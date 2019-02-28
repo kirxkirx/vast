@@ -31,7 +31,7 @@ SHELL=/bin/sh
 #################################################################
 #PREFIX  = /usr/local
 #PREFIX  = $(HOME)
-PREFIX  = /home/kirx/current_work/vast-1.0rc84/lib
+PREFIX  = /home/kirx/current_work/vast/lib
 PACKAGE = cdsclient
 VERSION = 3.84
 DISTRIB = $(PACKAGE)-$(VERSION)
