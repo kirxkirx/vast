@@ -1,0 +1,68 @@
+#!/bin/sh
+#++++++++++++++++
+# Copyright:    (C) 2008-2017 UDS/CNRS
+# License:       GNU General Public License
+#.IDENTIFICATION 
+#.LANGUAGE       Bourne shell
+#.AUTHOR         G.Landais, F.Ochsenbein
+#.ENVIRONMENT    
+#.KEYWORDS       
+#.VERSION  1.0   01 Sep 2008
+#.VERSION  1.1   17-Oct-2008: Bourne shell
+#.VERSION  1.2   27-Jun-2011/ via http: use viz-bin
+#.PURPOSE        to pass over a proxy
+#.COMMENTS       the script aserver.cgi must be install on server 
+#----------------
+
+# Conversion of spzecial characters:
+sed_encode='
+1,$ s/ /%20/g
+1,$ s/["]/%22/g
+1,$ s/[#]/%23/g
+1,$ s/['"'"']/%27/g
+1,$ s/+/%2b/g
+1,$ s/[*]/%2e/g
+1,$ s/[<]/%3c/g
+1,$ s/[>]/%3e/g
+'
+if test $# -lt 2; then
+    echo "aclient_cgi host service [-f filename|-] [args...]"
+    echo " -f: (or - for stdin usage) must be the first argument"
+    exit 1
+fi
+host=$1; shift
+qstr=$1; shift
+
+url="http://$host/viz-bin/aserver.cgi"
+file=""
+
+# get filename if given
+#echo "#...[aclient_cgi $1]"
+case "$1" in
+   -)  file="$1"; shift; ;;
+  -f)  file="$2"; shift; shift; ;;
+esac
+
+if [ "$file" = "-" ]; then
+    echo "#*** Sorry streaming input is not allowed by wget"
+    echo "     Use a physical file instead."
+    exit 1
+fi
+
+# Get all arguments
+while test $# -gt 0; do
+    qstr="$qstr&$1"
+    shift
+done
+qstr=`echo $qstr | sed "$sed_encode"`
+
+# create command
+if test -z "$file"; then    # No file -- generate GET
+    # execute
+    echo "#...url= $url?$qstr" 1>&2
+    wget -q -O - "$url?$qstr" || echo "#***Error wget!"
+else
+    # execute
+    echo "#...exec wget -nv --post-file=$file -O - '$url?$qstr'"
+    wget -nv --post-file=$file -O - "$url?$qstr" || echo "#***Error wget!"
+fi

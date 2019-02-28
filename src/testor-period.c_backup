@@ -1,0 +1,23 @@
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include "vast_limits.h"
+
+int main( int argc, char *argv[] ) {
+ FILE *f;
+ double X, Y, A, B, C, D;
+ char MUSOR[TESTOR_MAX_MUSOR];
+ int i;
+ if ( argc < 2 ) {
+  fprintf( stderr, "Deficiency of arguments!\n ./testor outfile.dat\n" );
+  return -1;
+ }
+ f= fopen( argv[1], "r" );
+ fscanf( f, "%lg %lg %lg %lg %lg %lg %s", &A, &B, &C, &X, &Y, &D, MUSOR );
+ for ( i= 0; i < TESTOR_MIN_NUMBER_OF_POINTS_PERIOD; i++ ) {
+  if ( NULL == fgets( MUSOR, 500, f ) )
+   return -1;
+ }
+ fclose( f );
+ return 0;
+}

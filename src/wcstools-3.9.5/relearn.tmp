@@ -1,0 +1,25 @@
+listspec.input = ""
+listspec.specext = 0
+listspec.specnum = "0"
+listspec.specband = 0
+listspec.specdir = ""
+listspec.pix1 = INDEF
+listspec.pix2 = INDEF
+listspec.lambda1 = INDEF
+listspec.lambda2 = INDEF
+listspec.logwav = no
+listspec.renormalize = 0.
+listspec.printlim = no
+listspec.columns = "wf"
+listspec.numform = "%3d"
+listspec.pixform = "%4d"
+listspec.fluxform = "%g"
+listspec.velform = "%9.3f"
+listspec.waveform = "%9.3f"
+listspec.outfile = no
+listspec.heading = no
+listspec.nsum = 1
+listspec.verbose = no
+listspec.debug = no
+listspec.mode = "ql"
+# EOF

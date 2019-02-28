@@ -1,0 +1,43 @@
+#!/bin/sh
+#++++++++++++++++
+# Copyright:    (C) 2008-2017 UDS/CNRS
+# License:       GNU General Public License
+#.IDENTIFICATION findppmx
+#.LANGUAGE       Bourne shell
+#.AUTHOR         Francois Ochsenbein [CDS]
+#.ENVIRONMENT    CDSclient Scripts
+#.KEYWORDS       PPMX
+#.VERSION  2.3   09-Dec-2008: PPMX
+#.VERSION  2.4   28-Aug-2009: Bourne shell version
+#.VERSION  2.5   06-Jul-2010: Accept ppmxl
+#.PURPOSE        Find Stars in Roeser et al. Cat. (PPMX)
+#----------------
+
+D_BIN=`dirname $0`
+pgm=`basename $0`
+rpc=`basename $0 | sed 's/find//'`
+CAT=`echo $rpc|tr '[a-z]' '[A-Z]'`	# Convert to uppercase
+
+# No argument is assumed to call for help
+test $# -eq 0 && exec $0 -help
+
+case "$1" in
+     h*)  # Assume help
+      exec $0 -help
+      ;;
+    -h*)  # Differs from standard help
+    cat <<===Help
+Usage: $pgm J2000-center [other_options]
+   or  $pgm -id $CAT [other_options]
+   or  $pgm -id - [other_options]    ($CAT identifiers in stdin)
+   or  $pgm -f [file_with_data] [other_options]
+   or  $pgm - [other_options]        (data in stdin)
+===Help
+    exec $D_BIN/find_gen $pgm $rpc -rhelp
+    ;;
+
+  # Use the generic find_gen service
+  *)
+    exec $D_BIN/find_gen $pgm $rpc "$@"
+    ;;
+esac

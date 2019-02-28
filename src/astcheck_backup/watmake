@@ -1,0 +1,43 @@
+# Basic astronomical functions library - OpenWatcom C/C++ version
+
+all: jd.exe astcheck.exe astephem.exe riseset3.exe get_test.exe
+
+jd.exe: jd.obj wafuncs.lib
+   wcl386 -zq -k10000 jd.obj wafuncs.lib
+
+get_test.exe: get_test.obj wafuncs.lib
+   wcl386 -zq -k10000 get_test.obj wafuncs.lib
+
+astephem.exe: astephem.obj mpcorb.obj wafuncs.lib
+   wcl386 -zq -k10000 astephem.obj mpcorb.obj wafuncs.lib
+
+astcheck.exe: astcheck.obj mpcorb.obj wafuncs.lib
+   wcl386 -zq -k10000 astcheck.obj mpcorb.obj wafuncs.lib
+
+riseset3.exe: riseset3.obj wafuncs.lib
+   wcl386 -zq -k10000 riseset3.obj wafuncs.lib
+
+wafuncs.lib: alt_az.obj astfuncs.obj big_vsop.obj classel.obj com_file.obj cospar.obj      &
+             date.obj delta_t.obj de_plan.obj dist_pa.obj        &
+             eart2000.obj elp82dat.obj getplane.obj get_time.obj &
+             jsats.obj lunar2.obj triton.obj miscell.obj nutation.obj       &
+             obliquit.obj pluto.obj precess.obj refract.obj       &
+             refract4.obj rocks.obj showelem.obj &
+             ssats.obj vislimit.obj vsopson.obj
+   wlib -q wafuncs.lib +alt_az.obj +astfuncs.obj +big_vsop.obj +classel.obj +com_file.obj +cospar.obj
+   wlib -q wafuncs.lib +date.obj +delta_t.obj +de_plan.obj +dist_pa.obj
+   wlib -q wafuncs.lib +eart2000.obj +elp82dat.obj +getplane.obj +get_time.obj
+   wlib -q wafuncs.lib +jsats.obj +lunar2.obj +triton.obj +miscell.obj +nutation.obj
+   wlib -q wafuncs.lib +obliquit.obj +pluto.obj +precess.obj +refract.obj
+   wlib -q wafuncs.lib +refract4.obj +rocks.obj +showelem.obj
+   wlib -q wafuncs.lib +ssats.obj +vislimit.obj +vsopson.obj
+
+CC=wcc386
+CFLAGS=-w4 -oxt -4r -s -j -zq
+
+.cpp.obj:
+   $(CC) $(CFLAGS) $<
+
+riseset3.obj: riseset3.cpp
+   $(CC) $(CFLAGS) -DTEST_MAIN riseset3.cpp
+

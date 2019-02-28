@@ -1,0 +1,320 @@
+.TH wwwget 1
+.SH NAME
+www (done)
+equest on HTTP
+                    (Rev. February 2007)
+.NXB "wwwget"
+.SH SYNTAX
+\fBwwwget\fR [\fB-v\fR] [\fB-s\fR] [\fB-m...\fR] [\fB-abs\fR] [\fB-post\fR|
+\fB-head\fR|\fB-get\fR|\fB-redirect\fR] [\fB-c \fR\fIname=value\fR] [\fB-p#
+\fR \fIprompt\fR] [\fB-q\fR] [\fB-D \fR\fIdomain\fR] [\fB-F \fR\fIfrom\fR
+] [\fB-U \fR\fIusername\fR] [\fB-P \fR\fIpassword\fR] [\fB-i \fR\fI
+input_file\fR] [\fB-o \fR\fIoutput_file\fR] [\fB-r \fR\fIrange\fR] [\fB
+-to \fR\fIsecs\fR] [\fIURL\fR|\fIhost[:port]\fR] [\fIquery_argument\fR]... 
+.PP
+.SH DESCRIPTION
+\fBwwwget\fR gets one or several HTTP document(s) directly on the 
+standard output. It avoids the usage of Netscape or similar browser. 
+When only the \fIhost\fR is specified as a command-line argument, 
+documents relative to the host are assumed to be specified in the 
+standard input.
+.PP
+.SH OPTIONS
+.PP
+\fB-v\fR  is a verbose option (display number of bytes transferred) 
+.PP
+\fB-m[\fIversion\fB]\fR  emulates Mozilla (insert in the message the 
+User-Agent, etc); the default version is 3. 
+.PP
+\fB-s\fR  silent mode: the HTTP header is stripped. By default this 
+header (containing the status, Content-Type, etc), which is terminated 
+by a blank line, is displayed on the standard error. 
+.PP
+\fB-post\fR  get the document in a POST method. The default is GET 
+method. 
+.PP
+\fB-head\fR  get the document in a HEAD method (only the header). The
+default is GET method. 
+.PP
+\fB-get\fR  use the default GET method to retrieve the document. 
+.PP
+\fB-redirect\fR  generates a Redirect block instead of querying the 
+remote site. Essentially useful when associated with the \fB-q\fR 
+option. 
+.PP
+\fB-abs\fR  translates relative anchors to absolute ones, providing 
+therefore useable HTML files. This operation is similar to the \fB
+wwwabs\fR(1) program. 
+.PP
+\fB-c \fIcookie\fB\fR  to forward a \fIcookie\fR (in the form \fIname
+\fR\fB=\fR\fIvalue\fR) 
+.PP
+\fB-p\fI[n]\fB \fIprompt\fB\fR  to define the \fIprompt\fR text - a 
+text which indicates to stop the data. A number \fIn \fR may be 
+attached to the \fB-p\fR argument to indicate to stop at \fIn\fRth 
+occurence of the prompt. 
+.PP
+\fB-q\fR  to indicate a \fBquery\fR, i.e. the \fIURL\fR indicates only 
+a \fIcgi\fR script, and arguments to this script are given as \fI
+query_argument\fR supplementary arguments. When no supplementary \fI
+query_argument\fR appears on the command line, the arguments are 
+assumed to be in the \fIinput_file\fR or the standard input, one 
+line per argument; in this input, lines starting by a blank (or a 
+tab) are considered as a continuation of the previous line. An 
+example is given below. 
+.PP
+\fB-F \fIfrom\fB\fR  specifies the \fIFrom:\fR string in the HTTP 
+protocol, typically used to propagate e-mails. This directorive is 
+used to propagate the origin of Aladin calls to VizieR. 
+.PP
+\fB-D \fIdomain\fB\fR  specifies the domain name which is required in 
+the \fBWWW-Authenticate\fR context; the domain name is specified in 
+the \fIWWW-Authenticate:\fR answer from the HTTP server. 
+.PP
+\fB-U \fIusername\fB\fR  specifies the username for documents requiring 
+an Authorization. 
+.PP
+\fB-P \fIpassword\fB\fR  specifies the password for documents requiring 
+an Authorization. 
+.PP
+\fB-i \fIinput_file\fB\fR  specifies the input file, useful in the \fB
+-q\fRuery mode. Default input file is \fIstdin\fR. 
+.PP
+\fB-o \fIoutput_file\fB\fR  specifies the output file, containing the 
+results. Default output file is \fIstdout\fR. 
+.PP
+\fB-r \fIrange_of_bytes\fB\fR  specifies a starting/ending point of the 
+document to get. 
+.PP
+\fB-to \fIsecs\fB\fR  specifies a time-out in seconds between the 
+reception of 2 packets; the default is 1200 (20min). 
+.PP
+\fB\fIURL\fB|\fIhost[:port]\fB\fR  
+.LP
+.TP 4
+.B =>
+When a full URL is specified, the document is located and displayed.
+.TP 4
+.B =>
+if only a hostname is supplied, document names are assumed to be 
+specified in the standard input; documents specified in the standard 
+input without hostname are then assumed to be \fIrelative to host\fR.
+.TP 4
+.B =>
+when no document or host is specified, the standard input is assumed
+to contain fully qualified URLs. 
+.PP
+.SH "RETURNED STATUS"
+\fBwwwget\fR returns \fB0\fR in case of success.
+.PP
+The code \fB1\fR is returned when there are invalid arguments, or 
+when the host could not be contacted.
+.PP
+The code \fB2\fR is returned when the contacted server indicates an 
+error (HTTP error code above 400).
+.PP
+.SH "HTTP STATUSES"
+\fI(from http://www.faqs.org/rfcs/rfc2616.html)\fR 
+.LP
+.TP 4
+.B 1.
+Informational 1xx 
+.LP
+.RS
+.TP 4
+.B =>
+100 Continue 
+.TP 4
+.B =>
+101 Switching Protocols 
+.RE
+.LP
+.PP
+.TP 4
+.B 2.
+Successful 2xx 
+.LP
+.RS
+.TP 4
+.B =>
+200 OK 
+.TP 4
+.B =>
+201 Created 
+.TP 4
+.B =>
+202 Accepted 
+.TP 4
+.B =>
+203 Non-Authoritative Information 
+.TP 4
+.B =>
+204 No Content 
+.TP 4
+.B =>
+205 Reset Content 
+.TP 4
+.B =>
+206 Partial Content 
+.RE
+.LP
+.PP
+.TP 4
+.B 3.
+Redirection 3xx 
+.LP
+.RS
+.TP 4
+.B =>
+300 Multiple Choices 
+.TP 4
+.B =>
+301 Moved Permanently 
+.TP 4
+.B =>
+302 Found 
+.TP 4
+.B =>
+303 See Other 
+.TP 4
+.B =>
+304 Not Modified 
+.TP 4
+.B =>
+305 Use Proxy 
+.TP 4
+.B =>
+306 (Unused) 
+.TP 4
+.B =>
+307 Temporary Redirect 
+.RE
+.LP
+.PP
+.TP 4
+.B 4.
+Client Error 4xx 
+.LP
+.RS
+.TP 4
+.B =>
+400 Bad Request 
+.TP 4
+.B =>
+401 Unauthorized 
+.TP 4
+.B =>
+402 Payment Required 
+.TP 4
+.B =>
+403 Forbidden 
+.TP 4
+.B =>
+404 Not Found 
+.TP 4
+.B =>
+405 Method Not Allowed 
+.TP 4
+.B =>
+406 Not Acceptable 
+.TP 4
+.B =>
+407 Proxy Authentication Required 
+.TP 4
+.B =>
+408 Request Timeout 
+.TP 4
+.B =>
+409 Conflict 
+.TP 4
+.B =>
+410 Gone 
+.TP 4
+.B =>
+411 Length Required 
+.TP 4
+.B =>
+412 Precondition Failed 
+.TP 4
+.B =>
+413 Request Entity Too Large 
+.TP 4
+.B =>
+414 Request-URI Too Long 
+.TP 4
+.B =>
+415 Unsupported Media Type 
+.TP 4
+.B =>
+416 Requested Range Not Satisfiable 
+.TP 4
+.B =>
+417 Expectation Failed 
+.RE
+.LP
+.PP
+.TP 4
+.B 5.
+Server Error 5xx 
+.LP
+.RS
+.TP 4
+.B =>
+500 Internal Server Error 
+.TP 4
+.B =>
+501 Not Implemented 
+.TP 4
+.B =>
+502 Bad Gateway 
+.TP 4
+.B =>
+503 Service Unavailable 
+.TP 4
+.B =>
+504 Gateway Timeout 
+.TP 4
+.B =>
+505 HTTP Version Not Supported 
+.RE
+.LP
+.PP
+.SH EXAMPLES
+.LP
+.TP 4
+.B 1.
+Get the result of a query into a reuseable file: 
+.br
+wwwget -strip -abs http://vizier/cgi-bin?-source=HIP > HIP.html
+.br
+
+.TP 4
+.B 2.
+Query vizier with arguments specified in the standard input: 
+.br
+wwwget -strip  -q http://vizier.u-strasbg.fr/cgi-bin/asu-xml << ====ENDofQuery
+.br
+-source=I/239/hip_main
+.br
+HIP=1..10
+.br
+-out.all
+.br
+====ENDofQuery
+.br
+
+.PP
+which could also be called as: 
+.br
+wwwget -q http://vizier.u-strasbg.fr/cgi-bin/asu-xml -source=I/239/hip_main HIP=1..10 -out.all
+.br
+
+.PP
+or as 
+.br
+wwwget -q http://vizier.u-strasbg.fr/cgi-bin/asu-xml\\?-source=I/239/hip_main HIP=1..10 -out.all
+.br
+
+.PP
+.SH "SEE ALSO"
+netscape(1) wwwabs(1) 

@@ -1,0 +1,33 @@
+#!/bin/sh
+#++++++++++++++++
+# Copyright:    (C) 2008-2017 UDS/CNRS
+# License:       GNU General Public License
+#.IDENTIFICATION find2mass
+#.LANGUAGE       C-shell
+#.AUTHOR         Francois Ochsenbein [CDS]
+#.ENVIRONMENT    
+#.KEYWORDS       
+#.VERSION  1.0   02-Mar-2001
+#.VERSION  1.1   25-Jun-2003: Final 2MASS All-Sky Release
+#.VERSION  1.2   31-Jul-2007: accept find2mass J-name
+#.VERSION  1.3   01-Sep-2008: for proxy usage
+#.VERSION  1.31  29-Aug-2009: Bourne shell
+#.PURPOSE        Find Stars in 2MASS releases
+#----------------
+
+D_BIN=`dirname $0`
+pgm=`basename $0`
+rpc=`basename $0 | sed 's/find//'`
+
+# The 2MASS rpc names are somewhat different from standard scheme
+case "$rpc" in 
+  2massi) rpc="find2psc3";  ;;
+   2mass) rpc="find2m";  ;;
+esac
+
+# No argument is assumed to call for help
+test $# -eq 0 && exec $0 -help
+
+# Use the generic find_gen service
+exec $D_BIN/find_gen $pgm $rpc "$@"
+

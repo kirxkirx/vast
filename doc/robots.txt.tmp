@@ -1,0 +1,3 @@
+User-agent: *
+Disallow: /nmw/NMW_processed_and_calibrated_images/
+Disallow: /~nmw/NMW_processed_and_calibrated_images/

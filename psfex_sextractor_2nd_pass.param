@@ -1,0 +1,40 @@
+NUMBER
+
+FLUX_PSF
+FLUXERR_PSF
+MAG_PSF
+MAG_APER(1)
+MAG_APER(2)
+MAG_APER(3)
+MAG_APER(4)
+MAG_APER(5)
+MAGERR_PSF
+MAGERR_APER(1)
+MAGERR_APER(2)
+MAGERR_APER(3)
+MAGERR_APER(4)
+MAGERR_APER(5)
+
+XPSF_IMAGE
+YPSF_IMAGE
+
+A_IMAGE
+ERRA_IMAGE
+B_IMAGE
+ERRB_IMAGE
+
+FLAGS
+
+### float filtering parameters ###
+FWHM_IMAGE
+MAG_AUTO
+######
+
+
+#CLASS_STAR
+
+# We repeat FLAGS here as a substitute for the IMAFLAGS_ISO column.
+# IMAFLAGS_ISO would appear if flag image is used in the processing
+#FLAGS
+
+CHI2_PSF

@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+PMAX=10.0
+PMIN=0.1
+PHASESTEP=0.01
+
+if [ ! -f vast_lightcurve_statistics.log ];then
+ echo "ERROR: cannot open vast_lightcurve_statistics.log"
+ exit 1
+fi
+
+while read STR ;do
+ LIGHTCURVEFILE=`echo "$STR" | awk '{print $5}'`
+ echo -n "Performing period search for $LIGHTCURVEFILE " >> /dev/stderr
+ echo -n " LK" >> /dev/stderr
+ LK_RESULTS=`lib/lk_compute_periodogram $LIGHTCURVEFILE $PMAX $PMIN $PHASESTEP`
+ echo -n " DFT" >> /dev/stderr
+ DFT_RESULTS=`lib/deeming_compute_periodogram $LIGHTCURVEFILE $PMAX $PMIN $PHASESTEP | awk '{print $2}'`
+ echo " done" >> /dev/stderr
+ echo "$STR    $LK_RESULTS  $DFT_RESULTS"
+done < vast_lightcurve_statistics.log > vast_lightcurve_statistics.tmp
+
+mv vast_lightcurve_statistics.tmp vast_lightcurve_statistics.log

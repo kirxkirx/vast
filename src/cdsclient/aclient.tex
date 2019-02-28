@@ -1,0 +1,122 @@
+\cgidef{-mail -tex -f manpage.def }
+%++++++++
+% Copyright:    (C) 2008-2017 UDS/CNRS
+% License:       GNU General Public License
+%.IDENTIFICATION aclient.tex
+%.PURPOSE        Definition of macros related to Man Pages
+%.AUTHOR         Francois Ochsenbein
+%.VERSION   1.0  26-Aug-1992
+%----------
+%=============================================================
+\begin{manpage}{1}{aclient} {A standard Client} {05-March-2010}
+	{client}
+\def\pgm{{{\bf aclient}\ }}
+\def\aserver{{{\bf aserver}}}
+\syntax { \pgm 
+	[{\bf --\%}]
+	[{\bf --b} {\em blocksize}]
+	[{\bf --bsk} {\em socket\_size}]
+	[{\bf --p} {\em prompt}]
+	{\em host} {\em service}
+	[{\bf --U}{\em name}]
+	[{\bf --P}{\em password}]
+	[{\em command}$\cdots$]
+  }
+
+\mansec{Description}
+\pgm is a client application of the {\bf sk}(3) functions.
+It transmits {\em commands} to \aserver(1) running the specified
+{\em service} on the specified {\em host}, and receives the result.
+
+\mansec{Options}
+\option {--\% } asks to encode the shell-specific characters
+	{\bf < > \& ? * [ ] ( ) ;} {\em(see also the {\bf Escaping 
+	conventions} below)}
+\option {--b {\em blocksize}} defines the size of logical blocks 
+	read from the standard input and transferred to the server. 
+	The default is {\bf 4k}.
+\option {--bsk {\em socket\_size}} defines the physical size of 
+	socket blocks used in data transmission.
+	The default can be specified via the {\tt SK\_bsk} environment
+	variable; if {\tt SK\_bsk} is not defined, the default
+	depends on the socket standards, generally 4K.
+\option {--p {\em prompt}} defines the prompt to be displayed in
+	case of interactive mode. The default is \\
+	{\tt {\em host}/{\em service}}.
+\option {{\em host}} designates the name of the host where the
+	specified {\em service} is available.
+\option {{\em service}} designates the service, either as a name appearing
+	in the {\tt /etc/services}(5) file, or as a number in the
+	1024--2047 range. The same {\em service} must be used by \aserver.
+\option{--U{\em name}} specifies a name that can be recognized
+	by the Server (see {\bf sk}(3), {\em authorisation file}).
+\option{--P{\em password}} specifies the password associated to
+	the {\bf --U} name (see {\bf sk}(3), {\em authorisation file}).
+\option{{\em command}} specifies what has to be executed by
+	{\em service} at {\em host}; a semi-colon ({\bf;}) may be
+	used as a separate argument to delimit commands.
+	When no {\em command} is given
+	as arguments, \pgm waits for commands in the {\em standard input}.
+
+\mansec{ Sending or Capturing the Data }
+	Data are normally transferred via the {\em standard} input and
+	output. A first solution therefore consists 
+	in specifying the command for data transfer as {\em options}, e.g.
+
+	\pgm {\tt {\em host} {\em service\_file} Write /tmp/copy < myinput}
+
+	There are redirection possibilities but unlike {\bf sh}(1)
+	these redirections must be specified {\em before} the command.
+	The example above could be executed as:
+	
+	\begin{raggedright}
+	\pgm {\tt {\em host} {\em service\_file} }\\
+	{\tt{\em host}/{\em service\_file}$>$} {\tt <myinput Write /tmp/copy}\\
+	{\tt{\em host}/{\em service\_file}$>$} \dots
+	\end{raggedright}
+
+	Note that file names may be replaced by pipes for names starting
+	with the $|$ character; if blanks are embedded, the command have
+	to be quoted. For instance, to write the list of files
+	to a foreign file:
+	\begin{raggedright}
+	\pgm {\tt {\em host} {\em service\_file} }\\
+	{\tt{\em host}/{\em service\_file}$>$}{\tt <"|ls -l" Write /tmp/copy}\\
+	{\tt{\em host}/{\em service\_file}$>$} \dots
+	\end{raggedright}
+
+\mansec{Escaping conventions}
+	Since {\bf aclient} connects to {\bf aserver} where a shell
+	is executed, a special convention (similar to http queries)
+	is available to {\em escape} special characters and
+	define arguments with special characters to the server
+	program. This convention uses {\bf\%\{...\}} to define
+	parameters with special characters (like blank, asterisks, etc).
+
+
+\mansec{Environment Variables}
+	{\tt SK\_bsk} is used by \pgm as the default {\bf --bsk} option.
+
+\mansec{Examples}
+\begin{enumerate}
+\item	Query a catalog on {\em cocat1}:\\
+	{\tt\bf\fg{red4}aclient cocat1 1660 gsc1.2  -c 123.12-78.12 -r 1.5 -sr}
+\item	Copy a file to cocat1\\
+	{\tt\bf\fg{red4}aclient cocat1 1660 save < /etc/passwd} \\
+	returns the name of the remote file
+\item	List remote files having a name wich contains an asterisk: \\
+	{\tt\bf\fg{red4} aclient cocat1 1660 ls *\%\{*\}*}
+\item	Find the star {\bf\fg{blue3} ** STT 82AA'} in the last
+	version of edited simbad: \\
+	{\tt\bf\fg{red4} aclient -\% newviz 1660 sim.arg 0 "** STT 82AA'"} \\
+	which gives the same result as \\
+	{\tt\bf\fg{red4} aclient newviz 1660 sim.arg 0 "\%{** STT 82AA'}"}
+\item	Rewind the tape {\tt/dev/nrst0} and get its status on the
+	{\tt foreign} host using the {\tt rtape}(4) service.
+\begin{verbatim}
+aclient foreign rtape setenv TAPE /dev/nrst0 \; mt stat \; mt rew \; mt stat
+\end{verbatim}
+\end{enumerate}
+	
+\seealso{ aserver(1) pipe(2) sk(3) services(5) } 
+\end{manpage}

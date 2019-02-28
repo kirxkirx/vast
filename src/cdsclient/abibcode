@@ -1,0 +1,120 @@
+#!/bin/csh
+#++++++++++++++++
+# Copyright:    (C) 2008-2017 UDS/CNRS
+# License:       GNU General Public License
+#.IDENTIFICATION abibcode
+#.LANGUAGE       C-shell
+#.AUTHOR         Francois Ochsenbein [CDS]
+#.ENVIRONMENT    
+#.KEYWORDS       
+#.VERSION  1.0   16-Jan-1997
+#.PURPOSE        Transform text, adding bibcodes
+#		either as \simOK{bibcode}, or
+#		\NOsim{test}
+#.COMMENTS       Requires the "aclient" program.
+#----------------
+set D_BIN = `dirname $0`
+
+## Examine the installation
+set AWK = `which gawk`
+if ($#AWK != 1) set AWK = `which nawk`
+if ($#AWK != 1) set AWK = `which awk`
+if ($#AWK != 1) then
+    echo "****$0 requires gawk (GNU version of awk)"
+    exit 1
+endif
+
+set ACLIENT = `which aclient`
+if ($#ACLIENT != 1) then
+    echo "****$0 requires installation of aclient  (in same package)"
+    exit 1
+endif
+set ACLIENT = "$ACLIENT 130.79.128.5 1660"
+
+set tt = /tmp/ab$$
+if ($#argv != 1) then
+    echo "Usage: $0 file_name"
+    exit 1
+endif
+
+# From the input file, create the 3-column table   
+#\bibitem	bibcode_19	free_bibcode
+#rm -rf $tt.*
+set file = $1
+trim $file | sed 's/, */ /g' | $AWK -f $0.awk > $tt.3
+#cat $tt.3
+#tr -d , < $1 | $AWK -f $0.awk > $tt.3
+
+# Interrogate SIMBAD from 3rd column of $tt.3, and generates
+#             2-column table with input SIMBAD_output
+# First transfer the file ...
+echo "%#...sending  `wc $tt.3`"
+#echo "#$AWK '/^#/{print "%R " $3}' $tt.3 | $ACLIENT savbib | tee $tt.U"
+$AWK '{print "%R " $2}' $tt.3 | $ACLIENT savbib | tee $tt.U \
+| $AWK '{print "%#" $0}'
+set Ufile = `gawk 'NR==1{print $1}'  $tt.U`
+echo "%#...$ACLIENT simref -in $Ufile"
+
+# Execute the SIMREF command (retrieve a list of bibcodes)
+# The full result is in $tt.t. Example:
+# %% 2003AJ....126.2081A
+# %R 2003AJ....126.2081A
+# %DOI 10.1086/378165
+# ...
+#
+# %% 2009ApJS..182..543A
+# %R 2009ApJS..182..543A
+# ...
+# %% 1980S.....192..779A
+# %% 1984of...X-ray-quietQSOs'A
+# %% 1977.(ParisCNRS)p377A
+# %% 1980Sci...336p..94)A
+#
+# In this list %% is the input, %R the actual bibcode.
+$ACLIENT simref -in $Ufile \
+| tee $tt.t \
+| $AWK '\
+ /^%% /{if(r!="") print r;r=$2}\
+ /^%R /{if (r != "") print r "\t" $2; r=""}\
+  /^$/{if(r!="") print r; r=""}\
+   END{if(r!="") print r; r=""}' > $tt.2
+#echo "%#...received `wc $tt.2`"
+Compare:
+if (`wc -l < $tt.2` != `wc -l < $tt.3`) then
+    # $tt.2 may contain a header that we have to strip
+    $AWK 'length==0{exit 1}' $tt.2
+    if ($status == 0) then
+        echo "****Files $tt.2 and $tt.3 should have same number of lines****"
+        echo "    (maybe a bad SIMBAD connection) "
+        head -10 $tt.*
+        /bin/rm -f $tt.*
+        exit 1
+    endif
+    mv $tt.2 $tt.2p; $AWK '/^$/{p++;next}{if(p>0)print}' $tt.2p > $tt.2
+    goto Compare
+endif
+
+# Merge the tables to provide a 3-col table   \bibitem  verify  SIMBAD_output
+#wc  $tt.3 $tt.2
+paste $tt.3 $tt.2 | $AWK 'BEGIN{FS="\t";OFS="\t"}{print $1,$2,$5}' \
+| sed 's/&/\\&/g' > $tt.fin
+#cat $tt.fin | acut -i"#" -c1-
+
+# Final: merge the original text with the appopriate macro
+trim $file | $AWK -v f3=$tt.fin '\
+  /^ *\\bibitem[[{]/{ if (ref!="") print "\t" ref; print; \
+	getline result < f3 ; nr = split(result, c, "\t")\
+	if (c[3] != "") ref = "\\simOK{" c[3] "}";  \
+	else ref = "\\NOsim{" c[2] "}" ; \
+	next }\
+  /^$/{ if(ref!="") { print "\t" ref; ref = "" }}\
+  / *\end{thebibliography}/ { if (ref!="") print "\t" ref; ref=""; } \
+  {print} \
+  END { if (ref!="") print "\t" ref; ref=""; } \
+'
+
+### Remove temporary files
+/bin/rm -f $tt.*
+
+### Exit now.
+exit 0

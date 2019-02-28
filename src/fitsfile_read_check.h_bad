@@ -1,0 +1,20 @@
+//#include "fitsio.h"
+
+int fitsfile_read_check(char * fitsfilename){
+        int status = 0; //for cfitsio routines
+        fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
+        if(0!=fits_open_file(&fptr, fitsfilename, READONLY, &status)){
+         //fits_report_error(stderr, status);  /* print out any error messages */
+         fits_clear_errmsg(); // clear the CFITSIO error message stack
+         fprintf(stderr,"FUCK!!!\n");
+         //status = 0;
+         //fits_close_file(fptr, &status);
+         return 1;
+        }
+        //status = 0;
+        //if(0 != status){
+        // return status;
+        //}
+        fits_close_file(fptr, &status);
+        return 0;
+}

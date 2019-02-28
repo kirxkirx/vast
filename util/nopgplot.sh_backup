@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+#
+# This script will conduct all the computations needed for the variability search.
+# No PGPlot-related programs are requiered (hence the script name). All computations may 
+# be conducted on a computer without PGPlot and saved for future display on another  
+# computer.
+#
+# If "-t" option is given, period-search-based tests will be conducted (really slow!).
+#
+
+lib/find_candidates_MAG_SIGMA_MAG.sh
+#lib/data_parser < data.m_sigma > tmp ; mv -f tmp data.m_sigma 
+
+# Generate list of stars with large rms
+lib/m_sigma_bin > m_sigma_bin.tmp
+cp m_sigma_bin.tmp vast_stars_with_large_sigma.log
+
+# Period search (if requested)
+if [ "$1" = "-t" ];then
+ echo Starting period detection algorithms...
+ lib/candidates-p.sh < m_sigma_bin.tmp #>>/dev/stderr
+ lib/candidates-bls.sh && rm -f m_sigma_bin.tmp
+fi
+
+if [ "$1" = "-q" ];then
+ # Quiet mode: exit without printing out the log file
+ exit
+fi
+
+#echo " " >>/dev/stderr
+echo "util/nopgplot.sh is done with computations! =)
+ 
+### vast_summary.log ###
+####################################################################################"
+if [ -f vast_summary.log ] ;then
+ cat vast_summary.log #>>/dev/stderr
+else
+ echo "WARNING! Something may be terribly wrong: the main log file vast_summary.log is not found." #>>/dev/stderr
+fi
+echo "####################################################################################
+
+"

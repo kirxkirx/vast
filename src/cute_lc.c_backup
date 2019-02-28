@@ -1,0 +1,36 @@
+// This small program will read a lightcurve file from stdin or an ASCII file and will reformat it to look cute. 
+
+#include <stdio.h>
+
+#include "lightcurve_io.h"
+
+int main(int argc, char **argv){
+ char string[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+ double jd,mag,mag_err;
+ double x,y,app;
+ FILE * inputfile;
+ 
+ if( argc>2 ){
+  fprintf(stderr,"This script will round--off all measurements to 0.001 mag and produce a lightcurve in format\nJD MAG MAG_ERR\n\n");
+  fprintf(stderr,"Usage: %s outNNNNN.dat > fancy_lc.dat\n",argv[0]);
+  return 1;
+ }
+ 
+ if( argc==2 ){
+  inputfile=fopen(argv[1],"r");
+  if( inputfile==NULL ){fprintf(stderr,"ERROR: cannot open the lightcurve file %s\n",argv[1]);return 1;}
+ }
+ else{
+  inputfile=stdin;
+ }
+
+ while( -1<read_lightcurve_point( inputfile, &jd, &mag, &mag_err, &x, &y, &app, string) ){
+  if( jd==0.0 )continue; // if this line could not be parsed, try the next one
+  fprintf(stdout,"%.5lf  %6.3lf %5.3lf\n",jd,mag,mag_err);
+ }
+
+ if( argc==2 )
+  fclose(inputfile);
+ 
+ return 0;
+}

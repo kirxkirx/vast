@@ -1,0 +1,48 @@
+body { color: #000;
+ background: #dde;
+ font-family: DejaVu, Liberation, serif;
+ font-size: 12pt;
+ line-height: 16pt;
+ margin-top: 3mm;
+ margin-bottom: 3mm;
+ margin-left: 10mm;
+ margin-right: 10mm;
+}
+
+p {text-align: justify; text-indent: 6mm; line-height: 16pt}
+.code {
+  font-family: DejaVu Sans Mono, Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif;
+  font-size: 11pt;
+  line-height: 14pt;
+  margin-bottom: 10px;
+  overflow: auto;
+  width: auto;
+  max-width: 950px;
+  white-space: nowrap;
+  padding: 5px;
+  color: #000;
+  background-color: #ccc;
+  padding-bottom: 20px!ie7;
+  max-height: 600px;
+}
+table.main {border-spacing: 5pt}
+td { padding-left: 20pt; padding-right: 20pt; padding-bottom: 3pt }
+
+a:link {color: #55f; text-decoration: none}
+a:visited {color: #33f; text-decoration: none}
+a:active {color: #55f; text-decoration: none}
+a:hover {color: #55f; text-decoration: underline}
+
+pre
+{
+  font-family: DejaVu Sans Mono, Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif;
+  font-size: 10pt;
+  line-height: 12pt;
+  margin-bottom: 10px;
+  overflow: auto;
+  width: auto;
+  padding: 5px;
+  background-color: #eee;
+  padding-bottom: 20px!ie7;
+  max-height: 600px;
+}

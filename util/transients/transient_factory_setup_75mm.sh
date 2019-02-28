@@ -1,0 +1,3 @@
+export REFERENCE_IMAGES=/home/kirx/current_work/reference_images_75mm/
+export APPROXIMATE_FIELD_OF_VIEW_ARCMIN=600
+export CONSERVATIVE_ASTROMETRIC_ACCURACY_ARCSEC=30

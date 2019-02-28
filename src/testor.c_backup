@@ -1,0 +1,27 @@
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include "vast_limits.h"
+
+#include "get_number_of_measured_images_from_vast_summary_log.h"
+
+//int get_number_of_measured_images_from_vast_summary_log();
+
+int main(int argc, char *argv[]){
+ FILE *f;
+ double X,Y,A,B,C,D;
+ char MUSOR[TESTOR_MAX_MUSOR];
+ int i;
+ if( argc<2 ){
+  fprintf(stderr,"Deficiency of arguments!\n ./testor outfile.dat\n");
+  return -1;;
+ }
+ f=fopen(argv[1],"r");
+  fscanf(f,"%lg %lg %lg %lg %lg %lg %s",&A,&B,&C,&X,&Y,&D,MUSOR);
+  for(i=0;i<MIN(TESTOR_MIN_NUMBER_OF_POINTS,(int)(0.5*get_number_of_measured_images_from_vast_summary_log()));i++){
+   if( NULL==fgets(MUSOR,TESTOR_MAX_MUSOR,f) )
+     return -1;
+  }
+ fclose(f);
+ return 0;
+}

@@ -1,0 +1,76 @@
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <gsl/gsl_statistics_double.h>
+#include <gsl/gsl_sort.h>
+#include <gsl/gsl_errno.h>
+
+#include "vast_limits.h"
+#include "get_number_of_measured_images_from_vast_summary_log.h"
+#include "lightcurve_io.h"
+
+int main( int argc, char **argv ) {
+ FILE *f;
+ double MUSOR;
+ char *strMUSOR;
+ strMUSOR= malloc( 2 * FILENAME_LENGTH * sizeof( char ) );
+ if ( strMUSOR == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for strMUSOR\n" );
+  exit( 1 );
+ };
+ double *m;
+ double m_mean;
+ double sigma_series;
+ int i= 0;
+ int j= 0;
+ double jd;
+
+ int n_points_to_drop= MIN( (int)( 0.1 * get_number_of_measured_images_from_vast_summary_log() ), STAT_NDROP );
+
+ if ( argc < 2 ) {
+  fprintf( stderr, "Usage: lib/stat outNUMBER.dat\n" );
+  exit( 1 );
+ }
+
+ m= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
+ if ( m == NULL ) {
+  fprintf( stderr, "ERROR allocating memory for m\n" );
+  return 1;
+ }
+
+ fprintf( stderr, " reading %s ", argv[1] );
+ f= fopen( argv[1], "r" );
+ if ( f == NULL ) {
+  fprintf( stderr, "ERROR: can't open file %s\n", argv[1] );
+  return 1;
+ }
+ //while( -1<fscanf(f,"%lf %lf %lf %lf %lf %lf %s",&MUSOR,&m[i],&MUSOR,&MUSOR,&MUSOR,&MUSOR,strMUSOR) ){
+ while ( -1 < read_lightcurve_point( f, &jd, &m[i], &MUSOR, &MUSOR, &MUSOR, &MUSOR, strMUSOR, NULL ) ) {
+  if ( jd == 0.0 )
+   continue; // if this line could not be parsed, try the next one
+  i++;
+  //m=realloc(m,(i+1)*sizeof(double));
+ }
+ fclose( f );
+ fprintf( stderr, "i=%d        \r", i );
+ gsl_sort( m, 1, i );
+
+ // Drop points //
+ if ( i > STAT_MIN_NUMBER_OF_POINTS_FOR_NDROP && i > 2 * n_points_to_drop ) {
+  i-= n_points_to_drop;
+  for ( j= 0; j < i; j++ ) {
+   m[j]= m[j + n_points_to_drop];
+  }
+  i-= n_points_to_drop;
+ }
+
+ m_mean= gsl_stats_median_from_sorted_data( m, 1, i );
+ sigma_series= gsl_stats_sd( m, 1, i );
+
+ if ( sigma_series == 0.0 || 0 == isnormal( sigma_series ) )
+  return 1;
+
+ fprintf( stdout, "%8.4lf %6.4lf ", m_mean, sigma_series );
+ return 0;
+}

@@ -1,0 +1,60 @@
+/*
+  This auxillary program will take an array of numbers on standard input 
+  and will print some basic statistics of the array to the standard output.
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+#include <gsl/gsl_statistics.h>
+#include <gsl/gsl_sort.h>
+
+int main() {
+ double *x= NULL;
+ double MIN, MAX;
+ double MEAN;
+ double MEDIAN;
+ double SD;
+ double MEAN_ERR;
+ int i= 0;
+
+ x= malloc( sizeof( double ) );
+ if ( x == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for x(star_array.c)\n" );
+  exit( 1 );
+ };
+
+ while ( -1 < fscanf( stdin, "%lf", &x[i] ) ) {
+  i+= 1;
+  x= realloc( x, ( i + 1 ) * sizeof( double ) );
+  if ( x == NULL ) {
+   fprintf( stderr, "ERROR: Couldn't reallocate memory for x(star_array.c)\n" );
+   exit( 1 );
+  };
+ }
+ fprintf( stdout, "N=%d\n", i );
+
+ gsl_sort( x, 1, i );
+ MIN= x[0];
+ MAX= x[i - 1];
+ MEDIAN= gsl_stats_median_from_sorted_data( x, 1, i );
+ MEAN= gsl_stats_mean( x, 1, i );
+ SD= gsl_stats_sd_m( x, 1, i, MEAN );
+ MEAN_ERR= SD / sqrt( i );
+ gsl_sort( x, 1, i );
+ MEDIAN= gsl_stats_median_from_sorted_data( x, 1, i );
+
+ free( x );
+
+ fprintf( stdout, "MIN=%lf\n", MIN );
+ fprintf( stdout, "MAX=%lf\n", MAX );
+ fprintf( stdout, "MAXminusMIN=%lf\n", MAX - MIN );
+ fprintf( stdout, "MEDIAN=%lf\n", MEDIAN );
+ fprintf( stdout, "MEAN=%lf\n", MEAN );
+ fprintf( stdout, "MEAN_ERR=%lf\n", MEAN_ERR );
+ fprintf( stdout, "SD=%lf\n", SD );
+
+ return 0;
+}

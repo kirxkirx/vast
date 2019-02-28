@@ -1,0 +1,285 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+#include <gsl/gsl_statistics_double.h>
+#include <gsl/gsl_spline.h>
+#include <gsl/gsl_sort.h>
+
+#include "../vast_limits.h"
+#include "../fit_plane_lin.h"
+
+#define MAX_DEVIATION_ARCSEC 5
+
+int main(int argc, char **argv){
+ double *RA_x_observed=malloc(MAX_NUMBER_OF_STARS*sizeof(double));
+ double *RA_y_observed=malloc(MAX_NUMBER_OF_STARS*sizeof(double));
+ double *RA_x_filtered=malloc(MAX_NUMBER_OF_STARS*sizeof(double));
+ double *RA_y_filtered=malloc(MAX_NUMBER_OF_STARS*sizeof(double));
+  
+ double *Dec_x_observed=malloc(MAX_NUMBER_OF_STARS*sizeof(double));
+ double *Dec_y_observed=malloc(MAX_NUMBER_OF_STARS*sizeof(double));
+ double *Dec_x_filtered=malloc(MAX_NUMBER_OF_STARS*sizeof(double));
+ double *Dec_y_filtered=malloc(MAX_NUMBER_OF_STARS*sizeof(double));
+
+ int N=0; // number of stars
+ 
+ int i,j; // just counters
+ 
+ // N=20 good for SA9
+ int N_median=80; // width of the median window (number of points)
+ double *RA_x_subarray=malloc(N_median*sizeof(double));
+ double *RA_y_subarray=malloc(N_median*sizeof(double));
+ double *Dec_x_subarray=malloc(N_median*sizeof(double));
+ double *Dec_y_subarray=malloc(N_median*sizeof(double));
+ 
+ if( argc<2 ){
+  fprintf(stderr,"Usage: %s RA DEC < wcs_XXX.fit.cat.vizquery\n",argv[0]);
+  return 1;
+ }
+
+ double RA_target=atof(argv[1]);
+ double Dec_target=atof(argv[2]);
+
+ 
+ // read input data
+ while(-1<fscanf(stdin,"%lf %lf %lf %lf",&RA_x_observed[N],&Dec_x_observed[N],&RA_y_observed[N],&Dec_y_observed[N]))N++;
+
+ /* Compensate for systeatic deviations in Declination */
+
+ // sort stars in RA
+ // it works! =)
+ double RA_x_tmp,RA_y_tmp,Dec_x_tmp,Dec_y_tmp;
+ for(i=0;i<N;i++)
+  for(j=i;j<N;j++)
+   if( RA_x_observed[i]>RA_x_observed[j] ){
+    RA_x_tmp=RA_x_observed[i];
+    RA_y_tmp=RA_y_observed[i];
+    Dec_x_tmp=Dec_x_observed[i];
+    Dec_y_tmp=Dec_y_observed[i];
+    
+    RA_x_observed[i]=RA_x_observed[j];
+    RA_y_observed[i]=RA_y_observed[j];
+    Dec_x_observed[i]=Dec_x_observed[j];
+    Dec_y_observed[i]=Dec_y_observed[j];
+    
+    RA_x_observed[j]=RA_x_tmp;
+    RA_y_observed[j]=RA_y_tmp;
+    Dec_x_observed[j]=Dec_x_tmp;
+    Dec_y_observed[j]=Dec_y_tmp;
+   }
+
+/*
+ double median_RA_correction=gsl_stats_median_from_sorted_data(RA_y_observed,1,N);
+ //fprintf(stderr,"median_RA_correction= %lf\n",median_RA_correction);
+*/
+ int k;
+ int i_median;
+ int N_filtered_RA=0;
+ for(i=0;i<N;i+=N_median){
+  i_median=0;
+  for(j=i; j<i+N_median && j<N ;j++){
+   RA_x_subarray[i_median]=RA_x_observed[j];
+   RA_y_subarray[i_median]=RA_y_observed[j];
+   //Dec_x_subarray[i_median]=Dec_x_observed[j];
+   //Dec_y_subarray[i_median]=Dec_y_observed[j];
+   i_median++;
+  }
+  if( i_median>=N_median ){
+   gsl_sort(RA_y_subarray,1,i_median);
+   RA_y_filtered[N_filtered_RA]=gsl_stats_median_from_sorted_data(RA_y_subarray,1,i_median);
+   // Clip
+   for(j=0;j<i_median;j++){
+    if( fabs(RA_y_subarray[j]-RA_y_filtered[N_filtered_RA])>MAX_DEVIATION_ARCSEC ){
+     for(k=j;k<i_median-1;k++){
+      RA_x_subarray[k]=RA_x_subarray[k+1];
+      RA_y_subarray[k]=RA_y_subarray[k+1];
+     }
+    }
+   }
+   //
+   RA_x_filtered[N_filtered_RA]=gsl_stats_mean(RA_x_subarray,1,i_median);
+   gsl_sort(RA_y_subarray,1,i_median);
+   RA_y_filtered[N_filtered_RA]=gsl_stats_median_from_sorted_data(RA_y_subarray,1,i_median);
+   N_filtered_RA++;
+  }
+  else
+   break;
+ }
+
+ // spline interpolation
+ //gsl_interp_accel *acc_RA = gsl_interp_accel_alloc ();
+ //gsl_spline *spline_RA = gsl_spline_alloc (gsl_interp_akima, N_filtered_RA);
+ //gsl_spline_init (spline_RA, RA_x_filtered, RA_y_filtered, N_filtered_RA);
+
+ /* Compensate for systeatic deviations in Declination */
+ // sort stars in declination
+ // it works! =)
+ //double RA_x_tmp,RA_y_tmp,Dec_x_tmp,Dec_y_tmp;
+ for(i=0;i<N;i++)
+  for(j=i;j<N;j++)
+   if( Dec_x_observed[i]>Dec_x_observed[j] ){
+    RA_x_tmp=RA_x_observed[i];
+    RA_y_tmp=RA_y_observed[i];
+    Dec_x_tmp=Dec_x_observed[i];
+    Dec_y_tmp=Dec_y_observed[i];
+    
+    RA_x_observed[i]=RA_x_observed[j];
+    RA_y_observed[i]=RA_y_observed[j];
+    Dec_x_observed[i]=Dec_x_observed[j];
+    Dec_y_observed[i]=Dec_y_observed[j];
+    
+    RA_x_observed[j]=RA_x_tmp;
+    RA_y_observed[j]=RA_y_tmp;
+    Dec_x_observed[j]=Dec_x_tmp;
+    Dec_y_observed[j]=Dec_y_tmp;
+   }
+
+ //int k;
+ //int i_median;
+ //int 
+ int N_filtered_Dec=0;
+ for(i=0;i<N;i+=N_median){
+  i_median=0;
+  for(j=i; j<i+N_median && j<N ;j++){
+   //RA_x_subarray[i_median]=RA_x_observed[j];
+   //RA_y_subarray[i_median]=RA_y_observed[j];
+   Dec_x_subarray[i_median]=Dec_x_observed[j];
+   Dec_y_subarray[i_median]=Dec_y_observed[j];
+   i_median++;
+  }
+  if( i_median>=N_median ){
+   gsl_sort(Dec_y_subarray,1,i_median);
+   Dec_y_filtered[N_filtered_Dec]=gsl_stats_median_from_sorted_data(Dec_y_subarray,1,i_median);
+   // Clip
+   for(j=0;j<i_median;j++){
+    if( fabs(Dec_y_subarray[j]-Dec_y_filtered[N_filtered_Dec])>MAX_DEVIATION_ARCSEC ){
+     for(k=j;k<i_median-1;k++){
+      Dec_x_subarray[k]=Dec_x_subarray[k+1];
+      Dec_y_subarray[k]=Dec_y_subarray[k+1];
+     }
+    }
+   }
+   //
+   Dec_x_filtered[N_filtered_Dec]=gsl_stats_mean(Dec_x_subarray,1,i_median);
+   gsl_sort(Dec_y_subarray,1,i_median);
+   Dec_y_filtered[N_filtered_Dec]=gsl_stats_median_from_sorted_data(Dec_y_subarray,1,i_median);
+   N_filtered_Dec++;
+  }
+  else
+   break;
+ }
+ 
+ // spline interpolation
+ gsl_interp_accel *acc_Dec = gsl_interp_accel_alloc ();
+ gsl_spline *spline_Dec = gsl_spline_alloc (gsl_interp_akima, N_filtered_Dec);
+ gsl_spline_init (spline_Dec, Dec_x_filtered, Dec_y_filtered, N_filtered_Dec);
+
+
+ /* Second step - fit plane to the residuals */
+ double RA_A,RA_B,RA_C,Dec_A,Dec_B,Dec_C;
+ for(i=0;i<N;i++){
+  //RA_y_observed[i]-=gsl_spline_eval(spline_RA, RA_x_observed[i], acc_RA);
+  
+  // Check if we are outside the propperly interpolated region
+  //fprintf(stderr,"#### DEBUG #### i=%d Dec_x_observed[i]=%lf\n",i,Dec_x_observed[i]);
+  if( Dec_x_observed[i]<Dec_x_filtered[0] ){
+   Dec_y_observed[i]-=gsl_spline_eval(spline_Dec, Dec_x_filtered[0], acc_Dec);
+   continue;
+  }
+  if( Dec_x_observed[i]>Dec_x_filtered[N_filtered_Dec-1] ){
+   Dec_y_observed[i]-=gsl_spline_eval(spline_Dec, Dec_x_filtered[N_filtered_Dec-1], acc_Dec);
+   continue;
+  }
+  // If we are inside the propperly interpolated region 
+  Dec_y_observed[i]-=gsl_spline_eval(spline_Dec, Dec_x_observed[i], acc_Dec);  
+ }
+
+ fit_plane_lin( RA_x_observed, Dec_x_observed, RA_y_observed, (unsigned int)N, &RA_A, &RA_B, &RA_C);
+ fit_plane_lin( RA_x_observed, Dec_x_observed, Dec_y_observed, (unsigned int)N, &Dec_A, &Dec_B, &Dec_C);
+ for(i=0;i<N;i++){
+  if( fabs(RA_y_observed[i]-(RA_A*RA_target+RA_B*Dec_target+RA_C))>MAX_DEVIATION_ARCSEC/2 || fabs(Dec_y_observed[i]-(Dec_A*RA_target+Dec_B*Dec_target+Dec_C))>MAX_DEVIATION_ARCSEC/2 ){
+   for(j=i;j<N-1;j++){
+    RA_x_observed[j]=RA_x_observed[j+1];
+    RA_y_observed[j]=RA_y_observed[j+1];
+    Dec_x_observed[j]=Dec_x_observed[j+1];
+    Dec_y_observed[j]=Dec_y_observed[j+1];
+   }
+   i--;
+   N--;
+  }
+ }
+ fit_plane_lin( RA_x_observed, Dec_x_observed, RA_y_observed, (unsigned int)N, &RA_A, &RA_B, &RA_C);
+ fit_plane_lin( RA_x_observed, Dec_x_observed, Dec_y_observed, (unsigned int)N, &Dec_A, &Dec_B, &Dec_C);
+
+
+
+ /* Output the results */
+ //fprintf(stdout,"%lf %lf\n",RA_target+15*cos(Dec_target*M_PI/180)*gsl_spline_eval(spline_RA, RA_target, acc_RA)/3600, Dec_target+gsl_spline_eval(spline_Dec, Dec_target, acc_Dec)/3600);
+
+ /* Debug files */
+/* FILE *f;
+ f=fopen("astrometry_spline_debug_input.txt","w");
+ for(i=0;i<N;i++)fprintf(f,"%10.6lf %10.6lf %6.2lf %6.2lf\n",RA_x_observed[i],Dec_x_observed[i],RA_y_observed[i],Dec_y_observed[i]);
+ fclose(f);
+
+ f=fopen("astrometry_spline_debug_spline.txt","w");
+ for(i=0;i<N;i++)fprintf(f,"%10.6lf %10.6lf %6.2lf %6.2lf\n",RA_x_observed[i],Dec_x_observed[i],gsl_spline_eval(spline_RA, RA_x_observed[i], acc_RA),gsl_spline_eval(spline_Dec, Dec_x_observed[i], acc_Dec));
+ fclose(f);
+
+ f=fopen("astrometry_spline_debug_residuals.txt","w");
+ //for(i=0;i<N;i++)fprintf(f,"%10.6lf %10.6lf %6.2lf %6.2lf\n",RA_x_observed[i],Dec_x_observed[i],RA_y_observed[i]-gsl_spline_eval(spline_RA, RA_x_observed[i], acc_RA),Dec_y_observed[i]-gsl_spline_eval(spline_Dec, Dec_x_observed[i], acc_RA));
+ for(i=0;i<N;i++)fprintf(f,"%10.6lf %10.6lf %6.2lf %6.2lf\n",RA_x_observed[i],Dec_x_observed[i],RA_y_observed[i]-0.0,Dec_y_observed[i]-gsl_spline_eval(spline_Dec, Dec_x_observed[i], acc_Dec));
+ fclose(f);
+
+
+ f=fopen("astrometry_spline_debug_median_RA.txt","w");
+ for(i=0;i<N_filtered_RA;i++)fprintf(f,"%10.6lf %6.2lf\n",RA_x_filtered[i],RA_y_filtered[i]);
+ fclose(f);
+
+ f=fopen("astrometry_spline_debug_median_Dec.txt","w");
+ for(i=0;i<N_filtered_Dec;i++)fprintf(f,"%10.6lf %6.2lf\n",Dec_x_filtered[i],Dec_y_filtered[i]);
+ fclose(f);
+*/ 
+
+ //fprintf(stdout,"%lf %lf\n",RA_target+cos(Dec_target*M_PI/180)*(gsl_spline_eval(spline_RA, RA_target, acc_RA)-(RA_A*RA_target+RA_B*Dec_target+RA_C))/3600, Dec_target+(gsl_spline_eval(spline_Dec, Dec_target, acc_Dec)-(Dec_A*RA_target+Dec_B*Dec_target+Dec_C))/3600);
+ 
+ if( Dec_x_observed[i]<Dec_x_filtered[0] ){
+  fprintf(stdout,"%lf %lf\n",RA_target+(0.0+(RA_A*RA_target+RA_B*Dec_target+RA_C))/3600, Dec_target+(gsl_spline_eval(spline_Dec, Dec_x_filtered[0], acc_Dec)-(Dec_A*RA_target+Dec_B*Dec_target+Dec_C))/3600);
+ }
+ else{
+  if( Dec_x_observed[i]>Dec_x_filtered[N_filtered_Dec-1] ){
+   fprintf(stdout,"%lf %lf\n",RA_target+(0.0+(RA_A*RA_target+RA_B*Dec_target+RA_C))/3600, Dec_target+(gsl_spline_eval(spline_Dec, Dec_x_filtered[N_filtered_Dec-1], acc_Dec)-(Dec_A*RA_target+Dec_B*Dec_target+Dec_C))/3600);
+  }
+  else{
+   fprintf(stdout,"%lf %lf\n",RA_target+(0.0+(RA_A*RA_target+RA_B*Dec_target+RA_C))/3600, Dec_target+(gsl_spline_eval(spline_Dec, Dec_target, acc_Dec)-(Dec_A*RA_target+Dec_B*Dec_target+Dec_C))/3600);
+  }
+ }
+ 
+ //fprintf(stdout,"%lf %lf\n",RA_target+median_RA_correction/3600, Dec_target+(gsl_spline_eval(spline_Dec, Dec_target, acc_Dec)-(Dec_A*RA_target+Dec_B*Dec_target+Dec_C))/3600);
+/*
+ f=fopen("astrometry_spline_debug_residuals_plane.txt","w");
+ for(i=0;i<N;i++)fprintf(f,"%10.6lf %10.6lf %6.2lf %6.2lf\n",RA_x_observed[i],Dec_x_observed[i],RA_y_observed[i]-(RA_A*RA_x_observed[i]+RA_B*Dec_x_observed[i]+RA_C),Dec_y_observed[i]-(Dec_A*RA_x_observed[i]+Dec_B*Dec_x_observed[i]+Dec_C));
+ fclose(f);
+
+ fprintf(stderr,"RA:  (%lf)*x+(%lf)*y+(%lf)\n",RA_A,RA_B,RA_C);
+ fprintf(stderr,"Dec: (%lf)*x+(%lf)*y+(%lf)\n",Dec_A,Dec_B,Dec_C);
+*/
+ 
+ free(RA_x_subarray);
+ free(RA_y_subarray);
+ free(Dec_x_subarray);
+ free(Dec_y_subarray);
+ 
+ free(Dec_y_filtered);
+ free(Dec_x_filtered);
+ free(Dec_y_observed);
+ free(Dec_x_observed);
+
+ free(RA_y_filtered);
+ free(RA_x_filtered);
+ free(RA_y_observed);
+ free(RA_x_observed);
+  
+ return 0;
+}

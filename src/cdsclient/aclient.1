@@ -1,0 +1,131 @@
+.TH aclient 1
+.SH NAME
+acl (done)
+A standard Client
+                    (Rev. 05-March-2010)
+.NXB "client"
+.SH SYNTAX
+\fBaclient\fR [\fB-%\fR] [\fB-b\fR \fIblocksize\fR] [\fB-bsk\fR \fI
+socket_size\fR] [\fB-p\fR \fIprompt\fR] \fIhost\fR \fIservice\fR [\fB-U\fR
+\fIname\fR] [\fB-P\fR\fIpassword\fR] [\fIcommand\fR...] 
+.PP
+.SH DESCRIPTION
+\fBaclient\fR is a client application of the \fBsk\fR(3) functions. It 
+transmits \fIcommands\fR to \fBaserver\fR(1) running the specified \fI
+service\fR on the specified \fIhost\fR, and receives the result.
+.PP
+.SH OPTIONS
+.PP
+\fB-% \fR  asks to encode the shell-specific characters \fB< > & ? *
+[ ] ( ) ;\fR \fI(see also the \fBEscaping conventions\fI below)\fR 
+.PP
+\fB-b \fIblocksize\fB\fR  defines the size of logical blocks read from 
+the standard input and transferred to the server. The default is \fB
+4k\fR. 
+.PP
+\fB-bsk \fIsocket_size\fB\fR  defines the physical size of socket blocks
+used in data transmission. The default can be specified via the \fI
+SK_bsk\fR environment variable; if \fISK_bsk\fR is not defined, the 
+default depends on the socket standards, generally 4K. 
+.PP
+\fB-p \fIprompt\fB\fR  defines the prompt to be displayed in case of 
+interactive mode. The default is 
+.br
+\fI\fRhost\fI/\fRservice\fI\fR. 
+.PP
+\fB\fIhost\fB\fR  designates the name of the host where the specified 
+\fIservice\fR is available. 
+.PP
+\fB\fIservice\fB\fR  designates the service, either as a name appearing 
+in the \fI/etc/services\fR(5) file, or as a number in the 1024-2047 
+range. The same \fIservice\fR must be used by \fBaserver\fR. 
+.PP
+\fB-U\fIname\fB\fR  specifies a name that can be recognized by the 
+Server (see \fBsk\fR(3), \fIauthorisation file\fR). 
+.PP
+\fB-P\fIpassword\fB\fR  specifies the password associated to the \fB-U\fR
+name (see \fBsk\fR(3), \fIauthorisation file\fR). 
+.PP
+\fB\fIcommand\fB\fR  specifies what has to be executed by \fIservice\fR 
+at \fIhost\fR; a semi-colon (\fB;\fR) may be used as a separate 
+argument to delimit commands. When no \fIcommand\fR is given as 
+arguments, \fBaclient\fR waits for commands in the \fIstandard input\fR.
+.PP
+.SH " SENDING OR CAPTURING THE DATA "
+Data are normally transferred via the \fIstandard\fR input and output.
+A first solution therefore consists in specifying the command for 
+data transfer as \fIoptions\fR, e.g.
+.PP
+\fBaclient\fR \fI\fRhost\fI \fRservice_file\fI Write /tmp/copy < myinput
+\fR
+.PP
+There are redirection possibilities but unlike \fBsh\fR(1) these 
+redirections must be specified \fIbefore\fR the command. The example 
+above could be executed as:
+.PP
+.PP
+\fBaclient\fR \fI\fRhost\fI \fRservice_file\fI \fR
+.br
+\fI\fRhost\fI/\fRservice_file\fI>\fR \fI<myinput Write /tmp/copy\fR
+.br
+\fI\fRhost\fI/\fRservice_file\fI>\fR ... 
+.PP
+Note that file names may be replaced by pipes for names starting 
+with the | character; if blanks are embedded, the command have to 
+be quoted. For instance, to write the list of files to a foreign 
+file: \fBaclient\fR \fI\fRhost\fI \fRservice_file\fI \fR
+.br
+\fI\fRhost\fI/\fRservice_file\fI>\fR\fI<"|ls -l" Write /tmp/copy\fR
+.br
+\fI\fRhost\fI/\fRservice_file\fI>\fR ... 
+.PP
+.SH "ESCAPING CONVENTIONS"
+Since \fBaclient\fR connects to \fBaserver\fR where a shell is 
+executed, a special convention (similar to http queries) is available 
+to \fIescape\fR special characters and define arguments with special 
+characters to the server program. This convention uses \fB%{...}\fR to
+define parameters with special characters (like blank, asterisks, etc).
+.PP
+.SH "ENVIRONMENT VARIABLES"
+\fISK_bsk\fR is used by \fBaclient\fR as the default \fB-bsk\fR option.
+.PP
+.SH EXAMPLES
+.LP
+.TP 4
+.B 1.
+Query a catalog on \fIcocat1\fR:
+.br
+\fI\fBaclient cocat1 1660 gsc1.2 -c 123.12-78.12 -r 1.5 -sr\fR 
+.TP 4
+.B 2.
+Copy a file to cocat1
+.br
+\fI\fBaclient cocat1 1660 save < /etc/passwd\fR 
+.br
+returns the name of the remote file 
+.TP 4
+.B 3.
+List remote files having a name wich contains an asterisk: 
+.br
+\fI\fB aclient cocat1 1660 ls *%{*}*\fR 
+.TP 4
+.B 4.
+Find the star \fB ** STT 82AA'\fR in the last version of edited 
+simbad: 
+.br
+\fI\fB aclient -% newviz 1660 sim.arg 0 "** STT 82AA'"\fR 
+.br
+which gives the same result as 
+.br
+\fI\fB aclient newviz 1660 sim.arg 0 "%** STT 82AA'"\fR 
+.TP 4
+.B 5.
+Rewind the tape \fI/dev/nrst0\fR and get its status on the \fIforeign
+\fR host using the \fIrtape\fR(4) service. 
+.br
+aclient foreign rtape setenv TAPE /dev/nrst0 \\; mt stat \\; mt rew \\; mt stat
+.br
+
+.PP
+.SH "SEE ALSO"
+aserver(1) pipe(2) sk(3) services(5) 
