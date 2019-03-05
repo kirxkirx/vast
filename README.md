@@ -12,3 +12,5 @@ virtual machine (like VirtualBox).
 
 The detailed description of the code may be found at [the project's homepage](http://scan.sai.msu.ru/vast/) and 
 in [the VaST paper](http://adsabs.harvard.edu/abs/2018A%26C....22...28S).
+
+Bug reports and pull requests, as well as new feature suggestions are warmly welcome!
