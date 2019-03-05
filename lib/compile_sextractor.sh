@@ -103,9 +103,6 @@ Thank you and sorry for the inconvenience."
 
  cd $VAST_DIR
 
- 
-
-
  # if we are here - assume the current SExtractor version compiled alright
  break
 
