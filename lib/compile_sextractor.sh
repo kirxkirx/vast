@@ -61,12 +61,18 @@ for LIBRARY_SOURCE in $LIBRARY_SOURCES ;do
  make distclean
  # for sextractor-2.25.0
  if [ -x ./autogen.sh ];then
-  ./autogen.sh
-  if [ $? -ne 0 ];then
-   echo "ERROR running autogen.sh"
+  command -v autoconf &>/dev/null
+  if [ $? -eq 0 ];then
+   ./autogen.sh
+   if [ $? -ne 0 ];then
+    echo "ERROR running autogen.sh"
+    continue
+   fi # if [ $? -ne 0 ];then
+  else
+   echo "ERROR no autoconf"
    continue
-  fi
- fi
+  fi # if [ $? -eq 0 ];then
+ fi # if [ -x ./autogen.sh ];then
  # --disable-model-fitting configure option turns-off model-fitting
  # features and allows compiling SExtractor without the ATLAS and FFTW libraries.
  ./configure --disable-model-fitting --prefix=$TARGET_DIR CFLAGS="$CFLAGS"

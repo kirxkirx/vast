@@ -79,7 +79,7 @@ if [ $? -ne 0 ];then
   fi
   if [ $TEST -eq 1 ];then
    echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../sample_data ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../tycho2 ../vast_test_lightcurves ;do
+   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
     # Simple safety thing
     TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
     if [ $TEST -ne 1 ];then
@@ -3011,6 +3011,452 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 
+#
+# Actually, we just want to repeat the above test to make sure the results are consistent
+# (because sometimes they are not!)
+#
+##### Space small CCD images test with size-mag filter enabled #####
+# Download the test dataset if needed
+if [ ! -d ../sample_data ];then
+ cd ..
+ wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ cd $WORKDIR
+fi
+if [ ! -d '../sample space' ];then
+ cp -r '../sample_data' '../sample space'
+fi
+
+# If the test data are found
+if [ -d '../sample space' ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "Space mall CCD images with mag-size filter test " >> /dev/stderr
+ echo -n "Space small CCD images with mag-size filter test: " >> vast_test_report.txt
+ cp default.sex.ccd_example default.sex
+ ./vast --magsizefilter -u -f '../sample space/'*.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD000"
+ fi
+ # Check results
+ if [ -f vast_summary.log ];then
+  grep --quiet "Images processed 91" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD001"
+  fi
+  grep --quiet "Images used for photometry 91" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD002"
+  fi
+  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD003"
+  fi
+  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD004"
+  fi
+  grep --quiet "Magnitude-Size filter: Enabled" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD005"
+  fi
+  grep --quiet 'Photometric errors rescaling: YES' vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_ERRORRESCALINGLOGREC"
+  fi
+  SYSTEMATIC_NOISE_LEVEL=`util/estimate_systematic_noise_level 2> /dev/null`
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_SYSNOISE01"
+  fi
+  TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL)-(0.0043);sqrt(a*a)<0.005" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_SYSNOISE02_$SYSTEMATIC_NOISE_LEVEL"
+  fi
+  if [ ! -f vast_lightcurve_statistics.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD006"
+  fi
+  if [ ! -s vast_lightcurve_statistics.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD007"
+  fi
+  if [ ! -f vast_lightcurve_statistics_format.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD008"
+  fi
+  if [ ! -s vast_lightcurve_statistics_format.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD009"
+  fi
+  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD010"
+  fi
+  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD011"
+  fi
+  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD012"
+  fi
+  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD013"
+  fi
+  ###############################################
+  ### Now let's check the candidate variables ###
+  # out00201.dat - CV (but we can't rely on it having the same out*.dat name)
+  STATSTR=`cat vast_lightcurve_statistics.log | sort -k26 | tail -n1`
+  STATMAG=`echo "$STATSTR" | awk '{print $1}'`
+  TEST=`echo "a=($STATMAG)-(-11.761200);sqrt(a*a)<0.01" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD014"
+  fi
+  STATX=`echo "$STATSTR" | awk '{print $3}'`
+  TEST=`echo "a=($STATX)-(218.9535100);sqrt(a*a)<0.1" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD015_$STATX"
+  fi
+  STATY=`echo "$STATSTR" | awk '{print $4}'`
+  TEST=`echo "a=($STATY)-(247.8363000);sqrt(a*a)<0.1" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD016_$STATY"
+  fi
+  # indexes
+  STATIDX=`echo "$STATSTR" | awk '{print $6}'`
+  #TEST=`echo "a=($STATIDX)-(0.241686);sqrt(a*a)<0.01" | bc -ql`
+  # wSTD with rescaled errorbars
+  #TEST=`echo "a=($STATIDX)-(0.320350);sqrt(a*a)<0.01" | bc -ql`
+  # wSTD with rescaled errorbars (robust line fit)
+  #TEST=`echo "a=($STATIDX)-(0.364624);sqrt(a*a)<0.02" | bc -ql`
+  # With the updated magsizefilter
+  #TEST=`echo "a=($STATIDX)-(0.341486);sqrt(a*a)<0.02" | bc -ql`
+  # weight image enabled
+  #TEST=`echo "a=($STATIDX)-(0.362346);sqrt(a*a)<0.02" | bc -ql`
+  # let's add a bit more space here
+  TEST=`echo "a=($STATIDX)-(0.362346);sqrt(a*a)<0.05" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD017_$STATIDX"
+  fi
+  STATIDX=`echo "$STATSTR" | awk '{print $14}'`
+  TEST=`echo "a=($STATIDX)-(0.018977);sqrt(a*a)<0.005" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD018_$STATIDX"
+  fi
+  STATIDX=`echo "$STATSTR" | awk '{print $30}'`
+  TEST=`echo "a=($STATIDX)-(0.025686);sqrt(a*a)<0.002" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD019_$STATIDX"
+  fi
+  STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
+  NUMBER_OF_LINES=`cat "$STATOUTFILE" | wc -l | awk '{print $1}'`
+  if [ $NUMBER_OF_LINES -ne 91 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD020_$NUMBER_OF_LINES"
+  fi
+  # Check if star is in the list of candidate vars
+  if [ ! -s vast_autocandidates.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD021 SPACEMAGSIZEFILTERSMALLCCD020_NOT_PERFORMED"
+  else
+   STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
+   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD022"
+   fi
+  fi
+  grep --quiet "$STATOUTFILE" vast_list_of_likely_constant_stars.log
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD023"
+  fi
+  # out00268.dat - EW (but we can't rely on it having the same out*.dat name)
+  STATSTR=`cat vast_lightcurve_statistics.log | sort -k26 | tail -n2 | head -n1`
+  STATMAG=`echo "$STATSTR" | awk '{print $1}'`
+  TEST=`echo "a=($STATMAG)-(-11.220400);sqrt(a*a)<0.01" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD024"
+  fi
+  STATX=`echo "$STATSTR" | awk '{print $3}'`
+  TEST=`echo "a=($STATX)-(87.2039000);sqrt(a*a)<0.1" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD025_$STATX"
+  fi
+  STATY=`echo "$STATSTR" | awk '{print $4}'`
+  TEST=`echo "a=($STATY)-(164.4241000);sqrt(a*a)<0.1" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD026_$STATY"
+  fi
+  # indexes
+  STATIDX=`echo "$STATSTR" | awk '{print $6}'`
+  TEST=`echo "a=($STATIDX)-(0.037195);sqrt(a*a)<0.01" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD027_$STATIDX"
+  fi
+  STATIDX=`echo "$STATSTR" | awk '{print $14}'`
+  TEST=`echo "a=($STATIDX)-(0.043737);sqrt(a*a)<0.002" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD028_$STATIDX"
+  fi
+  STATIDX=`echo "$STATSTR" | awk '{print $30}'`
+  # 91 points
+  #TEST=`echo "a=($STATIDX)-(0.050557);sqrt(a*a)<0.001" | bc -ql`
+  # 90 points, weight image
+  TEST=`echo "a=($STATIDX)-(0.052707);sqrt(a*a)<0.005" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD029_$STATIDX"
+  fi
+  STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
+  NUMBER_OF_LINES=`cat "$STATOUTFILE" | wc -l | awk '{print $1}'`
+  if [ $NUMBER_OF_LINES -lt 90 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD030_$NUMBER_OF_LINES"
+  fi
+  # Check if star is in the list of candidate vars
+  if [ ! -s vast_autocandidates.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD031 SPACEMAGSIZEFILTERSMALLCCD032_NOT_PERFORMED"
+  else
+   STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
+   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD032"
+   fi
+  fi
+  grep --quiet "$STATOUTFILE" vast_list_of_likely_constant_stars.log
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD033"
+  fi
+  ###############################################
+  # Check log files associated with mag-size filtering
+  for PARAM in 00 01 04 06 08 10 12 ;do
+   for MAGSIZEFILTERLOGFILE in image*.cat.magparameter"$PARAM"filter_passed image*1.cat.magparameter"$PARAM"filter_rejected image*.cat.magparameter"$PARAM"filter_thresholdcurve ;do
+    if [ ! -f "$MAGSIZEFILTERLOGFILE" ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_MISSINGLOGFILE_$MAGSIZEFILTERLOGFILE"
+    fi
+   done
+  done
+  if [ ! -s image00001.cat.magparameter00filter_rejected ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY00REJ"
+  else
+   LINES_IN_LOGFILE=`cat image00001.cat.magparameter00filter_rejected | wc -l | awk '{print $1}'`
+   if [ $LINES_IN_LOGFILE -lt 8 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW00REJ"
+   fi
+  fi
+  #
+  if [ ! -s image00001.cat.magparameter01filter_rejected ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY01REJ"
+  else
+   LINES_IN_LOGFILE=`cat image00001.cat.magparameter01filter_rejected | wc -l | awk '{print $1}'`
+   if [ $LINES_IN_LOGFILE -lt 6 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW01REJ"
+   fi
+  fi
+  #
+  if [ ! -s image00001.cat.magparameter04filter_rejected ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY04REJ"
+  else
+   LINES_IN_LOGFILE=`cat image00001.cat.magparameter04filter_rejected | wc -l | awk '{print $1}'`
+   if [ $LINES_IN_LOGFILE -lt 6 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW04REJ"
+   fi
+  fi
+  #
+  if [ ! -s image00001.cat.magparameter06filter_rejected ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY06REJ"
+  else
+   LINES_IN_LOGFILE=`cat image00001.cat.magparameter06filter_rejected | wc -l | awk '{print $1}'`
+   if [ $LINES_IN_LOGFILE -lt 5 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW06REJ"
+   fi
+  fi
+  #
+  if [ ! -s image00001.cat.magparameter08filter_rejected ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY08REJ"
+  else
+   LINES_IN_LOGFILE=`cat image00001.cat.magparameter08filter_rejected | wc -l | awk '{print $1}'`
+   if [ $LINES_IN_LOGFILE -lt 5 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW08REJ"
+   fi
+  fi
+  #
+  if [ ! -s image00001.cat.magparameter10filter_rejected ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY10REJ"
+  else
+   LINES_IN_LOGFILE=`cat image00001.cat.magparameter10filter_rejected | wc -l | awk '{print $1}'`
+   if [ $LINES_IN_LOGFILE -lt 5 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW10REJ"
+   fi
+  fi
+  #
+  if [ ! -s image00001.cat.magparameter12filter_rejected ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY11REJ"
+  else
+   LINES_IN_LOGFILE=`cat image00001.cat.magparameter12filter_rejected | wc -l | awk '{print $1}'`
+   if [ $LINES_IN_LOGFILE -lt 3 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW11REJ"
+   fi
+  fi
+  ###############################################
+
+ else
+  echo "ERROR: cannot find vast_summary.log" >> /dev/stderr
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_ALL"
+ fi
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mSpace small CCD images with mag-size filter test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mSpace small CCD images with mag-size filter test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+
 
 ### !!!!!!!!!!!!!
 #echo $FAILED_TEST_CODES
@@ -4151,12 +4597,12 @@ if [ -d ../transient_detection_test_Ceres ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES013"
   fi
   #grep --quiet "2013 03 22.3148  2456191.3148  12.79  05:43:31.42 +28:07:41.4" transient_report/index.html
-  grep --quiet "2013 03 22.3148  2456191.3148  12.79" transient_report/index.html
+  grep --quiet -e "2013 03 22.3148  2456191.3148  12.79" -e "2013 03 22.3148  2456191.3148  12.80" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES013a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2013 03 22.3148  2456191.3148  12.79" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2013 03 22.3148  2456191.3148  12.79" -e "2013 03 22.3148  2456191.3148  12.80" transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:43:31.42 +28:07:41.4 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
@@ -7356,7 +7802,7 @@ if [ $? -ne 0 ];then
   fi
   if [ $TEST -eq 1 ];then
    echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../sample_data ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../tycho2 ../vast_test_lightcurves ;do
+   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
     # Simple safety thing
     TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
     if [ $TEST -ne 1 ];then
