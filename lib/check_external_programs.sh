@@ -90,7 +90,7 @@ X11_DEVELOPEMENT_PACKAGE=""
 # do the following test only if we found the C compiler in order not to confuse the user if we have a bigger problem
 command -v $CC &> /dev/null
 if [ $? -eq 0 ];then
- echo -e "#include <X11/Xos.h>
+ echo "#include <X11/Xos.h>
 int main(){return 0;}" > test.c
  $CC -o test.exe test.c `lib/find_x11lib_include.sh` -lX11 &>/dev/null
  if [ $? -ne 0 ];then
