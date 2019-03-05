@@ -12,6 +12,11 @@
 	"A Modern Mean Dwarf Stellar Color and Effective Temperature Sequence" table by Eric Mamajek
 	http://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt
 	instead of the older reference http://adsabs.harvard.edu/abs/1988PASP..100.1134B
+	* Upgraded the internal copy of SExtractor to version 2.25.0 while keeping 2.19.5 as a the
+	automatic fall-back option (the new SExtractor cannot be compiled on the very old systems). 
+	If a system-wide installation of SExtractor is found (by simply testing for the presence of 
+	'sex' executable in $PATH), the internal copy of SExtractor is not compiled at all to speed-up
+	compilation.
 01 Oct 2018: vast-1.0rc83:
 	* A careful review and refactoring of almost the entire VaST C-code tree was performed by Vladimir Bazilevich.
 	* The variable identification script 'util/search_databases_with_vizquery.sh' will now try to identify 
