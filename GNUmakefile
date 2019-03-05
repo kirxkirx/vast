@@ -450,11 +450,11 @@ util/ccd/md: $(SRC_PATH)ccd/md.c
 
 ifneq ($(RECOMPILE_VAST_ONLY),yes)
 clean_libraries:
-	#rm -f poisk vast libident.so libident.o $(LIB_DIR)xyvb1der $(LIB_DIR)stat $(LIB_DIR)formater_out_wfk stat_outfile $(LIB_DIR)simulate_2_colors combine_obs_median $(SRC_PATH)*.o $(SRC_PATH)*.so lc find_candidates pgfv $(SRC_PATH)pgfv/*.o $(SRC_PATH)diferential/*.o vast poisk util/stat_outfile util/combine_obs_median $(LIB_DIR)m_sigma_bin $(LIB_DIR)select_sysrem_input_star_list lib/periodFilter/periodS2 lib/periodFilter/periodFilter lib/BLS/bls util/ccd/*
-	rm -f poisk vast libident.so libident.o $(LIB_DIR)stat $(LIB_DIR)formater_out_wfk stat_outfile $(LIB_DIR)simulate_2_colors combine_obs_median $(SRC_PATH)*.o $(SRC_PATH)*.so lc find_candidates pgfv $(SRC_PATH)pgfv/*.o $(SRC_PATH)diferential/*.o vast poisk util/stat_outfile util/combine_obs_median $(LIB_DIR)m_sigma_bin $(LIB_DIR)select_sysrem_input_star_list lib/periodFilter/periodS2 lib/periodFilter/periodFilter lib/BLS/bls util/ccd/*
 	util/clean_data.sh all # remove all data (lightcurves, etc) from the previous VaST run
+	rm -f poisk vast libident.so libident.o $(LIB_DIR)stat $(LIB_DIR)formater_out_wfk stat_outfile $(LIB_DIR)simulate_2_colors combine_obs_median $(SRC_PATH)*.o $(SRC_PATH)*.so lc find_candidates pgfv $(SRC_PATH)pgfv/*.o $(SRC_PATH)diferential/*.o vast poisk util/stat_outfile util/combine_obs_median $(LIB_DIR)m_sigma_bin $(LIB_DIR)select_sysrem_input_star_list lib/periodFilter/periodS2 lib/periodFilter/periodFilter lib/BLS/bls util/ccd/*
 	rm -f lib/libcfitsio.a
 	rm -f util/fitscopy src/cfitsio/fitscopy src/fitsio.h src/longnam.h
+	rm -f lib/fitsverify
 	lib/compile_cfitsio.sh clean
 	lib/compile_gsl.sh clean
 	lib/compile_sextractor.sh clean
@@ -485,7 +485,7 @@ clean: clean_libraries
 	rm -f util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/astrometry/get_image_dimentions lib/astrometry/insert_wcs_header lib/astrometry/*~ lib/kwee-van-woerden  lib/find_star_in_wcs_catalog
 	rm -f src/heliocentric_correction/*~ util/hjd_input_in_UTC util/hjd_input_in_TT util/UTC2TT util/make_finding_chart lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/check_catalogs_offline util/get_image_date lib/make_outxyls_for_astrometric_calibration lib/fits2cat lib/create_data lib/fast_clean_data util/solve_plate_with_UCAC5 lib/autodetect_aperture_main lib/sextract_single_image_noninteractive
 	rm -f util/solve_plate_with_UCAC4
-	rm -f /src/catalogs/*~
+	rm -f src/catalogs/*~
 	rm -f .cc.version 
 	rm -f util/wcs_image_calibration.sh util/identify_transient.sh util/identify_for_catalog.sh util/identify_noninteractive.sh
 	rm -f lib/pgplot/cpgdemo lib/pgplot/pgdemo* lib/pgplot/pgxwin_server lib/pgplot/pgplot.doc lib/pgplot/*.a lib/pgplot/*.so lib/pgplot/*~ lib/pgplot/grfont.dat
@@ -496,6 +496,9 @@ clean: clean_libraries
 	rm -f lib/lk_compute_periodogram lib/deeming_compute_periodogram lib/compute_periodogram_allmethods
 	rm -f lib/guess_saturation_limit_main
 	rm -f lib/remove_bad_images lib/MagSize_filter_standalone
+	rm -f lib/select_only_n_random_points_from_set_of_lightcurves
+	rm -f lib/index_vs_mag
+	rm -f lib/stat_array
 	
 
 clean_objects: vast statistics etc pgplot_components old shell_commands period_filter ccd astrometry astcheck cdsclient

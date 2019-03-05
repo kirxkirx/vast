@@ -155,3 +155,16 @@ ERROR: please set up the default bad_region.lst before release!
 "
 fi
 
+# Check that no binary files are left in the source tree
+for i in `find .` ;do 
+ file $i | grep --quiet ELF 
+ if [ $? -eq 0 ];then
+  file $i >> /dev/stderr
+  echo "BINARY_FILE_FOUND"
+ fi
+done | grep --quiet "BINARY_FILE_FOUND"
+if [ $? -eq 0 ];then
+ echo "ERROR: please remove the above binary file(s) from the source tree"
+fi
+
+

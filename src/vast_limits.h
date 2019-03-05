@@ -16,7 +16,7 @@
 #define MAX_NUMBER_OF_STARS 300000
 #define MAX_NUMBER_OF_OBSERVATIONS 120000 // per star
 // The following paprameter is now set here AUTOMATICALLY by the script lib/set_MAX_MEASUREMENTS_IN_RAM_in_vast_limits.sh that is started by make
-#define MAX_MEASUREMENTS_IN_RAM 96000  // PHYSMEM_BYTES=8229101568
+#define MAX_MEASUREMENTS_IN_RAM 96000  // PHYSMEM_BYTES=8229117952
 // Max. number of measurements to be stored in memory
 #define FILENAME_LENGTH 1024   // Max. image filename length
 #define OUTFILENAME_LENGTH 128 // Max. lightcurve (out*.dat) filename length

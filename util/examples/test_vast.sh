@@ -3516,55 +3516,70 @@ if [ -d ../only_few_stars ];then
    fi
   fi
   #
-  if [ ! -s image00001.cat.magparameter00filter_rejected ];then
+  ### The input image order on the command line depends on locale,
+  ### so image00001.cat may correspond to different images on different machines.
+  ### So, we need to get the image catalog name corresponding to the secific
+  ### input FITS image.
+  if [ ! -s vast_images_catalogs.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_NOVASTIMAGESCATALOGSLOG"
+  fi
+  grep --quiet 'ap000177.fit' vast_images_catalogs.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_THEIMAGFILEISNOTINIMAGESCATALOGS"
+  fi
+  IMAGE_CATALOG_NAME=`cat vast_images_catalogs.log | grep 'ap000177.fit' | awk '{print $1}'`
+  #
+  if [ ! -s "$IMAGE_CATALOG_NAME".magparameter00filter_rejected ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY00REJ"
   else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter00filter_rejected | wc -l | awk '{print $1}'`
+   LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter00filter_rejected | wc -l | awk '{print $1}'`
    if [ $LINES_IN_LOGFILE -lt 8 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_FEW00REJ"
    fi
   fi
   #
-  if [ ! -s image00001.cat.magparameter01filter_rejected ];then
+  if [ ! -s "$IMAGE_CATALOG_NAME".magparameter01filter_rejected ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY01REJ"
   else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter01filter_rejected | wc -l | awk '{print $1}'`
+   LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter01filter_rejected | wc -l | awk '{print $1}'`
    if [ $LINES_IN_LOGFILE -lt 7 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_FEW01REJ"
    fi
   fi
   #
-  if [ ! -s image00001.cat.magparameter04filter_rejected ];then
+  if [ ! -s "$IMAGE_CATALOG_NAME".magparameter04filter_rejected ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY04REJ"
   else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter04filter_rejected | wc -l | awk '{print $1}'`
+   LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter04filter_rejected | wc -l | awk '{print $1}'`
    if [ $LINES_IN_LOGFILE -lt 6 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_FEW04REJ"
    fi
   fi
   #
-  if [ ! -s image00001.cat.magparameter06filter_rejected ];then
+  if [ ! -s "$IMAGE_CATALOG_NAME".magparameter06filter_rejected ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY06REJ"
   else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter06filter_rejected | wc -l | awk '{print $1}'`
+   LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter06filter_rejected | wc -l | awk '{print $1}'`
    if [ $LINES_IN_LOGFILE -lt 6 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_FEW06REJ"
    fi
   fi
   #
-  if [ ! -s image00001.cat.magparameter08filter_rejected ];then
+  if [ ! -s "$IMAGE_CATALOG_NAME".magparameter08filter_rejected ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY08REJ"
   else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter08filter_rejected | wc -l | awk '{print $1}'`
+   LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter08filter_rejected | wc -l | awk '{print $1}'`
    #if [ $LINES_IN_LOGFILE -lt 6 ];then
    if [ $LINES_IN_LOGFILE -lt 2 ];then
     TEST_PASSED=0
@@ -3572,11 +3587,11 @@ if [ -d ../only_few_stars ];then
    fi
   fi
   #
-  if [ ! -s image00001.cat.magparameter10filter_rejected ];then
+  if [ ! -s "$IMAGE_CATALOG_NAME".magparameter10filter_rejected ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY10REJ"
   else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter10filter_rejected | wc -l | awk '{print $1}'`
+   LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter10filter_rejected | wc -l | awk '{print $1}'`
    #if [ $LINES_IN_LOGFILE -lt 6 ];then
    if [ $LINES_IN_LOGFILE -lt 2 ];then
     TEST_PASSED=0
@@ -3584,11 +3599,11 @@ if [ -d ../only_few_stars ];then
    fi
   fi
   #
-  if [ ! -s image00001.cat.magparameter12filter_rejected ];then
+  if [ ! -s "$IMAGE_CATALOG_NAME".magparameter12filter_rejected ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY12REJ"
   else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter12filter_rejected | wc -l | awk '{print $1}'`
+   LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter12filter_rejected | wc -l | awk '{print $1}'`
    #if [ $LINES_IN_LOGFILE -lt 6 ];then
    if [ $LINES_IN_LOGFILE -lt 5 ];then
     TEST_PASSED=0
@@ -3922,6 +3937,7 @@ if [ -d ../transient_detection_test_Ceres ];then
   fi
 
   # Re-run the analysis to make sure -k key has no effect (JD keyword in the FITS header is automatically ignored)
+  cp default.sex.telephoto_lens default.sex
   ./vast -x99 -uf ../transient_detection_test_Ceres/reference_images/* ../transient_detection_test_Ceres/second_epoch_images/*
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -4022,67 +4038,176 @@ if [ -d ../transient_detection_test_Ceres ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES010"
   fi
-  grep --quiet "2013 03 25.8483  2456377.3483  12.37  06:01:27.29 +23:51:10.7" transient_report/index.html
+  #grep --quiet "2013 03 25.8483  2456377.3483  12.37  06:01:27.29 +23:51:10.7" transient_report/index.html
+  grep --quiet "2013 03 25.8483  2456377.3483  12.37" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES010a"
   fi
+  RADECPOSITION_TO_TEST=`grep "2013 03 25.8483  2456377.3483  12.37" transient_report/index.html | awk '{print $6" "$7}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 06:01:27.29 +23:51:10.7 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES010a_TOO_FAR_$DISTANCE_DEGREES"
+   fi
+  fi
+  #
   grep --quiet "HK Aur" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES011"
   fi
-  grep --quiet "2013 03 22.3148  2456191.3148  11.75  05:48:54.08 +28:51:09.7" transient_report/index.html
+  #grep --quiet "2013 03 22.3148  2456191.3148  11.75  05:48:54.08 +28:51:09.7" transient_report/index.html
+  grep --quiet "2013 03 22.3148  2456191.3148  11.75" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES011a"
   fi
+  RADECPOSITION_TO_TEST=`grep "2013 03 22.3148  2456191.3148  11.75" transient_report/index.html | awk '{print $6" "$7}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:48:54.08 +28:51:09.7 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES011a_TOO_FAR_$DISTANCE_DEGREES"
+   fi
+  fi
+  #
   grep --quiet "AW Tau" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES0110"
   fi
-  grep --quiet "2013 03 22.3148  2456191.3148  13.38  05:47:30.53 +27:08:16.8" transient_report/index.html
+  #grep --quiet "2013 03 22.3148  2456191.3148  13.38  05:47:30.53 +27:08:16.8" transient_report/index.html
+  grep --quiet "2013 03 22.3148  2456191.3148  13.38" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES0110a"
   fi
+  RADECPOSITION_TO_TEST=`grep "2013 03 22.3148  2456191.3148  13.38" transient_report/index.html | awk '{print $6" "$7}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:47:30.53 +27:08:16.8 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES0110a_TOO_FAR_$DISTANCE_DEGREES"
+   fi
+  fi
+  #
   grep --quiet "LP Gem" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES012"
   fi
-  grep --quiet "2013 03 22.3148  2456191.3148  13.10  06:05:05.47 +26:40:53.2" transient_report/index.html
+  #grep --quiet "2013 03 22.3148  2456191.3148  13.10  06:05:05.47 +26:40:53.2" transient_report/index.html
+  grep --quiet "2013 03 22.3148  2456191.3148  13.10" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES012a"
   fi
+  RADECPOSITION_TO_TEST=`grep "2013 03 22.3148  2456191.3148  13.10" transient_report/index.html | awk '{print $6" "$7}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 06:05:05.47 +26:40:53.2 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES012a_TOO_FAR_$DISTANCE_DEGREES"
+   fi
+  fi
+  #
   grep --quiet "AU Tau" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES013"
   fi
-  grep --quiet "2013 03 22.3148  2456191.3148  12.79  05:43:31.42 +28:07:41.4" transient_report/index.html
+  #grep --quiet "2013 03 22.3148  2456191.3148  12.79  05:43:31.42 +28:07:41.4" transient_report/index.html
+  grep --quiet "2013 03 22.3148  2456191.3148  12.79" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES013a"
   fi
+  RADECPOSITION_TO_TEST=`grep "2013 03 22.3148  2456191.3148  12.79" transient_report/index.html | awk '{print $6" "$7}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:43:31.42 +28:07:41.4 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES013a_TOO_FAR_$DISTANCE_DEGREES"
+   fi
+  fi
+  #
   grep --quiet "RR Tau" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES014"
   fi
-  grep --quiet "2013 03 22.3148  2456191.3148  12.32  05:39:30.69 +26:22:25.7" transient_report/index.html
+  #grep --quiet "2013 03 22.3148  2456191.3148  12.32  05:39:30.69 +26:22:25.7" transient_report/index.html
+  grep --quiet "2013 03 22.3148  2456191.3148  12.32" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES014a"
   fi
+  RADECPOSITION_TO_TEST=`grep "2013 03 22.3148  2456191.3148  12.32" transient_report/index.html | awk '{print $6" "$7}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:39:30.69 +26:22:25.7 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES014a_TOO_FAR_$DISTANCE_DEGREES"
+   fi
+  fi
+  #
   grep --quiet "1 Ceres" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES015"
   fi
-  grep --quiet "2013 03 25.8483  2456377.3483  8.61  05:46:04.53 +28:40:52.7" transient_report/index.html
+  #grep --quiet "2013 03 25.8483  2456377.3483  8.61  05:46:04.53 +28:40:52.7" transient_report/index.html
+  grep --quiet "2013 03 25.8483  2456377.3483  8.61" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES015a"
@@ -4092,7 +4217,8 @@ if [ -d ../transient_detection_test_Ceres ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES016"
   fi
-  grep --quiet "2013 03 25.8483  2456377.3483  12.43  06:00:06.32 +25:03:34.1" transient_report/index.html
+  #grep --quiet "2013 03 25.8483  2456377.3483  12.43  06:00:06.32 +25:03:34.1" transient_report/index.html
+  grep --quiet "2013 03 25.8483  2456377.3483  12.43" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES016a"

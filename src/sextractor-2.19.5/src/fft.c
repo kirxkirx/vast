@@ -49,13 +49,13 @@
 #include "threads.h"
 #endif
 
-fftwf_plan fplan, bplan;
-int firsttimeflag;
+ fftwf_plan	fplan, bplan;
+ int    	firsttimeflag;
 
 #ifdef USE_THREADS
-pthread_mutex_t fftmutex;
+ pthread_mutex_t	fftmutex;
 #endif
-fftwf_complex *fdata1;
+ fftwf_complex 		*fdata1;
 
 /****** fft_init ************************************************************
 PROTO	void fft_init(void)
@@ -66,20 +66,24 @@ NOTES	Global preferences are used for multhreading.
 AUTHOR	E. Bertin (IAP)
 VERSION	26/06/2009
  ***/
-void fft_init( int nthreads ) {
- if ( !firsttimeflag ) {
+void    fft_init(int nthreads)
+ {
+  if (!firsttimeflag)
+    {
 #ifdef USE_THREADS
-  if ( nthreads > 1 ) {
-   if ( !fftw_init_threads() )
-    error( EXIT_FAILURE, "*Error*: thread initialization failed in ", "FFTW" );
-   fftwf_plan_with_nthreads( prefs.nthreads );
-  }
+    if (nthreads > 1)
+      {
+      if (!fftw_init_threads())
+        error(EXIT_FAILURE, "*Error*: thread initialization failed in ", "FFTW");
+      fftwf_plan_with_nthreads(prefs.nthreads);
+      }
 #endif
-  firsttimeflag= 1;
- }
+    firsttimeflag = 1;
+    }
 
- return;
-}
+  return;
+  }
+
 
 /****** fft_end ************************************************************
 PROTO	void fft_init(void)
@@ -90,15 +94,18 @@ NOTES	-.
 AUTHOR	E. Bertin (IAP)
 VERSION	26/06/2009
  ***/
-void fft_end( void ) {
+void    fft_end(void)
+ {
 
- if ( firsttimeflag ) {
-  firsttimeflag= 0;
-  fftwf_cleanup();
- }
+  if (firsttimeflag)
+    {
+    firsttimeflag = 0;
+    fftwf_cleanup();
+    }
 
- return;
-}
+  return;
+  }
+
 
 /****** fft_reset ***********************************************************
 PROTO	void fft_reset(void)
@@ -109,17 +116,20 @@ NOTES	-.
 AUTHOR	E. Bertin (IAP)
 VERSION	08/10/2009
  ***/
-void fft_reset( void ) {
- if ( fplan ) {
-  QFFTWF_FREE( fdata1 );
-  fftwf_destroy_plan( fplan );
- }
- if ( bplan )
-  fftwf_destroy_plan( bplan );
- fplan= bplan= NULL;
+void    fft_reset(void)
+ {
+  if (fplan)
+    {
+    QFFTWF_FREE(fdata1);
+    fftwf_destroy_plan(fplan);
+    }
+  if (bplan)
+    fftwf_destroy_plan(bplan);
+  fplan = bplan = NULL;
 
- return;
-}
+  return;
+  }
+
 
 /****** fft_conv ************************************************************
 PROTO	void fft_conv(float *data1, float *fdata2, int *size)
@@ -133,48 +143,53 @@ NOTES	For data1 and fdata2, memory must be allocated for
 AUTHOR	E. Bertin (IAP)
 VERSION	29/03/2013
  ***/
-void fft_conv( float *data1, float *fdata2, int *size ) {
- float *fdata1p, *fdata2p,
-     real, imag, fac;
- int i, npix, npix2;
+void    fft_conv(float *data1, float *fdata2, int *size)
+  {
+   float		*fdata1p,*fdata2p,
+			real,imag, fac;
+   int			i, npix,npix2;
 
- /* Convert axis indexing to that of FFTW */
- npix= size[0] * size[1];
- npix2= ( ( size[0] / 2 ) + 1 ) * size[1];
+/* Convert axis indexing to that of FFTW */
+  npix = size[0]*size[1];
+  npix2 = ((size[0]/2) + 1) * size[1];
 
- /* Forward FFT "in place" for data1 */
- if ( !fplan ) {
-  QFFTWF_MALLOC( fdata1, fftwf_complex, npix2 );
-  fplan= fftwf_plan_dft_r2c_2d( size[1], size[0], data1,
-                                (fftwf_complex *)fdata1, FFTW_ESTIMATE );
- }
+/* Forward FFT "in place" for data1 */
+  if (!fplan)
+    {
+    QFFTWF_MALLOC(fdata1, fftwf_complex, npix2);
+    fplan = fftwf_plan_dft_r2c_2d(size[1], size[0], data1,
+        (fftwf_complex *)fdata1, FFTW_ESTIMATE);
+    }
 
- fftwf_execute_dft_r2c( fplan, data1, fdata1 );
+  fftwf_execute_dft_r2c(fplan, data1, fdata1);
 
- /* Actual convolution (Fourier product) */
- fac= 1.0 / npix;
- fdata1p= (float *)fdata1;
- fdata2p= fdata2;
+/* Actual convolution (Fourier product) */
+  fac = 1.0/npix;  
+  fdata1p = (float *)fdata1;
+  fdata2p = fdata2;
 #pragma ivdep
- for ( i= npix2; i--; ) {
-  real= *fdata1p * *fdata2p - *( fdata1p + 1 ) * *( fdata2p + 1 );
-  imag= *( fdata1p + 1 ) * *fdata2p + *fdata1p * *( fdata2p + 1 );
-  *( fdata1p )= fac * real;
-  *( fdata1p + 1 )= fac * imag;
-  fdata1p+= 2;
-  fdata2p+= 2;
- }
+  for (i=npix2; i--;)
+    {
+    real = *fdata1p **fdata2p - *(fdata1p+1)**(fdata2p+1);
+    imag = *(fdata1p+1)**fdata2p + *fdata1p**(fdata2p+1);
+    *(fdata1p) = fac*real;
+    *(fdata1p+1) = fac*imag;
+    fdata1p+=2;
+    fdata2p+=2;
+    }
 
- /* Reverse FFT */
- if ( !bplan )
-  bplan= fftwf_plan_dft_c2r_2d( size[1], size[0], (fftwf_complex *)fdata1,
-                                data1, FFTW_ESTIMATE );
- fftwf_execute_dft_c2r( bplan, fdata1, data1 );
+/* Reverse FFT */
+  if (!bplan)
+    bplan = fftwf_plan_dft_c2r_2d(size[1], size[0], (fftwf_complex *)fdata1, 
+        data1, FFTW_ESTIMATE);
+  fftwf_execute_dft_c2r(bplan, fdata1, data1);
 
- //  fftwf_execute(plan);
+//  fftwf_execute(plan);
 
- return;
-}
+
+  return;
+  }
+
 
 /****** fft_rtf ************************************************************
 PROTO	float *fft_rtf(float *data, int *size)
@@ -186,19 +201,22 @@ NOTES	Input data may end up corrupted.
 AUTHOR	E. Bertin (IAP)
 VERSION	12/07/2012
  ***/
-float *fft_rtf( float *data, int *size ) {
- fftwf_plan plan;
- fftwf_complex *fdata;
- int npix2;
+float	*fft_rtf(float *data, int *size)
+  {
+   fftwf_plan   	plan;
+   fftwf_complex	*fdata;
+   int			npix2;
 
- /* Convert axis indexing to that of FFTW */
- npix2= ( ( size[0] / 2 ) + 1 ) * size[1];
+/* Convert axis indexing to that of FFTW */
+  npix2 = ((size[0]/2) + 1) * size[1];
 
- /* Forward FFT "in place" for data1 */
- QFFTWF_MALLOC( fdata, fftwf_complex, npix2 );
- plan= fftwf_plan_dft_r2c_2d( size[1], size[0], data, fdata, FFTW_ESTIMATE );
- fftwf_execute( plan );
- fftwf_destroy_plan( plan );
+/* Forward FFT "in place" for data1 */
+  QFFTWF_MALLOC(fdata, fftwf_complex, npix2);
+  plan = fftwf_plan_dft_r2c_2d(size[1], size[0], data, fdata, FFTW_ESTIMATE);
+  fftwf_execute(plan);
+  fftwf_destroy_plan(plan);
 
- return (float *)fdata;
-}
+  return (float *)fdata;
+  }
+
+

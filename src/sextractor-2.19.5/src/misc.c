@@ -27,15 +27,16 @@
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include        "config.h"
 #endif
 
-#include <stdlib.h>
-#include <time.h>
-#include <sys/time.h>
+#include	<stdlib.h>
+#include	<time.h>
+#include	<sys/time.h>
 
-#include "define.h"
-#include "globals.h"
+#include	"define.h"
+#include	"globals.h"
+
 
 /*i**** fqcmp **************************************************************
 PROTO	int	fqcmp(const void *p1, const void *p2)
@@ -47,11 +48,13 @@ NOTES	-.
 AUTHOR	E. Bertin (IAP)
 VERSION	05/10/2010
  ***/
-static int fqcmp( const void *p1, const void *p2 ) {
- double f1= *( (float *)p1 ),
-        f2= *( (float *)p2 );
- return f1 > f2 ? 1 : ( f1 < f2 ? -1 : 0 );
-}
+static int	fqcmp(const void *p1, const void *p2)
+  {
+   double	f1=*((float *)p1),
+		f2=*((float *)p2);
+  return f1>f2? 1 : (f1<f2? -1 : 0);
+  }
+
 
 /****** fqmedian **************************************************************
 PROTO	float   fqmedian(float *ra, int n)
@@ -63,17 +66,18 @@ NOTES	Warning: the order of input data is modified!.
 AUTHOR	E. Bertin (IAP)
 VERSION	05/10/2010
  ***/
-float fqmedian( float *ra, int n )
+float	fqmedian(float *ra, int n)
 
-{
- int dqcmp( const void *p1, const void *p2 );
+  {
+   int dqcmp(const void *p1, const void *p2);
 
- qsort( ra, n, sizeof( float ), fqcmp );
- if ( n < 2 )
-  return *ra;
- else
-  return n & 1 ? ra[n / 2] : ( ra[n / 2 - 1] + ra[n / 2] ) / 2.0;
-}
+  qsort(ra, n, sizeof(float), fqcmp);
+  if (n<2)
+    return *ra;
+  else
+    return n&1? ra[n/2] : (ra[n/2-1]+ra[n/2])/2.0;
+  }
+
 
 /****** propagate_covar ******************************************************
 PROTO	void	propagate_covar(double *vi, double *d, double *vo,
@@ -89,39 +93,45 @@ NOTES	-.
 AUTHOR	E. Bertin (IAP)
 VERSION	20/08/2010
  ***/
-void propagate_covar( double *vi, double *d, double *vo,
-                      int ni, int no, double *temp ) {
- double *vit, *dt, *vot, *tempt,
-     dval;
- int i, j, k;
+void propagate_covar(double *vi, double *d, double *vo,
+				int ni, int no,	double *temp)
+  {
+   double	*vit,*dt,*vot,*tempt,
+		dval;
+   int		i,j,k;
 
- tempt= temp;
- vit= vi;
- for ( j= 0; j < ni; j++ ) {
-  dt= d;
-  for ( i= no; i--; ) {
-   vit= vi + j * ni;
-   dval= 0.0;
-   for ( k= ni; k--; )
-    dval+= *( vit++ ) * *( dt++ );
-   *( tempt++ )= dval;
+  tempt = temp;
+  vit = vi;
+  for (j=0; j<ni; j++)
+    {
+    dt = d;
+    for (i=no; i--;)
+      {
+      vit = vi + j*ni;
+      dval = 0.0;
+      for (k=ni; k--;)
+        dval += *(vit++)**(dt++);
+      *(tempt++) = dval;
+      }
+    }
+
+  vot = vo;
+  for (j=0; j<no; j++)
+    {
+    for (i=0; i<no; i++)
+      {
+      dt = d + j*ni;
+      tempt = temp + i;
+      dval = 0.0;
+      for (k=ni; k--; tempt+=no)
+        dval += *(dt++)**tempt;
+      *(vot++) = dval;
+      }
+    }
+
+  return;
   }
- }
 
- vot= vo;
- for ( j= 0; j < no; j++ ) {
-  for ( i= 0; i < no; i++ ) {
-   dt= d + j * ni;
-   tempt= temp + i;
-   dval= 0.0;
-   for ( k= ni; k--; tempt+= no )
-    dval+= *( dt++ ) * *tempt;
-   *( vot++ )= dval;
-  }
- }
-
- return;
-}
 
 /****** counter_seconds *******************************************************
 PROTO	double counter_seconds(void)
@@ -132,11 +142,14 @@ NOTES	Results are meaningful only for tasks that take one microsec or more.
 AUTHOR	E. Bertin (IAP)
 VERSION	24/09/2009
  ***/
-double counter_seconds( void ) {
- struct timeval tp;
- struct timezone tzp;
- int dummy;
+double	counter_seconds(void)
+  {
+   struct timeval	tp;
+   struct timezone	tzp;
+   int			dummy;
 
- dummy= gettimeofday( &tp, &tzp );
- return (double)tp.tv_sec + (double)tp.tv_usec * 1.0e-6;
-}
+  dummy = gettimeofday(&tp,&tzp);
+  return (double) tp.tv_sec + (double) tp.tv_usec * 1.0e-6;
+  }
+
+
