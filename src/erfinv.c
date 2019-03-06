@@ -1,6 +1,8 @@
 // The following line is just to make sure this file is not included twice in the code
 #ifndef VAST_ERFINV_INCLUDE_FILE
 
+#include <math.h> // for fabs(), sqrt(), log()
+
 // This function computes the inverse of the error function
 // `erf` in the C math library. The implementation is based
 // on the rational approximation of Normal quantile function

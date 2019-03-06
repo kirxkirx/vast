@@ -53,11 +53,7 @@ int main( int argc, char **argv ) {
  gsl_rng *r;
 
  int number_of_measurements=DEFAULT_NUMBER_OF_POINTS_IN_LIGHTCURVE;
- double model_JD;
- double model_mag;
- double model_mag_err;
  int lightcurve_counter,i; // counters
- double timestep;
 
  // JD is the array with dates
  double *JD;
