@@ -4664,7 +4664,7 @@ if [ -d ../transient_detection_test_Ceres ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES016"
   fi
   #grep --quiet "2013 03 25.8483  2456377.3483  12.43  06:00:06.32 +25:03:34.1" transient_report/index.html
-  grep --quiet "2013 03 25.8483  2456377.3483  12.43" transient_report/index.html
+  grep --quiet -e "2013 03 25.8483  2456377.3483  12.43" -e "2013 03 25.8483  2456377.3483  12.42" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES016a"

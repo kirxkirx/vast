@@ -580,7 +580,14 @@ field identification have good chances to fail. Sorry... :(
       ERROR_STATUS=0
       echo "The WCS header appears to be added with no errors."
      fi
-     rm -f `basename $FITSFILE` out$$.wcs
+     # The output plate-solved image wcs_`basename $FITSFILE` will be produced by lib/astrometry/insert_wcs_header
+     for FILE_TO_REMOVE in `basename $FITSFILE` out$$.wcs ;do
+      if [ -f "$FILE_TO_REMOVE" ];then
+       rm -f "$FILE_TO_REMOVE"
+      else
+       echo "Hmmm, the file $FILE_TO_REMOVE that we wanted to remove does not exist!"
+      fi
+     done
     else
      echo "ERROR: cannot download out.wcs "
      ERROR_STATUS=2
@@ -638,8 +645,15 @@ else
 fi
 
 # Check if the wcs-solved image could not be created
-if [ ! -f $WCS_IMAGE_NAME ];then
+if [ ! -f "$WCS_IMAGE_NAME" ];then
  # Failure
+ exit 1
+fi
+
+# Check if the wcs-solved image could not be created
+if [ ! -s "$WCS_IMAGE_NAME" ];then
+ # Failure
+ echo "The output plate-solved image $WCS_IMAGE_NAME exist, but its empty!"
  exit 1
 fi
 
@@ -648,6 +662,25 @@ if [ $ERROR_STATUS -ne 0 ];then
  echo "ERROR: $ERROR_STATUS"
  exit $ERROR_STATUS
 fi
+
+########## NEW: Check if PV keywords aare present in the plate-solved image header and if not - try to insert them ##########
+"$VAST_PATH"util/listhead "$WCS_IMAGE_NAME" | grep --quiet -e 'PV1_1' -e 'PV2_1' -e 'PV1_2' -e 'PV2_2'
+if [ $? -ne 0 ];then
+ echo "Note that the $WCS_IMAGE_NAME plate-solved image header has no TPV-convention distortions in it..."
+ # Check if the local copy of wcs-addpv.py is working (unlike hte rest of the VaST code it relies on python)
+ "$VAST_PATH"lib/wcs-addpv.py -h &>/dev/null
+ if [ $? -eq 0 ];then
+  echo "Trying to insert TPV-convention distortions"
+  "$VAST_PATH"lib/wcs-addpv.py "$WCS_IMAGE_NAME"
+  if [ $? -ne 0 ];then
+   echo "There was an error in lib/wcs-addpv.py while trying to insert the TPV keywords."
+  fi
+ else
+  echo "Well, not much we can do..."
+ fi 
+fi
+#############################################################################################################################
+
 
  # At this point, we should somehow have a WCS calibrated image named $WCS_IMAGE_NAME
  if [ ! -f "$SEXTRACTOR_CATALOG_NAME" ];then

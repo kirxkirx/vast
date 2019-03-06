@@ -499,6 +499,7 @@ clean: clean_libraries
 	rm -f lib/select_only_n_random_points_from_set_of_lightcurves
 	rm -f lib/index_vs_mag
 	rm -f lib/stat_array
+	rm -f util/fix_image_date
 	
 
 clean_objects: vast statistics etc pgplot_components old shell_commands period_filter ccd astrometry astcheck cdsclient

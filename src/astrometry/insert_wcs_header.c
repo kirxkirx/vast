@@ -254,10 +254,12 @@ int main( int argc, char **argv ) {
   status= 0;
  }
 
+/* Why do we want to delete HISTORY??
  for ( i= 0; i < 10000; i++ ) {
   fits_delete_key( outputfptr, "HISTORY", &status );
   status= 0;
  }
+*/
 
  status= 0;
 

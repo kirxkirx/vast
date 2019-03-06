@@ -38,7 +38,7 @@ IMAGE_SIZE             0               # Image size (0 = AUTOMATIC)
  
 #-------------------------------- Resampling ----------------------------------
  
-RESAMPLE               N               # Resample input images (Y/N)?
+RESAMPLE               Y               # Resample input images (Y/N)?
 RESAMPLE_DIR           .               # Directory path for resampled images
 RESAMPLE_SUFFIX        .resamp.fits    # filename extension for resampled images
  
