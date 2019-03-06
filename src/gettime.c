@@ -488,6 +488,8 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
 //int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to_TT, double *dimX, double *dimY, char *stderr_output, char *log_output, int param_nojdkeyword, int param_verbose, int param_get_start_time_instead_of_midexp) {
 int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_to_TT, double *dimX, double *dimY, char *stderr_output, char *log_output, int param_nojdkeyword, int param_verbose ) {
 
+ unsigned int counter_i;
+
  /* Variables for time */
  int status= 0; //for cfitsio routines
  int j;
@@ -1191,7 +1193,16 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   }
   //exposure = 0.0;
   if ( NULL != stderr_output ) {
-   sprintf( stderr_output, "JD (mid. exp.) %.5lf\n", ( *JD ) );
+   //sprintf( stderr_output, "JD (mid. exp.) %.5lf\n", ( *JD ) );
+   Vrema= ( time_t )( ( ( *JD ) - 2440587.5 ) * 3600.0 * 24.0 + 0.5 );
+   form_DATEOBS_and_EXPTIME_from_UNIXSEC( Vrema, 0.0, formed_str_DATEOBS, formed_str_EXPTIME );
+   for( counter_i=0; counter_i<strlen(formed_str_DATEOBS); counter_i++ ){
+    if( formed_str_DATEOBS[counter_i]=='T' ){
+     formed_str_DATEOBS[counter_i]=' ';
+     break;
+    }
+   } // for( counter_i=0; counter_i<strlen(formed_str_DATEOBS); counter_i++ ){
+   sprintf( stderr_output, "JD (mid. exp.) %.5lf = %s %s\n", ( *JD ), formed_str_DATEOBS, tymesys_str_out );
   }
   if ( NULL != log_output ) {
    sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", 0, 0, 0, 0, 0, 0, exposure );

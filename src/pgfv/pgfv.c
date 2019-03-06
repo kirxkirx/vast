@@ -564,6 +564,7 @@ int main( int argc, char **argv ) {
  if ( 0 == strcmp( "make_finding_chart", basename( argv[0] ) ) ) {
   fprintf( stderr, "Plotting finding chart...\n" );
   finding_chart_mode= 1;
+  //mark_trigger= 1;
  }
 
  /* Reading file which defines rectangular regions we want to exclude */
@@ -1283,6 +1284,8 @@ int main( int argc, char **argv ) {
   markX= 0.0;
   markY= 0.0;
  }
+ 
+
 
  // start with a zoom if a marker position is specified
  if ( markX != 0.0 && markY != 0.0 && finding_chart_mode == 0 ) {
@@ -1869,6 +1872,17 @@ int main( int argc, char **argv ) {
      cpgsci( 1 );
     }
     /////
+   } // if ( mark_trigger == 1 ) {
+   
+   // Always put mark in te center of the finding chart
+   if ( finding_chart_mode == 1 ) {
+    markX=((float)naxes[0]/2.0+0.5);
+    markY=((float)naxes[1]/2.0+0.5);
+    cpgsci( 2 );
+    cpgsch( 3.0 );
+    cpgpt1( markX, markY, 2 );
+    cpgsch( 1.0 );
+    cpgsci( 1 );
    }
 
    // Markers from manymarkers file
