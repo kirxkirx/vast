@@ -1876,8 +1876,8 @@ int main( int argc, char **argv ) {
    
    // Always put mark in te center of the finding chart
    if ( finding_chart_mode == 1 ) {
-    markX=((float)naxes[0]/2.0+0.5);
-    markY=((float)naxes[1]/2.0+0.5);
+    markX=((float)naxes[0]/2.0);
+    markY=((float)naxes[1]/2.0);
     cpgsci( 2 );
     cpgsch( 3.0 );
     cpgpt1( markX, markY, 2 );

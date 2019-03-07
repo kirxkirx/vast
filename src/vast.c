@@ -2173,8 +2173,9 @@ int main( int argc, char **argv ) {
     if ( pid == -1 )
      fprintf( stderr, "WARNING: cannot fork()! Continuing in the streamline mode...\n" );
     autodetect_aperture( input_images[i], sextractor_catalog, 0, param_P, fixed_aperture, X_im_size, Y_im_size, guess_saturation_limit_operation_mode );
-    if ( pid == 0 )
+    if ( pid == 0 ) {
      exit( 0 ); // exit only if this is actually a child
+    } // if ( pid == 0 ) {
    } else {
     //child_pids[i_fork-1]=pid;
     for ( fork_found_empty_slot= 0, j_fork= 0; j_fork < n_fork; j_fork++ ) {

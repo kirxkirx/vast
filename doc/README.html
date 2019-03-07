@@ -49,7 +49,7 @@ on a series of astronomical images</h2>
 
 <p>
 <b>See the <a href="http://adsabs.harvard.edu/abs/2018A%26C....22...28S">VaST paper</a>
-for a detailed description of the code.</b>
+for a detailed description of the code. The code is <a href="https://github.com/kirxkirx/vast">available on Github</a>.</b>
 </p>
 
 <dl>
@@ -741,6 +741,46 @@ or just drop a line to kirx[at]scan.sai.msu.ru
 <h2><a name="news"></a>Release notes</h2>
 
 <pre>
+07 Mar 2019: vast-1.0rc84:
+
+ * VaST is now on Github ( https://github.com/kirxkirx/vast ), pull requests are welcome!
+
+ * The new script 'util/get_gaia_lc.sh' gets Gaia G, BP and RP lightcurves for a Gaia DR2 ID that 
+should be specified as a command line argument. You may get Gaia ID of a source at a given sky
+position by running 'util/search_databases_with_vizquery.sh' The lightcurves are saved in the folder 
+'gaia_lightcurves/' within the VaST main directory.
+
+ * 'util/colstat' will take a column of numbers from a standard input and compute mean, median, sigma
+and other values describing the column. For example, to compute statistics on the scatter of magnitude
+measurements among all stars that passed the selection, one may extract the second column from 
+'vast_lightcurve_statistics.log' using 'cat' and 'awk' and send it to 'util/colstat' like this:
+cat vast_lightcurve_statistics.log | awk '{print $2}' | util/colstat
+
+ * The script 'util/search_databases_with_vizquery.sh' is trying to guess the star's spectral type 
+from its 2MASS colors. The color-spectral type relation is updated to correspond to
+"A Modern Mean Dwarf Stellar Color and Effective Temperature Sequence" table by Eric Mamajek
+http://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt
+instead of the older reference http://adsabs.harvard.edu/abs/1988PASP..100.1134B
+
+ * Upgraded the internal copy of SExtractor to version 2.25.0 while keeping 2.19.5 as a the
+automatic fall-back option. The new SExtractor cannot be compiled on very old systems and
+it requires autoconf that is missing on BSD systems and (by default) in Ubuntu.
+If a system-wide installation of SExtractor is found (by simply testing for the presence of 
+'sex' executable in $PATH), the internal copy of SExtractor is not compiled at all to speed-up
+compilation.
+
+ * Added integration with wcs-addpv.py script ( https://github.com/evertrol/sippv ) as the second line 
+of defense against the "TPV vs. SIP" problem: astrometry.net describes image distortions using 
+the SIP convention while SExtractor/SWarp and other Astromatic tools expect the TPV convention.
+The script requires python+numpy+scipy+astropy to run. If you run astrometry.net code locally,
+the required python tools are already installed in your system. The old trick with VaST using 'xy2sky' 
+from WCSTools to re-compute celestial coordinates in SExtractor catalogs still works, of course. 
+Having the TPV distortions inserted in the images plate-solved with VaST is especially useful 
+if you want to stack images with SWarp.
+
+
+
+
 01 Oct 2018: vast-1.0rc83:
 
  * A careful review and refactoring of almost the entire VaST C-code tree was performed by Vladimir Bazilevich.

@@ -7381,8 +7381,8 @@ fi
 #### Period search test
 TEST_PASSED=1
 # Run the test
-echo "Performing period search test " >> /dev/stderr
-echo -n "Performing period search test: " >> vast_test_report.txt 
+echo "Performing the second period search test " >> /dev/stderr
+echo -n "Performing the second period search test: " >> vast_test_report.txt 
 
 lib/lk_compute_periodogram lib/test/hads_p0.060.dat 1.0 0.05 0.1 | grep "16.661" &>/dev/null
 if [ $? -ne 0 ];then
@@ -7402,17 +7402,17 @@ fi
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mPeriod search test \033[01;32mPASSED\033[00m" >> /dev/stderr
+ echo -e "\n\033[01;34mThe second period search test \033[01;32mPASSED\033[00m" >> /dev/stderr
  echo "PASSED" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mPeriod search test \033[01;31mFAILED\033[00m" >> /dev/stderr
+ echo -e "\n\033[01;34mThe second period search test \033[01;31mFAILED\033[00m" >> /dev/stderr
  echo "FAILED" >> vast_test_report.txt
 fi 
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
-          
+
 
 #### Coordinate conversion test
 # A local copy of WCSTools now should be supplied with VaST
