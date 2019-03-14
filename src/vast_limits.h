@@ -328,7 +328,7 @@
 
 //////////////////////////////////////////////////
 // Enable debug file output and many debug messages on the terminal.
-// Should not be set for pruduction.
+// Should not be set for production!
 //#define DEBUGFILES
 
 // The macro below will tell the pre-processor that limits.h is already included
