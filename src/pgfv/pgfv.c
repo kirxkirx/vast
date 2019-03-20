@@ -1245,6 +1245,11 @@ int main( int argc, char **argv ) {
  //setenv("PGPLOT_DIR","lib/pgplot/",1);
  setenv_localpgplot( argv[0] );
  if ( finding_chart_mode == 1 ) {
+ 
+  //
+  inverted_Y_axis=0; // do not invert Y axis for finding charts!
+  //
+ 
   if ( cpgbeg( 0, "/PNG", 1, 1 ) != 1 ) {
    // fallback to PS
    if ( cpgbeg( 0, "/PS", 1, 1 ) != 1 ) {
