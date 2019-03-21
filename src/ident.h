@@ -248,6 +248,8 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
 //double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, int force_recompute, int param_P, double fixed_aperture, int verbose, double X_im_size, double Y_im_size);
 double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog, int force_recompute, int param_P, double fixed_aperture, double X_im_size, double Y_im_size, int guess_saturation_limit_operation_mode );
 
+// These two should be moved to a new gettime.h
+int check_if_this_fits_image_is_north_up_east_left( char *fitsfilename);
 int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_to_TT, double *dimX, double *dimY, char *stderr_output, char *log_output, int param_nojdkeyword, int verbose );
 
 int read_bad_lst( double *X1, double *Y1, double *X2, double *Y2, int *N );

@@ -609,6 +609,9 @@ int main( int argc, char **argv ) {
 
  //
  int is_this_an_hla_image= 0; // 0 - no;  1 - yes; needed only to make proper labels
+ 
+ //
+ int is_this_north_up_east_left_image= 0; // For N/E labels on the finding chart
 
  // Dummy vars
  // int star_number_in_sextractor_catalog;
@@ -833,6 +836,9 @@ int main( int argc, char **argv ) {
   stderr_output[0]= '\0';
  }
  //
+ if ( finding_chart_mode == 1 ){
+  is_this_north_up_east_left_image=check_if_this_fits_image_is_north_up_east_left( fits_image_name);
+ }
 
  //fprintf(stderr,"DEBUG-3\n");
 
@@ -1885,7 +1891,9 @@ int main( int argc, char **argv ) {
     markY=((float)naxes[1]/2.0);
     cpgsci( 2 );
     cpgsch( 3.0 );
+    cpgslw(2); // increase line width
     cpgpt1( markX, markY, 2 );
+    cpgslw(1); // set default line width
     cpgsch( 1.0 );
     cpgsci( 1 );
    }
@@ -1898,6 +1906,18 @@ int main( int argc, char **argv ) {
    }
 
    if ( finding_chart_mode == 1 ) {
+    // Make N/E labels
+    if ( is_this_north_up_east_left_image== 1 ){
+     cpgsci( 2 );
+     cpgsch( 2.0 );                 /* Set small font size */
+     cpgslw(3); // increase line width
+     cpgmtxt( "T", -1.0, 0.5, 0.5, "N");
+     cpgmtxt( "LV", -0.5, 0.5, 0.5, "E");
+     cpgslw(1); // set default line width
+     cpgsch( 1.0 );                 /* Set default font size */
+     cpgsci( 1 );
+    }
+    
     // exit now
     cpgclos();
     free( float_array );

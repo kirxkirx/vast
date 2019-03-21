@@ -485,6 +485,73 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
  return;
 }
 
+// Determine if this is the image resampled to the defaut orientation (North up, East left)
+// 1 - yes
+// 0 - no 
+int check_if_this_fits_image_is_north_up_east_left( char *fitsfilename){
+ fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
+ int status= 0; //for cfitsio routines
+ double CD1_1,CD1_2,CD2_1,CD2_2;
+
+ fits_open_image( &fptr, fitsfilename, READONLY, &status );
+ if ( 0 != status ) {
+  fits_report_error( stderr, status ); /* print out any error messages */
+  fits_clear_errmsg();                 // clear the CFITSIO error message stack
+  return 0; // assume - no
+ }
+
+ fits_read_key( fptr, TDOUBLE, "CD1_1", &CD1_1, NULL, &status );
+ if ( status == 202 ) {
+  fits_report_error( stderr, status );
+  fits_clear_errmsg();              // clear the CFITSIO error message stack
+  fits_close_file( fptr, &status ); // close file
+  status=0; // just in case
+  return 0; // assume - no
+ }
+ fits_read_key( fptr, TDOUBLE, "CD1_2", &CD1_2, NULL, &status );
+ if ( status == 202 ) {
+  fits_report_error( stderr, status );
+  fits_clear_errmsg();              // clear the CFITSIO error message stack
+  fits_close_file( fptr, &status ); // close file
+  status=0; // just in case
+  return 0; // assume - no
+ }
+ fits_read_key( fptr, TDOUBLE, "CD2_1", &CD2_1, NULL, &status );
+ if ( status == 202 ) {
+  fits_report_error( stderr, status );
+  fits_clear_errmsg();              // clear the CFITSIO error message stack
+  fits_close_file( fptr, &status ); // close file
+  status=0; // just in case
+  return 0; // assume - no
+ }
+ fits_read_key( fptr, TDOUBLE, "CD2_2", &CD2_2, NULL, &status );
+ if ( status == 202 ) {
+  fits_report_error( stderr, status );
+  fits_clear_errmsg();              // clear the CFITSIO error message stack
+  fits_close_file( fptr, &status ); // close file
+  status=0; // just in case
+  return 0; // assume - no
+ }
+
+ // close the FITS file
+ fits_report_error( stderr, status );
+ fits_clear_errmsg();              // clear the CFITSIO error message stack
+ fits_close_file( fptr, &status ); // close file
+ status=0; // just in case
+
+ // main test
+ // WCS axes are paralllell to the image axes
+ if( CD1_2==0.0 && CD2_1==0.0 ){
+  // east left, north up
+  if( CD1_1<0.0 && CD2_2>0.0 ){
+   return 1; // yes!!!!
+  }
+ } // if( CD1_2==0.0 && CD2_1==0.0 ){
+
+ // by default
+ return 0; // assume - no
+}
+
 //int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to_TT, double *dimX, double *dimY, char *stderr_output, char *log_output, int param_nojdkeyword, int param_verbose, int param_get_start_time_instead_of_midexp) {
 int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_to_TT, double *dimX, double *dimY, char *stderr_output, char *log_output, int param_nojdkeyword, int param_verbose ) {
 
