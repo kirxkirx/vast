@@ -31,6 +31,11 @@ int fake_image_hack( char *input_string ) {
 
  char card[FLEN_CARD], newcard[FLEN_CARD], fitsfilename[FILENAME_LENGTH];
 
+ int input_calendar_date_or_jd=0; // 0 - calendar, 1 - JD
+ unsigned int number_of_characters_inputs_str;
+ unsigned int i,j; // counter
+ double jd_from_string;
+
  FILE *f;
 
  f= fopen( input_string, "r" );
@@ -38,6 +43,42 @@ int fake_image_hack( char *input_string ) {
   // This is a file, nothing to do
   fclose( f );
   return 0;
+ }
+ 
+ // Check input string
+ number_of_characters_inputs_str=strlen(input_string);
+ // check if the number of characters is reasonable
+ if( number_of_characters_inputs_str<7 ){
+  fprintf(stderr,"ERROR in fake_image_hack(): the number of characters in the input string #%s# is %d, less than expected",input_string,number_of_characters_inputs_str);
+  return 0;
+ }
+ if( number_of_characters_inputs_str>26 ){
+  fprintf(stderr,"ERROR in fake_image_hack(): the number of characters in the input string #%s# is %d, more than expected",input_string,number_of_characters_inputs_str);
+  return 0;
+ }
+
+ // Determine if the input is the calendar date or JD
+ input_calendar_date_or_jd= 0; // assume calendar date by default
+ // Check that we have exactly one '.'
+ for ( j= 0, i= 0; i < number_of_characters_inputs_str; i++ ) {
+  //
+  if ( 0 != isdigit( input_string[i] ) ) {
+   continue;
+  }
+  if ( input_string[i] == '.' ) {
+   j++;
+   continue;
+  }
+  // If we are here, that means there was an ilegal character in the input
+  j=99;
+  break;
+ } // for ( j= 0, i= 0; i < strlen( argv[1] ); i++ ) { 
+ if( j==1 ){
+  // OK, there is only one '.' in the string, that looks promising
+  jd_from_string=atof(input_string);
+  if ( jd_from_string>EXPECTED_MIN_MJD && jd_from_string<EXPECTED_MAX_JD ){
+   input_calendar_date_or_jd= 1; // this looks like a JD
+  }
  }
 
  sprintf( fitsfilename, "fake_image_hack_%d.fits", getpid() );
@@ -47,15 +88,27 @@ int fake_image_hack( char *input_string ) {
  fits_create_img( fptr, USHORT_IMG, 2, naxes, &status );
  fits_write_img( fptr, TUSHORT, fpixel, naxes[0] * naxes[1], combined_array, &status );
 
- strcpy( newcard, "DATE-OBS" );                                  // keyword name
- strcat( newcard, " = " );                                       // '=' value delimiter
- strcat( newcard, input_string );                                // new value
- strcat( newcard, " / " );                                       // comment delimiter
- strcat( newcard, "Exposure start time (UTC) derived by VaST" ); // append the comment
- // reformat the keyword string to conform to FITS rules
- fits_parse_template( newcard, card, &keytype, &status );
- // overwrite the keyword with the new value
- fits_update_card( fptr, "DATE-OBS", card, &status );
+ if ( input_calendar_date_or_jd== 1 ){
+  // Writing this into JD keyword
+  sprintf( newcard,"JD = %.5lf / JD (UTC)",jd_from_string);
+  // reformat the keyword string to conform to FITS rules
+  fits_parse_template( newcard, card, &keytype, &status );
+  // overwrite the keyword with the new value
+  fits_update_card( fptr, "JD", card, &status );
+ }
+ else{ 
+  // The defaultassumption is to write DATE-OBS
+  strcpy( newcard, "DATE-OBS" );                                  // keyword name
+  strcat( newcard, " = " );                                       // '=' value delimiter
+  strcat( newcard, input_string );                                // new value
+  strcat( newcard, " / " );                                       // comment delimiter
+  strcat( newcard, "Exposure start time (UTC) derived by VaST" ); // append the comment
+  // reformat the keyword string to conform to FITS rules
+  fits_parse_template( newcard, card, &keytype, &status );
+  // overwrite the keyword with the new value
+  fits_update_card( fptr, "DATE-OBS", card, &status );
+ }
+ 
  strcpy( newcard, "EXPTIME" );            // keyword name
  strcat( newcard, " = " );                // '=' value delimiter
  strcat( newcard, "0" );                  // new value

@@ -1215,8 +1215,15 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    }
   }
   ///////////////////////////////////
-  Vrema= ( time_t )( (double)Vrema + exposure / 2.0 + 0.5 );
-  ( *JD )= (double)Vrema / 3600.0 / 24.0 + 2440587.5 + apply_JD_correction_in_days; // not that the time correction is not reflected in the broken down time!
+  // Oh, this is a funny one: cf. date -d '1969-12-31T23:59:59' +%s  and  date -d '1970-01-01T00:00:00' +%s
+  if( (double)Vrema + exposure / 2.0 < 0.0 ){
+   Vrema= ( time_t )( (double)Vrema + exposure / 2.0 );
+  }
+  else{
+   Vrema= ( time_t )( (double)Vrema + exposure / 2.0 + 0.5 );
+  }
+
+  ( *JD )= (double)Vrema / 3600.0 / 24.0 + 2440587.5 + apply_JD_correction_in_days; // note that the time correction is not reflected in the broken down time!
   if ( overridingJD_from_input_image_list != 0.0 ) {
    // Override the computed JD!
    ( *JD )= overridingJD_from_input_image_list;
