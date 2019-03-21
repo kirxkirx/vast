@@ -80,6 +80,7 @@ int fake_image_hack( char *input_string ) {
    input_calendar_date_or_jd= 1; // this looks like a JD
   }
  }
+ //
 
  sprintf( fitsfilename, "fake_image_hack_%d.fits", getpid() );
 
@@ -199,8 +200,12 @@ int main( int argc, char **argv ) {
  MJD= JD - 2400000.5;
  UnixTime= ( JD - 2440587.5 ) * 86400.0;
  Julian_year= 2000.0 + ( JD - 2451545.0 ) / 365.25;
- //
- UnixTime_time_t= (time_t)UnixTime;
+ if ( UnixTime<0.0 ){
+  UnixTime_time_t= (time_t)(UnixTime - 0.5);
+ } else{
+  // UnixTime is double, so we add 0.5 for the propoer type conversion
+  UnixTime_time_t= (time_t)(UnixTime + 0.5);
+ }
  structureTIME= gmtime( &UnixTime_time_t );
 
  // Print output
@@ -210,7 +215,11 @@ int main( int argc, char **argv ) {
  fprintf( stdout, "        MJD %14.6lf\n", MJD );
  fprintf( stdout, "  Unix Time %.0lf\n", UnixTime );
  fprintf( stdout, "Julian year %14.9lf\n", Julian_year );
+// The roblem is that the sub-second accuracy is lost in this output
  fprintf( stdout, " MPC format %04d %02d %8.5lf\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, (double)structureTIME->tm_mday + (double)structureTIME->tm_hour / 24.0 + (double)structureTIME->tm_min / ( 24.0 * 60 ) + (double)structureTIME->tm_sec / ( 24.0 * 60 * 60 ) );
+// fprintf( stdout, " MPC format %04d %02d %8.6lf\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, (double)structureTIME->tm_mday + (double)structureTIME->tm_hour / 24.0 + (double)structureTIME->tm_min / ( 24.0 * 60 ) + (double)structureTIME->tm_sec / ( 24.0 * 60 * 60 ) );
+ //
+ fprintf( stderr, "DEBUG UnixTime_time_t=%ld UnixTime(double)=%lf\n",UnixTime_time_t,UnixTime);
 
  // Clean up
  free( log_output );

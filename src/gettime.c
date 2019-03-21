@@ -1217,7 +1217,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   ///////////////////////////////////
   // Oh, this is a funny one: cf. date -d '1969-12-31T23:59:59' +%s  and  date -d '1970-01-01T00:00:00' +%s
   if( (double)Vrema + exposure / 2.0 < 0.0 ){
-   Vrema= ( time_t )( (double)Vrema + exposure / 2.0 );
+   Vrema= ( time_t )( (double)Vrema + exposure / 2.0 - 0.5 );
   }
   else{
    Vrema= ( time_t )( (double)Vrema + exposure / 2.0 + 0.5 );
