@@ -369,7 +369,8 @@ if [ -z $2 ];then
   echo "The guess is $FIELD_OF_VIEW_ARCMIN arcmin."
  fi
  #TEST=`echo "$FIELD_OF_VIEW_ARCMIN<15.0"|bc -ql`
- TEST=`echo "$FIELD_OF_VIEW_ARCMIN<3.0"|bc -ql`
+ #TEST=`echo "$FIELD_OF_VIEW_ARCMIN<3.0"|bc -ql`
+ TEST=`echo "$FIELD_OF_VIEW_ARCMIN<1.0"|bc -ql`
  if [ $TEST -eq 1 ];then
   # If we know FIELD_OF_VIEW_ARCMIN is so small we have no hope to blindly solve it 
   # - try to rely on WCS information that may be already inserted in the image
@@ -433,6 +434,8 @@ field identification have good chances to fail. Sorry... :(
   # Blind solve
   `"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # HACK Hack hack -- manually specify the field center and size
+  # SOAR observations of ASASSN-19gt
+  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --pixel-error 3 --ra 11:40:33.13 --dec -62:50:17.4 --radius 0.2   --objs 50 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # SOAR observations of ASASSN-19cq
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 17:47:05.77 --dec -13:31:42.5 --radius 0.2   --objs 50 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # RA tracking at MSU 2019-01-14

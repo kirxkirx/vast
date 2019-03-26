@@ -258,8 +258,11 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
  if ( strlen( telescop ) >= 9 ) { //01234567890
   pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "SOAR 4.1m", 9 );
   if ( pointer_to_the_key_start != NULL ) {
-   ( *estimated_fov_arcmin )= 2.0;
+   ( *estimated_fov_arcmin )= 3.2;
    fits_close_file( fptr, &status );
+   // Print the special waring
+   fprintf(stderr,"\n\n\nWARNING! WARNING! WARNING!\nThis is a SOAR 4.1m image.\nRemember to trim the black areas around the actual image or it will not be plate-solved!\nYou may trim it by running  util/fitscopy %s[700:1370] test.fit\n\n\n",fitsfilename);
+   //
    return 0;
   }
  }
