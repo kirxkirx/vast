@@ -37,6 +37,25 @@
 
 int Kourovka_SBG_date_hack( char *fitsfilename, char *DATEOBS, int *date_parsed, double *exposure ); // defined in gettime.c
 
+int get_string_with_fov_of_wcs_calibrated_image( char *fitsfilename, char *output_string ) {
+ char path_to_vast_string[VAST_PATH_MAX];
+ char systemcommand[2 * VAST_PATH_MAX];
+ FILE *fp;
+ get_path_to_vast( path_to_vast_string );
+ path_to_vast_string[VAST_PATH_MAX - 1]= '\0'; // just in case
+ sprintf( systemcommand, "%sutil/fov_of_wcs_calibrated_image.sh %s", path_to_vast_string, fitsfilename);
+ if ((fp = popen(systemcommand, "r")) == NULL) {
+  fprintf(stderr,"ERROR in get_string_with_fov_of_wcs_calibrated_image() while opening pipe!\n");
+  return 1;
+ }
+ fscanf(fp,"%s",output_string);
+ if( pclose(fp) )  {
+  fprintf(stderr,"ERROR in get_string_with_fov_of_wcs_calibrated_image() Command not found or exited with error status\n");
+  return 1;
+ }
+ return 0;
+}
+
 int xy2sky( char *fitsfilename, float X, float Y ) {
  char path_to_vast_string[VAST_PATH_MAX];
  char systemcommand[2 * VAST_PATH_MAX];
@@ -585,6 +604,8 @@ int main( int argc, char **argv ) {
  float manymarkersY[1024];
  char manymarkersstring[2048];
  ////////////
+ 
+ char fov_string[1024];
 
  if ( 0 != strcmp( "select_star_on_reference_image", basename( argv[0] ) ) ) {
   if ( argc == 1 ) {
@@ -1913,6 +1934,11 @@ int main( int argc, char **argv ) {
      cpgslw(3); // increase line width
      cpgmtxt( "T", -1.0, 0.5, 0.5, "N");
      cpgmtxt( "LV", -0.5, 0.5, 0.5, "E");
+     //
+     get_string_with_fov_of_wcs_calibrated_image( fits_image_name, fov_string );
+     cpgmtxt( "B", -1.0, 0.05, 0.0, fov_string);
+     fprintf(stdout,"The image is %s\n",fov_string);
+     //
      cpgslw(1); // set default line width
      cpgsch( 1.0 );                 /* Set default font size */
      cpgsci( 1 );
