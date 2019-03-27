@@ -1935,13 +1935,13 @@ int main( int argc, char **argv ) {
     if ( is_this_north_up_east_left_image== 1 ){
      cpgsci( 2 );
      cpgsch( 2.0 );                 /* Set small font size */
-     cpgslw(3); // increase line width
+     cpgslw(4); // increase line width
      cpgmtxt( "T", -1.0, 0.5, 0.5, "N");
      cpgmtxt( "LV", -0.5, 0.5, 0.5, "E");
      //
      if ( 0 == get_string_with_fov_of_wcs_calibrated_image( fits_image_name, fov_string ) ) {
       cpgmtxt( "B", -1.0, 0.05, 0.0, fov_string);
-      fprintf(stdout,"The image is %s\n",fov_string);
+      fprintf(stderr,"The image is %s\n",fov_string);
      }
      //
      cpgslw(1); // set default line width
