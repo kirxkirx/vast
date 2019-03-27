@@ -1267,7 +1267,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   }
   //exposure = 0.0;
   if ( NULL != stderr_output ) {
-   //sprintf( stderr_output, "JD (mid. exp.) %.5lf\n", ( *JD ) );
+   sprintf( stderr, "JD (mid. exp.) %.5lf\n", ( *JD ) );
    Vrema= ( time_t )( ( ( *JD ) - 2440587.5 ) * 3600.0 * 24.0 + 0.5 );
    form_DATEOBS_and_EXPTIME_from_UNIXSEC( Vrema, 0.0, formed_str_DATEOBS, formed_str_EXPTIME );
    for( counter_i=0; counter_i<strlen(formed_str_DATEOBS); counter_i++ ){

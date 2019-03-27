@@ -851,6 +851,10 @@ int main( int argc, char **argv ) {
  }
  int param_nojdkeyword= 0; // Temporary fix!!! pgfv cannot accept the --nojdkeyword parameter yet, only the main program vast understands it
  gettime( fits_image_name, &JD, &timesys, convert_timesys_to_TT, &dimX, &dimY, stderr_output, log_output, param_nojdkeyword, 0 );
+ if( strlen( stderr_output )<10 ) {
+  fprintf(stderr,"Warning after running gettime(): stderr_output is suspiciously short:\n");
+  fprintf(stderr,"#%s#\n",stderr_output);
+ }
  stderr_output[strlen( stderr_output ) - 1]= '\0'; /* Remove \n at the end of line */
  // Special case of HLA images with no proper date
  if ( is_this_an_hla_image == 1 ) {
@@ -1935,9 +1939,10 @@ int main( int argc, char **argv ) {
      cpgmtxt( "T", -1.0, 0.5, 0.5, "N");
      cpgmtxt( "LV", -0.5, 0.5, 0.5, "E");
      //
-     get_string_with_fov_of_wcs_calibrated_image( fits_image_name, fov_string );
-     cpgmtxt( "B", -1.0, 0.05, 0.0, fov_string);
-     fprintf(stdout,"The image is %s\n",fov_string);
+     if ( 0 == get_string_with_fov_of_wcs_calibrated_image( fits_image_name, fov_string ) ) {
+      cpgmtxt( "B", -1.0, 0.05, 0.0, fov_string);
+      fprintf(stdout,"The image is %s\n",fov_string);
+     }
      //
      cpgslw(1); // set default line width
      cpgsch( 1.0 );                 /* Set default font size */
