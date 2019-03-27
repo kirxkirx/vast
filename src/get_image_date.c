@@ -49,11 +49,11 @@ int fake_image_hack( char *input_string ) {
  number_of_characters_inputs_str=strlen(input_string);
  // check if the number of characters is reasonable
  if( number_of_characters_inputs_str<7 ){
-  fprintf(stderr,"ERROR in fake_image_hack(): the number of characters in the input string #%s# is %d, less than expected",input_string,number_of_characters_inputs_str);
+  fprintf(stderr,"ERROR in fake_image_hack(): the number of characters in the input string #%s# is %d, less than expected\n",input_string,number_of_characters_inputs_str);
   return 0;
  }
  if( number_of_characters_inputs_str>26 ){
-  fprintf(stderr,"ERROR in fake_image_hack(): the number of characters in the input string #%s# is %d, more than expected",input_string,number_of_characters_inputs_str);
+  fprintf(stderr,"ERROR in fake_image_hack(): the number of characters in the input string #%s# is %d, more than expected\n",input_string,number_of_characters_inputs_str);
   return 0;
  }
 
