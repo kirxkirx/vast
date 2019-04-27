@@ -1692,7 +1692,7 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
    x[N_good]= stars[i].mag;
    y[N_good]= 0.1; // fake error, same for all stars since we want an unweighted fit
    z1[N_good]= stars[i].catalog_ra - stars[i].corrected_ra_planefit;
-   z1[N_good]= stars[i].catalog_dec - stars[i].corrected_dec_planefit;
+   z2[N_good]= stars[i].catalog_dec - stars[i].corrected_dec_planefit;
    N_good++;
   }
  }
