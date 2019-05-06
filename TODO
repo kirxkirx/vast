@@ -2,8 +2,6 @@
 
 * Are we filtering SExtractor detections before feeding'em to the plate solver?!
 
-* teach util/get_image_date to convert from JD back to the normal time.
-
 * ping is not a good indicator that the whole thing is working.
 Add a check that pache is working on the choosen web server for the period search.
 
