@@ -8066,6 +8066,22 @@ util/clean_data.sh &> /dev/null
 cp default.sex.ccd_example default.sex
 cp default.psfex.ccd_example default.psfex
 
+# Mail report to kirx if this script is running on a test machine
+if [ -f ../THIS_IS_HPCC ];then
+ HOST=`hostname`
+ HOST="@$HOST"
+ NAME="$USER$HOST"
+ DATETIME=`LANG=C date --utc`
+ SCRIPTNAME=`basename $0`
+ LOG=`cat vast_test_report.txt`
+ MSG="The script $0 has finished on $DATETIME at $PWD $LOG"
+echo "
+$MSG
+
+"
+ curl --silent 'http://scan.sai.msu.ru/vast/anyemailkirx.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode "message=$MSG" --data-urlencode 'submit=submit'
+fi
+
 if [ "$FAILED_TEST_CODES" != "NONE" ];then
  exit 1
 fi
