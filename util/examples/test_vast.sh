@@ -6493,7 +6493,7 @@ if [ $? -ne 0 ];then
 fi
 
 # MDV via VizieR
-util/search_databases_with_vizquery.sh 02:38:54.34 +63:37:40.4 | grep --quiet 'MDV 521'
+util/search_databases_with_vizquery.sh 02:38:54.34 +63:37:40.4 | grep --quiet -e 'MDV 521' -e 'V1340 Cas'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT010"
@@ -7526,7 +7526,7 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
   break
  fi
 done
-util/get_image_date '2456909.72911' 2>&1 |grep --quiet 'DATE-OBS= 2014-09-09T05:29:55'
+util/get_image_date '2456909.72911' 2>&1 |grep --quiet '2014-09-09 05:29:55 (UT)'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV003"
@@ -7539,7 +7539,7 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
   break
  fi
 done
-util/get_image_date '2458563.500000' 2>&1 |grep --quiet 'DATE-OBS= 2019-03-21T00:00:00'
+util/get_image_date '2458563.500000' 2>&1 |grep --quiet '2019-03-21 00:00:00 (UT)'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV005"
