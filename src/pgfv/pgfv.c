@@ -414,12 +414,14 @@ int myimax( int A, int B ) {
   return B;
 }
 
+/*
 int myimin( int A, int B ) {
  if ( A < B )
   return A;
  else
   return B;
 }
+*/
 
 int mymax( float A, float B ) {
  if ( A > B )
@@ -1733,7 +1735,7 @@ int main( int argc, char **argv ) {
      drawY0= (int)( ( drawY1 + drawY2 ) / 2 + 0.5 );
      razmer_y= myimax( drawX2 - drawX1, drawY2 - drawY1 );
      if ( finding_chart_mode == 1 ) {
-      // we whant a square finding chart !
+      // we want a square finding chart !
       razmer_x= razmer_y;
      } else {
       razmer_x= axis_ratio * razmer_y;

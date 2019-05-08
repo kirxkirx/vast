@@ -4,7 +4,9 @@
 #
 
 if [ -z "$1" ];then
- echo "Usage: $0 wcs_image.fits" >> /dev/stderr
+ echo "This script should print filed of view of an input WCS-calibrated image
+ 
+ Usage: $0 wcs_image.fits" >> /dev/stderr
  exit 1
 fi
 
@@ -55,7 +57,7 @@ done
 # Get image dimentions in pixels
 FITSHEADER=`"$VAST_PATH"util/listhead "$FITS_IMAGE_TO_CHECK"`
 NAXIS1=`echo "$FITSHEADER" | grep --max-count=1 'NAXIS1' | awk '{print $2}' FS='=' | awk '{print $1}'`
-NAXIS2=`echo "$FITSHEADER" | grep --max-count=2 'NAXIS1' | awk '{print $2}' FS='=' | awk '{print $1}'`
+NAXIS2=`echo "$FITSHEADER" | grep --max-count=1 'NAXIS2' | awk '{print $2}' FS='=' | awk '{print $1}'`
 
 # Determine the image size
 XY2SKY_OUTPUT=`"$VAST_PATH"lib/bin/xy2sky -j "$FITS_IMAGE_TO_CHECK" 0 0 $NAXIS1 0 0 $NAXIS2`
@@ -65,6 +67,13 @@ CORNER_0_NAXIS2=`echo "$XY2SKY_OUTPUT" | head -n3 | tail -n1 | awk '{print $1" "
 X_SIZE_ARCMIN=`"$VAST_PATH"lib/bin/skycoor -r $CORNER_0_0 $CORNER_NAXIS1_0 | awk '{printf "%.1f",$1/60}'`
 Y_SIZE_ARCMIN=`"$VAST_PATH"lib/bin/skycoor -r $CORNER_0_0 $CORNER_0_NAXIS2 | awk '{printf "%.1f",$1/60}'`
 
-# Print the results
-echo "$X_SIZE_ARCMIN'"x"$Y_SIZE_ARCMIN'"
+IMAGE_SCALE_X_ARCSECpix=`echo "$X_SIZE_ARCMIN $NAXIS1" | awk '{printf "%.2f",$1*60/$2}'`
+IMAGE_SCALE_Y_ARCSECpix=`echo "$Y_SIZE_ARCMIN $NAXIS2" | awk '{printf "%.2f",$1*60/$2}'`
 
+IMAGE_CENTER_XY=`echo "$NAXIS1 $NAXIS2" | awk '{printf "%.3f %.3f",($1+1)/2,($2+1)/2}'`
+IMAGE_CENTER_RA_Dec=`"$VAST_PATH"lib/bin/xy2sky -j "$FITS_IMAGE_TO_CHECK" $IMAGE_CENTER_XY`
+
+# Print the results
+echo "Image size: $X_SIZE_ARCMIN'"x"$Y_SIZE_ARCMIN'"
+echo "Image scale: $IMAGE_SCALE_X_ARCSECpix\"/pix along the X axis and $IMAGE_SCALE_Y_ARCSECpix\"/pix along the Y axis"
+echo "Image center: $IMAGE_CENTER_RA_Dec"

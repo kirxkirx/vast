@@ -6493,7 +6493,7 @@ if [ $? -ne 0 ];then
 fi
 
 # MDV via VizieR
-util/search_databases_with_vizquery.sh 02:38:54.34 +63:37:40.4 | grep --quiet 'MDV 521'
+util/search_databases_with_vizquery.sh 02:38:54.34 +63:37:40.4 | grep --quiet -e 'MDV 521' -e 'V1340 Cas'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT010"
@@ -7526,7 +7526,7 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
   break
  fi
 done
-util/get_image_date '2456909.72911' 2>&1 |grep --quiet 'DATE-OBS= 2014-09-09T05:29:55'
+util/get_image_date '2456909.72911' 2>&1 |grep --quiet '2014-09-09 05:29:55 (UT)'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV003"
@@ -7539,7 +7539,7 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
   break
  fi
 done
-util/get_image_date '2458563.500000' 2>&1 |grep --quiet 'DATE-OBS= 2019-03-21T00:00:00'
+util/get_image_date '2458563.500000' 2>&1 |grep --quiet '2019-03-21 00:00:00 (UT)'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV005"
@@ -7784,6 +7784,73 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 
 
 
+# util/fov_of_wcs_calibrated_image.sh
+TEST_PASSED=1
+echo "Performing the image field of view script test " >> /dev/stderr
+echo -n "Performing the image field of view script test: " >> vast_test_report.txt 
+
+if [ ! -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/wcs_fd_Per3_2011-10-31_001.fts.bz2" && bunzip2 wcs_fd_Per3_2011-10-31_001.fts.bz2
+ cd $WORKDIR
+fi
+if [ -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
+ util/fov_of_wcs_calibrated_image.sh ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts | grep 'Image size: 467.' | grep --quiet '352.'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES IMAGEFOVSCRIPT_001"
+ fi
+ util/fov_of_wcs_calibrated_image.sh ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts | grep --quiet 'Image scale: 8.3'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES IMAGEFOVSCRIPT_002"
+ fi
+ IMAGE_CENTER=`util/fov_of_wcs_calibrated_image.sh ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts | grep 'Image center: ' | awk '{print $3" "$4}'`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES IMAGEFOVSCRIPT_003"
+ fi
+ if [ -z "$IMAGE_CENTER" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES IMAGEFOVSCRIPT_004"
+ fi
+ DISTANCE_FROM_IMAGE_CENTER_ARCSEC=`lib/bin/skycoor -r 03:47:04.453 +45:10:05.77 $IMAGE_CENTER`
+ TEST=`echo "$DISTANCE_FROM_IMAGE_CENTER_ARCSEC<0.3" | bc -ql`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES IMAGEFOVSCRIPT_005"
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES IMAGEFOVSCRIPT_TEST_NOT_PERFORMED"
+fi
+
+
+# Make an overall conclusion for this test
+if [ $TEST_PASSED -eq 1 ];then
+ echo -e "\n\033[01;34mImage field of view script test \033[01;32mPASSED\033[00m" >> /dev/stderr
+ echo "PASSED" >> vast_test_report.txt
+else
+ echo -e "\n\033[01;34mImage field of view script test \033[01;31mFAILED\033[00m" >> /dev/stderr
+ echo "FAILED" >> vast_test_report.txt
+fi 
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+
+
+
+
 
 #### HJD correction test
 # needs VARTOOLS to run
@@ -7998,6 +8065,22 @@ util/clean_data.sh &> /dev/null
 # Restore default SExtractor settings file
 cp default.sex.ccd_example default.sex
 cp default.psfex.ccd_example default.psfex
+
+# Mail report to kirx if this script is running on a test machine
+if [ -f ../THIS_IS_HPCC ];then
+ HOST=`hostname`
+ HOST="@$HOST"
+ NAME="$USER$HOST"
+ DATETIME=`LANG=C date --utc`
+ SCRIPTNAME=`basename $0`
+ LOG=`cat vast_test_report.txt`
+ MSG="The script $0 has finished on $DATETIME at $PWD $LOG"
+echo "
+$MSG
+
+"
+ curl --silent 'http://scan.sai.msu.ru/vast/anyemailkirx.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode "message=$MSG" --data-urlencode 'submit=submit'
+fi
 
 if [ "$FAILED_TEST_CODES" != "NONE" ];then
  exit 1

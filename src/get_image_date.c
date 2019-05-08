@@ -159,7 +159,7 @@ int main( int argc, char **argv ) {
   }
   fprintf( stderr, "\nUsage:\n %s image.fits\n", argv[0] );
   if ( param_verbose != 2 ) {
-   fprintf( stderr, "or\n %s '2014-09-09T05:29:55' or\n %s '2456909.72911'\n", argv[0], argv[0] );
+   fprintf( stderr, "or\n %s '2014-09-09T05:29:55'\nor\n %s '2456909.72911'\n", argv[0], argv[0] );
   }
   return 1;
  }
