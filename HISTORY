@@ -2,7 +2,9 @@ vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911
 	it can also be used to convert calendar date/time to JD:
-	util/get_image_date 2014-09-09T05:29:55 
+	util/get_image_date 2014-09-09T05:29:55
+	* The new script 'util/fov_of_wcs_calibrated_image.sh' will print the field of view,
+	image scale and the image center position of a WCS-calibrated FITS image.
 07 Mar 2019: vast-1.0rc84:
 	* VaST is now on Github ( https://github.com/kirxkirx/vast ), pull requests are welcome!
 	* The new script 'util/get_gaia_lc.sh' gets Gaia G, BP and RP lightcurves for a Gaia DR2 ID that 
