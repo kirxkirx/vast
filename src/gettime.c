@@ -990,7 +990,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  } else {
   status= 202; // proceed parsing the DATE string
   if ( param_nojdkeyword == 1 && date_parsed == 0 ) {
-   // Special case - no date information in the image file (and we are not allowed to use JD keyword, no matter id it's there or not)
+   // Special case - no date information in the image file (and we are not allowed to use JD keyword, no matter if it's there or not)
    inJD= 0.0;
    status= 0;
   }
@@ -1302,6 +1302,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    //
   }
  }
+
+ fprintf(stdout,"HAHHAHAHHAHHA\n");
 
  return 0;
 }

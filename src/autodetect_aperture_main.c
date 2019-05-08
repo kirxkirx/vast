@@ -1,4 +1,3 @@
-//#define _GNU_SOURCE
 #include <string.h> // for memmem() and strncmp()
 #include <libgen.h> // for basename()
 
@@ -26,7 +25,6 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "ERROR in %s cannot chdir() to %s\n", argv[0], path_to_vast_string );
   return 1;
  }
- //fprintf(stderr,"\n\n\n\nDEBUG %s \n\n\n\n",path_to_vast_string);
 
  fprintf( stderr, "Choosing aperture...\n" );
  if ( argc < 2 ) {
@@ -40,7 +38,7 @@ int main( int argc, char **argv ) {
  fprintf( stderr, "gettime()\n" );
  int_garbage_timesys= 0;
  gettime( argv[1], &double_garbage_JD, &int_garbage_timesys, 0, &X_im_size, &Y_im_size, char_garbage, char_garbage, 0, 0 );
- fprintf( stderr, "autodetect_aperture()\n" );
+ fprintf( stdout, "autodetect_aperture()\n" );
  if ( 0 == strncmp( "sextract_single_image_noninteractive", basename( argv[0] ), strlen( "sextract_single_image_noninteractive" ) ) ) {
   // Perform the standard multi-run SEtractor processing and write the output source catalog
   aperture= autodetect_aperture( argv[1], char_garbage, 0, 0, 0.0, X_im_size, Y_im_size, 2 );

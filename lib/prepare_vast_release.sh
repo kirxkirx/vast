@@ -141,6 +141,26 @@ in src/vast_limits.h before release!
 "
 fi
 
+# Check DEBUGMESSAGES
+grep -v '//' src/vast_limits.h | grep --quiet '#define DEBUGMESSAGES'
+if [ $? -eq 0 ];then
+ echo "
+ERROR: please comment the line
+#define DEBUGMESSAGES
+in src/vast_limits.h before release!
+"
+fi
+
+# Check DEBUGFILES
+grep -v '//' src/vast_limits.h | grep --quiet '#define DEBUGFILES'
+if [ $? -eq 0 ];then
+ echo "
+ERROR: please comment the line
+#define DEBUGFILES
+in src/vast_limits.h before release!
+"
+fi
+
 N_LINES_BAD_REGION=`cat bad_region.lst | wc -l`
 if [ $N_LINES_BAD_REGION -ne 1 ];then
  echo "
