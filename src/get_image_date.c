@@ -8,6 +8,8 @@
 #include <unistd.h>    // for getpid() and unlink()
 #include <sys/types.h> // for getpid()
 
+#include <ctype.h> // for isdigit()
+
 #include <time.h>
 
 #include "fitsio.h"

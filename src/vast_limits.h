@@ -330,6 +330,7 @@
 // Enable debug file output and many debug messages on the terminal.
 // Should not be set for production!
 //#define DEBUGFILES
+//#define DEBUGMESSAGES
 
 // The macro below will tell the pre-processor that limits.h is already included
 #define VAST_LIMITS_INCLUDE_FILE

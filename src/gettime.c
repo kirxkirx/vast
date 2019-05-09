@@ -948,11 +948,18 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  // param_nojdkeyword==1 tells us that JD keyword should be ignored
  // date_parsed==0 means DATE-OBS was not found and parsed
  if ( param_nojdkeyword == 0 && date_parsed == 0 && expstart_mjd_parsed == 0 ) {
+  #ifdef DEBUGMESSAGES
+  fprintf(stderr,"entering   if ( param_nojdkeyword == 0 && date_parsed == 0 && expstart_mjd_parsed == 0 )\n");
+  #endif
+
   exposure= 0.0; // Assume JD keyword corresponds to the middle of exposure!!!
   fprintf( stderr, "Trying to get observing date from JD keyword...\n" );
   fits_read_key( fptr, TDOUBLE, "JD", &inJD, NULL, &status );
   //fprintf(stderr,"DEBUG: status = %d\n",status);
   if ( status == 0 ) {
+   #ifdef DEBUGMESSAGES
+   fprintf(stderr,"entering   if ( status == 0 )\n");
+   #endif
    fprintf( stderr, "Getting JD of the middle of exposure from JD keyword: %.5lf\n", inJD );
    // Check that JD is within the reasonable range
    if ( inJD < EXPECTED_MIN_JD || inJD > EXPECTED_MAX_JD ) {
@@ -960,10 +967,16 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     exit( 1 );
    }
   } else {
+   #ifdef DEBUGMESSAGES
+   fprintf(stderr,"entering  else corresponding to if ( status == 0 )\n");
+   #endif
    status= 0; // reset
    fprintf( stderr, "Trying to get observing date from JDMID keyword...\n" );
    fits_read_key( fptr, TDOUBLE, "JDMID", &inJD, NULL, &status );
    if ( status == 0 ) {
+    #ifdef DEBUGMESSAGES
+    fprintf(stderr,"entering  if ( status == 0 )\n");
+    #endif
     fprintf( stderr, "Getting JD of the middle of exposure from JDMID keyword: %.5lf\n", inJD );
     // Check that JD is within the reasonable range
     if ( inJD < EXPECTED_MIN_JD || inJD > EXPECTED_MAX_JD ) {
@@ -973,28 +986,47 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    }
   }
   if ( status != 0 ) {
+   #ifdef DEBUGMESSAGES
+   fprintf(stderr,"entering  if ( status != 0 )\n");
+   #endif
    // Testing if this is the mad header from Kourovka SBG?
    status= 0;
    fprintf( stderr, "Testing if this is an image from Kourovka SBG camera...\n" );
    status= Kourovka_SBG_date_hack( fitsfilename, DATEOBS, &date_parsed, &exposure );
    if ( status != 0 ) {
+    #ifdef DEBUGMESSAGES
+    fprintf(stderr,"entering  if ( status != 0 )\n");
+    #endif
     date_parsed= 0; // if Kourovka_SBG_date_hack() failed...
     fprintf( stderr, "No, it's not.\nWARNING: cannot determine date/time associated with this image!\n" );
     // Special case - no date information in the image file
     inJD= 0.0;
     status= 0;
    } else {
+    #ifdef DEBUGMESSAGES
+    fprintf(stderr,"entering  else corresponding to if ( status != 0 )\n");
+    #endif
     fprintf( stderr, "Yes this is an image from Kourovka SBG camera! start=%s exp=%.1lf parsing_flag=%d\n", DATEOBS, exposure, date_parsed );
    }
   }
  } else {
+  #ifdef DEBUGMESSAGES
+  fprintf(stderr,"entering  else corresponding to if ( param_nojdkeyword == 0 && date_parsed == 0 && expstart_mjd_parsed == 0 ) {\n");
+  #endif
   status= 202; // proceed parsing the DATE string
   if ( param_nojdkeyword == 1 && date_parsed == 0 ) {
+   #ifdef DEBUGMESSAGES
+   fprintf(stderr,"entering  if ( param_nojdkeyword == 1 && date_parsed == 0 )\n");
+   #endif
    // Special case - no date information in the image file (and we are not allowed to use JD keyword, no matter if it's there or not)
    inJD= 0.0;
    status= 0;
   }
  }
+
+ #ifdef DEBUGMESSAGES
+ fprintf(stderr,"debug checkpoint 01\n");
+ #endif
 
  ( *dimX )= naxes[0];
  ( *dimY )= naxes[1];
@@ -1013,6 +1045,9 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  // status==202 here means the JD keyword is not found
  // date_parsed==0 means DATE-OBS was not found and parsed
  if ( status == 202 && date_parsed != 0 && expstart_mjd_parsed == 0 ) {
+  #ifdef DEBUGMESSAGES
+  fprintf(stderr,"entering  if ( status == 202 && date_parsed != 0 && expstart_mjd_parsed == 0 )\n");
+  #endif
   //if (status == 202) {
   /* If no JD keyword was found... */
 
@@ -1024,6 +1059,9 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   status= 0;
   fits_read_key( fptr, TSTRING, "TIMESYS", TIMESYS, NULL, &status );
   if ( status != 202 ) {
+   #ifdef DEBUGMESSAGES
+   fprintf(stderr,"entering  if ( status != 202 )\n");
+   #endif
    // TIMESYS keyword found
    if ( param_verbose >= 1 )
     fprintf( stderr, "TIMESYS keyword found: %s\n", TIMESYS );
@@ -1034,12 +1072,16 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    else
     ( *timesys )= 0; // UNKNOWN
   } else {
+   #ifdef DEBUGMESSAGES
+   fprintf(stderr,"entering  else corresponding to if ( status != 202 )\n");
+   #endif
    // Here we assume that TT system can be only set from TIMESYS keyword.
    // If it's not there - the only temaing options are UTC or UNKNOWN
 
    // TIMESYS keyword not found, try to parse DATE-OBS comment string
-   if ( param_verbose >= 1 )
+   if ( param_verbose >= 1 ){
     fprintf( stderr, "TIMESYS keyword is not in the FITS header.\n" );
+   }
    // Make sure the string is not empty
    if ( strlen( DATEOBS_COMMENT ) > 1 ) {
     if ( param_verbose >= 1 )
@@ -1066,17 +1108,22 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   }
 
   /* Choose string to describe time system */
-  if ( ( *timesys ) == 2 )
+  if ( ( *timesys ) == 2 ){
    sprintf( tymesys_str_in, "TT" );
-  else if ( ( *timesys ) == 1 )
+  } 
+  else if ( ( *timesys ) == 1 ){
    sprintf( tymesys_str_in, "UT" );
-  else
+  }
+  else {
    sprintf( tymesys_str_in, " " );
+  }
 
-  if ( param_verbose >= 1 )
+  if ( param_verbose >= 1 ){
    fprintf( stderr, "The input time system is identified as: %s (blank if unknown)\n", tymesys_str_in );
-  if ( param_verbose >= 1 )
+  }
+  if ( param_verbose >= 1 ){
    fprintf( stderr, "Setting observation date using %s keyword: %s\n", DATEOBS_KEY_NAME, DATEOBS );
+  }
   if ( 0 == strlen( DATEOBS ) ) {
    fprintf( stderr, "ERROR in gettime(): the %s FITS header key that is supposed to report the observation date is missing or empty!\n", DATEOBS_KEY_NAME );
    fits_close_file( fptr, &status ); // close file
@@ -1235,16 +1282,20 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   }
 
   /* Convert JD(UT) to JD(TT) if needed */
-  if ( ( *timesys ) == 1 && convert_timesys_to_TT == 1 )
+  if ( ( *timesys ) == 1 && convert_timesys_to_TT == 1 ){
    ( *JD )= convert_jdUT_to_jdTT( ( *JD ), timesys );
+  }
 
   /* Choose string to describe new time system */
-  if ( ( *timesys ) == 2 )
+  if ( ( *timesys ) == 2 ){
    sprintf( tymesys_str_out, "(TT)" );
-  else if ( ( *timesys ) == 1 )
+  }
+  else if ( ( *timesys ) == 1 ){
    sprintf( tymesys_str_out, "(UT)" );
-  else
+  }
+  else{
    sprintf( tymesys_str_out, " " );
+  }
 
   if ( NULL != log_output ) {
    sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, structureTIME.tm_sec, exposure );
@@ -1257,17 +1308,29 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     sprintf( stderr_output, "Exposure %3.0lf sec, %02d.%02d.%4d %02d:%02d:%02d %s = JD%s %.5lf\n", exposure, structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, structureTIME.tm_sec, tymesys_str_in, tymesys_str_out, ( *JD ) );
   }
  } else {
+  #ifdef DEBUGMESSAGES
+  fprintf(stderr,"entering  else corresponding to if ( status == 202 && date_parsed != 0 && expstart_mjd_parsed == 0 )\n");
+  #endif
   /* Setting pre-calculated JD(UT) mid. exp. from the JD keyword */
   ( *timesys )= 1;
   sprintf( tymesys_str_out, "(UT)" );
   ( *JD )= inJD + apply_JD_correction_in_days;
   if ( overridingJD_from_input_image_list != 0.0 ) {
+   #ifdef DEBUGMESSAGES
+   fprintf(stderr,"entering  if ( overridingJD_from_input_image_list != 0.0 ) \n");
+   #endif
    // Override the computed JD!
    ( *JD )= overridingJD_from_input_image_list;
   }
+  #ifdef DEBUGMESSAGES
+  fprintf(stderr,"debug checkpoint a01\n");
+  #endif
   //exposure = 0.0;
   if ( NULL != stderr_output ) {
-   sprintf( stderr, "JD (mid. exp.) %.5lf\n", ( *JD ) );
+   #ifdef DEBUGMESSAGES
+   fprintf(stderr,"entering  if ( NULL != stderr_output )\n");
+   #endif
+   fprintf( stderr, "JD (mid. exp.) %.5lf\n", ( *JD ) );
    Vrema= ( time_t )( ( ( *JD ) - 2440587.5 ) * 3600.0 * 24.0 + 0.5 );
    form_DATEOBS_and_EXPTIME_from_UNIXSEC( Vrema, 0.0, formed_str_DATEOBS, formed_str_EXPTIME );
    for( counter_i=0; counter_i<strlen(formed_str_DATEOBS); counter_i++ ){
@@ -1278,32 +1341,53 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    } // for( counter_i=0; counter_i<strlen(formed_str_DATEOBS); counter_i++ ){
    sprintf( stderr_output, "JD (mid. exp.) %.5lf = %s %s\n", ( *JD ), formed_str_DATEOBS, tymesys_str_out );
   }
+  #ifdef DEBUGMESSAGES
+  fprintf(stderr,"debug checkpoint a03\n");
+  #endif
   if ( NULL != log_output ) {
+   #ifdef DEBUGMESSAGES
+   fprintf(stderr,"entering if ( NULL != log_output )\n");
+   #endif
    sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", 0, 0, 0, 0, 0, 0, exposure );
   }
   //
  }
  fits_close_file( fptr, &status ); // close file
+ status=0;
+ //fits_report_error( stderr, status ); // print out any error messages
+ #ifdef DEBUGMESSAGES
+ fprintf(stderr,"finished   fits_close_file()\n");
+ #endif
+
 
  // Do this only if the time system is UNKNOWN or UT!
  if ( ( *timesys ) == 0 || ( *timesys ) == 1 ) {
+  #ifdef DEBUGMESSAGES
+  fprintf(stderr,"entering   if ( ( *timesys ) == 0 || ( *timesys ) == 1 )\n");
+  #endif
   if ( param_verbose >= 1 ) {
+   #ifdef DEBUGMESSAGES
+   fprintf(stderr,"entering   if ( param_verbose >= 1 )\n");
+   #endif
    // Compute Vrema so we can convert the JD back to the broken-down time
    //(*JD) = (double)Vrema/3600.0/24.0+2440587.5+apply_JD_correction_in_days;
    Vrema= ( time_t )( ( ( *JD ) - 2440587.5 ) * 3600.0 * 24.0 + 0.5 );
    exposure= fabs( exposure );
    form_DATEOBS_and_EXPTIME_from_UNIXSEC( Vrema, exposure, formed_str_DATEOBS, formed_str_EXPTIME );
-   //fprintf(stderr,"\n\n\nDEBUUUUG\nVrema=%ld\nexposure=%lf\nformed_str_DATEOBS=%s\nformed_str_EXPTIME=%s\n\n\n",Vrema,exposure,formed_str_DATEOBS,formed_str_EXPTIME);
+   fprintf(stderr,"\n\n\nDEBUUUUG\nVrema=%ld\nexposure=%lf\nformed_str_DATEOBS=%s\nformed_str_EXPTIME=%s\n\n\n",Vrema,exposure,formed_str_DATEOBS,formed_str_EXPTIME);
    //
    if ( param_verbose == 2 ) {
+    #ifdef DEBUGMESSAGES
+    fprintf(stderr,"entering   if ( param_verbose == 2 ) )\n");
+    #endif
     // Update the FITS header
     write_DATEOBS_and_EXPTIME_to_FITS_header( fitsfilename, formed_str_DATEOBS, formed_str_EXPTIME );
    }
    //
   }
  }
-
- fprintf(stdout,"HAHHAHAHHAHHA\n");
-
+ #ifdef DEBUGMESSAGES
+ fprintf(stderr,"gettime() ends\n");
+ #endif
  return 0;
 }
