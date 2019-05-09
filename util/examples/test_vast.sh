@@ -8093,8 +8093,23 @@ util/clean_data.sh &> /dev/null
 cp default.sex.ccd_example default.sex
 cp default.psfex.ccd_example default.psfex
 
-# Mail report to kirx if this script is running on a test machine
+# Ask user if we should mail the test report
+MAIL_TEST_REPORT_TO_KIRX="NO"
+# Always mail report to kirx if this script is running on a test machine
 if [ -f ../THIS_IS_HPCC ];then
+ MAIL_TEST_REPORT_TO_KIRX="YES"
+else
+ # Ask user on the command line
+ echo "### Send the above report to the VaST developer? (yes/no)"
+ read USER_ANSWER
+ if [ "yes" = "$USER_ANSWER" ] || [ "y" = "$USER_ANSWER" ] || [ "ys" = "$USER_ANSWER" ] || [ "Yes" = "$USER_ANSWER" ] || [ "YES" = "$USER_ANSWER" ] || [ "1" = "$USER_ANSWER" ] ;then
+  MAIL_TEST_REPORT_TO_KIRX="YES"
+ else
+  MAIL_TEST_REPORT_TO_KIRX="NO"
+ fi
+fi
+
+if [ "$MAIL_TEST_REPORT_TO_KIRX" = "YES" ];then
  HOST=`hostname`
  HOST="@$HOST"
  NAME="$USER$HOST"
@@ -8106,7 +8121,12 @@ echo "
 $MSG
 
 "
- curl --silent 'http://scan.sai.msu.ru/vast/anyemailkirx.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode "message=$MSG" --data-urlencode 'submit=submit'
+ curl --silent 'http://scan.sai.msu.ru/vast/vasttestreport.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode "message=$MSG" --data-urlencode 'submit=submit'
+ if [ $? -eq 0 ];then
+  echo "The test report was sent successfully"
+ else
+  echo "There was a problem sending the test report"
+ fi
 fi
 
 if [ "$FAILED_TEST_CODES" != "NONE" ];then
