@@ -7539,6 +7539,20 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
   break
  fi
 done
+### Repeat the above test checking the other output line
+util/get_image_date '2456909.72911' 2>&1 |grep --quiet 'DATE-OBS= 2014-09-09T05:29:55'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV003a"
+fi
+# Now make sure there are no residual files
+for TMP_FITS_FILE in fake_image_hack_*.fits ;do
+ if [ -f "$TMP_FITS_FILE" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV004a_$TMP_FITS_FILE"
+  break
+ fi
+done
 util/get_image_date '2458563.500000' 2>&1 |grep --quiet '2019-03-21 00:00:00 (UT)'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
@@ -7549,6 +7563,19 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  if [ -f "$TMP_FITS_FILE" ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV005a_$TMP_FITS_FILE"
+  break
+ fi
+done
+util/get_image_date '2458563.500000' 2>&1 |grep --quiet 'DATE-OBS= 2019-03-21T00:00:00'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV005b"
+fi
+# Now make sure there are no residual files
+for TMP_FITS_FILE in fake_image_hack_*.fits ;do
+ if [ -f "$TMP_FITS_FILE" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV005c_$TMP_FITS_FILE"
   break
  fi
 done
