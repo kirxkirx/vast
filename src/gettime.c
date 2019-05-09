@@ -1374,7 +1374,9 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    Vrema= ( time_t )( ( ( *JD ) - 2440587.5 ) * 3600.0 * 24.0 + 0.5 );
    exposure= fabs( exposure );
    form_DATEOBS_and_EXPTIME_from_UNIXSEC( Vrema, exposure, formed_str_DATEOBS, formed_str_EXPTIME );
-   fprintf(stderr,"\n\n\nDEBUUUUG\nVrema=%ld\nexposure=%lf\nformed_str_DATEOBS=%s\nformed_str_EXPTIME=%s\n\n\n",Vrema,exposure,formed_str_DATEOBS,formed_str_EXPTIME);
+   #ifdef DEBUGMESSAGES
+   fprintf(stderr,"\n\n\n\nVrema=%ld\nexposure=%lf\nformed_str_DATEOBS=%s\nformed_str_EXPTIME=%s\n\n\n",Vrema,exposure,formed_str_DATEOBS,formed_str_EXPTIME);
+   #endif
    //
    if ( param_verbose == 2 ) {
     #ifdef DEBUGMESSAGES
