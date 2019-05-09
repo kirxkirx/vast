@@ -2235,6 +2235,7 @@ if [ -d ../sample_data ];then
   #grep --quiet "Ref.  image: 2453193.35816 06.07.2004 20:34:15   ../sample_data/f_72-008r.fit" vast_summary.log
   # We end up with different reference images at diffferent machines,
   # so let's just check the date when the ref image was taken
+  #### ????This test is not working - different machines choose different reference images!!!!
   grep "Ref.  image:" vast_summary.log | grep --quiet -e "06.07.2004" -e "05.07.2004"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
