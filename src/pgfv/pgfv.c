@@ -48,7 +48,7 @@ int get_string_with_fov_of_wcs_calibrated_image( char *fitsfilename, char *outpu
   fprintf(stderr,"ERROR in get_string_with_fov_of_wcs_calibrated_image() while opening pipe!\n");
   return 1;
  }
- // On  success, these functions return the number of input items successfully matched and assigned
+ // On success, these functions return the number of input items successfully matched and assigned
  if( 1!=fscanf(fp,"%s",output_string) ){
   fprintf(stderr,"ERROR in get_string_with_fov_of_wcs_calibrated_image() Cannot read the command output\n");
   return 1;
