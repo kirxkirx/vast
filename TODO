@@ -1,7 +1,5 @@
 * Test on UBUNTU 18.04
 
-* Support astrometry.net in /usr/bin
-
 * Are we filtering SExtractor detections before feeding'em to the plate solver?!
 
 * ping is not a good indicator that the whole thing is working.
