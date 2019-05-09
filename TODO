@@ -45,9 +45,6 @@ Unless it is explicitly requested by user.
 * Deal with this:
 which: no wwwget in (/home/kirx/mybin:/home/kirx/cod/wcstools-3.9.4/bin:/opt/sun-jre-bin-1.6.0.02/bin/:/usr/local/bin:/usr/bin:/bin:/opt/bin:/usr/x86_64-pc-linux-gnu/gcc-bin/5.4.0:/usr/bin/cdsclient:/home/kirx/.gem/ruby/1.8/bin/:/usr/games/bin/)
 
-* ./sextract_single_image should re-compute the source catalog if 
-default.sex was changed after processing an image series.
-
 * Pirint error message when requested to convert from TT back to UTC.
 
 * Single-image cosmic ray/hot pixel filter?

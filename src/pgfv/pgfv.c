@@ -428,23 +428,17 @@ int myimin( int A, int B ) {
 */
 
 int mymax( float A, float B ) {
- int iA, iB;
- iA= (int)( A + 0.5 );
- iB= (int)( B + 0.5 );
- if ( iA > iB )
-  return iA;
+ if ( A > B )
+  return trunc(round(A));
  else
-  return iB;
+  return trunc(round(B));
 }
 
 int mymin( float A, float B ) {
- int iA, iB;
- iA= (int)( A + 0.5 );
- iB= (int)( B + 0.5 );
- if ( iA < iB )
-  return iA;
+ if ( A < B )
+  return trunc(round(A));
  else
-  return iB;
+  return trunc(round(B));
 }
 
 int main( int argc, char **argv ) {
