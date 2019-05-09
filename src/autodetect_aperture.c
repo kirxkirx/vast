@@ -12,7 +12,8 @@
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_sort.h>
 
-#include <sys/types.h> // for getpid()
+#include <sys/types.h> // for getpid(i)
+#include <sys/stat.h> // for st_mtime (modification time)
 #include <unistd.h>    // also for getpid() and unlink() ...
 
 #include "vast_limits.h"
@@ -43,8 +44,18 @@ int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogf
  f= fopen( catalogfilename, "r" );
  if ( f == NULL )
   return 1;
- else
-  fclose( f );
+ else{
+  fclose(f);
+  /* Check if default.sex was modified after catalog's creation*/
+  struct stat defSex;
+  struct stat cat;
+  stat("default.sex", &defSex);
+  stat(catalogfilename, &cat);
+  if(defSex.st_mtime > cat.st_mtime){
+   fprintf(stderr, "Image will be processed again since default.sex was modified\n");
+   return 1;
+  };
+ }
  return 0;
 }
 
