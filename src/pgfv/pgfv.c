@@ -43,6 +43,9 @@ int get_string_with_fov_of_wcs_calibrated_image( char *fitsfilename, char *outpu
  FILE *fp;
  get_path_to_vast( path_to_vast_string );
  path_to_vast_string[VAST_PATH_MAX - 1]= '\0'; // just in case
+ //
+ output_string[0]='\0'; // reset output just in case
+ //
  sprintf( systemcommand, "%sutil/fov_of_wcs_calibrated_image.sh %s", path_to_vast_string, fitsfilename);
  if ((fp = popen(systemcommand, "r")) == NULL) {
   fprintf(stderr,"ERROR in get_string_with_fov_of_wcs_calibrated_image() while opening pipe!\n");
@@ -51,10 +54,12 @@ int get_string_with_fov_of_wcs_calibrated_image( char *fitsfilename, char *outpu
  // On success, these functions return the number of input items successfully matched and assigned
  if( 1!=fscanf(fp,"%s",output_string) ){
   fprintf(stderr,"ERROR in get_string_with_fov_of_wcs_calibrated_image() Cannot read the command output\n");
+  output_string[0]='\0'; // reset output just in case
   return 1;
  }
  if( pclose(fp) )  {
   fprintf(stderr,"ERROR in get_string_with_fov_of_wcs_calibrated_image() Command not found or exited with error status\n");
+  output_string[0]='\0'; // reset output just in case
   return 1;
  }
  return 0;

@@ -5,6 +5,9 @@ vast-1.0rc85:
 	util/get_image_date 2014-09-09T05:29:55
 	* The new script 'util/fov_of_wcs_calibrated_image.sh' will print the field of view,
 	image scale and the image center position of a WCS-calibrated FITS image.
+	* The new tool 'util/fits2png' will produce a PNG finder chart with no labels from 
+	the input FITS image. Use 'util/make_finding_chart' to produce a finder chart with labels.
+	In all cases the output image will be written to 'pgplot.png' file in the current directory.
 07 Mar 2019: vast-1.0rc84:
 	* VaST is now on Github ( https://github.com/kirxkirx/vast ), pull requests are welcome!
 	* The new script 'util/get_gaia_lc.sh' gets Gaia G, BP and RP lightcurves for a Gaia DR2 ID that 
