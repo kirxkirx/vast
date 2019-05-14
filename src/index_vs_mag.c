@@ -876,9 +876,9 @@ int main() {
 
   l= 0; // use this counter as a flag for Cmax
   // M31 - fixed 3 sigma threshould
-  for ( threshold= 3.0; threshold < 3.1; threshold+= 0.1 ) {
+  //for ( threshold= 3.0; threshold < 3.1; threshold+= 0.1 ) {
    // Normal threshould fine-tuning
-   //for( threshold=0.0; threshold<50.0; threshold+=0.1 ){
+   for( threshold=0.0; threshold<50.0; threshold+=0.1 ){
 
    fprintf( stderr, "Selecting candidates with threshold=%lf sigma in each index\r", threshold );
 
