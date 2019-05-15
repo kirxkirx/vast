@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-FILE_WITH_FILEAMES_OF_KNOWN_VARS="vast_autocandidates.log"
+#FILE_WITH_FILEAMES_OF_KNOWN_VARS="vast_autocandidates.log"
+FILE_WITH_FILEAMES_OF_KNOWN_VARS="vast_list_of_previously_known_variables.log"
 
 ####### Set color scheme for gnuplot 5.0 or above
 GNUPLOT5_COLOR_SCHEME_COMMAND="set colors classic"

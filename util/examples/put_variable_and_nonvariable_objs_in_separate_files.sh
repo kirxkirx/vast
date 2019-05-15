@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-FILE_WITH_FILEAMES_OF_KNOWN_VARS="vast_autocandidates.log"
+#FILE_WITH_FILEAMES_OF_KNOWN_VARS="vast_autocandidates.log"
+FILE_WITH_FILEAMES_OF_KNOWN_VARS="vast_list_of_previously_known_variables.log"
 
 for STATISTICSFILE in vast_lightcurve_statistics.log vast_lightcurve_statistics_normalized.log ;do
  VARIABLESFILE=${STATISTICSFILE/.log/_variables_only.log}
