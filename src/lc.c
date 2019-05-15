@@ -60,6 +60,7 @@ void print_help() {
  fprintf( stderr, "  'K' - time of minimum determination using KvW method. You'll need to specify the eclipse duration with two clicks.\n" );
  fprintf( stderr, "  \033[0;36m'U'\033[00m - Try to \033[0;36midentify the star\033[00m with USNO-B1.0 and search GCVS, Simbad, VSX\n" );
  fprintf( stderr, "  \033[0;36m'L'\033[00m - Start web-based \033[0;36mperiod search tool\033[00m\n" );
+ fprintf( stderr, "  'Q' - Start online lighcurve classifier (http://scan.sai.msu.ru/wwwupsilon/)\n");
  fprintf( stderr, "\n" );
  return;
 }
@@ -602,7 +603,7 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for APER(lc.c)\n" );
   exit( 1 );
  };
- filename= (char **)malloc( number_of_lines_in_lc_file_for_malloc * sizeof( char ** ) );
+ filename= (char **)malloc( number_of_lines_in_lc_file_for_malloc * sizeof( char * ) );
  if ( filename == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for filename(lc.c)\n" );
   exit( 1 );
@@ -959,7 +960,15 @@ int main( int argc, char **argv ) {
     plot_linear_trend( fit_jd, fit_n, A, B, mean_jd, mean_mag );
     //
    }
+   
 
+   free(fit_jd);
+   free(fit_mag);
+   free(fit_mag_err);
+   
+   fit_jd = NULL;
+   fit_mag = NULL;
+   fit_mag_err = NULL;
   } // if( plot_linear_trend_switch==1 ){
 
   //   fprintf(stderr,"##### DEBUG06 #####\n");
@@ -1156,6 +1165,13 @@ int main( int argc, char **argv ) {
    }
 
    was_lightcurve_changed= 1; // note, that lightcurve was changed
+
+   free(fit_jd);
+   free(fit_mag);
+   free(fit_mag_err);
+   fit_jd = NULL;
+   fit_mag = NULL;
+   fit_mag_err = NULL;
   }
 
   // terminate single data point
@@ -1261,23 +1277,27 @@ int main( int argc, char **argv ) {
    // make sure the lightcurve file name is long enough
    if ( strlen( lightcurvefilename ) > 5 ) {
     // we don't do the fancy renaming if the input lightcurve file name is too short
-    if ( lightcurvefilename[strlen( lightcurvefilename ) - 1] == 't' && lightcurvefilename[strlen( lightcurvefilename ) - 2] == 'a' && lightcurvefilename[strlen( lightcurvefilename ) - 3] == 'd' ) {
+    //if ( lightcurvefilename[strlen( lightcurvefilename ) - 1] == 't' && lightcurvefilename[strlen( lightcurvefilename ) - 2] == 'a' && lightcurvefilename[strlen( lightcurvefilename ) - 3] == 'd' ) {
+    if(strcmp(&(lightcurvefilename[strlen(lightcurvefilename) - 3]), "dat")){
      lightcurvefilename[strlen( lightcurvefilename ) - 4]= '\0'; // remove ".dat"
      strcat( lightcurvefilename, "_edit.dat" );
      is_lightcurvefilename_modified= 1;
     }
-    if ( lightcurvefilename[strlen( lightcurvefilename ) - 1] == 't' && lightcurvefilename[strlen( lightcurvefilename ) - 2] == 'x' && lightcurvefilename[strlen( lightcurvefilename ) - 3] == 't' ) {
+    //if ( lightcurvefilename[strlen( lightcurvefilename ) - 1] == 't' && lightcurvefilename[strlen( lightcurvefilename ) - 2] == 'x' && lightcurvefilename[strlen( lightcurvefilename ) - 3] == 't' ) {
+    if(strcmp(&(lightcurvefilename[strlen(lightcurvefilename) - 3]), "txt")){
      lightcurvefilename[strlen( lightcurvefilename ) - 4]= '\0'; // remove ".txt"
      strcat( lightcurvefilename, "_edit.txt" );
      is_lightcurvefilename_modified= 1;
     }
-    if ( lightcurvefilename[strlen( lightcurvefilename ) - 1] == 'v' && lightcurvefilename[strlen( lightcurvefilename ) - 2] == 's' && lightcurvefilename[strlen( lightcurvefilename ) - 3] == 'c' ) {
-     lightcurvefilename[strlen( lightcurvefilename ) - 4]= '\0'; // remove ".txt"
+    //if ( lightcurvefilename[strlen( lightcurvefilename ) - 1] == 'v' && lightcurvefilename[strlen( lightcurvefilename ) - 2] == 's' && lightcurvefilename[strlen( lightcurvefilename ) - 3] == 'c' ) {
+    if(strcmp(&(lightcurvefilename[strlen(lightcurvefilename) - 3]), "csv")){
+     lightcurvefilename[strlen( lightcurvefilename ) - 4]= '\0'; // remove ".csv"
      strcat( lightcurvefilename, "_edit.csv" );
      is_lightcurvefilename_modified= 1;
     }
-    if ( lightcurvefilename[strlen( lightcurvefilename ) - 1] == 'c' && lightcurvefilename[strlen( lightcurvefilename ) - 2] == 'l' ) {
-     lightcurvefilename[strlen( lightcurvefilename ) - 3]= '\0'; // remove ".txt"
+    //if ( lightcurvefilename[strlen( lightcurvefilename ) - 1] == 'c' && lightcurvefilename[strlen( lightcurvefilename ) - 2] == 'l' ) {
+    if(strcmp(&(lightcurvefilename[strlen(lightcurvefilename) - 2]), "lc")){
+     lightcurvefilename[strlen( lightcurvefilename ) - 3]= '\0'; // remove ".lc"
      strcat( lightcurvefilename, "_edit.lc" );
      is_lightcurvefilename_modified= 1;
     }
@@ -1432,6 +1452,8 @@ int main( int argc, char **argv ) {
    // clean-up
    free( fit_mag );
    free( fit_jd );
+   fit_mag = NULL;
+   fit_jd = NULL;
    fit_n= 0;
 
    n_breaks= 2; // to draw fitting boundaries again after the screen was wiped
@@ -1562,6 +1584,7 @@ int main( int argc, char **argv ) {
  if ( 0 != strcmp( PGPLOT_CONTROL, "/CPS" ) && 0 != strcmp( PGPLOT_CONTROL, "/PNG" ) ) {
   cpgclos();
  }
+ 
 
  return 0;
 }
