@@ -143,6 +143,50 @@ int main( int argc, char **argv ) {
  }
 */
 
+
+ /* create a generator chosen by the 
+   environment variable GSL_RNG_TYPE */
+ gsl_rng_env_setup();
+
+ T= gsl_rng_default;
+ r= gsl_rng_alloc( T );
+
+ //gsl_rng_set(r, 2015); // set random seed
+ gsl_rng_set( r, random_seed() );
+
+ // Now after RNG is initialized we may randomly choose variability type, if needed
+ if ( randomly_choose_sine_or_psd_variability_type == 1 ) {
+  if ( 0.5 < gsl_rng_uniform( r ) ) {
+   sine_wave_mode_instead_of_psd= 1;
+  } else {
+   sine_wave_mode_instead_of_psd= 0;
+  }
+ }
+
+
+ ////////////////////// RANDOM VARIABILITY PARAMETERS SETUP //////////////////////
+ if ( all_random == 1 ) {
+  // Decide if we want this star to be variable at all
+  // 1% probability for this star to be made variable
+  if ( 0.01 < gsl_rng_uniform( r ) ) {
+   fprintf( stderr, "We are not making this star variable!\n" );
+   gsl_rng_free( r ); // de-allocation
+   return 1; // exit code is important for the control script
+  }
+  // Uniform distribution from 0 to 1mag amplitude (peak-to-peak)
+  var_half_amp= 0.5 * gsl_rng_uniform( r );
+  if ( sine_wave_mode_instead_of_psd != 0 ) {
+   // Uniform frequency distribution from 1/0.05 to 1/20 d
+   frequency= gsl_ran_flat( r, 0.05, 20.0 );
+   phase= gsl_ran_flat( r, 0.0, 2 * M_PI ); // randomize phase
+   fprintf( stderr, "Injecting sine variability with the amplitude mag., frequency=%lf c/d, phase=%lf rad!\n", 2*var_half_amp, frequency, phase );
+  }
+ }
+ sprintf( var_half_amp_string, "_amp%.3lfmag", var_half_amp ); // save amplitude for future reference
+ /////////////////////////////////////////////////////////////////////////////////
+
+ // We want it after 'all_random' check so we don't do all the malloc'ing 
+ // if we don't want to insert simulated variability into the input lightcurve.
  JD= malloc( number_of_measurements * sizeof( double ) );
  if ( JD == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for JD(lighcurve_simulator.c)\n" );
@@ -174,25 +218,6 @@ int main( int argc, char **argv ) {
   exit( 1 );
  };
 
- /* create a generator chosen by the 
-   environment variable GSL_RNG_TYPE */
- gsl_rng_env_setup();
-
- T= gsl_rng_default;
- r= gsl_rng_alloc( T );
-
- //gsl_rng_set(r, 2015); // set random seed
- gsl_rng_set( r, random_seed() );
-
- // Now after RNG is initialized we may randomly choose variability type, if needed
- if ( randomly_choose_sine_or_psd_variability_type == 1 ) {
-  if ( 0.5 < gsl_rng_uniform( r ) ) {
-   sine_wave_mode_instead_of_psd= 1;
-  } else {
-   sine_wave_mode_instead_of_psd= 0;
-  }
- }
-
  if ( sine_wave_mode_instead_of_psd != 1 ) {
   simulated_mag= malloc( number_of_measurements * sizeof( double ) );
   if ( simulated_mag == NULL ) {
@@ -216,24 +241,6 @@ int main( int argc, char **argv ) {
   };
   phases= malloc( N_SPECTRAL_POINTS * sizeof( double ) );
  }
-
- ////////////////////// RANDOM VARIABILITY PARAMETERS SETUP //////////////////////
- if ( all_random == 1 ) {
-  // Decide if we want this star to be variable at all
-  // 1% probability for this star to be made variable
-  if ( 0.01 < gsl_rng_uniform( r ) ) {
-   return 1; // exit code is important for the control script
-  }
-  // Uniform distribution from 0 to 1mag amplitude (peak-to-peak)
-  var_half_amp= 0.5 * gsl_rng_uniform( r );
-  if ( sine_wave_mode_instead_of_psd != 0 ) {
-   // Uniform frequency distribution from 1/0.05 to 1/20 d
-   frequency= gsl_ran_flat( r, 0.05, 20.0 );
-   phase= gsl_ran_flat( r, 0.0, 2 * M_PI ); // randomize phase
-  }
- }
- sprintf( var_half_amp_string, "_amp%.3lfmag", var_half_amp ); // save amplitude for future reference
- /////////////////////////////////////////////////////////////////////////////////
 
  // This stuff will be the same for all the realizations
  if ( sine_wave_mode_instead_of_psd != 1 ) {
