@@ -14,6 +14,14 @@ if [ -d SIMULATOR_reference ];then
 fi
 util/save.sh SIMULATOR_reference
 
+# This should be outside the for N_POINTS loop!!!
+for OLDDIR in reduced_N_points_* ;do
+ if [ -d "$OLDDIR/" ];then
+  rm -rf "$OLDDIR"
+ fi
+done
+
+
 for N_POINTS in `seq 2 260` ;do
 #for N_POINTS in `seq 201 265` ;do
 
@@ -24,11 +32,6 @@ else
  mkdir simulation_results
 fi
 
-for OLDDIR in reduced_N_points_* ;do
- if [ -d "$OLDDIR/" ];then
-  rm -rf "$OLDDIR"
- fi
-done
 
 
 #for ITERATION in `seq 1 1000` ;do
