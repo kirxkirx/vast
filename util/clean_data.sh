@@ -6,7 +6,7 @@
 # Note, from this version on the command line parameter "all" is no longer needed.
 #
 
-echo -n "Checking write permissions for the current directory ( $PWD )...  "
+echo -n "Checking write permissions for the current directory ( $PWD ) ...  "
 
 touch testfile$$.tmp
 if [ $? -eq 0 ];then
