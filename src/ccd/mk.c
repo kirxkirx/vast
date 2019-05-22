@@ -10,8 +10,6 @@
 
 #include "../vast_limits.h"
 
-//#define MIN_COUNT 15 //Это типа минимальный отсчёт, который мы считаем реальным.
-
 char *beztochki( char * );
 
 int main( int argc, char *argv[] ) {
@@ -34,7 +32,6 @@ int main( int argc, char *argv[] ) {
  int bitpix2;
  int file_counter;
  // These variables are needed to keep FITS header keys
- //char *key[10000];
  char **key;
  int No_of_keys;
  int keys_left;
@@ -68,7 +65,7 @@ int main( int argc, char *argv[] ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for key[ii]\n" );
    exit( 1 );
   }
-  fprintf( stderr, "DEBUG: ii=%d No_of_keys=%d FLEN_CARD=%d\n", ii, No_of_keys, FLEN_CARD );
+  //fprintf( stderr, "DEBUG: ii=%d No_of_keys=%d FLEN_CARD=%d\n", ii, No_of_keys, FLEN_CARD );
   fits_read_record( fptr, ii, key[ii], &status );
  }
  fits_read_key( fptr, TLONG, "BZERO", &bzero, bzero_comment, &status );
@@ -123,6 +120,7 @@ int main( int argc, char *argv[] ) {
   if ( status != 0 ) {
    exit( 1 );
   }
+  //fprintf(stderr,"DEBUUG: file_counter=%d\n",file_counter);
  }
 
  yy= malloc( img_size * sizeof( double ) );
@@ -130,9 +128,16 @@ int main( int argc, char *argv[] ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for yy array\n" );
   exit( 1 );
  };
+/*
  // Scale everyting to the first image
  for ( i= 0; i < img_size; i++ ) {
   yy[i]= (double)image_array[1][i];
+  //  fprintf(stderr,"%lf %d\n",yy[i],i);
+ }
+*/
+ // Scale everyting to the LAST image
+ for ( i= 0; i < img_size; i++ ) {
+  yy[i]= (double)image_array[file_counter-1][i];
   //  fprintf(stderr,"%lf %d\n",yy[i],i);
  }
  gsl_sort( yy, 1, img_size );
