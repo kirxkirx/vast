@@ -35,6 +35,10 @@
 
 #include "../get_path_to_vast.h"
 
+#include "../count_lines_in_ASCII_file.h"
+
+#include "../lightcurve_io.h" // for read_lightcurve_point()
+
 int Kourovka_SBG_date_hack( char *fitsfilename, char *DATEOBS, int *date_parsed, double *exposure ); // defined in gettime.c
 
 int get_string_with_fov_of_wcs_calibrated_image( char *fitsfilename, char *output_string ) {
@@ -209,7 +213,9 @@ void get_ref_image_name(char *str){
 void get_ref_image_name( char *str ) {
  FILE *outfile;
  char stringbuf[2048];
- char stringtrash[2048];
+ char stringtrash1[2048];
+ char stringtrash2[2048];
+ char stringtrash3[2048];
  fprintf( stderr, "Getting the reference image name from vast_summary.log\n" );
  outfile= fopen( "vast_summary.log", "r" );
  if ( outfile == NULL ) {
@@ -218,11 +224,17 @@ void get_ref_image_name( char *str ) {
  }
  while ( NULL != fgets( stringbuf, 2048, outfile ) ) {
   stringbuf[2048 - 1]= '\0'; // just in case
-  if ( NULL == strstr( stringbuf, "Ref.  image:" ) )
+  if ( NULL == strstr( stringbuf, "Ref.  image:" ) ){
    continue;
+  }
   // Example string to parse
   // Ref.  image: 2453192.38876 05.07.2004 21:18:19   ../sample_data/f_72-001r.fit
-  sscanf( stringbuf, "Ref.  image: %2048s %2048s %2048s   %s", stringtrash, stringtrash, stringtrash, str );
+  sscanf( stringbuf, "Ref.  image: %s %s %s   %s", stringtrash1, stringtrash2, stringtrash3, str );
+  stringtrash1[2048 - 1]= '\0'; // just in case
+  stringtrash2[2048 - 1]= '\0'; // just in case
+  stringtrash3[2048 - 1]= '\0'; // just in case
+  // The line below freaks out Address sanitizer
+  //sscanf( stringbuf, "Ref.  image: %2048s %2048s %2048s   %s", stringtrash1, stringtrash2, stringtrash3, str );
  }
  fclose( outfile );
  fprintf( stderr, "The reference image is %s \n", str );
@@ -446,6 +458,49 @@ int mymin( float A, float B ) {
   return trunc(round(B));
 }
 
+int find_XY_position_of_a_star_on_image_from_vast_format_lightcurve( float *X_known_variable, float *Y_known_variable, char *lightcurvefilename, char *fits_image_name ){
+ double jd, mag, merr, x, y, app;
+ char string[FILENAME_LENGTH];
+ FILE *lightcurvefile;
+ lightcurvefile=fopen(lightcurvefilename,"r");
+ if ( lightcurvefile == NULL ){
+  fprintf(stderr,"No lightcurve file %s\n",lightcurvefilename);
+  return 0; // not found
+ }
+ while( -1<read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ){
+  if ( jd == 0.0 ){
+   continue; // if this line could not be parsed, try the next one
+  }
+  if( 0==strncmp( string, fits_image_name, strlen(fits_image_name) ) ){
+   fprintf(stderr,"%lf %lf\n", x, y );
+   (*X_known_variable)= (float)x;
+   (*Y_known_variable)= (float)y;
+   return 1; // found
+  }
+ }
+ fprintf(stderr,"not found\n");
+ return 0; // not found, if we are still here
+}
+
+void load_markers_for_known_variables( float *markX_known_variable, float *markY_known_variable, int *mark_known_variable_counter, char *fits_image_name){
+ FILE *list_of_known_vars_file;
+ char lightcurvefilename[OUTFILENAME_LENGTH];
+ char string_with_star_id_and_info[2048];
+ list_of_known_vars_file=fopen("vast_list_of_previously_known_variables.log","r");
+ if( list_of_known_vars_file == NULL ){
+  (*mark_known_variable_counter)=0;
+  return;
+ }
+ fprintf(stderr,"Loading known variables from vast_list_of_previously_known_variables.log\n");
+ while ( -1<fscanf(list_of_known_vars_file,"%s %[^\t\n]", lightcurvefilename, string_with_star_id_and_info ) ){
+  fprintf(stderr,"Loading %s ... ",lightcurvefilename);
+  if ( 1==find_XY_position_of_a_star_on_image_from_vast_format_lightcurve( &markX_known_variable[(*mark_known_variable_counter)], &markY_known_variable[(*mark_known_variable_counter)], lightcurvefilename, fits_image_name ) ){
+   (*mark_known_variable_counter)++;
+  }
+ }
+ return;
+}
+
 int main( int argc, char **argv ) {
 
  /* For FITS file reading */
@@ -531,6 +586,13 @@ int main( int argc, char **argv ) {
  float *sexY_viewed= NULL;
  int sex_viewed_counter;
 
+ float *markX_known_variable= NULL;
+ float *markY_known_variable= NULL;
+ int mark_known_variable_counter;
+
+ int use_north_east_marks=1;
+ int use_labels=1;
+
  /* Match File */
  FILE *matchfile;
  char RADEC[1024];
@@ -588,6 +650,14 @@ int main( int argc, char **argv ) {
  if ( 0 == strcmp( "make_finding_chart", basename( argv[0] ) ) ) {
   fprintf( stderr, "Plotting finding chart...\n" );
   finding_chart_mode= 1;
+  //mark_trigger= 1;
+ }
+
+ if ( 0 == strcmp( "fits2png", basename( argv[0] ) ) ) {
+  fprintf( stderr, "Plotting finding chart with no labels...\n" );
+  finding_chart_mode= 1;
+  use_north_east_marks= 0;
+  use_labels= 0;
   //mark_trigger= 1;
  }
 
@@ -653,12 +723,13 @@ int main( int argc, char **argv ) {
  // double a_b_err;
  // int sextractor_flag;
 
+
  /* Options for getopt() */
  char *cvalue= NULL;
 
- const char *const shortopt= "a:9";
+ const char *const shortopt= "a:9nl";
  const struct option longopt[]= {
-     {"apeture", 1, NULL, 'a'}, {"ds9", 0, NULL, '9'}, {NULL, 0, NULL, 0}}; //NULL string must be in the end
+     {"apeture", 1, NULL, 'a'}, {"ds9", 0, NULL, '9'}, {"nonortheastmarks", 0, NULL, 'n'}, {"nolabels", 0, NULL, 'l'}, {NULL, 0, NULL, 0}}; //NULL string must be in the end
  int nextopt;
  while ( nextopt= getopt_long( argc, argv, shortopt, longopt, NULL ), nextopt != -1 ) {
   switch ( nextopt ) {
@@ -676,6 +747,14 @@ int main( int argc, char **argv ) {
   case '9':
    use_ds9= 1;
    fprintf( stdout, "opt '9': Using ds9 to display images!\n" );
+   break;
+  case 'n':
+   use_north_east_marks= 0;
+   fprintf( stdout, "opt 'n': No North-East marks will be ploted!\n" );
+   break;
+  case 'l':
+   use_labels= 0;
+   fprintf( stdout, "opt 'l': No axes labels will be ploted!\n" );
    break;
   case -1:
    fprintf( stderr, "That's all\n" );
@@ -747,6 +826,11 @@ int main( int argc, char **argv ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for sexMAG_ERR\n" );
    exit( 1 );
   };
+  sexNUMBER= (int *)malloc( MAX_NUMBER_OF_STARS * sizeof( int ) );
+  if ( sexNUMBER == NULL ) {
+   fprintf( stderr, "ERROR: Couldn't allocate memory for sexNUMBER\n" );
+   exit( 1 );
+  };
   marker_counter= 0;
 
   /* Get reference file name from log */
@@ -763,7 +847,9 @@ int main( int argc, char **argv ) {
     }
     fclose( calibfile );
     if ( 0 == strcmp( imagefilename, fits_image_name ) ) {
-     /* Get number of observations for correct error estimation */
+     // Get number of observations for correct error estimation
+     N=count_lines_in_ASCII_file( RADEC );
+     /*
      sprintf( system_command, "grep -c \" \" %s > grep.tmp", RADEC );
      if ( 0 != system( system_command ) ) {
       fprintf( stderr, "ERROR running  %s\n", system_command );
@@ -775,8 +861,12 @@ int main( int argc, char **argv ) {
      fclose( calibfile );
      //system("rm -f grep.tmp");
      unlink( "grep.tmp" );
+     */
      sexMAG_ERR[sex]= sexMAG_ERR[sex] / sqrt( N - 1 );
-     /* done with errors, remember aperture size, increase counter */
+     // done with errors
+     // Note the star name
+     sscanf( RADEC, "out%d.dat", &sexNUMBER[sex] );
+     // remember aperture size, increase counter */
      APER= tmp_APER;
      sex++;
     }
@@ -871,6 +961,31 @@ int main( int argc, char **argv ) {
  }
 
  //fprintf(stderr,"DEBUG-3\n");
+
+ if ( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
+  // Allocate memory for the array of known variables markers
+  markX_known_variable= (float *)malloc( MAX_NUMBER_OF_STARS * sizeof( float ) );
+  if ( markX_known_variable == NULL ) {
+   fprintf( stderr, "ERROR: Couldn't allocate memory for markX_known_variable\n" );
+   exit( 1 );
+  };
+  markY_known_variable= (float *)malloc( MAX_NUMBER_OF_STARS * sizeof( float ) );
+  if ( markY_known_variable == NULL ) {
+   fprintf( stderr, "ERROR: Couldn't allocate memory for markY_known_variable\n" );
+   exit( 1 );
+  };
+  mark_known_variable_counter= 0; // initialize
+  // TBA: load known variables
+  //load_markers_for_known_variables( float *markX_known_variable, float *markY_known_variable, int *mark_known_variable_counter, char *fits_image_name);
+  load_markers_for_known_variables( markX_known_variable, markY_known_variable, &mark_known_variable_counter, fits_image_name);
+  //
+  if( mark_known_variable_counter==0 ){
+   // Free memory for the array of known variables markers, as non known variables were loaded
+   free(markX_known_variable);
+   free(markY_known_variable);
+  }
+ }
+
 
  if ( match_mode == 1 || match_mode == 3 ) {
   //fprintf(stderr,"DEBUG-2\n");
@@ -1310,7 +1425,13 @@ int main( int argc, char **argv ) {
   cpgsvp( 0.05, 0.95, 0.035, 0.035 + 0.9 );
  } else {
   cpgpap( 0.0, 1.0 ); /* Make square plot */
-  cpgsvp( 0.05, 0.95, 0.05, 0.95 );
+  if( use_labels == 1 ) {
+   // leave some space for labels
+   cpgsvp( 0.05, 0.95, 0.05, 0.95 );
+  } else {
+   // Use the full plot area leaving no space for labels
+   cpgsvp( 0.0, 1.0, 0.0, 1.0 );
+  }
  }
 
  // set default plotting limits
@@ -1371,8 +1492,12 @@ int main( int argc, char **argv ) {
  }
 
  if ( finding_chart_mode == 0 ) {
+  // Print user instructions here!!!
   print_pgfv_help();
- }
+  if ( match_mode == 2 ) {
+   fprintf(stderr, "Click on a comparison star and enter its magnitude in the terminal window.\nRight-click after entering all the comparison stars.\n");
+  }
+ } // if ( finding_chart_mode == 0 ) {
 
  if ( finding_chart_mode == 1 ) {
   curX= markX;
@@ -1529,10 +1654,20 @@ int main( int argc, char **argv ) {
     if ( match_mode == 1 || match_mode == 2 || match_mode == 3 ) {
      for ( marker_counter= 0; marker_counter < sex; marker_counter++ ) {
       if ( ( curX - sexX[marker_counter] ) * ( curX - sexX[marker_counter] ) + ( curY - sexY[marker_counter] ) * ( curY - sexY[marker_counter] ) < (float)( APER * APER / 4.0 ) ) {
+        // mark the star
+        cpgsci( 2 );
+        cpgcirc( sexX[marker_counter], sexY[marker_counter], (float)APER / 2.0 );
+        cpgsci( 1 );
+        //
 
        /* Magnitude calibration mode */
        if ( match_mode == 2 ) {
-        fprintf( stderr, "Star detected. Instrumental magnitude: %.4lf %.4lf\n(In order to cancel the input - just type '99' instead of an actual magnitude.)\nPlease, enter its catalog magnitude: ", sexMAG[marker_counter], sexMAG_ERR[marker_counter] );
+        // mark the star
+        //cpgsci( 2 );
+        //cpgcirc( sexX[marker_counter], sexY[marker_counter], (float)APER / 2.0 );
+        //cpgsci( 1 );
+        //
+        fprintf( stderr, "Star %d. Instrumental magnitude: %.4lf %.4lf\n(In order to cancel the input - type '99' instead of an actual magnitude.)\nPlease, enter its catalog magnitude: ", sexNUMBER[marker_counter], sexMAG[marker_counter], sexMAG_ERR[marker_counter] );
         if ( NULL == fgets( RADEC, 1024, stdin ) ) {
          fprintf( stderr, "Incorrect input!\n" );
         }
@@ -1857,7 +1992,9 @@ int main( int argc, char **argv ) {
     cpgeras();
    }
    cpgswin( (float)drawX1, (float)drawX2, (float)drawY1, (float)drawY2 );
-   cpgbox( "BCN1", 0.0, 0, "BCN1", 0.0, 0 );
+   if( use_labels == 1 ) {
+    cpgbox( "BCN1", 0.0, 0, "BCN1", 0.0, 0 );
+   }
 
    if ( drawY1 > drawY2 ) {
     buf= drawY1;
@@ -1888,20 +2025,22 @@ int main( int argc, char **argv ) {
     //    return 0;
    }
    /* Make labels with general information: time, filename... */
-   if ( finding_chart_mode == 0 ) {
-    cpgscr( 1, 0.62, 0.81, 0.38 ); /* set color of lables */
-    cpgsch( 0.9 );                 /* Set small font size */
-    cpgmtxt( "T", 0.5, 0.5, 0.5, fits_image_name );
-    cpgmtxt( "T", 1.5, 0.5, 0.5, stderr_output );
-    cpgsch( 1.0 );              /* Set normal font size */
-    cpgscr( 1, 1.0, 1.0, 1.0 ); /* */
-   } else {
-    cpgmtxt( "T", 1.0, 0.5, 0.5, stderr_output );
+   if( use_labels == 1 ) {
+    if ( finding_chart_mode == 0 ) {
+     cpgscr( 1, 0.62, 0.81, 0.38 ); /* set color of lables */
+     cpgsch( 0.9 );                 /* Set small font size */
+     cpgmtxt( "T", 0.5, 0.5, 0.5, fits_image_name );
+     cpgmtxt( "T", 1.5, 0.5, 0.5, stderr_output );
+     cpgsch( 1.0 );              /* Set normal font size */
+     cpgscr( 1, 1.0, 1.0, 1.0 ); /* */
+    } else {
+     cpgmtxt( "T", 1.0, 0.5, 0.5, stderr_output );
+    }
    }
    /* Done with labels */
 
    /* Put a mark */
-   if ( mark_trigger == 1 ) {
+   if ( mark_trigger == 1 && use_labels == 1 ) {
     cpgsci( 2 );
     cpgpt1( markX, markY, 2 );
     cpgsci( 1 );
@@ -1915,17 +2054,19 @@ int main( int argc, char **argv ) {
     /////
    } // if ( mark_trigger == 1 ) {
    
-   // Always put mark in te center of the finding chart
-   if ( finding_chart_mode == 1 ) {
-    markX=((float)naxes[0]/2.0);
-    markY=((float)naxes[1]/2.0);
-    cpgsci( 2 );
-    cpgsch( 3.0 );
-    cpgslw(2); // increase line width
-    cpgpt1( markX, markY, 2 );
-    cpgslw(1); // set default line width
-    cpgsch( 1.0 );
-    cpgsci( 1 );
+   if( use_labels == 1 ) {
+    // Always put mark in te center of the finding chart
+    if ( finding_chart_mode == 1 ) {
+     markX=((float)naxes[0]/2.0);
+     markY=((float)naxes[1]/2.0);
+     cpgsci( 2 );
+     cpgsch( 3.0 );
+     cpgslw(2); // increase line width
+     cpgpt1( markX, markY, 2 );
+     cpgslw(1); // set default line width
+     cpgsch( 1.0 );
+     cpgsci( 1 );
+    }
    }
 
    // Markers from manymarkers file
@@ -1936,22 +2077,25 @@ int main( int argc, char **argv ) {
    }
 
    if ( finding_chart_mode == 1 ) {
-    // Make N/E labels
-    if ( is_this_north_up_east_left_image== 1 ){
-     cpgsci( 2 );
-     cpgsch( 2.0 );                 /* Set small font size */
-     cpgslw(4); // increase line width
-     cpgmtxt( "T", -1.0, 0.5, 0.5, "N");
-     cpgmtxt( "LV", -0.5, 0.5, 0.5, "E");
-     //
-     if ( 0 == get_string_with_fov_of_wcs_calibrated_image( fits_image_name, fov_string ) ) {
-      cpgmtxt( "B", -1.0, 0.05, 0.0, fov_string);
-      fprintf(stderr,"The image is %s\n",fov_string);
+    
+    if ( use_north_east_marks == 1 ){
+     // Make N/E labels
+     if ( is_this_north_up_east_left_image== 1 ){
+      cpgsci( 2 );
+      cpgsch( 2.0 );                 /* Set small font size */
+      cpgslw(4); // increase line width
+      cpgmtxt( "T", -1.0, 0.5, 0.5, "N");
+      cpgmtxt( "LV", -0.5, 0.5, 0.5, "E");
+      //
+      if ( 0 == get_string_with_fov_of_wcs_calibrated_image( fits_image_name, fov_string ) ) {
+       cpgmtxt( "B", -1.0, 0.05, 0.0, fov_string);
+       fprintf(stderr,"The image is %s\n",fov_string);
+      }
+      //
+      cpgslw(1); // set default line width
+      cpgsch( 1.0 );                 /* Set default font size */
+      cpgsci( 1 );
      }
-     //
-     cpgslw(1); // set default line width
-     cpgsch( 1.0 );                 /* Set default font size */
-     cpgsci( 1 );
     }
     
     // exit now
@@ -1968,12 +2112,21 @@ int main( int argc, char **argv ) {
     cpgsci( 3 );
     cpgsfs( 2 );
     // Draw objects
-    for ( marker_counter= 0; marker_counter < sex; marker_counter++ )
+    for ( marker_counter= 0; marker_counter < sex; marker_counter++ ){
      cpgcirc( sexX[marker_counter], sexY[marker_counter], (float)APER / 2.0 );
+    }
     if ( match_mode == 1 ) {
      cpgsci( 2 );
-     for ( marker_counter= 0; marker_counter < sex_viewed_counter; marker_counter++ )
+     for ( marker_counter= 0; marker_counter < sex_viewed_counter; marker_counter++ ){
       cpgcirc( sexX_viewed[marker_counter], sexY_viewed[marker_counter], (float)APER / 2.0 );
+     }
+     cpgsci( 1 );
+    }
+    if ( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
+     cpgsci( 3 );
+     for ( marker_counter= 0; marker_counter < mark_known_variable_counter; marker_counter++ ){
+      cpgcirc( markX_known_variable[marker_counter], markX_known_variable[marker_counter], (float)APER / 2.0 );
+     }
      cpgsci( 1 );
     }
     /* And draw bad regions */
@@ -2033,6 +2186,7 @@ int main( int argc, char **argv ) {
   free( sexY );
   free( sexMAG );
   free( sexMAG_ERR );
+  free( sexNUMBER );
  }
 
  if ( match_mode == 1 || match_mode == 3 ) {
@@ -2043,7 +2197,7 @@ int main( int argc, char **argv ) {
  if ( match_mode == 1 || match_mode == 3 ) {
   free( sexFLUX );
   free( sexFLUX_ERR );
-  free( sexNUMBER );
+  //free( sexNUMBER );
   free( sexFLAG );
   free( extFLAG );
   free( psfCHI2 );
@@ -2053,14 +2207,23 @@ int main( int argc, char **argv ) {
   free( sexERRB_IMAGE );
  }
 
+ if ( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
+  if( mark_known_variable_counter>0 ){
+   // Free memory for the array of known variables markers
+   free(markX_known_variable);
+   free(markY_known_variable);
+  }
+ }
+
  /* Write magnitude calibration file */
  /* Magnitude calibration mode */
  if ( match_mode == 2 && match_input != 0 ) {
   fprintf( stderr, "%d stars were written to calib.txt \n", match_input );
  }
 
- if ( hist_trigger == 1 )
+ if ( hist_trigger == 1 ){
   free( float_array2 );
+ }
 
  free( float_array );
  free( real_float_array );

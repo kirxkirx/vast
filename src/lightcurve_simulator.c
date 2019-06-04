@@ -179,7 +179,7 @@ int main( int argc, char **argv ) {
    // Uniform frequency distribution from 1/0.05 to 1/20 d
    frequency= gsl_ran_flat( r, 0.05, 20.0 );
    phase= gsl_ran_flat( r, 0.0, 2 * M_PI ); // randomize phase
-   fprintf( stderr, "Injecting sine variability with the amplitude mag., frequency=%lf c/d, phase=%lf rad!\n", 2*var_half_amp, frequency, phase );
+   fprintf( stderr, "Injecting sine variability with the amplitude %lf mag. (peak-to-peak), frequency=%lf c/d, phase=%lf rad!\n", 2*var_half_amp, frequency, phase );
   }
  }
  sprintf( var_half_amp_string, "_amp%.3lfmag", var_half_amp ); // save amplitude for future reference
