@@ -8,6 +8,9 @@ vast-1.0rc85:
 	* The new tool 'util/fits2png' will produce a PNG finder chart with no labels from 
 	the input FITS image. Use 'util/make_finding_chart' to produce a finder chart with labels.
 	In all cases the output image will be written to 'pgplot.png' file in the current directory.
+	* Lightcurve files (out*.dat) listed as automatically selected candidate variables in vast_autocandidates.log
+	as well as the ones listed by user as previously known variables in vast_list_of_previously_known_variables.log
+	are now higlighted by the FITS viewer './sextract_single_image'
 07 Mar 2019: vast-1.0rc84:
 	* VaST is now on Github ( https://github.com/kirxkirx/vast ), pull requests are welcome!
 	* The new script 'util/get_gaia_lc.sh' gets Gaia G, BP and RP lightcurves for a Gaia DR2 ID that 
