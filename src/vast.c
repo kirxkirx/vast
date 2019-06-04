@@ -920,7 +920,7 @@ void exclude_from_6_double_arrays( double *array1, double *array2, double *array
 }
 
 // Auxialiary function for magnitude calibration
-void drop_one_point_that_changes_fit_the_most( double *poly_x_external, double *poly_y_external, double *poly_err_external, int *N_good_stars_external, int param_p, int param_use_photocurve ) {
+void drop_one_point_that_changes_fit_the_most( double *poly_x_external, double *poly_y_external, double *poly_err_external, int *N_good_stars_external, int photometric_calibration_type, int param_use_photocurve ) {
  int param_use_photocurve_local_copy;
  double poly_coeff_local_copy[10];
  double chi2;
@@ -969,7 +969,7 @@ void drop_one_point_that_changes_fit_the_most( double *poly_x_external, double *
    wpolyfit_exit_code= fit_photocurve( poly_x, poly_y, poly_err, N_good_stars, poly_coeff_local_copy, &param_use_photocurve_local_copy, &chi2 );
    //poly_coeff_local_copy[4]=(double)param_use_photocurve;
   } else {
-   if ( param_p == 0 ) {
+   if ( photometric_calibration_type == 0 ) {
     wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff_local_copy, &chi2 );
    } else {
     wpolyfit_exit_code= wpolyfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff_local_copy, &chi2 );
@@ -1264,7 +1264,7 @@ int main( int argc, char **argv ) {
 
  /* Variables to set special parameters */
  int fitsfile_read_error= 0; // returned by gettime
- int param_p= 1;             // do not calibrate mags by polynom
+ int photometric_calibration_type= 1;             // do not calibrate mags by polynom
  int param_P= 0;             // PSF photometry mode (1 - do it; 2 - do usual aperture photometry)
  int param_w= 0;             // wide comparison window
  double fixed_star_matching_radius_pix= 0.0;
@@ -1542,12 +1542,12 @@ int main( int argc, char **argv ) {
    break;
   ///
   case 'p':
-   param_p= 0;
+   photometric_calibration_type= 0;
    fprintf( stdout, "opt 'p': Polynomial magnitude calibration will *NOT* be used!\n" );
    break;
   case 'o':
    param_use_photocurve= 1;
-   param_p= 1; // force parabolic magnitude fit (it should be reasonably good). It is needed to remove outliers.
+   photometric_calibration_type= 1; // force parabolic magnitude fit (it should be reasonably good). It is needed to remove outliers.
    fprintf( stdout, "opt 'o': \"photocurve\" will be used for magnitude calibration!\n" );
    break;
   case '1':
@@ -3799,7 +3799,7 @@ int main( int argc, char **argv ) {
         else
          exclude_from_6_double_arrays( poly_x, poly_y, poly_err, lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, the_baddest_outlier_number, &N_good_stars );
         // Recompute fit using linear or parabolic function depending on settings
-        if ( param_p == 0 ) {
+        if ( photometric_calibration_type == 0 ) {
          wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
         } else {
          wpolyfit_exit_code= wpolyfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
@@ -3819,7 +3819,7 @@ int main( int argc, char **argv ) {
 
       // Drop one of the 10 brightest stars that changes fit the most,
       // this is to handle the case when one of the brightest stars is actually variable
-      drop_one_point_that_changes_fit_the_most( poly_x, poly_y, poly_err, &N_good_stars, param_p, param_use_photocurve );
+      drop_one_point_that_changes_fit_the_most( poly_x, poly_y, poly_err, &N_good_stars, photometric_calibration_type, param_use_photocurve );
 
       /* Check that we haven't dropped too many stars so the parabolic fit still make sence */
       if ( N_good_stars < min_number_of_stars_for_magnitude_calibration ) {
@@ -3832,7 +3832,7 @@ int main( int argc, char **argv ) {
       }
 
       // Redo the final fit here, just in case
-      if ( param_p == 0 ) {
+      if ( photometric_calibration_type == 0 ) {
        wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
       } else {
        wpolyfit_exit_code= wpolyfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );

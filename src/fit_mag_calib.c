@@ -357,6 +357,7 @@ int main( int argc, char **argv ) {
      cov00= poly_coeff[5];
      cov11= poly_coeff[6];
     }
+    //
     if ( fit_function == 3 ) {
      B= 1.0;
      sum1= sum2= 0.0;
@@ -374,6 +375,7 @@ int main( int argc, char **argv ) {
      fit_photocurve( insmag, catmag, insmagerr, n_stars, poly_coeff, &fit_function, NULL );
     }
    }
+   //
 
    /* Print plot header */
    cpgscf( 1 );

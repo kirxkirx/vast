@@ -1,5 +1,4 @@
-* Deal with WARNING: the last record in lib/tai-utc.dat is more than 730 days old (JD2457754.5)!
-  Please make sure the tai-utc.dat file is up to date by checking its latest version at http://maia.usno.navy.mil/ser7/tai-utc.dat
+* Implement match_mode == 4 for variable and comparison star selection in pgfv
 
 * Test on UBUNTU 18.04
 

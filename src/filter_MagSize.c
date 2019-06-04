@@ -1,5 +1,6 @@
 #include "filter_MagSize.h"
 
+#define STOP_IF_FEWER_THAN_THIS_NUMBER_OF_STARS_PER_BIN 10
 #define MIN_NUMBER_OF_STARS_IN_BIN 40
 #define MAX_NUMBER_OF_STARS_IN_BIN 300
 #define BIN_HALFWIDTH_STEP_MAG 0.05
@@ -114,6 +115,13 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
   fprintf( stderr, "ERROR in filter_on_float_parameters(): parameter_number is out of range!\n" );
   return 0;
  }
+
+ min_number_of_points_in_mag_bin= MIN( MIN_NUMBER_OF_STARS_IN_BIN, (int)( (float)NUMBER / 3.0 ) + 0.5 );
+ if ( min_number_of_points_in_mag_bin<STOP_IF_FEWER_THAN_THIS_NUMBER_OF_STARS_PER_BIN ) {
+  fprintf( stderr, "ERROR in filter_on_float_parameters(): too few stars per magnitude bin to perform filtering!\n" );
+  return 0;
+ }
+
 
  if ( parameter_number == -2 ) {
   vast_flag_to_set= 2; // PSF-fit chi^2
@@ -235,7 +243,6 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
  debugfile_thresholdcurve= fopen( thresholdcurvefilename, "w" );
 
  //
- min_number_of_points_in_mag_bin= MIN( MIN_NUMBER_OF_STARS_IN_BIN, (int)( (float)NUMBER / 3.0 ) + 0.5 );
 
  // Make two iterations so the stars that are just on the edge of being rejected go over that edge
  for ( iteration= 0; iteration < 2; iteration++ ) {

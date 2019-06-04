@@ -8,7 +8,7 @@ if [ ! -f data.m_sigma ];then
  util/nopgplot.sh
 fi
 
-if [ -z $1 ] ;then
+if [ -z "$1" ] ;then
  echo "Performing manual magnitude calibration."
  echo "Please specify the comparison stars and their magnitudes!
 Opening the reference image..."
@@ -18,7 +18,7 @@ Opening the reference image..."
  fi
 else
  # Magnitude calibration for BVRIri bands using APASS magnitudes
- BAND=$1
+ BAND="$1"
  case "$BAND" in
  "C")
  ;;

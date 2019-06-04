@@ -72,7 +72,8 @@ echo -n "Checking if we can reach any period search servers... "
 # first - set the initial list of servers
 #PERIOD_SEARCH_SERVERS="scan.sai.msu.ru polaris.kirx.net vast.sai.msu.ru"
 # polaris.kirx.net is actually pretty slow...
-PERIOD_SEARCH_SERVERS="scan.sai.msu.ru vast.sai.msu.ru"
+# vast.sai.msu.ru disabled until the software is updated there
+PERIOD_SEARCH_SERVERS="scan.sai.msu.ru"
 rm -f server_*.ping_ok
 for i in $PERIOD_SEARCH_SERVERS ;do
  ping -c1 -n "$i" &>/dev/null && echo "$i" > server_"$i".ping_ok &
