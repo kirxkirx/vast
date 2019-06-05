@@ -248,6 +248,17 @@ int main( int argc, char **argv ) {
  /* Special one-star mode */
  if ( n_stars == 1 ) {
   fprintf( stdout, "%lf %lf %lf\n", 0.0, 1.0, ( catmag[0] ) - ( insmag[0] ) );
+  //
+  free( computed_x );
+  free( computed_y );
+  free( catmag );
+  free( fcatmag );
+  free( w );
+  free( insmagerr );
+  free( finsmag );
+  free( insmag );
+  free( finsmagerr );
+  //
   return 0;
  }
 
@@ -256,6 +267,20 @@ int main( int argc, char **argv ) {
   operation_mode= 1;
   fit_function= 1;
   gsl_fit_wlinear( insmag, 1, w, 1, catmag, 1, n_stars, &C, &B, &cov00, &cov01, &cov11, &sumsqres );
+  poly_coeff[7]= poly_coeff[6]= poly_coeff[5]= poly_coeff[4]= poly_coeff[3]= poly_coeff[2]= poly_coeff[1]= poly_coeff[0]= 0.0;
+  poly_coeff[0]= C;
+  poly_coeff[1]= B;
+ }
+ if ( 0 == strcmp( "fit_zeropoint", basename( argv[0] ) ) ) {
+  operation_mode= 1;
+  fit_function= 3;
+  B= 1.0;
+  sum1= sum2= 0.0;
+  for ( j= 0; j < n_stars; j++ ) {
+   sum1+= w[j] * ( catmag[j] - insmag[j] );
+   sum2+= w[j];
+  }
+  C= sum1 / sum2;
   poly_coeff[7]= poly_coeff[6]= poly_coeff[5]= poly_coeff[4]= poly_coeff[3]= poly_coeff[2]= poly_coeff[1]= poly_coeff[0]= 0.0;
   poly_coeff[0]= C;
   poly_coeff[1]= B;

@@ -80,6 +80,12 @@ else
  echo "Not saving default.sex and default.psfex - assuming this is some kind of imported data since there is no vast_summary.log"
 fi
 
+for SPECIAL_FILE_TO_COPY in manually_selected_comparison_stars.lst exclude.lst bad_region.lst ;do
+ if [ -f "$SPECIAL_FILE_TO_COPY" ];then
+  cp -v "$SPECIAL_FILE_TO_COPY" "$REGION_NAME"/
+ fi
+done
+
 #echo -n "Saving the program source code ... "
 #cp -r src/ "$REGION_NAME"/vast_src_"$REGION_NAME" && echo "Ok"
 

@@ -5,10 +5,11 @@
  This file is part of VaST -
  a SExtractor front-end for search of variable objects in a series of FITS images.
 
- Copyleft 2005-2018  Sokolovsky Kirill <kirx@scan.sai.msu.ru>,
+ Copyleft 2005-2019  Sokolovsky Kirill <kirx@scan.sai.msu.ru>,
                      Lebedev Alexandr  <lebastr@gmail.com>,
                      Nasonov Dmitry    
                      Nazarov Sergey 
+                     Vladimir Bazilevich
 
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of 
@@ -128,7 +129,8 @@ void print_vast_version( void ) {
  return;
 }
 
-void hello_msg( int show_timer_or_quit_instantly ) {
+
+void print_TT_reminder( int show_timer_or_quit_instantly ) {
 
  int n;
 
@@ -136,26 +138,34 @@ void hello_msg( int show_timer_or_quit_instantly ) {
  fprintf( stderr, "\n" );
 
  fprintf( stderr, "              #########   \E[34;47mATTENTION!\E[33;00m   #########              \n" );
- fprintf( stderr, "According to IAU recommendations (Resolution B1 XXIII IAU GA,\n" );
- fprintf( stderr, "see http://www.iers.org/IERS/EN/Science/Recommendations/resolutionB1.html for details)  \n" );
- fprintf( stderr, "Julian Dates computed by VaST will be expressed by default    \n" );
+ fprintf( stderr, "According to the IAU recommendation (Resolution B1 XXIII IAU GA,\n" );
+ fprintf( stderr, "see http://www.iers.org/IERS/EN/Science/Recommendations/resolutionB1.html )  \n" );
+ fprintf( stderr, "Julian Dates (JDs) computed by VaST will be expressed by default    \n" );
  fprintf( stderr, "in \E[34;47mTerrestrial Time (TT)\E[33;00m! " );
  fprintf( stderr, "Starting from January 1, 2017:\n  TT = UTC + 69.184 sec  \n" );
- fprintf( stderr, "If you want Julian Dates to be expressed in UTC,\nuse VaST with -u or --UTC key:   ./vast -u\n" );
- fprintf( stderr, "Information which time system is used may be found in the log\n" );
- fprintf( stderr, "file vast_summary.log\n\n" );
- fprintf( stderr, "If you need precise timing, don't forget to apply \nthe Heliocentric Correction to the final lightcurve!\n" );
- fprintf( stderr, "This can be doe using 'util/hjd_input_in_TT' or 'util/hjd_input_in_UTC'.\n\n" );
+ fprintf( stderr, "If you want JDs to be expressed in UTC, use '-u' or '--UTC' key: './vast -u'\n" );
+ fprintf( stderr, "You may find which time system was used in vast_summary.log\n\n" );
+ fprintf( stderr, "Please \E[01;31mmake sure you know the difference between Terrestrial Time and UTC\033[00m,\n" );
+ fprintf( stderr, "before deriving the time of minimum of an eclipsing binary or maximum of\n" );
+ fprintf( stderr, "a pulsating star, sending a VaST lightcurve to your collaborator, AAVSO,\n" );
+ fprintf( stderr, "B.R.N.O. database etc. Often people and databases expect JDs in UTC, not TT.\n" );
+ fprintf( stderr, "More information may be found at https://en.wikipedia.org/wiki/Terrestrial_Time\n\n" );
+ if ( show_timer_or_quit_instantly == 2 ) {
+  return;
+ }
+ fprintf( stderr, "If you need accurate timing, don't forget to apply the Heliocentric Correction\n" );
+ fprintf( stderr, "to the lightcurve. This can be done using 'util/hjd_input_in_TT' or 'util/hjd_input_in_UTC'.\n\n" );
  fprintf( stderr, "The more accurate barycentric time correction may be computed with VARTOOLS:\n" );
  fprintf( stderr, "http://www.astro.princeton.edu/~jhartman/vartools.html#converttime\n" );
- fprintf( stderr, "Notes that SPICE ( https://naif.jpl.nasa.gov/ ) support needs to be enabled when compiling VARTOOLS.\n\n" );
+ fprintf( stderr, "The SPICE library ( https://naif.jpl.nasa.gov/ ) support needs to be enabled\n" );
+ fprintf( stderr, "when compiling VARTOOLS.\n\n" );
  fprintf( stderr, "Have fun! =)\n" );
 
- fprintf( stderr, "\n\n" );
 
  if ( show_timer_or_quit_instantly == 1 ) {
   return;
  }
+ fprintf( stderr, "\n\n" );
 
  fprintf( stderr, "This warning message will disappear in...   " );
  /* sleep for 6 seconds to make sure user saw the message */
@@ -211,7 +221,7 @@ void help_msg( const char *progname, int exit_code ) {
  printf( "  ./vast --UTC ../data/ccd_image-001.fit ../data/ccd_image-*.fit # CCD image reduction, UTC time will be used instead of TT.\n" );
  printf( "  ./vast -y 1 ../data/ccd_image-001.fit ../data/ccd_image-*.fit  # CCD image reduction with one SysRem iteration.\n" );
 
- hello_msg( 1 );
+ print_TT_reminder( 1 );
 
  exit( exit_code );
 }
@@ -603,7 +613,7 @@ void write_magnitude_calibration_log( double *mag1, double *mag2, double *mag_er
   fprintf( logfile, "%8.4lf %8.4lf %.4lf\n", mag1[i], mag2[i], mag_err[i] );
  }
  fclose( logfile );
- fprintf( stderr, "Using %d stars for magnitude calibration.\n", N );
+ fprintf( stderr, "Using %d stars for magnitude calibration (before filtering).\n", N );
  return;
 }
 
@@ -1253,9 +1263,15 @@ int main( int argc, char **argv ) {
  long obs_in_RAM= 0;                           // Number of observations which were not written to disk
  long Max_obs_in_RAM= MAX_MEASUREMENTS_IN_RAM; // maximum number of observations in RAM
  int N_good_stars= 0;
+ //
  int N_bad_stars= 0;
  double *bad_stars_X;
  double *bad_stars_Y;
+ //
+ int N_manually_selected_comparison_stars= 0;
+ double *manually_selected_comparison_stars_X;
+ double *manually_selected_comparison_stars_Y;
+ //
  double X_im_size= 0.0;
  double Y_im_size= 0.0;
  double max_X_im_size= 0.0; // new (We may have input images of different size and we need the largest size for image identifictaion)
@@ -1429,7 +1445,21 @@ int main( int argc, char **argv ) {
  long malloc_size= 0; // we want to have it a signed type (not size_t) so the negative value of malloc_size may indicate an error
 
  double fraction_of_good_measurements_for_this_source; // fraction of good measurements used to filter-out bad sources
-
+ 
+ /// Comparison star filtering ////
+ double sigma_from_MAD; // for compariosn stars filtering
+ int number_of_bright_stars_to_drop_from_mag_calibr= 0;
+ int comparison_star_counter;
+ int comparison_star_counter2;
+ double comparison_star_median_mag_diff;
+ double *comparison_star_mag_diff;
+ double *comparison_star_poly_x_good;
+ double *comparison_star_poly_y_good;
+ double *comparison_star_poly_err_good;
+ double *poly_x_original_pointer;
+ double *poly_y_original_pointer;
+ double *poly_err_original_pointer;
+ //////////////////////////////////
  //        int number_of_elements_in_Pos1; // needed for adding stars not detected on the reference frame
 
  /// end of definitions
@@ -1462,9 +1492,9 @@ int main( int argc, char **argv ) {
  /* Options for getopt() */
  char *cvalue= NULL;
 
- const char *const shortopt= "vh9fdqmwpoPngGrlsteucUijJk12346785:a:b:x:y:";
+ const char *const shortopt= "vh9fdqmwpoPngGrlst:eucUijJk12346785:a:b:x:y:";
  const struct option longopt[]= {
-     {"guess_saturation_limit", 0, NULL, 'g'}, {"no_guess_saturation_limit", 0, NULL, 'G'}, {"version", 0, NULL, 'v'}, {"PSF", 0, NULL, 'P'}, {"help", 0, NULL, 'h'}, {"ds9", 0, NULL, '9'}, {"small", 0, NULL, 's'}, {"time", 0, NULL, 't'}, {"medium", 0, NULL, 'm'}, {"wide", 0, NULL, 'w'}, {"starmatchraius", 1, NULL, '5'}, {"poly", 0, NULL, 'p'}, {"filter", 0, NULL, 'l'}, {"norotation", 0, NULL, 'r'}, {"nofind", 0, NULL, 'f'}, {"debug", 0, NULL, 'd'}, {"position_dependent_correction", 0, NULL, 'j'}, {"no_position_dependent_correction", 0, NULL, 'J'}, {"aperture", 1, NULL, 'a'}, {"matchstarnumber", 1, NULL, 'b'}, {"sysrem", 1, NULL, 'y'}, {"failsafe", 0, NULL, 'e'}, {"UTC", 0, NULL, 'u'}, {"utc", 0, NULL, 'c'}, {"Utc", 0, NULL, 'U'}, {"increment", 0, NULL, 'i'}, {"nojdkeyword", 0, NULL, 'k'}, {"maxsextractorflag", 1, NULL, 'x'}, {"photocurve", 0, NULL, 'o'}, {"magsizefilter", 0, NULL, '1'}, {"nomagsizefilter", 0, NULL, '2'}, {"selectbestaperture", 0, NULL, '3'}, {"noerrorsrescale", 0, NULL, '4'}, {"notremovebadimages", 0, NULL, '6'}, {"autoselectrefimage", 0, NULL, '7'}, {"excluderefimage", 0, NULL, '8'}, {NULL, 0, NULL, 0}}; //NULL string must be in the end
+     {"guess_saturation_limit", 0, NULL, 'g'}, {"no_guess_saturation_limit", 0, NULL, 'G'}, {"version", 0, NULL, 'v'}, {"PSF", 0, NULL, 'P'}, {"help", 0, NULL, 'h'}, {"ds9", 0, NULL, '9'}, {"small", 0, NULL, 's'}, {"type", 0, NULL, 't'}, {"medium", 0, NULL, 'm'}, {"wide", 0, NULL, 'w'}, {"starmatchraius", 1, NULL, '5'}, {"poly", 0, NULL, 'p'}, {"filter", 0, NULL, 'l'}, {"norotation", 0, NULL, 'r'}, {"nofind", 0, NULL, 'f'}, {"debug", 0, NULL, 'd'}, {"position_dependent_correction", 0, NULL, 'j'}, {"no_position_dependent_correction", 0, NULL, 'J'}, {"aperture", 1, NULL, 'a'}, {"matchstarnumber", 1, NULL, 'b'}, {"sysrem", 1, NULL, 'y'}, {"failsafe", 0, NULL, 'e'}, {"UTC", 0, NULL, 'u'}, {"utc", 0, NULL, 'c'}, {"Utc", 0, NULL, 'U'}, {"increment", 0, NULL, 'i'}, {"nojdkeyword", 0, NULL, 'k'}, {"maxsextractorflag", 1, NULL, 'x'}, {"photocurve", 0, NULL, 'o'}, {"magsizefilter", 0, NULL, '1'}, {"nomagsizefilter", 0, NULL, '2'}, {"selectbestaperture", 0, NULL, '3'}, {"noerrorsrescale", 0, NULL, '4'}, {"notremovebadimages", 0, NULL, '6'}, {"autoselectrefimage", 0, NULL, '7'}, {"excluderefimage", 0, NULL, '8'}, {NULL, 0, NULL, 0}}; //NULL string must be in the end
  int nextopt;
  fprintf( stderr, "Parsing command line arguments...\n" );
  while ( nextopt= getopt_long( argc, argv, shortopt, longopt, NULL ), nextopt != -1 ) {
@@ -1492,10 +1522,26 @@ int main( int argc, char **argv ) {
    debug= 1;
    param_nofind= 1;
    break;
-  case 't': //use period search
-   period_search_switch= 1;
-   fprintf( stdout, "opt 't': [DEPRECATED] ANOVA & BLS period search algorithms will be used\n" );
+  case 't': 
+   cvalue= optarg;
+   if ( 1 == is_file( cvalue ) ) {
+    fprintf( stderr, "Option -%c requires an argument: the desired photometric calibration type!\n", optopt );
+    exit( 1 );
+   }
+   photometric_calibration_type= atoi( cvalue );
+   if ( photometric_calibration_type<0 || photometric_calibration_type>3 ){
+    fprintf( stderr, "The argument is out of range: -%c %s \n", optopt, cvalue );
+    exit( 1 );
+   }
+   if( photometric_calibration_type == 2 ){
+    apply_position_dependent_correction= 0;
+    param_use_photocurve= 0;
+   }
    break;
+//  case 't': //use period search
+//   period_search_switch= 1;
+//   fprintf( stdout, "opt 't': [DEPRECATED] ANOVA & BLS period search algorithms will be used\n" );
+//   break;
   case '9': //use ds9 FITS viewer
    use_ds9_instead_of_pgfv= 1;
    fprintf( stdout, "opt '9': DS9 FITS viewer will be used instead of pgfv\n" );
@@ -2018,8 +2064,9 @@ int main( int argc, char **argv ) {
  }
 
  /* Print the TT warning only if UTC was not explicitly requested by user. */
- if ( convert_timesys_to_TT != 0 && Num != 3 && Num != 4 && Num != 5 )
-  hello_msg( 0 );
+ if ( convert_timesys_to_TT != 0 && Num != 3 && Num != 4 && Num != 5 ){
+  print_TT_reminder( 0 );
+ }
 
  /* The end of the beginning =) */
 
@@ -2064,12 +2111,16 @@ int main( int argc, char **argv ) {
   return 1;
  }
 
- /* Reading file which defines rectangular regions we want to exclude */
+ //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ /////// Reading file which defines rectangular regions we want to completely exclude from the analysis ///////
+ //////////////////////////////////////////////////////////////////////////////////////////////////////////////
  double X1[MAX_NUMBER_OF_BAD_REGIONS_ON_CCD], Y1[MAX_NUMBER_OF_BAD_REGIONS_ON_CCD], X2[MAX_NUMBER_OF_BAD_REGIONS_ON_CCD], Y2[MAX_NUMBER_OF_BAD_REGIONS_ON_CCD];
  int N_bad_regions= 0;
  read_bad_lst( X1, Y1, X2, Y2, &N_bad_regions );
 
- /* Reading file with stars which should not be used for magnitude calibration */
+ //////////////////////////////////////////////////////////////////////////////////////////
+ /////// Reading file with stars which should not be used for magnitude calibration ///////
+ //////////////////////////////////////////////////////////////////////////////////////////
  // The stars are specified with their X Y positions on the reference frame
  FILE *excludefile;
  bad_stars_X= malloc( sizeof( double ) );
@@ -2086,21 +2137,63 @@ int main( int argc, char **argv ) {
  }
  excludefile= fopen( "exclude.lst", "r" );
  if ( excludefile == NULL ) {
-  fprintf( stderr, "ERROR: I can't find file exclude.lst! :(\nI die.\n" );
-  exit( 1 );
+  fprintf( stderr, "WARNING: no exclude.lst\n" );
+  //exit( 1 );
+  // Why should we quit if there is no exclude.lst ?
  }
- while ( -1 < fscanf( excludefile, "%lf %lf", &bad_stars_X[N_bad_stars], &bad_stars_Y[N_bad_stars] ) ) {
-  bad_stars_X= realloc( bad_stars_X, sizeof( double ) * ( N_bad_stars + 2 ) );
-  bad_stars_Y= realloc( bad_stars_Y, sizeof( double ) * ( N_bad_stars + 2 ) );
-  N_bad_stars+= 1;
+ else{
+  while ( -1 < fscanf( excludefile, "%lf %lf", &bad_stars_X[N_bad_stars], &bad_stars_Y[N_bad_stars] ) ) {
+   bad_stars_X= realloc( bad_stars_X, sizeof( double ) * ( N_bad_stars + 2 ) );
+   bad_stars_Y= realloc( bad_stars_Y, sizeof( double ) * ( N_bad_stars + 2 ) );
+   N_bad_stars+= 1;
+  }
+  fclose( excludefile );
+  fprintf( stderr, "Exclusion file was read\n\n\n" );
  }
- fclose( excludefile );
- fprintf( stderr, "Exclusion file was read\n\n\n" );
 
- /* From now on, ignore SIGHUP! */
+ ////////////////////////////////////////////////////////////////////
+ /////// Reading file with manually selected comparison stars ///////
+ ////////////////////////////////////////////////////////////////////
+ // The stars are specified with their X Y positions on the reference frame
+ FILE *cmparisonstarsfile;
+ manually_selected_comparison_stars_X= malloc( sizeof( double ) );
+ if ( manually_selected_comparison_stars_X == NULL ) {
+  fprintf( stderr, "ERROR: can't allocate memory for manually_selected_comparison_stars_X\n" );
+  vast_report_memory_error();
+  return 1;
+ }
+ manually_selected_comparison_stars_Y= malloc( sizeof( double ) );
+ if ( manually_selected_comparison_stars_Y == NULL ) {
+  fprintf( stderr, "ERROR: can't allocate memory for manually_selected_comparison_stars_Y\n" );
+  vast_report_memory_error();
+  return 1;
+ }
+ cmparisonstarsfile= fopen( "manually_selected_comparison_stars.lst", "r" );
+ if ( cmparisonstarsfile == NULL ) {
+  fprintf( stderr, "No manually selected comparison stars file manually_selected_comparison_stars.lst which is fine.\n" );
+  //exit( 1 );
+  // We should not quit if there is no manually_selected_comparison_stars.lst
+ }
+ else{
+  while ( -1 < fscanf( cmparisonstarsfile, "%lf %lf", &manually_selected_comparison_stars_X[N_manually_selected_comparison_stars], &manually_selected_comparison_stars_Y[N_manually_selected_comparison_stars] ) ) {
+   manually_selected_comparison_stars_X= realloc( manually_selected_comparison_stars_X, sizeof( double ) * ( N_manually_selected_comparison_stars + 2 ) );
+   manually_selected_comparison_stars_Y= realloc( manually_selected_comparison_stars_Y, sizeof( double ) * ( N_manually_selected_comparison_stars + 2 ) );
+   N_manually_selected_comparison_stars+= 1;
+  }
+  fclose( cmparisonstarsfile );
+  fprintf( stderr, "Exclusion file was read\n\n\n" );
+ }
+
+
+
+
+
+
+
+ ///// From now on, ignore SIGHUP! /////
  signal( SIGHUP, SIG_IGN );
 
- /* Starting real work... */
+ ///// Starting real work! /////
 
  // Set up coordinate system transofrmation structure
  if ( param_w == 0 || param_w == 4 ) {
@@ -3533,6 +3626,11 @@ int main( int argc, char **argv ) {
      vast_report_memory_error();
      return 1;
     }
+    // We may use some pointer arithmetic to drop brightes stars from these arrays,
+    // but we need to keep track of the original pointers to free the arrays properly
+    poly_x_original_pointer= poly_x;
+    poly_y_original_pointer= poly_y;
+    poly_err_original_pointer= poly_err;
 
     if ( apply_position_dependent_correction == 1 ) {
      //lin_mag_cor_x = (double *)malloc(MIN( Number_of_ecv_star, NUMBER3) * sizeof(double));
@@ -3548,7 +3646,7 @@ int main( int argc, char **argv ) {
      }
     }
 
-    // populate the arrays
+    // populate the arrays of comparison stars for magnitude calibration
     for ( i= 0; i < MIN( Number_of_ecv_star, NUMBER3 ); i++ ) {
      // STAR1[Pos1[i]].magmag==0.0 if the star was not detected on the reference frame
      if ( 0 == exclude_test( STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, bad_stars_X, bad_stars_Y, N_bad_stars ) && fabs( STAR1[Pos1[i]].mag - STAR2[Pos2[i]].mag ) < MAX_INSTR_MAG_DIFF && STAR1[Pos1[i]].mag != 0.0
@@ -3556,20 +3654,32 @@ int main( int argc, char **argv ) {
           && STAR1[Pos1[i]].sextractor_flag <= 1 && STAR1[Pos1[i]].vast_flag == 0
           //&& STAR2[Pos2[i]].sextractor_flag==0
           && STAR2[Pos2[i]].sextractor_flag <= 1 && STAR2[Pos2[i]].vast_flag == 0 ) {
-      poly_x[N_good_stars]= (double)STAR2[Pos2[i]].mag;
-      poly_y[N_good_stars]= (double)STAR1[Pos1[i]].mag;
-      poly_err[N_good_stars]= (double)STAR2[Pos2[i]].sigma_mag;
-      poly_err_fake[N_good_stars]= 0.01; // fake error for unweighted fitting
 
-      if ( apply_position_dependent_correction == 1 ) {
-       lin_mag_cor_x[N_good_stars]= (double)STAR2[Pos2[i]].x_frame;
-       lin_mag_cor_y[N_good_stars]= (double)STAR2[Pos2[i]].y_frame;
-      }
+      if ( N_manually_selected_comparison_stars>0 ) {
+       // Handle the special case of a set of manually selected comparison stars
+       if ( 1 ==  exclude_test( STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, manually_selected_comparison_stars_X, manually_selected_comparison_stars_Y, N_manually_selected_comparison_stars ) ){
+        poly_x[N_good_stars]= (double)STAR2[Pos2[i]].mag;
+        poly_y[N_good_stars]= (double)STAR1[Pos1[i]].mag;
+        poly_err[N_good_stars]= (double)STAR2[Pos2[i]].sigma_mag;
+        poly_err_fake[N_good_stars]= 0.01; // fake error for unweighted fitting
+        N_good_stars+= 1;
+       }
+      } else {
+       // Handle the normal case of using all the good matched stars for magnitude calibration
+       poly_x[N_good_stars]= (double)STAR2[Pos2[i]].mag;
+       poly_y[N_good_stars]= (double)STAR1[Pos1[i]].mag;
+       poly_err[N_good_stars]= (double)STAR2[Pos2[i]].sigma_mag;
+       poly_err_fake[N_good_stars]= 0.01; // fake error for unweighted fitting
 
-      N_good_stars+= 1;
-     }
-    }
-    // Handle case where the majority of stars have the 'blended' flag
+       if ( apply_position_dependent_correction == 1 ) {
+        lin_mag_cor_x[N_good_stars]= (double)STAR2[Pos2[i]].x_frame;
+        lin_mag_cor_y[N_good_stars]= (double)STAR2[Pos2[i]].y_frame;
+       }
+       N_good_stars+= 1;
+      } // else if ( N_manually_selected_comparison_stars>0 ) {
+     } // if ( 0 == exclude_test( STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, bad_stars_X, bad_stars_Y, N_bad_stars ) && fabs( STAR1[Pos1[i]].mag - STAR2[Pos2[i]].mag ) ...
+    } // for ( i= 0; i < MIN( Number_of_ecv_star, NUMBER3 ); i++ ) {
+    // Handle the case where the majority of stars have the 'blended' flag
     if ( N_good_stars < (double)( MIN( Number_of_ecv_star, NUMBER3 ) ) / 2.0 ) {
      N_good_stars= 0;
      // repopulate the arrays
@@ -3615,20 +3725,25 @@ int main( int argc, char **argv ) {
      //poly_err[i]=MAX( poly_err[i], MIN_MAG_ERR_FROM_SEXTRACTOR);
     }
     // -------------------------------------------------
-    if ( debug != 0 )
+    if ( debug != 0 ){
      fprintf( stderr, "%d stars selected for mag. calibr. (N_good_stars)\n", N_good_stars );
-    if ( debug != 0 )
+    }
+    if ( debug != 0 ){
      fprintf( stderr, "DEBUG MSG: flush poly_coeff - " );
+    }
     poly_coeff[0]= 0;
     poly_coeff[1]= 0;
     poly_coeff[2]= 0;
     poly_coeff[3]= 0;
     poly_coeff[4]= 0;
-    if ( debug != 0 )
+    if ( debug != 0 ){
      fprintf( stderr, "Ok\n" );
+    }
     //////
     // Decide how many stars we need for magnitude calibration
     min_number_of_stars_for_magnitude_calibration= MIN( (int)( (double)MIN( NUMBER2, NUMBER3 ) / 3.0 ), MIN_NUMBER_STARS_POLY_MAG_CALIBR );
+    min_number_of_stars_for_magnitude_calibration= MAX( min_number_of_stars_for_magnitude_calibration, 1); // we need at least one comparison star, that's for sure
+    
     fprintf( stderr, "Expecting to find at least %d * for magnitude calibration\n", min_number_of_stars_for_magnitude_calibration );
     //////
 
@@ -3641,39 +3756,116 @@ int main( int argc, char **argv ) {
      /* Write data to log */
      write_magnitude_calibration_log( poly_x, poly_y, poly_err, N_good_stars, input_images[n] );
 
-     if ( debug != 0 )
+     if ( debug != 0 ){
       fprintf( stderr, "DEBUG MSG: GSL: wpolyfit - " );
+     }
 
-     // First pass - remove really bad outliers usin unweighted linear approximation
-
-     fprintf( stderr, "Iteratively removing outliers from the linear mag-mag relation (unweighted fit)...\n" );
-     // Use linear function as the first-order approximation
-     //wpolyfit_exit_code=wlinearfit(poly_x, poly_y, poly_err_fake, N_good_stars, poly_coeff);
-     wpolyfit_exit_code= robustlinefit( poly_x, poly_y, N_good_stars, poly_coeff );
-     do {
-      the_baddest_outlier= 0.0;
-      the_baddest_outlier_number= -1;
-      for ( exclude_outlier_mags_counter= N_good_stars; exclude_outlier_mags_counter--; ) {
-       computed_mag= poly_coeff[1] * poly_x[exclude_outlier_mags_counter] + poly_coeff[0];
-       // find the baddest outlier
-       abs_computed_predicted_mag_diff= fabs( computed_mag - poly_y[exclude_outlier_mags_counter] );
-       if ( abs_computed_predicted_mag_diff > 3 * MAX_DIFF_POLY_MAG_CALIBRATION && abs_computed_predicted_mag_diff > the_baddest_outlier ) {
-        the_baddest_outlier= abs_computed_predicted_mag_diff;
-        the_baddest_outlier_number= exclude_outlier_mags_counter;
+     /// Here we try to weed-out potential variable stars from the magnitude calibration data
+     
+     if ( photometric_calibration_type == 2 ) {
+      min_number_of_stars_for_magnitude_calibration=1; // we can survive with only a single comparison star in this mode
+      // Filter the comparison stars for the zero-point-only calibration
+      if ( N_good_stars>3 ){
+       // remove the brightest star, it is typically bad
+       number_of_bright_stars_to_drop_from_mag_calibr=1;
+       fprintf(stderr,"Excluding %d brightest stars from magnitude calibration\n", number_of_bright_stars_to_drop_from_mag_calibr);
+       // Pointer Arithmetic https://stackoverflow.com/questions/394767/pointer-arithmetic
+       poly_x= poly_x + number_of_bright_stars_to_drop_from_mag_calibr;
+       poly_y= poly_y + number_of_bright_stars_to_drop_from_mag_calibr;
+       poly_err= poly_err + number_of_bright_stars_to_drop_from_mag_calibr;
+       N_good_stars= N_good_stars - number_of_bright_stars_to_drop_from_mag_calibr;
+       //
+      }
+      if ( N_good_stars>3 ){
+       N_good_stars=MAX( (int)(0.1*N_good_stars), 3 ); // keep only the few brightest stars
+       fprintf(stderr,"Using only %d brightest stars from magnitude calibration\n", N_good_stars);
+      }
+      if ( N_good_stars>3 ){
+       malloc_size=N_good_stars*sizeof(double);
+       if ( malloc_size <= 0 ) {
+        fprintf( stderr, "ERROR - trying to allocate zero or negative number of bytes!\n" );
+        return 1;
        }
-      }
-      // And now remove the baddest outlier
-      if ( the_baddest_outlier_number >= 0 ) {
-       // Exclude bad point from calibration
-       if ( apply_position_dependent_correction == 0 )
-        exclude_from_3_double_arrays( poly_x, poly_y, poly_err, the_baddest_outlier_number, &N_good_stars );
-       else
-        exclude_from_6_double_arrays( poly_x, poly_y, poly_err, lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, the_baddest_outlier_number, &N_good_stars );
-       // Recompute fit using unweighted linear fit
-       //wpolyfit_exit_code=wlinearfit(poly_x, poly_y, poly_err_fake, N_good_stars, poly_coeff);
-       wpolyfit_exit_code= robustlinefit( poly_x, poly_y, N_good_stars, poly_coeff );
-      }
-     } while ( the_baddest_outlier_number >= 0 );
+       comparison_star_mag_diff= malloc(malloc_size);
+       if( comparison_star_mag_diff == NULL ){
+        fprintf(stderr,"Memory allocation ERROR\n");
+        vast_report_memory_error();
+        return 1;
+       }
+       for( comparison_star_counter=0; comparison_star_counter<N_good_stars; comparison_star_counter++ ){
+        comparison_star_mag_diff[comparison_star_counter]=poly_y[comparison_star_counter]-poly_x[comparison_star_counter];
+       }
+       gsl_sort( comparison_star_mag_diff, 1, N_good_stars );
+       comparison_star_median_mag_diff= gsl_stats_median_from_sorted_data( comparison_star_mag_diff, 1, N_good_stars );
+       sigma_from_MAD=esimate_sigma_from_MAD_of_sorted_data( comparison_star_mag_diff, (long)N_good_stars );
+       fprintf(stderr, "Zero-point offset = %.4lf +/-%.4lf mag\n", comparison_star_median_mag_diff, sigma_from_MAD);
+       free(comparison_star_mag_diff);
+       // Now filter-out the outliers
+       comparison_star_poly_x_good= malloc(malloc_size); 
+       comparison_star_poly_y_good= malloc(malloc_size);
+       comparison_star_poly_err_good= malloc(malloc_size);
+       if ( comparison_star_poly_x_good==NULL || comparison_star_poly_y_good==NULL || comparison_star_poly_err_good==NULL ){
+        fprintf(stderr,"Memory allocation ERROR comparison_star_poly_x_good comparison_star_poly_y_good comparison_star_poly_err_good\n");
+        vast_report_memory_error();
+        return 1;
+       }
+       comparison_star_counter2= 0;
+       for( comparison_star_counter=0; comparison_star_counter<N_good_stars; comparison_star_counter++ ){
+        if( fabs( (poly_y[comparison_star_counter]-poly_x[comparison_star_counter])-comparison_star_median_mag_diff )<3.0*sigma_from_MAD ){
+         comparison_star_poly_x_good[comparison_star_counter2]= poly_x[comparison_star_counter];
+         comparison_star_poly_y_good[comparison_star_counter2]= poly_y[comparison_star_counter];
+         comparison_star_poly_err_good[comparison_star_counter2]= poly_err[comparison_star_counter];
+         comparison_star_counter2++;
+        } else {
+         fprintf(stderr,"Rejecting a star from magnitude calibration\n");
+        }
+       }
+       // Copy the good points back
+       for( comparison_star_counter=0; comparison_star_counter<comparison_star_counter2; comparison_star_counter++ ){
+        poly_x[comparison_star_counter]= comparison_star_poly_x_good[comparison_star_counter];
+        poly_y[comparison_star_counter]= comparison_star_poly_y_good[comparison_star_counter];
+        poly_err[comparison_star_counter]= comparison_star_poly_err_good[comparison_star_counter];
+       }
+       N_good_stars=comparison_star_counter2;
+       free(comparison_star_poly_err_good);
+       free(comparison_star_poly_y_good);
+       free(comparison_star_poly_x_good);
+       //
+      } 
+     
+     } else {
+      // Filter the comparison stars for the usual linear/quadratic/photocurve calibration
+      
+      // First pass - remove really bad outliers usin unweighted linear approximation
+      fprintf( stderr, "Iteratively removing outliers from the linear mag-mag relation (unweighted fit)...\n" );
+      // Use linear function as the first-order approximation
+      //wpolyfit_exit_code=wlinearfit(poly_x, poly_y, poly_err_fake, N_good_stars, poly_coeff);
+      wpolyfit_exit_code= robustlinefit( poly_x, poly_y, N_good_stars, poly_coeff );
+      do {
+       the_baddest_outlier= 0.0;
+       the_baddest_outlier_number= -1;
+       for ( exclude_outlier_mags_counter= N_good_stars; exclude_outlier_mags_counter--; ) {
+        computed_mag= poly_coeff[1] * poly_x[exclude_outlier_mags_counter] + poly_coeff[0];
+        // find the baddest outlier
+        abs_computed_predicted_mag_diff= fabs( computed_mag - poly_y[exclude_outlier_mags_counter] );
+        if ( abs_computed_predicted_mag_diff > 3 * MAX_DIFF_POLY_MAG_CALIBRATION && abs_computed_predicted_mag_diff > the_baddest_outlier ) {
+         the_baddest_outlier= abs_computed_predicted_mag_diff;
+         the_baddest_outlier_number= exclude_outlier_mags_counter;
+        }
+       }
+       // And now remove the baddest outlier
+       if ( the_baddest_outlier_number >= 0 ) {
+        // Exclude bad point from calibration
+        if ( apply_position_dependent_correction == 0 )
+         exclude_from_3_double_arrays( poly_x, poly_y, poly_err, the_baddest_outlier_number, &N_good_stars );
+        else
+         exclude_from_6_double_arrays( poly_x, poly_y, poly_err, lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, the_baddest_outlier_number, &N_good_stars );
+        // Recompute fit using unweighted linear fit
+        //wpolyfit_exit_code=wlinearfit(poly_x, poly_y, poly_err_fake, N_good_stars, poly_coeff);
+        wpolyfit_exit_code= robustlinefit( poly_x, poly_y, N_good_stars, poly_coeff );
+       }
+      } while ( the_baddest_outlier_number >= 0 );
+     } // Iteratively removing outliers from the linear mag-mag relation (unweighted fit)
 
      /* Check that we haven't dropped too many stars so the parabolic fit still make sence */
      if ( N_good_stars < min_number_of_stars_for_magnitude_calibration ) {
@@ -3775,7 +3967,7 @@ int main( int argc, char **argv ) {
      }  // if( apply_position_dependent_correction==1 && wpolyfit_exit_code==0 ){
 
      // Second pass - remove the remaining outlier using weighted approximation
-     if ( wpolyfit_exit_code == 0 ) {
+     if ( wpolyfit_exit_code == 0 && photometric_calibration_type != 2 ) {
       // Use linear function as the very first approximation
       wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
       fprintf( stderr, "Iteratively removing outliers from the mag-mag relation (weighted linear/polynomial fit)...\n" );
@@ -3848,20 +4040,33 @@ int main( int argc, char **argv ) {
       write_magnitude_calibration_param_log( poly_coeff, input_images[n] );
 
      } // if( wpolyfit_exit_code==0 ){
-    }
+     else {
+      if ( photometric_calibration_type == 2 ) {
+       //wpolyfit_exit_code= robustzeropointfit( poly_x, poly_y, MAX( (int)(0.1*N_good_stars), 3), poly_coeff );
+       //wpolyfit_exit_code= robustzeropointfit( poly_x + 1, poly_y + 1, MAX( (int)(0.1*N_good_stars), 3), poly_coeff );
+       // filtering moved above
+       wpolyfit_exit_code= robustzeropointfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff );
+       write_magnitude_calibration_param_log( poly_coeff, input_images[n] );
+      }
+     }
+     fprintf( stderr, "Used %d stars for magnitude calibration (after filtering).\n", N_good_stars );
+    } // if we have enought stars for mag calibration
     if ( debug != 0 )
      fprintf( stderr, "DEBUG MSG: free(poly_x) - " );
-    free( poly_x );
+    //free( poly_x );
+    free( poly_x_original_pointer );
     if ( debug != 0 )
      fprintf( stderr, "Ok\n" );
     if ( debug != 0 )
      fprintf( stderr, "DEBUG MSG: free(poly_y) - " );
-    free( poly_y );
+    //free( poly_y );
+    free( poly_y_original_pointer );
     if ( debug != 0 )
      fprintf( stderr, "Ok\n" );
     if ( debug != 0 )
      fprintf( stderr, "DEBUG MSG: free(poly_err) - " );
-    free( poly_err );
+    //free( poly_err );
+    free( poly_err_original_pointer );
     if ( debug != 0 )
      fprintf( stderr, "Ok\n" );
     free( poly_err_fake );
@@ -4394,6 +4599,9 @@ int main( int argc, char **argv ) {
  free( bad_stars_X );
  free( bad_stars_Y );
 
+ free( manually_selected_comparison_stars_X );
+ free( manually_selected_comparison_stars_Y );
+
  fprintf( stderr, "Done with measurements! =)\n\n" );
  fprintf( stderr, "Total number of measurements %ld (%ld measurements stored in RAM)\n", TOTAL_OBS, obs_in_RAM );
  fprintf( stderr, "Writing lightcurve (outNNNNN.dat) files...\n" );
@@ -4667,6 +4875,9 @@ int main( int argc, char **argv ) {
  // Choose string to describe time system
  if ( timesys == 2 ) {
   sprintf( tymesys_str, "TT" );
+  fprintf(stderr, "\n\n   ##### The JD time system is set to TT, not UTC!!! #####\n ");
+  print_TT_reminder( 2 ); // print the TT reminder once more, just to be sure the user have noticed it
+  fprintf(stderr, "   #######################################################\n\n ");
  } else {
   if ( timesys == 1 ) {
    sprintf( tymesys_str, "UTC" );

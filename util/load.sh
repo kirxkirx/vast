@@ -137,6 +137,21 @@ for i in "$REGION_NAME"/* ;do
   if [ $? -ne 1 ];then
    cp -i $i .
   fi
+ elif [ "$i" = "$REGION_NAME/manually_selected_comparison_stars.lst" ];then
+  check_if_two_files_are_the_same $i manually_selected_comparison_stars.lst
+  if [ $? -ne 1 ];then
+   cp -i $i .
+  fi
+ elif [ "$i" = "$REGION_NAME/exclude.lst" ];then
+  check_if_two_files_are_the_same $i exclude.lst
+  if [ $? -ne 1 ];then
+   cp -i $i .
+  fi
+ elif [ "$i" = "$REGION_NAME/bad_region.lst" ];then
+  check_if_two_files_are_the_same $i bad_region.lst
+  if [ $? -ne 1 ];then
+   cp -i $i .
+  fi
  elif [ "$i" = "$REGION_NAME/vast_list_of_input_images_with_time_corrections.txt" ];then
   check_if_two_files_are_the_same $i vast_list_of_input_images_with_time_corrections.txt
   if [ $? -ne 1 ];then
