@@ -7,6 +7,8 @@ int wlinearfit( double *datax, double *datay, double *dataerr, int n, double *po
 
 int robustlinefit( double *datax, double *datay, int n, double *poly_coeff );
 
+int robustzeropointfit( double *datax, double *datay, double *dataerr, int n, double *poly_coeff );
+
 // The macro below will tell the pre-processor that this header file is already included
 #define VAST_WPOLYFIT_INCLUDE_FILE
 

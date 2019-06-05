@@ -1,7 +1,12 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <gsl/gsl_fit.h> // for the fallback option gsl_fit_linear()
 #include <gsl/gsl_multifit.h>
 #include <gsl/gsl_errno.h> // for gsl_strerror(s)
+//
+#include <gsl/gsl_statistics.h>
+#include <gsl/gsl_sort.h>      
+
 
 int wpolyfit( double *datax, double *datay, double *dataerr, int n, double *poly_coeff, double *chi2_not_reduced ) {
 
@@ -197,3 +202,36 @@ int robustlinefit( double *datax, double *datay, int n, double *poly_coeff ) {
 
  return 0;
 }
+
+int robustzeropointfit( double *datax, double *datay, double *dataerr, int n, double *poly_coeff ) {
+ int i;
+ double median_mag_diff;
+ double *mag_diff;
+ double *w;
+ mag_diff=malloc(n*sizeof(double));
+ if( mag_diff == NULL ){
+  fprintf(stderr,"Memory allocation ERROR in robustzeropointfit()\n");
+  return 1;
+ }
+ w=malloc(n*sizeof(double));
+ if( w == NULL ){
+  fprintf(stderr,"Memory allocation ERROR in robustzeropointfit()\n");
+  return 1;
+ }
+ for(i=0;i<n;i++){
+  mag_diff[i]=datay[i]-datax[i];
+  w[i]=1.0/( dataerr[i]*dataerr[i] );
+ }
+ //gsl_sort( mag_diff, 1, n );
+ //median_mag_diff= gsl_stats_median_from_sorted_data( mag_diff, 1, n );
+ //median_mag_diff= gsl_stats_mean( mag_diff, 1, n );
+ median_mag_diff= gsl_stats_wmean( w, 1, mag_diff, 1, n );
+ free(w);
+ free(mag_diff);
+ poly_coeff[7]= poly_coeff[6]= poly_coeff[5]= poly_coeff[4]= poly_coeff[3]= poly_coeff[2]= poly_coeff[1]= poly_coeff[0]= 0.0;
+ poly_coeff[1]=1.0;
+ poly_coeff[0]=median_mag_diff;
+ fprintf( stderr, "Final zero-point offset %.4lf mag\n", median_mag_diff);
+ return 0;
+}
+
