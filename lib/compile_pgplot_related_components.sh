@@ -169,7 +169,7 @@ echo "Compiler flags: " `cat optflags_for_scripts.tmp`
 ## -g -Wall -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all -O0 
 
 # Make sure old versions of the files are gone
-for FILE_TO_REMOVE in lc find_candidates pgfv lib/fit_mag_calib lib/fit_linear lib/fit_photocurve ;do
+for FILE_TO_REMOVE in lc find_candidates pgfv lib/fit_mag_calib lib/fit_linear lib/fit_zeropoint lib/fit_photocurve ;do
  if [ -f "$FILE_TO_REMOVE" ];then
   rm -f "$FILE_TO_REMOVE"
  fi
@@ -186,7 +186,7 @@ done
 "$CC" `cat optflags_for_scripts.tmp` -o pgfv pgfv.o setenv_local_pgplot.o photocurve.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o get_path_to_vast.o $CFITSIO_LIB -lm $GSL_LIB -I$GSL_INCLUDE $PGPLOT_LIBS
 "$CC" `cat optflags_for_scripts.tmp` -c -o fit_mag_calib.o src/fit_mag_calib.c -I$GSL_INCLUDE
 "$CC" `cat optflags_for_scripts.tmp` -o lib/fit_mag_calib fit_mag_calib.o setenv_local_pgplot.o wpolyfit.o photocurve.o $PGPLOT_LIBS -lm $GSL_LIB -Wall -Wextra
-cd lib/ ; ln -s fit_mag_calib fit_linear ; ln -s fit_mag_calib fit_photocurve ; cd ..
+cd lib/ ; ln -s fit_mag_calib fit_linear ; ln -s fit_mag_calib fit_zeropoint ; ln -s fit_mag_calib fit_photocurve ; cd ..
 
 # Test if executable files were actually created?
 COMPILATION_ERROR=0
