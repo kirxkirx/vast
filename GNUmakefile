@@ -18,7 +18,7 @@
 # try to set the correct path to X11 library, but it is most likely the program
 # will compile fine even if this path is set incorrectly
 # If RECOMPILE_VAST_ONLY is set to 'yes' only VaST will be re-compiled (faster option for developement) 
-RECOMPILE_VAST_ONLY = yes
+#RECOMPILE_VAST_ONLY = yes
 
 # You probably don't want to change anything below this line
 ##############################################################################
@@ -44,7 +44,7 @@ GSL_INCLUDE = lib/include
 
 
 ## production
-#OPTFLAGS = -w -O2 -fomit-frame-pointer $(GOOD_MARCH_OPTIONS) $(LTO_OPTIONS) $(USE_OMP_OPTIONS) $(USE_BUILTIN_FUNCTIONS)
+OPTFLAGS = -w -O2 -fomit-frame-pointer $(GOOD_MARCH_OPTIONS) $(LTO_OPTIONS) $(USE_OMP_OPTIONS) $(USE_BUILTIN_FUNCTIONS)
 # more conservative production flags
 #OPTFLAGS = -O2 -w $(GOOD_MARCH_OPTIONS)
 ## debug
@@ -52,7 +52,7 @@ GSL_INCLUDE = lib/include
 #OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all -lmcheck -O0 $(USE_BUILTIN_FUNCTIONS) #$(USE_OMP_OPTIONS) # for debugging with valgrind
 # Address Sanitizer (not compatible with Valgrind)
 #OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -lmcheck  -fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -O1 $(USE_BUILTIN_FUNCTIONS) 
-OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wformat -Werror=format-security -Werror=array-bounds -Wextra -fno-omit-frame-pointer -lmcheck  -fsanitize=address,undefined -fsanitize-address-use-after-scope -O1 $(USE_BUILTIN_FUNCTIONS) 
+#OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wformat -Werror=format-security -Werror=array-bounds -Wextra -fno-omit-frame-pointer -lmcheck  -fsanitize=address,undefined -fsanitize-address-use-after-scope -O1 $(USE_BUILTIN_FUNCTIONS) 
 # Check pointer bounds
 #OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all -lmcheck  -mmpx -fcheck-pointer-bounds  -O0 $(USE_BUILTIN_FUNCTIONS) #$(USE_OMP_OPTIONS) # for debugging with valgrind
 # Debug mode with OpenMP
@@ -145,7 +145,6 @@ stetson_test.o: $(SRC_PATH)test/stetson_test.c
 #vast: vast.o gettime.o vast_report_memory_error.o libident.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o vast_progbar.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o cfitsio gsl
 vast: vast.o gettime.o vast_report_memory_error.o libident.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o erfinv.o cfitsio gsl
 	$(CC) $(OPTFLAGS) -o vast vast.o gettime.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o vast_report_memory_error.o libident.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o erfinv.o $(CFITSIO_LIB) $(GSL_LIB) -Wl,-rpath,$(LIB_IDENT_PATH) -lm
-	ln -s vast diffphot
 
 vast.o: $(SRC_PATH)vast.c $(SOURCE_IDENT_PATH)ident.h $(SRC_PATH)vast_limits.h $(SRC_PATH)vast_report_memory_error.h $(SRC_PATH)detailed_error_messages.h $(SRC_PATH)photocurve.h $(SRC_PATH)get_number_of_cpu_cores.h $(SRC_PATH)fit_plane_lin.h $(SRC_PATH)fitsfile_read_check.h $(SRC_PATH)wpolyfit.h $(SRC_PATH)replace_file_with_symlink_if_filename_contains_white_spaces.h $(SRC_PATH)lightcurve_io.h
 	$(CC) $(OPTFLAGS) -c -o vast.o $(SRC_PATH)vast.c -I$(GSL_INCLUDE) -Wall
@@ -420,7 +419,8 @@ util/solve_plate_with_UCAC5: solve_plate_with_UCAC5.o gettime.o wpolyfit.o varia
 solve_plate_with_UCAC5.o:
 	$(CC) $(OPTFLAGS) -c src/solve_plate_with_UCAC5.c -I$(GSL_INCLUDE)
 
-shell_commands: pgplot_components lib/lightcurve_simulator
+shell_commands: pgplot_components lib/lightcurve_simulator vast
+	ln -s vast diffphot
 	ln -s pgfv sextract_single_image
 	ln -s pgfv select_star_on_reference_image
 	ln -s ../pgfv util/make_finding_chart
@@ -453,7 +453,7 @@ util/ccd/md: $(SRC_PATH)ccd/md.c
 ifneq ($(RECOMPILE_VAST_ONLY),yes)
 clean_libraries:
 	util/clean_data.sh all # remove all data (lightcurves, etc) from the previous VaST run
-	rm -f vast diffphot libident.so libident.o $(LIB_DIR)stat $(LIB_DIR)formater_out_wfk stat_outfile $(LIB_DIR)simulate_2_colors combine_obs_median $(SRC_PATH)*.o $(SRC_PATH)*.so lc find_candidates pgfv $(SRC_PATH)pgfv/*.o $(SRC_PATH)diferential/*.o vast poisk util/stat_outfile util/combine_obs_median $(LIB_DIR)m_sigma_bin $(LIB_DIR)select_sysrem_input_star_list lib/periodFilter/periodS2 lib/periodFilter/periodFilter lib/BLS/bls util/ccd/*
+	rm -f vast libident.so libident.o $(LIB_DIR)stat $(LIB_DIR)formater_out_wfk stat_outfile $(LIB_DIR)simulate_2_colors combine_obs_median $(SRC_PATH)*.o $(SRC_PATH)*.so lc find_candidates pgfv $(SRC_PATH)pgfv/*.o $(SRC_PATH)diferential/*.o vast poisk util/stat_outfile util/combine_obs_median $(LIB_DIR)m_sigma_bin $(LIB_DIR)select_sysrem_input_star_list lib/periodFilter/periodS2 lib/periodFilter/periodFilter lib/BLS/bls util/ccd/*
 	rm -f lib/libcfitsio.a
 	rm -f util/fitscopy src/cfitsio/fitscopy src/fitsio.h src/longnam.h
 	rm -f lib/fitsverify
@@ -478,7 +478,7 @@ clean: clean_libraries
 	rm -f callgrind.out.* # remove files from possible callgrind/kcachegrind profiling run: valgrind --tool=callgrind -v  ./vast -uf ../sample_data/f_72-00* ../sample_data/f_72-01*
 	rm -f massif.out.* # same for the other valgrind tool
 	rm -f *~ util/*~ util/transients/*~ lib/*~ lib/drop_faint_points lib/drop_bright_points DEADJOE tmp.txt match.txt  util/calibrate_magnitude_scale lib/fit_mag_calib lib/fit_linear lib/fit_zeropoint lib/fit_photocurve util/match_eater 
-	rm -f lib/deg2hms lib/coord_v_dva_slova lib/hms2deg $(SRC_PATH)period_search/BLS/*~ $(SRC_PATH)period_search/periodFilter/*~ lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/clean_lightcurves_from_nan lib/put_two_sources_in_one_field lib/new_lightcurve_sigma_filter lib/data_parser lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list lib/remove_points_with_large_errors lib/select_aperture_with_smallest_scatter_for_each_object util/hjd sextract_single_image select_star_on_reference_image util/mark_wcs_position_with_ds9.sh
+	rm -f lib/deg2hms lib/coord_v_dva_slova lib/hms2deg $(SRC_PATH)period_search/BLS/*~ $(SRC_PATH)period_search/periodFilter/*~ lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/clean_lightcurves_from_nan lib/put_two_sources_in_one_field lib/new_lightcurve_sigma_filter lib/data_parser lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list lib/remove_points_with_large_errors lib/select_aperture_with_smallest_scatter_for_each_object util/hjd sextract_single_image diffphot select_star_on_reference_image util/mark_wcs_position_with_ds9.sh
 	rm -f lib/sine_wave_simulator lib/sine_wave_and_psd_simulator lib/sine_wave_or_psd_simulator
 	rm -f util/rescale_photometric_errors util/estimate_systematic_noise_level
 	rm -f util/colstat
