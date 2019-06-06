@@ -11,6 +11,7 @@ CPCS_LOGIN_HASHTAG="CHANGE_ME"
 #CPCS_LOGIN_HASHTAG="AZubareva_0.6_SAI16759d5188940315b9c7591049910831"
 #CPCS_LOGIN_HASHTAG="CrAO_SNazarov_13bd755aea9d87608b9c68c66e2a02c4"
 #CPCS_LOGIN_HASHTAG="Aristarchos_KSokolovsky_615f932fd0a2d1c0996723b7ec76df91"
+#CPCS_LOGIN_HASHTAG="MSUO0.6_KSokolovsky_7dba8628e6b3c4113e6bce0b26cd77bc"
 # The hashtag should be requested from Lukasz Wyrzykowski.
 # For more information see https://www.ast.cam.ac.uk/ioa/wikis/gsawgwiki/index.php/Calibration_Server
 #

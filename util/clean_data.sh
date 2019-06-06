@@ -45,30 +45,54 @@ done
 for i in image*.weight ;do
  rm -f $i
 done
-rm -f data* candidates.lst pgplot.ps pgplot.gif nohup.out test.cat *~ util/*~ lib/*~ util/photo/*~ util/examples/*~ src/*~ src/pgfv/*~ DEADJOE BLS/*~ periodFilter/*~ tmp.cat src/ccd/*~ src/diferential/*~ src/astrometry/*~
-rm -f candidates-*.err candidates-*.txt candidates-*.lst m_sigma_bin.tmp match.txt calib.txt
-rm -rf selected/
-rm -f vast*.log vast_list_of_all_stars.ds9 vast_list_of_all_stars.ds9.reg wcs.fit m_sigma_bin.tmp sysrem_input_star_list.lst ref_frame_sextractor.cat util/convert/*~ bright_star_blend_check_*.sex
-rm -rf vast_magnitude_calibration_details_log/
-rm -f calib.txt_backup
-rm -f *.calib_param
-rm -f *.calib
-rm -f *.struct
-rm -f octave-core out.wcs out.xyls
-rm -f *.bak util/*.bak lib/*.bak src/*.bak src/pgfv/*.bak BLS/*.bak periodFilter/*.bak src/ccd/*.bak src/diferential/*.bak
-rm -f coadd.* check.fits test.mpc curr_unc
-rm -f curlhack.html server_reply.html wcsmag.cat
-rm -f psfex_*cat test.psf psfex.xml psfex_?????.param psfex_????.param psfex_???.param psfex_input_*.cat autodetect_aper_*.cat psfex.found
-rm -f *.cat.vizquery
-rm -f Aladin.script
-rm -f candidates-transients.tmp_1
+for i in data* candidates.lst pgplot.ps pgplot.gif nohup.out test.cat *~ util/*~ lib/*~ util/photo/*~ util/examples/*~ src/*~ src/pgfv/*~ DEADJOE BLS/*~ periodFilter/*~ tmp.cat src/ccd/*~ src/diferential/*~ src/astrometry/*~ ;do
+ if [ -f "$i" ];then
+  rm -f "$i"
+ fi
+done
+for i in candidates-*.err candidates-*.txt candidates-*.lst m_sigma_bin.tmp match.txt calib.txt manually_selected_comparison_stars.lst ;do
+ if [ -f "$i" ];then
+  rm -f "$i"
+ fi
+done
+if [ -d selected ];then
+ rm -rf selected/
+fi
+for i in vast*.log vast_list_of_all_stars.ds9 vast_list_of_all_stars.ds9.reg wcs.fit m_sigma_bin.tmp sysrem_input_star_list.lst ref_frame_sextractor.cat util/convert/*~ bright_star_blend_check_*.sex ;do
+ if [ -f "$i" ];then
+  rm -f "$i"
+ fi
+done
+if [ -d vast_magnitude_calibration_details_log ];then
+ rm -rf vast_magnitude_calibration_details_log/
+fi
+for i in calib.txt_backup *.calib_param *.calib *.struct octave-core out.wcs out.xyls *.bak util/*.bak lib/*.bak src/*.bak src/pgfv/*.bak BLS/*.bak periodFilter/*.bak src/ccd/*.bak src/diferential/*.bak ;do
+ if [ -f "$i" ];then
+  rm -f "$i"
+ fi
+done
+for i in coadd.* check.fits test.mpc curr_unc curlhack.html server_reply.html wcsmag.cat psfex_*cat test.psf psfex.xml psfex_?????.param psfex_????.param psfex_???.param psfex_input_*.cat autodetect_aper_*.cat psfex.found *.cat.vizquery Aladin.script candidates-transients.tmp_1 ;do
+ if [ -f "$i" ];then
+  rm -f "$i"
+ fi
+done
 # Remove saved VaST source code snapshots that could be loaded together with loghtcurves
-rm -rf vast_src_*
-rm -f search_databases_with_vizquery_USNOB_ID_OK.tmp
-rm -f vizquerry_*.input vizquerry_*.output
-rm -f vizquery_*.input vizquery_*.output
+for i in vast_src_* ;do
+ if [ -d "$i" ];then
+  rm -rf "$i"
+ fi
+done
+for i in search_databases_with_vizquery_USNOB_ID_OK.tmp vizquerry_*.input vizquerry_*.output vizquery_*.input vizquery_*.output ;do
+ if [ -f "$i" ];then
+  rm -f "$i"
+ fi
+done
 # Remove Astrometry.net residuals
-rm -f out*.axy out*.corr out*.match out*.rdls out*.solved out*.wcs
+for i in out*.axy out*.corr out*.match out*.rdls out*.solved out*.wcs ;do
+ if [ -f "$i" ];then
+  rm -f "$i"
+ fi
+done
 # Remove symlinks to images
 # THIS CANNOT BE HERE
 #rm -rf symlinks_to_images/

@@ -1041,19 +1041,21 @@ void write_string_to_log_file( char *log_string, char *sextractor_catalog ) {
  return;
 }
 
+// -1 - not found
+// 0, 1, 2... - index of the found star
 int exclude_test( double X, double Y, double *exX, double *exY, int N ) {
- int result= 0;
+ int result= -1;
  int i;
- //for (i = 0; i < N; i++) {
- for ( i= N; i--; ) {
+ for (i = 0; i < N; i++) {
+ //for ( i= N; i--; ) {
   if ( fabs( exX[i] - X ) < 1.5 && fabs( exY[i] - Y ) < 1.5 ) {
-   result= 1;
+   result= i;
    break;
   }
  }
- if ( result != 0 ) {
-  fprintf( stderr, "The star %lg %lg is listed in exclude.lst => excluded from magnitude calibration\n", X, Y );
- }
+// if ( result != 0 ) {
+//  fprintf( stderr, "The star %lg %lg is listed in exclude.lst => excluded from magnitude calibration\n", X, Y );
+// }
  return result;
 }
 
@@ -1271,6 +1273,9 @@ int main( int argc, char **argv ) {
  int N_manually_selected_comparison_stars= 0;
  double *manually_selected_comparison_stars_X;
  double *manually_selected_comparison_stars_Y;
+ double *manually_selected_comparison_stars_catalog_mag;
+ int manually_selected_comparison_stars_index;
+ FILE *calibtxtfile;
  //
  double X_im_size= 0.0;
  double Y_im_size= 0.0;
@@ -1405,8 +1410,6 @@ int main( int argc, char **argv ) {
 
  int max_number; // Maximum star number, will be needed to make up numbers for new stars if we want to add them to the list
 
- //int xxx; // for test
-
  char sextractor_catalog[FILENAME_LENGTH];
 
  pid_t pid;
@@ -1459,6 +1462,10 @@ int main( int argc, char **argv ) {
  double *poly_x_original_pointer;
  double *poly_y_original_pointer;
  double *poly_err_original_pointer;
+ 
+ char system_command_select_comparison_stars[2*FILENAME_LENGTH];
+ 
+ FILE *image00000_cat_aperture_file;
  //////////////////////////////////
  //        int number_of_elements_in_Pos1; // needed for adding stars not detected on the reference frame
 
@@ -2063,15 +2070,28 @@ int main( int argc, char **argv ) {
   fprintf( stderr, " **** ****\n" );
  }
 
- /* Print the TT warning only if UTC was not explicitly requested by user. */
+ /// Special mode for manual comparison star selection
+ if ( 0 == strcmp( "diffphot", basename( argv[0] ) ) ) {
+  fprintf(stderr, "\n\n######## Applying a set of special settings for the simple differential photometry mode ########\n");
+  fprintf(stderr, "diffphot mode: magnitude calibration type is set to zeropoint offset only\n");
+  photometric_calibration_type= 2;
+  fprintf(stderr, "diffphot mode: disabling photocurve support\n");
+  param_use_photocurve= 0;
+  fprintf(stderr, "diffphot mode: disabling position-dependent corrections\n");
+  apply_position_dependent_correction= 0;
+  fprintf(stderr, "diffphot mode: no UTC-to-TT time system conversion will be performed!!!\n");
+  convert_timesys_to_TT=0;
+  fprintf(stderr, "diffphot mode: a fixed aperture diameter will be used!!!\n");
+  fprintf(stderr, "################\n\n");
+ }
+
+ //// Print the TT warning only if UTC was not explicitly requested by user. 
  if ( convert_timesys_to_TT != 0 && Num != 3 && Num != 4 && Num != 5 ){
   print_TT_reminder( 0 );
  }
 
  /* The end of the beginning =) */
 
- /* Start timer */
- start_time= time( NULL );
 
  /* Update PATH variable to make sure the local copy of SExtractor is there */
  char pathstring[8192];
@@ -2103,13 +2123,39 @@ int main( int argc, char **argv ) {
  /* Save command line arguments to the log file vast_command_line.log */
  save_command_line_to_log_file( argc, argv );
 
- /* 
-           Generate bright_star_blend_check.sex from default.sex for false transient removal
-        */
+ /// Special mode for manual comparison star selection
+ if ( 0 == strcmp( "diffphot", basename( argv[0] ) ) ) {
+  fprintf( stderr, "\n\n Select a comparison star with a click and change the measurement aperture by pressing '+'/'-' on the keyboard.\n\n");
+  sprintf( system_command_select_comparison_stars, "lib/select_comparison_stars %s", input_images[0]);
+  if ( 0 != system( system_command_select_comparison_stars ) ) {
+   fprintf( stderr, "ERROR running  '%s'\n", system_command_select_comparison_stars );
+   return 1;
+  }
+  image00000_cat_aperture_file=fopen("image00000.cat.aperture","r");
+  if( NULL != image00000_cat_aperture_file ){
+   if ( 1!=fscanf( image00000_cat_aperture_file, "%lf", &fixed_aperture ) ){
+    fprintf( stderr, "ERROR: getting the fixed aperture dameter from image00000.cat.aperture\nWill fall back to automatically-selected apertures!\n" );
+    fixed_aperture= 0.0;
+   }
+   fclose( image00000_cat_aperture_file );
+   if ( fixed_aperture < 1.0 && fixed_aperture > 100.0 ) {
+    fprintf( stderr, "ERROR: the fixed aperture dameter of %lf pix is out of the expected range!\nWill fall back to automatically-selected apertures!\n", fixed_aperture );
+    fixed_aperture= 0.0;
+   }
+  } else {
+   fprintf( stderr, "WARNING: cannot read image00000.cat.aperture\nWill fall back to automatically-selected apertures!\n");
+  }
+ } // if ( 0 == strcmp( "diffphot", basename( argv[0] ) ) ) {
+
+
+ //// Generate bright_star_blend_check.sex from default.sex for false transient removal
  if ( 0 != system( "lib/generate_bright_star_blend_check_sex.sh default.sex" ) ) {
   fprintf( stderr, "ERROR running  lib/generate_bright_star_blend_check_sex.sh default.sex\n" );
   return 1;
  }
+
+ /* Start timer */
+ start_time= time( NULL );
 
  //////////////////////////////////////////////////////////////////////////////////////////////////////////////
  /////// Reading file which defines rectangular regions we want to completely exclude from the analysis ///////
@@ -2148,7 +2194,7 @@ int main( int argc, char **argv ) {
    N_bad_stars+= 1;
   }
   fclose( excludefile );
-  fprintf( stderr, "Exclusion file was read\n\n\n" );
+  fprintf( stderr, "Excluding %d stars (listed in exclude.lst file) from magnitude calibration\n\n\n", N_bad_stars );
  }
 
  ////////////////////////////////////////////////////////////////////
@@ -2168,6 +2214,12 @@ int main( int argc, char **argv ) {
   vast_report_memory_error();
   return 1;
  }
+ manually_selected_comparison_stars_catalog_mag= malloc( sizeof( double ) );
+ if ( manually_selected_comparison_stars_catalog_mag == NULL ) {
+  fprintf( stderr, "ERROR: can't allocate memory for manually_selected_comparison_stars_catalog_mag\n" );
+  vast_report_memory_error();
+  return 1;
+ }
  cmparisonstarsfile= fopen( "manually_selected_comparison_stars.lst", "r" );
  if ( cmparisonstarsfile == NULL ) {
   fprintf( stderr, "No manually selected comparison stars file manually_selected_comparison_stars.lst which is fine.\n" );
@@ -2175,13 +2227,16 @@ int main( int argc, char **argv ) {
   // We should not quit if there is no manually_selected_comparison_stars.lst
  }
  else{
-  while ( -1 < fscanf( cmparisonstarsfile, "%lf %lf", &manually_selected_comparison_stars_X[N_manually_selected_comparison_stars], &manually_selected_comparison_stars_Y[N_manually_selected_comparison_stars] ) ) {
+  while ( -1 < fscanf( cmparisonstarsfile, "%lf %lf %lf", &manually_selected_comparison_stars_X[N_manually_selected_comparison_stars], &manually_selected_comparison_stars_Y[N_manually_selected_comparison_stars], &manually_selected_comparison_stars_catalog_mag[N_manually_selected_comparison_stars] ) ) {
    manually_selected_comparison_stars_X= realloc( manually_selected_comparison_stars_X, sizeof( double ) * ( N_manually_selected_comparison_stars + 2 ) );
    manually_selected_comparison_stars_Y= realloc( manually_selected_comparison_stars_Y, sizeof( double ) * ( N_manually_selected_comparison_stars + 2 ) );
+   manually_selected_comparison_stars_catalog_mag= realloc( manually_selected_comparison_stars_catalog_mag, sizeof( double ) * ( N_manually_selected_comparison_stars + 2 ) );
    N_manually_selected_comparison_stars+= 1;
   }
   fclose( cmparisonstarsfile );
-  fprintf( stderr, "Exclusion file was read\n\n\n" );
+  fprintf( stderr, "Loaded %d manually selected compariosn stars from manually_selected_comparison_stars.lst file\n", N_manually_selected_comparison_stars );
+  photometric_calibration_type= 2;
+  fprintf(stderr, "Resetting the magnitude calibration mode to zero-point offset only!\n\n\n");
  }
 
 
@@ -2598,6 +2653,20 @@ int main( int argc, char **argv ) {
   //
   for ( float_parameters_counter= NUMBER_OF_FLOAT_PARAMETERS; float_parameters_counter--; ) {
    STAR1[NUMBER1 - 1].float_parameters[float_parameters_counter]= float_parameters[float_parameters_counter];
+  }
+  // If there are manually supplied calibration stars - write calib.txt
+  if ( N_manually_selected_comparison_stars>0 ){
+   manually_selected_comparison_stars_index=exclude_test( position_x_pix, position_y_pix, manually_selected_comparison_stars_X, manually_selected_comparison_stars_Y, N_manually_selected_comparison_stars );
+   if ( manually_selected_comparison_stars_index != -1 ){
+    calibtxtfile=fopen("calib.txt","a");
+    if ( calibtxtfile == NULL ){
+     fprintf(stderr, "ERROR: cannot open file calib.txt for writing!\n");
+     exit( 1 );
+    }
+    // -13.5161 14.4000 0.0032
+    fprintf( calibtxtfile, "%lf %lf %lf\n", mag, manually_selected_comparison_stars_catalog_mag[manually_selected_comparison_stars_index], sigma_mag );
+    fclose( calibtxtfile );
+   }
   }
   // Use only good stars for coordinate transformation
   if ( STAR1[NUMBER1 - 1].sextractor_flag <= 7 && STAR1[NUMBER1 - 1].vast_flag == 0 ) {
@@ -3649,15 +3718,16 @@ int main( int argc, char **argv ) {
     // populate the arrays of comparison stars for magnitude calibration
     for ( i= 0; i < MIN( Number_of_ecv_star, NUMBER3 ); i++ ) {
      // STAR1[Pos1[i]].magmag==0.0 if the star was not detected on the reference frame
-     if ( 0 == exclude_test( STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, bad_stars_X, bad_stars_Y, N_bad_stars ) && fabs( STAR1[Pos1[i]].mag - STAR2[Pos2[i]].mag ) < MAX_INSTR_MAG_DIFF && STAR1[Pos1[i]].mag != 0.0
+     if ( -1 == exclude_test( STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, bad_stars_X, bad_stars_Y, N_bad_stars ) && fabs( STAR1[Pos1[i]].mag - STAR2[Pos2[i]].mag ) < MAX_INSTR_MAG_DIFF && STAR1[Pos1[i]].mag != 0.0
           //&& STAR1[Pos1[i]].sextractor_flag==0
           && STAR1[Pos1[i]].sextractor_flag <= 1 && STAR1[Pos1[i]].vast_flag == 0
           //&& STAR2[Pos2[i]].sextractor_flag==0
           && STAR2[Pos2[i]].sextractor_flag <= 1 && STAR2[Pos2[i]].vast_flag == 0 ) {
 
       if ( N_manually_selected_comparison_stars>0 ) {
+       fprintf(stderr, "Performing magnitude calibration using manually selected comparison stars\n");
        // Handle the special case of a set of manually selected comparison stars
-       if ( 1 ==  exclude_test( STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, manually_selected_comparison_stars_X, manually_selected_comparison_stars_Y, N_manually_selected_comparison_stars ) ){
+       if ( exclude_test( STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, manually_selected_comparison_stars_X, manually_selected_comparison_stars_Y, N_manually_selected_comparison_stars ) != -1 ){
         poly_x[N_good_stars]= (double)STAR2[Pos2[i]].mag;
         poly_y[N_good_stars]= (double)STAR1[Pos1[i]].mag;
         poly_err[N_good_stars]= (double)STAR2[Pos2[i]].sigma_mag;
@@ -3665,6 +3735,7 @@ int main( int argc, char **argv ) {
         N_good_stars+= 1;
        }
       } else {
+       fprintf(stderr, "Performing magnitude calibration using automatically selected comparison stars\n");
        // Handle the normal case of using all the good matched stars for magnitude calibration
        poly_x[N_good_stars]= (double)STAR2[Pos2[i]].mag;
        poly_y[N_good_stars]= (double)STAR1[Pos1[i]].mag;
@@ -3680,12 +3751,13 @@ int main( int argc, char **argv ) {
      } // if ( 0 == exclude_test( STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, bad_stars_X, bad_stars_Y, N_bad_stars ) && fabs( STAR1[Pos1[i]].mag - STAR2[Pos2[i]].mag ) ...
     } // for ( i= 0; i < MIN( Number_of_ecv_star, NUMBER3 ); i++ ) {
     // Handle the case where the majority of stars have the 'blended' flag
-    if ( N_good_stars < (double)( MIN( Number_of_ecv_star, NUMBER3 ) ) / 2.0 ) {
+    // Don't do that if the manually selected comparison stars were provided
+    if ( N_good_stars < (double)( MIN( Number_of_ecv_star, NUMBER3 ) ) / 2.0 && N_manually_selected_comparison_stars == 0 ) {
      N_good_stars= 0;
      // repopulate the arrays
      for ( i= 0; i < MIN( Number_of_ecv_star, NUMBER3 ); i++ ) {
       // STAR1[Pos1[i]].magmag==0.0 if the star was not detected on the reference frame
-      if ( 0 == exclude_test( STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, bad_stars_X, bad_stars_Y, N_bad_stars ) && fabs( STAR1[Pos1[i]].mag - STAR2[Pos2[i]].mag ) < MAX_INSTR_MAG_DIFF && STAR1[Pos1[i]].mag != 0.0
+      if ( -1 == exclude_test( STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, bad_stars_X, bad_stars_Y, N_bad_stars ) && fabs( STAR1[Pos1[i]].mag - STAR2[Pos2[i]].mag ) < MAX_INSTR_MAG_DIFF && STAR1[Pos1[i]].mag != 0.0
            //&& STAR1[Pos1[i]].sextractor_flag==0
            && STAR1[Pos1[i]].sextractor_flag <= 3 && STAR1[Pos1[i]].vast_flag == 0
            //&& STAR2[Pos2[i]].sextractor_flag==0
@@ -3748,7 +3820,7 @@ int main( int argc, char **argv ) {
     //////
 
     // If we don't have enough stars to perform a reliable magnitude calibration
-    if ( N_good_stars < min_number_of_stars_for_magnitude_calibration ) {
+    if ( N_good_stars < min_number_of_stars_for_magnitude_calibration && N_manually_selected_comparison_stars == 0 ) {
      wpolyfit_exit_code= 1;
      write_string_to_individual_image_log( sextractor_catalog, "main(): ", "ERROR: to few stars to perform magnitude calibration ", "" );
     } else {
@@ -3765,8 +3837,9 @@ int main( int argc, char **argv ) {
      if ( photometric_calibration_type == 2 ) {
       min_number_of_stars_for_magnitude_calibration=1; // we can survive with only a single comparison star in this mode
       // Filter the comparison stars for the zero-point-only calibration
-      if ( N_good_stars>3 ){
+      if ( N_good_stars>3 && N_manually_selected_comparison_stars > 0 ){
        // remove the brightest star, it is typically bad
+       // but not if it was explicitly specified by the user
        number_of_bright_stars_to_drop_from_mag_calibr=1;
        fprintf(stderr,"Excluding %d brightest stars from magnitude calibration\n", number_of_bright_stars_to_drop_from_mag_calibr);
        // Pointer Arithmetic https://stackoverflow.com/questions/394767/pointer-arithmetic
@@ -3776,7 +3849,8 @@ int main( int argc, char **argv ) {
        N_good_stars= N_good_stars - number_of_bright_stars_to_drop_from_mag_calibr;
        //
       }
-      if ( N_good_stars>3 ){
+      if ( N_good_stars>3 && N_manually_selected_comparison_stars > 0 ){
+       // but not if they were explicitly specified by the user
        N_good_stars=MAX( (int)(0.1*N_good_stars), 3 ); // keep only the few brightest stars
        fprintf(stderr,"Using only %d brightest stars from magnitude calibration\n", N_good_stars);
       }
@@ -4601,6 +4675,7 @@ int main( int argc, char **argv ) {
 
  free( manually_selected_comparison_stars_X );
  free( manually_selected_comparison_stars_Y );
+ free( manually_selected_comparison_stars_catalog_mag );
 
  fprintf( stderr, "Done with measurements! =)\n\n" );
  fprintf( stderr, "Total number of measurements %ld (%ld measurements stored in RAM)\n", TOTAL_OBS, obs_in_RAM );
@@ -5050,6 +5125,13 @@ int main( int argc, char **argv ) {
  if ( MATCH_SUCESS == 0 && Num == 2 ) {
   fprintf( stderr, "\n\n\nVaST processing ERROR: cannot match the two images!\n\n\n" );
   return 1;
+ }
+
+ // Perform manitude calibration if the calibration file is supplied and non-empty
+ if( count_lines_in_ASCII_file("calib.txt") > 0 && N_manually_selected_comparison_stars > 0 ){
+  if ( 0!=system("util/calibrate_magnitude_scale `lib/fit_zeropoint`") ){
+   fprintf(stderr, "ERROR running the magnitude calibration!");
+  }  
  }
 
  // Print warning messages if many images were not matched

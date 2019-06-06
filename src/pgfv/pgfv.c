@@ -484,6 +484,7 @@ int find_XY_position_of_a_star_on_image_from_vast_format_lightcurve( float *X_kn
 
 void load_markers_for_known_variables( float *markX_known_variable, float *markY_known_variable, int *mark_known_variable_counter, char *fits_image_name){
  FILE *list_of_known_vars_file;
+ char full_string[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
  char lightcurvefilename[OUTFILENAME_LENGTH];
  char string_with_star_id_and_info[2048];
  list_of_known_vars_file=fopen("vast_list_of_previously_known_variables.log","r");
@@ -492,12 +493,36 @@ void load_markers_for_known_variables( float *markX_known_variable, float *markY
   return;
  }
  fprintf(stderr,"Loading known variables from vast_list_of_previously_known_variables.log\n");
- while ( -1<fscanf(list_of_known_vars_file,"%s %[^\t\n]", lightcurvefilename, string_with_star_id_and_info ) ){
+ while ( NULL != fgets( full_string, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, list_of_known_vars_file ) ){
+  sscanf( full_string,"%s %[^\t\n]", lightcurvefilename, string_with_star_id_and_info );
   fprintf(stderr,"Loading %s ... ",lightcurvefilename);
   if ( 1==find_XY_position_of_a_star_on_image_from_vast_format_lightcurve( &markX_known_variable[(*mark_known_variable_counter)], &markY_known_variable[(*mark_known_variable_counter)], lightcurvefilename, fits_image_name ) ){
    (*mark_known_variable_counter)++;
   }
  }
+ fprintf(stderr, "Loaded %d known variables.\n", (*mark_known_variable_counter) );
+ return;
+}
+
+void load_markers_for_autocandidate_variables( float *markX_known_variable, float *markY_known_variable, int *mark_known_variable_counter, char *fits_image_name){
+ FILE *list_of_known_vars_file;
+ char full_string[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+ char lightcurvefilename[OUTFILENAME_LENGTH];
+ char string_with_star_id_and_info[2048];
+ list_of_known_vars_file=fopen("vast_autocandidates.log","r");
+ if( list_of_known_vars_file == NULL ){
+  (*mark_known_variable_counter)=0;
+  return;
+ }
+ fprintf(stderr,"Loading autocandidate variables from vast_autocandidates.log\n");
+ while ( NULL != fgets( full_string, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, list_of_known_vars_file ) ){
+  sscanf( full_string,"%s %[^\t\n]", lightcurvefilename, string_with_star_id_and_info );
+  fprintf(stderr,"Loading %s ... ",lightcurvefilename);
+  if ( 1==find_XY_position_of_a_star_on_image_from_vast_format_lightcurve( &markX_known_variable[(*mark_known_variable_counter)], &markY_known_variable[(*mark_known_variable_counter)], lightcurvefilename, fits_image_name ) ){
+   (*mark_known_variable_counter)++;
+  }
+ }
+ fprintf(stderr, "Loaded %d candidate variables.\n", (*mark_known_variable_counter) );
  return;
 }
 
@@ -589,6 +614,9 @@ int main( int argc, char **argv ) {
  float *markX_known_variable= NULL;
  float *markY_known_variable= NULL;
  int mark_known_variable_counter;
+ float *markX_autocandidate_variable= NULL;
+ float *markY_autocandidate_variable= NULL;
+ int mark_autocandidate_variable_counter;
 
  int use_north_east_marks=1;
  int use_labels=1;
@@ -889,16 +917,27 @@ int main( int argc, char **argv ) {
   return 1;
  }
 
- /*
- if( 0==strcmp("select_star_on_reference_image",basename(argv[0])) ){
-  match_mode=1;
-  get_ref_image_name(fits_image_name);
- }
-*/
-
  if ( 0 == strcmp( "sextract_single_image", basename( argv[0] ) ) ) {
   match_mode= 3;
  }
+
+ if ( 0 == strcmp( "select_comparison_stars", basename( argv[0] ) ) ) {
+  match_mode= 4;
+
+  // Remove old calib.txt
+  matchfile= fopen( "calib.txt", "r" );
+  if ( NULL != matchfile ) {
+   fclose( matchfile );
+   unlink( "calib.txt" );
+  }
+  // Remove old manually_selected_comparison_stars.lst
+  matchfile= fopen( "manually_selected_comparison_stars.lst", "r" );
+  if ( NULL != matchfile ) {
+   fclose( matchfile );
+   unlink( "manually_selected_comparison_stars.lst" );
+  }
+
+ } // if ( 0 == strcmp( "select_comparison_stars", basename( argv[0] ) ) ) {
 
  //fprintf(stderr,"DEBUG-5\n");
 
@@ -984,10 +1023,34 @@ int main( int argc, char **argv ) {
    free(markX_known_variable);
    free(markY_known_variable);
   }
+  fprintf(stderr, "Loaded %d known variables.\n", mark_known_variable_counter );
+  
+  // Allocate memory for the array of autocandidate variables markers
+  markX_autocandidate_variable= (float *)malloc( MAX_NUMBER_OF_STARS * sizeof( float ) );
+  if ( markX_autocandidate_variable == NULL ) {
+   fprintf( stderr, "ERROR: Couldn't allocate memory for markX_autocandidate_variable\n" );
+   exit( 1 );
+  };
+  markY_autocandidate_variable= (float *)malloc( MAX_NUMBER_OF_STARS * sizeof( float ) );
+  if ( markY_autocandidate_variable == NULL ) {
+   fprintf( stderr, "ERROR: Couldn't allocate memory for markY_autocandidate_variable\n" );
+   exit( 1 );
+  };
+  mark_autocandidate_variable_counter= 0; // initialize
+  // TBA: load autocandidate variables
+  load_markers_for_autocandidate_variables( markX_autocandidate_variable, markY_autocandidate_variable, &mark_autocandidate_variable_counter, fits_image_name);
+  //
+  if( mark_autocandidate_variable_counter==0 ){
+   // Free memory for the array of autocandidate variables markers, as non autocandidate variables were loaded
+   free(markX_autocandidate_variable);
+   free(markY_autocandidate_variable);
+  }
+  fprintf(stderr, "Loaded %d candidate variables.\n", mark_autocandidate_variable_counter );
+
  }
 
 
- if ( match_mode == 1 || match_mode == 3 ) {
+ if ( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
   //fprintf(stderr,"DEBUG-2\n");
   /* Check if the SExtractor executable (named "sex") is present in $PATH */
   /* Update PATH variable to make sure the local copy of SExtractor is there */
@@ -1524,90 +1587,47 @@ int main( int argc, char **argv ) {
 
    /* '+' increse aperture */
    if ( curC == '+' || curC == '=' ) {
-    APER= APER + 0.5;
+    APER= APER + 1.0;
+    APER= (double)( (int)(APER+0.5) ); // round-off the aperture
     aperture_change= 1;
    }
 
    /* '-' decrese aperture */
    if ( curC == '-' || curC == '_' ) {
-    APER-= 0.5;
+    APER= APER - 1.0;
+    APER= (double)( (int)(APER+0.5) ); // round-off the aperture
     aperture_change= 1;
    }
 
    /* If aperture was changed - repeat measurements with new aperture */
-   if ( aperture_change == 1 && match_mode == 3 ) {
-    //autodetect_aperture(fits_image_name, sextractor_catalog, 1, 0, APER, 1, dimX, dimY);
-    autodetect_aperture( fits_image_name, sextractor_catalog, 1, 0, APER, dimX, dimY, 2 );
-    sex= 0;
-    catfile= fopen( sextractor_catalog, "r" );
-    if ( NULL == catfile ) {
-     fprintf( stderr, "ERROR! Cannot open sextractor catalog file %s for reading!\n", sextractor_catalog );
-     exit( 1 );
-    }
-    //while( -1<fscanf(catfile, "%d %lf %lf %lf %lf %f %f %lf %lf %lf %lf %d\n", &sexNUMBER[sex], &sexFLUX[sex], &sexFLUX_ERR[sex], &sexMAG[sex], &sexMAG_ERR[sex], &sexX[sex], &sexY[sex], &sexA_IMAGE[sex], &sexERRA_IMAGE[sex], &sexB_IMAGE[sex], &sexERRB_IMAGE[sex], &sexFLAG[sex]) ){
-    while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, catfile ) ) {
-     sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
-     external_flag= 0;
-     //external_flag_string[0]='\0';
-     if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &sexNUMBER[sex], &sexFLUX[sex], &sexFLUX_ERR[sex], &sexMAG[sex], &sexMAG_ERR[sex], &position_x_pix, &position_y_pix, &sexA_IMAGE[sex], &sexERRA_IMAGE[sex], &sexB_IMAGE[sex], &sexERRB_IMAGE[sex], &sexFLAG[sex], &external_flag, &psf_chi2, NULL ) ) {
-      fprintf( stderr, "WARNING: problem occurred while parsing SExtractor catalog %s\nThe offending line is:\n%s\n", sextractor_catalog, sextractor_catalog_string );
-      continue;
+   if( match_mode == 3 || match_mode == 4 ) {
+    if ( aperture_change == 1 ) {
+     autodetect_aperture( fits_image_name, sextractor_catalog, 1, 0, APER, dimX, dimY, 2 );
+     sex= 0;
+     catfile= fopen( sextractor_catalog, "r" );
+     if ( NULL == catfile ) {
+      fprintf( stderr, "ERROR! Cannot open sextractor catalog file %s for reading!\n", sextractor_catalog );
+      exit( 1 );
      }
-     sexX[sex]= position_x_pix;
-     sexY[sex]= position_y_pix;
-     //if( 12>sscanf(sextractor_catalog_string, "%d %lf %lf %lf %lf %f %f %lf %lf %lf %lf %d %[^\t\n]\n", &sexNUMBER[sex], &sexFLUX[sex], &sexFLUX_ERR[sex], &sexMAG[sex], &sexMAG_ERR[sex], &sexX[sex], &sexY[sex], &sexA_IMAGE[sex], &sexERRA_IMAGE[sex], &sexB_IMAGE[sex], &sexERRB_IMAGE[sex], &sexFLAG[sex], external_flag_string) ){
-     // fprintf(stderr,"WARNING: problem occurred while parsing SExtractor catalog %s\nThe offending line is:\n%s\n",sextractor_catalog,sextractor_catalog_string);
-     // continue;
-     //}
-     /*
-     // Now this is some crazy stuff:
-     // The last columns of the SExtractor catalog file might be:
-     // ... flags
-     // ... flags external_flags
-     // ... flags external_flags psf_fitting_chi2
-     // ... flags psf_fitting_chi2
-     // Below we try to handle each of the four possibilities
-     //
-     // if these are not just flags
-     if( strlen(external_flag_string)>0 && sexFLUX[sex]>0.0 && sexMAG[sex]!=99.0000 ){
-      // if these are not flags external_flags psf_fitting_chi2
-      if( 2!=sscanf(external_flag_string,"%lf %lf",&double_external_flag,&psf_chi2) ){
-       // Decide between "flags external_flags" and "flags psf_fitting_chi2"
-       for(ii=0,jj=0;ii<(int)strlen(external_flag_string);ii++){
-        if( external_flag_string[ii]=='.' || external_flag_string[ii]=='e' ){jj=1;break;} // assume that a decimal point indicates psf_chi2 rather than external_flag that is expected to be 0 or 1 only
-       }
-       if( jj==0 ){
-        // "flags external_flags" case
-        psf_chi2=1.0; // no PSF fitting results
-        if( 1!=sscanf(external_flag_string,"%lf",&double_external_flag) ){
-         double_external_flag=0.0; // no external flag image used
-        }
-       }
-       else{
-        // "flags psf_fitting_chi2" case
-        double_external_flag=0.0; // no external flag image used
-        if( 1!=sscanf(external_flag_string,"%lf",&psf_chi2) ){
-         psf_chi2=1.0; // no PSF fitting results
-        }
-       }
-      } // if( 2!=sscanf(external_flag_string,"%lf %lf",&double_external_flag,&psf_chi2) ){
-      external_flag=(int)double_external_flag;
+     while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, catfile ) ) {
+      sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
+      external_flag= 0;
+      if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &sexNUMBER[sex], &sexFLUX[sex], &sexFLUX_ERR[sex], &sexMAG[sex], &sexMAG_ERR[sex], &position_x_pix, &position_y_pix, &sexA_IMAGE[sex], &sexERRA_IMAGE[sex], &sexB_IMAGE[sex], &sexERRB_IMAGE[sex], &sexFLAG[sex], &external_flag, &psf_chi2, NULL ) ) {
+       fprintf( stderr, "WARNING: problem occurred while parsing SExtractor catalog %s\nThe offending line is:\n%s\n", sextractor_catalog, sextractor_catalog_string );
+       continue;
+      }
+      sexX[sex]= position_x_pix;
+      sexY[sex]= position_y_pix;
+      extFLAG[sex]= external_flag;
+      psfCHI2[sex]= psf_chi2;
+      sex++;
      }
-     else{
-      psf_chi2=1.0; // no PSF fitting results
-      external_flag=0; // no external flag image used
-     }
-     */
-     extFLAG[sex]= external_flag;
-     psfCHI2[sex]= psf_chi2;
-     sex++;
-    }
-    fclose( catfile );
-    fprintf( stderr, "New aperture %.1lf\n", APER );
-    aperture_change= 0;
-    curC= 'R'; // Redraw screen
-   }
-
+     fclose( catfile );
+     fprintf( stderr, "New aperture %.1lf\n", APER );
+     aperture_change= 0;
+     curC= 'R'; // Redraw screen
+    } // if ( aperture_change == 1 ) {
+   } // if( match_mode == 3 || match_mode == 4 ) {
    /* Switch to magnitude calibration mode */
    if ( curC == '2' && match_mode == 3 ) {
     fprintf( stderr, "Entering megnitude calibration mode!\n" );
@@ -1651,7 +1671,7 @@ int main( int argc, char **argv ) {
 
     /* Magnitude calibration mode or Single image mode */
     //if( match_mode==2 || match_mode==3 ){
-    if ( match_mode == 1 || match_mode == 2 || match_mode == 3 ) {
+    if ( match_mode == 1 || match_mode == 2 || match_mode == 3 || match_mode == 4 ) {
      for ( marker_counter= 0; marker_counter < sex; marker_counter++ ) {
       if ( ( curX - sexX[marker_counter] ) * ( curX - sexX[marker_counter] ) + ( curY - sexY[marker_counter] ) * ( curY - sexY[marker_counter] ) < (float)( APER * APER / 4.0 ) ) {
         // mark the star
@@ -1661,7 +1681,7 @@ int main( int argc, char **argv ) {
         //
 
        /* Magnitude calibration mode */
-       if ( match_mode == 2 ) {
+       if ( match_mode == 2 || match_mode == 4 ) {
         // mark the star
         //cpgsci( 2 );
         //cpgcirc( sexX[marker_counter], sexY[marker_counter], (float)APER / 2.0 );
@@ -1755,17 +1775,27 @@ int main( int argc, char **argv ) {
          fprintf( stderr, "Magnitude %lf is out of range. Ignoring input.\nPlease try again with this or another star.\n", catalog_mag );
          break;
         }
-        fprintf( stderr, "Writing a new string to calib.txt:\n%.4lf %.4lf %.4lf\n\n", sexMAG[marker_counter], catalog_mag, sexMAG_ERR[marker_counter] );
-        matchfile= fopen( "calib.txt", "a" );
-        fprintf( matchfile, "%.4lf %.4lf %.4lf\n", sexMAG[marker_counter], catalog_mag, sexMAG_ERR[marker_counter] );
-        fclose( matchfile );
+        if ( match_mode == 4 ){
+         fprintf(stderr, "Adding the star at %.4f %.4f with magnitude %.4lf to manually_selected_comparison_stars.lst\nPick an additional comparison star or right-click to quit.\n", sexX[marker_counter], sexY[marker_counter] );
+         matchfile= fopen( "manually_selected_comparison_stars.lst", "a" );
+         if ( matchfile == NULL ){
+          fprintf( stderr, "ERROR: failed to poed manually_selected_comparison_stars.lst for writing!\nSomething is really messed-up, so I'll die. :(\n");
+          exit( 1 );
+         }
+         fprintf( matchfile, "%.4f %.4f %.4lf\n", sexX[marker_counter], sexY[marker_counter], catalog_mag );
+         fclose( matchfile );
+        } else {
+         fprintf( stderr, "Writing a new string to calib.txt:\n%.4lf %.4lf %.4lf\n\n", sexMAG[marker_counter], catalog_mag, sexMAG_ERR[marker_counter] );
+         matchfile= fopen( "calib.txt", "a" );
+         fprintf( matchfile, "%.4lf %.4lf %.4lf\n", sexMAG[marker_counter], catalog_mag, sexMAG_ERR[marker_counter] );
+         fclose( matchfile );
+        }
         match_input++;
         break;
        }
 
        /* Single image mode */
-       //if( match_mode==3 ){
-       if ( match_mode == 1 || match_mode == 3 ) {
+       if ( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
         fprintf( stderr, "Star %6d\n", sexNUMBER[marker_counter] );
 
         if ( sexX[marker_counter] > FRAME_EDGE_INDENT_PIXELS && sexY[marker_counter] > FRAME_EDGE_INDENT_PIXELS && fabs( sexX[marker_counter] - (float)naxes[0] ) > FRAME_EDGE_INDENT_PIXELS && fabs( sexY[marker_counter] - (float)naxes[1] ) > FRAME_EDGE_INDENT_PIXELS ) {
@@ -2123,10 +2153,24 @@ int main( int argc, char **argv ) {
      cpgsci( 1 );
     }
     if ( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
-     cpgsci( 3 );
+     // mark previously known variables from vast_list_of_previously_known_variables.log
+     // cpgsci( 5 ); // good for autocandidates
+     cpgsci( 6 );
+     cpgslw(4); // increase line width
      for ( marker_counter= 0; marker_counter < mark_known_variable_counter; marker_counter++ ){
-      cpgcirc( markX_known_variable[marker_counter], markX_known_variable[marker_counter], (float)APER / 2.0 );
+      cpgcirc( markX_known_variable[marker_counter], markY_known_variable[marker_counter], (float)APER / 1.5 );
      }
+     cpgslw(1); // set default line width
+     cpgsci( 1 );
+    }
+    if ( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
+     // mark previously known variables from vast_autocandidates.log
+     cpgsci( 5 ); // good for autocandidates
+     cpgslw(4); // increase line width
+     for ( marker_counter= 0; marker_counter < mark_autocandidate_variable_counter; marker_counter++ ){
+      cpgcirc( markX_autocandidate_variable[marker_counter], markY_autocandidate_variable[marker_counter], (float)APER / 1.2 );
+     }
+     cpgslw(1); // set default line width
      cpgsci( 1 );
     }
     /* And draw bad regions */
@@ -2189,12 +2233,12 @@ int main( int argc, char **argv ) {
   free( sexNUMBER );
  }
 
- if ( match_mode == 1 || match_mode == 3 ) {
+ if ( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
   free( sexX_viewed );
   free( sexY_viewed );
  }
 
- if ( match_mode == 1 || match_mode == 3 ) {
+ if ( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
   free( sexFLUX );
   free( sexFLUX_ERR );
   //free( sexNUMBER );
@@ -2212,6 +2256,11 @@ int main( int argc, char **argv ) {
    // Free memory for the array of known variables markers
    free(markX_known_variable);
    free(markY_known_variable);
+  }
+  if( mark_autocandidate_variable_counter>0 ){
+   // Free memory for the array of autocandidate variables markers
+   free(markX_autocandidate_variable);
+   free(markY_autocandidate_variable);
   }
  }
 

@@ -95,6 +95,13 @@ for DIAGNOSTIC_PLOT_FILE in fake_image_hack_*.fits ;do
   rm -f "$DIAGNOSTIC_PLOT_FILE"
  fi
 done
+####################################
+# Remove fake_image_hack files, if any
+for BADDIR in SIMULATOR_reference simulation_results ;do
+ if [ -d "$BADDIR" ];then
+  rm -rf "$BADDIR"
+ fi
+done
 
 
 ####################################

@@ -271,8 +271,9 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
   fclose( catalog );
 
   // remove the SExtractor catalog from the 1st pass with wich we measured sizes of stars, we don't need it anymore
-  if ( 0 != unlink( sextractor_catalog_filename ) )
+  if ( 0 != unlink( sextractor_catalog_filename ) ){
    fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", sextractor_catalog_filename );
+  }
 
   gsl_sort( A, 1, i );
   median_A= gsl_stats_median_from_sorted_data( A, 1, i );
