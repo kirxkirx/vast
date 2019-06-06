@@ -434,6 +434,8 @@ field identification have good chances to fail. Sorry... :(
   # Blind solve
   `"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # HACK Hack hack -- manually specify the field center and size
+  # Gaia18dvy
+  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 20:05:06.02 --dec +36:29:13.52 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # SOAR observations of ASASSN-19gt
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --pixel-error 3 --ra 11:40:33.13 --dec -62:50:17.4 --radius 0.2   --objs 50 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # SOAR observations of ASASSN-19cq
