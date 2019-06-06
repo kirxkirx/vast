@@ -1284,29 +1284,26 @@ int main( int argc, char **argv ) {
   if ( write_edited_lightcurve_to_file == 1 ) {
    was_lightcurve_changed= 0;
    write_edited_lightcurve_to_file= 0; // don't do it again unless 'W' or 'P' will be pressed again
+   //fprintf(stderr,"\n\n\nDEBUUUUGGG #%s#\n&(lightcurvefilename[strlen(lightcurvefilename) - 4]=#%s#\n&(lightcurvefilename[strlen(lightcurvefilename) - 3])=#%s#\n",lightcurvefilename,&(lightcurvefilename[strlen(lightcurvefilename) - 4]),&(lightcurvefilename[strlen(lightcurvefilename) - 3]));
    // make sure the lightcurve file name is long enough
    if ( strlen( lightcurvefilename ) > 5 ) {
     // we don't do the fancy renaming if the input lightcurve file name is too short
-    //if ( lightcurvefilename[strlen( lightcurvefilename ) - 1] == 't' && lightcurvefilename[strlen( lightcurvefilename ) - 2] == 'a' && lightcurvefilename[strlen( lightcurvefilename ) - 3] == 'd' ) {
-    if(strcmp(&(lightcurvefilename[strlen(lightcurvefilename) - 3]), "dat")){
+    if( NULL != strstr( lightcurvefilename, ".dat") ) {
      lightcurvefilename[strlen( lightcurvefilename ) - 4]= '\0'; // remove ".dat"
      strcat( lightcurvefilename, "_edit.dat" );
      is_lightcurvefilename_modified= 1;
     }
-    //if ( lightcurvefilename[strlen( lightcurvefilename ) - 1] == 't' && lightcurvefilename[strlen( lightcurvefilename ) - 2] == 'x' && lightcurvefilename[strlen( lightcurvefilename ) - 3] == 't' ) {
-    if(strcmp(&(lightcurvefilename[strlen(lightcurvefilename) - 3]), "txt")){
+    if( NULL != strstr( lightcurvefilename, ".txt") ) {
      lightcurvefilename[strlen( lightcurvefilename ) - 4]= '\0'; // remove ".txt"
      strcat( lightcurvefilename, "_edit.txt" );
      is_lightcurvefilename_modified= 1;
     }
-    //if ( lightcurvefilename[strlen( lightcurvefilename ) - 1] == 'v' && lightcurvefilename[strlen( lightcurvefilename ) - 2] == 's' && lightcurvefilename[strlen( lightcurvefilename ) - 3] == 'c' ) {
-    if(strcmp(&(lightcurvefilename[strlen(lightcurvefilename) - 3]), "csv")){
+    if( NULL != strstr( lightcurvefilename, ".csv") ) {
      lightcurvefilename[strlen( lightcurvefilename ) - 4]= '\0'; // remove ".csv"
      strcat( lightcurvefilename, "_edit.csv" );
      is_lightcurvefilename_modified= 1;
     }
-    //if ( lightcurvefilename[strlen( lightcurvefilename ) - 1] == 'c' && lightcurvefilename[strlen( lightcurvefilename ) - 2] == 'l' ) {
-    if(strcmp(&(lightcurvefilename[strlen(lightcurvefilename) - 2]), "lc")){
+    if( NULL != strstr( lightcurvefilename, ".lc") ) {
      lightcurvefilename[strlen( lightcurvefilename ) - 3]= '\0'; // remove ".lc"
      strcat( lightcurvefilename, "_edit.lc" );
      is_lightcurvefilename_modified= 1;

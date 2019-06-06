@@ -93,6 +93,12 @@ for i in out*.axy out*.corr out*.match out*.rdls out*.solved out*.wcs ;do
   rm -f "$i"
  fi
 done
+# Remove edited lightcurve files
+for i in out*_edit* ;do
+ if [ -f "$i" ];then
+  rm -f "$i"
+ fi
+done
 # Remove symlinks to images
 # THIS CANNOT BE HERE
 #rm -rf symlinks_to_images/
