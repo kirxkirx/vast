@@ -827,8 +827,9 @@ int main( int argc, char **argv ) {
   //   fprintf(stderr,"##### DEBUG04 #####\n");
 
   // plot break lines
-  if ( n_breaks != 0 )
+  if ( n_breaks != 0 ){
    gsl_sort_float( breaks, 1, n_breaks );
+  }
   cpgsci( 4 );
   for ( i= 0; i < n_breaks; i++ ) {
    tmp_x[1]= tmp_x[0]= breaks[i];
@@ -847,6 +848,7 @@ int main( int argc, char **argv ) {
   if ( plot_linear_trend_switch == 1 ) { // fit and plot linear trends and breaks if there are any, some more details my be found below near remove_linear_trend
    if ( fit_n == 0 ) {
     // allocate memory
+    //fprintf(stderr,"DEBUUUUGGGG\n\n\n");
     fit_jd= malloc( Nobs * sizeof( float ) );
     if ( fit_jd == NULL ) {
      fprintf( stderr, "ERROR3: Couldn't allocate memory for fit_jd(lc.c)\n" );
@@ -913,6 +915,9 @@ int main( int argc, char **argv ) {
     fit_n= 0;
     for ( i= 0; i < Nobs; i++ ) {
      if ( float_JD[i] <= breaks[0] ) {
+      //
+      fprintf( stderr, "fit_n=%d i=%d breaks[0]=%f\n", fit_n, i, breaks[0]);
+      //
       fit_jd[fit_n]= float_JD[i];
       fit_mag[fit_n]= mag[i];
       fit_mag_err[fit_n]= mag_err[i];
@@ -969,6 +974,8 @@ int main( int argc, char **argv ) {
    fit_jd = NULL;
    fit_mag = NULL;
    fit_mag_err = NULL;
+   
+   fit_n= 0; // or we'll not reallocate the memory for fit_jd and stuff when we'll get back here
   } // if( plot_linear_trend_switch==1 ){
 
   //   fprintf(stderr,"##### DEBUG06 #####\n");
@@ -1172,6 +1179,9 @@ int main( int argc, char **argv ) {
    fit_jd = NULL;
    fit_mag = NULL;
    fit_mag_err = NULL;
+   
+   n_breaks=0; // reset the breaks counter
+   fit_n=0; // reset this one too, just in case
   }
 
   // terminate single data point
