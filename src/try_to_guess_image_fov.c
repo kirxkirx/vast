@@ -186,6 +186,116 @@ int try_to_recognize_Zeiss2_with_FLIcam( char *fitsfilename, double *estimated_f
  return 0; // if we are still here - this is Zeiss-2
 }
 
+int try_to_recognize_MSUcampusObs06m_with_APOGEEcam( char *fitsfilename, double *estimated_fov_arcmin ) {
+ double xpixsz;
+ double ypixsz;
+ int xbinning;
+ int ybinning;
+ long naxes[2];
+ char sitelat[1024];
+ char sitelat_comment[1024];
+ char sitelong[1024];
+ char sitelong_comment[1024];
+
+ // fitsio
+ int status= 0;
+ fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
+ // Extract data from fits header
+ fits_open_file( &fptr, fitsfilename, READONLY, &status );
+ if ( 0 != status ) {
+  fits_report_error( stderr, status ); // print out any error messages
+  fits_clear_errmsg();                 // clear the CFITSIO error message stack
+  return status;
+ }
+
+
+ fits_read_key( fptr, TSTRING, "SITELAT", sitelat, sitelat_comment, &status );
+ if ( 0 != status ) {
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+ if ( 0 != strncasecmp( sitelat, "42 42 23", 1024 - 1 ) ) {
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+ fits_read_key( fptr, TSTRING, "SITELONG", sitelong, sitelong_comment, &status );
+ if ( 0 != status ) {
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+ if ( 0 != strncasecmp( sitelong, "-25 37 56", 1024 - 1 ) ) {
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+
+ fits_read_key( fptr, TDOUBLE, "XPIXSZ", &xpixsz, NULL, &status );
+ if ( 0 != status ) {
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+ if ( xpixsz != 13.0 ) {
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+ fits_read_key( fptr, TDOUBLE, "YPIXSZ", &ypixsz, NULL, &status );
+ if ( 0 != status ) {
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+ if ( ypixsz != 13.0 ) {
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+
+ fits_read_key( fptr, TINT, "XBINNING", &xbinning, NULL, &status );
+ if ( 0 != status ) {
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+ if ( xbinning != 1 ) {
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+ fits_read_key( fptr, TINT, "YBINNING", &ybinning, NULL, &status );
+ if ( 0 != status ) {
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+ if ( ybinning != 1 ) {
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+
+ fits_read_key( fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status );
+ if ( 0 != status ) {
+  fits_report_error( stderr, status ); // print out any error messages
+  fits_clear_errmsg();                 // clear the CFITSIO error message stack
+  fits_close_file( fptr, &status );
+  return status;
+ }
+ if ( naxes[0] != 1024 ) {
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+
+ fits_read_key( fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status );
+ if ( 0 != status ) {
+  fits_report_error( stderr, status ); // print out any error messages
+  fits_clear_errmsg();                 // clear the CFITSIO error message stack
+  fits_close_file( fptr, &status );
+  return status;
+ }
+ if ( naxes[1] != 1024 ) {
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+
+ ( *estimated_fov_arcmin )= 6.9;
+
+ fits_close_file( fptr, &status );
+ return 0; // if we are still here - this is Zeiss-2
+}
+
 int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov_arcmin ) {
  char telescop[1024];
  char telescop_comment[1024];
@@ -584,6 +694,11 @@ int main( int argc, char **argv ) {
  }
 
  if ( 0 == try_to_recognize_Zeiss2_with_FLIcam( fitsfile_name, &estimated_fov_arcmin ) ) {
+  fprintf( stdout, "%4.0lf\n", estimated_fov_arcmin );
+  return 0;
+ }
+
+ if ( 0 == try_to_recognize_MSUcampusObs06m_with_APOGEEcam( fitsfile_name, &estimated_fov_arcmin ) ) {
   fprintf( stdout, "%4.0lf\n", estimated_fov_arcmin );
   return 0;
  }
