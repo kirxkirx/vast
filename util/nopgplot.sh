@@ -15,7 +15,7 @@ lib/create_data
 export LANG="POSIX"
 sort -n data | awk '{printf "%10.6f %.6f %9.3f %9.3f %s\n", $1, $2, $3, $4, $5}' > data.tmp
 mv data.tmp data.m_sigma
-lib/index_vs_mag
+lib/index_vs_mag > /dev/null # to supress the variable threshould output
 
 # Generate (a very optimistic) list of stars with large rms
 lib/m_sigma_bin > m_sigma_bin.tmp

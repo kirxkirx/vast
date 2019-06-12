@@ -966,7 +966,7 @@ int main() {
 
  } // if( NULL!=list_of_known_vars_file ){
  else {
-  // No list of candidates.
+  // No list of known variables
   // We are supposed to write one, not create detection efficiency stats!
   for ( j= 0; j < MAX_NUMBER_OF_INDEXES_TO_STORE; j++ ) {
    threshold_at_Fmax[j]= 1.0; // is that enough??? what about the other uninitialized stuff??

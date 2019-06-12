@@ -2131,6 +2131,8 @@ int main( int argc, char **argv ) {
    fprintf( stderr, "ERROR running  '%s'\n", system_command_select_comparison_stars );
    return 1;
   }
+  /*
+  //// Apply the first-image apperture diameter to the whole image series ////
   image00000_cat_aperture_file=fopen("image00000.cat.aperture","r");
   if( NULL != image00000_cat_aperture_file ){
    if ( 1!=fscanf( image00000_cat_aperture_file, "%lf", &fixed_aperture ) ){
@@ -2145,6 +2147,8 @@ int main( int argc, char **argv ) {
   } else {
    fprintf( stderr, "WARNING: cannot read image00000.cat.aperture\nWill fall back to automatically-selected apertures!\n");
   }
+  ////////////////////////////////////////////////////////////////////////////
+  */
  } // if ( 0 == strcmp( "diffphot", basename( argv[0] ) ) ) {
 
 
@@ -3725,7 +3729,7 @@ int main( int argc, char **argv ) {
           && STAR2[Pos2[i]].sextractor_flag <= 1 && STAR2[Pos2[i]].vast_flag == 0 ) {
 
       if ( N_manually_selected_comparison_stars>0 ) {
-       fprintf(stderr, "Performing magnitude calibration using manually selected comparison stars\n");
+       //fprintf(stderr, "Performing magnitude calibration using manually selected comparison stars\n");
        // Handle the special case of a set of manually selected comparison stars
        if ( exclude_test( STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, manually_selected_comparison_stars_X, manually_selected_comparison_stars_Y, N_manually_selected_comparison_stars ) != -1 ){
         poly_x[N_good_stars]= (double)STAR2[Pos2[i]].mag;
@@ -3735,7 +3739,7 @@ int main( int argc, char **argv ) {
         N_good_stars+= 1;
        }
       } else {
-       fprintf(stderr, "Performing magnitude calibration using automatically selected comparison stars\n");
+       //fprintf(stderr, "Performing magnitude calibration using automatically selected comparison stars\n");
        // Handle the normal case of using all the good matched stars for magnitude calibration
        poly_x[N_good_stars]= (double)STAR2[Pos2[i]].mag;
        poly_y[N_good_stars]= (double)STAR1[Pos1[i]].mag;
@@ -3776,6 +3780,12 @@ int main( int argc, char **argv ) {
       } // if( 0==exclude_test ...
      }  // for (i = 0; i < MIN( Number_of_ecv_star, NUMBER3) ; i++) {
     }   // if( N_good_stars<(double)(MIN( Number_of_ecv_star, NUMBER3))/2.0 ){
+
+    if ( N_manually_selected_comparison_stars>0 ) {
+     fprintf(stderr, "Performing magnitude calibration using manually selected comparison stars\n");
+    } else {
+     fprintf(stderr, "Performing magnitude calibration using automatically selected comparison stars\n");
+    }
 
     // make sure we don't have an estimated error == 0.0
     for ( i= 0; i < N_good_stars; i++ ) {
