@@ -43,13 +43,14 @@ if [ $? -ne 0 ];then
  echo "ERROR: cannot confirm that the JD time system is UTC from vast_summary.log"
  exit 1
 fi
+SOFTWARE_VERSION=`grep 'Software: ' vast_summary.log  | awk '{print $2" "$3}'`
 
 # Get the observing date for the header
 JD_FIRST_OBS=`util/cute_lc "$INPUT_VAST_LIGHTCURVE" | head -n1 | awk '{print $1}'`
 JD_LAST_OBS=`util/cute_lc "$INPUT_VAST_LIGHTCURVE" | tail -n1 | awk '{print $1}'`
 UNIXTIME_FIRST_OBS=`util/get_image_date "$JD_FIRST_OBS" 2>/dev/null | grep 'Unix Time' | awk '{print $3}'`
-DATE_FOR_CBA_HEADER_FIRST_OBS=`LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d%b%Y"`
-DATE_FOR_CBA_MESSAGE_SUBJECT_FIRST_OBS=`LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d %B %Y"`
+DATE_FOR_AAVSO_HEADER_FIRST_OBS=`LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d%b%Y"`
+DATE_FOR_AAVSO_MESSAGE_SUBJECT_FIRST_OBS=`LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d %B %Y"`
 
 # Get the exposure time for the header
 if [ -s vast_image_details.log ];then
@@ -58,73 +59,51 @@ else
  echo "WARNING: cannot get the exposure time from vast_image_details.log"
 fi
 
-if [ ! -s CBA_previously_used_header.txt ];then
- echo "# Variable: AM CVn
-# Date: $DATE_FOR_CBA_HEADER_FIRST_OBS
-# Comp star: 144_AAVSO_(V= 14.357 )
-# Check star: 157_AAVSO_(V= 15.663 )
-# Exp time (s): $MEDIAN_EXPOSURE_TIME_SEC s
-# Filter: CV
-# Observatory: Michigan State Campus Observatory
-# East Lansing, MI, USA
-# Observers: Kirill Sokolovsky
-# Comments: Clear most of the night.
-# JD              Var_Mag     Var_eMag" > CBA_previously_used_header.txt
+VARIABLE_STAR_NAME="XX Xxx"
+FILTER="X"
+if [ -s CBA_previously_used_header.txt ];then
+ echo "Importing the variable star info from CBA_previously_used_header.txt" >> /dev/stderr
+ VARIABLE_STAR_NAME=`cat CBA_previously_used_header.txt | grep '# Variable: ' | awk '{print $2}' FS='# Variable: '`
+ FILTER=`cat CBA_previously_used_header.txt | grep '# Filter: ' | awk '{print $2}' FS='# Filter: '`
 fi
-cp CBA_previously_used_header.txt CBA_report.txt
+
+if [ ! -s AAVSO_previously_used_header.txt ];then
+ echo "#TYPE=EXTENDED
+#OBSCODE=SKA
+#SOFTWARE=$SOFTWARE_VERSION
+#DELIM=,
+#DATE=JD
+#NAME,DATE,MAG,MERR,FILT,TRANS,MTYPE,CNAME,CMAG,KNAME,KMAG,AMASS,GROUP,CHART,NOTES" > AAVSO_previously_used_header.txt
+fi
+cp AAVSO_previously_used_header.txt AAVSO_report.txt
 util/cute_lc "$INPUT_VAST_LIGHTCURVE" | while read JD MAG ERR ;do
- echo "$JD     $MAG      $ERR"
-done >> CBA_report.txt
+      ##NAME,DATE,MAG,MERR,FILT,TRANS,MTYPE,CNAME,CMAG,KNAME,KMAG,AMASS,GROUP,CHART,NOTES
+      #SS CYG,2450702.1234,11.235,0.003,B,NO,STD,ENSEMBLE,na,105,10.593,1.561,1,X16382L,na
+ echo "$VARIABLE_STAR_NAME,$JD,$MAG,$ERR,$FILTER,NO,STD,ENSEMBLE,na,na,na,na,1,na,na"
+done >> AAVSO_report.txt
 if [ $? -ne 0 ];then
  echo "Something went WRONG with the lightcurve conversion!"
  exit 1
 fi
 
- echo "The stub report is written to CBA_report.txt
-You may need to edit the header before submitting the file to the CBA!"
+ echo "The stub report is written to AAVSO_report.txt
+You may need to edit the header before submitting the file to the AAVSO!"
 
 # Manually edit the report
 if [ ! -z "$EDITOR" ];then
- $EDITOR CBA_report.txt
+ $EDITOR AAVSO_report.txt
 fi
 
-VARIABLE_STAR_NAME=`head CBA_report.txt | grep 'Variable: ' | awk '{print $2}' FS='Variable: '`
+#VARIABLE_STAR_NAME=`head AAVSO_report.txt | grep 'Variable: ' | awk '{print $2}' FS='Variable: '`
 if [ -z "$VARIABLE_STAR_NAME" ];then
- echo "ERROR in CBA_report.txt : cannot find the variable star name"
+ echo "ERROR in AAVSO_report.txt : cannot find the variable star name"
  exit 1
 fi
 VARIABLE_STAR_NAME_NO_WHITESPACES="${VARIABLE_STAR_NAME//' '/'_'}"
 
-OBSERVATORY_NAME=`head CBA_report.txt | grep 'Observatory: ' | awk '{print $2}' FS='Observatory: '`
-if [ -z "$OBSERVATORY_NAME" ];then
- echo "ERROR in CBA_report.txt : cannot find the observatory name"
- exit 1
-fi
 
-OBSERVER_NAMES=`head CBA_report.txt | grep 'Observers: ' | awk '{print $2}' FS='Observers: '`
-if [ -z "$OBSERVER_NAMES" ];then
- echo "ERROR in CBA_report.txt : cannot find the observer name"
- exit 1
-fi
-
-
-FINAL_OUTPUT_FILENAME=CBA_"$VARIABLE_STAR_NAME_NO_WHITESPACES""$DATE_FOR_CBA_HEADER_FIRST_OBS"_measurements.txt
+FINAL_OUTPUT_FILENAME=AAVSO_"$VARIABLE_STAR_NAME_NO_WHITESPACES""$DATE_FOR_AAVSO_HEADER_FIRST_OBS"_measurements.txt
 echo "Renaming the final report file:"
-cp -v CBA_report.txt "$FINAL_OUTPUT_FILENAME"
-grep '# ' CBA_report.txt > CBA_previously_used_header.txt
+cp -v AAVSO_report.txt "$FINAL_OUTPUT_FILENAME"
+grep '# ' AAVSO_report.txt > AAVSO_previously_used_header.txt
 
-#Subject: AM CVn, 03 June 2019 (JD 2458638.61434 to 2458638.77528)"
-SUBJECT="$VARIABLE_STAR_NAME, $DATE_FOR_CBA_MESSAGE_SUBJECT_FIRST_OBS (JD $JD_FIRST_OBS to $JD_LAST_OBS)"
-MESSAGE="Hi,
-
-Please find attached the observations of $VARIABLE_STAR_NAME on $DATE_FOR_CBA_MESSAGE_SUBJECT_FIRST_OBS from $OBSERVATORY_NAME.
-
-Best wishes,
-$OBSERVER_NAMES
-"
-echo " ### Suggested message subject and text 
-To: cba-data@cbastro.org
-
-Subject: $SUBJECT
-
-$MESSAGE"

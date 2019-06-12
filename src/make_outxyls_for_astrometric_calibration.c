@@ -114,7 +114,8 @@ int main( int argc, char **argv ) {
  fclose( ascii_catalog );
 
  // Check if we have enough high-SNR stars to attempt plate solving
- if ( n_high_snr < 10 ) {
+ //if ( n_high_snr < 10 ) {
+ if ( n_high_snr < 4 ) {
   fprintf( stderr, "ERROR in %s : too few high-SNR stars detected on the image (%d<10).\nIs this a bad image?\n", argv[0], n_high_snr );
   free( X );
   free( Y );
