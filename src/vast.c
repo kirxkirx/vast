@@ -2081,7 +2081,8 @@ int main( int argc, char **argv ) {
   apply_position_dependent_correction= 0;
   fprintf(stderr, "diffphot mode: no UTC-to-TT time system conversion will be performed!!!\n");
   convert_timesys_to_TT=0;
-  fprintf(stderr, "diffphot mode: a fixed aperture diameter will be used!!!\n");
+  fprintf(stderr, "diffphot mode: disable photometric error rescaling!!!\n");
+  param_rescale_photometric_errors=0;
   fprintf(stderr, "################\n\n");
  }
 

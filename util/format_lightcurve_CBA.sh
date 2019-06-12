@@ -71,7 +71,16 @@ if [ ! -s CBA_previously_used_header.txt ];then
 # Comments: Clear most of the night.
 # JD              Var_Mag     Var_eMag" > CBA_previously_used_header.txt
 fi
-cp CBA_previously_used_header.txt CBA_report.txt
+#cp CBA_previously_used_header.txt CBA_report.txt
+grep '# Variable: ' CBA_previously_used_header.txt > CBA_report.txt
+echo "# Date: $DATE_FOR_CBA_HEADER_FIRST_OBS" >> CBA_report.txt
+grep '# Comp star: ' CBA_previously_used_header.txt >> CBA_report.txt
+grep '# Check star: ' CBA_previously_used_header.txt >> CBA_report.txt
+echo "# Exp time (s): $MEDIAN_EXPOSURE_TIME_SEC " >> CBA_report.txt
+grep '# Filter: ' CBA_previously_used_header.txt >> CBA_report.txt
+grep -A4 '# Observatory: ' CBA_previously_used_header.txt | grep '#' >> CBA_report.txt
+
+#
 util/cute_lc "$INPUT_VAST_LIGHTCURVE" | while read JD MAG ERR ;do
  echo "$JD     $MAG      $ERR"
 done >> CBA_report.txt
