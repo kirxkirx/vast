@@ -5,13 +5,13 @@
 # http://gsaweb.ast.cam.ac.uk/followup
 #
 # Before using the script, please specify your hashtag:
-CPCS_LOGIN_HASHTAG="CHANGE_ME"
+#CPCS_LOGIN_HASHTAG="CHANGE_ME"
 #CPCS_LOGIN_HASHTAG="MSUO0.6_KSokolovsky_7dba8628e6b3c4113e6bce0b26cd77bc"
 #CPCS_LOGIN_HASHTAG="AAVSO_5cc0bbac500993d82502e68c7be1ee4a"
 #CPCS_LOGIN_HASHTAG="AZubareva_0.6_SAI16759d5188940315b9c7591049910831"
 #CPCS_LOGIN_HASHTAG="CrAO_SNazarov_13bd755aea9d87608b9c68c66e2a02c4"
 #CPCS_LOGIN_HASHTAG="Aristarchos_KSokolovsky_615f932fd0a2d1c0996723b7ec76df91"
-#CPCS_LOGIN_HASHTAG="MSUO0.6_KSokolovsky_7dba8628e6b3c4113e6bce0b26cd77bc"
+CPCS_LOGIN_HASHTAG="MSUO0.6_KSokolovsky_7dba8628e6b3c4113e6bce0b26cd77bc"
 # The hashtag should be requested from Lukasz Wyrzykowski.
 # For more information see https://www.ast.cam.ac.uk/ioa/wikis/gsawgwiki/index.php/Calibration_Server
 #
@@ -198,6 +198,7 @@ fi
 
 # Upload results
 curl -F matchDist=2 -F EventID="$IVORN" -F sexCat="@CPCS.cat;filename=CPCS.cat" -F "hashtag=$CPCS_LOGIN_HASHTAG" -F "MJD=$MJD" -F expTime="$EXPOSURE" -F noPlot=1 -F forceFilter=$FORCE_FILTER -F dryRun=$DO_DRY_RUN -F outputFormat=json "http://gsaweb.ast.cam.ac.uk/followup/cgi/upload"
+#curl -F matchDist=3 -F EventID="$IVORN" -F sexCat="@CPCS.cat;filename=CPCS.cat" -F "hashtag=$CPCS_LOGIN_HASHTAG" -F "MJD=$MJD" -F expTime="$EXPOSURE" -F noPlot=1 -F forceFilter=$FORCE_FILTER -F dryRun=$DO_DRY_RUN -F outputFormat=json "http://gsaweb.ast.cam.ac.uk/followup/cgi/upload"
 if [ $? -ne 0 ];then
  echo "ERROR uploading the catalog to CPCS"
  write_vast_CPCS_log "ERROR uploading the catalog to CPCS"
