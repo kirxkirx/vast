@@ -136,6 +136,8 @@ int main( int argc, char **argv ) {
   fclose(simulated_lightcurve_file);   
  }
 
+ gsl_rng_free( r );
+
  free( JD );
  free( out_mag );
  free( out_magerr );
