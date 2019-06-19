@@ -120,7 +120,7 @@ int main( int argc, char **argv ) {
    #ifdef UNIFORM_ERRORS
    out_mag[i]=DEFAULT_MEAN_MAG + ERROR_AMPLITUDE*gsl_rng_uniform( r );
    #else
-   out_mag[i]=DEFAULT_MEAN_MAG + ERROR_AMPLITUDE*gsl_ran_gaussian( r, ERROR_AMPLITUDE);
+   out_mag[i]=DEFAULT_MEAN_MAG + gsl_ran_gaussian( r, ERROR_AMPLITUDE);
    #endif
    #ifdef OUTLIERS
    // insert outliers only in some lightcurves
