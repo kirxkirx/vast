@@ -1847,7 +1847,7 @@ int main( int argc, char **argv ) {
      continue;
     } // if((sb.st_mode & S_IFMT) == S_IFDIR){
     if ( ( sb.st_mode & S_IFMT ) == S_IFREG ) {
-     // Handle a regular file
+     // Handle a regular file in a first-level directory
      if ( 0 != fitsfile_read_check( dir_string ) ) {
       fprintf( stderr, "The input does not appear to be a FITS image: %s\n", dir_string );
       continue;
@@ -1889,9 +1889,9 @@ int main( int argc, char **argv ) {
    (void)closedir( dp );
    continue;
   } // if((sb.st_mode & S_IFMT) == S_IFDIR){
-    // If this is a regular file
+  // If this is a regular file
   if ( ( sb.st_mode & S_IFMT ) == S_IFREG ) {
-   // Handle a regular file
+   // Handle a regular file specified on the command line
    if ( 0 != fitsfile_read_check( file_or_dir_on_command_line ) ) {
     fprintf( stderr, "The input does not appear to be a FITS image: %s\n", file_or_dir_on_command_line );
     continue;

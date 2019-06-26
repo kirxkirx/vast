@@ -110,8 +110,9 @@ void remove_linear_trend( float *fit_jd, float *mag, int N, double A, double B, 
    plot_jd[i]= fit_jd[i] - (float)( mean_jd );
    plot_y[i]= (float)(A)*plot_jd[i] + (float)( B );
    plot_jd[i]= plot_jd[i] + (float)mean_jd;
-   if ( mag[i] > 100.0 )
+   if ( mag[i] > 100.0 ){
     mag[i]= mag[i] - plot_y[i]; // assume it's not magnitude but something linear
+   }
    else {
     // subtract magnitudes
     E1= powf( 10.0f, -0.4f * plot_y[i] );
@@ -124,8 +125,9 @@ void remove_linear_trend( float *fit_jd, float *mag, int N, double A, double B, 
  // correct for mean_mag
  for ( i= 0; i < N; i++ ) {
   if ( fit_jd[i] >= jd_min && fit_jd[i] <= jd_max ) {
-   if ( mag[i] > 100.0 )
+   if ( mag[i] > 100.0 ){
     mag[i]= mag[i] - mean_mag; // assume it's not magnitude but something linear
+   }
    else {
     // subtract magnitudes
     E1= powf( 10.0f, -0.4f * mean_mag );
