@@ -812,7 +812,19 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   DATEOBS_COMMENT[81]= '\0'; // just in case
  }
 
- // if DATE-OBS, DATE-BEG and DATE-EXP do not exist at all, try DATE
+ // SHUTOPEN is in ZTF images
+ if ( status == 202 ) {
+  // if DATE-OBS, DATE-BEG, DATE-EXP do not exist, try SHUTOPEN
+  status= 0;
+  fits_read_key( fptr, TSTRING, "SHUTOPEN", DATEOBS, DATEOBS_COMMENT, &status );
+  if ( status == 0 ) {
+   date_parsed= 1;
+   strncpy( DATEOBS_KEY_NAME, "SHUTOPEN", 9 );
+  }
+  DATEOBS_COMMENT[81]= '\0'; // just in case
+ }
+
+ // if DATE-OBS, DATE-BEG, DATE-EXP and SHUTOPEN do not exist at all, try DATE
  if ( status == 202 ) {
   date_parsed= 0;
   if ( param_verbose >= 1 )

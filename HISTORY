@@ -11,6 +11,14 @@ vast-1.0rc85:
 	* Lightcurve files (out*.dat) listed as automatically selected candidate variables in vast_autocandidates.log
 	as well as the ones listed by user as previously known variables in vast_list_of_previously_known_variables.log
 	are now higlighted by the FITS viewer './sextract_single_image'
+	* You may now specify on the command line the directory that contains one level of sub-directories 
+	with images: './vast -u -f ../vast_test_ASASSN-19cq' where the directory ../vast_test_ASASSN-19cq contains
+	sub-directories '2019_05_15 2019_05_25 2019_05_26 2019_06_03 2019_06_10 2019_06_24' with FITS images.
+	Note that VaST will only go two levels down the directory tree, i.e. images from the sub-directory
+	'2019_05_15/bad_images' in the above example will not be processed.
+	* VaST will now understand the exposure start time if it is written in 'SHUTOPEN' keyword instead of
+	'DATE-OBS'. This is to process the ZTF 'sciimg' images (see 'ZTF Image Access' at 
+	https://irsa.ipac.caltech.edu/Missions/ztf.html ).
 07 Mar 2019: vast-1.0rc84:
 	* VaST is now on Github ( https://github.com/kirxkirx/vast ), pull requests are welcome!
 	* The new script 'util/get_gaia_lc.sh' gets Gaia G, BP and RP lightcurves for a Gaia DR2 ID that 

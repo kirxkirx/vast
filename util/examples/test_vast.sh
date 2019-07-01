@@ -2090,6 +2090,210 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 
+##### Small CCD images test with the directory name being specified istead of the file list #####
+# Download the test dataset if needed
+if [ ! -d ../sample_data ];then
+ cd ..
+ wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ cd $WORKDIR
+fi
+# If the test data are found
+if [ -d ../sample_data ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "Small CCD images with directory name instead of file list test " >> /dev/stderr
+ echo -n "Small CCD images with directory name instead of file list test: " >> vast_test_report.txt
+ # Here is the main feature of this test: we limit the number of processin threads to only 2
+ cp default.sex.ccd_example default.sex
+ ./vast -u -f ../sample_data
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD000"
+ fi
+ # Check results
+ if [ -f vast_summary.log ];then
+  grep --quiet "Images processed 91" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD001"
+  fi
+  grep --quiet "Images used for photometry 91" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD002"
+  fi
+  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD003a"
+  fi
+  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD003b"
+  fi
+  if [ ! -f vast_lightcurve_statistics.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD005c"
+  fi
+  if [ ! -s vast_lightcurve_statistics.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD006"
+  fi
+  if [ ! -f vast_lightcurve_statistics_format.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD007"
+  fi
+  if [ ! -s vast_lightcurve_statistics_format.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD008"
+  fi
+  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD009"
+  fi
+  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD010"
+  fi
+  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD011"
+  fi
+  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD012"
+  fi
+
+ else
+  echo "ERROR: cannot find vast_summary.log" >> /dev/stderr
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD_ALL"
+ fi
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mSmall CCD images with directory name instead of file list test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mSmall CCD images with directory name instead of file list test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+
+##### Small CCD images test with the directory name with / being specified istead of the file list #####
+# Download the test dataset if needed
+if [ ! -d ../sample_data ];then
+ cd ..
+ wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ cd $WORKDIR
+fi
+# If the test data are found
+if [ -d ../sample_data ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "Small CCD images with directory name instead of file list test " >> /dev/stderr
+ echo -n "Small CCD images with directory name instead of file list test: " >> vast_test_report.txt
+ # Here is the main feature of this test: we limit the number of processin threads to only 2
+ cp default.sex.ccd_example default.sex
+ ./vast -u -f ../sample_data/
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD000"
+ fi
+ # Check results
+ if [ -f vast_summary.log ];then
+  grep --quiet "Images processed 91" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD001"
+  fi
+  grep --quiet "Images used for photometry 91" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD002"
+  fi
+  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD003a"
+  fi
+  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD003b"
+  fi
+  if [ ! -f vast_lightcurve_statistics.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD005c"
+  fi
+  if [ ! -s vast_lightcurve_statistics.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD006"
+  fi
+  if [ ! -f vast_lightcurve_statistics_format.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD007"
+  fi
+  if [ ! -s vast_lightcurve_statistics_format.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD008"
+  fi
+  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD009"
+  fi
+  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD010"
+  fi
+  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD011"
+  fi
+  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD012"
+  fi
+
+ else
+  echo "ERROR: cannot find vast_summary.log" >> /dev/stderr
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD_ALL"
+ fi
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mSmall CCD images with directory name instead of file list test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mSmall CCD images with directory name instead of file list test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+
 
 ##### White space name #####
 # Download the test dataset if needed
@@ -3462,6 +3666,109 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 ### !!!!!!!!!!!!!
 #echo $FAILED_TEST_CODES
 #exit 1
+
+##### Test the two levels of directory recursion #####
+# Download the test dataset if needed
+if [ ! -d ../vast_test_ASASSN-19cq ];then
+ cd ..
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/vast_test_ASASSN-19cq.tar.bz2" && tar -xvjf vast_test_ASASSN-19cq.tar.bz2 && rm -f vast_test_ASASSN-19cq.tar.bz2
+ cd $WORKDIR
+fi
+# If the test data are found
+if [ -d ../vast_test_ASASSN-19cq ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "Two-level directory recursion test " >> /dev/stderr
+ echo -n "Two-level directory recursion test: " >> vast_test_report.txt
+ # Here is the main feature of this test: we limit the number of processin threads to only 2
+ cp default.sex.ccd_example default.sex
+ ./vast -u -f ../vast_test_ASASSN-19cq/
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC000"
+ fi
+ # Check results
+ if [ -f vast_summary.log ];then
+  grep --quiet "Images processed 11" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC001"
+  fi
+  grep --quiet "Images used for photometry 11" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC002"
+  fi
+  grep --quiet "First image: 2458619.73071 16.05.2019 05:30:33" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC003a"
+  fi
+  grep --quiet "Last  image: 2458659.73438 25.06.2019 05:35:00" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC003b"
+  fi
+  if [ ! -f vast_lightcurve_statistics.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC005c"
+  fi
+  if [ ! -s vast_lightcurve_statistics.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC006"
+  fi
+  if [ ! -f vast_lightcurve_statistics_format.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC007"
+  fi
+  if [ ! -s vast_lightcurve_statistics_format.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC008"
+  fi
+  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC009"
+  fi
+  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC010"
+  fi
+  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC011"
+  fi
+  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC012"
+  fi
+
+ else
+  echo "ERROR: cannot find vast_summary.log" >> /dev/stderr
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC_ALL"
+ fi
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mTwo-level directory recursion test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mTwo-level directory recursion test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+
 
 
 ##### MASTER images test #####
@@ -5238,6 +5545,101 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
+
+
+######### ZTF image header test
+if [ ! -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits.bz2" && bunzip2 ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits.bz2
+ cd $WORKDIR
+fi
+
+if [ -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "ZTF image header test " >> /dev/stderr
+ echo -n "ZTF image header test: " >> vast_test_report.txt 
+ #
+ util/get_image_date ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits | grep --quiet 'Exposure  30 sec, 27.03.2018 12:43:50   = JD  2458205.03061 mid. exp.'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER000"
+ fi
+ #
+ util/get_image_date ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits 2>&1 | grep --quiet 'DATE-OBS= 2018-03-27T12:43:50'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER000a"
+ fi
+ #
+ util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits  | grep --quiet "Image size: 51.9'x52.0'"
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER000b"
+ fi
+ #
+ util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits  | grep --quiet 'Image scale: 1.01"/pix along the X axis and 1.01"/pix along the Y axis'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER000c"
+ fi
+ #
+ util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits  | grep --quiet 'Image center: 17:47:53.046 -13:08:42.33 J2000 1536.500 1540.500'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER000d"
+ fi
+ #
+ #
+ lib/try_to_guess_image_fov ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits  | grep --quiet ' 47'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER000e"
+ fi
+ #
+ cp default.sex.ccd_example default.sex 
+ util/solve_plate_with_UCAC5 ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits
+ if [ ! -f wcs_1630+3250.20150511T215921000.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER001"
+ fi 
+ lib/bin/xy2sky wcs_ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits 200 200 &>/dev/null
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER001a"
+ fi
+ if [ ! -s wcs_ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits.cat.ucac5 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER002"
+ else
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits.cat.ucac5 | wc -l | awk '{print $1}'`
+  if [ $TEST -lt 1800 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER002a_$TEST"
+  fi
+ fi 
+ # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
+ util/solve_plate_with_UCAC5 ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits 2>&1 | grep --quiet 'The output catalog wcs_1630+3250.20150511T215921000.fit.cat.ucac5 already exist.'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER003"
+ fi
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mZTF image header test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mZTF image header test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER_TEST_NOT_PERFORMED"
+fi
+
 
 ### Test the field-of-view guess code
 if [ -d ../individual_images_test ];then
