@@ -52,6 +52,19 @@ function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image
   return 1
  fi
  
+ ### !!! Blindly trust WCS if it was created by SCAMP code !!! ###
+ echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet -e 'HISTORY   Astrometric solution by SCAMP version'
+ if [ $? -eq 0 ];then
+  return 1
+ fi
+ 
+ ### !!! Blindly trust ZTF image astrometry !!! ###
+ # (actually it will have the above SCAMP keyword too)
+ echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -B500 -A500 "ORIGIN  = 'Zwicky Transient Facility'" | grep -B500 -A500 "INSTRUME= 'ZTF/MOSAIC'" |  grep --quiet "CTYPE1  = 'RA---TPV'"
+ if [ $? -eq 0 ];then
+  return 1
+ fi
+ 
  return 0
 }
 
@@ -434,6 +447,13 @@ field identification have good chances to fail. Sorry... :(
   # Blind solve
   `"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # HACK Hack hack -- manually specify the field center and size
+  # RA 2019-06-10 10:06:05.612 +53:15:53.97
+  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 10:06:05.612 --dec +53:15:53.97 --radius 2.0  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --odds-to-solve 1e6 --ra 10:06:05.612 --dec +53:15:53.97 --radius 2.0  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # ASASSN-19cq
+  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 17:47:5.88 --dec -13:31:43 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # Gaia19bcv
+  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 23:43:54.60 --dec +65:33:43.88 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # Gaia18dvy
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 20:05:06.02 --dec +36:29:13.52 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # SOAR observations of ASASSN-19gt
