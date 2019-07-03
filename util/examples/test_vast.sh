@@ -5070,7 +5070,11 @@ if [ -d ../KZ_Her_DSLR_transient_search_test ];then
  echo "DSLR transient search test " >> /dev/stderr
  echo -n "DSLR transient search test: " >> vast_test_report.txt 
  cp default.sex.DSLR_test default.sex
- ./vast -x99 -ukf -b200 ../KZ_Her_DSLR_transient_search_test/v838her1.fit ../KZ_Her_DSLR_transient_search_test/v838her2.fit ../KZ_Her_DSLR_transient_search_test/v838her3.fit ../KZ_Her_DSLR_transient_search_test/v838her4.fit
+ ./vast -x99 -ukf -b200 \
+ ../KZ_Her_DSLR_transient_search_test/v838her1.fit \
+ ../KZ_Her_DSLR_transient_search_test/v838her2.fit \
+ ../KZ_Her_DSLR_transient_search_test/v838her3.fit \
+ ../KZ_Her_DSLR_transient_search_test/v838her4.fit
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER000"

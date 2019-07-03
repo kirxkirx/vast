@@ -333,17 +333,20 @@ Checking if the filename extension and FITS header look reasonable..."
  fi
 fi
 
+###
+BASENAME_FITSFILE=`basename "$FITSFILE"`
+###
 
 # Test if the original image is already a calibrated one
 # (Test by checking the file name)
-TEST_SUBSTRING=`basename "$FITSFILE"`
+TEST_SUBSTRING="$BASENAME_FITSFILE"
 TEST_SUBSTRING="${TEST_SUBSTRING:0:4}"
 #TEST_SUBSTRING=`expr substr $TEST_SUBSTRING  1 4`
 if [ "$TEST_SUBSTRING" = "wcs_" ];then
  cp -v "$FITSFILE" .
- WCS_IMAGE_NAME=`basename "$FITSFILE"`
+ WCS_IMAGE_NAME="$BASENAME_FITSFILE"
 else
- WCS_IMAGE_NAME=wcs_`basename "$FITSFILE"`
+ WCS_IMAGE_NAME=wcs_"$BASENAME_FITSFILE"
  # Test if the original image has a WCS header and we should just blindly trust it
  check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image "$FITSFILE"
  if [ $? -eq 1 ];then
@@ -439,13 +442,15 @@ field identification have good chances to fail. Sorry... :(
  # Local plate-solving software
  if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "local" ];then
   IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE`
-  SCALE_LOW=`echo "0.3*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'`
+  #SCALE_LOW=`echo "0.3*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'`
+  # "0.9*$TRIAL_FIELD_OF_VIEW_ARCMIN matches the remote server parameters
+  SCALE_LOW=`echo "0.9*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'`
   # Yes, works fine with 1.2*$TRIAL_FIELD_OF_VIEW_ARCMIN but does not work with 1.0*$TRIAL_FIELD_OF_VIEW_ARCMIN
   #SCALE_HIGH=`echo "1.2*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql`
   SCALE_HIGH=`echo "1.6*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'`
   #
   # Blind solve
-  `"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  `"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # HACK Hack hack -- manually specify the field center and size
   # RA 2019-06-10 10:06:05.612 +53:15:53.97
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 10:06:05.612 --dec +53:15:53.97 --radius 2.0  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
@@ -496,9 +501,9 @@ field identification have good chances to fail. Sorry... :(
     #exit 1
    fi
    if [ -f out$$.wcs ];then
-    cp $FITSFILE `basename $FITSFILE`
+    cp $FITSFILE "$BASENAME_FITSFILE"
     echo -n "Inserting WCS header...  "
-    "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs `basename $FITSFILE`
+    "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE"
     if [ $? -ne 0 ];then
      # This is a bad one, just exit
      echo " ERROR inserting WCS header! Aborting further actions! "
@@ -508,7 +513,43 @@ field identification have good chances to fail. Sorry... :(
      echo "The WCS header appears to be added with no errors."
     fi
     # clean up
-    rm -f `basename $FITSFILE` out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$.xyls out$$-indx.xyls
+    #rm -f "$BASENAME_FITSFILE" out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$.xyls out$$-indx.xyls
+    rm -f out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$-indx.xyls
+    ############
+    # Attempt the second iteration with restricted parameters
+    RADECCOMMAND=`"$VAST_PATH"util/fov_of_wcs_calibrated_image.sh wcs_"$BASENAME_FITSFILE" | grep 'Image center:' | awk '{print "--ra "$3" --dec "$4}'`
+    FOV=`"$VAST_PATH"util/fov_of_wcs_calibrated_image.sh wcs_"$BASENAME_FITSFILE" | grep 'Image size:' | awk '{print $3}' | sed "s:'::g" | sed "s:x: :g"  | awk '{if ( $1 < $2 ) print $2/60 ;else print $1/60 }'`
+    IMAGE_SCALE_ARCSECPIX=`"$VAST_PATH"util/fov_of_wcs_calibrated_image.sh wcs_"$BASENAME_FITSFILE" | grep 'Image scale:' | awk '{print $3}' | awk '{print $1}' FS='"'`
+    IMAGE_SCALE_ARCSECPIX_LOW=`echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%f",0.95*$1}'`
+    IMAGE_SCALE_ARCSECPIX_HIGH=`echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%f",1.05*$1}'`
+    RADECCOMMAND="$RADECCOMMAND --radius $FOV --scale-low $IMAGE_SCALE_ARCSECPIX_LOW --scale-high $IMAGE_SCALE_ARCSECPIX_HIGH --scale-units arcsecperpix"
+    `"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
+    if [ $? -ne 0 ];then
+     echo "ERROR running the second iteration of solve-field"
+     exit 1
+    fi
+    if [ ! -f out$$.solved ];then
+     echo "The second iteration of solve-field failed to solve the field"
+     exit 1
+    fi
+    if [ ! -f out$$.wcs ];then
+     echo "The second iteration of solve-field failed to produce out$$.wcs"
+     exit 1
+    fi
+    rm -f wcs_"$BASENAME_FITSFILE"
+    echo -n "Inserting WCS header (2nd iteration)...  "
+    "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE"
+    if [ $? -ne 0 ];then
+     # This is a bad one, just exit
+     echo " ERROR inserting WCS header! Aborting further actions! "
+     exit 1
+    else   
+     ERROR_STATUS=0
+     echo "The WCS header appears to be added with no errors."
+    fi
+    # clean up
+    rm -f "$BASENAME_FITSFILE" out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$.xyls out$$-indx.xyls
+    ############
    else
     echo "ERROR: cannot find out$$.wcs "
     ERROR_STATUS=2
@@ -594,9 +635,9 @@ field identification have good chances to fail. Sorry... :(
      exit 1
     fi
     if [ -f out$$.wcs ];then
-     cp $FITSFILE `basename $FITSFILE`
+     cp $FITSFILE "$BASENAME_FITSFILE"
      echo -n "Inserting WCS header...  "
-     "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs `basename $FITSFILE`
+     "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE"
      if [ $? -ne 0 ];then
       # This is a bad one, just exit
       echo " ERROR inserting WCS header! Aborting further actions! "
@@ -605,8 +646,8 @@ field identification have good chances to fail. Sorry... :(
       ERROR_STATUS=0
       echo "The WCS header appears to be added with no errors."
      fi
-     # The output plate-solved image wcs_`basename $FITSFILE` will be produced by lib/astrometry/insert_wcs_header
-     for FILE_TO_REMOVE in `basename $FITSFILE` out$$.wcs ;do
+     # The output plate-solved image wcs_"$BASENAME_FITSFILE" will be produced by lib/astrometry/insert_wcs_header
+     for FILE_TO_REMOVE in "$BASENAME_FITSFILE" out$$.wcs ;do
       if [ -f "$FILE_TO_REMOVE" ];then
        rm -f "$FILE_TO_REMOVE"
       else
@@ -829,14 +870,14 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
     tail -n1 "$LIGHTCURVEFILE" > lightcurve.tmp
     read JD MAG MERR X Y APP FITSFILE REST < lightcurve.tmp && echo "ok $FITSFILE"
     # Tesit if the original image is already a calibrated one
-    TEST_SUBSTRING=`basename "$FITSFILE"`
+    TEST_SUBSTRING="$BASENAME_FITSFILE"
     TEST_SUBSTRING="${TEST_SUBSTRING:0:4}"
     #TEST_SUBSTRING=`expr substr $TEST_SUBSTRING  1 4`
     if [ "$TEST_SUBSTRING" = "wcs_" ];then
      cp $FITSFILE .
-     WCS_IMAGE_NAME=`basename "$FITSFILE"`
+     WCS_IMAGE_NAME="$BASENAME_FITSFILE"
     else
-     WCS_IMAGE_NAME=wcs_`basename "$FITSFILE"`
+     WCS_IMAGE_NAME=wcs_"$BASENAME_FITSFILE"
     fi
     SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".cat
     # Check if ucac5 plate solution is available

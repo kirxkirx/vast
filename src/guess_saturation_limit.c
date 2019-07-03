@@ -265,6 +265,8 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
  double *pix;
  long number_of_zeroes= 0;
  long number_of_negatives= 0;
+ long number_of_subthreshold_pix= 0;
+ int flag_subthreshould_pixels_but_not_zeroes= 0;
  char *flag;
  char *weight;
  fitsfile *outfptr_flag;   // FITS file pointer
@@ -356,11 +358,13 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
  } // if( 0==fits_open_image(&fptr, fitsfilename, READONLY, &status) ){
 
  //
+/*
  if ( median != 0.0 ) {
   pixel_value_threshold= MAX( 0.0, pixel_value_threshold );
  } else {
   pixel_value_threshold= MIN_PIX_VALUE;
  }
+*/
  //
 
  // If user requests to use the flag image, we don't need to guess
@@ -429,8 +433,12 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
      number_of_zeroes++;
      continue;
     }
-    if ( pix[ii] < 0.0 )
+    if ( pix[ii] < 0.0 ){
      number_of_negatives++;
+    }
+    if ( pix[ii] < pixel_value_threshold ){
+     number_of_subthreshold_pix++;
+    }
    }
   }
 
@@ -449,17 +457,30 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
  }
 
  if ( 1 != ( *is_flag_image_used ) ) {
-  // If the image has only a few zero-value pixels
-  // or if the image has many negative pixels (meaning that a zero-value is not an extreme)
-  // - we do not need to create a flag image.
-  if ( (double)number_of_zeroes / (double)totpix < FRACTION_OF_ZERO_PIXEL_TO_USE_FLAG_IMG || number_of_negatives > number_of_zeroes ) {
-   // Nothing to do, we'll be fine even without a flag image
-   ( *is_flag_image_used )= 0;
-   resulting_sextractor_cl_parameter_string[0]= '\0';
-   flag_image_filename[0]= '\0';
-   return 0;
-  }
+
+  // First check the sub-threshold pix count 
+  if ( (double)number_of_subthreshold_pix / (double)totpix < FRACTION_OF_ZERO_PIXEL_TO_USE_FLAG_IMG ) {
+
+   // If the image has only a few zero-value pixels
+   // or if the image has many negative pixels (meaning that a zero-value is not an extreme)
+   // - we do not need to create a flag image.
+   fprintf(stderr,"number_of_zeroes = %d (%.4lf\%)  number_of_negatives = %d (%.4lf\%)\n", number_of_zeroes, (double)number_of_zeroes / (double)totpix*100, number_of_negatives, (double)number_of_negatives / (double)totpix*100);
+   if ( (double)number_of_zeroes / (double)totpix < FRACTION_OF_ZERO_PIXEL_TO_USE_FLAG_IMG || number_of_negatives > number_of_zeroes ) {
+    // Nothing to do, we'll be fine even without a flag image
+    ( *is_flag_image_used )= 0;
+    resulting_sextractor_cl_parameter_string[0]= '\0';
+    flag_image_filename[0]= '\0';
+    fprintf(stderr,"Flag and weight images will NOT be created for %s\n",fitsfilename);
+    return 0;
+   }
+  } else {
+   if ( number_of_negatives > number_of_zeroes ) {
+    flag_subthreshould_pixels_but_not_zeroes= 1; // KZ Her example
+   }
+  } // else if ( (double)number_of_subthreshold_pix / (double)totpix < FRACTION_OF_ZERO_PIXEL_TO_USE_FLAG_IMG ) {
  } // if( 1!=is_flag_image_used ){
+ 
+ fprintf(stderr,"Flag and weight images will be created for %s\n",fitsfilename);
 
  ///// If we are still here, check how many zero-value neighbors each zero-value pixel has?
  ///// If there are only few for each pixel -- assume we don't need a flag image
@@ -671,7 +692,18 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
    //
    for ( ii= 0; ii < totpix; ii++ ) {
     // it was pix[ii]==0.0
-    if ( pix[ii] == 0.0 || pix[ii] < pixel_value_threshold || pix[ii] < MIN_PIX_VALUE || pix[ii] > MAX_PIX_VALUE ) {
+    //if ( pix[ii] == 0.0 || pix[ii] < pixel_value_threshold || pix[ii] < MIN_PIX_VALUE || pix[ii] > MAX_PIX_VALUE ) {
+    if ( flag_subthreshould_pixels_but_not_zeroes == 0 ){
+     if ( pix[ii] != 0.0 && pix[ii] > pixel_value_threshold && pix[ii] > MIN_PIX_VALUE && pix[ii] < MAX_PIX_VALUE ) {
+      continue;
+     }
+    } else {
+     if ( pix[ii] > pixel_value_threshold && pix[ii] > MIN_PIX_VALUE && pix[ii] < MAX_PIX_VALUE ) {
+      continue;
+     }
+    }
+    // indent!!!
+    {
      //flag[ii]=1;
      /// Mark as suspicious also FLAG_N_PIXELS_AROUND_BAD_ONE pixels around the bad one
      Y0= 1 + (long)( (float)ii / (float)naxes[0] );

@@ -1425,6 +1425,10 @@ int main( int argc, char **argv ) {
  struct dirent *ep;
  char dir_string[FILENAME_LENGTH];
 
+ DIR *dp2;
+ struct dirent *ep2;
+ char dir_string2[FILENAME_LENGTH];
+
  // The following variables are used to handle vast_list_of_input_images_with_time_corrections.txt
  FILE *vast_list_of_input_images_with_time_corrections;
  char image_filename_from_input_list[FILENAME_LENGTH];
@@ -1819,7 +1823,7 @@ int main( int argc, char **argv ) {
   }
   // If this is dir
   if ( ( sb.st_mode & S_IFMT ) == S_IFDIR ) {
-   fprintf( stderr, "Listing %s\n", file_or_dir_on_command_line );
+   fprintf( stderr, "Listing level 1 directory %s\n", file_or_dir_on_command_line );
    dp= opendir( file_or_dir_on_command_line );
    if ( dp == NULL )
     continue;
@@ -1829,10 +1833,11 @@ int main( int argc, char **argv ) {
      continue; // avoid hidden files and dirs
     if ( (int)strlen( ep->d_name ) < 3 )
      continue; // avoid short filenames
-    if ( file_or_dir_on_command_line[(int)strlen( file_or_dir_on_command_line ) - 1] == '/' )
+    if ( file_or_dir_on_command_line[(int)strlen( file_or_dir_on_command_line ) - 1] == '/' ){
      sprintf( dir_string, "%s%s", file_or_dir_on_command_line, ep->d_name );
-    else
+    } else {
      sprintf( dir_string, "%s/%s", file_or_dir_on_command_line, ep->d_name );
+    }
     // Try to stat() the input
     if ( 0 != stat( dir_string, &sb ) ) {
      fprintf( stderr, "Cannot stat() %s - No such file or directory. Skipping the input.\n", dir_string );
@@ -1844,6 +1849,80 @@ int main( int argc, char **argv ) {
     }
     if ( ( sb.st_mode & S_IFMT ) == S_IFDIR ) {
      fprintf( stderr, "This is a directory: %s\n", dir_string );
+     ///////////////////////////////////////////////////////////////////////////////////////////
+     // TBA: list the second-level directory too
+     fprintf( stderr, "Listing level 2 directory %s\n", dir_string );
+     dp2= opendir( dir_string );
+     if ( dp2 == NULL )
+      continue;
+     while ( ( ep2= readdir( dp2 ) ) != NULL ) {
+      // Cycle through all entries
+      if ( ep2->d_name[0] == '.' )
+       continue; // avoid hidden files and dirs
+      if ( (int)strlen( ep2->d_name ) < 3 )
+       continue; // avoid short filenames
+      if ( dir_string[(int)strlen( dir_string ) - 1] == '/' ){
+       sprintf( dir_string2, "%s%s", dir_string, ep2->d_name );
+      } else {
+       sprintf( dir_string2, "%s/%s", dir_string, ep2->d_name );
+      }
+      // Try to stat() the input
+      if ( 0 != stat( dir_string2, &sb ) ) {
+       fprintf( stderr, "Cannot stat() %s - No such file or directory. Skipping the input.\n", dir_string2 );
+       continue;
+      }
+      if ( ( sb.st_mode & S_IFMT ) != S_IFDIR && ( sb.st_mode & S_IFMT ) != S_IFREG ) {
+       fprintf( stderr, "The input is not a regular file, directory or symlink. Skipping the input %s\n", dir_string2 );
+       continue;
+      }
+      if ( ( sb.st_mode & S_IFMT ) == S_IFDIR ) {
+       fprintf( stderr, "This is a level 3 directory, its content will be ignored: %s\n", dir_string2 );
+       ///////////////////////////////////////////////////////////////////////////////////////////
+       // TBA: list the second-level directory too
+       ///////////////////////////////////////////////////////////////////////////////////////////
+       continue;
+      } // if((sb.st_mode & S_IFMT) == S_IFDIR){
+      if ( ( sb.st_mode & S_IFMT ) == S_IFREG ) {
+       // Handle a regular file in a first-level directory
+       if ( 0 != fitsfile_read_check( dir_string2 ) ) {
+        fprintf( stderr, "The input does not appear to be a FITS image: %s\n", dir_string2 );
+        continue;
+       } else {
+        // allocate memory for the list of input images
+        input_images= (char **)realloc( input_images, sizeof( char * ) * ( Num + 1 ) );
+        if ( input_images == NULL ) {
+         fprintf( stderr, "ERROR: can't allocate memory!\n input_images = (char **)realloc(input_images, sizeof(char *) * n); - failed!\n" );
+         return 1;
+        }
+        // handle file names with white spaces
+        replace_file_with_symlink_if_filename_contains_white_spaces( dir_string2 );
+        // allocate memory for each item in the image list
+        malloc_size= sizeof( char ) * ( strlen( dir_string2 ) + 1 );
+        // !!!
+        if ( malloc_size > FILENAME_LENGTH ) {
+         fprintf( stderr, "ERROR in main(): filename is too long %s\n", dir_string2 );
+         exit( 1 );
+        }
+        malloc_size= FILENAME_LENGTH;
+        //
+        if ( malloc_size <= 0 ) {
+         fprintf( stderr, "ERROR002 - trying to allocate zero or negative number of bytes!\n" );
+         exit( 1 );
+        }
+        input_images[Num]= malloc( (size_t)malloc_size );
+        if ( input_images[Num] == NULL ) {
+         fprintf( stderr, "ERROR: can't allocate memory!\n input_images[Num] = malloc(sizeof(char) * (strlen(file_or_dir_on_command_line) + 1)); - failed!\n" );
+         vast_report_memory_error();
+         return 1;
+        }
+        strcpy( input_images[Num], dir_string2 );
+        // increase image counter
+        Num++;
+       }
+      } // if((sb.st_mode & S_IFMT) == S_IFREG){
+     }
+     (void)closedir( dp2 );
+     ///////////////////////////////////////////////////////////////////////////////////////////
      continue;
     } // if((sb.st_mode & S_IFMT) == S_IFDIR){
     if ( ( sb.st_mode & S_IFMT ) == S_IFREG ) {

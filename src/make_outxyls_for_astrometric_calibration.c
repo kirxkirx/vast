@@ -142,8 +142,8 @@ int main( int argc, char **argv ) {
   }
 
  // Use only N brightest stars!
- if ( n_good > 3000 )
-  n_good= 3000;
+ if ( n_good > 10000 )
+  n_good= 10000;
 
  // Create FITS table
  char *ttype[3]= {"X_IMAGE", "Y_IMAGE", "FLUX_APER"};
