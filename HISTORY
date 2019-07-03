@@ -18,7 +18,17 @@ vast-1.0rc85:
 	'2019_05_15/bad_images' in the above example will not be processed.
 	* VaST will now understand the exposure start time if it is written in 'SHUTOPEN' keyword instead of
 	'DATE-OBS'. This is to process the ZTF 'sciimg' images (see 'ZTF Image Access' at 
-	https://irsa.ipac.caltech.edu/Missions/ztf.html ).
+	https://irsa.ipac.caltech.edu/Missions/ztf.html ). Example of running VaST on ZTF images:
+	./vast --UTC --poly /mnt/usb/ZTF_images_test_2/ztf_20180*_zg_*_q1_sciimg.fits
+	* For star identification VaST will blindly trust the astrometric solutions produced with SCAMP 
+	( https://www.astromatic.net/software/scamp ). In this case, VaST will not attempt to re-solve 
+	the image using a local or remote copy of the Astrometry.net code. The same is true is the FITS 
+	header indicates that the image was already plate-solved with Astrometry.net
+	* When solving plates with a local copy of the Astrometry.net code, VaST will try to refind 
+	the plate solution by performing the second run of the Astrometry.net code restricting the search space
+	by using the image center and scale derived from the first run.
+	* Updated the flag/weight image generation rules for better handling stacked images with black areas 
+	around the image edges.
 07 Mar 2019: vast-1.0rc84:
 	* VaST is now on Github ( https://github.com/kirxkirx/vast ), pull requests are welcome!
 	* The new script 'util/get_gaia_lc.sh' gets Gaia G, BP and RP lightcurves for a Gaia DR2 ID that 
