@@ -526,7 +526,19 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
   number_of_zeroes2= 0;
   for ( ii= 0; ii < totpix; ii++ ) {
    // if a pixel has zero value
-   if ( pix[ii] == 0.0 || pix[ii] < pixel_value_threshold || pix[ii] < MIN_PIX_VALUE || pix[ii] > MAX_PIX_VALUE ) {
+   //if ( pix[ii] == 0.0 || pix[ii] < pixel_value_threshold || pix[ii] < MIN_PIX_VALUE || pix[ii] > MAX_PIX_VALUE ) {
+   if ( flag_subthreshould_pixels_but_not_zeroes == 0 ){
+    if ( pix[ii] != 0.0 && pix[ii] > pixel_value_threshold && pix[ii] > MIN_PIX_VALUE && pix[ii] < MAX_PIX_VALUE ) {
+     continue;
+    }
+   } else {
+    if ( pix[ii] > pixel_value_threshold && pix[ii] > MIN_PIX_VALUE && pix[ii] < MAX_PIX_VALUE ) {
+     continue;
+    }
+   }
+   ///
+   /// indent
+   {
     number_of_zeroes_tmp= 0;
     // count its neighbors with zero values
     Y0= 1 + (long)( (float)ii / (float)naxes[0] );
@@ -549,10 +561,11 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
       }
      }
     }
-    ///
+    //
     number_of_zero_neighbors[number_of_zeroes2]= number_of_zeroes_tmp;
     number_of_zeroes2++;
    }
+   ///
   }
   free( pix );
   gsl_sort_int( number_of_zero_neighbors, 1, number_of_zeroes2 );
@@ -567,6 +580,7 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
     ( *is_flag_image_used )= 0;
     resulting_sextractor_cl_parameter_string[0]= '\0';
     flag_image_filename[0]= '\0';
+    fprintf(stderr,"Not creating the flag image after all - 0.5 > %ld/( 2*%ld + 1 )^2 = %lf\n", number_of_zeroes_tmp, COUNT_N_PIXELS_AROUND_BAD_ONE, (double)number_of_zeroes_tmp / ( (double)( 2 * COUNT_N_PIXELS_AROUND_BAD_ONE + 1 ) * (double)( 2 * COUNT_N_PIXELS_AROUND_BAD_ONE + 1 ) ) );
     return 0;
    }
   } // if( 1!=is_flag_image_used ){
@@ -702,33 +716,30 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
       continue;
      }
     }
-    // indent!!!
-    {
-     //flag[ii]=1;
-     /// Mark as suspicious also FLAG_N_PIXELS_AROUND_BAD_ONE pixels around the bad one
-     Y0= 1 + (long)( (float)ii / (float)naxes[0] );
-     X0= ii + 1 - ( Y0 - 1 ) * naxes[0];
-     for ( j= -1 * FLAG_N_PIXELS_AROUND_BAD_ONE; j <= FLAG_N_PIXELS_AROUND_BAD_ONE; j++ ) {
-      X= X0 + j;
-      if ( X < 1 )
+    ///
+    //  Mark as suspicious also FLAG_N_PIXELS_AROUND_BAD_ONE pixels around the bad one
+    Y0= 1 + (long)( (float)ii / (float)naxes[0] );
+    X0= ii + 1 - ( Y0 - 1 ) * naxes[0];
+    for ( j= -1 * FLAG_N_PIXELS_AROUND_BAD_ONE; j <= FLAG_N_PIXELS_AROUND_BAD_ONE; j++ ) {
+     X= X0 + j;
+     if ( X < 1 )
+      continue;
+     if ( X > naxes[0] )
+      continue;
+     for ( k= -1 * FLAG_N_PIXELS_AROUND_BAD_ONE; k <= FLAG_N_PIXELS_AROUND_BAD_ONE; k++ ) {
+      Y= Y0 + k;
+      if ( Y < 1 )
        continue;
-      if ( X > naxes[0] )
+      if ( Y > naxes[1] )
        continue;
-      for ( k= -1 * FLAG_N_PIXELS_AROUND_BAD_ONE; k <= FLAG_N_PIXELS_AROUND_BAD_ONE; k++ ) {
-       Y= Y0 + k;
-       if ( Y < 1 )
-        continue;
-       if ( Y > naxes[1] )
-        continue;
-       l= X - 1 + ( Y - 1 ) * naxes[0];
-       flag[l]= 1;
-       //
-       weight[l]= 0;
-       //
-      }
+      l= X - 1 + ( Y - 1 ) * naxes[0];
+      flag[l]= 1;
+      //
+      weight[l]= 0;
+      //
      }
-     ///
     }
+    ///
    }
    free( pix );
    fits_write_img( outfptr_flag, TBYTE, 1, totpix, flag, &status );

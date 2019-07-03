@@ -762,8 +762,13 @@ if [ -d ../test_data_photo ];then
     util/clean_data.sh
     lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
     if [ $? -eq 0 ];then
-     TEST_PASSED=0
      IMAGE=`basename $IMAGE`
+     ## We do want flags for these specific plates
+     if [ "$IMAGE" = "SCA843S_16645_09097__00_00.fit" ];then
+      continue
+     fi
+     ##
+     TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE221_$IMAGE"
     fi
    done
@@ -5133,8 +5138,9 @@ if [ -d ../KZ_Her_DSLR_transient_search_test ];then
   ### Flag image test should always be the last one
   for IMAGE in v838her1.fit v838her2.fit v838her3.fit v838her4.fit ;do
    util/clean_data.sh
+   # Now we DO want the flag images to be created for this dataset
    lib/autodetect_aperture_main ../KZ_Her_DSLR_transient_search_test/$IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
-   if [ $? -eq 0 ];then
+   if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER009_$IMAGE"
    fi 
