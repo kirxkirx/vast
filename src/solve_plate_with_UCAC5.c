@@ -2069,7 +2069,7 @@ int main( int argc, char **argv ) {
  //for(i=0;i<number_of_stars_in_wcs_catalog;i++)stars[i].matched_with_catalog=0;
 
  // **** Querry UCAC5 ****
- fprintf( stderr, "\nITERATION 01\n" );
+ fprintf( stderr, "\nITERATION 01 -- talking to VizieR, this might be slow!\n" );
  //if( 0!=search_UCAC4_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters) ){fprintf(stderr,"ERROR running vizquery\n");return 1;}
  if ( 0 != search_UCAC5_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
   fprintf( stderr, "ERROR running vizquery\n" );
@@ -2128,7 +2128,7 @@ int main( int argc, char **argv ) {
  // Apply the local corrections and iterate to find a better plate solution
  for ( solution_iteration= 2; solution_iteration <= MAX_NUMBER_OF_ITERATIONS_FOR_UCAC5_MATCH; solution_iteration++ ) {
 
-  fprintf( stderr, "\nITERATION %02d\n", solution_iteration );
+  fprintf( stderr, "\nITERATION %02d -- talking to VizieR, this might be slow!\n", solution_iteration );
   for ( i= 0; i < number_of_stars_in_wcs_catalog; i++ ) {
    stars[i].ra_deg_measured= stars[i].corrected_ra_local;
    stars[i].dec_deg_measured= stars[i].corrected_dec_local;
