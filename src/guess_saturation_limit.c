@@ -464,7 +464,7 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
    // If the image has only a few zero-value pixels
    // or if the image has many negative pixels (meaning that a zero-value is not an extreme)
    // - we do not need to create a flag image.
-   fprintf(stderr,"number_of_zeroes = %d (%.4lf\%)  number_of_negatives = %d (%.4lf\%)\n", number_of_zeroes, (double)number_of_zeroes / (double)totpix*100, number_of_negatives, (double)number_of_negatives / (double)totpix*100);
+   fprintf(stderr,"number_of_zeroes = %d (%.4lf%%)  number_of_negatives = %d (%.4lf%%)\n", number_of_zeroes, (double)number_of_zeroes / (double)totpix*100, number_of_negatives, (double)number_of_negatives / (double)totpix*100);
    if ( (double)number_of_zeroes / (double)totpix < FRACTION_OF_ZERO_PIXEL_TO_USE_FLAG_IMG || number_of_negatives > number_of_zeroes ) {
     // Nothing to do, we'll be fine even without a flag image
     ( *is_flag_image_used )= 0;

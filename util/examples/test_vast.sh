@@ -5303,6 +5303,70 @@ else
  FAILED_TEST_CODES="$FAILED_TEST_CODES HOTPIXIMAGE_TEST_NOT_PERFORMED"
 fi
 
+######### SAI RC600 image
+if [ ! -f ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit.bz2" && bunzip2 SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit.bz2
+ cd $WORKDIR
+fi
+
+if [ -f ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "SAI RC600 image test " >> /dev/stderr
+ echo -n "SAI RC600 test: " >> vast_test_report.txt 
+ cp default.sex.ccd_example default.sex
+ util/solve_plate_with_UCAC5 ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600000"
+ fi
+ if [ ! -f wcs_SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600001"
+ fi 
+ lib/bin/xy2sky wcs_SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit 200 200 &>/dev/null
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600001a"
+ fi
+ if [ ! -f wcs_SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit.cat.ucac5 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600002"
+ else
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+  if [ $TEST -lt 170 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600002a_$TEST"
+  fi
+ fi 
+ util/get_image_date ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit | grep --quiet "Exposure  45 sec, 11.06.2019 00:10:29 UT = JD(UT) 2458645.50755 mid. exp."
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600003"
+ fi
+ #
+ FOV=`lib/try_to_guess_image_fov ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit | awk '{print $1}'`
+ if [ "$FOV" != "23" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600004"
+ fi
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mSAI RC600 image test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mSAI RC600 image test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600_TEST_NOT_PERFORMED"
+fi
+
 
 ######### NMW archive image
 if [ ! -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then

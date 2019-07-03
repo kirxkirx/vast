@@ -16,6 +16,8 @@
 #define MAX_FOV_ARCMIN 7200 // 120 deg.
 #define MIN_FOV_ARCMIN 5
 
+#define FOV_DEBUG_MESSAGES
+
 int is_it_a_photopate_scan_from_SAI_collection_with_the_basic_header( char *fitsfilename, double *estimated_fov_arcmin ) {
  double JD;
  char telescop[1024];
@@ -290,7 +292,7 @@ int try_to_recognize_MSUcampusObs06m_with_APOGEEcam( char *fitsfilename, double 
   return 1;
  }
 
- ( *estimated_fov_arcmin )= 6.9;
+ ( *estimated_fov_arcmin )= 9.3;
 
  fits_close_file( fptr, &status );
  return 0; // if we are still here - this is Zeiss-2
@@ -672,6 +674,9 @@ int main( int argc, char **argv ) {
        if ( 0 == look_for_existing_wcs_header( name_of_wcs_solved_reference_image, &estimated_fov_arcmin ) ) {
         fprintf( stdout, "%4.0lf\n", estimated_fov_arcmin );
         fclose( image_details_logfile );
+        #ifdef FOV_DEBUG_MESSAGES
+        fprintf(stderr,"The guess is based on the previously solved image %s\n", name_of_wcs_solved_reference_image);
+        #endif
         return 0;
        }
        break;
@@ -685,31 +690,49 @@ int main( int argc, char **argv ) {
 
  if ( 0 == try_to_recognize_telescop_keyword( fitsfile_name, &estimated_fov_arcmin ) ) {
   fprintf( stdout, "%4.0lf\n", estimated_fov_arcmin );
+  #ifdef FOV_DEBUG_MESSAGES
+  fprintf(stderr,"The guess is based on the recognized TELESCOP keyword.\n");
+  #endif
   return 0;
  }
 
  if ( 0 == look_for_focallen_keyword( fitsfile_name, &estimated_fov_arcmin ) ) {
   fprintf( stdout, "%4.0lf\n", estimated_fov_arcmin );
+  #ifdef FOV_DEBUG_MESSAGES
+  fprintf(stderr,"The guess is based on the FOCALLEN keyword.\n");
+  #endif
   return 0;
  }
 
  if ( 0 == try_to_recognize_Zeiss2_with_FLIcam( fitsfile_name, &estimated_fov_arcmin ) ) {
   fprintf( stdout, "%4.0lf\n", estimated_fov_arcmin );
+  #ifdef FOV_DEBUG_MESSAGES
+  fprintf(stderr,"That's Zeiss2 with FLI camera.\n");
+  #endif
   return 0;
  }
 
  if ( 0 == try_to_recognize_MSUcampusObs06m_with_APOGEEcam( fitsfile_name, &estimated_fov_arcmin ) ) {
   fprintf( stdout, "%4.0lf\n", estimated_fov_arcmin );
+  #ifdef FOV_DEBUG_MESSAGES
+  fprintf(stderr,"That's MSU Campus Observatory with the APOGEE camera.\n");
+  #endif
   return 0;
  }
 
  if ( 0 == is_it_a_photopate_scan_from_SAI_collection_with_the_basic_header( fitsfile_name, &estimated_fov_arcmin ) ) {
   fprintf( stdout, "%4.0lf\n", estimated_fov_arcmin );
+  #ifdef FOV_DEBUG_MESSAGES
+  fprintf(stderr,"That's a digitized plate from the SAI collaction.\n");
+  #endif
   return 0;
  }
 
  // print out the default value anyhow
  fprintf( stdout, "%4.0lf\n", estimated_fov_arcmin );
+ #ifdef FOV_DEBUG_MESSAGES
+ fprintf(stderr,"That's the default guess value.\n");
+ #endif
 
  return 1;
 }
