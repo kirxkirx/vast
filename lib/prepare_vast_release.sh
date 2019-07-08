@@ -96,6 +96,13 @@ for DIAGNOSTIC_PLOT_FILE in fake_image_hack_*.fits ;do
  fi
 done
 ####################################
+# Remove core files, if any
+for CORE_FILE in core.* ;do
+ if [ -f "$CORE_FILE" ];then
+  rm -f "$CORE_FILE"
+ fi
+done
+####################################
 # Remove fake_image_hack files, if any
 for BADDIR in SIMULATOR_reference simulation_results ;do
  if [ -d "$BADDIR" ];then
