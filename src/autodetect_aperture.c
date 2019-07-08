@@ -403,6 +403,10 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
   if ( 0 != unlink( weight_image_filename ) )
    fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", weight_image_filename );
 #endif
+#ifdef REMOVE_SEX_LOG_FILES
+  if ( 0 != unlink( sextractor_messages_filename ) )
+   fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", sextractor_messages_filename );
+#endif
  }
 
  return APERTURE;
