@@ -200,6 +200,7 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
   //sprintf( sextractor_catalog_filename, "autodetect_aper_%d.cat", pid );
   sprintf( sextractor_catalog_filename, "autodetect_aper_%s", output_sextractor_catalog );
   // and yes, we are re-using the .sex_log files
+  // The portable stderr redirection syntax is explained here https://stackoverflow.com/questions/56959503/is-there-a-way-to-redirect-stderr-to-a-file-that-works-in-bash-csh-and-dash
   if ( is_flag_image_used == 1 ) {
    sprintf( command, "sex -c default.sex %s%s%s -PARAMETERS_NAME autodetect_aper_flag.param -CATALOG_NAME %s  %s > %s 2>&1", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, flag_image_sextractor_cl_parameter_string, sextractor_catalog_filename, fitsfilename, sextractor_messages_filename );
   } else {
