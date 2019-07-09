@@ -96,7 +96,7 @@
 #define N_POINTS_PSF_FIT_QUALITY_FILTER 7
 
 #define REMOVE_FLAG_IMAGES_TO_SAVE_SPACE
-#define REMOVE_SEX_LOG_FILES
+//#define REMOVE_SEX_LOG_FILES
 
 // Only image pixels with values between MIN_PIX_VALUE and MAX_PIX_VALUE are considered good ones
 #define MIN_PIX_VALUE -100000
