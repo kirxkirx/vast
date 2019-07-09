@@ -16,7 +16,7 @@
 #define MAX_FOV_ARCMIN 7200 // 120 deg.
 #define MIN_FOV_ARCMIN 5
 
-#define FOV_DEBUG_MESSAGES
+//#define FOV_DEBUG_MESSAGES
 
 int is_it_a_photopate_scan_from_SAI_collection_with_the_basic_header( char *fitsfilename, double *estimated_fov_arcmin ) {
  double JD;
@@ -379,6 +379,16 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
   }
  }
 
+ // SAI new RC600
+ if ( strlen( telescop ) >= 28 ) { //01234567890
+  pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "CMO SAI MSU ASA RC600 PHOTON", 28 );
+  if ( pointer_to_the_key_start != NULL ) {
+   ( *estimated_fov_arcmin )= 22.8;
+   fits_close_file( fptr, &status );
+   return 0;
+  }
+ }
+
  fits_close_file( fptr, &status ); // close the FITS file
  return 1;                         // failed to recognize the telescope
 }
@@ -444,22 +454,42 @@ int look_for_focallen_keyword( char *fitsfilename, double *estimated_fov_arcmin 
   // Set the default value
   // 14mm is a typical minor axis size of a CCD chip
   minor_axis_of_CCD_chip_mm= 14.0;
+  #ifdef FOV_DEBUG_MESSAGES
+  fprintf(stderr, "Using the default guess for the CCD chip size.\n");
+  #endif
  } else {
   if ( ypixsz > 1.0 && ypixsz < 100.0 ) {
    minor_axis_of_CCD_chip_mm= (double)naxes[1] * ypixsz / 1000.0;
+   #ifdef FOV_DEBUG_MESSAGES
+   fprintf(stderr, "The minor axis of the CCD chip should be %.1lf mm based on the derived pixel size of %.1lf um\n", minor_axis_of_CCD_chip_mm, ypixsz);
+   #endif
   } else {
    // xpixsz value is suspicious, fallback to the deafult
    minor_axis_of_CCD_chip_mm= 14.0;
+   #ifdef FOV_DEBUG_MESSAGES
+   fprintf(stderr, "Using the default guess for the CCD chip size.\n");
+   #endif
   }
  }
 
  internal_estimated_fov_arcmin= atan2( minor_axis_of_CCD_chip_mm, focallen ) * 60.0 * 180.0 / M_PI;
+ #ifdef FOV_DEBUG_MESSAGES
+ fprintf(stderr, "Internal estimated FoV %.1lf'\n", internal_estimated_fov_arcmin);
+ #endif
+
  // If focallen>1000mm the telescope is likely to have a focal reducer installed
  //if( focallen>1000 )internal_estimated_fov_arcmin=internal_estimated_fov_arcmin*2.0;
- if ( focallen > 1000 )
+ if ( focallen > 1000 ){
   internal_estimated_fov_arcmin= internal_estimated_fov_arcmin * 1.5;
+  #ifdef FOV_DEBUG_MESSAGES
+  fprintf(stderr, "The focal length %lf > 1000mm - guessing the telescope has a focal reducer.\nInternal estimated FoV %.1lf'\n", focallen, internal_estimated_fov_arcmin);
+  #endif
+ }
 
  internal_estimated_fov_arcmin= internal_estimated_fov_arcmin - 0.1 * internal_estimated_fov_arcmin;
+ #ifdef FOV_DEBUG_MESSAGES
+ fprintf(stderr, "Reduce the guess by 10%% to be on a safe side.\nInternal estimated FoV %.1lf'\n", internal_estimated_fov_arcmin);
+ #endif
 
  if ( internal_estimated_fov_arcmin > MIN_FOV_ARCMIN && internal_estimated_fov_arcmin < MAX_FOV_ARCMIN ) {
   ( *estimated_fov_arcmin )= internal_estimated_fov_arcmin;
