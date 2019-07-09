@@ -201,9 +201,9 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
   sprintf( sextractor_catalog_filename, "autodetect_aper_%s", output_sextractor_catalog );
   // and yes, we are re-using the .sex_log files
   if ( is_flag_image_used == 1 ) {
-   sprintf( command, "sex -c default.sex %s%s%s -PARAMETERS_NAME autodetect_aper_flag.param -CATALOG_NAME %s  %s 2>&1 > %s", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, flag_image_sextractor_cl_parameter_string, sextractor_catalog_filename, fitsfilename, sextractor_messages_filename );
+   sprintf( command, "sex -c default.sex %s%s%s -PARAMETERS_NAME autodetect_aper_flag.param -CATALOG_NAME %s  %s > %s 2>&1", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, flag_image_sextractor_cl_parameter_string, sextractor_catalog_filename, fitsfilename, sextractor_messages_filename );
   } else {
-   sprintf( command, "sex -c default.sex %s%s -PARAMETERS_NAME autodetect_aper.param -CATALOG_NAME %s  %s 2>&1 > %s", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, sextractor_catalog_filename, fitsfilename, sextractor_messages_filename );
+   sprintf( command, "sex -c default.sex %s%s -PARAMETERS_NAME autodetect_aper.param -CATALOG_NAME %s  %s > %s 2>&1", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, sextractor_catalog_filename, fitsfilename, sextractor_messages_filename );
   }
   //fprintf(stderr, "%s\n", command);
   fputs( command, stderr );
@@ -317,9 +317,9 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
 
  if ( do_PSF_fitting == 0 ) {
   if ( is_flag_image_used == 1 ) {
-   sprintf( command, "sex %s%s%s -PARAMETERS_NAME default_flag.param -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf,%.1lf -VERBOSE_TYPE NORMAL -CATALOG_NAME %s %s 2>&1 > %s", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, flag_image_sextractor_cl_parameter_string, APERTURE, APERTURE, ap[0], ap[1], ap[2], ap[3], output_sextractor_catalog, fitsfilename, sextractor_messages_filename );
+   sprintf( command, "sex %s%s%s -PARAMETERS_NAME default_flag.param -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf,%.1lf -VERBOSE_TYPE NORMAL -CATALOG_NAME %s %s > %s 2>&1", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, flag_image_sextractor_cl_parameter_string, APERTURE, APERTURE, ap[0], ap[1], ap[2], ap[3], output_sextractor_catalog, fitsfilename, sextractor_messages_filename );
   } else {
-   sprintf( command, "sex %s%s -PARAMETERS_NAME default.param -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf,%.1lf -VERBOSE_TYPE NORMAL -CATALOG_NAME %s %s 2>&1 > %s", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, APERTURE, APERTURE, ap[0], ap[1], ap[2], ap[3], output_sextractor_catalog, fitsfilename, sextractor_messages_filename );
+   sprintf( command, "sex %s%s -PARAMETERS_NAME default.param -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf,%.1lf -VERBOSE_TYPE NORMAL -CATALOG_NAME %s %s > %s 2>&1", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, APERTURE, APERTURE, ap[0], ap[1], ap[2], ap[3], output_sextractor_catalog, fitsfilename, sextractor_messages_filename );
   }
   fprintf( stderr, "%s\n", command );
   write_string_to_individual_image_log( output_sextractor_catalog, "autodetect_aperture(): runnning SExtractor in the aperture photometry mode, the processing command is\n", command, "" );
@@ -354,7 +354,7 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
    fprintf( stderr, "ERROR: the command returned a non-zero exit code!\n" );
   }
 
-  sprintf( command, "psfex -c default.psfex -NTHREADS 1 -SAMPLE_FWHMRANGE %.2lf,%.2lf -XML_NAME %s %s 2>&1 > %s", 0.3 * APERTURE / 2.2528, 1.3 * APERTURE / 2.2528, psfex_XML_check_filename, sextractor_catalog_filename, psfex_log_entry_filename );
+  sprintf( command, "psfex -c default.psfex -NTHREADS 1 -SAMPLE_FWHMRANGE %.2lf,%.2lf -XML_NAME %s %s > %s 2>&1", 0.3 * APERTURE / 2.2528, 1.3 * APERTURE / 2.2528, psfex_XML_check_filename, sextractor_catalog_filename, psfex_log_entry_filename );
   fprintf( stderr, "%s\n", command );
   write_string_to_individual_image_log( output_sextractor_catalog, "autodetect_aperture(): ", "extracting PSF with PSFEx using the command\n", command );
   if ( 0 != system( command ) ) {
@@ -362,9 +362,9 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
   }
 
   if ( is_flag_image_used == 1 ) {
-   sprintf( command, "sex -c default.sex %s%s%s -PARAMETERS_NAME psfex_sextractor_2nd_pass_flag.param -PSF_NMAX 1 -PSF_NAME %s -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf -VERBOSE_TYPE NORMAL -CATALOG_NAME %s %s 2>&1 > %s", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, flag_image_sextractor_cl_parameter_string, psf_filename, APERTURE, ap[0], ap[1], ap[2], ap[3], output_sextractor_catalog, fitsfilename, sextractor_messages_filename );
+   sprintf( command, "sex -c default.sex %s%s%s -PARAMETERS_NAME psfex_sextractor_2nd_pass_flag.param -PSF_NMAX 1 -PSF_NAME %s -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf -VERBOSE_TYPE NORMAL -CATALOG_NAME %s %s > %s 2>&1", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, flag_image_sextractor_cl_parameter_string, psf_filename, APERTURE, ap[0], ap[1], ap[2], ap[3], output_sextractor_catalog, fitsfilename, sextractor_messages_filename );
   } else {
-   sprintf( command, "sex -c default.sex %s%s -PARAMETERS_NAME psfex_sextractor_2nd_pass.param -PSF_NMAX 1 -PSF_NAME %s -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf -VERBOSE_TYPE NORMAL -CATALOG_NAME %s %s 2>&1 > %s", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, psf_filename, APERTURE, ap[0], ap[1], ap[2], ap[3], output_sextractor_catalog, fitsfilename, sextractor_messages_filename );
+   sprintf( command, "sex -c default.sex %s%s -PARAMETERS_NAME psfex_sextractor_2nd_pass.param -PSF_NMAX 1 -PSF_NAME %s -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf -VERBOSE_TYPE NORMAL -CATALOG_NAME %s %s > %s 2>&1", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, psf_filename, APERTURE, ap[0], ap[1], ap[2], ap[3], output_sextractor_catalog, fitsfilename, sextractor_messages_filename );
   }
   fprintf( stderr, "%s\n", command );
   write_string_to_individual_image_log( output_sextractor_catalog, "autodetect_aperture(): ", "running SExtractor in the PSF-photometry mode with the command\n", command );
