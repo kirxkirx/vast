@@ -12,7 +12,7 @@
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_sort.h>
 
-#include <sys/types.h> // for getpid(i)
+//#include <sys/types.h> // for getpid(i)
 #include <sys/stat.h> // for st_mtime (modification time)
 #include <unistd.h>    // also for getpid() and unlink() ...
 
@@ -82,7 +82,7 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
  double *X2;
  double *Y2;
 
- int pid= getpid();
+// int pid= getpid();
  char sextractor_catalog_filename[FILENAME_LENGTH];
  char psf_filename[FILENAME_LENGTH];
  
@@ -188,6 +188,8 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
 
  fprintf( stderr, "Running SExtractor on %s\n", fitsfilename );
 
+ sprintf( sextractor_messages_filename, "%s.sex_log", output_sextractor_catalog );
+
  /* Set fixed aperture size if we whant to use it */
  if ( fixed_aperture != 0.0 ) {
   APERTURE= fixed_aperture;
@@ -197,10 +199,11 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
   /* Calculate best aperture size from seeing */
   //sprintf( sextractor_catalog_filename, "autodetect_aper_%d.cat", pid );
   sprintf( sextractor_catalog_filename, "autodetect_aper_%s", output_sextractor_catalog );
+  // and yes, we are re-using the .sex_log files
   if ( is_flag_image_used == 1 ) {
-   sprintf( command, "sex -c default.sex %s%s%s -PARAMETERS_NAME autodetect_aper_flag.param -CATALOG_NAME %s  %s", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, flag_image_sextractor_cl_parameter_string, sextractor_catalog_filename, fitsfilename );
+   sprintf( command, "sex -c default.sex %s%s%s -PARAMETERS_NAME autodetect_aper_flag.param -CATALOG_NAME %s  %s >& %s", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, flag_image_sextractor_cl_parameter_string, sextractor_catalog_filename, fitsfilename, sextractor_messages_filename );
   } else {
-   sprintf( command, "sex -c default.sex %s%s -PARAMETERS_NAME autodetect_aper.param -CATALOG_NAME %s  %s", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, sextractor_catalog_filename, fitsfilename );
+   sprintf( command, "sex -c default.sex %s%s -PARAMETERS_NAME autodetect_aper.param -CATALOG_NAME %s  %s >& %s", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, sextractor_catalog_filename, fitsfilename, sextractor_messages_filename );
   }
   //fprintf(stderr, "%s\n", command);
   fputs( command, stderr );
@@ -311,7 +314,6 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
  // ap[2]
  // ap[3]
  
- sprintf( sextractor_messages_filename, "%s.sex_log", output_sextractor_catalog );
 
  if ( do_PSF_fitting == 0 ) {
   if ( is_flag_image_used == 1 ) {
