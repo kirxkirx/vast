@@ -29,6 +29,8 @@ vast-1.0rc85:
 	by using the image center and scale derived from the first run.
 	* Updated the flag/weight image generation rules for better handling stacked images with black areas 
 	around the image edges.
+	* The file names in the vast_magnitude_calibration_details_log directory now include image number as
+	well as the image name: useful if multiple input images from different directories have the same name.
 07 Mar 2019: vast-1.0rc84:
 	* VaST is now on Github ( https://github.com/kirxkirx/vast ), pull requests are welcome!
 	* The new script 'util/get_gaia_lc.sh' gets Gaia G, BP and RP lightcurves for a Gaia DR2 ID that 

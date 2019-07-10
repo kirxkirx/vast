@@ -1471,6 +1471,9 @@ int main( int argc, char **argv ) {
  
  FILE *image00000_cat_aperture_file;
  //////////////////////////////////
+ 
+ char filename_for_magnitude_calibration_log[2*FILENAME_LENGTH]; // image00001__myimage.fits
+ 
  //        int number_of_elements_in_Pos1; // needed for adding stars not detected on the reference frame
 
  /// end of definitions
@@ -3916,7 +3919,9 @@ int main( int argc, char **argv ) {
     } else {
 
      /* Write data to log */
-     write_magnitude_calibration_log( poly_x, poly_y, poly_err, N_good_stars, input_images[n] );
+     sprintf( filename_for_magnitude_calibration_log, "image%05d__%s", n, basename(input_images[n]) );
+     //write_magnitude_calibration_log( poly_x, poly_y, poly_err, N_good_stars, input_images[n] );
+     write_magnitude_calibration_log( poly_x, poly_y, poly_err, N_good_stars, filename_for_magnitude_calibration_log );
 
      if ( debug != 0 ){
       fprintf( stderr, "DEBUG MSG: GSL: wpolyfit - " );
@@ -4046,7 +4051,8 @@ int main( int argc, char **argv ) {
       // Fit a plane in the (X, Y, delta_mag) space
 
       fit_plane_lin( lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, (unsigned int)N_good_stars, &lin_mag_A, &lin_mag_B, &lin_mag_C );
-      write_magnitude_calibration_log_plane( lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, N_good_stars, input_images[n], lin_mag_A, lin_mag_B, lin_mag_C );
+      //write_magnitude_calibration_log_plane( lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, N_good_stars, input_images[n], lin_mag_A, lin_mag_B, lin_mag_C );
+      write_magnitude_calibration_log_plane( lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, N_good_stars, filename_for_magnitude_calibration_log, lin_mag_A, lin_mag_B, lin_mag_C );
 
       // Iteratively remove outliers
       do {
@@ -4081,9 +4087,11 @@ int main( int argc, char **argv ) {
       for ( i= 0; i < N_good_stars; i++ ) {
        poly_y[i]= poly_y[i] + ( lin_mag_A * lin_mag_cor_x[i] + lin_mag_B * lin_mag_cor_y[i] + lin_mag_C );
       } //fprintf(stderr,"DEBUG: %lf\n",lin_mag_A*lin_mag_cor_x[i]+lin_mag_B*lin_mag_cor_y[i]+lin_mag_C);}
-      write_magnitude_calibration_log2( poly_x, poly_y, poly_err, N_good_stars, input_images[n] );
+      //write_magnitude_calibration_log2( poly_x, poly_y, poly_err, N_good_stars, input_images[n] );
+      write_magnitude_calibration_log2( poly_x, poly_y, poly_err, N_good_stars, filename_for_magnitude_calibration_log );
       fprintf( stderr, "Using the linear CCD position-dependent magnitude correction:\n delta_m = %7.5lf*X_pix %+7.5lf*Y_pix %+7.5lf\n", lin_mag_A, lin_mag_B, lin_mag_C );
-      write_magnitude_calibration_log_plane( lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, N_good_stars, input_images[n], lin_mag_A, lin_mag_B, lin_mag_C );
+      //write_magnitude_calibration_log_plane( lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, N_good_stars, input_images[n], lin_mag_A, lin_mag_B, lin_mag_C );
+      write_magnitude_calibration_log_plane( lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, N_good_stars, filename_for_magnitude_calibration_log, lin_mag_A, lin_mag_B, lin_mag_C );
 
       // Check if the magnitude correction is not too large
       if ( fabs( lin_mag_C ) > MAX_LIN_CORR_MAG )
@@ -4201,7 +4209,8 @@ int main( int argc, char **argv ) {
       }
 
       /* Write calibration parameters to log files */
-      write_magnitude_calibration_param_log( poly_coeff, input_images[n] );
+      //write_magnitude_calibration_param_log( poly_coeff, input_images[n] );
+      write_magnitude_calibration_param_log( poly_coeff, filename_for_magnitude_calibration_log );
 
      } // if( wpolyfit_exit_code==0 ){
      else {
@@ -4210,7 +4219,8 @@ int main( int argc, char **argv ) {
        //wpolyfit_exit_code= robustzeropointfit( poly_x + 1, poly_y + 1, MAX( (int)(0.1*N_good_stars), 3), poly_coeff );
        // filtering moved above
        wpolyfit_exit_code= robustzeropointfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff );
-       write_magnitude_calibration_param_log( poly_coeff, input_images[n] );
+       //write_magnitude_calibration_param_log( poly_coeff, input_images[n] );
+       write_magnitude_calibration_param_log( poly_coeff, filename_for_magnitude_calibration_log );
       }
      }
      fprintf( stderr, "Used %d stars for magnitude calibration (after filtering).\n", N_good_stars );
