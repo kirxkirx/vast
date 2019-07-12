@@ -100,5 +100,5 @@ for i in out*_edit* ;do
  fi
 done
 # Remove symlinks to images
-# THIS CANNOT BE HERE
+# THIS CANNOT BE HERE, because util/clean_data.sh is run by vast main program AFTER symlinks arecreated
 #rm -rf symlinks_to_images/
