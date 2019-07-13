@@ -232,19 +232,9 @@ int remove_directory( const char *path ) {
  DIR *d= opendir( path );
  size_t path_len= strlen( path );
  int r= -1;
- 
- int error = 0;
-
- #ifdef DEBUGMESSAGES
- fprintf( stderr, "Checking the directory %s\n", path);
- #endif
 
  if ( d ) {
   struct dirent *p;
-  
-  #ifdef DEBUGMESSAGES
-  fprintf( stderr, "Opening directory %s\n", path);
-  #endif
 
   r= 0;
 
@@ -253,21 +243,10 @@ int remove_directory( const char *path ) {
    char *buf;
    size_t len;
 
-   #ifdef DEBUGMESSAGES
-   fprintf( stderr, "Dealing with the directory entry %s\n", p->d_name);
-   #endif
-
    /* Skip the names "." and ".." as we don't want to recurse on them. */
    if ( !strcmp( p->d_name, "." ) || !strcmp( p->d_name, ".." ) ) {
-    #ifdef DEBUGMESSAGES
-    fprintf( stderr, "Ups, skipping the dangerouse name %s\n", p->d_name);
-    #endif
     continue;
    }
-
-   #ifdef DEBUGMESSAGES
-   fprintf( stderr, "Still here with the entry %s\n", p->d_name);
-   #endif
 
    len= path_len + strlen( p->d_name ) + 2;
    if ( len <= 0 ) {
@@ -283,78 +262,30 @@ int remove_directory( const char *path ) {
    if ( buf ) {
     struct stat statbuf;
 
-    #ifdef DEBUGMESSAGES
-    fprintf( stderr, "if ( %s )\n", buf );
-    #endif
-
     snprintf( buf, len, "%s/%s", path, p->d_name );
 
-    #ifdef DEBUGMESSAGES
-    fprintf( stderr, "buf = %s\n", buf );
-    #endif
-
     if ( !stat( buf, &statbuf ) ) {
-     #ifdef DEBUGMESSAGES
-     fprintf( stderr, "stat() went fine for buf = %s\n", buf );
-     #endif
-
      if ( S_ISDIR( statbuf.st_mode ) ) {
-      #ifdef DEBUGMESSAGES
-      fprintf( stderr, "Recursively calling remove_directory( %s )\n", buf );
-      #endif
       r2= remove_directory( buf );
      } else {
-      #ifdef DEBUGMESSAGES
-      fprintf( stderr, "Removing %s\n", buf );
-      #endif
       r2= unlink( buf );
-     }
-    } else { 
-     #ifdef DEBUGMESSAGES
-     fprintf( stderr, "stat() is not fine for buf = %s\n", buf );
-     #endif
-     
-     // Assume this is a broken 
-     if ( !lstat( buf, &statbuf ) ) {
-      r2= unlink( buf );
-     } else {
-      fprintf( stderr, "ERROR removing %s\n", buf );
-      // Don't stop if you can't delete one entry.
-      // But this means we'll not be able to delete the directory anyhow.
-      error=1;
-      continue;
      }
     }
 
     free( buf );
-   } else {
-    #ifdef DEBUGMESSAGES
-    fprintf( stderr, "ELSE if ( %s )\n", buf );
-    #endif
    }
 
    r= r2;
   }
 
-  #ifdef DEBUGMESSAGES
-  fprintf( stderr, "Closing the directory\n" );
-  #endif
-
   closedir( d );
  }
 
  if ( !r ) {
-  #ifdef DEBUGMESSAGES
-  fprintf( stderr, "Removing directory %s\n", path);
-  #endif
   r= rmdir( path );
-  error = r;
- } else {
-  error=1;
  }
 
- //return r;
- return error;
+ return r;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1875,13 +1806,7 @@ int main( int argc, char **argv ) {
  /// Should be replaced with C code
  if ( argc > 1 ) {
   //system("if [ -d symlinks_to_images ];then rm -rf symlinks_to_images/ ;fi");
-  #ifdef DEBUGMESSAGES
-  fprintf( stderr, "Starting remove_directory( \"symlinks_to_images\" )\n");
-  #endif 
   remove_directory( "symlinks_to_images" );
-  #ifdef DEBUGMESSAGES
-  fprintf( stderr, "Done with remove_directory( \"symlinks_to_images\" )\n");
-  #endif
  }
 
  // Go through images and directories specified in the command line
