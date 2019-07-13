@@ -66,38 +66,11 @@ OPTFLAGS = -w -O2 -fomit-frame-pointer $(GOOD_MARCH_OPTIONS) $(LTO_OPTIONS) $(US
 ##############################################################################
 
 # this invocation of make will be run serially, even if the '-j' option is given.
-#.NOTPARALLEL:
+.NOTPARALLEL:
 
 
 
-#all: print_check_start_message check print_compile_start_message clean cfitsio gsl sextractor wcstools set_vast_limits vast.o vast statistics etc pgplot_components old shell_commands period_filter ccd astrometry astcheck cdsclient  clean_objects print_compile_success_message
-#all: print_check_start_message check print_compile_start_message clean cfitsio gsl sextractor wcstools set_vast_limits vast statistics etc pgplot_components old shell_commands period_filter ccd astrometry astcheck cdsclient  clean_objects print_compile_success_message
-
-all: 
-	$(MAKE) preliminary_checks 
-	$(MAKE) external_libraries 
-	$(MAKE) vast_main 
-	$(MAKE) pgplot_main 
-	$(MAKE) final_steps
-
-preliminary_checks: 
-	$(MAKE) print_check_start_message 
-	$(MAKE) check 
-	$(MAKE) print_compile_start_message 
-	$(MAKE) clean 
-
-external_libraries: cfitsio gsl sextractor wcstools astcheck cdsclient 
-
-vast_main: 
-	$(MAKE) set_vast_limits 
-	$(MAKE) vast 
-	$(MAKE) vast_peripherial
-vast_peripherial: statistics etc old period_filter ccd astrometry
-
-final_steps: 
-	$(MAKE) shell_commands 
-	$(MAKE) clean_objects 
-	$(MAKE) print_compile_success_message
+all: print_check_start_message check print_compile_start_message clean cfitsio gsl sextractor wcstools set_vast_limits vast.o vast statistics etc pgplot_components old shell_commands period_filter ccd astrometry astcheck cdsclient  clean_objects print_compile_success_message
 
 ifneq ($(RECOMPILE_VAST_ONLY),yes)
 check:
@@ -107,9 +80,9 @@ check:
 	# do notheing
 endif
 
-#q: vast statistics etc pgplot_components old period_filter ccd
+q: vast statistics etc pgplot_components old period_filter ccd
 
-#main: vast statistics stetson_test lib/create_data
+main: vast.o vast statistics stetson_test lib/create_data
 
 statistics: m_sigma_bin index_vs_mag select_sysrem_input_star_list drop lib/select_only_n_random_points_from_set_of_lightcurves lib/new_lightcurve_sigma_filter lib/remove_points_with_large_errors lib/select_aperture_with_smallest_scatter_for_each_object lib/create_data rescale_photometric_errors util/colstat
 
@@ -119,8 +92,7 @@ old: formater_out_wfk
 
 astrometry: lib/astrometry/get_image_dimentions lib/astrometry/insert_wcs_header lib/make_outxyls_for_astrometric_calibration lib/fits2cat util/solve_plate_with_UCAC5 lib/autodetect_aperture_main lib/try_to_guess_image_fov cfitsio gsl
 
-#pgplot_components: variability_indexes.o photocurve.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o replace_file_with_symlink_if_filename_contains_white_spaces.o wpolyfit.o get_path_to_vast.o cfitsio gsl
-pgplot_main:
+pgplot_components: variability_indexes.o photocurve.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o replace_file_with_symlink_if_filename_contains_white_spaces.o wpolyfit.o get_path_to_vast.o cfitsio gsl
 	lib/test_libpng.sh
 	echo $(OPTFLAGS) > optflags_for_scripts.tmp
 	$(CC) $(OPTFLAGS) -c src/setenv_local_pgplot.c
@@ -157,9 +129,9 @@ astcheck:
 cdsclient:
 	lib/compile_cdsclient.sh
 
-#period_filter: lib/period_search/periodFilter/periodS2 lib/periodFilter/periodFilter lib/BLS/bls lib/lk_compute_periodogram lib/deeming_compute_periodogram
-period_filter: lib/deeming_compute_periodogram lib/lk_compute_periodogram
-#nopgplot: print_check_start_message check print_compile_start_message clean cfitsio gsl sextractor vast.o vast statistics etc old shell_commands period_filter ccd astrometry astcheck clean_objects print_compile_success_message 
+period_filter: lib/period_search/periodFilter/periodS2 lib/periodFilter/periodFilter lib/BLS/bls lib/lk_compute_periodogram lib/deeming_compute_periodogram
+
+nopgplot: print_check_start_message check print_compile_start_message clean cfitsio gsl sextractor vast.o vast statistics etc old shell_commands period_filter ccd astrometry astcheck clean_objects print_compile_success_message 
 
 
 stetson_test: stetson_test.o variability_indexes.o lib/create_data
@@ -171,7 +143,7 @@ stetson_test.o: $(SRC_PATH)test/stetson_test.c
 
 
 #vast: vast.o gettime.o vast_report_memory_error.o libident.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o vast_progbar.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o cfitsio gsl
-vast: vast.o gettime.o vast_report_memory_error.o libident.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o erfinv.o #cfitsio gsl
+vast: vast.o gettime.o vast_report_memory_error.o libident.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o erfinv.o cfitsio gsl
 	$(CC) $(OPTFLAGS) -o vast vast.o gettime.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o vast_report_memory_error.o libident.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o erfinv.o $(CFITSIO_LIB) $(GSL_LIB) -Wl,-rpath,$(LIB_IDENT_PATH) -lm
 
 vast.o: $(SRC_PATH)vast.c $(SOURCE_IDENT_PATH)ident.h $(SRC_PATH)vast_limits.h $(SRC_PATH)vast_report_memory_error.h $(SRC_PATH)detailed_error_messages.h $(SRC_PATH)photocurve.h $(SRC_PATH)get_number_of_cpu_cores.h $(SRC_PATH)fit_plane_lin.h $(SRC_PATH)fitsfile_read_check.h $(SRC_PATH)wpolyfit.h $(SRC_PATH)replace_file_with_symlink_if_filename_contains_white_spaces.h $(SRC_PATH)lightcurve_io.h
@@ -343,12 +315,12 @@ lib/MagSize_filter_standalone: MagSize_filter_standalone.o filter_MagSize.o erfi
 get_image_date.o: $(SRC_PATH)get_image_date.c
 	$(CC) $(OPTFLAGS) -c -o get_image_date.o $(SRC_PATH)get_image_date.c
 		
-#lib/period_search/periodFilter/periodS2: $(SRC_PATH)period_search/periodFilter/periodS2.c
-#	$(CC) $(OPTFLAGS) $(SRC_PATH)period_search/periodFilter/periodS2.c -o lib/periodFilter/periodS2 -lm
-#lib/periodFilter/periodFilter: $(SRC_PATH)period_search/periodFilter/periodFilter.c
-#	$(CC) $(OPTFLAGS) $(SRC_PATH)period_search/periodFilter/periodFilter.c -o lib/periodFilter/periodFilter
-#lib/BLS/bls: $(SRC_PATH)period_search/BLS/bls.c
-#	$(CC) $(OPTFLAGS) -o lib/BLS/bls $(SRC_PATH)period_search/BLS/bls.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+lib/period_search/periodFilter/periodS2: $(SRC_PATH)period_search/periodFilter/periodS2.c
+	$(CC) $(OPTFLAGS) $(SRC_PATH)period_search/periodFilter/periodS2.c -o lib/periodFilter/periodS2 -lm
+lib/periodFilter/periodFilter: $(SRC_PATH)period_search/periodFilter/periodFilter.c
+	$(CC) $(OPTFLAGS) $(SRC_PATH)period_search/periodFilter/periodFilter.c -o lib/periodFilter/periodFilter
+lib/BLS/bls: $(SRC_PATH)period_search/BLS/bls.c
+	$(CC) $(OPTFLAGS) -o lib/BLS/bls $(SRC_PATH)period_search/BLS/bls.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 lib/lk_compute_periodogram: lib/deeming_compute_periodogram
 	cd lib/; ln -s  deeming_compute_periodogram lk_compute_periodogram ; ln -s deeming_compute_periodogram compute_periodogram_allmethods ; cd ..
 deeming_compute_periodogram.o: $(SRC_PATH)period_search/deeming_compute_periodogram.c
@@ -447,8 +419,7 @@ util/solve_plate_with_UCAC5: solve_plate_with_UCAC5.o gettime.o wpolyfit.o varia
 solve_plate_with_UCAC5.o:
 	$(CC) $(OPTFLAGS) -c src/solve_plate_with_UCAC5.c -I$(GSL_INCLUDE)
 
-#shell_commands: pgplot_components lib/lightcurve_simulator vast
-shell_commands: 
+shell_commands: pgplot_components lib/lightcurve_simulator vast
 	ln -s vast diffphot
 	ln -s pgfv sextract_single_image
 	ln -s pgfv select_star_on_reference_image
@@ -533,8 +504,7 @@ clean: clean_libraries
 	rm -f util/fix_image_date
 	
 
-#clean_objects: vast statistics etc pgplot_components old shell_commands period_filter ccd astrometry astcheck cdsclient
-clean_objects: 
+clean_objects: vast statistics etc pgplot_components old shell_commands period_filter ccd astrometry astcheck cdsclient
 	rm -f *.o $(SRC_PATH)*.o $(SRC_PATH)pgfv/*.o $(SRC_PATH)diferential/*.o  $(SRC_PATH)astrometry/*.o $(SRC_PATH)heliocentric_correction/*.o
 
 test: ../sample_data/f_72-001r.fit
@@ -550,8 +520,7 @@ print_compile_start_message:
 	@echo -e "\033[01;34mCompiling VaST...\033[00m"
 	@echo " "
 
-#print_compile_success_message: clean_objects sextractor astcheck cdsclient
-print_compile_success_message:
+print_compile_success_message: clean_objects sextractor astcheck cdsclient
 	@echo " "
 	@echo -e "\033[01;34mVaST seems to be compiled successfully! =)\033[00m"
 	@echo " "
