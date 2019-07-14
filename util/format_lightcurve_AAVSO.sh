@@ -54,7 +54,8 @@ DATE_FOR_AAVSO_MESSAGE_SUBJECT_FIRST_OBS=`LANG=C date -d @"$UNIXTIME_FIRST_OBS" 
 
 # Get the exposure time for the header
 if [ -s vast_image_details.log ];then
- MEDIAN_EXPOSURE_TIME_SEC=`cat vast_image_details.log | awk '{print $2}' FS='exp=' | awk '{print $1}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.0f\n", $2}'`
+ #MEDIAN_EXPOSURE_TIME_SEC=`cat vast_image_details.log | awk '{print $2}' FS='exp=' | awk '{print $1}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.0f\n", $2}'`
+ MEDIAN_EXPOSURE_TIME_SEC=`cat vast_image_details.log | awk -F 'exp=' '{print $2}' | awk '{print $1}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.0f\n", $2}'`
 else
  echo "WARNING: cannot get the exposure time from vast_image_details.log"
 fi
@@ -63,8 +64,10 @@ VARIABLE_STAR_NAME="XX Xxx"
 FILTER="X"
 if [ -s CBA_previously_used_header.txt ];then
  echo "Importing the variable star info from CBA_previously_used_header.txt" >> /dev/stderr
- VARIABLE_STAR_NAME=`cat CBA_previously_used_header.txt | grep '# Variable: ' | awk '{print $2}' FS='# Variable: '`
- FILTER=`cat CBA_previously_used_header.txt | grep '# Filter: ' | awk '{print $2}' FS='# Filter: '`
+ #VARIABLE_STAR_NAME=`cat CBA_previously_used_header.txt | grep '# Variable: ' | awk '{print $2}' FS='# Variable: '`
+ VARIABLE_STAR_NAME=`cat CBA_previously_used_header.txt | grep '# Variable: ' | awk -F '# Variable: ' '{print $2}'`
+ #FILTER=`cat CBA_previously_used_header.txt | grep '# Filter: ' | awk '{print $2}' FS='# Filter: '`
+ FILTER=`cat CBA_previously_used_header.txt | grep '# Filter: ' | awk -F '# Filter: ' '{print $2}'`
 fi
 
 if [ ! -s AAVSO_previously_used_header.txt ];then
@@ -94,7 +97,6 @@ if [ ! -z "$EDITOR" ];then
  $EDITOR AAVSO_report.txt
 fi
 
-#VARIABLE_STAR_NAME=`head AAVSO_report.txt | grep 'Variable: ' | awk '{print $2}' FS='Variable: '`
 if [ -z "$VARIABLE_STAR_NAME" ];then
  echo "ERROR in AAVSO_report.txt : cannot find the variable star name"
  exit 1

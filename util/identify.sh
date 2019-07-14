@@ -519,7 +519,7 @@ field identification have good chances to fail. Sorry... :(
     # Attempt the second iteration with restricted parameters
     RADECCOMMAND=`"$VAST_PATH"util/fov_of_wcs_calibrated_image.sh wcs_"$BASENAME_FITSFILE" | grep 'Image center:' | awk '{print "--ra "$3" --dec "$4}'`
     FOV=`"$VAST_PATH"util/fov_of_wcs_calibrated_image.sh wcs_"$BASENAME_FITSFILE" | grep 'Image size:' | awk '{print $3}' | sed "s:'::g" | sed "s:x: :g"  | awk '{if ( $1 < $2 ) print $2/60 ;else print $1/60 }'`
-    IMAGE_SCALE_ARCSECPIX=`"$VAST_PATH"util/fov_of_wcs_calibrated_image.sh wcs_"$BASENAME_FITSFILE" | grep 'Image scale:' | awk '{print $3}' | awk '{print $1}' FS='"'`
+    IMAGE_SCALE_ARCSECPIX=`"$VAST_PATH"util/fov_of_wcs_calibrated_image.sh wcs_"$BASENAME_FITSFILE" | grep 'Image scale:' | awk '{print $3}' | awk -F '"' '{print $1}'`
     IMAGE_SCALE_ARCSECPIX_LOW=`echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%f",0.95*$1}'`
     IMAGE_SCALE_ARCSECPIX_HIGH=`echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%f",1.05*$1}'`
     RADECCOMMAND="$RADECCOMMAND --radius $FOV --scale-low $IMAGE_SCALE_ARCSECPIX_LOW --scale-high $IMAGE_SCALE_ARCSECPIX_HIGH --scale-units arcsecperpix"

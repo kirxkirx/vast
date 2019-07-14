@@ -153,7 +153,8 @@ fi
 # Get image data
 MJD=`util/get_image_date "$INPUT_FITS_IMAGE" | grep -A 10 "Observation date in various formats" | grep "  MJD  " | awk '{print $2}'`
 echo " ##### Derived MJD $MJD for $INPUT_FITS_IMAGE ##### "
-EXPOSURE=`util/listhead "$INPUT_FITS_IMAGE" | grep -e EXPTIME -e EXPOSURE | head -n1 | awk '{print $2}' FS='=' | awk '{printf "%.2f",$1}'`
+#EXPOSURE=`util/listhead "$INPUT_FITS_IMAGE" | grep -e EXPTIME -e EXPOSURE | head -n1 | awk '{print $2}' FS='=' | awk '{printf "%.2f",$1}'`
+EXPOSURE=`util/listhead "$INPUT_FITS_IMAGE" | grep -e EXPTIME -e EXPOSURE | head -n1 | awk -F '=' '{print $2}' | awk '{printf "%.2f",$1}'`
 if [ -z "$EXPOSURE" ];then
  echo "WARNING: cannot derive the exposure time from FITS image header!
 Assuming EXPOSURE=0.0 !"

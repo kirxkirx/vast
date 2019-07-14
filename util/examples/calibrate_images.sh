@@ -51,7 +51,7 @@ for RECORD in NIGHT IMAGE_DIR ;do
  done
 done
 # test that all the input directories actually exist
-for INPUT_DIR in `grep IMAGE_DIR= $0 | grep -v 'for ' | awk '{print $2}' FS='='` ;do
+for INPUT_DIR in `grep IMAGE_DIR= $0 | grep -v 'for ' | awk -F '=' '{print $2}'` ;do
  if [ ! -d "$INPUT_DIR" ];then
   echo "ERROR: the input directory $INPUT_DIR does not exist!"
   if [ -f "$INPUT_DIR" ];then
@@ -68,7 +68,7 @@ for INPUT_DIR in `grep IMAGE_DIR= $0 | grep -v 'for ' | awk '{print $2}' FS='='`
  done
 done
 # test that all the input files actually exist
-for INPUT_FILE in `grep -e "DARK=" -e "FLAT=" $0 | grep -v 'for ' | awk '{print $2}' FS='='` ;do
+for INPUT_FILE in `grep -e "DARK=" -e "FLAT=" $0 | grep -v 'for ' | awk -F '=' '{print $2}'` ;do
  if [ ! -f "$INPUT_FILE" ];then
   echo "ERROR: the input directory $INPUT_FILE does not exist!"
   if [ -d "$INPUT_FILE" ];then

@@ -41,7 +41,8 @@ for ASCII_LC_FILE in "$ASCII_LC_DIR"/* ;do
  # Determine if this is a csv or space-separated file
  tail -n3 "$ASCII_LC_FILE" | grep ',' --quiet
  if [ $? -eq 0 ];then
-  FS="FS=,"
+  #FS="FS=,"
+  FS="-F ','"
  else
   FS=" "
  fi
@@ -55,7 +56,7 @@ for ASCII_LC_FILE in "$ASCII_LC_DIR"/* ;do
  grep --quiet 'hst_' "$ASCII_LC_FILE"
  if [ $? -eq 0 ];then
   # This is an HCV data file
-  cat "$ASCII_LC_FILE" | grep -v 'nan' | awk '{ jd=$1 ; mag=$2 ; err=$3; CI=$4 ; RA=$5; DEC=$6; filename=$7; if ( jd<2400000.5 )jd=jd+2400000.5; printf "%.6f %7.4f %.4f %.7f %.7f %.7f %s\n", jd , mag, err, RA, DEC, CI, filename}' $FS | grep -v "#" | grep -v "%" > "$NEW_NAME"
+  cat "$ASCII_LC_FILE" | grep -v 'nan' | awk $FS '{ jd=$1 ; mag=$2 ; err=$3; CI=$4 ; RA=$5; DEC=$6; filename=$7; if ( jd<2400000.5 )jd=jd+2400000.5; printf "%.6f %7.4f %.4f %.7f %.7f %.7f %s\n", jd , mag, err, RA, DEC, CI, filename}' | grep -v "#" | grep -v "%" > "$NEW_NAME"
   # All this is the old stuff
   ## corrected LC
   ##cat "$ASCII_LC_FILE" | awk '{ jd=$1 ; mag=$3 ; err=$4; filename=$5; if ( jd<2400000.5 )jd=jd+2400000.5; printf "%.6f %7.4f %.4f 0.1 0.1 1.0 %s\n", jd , mag, err, filename}' $FS | grep -v "#" | grep -v "%" > "$NEW_NAME"
@@ -64,13 +65,16 @@ for ASCII_LC_FILE in "$ASCII_LC_DIR"/* ;do
  else
   # A generic parser
   ### Try to guess if the file includes numbers in exponential form
-  head -n10 "$ASCII_LC_FILE" | head -n +2 | awk '{print $2" "$3}' $FS | grep --quiet 'e-0'
+  #head -n10 "$ASCII_LC_FILE" | head -n +2 | awk '{print $2" "$3}' $FS | grep --quiet 'e-0'
+  head -n10 "$ASCII_LC_FILE" | head -n +2 | awk $FS '{print $2" "$3}' | grep --quiet 'e-0'
   if [ $? -eq 0 ];then
    # Write lightcurve in the exponential format
-   cat "$ASCII_LC_FILE" | awk '{ jd=$1 ; mag=$2 ; err=$3; if ( jd<2400000.5 )jd=jd+2400000.5; printf "%.6f %g %g 0.1 0.1 1.0 none\n", jd , mag, err}' $FS | grep -v "#" | grep -v "%" > "$NEW_NAME"
+   #cat "$ASCII_LC_FILE" | awk '{ jd=$1 ; mag=$2 ; err=$3; if ( jd<2400000.5 )jd=jd+2400000.5; printf "%.6f %g %g 0.1 0.1 1.0 none\n", jd , mag, err}' $FS | grep -v "#" | grep -v "%" > "$NEW_NAME"
+   cat "$ASCII_LC_FILE" | awk $FS '{ jd=$1 ; mag=$2 ; err=$3; if ( jd<2400000.5 )jd=jd+2400000.5; printf "%.6f %g %g 0.1 0.1 1.0 none\n", jd , mag, err}' | grep -v "#" | grep -v "%" > "$NEW_NAME"
   else
    # Write lightcurve in the usual fixed-point format
-   cat "$ASCII_LC_FILE" | awk '{ jd=$1 ; mag=$2 ; err=$3; if ( jd<2400000.5 )jd=jd+2400000.5; printf "%.6f %7.4f %.4f 0.1 0.1 1.0 none\n", jd , mag, err}' $FS | grep -v "#" | grep -v "%" > "$NEW_NAME"
+   #cat "$ASCII_LC_FILE" | awk '{ jd=$1 ; mag=$2 ; err=$3; if ( jd<2400000.5 )jd=jd+2400000.5; printf "%.6f %7.4f %.4f 0.1 0.1 1.0 none\n", jd , mag, err}' $FS | grep -v "#" | grep -v "%" > "$NEW_NAME"
+   cat "$ASCII_LC_FILE" | awk $FS '{ jd=$1 ; mag=$2 ; err=$3; if ( jd<2400000.5 )jd=jd+2400000.5; printf "%.6f %7.4f %.4f 0.1 0.1 1.0 none\n", jd , mag, err}' | grep -v "#" | grep -v "%" > "$NEW_NAME"
   fi # exp. form
  fi
 done

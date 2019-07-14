@@ -112,8 +112,10 @@ cat "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_RP.txt
 
 ###### Plot Gaia lightcurve using gnuplot
 
-JD0=`cat "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_G.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_BP.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_RP.txt | awk '{print $1}' FS='.' | sort | uniq | head -n 1`
-JD1=`cat "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_G.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_BP.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_RP.txt | awk '{print $1}' FS='.' | sort | uniq | tail -n 1`
+#JD0=`cat "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_G.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_BP.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_RP.txt | awk '{print $1}' FS='.' | sort | uniq | head -n 1`
+JD0=`cat "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_G.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_BP.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_RP.txt | awk -F '.' '{print $1}' | sort | uniq | head -n 1`
+#JD1=`cat "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_G.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_BP.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_RP.txt | awk '{print $1}' FS='.' | sort | uniq | tail -n 1`
+JD1=`cat "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_G.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_BP.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_RP.txt | awk -F '.' '{print $1}' | sort | uniq | tail -n 1`
 PLOT_MIN=`echo "-1*($JD1-$JD0)/10" | bc -ql | awk '{printf "%.1f",$1}'`
 PLOT_MAX=`echo "($JD1-$JD0)+($JD1-$JD0)/10" | bc -ql | awk '{printf "%.1f",$1}'`
 

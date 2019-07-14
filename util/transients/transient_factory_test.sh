@@ -19,7 +19,8 @@ echo "<HTML>" >> transient_report/index.html
 # assuming filenames like Cas5_2017-11-20_23-2-32_001.fts
 for i in "$NEW_IMAGES"/* ;do
  FIELDNAME=`basename "$i"`
- FIELDNAME=`echo "$FIELDNAME" | awk '{print $1}' FS='_'`
+ #FIELDNAME=`echo "$FIELDNAME" | awk '{print $1}' FS='_'`
+ FIELDNAME=`echo "$FIELDNAME" | awk -F '_' '{print $1}'`
  echo "$FIELDNAME"
 done | sort | uniq | while read FIELD ;do
  #STR=`basename $i _001.fit` 

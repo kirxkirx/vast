@@ -56,8 +56,8 @@ done
 
 # Get image dimentions in pixels
 FITSHEADER=`"$VAST_PATH"util/listhead "$FITS_IMAGE_TO_CHECK"`
-NAXIS1=`echo "$FITSHEADER" | grep --max-count=1 'NAXIS1' | awk '{print $2}' FS='=' | awk '{print $1}'`
-NAXIS2=`echo "$FITSHEADER" | grep --max-count=1 'NAXIS2' | awk '{print $2}' FS='=' | awk '{print $1}'`
+NAXIS1=`echo "$FITSHEADER" | grep --max-count=1 'NAXIS1' | awk -F '=' '{print $2}' | awk '{print $1}'`
+NAXIS2=`echo "$FITSHEADER" | grep --max-count=1 'NAXIS2' | awk -F '=' '{print $2}' | awk '{print $1}'`
 
 # Determine the image size
 XY2SKY_OUTPUT=`"$VAST_PATH"lib/bin/xy2sky -j "$FITS_IMAGE_TO_CHECK" 0 0 $NAXIS1 0 0 $NAXIS2`

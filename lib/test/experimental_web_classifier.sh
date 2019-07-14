@@ -48,7 +48,8 @@ CURL="$CURL -H 'Expect:'"
 #################################
 # Do the actual work
 
-RESULTURL=`$CURL -F file=@$1 -F submit="Classify" http://scan.sai.msu.ru/cgi-bin/wwwupsilon/process_lightcurve.py | grep Refresh | grep "url=" | awk '{print $2}' FS='url=' | awk '{print $1}' FS='"'`
+#RESULTURL=`$CURL -F file=@$1 -F submit="Classify" http://scan.sai.msu.ru/cgi-bin/wwwupsilon/process_lightcurve.py | grep Refresh | grep "url=" | awk '{print $2}' FS='url=' | awk '{print $1}' FS='"'`
+RESULTURL=`$CURL -F file=@$1 -F submit="Classify" http://scan.sai.msu.ru/cgi-bin/wwwupsilon/process_lightcurve.py | grep Refresh | grep "url=" | awk -F 'url=' '{print $2}' | awk -F '"' '{print $1}'`
 
 # Start web browser
 echo "# Starting $WEBBROWSER web browser..."

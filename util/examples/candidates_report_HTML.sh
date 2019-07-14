@@ -20,7 +20,7 @@ fi
 
 ####### Set color scheme for gnuplot 5.0 or above
 GNUPLOT5_COLOR_SCHEME_COMMAND="set colors classic"
-GNUPLOT_VERSION=`gnuplot --version | awk '{print $2}' | awk '{print $1}' FS='.'`
+GNUPLOT_VERSION=`gnuplot --version | awk '{print $2}' | awk -F '.' '{print $1}'`
 if [ $GNUPLOT_VERSION -ge 5 ];then
  COLOR_SCHEME_COMMAND="$GNUPLOT5_COLOR_SCHEME_COMMAND"
 else

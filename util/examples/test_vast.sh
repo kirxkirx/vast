@@ -454,7 +454,8 @@ if [ -d ../test_data_photo ];then
    fi
    # Here we expect exactly two distances to be reported 2MASS and USNO-B1.0 match
    # Both should be within 0.8 arcsec from the input coordinates. Let's check this
-   "$WORKDIR"/util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 | grep 'r=' | grep -v 'var=' | awk '{print $1}' FS='"' | awk '{print $2}' FS='r=' | while read R_DISTANCE_TO_MATCH ;do
+   #"$WORKDIR"/util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 | grep 'r=' | grep -v 'var=' | awk '{print $1}' FS='"' | awk '{print $2}' FS='r=' | while read R_DISTANCE_TO_MATCH ;do
+   "$WORKDIR"/util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 | grep 'r=' | grep -v 'var=' | awk -F '"' '{print $1}' | awk -F 'r=' '{print $2}' | while read R_DISTANCE_TO_MATCH ;do
     TEST=`echo "$R_DISTANCE_TO_MATCH<0.8" | bc -ql`
     if [ $TEST -eq 1 ];then
      echo "GOODMATCH"
@@ -6124,7 +6125,7 @@ if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND001"
    fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk '{print $2}' FS=':' | awk '{print $1}' | while read ERRORS ;do
+   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
     if [ $ERRORS -ne 0 ];then
      echo "ERROR"
      break
@@ -6141,7 +6142,7 @@ if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND003"
    fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk '{print $2}' FS=':' | awk '{print $1}' | while read ERRORS ;do
+   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
     if [ $ERRORS -ne 0 ];then
      echo "ERROR"
      break
@@ -6156,7 +6157,7 @@ if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND004"
    fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk '{print $2}' FS=':' | awk '{print $1}' | while read ERRORS ;do
+   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
     if [ $ERRORS -ne 0 ];then
      echo "ERROR"
      break
@@ -6171,7 +6172,7 @@ if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND005"
    fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk '{print $2}' FS=':' | awk '{print $1}' | while read ERRORS ;do
+   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
     if [ $ERRORS -ne 0 ];then
      echo "ERROR"
      break
@@ -6188,7 +6189,7 @@ if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND007"
    fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk '{print $2}' FS=':' | awk '{print $1}' | while read ERRORS ;do
+   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
     if [ $ERRORS -ne 0 ];then
      echo "ERROR"
      break
@@ -6203,7 +6204,7 @@ if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND009"
    fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk '{print $2}' FS=':' | awk '{print $1}' | while read ERRORS ;do
+   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
     if [ $ERRORS -ne 0 ];then
      echo "ERROR"
      break
@@ -6221,7 +6222,7 @@ if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND011"
    fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk '{print $2}' FS=':' | awk '{print $1}' | while read ERRORS ;do
+   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
     if [ $ERRORS -ne 0 ];then
      echo "ERROR"
      break
@@ -6239,7 +6240,7 @@ if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND013"
    fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk '{print $2}' FS=':' | awk '{print $1}' | while read ERRORS ;do
+   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
     if [ $ERRORS -ne 0 ];then
      echo "ERROR"
      break
@@ -6258,7 +6259,7 @@ if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND015"
    fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk '{print $2}' FS=':' | awk '{print $1}' | while read ERRORS ;do
+   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
     if [ $ERRORS -ne 0 ];then
      echo "ERROR"
      break
@@ -6277,7 +6278,7 @@ if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND017"
    fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk '{print $2}' FS=':' | awk '{print $1}' | while read ERRORS ;do
+   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
     if [ $ERRORS -ne 0 ];then
      echo "ERROR"
      break
@@ -6295,7 +6296,7 @@ if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND019"
    fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk '{print $2}' FS=':' | awk '{print $1}' | while read ERRORS ;do
+   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
     if [ $ERRORS -ne 0 ];then
      echo "ERROR"
      break
@@ -6313,7 +6314,7 @@ if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND021"
    fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk '{print $2}' FS=':' | awk '{print $1}' | while read ERRORS ;do
+   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
     if [ $ERRORS -ne 0 ];then
      echo "ERROR"
      break
@@ -6331,7 +6332,7 @@ if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND023"
    fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk '{print $2}' FS=':' | awk '{print $1}' | while read ERRORS ;do
+   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
     if [ $ERRORS -ne 0 ];then
      echo "ERROR"
      break
@@ -6351,7 +6352,7 @@ if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND025"
    fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk '{print $2}' FS=':' | awk '{print $1}' | while read ERRORS ;do
+   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
     if [ $ERRORS -ne 0 ];then
      echo "ERROR"
      break
@@ -6375,7 +6376,7 @@ if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND026"
    fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk '{print $2}' FS=':' | awk '{print $1}' | while read ERRORS ;do
+   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
     if [ $ERRORS -ne 0 ];then
      echo "ERROR"
      break
@@ -6703,7 +6704,8 @@ fi
 
 # Remote period search
 for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
- REMOTE_FREQUENCY_CD=`WEBBROWSER=curl ./pokaz_laflerkinman.sh ../vast_test_lightcurves/out00095_edit_edit.dat 2>/dev/null | grep 'L&K peak 2' | awk '{print $2}' FS='&nu; ='  | awk '{printf "%.4f",$1}'`
+ #REMOTE_FREQUENCY_CD=`WEBBROWSER=curl ./pokaz_laflerkinman.sh ../vast_test_lightcurves/out00095_edit_edit.dat 2>/dev/null | grep 'L&K peak 2' | awk '{print $2}' FS='&nu; ='  | awk '{printf "%.4f",$1}'`
+ REMOTE_FREQUENCY_CD=`WEBBROWSER=curl ./pokaz_laflerkinman.sh ../vast_test_lightcurves/out00095_edit_edit.dat 2>/dev/null | grep 'L&K peak 2' | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.4f",$1}'`
  if [ "$REMOTE_FREQUENCY_CD" != "$LOCAL_FREQUENCY_CD" ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH003_$PERIOD_SEARCH_SERVER"
@@ -8211,7 +8213,8 @@ if [ ! -f ../vast_test_lightcurves/IOMC_4011000047.fits ];then
  wget -c "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/IOMC_4011000047.fits.bz2" && bunzip2 IOMC_4011000047.fits.bz2
  cd $WORKDIR
 fi
-RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/IOMC_4011000047.fits" 'http://scan.sai.msu.ru/cgi-bin/omc_converter/process_omc.py' | grep 'Refresh' | awk '{print $2}' FS='url=' | sed 's:"::g' | awk '{print $1}' FS='>'`
+#RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/IOMC_4011000047.fits" 'http://scan.sai.msu.ru/cgi-bin/omc_converter/process_omc.py' | grep 'Refresh' | awk '{print $2}' FS='url=' | sed 's:"::g' | awk '{print $1}' FS='>'`
+RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/IOMC_4011000047.fits" 'http://scan.sai.msu.ru/cgi-bin/omc_converter/process_omc.py' | grep 'Refresh' | awk -F 'url=' '{print $2}' | sed 's:"::g' | awk -F '>' '{print $1}'`
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII_001"
@@ -8233,7 +8236,8 @@ if [ ! -f ../vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits ];then
  wget -c "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits.bz2" && bunzip2 1SWASP_J013623.20+480028.4.fits.bz2
  cd $WORKDIR
 fi
-RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits" 'http://scan.sai.msu.ru/cgi-bin/swasp_converter/process_swasp.py' | grep 'Refresh' | awk '{print $2}' FS='url=' | sed 's:"::g' | awk '{print $1}' FS='>'`
+#RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits" 'http://scan.sai.msu.ru/cgi-bin/swasp_converter/process_swasp.py' | grep 'Refresh' | awk '{print $2}' FS='url=' | sed 's:"::g' | awk '{print $1}' FS='>'`
+RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits" 'http://scan.sai.msu.ru/cgi-bin/swasp_converter/process_swasp.py' | grep 'Refresh' | awk -F 'url=' '{print $2}' | sed 's:"::g' | awk -F '>' '{print $1}'`
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_SWASP_001"
@@ -8255,7 +8259,8 @@ if [ ! -f ../vast_test_lightcurves/nsv14523hjd.dat ];then
  wget -c "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/nsv14523hjd.dat.bz2" && bunzip2 nsv14523hjd.dat.bz2
  cd $WORKDIR
 fi
-RESULTSURL=`curl --silent -F submit="Classify" -F file=@"../vast_test_lightcurves/nsv14523hjd.dat" 'http://scan.sai.msu.ru/cgi-bin/wwwupsilon/process_lightcurve.py' | grep 'Refresh' | awk '{print $2}' FS='url=' | sed 's:"::g' | awk '{print $1}' FS='>'`
+#RESULTSURL=`curl --silent -F submit="Classify" -F file=@"../vast_test_lightcurves/nsv14523hjd.dat" 'http://scan.sai.msu.ru/cgi-bin/wwwupsilon/process_lightcurve.py' | grep 'Refresh' | awk '{print $2}' FS='url=' | sed 's:"::g' | awk '{print $1}' FS='>'`
+RESULTSURL=`curl --silent -F submit="Classify" -F file=@"../vast_test_lightcurves/nsv14523hjd.dat" 'http://scan.sai.msu.ru/cgi-bin/wwwupsilon/process_lightcurve.py' | grep 'Refresh' | awk -F 'url=' '{print $2}' | sed 's:"::g' | awk -F '>' '{print $1}'`
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_WWWU_001"

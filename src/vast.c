@@ -2284,7 +2284,11 @@ int main( int argc, char **argv ) {
  /// Special mode for manual comparison star selection
  if ( 0 == strcmp( "diffphot", basename( argv[0] ) ) ) {
   fprintf( stderr, "\n\n Select a comparison star with a click and change the measurement aperture by pressing '+'/'-' on the keyboard.\n\n");
-  sprintf( system_command_select_comparison_stars, "lib/select_comparison_stars %s", input_images[0]);
+  if ( fixed_aperture != 0.0 ){
+   sprintf( system_command_select_comparison_stars, "lib/select_comparison_stars %s -a %lf", input_images[0], fixed_aperture);
+  } else { 
+   sprintf( system_command_select_comparison_stars, "lib/select_comparison_stars %s", input_images[0]);
+  }
   if ( 0 != system( system_command_select_comparison_stars ) ) {
    fprintf( stderr, "ERROR running  '%s'\n", system_command_select_comparison_stars );
    return 1;
