@@ -18,7 +18,7 @@
 # try to set the correct path to X11 library, but it is most likely the program
 # will compile fine even if this path is set incorrectly
 # If RECOMPILE_VAST_ONLY is set to 'yes' only VaST will be re-compiled (faster option for developement) 
-RECOMPILE_VAST_ONLY = yes
+#RECOMPILE_VAST_ONLY = yes
 
 # You probably don't want to change anything below this line
 ##############################################################################
@@ -74,7 +74,7 @@ all: print_check_start_message check print_compile_start_message clean cfitsio g
 
 ifneq ($(RECOMPILE_VAST_ONLY),yes)
 check:
-	#lib/check_external_programs.sh $(CC)
+	lib/check_external_programs.sh $(CC)
 else
 check:
 	# do notheing
