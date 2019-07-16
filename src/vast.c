@@ -2240,6 +2240,12 @@ int main( int argc, char **argv ) {
   convert_timesys_to_TT=0;
   fprintf(stderr, "diffphot mode: disable photometric error rescaling!!!\n");
   param_rescale_photometric_errors=0;
+  fprintf(stderr, "diffphot mode: will not try to gues image saturation limit\n");
+  guess_saturation_limit_operation_mode= 0;
+  maxsextractorflag= 3;
+  fprintf(stderr, "diffphot mode: setting the maximum acceptable SExtractor flag to 3\n");
+  param_filterout_magsize_outliers= 0;
+  fprintf(stderr, "diffphot mode: disabling magnitude-size outlier filtering\n");
   fprintf(stderr, "################\n\n");
  }
 
