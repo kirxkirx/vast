@@ -5334,9 +5334,9 @@ int main( int argc, char **argv ) {
 
  /// Special mode for manual comparison star selection
  if ( 0 == strcmp( "diffphot", basename( argv[0] ) ) ) {
-  sprintf( stderr_output, "if [ -s vast_list_of_previously_known_variables.log ];then while read A ;do./lc $A done < vast_list_of_previously_known_variables.log ;fi" );
+  sprintf( stderr_output, "if [ -s vast_list_of_previously_known_variables.log ];then while read A ;do ./lc $A & done < vast_list_of_previously_known_variables.log ;fi" );
   if ( !system( stderr_output ) ){
-   fprintf(syderr, "ERROR running the command:\n %s\n", stderr_output);
+   fprintf(stderr, "ERROR running the command:\n %s\n", stderr_output);
   }
  }
 
