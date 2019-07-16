@@ -354,7 +354,7 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
   free( pix ); // we'll mess-up the order of pix while calculating median
   pixel_value_threshold= median - 7.0 * sigma_estimated_from_MAD;
   //
-  fprintf( stderr, "median=%lf sigma=%lf threshold=%lf\n", median, sigma_estimated_from_MAD, pixel_value_threshold );
+  fprintf( stderr, "Image stats for %s  median=%lf sigma=%lf threshold=%lf\n", basename(fitsfilename), median, sigma_estimated_from_MAD, pixel_value_threshold );
  } // if( 0==fits_open_image(&fptr, fitsfilename, READONLY, &status) ){
 
  //
