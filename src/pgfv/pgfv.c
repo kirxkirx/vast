@@ -41,6 +41,18 @@
 
 int Kourovka_SBG_date_hack( char *fitsfilename, char *DATEOBS, int *date_parsed, double *exposure ); // defined in gettime.c
 
+void save_star_to_vast_list_of_previously_known_variables_and_exclude_lst( int sexNUMBER, float sexX, float sexY ) {
+ FILE *filepointer;
+ fprintf(stderr,"Marking out%05d.dat as a variable star and excluding it from magnitude calibration\n", sexNUMBER);
+ filepointer=fopen("vast_list_of_previously_known_variables.log","a");
+ fprintf( filepointer, "out%05d.dat\n", sexNUMBER );
+ fclose( filepointer );
+ filepointer=fopen("exclude.lst","a");
+ fprintf( filepointer, "%.3f %.3f\n", sexX, sexY );
+ fclose( filepointer );
+ return;
+}
+
 int get_string_with_fov_of_wcs_calibrated_image( char *fitsfilename, char *output_string ) {
  char path_to_vast_string[VAST_PATH_MAX];
  char systemcommand[2 * VAST_PATH_MAX];
@@ -1014,8 +1026,6 @@ int main( int argc, char **argv ) {
    exit( 1 );
   };
   mark_known_variable_counter= 0; // initialize
-  // TBA: load known variables
-  //load_markers_for_known_variables( float *markX_known_variable, float *markY_known_variable, int *mark_known_variable_counter, char *fits_image_name);
   load_markers_for_known_variables( markX_known_variable, markY_known_variable, &mark_known_variable_counter, fits_image_name);
   //
   if( mark_known_variable_counter==0 ){
@@ -1065,8 +1075,9 @@ int main( int argc, char **argv ) {
   // Star match mode (create WCS) or Single image reduction mode
   //APER=autodetect_aperture(fits_image_name, sextractor_catalog, 0, 0, fixed_aperture, 1, dimX, dimY);
   APER= autodetect_aperture( fits_image_name, sextractor_catalog, 0, 0, fixed_aperture, dimX, dimY, 2 );
-  if ( fixed_aperture != 0.0 )
+  if ( fixed_aperture != 0.0 ){
    APER= fixed_aperture;
+  }
 
   //fprintf(stderr,"DEBUG-1\n");
 
@@ -1690,6 +1701,14 @@ int main( int argc, char **argv ) {
         fprintf( stderr, "Star %d. Instrumental magnitude: %.4lf %.4lf\n(In order to cancel the input - type '99' instead of an actual magnitude.)\nPlease, enter its catalog magnitude: ", sexNUMBER[marker_counter], sexMAG[marker_counter], sexMAG_ERR[marker_counter] );
         if ( NULL == fgets( RADEC, 1024, stdin ) ) {
          fprintf( stderr, "Incorrect input!\n" );
+        }
+        RADEC[1024-1]='\0';; // just in case
+        if ( match_mode == 4 ) {
+         // Check if we should mark this as a known variable star
+         if( NULL != strstr( RADEC, "v") || NULL != strstr( RADEC, "V") ) {
+          save_star_to_vast_list_of_previously_known_variables_and_exclude_lst( sexNUMBER[marker_counter], sexX[marker_counter], sexY[marker_counter] );
+          break;
+         }
         }
         // Try to filter the input string
         for ( first_number_flag= 0, jj= 0, ii= 0; ii < MIN( 1024, (int)strlen( RADEC ) ); ii++ ) {
