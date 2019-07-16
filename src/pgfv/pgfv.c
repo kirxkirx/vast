@@ -1698,7 +1698,7 @@ int main( int argc, char **argv ) {
         //cpgcirc( sexX[marker_counter], sexY[marker_counter], (float)APER / 2.0 );
         //cpgsci( 1 );
         //
-        fprintf( stderr, "Star %d. Instrumental magnitude: %.4lf %.4lf\n(In order to cancel the input - type '99' instead of an actual magnitude.)\nPlease, enter its catalog magnitude: ", sexNUMBER[marker_counter], sexMAG[marker_counter], sexMAG_ERR[marker_counter] );
+        fprintf( stderr, "Star %d. Instrumental magnitude: %.4lf %.4lf\n(In order to cancel the input - type '99' instead of an actual magnitude.)\n Please, enter its catalog magnitude or 'v' to mark it as the target variable: ", sexNUMBER[marker_counter], sexMAG[marker_counter], sexMAG_ERR[marker_counter] );
         if ( NULL == fgets( RADEC, 1024, stdin ) ) {
          fprintf( stderr, "Incorrect input!\n" );
         }
