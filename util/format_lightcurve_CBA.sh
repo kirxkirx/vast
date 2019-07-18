@@ -45,8 +45,8 @@ if [ $? -ne 0 ];then
 fi
 
 # Get the observing date for the header
-JD_FIRST_OBS=`util/cute_lc "$INPUT_VAST_LIGHTCURVE" | head -n1 | awk '{print $1}'`
-JD_LAST_OBS=`util/cute_lc "$INPUT_VAST_LIGHTCURVE" | tail -n1 | awk '{print $1}'`
+JD_FIRST_OBS=`util/cute_lc "$INPUT_VAST_LIGHTCURVE" | head -n1 | awk '{printf "%.3lf", $1}'`
+JD_LAST_OBS=`util/cute_lc "$INPUT_VAST_LIGHTCURVE" | tail -n1 | awk '{printf "%.3lf", $1}'`
 UNIXTIME_FIRST_OBS=`util/get_image_date "$JD_FIRST_OBS" 2>/dev/null | grep 'Unix Time' | awk '{print $3}'`
 DATE_FOR_CBA_HEADER_FIRST_OBS=`LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d%b%Y"`
 DATE_FOR_CBA_MESSAGE_SUBJECT_FIRST_OBS=`LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d %B %Y"`
@@ -121,7 +121,7 @@ if [ -z "$OBSERVER_NAMES" ];then
 fi
 
 
-FINAL_OUTPUT_FILENAME=CBA_"$VARIABLE_STAR_NAME_NO_WHITESPACES""$DATE_FOR_CBA_HEADER_FIRST_OBS"_measurements.txt
+FINAL_OUTPUT_FILENAME=CBA_"$VARIABLE_STAR_NAME_NO_WHITESPACES"_"$DATE_FOR_CBA_HEADER_FIRST_OBS"_measurements.txt
 echo "Renaming the final report file:"
 cp -v CBA_report.txt "$FINAL_OUTPUT_FILENAME"
 grep '# ' CBA_report.txt > CBA_previously_used_header.txt
