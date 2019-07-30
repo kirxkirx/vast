@@ -1540,7 +1540,7 @@ int main( int argc, char **argv ) {
  
  char system_command_select_comparison_stars[2*FILENAME_LENGTH];
  
- FILE *image00000_cat_aperture_file;
+ //FILE *image00000_cat_aperture_file;
  //////////////////////////////////
  
  char filename_for_magnitude_calibration_log[2*FILENAME_LENGTH]; // image00001__myimage.fits

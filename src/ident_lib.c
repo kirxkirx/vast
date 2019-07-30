@@ -409,9 +409,9 @@ struct Triangle *Separate_to_triangles( struct Star *star, int Number, int *Ntri
  // We need to create only few triangles, not all possible triangles containing this star.
  // Otherwise it would be a computational nightmare...
  
- // why 11 ?
+ // why 11 ? For each star we make 11 triangles
  //for ( n= 0, m= 0; n < Number - 11; n++ ) {
- for ( n= 0, m= 0; n < Number - 6; n++ ) {
+ for ( n= 0, m= 0; n < Number ; n++ ) {
 
   if ( m > MATCH_MAX_NUMBER_OF_TRIANGLES - 11 ) {
    fprintf( stderr, "WARNING: upper limit for the number of triangles reached!\nMaybe you want to change the line \n#define MATCH_MAX_NUMBER_OF_TRIANGLES %d \nin src/vast_limits.h (you'll need to recompile the program with \"make\" for the change to take effect)\n", MATCH_MAX_NUMBER_OF_TRIANGLES );
@@ -444,10 +444,22 @@ struct Triangle *Separate_to_triangles( struct Star *star, int Number, int *Ntri
 
   // Add triangles consisting of stars with close brightness
 
+  if ( n + 1 == Number ){
+   break;
+  }
+
+  if ( n + 2 == Number ){
+   break;
+  }
+
   m++;
   triangles[m - 1].a[0]= iskl[n];
   triangles[m - 1].a[1]= iskl[n + 1];
   triangles[m - 1].a[2]= iskl[n + 2];
+
+  if ( n + 3 == Number ){
+   continue;
+  }
 
   m++;
   triangles[m - 1].a[0]= iskl[n];
@@ -458,6 +470,10 @@ struct Triangle *Separate_to_triangles( struct Star *star, int Number, int *Ntri
   triangles[m - 1].a[0]= iskl[n];
   triangles[m - 1].a[1]= iskl[n + 2];
   triangles[m - 1].a[2]= iskl[n + 3];
+
+  if ( n + 4 == Number ){
+   continue;
+  }
 
   m++;
   triangles[m - 1].a[0]= iskl[n];
@@ -473,6 +489,10 @@ struct Triangle *Separate_to_triangles( struct Star *star, int Number, int *Ntri
   triangles[m - 1].a[0]= iskl[n];
   triangles[m - 1].a[1]= iskl[n + 3];
   triangles[m - 1].a[2]= iskl[n + 4];
+
+  if ( n + 5 == Number ){
+   continue;
+  }
 
   m++;
   triangles[m - 1].a[0]= iskl[n];

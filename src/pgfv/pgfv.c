@@ -1795,7 +1795,7 @@ int main( int argc, char **argv ) {
          break;
         }
         if ( match_mode == 4 ){
-         fprintf(stderr, "Adding the star at %.4f %.4f with magnitude %.4lf to manually_selected_comparison_stars.lst\nPick an additional comparison star or right-click to quit.\n", sexX[marker_counter], sexY[marker_counter] );
+         fprintf(stderr, "Adding the star at %.4f %.4f with magnitude %.4lf to manually_selected_comparison_stars.lst\nPick an additional comparison star or right-click to quit.\n", sexX[marker_counter], sexY[marker_counter], catalog_mag );
          matchfile= fopen( "manually_selected_comparison_stars.lst", "a" );
          if ( matchfile == NULL ){
           fprintf( stderr, "ERROR: failed to poed manually_selected_comparison_stars.lst for writing!\nSomething is really messed-up, so I'll die. :(\n");
