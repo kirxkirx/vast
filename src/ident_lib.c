@@ -1288,13 +1288,16 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
 
  // Set the number of reference stars based on the requested nuber supplied to his function as preobr->Number_of_main_star .
  Number1= (int)( (double)( preobr->Number_of_main_star ) * (double)NUMBER2 / (double)NUMBER3 ); // if we have more stars on one frame than on the other - it is likely that this frame is just taken with a longer exposure...
- if ( Number1 < MATCH_MIN_NUMBER_OF_REFERENCE_STARS )
+ if ( Number1 < MATCH_MIN_NUMBER_OF_REFERENCE_STARS ) {
   Number1= MATCH_MIN_NUMBER_OF_REFERENCE_STARS;
+ }
  Number2= preobr->Number_of_main_star;
- if ( Number1 > NUMBER3 - START_NUMBER3 )
+ if ( Number1 > NUMBER3 - START_NUMBER3 ) {
   Number1= NUMBER3 - START_NUMBER3;
- if ( Number2 > NUMBER2 - START_NUMBER2 )
+ }
+ if ( Number2 > NUMBER2 - START_NUMBER2 ){
   Number2= NUMBER2 - START_NUMBER2;
+ }
 
  // Just a test
  if ( Number1 == 0 || Number2 == 0 ) {

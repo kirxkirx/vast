@@ -1412,6 +1412,8 @@ int main( int argc, char **argv ) {
 
  int MATCH_SUCESS= 0;
 
+ int previous_Number_of_main_star;
+
  /* LOG-file */
  FILE *vast_image_details; /* May refer to both vast_image_details.log and vast_summary.log when needed */
 
@@ -3490,9 +3492,10 @@ int main( int argc, char **argv ) {
       vast_report_memory_error();
       return 1;
      }
-     if ( debug != 0 )
+     if ( debug != 0 ) {
       fprintf( stderr, "DEBUG MSG: Ident(preobr etc) - " );
-
+     }
+     
      // Experimental fix - resize Pos1 right here. Yes, that seems to work well!
      // BUT THE EXTENDED PART OF Pos1 is not populated yet!
      Pos1= realloc( Pos1, sizeof( int ) * ( MAX( NUMBER1, NUMBER2 ) + 1 ) );
@@ -3505,6 +3508,7 @@ int main( int argc, char **argv ) {
      best_number_of_matched_stars= 0;
      preobr->Number_of_ecv_triangle= default_Number_of_ecv_triangle;
      preobr->Number_of_main_star= default_Number_of_main_star;
+     previous_Number_of_main_star= 0;
      for ( match_try= 0; match_try < MAX_MATCH_TRIALS; match_try++ ) {
       match_retry= 0;
 
@@ -3525,8 +3529,9 @@ int main( int argc, char **argv ) {
        best_number_of_matched_stars= Number_of_ecv_star;
        best_number_of_reference_stars= preobr->Number_of_main_star;
       }
-      if ( preobr->Number_of_main_star >= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES )
+      if ( preobr->Number_of_main_star >= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES ) {
        break;
+      }
       /* Try to play with parameters */
       preobr->Number_of_main_star= preobr->Number_of_main_star * 2;
       preobr->Number_of_ecv_triangle= preobr->Number_of_ecv_triangle * 2;
@@ -3536,27 +3541,37 @@ int main( int argc, char **argv ) {
        preobr->Number_of_main_star= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) );
        preobr->Number_of_ecv_triangle= MATCH_MAX_NUMBER_OF_TRIANGLES;
       }
-     }
+      
+      // this is new!
+      fprintf(stderr, "[1] previous_Number_of_main_star = %d\n", previous_Number_of_main_star );
+      if( preobr->Number_of_main_star == previous_Number_of_main_star ) {
+       fprintf(stderr, "[1] break!\n" );
+       break;
+      }
+      previous_Number_of_main_star= preobr->Number_of_main_star;
+     } // for ( match_try= 0; match_try < MAX_MATCH_TRIALS; match_try++ ) {
 
      /* Special test for the case if one image is much better focused than the other and
 				    all the reference stars got saturated on it... */
-     if ( match_retry == 1 )
-      fprintf( stderr, "Performing special test for the case of a sudden focus change...\n" );
+     if ( match_retry == 1 ) {
+      fprintf( stderr, "Performing special test for the case of a sudden focus change (exclude brightest stars from the match)...\n" );
+     }
      // current image
      if ( match_retry == 1 && NUMBER2 > 2 * preobr->Number_of_main_star ) {
       match_retry= 0;
       Number_of_ecv_star= Ident( preobr, STAR1, NUMBER1, STAR2, NUMBER2, preobr->Number_of_main_star, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( 1.5 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
      } else {
       if ( match_retry == 1 )
-       fprintf( stderr, "Ups, not enough stars for the test! Whatever...\n" );
+       fprintf( stderr, "Ups, not enough stars on the current image for the test! Whatever...\n" );
      }
+     
      // reference image
      if ( match_retry == 1 && NUMBER3 > 2 * preobr->Number_of_main_star ) {
       match_retry= 0;
       Number_of_ecv_star= Ident( preobr, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, preobr->Number_of_main_star, &match_retry, (int)( 1.5 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
      } else {
       if ( match_retry == 1 )
-       fprintf( stderr, "Ups, not enough stars for the test! Whatever...\n" );
+       fprintf( stderr, "Ups, not enough stars on the reference image for the test! Whatever...\n" );
      }
      if ( match_retry == 1 )
       fprintf( stderr, "Done with the test...\n" );
@@ -3588,7 +3603,20 @@ int main( int argc, char **argv ) {
        }
        if ( preobr->Number_of_main_star <= MATCH_MIN_NUMBER_OF_REFERENCE_STARS || preobr->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES )
         break;
-      }
+
+       if ( preobr->Number_of_main_star <= MIN( MATCH_MIN_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES ) {
+        break;
+       }
+       
+       // this is new!
+       fprintf(stderr, "[2] previous_Number_of_main_star = %d\n", previous_Number_of_main_star );
+       if( preobr->Number_of_main_star == previous_Number_of_main_star ) {
+        fprintf(stderr, "[2] break!\n" );
+        break;
+       }
+       previous_Number_of_main_star= preobr->Number_of_main_star;
+       
+      } // for ( match_try= 1; match_try < MAX_MATCH_TRIALS + 1; match_try++ ) {
      }
 
      /* If it still doesn't work - try to decrease an accpetable number of matched stars */
@@ -3625,7 +3653,20 @@ int main( int argc, char **argv ) {
         preobr->Number_of_main_star= MATCH_MAX_NUMBER_OF_REFERENCE_STARS;
         preobr->Number_of_ecv_triangle= MATCH_MAX_NUMBER_OF_TRIANGLES;
        }
-      }
+
+       if ( preobr->Number_of_main_star >= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES ) {
+        break;
+       }
+       
+       // this is new!
+       fprintf(stderr, "[3] previous_Number_of_main_star = %d\n", previous_Number_of_main_star );
+       if( preobr->Number_of_main_star == previous_Number_of_main_star ) {
+        fprintf(stderr, "[3] break!\n" );
+        break;
+       }
+       previous_Number_of_main_star= preobr->Number_of_main_star;
+       
+      } // for ( match_try= 0; match_try < MAX_MATCH_TRIALS; match_try++ ) {
      }
 
      /* If increasing number of reference stars did not help, try to decrease the number */
@@ -3644,6 +3685,11 @@ int main( int argc, char **argv ) {
        }
        if ( preobr->Number_of_main_star <= MATCH_MIN_NUMBER_OF_REFERENCE_STARS || preobr->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES )
         break;
+
+       if ( preobr->Number_of_main_star <= MIN( MATCH_MIN_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES ) {
+        break;
+       }
+
        /* If not, try to play with parameters */
        preobr->Number_of_main_star= preobr->Number_of_main_star / 2;
        preobr->Number_of_ecv_triangle= preobr->Number_of_ecv_triangle / 2;
@@ -3674,6 +3720,11 @@ int main( int argc, char **argv ) {
         preobr->Number_of_main_star= MATCH_MIN_NUMBER_OF_REFERENCE_STARS;
         preobr->Number_of_ecv_triangle= MATCH_MIN_NUMBER_OF_TRIANGLES;
        }
+       
+       if ( preobr->Number_of_main_star >= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES ) {
+        break;
+       }
+       
       }
      }
 
@@ -3707,6 +3758,14 @@ int main( int argc, char **argv ) {
         break;
        if ( preobr->Number_of_main_star >= MATCH_MAX_NUMBER_OF_REFERENCE_STARS || preobr->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES )
         break;
+
+       if ( preobr->Number_of_main_star >= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES ) {
+        break;
+       }
+       if ( preobr->Number_of_main_star <= MIN( MATCH_MIN_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES ) {
+        break;
+       }
+
        /* If not, try to play with parameters */
        preobr->Number_of_main_star= preobr->Number_of_main_star * 2;
        preobr->Number_of_ecv_triangle= preobr->Number_of_ecv_triangle * 2;
@@ -3728,6 +3787,14 @@ int main( int argc, char **argv ) {
         break;
        if ( preobr->Number_of_main_star <= MATCH_MIN_NUMBER_OF_REFERENCE_STARS || preobr->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES )
         break;
+
+       if ( preobr->Number_of_main_star >= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES ) {
+        break;
+       }
+       if ( preobr->Number_of_main_star <= MIN( MATCH_MIN_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES ) {
+        break;
+       }
+
        /* If not, try to play with parameters */
        preobr->Number_of_main_star= preobr->Number_of_main_star / 2;
        preobr->Number_of_ecv_triangle= preobr->Number_of_ecv_triangle / 2;
@@ -3749,6 +3816,15 @@ int main( int argc, char **argv ) {
        /* Test if match attemt was a success */
        if ( match_retry == 0 )
         break;
+
+       if ( preobr->Number_of_main_star >= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES ) {
+        break;
+       }
+       if ( preobr->Number_of_main_star <= MIN( MATCH_MIN_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES ) {
+        break;
+       }
+
+
        if ( preobr->Number_of_main_star < MATCH_MIN_NUMBER_OF_REFERENCE_STARS || preobr->Number_of_ecv_triangle < MATCH_MIN_NUMBER_OF_TRIANGLES ) {
         preobr->Number_of_main_star= MATCH_MIN_NUMBER_OF_REFERENCE_STARS;
         preobr->Number_of_ecv_triangle= MATCH_MIN_NUMBER_OF_TRIANGLES;
