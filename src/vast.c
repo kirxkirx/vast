@@ -1498,7 +1498,7 @@ int main( int argc, char **argv ) {
 
  DIR *dp2;
  struct dirent *ep2;
- char dir_string2[FILENAME_LENGTH];
+ char dir_string2[2*FILENAME_LENGTH];
 
  // The following variables are used to handle vast_list_of_input_images_with_time_corrections.txt
  FILE *vast_list_of_input_images_with_time_corrections;

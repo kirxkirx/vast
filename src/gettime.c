@@ -634,14 +634,14 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   while ( 2 == fscanf( vast_list_of_input_images_with_time_corrections, "%s %lf", image_filename_from_input_list, &image_date_correction_from_input_list ) ) {
    // Check if the listed one is the same image we process now
    if ( 0 == strncmp( image_filename_from_input_list, fitsfilename, FILENAME_LENGTH ) ) {
-    if ( abs( image_date_correction_from_input_list ) < EXPECTED_MIN_JD ) {
+    if ( fabs( image_date_correction_from_input_list ) < EXPECTED_MIN_JD ) {
      // Assume this is the time correction in seconds we need to apply to this image
      apply_JD_correction_in_days= image_date_correction_from_input_list / 86400.0;
      if ( param_verbose >= 1 )
       fprintf( stderr, "JD correction of %.6lf days (%.2lf seconds) will be applied!\n", apply_JD_correction_in_days, image_date_correction_from_input_list );
     } else {
      // Assume this is the full JD in days
-     if ( abs( image_date_correction_from_input_list ) < EXPECTED_MAX_JD ) {
+     if ( fabs( image_date_correction_from_input_list ) < EXPECTED_MAX_JD ) {
       overridingJD_from_input_image_list= image_date_correction_from_input_list;
       if ( param_verbose >= 1 )
        fprintf( stderr, "WARNING: overriding the time deterrmined from FITS header with JD%.5lf as specified in vast_list_of_input_images_with_time_corrections.txt !\n", overridingJD_from_input_image_list );

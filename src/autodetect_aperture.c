@@ -64,7 +64,7 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
  FILE *psfex_compatible_sextractor_parameters_file;
  char error_message_string[2048 + 1024 + 4 * FILENAME_LENGTH]; // should be big enough to encomapss command[]
 
- char command[1024 + 4 * FILENAME_LENGTH];
+ char command[1024 + 5 * FILENAME_LENGTH];
  double *A;
  int i= 0;
  double median_A;
