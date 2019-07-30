@@ -395,19 +395,23 @@ struct Triangle *Separate_to_triangles( struct Star *star, int Number, int *Ntri
   vast_report_memory_error();
   exit( 1 );
  }
- for ( n= 0; n < Number; n++ )
+ for ( n= 0; n < Number; n++ ){
   iskl[n]= n;
+ }
 
  // Allocate memory for the array of Triangle-type structures which will contain... well, yaah, triangles...
  triangles= malloc( MATCH_MAX_NUMBER_OF_TRIANGLES * sizeof( struct Triangle ) );
  if ( triangles == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for triangles(ident_lib.c)\n" );
- };
+ }
 
  // For each star in the structure we create a few triangles containitng this star.
  // We need to create only few triangles, not all possible triangles containing this star.
  // Otherwise it would be a computational nightmare...
- for ( n= 0, m= 0; n < Number - 11; n++ ) {
+ 
+ // why 11 ?
+ //for ( n= 0, m= 0; n < Number - 11; n++ ) {
+ for ( n= 0, m= 0; n < Number - 6; n++ ) {
 
   if ( m > MATCH_MAX_NUMBER_OF_TRIANGLES - 11 ) {
    fprintf( stderr, "WARNING: upper limit for the number of triangles reached!\nMaybe you want to change the line \n#define MATCH_MAX_NUMBER_OF_TRIANGLES %d \nin src/vast_limits.h (you'll need to recompile the program with \"make\" for the change to take effect)\n", MATCH_MAX_NUMBER_OF_TRIANGLES );
@@ -669,7 +673,7 @@ int Very_Well_triangle( struct Star *star1, int Number1, struct Star *star2, int
  //Sort_Ecv_triangles(ecv_tr);
 
  Ploshad= ( xmax - xmin ) * ( ymax - ymin );
- *nm= 0;
+ (*nm)= 0;
  Popadanie_max= 0;
  sigma2= preobr->sigma_popadaniya_multiple * preobr->sigma_popadaniya_multiple * preobr->sigma_popadaniya * preobr->sigma_popadaniya;
 
@@ -698,7 +702,7 @@ int Very_Well_triangle( struct Star *star1, int Number1, struct Star *star2, int
   Popadanie= Popadanie_star1_to_star2( copy_star1, Number1, copy_star2, Number2, preobr->sigma_popadaniya );
   if ( Popadanie > Popadanie_max ) {
    Popadanie_max= Popadanie;
-   *nm= n;
+   (*nm)= n;
   }
   //for (m = 0; m < Number2; m++)
   for ( m= Number2; m--; )
@@ -1336,8 +1340,9 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
  // Select the best trianle which allows to match the largest number of reference stars and determine the corrdinate transormation
  // using this best triangle. This coordinate tresformation is returned as the structure preobr .
 
- if ( key != 0 )
+ if ( key != 0 ){
   key= Very_Well_triangle( star1, Number1, star2, Number2, ecv_tr, preobr, &nm, control1 );
+ }
 
  // Free-up memory related to the triangles.
  Delete_Ecv_triangles( ecv_tr );
@@ -1395,7 +1400,7 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
 
   // If the match is bad - exit and retry.
   if ( nm < min_number_of_matched_stars ) {
-   fprintf( stderr, "Too few * matched: %d! Retrying...\n", nm );
+   fprintf( stderr, "Too few * matched: %d < %d ! Retrying...\n", nm, min_number_of_matched_stars );
    ( *match_retry )= 1; // !!
 
    // We don't want to exit without freeing the memory allocated for te sturctures

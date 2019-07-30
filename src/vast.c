@@ -5379,8 +5379,12 @@ int main( int argc, char **argv ) {
 
  //fprintf(stderr,"\n\n\nDEEEEEEEEEEEEEEEEEEEEEEBUG MATCH_SUCESS=%d Num=%d\n\n\n",MATCH_SUCESS,Num);
 
+
  if ( Num <= SOFT_MIN_NUMBER_OF_POINTS && Num != 4 ) {
-  fprintf( stderr, "\n\n\n----***** VaST processing message *****----\nYou asked VaST to process only %d images.  Under most circumstances this \nis a BAD IDEA that will lead to unreliable and inconclusive results.\nUnless you are absolutely sure about what you are doing, please consider\none of the 'normal' ways to run VaST:\n\n * 'Transient detection mode' - run VaST on four (4) images: two reference and two second-epoch.\nThen create an HTML search report by running util/transients/search_for_transients_single_field.sh\n\n * 'Variable star search mode' - run VaST on a long (50-100-1000) series of images and inspect\nlightcurves that show a large scatter.\n\n\n\n", Num );
+  if ( 0 != strcmp( "diffphot", basename( argv[0] ) ) ) {
+   // suppress the message if we are in the manual differential photometry mode
+   fprintf( stderr, "\n\n\n----***** VaST processing message *****----\nYou asked VaST to process only %d images. Under most circumstances this \nis a BAD IDEA that will lead to inconclusive results.\nUnless you are sure about what you are doing, please consider\none of the 'normal' ways to run VaST:\n\n * 'Transient detection mode' - run VaST on four (4) images: two reference and two second-epoch.\nThen create an HTML search report by running util/transients/search_for_transients_single_field.sh\n\n * 'Variable star search mode' - run VaST on a long (50-100-1000) series of images and inspect\nlightcurves that show a large scatter.\n\n * 'Individual star photometry mode' - run VaST with './diffphot' command an manually specify\nthe comparison stars and the variable star you want to measure.\n\n\n\n", Num );
+  }
  }
 
  if ( MATCH_SUCESS == 0 && Num == 2 ) {
