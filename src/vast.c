@@ -5410,6 +5410,10 @@ int main( int argc, char **argv ) {
   if ( 0 != system( "util/nopgplot.sh" ) ) {
    fprintf( stderr, "ERROR running util/nopgplot.sh\n" );
   }
+  // Warn the user if the reference image does not look good
+  if ( 0 != system( "lib/evaluate_vast_image_details_log.sh" ) ) {
+   fprintf( stderr, "ERROR running lib/evaluate_vast_image_details_log.sh\n" );
+  }
  }
 
  /// Special mode for manual comparison star selection
