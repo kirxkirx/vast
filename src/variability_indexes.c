@@ -657,7 +657,8 @@ double compute_IQR_of_unsorted_data( double *unsorted_data, int n ) {
  return IQR;
 }
 
-float clipped_mean_of_unsorted_data_float( double *unsorted_data, long n ) {
+/*
+float clipped_mean_of_unsorted_data_float( float *unsorted_data, long n ) {
  long i;
  double *x;
  float float_result;
@@ -665,7 +666,7 @@ float clipped_mean_of_unsorted_data_float( double *unsorted_data, long n ) {
  for( i=0; i<n; i++ ) {
   x[i]=(double)unsorted_data[i];
  }
- float_result= (float)clipped_mean_of_unsorted_data( x, long n );
+ float_result= (float)clipped_mean_of_unsorted_data( x, n );
  free(x);
  return float_result;
 }
@@ -715,7 +716,7 @@ double clipped_mean_of_unsorted_data( double *unsorted_data, long n ) {
  // return result
  return MAD_scaled_to_sigma;
 }
-
+*/
 
 // This function will compute the Median Absolute Deviation of the input dataset,
 // the input dataset will be copied and the copy will be sorted to compute MAD.

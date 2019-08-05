@@ -42,8 +42,10 @@ double sign_only_welch_stetson_I_from_sorted_lightcurve( size_t *input_array_ind
 
 double compute_IQR_of_unsorted_data( double *unsorted_data, int n );
 
-float clipped_mean_of_unsorted_data_float( double *unsorted_data, long n ); 
+/*
+float clipped_mean_of_unsorted_data_float( float *unsorted_data, long n ); 
 double clipped_mean_of_unsorted_data( double *unsorted_data, long n );
+*/
 
 double esimate_sigma_from_MAD_of_unsorted_data( double *unsorted_data, long n );
 
