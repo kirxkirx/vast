@@ -657,6 +657,66 @@ double compute_IQR_of_unsorted_data( double *unsorted_data, int n ) {
  return IQR;
 }
 
+float clipped_mean_of_unsorted_data_float( double *unsorted_data, long n ) {
+ long i;
+ double *x;
+ float float_result;
+ x=malloc(n*sizeof(double));
+ for( i=0; i<n; i++ ) {
+  x[i]=(double)unsorted_data[i];
+ }
+ float_result= (float)clipped_mean_of_unsorted_data( x, long n );
+ free(x);
+ return float_result;
+}
+
+// This function will compute the clipped mean the input dataset,
+// the input dataset will be copied and the copy will be sorted to compute median, MAD and reject outliers.
+// The input dataset will not be changed.
+double clipped_mean_of_unsorted_data( double *unsorted_data, long n ) {
+ double median;
+ double mean;
+ int n_good_for_mean;
+ double MAD_scaled_to_sigma; // the result
+ double *x;                  // copy of the input dataset that will be sorted
+ int i;                      // counter
+
+ // allocate memory
+ x= malloc( n * sizeof( double ) );
+ if ( x == NULL ) {
+  fprintf( stderr, "ERROR allocating memory for x in esimate_sigma_from_MAD_of_unsorted_data()\n" );
+  exit( 1 );
+ }
+
+ // make a copy of the input dataset
+ for ( i= 0; i < n; i++ ) {
+  x[i]= unsorted_data[i];
+ }
+ // sort the copy
+ gsl_sort( x, 1, n );
+
+ // compute MAD scaled to sigma
+ MAD_scaled_to_sigma= esimate_sigma_from_MAD_of_sorted_data( x, n );
+ median= gsl_stats_median_from_sorted_data( x, 1, n );
+
+ n_good_for_mean=0;
+ mean=0.0;
+ for( i=0; i<n; i++ ) {
+  if ( fabs( x[i]-median )<3*MAD_scaled_to_sigma ){
+   mean+=x[i];
+   n_good_for_mean++;
+  }
+ }
+ mean= mean/(double)n_good_for_mean;
+
+ // free-up memory
+ free( x );
+
+ // return result
+ return MAD_scaled_to_sigma;
+}
+
+
 // This function will compute the Median Absolute Deviation of the input dataset,
 // the input dataset will be copied and the copy will be sorted to compute MAD.
 // The input dataset will not be changed.

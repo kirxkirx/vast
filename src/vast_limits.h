@@ -137,6 +137,9 @@
 #define AP04 0.3
 
 // Star matching
+#define MAX_FRACTION_OF_AMBIGUOUS_MATCHES 0.05 //  Maximum fraction of stars that match one star on the reference image
+#define MIN_NUMBER_OF_AMBIGUOUS_MATCHES_TO_TAKE_ACTION 5 // discard the above if there are less than the specified number of stars affected by the problem
+
 #define MAX_MATCH_TRIALS 5                              /* discard image if it was still not matched after MAX_MATCH_TRIALS attempts */
 #define MIN_FRACTION_OF_MATCHED_STARS 0.41              /* discard image if <MIN_FRACTION_OF_MATCHED_STARS*number_stars_on_reference_image were matched */
                                                         /* (should always be <0.5 !!!) discard image if <MIN_FRACTION_OF_MATCHED_STARS*number_stars_on_reference_image were matched */
@@ -147,7 +150,8 @@
 #define MATCH_REFERENCE_STARS_NUMBER_STEP 500                                  // Search for an optimal number of reference stars between MATCH_MIN_NUMBER_OF_REFERENCE_STARS and
                                                                                // MATCH_MAX_NUMBER_OF_REFERENCE_STARS with step MATCH_REFERENCE_STARS_NUMBER_STEP
 #define MATCH_MAX_NUMBER_OF_REFERENCE_STARS 3000                               // Give up trying to match frame if it was not matched with MATCH_MAX_NUMBER_OF_REFERENCE_STARS stars
-#define MATCH_MAX_NUMBER_OF_TRIANGLES 20 * MATCH_MAX_NUMBER_OF_REFERENCE_STARS // 3 triangles paer star in the current algorithm
+#define TRIANGLES_PER_STAR 11                                                  // 11 triangles paer star in the current algorithm, see Separate_to_triangles() in src/ident_lib.c
+#define MATCH_MAX_NUMBER_OF_TRIANGLES TRIANGLES_PER_STAR * MATCH_MAX_NUMBER_OF_REFERENCE_STARS // 
 #define MATCH_MAX_NUMBER_OF_STARS_FOR_SMALL_TRIANGLES 700                      // The starfield is divided in triangles using two statagies:
                                                                                // one produces largi triangles from stars of close brightness while
                                                                                // the second produces small triangles from closely separated stars.

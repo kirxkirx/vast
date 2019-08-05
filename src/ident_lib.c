@@ -413,10 +413,14 @@ struct Triangle *Separate_to_triangles( struct Star *star, int Number, int *Ntri
  //for ( n= 0, m= 0; n < Number - 11; n++ ) {
  for ( n= 0, m= 0; n < Number ; n++ ) {
 
-  if ( m > MATCH_MAX_NUMBER_OF_TRIANGLES - 11 ) {
+//  if ( m > MATCH_MAX_NUMBER_OF_TRIANGLES - 11 ) {
+//  if ( m > MATCH_MAX_NUMBER_OF_TRIANGLES - 22 ) {
+  if ( m > MATCH_MAX_NUMBER_OF_TRIANGLES - TRIANGLES_PER_STAR ) {
    fprintf( stderr, "WARNING: upper limit for the number of triangles reached!\nMaybe you want to change the line \n#define MATCH_MAX_NUMBER_OF_TRIANGLES %d \nin src/vast_limits.h (you'll need to recompile the program with \"make\" for the change to take effect)\n", MATCH_MAX_NUMBER_OF_TRIANGLES );
    break;
   }
+
+  // TRIANGLES_PER_STAR should match the code below!!!
 
   // We use a mixed strategy of separating list of stars to triangles.
   // First, for each reference star we construct a triangle from it and two closest reference stars.
@@ -513,6 +517,74 @@ struct Triangle *Separate_to_triangles( struct Star *star, int Number, int *Ntri
   triangles[m - 1].a[0]= iskl[n];
   triangles[m - 1].a[1]= iskl[n + 4];
   triangles[m - 1].a[2]= iskl[n + 5];
+
+/*  
+  // experimental stuff
+  if ( n + 6 == Number ){
+   continue;
+  }
+
+  m++;
+  triangles[m - 1].a[0]= iskl[n];
+  triangles[m - 1].a[1]= iskl[n + 1];
+  triangles[m - 1].a[2]= iskl[n + 6];
+
+  m++;
+  triangles[m - 1].a[0]= iskl[n];
+  triangles[m - 1].a[1]= iskl[n + 2];
+  triangles[m - 1].a[2]= iskl[n + 6];
+
+  m++;
+  triangles[m - 1].a[0]= iskl[n];
+  triangles[m - 1].a[1]= iskl[n + 3];
+  triangles[m - 1].a[2]= iskl[n + 6];
+
+  m++;
+  triangles[m - 1].a[0]= iskl[n];
+  triangles[m - 1].a[1]= iskl[n + 4];
+  triangles[m - 1].a[2]= iskl[n + 6];
+
+  m++;
+  triangles[m - 1].a[0]= iskl[n];
+  triangles[m - 1].a[1]= iskl[n + 5];
+  triangles[m - 1].a[2]= iskl[n + 6];
+
+  if ( n + 7 == Number ){
+   continue;
+  }
+
+  m++;
+  triangles[m - 1].a[0]= iskl[n];
+  triangles[m - 1].a[1]= iskl[n + 1];
+  triangles[m - 1].a[2]= iskl[n + 7];
+
+  m++;
+  triangles[m - 1].a[0]= iskl[n];
+  triangles[m - 1].a[1]= iskl[n + 2];
+  triangles[m - 1].a[2]= iskl[n + 7];
+
+  m++;
+  triangles[m - 1].a[0]= iskl[n];
+  triangles[m - 1].a[1]= iskl[n + 3];
+  triangles[m - 1].a[2]= iskl[n + 7];
+
+  m++;
+  triangles[m - 1].a[0]= iskl[n];
+  triangles[m - 1].a[1]= iskl[n + 4];
+  triangles[m - 1].a[2]= iskl[n + 7];
+
+  m++;
+  triangles[m - 1].a[0]= iskl[n];
+  triangles[m - 1].a[1]= iskl[n + 5];
+  triangles[m - 1].a[2]= iskl[n + 7];
+
+  m++;
+  triangles[m - 1].a[0]= iskl[n];
+  triangles[m - 1].a[1]= iskl[n + 6];
+  triangles[m - 1].a[2]= iskl[n + 7];
+
+*/
+  
  }
  // Fill-in .ab .ac .bc .ab_bc_ac fields in triangles array of structures.
  Compute_sides_of_triangles( triangles, m, star );
@@ -616,6 +688,76 @@ static inline int Popadanie_star1_to_star2( struct Star *star1, int Number1, str
  }
  return ( popadanie );
 }
+
+
+static inline float mean_distance__Popadanie_star1_to_star2( struct Star *star1, int Number1, struct Star *star2, int Number2,
+                                            double sigma_popadaniya ) {
+ int n, m, popadanie= 0;
+
+ float float_sigma_popadaniya= (float)sigma_popadaniya;
+
+ float float_sigma_popadaniya_squared= float_sigma_popadaniya * float_sigma_popadaniya;
+
+ float mean_distance=0.0;
+
+ //for (n = 0; n < Number1; n++)
+ for ( n= Number1; n--; ) {
+  //for (m = 0; m < Number2; m++) {
+  for ( m= Number2; m--; ) {
+   // the quick and dirty check
+   // yes, check fabsf(a-b)>x is faster than checking if (a-b)>x and (b-a)>x
+   if ( fabsf( star1[n].x - star2[m].x ) > float_sigma_popadaniya )
+    continue;
+   if ( fabsf( star1[n].y - star2[m].y ) > float_sigma_popadaniya )
+    continue;
+   // the correct check
+   if ( ( star1[n].x - star2[m].x ) * ( star1[n].x - star2[m].x ) + ( star1[n].y - star2[m].y ) * ( star1[n].y - star2[m].y ) > float_sigma_popadaniya_squared )
+    continue;
+   popadanie++;
+   mean_distance+=( star1[n].x - star2[m].x ) * ( star1[n].x - star2[m].x ) + ( star1[n].y - star2[m].y ) * ( star1[n].y - star2[m].y );
+   break; // assume the first match is the right one
+  }
+ }
+ return ( sqrtf(mean_distance)/(float)popadanie );
+}
+
+static inline int Popadanie_star1_to_star2__with_mean_distance( struct Star *star1, int Number1, struct Star *star2, int Number2,
+                                            double sigma_popadaniya, float *output_mean_distance ) {
+ int n, m, popadanie= 0;
+
+ float float_sigma_popadaniya= (float)sigma_popadaniya;
+
+ float float_sigma_popadaniya_squared= float_sigma_popadaniya * float_sigma_popadaniya;
+
+ float float_mean_distance_squared=0.0;
+ float float_distance_squared;
+
+ //for (n = 0; n < Number1; n++)
+ for ( n= Number1; n--; ) {
+  //for (m = 0; m < Number2; m++) {
+  for ( m= Number2; m--; ) {
+   // the quick and dirty check
+   // yes, check fabsf(a-b)>x is faster than checking if (a-b)>x and (b-a)>x
+   if ( fabsf( star1[n].x - star2[m].x ) > float_sigma_popadaniya )
+    continue;
+   if ( fabsf( star1[n].y - star2[m].y ) > float_sigma_popadaniya )
+    continue;
+   // the correct check
+   float_distance_squared= ( star1[n].x - star2[m].x ) * ( star1[n].x - star2[m].x ) + ( star1[n].y - star2[m].y ) * ( star1[n].y - star2[m].y );
+   //if ( ( star1[n].x - star2[m].x ) * ( star1[n].x - star2[m].x ) + ( star1[n].y - star2[m].y ) * ( star1[n].y - star2[m].y ) > float_sigma_popadaniya_squared ) {
+   if ( float_distance_squared > float_sigma_popadaniya_squared ) {
+    continue;
+   }
+   popadanie++;
+   //float_mean_distance_squared+=( star1[n].x - star2[m].x ) * ( star1[n].x - star2[m].x ) + ( star1[n].y - star2[m].y ) * ( star1[n].y - star2[m].y );
+   float_mean_distance_squared+=float_distance_squared;
+   break; // assume the first match is the right one
+  }
+ }
+ (*output_mean_distance)= sqrtf(float_mean_distance_squared)/(float)popadanie;
+ return ( popadanie );
+}
+
 /*
 // The old quick and dirty version
 static inline int Popadanie_star1_to_star2(struct Star *star1, int Number1, struct Star *star2, int Number2,
@@ -649,6 +791,8 @@ int Very_Well_triangle( struct Star *star1, int Number1, struct Star *star2, int
  double xmin, xmax, ymin, ymax, Ploshad, Ploshad1, sigma2;
  struct Star *copy_star1, *copy_star2;
  int N_ecv= 0;
+ 
+ float mean_distance, mean_distance_best;
 
  copy_star1= malloc( sizeof( struct Star ) * Number1 );
  copy_star2= malloc( sizeof( struct Star ) * Number2 );
@@ -719,10 +863,23 @@ int Very_Well_triangle( struct Star *star1, int Number1, struct Star *star2, int
    continue;
 
   // Compute how many reference stars are successfully matched using the current triangle as the reference one
-  Popadanie= Popadanie_star1_to_star2( copy_star1, Number1, copy_star2, Number2, preobr->sigma_popadaniya );
+  //Popadanie= Popadanie_star1_to_star2( copy_star1, Number1, copy_star2, Number2, preobr->sigma_popadaniya );
+  Popadanie= Popadanie_star1_to_star2__with_mean_distance( copy_star1, Number1, copy_star2, Number2, preobr->sigma_popadaniya, &mean_distance );
+  // If we match the same number of stars, check if this is a better match (smaller position deviations)
+  if ( Popadanie == Popadanie_max ) {
+   //mean_distance= mean_distance__Popadanie_star1_to_star2( copy_star1, Number1, copy_star2, Number2, preobr->sigma_popadaniya );
+   if ( mean_distance< mean_distance_best ){ 
+    Popadanie_max= Popadanie;
+    (*nm)= n;
+    mean_distance_best= mean_distance;
+   }
+  }
+  // If we can mutch more stars with this triangle - take it
   if ( Popadanie > Popadanie_max ) {
    Popadanie_max= Popadanie;
    (*nm)= n;
+   //mean_distance_best= mean_distance__Popadanie_star1_to_star2( copy_star1, Number1, copy_star2, Number2, preobr->sigma_popadaniya );
+   mean_distance_best= mean_distance;
   }
   //for (m = 0; m < Number2; m++)
   for ( m= Number2; m--; )
@@ -1064,6 +1221,9 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
  point p1, p2, p_best;
 
  int previous_number_in_array;
+ 
+ int number_of_ambiguous_matches=0;
+ double fraction_of_ambiguous_matches;
 
  epsilon= sigma_popadaniya * sigma_popadaniya;
 
@@ -1089,6 +1249,13 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
   while ( isEmpty( ps_1 ) == 0 ) {
    p1= disjoinList( &ps_1 );
    R= ( p2.x - p1.x ) * ( p2.x - p1.x ) + ( p2.y - p1.y ) * ( p2.y - p1.y );
+   //
+//   if ( fabs(p1.x - 591.8) < 1.0 && fabs(p1.y - 750.6) < 1.0 ){
+//    if ( R < 3*epsilon ){
+//     fprintf( stderr, "\n--- p1.x=%lf p1.y=%lf  p2.i=%d R=%lf R_best=%lf  p2.x=%lf p2.x=%lf\n", p1.x, p1.y, p2.i, sqrt(R), sqrt(R_best), p2.x, p2.y );
+//    }
+//   }
+   //
    if ( R < R_best ) { // && R<star1[p1.i].distance_to_neighbor_squared && R<star2[p2.i].distance_to_neighbor_squared) {
     find_flag= 1;
     p_best= p1;
@@ -1100,6 +1267,12 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
    xs_matched= addToList( p_best, xs_matched );
    ys_matched= addToList( p2, ys_matched );
   } else {
+   //
+//   if ( fabs(p1.x - 591.8) < 1.0 && fabs(p1.y - 750.6) < 1.0 ){
+//    fprintf( stderr, "\n--- NO MATCH!!!   p2.i=%d R=%lf R_best=%lf  p2.x=%lf p2.x=%lf  \n", p2.i, sqrt(R), sqrt(R_best), p2.x, p2.y );
+//    exit(1);
+//   }
+   //
    ys_unmatched= addToList( p2, ys_unmatched );
   }
   freeList( ps );
@@ -1132,6 +1305,10 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
    // this star has a better match, so this match is wrong
    // WHY DO YOU THINK THE PREVIOUS MATCH IS THE BETTER ONE?
    ys_unmatched= addToList( p2, ys_unmatched );
+   //
+   //fprintf(stderr, "AMBIGUOUS MATCH: p1.i=%d p1.x=%lf p1.y=%lf   p2.i=%d p2.x=%lf p2.y=%lf\n", p1.i, p1.x, p1.y, p2.i, p2.x, p2.y);
+   number_of_ambiguous_matches++;
+   //
   }
  }
 
@@ -1151,6 +1328,14 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
  freeGrid( gr );
  freeList( points2 );
  freeList( points1 );
+ 
+ fraction_of_ambiguous_matches= (double)number_of_ambiguous_matches/(double)number_of_matched_stars;
+ if( fraction_of_ambiguous_matches>MAX_FRACTION_OF_AMBIGUOUS_MATCHES && number_of_ambiguous_matches>MIN_NUMBER_OF_AMBIGUOUS_MATCHES_TO_TAKE_ACTION ) {
+  fprintf(stderr, "ERROR: ambiguous match for too many stars!!!\n");
+  fprintf(stderr, "fraction_of_ambiguous_matches= %lf, number_of_ambiguous_matches=%d \n", fraction_of_ambiguous_matches, number_of_ambiguous_matches );
+  number_of_matched_stars=0;
+ }
+ 
  return number_of_matched_stars;
 }
 
@@ -1359,7 +1544,6 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
  fprintf( stderr, "    %5d * detected, using %4d/%4d * for reference/current image matching, ", NUMBER2, Number1, Number2 );
  // Select the best trianle which allows to match the largest number of reference stars and determine the corrdinate transormation
  // using this best triangle. This coordinate tresformation is returned as the structure preobr .
-
  if ( key != 0 ){
   key= Very_Well_triangle( star1, Number1, star2, Number2, ecv_tr, preobr, &nm, control1 );
  }
@@ -1432,6 +1616,7 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
 
   // Now, if the match is good - we try to further refine the coordinate transoformation
   if ( nm >= min_number_of_matched_stars ) {
+   fprintf( stderr, "refining the coordinate transformation... ");
    float dx, dy;                                                // coordinate corrections for a given star
    unsigned int ii;                                             // counter
    double Ax, Bx, Cx, Ay, By, Cy;                               // coefficients for the two planes which will describe the residuals

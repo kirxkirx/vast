@@ -1351,6 +1351,7 @@ int main( int argc, char **argv ) {
  double max_X_im_size= 0.0; // new (We may have input images of different size and we need the largest size for image identifictaion)
  double max_Y_im_size= 0.0; // new
  double aperture;
+ double reference_image_aperture;
 
  /* Variables to set special parameters */
  int fitsfile_read_error= 0; // returned by gettime
@@ -2632,6 +2633,7 @@ int main( int argc, char **argv ) {
   write_string_to_individual_image_log( sextractor_catalog, "main(): ", "Bad reference image: the estimated aperture is out of range!", "" );
   exit( 1 );
  }
+ reference_image_aperture= aperture;
  if ( param_w == 0 ) {
   preobr->sigma_popadaniya= AUTO_SIGMA_POPADANIYA_COEF * aperture;
  }
@@ -3207,7 +3209,7 @@ int main( int argc, char **argv ) {
      max_Y_im_size= Y_im_size;
     //
     if ( param_w == 0 ) {
-     preobr->sigma_popadaniya= AUTO_SIGMA_POPADANIYA_COEF * aperture;
+     preobr->sigma_popadaniya= AUTO_SIGMA_POPADANIYA_COEF * MAX( aperture, reference_image_aperture );
     }
     if ( debug != 0 )
      fprintf( stderr, "DEBUG MSG: Read_sex_cat() - " );
@@ -4673,10 +4675,14 @@ int main( int argc, char **argv ) {
                                              }
                                              */
           //
-          gsl_sort_float( coordinate_array_x[coordinate_array_index], 1, number_of_coordinate_measurements_for_star[coordinate_array_index] );
-          gsl_sort_float( coordinate_array_y[coordinate_array_index], 1, number_of_coordinate_measurements_for_star[coordinate_array_index] );
-          STAR1[Pos1[i]].x= gsl_stats_float_median_from_sorted_data( coordinate_array_x[coordinate_array_index], 1, number_of_coordinate_measurements_for_star[coordinate_array_index] );
-          STAR1[Pos1[i]].y= gsl_stats_float_median_from_sorted_data( coordinate_array_y[coordinate_array_index], 1, number_of_coordinate_measurements_for_star[coordinate_array_index] );
+          //gsl_sort_float( coordinate_array_x[coordinate_array_index], 1, number_of_coordinate_measurements_for_star[coordinate_array_index] );
+          //gsl_sort_float( coordinate_array_y[coordinate_array_index], 1, number_of_coordinate_measurements_for_star[coordinate_array_index] );
+          //STAR1[Pos1[i]].x= gsl_stats_float_median_from_sorted_data( coordinate_array_x[coordinate_array_index], 1, number_of_coordinate_measurements_for_star[coordinate_array_index] );
+          //STAR1[Pos1[i]].y= gsl_stats_float_median_from_sorted_data( coordinate_array_y[coordinate_array_index], 1, number_of_coordinate_measurements_for_star[coordinate_array_index] );
+          //
+          STAR1[Pos1[i]].x= clipped_mean_of_unsorted_data_float( coordinate_array_x[coordinate_array_index], number_of_coordinate_measurements_for_star[coordinate_array_index] );
+          STAR1[Pos1[i]].y= clipped_mean_of_unsorted_data_float( coordinate_array_y[coordinate_array_index], number_of_coordinate_measurements_for_star[coordinate_array_index] );
+          //
          }     // update coordinates ONLY if we already have many measurements
         }      // if( number_of_coordinate_measurements_for_star[coordinate_array_index]<MAX_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ){
                /////////////////
