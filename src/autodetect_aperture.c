@@ -157,34 +157,6 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
  }
  ////// End of the memory-hungry stuff //////
 
- X1= malloc( MAX_NUMBER_OF_BAD_REGIONS_ON_CCD * sizeof( double ) );
- if ( X1 == NULL ) {
-  fprintf( stderr, "ERROR: in autodetect_aperture() can't allocate memory for X1\n" );
-  exit( 1 );
- }
- Y1= malloc( MAX_NUMBER_OF_BAD_REGIONS_ON_CCD * sizeof( double ) );
- if ( Y1 == NULL ) {
-  fprintf( stderr, "ERROR: in autodetect_aperture() can't allocate memory for Y1\n" );
-  exit( 1 );
- }
- X2= malloc( MAX_NUMBER_OF_BAD_REGIONS_ON_CCD * sizeof( double ) );
- if ( X2 == NULL ) {
-  fprintf( stderr, "ERROR: in autodetect_aperture() can't allocate memory for X2\n" );
-  exit( 1 );
- }
- Y2= malloc( MAX_NUMBER_OF_BAD_REGIONS_ON_CCD * sizeof( double ) );
- if ( Y2 == NULL ) {
-  fprintf( stderr, "ERROR: in autodetect_aperture() can't allocate memory for Y2\n" );
-  exit( 1 );
- }
-
- read_bad_lst( X1, Y1, X2, Y2, &N_bad_regions );
-
- A= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
- if ( A == NULL ) {
-  fprintf( stderr, "ERROR: out of memory in function autodetect_aperture() A !!!\n" );
-  exit( 1 );
- }
 
  fprintf( stderr, "Running SExtractor on %s\n", fitsfilename );
 
@@ -195,6 +167,36 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
   APERTURE= fixed_aperture;
   write_string_to_individual_image_log( output_sextractor_catalog, "autodetect_aperture(): ", "setting the user-specified fixed aperture", "" );
  } else {
+
+  X1= malloc( MAX_NUMBER_OF_BAD_REGIONS_ON_CCD * sizeof( double ) );
+  if ( X1 == NULL ) {
+   fprintf( stderr, "ERROR: in autodetect_aperture() can't allocate memory for X1\n" );
+   exit( 1 );
+  }
+  Y1= malloc( MAX_NUMBER_OF_BAD_REGIONS_ON_CCD * sizeof( double ) );
+  if ( Y1 == NULL ) {
+   fprintf( stderr, "ERROR: in autodetect_aperture() can't allocate memory for Y1\n" );
+   exit( 1 );
+  }
+  X2= malloc( MAX_NUMBER_OF_BAD_REGIONS_ON_CCD * sizeof( double ) );
+  if ( X2 == NULL ) {
+   fprintf( stderr, "ERROR: in autodetect_aperture() can't allocate memory for X2\n" );
+   exit( 1 );
+  }
+  Y2= malloc( MAX_NUMBER_OF_BAD_REGIONS_ON_CCD * sizeof( double ) );
+  if ( Y2 == NULL ) {
+   fprintf( stderr, "ERROR: in autodetect_aperture() can't allocate memory for Y2\n" );
+   exit( 1 );
+  }
+
+  read_bad_lst( X1, Y1, X2, Y2, &N_bad_regions );
+
+  A= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
+  if ( A == NULL ) {
+   fprintf( stderr, "ERROR: out of memory in function autodetect_aperture() A !!!\n" );
+   exit( 1 );
+  }
+
   write_string_to_individual_image_log( output_sextractor_catalog, "autodetect_aperture(): ", "Calculating the aperture size", "" );
   /* Calculate best aperture size from seeing */
   //sprintf( sextractor_catalog_filename, "autodetect_aper_%d.cat", pid );
@@ -215,6 +217,14 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
    sprintf( error_message_string, "An ERROR occured while executing the following command:\n%s\n", command );
    fputs( error_message_string, stderr );
    write_string_to_individual_image_log( output_sextractor_catalog, "autodetect_aperture(): ", error_message_string, "" );
+
+   free( A );
+
+   free( X1 );
+   free( Y1 );
+   free( X2 );
+   free( Y2 );
+
    return 99.0;
   }
   FILE *catalog;
@@ -223,6 +233,14 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
    sprintf( error_message_string, "ERROR: cannot open SExtractor output catalog file %s\n", sextractor_catalog_filename );
    fputs( error_message_string, stderr );
    write_string_to_individual_image_log( output_sextractor_catalog, "autodetect_aperture(): ", error_message_string, "" );
+
+   free( A );
+
+   free( X1 );
+   free( Y1 );
+   free( X2 );
+   free( Y2 );
+
    return 99.0;
   }
   while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, catalog ) ) {
@@ -285,6 +303,14 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
   gsl_sort( A, 1, i );
   median_A= gsl_stats_median_from_sorted_data( A, 1, i );
   APERTURE= median_A * CONST;
+
+  free( A );
+
+  free( X1 );
+  free( Y1 );
+  free( X2 );
+  free( Y2 );
+
  } //if( fixed_aperture!=0.0 )
 
  // Save aperture information
@@ -390,12 +416,6 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
   // !!! EXTRA APERTURE PHOTOMETRY RUN !!!
  }
 
- free( A );
-
- free( X1 );
- free( Y1 );
- free( X2 );
- free( Y2 );
 
  // Remove flag file to save disk space (if it was used)
  if ( is_flag_image_used == 1 ) {

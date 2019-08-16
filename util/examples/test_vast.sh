@@ -3902,7 +3902,6 @@ if [ -d ../vast_test_ASASSN-19cq ];then
  # Run the test
  echo "Two-level directory recursion test " >> /dev/stderr
  echo -n "Two-level directory recursion test: " >> vast_test_report.txt
- # Here is the main feature of this test: we limit the number of processin threads to only 2
  cp default.sex.ccd_example default.sex
  ./vast -u -f ../vast_test_ASASSN-19cq/
  if [ $? -ne 0 ];then
@@ -3916,7 +3915,9 @@ if [ -d ../vast_test_ASASSN-19cq ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC001"
   fi
-  grep --quiet "Images used for photometry 11" vast_summary.log
+  # The possible reference image ../vast_test_ASASSN-19cq/2019_05_15/fd_img2_ASASSN_19cq_V_200s.fit
+  # is the wors and should be rejected under normal circumstances
+  grep --quiet -e "Images used for photometry 11" -e "Images used for photometry 10" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC002"
@@ -3971,7 +3972,82 @@ if [ -d ../vast_test_ASASSN-19cq ];then
  else
   echo "ERROR: cannot find vast_summary.log" >> /dev/stderr
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC_ALL"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC_ALL1"
+ fi
+
+ # Now test the same but with a reasonably good reference image ../vast_test_ASASSN-19cq/2019_06_03/fd_2019_06_03_ASSASN19CQ_300S_v_002.fit
+ cp default.sex.ccd_example default.sex
+ ./vast -u -f ../vast_test_ASASSN-19cq/2019_06_03/fd_2019_06_03_ASSASN19CQ_300S_v_002.fit ../vast_test_ASASSN-19cq/
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC100"
+ fi
+ # Check results
+ if [ -f vast_summary.log ];then
+  # 12 because the reference image will be counted twice
+  grep --quiet "Images processed 12" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC101"
+  fi
+  # The possible reference image ../vast_test_ASASSN-19cq/2019_05_15/fd_img2_ASASSN_19cq_V_200s.fit
+  # is the wors and should be rejected under normal circumstances
+  grep --quiet "Images used for photometry 10" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC102"
+  fi
+  grep --quiet "First image: 2458619.73071 16.05.2019 05:30:33" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC103a"
+  fi
+  grep --quiet "Last  image: 2458659.73438 25.06.2019 05:35:00" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC103b"
+  fi
+  if [ ! -f vast_lightcurve_statistics.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC105c"
+  fi
+  if [ ! -s vast_lightcurve_statistics.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC106"
+  fi
+  if [ ! -f vast_lightcurve_statistics_format.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC107"
+  fi
+  if [ ! -s vast_lightcurve_statistics_format.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC108"
+  fi
+  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC109"
+  fi
+  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC110"
+  fi
+  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC111"
+  fi
+  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC112"
+  fi
+
+ else
+  echo "ERROR: cannot find vast_summary.log" >> /dev/stderr
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC_ALL2"
  fi
 
  # Make an overall conclusion for this test
@@ -6617,11 +6693,13 @@ if [ $? -eq 0 ];then
    fi
   else
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND_TEST_NOT_PERFORMED_ASAN_ENABLED"
+    echo "SPECIAL_VALGRIND_TEST_NOT_PERFORMED_ASAN_ENABLED" >> vast_test_report.txt
   fi # ldd vast | grep --quiet 'libasan'
-  else
+ else
   # do not distract user with this obscure message if the test host is not eridan
   if [ "$HOSTNAME" = "eridan" ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND_TEST_NOT_PERFORMED_NO_DATA"
+   echo "SPECIAL_VALGRIND_TEST_NOT_PERFORMED_NO_DATA" >> vast_test_report.txt
   fi
  fi
  #

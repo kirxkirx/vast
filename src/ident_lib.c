@@ -1335,6 +1335,9 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
   fprintf(stderr, "fraction_of_ambiguous_matches= %lf, number_of_ambiguous_matches=%d \n", fraction_of_ambiguous_matches, number_of_ambiguous_matches );
   number_of_matched_stars=0;
  }
+ //
+ fprintf(stderr, "fraction_of_ambiguous_matches= %lf, number_of_ambiguous_matches=%d \n", fraction_of_ambiguous_matches, number_of_ambiguous_matches );
+ //
  
  return number_of_matched_stars;
 }
