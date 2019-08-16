@@ -2222,12 +2222,18 @@ int main( int argc, char **argv ) {
 
  // Special settings that are forced for the transient detection mode
  if ( Num == 3 || Num == 4 || Num == 5 ) {
-  fprintf( stderr, "\n **** Forcing special settings for the transient detection mode ****\n" );
+  fprintf( stderr, "\n\n######## Forcing special settings for the transient detection ########\n" );
+  fprintf( stderr, "transient search mode: disabling the mag-size filter as it should be switched off when running a transient search!\n" );
   param_filterout_magsize_outliers= 0;
-  fprintf( stderr, "* Disabling the mag-size filter as it should be switched off when running a transient search!\n" );
+  fprintf( stderr, "transient search mode: disabling the bad image filter as it will not help during the transient search!\n" );
   param_remove_bad_images= 0;
-  fprintf( stderr, "* Disabling the bad image filter as it will not help during the transient search!\n" );
-  fprintf( stderr, " **** ****\n" );
+  fprintf(stderr, "transient search mode: will not try to gues image saturation limit\n");
+  guess_saturation_limit_operation_mode= 0;
+  fprintf(stderr, "transient search mode: no UTC-to-TT time system conversion will be performed!!!\n");
+  convert_timesys_to_TT=0;
+  fprintf(stderr, "transient search mode: setting the maximum acceptable SExtractor flag to 3\n");
+  maxsextractorflag= 3;
+  fprintf( stderr, "################\n" );
  }
 
  /// Special mode for manual comparison star selection
