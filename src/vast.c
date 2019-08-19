@@ -2232,7 +2232,7 @@ int main( int argc, char **argv ) {
   fprintf(stderr, "transient search mode: no UTC-to-TT time system conversion will be performed!!!\n");
   convert_timesys_to_TT=0;
   fprintf(stderr, "transient search mode: setting the maximum acceptable SExtractor flag to 3\n");
-  maxsextractorflag= 3;
+  maxsextractorflag= 3 + 4; // we want to accept all sorts of blended and saturated sources
   fprintf( stderr, "################\n" );
  }
 
