@@ -569,6 +569,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 
  char DATEOBS[32], TIMEOBS[32], TIMESYS[32];
  char DATEOBS_COMMENT[2048]; // make it long, just in case
+ char EXPOSURE_COMMENT[2048]; // make it long, just in case
  char tymesys_str_in[32];
  char tymesys_str_out[32];
  double inJD= 0.0;
@@ -622,6 +623,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  memset( TIMEOBS, 0, 32 );
  memset( TIMESYS, 0, 32 );
  memset( DATEOBS_COMMENT, 0, 2048 );
+ memset( EXPOSURE_COMMENT, 0, 2048 );
 
  if ( param_verbose >= 1 )
   fprintf( stderr, "Processing  %s\n", fitsfilename );
@@ -707,17 +709,17 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  // Moved here as we may need the exposure time to set time using UT-END
  // if exposure!=0.0 we assume it was set earlier by Kourovka_SBG_date_hack()
  if ( exposure == 0.0 ) {
-  fits_read_key( fptr, TDOUBLE, "EXPTIME", &exposure, NULL, &status );
+  fits_read_key( fptr, TDOUBLE, "EXPTIME", &exposure, EXPOSURE_COMMENT, &status );
   if ( status == 202 ) {
    status= 0;
    if ( param_verbose >= 1 )
     fprintf( stderr, "Looking for exposure in EXPOSURE \n" );
-   fits_read_key( fptr, TDOUBLE, "EXPOSURE", &exposure, NULL, &status );
+   fits_read_key( fptr, TDOUBLE, "EXPOSURE", &exposure, EXPOSURE_COMMENT, &status );
    if ( status == 202 ) {
     status= 0;
     if ( param_verbose >= 1 )
      fprintf( stderr, "Looking for exposure in TM-EXPOS \n" );
-    fits_read_key( fptr, TDOUBLE, "TM-EXPOS", &exposure, NULL, &status );
+    fits_read_key( fptr, TDOUBLE, "TM-EXPOS", &exposure, EXPOSURE_COMMENT, &status );
     if ( status == 202 ) {
      if ( param_verbose >= 1 )
       fprintf( stderr, "I can't find a keyword with exposure time! ;(     assuming EXPTIME=0\n" );
@@ -728,6 +730,24 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   }
   fits_report_error( stderr, status ); /* print out any error messages */
   fits_clear_errmsg();                 // clear the CFITSIO error message stack
+  // Try to parse the exposure keyword comment and handle the situation when the exposure is not expressed in seconds
+  if ( strlen(EXPOSURE_COMMENT)>8 ){
+   if( NULL == strstr( lightcurvefilename, "Seconds") && NULL == strstr( lightcurvefilename, "seconds") ) {
+    if( NULL != strstr( lightcurvefilename, "Minutes") ) {
+     exposure=60.0*exposure;
+    }
+    if( NULL != strstr( lightcurvefilename, "minutes") ) {
+     exposure=60.0*exposure;
+    }
+    if( NULL != strstr( lightcurvefilename, "Hours") ) {
+     exposure=3600.0*exposure;
+    }
+    if( NULL != strstr( lightcurvefilename, "hours") ) {
+     exposure=3600.0*exposure;
+    }
+   }
+  }
+  //
  }                                     // if( exposure!=0.0 ){
 
  if ( exposure < SHORTEST_EXPOSURE_SEC || exposure > LONGEST_EXPOSURE_SEC ) {

@@ -10,7 +10,7 @@ vast-1.0rc85:
 	In all cases the output image will be written to 'pgplot.png' file in the current directory.
 	* Lightcurve files (out*.dat) listed as automatically selected candidate variables in vast_autocandidates.log
 	as well as the ones listed by user as previously known variables in vast_list_of_previously_known_variables.log
-	are now higlighted by the FITS viewer './sextract_single_image'
+	are now highlighted by the FITS viewer './sextract_single_image'
 	* You may now specify on the command line the directory that contains one level of sub-directories 
 	with images: './vast -u -f ../vast_test_ASASSN-19cq' where the directory ../vast_test_ASASSN-19cq contains
 	sub-directories '2019_05_15 2019_05_25 2019_05_26 2019_06_03 2019_06_10 2019_06_24' with FITS images.
@@ -22,15 +22,26 @@ vast-1.0rc85:
 	./vast --UTC --poly /mnt/usb/ZTF_images_test_2/ztf_20180*_zg_*_q1_sciimg.fits
 	* For star identification VaST will blindly trust the astrometric solutions produced with SCAMP 
 	( https://www.astromatic.net/software/scamp ). In this case, VaST will not attempt to re-solve 
-	the image using a local or remote copy of the Astrometry.net code. The same is true is the FITS 
+	the image using a local or remote copy of the Astrometry.net code. The same is true if the FITS 
 	header indicates that the image was already plate-solved with Astrometry.net
-	* When solving plates with a local copy of the Astrometry.net code, VaST will try to refind 
+	* When solving plates with a local copy of the Astrometry.net code, VaST will now try to refine 
 	the plate solution by performing the second run of the Astrometry.net code restricting the search space
 	by using the image center and scale derived from the first run.
 	* Updated the flag/weight image generation rules for better handling stacked images with black areas 
 	around the image edges.
 	* The file names in the vast_magnitude_calibration_details_log directory now include image number as
 	well as the image name: useful if multiple input images from different directories have the same name.
+	* VaST should warn the user if the reference image seems to be of poor quality (has much less stars)
+	than other images in the series. If this happens, you may want to manually specify another reference 
+	image by putting it before all other images in VaST command line arguments. For example the command:
+	./vast ../images/image-012.fit ../images/image-*.fit
+	will make VaST use 'image-012.fit' as the reference image.
+	* Tweaks to the star list matching algorithm should allow VaST to process images with 
+	very few stars (<10). You may need to think twice about the magnitude calibration procedure
+	for such images: the linear calibration ('--poly' option), or the zero-point-offset-only
+	('-t 2' option), or manually selecting the reference stars using 'diffphot' may be good options.
+	* VaST will now try to parse the EXPOSURE keyword comment to determine if the exposure time is 
+	specified in minutes (like in DSS FITS images) or hours rather than seconds (most FITS images).
 07 Mar 2019: vast-1.0rc84:
 	* VaST is now on Github ( https://github.com/kirxkirx/vast ), pull requests are welcome!
 	* The new script 'util/get_gaia_lc.sh' gets Gaia G, BP and RP lightcurves for a Gaia DR2 ID that 
