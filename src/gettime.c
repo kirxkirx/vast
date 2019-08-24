@@ -731,18 +731,20 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   fits_report_error( stderr, status ); /* print out any error messages */
   fits_clear_errmsg();                 // clear the CFITSIO error message stack
   // Try to parse the exposure keyword comment and handle the situation when the exposure is not expressed in seconds
+  //
+  EXPOSURE_COMMENT[2048-1]='\0'; // just in case
   if ( strlen(EXPOSURE_COMMENT)>8 ){
-   if( NULL == strstr( lightcurvefilename, "Seconds") && NULL == strstr( lightcurvefilename, "seconds") ) {
-    if( NULL != strstr( lightcurvefilename, "Minutes") ) {
+   if( NULL == strstr( EXPOSURE_COMMENT, "Seconds") && NULL == strstr( EXPOSURE_COMMENT, "seconds") ) {
+    if( NULL != strstr( EXPOSURE_COMMENT, "Minutes") ) {
      exposure=60.0*exposure;
     }
-    if( NULL != strstr( lightcurvefilename, "minutes") ) {
+    if( NULL != strstr( EXPOSURE_COMMENT, "minutes") ) {
      exposure=60.0*exposure;
     }
-    if( NULL != strstr( lightcurvefilename, "Hours") ) {
+    if( NULL != strstr( EXPOSURE_COMMENT, "Hours") ) {
      exposure=3600.0*exposure;
     }
-    if( NULL != strstr( lightcurvefilename, "hours") ) {
+    if( NULL != strstr( EXPOSURE_COMMENT, "hours") ) {
      exposure=3600.0*exposure;
     }
    }
@@ -1217,21 +1219,26 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    Vr_h[j]= TIMEOBS[j];
   }
   for ( j+= 1; j < 32; j++ ) {
-   if ( TIMEOBS[j] == ':' ) {
+   if ( TIMEOBS[j] == ':' || TIMEOBS[j] == '\0' ) {
     Vr_m[j - 3]= '\0';
     break;
    }
    Vr_m[j - 3]= TIMEOBS[j];
   }
-  for ( j+= 1; j < 32; j++ ) {
-   if ( TIMEOBS[j] == '\0' ) { //|| TIMEOBS[j] == '.') {
-    Vr_s[j - 6]= '\0';
-    break;
+  if ( j<strlen(TIMEOBS) ) { 
+   for ( j+= 1; j < 32; j++ ) {
+    if ( TIMEOBS[j] == '\0' ) {
+     Vr_s[j - 6]= '\0';
+     break;
+    }
+    Vr_s[j - 6]= TIMEOBS[j];
    }
-   Vr_s[j - 6]= TIMEOBS[j];
+   Vr_s[6]= '\0';
+  } else {
+   Vr_s[0]='0';
+   Vr_s[1]='0';
+   Vr_s[2]='\0';
   }
-  //Vr_s[2]='\0';
-  Vr_s[6]= '\0';
   //
   Vr_m[2]= '\0';
   Vr_m[2]= '\0';
@@ -1243,7 +1250,6 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    fits_close_file( fptr, &status ); // close file
    return 1;
   }
-  //structureTIME.tm_sec = atoi(Vr_s);
   structureTIME.tm_sec= (int)( atof( Vr_s ) + 0.5 );
   if ( structureTIME.tm_sec < 0 || structureTIME.tm_sec > 60 ) {
    fprintf( stderr, "ERROR001 in gettime()\n" );

@@ -83,6 +83,25 @@ int fake_image_hack( char *input_string ) {
   }
  }
  //
+ // handle the white space between the input date and time instead of T
+ int is_T_found=0;
+ if ( input_calendar_date_or_jd == 0 ){
+  for ( j=0, i= 0; i < number_of_characters_inputs_str; i++ ) {
+   if ( input_string[i] == 'T' ) {
+    is_T_found=1;
+    break;
+   }
+  }
+  if ( is_T_found == 0 ){
+   for ( i= 1; i < number_of_characters_inputs_str; i++ ) {
+    if ( 0 != isdigit( input_string[i-1] ) && input_string[i] == ' ' ) {
+     input_string[i]='T';
+     break;
+    }
+   }
+  }
+ }
+ //
 
  sprintf( fitsfilename, "fake_image_hack_%d.fits", getpid() );
 

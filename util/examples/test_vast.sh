@@ -8356,6 +8356,12 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV006"
 fi
+# And a few more checks for the format of the input date string
+util/get_image_date '2014-09-09T05:29' 2>&1 | grep --quiet 'JD 2456909.728472'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV006"
+fi
 # Now make sure there are no residual files
 for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  if [ -f "$TMP_FITS_FILE" ];then
@@ -8468,7 +8474,36 @@ fi
 for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  if [ -f "$TMP_FITS_FILE" ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV010a_$TMP_FITS_FILE"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV010b_$TMP_FITS_FILE"
+  break
+ fi
+done
+# And a few more checks for the format of the input date string
+util/get_image_date '2014-09-09T05:29' 2>&1 | grep --quiet 'JD 2456909.728472'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV020"
+fi
+util/get_image_date '2014-09-09 05:29' 2>&1 | grep --quiet 'JD 2456909.728472'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV021"
+fi
+util/get_image_date '2014-09-09 05:29:' 2>&1 | grep --quiet 'JD 2456909.728472'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV022"
+fi
+util/get_image_date '2014-09-09 05:29: ' 2>&1 | grep --quiet 'JD 2456909.728472'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV023"
+fi
+# Now make sure there are no residual files
+for TMP_FITS_FILE in fake_image_hack_*.fits ;do
+ if [ -f "$TMP_FITS_FILE" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV010c_$TMP_FITS_FILE"
   break
  fi
 done
