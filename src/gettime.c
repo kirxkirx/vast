@@ -1198,7 +1198,6 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     TIMEOBS[jj]= DATEOBS[j];
     jj++;
    }
-
   } else {
    if ( 0 == strlen( TIMEOBS_KEY_NAME ) ) {
     fprintf( stderr, "ERROR in gettime(): cannot find a FITS header key reporting the observation start time!\n" );
@@ -1225,7 +1224,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    }
    Vr_m[j - 3]= TIMEOBS[j];
   }
-  if ( j<strlen(TIMEOBS) ) { 
+  if ( j+1<(int)strlen( TIMEOBS ) ) { 
    for ( j+= 1; j < 32; j++ ) {
     if ( TIMEOBS[j] == '\0' ) {
      Vr_s[j - 6]= '\0';

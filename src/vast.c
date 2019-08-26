@@ -2866,13 +2866,16 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "Filtering-out stars with bad PSF fit... " );
   if ( debug != 0 )
    fprintf( stderr, "DEBUG MSG: filter_MagPSFchi2()\n" );
-  counter_rejected_bad_psf_fit= filter_on_float_parameters( STAR1, NUMBER1, sextractor_catalog, -2 ); // psfchi2
+  if ( param_filterout_magsize_outliers == 1 )
+   counter_rejected_bad_psf_fit= filter_on_float_parameters( STAR1, NUMBER1, sextractor_catalog, -2 ); // psfchi2
+/*
   if ( param_filterout_magsize_outliers != 1 ) {
    // do this ONLY if no other filtering will be done, otherwise it will mess-up the flags
    if ( debug != 0 )
     fprintf( stderr, "DEBUG MSG: filter_on_float_parameters(2)\n" );
    counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR1, NUMBER1, sextractor_catalog, 2 ); // magpsf-magaper
   }
+*/
   fprintf( stderr, "done!\n" );
  } else {
   if ( debug != 0 )
@@ -2894,11 +2897,13 @@ int main( int argc, char **argv ) {
    fprintf( stderr, "DEBUG MSG: filter_on_float_parameters(1)\n" );
   counter_rejected_MagSize+= filter_on_float_parameters( STAR1, NUMBER1, sextractor_catalog, 1 );
   //
+/*
   if ( param_P == 1 ) {
    if ( debug != 0 )
     fprintf( stderr, "DEBUG MSG: filter_on_float_parameters(2)\n" );
    counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR1, NUMBER1, sextractor_catalog, 2 ); // magpsf-magaper
   }
+*/
   //
   if ( debug != 0 )
    fprintf( stderr, "DEBUG MSG: filter_on_float_parameters(4)\n" );
@@ -3402,12 +3407,15 @@ int main( int argc, char **argv ) {
      fprintf( stderr, "Filtering-out stars with bad PSF fit... " );
      if ( debug != 0 )
       fprintf( stderr, "DEBUG MSG: filter_MagPSFchi2()\n" );
-     counter_rejected_bad_psf_fit= filter_on_float_parameters( STAR2, NUMBER2, sextractor_catalog, -2 ); // psfchi2
+     if ( param_filterout_magsize_outliers == 1 )
+      counter_rejected_bad_psf_fit= filter_on_float_parameters( STAR2, NUMBER2, sextractor_catalog, -2 ); // psfchi2
+/*
      if ( param_filterout_magsize_outliers != 1 ) {
       if ( debug != 0 )
        fprintf( stderr, "DEBUG MSG: filter_on_float_parameters(2)\n" );
       counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextractor_catalog, 2 ); // magpsf-magaper
      }
+*/
      fprintf( stderr, "done!\n" );
     } else {
      if ( debug != 0 )
@@ -3429,11 +3437,13 @@ int main( int argc, char **argv ) {
       fprintf( stderr, "DEBUG MSG: filter_on_float_parameters(1)\n" );
      counter_rejected_MagSize+= filter_on_float_parameters( STAR2, NUMBER2, sextractor_catalog, 1 );
      //
+     /*
      if ( param_P == 1 ) {
       if ( debug != 0 )
        fprintf( stderr, "DEBUG MSG: filter_on_float_parameters(2)\n" );
       counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextractor_catalog, 2 ); // magpsf-magaper
      }
+     */
      //
      if ( debug != 0 )
       fprintf( stderr, "DEBUG MSG: filter_on_float_parameters(4)\n" );
