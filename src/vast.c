@@ -617,9 +617,9 @@ void write_Star_struct_to_ASCII_file( struct Star *star, int N_start, int N_stop
  return;
 }
 
-/*
- Get the compiler version, just for the sake of bookkeeping...
- */
+//
+// Get the compiler version, just for the sake of bookkeeping...
+//
 void compiler_version( char *compiler_version_string ) {
  FILE *cc_version_file;
  cc_version_file= fopen( ".cc.version", "r" );
@@ -633,6 +633,21 @@ void compiler_version( char *compiler_version_string ) {
  fclose( cc_version_file );
  return;
 }
+
+void compilation_date( char *compilation_date_string ) {
+ FILE *cc_version_file;
+ cc_version_file= fopen( ".cc.date", "r" );
+ if ( NULL == cc_version_file ) {
+  strncpy( compilation_date_string, "unknown date\n", 18 );
+  return;
+ }
+ if ( NULL == fgets( compilation_date_string, 256, cc_version_file ) ) {
+  strncpy( compilation_date_string, "unknown date\n", 18 );
+ }
+ fclose( cc_version_file );
+ return;
+}
+
 
 /* is_file() - a small function which checks is an input string is a name of a readable file */
 int is_file( char *filename ) {
@@ -2221,7 +2236,8 @@ int main( int argc, char **argv ) {
  }
 
  // Special settings that are forced for the transient detection mode
- if ( Num == 3 || Num == 4 || Num == 5 ) {
+ //if ( Num == 3 || Num == 4 || Num == 5 ) {
+ if ( Num == 4 ) {
   fprintf( stderr, "\n\n######## Forcing special settings for the transient detection ########\n" );
   fprintf( stderr, "transient search mode: disabling the mag-size filter as it should be switched off when running a transient search!\n" );
   param_filterout_magsize_outliers= 0;
@@ -5380,8 +5396,10 @@ int main( int argc, char **argv ) {
   return 1;
  }
  fprintf( vast_image_details, "Software: %s ", stderr_output );
+ compilation_date( stderr_output );
+ fprintf( vast_image_details, "compiled on %s", stderr_output );
  compiler_version( stderr_output );
- fprintf( vast_image_details, "compiled with %s", stderr_output );
+ fprintf( vast_image_details, " with %s", stderr_output );
  fclose( vast_image_details );
  if ( 0 != system( "sex -v >> vast_summary.log" ) ) {
   fprintf( stderr, "ERROR_SYSTEM001\n" );

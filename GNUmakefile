@@ -18,7 +18,7 @@
 # try to set the correct path to X11 library, but it is most likely the program
 # will compile fine even if this path is set incorrectly
 # If RECOMPILE_VAST_ONLY is set to 'yes' only VaST will be re-compiled (faster option for developement) 
-#RECOMPILE_VAST_ONLY = yes
+RECOMPILE_VAST_ONLY = yes
 
 # You probably don't want to change anything below this line
 ##############################################################################
@@ -434,6 +434,7 @@ shell_commands: pgplot_components lib/lightcurve_simulator vast
 	rm -f `find src/ -name '*.pdf'` `find src/ -name '*.ps'`
 	#
 	$(CC) --version |head -n 1 > .cc.version # save compiler version
+	date > .cc.date # seve compile time
 	
 libident.o: $(SOURCE_IDENT_PATH)ident_lib.c $(SOURCE_IDENT_PATH)ident.h 
 	$(CC) $(OPTFLAGS) -c -o $(SRC_PATH)ident_lib.o -fPIC $(SOURCE_IDENT_PATH)ident_lib.c 
@@ -488,7 +489,8 @@ clean: clean_libraries
 	rm -f src/heliocentric_correction/*~ util/hjd_input_in_UTC util/hjd_input_in_TT util/UTC2TT util/make_finding_chart util/fits2png lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/check_catalogs_offline util/get_image_date lib/make_outxyls_for_astrometric_calibration lib/fits2cat lib/create_data lib/fast_clean_data util/solve_plate_with_UCAC5 lib/autodetect_aperture_main lib/sextract_single_image_noninteractive
 	rm -f util/solve_plate_with_UCAC4
 	rm -f src/catalogs/*~
-	rm -f .cc.version 
+	rm -f .cc.version
+	rm -f .cc.date 
 	rm -f util/wcs_image_calibration.sh util/identify_transient.sh util/identify_for_catalog.sh util/identify_noninteractive.sh
 	rm -f lib/pgplot/cpgdemo lib/pgplot/pgdemo* lib/pgplot/pgxwin_server lib/pgplot/pgplot.doc lib/pgplot/*.a lib/pgplot/*.so lib/pgplot/*~ lib/pgplot/grfont.dat
 	rm -f lib/vizquery
