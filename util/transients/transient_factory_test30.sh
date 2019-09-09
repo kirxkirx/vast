@@ -11,6 +11,8 @@
 if [ -z "$REFERENCE_IMAGES" ];then
  REFERENCE_IMAGES=/mnt/usb/NMW_NG/NMW_reference_images_2012
  if [ ! -d "$REFERENCE_IMAGES" ];then
+  REFERENCE_IMAGES=/dataX/kirx/NMW_reference_images_2012 
+ elif [ ! -d "$REFERENCE_IMAGES" ];then
   REFERENCE_IMAGES=/dataY/kirx/NMW_reference_images_2012 
  fi
 fi

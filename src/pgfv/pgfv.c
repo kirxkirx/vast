@@ -1834,9 +1834,9 @@ int main( int argc, char **argv ) {
         }
 
         if ( sexFLUX[marker_counter] > MIN_SNR * sexFLUX_ERR[marker_counter] ) {
-         fprintf( stderr, "SNR \E[01;32m%lf\E[33;00m\n", sexFLUX[marker_counter] / sexFLUX_ERR[marker_counter] );
+         fprintf( stderr, "SNR \E[01;32m%.1lf\E[33;00m\n", sexFLUX[marker_counter] / sexFLUX_ERR[marker_counter] );
         } else {
-         fprintf( stderr, "SNR \E[01;31m%lf\E[33;00m\n", sexFLUX[marker_counter] / sexFLUX_ERR[marker_counter] );
+         fprintf( stderr, "SNR \E[01;31m%.1lf\E[33;00m\n", sexFLUX[marker_counter] / sexFLUX_ERR[marker_counter] );
         }
 
         if ( sexMAG[marker_counter] != 99.0000 ) {
@@ -2014,8 +2014,8 @@ int main( int argc, char **argv ) {
   }
   /* F - Fiddle the color table contrast and brightness */
   if ( curC == 'F' || curC == 'f' ) {
-   fprintf( stderr, "brightness=%lf  contrast=%lf\n", ( curX - drawX1 ) / ( drawX2 - drawX1 ), 5.0 * curY / fabs( drawY2 - drawY1 ) );
-   cpgctab( bw_l, bw_r, bw_g, bw_b, 83, 5.0 * curY / fabs( drawY2 - drawY1 ), ( curX - drawX1 ) / ( drawX2 - drawX1 ) );
+   fprintf( stderr, "brightness=%lf  contrast=%lf\n", ( curX - drawX1 ) / ( drawX2 - drawX1 ), 5.0 * curY / abs( drawY2 - drawY1 ) );
+   cpgctab( bw_l, bw_r, bw_g, bw_b, 83, 5.0 * curY / abs( drawY2 - drawY1 ), ( curX - drawX1 ) / ( drawX2 - drawX1 ) );
    curC= 'R';
   }
 
