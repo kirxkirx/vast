@@ -450,8 +450,14 @@ field identification have good chances to fail. Sorry... :(
   SCALE_HIGH=`echo "1.6*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'`
   #
   # Blind solve
-  `"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # HACK Hack hack -- manually specify the field center and size
+  # Gaia19dum
+  `"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 19:52:08.25 --dec 27:42:20.9 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # V3890 Sgr
+  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 18:30:43.28 --dec -24:01:08.9 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # TCP J21040470+4631129
+  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 21:04:04.69 --dec +46:31:13.7 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # RA 2019-06-10 10:06:05.612 +53:15:53.97
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 10:06:05.612 --dec +53:15:53.97 --radius 2.0  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --odds-to-solve 1e6 --ra 10:06:05.612 --dec +53:15:53.97 --radius 2.0  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
@@ -733,7 +739,7 @@ fi
 "$VAST_PATH"util/listhead "$WCS_IMAGE_NAME" | grep --quiet -e 'PV1_1' -e 'PV2_1' -e 'PV1_2' -e 'PV2_2'
 if [ $? -ne 0 ];then
  echo "Note that the $WCS_IMAGE_NAME plate-solved image header has no TPV-convention distortions in it..."
- # Check if the local copy of wcs-addpv.py is working (unlike hte rest of the VaST code it relies on python)
+ # Check if the local copy of wcs-addpv.py is working (unlike the rest of the VaST code it relies on python)
  "$VAST_PATH"lib/wcs-addpv.py -h &>/dev/null
  if [ $? -eq 0 ];then
   echo "Trying to insert TPV-convention distortions"
