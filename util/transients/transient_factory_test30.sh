@@ -15,6 +15,14 @@ if [ -z "$REFERENCE_IMAGES" ];then
  elif [ ! -d "$REFERENCE_IMAGES" ];then
   REFERENCE_IMAGES=/dataY/kirx/NMW_reference_images_2012 
  fi
+ elif [ ! -d "$REFERENCE_IMAGES" ];then
+  REFERENCE_IMAGES=/home/kirx/current_work/NMW_crashtest/ref 
+ fi
+fi
+
+if [ ! -d "$REFERENCE_IMAGES" ];then
+ echo "ERROR: cannot find the reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES"
+ exit 1
 fi
 
 # This script should take care of updating astorb.dat
