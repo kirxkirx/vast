@@ -201,4 +201,11 @@ if [ $? -eq 0 ];then
  echo "ERROR: please remove the above binary file(s) from the source tree"
 fi
 
+grep -A1 'Blind solve' util/identify.sh | tail -n1 | grep --quiet '\#'
+if [ $? -eq 0 ];then
+ echo "
+ERROR: please set up the blind plate solve mode in util/identify.sh !
+"
+fi
+
 
