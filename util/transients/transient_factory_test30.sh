@@ -12,10 +12,11 @@ if [ -z "$REFERENCE_IMAGES" ];then
  REFERENCE_IMAGES=/mnt/usb/NMW_NG/NMW_reference_images_2012
  if [ ! -d "$REFERENCE_IMAGES" ];then
   REFERENCE_IMAGES=/dataX/kirx/NMW_reference_images_2012 
- elif [ ! -d "$REFERENCE_IMAGES" ];then
+ fi
+ if [ ! -d "$REFERENCE_IMAGES" ];then
   REFERENCE_IMAGES=/dataY/kirx/NMW_reference_images_2012 
  fi
- elif [ ! -d "$REFERENCE_IMAGES" ];then
+ if [ ! -d "$REFERENCE_IMAGES" ];then
   REFERENCE_IMAGES=/home/kirx/current_work/NMW_crashtest/ref 
  fi
 fi
@@ -143,6 +144,16 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 
  # Wait for all children to end processing
  wait
+ 
+ # Check that the plates were actually solved
+ for i in `cat vast_image_details.log |awk '{print $17}'` ;do 
+  util/wcs_image_calibration.sh $i &
+  if [ ! -f wcs_`basename $i` ];then
+   echo "***** PLATE SOLVE PROCESSING ERROR *****" >> transient_factory.log
+   echo "############################################################" >> transient_factory.log
+   continue
+  fi
+ done 
  
 # # Save astrometrically calibrated reference images to cache, if they are not there already
 # # Here we assume we have two reference images
