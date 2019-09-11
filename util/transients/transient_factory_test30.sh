@@ -132,14 +132,10 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  
  # WCS-calibration
  for i in `cat vast_image_details.log |awk '{print $17}'` ;do 
-  util/wcs_image_calibration.sh $i &
-#  if [ ! -f wcs_`basename $i` ];then
-#   for N_RETRY_WCS in `seq 1 3` ;do
-#    echo "WARNING!!! WCS-calibrated file was not created! Retrying..."
-#    sleep 10
-#    util/wcs_image_calibration.sh $i $APPROXIMATE_FIELD_OF_VIEW_ARCMIN
-#   done
-#  fi
+  # This should ensure the correct field-of-view guess by setting the TELESCOP keyword
+  #util/modhead $i TELESCOP NMW_camera
+  #
+  TELESCOP="NMW_camera" util/wcs_image_calibration.sh $i &
  done 
 
  # Wait for all children to end processing
@@ -150,6 +146,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   util/wcs_image_calibration.sh $i &
   if [ ! -f wcs_`basename $i` ];then
    echo "***** PLATE SOLVE PROCESSING ERROR *****" >> transient_factory.log
+   echo "***** cannot find wcs_"`basename $i`"  *****" >> transient_factory.log
    echo "############################################################" >> transient_factory.log
    continue
   fi

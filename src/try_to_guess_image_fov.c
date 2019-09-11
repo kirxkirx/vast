@@ -305,17 +305,24 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
  // fitsio
  int status= 0;
  fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
- // Extract data from fits header
- fits_open_file( &fptr, fitsfilename, READONLY, &status );
- if ( 0 != status ) {
-  fits_report_error( stderr, status ); // print out any error messages
-  fits_clear_errmsg();                 // clear the CFITSIO error message stack
-  return status;
- }
- fits_read_key( fptr, TSTRING, "TELESCOP", telescop, telescop_comment, &status );
- if ( 0 != status ) {
-  fits_close_file( fptr, &status );
-  return 1;
+ // Hack allowing to owerride the FITS TELESCOP keyword by setting the environment variable of the same name
+ if ( NULL != getenv( "TELESCOP" ) ) {
+  strncpy( telescop, getenv( "TELESCOP" ), 1024 );
+  telescop[1024 - 1]= '\0';
+ } else {
+  // Else extract data from FITS header
+  fits_open_file( &fptr, fitsfilename, READONLY, &status );
+  if ( 0 != status ) {
+   fits_report_error( stderr, status ); // print out any error messages
+   fits_clear_errmsg();                 // clear the CFITSIO error message stack
+   return status;
+  }
+  fits_read_key( fptr, TSTRING, "TELESCOP", telescop, telescop_comment, &status );
+  if ( 0 != status ) {
+   fits_close_file( fptr, &status );
+   return 1;
+  }
+  //
  }
  // TELESCOP= 'Lens  2.8/170'
  if ( 0 == strncasecmp( telescop, "Lens  2.8/170", 1024 - 1 ) ) {
@@ -384,6 +391,16 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
   pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "CMO SAI MSU ASA RC600 PHOTON", 28 );
   if ( pointer_to_the_key_start != NULL ) {
    ( *estimated_fov_arcmin )= 22.8;
+   fits_close_file( fptr, &status );
+   return 0;
+  }
+ }
+
+ // NMW camera
+ if ( strlen( telescop ) >= 10 ) { //01234567890
+  pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "NMW_camera", 10 );
+  if ( pointer_to_the_key_start != NULL ) {
+   ( *estimated_fov_arcmin )= 350.0;
    fits_close_file( fptr, &status );
    return 0;
   }
