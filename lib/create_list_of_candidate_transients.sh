@@ -22,7 +22,8 @@ if [ $NUMBER_OF_GOOD_IMAGES -lt 10 ];then
  while read A B ;do echo $A `cat $A | wc -l` `tail -n1 $A | awk '{printf "%s %8.3f %8.3f  ",$7,$4,$5}'` `head -n1 $A | awk '{printf "%s %8.3f %8.3f  ",$7,$4,$5}'` ;done < candidates-flares.lst >> candidates-transients.lst
 fi # if [ $NUMBER_OF_GOOD_IMAGES -lt 10 ];then
 
-if [ $NUMBER_OF_GOOD_IMAGES -eq 3 ] || [ $NUMBER_OF_GOOD_IMAGES -eq 4 ];then
+#if [ $NUMBER_OF_GOOD_IMAGES -eq 3 ] ||
+if [ $NUMBER_OF_GOOD_IMAGES -eq 4 ];then
  echo -n 'Transient candidates found: ' >> vast_summary.log 
  if [ -f candidates-transients.lst ];then 
   cat candidates-transients.lst | wc -l >> vast_summary.log 

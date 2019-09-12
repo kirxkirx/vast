@@ -30,7 +30,7 @@ fi
 lib/update_offline_catalogs.sh all
 
 # Set the SExtractor parameters file
-cp default.sex.telephoto_lens_v3 default.sex
+cp default.sex.telephoto_lens_v4 default.sex
 
 echo "Reference image directory is set to $REFERENCE_IMAGES"
 if [ -z $1 ]; then
@@ -83,7 +83,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  REFERENCE_EPOCH__FIRST_IMAGE=`ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | head -n1`
  REFERENCE_EPOCH__SECOND_IMAGE=`ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | tail -n1`
  SECOND_EPOCH__FIRST_IMAGE=`ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | head -n1`
- SECOND_EPOCH__SECOND_IMAGE=`ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | tail -n1`
+ SECOND_EPOCH__SECOND_IMAGE=`ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | head -n2 | tail -n1`
  # double-check the files
  for FILE_TO_CHECK in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" ;do
   ls "$FILE_TO_CHECK" 
@@ -136,6 +136,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   #util/modhead $i TELESCOP NMW_camera
   #
   TELESCOP="NMW_camera" util/wcs_image_calibration.sh $i &
+  #TELESCOP="NMW_camera" util/solve_plate_with_UCAC5 $i &
  done 
 
  # Wait for all children to end processing
@@ -143,7 +144,6 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  
  # Check that the plates were actually solved
  for i in `cat vast_image_details.log |awk '{print $17}'` ;do 
-  util/wcs_image_calibration.sh $i &
   if [ ! -f wcs_`basename $i` ];then
    echo "***** PLATE SOLVE PROCESSING ERROR *****" >> transient_factory.log
    echo "***** cannot find wcs_"`basename $i`"  *****" >> transient_factory.log
@@ -151,6 +151,11 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    continue
   fi
  done 
+ 
+ # We need UCAC5 solution for the first and the third images
+ util/solve_plate_with_UCAC5 `cat vast_image_details.log | awk '{print $17}' | head -n1 | tail -n1` &
+ util/solve_plate_with_UCAC5 `cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1` &
+# wait
  
 # # Save astrometrically calibrated reference images to cache, if they are not there already
 # # Here we assume we have two reference images
@@ -168,7 +173,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 
  echo "Filter-out faint candidates..."
  # Filter-out faint candidates
- for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A/\n/} | awk '{print ($1+$2)/2">13.0"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+ for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A/\n/} | awk '{print ($1+$2)/2">12.5"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
  echo "Filter-out candidates with large difference between measured mags in one epoch..."
  # 2nd epoch
@@ -191,6 +196,14 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  for i in `cat candidates-transients.lst | awk '{print $1}'` ;do if [ `cat $i | wc -l` -eq 2 ];then grep $i candidates-transients.lst | head -n1 ;continue ;fi ; A=`head -n1 $i | awk '{print $2}'` ; B=`tail -n2 $i | awk '{print $2}'` ; MEANMAGSECONDEPOCH=`echo ${B/\n/} | awk '{print ($1+$2)/2}' |bc -ql` ; TEST=`echo $A $MEANMAGSECONDEPOCH | awk '{print ($1-$2)"<0.5"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
  ###
+ # Exclude the previously considered candidates
+ if [ -f ../exclusion_list.txt ];then
+  SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
+  WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
+  lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @../exclusion_list.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list.txt  #| awk -F'->' '{print $2}' 
+ fi
+
+ ###
 
  echo "Done with filtering! =)"
  ###############################################################################################################
@@ -198,11 +211,13 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # Check if the number of detected transients is suspiciously large
  #NUMBER_OF_DETECTED_TRANSIENTS=`cat vast_summary.log |grep "Transient candidates found:" | awk '{print $4}'`
  NUMBER_OF_DETECTED_TRANSIENTS=`cat candidates-transients.lst | wc -l`
- if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 200 ];then
+# if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 200 ];then
+ if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 2000 ];then
   echo "WARNING! Too many candidates... Skipping field..."
   continue
  fi
- if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 50 ];then
+# if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 50 ];then
+ if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 500 ];then
   echo "WARNING! Too many candidates... Dropping flares..."
   # if yes, remove flares, keep only new objects
   while read FLAREOUTFILE A B ;do
@@ -211,8 +226,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   done < candidates-flares.lst
  fi
  
-
-
+ # this is for UCAC5 plate solver
+ wait
 
  util/transients/make_report_in_HTML.sh #$FIELD
  #echo $FIELD
@@ -230,5 +245,5 @@ echo "</pre>" >> transient_report/index.html
 
 echo "</HTML>" >> transient_report/index.html
 
-util/clean_data.sh
+#util/clean_data.sh
 

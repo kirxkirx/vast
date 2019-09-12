@@ -16,6 +16,7 @@ int main( int argc, char **argv ) {
  double target_RA_deg;
  double target_Dec_deg;
  char GARBAGE[4096];
+ char sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT];
 
  if ( argc < 3 ) {
   fprintf( stderr, "Usage: %s target_RA_deg target_Dec_deg\n", argv[0] );
@@ -49,7 +50,23 @@ int main( int argc, char **argv ) {
   exit( 1 );
  };
 
+/*
  while ( -1 < fscanf( stdin, "%d %lf %lf %lf %lf  %[^\t\n]", &NUMBER[i], &ALPHA_SKY[i], &DELTA_SKY[i], &X_IMAGE[i], &Y_IMAGE[i], GARBAGE ) ) {
+  i++;
+ }
+ for ( j= 0; j < i; j++ ) {
+  distance= sqrt( ( target_RA_deg - X_IMAGE[j] ) * ( target_RA_deg - X_IMAGE[j] ) + ( target_Dec_deg - Y_IMAGE[j] ) * ( target_Dec_deg - Y_IMAGE[j] ) );
+  if ( distance < best_distance ) {
+   best_distance= distance;
+   best_i= j;
+  }
+ }
+*/
+ i= 0;
+ while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, stdin )
+  if( 5 !=sscanf( sextractor_catalog_string, "%d %lf %lf %lf %lf ", &NUMBER[i], &ALPHA_SKY[i], &DELTA_SKY[i], &X_IMAGE[i], &Y_IMAGE[i] ) ) {
+   continue;
+  }
   i++;
  }
  for ( j= 0; j < i; j++ ) {

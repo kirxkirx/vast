@@ -7772,7 +7772,8 @@ if [ -d ../MASTER_test ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCDPSF004"
   else
    TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_fd_MASTER-KISL-WFC-1_EAST_W_-30_LIGHT_5_878280.fit.cat.ucac5 | wc -l | awk '{print $1}'`
-   if [ $TEST -lt 1100 ];then
+   #if [ $TEST -lt 1100 ];then
+   if [ $TEST -lt 900 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCDPSF004a"
    fi
@@ -7914,7 +7915,8 @@ if [ -d ../M31_ISON_test ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF004"
   else
    TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_M31-1-001-001_dupe-1.fts.cat.ucac5 | wc -l | awk '{print $1}'`
-   if [ $TEST -lt 1500 ];then
+   #if [ $TEST -lt 1500 ];then
+   if [ $TEST -lt 900 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF004a_$TEST"
    fi

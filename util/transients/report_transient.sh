@@ -216,11 +216,11 @@ DEC_HMS=`echo "$RADEC_MEAN_HMS" | awk '{print $2}'`
 ### Apply the exclusion list
 # It may be generated from the previous-day report file using
 EXCLUSION_LIST_FILE="exclusion_list.txt"
-if [ ! -s "$EXCLUSION_LIST_FILE" ];then
- EXCLUSION_LIST_FILE="../exclusion_list.txt"
-fi
+#if [ ! -s "$EXCLUSION_LIST_FILE" ];then
+# EXCLUSION_LIST_FILE="../exclusion_list.txt"
+#fi
 if [ -s "$EXCLUSION_LIST_FILE" ];then
- echo "Checking $RA_HMS $DEC_HMS in the exclusion list"
+ echo "Checking $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE" >> /dev/stderr
  while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
   lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_HMS" "$DEC_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 15/3600.0 ) print "FOUND" }' | grep "FOUND" && break
  done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_HMS $DEC_HMS in the exclusion list ****" >> /dev/stderr && exit 1

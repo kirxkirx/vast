@@ -1153,15 +1153,17 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
  double m_err= star.sigma_mag;
 
  // Test if the time difference between the reference and the current image is >TRANSIENT_MIN_TIMESCALE_DAYS
- if ( fabs( star.JD - reference_image_JD ) < TRANSIENT_MIN_TIMESCALE_DAYS )
+ if ( fabs( star.JD - reference_image_JD ) < TRANSIENT_MIN_TIMESCALE_DAYS ) {
   return;
+ }
  //if( star.n==4511 )fprintf(stderr,"##### %lf %lf\n",star.JD,reference_image_JD);
 
  if ( x > search_area_boundaries[0] && x < search_area_boundaries[1] ) {
   if ( y > search_area_boundaries[2] && y < search_area_boundaries[3] ) {
    if ( m + 1.0 * m_err < search_area_boundaries[5] ) {
-    if ( 1 == is_point_close_or_off_the_frame_edge( star.x_frame, star.y_frame, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) )
+    if ( 1 == is_point_close_or_off_the_frame_edge( star.x_frame, star.y_frame, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) ) {
      return;
+    }
     transientfile= fopen( "candidates-transients.lst", "a" );
     if ( NULL == transientfile ) {
      fprintf( stderr, "ERROR writing to candidates-transients.lst\n" );
@@ -5396,10 +5398,10 @@ int main( int argc, char **argv ) {
   return 1;
  }
  fprintf( vast_image_details, "Software: %s ", stderr_output );
- compilation_date( stderr_output );
- fprintf( vast_image_details, "compiled on %s", stderr_output );
  compiler_version( stderr_output );
- fprintf( vast_image_details, " with %s", stderr_output );
+ fprintf( vast_image_details, "compiled with %s", stderr_output );
+ compilation_date( stderr_output );
+ fprintf( vast_image_details, "VaST compiled on  %s", stderr_output );
  fclose( vast_image_details );
  if ( 0 != system( "sex -v >> vast_summary.log" ) ) {
   fprintf( stderr, "ERROR_SYSTEM001\n" );
