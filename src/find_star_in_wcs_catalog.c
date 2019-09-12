@@ -62,8 +62,9 @@ int main( int argc, char **argv ) {
   }
  }
 */
+ // this might be more stable against corrupted input
  i= 0;
- while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, stdin )
+ while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, stdin ) ) {
   if( 5 !=sscanf( sextractor_catalog_string, "%d %lf %lf %lf %lf ", &NUMBER[i], &ALPHA_SKY[i], &DELTA_SKY[i], &X_IMAGE[i], &Y_IMAGE[i] ) ) {
    continue;
   }
