@@ -45,7 +45,23 @@ if [ ! -d transient_report ];then
 fi
 
 rm -f transient_report/* transient_factory.log
-echo "<HTML>" >> transient_report/index.html
+echo "<HTML>
+
+<script type='text/javascript'>
+function toggleElement(id)
+{
+    if(document.getElementById(id).style.display == 'none')
+    {
+        document.getElementById(id).style.display = '';
+    }
+    else
+    {   
+        document.getElementById(id).style.display = 'none';
+    }
+}
+</script>
+
+<BODY>" >> transient_report/index.html
 
 # Allow for multiple image directories to be specified on the command line
 
@@ -53,7 +69,8 @@ for NEW_IMAGES in "$@" ;do
 
 LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR=`for IMGFILE in "$NEW_IMAGES"/*.fts ;do basename "$IMGFILE" ;done | awk '{print $1}' FS='_' | sort | uniq`
 
-echo "Fields in the data directory: $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR"
+echo "Fields in the data directory: 
+$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR"
 
 #exit # !!!
 
@@ -243,7 +260,7 @@ echo "<pre>" >> transient_report/index.html
 cat transient_factory.log >> transient_report/index.html
 echo "</pre>" >> transient_report/index.html
 
-echo "</HTML>" >> transient_report/index.html
+echo "</BODY></HTML>" >> transient_report/index.html
 
 #util/clean_data.sh
 

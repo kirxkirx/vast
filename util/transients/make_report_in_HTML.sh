@@ -71,8 +71,8 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
   # Only generate the full-frame previews if convert is installed
   command -v convert &> /dev/null
   if [ $? -eq 0 ];then
-   echo "Preview of the reference image(s) and two 2nd epoch images:</br>" >> transient_report/index.tmp  
-   echo "<img src=\"$REFERENCE_IMAGE_PREVIEW\"></img>" >> transient_report/index.tmp
+   echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Preview of the reference image(s) and two 2nd epoch images</a></br>" >> transient_report/index.tmp  
+   echo "<div id=\"fullframepreview_$TRANSIENT_NAME\" style=\"display:none\"><img src=\"$REFERENCE_IMAGE_PREVIEW\"></img>" >> transient_report/index.tmp
    while read JD MAG ERR X Y APP IMAGE REST ;do
     if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then
      PREVIEW_IMAGE=`basename $IMAGE`_preview.png
@@ -83,6 +83,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
     fi
    done < $LIGHTCURVE_FILE_OUTDAT
    wait # just to speed-up the convert thing a bit
+   echo "</div>" >> transient_report/index.tmp
   fi # if [ $? -eq 0 ];then
  
   echo "</br>" >> transient_report/index.tmp
