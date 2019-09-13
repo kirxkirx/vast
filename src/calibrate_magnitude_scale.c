@@ -47,6 +47,29 @@ int main( int argc, char **argv ) {
   b= atof( argv[2] );
   c= atof( argv[3] );
   fprintf( stderr, "a=%lf b=%lf c=%lf\n", a, b, c );
+
+#ifdef VAST_USE_BUILTIN_FUNCTIONS
+// Make a proper check the input values if isnormal() is defined
+#if defined _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L
+// We use __builtin_isnormal() as we know it is working if VAST_USE_BUILTIN_FUNCTIONS is defined
+// Othervise even with the '_ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L' check
+// isnormal() doesn't work on Ubuntu 14.04 trusty (vast.sai.msu.ru)
+// BEWARE 0.0 is also not considered normal by isnormal() !!!
+  if ( 0 == __builtin_isnormal( ( a ) && a != 0.0 ) ) {
+   fprintf( stderr, "The coefficient value is out of range!\n");
+   return 1;
+  }
+  if ( 0 == __builtin_isnormal( ( b ) && b != 0.0 ) ) {
+   fprintf( stderr, "The coefficient value is out of range!\n");
+   return 1;
+  }
+  if ( 0 == __builtin_isnormal( ( c ) && c != 0.0 ) ) {
+   fprintf( stderr, "The coefficient value is out of range!\n");
+   return 1;
+  }
+#endif
+#endif
+
  }
 
  if ( argc == 6 ) {
@@ -56,6 +79,33 @@ int main( int argc, char **argv ) {
   a_[2]= atof( argv[4] );
   a_[3]= atof( argv[5] );
   fprintf( stderr, "Using the 'photocurve' calibration with the parameters a_[0]=%lg a_[1]=%lg a_[2]=%lg a_[3]=%lg\n", a_[0], a_[1], a_[2], a_[3] );
+
+#ifdef VAST_USE_BUILTIN_FUNCTIONS
+// Make a proper check the input values if isnormal() is defined
+#if defined _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L
+// We use __builtin_isnormal() as we know it is working if VAST_USE_BUILTIN_FUNCTIONS is defined
+// Othervise even with the '_ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L' check
+// isnormal() doesn't work on Ubuntu 14.04 trusty (vast.sai.msu.ru)
+// BEWARE 0.0 is also not considered normal by isnormal() !!!
+  if ( 0 == __builtin_isnormal( ( a_[0] ) && a_[0] != 0.0 ) ) {
+   fprintf( stderr, "The coefficient value is out of range!\n");
+   return 1;
+  }
+  if ( 0 == __builtin_isnormal( ( a_[1] ) && a_[1] != 0.0 ) ) {
+   fprintf( stderr, "The coefficient value is out of range!\n");
+   return 1;
+  }
+  if ( 0 == __builtin_isnormal( ( a_[2] ) && a_[2] != 0.0 ) ) {
+   fprintf( stderr, "The coefficient value is out of range!\n");
+   return 1;
+  }
+  if ( 0 == __builtin_isnormal( ( a_[3] ) && a_[3] != 0.0 ) ) {
+   fprintf( stderr, "The coefficient value is out of range!\n");
+   return 1;
+  }
+#endif
+#endif
+
  }
 
  // internal check

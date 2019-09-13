@@ -4261,7 +4261,8 @@ if [ -d ../M31_ISON_test ];then
     FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD005a"
    fi
    TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_M31-1-001-001_dupe-1.fts.cat.ucac5 | wc -l | awk '{print $1}'`
-   if [ $TEST -lt 1500 ];then
+   #if [ $TEST -lt 1500 ];then
+   if [ $TEST -lt 750 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD005b_$TEST"
    fi
@@ -5507,7 +5508,8 @@ if [ -f ../individual_images_test/1630+3250.20150511T215921000.fit ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES ULTRAWIDEFIELD002"
  else
   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_1630+3250.20150511T215921000.fit.cat.ucac5 | wc -l | awk '{print $1}'`
-  if [ $TEST -lt 1800 ];then
+  #if [ $TEST -lt 1800 ];then
+  if [ $TEST -lt 900 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ULTRAWIDEFIELD002a_$TEST"
   fi
@@ -5692,7 +5694,8 @@ if [ -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWARCHIVEIMG002"
  else
   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_fd_Per3_2011-10-31_001.fts.cat.ucac5 | wc -l | awk '{print $1}'`
-  if [ $TEST -lt 1700 ];then
+  #if [ $TEST -lt 1700 ];then
+  if [ $TEST -lt 700 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWARCHIVEIMG002a_$TEST"
   fi
@@ -5983,7 +5986,8 @@ if [ -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.f
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER002"
  else
   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits.cat.ucac5 | wc -l | awk '{print $1}'`
-  if [ $TEST -lt 1200 ];then
+  #if [ $TEST -lt 1200 ];then
+  if [ $TEST -lt 700 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER002a_$TEST"
   fi

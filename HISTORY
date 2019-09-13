@@ -44,6 +44,11 @@ vast-1.0rc85:
 	('-t 2' option), or manually selecting the reference stars using 'diffphot' may be good options.
 	* VaST will now try to parse the EXPOSURE keyword comment to determine if the exposure time is 
 	specified in minutes (like in DSS FITS images) or hours rather than seconds (most FITS images).
+	* '--nomagsizefilter' option now switches off also the psf fit quality vs magnitude filter.
+	If you don't find your target star in the PSF photometry mode, but it is there when the aperture
+	photometry is used - that option might help.
+	* Changed the defautl maximum number of stars for plate solution in 'util/solve_plate_with_UCAC5'
+	to 1000 in order to speed up communication with VizieR. 
 07 Mar 2019: vast-1.0rc84:
 	* VaST is now on Github ( https://github.com/kirxkirx/vast ), pull requests are welcome!
 	* The new script 'util/get_gaia_lc.sh' gets Gaia G, BP and RP lightcurves for a Gaia DR2 ID that 
