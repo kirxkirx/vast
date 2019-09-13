@@ -55,19 +55,33 @@ int main( int argc, char **argv ) {
 // Othervise even with the '_ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L' check
 // isnormal() doesn't work on Ubuntu 14.04 trusty (vast.sai.msu.ru)
 // BEWARE 0.0 is also not considered normal by isnormal() !!!
-  if ( 0 == __builtin_isnormal( ( a ) && a != 0.0 ) ) {
+  if ( 0 == __builtin_isnormal( ( a ) ) && a != 0.0 ) {
    fprintf( stderr, "The coefficient value is out of range!\n");
    return 1;
   }
-  if ( 0 == __builtin_isnormal( ( b ) && b != 0.0 ) ) {
+  if ( 0 == __builtin_isnormal( ( b ) ) && b != 0.0 ) {
    fprintf( stderr, "The coefficient value is out of range!\n");
    return 1;
   }
-  if ( 0 == __builtin_isnormal( ( c ) && c != 0.0 ) ) {
+  if ( 0 == __builtin_isnormal( ( c ) ) && c != 0.0 ) {
    fprintf( stderr, "The coefficient value is out of range!\n");
    return 1;
   }
 #endif
+#else
+  // a simplified check using isnan
+  if ( 0 != isnan( ( a ) ) ) {
+   fprintf( stderr, "The coefficient value is out of range!\n");
+   return 1;
+  }
+  if ( 0 != isnan( ( b ) ) ) {
+   fprintf( stderr, "The coefficient value is out of range!\n");
+   return 1;
+  }
+  if ( 0 != isnan( ( c ) ) ) {
+   fprintf( stderr, "The coefficient value is out of range!\n");
+   return 1;
+  }
 #endif
 
  }
@@ -87,23 +101,41 @@ int main( int argc, char **argv ) {
 // Othervise even with the '_ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L' check
 // isnormal() doesn't work on Ubuntu 14.04 trusty (vast.sai.msu.ru)
 // BEWARE 0.0 is also not considered normal by isnormal() !!!
-  if ( 0 == __builtin_isnormal( ( a_[0] ) && a_[0] != 0.0 ) ) {
+  if ( 0 == __builtin_isnormal( ( a_[0] ) ) && a_[0] != 0.0 ) {
    fprintf( stderr, "The coefficient value is out of range!\n");
    return 1;
   }
-  if ( 0 == __builtin_isnormal( ( a_[1] ) && a_[1] != 0.0 ) ) {
+  if ( 0 == __builtin_isnormal( ( a_[1] ) ) && a_[1] != 0.0 ) {
    fprintf( stderr, "The coefficient value is out of range!\n");
    return 1;
   }
-  if ( 0 == __builtin_isnormal( ( a_[2] ) && a_[2] != 0.0 ) ) {
+  if ( 0 == __builtin_isnormal( ( a_[2] ) ) && a_[2] != 0.0 ) {
    fprintf( stderr, "The coefficient value is out of range!\n");
    return 1;
   }
-  if ( 0 == __builtin_isnormal( ( a_[3] ) && a_[3] != 0.0 ) ) {
+  if ( 0 == __builtin_isnormal( ( a_[3] ) ) && a_[3] != 0.0 ) {
    fprintf( stderr, "The coefficient value is out of range!\n");
    return 1;
   }
 #endif
+#else
+  // a simplified check using isnan
+  if ( 0 != isnan( (  a_[0] ) ) ) {
+   fprintf( stderr, "The coefficient value is out of range!\n");
+   return 1;
+  }
+  if ( 0 != isnan( (  a_[1] ) ) ) {
+   fprintf( stderr, "The coefficient value is out of range!\n");
+   return 1;
+  }
+  if ( 0 != isnan( (  a_[2] ) ) ) {
+   fprintf( stderr, "The coefficient value is out of range!\n");
+   return 1;
+  }
+  if ( 0 != isnan( (  a_[3] ) ) ) {
+   fprintf( stderr, "The coefficient value is out of range!\n");
+   return 1;
+  }
 #endif
 
  }
