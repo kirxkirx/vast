@@ -28,7 +28,11 @@ else
  ;;
  "R")
  ;;
+ "Rc")
+ ;;
  "I")
+ ;;
+ "Ic")
  ;;
  "r")
  ;;
@@ -184,7 +188,7 @@ else
    echo "$MEDIAN_MAG  $B  $COMBINED_ERROR"
   done | sort -n > calib.txt
  ;;
- "R")
+ "R"|"Rc")
 #  cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{print $8" "$21" "sqrt($9*$9+$22*$22)}' | while read A B C ;do if [ ! -z $C ];then  if [ "$B" != "0.000" ];then echo "$A  $B  $C" ;fi  ;fi ;done | sort -n > calib.txt
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$21,$22}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then
@@ -207,7 +211,7 @@ else
    echo "$MEDIAN_MAG  $B  $COMBINED_ERROR"
   done | sort -n > calib.txt
  ;;
- "I")
+ "I"|"Ic")
 #  cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{print $8" "$23" "sqrt($9*$9+$24*$24)}' | while read A B C ;do if [ ! -z $C ];then  if [ "$B" != "0.000" ];then echo "$A  $B  $C" ;fi  ;fi ;done | sort -n > calib.txt
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$23,$24}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then
