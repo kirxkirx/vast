@@ -147,7 +147,7 @@ void print_TT_reminder( int show_timer_or_quit_instantly ) {
  fprintf( stderr, "You may find which time system was used in vast_summary.log\n\n" );
  fprintf( stderr, "Please \E[01;31mmake sure you know the difference between Terrestrial Time and UTC\033[00m,\n" );
  fprintf( stderr, "before deriving the time of minimum of an eclipsing binary or maximum of\n" );
- fprintf( stderr, "a pulsating star, sending a VaST lightcurve to your collaborator, AAVSO,\n" );
+ fprintf( stderr, "a pulsating star, sending a VaST lightcurve to your collaborators, AAVSO,\n" );
  fprintf( stderr, "B.R.N.O. database etc. Often people and databases expect JDs in UTC, not TT.\n" );
  fprintf( stderr, "More information may be found at https://en.wikipedia.org/wiki/Terrestrial_Time\n\n" );
  if ( show_timer_or_quit_instantly == 2 ) {
@@ -4795,19 +4795,23 @@ int main( int argc, char **argv ) {
 
     if ( debug != 0 )
      fprintf( stderr, "DEBUG MSG: 00002 " );
-    // We do not care about transient candidates in failsafe mode OR if all stars on the frame were matched
-    if ( param_failsafe == 0 && Number_of_ecv_star < NUMBER2 ) {
-     // Make sure the potential transients are not suspiciously fast
-     if ( fabs( STAR3[0].JD - STAR2[Pos2[Number_of_ecv_star]].JD ) > TRANSIENT_MIN_TIMESCALE_DAYS ) {
-      // Search for transients among new stars
-      for ( i= Number_of_ecv_star; i < NUMBER2; i++ ) {
-       // !!!! vast_flag is size-related and should not be considered for the transient search
-       //if( STAR2[Pos2[i]].vast_flag!=0 )continue;
-       //fprintf(stderr,"*** DEBUG %d\n",STAR2[Pos2[i]].n);
-       test_transient( search_area_boundaries, STAR2[Pos2[i]], STAR3[0].JD, X_im_size, Y_im_size );
+    // Do this only for the second image in the transientdetection mode !!
+    if( n==2 && Num==4 ) {
+     // We do not care about transient candidates in failsafe mode OR if all stars on the frame were matched
+     if ( param_failsafe == 0 && Number_of_ecv_star < NUMBER2 ) {
+      // Make sure the potential transients are not suspiciously fast
+      if ( fabs( STAR3[0].JD - STAR2[Pos2[Number_of_ecv_star]].JD ) > TRANSIENT_MIN_TIMESCALE_DAYS ) {
+       // Search for transients among new stars
+       for ( i= Number_of_ecv_star; i < NUMBER2; i++ ) {
+        // !!!! vast_flag is size-related and should not be considered for the transient search
+        //if( STAR2[Pos2[i]].vast_flag!=0 )continue;
+        //fprintf(stderr,"*** DEBUG %d\n",STAR2[Pos2[i]].n);
+        test_transient( search_area_boundaries, STAR2[Pos2[i]], STAR3[0].JD, X_im_size, Y_im_size );
+       }
       }
      }
     }
+    //
     if ( debug != 0 )
      fprintf( stderr, "Ok\n" );
 

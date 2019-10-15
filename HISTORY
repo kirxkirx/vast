@@ -47,8 +47,13 @@ vast-1.0rc85:
 	* '--nomagsizefilter' option now switches off also the psf fit quality vs magnitude filter.
 	If you don't find your target star in the PSF photometry mode, but it is there when the aperture
 	photometry is used - that option might help.
-	* Changed the defautl maximum number of stars for plate solution in 'util/solve_plate_with_UCAC5'
-	to 1000 in order to speed up communication with VizieR. 
+	* Changed the maximum number of stars for plate solution in 'util/solve_plate_with_UCAC5'
+	to 1000 in order to speed up communication with VizieR. You may change this default value 
+	by editing the line '#define MAX_STARS_IN_VIZQUERY 1000' in 'src/solve_plate_with_UCAC5.c'
+	and recompiling VaST with 'make'.
+	* The lightcurve plotter './lc' can fit a linear trend to the lightcurve (when viewing a lightcurve 
+	press '1' on the keyboard). The fitted line slope is now displayed in mag/day as well as the time of 
+	decline by two (t2) and three (t3) magnitudes for convenience.
 07 Mar 2019: vast-1.0rc84:
 	* VaST is now on Github ( https://github.com/kirxkirx/vast ), pull requests are welcome!
 	* The new script 'util/get_gaia_lc.sh' gets Gaia G, BP and RP lightcurves for a Gaia DR2 ID that 

@@ -222,7 +222,7 @@ void fit_linear_trend( float *input_JD, float *input_mag, float *mag_err, int N,
  gsl_fit_wmul( fit_jd, 1, fit_w, 1, fit_mag, 1, N, A, &cov11, &chisq );
  ( *B )= 0.0;
 
- fprintf( stderr, "linear trend fit:   %lf mag/day\n", ( *A ) );
+ fprintf( stderr, "linear trend fit:   %lf mag/day, corresponding to t_2mag= %lf, t_3mag= %lf\n", ( *A ), 2.0/( *A ), 3.0/( *A ) );
 
  free( difference );
  free( fit_w );

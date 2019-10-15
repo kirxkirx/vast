@@ -64,9 +64,7 @@ VARIABLE_STAR_NAME="XX Xxx"
 FILTER="X"
 if [ -s CBA_previously_used_header.txt ];then
  echo "Importing the variable star info from CBA_previously_used_header.txt" >> /dev/stderr
- #VARIABLE_STAR_NAME=`cat CBA_previously_used_header.txt | grep '# Variable: ' | awk '{print $2}' FS='# Variable: '`
  VARIABLE_STAR_NAME=`cat CBA_previously_used_header.txt | grep '# Variable: ' | awk -F '# Variable: ' '{print $2}'`
- #FILTER=`cat CBA_previously_used_header.txt | grep '# Filter: ' | awk '{print $2}' FS='# Filter: '`
  FILTER=`cat CBA_previously_used_header.txt | grep '# Filter: ' | awk -F '# Filter: ' '{print $2}'`
 fi
 
