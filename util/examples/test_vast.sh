@@ -31,6 +31,45 @@ END {
  return 0
 }
 
+function test_https_connection {
+ curl --max-time 10 --silent https://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
+ if [ $? -ne 0 ];then
+  # if the above didn't work, try to download the certificate
+  wget -O - https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem > intermediate.pem
+  curl --max-time 10 --silent --cacert intermediate.pem https://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
+  if [ $? -ne 0 ];then
+   # cleanup
+   if [ -f intermediate.pem ];then
+    rm -f intermediate.pem
+   fi
+   #
+   echo "ERROR in test_https_connection(): cannot connect to scan.sai.msu.ru" >> /dev/stderr
+   return 1
+  fi
+ fi
+ 
+ # note there is no https support at vast.sai.msu.ru yet
+
+ curl --max-time 10 --silent https://kirx.net/astrometry_engine/files/ | grep --quiet 'Parent Directory'
+ if [ $? -ne 0 ];then
+  if [ ! -f intermediate.pem ];then
+   wget -O - https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem > intermediate.pem
+  fi
+  curl --max-time 10 --silent --cacert intermediate.pem https://kirx.net/astrometry_engine/files/ | grep --quiet 'Parent Directory'
+  if [ $? -ne 0 ];then
+   echo "ERROR in test_https_connection(): cannot connect to vast.sai.msu.ru" >> /dev/stderr
+   return 1
+  fi
+ fi
+
+ if [ -f intermediate.pem ];then
+  rm -f intermediate.pem
+ fi
+
+ return 0
+}
+
+
 function test_internet_connection {
  curl --max-time 10 --silent http://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
  if [ $? -ne 0 ];then
@@ -8610,6 +8649,12 @@ else
  fi
 fi
 
+####### HTTPS
+test_https_connection
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES HTTPS_001"
+fi
 
 
 # Make an overall conclusion for this test
