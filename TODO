@@ -1,3 +1,17 @@
+* On fresh install the VSX catalog update is slow and silent.
+Need to inform the user about what is going on!
+
+* Specify image center for plate solver.
+
+* Filter out images with bad tracking based on ellipticity.
+
+* Write warning in sextract_single_image that with the default settings 
+a measurement will be dropped.
+
+* Day of the year output for get_image_date
+
+* Recognize calibrated images from MSU observatory for plate solving
+
 * Implement match_mode == 4 for variable and comparison star selection in pgfv
 
 * Test on UBUNTU 18.04

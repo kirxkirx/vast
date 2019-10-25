@@ -7350,7 +7350,7 @@ if [ $? -ne 0 ];then
 fi
 
 # Gaia LPV, first in the list. Do not mix it up with OGLE-BLG-RRLYR-01707 that is 36" away!
-util/search_databases_with_vizquery.sh 265.86100820754 -34.10333534797 | grep -v 'OGLE-BLG-RRLYR-01707' | grep 'OGLE BLG-LPV-022489' | grep 'VARIABLE' | grep --quiet 'Gaia2_LPV'
+util/search_databases_with_vizquery.sh 265.86100820754 -34.10333534797 | grep -v 'OGLE-BLG-RRLYR-01707' | grep 'OGLE-BLG-LPV-022489' | grep 'VARIABLE' | grep --quiet 'Gaia2_LPV'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT016"
