@@ -3,10 +3,11 @@
 # This script will try to set a safe value of MAX_MEASUREMENTS_IN_RAM in src/vast_limits.h
 # before compiling VaST
 
-# default
+# default conservative values
 PHYSMEM_BYTES=512000000
 MAX_MEASUREMENTS_IN_RAM=12000
 
+# try to get the RAM size BSD-style
 command -v sysctl &>/dev/null
 if [ $? -eq 0 ];then
  NEWMEM=`sysctl hw.physmem | awk '{print $2}'`
@@ -17,6 +18,7 @@ if [ $? -eq 0 ];then
  fi
 fi
 
+# try to get the RAM size Linux-style
 command -v free &>/dev/null
 if [ $? -eq 0 ];then
  NEWMEM=`free -b | grep 'Mem' | awk '{print $2}'`
@@ -27,6 +29,7 @@ if [ $? -eq 0 ];then
  fi
 fi
 
+# Based on how much RAM we have, set the maximum number of observations
 if [ $PHYSMEM_BYTES -lt 1073741824 ];then
  MAX_MEASUREMENTS_IN_RAM=12000
 elif [ $PHYSMEM_BYTES -lt 2147483648 ];then
@@ -41,6 +44,7 @@ else
  MAX_MEASUREMENTS_IN_RAM=384000
 fi
 
+# report the result
 echo "This system seems to have $PHYSMEM_BYTES bytes of physical memory 
 Setting MAX_MEASUREMENTS_IN_RAM=$MAX_MEASUREMENTS_IN_RAM in src/vast_limits.h"
 
@@ -58,7 +62,7 @@ if [ $N -ne 1 ];then
 fi
 
 LINE_TO_REPLACE=`grep '#define MAX_MEASUREMENTS_IN_RAM' src/vast_limits.h`
-REPLACE_WITH="#define MAX_MEASUREMENTS_IN_RAM $MAX_MEASUREMENTS_IN_RAM  // PHYSMEM_BYTES=$PHYSMEM_BYTES"
+REPLACE_WITH="#define MAX_MEASUREMENTS_IN_RAM $MAX_MEASUREMENTS_IN_RAM  // set automatically at compile time based on PHYSMEM_BYTES=$PHYSMEM_BYTES by $0"
 
 cat src/vast_limits.h | sed "s:$LINE_TO_REPLACE:$REPLACE_WITH:g" > src/vast_limits.tmp
 mv src/vast_limits.tmp src/vast_limits.h

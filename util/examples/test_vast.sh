@@ -36,6 +36,10 @@ function test_https_connection {
  if [ $? -ne 0 ];then
   # if the above didn't work, try to download the certificate
   wget -O - https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem > intermediate.pem
+  # if that fails - abort the test
+  if [ $? -ne 0 ];then
+   return 2
+  fi
   curl --max-time 10 --silent --cacert intermediate.pem https://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
   if [ $? -ne 0 ];then
    # cleanup
@@ -54,6 +58,10 @@ function test_https_connection {
  if [ $? -ne 0 ];then
   if [ ! -f intermediate.pem ];then
    wget -O - https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem > intermediate.pem
+   # if that fails - abort the test
+   if [ $? -ne 0 ];then
+    return 2
+   fi
   fi
   curl --max-time 10 --silent --cacert intermediate.pem https://kirx.net/astrometry_engine/files/ | grep --quiet 'Parent Directory'
   if [ $? -ne 0 ];then
@@ -8651,9 +8659,14 @@ fi
 
 ####### HTTPS
 test_https_connection
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES HTTPS_001"
+TEST_EXIT_CODE=$?
+if [ $TEST_EXIT_CODE -ne 0 ];then
+ if [ $TEST_EXIT_CODE -eq 2 ];then
+  FAILED_TEST_CODES="$FAILED_TEST_CODES HTTPS_001_TEST_NOT_PERFORMED"
+ else
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES HTTPS_001"
+ fi
 fi
 
 
