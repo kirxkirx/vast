@@ -1337,6 +1337,432 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 
+##### Small CCD images with file list input test #####
+# Download the test dataset if needed
+if [ ! -d ../sample_data ];then
+ cd ..
+ wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ cd $WORKDIR
+fi
+# If the test data are found
+if [ -d ../sample_data ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "Small CCD images with file list input test " >> /dev/stderr
+ echo -n "Small CCD images with file list input test: " >> vast_test_report.txt 
+ if [ -f vast_list_of_input_images_with_time_corrections.txt_test ];then
+  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
+   mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP
+  fi
+  cp vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_example vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+  cp default.sex.ccd_example default.sex
+  cp vast_list_of_input_images_with_time_corrections.txt_test vast_list_of_input_images_with_time_corrections.txt
+  ./vast -u -f --nomagsizefilter 
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST000"
+  fi
+  rm -f vast_list_of_input_images_with_time_corrections.txt
+  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP ];then
+    mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+  fi
+ fi
+ # Check results
+ if [ -f vast_summary.log ];then
+  grep --quiet "Images processed 91" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST001"
+  fi
+  grep --quiet "Images used for photometry 91" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST002"
+  fi
+  grep --quiet "Ref.  image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST_REFIMAGE"
+  fi
+  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST003"
+  fi
+  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST004"
+  fi
+  grep --quiet "Magnitude-Size filter: Disabled" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST005"
+  fi
+  grep --quiet "Photometric errors rescaling: YES" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST006"
+  fi
+  if [ ! -f vast_lightcurve_statistics.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST007"
+  fi
+  if [ ! -s vast_lightcurve_statistics.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST008"
+  fi
+  if [ ! -f vast_lightcurve_statistics_format.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST009"
+  fi
+  if [ ! -s vast_lightcurve_statistics_format.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST010"
+  fi
+  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST011"
+  fi
+  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST012"
+  fi
+  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST013"
+  fi
+  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST014"
+  fi
+  N_AUTOCANDIDATES=`cat vast_autocandidates.log | wc -l | awk '{print $1}'`
+  # actually we get two more false candidates depending on binning if filtering is disabled
+  if [ $N_AUTOCANDIDATES -lt 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST000_N_AUTOCANDIDATES"
+  fi
+  ###############################################
+  ### Now let's check the candidate variables ###
+  # out00201.dat - CV (but we can't rely on it having the same out*.dat name)
+  STATSTR=`cat vast_lightcurve_statistics.log | sort -k26 | tail -n1`
+  LIGHTCURVEFILE=`echo "$STATSTR" | awk '{print $5}'`
+  NLINES_IN_LIGHTCURVEFILE=`cat $LIGHTCURVEFILE | wc -l | awk '{print $1}'`
+  if [ $NLINES_IN_LIGHTCURVEFILE -lt 91 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST015_$NLINES_IN_LIGHTCURVEFILE"
+  fi
+  STATMAG=`echo "$STATSTR" | awk '{print $1}'`
+  TEST=`echo "a=($STATMAG)-(-11.761200);sqrt(a*a)<0.01" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST015a"
+  fi
+  STATX=`echo "$STATSTR" | awk '{print $3}'`
+  TEST=`echo "a=($STATX)-(218.9535100);sqrt(a*a)<0.1" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST016"
+  fi
+  STATY=`echo "$STATSTR" | awk '{print $4}'`
+  TEST=`echo "a=($STATY)-(247.8363000);sqrt(a*a)<0.1" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST017"
+  fi
+  # indexes
+  # idx01_wSTD
+  STATIDX=`echo "$STATSTR" | awk '{print $6}'`
+  #TEST=`echo "a=($STATIDX)-(0.241686);sqrt(a*a)<0.01" | bc -ql`
+  # wSTD with rescaled errorbars
+  #TEST=`echo "a=($STATIDX)-(0.325552);sqrt(a*a)<0.01" | bc -ql`
+  # wSTD with rescaled errorbars (robust line fitting)
+  # The difference may be pretty huge from machine to mcahine...
+  # And the difference HUGEly depends on weighting
+  TEST=`echo "a=($STATIDX)-(0.372294);sqrt(a*a)<0.1" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST018"
+  fi
+  # idx09_MAD
+  STATIDX=`echo "$STATSTR" | awk '{print $14}'`
+  TEST=`echo "a=($STATIDX)-(0.018977);sqrt(a*a)<0.005" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST019"
+  fi
+  # idx25_IQR
+  STATIDX=`echo "$STATSTR" | awk '{print $30}'`
+  TEST=`echo "a=($STATIDX)-(0.025686);sqrt(a*a)<0.001" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST020"
+  fi
+  STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
+  NUMBER_OF_LINES=`cat "$STATOUTFILE" | wc -l | awk '{print $1}'`
+  if [ $NUMBER_OF_LINES -ne 91 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST021_$NUMBER_OF_LINES"
+  fi
+  # Check if star is in the list of candidate vars
+  if [ ! -s vast_autocandidates.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST022 SMALLCCDFILELIST023_NOT_PERFORMED"
+  else
+   STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
+   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST023"
+   fi
+  fi
+  # Check that this star is not in the list of constant stars
+  if [ ! -s vast_list_of_likely_constant_stars.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST024 SMALLCCDFILELIST025_NOT_PERFORMED"
+  else
+   STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
+   grep --quiet "$STATOUTFILE" vast_list_of_likely_constant_stars.log
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST025"
+   fi
+  fi  
+  # out00268.dat - EW (but we can't rely on it having the same out*.dat name)
+  STATSTR=`cat vast_lightcurve_statistics.log | sort -k26 | tail -n2 | head -n1`
+  LIGHTCURVEFILE=`echo "$STATSTR" | awk '{print $5}'`
+  NLINES_IN_LIGHTCURVEFILE=`cat $LIGHTCURVEFILE | wc -l | awk '{print $1}'`
+  if [ $NLINES_IN_LIGHTCURVEFILE -lt 90 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST026_$NLINES_IN_LIGHTCURVEFILE"
+  fi
+  STATMAG=`echo "$STATSTR" | awk '{print $1}'`
+  TEST=`echo "a=($STATMAG)-(-11.220400);sqrt(a*a)<0.01" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST026a"
+  fi
+  STATX=`echo "$STATSTR" | awk '{print $3}'`
+  TEST=`echo "a=($STATX)-(87.2039000);sqrt(a*a)<0.1" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST027"
+  fi
+  STATY=`echo "$STATSTR" | awk '{print $4}'`
+  TEST=`echo "a=($STATY)-(164.4241000);sqrt(a*a)<0.1" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST028"
+  fi
+  # indexes
+  STATIDX=`echo "$STATSTR" | awk '{print $6}'`
+  TEST=`echo "a=($STATIDX)-(0.037195);sqrt(a*a)<0.01" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST029"
+  fi
+  STATIDX=`echo "$STATSTR" | awk '{print $14}'`
+  TEST=`echo "a=($STATIDX)-(0.044775);sqrt(a*a)<0.002" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST030"
+  fi
+  STATIDX=`echo "$STATSTR" | awk '{print $30}'`
+  # Yeah, I have no idea why this difference is so large between machines
+  # The difference is in the original lightcurve...
+  TEST=`echo "a=($STATIDX)-(0.050557);sqrt(a*a)<0.003" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST031"
+  fi
+  STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
+  NUMBER_OF_LINES=`cat "$STATOUTFILE" | wc -l | awk '{print $1}'`
+  if [ $NUMBER_OF_LINES -lt 90 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST032_$NUMBER_OF_LINES"
+  fi
+  # Check if star is in the list of candidate vars
+  if [ ! -s vast_autocandidates.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST033 SMALLCCDFILELIST034_NOT_PERFORMED"
+  else
+   STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
+   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST034"
+   fi
+  fi
+  STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
+  grep --quiet "$STATOUTFILE" vast_list_of_likely_constant_stars.log
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST035"
+  fi
+  ###############################################
+  # Both stars should be selected using the following criterea, but let's check at least one
+  cat vast_autocandidates_details.log | grep --quiet 'IQR  IQR+MAD  eta+IQR+MAD  eta+CLIPPED_SIGMA'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST_AUTOCANDIDATEDETAILS"
+  fi
+  ###############################################
+  lib/remove_bad_images 0.1 &> /dev/null
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST036"
+  fi
+  ###############################################
+  if [ -s vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
+   grep --quiet "CCD-TEMP" vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+   if [ $? -eq 0 ];then
+    for LIGHTCURVEFILE_TO_TEST in out*.dat ;do
+     grep --quiet "CCD-TEMP" "$LIGHTCURVEFILE_TO_TEST"
+     if [ $? -ne 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST037_$LIGHTCURVEFILE_TO_TEST"
+      break
+     fi
+    done
+   else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST037_NOT_PERFORMED_1"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST037_NOT_PERFORMED_2"
+  fi
+  ################################################################################
+  # Check vast_image_details.log format
+  NLINES=`cat vast_image_details.log | awk '{print $18}' | sed '/^\s*$/d' | wc -l | awk '{print $1}'`
+  if [ $NLINES -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST_VAST_IMG_DETAILS_FORMAT"
+  fi
+  ################################################################################
+  ###############################################
+  ### Flag image test should always be the last one
+  for IMAGE in ../sample_data/*.fit ;do
+   util/clean_data.sh
+   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    IMAGE=`basename $IMAGE`
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST038_$IMAGE"
+   fi 
+  done
+
+ else
+  echo "ERROR: cannot find vast_summary.log" >> /dev/stderr
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST_ALL"
+ fi
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mSmall CCD images with file list input test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mSmall CCD images with file list input test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+
 
 ##### Few small CCD images test #####
 # Download the test dataset if needed

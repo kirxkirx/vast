@@ -1520,6 +1520,7 @@ int main( int argc, char **argv ) {
 
  // The following variables are used to handle vast_list_of_input_images_with_time_corrections.txt
  FILE *vast_list_of_input_images_with_time_corrections;
+ char str_image_filename_from_input_list_and_time_correction[2*FILENAME_LENGTH];
  char image_filename_from_input_list[FILENAME_LENGTH];
  double image_date_correction_from_input_list;
  // ------------------------------------------
@@ -2114,7 +2115,15 @@ int main( int argc, char **argv ) {
   // If the file exists
   fprintf( stderr, "list found!\n" );
   // Possibe buffer overflow here beacuse of fscanf(..., "%s", ...), but I feel lucky
-  while ( 2 == fscanf( vast_list_of_input_images_with_time_corrections, "%s %lf", image_filename_from_input_list, &image_date_correction_from_input_list ) ) {
+  //while ( 2 == fscanf( vast_list_of_input_images_with_time_corrections, "%s %lf", image_filename_from_input_list, &image_date_correction_from_input_list ) ) {
+  while ( NULL!=fgets( str_image_filename_from_input_list_and_time_correction, 2*FILENAME_LENGTH, vast_list_of_input_images_with_time_corrections) ){
+   if ( 2 != sscanf( str_image_filename_from_input_list_and_time_correction, "%s %lf", image_filename_from_input_list, &image_date_correction_from_input_list ) ) {
+    // handle the case when no time correction is specified, just the image file
+    if ( 1 != sscanf( str_image_filename_from_input_list_and_time_correction, "%s", image_filename_from_input_list ) ) {
+     continue;
+    }
+    image_date_correction_from_input_list=0.0;
+   }
    // We will run a few simple checks on image_date_correction_from_input_list and forget image_date_correction_from_input_list for now, it will be looked for in gettime() later
    if ( fabs( image_date_correction_from_input_list ) > EXPECTED_MAX_JD )
     continue;
