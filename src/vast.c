@@ -5229,11 +5229,13 @@ int main( int argc, char **argv ) {
  if ( 0 == system( "lib/vast_image_details_log_parser.sh > vast_summary.log" ) ) {
   fprintf( stderr, "OK\n" );
  }
- 
+
+ /* We don't need it if vast_source_detection_rejection_statistics.log stuff works 
  // Remove single-epoch detections to exclude them from bad image search speed-up the following steps
  if ( 0 != system( "lib/remove_lightcurves_with_small_number_of_points" ) ) {
   fprintf( stderr, "ERROR running  lib/remove_lightcurves_with_small_number_of_points\n" );
  }
+ */
 
  // Filter-out bad images
  if ( param_remove_bad_images == 1 ) {
