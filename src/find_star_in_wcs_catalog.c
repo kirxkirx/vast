@@ -15,7 +15,7 @@ int main( int argc, char **argv ) {
  int best_i= -1;
  double target_RA_deg;
  double target_Dec_deg;
- char GARBAGE[4096];
+ //char GARBAGE[4096];
  char sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT];
 
  if ( argc < 3 ) {
