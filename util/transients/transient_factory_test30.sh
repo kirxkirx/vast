@@ -126,9 +126,10 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 #  continue
 # fi
  # Run VaST
- ##./vast -x99 -u -f -k $REFERENCE_IMAGES/*$FIELD* $NEW_IMAGES/*$FIELD*
- #./vast --selectbestaperture -y1 -p -x99 -u -f -k $REFERENCE_IMAGES/*"$FIELD"_* `ls $NEW_IMAGES/*"$FIELD"_*_001.fts | head -n1` `ls $NEW_IMAGES/*"$FIELD"_*_002.fts | head -n1`
- ./vast --selectbestaperture -y1 -p -x99 -u -f -k "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
+ ###./vast -x99 -u -f -k $REFERENCE_IMAGES/*$FIELD* $NEW_IMAGES/*$FIELD*
+ ##./vast --selectbestaperture -y1 -p -x99 -u -f -k $REFERENCE_IMAGES/*"$FIELD"_* `ls $NEW_IMAGES/*"$FIELD"_*_001.fts | head -n1` `ls $NEW_IMAGES/*"$FIELD"_*_002.fts | head -n1`
+ #./vast --selectbestaperture -y1 -p -x99 -u -f -k "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
+ ./vast --matchstarnumber 500 --selectbestaperture -y1 -p -x99 -u -f -k "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
  cat vast_summary.log >> transient_factory.log
  grep --quiet 'Images used for photometry 4' vast_summary.log
  if [ $? -ne 0 ];then
