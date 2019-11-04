@@ -56,6 +56,11 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
  # TEST !!!
  #NEED_TO_UPDATE_THE_FILE=1
 
+ if [ "$1" == "force" ];then
+  echo "Forcing the catalog update per user request"  >> /dev/stderr
+  NEED_TO_UPDATE_THE_FILE=1
+ fi
+
  # Update the file if needed
  if [ $NEED_TO_UPDATE_THE_FILE -eq 1 ];then
   echo "######### Updating $FILE_TO_UPDATE #########" >> /dev/stderr
