@@ -8104,7 +8104,9 @@ if [ -d ../sample_data ];then
   #TEST=`echo "a=($STATIDX)-(0.052632);sqrt(a*a)<0.003" | bc -ql`
   #TEST=`echo "a=($STATIDX)-(0.049074);sqrt(a*a)<0.003" | bc -ql`
   # After dropping one of the 10 brightest stars
-  TEST=`echo "a=($STATIDX)-(0.045071);sqrt(a*a)<0.003" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.045071);sqrt(a*a)<0.003" | bc -ql`
+  # After disabling mag_psf-mag_aper filter
+  TEST=`echo "a=($STATIDX)-(0.049129);sqrt(a*a)<0.003" | bc -ql`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
