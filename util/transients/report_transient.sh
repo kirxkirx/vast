@@ -8,7 +8,7 @@ if [ -z $1 ]; then
 fi
 LIGHTCURVEFILE=$1
 
-. util/transients/transient_factory_setup.sh
+#. util/transients/transient_factory_setup.sh
 
 # Find SExtractor
 SEXTRACTOR=`command -v sex 2>/dev/null`
@@ -187,9 +187,9 @@ echo "                   $YEAR $MONTH $DAYFRAC_MEAN  $JD_MEAN  $MAG_MEAN " `lib/
 #     Reference image    2010 12 10.0833  2455540.5834  13.61  06:29:12.25 +26:24:19.4
 
 RA_MEAN_SPACES=`lib/deg2hms $RA_MEAN $DEC_MEAN | awk '{print $1}'`
-RA_MEAN_SPACES=${RA_MEAN_SPACES//:/ }
+RA_MEAN_SPACES=${RA_MEAN_SPACES//":"/" "}
 DEC_MEAN_SPACES=`lib/deg2hms $RA_MEAN $DEC_MEAN | awk '{print $2}'`
-DEC_MEAN_SPACES=${DEC_MEAN_SPACES//:/ }
+DEC_MEAN_SPACES=${DEC_MEAN_SPACES//":"/" "}
 
 ### FINAL CHECK: make sure the transient is not jumping in RA or DEC ###
 #EXTREME_POSITION_1=`lib/deg2hms $RA_MAX $DEC_MAX`
@@ -231,13 +231,68 @@ lib/catalogs/check_catalogs_offline $RA_MEAN $DEC_MEAN
 #util/search_databases_with_curl.sh `lib/deg2hms $RA_MEAN $DEC_MEAN` H |grep -v "Starting" |grep -v "Searching"
 #util/transients/MPCheck.sh `lib/deg2hms $RADEC` $DATE $TIME H |grep -v "Starting"
 util/transients/MPCheck.sh $RADEC_MEAN_HMS $DATE $TIME H |grep -v "Starting"
+
 echo -n "<a href=\"http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=$RA_MEAN%20$DEC_MEAN&CooDefinedFrames=J2000&Radius=1.0&Radius.unit=arcmin\" target=\"_blank\">Search this object in <font color=\"maroon\">SIMBAD</font>.</a>
 <a href=\"http://vizier.u-strasbg.fr/viz-bin/VizieR?-source=&-out.add=_r&-out.add=_RAJ%2C_DEJ&-sort=_r&-to=&-out.max=20&-meta.ucd=2&-meta.foot=1&-c=$RA_MEAN+$DEC_MEAN&-c.rs=60\" target=\"_blank\">Search this object in <font color=\"FF9900\">VizieR</font> catalogs.</a>
 <a href=\"http://skydot.lanl.gov/nsvs/cone_search.php?ra=$RA_MEAN&dec=$DEC_MEAN&rad=1&saturated=on&nocorr=on&lonpts=on&hiscat=on&hicorr=on&hisigcorr=on&radecflip=on\" target=\"_blank\">Search for previous observations of this object in the <font color=#006600>NSVS</font> database.</a>
 <a href=\"http://irsa.ipac.caltech.edu/applications/wise/#id=Hydra_wise_wise_1&RequestClass=ServerRequest&DoSearch=true&schema=allsky-4band&intersect=CENTER&subsize=0.16666666800000002&mcenter=mcen&band=1,2,3,4&dpLevel=3a&UserTargetWorldPt=$RA_MEAN;$DEC_MEAN;EQ_J2000&SimpleTargetPanel.field.resolvedBy=nedthensimbad&preliminary_data=no&coaddId=&projectId=wise&searchName=wise_1&shortDesc=Position&isBookmarkAble=true&isDrillDownRoot=true&isSearchResult=true\" target=\"_blank\">Show this position in <font color=\"#FF0033\">WISE</font> atlas</a>
 <a href=\"http://irsa.ipac.caltech.edu/cgi-bin/FinderChart/nph-finder?locstr=$RA_MEAN+$DEC_MEAN&markervis_shrunk=true\" target=\"_blank\"><font color=\"#339999\">2MASS</font>, <font color=\"#339999\">SDSS</font>, and <font color=\"#339999\">DSS</font> Finder Chart</a>
+<FORM NAME='$$FORMMPC$1' METHOD=POST TARGET='_blank' ACTION='https://minorplanetcenter.net/cgi-bin/mpcheck.cgi'>
+<font color='#33CC99'>MPChecker:</font> <input type=submit value=' Produce list '>
+<input type='hidden' name='year' maxlength=4 size=4 value='2019'> <input type='hidden' name='month' maxlength=2 size=2 value='11'> <input type='hidden' name='day' maxlength=5 size=5 value='04.95'>
+<input type='radio' name='which' VALUE='pos' CHECKED style='display:none;'>
+<input type='hidden' name='ra' value='$RA_MEAN_SPACES' maxlength=12 size=12>
+<input type='hidden' name='decl' value='$DEC_MEAN_SPACES' maxlength=12 size=12>
+<input type='radio' name='which' VALUE='obs' style='display:none;'>
+<textarea name='TextArea' cols=81 rows=10 style='display:none;'></textarea>
+<input type='hidden' name='radius' maxlength=3 size=3 VALUE='15'>
+<input type='hidden' name='limit' maxlength=4 size=4 VALUE='16.0'>
+<input type='hidden' name='oc' maxlength=3 size=3 VALUE='500'>
+<input type='radio' name='sort' VALUE='d' CHECKED style='display:none;'>
+<input type='radio' name='sort' VALUE='r' style='display:none;'>
+<input type='radio' name='mot' VALUE='m' style='display:none;'>
+<input type='radio' name='mot' VALUE='h' CHECKED style='display:none;'>
+<input type='radio' name='mot' value='d' style='display:none;'>
+<input type='radio' name='tmot' VALUE='t' style='display:none;'>
+<input type='radio' name='tmot' VALUE='s' CHECKED style='display:none;'>
+<input type='radio' name='pdes' VALUE='u' CHECKED style='display:none;'>
+<input type='radio' name='pdes' VALUE='p' style='display:none;'>
+<input type='radio' name='needed' VALUE='f' CHECKED style='display:none;'>
+<input type='radio' name='needed' VALUE='t' style='display:none;'>
+<input type='radio' name='needed' VALUE='n' style='display:none;'>
+<input type='radio' name='needed' VALUE='u' style='display:none;'>
+<input type='radio' name='needed' VALUE='N' style='display:none;'>
+<input type='hidden' name='ps' VALUE='n'>
+<input type='radio' name='type' VALUE='p' CHECKED style='display:none;'>
+<input type='radio' name='type' VALUE='m' style='display:none;'>
+</form>
+<form NAME=\"$$FORMCATALINA$1\" method=\"post\" TARGET=\"_blank\" action=\"http://nunuku.caltech.edu/cgi-bin/getcssconedb_release_img.cgi\" enctype=\"multipart/form-data\">
+<font color=\"#33CC99\">Catalina photometry: </font>
+<input type=\"hidden\" name=\"RA\"  size=\"12\" maxlength=\"20\" value=\"$RA_MEAN\" /><input type=\"hidden\" name=\"Dec\"  size=\"12\" maxlength=\"20\" value=\"$DEC_MEAN\" />
+<input type=\"hidden\" name=\"Rad\"  size=\"5\" maxlength=\"10\" value=\"0.1\" />
+<input type=\"hidden\" name=\"IMG\" value=\"dss\" />
+<input type=\"hidden\" name=\"IMG\" value=\"nun\" checked=\"checked\" />
+<input type=\"hidden\" name=\"IMG\" value=\"sdss\" />
+<input type=\"hidden\" name=\"DB\" value=\"photcat\" checked=\"checked\" />
+<input type=\"hidden\" name=\"D=0>value=\"orphancat\" />
+<input type=\"submit\" name=\".submit\" value=\"Submit\" />
+<input type=\"hidden\" name=\"OUT\" value=\"web\" />
+<input type=\"hidden\" name=\"OUT\" value=\"csv\" checked=\"checked\" />
+<input type=\"hidden\" name=\"OUT\" value=\"vot\" />
+<input type=\"hidden\" name=\"SHORT\" value=\"short\" checked=\"checked\" />
+<input type=\"hidden\" name=\"SHORT\" value=\"long\" />
+<input type=\"hidden\" name=\"PLOT\" value=\"plot\" checked=\"checked\" />
+</form>
+<form NAME=\"$$FORMNMW$1\" method=\"get\" TARGET=\"_blank\" action=\"http://scan.sai.msu.ru/cgi-bin/nmw/sky_archive\" enctype=\"application/x-www-form-urlencoded\">
+<font color=\"#33CC99\">NMW image archive: </font>
+<input id=\"h2\" name=\"ra\" type=\"hidden\" required value=\"$RA_HMS\">
+<input id=\"h3\" name=\"dec\" type=\"hidden\" required value=\"$DEC_HMS\">image size 
+<input id=\"h4\" name=\"r\" type=\"text\" required=\"\" value=\"32\" size=\"3\">(pix) 
+<input type=\"submit\">
+</form>
+"
 
-<FORM NAME=\"$$FORMMPC$1\" METHOD=POST TARGET=\"_blank\" ACTION=\"http://www.minorplanetcenter.net/cgi-bin/mpcheck.cgi\"><font color=\"#33CC99\">MPChecker:</font> <input type=submit value=\" Produce list \"><input type=\"hidden\" name=\"year\" maxlength=4 size=4 value=\"$YEAR\" style=\"display:none;\"><input type=\"hidden\" name=\"month\" maxlength=2 size=2 value=\"$MONTH\" style=\"display:none;\"><input type=\"hidden\" name=\"day\" maxlength=5 size=5 value=\"$DAYFRAC_MEAN_SHORT\" style=\"display:none;\"><input type=\"radio\"  name=\"which\" VALUE=\"pos\" CHECKED style=\"display:none;\"><input type=\"hidden\" name=\"ra\" maxlength=12 size=12 value=\"$RA_MEAN_SPACES\" style=\"display:none;\"><input type=\"hidden\" name=\"decl\" maxlength=12 size=12 value=\"$DEC_MEAN_SPACES\" style=\"display:none;\"><input type=\"radio\"  name=\"which\" VALUE=\"obs\" style=\"display:none;\"><textarea name=\"TextArea\" cols=81 rows=10 style=\"display:none;\"></textarea><input type=\"hidden\" name=\"radius\" maxlength=3 size=3 VALUE=\"15\" style=\"display:none;\"><input type=\"hidden\" name=\"limit\" maxlength=4 size=4 VALUE=\"16.0\" style=\"display:none;\"><input type=\"hidden\" name=\"oc\" maxlength=3 size=3 VALUE=\"500\" style=\"display:none;\"><input type=\"radio\"  name=\"sort\" VALUE=\"r\" style=\"display:none;\"><input type=\"radio\"  name=\"sort\" VALUE=\"d\" CHECKED style=\"display:none;\"><input type=\"radio\"  name=\"mot\" VALUE=\"m\" style=\"display:none;\"><input type=\"radio\"  name=\"mot\" VALUE=\"h\" CHECKED style=\"display:none;\"><input type=\"radio\"  name=\"mot\" value=\"d\" style=\"display:none;\"><input type=\"radio\"  name=\"tmot\" VALUE=\"t\" style=\"display:none;\"><input type=\"radio\"  name=\"tmot\" VALUE=\"s\" CHECKED style=\"display:none;\"><input type=\"radio\"  name=\"pdes\" VALUE=\"u\" CHECKED style=\"display:none;\"><input type=\"radio\"  name=\"pdes\" VALUE=\"p\" style=\"display:none;\"><input type=\"radio\"  name=\"needed\" VALUE=\"f\" CHECKED style=\"display:none;\"><input type=\"radio\"  name=\"needed\" VALUE=\"t\" style=\"display:none;\"><input type=\"radio\"  name=\"needed\" VALUE=\"n\" style=\"display:none;\"><input type=\"radio\"  name=\"needed\" VALUE=\"u\" style=\"display:none;\"><input type=\"radio\"  name=\"needed\" VALUE=\"N\" style=\"display:none;\"><input type=\"hidden\"  name=\"ps\" VALUE=\"n\" style=\"display:none;\"><input type=\"radio\"  name=\"type\" VALUE=\"p\" CHECKED style=\"display:none;\"><input type=\"radio\"  name=\"type\" VALUE=\"m\" style=\"display:none;\"></FORM><form NAME=\"$$FORMCATALINA$1\" method=\"post\" TARGET=\"_blank\" action=\"http://nunuku.caltech.edu/cgi-bin/getcssconedb_release_img.cgi\" enctype=\"multipart/form-data\"><font color=\"#33CC99\">Catalina photometry: </font><input type=\"hidden\" name=\"RA\"  size=\"12\" maxlength=\"20\" value=\"$RA_MEAN\" /><input type=\"hidden\" name=\"Dec\"  size=\"12\" maxlength=\"20\" value=\"$DEC_MEAN\" /><input type=\"hidden\" name=\"Rad\"  size=\"5\" maxlength=\"10\" value=\"0.1\" /><input type=\"hidden\" name=\"IMG\" value=\"dss\" /><input type=\"hidden\" name=\"IMG\" value=\"nun\" checked=\"checked\" /><input type=\"hidden\" name=\"IMG\" value=\"sdss\" /><input type=\"hidden\" name=\"DB\" value=\"photcat\" checked=\"checked\" /><input type=\"hidden\" name=\"D=0>value=\"orphancat\" /><input type=\"submit\" name=\".submit\" value=\"Submit\" /><input type=\"hidden\" name=\"OUT\" value=\"web\" /><input type=\"hidden\" name=\"OUT\" value=\"csv\" checked=\"checked\" /><input type=\"hidden\" name=\"OUT\" value=\"vot\" /><input type=\"hidden\" name=\"SHORT\" value=\"short\" checked=\"checked\" /><input type=\"hidden\" name=\"SHORT\" value=\"long\" /><input type=\"hidden\" name=\"PLOT\" value=\"plot\" checked=\"checked\" /></form><form NAME=\"$$FORMNMW$1\" method=\"get\" TARGET=\"_blank\" action=\"http://scan.sai.msu.ru/cgi-bin/nmw/sky_archive\" enctype=\"application/x-www-form-urlencoded\"><font color=\"#33CC99\">NMW image archive: </font><input id=\"h2\" name=\"ra\" type=\"hidden\" required value=\"$RA_HMS\"><input id=\"h3\" name=\"dec\" type=\"hidden\" required value=\"$DEC_HMS\">image size <input id=\"h4\" name=\"r\" type=\"text\" required=\"\" value=\"32\" size=\"3\">(pix) <input type=\"submit\"></form>"
+#<FORM NAME=\"$$FORMMPC$1\" METHOD=POST TARGET=\"_blank\" ACTION=\"http://www.minorplanetcenter.net/cgi-bin/mpcheck.cgi\"><font color=\"#33CC99\">MPChecker:</font> <input type=submit value=\" Produce list \"><input type=\"hidden\" name=\"year\" maxlength=4 size=4 value=\"$YEAR\" style=\"display:none;\"><input type=\"hidden\" name=\"month\" maxlength=2 size=2 value=\"$MONTH\" style=\"display:none;\"><input type=\"hidden\" name=\"day\" maxlength=5 size=5 value=\"$DAYFRAC_MEAN_SHORT\" style=\"display:none;\"><input type=\"radio\"  name=\"which\" VALUE=\"pos\" CHECKED style=\"display:none;\"><input type=\"hidden\" name=\"ra\" maxlength=12 size=12 value=\"$RA_MEAN_SPACES\" style=\"display:none;\"><input type=\"hidden\" name=\"decl\" maxlength=12 size=12 value=\"$DEC_MEAN_SPACES\" style=\"display:none;\"><input type=\"radio\"  name=\"which\" VALUE=\"obs\" style=\"display:none;\"><textarea name=\"TextArea\" cols=81 rows=10 style=\"display:none;\"></textarea><input type=\"hidden\" name=\"radius\" maxlength=3 size=3 VALUE=\"15\" style=\"display:none;\"><input type=\"hidden\" name=\"limit\" maxlength=4 size=4 VALUE=\"16.0\" style=\"display:none;\"><input type=\"hidden\" name=\"oc\" maxlength=3 size=3 VALUE=\"500\" style=\"display:none;\"><input type=\"radio\"  name=\"sort\" VALUE=\"r\" style=\"display:none;\"><input type=\"radio\"  name=\"sort\" VALUE=\"d\" CHECKED style=\"display:none;\"><input type=\"radio\"  name=\"mot\" VALUE=\"m\" style=\"display:none;\"><input type=\"radio\"  name=\"mot\" VALUE=\"h\" CHECKED style=\"display:none;\"><input type=\"radio\"  name=\"mot\" value=\"d\" style=\"display:none;\"><input type=\"radio\"  name=\"tmot\" VALUE=\"t\" style=\"display:none;\"><input type=\"radio\"  name=\"tmot\" VALUE=\"s\" CHECKED style=\"display:none;\"><input type=\"radio\"  name=\"pdes\" VALUE=\"u\" CHECKED style=\"display:none;\"><input type=\"radio\"  name=\"pdes\" VALUE=\"p\" style=\"display:none;\"><input type=\"radio\"  name=\"needed\" VALUE=\"f\" CHECKED style=\"display:none;\"><input type=\"radio\"  name=\"needed\" VALUE=\"t\" style=\"display:none;\"><input type=\"radio\"  name=\"needed\" VALUE=\"n\" style=\"display:none;\"><input type=\"radio\"  name=\"needed\" VALUE=\"u\" style=\"display:none;\"><input type=\"radio\"  name=\"needed\" VALUE=\"N\" style=\"display:none;\"><input type=\"hidden\"  name=\"ps\" VALUE=\"n\" style=\"display:none;\"><input type=\"radio\"  name=\"type\" VALUE=\"p\" CHECKED style=\"display:none;\"><input type=\"radio\"  name=\"type\" VALUE=\"m\" style=\"display:none;\"></FORM><form NAME=\"$$FORMCATALINA$1\" method=\"post\" TARGET=\"_blank\" action=\"http://nunuku.caltech.edu/cgi-bin/getcssconedb_release_img.cgi\" enctype=\"multipart/form-data\"><font color=\"#33CC99\">Catalina photometry: </font><input type=\"hidden\" name=\"RA\"  size=\"12\" maxlength=\"20\" value=\"$RA_MEAN\" /><input type=\"hidden\" name=\"Dec\"  size=\"12\" maxlength=\"20\" value=\"$DEC_MEAN\" /><input type=\"hidden\" name=\"Rad\"  size=\"5\" maxlength=\"10\" value=\"0.1\" /><input type=\"hidden\" name=\"IMG\" value=\"dss\" /><input type=\"hidden\" name=\"IMG\" value=\"nun\" checked=\"checked\" /><input type=\"hidden\" name=\"IMG\" value=\"sdss\" /><input type=\"hidden\" name=\"DB\" value=\"photcat\" checked=\"checked\" /><input type=\"hidden\" name=\"D=0>value=\"orphancat\" /><input type=\"submit\" name=\".submit\" value=\"Submit\" /><input type=\"hidden\" name=\"OUT\" value=\"web\" /><input type=\"hidden\" name=\"OUT\" value=\"csv\" checked=\"checked\" /><input type=\"hidden\" name=\"OUT\" value=\"vot\" /><input type=\"hidden\" name=\"SHORT\" value=\"short\" checked=\"checked\" /><input type=\"hidden\" name=\"SHORT\" value=\"long\" /><input type=\"hidden\" name=\"PLOT\" value=\"plot\" checked=\"checked\" /></form><form NAME=\"$$FORMNMW$1\" method=\"get\" TARGET=\"_blank\" action=\"http://scan.sai.msu.ru/cgi-bin/nmw/sky_archive\" enctype=\"application/x-www-form-urlencoded\"><font color=\"#33CC99\">NMW image archive: </font><input id=\"h2\" name=\"ra\" type=\"hidden\" required value=\"$RA_HMS\"><input id=\"h3\" name=\"dec\" type=\"hidden\" required value=\"$DEC_HMS\">image size <input id=\"h4\" name=\"r\" type=\"text\" required=\"\" value=\"32\" size=\"3\">(pix) <input type=\"submit\"></form>
 # Show the ASAS only for sources with declination below +28 
 TEST=`echo "($DEC_MEAN)<28" |bc -ql`
 re='^[0-9]+$'

@@ -56,7 +56,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  done < $LIGHTCURVE_FILE_OUTDAT
  
  echo "</br>" >> transient_report/index.tmp
- echo "<pre>" >> transient_report/index.tmp
+ #echo "<pre>" >> transient_report/index.tmp
  #cat tmp.description >> transient_report/index.tmp
  #util/transients/report_transient.sh $LIGHTCURVE_FILE_OUTDAT 120 >> transient_report/index.tmp
  util/transients/report_transient.sh $LIGHTCURVE_FILE_OUTDAT  >> transient_report/index.tmp
@@ -66,7 +66,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  # if the final check passed well
  if [ $? -eq 0 ];then
 
-  echo "</pre>" >> transient_report/index.tmp
+  #echo "</pre>" >> transient_report/index.tmp
 
   # Only generate the full-frame previews if convert is installed
   command -v convert &> /dev/null

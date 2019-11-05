@@ -58,10 +58,11 @@ vast-1.0rc85:
 	instead of the command line. The file should contain a path to one image per line.
 	No white spaces should be present in the path (if there are white spaces - rename the files 
 	or create symlinks). A time correction in seconds or the Julian Date of the observation
-	may be specified as the socond column in the input file list. This correction will be applied 
+	may be specified as the second column in the input file list. This correction will be applied 
 	to the image date derived from the FITS image header. If the Julian Date is specified - it will
 	override the date derived from the FITS header. See the examples in 
 	'vast_list_of_input_images_with_time_corrections.txt_example' and 'vast_list_of_input_images_with_time_corrections.txt_test'.
+	* Fixed the "Produce list of minor planest with online MPCecker" function in the transient search mode.
 07 Mar 2019: vast-1.0rc84:
 	* VaST is now on Github ( https://github.com/kirxkirx/vast ), pull requests are welcome!
 	* The new script 'util/get_gaia_lc.sh' gets Gaia G, BP and RP lightcurves for a Gaia DR2 ID that 
