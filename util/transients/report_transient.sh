@@ -182,8 +182,9 @@ for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.da
  fi
 done
 
-echo "Mean magnitude and position on the discovery images: "
-echo "                   $YEAR $MONTH $DAYFRAC_MEAN  $JD_MEAN  $MAG_MEAN " `lib/deg2hms $RA_MEAN $DEC_MEAN`
+echo "<pre>
+Mean magnitude and position on the discovery images: 
+                   $YEAR $MONTH $DAYFRAC_MEAN  $JD_MEAN  $MAG_MEAN " `lib/deg2hms $RA_MEAN $DEC_MEAN`
 #     Reference image    2010 12 10.0833  2455540.5834  13.61  06:29:12.25 +26:24:19.4
 
 RA_MEAN_SPACES=`lib/deg2hms $RA_MEAN $DEC_MEAN | awk '{print $1}'`
@@ -237,7 +238,8 @@ echo -n "<a href=\"http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=$RA_MEAN%20$D
 <a href=\"http://skydot.lanl.gov/nsvs/cone_search.php?ra=$RA_MEAN&dec=$DEC_MEAN&rad=1&saturated=on&nocorr=on&lonpts=on&hiscat=on&hicorr=on&hisigcorr=on&radecflip=on\" target=\"_blank\">Search for previous observations of this object in the <font color=#006600>NSVS</font> database.</a>
 <a href=\"http://irsa.ipac.caltech.edu/applications/wise/#id=Hydra_wise_wise_1&RequestClass=ServerRequest&DoSearch=true&schema=allsky-4band&intersect=CENTER&subsize=0.16666666800000002&mcenter=mcen&band=1,2,3,4&dpLevel=3a&UserTargetWorldPt=$RA_MEAN;$DEC_MEAN;EQ_J2000&SimpleTargetPanel.field.resolvedBy=nedthensimbad&preliminary_data=no&coaddId=&projectId=wise&searchName=wise_1&shortDesc=Position&isBookmarkAble=true&isDrillDownRoot=true&isSearchResult=true\" target=\"_blank\">Show this position in <font color=\"#FF0033\">WISE</font> atlas</a>
 <a href=\"http://irsa.ipac.caltech.edu/cgi-bin/FinderChart/nph-finder?locstr=$RA_MEAN+$DEC_MEAN&markervis_shrunk=true\" target=\"_blank\"><font color=\"#339999\">2MASS</font>, <font color=\"#339999\">SDSS</font>, and <font color=\"#339999\">DSS</font> Finder Chart</a>
-<FORM NAME='$$FORMMPC$1' METHOD=POST TARGET='_blank' ACTION='https://minorplanetcenter.net/cgi-bin/mpcheck.cgi'>
+</pre>
+<form NAME='$$FORMMPC$1' METHOD=POST TARGET='_blank' ACTION='https://minorplanetcenter.net/cgi-bin/mpcheck.cgi'>
 <font color='#33CC99'>MPChecker:</font> <input type=submit value=' Produce list '>
 <input type='hidden' name='year' maxlength=4 size=4 value='2019'> <input type='hidden' name='month' maxlength=2 size=2 value='11'> <input type='hidden' name='day' maxlength=5 size=5 value='04.95'>
 <input type='radio' name='which' VALUE='pos' CHECKED style='display:none;'>
