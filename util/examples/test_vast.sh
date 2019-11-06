@@ -8158,7 +8158,9 @@ if [ -d ../sample_data ];then
   
   # Check the log files corresponding to the first 9 images
   for IMGNUM in `seq 1 9`;do
-   for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve image0000$IMGNUM.cat.magparameter02filter_passed image0000$IMGNUM.cat.magparameter02filter_rejected image0000$IMGNUM.cat.magparameter02filter_thresholdcurve ;do
+   #for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve image0000$IMGNUM.cat.magparameter02filter_passed image0000$IMGNUM.cat.magparameter02filter_rejected image0000$IMGNUM.cat.magparameter02filter_thresholdcurve ;do
+   # We disabled the PSF-APER filter, so no *magparameter02filter_passed files are created
+   for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve image0000$IMGNUM.cat.magparameter02filter_rejected image0000$IMGNUM.cat.magparameter02filter_thresholdcurve ;do
     if [ ! -s "$LOGFILE_TO_CHECK" ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF_EMPTYPSFFILTERINGLOFGILE_$LOGFILE_TO_CHECK"
