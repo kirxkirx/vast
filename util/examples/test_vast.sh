@@ -4724,9 +4724,17 @@ if [ -d ../M31_ISON_test ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD004"
   fi
   util/solve_plate_with_UCAC5 ../M31_ISON_test/M31-1-001-001_dupe-1.fts
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD005_exitcode"
+  fi
+  if [ ! -f wcs_M31-1-001-001_dupe-1.fts ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD005_wcs_M31-1-001-001_dupe-1.fts"
+  fi
   if [ ! -f wcs_M31-1-001-001_dupe-1.fts.cat.ucac5 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD005"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD005_wcs_M31-1-001-001_dupe-1.fts.cat.ucac5"
   else
    lib/bin/xy2sky wcs_M31-1-001-001_dupe-1.fts 200 200 &>/dev/null
    if [ $? -ne 0 ];then
