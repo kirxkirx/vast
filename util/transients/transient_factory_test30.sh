@@ -208,9 +208,10 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 
 
  ##### THIS IS WHAT I WANT TO REMOVE ##### 
- echo "Filter-out spurious flares of bright stars..."
- # Filter-out spurious flares of bright stars
- for i in `cat candidates-transients.lst | awk '{print $1}'` ;do if [ `cat $i | wc -l` -eq 2 ];then grep $i candidates-transients.lst | head -n1 ;continue ;fi ; A=`head -n1 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($1)<9.0 ) print 1; else print 0 }'` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+ # replaced by checking the list of bright stars in util/transients/report_transient.sh
+ #echo "Filter-out spurious flares of bright stars..."
+ ## Filter-out spurious flares of bright stars
+ #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do if [ `cat $i | wc -l` -eq 2 ];then grep $i candidates-transients.lst | head -n1 ;continue ;fi ; A=`head -n1 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($1)<9.0 ) print 1; else print 0 }'` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
  #########################################
 
  echo "Filter-out small-amplitude flares..."
@@ -222,13 +223,19 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  if [ -f ../exclusion_list.txt ];then
   SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
   WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
-  lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @../exclusion_list.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list.txt  #| awk -F'->' '{print $2}' 
+  lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @../exclusion_list.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list.txt
  fi
- # Exclude bright Tycho-2 stars
+ # Exclude stars from the Bright Star Catalog with magnitudes < 7
+ if [ -f lib/catalogs/bright_star_catalog_radeconly.txt ];then
+  SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
+  WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
+  lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/bright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | while read A ;do lib/deg2hms $A ;done > exclusion_list_bsc.txt
+ fi
+ # Exclude bright Tycho-2 stars, by default the magnitude limit is set to vt < 9
  if [ -f lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
   SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
   WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
-  lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_tycho2.txt
+  lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | while read A ;do lib/deg2hms $A ;done > exclusion_list_tycho2.txt
  fi
  
 

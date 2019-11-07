@@ -377,7 +377,7 @@ if [ -z $2 ];then
  #FIELD_OF_VIEW_ARCMIN=62
  #echo "Field of view was not set. Retreating to a default value $FIELD_OF_VIEW_ARCMIN'..."
  echo "Field of view for the image $FITSFILE was not set. Trying to guess..."
- FIELD_OF_VIEW_ARCMIN=`"$VAST_PATH"lib/try_to_guess_image_fov $FITSFILE`
+ FIELD_OF_VIEW_ARCMIN=`"$VAST_PATH"lib/try_to_guess_image_fov $FITSFILE 2>/dev/null`
  if [ -z "$FIELD_OF_VIEW_ARCMIN" ];then
   echo "ERROR guessing the field of view, assuming the default value"
   FIELD_OF_VIEW_ARCMIN=40

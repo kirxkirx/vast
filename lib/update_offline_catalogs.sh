@@ -141,3 +141,18 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
  fi
 
 done
+
+### Check if the  Bright  Star  Catalogue  (BSC) has been downloaded
+if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ];then
+ echo "Downloading the Bright Star Catalogue"
+ curl --silent ftp://cdsarc.u-strasbg.fr/pub/cats/V/50/catalog.gz | gunzip > lib/catalogs/bright_star_catalog_original.txt
+ if [ $? -eq 0 ];then
+  echo "Extracting the R.A. Dec. list"
+  cat lib/catalogs/bright_star_catalog_original.txt | grep -v -e 'NOVA' -e '47    Tuc' -e 'M 31' -e 'NGC 2281' -e 'M 67' -e 'NGC 2808' | while read STR ;do 
+   echo "${STR:75:2}:${STR:77:2}:${STR:79:4} ${STR:83:3}:${STR:86:2}:${STR:88:2}" 
+  done > lib/catalogs/bright_star_catalog_radeconly.txt
+ else
+  echo "ERROR doenloading/unpacking the Bright Star Catalogue"
+ fi
+fi
+
