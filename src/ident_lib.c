@@ -754,7 +754,8 @@ static inline int Popadanie_star1_to_star2__with_mean_distance( struct Star *sta
    break; // assume the first match is the right one
   }
  }
- (*output_mean_distance)= sqrtf(float_mean_distance_squared)/(float)popadanie;
+ //(*output_mean_distance)= sqrtf(float_mean_distance_squared)/(float)popadanie; // that's one funny way to output the accuracy
+ (*output_mean_distance)= sqrtf( float_mean_distance_squared/( (float)popadanie) ); // that's one funny way to output the accuracy
  return ( popadanie );
 }
 
@@ -840,6 +841,7 @@ int Very_Well_triangle( struct Star *star1, int Number1, struct Star *star2, int
  (*nm)= 0;
  Popadanie_max= 0;
  sigma2= preobr->sigma_popadaniya_multiple * preobr->sigma_popadaniya_multiple * preobr->sigma_popadaniya * preobr->sigma_popadaniya;
+ mean_distance_best= 1e9; // to silance the gcc warning. Popadanie_max= 0; is what protects us from using mean_distance_best uninitialized
 
  // Cycle through triangles to identify the best one
  for ( n= 0; n < N_ecv; n++ ) {
