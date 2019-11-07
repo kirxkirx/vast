@@ -3,76 +3,13 @@
 #include <string.h>
 #include <math.h>
 
-//#include <gsl/gsl_fit.h>
 #include <gsl/gsl_statistics.h>
-
-// Wide-field camera
-//#define MIN_VT  0.0
-//#define MAX_VT  8.0
-//#define MAX_DISTANCE_ARCSEC  90
-
-#define MIN_VT 9.0
-#define MAX_VT 12.5
-#define MAX_DISTANCE_ARCSEC 5
-
-#define MAX_DISTANCE_DEGREES MAX_DISTANCE_ARCSEC / 3600.0
-
-#define STARS_IN_TYC2 2539913
-#define TYCHOSTRING 256
-#define TYCHONUMBER 18
 
 #include "../vast_limits.h"
 
 #include "../count_lines_in_ASCII_file.h" // for count_lines_in_ASCII_file()
 
-#define MAX_NUMBER_OF_STARS_ON_IMAGE MAX_NUMBER_OF_STARS // Just to make syntax more convoluted and complex ;)
-
-/* Auxiliary definitions */
-//#define MAX(a, b) (((a)>(b)) ? (a) : (b))
-//#define MIN(a, b) (((a)<(b)) ? (a) : (b))
-
-struct Star {
- int good_star;
- char catnumber[TYCHONUMBER]; // start name
-                              // char imagfilename[LONGEST_FILENAME]; // FITS image name
- double computed_mag;         // star magnitude after correction
- double distance_from_catalog_position;
- // Parameters taken from the sextractor catalog
- int NUMBER; // inernal star number in the Sextractor catalog
- double FLUX_APER;
- double FLUXERR_APER;
- double MAG_APER;
- double MAGERR_APER;
- double X_IMAGE;
- double Y_IMAGE;
- double ALPHA_SKY;
- double DELTA_SKY;
- //double A_IMAGE;
- //double ERRA_IMAGE;
- //double B_IMAGE;
- //double ERRB_IMAGE;
- //double A_WORLD;
- //double B_WORLD;
- int FLAGS;
- //double CLASS_STAR;
- // Parameters from the Tycho2 catalog
- int matched_with_catalog;
- double ALPHA_catalog;
- double DELTA_catalog;
- double BT;  // Tycho B mag
- double VT;  // Tycho V mag
- double V;   // V   = VT -0.090*(BT-VT)
- double B_V; // B-V = 0.850*(BT-VT)
- // Consult Sect 1.3 of Vol 1 of "The Hipparcos and Tycho Catalogues", ESA SP-1200, 1997, for details.
-};
-
-struct CatStar {
- char catnumber[TYCHONUMBER]; // start name
- double ALPHA_catalog;
- double DELTA_catalog;
- double BT; // Tycho B mag
- double VT; // Tycho V mag
-};
+#include "read_tycho2.h"
 
 double get_RA_from_string( char *str ) {
  char str2[256];
@@ -372,31 +309,60 @@ int read_sextractor_cat( char *catalog_name, struct Star *arrStar, int *N, doubl
  return 0;
 }
 
-int main() {
+int create_tycho2_list_of_bright_stars_to_exclude_from_transient_search( double faint_mag_limit_for_the_list ) {
+ double star_VT, star_RA, star_Dec;
+ long i= 0;
+ FILE *outputradeclist;
+ FILE *tychofile;
+ int tychofilecounter;
+ char tychofiles[20][32]= {"lib/catalogs/tycho2/tyc2.dat.00", "lib/catalogs/tycho2/tyc2.dat.01", "lib/catalogs/tycho2/tyc2.dat.02", "lib/catalogs/tycho2/tyc2.dat.03", "lib/catalogs/tycho2/tyc2.dat.04",
+                           "lib/catalogs/tycho2/tyc2.dat.05", "lib/catalogs/tycho2/tyc2.dat.06", "lib/catalogs/tycho2/tyc2.dat.07", "lib/catalogs/tycho2/tyc2.dat.08", "lib/catalogs/tycho2/tyc2.dat.09", "lib/catalogs/tycho2/tyc2.dat.10",
+                           "lib/catalogs/tycho2/tyc2.dat.11", "lib/catalogs/tycho2/tyc2.dat.12", "lib/catalogs/tycho2/tyc2.dat.13", "lib/catalogs/tycho2/tyc2.dat.14", "lib/catalogs/tycho2/tyc2.dat.15", "lib/catalogs/tycho2/tyc2.dat.16",
+                           "lib/catalogs/tycho2/tyc2.dat.17", "lib/catalogs/tycho2/tyc2.dat.18", "lib/catalogs/tycho2/tyc2.dat.19"};
+ char tychostr[TYCHOSTRING];
 
- double image_boundaries_radec[4];
- long M;
- int N, N_match; //,N_candidates;
- struct Star *arrStar;
- struct CatStar *arrCatStar;
- N= count_lines_in_ASCII_file( "wcsmag.cat" );
- //arrStar=malloc(MAX_NUMBER_OF_STARS_ON_IMAGE*sizeof(struct Star));
- arrStar= malloc( N * sizeof( struct Star ) );
- if ( arrStar == NULL ) {
-  fprintf( stderr, "ERROR: Couldnt allocate memory for arrStar\n" );
-  exit( 1 );
- };
- read_sextractor_cat( "wcsmag.cat", arrStar, &N, image_boundaries_radec );
- arrCatStar= malloc( STARS_IN_TYC2 * sizeof( struct CatStar ) );
- if ( arrCatStar == NULL ) {
-  fprintf( stderr, "ERROR: Couldn't allocate memory for arrCatStar\n" );
-  exit( 1 );
- };
- read_tycho_cat( arrCatStar, &M, image_boundaries_radec );
- N_match= match_stars_with_catalog( arrStar, N, arrCatStar, M );
- free( arrCatStar );
- free( arrStar );
- fprintf( stderr, "Matched with Tycho-2 %d out of %d detected stars.\n", N_match, N );
 
+ fprintf( stderr, "Creating a list of Tycho2 stars with VT<%.2lf \n", faint_mag_limit_for_the_list);
+
+ outputradeclist=fopen("lib/catalogs/list_of_bright_stars_from_tycho2.txt","w");
+ if ( outputradeclist==NULL ) {
+  fprintf(stderr,"ERROR: cannot open lib/catalogs/list_of_bright_stars_from_tycho2.txt for wrigting!\n");
+  return 1;
+ }
+
+ for ( tychofilecounter= 0; tychofilecounter < 20; tychofilecounter++ ) {
+  fprintf( stderr, "Reading Tycho2 catalog file %s\n", tychofiles[tychofilecounter] );
+  tychofile= fopen( tychofiles[tychofilecounter], "r" );
+  if ( tychofile == NULL ) {
+   fprintf( stderr, "ERROR: cannot open Tycho2 catalog file %s\n", tychofiles[tychofilecounter] );
+   exit( 1 );
+  }
+  memset( tychostr, 0, TYCHOSTRING ); // reset the string just in case
+  while ( NULL != fgets( tychostr, TYCHOSTRING, tychofile ) ) {
+   tychostr[TYCHOSTRING - 1]= '\0'; // just in case
+   star_VT= get_VT_from_string( tychostr );
+   if ( star_VT > faint_mag_limit_for_the_list ) {
+    continue;
+   }
+   if ( star_VT == 0.0 ) {
+    continue;
+   }
+   star_RA= get_RA_from_string( tychostr );
+   if ( star_RA == 0.0 ) {
+    continue;
+   }
+   star_Dec= get_Dec_from_string( tychostr );
+   if ( star_Dec == 0.0 ) {
+    continue;
+   }
+   fprintf( outputradeclist, "%lf %lf \n", star_RA, star_Dec);
+   i++;
+  }
+  fclose( tychofile );
+ }
+ 
+ fclose(outputradeclist);
+
+ fprintf( stderr, "The list of Tycho2 stars with VT<%.2lf is written to lib/catalogs/list_of_bright_stars_from_tycho2.txt \n", faint_mag_limit_for_the_list);
  return 0;
 }
