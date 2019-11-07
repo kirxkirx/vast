@@ -86,7 +86,7 @@ main: vast.o vast statistics stetson_test lib/create_data
 
 statistics: m_sigma_bin index_vs_mag select_sysrem_input_star_list drop lib/select_only_n_random_points_from_set_of_lightcurves lib/new_lightcurve_sigma_filter lib/remove_points_with_large_errors lib/select_aperture_with_smallest_scatter_for_each_object lib/create_data rescale_photometric_errors util/colstat
 
-etc: stat_outfile util/calibrate_magnitude_scale lib/deg2hms lib/coord_v_dva_slova lib/hms2deg lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/remove_bad_images lib/clean_lightcurves_from_nan lib/put_two_sources_in_one_field lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list util/hjd util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/kwee-van-woerden lib/find_star_in_wcs_catalog util/UTC2TT lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/check_catalogs_offline util/get_image_date lib/fast_clean_data stetson_test util/split_multiextension_fits lib/guess_saturation_limit_main lib/MagSize_filter_standalone
+etc: stat_outfile util/calibrate_magnitude_scale lib/deg2hms lib/coord_v_dva_slova lib/hms2deg lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/remove_bad_images lib/clean_lightcurves_from_nan lib/put_two_sources_in_one_field lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list util/hjd util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/kwee-van-woerden lib/find_star_in_wcs_catalog util/UTC2TT lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search lib/catalogs/check_catalogs_offline util/get_image_date lib/fast_clean_data stetson_test util/split_multiextension_fits lib/guess_saturation_limit_main lib/MagSize_filter_standalone
 
 old: formater_out_wfk 
 
@@ -280,8 +280,20 @@ lib/select_aperture_with_smallest_scatter_for_each_object: select_aperture_with_
 
 lib/kwee-van-woerden: $(SRC_PATH)kwee-van-woerden.c
 	$(CC) $(OPTFLAGS) -o lib/kwee-van-woerden $(SRC_PATH)kwee-van-woerden.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
-lib/catalogs/read_tycho2: $(SRC_PATH)catalogs/read_tycho2.c
-	$(CC) $(OPTFLAGS) -o lib/catalogs/read_tycho2 $(SRC_PATH)catalogs/read_tycho2.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+
+#lib/catalogs/read_tycho2: $(SRC_PATH)catalogs/read_tycho2.c
+#	$(CC) $(OPTFLAGS) -o lib/catalogs/read_tycho2 $(SRC_PATH)catalogs/read_tycho2.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+read_tycho2.o: $(SRC_PATH)catalogs/read_tycho2.c
+	$(CC) $(OPTFLAGS) -c $(SRC_PATH)catalogs/read_tycho2.c -I$(GSL_INCLUDE)
+read_tycho2_main.o: $(SRC_PATH)catalogs/read_tycho2_main.c
+	$(CC) $(OPTFLAGS) -c $(SRC_PATH)catalogs/read_tycho2_main.c
+create_tycho2_list_of_bright_stars_to_exclude_from_transient_search.o: $(SRC_PATH)catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search.c
+	$(CC) $(OPTFLAGS) -c $(SRC_PATH)catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search.c
+lib/catalogs/read_tycho2: read_tycho2.o read_tycho2_main.o
+	$(CC) $(OPTFLAGS) -o lib/catalogs/read_tycho2 read_tycho2.o read_tycho2_main.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search: read_tycho2.o create_tycho2_list_of_bright_stars_to_exclude_from_transient_search.o
+	$(CC) $(OPTFLAGS) -o lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search read_tycho2.o create_tycho2_list_of_bright_stars_to_exclude_from_transient_search.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+
 lib/catalogs/check_catalogs_offline: $(SRC_PATH)catalogs/check_catalogs_offline.c
 	$(CC) $(OPTFLAGS) -o lib/catalogs/check_catalogs_offline $(SRC_PATH)catalogs/check_catalogs_offline.c -lm
 util/get_image_date: get_image_date.o gettime.o
@@ -486,7 +498,7 @@ clean: clean_libraries
 	#rm -f src/limits.h # these are symlinks
 	rm -f src/*~
 	rm -f util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/astrometry/get_image_dimentions lib/astrometry/insert_wcs_header lib/astrometry/*~ lib/kwee-van-woerden  lib/find_star_in_wcs_catalog
-	rm -f src/heliocentric_correction/*~ util/hjd_input_in_UTC util/hjd_input_in_TT util/UTC2TT util/make_finding_chart util/fits2png lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/check_catalogs_offline util/get_image_date lib/make_outxyls_for_astrometric_calibration lib/fits2cat lib/create_data lib/fast_clean_data util/solve_plate_with_UCAC5 lib/autodetect_aperture_main lib/sextract_single_image_noninteractive
+	rm -f src/heliocentric_correction/*~ util/hjd_input_in_UTC util/hjd_input_in_TT util/UTC2TT util/make_finding_chart util/fits2png lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search lib/catalogs/check_catalogs_offline util/get_image_date lib/make_outxyls_for_astrometric_calibration lib/fits2cat lib/create_data lib/fast_clean_data util/solve_plate_with_UCAC5 lib/autodetect_aperture_main lib/sextract_single_image_noninteractive
 	rm -f util/solve_plate_with_UCAC4
 	rm -f src/catalogs/*~
 	rm -f .cc.version
