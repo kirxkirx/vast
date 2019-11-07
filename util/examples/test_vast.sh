@@ -5850,7 +5850,8 @@ if [ -d ../NMW_Saturn_test ];then
  # Run the test
  echo "Find Saturn/Iapetus test " >> /dev/stderr
  echo -n "Find Saturn/Iapetus test: " >> vast_test_report.txt 
- cp default.sex.telephoto_lens_v4 default.sex
+ #cp default.sex.telephoto_lens_v4 default.sex
+ cp default.sex.telephoto_lens_v3 default.sex
  ./vast -x99 -uf ../NMW_Saturn_test/1referenceepoch/* ../NMW_Saturn_test/2ndepoch/*
  if [ $? -ne 0 ];then
   TEST_PASSED=0
@@ -6123,12 +6124,12 @@ if [ -d ../NMW_Saturn_test ];then
   grep --quiet "TW Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN014"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN314"
   fi
   grep --quiet "2019 11 03.8559  2457406.3559  11.61" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN014a"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN314a"
   fi
   RADECPOSITION_TO_TEST=`grep "2019 11 03.8559  2457406.3559  11.61" transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:13:27.07 -21:33:38.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
@@ -6143,11 +6144,98 @@ if [ -d ../NMW_Saturn_test ];then
   else
    if [ $TEST -eq 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN014a_TOO_FAR_$DISTANCE_DEGREES"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN314a_TOO_FAR_$DISTANCE_DEGREES"
    fi
   fi
   #
+  ##### The following variables will not be found with the 12.5 magnitude limit and v4 SE settings file
   #
+  grep --quiet "V1234 Sgr" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN315"
+  fi
+  grep --quiet "2019 11 03.6470  2458791.1470  12.79" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN315a"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2019 11 03.6470  2458791.1470  12.79" transient_report/index.html | awk '{print $6" "$7}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:00:31.79 -23:01:30.2 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN315a_TOO_FAR_$DISTANCE_DEGREES"
+   fi
+  fi
+  #
+  ##### The following variables will not be found with the 12.5 magnitude limit and v4 SE settings file
+  #
+  grep --quiet "ASASSN-V J190815.15-194531.8" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN316"
+  fi
+  grep --quiet "2019 11 03.6470  2458791.1470  13.01" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN316a"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2019 11 03.6470  2458791.1470  13.01" transient_report/index.html | awk '{print $6" "$7}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:08:15.28 -19:45:23.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN316a_TOO_FAR_$DISTANCE_DEGREES"
+   fi
+  fi
+  #
+  ##### The following variables will not be found with the 12.5 magnitude limit and v4 SE settings file
+  #
+  grep --quiet "V1253 Sgr" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN317"
+  fi
+  grep --quiet "2019 11 03.7862  2457867.9529  13.42" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN317a"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2019 11 03.7862  2457867.9529  13.42" transient_report/index.html | awk '{print $6" "$7}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:10:50.72 -23:55:14.6 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN317a_TOO_FAR_$DISTANCE_DEGREES"
+   fi
+  fi
+  #
+  ###### restore exclusion list after the test if needed
   if [ -f ../exclusion_list.txt_backup ];then
    mv ../exclusion_list.txt_backup ../exclusion_list.txt
   fi
