@@ -63,6 +63,33 @@ echo ${A/\n/} | awk '{print (\$1+\$2)/2\">13.5\"}'|bc -ql
 done > candidates-transients.tmp 
 mv candidates-transients.tmp candidates-transients.lst
 
+######################################################################################################################################
+####### util/transients/make_report_in_HTML.sh will not report candidate transients listed in the following files              #######
+####### ../exclusion_list.txt lib/catalogs/bright_star_catalog_radeconly.txt lib/catalogs/list_of_bright_stars_from_tycho2.txt #######
+######################################################################################################################################
+### Prepare the exclusion lists for this field
+# Exclude the previously considered candidates
+if [ -f ../exclusion_list.txt ];then
+ SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
+ WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
+ lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @../exclusion_list.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list.txt
+fi
+# Exclude stars from the Bright Star Catalog with magnitudes < 7
+if [ -f lib/catalogs/bright_star_catalog_radeconly.txt ];then
+ SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
+ WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
+ lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/bright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bsc.txt
+fi
+# Exclude bright Tycho-2 stars, by default the magnitude limit is set to vt < 9
+if [ -f lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
+ SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
+ WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
+ lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | while read A ;do lib/deg2hms $A ;done > exclusion_list_tycho2.txt
+fi
+###
+######################################################################################################################################
+######################################################################################################################################
+
 # Prepare the transient search report as an HTML page
 echo "<HTML>" > transient_report/index.html
 util/transients/make_report_in_HTML.sh
