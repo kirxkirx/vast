@@ -5850,7 +5850,7 @@ if [ -d ../NMW_Saturn_test ];then
  # Run the test
  echo "Find Saturn/Iapetus test " >> /dev/stderr
  echo -n "Find Saturn/Iapetus test: " >> vast_test_report.txt 
- cp default.sex.telephoto_lens default.sex
+ cp default.sex.telephoto_lens_v4 default.sex
  ./vast -x99 -uf ../NMW_Saturn_test/1referenceepoch/* ../NMW_Saturn_test/2ndepoch/*
  if [ $? -ne 0 ];then
   TEST_PASSED=0
