@@ -96,6 +96,13 @@ for DIAGNOSTIC_PLOT_FILE in fake_image_hack_*.fits ;do
  fi
 done
 ####################################
+# Remove exclusion_list files, if any
+for EXCLUSION_LIST_FILE in exclusion_list_tycho2.txt ;do
+ if [ -f "$EXCLUSION_LIST_FILE" ];then
+  rm -f "$EXCLUSION_LIST_FILE"
+ fi
+done
+####################################
 # Remove core files, if any
 for CORE_FILE in core.* ;do
  if [ -f "$CORE_FILE" ];then
