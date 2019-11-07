@@ -322,26 +322,25 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
    fits_close_file( fptr, &status );
    return 1;
   }
+  // everything is fine
+  fits_close_file( fptr, &status ); // close the FITS file
   //
  }
  // TELESCOP= 'Lens  2.8/170'
  if ( 0 == strncasecmp( telescop, "Lens  2.8/170", 1024 - 1 ) ) {
   ( *estimated_fov_arcmin )= 180.0;
-  fits_close_file( fptr, &status );
   return 0;
  }
  // Lens
  pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "Lens", 4 );
  if ( pointer_to_the_key_start != NULL ) {
   ( *estimated_fov_arcmin )= 180.0;
-  fits_close_file( fptr, &status );
   return 0;
  }
  // LENS
  pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "LENS", 4 );
  if ( pointer_to_the_key_start != NULL ) {
   ( *estimated_fov_arcmin )= 180.0;
-  fits_close_file( fptr, &status );
   return 0;
  }
  // TELESCOP= 'HST'
@@ -349,7 +348,6 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
  pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "HST", 3 );
  if ( pointer_to_the_key_start != NULL ) {
   ( *estimated_fov_arcmin )= 2.0;
-  fits_close_file( fptr, &status );
   return 0;
  }
 
@@ -358,7 +356,6 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
   pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "0.45-m f/2.8", 12 );
   if ( pointer_to_the_key_start != NULL ) {
    ( *estimated_fov_arcmin )= 90.0;
-   fits_close_file( fptr, &status );
    return 0;
   }
  }
@@ -368,7 +365,6 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
   pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "Aristarchos", 10 );
   if ( pointer_to_the_key_start != NULL ) {
    ( *estimated_fov_arcmin )= 5.0;
-   fits_close_file( fptr, &status );
    return 0;
   }
  }
@@ -378,7 +374,6 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
   pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "SOAR 4.1m", 9 );
   if ( pointer_to_the_key_start != NULL ) {
    ( *estimated_fov_arcmin )= 3.2;
-   fits_close_file( fptr, &status );
    // Print the special waring
    fprintf(stderr,"\n\n\nWARNING! WARNING! WARNING!\nThis is a SOAR 4.1m image.\nRemember to trim the black areas around the actual image or it will not be plate-solved!\nYou may trim it by running  util/fitscopy %s[700:1370] test.fit\n\n\n",fitsfilename);
    //
@@ -391,7 +386,6 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
   pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "CMO SAI MSU ASA RC600 PHOTON", 28 );
   if ( pointer_to_the_key_start != NULL ) {
    ( *estimated_fov_arcmin )= 22.8;
-   fits_close_file( fptr, &status );
    return 0;
   }
  }
@@ -401,12 +395,10 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
   pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "NMW_camera", 10 );
   if ( pointer_to_the_key_start != NULL ) {
    ( *estimated_fov_arcmin )= 350.0;
-   fits_close_file( fptr, &status );
    return 0;
   }
  }
 
- fits_close_file( fptr, &status ); // close the FITS file
  return 1;                         // failed to recognize the telescope
 }
 
@@ -729,7 +721,9 @@ int main( int argc, char **argv ) {
        break;
       }
      } // while(0<fscanf(image_details_logfile...
-    }  // if(0==fitsfile_read_check(name_of_wcs_solved_reference_image)){
+    } else {  // if(0==fitsfile_read_check(name_of_wcs_solved_reference_image)){
+     fprintf( stderr, "This was an attempt to see if there is a plate-solved reference image from the same image series. Never mind.\n" );
+    } // else if(0==fitsfile_read_check(name_of_wcs_solved_reference_image)){
    }   // if( 0!=strncmp(fitsfile_name,full_path_to_fits_image,FILENAME_LENGTH) ){
   }    // if( 10=fscanf(image_details_logfile,"exp_start=  ...
   fclose( image_details_logfile );
