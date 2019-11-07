@@ -5518,6 +5518,16 @@ if [ -d ../transient_detection_test_Ceres ];then
   fi
   #
   echo "y" | util/transients/search_for_transients_single_field.sh
+  ## New stuff the file lib/catalogs/list_of_bright_stars_from_tycho2.txt should be created by util/transients/search_for_transients_single_field.sh
+  if [ ! -f lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CERES200"
+  fi
+  if [ ! -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CERES201"
+  fi
+  ##
   if [ ! -f wcs_Tau1_2012-3-18_18-45-6_002.fts ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES005"
@@ -5815,6 +5825,395 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
+
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!" >> /dev/stderr
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES" >> /dev/stderr
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ exit 1
+fi
+
+##### Saturn/Iapetus test #####
+# Download the test dataset if needed
+if [ ! -d ../NMW_Saturn_test ];then
+ cd ..
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/NMW_Saturn_test.tzr.bz2" && tar -xvjf NMW_Saturn_test.tar.bz2 && rm -f NMW_Saturn_test.tar.bz2
+ cd $WORKDIR
+fi
+# If the test data are found
+if [ -d ../NMW_Saturn_test ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "Find Saturn/Iapetus test " >> /dev/stderr
+ echo -n "Find Saturn/Iapetus test: " >> vast_test_report.txt 
+ cp default.sex.telephoto_lens default.sex
+ ./vast -x99 -uf ../NMW_Saturn_test/1referenceepoch/* ../NMW_Saturn_test/2ndepoch/*
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN000"
+ fi
+ # Check results
+ if [ -f vast_summary.log ];then
+  grep --quiet "Images processed 4" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN001"
+  fi
+  grep --quiet "Images used for photometry 4" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN002"
+  fi
+  grep --quiet "First image: 2456021.56453 04.04.2012 01:32:40" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN003"
+  fi
+  grep --quiet "Last  image: 2458791.14727 03.11.2019 15:31:54" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN004"
+  fi
+  
+  # Download a copy of Tycho-2 catalog for magnitude calibration of wide-field transient search data
+  VASTDIR=$PWD
+  TYCHO_PATH=lib/catalogs/tycho2
+  # Check if we have a locakal copy...
+  if [ ! -f "$TYCHO_PATH"/tyc2.dat.00 ];then
+   # Download the Tycho-2 catalog from our own server
+   if [ ! -d ../tycho2 ];then
+    cd `dirname $VASTDIR`
+    wget -c "http://scan.sai.msu.ru/~kirx/pub/tycho2.tar.bz2" && tar -xvjf tycho2.tar.bz2 && rm -f tycho2.tar.bz2
+    cd $VASTDIR
+   fi
+   # Try again
+   if [ -d ../tycho2 ];then
+    #cp -r ../tycho2 $TYCHO_PATH
+    if [ ! -d "$TYCHO_PATH" ];then
+     # -p  no error if existing, make parent directories as needed
+     mkdir -p "$TYCHO_PATH"
+    fi
+    cd $TYCHO_PATH
+    for TYCHOFILE in `dirname $VASTDIR`/tycho2/* ;do ln -s $TYCHOFILE ;done
+    cd $VASTDIR
+   fi
+  fi
+  #
+  if [ -f ../exclusion_list.txt ];then
+   mv ../exclusion_list.txt ../exclusion_list.txt_backup
+  fi
+  #
+  echo "y" | util/transients/search_for_transients_single_field.sh
+  ## New stuff the file lib/catalogs/list_of_bright_stars_from_tycho2.txt should be created by util/transients/search_for_transients_single_field.sh
+  if [ ! -f lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN200"
+  fi
+  if [ ! -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN201"
+  fi
+  ##
+  if [ ! -f wcs_Sgr4_2012-4-4_1-33-21_002.fts ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN005"
+  fi 
+  lib/bin/xy2sky wcs_Sgr4_2012-4-4_1-33-21_002.fts 200 200 &>/dev/null
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN005a"
+  fi
+  if [ ! -f wcs_Sgr4_2019-11-3_15-31-54_001.fts ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN006"
+  fi 
+  lib/bin/xy2sky wcs_Sgr4_2019-11-3_15-31-54_001.fts 200 200 &>/dev/null
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN006a"
+  fi
+  if [ ! -f wcs_Sgr4_2019-11-3_15-32-23_002.fts ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN007"
+  fi 
+  lib/bin/xy2sky wcs_Sgr4_2019-11-3_15-32-23_002.fts 200 200 &>/dev/null
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN007a"
+  fi
+  if [ ! -f wcs_Sgr4_201_ref_rename_001.fts ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN008"
+  fi 
+  lib/bin/xy2sky wcs_Sgr4_201_ref_rename_001.fts 200 200 &>/dev/null
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN008a"
+  fi
+  if [ ! -f transient_report/index.html ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN009"
+  fi 
+  grep --quiet "QY Sgr" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN010"
+  fi
+  grep --quiet "2019 11 03.8559  2457406.3559  12.57" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN010a"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2019 11 03.8559  2457406.3559  12.57" transient_report/index.html | awk '{print $6" "$7}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:03:48.76 -26:58:59.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN010a_TOO_FAR_$DISTANCE_DEGREES"
+   fi
+  fi
+  #
+  grep --quiet "V1058 Sgr" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN011"
+  fi
+  grep --quiet "2019 11 03.6470  2458791.1470  11.84" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN011a"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2019 11 03.6470  2458791.1470  11.84" transient_report/index.html | awk '{print $6" "$7}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:01:28.86 -22:38:56.6 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN011a_TOO_FAR_$DISTANCE_DEGREES"
+   fi
+  fi
+  # Iapetus has no automatic ID in the current VaST version
+  #grep --quiet "AW Tau" transient_report/index.html
+  #if [ $? -ne 0 ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN0110"
+  #fi
+  grep --quiet "2019 11 03.6470  2458791.1470  12.13" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN0110a"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2019 11 03.6470  2458791.1470  12.13" transient_report/index.html | awk '{print $6" "$7}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:06:59.18 -22:25:40.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN0110a_TOO_FAR_$DISTANCE_DEGREES"
+   fi
+  fi
+  #
+  grep --quiet "V2407 Sgr" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN012"
+  fi
+  grep --quiet "2019 11 03.6470  2458791.1470  12.29" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN012a"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2019 11 03.6470  2458791.1470  12.29" transient_report/index.html | awk '{print $6" "$7}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:10:11.72 -27:05:38.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN012a_TOO_FAR_$DISTANCE_DEGREES"
+   fi
+  fi
+  #
+  grep --quiet "V1260 Sgr" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN013"
+  fi
+  grep --quiet "2019 11 03.8559  2457406.3559  11.70" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN013a"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2019 11 03.8559  2457406.3559  11.70" transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:16:59.73 -24:36:23.9 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN013a_TOO_FAR_$DISTANCE_DEGREES"
+   fi
+  fi
+  #
+  grep --quiet "QR Sgr" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN014"
+  fi
+  grep --quiet "2019 11 03.8559  2457406.3559  12.68" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN014a"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2019 11 03.8559  2457406.3559  12.68" transient_report/index.html | awk '{print $6" "$7}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:01:30.92 -21:19:30.1 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN014a_TOO_FAR_$DISTANCE_DEGREES"
+   fi
+  fi
+  #
+  grep --quiet "TW Sgr" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN014"
+  fi
+  grep --quiet "2019 11 03.8559  2457406.3559  11.61" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN014a"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2019 11 03.8559  2457406.3559  11.61" transient_report/index.html | awk '{print $6" "$7}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:13:27.07 -21:33:38.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN014a_TOO_FAR_$DISTANCE_DEGREES"
+   fi
+  fi
+  #
+  #
+  if [ -f ../exclusion_list.txt_backup ];then
+   mv ../exclusion_list.txt_backup ../exclusion_list.txt
+  fi
+  #
+  ### Specific test to make sure lib/try_to_guess_image_fov does not crash
+  for IMAGE in ../NMW_Saturn_test/reference_images/* ../NMW_Saturn_test/second_epoch_images/* ;do
+   lib/try_to_guess_image_fov $IMAGE
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    IMAGE=`basename $IMAGE`
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN017_$IMAGE"
+   fi
+  done
+  ### Test to make sure no bad magnitudes were created during magnitude calibration process
+  if [ -f SATURN018_PROBLEM.txt ];then
+   rm -f SATURN018_PROBLEM.txt
+  fi
+  for OUTFILE in out*.dat ;do NLINES=`cat $OUTFILE | wc -l | awk '{print $1}'` ; NGOOD=`util/cute_lc $OUTFILE | wc -l | awk '{print $1}'` ; if [ $NLINES -ne $NGOOD ];then echo PROBLEM $NLINES $NGOOD $OUTFILE ; echo "$NLINES $NGOOD $OUTFILE" >> SATURN018_PROBLEM.txt ; cp $OUTFILE SATURN018_PROBLEM_$OUTFILE ;fi ;done | grep --quiet 'PROBLEM'
+  if [ $? -eq 0 ];then
+   N_FILES_WITH_PROBLEM=`cat SATURN018_PROBLEM.txt |wc -l | awk '{print $1}'`
+   if [ $N_FILES_WITH_PROBLEM -gt 1 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN018__"$N_FILES_WITH_PROBLEM
+   fi
+  fi
+  ################################################################################
+  # Check vast_image_details.log format
+  NLINES=`cat vast_image_details.log | awk '{print $18}' | sed '/^\s*$/d' | wc -l | awk '{print $1}'`
+  if [ $NLINES -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN_VAST_IMG_DETAILS_FORMAT"
+  fi
+  ################################################################################
+  ### Flag image test should always be the last one because we clean the data
+  for IMAGE in ../NMW_Saturn_test/reference_images/* ../NMW_Saturn_test/second_epoch_images/* ;do
+   util/clean_data.sh
+   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    IMAGE=`basename $IMAGE`
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN019_$IMAGE"
+   fi
+  done 
+
+ else
+  echo "ERROR: cannot find vast_summary.log" >> /dev/stderr
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN_ALL"
+ fi
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mFind Saturn/Iapetus test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mFind Saturn/Iapetus test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+
 
 # Test that the Internet conncation has not failed
 test_internet_connection
