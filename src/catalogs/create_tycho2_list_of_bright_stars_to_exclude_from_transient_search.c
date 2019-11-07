@@ -1,33 +1,31 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stdlib.h> // for atof()
 
 #include "read_tycho2.h"
 
-int main() {
+int main(int argc, char **argv) {
 
- double image_boundaries_radec[4];
- long M;
- int N, N_match;
- struct Star *arrStar;
- struct CatStar *arrCatStar;
- N= count_lines_in_ASCII_file( "wcsmag.cat" );
- arrStar= malloc( N * sizeof( struct Star ) );
- if ( arrStar == NULL ) {
-  fprintf( stderr, "ERROR: Couldnt allocate memory for arrStar\n" );
-  exit( 1 );
- };
- read_sextractor_cat( "wcsmag.cat", arrStar, &N, image_boundaries_radec );
- arrCatStar= malloc( STARS_IN_TYC2 * sizeof( struct CatStar ) );
- if ( arrCatStar == NULL ) {
-  fprintf( stderr, "ERROR: Couldn't allocate memory for arrCatStar\n" );
-  exit( 1 );
- };
- read_tycho_cat( arrCatStar, &M, image_boundaries_radec );
- N_match= match_stars_with_catalog( arrStar, N, arrCatStar, M );
- free( arrCatStar );
- free( arrStar );
- fprintf( stderr, "Matched with Tycho-2 %d out of %d detected stars.\n", N_match, N );
+ double faint_mag_limit_for_the_list;
+
+ if ( argc<2 ){
+  fprintf( stderr, "Usage: %s mag_limit\n", argv[0]);
+  return 1;
+ }
+ 
+ faint_mag_limit_for_the_list=atof(argv[1]);
+ 
+ if ( faint_mag_limit_for_the_list < 2.0 ){
+  fprintf( stderr, "ERROR: the limiting magnitude is too bright!\n");
+  return 1;
+ }
+ if ( faint_mag_limit_for_the_list > 14.0 ){
+  fprintf( stderr, "ERROR: the limiting magnitude is too faint!\n");
+  return 1;
+ }
+
+
+ create_tycho2_list_of_bright_stars_to_exclude_from_transient_search( faint_mag_limit_for_the_list );
+
 
  return 0;
 }
