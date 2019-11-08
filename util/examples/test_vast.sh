@@ -5848,7 +5848,7 @@ fi
 # Download the test dataset if needed
 if [ ! -d ../NMW_Saturn_test ];then
  cd ..
- wget -c "http://scan.sai.msu.ru/~kirx/pub/NMW_Saturn_test.tzr.bz2" && tar -xvjf NMW_Saturn_test.tar.bz2 && rm -f NMW_Saturn_test.tar.bz2
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/NMW_Saturn_test.tar.bz2" && tar -xvjf NMW_Saturn_test.tar.bz2 && rm -f NMW_Saturn_test.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
