@@ -20,6 +20,10 @@ fi
 # TRAP!! If we whant to identify a flare, there will be no sence to search for an asteroid on the reference image.
 # Use the first discovery image instead!
 REFERENCE_IMAGE=`cat vast_summary.log |grep "Ref.  image:" | awk '{print $6}'`
+
+# Assume that the second first-epoch image is always supplied as the second image on the command line
+SECOND_REFERENCE_IMAGE=`cat vast_image_details.log | head -n2 | tail -n1 | awk '{print $17}'`
+
 #     Reference image    2010 12 10.0833  2455540.5834  13.61  06:29:12.25 +26:24:19.4
 echo "<table>"
 echo "<tr><th></th><th>                     Date (UTC)   </th><th>    JD(UTC)  </th><th>    mag. </th><th> R.A. & Dec.(J2000)   </th><th>X & Y (pix)</th><th>    Image</th></tr>"
@@ -45,7 +49,6 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  TIME=`echo $DATETIMEJD|awk '{print $2}'`
  EXPTIME=`echo $DATETIMEJD|awk '{print $3}'`
  JD=`echo $DATETIMEJD|awk '{print $4}'`
- echo "$JD" >> jd$$.dat
  DAY=`echo $DATE |awk -F"." '{print $1}'`
  MONTH=`echo $DATE |awk -F"." '{print $2}'`
  YEAR=`echo $DATE |awk -F"." '{print $3}'` 
@@ -53,14 +56,19 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  TIMEM=`echo $TIME |awk -F":" '{print $2}'`
  TIMES=`echo $TIME |awk -F":" '{print $3}'`
  DAYFRAC=`echo "$DAY+$TIMEH/24+$TIMEM/1440+$TIMES/86400+$EXPTIME/(2*86400)" |bc -ql`
- echo "$DAYFRAC" >> dayfrac$$.dat
  RADEC=`lib/find_star_in_wcs_catalog $X $Y < $SEXTRACTOR_CATALOG_NAME`
  RA=`echo $RADEC | awk '{print $1}'`
  DEC=`echo $RADEC | awk '{print $2}'`
- echo "$RA" >> ra$$.dat
- echo "$DEC" >> dec$$.dat
- echo "$MAG" >> mag$$.dat
  MAG=`echo $MAG|awk '{printf "%.2f",$1}'`
+
+ # Do not use the first-epoch images for computing average values (positions, dates, magnitdes)
+ if [ "$FITSFILE" != "$REFERENCE_IMAGE" ] && [ "$FITSFILE" != "$SECOND_REFERENCE_IMAGE" ] ;then
+  echo "$JD" >> jd$$.dat
+  echo "$DAYFRAC" >> dayfrac$$.dat
+  echo "$RA" >> ra$$.dat
+  echo "$DEC" >> dec$$.dat
+  echo "$MAG" >> mag$$.dat
+ fi
  
  if [ "$FITSFILE" != "$REFERENCE_IMAGE" ] ;then
   #N=`echo $N+1|bc -q`

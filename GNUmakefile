@@ -503,7 +503,8 @@ clean: clean_libraries
 	rm -f util/solve_plate_with_UCAC4
 	rm -f src/catalogs/*~
 	rm -f .cc.version
-	rm -f .cc.date 
+	rm -f .cc.date
+	# we do not delete .cc.build 
 	rm -f util/wcs_image_calibration.sh util/identify_transient.sh util/identify_for_catalog.sh util/identify_noninteractive.sh
 	rm -f lib/pgplot/cpgdemo lib/pgplot/pgdemo* lib/pgplot/pgxwin_server lib/pgplot/pgplot.doc lib/pgplot/*.a lib/pgplot/*.so lib/pgplot/*~ lib/pgplot/grfont.dat
 	rm -f lib/vizquery

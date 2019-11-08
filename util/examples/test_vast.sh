@@ -5972,12 +5972,19 @@ if [ -d ../NMW_Saturn_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN010"
   fi
-  grep --quiet "2019 11 03.8559  2457406.3559  12.57" transient_report/index.html
+  # this should NOT be found! First epoch image is used along the 2nd epoch images
+  grep --quiet "2019 11 03.7864  2457867.9530  12.18" transient_report/index.html
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN010x"
+  fi
+  #
+  grep --quiet -e "2019 11 03.8559  2457406.3559  12.57" -e "2019 11 03.6470  2458791.1470  11.27" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN010a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2019 11 03.8559  2457406.3559  12.57" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.8559  2457406.3559  12.57" -e "2019 11 03.6470  2458791.1470  11.27" transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:03:48.76 -26:58:59.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
@@ -6053,12 +6060,12 @@ if [ -d ../NMW_Saturn_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN012"
   fi
-  grep --quiet "2019 11 03.6470  2458791.1470  12.29" transient_report/index.html
+  grep --quiet -e "2019 11 03.6470  2458791.1470  12.29" -e "2019 11 03.6470  2458791.1470  12.28" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN012a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2019 11 03.6470  2458791.1470  12.29" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  12.29" -e "2019 11 03.6470  2458791.1470  12.28" transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:10:11.72 -27:05:38.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
@@ -6080,12 +6087,12 @@ if [ -d ../NMW_Saturn_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN013"
   fi
-  grep --quiet "2019 11 03.8559  2457406.3559  11.70" transient_report/index.html
+  grep --quiet -e "2019 11 03.8559  2457406.3559  11.70" -e "2019 11 03.6470  2458791.1470  10.97" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN013a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2019 11 03.8559  2457406.3559  11.70" transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.8559  2457406.3559  11.70" -e "2019 11 03.6470  2458791.1470  10.97" transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:16:59.73 -24:36:23.9 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
@@ -6107,12 +6114,12 @@ if [ -d ../NMW_Saturn_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN014"
   fi
-  grep --quiet "2019 11 03.8559  2457406.3559  12.68" transient_report/index.html
+  grep --quiet -e "2019 11 03.8559  2457406.3559  12.68" -e "2019 11 03.6470  2458791.1470  12.04" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN014a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2019 11 03.8559  2457406.3559  12.68" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.8559  2457406.3559  12.68" -e "2019 11 03.6470  2458791.1470  12.04" transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:01:30.92 -21:19:30.1 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
@@ -6134,12 +6141,12 @@ if [ -d ../NMW_Saturn_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN314"
   fi
-  grep --quiet "2019 11 03.8559  2457406.3559  11.61" transient_report/index.html
+  grep --quiet -e "2019 11 03.8559  2457406.3559  11.61" -e "2019 11 03.6470  2458791.1470  10.94" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN314a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2019 11 03.8559  2457406.3559  11.61" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.8559  2457406.3559  11.61" -e "2019 11 03.6470  2458791.1470  10.94" transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:13:27.07 -21:33:38.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
@@ -6163,13 +6170,13 @@ if [ -d ../NMW_Saturn_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN315"
   fi
-  grep --quiet "2019 11 03.6470  2458791.1470  12.79" transient_report/index.html
+  grep --quiet "2019 11 03.6470  2458791.1470  12.77" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN315a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2019 11 03.6470  2458791.1470  12.79" transient_report/index.html | awk '{print $6" "$7}'`
-  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:00:31.79 -23:01:30.2 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  RADECPOSITION_TO_TEST=`grep "2019 11 03.6470  2458791.1470  12.77" transient_report/index.html | awk '{print $6" "$7}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:00:31.78 -23:01:30.8 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
   re='^[0-9]+$'
@@ -6192,12 +6199,12 @@ if [ -d ../NMW_Saturn_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN316"
   fi
-  grep --quiet "2019 11 03.6470  2458791.1470  13.01" transient_report/index.html
+  grep --quiet -e "2019 11 03.6470  2458791.1470  13.01" -e "2019 11 03.6470  2458791.1470  12.98" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN316a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2019 11 03.6470  2458791.1470  13.01" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  13.01" -e "2019 11 03.6470  2458791.1470  12.98" transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:08:15.28 -19:45:23.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
@@ -6221,12 +6228,12 @@ if [ -d ../NMW_Saturn_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN317"
   fi
-  grep --quiet "2019 11 03.7862  2457867.9529  13.42" transient_report/index.html
+  grep --quiet -e "2019 11 03.7862  2457867.9529  13.42" -e "2019 11 03.6470  2458791.1470  13.07" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN317a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2019 11 03.7862  2457867.9529  13.42" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.7862  2457867.9529  13.42" -e "2019 11 03.6470  2458791.1470  13.07" transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:10:50.72 -23:55:14.6 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
@@ -6249,7 +6256,7 @@ if [ -d ../NMW_Saturn_test ];then
   fi
   #
   ### Specific test to make sure lib/try_to_guess_image_fov does not crash
-  for IMAGE in ../NMW_Saturn_test/reference_images/* ../NMW_Saturn_test/second_epoch_images/* ;do
+  for IMAGE in ../NMW_Saturn_test/1referenceepoch/* ../NMW_Saturn_test/2ndepoch/* ../NMW_Saturn_test/3rdepoch/* ;do
    lib/try_to_guess_image_fov $IMAGE
    if [ $? -ne 0 ];then
     TEST_PASSED=0
