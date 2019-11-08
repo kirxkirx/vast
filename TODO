@@ -1,3 +1,5 @@
+* Try to automatically select the reference image as the image with best seeing?
+
 * On fresh install the VSX catalog update is slow and silent.
 Need to inform the user about what is going on!
 

@@ -447,6 +447,7 @@ shell_commands: pgplot_components lib/lightcurve_simulator vast
 	#
 	$(CC) --version |head -n 1 > .cc.version # save compiler version
 	date > .cc.date # seve compile time
+	lib/record_vast_build_number.sh # seve vast build number to .cc.build
 	
 libident.o: $(SOURCE_IDENT_PATH)ident_lib.c $(SOURCE_IDENT_PATH)ident.h 
 	$(CC) $(OPTFLAGS) -c -o $(SRC_PATH)ident_lib.o -fPIC $(SOURCE_IDENT_PATH)ident_lib.c 
