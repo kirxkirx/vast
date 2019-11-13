@@ -239,7 +239,8 @@ if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
  echo "Checking $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE" >> /dev/stderr
  while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
-  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_HMS" "$DEC_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 40/3600.0 ) print "FOUND" }' | grep "FOUND" && break
+  #lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_HMS" "$DEC_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 40/3600.0 ) print "FOUND" }' | grep "FOUND" && break
+  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_HMS" "$DEC_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 80/3600.0 ) print "FOUND" }' | grep "FOUND" && break
  done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE ****" >> /dev/stderr && exit 1
 fi
 ### Apply the Tycho-2 bright stars exclusion list
@@ -266,7 +267,9 @@ echo -n "<a href=\"http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=$RA_MEAN%20$D
 </pre>
 <form NAME='$$FORMMPC$1' METHOD=POST TARGET='_blank' ACTION='https://minorplanetcenter.net/cgi-bin/mpcheck.cgi'>
 <font color='#33CC99'>MPChecker:</font> <input type=submit value=' Produce list '>
-<input type='hidden' name='year' maxlength=4 size=4 value='2019'> <input type='hidden' name='month' maxlength=2 size=2 value='11'> <input type='hidden' name='day' maxlength=5 size=5 value='04.95'>
+<input type='hidden' name='year' maxlength=4 size=4 value='$YEAR'>
+<input type='hidden' name='month' maxlength=2 size=2 value='$MONTH'>
+<input type='hidden' name='day' maxlength=5 size=5 value='$DAYFRAC_MEAN_SHORT'>
 <input type='radio' name='which' VALUE='pos' CHECKED style='display:none;'>
 <input type='hidden' name='ra' value='$RA_MEAN_SPACES' maxlength=12 size=12>
 <input type='hidden' name='decl' value='$DEC_MEAN_SPACES' maxlength=12 size=12>
