@@ -1,7 +1,12 @@
 vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911
-	it can also be used to convert calendar date/time to JD:
+	it will understand input as MJD (distinguishing it from JD based on the numerical value):
+	util/get_image_date 58020.39
+	Remember the 0.5 day difference between MJD and truncated JD! Never use truncated JD,
+	in my opinion MJD should also be avoided. Spell out a full JD to specify time for the sake of 
+	avoiding confusion. Computers nowadays can handle the two extra digits, they really do.
+	'util/get_image_date' can also be used to convert calendar date/time to JD:
 	util/get_image_date 2014-09-09T05:29:55
 	it will also understand
 	util/get_image_date '2014-09-09 05:29' 

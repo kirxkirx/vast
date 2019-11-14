@@ -54,8 +54,8 @@ else
 fi
 
 if [ ! -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
- # Create a list of stars brighter than mag 9 for filtering transient candidates
- lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search 9.0
+ # Create a list of stars brighter than mag 9.5 for filtering transient candidates
+ lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search 9.5
 fi
 
 # WCS-calibrate the reference image if it has not been done before (util/wcs_image_calibration.sh will check that)

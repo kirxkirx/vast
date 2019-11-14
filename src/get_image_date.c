@@ -78,10 +78,17 @@ int fake_image_hack( char *input_string ) {
  if( j==1 ){
   // OK, there is only one '.' in the string, that looks promising
   jd_from_string=atof(input_string);
-  if ( jd_from_string>EXPECTED_MIN_MJD && jd_from_string<EXPECTED_MAX_JD ){
+  if ( jd_from_string>EXPECTED_MIN_MJD && jd_from_string<EXPECTED_MAX_JD ) {
    input_calendar_date_or_jd= 1; // this looks like a JD
-  }
- }
+   // now figure out if this is JD or MJD
+   if ( jd_from_string<EXPECTED_MAX_MJD ) {
+    fprintf(stderr, "Assuming the input is MJD\n");
+    jd_from_string= jd_from_string + 2400000.5;
+   } else { // if ( jd_from_string<EXPECTED_MAX_MJD ) {
+    fprintf(stderr, "Assuming the input is JD\n");
+   } // else if ( jd_from_string<EXPECTED_MAX_MJD ) {
+  } // if ( jd_from_string>EXPECTED_MIN_MJD && jd_from_string<EXPECTED_MAX_JD ) {
+ } // if( j==1 ){ // OK, there is only one '.' in the string, that looks promising
  //
  // handle the white space between the input date and time instead of T
  int is_T_found=0;

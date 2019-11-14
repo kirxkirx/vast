@@ -9493,6 +9493,21 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  fi
 done
 
+# Check input as MJD
+util/get_image_date '58020.39' 2>&1 | grep --quiet 'JD 2458020.89'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV024"
+fi
+# Now make sure there are no residual files
+for TMP_FITS_FILE in fake_image_hack_*.fits ;do
+ if [ -f "$TMP_FITS_FILE" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV010c_$TMP_FITS_FILE"
+  break
+ fi
+done
+
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
  echo -e "\n\033[01;34mCalendar date to JD conversion test \033[01;32mPASSED\033[00m" >> /dev/stderr
