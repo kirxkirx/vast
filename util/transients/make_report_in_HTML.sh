@@ -21,7 +21,8 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  TRANSIENT_NAME=${TRANSIENT_NAME/out/}
  TRANSIENT_NAME="$TRANSIENT_NAME"_`basename $C`
  echo "Preparing report for the candidate $TRANSIENT_NAME"
- echo "<h3>$TRANSIENT_NAME</h3>" >> transient_report/index.tmp
+ #echo "<h3>$TRANSIENT_NAME</h3>" >> transient_report/index.tmp
+ echo "<script>printCandidateNameWithAbsLink('$TRANSIENT_NAME');</script>" >> transient_report/index.tmp
  # plot reference image
  util/make_finding_chart $REFERENCE_IMAGE $G $H &>/dev/null && mv pgplot.png transient_report/"$TRANSIENT_NAME"_reference.png
  echo "<img src=\""$TRANSIENT_NAME"_reference.png\"></img>" >> transient_report/index.tmp
