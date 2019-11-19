@@ -31,7 +31,8 @@ if [ ! -f $TYCHO_PATH/tyc2.dat.00 ];then
    mkdir $TYCHO_PATH
   fi
   cd $TYCHO_PATH 
-  wget -nH --cut-dirs=4 --no-parent -r -l0 -c -R 'guide.*,*.gif' "ftp://cdsarc.u-strasbg.fr/pub/cats/I/259/"
+  #wget -nH --cut-dirs=4 --no-parent -r -l0 -c -R 'guide.*,*.gif' "ftp://cdsarc.u-strasbg.fr/pub/cats/I/259/"
+  wget -nH --cut-dirs=4 --no-parent -r -l0 -c -R 'guide.*,*.gif' "http://scan.sai.msu.ru/~kirx/data/tycho2/"
   echo "Download complete. Unpacking..."
   for i in tyc2.dat.*gz ;do
    gunzip $i
@@ -44,7 +45,8 @@ else
  if [ ! -f $TYCHO_PATH/tyc2.dat.19 ] ;then
   echo "WARNING! One of the catalog files was not found! Will attempt to re-download the catalog."
   cd $TYCHO_PATH 
-  wget -nH --cut-dirs=4 --no-parent -r -l0 -c -R 'guide.*,*.gif' "ftp://cdsarc.u-strasbg.fr/pub/cats/I/259/"
+  #wget -nH --cut-dirs=4 --no-parent -r -l0 -c -R 'guide.*,*.gif' "ftp://cdsarc.u-strasbg.fr/pub/cats/I/259/"
+  wget -nH --cut-dirs=4 --no-parent -r -l0 -c -R 'guide.*,*.gif' "http://scan.sai.msu.ru/~kirx/data/tycho2/"
   echo "Download complete. Unpacking..."
   for i in tyc2.dat.*gz ;do
    gunzip $i
