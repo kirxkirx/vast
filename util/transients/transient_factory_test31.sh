@@ -17,6 +17,9 @@ if [ -z "$REFERENCE_IMAGES" ];then
   REFERENCE_IMAGES=/dataY/kirx/NMW_reference_images_2012 
  fi
  if [ ! -d "$REFERENCE_IMAGES" ];then
+  REFERENCE_IMAGES=/home/NMW_reference_images_2012
+ fi
+ if [ ! -d "$REFERENCE_IMAGES" ];then
   REFERENCE_IMAGES=/home/kirx/current_work/NMW_crashtest/ref 
  fi
 fi
