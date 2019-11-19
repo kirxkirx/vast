@@ -10,14 +10,16 @@
 # You may set a few alternative locations, but only the first one that exist will be used
 if [ -z "$REFERENCE_IMAGES" ];then
  REFERENCE_IMAGES=/mnt/usb/NMW_NG/NMW_reference_images_2012
+ # scan
+ if [ ! -d "$REFERENCE_IMAGES" ];then
+  REFERENCE_IMAGES=/home/NMW_reference_images_2012
+ fi
+ # vast
  if [ ! -d "$REFERENCE_IMAGES" ];then
   REFERENCE_IMAGES=/dataX/kirx/NMW_reference_images_2012 
  fi
  if [ ! -d "$REFERENCE_IMAGES" ];then
   REFERENCE_IMAGES=/dataY/kirx/NMW_reference_images_2012 
- fi
- if [ ! -d "$REFERENCE_IMAGES" ];then
-  REFERENCE_IMAGES=/home/NMW_reference_images_2012
  fi
  if [ ! -d "$REFERENCE_IMAGES" ];then
   REFERENCE_IMAGES=/home/kirx/current_work/NMW_crashtest/ref 
