@@ -30,8 +30,8 @@ fi
 lib/update_offline_catalogs.sh all
 
 # Set the SExtractor parameters file
-#cp default.sex.telephoto_lens_v4 default.sex
-cp default.sex.telephoto_lens_v3 default.sex
+cp default.sex.telephoto_lens_v4 default.sex
+#cp default.sex.telephoto_lens_v3 default.sex
 
 echo "Reference image directory is set to $REFERENCE_IMAGES"
 if [ -z $1 ]; then
@@ -60,6 +60,24 @@ function toggleElement(id)
         document.getElementById(id).style.display = 'none';
     }
 }
+
+function printCandidateNameWithAbsLink( transientname) {
+
+ var currentLocation = window.location.href;
+ var transientLink = \"#\";
+ transientLink = transientLink.concat(transientname);
+ var targetURL = currentLocation.concat(transientLink);
+ 
+ var outputString = \"<h3><a href='\";
+ outputString = outputString.concat(targetURL);
+ outputString = outputString.concat(\"'>\");
+ outputString = outputString.concat(transientname);
+ outputString = outputString.concat(\"</a></h3>\");
+
+ document.write(outputString); 
+
+}
+
 </script>
 
 <BODY>" >> transient_report/index.html
@@ -192,8 +210,9 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 
  echo "Filter-out faint candidates..."
  # Filter-out faint candidates
+ for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">11.5"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
  #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">12.5"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
- for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">13.0"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+ #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">13.0"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
  echo "Filter-out candidates with large difference between measured mags in one epoch..."
  # 2nd epoch
