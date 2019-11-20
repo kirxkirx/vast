@@ -86,7 +86,7 @@ function printCandidateNameWithAbsLink( transientname) {
 </script>
 
 <BODY>
-<h2>NMW transient search results<h2><br> 
+<h2>NMW transient search results</h2><br> 
 The list of candidates will appear below. Please manually reload the page every few minutes untill the 'Processing complete' message appears.
 <br>" >> transient_report/index.html
 
