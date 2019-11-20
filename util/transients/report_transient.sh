@@ -265,8 +265,8 @@ echo -n "<a href=\"http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=$RA_MEAN%20$D
 <a href=\"http://irsa.ipac.caltech.edu/applications/wise/#id=Hydra_wise_wise_1&RequestClass=ServerRequest&DoSearch=true&schema=allsky-4band&intersect=CENTER&subsize=0.16666666800000002&mcenter=mcen&band=1,2,3,4&dpLevel=3a&UserTargetWorldPt=$RA_MEAN;$DEC_MEAN;EQ_J2000&SimpleTargetPanel.field.resolvedBy=nedthensimbad&preliminary_data=no&coaddId=&projectId=wise&searchName=wise_1&shortDesc=Position&isBookmarkAble=true&isDrillDownRoot=true&isSearchResult=true\" target=\"_blank\">Show this position in <font color=\"#FF0033\">WISE</font> atlas</a>
 <a href=\"http://irsa.ipac.caltech.edu/cgi-bin/FinderChart/nph-finder?locstr=$RA_MEAN+$DEC_MEAN&markervis_shrunk=true\" target=\"_blank\"><font color=\"#339999\">2MASS</font>, <font color=\"#339999\">SDSS</font>, and <font color=\"#339999\">DSS</font> Finder Chart</a>
 </pre>
-<form NAME='$$FORMMPC$1' METHOD=POST TARGET='_blank' ACTION='https://minorplanetcenter.net/cgi-bin/mpcheck.cgi'>
-<font color='#33CC99'>MPChecker:</font> <input type=submit value=' Produce list '>
+<form style='display: inline;' NAME='$$FORMMPC$1' METHOD=POST TARGET='_blank' ACTION='https://minorplanetcenter.net/cgi-bin/mpcheck.cgi'>
+<input type=submit value=' Online MPChecker '>
 <input type='hidden' name='year' maxlength=4 size=4 value='$YEAR'>
 <input type='hidden' name='month' maxlength=2 size=2 value='$MONTH'>
 <input type='hidden' name='day' maxlength=5 size=5 value='$DAYFRAC_MEAN_SHORT'>
@@ -296,8 +296,34 @@ echo -n "<a href=\"http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=$RA_MEAN%20$D
 <input type='radio' name='type' VALUE='p' CHECKED style='display:none;'>
 <input type='radio' name='type' VALUE='m' style='display:none;'>
 </form>
-<form NAME=\"$$FORMCATALINA$1\" method=\"post\" TARGET=\"_blank\" action=\"http://nunuku.caltech.edu/cgi-bin/getcssconedb_release_img.cgi\" enctype=\"multipart/form-data\">
-<font color=\"#33CC99\">Catalina photometry: </font>
+<form style='display: inline;' NAME='$$FORMVSX$1' method='post' TARGET='_blank' action='https://www.aavso.org/vsx/index.php?view=results.submit1' enctype='multipart/form-data'>
+<input type='Hidden' name='ql' value='1'>
+<input type='Hidden' name='getCoordinates' value='0'>
+<input type='Hidden' name='plotType' value='Search'>
+<select style='display:none;' class='formselect' style='width: 160px' name='special' size='1'>
+<option value='index.php?view=results.special&sid=2'>Changes in last week...</option>
+</select>
+<input  type='hidden' class='forminput' type='Text' name='ident' style='width: 205px' value=''>
+<select style='display:none;' class='formselect' name='constid' size='1'>
+<option value='0' selected>--</option>
+</select>
+<input type='hidden' class='forminput' type='Text' name='targetcenter' style='width: 140px' value='$RADEC_MEAN_HMS'>
+<input type='hidden' class='formbutton' type='Radio' name='format' value='s' checked>
+<input type='hidden' class='forminput' type='Text' name='fieldsize' size='3' value='10'>
+<select style='display:none;' class='formselect' name='fieldunit' size='1'>
+<option value='3' selected>arc seconds</option>
+</select>
+<input style='display:none;' class='formbutton' type='Radio' name='geometry' value='r' checked>
+<input type='hidden' name='filter[]' value='0' checked>
+<input type='hidden' name='filter[]' value='1' checked>
+<input type='hidden' name='filter[]' value='2' checked>
+<input type='hidden' name='filter[]' value='3' checked>
+<select style='display:none;' class='formselect' name='order' size='1' style='width: 140px'>
+<option value='9' selected>Angular sep.</option>
+</select>
+<input class='formbutton' type='Submit' value='Search VSX online'>
+</form>
+<form style='display: inline;' NAME=\"$$FORMCATALINA$1\" method=\"post\" TARGET=\"_blank\" action=\"http://nunuku.caltech.edu/cgi-bin/getcssconedb_release_img.cgi\" enctype=\"multipart/form-data\">
 <input type=\"hidden\" name=\"RA\"  size=\"12\" maxlength=\"20\" value=\"$RA_MEAN\" /><input type=\"hidden\" name=\"Dec\"  size=\"12\" maxlength=\"20\" value=\"$DEC_MEAN\" />
 <input type=\"hidden\" name=\"Rad\"  size=\"5\" maxlength=\"10\" value=\"0.1\" />
 <input type=\"hidden\" name=\"IMG\" value=\"dss\" />
@@ -305,7 +331,7 @@ echo -n "<a href=\"http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=$RA_MEAN%20$D
 <input type=\"hidden\" name=\"IMG\" value=\"sdss\" />
 <input type=\"hidden\" name=\"DB\" value=\"photcat\" checked=\"checked\" />
 <input type=\"hidden\" name=\"D=0>value=\"orphancat\" />
-<input type=\"submit\" name=\".submit\" value=\"Submit\" />
+<input type=\"submit\" name=\".submit\" value=\"Catalina photometry\" />
 <input type=\"hidden\" name=\"OUT\" value=\"web\" />
 <input type=\"hidden\" name=\"OUT\" value=\"csv\" checked=\"checked\" />
 <input type=\"hidden\" name=\"OUT\" value=\"vot\" />
@@ -313,12 +339,12 @@ echo -n "<a href=\"http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=$RA_MEAN%20$D
 <input type=\"hidden\" name=\"SHORT\" value=\"long\" />
 <input type=\"hidden\" name=\"PLOT\" value=\"plot\" checked=\"checked\" />
 </form>
-<form NAME=\"$$FORMNMW$1\" method=\"get\" TARGET=\"_blank\" action=\"http://scan.sai.msu.ru/cgi-bin/nmw/sky_archive\" enctype=\"application/x-www-form-urlencoded\">
+<form style='display: inline;' NAME=\"$$FORMNMW$1\" method=\"get\" TARGET=\"_blank\" action=\"http://scan.sai.msu.ru/cgi-bin/nmw/sky_archive\" enctype=\"application/x-www-form-urlencoded\">
 <font color=\"#33CC99\">NMW image archive: </font>
 <input id=\"h2\" name=\"ra\" type=\"hidden\" required value=\"$RA_HMS\">
 <input id=\"h3\" name=\"dec\" type=\"hidden\" required value=\"$DEC_HMS\">image size 
 <input id=\"h4\" name=\"r\" type=\"text\" required=\"\" value=\"32\" size=\"3\">(pix) 
-<input type=\"submit\">
+<input type=\"submit\" value='NMW archive'>
 </form>
 "
 
@@ -331,9 +357,11 @@ if ! [[ $TEST =~ $re ]] ; then
  exit 1
 else
  if [ $TEST -eq 1 ];then
-  echo -n "<form NAME=\"$$FORMASAS$1\" ACTION='http://www.astrouw.edu.pl/cgi-asas/asas_cat_input' METHOD=POST TARGET=\"data_list\">Get <font color=\"#33CC00\">ASAS</font> lightcurve: <input type='radio' name='source' value='asas3' CHECKED style=\"display:none;\"><TEXTAREA NAME='coo' ROWS=1 COLS=30 WRAP=virtual style=\"display:none;\">$RADEC_MEAN_HMS</TEXTAREA><INPUT NAME=equinox VALUE=2000 SIZE=4 style=\"display:none;\"><INPUT NAME=nmin VALUE=4 SIZE=4 style=\"display:none;\"><INPUT NAME=box VALUE=15 SIZE=4 style=\"display:none;\"><INPUT TYPE=submit NAME=submit VALUE=\"Search\" ></form>"
+  echo -n "<form style='display: inline;' NAME=\"$$FORMASAS$1\" ACTION='http://www.astrouw.edu.pl/cgi-asas/asas_cat_input' METHOD=POST TARGET=\"data_list\">Get <font color=\"#33CC00\">ASAS</font> lightcurve: <input type='radio' name='source' value='asas3' CHECKED style=\"display:none;\"><TEXTAREA NAME='coo' ROWS=1 COLS=30 WRAP=virtual style=\"display:none;\">$RADEC_MEAN_HMS</TEXTAREA><INPUT NAME=equinox VALUE=2000 SIZE=4 style=\"display:none;\"><INPUT NAME=nmin VALUE=4 SIZE=4 style=\"display:none;\"><INPUT NAME=box VALUE=15 SIZE=4 style=\"display:none;\"><INPUT TYPE=submit NAME=submit VALUE=\"Search\" ></form>"
  fi
 fi
+
+echo "<br>"
 
 exit 0
 # everything is fine!

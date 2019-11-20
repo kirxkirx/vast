@@ -148,7 +148,7 @@ if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ];then
  # The CDS link is down
  #curl --silent ftp://cdsarc.u-strasbg.fr/pub/cats/V/50/catalog.gz | gunzip > lib/catalogs/bright_star_catalog_original.txt
  # Changed to local copy
- curl --silent scan.sai.msu.ru/~kirx/data/bright_star_catalog_original.txt.gz | gunzip > lib/catalogs/bright_star_catalog_original.txt
+ curl --silent http://scan.sai.msu.ru/~kirx/data/bright_star_catalog_original.txt.gz | gunzip > lib/catalogs/bright_star_catalog_original.txt
  if [ $? -eq 0 ];then
   echo "Extracting the R.A. Dec. list"
   cat lib/catalogs/bright_star_catalog_original.txt | grep -v -e 'NOVA' -e '47    Tuc' -e 'M 31' -e 'NGC 2281' -e 'M 67' -e 'NGC 2808' | while read STR ;do 

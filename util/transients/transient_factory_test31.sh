@@ -28,6 +28,7 @@ fi
 
 if [ ! -d "$REFERENCE_IMAGES" ];then
  echo "ERROR: cannot find the reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES"
+ echo "ERROR: cannot find the reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES" >> transient_factory_test31.txt
  exit 1
 fi
 
@@ -41,6 +42,7 @@ cp default.sex.telephoto_lens_v4 default.sex
 echo "Reference image directory is set to $REFERENCE_IMAGES"
 if [ -z $1 ]; then
  echo "Usage: $0 PATH_TO_DIRECTORY_WITH_IMAGE_PAIRS"
+ echo "Usage: $0 PATH_TO_DIRECTORY_WITH_IMAGE_PAIRS" >> transient_factory_test31.txt
  exit
 fi
 
@@ -100,15 +102,18 @@ echo "Fields in the data directory:
 $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR"
 
 #exit # !!!
+echo "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" > transient_factory_test31.txt
 
 PREVIOUS_FIELD="none"
 #for i in "$NEW_IMAGES"/*_001.fts ;do
 for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
+ echo "Processing $FIELD" >> transient_factory_test31.txt
  #STR=`basename $i _001.fts` 
  #FIELD=`echo ${STR:0:8}`
  #FIELD=`echo $FIELD | awk '{print $1}' FS='_'`
  if [ "$FIELD" == "$PREVIOUS_FIELD" ];then
   echo "Script ERROR! This field has been processed before!"
+  echo "Script ERROR! This field has been processed before!" >> transient_factory_test31.txt
   continue
  fi
  PREVIOUS_FIELD="$FIELD"
@@ -157,6 +162,12 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  ##./vast --selectbestaperture -y1 -p -x99 -u -f -k $REFERENCE_IMAGES/*"$FIELD"_* `ls $NEW_IMAGES/*"$FIELD"_*_001.fts | head -n1` `ls $NEW_IMAGES/*"$FIELD"_*_002.fts | head -n1`
  #./vast --selectbestaperture -y1 -p -x99 -u -f -k "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
  ./vast --matchstarnumber 500 --selectbestaperture -y1 -p -x99 -u -f -k "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
+ if [ $? -ne 0 ];then
+  echo "ERROR running VaST on the fiels $FIELD"
+  echo "ERROR running VaST on the fiels $FIELD" >> transient_factory_test31.txt
+  echo "ERROR running VaST on the fiels $FIELD" >> transient_factory.log
+ fi
+ echo "The four input images were $REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"  >> transient_factory_test31.txt
  cat vast_summary.log >> transient_factory.log
  grep --quiet 'Images used for photometry 4' vast_summary.log
  if [ $? -ne 0 ];then
