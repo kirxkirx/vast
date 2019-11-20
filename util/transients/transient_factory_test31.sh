@@ -168,9 +168,9 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  #./vast --selectbestaperture -y1 -p -x99 -u -f -k "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
  ./vast --matchstarnumber 500 --selectbestaperture -y1 -p -x99 -u -f -k "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
  if [ $? -ne 0 ];then
-  echo "ERROR running VaST on the fiels $FIELD"
-  echo "ERROR running VaST on the fiels $FIELD" >> transient_factory_test31.txt
-  echo "ERROR running VaST on the fiels $FIELD" >> transient_factory.log
+  echo "ERROR running VaST on the field $FIELD"
+  echo "ERROR running VaST on the field $FIELD" >> transient_factory_test31.txt
+  echo "ERROR running VaST on the field $FIELD" >> transient_factory.log
  else
   echo "VsST run complete" >> transient_factory_test31.txt
  fi

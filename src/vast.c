@@ -5436,7 +5436,6 @@ int main( int argc, char **argv ) {
  fprintf( vast_image_details, "compiled with %s", stderr_output );
  compilation_date( stderr_output );
  fprintf( vast_image_details, "VaST compiled on  %s", stderr_output );
- fclose( vast_image_details );
  vast_build_number( stderr_output );
  fprintf( vast_image_details, "VaST build number  %s", stderr_output );
  fclose( vast_image_details );
@@ -5507,20 +5506,29 @@ int main( int argc, char **argv ) {
  /* Search for variability candidates */
  if ( param_nofind == 0 ) {
   strcpy( stderr_output, "./find_candidates a" ); // no need to recompute lightcurve stats!
-  if ( period_search_switch == 1 )
+  if ( period_search_switch == 1 ){
    strcat( stderr_output, "--tsearch " );
-  if ( use_ds9_instead_of_pgfv == 1 )
+  }
+  if ( use_ds9_instead_of_pgfv == 1 ){
    strcat( stderr_output, "--ds9 " );
+  }
   fprintf( stderr, "%s\n", stderr_output );
-  if ( !system( stderr_output ) )
+  if ( !system( stderr_output ) ){
    return 1;
+  }
  }
 
  //unsetenv("MALLOC_CHECK_");
 
- // Decide on the overall outcome of the processing (was it OK or not)
- if ( MATCH_SUCESS + 1 < (int)( 0.75 * (double)Num + 0.5 ) )
-  return 1;
+ //fprintf(stderr, "Num=%d MATCH_SUCESS=%d\n", Num, MATCH_SUCESS);
 
+ // Decide on the overall outcome of the processing (was it OK or not)
+ if ( MATCH_SUCESS + 1 < (int)( 0.75 * (double)Num + 0.5 ) ){
+  fprintf( stderr, "Low percentage of matched images - we'll declare this an unsuccessful VaST run (exit code 1)\n");
+  return 1;
+ }
+
+ fprintf( stderr, "We consider this a successful VaST run (exit code 0)\n");
  return 0;
 }
+
