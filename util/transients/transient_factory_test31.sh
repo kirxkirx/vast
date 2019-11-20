@@ -171,6 +171,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   echo "ERROR running VaST on the field $FIELD"
   echo "ERROR running VaST on the field $FIELD" >> transient_factory_test31.txt
   echo "ERROR running VaST on the field $FIELD" >> transient_factory.log
+  # drop this field and continue to the next one
+  continue
  else
   echo "VsST run complete" >> transient_factory_test31.txt
  fi
@@ -212,35 +214,32 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "***** PLATE SOLVE PROCESSING ERROR *****" >> transient_factory.log
    echo "***** cannot find wcs_"`basename $i`"  *****" >> transient_factory.log
    echo "############################################################" >> transient_factory.log
-   continue # does this work???
+   echo 'UNSOLVED_PLATE'
   fi
- done 
+ done | grep --quiet 'UNSOLVED_PLATE'
+ if [ $? -eq 0 ];then
+  echo "ERROR found an unsoved plate in the field $FIELD" >> transient_factory_test31.txt
+  continue
+ fi
  
  echo "Running solve_plate_with_UCAC5" >> transient_factory_test31.txt
  # We need UCAC5 solution for the first and the third images
  util/solve_plate_with_UCAC5 `cat vast_image_details.log | awk '{print $17}' | head -n1 | tail -n1` &
  util/solve_plate_with_UCAC5 `cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1` &
-# wait
- 
-# # Save astrometrically calibrated reference images to cache, if they are not there already
-# # Here we assume we have two reference images
-# for i in `cat vast_image_details.log | head -n2 |awk '{print $17}'` ;do
-#  if [ ! -f wcscache/wcs_`basename $i` ];then
-#   # We want to copy both images and catalogs
-#   cp wcs_`basename $i`* wcscache/
-#  fi
-# done
+ # wait # moved down
  
  echo "Calibrating the magnitude scale with Tycho-2 stars" >> transient_factory_test31.txt
  # Calibrate magnitude scale with Tycho-2 stars in the field 
  echo "y" | util/transients/calibrate_current_field_with_tycho2.sh 
 
- ################## Quality cits applied to calibrated magnitudes of the candidate transients ##################
+ ################## Quality cuts applied to calibrated magnitudes of the candidate transients ##################
 
  echo "Filter-out faint candidates..." >> transient_factory_test31.txt
  echo "Filter-out faint candidates..."
  # Filter-out faint candidates
- for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">11.5"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+ #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">11.5"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+ #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">12.0"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+ for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($1+$2)/2>12.0 ) print 1; else print 0 }'` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
  #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">12.5"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
  #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">13.0"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
@@ -269,6 +268,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  echo "Filter-out small-amplitude flares..."
  # Filter-out small-amplitude flares
  for i in `cat candidates-transients.lst | awk '{print $1}'` ;do if [ `cat $i | wc -l` -eq 2 ];then grep $i candidates-transients.lst | head -n1 ;continue ;fi ; A=`head -n1 $i | awk '{print $2}'` ; B=`tail -n2 $i | awk '{print $2}'` ; MEANMAGSECONDEPOCH=`echo ${B//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2}'` ; TEST=`echo $A $MEANMAGSECONDEPOCH | awk '{if ( ($1-$2)<0.5 ) print 1; else print 0 }'` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+
 
  ### Prepare the exclusion lists for this field
  echo "Preparing the exclusion lists for this field" >> transient_factory_test31.txt
