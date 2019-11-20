@@ -122,13 +122,16 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  N=`ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | wc -l`
  if [ $N -lt 2 ];then
   echo "ERROR: to few refereence images for the field $FIELD"
+  echo "ERROR: to few refereence images for the field $FIELD" >> transient_factory_test31.txt
   continue
  fi
  N=`ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | wc -l`
  if [ $N -lt 2 ];then
-  echo "ERROR: to few refereence images for the field $FIELD"
+  echo "ERROR: to few new images for the field $FIELD"
+  echo "ERROR: to few new images for the field $FIELD" >> transient_factory_test31.txt
   continue
  fi
+ echo "Checking input images" >> transient_factory_test31.txt
  REFERENCE_EPOCH__FIRST_IMAGE=`ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | head -n1`
  REFERENCE_EPOCH__SECOND_IMAGE=`ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | tail -n1`
  SECOND_EPOCH__FIRST_IMAGE=`ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | head -n1`
@@ -142,6 +145,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  done | grep "ERROR opening file"
  if [ $? -eq 0 ];then
   echo "ERROR processing the image series"
+  echo "ERROR processing the image series" >> transient_factory_test31.txt
   continue
  fi
 # # check if all images are actually there
@@ -157,6 +161,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 #  echo "Script ERROR! Cannot find image $NEW_IMAGES/*$FIELD*_002.fts"
 #  continue
 # fi
+ echo "Starting VaST" >> transient_factory_test31.txt
  # Run VaST
  ###./vast -x99 -u -f -k $REFERENCE_IMAGES/*$FIELD* $NEW_IMAGES/*$FIELD*
  ##./vast --selectbestaperture -y1 -p -x99 -u -f -k $REFERENCE_IMAGES/*"$FIELD"_* `ls $NEW_IMAGES/*"$FIELD"_*_001.fts | head -n1` `ls $NEW_IMAGES/*"$FIELD"_*_002.fts | head -n1`
@@ -166,6 +171,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   echo "ERROR running VaST on the fiels $FIELD"
   echo "ERROR running VaST on the fiels $FIELD" >> transient_factory_test31.txt
   echo "ERROR running VaST on the fiels $FIELD" >> transient_factory.log
+ else
+  echo "VsST run complete" >> transient_factory_test31.txt
  fi
  echo "The four input images were $REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"  >> transient_factory_test31.txt
  cat vast_summary.log >> transient_factory.log
@@ -186,6 +193,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 #  mkdir wcscache
 # fi
  
+ echo "Plate-solving the images" >> transient_factory_test31.txt
  # WCS-calibration
  for i in `cat vast_image_details.log |awk '{print $17}'` ;do 
   # This should ensure the correct field-of-view guess by setting the TELESCOP keyword
@@ -204,10 +212,11 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "***** PLATE SOLVE PROCESSING ERROR *****" >> transient_factory.log
    echo "***** cannot find wcs_"`basename $i`"  *****" >> transient_factory.log
    echo "############################################################" >> transient_factory.log
-   continue
+   continue # does this work???
   fi
  done 
  
+ echo "Running solve_plate_with_UCAC5" >> transient_factory_test31.txt
  # We need UCAC5 solution for the first and the third images
  util/solve_plate_with_UCAC5 `cat vast_image_details.log | awk '{print $17}' | head -n1 | tail -n1` &
  util/solve_plate_with_UCAC5 `cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1` &
@@ -222,17 +231,20 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 #  fi
 # done
  
+ echo "Calibrating the magnitude scale with Tycho-2 stars" >> transient_factory_test31.txt
  # Calibrate magnitude scale with Tycho-2 stars in the field 
  echo "y" | util/transients/calibrate_current_field_with_tycho2.sh 
 
  ################## Quality cits applied to calibrated magnitudes of the candidate transients ##################
 
+ echo "Filter-out faint candidates..." >> transient_factory_test31.txt
  echo "Filter-out faint candidates..."
  # Filter-out faint candidates
  for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">11.5"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
  #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">12.5"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
  #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">13.0"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
+ echo "Filter-out candidates with large difference between measured mags in one epoch..." >> transient_factory_test31.txt
  echo "Filter-out candidates with large difference between measured mags in one epoch..."
  # 2nd epoch
  cp candidates-transients.lst DEBUG_BACKUP_candidates-transients.lst
@@ -253,11 +265,13 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do if [ `cat $i | wc -l` -eq 2 ];then grep $i candidates-transients.lst | head -n1 ;continue ;fi ; A=`head -n1 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($1)<9.0 ) print 1; else print 0 }'` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
  #########################################
 
+ echo "Filter-out small-amplitude flares..." >> transient_factory_test31.txt
  echo "Filter-out small-amplitude flares..."
  # Filter-out small-amplitude flares
  for i in `cat candidates-transients.lst | awk '{print $1}'` ;do if [ `cat $i | wc -l` -eq 2 ];then grep $i candidates-transients.lst | head -n1 ;continue ;fi ; A=`head -n1 $i | awk '{print $2}'` ; B=`tail -n2 $i | awk '{print $2}'` ; MEANMAGSECONDEPOCH=`echo ${B//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2}'` ; TEST=`echo $A $MEANMAGSECONDEPOCH | awk '{if ( ($1-$2)<0.5 ) print 1; else print 0 }'` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
  ### Prepare the exclusion lists for this field
+ echo "Preparing the exclusion lists for this field" >> transient_factory_test31.txt
  # Exclude the previously considered candidates
  if [ -f ../exclusion_list.txt ];then
   SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
@@ -277,7 +291,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | while read A ;do lib/deg2hms $A ;done > exclusion_list_tycho2.txt
  fi
  ###
-
+ echo "Done with filtering" >> transient_factory_test31.txt
  echo "Done with filtering! =)"
  ###############################################################################################################
 
@@ -287,21 +301,24 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 # if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 200 ];then
  if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 2000 ];then
   echo "WARNING! Too many candidates... Skipping field..."
+  echo "ERROR Too many candidates... Skipping field..." >> transient_factory_test31.txt
   continue
  fi
 # if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 50 ];then
  if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 500 ];then
   echo "WARNING! Too many candidates... Dropping flares..."
+  echo "ERROR Too many candidates... Dropping flares..." >> transient_factory_test31.txt
   # if yes, remove flares, keep only new objects
   while read FLAREOUTFILE A B ;do
    grep -v $FLAREOUTFILE candidates-transients.lst > candidates-transients.tmp
    mv candidates-transients.tmp candidates-transients.lst
   done < candidates-flares.lst
  fi
- 
+
+ echo "Waiting for UCAC5 plate solver" >> transient_factory_test31.txt  
  # this is for UCAC5 plate solver
  wait
-
+ echo "Preparing the HTML report" >> transient_factory_test31.txt
  util/transients/make_report_in_HTML.sh #$FIELD
  #echo $FIELD
  
