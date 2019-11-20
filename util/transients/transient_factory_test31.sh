@@ -85,7 +85,10 @@ function printCandidateNameWithAbsLink( transientname) {
 
 </script>
 
-<BODY>" >> transient_report/index.html
+<BODY>
+<h2>NMW transient search results<h2><br> 
+The list of candidates will appear below. Please manually reload the page every few minutes untill the 'Processing complete' message appears.
+<br>" >> transient_report/index.html
 
 # Allow for multiple image directories to be specified on the command line
 
