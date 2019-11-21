@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 if [ -z "$2" ];then
  echo "Usage: $0 wcs_image.fits sextractor_catalog.cat"
  exit 1

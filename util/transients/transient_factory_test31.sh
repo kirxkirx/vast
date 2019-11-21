@@ -226,6 +226,9 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # We need UCAC5 solution for the first and the third images
  util/solve_plate_with_UCAC5 `cat vast_image_details.log | awk '{print $17}' | head -n1 | tail -n1` &
  util/solve_plate_with_UCAC5 `cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1` &
+ #
+ util/solve_plate_with_UCAC5 `cat vast_image_details.log | awk '{print $17}' | head -n2 | tail -n1` &
+ util/solve_plate_with_UCAC5 `cat vast_image_details.log | awk '{print $17}' | head -n4 | tail -n1` &
  # wait # moved down
  
  echo "Calibrating the magnitude scale with Tycho-2 stars" >> transient_factory_test31.txt

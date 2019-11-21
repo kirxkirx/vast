@@ -453,6 +453,8 @@ field identification have good chances to fail. Sorry... :(
   `"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # HACK Hack hack -- manually specify the field center and size
   # Gaia19dum
+  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 08:25:40.808 --dec +35:34:27.675 --radius 5.0  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # Gaia19dum
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 19:52:08.25 --dec 27:42:20.9 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # V3890 Sgr
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 18:30:43.28 --dec -24:01:08.9 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
