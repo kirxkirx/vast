@@ -315,7 +315,7 @@ echo -n "<a href=\"http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=$RA_MEAN%20$D
 </select>
 <input type='hidden' class='forminput' type='Text' name='targetcenter' style='width: 140px' value='$RADEC_MEAN_HMS'>
 <input type='hidden' class='formbutton' type='Radio' name='format' value='s' checked>
-<input type='hidden' class='forminput' type='Text' name='fieldsize' size='3' value='10'>
+<input type='hidden' class='forminput' type='Text' name='fieldsize' size='3' value='30'>
 <select style='display:none;' class='formselect' name='fieldunit' size='1'>
 <option value='3' selected>arc seconds</option>
 </select>
