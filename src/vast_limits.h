@@ -16,7 +16,7 @@
 #define MAX_NUMBER_OF_STARS 300000
 #define MAX_NUMBER_OF_OBSERVATIONS 120000 // per star
 // The following paprameter is now set here AUTOMATICALLY by the script lib/set_MAX_MEASUREMENTS_IN_RAM_in_vast_limits.sh that is started by make
-#define MAX_MEASUREMENTS_IN_RAM 96000  // PHYSMEM_BYTES=8229101568
+#define MAX_MEASUREMENTS_IN_RAM 96000  // set automatically at compile time based on PHYSMEM_BYTES=8229101568 by lib/set_MAX_MEASUREMENTS_IN_RAM_in_vast_limits.sh
 // Max. number of measurements to be stored in memory
 #define FILENAME_LENGTH 1024   // Max. image filename length
 #define OUTFILENAME_LENGTH 128 // Max. lightcurve (out*.dat) filename length
@@ -337,6 +337,19 @@
 // Should not be set for production!
 //#define DEBUGFILES
 //#define DEBUGMESSAGES
+
+// is_file() - a small function which checks is an input string is a name of a readable file
+static inline int is_file( char *filename ) {
+ FILE *f= NULL;
+ f= fopen( filename, "r" );
+ if ( f == NULL )
+  return 0;
+ else {
+  fclose( f );
+  return 1;
+ }
+}
+
 
 // The macro below will tell the pre-processor that limits.h is already included
 #define VAST_LIMITS_INCLUDE_FILE

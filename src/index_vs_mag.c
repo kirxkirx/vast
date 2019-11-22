@@ -306,8 +306,9 @@ int main() {
    for ( i= 0; i < number_of_reference_points; i++ ) {
 
     //if( i % 100 == 0 )fprintf(stderr,"\rComputing variability indexes for star %5d out of %5d    ",i,n_stars_in_lightcurve_statistics_file);
-    if ( i % 100 == 0 )
+    if ( i % 100 == 0 ) {
      fprintf( stderr, "." );
+    }
 
     // Determine the range of indexes for the bin around the current star
     start_index= stop_index= 0;
@@ -354,8 +355,11 @@ int main() {
      if ( k > 5 ) {
       //     if( iteration<3 ){
       gsl_sort( data_for_stat, 1, k );
+      // yes, qsort is noticably slower!!
+      //qsort( data_for_stat, k, sizeof( double ), compare_double );
       index_expected[i][varindex_counter]= gsl_stats_median_from_sorted_data( data_for_stat, 1, k );
       gsl_sort( data_for_stat_median_subtracted, 1, k );
+      //qsort( data_for_stat_median_subtracted, k, sizeof( double ), compare_double );
       index_spread[i][varindex_counter]= esimate_sigma_from_MAD_of_sorted_data( data_for_stat_median_subtracted, k );
       //     }
       //     else{

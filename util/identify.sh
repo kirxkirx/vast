@@ -737,7 +737,7 @@ if [ $ERROR_STATUS -ne 0 ];then
  exit $ERROR_STATUS
 fi
 
-########## NEW: Check if PV keywords aare present in the plate-solved image header and if not - try to insert them ##########
+########## NEW: Check if PV keywords are present in the plate-solved image header and if not - try to insert them ##########
 "$VAST_PATH"util/listhead "$WCS_IMAGE_NAME" | grep --quiet -e 'PV1_1' -e 'PV2_1' -e 'PV1_2' -e 'PV2_2'
 if [ $? -ne 0 ];then
  echo "Note that the $WCS_IMAGE_NAME plate-solved image header has no TPV-convention distortions in it..."

@@ -83,6 +83,18 @@ double unbiased_estimation_of_standard_deviation_assuming_Gaussian_dist( double 
 
 double compute_median_of_usorted_array_without_changing_it( double *data, int n );
 
+// Comparison function for qsort, which is actually slower in practice than gsl_sort (heapsort)
+// https://stackoverflow.com/questions/20584499/why-qsort-from-stdlib-doesnt-work-with-double-values-c
+static inline int compare_double( const void * a, const void * b) {
+  if (*(double*)a > *(double*)b)
+    return 1;
+ if (*(double*)a < *(double*)b)
+    return -1;
+ else
+    return 0; 
+}
+
+
 // The macro below will tell the pre-processor that this header file is already included
 #define VAST_STETSON_VARIABILITY_INDEXES_INCLUDE_FILE
 

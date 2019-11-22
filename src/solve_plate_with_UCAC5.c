@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <getopt.h>                              
 
 //#define _GNU_SOURCE // for memmem()
 #include <string.h>
@@ -30,19 +31,10 @@
 #include <unistd.h>    // also for getpid() and unlink() ...
 #include <math.h>
 
-// all these troubles for PATH_MAX
-/*
-#ifdef __gnu_linux__
- #include <linux/limits.h>
-#else
- #include <sys/syslimits.h>
-#endif
-*/
-#include <stdio.h>
-#include "get_path_to_vast.h"
-
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_sort.h>
+
+#include "get_path_to_vast.h"
 
 #include "fit_plane_lin.h"
 #include "fitsio.h"
@@ -1975,12 +1967,25 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
 }
 
 int main( int argc, char **argv ) {
+
+ /////////////////////////////////////
+ // Options for getopt()
+ char *cvalue= NULL;
+ const char *const shortopt= "ni:f:";
+ const struct option longopt[]= {
+     {"no_photometric_catalog", 0, NULL, 'n'}, {"iterations", 1, NULL, 'i'}, {"fov", 1, NULL, 'f'}, {NULL, 0, NULL, 0}}; //NULL string must be in the end
+ int nextopt;
+ /////////////////////////////////////
+
+ int use_photometric_catalog= 1;
+ int requested_number_of_iterations= MAX_NUMBER_OF_ITERATIONS_FOR_UCAC5_MATCH;
+
  int number_of_stars_in_wcs_catalog;
  struct detected_star *stars;
  char fits_image_filename[FILENAME_LENGTH];
  int i;
 
- double approximate_field_of_view_arcmin;
+ double approximate_field_of_view_arcmin= DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN;
 
  int stars_matched_at_previous_iteration, stars_matched_at_this_iteration;
 
@@ -1996,12 +2001,57 @@ int main( int argc, char **argv ) {
 
  number_of_stars_in_wcs_catalog= 0; // =0 just in case
 
- if ( argc < 2 || argc > 3 ) {
-  fprintf( stderr, "Usage: %s myfitsimage.fits [APPROXIMATE_FIELD_OF_VIEW_ARCMIN]\n\nExamples: %s myfitsimage.fits\n          %s myfitsimage.fits 40\n", argv[0], argv[0], argv[0] );
+
+ if ( argc < 2 ) {
+  fprintf( stderr, "Usage: %s myfitsimage.fits [--fov APPROXIMATE_FIELD_OF_VIEW_ARCMIN] [--iterations NUMBER_OF_ITERATIONS] [--no_photometric_catalog]\n\nExamples: %s myfitsimage.fits\n          %s myfitsimage.fits -f 40\n", argv[0], argv[0], argv[0] );
   return 1;
  }
 
- strncpy( fits_image_filename, argv[1], FILENAME_LENGTH );
+ // Parse command line arguments
+ fprintf( stderr, "Parsing command line arguments...\n" );
+ while ( nextopt= getopt_long( argc, argv, shortopt, longopt, NULL ), nextopt != -1 ) {
+  switch ( nextopt ) {
+  case 'n':
+   fprintf( stdout, "Option '-n' not using photometric catalogs, just stick with astrometry\n" );
+   use_photometric_catalog= 0;
+   break;
+  case 'i':
+   cvalue= optarg;
+   if ( 1 == is_file( cvalue ) ) {
+    fprintf( stderr, "Option '-i' requires an argument: maximum number of iterations\n" );
+    exit( 1 );
+   }
+   requested_number_of_iterations= atoi( cvalue );
+   if ( requested_number_of_iterations < 1 || requested_number_of_iterations > 10 ) {
+    fprintf( stderr, "WARNING: maximum number of iterations %d is set incorrectly!\nResorting to the default value of %d\n", requested_number_of_iterations, MAX_NUMBER_OF_ITERATIONS_FOR_UCAC5_MATCH );
+    requested_number_of_iterations= MAX_NUMBER_OF_ITERATIONS_FOR_UCAC5_MATCH;
+   }
+   fprintf( stdout, "opt '-i': %d is the maximum number of iterations\n", requested_number_of_iterations );
+   break;
+  case 'f':
+   cvalue= optarg;
+   if ( 1 == is_file( cvalue ) ) {
+    fprintf( stderr, "Option '-%c' requires an argument: field of view in arcminutes\n", optopt );
+    exit( 1 );
+   }
+   approximate_field_of_view_arcmin= atof( cvalue );
+   if ( approximate_field_of_view_arcmin < 2.0 || approximate_field_of_view_arcmin > 600.0 ) {
+    fprintf( stderr, "WARNING: the field of view %lf seems to be set incorrectly!\nResorting to the default value of %lf\n", approximate_field_of_view_arcmin, DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN );
+    approximate_field_of_view_arcmin= DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN;
+   }
+   fprintf( stdout, "opt '-%c': %lf is the field of view in arcminutes\n", optopt, approximate_field_of_view_arcmin );
+   break;
+  case '?':
+   fprintf( stderr, "ERROR: unknown option!\n" );
+   exit( 1 );
+   break;
+  case -1:
+   fprintf( stderr, "Done parsing the options\n" );
+   break;
+  }
+ }
+
+ strncpy( fits_image_filename, argv[optind], FILENAME_LENGTH );
  fits_image_filename[FILENAME_LENGTH - 1]= '\0';
 
  // Check if the input file has already been processed
@@ -2015,6 +2065,7 @@ int main( int argc, char **argv ) {
   return 1;
  }
 
+/*
  // set the field of view, if needed
  if ( argc == 3 ) {
   approximate_field_of_view_arcmin= atof( argv[2] );
@@ -2022,8 +2073,8 @@ int main( int argc, char **argv ) {
    fprintf( stderr, "Warining! The supplied approximate field of view (%s = %lf) arcmin seems wrong. Resorting to the default value of %lf.\n", argv[2], approximate_field_of_view_arcmin, DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN );
    approximate_field_of_view_arcmin= DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN;
   }
- } else {
-  //approximate_field_of_view_arcmin=DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN;
+*/
+ if ( approximate_field_of_view_arcmin == DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN ) {
   sprintf( command_string, "%slib/try_to_guess_image_fov %s", path_to_vast_string, fits_image_filename );
   pipe_for_try_to_guess_image_fov= popen( command_string, "r" );
   if ( NULL == pipe_for_try_to_guess_image_fov ) {
@@ -2039,6 +2090,7 @@ int main( int argc, char **argv ) {
   }
  }
 
+ fprintf( stderr, "Seting catalog search parameters based on the expected field of view %lf arcmin\n", approximate_field_of_view_arcmin);
  set_catalog_search_parameters( approximate_field_of_view_arcmin, &catalog_search_parameters );
 
  // **** Blind plate solution with Astrometry.net ****
@@ -2127,7 +2179,8 @@ int main( int argc, char **argv ) {
  stars_matched_at_previous_iteration= stars_matched_at_this_iteration;
 
  // Apply the local corrections and iterate to find a better plate solution
- for ( solution_iteration= 2; solution_iteration <= MAX_NUMBER_OF_ITERATIONS_FOR_UCAC5_MATCH; solution_iteration++ ) {
+ //for ( solution_iteration= 2; solution_iteration <= MAX_NUMBER_OF_ITERATIONS_FOR_UCAC5_MATCH; solution_iteration++ ) {
+ for ( solution_iteration= 2; solution_iteration <= requested_number_of_iterations; solution_iteration++ ) {
 
   fprintf( stderr, "\nITERATION %02d -- talking to VizieR, this might be slow!\n", solution_iteration );
   for ( i= 0; i < number_of_stars_in_wcs_catalog; i++ ) {
@@ -2208,16 +2261,18 @@ int main( int argc, char **argv ) {
  fclose( solve_plate_debug );
 #endif
 
- // Photometric calibration
- if ( 0 != search_APASS_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
-  fprintf( stderr, "ERROR running search_APASS_with_vizquery()\n" );
-  fprintf( stderr, "Maybe this sky area is not covered by APASS yet?\nTrying the Pan-STARRS1 catalog as the fallback option...\n\nWARNING: using Pan-STARRS1 instead of APASS for magnitude calibration!!!!\n\n" );
-  if ( 0 != search_PANSTARRS1_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
-   fprintf( stderr, "ERROR running search_PANSTARRS1_with_vizquery()\n" );
-   free( stars );
-   return 1;
+ if ( use_photometric_catalog == 1 ) {
+  // Photometric calibration
+  if ( 0 != search_APASS_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
+   fprintf( stderr, "ERROR running search_APASS_with_vizquery()\n" );
+   fprintf( stderr, "Maybe this sky area is not covered by APASS yet?\nTrying the Pan-STARRS1 catalog as the fallback option...\n\nWARNING: using Pan-STARRS1 instead of APASS for magnitude calibration!!!!\n\n" );
+   if ( 0 != search_PANSTARRS1_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
+    fprintf( stderr, "ERROR running search_PANSTARRS1_with_vizquery()\n" );
+    free( stars );
+    return 1;
+   }
   }
- }
+ } // if ( use_photometric_catalog == 1 ) {
 
  // Write output
  write_wcs_catalog( fits_image_filename, stars, number_of_stars_in_wcs_catalog );
