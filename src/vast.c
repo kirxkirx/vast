@@ -663,7 +663,7 @@ void vast_build_number( char *vast_build_number_string ) {
 }
 
 
-/* is_file() - a small function which checks is an input string is a name of a readable file */
+/* is_file() - a small function which checks is an input string is a name of a readable file
 int is_file( char *filename ) {
  FILE *f= NULL;
  f= fopen( filename, "r" );
@@ -674,6 +674,7 @@ int is_file( char *filename ) {
   return 1;
  }
 }
+*/
 
 /*
    This function will write vast_images_catalogs.log file
