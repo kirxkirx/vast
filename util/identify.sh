@@ -234,7 +234,7 @@ fi # if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
 VAST_PATH=`readlink -f $0`
 VAST_PATH=`dirname "$VAST_PATH"`
 VAST_PATH="${VAST_PATH/util/}"
-VAST_PATH="${VAST_PATH/lib/}"
+#VAST_PATH="${VAST_PATH/lib/}"
 VAST_PATH="${VAST_PATH/'//'/'/'}"
 export VAST_PATH
 OLDDDIR_TO_CHECK_INPUT_FILE="$PWD"
