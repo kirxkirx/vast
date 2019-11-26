@@ -113,6 +113,35 @@ struct detected_star {
  double observing_epoch_jd;
 };
 
+static inline double compute_distance_on_sphere( double RA1_deg, double DEC1_deg, double RA2_deg, double DEC2_deg ) {
+ double distance;
+ double deg2rad_conversion= M_PI / 180.0;
+ double RA1_rad= RA1_deg * deg2rad_conversion;
+ double DEC1_rad= DEC1_deg * deg2rad_conversion;
+ double RA2_rad= RA2_deg * deg2rad_conversion;
+ double DEC2_rad= DEC2_deg * deg2rad_conversion;
+
+ double cos_DEC1_rad;
+ double sin_DEC1_rad;
+ double cos_DEC2_rad;
+ double sin_DEC2_rad;
+
+#ifdef VAST_USE_SINCOS
+ sincos( DEC1_rad, &sin_DEC1_rad, &cos_DEC1_rad );
+ sincos( DEC2_rad, &sin_DEC2_rad, &cos_DEC2_rad );
+#else
+ cos_DEC1_rad= cos( DEC1_rad );
+ sin_DEC1_rad= sin( DEC1_rad );
+ cos_DEC2_rad= cos( DEC2_rad );
+ sin_DEC2_rad= sin( DEC2_rad );
+#endif
+
+ //distance=acos(cos(DEC1_rad)*cos(DEC2_rad)*cos(MAX(RA1_rad,RA2_rad)-MIN(RA1_rad,RA2_rad))+sin(DEC1_rad)*sin(DEC2_rad))/deg2rad_conversion;
+ distance= acos( cos_DEC1_rad * cos_DEC2_rad * cos( MAX( RA1_rad, RA2_rad ) - MIN( RA1_rad, RA2_rad ) ) + sin_DEC1_rad * sin_DEC2_rad ) / deg2rad_conversion;
+
+ return distance;
+}
+
 void remove_outliers_from_a_pair_of_arrays( double *a, double *b, int *N_good ) {
  int i, j;
  double median1, MAD1, M1;
@@ -1208,6 +1237,231 @@ void usno_hack_create_vizquery_input_from_ucac4_output( char *vizquery_output_fi
 }
 */
 
+int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
+
+ double faintest_mag, brightest_mag;
+
+ double observing_epoch_jy, dt;
+
+ double measured_ra, measured_dec, catalog_ra, catalog_dec, catalog_mag;
+ //double distance;
+ double catalog_ra_original, catalog_dec_original;                                                    
+ double cos_delta;
+ int N_stars_matched_with_astrometric_catalog= 0;
+ 
+ int search_stars_counter;
+
+ double epoch, pmRA, pmDE;
+ //double e_pmRA, e_pmDE;
+
+ double search_ra_min_deg, search_ra_max_deg, search_ra_maxmin_deg, search_ra_mean_deg;
+ double search_dec_min_deg, search_dec_max_deg, search_dec_maxmin_deg, search_dec_mean_deg;
+ int detected_star_counter;
+ 
+ // based on https://stackoverflow.com/questions/17598572/read-and-write-to-binary-files-in-c
+ // and http://cdsarc.u-strasbg.fr/ftp/I/340/readmeU5.txt
+ int zone_counter;
+ char zonefilename[24]; // should match the length of sprintf string below
+
+ //double gaia_ra_deg, garia_dec_deg;
+ double ucac_ra_deg, ucac_dec_deg;
+ double ucac_mag;
+ double ucac_epoch;
+ 
+ double ucac_pm_ra_masy; //, ucac_pm_ra_err_masy;
+ double ucac_pm_dec_masy; //, ucac_pm_dec_err_masy;
+
+ int64_t srcid;   // long
+ int32_t ira,idc, rag,dcg; // int
+ int16_t epi, pmir,pmid,pmer,pmed, phgm,im1,rmag,jmag,hmag,kmag ,erg, edg; // short
+ int8_t flg,nu1; // char
+
+ //unsigned char buffer[52];
+ FILE *ptr;
+
+ // Check if a local copy of UCAC5 is found
+ sprintf( zonefilename,"lib/catalogs/ucac5/z%03d",1);
+ ptr = fopen( zonefilename, "rb");  // r for read, b for binary
+ if ( NULL == ptr ) {
+  fprintf( stderr, "No local copy of UCAC5 is found\n");
+  return 1;
+ }
+
+ // set zone search parameters
+ search_ra_min_deg=360.0;
+ search_ra_max_deg=0.0;
+ search_dec_min_deg=90.0;
+ search_dec_max_deg=-90.0;
+ for ( detected_star_counter=0; detected_star_counter<N; detected_star_counter++ ){
+  if ( stars[detected_star_counter].ra_deg_measured < search_ra_min_deg )search_ra_min_deg=stars[detected_star_counter].ra_deg_measured;
+  if ( stars[detected_star_counter].ra_deg_measured > search_ra_max_deg )search_ra_max_deg=stars[detected_star_counter].ra_deg_measured;
+  if ( stars[detected_star_counter].dec_deg_measured < search_dec_min_deg )search_dec_min_deg=stars[detected_star_counter].dec_deg_measured;
+  if ( stars[detected_star_counter].dec_deg_measured > search_dec_max_deg )search_dec_max_deg=stars[detected_star_counter].dec_deg_measured; 
+ }
+ search_ra_maxmin_deg=search_ra_max_deg-search_ra_min_deg;
+ search_ra_mean_deg=(search_ra_max_deg+search_ra_min_deg)/2.0;
+ search_dec_maxmin_deg=search_dec_max_deg-search_dec_min_deg;
+ search_dec_mean_deg=(search_dec_max_deg+search_dec_min_deg)/2.0;
+ //
+ faintest_mag=catalog_search_parameters->faintest_mag;
+ brightest_mag=catalog_search_parameters->brightest_mag;
+
+ // Read each zone file
+ for( zone_counter=1; zone_counter<900+1; zone_counter++ ) {
+ //for( zone_counter=1; zone_counter<2; zone_counter++ ) {
+  
+  sprintf( zonefilename,"lib/catalogs/ucac5/z%03d",zone_counter);
+  
+  //fprintf(stderr,"%s\n",zonefilename);
+  
+  ptr = fopen( zonefilename, "rb");  // r for read, b for binary
+  if ( NULL == ptr ) {
+   fprintf( stderr, "ERROR opening zone file %s\n", zonefilename);
+   // if this is the first file - assume there is no catalog
+   //if( zone_counter==1 ){
+   // return 1;
+   //}
+   // otherwise assume this is just one missing file
+   continue;
+  }
+  
+  //fprintf(stderr,"DEBUG: reading %s\n",zonefilename);
+
+  // Read all stars in the zone file
+  while ( 1 == 1 ) {
+   if ( 0 == fread(&srcid,sizeof(srcid),1,ptr) ){break;}
+   if ( 0 == fread(&rag,sizeof(rag),1,ptr) ){break;}
+   if ( 0 == fread(&dcg,sizeof(dcg),1,ptr) ){break;}
+   //
+   //gaia_ra_deg=(double)rag/3600000.0;
+   //garia_dec_deg=(double)dcg/3600000.0;
+   //
+   if ( 0 == fread(&erg,sizeof(erg),1,ptr) ){break;}
+   if ( 0 == fread(&edg,sizeof(edg),1,ptr) ){break;}
+   if ( 0 == fread(&flg,sizeof(flg),1,ptr) ){break;}
+   if ( 0 == fread(&nu1,sizeof(nu1),1,ptr) ){break;}
+   if ( 0 == fread(&epi,sizeof(epi),1,ptr) ){break;}
+   //
+   ucac_epoch=(double)epi/1000.0+1997.0;
+   epoch= ucac_epoch;
+   //
+   if ( 0 == fread(&ira,sizeof(ira),1,ptr) ){break;}
+   if ( 0 == fread(&idc,sizeof(idc),1,ptr) ){break;}
+   //
+   ucac_ra_deg=(double)ira/3600000.0;
+   ucac_dec_deg=(double)idc/3600000.0;
+   //
+   if ( fabs(search_dec_mean_deg-ucac_dec_deg)>search_dec_maxmin_deg/2.0+0.2 ){break;}
+   //
+   if ( 0 == fread(&pmir,sizeof(pmir),1,ptr) ){break;}
+   if ( 0 == fread(&pmid,sizeof(pmid),1,ptr) ){break;}
+   if ( 0 == fread(&pmer,sizeof(pmer),1,ptr) ){break;}
+   if ( 0 == fread(&pmed,sizeof(pmed),1,ptr) ){break;}
+   //
+   ucac_pm_ra_masy=0.1*(double)pmir;
+   //ucac_pm_ra_err_masy=0.1*(double)pmer;
+   ucac_pm_dec_masy=0.1*(double)pmid;
+   //ucac_pm_dec_err_masy=0.1*(double)pmed;
+
+   //
+   if ( 0 == fread(&phgm,sizeof(phgm),1,ptr) ){break;}
+   if ( 0 == fread(&im1,sizeof(im1),1,ptr) ){break;}
+   //
+   ucac_mag=(double)im1/1000.0;
+   //
+   if ( 0 == fread(&rmag,sizeof(rmag),1,ptr) ){break;}
+   if ( 0 == fread(&jmag,sizeof(jmag),1,ptr) ){break;}
+   if ( 0 == fread(&hmag,sizeof(hmag),1,ptr) ){break;}
+   if ( 0 == fread(&kmag,sizeof(kmag),1,ptr) ){break;}
+   
+   // Check the search parameters
+   if ( ucac_mag>faintest_mag ){continue;} // continue to the next star
+   if ( ucac_mag<brightest_mag ){continue;} // continue to the next star
+   //
+   if( ucac_ra_deg < search_ra_min_deg ){continue;}
+   if( ucac_ra_deg > search_ra_max_deg ){continue;}
+   if( ucac_dec_deg < search_dec_min_deg ){continue;}
+   if( ucac_dec_deg > search_dec_max_deg ){continue;}
+   //
+   // Go through all the detected stars and search for a match
+   search_stars_counter= 0;
+   for ( detected_star_counter=0; detected_star_counter<N; detected_star_counter++ ){
+    //
+    if ( stars[detected_star_counter].good_star != 1 ){
+     continue;
+    }
+    if ( search_stars_counter == MAX_STARS_IN_VIZQUERY ) {
+     break;
+    }
+    search_stars_counter++;
+    //
+    measured_ra= stars[detected_star_counter].ra_deg_measured;
+    measured_dec= stars[detected_star_counter].dec_deg_measured;
+    if ( compute_distance_on_sphere( ucac_ra_deg, ucac_dec_deg, measured_ra, measured_dec ) < catalog_search_parameters->search_radius_deg ) { 
+     if ( ( ucac_mag < stars[detected_star_counter].catalog_mag && stars[detected_star_counter].matched_with_astrometric_catalog == 1 ) || stars[detected_star_counter].matched_with_astrometric_catalog == 0 ) {
+      //
+      //fprintf(stderr,"DEBUG: we've got a match!\n");
+      //
+      if( stars[detected_star_counter].matched_with_astrometric_catalog == 0 )N_stars_matched_with_astrometric_catalog++;
+      //
+      catalog_ra= ucac_ra_deg;
+      catalog_dec= ucac_dec_deg;
+      pmRA= ucac_pm_ra_masy;
+      pmDE= ucac_pm_dec_masy;
+      catalog_mag= ucac_mag;
+      ///////////////// Account for proper motion /////////////////
+      cos_delta= cos( catalog_dec * M_PI / 180.0 );
+      catalog_ra_original= catalog_ra;
+      catalog_dec_original= catalog_dec;
+      observing_epoch_jy= 2000.0 + ( stars[0].observing_epoch_jd - 2451545.0 ) / 365.25;
+      dt= observing_epoch_jy - epoch;
+      catalog_ra= catalog_ra + pmRA / 3600000 * cos_delta * dt;
+      catalog_dec= catalog_dec + pmDE / 3600000 * dt;
+      //
+      stars[detected_star_counter].matched_with_astrometric_catalog= 1;
+      stars[detected_star_counter].d_ra= catalog_ra - measured_ra;
+      stars[detected_star_counter].d_dec= catalog_dec - measured_dec;
+      stars[detected_star_counter].catalog_ra= catalog_ra;
+      stars[detected_star_counter].catalog_dec= catalog_dec;
+      stars[detected_star_counter].catalog_mag= catalog_mag;
+      stars[detected_star_counter].catalog_mag_err= 0.0;
+      stars[detected_star_counter].catalog_ra_original= catalog_ra_original;
+      stars[detected_star_counter].catalog_dec_original= catalog_dec_original;
+      // reset photometric info
+      stars[detected_star_counter].APASS_B= 0.0;
+      stars[detected_star_counter].APASS_B_err= 0.0;
+      stars[detected_star_counter].APASS_V= 0.0;
+      stars[detected_star_counter].APASS_V_err= 0.0;
+      stars[detected_star_counter].APASS_r= 0.0;
+      stars[detected_star_counter].APASS_r_err= 0.0;
+      stars[detected_star_counter].APASS_i= 0.0;
+      stars[detected_star_counter].APASS_i_err= 0.0;
+      stars[detected_star_counter].Rc_computed_from_APASS_ri= 0.0;
+      stars[detected_star_counter].Rc_computed_from_APASS_ri_err= 0.0;
+      stars[detected_star_counter].Rc_computed_from_APASS_ri_err= 0.0;
+      stars[detected_star_counter].Ic_computed_from_APASS_ri= 0.0;
+      stars[detected_star_counter].Ic_computed_from_APASS_ri_err= 0.0;
+      //
+     }
+    }
+   }
+   //
+  
+   //fprintf(stderr, "%li  %.7lf %.7lf  %.3lf %.3lf  %.1lf %.1lf %.1lf %.1lf\n", srcid, ucac_ra_deg, ucac_dec_deg, ucac_epoch, ucac_mag,  ucac_pm_ra_masy, ucac_pm_ra_err_masy, ucac_pm_dec_masy, ucac_pm_dec_err_masy );
+  } // while( 1 == 1 ) { // Read all stars in the zone file
+ 
+  fclose(ptr);
+ } // for( zone_counter==0; zone_counter<900; zone_counter++ ) { // Read each zone file
+
+ fprintf( stderr, "Matched %d stars with the local copy of UCAC5.\n", N_stars_matched_with_astrometric_catalog );
+ if ( N_stars_matched_with_astrometric_catalog < 5 ) {
+  fprintf( stderr, "ERROR: too few stars matched!\n" );
+  return 1;
+ }
+
+ return 0;
+}
+
 int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
  char command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
  FILE *vizquery_input;
@@ -1220,6 +1474,12 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
 
  char path_to_vast_string[VAST_PATH_MAX];
  get_path_to_vast( path_to_vast_string );
+
+ // Try the local copy of UCAC5
+ if ( 0 == search_UCAC5_localcopy( stars, N, catalog_search_parameters ) ) {
+  fprintf( stderr, "The local UCAC5 search seems to be a success\n");
+  return 0;
+ }
 
  sprintf( vizquery_input_filename, "vizquery_%d.input", pid );
  sprintf( vizquery_output_filename, "vizquery_%d.output", pid );
@@ -1570,34 +1830,6 @@ static int compare_star_on_mag_solve( const void *a1, const void *a2 ) {
 */
 }
 
-static inline double compute_distance_on_sphere( double RA1_deg, double DEC1_deg, double RA2_deg, double DEC2_deg ) {
- double distance;
- double deg2rad_conversion= M_PI / 180.0;
- double RA1_rad= RA1_deg * deg2rad_conversion;
- double DEC1_rad= DEC1_deg * deg2rad_conversion;
- double RA2_rad= RA2_deg * deg2rad_conversion;
- double DEC2_rad= DEC2_deg * deg2rad_conversion;
-
- double cos_DEC1_rad;
- double sin_DEC1_rad;
- double cos_DEC2_rad;
- double sin_DEC2_rad;
-
-#ifdef VAST_USE_SINCOS
- sincos( DEC1_rad, &sin_DEC1_rad, &cos_DEC1_rad );
- sincos( DEC2_rad, &sin_DEC2_rad, &cos_DEC2_rad );
-#else
- cos_DEC1_rad= cos( DEC1_rad );
- sin_DEC1_rad= sin( DEC1_rad );
- cos_DEC2_rad= cos( DEC2_rad );
- sin_DEC2_rad= sin( DEC2_rad );
-#endif
-
- //distance=acos(cos(DEC1_rad)*cos(DEC2_rad)*cos(MAX(RA1_rad,RA2_rad)-MIN(RA1_rad,RA2_rad))+sin(DEC1_rad)*sin(DEC2_rad))/deg2rad_conversion;
- distance= acos( cos_DEC1_rad * cos_DEC2_rad * cos( MAX( RA1_rad, RA2_rad ) - MIN( RA1_rad, RA2_rad ) ) + sin_DEC1_rad * sin_DEC2_rad ) / deg2rad_conversion;
-
- return distance;
-}
 
 int correct_measured_positions( struct detected_star *stars, int N, double search_radius, int process_only_stars_matched_with_catalog, struct str_catalog_search_parameters *catalog_search_parameters ) {
 
