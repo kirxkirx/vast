@@ -186,7 +186,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  fi
  echo "############################################################" >> transient_factory.log
  
-# # Use cache if possible to speed-up WCS calibration
+ # Use cache if possible to speed-up WCS calibration
 # if [ -d wcscache ];then
 #  for i in wcscache/*$FIELD* ;do
 #   ln -s $i
@@ -194,6 +194,14 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 # else
 #  mkdir wcscache
 # fi
+ for WCSCACHEDIR in "/mnt/usb/NMW_NG/solved_reference_images" "/home/NMW_web_upload/solved_reference_images" "/dataX/kirx/NMW_NG_rt3_autumn2019/solved_reference_images" ;do
+  if [ -d "$WCSCACHEDIR" ];then
+   for i in "$WCSCACHEDIR/wcs_"$FIELD"_"* ;do
+    ln -s $i
+   done
+   break
+  fi
+ done
  
  echo "Plate-solving the images" >> transient_factory_test31.txt
  # WCS-calibration
@@ -272,6 +280,18 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # Filter-out small-amplitude flares
  for i in `cat candidates-transients.lst | awk '{print $1}'` ;do if [ `cat $i | wc -l` -eq 2 ];then grep $i candidates-transients.lst | head -n1 ;continue ;fi ; A=`head -n1 $i | awk '{print $2}'` ; B=`tail -n2 $i | awk '{print $2}'` ; MEANMAGSECONDEPOCH=`echo ${B//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2}'` ; TEST=`echo $A $MEANMAGSECONDEPOCH | awk '{if ( ($1-$2)<0.5 ) print 1; else print 0 }'` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
+ # Make sure ech candidate is detected on the two second-epoch images, not any other combination
+ for i in `cat candidates-transients.lst | awk '{print $1}'` ;do 
+  grep --quiet "$SECOND_EPOCH__FIRST_IMAGE" "$i"
+  if [ $? -ne 0 ];then
+   continue
+  fi
+  grep --quiet "$SECOND_EPOCH__SECOND_IMAGE" "$i"
+  if [ $? -ne 0 ];then
+   continue
+  fi
+  grep $i candidates-transients.lst | head -n1 
+ done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
  ### Prepare the exclusion lists for this field
  echo "Preparing the exclusion lists for this field" >> transient_factory_test31.txt
