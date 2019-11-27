@@ -50,7 +50,7 @@ int fake_image_hack( char *input_string ) {
  // Check input string
  number_of_characters_inputs_str=strlen(input_string);
  // check if the number of characters is reasonable
- if( number_of_characters_inputs_str<7 ){
+ if( number_of_characters_inputs_str<5 ){
   fprintf(stderr,"ERROR in fake_image_hack(): the number of characters in the input string #%s# is %d, less than expected\n",input_string,number_of_characters_inputs_str);
   return 0;
  }
@@ -75,7 +75,7 @@ int fake_image_hack( char *input_string ) {
   j=99;
   break;
  } // for ( j= 0, i= 0; i < strlen( argv[1] ); i++ ) { 
- if( j==1 ){
+ if( j==0 || j==1 ){
   // OK, there is only one '.' in the string, that looks promising
   jd_from_string=atof(input_string);
   if ( jd_from_string>EXPECTED_MIN_MJD && jd_from_string<EXPECTED_MAX_JD ) {
