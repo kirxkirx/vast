@@ -5588,7 +5588,9 @@ if [ -d ../transient_detection_test_Ceres ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES010a"
   fi
   RADECPOSITION_TO_TEST=`grep "2013 03 25.8483  2456377.3483  12.37" transient_report/index.html | awk '{print $6" "$7}'`
-  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 06:01:27.29 +23:51:10.7 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  #DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 06:01:27.29 +23:51:10.7 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # Changed to the VSX position
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 06:01:27.02 +23:51:19.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
   re='^[0-9]+$'
@@ -5610,13 +5612,15 @@ if [ -d ../transient_detection_test_Ceres ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES011"
   fi
   #grep --quiet "2013 03 22.3148  2456191.3148  11.75  05:48:54.08 +28:51:09.7" transient_report/index.html
-  grep --quiet "2013 03 22.3148  2456191.3148  11.75" transient_report/index.html
+  grep --quiet "2013 03 25.8483  2456377.3483  11.26" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES011a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2013 03 22.3148  2456191.3148  11.75" transient_report/index.html | awk '{print $6" "$7}'`
-  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:48:54.08 +28:51:09.7 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  RADECPOSITION_TO_TEST=`grep "2013 03 25.8483  2456377.3483  11.26" transient_report/index.html | awk '{print $6" "$7}'`
+  #DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:48:54.08 +28:51:09.7 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # Changed to the VSX position
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:48:53.74 +28:51:09.7  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
   re='^[0-9]+$'
@@ -5638,13 +5642,15 @@ if [ -d ../transient_detection_test_Ceres ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES0110"
   fi
   #grep --quiet "2013 03 22.3148  2456191.3148  13.38  05:47:30.53 +27:08:16.8" transient_report/index.html
-  grep --quiet "2013 03 22.3148  2456191.3148  13.38" transient_report/index.html
+  grep --quiet "2013 03 25.8483  2456377.3483  12.93" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES0110a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2013 03 22.3148  2456191.3148  13.38" transient_report/index.html | awk '{print $6" "$7}'`
-  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:47:30.53 +27:08:16.8 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  RADECPOSITION_TO_TEST=`grep "2013 03 25.8483  2456377.3483  12.93" transient_report/index.html | awk '{print $6" "$7}'`
+  #DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:47:30.53 +27:08:16.8 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # Changed to the VSX position
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:47:30.21 +27:08:12.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
   re='^[0-9]+$'
@@ -5666,13 +5672,15 @@ if [ -d ../transient_detection_test_Ceres ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES012"
   fi
   #grep --quiet "2013 03 22.3148  2456191.3148  13.10  06:05:05.47 +26:40:53.2" transient_report/index.html
-  grep --quiet "2013 03 22.3148  2456191.3148  13.10" transient_report/index.html
+  grep --quiet "2013 03 25.8483  2456377.3483  12.24" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES012a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2013 03 22.3148  2456191.3148  13.10" transient_report/index.html | awk '{print $6" "$7}'`
-  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 06:05:05.47 +26:40:53.2 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  RADECPOSITION_TO_TEST=`grep "2013 03 25.8483  2456377.3483  12.24" transient_report/index.html | awk '{print $6" "$7}'`
+  #DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 06:05:05.47 +26:40:53.2 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # Changed to the VSX position
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 06:05:05.13 +26:40:53.4 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
   re='^[0-9]+$'
@@ -5694,13 +5702,14 @@ if [ -d ../transient_detection_test_Ceres ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES013"
   fi
   #grep --quiet "2013 03 22.3148  2456191.3148  12.79  05:43:31.42 +28:07:41.4" transient_report/index.html
-  grep --quiet -e "2013 03 22.3148  2456191.3148  12.79" -e "2013 03 22.3148  2456191.3148  12.80" transient_report/index.html
+  grep --quiet "2013 03 25.8483  2456377.3483  12.04" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES013a"
   fi
-  RADECPOSITION_TO_TEST=`grep -e "2013 03 22.3148  2456191.3148  12.79" -e "2013 03 22.3148  2456191.3148  12.80" transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
-  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:43:31.42 +28:07:41.4 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  RADECPOSITION_TO_TEST=`grep "2013 03 25.8483  2456377.3483  12.04" transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  #DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:43:31.42 +28:07:41.4 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:43:31.01 +28:07:44.1 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
   re='^[0-9]+$'
@@ -5722,13 +5731,14 @@ if [ -d ../transient_detection_test_Ceres ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES014"
   fi
   #grep --quiet "2013 03 22.3148  2456191.3148  12.32  05:39:30.69 +26:22:25.7" transient_report/index.html
-  grep --quiet "2013 03 22.3148  2456191.3148  12.32" transient_report/index.html
+  grep --quiet "2013 03 25.8483  2456377.3483  10.76" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES014a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2013 03 22.3148  2456191.3148  12.32" transient_report/index.html | awk '{print $6" "$7}'`
-  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:39:30.69 +26:22:25.7 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  RADECPOSITION_TO_TEST=`grep "2013 03 25.8483  2456377.3483  10.76" transient_report/index.html | awk '{print $6" "$7}'`
+  #DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:39:30.69 +26:22:25.7 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:39:30.51 +26:22:27.0 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
   re='^[0-9]+$'
@@ -5979,12 +5989,12 @@ if [ -d ../NMW_Saturn_test ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN010x"
   fi
   #
-  grep --quiet -e "2019 11 03.8559  2457406.3559  12.57" -e "2019 11 03.6470  2458791.1470  11.27" transient_report/index.html
+  grep --quiet "2019 11 03.6470  2458791.1470  11.27" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN010a"
   fi
-  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.8559  2457406.3559  12.57" -e "2019 11 03.6470  2458791.1470  11.27" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2019 11 03.6470  2458791.1470  11.27" transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:03:48.76 -26:58:59.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
@@ -6006,12 +6016,12 @@ if [ -d ../NMW_Saturn_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN011"
   fi
-  grep --quiet "2019 11 03.6470  2458791.1470  11.84" transient_report/index.html
+  grep --quiet -e "2019 11 03.6470  2458791.1470  11.84" -e "2019 11 03.6470  2458791.1470  11.82" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN011a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2019 11 03.6470  2458791.1470  11.84" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  11.84" -e "2019 11 03.6470  2458791.1470  11.82" transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:01:28.86 -22:38:56.6 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
