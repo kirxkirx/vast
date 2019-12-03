@@ -8685,11 +8685,12 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF_EMPTYPSFFILTERINGLOFGILE_FEW_SRC_REJECTED"
   fi
-  NUMER_OF_REJECTED_STARS=`cat image00001.cat.magparameter02filter_rejected | wc -l | awk '{print $1}'`
-  if [ $NUMER_OF_REJECTED_STARS -lt 9 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF_EMPTYPSFFILTERINGLOFGILE_FEW_SRC_REJECTED_PSFmAPER"
-  fi
+  # Not using this filter anymore
+  #NUMER_OF_REJECTED_STARS=`cat image00001.cat.magparameter02filter_rejected | wc -l | awk '{print $1}'`
+  #if [ $NUMER_OF_REJECTED_STARS -lt 9 ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF_EMPTYPSFFILTERINGLOFGILE_FEW_SRC_REJECTED_PSFmAPER"
+  #fi
 
  else
   echo "ERROR: cannot find vast_summary.log" >> /dev/stderr
@@ -8798,7 +8799,8 @@ if [ -d ../MASTER_test ];then
 
   # Check the log files
   for IMGNUM in `seq 1 6`;do
-   for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve image0000$IMGNUM.cat.magparameter02filter_passed image0000$IMGNUM.cat.magparameter02filter_rejected image0000$IMGNUM.cat.magparameter02filter_thresholdcurve ;do
+   #for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve image0000$IMGNUM.cat.magparameter02filter_passed image0000$IMGNUM.cat.magparameter02filter_rejected image0000$IMGNUM.cat.magparameter02filter_thresholdcurve ;do
+   for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve ;do
     if [ ! -s "$LOGFILE_TO_CHECK" ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF_EMPTYPSFFILTERINGLOFGILE_$LOGFILE_TO_CHECK"
