@@ -67,7 +67,11 @@ vast-1.0rc85:
 	to the image date derived from the FITS image header. If the Julian Date is specified - it will
 	override the date derived from the FITS header. See the examples in 
 	'vast_list_of_input_images_with_time_corrections.txt_example' and 'vast_list_of_input_images_with_time_corrections.txt_test'.
-	* Fixed the "Produce list of minor planest with online MPCecker" function in the transient search mode.
+	* Fixed the "Produce list of minor planets with online MPChecker" function in the transient search mode.
+	* To speed-up the plate solution step needed for star identification, VaST can now use a local copy of 
+	the UCAC5 catalog. The catalog files (5,3G) can be installed using the script 'lib/install_local_copy_of_UCAC5.sh'
+	or they can be manually download from VizieR and placed in 'lib/catalogs/ucac5/'. If the files are not found, 
+	VaST will access the catalog online through VizieR, as before.
 07 Mar 2019: vast-1.0rc84:
 	* VaST is now on Github ( https://github.com/kirxkirx/vast ), pull requests are welcome!
 	* The new script 'util/get_gaia_lc.sh' gets Gaia G, BP and RP lightcurves for a Gaia DR2 ID that 
