@@ -46,9 +46,10 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  #if [ ! -f $SEXTRACTOR_CATALOG_NAME ];then  
  # $SEXTRACTOR -c `grep "SExtractor parameter file:" vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME $WCS_IMAGE_NAME
  #fi # if [ ! -f $SEXTRACTOR_CATALOG_NAME ];then
- if [ ! -f $UCAC5_SOLUTION_NAME ];then
-  util/solve_plate_with_UCAC5 $FITSFILE
- fi
+ # Keeping this step for backward compatibility with the old scripts used in the tests
+ #if [ ! -f $UCAC5_SOLUTION_NAME ];then
+ # util/solve_plate_with_UCAC5 $FITSFILE >> /dev/stderr
+ #fi
  DATETIMEJD=`grep $FITSFILE vast_image_details.log |awk '{print $2" "$3"  "$5"  "$7}'`
  DATE=`echo $DATETIMEJD|awk '{print $1}'`
  TIME=`echo $DATETIMEJD|awk '{print $2}'`
@@ -61,8 +62,17 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  TIMEM=`echo $TIME |awk -F":" '{print $2}'`
  TIMES=`echo $TIME |awk -F":" '{print $3}'`
  DAYFRAC=`echo "$DAY+$TIMEH/24+$TIMEM/1440+$TIMES/86400+$EXPTIME/(2*86400)" |bc -ql`
- #RADEC=`lib/find_star_in_wcs_catalog $X $Y < $SEXTRACTOR_CATALOG_NAME`
- RADEC=`lib/find_star_in_wcs_catalog $X $Y < $UCAC5_SOLUTION_NAME`
+ # If there is a UCAC5 plate solution with local corrections - use it,
+ # otherwise rely on the positions computed using only the WCS header
+ if [ -f $UCAC5_SOLUTION_NAME ];then
+  RADEC=`lib/find_star_in_wcs_catalog $X $Y < $UCAC5_SOLUTION_NAME`
+ elif [ -f $SEXTRACTOR_CATALOG_NAME ];then
+  RADEC=`lib/find_star_in_wcs_catalog $X $Y < $SEXTRACTOR_CATALOG_NAME`
+ else
+  echo "ERROR: cannot find any of the plate-solved-image-related catalogs: $UCAC5_SOLUTION_NAME $SEXTRACTOR_CATALOG_NAME" >> /dev/stderr
+  exit 1
+ fi
+ #
  RA=`echo $RADEC | awk '{print $1}'`
  DEC=`echo $RADEC | awk '{print $2}'`
  MAG=`echo $MAG|awk '{printf "%.2f",$1}'`

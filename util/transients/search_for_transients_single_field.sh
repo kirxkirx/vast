@@ -18,12 +18,19 @@ lib/update_offline_catalogs.sh all
 
 # Plate-solve all images
 for i in `cat vast_image_details.log |awk '{print $17}'` ;do 
+ # 
  util/wcs_image_calibration.sh $i &
-# Moved the following check outside this loop
-# if [ $? -ne 0 ];then
-#  echo "ERROR plate solving $i" >> /dev/stderr
-#  exit 1 # Makes no sence to go on if not all images were plate-solved
-# fi
+ # Replace the above line with the line below to enable local astrometric corrections.
+ # This will result in better astrometry but will take more time to compute.
+ # (The slow part is communicating with VizieR.)
+ # util/solve_plate_with_UCAC5 $i &
+ #
+ #
+ # Moved the following check outside this loop
+ # if [ $? -ne 0 ];then
+ #  echo "ERROR plate solving $i" >> /dev/stderr
+ #  exit 1 # Makes no sence to go on if not all images were plate-solved
+ # fi
 done
 
 # whait for all the plate solving tasks to finish
