@@ -441,6 +441,9 @@ field identification have good chances to fail. Sorry... :(
  ############################################################################
  # Local plate-solving software
  if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "local" ];then
+  
+  echo "Using the local copy of Astrometry.net code"
+  
   IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE`
   #SCALE_LOW=`echo "0.3*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'`
   # "0.9*$TRIAL_FIELD_OF_VIEW_ARCMIN matches the remote server parameters
@@ -573,16 +576,21 @@ field identification have good chances to fail. Sorry... :(
 
 
  if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
+ 
+  echo "Using the remote server with Astrometry.net code"
+ 
   # Web-based processing
   while true ;do
    #################### Check if we want to retry with another server ####################
    if [ $ERROR_STATUS -eq 2 ];then
+    echo "Will retry with another plate-solve server"
     # Remove the current server from the list
     PLATE_SOLVE_SERVERS=${PLATE_SOLVE_SERVERS//$PLATE_SOLVE_SERVER/}
     # Pick the next server in line
     PLATE_SOLVE_SERVER=`echo $PLATE_SOLVE_SERVERS | awk '{print $1}'`
     # break if there are no more servers left
     if [ "$PLATE_SOLVE_SERVER" = "" ];then
+     echo "No more plate-solve servers left"
      break
     fi
    fi
