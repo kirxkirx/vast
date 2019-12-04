@@ -8911,7 +8911,7 @@ if [ -d ../M31_ISON_test ];then
   else
    TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_M31-1-001-001_dupe-1.fts.cat.ucac5 | wc -l | awk '{print $1}'`
    #if [ $TEST -lt 1500 ];then
-   if [ $TEST -lt 900 ];then
+   if [ $TEST -lt 700 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF004a_$TEST"
    fi
@@ -9278,6 +9278,14 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 
 
 #### Calendar date to JD conversion test
+
+# clean up any previous files
+for TMP_FITS_FILE in fake_image_hack_*.fits ;do
+ if [ -f "$TMP_FITS_FILE" ];then
+  rm -f "$TMP_FITS_FILE"
+ fi
+done
+ 
 TEST_PASSED=1
 # Run the test
 echo "Calendar date to JD conversion test " >> /dev/stderr
