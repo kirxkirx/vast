@@ -8131,6 +8131,29 @@ if [ ! -s test_vizquery_M31.output ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST003"
 fi
+# check that the whole output was received, if not - retry
+cat test_vizquery_M31.output | grep --quiet '#END#  -ref=VOT'
+if [ $? -ne 0 ];then
+ FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST_RETRY"
+ # maybe this was a random network glitch? sleep 30 sec and retry
+ sleep 30 
+ lib/vizquery -site=$("$VAST_PATH"lib/choose_vizier_mirror.sh) -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini \
+-out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=9.0..16.5 -sort=f.mag -c.rs=6.0 \
+-list=../vast_test_lightcurves/test_vizquery_M31.input > test_vizquery_M31.output
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST001a"
+ fi
+ if [ ! -f test_vizquery_M31.output ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST002a"
+ fi
+ if [ ! -s test_vizquery_M31.output ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST003a"
+ fi
+ #
+fi
 # count lines in vizquery output
 TEST=`cat test_vizquery_M31.output | wc -l | awk '{print $1}'`
 re='^[0-9]+$'
@@ -8142,7 +8165,7 @@ if ! [[ $TEST =~ $re ]] ; then
 else
  if [ $TEST -lt 1200 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST004"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST004_$TEST"
  fi
 fi
 cat test_vizquery_M31.output | grep --quiet '#END#  -ref=VOT'
