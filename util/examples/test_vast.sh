@@ -5989,12 +5989,12 @@ if [ -d ../NMW_Saturn_test ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN010x"
   fi
   #
-  grep --quiet "2019 11 03.6470  2458791.1470  11.27" -e "2019 11 03.6470  2458791.1470  11.29" transient_report/index.html
+  grep --quiet "2019 11 03.6470  2458791.1470  11.27  19:03:" -e "2019 11 03.6470  2458791.1470  11.29  19:03:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN010a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2019 11 03.6470  2458791.1470  11.27" -e "2019 11 03.6470  2458791.1470  11.29" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2019 11 03.6470  2458791.1470  11.27  19:03:" -e "2019 11 03.6470  2458791.1470  11.29  19:03:" transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:03:48.76 -26:58:59.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
@@ -6043,12 +6043,12 @@ if [ -d ../NMW_Saturn_test ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN0110"
   #fi
-  grep --quiet "2019 11 03.6470  2458791.1470  12.13" transient_report/index.html
+  grep --quiet "2019 11 03.6470  2458791.1470  12.13  19:06:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN0110a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2019 11 03.6470  2458791.1470  12.13" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2019 11 03.6470  2458791.1470  12.13  19:06:" transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:06:59.18 -22:25:40.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
@@ -7045,7 +7045,6 @@ if [ -d ../individual_images_test ];then
  # Run the test
  echo "Test plate solving with remote servers " >> /dev/stderr
  echo -n "Plate solving with remote servers: " >> vast_test_report.txt 
- #for PLATE_SOLVE_SERVER in none scan.sai.msu.ru vast.sai.msu.ru polaris.kirx.net ;do
  for FORCE_PLATE_SOLVE_SERVER in scan.sai.msu.ru vast.sai.msu.ru polaris.kirx.net none ;do
   export FORCE_PLATE_SOLVE_SERVER
   util/clean_data.sh
@@ -7096,6 +7095,28 @@ if [ -d ../individual_images_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE006a"
   fi
+  #
+  if [ -f ../M31_ISON_test/M31-1-001-001_dupe-1.fts ];then
+   cp default.sex.ison_m31_test default.sex
+   ASTROMETRYNET_LOCAL_OR_REMOTE="remote" util/wcs_image_calibration.sh ../M31_ISON_test/M31-1-001-001_dupe-1.fts
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE007"
+   fi
+   if [ ! -f wcs_M31-1-001-001_dupe-1.fts ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE008"
+   fi
+   lib/bin/xy2sky wcs_M31-1-001-001_dupe-1.fts 200 200 &>/dev/null
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE009"
+   fi
+  else
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMING_REMOTE_PLATE_SOLVER_CHECK_FOR_M31_ISON_test"
+  fi
+  # restore default settings file, just in case
+  cp default.sex.ccd_example default.sex
  done
 
  # Make an overall conclusion for this test
