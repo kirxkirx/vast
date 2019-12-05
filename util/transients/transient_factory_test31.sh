@@ -32,6 +32,19 @@ if [ ! -d "$REFERENCE_IMAGES" ];then
  exit 1
 fi
 
+# Check for a local copy of UCAC5
+# (this is specific to our in-house setup)
+if [ ! -d lib/catalogs/ucac5 ];then
+ for TEST_THIS_DIR in /dataX/kirx/UCAC5 /mnt/usb/UCAC5 /home/kirx/UCAC5 ;do
+  if [ -d $TEST_THIS_DIR ];then
+   ln -s $TEST_THIS_DIR lib/catalogs/ucac5
+   echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR"
+   echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR" >> transient_factory_test31.txt
+   break
+  fi
+ done
+fi
+
 # This script should take care of updating astorb.dat
 lib/update_offline_catalogs.sh all
 
@@ -187,13 +200,6 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  echo "############################################################" >> transient_factory.log
  
  # Use cache if possible to speed-up WCS calibration
-# if [ -d wcscache ];then
-#  for i in wcscache/*$FIELD* ;do
-#   ln -s $i
-#  done
-# else
-#  mkdir wcscache
-# fi
  for WCSCACHEDIR in "/mnt/usb/NMW_NG/solved_reference_images" "/home/NMW_web_upload/solved_reference_images" "/dataX/kirx/NMW_NG_rt3_autumn2019/solved_reference_images" ;do
   if [ -d "$WCSCACHEDIR" ];then
    for i in "$WCSCACHEDIR/wcs_"$FIELD"_"* ;do
