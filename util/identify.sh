@@ -571,11 +571,9 @@ field identification have good chances to fail. Sorry... :(
    rm -f out$$.axy out$$.xyls
    # end of clean-up
   fi # solve-field didn't crash
- fi # if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "local" ];then
+ #fi # if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "local" ];then
  ############################################################################
-
-
- if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
+ elif [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
  
   echo "Using the remote server with Astrometry.net code"
  
@@ -705,6 +703,9 @@ field identification have good chances to fail. Sorry... :(
    fi
    ############################################################################
   done
+ else
+  echo "ERROR: the variable ASTROMETRYNET_LOCAL_OR_REMOTE should be set to 'remote' or 'local', instead ASTROMETRYNET_LOCAL_OR_REMOTE=$ASTROMETRYNET_LOCAL_OR_REMOTE"
+  exit 1
  fi # if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
  
  
