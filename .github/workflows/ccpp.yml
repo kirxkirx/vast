@@ -9,5 +9,7 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
-    - name: make
+    - name: Install gfortran
+      run: sudo apt-get install gfortran
+    - name: make VaST
       run: make
