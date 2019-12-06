@@ -26,6 +26,10 @@ if [ -z "$REFERENCE_IMAGES" ];then
  fi
 fi
 
+if [ -f transient_factory_test31.txt ];then
+ rm -f transient_factory_test31.txt
+fi
+
 if [ ! -d "$REFERENCE_IMAGES" ];then
  echo "ERROR: cannot find the reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES"
  echo "ERROR: cannot find the reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES" >> transient_factory_test31.txt
@@ -66,6 +70,7 @@ if [ ! -d transient_report ];then
 fi
 
 rm -f transient_report/* transient_factory.log
+
 echo "<HTML>
 
 <script type='text/javascript'>
@@ -101,9 +106,10 @@ function printCandidateNameWithAbsLink( transientname) {
 </script>
 
 <BODY>
-<h2>NMW transient search results</h2><br> 
+<h2>NMW transient search results</h2>
+This analysis is done by the script  <code>$0 $@</code><br><br>
 The list of candidates will appear below. Please manually reload the page every few minutes untill the 'Processing complete' message appears.
-<br>" >> transient_report/index.html
+<br><br>" >> transient_report/index.html
 
 # Allow for multiple image directories to be specified on the command line
 
@@ -114,8 +120,10 @@ LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR=`for IMGFILE in "$NEW_IMAGES"/*.fts ;do bas
 echo "Fields in the data directory: 
 $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR"
 
+echo "Processing fields $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR <br>" >> transient_report/index.html
+
 #exit # !!!
-echo "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" > transient_factory_test31.txt
+echo "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" >> transient_factory_test31.txt
 
 PREVIOUS_FIELD="none"
 #for i in "$NEW_IMAGES"/*_001.fts ;do
