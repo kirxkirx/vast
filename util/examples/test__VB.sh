@@ -261,7 +261,9 @@ if [ -f vast_summary.log ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_101"
  fi
- grep --quiet "Images used for photometry 501" vast_summary.log
+ #grep --quiet "Images used for photometry 501" vast_summary.log
+ # Three images have "star doubling" and are correctly rejected by the "high percentage of ambigous match" filter
+ grep --quiet "Images used for photometry 498" vast_summary.log
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_102"
