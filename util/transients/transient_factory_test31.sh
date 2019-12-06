@@ -364,5 +364,14 @@ echo "</pre>" >> transient_report/index.html
 
 echo "</BODY></HTML>" >> transient_report/index.html
 
-#util/clean_data.sh
+# Automatically update the exclusion list if we are on a production server
+HOST=`hostname`
+if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ];then
+ if [ -f ../exclusion_list.txt ];then
+  grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' >> ../exclusion_list.txt
+ fi
+fi
+
+# may want to comment this out for debugging
+util/clean_data.sh
 
