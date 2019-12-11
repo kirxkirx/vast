@@ -1664,10 +1664,11 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
    fit_plane_lin( x, y, z, (unsigned int)nm, &Ay, &By, &Cy );
    //fprintf(stderr,"dy=(%lf)*x+(%lf)*y+(%lf)\n",Ay,By,Cy);
 
+/*
    free( z );
    free( y );
    free( x );
-
+*/
    // Now, apply the coordinate correction to ALL stars on the new (= current = star2) frame.
    //fprintf(stderr,"Applying coordinate corrections...\n");
    for ( ii= 0; ii < (unsigned int)NUMBER2; ii++ ) {
@@ -1679,7 +1680,65 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
    // And now match stars again
    nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, preobr->sigma_popadaniya, image_size_X, image_size_Y );
    //fprintf(stderr,"%d * matched after the coordinate correction. ",nm);
-   fprintf( stderr, "%d * matched. ", nm );
+   fprintf( stderr, "%d * matched, ", nm );
+
+   /// Second iteration
+   // Fit a plane to x residuals
+   for ( ii= 0; ii < (unsigned int)nm; ii++ ) {
+    x[ii]= star2[Pos2[ii]].x_frame;
+    y[ii]= star2[Pos2[ii]].y_frame;
+    z[ii]= star2[Pos2[ii]].x - STAR1[Pos1[ii]].x;
+   }
+   fit_plane_lin( x, y, z, (unsigned int)nm, &Ax, &Bx, &Cx );
+
+   // Fit a plane to y residuals
+   for ( ii= 0; ii < (unsigned int)nm; ii++ )
+    z[ii]= star2[Pos2[ii]].y - STAR1[Pos1[ii]].y;
+   fit_plane_lin( x, y, z, (unsigned int)nm, &Ay, &By, &Cy );
+
+   // Now, apply the coordinate correction to ALL stars on the new (= current = star2) frame.
+   for ( ii= 0; ii < (unsigned int)NUMBER2; ii++ ) {
+    dx= (float)( Ax * star2[Pos2[ii]].x_frame + Bx * star2[Pos2[ii]].y_frame + Cx );
+    dy= (float)( Ay * star2[Pos2[ii]].x_frame + By * star2[Pos2[ii]].y_frame + Cy );
+    star2[Pos2[ii]].x-= dx;
+    star2[Pos2[ii]].y-= dy;
+   }
+   // And now match stars again
+   nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, preobr->sigma_popadaniya, image_size_X, image_size_Y );
+   //fprintf(stderr,"%d * matched after the coordinate correction. ",nm);
+   fprintf( stderr, "%d * matched (2nd iteration). ", nm );
+
+   /// Third iteration
+   // Fit a plane to x residuals
+   for ( ii= 0; ii < (unsigned int)nm; ii++ ) {
+    x[ii]= star2[Pos2[ii]].x_frame;
+    y[ii]= star2[Pos2[ii]].y_frame;
+    z[ii]= star2[Pos2[ii]].x - STAR1[Pos1[ii]].x;
+   }
+   fit_plane_lin( x, y, z, (unsigned int)nm, &Ax, &Bx, &Cx );
+
+   // Fit a plane to y residuals
+   for ( ii= 0; ii < (unsigned int)nm; ii++ )
+    z[ii]= star2[Pos2[ii]].y - STAR1[Pos1[ii]].y;
+   fit_plane_lin( x, y, z, (unsigned int)nm, &Ay, &By, &Cy );
+
+   // Now, apply the coordinate correction to ALL stars on the new (= current = star2) frame.
+   for ( ii= 0; ii < (unsigned int)NUMBER2; ii++ ) {
+    dx= (float)( Ax * star2[Pos2[ii]].x_frame + Bx * star2[Pos2[ii]].y_frame + Cx );
+    dy= (float)( Ay * star2[Pos2[ii]].x_frame + By * star2[Pos2[ii]].y_frame + Cy );
+    star2[Pos2[ii]].x-= dx;
+    star2[Pos2[ii]].y-= dy;
+   }
+   // And now match stars again
+   nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, preobr->sigma_popadaniya, image_size_X, image_size_Y );
+   //fprintf(stderr,"%d * matched after the coordinate correction. ",nm);
+   fprintf( stderr, "%d * matched (3rd iteration). ", nm );
+
+
+   free( z );
+   free( y );
+   free( x );
+
   }
 
   for ( n= 0; n < NUMBER2; n++ )
