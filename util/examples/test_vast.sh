@@ -271,6 +271,12 @@ if [ -d ../test_data_photo ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE003"
    fi
+   # ../test_data_photo/SCA14627S_16037_07933__00_00.fit is a bad image just below 0.11
+   grep --quiet "Number of identified bad images: 0" vast_summary.log
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE003a"
+   fi
    util/wcs_image_calibration.sh ../test_data_photo/SCA1017S_17061_09773__00_00.fit
    if [ $? -ne 0 ];then
     TEST_PASSED=0

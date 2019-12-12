@@ -16,7 +16,7 @@
 #define MAX_NUMBER_OF_STARS 300000
 #define MAX_NUMBER_OF_OBSERVATIONS 120000 // per star
 // The following paprameter is now set here AUTOMATICALLY by the script lib/set_MAX_MEASUREMENTS_IN_RAM_in_vast_limits.sh that is started by make
-#define MAX_MEASUREMENTS_IN_RAM 96000  // set automatically at compile time based on PHYSMEM_BYTES=8229101568 by lib/set_MAX_MEASUREMENTS_IN_RAM_in_vast_limits.sh
+#define MAX_MEASUREMENTS_IN_RAM 96000  // set automatically at compile time based on PHYSMEM_BYTES=8229117952 by lib/set_MAX_MEASUREMENTS_IN_RAM_in_vast_limits.sh
 // Max. number of measurements to be stored in memory
 #define FILENAME_LENGTH 1024   // Max. image filename length
 #define OUTFILENAME_LENGTH 128 // Max. lightcurve (out*.dat) filename length
@@ -307,7 +307,7 @@
 // src/remove_bad_images.c
 #define REMOVE_BAD_IMAGES__OUTLIER_THRESHOLD 3.0                // Considers outliers measurements that are REMOVE_BAD_IMAGES__OUTLIER_THRESHOLD sigma
                                                                 // above or below the median brightness.
-#define REMOVE_BAD_IMAGES__DEFAULT_MAX_FRACTION_OF_OUTLIERS 0.1 // Drop images that have a large fraction of outlier measurements
+#define REMOVE_BAD_IMAGES__DEFAULT_MAX_FRACTION_OF_OUTLIERS 0.11 // Drop images that have a large fraction of outlier measurements
 #define REMOVE_BAD_IMAGES__MAX_ALLOWED_NUMBER_OF_OUTLIERS 20    // Drop bad images only if there are at least the specified number of outlier objects
                                                                 // (regardless of what fraction of the total number of objects these outliers constitute)
 

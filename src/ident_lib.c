@@ -1252,7 +1252,7 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
    p1= disjoinList( &ps_1 );
    R= ( p2.x - p1.x ) * ( p2.x - p1.x ) + ( p2.y - p1.y ) * ( p2.y - p1.y );
    //
-//   if ( fabs(p1.x - 591.8) < 1.0 && fabs(p1.y - 750.6) < 1.0 ){
+//   if ( fabs(p1.x - 1125.732) < 1.0 && fabs(p1.y - 1675.50) < 1.0 ){
 //    if ( R < 3*epsilon ){
 //     fprintf( stderr, "\n--- p1.x=%lf p1.y=%lf  p2.i=%d R=%lf R_best=%lf  p2.x=%lf p2.x=%lf\n", p1.x, p1.y, p2.i, sqrt(R), sqrt(R_best), p2.x, p2.y );
 //    }
@@ -1270,7 +1270,7 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
    ys_matched= addToList( p2, ys_matched );
   } else {
    //
-//   if ( fabs(p1.x - 591.8) < 1.0 && fabs(p1.y - 750.6) < 1.0 ){
+//   if ( fabs(p1.x - 1125.732) < 1.0 && fabs(p1.y - 1675.50) < 1.0 ){
 //    fprintf( stderr, "\n--- NO MATCH!!!   p2.i=%d R=%lf R_best=%lf  p2.x=%lf p2.x=%lf  \n", p2.i, sqrt(R), sqrt(R_best), p2.x, p2.y );
 //    exit(1);
 //   }
@@ -1298,6 +1298,11 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
     fprintf( stderr, "ERROR in Ident_on_sigma(): number_of_matched_stars>=Number2 while it shouldn't\n" );
     exit( 1 );
    }
+   //
+   //
+//   if ( fabs(p1.x - 1125.732) < 1.0 && fabs(p1.y - 1675.50) < 1.0 ){
+//     fprintf( stderr, "\nmmm p1.x=%lf p1.y=%lf  p2.i=%d R=%lf R_best=%lf  p2.x=%lf p2.x=%lf\n", p1.x, p1.y, p2.i, sqrt(R), sqrt(R_best), p2.x, p2.y );
+//   }
    //
    // write it as matched
    Pos1[number_of_matched_stars]= p1.i;
@@ -1682,6 +1687,7 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
    //fprintf(stderr,"%d * matched after the coordinate correction. ",nm);
    fprintf( stderr, "%d * matched, ", nm );
 
+
    /// Second iteration
    // Fit a plane to x residuals
    for ( ii= 0; ii < (unsigned int)nm; ii++ ) {
@@ -1707,6 +1713,7 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
    nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, preobr->sigma_popadaniya, image_size_X, image_size_Y );
    //fprintf(stderr,"%d * matched after the coordinate correction. ",nm);
    fprintf( stderr, "%d * matched (2nd iteration). ", nm );
+
 
    /// Third iteration
    // Fit a plane to x residuals
@@ -1734,7 +1741,7 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
    //fprintf(stderr,"%d * matched after the coordinate correction. ",nm);
    fprintf( stderr, "%d * matched (3rd iteration). ", nm );
 
-
+/**/
    free( z );
    free( y );
    free( x );
