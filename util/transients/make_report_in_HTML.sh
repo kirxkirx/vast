@@ -89,6 +89,31 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    echo "</div>" >> transient_report/index.tmp
   fi # if [ $? -eq 0 ];then
  
+  #
+  echo "<a href=\"javascript:toggleElement('manualvast_$TRANSIENT_NAME')\">Example VaST+ds9 commands for visual image inspection</a></br>" >> transient_report/index.tmp  
+  echo -n "<div id=\"manualvast_$TRANSIENT_NAME\" style=\"display:none\">
+<pre>
+# Plate-solve the FITS images
+export TELESCOP='NMW_camera'
+for i in $REFERENCE_IMAGE " >> transient_report/index.tmp
+  while read JD MAG ERR X Y APP IMAGE REST ;do
+   echo -n "$IMAGE "
+  done < $LIGHTCURVE_FILE_OUTDAT >> transient_report/index.tmp
+  echo -n ";do util/wcs_image_calibration.sh \$i ;done
+# Display FITS images
+ds9 -frame lock wcs  " >> transient_report/index.tmp
+  # We should always displa ythe reference image, even if it's not in the lightcurve file
+  grep --quiet "$REFERENCE_IMAGE" $LIGHTCURVE_FILE_OUTDAT
+  if [ $? -ne 0 ];then
+   echo -n "wcs_"`basename "$REFERENCE_IMAGE"`" " >> transient_report/index.tmp
+  fi
+  while read JD MAG ERR X Y APP IMAGE REST ;do
+   echo -n " wcs_"`basename "$IMAGE"`" -crosshair $X $Y image   "
+  done < $LIGHTCURVE_FILE_OUTDAT >> transient_report/index.tmp
+  echo "
+</pre>
+</div>" >> transient_report/index.tmp
+  #
   #echo "</br>" >> transient_report/index.tmp
 
   echo "<HR>" >> transient_report/index.tmp
