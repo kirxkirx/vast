@@ -89,7 +89,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    echo "</div>" >> transient_report/index.tmp
   fi # if [ $? -eq 0 ];then
  
-  echo "</br>" >> transient_report/index.tmp
+  #echo "</br>" >> transient_report/index.tmp
 
   echo "<HR>" >> transient_report/index.tmp
   cat transient_report/index.tmp >> transient_report/index$1.html

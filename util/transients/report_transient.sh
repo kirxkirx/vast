@@ -25,8 +25,8 @@ REFERENCE_IMAGE=`cat vast_summary.log |grep "Ref.  image:" | awk '{print $6}'`
 SECOND_REFERENCE_IMAGE=`cat vast_image_details.log | head -n2 | tail -n1 | awk '{print $17}'`
 
 #     Reference image    2010 12 10.0833  2455540.5834  13.61  06:29:12.25 +26:24:19.4
-echo "<table>"
-echo "<tr><th></th><th>                     Date (UTC)   </th><th>    JD(UTC)  </th><th>    mag. </th><th> R.A. & Dec.(J2000)   </th><th>X & Y (pix)</th><th>    Image</th></tr>"
+echo "<table style='font-family:monospace;font-size:12px;'>
+<tr><th></th><th>                     Date (UTC)   </th><th>    JD(UTC)  </th><th>    mag. </th><th> R.A. & Dec.(J2000)   </th><th>X & Y (pix)</th><th>    Image</th></tr>"
 N=0
 
 # Make sure there are no files with names we want to use
@@ -206,7 +206,7 @@ for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.da
  fi
 done
 
-echo "<pre>
+echo "<pre style='font-family:monospace;font-size:12px;'>
 Mean magnitude and position on the discovery images: 
                    $YEAR $MONTH $DAYFRAC_MEAN  $JD_MEAN  $MAG_MEAN " `lib/deg2hms $RA_MEAN $DEC_MEAN`
 #     Reference image    2010 12 10.0833  2455540.5834  13.61  06:29:12.25 +26:24:19.4

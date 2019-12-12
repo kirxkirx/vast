@@ -89,6 +89,9 @@ function toggleElement(id)
 function printCandidateNameWithAbsLink( transientname) {
 
  var currentLocation = window.location.href;
+ 
+ var n = currentLocation.indexOf('#');
+ currentLocation = currentLocation.substring(0, n != -1 ? n : currentLocation.length);
  var transientLink = \"#\";
  transientLink = transientLink.concat(transientname);
  var targetURL = currentLocation.concat(transientLink);
