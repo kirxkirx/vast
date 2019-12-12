@@ -100,7 +100,7 @@ for i in $REFERENCE_IMAGE " >> transient_report/index.tmp
    echo -n "$IMAGE "
   done < $LIGHTCURVE_FILE_OUTDAT >> transient_report/index.tmp
   echo -n ";do util/wcs_image_calibration.sh \$i ;done
-# Display FITS images
+# Display the solved FITS images
 ds9 -frame lock wcs  " >> transient_report/index.tmp
   # We should always displa ythe reference image, even if it's not in the lightcurve file
   grep --quiet "$REFERENCE_IMAGE" $LIGHTCURVE_FILE_OUTDAT
