@@ -512,6 +512,19 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
      KNOWN_VARIABLE=1
     fi
    fi   
+   # ATLAS
+   if [ $KNOWN_VARIABLE -eq 0 ];then
+    ATLAS_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=vizier.u-strasbg.fr -mime=text -source=J/AJ/156/241/table4 -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=ATOID,Class 2>/dev/null |grep -v \# | grep -v "_" | grep -v "\-\-\-" | grep J | tail -n1`
+    if [ ! -z "$ATLAS_RESULTS" ];then
+     ATLASNAME=`echo "$ATLAS_RESULTS" | awk '{print $1}'`
+     ATLASTYPE=`echo "$ATLAS_RESULTS" | awk '{print $2}'`
+     ATLASPERIOD=" "
+     SUGGESTED_NAME_STRING="ATOID $ATLASNAME"
+     SUGGESTED_TYPE_STRING="$ATLASTYPE (ATLAS)"
+     SUGGESTED_PERIOD_STRING="$ATLASPERIOD (ATLAS)"
+     KNOWN_VARIABLE=1
+    fi
+   fi
    # OGLE Bulge RR Lyr
    #if [ $KNOWN_VARIABLE -eq 0 ];then
    # OGLE_LPV_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=vizier.u-strasbg.fr -mime=text -source=J/AcA/61/1/ident -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Star,Type 2>/dev/null |grep -v \# | grep -v "_" | grep -v "\-\-\-" | grep -A 1 'Star' | tail -n1`

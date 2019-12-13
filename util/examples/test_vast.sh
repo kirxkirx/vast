@@ -8325,7 +8325,14 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012"
 fi
 
-# MASTER_OT J132104.04+560957.8 - AM CVn star, Gaia shoer timescale variable
+# ATLAS via VizieR
+util/search_databases_with_vizquery.sh 18:31:04.64 -16:58:22.3 | grep 'MIRA' | grep 'VARIABLE' | grep --quiet 'ATOID J277.7693-16.9729'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012atlas"
+fi
+
+# MASTER_OT J132104.04+560957.8 - AM CVn star, Gaia short timescale variable
 util/search_databases_with_vizquery.sh 200.26675923087 +56.16607967965 | grep 'MASTER_OT J132104.04+560957.8' | grep --quiet 'Gaia2_SHORTTS'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
