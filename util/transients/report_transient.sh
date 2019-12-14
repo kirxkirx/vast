@@ -178,8 +178,9 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 ##########################
-cp script$$.dat /tmp/script_test.tmp
-cp jd$$.dat /tmp/jd_test.tmp
+# debug
+#cp script$$.dat /tmp/script_test.tmp
+#cp jd$$.dat /tmp/jd_test.tmp
 ##########################
 . script$$.dat
 if [ $? -ne 0 ];then
