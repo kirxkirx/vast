@@ -37,7 +37,7 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  # At this point, we should somehow have a WCS calibrated image named $WCS_IMAGE_NAME
  WCS_IMAGE_NAME=wcs_`basename $FITSFILE`
  if [ ! -f $WCS_IMAGE_NAME ];then
-  echo "ERROR: cannot find plate-solved image $WCS_IMAGE_NAME" >> /dev/stderr
+  echo "ERROR: cannot find plate-solved image $WCS_IMAGE_NAME" 
   exit 1
  fi
  SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".cat
@@ -69,7 +69,7 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  elif [ -f $SEXTRACTOR_CATALOG_NAME ];then
   RADEC=`lib/find_star_in_wcs_catalog $X $Y < $SEXTRACTOR_CATALOG_NAME`
  else
-  echo "ERROR: cannot find any of the plate-solved-image-related catalogs: $UCAC5_SOLUTION_NAME $SEXTRACTOR_CATALOG_NAME" >> /dev/stderr
+  echo "ERROR: cannot find any of the plate-solved-image-related catalogs: $UCAC5_SOLUTION_NAME $SEXTRACTOR_CATALOG_NAME" 
   exit 1
  fi
  #
@@ -108,12 +108,12 @@ util/colstat < ra$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' 
 #cp script$$.dat /tmp/
 ###################
 if [ $? -ne 0 ];then
- echo "ERROR0001 in $0" >> /dev/strderr
+ echo "ERROR0001 in $0" 
  exit 1
 fi
 . script$$.dat
 if [ $? -ne 0 ];then
- echo "ERROR0002 in $0" >> /dev/strderr
+ echo "ERROR0002 in $0" 
  exit 1
 fi
 RA_MEAN=$MEAN
@@ -127,12 +127,12 @@ RA_MIN=${RA_MIN//"+"/}
 #lib/stat_array < dec$$.dat > script$$.dat
 util/colstat < dec$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
 if [ $? -ne 0 ];then
- echo "ERROR0003 in $0" >> /dev/strderr
+ echo "ERROR0003 in $0" 
  exit 1
 fi
 . script$$.dat
 if [ $? -ne 0 ];then
- echo "ERROR0004 in $0" >> /dev/strderr
+ echo "ERROR0004 in $0" 
  exit 1
 fi
 DEC_MEAN=$MEAN
@@ -145,12 +145,12 @@ DEC_MIN=${DEC_MIN//"+"/}
 #lib/stat_array < mag$$.dat > script$$.dat
 util/colstat < mag$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
 if [ $? -ne 0 ];then
- echo "ERROR0005 in $0" >> /dev/strderr
+ echo "ERROR0005 in $0" 
  exit 1
 fi
 . script$$.dat
 if [ $? -ne 0 ];then
- echo "ERROR0006 in $0" >> /dev/strderr
+ echo "ERROR0006 in $0" 
  exit 1
 fi
 MAG_MEAN=`echo $MEAN|awk '{printf "%.2f",$1}'`
@@ -159,12 +159,12 @@ MAG_MEAN=${MAG_MEAN//"+"/}
 #lib/stat_array < dayfrac$$.dat > script$$.dat
 util/colstat < dayfrac$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
 if [ $? -ne 0 ];then
- echo "ERROR0007 in $0" >> /dev/strderr
+ echo "ERROR0007 in $0" 
  exit 1
 fi
 . script$$.dat
 if [ $? -ne 0 ];then
- echo "ERROR0008 in $0" >> /dev/strderr
+ echo "ERROR0008 in $0" 
  exit 1
 fi
 DAYFRAC_MEAN=`echo $MEAN|awk '{printf "%07.4f",$1}'`
@@ -174,7 +174,7 @@ DAYFRAC_MEAN_SHORT=`echo $MEAN|awk '{printf "%05.2f",$1}'`
 #lib/stat_array < jd$$.dat > script$$.dat
 util/colstat < jd$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
 if [ $? -ne 0 ];then
- echo "ERROR0009 in $0" >> /dev/strderr
+ echo "ERROR0009 in $0" 
  exit 1
 fi
 ##########################
@@ -184,7 +184,7 @@ fi
 ##########################
 . script$$.dat
 if [ $? -ne 0 ];then
- echo "ERROR0010 in $0" >> /dev/strderr
+ echo "ERROR0010 in $0" 
  exit 1
 fi
 JD_MEAN=`echo $MEAN |awk '{printf "%.4f",$1}'`
@@ -193,7 +193,7 @@ JD_MEAN=`echo $MEAN |awk '{printf "%.4f",$1}'`
 for STRING_TO_TEST in "$RA_MEAN" "$RA_MAX" "$RA_MIN" "$DEC_MEAN" "$DEC_MAX" "$DEC_MIN" "$MAG_MEAN" "$DAYFRAC_MEAN" "$DAYFRAC_MEAN_SHORT" "$JD_MEAN" ;do
  re='^[+-]?[0-9]+([.][0-9]+)?$'
  if ! [[ $STRING_TO_TEST =~ $re ]] ; then
-  echo "ERROR in $0 : the string #$STRING_TO_TEST# is not a floating point number" >> /dev/stderr
+  echo "ERROR in $0 : the string #$STRING_TO_TEST# is not a floating point number" 
   exit 1
  fi
 done
@@ -245,29 +245,29 @@ DEC_HMS=`echo "$RADEC_MEAN_HMS" | awk '{print $2}'`
 EXCLUSION_LIST_FILE="exclusion_list.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
- echo "Checking $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE" >> /dev/stderr
+ echo "Checking $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
  while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
   lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_HMS" "$DEC_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 15/3600.0 ) print "FOUND" }' | grep "FOUND" && break
- done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE ****" >> /dev/stderr && exit 1
+ done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"  && exit 1
 fi 
 ### Apply the Tycho-2 bright stars exclusion list
 EXCLUSION_LIST_FILE="exclusion_list_bsc.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
- echo "Checking $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE" >> /dev/stderr
+ echo "Checking $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
  while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
   #lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_HMS" "$DEC_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 40/3600.0 ) print "FOUND" }' | grep "FOUND" && break
   lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_HMS" "$DEC_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 80/3600.0 ) print "FOUND" }' | grep "FOUND" && break
- done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE ****" >> /dev/stderr && exit 1
+ done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"  && exit 1
 fi
 ### Apply the Tycho-2 bright stars exclusion list
 EXCLUSION_LIST_FILE="exclusion_list_tycho2.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
- echo "Checking $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE" >> /dev/stderr
+ echo "Checking $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
  while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
   lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_HMS" "$DEC_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 20/3600.0 ) print "FOUND" }' | grep "FOUND" && break
- done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE ****" >> /dev/stderr && exit 1
+ done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"  && exit 1
 fi 
 ############
 
@@ -370,7 +370,7 @@ echo -n "<a href=\"http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=$RA_MEAN%20$D
 TEST=`echo "($DEC_MEAN)<28" |bc -ql`
 re='^[0-9]+$'
 if ! [[ $TEST =~ $re ]] ; then
- echo "TEST ERROR in ($DEC_MEAN)<28" >> /dev/stderr
+ echo "TEST ERROR in ($DEC_MEAN)<28" 
  exit 1
 else
  if [ $TEST -eq 1 ];then
