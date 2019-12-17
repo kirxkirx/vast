@@ -1,3 +1,5 @@
+* Reject overexposed images in mk
+
 * Not reject stuff that is too large in the transient search mode
 
 * Try to automatically select the reference image as the image with best seeing?

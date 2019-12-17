@@ -398,6 +398,14 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
    return 0;
   }
  }
+ // NMW camera (new header)
+ if ( strlen( telescop ) >= 12 ) {                                       //01234567890
+  pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "F=135mm, 2.0", 12 );
+  if ( pointer_to_the_key_start != NULL ) {
+   ( *estimated_fov_arcmin )= 350.0;
+   return 0;
+  }
+ }
 
  return 1;                         // failed to recognize the telescope
 }
