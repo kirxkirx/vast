@@ -39,7 +39,7 @@ fi
 # Check for a local copy of UCAC5
 # (this is specific to our in-house setup)
 if [ ! -d lib/catalogs/ucac5 ];then
- for TEST_THIS_DIR in /dataX/kirx/UCAC5 /mnt/usb/UCAC5 /home/kirx/UCAC5 ;do
+ for TEST_THIS_DIR in /dataX/kirx/UCAC5 /mnt/usb/UCAC5 /home/kirx/UCAC5 $HOME/UCAC5 ../UCAC5 ;do
   if [ -d $TEST_THIS_DIR ];then
    ln -s $TEST_THIS_DIR lib/catalogs/ucac5
    echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR"
