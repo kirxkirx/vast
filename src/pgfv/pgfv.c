@@ -1438,15 +1438,20 @@ int main( int argc, char **argv ) {
  }
  //fprintf(stderr,"Ok\n");
 
- // Decide if we want to use xy2sky()
- xy2sky_return_value= xy2sky( fits_image_name, (float)naxes[0] / 2.0, (float)naxes[1] / 2.0 );
- if ( xy2sky_return_value == 0 ) {
-  fprintf( stderr, "The image center coordinates are printed above.\n" );
-  use_xy2sky= 1;
+ // Don't do this check if this is fits2png
+ if ( finding_chart_mode !=1 && use_labels !=0 ) {
+  // Decide if we want to use xy2sky()
+  xy2sky_return_value= xy2sky( fits_image_name, (float)naxes[0] / 2.0, (float)naxes[1] / 2.0 );
+  if ( xy2sky_return_value == 0 ) {
+   fprintf( stderr, "The image center coordinates are printed above.\n" );
+   use_xy2sky= 1;
+  } else {
+   use_xy2sky= 0;
+  }
+  //
  } else {
-  use_xy2sky= 0;
+  use_xy2sky =0;
  }
- //
 
  axis_ratio= (float)naxes[0] / (float)naxes[1];
  //fprintf(stderr,"axis_ratio=%f\n",axis_ratio);
@@ -2149,6 +2154,7 @@ int main( int argc, char **argv ) {
     
     // exit now
     cpgclos();
+    fprintf( stderr, "Writing the output image file pgplot.png (or .ps)\n");
     free( float_array );
     free( real_float_array );
     return 0;
@@ -2236,6 +2242,7 @@ int main( int argc, char **argv ) {
    if ( finding_chart_mode == 0 )
     cpgebuf();
    else {
+    fprintf( stderr, "Writing the output image file pgplot.png (or.ps)\n");
     cpgclos();
     return 0;
    }

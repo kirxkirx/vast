@@ -13,7 +13,7 @@ int read_bad_lst( double *X1, double *Y1, double *X2, double *Y2, int *N ) {
  ( *N )= 0;
  badfile= fopen( "bad_region.lst", "r" );
  if ( badfile == NULL ) {
-  fprintf( stderr, "ERROR: Can't open bad_region.lst ! :(\n" );
+  fprintf( stderr, "WARNING: Cannot open bad_region.lst \n" );
   return 0; // it should not be a fatal error!
  }
  while ( -1 < fscanf( badfile, "%lf %lf %lf %lf", &X1[( *N )], &Y1[( *N )], &X2[( *N )], &Y2[( *N )] ) ) {
