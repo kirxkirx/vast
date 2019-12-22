@@ -95,14 +95,43 @@ if [ ! -z "$EDITOR" ];then
  $EDITOR AAVSO_report.txt
 fi
 
+# Update the variable star name as the user might have changed it
+VARIABLE_STAR_NAME=`cat AAVSO_report.txt | grep -v \# | awk -F',' '{print $1}' | head -n1`
+
 if [ -z "$VARIABLE_STAR_NAME" ];then
  echo "ERROR in AAVSO_report.txt : cannot find the variable star name"
  exit 1
 fi
+
+# Check that this file contains only observations of this one star
+# (i.e. there are no lines where the star name is misspelled)
+N_LINES_STARNAME=`grep -c "$VARIABLE_STAR_NAME" AAVSO_report.txt`
+N_LINES_MEASUREMENTS=`cat AAVSO_report.txt | grep -v \# | grep -c ','`
+if [ $N_LINES_STARNAME -ne $N_LINES_MEASUREMENTS ];then
+ echo "ERROR in AAVSO_report.txt : N_LINES_STARNAME != N_LINES_MEASUREMENTS : $N_LINES_STARNAME != $N_LINES_MEASUREMENTS"
+ exit 1
+fi
+
+
 VARIABLE_STAR_NAME_NO_WHITESPACES="${VARIABLE_STAR_NAME//' '/'_'}"
 
+# Filter name
+FILTER_NAME=`cat AAVSO_report.txt | grep -v \# | awk -F',' '{print $5}' | head -n1`
+if [ -z "$FILTER_NAME" ];then
+ echo "ERROR in AAVSO_report.txt : cannot find the filter name"
+ exit 1
+fi
+# Check that this file contains only observations in one filter
+# (i.e. there are no lines where the filter name is misspelled)
+N_LINES_FILTERNAME=`grep -c ",$FILTER_NAME," AAVSO_report.txt`
+N_LINES_MEASUREMENTS=`cat AAVSO_report.txt | grep -v \# | grep -c ','`
+if [ $N_LINES_FILTERNAME -ne $N_LINES_MEASUREMENTS ];then
+ echo "ERROR in AAVSO_report.txt : N_LINES_FILTERNAME != N_LINES_MEASUREMENTS : $N_LINES_FILTERNAME != $N_LINES_MEASUREMENTS"
+ exit 1
+fi
 
-FINAL_OUTPUT_FILENAME=AAVSO_"$VARIABLE_STAR_NAME_NO_WHITESPACES"_"$DATE_FOR_AAVSO_HEADER_FIRST_OBS"_measurements.txt
+
+FINAL_OUTPUT_FILENAME=AAVSO_"$VARIABLE_STAR_NAME_NO_WHITESPACES"_"$DATE_FOR_AAVSO_HEADER_FIRST_OBS"_"$FILTER_NAME"_measurements.txt
 echo "Renaming the final report file:"
 cp -v AAVSO_report.txt "$FINAL_OUTPUT_FILENAME"
 grep '# ' AAVSO_report.txt > AAVSO_previously_used_header.txt
