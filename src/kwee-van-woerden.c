@@ -117,6 +117,7 @@ int main() {
    n++;
   } else {
    fprintf( stderr, "ERROR in kwee-van-woerden.c best_d_j>=n_points_lightcurve\n" );
+   break;
   }
  }
  /* for(i=0;i<n;i++){
