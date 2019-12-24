@@ -86,6 +86,10 @@
 //
 #define FWHM_MIN 0.1 // safe default value
 //
+#define MIN_SOURCE_SIZE_APERTURE_FRACTION 0.5 // reject sources for which the comusted aperture size would be less than 
+                                              // MIN_SOURCE_SIZE_APERTURE_FRACTION*image_aperture_size
+                                              // (this should reject very small objects = cosmic rays)
+
 
 #define SATURATION_LIMIT_INDENT 0.1 // guessed_saturation_limit=maxval-SATURATION_LIMIT_INDENT*maxval;
 

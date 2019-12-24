@@ -512,7 +512,7 @@ void choose_best_reference_image( char **input_images, int Num, int maxsextracto
  median_number_of_good_detected_stars= gsl_stats_median_from_sorted_data( copy_of_number_of_good_detected_stars, 1, Num );
  free( copy_of_number_of_good_detected_stars );
 
- // Avoid choosing an image with doble-detections as the best one
+ // Avoid choosing an image with double-detections as the best one
  best_image= 0;
  best_number_of_good_detected_stars= 0.0;
  for ( i= 0; i < Num; i++ ) {
@@ -2684,6 +2684,7 @@ int main( int argc, char **argv ) {
  reference_image_aperture= aperture;
  if ( param_w == 0 ) {
   preobr->sigma_popadaniya= AUTO_SIGMA_POPADANIYA_COEF * aperture;
+  fprintf( stderr, "Setting the star matching radius to %.2lf pix\n", preobr->sigma_popadaniya);
  }
 
  fprintf( stderr, "%s", stderr_output );
@@ -2817,6 +2818,11 @@ int main( int argc, char **argv ) {
   }
   if ( 1 == is_point_close_or_off_the_frame_edge( position_x_pix, position_y_pix, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) ) {
    counter_rejected_frame_edge++;
+   continue;
+  }
+  //
+  if ( CONST*(a_a + a_a_err) < MIN_SOURCE_SIZE_APERTURE_FRACTION*aperture ) {
+   counter_rejected_too_small++;
    continue;
   }
   //
@@ -2978,7 +2984,7 @@ int main( int argc, char **argv ) {
           counter_rejected_low_snr,
           counter_rejected_bad_region,
           counter_rejected_frame_edge,
-          FWHM_MIN,
+          MAX( FWHM_MIN, MIN_SOURCE_SIZE_APERTURE_FRACTION*aperture),
           counter_rejected_too_small,
           aperture,
           counter_rejected_too_large,
@@ -3263,6 +3269,7 @@ int main( int argc, char **argv ) {
     //
     if ( param_w == 0 ) {
      preobr->sigma_popadaniya= AUTO_SIGMA_POPADANIYA_COEF * MAX( aperture, reference_image_aperture );
+     fprintf( stderr, "Setting the star matching radius to %.2lf pix\n", preobr->sigma_popadaniya);
     }
     if ( debug != 0 )
      fprintf( stderr, "DEBUG MSG: Read_sex_cat() - " );
@@ -3368,6 +3375,11 @@ int main( int argc, char **argv ) {
      }
      if ( 1 == is_point_close_or_off_the_frame_edge( position_x_pix, position_y_pix, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) ) {
       counter_rejected_frame_edge++;
+      continue;
+     }
+     //
+     if ( CONST*(a_a + a_a_err) < MIN_SOURCE_SIZE_APERTURE_FRACTION*aperture ) {
+      counter_rejected_too_small++;
       continue;
      }
      //
@@ -3518,7 +3530,7 @@ int main( int argc, char **argv ) {
              MIN_SNR, counter_rejected_low_snr,
              counter_rejected_bad_region,
              counter_rejected_frame_edge,
-             FWHM_MIN, counter_rejected_too_small,
+             MAX(FWHM_MIN, MIN_SOURCE_SIZE_APERTURE_FRACTION*aperture), counter_rejected_too_small,
              aperture, counter_rejected_too_large,
              counter_rejected_MagSize,
              maxsextractorflag, counter_rejected_seflags_gt_user_spec_threshold,
