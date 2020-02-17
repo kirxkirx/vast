@@ -18,7 +18,7 @@
 # try to set the correct path to X11 library, but it is most likely the program
 # will compile fine even if this path is set incorrectly
 # If RECOMPILE_VAST_ONLY is set to 'yes' only VaST will be re-compiled (faster option for developement) 
-#RECOMPILE_VAST_ONLY = yes
+RECOMPILE_VAST_ONLY = yes
 
 # You probably don't want to change anything below this line
 ##############################################################################
@@ -44,12 +44,12 @@ GSL_INCLUDE = lib/include
 
 
 ## production
-OPTFLAGS = -w -O2 -fomit-frame-pointer $(GOOD_MARCH_OPTIONS) $(LTO_OPTIONS) $(USE_OMP_OPTIONS) $(USE_BUILTIN_FUNCTIONS)
+#OPTFLAGS = -w -O2 -fomit-frame-pointer $(GOOD_MARCH_OPTIONS) $(LTO_OPTIONS) $(USE_OMP_OPTIONS) $(USE_BUILTIN_FUNCTIONS)
 # more conservative production flags
 #OPTFLAGS = -O2 -w $(GOOD_MARCH_OPTIONS)
 ## debug
 # (note that an older GCC may not understand '-Warray-bounds')
-#OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all -lmcheck -O0 $(USE_BUILTIN_FUNCTIONS) #$(USE_OMP_OPTIONS) # for debugging with valgrind
+OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all -lmcheck -O0 $(USE_BUILTIN_FUNCTIONS) #$(USE_OMP_OPTIONS) # for debugging with valgrind
 # Address Sanitizer (not compatible with Valgrind)
 #OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -lmcheck  -fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -O1 $(USE_BUILTIN_FUNCTIONS) 
 #OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wformat -Werror=format-security -Werror=array-bounds -Wextra -fno-omit-frame-pointer -lmcheck  -fsanitize=address,undefined -fsanitize-address-use-after-scope -O1 $(USE_BUILTIN_FUNCTIONS) 
@@ -349,8 +349,8 @@ get_dates_from_lightcurve_files_function.o: $(SRC_PATH)get_dates_from_lightcurve
 sysrem2.o: $(SRC_PATH)sysrem2.c
 	$(CC) $(OPTFLAGS) -c -o sysrem2.o $(SRC_PATH)sysrem2.c -I$(GSL_INCLUDE) -lm
 	#$(CC) $(OPTFLAGS) -c -o sysrem2.o $(SRC_PATH)sysrem2.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
-util/sysrem2: sysrem2.o variability_indexes.o get_dates_from_lightcurve_files_function.o
-	$(CC) $(OPTFLAGS) -o util/sysrem2 sysrem2.o variability_indexes.o get_dates_from_lightcurve_files_function.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+util/sysrem2: sysrem2.o variability_indexes.o get_dates_from_lightcurve_files_function.o get_number_of_cpu_cores.o
+	$(CC) $(OPTFLAGS) -o util/sysrem2 sysrem2.o variability_indexes.o get_dates_from_lightcurve_files_function.o get_number_of_cpu_cores.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 
 lib/lightcurve_simulator: $(SRC_PATH)lightcurve_simulator.c
 	$(CC) $(OPTFLAGS) -o lib/lightcurve_simulator $(SRC_PATH)lightcurve_simulator.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm

@@ -16,8 +16,6 @@
 #include <unistd.h>
 #include <math.h>
 
-//#include <gsl/gsl_statistics_float.h>
-//#include <gsl/gsl_sort_float.h>
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_sort.h>
 #include <gsl/gsl_errno.h>
@@ -27,6 +25,8 @@
 #include "variability_indexes.h" // for esimate_sigma_from_MAD_of_unsorted_data()
 
 #include "get_dates_from_lightcurve_files_function.h"
+
+#include "get_number_of_cpu_cores.h" // for get_number_of_cpu_cores()
 
 void change_number_of_sysrem_iterations_in_log_file() {
  FILE *logfilein;
@@ -102,6 +102,8 @@ int main() {
  char **star_numbers;
 
  float tmpfloat; // for faster computation
+ 
+ int number_of_cpu_cores_to_report;
 
  /* Protection against strange free() crashes */
  //setenv("MALLOC_CHECK_", "0", 1);
@@ -173,7 +175,7 @@ int main() {
   exit( 1 );
  }
 
- data= malloc( Nstars * Nobs * sizeof( float ) );
+ data= malloc( Nstars * Nobs * sizeof( float ) ); // !!
  if ( data == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for data\n" );
   exit( 1 );
@@ -187,8 +189,8 @@ int main() {
 
  //for(i=0;i<Nstars;i++){
  for ( i= Nstars; i--; ) {
-  mag_err[i]= malloc( Nobs * sizeof( float ) );
-  r[i]= malloc( Nobs * sizeof( float ) ); // is it correct ?????
+  mag_err[i]= malloc( Nobs * sizeof( float ) ); // !!
+  r[i]= malloc( Nobs * sizeof( float ) ); // is it correct ????? // !!
   if ( r[i] == NULL || mag_err[i] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory(i=%d)\n", i );
    exit( 1 );
@@ -278,6 +280,14 @@ int main() {
   i++;
  }
  fclose( datafile );
+
+
+ ////////////////////////
+ // get_number_of_cpu_cores() will set OMP_NUM_THREADS variable
+ // in a hope to avoid out-of-memory situation when using OpenMP down below
+ number_of_cpu_cores_to_report= get_number_of_cpu_cores();
+ // and report the number of CPU cores to the user (just for information)
+ fprintf( stderr, "Number of threads: %d\n", number_of_cpu_cores_to_report );
 
  /* Do the actual work */
  fprintf( stderr, "Computing average magnitudes... " );
