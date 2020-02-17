@@ -3243,12 +3243,12 @@ int main( int argc, char **argv ) {
   fitsfile_read_error= gettime( input_images[n], &JD, &timesys, convert_timesys_to_TT, &X_im_size, &Y_im_size, stderr_output, log_output, param_nojdkeyword, 1 ); //Вот этот код дублирован выше! Зачем?
   if ( fitsfile_read_error == 0 ) {
    if ( debug != 0 )
-    fprintf( stderr, "Ok\n" );
+    fprintf( stderr, "OK\n" );
    if ( debug != 0 )
     fprintf( stderr, "DEBUG MSG: autodetect_aperture() - " );
    aperture= autodetect_aperture( input_images[n], sextractor_catalog, 0, param_P, fixed_aperture, X_im_size, Y_im_size, guess_saturation_limit_operation_mode );
    if ( debug != 0 )
-    fprintf( stderr, "Ok\n" );
+    fprintf( stderr, "OK\n" );
    /* Write the logfile */
    if ( aperture < 0.0 )
     aperture= 0.0; // Do not corrupt the log file with bad apertures
@@ -3450,7 +3450,7 @@ int main( int argc, char **argv ) {
      //}
 
      if ( debug != 0 )
-      fprintf( stderr, "DEBUG MSG: Reading test.cat NUMBER2=%d Ok\n", NUMBER2 );
+      fprintf( stderr, "DEBUG MSG: Reading test.cat NUMBER2=%d OK\n", NUMBER2 );
     }
     fclose( file );
     if ( debug != 0 )
@@ -3546,7 +3546,7 @@ int main( int argc, char **argv ) {
      fprintf( stderr, "\E[01;31m WARNING: \E[33;00m suspiciously many stars are rejected as being too small. Please check FWHM_MIN in src/vast_limits.h and re-run 'make' if you change it.\n" );
 
     if ( debug != 0 )
-     fprintf( stderr, "DEBUG MSG: NUMBER2=%d Ok\n", NUMBER2 );
+     fprintf( stderr, "DEBUG MSG: NUMBER2=%d OK\n", NUMBER2 );
 
     Pos2= NULL; // can't malloc here as there will be an error if NUMBER2<MIN_NUMBER_OF_STARS_ON_FRAME
 
@@ -3906,7 +3906,7 @@ int main( int argc, char **argv ) {
 
      /*----------------------------------------------------------------------------------*/
      if ( debug != 0 )
-      fprintf( stderr, "Ok\n" );
+      fprintf( stderr, "OK\n" );
 
      // Check if this is the reference image again? We don't want to measure it for the second time and write
      // duplicate points in all lightcurves!
@@ -3973,18 +3973,18 @@ int main( int argc, char **argv ) {
      sprintf( log_output, "status=ERROR  %s\n", input_images[n] );
      write_string_to_log_file( log_output, sextractor_catalog );
      if ( debug != 0 )
-      fprintf( stderr, "Ok\n" );
+      fprintf( stderr, "OK\n" );
      if ( debug != 0 )
       fprintf( stderr, "DEBUG MSG: Closing log file - " );
      if ( debug != 0 )
-      fprintf( stderr, "Ok\n" );
+      fprintf( stderr, "OK\n" );
      if ( NUMBER2 > MIN_NUMBER_OF_STARS_ON_FRAME )
       free( Pos2 );
      if ( debug != 0 )
       fprintf( stderr, "DEBUG MSG: free(STAR2) - " );
      free( STAR2 );
      if ( debug != 0 )
-      fprintf( stderr, "Ok\n" );
+      fprintf( stderr, "OK\n" );
      continue; // Go to next image
     }
     //MATCH_SUCESS++;
@@ -4135,7 +4135,7 @@ int main( int argc, char **argv ) {
     poly_coeff[3]= 0;
     poly_coeff[4]= 0;
     if ( debug != 0 ){
-     fprintf( stderr, "Ok\n" );
+     fprintf( stderr, "OK\n" );
     }
     //////
     // Decide how many stars we need for magnitude calibration
@@ -4424,7 +4424,7 @@ int main( int argc, char **argv ) {
        fprintf( stderr, "ERROR03 - too few stars for magnitude calibration: %d\n", N_good_stars );
       } else {
        if ( debug != 0 ) {
-        fprintf( stderr, "Ok %d\n", wpolyfit_exit_code );
+        fprintf( stderr, "OK %d\n", wpolyfit_exit_code );
        }
       }
 
@@ -4463,19 +4463,19 @@ int main( int argc, char **argv ) {
     //free( poly_x );
     free( poly_x_original_pointer );
     if ( debug != 0 )
-     fprintf( stderr, "Ok\n" );
+     fprintf( stderr, "OK\n" );
     if ( debug != 0 )
      fprintf( stderr, "DEBUG MSG: free(poly_y) - " );
     //free( poly_y );
     free( poly_y_original_pointer );
     if ( debug != 0 )
-     fprintf( stderr, "Ok\n" );
+     fprintf( stderr, "OK\n" );
     if ( debug != 0 )
      fprintf( stderr, "DEBUG MSG: free(poly_err) - " );
     //free( poly_err );
     free( poly_err_original_pointer );
     if ( debug != 0 )
-     fprintf( stderr, "Ok\n" );
+     fprintf( stderr, "OK\n" );
     free( poly_err_fake );
 
     if ( apply_position_dependent_correction == 1 ) {
@@ -4485,7 +4485,7 @@ int main( int argc, char **argv ) {
     }
 
     if ( debug != 0 )
-     fprintf( stderr, "DEBUG MSG: It was a lot of work, Ok now\n" );
+     fprintf( stderr, "DEBUG MSG: It was a lot of work, OK now\n" );
     if ( wpolyfit_exit_code == 0 ) {
      /* Transform all magnitudes to the ref-frame system. */
      if ( debug != 0 )
@@ -4513,7 +4513,7 @@ int main( int argc, char **argv ) {
       }
      }
      if ( debug != 0 )
-      fprintf( stderr, "Ok\n" );
+      fprintf( stderr, "OK\n" );
     }
     //} // nocalib ??
 
@@ -4809,7 +4809,7 @@ int main( int argc, char **argv ) {
       }
       //
      } // for (i = 0; i < cache_counter; i++) {
-     fprintf( stderr, "Ok\n" );
+     fprintf( stderr, "OK\n" );
     } // if ( wpolyfit_exit_code == 0 ) {
 
     if ( debug != 0 )
@@ -4827,7 +4827,7 @@ int main( int argc, char **argv ) {
      }
     }
     if ( debug != 0 )
-     fprintf( stderr, "Ok\n" );
+     fprintf( stderr, "OK\n" );
 
     if ( debug != 0 )
      fprintf( stderr, "DEBUG MSG: 00002 " );
@@ -4849,7 +4849,7 @@ int main( int argc, char **argv ) {
     }
     //
     if ( debug != 0 )
-     fprintf( stderr, "Ok\n" );
+     fprintf( stderr, "OK\n" );
 
     /* Write observations to disk to save RAM */
     if ( 0 != check_and_print_memory_statistics() && Max_obs_in_RAM > 1000 )
@@ -4987,12 +4987,12 @@ int main( int argc, char **argv ) {
      fprintf( stderr, "DEBUG MSG: free(Pos2); - " );
     free( Pos2 );
     if ( debug != 0 )
-     fprintf( stderr, "Ok\n" );
+     fprintf( stderr, "OK\n" );
     if ( debug != 0 )
      fprintf( stderr, "DEBUG MSG: free(STAR2); - " );
     free( STAR2 );
     if ( debug != 0 )
-     fprintf( stderr, "Ok\n" );
+     fprintf( stderr, "OK\n" );
    } else {
     fprintf( stderr, "ERROR! APERTURE > 50\n" );
     /* Write error to the logfile */
@@ -5259,9 +5259,9 @@ int main( int argc, char **argv ) {
 
  // Generate summary log
  if ( debug != 0 )
-  fprintf( stderr, "DEBUG MSG: vast.c is starting echo and lib/vast_image_details_log_parser.sh > vast_summary.log && echo Ok\n" );
+  fprintf( stderr, "DEBUG MSG: vast.c is starting echo and lib/vast_image_details_log_parser.sh > vast_summary.log && echo OK\n" );
  fprintf( stderr, "\nWriting summary file: vast_summary.log ...  " );
- //system("lib/vast_image_details_log_parser.sh > vast_summary.log && echo Ok ");
+ //system("lib/vast_image_details_log_parser.sh > vast_summary.log && echo OK ");
  if ( 0 == system( "lib/vast_image_details_log_parser.sh > vast_summary.log" ) ) {
   fprintf( stderr, "OK\n" );
  }

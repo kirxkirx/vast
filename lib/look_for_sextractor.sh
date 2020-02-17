@@ -5,7 +5,7 @@ echo -n "Checking write permissions for the current directory ($PWD)...  "
 touch testfile$$.tmp
 if [ $? -eq 0 ];then
  rm touch testfile$$.tmp &>/dev/null
- echo "Ok"
+ echo "OK"
 else
  echo "ERROR!
 Please make sure you have write permissions for the current directory.

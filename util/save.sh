@@ -24,7 +24,7 @@ fi
 echo -n "Creating directory $REGION_NAME ... "
 mkdir "$REGION_NAME"
 if [ $? = 0 ];then
- echo "Ok"
+ echo "OK"
 else
  echo "ERROR: Can't create directory $REGION_NAME"
  exit 1
@@ -38,7 +38,7 @@ fi
 for WCS_IMAGE in wcs_* ;do
  if [ -f $WCS_IMAGE ];then
   echo -n "Saving WCS-calibrated image/catalog  $WCS_IMAGE ... "
-  mv $WCS_IMAGE "$REGION_NAME" && echo "Ok"
+  mv $WCS_IMAGE "$REGION_NAME" && echo "OK"
  fi
 done
 
@@ -46,36 +46,36 @@ done
 # The wcs.fit file is produced by ./pgfv match
 if [ -f wcs.fit ];then
  echo -n "Saving wcs.fit ... "
- mv wcs.fit "$REGION_NAME" && echo "Ok"
+ mv wcs.fit "$REGION_NAME" && echo "OK"
 fi
  
 if [ -f calib.txt ];then
  echo -n "Saving calib.txt ... "
- mv calib.txt "$REGION_NAME" && echo "Ok"
+ mv calib.txt "$REGION_NAME" && echo "OK"
 fi
 if [ -f calib.txt_param ];then
  echo -n "Saving calib.txt_param ... "
- mv calib.txt_param "$REGION_NAME" && echo "Ok"
+ mv calib.txt_param "$REGION_NAME" && echo "OK"
 fi
 if [ -d vast_magnitude_calibration_details_log ];then
  echo -n "Saving vast_magnitude_calibration_details_log ... "
- mv vast_magnitude_calibration_details_log/ "$REGION_NAME" && echo "Ok"
+ mv vast_magnitude_calibration_details_log/ "$REGION_NAME" && echo "OK"
 fi
 
 if [ -d symlinks_to_images ];then
  echo -n "Saving symlinks_to_images ... "
- mv symlinks_to_images/ "$REGION_NAME" && echo "Ok"
+ mv symlinks_to_images/ "$REGION_NAME" && echo "OK"
 fi
 
 if [ -f vast_summary.log ];then
  echo -n "Saving" `grep "SExtractor parameter file:" vast_summary.log |awk '{print $4}'`" ... " 
  SEXTRACTOR_PARAMETER_FILE=`grep "SExtractor parameter file:" vast_summary.log |awk '{print $4}'`
- cp "$SEXTRACTOR_PARAMETER_FILE" "$REGION_NAME" && echo "Ok"
+ cp "$SEXTRACTOR_PARAMETER_FILE" "$REGION_NAME" && echo "OK"
  echo -n "Saving default.psfex ... " 
- cp default.psfex "$REGION_NAME" && echo "Ok"
+ cp default.psfex "$REGION_NAME" && echo "OK"
  CONVOLUTION_FILE=`grep .conv "$SEXTRACTOR_PARAMETER_FILE" | awk '{print $1" "$2}' | grep -v \# | grep '.conv' | head -n1 | awk '{print $2}'`
  echo -n "Saving $CONVOLUTION_FILE ... "
- cp "$CONVOLUTION_FILE" "$REGION_NAME" && echo "Ok"
+ cp "$CONVOLUTION_FILE" "$REGION_NAME" && echo "OK"
 else
  echo "Not saving default.sex and default.psfex - assuming this is some kind of imported data since there is no vast_summary.log"
 fi
@@ -87,7 +87,7 @@ for SPECIAL_FILE_TO_COPY in manually_selected_comparison_stars.lst exclude.lst b
 done
 
 #echo -n "Saving the program source code ... "
-#cp -r src/ "$REGION_NAME"/vast_src_"$REGION_NAME" && echo "Ok"
+#cp -r src/ "$REGION_NAME"/vast_src_"$REGION_NAME" && echo "OK"
 
 # Save the VaST settings file for the record
 cp src/vast_limits.h "$REGION_NAME"_saved_limits.h ; mv "$REGION_NAME"_saved_limits.h "$REGION_NAME"/
@@ -101,7 +101,7 @@ for i in vast_list_of_input_images_with_time_corrections.txt vast_list_of_FITS_k
  if [ -f $i ];then
   mv $i "$REGION_NAME" 
  fi
-done && echo -e "Ok\nAll data and processing parameters saved!\nTo restore them use:\n util/load.sh $REGION_NAME" && exit 0
+done && echo -e "OK\nAll data and processing parameters saved!\nTo restore them use:\n util/load.sh $REGION_NAME" && exit 0
 
 echo "Something is wrong..."
 exit 1

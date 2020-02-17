@@ -560,7 +560,7 @@ int main( int argc, char **argv ) {
   return EXIT_FAILURE;
  }
  cpgask( 0 ); // turn OFF this silly " Type <RETURN> for next page:" request
- //fprintf(stderr,"- Ok\n");
+ //fprintf(stderr,"- OK\n");
  fprintf( stderr, "\n  --*** HOW TO USE THE VARIABILITY INDEX PLOTTER ***--\n" );
  fprintf( stderr, "\nClick on any star to see its lightcurve.\n" );
  fprintf( stderr, "Press \033[0;36m'M'\033[00m and \033[0;36m'N'\033[00m to switch between the various variability indices.\nPress 'Z' and draw rectangle to zoom in.\nPress 'D', 'Z''Z' or click middle mouse button to return to the original zoom.\nPress 'X' two times or double right click to exit.\nHave fun! :)\n\n" );

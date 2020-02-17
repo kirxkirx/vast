@@ -1436,7 +1436,7 @@ int main( int argc, char **argv ) {
  if ( status != 0 ) {
   exit( status );
  }
- //fprintf(stderr,"Ok\n");
+ //fprintf(stderr,"OK\n");
 
  // Don't do this check if this is fits2png
  if ( finding_chart_mode !=1 && use_labels !=0 ) {
@@ -1982,7 +1982,7 @@ int main( int argc, char **argv ) {
     //fprintf(stderr,"histeq... ");
     histeq( naxes[0] * naxes[1], float_array, &max_val, &min_val );
     image_minmax3( naxes[0] * naxes[1], float_array, &max_val, &min_val, drawX1, drawX2, drawY1, drawY2, naxes ); // TEST
-    //fprintf(stderr,"Ok\n ");
+    //fprintf(stderr,"OK\n ");
    } else {
     hist_trigger= 0;
     for ( i= 0; i < naxes[0] * naxes[1]; i++ ) {

@@ -122,8 +122,9 @@ int main() {
   fprintf( stderr, "ERROR! Can't open file sysrem_input_star_list.lst\n" );
   exit( 1 );
  }
- while ( -1 < fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename ) )
+ while ( -1 < fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename ) ) {
   Nstars++;
+ }
  fclose( datafile );
  fprintf( stderr, "Number of stars in sysrem_input_star_list.lst %d\n", Nstars );
  if ( Nstars < 100 ) {

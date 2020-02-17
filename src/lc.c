@@ -637,7 +637,7 @@ int main( int argc, char **argv ) {
 
  // Nobs--;
  fclose( lightcurvefile );
- //fprintf(stderr,"Ok\n");
+ //fprintf(stderr,"OK\n");
 
  print_help();
 

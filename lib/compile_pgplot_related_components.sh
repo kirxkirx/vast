@@ -136,7 +136,7 @@ for TEST_FILE in lib/pgplot/libpgplot.a lib/pgplot/libcpgplot.a lib/pgplot/grfon
   COMPILATION_ERROR=1
   echo -ne "\033[01;31mERROR\033[00m,   "
  else
-  echo -ne "\033[01;32mOk\033[00m,   "
+  echo -ne "\033[01;32mOK\033[00m,   "
  fi
 done
 echo "done!"
@@ -198,7 +198,7 @@ for TEST_FILE in lc find_candidates pgfv lib/fit_mag_calib lib/fit_linear lib/fi
   COMPILATION_ERROR=1
   echo -ne "\033[01;31mERROR\033[00m,   "
  else
-  echo -ne "\033[01;32mOk\033[00m,   "
+  echo -ne "\033[01;32mOK\033[00m,   "
  fi
 done
 echo "done!"

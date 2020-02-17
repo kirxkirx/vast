@@ -125,7 +125,7 @@ for TEST_FILE in $TARGET_DIR/bin/sex ;do
   COMPILATION_ERROR=1
   echo -ne "\033[01;31mERROR\033[00m,   "
  else
-  echo -ne "\033[01;32mOk\033[00m,   "
+  echo -ne "\033[01;32mOK\033[00m,   "
  fi
 done
 

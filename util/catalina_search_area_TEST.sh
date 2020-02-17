@@ -58,7 +58,7 @@ cat vizquerry$$.txt | while read A B RAD RA DEC R ;do if [ -z $R ];then continue
  CSV_FILE_LINK=`curl --silent --max-time 10 --data "RA=$RA&Dec=$DEC&Rad=$INDIVIDUAL_OBJECT_SEARCH_RADIUS_ARCMIN&IMG=nun&DB=photcat&.submit=Submit&OUT=csv&SHORT=short" $CATALINA_SERVER_URL | grep ">download<" | awk '{print $1}' FS='>download<' | awk '{print $2}' FS='href='`
  # Download the Catalina result
  curl --silent --max-time 10 "$CSV_FILE_LINK" | grep -v MasterID | awk '{printf "%.5f %.2f %.2f %d %s\n",$6+2400000.5,$2,$3,$7,$1}' FS=',' >> all_in_one$$.dat
- echo "Ok"
+ echo "OK"
 
 done
 

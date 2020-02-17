@@ -24,7 +24,7 @@ for TBLFILENAME in *_lc.tbl ;do
    fi
   done < $TBLFILENAME > $OUTFILENAME
  
-  echo Ok
+  echo "OK"
  
  else
   echo "File already exist"
