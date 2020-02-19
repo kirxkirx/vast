@@ -129,6 +129,20 @@ void print_vast_version( void ) {
  return;
 }
 
+void report_and_handle_too_many_stars_error( void ) {
+ // user message
+ fprintf( stderr, "#######################\nVaST thinks there are too many stars on the images.\n\nIn most cases this is not the case and VaST/SExtractor detects noise fluctuations and counts them as stars.\nIf this is the case you may want to change the detection settings in default.sex\nTry to set a higher star detection limit (get less stars per frame) by changing DETECT_MINAREA and DETECT_THRESH/ANALYSIS_THRESH\n\nYou may look at how well stars are detected by running './sextract_single_image'. Most stars visible on the image should be marked\nwith green circles and the green circles should not appear around things that are not stars.\n\nIf you are sure that it's the actual number of stars on image that exceeds the VaST limit of %d,\nchange the string \"#define MAX_NUMBER_OF_STARS %d\" in src/vast_limits.h file and recompile VaST by running \"make\".\n#######################\n", MAX_NUMBER_OF_STARS );
+ // clean the MAX_NUMBER_OF_STARS lightcurve files
+ fprintf( stderr, "Removing the %d outNNNNN.dat lightcurve files.\n" );
+ if ( 0 != system( "util/clean_data.sh all >/dev/null" ) ) {
+  fprintf( stderr, "There was an error while cleaning old files!\n" );
+ } else {
+  fprintf( stderr, "Done with cleaning!\n" );
+ }
+
+ return;
+}
+
 
 void print_TT_reminder( int show_timer_or_quit_instantly ) {
 
@@ -3137,8 +3151,9 @@ int main( int argc, char **argv ) {
  for ( i= 0; i < NUMBER1; i++ ) {
 
   if ( STAR1[i].n >= MAX_NUMBER_OF_STARS ) {
-   fprintf( stderr, "Oops!!! Too many stars!\nChange string \"#define MAX_NUMBER_OF_STARS %d\" in src/vast_limits.h file and recompile the program by running \"make\".\n\nOr you may choose a higher star detection limit (get less stars per frame) by changing DETECT_MINAREA and DETECT_THRESH/ANALYSIS_THRESH parameters in default.sex file\n",
-            MAX_NUMBER_OF_STARS );
+   report_and_handle_too_many_stars_error();
+//   fprintf( stderr, "########## Oops!!! Too many stars! ##########\nChange string \"#define MAX_NUMBER_OF_STARS %d\" in src/vast_limits.h file and recompile the program by running \"make\".\n\nOr you may choose a higher star detection limit (get less stars per frame) by changing DETECT_MINAREA and DETECT_THRESH/ANALYSIS_THRESH parameters in default.sex file\n",
+//            MAX_NUMBER_OF_STARS );
    exit( 1 );
   }
 
@@ -4588,7 +4603,9 @@ int main( int argc, char **argv ) {
       //}
 
       if ( NUMBER1 >= MAX_NUMBER_OF_STARS - 1 ) {
-       fprintf( stderr, "ERROR while adding new stars: Too many stars!\nChange string \"#define MAX_NUMBER_OF_STARS %d\" in src/vast_limits.h file and recompile the program by running \"make\".\n", MAX_NUMBER_OF_STARS );
+       //fprintf( stderr, "ERROR while adding new stars: Too many stars!\nChange string \"#define MAX_NUMBER_OF_STARS %d\" in src/vast_limits.h file and recompile the program by running \"make\".\n", MAX_NUMBER_OF_STARS );
+       fprintf( stderr, "ERROR while adding new stars!" );
+       report_and_handle_too_many_stars_error();
        exit( 1 );
       }
       //} // // If this is a good star
