@@ -225,9 +225,9 @@ int main( int argc, char **argv ) {
  free( magerr_a );
 
  for ( i= 0; i < 6; i++ ) {
-  aperture_coefficient_to_print= 1.0;
+  aperture_coefficient_to_print= 0.0;
   if ( i == 1 )
-   aperture_coefficient_to_print= 1.0;
+   aperture_coefficient_to_print= 0.0;
   if ( i == 2 )
    aperture_coefficient_to_print= AP01;
   if ( i == 3 )
@@ -236,7 +236,8 @@ int main( int argc, char **argv ) {
    aperture_coefficient_to_print= AP03;
   if ( i == 5 )
    aperture_coefficient_to_print= AP04;
-  fprintf( stderr, "Aperture with index %d (%lf*REFERENCE_APERTURE_DIAMETER) seems best for %d stars\n", i, aperture_coefficient_to_print, counter_ap[i] );
+  //fprintf( stderr, "Aperture with index %d (%lf*REFERENCE_APERTURE_DIAMETER) seems best for %d stars\n", i, aperture_coefficient_to_print, counter_ap[i] );
+  fprintf( stderr, "Aperture with index %d (REFERENCE_APERTURE_DIAMETER + (%.2lf)*REFERENCE_APERTURE_DIAMETER) seems best for %d stars\n", i, aperture_coefficient_to_print, counter_ap[i] );
  }
 
  fprintf( stderr, "\ndone!  =)\n" );
