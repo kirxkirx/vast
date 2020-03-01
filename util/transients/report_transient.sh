@@ -245,7 +245,7 @@ DEC_HMS=`echo "$RADEC_MEAN_HMS" | awk '{print $2}'`
 EXCLUSION_LIST_FILE="exclusion_list.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
- echo "Checking $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
+ #echo "Checking $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
  while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
   lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_HMS" "$DEC_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 15/3600.0 ) print "FOUND" }' | grep "FOUND" && break
  done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"  && exit 1
@@ -254,7 +254,7 @@ fi
 EXCLUSION_LIST_FILE="exclusion_list_bsc.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
- echo "Checking $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
+ #echo "Checking $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
  while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
   #lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_HMS" "$DEC_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 40/3600.0 ) print "FOUND" }' | grep "FOUND" && break
   lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_HMS" "$DEC_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 80/3600.0 ) print "FOUND" }' | grep "FOUND" && break
@@ -264,7 +264,7 @@ fi
 EXCLUSION_LIST_FILE="exclusion_list_tycho2.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
- echo "Checking $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
+ #echo "Checking $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
  while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
   lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_HMS" "$DEC_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 20/3600.0 ) print "FOUND" }' | grep "FOUND" && break
  done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"  && exit 1
