@@ -175,8 +175,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   echo "Preliminary VaST run" >> transient_factory_test31.txt
   ./vast --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages  "$NEW_IMAGES"/*"$FIELD"_*_*.fts  
   # column 9 in vast_image_details.log is the aperture size in pixels
-  SECOND_EPOCH__FIRST_IMAGE=`cat vast_image_details.log | sort -k9 | head -n1 | awk '{print $17}'`
-  SECOND_EPOCH__SECOND_IMAGE=`cat vast_image_details.log | sort -k9 | head -n2 | tail -n1 | awk '{print $17}'`
+  SECOND_EPOCH__FIRST_IMAGE=`cat vast_image_details.log | sort -nk9 | head -n1 | awk '{print $17}'`
+  SECOND_EPOCH__SECOND_IMAGE=`cat vast_image_details.log | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}'`
  fi
  ################################
  # double-check the files
