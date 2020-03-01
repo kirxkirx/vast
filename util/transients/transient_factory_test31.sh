@@ -156,10 +156,29 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   continue
  fi
  echo "Checking input images" >> transient_factory_test31.txt
+ ################################
+ # choose first epoch images
  REFERENCE_EPOCH__FIRST_IMAGE=`ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | head -n1`
  REFERENCE_EPOCH__SECOND_IMAGE=`ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | tail -n1`
- SECOND_EPOCH__FIRST_IMAGE=`ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | head -n1`
- SECOND_EPOCH__SECOND_IMAGE=`ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | head -n2 | tail -n1`
+ # choose second epoch images
+ # first, count how many there are
+ NUMBER_OF_SECOND_EPOCH_IMAGES=`ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | wc -l`
+ if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -lt 2 ];then
+  echo "ERROR processing the image series - only $NUMBER_OF_SECOND_EPOCH_IMAGES second-epoch images found"
+  echo "ERROR processing the image series - only $NUMBER_OF_SECOND_EPOCH_IMAGES second-epoch images found" >> transient_factory_test31.txt
+  continue
+ elif [ $NUMBER_OF_SECOND_EPOCH_IMAGES -eq 2 ];then
+  SECOND_EPOCH__FIRST_IMAGE=`ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | head -n1`
+  SECOND_EPOCH__SECOND_IMAGE=`ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | head -n2 | tail -n1`
+ else
+  # There are more than two second-epoch images - do a preliminary VaST run to choose the two images with best seeing
+  echo "Preliminary VaST run" >> transient_factory_test31.txt
+  ./vast --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages  "$NEW_IMAGES"/*"$FIELD"_*_*.fts  
+  # column 9 in vast_image_details.log is the aperture size in pixels
+  SECOND_EPOCH__FIRST_IMAGE=`cat vast_image_details.log | sort -k9 | head -n1 | awk '{print $17}'`
+  SECOND_EPOCH__SECOND_IMAGE=`cat vast_image_details.log | sort -k9 | head -n2 | tail -n1 | awk '{print $17}'`
+ fi
+ ################################
  # double-check the files
  for FILE_TO_CHECK in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" ;do
   ls "$FILE_TO_CHECK" 
