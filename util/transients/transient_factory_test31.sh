@@ -56,6 +56,11 @@ lib/update_offline_catalogs.sh all
 cp default.sex.telephoto_lens_v4 default.sex
 #cp default.sex.telephoto_lens_v3 default.sex
 
+# Set custom bad_region.lst if there is one
+if [ -f ../bad_region.lst ];then
+ cp ../bad_region.lst .
+fi
+
 echo "Reference image directory is set to $REFERENCE_IMAGES"
 if [ -z $1 ]; then
  echo "Usage: $0 PATH_TO_DIRECTORY_WITH_IMAGE_PAIRS"

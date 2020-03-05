@@ -1,1 +1,8 @@
+# This is an example bad region file.
+# There are two ways to specify a bad reginon:
+# 1) as coordinates of the lower left and upper 
+# right corners of a rectangle, like this 
 0 0 0 0
+# 2) as a bad spot (3-pixel box around this 
+# spot will be excluded, like this
+0 0
