@@ -110,6 +110,13 @@ int read_bad_lst( double *X1, double *Y1, double *X2, double *Y2, int *N ) {
    fprintf( stderr, "excluding region: %.1lf %.1lf %.1lf %.1lf\n", X1[( *N )], Y1[( *N )], X2[( *N )], Y2[( *N )] );
   }
   ( *N )+= 1;
+  
+  // Check that we are not out of memory yet
+  if ( ( *N ) >= MAX_NUMBER_OF_BAD_REGIONS_ON_CCD ) {
+   fprintf( stderr, "ERROR: we reached MAX_NUMBER_OF_BAD_REGIONS_ON_CCD\n Please edit the line\n#define MAX_NUMBER_OF_BAD_REGIONS_ON_CCD %d\nin src/vast_limits.h and recompile with 'make'\n\n", MAX_NUMBER_OF_BAD_REGIONS_ON_CCD );
+   break;
+  }
+  
  }
  fclose( badfile );
  //fprintf( stderr, "Done reading bad_region.lst \n" );

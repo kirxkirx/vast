@@ -31,9 +31,9 @@
 #define MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT 512                                                 // Maximum string length in image00001.cat
 #define MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG 512                                 // Maximum string length in vast_lightcurve_statistics.log
 
-#define MAX_RAM_USAGE 0.7                   /* Try not to store in RAM more than MAX_RAM_USAGE*RAM_size */
-#define MAX_NUMBER_OF_BAD_REGIONS_ON_CCD 64 /* Which may be described in bad_region.lst */
-#define MAX_NUMBER_OF_LEAP_SECONDS 100      /* Maximum number of lines in lib/tai-utc.dat file */
+#define MAX_RAM_USAGE 0.7                      /* Try not to store in RAM more than MAX_RAM_USAGE*RAM_size */
+#define MAX_NUMBER_OF_BAD_REGIONS_ON_CCD 16384 /* Which may be described in bad_region.lst */
+#define MAX_NUMBER_OF_LEAP_SECONDS 100         /* Maximum number of lines in lib/tai-utc.dat file */
 
 /* Star detection */
 #define FRAME_EDGE_INDENT_PIXELS 10.0  // Don't take into account stars closer than FRAME_EDGE_INDENT_PIXELS pixels to a frame edge.
