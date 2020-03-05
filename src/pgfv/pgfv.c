@@ -1831,7 +1831,7 @@ int main( int argc, char **argv ) {
         if ( 0 == exclude_region( X1, Y1, X2, Y2, N_bad_regions, (double)sexX[marker_counter], (double)sexY[marker_counter], APER ) ) {
          fprintf( stderr, "The star is not situated in a bad CCD region according to bad_region.lst\n" );
         } else {
-         fprintf( stderr, "The star is not situated in a \E[01;31mbad CCD region\E[33;00m according to bad_region.lst\n" );
+         fprintf( stderr, "The star is situated in a \E[01;31mbad CCD region\E[33;00m according to bad_region.lst\n" );
         }
 
         if ( use_xy2sky > 0 ) {
