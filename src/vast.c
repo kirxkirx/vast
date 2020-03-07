@@ -1172,7 +1172,7 @@ int exclude_test( double X, double Y, double *exX, double *exY, int N ) {
  return result;
 }
 
-/* Transients are objects which were not netected on the reference frame but have now suddenly appeared. */
+// Transients are objects which were not detected on the reference frame but have now suddenly appeared.
 void test_transient( double *search_area_boundaries, struct Star star, double reference_image_JD, double X_im_size, double Y_im_size ) {
  FILE *transientfile;
  int n= star.n;
@@ -1189,6 +1189,8 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
 
  if ( x > search_area_boundaries[0] && x < search_area_boundaries[1] ) {
   if ( y > search_area_boundaries[2] && y < search_area_boundaries[3] ) {
+   // we check that the transient is brighter than the faint limit
+   // obviously don't care if it's fainter or brighter thant the bright search box limits
    if ( m + 1.0 * m_err < search_area_boundaries[5] ) {
     if ( 1 == is_point_close_or_off_the_frame_edge( star.x_frame, star.y_frame, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) ) {
      return;
