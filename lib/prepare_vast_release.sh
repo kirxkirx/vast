@@ -38,7 +38,10 @@ rm -f transient_factory.log
 rm -rf wcscache
 rm -f *.gnuplot
 rm -f *.eps
+rm -f *.ps
 rm -f *.png
+rm -f *.mp4
+rm -f *.gif
 rm -f *_saved_limits.h
 rm -f octave-workspace
 rm -f vast_index_vs_mag*.txt
