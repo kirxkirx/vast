@@ -1173,7 +1173,8 @@ int exclude_test( double X, double Y, double *exX, double *exY, int N ) {
 }
 
 // Transients are objects which were not detected on the reference frame but have now suddenly appeared.
-void test_transient( double *search_area_boundaries, struct Star star, double reference_image_JD, double X_im_size, double Y_im_size ) {
+//void test_transient( double *search_area_boundaries, struct Star star, double reference_image_JD, double X_im_size, double Y_im_size ) {
+void test_transient( double *search_area_boundaries, struct Star star, double reference_image_JD, double X_im_size, double Y_im_size,  double *X1, double *Y1, double *X2, double *Y2, int N_bad_regions, double aperture ) {
  FILE *transientfile;
  int n= star.n;
  double x= star.x;
@@ -1192,9 +1193,19 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
    // we check that the transient is brighter than the faint limit
    // obviously don't care if it's fainter or brighter thant the bright search box limits
    if ( m + 1.0 * m_err < search_area_boundaries[5] ) {
+    // The candidate is inside the search box - now make additional (slow) checks
     if ( 1 == is_point_close_or_off_the_frame_edge( star.x_frame, star.y_frame, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) ) {
      return;
     }
+    // double-check that it's not in a bad region
+    if ( 0 != exclude_region( X1, Y1, X2, Y2, N_bad_regions, star.x_frame, star.y_frame, aperture ) ) {
+     return;
+    }
+    // Check that it's not in a bad region on the reference frame - there will be no reference object!
+    if ( 0 != exclude_region( X1, Y1, X2, Y2, N_bad_regions, x, y, aperture ) ) {
+     return;
+    }
+    // OK, we like this candidate
     transientfile= fopen( "candidates-transients.lst", "a" );
     if ( NULL == transientfile ) {
      fprintf( stderr, "ERROR writing to candidates-transients.lst\n" );
@@ -4898,7 +4909,8 @@ int main( int argc, char **argv ) {
         // !!!! vast_flag is size-related and should not be considered for the transient search
         //if( STAR2[Pos2[i]].vast_flag!=0 )continue;
         //fprintf(stderr,"*** DEBUG %d\n",STAR2[Pos2[i]].n);
-        test_transient( search_area_boundaries, STAR2[Pos2[i]], STAR3[0].JD, X_im_size, Y_im_size );
+        //test_transient( search_area_boundaries, STAR2[Pos2[i]], STAR3[0].JD, X_im_size, Y_im_size );
+        test_transient( search_area_boundaries, STAR2[Pos2[i]], STAR3[0].JD, X_im_size, Y_im_size,  X1, Y1, X2, Y2, N_bad_regions, aperture );
        }
       }
      }

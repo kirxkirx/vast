@@ -4,6 +4,8 @@
 
  */
 
+#define EXCLUDE_N_PIXELS_AROUND_BAD_POINT 1.0 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -77,11 +79,11 @@ int read_bad_lst( double *X1, double *Y1, double *X2, double *Y2, int *N ) {
   if ( 4 != sscanf( str, "%lf %lf %lf %lf", &X1[( *N )], &Y1[( *N )], &X2[( *N )], &Y2[( *N )] ) ) {
    // if that didn't work, try the new format - bad point X and Y
    if ( 2 == sscanf( str, "%lf %lf", &X1[( *N )], &Y1[( *N )] ) ) {
-    // exclude a 3-pix region around the specified point
-    X2[( *N )]= X1[( *N )] + 3.0;
-    Y2[( *N )]= Y1[( *N )] + 3.0;
-    X1[( *N )]= X1[( *N )] - 3.0;
-    Y1[( *N )]= Y1[( *N )] - 3.0;
+    // exclude a EXCLUDE_N_PIXELS_AROUND_BAD_POINT-pix region around the specified point
+    X2[( *N )]= X1[( *N )] + EXCLUDE_N_PIXELS_AROUND_BAD_POINT;
+    Y2[( *N )]= Y1[( *N )] + EXCLUDE_N_PIXELS_AROUND_BAD_POINT;
+    X1[( *N )]= X1[( *N )] - EXCLUDE_N_PIXELS_AROUND_BAD_POINT;
+    Y1[( *N )]= Y1[( *N )] - EXCLUDE_N_PIXELS_AROUND_BAD_POINT;
     //fprintf( stderr, "Parsed as a bad spot, excluding rectangle: %.1lf %.1lf %.1lf %.1lf\n", X1[( *N )], Y1[( *N )], X2[( *N )], Y2[( *N )]);
    } else {
     // if this didn't work - something is wrong with that particular string
