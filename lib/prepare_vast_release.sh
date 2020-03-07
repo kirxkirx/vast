@@ -183,13 +183,20 @@ in src/vast_limits.h before release!
 fi
 
 N_LINES_BAD_REGION=`cat bad_region.lst | wc -l`
-if [ $N_LINES_BAD_REGION -ne 1 ];then
+if [ $N_LINES_BAD_REGION -ne 9 ];then
  echo "
 ERROR: please set up the default bad_region.lst before release!
 "
 fi
 
 grep --quiet '0 0 0 0' bad_region.lst
+if [ $? -ne 0 ];then
+ echo "
+ERROR: please set up the default bad_region.lst before release!
+"
+fi
+
+grep --quiet '0 0' bad_region.lst
 if [ $? -ne 0 ];then
  echo "
 ERROR: please set up the default bad_region.lst before release!

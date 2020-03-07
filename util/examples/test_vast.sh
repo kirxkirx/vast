@@ -7398,6 +7398,11 @@ if [ "$HOSTNAME" = "eridan" ] ;then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMW_001"
   fi
+  util/examples/test_NMW02.sh
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMW_002"
+  fi  
   if [ $TEST_PASSED -eq 1 ];then
    echo -e "\n\033[01;34mSpecial NMW test \033[01;32mPASSED\033[00m" >> /dev/stderr
    echo "PASSED" >> vast_test_report.txt
