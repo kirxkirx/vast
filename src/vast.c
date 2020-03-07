@@ -1240,7 +1240,7 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
 
  search_area_boundaries[5]= search_area_boundaries[5] - MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT;
 
- fprintf( stderr, "\nParameter box for transient search: %lf<X<%lf %lf<Y<%lf %lf<m<%lf\n \n", search_area_boundaries[0], search_area_boundaries[1], search_area_boundaries[2], search_area_boundaries[3], search_area_boundaries[4], search_area_boundaries[5] );
+ fprintf( stderr, "\nParameter box for transient search: %7.1lf<X<%7.1lf %7.1lf<Y<%7.1lf %5.2lf<m<%5.2lf\n \n", search_area_boundaries[0], search_area_boundaries[1], search_area_boundaries[2], search_area_boundaries[3], search_area_boundaries[4], search_area_boundaries[5] );
 
  return;
 }
@@ -2434,48 +2434,6 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "Excluding %d stars (listed in exclude.lst file) from magnitude calibration\n\n\n", N_bad_stars );
  }
 
- ////////////////////////////////////////////////////////////////////
- /////// Reading file with manually selected comparison stars ///////
- ////////////////////////////////////////////////////////////////////
- // The stars are specified with their X Y positions on the reference frame
- FILE *cmparisonstarsfile;
- manually_selected_comparison_stars_X= malloc( sizeof( double ) );
- if ( manually_selected_comparison_stars_X == NULL ) {
-  fprintf( stderr, "ERROR: can't allocate memory for manually_selected_comparison_stars_X\n" );
-  vast_report_memory_error();
-  return 1;
- }
- manually_selected_comparison_stars_Y= malloc( sizeof( double ) );
- if ( manually_selected_comparison_stars_Y == NULL ) {
-  fprintf( stderr, "ERROR: can't allocate memory for manually_selected_comparison_stars_Y\n" );
-  vast_report_memory_error();
-  return 1;
- }
- manually_selected_comparison_stars_catalog_mag= malloc( sizeof( double ) );
- if ( manually_selected_comparison_stars_catalog_mag == NULL ) {
-  fprintf( stderr, "ERROR: can't allocate memory for manually_selected_comparison_stars_catalog_mag\n" );
-  vast_report_memory_error();
-  return 1;
- }
- cmparisonstarsfile= fopen( "manually_selected_comparison_stars.lst", "r" );
- if ( cmparisonstarsfile == NULL ) {
-  fprintf( stderr, "No manually selected comparison stars file manually_selected_comparison_stars.lst which is fine.\n" );
-  //exit( 1 );
-  // We should not quit if there is no manually_selected_comparison_stars.lst
- }
- else{
-  while ( -1 < fscanf( cmparisonstarsfile, "%lf %lf %lf", &manually_selected_comparison_stars_X[N_manually_selected_comparison_stars], &manually_selected_comparison_stars_Y[N_manually_selected_comparison_stars], &manually_selected_comparison_stars_catalog_mag[N_manually_selected_comparison_stars] ) ) {
-   manually_selected_comparison_stars_X= realloc( manually_selected_comparison_stars_X, sizeof( double ) * ( N_manually_selected_comparison_stars + 2 ) );
-   manually_selected_comparison_stars_Y= realloc( manually_selected_comparison_stars_Y, sizeof( double ) * ( N_manually_selected_comparison_stars + 2 ) );
-   manually_selected_comparison_stars_catalog_mag= realloc( manually_selected_comparison_stars_catalog_mag, sizeof( double ) * ( N_manually_selected_comparison_stars + 2 ) );
-   N_manually_selected_comparison_stars+= 1;
-  }
-  fclose( cmparisonstarsfile );
-  fprintf( stderr, "Loaded %d manually selected compariosn stars from manually_selected_comparison_stars.lst file\n", N_manually_selected_comparison_stars );
-  photometric_calibration_type= 2;
-  fprintf(stderr, "Resetting the magnitude calibration mode to zero-point offset only!\n\n\n");
- }
-
 
 
 
@@ -2559,8 +2517,43 @@ int main( int argc, char **argv ) {
      fprintf( stderr, "WARNING: cannot fork()! Continuing in the streamline mode...\n" );
     autodetect_aperture( input_images[i], sextractor_catalog, 0, param_P, fixed_aperture, X_im_size, Y_im_size, guess_saturation_limit_operation_mode );
     if ( pid == 0 ) {
+     ///// If this is a child /////
+     // free-up memory
+     if ( debug != 0 ) {
+      fprintf( stderr, "DEBUG MSG: CHILD free();\n" );
+     }
+     free( child_pids );
+     free( ptr_struct_Obs );
+     free( STAR3 );
+     free( STAR1 );
+     free( bad_stars_X );
+     free( bad_stars_Y );
+     if ( debug != 0 ) {
+      fprintf( stderr, "DEBUG MSG: for(n = 0; n < Num; n++)free(input_images[n]);\n" );
+     }
+     for ( n= Num; n--; ) {
+      free( input_images[n] );
+     }
+     if ( debug != 0 ) {
+      fprintf( stderr, "DEBUG MSG: free(input_images);\n" );
+     }
+     free( input_images );
+     //
+     for ( n= Num; n--; ) {
+      free( str_with_fits_keywords_to_capture_from_input_images[n] );
+     }
+     free( str_with_fits_keywords_to_capture_from_input_images );
+     if ( debug != 0 ) {
+      fprintf( stderr, "DEBUG MSG: Delete_Preobr_Sk(preobr);\n" );
+     }
+     Delete_Preobr_Sk( preobr );
+     if ( debug != 0 ) {
+      fprintf( stderr, "DEBUG MSG: CHILD free() -- still alive\n" );
+     }
+     //
      exit( 0 ); // exit only if this is actually a child
     } // if ( pid == 0 ) {
+    // the other possibility is that this is a parent that could not fork - no exit in this case
    } else {
     //child_pids[i_fork-1]=pid;
     for ( fork_found_empty_slot= 0, j_fork= 0; j_fork < n_fork; j_fork++ ) {
@@ -2672,8 +2665,52 @@ int main( int argc, char **argv ) {
   number_of_coordinate_measurements_for_star[i]= 0;
  }
 
- /* Process the reference image */
+ // I want this after fork()
+ ////////////////////////////////////////////////////////////////////
+ /////// Reading file with manually selected comparison stars ///////
+ ////////////////////////////////////////////////////////////////////
+ // The stars are specified with their X Y positions on the reference frame
+ FILE *cmparisonstarsfile;
+ manually_selected_comparison_stars_X= malloc( sizeof( double ) );
+ if ( manually_selected_comparison_stars_X == NULL ) {
+  fprintf( stderr, "ERROR: can't allocate memory for manually_selected_comparison_stars_X\n" );
+  vast_report_memory_error();
+  return 1;
+ }
+ manually_selected_comparison_stars_Y= malloc( sizeof( double ) );
+ if ( manually_selected_comparison_stars_Y == NULL ) {
+  fprintf( stderr, "ERROR: can't allocate memory for manually_selected_comparison_stars_Y\n" );
+  vast_report_memory_error();
+  return 1;
+ }
+ manually_selected_comparison_stars_catalog_mag= malloc( sizeof( double ) );
+ if ( manually_selected_comparison_stars_catalog_mag == NULL ) {
+  fprintf( stderr, "ERROR: can't allocate memory for manually_selected_comparison_stars_catalog_mag\n" );
+  vast_report_memory_error();
+  return 1;
+ }
+ cmparisonstarsfile= fopen( "manually_selected_comparison_stars.lst", "r" );
+ if ( cmparisonstarsfile == NULL ) {
+  fprintf( stderr, "No manually selected comparison stars file manually_selected_comparison_stars.lst which is fine.\n" );
+  //exit( 1 );
+  // We should not quit if there is no manually_selected_comparison_stars.lst
+ }
+ else{
+  while ( -1 < fscanf( cmparisonstarsfile, "%lf %lf %lf", &manually_selected_comparison_stars_X[N_manually_selected_comparison_stars], &manually_selected_comparison_stars_Y[N_manually_selected_comparison_stars], &manually_selected_comparison_stars_catalog_mag[N_manually_selected_comparison_stars] ) ) {
+   manually_selected_comparison_stars_X= realloc( manually_selected_comparison_stars_X, sizeof( double ) * ( N_manually_selected_comparison_stars + 2 ) );
+   manually_selected_comparison_stars_Y= realloc( manually_selected_comparison_stars_Y, sizeof( double ) * ( N_manually_selected_comparison_stars + 2 ) );
+   manually_selected_comparison_stars_catalog_mag= realloc( manually_selected_comparison_stars_catalog_mag, sizeof( double ) * ( N_manually_selected_comparison_stars + 2 ) );
+   N_manually_selected_comparison_stars+= 1;
+  }
+  fclose( cmparisonstarsfile );
+  fprintf( stderr, "Loaded %d manually selected compariosn stars from manually_selected_comparison_stars.lst file\n", N_manually_selected_comparison_stars );
+  photometric_calibration_type= 2;
+  fprintf(stderr, "Resetting the magnitude calibration mode to zero-point offset only!\n\n\n");
+ }
+ ////////////////////////////////////////////////////////////////////
 
+
+ // Process the reference image
  if ( debug != 0 )
   fprintf( stderr, "DEBUG MSG: (ref) gettime(input_images[0])\n" ); // Debug message!
  fitsfile_read_error= gettime( input_images[0], &JD, &timesys, convert_timesys_to_TT, &X_im_size, &Y_im_size, stderr_output, log_output, param_nojdkeyword, 1 );
@@ -4965,9 +5002,68 @@ int main( int argc, char **argv ) {
         fclose( file_out );
         // end of process one star
        }
-       if ( pid == 0 )
+       if ( pid == 0 ) {
+        ///// If this is a child /////
+        // free-up memory
+        if ( debug != 0 ) {
+         fprintf( stderr, "DEBUG MSG: CHILD free();\n" );
+        }
+        free( child_pids );
+        free( ptr_struct_Obs );
+        free( STAR3 );
+        free( STAR1 );
+        free( Pos1 );
+        free( Pos2 );
+        if ( debug != 0 ) {
+         fprintf( stderr, "DEBUG MSG: freeing coordinate arrays\n" );
+        }
+        for ( coordinate_array_index= coordinate_array_counter; coordinate_array_index--; ) {
+         free( coordinate_array_x[coordinate_array_index] );
+         free( coordinate_array_y[coordinate_array_index] );
+        }
+        if ( debug != 0 ) {
+         fprintf( stderr, "DEBUG MSG: free(coordinate_array_x);\n" );
+        }
+        free( coordinate_array_x );
+        if ( debug != 0 ) {
+         fprintf( stderr, "DEBUG MSG: free(coordinate_array_y);\n" );
+        }
+        free( coordinate_array_y );
+        if ( debug != 0 ) {
+         fprintf( stderr, "DEBUG MSG: free(star_numbers_for_coordinate_arrays);\n" );
+        }
+        free( star_numbers_for_coordinate_arrays );
+        if ( debug != 0 ) {
+         fprintf( stderr, "DEBUG MSG: free(number_of_coordinate_measurements_for_star);\n" );
+        }
+        free( number_of_coordinate_measurements_for_star );
+        if ( debug != 0 ) {
+         fprintf( stderr, "DEBUG MSG: for(n = 0; n < Num; n++)free(input_images[n]);\n" );
+        }
+        for ( n= Num; n--; ) {
+         free( input_images[n] );
+        }
+        if ( debug != 0 ) {
+         fprintf( stderr, "DEBUG MSG: free(input_images);\n" );
+        }
+        free( input_images );
+        //
+        for ( n= Num; n--; ) {
+         free( str_with_fits_keywords_to_capture_from_input_images[n] );
+        }
+        free( str_with_fits_keywords_to_capture_from_input_images );
+        if ( debug != 0 ) {
+         fprintf( stderr, "DEBUG MSG: Delete_Preobr_Sk(preobr);\n" );
+        }
+        Delete_Preobr_Sk( preobr );
+
+        if ( debug != 0 ) {
+         fprintf( stderr, "DEBUG MSG: CHILD free() -- still alive\n" );
+        }
         exit( 0 ); // exit only if this is actually a child
-       // end of child
+        // end of child
+       }
+       // the other possibility is that this is a parent that could not fork - no exit in this case
       } else {
        // if parent
        child_pids[i_fork - 1]= pid;
@@ -5028,6 +5124,10 @@ int main( int argc, char **argv ) {
   progress( n + 1, Num );
  }
 
+ fprintf( stderr, "Done with measurements! =)\n\n" );
+ fprintf( stderr, "Total number of measurements %ld (%ld measurements stored in RAM)\n", TOTAL_OBS, obs_in_RAM );
+ fprintf( stderr, "Freeing up some memory...\n" );
+
  free( bad_stars_X );
  free( bad_stars_Y );
 
@@ -5035,8 +5135,55 @@ int main( int argc, char **argv ) {
  free( manually_selected_comparison_stars_Y );
  free( manually_selected_comparison_stars_catalog_mag );
 
- fprintf( stderr, "Done with measurements! =)\n\n" );
- fprintf( stderr, "Total number of measurements %ld (%ld measurements stored in RAM)\n", TOTAL_OBS, obs_in_RAM );
+ //// Moved up here
+ if ( debug != 0 ) {
+  fprintf( stderr, "DEBUG MSG: free(Pos1);\n" );
+ }
+ free( Pos1 );
+ if ( debug != 0 ) {
+  fprintf( stderr, "DEBUG MSG: freeing coordinate arrays\n" );
+ }
+ for ( coordinate_array_index= coordinate_array_counter; coordinate_array_index--; ) {
+  free( coordinate_array_x[coordinate_array_index] );
+  free( coordinate_array_y[coordinate_array_index] );
+ }
+ if ( debug != 0 ) {
+  fprintf( stderr, "DEBUG MSG: free(coordinate_array_x);\n" );
+ }
+ free( coordinate_array_x );
+ if ( debug != 0 ) {
+  fprintf( stderr, "DEBUG MSG: free(coordinate_array_y);\n" );
+ }
+ free( coordinate_array_y );
+ if ( debug != 0 ) {
+  fprintf( stderr, "DEBUG MSG: free(star_numbers_for_coordinate_arrays);\n" );
+ }
+ free( star_numbers_for_coordinate_arrays );
+ if ( debug != 0 ) {
+  fprintf( stderr, "DEBUG MSG: free(number_of_coordinate_measurements_for_star);\n" );
+ }
+ free( number_of_coordinate_measurements_for_star );
+ if ( debug != 0 ) {
+  fprintf( stderr, "DEBUG MSG: for(n = 0; n < Num; n++)free(input_images[n]);\n" );
+ }
+ for ( n= Num; n--; ) {
+  free( input_images[n] );
+ }
+ if ( debug != 0 ) {
+  fprintf( stderr, "DEBUG MSG: free(input_images);\n" );
+ }
+ free( input_images );
+ //
+ for ( n= Num; n--; ) {
+  free( str_with_fits_keywords_to_capture_from_input_images[n] );
+ }
+ free( str_with_fits_keywords_to_capture_from_input_images );
+ if ( debug != 0 ) {
+  fprintf( stderr, "DEBUG MSG: Delete_Preobr_Sk(preobr);\n" );
+ }
+ Delete_Preobr_Sk( preobr );
+ ////
+
  fprintf( stderr, "Writing lightcurve (outNNNNN.dat) files...\n" );
 
 /* Write observation to disk */
@@ -5131,9 +5278,30 @@ int main( int argc, char **argv ) {
     fclose( file_out );
     // end of process one star
    }
-   if ( pid == 0 )
+   if ( pid == 0 ) {
+    ///// If this is a child /////
+    // free-up memory
+    if ( debug != 0 ) {
+     fprintf( stderr, "DEBUG MSG: CHILD free();\n" );
+    }
+    free( child_pids );
+    free( ptr_struct_Obs );
+    free( STAR3 );
+    free( STAR1 );
+    //free( coordinate_array_x );
+    //free( coordinate_array_y );
+    //free( star_numbers_for_coordinate_arrays );
+    //free( number_of_coordinate_measurements_for_star );
+    //free( Pos1 );
+    //free( Pos2 ) ;
+    if ( debug != 0 ) {
+     fprintf( stderr, "DEBUG MSG: CHILD free() -- still alive\n" );
+    }
+    //
     exit( 0 ); // exit only if this is actually a child
-   // end of child
+    // end of child
+   }
+   // the other possibility is that this is a parent that could not fork - no exit in this case
   } else {
    // if parent
    child_pids[i_fork - 1]= pid;
@@ -5203,18 +5371,21 @@ int main( int argc, char **argv ) {
   fclose( vast_source_detection_rejection_statistics_log );
  }
 
- fprintf( stderr, "The lightcurve files have been written, freeing up some memory...\n" );
+ fprintf( stderr, "The lightcurve files have been written, freeing up more memory...\n" );
  if ( debug != 0 )
   fprintf( stderr, "DEBUG MSG: free(ptr_struct_Obs);\n" );
  free( ptr_struct_Obs );
 
+/*
+ // moved up
  if ( debug != 0 )
   fprintf( stderr, "DEBUG MSG: Delete_Preobr_Sk(preobr);\n" );
  Delete_Preobr_Sk( preobr );
+*/
 
- if ( debug != 0 )
-  fprintf( stderr, "DEBUG MSG: free(Pos1);\n" );
- free( Pos1 );
+// if ( debug != 0 )
+//  fprintf( stderr, "DEBUG MSG: free(Pos1);\n" );
+// free( Pos1 );
 
  if ( debug != 0 )
   fprintf( stderr, "DEBUG MSG: free(STAR1);\n" );
@@ -5226,14 +5397,16 @@ int main( int argc, char **argv ) {
         // moved up
 	if (debug != 0) fprintf(stderr, "DEBUG MSG: free(file_or_dir_on_command_line);\n");
 	free(file_or_dir_on_command_line);
-*/
- if ( debug != 0 )
+ // moved up
+ if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: for(n = 0; n < Num; n++)free(input_images[n]);\n" );
+ }
  for ( n= Num; n--; ) {
   free( input_images[n] );
  }
- if ( debug != 0 )
+ if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: free(input_images);\n" );
+ }
  free( input_images );
  //
  for ( n= Num; n--; ) {
@@ -5241,28 +5414,36 @@ int main( int argc, char **argv ) {
  }
  free( str_with_fits_keywords_to_capture_from_input_images );
 
- if ( debug != 0 )
+ // moved up
+ if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: freeing coordinate arrays\n" );
+ }
  for ( coordinate_array_index= coordinate_array_counter; coordinate_array_index--; ) {
   free( coordinate_array_x[coordinate_array_index] );
   free( coordinate_array_y[coordinate_array_index] );
  }
- if ( debug != 0 )
+ if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: free(coordinate_array_x);\n" );
+ }
  free( coordinate_array_x );
- if ( debug != 0 )
+ if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: free(coordinate_array_y);\n" );
+ }
  free( coordinate_array_y );
- if ( debug != 0 )
+ if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: free(star_numbers_for_coordinate_arrays);\n" );
+ }
  free( star_numbers_for_coordinate_arrays );
- if ( debug != 0 )
+ if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: free(number_of_coordinate_measurements_for_star);\n" );
+ }
  free( number_of_coordinate_measurements_for_star );
+*/
 
  // Save details about magnitude calibration
- if ( debug != 0 )
+ if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: vast.c is starting lib/save_magnitude_calibration_details.sh\n" );
+ }
 
  if ( 0 != system( "lib/save_magnitude_calibration_details.sh" ) ) {
   fprintf( stderr, "ERROR running  lib/save_magnitude_calibration_details.sh\n" );
@@ -5275,8 +5456,9 @@ int main( int argc, char **argv ) {
  }
 
  // Generate summary log
- if ( debug != 0 )
+ if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: vast.c is starting echo and lib/vast_image_details_log_parser.sh > vast_summary.log && echo OK\n" );
+ }
  fprintf( stderr, "\nWriting summary file: vast_summary.log ...  " );
  //system("lib/vast_image_details_log_parser.sh > vast_summary.log && echo OK ");
  if ( 0 == system( "lib/vast_image_details_log_parser.sh > vast_summary.log" ) ) {

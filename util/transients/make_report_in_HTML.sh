@@ -119,6 +119,8 @@ ds9 -frame lock wcs  " >> transient_report/index.tmp
   echo "<HR>" >> transient_report/index.tmp
   cat transient_report/index.tmp >> transient_report/index$1.html
  else
+  tail -n1 transient_report/index.tmp
+  echo "The candidate $TRANSIENT_NAME did not pass the final checks"
   rm -f transient_report/index.tmp
  fi
 done < candidates-transients.lst

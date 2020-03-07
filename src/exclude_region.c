@@ -107,7 +107,7 @@ int read_bad_lst( double *X1, double *Y1, double *X2, double *Y2, int *N ) {
   
   // Don't print example region from bad_region.lst - 0 0 0 0 
   if ( X1[( *N )] != 0.0 || Y1[( *N )] != 0.0 || X2[( *N )] != 0.0 || Y2[( *N )] != 0.0 ) {
-   fprintf( stderr, "excluding region: %.1lf %.1lf %.1lf %.1lf\n", X1[( *N )], Y1[( *N )], X2[( *N )], Y2[( *N )] );
+   fprintf( stderr, "excluding region: %7.1lf %7.1lf %7.1lf %7.1lf\n", X1[( *N )], Y1[( *N )], X2[( *N )], Y2[( *N )] );
   }
   ( *N )+= 1;
   
@@ -127,7 +127,7 @@ int exclude_region( double *X1, double *Y1, double *X2, double *Y2, int N, doubl
  int i;
  for ( i= 0; i < N; i++ ) {
   if ( X + aperture / 2.0 >= X1[i] && Y + aperture / 2.0 >= Y1[i] && X - aperture / 2.0 <= X2[i] && Y - aperture / 2.0 <= Y2[i] ) {
-   fprintf( stderr, "The star %lf %lf is rejected, see bad_region.lst\n", X, Y );
+   fprintf( stderr, "The star %9.3lf %9.3lf is rejected, see bad_region.lst\n", X, Y );
    return 1;
   }
  }
