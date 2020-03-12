@@ -1865,7 +1865,7 @@ int main( int argc, char **argv ) {
         // Print anyway
         fprintf( stderr, "Reduced chi2 from PSF-fitting: \E[01;32m%lg\E[33;00m (Objects with large values will be mising from the list of detections! If no PSF fitting was performed, this value is set to 1.0)\n", psfCHI2[marker_counter] );
 
-        if ( sexA_IMAGE[marker_counter] < APER && sexA_IMAGE[marker_counter] > FWHM_MIN && sexB_IMAGE[marker_counter] > FWHM_MIN ) {
+        if ( CONST*(sexA_IMAGE[marker_counter] + sexA_IMAGE[marker_counter]) > MIN_SOURCE_SIZE_APERTURE_FRACTION*APER && sexA_IMAGE[marker_counter] < APER && sexA_IMAGE[marker_counter] > FWHM_MIN && sexB_IMAGE[marker_counter] > FWHM_MIN ) {
          fprintf( stderr, "A= \E[01;32m%lf +/- %lf\E[33;00m  B= \E[01;32m%lf +/- %lf\E[33;00m\n", sexA_IMAGE[marker_counter], sexERRA_IMAGE[marker_counter], sexB_IMAGE[marker_counter], sexERRB_IMAGE[marker_counter] );
         } else {
          fprintf( stderr, "A= \E[01;31m%lf +/- %lf\E[33;00m  B= \E[01;31m%lf +/- %lf\E[33;00m\n", sexA_IMAGE[marker_counter], sexERRA_IMAGE[marker_counter], sexB_IMAGE[marker_counter], sexERRB_IMAGE[marker_counter] );

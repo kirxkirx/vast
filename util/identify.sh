@@ -453,10 +453,13 @@ field identification have good chances to fail. Sorry... :(
   SCALE_HIGH=`echo "1.6*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'`
   #
   # Blind solve
-  `"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # old parameters
+  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # new parameters that should avoid using python
+  `"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH  --no-fits2fits --uniformize 0  out$$.xyls
   # HACK Hack hack -- manually specify the field center and size
-  # Gaia19dum
-  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 08:25:40.808 --dec +35:34:27.675 --radius 5.0  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # PGIR19brv
+  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 21:09:25.53 --dec +48:10:52.2 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # Gaia19dum
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 19:52:08.25 --dec 27:42:20.9 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # V3890 Sgr
@@ -478,6 +481,8 @@ field identification have good chances to fail. Sorry... :(
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 17:47:05.77 --dec -13:31:42.5 --radius 0.2   --objs 50 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # RA tracking at MSU 2019-01-14
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 06:25:29.247 --dec -17:23:42.98 --radius 3.0   --objs 50 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # RA tracking at MSU 2020-02-18
+  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 08:32:09.568 --dec +39:14:31.32 --radius 3.0   --objs 50 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # ASASSN-17gs
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field  --ra 15:44:19.671 --dec -06:49:15.35 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # CSSJ0458
@@ -534,7 +539,8 @@ field identification have good chances to fail. Sorry... :(
     IMAGE_SCALE_ARCSECPIX_LOW=`echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%f",0.95*$1}'`
     IMAGE_SCALE_ARCSECPIX_HIGH=`echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%f",1.05*$1}'`
     RADECCOMMAND="$RADECCOMMAND --radius $FOV --scale-low $IMAGE_SCALE_ARCSECPIX_LOW --scale-high $IMAGE_SCALE_ARCSECPIX_HIGH --scale-units arcsecperpix"
-    `"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
+    #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
+    `"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER   --no-fits2fits --uniformize 0
     if [ $? -ne 0 ];then
      echo "ERROR running the second iteration of solve-field"
      exit 1
