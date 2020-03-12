@@ -9,6 +9,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
+    - name: Update apt-get
+      run: sudo apt-get update
     - name: Install gfortran
       run: sudo apt-get install gfortran
     - name: make VaST
