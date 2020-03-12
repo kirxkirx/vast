@@ -15,8 +15,13 @@
 /* Memory settings */
 #define MAX_NUMBER_OF_STARS 300000
 #define MAX_NUMBER_OF_OBSERVATIONS 120000 // per star
-// The following paprameter is now set here AUTOMATICALLY by the script lib/set_MAX_MEASUREMENTS_IN_RAM_in_vast_limits.sh that is started by make
-#define MAX_MEASUREMENTS_IN_RAM 96000  // set automatically at compile time based on PHYSMEM_BYTES=8229117952 by lib/set_MAX_MEASUREMENTS_IN_RAM_in_vast_limits.sh
+
+//////////////////////////////////////////////////////////
+// The following paprameter is now set AUTOMATICALLY by the script lib/set_MAX_MEASUREMENTS_IN_RAM_in_vast_limits.sh that is started by make
+#include "vast_max_measurements_in_ram.h"
+//#define MAX_MEASUREMENTS_IN_RAM 96000  // set automatically at compile time based on PHYSMEM_BYTES=8229117952 by lib/set_MAX_MEASUREMENTS_IN_RAM_in_vast_limits.sh
+//////////////////////////////////////////////////////////
+
 // Max. number of measurements to be stored in memory
 #define FILENAME_LENGTH 1024   // Max. image filename length
 #define OUTFILENAME_LENGTH 128 // Max. lightcurve (out*.dat) filename length
@@ -85,8 +90,8 @@
 //#define FWHM_MIN 0.85      /* pix, only stars with FWHM > FWHM_MIN (pix) will be processed   */
 //
 #define FWHM_MIN 0.1 // safe default value
-//
-#define MIN_SOURCE_SIZE_APERTURE_FRACTION 0.5 // reject sources for which the comusted aperture size would be less than 
+//                                            // 0.5 is too high - fails the photographic plate test
+#define MIN_SOURCE_SIZE_APERTURE_FRACTION 0.25 // reject sources for which the comusted aperture size would be less than 
                                               // MIN_SOURCE_SIZE_APERTURE_FRACTION*image_aperture_size
                                               // (this should reject very small objects = cosmic rays)
 
