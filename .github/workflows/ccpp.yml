@@ -15,5 +15,7 @@ jobs:
       run: sudo apt-get install gfortran
     - name: make VaST
       run: make
+    - name: prepare for the test
+      run: touh ../THIS_IS_HPCC 
     - name: test VaST
       run: util/examples/test_vast.sh
