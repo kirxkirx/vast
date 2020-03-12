@@ -277,6 +277,11 @@ if [ -d ../test_data_photo ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE003a"
    fi
+   grep --quiet "Magnitude-Size filter: Disabled" vast_summary.log
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE003b"
+   fi
    util/wcs_image_calibration.sh ../test_data_photo/SCA1017S_17061_09773__00_00.fit
    if [ $? -ne 0 ];then
     TEST_PASSED=0
@@ -8330,11 +8335,18 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012"
 fi
 
-# ATLAS via VizieR
-util/search_databases_with_vizquery.sh 18:31:04.64 -16:58:22.3 | grep 'MIRA' | grep 'VARIABLE' | grep --quiet 'ATOID J277.7693-16.9729'
+# new ATLAS via VizieR test
+util/search_databases_with_vizquery.sh 07:29:19.69 -13:23:06.6 | grep 'CBF (ATLAS)' | grep --quiet 'ATOID J112.3320-13.3851'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012atlas"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012vsx"
+fi
+
+# This one was added to VSX
+util/search_databases_with_vizquery.sh 18:31:04.64 -16:58:22.3 | grep 'M' | grep 'VARIABLE' | grep --quiet 'ATO J277.7693-16.9729'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012vsx"
 fi
 
 # MASTER_OT J132104.04+560957.8 - AM CVn star, Gaia short timescale variable
