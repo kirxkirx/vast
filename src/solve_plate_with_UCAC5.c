@@ -1285,6 +1285,8 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
  if ( NULL == ptr ) {
   fprintf( stderr, "No local copy of UCAC5 is found\n");
   return 1;
+ } else {
+  fprintf( stderr, "Found a local copy of UCAC5\n");
  }
 
  // set zone search parameters
@@ -1479,6 +1481,8 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
  if ( 0 == search_UCAC5_localcopy( stars, N, catalog_search_parameters ) ) {
   fprintf( stderr, "The local UCAC5 search seems to be a success\n");
   return 0;
+ } else {
+  fprintf( stderr, "The local UCAC5 search failed. Trying remote search with vizquery\n");
  }
 
  sprintf( vizquery_input_filename, "vizquery_%d.input", pid );

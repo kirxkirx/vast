@@ -383,9 +383,9 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  echo "Waiting for UCAC5 plate solver" >> transient_factory_test31.txt  
  # this is for UCAC5 plate solver
  wait
- echo "Preparing the HTML report" >> transient_factory_test31.txt
+ echo "Preparing the HTML report for the field $FIELD" >> transient_factory_test31.txt
  util/transients/make_report_in_HTML.sh #$FIELD
- #echo $FIELD
+ echo "Prepared the HTML report for the field $FIELD" >> transient_factory_test31.txt
  
 done # for i in "$NEW_IMAGES"/*_001.fts ;do
 
