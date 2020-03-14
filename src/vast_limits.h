@@ -341,6 +341,9 @@
 #define MAX( a, b ) ( ( ( a ) > ( b ) ) ? ( a ) : ( b ) )
 #define MIN( a, b ) ( ( ( a ) < ( b ) ) ? ( a ) : ( b ) )
 
+// 2*sqrt(2*log(2)) see https://en.wikipedia.org/wiki/Full_width_at_half_maximum
+#define SIGMA_TO_FWHM_CONVERSION_FACTOR 2.35482004503095
+
 //////////////////////////////////////////////////
 // Enable debug file output and many debug messages on the terminal.
 // Should not be set for production!

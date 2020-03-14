@@ -488,10 +488,10 @@ void choose_best_reference_image( char **input_images, int Num, int maxsextracto
    //
    // https://en.wikipedia.org/wiki/Full_width_at_half_maximum
    // ok, I'm not sure if A is the sigma or sigma/2
-   if ( a_a + a_a_err < FWHM_MIN / 2.355 ) {
+   if ( SIGMA_TO_FWHM_CONVERSION_FACTOR * (a_a + a_a_err) < FWHM_MIN ) {
     continue;
    }
-   if ( a_b + a_b_err < FWHM_MIN / 2.355 ) {
+   if ( SIGMA_TO_FWHM_CONVERSION_FACTOR * (a_b + a_b_err) < FWHM_MIN ) {
     continue;
    }
    // float_parameters[0] is the actual FWHM
@@ -2890,11 +2890,11 @@ int main( int argc, char **argv ) {
    continue;
   }
   //
-  if ( a_a + a_a_err < FWHM_MIN / 2.355 ) {
+  if ( SIGMA_TO_FWHM_CONVERSION_FACTOR * (a_a + a_a_err) < FWHM_MIN ) {
    counter_rejected_too_small++;
    continue;
   }
-  if ( a_b + a_b_err < FWHM_MIN / 2.355 ) {
+  if ( SIGMA_TO_FWHM_CONVERSION_FACTOR * (a_b + a_b_err) < FWHM_MIN ) {
    counter_rejected_too_small++;
    continue;
   }
@@ -3448,11 +3448,11 @@ int main( int argc, char **argv ) {
       continue;
      }
      //
-     if ( a_a + a_a_err < FWHM_MIN ) {
+     if ( SIGMA_TO_FWHM_CONVERSION_FACTOR * (a_a + a_a_err) < FWHM_MIN ) {
       counter_rejected_too_small++;
       continue;
      }
-     if ( a_b + a_b_err < FWHM_MIN ) {
+     if ( SIGMA_TO_FWHM_CONVERSION_FACTOR * (a_b + a_b_err) < FWHM_MIN ) {
       counter_rejected_too_small++;
       continue;
      }

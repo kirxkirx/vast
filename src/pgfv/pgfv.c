@@ -1866,10 +1866,12 @@ int main( int argc, char **argv ) {
         fprintf( stderr, "Reduced chi2 from PSF-fitting: \E[01;32m%lg\E[33;00m (Objects with large values will be mising from the list of detections! If no PSF fitting was performed, this value is set to 1.0)\n", psfCHI2[marker_counter] );
 
         if ( CONST*(sexA_IMAGE[marker_counter] + sexA_IMAGE[marker_counter]) > MIN_SOURCE_SIZE_APERTURE_FRACTION*APER && sexA_IMAGE[marker_counter] < APER && sexA_IMAGE[marker_counter] > FWHM_MIN && sexB_IMAGE[marker_counter] > FWHM_MIN ) {
-         fprintf( stderr, "A= \E[01;32m%lf +/- %lf\E[33;00m  B= \E[01;32m%lf +/- %lf\E[33;00m\n", sexA_IMAGE[marker_counter], sexERRA_IMAGE[marker_counter], sexB_IMAGE[marker_counter], sexERRB_IMAGE[marker_counter] );
+         fprintf( stderr, "A= \E[01;32m%lf +/- %lf\E[33;00m  B= \E[01;32m%lf +/- %lf\E[33;00m\nFWHM(A)= \E[01;32m%lf +/- %lf\E[33;00m  FWHM(B)= \E[01;32m%lf +/- %lf\E[33;00m\n", sexA_IMAGE[marker_counter], sexERRA_IMAGE[marker_counter], sexB_IMAGE[marker_counter], sexERRB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR*sexA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR*sexERRA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR*sexB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR*sexERRB_IMAGE[marker_counter] );
         } else {
-         fprintf( stderr, "A= \E[01;31m%lf +/- %lf\E[33;00m  B= \E[01;31m%lf +/- %lf\E[33;00m\n", sexA_IMAGE[marker_counter], sexERRA_IMAGE[marker_counter], sexB_IMAGE[marker_counter], sexERRB_IMAGE[marker_counter] );
+         fprintf( stderr, "A= \E[01;31m%lf +/- %lf\E[33;00m  B= \E[01;31m%lf +/- %lf\E[33;00m\nFWHM(A)= \E[01;31m%lf +/- %lf\E[33;00m  FWHM(B)= \E[01;31m%lf +/- %lf\E[33;00m\n", sexA_IMAGE[marker_counter], sexERRA_IMAGE[marker_counter], sexB_IMAGE[marker_counter], sexERRB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR*sexA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR*sexERRA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR*sexB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR*sexERRB_IMAGE[marker_counter] );
         }
+        // It's nice to ptint the aperture size here for comparison
+        fprintf( stderr, "Aperture diameter = %.1lf pixels\n", APER );
 
         fprintf( stderr, "%s\n", stderr_output );
         fprintf( stderr, "\n" );
