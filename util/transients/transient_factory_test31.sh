@@ -56,10 +56,11 @@ lib/update_offline_catalogs.sh all
 cp default.sex.telephoto_lens_v4 default.sex
 #cp default.sex.telephoto_lens_v3 default.sex
 
-# Set custom bad_region.lst if there is one
-if [ -f ../bad_region.lst ];then
- cp ../bad_region.lst .
-fi
+# Moved later as we may want to decde which list of bad regions to use based on the actual image
+## Set custom bad_region.lst if there is one
+#if [ -f ../bad_region.lst ];then
+# cp ../bad_region.lst .
+#fi
 
 echo "Reference image directory is set to $REFERENCE_IMAGES"
 if [ -z $1 ]; then
@@ -209,6 +210,23 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 #  echo "Script ERROR! Cannot find image $NEW_IMAGES/*$FIELD*_002.fts"
 #  continue
 # fi
+
+ ###############################################
+ # We may have images from two different cameras that require two different bad region lists
+ # ./Nazar_bad_region.lst and ../bad_region.lst
+ echo "Choosing a bad regions list" >> transient_factory_test31.txt
+ # Set custom bad_region.lst if there is one
+ if [ -f ../Nazar_bad_region.lst ];then
+  # test the file name
+  echo "$SECOND_EPOCH__FIRST_IMAGE" | grep --quiet -e "Nazar" -e "nazar" -e "NAZAR"
+  if [ $? -eq 0 ];then
+   cp -v ../Nazar_bad_region.lst bad_region.lst >> transient_factory_test31.txt
+  fi
+ elif [ -f ../bad_region.lst ];then
+  cp -v ../bad_region.lst . >> transient_factory_test31.txt
+ fi
+ ###############################################
+ 
  echo "Starting VaST" >> transient_factory_test31.txt
  # Run VaST
  ###./vast -x99 -u -f -k $REFERENCE_IMAGES/*$FIELD* $NEW_IMAGES/*$FIELD*
