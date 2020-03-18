@@ -1202,7 +1202,8 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
      return;
     }
     // Check that it's not in a bad region on the reference frame - there will be no reference object!
-    if ( 0 != exclude_region( X1, Y1, X2, Y2, N_bad_regions, x, y, aperture ) ) {
+    // increase the bad region, just in case
+    if ( 0 != exclude_region( X1, Y1, X2, Y2, N_bad_regions, x, y, 1.5*aperture ) ) {
      return;
     }
     // OK, we like this candidate
