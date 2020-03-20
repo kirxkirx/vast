@@ -24,17 +24,17 @@ int main( int argc, char **argv ) {
  int number_of_reference_images;
  double *mag_a= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( mag_a == NULL ) {
-  fprintf( stderr, "ERROR: Couldn_tallocate memory for mag_a(find_flares.c)\n" );
+  fprintf( stderr, "ERROR: Cannot allocate memory for mag_a(find_flares.c)\n" );
   exit( 1 );
  };
  double *mag_a_err= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( mag_a_err == NULL ) {
-  fprintf( stderr, "ERROR: Couldn_tallocate memory for mag_a_err(find_flares.c)\n" );
+  fprintf( stderr, "ERROR: Cannot allocate memory for mag_a_err(find_flares.c)\n" );
   exit( 1 );
  };
  double *w= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( w == NULL ) {
-  fprintf( stderr, "ERROR: Couldn_tallocate memory for w(find_flares.c)\n" );
+  fprintf( stderr, "ERROR: Cannot allocate memory for w(find_flares.c)\n" );
   exit( 1 );
  };
  double preflare_median_mag, flare_median_mag;
@@ -145,17 +145,21 @@ int main( int argc, char **argv ) {
     } // something is wrong with this star
     /* TEST if the flare is good */
     if ( preflare_median_mag - preflare_mag_sigma - flare_median_mag + flare_mag_sigma > FLARE_MAG ) {
-     //fprintf(stderr,"%s preflare_median_mag=%lf preflare_mag_sigma=%lf i=%d ",ep->d_name,preflare_median_mag,preflare_mag_sigma,i);
-     //fprintf(stderr," flare_median_mag=%lf flare_mag_sigma=%lf i=%d\n",flare_median_mag,flare_mag_sigma,i);
-     fprintf( stdout, "%s  %8.3lf %8.3lf\n", ep->d_name, x_on_reference_image, y_on_reference_image );
+     // Make sure the flare is significant at 3 sigma level given the errorbars
+     if ( preflare_median_mag - flare_median_mag > 3.0*sqrt( preflare_mag_sigma*preflare_mag_sigma + flare_mag_sigma*flare_mag_sigma ) ) {
+      //fprintf(stderr,"%s preflare_median_mag=%lf preflare_mag_sigma=%lf i=%d ",ep->d_name,preflare_median_mag,preflare_mag_sigma,i);
+      //fprintf(stderr," flare_median_mag=%lf flare_mag_sigma=%lf i=%d\n",flare_median_mag,flare_mag_sigma,i);
+      fprintf( stdout, "%s  %8.3lf %8.3lf\n", ep->d_name, x_on_reference_image, y_on_reference_image );
+     }
     }
 
     fclose( lightcurvefile );
    }
   }
   (void)closedir( dp );
- } else
+ } else {
   perror( "Couldn't open the directory\n" );
+ }
 
  free( mag_a );
  free( mag_a_err );
