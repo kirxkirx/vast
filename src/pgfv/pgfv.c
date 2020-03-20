@@ -1949,6 +1949,11 @@ int main( int argc, char **argv ) {
      drawX0= (int)( ( drawX1 + drawX2 ) / 2 + 0.5 );
      drawY0= (int)( ( drawY1 + drawY2 ) / 2 + 0.5 );
      razmer_y= myimax( drawX2 - drawX1, drawY2 - drawY1 );
+     razmer_y= MIN( razmer_y, naxes[1] );
+     // if razmer_y is so big that the whole image is to be displayed again...
+     if ( razmer_y == naxes[1] ){
+      razmer_y = (double)MIN( drawX2 - drawX1, naxes[0] )/(double)naxes[0] * razmer_y;
+     }
      if ( finding_chart_mode == 1 ) {
       // we want a square finding chart !
       razmer_x= razmer_y;
@@ -1979,6 +1984,8 @@ int main( int argc, char **argv ) {
       drawX2= naxes[0];
      if ( drawY2 > naxes[1] )
       drawY2= naxes[1];
+     //
+     //     
      curC= 'R';
     }
    }
