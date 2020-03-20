@@ -242,7 +242,7 @@
 #define MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT 1.3 //0.8 //1.3 // Transient candidates should be at least MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT mag
                                                           // above the detection limit on the reference frame.
 #define FLARE_MAG 0.9                                     // Objects which are found to be FLARE_MAG magnitudes brighter on the current image than on the reference image
-                                                          // will be also listed as ztransient candidates
+                                                          // will be also listed as transient candidates
 #define MIN_DISTANCE_BETWEEN_STARS_IN_APERTURE_DIAMS 0.8  //0.7
 
 /* src/fit_mag_calib.c */

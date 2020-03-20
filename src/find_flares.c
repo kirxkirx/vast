@@ -139,11 +139,14 @@ int main( int argc, char **argv ) {
     flare_median_mag= gsl_stats_wmean( w, 1, mag_a, 1, i );
     flare_mag_sigma= MAX( gsl_stats_wsd_m( w, 1, mag_a, 1, i, flare_median_mag ), sqrt( mag_a_err[0] * mag_a_err[0] + mag_a_err[1] * mag_a_err[1] ) );
 
+    // Check the difference between the two second-epoch measurements
     if ( fabs( mag_a[0] - mag_a[1] ) > 0.4 ) {
      fclose( lightcurvefile );
      continue;
     } // something is wrong with this star
-    /* TEST if the flare is good */
+    
+    
+    // TEST if the flare is good
     if ( preflare_median_mag - preflare_mag_sigma - flare_median_mag + flare_mag_sigma > FLARE_MAG ) {
      // Make sure the flare is significant at 3 sigma level given the errorbars
      if ( preflare_median_mag - flare_median_mag > 3.0*sqrt( preflare_mag_sigma*preflare_mag_sigma + flare_mag_sigma*flare_mag_sigma ) ) {
