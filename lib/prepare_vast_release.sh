@@ -125,6 +125,12 @@ done
 #### Update VaST documentation file ####
 VASTDIR="$PWD"
 cd doc
+if [ -f index.css ];then
+ rm -f index.css
+fi
+if [ -f index.html ];then
+ rm -f index.html
+fi
 wget -c --no-parent -nd --convert-links -A".css,.html,.jpg,.gif" -p http://scan.sai.msu.ru/vast/index.html
 cat index.html | sed 's:</td></tr><tr><td bgcolor="#f5f5ff">:</td></tr><tr><td bgcolor="#f5f5ff">\n\n<h2><a href="http\://scan.sai.msu.ru/vast/">The up-to-date version of this document is avaliable at http\://scan.sai.msu.ru/vast/</a></h2>:g' | sed 's:index.html:README.html:g' | sed '/<!-- CUT HERE START --!>/,/<!-- CUT HERE STOP --!>/d' > README.html
 rm -f robots.txt index.html
