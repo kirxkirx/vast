@@ -13,7 +13,7 @@ fi
 
 NUMBER_OF_GOOD_IMAGES=`grep -v 'status=ERROR' vast_image_details.log | wc -l`
 
-if [ $NUMBER_OF_GOOD_IMAGES -lt 10 ];then
+if [ $NUMBER_OF_GOOD_IMAGES -eq 4 ];then
  lib/find_flares >> candidates-flares.lst
  if [ $? -ne 0 ];then
   echo "ERROR running lib/transient_list" >> /dev/stderr
