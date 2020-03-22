@@ -241,7 +241,7 @@ DEC_HMS=`echo "$RADEC_MEAN_HMS" | awk '{print $2}'`
 ############
 # We are not making a for cycle here because we want different exclusion radii to be applied to different catalogs
 ### Apply the exclusion list
-# It may be generated from the previous-day report file using
+# It may be generated from the previous-day report file 
 EXCLUSION_LIST_FILE="exclusion_list.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
@@ -269,6 +269,15 @@ if [ -s "$EXCLUSION_LIST_FILE" ];then
   lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_HMS" "$DEC_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 20/3600.0 ) print "FOUND" }' | grep "FOUND" && break
  done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"  && exit 1
 fi 
+# It may be generated from the local
+EXCLUSION_LIST_FILE="exclusion_list_local.txt"
+if [ -s "$EXCLUSION_LIST_FILE" ];then
+ # Exclude previously considered candidates
+ #echo "Checking $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
+ while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
+  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_HMS" "$DEC_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 15/3600.0 ) print "FOUND" }' | grep "FOUND" && break
+ done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_HMS $DEC_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"  && exit 1
+fi
 ############
 
 lib/catalogs/check_catalogs_offline $RA_MEAN $DEC_MEAN
@@ -379,6 +388,9 @@ else
 fi
 
 echo "<br>"
+
+# Write this transient to local exclusion list
+echo "$RADEC_MEAN_HMS" >> exclusion_list_local.txt
 
 exit 0
 # everything is fine!

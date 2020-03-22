@@ -234,6 +234,11 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  fi
  ###############################################
 
+ # We need a locla exclusion list not to find the same things in multiple SExtractor runs
+ if [ -f exclusion_list_local.txt ];then
+  rm -f exclusion_list_local.txt
+ fi
+
  # Make multiple VaST runs with different SExtractor config files
  for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
  
@@ -462,6 +467,11 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "Removing $FILE_TO_REMOVE" >> transient_factory_test31.txt
   fi
  done
+
+ # We need a locla exclusion list not to find the same things in multiple SExtractor runs
+ if [ -f exclusion_list_local.txt ];then
+  rm -f exclusion_list_local.txt
+ fi
  
  echo "########### Completed $FIELD ###########" >> transient_factory_test31.txt
  
