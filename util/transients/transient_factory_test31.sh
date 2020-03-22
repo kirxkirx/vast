@@ -216,14 +216,16 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # ./Nazar_bad_region.lst and ../bad_region.lst
  echo "Choosing a bad regions list" >> transient_factory_test31.txt
  # Set custom bad_region.lst if there is one
- if [ -f ../Nazar_bad_region.lst ];then
-  # test the file name
-  echo "$SECOND_EPOCH__FIRST_IMAGE" | grep --quiet -e "Nazar" -e "nazar" -e "NAZAR"
-  if [ $? -eq 0 ];then
+ # test the file name
+ echo "$SECOND_EPOCH__FIRST_IMAGE" | grep --quiet -e "Nazar" -e "nazar" -e "NAZAR"
+ if [ $? -eq 0 ];then
+  if [ -f ../Nazar_bad_region.lst ];then
    cp -v ../Nazar_bad_region.lst bad_region.lst >> transient_factory_test31.txt
   fi
- elif [ -f ../bad_region.lst ];then
-  cp -v ../bad_region.lst . >> transient_factory_test31.txt
+ else
+  if [ -f ../bad_region.lst ];then
+   cp -v ../bad_region.lst . >> transient_factory_test31.txt
+  fi
  fi
  ###############################################
  
