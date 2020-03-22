@@ -182,6 +182,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   SECOND_EPOCH__SECOND_IMAGE=`ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | head -n2 | tail -n1`
  else
   # There are more than two second-epoch images - do a preliminary VaST run to choose the two images with best seeing
+  cp -v default.sex.telephoto_lens_onlybrightstars_v1 default.sex >> transient_factory_test31.txt
   echo "Preliminary VaST run" >> transient_factory_test31.txt
   ./vast --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages  "$NEW_IMAGES"/*"$FIELD"_*_*.fts  
   # column 9 in vast_image_details.log is the aperture size in pixels
