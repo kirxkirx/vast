@@ -138,6 +138,9 @@ echo "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" >> transient_factory_test31.txt
 PREVIOUS_FIELD="none"
 #for i in "$NEW_IMAGES"/*_001.fts ;do
 for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
+ 
+ echo "########### Starting $FIELD ###########" >> transient_factory_test31.txt
+
  echo "Processing $FIELD" >> transient_factory_test31.txt
  #STR=`basename $i _001.fts` 
  #FIELD=`echo ${STR:0:8}`
@@ -274,13 +277,15 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   if [ -d "$WCSCACHEDIR" ];then
    if [ "$SEXTRACTOR_CONFIG_FILE" = "default.sex.telephoto_lens_v4" ];then
     # link the solved images and catalogs created with this SExtractorconfig file
-    for i in "$WCSCACHEDIR/wcs_"$FIELD"_"* ;do
+    for i in "$WCSCACHEDIR/wcs_"$FIELD"_"* local_wcs_cache/exclusion* ;do
+     echo "Creating symlink $i" >> transient_factory_test31.txt
      ln -s $i
     done
    else
     # we are using a different config file
-    # link only the solved images
-    for i in "$WCSCACHEDIR/wcs_"$FIELD"_"*.fts ;do
+    # link only the solved images (and the exclusion lists)
+    for i in "$WCSCACHEDIR/wcs_"$FIELD"_"*.fts local_wcs_cache/exclusion* ;do
+     echo "Creating symlink $i" >> transient_factory_test31.txt
      ln -s $i
     done
    fi
@@ -391,22 +396,31 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  ### Prepare the exclusion lists for this field
  echo "Preparing the exclusion lists for this field" >> transient_factory_test31.txt
  # Exclude the previously considered candidates
- if [ -f ../exclusion_list.txt ];then
-  SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
-  WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
-  lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @../exclusion_list.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list.txt
+ if [ ! -f exclusion_list.txt ];then
+  if [ -f ../exclusion_list.txt ];then
+   SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
+   WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
+   lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @../exclusion_list.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list.txt
+   cp -v exclusion_list.txt local_wcs_cache/ >> transient_factory_test31.txt
+  fi
  fi
  # Exclude stars from the Bright Star Catalog with magnitudes < 7
- if [ -f lib/catalogs/bright_star_catalog_radeconly.txt ];then
-  SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
-  WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
-  lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/bright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bsc.txt
+ if [ ! -f exclusion_list_bsc.txt ];then
+  if [ -f lib/catalogs/bright_star_catalog_radeconly.txt ];then
+   SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
+   WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
+   lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/bright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bsc.txt
+   cp -v exclusion_list_bsc.txt local_wcs_cache/ >> transient_factory_test31.txt
+  fi
  fi
  # Exclude bright Tycho-2 stars, by default the magnitude limit is set to vt < 9
- if [ -f lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
-  SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
-  WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
-  lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | while read A ;do lib/deg2hms $A ;done > exclusion_list_tycho2.txt
+ if [ ! -f exclusion_list_tycho2.txt ];then
+  if [ -f lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
+   SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
+   WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
+   lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | while read A ;do lib/deg2hms $A ;done > exclusion_list_tycho2.txt
+   cp -v exclusion_list_tycho2.txt local_wcs_cache/ >> transient_factory_test31.txt
+  fi
  fi
  ###
  echo "Done with filtering" >> transient_factory_test31.txt
@@ -441,12 +455,14 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  done # for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
  
  # clean up the local cache
- for FILE_TO_REMOVE in local_wcs_cache/* ;do
+ for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.txt exclusion_list_tycho2.txt ;do
   if [ -f "$FILE_TO_REMOVE" ];then
    rm -f "$FILE_TO_REMOVE"
    echo "Removing $FILE_TO_REMOVE" >> transient_factory_test31.txt
   fi
  done
+ 
+ echo "########### Completed $FIELD ###########" >> transient_factory_test31.txt
  
 done # for i in "$NEW_IMAGES"/*_001.fts ;do
 
