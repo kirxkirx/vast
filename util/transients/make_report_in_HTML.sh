@@ -15,16 +15,25 @@ if [ ! -f candidates-transients.lst ];then
  exit
 fi
 
+USE_JAVASCRIPT=0
+grep --quiet "<script type='text/javascript'>" transient_report/index.html
+if [ $? -eq 0 ];then
+ USE_JAVASCRIPT=1
+fi
+
 while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  rm -f transient_report/index.tmp
  TRANSIENT_NAME=`basename $LIGHTCURVE_FILE_OUTDAT .dat`
  TRANSIENT_NAME=${TRANSIENT_NAME/out/}
- TRANSIENT_NAME="$TRANSIENT_NAME"_`basename $C`
+ TRANSIENT_NAME="$TRANSIENT_NAME"_`basename $C .fts`
  echo "Preparing report for the candidate $TRANSIENT_NAME"
- #echo "<h3>$TRANSIENT_NAME</h3>" >> transient_report/index.tmp
- echo "
+ if [ $USE_JAVASCRIPT -eq 1 ];then
+  echo "
 <a name='$TRANSIENT_NAME'></a>
 <script>printCandidateNameWithAbsLink('$TRANSIENT_NAME');</script>" >> transient_report/index.tmp
+ else
+  echo "<h3>$TRANSIENT_NAME</h3>" >> transient_report/index.tmp
+ fi
  # plot reference image
  util/make_finding_chart $REFERENCE_IMAGE $G $H &>/dev/null && mv pgplot.png transient_report/"$TRANSIENT_NAME"_reference.png
  echo "<img src=\""$TRANSIENT_NAME"_reference.png\">" >> transient_report/index.tmp
@@ -70,51 +79,68 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  if [ $? -eq 0 ];then
 
   #echo "</pre>" >> transient_report/index.tmp
+  
+  # Only do this if we are going for javascript
+  if [ $USE_JAVASCRIPT -eq 1 ];then
 
-  # Only generate the full-frame previews if convert is installed
-  command -v convert &> /dev/null
-  if [ $? -eq 0 ];then
-   echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Preview of the reference image(s) and two 2nd epoch images</a> (are there clouds/trees in the field of view?)</br>" >> transient_report/index.tmp  
-   echo "<div id=\"fullframepreview_$TRANSIENT_NAME\" style=\"display:none\"><img src=\"$REFERENCE_IMAGE_PREVIEW\">" >> transient_report/index.tmp
-   while read JD MAG ERR X Y APP IMAGE REST ;do
-    if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then
-     PREVIEW_IMAGE=`basename $IMAGE`_preview.png
-     if [ ! -f transient_report/$PREVIEW_IMAGE ];then
-      convert $IMAGE -brightness-contrast 30x30 -resize 10% transient_report/$PREVIEW_IMAGE &
+   # Only generate the full-frame previews if convert is installed
+   command -v convert &> /dev/null
+   if [ $? -eq 0 ];then
+    echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Preview of the reference image(s) and two 2nd epoch images</a> (are there clouds/trees in the field of view?)</br>" >> transient_report/index.tmp  
+    echo "<div id=\"fullframepreview_$TRANSIENT_NAME\" style=\"display:none\"><img src=\"$REFERENCE_IMAGE_PREVIEW\">" >> transient_report/index.tmp
+    while read JD MAG ERR X Y APP IMAGE REST ;do
+     if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then
+      PREVIEW_IMAGE=`basename $IMAGE`_preview.png
+      if [ ! -f transient_report/$PREVIEW_IMAGE ];then
+       convert $IMAGE -brightness-contrast 30x30 -resize 10% transient_report/$PREVIEW_IMAGE &
+      fi
+      echo "<img src=\"$PREVIEW_IMAGE\">" >> transient_report/index.tmp
      fi
-     echo "<img src=\"$PREVIEW_IMAGE\">" >> transient_report/index.tmp
-    fi
-   done < $LIGHTCURVE_FILE_OUTDAT
-   wait # just to speed-up the convert thing a bit
-   echo "</div>" >> transient_report/index.tmp
-  fi # if [ $? -eq 0 ];then
+    done < $LIGHTCURVE_FILE_OUTDAT
+    wait # just to speed-up the convert thing a bit
+    echo "</div>" >> transient_report/index.tmp
+   fi # if [ $? -eq 0 ];then
  
-  #
-  echo "<a href=\"javascript:toggleElement('manualvast_$TRANSIENT_NAME')\">Example VaST+ds9 commands for visual image inspection</a> (blink the images in ds9)</br>" >> transient_report/index.tmp  
-  echo -n "<div id=\"manualvast_$TRANSIENT_NAME\" style=\"display:none\">
+   #
+   echo "<a href=\"javascript:toggleElement('manualvast_$TRANSIENT_NAME')\">Example VaST+ds9 commands for visual image inspection</a> (blink the images in ds9)</br>" >> transient_report/index.tmp  
+   echo -n "<div id=\"manualvast_$TRANSIENT_NAME\" style=\"display:none\">
 <pre>
 # Plate-solve the FITS images
 export TELESCOP='NMW_camera'
 for i in $REFERENCE_IMAGE " >> transient_report/index.tmp
-  while read JD MAG ERR X Y APP IMAGE REST ;do
-   echo -n "$IMAGE "
-  done < $LIGHTCURVE_FILE_OUTDAT >> transient_report/index.tmp
-  echo -n ";do util/wcs_image_calibration.sh \$i ;done
+   while read JD MAG ERR X Y APP IMAGE REST ;do
+    echo -n "$IMAGE "
+   done < $LIGHTCURVE_FILE_OUTDAT >> transient_report/index.tmp
+   echo -n ";do util/wcs_image_calibration.sh \$i ;done
 # Display the solved FITS images
 ds9 -frame lock wcs  " >> transient_report/index.tmp
-  # We should always displa ythe reference image, even if it's not in the lightcurve file
-  grep --quiet "$REFERENCE_IMAGE" $LIGHTCURVE_FILE_OUTDAT
-  if [ $? -ne 0 ];then
-   echo -n "wcs_"`basename "$REFERENCE_IMAGE"`" " >> transient_report/index.tmp
-  fi
-  while read JD MAG ERR X Y APP IMAGE REST ;do
-   echo -n " wcs_"`basename "$IMAGE"`" -crosshair $X $Y image   "
-  done < $LIGHTCURVE_FILE_OUTDAT >> transient_report/index.tmp
-  echo "
+   # We should always display the reference image, even if it's not in the lightcurve file
+   grep --quiet "$REFERENCE_IMAGE" $LIGHTCURVE_FILE_OUTDAT
+   if [ $? -ne 0 ];then
+    echo -n "wcs_"`basename "$REFERENCE_IMAGE"`" " >> transient_report/index.tmp
+   fi
+   while read JD MAG ERR X Y APP IMAGE REST ;do
+    echo -n " wcs_"`basename "$IMAGE"`" -crosshair $X $Y image   "
+   done < $LIGHTCURVE_FILE_OUTDAT >> transient_report/index.tmp
+   echo "
 </pre>
 </div>" >> transient_report/index.tmp
-  #
-  #echo "</br>" >> transient_report/index.tmp
+   #
+   #echo "</br>" >> transient_report/index.tmp
+
+   #
+   echo "<a href=\"javascript:toggleElement('vastcommandline_$TRANSIENT_NAME')\">VaST command line</a> (re-run the analysis for testing)</br>" >> transient_report/index.tmp  
+   echo -n "<div id=\"vastcommandline_$TRANSIENT_NAME\" style=\"display:none\">
+<pre>
+" >> transient_report/index.tmp
+   cat vast_command_line.log >> transient_report/index.tmp
+   echo " && util/transients/search_for_transients_single_field.sh
+</pre>
+</div>" >> transient_report/index.tmp
+   #
+   #echo "</br>" >> transient_report/index.tmp
+
+  fi # if [ $USE_JAVASCRIPT -eq 1 ];then
 
   echo "<HR>" >> transient_report/index.tmp
   cat transient_report/index.tmp >> transient_report/index$1.html
