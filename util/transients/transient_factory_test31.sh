@@ -52,11 +52,12 @@ fi
 # This script should take care of updating astorb.dat
 lib/update_offline_catalogs.sh all
 
-# Set the SExtractor parameters file
-cp default.sex.telephoto_lens_v4 default.sex
-#cp default.sex.telephoto_lens_v3 default.sex
+# moved down
+## Set the SExtractor parameters file
+#cp default.sex.telephoto_lens_v4 default.sex
+##cp default.sex.telephoto_lens_v3 default.sex
 
-# Moved later as we may want to decde which list of bad regions to use based on the actual image
+# Moved later as we may want to decide which list of bad regions to use based on the actual image
 ## Set custom bad_region.lst if there is one
 #if [ -f ../bad_region.lst ];then
 # cp ../bad_region.lst .
@@ -228,8 +229,21 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   fi
  fi
  ###############################################
+
+ # Make multiple VaST runs with different SExtractor config files
+ for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
  
- echo "Starting VaST" >> transient_factory_test31.txt
+ # just to make sure all the child loops will see it
+ export SEXTRACTOR_CONFIG_FILE
+ 
+ ## Set the SExtractor parameters file
+ if [ ! -f "$SEXTRACTOR_CONFIG_FILE" ];then
+  echo "ERROR finding $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
+  continue
+ fi
+ cp -v "$SEXTRACTOR_CONFIG_FILE" default.sex >> transient_factory_test31.txt
+
+ echo "Starting VaST with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
  # Run VaST
  ###./vast -x99 -u -f -k $REFERENCE_IMAGES/*$FIELD* $NEW_IMAGES/*$FIELD*
  ##./vast --selectbestaperture -y1 -p -x99 -u -f -k $REFERENCE_IMAGES/*"$FIELD"_* `ls $NEW_IMAGES/*"$FIELD"_*_001.fts | head -n1` `ls $NEW_IMAGES/*"$FIELD"_*_002.fts | head -n1`
@@ -256,11 +270,20 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  echo "############################################################" >> transient_factory.log
  
  # Use cache if possible to speed-up WCS calibration
- for WCSCACHEDIR in "/mnt/usb/NMW_NG/solved_reference_images" "/home/NMW_web_upload/solved_reference_images" "/dataX/kirx/NMW_NG_rt3_autumn2019/solved_reference_images" ;do
+ for WCSCACHEDIR in "/mnt/usb/NMW_NG/solved_reference_images" "/home/NMW_web_upload/solved_reference_images" "/dataX/kirx/NMW_NG_rt3_autumn2019/solved_reference_images" "./local_wcs_cache" ;do
   if [ -d "$WCSCACHEDIR" ];then
-   for i in "$WCSCACHEDIR/wcs_"$FIELD"_"* ;do
-    ln -s $i
-   done
+   if [ "$SEXTRACTOR_CONFIG_FILE" = "default.sex.telephoto_lens_v4" ];then
+    # link the solved images and catalogs created with this SExtractorconfig file
+    for i in "$WCSCACHEDIR/wcs_"$FIELD"_"* ;do
+     ln -s $i
+    done
+   else
+    # we are using a different config file
+    # link only the solved images
+    for i in "$WCSCACHEDIR/wcs_"$FIELD"_"*.fts ;do
+     ln -s $i
+    done
+   fi
    break
   fi
  done
@@ -280,11 +303,21 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  
  # Check that the plates were actually solved
  for i in `cat vast_image_details.log |awk '{print $17}'` ;do 
-  if [ ! -f wcs_`basename $i` ];then
+  WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $i`
+  if [ ! -f "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
    echo "***** PLATE SOLVE PROCESSING ERROR *****" >> transient_factory.log
-   echo "***** cannot find wcs_"`basename $i`"  *****" >> transient_factory.log
+   echo "***** cannot find $WCS_IMAGE_NAME_FOR_CHECKS  *****" >> transient_factory.log
    echo "############################################################" >> transient_factory.log
    echo 'UNSOLVED_PLATE'
+  else
+   if [ ! -d local_wcs_cache/ ];then
+    mkdir local_wcs_cache
+   fi
+   if [ ! -L "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
+    # save the solved plate to local cache, but only if it's not already a symlink
+    echo "Saving $WCS_IMAGE_NAME_FOR_CHECKS to local_wcs_cache/" >> transient_factory_test31.txt
+    cp "$WCS_IMAGE_NAME_FOR_CHECKS" local_wcs_cache/
+   fi
   fi
  done | grep --quiet 'UNSOLVED_PLATE'
  if [ $? -eq 0 ];then
@@ -342,7 +375,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # Filter-out small-amplitude flares
  for i in `cat candidates-transients.lst | awk '{print $1}'` ;do if [ `cat $i | wc -l` -eq 2 ];then grep $i candidates-transients.lst | head -n1 ;continue ;fi ; A=`head -n1 $i | awk '{print $2}'` ; B=`tail -n2 $i | awk '{print $2}'` ; MEANMAGSECONDEPOCH=`echo ${B//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2}'` ; TEST=`echo $A $MEANMAGSECONDEPOCH | awk '{if ( ($1-$2)<0.5 ) print 1; else print 0 }'` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
- # Make sure ech candidate is detected on the two second-epoch images, not any other combination
+ # Make sure each candidate is detected on the two second-epoch images, not any other combination
  for i in `cat candidates-transients.lst | awk '{print $1}'` ;do 
   grep --quiet "$SECOND_EPOCH__FIRST_IMAGE" "$i"
   if [ $? -ne 0 ];then
@@ -383,13 +416,11 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # Check if the number of detected transients is suspiciously large
  #NUMBER_OF_DETECTED_TRANSIENTS=`cat vast_summary.log |grep "Transient candidates found:" | awk '{print $4}'`
  NUMBER_OF_DETECTED_TRANSIENTS=`cat candidates-transients.lst | wc -l`
-# if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 200 ];then
  if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 2000 ];then
   echo "WARNING! Too many candidates... Skipping field..."
   echo "ERROR Too many candidates... Skipping field..." >> transient_factory_test31.txt
   continue
  fi
-# if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 50 ];then
  if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 500 ];then
   echo "WARNING! Too many candidates... Dropping flares..."
   echo "ERROR Too many candidates... Dropping flares..." >> transient_factory_test31.txt
@@ -403,9 +434,19 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  echo "Waiting for UCAC5 plate solver" >> transient_factory_test31.txt  
  # this is for UCAC5 plate solver
  wait
- echo "Preparing the HTML report for the field $FIELD" >> transient_factory_test31.txt
+ echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
  util/transients/make_report_in_HTML.sh #$FIELD
- echo "Prepared the HTML report for the field $FIELD" >> transient_factory_test31.txt
+ echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
+
+ done # for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
+ 
+ # clean up the local cache
+ for FILE_TO_REMOVE in local_wcs_cache/* ;do
+  if [ -f "$FILE_TO_REMOVE" ];then
+   rm -f "$FILE_TO_REMOVE"
+   echo "Removing $FILE_TO_REMOVE" >> transient_factory_test31.txt
+  fi
+ done
  
 done # for i in "$NEW_IMAGES"/*_001.fts ;do
 
@@ -413,9 +454,14 @@ done # for NEW_IMAGES in $@ ;do
 
 echo "<H2>Processig complete!</H2>" >> transient_report/index.html
 
-echo "<H3>Processing log:</H3>" >> transient_report/index.html
-echo "<pre>" >> transient_report/index.html
+echo "<H3>Processing log:</H3>
+<pre>" >> transient_report/index.html
 cat transient_factory.log >> transient_report/index.html
+echo "</pre>" >> transient_report/index.html
+
+echo "<H3>Filtering log:</H3>
+<pre>" >> transient_report/index.html
+cat transient_factory_test31.txt >> transient_report/index.html
 echo "</pre>" >> transient_report/index.html
 
 echo "</BODY></HTML>" >> transient_report/index.html
@@ -423,8 +469,12 @@ echo "</BODY></HTML>" >> transient_report/index.html
 # Automatically update the exclusion list if we are on a production server
 HOST=`hostname`
 if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ];then
- if [ -f ../exclusion_list.txt ];then
-  grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' >> ../exclusion_list.txt
+ # if we are not in the test directory
+ echo "$PWD" | grep --quiet 'vast_test'
+ if [ $? -ne 0 ];then
+  if [ -f ../exclusion_list.txt ];then
+   grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' >> ../exclusion_list.txt
+  fi
  fi
 fi
 
