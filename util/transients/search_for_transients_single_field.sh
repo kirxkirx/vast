@@ -94,6 +94,11 @@ if [ -f lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
  lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | while read A ;do lib/deg2hms $A ;done > exclusion_list_tycho2.txt
 fi
 ###
+# We need a local exclusion list for multiple SExtractor runs on the same field.
+# This file should not be present if we do single-run analysis
+if [ -f exclusion_list_local.txt ];then
+ rm -f exclusion_list_local.txt
+fi
 ######################################################################################################################################
 ######################################################################################################################################
 

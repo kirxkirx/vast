@@ -234,7 +234,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  fi
  ###############################################
 
- # We need a locla exclusion list not to find the same things in multiple SExtractor runs
+ # We need a local exclusion list not to find the same things in multiple SExtractor runs
  if [ -f exclusion_list_local.txt ];then
   rm -f exclusion_list_local.txt
  fi
@@ -468,7 +468,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   fi
  done
 
- # We need a locla exclusion list not to find the same things in multiple SExtractor runs
+ # We need a local exclusion list not to find the same things in multiple SExtractor runs
  if [ -f exclusion_list_local.txt ];then
   rm -f exclusion_list_local.txt
  fi

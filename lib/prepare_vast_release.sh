@@ -100,7 +100,7 @@ for DIAGNOSTIC_PLOT_FILE in fake_image_hack_*.fits ;do
 done
 ####################################
 # Remove exclusion_list files, if any
-for EXCLUSION_LIST_FILE in exclusion_list.txt exclusion_list_tycho2.txt exclusion_list_bsc.txt ;do
+for EXCLUSION_LIST_FILE in exclusion_list.txt exclusion_list_tycho2.txt exclusion_list_bsc.txt exclusion_list_local.txt ;do
  if [ -f "$EXCLUSION_LIST_FILE" ];then
   rm -f "$EXCLUSION_LIST_FILE"
  fi
