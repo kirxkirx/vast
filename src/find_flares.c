@@ -170,7 +170,7 @@ int main( int argc, char **argv ) {
     //if ( preflare_median_mag - preflare_mag_sigma - flare_median_mag + flare_mag_sigma > FLARE_MAG ) {
     if ( preflare_median_mag - flare_median_mag > FLARE_MAG ) {
      // Make sure the flare is significant at N sigma level given the errorbars
-     if ( preflare_median_mag - flare_median_mag > 3.0*sqrt( preflare_mag_sigma*preflare_mag_sigma + flare_mag_sigma*flare_mag_sigma ) ) {
+     if ( preflare_median_mag - flare_median_mag > 5.0*sqrt( preflare_mag_sigma*preflare_mag_sigma + flare_mag_sigma*flare_mag_sigma ) ) {
       //fprintf(stderr,"%s preflare_median_mag=%lf preflare_mag_sigma=%lf i=%d ",ep->d_name,preflare_median_mag,preflare_mag_sigma,i);
       //fprintf(stderr," flare_median_mag=%lf flare_mag_sigma=%lf i=%d\n",flare_median_mag,flare_mag_sigma,i);
       fprintf( stdout, "%s  %8.3lf %8.3lf\n", ep->d_name, x_on_reference_image, y_on_reference_image );
