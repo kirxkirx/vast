@@ -280,6 +280,8 @@ if [ -s "$EXCLUSION_LIST_FILE" ];then
 fi
 ############
 
+lib/bin/skycoor -g $RADEC_MEAN_HMS J2000
+
 lib/catalogs/check_catalogs_offline $RA_MEAN $DEC_MEAN
 #util/search_databases_with_curl.sh `lib/deg2hms $RA_MEAN $DEC_MEAN` H |grep -v "Starting" |grep -v "Searching"
 #util/transients/MPCheck.sh `lib/deg2hms $RADEC` $DATE $TIME H |grep -v "Starting"
