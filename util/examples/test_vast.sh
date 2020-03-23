@@ -5647,36 +5647,36 @@ if [ -d ../transient_detection_test_Ceres ];then
     FAILED_TEST_CODES="$FAILED_TEST_CODES CERES011a_TOO_FAR_$DISTANCE_DEGREES"
    fi
   fi
-  #
-  grep --quiet "AW Tau" transient_report/index.html
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES CERES0110"
-  fi
-  #grep --quiet "2013 03 22.3148  2456191.3148  13.38  05:47:30.53 +27:08:16.8" transient_report/index.html
-  grep --quiet "2013 03 25.8483  2456377.3483  12.93" transient_report/index.html
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES CERES0110a"
-  fi
-  RADECPOSITION_TO_TEST=`grep "2013 03 25.8483  2456377.3483  12.93" transient_report/index.html | awk '{print $6" "$7}'`
-  #DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:47:30.53 +27:08:16.8 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
-  # Changed to the VSX position
-  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:47:30.21 +27:08:12.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
-  # NMW scale is 8.4"/pix
-  TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
-  re='^[0-9]+$'
-  if ! [[ $TEST =~ $re ]] ; then
-   echo "TEST ERROR"
-   TEST_PASSED=0
-   TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES CERES0110a_TOO_FAR_TEST_ERROR"
-  else
-   if [ $TEST -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES0110a_TOO_FAR_$DISTANCE_DEGREES"
-   fi
-  fi
+  # AW Tau does not pass the strict selection criterea, so we'll drop it
+  #grep --quiet "AW Tau" transient_report/index.html
+  #if [ $? -ne 0 ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES CERES0110"
+  #fi
+  ##grep --quiet "2013 03 22.3148  2456191.3148  13.38  05:47:30.53 +27:08:16.8" transient_report/index.html
+  #grep --quiet "2013 03 25.8483  2456377.3483  12.93" transient_report/index.html
+  #if [ $? -ne 0 ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES CERES0110a"
+  #fi
+  #RADECPOSITION_TO_TEST=`grep "2013 03 25.8483  2456377.3483  12.93" transient_report/index.html | awk '{print $6" "$7}'`
+  ##DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:47:30.53 +27:08:16.8 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  ## Changed to the VSX position
+  #DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 05:47:30.21 +27:08:12.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  ## NMW scale is 8.4"/pix
+  #TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
+  #re='^[0-9]+$'
+  #if ! [[ $TEST =~ $re ]] ; then
+  # echo "TEST ERROR"
+  # TEST_PASSED=0
+  # TEST=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES CERES0110a_TOO_FAR_TEST_ERROR"
+  #else
+  # if [ $TEST -eq 0 ];then
+  #  TEST_PASSED=0
+  #  FAILED_TEST_CODES="$FAILED_TEST_CODES CERES0110a_TOO_FAR_$DISTANCE_DEGREES"
+  # fi
+  #fi
   #
   grep --quiet "LP Gem" transient_report/index.html
   if [ $? -ne 0 ];then
