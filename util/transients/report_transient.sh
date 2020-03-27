@@ -368,11 +368,10 @@ echo -n "<a href=\"http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=$RA_MEAN%20$D
 <input type=\"hidden\" name=\"PLOT\" value=\"plot\" checked=\"checked\" />
 </form>
 <form style='display: inline;' NAME=\"$$FORMNMW$1\" method=\"get\" TARGET=\"_blank\" action=\"http://scan.sai.msu.ru/cgi-bin/nmw/sky_archive\" enctype=\"application/x-www-form-urlencoded\">
-<font color=\"#33CC99\">NMW image archive: </font>
 <input id=\"h2\" name=\"ra\" type=\"hidden\" required value=\"$RA_HMS\">
-<input id=\"h3\" name=\"dec\" type=\"hidden\" required value=\"$DEC_HMS\">image size 
-<input id=\"h4\" name=\"r\" type=\"text\" required=\"\" value=\"32\" size=\"3\">(pix) 
-<input type=\"submit\" value='NMW archive'>
+<input id=\"h3\" name=\"dec\" type=\"hidden\" required value=\"$DEC_HMS\"> 
+<input id=\"h4\" name=\"r\" type=\"hidden\" required=\"\" value=\"32\" size=\"3\"> 
+<input type=\"submit\" value='NMW images'>
 </form>
 "
 
@@ -385,7 +384,7 @@ if ! [[ $TEST =~ $re ]] ; then
  exit 1
 else
  if [ $TEST -eq 1 ];then
-  echo -n "<form style='display: inline;' NAME=\"$$FORMASAS$1\" ACTION='http://www.astrouw.edu.pl/cgi-asas/asas_cat_input' METHOD=POST TARGET=\"data_list\">Get <font color=\"#33CC00\">ASAS</font> lightcurve: <input type='radio' name='source' value='asas3' CHECKED style=\"display:none;\"><TEXTAREA NAME='coo' ROWS=1 COLS=30 WRAP=virtual style=\"display:none;\">$RADEC_MEAN_HMS</TEXTAREA><INPUT NAME=equinox VALUE=2000 SIZE=4 style=\"display:none;\"><INPUT NAME=nmin VALUE=4 SIZE=4 style=\"display:none;\"><INPUT NAME=box VALUE=15 SIZE=4 style=\"display:none;\"><INPUT TYPE=submit NAME=submit VALUE=\"Search\" ></form>"
+  echo -n "<form style='display: inline;' NAME=\"$$FORMASAS$1\" ACTION='http://www.astrouw.edu.pl/cgi-asas/asas_cat_input' METHOD=POST TARGET=\"data_list\"><input type='radio' name='source' value='asas3' CHECKED style=\"display:none;\"><TEXTAREA NAME='coo' ROWS=1 COLS=30 WRAP=virtual style=\"display:none;\">$RADEC_MEAN_HMS</TEXTAREA><INPUT NAME=equinox VALUE=2000 SIZE=4 style=\"display:none;\"><INPUT NAME=nmin VALUE=4 SIZE=4 style=\"display:none;\"><INPUT NAME=box VALUE=15 SIZE=4 style=\"display:none;\"><INPUT TYPE=submit NAME=submit VALUE=\"ASAS-3 lightcurve\" ></form>"
  fi
 fi
 
