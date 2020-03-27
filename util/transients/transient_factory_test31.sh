@@ -510,7 +510,7 @@ echo "</BODY></HTML>" >> transient_report/index.html
 HOST=`hostname`
 if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ];then
  # if we are not in the test directory
- echo "$PWD" | grep --quiet 'vast_test'
+ echo "$PWD" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
  if [ $? -ne 0 ];then
   if [ -f ../exclusion_list.txt ];then
    grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' >> ../exclusion_list.txt
