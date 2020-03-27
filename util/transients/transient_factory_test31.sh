@@ -72,8 +72,11 @@ fi
 
 #NEW_IMAGES=$1
 
-if [ ! -d transient_report ];then
- mkdir transient_report
+# do this only if transient_report is not a symlink
+if [ ! -L transient_report ];then
+ if [ ! -d transient_report ];then
+  mkdir transient_report
+ fi
 fi
 
 rm -f transient_report/* transient_factory.log
