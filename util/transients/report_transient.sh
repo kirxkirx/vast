@@ -292,7 +292,7 @@ lib/catalogs/check_catalogs_offline $RA_MEAN $DEC_MEAN
 #util/transients/MPCheck.sh `lib/deg2hms $RADEC` $DATE $TIME H |grep -v "Starting"
 util/transients/MPCheck.sh $RADEC_MEAN_HMS $DATE $TIME H | grep -v "Starting"
 
-echo -n "<a href=\"https://wis-tns.weizmann.ac.il/search?ra=${RA_MEAN_HMS//:/%3A}&decl=${DEC_MEAN_HMS//:/%3A}&radius=15&coords_unit=arcsec\" target=\"_blank\">Check this position in <font color=\"tomato\">TNS</font>.</a>
+echo -n "<a href=\"https://wis-tns.weizmann.ac.il/search?ra=${RA_MEAN_HMS//:/%3A}&decl=${DEC_MEAN_HMS//:/%3A}&radius=15&coords_unit=arcsec\" target=\"_blank\">Check this position in <font color=\"tomato\">TNS</font>.</a>                         <a href='http://www.astronomy.ohio-state.edu/asassn/transients.html'>Manually check the ASAS-SN list of transients!</a>
 <a href=\"http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=$RA_MEAN%20$DEC_MEAN&CooDefinedFrames=J2000&Radius=1.0&Radius.unit=arcmin\" target=\"_blank\">Search this object in <font color=\"maroon\">SIMBAD</font>.</a>
 <a href=\"http://vizier.u-strasbg.fr/viz-bin/VizieR?-source=&-out.add=_r&-out.add=_RAJ%2C_DEJ&-sort=_r&-to=&-out.max=20&-meta.ucd=2&-meta.foot=1&-c=$RA_MEAN+$DEC_MEAN&-c.rs=60\" target=\"_blank\">Search this object in <font color=\"FF9900\">VizieR</font> catalogs.</a>
 <a href=\"http://skydot.lanl.gov/nsvs/cone_search.php?ra=$RA_MEAN&dec=$DEC_MEAN&rad=1&saturated=on&nocorr=on&lonpts=on&hiscat=on&hicorr=on&hisigcorr=on&radecflip=on\" target=\"_blank\">Search for previous observations of this object in the <font color=#006600>NSVS</font> database.</a>
