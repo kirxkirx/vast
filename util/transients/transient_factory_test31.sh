@@ -80,6 +80,14 @@ rm -f transient_report/* transient_factory.log
 
 echo "<HTML>
 
+<HEAD>
+<style>
+ body {
+       font-family:monospace;
+       font-size:10px;'
+      }
+</style>
+
 <script type='text/javascript'>
 function toggleElement(id)
 {
@@ -114,6 +122,8 @@ function printCandidateNameWithAbsLink( transientname) {
 }
 
 </script>
+
+</HEAD>
 
 <BODY>
 <h2>NMW transient search results</h2>
