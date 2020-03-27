@@ -4,7 +4,7 @@
 #include <math.h>
 
 //#define VSX_SEARCH_RADIUS_DEG 120.0/3600.0
-#define VSX_SEARCH_RADIUS_DEG 30.0 / 3600.0
+#define VSX_SEARCH_RADIUS_DEG 35.0 / 3600.0
 
 /* Auxiliary definitions */
 #define MAX( a, b ) ( ( ( a ) > ( b ) ) ? ( a ) : ( b ) )
