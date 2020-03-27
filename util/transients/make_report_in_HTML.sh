@@ -102,9 +102,9 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    fi # if [ $? -eq 0 ];then
  
    #
-   echo "<a href=\"javascript:toggleElement('manualvast_$TRANSIENT_NAME')\">Example VaST+ds9 commands for visual image inspection</a> (blink the images in ds9)</br>" >> transient_report/index.tmp  
+   echo "<a href=\"javascript:toggleElement('manualvast_$TRANSIENT_NAME')\">Example VaST+ds9 commands for visual image inspection</a> (blink the images in ds9). " >> transient_report/index.tmp  
    echo -n "<div id=\"manualvast_$TRANSIENT_NAME\" style=\"display:none\">
-<pre>
+<pre style='font-family:monospace;font-size:12px;'>
 # Plate-solve the FITS images
 export TELESCOP='NMW_camera'
 for i in $REFERENCE_IMAGE " >> transient_report/index.tmp
@@ -129,9 +129,9 @@ ds9 -frame lock wcs  " >> transient_report/index.tmp
    #echo "</br>" >> transient_report/index.tmp
 
    #
-   echo "<a href=\"javascript:toggleElement('vastcommandline_$TRANSIENT_NAME')\">VaST command line</a> (re-run the analysis for testing)</br>" >> transient_report/index.tmp  
+   echo "<a href=\"javascript:toggleElement('vastcommandline_$TRANSIENT_NAME')\">VaST command line</a> (re-run the search)</br>" >> transient_report/index.tmp  
    echo -n "<div id=\"vastcommandline_$TRANSIENT_NAME\" style=\"display:none\">
-<pre>
+<pre style='font-family:monospace;font-size:12px;'>
 " >> transient_report/index.tmp
    cat vast_command_line.log >> transient_report/index.tmp
    echo " && util/transients/search_for_transients_single_field.sh

@@ -358,7 +358,7 @@ echo -n "<a href=\"http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=$RA_MEAN%20$D
 <input type=\"hidden\" name=\"IMG\" value=\"nun\" checked=\"checked\" />
 <input type=\"hidden\" name=\"IMG\" value=\"sdss\" />
 <input type=\"hidden\" name=\"DB\" value=\"photcat\" checked=\"checked\" />
-<input type=\"hidden\" name=\"D=0>value=\"orphancat\" />
+<input type=\"hidden\" name=\"DB\" value=\"orphancat\" />
 <input type=\"submit\" name=\".submit\" value=\"Catalina photometry\" />
 <input type=\"hidden\" name=\"OUT\" value=\"web\" />
 <input type=\"hidden\" name=\"OUT\" value=\"csv\" checked=\"checked\" />
