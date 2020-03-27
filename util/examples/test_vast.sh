@@ -6359,6 +6359,9 @@ if [ -d ../NMW_Saturn_test ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
  fi
  #
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
  # Instead of running the single-field search,
  # we test the production NMW script
  util/transients/transient_factory_test31.sh ../NMW_Saturn_test/2ndepoch
@@ -6386,22 +6389,22 @@ if [ -d ../NMW_Saturn_test ];then
   grep --quiet "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN001"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2001"
   fi
   grep --quiet "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN002"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2002"
   fi
   grep --quiet "First image: 2456021.56453 04.04.2012 01:32:40" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN003"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2003"
   fi
   grep --quiet "Last  image: 2458791.14727 03.11.2019 15:31:54" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN004"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2004"
   fi
   # now search for specific objects
   grep --quiet "QY Sgr" transient_report/index.html
