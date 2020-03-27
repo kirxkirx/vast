@@ -6354,29 +6354,56 @@ if [ -d ../NMW_Saturn_test ];then
  # Run the test
  echo "Find Saturn/Iapetus test 2 " >> /dev/stderr
  echo -n "Find Saturn/Iapetus test 2: " >> vast_test_report.txt 
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ #
  # Instead of running the single-field search,
  # we test the production NMW script
  util/transients/transient_factory_test31.sh ../NMW_Saturn_test/2ndepoch
- if [ $? -eq 0 ];then
-  #
-  if [ -f ../exclusion_list.txt ];then
-   mv ../exclusion_list.txt ../exclusion_list.txt_backup
-  fi
-  #
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2000_EXIT_CODE"
+ fi
+ if [ -f transient_report/index.html ];then
   ## New stuff the file lib/catalogs/list_of_bright_stars_from_tycho2.txt should be created by util/transients/search_for_transients_single_field.sh
-  if [ ! -f lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2200"
-  fi
-  if [ ! -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2201"
-  fi
+  #if [ ! -f lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2200"
+  #fi
+  #if [ ! -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2201"
+  #fi
   ##
-  if [ ! -f transient_report/index.html ];then
+  # we test this above
+  #if [ ! -f transient_report/index.html ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2009"
+  #fi 
+  # The copy of the log file shoule be in the HTML report
+  grep --quiet "Images processed 4" transient_report/index.html
+  if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2009"
-  fi 
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN001"
+  fi
+  grep --quiet "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN002"
+  fi
+  grep --quiet "First image: 2456021.56453 04.04.2012 01:32:40" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN003"
+  fi
+  grep --quiet "Last  image: 2458791.14727 03.11.2019 15:31:54" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN004"
+  fi
+  # now search for specific objects
   grep --quiet "QY Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -6690,17 +6717,18 @@ if [ -d ../NMW_Saturn_test ];then
   # fi
   #fi
   #
-  ###### restore exclusion list after the test if needed
-  if [ -f ../exclusion_list.txt_backup ];then
-   mv ../exclusion_list.txt_backup ../exclusion_list.txt
-  fi
-  #
 
  else
   echo "ERROR running the transient search script" >> /dev/stderr
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_ALL"
  fi
+
+ ###### restore exclusion list after the test if needed
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
