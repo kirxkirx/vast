@@ -3597,91 +3597,96 @@ if [ -d ../sample_data ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD033"
   fi
   ###############################################
-  # Check log files associated with mag-size filtering
-  for PARAM in 00 01 04 06 08 10 12 ;do
-   for MAGSIZEFILTERLOGFILE in image*.cat.magparameter"$PARAM"filter_passed image*1.cat.magparameter"$PARAM"filter_rejected image*.cat.magparameter"$PARAM"filter_thresholdcurve ;do
-    if [ ! -f "$MAGSIZEFILTERLOGFILE" ];then
-     TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_MISSINGLOGFILE_$MAGSIZEFILTERLOGFILE"
-    fi
+  cat src/vast_limits.h | grep -v '//' | grep --quiet 'DISABLE_MAGSIZE_FILTER_LOGS'
+  if [ $? -eq 0 ];then
+   # Check log files associated with mag-size filtering
+   for PARAM in 00 01 04 06 08 10 12 ;do
+    for MAGSIZEFILTERLOGFILE in image*.cat.magparameter"$PARAM"filter_passed image*1.cat.magparameter"$PARAM"filter_rejected image*.cat.magparameter"$PARAM"filter_thresholdcurve ;do
+     if [ ! -f "$MAGSIZEFILTERLOGFILE" ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_MISSINGLOGFILE_$MAGSIZEFILTERLOGFILE"
+     fi
+    done
    done
-  done
-  if [ ! -s image00001.cat.magparameter00filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_EMPTY00REJ"
-  else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter00filter_rejected | wc -l | awk '{print $1}'`
-   if [ $LINES_IN_LOGFILE -lt 8 ];then
+   if [ ! -s image00001.cat.magparameter00filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_FEW00REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_EMPTY00REJ"
+   else
+    LINES_IN_LOGFILE=`cat image00001.cat.magparameter00filter_rejected | wc -l | awk '{print $1}'`
+    if [ $LINES_IN_LOGFILE -lt 8 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_FEW00REJ"
+    fi
    fi
-  fi
-  #
-  if [ ! -s image00001.cat.magparameter01filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_EMPTY01REJ"
-  else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter01filter_rejected | wc -l | awk '{print $1}'`
-   if [ $LINES_IN_LOGFILE -lt 6 ];then
+   #
+   if [ ! -s image00001.cat.magparameter01filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_FEW01REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_EMPTY01REJ"
+   else
+    LINES_IN_LOGFILE=`cat image00001.cat.magparameter01filter_rejected | wc -l | awk '{print $1}'`
+    if [ $LINES_IN_LOGFILE -lt 6 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_FEW01REJ"
+    fi
    fi
-  fi
-  #
-  if [ ! -s image00001.cat.magparameter04filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_EMPTY04REJ"
-  else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter04filter_rejected | wc -l | awk '{print $1}'`
-   if [ $LINES_IN_LOGFILE -lt 6 ];then
+   #
+   if [ ! -s image00001.cat.magparameter04filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_FEW04REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_EMPTY04REJ"
+   else
+    LINES_IN_LOGFILE=`cat image00001.cat.magparameter04filter_rejected | wc -l | awk '{print $1}'`
+    if [ $LINES_IN_LOGFILE -lt 6 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_FEW04REJ"
+    fi
    fi
-  fi
-  #
-  if [ ! -s image00001.cat.magparameter06filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_EMPTY06REJ"
-  else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter06filter_rejected | wc -l | awk '{print $1}'`
-   if [ $LINES_IN_LOGFILE -lt 5 ];then
+   #
+   if [ ! -s image00001.cat.magparameter06filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_FEW06REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_EMPTY06REJ"
+   else
+    LINES_IN_LOGFILE=`cat image00001.cat.magparameter06filter_rejected | wc -l | awk '{print $1}'`
+    if [ $LINES_IN_LOGFILE -lt 5 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_FEW06REJ"
+    fi
    fi
-  fi
-  #
-  if [ ! -s image00001.cat.magparameter08filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_EMPTY08REJ"
-  else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter08filter_rejected | wc -l | awk '{print $1}'`
-   if [ $LINES_IN_LOGFILE -lt 5 ];then
+   #
+   if [ ! -s image00001.cat.magparameter08filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_FEW08REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_EMPTY08REJ"
+   else
+    LINES_IN_LOGFILE=`cat image00001.cat.magparameter08filter_rejected | wc -l | awk '{print $1}'`
+    if [ $LINES_IN_LOGFILE -lt 5 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_FEW08REJ"
+    fi
    fi
-  fi
-  #
-  if [ ! -s image00001.cat.magparameter10filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_EMPTY10REJ"
-  else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter10filter_rejected | wc -l | awk '{print $1}'`
-   if [ $LINES_IN_LOGFILE -lt 5 ];then
+   #
+   if [ ! -s image00001.cat.magparameter10filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_FEW10REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_EMPTY10REJ"
+   else
+    LINES_IN_LOGFILE=`cat image00001.cat.magparameter10filter_rejected | wc -l | awk '{print $1}'`
+    if [ $LINES_IN_LOGFILE -lt 5 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_FEW10REJ"
+    fi
    fi
-  fi
-  #
-  if [ ! -s image00001.cat.magparameter12filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_EMPTY11REJ"
-  else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter12filter_rejected | wc -l | awk '{print $1}'`
-   if [ $LINES_IN_LOGFILE -lt 3 ];then
+   #
+   if [ ! -s image00001.cat.magparameter12filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_FEW11REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_EMPTY11REJ"
+   else
+    LINES_IN_LOGFILE=`cat image00001.cat.magparameter12filter_rejected | wc -l | awk '{print $1}'`
+    if [ $LINES_IN_LOGFILE -lt 3 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_FEW11REJ"
+    fi
    fi
-  fi
+  else
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DISABLE_MAGSIZE_FILTER_LOGS"
+  fi # if DISABLE_MAGSIZE_FILTER_LOGS
   ###############################################
 
  else
@@ -4043,91 +4048,94 @@ if [ -d '../sample space' ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD033"
   fi
   ###############################################
-  # Check log files associated with mag-size filtering
-  for PARAM in 00 01 04 06 08 10 12 ;do
-   for MAGSIZEFILTERLOGFILE in image*.cat.magparameter"$PARAM"filter_passed image*1.cat.magparameter"$PARAM"filter_rejected image*.cat.magparameter"$PARAM"filter_thresholdcurve ;do
-    if [ ! -f "$MAGSIZEFILTERLOGFILE" ];then
-     TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_MISSINGLOGFILE_$MAGSIZEFILTERLOGFILE"
-    fi
+  cat src/vast_limits.h | grep -v '//' | grep --quiet 'DISABLE_MAGSIZE_FILTER_LOGS'
+  if [ $? -eq 0 ];then
+   # Check log files associated with mag-size filtering
+   for PARAM in 00 01 04 06 08 10 12 ;do
+    for MAGSIZEFILTERLOGFILE in image*.cat.magparameter"$PARAM"filter_passed image*1.cat.magparameter"$PARAM"filter_rejected image*.cat.magparameter"$PARAM"filter_thresholdcurve ;do
+     if [ ! -f "$MAGSIZEFILTERLOGFILE" ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_MISSINGLOGFILE_$MAGSIZEFILTERLOGFILE"
+     fi
+    done
    done
-  done
-  if [ ! -s image00001.cat.magparameter00filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY00REJ"
-  else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter00filter_rejected | wc -l | awk '{print $1}'`
-   if [ $LINES_IN_LOGFILE -lt 8 ];then
+   if [ ! -s image00001.cat.magparameter00filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW00REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY00REJ"
+   else
+    LINES_IN_LOGFILE=`cat image00001.cat.magparameter00filter_rejected | wc -l | awk '{print $1}'`
+    if [ $LINES_IN_LOGFILE -lt 8 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW00REJ"
+    fi
    fi
-  fi
-  #
-  if [ ! -s image00001.cat.magparameter01filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY01REJ"
-  else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter01filter_rejected | wc -l | awk '{print $1}'`
-   if [ $LINES_IN_LOGFILE -lt 6 ];then
+   #
+   if [ ! -s image00001.cat.magparameter01filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW01REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY01REJ"
+   else
+    LINES_IN_LOGFILE=`cat image00001.cat.magparameter01filter_rejected | wc -l | awk '{print $1}'`
+    if [ $LINES_IN_LOGFILE -lt 6 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW01REJ"
+    fi
    fi
-  fi
-  #
-  if [ ! -s image00001.cat.magparameter04filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY04REJ"
-  else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter04filter_rejected | wc -l | awk '{print $1}'`
-   if [ $LINES_IN_LOGFILE -lt 6 ];then
+   #
+   if [ ! -s image00001.cat.magparameter04filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW04REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY04REJ"
+   else
+    LINES_IN_LOGFILE=`cat image00001.cat.magparameter04filter_rejected | wc -l | awk '{print $1}'`
+    if [ $LINES_IN_LOGFILE -lt 6 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW04REJ"
+    fi
    fi
-  fi
-  #
-  if [ ! -s image00001.cat.magparameter06filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY06REJ"
-  else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter06filter_rejected | wc -l | awk '{print $1}'`
-   if [ $LINES_IN_LOGFILE -lt 5 ];then
+   #
+   if [ ! -s image00001.cat.magparameter06filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW06REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY06REJ"
+   else
+    LINES_IN_LOGFILE=`cat image00001.cat.magparameter06filter_rejected | wc -l | awk '{print $1}'`
+    if [ $LINES_IN_LOGFILE -lt 5 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW06REJ"
+    fi
    fi
-  fi
-  #
-  if [ ! -s image00001.cat.magparameter08filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY08REJ"
-  else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter08filter_rejected | wc -l | awk '{print $1}'`
-   if [ $LINES_IN_LOGFILE -lt 5 ];then
+   #
+   if [ ! -s image00001.cat.magparameter08filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW08REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY08REJ"
+   else
+    LINES_IN_LOGFILE=`cat image00001.cat.magparameter08filter_rejected | wc -l | awk '{print $1}'`
+    if [ $LINES_IN_LOGFILE -lt 5 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW08REJ"
+    fi
    fi
-  fi
-  #
-  if [ ! -s image00001.cat.magparameter10filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY10REJ"
-  else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter10filter_rejected | wc -l | awk '{print $1}'`
-   if [ $LINES_IN_LOGFILE -lt 5 ];then
+   #
+   if [ ! -s image00001.cat.magparameter10filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW10REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY10REJ"
+   else
+    LINES_IN_LOGFILE=`cat image00001.cat.magparameter10filter_rejected | wc -l | awk '{print $1}'`
+    if [ $LINES_IN_LOGFILE -lt 5 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW10REJ"
+    fi
    fi
-  fi
-  #
-  if [ ! -s image00001.cat.magparameter12filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY11REJ"
-  else
-   LINES_IN_LOGFILE=`cat image00001.cat.magparameter12filter_rejected | wc -l | awk '{print $1}'`
-   if [ $LINES_IN_LOGFILE -lt 3 ];then
+   #
+   if [ ! -s image00001.cat.magparameter12filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW11REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_EMPTY11REJ"
+   else
+    LINES_IN_LOGFILE=`cat image00001.cat.magparameter12filter_rejected | wc -l | awk '{print $1}'`
+    if [ $LINES_IN_LOGFILE -lt 3 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_FEW11REJ"
+    fi
    fi
-  fi
+  fi # DISABLE_MAGSIZE_FILTER_LOGS
   ###############################################
 
  else
@@ -5075,86 +5083,89 @@ if [ -d ../only_few_stars ];then
   fi
   IMAGE_CATALOG_NAME=`cat vast_images_catalogs.log | grep 'ap000177.fit' | awk '{print $1}'`
   #
-  if [ ! -s "$IMAGE_CATALOG_NAME".magparameter00filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY00REJ"
-  else
-   LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter00filter_rejected | wc -l | awk '{print $1}'`
-   if [ $LINES_IN_LOGFILE -lt 8 ];then
+  cat src/vast_limits.h | grep -v '//' | grep --quiet 'DISABLE_MAGSIZE_FILTER_LOGS'
+  if [ $? -eq 0 ];then
+   if [ ! -s "$IMAGE_CATALOG_NAME".magparameter00filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_FEW00REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY00REJ"
+   else
+    LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter00filter_rejected | wc -l | awk '{print $1}'`
+    if [ $LINES_IN_LOGFILE -lt 8 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_FEW00REJ"
+    fi
    fi
-  fi
-  #
-  if [ ! -s "$IMAGE_CATALOG_NAME".magparameter01filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY01REJ"
-  else
-   LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter01filter_rejected | wc -l | awk '{print $1}'`
-   if [ $LINES_IN_LOGFILE -lt 7 ];then
+   #
+   if [ ! -s "$IMAGE_CATALOG_NAME".magparameter01filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_FEW01REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY01REJ"
+   else
+    LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter01filter_rejected | wc -l | awk '{print $1}'`
+    if [ $LINES_IN_LOGFILE -lt 7 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_FEW01REJ"
+    fi
    fi
-  fi
-  #
-  if [ ! -s "$IMAGE_CATALOG_NAME".magparameter04filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY04REJ"
-  else
-   LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter04filter_rejected | wc -l | awk '{print $1}'`
-   if [ $LINES_IN_LOGFILE -lt 6 ];then
+   #
+   if [ ! -s "$IMAGE_CATALOG_NAME".magparameter04filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_FEW04REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY04REJ"
+   else
+    LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter04filter_rejected | wc -l | awk '{print $1}'`
+    if [ $LINES_IN_LOGFILE -lt 6 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_FEW04REJ"
+    fi
    fi
-  fi
-  #
-  if [ ! -s "$IMAGE_CATALOG_NAME".magparameter06filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY06REJ"
-  else
-   LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter06filter_rejected | wc -l | awk '{print $1}'`
-   if [ $LINES_IN_LOGFILE -lt 6 ];then
+   #
+   if [ ! -s "$IMAGE_CATALOG_NAME".magparameter06filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_FEW06REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY06REJ"
+   else
+    LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter06filter_rejected | wc -l | awk '{print $1}'`
+    if [ $LINES_IN_LOGFILE -lt 6 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_FEW06REJ"
+    fi
    fi
-  fi
-  #
-  if [ ! -s "$IMAGE_CATALOG_NAME".magparameter08filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY08REJ"
-  else
-   LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter08filter_rejected | wc -l | awk '{print $1}'`
-   #if [ $LINES_IN_LOGFILE -lt 6 ];then
-   if [ $LINES_IN_LOGFILE -lt 2 ];then
+   #
+   if [ ! -s "$IMAGE_CATALOG_NAME".magparameter08filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_FEW08REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY08REJ"
+   else
+    LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter08filter_rejected | wc -l | awk '{print $1}'`
+    #if [ $LINES_IN_LOGFILE -lt 6 ];then
+    if [ $LINES_IN_LOGFILE -lt 2 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_FEW08REJ"
+    fi
    fi
-  fi
-  #
-  if [ ! -s "$IMAGE_CATALOG_NAME".magparameter10filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY10REJ"
-  else
-   LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter10filter_rejected | wc -l | awk '{print $1}'`
-   #if [ $LINES_IN_LOGFILE -lt 6 ];then
-   if [ $LINES_IN_LOGFILE -lt 2 ];then
+   #
+   if [ ! -s "$IMAGE_CATALOG_NAME".magparameter10filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_FEW10REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY10REJ"
+   else
+    LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter10filter_rejected | wc -l | awk '{print $1}'`
+    #if [ $LINES_IN_LOGFILE -lt 6 ];then
+    if [ $LINES_IN_LOGFILE -lt 2 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_FEW10REJ"
+    fi
    fi
-  fi
-  #
-  if [ ! -s "$IMAGE_CATALOG_NAME".magparameter12filter_rejected ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY12REJ"
-  else
-   LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter12filter_rejected | wc -l | awk '{print $1}'`
-   #if [ $LINES_IN_LOGFILE -lt 6 ];then
-   if [ $LINES_IN_LOGFILE -lt 5 ];then
+   #
+   if [ ! -s "$IMAGE_CATALOG_NAME".magparameter12filter_rejected ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_FEW12REJ"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY12REJ"
+   else
+    LINES_IN_LOGFILE=`cat "$IMAGE_CATALOG_NAME".magparameter12filter_rejected | wc -l | awk '{print $1}'`
+    #if [ $LINES_IN_LOGFILE -lt 6 ];then
+    if [ $LINES_IN_LOGFILE -lt 5 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_FEW12REJ"
+    fi
    fi
-  fi
-  #
+   #
+  fi # DISABLE_MAGSIZE_FILTER_LOGS
   ################################################################################
   # Check vast_image_details.log format
   NLINES=`cat vast_image_details.log | awk '{print $18}' | sed '/^\s*$/d' | wc -l | awk '{print $1}'`
@@ -9152,30 +9163,35 @@ if [ -d ../sample_data ];then
    fi
   fi
   ###############################################
+
+  cat src/vast_limits.h | grep -v '//' | grep --quiet 'DISABLE_MAGSIZE_FILTER_LOGS'
+  if [ $? -eq 0 ];then
   
-  # Check the log files corresponding to the first 9 images
-  for IMGNUM in `seq 1 9`;do
-   #for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve image0000$IMGNUM.cat.magparameter02filter_passed image0000$IMGNUM.cat.magparameter02filter_rejected image0000$IMGNUM.cat.magparameter02filter_thresholdcurve ;do
-   # We disabled the PSF-APER filter, so no *magparameter02filter_passed files are created
-   for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve ;do
-    if [ ! -s "$LOGFILE_TO_CHECK" ];then
-     TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF_EMPTYPSFFILTERINGLOFGILE_$LOGFILE_TO_CHECK"
-    fi
+   # Check the log files corresponding to the first 9 images
+   for IMGNUM in `seq 1 9`;do
+    #for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve image0000$IMGNUM.cat.magparameter02filter_passed image0000$IMGNUM.cat.magparameter02filter_rejected image0000$IMGNUM.cat.magparameter02filter_thresholdcurve ;do
+    # We disabled the PSF-APER filter, so no *magparameter02filter_passed files are created
+    for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve ;do
+     if [ ! -s "$LOGFILE_TO_CHECK" ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF_EMPTYPSFFILTERINGLOFGILE_$LOGFILE_TO_CHECK"
+     fi
+    done
    done
-  done
   
-  NUMER_OF_REJECTED_STARS=`cat image00001.cat.magpsfchi2filter_rejected | wc -l | awk '{print $1}'`
-  if [ $NUMER_OF_REJECTED_STARS -lt 9 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF_EMPTYPSFFILTERINGLOFGILE_FEW_SRC_REJECTED"
-  fi
-  # Not using this filter anymore
-  #NUMER_OF_REJECTED_STARS=`cat image00001.cat.magparameter02filter_rejected | wc -l | awk '{print $1}'`
-  #if [ $NUMER_OF_REJECTED_STARS -lt 9 ];then
-  # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF_EMPTYPSFFILTERINGLOFGILE_FEW_SRC_REJECTED_PSFmAPER"
-  #fi
+   NUMER_OF_REJECTED_STARS=`cat image00001.cat.magpsfchi2filter_rejected | wc -l | awk '{print $1}'`
+   if [ $NUMER_OF_REJECTED_STARS -lt 9 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF_EMPTYPSFFILTERINGLOFGILE_FEW_SRC_REJECTED"
+   fi
+   # Not using this filter anymore
+   #NUMER_OF_REJECTED_STARS=`cat image00001.cat.magparameter02filter_rejected | wc -l | awk '{print $1}'`
+   #if [ $NUMER_OF_REJECTED_STARS -lt 9 ];then
+   # TEST_PASSED=0
+   # FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF_EMPTYPSFFILTERINGLOFGILE_FEW_SRC_REJECTED_PSFmAPER"
+   #fi
+   
+  fi # DISABLE_MAGSIZE_FILTER_LOGS
 
  else
   echo "ERROR: cannot find vast_summary.log" >> /dev/stderr
@@ -9282,17 +9298,21 @@ if [ -d ../MASTER_test ];then
    fi
   done
 
-  # Check the log files
-  for IMGNUM in `seq 1 6`;do
-   #for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve image0000$IMGNUM.cat.magparameter02filter_passed image0000$IMGNUM.cat.magparameter02filter_rejected image0000$IMGNUM.cat.magparameter02filter_thresholdcurve ;do
-   for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve ;do
-    if [ ! -s "$LOGFILE_TO_CHECK" ];then
-     TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF_EMPTYPSFFILTERINGLOFGILE_$LOGFILE_TO_CHECK"
-    fi
-   done
-  done
+  cat src/vast_limits.h | grep -v '//' | grep --quiet 'DISABLE_MAGSIZE_FILTER_LOGS'
+  if [ $? -eq 0 ];then
 
+   # Check the log files
+   for IMGNUM in `seq 1 6`;do
+    #for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve image0000$IMGNUM.cat.magparameter02filter_passed image0000$IMGNUM.cat.magparameter02filter_rejected image0000$IMGNUM.cat.magparameter02filter_thresholdcurve ;do
+    for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve ;do
+     if [ ! -s "$LOGFILE_TO_CHECK" ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF_EMPTYPSFFILTERINGLOFGILE_$LOGFILE_TO_CHECK"
+     fi
+    done
+   done
+  
+  fi # DISABLE_MAGSIZE_FILTER_LOGS
 
  else
   echo "ERROR: cannot find vast_summary.log" >> /dev/stderr
@@ -10460,6 +10480,7 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  FAILED_TEST_CODES="${FAILED_TEST_CODES/ WCSTOOLS_NOT_INSTALLED/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES/ VARTOOLS_NOT_INSTALLED/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES/ AUXWEB_WWWU_003/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// DISABLE_MAGSIZE_FILTER_LOGS/}"
  if [ ! -z "$FAILED_TEST_CODES" ];then
   echo "Exit code 1"
   exit 1

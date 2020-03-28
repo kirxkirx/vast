@@ -10,6 +10,9 @@
 #include "vast_limits.h"
 
 static inline int write_string_to_individual_image_log( char *sextractor_catalog_filename, char *prefix_string, char *string_to_write_in_image_logfile, char *postfix_string ) {
+ #ifdef DISABLE_INDIVIDUAL_IMAGE_LOG
+ return 0;
+ #endif
  FILE *individual_image_logfile;
  char individual_image_logfilename[512];
  if ( strlen( sextractor_catalog_filename ) > 500 ) {

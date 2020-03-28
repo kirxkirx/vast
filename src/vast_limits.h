@@ -104,8 +104,12 @@
                                                      // and avoid numerous supurious detections arond their edges
 #define N_POINTS_PSF_FIT_QUALITY_FILTER 7
 
+/////////////// LOG FILES THAT MAY OR MAY NOT BE NEEDED ///////////////
 #define REMOVE_FLAG_IMAGES_TO_SAVE_SPACE
-//#define REMOVE_SEX_LOG_FILES
+#define REMOVE_SEX_LOG_FILES
+#define DISABLE_INDIVIDUAL_IMAGE_LOG
+#define DISABLE_MAGSIZE_FILTER_LOGS
+///////////////////////////////////////////////////////////////////////
 
 // Only image pixels with values between MIN_PIX_VALUE and MAX_PIX_VALUE are considered good ones
 #define MIN_PIX_VALUE -100000

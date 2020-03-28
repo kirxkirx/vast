@@ -85,6 +85,7 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
 
  int min_number_of_points_in_mag_bin;
 
+ #ifndef DISABLE_MAGSIZE_FILTER_LOGS
  char thresholdcurvefilename[512];
  char passedfilename[512];
  char rejectedfilename[512];
@@ -92,6 +93,7 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
  FILE *debugfile_thresholdcurve;
  FILE *debugfile_passed;
  FILE *debugfile_rejected;
+ #endif
 
  // Set the cut-off threshold depending on the number of sources detected on the image
  /// https://en.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7_rule
@@ -222,6 +224,7 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
   } // for(i=0;i<number_of_reference_points;i++){
  }  // if( NUMBER<NUMBER_OF_REFERENCE_POINTS ){
 
+ #ifndef DISABLE_MAGSIZE_FILTER_LOGS
  // Set the log file names
  if ( parameter_number == -2 ) {
   sprintf( thresholdcurvefilename, "%s.magpsfchi2filter_thresholdcurve", sextractor_catalog );
@@ -241,7 +244,7 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
 
  // open the log file which will store the cut-off curve
  debugfile_thresholdcurve= fopen( thresholdcurvefilename, "w" );
-
+ #endif
  //
 
  // Make two iterations so the stars that are just on the edge of being rejected go over that edge
@@ -442,11 +445,13 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
   // done with median_subtracted_float_parameter_for_each_star
   free( median_subtracted_float_parameter_for_each_star );
 
+  #ifndef DISABLE_MAGSIZE_FILTER_LOGS
   if ( iteration == 1 ) {
    for ( i= 0; i < number_of_reference_points; i++ ) {
     fprintf( debugfile_thresholdcurve, "%f %g %g\n", reference_point_mag[i], reference_point_float_parameter[i], reference_point_float_parameter_sigma[i] );
    }
   }
+  #endif
 
 // for each star
 #ifdef VAST_ENABLE_OPENMP
@@ -520,7 +525,9 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
   }
 
  } // for(iteration=0;iteration<2;iteration++{
+ #ifndef DISABLE_MAGSIZE_FILTER_LOGS
  fclose( debugfile_thresholdcurve );
+ #endif
 
  //
  free( reference_point_mag );
@@ -528,6 +535,7 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
  free( reference_point_float_parameter_sigma );
  //
 
+ #ifndef DISABLE_MAGSIZE_FILTER_LOGS
  // Write the log files
  debugfile_passed= fopen( passedfilename, "w" );
  if ( debugfile_passed == NULL ) {
@@ -562,6 +570,7 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
  fclose( debugfile_passed );
  fclose( debugfile_rejected );
  //
+ #endif
 
  return flagged_stars_counter;
 }
