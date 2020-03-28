@@ -3598,7 +3598,7 @@ if [ -d ../sample_data ];then
   fi
   ###############################################
   cat src/vast_limits.h | grep -v '//' | grep --quiet 'DISABLE_MAGSIZE_FILTER_LOGS'
-  if [ $? -eq 0 ];then
+  if [ $? -ne 0 ];then
    # Check log files associated with mag-size filtering
    for PARAM in 00 01 04 06 08 10 12 ;do
     for MAGSIZEFILTERLOGFILE in image*.cat.magparameter"$PARAM"filter_passed image*1.cat.magparameter"$PARAM"filter_rejected image*.cat.magparameter"$PARAM"filter_thresholdcurve ;do
@@ -4049,7 +4049,7 @@ if [ -d '../sample space' ];then
   fi
   ###############################################
   cat src/vast_limits.h | grep -v '//' | grep --quiet 'DISABLE_MAGSIZE_FILTER_LOGS'
-  if [ $? -eq 0 ];then
+  if [ $? -ne 0 ];then
    # Check log files associated with mag-size filtering
    for PARAM in 00 01 04 06 08 10 12 ;do
     for MAGSIZEFILTERLOGFILE in image*.cat.magparameter"$PARAM"filter_passed image*1.cat.magparameter"$PARAM"filter_rejected image*.cat.magparameter"$PARAM"filter_thresholdcurve ;do
@@ -5084,7 +5084,7 @@ if [ -d ../only_few_stars ];then
   IMAGE_CATALOG_NAME=`cat vast_images_catalogs.log | grep 'ap000177.fit' | awk '{print $1}'`
   #
   cat src/vast_limits.h | grep -v '//' | grep --quiet 'DISABLE_MAGSIZE_FILTER_LOGS'
-  if [ $? -eq 0 ];then
+  if [ $? -ne 0 ];then
    if [ ! -s "$IMAGE_CATALOG_NAME".magparameter00filter_rejected ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_EMPTY00REJ"
@@ -9165,7 +9165,7 @@ if [ -d ../sample_data ];then
   ###############################################
 
   cat src/vast_limits.h | grep -v '//' | grep --quiet 'DISABLE_MAGSIZE_FILTER_LOGS'
-  if [ $? -eq 0 ];then
+  if [ $? -ne 0 ];then
   
    # Check the log files corresponding to the first 9 images
    for IMGNUM in `seq 1 9`;do
@@ -9299,7 +9299,7 @@ if [ -d ../MASTER_test ];then
   done
 
   cat src/vast_limits.h | grep -v '//' | grep --quiet 'DISABLE_MAGSIZE_FILTER_LOGS'
-  if [ $? -eq 0 ];then
+  if [ $? -ne 0 ];then
 
    # Check the log files
    for IMGNUM in `seq 1 6`;do
