@@ -2,9 +2,10 @@
 #ifndef VAST_STETSON_VARIABILITY_INDEXES_INCLUDE_FILE
 
 // This tells the compiler if we should not compute some variability indexes to speed-up computations
-//#define SKIP_EXPERIMENTAL_VARIABILITY_INDEXES
+#define SKIP_EXPERIMENTAL_VARIABILITY_INDEXES
 
 // If we want to skip some variability indexes, here is the exact list of indexes to skip
+// These are the ones that are not displayed by './find_candidates' minus CHI2
 #ifdef SKIP_EXPERIMENTAL_VARIABILITY_INDEXES
 // The commented-out indexes will not be disabled by enabling SKIP_EXPERIMENTAL_VARIABILITY_INDEXES
 #define DISABLE_INDEX_WELCH_STETSON
@@ -24,9 +25,10 @@
 #define DISABLE_INDEX_EXCESS_ABBE_E_A
 // #define DISABLE_INDEX_SB
 #define DISABLE_INDEX_NXS
-#define DISABLE_INDEX_REDUCED_CHI2
+// #define DISABLE_INDEX_REDUCED_CHI2
 #define DISABLE_INDEX_PEAK_TO_PEAK_AGN_V
 // #define DISABLE_INDEX_WEIGHTED_SIGMA // also disables DISABLE_INDEX_SKEWNESS and DISABLE_INDEX_KURTOSIS see src/create_data.c
+#define DISABLE_INDEX_A
 #endif
 
 // The following is for internal use only, do not change the default value!

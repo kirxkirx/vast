@@ -18,6 +18,8 @@ int main() {
  int output_file_counter;
  FILE *output_filedescriptor;
 
+ int disabled_indexes[MAX_NUMBER_OF_INDEXES_TO_STORE];
+
  double **index;          // the actual values of all indexes for all stars
  double **index_expected; // the expected (for non-variables) values of all indexes for all stars
  double **index_spread;   // the RMS (?) scatter of the the expected (for non-variables) values of all indexes for all stars
@@ -234,6 +236,17 @@ int main() {
   i++;
  }
  fclose( lightcurve_statistics_file );
+ 
+ // List the disabled indexes - they will be 0.0 for all stars
+ for ( varindex_counter= 0; varindex_counter < MAX_NUMBER_OF_INDEXES_TO_STORE; varindex_counter++ ) { 
+  get_index_name( varindex_counter, short_index_name );
+  if ( short_index_name[0] == '_' ) {
+   disabled_indexes[varindex_counter]= 1;
+  } else {
+   fprintf( stderr, "Variability index %s is enabled\n", short_index_name );
+   disabled_indexes[varindex_counter]= 0;
+  }
+ }
 
  // Compute the expected index values and their scatter for each star
  // WE RELY ON THE INPUT ARRAY TO BE SORTED IN MAGNITUDE
@@ -333,6 +346,11 @@ int main() {
 
     // For each index
     for ( varindex_counter= 0; varindex_counter < MAX_NUMBER_OF_INDEXES_TO_STORE; varindex_counter++ ) {
+     // Check if the index is disabled
+     if ( disabled_indexes[varindex_counter] == 1 ) {
+      continue;
+     }
+     //
      // initialize index values to make valgrind happy
      // collect index values within the bin into an array
      for ( k= 0, j= start_index; j < stop_index; j++ ) {
@@ -414,6 +432,11 @@ int main() {
     return 1;
    }
    for ( varindex_counter= 0; varindex_counter < MAX_NUMBER_OF_INDEXES_TO_STORE; varindex_counter++ ) {
+    // Check if the index is disabled
+    if ( disabled_indexes[varindex_counter] == 1 ) {
+     continue;
+    }
+    //
     index_filtered[i][varindex_counter]= index_expected[best_reference_point_index][varindex_counter];
     index_spread_filtered[i][varindex_counter]= index_spread[best_reference_point_index][varindex_counter];
     //
@@ -894,6 +917,11 @@ int main() {
    for ( i= 0; i < n_stars_in_lightcurve_statistics_file; i++ ) {
     // compare its indexes with a threshold
     for ( j= 0; j < MAX_NUMBER_OF_INDEXES_TO_STORE; j++ ) {
+     // Check if the index is disabled
+     if ( disabled_indexes[j] == 1 ) {
+      continue;
+     }
+     //
      if ( index[i][j] > index_filtered[i][j] + threshold * index_spread_filtered[i][j] ) {
       number_of_selected_objects[j]++; // count this one as selected object
       // check if this is one of the known variables
@@ -909,6 +937,11 @@ int main() {
 
    // Print the resulting statistic for each index
    for ( j= 0; j < MAX_NUMBER_OF_INDEXES_TO_STORE; j++ ) {
+    // Check if the index is disabled
+    if ( disabled_indexes[j] == 1 ) {
+     continue;
+    }
+    //
     C= (double)number_of_selected_variables[j] / (double)n_known_variables;
     P= (double)number_of_selected_variables[j] / (double)number_of_selected_objects[j];
     F= 2.0 * ( C * P ) / ( C + P );
@@ -1002,6 +1035,11 @@ int main() {
   fprintf( lightcurve_statistics_expected_minus_spread_file, "%lf %lf 0 0 0 ", array_of_magnitudes[i], index_filtered[i][0] - threshold_at_Fmax[0] * index_spread_filtered[i][0] );
   fprintf( lightcurve_statistics_normalized_file, "%+10.6lf %+12.6lf 0 0 %s ", array_of_magnitudes[i], ( index[i][0] - index_filtered[i][0] ) / index_spread_filtered[i][0], lightcurvefilename[i] );
   for ( j= 1; j < MAX_NUMBER_OF_INDEXES_TO_STORE; j++ ) {
+   // Check if the index is disabled
+   if ( disabled_indexes[j] == 1 ) {
+    continue;
+   }
+   //
    for ( output_file_counter= 0; output_file_counter < 6; output_file_counter++ ) {
     tmp_d_value_to_print= 0.0; // initialize to make valgrind happy
     if ( output_file_counter == 0 ) {

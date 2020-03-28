@@ -29,31 +29,59 @@ static inline void get_index_name( int input_index_number, char *output_short_in
   return;
  }
  if ( input_index_number == 6 - 5 ) {
+  #ifdef DISABLE_INDEX_WEIGHTED_SIGMA
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx01_wSTD" );
+  #endif
   return;
  }
  if ( input_index_number == 7 - 5 ) {
+  #ifdef DISABLE_INDEX_SKEWNESS
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx02_skew" );
+  #endif
   return;
  }
  if ( input_index_number == 8 - 5 ) {
+  #ifdef DISABLE_INDEX_KURTOSIS
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx03_kurt" );
+  #endif
   return;
  }
  if ( input_index_number == 9 - 5 ) {
+  #ifdef DISABLE_INDEX_WELCH_STETSON
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx04_I   " );
+  #endif
   return;
  }
  if ( input_index_number == 10 - 5 ) {
+  #ifdef DISABLE_INDEX_STETSON_JKL
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx05_J   " );
+  #endif
   return;
  }
  if ( input_index_number == 11 - 5 ) {
+  #ifdef DISABLE_INDEX_STETSON_JKL
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx06_K   " );
+  #endif
   return;
  }
  if ( input_index_number == 12 - 5 ) {
+  #ifdef DISABLE_INDEX_STETSON_JKL
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx07_L   " );
+  #endif
   return;
  }
  if ( input_index_number == 13 - 5 ) {
@@ -61,92 +89,182 @@ static inline void get_index_name( int input_index_number, char *output_short_in
   return;
  }
  if ( input_index_number == 14 - 5 ) {
+  #ifdef DISABLE_INDEX_MAD
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx09_MAD " );
+  #endif
   return;
  }
  if ( input_index_number == 15 - 5 ) {
+  #ifdef DISABLE_INDEX_LAG1_AUTOCORRELATION
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx10_lag1" );
+  #endif
   return;
  }
  if ( input_index_number == 16 - 5 ) {
+  #ifdef DISABLE_INDEX_ROMS
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx11_RoMS" );
+  #endif
   return;
  }
  if ( input_index_number == 17 - 5 ) {
+  #ifdef DISABLE_INDEX_REDUCED_CHI2
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx12_rCh2" );
+  #endif
   return;
  }
  if ( input_index_number == 18 - 5 ) {
+  #ifdef DISABLE_INDEX_WELCH_STETSON_SIGN_ONLY
+  strcpy( output_short_index_name, "__________" );
+  #else  
   strcpy( output_short_index_name, "idx13_Isgn" );
+  #endif
   return;
  }
  if ( input_index_number == 19 - 5 ) {
+  #ifdef DISABLE_INDEX_PEAK_TO_PEAK_AGN_V
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx14_Vp2p" );
+  #endif
   return;
  }
  if ( input_index_number == 20 - 5 ) {
+  #ifdef DISABLE_INDEX_STETSON_JKL_MAG_CLIP_PAIRS
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx15_Jclp" );
+  #endif
   return;
  }
  if ( input_index_number == 21 - 5 ) {
+  #ifdef DISABLE_INDEX_STETSON_JKL_MAG_CLIP_PAIRS
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx16_Lclp" );
+  #endif
   return;
  }
  if ( input_index_number == 22 - 5 ) {
+  #ifdef DISABLE_INDEX_STETSON_JKL_TIME_WEIGHTING
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx17_Jtim" );
+  #endif
   return;
  }
  if ( input_index_number == 23 - 5 ) {
+  #ifdef DISABLE_INDEX_STETSON_JKL_TIME_WEIGHTING
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx18_Ltim" );
+  #endif
   return;
  }
  if ( input_index_number == 24 - 5 ) {
+  #ifdef DISABLE_INDEX_N3
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx19_N3  " );
+  #endif
   return;
  }
  if ( input_index_number == 25 - 5 ) {
+  #ifdef DISABLE_INDEX_EXCURSIONS
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx20_excr" );
+  #endif
   return;
  }
  if ( input_index_number == 26 - 5 ) {
+  #ifdef DISABLE_INDEX_VONNEUMANN_RATIO
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx21_eta " );
+  #endif
   return;
  }
  if ( input_index_number == 27 - 5 ) {
+  #ifdef DISABLE_INDEX_EXCESS_ABBE_E_A
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx22_E_A " );
+  #endif
   return;
  }
  if ( input_index_number == 28 - 5 ) {
+  #ifdef DISABLE_INDEX_SB
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx23_S_B " );
+  #endif
   return;
  }
  if ( input_index_number == 29 - 5 ) {
+  #ifdef DISABLE_INDEX_NXS
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx24_NXS " );
+  #endif
   return;
  }
  if ( input_index_number == 30 - 5 ) {
+  #ifdef DISABLE_INDEX_IQR
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx25_IQR " );
+  #endif
   return;
  }
- //
+ // the A01--A05 indexes are reserved for the PCA analysis
+ // that was implemented outside of VaST, see
+ // https://ui.adsabs.harvard.edu/abs/2018MNRAS.477.2664M
  if ( input_index_number == 31 - 5 ) {
+  #ifdef DISABLE_INDEX_A
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx26_A01 " );
+  #endif
   return;
  }
  if ( input_index_number == 32 - 5 ) {
+  #ifdef DISABLE_INDEX_A
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx27_A02 " );
+  #endif
   return;
  }
  if ( input_index_number == 33 - 5 ) {
+  #ifdef DISABLE_INDEX_A
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx28_A03 " );
+  #endif
   return;
  }
  if ( input_index_number == 34 - 5 ) {
+  #ifdef DISABLE_INDEX_A
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx29_A04 " );
+  #endif
   return;
  }
  if ( input_index_number == 35 - 5 ) {
+  #ifdef DISABLE_INDEX_A
+  strcpy( output_short_index_name, "__________" );
+  #else
   strcpy( output_short_index_name, "idx30_A05 " );
+  #endif
   return;
  }
 
