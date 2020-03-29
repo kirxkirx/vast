@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# make sure the manual override TELESCOP variable is not set,
+# otherwise it will mess up all the plate-solve tests
+unset TELESCOP
+
 # for test runs with AddressSanitizer 
 export ASAN_OPTIONS=strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
 
@@ -285,21 +289,22 @@ if [ -d ../test_data_photo ];then
    util/wcs_image_calibration.sh ../test_data_photo/SCA1017S_17061_09773__00_00.fit
    if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE004"
-   fi
-   if [ ! -f wcs_SCA1017S_17061_09773__00_00.fit ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE005"
-   fi
-   lib/bin/xy2sky wcs_SCA1017S_17061_09773__00_00.fit 200 200 &>/dev/null
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE005a"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE004_platesolve"
+   else
+    if [ ! -f wcs_SCA1017S_17061_09773__00_00.fit ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE005"
+    fi
+    lib/bin/xy2sky wcs_SCA1017S_17061_09773__00_00.fit 200 200 &>/dev/null
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE005a"
+    fi
    fi
    util/solve_plate_with_UCAC5 ../test_data_photo/SCA1017S_17061_09773__00_00.fit
    if [ ! -f wcs_SCA1017S_17061_09773__00_00.fit.cat.ucac5 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE006"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE006_platesolveucac5"
    else
     TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_SCA1017S_17061_09773__00_00.fit.cat.ucac5 | wc -l | awk '{print $1}'`
     if [ $TEST -lt 420 ];then
@@ -339,7 +344,7 @@ if [ -d ../test_data_photo ];then
    util/solve_plate_with_UCAC5 ../test_data_photo/SCA10670S_13788_08321__00_00.fit
    if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE007"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE007_platesolveucac5"
    fi
    if [ ! -s wcs_SCA10670S_13788_08321__00_00.fit ];then
     TEST_PASSED=0
