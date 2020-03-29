@@ -6435,12 +6435,12 @@ if [ -d ../NMW_Saturn_test ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2010x"
   fi
   #
-  grep --quiet -e "2019 11 03.6470  2458791.1470  11.27  19:03:" -e "2019 11 03.6470  2458791.1470  11.29  19:03:" transient_report/index.html
+  grep --quiet -e "2019 11 03.6470  2458791.1470  11\.2.  19:03:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2010a"
   fi
-  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  11.27  19:03:" -e "2019 11 03.6470  2458791.1470  11.29  19:03:" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  11\.2.  19:03:" transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:03:48.76 -26:58:59.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
@@ -6599,12 +6599,12 @@ if [ -d ../NMW_Saturn_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2014"
   fi
-  grep --quiet -e "2019 11 03.6470  2458791.1470  12\.0.  19:01:" -e "2019 11 03.6470  2458791.1470  12.04  19:01:" transient_report/index.html
+  grep --quiet -e "2019 11 03.6470  2458791.1470  12\.0.  19:01:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2014a"
   fi
-  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  12\.0.  19:01:" -e "2019 11 03.6470  2458791.1470  12.04  19:01:" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  12\.0.  19:01:" transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:01:30.92 -21:19:30.1 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
@@ -7657,18 +7657,18 @@ if [ -d ../vast_test__dark_flat_flag ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Special Dark Flat Flag test " >> /dev/stderr
- echo -n "Special Dark Flat Flag test: " >> vast_test_report.txt 
+ echo "Dark Flat Flag test " >> /dev/stderr
+ echo -n "Dark Flat Flag test: " >> vast_test_report.txt 
  util/examples/test__dark_flat_flag.sh
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_DARK_FLAT_FLAG_001"
  fi
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSpecial Dark Flat Flag test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo -e "\n\033[01;34mDark Flat Flag test \033[01;32mPASSED\033[00m" >> /dev/stderr
   echo "PASSED" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSpecial Dark Flat Flag test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo -e "\n\033[01;34mDark Flat Flag test \033[01;31mFAILED\033[00m" >> /dev/stderr
   echo "FAILED" >> vast_test_report.txt
  fi
  #
