@@ -22,7 +22,22 @@ if [ $? -eq 0 ];then
 fi
 
 while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
- rm -f transient_report/index.tmp
+ if [ -f transient_report/index.tmp ];then
+  rm -f transient_report/index.tmp
+ fi
+ if [ -f transient_report/index.tmp2 ];then
+  rm -f transient_report/index.tmp2
+ fi
+ # Moved the final check here
+ util/transients/report_transient.sh $LIGHTCURVE_FILE_OUTDAT  > transient_report/index.tmp2
+ if [ $? -eq 0 ];then
+  echo "The candidate $TRANSIENT_NAME did not pass the final checks"
+  if [ -f transient_report/index.tmp2 ];then
+   rm -f transient_report/index.tmp2
+  fi
+  continue
+ fi
+
  TRANSIENT_NAME=`basename $LIGHTCURVE_FILE_OUTDAT .dat`
  TRANSIENT_NAME=${TRANSIENT_NAME/out/}
  TRANSIENT_NAME="$TRANSIENT_NAME"_`basename $C .fts`
@@ -68,15 +83,11 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  done < $LIGHTCURVE_FILE_OUTDAT
  
  echo "</br>" >> transient_report/index.tmp
- #echo "<pre>" >> transient_report/index.tmp
- #cat tmp.description >> transient_report/index.tmp
- #util/transients/report_transient.sh $LIGHTCURVE_FILE_OUTDAT 120 >> transient_report/index.tmp
- util/transients/report_transient.sh $LIGHTCURVE_FILE_OUTDAT  >> transient_report/index.tmp
- #echo "!!! $TRANSIENT_NAME !!!"
- #cat transient_report/index.tmp
- #echo "!!!!!!!!!!!!!!!!!!!!!!!"
+ #util/transients/report_transient.sh $LIGHTCURVE_FILE_OUTDAT  >> transient_report/index.tmp
  # if the final check passed well
- if [ $? -eq 0 ];then
+ #if [ $? -eq 0 ];then
+
+  cat transient_report/index.tmp2 >> transient_report/index.tmp
 
   #echo "</pre>" >> transient_report/index.tmp
   
@@ -144,11 +155,16 @@ ds9 -frame lock wcs  " >> transient_report/index.tmp
 
   echo "<HR>" >> transient_report/index.tmp
   cat transient_report/index.tmp >> transient_report/index$1.html
- else
-  tail -n1 transient_report/index.tmp
-  echo "The candidate $TRANSIENT_NAME did not pass the final checks"
-  rm -f transient_report/index.tmp
- fi
+ #else
+ # tail -n1 transient_report/index.tmp
+ # echo "The candidate $TRANSIENT_NAME did not pass the final checks"
+ # rm -f transient_report/index.tmp
+ #fi
 done < candidates-transients.lst
-rm -f transient_report/index.tmp
+if [ -f transient_report/index.tmp ];then
+ rm -f transient_report/index.tmp
+fi
+if [ -f transient_report/index.tmp2 ];then
+ rm -f transient_report/index.tmp2
+fi
 rm -f *_preview.png
