@@ -30,7 +30,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  fi
  # Moved the final check here
  util/transients/report_transient.sh $LIGHTCURVE_FILE_OUTDAT  > transient_report/index.tmp2
- if [ $? -eq 0 ];then
+ if [ $? -ne 0 ];then
   echo "The candidate $TRANSIENT_NAME did not pass the final checks"
   if [ -f transient_report/index.tmp2 ];then
    rm -f transient_report/index.tmp2
