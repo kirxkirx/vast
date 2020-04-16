@@ -38,11 +38,11 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   echo "Plate-solving the images" 
  # WCS-calibration
  for i in $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE ;do 
-  TELESCOP="NMW_camera" util/wcs_image_calibration.sh $i &
+  TELESCOP="NMW_camera" util/wcs_image_calibration.sh $i #&
  done 
 
  # Wait for all children to end processing
- wait
+ #wait
  
  # Check that the plates were actually solved
  for i in $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE ;do 
