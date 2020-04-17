@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# When adapring this script for a new dataset, watch for the signs
+### ===> MAGNITUDE LIMITS HARDCODED HERE <===
+
 #
 # This script is an example of how an automated transient-detection pipeline may be set up using VaST.
 # Note, that in this example there are two reference and two second-epoch images.
@@ -365,22 +368,47 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  echo "Calibrating the magnitude scale with Tycho-2 stars" >> transient_factory_test31.txt
  # Calibrate magnitude scale with Tycho-2 stars in the field 
  echo "y" | util/transients/calibrate_current_field_with_tycho2.sh 
+ MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
+ # Check that the magnitude calibration actually worked
+ for i in `cat candidates-transients.lst | awk '{print $1}'` ;do 
+  ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
+  cat "$i" | awk '{print $2}' | util/colstat 2>&1 | grep 'MEAN=' | awk '{if ( $2 < -5 && $2 >18 ) print "ERROR"}' | grep 'ERROR' && break
+ done | grep --quiet 'ERROR'
+ #
+ if [ $? -eq 0 ] || [ $MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE -ne 0 ] || [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
+  # Wait for the solve_plate_with_UCAC5 stuff to finish
+  wait
+  # Throw an error
+  echo "ERROR calibrating magnitudes in the field $FIELD"
+  echo "ERROR calibrating magnitudes in the field $FIELD" >> transient_factory_test31.txt
+  echo "***** MAGNITUDE CALIBRATION ERROR *****" >> transient_factory.log
+  echo "############################################################" >> transient_factory.log
+  # continue to the next field
+  continue
+ fi
 
  ################## Quality cuts applied to calibrated magnitudes of the candidate transients ##################
 
  echo "Filter-out faint candidates..." >> transient_factory_test31.txt
  echo "Filter-out faint candidates..."
  # Filter-out faint candidates
+ ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
  #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">11.5"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
  #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">12.0"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
  #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($1+$2)/2>12.0 ) print 1; else print 0 }'` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
  #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">12.5"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
  for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">13.0"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
+ echo "Filter-out suspiciously bright candidates..." >> transient_factory_test31.txt
+ echo "Filter-out suspiciously bright candidates..."
+ # Filter-out suspiciously bright candidates
+ ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
+ for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2"<-5.0"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+
  echo "Filter-out candidates with large difference between measured mags in one epoch..." >> transient_factory_test31.txt
  echo "Filter-out candidates with large difference between measured mags in one epoch..."
  # 2nd epoch
- cp candidates-transients.lst DEBUG_BACKUP_candidates-transients.lst
+ #cp candidates-transients.lst DEBUG_BACKUP_candidates-transients.lst
  # Filter-out candidates with large difference between measured mags
  for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($1-$2)>0.4 ) print 1; else print 0 }'` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
  # Filter-out candidates with large difference between measured mags
@@ -522,6 +550,6 @@ if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ];then
  fi
 fi
 
-# may want to comment this out for debugging
-util/clean_data.sh
+# why do we need this - the transients are all already reported
+#util/clean_data.sh
 

@@ -153,7 +153,7 @@ int main( int argc, char **argv ) {
    if ( strlen( ep->d_name ) < 8 )
     continue; // make sure the filename is not too short for the following tests
    if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[strlen( ep->d_name ) - 1] == 't' && ep->d_name[strlen( ep->d_name ) - 2] == 'a' && ep->d_name[strlen( ep->d_name ) - 3] == 'd' ) {
-    emergency_stop= 0; // reset the mergency stop flag
+    emergency_stop= 0; // reset the emergency stop flag
     //puts (ep->d_name);
     lightcurvefile= fopen( ep->d_name, "r" );
     if ( NULL == lightcurvefile ) {
@@ -166,8 +166,9 @@ int main( int argc, char **argv ) {
      exit( 1 );
     }
     while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
-     if ( jd == 0.0 )
+     if ( jd == 0.0 ) {
       continue; // if this line could not be parsed, try the next one
+     }
 
      newmag= maxmag= minmag= 0.0; // reset
 
@@ -182,19 +183,22 @@ int main( int argc, char **argv ) {
       minmag= eval_photocurve( mag - merr, a_, operation_mode );
      }
      //newmerr=(maxmag-minmag)/2.0;
-     if ( 0 != isnan( maxmag ) )
+     if ( 0 != isnan( maxmag ) ) {
       maxmag= 0.0;
-     if ( 0 != isnan( minmag ) )
+     }
+     if ( 0 != isnan( minmag ) ) {
       minmag= 0.0;
+     }
      newmerr= MAX( maxmag - newmag, newmag - minmag ); // fallback option
      if ( maxmag != 0.0 && minmag != 0.0 ) {
       // Normal option
       newmerr= ( ( maxmag - newmag ) + ( newmag - minmag ) ) / 2.0;
      }
-     if ( newmerr > MAX_MAG_ERROR )
+     if ( newmerr > MAX_MAG_ERROR ) {
       continue; // drop measurements with very large error bars
-     if ( newmag > FAINTEST_STARS_ANYMAG ) {
-      fprintf( stderr, "Magnitude conversion ERROR: %lf>%lf\n", newmag, FAINTEST_STARS_ANYMAG );
+     }
+     if ( newmag > FAINTEST_STARS_ANYMAG || newmag < BRIGHTEST_STARS ) {
+      fprintf( stderr, "Magnitude conversion ERROR: %lf>%lf or %lf<%lf\n", newmag, FAINTEST_STARS_ANYMAG, newmag, BRIGHTEST_STARS );
       if ( operation_mode == 0 ) {
        fprintf( stderr, "newmag=a*mag*mag+b*mag+c; %lf=%lf*%lf*%lf+%lf*%lf+%lf;\n\n", newmag, a, mag, mag, b, mag, c );
       }
@@ -220,6 +224,7 @@ int main( int argc, char **argv ) {
   (void)closedir( dp );
  } else {
   perror( "Couldn't open the directory" );
+  return -1;
  }
 
  fprintf( stderr, "All lightcurves processed!  =)\n" );

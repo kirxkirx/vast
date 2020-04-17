@@ -84,14 +84,5 @@ if [ ! -s "$SEXTRACTOR_CATALOG_NAME" ];then
 fi
 cp -v "$SEXTRACTOR_CATALOG_NAME" wcsmag.cat
 
-# No need to re-run SExtractor -- all the stuff below is supposed to be performed by util/wcs_image_calibration.sh
-#SEXTRACTOR_PARAMETER_FILE=`cat vast_summary.log |grep "SExtractor parameter file:" | awk '{print $4}'`
-#APERTURE=`grep $REFERENCE_IMAGE vast_image_details.log | awk '{print $9}' |head -n1`
-#echo "Measuring the reference image..."
-#COMMAND="$SEXTRACTOR -c $SEXTRACTOR_PARAMETER_FILE -PARAMETERS_NAME wcs.param -PHOT_APERTURES $APERTURE -CATALOG_NAME wcsmag.cat $WCS_CALIBRATED_REFERENCE_IMAGE"
-#echo $COMMAND
-#$COMMAND
-#lib/correct_sextractor_wcs_catalog_using_xy2sky.sh "$WCS_CALIBRATED_REFERENCE_IMAGE" wcsmag.cat
-#debug
 #valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes lib/catalogs/read_tycho2
 util/calibrate_magnitude_scale `lib/catalogs/read_tycho2`

@@ -60,6 +60,7 @@ rm -f pgplot.png pgplot.ps
 rm -f rm -rf servers*.ping_ok
 rm -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
 rm -f lightcurve.tmp_emergency_stop_debug
+rm -f DEBUG_BACKUP_candidates-transients.lst
 ####################################
 for BADFILE in shuffled_lightcurve.txt test_lightcurve_outlier.txt test_lightcurve.tex test_lightcurve_without_outlier.txt lk.periodogram deeming.periodogram out_Cepheid_TDB_HJD_VARTOOLS.tmp out_Cepheid_TT_HJD_VaST.tmp test_heliocentric_correction.tmp test_heliocentric_correction.tmp_hjdTT test_heliocentric_correction.tmp_vartools valgrind_test.out magcalibdebug.txt A 2mass.tmp script.tmp ;do
  if [ -f "$BADFILE" ];then
