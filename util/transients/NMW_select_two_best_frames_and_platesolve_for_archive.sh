@@ -27,7 +27,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   # There are more than two second-epoch images - do a preliminary VaST run to choose the two images with best seeing
   cp -v default.sex.telephoto_lens_onlybrightstars_v1 default.sex 
   echo "Preliminary VaST run" 
-  ./vast --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages  "$NEW_IMAGES"/*"$FIELD"_*_*.fts  
+  ./vast --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages  "$NEW_IMAGES"/*"$FIELD"_*_*.fts  
   # column 9 in vast_image_details.log is the aperture size in pixels
   SECOND_EPOCH__FIRST_IMAGE=`cat vast_image_details.log | sort -nk9 | head -n1 | awk '{print $17}'`
   SECOND_EPOCH__SECOND_IMAGE=`cat vast_image_details.log | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}'`
@@ -35,10 +35,15 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  ################################
 
  # Plate-solve
-  echo "Plate-solving the images" 
+ echo "Plate-solving the images" 
  # WCS-calibration
  for i in $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE ;do 
-  TELESCOP="NMW_camera" util/wcs_image_calibration.sh $i #&
+  WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $i`
+  if [ ! -f "solved_images/$WCS_IMAGE_NAME_FOR_CHECKS" ];then
+   TELESCOP="NMW_camera" util/wcs_image_calibration.sh $i #&
+  else
+   echo "Found an already solved image solved_images/$WCS_IMAGE_NAME_FOR_CHECKS"
+  fi
  done 
 
  # Wait for all children to end processing
