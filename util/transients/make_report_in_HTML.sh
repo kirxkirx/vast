@@ -28,6 +28,11 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  if [ -f transient_report/index.tmp2 ];then
   rm -f transient_report/index.tmp2
  fi
+ 
+ TRANSIENT_NAME=`basename $LIGHTCURVE_FILE_OUTDAT .dat`
+ TRANSIENT_NAME=${TRANSIENT_NAME/out/}
+ TRANSIENT_NAME="$TRANSIENT_NAME"_`basename $C .fts`
+ 
  # Moved the final check here
  util/transients/report_transient.sh $LIGHTCURVE_FILE_OUTDAT  > transient_report/index.tmp2
  if [ $? -ne 0 ];then
@@ -38,9 +43,6 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
   continue
  fi
 
- TRANSIENT_NAME=`basename $LIGHTCURVE_FILE_OUTDAT .dat`
- TRANSIENT_NAME=${TRANSIENT_NAME/out/}
- TRANSIENT_NAME="$TRANSIENT_NAME"_`basename $C .fts`
  echo "Preparing report for the candidate $TRANSIENT_NAME"
  if [ $USE_JAVASCRIPT -eq 1 ];then
   echo "

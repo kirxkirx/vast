@@ -175,14 +175,14 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # check if all images are actually there
  N=`ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | wc -l`
  if [ $N -lt 2 ];then
-  echo "ERROR: to few refereence images for the field $FIELD"
-  echo "ERROR: to few refereence images for the field $FIELD" >> transient_factory_test31.txt
+  echo "ERROR: too few refereence images for the field $FIELD"
+  echo "ERROR: too few refereence images for the field $FIELD" >> transient_factory_test31.txt
   continue
  fi
  N=`ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | wc -l`
  if [ $N -lt 2 ];then
-  echo "ERROR: to few new images for the field $FIELD"
-  echo "ERROR: to few new images for the field $FIELD" >> transient_factory_test31.txt
+  echo "ERROR: too few new images for the field $FIELD"
+  echo "ERROR: too few new images for the field $FIELD" >> transient_factory_test31.txt
   continue
  fi
  echo "Checking input images" >> transient_factory_test31.txt
