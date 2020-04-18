@@ -298,7 +298,8 @@ if [ ! -z "$VIZIER_SITE" ];then
  if [ `cat $LIGHTCURVEFILE | wc -l` -eq 2 ];then
   # New last-ditch effort, search Gaia DR2 for a known star of approximately the same brightenss
   ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
-  MAG_BRIGHT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1-0.5}'`
+  #MAG_BRIGHT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1-0.5}'`
+  MAG_BRIGHT_SEARCH_LIMIT=0.0
   MAG_FAINT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.5}'`
   #if [ -z "$VIZIER_SITE" ];then
   # VIZIER_SITE=`lib/choose_vizier_mirror.sh`
