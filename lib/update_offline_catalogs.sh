@@ -143,7 +143,7 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
 done
 
 ### Check if the  Bright  Star  Catalogue  (BSC) has been downloaded
-if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ $DOWNLOAD_EVERYTHING -eq 1 ] ;then
+if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ ! -s "lib/catalogs/brightbright_star_catalog_radeconly.txt" ] ;then
  echo "Downloading the Bright Star Catalogue"
  # The CDS link is down
  #curl --silent ftp://cdsarc.u-strasbg.fr/pub/cats/V/50/catalog.gz | gunzip > lib/catalogs/bright_star_catalog_original.txt

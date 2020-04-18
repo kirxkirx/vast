@@ -252,7 +252,7 @@ if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
  #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
  while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
-  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 15/3600.0 ) print "FOUND" }' | grep "FOUND" && break
+  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 17/3600.0 ) print "FOUND" }' | grep "FOUND" && break
  done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"  && exit 1
 fi 
 ### Apply the bright BSC bright stars exclusion list
@@ -261,7 +261,7 @@ if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
  #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
  while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
-  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 180/3600.0 ) print "FOUND" }' | grep "FOUND" && break
+  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 240/3600.0 ) print "FOUND" }' | grep "FOUND" && break
  done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"  && exit 1
 fi
 ### Apply the BSC bright stars exclusion list
@@ -270,8 +270,7 @@ if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
  #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
  while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
-  #lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 40/3600.0 ) print "FOUND" }' | grep "FOUND" && break
-  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 80/3600.0 ) print "FOUND" }' | grep "FOUND" && break
+  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 90/3600.0 ) print "FOUND" }' | grep "FOUND" && break
  done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"  && exit 1
 fi
 ### Apply the Tycho-2 bright stars exclusion list
@@ -289,16 +288,33 @@ if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
  #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
  while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
-  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 15/3600.0 ) print "FOUND" }' | grep "FOUND" && break
+  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 17/3600.0 ) print "FOUND" }' | grep "FOUND" && break
  done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"  && exit 1
 fi
 ############
-
+# do this only if $VIZIER_SITE is set
+if [ ! -z "$VIZIER_SITE" ];then
+ # if this is a new source
+ if [ `cat $LIGHTCURVEFILE | wc -l` -eq 2 ];then
+  # New last-ditch effort, search Gaia DR2 for a known star of approximately the same brightenss
+  ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
+  MAG_BRIGHT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1-0.5}'`
+  MAG_FAINT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.5}'`
+  #if [ -z "$VIZIER_SITE" ];then
+  # VIZIER_SITE=`lib/choose_vizier_mirror.sh`
+  #fi
+  # We assume $TIMEOUTCOMMAND is set by the parent script
+  $TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/345/gaia2  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=17  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null |grep -v \# | grep -v "\-\-\-" |grep -v "sec" | grep -v 'Gma' |grep -v "RA_ICRS" | grep --quiet -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE'
+  if [ $? -eq 0 ];then
+   echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2"
+   exit 1
+  fi # if Gaia DR2 match found
+ fi # if this is a new source
+fi # if $VIZIER_SITE is set
+############
 lib/bin/skycoor -g $RADEC_MEAN_HMS J2000
 
 lib/catalogs/check_catalogs_offline $RA_MEAN $DEC_MEAN
-#util/search_databases_with_curl.sh `lib/deg2hms $RA_MEAN $DEC_MEAN` H |grep -v "Starting" |grep -v "Searching"
-#util/transients/MPCheck.sh `lib/deg2hms $RADEC` $DATE $TIME H |grep -v "Starting"
 util/transients/MPCheck.sh $RADEC_MEAN_HMS $DATE $TIME H | grep -v "Starting"
 
 echo -n "<a href=\"https://wis-tns.weizmann.ac.il/search?ra=${RA_MEAN_HMS//:/%3A}&decl=${DEC_MEAN_HMS//:/%3A}&radius=15&coords_unit=arcsec\" target=\"_blank\">Check this position in <font color=\"tomato\">TNS</font>.</a>                         <a href='http://www.astronomy.ohio-state.edu/asassn/transients.html'>Manually check the ASAS-SN list of transients!</a>

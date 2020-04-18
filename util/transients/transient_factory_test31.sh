@@ -74,10 +74,20 @@ echo "Reference image directory is set to $REFERENCE_IMAGES"
 if [ -z $1 ]; then
  echo "Usage: $0 PATH_TO_DIRECTORY_WITH_IMAGE_PAIRS"
  echo "Usage: $0 PATH_TO_DIRECTORY_WITH_IMAGE_PAIRS" >> transient_factory_test31.txt
- exit
+ exit 1
 fi
 
-#NEW_IMAGES=$1
+# We may need it for the new transients check in util/transients/report_transient.sh
+export VIZIER_SITE=`lib/choose_vizier_mirror.sh`
+### 
+TIMEOUTCOMMAND=`"$VAST_PATH"lib/find_timeout_command.sh`
+if [ $? -ne 0 ];then
+ echo "WARNING: cannot find timeout command"
+else
+ TIMEOUTCOMMAND="$TIMEOUTCOMMAND 10 "
+fi
+export TIMEOUTCOMMAND
+
 
 # do this only if transient_report is not a symlink
 if [ ! -L transient_report ];then
@@ -468,7 +478,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   if [ -s lib/catalogs/brightbright_star_catalog_radeconly.txt ];then
    SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
    WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
-   lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/brightbright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bsc.txt
+   lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/brightbright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bbsc.txt
    cp -v exclusion_list_bbsc.txt local_wcs_cache/ >> transient_factory_test31.txt
   fi
  fi
@@ -523,7 +533,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  done # for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
  
  # clean up the local cache
- for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.txt exclusion_list_tycho2.txt ;do
+ for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.txt exclusion_list_bbsc.txt exclusion_list_tycho2.txt ;do
   if [ -f "$FILE_TO_REMOVE" ];then
    rm -f "$FILE_TO_REMOVE"
    echo "Removing $FILE_TO_REMOVE" >> transient_factory_test31.txt
