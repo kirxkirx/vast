@@ -154,7 +154,7 @@ if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ ! -s "lib/catal
   cat lib/catalogs/bright_star_catalog_original.txt | grep -v -e 'NOVA' -e '47    Tuc' -e 'M 31' -e 'NGC 2281' -e 'M 67' -e 'NGC 2808' | while IFS= read -r STR ;do 
    echo "${STR:75:2}:${STR:77:2}:${STR:79:4} ${STR:83:3}:${STR:86:2}:${STR:88:2}" 
   done > lib/catalogs/bright_star_catalog_radeconly.txt
-  echo "Extracting the R.A. Dec. list (stars brighter than mag 3)"
+  echo "Extracting the R.A. Dec. list (stars brighter than mag 4)"
   # Exact lines, no trimming, Without '-r' option, any backslashes in the input will be discarded. You should almost always use the -r option with read.
   cat lib/catalogs/bright_star_catalog_original.txt | grep -v -e 'NOVA' -e '47    Tuc' -e 'M 31' -e 'NGC 2281' -e 'M 67' -e 'NGC 2808' | while IFS= read -r STR ;do 
    #echo "#$STR#"
@@ -172,7 +172,7 @@ if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ ! -s "lib/catal
    fi
    # Make sure we have the proper format
    MAG=`echo "$MAG" | awk '{printf "%.2f", $1}'`
-   TEST=`echo "$MAG > 3.0" | bc -ql`
+   TEST=`echo "$MAG > 4.0" | bc -ql`
    if [ $TEST -eq 1 ];then
     continue
    fi
