@@ -143,17 +143,41 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
 done
 
 ### Check if the  Bright  Star  Catalogue  (BSC) has been downloaded
-if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ];then
+if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ $DOWNLOAD_EVERYTHING -eq 1 ] ;then
  echo "Downloading the Bright Star Catalogue"
  # The CDS link is down
  #curl --silent ftp://cdsarc.u-strasbg.fr/pub/cats/V/50/catalog.gz | gunzip > lib/catalogs/bright_star_catalog_original.txt
  # Changed to local copy
  curl --silent http://scan.sai.msu.ru/~kirx/data/bright_star_catalog_original.txt.gz | gunzip > lib/catalogs/bright_star_catalog_original.txt
  if [ $? -eq 0 ];then
-  echo "Extracting the R.A. Dec. list"
-  cat lib/catalogs/bright_star_catalog_original.txt | grep -v -e 'NOVA' -e '47    Tuc' -e 'M 31' -e 'NGC 2281' -e 'M 67' -e 'NGC 2808' | while read STR ;do 
+  echo "Extracting the R.A. Dec. list (all BSC)"
+  cat lib/catalogs/bright_star_catalog_original.txt | grep -v -e 'NOVA' -e '47    Tuc' -e 'M 31' -e 'NGC 2281' -e 'M 67' -e 'NGC 2808' | while IFS= read -r STR ;do 
    echo "${STR:75:2}:${STR:77:2}:${STR:79:4} ${STR:83:3}:${STR:86:2}:${STR:88:2}" 
   done > lib/catalogs/bright_star_catalog_radeconly.txt
+  echo "Extracting the R.A. Dec. list (stars brighter than mag 3)"
+  # Exact lines, no trimming, Without '-r' option, any backslashes in the input will be discarded. You should almost always use the -r option with read.
+  cat lib/catalogs/bright_star_catalog_original.txt | grep -v -e 'NOVA' -e '47    Tuc' -e 'M 31' -e 'NGC 2281' -e 'M 67' -e 'NGC 2808' | while IFS= read -r STR ;do 
+   #echo "#$STR#"
+   MAG=${STR:102:4}
+   if [ -z "$MAG" ];then
+    continue
+   fi
+   # get rid of white spaces
+   MAG=`echo $MAG`
+   # https://stackoverflow.com/questions/806906/how-do-i-test-if-a-variable-is-a-number-in-bash
+   re='^[+-]?[0-9]+([.][0-9]+)?$'
+   if ! [[ $MAG =~ $re ]] ; then
+    echo "TEST ERROR: $MAG" >> /dev/stderr
+    continue
+   fi
+   # Make sure we have the proper format
+   MAG=`echo "$MAG" | awk '{printf "%.2f", $1}'`
+   TEST=`echo "$MAG > 3.0" | bc -ql`
+   if [ $TEST -eq 1 ];then
+    continue
+   fi
+   echo "${STR:75:2}:${STR:77:2}:${STR:79:4} ${STR:83:3}:${STR:86:2}:${STR:88:2}" 
+  done > lib/catalogs/brightbright_star_catalog_radeconly.txt
  else
   echo "ERROR downloading/unpacking the Bright Star Catalogue"
  fi

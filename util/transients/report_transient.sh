@@ -255,7 +255,16 @@ if [ -s "$EXCLUSION_LIST_FILE" ];then
   lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 15/3600.0 ) print "FOUND" }' | grep "FOUND" && break
  done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"  && exit 1
 fi 
-### Apply the Tycho-2 bright stars exclusion list
+### Apply the bright BSC bright stars exclusion list
+EXCLUSION_LIST_FILE="exclusion_list_bbsc.txt"
+if [ -s "$EXCLUSION_LIST_FILE" ];then
+ # Exclude previously considered candidates
+ #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
+ while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
+  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 180/3600.0 ) print "FOUND" }' | grep "FOUND" && break
+ done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"  && exit 1
+fi
+### Apply the BSC bright stars exclusion list
 EXCLUSION_LIST_FILE="exclusion_list_bsc.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates

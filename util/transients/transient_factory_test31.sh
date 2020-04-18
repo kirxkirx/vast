@@ -46,7 +46,7 @@ fi
 # Check for a local copy of UCAC5
 # (this is specific to our in-house setup)
 if [ ! -d lib/catalogs/ucac5 ];then
- for TEST_THIS_DIR in /dataX/kirx/UCAC5 /mnt/usb/UCAC5 /home/kirx/UCAC5 $HOME/UCAC5 ../UCAC5 ;do
+ for TEST_THIS_DIR in /mnt/usb/UCAC5 /dataX/kirx/UCAC5 /home/kirx/UCAC5 $HOME/UCAC5 ../UCAC5 ;do
   if [ -d $TEST_THIS_DIR ];then
    ln -s $TEST_THIS_DIR lib/catalogs/ucac5
    echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR"
@@ -208,6 +208,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   if [ $? -eq 0 ];then
    # Bad reference image
    echo "ERROR clouds on second-epoch images?"
+   echo "***** IMAGE PROCESSING ERROR (clouds?) *****" >> transient_factory.log
+   echo "############################################################" >> transient_factory.log
    echo "ERROR clouds on second-epoch images?" >> transient_factory_test31.txt
    continue
   fi
@@ -453,17 +455,26 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  ### Prepare the exclusion lists for this field
  echo "Preparing the exclusion lists for this field" >> transient_factory_test31.txt
  # Exclude the previously considered candidates
- if [ ! -f exclusion_list.txt ];then
-  if [ -f ../exclusion_list.txt ];then
+ if [ ! -s exclusion_list.txt ];then
+  if [ -s ../exclusion_list.txt ];then
    SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
    WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
    lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @../exclusion_list.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list.txt
    cp -v exclusion_list.txt local_wcs_cache/ >> transient_factory_test31.txt
   fi
  fi
+ # Exclude stars from the Bright Star Catalog with magnitudes < 3
+ if [ ! -s exclusion_list_bbsc.txt ];then
+  if [ -s lib/catalogs/brightbright_star_catalog_radeconly.txt ];then
+   SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
+   WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
+   lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/brightbright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bsc.txt
+   cp -v exclusion_list_bbsc.txt local_wcs_cache/ >> transient_factory_test31.txt
+  fi
+ fi
  # Exclude stars from the Bright Star Catalog with magnitudes < 7
- if [ ! -f exclusion_list_bsc.txt ];then
-  if [ -f lib/catalogs/bright_star_catalog_radeconly.txt ];then
+ if [ ! -s exclusion_list_bsc.txt ];then
+  if [ -s lib/catalogs/bright_star_catalog_radeconly.txt ];then
    SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
    WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
    lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/bright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bsc.txt
@@ -471,8 +482,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   fi
  fi
  # Exclude bright Tycho-2 stars, by default the magnitude limit is set to vt < 9
- if [ ! -f exclusion_list_tycho2.txt ];then
-  if [ -f lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
+ if [ ! -s exclusion_list_tycho2.txt ];then
+  if [ -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
    SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
    WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
    lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | while read A ;do lib/deg2hms $A ;done > exclusion_list_tycho2.txt
