@@ -6422,40 +6422,41 @@ if [ -d ../NMW_Saturn_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2004"
   fi
+  # QY Sgr is now excluded as having a bright Gaia DR2 counterpart
   # now search for specific objects
-  grep --quiet "QY Sgr" transient_report/index.html
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2010"
-  fi
+  #grep --quiet "QY Sgr" transient_report/index.html
+  #if [ $? -ne 0 ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2010"
+  #fi
   # this should NOT be found! First epoch image is used along the 2nd epoch images
   grep --quiet "2019 11 03.7864  2457867.9530  12.18" transient_report/index.html
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2010x"
   fi
-  #
-  grep --quiet -e "2019 11 03.6470  2458791.1470  11\.2.  19:03:" transient_report/index.html
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2010a"
-  fi
-  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  11\.2.  19:03:" transient_report/index.html | awk '{print $6" "$7}'`
-  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:03:48.76 -26:58:59.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
-  # NMW scale is 8.4"/pix
-  TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
-  re='^[0-9]+$'
-  if ! [[ $TEST =~ $re ]] ; then
-   echo "TEST ERROR"
-   TEST_PASSED=0
-   TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2010a_TOO_FAR_TEST_ERROR"
-  else
-   if [ $TEST -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2010a_TOO_FAR_$DISTANCE_DEGREES"
-   fi
-  fi
+  ##
+  #grep --quiet -e "2019 11 03.6470  2458791.1470  11\.2.  19:03:" transient_report/index.html
+  #if [ $? -ne 0 ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2010a"
+  #fi
+  #RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  11\.2.  19:03:" transient_report/index.html | awk '{print $6" "$7}'`
+  #DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:03:48.76 -26:58:59.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  ## NMW scale is 8.4"/pix
+  #TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
+  #re='^[0-9]+$'
+  #if ! [[ $TEST =~ $re ]] ; then
+  # echo "TEST ERROR"
+  # TEST_PASSED=0
+  # TEST=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2010a_TOO_FAR_TEST_ERROR"
+  #else
+  # if [ $TEST -eq 0 ];then
+  #  TEST_PASSED=0
+  #  FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2010a_TOO_FAR_$DISTANCE_DEGREES"
+  # fi
+  #fi
   #
   grep --quiet "V1058 Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
