@@ -300,7 +300,7 @@ if [ ! -z "$VIZIER_SITE" ];then
   ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
   #MAG_BRIGHT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1-0.5}'`
   MAG_BRIGHT_SEARCH_LIMIT=0.0
-  MAG_FAINT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.5}'`
+  MAG_FAINT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.75}'`
   #if [ -z "$VIZIER_SITE" ];then
   # VIZIER_SITE=`lib/choose_vizier_mirror.sh`
   #fi
