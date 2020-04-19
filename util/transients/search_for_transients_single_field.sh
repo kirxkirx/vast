@@ -99,6 +99,10 @@ fi
 if [ -f exclusion_list_local.txt ];then
  rm -f exclusion_list_local.txt
 fi
+# This file is for including Gaia DR2 matches to the exclusio list (not used in this script)
+if [ -f exclusion_list_gaiadr2.txt ];then
+ rm -f exclusion_list_gaiadr2.txt
+fi
 ######################################################################################################################################
 ######################################################################################################################################
 

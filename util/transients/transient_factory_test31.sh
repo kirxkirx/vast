@@ -533,7 +533,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  done # for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
  
  # clean up the local cache
- for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.txt exclusion_list_bbsc.txt exclusion_list_tycho2.txt ;do
+ for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.txt exclusion_list_bbsc.txt exclusion_list_tycho2.txt exclusion_list_gaiadr2.txt ;do
   if [ -f "$FILE_TO_REMOVE" ];then
    rm -f "$FILE_TO_REMOVE"
    echo "Removing $FILE_TO_REMOVE" >> transient_factory_test31.txt
@@ -573,6 +573,10 @@ if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ];then
  if [ $? -ne 0 ];then
   if [ -f ../exclusion_list.txt ];then
    grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' >> ../exclusion_list.txt
+   if [ -f exclusion_list_gaiadr2.txt ];then
+    cat exclusion_list_gaiadr2.txt >> ../exclusion_list.txt
+    rm -f exclusion_list_gaiadr2.txt
+   fi
   fi
  fi
 fi
