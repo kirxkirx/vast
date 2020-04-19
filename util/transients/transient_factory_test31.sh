@@ -572,11 +572,14 @@ if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ];then
  echo "$PWD" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
  if [ $? -ne 0 ];then
   if [ -f ../exclusion_list.txt ];then
-   grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' >> ../exclusion_list.txt
+   grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' > exclusion_list_index_html.txt
    if [ -f exclusion_list_gaiadr2.txt ];then
-    cat exclusion_list_gaiadr2.txt >> ../exclusion_list.txt
+    cat exclusion_list_gaiadr2.txt >> exclusion_list_index_html.txt
     rm -f exclusion_list_gaiadr2.txt
    fi
+   # Write to ../exclusion_list.txt in a single operation in a miserable attempt to minimize chances fo a race condition
+   cat exclusion_list_index_html.txt >> ../exclusion_list.txt
+   rm -f exclusion_list_index_html.txt
   fi
  fi
 fi
