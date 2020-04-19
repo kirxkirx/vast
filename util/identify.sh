@@ -405,8 +405,7 @@ fi
 # Now the interesting part...
 
 if [ ! -f "$WCS_IMAGE_NAME" ];then
- echo "No image with WCS calibration found."
- echo -n "Starting SExtractor...  "
+ echo -n "No image with WCS calibration found. Starting SExtractor...  "
  IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
  # EXPERIMENTAL STUFF 
  CATALOG_NAME=`"$VAST_PATH"lib/fits2cat $FITSFILE`
@@ -752,22 +751,25 @@ if [ $ERROR_STATUS -ne 0 ];then
  exit $ERROR_STATUS
 fi
 
+### wcs-addpv.py ws found to be unreliable for images close to celestial pole,
+### may completely mess-up the WCS solution.
+### Diabled until the issue is resolved.
 ########## NEW: Check if PV keywords are present in the plate-solved image header and if not - try to insert them ##########
-"$VAST_PATH"util/listhead "$WCS_IMAGE_NAME" | grep --quiet -e 'PV1_1' -e 'PV2_1' -e 'PV1_2' -e 'PV2_2'
-if [ $? -ne 0 ];then
- echo "Note that the $WCS_IMAGE_NAME plate-solved image header has no TPV-convention distortions in it..."
- # Check if the local copy of wcs-addpv.py is working (unlike the rest of the VaST code it relies on python)
- "$VAST_PATH"lib/wcs-addpv.py -h &>/dev/null
- if [ $? -eq 0 ];then
-  echo "Trying to insert TPV-convention distortions"
-  "$VAST_PATH"lib/wcs-addpv.py "$WCS_IMAGE_NAME"
-  if [ $? -ne 0 ];then
-   echo "There was an error in lib/wcs-addpv.py while trying to insert the TPV keywords."
-  fi
- else
-  echo "Well, not much we can do..."
- fi 
-fi
+#"$VAST_PATH"util/listhead "$WCS_IMAGE_NAME" | grep --quiet -e 'PV1_1' -e 'PV2_1' -e 'PV1_2' -e 'PV2_2'
+#if [ $? -ne 0 ];then
+# echo "Note that the $WCS_IMAGE_NAME plate-solved image header has no TPV-convention distortions in it..."
+# # Check if the local copy of wcs-addpv.py is working (unlike the rest of the VaST code it relies on python)
+# "$VAST_PATH"lib/wcs-addpv.py -h &>/dev/null
+# if [ $? -eq 0 ];then
+#  echo "Trying to insert TPV-convention distortions"
+#  "$VAST_PATH"lib/wcs-addpv.py "$WCS_IMAGE_NAME"
+#  if [ $? -ne 0 ];then
+#   echo "There was an error in lib/wcs-addpv.py while trying to insert the TPV keywords."
+#  fi
+# else
+#  echo "Well, not much we can do..."
+# fi 
+#fi
 #############################################################################################################################
 
 
@@ -776,8 +778,7 @@ fi
   # Try to generate the catalog without re-running SExtractor
   "$VAST_PATH"lib/reformat_existing_sextractor_catalog_according_to_wcsparam.sh "$FITSFILE" "$WCS_IMAGE_NAME" "$SEXTRACTOR_CATALOG_NAME"
   if [ $? -ne 0 ];then
-   echo "Starting SExtractor" >> /dev/stderr
-   echo -ne "Starting SExtractor - "
+   echo "lib/reformat_existing_sextractor_catalog_according_to_wcsparam.sh did not work. Starting SExtractor..." >> /dev/stderr
    $SEXTRACTOR -c "$VAST_PATH"`grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $WCS_IMAGE_NAME 2>/dev/null` $WCS_IMAGE_NAME && echo "ok"
   fi
   echo "Catalog $SEXTRACTOR_CATALOG_NAME corresponding to the image $WCS_IMAGE_NAME created."
