@@ -1252,11 +1252,11 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
    p1= disjoinList( &ps_1 );
    R= ( p2.x - p1.x ) * ( p2.x - p1.x ) + ( p2.y - p1.y ) * ( p2.y - p1.y );
    //
-//   if ( fabs(p1.x - 1125.732) < 1.0 && fabs(p1.y - 1675.50) < 1.0 ){
-//    if ( R < 3*epsilon ){
-//     fprintf( stderr, "\n--- p1.x=%lf p1.y=%lf  p2.i=%d R=%lf R_best=%lf  p2.x=%lf p2.x=%lf\n", p1.x, p1.y, p2.i, sqrt(R), sqrt(R_best), p2.x, p2.y );
-//    }
-//   }
+   if ( fabs(p1.x - 1494.6) < 1.0 && fabs(p1.y - 2081.4) < 1.0 ){
+    if ( R < 3*epsilon ){
+     fprintf( stderr, "\n--- p1.x=%lf p1.y=%lf  p2.i=%d R=%lf R_best=%lf  p2.x=%lf p2.x=%lf\n", p1.x, p1.y, p2.i, sqrt(R), sqrt(R_best), p2.x, p2.y );
+    }
+   }
    //
    if ( R < R_best ) { // && R<star1[p1.i].distance_to_neighbor_squared && R<star2[p2.i].distance_to_neighbor_squared) {
     find_flag= 1;
@@ -1270,10 +1270,10 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
    ys_matched= addToList( p2, ys_matched );
   } else {
    //
-//   if ( fabs(p1.x - 1125.732) < 1.0 && fabs(p1.y - 1675.50) < 1.0 ){
-//    fprintf( stderr, "\n--- NO MATCH!!!   p2.i=%d R=%lf R_best=%lf  p2.x=%lf p2.x=%lf  \n", p2.i, sqrt(R), sqrt(R_best), p2.x, p2.y );
-//    exit(1);
-//   }
+   //if ( fabs(p1.x - 1494.6) < 1.0 && fabs(p1.y - 2081.4) < 1.0 ){
+   // fprintf( stderr, "\n--- NO MATCH!!!   p2.i=%d R=%lf R_best=%lf  p2.x=%lf p2.x=%lf  \n", p2.i, sqrt(R), sqrt(R_best), p2.x, p2.y );
+   // exit(1);
+   //}
    //
    ys_unmatched= addToList( p2, ys_unmatched );
   }

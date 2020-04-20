@@ -6766,6 +6766,143 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 
+##### Venus test #####
+# Download the test dataset if needed
+if [ ! -d ../NMW_Venus_test ];then
+ cd ..
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/NMW_Venus_test.tar.bz2" && tar -xvjf NMW_Venus_test.tar.bz2 && rm -f NMW_Venus_test.tar.bz2
+ cd $WORKDIR
+fi
+# If the test data are found
+if [ -d ../NMW_Venus_test ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "Find Venus test " >> /dev/stderr
+ echo -n "Find Venus test: " >> vast_test_report.txt 
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ #
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
+ # Instead of running the single-field search,
+ # we test the production NMW script
+ REFERENCE_IMAGES=../NMW_Venus_test/reference/ util/transients/transient_factory_test31.sh ../NMW_Venus_test/2nd_epoch
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS000_EXIT_CODE"
+ fi
+ if [ -f transient_report/index.html ];then
+  # The copy of the log file shoule be in the HTML report
+  grep --quiet "Images processed 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS001"
+  fi
+  grep --quiet "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS002"
+  fi
+  grep --quiet "First image: 2458956.27441 16.04.2020 18:34:59" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS003"
+  fi
+  grep --quiet "Last  image: 2458959.26847 19.04.2020 18:26:26" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS004"
+  fi
+  #
+  # Venus has no automatic ID in the current VaST version
+  #grep --quiet "AW Tau" transient_report/index.html
+  #if [ $? -ne 0 ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS0110"
+  #fi
+  grep --quiet -e "2020 04 19.7683  2458959.2683  6\...  04:41:" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS0110a"
+  fi
+  RADECPOSITION_TO_TEST=`grep -e "2020 04 19.7683  2458959.2683  6\...  04:41:"  transient_report/index.html | awk '{print $6" "$7}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 04:41:42.66 +26:53:41.8 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  # Allow for 5 pixel offset - it's BIG
+  TEST=`echo "$DISTANCE_DEGREES<5*8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS0110a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS0110a_TOO_FAR_$DISTANCE_DEGREES"
+   fi
+  fi
+  # asteroid 9 Metis
+  grep --quiet "Metis" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS314"
+  fi
+  grep --quiet "2020 04 19.7683  2458959.2683  11\...  04:44:" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS314a"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2020 04 19.7683  2458959.2683  11\...  04:44:" transient_report/index.html | awk '{print $6" "$7}'`
+  DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 04:44:14.09 +23:59:02.0 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS314a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS314a_TOO_FAR_$DISTANCE_DEGREES"
+   fi
+  fi
+
+ else
+  echo "ERROR running the transient search script" >> /dev/stderr
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_ALL"
+ fi
+
+ ###### restore exclusion list after the test if needed
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mFind Venus test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mFind Venus test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+
+
 
 # Test that the Internet conncation has not failed
 test_internet_connection

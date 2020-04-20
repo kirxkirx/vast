@@ -503,7 +503,8 @@ void choose_best_reference_image( char **input_images, int Num, int maxsextracto
     continue;
    }
    //
-   if ( maxsextractorflag < sextractor_flag && sextractor_flag <= 7 ) {
+   //if ( maxsextractorflag < sextractor_flag && sextractor_flag <= 7 ) {
+   if ( sextractor_flag > maxsextractorflag ) {
     continue;
    }
    // just in case we mark objects with really bad SExtractor flags
@@ -2302,7 +2303,7 @@ int main( int argc, char **argv ) {
   fprintf(stderr, "transient search mode: no UTC-to-TT time system conversion will be performed!!!\n");
   convert_timesys_to_TT=0;
   fprintf(stderr, "transient search mode: setting the maximum acceptable SExtractor flag to 3\n");
-  maxsextractorflag= 3 + 4; // we want to accept all sorts of blended and saturated sources
+  maxsextractorflag= 99; // 3 + 4; // we want to accept all sorts of blended and saturated sources
   fprintf( stderr, "################\n" );
  }
 
@@ -2916,7 +2917,8 @@ int main( int argc, char **argv ) {
    // they will be rejected later when saving the observations.
   }
   // just in case we mark objects with really bad SExtractor flags
-  if ( sextractor_flag > 7 ) {
+  // sextractor_flag != 20 -- accept a super-bright saturated object
+  if ( sextractor_flag > 7 && sextractor_flag != 20 ) {
    counter_rejected_seflags_gt7++;
    continue;
   }
@@ -3202,6 +3204,9 @@ int main( int argc, char **argv ) {
 
  for ( i= 0; i < NUMBER1; i++ ) {
 
+//  if( STAR1[i].n == 375 )
+//   fprintf(stderr, "\n\n\n DEBUGVENUS STAR1[i].n -- CHECK\n\n\n");
+
   if ( STAR1[i].n >= MAX_NUMBER_OF_STARS ) {
    report_and_handle_too_many_stars_error();
 //   fprintf( stderr, "########## Oops!!! Too many stars! ##########\nChange string \"#define MAX_NUMBER_OF_STARS %d\" in src/vast_limits.h file and recompile the program by running \"make\".\n\nOr you may choose a higher star detection limit (get less stars per frame) by changing DETECT_MINAREA and DETECT_THRESH/ANALYSIS_THRESH parameters in default.sex file\n",
@@ -3224,12 +3229,16 @@ int main( int argc, char **argv ) {
    fprintf( stderr, "FRAME EDGE REJECTION ERROR!!!\n" );
    exit( 1 );
   }
+//  if( STAR1[i].n == 375 )
+//   fprintf(stderr, "\n\n\n DEBUGVENUS STAR1[i].n -- CHECK2\n\n\n");
   if ( STAR1[i].sextractor_flag > maxsextractorflag ) {
    // We counted them above, here we just reject
    //counter_rejected_seflags_gt_user_spec_threshold++;
    STAR1[i].n_rejected= 1;
    continue;
   }
+//  if( STAR1[i].n == 375 )
+//   fprintf(stderr, "\n\n\n DEBUGVENUS STAR1[i].n -- CHECK3\n\n\n");
   if ( STAR1[i].vast_flag != 0 ) {
    // WTF?!?!?!?!?
    STAR1[i].n_rejected= 1;
@@ -3266,6 +3275,10 @@ int main( int argc, char **argv ) {
     return 1;
    }
   }
+  
+  //
+//  if( STAR1[i].n == 375 )
+//   fprintf(stderr, "\n\n\n DEBUGVENUS STAR1[i].n -- YES\n\n\n");
 
   ptr_struct_Obs[obs_in_RAM - 1].star_num= STAR1[i].n;
   ptr_struct_Obs[obs_in_RAM - 1].JD= STAR1[i].JD;
@@ -3474,7 +3487,8 @@ int main( int argc, char **argv ) {
       // they will be rejected later when saving the observations.
      }
      // just in case we mark objects with really bad SExtractor flags
-     if ( sextractor_flag > 7 ) {
+     // sextractor_flag != 20 -- accept a super-bright saturated object
+     if ( sextractor_flag > 7 && sextractor_flag != 20 ) {
       counter_rejected_seflags_gt7++;
       continue;
      }
@@ -4699,6 +4713,10 @@ int main( int argc, char **argv ) {
       }
       //
 
+
+//      if( STAR1[Pos1[i]].n == 375 )
+//       fprintf(stderr, "\n\n\n DEBUGVENUS STAR1[i].n - CHECK\n\n\n");
+
       // !!! ONE LAST CHECK IF THIS IS A GOOD STAR !!!
       if ( 1 == is_point_close_or_off_the_frame_edge( (double)STAR2[Pos2[i]].x_frame, (double)STAR2[Pos2[i]].y_frame, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) ) {
        // This is supposed to be checked above!
@@ -4854,6 +4872,10 @@ int main( int argc, char **argv ) {
         return 1;
        }
       }
+      
+//      if( STAR1[Pos1[i]].n == 375 )
+//       fprintf(stderr, "\n\n\n DEBUGVENUS STAR1[i].n - YES\n\n\n");
+      
       ptr_struct_Obs[obs_in_RAM - 1].star_num= STAR1[Pos1[i]].n;
       ptr_struct_Obs[obs_in_RAM - 1].JD= STAR2[Pos2[i]].JD;
       ptr_struct_Obs[obs_in_RAM - 1].mag= (double)STAR2[Pos2[i]].mag;

@@ -322,15 +322,19 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    if [ "$SEXTRACTOR_CONFIG_FILE" = "default.sex.telephoto_lens_v4" ];then
     # link the solved images and catalogs created with this SExtractorconfig file
     for i in "$WCSCACHEDIR/wcs_"$FIELD"_"* local_wcs_cache/exclusion* ;do
-     echo "Creating symlink $i" >> transient_factory_test31.txt
-     ln -s $i
+     if [ -f "$i" ];then
+      echo "Creating symlink $i" >> transient_factory_test31.txt
+      ln -s $i
+     fi
     done
    else
     # we are using a different config file
     # link only the solved images (and the exclusion lists)
     for i in "$WCSCACHEDIR/wcs_"$FIELD"_"*.fts local_wcs_cache/exclusion* ;do
-     echo "Creating symlink $i" >> transient_factory_test31.txt
-     ln -s $i
+     if [ -f "$i" ];then
+      echo "Creating symlink $i" >> transient_factory_test31.txt
+      ln -s $i
+     fi
     done
    fi
    break

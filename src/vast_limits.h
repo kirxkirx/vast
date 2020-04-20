@@ -241,7 +241,7 @@
 #define DROP_FRACTION_OF_FAINTEST_CONST_STARS 0.1   // exclude the faintest 10% of stars from the list
 //////////////////////////////////////////////////////////
 
-// Transient search (!!!EXPERIMENTAL!!!)
+// Transient search
 #define TRANSIENT_MIN_TIMESCALE_DAYS 1.0                  // expect transients apearing on timescale > TRANSIENT_MIN_TIMESCALE_DAYS
 #define MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT 1.3 //0.8 //1.3 // Transient candidates should be at least MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT mag
                                                           // above the detection limit on the reference frame.
