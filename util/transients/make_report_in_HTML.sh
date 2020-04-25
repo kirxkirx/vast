@@ -118,6 +118,8 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    echo "<a href=\"javascript:toggleElement('manualvast_$TRANSIENT_NAME')\">Example VaST+ds9 commands for visual image inspection</a> (blink the images in ds9). " >> transient_report/index.tmp  
    echo -n "<div id=\"manualvast_$TRANSIENT_NAME\" style=\"display:none\">
 <pre style='font-family:monospace;font-size:12px;'>
+# Set SExtractor parameters file
+cp default.sex.telephoto_lens_onlybrightstars_v1 default.sex
 # Plate-solve the FITS images
 export TELESCOP='NMW_camera'
 for i in $REFERENCE_IMAGE " >> transient_report/index.tmp

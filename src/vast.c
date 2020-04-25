@@ -376,7 +376,8 @@ int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogf
 
 // This function will try to find the deepest image and set it as the reference one
 // by altering the image order in input_images array
-void choose_best_reference_image( char **input_images, int Num, int maxsextractorflag ) {
+//void choose_best_reference_image( char **input_images, int Num, int maxsextractorflag ) {
+void choose_best_reference_image( char **input_images, int Num ) {
  char sextractor_catalog[FILENAME_LENGTH];
  char copy_input_image_path[FILENAME_LENGTH];
  char sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT];
@@ -399,35 +400,49 @@ void choose_best_reference_image( char **input_images, int Num, int maxsextracto
  double *number_of_good_detected_stars; // this is double for the simple reason that I want to use the conveinent double functions from GSL (already included for other purposes)
  double *copy_of_number_of_good_detected_stars;
  double median_number_of_good_detected_stars;
- double best_number_of_good_detected_stars;
+ //double best_number_of_good_detected_stars;
+
+ int int_number_of_good_detected_stars; 
+ double *A_IMAGE;
+ double *aperture;
+ double best_aperture;
 
  FILE *file;
 
+ fprintf( stderr, "Trying to automatically select the reference image!\n" );
+
  if ( Num <= 0 ) {
-  fprintf( stderr, "Error: Num is too small for choosing best reference image\n" );
+  fprintf( stderr, "ERROR: Num is too small for choosing best reference image\n" );
   exit( 1 );
  }
 
  number_of_good_detected_stars= malloc( Num * sizeof( double ) );
- copy_of_number_of_good_detected_stars= malloc( Num * sizeof( double ) );
+ 
+ aperture= malloc( Num * sizeof( double ) );
+ 
+ A_IMAGE= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
 
  for ( i= 0; i < Num; i++ ) {
   // Get the star catalog name from the image name
   if ( 0 != find_catalog_in_vast_images_catalogs_log( input_images[i], sextractor_catalog ) ) {
    fprintf( stderr, "WARNING in choose_best_reference_image(): cannot read the catalog file associated with the image %s\n", input_images[i] );
    number_of_good_detected_stars[i]= 0.0;
+   aperture[i]= 0.0;
    continue;
   }
   // count number of detected_stars
   file= fopen( sextractor_catalog, "r" );
   if ( file == NULL ) {
-   fprintf( stderr, "Can't open file %s\n", sextractor_catalog );
+   fprintf( stderr, "WARNING in choose_best_reference_image(): cannot open file %s\n", sextractor_catalog );
    number_of_good_detected_stars[i]= 0.0;
+   aperture[i]= 0.0;
    continue;
   }
 
   previous_star_number_in_sextractor_catalog= 0;
   number_of_good_detected_stars[i]= 0.0;
+  aperture[i]= 0.0;
+  int_number_of_good_detected_stars= 0;
   while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, file ) ) {
    sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
    external_flag= 0;
@@ -504,36 +519,70 @@ void choose_best_reference_image( char **input_images, int Num, int maxsextracto
    }
    //
    //if ( maxsextractorflag < sextractor_flag && sextractor_flag <= 7 ) {
-   if ( sextractor_flag > maxsextractorflag ) {
-    continue;
-   }
+//   if ( sextractor_flag > maxsextractorflag ) {
+//    continue;
+//   }
    // just in case we mark objects with really bad SExtractor flags
    if ( sextractor_flag > 7 ) {
     continue;
    }
-   number_of_good_detected_stars[i]= number_of_good_detected_stars[i] + 1.0;
+   A_IMAGE[int_number_of_good_detected_stars]= a_a;
+   //number_of_good_detected_stars[i]= number_of_good_detected_stars[i] + 1.0;
+   int_number_of_good_detected_stars++;
   } // while( NULL!=fgets(sextractor_catalog_string,MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT,file) ){
 
   fclose( file );
+  number_of_good_detected_stars[i]= (double)int_number_of_good_detected_stars;
+  if ( int_number_of_good_detected_stars < MIN_NUMBER_OF_STARS_ON_FRAME ) {
+   // mark as bad image that has too few stars
+   aperture[i]= 0.0;
+   continue;
+  }
+  gsl_sort( A_IMAGE, 1, int_number_of_good_detected_stars );
+  aperture[i]= CONST * gsl_stats_median_from_sorted_data( A_IMAGE, 1, int_number_of_good_detected_stars );
+  fprintf( stderr, "Redetermining aperture for the image %s %.1lfpix\n", input_images[i], aperture[i] );
  }
+ free( A_IMAGE );
 
+ // Determine median number of stars on images
  best_image= 0;
- best_number_of_good_detected_stars= 0.0;
+ //best_number_of_good_detected_stars= 0.0;
+ copy_of_number_of_good_detected_stars= malloc( Num * sizeof( double ) );
  for ( i= 0; i < Num; i++ ) {
   copy_of_number_of_good_detected_stars[i]= number_of_good_detected_stars[i];
  }
-
  gsl_sort( copy_of_number_of_good_detected_stars, 1, Num );
  median_number_of_good_detected_stars= gsl_stats_median_from_sorted_data( copy_of_number_of_good_detected_stars, 1, Num );
  free( copy_of_number_of_good_detected_stars );
+ ///
+ 
+ fprintf( stderr, "==> median number of good stars %.0lf, max. number of good stars %.0lf", median_number_of_good_detected_stars, 2.0 * median_number_of_good_detected_stars );
 
  // Avoid choosing an image with double-detections as the best one
  best_image= 0;
- best_number_of_good_detected_stars= 0.0;
+ //best_number_of_good_detected_stars= 0.0;
+ best_aperture= 99.0;
  for ( i= 0; i < Num; i++ ) {
-  if ( number_of_good_detected_stars[i] > best_number_of_good_detected_stars && number_of_good_detected_stars[i] < 2.0 * median_number_of_good_detected_stars ) {
-   best_image= i;
-   best_number_of_good_detected_stars= number_of_good_detected_stars[i];
+  fprintf( stderr, "%.1lf %.0lf  %s \n", aperture[i], number_of_good_detected_stars[i], input_images[i] );
+  // avoid images that have too many stars
+  if ( number_of_good_detected_stars[i] < 2.0 * median_number_of_good_detected_stars ) {
+   // avoid images that have too few stars
+   if ( number_of_good_detected_stars[i] >= median_number_of_good_detected_stars && number_of_good_detected_stars[i] > 0.0 ) {
+    // avoid images that don't have a good aperture estimate
+    if ( aperture[i] > 0.0 ) {
+     // The new way of selecting reference image as the one that has the best seeing
+     if ( aperture[i] < best_aperture ) {
+      best_image= i;
+      best_aperture= aperture[i];
+      fprintf( stderr, "new best!\n" );
+     }
+// The old way of selecting reference image as the one that has the most detected stars
+//     if ( number_of_good_detected_stars[i] > best_number_of_good_detected_stars ) {
+//      best_image= i;
+//      best_number_of_good_detected_stars= number_of_good_detected_stars[i];
+//     }
+    }
+   }
   }
   //fprintf(stderr,"%lf %s \n",number_of_good_detected_stars[i],input_images[i]);
  }
@@ -541,6 +590,8 @@ void choose_best_reference_image( char **input_images, int Num, int maxsextracto
  //fprintf(stderr,"%lf %s  -- NEW BEST\n",best_number_of_good_detected_stars,input_images[best_image]);
 
  fprintf( stderr, "\nAutomatically selected %s as the reference image.\n\n", input_images[best_image] );
+
+ free( aperture );
 
  free( number_of_good_detected_stars );
 
@@ -2609,7 +2660,7 @@ int main( int argc, char **argv ) {
  // Here is a wild assumption: if we have more than 100 images,
  // the remaining few will be processed while we are starting
  // to match star lists corresponding to the first few images
- if ( Num < 100 && param_automatically_select_reference_image == 0 ) {
+ if ( Num < 100 || param_automatically_select_reference_image == 1 ) {
   for ( ; i_fork--; ) {
    fprintf( stderr, "Waiting for thread %d to finish...\n", i_fork + 1 );
    if ( i_fork < 0 )
@@ -2623,7 +2674,8 @@ int main( int argc, char **argv ) {
 
  // Choose the reference image if we were asked to (otherwise the first image will be used)
  if ( param_automatically_select_reference_image == 1 ) {
-  choose_best_reference_image( input_images, Num, maxsextractorflag );
+  //choose_best_reference_image( input_images, Num, maxsextractorflag );
+  choose_best_reference_image( input_images, Num );
  }
 
  /*  Allocate memory for arrays with coordinates. */

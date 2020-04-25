@@ -195,11 +195,13 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   echo "ERROR: too few new images for the field $FIELD" >> transient_factory_test31.txt
   continue
  fi
- echo "Checking input images" >> transient_factory_test31.txt
+ echo "Checking input images ($N new)" >> transient_factory_test31.txt
  ################################
  # choose first epoch images
  REFERENCE_EPOCH__FIRST_IMAGE=`ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | head -n1`
+ echo "REFERENCE_EPOCH__FIRST_IMAGE= $REFERENCE_EPOCH__FIRST_IMAGE" >> transient_factory_test31.txt
  REFERENCE_EPOCH__SECOND_IMAGE=`ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | tail -n1`
+ echo "REFERENCE_EPOCH__SECOND_IMAGE= $REFERENCE_EPOCH__SECOND_IMAGE" >> transient_factory_test31.txt
  # choose second epoch images
  # first, count how many there are
  NUMBER_OF_SECOND_EPOCH_IMAGES=`ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | wc -l`
@@ -214,18 +216,57 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   # There are more than two second-epoch images - do a preliminary VaST run to choose the two images with best seeing
   cp -v default.sex.telephoto_lens_onlybrightstars_v1 default.sex >> transient_factory_test31.txt
   echo "Preliminary VaST run" >> transient_factory_test31.txt
-  ./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages  "$NEW_IMAGES"/*"$FIELD"_*_*.fts  2>&1 | grep 'Bad reference image...'
+  ./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages  "$NEW_IMAGES"/*"$FIELD"_*_*.fts  2>&1 prelim_vast_run.log
+  wait
+  cat prelim_vast_run.log | grep 'Bad reference image...' >> transient_factory.log
   if [ $? -eq 0 ];then
    # Bad reference image
    echo "ERROR clouds on second-epoch images?"
    echo "***** IMAGE PROCESSING ERROR (clouds?) *****" >> transient_factory.log
    echo "############################################################" >> transient_factory.log
    echo "ERROR clouds on second-epoch images?" >> transient_factory_test31.txt
+   rm -f prelim_vast_run.log
+   continue
+  fi
+  if [ -f prelim_vast_run.log ];then
+   rm -f prelim_vast_run.log
+  fi
+  if [ -s vast_summary.log ];then
+   echo "ERROR: vast_summary.log is not created during the preliminary VaST run" >> transient_factory_test31.txt
+   continue
+  fi
+  N_PROCESSED_IMAGES_PRELIM_RUN=`cat vast_summary.log | grep 'Images processed' | awk '{print $3}'`
+  if [ $N_PROCESSED_IMAGES_PRELIM_RUN -lt 2 ];then
+   echo "ERROR processing second-epoch images!"
+   echo "***** IMAGE PROCESSING ERROR (preliminary VaST run) *****" >> transient_factory.log
+   echo "############################################################" >> transient_factory.log
+   echo "ERROR processing second-epoch images (preliminary VaST run)!" >> transient_factory_test31.txt
+   continue   
+  fi
+  if [ ! -s vast_image_details.log ];then
+   echo "ERROR: vast_image_details.log is not created" >> transient_factory_test31.txt
    continue
   fi
   # column 9 in vast_image_details.log is the aperture size in pixels
-  SECOND_EPOCH__FIRST_IMAGE=`cat vast_image_details.log | sort -nk9 | head -n1 | awk '{print $17}'`
-  SECOND_EPOCH__SECOND_IMAGE=`cat vast_image_details.log | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}'`
+  SECOND_EPOCH__FIRST_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | sort -nk9 | head -n1 | awk '{print $17}'`
+  echo "SECOND_EPOCH__FIRST_IMAGE= $SECOND_EPOCH__FIRST_IMAGE" >> transient_factory_test31.txt
+  SECOND_EPOCH__SECOND_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}'`
+  echo "SECOND_EPOCH__SECOND_IMAGE= $SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_test31.txt
+  if [ -z "$SECOND_EPOCH__FIRST_IMAGE" ];then
+   echo "ERROR: SECOND_EPOCH__FIRST_IMAGE is not defined!" >> transient_factory_test31.txt
+   cat vast_image_details.log >> transient_factory_test31.txt
+   continue
+  fi
+  if [ -z "$SECOND_EPOCH__SECOND_IMAGE" ];then
+   echo "ERROR: SECOND_EPOCH__SECOND_IMAGE is not defined!" >> transient_factory_test31.txt
+   cat vast_image_details.log >> transient_factory_test31.txt
+   continue
+  fi
+  if [ "$SECOND_EPOCH__FIRST_IMAGE" = "$SECOND_EPOCH__SECOND_IMAGE" ];then
+   echo "ERROR: SECOND_EPOCH__FIRST_IMAGE = SECOND_EPOCH__SECOND_IMAGE"
+   cat vast_image_details.log >> transient_factory_test31.txt
+   continue
+  fi
  fi
  ################################
  # double-check the files

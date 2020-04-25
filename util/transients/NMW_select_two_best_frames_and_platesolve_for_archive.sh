@@ -28,9 +28,13 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   cp -v default.sex.telephoto_lens_onlybrightstars_v1 default.sex 
   echo "Preliminary VaST run" 
   ./vast --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages  "$NEW_IMAGES"/*"$FIELD"_*_*.fts  
+  if [ ! -s vast_image_details.log ];then
+   echo "ERROR: vast_image_details.log is not created"
+   continue
+  fi
   # column 9 in vast_image_details.log is the aperture size in pixels
-  SECOND_EPOCH__FIRST_IMAGE=`cat vast_image_details.log | sort -nk9 | head -n1 | awk '{print $17}'`
-  SECOND_EPOCH__SECOND_IMAGE=`cat vast_image_details.log | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}'`
+  SECOND_EPOCH__FIRST_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | sort -nk9 | head -n1 | awk '{print $17}'`
+  SECOND_EPOCH__SECOND_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}'`
  fi
  ################################
 

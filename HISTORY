@@ -76,6 +76,10 @@ vast-1.0rc85:
 	Heinze et al. (2018, AJ, 156, 241) https://ui.adsabs.harvard.edu/abs/2018AJ....156..241H 
 	to the variable star candidate identification script 'util/search_databases_with_vizquery.sh'
 	The catalog is accessed via VizieR: http://cdsarc.u-strasbg.fr/viz-bin/cat/J/AJ/156/241
+	* Changed the algorithm for automatic reference image selection (activate with '--autoselectrefimage' option).
+	Now the reference image will be the image with the best seeing that doesn't have too few or too many stars
+	compared to other images in the series. If the option '--autoselectrefimage' is not specified, the reference 
+	image will be the first image supplied on the command line, as before.
 07 Mar 2019: vast-1.0rc84:
 	* VaST is now on Github ( https://github.com/kirxkirx/vast ), pull requests are welcome!
 	* The new script 'util/get_gaia_lc.sh' gets Gaia G, BP and RP lightcurves for a Gaia DR2 ID that 
