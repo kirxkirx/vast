@@ -246,6 +246,8 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
  debugfile_thresholdcurve= fopen( thresholdcurvefilename, "w" );
  #endif
  //
+ 
+ fprintf( stderr, "Applying mag-size filter to %s filtering on parameter %d (see src/filter_MagSize.c)\n", sextractor_catalog, parameter_number );
 
  // Make two iterations so the stars that are just on the edge of being rejected go over that edge
  for ( iteration= 0; iteration < 2; iteration++ ) {
