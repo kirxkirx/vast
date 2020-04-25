@@ -231,7 +231,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   if [ -f prelim_vast_run.log ];then
    rm -f prelim_vast_run.log
   fi
-  if [ -s vast_summary.log ];then
+  if [ ! -s vast_summary.log ];then
    echo "ERROR: vast_summary.log is not created during the preliminary VaST run" >> transient_factory_test31.txt
    continue
   fi
