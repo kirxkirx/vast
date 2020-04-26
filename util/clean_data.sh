@@ -99,6 +99,10 @@ for i in out*_edit* ;do
   rm -f "$i"
  fi
 done
+# Remove magnitude calibration crash report
+if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
+ rm -f 'lightcurve.tmp_emergency_stop_debug'
+fi
 # Remove symlinks to images
 # THIS CANNOT BE HERE, because util/clean_data.sh is run by vast main program AFTER symlinks arecreated
 #rm -rf symlinks_to_images/

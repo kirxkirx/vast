@@ -55,7 +55,15 @@ if [ ! -d lib/catalogs/ucac5 ];then
   fi
  done
 fi
-
+#### Even more specific case: /mnt/usb/UCAC5 is present but the link is set to /dataX/kirx/UCAC5 ####
+if [ -d /mnt/usb/UCAC5 ];then
+ LINK_POINTS_TO=`readlink -f lib/catalogs/ucac5`
+ if [ "$LINK_POINTS_TO" = "/dataX/kirx/UCAC5" ];then
+  rm -f lib/catalogs/ucac5
+  ln -s /mnt/usb/UCAC5 lib/catalogs/ucac5
+ fi
+fi
+#####################################################################################################
 # This script should take care of updating astorb.dat
 lib/update_offline_catalogs.sh all
 
@@ -429,6 +437,9 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # wait # moved down
  
  echo "Calibrating the magnitude scale with Tycho-2 stars" >> transient_factory_test31.txt
+ if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
+  rm -f 'lightcurve.tmp_emergency_stop_debug'
+ fi
  # Calibrate magnitude scale with Tycho-2 stars in the field 
  echo "y" | util/transients/calibrate_current_field_with_tycho2.sh 
  MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
@@ -438,12 +449,34 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   cat "$i" | awk '{print $2}' | util/colstat 2>&1 | grep 'MEAN=' | awk '{if ( $2 < -5 && $2 >18 ) print "ERROR"}' | grep 'ERROR' && break
  done | grep --quiet 'ERROR'
  #
- if [ $? -eq 0 ] || [ $MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE -ne 0 ] || [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
+ if [ $? -eq 0 ];then
   # Wait for the solve_plate_with_UCAC5 stuff to finish
   wait
   # Throw an error
-  echo "ERROR calibrating magnitudes in the field $FIELD"
-  echo "ERROR calibrating magnitudes in the field $FIELD" >> transient_factory_test31.txt
+  echo "ERROR calibrating magnitudes in the field $FIELD (mean mag outside of range)"
+  echo "ERROR calibrating magnitudes in the field $FIELD (mean mag outside of range)" >> transient_factory_test31.txt
+  echo "***** MAGNITUDE CALIBRATION ERROR *****" >> transient_factory.log
+  echo "############################################################" >> transient_factory.log
+  # continue to the next field
+  continue
+ fi
+ if [ $MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE -ne 0 ];then
+  # Wait for the solve_plate_with_UCAC5 stuff to finish
+  wait
+  # Throw an error
+  echo "ERROR calibrating magnitudes in the field $FIELD MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE"
+  echo "ERROR calibrating magnitudes in the field $FIELD MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE" >> transient_factory_test31.txt
+  echo "***** MAGNITUDE CALIBRATION ERROR *****" >> transient_factory.log
+  echo "############################################################" >> transient_factory.log
+  # continue to the next field
+  continue
+ fi
+ if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
+  # Wait for the solve_plate_with_UCAC5 stuff to finish
+  wait
+  # Throw an error
+  echo "ERROR calibrating magnitudes in the field $FIELD (found lightcurve.tmp_emergency_stop_debug)"
+  echo "ERROR calibrating magnitudes in the field $FIELD (found lightcurve.tmp_emergency_stop_debug)" >> transient_factory_test31.txt
   echo "***** MAGNITUDE CALIBRATION ERROR *****" >> transient_factory.log
   echo "############################################################" >> transient_factory.log
   # continue to the next field

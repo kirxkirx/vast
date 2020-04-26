@@ -5805,6 +5805,14 @@ if [ -d ../transient_detection_test_Ceres ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES016a"
   fi
   #
+  ###########################################################
+  # Magnitude calibration error test
+  if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CERES_magcalibr_emergency"
+   cp lightcurve.tmp_emergency_stop_debug CERES_magcalibr_emergency__lightcurve.tmp_emergency_stop_debug
+  fi
+  ###########################################################
   #
   if [ -f ../exclusion_list.txt_backup ];then
    mv ../exclusion_list.txt_backup ../exclusion_list.txt
@@ -6289,6 +6297,14 @@ if [ -d ../NMW_Saturn_test ];then
   # fi
   #fi
   #
+  ###########################################################
+  # Magnitude calibration error test
+  if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN0_magcalibr_emergency"
+   cp lightcurve.tmp_emergency_stop_debug SATURN0_magcalibr_emergency__lightcurve.tmp_emergency_stop_debug
+  fi
+  ###########################################################
   ###### restore exclusion list after the test if needed
   if [ -f ../exclusion_list.txt_backup ];then
    mv ../exclusion_list.txt_backup ../exclusion_list.txt
@@ -6406,6 +6422,11 @@ if [ -d ../NMW_Saturn_test ];then
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2001"
+  fi
+  grep --quiet 'ERROR' "transient_report/index.html"
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_ERROR_MESSAGE_IN_index_html"
   fi
   grep --quiet "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
@@ -6648,95 +6669,14 @@ if [ -d ../NMW_Saturn_test ];then
     FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2314a_TOO_FAR_$DISTANCE_DEGREES"
    fi
   fi
-  #
-  ##### The following variables will not be found with the 12.5 magnitude limit and v4 SE settings file
-  ##
-  #grep --quiet "V1234 Sgr" transient_report/index.html
-  #if [ $? -ne 0 ];then
-  # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2315"
-  #fi
-  #grep --quiet -e "2019 11 03.6470  2458791.1470  12.80  19:00:" -e "2019 11 03.6470  2458791.1470  12.77  19:00:" -e "2019 11 03.6470  2458791.1470  12.78  19:00:" transient_report/index.html
-  #if [ $? -ne 0 ];then
-  # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2315a"
-  #fi
-  #RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  12.80  19:00:" -e "2019 11 03.6470  2458791.1470  12.77  19:00:" -e "2019 11 03.6470  2458791.1470  12.78  19:00:" transient_report/index.html | awk '{print $6" "$7}'`
-  #DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:00:31.78 -23:01:30.8 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
-  ## NMW scale is 8.4"/pix
-  #TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
-  #re='^[0-9]+$'
-  #if ! [[ $TEST =~ $re ]] ; then
-  # echo "TEST ERROR"
-  # TEST_PASSED=0
-  # TEST=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2315a_TOO_FAR_TEST_ERROR"
-  #else
-  # if [ $TEST -eq 0 ];then
-  #  TEST_PASSED=0
-  #  FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2315a_TOO_FAR_$DISTANCE_DEGREES"
-  # fi
-  #fi
-  ##
-  ##### The following variables will not be found with the 12.5 magnitude limit and v4 SE settings file
-  ##
-  #grep --quiet "ASASSN-V J190815.15-194531.8" transient_report/index.html
-  #if [ $? -ne 0 ];then
-  # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2316"
-  #fi
-  #grep --quiet -e "2019 11 03.6470  2458791.1470  13.02  19:08:" -e "2019 11 03.6470  2458791.1470  13.01  19:08:" -e "2019 11 03.6470  2458791.1470  12.98  19:08:" transient_report/index.html
-  #if [ $? -ne 0 ];then
-  # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2316a"
-  #fi
-  #RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  13.02  19:08:" -e "2019 11 03.6470  2458791.1470  13.01  19:08:" -e "2019 11 03.6470  2458791.1470  12.98  19:08:" transient_report/index.html | awk '{print $6" "$7}'`
-  #DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:08:15.28 -19:45:23.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
-  ## NMW scale is 8.4"/pix
-  #TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
-  #re='^[0-9]+$'
-  #if ! [[ $TEST =~ $re ]] ; then
-  # echo "TEST ERROR"
-  # TEST_PASSED=0
-  # TEST=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2316a_TOO_FAR_TEST_ERROR"
-  #else
-  # if [ $TEST -eq 0 ];then
-  #  TEST_PASSED=0
-  #  FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2316a_TOO_FAR_$DISTANCE_DEGREES"
-  # fi
-  #fi
-  ##
-  ##### The following variables will not be found with the 12.5 magnitude limit and v4 SE settings file
-  ##### This is a really marginal case, so I'm removing it
-  #
-  #grep --quiet "V1253 Sgr" transient_report/index.html
-  #if [ $? -ne 0 ];then
-  # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2317"
-  #fi
-  #grep --quiet -e "2019 11 03.6470  2458791.1470  13.11  19:10:" -e "2019 11 03.7862  2457867.9529  13.42  19:10:" -e "2019 11 03.6470  2458791.1470  13.07  19:10:" -e "2019 11 03.6470  2458791.1470  13.08  19:10:" transient_report/index.html
-  #if [ $? -ne 0 ];then
-  # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2317a"
-  #fi
-  #RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  13.11  19:10:" -e "2019 11 03.7862  2457867.9529  13.42  19:10:" -e "2019 11 03.6470  2458791.1470  13.07  19:10:" -e "2019 11 03.6470  2458791.1470  13.08  19:10:" transient_report/index.html | awk '{print $6" "$7}'`
-  #DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:10:50.72 -23:55:14.6 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
-  ## NMW scale is 8.4"/pix
-  #TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
-  #re='^[0-9]+$'
-  #if ! [[ $TEST =~ $re ]] ; then
-  # echo "TEST ERROR"
-  # TEST_PASSED=0
-  # TEST=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2317a_TOO_FAR_TEST_ERROR"
-  #else
-  # if [ $TEST -eq 0 ];then
-  #  TEST_PASSED=0
-  #  FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2317a_TOO_FAR_$DISTANCE_DEGREES"
-  # fi
-  #fi
-  #
+  ###########################################################
+  # Magnitude calibration error test
+  if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_magcalibr_emergency"
+   cp lightcurve.tmp_emergency_stop_debug SATURN2_magcalibr_emergency__lightcurve.tmp_emergency_stop_debug
+  fi
+  ###########################################################
 
  else
   echo "ERROR running the transient search script" >> /dev/stderr
@@ -6796,6 +6736,11 @@ if [ -d ../NMW_Venus_test ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS000_EXIT_CODE"
  fi
  if [ -f transient_report/index.html ];then
+  grep --quiet 'ERROR' "transient_report/index.html"
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_ERROR_MESSAGE_IN_index_html"
+  fi
   # The copy of the log file shoule be in the HTML report
   grep --quiet "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
@@ -6965,6 +6910,14 @@ if [ -d ../KZ_Her_DSLR_transient_search_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER005"
   fi 
+  ###########################################################
+  # Magnitude calibration error test
+  if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER_magcalibr_emergency"
+   cp lightcurve.tmp_emergency_stop_debug DSLRKZHER_magcalibr_emergency__lightcurve.tmp_emergency_stop_debug
+  fi
+  ###########################################################
   grep --quiet "KZ Her" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
