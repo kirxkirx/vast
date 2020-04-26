@@ -11,10 +11,9 @@
 #include "lightcurve_io.h"
 
 int main( int argc, char **argv ) {
- DIR *dp;
- struct dirent *ep;
 
- /* Mag conversion */
+
+ // Mag conversion
  double a, b, c;
  a= b= c= 0.0;
  FILE *lightcurvefile;
@@ -30,6 +29,14 @@ int main( int argc, char **argv ) {
  double a_[4]; // for parameters of "photocurve"
 
  int emergency_stop;
+
+ // File name handling
+ DIR *dp;
+ struct dirent *ep;
+ 
+ char **filenamelist;
+ long filename_counter;
+ long filenamelen;
 
  if ( argc != 4 && argc != 6 ) {
   fprintf( stderr, "Magnitude converter\n" );
@@ -146,86 +153,103 @@ int main( int argc, char **argv ) {
   return 1;
  }
 
+ // Create a list of files
+ filenamelist= (char **)malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );
+ filename_counter= 0;
  dp= opendir( "./" );
  if ( dp != NULL ) {
   fprintf( stderr, "Working...\nPlease, PLEASE, be patient!!!\n" );
   while ( ( ep= readdir( dp ) ) != NULL ) {
-   if ( strlen( ep->d_name ) < 8 )
+   filenamelen= strlen( ep->d_name );
+   if ( filenamelen < 8 ){
     continue; // make sure the filename is not too short for the following tests
-   if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[strlen( ep->d_name ) - 1] == 't' && ep->d_name[strlen( ep->d_name ) - 2] == 'a' && ep->d_name[strlen( ep->d_name ) - 3] == 'd' ) {
-    emergency_stop= 0; // reset the emergency stop flag
-    //puts (ep->d_name);
-    lightcurvefile= fopen( ep->d_name, "r" );
-    if ( NULL == lightcurvefile ) {
-     fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
-     exit( 1 );
-    }
-    outlightcurvefile= fopen( "lightcurve.tmp", "w" );
-    if ( NULL == outlightcurvefile ) {
-     fprintf( stderr, "ERROR: Can't open file lightcurve.tmp\n" );
-     exit( 1 );
-    }
-    while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
-     if ( jd == 0.0 ) {
-      continue; // if this line could not be parsed, try the next one
-     }
-
-     newmag= maxmag= minmag= 0.0; // reset
-
-     if ( operation_mode == 0 ) {
-      newmag= a * mag * mag + b * mag + c;
-      maxmag= a * ( mag + merr ) * ( mag + merr ) + b * ( mag + merr ) + c;
-      minmag= a * ( mag - merr ) * ( mag - merr ) + b * ( mag - merr ) + c;
-     }
-     if ( operation_mode == 4 || operation_mode == 5 ) {
-      newmag= eval_photocurve( mag, a_, operation_mode );
-      maxmag= eval_photocurve( mag + merr, a_, operation_mode );
-      minmag= eval_photocurve( mag - merr, a_, operation_mode );
-     }
-     //newmerr=(maxmag-minmag)/2.0;
-     if ( 0 != isnan( maxmag ) ) {
-      maxmag= 0.0;
-     }
-     if ( 0 != isnan( minmag ) ) {
-      minmag= 0.0;
-     }
-     newmerr= MAX( maxmag - newmag, newmag - minmag ); // fallback option
-     if ( maxmag != 0.0 && minmag != 0.0 ) {
-      // Normal option
-      newmerr= ( ( maxmag - newmag ) + ( newmag - minmag ) ) / 2.0;
-     }
-     if ( newmerr > MAX_MAG_ERROR ) {
-      continue; // drop measurements with very large error bars
-     }
-     if ( newmag > FAINTEST_STARS_ANYMAG || newmag < BRIGHTEST_STARS ) {
-      fprintf( stderr, "Magnitude conversion ERROR: %lf>%lf or %lf<%lf\n", newmag, FAINTEST_STARS_ANYMAG, newmag, BRIGHTEST_STARS );
-      if ( operation_mode == 0 ) {
-       fprintf( stderr, "newmag=a*mag*mag+b*mag+c; %lf=%lf*%lf*%lf+%lf*%lf+%lf;\n\n", newmag, a, mag, mag, b, mag, c );
-      }
-      emergency_stop= 1;
-      break;
-      // In some strange circumstances on BSD systems it seems the same lightcurve file may be
-      // opened multiple times triggering the above magnitude conversion error.
-      // Try to circument it by just going to the next file [I know this is not really a solution]
-     }
-     write_lightcurve_point( outlightcurvefile, jd, newmag, newmerr, x, y, app, string, comments_string );
-    }
-    fclose( outlightcurvefile );
-    fclose( lightcurvefile );
-    if ( emergency_stop != 0 ) {
-     rename( "lightcurve.tmp", "lightcurve.tmp_emergency_stop_debug" );
-     continue;
-    }
-    // do this only if there was no emergency stop
-    unlink( ep->d_name );                   /* delete old lightcurve file */
-    rename( "lightcurve.tmp", ep->d_name ); /* move lightcurve.tmp to lightcurve file */
+   }
+   if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[filenamelen - 1] == 't' && ep->d_name[filenamelen - 2] == 'a' && ep->d_name[filenamelen - 3] == 'd' ) {
+    filenamelist[filename_counter]= malloc( (filenamelen+1) * sizeof( char ) );
+    strncpy( filenamelist[filename_counter], ep->d_name, (filenamelen+1) );
+    //fprintf( stderr, "#%s#\n", filenamelist[filename_counter]);
+    filename_counter++;
    }
   }
   (void)closedir( dp );
  } else {
   perror( "Couldn't open the directory" );
+  free( filenamelist );
   return -1;
  }
+
+
+ // Process each file in the list
+ for ( ; filename_counter--; ) {
+  emergency_stop= 0; // reset the emergency stop flag
+  //puts (filenamelist[filename_counter]);
+  lightcurvefile= fopen( filenamelist[filename_counter], "r" );
+  if ( NULL == lightcurvefile ) {
+   fprintf( stderr, "ERROR: Can't open file %s\n", filenamelist[filename_counter] );
+   exit( 1 );
+  }
+  outlightcurvefile= fopen( "lightcurve.tmp", "w" );
+  if ( NULL == outlightcurvefile ) {
+   fprintf( stderr, "ERROR: Can't open file lightcurve.tmp\n" );
+   exit( 1 );
+  }
+  while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
+   if ( jd == 0.0 ) {
+    continue; // if this line could not be parsed, try the next one
+   }
+   newmag= maxmag= minmag= 0.0; // reset
+   if ( operation_mode == 0 ) {
+    newmag= a * mag * mag + b * mag + c;
+    maxmag= a * ( mag + merr ) * ( mag + merr ) + b * ( mag + merr ) + c;
+    minmag= a * ( mag - merr ) * ( mag - merr ) + b * ( mag - merr ) + c;
+   }
+   if ( operation_mode == 4 || operation_mode == 5 ) {
+    newmag= eval_photocurve( mag, a_, operation_mode );
+    maxmag= eval_photocurve( mag + merr, a_, operation_mode );
+    minmag= eval_photocurve( mag - merr, a_, operation_mode );
+   }
+   //newmerr=(maxmag-minmag)/2.0;
+   if ( 0 != isnan( maxmag ) ) {
+    maxmag= 0.0;
+   }
+   if ( 0 != isnan( minmag ) ) {
+    minmag= 0.0;
+   }
+   newmerr= MAX( maxmag - newmag, newmag - minmag ); // fallback option
+   if ( maxmag != 0.0 && minmag != 0.0 ) {
+    // Normal option
+    newmerr= ( ( maxmag - newmag ) + ( newmag - minmag ) ) / 2.0;
+   }
+   if ( newmerr > MAX_MAG_ERROR ) {
+    continue; // drop measurements with very large error bars
+   }
+   if ( newmag > FAINTEST_STARS_ANYMAG || newmag < BRIGHTEST_STARS ) {
+    fprintf( stderr, "Magnitude conversion ERROR: %lf>%lf or %lf<%lf\n", newmag, FAINTEST_STARS_ANYMAG, newmag, BRIGHTEST_STARS );
+    if ( operation_mode == 0 ) {
+     fprintf( stderr, "newmag=a*mag*mag+b*mag+c; %lf=%lf*%lf*%lf+%lf*%lf+%lf;\n\n", newmag, a, mag, mag, b, mag, c );
+    }
+    emergency_stop= 1;
+    break;
+    // In some strange circumstances on BSD systems it seems the same lightcurve file may be
+    // opened multiple times triggering the above magnitude conversion error.
+    // Try to circument it by just going to the next file [I know this is not really a solution]
+   }
+   write_lightcurve_point( outlightcurvefile, jd, newmag, newmerr, x, y, app, string, comments_string );
+  }
+  fclose( outlightcurvefile );
+  fclose( lightcurvefile );
+  if ( emergency_stop != 0 ) {
+   rename( "lightcurve.tmp", "lightcurve.tmp_emergency_stop_debug" );
+   free( filenamelist[filename_counter] );
+   continue;
+  }
+  // do this only if there was no emergency stop
+  unlink( filenamelist[filename_counter] );                   /* delete old lightcurve file */
+  rename( "lightcurve.tmp", filenamelist[filename_counter] ); /* move lightcurve.tmp to lightcurve file */
+  free( filenamelist[filename_counter] );
+ }
+
+ free( filenamelist );
 
  fprintf( stderr, "All lightcurves processed!  =)\n" );
 

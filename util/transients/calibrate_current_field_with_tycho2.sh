@@ -85,4 +85,7 @@ fi
 cp -v "$SEXTRACTOR_CATALOG_NAME" wcsmag.cat
 
 #valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes lib/catalogs/read_tycho2
-util/calibrate_magnitude_scale `lib/catalogs/read_tycho2`
+MAGNITUDE_CALIBRATION_PARAMETERS=`lib/catalogs/read_tycho2`
+echo "util/calibrate_magnitude_scale $MAGNITUDE_CALIBRATION_PARAMETERS" >> /dev/stderr
+util/calibrate_magnitude_scale $MAGNITUDE_CALIBRATION_PARAMETERS
+#util/calibrate_magnitude_scale `lib/catalogs/read_tycho2`
