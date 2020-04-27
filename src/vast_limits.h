@@ -315,7 +315,7 @@
 #define LIGHT_CURVE_FILTER_SIGMA 7.0
 
 // src/remove_points_with_large_errors.c
-#define LIGHT_CURVE_ERROR_FILTER_SIGMA 5.0
+//#define LIGHT_CURVE_ERROR_FILTER_SIGMA 5.0
 
 // src/remove_bad_images.c
 #define REMOVE_BAD_IMAGES__OUTLIER_THRESHOLD 3.0                // Considers outliers measurements that are REMOVE_BAD_IMAGES__OUTLIER_THRESHOLD sigma

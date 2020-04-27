@@ -3,6 +3,9 @@
 # When adapring this script for a new dataset, watch for the signs
 ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
 
+# Also watch for
+### ===> SExtractor config file <===
+
 #
 # This script is an example of how an automated transient-detection pipeline may be set up using VaST.
 # Note, that in this example there are two reference and two second-epoch images.
@@ -66,17 +69,6 @@ fi
 #####################################################################################################
 # This script should take care of updating astorb.dat
 lib/update_offline_catalogs.sh all
-
-# moved down
-## Set the SExtractor parameters file
-#cp default.sex.telephoto_lens_v4 default.sex
-##cp default.sex.telephoto_lens_v3 default.sex
-
-# Moved later as we may want to decide which list of bad regions to use based on the actual image
-## Set custom bad_region.lst if there is one
-#if [ -f ../bad_region.lst ];then
-# cp ../bad_region.lst .
-#fi
 
 echo "Reference image directory is set to $REFERENCE_IMAGES"
 if [ -z $1 ]; then
@@ -224,8 +216,21 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   # There are more than two second-epoch images - do a preliminary VaST run to choose the two images with best seeing
   cp -v default.sex.telephoto_lens_onlybrightstars_v1 default.sex >> transient_factory_test31.txt
   echo "Preliminary VaST run" >> transient_factory_test31.txt
-  ./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages  "$NEW_IMAGES"/*"$FIELD"_*_*.fts  2>&1 prelim_vast_run.log
+  ./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages  "$NEW_IMAGES"/*"$FIELD"_*_*.fts  2>&1 > prelim_vast_run.log
   wait
+  ## Special test for stuck camera ##
+  if [ -s vast_image_details.log ];then
+   N_SAME_IMAGE=`grep -c ' rotation= 180.000 ' vast_image_details.log`
+   if [ $N_SAME_IMAGE -gt 1 ];then
+    # Stuck camera
+    echo "ERROR the camera is stuck repeatedly sending the same image!"
+    echo "***** IMAGE PROCESSING ERROR (stuck camera repeatedly sending the same image) *****" >> transient_factory.log
+    echo "###################################################################################" >> transient_factory.log
+    echo "ERROR the camera is stuck repeatedly sending the same image!" >> transient_factory_test31.txt
+    rm -f prelim_vast_run.log
+    continue
+   fi
+  fi
   cat prelim_vast_run.log | grep 'Bad reference image...' >> transient_factory.log
   if [ $? -eq 0 ];then
    # Bad reference image
@@ -327,6 +332,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  fi
 
  # Make multiple VaST runs with different SExtractor config files
+ ### ===> SExtractor config file <===
  for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
  
  # just to make sure all the child loops will see it
@@ -351,7 +357,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   echo "ERROR running VaST on the field $FIELD" >> transient_factory_test31.txt
   echo "ERROR running VaST on the field $FIELD" >> transient_factory.log
   # drop this field and continue to the next one
-  continue
+  # We want to break from the SExtractor settings files loop here
+  break
  else
   echo "VsST run complete" >> transient_factory_test31.txt
  fi
@@ -368,6 +375,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # Use cache if possible to speed-up WCS calibration
  for WCSCACHEDIR in "/mnt/usb/NMW_NG/solved_reference_images" "/home/NMW_web_upload/solved_reference_images" "/dataX/kirx/NMW_NG_rt3_autumn2019/solved_reference_images" "./local_wcs_cache" ;do
   if [ -d "$WCSCACHEDIR" ];then
+   ### ===> SExtractor config file <===
    if [ "$SEXTRACTOR_CONFIG_FILE" = "default.sex.telephoto_lens_v4" ];then
     # link the solved images and catalogs created with this SExtractorconfig file
     for i in "$WCSCACHEDIR/wcs_"$FIELD"_"* local_wcs_cache/exclusion* ;do

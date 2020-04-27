@@ -16,6 +16,9 @@ int main() {
 
  dp= opendir( "./" );
  if ( dp != NULL ) {
+  // ACTUALLY, if we just cycle through the directory that we are modifying (by deleting files)
+  // we are at risk of missing some files. But here I'll consider this tolearble, as the higher-level
+  // BASH script should take care of the remaining files.
   //while( ep=readdir(dp) ){
   while ( ( ep= readdir( dp ) ) != NULL ) {
    if ( strlen( ep->d_name ) < 12 ) {

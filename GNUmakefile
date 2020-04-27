@@ -84,9 +84,11 @@ q: vast statistics etc pgplot_components old period_filter ccd
 
 main: vast.o vast statistics stetson_test lib/create_data
 
-statistics: m_sigma_bin index_vs_mag select_sysrem_input_star_list drop lib/select_only_n_random_points_from_set_of_lightcurves lib/new_lightcurve_sigma_filter lib/remove_points_with_large_errors lib/select_aperture_with_smallest_scatter_for_each_object lib/create_data rescale_photometric_errors util/colstat
+#statistics: m_sigma_bin index_vs_mag select_sysrem_input_star_list drop lib/select_only_n_random_points_from_set_of_lightcurves lib/new_lightcurve_sigma_filter lib/remove_points_with_large_errors lib/select_aperture_with_smallest_scatter_for_each_object lib/create_data rescale_photometric_errors util/colstat
+statistics: m_sigma_bin index_vs_mag select_sysrem_input_star_list lib/select_only_n_random_points_from_set_of_lightcurves lib/new_lightcurve_sigma_filter lib/select_aperture_with_smallest_scatter_for_each_object lib/create_data rescale_photometric_errors util/colstat
 
-etc: stat_outfile util/calibrate_magnitude_scale lib/deg2hms lib/coord_v_dva_slova lib/hms2deg lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/remove_bad_images lib/clean_lightcurves_from_nan lib/put_two_sources_in_one_field lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list util/hjd util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/kwee-van-woerden lib/find_star_in_wcs_catalog util/UTC2TT lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search lib/catalogs/check_catalogs_offline util/get_image_date lib/fast_clean_data stetson_test util/split_multiextension_fits lib/guess_saturation_limit_main lib/MagSize_filter_standalone
+#etc: stat_outfile util/calibrate_magnitude_scale lib/deg2hms lib/coord_v_dva_slova lib/hms2deg lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/remove_bad_images lib/clean_lightcurves_from_nan lib/put_two_sources_in_one_field lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list util/hjd util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/kwee-van-woerden lib/find_star_in_wcs_catalog util/UTC2TT lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search lib/catalogs/check_catalogs_offline util/get_image_date lib/fast_clean_data stetson_test util/split_multiextension_fits lib/guess_saturation_limit_main lib/MagSize_filter_standalone
+etc: stat_outfile util/calibrate_magnitude_scale lib/deg2hms lib/coord_v_dva_slova lib/hms2deg lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/remove_bad_images lib/put_two_sources_in_one_field lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list util/hjd util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/kwee-van-woerden lib/find_star_in_wcs_catalog util/UTC2TT lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search lib/catalogs/check_catalogs_offline util/get_image_date lib/fast_clean_data stetson_test util/split_multiextension_fits lib/guess_saturation_limit_main lib/MagSize_filter_standalone
 
 old: formater_out_wfk 
 
@@ -236,9 +238,9 @@ rescale_photometric_errors: rescale_photometric_errors.o wpolyfit.o
 
 select_sysrem_input_star_list: $(SRC_PATH)select_sysrem_input_star_list.c
 	$(CC) $(OPTFLAGS) -o $(LIB_DIR)select_sysrem_input_star_list $(SRC_PATH)select_sysrem_input_star_list.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
-drop: $(SRC_PATH)drop_faint_points.c $(SRC_PATH)drop_bright_points.c
-	$(CC) $(OPTFLAGS) -o lib/drop_faint_points $(SRC_PATH)drop_faint_points.c
-	$(CC) $(OPTFLAGS) -o lib/drop_bright_points $(SRC_PATH)drop_bright_points.c
+#drop: $(SRC_PATH)drop_faint_points.c $(SRC_PATH)drop_bright_points.c
+#	$(CC) $(OPTFLAGS) -o lib/drop_faint_points $(SRC_PATH)drop_faint_points.c
+#	$(CC) $(OPTFLAGS) -o lib/drop_bright_points $(SRC_PATH)drop_bright_points.c
 	
 util/calibrate_magnitude_scale:  calibrate_magnitude_scale.o photocurve.o
 	$(CC) $(OPTFLAGS) -o util/calibrate_magnitude_scale calibrate_magnitude_scale.o photocurve.o $(GSL_LIB) -lm
@@ -269,8 +271,8 @@ lib/select_only_n_random_points_from_set_of_lightcurves: select_only_n_random_po
 
 lib/new_lightcurve_sigma_filter: $(SRC_PATH)new_lightcurve_sigma_filter.c
 	$(CC) $(OPTFLAGS) -o lib/new_lightcurve_sigma_filter $(SRC_PATH)new_lightcurve_sigma_filter.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
-lib/remove_points_with_large_errors: $(SRC_PATH)remove_points_with_large_errors.c
-	$(CC) $(OPTFLAGS) -o lib/remove_points_with_large_errors $(SRC_PATH)remove_points_with_large_errors.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+#lib/remove_points_with_large_errors: $(SRC_PATH)remove_points_with_large_errors.c
+#	$(CC) $(OPTFLAGS) -o lib/remove_points_with_large_errors $(SRC_PATH)remove_points_with_large_errors.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 
 select_aperture_with_smallest_scatter_for_each_object.o: $(SRC_PATH)select_aperture_with_smallest_scatter_for_each_object.c
 	$(CC) $(OPTFLAGS) -c -o select_aperture_with_smallest_scatter_for_each_object.o $(SRC_PATH)select_aperture_with_smallest_scatter_for_each_object.c -I$(GSL_INCLUDE) -lm
@@ -362,8 +364,8 @@ util/local_zeropoint_correction: $(SRC_PATH)local_zeropoint_correction.c
 lib/checkstar: $(SRC_PATH)checkstar.c
 	$(CC) $(OPTFLAGS) -o lib/checkstar $(SRC_PATH)checkstar.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 
-lib/clean_lightcurves_from_nan: $(SRC_PATH)clean_lightcurves_from_nan.c
-	$(CC) $(OPTFLAGS) -o lib/clean_lightcurves_from_nan $(SRC_PATH)clean_lightcurves_from_nan.c -lm
+#lib/clean_lightcurves_from_nan: $(SRC_PATH)clean_lightcurves_from_nan.c
+#	$(CC) $(OPTFLAGS) -o lib/clean_lightcurves_from_nan $(SRC_PATH)clean_lightcurves_from_nan.c -lm
 lib/fit_parabola_wpolyfit: fit_parabola_wpolyfit.o wpolyfit.o
 	$(CC) $(OPTFLAGS) -o lib/fit_parabola_wpolyfit fit_parabola_wpolyfit.o wpolyfit.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 fit_parabola_wpolyfit.o: $(SRC_PATH)fit_parabola_wpolyfit.c
@@ -491,8 +493,10 @@ clean: clean_libraries
 	rm -f *.o 
 	rm -f callgrind.out.* # remove files from possible callgrind/kcachegrind profiling run: valgrind --tool=callgrind -v  ./vast -uf ../sample_data/f_72-00* ../sample_data/f_72-01*
 	rm -f massif.out.* # same for the other valgrind tool
-	rm -f *~ util/*~ util/transients/*~ lib/*~ lib/drop_faint_points lib/drop_bright_points DEADJOE tmp.txt match.txt  util/calibrate_magnitude_scale lib/fit_mag_calib lib/fit_linear lib/fit_zeropoint lib/fit_photocurve util/match_eater 
-	rm -f lib/deg2hms lib/coord_v_dva_slova lib/hms2deg $(SRC_PATH)period_search/BLS/*~ $(SRC_PATH)period_search/periodFilter/*~ lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/clean_lightcurves_from_nan lib/put_two_sources_in_one_field lib/new_lightcurve_sigma_filter lib/data_parser lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list lib/remove_points_with_large_errors lib/select_aperture_with_smallest_scatter_for_each_object util/hjd sextract_single_image diffphot select_star_on_reference_image util/mark_wcs_position_with_ds9.sh
+#	rm -f *~ util/*~ util/transients/*~ lib/*~ lib/drop_faint_points lib/drop_bright_points DEADJOE tmp.txt match.txt  util/calibrate_magnitude_scale lib/fit_mag_calib lib/fit_linear lib/fit_zeropoint lib/fit_photocurve util/match_eater 
+	rm -f *~ util/*~ util/transients/*~ lib/*~ DEADJOE tmp.txt match.txt  util/calibrate_magnitude_scale lib/fit_mag_calib lib/fit_linear lib/fit_zeropoint lib/fit_photocurve util/match_eater 
+#	rm -f lib/deg2hms lib/coord_v_dva_slova lib/hms2deg $(SRC_PATH)period_search/BLS/*~ $(SRC_PATH)period_search/periodFilter/*~ lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/clean_lightcurves_from_nan lib/put_two_sources_in_one_field lib/new_lightcurve_sigma_filter lib/data_parser lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list lib/remove_points_with_large_errors lib/select_aperture_with_smallest_scatter_for_each_object util/hjd sextract_single_image diffphot select_star_on_reference_image util/mark_wcs_position_with_ds9.sh
+	rm -f lib/deg2hms lib/coord_v_dva_slova lib/hms2deg $(SRC_PATH)period_search/BLS/*~ $(SRC_PATH)period_search/periodFilter/*~ lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/put_two_sources_in_one_field lib/new_lightcurve_sigma_filter lib/data_parser lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list lib/select_aperture_with_smallest_scatter_for_each_object util/hjd sextract_single_image diffphot select_star_on_reference_image util/mark_wcs_position_with_ds9.sh
 	rm -f lib/sine_wave_simulator lib/sine_wave_and_psd_simulator lib/sine_wave_or_psd_simulator
 	rm -f util/rescale_photometric_errors util/estimate_systematic_noise_level
 	rm -f util/colstat

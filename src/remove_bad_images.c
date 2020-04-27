@@ -93,8 +93,13 @@ void get_image_filename_from_vast_image_details_log_using_JD( double JD ) {
 }
 
 int main( int argc, char **argv ) {
+ // File name handling
  DIR *dp;
  struct dirent *ep;
+ 
+ char **filenamelist;
+ long filename_counter;
+ long filenamelen;
 
  FILE *lightcurvefile;
  FILE *outlightcurvefile;
@@ -259,60 +264,77 @@ int main( int argc, char **argv ) {
  if ( images_Nbad > 0 ) {
   fprintf( stderr, "Removing them from all lightcurves... " );
   sprintf( lightcurve_tmp_filename, "lightcurve.tmp" );
+  // Create a list of files
+  filenamelist= (char **)malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );
+  filename_counter= 0;
   dp= opendir( "./" );
   if ( dp != NULL ) {
    //while( ep = readdir(dp) ){
    while ( ( ep= readdir( dp ) ) != NULL ) {
-    if ( strlen( ep->d_name ) < 8 )
+    filenamelen= strlen( ep->d_name );
+    if ( filenamelen < 8 )
      continue; // make sure the filename is not too short for the following tests
-    if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[strlen( ep->d_name ) - 1] == 't' && ep->d_name[strlen( ep->d_name ) - 2] == 'a' && ep->d_name[strlen( ep->d_name ) - 3] == 'd' ) {
-     /// Re-open the lightcurve file and choose only good points
-     lightcurvefile= fopen( ep->d_name, "r" );
-     if ( NULL == lightcurvefile ) {
-      fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
-      exit( 1 );
-     }
-     outlightcurvefile= fopen( lightcurve_tmp_filename, "w" );
-     if ( NULL == outlightcurvefile ) {
-      fprintf( stderr, "\nAn ERROR has occured while processing file %s  median_mag=%lf mag_sigma=%lf\n", ep->d_name, median_mag, mag_sigma );
-      fprintf( stderr, "ERROR: Can't open file %s\n", lightcurve_tmp_filename );
-      exit( 1 );
-     }
-     //fscanf(lightcurvefile,"%lf %lf %lf %lf %lf %lf %s",&jd,&mag,&merr,&x,&y,&app,string); // Never drop the first point!
-     // The while cycle is needed to handle the situation that the first lines are comments
-     jd= 0.0;
-     //while( jd==0.0 ){
-     // read_lightcurve_point(lightcurvefile,&jd,&mag,&merr,&x,&y,&app,string); // Never drop the first point!
-     //}
-     //fprintf(outlightcurvefile,"%.5lf %8.5lf %.5lf %8.3lf %8.3lf %4.1lf %s\n",jd,mag,merr,x,y,app,string);
-     //write_lightcurve_point( outlightcurvefile, jd, mag, merr, x, y, app, string);
-     //while(-1<fscanf(lightcurvefile,"%lf %lf %lf %lf %lf %lf %s",&jd,&mag,&merr,&x,&y,&app,string)){
-     while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
-      if ( jd == 0.0 )
-       continue; // if this line could not be parsed, try the next one
-      is_this_image_good= 1;
-      for ( image_counter= 0; image_counter < images_Nbad; image_counter++ ) {
-       if ( jd == images_bad[image_counter] ) {
-        is_this_image_good= 0;
-        break; // we expect only one image with matching JD
-       }
-      }
-      if ( is_this_image_good == 1 ) {
-       //fprintf(outlightcurvefile,"%.5lf %8.5lf %.5lf %8.3lf %8.3lf %4.1lf %s\n",jd,mag,merr,x,y,app,string);
-       write_lightcurve_point( outlightcurvefile, jd, mag, merr, x, y, app, string, comments_string );
-      }
-     }
-     fclose( outlightcurvefile );
-     fclose( lightcurvefile );
-     unlink( ep->d_name );                          // delete old lightcurve file
-     rename( lightcurve_tmp_filename, ep->d_name ); /// move lightcurve.tmp to lightcurve file
+    if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[filenamelen - 1] == 't' && ep->d_name[filenamelen - 2] == 'a' && ep->d_name[filenamelen - 3] == 'd' ) {
+     filenamelist[filename_counter]= malloc( (filenamelen+1) * sizeof( char ) );
+     strncpy( filenamelist[filename_counter], ep->d_name, (filenamelen+1) );
+     filename_counter++;
     }
    }
-   update_number_of_bad_images_in_log_file( images_Nbad ); // Update vast_summary.log
    (void)closedir( dp );
-  } else
-   perror( "Couldn't open the directory\n" );
+  } else {
+   perror( "Couldn't open the directory" );
+   free( filenamelist );
+   return -1;
+  }
+  // Process each file in the list
+  for ( ; filename_counter--; ) {
+   /// Re-open the lightcurve file and choose only good points
+   //lightcurvefile= fopen( ep->d_name, "r" );
+   lightcurvefile= fopen( filenamelist[filename_counter], "r" );
+   if ( NULL == lightcurvefile ) {
+    fprintf( stderr, "ERROR: Can't open file %s\n", filenamelist[filename_counter] );
+    exit( 1 );
+   }
+   outlightcurvefile= fopen( lightcurve_tmp_filename, "w" );
+   if ( NULL == outlightcurvefile ) {
+    fprintf( stderr, "\nAn ERROR has occured while processing file %s  median_mag=%lf mag_sigma=%lf\n", filenamelist[filename_counter], median_mag, mag_sigma );
+    fprintf( stderr, "ERROR: Can't open file %s\n", lightcurve_tmp_filename );
+    exit( 1 );
+   }
+   //fscanf(lightcurvefile,"%lf %lf %lf %lf %lf %lf %s",&jd,&mag,&merr,&x,&y,&app,string); // Never drop the first point!
+   // The while cycle is needed to handle the situation that the first lines are comments
+   jd= 0.0;
+   //while( jd==0.0 ){
+   // read_lightcurve_point(lightcurvefile,&jd,&mag,&merr,&x,&y,&app,string); // Never drop the first point!
+   //}
+   //fprintf(outlightcurvefile,"%.5lf %8.5lf %.5lf %8.3lf %8.3lf %4.1lf %s\n",jd,mag,merr,x,y,app,string);
+   //write_lightcurve_point( outlightcurvefile, jd, mag, merr, x, y, app, string);
+   //while(-1<fscanf(lightcurvefile,"%lf %lf %lf %lf %lf %lf %s",&jd,&mag,&merr,&x,&y,&app,string)){
+   while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
+    if ( jd == 0.0 )
+     continue; // if this line could not be parsed, try the next one
+    is_this_image_good= 1;
+    for ( image_counter= 0; image_counter < images_Nbad; image_counter++ ) {
+     if ( jd == images_bad[image_counter] ) {
+      is_this_image_good= 0;
+      break; // we expect only one image with matching JD
+     }
+    }
+    if ( is_this_image_good == 1 ) {
+     //fprintf(outlightcurvefile,"%.5lf %8.5lf %.5lf %8.3lf %8.3lf %4.1lf %s\n",jd,mag,merr,x,y,app,string);
+     write_lightcurve_point( outlightcurvefile, jd, mag, merr, x, y, app, string, comments_string );
+    }
+   }
+   fclose( outlightcurvefile );
+   fclose( lightcurvefile );
+   unlink( filenamelist[filename_counter] );                          // delete old lightcurve file
+   rename( lightcurve_tmp_filename, filenamelist[filename_counter] ); /// move lightcurve.tmp to lightcurve file
+   free( filenamelist[filename_counter] );
+  }
+  update_number_of_bad_images_in_log_file( images_Nbad ); // Update vast_summary.log
  } // if( images_Nbad>0 ){
+
+ free( filenamelist );
 
  free( images_bad );
 

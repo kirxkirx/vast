@@ -199,10 +199,12 @@ int main() {
  }
 
  //for(i=0;i<Nstars;i++)
- for ( i= Nstars; i--; )
+ for ( i= Nstars; i--; ) {
   //for(j=0;j<Nobs;j++)
-  for ( j= Nobs; j--; )
+  for ( j= Nobs; j--; ) {
    r[i][j]= 0.0;
+  }
+ }
 
  c= malloc( Nstars * sizeof( float ) );
  if ( c == NULL ) {
@@ -622,9 +624,6 @@ int main() {
    }
    fclose( outlightcurvefile );
    fclose( lightcurvefile );
-   // TODO: replace with unlink + rename
-   //sprintf(system_command_str,"mv -f %s %s",outlightcurvefilename,lightcurvefilename);
-   //system(system_command_str);
    unlink( lightcurvefilename );
    rename( outlightcurvefilename, lightcurvefilename );
   } else {
