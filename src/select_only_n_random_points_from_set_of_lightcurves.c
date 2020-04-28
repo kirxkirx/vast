@@ -146,12 +146,13 @@ int main( int argc, char **argv ) {
 
   lightcurvefile= fopen( filenamelist[filename_counter], "r" );
   if ( NULL == lightcurvefile ) {
-   fprintf( stderr, "ERROR: Can't open file %s\n", filenamelist[filename_counter] );
+   fprintf( stderr, "ERROR: Can't open file %s (filenamelist[%d]) for reading\n", filenamelist[filename_counter], filename_counter );
    return 1;
   }
+  sprintf( lightcurve_tmp_filename, "lightcurve.tmp" );
   outlightcurvefile= fopen( lightcurve_tmp_filename, "w" );
   if ( NULL == outlightcurvefile ) {
-   fprintf( stderr, "ERROR: Can't open file %s\n", lightcurve_tmp_filename );
+   fprintf( stderr, "ERROR: Can't open file %s (lightcurve_tmp_filename) for writing\n", lightcurve_tmp_filename );
    return 1;
   }
   while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
@@ -177,5 +178,8 @@ int main( int argc, char **argv ) {
  free( selected_jd );
  free( input_jd );
 
+ gsl_rng_free( r );
+
  return 0;
 }
+
