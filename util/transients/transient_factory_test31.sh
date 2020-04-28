@@ -485,6 +485,9 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   # Throw an error
   echo "ERROR calibrating magnitudes in the field $FIELD (found lightcurve.tmp_emergency_stop_debug)"
   echo "ERROR calibrating magnitudes in the field $FIELD (found lightcurve.tmp_emergency_stop_debug)" >> transient_factory_test31.txt
+  echo "############################################################" >> transient_factory_test31.txt
+  cat lightcurve.tmp_emergency_stop_debug >> transient_factory_test31.txt
+  echo "############################################################" >> transient_factory_test31.txt
   echo "***** MAGNITUDE CALIBRATION ERROR *****" >> transient_factory.log
   echo "############################################################" >> transient_factory.log
   # continue to the next field
