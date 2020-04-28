@@ -46,8 +46,14 @@ int main( int argc, char **argv ) {
 
  int i; // counter
 
+ // File name handling
  DIR *dp;
  struct dirent *ep;
+ 
+ char **filenamelist;
+ long filename_counter;
+ long filenamelen;
+
  FILE *lightcurvefile;
  FILE *outlightcurvefile;
  double jd, mag, merr, x, y, app;
@@ -111,46 +117,62 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "JD%lf is selected for output\n", selected_jd[i] );
  }
 
+ // Create a list of files
+ filenamelist= (char **)malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );
+ filename_counter= 0;
  dp= opendir( "./" );
  if ( dp != NULL ) {
-  //while( ep = readdir(dp) ){
   while ( ( ep= readdir( dp ) ) != NULL ) {
    /// For each file
-   if ( strlen( ep->d_name ) < 8 )
+   filenamelen= strlen( ep->d_name );
+   if ( filenamelen < 8 )
     continue; // make sure the filename is not too short for the following tests
-   if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[strlen( ep->d_name ) - 1] == 't' && ep->d_name[strlen( ep->d_name ) - 2] == 'a' && ep->d_name[strlen( ep->d_name ) - 3] == 'd' ) {
-
-    lightcurvefile= fopen( ep->d_name, "r" );
-    if ( NULL == lightcurvefile ) {
-     fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
-     return 1;
-    }
-    outlightcurvefile= fopen( lightcurve_tmp_filename, "w" );
-    if ( NULL == outlightcurvefile ) {
-     fprintf( stderr, "ERROR: Can't open file %s\n", lightcurve_tmp_filename );
-     return 1;
-    }
-    while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
-     if ( jd == 0.0 )
-      continue; // if this line could not be parsed, try the next one
-     for ( i= 0; i < N; i++ ) {
-      if ( jd == selected_jd[i] ) {
-       write_lightcurve_point( outlightcurvefile, jd, mag, merr, x, y, app, string, NULL );
-       break;
-      }
-     } // for(i=0;i<N;i++){
-    }
-    fclose( outlightcurvefile );
-    fclose( lightcurvefile );
-    unlink( ep->d_name );                          /* delete old lightcurve file */
-    rename( lightcurve_tmp_filename, ep->d_name ); /* move lightcurve.tmp to lightcurve file */
-
-   } // if this is out*.dat file
-   //////
+   if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[filenamelen - 1] == 't' && ep->d_name[filenamelen - 2] == 'a' && ep->d_name[filenamelen - 3] == 'd' ) {
+    filenamelist[filename_counter]= malloc( (filenamelen+1) * sizeof( char ) );
+    strncpy( filenamelist[filename_counter], ep->d_name, (filenamelen+1) );
+    filename_counter++;
+   }
   }
   (void)closedir( dp );
- } else
-  perror( "Couldn't open the directory\n" );
+ } else {
+  perror( "Couldn't open the directory" );
+  free( filenamelist );
+  return 2;
+ }
+
+
+ // Process each file in the list
+ for ( ; filename_counter--; ) {
+
+  lightcurvefile= fopen( filenamelist[filename_counter], "r" );
+  if ( NULL == lightcurvefile ) {
+   fprintf( stderr, "ERROR: Can't open file %s\n", filenamelist[filename_counter] );
+   return 1;
+  }
+  outlightcurvefile= fopen( lightcurve_tmp_filename, "w" );
+  if ( NULL == outlightcurvefile ) {
+   fprintf( stderr, "ERROR: Can't open file %s\n", lightcurve_tmp_filename );
+   return 1;
+  }
+  while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
+   if ( jd == 0.0 )
+    continue; // if this line could not be parsed, try the next one
+   for ( i= 0; i < N; i++ ) {
+    if ( jd == selected_jd[i] ) {
+     write_lightcurve_point( outlightcurvefile, jd, mag, merr, x, y, app, string, NULL );
+     break;
+    }
+   } // for(i=0;i<N;i++){
+  }
+  fclose( outlightcurvefile );
+  fclose( lightcurvefile );
+  unlink( filenamelist[filename_counter] );                          /* delete old lightcurve file */
+  rename( lightcurve_tmp_filename, filenamelist[filename_counter] ); /* move lightcurve.tmp to lightcurve file */
+  free( filenamelist[filename_counter] );
+ } // if this is out*.dat file
+ //////
+ 
+ free( filenamelist );
 
  free( selected_jd );
  free( input_jd );

@@ -449,7 +449,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   rm -f 'lightcurve.tmp_emergency_stop_debug'
  fi
  # Calibrate magnitude scale with Tycho-2 stars in the field 
- echo "y" | util/transients/calibrate_current_field_with_tycho2.sh 
+ echo "y" | util/transients/calibrate_current_field_with_tycho2.sh 2>&1 >> transient_factory_test31.txt
  MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
  # Check that the magnitude calibration actually worked
  for i in `cat candidates-transients.lst | awk '{print $1}'` ;do 

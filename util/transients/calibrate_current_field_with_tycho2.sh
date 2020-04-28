@@ -88,4 +88,7 @@ cp -v "$SEXTRACTOR_CATALOG_NAME" wcsmag.cat
 MAGNITUDE_CALIBRATION_PARAMETERS=`lib/catalogs/read_tycho2`
 echo "util/calibrate_magnitude_scale $MAGNITUDE_CALIBRATION_PARAMETERS" >> /dev/stderr
 util/calibrate_magnitude_scale $MAGNITUDE_CALIBRATION_PARAMETERS
+if [ $? -ne 0 ];then
+ echo "ERROR: non-zero exit code of util/calibrate_magnitude_scale"
+fi
 #util/calibrate_magnitude_scale `lib/catalogs/read_tycho2`

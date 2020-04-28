@@ -167,7 +167,6 @@ int main( int argc, char **argv ) {
    if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[filenamelen - 1] == 't' && ep->d_name[filenamelen - 2] == 'a' && ep->d_name[filenamelen - 3] == 'd' ) {
     filenamelist[filename_counter]= malloc( (filenamelen+1) * sizeof( char ) );
     strncpy( filenamelist[filename_counter], ep->d_name, (filenamelen+1) );
-    //fprintf( stderr, "#%s#\n", filenamelist[filename_counter]);
     filename_counter++;
    }
   }
@@ -175,7 +174,7 @@ int main( int argc, char **argv ) {
  } else {
   perror( "Couldn't open the directory" );
   free( filenamelist );
-  return -1;
+  return 2;
  }
 
 

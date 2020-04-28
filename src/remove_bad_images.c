@@ -261,11 +261,12 @@ int main( int argc, char **argv ) {
   get_image_filename_from_vast_image_details_log_using_JD( images_bad[image_counter] );
  }
 
+ filenamelist= (char **)malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );
+
  if ( images_Nbad > 0 ) {
   fprintf( stderr, "Removing them from all lightcurves... " );
   sprintf( lightcurve_tmp_filename, "lightcurve.tmp" );
   // Create a list of files
-  filenamelist= (char **)malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );
   filename_counter= 0;
   dp= opendir( "./" );
   if ( dp != NULL ) {

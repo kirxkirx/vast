@@ -9,8 +9,6 @@
 #include "lightcurve_io.h"
 
 int main( int argc, char **argv ) {
- DIR *dp;
- struct dirent *ep;
 
  FILE *lightcurvefile;
  double jd, mag, merr, x, y, app;
@@ -18,6 +16,13 @@ int main( int argc, char **argv ) {
  int i;
 
  int min_number_of_points;
+
+ DIR *dp;
+ struct dirent *ep;
+ 
+ char **filenamelist;
+ long filename_counter;
+ long filenamelen;
 
  if ( argc >= 2 && 0 == strcmp( "-h", argv[1] ) ) {
   fprintf( stderr, "Delete out*dat files with too small number of observations.\n" );
@@ -31,40 +36,57 @@ int main( int argc, char **argv ) {
  } else
   min_number_of_points= HARD_MIN_NUMBER_OF_POINTS; /* Use default value from vast_limits.h */
 
+ // Create a list of files
+ filenamelist= (char **)malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );
+ filename_counter= 0;
  dp= opendir( "./" );
  if ( dp != NULL ) {
   fprintf( stderr, "Removing lightcurves with less than %d points... ", min_number_of_points );
-  //while( ep = readdir(dp) ){
   while ( ( ep= readdir( dp ) ) != NULL ) {
-   if ( strlen( ep->d_name ) < 8 )
+   filenamelen= strlen( ep->d_name );
+   if ( filenamelen < 8 )
     continue; // make sure the filename is not too short for the following tests
-   if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[strlen( ep->d_name ) - 1] == 't' && ep->d_name[strlen( ep->d_name ) - 2] == 'a' && ep->d_name[strlen( ep->d_name ) - 3] == 'd' ) {
-
-    lightcurvefile= fopen( ep->d_name, "r" );
-
-    if ( NULL == lightcurvefile ) {
-     fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
-     exit( 1 );
-    }
-
-    /* Count observations */
-    i= 0;
-    //while(-1<fscanf(lightcurvefile,"%lf %lf %lf %lf %lf %lf %s",&jd,&mag,&merr,&x,&y,&app,string)){
-    while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
-     if ( jd == 0.0 )
-      continue; // if this line could not be parsed, try the next one
-     i++;
-    }
-    fclose( lightcurvefile );
-
-    if ( i < min_number_of_points )
-     unlink( ep->d_name ); /* delete lightcurve file */
+   if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[filenamelen - 1] == 't' && ep->d_name[filenamelen - 2] == 'a' && ep->d_name[filenamelen - 3] == 'd' ) {
+    filenamelist[filename_counter]= malloc( (filenamelen+1) * sizeof( char ) );
+    strncpy( filenamelist[filename_counter], ep->d_name, (filenamelen+1) );
+    filename_counter++;
    }
   }
   (void)closedir( dp );
  } else {
-  perror( "Couldn't open the directory\n" );
+  perror( "Couldn't open the directory" );
+  free( filenamelist );
+  return 2;
  }
+
+
+ // Process each file in the list
+ for ( ; filename_counter--; ) {
+
+  lightcurvefile= fopen( filenamelist[filename_counter], "r" );
+
+  if ( NULL == lightcurvefile ) {
+   fprintf( stderr, "ERROR: Can't open file %s\n", filenamelist[filename_counter] );
+   exit( 1 );
+  }
+
+  // Count observations 
+  i= 0;
+  while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
+   if ( jd == 0.0 )
+    continue; // if this line could not be parsed, try the next one
+   i++;
+  }
+  fclose( lightcurvefile );
+
+  if ( i < min_number_of_points ) {
+   unlink( filenamelist[filename_counter] ); // delete lightcurve file 
+  }
+  
+  free( filenamelist[filename_counter] );
+ }
+
+ free( filenamelist );
 
  fprintf( stderr, "done!  =)\n" );
 

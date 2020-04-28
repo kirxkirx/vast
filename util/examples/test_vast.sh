@@ -383,6 +383,10 @@ if [ -d ../test_data_photo ];then
    ###
    # Filter-out all stars with small number of detections
    lib/remove_lightcurves_with_small_number_of_points 40
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_remove_lightcurves_with_small_number_of_points_exit_code"
+   fi
    util/nopgplot.sh
    # Find star with the largest sigma in this field
    TMPSTR=`cat data.m_sigma | awk '{printf "%08.3f %8.3f %8.3f %s\n",$2*1000,$3,$4,$5}' | sort -n | tail -n1| awk '{print $4}'`
@@ -531,6 +535,20 @@ if [ -d ../test_data_photo ];then
    cd $WORKDIR 
    #
    #####################
+   # Magnitude calibration test
+   if [ -f lightcurve.tmp_emergency_stop_debug ];then
+    rm -f lightcurve.tmp_emergency_stop_debug
+   fi
+   util/calibrate_magnitude_scale 5.000000 -16.294004 14.734595 0.445192 2.319951
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_calibrate_magnitude_scale_exit_code"
+   fi
+   if [ -f lightcurve.tmp_emergency_stop_debug ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_lightcurve_tmp_emergency_stop_debug"
+   fi
+   #####################
    ## Check if we get the same results with mag-size filtering
    util/clean_data.sh
    # Run the test
@@ -585,6 +603,10 @@ if [ -d ../test_data_photo ];then
    ###
    # Filter-out all stars with small number of detections
    lib/remove_lightcurves_with_small_number_of_points 40
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_remove_lightcurves_with_small_number_of_points_exit_code"
+   fi
    util/nopgplot.sh
    # Find star with the largest sigma in this field
    TMPSTR=`cat data.m_sigma | awk '{printf "%08.3f %8.3f %8.3f %s\n",$2*1000,$3,$4,$5}' | sort -n | tail -n1| awk '{print $4}'`
@@ -655,6 +677,35 @@ if [ -d ../test_data_photo ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE116"
    fi
+   # test lib/new_lightcurve_sigma_filter and its cousins
+   lib/new_lightcurve_sigma_filter 2.0
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_new_lightcurve_sigma_filter_exit_code"
+   fi
+   lib/drop_faint_points 3
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_drop_faint_points_exit_code"
+   fi
+   lib/drop_bright_points 3
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_drop_bright_points_exit_code"
+   fi
+   #####################
+   N_RANDOM_SET=30
+   lib/select_only_n_random_points_from_set_of_lightcurves $N_RANDOM_SET
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_select_only_n_random_points_from_set_of_lightcurves_exit_code"
+   else
+    N_RANDOM_ACTUAL=`for i in out*.dat ;do cat $i | wc -l ;done | util/colstat 2>&1 | grep 'MAX=' | awk '{printf "%.0f", $2}'`
+    if [ $N_RANDOM_SET -ne $N_RANDOM_ACTUAL ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_select_only_n_random_points_from_set_of_lightcurves_$N_RANDOM_ACTUAL"
+    fi
+   fi
    #####################
    #####################
    ## Check if we get the same results with automated reference image selection
@@ -711,6 +762,10 @@ if [ -d ../test_data_photo ];then
    ###
    # Filter-out all stars with small number of detections
    lib/remove_lightcurves_with_small_number_of_points 40
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE2_remove_lightcurves_with_small_number_of_points_exit_code"
+   fi
    util/nopgplot.sh
    # Find star with the largest sigma in this field
    TMPSTR=`cat data.m_sigma | awk '{printf "%08.3f %8.3f %8.3f %s\n",$2*1000,$3,$4,$5}' | sort -n | tail -n1| awk '{print $4}'`
@@ -1294,6 +1349,20 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD037_NOT_PERFORMED_2"
   fi
+  #####################
+  N_RANDOM_SET=30
+  lib/select_only_n_random_points_from_set_of_lightcurves $N_RANDOM_SET
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_select_only_n_random_points_from_set_of_lightcurves_exit_code"
+  else
+   N_RANDOM_ACTUAL=`for i in out*.dat ;do cat $i | wc -l ;done | util/colstat 2>&1 | grep 'MAX=' | awk '{printf "%.0f", $2}'`
+   if [ $N_RANDOM_SET -ne $N_RANDOM_ACTUAL ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_select_only_n_random_points_from_set_of_lightcurves_$N_RANDOM_ACTUAL"
+   fi
+  fi
+  #####################
   ################################################################################
   # Check vast_image_details.log format
   NLINES=`cat vast_image_details.log | awk '{print $18}' | sed '/^\s*$/d' | wc -l | awk '{print $1}'`
@@ -2310,6 +2379,7 @@ if [ -d ../sample_data ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE_VAST_IMG_DETAILS_FORMAT"
   fi
   ################################################################################
+  
   ###############################################
   ### Flag image test should always be the last one
   for IMAGE in ../sample_data/*.fit ;do
@@ -6567,12 +6637,12 @@ if [ -d ../NMW_Saturn_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2012"
   fi
-  grep --quiet -e "2019 11 03.6470  2458791.1470  12.29  19:10:" -e "2019 11 03.6470  2458791.1470  12.28  19:10:" -e "2019 11 03.6470  2458791.1470  12.31  19:10:" transient_report/index.html
+  grep --quiet -e "2019 11 03.6470  2458791.1470  12.29  19:10:" -e "2019 11 03.6470  2458791.1470  12\.3.  19:10:"  transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2012a"
   fi
-  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  12.29  19:10:" -e "2019 11 03.6470  2458791.1470  12.28  19:10:" -e "2019 11 03.6470  2458791.1470  12.31  19:10:" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  12.29  19:10:" -e "2019 11 03.6470  2458791.1470  12\.3.  19:10:"  transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:10:11.72 -27:05:38.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
@@ -6621,12 +6691,12 @@ if [ -d ../NMW_Saturn_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2014"
   fi
-  grep --quiet -e "2019 11 03.6470  2458791.1470  12\.0.  19:01:" transient_report/index.html
+  grep --quiet -e "2019 11 03.6470  2458791.1470  12\.0.  19:01:" -e "2019 11 03.6470  2458791.1470  12\.1.  19:01:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2014a"
   fi
-  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  12\.0.  19:01:" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  12\.0.  19:01:" -e "2019 11 03.6470  2458791.1470  12\.2.  19:01:" transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:01:30.92 -21:19:30.1 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
@@ -6635,11 +6705,11 @@ if [ -d ../NMW_Saturn_test ];then
    echo "TEST ERROR"
    TEST_PASSED=0
    TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES _TOO_FAR_TEST_ERROR"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2014a_TOO_FAR_TEST_ERROR"
   else
    if [ $TEST -eq 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES _TOO_FAR_$DISTANCE_DEGREES"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2014a_TOO_FAR_$DISTANCE_DEGREES"
    fi
   fi
   #

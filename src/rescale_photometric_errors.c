@@ -60,8 +60,6 @@ void make_sure_photometric_errors_rescaling_is_in_log_file() {
 }
 
 int main( int argc, char **argv ) {
- DIR *dp;
- struct dirent *ep;
 
  FILE *outlightcurvefile;
 
@@ -89,6 +87,14 @@ int main( int argc, char **argv ) {
 
  double *mag_array;
  double *magerr_array;
+
+ // File name handling
+ DIR *dp;
+ struct dirent *ep;
+ 
+ char **filenamelist;
+ long filename_counter;
+ long filenamelen;
 
  mean_estimated_sigma= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
  if ( mean_estimated_sigma == NULL ) {
@@ -303,45 +309,62 @@ int main( int argc, char **argv ) {
 
  // Apply the corrections
  fprintf( stderr, "Applying corrections to error estimates in all lightcurves.\n" );
+ // Create a list of files
+ filenamelist= (char **)malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );
+ filename_counter= 0;
  dp= opendir( "./" );
  if ( dp != NULL ) {
   while ( ( ep= readdir( dp ) ) != NULL ) {
-   if ( strlen( ep->d_name ) < 8 )
+   filenamelen= strlen( ep->d_name );
+   if ( filenamelen < 8 )
     continue; // make sure the filename is not too short for the following tests
-   if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[strlen( ep->d_name ) - 1] == 't' && ep->d_name[strlen( ep->d_name ) - 2] == 'a' && ep->d_name[strlen( ep->d_name ) - 3] == 'd' ) {
-    input_lightcurve_file= fopen( ep->d_name, "r" );
-    if ( NULL == input_lightcurve_file ) {
-     fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
-     exit( 1 );
-    }
-    outlightcurvefile= fopen( "lightcurve.tmp", "w" );
-    if ( NULL == outlightcurvefile ) {
-     fprintf( stderr, "\nAn ERROR has occured while processing file %s \n", ep->d_name );
-     fprintf( stderr, "ERROR: Can't open file %s for writing\n", "lightcurve.tmp" );
-     exit( 1 );
-    }
-    while ( -1 < read_lightcurve_point( input_lightcurve_file, &jd, &mag, &magerr, &x, &y, &app, string, comments_string ) ) {
-     if ( jd == 0.0 )
-      continue; // if this line could not be parsed, try the next one
-     /////
-     magerr= sqrt( gamma_squared * magerr * magerr + epsilon_squared );
-     ////
-     if ( magerr > MAX_MAG_ERROR )
-      continue; // discard observations with large errorbars
-     ////
-     write_lightcurve_point( outlightcurvefile, jd, mag, magerr, x, y, app, string, comments_string );
-    }
-    fclose( outlightcurvefile );
-    fclose( input_lightcurve_file );
-    unlink( ep->d_name );                   // delete old lightcurve file
-    rename( "lightcurve.tmp", ep->d_name ); // move lightcurve.tmp to lightcurve file
+   if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[filenamelen - 1] == 't' && ep->d_name[filenamelen - 2] == 'a' && ep->d_name[filenamelen - 3] == 'd' ) {
+    filenamelist[filename_counter]= malloc( (filenamelen+1) * sizeof( char ) );
+    strncpy( filenamelist[filename_counter], ep->d_name, (filenamelen+1) );
+    filename_counter++;
    }
   }
   (void)closedir( dp );
-  make_sure_photometric_errors_rescaling_is_in_log_file();
  } else {
-  perror( "Couldn't open the directory\n" );
+  perror( "Couldn't open the directory" );
+  free( filenamelist );
+  return 2;
  }
+
+ // Process each file in the list
+ for ( ; filename_counter--; ) {
+  input_lightcurve_file= fopen( filenamelist[filename_counter], "r" );
+  if ( NULL == input_lightcurve_file ) {
+   fprintf( stderr, "ERROR: Can't open file %s\n", filenamelist[filename_counter] );
+   exit( 1 );
+  }
+  outlightcurvefile= fopen( "lightcurve.tmp", "w" );
+  if ( NULL == outlightcurvefile ) {
+   fprintf( stderr, "\nAn ERROR has occured while processing file %s \n", filenamelist[filename_counter] );
+   fprintf( stderr, "ERROR: Can't open file %s for writing\n", "lightcurve.tmp" );
+   exit( 1 );
+  }
+  while ( -1 < read_lightcurve_point( input_lightcurve_file, &jd, &mag, &magerr, &x, &y, &app, string, comments_string ) ) {
+   if ( jd == 0.0 )
+    continue; // if this line could not be parsed, try the next one
+   /////
+   magerr= sqrt( gamma_squared * magerr * magerr + epsilon_squared );
+   ////
+   if ( magerr > MAX_MAG_ERROR )
+    continue; // discard observations with large errorbars
+   ////
+   write_lightcurve_point( outlightcurvefile, jd, mag, magerr, x, y, app, string, comments_string );
+  }
+  fclose( outlightcurvefile );
+  fclose( input_lightcurve_file );
+  unlink( filenamelist[filename_counter] );                   // delete old lightcurve file
+  rename( "lightcurve.tmp", filenamelist[filename_counter] ); // move lightcurve.tmp to lightcurve file
+  free( filenamelist[filename_counter] );
+ }
+
+ make_sure_photometric_errors_rescaling_is_in_log_file();
+
+ free( filenamelist );
 
  return 0;
 }
