@@ -98,6 +98,7 @@ int main() {
 
  int stop_iterations= 0;
 
+ int bad_stars_counter;
  int *bad_stars;
  char **star_numbers;
 
@@ -158,6 +159,7 @@ int main() {
   fprintf( stderr, "ERROR: Couldn't allocate memory for jd\n" );
   exit( 1 );
  }
+ Nobs= 0; //initialize it here, just in case
  get_dates( jd, &Nobs );
  if ( Nobs <= 0 ) {
   fprintf( stderr, "ERROR: Trying allocate zero or negative memory amount(Nobs <= 0)\n" );
@@ -248,6 +250,7 @@ int main() {
   exit( 1 );
  }
  while ( -1 < fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename ) ) {
+  memset( star_number_string, 0, FILENAME_LENGTH ); // just in case
   // Get star number from the lightcurve file name
   for ( k= 3; k < (long)strlen( lightcurvefilename ); k++ ) {
    star_number_string[k - 3]= lightcurvefilename[k];
@@ -262,7 +265,8 @@ int main() {
    fprintf( stderr, "ERROR: Can't read file %s\n", lightcurvefilename );
    exit( 1 );
   }
-  //while(-1<fscanf(lightcurvefile,"%lf %f %f %f %f %f %s",&djd,&dmag,&dmerr,&x,&y,&app,string)){
+  memset( string, 0, FILENAME_LENGTH );
+  memset( comments_string, 0, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE );
   while ( -1 < read_lightcurve_point( lightcurvefile, &djd, &ddmag, &ddmerr, &x, &y, &app, string, comments_string ) ) {
    if ( djd == 0.0 )
     continue; // if this line could not be parsed, try the next one
@@ -383,6 +387,13 @@ int main() {
    }
   }
 
+ // More debug
+ fprintf( stderr, "\n" );
+ for ( i= Nobs; i--; ) {
+  fprintf( stderr, "a[%d]=%lf\n", i, a[i] );
+ }
+
+
   /* Should we stop now? */
   stop_iterations= 1;
   //for(i=0;i<Nstars;i++){
@@ -425,7 +436,7 @@ int main() {
  for ( i= Nstars; i--; ) {
   if ( c[i] != 0.0f ) {
    if ( fabsf( c[i] - median ) > 10.0 * sigma ) {
-    fprintf( stderr, "EXCLUDING out%s.dat %d  fabsf(c[i]-median)=%f  >10.0*sigma=%f c[i]=%f median=%f\n", star_numbers[i], i, fabsf( c[i] - median ), 10.0 * sigma, c[i], median );
+//    fprintf( stderr, "EXCLUDING out%s.dat %d  fabsf(c[i]-median)=%f  >10.0*sigma=%f c[i]=%f median=%f\n", star_numbers[i], i, fabsf( c[i] - median ), 10.0 * sigma, c[i], median );
     bad_stars[i]= 1;
    }
   }
@@ -461,6 +472,21 @@ int main() {
 
  /* 2nd pass */
 
+ /////////////////////////////////////////////////////////
+ // We marked the bad stars in the first pass
+ // Now reset the coefficiants in order to start iterative search 
+ // in the second pass from scratch
+ for ( i= Nstars; i--; ) {
+  c[i]= 0.1;
+  old_c[i]= 0.1;
+ }
+
+ for ( i= Nobs; i--; ) {
+  a[i]= 1.0;
+  old_a[i]= 1.0;
+ }
+ /////////////////////////////////////////////////////////
+
  for ( iter= 0; iter < NUMBER_OF_Ai_Ci_ITERATIONS; iter++ ) {
   fprintf( stderr, "\riteration %4d", iter + 1 );
 #ifdef VAST_ENABLE_OPENMP
@@ -487,16 +513,20 @@ int main() {
    }
   }
 
+/*
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
 #pragma omp parallel for private( i, j, sum1, sum2, tmpfloat )
 #endif
 #endif
+*/
   for ( j= 0; j < Nobs; j++ ) {
    //for(j=Nobs;j--;){
    sum1= sum2= 0.0;
-   //for(i=0;i<Nstars;i++){
-   for ( i= Nstars; i--; ) {
+   // !!!!! experimental !!!!! - try to use only a few brightest stars to compute a[j]
+   // We assume the array is sorted in magnitude
+   for( i=0; i < MIN( Nstars, 1000); i++ ){
+   //for ( i= Nstars; i--; ) {
     if ( bad_stars[i] == 0 ) {
      if ( r[i][j] != 0.0 ) {
       tmpfloat= 1.0f / ( mag_err[i][j] * mag_err[i][j] );
@@ -509,6 +539,13 @@ int main() {
     old_a[j]= a[j];
     a[j]= sum1 / sum2;
    }
+  }
+
+
+  // More debug
+  fprintf( stderr, "\n" );
+  for ( i= Nobs; i--; ) {
+   fprintf( stderr, "a[%d]=%lf\n", i, a[i] );
   }
 
   // Should we stop now?
@@ -555,7 +592,7 @@ int main() {
  for ( i= Nstars; i--; ) {
   if ( c[i] != 0.0f ) {
    if ( fabsf( c[i] - median ) > 10.0 * sigma ) {
-    fprintf( stderr, "EXCLUDING out%s.dat %d  fabsf(c[i]-median)=%f  >10.0*sigma=%f c[i]=%f median=%f\n", star_numbers[i], i, fabsf( c[i] - median ), 10.0 * sigma, c[i], median );
+//    fprintf( stderr, "EXCLUDING out%s.dat %d  fabsf(c[i]-median)=%f  >10.0*sigma=%f c[i]=%f median=%f\n", star_numbers[i], i, fabsf( c[i] - median ), 10.0 * sigma, c[i], median );
     bad_stars[i]= 1;
    }
   }
@@ -596,8 +633,8 @@ int main() {
 #endif
 #endif
  for ( i= 0; i < Nstars; i++ ) {
-  sprintf( lightcurvefilename, "out%s.dat", star_numbers[i] );
   if ( bad_stars[i] == 0 ) {
+   sprintf( lightcurvefilename, "out%s.dat", star_numbers[i] );
    sprintf( outlightcurvefilename, "out%s.tmp", star_numbers[i] );
    lightcurvefile= fopen( lightcurvefilename, "r" );
    if ( NULL == lightcurvefile ) {
@@ -605,7 +642,6 @@ int main() {
     exit( 1 );
    }
    outlightcurvefile= fopen( outlightcurvefilename, "w" );
-   //while(-1<fscanf(lightcurvefile,"%lf %f %f %f %f %f %s",&djd,&dmag,&dmerr,&x,&y,&app,string)){
    while ( -1 < read_lightcurve_point( lightcurvefile, &djd, &ddmag, &ddmerr, &x, &y, &app, string, comments_string ) ) {
     if ( djd == 0.0 )
      continue; // if this line could not be parsed, try the next one
@@ -616,7 +652,11 @@ int main() {
      if ( fabs( jd[k] - djd ) <= 0.00001 ) { // 0.8 sec
                                              //if( fabs(jd[k]-djd)<=0.0001 ){ // 8 sec
       j= k;
-      //fprintf(outlightcurvefile,"%.5lf %8.5f %.5f %8.3f %8.3f %4.lf %s\n",djd,dmag-c[i]*a[j],dmerr,x,y,app,string);
+      //
+      if ( fabs(c[i] * a[j]) >2.0 ) {
+       fprintf( stderr, "DEBUG: %s  c[i] * a[j]=%lf  c[i]=%lf a[j]=%lf\n", outlightcurvefilename, c[i] * a[j], c[i], a[j] );
+      }
+      // 
       write_lightcurve_point( outlightcurvefile, djd, (double)( dmag - c[i] * a[j] ), (double)dmerr, (double)x, (double)y, (double)app, string, comments_string );
       break;
      }
@@ -626,7 +666,9 @@ int main() {
    fclose( lightcurvefile );
    unlink( lightcurvefilename );
    rename( outlightcurvefilename, lightcurvefilename );
+/*
   } else {
+   // We should move this out of parallell for!
    fprintf( stderr, "Skip correction for %s", lightcurvefilename );
    if ( bad_stars[i] == 2 ) {
     fprintf( stderr, " removing it from sysrem_input_star_list.lst\n" );
@@ -634,13 +676,44 @@ int main() {
     if ( 0 != system( system_command_str ) ) {
      fprintf( stderr, "ERROR runnning command: %s\n", system_command_str );
     }
-   } else
+   } else {
     fprintf( stderr, "\n" );
+   }
+*/
   }
  }
  fprintf( stderr, "done\n" );
 
- /* Print out some stats */
+ // This should not be parallel as it relies on system() commands
+ bad_stars_counter=0;
+ for ( i= Nstars; i--; ) { 
+  if ( bad_stars[i] != 0 ) {
+   bad_stars_counter++;
+   sprintf( lightcurvefilename, "out%s.dat", star_numbers[i] );
+   sprintf( outlightcurvefilename, "out%s.tmp", star_numbers[i] );
+   fprintf( stderr, "Skip correction for %s", lightcurvefilename );
+   if ( bad_stars[i] == 2 ) {
+    fprintf( stderr, " removing it from sysrem_input_star_list.lst\n" );
+    sprintf( system_command_str, "grep -v %s sysrem_input_star_list.lst > %s && mv -f %s sysrem_input_star_list.lst", lightcurvefilename, outlightcurvefilename, outlightcurvefilename );
+    if ( 0 != system( system_command_str ) ) {
+     fprintf( stderr, "ERROR runnning command: %s\n", system_command_str );
+    }
+   } else {
+    fprintf( stderr, "\n" );
+   }
+  }
+ }
+ fprintf( stderr, "Skipped corrections for %d out of %d stars\n", bad_stars_counter, Nstars );
+
+ 
+ // More debug
+ for ( i= Nobs; i--; ) {
+  fprintf( stderr, "a[%d]=%lf\n", i, a[i] );
+ }
+
+
+
+ // Print out some stats 
  k= 0;
  for ( i= 0; i < Nstars; i++ ) {
   if ( bad_stars[i] == 0 ) {
