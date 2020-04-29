@@ -75,8 +75,10 @@ int main() {
 
  long k;
 
+ double corrected_magnitude, correction_mag;
+
  double djd;
- float dmag, dmerr; //,x,y,app;
+ float dmag, dmerr;
  double ddmag, ddmerr, x, y, app;
  char string[FILENAME_LENGTH];
  char comments_string[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
@@ -513,13 +515,11 @@ int main() {
    }
   }
 
-/*
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
 #pragma omp parallel for private( i, j, sum1, sum2, tmpfloat )
 #endif
 #endif
-*/
   for ( j= 0; j < Nobs; j++ ) {
    //for(j=Nobs;j--;){
    sum1= sum2= 0.0;
@@ -645,19 +645,28 @@ int main() {
    while ( -1 < read_lightcurve_point( lightcurvefile, &djd, &ddmag, &ddmerr, &x, &y, &app, string, comments_string ) ) {
     if ( djd == 0.0 )
      continue; // if this line could not be parsed, try the next one
-    dmag= ddmag;
-    dmerr= ddmerr;
+    dmag= (float)ddmag;
+    dmerr= (float)ddmerr;
     // Find which j is corresponding to the current JD
     for ( k= 0; k < Nobs; k++ ) {
      if ( fabs( jd[k] - djd ) <= 0.00001 ) { // 0.8 sec
                                              //if( fabs(jd[k]-djd)<=0.0001 ){ // 8 sec
       j= k;
       //
-      if ( fabs(c[i] * a[j]) >2.0 ) {
-       fprintf( stderr, "DEBUG: %s  c[i] * a[j]=%lf  c[i]=%lf a[j]=%lf\n", outlightcurvefilename, c[i] * a[j], c[i], a[j] );
+      //if ( fabs(c[i] * a[j]) >2.0 ) {
+      // fprintf( stderr, "DEBUG: %s  c[i] * a[j]=%lf  c[i]=%lf a[j]=%lf\n", outlightcurvefilename, c[i] * a[j], c[i], a[j] );
+      //}
+      // reject large corrections
+      corrected_magnitude= ddmag;
+      correction_mag= (double)( c[i] * a[j] );
+      if ( fabs(correction_mag) < SYSREM_MAX_CORRECTION_MAG ) {
+       corrected_magnitude= ddmag - correction_mag;
+      } else {
+       fprintf( stderr, "SysRem WARNING: skipping a large correction of %lf mag for star %s on JD%lf  c[i]=%f a[j]=%f\n", correction_mag, outlightcurvefilename, djd, c[i], a[j] );
       }
       // 
-      write_lightcurve_point( outlightcurvefile, djd, (double)( dmag - c[i] * a[j] ), (double)dmerr, (double)x, (double)y, (double)app, string, comments_string );
+      //write_lightcurve_point( outlightcurvefile, djd, (double)( dmag - c[i] * a[j] ), (double)dmerr, (double)x, (double)y, (double)app, string, comments_string );
+      write_lightcurve_point( outlightcurvefile, djd, corrected_magnitude, (double)dmerr, (double)x, (double)y, (double)app, string, comments_string );
       break;
      }
     }

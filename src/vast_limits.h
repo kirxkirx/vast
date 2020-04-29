@@ -310,6 +310,7 @@
 // src/sysrem.c and src/sysrem2.c
 #define NUMBER_OF_Ai_Ci_ITERATIONS 1000
 #define Ai_Ci_DIFFERENCE_TO_STOP_ITERATIONS 0.00001
+#define SYSREM_MAX_CORRECTION_MAG 0.5
 
 // src/new_lightcurve_sigma_filter.c
 #define LIGHT_CURVE_FILTER_SIGMA 7.0
