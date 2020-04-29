@@ -80,6 +80,10 @@ vast-1.0rc85:
 	Now the reference image will be the image with the best seeing that doesn't have too few or too many stars
 	compared to other images in the series. If the option '--autoselectrefimage' is not specified, the reference 
 	image will be the first image supplied on the command line, as before.
+	* The script 'util/load.sh' used to restore a set of lightcurves, configuration and log files previously 
+	saved with 'util/save.sh' will now try to use 'find' command to copy the files. This is ten times faster 
+	than the old 'for' loop, but it will not ask if you want to keep the old configuration files (most importantly
+	default.sex) and will just silently owerwrite them, so please beware!
 07 Mar 2019: vast-1.0rc84:
 	* VaST is now on Github ( https://github.com/kirxkirx/vast ), pull requests are welcome!
 	* The new script 'util/get_gaia_lc.sh' gets Gaia G, BP and RP lightcurves for a Gaia DR2 ID that 

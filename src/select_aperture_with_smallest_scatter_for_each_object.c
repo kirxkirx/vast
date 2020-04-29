@@ -76,6 +76,8 @@ int main( int argc, char **argv ) {
  char **filenamelist;
  long filename_counter;
  long filenamelen;
+ 
+ int sscanf_return_value;
 
  // This is to silance Valgrind warning that we may use this thig uninitialized
  memset(comments_string_without_multiple_apertures,0,MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE);
@@ -152,11 +154,9 @@ int main( int argc, char **argv ) {
    if ( comments_string == NULL ) {
     continue;
    }
-   //if ( 10 > sscanf( comments_string, "%lf %lf  %lf %lf %lf %lf %lf %lf %lf %lf %[^\t\n]", &mag_a[1][i], &magerr_a[1][i], &mag_a[2][i], &magerr_a[2][i], &mag_a[3][i], &magerr_a[3][i], &mag_a[4][i], &magerr_a[4][i], &mag_a[5][i], &magerr_a[5][i], comments_string_without_multiple_apertures ) ) {
-   int scanf_return_value=sscanf( comments_string, "%lf %lf  %lf %lf %lf %lf %lf %lf %lf %lf %[^\t\n]", &mag_a[1][i], &magerr_a[1][i], &mag_a[2][i], &magerr_a[2][i], &mag_a[3][i], &magerr_a[3][i], &mag_a[4][i], &magerr_a[4][i], &mag_a[5][i], &magerr_a[5][i], comments_string_without_multiple_apertures );
-   //if ( 10 > sscanf( comments_string, "%lf %lf  %lf %lf %lf %lf %lf %lf %lf %lf %[^\t\n]", &mag_a[1][i], &magerr_a[1][i], &mag_a[2][i], &magerr_a[2][i], &mag_a[3][i], &magerr_a[3][i], &mag_a[4][i], &magerr_a[4][i], &mag_a[5][i], &magerr_a[5][i], comments_string_without_multiple_apertures ) ) {
-   fprintf(stderr, "scanf_return_value=%d\n", scanf_return_value);
-   if ( 10 > scanf_return_value ) {
+   sscanf_return_value=sscanf( comments_string, "%lf %lf  %lf %lf %lf %lf %lf %lf %lf %lf %[^\t\n]", &mag_a[1][i], &magerr_a[1][i], &mag_a[2][i], &magerr_a[2][i], &mag_a[3][i], &magerr_a[3][i], &mag_a[4][i], &magerr_a[4][i], &mag_a[5][i], &magerr_a[5][i], comments_string_without_multiple_apertures );
+   //fprintf(stderr, "sscanf_return_value=%d\n", sscanf_return_value);
+   if ( 10 > sscanf_return_value ) {
     //fprintf( stderr, "ERROR parsing the comments string: %s\n", comments_string );
     //fprintf( stderr, "##%s##\n", comments_string );
     //fprintf( stderr, "#%s#\n", comments_string_without_multiple_apertures );

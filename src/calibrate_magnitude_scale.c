@@ -184,12 +184,12 @@ int main( int argc, char **argv ) {
   //puts (filenamelist[filename_counter]);
   lightcurvefile= fopen( filenamelist[filename_counter], "r" );
   if ( NULL == lightcurvefile ) {
-   fprintf( stderr, "ERROR: Can't open file %s\n", filenamelist[filename_counter] );
+   fprintf( stderr, "ERROR: Cannot open file %s (filenamelist[%ld]) for reading\n", filenamelist[filename_counter], filename_counter );
    exit( 1 );
   }
   outlightcurvefile= fopen( "lightcurve.tmp", "w" );
   if ( NULL == outlightcurvefile ) {
-   fprintf( stderr, "ERROR: Can't open file lightcurve.tmp\n" );
+   fprintf( stderr, "ERROR: Can't open file lightcurve.tmp for writing\n" );
    exit( 1 );
   }
   while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
@@ -226,6 +226,7 @@ int main( int argc, char **argv ) {
     fprintf( stderr, "Magnitude conversion ERROR: %lf>%lf or %lf<%lf\n", newmag, FAINTEST_STARS_ANYMAG, newmag, BRIGHTEST_STARS );
     if ( operation_mode == 0 ) {
      fprintf( stderr, "newmag=a*mag*mag+b*mag+c; %lf=%lf*%lf*%lf+%lf*%lf+%lf;\n\n", newmag, a, mag, mag, b, mag, c );
+     fprintf( stderr, "This happened while processing the star %s\n", filenamelist[filename_counter] );
     }
     emergency_stop= 1;
     break;

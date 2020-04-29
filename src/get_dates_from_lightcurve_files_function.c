@@ -94,16 +94,54 @@ void get_dates( double *jd, int *Nobs ) {
   fprintf( stderr, "WARNING: Can't open vast_image_details.log\n" );
   get_dates_from_lightcurve_files( jd, Nobs );
  } else {
+  memset( str, 0, MAX_LOG_STR_LENGTH );
   while ( NULL != fgets( str, MAX_LOG_STR_LENGTH, vastlogfile ) ) {
-   for ( i= 0; i < strlen( str ) - 3; i++ )
+   memset( jd_str, 0, MAX_LOG_STR_LENGTH );
+   for ( i= 0; i < strlen( str ) - 3; i++ ) {
     if ( str[i] == 'J' && str[i + 1] == 'D' && str[i + 2] == '=' ) {
      for ( j= i + 4, k= 0; str[j] != ' '; j++, k++ ) {
       jd_str[k]= str[j];
      }
      jd[( *Nobs )]= atof( jd_str );
+     // Check that we have parsed the log file correclty
+     if ( 0 != isnan( jd[( *Nobs )] ) ) {
+      fprintf( stderr, "ERROR in get_dates(): failed to convert string #%s# to double\n", jd_str );
+      exit( 1 );
+     }
+     if ( 0 != isinf( jd[( *Nobs )] ) ) {
+      fprintf( stderr, "ERROR in get_dates(): failed to convert string #%s# to double (1)\n", jd_str );
+      exit( 1 );
+     }
+#ifdef STRICT_CHECK_OF_JD_AND_MAG_RANGE
+#ifdef VAST_USE_BUILTIN_FUNCTIONS
+// Make a proper check of the input values if isnormal() is defined
+#if defined _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L
+     // We use __builtin_isnormal() as we know it is working if VAST_USE_BUILTIN_FUNCTIONS is defined
+     // Othervise even with the '_ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L' check
+     // isnormal() doesn't work on Ubuntu 14.04 trusty (vast.sai.msu.ru)
+     // BEWARE 0.0 is also not considered normal by isnormal() !!!
+     if ( 0 == __builtin_isnormal( jd[( *Nobs )] ) ) {
+      fprintf( stderr, "ERROR in get_dates(): failed to convert string #%s# to double (2)\n", jd_str );
+      exit( 1 );
+     }
+#endif
+#endif
+
+     // Check the input date, note that wedon't know if it's JD or MJD
+     if ( jd[( *Nobs )] < EXPECTED_MIN_MJD ) {
+      fprintf( stderr, "ERROR in get_dates(): JD%.5lf<%.5lf #%s#\n", jd[( *Nobs )], EXPECTED_MIN_MJD, jd_str );
+      exit( 1 );
+     }
+     if ( jd[( *Nobs )] > EXPECTED_MAX_JD ) {
+      fprintf( stderr, "ERROR in get_dates(): JD%.5lf>%.5lf #%s#\n", jd[( *Nobs )], EXPECTED_MAX_JD, jd_str );
+      exit( 1 );
+     }
+#endif
+     // everything is fine, go parse the next line in the log file
+     ( *Nobs )+= 1;
      break;
     }
-   ( *Nobs )+= 1;
+   }
   }
   fclose( vastlogfile );
   fprintf( stderr, "Total number of observations (from log file) %d\n", ( *Nobs ) );

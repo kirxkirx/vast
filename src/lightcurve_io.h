@@ -14,6 +14,14 @@
 #include "vast_limits.h"
 
 static inline int write_lightcurve_point( FILE *lc_file_descriptor, double jd, double mag, double mag_err, double x, double y, double app, char *string, char *comments_string ) {
+ //
+/*
+ if( mag>0.0 ){
+  fprintf(stderr, "EMERGENCY STOP: mag=%lf \n", mag);
+  exit( 1 );
+ }
+*/
+ //
  if ( NULL == comments_string ) {
 //  fprintf( lc_file_descriptor, "%.5lf %8.4lf %.4lf  %10.5lf %10.5lf %4.1lf %s\n", jd, mag, mag_err, x, y, app, string );
   fprintf( lc_file_descriptor, "%.5lf %12.8lf %.8lf  %10.5lf %10.5lf %4.1lf %s\n", jd, mag, mag_err, x, y, app, string );
@@ -179,7 +187,7 @@ static inline int read_lightcurve_point( FILE *lc_file_descriptor, double *jd, d
 
 #ifdef STRICT_CHECK_OF_JD_AND_MAG_RANGE
 #ifdef VAST_USE_BUILTIN_FUNCTIONS
-// Make a proper check the input values if isnormal() is defined
+// Make a proper check of the input values if isnormal() is defined
 #if defined _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L
  // We use __builtin_isnormal() as we know it is working if VAST_USE_BUILTIN_FUNCTIONS is defined
  // Othervise even with the '_ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L' check

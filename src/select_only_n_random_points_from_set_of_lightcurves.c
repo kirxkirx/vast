@@ -146,7 +146,7 @@ int main( int argc, char **argv ) {
 
   lightcurvefile= fopen( filenamelist[filename_counter], "r" );
   if ( NULL == lightcurvefile ) {
-   fprintf( stderr, "ERROR: Can't open file %s (filenamelist[%d]) for reading\n", filenamelist[filename_counter], filename_counter );
+   fprintf( stderr, "ERROR: Can't open file %s (filenamelist[%ld]) for reading\n", filenamelist[filename_counter], filename_counter );
    return 1;
   }
   sprintf( lightcurve_tmp_filename, "lightcurve.tmp" );

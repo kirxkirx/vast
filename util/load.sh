@@ -51,6 +51,18 @@ else
  read REGION_NAME
 fi
 
+# In case it was an unsucessfull read
+if [ -z "$REGION_NAME" ];then
+ echo "You must specify the directory containing VaST lightcurve files (out*.dat)"
+ exit 1
+fi
+
+# Remove trailing / from $REGION_NAME
+LAST_CHAR_OF_REGION_NAME="${REGION_NAME: -1}"
+if [ "$LAST_CHAR_OF_REGION_NAME" == "/" ];then
+ REGION_NAME="${REGION_NAME%?}"
+fi
+
 # Test if the data directory exist at all
 if [ ! -d $REGION_NAME ];then
  echo "Error: cannot find directory $REGION_NAME"
@@ -109,7 +121,24 @@ fi # if [ $? -eq 0 ];then
 util/clean_data.sh all 
 
 echo "Loading data from $REGION_NAME ... "
-# Copy data
+
+# Copy data - the new fast and insecure way
+command -v find &>/dev/null
+if [ $? -eq 0 ];then
+ echo "Tring to copy files the fast way using find"
+ find "$REGION_NAME" ! -name "$REGION_NAME" -exec cp -r -t . {} \+
+ if [ $? -eq 0 ];then
+  # it worked! Exit the scrip
+  echo "Done"
+  exit 0
+ else
+  echo "Oh, find returned a non-zero exit code"
+ fi
+fi
+
+echo "Trying to copy files the old way using the for cycle"
+
+# Copy data - the old, slow and secure way
 for i in "$REGION_NAME"/* ;do
  # do not copy edited files
  echo `basename $i` | grep "_edit.dat" &>/dev/null
