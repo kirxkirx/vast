@@ -701,7 +701,12 @@ if [ -d ../test_data_photo ];then
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_select_only_n_random_points_from_set_of_lightcurves_exit_code"
    else
     N_RANDOM_ACTUAL=`for i in out*.dat ;do cat $i | wc -l ;done | util/colstat 2>&1 | grep 'MAX=' | awk '{printf "%.0f", $2}'`
-    if [ $N_RANDOM_SET -ne $N_RANDOM_ACTUAL ];then
+    if [ $N_RANDOM_ACTUAL -gt $N_RANDOM_SET ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_select_only_n_random_points_from_set_of_lightcurves_$N_RANDOM_ACTUAL"
+    fi
+    # allow for a few bad images
+    if [ $N_RANDOM_SET -lt $[$N_RANDOM_ACTUAL+3] ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_select_only_n_random_points_from_set_of_lightcurves_$N_RANDOM_ACTUAL"
     fi
@@ -6637,12 +6642,12 @@ if [ -d ../NMW_Saturn_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2012"
   fi
-  grep --quiet -e "2019 11 03.6470  2458791.1470  12.29  19:10:" -e "2019 11 03.6470  2458791.1470  12\.3.  19:10:"  transient_report/index.html
+  grep --quiet -e "2019 11 03.6470  2458791.1470  12\.2.  19:10:" -e "2019 11 03.6470  2458791.1470  12\.3.  19:10:"  transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2012a"
   fi
-  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  12.29  19:10:" -e "2019 11 03.6470  2458791.1470  12\.3.  19:10:"  transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  12\.2.  19:10:" -e "2019 11 03.6470  2458791.1470  12\.3.  19:10:"  transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:10:11.72 -27:05:38.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
@@ -9439,7 +9444,7 @@ if [ -d ../MASTER_test ];then
     FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCDPSF004a"
    fi
   fi 
-  util/sysrem
+  util/sysrem2
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCDPSF005"

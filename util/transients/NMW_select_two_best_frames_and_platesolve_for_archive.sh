@@ -6,7 +6,7 @@ fi
 
 for NEW_IMAGES in "$@" ;do
 
-LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR=`for IMGFILE in "$NEW_IMAGES"/*.fts ;do basename "$IMGFILE" ;done | awk '{print $1}' FS='_' | sort | uniq`
+LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR=`for IMGFILE in "$NEW_IMAGES"/*.fts ;do basename "${IMGFILE/wcs_fd_/}" ;done | awk -F'_' '{print $1}' | sort | uniq`
 
 echo "Fields in the data directory: 
 $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR"
