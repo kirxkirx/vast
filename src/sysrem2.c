@@ -629,7 +629,7 @@ int main() {
  fprintf( stderr, "Applying corrections... \n" );
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
-#pragma omp parallel for private( i, lightcurvefilename, lightcurvefile, djd, ddmag, ddmerr, x, y, app, string, comments_string, dmag, dmerr, j, k, outlightcurvefilename, outlightcurvefile, system_command_str )
+#pragma omp parallel for private( i, lightcurvefilename, lightcurvefile, djd, ddmag, ddmerr, x, y, app, string, comments_string, dmag, dmerr, j, k, outlightcurvefilename, outlightcurvefile, system_command_str, corrected_magnitude, correction_mag )
 #endif
 #endif
  for ( i= 0; i < Nstars; i++ ) {
@@ -699,9 +699,11 @@ int main() {
   if ( bad_stars[i] != 0 ) {
    bad_stars_counter++;
    sprintf( lightcurvefilename, "out%s.dat", star_numbers[i] );
-   sprintf( outlightcurvefilename, "out%s.tmp", star_numbers[i] );
    fprintf( stderr, "Skip correction for %s", lightcurvefilename );
+   /*
+   // This whole thing doesn't work anymore as index_vs_mag.c recreates sysrem_input_star_list.lst based on mag-sigma plots
    if ( bad_stars[i] == 2 ) {
+    sprintf( outlightcurvefilename, "out%s.tmp", star_numbers[i] );
     fprintf( stderr, " removing it from sysrem_input_star_list.lst\n" );
     sprintf( system_command_str, "grep -v %s sysrem_input_star_list.lst > %s && mv -f %s sysrem_input_star_list.lst", lightcurvefilename, outlightcurvefilename, outlightcurvefilename );
     if ( 0 != system( system_command_str ) ) {
@@ -710,6 +712,8 @@ int main() {
    } else {
     fprintf( stderr, "\n" );
    }
+   */
+   fprintf( stderr, "\n" );
   }
  }
  fprintf( stderr, "Skipped corrections for %d out of %d stars\n", bad_stars_counter, Nstars );

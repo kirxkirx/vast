@@ -706,7 +706,7 @@ if [ -d ../test_data_photo ];then
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_select_only_n_random_points_from_set_of_lightcurves_$N_RANDOM_ACTUAL"
     fi
     # allow for a few bad images
-    if [ $N_RANDOM_SET -lt $[$N_RANDOM_ACTUAL+3] ];then
+    if [ $[$N_RANDOM_SET-3] -lt $N_RANDOM_ACTUAL ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_select_only_n_random_points_from_set_of_lightcurves_$N_RANDOM_ACTUAL"
     fi
