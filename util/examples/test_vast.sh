@@ -703,12 +703,12 @@ if [ -d ../test_data_photo ];then
     N_RANDOM_ACTUAL=`for i in out*.dat ;do cat $i | wc -l ;done | util/colstat 2>&1 | grep 'MAX=' | awk '{printf "%.0f", $2}'`
     if [ $N_RANDOM_ACTUAL -gt $N_RANDOM_SET ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_select_only_n_random_points_from_set_of_lightcurves_$N_RANDOM_ACTUAL"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_select_only_n_random_points_from_set_of_lightcurves_a_$N_RANDOM_ACTUAL"
     fi
     # allow for a few bad images
     if [ $[$N_RANDOM_SET-3] -lt $N_RANDOM_ACTUAL ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_select_only_n_random_points_from_set_of_lightcurves_$N_RANDOM_ACTUAL"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_select_only_n_random_points_from_set_of_lightcurves_b_$N_RANDOM_ACTUAL"
     fi
    fi
    #####################
