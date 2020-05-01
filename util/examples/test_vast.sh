@@ -706,7 +706,7 @@ if [ -d ../test_data_photo ];then
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_select_only_n_random_points_from_set_of_lightcurves_a_$N_RANDOM_ACTUAL"
     fi
     # allow for a few bad images
-    if [ $[$N_RANDOM_SET-3] -lt $N_RANDOM_ACTUAL ];then
+    if [ $N_RANDOM_ACTUAL -lt $[$N_RANDOM_SET-5] ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_select_only_n_random_points_from_set_of_lightcurves_b_$N_RANDOM_ACTUAL"
     fi
@@ -6701,7 +6701,7 @@ if [ -d ../NMW_Saturn_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2014a"
   fi
-  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  12\.0.  19:01:" -e "2019 11 03.6470  2458791.1470  12\.2.  19:01:" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  12\.0.  19:01:" -e "2019 11 03.6470  2458791.1470  12\.1.  19:01:" transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:01:30.92 -21:19:30.1 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
