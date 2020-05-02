@@ -205,6 +205,18 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # choose second epoch images
  # first, count how many there are
  NUMBER_OF_SECOND_EPOCH_IMAGES=`ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | wc -l`
+ 
+ if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -gt 1 ];then
+  # Make image previews
+  echo "Previews of the second-epoch images: <br>" >> transient_factory_test31.txt
+  for FITS_IMAGE_TO_PREVIEW in "$NEW_IMAGES"/*"$FIELD"_*_*.fts ;do
+   PREVIEW_IMAGE=`basename $FITS_IMAGE_TO_PREVIEW`_preview.png
+   util/fits2png $FITS_IMAGE_TO_PREVIEW && mv pgplot.png transient_report/$PREVIEW_IMAGE
+   echo "<img src=\"$PREVIEW_IMAGE\">" >> transient_factory_test31.txt
+  done
+  echo "<br>" >> transient_factory_test31.txt
+ fi
+ 
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -lt 2 ];then
   echo "ERROR processing the image series - only $NUMBER_OF_SECOND_EPOCH_IMAGES second-epoch images found"
   echo "ERROR processing the image series - only $NUMBER_OF_SECOND_EPOCH_IMAGES second-epoch images found" >> transient_factory_test31.txt

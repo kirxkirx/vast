@@ -27,14 +27,26 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   # There are more than two second-epoch images - do a preliminary VaST run to choose the two images with best seeing
   cp -v default.sex.telephoto_lens_onlybrightstars_v1 default.sex 
   echo "Preliminary VaST run" 
-  ./vast --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages  "$NEW_IMAGES"/*"$FIELD"_*_*.fts  
+  ./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages  "$NEW_IMAGES"/*"$FIELD"_*_*.fts  
   if [ ! -s vast_image_details.log ];then
    echo "ERROR: vast_image_details.log is not created"
    continue
   fi
-  # column 9 in vast_image_details.log is the aperture size in pixels
-  SECOND_EPOCH__FIRST_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | sort -nk9 | head -n1 | awk '{print $17}'`
-  SECOND_EPOCH__SECOND_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}'`
+  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -lt 10 ];then
+   # Simple selection based on seeing
+   # column 9 in vast_image_details.log is the aperture size in pixels
+   SECOND_EPOCH__FIRST_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | sort -nk9 | head -n1 | awk '{print $17}'`
+   SECOND_EPOCH__SECOND_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}'`
+  else
+   # A more careful selection with additional filters (with multi-night image sets in mind)
+   grep 'status=OK' vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' > vast_image_details.log_filtered
+   MEDIAN_NUMBER_OF_DETECTED_STARS=`cat vast_image_details.log_filtered | awk '{print $13}' | util/colstat 2>/dev/null | grep 'MEDIAN=' | awk '{printf "%.0f",$2}'`
+   cat vast_image_details.log_filtered | awk "{if ( \$13 > $MEDIAN_NUMBER_OF_DETECTED_STARS && \$13 <2*$MEDIAN_NUMBER_OF_DETECTED_STARS ) print }" | sort -nk9  > vast_image_details.log_filtered_sorted
+   mv vast_image_details.log_filtered_sorted vast_image_details.log_filtered
+   SECOND_EPOCH__FIRST_IMAGE=`cat vast_image_details.log_filtered | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | head -n1 | awk '{print $17}'`
+   SECOND_EPOCH__SECOND_IMAGE=`cat vast_image_details.log_filtered | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | head -n2 | tail -n1 | awk '{print $17}'`
+   rm -f vast_image_details.log_filtered
+  fi
  fi
  ################################
 
@@ -56,11 +68,20 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # Check that the plates were actually solved
  for i in $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE ;do 
   WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $i`
+  WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
   if [ ! -f "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
-   echo "***** PLATE SOLVE PROCESSING ERROR *****" >> transient_factory.log
-   echo "***** cannot find $WCS_IMAGE_NAME_FOR_CHECKS  *****" >> transient_factory.log
-   echo "############################################################" >> transient_factory.log
-   echo 'UNSOLVED_PLATE'
+   if [ ! -f `basename "${i/wcs_fd_/}"` ];then
+    if [ ! -f `basename "${i/fd_/}"` ];then
+     echo "***** PLATE SOLVE PROCESSING ERROR *****" >> transient_factory.log
+     echo "***** cannot find $WCS_IMAGE_NAME_FOR_CHECKS  *****" >> transient_factory.log
+     echo "############################################################" >> transient_factory.log
+     echo 'UNSOLVED_PLATE'
+    else
+     mv "$WCS_IMAGE_NAME_FOR_CHECKS" solved_images/
+    fi
+   else
+    mv "$WCS_IMAGE_NAME_FOR_CHECKS" solved_images/  
+   fi
   else
    mv "$WCS_IMAGE_NAME_FOR_CHECKS" solved_images/
   fi

@@ -1061,6 +1061,7 @@ int main( int argc, char **argv ) {
 
  }
 
+ //fprintf(stderr,"DEBUG-3a\n");
 
  if ( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
   //fprintf(stderr,"DEBUG-2\n");
@@ -1193,7 +1194,7 @@ int main( int argc, char **argv ) {
    exit( 1 );
   }
   //while( -1<fscanf(catfile, "%d %lf %lf %lf %lf %f %f %lf %lf %lf %lf %d\n", &sexNUMBER[sex], &sexFLUX[sex], &sexFLUX_ERR[sex], &sexMAG[sex], &sexMAG_ERR[sex], &sexX[sex], &sexY[sex], &sexA_IMAGE[sex], &sexERRA_IMAGE[sex], &sexB_IMAGE[sex], &sexERRB_IMAGE[sex], &sexFLAG[sex]) ){
-  //fprintf(stderr,"DEBUG01\n");
+  fprintf(stderr,"DEBUG01\n");
   while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, catfile ) ) {
    //fprintf(stderr,"DEBUG02 sex=%d\n",sex);
    sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
@@ -1307,6 +1308,8 @@ int main( int argc, char **argv ) {
   }
  }
 
+ //fprintf(stderr,"DEBUG-3b\n");
+
  // Check if we are asked to start ds9 instead of the normal PGPLOT interface
  if ( use_ds9 == 1 ) {
   // execute the system command to run ds9
@@ -1319,9 +1322,12 @@ int main( int argc, char **argv ) {
   return 0;
  }
 
+ //fprintf(stderr,"DEBUG-3c\n");
+
  if ( 0 != fitsfile_read_check( fits_image_name ) ) {
   return 1;
  }
+ //fprintf(stderr,"DEBUG-3d\n");
  //fits_open_file(&fptr, fits_image_name, 0 , &status);
  fits_open_image( &fptr, fits_image_name, 0, &status );
  if ( status != 0 ) {
@@ -1440,6 +1446,8 @@ int main( int argc, char **argv ) {
  }
  //fprintf(stderr,"OK\n");
 
+ //fprintf(stderr,"DEBUG-3e\n");
+
  // Don't do this check if this is fits2png
  if ( finding_chart_mode !=1 && use_labels !=0 ) {
   // Decide if we want to use xy2sky()
@@ -1456,7 +1464,7 @@ int main( int argc, char **argv ) {
  }
 
  axis_ratio= (float)naxes[0] / (float)naxes[1];
- //fprintf(stderr,"axis_ratio=%f\n",axis_ratio);
+ //fprintf(stderr,"DEBUG-3f axis_ratio=%f\n",axis_ratio);
 
  // filter out bad pixels from float_array
  for ( i= 0; i < naxes[0] * naxes[1]; i++ ) {
@@ -1466,13 +1474,16 @@ int main( int argc, char **argv ) {
 
  // real_float_array - array with real pixel values (well, not real but converted to float)
  // float_array - array used for computations with values ranging from 0 to 65535
- for ( i= 0; i < naxes[0] * naxes[1]; i++ )
+ for ( i= 0; i < naxes[0] * naxes[1]; i++ ) {
   real_float_array[i]= float_array[i];
+ }
  fix_array_with_negative_values( naxes[0] * naxes[1], float_array );
  image_minmax2( naxes[0] * naxes[1], float_array, &max_val, &min_val );
 
  /* GUI */
  //fprintf(stderr,"Opening display ... ");
+ 
+ //fprintf(stderr,"DEBUG-3g\n");
 
  //setenv("PGPLOT_DIR","lib/pgplot/",1);
  setenv_localpgplot( argv[0] );
@@ -1501,19 +1512,40 @@ int main( int argc, char **argv ) {
  cpgscr( 0, 0.10, 0.31, 0.32 ); /* set default vast window background */
  cpgpage();
  //}
- if ( finding_chart_mode == 0 ) {
-  cpgpap( 0.0, (float)naxes[1] / (float)( naxes[0] ) );
+ // (finding_chart_mode == 1 && use_north_east_marks == 0 && use_labels == 0)
+ // should correspond to fits2png settings
+ if ( finding_chart_mode == 0 || (finding_chart_mode == 1 && use_north_east_marks == 0 && use_labels == 0) ) {
+  //fprintf(stderr,"DEBUG-3h\n");
+  cpgpap( 0.0, 1.0/axis_ratio );
+  //cpgpap( 0.0, (float)naxes[1] / (float)( naxes[0] ) );
   cpgsvp( 0.05, 0.95, 0.035, 0.035 + 0.9 );
  } else {
+  //fprintf(stderr,"DEBUG-3hh\n");
   cpgpap( 0.0, 1.0 ); /* Make square plot */
+/*
   if( use_labels == 1 ) {
+   fprintf(stderr,"DEBUG-3hhh\n");
    // leave some space for labels
    cpgsvp( 0.05, 0.95, 0.05, 0.95 );
   } else {
+   fprintf(stderr,"DEBUG-3hhhh\n");
    // Use the full plot area leaving no space for labels
    cpgsvp( 0.0, 1.0, 0.0, 1.0 );
   }
+*/
  }
+
+  if( use_labels == 1 ) {
+   //fprintf(stderr,"DEBUG-3hhh\n");
+   // leave some space for labels
+   cpgsvp( 0.05, 0.95, 0.05, 0.95 );
+  } else {
+   //fprintf(stderr,"DEBUG-3hhhh\n");
+   // Use the full plot area leaving no space for labels
+   cpgsvp( 0.0, 1.0, 0.0, 1.0 );
+  }
+
+
 
  // set default plotting limits
  drawX1= 1;
@@ -1536,7 +1568,7 @@ int main( int argc, char **argv ) {
   drawY1= markY - MIN( 100.0, markY );
   drawX2= drawX1 + MIN( 200.0, (float)naxes[0] );
   drawY2= drawY1 + MIN( 200.0, (float)naxes[1] );
-  //fprintf(stderr,"DEBUG01: drawX1=%d drawX2=%d drawY1=%d drawY2=%d  markX=%f markY=%f \n",drawX1,drawX2,drawY1,drawY2,markX,markY);
+  fprintf(stderr,"DEBUG01: drawX1=%d drawX2=%d drawY1=%d drawY2=%d  markX=%f markY=%f \n",drawX1,drawX2,drawY1,drawY2,markX,markY);
   ///////
   drawX0= (int)( ( drawX1 + drawX2 ) / 2 + 0.5 );
   drawY0= (int)( ( drawY1 + drawY2 ) / 2 + 0.5 );
@@ -1546,7 +1578,7 @@ int main( int argc, char **argv ) {
   drawY1= drawY0 - (int)( razmer_y / 2 + 0.5 );
   drawX2= drawX1 + (int)razmer_x;
   drawY2= drawY1 + (int)razmer_y;
-  //fprintf(stderr,"DEBUG02: drawX1=%d drawX2=%d drawY1=%d drawY2=%d\n",drawX1,drawX2,drawY1,drawY2);
+  fprintf(stderr,"DEBUG02: drawX1=%d drawX2=%d drawY1=%d drawY2=%d\n",drawX1,drawX2,drawY1,drawY2);
   if ( drawX2 > naxes[0] ) {
    drawX1-= drawX2 - naxes[0];
    drawX2= naxes[0];
@@ -1567,7 +1599,7 @@ int main( int argc, char **argv ) {
    drawX2= naxes[0];
   if ( drawY2 > naxes[1] )
    drawY2= naxes[1];
-  //fprintf(stderr,"DEBUG03: drawX1=%d drawX2=%d drawY1=%d drawY2=%d\n",drawX1,drawX2,drawY1,drawY2);
+  fprintf(stderr,"DEBUG03: drawX1=%d drawX2=%d drawY1=%d drawY2=%d\n",drawX1,drawX2,drawY1,drawY2);
   ///////
   fprintf( stderr, "\n Press 'D' or 'Z''Z' to view the full image.\n\n" );
  }
@@ -1954,11 +1986,16 @@ int main( int argc, char **argv ) {
      if ( razmer_y == naxes[1] ){
       razmer_y = (double)MIN( drawX2 - drawX1, naxes[0] )/(double)naxes[0] * razmer_y;
      }
-     if ( finding_chart_mode == 1 ) {
+     // finding_chart_mode=1 use_north_east_marks= 0; use_labels= 0;
+     // corresponds to fits2png settings where we presumably whant the whole image
+     //if ( finding_chart_mode == 1 && ( use_north_east_marks!= 0 && use_labels!= 0 ) ) {
+     if ( finding_chart_mode == 1 && ( use_north_east_marks!= 0 && use_labels!= 0 ) ) {
       // we want a square finding chart !
       razmer_x= razmer_y;
+      fprintf( stderr, "Making a square plot\n");
      } else {
       razmer_x= axis_ratio * razmer_y;
+      fprintf( stderr, "Making a plot with the axes ratio of %lf\n", axis_ratio);
      }
      drawX1= drawX0 - (int)( razmer_x / 2 + 0.5 );
      drawY1= drawY0 - (int)( razmer_y / 2 + 0.5 );
@@ -2184,7 +2221,7 @@ int main( int argc, char **argv ) {
     return 0;
    }
 
-   //fprintf(stderr,"DEBUG000\n");
+   fprintf(stderr,"DEBUG000\n");
 
    /* If not in simple display mode - draw star markers */
    if ( match_mode > 0 && draw_star_markers == 1 ) {
