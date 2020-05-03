@@ -317,7 +317,7 @@ fi # if $VIZIER_SITE is set
 lib/bin/skycoor -g $RADEC_MEAN_HMS J2000
 
 lib/catalogs/check_catalogs_offline $RA_MEAN $DEC_MEAN
-util/transients/MPCheck.sh $RADEC_MEAN_HMS $DATE $TIME H | grep -v "Starting"
+util/transients/MPCheck.sh $RADEC_MEAN_HMS $DATE $TIME H $MAG_MEAN | grep -v "Starting"
 
 echo -n "<a href=\"https://wis-tns.weizmann.ac.il/search?ra=${RA_MEAN_HMS//:/%3A}&decl=${DEC_MEAN_HMS//:/%3A}&radius=15&coords_unit=arcsec\" target=\"_blank\">Check this position in <font color=\"tomato\">TNS</font>.</a>                         <a href='http://www.astronomy.ohio-state.edu/asassn/transients.html' target='_blank'>Manually check the ASAS-SN list of transients!</a>
 <a href=\"http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=$RA_MEAN%20$DEC_MEAN&CooDefinedFrames=J2000&Radius=1.0&Radius.unit=arcmin\" target=\"_blank\">Search this object in <font color=\"maroon\">SIMBAD</font>.</a>

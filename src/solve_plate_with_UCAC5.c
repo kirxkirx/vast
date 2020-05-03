@@ -1254,7 +1254,7 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
  double epoch, pmRA, pmDE;
  //double e_pmRA, e_pmDE;
 
- double search_ra_min_deg, search_ra_max_deg, search_ra_maxmin_deg, search_ra_mean_deg;
+ double search_ra_min_deg, search_ra_max_deg;//, search_ra_maxmin_deg, search_ra_mean_deg;
  double search_dec_min_deg, search_dec_max_deg, search_dec_maxmin_deg, search_dec_mean_deg;
  int detected_star_counter;
  
@@ -1300,13 +1300,15 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
   if ( stars[detected_star_counter].dec_deg_measured < search_dec_min_deg )search_dec_min_deg=stars[detected_star_counter].dec_deg_measured;
   if ( stars[detected_star_counter].dec_deg_measured > search_dec_max_deg )search_dec_max_deg=stars[detected_star_counter].dec_deg_measured; 
  }
- search_ra_maxmin_deg=search_ra_max_deg-search_ra_min_deg;
- search_ra_mean_deg=(search_ra_max_deg+search_ra_min_deg)/2.0;
+ //search_ra_maxmin_deg=search_ra_max_deg-search_ra_min_deg;
+ //search_ra_mean_deg=(search_ra_max_deg+search_ra_min_deg)/2.0;
  search_dec_maxmin_deg=search_dec_max_deg-search_dec_min_deg;
  search_dec_mean_deg=(search_dec_max_deg+search_dec_min_deg)/2.0;
  //
  faintest_mag=catalog_search_parameters->faintest_mag;
  brightest_mag=catalog_search_parameters->brightest_mag;
+
+ fprintf( stderr, "Reading UCAC5 zone files...\n");
 
  // Read each zone file
  for( zone_counter=1; zone_counter<900+1; zone_counter++ ) {
@@ -1454,6 +1456,8 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
  
   fclose(ptr);
  } // for( zone_counter==0; zone_counter<900; zone_counter++ ) { // Read each zone file
+
+ fprintf( stderr, "Done reading UCAC5 zone files...\n");
 
  fprintf( stderr, "Matched %d stars with the local copy of UCAC5.\n", N_stars_matched_with_astrometric_catalog );
  if ( N_stars_matched_with_astrometric_catalog < 5 ) {

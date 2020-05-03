@@ -5626,8 +5626,36 @@ if [ -d ../transient_detection_test_Ceres ];then
   if [ -f ../exclusion_list.txt ];then
    mv ../exclusion_list.txt ../exclusion_list.txt_backup
   fi
-  #
+  #################################################################
+  # We need a special astorb.dat for Ceres
+  if [ -f astorb.dat ];then
+   mv astorb.dat astorb.dat_backup
+  fi
+  if [ ! -f astorb_ceres.dat ];then
+   wget -c http://scan.sai.msu.ru/~kirx/pub/astorb_ceres.dat.gz &> /dev/stderr
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES_error_downloading_custom_astorb_ceres.dat"
+   fi
+   gunzip astorb_ceres.dat.gz
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES_error_unpacking_custom_astorb_ceres.dat"
+   fi
+  fi
+  cp astorb_ceres.dat astorb.dat
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CERES_error_copying_astorb_ceres.dat_to_astorb.dat"
+  fi
+  #################################################################
   echo "y" | util/transients/search_for_transients_single_field.sh
+  if [ -f astorb.dat_backup ];then
+   mv astorb.dat_backup astorb.dat
+  else
+   # remove the custom astorb.dat
+   rm -f astorb.dat
+  fi
   ## New stuff the file lib/catalogs/list_of_bright_stars_from_tycho2.txt should be created by util/transients/search_for_transients_single_field.sh
   if [ ! -f lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
    TEST_PASSED=0

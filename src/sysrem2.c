@@ -92,7 +92,7 @@ int main() {
  double *double_data;
  float mean, median, sigma, sum1, sum2;
 
- char system_command_str[1024];
+ //char system_command_str[1024];
 
  FILE *datafile;
  char lightcurvefilename[OUTFILENAME_LENGTH];
@@ -629,7 +629,7 @@ int main() {
  fprintf( stderr, "Applying corrections... \n" );
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
-#pragma omp parallel for private( i, lightcurvefilename, lightcurvefile, djd, ddmag, ddmerr, x, y, app, string, comments_string, dmag, dmerr, j, k, outlightcurvefilename, outlightcurvefile, system_command_str, corrected_magnitude, correction_mag )
+#pragma omp parallel for private( i, lightcurvefilename, lightcurvefile, djd, ddmag, ddmerr, x, y, app, string, comments_string, dmag, dmerr, j, k, outlightcurvefilename, outlightcurvefile, corrected_magnitude, correction_mag )
 #endif
 #endif
  for ( i= 0; i < Nstars; i++ ) {

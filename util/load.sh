@@ -123,17 +123,26 @@ util/clean_data.sh all
 echo "Loading data from $REGION_NAME ... "
 
 # Copy data - the new fast and insecure way
-command -v find &>/dev/null
+# Check if cp supports the -t option (it does not on BSD systems)
+echo " " > "$REGION_NAME"/testfile
+cp -t . "$REGION_NAME"/testfile
 if [ $? -eq 0 ];then
- echo "Tring to copy files the fast way using find"
- find "$REGION_NAME" ! -name "$REGION_NAME" -exec cp -r -t . {} \+
+ command -v find &>/dev/null
  if [ $? -eq 0 ];then
-  # it worked! Exit the scrip
-  echo "Done"
-  exit 0
- else
-  echo "Oh, find returned a non-zero exit code"
+  echo "Tring to copy files the fast way using find"
+  find "$REGION_NAME" ! -name "$REGION_NAME" -exec cp -r -t . {} \+
+  if [ $? -eq 0 ];then
+   # it worked! Exit the scrip
+   echo "Done"
+   exit 0
+  else
+   echo "Oh, find returned a non-zero exit code"
+  fi
  fi
+fi
+rm -f "$REGION_NAME"/testfile
+if [ -f testfile ];then
+ rm -f testfile
 fi
 
 echo "Trying to copy files the old way using the for cycle"
