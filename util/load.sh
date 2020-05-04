@@ -64,38 +64,42 @@ if [ "$LAST_CHAR_OF_REGION_NAME" == "/" ];then
 fi
 
 # Test if the data directory exist at all
-if [ ! -d $REGION_NAME ];then
- echo "Error: cannot find directory $REGION_NAME"
- if [ -f $REGION_NAME ];then
-  echo "Error: $REGION_NAME is a file, not a directory."
+if [ ! -d "$REGION_NAME" ];then
+ echo "ERROR: cannot find directory $REGION_NAME"
+ if [ -f "$REGION_NAME" ];then
+  echo "ERROR: $REGION_NAME is a file, not a directory."
  fi
  exit 1
 fi   
 
+echo "Checking if $REGION_NAME contains VaST lightcurve data ... "
+
 # Test if the directory contains lightcurve files
-DIR_CONTAINS_AT_LEAST_ONE_GOOD_LIGHTCURVE=0
 for i in "$REGION_NAME"/out*.dat ;do
  # If there is not a sigle file with the proper (out*.dat) name - things are bad
  if [ ! -f $i ];then
-  DIR_CONTAINS_AT_LEAST_ONE_GOOD_LIGHTCURVE=0
   break
  fi
+ #echo "DEBUG checking file $i"
  # If this is a non empty file
  if [ -s $i ];then
+  #echo "DEBUG checking file $i nonempty"
   # That includes ASCII text
   file $i | grep "ASCII text" &>/dev/null
   if [ $? -eq 0 ];then
+   #echo "DEBUG checking file $i nonempty contains ASCII text"
    # And this file is a readable lightcurve
    util/cute_lc $i &> /dev/null
    if [ $? -eq 0 ];then
+    #echo "DEBUG checking file $i nonempty contains ASCII text passes cute_lc"
     # At least one readable lightcurve found
-    DIR_CONTAINS_AT_LEAST_ONE_GOOD_LIGHTCURVE=1
+    echo "DIR_CONTAINS_AT_LEAST_ONE_GOOD_LIGHTCURVE_FILE"
     break
    fi
   fi
  fi
-done
-if [ $DIR_CONTAINS_AT_LEAST_ONE_GOOD_LIGHTCURVE -eq 1 ];then
+done | grep --quiet "DIR_CONTAINS_AT_LEAST_ONE_GOOD_LIGHTCURVE_FILE"
+if [ $? -eq 0 ];then
  echo "The directory $REGION_NAME seems to contain VaST-formated lightcurve files ... "
 else
  echo "ERROR: the directory $REGION_NAME does not contain VaST-formated lightcurve files"
@@ -122,14 +126,14 @@ util/clean_data.sh all
 
 echo "Loading data from $REGION_NAME ... "
 
-# Copy data - the new fast and insecure way
+#### Copy data - the new fast and insecure way ####
 # Check if cp supports the -t option (it does not on BSD systems)
 echo " " > "$REGION_NAME"/testfile
 cp -t . "$REGION_NAME"/testfile
 if [ $? -eq 0 ];then
  command -v find &>/dev/null
  if [ $? -eq 0 ];then
-  echo "Tring to copy files the fast way using find"
+  echo "Trying to copy files the fast way using find"
   find "$REGION_NAME" ! -name "$REGION_NAME" -exec cp -r -t . {} \+
   if [ $? -eq 0 ];then
    # it worked! Exit the scrip
@@ -147,7 +151,7 @@ fi
 
 echo "Trying to copy files the old way using the for cycle"
 
-# Copy data - the old, slow and secure way
+#### Copy data - the old, slow and secure way ####
 for i in "$REGION_NAME"/* ;do
  # do not copy edited files
  echo `basename $i` | grep "_edit.dat" &>/dev/null

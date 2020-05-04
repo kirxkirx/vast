@@ -43,7 +43,6 @@ void get_dates_from_lightcurve_files( double *jd, int *Nobs ) {
  dp= opendir( "./" );
  if ( dp != NULL ) {
   fprintf( stderr, "Extracting list of Julian Days from lightcurves... " );
-  //while( ep = readdir(dp) ){
   while ( ( ep= readdir( dp ) ) != NULL ) {
    if ( strlen( ep->d_name ) < 8 )
     continue; // make sure the filename is not too short for the following tests
@@ -53,7 +52,6 @@ void get_dates_from_lightcurve_files( double *jd, int *Nobs ) {
      fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
      exit( 1 );
     }
-    //while(-1<fscanf(lightcurvefile,"%lf %lf %lf %lf %lf %lf %s",&_jd,&mag,&merr,&x,&y,&app,string)){
     while ( -1 < read_lightcurve_point( lightcurvefile, &_jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
      if ( _jd == 0.0 )
       continue; // if this line could not be parsed, try the next one
@@ -74,10 +72,11 @@ void get_dates_from_lightcurve_files( double *jd, int *Nobs ) {
   }
   (void)closedir( dp );
   fprintf( stderr, "done\n" );
- } else
+ } else {
   perror( "Couldn't open the directory\n" );
+ }
 
- /* Write a fake log file so we don't need to read all the lightcurves next time */
+ // Write a fake log file so we don't need to read all the lightcurves next time
  write_fake_log_file( jd, Nobs );
 
  return;
@@ -96,10 +95,15 @@ void get_dates( double *jd, int *Nobs ) {
  } else {
   memset( str, 0, MAX_LOG_STR_LENGTH );
   while ( NULL != fgets( str, MAX_LOG_STR_LENGTH, vastlogfile ) ) {
+   str[MAX_LOG_STR_LENGTH-1]='\0'; // just in case
+   //fprintf( stderr, "#%s#\n", str);
+   if( strlen( str ) < 4 ){
+    continue;
+   }
    memset( jd_str, 0, MAX_LOG_STR_LENGTH );
    for ( i= 0; i < strlen( str ) - 3; i++ ) {
     if ( str[i] == 'J' && str[i + 1] == 'D' && str[i + 2] == '=' ) {
-     for ( j= i + 4, k= 0; str[j] != ' '; j++, k++ ) {
+     for ( j= i + 4, k= 0; str[j] != ' ' && str[j] != '\n' ; j++, k++ ) {
       jd_str[k]= str[j];
      }
      jd[( *Nobs )]= atof( jd_str );

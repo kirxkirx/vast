@@ -50,14 +50,13 @@ OPTFLAGS = -w -O2 -fomit-frame-pointer $(GOOD_MARCH_OPTIONS) $(LTO_OPTIONS) $(US
 ## debug
 # (note that an older GCC may not understand '-Warray-bounds')
 #OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all -lmcheck -O0 $(USE_BUILTIN_FUNCTIONS) #$(USE_OMP_OPTIONS) # for debugging with valgrind
+# debug mode with OpenMP
+#OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all -O0 $(USE_OMP_OPTIONS) $(USE_BUILTIN_FUNCTIONS) #$(USE_OMP_OPTIONS) # for debugging with valgrind
+# Check pointer bounds
+#OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all -lmcheck  -mmpx -fcheck-pointer-bounds  -O0 $(USE_BUILTIN_FUNCTIONS) #$(USE_OMP_OPTIONS) # for debugging with valgrind
 # Address Sanitizer (not compatible with Valgrind)
 #OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -lmcheck  -fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -O1 $(USE_BUILTIN_FUNCTIONS) 
 #OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wformat -Werror=format-security -Werror=array-bounds -Wextra -fno-omit-frame-pointer -lmcheck  -fsanitize=address,undefined -fsanitize-address-use-after-scope -O1 $(USE_BUILTIN_FUNCTIONS) 
-# Check pointer bounds
-#OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all -lmcheck  -mmpx -fcheck-pointer-bounds  -O0 $(USE_BUILTIN_FUNCTIONS) #$(USE_OMP_OPTIONS) # for debugging with valgrind
-# Debug mode with OpenMP
-#OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all -O0 $(USE_OMP_OPTIONS) $(USE_BUILTIN_FUNCTIONS) #$(USE_OMP_OPTIONS) # for debugging with valgrind
-#OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all  -fsanitize=thread  -O0 $(USE_OMP_OPTIONS) $(USE_BUILTIN_FUNCTIONS) # for debugging with valgrind
 
 
 

@@ -181,7 +181,7 @@ ds9 -frame lock wcs  " >> transient_report/index.tmp
 
    #
    if [ -f test.mpc ];then
-    echo "<a href=\"javascript:toggleElement('mpcstub_$TRANSIENT_NAME')\">Stub MPC report line</a> (for manually re-running the online MPChecker)</br>" >> transient_report/index.tmp  
+    echo "<a href=\"javascript:toggleElement('mpcstub_$TRANSIENT_NAME')\">Stub MPC report line</a> (to manually re-run online MPChecker)</br>" >> transient_report/index.tmp  
     echo -n "<div id=\"mpcstub_$TRANSIENT_NAME\" style=\"display:none\">
 <pre style='font-family:monospace;font-size:12px;'>
 " >> transient_report/index.tmp

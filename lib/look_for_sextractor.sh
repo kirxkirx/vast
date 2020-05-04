@@ -15,17 +15,24 @@ sudo chown -R $USER $PWD"
  exit 1
 fi
 
+# Do nothing if there is a system-wide installation of SExtractor
+command -v sex &>/dev/null
+if [ $? -eq 0 ];then
+ echo "Found a system-wide installation of SExtractor"
+ exit 0
+fi
+
 echo -n "Checking the local copy of SExtractor...  "
 if [ ! -f lib/bin/sex ];then
- echo "Warning: cannot find a local copy of SExtractor..."
+ echo "WARNING: cannot find a local copy of SExtractor..."
 else
  echo -n "found. "
 fi
 if [ ! -x lib/bin/sex ];then
- echo -n "Warning: the local copy of SExtractor is not an exacuable file Trying to fix... "
+ echo -n "WARNING: the local copy of SExtractor is not an exacuable file Trying to fix... "
  chmod +x lib/bin/sex
  if [ ! -x lib/bin/sex ];then
-  echo "Warning: the local copy of SExtractor in lib/bin/sex is not an executable file
+  echo "WARNING: the local copy of SExtractor in lib/bin/sex is not an executable file
  Something is very-very wrong!"
  else
   echo "fixed. "

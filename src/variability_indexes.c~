@@ -811,7 +811,7 @@ float esimate_sigma_from_MAD_of_sorted_data_float( float *sorted_data, long n ) 
  return sigma;
 }
 // as the above, but messes-up the input array in order to save memory
-double esimate_sigma_from_MAD_of_sorted_data_and_ruin_input_array( double *sorted_data, long n ) {
+double esimate_sigma_from_MAD_of_sorted_data_and_destroy_input_array( double *sorted_data, long n ) {
  double median_data, MAD, sigma;
  int i;
 

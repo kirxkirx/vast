@@ -88,7 +88,7 @@ if [ -f lib/astcheck ];then
  echo "$YEAR $MONTH $DAYFRAC $RAHH $RAMM $RASS  $DECDD $DECMM $DECSS  $MAG_FOR_MPC_REPORT" |awk '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+02.0f %02.0f %05.2f         %4.1f R      500\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' > test.mpc
  #lib/astcheck test.mpc -r100 -m15 |grep -A 50 "TAU0008" |grep -v "TAU0008" |head -n 1 | grep -v ObsCodes.html
  # We need the 250" search radius to find ceres with the available custom (=old) astorb.dat
- lib/astcheck test.mpc -r250 -m15 |grep -A 50 "TAU0008" |grep -v "TAU0008" |head -n 1 | grep -v ObsCodes.html
+ lib/astcheck test.mpc -r300 -m15 |grep -A 50 "TAU0008" |grep -v "TAU0008" |head -n 1 | grep -v ObsCodes.html
  if [ $? -eq 1 ];then
   if [ $COLOR -eq 1 ];then
    echo -e "The object was \033[01;31mnot found\033[00m in $DATABASE_NAME."

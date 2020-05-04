@@ -1,6 +1,6 @@
 /*
 
-  This is a refurbished implementation of the SysRem algorithm 
+  This is a loose implementation of the SysRem algorithm 
   proposed by Tamuz, O.; Mazeh, T.; Zucker, S. 2005 MNRAS, 356, 1466
   http://adsabs.harvard.edu/abs/2005MNRAS.356.1466T
   see also Roberts et al. 2013, MNRAS, 435, 3639
@@ -49,7 +49,7 @@ void change_number_of_sysrem_iterations_in_log_file() {
   }
   fclose( logfileout );
   fclose( logfilein );
-  //system("mv vast_summary.log.tmp vast_summary.log");
+  // rename vast_summary.log.tmp vast_summary.log
   unlink( "vast_summary.log" );
   rename( "vast_summary.log.tmp", "vast_summary.log" );
  }
@@ -78,7 +78,7 @@ int main() {
  double corrected_magnitude, correction_mag;
 
  double djd;
- float dmag, dmerr;
+ //float dmag, dmerr;
  double ddmag, ddmerr, x, y, app;
  char string[FILENAME_LENGTH];
  char comments_string[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
@@ -88,11 +88,9 @@ int main() {
  int Nobs;
  int Nstars;
 
- float *data;
+ //float *data;
  double *double_data;
  float mean, median, sigma, sum1, sum2;
-
- //char system_command_str[1024];
 
  FILE *datafile;
  char lightcurvefilename[OUTFILENAME_LENGTH];
@@ -100,7 +98,7 @@ int main() {
 
  int stop_iterations= 0;
 
- int bad_stars_counter;
+ //int bad_stars_counter;
  int *bad_stars;
  char **star_numbers;
 
@@ -108,17 +106,13 @@ int main() {
  
  int number_of_cpu_cores_to_report;
 
- /* Protection against strange free() crashes */
- //setenv("MALLOC_CHECK_", "0", 1);
-
- /* If there is no input star list - make it */
- //system("lib/select_sysrem_input_star_list");
+ // This will make sysrem_input_star_list.lst
  if ( 0 != system( "lib/index_vs_mag" ) ) {
   fprintf( stderr, "ERROR in sysrem2.c while running lib/index_vs_mag\n" );
   exit( 1 );
  }
 
- /* Count stars we want to process */
+ // Count stars we want to process
  Nstars= 0;
  datafile= fopen( "sysrem_input_star_list.lst", "r" );
  if ( NULL == datafile ) {
@@ -130,7 +124,7 @@ int main() {
  }
  fclose( datafile );
  fprintf( stderr, "Number of stars in sysrem_input_star_list.lst %d\n", Nstars );
- if ( Nstars < 100 ) {
+ if ( Nstars < SYSREM_MIN_NUMBER_OF_STARS ) {
   fprintf( stderr, "Too few stars!\n" );
   exit( 1 );
  }
@@ -155,7 +149,7 @@ int main() {
   bad_stars[i]= 0;
  }
 
- /* Read the log file */
+ // Read the log file
  jd= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( jd == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for jd\n" );
@@ -168,7 +162,7 @@ int main() {
   exit( 1 );
  };
 
- /* Allocate memory */
+ // Allocate memory
  mag_err= malloc( Nstars * sizeof( float * ) );
  if ( mag_err == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mag_err\n" );
@@ -180,17 +174,23 @@ int main() {
   exit( 1 );
  }
 
- data= malloc( Nstars * Nobs * sizeof( float ) ); // !!
+/*
+ data= malloc( Nstars * Nobs * sizeof( float ) ); // ??
  if ( data == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for data\n" );
   exit( 1 );
  }
+*/
 
- double_data= malloc( Nstars * Nobs * sizeof( double ) );
+ // Moved below
+/*
+ //double_data_Nstars= malloc( Nstars * Nobs * sizeof( double ) );
+ double_data= malloc( MAX( Nstars, Nobs ) * sizeof( double ) );
  if ( double_data == NULL ) {
-  fprintf( stderr, "ERROR: Couldn't allocate memory for double_data\n" );
+  fprintf( stderr, "ERROR: Couldn't allocate memory for double_data_Nstars\n" );
   exit( 1 );
  }
+*/
 
  //for(i=0;i<Nstars;i++){
  for ( i= Nstars; i--; ) {
@@ -261,7 +261,8 @@ int main() {
     break;
    }
   }
-  strcpy( star_numbers[i], star_number_string );
+  strncpy( star_numbers[i], star_number_string, OUTFILENAME_LENGTH );
+  star_numbers[i][OUTFILENAME_LENGTH-1]='\0';
   lightcurvefile= fopen( lightcurvefilename, "r" );
   if ( NULL == lightcurvefile ) {
    fprintf( stderr, "ERROR: Can't read file %s\n", lightcurvefilename );
@@ -272,15 +273,15 @@ int main() {
   while ( -1 < read_lightcurve_point( lightcurvefile, &djd, &ddmag, &ddmerr, &x, &y, &app, string, comments_string ) ) {
    if ( djd == 0.0 )
     continue; // if this line could not be parsed, try the next one
-   dmag= ddmag;
-   dmerr= ddmerr;
+   //dmag= (float)ddmag;
+   //dmerr= (float)ddmerr;
    // Find which j is corresponding to the current JD
    for ( k= 0; k < Nobs; k++ ) {
     if ( fabs( jd[k] - djd ) <= 0.00001 ) { // 0.8 sec
                                             //if( fabs(jd[k]-djd)<=0.0001 ){ // 8 sec
      j= k;
-     r[i][j]= dmag;
-     mag_err[i][j]= dmerr;
+     r[i][j]= (float)ddmag;
+     mag_err[i][j]= (float)ddmerr;
      break;
     }
    }
@@ -298,31 +299,39 @@ int main() {
  // and report the number of CPU cores to the user (just for information)
  fprintf( stderr, "Number of threads: %d\n", number_of_cpu_cores_to_report );
 
- /* Do the actual work */
+ // Do the actual work
  fprintf( stderr, "Computing average magnitudes... " );
 
- /* For each star compute median magnitude and subtract it from all measurements */
+ // For each star compute median magnitude and subtract it from all measurements 
  //for(i=0;i<Nstars;i++){
+ double_data= malloc( Nobs * sizeof( double ) );
+ if ( double_data == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for double_data_Nstars\n" );
+  exit( 1 );
+ }
  for ( i= Nstars; i--; ) {
   k= 0;
   /*
   // No obvious speed-up with OpenMP here
-  // data[] array is very big, so we cannot have a private  copy of it for each thread!
+  // data[] array is very big, so we cannot have a private copy of it for each thread!
   #ifdef VAST_ENABLE_OPENMP
    #ifdef _OPENMP
     #pragma omp parallel for private(j) reduction(+: k)
    #endif
   #endif
   */
-  for ( j= 0; j < Nobs; j++ ) {
-   //for(j=Nobs;j--;){
+  //for ( j= 0; j < Nobs; j++ ) {
+  for(j=Nobs;j--;){
    if ( r[i][j] != 0.0 ) {
-    data[k]= r[i][j];
+    //data[k]= r[i][j];
+    double_data[k]= (double)r[i][j];
     k++;
    }
   }
-  gsl_sort_float( data, 1, k );
-  median= gsl_stats_float_median_from_sorted_data( data, 1, k );
+//  gsl_sort_float( data, 1, k );
+//  median= gsl_stats_float_median_from_sorted_data( data, 1, k );
+  gsl_sort( double_data, 1, k );
+  median= gsl_stats_median_from_sorted_data( double_data, 1, k );
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
 #pragma omp parallel for private( j )
@@ -337,13 +346,13 @@ int main() {
   //fprintf(stderr,"DEBUG06\n");
  }
  //fprintf(stderr,"DEBUG07\n");
+ free( double_data );
 
  fprintf( stderr, "done\nStarting iterations...\n" );
 
- /* Iterative search for best c[i] and a[j] */
+ // Iterative search for best c[i] and a[j]
  for ( iter= 0; iter < NUMBER_OF_Ai_Ci_ITERATIONS; iter++ ) {
   fprintf( stderr, "\riteration %4d", iter + 1 );
-/// Parallellize with OMP here???
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
 #pragma omp parallel for private( i, j, sum1, sum2, tmpfloat )
@@ -356,8 +365,8 @@ int main() {
     //for(j=Nobs;j--;){
     if ( r[i][j] != 0.0 ) {
      tmpfloat= 1.0f / ( mag_err[i][j] * mag_err[i][j] );
-     sum1+= r[i][j] * a[j] * tmpfloat; // /(mag_err[i][j]*mag_err[i][j]);
-     sum2+= a[j] * a[j] * tmpfloat;    // /(mag_err[i][j]*mag_err[i][j]);
+     sum1+= r[i][j] * a[j] * tmpfloat;
+     sum2+= a[j] * a[j] * tmpfloat;
     }
    }
    if ( sum1 != 0.0 && sum2 != 0.0 ) {
@@ -366,7 +375,6 @@ int main() {
    }
   }
 
-/// Parallellize with OMP here???
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
 #pragma omp parallel for private( i, j, sum1, sum2, tmpfloat )
@@ -379,8 +387,8 @@ int main() {
    for ( i= Nstars; i--; ) {
     if ( r[i][j] != 0.0 ) {
      tmpfloat= 1.0f / ( mag_err[i][j] * mag_err[i][j] );
-     sum1+= r[i][j] * c[i] * tmpfloat; // /(mag_err[i][j]*mag_err[i][j]);
-     sum2+= c[i] * c[i] * tmpfloat;    // /(mag_err[i][j]*mag_err[i][j]);
+     sum1+= r[i][j] * c[i] * tmpfloat;
+     sum2+= c[i] * c[i] * tmpfloat;
     }
    }
    if ( sum1 != 0.0 && sum2 != 0.0 ) {
@@ -390,13 +398,15 @@ int main() {
   }
 
  // More debug
- fprintf( stderr, "\n" );
+ fprintf( stderr, "\nSysRem \"airmass\" coefficients for each image (not the actual airmass, of course):\n" );
  for ( i= Nobs; i--; ) {
   fprintf( stderr, "a[%d]=%lf\n", i, a[i] );
  }
 
 
-  /* Should we stop now? */
+  // Should we stop now?
+  // Yes, if both a and c change by less than Ai_Ci_DIFFERENCE_TO_STOP_ITERATIONS compared to the previous step
+  // (for all indexes = stars/images)
   stop_iterations= 1;
   //for(i=0;i<Nstars;i++){
   for ( i= Nstars; i--; ) {
@@ -405,7 +415,6 @@ int main() {
     break;
    }
   }
-
   if ( stop_iterations == 1 ) {
    //for(j=0;j<Nobs;j++){
    for ( j= Nobs; j--; ) {
@@ -415,14 +424,21 @@ int main() {
     }
    }
   }
-  if ( stop_iterations == 1 )
+  if ( stop_iterations == 1 ) {
    break; // Stop iteretions if they make no difference
+  }
 
  } // Iterative search for best c[i] and a[j]
 
  fprintf( stderr, "\nRemoving outliers... " );
 
- // A new filtering attempt: if a single star dominates the solution, it should have c~1 while
+ double_data= malloc( Nstars * sizeof( double ) );
+ if ( double_data == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for double_data\n" );
+  exit( 1 );
+ }
+
+ // A filtering attempt: if a single star dominates the solution, it should have c~1 while
  // all other stars should have c~0
  k= 0;
  for ( i= Nstars; i--; ) {
@@ -433,9 +449,15 @@ int main() {
  }
  gsl_sort( double_data, 1, k );
  median= (float)gsl_stats_median_from_sorted_data( double_data, 1, k );
- //sigma=(float)esimate_sigma_from_MAD_of_sorted_data(double_data,k);
- sigma= (float)esimate_sigma_from_MAD_of_sorted_data_and_destroy_input_array( double_data, k );
- for ( i= Nstars; i--; ) {
+ sigma= (float)esimate_sigma_from_MAD_of_sorted_data_and_ruin_input_array( double_data, k );
+ free( double_data );
+#ifdef VAST_ENABLE_OPENMP
+#ifdef _OPENMP
+#pragma omp parallel for private( i )
+#endif
+#endif
+for ( i= 0; i<Nstars; i++ ) {
+// for ( i= Nstars; i--; ) {
   if ( c[i] != 0.0f ) {
    if ( fabsf( c[i] - median ) > 10.0 * sigma ) {
 //    fprintf( stderr, "EXCLUDING out%s.dat %d  fabsf(c[i]-median)=%f  >10.0*sigma=%f c[i]=%f median=%f\n", star_numbers[i], i, fabsf( c[i] - median ), 10.0 * sigma, c[i], median );
@@ -444,32 +466,6 @@ int main() {
   }
  }
 
- // WTF?!?!? is it working?????
-
- /*
- /// Check for obviously bad corrections
- //for(j=0;j<Nobs;j++){
- for(j=Nobs;j--;){
-  if( 0!=isnan(a[j]) ){fprintf(stderr,"a[%d]= %f\n",j,a[j]);exit(1);}
-  k=0;
-  //for(i=0;i<Nstars;i++){
-  for(i=Nstars;i--;){
-   if( r[i][j]!=0.0 ){
-    data[k]=a[j]*c[i];
-    k++;
-   }
-  }
-  mean=gsl_stats_float_mean(data,1,k);
-  sigma=gsl_stats_float_sd_m(data,1,k,mean);
-  gsl_sort_float(data,1,k);
-  median=gsl_stats_float_median_from_sorted_data(data,1,k);
-
-  //for(i=0;i<Nstars;i++){
-  for(i=Nstars;i--;){
-   if( r[i][j]!=0.0 && fabsf(a[j]*c[i]-median)>3.0*sigma )bad_stars[i]=1;
-  }
- }
- */
  fprintf( stderr, "done\n" );
 
  /* 2nd pass */
@@ -504,8 +500,8 @@ int main() {
     for ( j= Nobs; j--; ) {
      if ( r[i][j] != 0.0 ) {
       tmpfloat= 1.0f / ( mag_err[i][j] * mag_err[i][j] );
-      sum1+= r[i][j] * a[j] * tmpfloat; // /(mag_err[i][j]*mag_err[i][j]);
-      sum2+= a[j] * a[j] * tmpfloat;    // /(mag_err[i][j]*mag_err[i][j]);
+      sum1+= r[i][j] * a[j] * tmpfloat;
+      sum2+= a[j] * a[j] * tmpfloat;
      }
     }
    }
@@ -530,8 +526,8 @@ int main() {
     if ( bad_stars[i] == 0 ) {
      if ( r[i][j] != 0.0 ) {
       tmpfloat= 1.0f / ( mag_err[i][j] * mag_err[i][j] );
-      sum1+= r[i][j] * c[i] * tmpfloat; // /(mag_err[i][j]*mag_err[i][j]);
-      sum2+= c[i] * c[i] * tmpfloat;    // /(mag_err[i][j]*mag_err[i][j]);
+      sum1+= r[i][j] * c[i] * tmpfloat;
+      sum2+= c[i] * c[i] * tmpfloat;
      }
     }
    }
@@ -543,7 +539,7 @@ int main() {
 
 
   // More debug
-  fprintf( stderr, "\n" );
+  fprintf( stderr, "\nSysRem \"airmass\" coefficients for each image (not the actual airmass, of course):\n" );
   for ( i= Nobs; i--; ) {
    fprintf( stderr, "a[%d]=%lf\n", i, a[i] );
   }
@@ -557,7 +553,6 @@ int main() {
     break;
    }
   }
-
   if ( stop_iterations == 1 ) {
    //for(j=0;j<Nobs;j++){
    for ( j= Nobs; j--; ) {
@@ -568,15 +563,22 @@ int main() {
    }
   }
 
-  if ( stop_iterations == 1 )
+  if ( stop_iterations == 1 ) {
    break; // Stop iteretions if they make no difference
+  }
 
  } // Iterative search for best c[i] and a[j]
 
  fprintf( stderr, "\nRemoving outliers... " );
 
- // Not sure how effective that is, considering that c[i] filtering with the same parameters is also done above
- // A new filtering attempt: if a single star dominates the solution, it should have c~1 while
+ double_data= malloc( Nstars * sizeof( double ) );
+ if ( double_data == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for double_data_Nstars\n" );
+  exit( 1 );
+ }
+
+ // Not sure how effective that is, considering that c[i] filtering with the same parameters is also done above...
+ // A filtering attempt: if a single star dominates the solution, it should have c~1 while
  // all other stars should have c~0
  k= 0;
  for ( i= Nstars; i--; ) {
@@ -587,9 +589,15 @@ int main() {
  }
  gsl_sort( double_data, 1, k );
  median= (float)gsl_stats_median_from_sorted_data( double_data, 1, k );
- //sigma=(float)esimate_sigma_from_MAD_of_sorted_data(double_data,k);
- sigma= (float)esimate_sigma_from_MAD_of_sorted_data_and_destroy_input_array( double_data, k );
- for ( i= Nstars; i--; ) {
+ sigma= (float)esimate_sigma_from_MAD_of_sorted_data_and_ruin_input_array( double_data, k );
+ free( double_data );
+#ifdef VAST_ENABLE_OPENMP
+#ifdef _OPENMP
+#pragma omp parallel for private( i )
+#endif
+#endif
+for ( i= 0; i<Nstars; i++ ) {
+// for ( i= Nstars; i--; ) {
   if ( c[i] != 0.0f ) {
    if ( fabsf( c[i] - median ) > 10.0 * sigma ) {
 //    fprintf( stderr, "EXCLUDING out%s.dat %d  fabsf(c[i]-median)=%f  >10.0*sigma=%f c[i]=%f median=%f\n", star_numbers[i], i, fabsf( c[i] - median ), 10.0 * sigma, c[i], median );
@@ -597,39 +605,17 @@ int main() {
    }
   }
  }
- free( double_data );
 
- /*
- // 2nd check for obviously bad corrections 
- for(j=0;j<Nobs;j++){
-  if( 0!=isnan(a[j]) ){fprintf(stderr,"a[%d]= %f\n",j,a[j]);exit(1);}
-  k=0;
-  for(i=0;i<Nstars;i++){
-   if( bad_stars[i]==0 )
-    if( r[i][j]!=0.0 ){
-     data[k]=a[j]*c[i];
-     k++;
-    }
-  }
-  mean=gsl_stats_float_mean(data,1,k);
-  sigma=gsl_stats_float_sd_m(data,1,k,mean);
-  gsl_sort_float(data,1,k);
-  median=gsl_stats_float_median_from_sorted_data(data,1,k);
-
-  for(i=0;i<Nstars;i++){
-   //if( r[i][j]!=0.0 && fabsf(a[j]*c[i]-mean)>5*sigma )bad_stars[i]=1;
-   if( r[i][j]!=0.0 && fabsf(a[j]*c[i]-median)>3*sigma )bad_stars[i]=1;
-   if( r[i][j]!=0.0 && fabsf(a[j]*c[i]-median)>6*sigma )bad_stars[i]=2;
-  }
- }
- */
  fprintf( stderr, "done\n" );
 
- /* Apply corrections to lightcurves */
+
+
+ // Apply corrections to lightcurves 
  fprintf( stderr, "Applying corrections... \n" );
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
-#pragma omp parallel for private( i, lightcurvefilename, lightcurvefile, djd, ddmag, ddmerr, x, y, app, string, comments_string, dmag, dmerr, j, k, outlightcurvefilename, outlightcurvefile, corrected_magnitude, correction_mag )
+//#pragma omp parallel for private( i, lightcurvefilename, lightcurvefile, djd, ddmag, ddmerr, x, y, app, string, comments_string, dmag, dmerr, j, k, outlightcurvefilename, outlightcurvefile, corrected_magnitude, correction_mag )
+#pragma omp parallel for private( i, lightcurvefilename, lightcurvefile, djd, ddmag, ddmerr, x, y, app, string, comments_string, j, k, outlightcurvefilename, outlightcurvefile, corrected_magnitude, correction_mag )
 #endif
 #endif
  for ( i= 0; i < Nstars; i++ ) {
@@ -645,12 +631,11 @@ int main() {
    while ( -1 < read_lightcurve_point( lightcurvefile, &djd, &ddmag, &ddmerr, &x, &y, &app, string, comments_string ) ) {
     if ( djd == 0.0 )
      continue; // if this line could not be parsed, try the next one
-    dmag= (float)ddmag;
-    dmerr= (float)ddmerr;
+    //dmag= (float)ddmag;
+    //dmerr= (float)ddmerr;
     // Find which j is corresponding to the current JD
     for ( k= 0; k < Nobs; k++ ) {
      if ( fabs( jd[k] - djd ) <= 0.00001 ) { // 0.8 sec
-                                             //if( fabs(jd[k]-djd)<=0.0001 ){ // 8 sec
       j= k;
       //
       //if ( fabs(c[i] * a[j]) >2.0 ) {
@@ -664,9 +649,7 @@ int main() {
       } else {
        fprintf( stderr, "SysRem WARNING: skipping a large correction of %lf mag for star %s on JD%lf  c[i]=%f a[j]=%f\n", correction_mag, outlightcurvefilename, djd, c[i], a[j] );
       }
-      // 
-      //write_lightcurve_point( outlightcurvefile, djd, (double)( dmag - c[i] * a[j] ), (double)dmerr, (double)x, (double)y, (double)app, string, comments_string );
-      write_lightcurve_point( outlightcurvefile, djd, corrected_magnitude, (double)dmerr, (double)x, (double)y, (double)app, string, comments_string );
+      write_lightcurve_point( outlightcurvefile, djd, corrected_magnitude, (double)ddmerr, (double)x, (double)y, (double)app, string, comments_string );
       break;
      }
     }
@@ -675,24 +658,11 @@ int main() {
    fclose( lightcurvefile );
    unlink( lightcurvefilename );
    rename( outlightcurvefilename, lightcurvefilename );
-/*
-  } else {
-   // We should move this out of parallell for!
-   fprintf( stderr, "Skip correction for %s", lightcurvefilename );
-   if ( bad_stars[i] == 2 ) {
-    fprintf( stderr, " removing it from sysrem_input_star_list.lst\n" );
-    sprintf( system_command_str, "grep -v %s sysrem_input_star_list.lst > %s && mv -f %s sysrem_input_star_list.lst", lightcurvefilename, outlightcurvefilename, outlightcurvefilename );
-    if ( 0 != system( system_command_str ) ) {
-     fprintf( stderr, "ERROR runnning command: %s\n", system_command_str );
-    }
-   } else {
-    fprintf( stderr, "\n" );
-   }
-*/
   }
  }
  fprintf( stderr, "done\n" );
 
+/*
  // This should not be parallel as it relies on system() commands
  bad_stars_counter=0;
  for ( i= Nstars; i--; ) { 
@@ -700,33 +670,24 @@ int main() {
    bad_stars_counter++;
    sprintf( lightcurvefilename, "out%s.dat", star_numbers[i] );
    fprintf( stderr, "Skip correction for %s", lightcurvefilename );
-   /*
-   // This whole thing doesn't work anymore as index_vs_mag.c recreates sysrem_input_star_list.lst based on mag-sigma plots
-   if ( bad_stars[i] == 2 ) {
-    sprintf( outlightcurvefilename, "out%s.tmp", star_numbers[i] );
-    fprintf( stderr, " removing it from sysrem_input_star_list.lst\n" );
-    sprintf( system_command_str, "grep -v %s sysrem_input_star_list.lst > %s && mv -f %s sysrem_input_star_list.lst", lightcurvefilename, outlightcurvefilename, outlightcurvefilename );
-    if ( 0 != system( system_command_str ) ) {
-     fprintf( stderr, "ERROR runnning command: %s\n", system_command_str );
-    }
-   } else {
-    fprintf( stderr, "\n" );
-   }
-   */
    fprintf( stderr, "\n" );
   }
  }
  fprintf( stderr, "Skipped corrections for %d out of %d stars\n", bad_stars_counter, Nstars );
-
+*/
  
- // More debug
- for ( i= Nobs; i--; ) {
-  fprintf( stderr, "a[%d]=%lf\n", i, a[i] );
- }
 
 
 
  // Print out some stats 
+ //
+ fprintf( stderr, "\nFinal SysRem \"airmass\" coefficients for each image (not the actual airmass, of course):\n" );
+ for ( i= Nobs; i--; ) {
+  fprintf( stderr, "a[%d]=%lf\n", i, a[i] );
+ }
+ //
+ /*
+ // We need a ton of memory to compute it!
  k= 0;
  for ( i= 0; i < Nstars; i++ ) {
   if ( bad_stars[i] == 0 ) {
@@ -743,10 +704,12 @@ int main() {
  gsl_sort_float( data, 1, k );
  median= gsl_stats_float_median_from_sorted_data( data, 1, k );
  fprintf( stderr, "Mean correction %.6f +/-%.6f  (median=%lf)\n", mean, sigma, median );
+ */
 
- //!!!
+ // Free memory
  free( bad_stars );
- for ( i= 0; i < Nstars; i++ ) {
+// for ( i= 0; i < Nstars; i++ ) {
+ for ( i= Nstars; i--; ) {
   free( star_numbers[i] );
   free( mag_err[i] );
   free( r[i] );
@@ -755,17 +718,14 @@ int main() {
  free( old_c );
  free( old_a );
 
- /* Free memory */
  free( mag_err );
  free( r );
  free( a );
  free( c );
  free( jd );
- free( data );
+ //free( data );
 
  change_number_of_sysrem_iterations_in_log_file();
-
- // unsetenv("MALLOC_CHECK_");
 
  if ( 0 != system( "lib/create_data" ) ) {
   fprintf( stderr, "ERROR running lib/create_data\n" );

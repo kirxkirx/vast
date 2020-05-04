@@ -352,7 +352,7 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
   fits_close_file( fptr, &status );
   gsl_sort( pix, 1, totpix );
   median= gsl_stats_median_from_sorted_data( pix, 1, totpix );
-  sigma_estimated_from_MAD= esimate_sigma_from_MAD_of_sorted_data_and_destroy_input_array( pix, totpix );
+  sigma_estimated_from_MAD= esimate_sigma_from_MAD_of_sorted_data_and_ruin_input_array( pix, totpix );
   free( pix ); // we'll mess-up the order of pix while calculating median
   pixel_value_threshold= median - 7.0 * sigma_estimated_from_MAD;
   //
