@@ -205,6 +205,361 @@ echo "---------- $VAST_VERSION_STRING test results ----------" >> vast_test_repo
 # (this list is useful if you cancel the test before it completes)
 cat vast_test_report.txt > vast_test_incremental_list_of_failed_test_codes.txt
 
+
+
+##### Check SysRem #####
+if [ ! -d ../NMW_And1_test_lightcurves_40 ];then
+ cd ..
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/NMW_And1_test_lightcurves_40.tar.bz2" && tar -xjf NMW_And1_test_lightcurves_40.tar.bz2 && rm -f NMW_And1_test_lightcurves_40.tar.bz2
+ cd $WORKDIR
+fi
+
+if [ -d ../NMW_And1_test_lightcurves_40 ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "SysRem test " >> /dev/stderr
+ echo -n "SysRem test: " >> vast_test_report.txt 
+ util/load.sh ../NMW_And1_test_lightcurves_40
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM001"
+ fi 
+ SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM=`util/estimate_systematic_noise_level 2> /dev/null`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM002"
+ fi
+ TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM)-(0.0304);sqrt(a*a)<0.005" | bc -ql`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM003_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM003"
+ fi
+ if [ ! -s vast_lightcurve_statistics.log ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM004"
+ fi
+ MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM005"
+ fi
+ TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM)-(0.026058);sqrt(a*a)<0.005" | bc -ql`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM006_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM006"
+ fi
+ util/sysrem2
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM007"
+ fi
+ SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM=`util/estimate_systematic_noise_level 2> /dev/null`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM102"
+ fi
+ TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM)-(0.0270);sqrt(a*a)<0.005" | bc -ql`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM103_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM103"
+ fi
+ if [ ! -s vast_lightcurve_statistics.log ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM104"
+ fi
+ MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM105"
+ fi
+ TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM)-(0.021055);sqrt(a*a)<0.005" | bc -ql`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM106_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM106"
+ fi
+ TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | bc -ql`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM0_SYSNOISEDECREASE_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM0_SYSNOISEDECREASE"
+ fi
+ TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM > $MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | bc -ql`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM0_MSIGMACLIPDECREASE_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM0_MSIGMACLIPDECREASE"
+ fi
+ util/sysrem2
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM007"
+ fi
+ SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM=`util/estimate_systematic_noise_level 2> /dev/null`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM102"
+ fi
+ TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM)-(0.0254);sqrt(a*a)<0.005" | bc -ql`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM103_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM103"
+ fi
+ if [ ! -s vast_lightcurve_statistics.log ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM104"
+ fi
+ MEDIAN_SIGMACLIP_BRIGHTSTARS=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM105"
+ fi
+ TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM)-(0.020588);sqrt(a*a)<0.005" | bc -ql`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM106_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM106"
+ fi
+ TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | bc -ql`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM1_SYSNOISEDECREASE_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM1_SYSNOISEDECREASE"
+ fi
+ TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM > $MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | bc -ql`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM1_MSIGMACLIPDECREASE_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM1_MSIGMACLIPDECREASE"
+ fi
+ util/sysrem2
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM207"
+ fi
+ util/sysrem2
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM307"
+ fi
+ util/sysrem2
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM407"
+ fi
+ SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM=`util/estimate_systematic_noise_level 2> /dev/null`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM502"
+ fi
+ TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM)-(0.0245);sqrt(a*a)<0.005" | bc -ql`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM503_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM503"
+ fi
+ if [ ! -s vast_lightcurve_statistics.log ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM504"
+ fi
+ MEDIAN_SIGMACLIP_BRIGHTSTARS=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM505"
+ fi
+ TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM)-(0.018628);sqrt(a*a)<0.005" | bc -ql`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM506_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM506"
+ fi
+ TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | bc -ql`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM5_SYSNOISEDECREASE_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM5_SYSNOISEDECREASE"
+ fi
+ TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM > $MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | bc -ql`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM5_MSIGMACLIPDECREASE_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM5_MSIGMACLIPDECREASE"
+ fi
+ ################################################################################
+ # Check individual variables in the test data set
+ ################################################################################
+ # True variables
+ for XY in "849.6359900 156.5065000" "2663.7233900 1989.1057100" "762.0687900 1472.2812500" "1688.0546900 399.5051000" "3181.1794400 2421.1013200" "867.0582900  78.9714000" "45.6917000 2405.7465800" "2843.8242200 2465.0180700" ;do
+  LIGHTCURVEFILE=$(find_source_by_X_Y_in_vast_lightcurve_statistics_log $XY)
+  if [ "$LIGHTCURVEFILE" == "none" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES  NMWSYSREM5_VARIABLE_NOT_DETECTED__${XY// /_}"
+  else
+   if [ "$XY" = "849.6359900 156.5065000" ];then
+    SIGMACLIP=`grep "$LIGHTCURVEFILE" vast_lightcurve_statistics.log | awk '{print $2}'`
+    TEST=`echo "a=($SIGMACLIP)-(0.058346);sqrt(a*a)<0.005" | bc -ql`
+    re='^[0-9]+$'
+    if ! [[ $TEST =~ $re ]] ; then
+     echo "TEST ERROR"
+     TEST_PASSED=0
+     TEST=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM_GDOR_TEST_ERROR"
+    fi
+    if [ $TEST -ne 1 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM_GDOR"
+    fi
+   fi
+  fi
+  grep --quiet "$LIGHTCURVEFILE" vast_autocandidates.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES  NMWSYSREM5_VARIABLE_NOT_SELECTED__$LIGHTCURVEFILE"
+  fi
+  grep --quiet "$LIGHTCURVEFILE" vast_list_of_likely_constant_stars.log
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES  NMWSYSREM5_VARIABLE_MISTAKEN_FOR_CONSTANT__$LIGHTCURVEFILE"
+  fi
+ done
+
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mSysRem test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mSysRem test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+#
+#########################################
+# Skip free disk space check on some pre-defined machines
+# hope this check should work even if there is no 'hostname' command
+hostname | grep --quiet eridan 
+if [ $? -ne 0 ];then 
+ # Free-up disk space if we run out of it
+ #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+ FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+ # If we managed to get the disk space info
+ if [ $? -eq 0 ];then
+  TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
+  fi
+  if [ $TEST -eq 1 ];then
+   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
+   if [ -d ../NMW_And1_test_lightcurves_40 ];then
+    echo "Deleting test data!" >> /dev/stderr
+    rm -rf ../NMW_And1_test_lightcurves_40
+   else
+    echo "What was it? o_O" >> /dev/stderr
+   fi
+  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
+ fi # if [ $? -eq 0 ];then
+fi # if [ $? -ne ];then # hostname check
+#########################################
+
+
 ##### Photographic plate test #####
 ### Check the consistency of the dest data if its already there
 if [ -d ../test_data_photo ];then
@@ -1021,23 +1376,6 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD006"
   fi
-#  SYSTEMATIC_NOISE_LEVEL=`util/estimate_systematic_noise_level 2> /dev/null`
-#  if [ $? -ne 0 ];then
-#   TEST_PASSED=0
-#   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_SYSNOISE01"
-#  fi
-#  TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL)-(0.0042);sqrt(a*a)<0.005" | bc -ql`
-#  re='^[0-9]+$'
-#  if ! [[ $TEST =~ $re ]] ; then
-#   echo "TEST ERROR"
-#   TEST_PASSED=0
-#   TEST=0
-#   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_ERROR"
-#  fi
-#  if [ $TEST -ne 1 ];then
-#   TEST_PASSED=0
-#   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_SYSNOISE02"
-#  fi
   if [ ! -f vast_lightcurve_statistics.log ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD007"

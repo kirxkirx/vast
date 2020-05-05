@@ -1194,7 +1194,7 @@ int main( int argc, char **argv ) {
    exit( 1 );
   }
   //while( -1<fscanf(catfile, "%d %lf %lf %lf %lf %f %f %lf %lf %lf %lf %d\n", &sexNUMBER[sex], &sexFLUX[sex], &sexFLUX_ERR[sex], &sexMAG[sex], &sexMAG_ERR[sex], &sexX[sex], &sexY[sex], &sexA_IMAGE[sex], &sexERRA_IMAGE[sex], &sexB_IMAGE[sex], &sexERRB_IMAGE[sex], &sexFLAG[sex]) ){
-  fprintf(stderr,"DEBUG01\n");
+  //fprintf(stderr,"DEBUG01\n");
   while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, catfile ) ) {
    //fprintf(stderr,"DEBUG02 sex=%d\n",sex);
    sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
@@ -1568,7 +1568,7 @@ int main( int argc, char **argv ) {
   drawY1= markY - MIN( 100.0, markY );
   drawX2= drawX1 + MIN( 200.0, (float)naxes[0] );
   drawY2= drawY1 + MIN( 200.0, (float)naxes[1] );
-  fprintf(stderr,"DEBUG01: drawX1=%d drawX2=%d drawY1=%d drawY2=%d  markX=%f markY=%f \n",drawX1,drawX2,drawY1,drawY2,markX,markY);
+  //fprintf(stderr,"DEBUG01: drawX1=%d drawX2=%d drawY1=%d drawY2=%d  markX=%f markY=%f \n",drawX1,drawX2,drawY1,drawY2,markX,markY);
   ///////
   drawX0= (int)( ( drawX1 + drawX2 ) / 2 + 0.5 );
   drawY0= (int)( ( drawY1 + drawY2 ) / 2 + 0.5 );
@@ -1578,7 +1578,7 @@ int main( int argc, char **argv ) {
   drawY1= drawY0 - (int)( razmer_y / 2 + 0.5 );
   drawX2= drawX1 + (int)razmer_x;
   drawY2= drawY1 + (int)razmer_y;
-  fprintf(stderr,"DEBUG02: drawX1=%d drawX2=%d drawY1=%d drawY2=%d\n",drawX1,drawX2,drawY1,drawY2);
+  //fprintf(stderr,"DEBUG02: drawX1=%d drawX2=%d drawY1=%d drawY2=%d\n",drawX1,drawX2,drawY1,drawY2);
   if ( drawX2 > naxes[0] ) {
    drawX1-= drawX2 - naxes[0];
    drawX2= naxes[0];
@@ -1599,7 +1599,7 @@ int main( int argc, char **argv ) {
    drawX2= naxes[0];
   if ( drawY2 > naxes[1] )
    drawY2= naxes[1];
-  fprintf(stderr,"DEBUG03: drawX1=%d drawX2=%d drawY1=%d drawY2=%d\n",drawX1,drawX2,drawY1,drawY2);
+  //fprintf(stderr,"DEBUG03: drawX1=%d drawX2=%d drawY1=%d drawY2=%d\n",drawX1,drawX2,drawY1,drawY2);
   ///////
   fprintf( stderr, "\n Press 'D' or 'Z''Z' to view the full image.\n\n" );
  }
@@ -2221,7 +2221,7 @@ int main( int argc, char **argv ) {
     return 0;
    }
 
-   fprintf(stderr,"DEBUG000\n");
+   //fprintf(stderr,"DEBUG000\n");
 
    /* If not in simple display mode - draw star markers */
    if ( match_mode > 0 && draw_star_markers == 1 ) {
