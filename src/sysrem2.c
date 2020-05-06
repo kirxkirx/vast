@@ -28,6 +28,89 @@
 
 #include "get_number_of_cpu_cores.h" // for get_number_of_cpu_cores()
 
+int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_filenames, int *N_sysrem_input_star_list_lst ) {
+
+ FILE *input_sysrem_input_star_list_lst;
+ FILE **outputfile;
+ int Nstars,Noutput_files,oputput_file_counter;
+ char full_string[MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG];
+
+ outputfile= malloc( SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS * sizeof(FILE *) );
+
+ Nstars= 0;
+ input_sysrem_input_star_list_lst= fopen( "sysrem_input_star_list.lst", "r" );
+ if ( NULL == input_sysrem_input_star_list_lst ) {
+  fprintf( stderr, "ERROR! Can't open file sysrem_input_star_list.lst\n" );
+  exit( 1 );
+ }
+ while ( NULL != fgets( full_string, MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG, input_sysrem_input_star_list_lst ) ) {
+  Nstars++;
+ }
+ fclose( input_sysrem_input_star_list_lst );
+ fprintf( stderr, "Number of stars in sysrem_input_star_list.lst %d\n", Nstars );
+ if ( Nstars < SYSREM_MIN_NUMBER_OF_STARS ) {
+  fprintf( stderr, "Too few stars!\n" );
+  exit( 1 );
+ }
+
+ // This is the trivial case of one processing block
+ if ( Nstars < 2 * SYSREM_N_STARS_IN_PROCESSING_BLOCK ) {
+  strncpy( split_sysrem_input_star_list_lst_filenames[0], "sysrem_input_star_list.lst" , 27);
+  (*N_sysrem_input_star_list_lst)= 1;
+  free( outputfile );
+  return 0;
+ }
+
+ // Split the input sysrem_input_star_list.lst into Noutput_files
+ Noutput_files= (int) ( (double)Nstars/(double)SYSREM_N_STARS_IN_PROCESSING_BLOCK );
+ Noutput_files= MIN( Noutput_files, SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS );
+ fprintf( stderr, "Will split sysrem_input_star_list.lst into %d processing blocks\n", Noutput_files);
+ 
+ // open the output files
+ for( oputput_file_counter=0; oputput_file_counter<Noutput_files; oputput_file_counter++ ) {
+  sprintf( split_sysrem_input_star_list_lst_filenames[oputput_file_counter], "sysrem_input_star_list.lst_%02d", oputput_file_counter );
+  outputfile[oputput_file_counter]= fopen( split_sysrem_input_star_list_lst_filenames[oputput_file_counter], "w");
+  if ( NULL==outputfile[oputput_file_counter] ) {
+   fprintf( stderr, "ERROR opening file %s for writing\n", split_sysrem_input_star_list_lst_filenames[oputput_file_counter]);
+   exit( 1 );
+  }
+  fprintf( stderr, "Opening file %s for writing\n", split_sysrem_input_star_list_lst_filenames[oputput_file_counter]);
+ }
+ 
+ // Re-open the input file and write its content in the output files
+ input_sysrem_input_star_list_lst= fopen( "sysrem_input_star_list.lst", "r" );
+ if ( NULL == input_sysrem_input_star_list_lst ) {
+  fprintf( stderr, "ERROR! Can't open file sysrem_input_star_list.lst (2)\n" );
+  exit( 1 );
+ }
+ oputput_file_counter=0;
+ while ( NULL != fgets( full_string, MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG, input_sysrem_input_star_list_lst ) ) {
+  fputs( full_string, outputfile[oputput_file_counter] );
+  oputput_file_counter++;
+  if ( oputput_file_counter==Noutput_files ) {
+   oputput_file_counter=0;
+  }
+ }
+ fclose( input_sysrem_input_star_list_lst );
+ fprintf( stderr, "Number of stars in sysrem_input_star_list.lst %d\n", Nstars );
+ if ( Nstars < SYSREM_MIN_NUMBER_OF_STARS ) {
+  fprintf( stderr, "Too few stars!\n" );
+  exit( 1 );
+ }
+ 
+ // close the output files
+ for( oputput_file_counter=0; oputput_file_counter<Noutput_files; oputput_file_counter++ ) { 
+  fclose( outputfile[oputput_file_counter] );
+ }
+ free( outputfile );
+
+ (*N_sysrem_input_star_list_lst)= Noutput_files;
+
+ //exit( 1 ); // !!!!!!!!!!!!
+
+ return 0;
+}
+
 void change_number_of_sysrem_iterations_in_log_file() {
  FILE *logfilein;
  FILE *logfileout;
@@ -85,6 +168,9 @@ int main() {
 
  char star_number_string[FILENAME_LENGTH];
 
+ char *split_sysrem_input_star_list_lst_filenames[SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS];
+ int N_sysrem_input_star_list_lst, sysrem_input_star_list_lst_counter;
+
  int Nobs;
  int Nstars;
 
@@ -112,13 +198,24 @@ int main() {
   exit( 1 );
  }
 
+ for( sysrem_input_star_list_lst_counter=0; sysrem_input_star_list_lst_counter<SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS; sysrem_input_star_list_lst_counter++ ) {
+  split_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter]= malloc( FILENAME_LENGTH * sizeof(char) );
+  memset( split_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter], 0, FILENAME_LENGTH ); // just in case
+ } 
+ split_sysrem_input_star_list_lst( split_sysrem_input_star_list_lst_filenames, &N_sysrem_input_star_list_lst );
+
+ ///////////////////////
+ for( sysrem_input_star_list_lst_counter=0; sysrem_input_star_list_lst_counter<N_sysrem_input_star_list_lst; sysrem_input_star_list_lst_counter++ ) {
+
  // Count stars we want to process
  Nstars= 0;
- datafile= fopen( "sysrem_input_star_list.lst", "r" );
+ //datafile= fopen( "sysrem_input_star_list.lst", "r" );
+ datafile= fopen( split_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter], "r" );
  if ( NULL == datafile ) {
-  fprintf( stderr, "ERROR! Can't open file sysrem_input_star_list.lst\n" );
+  fprintf( stderr, "ERROR! Can't open file %s\n", split_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter] );
   exit( 1 );
  }
+
  while ( -1 < fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename ) ) {
   Nstars++;
  }
@@ -246,9 +343,10 @@ int main() {
 
  // Read the data
  i= j= 0;
- datafile= fopen( "sysrem_input_star_list.lst", "r" );
+ //datafile= fopen( "sysrem_input_star_list.lst", "r" );
+ datafile= fopen( split_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter], "r" );
  if ( NULL == datafile ) {
-  fprintf( stderr, "ERROR! Can't open file sysrem_input_star_list.lst\n" );
+  fprintf( stderr, "ERROR! Can't open file %s\n", split_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter] );
   exit( 1 );
  }
  while ( -1 < fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename ) ) {
@@ -724,6 +822,16 @@ for ( i= 0; i<Nstars; i++ ) {
  free( c );
  free( jd );
  //free( data );
+
+ fprintf( stderr, "Removing %s\n", split_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter] );
+ unlink( split_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter] );
+
+ } // for( sysrem_input_star_list_lst_counter=0; sysrem_input_star_list_lst_counter<N_sysrem_input_star_list_lst;
+
+
+ for( sysrem_input_star_list_lst_counter=0; sysrem_input_star_list_lst_counter<SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS; sysrem_input_star_list_lst_counter++ ) {
+  free( split_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter] );
+ }
 
  change_number_of_sysrem_iterations_in_log_file();
 
