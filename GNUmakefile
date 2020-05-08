@@ -315,7 +315,7 @@ remove_bad_images.o: $(SRC_PATH)remove_bad_images.c
 	$(CC) $(OPTFLAGS) -c $(SRC_PATH)remove_bad_images.c -I$(GSL_INCLUDE)
 	
 lib/remove_bad_images: remove_bad_images.o variability_indexes.o
-	$(CC) $(OPTFLAGS) -o lib/remove_bad_images remove_bad_images.o variability_indexes.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+	$(CC) $(OPTFLAGS) -o lib/remove_bad_images remove_bad_images.o variability_indexes.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm $(OPTFLAGS)
 
 
 MagSize_filter_standalone.o: $(SRC_PATH)MagSize_filter_standalone.c

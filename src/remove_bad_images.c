@@ -99,6 +99,7 @@ int main( int argc, char **argv ) {
  
  char **filenamelist;
  long filename_counter;
+ long filename_n;
  long filenamelen;
 
  FILE *lightcurvefile;
@@ -264,8 +265,8 @@ int main( int argc, char **argv ) {
  filenamelist= (char **)malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );
 
  if ( images_Nbad > 0 ) {
-  fprintf( stderr, "Removing them from all lightcurves... " );
-  sprintf( lightcurve_tmp_filename, "lightcurve.tmp" );
+  fprintf( stderr, "Removing bad-image measurements from all lightcurves... " );
+  //sprintf( lightcurve_tmp_filename, "lightcurve.tmp" );
   // Create a list of files
   filename_counter= 0;
   dp= opendir( "./" );
@@ -288,7 +289,17 @@ int main( int argc, char **argv ) {
    return -1;
   }
   // Process each file in the list
-  for ( ; filename_counter--; ) {
+  filename_n=filename_counter;
+/*
+// On the test data I have this is not faster!
+#ifdef VAST_ENABLE_OPENMP
+#ifdef _OPENMP           
+#pragma omp parallel for private( filename_counter, lightcurvefile, outlightcurvefile, lightcurve_tmp_filename, jd, mag, merr, x, y, app, string, comments_string, is_this_image_good, image_counter )
+#endif
+#endif
+*/
+  for ( filename_counter=0 ; filename_counter<filename_n; filename_counter++ ) {
+  //for ( ; filename_counter--; ) {
    /// Re-open the lightcurve file and choose only good points
    //lightcurvefile= fopen( ep->d_name, "r" );
    lightcurvefile= fopen( filenamelist[filename_counter], "r" );
@@ -296,6 +307,7 @@ int main( int argc, char **argv ) {
     fprintf( stderr, "ERROR: Can't open file %s\n", filenamelist[filename_counter] );
     exit( 1 );
    }
+   sprintf( lightcurve_tmp_filename, "lightcurve.tmp%05d", filename_counter );
    outlightcurvefile= fopen( lightcurve_tmp_filename, "w" );
    if ( NULL == outlightcurvefile ) {
     fprintf( stderr, "\nAn ERROR has occured while processing file %s  median_mag=%lf mag_sigma=%lf\n", filenamelist[filename_counter], median_mag, mag_sigma );

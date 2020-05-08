@@ -137,6 +137,14 @@ fi
 
 ######### Apart from just checking external programs do some other useful actions #########
 
+# Do this only if there are no data loaded, otherwise touch may be increadably slow if there are tens of thousands of files
+for i in out*.dat ;do
+ if [ -f "$i" ];then
+  # found a lightcurve file, exit now
+  exit 0
+ fi
+done
+
 # Touch all files to circumvent the clock skew (often found in virtual machines after the stop-resume cycle)
 #  The folowing step may be very slow on network file systems, so we try & to speed thing up
 for VASTFILE in `find .` ;do
