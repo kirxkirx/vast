@@ -188,7 +188,6 @@ int main( int argc, char **argv ) {
     }
     /* Compute median mag & sigma */
     i= 0;
-    //while(-1<fscanf(lightcurvefile,"%lf %lf %lf %lf %lf %lf %s",&jd,&mag,&merr,&x,&y,&app,string)){
     while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
      if ( jd == 0.0 )
       continue; // if this line could not be parsed, try the next one
@@ -197,12 +196,14 @@ int main( int argc, char **argv ) {
      i++;
     }
     fclose( lightcurvefile );
-    if ( i < SOFT_MIN_NUMBER_OF_POINTS )
+    if ( i < SOFT_MIN_NUMBER_OF_POINTS ) {
      continue;
+    }
     gsl_sort2( mag_a, 1, jd_a, 1, i );
     median_mag= gsl_stats_median_from_sorted_data( mag_a, 1, i );
     //mag_sigma=gsl_stats_sd(mag_a,1,i);
-    mag_sigma= esimate_sigma_from_MAD_of_unsorted_data( mag_a, i );
+    //mag_sigma= esimate_sigma_from_MAD_of_unsorted_data( mag_a, i );
+    mag_sigma= esimate_sigma_from_MAD_of_sorted_data( mag_a, i );
     //
     // Count outliers
     for ( j= 0; j < i; j++ ) {
@@ -226,8 +227,9 @@ int main( int argc, char **argv ) {
    }
   }
   (void)closedir( dp );
- } else
+ } else {
   perror( "Couldn't open the directory\n" );
+ }
 
  free( jd_a );
  free( mag_a );
@@ -307,7 +309,7 @@ int main( int argc, char **argv ) {
     fprintf( stderr, "ERROR: Can't open file %s\n", filenamelist[filename_counter] );
     exit( 1 );
    }
-   sprintf( lightcurve_tmp_filename, "lightcurve.tmp%05d", filename_counter );
+   sprintf( lightcurve_tmp_filename, "lightcurve.tmp%05ld", filename_counter );
    outlightcurvefile= fopen( lightcurve_tmp_filename, "w" );
    if ( NULL == outlightcurvefile ) {
     fprintf( stderr, "\nAn ERROR has occured while processing file %s  median_mag=%lf mag_sigma=%lf\n", filenamelist[filename_counter], median_mag, mag_sigma );
@@ -316,14 +318,16 @@ int main( int argc, char **argv ) {
    }
    //fscanf(lightcurvefile,"%lf %lf %lf %lf %lf %lf %s",&jd,&mag,&merr,&x,&y,&app,string); // Never drop the first point!
    // The while cycle is needed to handle the situation that the first lines are comments
-   jd= 0.0;
+   //jd= 0.0;
    //while( jd==0.0 ){
    // read_lightcurve_point(lightcurvefile,&jd,&mag,&merr,&x,&y,&app,string); // Never drop the first point!
    //}
    //fprintf(outlightcurvefile,"%.5lf %8.5lf %.5lf %8.3lf %8.3lf %4.1lf %s\n",jd,mag,merr,x,y,app,string);
    //write_lightcurve_point( outlightcurvefile, jd, mag, merr, x, y, app, string);
    //while(-1<fscanf(lightcurvefile,"%lf %lf %lf %lf %lf %lf %s",&jd,&mag,&merr,&x,&y,&app,string)){
-   while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
+   //while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
+   // x == NULL is a trick that should make read_lightcurve_point() work faster
+   while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, NULL, &y, &app, string, comments_string ) ) {
     if ( jd == 0.0 )
      continue; // if this line could not be parsed, try the next one
     is_this_image_good= 1;

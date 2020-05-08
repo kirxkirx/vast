@@ -118,128 +118,135 @@ static inline int read_lightcurve_point( FILE *lc_file_descriptor, double *jd, d
   fprintf( stderr, "ERROR: MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE defined in src/vast_limits.h should be >512\n" );
   exit( 1 );
  }
- // Warning! Max comment string length is hardcoded here!
- if ( 8 != sscanf( str, "%lf %lf %lf  %lf %lf %lf %s %512[^\t\n]", jd, mag, mag_err, x, y, app, string, string_for_additional_columns_in_lc_file ) ) {
-  string_for_additional_columns_in_lc_file[0]= '\0';
-  string[0]= '\0';                                     // just in case
-  str[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1]= '\0'; // just in case
-  if ( 7 != sscanf( str, "%lf %lf %lf  %lf %lf %lf %s", jd, mag, mag_err, x, y, app, string ) ) {
-   string[0]= '\0';
-   ( *app )= 1.0;
-   ( *x )= ( *y )= 0.0;
-   if ( 3 != sscanf( str, "%lf %lf %lf\n", jd, mag, mag_err ) ) {
-    ( *mag_err )= 0.02;
-    if ( 2 != sscanf( str, "%lf %lf\n", jd, mag ) ) {
-     ( *jd )= 0.0;
-//     free( str );
-//     free( string_for_additional_columns_in_lc_file ); // !!
-     return 1;
-    }
-   }
+
+ // Special case -- yes, we can actually speed up reading by not parsing x, y, app and the comments
+ if ( x == NULL ) {
+  if ( 3 != sscanf( str, "%lf %lf %lf\n", jd, mag, mag_err ) ) {
+   ( *mag_err )= 0.02;
+   if ( 2 != sscanf( str, "%lf %lf\n", jd, mag ) ) {
+    ( *jd )= 0.0;
+    return 1;
+   } // if ( 2 != sscanf( str, "%lf %lf\n", jd, mag ) ) {
+  } // if ( 3 != sscanf( str, "%lf %lf %lf\n", jd, mag, mag_err ) ) {
+ } else {
+ 
+  // Warning! Max comment string length is hardcoded here!
+  if ( 8 != sscanf( str, "%lf %lf %lf  %lf %lf %lf %s %512[^\t\n]", jd, mag, mag_err, x, y, app, string, string_for_additional_columns_in_lc_file ) ) {
+   string_for_additional_columns_in_lc_file[0]= '\0';
+   string[0]= '\0';                                     // just in case
+   str[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1]= '\0'; // just in case
+   if ( 7 != sscanf( str, "%lf %lf %lf  %lf %lf %lf %s", jd, mag, mag_err, x, y, app, string ) ) {
+    string[0]= '\0';
+    ( *app )= 1.0;
+    ( *x )= ( *y )= 0.0;
+    if ( 3 != sscanf( str, "%lf %lf %lf\n", jd, mag, mag_err ) ) {
+     ( *mag_err )= 0.02;
+     if ( 2 != sscanf( str, "%lf %lf\n", jd, mag ) ) {
+      ( *jd )= 0.0;
+      return 1;
+     } // if ( 2 != sscanf( str, "%lf %lf\n", jd, mag ) ) {
+    } // if ( 3 != sscanf( str, "%lf %lf %lf\n", jd, mag, mag_err ) ) {
+   } // if ( 7 != sscanf( str, "%lf %lf %lf  %lf %lf %lf %s", jd, mag, mag_err, x, y, app, string ) ) {
+  } // if ( 8 != sscanf( str, "%lf %lf %lf  %lf %lf %lf %s %512[^\t\n]", jd, mag, mag_err, x, y, app, string, string_for_additio
+  string_for_additional_columns_in_lc_file[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1]= '\0'; // just in case
+  // !!
+  if ( NULL != comments_string ) {
+   strncpy( comments_string, string_for_additional_columns_in_lc_file, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE );
+   comments_string[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1]= '\0'; // just in case
   }
- }
- string_for_additional_columns_in_lc_file[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1]= '\0'; // just in case
- // !!
- //fprintf(stderr,"DEBUG: %lf string=*%s* string_for_additional_columns_in_lc_file=*%s*\n",(*app),string,string_for_additional_columns_in_lc_file);
-// free( str );
- // !!
- if ( NULL != comments_string ) {
-  strncpy( comments_string, string_for_additional_columns_in_lc_file, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE );
-  comments_string[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1]= '\0'; // just in case
- }
-// free( string_for_additional_columns_in_lc_file );
-
- // isnan() and isinf() are normally defined
- if ( 0 != isnan( ( *jd ) ) ) {
-  ( *jd )= 0.0;
-  return 1;
- }
- if ( 0 != isnan( ( *mag ) ) ) {
-  ( *jd )= 0.0;
-  return 1;
- }
- if ( 0 != isinf( ( *jd ) ) ) {
-  ( *jd )= 0.0;
-  return 1;
- }
- if ( 0 != isinf( ( *mag ) ) ) {
-  ( *jd )= 0.0;
-  return 1;
- }
- if ( 0 != isnan( ( *x ) ) ) {
-  ( *jd )= 0.0;
-  return 1;
- }
- if ( 0 != isnan( ( *y ) ) ) {
-  ( *jd )= 0.0;
-  return 1;
- }
- if ( 0 != isinf( ( *x ) ) ) {
-  ( *jd )= 0.0;
-  return 1;
- }
- if ( 0 != isinf( ( *y ) ) ) {
-  ( *jd )= 0.0;
-  return 1;
- }
-
- //fprintf(stderr,"DEBUG: %lf %lf\n%s\n",(*jd),(*mag),str);
-
+ // free( string_for_additional_columns_in_lc_file );
+ 
+  // isnan() and isinf() are normally defined
+  if ( 0 != isnan( ( *jd ) ) ) {
+   ( *jd )= 0.0;
+   return 1;
+  }
+  if ( 0 != isnan( ( *mag ) ) ) {
+   ( *jd )= 0.0;
+   return 1;
+  }
+  if ( 0 != isinf( ( *jd ) ) ) {
+   ( *jd )= 0.0;
+   return 1;
+  }
+  if ( 0 != isinf( ( *mag ) ) ) {
+   ( *jd )= 0.0;
+   return 1;
+  }
+  if ( 0 != isnan( ( *x ) ) ) {
+   ( *jd )= 0.0;
+   return 1;
+  }
+  if ( 0 != isnan( ( *y ) ) ) {
+   ( *jd )= 0.0;
+   return 1;
+  }
+  if ( 0 != isinf( ( *x ) ) ) {
+   ( *jd )= 0.0;
+   return 1;
+  }
+  if ( 0 != isinf( ( *y ) ) ) {
+   ( *jd )= 0.0;
+   return 1;
+  }
+ 
 #ifdef STRICT_CHECK_OF_JD_AND_MAG_RANGE
 #ifdef VAST_USE_BUILTIN_FUNCTIONS
 // Make a proper check of the input values if isnormal() is defined
 #if defined _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L
- // We use __builtin_isnormal() as we know it is working if VAST_USE_BUILTIN_FUNCTIONS is defined
- // Othervise even with the '_ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L' check
- // isnormal() doesn't work on Ubuntu 14.04 trusty (vast.sai.msu.ru)
- // BEWARE 0.0 is also not considered normal by isnormal() !!!
- if ( 0 == __builtin_isnormal( ( *jd ) ) ) {
-  ( *jd )= 0.0;
-  return 1;
- }
- if ( 0 == __builtin_isnormal( ( *mag ) ) ) {
-  ( *jd )= 0.0;
-  return 1;
- }
- if ( 0 == __builtin_isnormal( ( *mag_err ) ) ) {
-  ( *jd )= 0.0;
-  return 1;
- }
- if ( 0 == __builtin_isnormal( ( *app ) ) ) {
-  ( *jd )= 0.0;
-  return 1;
- }
+  // We use __builtin_isnormal() as we know it is working if VAST_USE_BUILTIN_FUNCTIONS is defined
+  // Othervise even with the '_ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L' check
+  // isnormal() doesn't work on Ubuntu 14.04 trusty (vast.sai.msu.ru)
+  // BEWARE 0.0 is also not considered normal by isnormal() !!!
+  if ( 0 == __builtin_isnormal( ( *jd ) ) ) {
+   ( *jd )= 0.0;
+   return 1;
+  }
+  if ( 0 == __builtin_isnormal( ( *mag ) ) ) {
+   ( *jd )= 0.0;
+   return 1;
+  }
+  if ( 0 == __builtin_isnormal( ( *mag_err ) ) ) {
+   ( *jd )= 0.0;
+   return 1;
+  }
+  if ( 0 == __builtin_isnormal( ( *app ) ) ) {
+   ( *jd )= 0.0;
+   return 1;
+  }
 #endif
 #endif
 
- // Check the input date, note that wedon't know if it's JD or MJD
- if ( ( *jd ) < EXPECTED_MIN_MJD ) {
-  ( *jd )= 0.0;
-  return 1;
- }
- if ( ( *jd ) > EXPECTED_MAX_JD ) {
-  ( *jd )= 0.0;
-  return 1;
- }
+  // Check the input date, note that wedon't know if it's JD or MJD
+  if ( ( *jd ) < EXPECTED_MIN_MJD ) {
+   ( *jd )= 0.0;
+   return 1;
+  }
+  if ( ( *jd ) > EXPECTED_MAX_JD ) {
+   ( *jd )= 0.0;
+   return 1;
+  }
 
- // Check the input mag
- if ( ( *mag ) < BRIGHTEST_STARS ) {
-  ( *jd )= 0.0;
-  return 1;
- }
- // A similar check for the expected faintest stars
- if ( ( *mag ) > FAINTEST_STARS_ANYMAG ) {
-  ( *jd )= 0.0;
-  return 1;
- }
+  // Check the input mag
+  if ( ( *mag ) < BRIGHTEST_STARS ) {
+   ( *jd )= 0.0;
+   return 1;
+  }
+  // A similar check for the expected faintest stars
+  if ( ( *mag ) > FAINTEST_STARS_ANYMAG ) {
+   ( *jd )= 0.0;
+   return 1;
+  }
 
- // Check if the measurement errors are not too big
- if ( ( *mag_err ) > MAX_MAG_ERROR ) {
-  ( *jd )= 0.0;
-  return 1;
- }
+  // Check if the measurement errors are not too big
+  if ( ( *mag_err ) > MAX_MAG_ERROR ) {
+   ( *jd )= 0.0;
+   return 1;
+  }
 
 #endif
+
+ } // end else special case
 
  return 0;
 }
@@ -257,7 +264,8 @@ static inline int count_points_in_lightcurve_file( char *lightcurvefilename ) {
  }
 
  n= 0;
- while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
+ //while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
+ while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, NULL, &y, &app, string, NULL ) ) {
   if ( jd == 0.0 )
    continue; // if this line could not be parsed, try the next one
   n++;

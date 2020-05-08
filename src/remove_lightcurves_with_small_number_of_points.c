@@ -72,7 +72,8 @@ int main( int argc, char **argv ) {
 
   // Count observations 
   i= 0;
-  while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
+  //while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
+  while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, NULL, &y, &app, string, NULL ) ) {
    if ( jd == 0.0 )
     continue; // if this line could not be parsed, try the next one
    i++;
