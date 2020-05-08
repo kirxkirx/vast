@@ -368,7 +368,8 @@ int main() {
   }
   memset( string, 0, FILENAME_LENGTH );
   memset( comments_string, 0, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE );
-  while ( -1 < read_lightcurve_point( lightcurvefile, &djd, &ddmag, &ddmerr, &x, &y, &app, string, comments_string ) ) {
+  //while ( -1 < read_lightcurve_point( lightcurvefile, &djd, &ddmag, &ddmerr, &x, &y, &app, string, comments_string ) ) {
+  while ( -1 < read_lightcurve_point( lightcurvefile, &djd, &ddmag, &ddmerr, NULL, &y, &app, string, comments_string ) ) {
    if ( djd == 0.0 )
     continue; // if this line could not be parsed, try the next one
    //dmag= (float)ddmag;
