@@ -5704,7 +5704,7 @@ if [ -d ../test_exclude_ref_image ];then
   # Check individual variables in the test data set
   ################################################################################
   # True variables
-  for XY in "770.0858800 207.0210000" "341.8960900 704.7567700" "563.2354700 939.6331800" "764.0470000 678.5069000" "560.6923800 625.8682900" "791.9907200 911.4987800"  "64.6611000 551.0836800" ;do
+  for XY in "849.6359900 156.5065000"  "1688.0546900 399.5051000"  "45.6917000 2405.7465800"  "2843.8242200 2465.0180700"  "1493.2484100 528.0899000" ;do
    LIGHTCURVEFILE=$(find_source_by_X_Y_in_vast_lightcurve_statistics_log $XY)
    if [ "$LIGHTCURVEFILE" == "none" ];then
     TEST_PASSED=0
