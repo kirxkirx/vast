@@ -90,12 +90,12 @@ int main() {
  interp_m= malloc( 5 * n_points_lightcurve * sizeof( double ) );
  if ( interp_m == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for interp_m(kwee-van-woerden.c)\n" );
-  exit( 1 );
+  return 1;
  };
  interp_jd= malloc( 5 * n_points_lightcurve * sizeof( double ) );
  if ( interp_jd == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for interp_jd(kwee-van-woerden.c)\n" );
-  exit( 1 );
+  return 1;
  };
  interp_m[0]= m[0];
  interp_jd[0]= jd[0];
@@ -117,7 +117,7 @@ int main() {
    n++;
   } else {
    fprintf( stderr, "ERROR in kwee-van-woerden.c best_d_j>=n_points_lightcurve\n" );
-   break;
+   return 1;
   }
  }
  /* for(i=0;i<n;i++){
@@ -140,7 +140,7 @@ int main() {
  delta_m= malloc( 5 * n_points_lightcurve * sizeof( double ) );
  if ( delta_m == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for delta_m(kwee-van-woerden.c)\n" );
-  exit( 1 );
+  return 1;
  };
  if ( n - jdT1 > jdT1 )
   n_delta_m= jdT1 - 1;

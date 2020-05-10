@@ -5,10 +5,10 @@
  This file is part of VaST -
  a SExtractor front-end for search of variable objects in a series of FITS images.
 
- Copyleft 2005-2020  Sokolovsky Kirill <kirx@scan.sai.msu.ru>,
-                     Lebedev Alexandr  <lebastr@gmail.com>,
-                     Nasonov Dmitry    
-                     Nazarov Sergey 
+ Copyleft 2005-2020  Kirill Sokolovsky <kirx@scan.sai.msu.ru>,
+                     Alexandr Lebedev  <lebastr@gmail.com>,
+                     Dmitry Nasonov,    
+                     Sergey Nazarov,
                      Vladimir Bazilevich
 
  This program is distributed in the hope that it will be useful,
@@ -4552,7 +4552,7 @@ int main( int argc, char **argv ) {
       // this is to handle the case when one of the brightest stars is actually variable
       drop_one_point_that_changes_fit_the_most( poly_x, poly_y, poly_err, &N_good_stars, photometric_calibration_type, param_use_photocurve );
 
-      /* Check that we haven't dropped too many stars so the parabolic fit still make sence */
+      /* Check that we haven't dropped too many stars so the parabolic fit still make sense */
       if ( N_good_stars < min_number_of_stars_for_magnitude_calibration ) {
        wpolyfit_exit_code= 1;
        fprintf( stderr, "ERROR03 - too few stars for magnitude calibration: %d\n", N_good_stars );

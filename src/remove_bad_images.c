@@ -188,7 +188,8 @@ int main( int argc, char **argv ) {
     }
     /* Compute median mag & sigma */
     i= 0;
-    while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
+    //while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
+    while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, NULL, &y, &app, string, comments_string ) ) {
      if ( jd == 0.0 )
       continue; // if this line could not be parsed, try the next one
      jd_a[i]= jd;
@@ -325,9 +326,7 @@ int main( int argc, char **argv ) {
    //fprintf(outlightcurvefile,"%.5lf %8.5lf %.5lf %8.3lf %8.3lf %4.1lf %s\n",jd,mag,merr,x,y,app,string);
    //write_lightcurve_point( outlightcurvefile, jd, mag, merr, x, y, app, string);
    //while(-1<fscanf(lightcurvefile,"%lf %lf %lf %lf %lf %lf %s",&jd,&mag,&merr,&x,&y,&app,string)){
-   //while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
-   // x == NULL is a trick that should make read_lightcurve_point() work faster
-   while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, NULL, &y, &app, string, comments_string ) ) {
+   while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
     if ( jd == 0.0 )
      continue; // if this line could not be parsed, try the next one
     is_this_image_good= 1;
