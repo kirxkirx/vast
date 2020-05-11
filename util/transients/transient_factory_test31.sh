@@ -544,8 +544,9 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  DIMX=`util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS1 | awk '{print $3}'`
  DIMY=`util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS2 | awk '{print $3}'`
  ### ===> IMAGE EDGE OFFSET HARDCODED HERE <===
+ FRAME_EDGE_OFFSET_PIX=30
  for i in `cat candidates-transients.lst | awk '{print $1}'` ;do 
-  cat $i | awk "{if ( \$4>50 && \$4<$DIMX-50 && \$5>50 && \$5<$DIMY-50 ) print \"YES\"; else print \"NO\" }" | grep --quiet 'NO'
+  cat $i | awk "{if ( \$4>$FRAME_EDGE_OFFSET_PIX && \$4<$DIMX-$FRAME_EDGE_OFFSET_PIX && \$5>$FRAME_EDGE_OFFSET_PIX && \$5<$DIMY-$FRAME_EDGE_OFFSET_PIX ) print \"YES\"; else print \"NO\" }" | grep --quiet 'NO'
   if [ $TEST -eq 0 ];then 
    grep $i candidates-transients.lst | head -n1 
   fi
