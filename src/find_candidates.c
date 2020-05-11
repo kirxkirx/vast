@@ -626,7 +626,8 @@ int main( int argc, char **argv ) {
 
   // Mark known variable stars
   for ( i= 0; i < Nstar; i++ ) {
-   cpgsci( 3 ); //
+   //cpgsci( 3 ); // green which is low contrast
+   cpgsci( 8 ); // orange
    if ( mark_as_known_variable[i] == 1 ) {
     cpgpt1( plot_x[i], plot_y[i], 23 );
    }

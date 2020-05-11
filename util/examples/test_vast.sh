@@ -478,7 +478,7 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
  # Check individual variables in the test data set
  ################################################################################
  # True variables
- for XY in "849.6359900 156.5065000" "2663.7233900 1989.1057100" "762.0687900 1472.2812500" "1688.0546900 399.5051000" "3181.1794400 2421.1013200" "867.0582900  78.9714000" "45.6917000 2405.7465800" "2843.8242200 2465.0180700" ;do
+ for XY in "849.6359900 156.5065000" "762.0687900 1472.2812500" "1688.0546900 399.5051000" "3181.1794400 2421.1013200" "867.0582900  78.9714000" "45.6917000 2405.7465800" "2843.8242200 2465.0180700" ;do
   LIGHTCURVEFILE=$(find_source_by_X_Y_in_vast_lightcurve_statistics_log $XY)
   if [ "$LIGHTCURVEFILE" == "none" ];then
    TEST_PASSED=0
@@ -743,6 +743,24 @@ if [ -d ../test_data_photo ];then
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_remove_lightcurves_with_small_number_of_points_exit_code"
    fi
    util/nopgplot.sh
+   # Check the average sigma level
+   MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATEMEANSIG005"
+   fi
+   TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM)-(0.090508);sqrt(a*a)<0.005" | bc -ql`
+   re='^[0-9]+$'
+   if ! [[ $TEST =~ $re ]] ; then
+    echo "TEST ERROR"
+    TEST_PASSED=0
+    TEST=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATEMEANSIG006_TEST_ERROR"
+   fi
+   if [ $TEST -ne 1 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATEMEANSIG006"
+   fi
    # Find star with the largest sigma in this field
    TMPSTR=`cat data.m_sigma | awk '{printf "%08.3f %8.3f %8.3f %s\n",$2*1000,$3,$4,$5}' | sort -n | tail -n1| awk '{print $4}'`
    CEPHEIDOUTFILE="$TMPSTR"
@@ -1412,6 +1430,25 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD014"
   fi
+  #
+  MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDMEANSIG005"
+  fi
+  TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM)-(0.061232);sqrt(a*a)<0.005" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDMEANSIG006_TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDMEANSIG006"
+  fi
+  #
   N_AUTOCANDIDATES=`cat vast_autocandidates.log | wc -l | awk '{print $1}'`
   # actually we get two more false candidates depending on binning if filtering is disabled
   if [ $N_AUTOCANDIDATES -lt 2 ];then
@@ -5704,7 +5741,7 @@ if [ -d ../test_exclude_ref_image ];then
   # Check individual variables in the test data set
   ################################################################################
   # True variables
-  for XY in "849.6359900 156.5065000"  "1688.0546900 399.5051000"  "45.6917000 2405.7465800"  "2843.8242200 2465.0180700"  "1493.2484100 528.0899000" ;do
+  for XY in "770.0858800 207.0210000" "341.8960900 704.7567700" "563.2354700 939.6331800" "764.0470000 678.5069000" "560.6923800 625.8682900" ;do
    LIGHTCURVEFILE=$(find_source_by_X_Y_in_vast_lightcurve_statistics_log $XY)
    if [ "$LIGHTCURVEFILE" == "none" ];then
     TEST_PASSED=0
@@ -8017,8 +8054,10 @@ if [ -d ../individual_images_test ];then
  echo -n "Plate solving with remote servers: " >> vast_test_report.txt 
  for FORCE_PLATE_SOLVE_SERVER in scan.sai.msu.ru vast.sai.msu.ru polaris.kirx.net none ;do
   export FORCE_PLATE_SOLVE_SERVER
+  unset TELESCOP
   util/clean_data.sh
   cp default.sex.ccd_example default.sex
+  unset TELESCOP
   export ASTROMETRYNET_LOCAL_OR_REMOTE="remote" 
   util/wcs_image_calibration.sh ../individual_images_test/1630+3250.20150511T215921000.fit
   export ASTROMETRYNET_LOCAL_OR_REMOTE=""
@@ -8035,6 +8074,7 @@ if [ -d ../individual_images_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE002a"
   fi
+  unset TELESCOP
   cp default.sex.ccd_example default.sex
   ASTROMETRYNET_LOCAL_OR_REMOTE="remote" util/wcs_image_calibration.sh ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit
   if [ $? -ne 0 ];then
@@ -8050,6 +8090,7 @@ if [ -d ../individual_images_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE004a"
   fi
+  unset TELESCOP
   cp default.sex.beta_Cas_photoplates default.sex
   ASTROMETRYNET_LOCAL_OR_REMOTE="remote" util/wcs_image_calibration.sh ../individual_images_test/SCA13320__00_00.fits
   if [ $? -ne 0 ];then
@@ -8067,6 +8108,7 @@ if [ -d ../individual_images_test ];then
   fi
   #
   if [ -f ../M31_ISON_test/M31-1-001-001_dupe-1.fts ];then
+   unset TELESCOP
    cp default.sex.ison_m31_test default.sex
    ASTROMETRYNET_LOCAL_OR_REMOTE="remote" util/wcs_image_calibration.sh ../M31_ISON_test/M31-1-001-001_dupe-1.fts
    if [ $? -ne 0 ];then
