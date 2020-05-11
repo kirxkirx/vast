@@ -165,13 +165,13 @@ ds9 -frame lock wcs  " >> transient_report/index.tmp
    #echo "</br>" >> transient_report/index.tmp
 
    #
-   grep --quiet 'done by the script' transient_report/index.html
+   grep --max-count=1 --quiet 'done by the script' transient_report/index.html
    if [ $? -eq 0 ];then
     echo "<a href=\"javascript:toggleElement('analysisscript_$TRANSIENT_NAME')\">The analysis script</a> (re-run the full search)" >> transient_report/index.tmp  
     echo -n "<div id=\"analysisscript_$TRANSIENT_NAME\" style=\"display:none\">
 <pre style='font-family:monospace;font-size:12px;'>
 " >> transient_report/index.tmp
-    grep 'done by the script' transient_report/index.html >> transient_report/index.tmp
+    grep --max-count=1 'done by the script' transient_report/index.html >> transient_report/index.tmp
     echo "</pre>
 </div>" >> transient_report/index.tmp
    fi
