@@ -402,12 +402,19 @@ else
  FIELD_OF_VIEW_ARCMIN=$2
 fi
 
+
+
 # Now the interesting part...
 
-if [ ! -f "$WCS_IMAGE_NAME" ];then
+if [ ! -s "$WCS_IMAGE_NAME" ];then
+ # Handle the situation where the file exist but is empty
+ if [ -f "$WCS_IMAGE_NAME" ];then
+  rm -f "$WCS_IMAGE_NAME"
+ fi
+ #
  echo -n "No image with WCS calibration found. Starting SExtractor...  "
  IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
- # EXPERIMENTAL STUFF 
+ # The stuff below seems to work fine
  CATALOG_NAME=`"$VAST_PATH"lib/fits2cat $FITSFILE`
  if [ -f "$CATALOG_NAME".apphot ];then
   CATALOG_NAME="$CATALOG_NAME".apphot
@@ -729,12 +736,13 @@ field identification have good chances to fail. Sorry... :(
  fi
 
 else
- echo "WCS calibrated image found: $WCS_IMAGE_NAME"
+ echo "WCS-calibrated image found: $WCS_IMAGE_NAME"
 fi
 
 # Check if the wcs-solved image could not be created
 if [ ! -f "$WCS_IMAGE_NAME" ];then
  # Failure
+ echo "The output plate-solved image $WCS_IMAGE_NAME does not exist!"
  exit 1
 fi
 

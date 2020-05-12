@@ -251,7 +251,7 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM005"
  fi
- TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM)-(0.026058);sqrt(a*a)<0.005" | bc -ql`
+ TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM)-(0.026058);sqrt(a*a)<0.005" | bc -ql`
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]] ; then
   echo "TEST ERROR"
@@ -356,7 +356,7 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM104"
  fi
- MEDIAN_SIGMACLIP_BRIGHTSTARS=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
+ MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM105"
@@ -433,7 +433,7 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM504"
  fi
- MEDIAN_SIGMACLIP_BRIGHTSTARS=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
+ MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM505"
@@ -744,12 +744,12 @@ if [ -d ../test_data_photo ];then
    fi
    util/nopgplot.sh
    # Check the average sigma level
-   MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
+   MEDIAN_SIGMACLIP_BRIGHTSTARS=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATEMEANSIG005"
    fi
-   TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM)-(0.090508);sqrt(a*a)<0.05" | bc -ql`
+   TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS)-(0.090508);sqrt(a*a)<0.05" | bc -ql`
    re='^[0-9]+$'
    if ! [[ $TEST =~ $re ]] ; then
     echo "TEST ERROR"
@@ -759,7 +759,7 @@ if [ -d ../test_data_photo ];then
    fi
    if [ $TEST -ne 1 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATEMEANSIG006"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATEMEANSIG006__$MEDIAN_SIGMACLIP_BRIGHTSTARS"
    fi
    # Find star with the largest sigma in this field
    TMPSTR=`cat data.m_sigma | awk '{printf "%08.3f %8.3f %8.3f %s\n",$2*1000,$3,$4,$5}' | sort -n | tail -n1| awk '{print $4}'`
@@ -1431,12 +1431,12 @@ if [ -d ../sample_data ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD014"
   fi
   #
-  MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
+  MEDIAN_SIGMACLIP_BRIGHTSTARS=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDMEANSIG005"
   fi
-  TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM)-(0.061232);sqrt(a*a)<0.05" | bc -ql`
+  TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS)-(0.061232);sqrt(a*a)<0.005" | bc -ql`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -1446,7 +1446,7 @@ if [ -d ../sample_data ];then
   fi
   if [ $TEST -ne 1 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDMEANSIG006"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDMEANSIG006__$MEDIAN_SIGMACLIP_BRIGHTSTARS"
   fi
   #
   N_AUTOCANDIDATES=`cat vast_autocandidates.log | wc -l | awk '{print $1}'`
