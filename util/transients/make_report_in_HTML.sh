@@ -38,6 +38,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  if [ $? -ne 0 ];then
   echo "The candidate $TRANSIENT_NAME did not pass the final checks"
   if [ -f transient_report/index.tmp2 ];then
+   #cat transient_report/index.tmp2
    rm -f transient_report/index.tmp2
   fi
   continue

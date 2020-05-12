@@ -749,7 +749,7 @@ if [ -d ../test_data_photo ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATEMEANSIG005"
    fi
-   TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM)-(0.090508);sqrt(a*a)<0.005" | bc -ql`
+   TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM)-(0.090508);sqrt(a*a)<0.05" | bc -ql`
    re='^[0-9]+$'
    if ! [[ $TEST =~ $re ]] ; then
     echo "TEST ERROR"
@@ -1436,7 +1436,7 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDMEANSIG005"
   fi
-  TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM)-(0.061232);sqrt(a*a)<0.005" | bc -ql`
+  TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM)-(0.061232);sqrt(a*a)<0.05" | bc -ql`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
