@@ -413,7 +413,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  
  echo "Plate-solving the images" >> transient_factory_test31.txt
  # WCS-calibration
- for i in `cat vast_image_details.log |awk '{print $17}'` ;do 
+ for i in `cat vast_image_details.log | awk '{print $17}' | sort | uniq` ;do 
   # This should ensure the correct field-of-view guess by setting the TELESCOP keyword
   #util/modhead $i TELESCOP NMW_camera
   #
@@ -427,7 +427,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # Check that the plates were actually solved
  for i in `cat vast_image_details.log |awk '{print $17}'` ;do 
   WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $i`
-  if [ ! -f "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
+  if [ ! -s "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
    echo "***** PLATE SOLVE PROCESSING ERROR *****" >> transient_factory.log
    echo "***** cannot find $WCS_IMAGE_NAME_FOR_CHECKS  *****" >> transient_factory.log
    echo "############################################################" >> transient_factory.log
@@ -449,19 +449,30 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  fi
  
  echo "Running solve_plate_with_UCAC5" >> transient_factory_test31.txt
+ for i in `cat vast_image_details.log | awk '{print $17}' | sort | uniq` ;do 
+  # This should ensure the correct field-of-view guess by setting the TELESCOP keyword
+  TELESCOP="NMW_camera" util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1  $i  &
+ done 
+
  # We need UCAC5 solution for the first and the third images
- util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1 `cat vast_image_details.log | awk '{print $17}' | head -n1 | tail -n1` &
- util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1 `cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1` &
+# util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1 `cat vast_image_details.log | awk '{print $17}' | head -n1 | tail -n1` &
+# util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1 `cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1` &
  #
- util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1 `cat vast_image_details.log | awk '{print $17}' | head -n2 | tail -n1` &
- util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1 `cat vast_image_details.log | awk '{print $17}' | head -n4 | tail -n1` &
+# util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1 `cat vast_image_details.log | awk '{print $17}' | head -n2 | tail -n1` &
+# util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1 `cat vast_image_details.log | awk '{print $17}' | head -n4 | tail -n1` &
  # wait # moved down
  
  echo "Calibrating the magnitude scale with Tycho-2 stars" >> transient_factory_test31.txt
  if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
   rm -f 'lightcurve.tmp_emergency_stop_debug'
  fi
- # Calibrate magnitude scale with Tycho-2 stars in the field 
+ # Calibrate magnitude scale with Tycho-2 stars in the field
+ # In order for this to work, we need the plate-solved reference image 
+ WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $REFERENCE_EPOCH__FIRST_IMAGE`
+ if [ ! -s "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
+  # Wait here hoping util/solve_plate_with_UCAC5 will plate-solve the reference image
+  wait
+ fi
  echo "y" | util/transients/calibrate_current_field_with_tycho2.sh 2>&1 >> transient_factory_test31.txt
  MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
  # Check that the magnitude calibration actually worked
