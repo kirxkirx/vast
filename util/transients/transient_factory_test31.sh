@@ -392,7 +392,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    if [ "$SEXTRACTOR_CONFIG_FILE" = "default.sex.telephoto_lens_v4" ];then
     # link the solved images and catalogs created with this SExtractorconfig file
     for i in "$WCSCACHEDIR/wcs_"$FIELD"_"* local_wcs_cache/exclusion* ;do
-     if [ -f "$i" ];then
+     if [ -s "$i" ];then
       echo "Creating symlink $i" >> transient_factory_test31.txt
       ln -s $i
      fi
@@ -401,7 +401,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
     # we are using a different config file
     # link only the solved images (and the exclusion lists)
     for i in "$WCSCACHEDIR/wcs_"$FIELD"_"*.fts local_wcs_cache/exclusion* ;do
-     if [ -f "$i" ];then
+     if [ -s "$i" ];then
       echo "Creating symlink $i" >> transient_factory_test31.txt
       ln -s $i
      fi
@@ -643,7 +643,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # this is for UCAC5 plate solver
  wait
  echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
- util/transients/make_report_in_HTML.sh #$FIELD
+ util/transients/make_report_in_HTML.sh >> transient_factory_test31.txt
  echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
 
  done # for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
