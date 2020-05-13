@@ -159,6 +159,7 @@ echo "---------- Starting $0 ----------" >> /dev/stderr
 echo "---------- $0 ----------" > vast_test_report.txt
 
 ##### Set initial values for the variables #####
+DEBUG_OUTPUT=""
 FAILED_TEST_CODES=""
 WORKDIR="$PWD"
 VAST_VERSION_STRING=`./vast --version`
@@ -7218,6 +7219,9 @@ if [ -d ../NMW_Venus_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_ERROR_MESSAGE_IN_index_html"
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### VENUS_ERROR_MESSAGE_IN_index_html ######
+"`grep 'ERROR' "transient_report/index.html"`
   fi
   # The copy of the log file shoule be in the HTML report
   grep --quiet "Images processed 4" transient_report/index.html
@@ -7251,6 +7255,9 @@ if [ -d ../NMW_Venus_test ];then
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS0110a"
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### VENUS0110a ######
+"`grep -e "2020 04 19.7683  2458959.2683  6\...  04:41:" transient_report/index.html`
   fi
   RADECPOSITION_TO_TEST=`grep -e "2020 04 19.7683  2458959.2683  6\...  04:41:"  transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 04:41:42.66 +26:53:41.8 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
@@ -11011,6 +11018,12 @@ echo "
 ############# Test Report #############"
 cat vast_test_report.txt
 
+if [ ! -z "$DEBUG_OUTPUT" ];then
+ echo "#########################################################
+$DEBUG_OUTPUT
+"
+fi
+
 # Clean-up
 util/clean_data.sh &> /dev/null
 
@@ -11044,6 +11057,8 @@ if [ "$MAIL_TEST_REPORT_TO_KIRX" = "YES" ];then
  MSG="The script $0 has finished on $DATETIME at $PWD $LOG"
 echo "
 $MSG
+#########################################################
+$DEBUG_OUTPUT
 
 "
  curl --silent 'http://scan.sai.msu.ru/vast/vasttestreport.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode "message=$MSG" --data-urlencode 'submit=submit'
