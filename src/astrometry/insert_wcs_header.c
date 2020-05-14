@@ -51,6 +51,7 @@ int main( int argc, char **argv ) {
  fitsfilename[FILENAME_LENGTH - 1]= '\0';
  fits_open_file( &fptr, fitsfilename, READONLY, &status );
  if ( 0 != status ) {
+  fprintf( stderr, "ERROR opening FITS file %s for reding\n", fitsfilename);
   fits_report_error( stderr, status ); /* print out any error messages */
   return status;
  }
@@ -77,7 +78,7 @@ int main( int argc, char **argv ) {
  fits_open_file( &inputfptr, fitsfilename, READONLY, &status );
  if ( 0 != status ) {
   fits_report_error( stderr, status );
-  fprintf( stderr, "ERROR: problem opening file!\n" );
+  fprintf( stderr, "ERROR: cannot open file %s for reading (2)\n", fitsfilename );
   return status;
  }
  fprintf( stderr, "done!\n" );
@@ -101,7 +102,7 @@ int main( int argc, char **argv ) {
    fits_close_file( inputfptr, &status );  // close file
    fits_close_file( outputfptr, &status ); // close file
    if ( 0 != unlink( outputfitsfilename ) ) {
-    fprintf( stderr, "ERROR! Cannot delete incomplete output file file %s\n", outputfitsfilename ); // remove incomplete output file
+    fprintf( stderr, "ERROR! Cannot delete incomplete output file %s\n", outputfitsfilename ); // remove incomplete output file
     return 1;
    }
    // Re-open files another way
@@ -116,37 +117,39 @@ int main( int argc, char **argv ) {
     return status;
    image_array= malloc( naxes[0] * naxes[1] * sizeof( short ) );
    if ( image_array == NULL ) {
-    fprintf( stderr, "ERROR: Couldn't allocate memory for image_array\n" );
-    exit( 1 );
-   };
-   if ( image_array == NULL ) {
-    fprintf( stderr, "ERROR allocating memory for the image array!\n" );
+    fprintf( stderr, "ERROR allocating memory for the image_array!\n" );
     return 1;
    }
    fits_read_img( inputfptr, TSHORT, 1, naxes[0] * naxes[1], &nullval, image_array, &anynul, &status );
    fits_report_error( stderr, status );
-   if ( status != 0 )
+   if ( status != 0 ) {
     return status;
+   }
    fits_create_file( &outputfptr, outputfitsfilename, &status );
    fits_report_error( stderr, status );
-   if ( status != 0 )
+   if ( status != 0 ) {
     return status;
+   }
    fits_create_img( outputfptr, SHORT_IMG, 2, naxes, &status );
    fits_report_error( stderr, status );
-   if ( status != 0 )
+   if ( status != 0 ) {
     return status;
+   }
    fits_update_key( outputfptr, TSTRING, "DATE-OBS", DATEOBS, "UTC observation start date", &status );
    fits_report_error( stderr, status );
-   if ( status != 0 )
+   if ( status != 0 ) {
     return status;
+   }
    fits_update_key( outputfptr, TDOUBLE, "EXPOSURE", &exposure, "Exposure time in seconds", &status );
    fits_report_error( stderr, status );
-   if ( status != 0 )
+   if ( status != 0 ) {
     return status;
+   }
    fits_write_img( outputfptr, TSHORT, fpixel, naxes[0] * naxes[1], image_array, &status );
    fits_report_error( stderr, status );
-   if ( status != 0 )
+   if ( status != 0 ) {
     return status;
+   }
   } else {
    fprintf( stderr, "Nope, this does not appear to be a Kourovka SBG image...\n" );
    status= 1;
@@ -158,8 +161,9 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "ERROR: problem copying HDU!\n" );
   fits_close_file( inputfptr, &status );  // close file
   fits_close_file( outputfptr, &status ); // close file
-  if ( 0 != unlink( outputfitsfilename ) )
-   fprintf( stderr, "WARNING! Cannot delete incomplete output file file %s\n", outputfitsfilename ); // remove incomplete output file
+  if ( 0 != unlink( outputfitsfilename ) ) {
+   fprintf( stderr, "ERROR: cannot delete incomplete output file %s\n", outputfitsfilename ); // remove incomplete output file
+  }
   return status;
  }
  fprintf( stderr, "done!\n" );

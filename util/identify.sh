@@ -442,7 +442,8 @@ field identification have good chances to fail. Sorry... :(
  #for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN `echo "3/4*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` `echo "2*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` `echo "10*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` ;do
  for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN `echo "3*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` `echo "3/4*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` ;do
  
- echo "######### Trying to solve plate assuming $TRIAL_FIELD_OF_VIEW_ARCMIN' field of view #########"
+ echo "######### Trying to solve plate assuming $TRIAL_FIELD_OF_VIEW_ARCMIN' field of view #########
+ $FITSFILE"
 
  ############################################################################
  # Local plate-solving software
@@ -525,14 +526,14 @@ field identification have good chances to fail. Sorry... :(
    if [ -f out$$.wcs ];then
     cp $FITSFILE "$BASENAME_FITSFILE"
     echo -n "Inserting WCS header...  "
-    "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE"
+    "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
     if [ $? -ne 0 ];then
      # This is a bad one, just exit
-     echo " ERROR inserting WCS header! Aborting further actions! "
+     echo " ERROR inserting WCS header in $FITSFILE !!! Aborting further actions! "
      exit 1
     else   
      ERROR_STATUS=0
-     echo "The WCS header appears to be added with no errors."
+     echo "The WCS header appears to be added with no errors in $FITSFILE ($BASENAME_FITSFILE)"
     fi
     # clean up
     #rm -f "$BASENAME_FITSFILE" out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$.xyls out$$-indx.xyls
