@@ -470,6 +470,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # In order for this to work, we need the plate-solved reference image 
  WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $REFERENCE_EPOCH__FIRST_IMAGE`
  if [ ! -s "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
+  echo "$WCS_IMAGE_NAME_FOR_CHECKS does not exist or is empty, waiting for solve_plate_with_UCAC5" >> transient_factory_test31.txt
   # Wait here hoping util/solve_plate_with_UCAC5 will plate-solve the reference image
   wait
  fi

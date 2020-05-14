@@ -5,7 +5,7 @@
 # ERROR_STATUS indicates error conditions
 # 0 - OK
 # 1 - field not solved, no need to retry
-# 2 - possible server communication error, retry with another plate solve server
+# 2 - possible server communication error, retry (with another plate solve server?)
 ERROR_STATUS=0
 
 # 0 - no, unknown telescope - have to plate-solve the image in the normal way
@@ -68,6 +68,9 @@ function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image
  return 0
 }
 
+# Set the correct path to 'timeout'
+TIMEOUT_COMMAND=`"$VAST_PATH"lib/find_timeout_command.sh`
+export TIMEOUT_COMMAND
 
 # Decide if we want to use local installation of Astrometry.net software or a remote one
 #ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
@@ -183,8 +186,10 @@ The reachable servers are:"
   exit 1
  fi
 
+
  # Choose a random server among the available ones
- PLATE_SOLVE_SERVER=`$("$VAST_PATH"lib/find_timeout_command.sh) 10  sort --random-sort --random-source=/dev/urandom servers$$.ping_ok | sort -R | head -n1`
+ #PLATE_SOLVE_SERVER=`$("$VAST_PATH"lib/find_timeout_command.sh) 10  sort --random-sort --random-source=/dev/urandom servers$$.ping_ok | sort -R | head -n1`
+ PLATE_SOLVE_SERVER=`$TIMEOUT_COMMAND 10  sort --random-sort --random-source=/dev/urandom servers$$.ping_ok | sort -R | head -n1`
  # If the above fails because sort doesn't understand the '--random-sort' option
  if [ "$PLATE_SOLVE_SERVER" = "" ];then
   PLATE_SOLVE_SERVER=`head -n1 servers$$.ping_ok`
@@ -461,7 +466,8 @@ field identification have good chances to fail. Sorry... :(
   #
   # Blind solve
   # old parameters
-  `"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  $TIMEOUT_COMMAND 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # new parameters that should avoid using python
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH  --no-fits2fits --uniformize 0  out$$.xyls
   # HACK Hack hack -- manually specify the field center and size
@@ -523,13 +529,14 @@ field identification have good chances to fail. Sorry... :(
     continue
     #exit 1
    fi
-   if [ -f out$$.wcs ];then
+   if [ -s out$$.wcs ];then
     cp $FITSFILE "$BASENAME_FITSFILE"
     echo -n "Inserting WCS header...  "
     "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
     if [ $? -ne 0 ];then
      # This is a bad one, just exit
      echo " ERROR inserting WCS header in $FITSFILE !!! Aborting further actions! "
+     util/listhead out$$.wcs
      exit 1
     else   
      ERROR_STATUS=0
@@ -546,26 +553,31 @@ field identification have good chances to fail. Sorry... :(
     IMAGE_SCALE_ARCSECPIX_LOW=`echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%f",0.95*$1}'`
     IMAGE_SCALE_ARCSECPIX_HIGH=`echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%f",1.05*$1}'`
     RADECCOMMAND="$RADECCOMMAND --radius $FOV --scale-low $IMAGE_SCALE_ARCSECPIX_LOW --scale-high $IMAGE_SCALE_ARCSECPIX_HIGH --scale-units arcsecperpix"
-    `"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
-    #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER   --no-fits2fits --uniformize 0
+    #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
+    $TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
     if [ $? -ne 0 ];then
-     echo "ERROR running the second iteration of solve-field"
+     echo "ERROR running the second iteration of solve-field on $BASENAME_FITSFILE"
      exit 1
     fi
     if [ ! -f out$$.solved ];then
-     echo "The second iteration of solve-field failed to solve the field"
+     echo "The second iteration of solve-field failed to solve the field for $BASENAME_FITSFILE"
      exit 1
     fi
     if [ ! -f out$$.wcs ];then
-     echo "The second iteration of solve-field failed to produce out$$.wcs"
+     echo "The second iteration of solve-field failed to produce out$$.wcs for $BASENAME_FITSFILE"
+     exit 1
+    fi
+    if [ ! -s out$$.wcs ];then
+     echo "The second iteration of solve-field produced an empty out$$.wcs for $BASENAME_FITSFILE"
      exit 1
     fi
     rm -f wcs_"$BASENAME_FITSFILE"
     echo -n "Inserting WCS header (2nd iteration)...  "
-    "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE"
+    "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
     if [ $? -ne 0 ];then
      # This is a bad one, just exit
      echo " ERROR inserting WCS header! Aborting further actions! "
+     util/listhead out$$.wcs
      exit 1
     else   
      ERROR_STATUS=0
@@ -575,12 +587,14 @@ field identification have good chances to fail. Sorry... :(
     rm -f "$BASENAME_FITSFILE" out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$.xyls out$$-indx.xyls
     ############
    else
-    echo "ERROR: cannot find out$$.wcs "
+    if [ -f out$$.wcs ];then
+     echo "ERROR: out$$.wcs is empty"
+    else
+     echo "ERROR: cannot find out$$.wcs "
+    fi
     ERROR_STATUS=2
    fi
    # Clean-up
-   #cp out*.xyls /tmp/
-   #rm -f out*.axy out*.xyls
    rm -f out$$.axy out$$.xyls
    # end of clean-up
   fi # solve-field didn't crash
@@ -615,7 +629,8 @@ field identification have good chances to fail. Sorry... :(
    #`lib/find_timeout_command.sh` 300 $CURL -F file=@out$$.xyls -F submit="Upload Image" -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
    #echo $CURL -F file=@out$$.xyls -F submit="Upload Image" -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd
    # Note that the timeout is also enforced at the server side
-   `"$VAST_PATH"lib/find_timeout_command.sh` 600 $CURL -F file=@out$$.xyls -F submit="Upload Image" -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
+   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 $CURL -F file=@out$$.xyls -F submit="Upload Image" -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
+   $TIMEOUT_COMMAND 600 $CURL -F file=@out$$.xyls -F submit="Upload Image" -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
    if [ $? -ne 0 ];then
     echo "An ERROR has occured while uploading the star list to the server!"
     ERROR_STATUS=2
@@ -637,7 +652,8 @@ field identification have good chances to fail. Sorry... :(
    fi
    echo "#### Plate solution log ####"
    SOLVE_PROGRAM_LOG_URL=${EXPECTED_WCS_HEAD_URL//out.wcs/program.log}
-   `"$VAST_PATH"lib/find_timeout_command.sh` 300 $CURL "$SOLVE_PROGRAM_LOG_URL" --user vast48:khyzbaojMhztNkWd
+   #`"$VAST_PATH"lib/find_timeout_command.sh` 300 $CURL "$SOLVE_PROGRAM_LOG_URL" --user vast48:khyzbaojMhztNkWd
+   $TIMEOUT_COMMAND 300 $CURL "$SOLVE_PROGRAM_LOG_URL" --user vast48:khyzbaojMhztNkWd
    if [ $? != 0 ];then
     echo "ERROR: getting processing log from the server $PLATE_SOLVE_SERVER"
     ERROR_STATUS=2
@@ -645,7 +661,8 @@ field identification have good chances to fail. Sorry... :(
    fi
    echo "############################"
    SOLVE_FILE_URL=${EXPECTED_WCS_HEAD_URL//out.wcs/out.solved}
-   `"$VAST_PATH"lib/find_timeout_command.sh` 300 $CURL "$SOLVE_FILE_URL" --user vast48:khyzbaojMhztNkWd 2>/dev/null |grep "404 Not Found" >/dev/null
+   #`"$VAST_PATH"lib/find_timeout_command.sh` 300 $CURL "$SOLVE_FILE_URL" --user vast48:khyzbaojMhztNkWd 2>/dev/null |grep "404 Not Found" >/dev/null
+   $TIMEOUT_COMMAND 300 $CURL "$SOLVE_FILE_URL" --user vast48:khyzbaojMhztNkWd 2>/dev/null |grep "404 Not Found" >/dev/null
    # Nope, this interfers with the if statement below
    #if [ $? -ge 130 ];then
    # # Exit if the process is killed by user
@@ -655,19 +672,42 @@ field identification have good chances to fail. Sorry... :(
     echo -e "Field \033[01;32mSOLVED\033[00m =)"
     rm -f out.solved
     echo -n "Downloading WCS header...  "
-    `"$VAST_PATH"lib/find_timeout_command.sh` 300 $CURL "$EXPECTED_WCS_HEAD_URL" -o out$$.wcs --user vast48:khyzbaojMhztNkWd &>/dev/null  && echo "done"
+    #`"$VAST_PATH"lib/find_timeout_command.sh` 300 $CURL "$EXPECTED_WCS_HEAD_URL" -o out$$.wcs --user vast48:khyzbaojMhztNkWd &>/dev/null  && echo "done"
+    $TIMEOUT_COMMAND 300 $CURL "$EXPECTED_WCS_HEAD_URL" -o out$$.wcs --user vast48:khyzbaojMhztNkWd &>/dev/null 
+    CURL_EXIT_CODE=$? 
     # This one should not interfere with the if below
-    if [ $? -ge 130 ];then
+    if [ $CURL_EXIT_CODE -ge 130 ];then
      # Exit if the process is killed by user
      exit 1
     fi
-    if [ -f out$$.wcs ];then
+    if [ $CURL_EXIT_CODE -ne 0 ];then
+     echo "The curl exit code was $CURL_EXIT_CODE
+Retrying..."
+     sleep 3
+     $TIMEOUT_COMMAND 300 $CURL "$EXPECTED_WCS_HEAD_URL" -o out$$.wcs --user vast48:khyzbaojMhztNkWd &>/dev/null
+     CURL_EXIT_CODE=$? 
+     # This one should not interfere with the if below
+     if [ $CURL_EXIT_CODE -ge 130 ];then
+      # Exit if the process is killed by user
+      exit 1
+     fi
+     if [ $CURL_EXIT_CODE -ne 0 ];then
+      echo "The curl exit code is still $CURL_EXIT_CODE"
+      ERROR_STATUS=2
+     else
+      echo "done"
+     fi
+    else
+     echo "done"
+    fi
+    if [ -s out$$.wcs ];then
      cp $FITSFILE "$BASENAME_FITSFILE"
-     echo -n "Inserting WCS header...  "
-     "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE"
+     echo -n "Inserting WCS header in $BASENAME_FITSFILE ...  "
+     "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
      if [ $? -ne 0 ];then
       # This is a bad one, just exit
-      echo " ERROR inserting WCS header! Aborting further actions! "
+      echo " ERROR inserting WCS header in $BASENAME_FITSFILE ! Aborting further actions! "
+      util/listhead out$$.wcs
       exit 1
      else
       ERROR_STATUS=0
@@ -682,7 +722,7 @@ field identification have good chances to fail. Sorry... :(
       fi
      done
     else
-     echo "ERROR: cannot download out.wcs "
+     echo "ERROR: cannot download out.wcs for $BASENAME_FITSFILE"
      ERROR_STATUS=2
      continue
     fi
@@ -697,7 +737,8 @@ field identification have good chances to fail. Sorry... :(
     echo "Sending request to remove job $SERVER_JOB_ID from the server...  "
     VaSTID="XGkbtHTGfTPVLrZLBdtIDPzGAEAjaZWW"
     # Web-based processing - remove completed plate-solveing job from the server
-    `"$VAST_PATH"lib/find_timeout_command.sh` 300 $CURL -F JobID="$SERVER_JOB_ID" -F VaSTID=$VaSTID "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/remove_job.py" --user vast48:khyzbaojMhztNkWd 
+    #`"$VAST_PATH"lib/find_timeout_command.sh` 300 $CURL -F JobID="$SERVER_JOB_ID" -F VaSTID=$VaSTID "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/remove_job.py" --user vast48:khyzbaojMhztNkWd 
+    $TIMEOUT_COMMAND 300 $CURL -F JobID="$SERVER_JOB_ID" -F VaSTID=$VaSTID "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/remove_job.py" --user vast48:khyzbaojMhztNkWd 
     if [ $? -ne 0 ];then
      echo "Hmm... Some error?"
     fi
