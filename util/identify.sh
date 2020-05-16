@@ -355,7 +355,7 @@ else
  # Test if the original image has a WCS header and we should just blindly trust it
  check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image "$FITSFILE"
  if [ $? -eq 1 ];then
-  echo "The input image has a WCS header - will blindly trust it is good..."
+  echo "The input image $FITSFILE has a WCS header - will blindly trust it is good..."
   cp -v "$FITSFILE" "$WCS_IMAGE_NAME" 
  fi
 fi
@@ -417,7 +417,7 @@ if [ ! -s "$WCS_IMAGE_NAME" ];then
   rm -f "$WCS_IMAGE_NAME"
  fi
  #
- echo -n "No image with WCS calibration found. Starting SExtractor...  "
+ echo -n "No image with WCS calibration found for $FITSFILE .... "
  IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
  # The stuff below seems to work fine
  CATALOG_NAME=`"$VAST_PATH"lib/fits2cat $FITSFILE`
@@ -442,7 +442,7 @@ of view (say, >40 arcmin). If the images are smaller than 20', the automatic
 field identification have good chances to fail. Sorry... :(
 "
 
-# Try to solve the image with a range of trial FIELD_OF_VIEW_ARCMINs
+ # Try to solve the image with a range of trial FIELD_OF_VIEW_ARCMINs
 
  #for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN `echo "3/4*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` `echo "2*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` `echo "10*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` ;do
  for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN `echo "3*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` `echo "3/4*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` ;do
@@ -536,6 +536,18 @@ field identification have good chances to fail. Sorry... :(
     if [ $? -ne 0 ];then
      # This is a bad one, just exit
      echo " ERROR inserting WCS header in $FITSFILE !!! Aborting further actions! "
+     WCS_IMAGE_TO_CHECK="wcs_$BASENAME_FITSFILE"
+     WCS_IMAGE_TO_CHECK="${WCS_IMAGE_TO_CHECK/wcs_wcs_/wcs_}"
+     if [ -f "$WCS_IMAGE_TO_CHECK" ];then
+      echo "The output file $WCS_IMAGE_TO_CHECK exist"
+      if [ -s "$WCS_IMAGE_TO_CHECK" ];then
+       echo "#### Header of the existing image $WCS_IMAGE_TO_CHECK ####"
+       util/listhead $WCS_IMAGE_TO_CHECK
+      else
+       echo "The output file $WCS_IMAGE_TO_CHECK is empty!"
+      fi
+     fi
+     echo "#### Header we wanted to insert ####"
      util/listhead out$$.wcs
      exit 1
     else   
@@ -577,6 +589,18 @@ field identification have good chances to fail. Sorry... :(
     if [ $? -ne 0 ];then
      # This is a bad one, just exit
      echo " ERROR inserting WCS header! Aborting further actions! "
+     WCS_IMAGE_TO_CHECK="wcs_$BASENAME_FITSFILE"
+     WCS_IMAGE_TO_CHECK="${WCS_IMAGE_TO_CHECK/wcs_wcs_/wcs_}"
+     if [ -f "$WCS_IMAGE_TO_CHECK" ];then
+      echo "The output file $WCS_IMAGE_TO_CHECK exist"
+      if [ -s "$WCS_IMAGE_TO_CHECK" ];then
+       echo "#### Header of the existing image $WCS_IMAGE_TO_CHECK ####"
+       util/listhead $WCS_IMAGE_TO_CHECK
+      else
+       echo "The output file $WCS_IMAGE_TO_CHECK is empty!"
+      fi
+     fi
+     echo "#### Header we wanted to insert ####"
      util/listhead out$$.wcs
      exit 1
     else   
@@ -707,6 +731,18 @@ Retrying..."
      if [ $? -ne 0 ];then
       # This is a bad one, just exit
       echo " ERROR inserting WCS header in $BASENAME_FITSFILE ! Aborting further actions! "
+      WCS_IMAGE_TO_CHECK="wcs_$BASENAME_FITSFILE"
+      WCS_IMAGE_TO_CHECK="${WCS_IMAGE_TO_CHECK/wcs_wcs_/wcs_}"
+      if [ -f "$WCS_IMAGE_TO_CHECK" ];then
+       echo "The output file $WCS_IMAGE_TO_CHECK exist"
+       if [ -s "$WCS_IMAGE_TO_CHECK" ];then
+        echo "#### Header of the existing image $WCS_IMAGE_TO_CHECK ####"
+        util/listhead $WCS_IMAGE_TO_CHECK
+       else
+        echo "The output file $WCS_IMAGE_TO_CHECK is empty!"
+       fi
+      fi
+      echo "#### Header we wanted to insert ####"
       util/listhead out$$.wcs
       exit 1
      else
@@ -828,7 +864,7 @@ fi
   # Try to generate the catalog without re-running SExtractor
   "$VAST_PATH"lib/reformat_existing_sextractor_catalog_according_to_wcsparam.sh "$FITSFILE" "$WCS_IMAGE_NAME" "$SEXTRACTOR_CATALOG_NAME"
   if [ $? -ne 0 ];then
-   echo "lib/reformat_existing_sextractor_catalog_according_to_wcsparam.sh did not work. Starting SExtractor..." >> /dev/stderr
+   echo "lib/reformat_existing_sextractor_catalog_according_to_wcsparam.sh did not work. Re-running SExtractor..." >> /dev/stderr
    $SEXTRACTOR -c "$VAST_PATH"`grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $WCS_IMAGE_NAME 2>/dev/null` $WCS_IMAGE_NAME && echo "ok"
   fi
   echo "Catalog $SEXTRACTOR_CATALOG_NAME corresponding to the image $WCS_IMAGE_NAME created."
@@ -839,7 +875,7 @@ fi
   # Check if the catalog looks big enough
   TEST=`cat $SEXTRACTOR_CATALOG_NAME | wc -l`
   if [ $TEST -lt 100 ];then
-   echo "The catalog seems suspiciously small (only $TEST lines), re-generating the catalog..."
+   echo "The catalog seems suspiciously small (only $TEST lines), re-generating the catalog with SExtractor..."
    $SEXTRACTOR -c "$VAST_PATH"`grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $WCS_IMAGE_NAME 2>/dev/null` $WCS_IMAGE_NAME && echo "ok"
    if [ -f $SEXTRACTOR_CATALOG_NAME ];then
     echo "Catalog $SEXTRACTOR_CATALOG_NAME corresponding to the image $WCS_IMAGE_NAME created."
@@ -865,7 +901,6 @@ fi
   fi
   
  fi
- #rm -f tmp$$.cat
 
 
 # If we are in the star identification mode - identify the star!

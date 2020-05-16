@@ -6,8 +6,8 @@
 #include <unistd.h> // for unlink() ...
 
 #include "../fitsio.h"
-
 #include "../vast_limits.h"
+#include "../fitsfile_read_check.h"
 
 // function defined in gettime.c
 int Kourovka_SBG_date_hack( char *fitsfilename, char *DATEOBS, int *date_parsed, double *exposure );
@@ -74,7 +74,7 @@ int main( int argc, char **argv ) {
 
  /* Read image */
  strncpy( fitsfilename, argv[2], 1024 );
- fprintf( stderr, "Opening FITS image file (%s)...  ", fitsfilename );
+ fprintf( stderr, "Opening FITS image file %s for reading...  ", fitsfilename );
  fits_open_file( &inputfptr, fitsfilename, READONLY, &status );
  if ( 0 != status ) {
   fits_report_error( stderr, status );
@@ -83,6 +83,12 @@ int main( int argc, char **argv ) {
  }
  fprintf( stderr, "done!\n" );
  sprintf( outputfitsfilename, "wcs_%s", fitsfilename );
+ // This is a special test for the strange bug when the output file ges created while we are slving the plate 
+ if( 0==fitsfile_read_check( outputfitsfilename ) ) {
+  fprintf( stderr, "WARNING: the output file %s already exist! Will not insert any header.\n", outputfitsfilename );
+  return 0; // assume success - everything was done by someone else
+ }
+ //
  fprintf( stderr, "Creating new image file (%s)...  ", outputfitsfilename );
  fits_create_file( &outputfptr, outputfitsfilename, &status ); /* create new file */
  if ( 0 != status ) {

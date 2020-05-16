@@ -323,7 +323,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  ###############################################
  # We may have images from two different cameras that require two different bad region lists
  # ./Nazar_bad_region.lst and ../bad_region.lst
- echo "Choosing a bad regions list" >> transient_factory_test31.txt
+ echo "Choosing bad regions list" >> transient_factory_test31.txt
  # Set custom bad_region.lst if there is one
  # test the file name
  echo "$SECOND_EPOCH__FIRST_IMAGE" | grep --quiet -e "Nazar" -e "nazar" -e "NAZAR"
@@ -346,6 +346,10 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # Make multiple VaST runs with different SExtractor config files
  ### ===> SExtractor config file <===
  for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
+
+ # make sure nothing is left running from the previous run (in case it ended early with 'continue')
+ wait
+ #
  
  # just to make sure all the child loops will see it
  export SEXTRACTOR_CONFIG_FILE
@@ -379,7 +383,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  cat vast_summary.log >> transient_factory.log
  grep --quiet 'Images used for photometry 4' vast_summary.log
  if [ $? -ne 0 ];then
-  echo "***** IMAGE PROCESSING ERROR *****" >> transient_factory.log
+  echo "***** IMAGE PROCESSING ERROR (less than 4 images processed) *****" >> transient_factory.log
   echo "############################################################" >> transient_factory.log
   continue
  fi
@@ -437,9 +441,14 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
     mkdir local_wcs_cache
    fi
    if [ ! -L "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
-    # save the solved plate to local cache, but only if it's not already a symlink
-    echo "Saving $WCS_IMAGE_NAME_FOR_CHECKS to local_wcs_cache/" >> transient_factory_test31.txt
-    cp "$WCS_IMAGE_NAME_FOR_CHECKS" local_wcs_cache/
+    ### ===> SExtractor config file <===
+    if [ "$SEXTRACTOR_CONFIG_FILE" != "default.sex.telephoto_lens_v4" ];then
+     # save the solved plate to local cache, but only if it's not already a symlink
+     echo "Saving $WCS_IMAGE_NAME_FOR_CHECKS to local_wcs_cache/" >> transient_factory_test31.txt
+     cp "$WCS_IMAGE_NAME_FOR_CHECKS" local_wcs_cache/
+    else
+     echo "NOT SAVING $WCS_IMAGE_NAME_FOR_CHECKS to local_wcs_cache/ as this is the run with $SEXTRACTOR_CONFIG_FILE"
+    fi
    fi
   fi
  done | grep --quiet 'UNSOLVED_PLATE'
@@ -469,8 +478,9 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # Calibrate magnitude scale with Tycho-2 stars in the field
  # In order for this to work, we need the plate-solved reference image 
  WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $REFERENCE_EPOCH__FIRST_IMAGE`
+ WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
  if [ ! -s "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
-  echo "$WCS_IMAGE_NAME_FOR_CHECKS does not exist or is empty, waiting for solve_plate_with_UCAC5" >> transient_factory_test31.txt
+  echo "$WCS_IMAGE_NAME_FOR_CHECKS does not exist or is empty: waiting for solve_plate_with_UCAC5" >> transient_factory_test31.txt
   # Wait here hoping util/solve_plate_with_UCAC5 will plate-solve the reference image
   wait
  fi
@@ -488,7 +498,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   # Throw an error
   echo "ERROR calibrating magnitudes in the field $FIELD (mean mag outside of range)"
   echo "ERROR calibrating magnitudes in the field $FIELD (mean mag outside of range)" >> transient_factory_test31.txt
-  echo "***** MAGNITUDE CALIBRATION ERROR *****" >> transient_factory.log
+  echo "***** MAGNITUDE CALIBRATION ERROR (candidate mag is out of the expected range) *****" >> transient_factory.log
   echo "############################################################" >> transient_factory.log
   # continue to the next field
   continue
@@ -499,7 +509,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   # Throw an error
   echo "ERROR calibrating magnitudes in the field $FIELD MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE"
   echo "ERROR calibrating magnitudes in the field $FIELD MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE" >> transient_factory_test31.txt
-  echo "***** MAGNITUDE CALIBRATION ERROR *****" >> transient_factory.log
+  echo "***** MAGNITUDE CALIBRATION ERROR (mag calibration script exited with code $MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE) *****" >> transient_factory.log
   echo "############################################################" >> transient_factory.log
   # continue to the next field
   continue
@@ -513,7 +523,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   echo "############################################################" >> transient_factory_test31.txt
   cat lightcurve.tmp_emergency_stop_debug >> transient_factory_test31.txt
   echo "############################################################" >> transient_factory_test31.txt
-  echo "***** MAGNITUDE CALIBRATION ERROR *****" >> transient_factory.log
+  echo "***** MAGNITUDE CALIBRATION ERROR (lightcurve.tmp_emergency_stop_debug) *****" >> transient_factory.log
   echo "############################################################" >> transient_factory.log
   # continue to the next field
   continue
