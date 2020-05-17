@@ -221,11 +221,23 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
  # Run the test
  echo "SysRem test " >> /dev/stderr
  echo -n "SysRem test: " >> vast_test_report.txt 
+ # Save VaST config files that may be overwritten when loading a data set
+ for FILE_TO_SAVE in bad_region.lst default.psfex default.sex ;do
+  if [ -f "$FILE_TO_SAVE" ];then
+   mv "$FILE_TO_SAVE" "$FILE_TO_SAVE"_vastautobackup
+  fi
+ done 
  util/load.sh ../NMW_And1_test_lightcurves_40
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM001"
  fi 
+ # Restore the previously-saved VaST config files
+ for FILE_TO_RESTORE in *_vastautobackup ;do
+  if [ -f "$FILE_TO_RESTORE" ];then
+   mv -f "$FILE_TO_RESTORE" `basename "$FILE_TO_RESTORE" _vastautobackup`
+  fi
+ done
  SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM=`util/estimate_systematic_noise_level 2> /dev/null`
  if [ $? -ne 0 ];then
   TEST_PASSED=0
