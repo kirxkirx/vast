@@ -112,7 +112,7 @@ Please check your internet connection..."
 fi
    
 # Choose a random server among the available ones
-PERIOD_SEARCH_SERVER=`$("$VAST_PATH"lib/find_timeout_command.sh) 10 sort --random-sort --random-source=/dev/urandom servers.ping_ok | sort -R | head -n1`
+PERIOD_SEARCH_SERVER=`$("$VAST_PATH"lib/find_timeout_command.sh) 10 sort --random-sort --random-source=/dev/urandom servers.ping_ok | head -n1`
 # If the above fails because sort doesn't understand the '--random-sort' option
 if [ "$PERIOD_SEARCH_SERVER" = "" ];then
  PERIOD_SEARCH_SERVER=`head -n1 servers.ping_ok`
