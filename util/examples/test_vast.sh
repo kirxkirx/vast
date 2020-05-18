@@ -7231,9 +7231,10 @@ if [ -d ../NMW_Venus_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_ERROR_MESSAGE_IN_index_html"
+   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### VENUS_ERROR_MESSAGE_IN_index_html ######
-"`grep 'ERROR' "transient_report/index.html"`
+$GREP_RESULT"
   fi
   # The copy of the log file shoule be in the HTML report
   grep --quiet "Images processed 4" transient_report/index.html
@@ -7263,15 +7264,16 @@ if [ -d ../NMW_Venus_test ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS0110"
   #fi
-  grep --quiet -e "2020 04 19.7683  2458959.2683  6\...  04:41:" transient_report/index.html
+  grep --quiet -e "2020 04 19.7683  2458959.2683  6\...  04:41:" -e "2020 04 19.7683  2458959.2683  5\...  04:41:" -e "2020 04 19.7683  2458959.2683  7\...  04:41:"  transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS0110a"
+   GREP_RESULT=`grep -e "2020 04 19.7683  2458959.2683  6\...  04:41:" -e "2020 04 19.7683  2458959.2683  5\...  04:41:" -e "2020 04 19.7683  2458959.2683  7\...  04:41:" transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### VENUS0110a ######
-"`grep -e "2020 04 19.7683  2458959.2683  6\...  04:41:" transient_report/index.html`
+$GREP_RESULT"
   fi
-  RADECPOSITION_TO_TEST=`grep -e "2020 04 19.7683  2458959.2683  6\...  04:41:"  transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2020 04 19.7683  2458959.2683  6\...  04:41:" -e "2020 04 19.7683  2458959.2683  5\...  04:41:" -e "2020 04 19.7683  2458959.2683  7\...  04:41:"  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 04:41:42.66 +26:53:41.8 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   # Allow for 5 pixel offset - it's BIG
@@ -8871,9 +8873,9 @@ if [ "$MD5COMMAND" != "none" ];then
  
  ############################# Test index sorting in util/cute_lc #############################
  # Test if 'sort' understands the '--random-sort' argument, perform the following tests only if it does
- echo -e "A\nB\n" | $(lib/find_timeout_command.sh) 10 sort --random-sort > /dev/null
+ echo -e "A\nB\n" | $(lib/find_timeout_command.sh) 10 sort --random-sort --random-source=/dev/urandom > /dev/null
  if [ $? -eq 0 ];then
-  MD5SUM_OF_PROCESSED_LC=`echo "$TEST_LIGHTCURVE" | $(lib/find_timeout_command.sh) 10 sort --random-sort | util/cute_lc | $MD5COMMAND | awk '{print $1}'`
+  MD5SUM_OF_PROCESSED_LC=`echo "$TEST_LIGHTCURVE" | $(lib/find_timeout_command.sh) 10 sort --random-sort --random-source=/dev/urandom | util/cute_lc | $MD5COMMAND | awk '{print $1}'`
   if [ "$MD5SUM_OF_PROCESSED_LC" != "68a39230fa63eef05af635df4b33cd44" ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES LCPARSER002"
@@ -8920,13 +8922,13 @@ echo "Testing lightcurve filters " >> /dev/stderr
 echo -n "Testing lightcurve filters: " >> vast_test_report.txt 
 
 # Test if 'sort' understands the '--random-sort' argument, perform the following tests only if it does
-echo -e "A\nB\n" | $(lib/find_timeout_command.sh) 10 sort --random-sort > /dev/null
+echo -e "A\nB\n" | $(lib/find_timeout_command.sh) 10 sort --random-sort --random-source=/dev/urandom > /dev/null
 if [ $? -eq 0 ];then
  # The first test relies on the MD5 sum calculation
  if [ "$MD5COMMAND" != "none" ];then
   # Random-sort the test lightcurve and run it through lib/test/stetson_test to make sure sorting doesn't afffect the result 
   # (meaning that sorting is done correctly within VaST).
-  TEST_LIGHTCURVE_SHUFFLED=`echo "$TEST_LIGHTCURVE" | $(lib/find_timeout_command.sh) 10 sort --random-sort`
+  TEST_LIGHTCURVE_SHUFFLED=`echo "$TEST_LIGHTCURVE" | $(lib/find_timeout_command.sh) 10 sort --random-sort --random-source=/dev/urandom`
   echo "$TEST_LIGHTCURVE_SHUFFLED" > test_lightcurve_shuffled.txt
   echo "$TEST_LIGHTCURVE" > test_lightcurve.txt
   STETSON_TEST_OUTPUT_TEST_LIGHTCURVE=`lib/test/stetson_test test_lightcurve.txt 2>&1 | $MD5COMMAND | awk '{print $1}'`
@@ -11034,6 +11036,10 @@ if [ ! -z "$DEBUG_OUTPUT" ];then
  echo "#########################################################
 $DEBUG_OUTPUT
 "
+else
+ echo "#########################################################
+No DEBUG_OUTPUT
+"
 fi
 
 # Clean-up
@@ -11066,7 +11072,7 @@ if [ "$MAIL_TEST_REPORT_TO_KIRX" = "YES" ];then
  DATETIME=`LANG=C date --utc`
  SCRIPTNAME=`basename $0`
  LOG=`cat vast_test_report.txt`
- MSG="The script $0 has finished on $DATETIME at $PWD $LOG"
+ MSG="The script $0 has finished on $DATETIME at $PWD $LOG $DEBUG_OUTPUT"
 echo "
 $MSG
 #########################################################
