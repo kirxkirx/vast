@@ -743,6 +743,6 @@ if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ];then
  fi
 fi
 
-# why do we need this - the transients are all already reported
-util/clean_data.sh
+# The uncleaned directory is needed for the test script
+#util/clean_data.sh
 
