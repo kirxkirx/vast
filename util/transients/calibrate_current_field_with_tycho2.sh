@@ -60,33 +60,41 @@ if [ ! -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
  lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search 9.5
 fi
 
-# WCS-calibrate the reference image if it has not been done before (util/wcs_image_calibration.sh will check that)
+# WCS-calibrate the reference image if it has not been done
 REFERENCE_IMAGE=`cat vast_summary.log | grep "Ref.  image:" |awk '{print $6}'`
-util/wcs_image_calibration.sh $REFERENCE_IMAGE 
-if [ $? -ne 0 ];then
- echo "ERROR in $0 : cannot plate-solve the reference image $REFERENCE_IMAGE" >> /dev/stderr
- exit 1
-fi
 TEST_SUBSTRING=`basename $REFERENCE_IMAGE`
 TEST_SUBSTRING="${TEST_SUBSTRING:0:4}"
-#TEST_SUBSTRING=`expr substr $TEST_SUBSTRING  1 4`
 if [ "$TEST_SUBSTRING" = "wcs_" ];then
  cp $REFERENCE_IMAGE .
  WCS_CALIBRATED_REFERENCE_IMAGE=`basename $REFERENCE_IMAGE`
 else
  WCS_CALIBRATED_REFERENCE_IMAGE=wcs_`basename $REFERENCE_IMAGE`
 fi
-
 SEXTRACTOR_CATALOG_NAME="$WCS_CALIBRATED_REFERENCE_IMAGE".cat
+if [ ! -s "$WCS_CALIBRATED_REFERENCE_IMAGE" ] || [ ! -s "$SEXTRACTOR_CATALOG_NAME" ] ;then
+ util/wcs_image_calibration.sh $REFERENCE_IMAGE 
+ if [ $? -ne 0 ];then
+  echo "ERROR in $0 : cannot plate-solve the reference image $REFERENCE_IMAGE"
+  exit 1
+ fi
+fi # if [ ! -s "$WCS_CALIBRATED_REFERENCE_IMAGE" ];then
+
+if [ ! -s "$WCS_CALIBRATED_REFERENCE_IMAGE" ];then
+ echo "ERROR in $0 : cannot find the WCS-calibrated image $WCS_CALIBRATED_REFERENCE_IMAGEE which was supposed to be created by util/wcs_image_calibration.sh"
+ exit 1
+fi
 if [ ! -s "$SEXTRACTOR_CATALOG_NAME" ];then
  echo "ERROR in $0 : cannot find the catalog file $SEXTRACTOR_CATALOG_NAME which was supposed to be created by util/wcs_image_calibration.sh"
  exit 1
 fi
+# If we are still here
+echo "The reference image ($WCS_CALIBRATED_REFERENCE_IMAGE) and catalog ($SEXTRACTOR_CATALOG_NAME) found"
+
 cp -v "$SEXTRACTOR_CATALOG_NAME" wcsmag.cat
 
 #valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes lib/catalogs/read_tycho2
 MAGNITUDE_CALIBRATION_PARAMETERS=`lib/catalogs/read_tycho2`
-echo "util/calibrate_magnitude_scale $MAGNITUDE_CALIBRATION_PARAMETERS" >> /dev/stderr
+echo "util/calibrate_magnitude_scale $MAGNITUDE_CALIBRATION_PARAMETERS"
 util/calibrate_magnitude_scale $MAGNITUDE_CALIBRATION_PARAMETERS
 if [ $? -ne 0 ];then
  echo "ERROR: non-zero exit code of util/calibrate_magnitude_scale"

@@ -74,18 +74,24 @@ int main( int argc, char **argv ) {
 
  /* Read image */
  strncpy( fitsfilename, argv[2], 1024 );
+ sprintf( outputfitsfilename, "wcs_%s", fitsfilename );
  fprintf( stderr, "Opening FITS image file %s for reading...  ", fitsfilename );
  fits_open_file( &inputfptr, fitsfilename, READONLY, &status );
  if ( 0 != status ) {
   fits_report_error( stderr, status );
-  fprintf( stderr, "ERROR: cannot open file %s for reading (2)\n", fitsfilename );
+  fprintf( stderr, "WARNING: cannot open file %s for reading (2)\n", fitsfilename );
+  // This is a special test for the strange bug when the output file ges created while we are slving the plate 
+  if( 0==fitsfile_read_check( outputfitsfilename ) ) {
+   fprintf( stderr, "WARNING: the output file %s already exist! Will not insert any header. (1)\n", outputfitsfilename );
+   return 0; // assume success - everything was done by someone else
+  }
+  fprintf( stderr, "ERROR: the output file %s was not created by anyone else\n", fitsfilename );
   return status;
  }
  fprintf( stderr, "done!\n" );
- sprintf( outputfitsfilename, "wcs_%s", fitsfilename );
  // This is a special test for the strange bug when the output file ges created while we are slving the plate 
  if( 0==fitsfile_read_check( outputfitsfilename ) ) {
-  fprintf( stderr, "WARNING: the output file %s already exist! Will not insert any header.\n", outputfitsfilename );
+  fprintf( stderr, "WARNING: the output file %s already exist! Will not insert any header. (2)\n", outputfitsfilename );
   return 0; // assume success - everything was done by someone else
  }
  //

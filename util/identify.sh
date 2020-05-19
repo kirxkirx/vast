@@ -186,14 +186,17 @@ The reachable servers are:"
   exit 1
  fi
 
-
- # Choose a random server among the available ones
- #PLATE_SOLVE_SERVER=`$("$VAST_PATH"lib/find_timeout_command.sh) 10  sort --random-sort --random-source=/dev/urandom servers$$.ping_ok | sort -R | head -n1`
- PLATE_SOLVE_SERVER=`$TIMEOUT_COMMAND 10 sort --random-sort --random-source=/dev/urandom servers$$.ping_ok | head -n1`
- # If the above fails because sort doesn't understand the '--random-sort' option
- if [ "$PLATE_SOLVE_SERVER" = "" ];then
+ N_REACHABLE_SERVERS=`cat servers$$.ping_ok | wc -l`
+ if [ $N_REACHABLE_SERVERS -eq 1 ];then
   PLATE_SOLVE_SERVER=`head -n1 servers$$.ping_ok`
- fi
+ else
+  # Choose a random server among the available ones
+  PLATE_SOLVE_SERVER=`$TIMEOUT_COMMAND 10 sort --random-sort --random-source=/dev/urandom servers$$.ping_ok | head -n1`
+  # If the above fails because sort doesn't understand the '--random-sort' option
+  if [ "$PLATE_SOLVE_SERVER" = "" ];then
+   PLATE_SOLVE_SERVER=`head -n1 servers$$.ping_ok`
+  fi
+ fi # if [ $N_REACHABLE_SERVERS -eq 1 ];then
 
  # Update the list of available servers
  PLATE_SOLVE_SERVERS=""
@@ -530,8 +533,12 @@ field identification have good chances to fail. Sorry... :(
     #exit 1
    fi
    if [ -s out$$.wcs ];then
-    cp $FITSFILE "$BASENAME_FITSFILE"
     echo -n "Inserting WCS header...  "
+    cp -v $FITSFILE "$BASENAME_FITSFILE"
+    if [ $? -ne 0 ];then
+     echo "ERROR: cannot copy $FITSFILE to $BASENAME_FITSFILE"
+     exit 1
+    fi
     "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
     if [ $? -ne 0 ];then
      # This is a bad one, just exit

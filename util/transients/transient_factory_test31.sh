@@ -354,6 +354,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # just to make sure all the child loops will see it
  export SEXTRACTOR_CONFIG_FILE
  
+ echo "*------ $SEXTRACTOR_CONFIG_FILE ------*" >> transient_factory_test31.txt
+ 
  ## Set the SExtractor parameters file
  if [ ! -f "$SEXTRACTOR_CONFIG_FILE" ];then
   echo "ERROR finding $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
@@ -390,12 +392,16 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  echo "############################################################" >> transient_factory.log
  
  # Use cache if possible to speed-up WCS calibration
- for WCSCACHEDIR in "/mnt/usb/NMW_NG/solved_reference_images" "/home/NMW_web_upload/solved_reference_images" "/dataX/kirx/NMW_NG_rt3_autumn2019/solved_reference_images" "./local_wcs_cache" ;do
+ for WCSCACHEDIR in "local_wcs_cache" "/mnt/usb/NMW_NG/solved_reference_images" "/home/NMW_web_upload/solved_reference_images" "/dataX/kirx/NMW_NG_rt3_autumn2019/solved_reference_images" ;do
+  echo "Checking WCS cache directory $WCSCACHEDIR" >> transient_factory_test31.txt
   if [ -d "$WCSCACHEDIR" ];then
+   echo "Found WCS cache directory $WCSCACHEDIR" >> transient_factory_test31.txt
+   #ls "$WCSCACHEDIR" >> transient_factory_test31.txt
    ### ===> SExtractor config file <===
    if [ "$SEXTRACTOR_CONFIG_FILE" = "default.sex.telephoto_lens_v4" ];then
+    echo "(SExtractor parameter file $SEXTRACTOR_CONFIG_FILE -- faint objects)" >> transient_factory_test31.txt
     # link the solved images and catalogs created with this SExtractorconfig file
-    for i in "$WCSCACHEDIR/wcs_"$FIELD"_"* local_wcs_cache/exclusion* ;do
+    for i in "$WCSCACHEDIR/wcs_"$FIELD"_"* "$WCSCACHEDIR/exclusion_list"* ;do
      if [ -s "$i" ];then
       echo "Creating symlink $i" >> transient_factory_test31.txt
       ln -s $i
@@ -404,14 +410,15 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    else
     # we are using a different config file
     # link only the solved images (and the exclusion lists)
-    for i in "$WCSCACHEDIR/wcs_"$FIELD"_"*.fts local_wcs_cache/exclusion* ;do
+    echo "(SExtractor parameter file $SEXTRACTOR_CONFIG_FILE -- bright objects)" >> transient_factory_test31.txt
+    for i in "$WCSCACHEDIR/wcs_"$FIELD"_"*.fts "$WCSCACHEDIR/exclusion_list"* ;do
      if [ -s "$i" ];then
       echo "Creating symlink $i" >> transient_factory_test31.txt
       ln -s $i
      fi
     done
    fi
-   break
+   #break
   fi
  done
  
@@ -426,7 +433,10 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  done 
 
  # Wait for all children to end processing
+ ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+ echo "wait"   >> transient_factory_test31.txt
  wait
+ ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
  
  # Check that the plates were actually solved
  for i in `cat vast_image_details.log |awk '{print $17}'` ;do 
@@ -437,6 +447,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "############################################################" >> transient_factory.log
    echo 'UNSOLVED_PLATE'
   else
+   echo "$WCS_IMAGE_NAME_FOR_CHECKS exists and is non-empty" >> transient_factory_test31.txt
    if [ ! -d local_wcs_cache/ ];then
     mkdir local_wcs_cache
    fi
@@ -447,7 +458,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
      echo "Saving $WCS_IMAGE_NAME_FOR_CHECKS to local_wcs_cache/" >> transient_factory_test31.txt
      cp "$WCS_IMAGE_NAME_FOR_CHECKS" local_wcs_cache/
     else
-     echo "NOT SAVING $WCS_IMAGE_NAME_FOR_CHECKS to local_wcs_cache/ as this is the run with $SEXTRACTOR_CONFIG_FILE"
+     echo "NOT SAVING $WCS_IMAGE_NAME_FOR_CHECKS to local_wcs_cache/ as this is the run with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
     fi
    fi
   fi
@@ -470,6 +481,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 # util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1 `cat vast_image_details.log | awk '{print $17}' | head -n2 | tail -n1` &
 # util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1 `cat vast_image_details.log | awk '{print $17}' | head -n4 | tail -n1` &
  # wait # moved down
+
  
  echo "Calibrating the magnitude scale with Tycho-2 stars" >> transient_factory_test31.txt
  if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
@@ -482,8 +494,15 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  if [ ! -s "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
   echo "$WCS_IMAGE_NAME_FOR_CHECKS does not exist or is empty: waiting for solve_plate_with_UCAC5" >> transient_factory_test31.txt
   # Wait here hoping util/solve_plate_with_UCAC5 will plate-solve the reference image
+  ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+  echo "wait"   >> transient_factory_test31.txt
   wait
+  ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+ else
+  echo "Found non-empty $WCS_IMAGE_NAME_FOR_CHECKS" >> transient_factory_test31.txt
  fi
+ # Print the process tree
+ ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
  echo "y" | util/transients/calibrate_current_field_with_tycho2.sh 2>&1 >> transient_factory_test31.txt
  MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
  # Check that the magnitude calibration actually worked
@@ -667,6 +686,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
  util/transients/make_report_in_HTML.sh >> transient_factory_test31.txt
  echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
+ 
+ echo "*------ done with $SEXTRACTOR_CONFIG_FILE ------*" >> transient_factory_test31.txt
 
  done # for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
  
@@ -723,5 +744,5 @@ if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ];then
 fi
 
 # why do we need this - the transients are all already reported
-#util/clean_data.sh
+util/clean_data.sh
 
