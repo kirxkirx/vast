@@ -379,7 +379,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   # We want to break from the SExtractor settings files loop here
   break
  else
-  echo "VsST run complete" >> transient_factory_test31.txt
+  echo "VaST run complete" >> transient_factory_test31.txt
  fi
  echo "The four input images were $REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"  >> transient_factory_test31.txt
  cat vast_summary.log >> transient_factory.log
@@ -387,6 +387,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  if [ $? -ne 0 ];then
   echo "***** IMAGE PROCESSING ERROR (less than 4 images processed) *****" >> transient_factory.log
   echo "############################################################" >> transient_factory.log
+  echo "ERROR running VaST on the field $FIELD (less than 4 images processed)" >> transient_factory_test31.txt
+  cat vast_image_details.log >> transient_factory_test31.txt
   continue
  fi
  echo "############################################################" >> transient_factory.log
@@ -666,13 +668,13 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  #NUMBER_OF_DETECTED_TRANSIENTS=`cat vast_summary.log |grep "Transient candidates found:" | awk '{print $4}'`
  NUMBER_OF_DETECTED_TRANSIENTS=`cat candidates-transients.lst | wc -l`
  if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 2000 ];then
-  echo "WARNING! Too many candidates... Skipping field..."
-  echo "ERROR Too many candidates... Skipping field..." >> transient_factory_test31.txt
+  echo "WARNING! Too many candidates ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping field..."
+  echo "ERROR Too many candidates ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping field..." >> transient_factory_test31.txt
   continue
  fi
- if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 500 ];then
-  echo "WARNING! Too many candidates... Dropping flares..."
-  echo "ERROR Too many candidates... Dropping flares..." >> transient_factory_test31.txt
+ if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 1000 ];then
+  echo "WARNING! Too many candidates ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..."
+  echo "ERROR Too many candidates ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..." >> transient_factory_test31.txt
   # if yes, remove flares, keep only new objects
   while read FLAREOUTFILE A B ;do
    grep -v $FLAREOUTFILE candidates-transients.lst > candidates-transients.tmp

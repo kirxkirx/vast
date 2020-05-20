@@ -20,25 +20,31 @@ fi
 VASTDIR=$PWD
 TYCHO_PATH=lib/catalogs/tycho2
 if [ ! -f $TYCHO_PATH/tyc2.dat.00 ];then
- echo "Tycho-2 catalog was not found at $TYCHO_PATH"
- echo "Would you like to download it now from VizieR (it's big, ~160M)? (y/n)"
- read ANSWER
- if [ "$ANSWER" = "n" ];then
-  echo "Well, maybe next time..."
-  exit 1
+ # Check if there is a local copy of Tycho-2 in the top directory
+ if [ -s ../tycho2/tyc2.dat.19 ];then
+  ln -s ../tycho2 $TYCHO_PATH
  else
-  if [ ! -d $TYCHO_PATH ];then
-   mkdir $TYCHO_PATH
+  #
+  echo "Tycho-2 catalog was not found at $TYCHO_PATH"
+  echo "Would you like to download it now (it's big, ~160M)? (y/n)"
+  read ANSWER
+  if [ "$ANSWER" = "n" ];then
+   echo "Well, maybe next time..."
+   exit 1
+  else
+   if [ ! -d $TYCHO_PATH ];then
+    mkdir $TYCHO_PATH
+   fi
+   cd $TYCHO_PATH 
+   #wget -nH --cut-dirs=4 --no-parent -r -l0 -c -R 'guide.*,*.gif' "ftp://cdsarc.u-strasbg.fr/pub/cats/I/259/"
+   wget -nH --cut-dirs=4 --no-parent -r -l0 -c -A 'ReadMe,*.gz,robots.txt' "http://scan.sai.msu.ru/~kirx/data/tycho2/"
+   echo "Download complete. Unpacking..."
+   for i in tyc2.dat.*gz ;do
+    gunzip $i
+   done
+   cd $VASTDIR
   fi
-  cd $TYCHO_PATH 
-  #wget -nH --cut-dirs=4 --no-parent -r -l0 -c -R 'guide.*,*.gif' "ftp://cdsarc.u-strasbg.fr/pub/cats/I/259/"
-  wget -nH --cut-dirs=4 --no-parent -r -l0 -c -A 'ReadMe,*.gz,robots.txt' "http://scan.sai.msu.ru/~kirx/data/tycho2/"
-  echo "Download complete. Unpacking..."
-  for i in tyc2.dat.*gz ;do
-   gunzip $i
-  done
-  cd $VASTDIR
- fi 
+ fi # if [ -s ../tycho2/tyc2.dat.19 ];then 
 else
  echo "Tycho-2 catalog is found at $TYCHO_PATH"
  # Make sure the catalog is fully downloaded and unpacked
