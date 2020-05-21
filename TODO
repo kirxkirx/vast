@@ -1,8 +1,9 @@
-* Reject overexposed images in mk
+* Add support for "bias + scaled dark" CCD image calibration strategy
 
-* Not reject stuff that is too large in the transient search mode
+* A NOVAS-based routine that would compute geocentric J2000 positions of major planets.
+(This is for quickly identifying bright transient candidates, so no need for high positional accuracy.)
 
-* Try to automatically select the reference image as the image with best seeing?
+* Automatically reject overexposed images in mk
 
 * On fresh install the VSX catalog update is slow and silent.
 Need to inform the user about what is going on!
@@ -14,22 +15,7 @@ Need to inform the user about what is going on!
 * Write warning in sextract_single_image that with the default settings 
 a measurement will be dropped.
 
-* Day of the year output for get_image_date
-
-* Recognize calibrated images from MSU observatory for plate solving
-
-* Implement match_mode == 4 for variable and comparison star selection in pgfv
-
-* Test on UBUNTU 18.04
-
-* Filter SExtractor detections before feeding'em to the plate solver??
-
-* ping is not a good indicator that the whole thing is working.
-Add a check that pache is working on the choosen web server for the period search.
-
 * Make sure to go to another period search server if the first one didn't work.
-
-* Fix the memory leak in ./lc related to the linear trend subtraction
 
 * More tests on M31
 
@@ -39,39 +25,22 @@ Add a check that pache is working on the choosen web server for the period searc
 
 * First try to plate-solve with guessed coordinates and retry without them if failed...
 
-* Exclude faintest (and brightest?) stars from the list of constant stars!
-
-* Test with bad images (a mixture of non-overlapping fields).
-
-* util/sysrem2 segfault on PoD test data
-
 * Support long filenames in ./lc display.
 
 * Print amplitude in ./lc display.
 
-* Filter on distance to the nearest nearly-saturated star/pixel?
-
-* Check if it's OK to accept saturated stars for image matching?
-
 * Do not try to guess gain if 'photocurve' is used for magnitude calibration???
 Unless it is explicitly requested by user.
 
-* inxi may not work (becase of lspci for example) - deal with it
+* inxi may not work (because of lspci for example) - deal with it
 
-* Non-interactive version of find_candidates
-
-* Make SysRem run on very large datasets
-
-* Deal with this:
-which: no wwwget in (/home/kirx/mybin:/home/kirx/cod/wcstools-3.9.4/bin:/opt/sun-jre-bin-1.6.0.02/bin/:/usr/local/bin:/usr/bin:/bin:/opt/bin:/usr/x86_64-pc-linux-gnu/gcc-bin/5.4.0:/usr/bin/cdsclient:/home/kirx/.gem/ruby/1.8/bin/:/usr/games/bin/)
-
-* Pirint error message when requested to convert from TT back to UTC.
+* Print error message when requested to convert from TT back to UTC.
 
 * Single-image cosmic ray/hot pixel filter?
 
 * Image arithmetics with floating point images
 
-* util/ccd/mk - do robust sigma-clipping before MEDIAN-combining images
+* util/ccd/mk - do robust sigma-clipping before MEDIAN-combining images???
 
 * Ignore JD keyword if there is a comment "/Julian Date at start of exposure"
 
@@ -79,38 +48,19 @@ which: no wwwget in (/home/kirx/mybin:/home/kirx/cod/wcstools-3.9.4/bin:/opt/sun
 
 * Test CFITSIO after building
 
-* Correct for differential extinction/flat-fielding problems while perfroming
+* Correct for differential extinction/flat-fielding problems while performing
 absolute magnitude calibration using APASS.
 
 * Make sure the narrow-field CCD test images can be plate-solved automatically
 
 * Need support for sub-second timing in DATE-OBS. So far we are rounding to
-1 sec due to the structure of struct tm (int tm_sec)
+1 sec due to the definition of struct tm (int tm_sec)
 https://www.gnu.org/software/libc/manual/html_node/Broken_002ddown-Time.html
 
 * Print "unknown key" message in lc and find_candidates
 
 * Even more clear interpretation of the command line
 
-* More flexible access from the command line to the match radius (to reduce
-the number of incorrect matches)
-
-* Filtering SExtractor detections on the ellipticity paramter (to eliminate
-blends that were not deblended)
-
-* Export lightcurves to AAVSO format.
-
-* Parallelize create_data?
-
 * ZScale image scaling in pgfv???
 ftp://iraf.noao.edu/ftp/web/sites/list2/0476.html
-
-* Make sure we are not malloc'ing 0-size arrays anywere
-
-* Make sure the string passed to system() is never an empty string!
-
-* Cancel selection for 'Z' and 'K' using right click
-
-* Check exit status of all system() calls
-
  

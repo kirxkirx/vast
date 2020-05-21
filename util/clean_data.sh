@@ -30,7 +30,7 @@ if [ -x lib/fast_clean_data ];then
  lib/fast_clean_data # This will quickly remove out*dat files
 fi
 # Remember! We are removing WCS-calibrated images too!
-for i in out*dat* aavso_out*.dat* out*.dat_hjd wcs_* *.chk image*.cat* image*.log ;do
+for i in out*dat* aavso_out*.dat* out*.dat_hjd wcs_* *.chk image*.cat* image*.log image*.calib* ;do
  rm -f $i
 done
 # Remove possible leftovers from WCS calibration process

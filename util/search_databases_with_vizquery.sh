@@ -168,7 +168,12 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=2
   fi # if [ ! -z $J_K ];then
   # Print results
   echo "r=$R\" J = $J +/-$eJ  Ks = $K +/-$eK  J-Ks =  $J_K +/-$eJ_K  ($SECTRAL_TYPE)"
-  echo "Spectral type is according to Bessell & Brett (1988, PASP, 100, 1134) *assuming zero extinction*."
+  #echo "Spectral type is according to Bessell & Brett (1988, PASP, 100, 1134) *assuming zero extinction*."
+  echo "Spectral type is according to the table
+'A Modern Mean Dwarf Stellar Color and Effective Temperature Sequence'
+http://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt
+Version 2018.12.10 by Eric Mamajek
+This is the spectral type *assuming zero extinction*."
   echo "J-Ks=$J_K+/-$eJ_K ($SECTRAL_TYPE)" > 2mass.tmp
  fi
 done

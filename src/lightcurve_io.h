@@ -254,7 +254,8 @@ static inline int read_lightcurve_point( FILE *lc_file_descriptor, double *jd, d
 static inline int count_points_in_lightcurve_file( char *lightcurvefilename ) {
  int n;
  FILE *lightcurvefile;
- double jd, mag, merr, x, y, app;
+ //double jd, mag, merr, x, y, app;
+ double jd, mag, merr, y, app;
  char string[FILENAME_LENGTH];
 
  lightcurvefile= fopen( lightcurvefilename, "r" );

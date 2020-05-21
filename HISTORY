@@ -84,6 +84,7 @@ vast-1.0rc85:
 	saved with 'util/save.sh' will now try to use 'find' command to copy the files. This is ten times faster 
 	than the old 'for' loop, but it will not ask if you want to keep the old configuration files (most importantly
 	default.sex) and will just silently owerwrite them, so please beware!
+	* Updated TODO list of desired features.
 07 Mar 2019: vast-1.0rc84:
 	* VaST is now on Github ( https://github.com/kirxkirx/vast ), pull requests are welcome!
 	* The new script 'util/get_gaia_lc.sh' gets Gaia G, BP and RP lightcurves for a Gaia DR2 ID that 

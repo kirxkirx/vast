@@ -487,9 +487,11 @@ int find_XY_position_of_a_star_on_image_from_vast_format_lightcurve( float *X_kn
    fprintf(stderr,"%lf %lf\n", x, y );
    (*X_known_variable)= (float)x;
    (*Y_known_variable)= (float)y;
+   fclose(lightcurvefile);
    return 1; // found
   }
  }
+ fclose(lightcurvefile);
  fprintf(stderr,"not found\n");
  return 0; // not found, if we are still here
 }
@@ -507,7 +509,7 @@ void load_markers_for_known_variables( float *markX_known_variable, float *markY
  fprintf(stderr,"Loading known variables from vast_list_of_previously_known_variables.log\n");
  while ( NULL != fgets( full_string, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, list_of_known_vars_file ) ){
   sscanf( full_string,"%s %[^\t\n]", lightcurvefilename, string_with_star_id_and_info );
-  fprintf(stderr,"Loading %s ... ",lightcurvefilename);
+  fprintf(stderr,"Loading known variable %s ... ",lightcurvefilename);
   if ( 1==find_XY_position_of_a_star_on_image_from_vast_format_lightcurve( &markX_known_variable[(*mark_known_variable_counter)], &markY_known_variable[(*mark_known_variable_counter)], lightcurvefilename, fits_image_name ) ){
    (*mark_known_variable_counter)++;
   }
@@ -529,7 +531,7 @@ void load_markers_for_autocandidate_variables( float *markX_known_variable, floa
  fprintf(stderr,"Loading autocandidate variables from vast_autocandidates.log\n");
  while ( NULL != fgets( full_string, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, list_of_known_vars_file ) ){
   sscanf( full_string,"%s %[^\t\n]", lightcurvefilename, string_with_star_id_and_info );
-  fprintf(stderr,"Loading %s ... ",lightcurvefilename);
+  fprintf(stderr,"Loading candidate variable %s ... ",lightcurvefilename);
   if ( 1==find_XY_position_of_a_star_on_image_from_vast_format_lightcurve( &markX_known_variable[(*mark_known_variable_counter)], &markY_known_variable[(*mark_known_variable_counter)], lightcurvefilename, fits_image_name ) ){
    (*mark_known_variable_counter)++;
   }
@@ -2365,6 +2367,8 @@ int main( int argc, char **argv ) {
  free( real_float_array );
 
  cpgclos();
+
+ fprintf( stderr, "%s fits viewer exit code 0 (all fine)\n", argv[0] );
 
  return 0;
 }

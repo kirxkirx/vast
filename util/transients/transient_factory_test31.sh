@@ -728,12 +728,21 @@ echo "</BODY></HTML>" >> transient_report/index.html
 
 # Automatically update the exclusion list if we are on a production server
 HOST=`hostname`
-if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ];then
+if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ] || [ "$HOST" = "eridan" ];then
  # if we are not in the test directory
  echo "$PWD" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
  if [ $? -ne 0 ];then
   if [ -f ../exclusion_list.txt ];then
    grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' > exclusion_list_index_html.txt
+   # Filter-out asteroids
+   while read RADECSTR ;do
+    grep --max-count=1 -A5 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep --quiet 'not found'
+    if [ $? -eq 0 ];then
+     echo "$RADECSTR"
+    fi
+   done < exclusion_list_index_html.txt > exclusion_list_index_html.txt_noasteroids
+   mv exclusion_list_index_html.txt_noasteroids exclusion_list_index_html.txt
+   #
    if [ -f exclusion_list_gaiadr2.txt ];then
     cat exclusion_list_gaiadr2.txt >> exclusion_list_index_html.txt
     rm -f exclusion_list_gaiadr2.txt
