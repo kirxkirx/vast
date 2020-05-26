@@ -1492,9 +1492,9 @@ int main( int argc, char **argv ) {
 
  int param_filterout_magsize_outliers= 1; // 0 - no, 1 - yes  -- filter out outliers on magnitude-size plot
 
- int param_rescale_photometric_errors= 1; // 1 - yes, 2 - no
+ int param_rescale_photometric_errors= 0; // 1 - yes, 0 - no
 
- int param_select_best_aperture_for_each_source= 0; // 1 - yes, 2 - no
+ int param_select_best_aperture_for_each_source= 0; // 1 - yes, 0 - no
 
  int param_remove_bad_images= 1; // 1 - yes, 0 - no
 
