@@ -8988,6 +8988,90 @@ if [ "$HOSTNAME" = "eridan" ] ;then
   df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
   # 
  fi
+ ############# NMW exclusion list #############
+ if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
+  TEST_PASSED=1
+  util/clean_data.sh
+  # Run the test
+  echo "Special NMW exclusion list test " >> /dev/stderr
+  echo -n "Special NMW exclusion list test: " >> vast_test_report.txt
+  # Purge the old exclusion list, create a fake one
+  echo "06:50:14.55 +00:07:27.8
+06:50:15.79 +00:07:22.0
+07:01:41.33 +00:06:32.7
+06:49:07.80 +01:00:22.0
+07:07:43.22 +00:02:18.7
+" > ../exclusion_list.txt
+  # Run the search
+  REFERENCE_IMAGES=../NMW_Vul2_magnitude_calibration_exit_code_test/ref/ util/transients/transient_factory_test31.sh ../NMW_Vul2_magnitude_calibration_exit_code_test/2nd_epoch/
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_001"
+  fi
+  if [ -f transient_report/index.html ];then
+   grep --quiet '2 Pallas' transient_report/index.html
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_002"
+   fi
+   grep --quiet 'EP Vul' transient_report/index.html
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_003"
+   fi
+   grep --quiet 'NSV 11847' transient_report/index.html
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_004"
+   fi
+   grep --quiet 'ASAS J193002+1950.9' transient_report/index.html
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_005"
+   fi
+   # Run the search again
+   REFERENCE_IMAGES=../NMW_Vul2_magnitude_calibration_exit_code_test/ref/ util/transients/transient_factory_test31.sh ../NMW_Vul2_magnitude_calibration_exit_code_test/2nd_epoch/
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_101"
+   fi
+   # Make sure we are finding now only the asteroid Pallas and the variables are excluded
+   grep --quiet '2 Pallas' transient_report/index.html
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_102"
+   fi
+   grep --quiet 'EP Vul' transient_report/index.html
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_103"
+   fi
+   grep --quiet 'NSV 11847' transient_report/index.html
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_104"
+   fi
+   grep --quiet 'ASAS J193002+1950.9' transient_report/index.html
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_105"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_NO_INDEXHTML"
+  fi
+  if [ $TEST_PASSED -eq 1 ];then
+   echo -e "\n\033[01;34mSpecial NMW exclusion list test \033[01;32mPASSED\033[00m" >> /dev/stderr
+   echo "PASSED" >> vast_test_report.txt
+  else
+   echo -e "\n\033[01;34mSpecial NMW exclusion list test \033[01;31mFAILED\033[00m" >> /dev/stderr
+   echo "FAILED" >> vast_test_report.txt
+  fi
+  #
+  echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+  df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+  # 
+ fi
 fi
 
 command -v valgrind &> /dev/null

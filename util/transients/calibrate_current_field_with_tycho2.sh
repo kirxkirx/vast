@@ -20,9 +20,12 @@ fi
 VASTDIR=$PWD
 TYCHO_PATH=lib/catalogs/tycho2
 if [ ! -f $TYCHO_PATH/tyc2.dat.00 ];then
+ echo "No local copy of Tycho-2 found (no $TYCHO_PATH/tyc2.dat.00)"
  # Check if there is a local copy of Tycho-2 in the top directory
  if [ -s ../tycho2/tyc2.dat.19 ];then
-  ln -s ../tycho2 $TYCHO_PATH
+  echo "Found nonempty ../tycho2/tyc2.dat.19
+  ln -s ../tycho2 $TYCHO_PATH"
+  ln -s `readlink -f ../tycho2` $TYCHO_PATH
  else
   #
   echo "Tycho-2 catalog was not found at $TYCHO_PATH"

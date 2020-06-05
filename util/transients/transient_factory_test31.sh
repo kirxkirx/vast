@@ -505,7 +505,9 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  fi
  # Print the process tree
  ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+ echo "____ Start of magnitude calibration ____" >> transient_factory_test31.txt
  echo "y" | util/transients/calibrate_current_field_with_tycho2.sh 2>&1 >> transient_factory_test31.txt
+ echo "____ End of magnitude calibration ____" >> transient_factory_test31.txt
  MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
  # Check that the magnitude calibration actually worked
  for i in `cat candidates-transients.lst | awk '{print $1}'` ;do 
@@ -712,6 +714,58 @@ done # for i in "$NEW_IMAGES"/*_001.fts ;do
 
 done # for NEW_IMAGES in $@ ;do
 
+## Automatically update the exclusion list if we are on a production server
+HOST=`hostname`
+echo "The analysis was running at $HOST" >> transient_factory_test31.txt
+if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ] || [ "$HOST" = "eridan" ];then
+ echo "We are allowed to update the exclusion list at $HOST host" >> transient_factory_test31.txt
+ # if we are not in the test directory
+ echo "$PWD" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
+ if [ $? -ne 0 ];then
+  echo "This does not look like a test run" >> transient_factory_test31.txt
+  if [ -f ../exclusion_list.txt ];then
+   echo "Found ../exclusion_list.txt" >> transient_factory_test31.txt
+   grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' > exclusion_list_index_html.txt
+   # Filter-out asteroids
+   echo "#### The exclusion list before filtering-out asteroids and adding Gaia sources ####" >> transient_factory_test31.txt
+   cat exclusion_list_index_html.txt >> transient_factory_test31.txt
+   echo "###################################################################################" >> transient_factory_test31.txt
+   while read RADECSTR ;do
+    grep --max-count=1 -A8 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep --quiet 'not found'
+    if [ $? -eq 0 ];then
+     echo "$RADECSTR"
+     echo "$RADECSTR  -- not an asteroid (will add it to exclusion list)" >> transient_factory_test31.txt
+    else
+     echo "$RADECSTR  -- asteroid (will NOT add it to exclusion list)" >> transient_factory_test31.txt
+    fi
+   done < exclusion_list_index_html.txt > exclusion_list_index_html.txt_noasteroids
+   mv -v exclusion_list_index_html.txt_noasteroids exclusion_list_index_html.txt >> transient_factory_test31.txt
+   #
+   if [ -f exclusion_list_gaiadr2.txt ];then
+    echo "Adding identified Gaia sources from exclusion_list_gaiadr2.txt" >> transient_factory_test31.txt
+    cat exclusion_list_gaiadr2.txt >> exclusion_list_index_html.txt
+    rm -f exclusion_list_gaiadr2.txt
+   else
+    echo "exclusion_list_gaiadr2.txt NOT FOUND" >> transient_factory_test31.txt
+   fi
+   # Write to ../exclusion_list.txt in a single operation in a miserable attempt to minimize chances fo a race condition
+   echo "#### Adding the following to the exclusion list ####" >> transient_factory_test31.txt
+   cat exclusion_list_index_html.txt >> transient_factory_test31.txt
+   echo "####################################################" >> transient_factory_test31.txt
+   cat exclusion_list_index_html.txt >> ../exclusion_list.txt
+   rm -f exclusion_list_index_html.txt
+  else
+   echo "NOT found ../exclusion_list.txt" >> transient_factory_test31.txt
+  fi
+ else
+  echo "This looks like a test run so we are not updating exclusion list" >> transient_factory_test31.txt
+  echo "$PWD" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST' >> transient_factory_test31.txt
+ fi
+fi
+## exclusion list update
+
+
+## Finalize the HTML report
 echo "<H2>Processig complete!</H2>" >> transient_report/index.html
 
 echo "<H3>Processing log:</H3>
@@ -726,33 +780,6 @@ echo "</pre>" >> transient_report/index.html
 
 echo "</BODY></HTML>" >> transient_report/index.html
 
-# Automatically update the exclusion list if we are on a production server
-HOST=`hostname`
-if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ] || [ "$HOST" = "eridan" ];then
- # if we are not in the test directory
- echo "$PWD" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
- if [ $? -ne 0 ];then
-  if [ -f ../exclusion_list.txt ];then
-   grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' > exclusion_list_index_html.txt
-   # Filter-out asteroids
-   while read RADECSTR ;do
-    grep --max-count=1 -A5 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep --quiet 'not found'
-    if [ $? -eq 0 ];then
-     echo "$RADECSTR"
-    fi
-   done < exclusion_list_index_html.txt > exclusion_list_index_html.txt_noasteroids
-   mv exclusion_list_index_html.txt_noasteroids exclusion_list_index_html.txt
-   #
-   if [ -f exclusion_list_gaiadr2.txt ];then
-    cat exclusion_list_gaiadr2.txt >> exclusion_list_index_html.txt
-    rm -f exclusion_list_gaiadr2.txt
-   fi
-   # Write to ../exclusion_list.txt in a single operation in a miserable attempt to minimize chances fo a race condition
-   cat exclusion_list_index_html.txt >> ../exclusion_list.txt
-   rm -f exclusion_list_index_html.txt
-  fi
- fi
-fi
 
 # The uncleaned directory is needed for the test script
 #util/clean_data.sh

@@ -134,7 +134,9 @@ cp default.sex.telephoto_lens_onlybrightstars_v1 default.sex
 export TELESCOP='NMW_camera'
 for i in $REFERENCE_IMAGE " >> transient_report/index.tmp
    while read JD MAG ERR X Y APP IMAGE REST ;do
-    echo -n "$IMAGE "
+    if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then
+     echo -n "$IMAGE "
+    fi
    done < $LIGHTCURVE_FILE_OUTDAT >> transient_report/index.tmp
    echo -n ";do util/wcs_image_calibration.sh \$i ;done
 # Display the solved FITS images
@@ -171,7 +173,7 @@ ds9 -frame lock wcs  " >> transient_report/index.tmp
     echo "<a href=\"javascript:toggleElement('analysisscript_$TRANSIENT_NAME')\">The analysis script</a> (re-run the full search)" >> transient_report/index.tmp  
     echo -n "<div id=\"analysisscript_$TRANSIENT_NAME\" style=\"display:none\">
 <pre style='font-family:monospace;font-size:12px;'>
-" >> transient_report/index.tmp
+export REFERENCE_IMAGES="`dirname $REFERENCE_IMAGE` >> transient_report/index.tmp
     grep --max-count=1 'done by the script' transient_report/index.html >> transient_report/index.tmp
     echo "</pre>
 </div>" >> transient_report/index.tmp

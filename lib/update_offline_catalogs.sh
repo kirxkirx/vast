@@ -72,7 +72,7 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
    TMP_OUTPUT="astorb.dat.new"
    WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 ftp://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
    WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 http://scan.sai.msu.ru/~kirx/catalogs/compressed/astorb.dat.gz"
-   UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz"
+   UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz && mv astorb.dat.new astorb.dat"
   fi
   if [ "$FILE_TO_UPDATE" == "lib/catalogs/vsx.dat" ];then
    TMP_OUTPUT="vsx.dat"
