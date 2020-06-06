@@ -1467,7 +1467,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD005"
   fi
   grep --quiet "Photometric errors rescaling: YES" vast_summary.log
-  if [ $? -ne 0 ];then
+  #if [ $? -ne 0 ];then
+  if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD006"
   fi
@@ -1590,7 +1591,9 @@ $GREP_RESULT"
   # wSTD with rescaled errorbars (robust line fitting)
   # The difference may be pretty huge from machine to mcahine...
   # And the difference HUGEly depends on weighting
-  TEST=`echo "a=($STATIDX)-(0.372294);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.372294);sqrt(a*a)<0.1" | bc -ql`
+  # This is the value on eridan with photometric error rescaling disabled
+  TEST=`echo "a=($STATIDX)-(0.354955);sqrt(a*a)<0.1" | bc -ql`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -1959,7 +1962,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST005"
   fi
   grep --quiet "Photometric errors rescaling: YES" vast_summary.log
-  if [ $? -ne 0 ];then
+  #if [ $? -ne 0 ];then
+  if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST006"
   fi
@@ -2063,7 +2067,8 @@ $GREP_RESULT"
   # wSTD with rescaled errorbars (robust line fitting)
   # The difference may be pretty huge from machine to mcahine...
   # And the difference HUGEly depends on weighting
-  TEST=`echo "a=($STATIDX)-(0.372294);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.372294);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "a=($STATIDX)-(0.354955);sqrt(a*a)<0.1" | bc -ql`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4040,7 +4045,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD005"
   fi
   grep --quiet 'Photometric errors rescaling: YES' vast_summary.log
-  if [ $? -ne 0 ];then
+  #if [ $? -ne 0 ];then
+  if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_ERRORRESCALINGLOGREC"
   fi
@@ -4049,7 +4055,8 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_SYSNOISE01"
   fi
-  TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL)-(0.0043);sqrt(a*a)<0.005" | bc -ql`
+  #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL)-(0.0043);sqrt(a*a)<0.005" | bc -ql`
+  TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL)-(0.0128);sqrt(a*a)<0.005" | bc -ql`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4152,7 +4159,9 @@ $GREP_RESULT"
   # weight image enabled
   #TEST=`echo "a=($STATIDX)-(0.362346);sqrt(a*a)<0.02" | bc -ql`
   # let's add a bit more space here
-  TEST=`echo "a=($STATIDX)-(0.362346);sqrt(a*a)<0.05" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.362346);sqrt(a*a)<0.05" | bc -ql`
+  # photometric error rescaling disabled
+  TEST=`echo "a=($STATIDX)-(0.242567);sqrt(a*a)<0.05" | bc -ql`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4507,7 +4516,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD005"
   fi
   grep --quiet 'Photometric errors rescaling: YES' vast_summary.log
-  if [ $? -ne 0 ];then
+  #if [ $? -ne 0 ];then
+  if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_ERRORRESCALINGLOGREC"
   fi
@@ -4516,7 +4526,9 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_SYSNOISE01"
   fi
-  TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL)-(0.0043);sqrt(a*a)<0.005" | bc -ql`
+  #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL)-(0.0043);sqrt(a*a)<0.005" | bc -ql`
+  # Photometric error rescalig disabled
+  TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL)-(0.0128);sqrt(a*a)<0.005" | bc -ql`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4619,7 +4631,9 @@ $GREP_RESULT"
   # weight image enabled
   #TEST=`echo "a=($STATIDX)-(0.362346);sqrt(a*a)<0.02" | bc -ql`
   # let's add a bit more space here
-  TEST=`echo "a=($STATIDX)-(0.362346);sqrt(a*a)<0.05" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.362346);sqrt(a*a)<0.05" | bc -ql`
+  # photometric error rescalingg disabled
+  TEST=`echo "a=($STATIDX)-(0.242567);sqrt(a*a)<0.05" | bc -ql`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -8995,6 +9009,9 @@ if [ "$HOSTNAME" = "eridan" ] ;then
   # Run the test
   echo "Special NMW exclusion list test " >> /dev/stderr
   echo -n "Special NMW exclusion list test: " >> vast_test_report.txt
+  if [ -f ../exclusion_list.txt ];then
+   mv ../exclusion_list.txt ../exclusion_list.txt_backup
+  fi
   # Purge the old exclusion list, create a fake one
   echo "06:50:14.55 +00:07:27.8
 06:50:15.79 +00:07:22.0
@@ -9060,6 +9077,12 @@ if [ "$HOSTNAME" = "eridan" ] ;then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_NO_INDEXHTML"
   fi
+  rm -f ../exclusion_list.txt
+  ###### restore exclusion list after the test if needed
+  if [ -f ../exclusion_list.txt_backup ];then
+   mv ../exclusion_list.txt_backup ../exclusion_list.txt
+  fi
+  #
   if [ $TEST_PASSED -eq 1 ];then
    echo -e "\n\033[01;34mSpecial NMW exclusion list test \033[01;32mPASSED\033[00m" >> /dev/stderr
    echo "PASSED" >> vast_test_report.txt
@@ -9868,10 +9891,17 @@ TEST_PASSED=1
 echo "Performing a standalone test for database querry scripts " >> /dev/stderr
 echo -n "Testing database querry scripts: " >> vast_test_report.txt 
 
-lib/update_offline_catalogs.sh all
+lib/update_offline_catalogs.sh all &> update_offline_catalogs.out
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT__LOCAL_CAT_UPDATE"
+ GREP_RESULT=`cat update_offline_catalogs.out`
+ DEBUG_OUTPUT="$DEBUG_OUTPUT                              
+###### STANDALONEDBSCRIPT__LOCAL_CAT_UPDATE ######
+$GREP_RESULT"
+fi
+if [ -f update_offline_catalogs.out ];then
+ rm -f update_offline_catalogs.out
 fi
 
 util/search_databases_with_curl.sh 22:02:43.29139 +42:16:39.9803 | grep --quiet "BL Lac"

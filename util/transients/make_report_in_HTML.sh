@@ -38,7 +38,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  if [ $? -ne 0 ];then
   echo "The candidate $TRANSIENT_NAME did not pass the final checks"
   if [ -f transient_report/index.tmp2 ];then
-   #cat transient_report/index.tmp2
+   tail -n3 transient_report/index.tmp2
    rm -f transient_report/index.tmp2
   fi
   continue
@@ -60,7 +60,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  echo "<img src=\""$TRANSIENT_NAME"_reference.png\">" >> transient_report/index.tmp
  # plot reference image preview
  REFERENCE_IMAGE_PREVIEW=`basename $REFERENCE_IMAGE`_preview.png
- util/fits2png $REFERENCE_IMAGE && mv pgplot.png transient_report/$REFERENCE_IMAGE_PREVIEW
+ util/fits2png $REFERENCE_IMAGE &> /dev/null && mv pgplot.png transient_report/$REFERENCE_IMAGE_PREVIEW
  #command -v convert &> /dev/null
  #if [ $? -eq 0 ];then
  # REFERENCE_IMAGE_PREVIEW=`basename $REFERENCE_IMAGE`_preview.png
@@ -115,7 +115,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
       PREVIEW_IMAGE=`basename $IMAGE`_preview.png
       if [ ! -f transient_report/$PREVIEW_IMAGE ];then
        #convert $IMAGE -brightness-contrast 30x30 -resize 10% transient_report/$PREVIEW_IMAGE &
-       util/fits2png $IMAGE && mv pgplot.png transient_report/$PREVIEW_IMAGE
+       util/fits2png $IMAGE &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
       fi
       echo "<img src=\"$PREVIEW_IMAGE\">" >> transient_report/index.tmp
      fi

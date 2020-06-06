@@ -16,6 +16,9 @@ fi
 # This script should take care of updating astorb.dat
 lib/update_offline_catalogs.sh all
 
+# This should disable Gaia DR2 search for transient candidates performed by util/transients/report_transient.sh
+unset VIZIER_SITE
+
 # Plate-solve all images
 for i in `cat vast_image_details.log |awk '{print $17}'` ;do 
  # 
