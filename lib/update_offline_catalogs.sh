@@ -69,10 +69,11 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
   UNPACK_COMMAND=""
   TMP_OUTPUT=""
   if [ "$FILE_TO_UPDATE" == "astorb.dat" ];then
-   TMP_OUTPUT="astorb.dat.new"
+   TMP_OUTPUT="astorb_dat_new"
    WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 ftp://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
    WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 http://scan.sai.msu.ru/~kirx/catalogs/compressed/astorb.dat.gz"
-   UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz && mv astorb.dat.new astorb.dat"
+   UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz"
+#mv $TMP_OUTPUT astorb.dat"
   fi
   if [ "$FILE_TO_UPDATE" == "lib/catalogs/vsx.dat" ];then
    TMP_OUTPUT="vsx.dat"
@@ -100,13 +101,23 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
   fi
   
   
+  if [ -f "$TMP_OUTPUT" ];then
+   rm -f "$TMP_OUTPUT"
+  fi
+  if [ -f "$TMP_OUTPUT".gz ];then
+   rm -f "$TMP_OUTPUT".gz
+  fi
+
   # First try to download a catalog from the mirror
+  echo "### WGET_LOCAL_COMMAND ###
+$PWD" >> /dev/stderr
   echo "$WGET_LOCAL_COMMAND" >> /dev/stderr
   $WGET_LOCAL_COMMAND
   if [ $? -ne 0 ];then
    # if that failed, try to download the catalog from the original link
    echo "$WGET_COMMAND" >> /dev/stderr
-   $WGET_COMMAND  
+   $WGET_COMMAND
+   ls -lh $TMP_OUTPUT >> /dev/stderr  
    if [ $? -ne 0 ];then
     echo "ERROR running wget" >> /dev/stderr
     if [ -f "$TMP_OUTPUT" ];then
@@ -116,15 +127,22 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
    fi
    #
   fi # if that failed
+  ls -lh $TMP_OUTPUT $TMP_OUTPUT.gz >> /dev/stderr
   # If we are still here, we downloaded the catalog, one way or the other
   if [ ! -z "$UNPACK_COMMAND" ];then
+   echo "### UNPACK_COMMAND ###
+$PWD
+$UNPACK_COMMAND" >> /dev/stderr
+   ls -lh $TMP_OUTPUT $TMP_OUTPUT.gz >> /dev/stderr
    $UNPACK_COMMAND
    if [ $? -ne 0 ];then
     echo "ERROR running $UNPACK_COMMAND" >> /dev/stderr
-    if [ -f "$TMP_OUTPUT" ];then
-     rm -f "$TMP_OUTPUT"
-    fi
+    #if [ -f "$TMP_OUTPUT" ];then
+    # rm -f "$TMP_OUTPUT"
+    #fi
     exit 1
+   else
+    echo "Unpack complete" >> /dev/stderr
    fi
   fi
   if [ ! -s "$TMP_OUTPUT" ];then
@@ -134,7 +152,10 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
    fi
    exit 1
   fi
-  mv -v "$TMP_OUTPUT" "$FILE_TO_UPDATE" && touch "$FILE_TO_UPDATE"
+  #if [ "$TMP_OUTPUT" = "astorb_dat_new" ];then
+  # mv -v "astorb_dat_new" "astorb.dat" >> /dev/stderr
+  #fi
+  mv -v "$TMP_OUTPUT" "$FILE_TO_UPDATE" >> /dev/stderr && touch "$FILE_TO_UPDATE"
   echo "Successfully updated $FILE_TO_UPDATE"
  #else
  # echo "No need to update $FILE_TO_UPDATE" >> /dev/stderr

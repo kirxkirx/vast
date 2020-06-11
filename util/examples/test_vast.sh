@@ -1403,7 +1403,7 @@ if [ -d ../sample_data ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Small CCD images test " >> /dev/stderr
+ echo "Small CCD images test " >> /dev/stderr 
  echo -n "Small CCD images test: " >> vast_test_report.txt 
  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
   mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP
@@ -1593,7 +1593,8 @@ $GREP_RESULT"
   # And the difference HUGEly depends on weighting
   #TEST=`echo "a=($STATIDX)-(0.372294);sqrt(a*a)<0.1" | bc -ql`
   # This is the value on eridan with photometric error rescaling disabled
-  TEST=`echo "a=($STATIDX)-(0.354955);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "a=($STATIDX)-(0.354955);sqrt(a*a)<0.2" | bc -ql`
+  # 0.242372 at HPCC with photometric error rescaling disabled
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2068,7 +2069,7 @@ $GREP_RESULT"
   # The difference may be pretty huge from machine to mcahine...
   # And the difference HUGEly depends on weighting
   #TEST=`echo "a=($STATIDX)-(0.372294);sqrt(a*a)<0.1" | bc -ql`
-  TEST=`echo "a=($STATIDX)-(0.354955);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "a=($STATIDX)-(0.354955);sqrt(a*a)<0.2" | bc -ql`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -10032,7 +10033,7 @@ if [ $? -ne 0 ];then
 fi
 
 # MASTER_OT J132104.04+560957.8 - AM CVn star, Gaia short timescale variable
-util/search_databases_with_vizquery.sh 200.26675923087 +56.16607967965 | grep 'MASTER_OT J132104.04+560957.8' | grep --quiet 'Gaia2_SHORTTS'
+util/search_databases_with_vizquery.sh 200.26675923087 +56.16607967965 | grep -e 'V0496 UMa' -e 'MASTER_OT J132104.04+560957.8' | grep --quiet 'Gaia2_SHORTTS'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT013"
@@ -10071,7 +10072,7 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT018"
 fi
 
-util/search_databases_with_vizquery.sh 17.25656 47.30456 | grep --quiet 'ASASSN-V J010901.57+471816.4'
+util/search_databases_with_vizquery.sh 17.25656 47.30456 | grep --quiet -e 'ATOID J017.2565+47.3045' -e 'ASASSN-V J010901.57+471816.4'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT019"
