@@ -173,8 +173,9 @@ ds9 -frame lock wcs  " >> transient_report/index.tmp
     echo "<a href=\"javascript:toggleElement('analysisscript_$TRANSIENT_NAME')\">The analysis script</a> (re-run the full search)" >> transient_report/index.tmp  
     echo -n "<div id=\"analysisscript_$TRANSIENT_NAME\" style=\"display:none\">
 <pre style='font-family:monospace;font-size:12px;'>
-export REFERENCE_IMAGES="`dirname $REFERENCE_IMAGE` >> transient_report/index.tmp
-    grep --max-count=1 'done by the script' transient_report/index.html >> transient_report/index.tmp
+REFERENCE_IMAGES="`dirname $REFERENCE_IMAGE` >> transient_report/index.tmp
+    echo -n "  " >> transient_report/index.tmp
+    grep --max-count=1 'done by the script' transient_report/index.html | awk -F'<code>' '{print $2}' | awk -F'</code>' '{print $1}' >> transient_report/index.tmp
     echo "</pre>
 </div>" >> transient_report/index.tmp
    fi
