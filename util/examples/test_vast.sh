@@ -8909,10 +8909,13 @@ if [ "$HOSTNAME" = "eridan" ] ;then
   # Run the test
   echo "Special VB test " >> /dev/stderr
   echo -n "Special VB test: " >> vast_test_report.txt 
-  util/examples/test__VB.sh
+  CAT_RESULT=`util/examples/test__VB.sh 2>&1 | grep 'FAILED_TEST_CODES= '`
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VB_001"
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### SPECIAL_VB_001 ######
+$CAT_RESULT"
   fi
   if [ $TEST_PASSED -eq 1 ];then
    echo -e "\n\033[01;34mSpecial VB test \033[01;32mPASSED\033[00m" >> /dev/stderr
@@ -8933,10 +8936,13 @@ if [ "$HOSTNAME" = "eridan" ] ;then
   # Run the test
   echo "Special VB2 test " >> /dev/stderr
   echo -n "Special VB2 test: " >> vast_test_report.txt 
-  util/examples/test__VB_2.sh
+  CAT_RESULT=`util/examples/test__VB_2.sh &2>1 | grep 'FAILED_TEST_CODES= '`
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VB_001"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VB2_001"
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### SPECIAL_VB2_001 ######
+$CAT_RESULT"
   fi
   if [ $TEST_PASSED -eq 1 ];then
    echo -e "\n\033[01;34mSpecial VB test \033[01;32mPASSED\033[00m" >> /dev/stderr

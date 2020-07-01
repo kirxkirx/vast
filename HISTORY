@@ -86,6 +86,9 @@ vast-1.0rc85:
 	default.sex) and will just silently owerwrite them, so please beware!
 	* Disabled photometric error rescaling as it works imperfectly and causes lots of confusion.
 	You may still perform the error rescaling manually by running 'util/rescale_photometric_errors'
+	* The new script 'util/make_finding_chart_script.sh' will use Swarp ( https://www.astromatic.net/software/swarp ) 
+	to resample the input WCS-calibrated image to the North-up, East-left orientation and make a good-loking finder
+	chart for the object specified by its RA and Dec.
 	* Updated TODO list of desired features.
 07 Mar 2019: vast-1.0rc84:
 	* VaST is now on Github ( https://github.com/kirxkirx/vast ), pull requests are welcome!

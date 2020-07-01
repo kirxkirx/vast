@@ -53,7 +53,9 @@ void save_star_to_vast_list_of_previously_known_variables_and_exclude_lst( int s
  return;
 }
 
-int get_string_with_fov_of_wcs_calibrated_image( char *fitsfilename, char *output_string ) {
+int get_string_with_fov_of_wcs_calibrated_image( char *fitsfilename, char *output_string, int finding_chart_mode, float finder_char_pix_around_the_target ) {
+ float image_scale, image_size;
+ unsigned int string_char_counter;
  char path_to_vast_string[VAST_PATH_MAX];
  char systemcommand[2 * VAST_PATH_MAX];
  FILE *fp;
@@ -62,22 +64,56 @@ int get_string_with_fov_of_wcs_calibrated_image( char *fitsfilename, char *outpu
  //
  output_string[0]='\0'; // reset output just in case
  //
- sprintf( systemcommand, "%sutil/fov_of_wcs_calibrated_image.sh %s", path_to_vast_string, fitsfilename);
- if ((fp = popen(systemcommand, "r")) == NULL) {
-  fprintf(stderr,"ERROR in get_string_with_fov_of_wcs_calibrated_image() while opening pipe!\n");
-  return 1;
+ if ( finding_chart_mode == 1 ) {
+  // This is a zoom-in image
+  sprintf( systemcommand, "%sutil/fov_of_wcs_calibrated_image.sh %s | grep 'Image scale:' | awk '{print $3}' | awk -F'\"' '{print $1}'", path_to_vast_string, fitsfilename);
+  fprintf( stderr, "Trying to run\n %s\n", systemcommand );
+  if ( (fp = popen(systemcommand, "r")) == NULL ) {
+   fprintf(stderr,"ERROR in get_string_with_fov_of_wcs_calibrated_image() while opening pipe!\n");
+   return 1;
+  }
+  if ( 1 == fscanf( fp, "%f", &image_scale ) ) {
+   if ( image_scale > 0.0 ) {
+    image_size= image_scale*2.0*finder_char_pix_around_the_target/60.0;
+    if ( image_size > 0.0 ) {
+     sprintf( output_string, "Image size: %.0f'x%.0f'", image_size, image_size );
+    }
+   }
+  }
+  pclose(fp);
+ } else {
+  // Full-frame image
+  sprintf( systemcommand, "%sutil/fov_of_wcs_calibrated_image.sh %s", path_to_vast_string, fitsfilename);
+  fprintf( stderr, "Trying to run\n %s\n", systemcommand );
+  if ( (fp = popen(systemcommand, "r")) == NULL ) {
+   fprintf(stderr,"ERROR in get_string_with_fov_of_wcs_calibrated_image() while opening pipe!\n");
+   return 1;
+  }
+  if ( NULL != fgets( output_string, 1024, fp ) ) {
+   output_string[1024-1]='\0'; // just in case
+   // remove new line character from the end of the string
+   for ( string_char_counter=0; string_char_counter < strlen( output_string ); string_char_counter++ ){
+    if ( output_string[string_char_counter]=='\n' ) {
+     output_string[string_char_counter]='\0';
+    }
+   }
+  }
+  pclose(fp);
  }
+ /*
  // On success, these functions return the number of input items successfully matched and assigned
  if( 1!=fscanf(fp,"%s",output_string) ){
   fprintf(stderr,"ERROR in get_string_with_fov_of_wcs_calibrated_image() Cannot read the command output\n");
   output_string[0]='\0'; // reset output just in case
   return 1;
  }
+ pclose(fp);
  if( pclose(fp) )  {
   fprintf(stderr,"ERROR in get_string_with_fov_of_wcs_calibrated_image() Command not found or exited with error status\n");
   output_string[0]='\0'; // reset output just in case
   return 1;
  }
+ */
  return 0;
 }
 
@@ -584,6 +620,7 @@ int main( int argc, char **argv ) {
 
  float markX= 0.0;
  float markY= 0.0;
+ float finder_char_pix_around_the_target= 10.0; // default thumbnail image size for transient search
 
  /* new fatures */
  //int buf,v_trigger=0,b_trigger=0;
@@ -634,8 +671,10 @@ int main( int argc, char **argv ) {
  float *markY_autocandidate_variable= NULL;
  int mark_autocandidate_variable_counter;
 
- int use_north_east_marks=1;
- int use_labels=1;
+ int use_north_east_marks= 1;
+ int use_labels= 1;
+ int use_datestringinsideimg= 0;
+ int use_imagesizestringinsideimg= 0;
 
  /* Match File */
  FILE *matchfile;
@@ -771,9 +810,9 @@ int main( int argc, char **argv ) {
  /* Options for getopt() */
  char *cvalue= NULL;
 
- const char *const shortopt= "a:9nl";
+ const char *const shortopt= "a:w:9sdnl";
  const struct option longopt[]= {
-     {"apeture", 1, NULL, 'a'}, {"ds9", 0, NULL, '9'}, {"nonortheastmarks", 0, NULL, 'n'}, {"nolabels", 0, NULL, 'l'}, {NULL, 0, NULL, 0}}; //NULL string must be in the end
+     {"apeture", 1, NULL, 'a'}, {"width", 1, NULL, 'w'}, {"ds9", 0, NULL, '9'}, {"imgsizestringinsideimg", 0, NULL, 's'}, {"datestringinsideimg", 0, NULL, 'd'}, {"nonortheastmarks", 0, NULL, 'n'}, {"nolabels", 0, NULL, 'l'}, {NULL, 0, NULL, 0}}; //NULL string must be in the end
  int nextopt;
  while ( nextopt= getopt_long( argc, argv, shortopt, longopt, NULL ), nextopt != -1 ) {
   switch ( nextopt ) {
@@ -781,16 +820,31 @@ int main( int argc, char **argv ) {
    cvalue= optarg;
    fixed_aperture= atof( cvalue );
    fprintf( stdout, "opt 'a': Using fixed aperture %.1lf pix. in diameter!\n", fixed_aperture );
+   if ( fixed_aperture < 1.0 ) {
+    fprintf( stderr, "ERROR: the specified fixed aperture dameter is out of the expected range!\n" );
+    return 1;
+   }
    break;
-  case '?':
-   if ( optopt == 'a' ) {
-    fprintf( stderr, "Option -%c requires an argument: fixed aperture size in pix.!\n", optopt );
-    exit( 1 );
+  case 'w':
+   cvalue= optarg;
+   finder_char_pix_around_the_target= (float)atof( cvalue );
+   fprintf( stdout, "opt 'w': Plotting %.1lf pix. around the target!\n", finder_char_pix_around_the_target );
+   if ( finder_char_pix_around_the_target < 1.0 ) {
+    fprintf( stderr, "ERROR: the specified finder chart widt is out of the expected range!\n" );
+    return 1;
    }
    break;
   case '9':
    use_ds9= 1;
    fprintf( stdout, "opt '9': Using ds9 to display images!\n" );
+   break;
+  case 's':
+   use_imagesizestringinsideimg= 1;
+   fprintf( stdout, "opt 's': image size will be displayed inside the image!\n" );
+   break;
+  case 'd':
+   use_datestringinsideimg= 1;
+   fprintf( stdout, "opt 'd': observing date will be displayed inside the image!\n" );
    break;
   case 'n':
    use_north_east_marks= 0;
@@ -800,12 +854,29 @@ int main( int argc, char **argv ) {
    use_labels= 0;
    fprintf( stdout, "opt 'l': No axes labels will be ploted!\n" );
    break;
+  case '?':
+   if ( optopt == 'a' ) {
+    fprintf( stderr, "Option -%c requires an argument: fixed aperture size in pix.!\n", optopt );
+    exit( 1 );
+   }
+   if ( optopt == 'w' ) {
+    fprintf( stderr, "Option -%c requires an argument: finder chart size in pix.!\n", optopt );
+    exit( 1 );
+   }
+   break;
   case -1:
    fprintf( stderr, "That's all\n" );
    break;
   }
  }
  optind--; //!!!
+ 
+ //
+ if ( use_labels == 1 && use_datestringinsideimg == 1 ){
+  fprintf( stderr, "We don't want the observing time string to be dispalyed two times - disabling the in-the-image display!\n");
+  use_datestringinsideimg= 0;
+ }
+ //
 
  if ( argc - optind >= 4 ) {
   mark_trigger= 1;
@@ -1961,10 +2032,10 @@ int main( int argc, char **argv ) {
    /* Zoom in or out */
    if ( curC == 'z' || curC == 'Z' ) {
     if ( finding_chart_mode == 1 ) {
-     drawX1= markX - 10;
-     drawX2= markX + 10;
-     drawY1= markY - 10;
-     drawY2= markY + 10;
+     drawX1= markX - finder_char_pix_around_the_target;
+     drawX2= markX + finder_char_pix_around_the_target;
+     drawY1= markY - finder_char_pix_around_the_target;
+     drawY2= markY + finder_char_pix_around_the_target;
      curC= 'R';
     } else {
      cpgsci( 5 );
@@ -2204,10 +2275,25 @@ int main( int argc, char **argv ) {
       cpgmtxt( "T", -1.0, 0.5, 0.5, "N");
       cpgmtxt( "LV", -0.5, 0.5, 0.5, "E");
       //
-      if ( 0 == get_string_with_fov_of_wcs_calibrated_image( fits_image_name, fov_string ) ) {
-       cpgmtxt( "B", -1.0, 0.05, 0.0, fov_string);
-       fprintf(stderr,"The image is %s\n",fov_string);
+      if ( 1 == use_datestringinsideimg ) {
+       cpgsch( 1.0 );
+       cpgmtxt( "B", -1.0, 0.5, 0.5, stderr_output);
+       cpgsch( 2.0 );
       }
+      //
+      if ( 1 == use_imagesizestringinsideimg ) {
+       if ( 0 == get_string_with_fov_of_wcs_calibrated_image( fits_image_name, fov_string, finding_chart_mode, finder_char_pix_around_the_target ) ) {
+        fprintf(stderr,"The image is %s\n",fov_string);
+        if ( 1 == use_datestringinsideimg ) {
+         cpgsch( 1.0 );
+         cpgmtxt( "B", -2.2, 0.05, 0.0, fov_string);
+         cpgsch( 2.0 );
+        } else {
+         // Use large letters
+         cpgmtxt( "B", -1.0, 0.05, 0.0, fov_string);
+        }
+       } // if ( 0 == get_string_with_fov_of_wcs_calibrated_image( fits_image_name, fov_string ) ) {
+      } //  if ( 1 == use_imagesizestringinsideimg ) {
       //
       cpgslw(1); // set default line width
       cpgsch( 1.0 );                 /* Set default font size */
