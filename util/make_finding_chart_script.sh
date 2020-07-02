@@ -9,13 +9,16 @@ PIXELS_AROUND_TARGET=64
 ############################################
 
 # Check the command line arguments
-if [ $3 -eq 0 ];then
+if [ -z "$3" ];then
  echo "This script will make a good looking finder chart from the input image.
  
 Usage: $0 wcs_calibrated_image.fits RA DEC
 Example: $0 wcs_calibrated_image.fits 12:34:56.78 -01:23:45.6"
 
 fi
+
+TARGET_RA="$2"
+TARGET_DEC="$3"
 
 # Check if Swarp is installed
 command -v swarp &>/dev/null
@@ -70,10 +73,10 @@ if [ $? -ne 0 ];then
  echo "ERROR running swarp"
  exit 1
 fi
-mv coadd.fits resample_"$FITSFILE"
+mv -v coadd.fits resample_"$FITSFILE"
 
 # Get the pixel position we want to mark
-PIXEL_POSITION_TO_MARK=`lib/bin/sky2xy resample_"$FITSFILE" 16:34:35.13 -26:58:03.4 | awk '{print $5" "$6}'`
+PIXEL_POSITION_TO_MARK=`lib/bin/sky2xy resample_"$FITSFILE" $TARGET_RA $TARGET_DEC | awk '{print $5" "$6}'`
 if [ $? -ne 0 ];then
  echo "ERROR converting RA, Dec to the pixel coordinates"
  exit 1
@@ -84,7 +87,9 @@ if [ -z "$PIXEL_POSITION_TO_MARK" ] || [ " " = "$PIXEL_POSITION_TO_MARK" ] ;then
 fi
 
 # Make the PNG finding chart
-util/make_finding_chart resample_"$FITSFILE" $PIXEL_POSITION_TO_MARK -w $PIXELS_AROUND_TARGET -l -d -s
+COMMAND="util/make_finding_chart  -w $PIXELS_AROUND_TARGET -l -d -s -- resample_$FITSFILE $PIXEL_POSITION_TO_MARK "
+echo $COMMAND
+$COMMAND
 if [ $? -ne 0 ];then
  echo "ERROR running util/make_finding_chart"
  exit 1

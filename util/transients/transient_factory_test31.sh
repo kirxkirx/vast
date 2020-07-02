@@ -84,7 +84,7 @@ TIMEOUTCOMMAND=`"$VAST_PATH"lib/find_timeout_command.sh`
 if [ $? -ne 0 ];then
  echo "WARNING: cannot find timeout command"
 else
- TIMEOUTCOMMAND="$TIMEOUTCOMMAND 10 "
+ TIMEOUTCOMMAND="$TIMEOUTCOMMAND 20 "
 fi
 export TIMEOUTCOMMAND
 
@@ -211,7 +211,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   echo "Previews of the second-epoch images: <br>" >> transient_factory_test31.txt
   for FITS_IMAGE_TO_PREVIEW in "$NEW_IMAGES"/*"$FIELD"_*_*.fts ;do
    PREVIEW_IMAGE=`basename $FITS_IMAGE_TO_PREVIEW`_preview.png
-   util/fits2png $FITS_IMAGE_TO_PREVIEW && mv pgplot.png transient_report/$PREVIEW_IMAGE
+   util/fits2png $FITS_IMAGE_TO_PREVIEW &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
    echo "<img src=\"$PREVIEW_IMAGE\">" >> transient_factory_test31.txt
   done
   echo "<br>" >> transient_factory_test31.txt

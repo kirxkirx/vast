@@ -108,7 +108,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    # Only generate the full-frame previews if convert is installed
    #command -v convert &> /dev/null
    #if [ $? -eq 0 ];then
-    echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Preview of the reference image(s) and two 2nd epoch images</a> (are there clouds/trees in the field of view?)</br>" >> transient_report/index.tmp  
+    echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Preview of the reference image(s) and two 2nd epoch images</a> (are there clouds/trees in the view?)</br>" >> transient_report/index.tmp  
     echo "<div id=\"fullframepreview_$TRANSIENT_NAME\" style=\"display:none\"><img src=\"$REFERENCE_IMAGE_PREVIEW\">" >> transient_report/index.tmp
     while read JD MAG ERR X Y APP IMAGE REST ;do
      if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then
@@ -125,7 +125,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    #fi # if [ $? -eq 0 ];then
  
    #
-   echo "<a href=\"javascript:toggleElement('manualvast_$TRANSIENT_NAME')\">Example VaST+ds9 commands for visual image inspection</a> (blink the images in ds9). " >> transient_report/index.tmp  
+   echo "<a href=\"javascript:toggleElement('manualvast_$TRANSIENT_NAME')\">Example VaST+ds9 commands for visual image inspection</a> (blink images in ds9). " >> transient_report/index.tmp  
    echo -n "<div id=\"manualvast_$TRANSIENT_NAME\" style=\"display:none\">
 <pre style='font-family:monospace;font-size:12px;'>
 # Set SExtractor parameters file
@@ -153,10 +153,9 @@ ds9 -frame lock wcs  " >> transient_report/index.tmp
 </pre>
 </div>" >> transient_report/index.tmp
    #
-   #echo "</br>" >> transient_report/index.tmp
 
    #
-   echo "<a href=\"javascript:toggleElement('vastcommandline_$TRANSIENT_NAME')\">VaST command line</a> (to re-run VaST)</br>" >> transient_report/index.tmp  
+   echo "<a href=\"javascript:toggleElement('vastcommandline_$TRANSIENT_NAME')\">VaST command line</a> (re-run VaST)</br>" >> transient_report/index.tmp  
    echo -n "<div id=\"vastcommandline_$TRANSIENT_NAME\" style=\"display:none\">
 <pre style='font-family:monospace;font-size:12px;'>
 " >> transient_report/index.tmp
@@ -165,7 +164,6 @@ ds9 -frame lock wcs  " >> transient_report/index.tmp
 </pre>
 </div>" >> transient_report/index.tmp
    #
-   #echo "</br>" >> transient_report/index.tmp
 
    #
    grep --max-count=1 --quiet 'done by the script' transient_report/index.html
@@ -180,12 +178,11 @@ REFERENCE_IMAGES="`dirname $REFERENCE_IMAGE` >> transient_report/index.tmp
 </div>" >> transient_report/index.tmp
    fi
    #
-   #echo "</br>" >> transient_report/index.tmp
 
 
    #
    if [ -f test.mpc ];then
-    echo "<a href=\"javascript:toggleElement('mpcstub_$TRANSIENT_NAME')\">Stub MPC report line</a> (to manually re-run online MPChecker)</br>" >> transient_report/index.tmp  
+    echo "<a href=\"javascript:toggleElement('mpcstub_$TRANSIENT_NAME')\">Stub MPC report line</a> (for online MPChecker) " >> transient_report/index.tmp  
     echo -n "<div id=\"mpcstub_$TRANSIENT_NAME\" style=\"display:none\">
 <pre style='font-family:monospace;font-size:12px;'>
 " >> transient_report/index.tmp
@@ -194,7 +191,45 @@ REFERENCE_IMAGES="`dirname $REFERENCE_IMAGE` >> transient_report/index.tmp
 </div>" >> transient_report/index.tmp
    fi
    #
-   #echo "</br>" >> transient_report/index.tmp
+
+   #
+   TARGET_MEAN_POSITION=`grep -A1 'Mean magnitude and position on the discovery images: ' transient_report/index.tmp | tail -n1 | awk '{print $6" "$7}'`
+   #
+   echo "<a href=\"javascript:toggleElement('findercharts_$TRANSIENT_NAME')\">Make finder charts with VaST</a>" >> transient_report/index.tmp  
+   echo -n "<div id=\"findercharts_$TRANSIENT_NAME\" style=\"display:none\">
+<pre style='font-family:monospace;font-size:12px;'>
+# Set SExtractor parameters file
+cp default.sex.telephoto_lens_onlybrightstars_v1 default.sex
+# Plate-solve the FITS images and produce the finder charts
+export TELESCOP='NMW_camera'
+for i in $REFERENCE_IMAGE " >> transient_report/index.tmp
+   while read JD MAG ERR X Y APP IMAGE REST ;do
+    if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then
+     echo -n "$IMAGE "
+    fi
+   done < $LIGHTCURVE_FILE_OUTDAT >> transient_report/index.tmp
+   echo -n ";do util/wcs_image_calibration.sh \$i && util/make_finding_chart_script.sh wcs_\`basename \$i\` $TARGET_MEAN_POSITION ;done
+# Combine the finder charts into one image (note the '*' subols meaning the command will work only if you have a single transient in that field)
+montage " >> transient_report/index.tmp
+ORIG_FITS_IMG="$REFERENCE_IMAGE"
+BASENAME_RESAMPLE_WCS_FITS_IMG="resample_wcs_"`basename "$REFERENCE_IMAGE"`
+# nope, we don't have a solved image when we run this
+PIXEL_POSITION_TO_MARK="*"
+#PIXEL_POSITION_TO_MARK=`lib/bin/sky2xy "$BASENAME_RESAMPLE_WCS_FITS_IMG" 16:34:35.13 -26:58:03.4 | awk '{print $5" "$6}'`
+FITSFILE=${BASENAME_RESAMPLE_WCS_FITS_IMG//./_}
+FITSFILE=${FITSFILE//" "/_}
+echo -n $FITSFILE"__"$PIXEL_POSITION_TO_MARK"pix.png" >> transient_report/index.tmp
+ORIG_FITS_IMG=`tail -n1 $LIGHTCURVE_FILE_OUTDAT | awk '{print $7}'`
+BASENAME_RESAMPLE_WCS_FITS_IMG="resample_wcs_"`basename "$ORIG_FITS_IMG"`
+#PIXEL_POSITION_TO_MARK=`lib/bin/sky2xy "$BASENAME_RESAMPLE_WCS_FITS_IMG" 16:34:35.13 -26:58:03.4 | awk '{print $5" "$6}'`
+FITSFILE=${BASENAME_RESAMPLE_WCS_FITS_IMG//./_}
+FITSFILE=${FITSFILE//" "/_}
+   echo -n " "$FITSFILE"__"$PIXEL_POSITION_TO_MARK"pix.png" >> transient_report/index.tmp
+   echo " -tile 2x1 -geometry +0+0 out.png" >> transient_report/index.tmp
+   echo "
+</pre>
+</div>" >> transient_report/index.tmp
+   #
 
 
   fi # if [ $USE_JAVASCRIPT -eq 1 ];then
