@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 
 EMPTY_OUTPUT_IMAGE_DIRECOTRY="/mnt/usb/VaST_test_VladimirB_2/GoodFrames/vast_test_VB"
+if [ -d "$EMPTY_OUTPUT_IMAGE_DIRECOTRY" ];then
+ EMPTY_OUTPUT_IMAGE_DIRECOTRY="../VaST_test_VladimirB_2/GoodFrames/vast_test_VB"
+fi
+
+TEST_DATA_ROOT="/mnt/usb/VaST_test_VladimirB_2"
+if [ -d "$TEST_DATA_ROOT" ];then
+ EST_DATA_ROOT="../VaST_test_VladimirB_2"
+fi
 
 ######################################################################
 
@@ -20,6 +28,12 @@ fi
 
 FAILED_TEST_CODES=""                            
 TEST_PASSED=1
+
+if [ ! -d "$TEST_DATA_ROOT" ];then
+ echo "ERROR: the input image direcotry $TEST_DATA_ROOT is not found"
+ exit 1
+fi
+
 
 if [ ! -d "$EMPTY_OUTPUT_IMAGE_DIRECOTRY" ];then
  echo "ERROR: the output image direcotry $EMPTY_OUTPUT_IMAGE_DIRECOTRY is not found"
@@ -88,9 +102,9 @@ done
 ##########################################################################################
 NIGHT_NUMBER=1
 NIGHT=`echo "$NIGHT_NUMBER" | awk '{printf "%03d",$1}'`
-IMAGE_DIR=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20170827
-DARK=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20170829/bdf/mdark60s.fit
-FLAT=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171013/bdf/bdf_20_b1-003FlatG.fit
+IMAGE_DIR=$TEST_DATA_ROOT/GoodFrames/20170827
+DARK=$TEST_DATA_ROOT/GoodFrames/20170829/bdf/mdark60s.fit
+FLAT=$TEST_DATA_ROOT/GoodFrames/20171013/bdf/bdf_20_b1-003FlatG.fit
 
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
@@ -116,9 +130,9 @@ done
 ##########################################################################################
 NIGHT_NUMBER=$[$NIGHT_NUMBER+1]
 NIGHT=`echo "$NIGHT_NUMBER" | awk '{printf "%03d",$1}'`
-IMAGE_DIR=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20170829/V523Cas
-DARK=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20170829/bdf/mdark60s.fit
-FLAT=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171013/bdf/bdf_20_b1-003FlatG.fit
+IMAGE_DIR=$TEST_DATA_ROOT/GoodFrames/20170829/V523Cas
+DARK=$TEST_DATA_ROOT/GoodFrames/20170829/bdf/mdark60s.fit
+FLAT=$TEST_DATA_ROOT/GoodFrames/20171013/bdf/bdf_20_b1-003FlatG.fit
 
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
@@ -144,9 +158,9 @@ done
 ##########################################################################################
 NIGHT_NUMBER=$[$NIGHT_NUMBER+1]
 NIGHT=`echo "$NIGHT_NUMBER" | awk '{printf "%03d",$1}'`
-IMAGE_DIR=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20170909/V523Cas
-DARK=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20170909/bdf/mdark60s.fit
-FLAT=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171013/bdf/bdf_20_b1-003FlatG.fit
+IMAGE_DIR=$TEST_DATA_ROOT/GoodFrames/20170909/V523Cas
+DARK=$TEST_DATA_ROOT/GoodFrames/20170909/bdf/mdark60s.fit
+FLAT=$TEST_DATA_ROOT/GoodFrames/20171013/bdf/bdf_20_b1-003FlatG.fit
 
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
@@ -172,9 +186,9 @@ done
 ##########################################################################################
 NIGHT_NUMBER=$[$NIGHT_NUMBER+1]
 NIGHT=`echo "$NIGHT_NUMBER" | awk '{printf "%03d",$1}'`
-IMAGE_DIR=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20170910/V523Cas
-DARK=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20170909/bdf/mdark60s.fit
-FLAT=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171013/bdf/bdf_20_b1-003FlatG.fit
+IMAGE_DIR=$TEST_DATA_ROOT/GoodFrames/20170910/V523Cas
+DARK=$TEST_DATA_ROOT/GoodFrames/20170909/bdf/mdark60s.fit
+FLAT=$TEST_DATA_ROOT/GoodFrames/20171013/bdf/bdf_20_b1-003FlatG.fit
 
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
@@ -200,9 +214,9 @@ done
 ##########################################################################################
 NIGHT_NUMBER=$[$NIGHT_NUMBER+1]
 NIGHT=`echo "$NIGHT_NUMBER" | awk '{printf "%03d",$1}'`
-IMAGE_DIR=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171109
-DARK=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171116/bdf/mdark60s.fit
-FLAT=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171116/bdf/mflatG.fit
+IMAGE_DIR=$TEST_DATA_ROOT/GoodFrames/20171109
+DARK=$TEST_DATA_ROOT/GoodFrames/20171116/bdf/mdark60s.fit
+FLAT=$TEST_DATA_ROOT/GoodFrames/20171116/bdf/mflatG.fit
 
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
@@ -228,9 +242,9 @@ done
 ##########################################################################################
 NIGHT_NUMBER=$[$NIGHT_NUMBER+1]
 NIGHT=`echo "$NIGHT_NUMBER" | awk '{printf "%03d",$1}'`
-IMAGE_DIR=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171111/V523Cas
-DARK=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171116/bdf/mdark60s.fit
-FLAT=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171116/bdf/mflatG.fit
+IMAGE_DIR=$TEST_DATA_ROOT/GoodFrames/20171111/V523Cas
+DARK=$TEST_DATA_ROOT/GoodFrames/20171116/bdf/mdark60s.fit
+FLAT=$TEST_DATA_ROOT/GoodFrames/20171116/bdf/mflatG.fit
 
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
@@ -256,9 +270,9 @@ done
 ##########################################################################################
 NIGHT_NUMBER=$[$NIGHT_NUMBER+1]
 NIGHT=`echo "$NIGHT_NUMBER" | awk '{printf "%03d",$1}'`
-IMAGE_DIR=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171116/V523Cas
-DARK=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171116/bdf/mdark60s.fit
-FLAT=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171116/bdf/mflatG.fit
+IMAGE_DIR=$TEST_DATA_ROOT/GoodFrames/20171116/V523Cas
+DARK=$TEST_DATA_ROOT/GoodFrames/20171116/bdf/mdark60s.fit
+FLAT=$TEST_DATA_ROOT/GoodFrames/20171116/bdf/mflatG.fit
 
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
@@ -284,9 +298,9 @@ done
 ##########################################################################################
 NIGHT_NUMBER=$[$NIGHT_NUMBER+1]
 NIGHT=`echo "$NIGHT_NUMBER" | awk '{printf "%03d",$1}'`
-IMAGE_DIR=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171122/V523Cas
-DARK=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171122/bdf/mdark60s.fit
-FLAT=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171116/bdf/mflatG.fit
+IMAGE_DIR=$TEST_DATA_ROOT/GoodFrames/20171122/V523Cas
+DARK=$TEST_DATA_ROOT/GoodFrames/20171122/bdf/mdark60s.fit
+FLAT=$TEST_DATA_ROOT/GoodFrames/20171116/bdf/mflatG.fit
 
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
@@ -312,9 +326,9 @@ done
 ##########################################################################################
 NIGHT_NUMBER=$[$NIGHT_NUMBER+1]
 NIGHT=`echo "$NIGHT_NUMBER" | awk '{printf "%03d",$1}'`
-IMAGE_DIR=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171125/V523Cas
-DARK=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171125/bdf/mdark60s.fit
-FLAT=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171116/bdf/mflatG.fit
+IMAGE_DIR=$TEST_DATA_ROOT/GoodFrames/20171125/V523Cas
+DARK=$TEST_DATA_ROOT/GoodFrames/20171125/bdf/mdark60s.fit
+FLAT=$TEST_DATA_ROOT/GoodFrames/20171116/bdf/mflatG.fit
 
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
@@ -340,9 +354,9 @@ done
 ##########################################################################################
 NIGHT_NUMBER=$[$NIGHT_NUMBER+1]
 NIGHT=`echo "$NIGHT_NUMBER" | awk '{printf "%03d",$1}'`
-IMAGE_DIR=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20180206/V523Cas
-DARK=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171125/bdf/mdark60s.fit
-FLAT=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171116/bdf/mflatG.fit
+IMAGE_DIR=$TEST_DATA_ROOT/GoodFrames/20180206/V523Cas
+DARK=$TEST_DATA_ROOT/GoodFrames/20171125/bdf/mdark60s.fit
+FLAT=$TEST_DATA_ROOT/GoodFrames/20171116/bdf/mflatG.fit
 
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
@@ -368,9 +382,9 @@ done
 ##########################################################################################
 NIGHT_NUMBER=$[$NIGHT_NUMBER+1]
 NIGHT=`echo "$NIGHT_NUMBER" | awk '{printf "%03d",$1}'`
-IMAGE_DIR=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20180207/V523Cas
-DARK=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20180207/bdf/mdark60s.fit
-FLAT=/mnt/usb/VaST_test_VladimirB_2/GoodFrames/20171116/bdf/mflatG.fit
+IMAGE_DIR=$TEST_DATA_ROOT/GoodFrames/20180207/V523Cas
+DARK=$TEST_DATA_ROOT/GoodFrames/20180207/bdf/mdark60s.fit
+FLAT=$TEST_DATA_ROOT/GoodFrames/20171116/bdf/mflatG.fit
 
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
@@ -464,7 +478,8 @@ if [ -f vast_summary.log ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_005"
  fi
- grep --quiet "Photometric errors rescaling: YES" vast_summary.log
+ #grep --quiet "Photometric errors rescaling: YES" vast_summary.log
+ grep --quiet "Photometric errors rescaling: NO" vast_summary.log
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_006"
@@ -508,7 +523,7 @@ if [ -f vast_summary.log ];then
  N_AUTOCANDIDATES=`cat vast_autocandidates.log | wc -l | awk '{print $1}'`
  if [ $N_AUTOCANDIDATES -lt 2 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_000_N_AUTOCANDIDATES1"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_000_N_AUTOCANDIDATES1__$N_AUTOCANDIDATES"
  fi
  #if [ $N_AUTOCANDIDATES -gt 6 ];then
  # TEST_PASSED=0

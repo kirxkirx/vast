@@ -8901,8 +8901,8 @@ $GREP_RESULT"
  # 
 fi
 
+############# VB #############
 if [ "$HOSTNAME" = "eridan" ] ;then
- ############# VB #############
  if [ -d /mnt/usb/VaST_test_VladimirB/GoodFrames/vast_test_VB ];then
   TEST_PASSED=1
   util/clean_data.sh
@@ -8929,60 +8929,70 @@ $CAT_RESULT"
   df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
   # 
  fi
- ############# VB2 #############
- if [ -d /mnt/usb/VaST_test_VladimirB_2/GoodFrames/vast_test_VB ];then
-  TEST_PASSED=1
-  util/clean_data.sh
-  # Run the test
-  echo "Special VB2 test " >> /dev/stderr
-  echo -n "Special VB2 test: " >> vast_test_report.txt 
-  CAT_RESULT=`util/examples/test__VB_2.sh &2>1 | grep 'FAILED_TEST_CODES= '`
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VB2_001"
-   DEBUG_OUTPUT="$DEBUG_OUTPUT
+fi # if [ "$HOSTNAME" = "eridan" ] ;then
+
+############# VB2 #############
+# yes, we want this test not only @eridan, but on any machine that has a copy of the test dataset
+if [ -d /mnt/usb/VaST_test_VladimirB_2/GoodFrames/vast_test_VB ] || [ -f ../VaST_test_VladimirB_2/GoodFrames/vast_test_VB ] ;then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "Special VB2 test " >> /dev/stderr
+ echo -n "Special VB2 test: " >> vast_test_report.txt 
+ CAT_RESULT=`util/examples/test__VB_2.sh &2>1 | grep 'FAILED_TEST_CODES= '`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VB2_001"
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### SPECIAL_VB2_001 ######
 $CAT_RESULT"
-  fi
-  if [ $TEST_PASSED -eq 1 ];then
-   echo -e "\n\033[01;34mSpecial VB test \033[01;32mPASSED\033[00m" >> /dev/stderr
-   echo "PASSED" >> vast_test_report.txt
-  else
-   echo -e "\n\033[01;34mSpecial VB test \033[01;31mFAILED\033[00m" >> /dev/stderr
-   echo "FAILED" >> vast_test_report.txt
-  fi
-  #
-  echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
-  df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
-  # 
  fi
- ############# Check free disk space #############
- FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
- ############# 61 Cyg #############
- if [ -d /mnt/usb/61Cyg_photoplates_test ] || [ -d ../61Cyg_photoplates_test ] || [ $FREE_DISK_SPACE_MB -gt 4096 ] ;then
-  TEST_PASSED=1
-  util/clean_data.sh
-  # Run the test
-  echo "Special 61 Cyg test " >> /dev/stderr
-  echo -n "Special 61 Cyg test: " >> vast_test_report.txt 
-  util/examples/test_61Cyg.sh
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_61CYG_001"
-  fi
-  if [ $TEST_PASSED -eq 1 ];then
-   echo -e "\n\033[01;34mSpecial 61 Cyg test \033[01;32mPASSED\033[00m" >> /dev/stderr
-   echo "PASSED" >> vast_test_report.txt
-  else
-   echo -e "\n\033[01;34mSpecial 61 Cyg test \033[01;31mFAILED\033[00m" >> /dev/stderr
-   echo "FAILED" >> vast_test_report.txt
-  fi
-  #
-  echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
-  df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
-  # 
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mSpecial VB test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mSpecial VB test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
  fi
- ############# NMW #############
+ #
+ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+ df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+ # 
+fi
+ 
+# yes, we want this test not only @eridan, but on any machine that has enough disk space
+############# Check free disk space #############
+FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+############# 61 Cyg #############
+if [ -d /mnt/usb/61Cyg_photoplates_test ] || [ -d ../61Cyg_photoplates_test ] || [ $FREE_DISK_SPACE_MB -gt 8192 ] ;then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "Special 61 Cyg test " >> /dev/stderr
+ echo -n "Special 61 Cyg test: " >> vast_test_report.txt 
+ GREP_RESULT=`util/examples/test_61Cyg.sh | grep -e 'FAILED_TEST_CODES' -e 'Test failed' -e 'Test passed'`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_61CYG_001"
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### 61 Cyg ######
+$GREP_RESULT"
+ fi
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mSpecial 61 Cyg test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mSpecial 61 Cyg test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
+ fi
+ #
+ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+ df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+ # 
+fi
+
+############# NMW #############
+if [ "$HOSTNAME" = "eridan" ] ;then
  if [ -d /mnt/usb/NMW_NG_transient_detection_test ];then
   TEST_PASSED=1
   util/clean_data.sh
@@ -9011,7 +9021,10 @@ $CAT_RESULT"
   df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
   # 
  fi
+fi # if [ "$HOSTNAME" = "eridan" ] ;then
+
  ############# NMW exclusion list #############
+if [ "$HOSTNAME" = "eridan" ] ;then
  if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
   TEST_PASSED=1
   util/clean_data.sh
@@ -9104,8 +9117,9 @@ $CAT_RESULT"
   df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
   # 
  fi
-fi
+fi # if [ "$HOSTNAME" = "eridan" ] ;then
 
+#### Valgrind test
 command -v valgrind &> /dev/null
 if [ $? -eq 0 ];then
  if [ -z "$HOSTNAME" ];then
