@@ -8956,8 +8956,10 @@ $CAT_RESULT"
   df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
   # 
  fi
+ ############# Check free disk space #############
+ FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
  ############# 61 Cyg #############
- if [ -d /mnt/usb/61Cyg_photoplates_test ];then
+ if [ -d /mnt/usb/61Cyg_photoplates_test ] || [ -d ../61Cyg_photoplates_test ] || [ $FREE_DISK_SPACE_MB -gt 4096 ] ;then
   TEST_PASSED=1
   util/clean_data.sh
   # Run the test
@@ -9043,7 +9045,7 @@ $CAT_RESULT"
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_003"
    fi
-   grep --quiet 'NSV 11847' transient_report/index.html
+   grep --quiet -e 'NSV 11847' -e 'V0556 Vul' transient_report/index.html
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_004"
