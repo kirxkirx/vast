@@ -90,6 +90,10 @@ vast-1.0rc85:
 	to resample the input WCS-calibrated image to the North-up, East-left orientation and make a good-loking finder
 	chart for the object specified by its RA and Dec.
 	* Updated TODO list of desired features.
+	* Limited the number of OpenMP threads to no more than 48. Tests on a machine with 192 virtual cores 
+	(2 CPUs x 48 cores x hyper threading) revealed that while it is beneficial to use all cores for running
+	instances of SExtractor, all the internal VaST tasks paralellized with OpenMP actually run much faster
+	when the number of threads is limited.
 07 Mar 2019: vast-1.0rc84:
 	* VaST is now on Github ( https://github.com/kirxkirx/vast ), pull requests are welcome!
 	* The new script 'util/get_gaia_lc.sh' gets Gaia G, BP and RP lightcurves for a Gaia DR2 ID that 

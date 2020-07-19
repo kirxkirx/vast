@@ -46,12 +46,12 @@
 #include <strings.h> // for strcasecmp()
 
 // Include omp.h ONLY if VaST compiler flag is requesting it
-//#ifdef VAST_ENABLE_OPENMP
-// // Include omp.h ONLY if the compiler supports OpenMP
-// #ifdef _OPENMP
-//  #include <omp.h>
-// #endif
-//#endif
+// Include omp.h ONLY if the compiler supports OpenMP
+#ifdef VAST_ENABLE_OPENMP
+#ifdef _OPENMP
+#include <omp.h> // for omp_get_num_threads() and omp_set_num_threads()
+#endif
+#endif
 
 // GSL header files
 #include <gsl/gsl_statistics.h>
@@ -2549,6 +2549,15 @@ int main( int argc, char **argv ) {
 
  // Set the desired number of threads
  n_fork= get_number_of_cpu_cores();
+ 
+#ifdef VAST_ENABLE_OPENMP
+#ifdef _OPENMP
+ // While we want to use all the available cores to run SExtractor via fork(),
+ // tests show that limiting the number of OpenMP threads dramatically improves performance.
+ omp_set_num_threads( MIN( n_fork, 48 ) );
+#endif
+#endif
+
 
  malloc_size= n_fork * sizeof( int );
  if ( malloc_size <= 0 ) {
@@ -2579,14 +2588,15 @@ int main( int argc, char **argv ) {
    i_fork++;
    pid= fork();
    if ( pid == 0 || pid == -1 ) {
-    if ( pid == -1 )
+    if ( pid == -1 ) {
      fprintf( stderr, "WARNING: cannot fork()! Continuing in the streamline mode...\n" );
+    }
     autodetect_aperture( input_images[i], sextractor_catalog, 0, param_P, fixed_aperture, X_im_size, Y_im_size, guess_saturation_limit_operation_mode );
     if ( pid == 0 ) {
      ///// If this is a child /////
      // free-up memory
      if ( debug != 0 ) {
-      fprintf( stderr, "DEBUG MSG: CHILD free();\n" );
+      fprintf( stderr, "DEBUG MSG %d: CHILD free();\n", getpid() );
      }
      free( child_pids );
      free( ptr_struct_Obs );
@@ -2595,13 +2605,13 @@ int main( int argc, char **argv ) {
      free( bad_stars_X );
      free( bad_stars_Y );
      if ( debug != 0 ) {
-      fprintf( stderr, "DEBUG MSG: for(n = 0; n < Num; n++)free(input_images[n]);\n" );
+      fprintf( stderr, "DEBUG MSG %d: for(n = 0; n < Num; n++)free(input_images[n]);\n", getpid() );
      }
      for ( n= Num; n--; ) {
       free( input_images[n] );
      }
      if ( debug != 0 ) {
-      fprintf( stderr, "DEBUG MSG: free(input_images);\n" );
+      fprintf( stderr, "DEBUG MSG %d: free(input_images);\n", getpid() );
      }
      free( input_images );
      //
@@ -2610,11 +2620,11 @@ int main( int argc, char **argv ) {
      }
      free( str_with_fits_keywords_to_capture_from_input_images );
      if ( debug != 0 ) {
-      fprintf( stderr, "DEBUG MSG: Delete_Preobr_Sk(preobr);\n" );
+      fprintf( stderr, "DEBUG MSG %d: Delete_Preobr_Sk(preobr);\n", getpid() );
      }
      Delete_Preobr_Sk( preobr );
      if ( debug != 0 ) {
-      fprintf( stderr, "DEBUG MSG: CHILD free() -- still alive\n" );
+      fprintf( stderr, "DEBUG MSG %d: CHILD free() -- still alive\n", getpid() );
      }
      //
      exit( 0 ); // exit only if this is actually a child
@@ -2656,11 +2666,16 @@ int main( int argc, char **argv ) {
    //////////////////////////////////////////////////////////////
   } // else // if (fitsfile_read_error != 0 && i==0 ) {
  }  // for(i=0;i<Num;i++){
+ 
+ fprintf( stderr, "Parent process says: we are done fork()ing.\n");
 
  // Here is a wild assumption: if we have more than 100 images,
  // the remaining few will be processed while we are starting
- // to match star lists corresponding to the first few images
- if ( Num < 100 || param_automatically_select_reference_image == 1 ) {
+ // to match star lists corresponding to the first few images.
+ //
+ // n_fork>16 condition is here because the above wild assumption will not
+ // work on a highly multi-core system!
+ if ( Num < 100 || param_automatically_select_reference_image == 1 || n_fork>16 ) {
   for ( ; i_fork--; ) {
    fprintf( stderr, "Waiting for thread %d to finish...\n", i_fork + 1 );
    if ( i_fork < 0 )
@@ -2668,9 +2683,12 @@ int main( int argc, char **argv ) {
    pid= child_pids[i_fork];
    waitpid( pid, &pid_status, 0 );
   }
+  fprintf( stderr, "\n\nDone with SExtractor!\n\n" );
+ } else {
+  fprintf( stderr, "Fast processing hack: continue to star matching while SExtractor is still computing!\n");
  }
 
- fprintf( stderr, "\n\nDone with SExtractor!\n\n" );
+ fprintf( stderr, "\n\nMatching stars between images!\n\n" );
 
  // Choose the reference image if we were asked to (otherwise the first image will be used)
  if ( param_automatically_select_reference_image == 1 ) {

@@ -351,7 +351,8 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
   fprintf( stderr, "%s\n", command );
   write_string_to_individual_image_log( output_sextractor_catalog, "autodetect_aperture(): runnning SExtractor in the aperture photometry mode, the processing command is\n", command, "" );
   if ( 0 != system( command ) ) {
-   fprintf( stderr, "ERROR: the command returned a non-zero exit code!\n" );
+   fprintf( stderr, "ERROR: the following command returned a non-zero exit code:\n%s\n", command );
+   write_string_to_individual_image_log( output_sextractor_catalog, "autodetect_aperture(): ", "ERROR: running SExtractor ", command );
   }
  }
  if ( do_PSF_fitting == 1 ) {
