@@ -16,6 +16,14 @@
 #include <unistd.h>
 #include <math.h>
 
+// Include omp.h ONLY if VaST compiler flag is requesting it
+// Include omp.h ONLY if the compiler supports OpenMP
+#ifdef VAST_ENABLE_OPENMP
+#ifdef _OPENMP
+#include <omp.h> // for omp_get_num_threads() and omp_set_num_threads()
+#endif
+#endif
+
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_sort.h>
 #include <gsl/gsl_errno.h>
@@ -396,7 +404,15 @@ int main() {
  // in a hope to avoid out-of-memory situation when using OpenMP down below
  number_of_cpu_cores_to_report= get_number_of_cpu_cores();
  // and report the number of CPU cores to the user (just for information)
- fprintf( stderr, "Number of threads: %d\n", number_of_cpu_cores_to_report );
+ fprintf( stderr, "Number of CPU cores: %d\n", number_of_cpu_cores_to_report );
+
+#ifdef VAST_ENABLE_OPENMP
+#ifdef _OPENMP
+ // tests show that limiting the number of OpenMP threads dramatically improves performance.
+ omp_set_num_threads( MIN( number_of_cpu_cores_to_report, 48 ) );
+#endif
+#endif
+ fprintf( stderr, "Number of threads: %d\n", MIN( number_of_cpu_cores_to_report, 48 ) );
 
  // Do the actual work
  fprintf( stderr, "Computing average magnitudes... " );
