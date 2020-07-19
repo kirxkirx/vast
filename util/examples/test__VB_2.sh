@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
 EMPTY_OUTPUT_IMAGE_DIRECOTRY="/mnt/usb/VaST_test_VladimirB_2/GoodFrames/vast_test_VB"
-if [ -d "$EMPTY_OUTPUT_IMAGE_DIRECOTRY" ];then
+if [ ! -d "$EMPTY_OUTPUT_IMAGE_DIRECOTRY" ];then
  EMPTY_OUTPUT_IMAGE_DIRECOTRY="../VaST_test_VladimirB_2/GoodFrames/vast_test_VB"
 fi
 
 TEST_DATA_ROOT="/mnt/usb/VaST_test_VladimirB_2"
-if [ -d "$TEST_DATA_ROOT" ];then
+if [ ! -d "$TEST_DATA_ROOT" ];then
  EST_DATA_ROOT="../VaST_test_VladimirB_2"
 fi
 

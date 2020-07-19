@@ -88,6 +88,13 @@ else
 fi
 export TIMEOUTCOMMAND
 
+# Remove filenames that will confuse vast command line parser
+for SUSPICIOUS_FILE in 1 2 3 4 5 6 7 8 9 10 11 12 ;do
+ if [ -f "$SUSPICIOUS_FILE" ];then
+  rm -f "$SUSPICIOUS_FILE"
+ fi
+done
+
 
 # do this only if transient_report is not a symlink
 if [ ! -L transient_report ];then

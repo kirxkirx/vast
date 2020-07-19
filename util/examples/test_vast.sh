@@ -7,6 +7,14 @@ unset TELESCOP
 # for test runs with AddressSanitizer 
 export ASAN_OPTIONS=strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
 
+# remove suspisious files
+## File names equal to small numbers will confuse VaST when it tries to parse command line options
+for SUSPICIOUS_FILE in 1 2 3 4 5 6 7 8 9 10 11 12 ;do
+ if [ -f "$SUSPICIOUS_FILE" ];then
+  rm -f "$SUSPICIOUS_FILE"
+ fi
+done
+
 ##### auxiliary functions #####
 function find_source_by_X_Y_in_vast_lightcurve_statistics_log {
  if [ ! -s vast_lightcurve_statistics.log ];then
@@ -6116,6 +6124,12 @@ if [ ! -d ../test_exclude_ref_image ];then
 fi
 # If the test data are found
 if [ -d ../test_exclude_ref_image ];then
+ ####
+ # No need to set OMP_NUM_THREADS for moria - the underlying issue should be fixed by now
+ #if [ "$HOSTNAME" == "moria" ];then
+ # export OMP_NUM_THREADS=96
+ #fi
+ ####
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
@@ -6298,6 +6312,13 @@ $GREP_RESULT"
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE_ALL"
  fi
+
+ ####
+ #if [ "$HOSTNAME" == "moria" ];then
+ # # We are setting OMP_NUM_THREADS for this host above!
+ # unset OMP_NUM_THREADS
+ #fi
+ ####
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -8933,13 +8954,13 @@ fi # if [ "$HOSTNAME" = "eridan" ] ;then
 
 ############# VB2 #############
 # yes, we want this test not only @eridan, but on any machine that has a copy of the test dataset
-if [ -d /mnt/usb/VaST_test_VladimirB_2/GoodFrames/vast_test_VB ] || [ -f ../VaST_test_VladimirB_2/GoodFrames/vast_test_VB ] ;then
+if [ -d /mnt/usb/VaST_test_VladimirB_2/GoodFrames/vast_test_VB ] || [ -d ../VaST_test_VladimirB_2/GoodFrames/vast_test_VB ] ;then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
  echo "Special VB2 test " >> /dev/stderr
  echo -n "Special VB2 test: " >> vast_test_report.txt 
- CAT_RESULT=`util/examples/test__VB_2.sh &2>1 | grep 'FAILED_TEST_CODES= '`
+ CAT_RESULT=`util/examples/test__VB_2.sh &2>1 | grep -e 'FAILED_TEST_CODES= ' -e 'ERROR'`
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VB2_001"
@@ -8999,15 +9020,21 @@ if [ "$HOSTNAME" = "eridan" ] ;then
   # Run the test
   echo "Special NMW test " >> /dev/stderr
   echo -n "Special NMW test: " >> vast_test_report.txt 
-  util/examples/test_NMW.sh
+  GREP_RESULT=`util/examples/test_NMW.sh 2>&1 | grep -e 'FAILED_TEST_CODES' -e 'Test failed' -e 'Test passed'`
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMW_001"
+   DEBUG_OUTPUT="$DEBUG_OUTPUT                              
+###### SPECIAL_NMW_001 ######
+$GREP_RESULT"
   fi
-  util/examples/test_NMW02.sh
+  GREP_RESULT=`util/examples/test_NMW02.sh 2>&1 | grep -e 'FAILED_TEST_CODES' -e 'Test failed' -e 'Test passed'`
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMW_002"
+   DEBUG_OUTPUT="$DEBUG_OUTPUT                              
+###### SPECIAL_NMW_002 ######
+$GREP_RESULT"
   fi  
   if [ $TEST_PASSED -eq 1 ];then
    echo -e "\n\033[01;34mSpecial NMW test \033[01;32mPASSED\033[00m" >> /dev/stderr
@@ -9933,10 +9960,18 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001"
 fi
 
+### This should specifically test GCVS
 util/search_databases_with_curl.sh 22:02:43.29139 +42:16:39.9803 | grep --quiet "BLLAC"
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001a"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001a_GCVS"
+fi
+
+# A more precise way to test the GCVS online search
+util/search_databases_with_curl.sh 22:02:43.29139 +42:16:39.9803 | grep 'not found' | grep --quiet 'GCVS'
+if [ $? -eq 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001b_GCVS"
 fi
 
 util/search_databases_with_curl.sh 15:31:40.10 -20:27:17.3 | grep --quiet "BW Lib"
@@ -11841,6 +11876,10 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  FAILED_TEST_CODES="${FAILED_TEST_CODES/ VARTOOLS_NOT_INSTALLED/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES/ AUXWEB_WWWU_003/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// DISABLE_MAGSIZE_FILTER_LOGS_SET/}"
+ #
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// STANDALONEDBSCRIPT001a_GCVS/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// STANDALONEDBSCRIPT001b_GCVS/}"
+ #
  if [ ! -z "$FAILED_TEST_CODES" ];then
   echo "Exit code 1"
   exit 1
