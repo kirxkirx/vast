@@ -4,11 +4,15 @@ EMPTY_OUTPUT_IMAGE_DIRECOTRY="/mnt/usb/VaST_test_VladimirB_2/GoodFrames/vast_tes
 if [ ! -d "$EMPTY_OUTPUT_IMAGE_DIRECOTRY" ];then
  EMPTY_OUTPUT_IMAGE_DIRECOTRY="../VaST_test_VladimirB_2/GoodFrames/vast_test_VB"
 fi
+EMPTY_OUTPUT_IMAGE_DIRECOTRY=`readlink -f $EMPTY_OUTPUT_IMAGE_DIRECOTRY`
 
 TEST_DATA_ROOT="/mnt/usb/VaST_test_VladimirB_2"
 if [ ! -d "$TEST_DATA_ROOT" ];then
- EST_DATA_ROOT="../VaST_test_VladimirB_2"
+ TEST_DATA_ROOT="../VaST_test_VladimirB_2"
 fi
+TEST_DATA_ROOT=`readlink -f $TEST_DATA_ROOT`
+
+# EMPTY_OUTPUT_IMAGE_DIRECOTRY and TEST_DATA_ROOT have to be absolute paths, that's why we nead 'readlink -f'
 
 ######################################################################
 
@@ -53,17 +57,19 @@ for FILE in "$EMPTY_OUTPUT_IMAGE_DIRECOTRY"/* ;do
 done
 
 ########### Selftest ###########
-# test that the certain records in the script are unique
-for RECORD in NIGHT IMAGE_DIR ;do
- LIST_OF_SUPPOSEDLY_UNIQE_RECORDS=`grep "$RECORD=" $0 | grep -v 'for ' | grep -v 'NIGHT_NUMBER'`
- for SUPPOSEDLY_UNIQE_RECORD in $LIST_OF_SUPPOSEDLY_UNIQE_RECORDS ;do
-  NUMBER_OF_SUPPOSEDLY_UNIQE_RECORDS=`grep -c "$SUPPOSEDLY_UNIQE_RECORD" $0`
-  if [ $NUMBER_OF_SUPPOSEDLY_UNIQE_RECORDS -ne 1 ];then
-   echo "ERROR: the record $SUPPOSEDLY_UNIQE_RECORD appears in $0 $NUMBER_OF_SUPPOSEDLY_UNIQE_RECORDS times, while we expect only one occurance!"
-   exit 1
-  fi
- done
-done
+#echo "Performing selftest"
+## test that the certain records in the script are unique
+#for RECORD in NIGHT IMAGE_DIR ;do
+# LIST_OF_SUPPOSEDLY_UNIQE_RECORDS=`grep "$RECORD=" $0 | grep -v 'for ' | grep -v 'NIGHT_NUMBER'`
+# for SUPPOSEDLY_UNIQE_RECORD in $LIST_OF_SUPPOSEDLY_UNIQE_RECORDS ;do
+#  NUMBER_OF_SUPPOSEDLY_UNIQE_RECORDS=`grep -c "$SUPPOSEDLY_UNIQE_RECORD" $0`
+#  if [ $NUMBER_OF_SUPPOSEDLY_UNIQE_RECORDS -ne 1 ];then
+#   echo "ERROR: the record $SUPPOSEDLY_UNIQE_RECORD appears in $0 $NUMBER_OF_SUPPOSEDLY_UNIQE_RECORDS times, while we expect only one occurance!"
+#   exit 1
+#  fi
+# done
+#done
+#echo "Done with the selftest"
 ################################
 
 
@@ -82,6 +88,8 @@ FLAT=$TEST_DATA_ROOT/GoodFrames/20171013/bdf/bdf_20_b1-003FlatG.fit
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
  exit 1
+else
+ echo "Processing images in $IMAGE_DIR"
 fi
 for IMAGE in "$IMAGE_DIR"/* "$DARK" "$FLAT" ;do
  if [ ! -f "$IMAGE" ];then
@@ -92,12 +100,17 @@ done
 
 cd "$EMPTY_OUTPUT_IMAGE_DIRECOTRY"
 for IMAGE in "$IMAGE_DIR"/* ;do
- IMAGE_BASE=`basename "$IMAGE"`
- DARK_SUBTRACTED_IMAGE="$NIGHT"__d_"$IMAGE_BASE"
- FLAT_FIELD_CORRECTED_IMAGE="$NIGHT"__fd_"$IMAGE_BASE"
- "$VAST_PATH"/util/ccd/ms "$IMAGE" "$DARK" "$DARK_SUBTRACTED_IMAGE"
- "$VAST_PATH"/util/ccd/md "$DARK_SUBTRACTED_IMAGE" "$FLAT" "$FLAT_FIELD_CORRECTED_IMAGE"
- rm -f "$DARK_SUBTRACTED_IMAGE"
+ echo "### Calibrating $IMAGE"
+# if [ -f "$IMAGE" ];then
+  IMAGE_BASE=`basename "$IMAGE"`
+  DARK_SUBTRACTED_IMAGE="$NIGHT"__d_"$IMAGE_BASE"
+  FLAT_FIELD_CORRECTED_IMAGE="$NIGHT"__fd_"$IMAGE_BASE"
+  echo "$VAST_PATH"/util/ccd/ms "$IMAGE" "$DARK" "$DARK_SUBTRACTED_IMAGE"
+  "$VAST_PATH"/util/ccd/ms "$IMAGE" "$DARK" "$DARK_SUBTRACTED_IMAGE"
+  echo "$VAST_PATH"/util/ccd/md "$DARK_SUBTRACTED_IMAGE" "$FLAT" "$FLAT_FIELD_CORRECTED_IMAGE"
+  "$VAST_PATH"/util/ccd/md "$DARK_SUBTRACTED_IMAGE" "$FLAT" "$FLAT_FIELD_CORRECTED_IMAGE"
+  rm -f "$DARK_SUBTRACTED_IMAGE"
+# fi
 done
 ##########################################################################################
 ##########################################################################################
@@ -110,6 +123,8 @@ FLAT=$TEST_DATA_ROOT/GoodFrames/20171013/bdf/bdf_20_b1-003FlatG.fit
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
  exit 1
+else
+ echo "Processing images in $IMAGE_DIR"
 fi
 for IMAGE in "$IMAGE_DIR"/* "$DARK" "$FLAT" ;do
  if [ ! -f "$IMAGE" ];then
@@ -138,6 +153,8 @@ FLAT=$TEST_DATA_ROOT/GoodFrames/20171013/bdf/bdf_20_b1-003FlatG.fit
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
  exit 1
+else
+ echo "Processing images in $IMAGE_DIR"
 fi
 for IMAGE in "$IMAGE_DIR"/* "$DARK" "$FLAT" ;do
  if [ ! -f "$IMAGE" ];then
@@ -166,6 +183,8 @@ FLAT=$TEST_DATA_ROOT/GoodFrames/20171013/bdf/bdf_20_b1-003FlatG.fit
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
  exit 1
+else
+ echo "Processing images in $IMAGE_DIR"
 fi
 for IMAGE in "$IMAGE_DIR"/* "$DARK" "$FLAT" ;do
  if [ ! -f "$IMAGE" ];then
@@ -194,6 +213,8 @@ FLAT=$TEST_DATA_ROOT/GoodFrames/20171116/bdf/mflatG.fit
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
  exit 1
+else
+ echo "Processing images in $IMAGE_DIR"
 fi
 for IMAGE in "$IMAGE_DIR"/* "$DARK" "$FLAT" ;do
  if [ ! -f "$IMAGE" ];then
@@ -222,6 +243,8 @@ FLAT=$TEST_DATA_ROOT/GoodFrames/20171116/bdf/mflatG.fit
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
  exit 1
+else
+ echo "Processing images in $IMAGE_DIR"
 fi
 for IMAGE in "$IMAGE_DIR"/* "$DARK" "$FLAT" ;do
  if [ ! -f "$IMAGE" ];then
@@ -250,6 +273,8 @@ FLAT=$TEST_DATA_ROOT/GoodFrames/20171116/bdf/mflatG.fit
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
  exit 1
+else
+ echo "Processing images in $IMAGE_DIR"
 fi
 for IMAGE in "$IMAGE_DIR"/* "$DARK" "$FLAT" ;do
  if [ ! -f "$IMAGE" ];then
@@ -278,6 +303,8 @@ FLAT=$TEST_DATA_ROOT/GoodFrames/20171116/bdf/mflatG.fit
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
  exit 1
+else
+ echo "Processing images in $IMAGE_DIR"
 fi
 for IMAGE in "$IMAGE_DIR"/* "$DARK" "$FLAT" ;do
  if [ ! -f "$IMAGE" ];then
@@ -306,6 +333,8 @@ FLAT=$TEST_DATA_ROOT/GoodFrames/20171116/bdf/mflatG.fit
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
  exit 1
+else
+ echo "Processing images in $IMAGE_DIR"
 fi
 for IMAGE in "$IMAGE_DIR"/* "$DARK" "$FLAT" ;do
  if [ ! -f "$IMAGE" ];then
@@ -334,6 +363,8 @@ FLAT=$TEST_DATA_ROOT/GoodFrames/20171116/bdf/mflatG.fit
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
  exit 1
+else
+ echo "Processing images in $IMAGE_DIR"
 fi
 for IMAGE in "$IMAGE_DIR"/* "$DARK" "$FLAT" ;do
  if [ ! -f "$IMAGE" ];then
@@ -362,6 +393,8 @@ FLAT=$TEST_DATA_ROOT/GoodFrames/20171116/bdf/mflatG.fit
 if [ ! -d "$IMAGE_DIR" ];then
  echo "ERROR: cannot find the image directory $IMAGE_DIR"
  exit 1
+else
+ echo "Processing images in $IMAGE_DIR"
 fi
 for IMAGE in "$IMAGE_DIR"/* "$DARK" "$FLAT" ;do
  if [ ! -f "$IMAGE" ];then
