@@ -11,7 +11,8 @@
 int main( int argc, char **argv ) {
 
  FILE *lightcurvefile;
- double jd, mag, merr, x, y, app;
+ //double jd, mag, merr, x, y, app;
+ double jd, mag, merr, y, app;
  char string[FILENAME_LENGTH];
  int i;
 
