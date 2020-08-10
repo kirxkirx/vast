@@ -5450,7 +5450,7 @@ int main( int argc, char **argv ) {
   fclose( vast_list_of_all_stars_ds9 );
  }
 
- //system("cat out00129.dat > YOHOHO.txt");
+ //system("cat out00856.dat > YOHOHO.txt");
 
  // Write detection statistics for all stars in STAR1 structure
  vast_source_detection_rejection_statistics_log= fopen( "vast_source_detection_rejection_statistics.log", "w" );

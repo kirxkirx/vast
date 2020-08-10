@@ -15,6 +15,7 @@
 #define DO_NOT_APPLY_SIZE_FILTERS_TO_N_BRIGHTEST_STARRS_OR_REFERENCE_POINTS 10 // do not apply A_IMAGE and FWHM_IMAGE filters to stars
                                                                                // that are brighter than the N reference point
 
+
 // This function will filter the input SExtractor catalog (already stored in the structure STAR)
 // containing NUMBER objects using the SExtractor output parameter (specified by 'parameter_number')
 // vs. magnitude plot.
@@ -98,7 +99,8 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
  // Set the cut-off threshold depending on the number of sources detected on the image
  /// https://en.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7_rule
  //threshold_sigma=sqrt(2)*erfinv(1-2*0.0003/NUMBER);
- threshold_sigma=sqrt(2)*erfinv(1-2*0.0002/NUMBER);
+ //threshold_sigma=sqrt(2)*erfinv(1-2*0.0002/NUMBER);
+ threshold_sigma=sqrt(2)*erfinv(1-2*0.0001/NUMBER);
  // sqrt(2)*erfinv(1-2*0.0003/100)=4.5264
  // sqrt(2)*erfinv(1-2*0.0003/1000)=4.9912
  // sqrt(2)*erfinv(1-2*0.0003/10000)=5.4188
@@ -134,6 +136,11 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
   vast_flag_to_set= 4; // A_IMAGE
   float_parameter_min= 0.0;
   float_parameter_max= 1.0e16; // some very large number by default
+  if ( parameter_number == -1 )
+   threshold_sigma=2.0*threshold_sigma;  // want to relax the threshould -- red stars appear bigger on refractor images
+                                         // also see MAG_AUTO below
+                                         // This is based on the test:
+                                         // ./vast --failsafe -u --selectbestaperture /mnt/usb/TCPJ00114297+6611190/Stas/2020-08-07_NCas/fd_2020-08-07_NCas_30sec_H_-15C_0*
  }
  if ( parameter_number == 0 ) {
   vast_flag_to_set= 8; // FWHM_IMAGE
@@ -148,7 +155,8 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
   float_parameter_min= -1.0 * MAX_MAG_ERROR;
   float_parameter_max= 1.0e16; // some very large number by default -- canot have small number here -- pho photographic data the difference may be pretty huge
   // don't want to set a hard limit here as for the fainter objects MAG_AUTO is not well defined
-  //threshold_sigma=1.5*threshold_sigma; // want to relax the threshould
+  if ( parameter_number == 1 )
+   threshold_sigma=2.0*threshold_sigma; // want to relax the threshould -- red stars appear bigger on refractor images
  }
  if ( parameter_number >= 2 ) {
   vast_flag_to_set= 32;         // PSF-APER MAG diff
@@ -356,6 +364,7 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
     return 0;
    }
   }
+  
 
   // For each star compute the median-subtracted float_parameter and store this value in median_subtracted_float_parameter_for_each_star[i]
   median_subtracted_float_parameter_for_each_star= malloc( NUMBER * sizeof( float ) );
@@ -446,6 +455,13 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
   }
   // done with median_subtracted_float_parameter_for_each_star
   free( median_subtracted_float_parameter_for_each_star );
+
+  // Smooth the threshold curve
+  for ( i= 2; i < number_of_reference_points-2; i++ ) {
+   reference_point_mag[i]=(reference_point_mag[i-2]+reference_point_mag[i-1]+reference_point_mag[i]+reference_point_mag[i+1]+reference_point_mag[i+2])/5.0;
+   reference_point_float_parameter_sigma[i]=(reference_point_float_parameter_sigma[i-2]+reference_point_float_parameter_sigma[i-1]+reference_point_float_parameter_sigma[i]+reference_point_float_parameter_sigma[i+1]+reference_point_float_parameter_sigma[i+2])/5.0;
+  }
+
 
   #ifndef DISABLE_MAGSIZE_FILTER_LOGS
   if ( iteration == 1 ) {

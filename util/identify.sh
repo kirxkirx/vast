@@ -335,9 +335,9 @@ Checking if the filename extension and FITS header look reasonable..."
  echo "$FITSFILE" | grep  -e ".fits"  -e ".FITS"  -e ".fts" -e ".FTS"  -e ".fit"  -e ".FIT" && "$VAST_PATH"util/listhead "$FITSFILE" | grep -e "SIMPLE  =                    T" -e "TELESCOP= 'Aristarchos'" && "$VAST_PATH"util/listhead "$FITSFILE" | grep -e "NAXIS   =                    2" -e "TELESCOP= 'Aristarchos'"
  if [ $? -eq 0 ];then
   echo "OK, let's assume this is a valid FITS file"
- else
-  echo "ERROR: the input image file $FITSFILE did not pass verification as a valid FITS file"
-  exit 1
+# else
+#  echo "ERROR: the input image file $FITSFILE did not pass verification as a valid FITS file"
+#  exit 1
  fi
 fi
 
@@ -462,15 +462,18 @@ field identification have good chances to fail. Sorry... :(
   IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE`
   #SCALE_LOW=`echo "0.3*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'`
   # "0.9*$TRIAL_FIELD_OF_VIEW_ARCMIN matches the remote server parameters
-  SCALE_LOW=`echo "0.9*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'`
+  #SCALE_LOW=`echo "0.9*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'`
+  SCALE_LOW=`echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",0.9*$1}'`
   # Yes, works fine with 1.2*$TRIAL_FIELD_OF_VIEW_ARCMIN but does not work with 1.0*$TRIAL_FIELD_OF_VIEW_ARCMIN
   #SCALE_HIGH=`echo "1.2*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql`
-  SCALE_HIGH=`echo "1.6*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'`
+  #SCALE_HIGH=`echo "1.6*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'`
+  SCALE_HIGH=`echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",1.6*$1}'`
   #
   # Blind solve
   # old parameters
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  $TIMEOUT_COMMAND 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  #$TIMEOUT_COMMAND 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  $TIMEOUT_COMMAND 600 solve-field --objs 1000 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # new parameters that should avoid using python
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH  --no-fits2fits --uniformize 0  out$$.xyls
   # HACK Hack hack -- manually specify the field center and size
