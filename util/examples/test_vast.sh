@@ -7032,12 +7032,12 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN010x"
   fi
   #
-  grep --quiet -e "2019 11 03.6470  2458791.1470  11.27  19:03:" -e "2019 11 03.6470  2458791.1470  11.29  19:03:" transient_report/index.html
+  grep --quiet "2019 11 03.6470  2458791.1470  11\.2.  19:03:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN010a"
   fi
-  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  11.27  19:03:" -e "2019 11 03.6470  2458791.1470  11.29  19:03:" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2019 11 03.6470  2458791.1470  11\.2.  19:03:" transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:03:48.76 -26:58:59.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
@@ -7113,12 +7113,12 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN012"
   fi
-  grep --quiet -e "2019 11 03.6470  2458791.1470  12.29  19:10:" -e "2019 11 03.6470  2458791.1470  12.28  19:10:" -e "2019 11 03.6470  2458791.1470  12.31  19:10:" transient_report/index.html
+  grep --quiet -e "2019 11 03.6470  2458791.1470  12\.2.  19:10:" -e "2019 11 03.6470  2458791.1470  12\.3.  19:10:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN012a"
   fi
-  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  12.29  19:10:" -e "2019 11 03.6470  2458791.1470  12.28  19:10:" -e "2019 11 03.6470  2458791.1470  12.31  19:10:" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  12\.2.  19:10:" -e "2019 11 03.6470  2458791.1470  12\.3.  19:10:" transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:10:11.72 -27:05:38.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
@@ -8960,7 +8960,7 @@ if [ -d /mnt/usb/VaST_test_VladimirB_2/GoodFrames/vast_test_VB ] || [ -d ../VaST
  # Run the test
  echo "Special VB2 test " >> /dev/stderr
  echo -n "Special VB2 test: " >> vast_test_report.txt 
- CAT_RESULT=`util/examples/test__VB_2.sh &2>1 | grep -e 'FAILED_TEST_CODES= ' -e 'ERROR'`
+ CAT_RESULT=`util/examples/test__VB_2.sh 2>&1 | grep -e 'FAILED_TEST_CODES= ' -e 'ERROR'`
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VB2_001"
@@ -11861,8 +11861,9 @@ $MSG
 #########################################################
 $DEBUG_OUTPUT
 
-"
- curl --silent 'http://scan.sai.msu.ru/vast/vasttestreport.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode "message=$MSG" --data-urlencode 'submit=submit'
+" > vast_test_email_message.log
+# curl --silent 'http://scan.sai.msu.ru/vast/vasttestreport.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode "message=$MSG" --data-urlencode 'submit=submit'
+ curl --silent 'http://scan.sai.msu.ru/vast/vasttestreport.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode message@vast_test_email_message.log --data-urlencode 'submit=submit'
  if [ $? -eq 0 ];then
   echo "The test report was sent successfully"
  else
