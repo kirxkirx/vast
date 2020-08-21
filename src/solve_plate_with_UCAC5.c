@@ -46,6 +46,8 @@
 
 #include "variability_indexes.h" // for esimate_sigma_from_MAD_of_unsorted_data() and c4()
 
+#include "is_point_close_or_off_the_frame_edge.h" // for is_point_close_or_off_the_frame_edge()
+
 struct str_catalog_search_parameters {
  double search_radius_deg;
  double search_radius_second_step_deg;
@@ -68,7 +70,7 @@ struct detected_star {
  double ra_deg_measured_orig;
  double dec_deg_measured_orig;
  //double aperture;
- double distance_from_image_edge;
+ //double distance_from_image_edge;
  /////////////////////////
  int matched_with_astrometric_catalog;
  int matched_with_photometric_catalog;
@@ -438,11 +440,13 @@ int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, in
   // set default values of the derived parameters
   stars[i].matched_with_astrometric_catalog= 0; // no catalog match at first
   stars[i].matched_with_photometric_catalog= 0; // no catalog match at first
-  stars[i].distance_from_image_edge= MIN( stars[i].x_pix, stars[i].y_pix );
-  stars[i].distance_from_image_edge= MIN( stars[i].distance_from_image_edge, X_im_size - stars[i].x_pix );
-  stars[i].distance_from_image_edge= MIN( stars[i].distance_from_image_edge, Y_im_size - stars[i].y_pix );
-  if ( stars[i].distance_from_image_edge < FRAME_EDGE_INDENT_PIXELS )
+  //stars[i].distance_from_image_edge= MIN( stars[i].x_pix, stars[i].y_pix );
+  //stars[i].distance_from_image_edge= MIN( stars[i].distance_from_image_edge, X_im_size - stars[i].x_pix );
+  //stars[i].distance_from_image_edge= MIN( stars[i].distance_from_image_edge, Y_im_size - stars[i].y_pix );
+  //if ( stars[i].distance_from_image_edge < FRAME_EDGE_INDENT_PIXELS )
+  if ( 1==is_point_close_or_off_the_frame_edge( stars[i].x_pix, stars[i].y_pix, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) ) {
    stars[i].good_star= 0;
+  }
   if ( stars[i].good_star == 1 ) {
    good_stars_counter++;
   }
@@ -949,7 +953,7 @@ int read_PANSTARRS1_from_vizquery( struct detected_star *stars, int N, char *viz
       stars[i].APASS_i= APASS_i;
       stars[i].APASS_i_err= APASS_i_err;
 
-      // Jester et al. (2005)
+      // Jester et al. (2005) https://ui.adsabs.harvard.edu/abs/2005AJ....130..873J
       // All stars with Rc-Ic < 1.15
       // V-R    =    1.09*(r-i) + 0.22        0.03
       stars[i].Rc_computed_from_APASS_ri= APASS_V - 1.09 * ( APASS_r - APASS_i ) - 0.22;

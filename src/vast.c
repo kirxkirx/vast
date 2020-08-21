@@ -81,6 +81,8 @@
 #include "parse_sextractor_catalog.h"
 //
 #include "count_lines_in_ASCII_file.h" // for count_lines_in_ASCII_file()
+//
+#include "is_point_close_or_off_the_frame_edge.h" // for is_point_close_or_off_the_frame_edge()
 
 /****************** Auxiliary functions ******************/
 
@@ -616,6 +618,7 @@ void choose_best_reference_image( char **input_images, int Num ) {
  return;
 }
 
+/*
 int is_point_close_or_off_the_frame_edge( double x, double y, double X_im_size, double Y_im_size, double indent ) {
  if ( x < indent )
   return 1;
@@ -627,6 +630,7 @@ int is_point_close_or_off_the_frame_edge( double x, double y, double X_im_size, 
   return 1;
  return 0; // if we are still here - the point is well within the image
 }
+*/
 
 //
 // This function is useful for debugging. It will create a DS9 region file from an rray of structures (type struct Star)

@@ -45,18 +45,22 @@ GSL_INCLUDE = lib/include
 
 ## production
 OPTFLAGS = -w -O2 -fomit-frame-pointer $(GOOD_MARCH_OPTIONS) $(LTO_OPTIONS) $(USE_OMP_OPTIONS) $(USE_BUILTIN_FUNCTIONS)
+## production with warnings
+#OPTFLAGS = -Wall -O2 -fomit-frame-pointer $(GOOD_MARCH_OPTIONS) $(LTO_OPTIONS) $(USE_OMP_OPTIONS) $(USE_BUILTIN_FUNCTIONS)
 # more conservative production flags
 #OPTFLAGS = -O2 -w $(GOOD_MARCH_OPTIONS)
 ## debug
 # (note that an older GCC may not understand '-Warray-bounds')
 #OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all -lmcheck -O0 $(USE_BUILTIN_FUNCTIONS) #$(USE_OMP_OPTIONS) # for debugging with valgrind
-# debug mode with OpenMP
+## debug mode with OpenMP
 #OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all -O0 $(USE_OMP_OPTIONS) $(USE_BUILTIN_FUNCTIONS) #$(USE_OMP_OPTIONS) # for debugging with valgrind
-# Check pointer bounds
+## Check pointer bounds
 #OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all -lmcheck  -mmpx -fcheck-pointer-bounds  -O0 $(USE_BUILTIN_FUNCTIONS) #$(USE_OMP_OPTIONS) # for debugging with valgrind
-# Address Sanitizer (not compatible with Valgrind)
+## Address Sanitizer (not compatible with Valgrind)
 #OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -lmcheck  -fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -O1 $(USE_BUILTIN_FUNCTIONS) 
 #OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wformat -Werror=format-security -Werror=array-bounds -Wextra -fno-omit-frame-pointer -lmcheck  -fsanitize=address,undefined -fsanitize-address-use-after-scope -O1 $(USE_BUILTIN_FUNCTIONS) 
+## OK, thia ASAN seems to work
+#OPTFLAGS := -g -Wall  -fsanitize=address,undefined -fsanitize-address-use-after-scope -O1 $(USE_BUILTIN_FUNCTIONS) 
 
 
 
@@ -93,7 +97,7 @@ old: formater_out_wfk
 
 astrometry: lib/astrometry/get_image_dimentions lib/astrometry/insert_wcs_header lib/make_outxyls_for_astrometric_calibration lib/fits2cat util/solve_plate_with_UCAC5 lib/autodetect_aperture_main lib/try_to_guess_image_fov cfitsio gsl
 
-pgplot_components: variability_indexes.o photocurve.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o replace_file_with_symlink_if_filename_contains_white_spaces.o wpolyfit.o get_path_to_vast.o cfitsio gsl
+pgplot_components: variability_indexes.o photocurve.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o replace_file_with_symlink_if_filename_contains_white_spaces.o wpolyfit.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o cfitsio gsl
 	lib/test_libpng.sh
 	echo $(OPTFLAGS) > optflags_for_scripts.tmp
 	$(CC) $(OPTFLAGS) -c src/setenv_local_pgplot.c
@@ -144,8 +148,8 @@ stetson_test.o: $(SRC_PATH)test/stetson_test.c
 
 
 #vast: vast.o gettime.o vast_report_memory_error.o libident.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o vast_progbar.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o cfitsio gsl
-vast: vast.o gettime.o vast_report_memory_error.o libident.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o erfinv.o cfitsio gsl
-	$(CC) $(OPTFLAGS) -o vast vast.o gettime.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o vast_report_memory_error.o libident.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o erfinv.o $(CFITSIO_LIB) $(GSL_LIB) -Wl,-rpath,$(LIB_IDENT_PATH) -lm
+vast: vast.o gettime.o vast_report_memory_error.o libident.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o erfinv.o is_point_close_or_off_the_frame_edge.o cfitsio gsl
+	$(CC) $(OPTFLAGS) -o vast vast.o gettime.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o vast_report_memory_error.o libident.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o erfinv.o is_point_close_or_off_the_frame_edge.o $(CFITSIO_LIB) $(GSL_LIB) -Wl,-rpath,$(LIB_IDENT_PATH) -lm
 
 vast.o: $(SRC_PATH)vast.c $(SOURCE_IDENT_PATH)ident.h $(SRC_PATH)vast_limits.h $(SRC_PATH)vast_report_memory_error.h $(SRC_PATH)detailed_error_messages.h $(SRC_PATH)photocurve.h $(SRC_PATH)get_number_of_cpu_cores.h $(SRC_PATH)fit_plane_lin.h $(SRC_PATH)fitsfile_read_check.h $(SRC_PATH)wpolyfit.h $(SRC_PATH)replace_file_with_symlink_if_filename_contains_white_spaces.h $(SRC_PATH)lightcurve_io.h
 	$(CC) $(OPTFLAGS) -c -o vast.o $(SRC_PATH)vast.c -I$(GSL_INCLUDE) -Wall
@@ -178,10 +182,13 @@ filter_MagSize.o: $(SRC_PATH)filter_MagSize.c
 erfinv.o: $(SRC_PATH)erfinv.c
 	$(CC) $(OPTFLAGS) -c -o erfinv.o $(SRC_PATH)erfinv.c
 
+is_point_close_or_off_the_frame_edge.o: $(SRC_PATH)is_point_close_or_off_the_frame_edge.c
+	$(CC) $(OPTFLAGS) -c -o is_point_close_or_off_the_frame_edge.o $(SRC_PATH)is_point_close_or_off_the_frame_edge.c
+
 guess_saturation_limit_main.o: $(SRC_PATH)guess_saturation_limit_main.c
 	$(CC) $(OPTFLAGS) -c $(SRC_PATH)guess_saturation_limit_main.c
-lib/guess_saturation_limit_main: guess_saturation_limit_main.o guess_saturation_limit.o autodetect_aperture.o exclude_region.o variability_indexes.o
-	$(CC) $(OPTFLAGS) -o lib/guess_saturation_limit_main  guess_saturation_limit_main.o guess_saturation_limit.o autodetect_aperture.o exclude_region.o variability_indexes.o $(GSL_LIB) $(CFITSIO_LIB) -lm
+lib/guess_saturation_limit_main: guess_saturation_limit_main.o guess_saturation_limit.o autodetect_aperture.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o
+	$(CC) $(OPTFLAGS) -o lib/guess_saturation_limit_main  guess_saturation_limit_main.o guess_saturation_limit.o autodetect_aperture.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o $(GSL_LIB) $(CFITSIO_LIB) -lm
 
 variability_indexes.o: $(SRC_PATH)variability_indexes.c $(SRC_PATH)vast_limits.h $(SRC_PATH)variability_indexes.h
 	# Older GCC versions complain about isnormal() unless -std=c99 is given explicitly
@@ -304,8 +311,8 @@ lib/find_flares: $(SRC_PATH)find_flares.c
 	$(CC) $(OPTFLAGS) -o lib/find_flares $(SRC_PATH)find_flares.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 #lib/stat_array: $(SRC_PATH)stat_array.c
 #	$(CC) $(OPTFLAGS) -o lib/stat_array $(SRC_PATH)stat_array.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
-lib/autodetect_aperture_main: autodetect_aperture_main.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o gettime.o get_number_of_cpu_cores.o get_path_to_vast.o variability_indexes.o
-	$(CC) $(OPTFLAGS) -o lib/autodetect_aperture_main autodetect_aperture_main.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o gettime.o get_number_of_cpu_cores.o get_path_to_vast.o variability_indexes.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE)  -lm
+lib/autodetect_aperture_main: autodetect_aperture_main.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o gettime.o get_number_of_cpu_cores.o get_path_to_vast.o variability_indexes.o is_point_close_or_off_the_frame_edge.o
+	$(CC) $(OPTFLAGS) -o lib/autodetect_aperture_main autodetect_aperture_main.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o gettime.o get_number_of_cpu_cores.o get_path_to_vast.o variability_indexes.o is_point_close_or_off_the_frame_edge.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE)  -lm
 	cd lib ; ln -s autodetect_aperture_main sextract_single_image_noninteractive ; cd ..
 autodetect_aperture_main.o: $(SRC_PATH)autodetect_aperture_main.c
 	$(CC) $(OPTFLAGS) -c $(SRC_PATH)autodetect_aperture_main.c
@@ -420,14 +427,18 @@ insert_wcs_header.o: $(SRC_PATH)astrometry/insert_wcs_header.c
 
 lib/find_star_in_wcs_catalog: $(SRC_PATH)find_star_in_wcs_catalog.c
 	 $(CC) $(OPTFLAGS) -o lib/find_star_in_wcs_catalog $(SRC_PATH)find_star_in_wcs_catalog.c -lm
-lib/make_outxyls_for_astrometric_calibration: $(SRC_PATH)make_outxyls_for_astrometric_calibration.c
-	$(CC) $(OPTFLAGS) -o lib/make_outxyls_for_astrometric_calibration $(SRC_PATH)make_outxyls_for_astrometric_calibration.c $(GSL_LIB) -I$(GSL_INCLUDE) $(CFITSIO_LIB) -lm
-lib/fits2cat: fits2cat.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o variability_indexes.o
-	$(CC) $(OPTFLAGS) -o lib/fits2cat fits2cat.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o variability_indexes.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+
+make_outxyls_for_astrometric_calibration.o: $(SRC_PATH)make_outxyls_for_astrometric_calibration.c
+	$(CC) $(OPTFLAGS) -c -o make_outxyls_for_astrometric_calibration.o $(SRC_PATH)make_outxyls_for_astrometric_calibration.c $(GSL_LIB) -I$(GSL_INCLUDE) $(CFITSIO_LIB) -lm
+lib/make_outxyls_for_astrometric_calibration: make_outxyls_for_astrometric_calibration.o is_point_close_or_off_the_frame_edge.o
+	$(CC) $(OPTFLAGS) -o lib/make_outxyls_for_astrometric_calibration make_outxyls_for_astrometric_calibration.o is_point_close_or_off_the_frame_edge.o $(GSL_LIB) -I$(GSL_INCLUDE) $(CFITSIO_LIB) -lm
+
+lib/fits2cat: fits2cat.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o
+	$(CC) $(OPTFLAGS) -o lib/fits2cat fits2cat.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 fits2cat.o: $(SRC_PATH)fits2cat.c
 	$(CC) $(OPTFLAGS) -c -o fits2cat.o $(SRC_PATH)fits2cat.c
-util/solve_plate_with_UCAC5: solve_plate_with_UCAC5.o gettime.o wpolyfit.o variability_indexes.o get_path_to_vast.o
-	$(CC) $(OPTFLAGS) -o util/solve_plate_with_UCAC5 solve_plate_with_UCAC5.o gettime.o fit_plane_lin.o wpolyfit.o variability_indexes.o get_path_to_vast.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+util/solve_plate_with_UCAC5: solve_plate_with_UCAC5.o gettime.o wpolyfit.o variability_indexes.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o
+	$(CC) $(OPTFLAGS) -o util/solve_plate_with_UCAC5 solve_plate_with_UCAC5.o gettime.o fit_plane_lin.o wpolyfit.o variability_indexes.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 	cd util/ ; ln -s solve_plate_with_UCAC5 solve_plate_with_UCAC4 ; cd ..
 solve_plate_with_UCAC5.o:
 	$(CC) $(OPTFLAGS) -c src/solve_plate_with_UCAC5.c -I$(GSL_INCLUDE)
@@ -504,6 +515,7 @@ clean: clean_libraries
 	rm -f util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/astrometry/get_image_dimentions lib/astrometry/insert_wcs_header lib/astrometry/*~ lib/kwee-van-woerden  lib/find_star_in_wcs_catalog
 	rm -f src/heliocentric_correction/*~ util/hjd_input_in_UTC util/hjd_input_in_TT util/UTC2TT util/make_finding_chart util/fits2png lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search lib/catalogs/check_catalogs_offline util/get_image_date lib/make_outxyls_for_astrometric_calibration lib/fits2cat lib/create_data lib/fast_clean_data util/solve_plate_with_UCAC5 lib/autodetect_aperture_main lib/sextract_single_image_noninteractive
 	rm -f util/solve_plate_with_UCAC4
+	rm -f util/solve_plate_with_UCAC5
 	rm -f src/catalogs/*~
 	rm -f .cc.version
 	rm -f .cc.date

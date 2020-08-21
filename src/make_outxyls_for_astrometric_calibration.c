@@ -17,6 +17,8 @@
 
 #include "parse_sextractor_catalog.h"
 
+#include "is_point_close_or_off_the_frame_edge.h" // for is_point_close_or_off_the_frame_edge()
+
 int main( int argc, char **argv ) {
 
  int i, j, n, n_good, n_high_snr; // counters
@@ -99,10 +101,13 @@ int main( int argc, char **argv ) {
 
   //
   //if(flags!=0)continue;
-  if ( x < FRAME_EDGE_INDENT_PIXELS || y < FRAME_EDGE_INDENT_PIXELS || fabs( x - X_im_size ) < FRAME_EDGE_INDENT_PIXELS || fabs( y - Y_im_size ) < FRAME_EDGE_INDENT_PIXELS )
+  //if ( x < FRAME_EDGE_INDENT_PIXELS || y < FRAME_EDGE_INDENT_PIXELS || fabs( x - X_im_size ) < FRAME_EDGE_INDENT_PIXELS || fabs( y - Y_im_size ) < FRAME_EDGE_INDENT_PIXELS )
+  if ( 1==is_point_close_or_off_the_frame_edge( x, y, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) ) {
    continue;
-  if ( flux / flux_err < MIN_SNR )
+  }
+  if ( flux / flux_err < MIN_SNR ) {
    continue;
+  }
   // else this is a reasonably good star
   X[n_good]= x;
   Y[n_good]= y;

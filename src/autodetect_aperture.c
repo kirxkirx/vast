@@ -21,6 +21,8 @@
 #include "guess_saturation_limit.h"
 #include "write_individual_image_log.h"
 
+#include "is_point_close_or_off_the_frame_edge.h" // for is_point_close_or_off_the_frame_edge()
+
 int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogfilename ) {
  char fitsfilename_to_test[FILENAME_LENGTH];
  FILE *f;
@@ -254,7 +256,8 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
    } else
     external_flag= 0; // no external flag image used
    all_stars_in_the_catalog++;
-   if ( external_flag == 0 && sextractor_flag == 0 && A[i] > FWHM_MIN && 0 == exclude_region( X1, Y1, X2, Y2, N_bad_regions, star_x, star_y, 5.0 ) && star_x > FRAME_EDGE_INDENT_PIXELS && star_y > FRAME_EDGE_INDENT_PIXELS && fabs( star_x - X_im_size ) > FRAME_EDGE_INDENT_PIXELS && fabs( star_y - Y_im_size ) > FRAME_EDGE_INDENT_PIXELS ) {
+   //if ( external_flag == 0 && sextractor_flag == 0 && A[i] > FWHM_MIN && 0 == exclude_region( X1, Y1, X2, Y2, N_bad_regions, star_x, star_y, 5.0 ) && star_x > FRAME_EDGE_INDENT_PIXELS && star_y > FRAME_EDGE_INDENT_PIXELS && fabs( star_x - X_im_size ) > FRAME_EDGE_INDENT_PIXELS && fabs( star_y - Y_im_size ) > FRAME_EDGE_INDENT_PIXELS ) {
+   if ( external_flag == 0 && sextractor_flag == 0 && A[i] > FWHM_MIN && 0 == exclude_region( X1, Y1, X2, Y2, N_bad_regions, star_x, star_y, 5.0 ) && 0==is_point_close_or_off_the_frame_edge( star_x, star_y, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) ) {
     i++;
     good_stars_in_the_catalog++;
    }
@@ -282,7 +285,8 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
     }
 
     all_stars_in_the_catalog++;
-    if ( external_flag == 0 && A[i] > FWHM_MIN && 0 == exclude_region( X1, Y1, X2, Y2, N_bad_regions, star_x, star_y, 5.0 ) && star_x > FRAME_EDGE_INDENT_PIXELS && star_y > FRAME_EDGE_INDENT_PIXELS && fabs( star_x - X_im_size ) > FRAME_EDGE_INDENT_PIXELS && fabs( star_y - Y_im_size ) > FRAME_EDGE_INDENT_PIXELS ) {
+    //if ( external_flag == 0 && A[i] > FWHM_MIN && 0 == exclude_region( X1, Y1, X2, Y2, N_bad_regions, star_x, star_y, 5.0 ) && star_x > FRAME_EDGE_INDENT_PIXELS && star_y > FRAME_EDGE_INDENT_PIXELS && fabs( star_x - X_im_size ) > FRAME_EDGE_INDENT_PIXELS && fabs( star_y - Y_im_size ) > FRAME_EDGE_INDENT_PIXELS ) {
+    if ( external_flag == 0 && A[i] > FWHM_MIN && 0 == exclude_region( X1, Y1, X2, Y2, N_bad_regions, star_x, star_y, 5.0 ) && 0==is_point_close_or_off_the_frame_edge( star_x, star_y, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) ) {
      i++;
      good_stars_in_the_catalog++;
     }

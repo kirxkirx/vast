@@ -358,6 +358,9 @@
 //#define DEBUGFILES
 //#define DEBUGMESSAGES
 
+
+#include "stdio.h" // defines FILE, fopen(), fclose()
+
 // is_file() - a small function which checks is an input string is a name of a readable file
 static inline int is_file( char *filename ) {
  FILE *f= NULL;

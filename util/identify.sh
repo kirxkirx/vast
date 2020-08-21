@@ -470,11 +470,11 @@ field identification have good chances to fail. Sorry... :(
   SCALE_HIGH=`echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",1.6*$1}'`
   #
   # Blind solve
-  # old parameters
+  # old parameters - they work
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  #$TIMEOUT_COMMAND 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   $TIMEOUT_COMMAND 600 solve-field --objs 1000 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # new parameters that should avoid using python
+  #$TIMEOUT_COMMAND 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # new parameters that should avoid using python - not working :(
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH  --no-fits2fits --uniformize 0  out$$.xyls
   # HACK Hack hack -- manually specify the field center and size
   # PGIR19brv

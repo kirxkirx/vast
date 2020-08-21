@@ -39,6 +39,8 @@
 
 #include "../lightcurve_io.h" // for read_lightcurve_point()
 
+#include "../is_point_close_or_off_the_frame_edge.h" // for is_point_close_or_off_the_frame_edge()
+
 int Kourovka_SBG_date_hack( char *fitsfilename, char *DATEOBS, int *date_parsed, double *exposure ); // defined in gettime.c
 
 void save_star_to_vast_list_of_previously_known_variables_and_exclude_lst( int sexNUMBER, float sexX, float sexY ) {
@@ -1810,7 +1812,7 @@ int main( int argc, char **argv ) {
         //cpgcirc( sexX[marker_counter], sexY[marker_counter], (float)APER / 2.0 );
         //cpgsci( 1 );
         //
-        fprintf( stderr, "Star %d. Instrumental magnitude: %.4lf %.4lf\n(In order to cancel the input - type '99' instead of an actual magnitude.)\n Please, enter its catalog magnitude or 'v' to mark it as the target variable: ", sexNUMBER[marker_counter], sexMAG[marker_counter], sexMAG_ERR[marker_counter] );
+        fprintf( stderr, "Star %d. Instrumental magnitude: %.4lf %.4lf\n(In order to cancel the input - type '99' instead of an actual magnitude.)\n Please, enter its catalog magnitude or 'v' to mark it as the target variable:\n", sexNUMBER[marker_counter], sexMAG[marker_counter], sexMAG_ERR[marker_counter] );
         if ( NULL == fgets( RADEC, 1024, stdin ) ) {
          fprintf( stderr, "Incorrect input!\n" );
         }
@@ -1929,7 +1931,8 @@ int main( int argc, char **argv ) {
        if ( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
         fprintf( stderr, "Star %6d\n", sexNUMBER[marker_counter] );
 
-        if ( sexX[marker_counter] > FRAME_EDGE_INDENT_PIXELS && sexY[marker_counter] > FRAME_EDGE_INDENT_PIXELS && fabs( sexX[marker_counter] - (float)naxes[0] ) > FRAME_EDGE_INDENT_PIXELS && fabs( sexY[marker_counter] - (float)naxes[1] ) > FRAME_EDGE_INDENT_PIXELS ) {
+        //if ( sexX[marker_counter] > FRAME_EDGE_INDENT_PIXELS && sexY[marker_counter] > FRAME_EDGE_INDENT_PIXELS && fabs( sexX[marker_counter] - (float)naxes[0] ) > FRAME_EDGE_INDENT_PIXELS && fabs( sexY[marker_counter] - (float)naxes[1] ) > FRAME_EDGE_INDENT_PIXELS ) {
+        if ( 0==is_point_close_or_off_the_frame_edge( (double)sexX[marker_counter], (double)sexY[marker_counter], (double)naxes[0], (double)naxes[1], FRAME_EDGE_INDENT_PIXELS ) ) {
          fprintf( stderr, "Star coordinates \E[01;32m%6.1lf %6.1lf\E[33;00m (pix)\n", sexX[marker_counter], sexY[marker_counter] );
         } else {
          fprintf( stderr, "Star coordinates \E[01;31m%6.1lf %6.1lf\E[33;00m (pix)\n", sexX[marker_counter], sexY[marker_counter] );
