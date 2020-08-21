@@ -16,7 +16,7 @@
 #define MAX_FOV_ARCMIN 7200 // 120 deg.
 #define MIN_FOV_ARCMIN 5
 
-//#define FOV_DEBUG_MESSAGES
+#define FOV_DEBUG_MESSAGES
 
 int is_it_a_photopate_scan_from_SAI_collection_with_the_basic_header( char *fitsfilename, double *estimated_fov_arcmin ) {
  double JD;
@@ -503,10 +503,11 @@ int look_for_focallen_keyword( char *fitsfilename, double *estimated_fov_arcmin 
   #endif
  }
 
- internal_estimated_fov_arcmin= internal_estimated_fov_arcmin - 0.1 * internal_estimated_fov_arcmin;
- #ifdef FOV_DEBUG_MESSAGES
- fprintf(stderr, "Reduce the guess by 10%% to be on a safe side.\nInternal estimated FoV %.1lf'\n", internal_estimated_fov_arcmin);
- #endif
+ // It actually works better if we don't reduce the field of view estimate
+ //internal_estimated_fov_arcmin= internal_estimated_fov_arcmin - 0.1 * internal_estimated_fov_arcmin;
+ //#ifdef FOV_DEBUG_MESSAGES
+ //fprintf(stderr, "Reduce the guess by 10%% to be on a safe side.\nInternal estimated FoV %.1lf'\n", internal_estimated_fov_arcmin);
+ //#endif
 
  if ( internal_estimated_fov_arcmin > MIN_FOV_ARCMIN && internal_estimated_fov_arcmin < MAX_FOV_ARCMIN ) {
   ( *estimated_fov_arcmin )= internal_estimated_fov_arcmin;
