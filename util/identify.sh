@@ -335,9 +335,9 @@ Checking if the filename extension and FITS header look reasonable..."
  echo "$FITSFILE" | grep  -e ".fits"  -e ".FITS"  -e ".fts" -e ".FTS"  -e ".fit"  -e ".FIT" && "$VAST_PATH"util/listhead "$FITSFILE" | grep -e "SIMPLE  =                    T" -e "TELESCOP= 'Aristarchos'" && "$VAST_PATH"util/listhead "$FITSFILE" | grep -e "NAXIS   =                    2" -e "TELESCOP= 'Aristarchos'"
  if [ $? -eq 0 ];then
   echo "OK, let's assume this is a valid FITS file"
-# else
-#  echo "ERROR: the input image file $FITSFILE did not pass verification as a valid FITS file"
-#  exit 1
+ else
+  echo "ERROR: the input image file $FITSFILE did not pass verification as a valid FITS file"
+  exit 1
  fi
 fi
 

@@ -8590,6 +8590,104 @@ else
  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER_TEST_NOT_PERFORMED"
 fi
 
+######### Stacked DSLR image created with Siril
+if [ ! -f ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/r_ncas20200820_stacked_16bit_g2.fit.bz2" && bunzip2 r_ncas20200820_stacked_16bit_g2.fit.bz2
+ cd $WORKDIR
+fi
+
+if [ -f ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "Stacked DSLR image created with Siril test " >> /dev/stderr
+ echo -n "Stacked DSLR image created with Siril test: " >> vast_test_report.txt 
+ #
+ util/get_image_date ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit | grep --quiet 'Exposure 750 sec, 20.08.2020 07:45:37 UT = JD(UT) 2459081.82769 mid. exp.'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL001"
+ fi
+ #
+ util/get_image_date ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit 2>&1 | grep --quiet 'DATE-OBS= 2020-08-20T07:45:37'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL002"
+ fi
+ #
+ lib/try_to_guess_image_fov ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit  | grep --quiet ' 672'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL003"
+ fi
+ #
+ #
+ cp default.sex.ccd_example default.sex 
+ util/wcs_image_calibration.sh ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL004"
+ fi
+ util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_16bit_g2.fit | grep --quiet "Image size: 970.6'x644.5'"
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL005"
+ fi
+ #
+ util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_16bit_g2.fit  | grep --quiet 'Image scale: 13.57"/pix along the X axis and 13.54"/pix along the Y axis'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL006"
+ fi
+ #
+ util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_16bit_g2.fit  | grep --quiet 'Image center: 00:07:22.995 +66:25:47.33 J2000 2145.500 1428.500'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL007"
+ fi
+ #
+ util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit
+ if [ ! -f wcs_r_ncas20200820_stacked_16bit_g2.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL008"
+ fi 
+ lib/bin/xy2sky wcs_r_ncas20200820_stacked_16bit_g2.fit 200 200 &>/dev/null
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL009"
+ fi
+ if [ ! -s wcs_r_ncas20200820_stacked_16bit_g2.fit.cat.ucac5 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL010"
+ else
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_r_ncas20200820_stacked_16bit_g2.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+  if [ $TEST -lt 100 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL011_$TEST"
+  fi
+ fi 
+ # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
+ util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit 2>&1 | grep --quiet 'The output catalog wcs_r_ncas20200820_stacked_16bit_g2.fit.cat.ucac5 already exist.'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL012"
+ fi
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mStacked DSLR image created with Siril test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mStacked DSLR image created with Siril test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL_TEST_NOT_PERFORMED"
+fi
+
 
 ### Test the field-of-view guess code
 if [ -d ../individual_images_test ];then
