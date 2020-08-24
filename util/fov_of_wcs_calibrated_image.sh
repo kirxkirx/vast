@@ -43,7 +43,23 @@ if [ "$LAST_CHAR_OF_VAST_PATH" != "/" ];then
 fi
 #
 
-# Check that the image does seem to contain a WCS solution
+# Verify that the input file is a valid FITS file
+"$VAST_PATH"lib/fitsverify -q -e "$FITS_IMAGE_TO_CHECK"
+if [ $? -ne 0 ];then
+ echo "WARNING: the input file $FITS_IMAGE_TO_CHECK seems to be a FITS image that does not fully comply with the FITS standard.
+Checking if the filename extension and FITS header look reasonable..."
+ ## Exampt from the rule for files that have at least some correct keywords
+ echo "$FITS_IMAGE_TO_CHECK" | grep  -e ".fits"  -e ".FITS"  -e ".fts" -e ".FTS"  -e ".fit"  -e ".FIT" && "$VAST_PATH"util/listhead "$FITS_IMAGE_TO_CHECK" | grep -e "SIMPLE  =                    T" -e "TELESCOP= 'Aristarchos'" && "$VAST_PATH"util/listhead "$FITS_IMAGE_TO_CHECK" | grep -e "NAXIS   =                    2" -e "TELESCOP= 'Aristarchos'"
+ if [ $? -eq 0 ];then
+  echo "OK, let's assume this is a valid FITS file"
+ else
+  echo "ERROR: the input image file $FITS_IMAGE_TO_CHECK did not pass verification as a valid FITS file"
+  exit 1
+ fi
+fi
+
+
+# Check that the FITS image does seem to contain a WCS solution
 FITS_IMAGE_TO_CHECK_HEADER=`"$VAST_PATH"util/listhead "$FITS_IMAGE_TO_CHECK"`
 # Check if it has WCS keywords
 for TYPICAL_WCS_KEYWORD in CTYPE1 CTYPE2 CRVAL1 CRVAL2 CRPIX1 CRPIX2 CD1_1 CD1_2 CD2_1 CD2_2 ;do

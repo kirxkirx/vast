@@ -122,11 +122,13 @@ int guess_gain( char *fitsfilename, char *resulting_sextractor_cl_parameter_stri
  int status= 0;  // CFITSIO status value MUST be initialized to zero!
  int hdutype;    //, naxis, ii;
 
- double guessed_gain, gain_from_fits_header;
+ double guessed_gain, gain_from_fits_header, double_trash;
 
  double exposure= 0.0;
 
  int check_gain_in_default_sex_result;
+ 
+ int bitpix;
 
  // Check the input
  if ( operation_mode < 0 || operation_mode > 2 ) {
@@ -182,7 +184,28 @@ int guess_gain( char *fitsfilename, char *resulting_sextractor_cl_parameter_stri
   }
   status= 0; // reset status, it is OK not to find this keyword
 
+  // Special case Siril imae stacking code producess some really strange normalization when writing 32bit floating-point images.
+  // As the result, the default non-zero gain value completely messes up error estimation for the detected sources.
+  // If this is a DSLR image (as indicated by the presence of ISOSPEED key) and it is 32bit floatng point - set gain to 0. 
+  status= 0;
+  fits_read_key( fptr, TDOUBLE, "ISOSPEED", &double_trash, NULL, &status );
+  if ( status == 0 ) {
+   fits_get_img_type( fptr, &bitpix, &status );
+   if ( status != 0 ) { 
+    fprintf( stderr, "ERROR: cannot get FITS image type!\n");
+   } else {
+    if ( bitpix == -32 ) {
+     fits_close_file( fptr, &status ); // close file
+     guessed_gain= 0.0;
+     sprintf( resulting_sextractor_cl_parameter_string, "-GAIN %.3lf ", guessed_gain );
+     fprintf( stderr, "The gain value is set to 0 for a BITPIX = -32 DSLR image %s\n", guessed_gain, fitsfilename );
+     return 0;
+    }
+   }
+  }
+  
   // Normal GAIN keyword
+  status= 0;
   fits_read_key( fptr, TDOUBLE, "GAIN", &gain_from_fits_header, comment_str, &status );
   if ( status == 0 ) {
    if ( 0 == check_if_gain_keyword_comment_looks_suspicious( comment_str ) ) {

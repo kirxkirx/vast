@@ -333,8 +333,9 @@ void image_minmax2( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i ) 
  int hist_summa= 0;
  ( *max_i )= ( *min_i )= im[0];
  // set all histogram values to 0
- for ( i= 0; i < 65536; i++ )
+ for ( i= 0; i < 65536; i++ ) {
   HIST[i]= 0;
+ }
 
  for ( i= 0; i < NUM_OF_PIXELS; i++ ) {
   if ( im[i] > 0 && im[i] < 65535 ) {
@@ -345,10 +346,58 @@ void image_minmax2( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i ) 
     ( *min_i )= im[i];
   }
  }
- for ( i= 0; i < 65535; i++ )
+ 
+ 
+ for ( i= 0; i < 65535; i++ ) {
   hist_summa+= HIST[i];
+ }
 
  limit= (long)( ( (double)hist_summa - (double)hist_summa * PGFV_CUTS_PERCENT / 100.0 ) / 2.0 );
+
+
+ //////////////////////
+ // Try the percantage cuts only if the image range is not much smaller than 0 to 65535
+ if ( ( *max_i ) < 10.0 ) {
+
+  // set all histogram values to 0
+  for ( i= 0; i < 65536; i++ ) {
+   HIST[i]= 0;
+  }
+
+  for ( i= 0; i < NUM_OF_PIXELS; i++ ) {
+   if ( im[i] > 0 && im[i] < 65535 ) {
+    HIST[(long)( 65535/10.0*im[i] + 0.5 )]+= 1;
+    if ( im[i] > ( *max_i ) )
+     ( *max_i )= im[i];
+    if ( im[i] < ( *min_i ) )
+     ( *min_i )= im[i];
+   }
+  }
+
+  // find histogram peak
+  summa= 0;
+  for ( i= 0; i < 65535; i++ ) {
+   if ( summa < HIST[i] ) {
+    ( *min_i )= (float)i/65535*10.0;
+    summa= HIST[i];
+   }
+  }
+  ( *min_i )-= ( *min_i ) * 2 / 3;
+  ( *min_i )= MAX( ( *min_i ), 0 ); // do not go for very negatve values - they are likely wrong
+  summa= 0;
+  for ( i= 65535; i > 1; i-- ) {
+   summa+= HIST[i];
+
+   if ( summa >= limit ) {
+    ( *max_i )= (float)i/65535*10.0;
+    break;
+   }
+  }
+
+  //fprintf( stderr, "DEBUG: image_minmax2() %f %f\n", ( *min_i ), ( *max_i ) );
+  return;
+ }
+ //////////////////////
 
  // find histogram peak
  summa= 0;
@@ -386,12 +435,34 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
  float X, Y;
 
  int test_i;
+ 
+ int limit;
+
+// int number_of_pixels_in_zoomed_image;
 
  if ( NUM_OF_PIXELS <= 0 ) {
   fprintf( stderr, "FATAL ERROR in image_minmax3(): NUM_OF_PIXELS<=0 \n" );
   exit( 1 );
  }
 
+/*
+ // Do not allow sub-pixel zoom
+ number_of_pixels_in_zoomed_image=0;
+ for ( i= 0; i < NUM_OF_PIXELS; i++ ) {
+  if ( im[i] > 0 && 65535/10.0*im[i] < 65535 ) {
+   // Cool it works!!! (Transformation from i to XY)
+   Y= 1 + (int)( (float)i / (float)naxes[0] );
+   X= i + 1 - ( Y - 1 ) * naxes[0];
+   if ( X > MIN( drawX1, drawX2 ) && X < MAX( drawX1, drawX2 ) && Y > MIN( drawY1, drawY2 ) && Y < MAX( drawY1, drawY2 ) ) {
+    number_of_pixels_in_zoomed_image++;
+   }
+  }
+ }
+ if ( number_of_pixels_in_zoomed_image<16 ) {
+  return;
+ }
+ //////////////////
+*/
  // set all histogram values to 0
  for ( i= 0; i < 65536; i++ )
   HIST[i]= 0;
@@ -410,6 +481,68 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
    }
   }
  }
+ 
+ //////////////////////
+ // Try the percantage cuts only if the image range is not much smaller than 0 to 65535
+ if ( ( *max_i ) < 10.0 ) {
+
+  // set all histogram values to 0
+  for ( i= 0; i < 65536; i++ ) {
+   HIST[i]= 0;
+  }
+
+
+  for ( i= 0; i < NUM_OF_PIXELS; i++ ) {
+   if ( im[i] > 0 && 65535/10.0*im[i] < 65535 ) {
+    // Cool it works!!! (Transformation from i to XY)
+    Y= 1 + (int)( (float)i / (float)naxes[0] );
+    X= i + 1 - ( Y - 1 ) * naxes[0];
+    if ( X > MIN( drawX1, drawX2 ) && X < MAX( drawX1, drawX2 ) && Y > MIN( drawY1, drawY2 ) && Y < MAX( drawY1, drawY2 ) ) {
+     HIST[(long)( 65535/10.0*im[i] + 0.5 )]+= 1;
+     if ( im[i] > ( *max_i ) )
+      ( *max_i )= im[i];
+     if ( im[i] < ( *min_i ) )
+      ( *min_i )= im[i];
+    }
+   }
+  }
+
+
+  // find histogram peak
+  summa= 0;
+  for ( i= 0; i < 65535; i++ ) {
+   if ( summa < HIST[i] ) {
+    ( *min_i )= MIN( ( *min_i ), (float)i/65535*10.0);
+    summa= HIST[i];
+   }
+  }
+  ( *min_i )-= ( *min_i ) * 2 / 3;
+  ( *min_i )= MAX( ( *min_i ), 0 ); // do not go for very negatve values - they are likely wrong
+
+
+  summa= 0;
+  //for ( i= 65535; i > 1; i-- ) {
+  for ( i= 65535; i--; ) {
+   summa+= HIST[i];
+  }
+  limit= (long)( ( (double)summa - (double)summa * PGFV_CUTS_PERCENT / 100.0 ) / 2.0 );
+
+  summa= 0;
+  //for ( i= 65535; i > 1; i-- ) {
+  for ( i= 65535; i-- ; ) {
+   summa+= HIST[i];
+
+   if ( summa >= limit ) {
+    ( *max_i )= MIN(  ( *max_i ), (float)i/65535*10.0 );
+    break;
+   }
+  }
+
+  //fprintf( stderr, "DEBUG: image_minmax3() %f %f\n", ( *min_i ), ( *max_i ) );
+  return;
+ }
+ //////////////////////
+  
  for ( i= 0; i < 65535; i++ )
   hist_summa+= HIST[i];
 
@@ -1648,6 +1781,9 @@ int main( int argc, char **argv ) {
   drawX0= (int)( ( drawX1 + drawX2 ) / 2 + 0.5 );
   drawY0= (int)( ( drawY1 + drawY2 ) / 2 + 0.5 );
   razmer_y= myimax( drawX2 - drawX1, drawY2 - drawY1 );
+  //
+  razmer_y= MAX( razmer_y, 3 ); // do not allow zoom smaller than 3 pix
+  //
   razmer_x= axis_ratio * razmer_y;
   drawX1= drawX0 - (int)( razmer_x / 2 + 0.5 );
   drawY1= drawY0 - (int)( razmer_y / 2 + 0.5 );
@@ -2057,6 +2193,7 @@ int main( int argc, char **argv ) {
      drawX0= (int)( ( drawX1 + drawX2 ) / 2 + 0.5 );
      drawY0= (int)( ( drawY1 + drawY2 ) / 2 + 0.5 );
      razmer_y= myimax( drawX2 - drawX1, drawY2 - drawY1 );
+     razmer_y= MAX( razmer_y, 3 ); // do not allow zoom smaller than 3 pix
      razmer_y= MIN( razmer_y, naxes[1] );
      // if razmer_y is so big that the whole image is to be displayed again...
      if ( razmer_y == naxes[1] ){
