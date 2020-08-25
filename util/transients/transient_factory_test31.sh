@@ -37,9 +37,19 @@ if [ -z "$REFERENCE_IMAGES" ];then
  fi
 fi
 
+# Clean whatever may remain from a possible incomplete previous run
 if [ -f transient_factory_test31.txt ];then
  rm -f transient_factory_test31.txt
 fi
+# clean up the local cache
+for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.txt exclusion_list_bbsc.txt exclusion_list_tycho2.txt exclusion_list_gaiadr2.txt ;do
+ if [ -f "$FILE_TO_REMOVE" ];then
+  rm -f "$FILE_TO_REMOVE"
+  echo "Removing $FILE_TO_REMOVE" >> transient_factory_test31.txt
+ fi
+done
+
+
 
 if [ ! -d "$REFERENCE_IMAGES" ];then
  echo "ERROR: cannot find the reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES"
@@ -368,7 +378,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # We need a local exclusion list not to find the same things in multiple SExtractor runs
  if [ -f exclusion_list_local.txt ];then
   rm -f exclusion_list_local.txt
- fi
+ fi 
 
  # Make multiple VaST runs with different SExtractor config files
  ### ===> SExtractor config file <===
@@ -728,9 +738,29 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  #
 
  done # for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
- 
+
+ # Compare image centers of the reference and second-epoch image
+ WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $REFERENCE_EPOCH__FIRST_IMAGE`
+ WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
+ IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE=`util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}'` 
+ WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $SECOND_EPOCH__FIRST_IMAGE`
+ WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
+ IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE=`util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}'`
+ DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=`lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{print $5}'`
+ echo "###################################
+Reference image center $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE
+Second-epoch image center $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE
+Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
+###################################" >> transient_factory_test31.txt
+ TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.5" | bc -ql`
+ if [ $TEST -eq 1 ];then
+  echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
+  echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg." >> transient_factory_test31.txt
+ fi
+  
  # clean up the local cache
- for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.txt exclusion_list_bbsc.txt exclusion_list_tycho2.txt exclusion_list_gaiadr2.txt ;do
+ # We should not remove exclusion_list_gaiadr2.txt as we want to use it later
+ for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.txt exclusion_list_bbsc.txt exclusion_list_tycho2.txt ;do
   if [ -f "$FILE_TO_REMOVE" ];then
    rm -f "$FILE_TO_REMOVE"
    echo "Removing $FILE_TO_REMOVE" >> transient_factory_test31.txt

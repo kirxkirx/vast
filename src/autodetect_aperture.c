@@ -304,6 +304,7 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
    fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", sextractor_catalog_filename );
   }
 
+  // Set the meaurement aperture using the median value of A (semi-major axis) parameter for the image
   gsl_sort( A, 1, i );
   median_A= gsl_stats_median_from_sorted_data( A, 1, i );
   APERTURE= median_A * CONST;
