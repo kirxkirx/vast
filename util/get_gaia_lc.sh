@@ -111,15 +111,14 @@ cat "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_RP.txt
 #exit 0
 
 ###### Plot Gaia lightcurve using gnuplot
+command -v gnuplot &>/dev/null
+if [ $? -eq 0 ];then
+ JD0=`cat "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_G.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_BP.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_RP.txt | awk -F '.' '{print $1}' | sort | uniq | head -n 1`
+ JD1=`cat "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_G.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_BP.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_RP.txt | awk -F '.' '{print $1}' | sort | uniq | tail -n 1`
+ PLOT_MIN=`echo "-1*($JD1-$JD0)/10" | bc -ql | awk '{printf "%.1f",$1}'`
+ PLOT_MAX=`echo "($JD1-$JD0)+($JD1-$JD0)/10" | bc -ql | awk '{printf "%.1f",$1}'`
 
-#JD0=`cat "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_G.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_BP.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_RP.txt | awk '{print $1}' FS='.' | sort | uniq | head -n 1`
-JD0=`cat "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_G.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_BP.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_RP.txt | awk -F '.' '{print $1}' | sort | uniq | head -n 1`
-#JD1=`cat "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_G.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_BP.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_RP.txt | awk '{print $1}' FS='.' | sort | uniq | tail -n 1`
-JD1=`cat "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_G.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_BP.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_RP.txt | awk -F '.' '{print $1}' | sort | uniq | tail -n 1`
-PLOT_MIN=`echo "-1*($JD1-$JD0)/10" | bc -ql | awk '{printf "%.1f",$1}'`
-PLOT_MAX=`echo "($JD1-$JD0)+($JD1-$JD0)/10" | bc -ql | awk '{printf "%.1f",$1}'`
-
-cd "$VAST_PATH"gaia_lightcurves/
+ cd "$VAST_PATH"gaia_lightcurves/
 echo "set terminal postscript eps enhanced color solid 'Times' 22 linewidth 2
 set output '"$GAIA_ID".eps'
 set xlabel 'JD-$JD0.0'
@@ -130,5 +129,9 @@ plot [$PLOT_MIN:$PLOT_MAX] \
 '"$GAIA_ID"_BP.txt' using (\$1-$JD0):2:3 with errorbars pointtype 7 pointsize 1.0 linecolor 'royalblue' title 'BP', \
 '"$GAIA_ID"_RP.txt' using (\$1-$JD0):2:3 with errorbars pointtype 7 pointsize 1.0 linecolor 'red' title 'RP'
 " > "$GAIA_ID".gnuplot
-gnuplot "$GAIA_ID".gnuplot
-convert -density 150 "$GAIA_ID".eps  -background white -alpha remove  "$GAIA_ID".png
+ gnuplot "$GAIA_ID".gnuplot
+ command -v convert &>/dev/null
+ if [ $? -eq 0 ];then
+  convert -density 150 "$GAIA_ID".eps  -background white -alpha remove  "$GAIA_ID".png
+ fi # command -v convert
+fi # command -v gnuplot

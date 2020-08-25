@@ -170,9 +170,9 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg ) {
  char Period[32];
  char Url[32];
  //char descr[128];
- char string[512];
- char string_noemptycells[512];
- char string_to_be_ruined_by_strok[512];
+ char string[4096];
+ char string_noemptycells[4096];
+ char string_to_be_ruined_by_strok[4096];
  int i, j;
 
  double distance_deg;
@@ -185,22 +185,23 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg ) {
   fprintf( stderr, "ERROR: Cannot open asassnv.csv\n" );
   exit( 1 );
  }
- while ( NULL != fgets( string, 512-1, vsx_dat ) ) {
+ while ( NULL != fgets( string, 4096-1, vsx_dat ) ) {
   if ( NULL == string ){
    continue;
   }
   if ( strlen(string)<180 ){
-   fprintf(stderr,"WARNING from search_asassnv() a string in lib/catalogs/asassnv.csv is too short:\n%s\n",string);
+// That happens all too often!
+//   fprintf(stderr,"WARNING from search_asassnv() a string in lib/catalogs/asassnv.csv is too short:\n%s\n",string);
    continue;
   }
   // fix the string for strtok() as it cannot handle empty cells ",,"
-  for ( i= 0, j= 0; i < 512-1; i++, j++ ) {
-   if ( j == 512-1 ){
+  for ( i= 0, j= 0; i < 4096-1; i++, j++ ) {
+   if ( j == 4096-1 ){
     string_noemptycells[j]='\0';
     break;
    }
    string_noemptycells[j]= string[i];
-   if ( i < 512-1 ) {
+   if ( i < 4096-1 ) {
     if ( string[i] == ',' && string[i + 1] == ',' ) {
      j++;
      string_noemptycells[j]= ' '; // add empty cell
@@ -213,8 +214,8 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg ) {
    exit( 1 );
   }
   // We should do this before each invocation of getfield_from_csv_string() !!!
-  strncpy( string_to_be_ruined_by_strok, string_noemptycells, 512-1 );
-  string_to_be_ruined_by_strok[512-1]= '\0'; // just in case
+  strncpy( string_to_be_ruined_by_strok, string_noemptycells, 4096-1 );
+  string_to_be_ruined_by_strok[4096-1]= '\0'; // just in case
   // Skip the header line
   if ( 0 == strncmp( "ASAS-SN Name", getfield_from_csv_string( string_to_be_ruined_by_strok, 1 ), strlen( "ASAS-SN Name" ) ) ) {
    continue;
@@ -223,16 +224,16 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg ) {
 
   //// Dec
   // We should do this before each invocation of getfield_from_csv_string() !!!
-  strncpy( string_to_be_ruined_by_strok, string_noemptycells, 512-1 );
-  string_to_be_ruined_by_strok[512-1]= '\0'; // just in case
+  strncpy( string_to_be_ruined_by_strok, string_noemptycells, 4096-1 );
+  string_to_be_ruined_by_strok[4096-1]= '\0'; // just in case
   Dec_deg=atof( getfield_from_csv_string( string_to_be_ruined_by_strok, 5 ) );
   if ( fabs( target_Dec_deg - Dec_deg ) > VSX_SEARCH_RADIUS_DEG )
    continue;
 
   //// RA
   // We should do this before each invocation of getfield_from_csv_string() !!!
-  strncpy( string_to_be_ruined_by_strok, string_noemptycells, 512-1 );
-  string_to_be_ruined_by_strok[512-1]= '\0'; // just in case
+  strncpy( string_to_be_ruined_by_strok, string_noemptycells, 4096-1 );
+  string_to_be_ruined_by_strok[4096-1]= '\0'; // just in case
   RA_deg= atof( getfield_from_csv_string( string_to_be_ruined_by_strok, 4 ) );
 
   RA1_rad= RA_deg * 3600 / 206264.8;
@@ -248,43 +249,43 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg ) {
    ////// Do the nasty conversions only if this is our star //////
    //// Name
    // We should do this before each invocation of getfield_from_csv_string() !!!
-   strncpy( string_to_be_ruined_by_strok, string_noemptycells, 512-1 );
-   string_to_be_ruined_by_strok[512-1]= '\0'; // just in case
+   strncpy( string_to_be_ruined_by_strok, string_noemptycells, 4096-1 );
+   string_to_be_ruined_by_strok[4096-1]= '\0'; // just in case
    strncpy( name, getfield_from_csv_string( string_to_be_ruined_by_strok, 1 ), 32 );
    name[32 - 1]= '\0'; // just in case
 
    //// Type
    // We should do this before each invocation of getfield_from_csv_string() !!!
-   strncpy( string_to_be_ruined_by_strok, string_noemptycells, 512-1 );
-   string_to_be_ruined_by_strok[512-1]= '\0'; // just in case
+   strncpy( string_to_be_ruined_by_strok, string_noemptycells, 4096-1 );
+   string_to_be_ruined_by_strok[4096-1]= '\0'; // just in case
    strncpy( type, getfield_from_csv_string( string_to_be_ruined_by_strok, 9 ), 32 );
    type[32 - 1]= '\0'; // just in case
 
    //// MeanMag
    // We should do this before each invocation of getfield_from_csv_string() !!!
-   strncpy( string_to_be_ruined_by_strok, string_noemptycells, 512-1 );
-   string_to_be_ruined_by_strok[512-1]= '\0'; // just in case
+   strncpy( string_to_be_ruined_by_strok, string_noemptycells, 4096-1 );
+   string_to_be_ruined_by_strok[4096-1]= '\0'; // just in case
    strncpy( MeanMag, getfield_from_csv_string( string_to_be_ruined_by_strok, 6 ), 32 );
    MeanMag[32 - 1]= '\0'; // just in case
 
    //// Amplitude
    // We should do this before each invocation of getfield_from_csv_string() !!!
-   strncpy( string_to_be_ruined_by_strok, string_noemptycells, 512-1 );
-   string_to_be_ruined_by_strok[512-1]= '\0'; // just in case
+   strncpy( string_to_be_ruined_by_strok, string_noemptycells, 4096-1 );
+   string_to_be_ruined_by_strok[4096-1]= '\0'; // just in case
    strncpy( Amplitude, getfield_from_csv_string( string_to_be_ruined_by_strok, 7 ), 32 );
    Amplitude[32 - 1]= '\0'; // just in case
 
    //// Period
    // We should do this before each invocation of getfield_from_csv_string() !!!
-   strncpy( string_to_be_ruined_by_strok, string_noemptycells, 512-1 );
-   string_to_be_ruined_by_strok[512-1]= '\0'; // just in case
+   strncpy( string_to_be_ruined_by_strok, string_noemptycells, 4096-1 );
+   string_to_be_ruined_by_strok[4096-1]= '\0'; // just in case
    strncpy( Period, getfield_from_csv_string( string_to_be_ruined_by_strok, 8 ), 32 );
    Period[32 - 1]= '\0'; // just in case
 
    //// Url
    // We should do this before each invocation of getfield_from_csv_string() !!!
-   strncpy( string_to_be_ruined_by_strok, string_noemptycells, 512-1 );
-   string_to_be_ruined_by_strok[512-1]= '\0'; // just in case
+   strncpy( string_to_be_ruined_by_strok, string_noemptycells, 4096-1 );
+   string_to_be_ruined_by_strok[4096-1]= '\0'; // just in case
    strncpy( Url, getfield_from_csv_string( string_to_be_ruined_by_strok, 10 ), 32 );
    Url[32 - 1]= '\0'; // just in case
    ///////////////////////////////////////////////////////////////
