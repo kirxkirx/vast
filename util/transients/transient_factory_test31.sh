@@ -720,6 +720,13 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  
  echo "*------ done with $SEXTRACTOR_CONFIG_FILE ------*" >> transient_factory_test31.txt
 
+ # Update the local exclusion list (but actually util/transients/report_transient.sh is supposed to take care of that already)
+ echo "Updating exclusion_list_local.txt" >> transient_factory_test31.txt
+ grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' >> exclusion_list_local.txt
+ echo "#### The local exclusion list is exclusion_list_local.txt ####" >> transient_factory_test31.txt
+ cat exclusion_list_local.txt >> transient_factory_test31.txt
+ #
+
  done # for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
  
  # clean up the local cache
