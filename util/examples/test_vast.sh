@@ -7026,18 +7026,18 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN010"
   fi
   # this should NOT be found! First epoch image is used along the 2nd epoch images
-  grep --quiet "2019 11 03.7864  2457867.9530  12.18" transient_report/index.html
+  grep --quiet "2019 11 03.7864  2457867.9530  12\.1." transient_report/index.html
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN010x"
   fi
   #
-  grep --quiet "2019 11 03.6470  2458791.1470  11\.2.  19:03:" transient_report/index.html
+  grep --quiet -e "2019 11 03.6470  2458791.1470  11\.2.  19:03:" -e "2019 11 03.6470  2458791.1470  11\.3.  19:03:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN010a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2019 11 03.6470  2458791.1470  11\.2.  19:03:" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2019 11 03.6470  2458791.1470  11\.2.  19:03:" -e "2019 11 03.6470  2458791.1470  11\.3.  19:03:" transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_DEGREES=`lib/put_two_sources_in_one_field 19:03:48.76 -26:58:59.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_DEGREES<8.4" | bc -ql`
@@ -8638,51 +8638,52 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit ];then
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL004"
- fi
- util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_16bit_g2.fit | grep --quiet "Image size: 970.6'x644.5'"
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL005"
- fi
- #
- util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_16bit_g2.fit  | grep --quiet 'Image scale: 13.57"/pix along the X axis and 13.54"/pix along the Y axis'
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL006"
- fi
- #
- util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_16bit_g2.fit  | grep --quiet 'Image center: 00:07:22.995 +66:25:47.33 J2000 2145.500 1428.500'
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL007"
- fi
- #
- util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit
- if [ ! -f wcs_r_ncas20200820_stacked_16bit_g2.fit ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL008"
- fi 
- lib/bin/xy2sky wcs_r_ncas20200820_stacked_16bit_g2.fit 200 200 &>/dev/null
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL009"
- fi
- if [ ! -s wcs_r_ncas20200820_stacked_16bit_g2.fit.cat.ucac5 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL010"
  else
-  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_r_ncas20200820_stacked_16bit_g2.fit.cat.ucac5 | wc -l | awk '{print $1}'`
-  if [ $TEST -lt 100 ];then
+  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_16bit_g2.fit | grep --quiet "Image size: 970.6'x644.5'"
+  if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL011_$TEST"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL005"
   fi
- fi 
- # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
- util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit 2>&1 | grep --quiet 'The output catalog wcs_r_ncas20200820_stacked_16bit_g2.fit.cat.ucac5 already exist.'
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL012"
- fi
+  #
+  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_16bit_g2.fit  | grep --quiet 'Image scale: 13.57"/pix along the X axis and 13.54"/pix along the Y axis'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL006"
+  fi
+  #
+  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_16bit_g2.fit  | grep --quiet 'Image center: 00:07:22.995 +66:25:47.33 J2000 2145.500 1428.500'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL007"
+  fi
+  #
+  util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit
+  if [ ! -f wcs_r_ncas20200820_stacked_16bit_g2.fit ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL008"
+  fi 
+  lib/bin/xy2sky wcs_r_ncas20200820_stacked_16bit_g2.fit 200 200 &>/dev/null
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL009"
+  fi
+  if [ ! -s wcs_r_ncas20200820_stacked_16bit_g2.fit.cat.ucac5 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL010"
+  else
+   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_r_ncas20200820_stacked_16bit_g2.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+   if [ $TEST -lt 100 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL011_$TEST"
+   fi
+  fi 
+  # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
+  util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit 2>&1 | grep --quiet 'The output catalog wcs_r_ncas20200820_stacked_16bit_g2.fit.cat.ucac5 already exist.'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL012"
+  fi
+ fi # initial plate solve was successful
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
   echo -e "\n\033[01;34mStacked DSLR image (BITPIX=16) created with Siril test \033[01;32mPASSED\033[00m" >> /dev/stderr
@@ -8749,51 +8750,52 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit ];then
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32004"
- fi
- util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_32bit_g2.fit | grep --quiet "Image size: 970.6'x644.5'"
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32005"
- fi
- #
- util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_32bit_g2.fit  | grep --quiet 'Image scale: 13.57"/pix along the X axis and 13.54"/pix along the Y axis'
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32006"
- fi
- #
- util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_32bit_g2.fit  | grep --quiet 'Image center: 00:07:22.995 +66:25:47.33 J2000 2145.500 1428.500'
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32007"
- fi
- #
- util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit
- if [ ! -f wcs_r_ncas20200820_stacked_32bit_g2.fit ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32008"
- fi 
- lib/bin/xy2sky wcs_r_ncas20200820_stacked_32bit_g2.fit 200 200 &>/dev/null
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32009"
- fi
- if [ ! -s wcs_r_ncas20200820_stacked_32bit_g2.fit.cat.ucac5 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32010"
  else
-  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_r_ncas20200820_stacked_32bit_g2.fit.cat.ucac5 | wc -l | awk '{print $1}'`
-  if [ $TEST -lt 100 ];then
+  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_32bit_g2.fit | grep --quiet "Image size: 970.6'x644.5'"
+  if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32011_$TEST"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32005"
   fi
- fi 
- # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
- util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit 2>&1 | grep --quiet 'The output catalog wcs_r_ncas20200820_stacked_32bit_g2.fit.cat.ucac5 already exist.'
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32012"
- fi
+  #
+  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_32bit_g2.fit  | grep --quiet 'Image scale: 13.57"/pix along the X axis and 13.54"/pix along the Y axis'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32006"
+  fi
+  #
+  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_32bit_g2.fit  | grep --quiet 'Image center: 00:07:22.995 +66:25:47.33 J2000 2145.500 1428.500'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32007"
+  fi
+  #
+  util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit
+  if [ ! -f wcs_r_ncas20200820_stacked_32bit_g2.fit ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32008"
+  fi 
+  lib/bin/xy2sky wcs_r_ncas20200820_stacked_32bit_g2.fit 200 200 &>/dev/null
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32009"
+  fi
+  if [ ! -s wcs_r_ncas20200820_stacked_32bit_g2.fit.cat.ucac5 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32010"
+  else
+   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_r_ncas20200820_stacked_32bit_g2.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+   if [ $TEST -lt 100 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32011_$TEST"
+   fi
+  fi 
+  # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
+  util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit 2>&1 | grep --quiet 'The output catalog wcs_r_ncas20200820_stacked_32bit_g2.fit.cat.ucac5 already exist.'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32012"
+  fi
+ fi # initial plate solve was successful
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
   echo -e "\n\033[01;34mStacked DSLR image (BITPIX=-32) created with Siril test \033[01;32mPASSED\033[00m" >> /dev/stderr
