@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-# When adapring this script for a new dataset, watch for the signs
+# When adapting this script for a new dataset, watch for the signs
 ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
+### ===> APERTURE LIMITS HARDCODED HERE <===
 
 # Also watch for
 ### ===> SExtractor config file <===
@@ -272,17 +273,36 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "ERROR processing second-epoch images!"
    echo "***** IMAGE PROCESSING ERROR (preliminary VaST run) *****" >> transient_factory.log
    echo "############################################################" >> transient_factory.log
-   echo "ERROR processing second-epoch images (preliminary VaST run)!" >> transient_factory_test31.txt
+   echo "ERROR processing second-epoch images (preliminary VaST run 01)!" >> transient_factory_test31.txt
+   continue   
+  fi
+  N_PROCESSED_IMAGES_PRELIM_RUN=`cat vast_summary.log | grep 'Images used for photometry' | awk '{print $5}'`
+  if [ $N_PROCESSED_IMAGES_PRELIM_RUN -lt 2 ];then
+   echo "ERROR processing second-epoch images!"
+   echo "***** IMAGE PROCESSING ERROR (preliminary VaST run) *****" >> transient_factory.log
+   echo "############################################################" >> transient_factory.log
+   echo "ERROR processing second-epoch images (preliminary VaST run 02)!" >> transient_factory_test31.txt
    continue   
   fi
   if [ ! -s vast_image_details.log ];then
-   echo "ERROR: vast_image_details.log is not created" >> transient_factory_test31.txt
+   echo "ERROR: vast_image_details.log is not created (preliminary VaST run)" >> transient_factory_test31.txt
    continue
   fi
   # column 9 in vast_image_details.log is the aperture size in pixels
-  SECOND_EPOCH__FIRST_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | sort -nk9 | head -n1 | awk '{print $17}'`
+  ### ===> APERTURE LIMITS HARDCODED HERE <===
+  NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 10 ) print }' | wc -l`
+  if [ $NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING -lt 2 ];then
+   echo "ERROR: seeing on second-epoch images is out of range"
+   echo "***** ERROR: seeing on second-epoch images is out of range *****" >> transient_factory.log
+   echo "############################################################" >> transient_factory.log
+   echo "ERROR: seeing on second-epoch images is out of range" >> transient_factory_test31.txt
+   continue
+  fi
+  ### ===> APERTURE LIMITS HARDCODED HERE <===
+  SECOND_EPOCH__FIRST_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 10 ) print }' | sort -nk9 | head -n1 | awk '{print $17}'`
   echo "SECOND_EPOCH__FIRST_IMAGE= $SECOND_EPOCH__FIRST_IMAGE" >> transient_factory_test31.txt
-  SECOND_EPOCH__SECOND_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}'`
+  ### ===> APERTURE LIMITS HARDCODED HERE <===
+  SECOND_EPOCH__SECOND_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 10 ) print }' | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}'`
   echo "SECOND_EPOCH__SECOND_IMAGE= $SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_test31.txt
   if [ -z "$SECOND_EPOCH__FIRST_IMAGE" ];then
    echo "ERROR: SECOND_EPOCH__FIRST_IMAGE is not defined!" >> transient_factory_test31.txt
