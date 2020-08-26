@@ -182,12 +182,28 @@ REFERENCE_IMAGES="`dirname $REFERENCE_IMAGE` >> transient_report/index.tmp
 
    #
    if [ -f test.mpc ];then
-    echo "<a href=\"javascript:toggleElement('mpcstub_$TRANSIENT_NAME')\">Stub MPC report line</a> (for online MPChecker) " >> transient_report/index.tmp  
+    echo "<a href=\"javascript:toggleElement('mpcstub_$TRANSIENT_NAME')\">Stub MPC report</a> (for online MPChecker) " >> transient_report/index.tmp  
     echo -n "<div id=\"mpcstub_$TRANSIENT_NAME\" style=\"display:none\">
+Don't forget to copy the leading white spaces and change the observatory code! 
+The code 'C32' is 'Ka-Dar Observatory, TAU Station, Nizhny Arkhyz', the code '500' is the geocenter.
+Make sure there are no trailing white spaces after the observatory code. 
+The string should be exactly 80 characters long to conform to the MPC format.<br>
+Mean position:
 <pre style='font-family:monospace;font-size:12px;'>
 " >> transient_report/index.tmp
-    cat test.mpc >> transient_report/index.tmp
+    cat test.mpc | sed 's: 500: C32:g' >> transient_report/index.tmp
     echo "</pre>
+Position measured on individual images:
+<pre style='font-family:monospace;font-size:12px;'>" >> transient_report/index.tmp
+    grep 'Discovery image' transient_report/index.tmp | tail -n 2 | head -n1 | awk -F'>' '{print $5" "$11" "$9}' | sed 's:&nbsp;::g' | sed 's:</td::g' | sed 's:\:: :g' | awk '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+02.0f %02.0f %05.2f         %4.1f R      C32\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' >> transient_report/index.tmp
+    grep 'Discovery image' transient_report/index.tmp | tail -n 1 | awk -F'>' '{print $5" "$11" "$9}' | sed 's:&nbsp;::g' | sed 's:</td::g' | sed 's:\:: :g' | awk '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+02.0f %02.0f %05.2f         %4.1f R      C32\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' >> transient_report/index.tmp
+    echo "</pre>" >> transient_report/index.tmp
+    echo "You may copy/paste the above measurements to the following online services:<br>
+<a href='https://minorplanetcenter.net/cgi-bin/checkmp.cgi'>MPChecker</a> (in case the button does not work)<br>
+<a href='https://minorplanetcenter.net/cgi-bin/checkneocmt.cgi'>NEOCMTChecker</a> (NEO's and comets)<br>
+<a href='https://www.projectpluto.com/sat_id2.htm'>sat_id2</a> (artificial satellites; needs at least two observations to work)<br>
+<a href='http://www.fitsblink.net/satellites/'>fitsblink_satellites</a> (art. sat.; you'll need to save the astrometry as a text file and upload it)
+<br>
 </div>" >> transient_report/index.tmp
    fi
    #
