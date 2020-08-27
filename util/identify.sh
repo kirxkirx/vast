@@ -400,8 +400,8 @@ if [ -z $2 ];then
   # - try to rely on WCS information that may be already inserted in the image
   if [ ! -f $WCS_IMAGE_NAME ];then
    # Check if the file already contains a WCS-header
-   echo $SEXTRACTOR -c `grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $FITSFILE 2>/dev/null` $FITSFILE 
-   $SEXTRACTOR -c "$VAST_PATH"`grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $FITSFILE 2>/dev/null` $FITSFILE && echo "Using WCS information from the original image" >>/dev/stderr && cp $FITSFILE $WCS_IMAGE_NAME
+   echo $SEXTRACTOR -c `grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $FITSFILE 2>/dev/null` `"$VAST_PATH"lib/guess_saturation_limit_main $FITSFILE 2>/dev/null`  $FITSFILE 
+   $SEXTRACTOR -c "$VAST_PATH"`grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $FITSFILE 2>/dev/null` `"$VAST_PATH"lib/guess_saturation_limit_main $FITSFILE 2>/dev/null`  $FITSFILE && echo "Using WCS information from the original image" >>/dev/stderr && cp $FITSFILE $WCS_IMAGE_NAME
    "$VAST_PATH"lib/correct_sextractor_wcs_catalog_using_xy2sky.sh "$WCS_IMAGE_NAME" "$SEXTRACTOR_CATALOG_NAME"
   fi
   
@@ -887,7 +887,7 @@ fi
   TEST=`cat $SEXTRACTOR_CATALOG_NAME | wc -l`
   if [ $TEST -lt 100 ];then
    echo "The catalog seems suspiciously small (only $TEST lines), re-generating the catalog with SExtractor..."
-   $SEXTRACTOR -c "$VAST_PATH"`grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $WCS_IMAGE_NAME 2>/dev/null` $WCS_IMAGE_NAME && echo "ok"
+   $SEXTRACTOR -c "$VAST_PATH"`grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $WCS_IMAGE_NAME 2>/dev/null` `"$VAST_PATH"lib/guess_saturation_limit_main $WCS_IMAGE_NAME 2>/dev/null`  $WCS_IMAGE_NAME && echo "ok"
    if [ -f $SEXTRACTOR_CATALOG_NAME ];then
     echo "Catalog $SEXTRACTOR_CATALOG_NAME corresponding to the image $WCS_IMAGE_NAME created."
     "$VAST_PATH"lib/correct_sextractor_wcs_catalog_using_xy2sky.sh "$WCS_IMAGE_NAME" "$SEXTRACTOR_CATALOG_NAME"
@@ -900,7 +900,7 @@ fi
   TEST=`head -n1 "$SEXTRACTOR_CATALOG_NAME" | awk '{print $6}'`
   if [ "$TEST" = "" ];then
    echo "The catalog is in the old format, re-generating the catalog..."
-   $SEXTRACTOR -c "$VAST_PATH"`grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $WCS_IMAGE_NAME 2>/dev/null` $WCS_IMAGE_NAME && echo "ok"
+   $SEXTRACTOR -c "$VAST_PATH"`grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $WCS_IMAGE_NAME 2>/dev/null` `"$VAST_PATH"lib/guess_saturation_limit_main $WCS_IMAGE_NAME 2>/dev/null`  $WCS_IMAGE_NAME && echo "ok"
    if [ -f "$SEXTRACTOR_CATALOG_NAME" ];then
     echo "Catalog $SEXTRACTOR_CATALOG_NAME corresponding to the image $WCS_IMAGE_NAME created."
     "$VAST_PATH"lib/correct_sextractor_wcs_catalog_using_xy2sky.sh "$WCS_IMAGE_NAME" "$SEXTRACTOR_CATALOG_NAME"

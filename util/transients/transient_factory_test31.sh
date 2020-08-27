@@ -746,13 +746,13 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $SECOND_EPOCH__FIRST_IMAGE`
  WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
  IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE=`util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}'`
- DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=`lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{print $5}'`
+ DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=`lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}'`
  echo "###################################
 Reference image center $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE
 Second-epoch image center $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE
 Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
 ###################################" >> transient_factory_test31.txt
- TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>1.0" | bc -ql`
+ TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.5" | bc -ql`
  if [ $TEST -eq 1 ];then
   echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
   echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg." >> transient_factory_test31.txt
@@ -806,18 +806,30 @@ if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ] || [ "$HOST" = "eridan" ];then
    mv -v exclusion_list_index_html.txt_noasteroids exclusion_list_index_html.txt >> transient_factory_test31.txt
    #
    if [ -f exclusion_list_gaiadr2.txt ];then
-    echo "Adding identified Gaia sources from exclusion_list_gaiadr2.txt" >> transient_factory_test31.txt
-    cat exclusion_list_gaiadr2.txt >> exclusion_list_index_html.txt
+    if [ -s exclusion_list_gaiadr2.txt ];then
+     echo "Adding identified Gaia sources from exclusion_list_gaiadr2.txt" >> transient_factory_test31.txt
+     cat exclusion_list_gaiadr2.txt >> exclusion_list_index_html.txt
+    else
+     echo "exclusion_list_gaiadr2.txt is empty - nothing to add to the exclusion list" >> transient_factory_test31.txt
+    fi
     rm -f exclusion_list_gaiadr2.txt
    else
     echo "exclusion_list_gaiadr2.txt NOT FOUND" >> transient_factory_test31.txt
    fi
    # Write to ../exclusion_list.txt in a single operation in a miserable attempt to minimize chances fo a race condition
-   echo "#### Adding the following to the exclusion list ####" >> transient_factory_test31.txt
-   cat exclusion_list_index_html.txt >> transient_factory_test31.txt
-   echo "####################################################" >> transient_factory_test31.txt
-   cat exclusion_list_index_html.txt >> ../exclusion_list.txt
-   rm -f exclusion_list_index_html.txt
+   if [ -f exclusion_list_index_html.txt ];then
+    if [ -s exclusion_list_index_html.txt ];then
+     echo "#### Adding the following to the exclusion list ####" >> transient_factory_test31.txt
+     cat exclusion_list_index_html.txt >> transient_factory_test31.txt
+     echo "####################################################" >> transient_factory_test31.txt
+     cat exclusion_list_index_html.txt >> ../exclusion_list.txt
+    else
+     echo "#### Nothing to add to the exclusion list ####" >> transient_factory_test31.txt
+    fi
+    rm -f exclusion_list_index_html.txt
+   else
+    echo "exclusion_list_index_html.txt NOT FOUND" >> transient_factory_test31.txt
+   fi
   else
    echo "NOT found ../exclusion_list.txt" >> transient_factory_test31.txt
   fi
