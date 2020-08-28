@@ -42,7 +42,7 @@ if [ -f transient_factory_test31.txt ];then
  rm -f transient_factory_test31.txt
 fi
 # clean up the local cache
-for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.txt exclusion_list_bbsc.txt exclusion_list_tycho2.txt exclusion_list_gaiadr2.txt ;do
+for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.txt exclusion_list_bbsc.txt exclusion_list_tycho2.txt exclusion_list_gaiadr2.txt exclusion_list_apass.txt ;do
  if [ -f "$FILE_TO_REMOVE" ];then
   rm -f "$FILE_TO_REMOVE"
   echo "Removing $FILE_TO_REMOVE" >> transient_factory_test31.txt
@@ -760,7 +760,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  fi
   
  # clean up the local cache
- # We should not remove exclusion_list_gaiadr2.txt as we want to use it later
+ # We should not remove exclusion_list_gaiadr2.txt and exclusion_list_apass.txt as we want to use them later
  for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.txt exclusion_list_bbsc.txt exclusion_list_tycho2.txt ;do
   if [ -f "$FILE_TO_REMOVE" ];then
    rm -f "$FILE_TO_REMOVE"
@@ -817,7 +817,20 @@ if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ] || [ "$HOST" = "eridan" ];then
    else
     echo "exclusion_list_gaiadr2.txt NOT FOUND" >> transient_factory_test31.txt
    fi
-   # Write to ../exclusion_list.txt in a single operation in a miserable attempt to minimize chances fo a race condition
+   #
+   if [ -f exclusion_list_apass.txt ];then
+    if [ -s exclusion_list_apass.txt ];then
+     echo "Adding identified Gaia sources from exclusion_list_apass.txt" >> transient_factory_test31.txt
+     cat exclusion_list_apass.txt >> exclusion_list_index_html.txt
+    else
+     echo "exclusion_list_apass.txt is empty - nothing to add to the exclusion list" >> transient_factory_test31.txt
+    fi
+    rm -f exclusion_list_apass.txt
+   else
+    echo "exclusion_list_apass.txt NOT FOUND" >> transient_factory_test31.txt
+   fi
+   #
+   # Write to ../exclusion_list.txt in a single operation in a miserable attempt to minimize chances of a race condition
    if [ -f exclusion_list_index_html.txt ];then
     if [ -s exclusion_list_index_html.txt ];then
      echo "#### Adding the following to the exclusion list ####" >> transient_factory_test31.txt
