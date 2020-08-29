@@ -1250,7 +1250,7 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
    // obviously don't care if it's fainter or brighter thant the bright search box limits
    if ( m + 1.0 * m_err < search_area_boundaries[5] ) {
     // The candidate is inside the search box - now make additional (slow) checks
-    if ( 1 == is_point_close_or_off_the_frame_edge( star.x_frame, star.y_frame, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) ) {
+    if ( 1 == is_point_close_or_off_the_frame_edge( star.x_frame, star.y_frame, X_im_size, Y_im_size, 2 * FRAME_EDGE_INDENT_PIXELS ) ) {
      return;
     }
     // double-check that it's not in a bad region
@@ -1288,8 +1288,7 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
   if ( star[i].vast_flag != 0 )
    continue;
   if ( star[i].mag != 0.0 ) { // just in case
-   // New: make sure a star defining the search area is not too close to image edge
-   //if( (double)star[i].x < 2*FRAME_EDGE_INDENT_PIXELS || (double)star[i].y < 2*FRAME_EDGE_INDENT_PIXELS || fabs((double)star[i].x - X_im_size) < 2*FRAME_EDGE_INDENT_PIXELS || fabs(star[i].y - Y_im_size) < 2*FRAME_EDGE_INDENT_PIXELS )continue;
+   // Make sure a star defining the search area is not too close to image edge
    if ( 1 == is_point_close_or_off_the_frame_edge( (double)star[i].x, (double)star[i].y, X_im_size, Y_im_size, 2.0 * FRAME_EDGE_INDENT_PIXELS ) )
     continue;
    //
