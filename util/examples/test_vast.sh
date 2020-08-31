@@ -138,7 +138,7 @@ if [ $? -ne 0 ];then
   fi
   if [ $TEST -eq 1 ];then
    echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
+   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_find_Chandra_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
     # Simple safety thing
     TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
     if [ $TEST -ne 1 ];then
@@ -12203,7 +12203,7 @@ if [ $? -ne 0 ];then
   fi
   if [ $TEST -eq 1 ];then
    echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
+   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_find_Chandra_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
     # Simple safety thing
     TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
     if [ $TEST -ne 1 ];then

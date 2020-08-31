@@ -59,7 +59,8 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  unset PGPLOT_PNG_HEIGHT ; unset PGPLOT_PNG_WIDTH
  echo "<img src=\""$TRANSIENT_NAME"_reference.png\">" >> transient_report/index.tmp
  # plot reference image preview
- REFERENCE_IMAGE_PREVIEW=`basename $REFERENCE_IMAGE`_preview.png
+ BASENAME_REFERENCE_IMAGE=`basename $REFERENCE_IMAGE`
+ REFERENCE_IMAGE_PREVIEW="$BASENAME_REFERENCE_IMAGE"_preview.png
  util/fits2png $REFERENCE_IMAGE &> /dev/null && mv pgplot.png transient_report/$REFERENCE_IMAGE_PREVIEW
  #command -v convert &> /dev/null
  #if [ $? -eq 0 ];then
@@ -81,7 +82,8 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
   # If this is not the reference image again
   if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then
    # Plot the discovery image
-   N=`echo $N+1|bc -q`
+   #N=`echo $N+1|bc -q`
+   N=$[$N+1]
    DATE=`grep $IMAGE vast_image_details.log |awk '{print $2" "$3"  "$7}'`
    #echo "Discovery image $N: $DATE  $IMAGE  $X $Y (pix)" >> tmp.description
    # convert -density 45 pgplot.ps pgplot.png
@@ -109,15 +111,16 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    #command -v convert &> /dev/null
    #if [ $? -eq 0 ];then
     echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Preview of the reference image(s) and two 2nd epoch images</a> (are there clouds/trees in the view?)</br>" >> transient_report/index.tmp  
-    echo "<div id=\"fullframepreview_$TRANSIENT_NAME\" style=\"display:none\"><img src=\"$REFERENCE_IMAGE_PREVIEW\">" >> transient_report/index.tmp
+    echo "<div id=\"fullframepreview_$TRANSIENT_NAME\" style=\"display:none\">$BASENAME_REFERENCE_IMAGE<br><img src=\"$REFERENCE_IMAGE_PREVIEW\"><br>" >> transient_report/index.tmp
     while read JD MAG ERR X Y APP IMAGE REST ;do
      if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then
-      PREVIEW_IMAGE=`basename $IMAGE`_preview.png
+      BASENAME_IMAGE=`basename $IMAGE`
+      PREVIEW_IMAGE="$BASENAME_IMAGE"_preview.png
       if [ ! -f transient_report/$PREVIEW_IMAGE ];then
        #convert $IMAGE -brightness-contrast 30x30 -resize 10% transient_report/$PREVIEW_IMAGE &
        util/fits2png $IMAGE &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
       fi
-      echo "<img src=\"$PREVIEW_IMAGE\">" >> transient_report/index.tmp
+      echo "<br>$BASENAME_IMAGE<br><img src=\"$PREVIEW_IMAGE\"><br>" >> transient_report/index.tmp
      fi
     done < $LIGHTCURVE_FILE_OUTDAT
     wait # just to speed-up the convert thing a bit

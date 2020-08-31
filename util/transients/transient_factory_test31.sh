@@ -3,6 +3,7 @@
 # When adapting this script for a new dataset, watch for the signs
 ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
 ### ===> APERTURE LIMITS HARDCODED HERE <===
+### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
 
 # Also watch for
 ### ===> SExtractor config file <===
@@ -227,11 +228,12 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -gt 1 ];then
   # Make image previews
-  echo "Previews of the second-epoch images: <br>" >> transient_factory_test31.txt
+  echo "Previews of the second-epoch images:<br>" >> transient_factory_test31.txt
   for FITS_IMAGE_TO_PREVIEW in "$NEW_IMAGES"/*"$FIELD"_*_*.fts ;do
-   PREVIEW_IMAGE=`basename $FITS_IMAGE_TO_PREVIEW`_preview.png
+   BASENAME_FITS_IMAGE_TO_PREVIEW=`basename $FITS_IMAGE_TO_PREVIEW`
+   PREVIEW_IMAGE="$BASENAME_FITS_IMAGE_TO_PREVIEW"_preview.png
    util/fits2png $FITS_IMAGE_TO_PREVIEW &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
-   echo "<img src=\"$PREVIEW_IMAGE\">" >> transient_factory_test31.txt
+   echo "<br>$BASENAME_FITS_IMAGE_TO_PREVIEW<br><img src=\"$PREVIEW_IMAGE\"><br>" >> transient_factory_test31.txt
   done
   echo "<br>" >> transient_factory_test31.txt
  fi
@@ -301,7 +303,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   fi
   # column 9 in vast_image_details.log is the aperture size in pixels
   ### ===> APERTURE LIMITS HARDCODED HERE <===
-  NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 10 ) print }' | wc -l`
+  NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | wc -l`
   if [ $NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING -lt 2 ];then
    echo "ERROR: seeing on second-epoch images is out of range"
    echo "***** ERROR: seeing on second-epoch images is out of range *****" >> transient_factory.log
@@ -310,10 +312,10 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    continue
   fi
   ### ===> APERTURE LIMITS HARDCODED HERE <===
-  SECOND_EPOCH__FIRST_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 10 ) print }' | sort -nk9 | head -n1 | awk '{print $17}'`
+  SECOND_EPOCH__FIRST_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk9 | head -n1 | awk '{print $17}'`
   echo "SECOND_EPOCH__FIRST_IMAGE= $SECOND_EPOCH__FIRST_IMAGE" >> transient_factory_test31.txt
   ### ===> APERTURE LIMITS HARDCODED HERE <===
-  SECOND_EPOCH__SECOND_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 10 ) print }' | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}'`
+  SECOND_EPOCH__SECOND_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}'`
   echo "SECOND_EPOCH__SECOND_IMAGE= $SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_test31.txt
   if [ -z "$SECOND_EPOCH__FIRST_IMAGE" ];then
    echo "ERROR: SECOND_EPOCH__FIRST_IMAGE is not defined!" >> transient_factory_test31.txt
@@ -330,6 +332,29 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    cat vast_image_details.log >> transient_factory_test31.txt
    continue
   fi
+  ###
+  # Check for elliptical star images (tracking error)
+  SE_CATALOG_FOR_SECOND_EPOCH__FIRST_IMAGE=`grep "$SECOND_EPOCH__FIRST_IMAGE" vast_images_catalogs.log | awk '{print $1}'`
+  MEDIAN_DIFFERENCE_AminusB_PIX=`cat $SE_CATALOG_FOR_SECOND_EPOCH__FIRST_IMAGE | awk '{print $18-$20}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.2f", $2}'`
+  ### ===> APERTURE LIMITS HARDCODED HERE <=== (this is median difference in pixels between semi-major and semi-minor axes of the source)
+  TEST=`echo "$MEDIAN_DIFFERENCE_AminusB_PIX < 0.5" | bc -ql`
+  if [ $TEST -eq 0 ];then
+   echo "ERROR: tracking error (elongated stars), median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  "`basename $SECOND_EPOCH__FIRST_IMAGE` >> transient_factory_test31.txt
+   continue
+  else
+   echo "The star elongation is within the allowed range: median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  "`basename $SECOND_EPOCH__FIRST_IMAGE` >> transient_factory_test31.txt
+  fi
+  SE_CATALOG_FOR_SECOND_EPOCH__SECOND_IMAGE=`grep "$SECOND_EPOCH__SECOND_IMAGE" vast_images_catalogs.log | awk '{print $1}'`
+  MEDIAN_DIFFERENCE_AminusB_PIX=`cat $SE_CATALOG_FOR_SECOND_EPOCH__SECOND_IMAGE | awk '{print $18-$20}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.2f", $2}'`
+  ### ===> APERTURE LIMITS HARDCODED HERE <=== (this is median difference in pixels between semi-major and semi-minor axes of the source)
+  TEST=`echo "$MEDIAN_DIFFERENCE_AminusB_PIX < 0.5" | bc -ql`
+  if [ $TEST -eq 0 ];then
+   echo "ERROR: tracking error (elongated stars) median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  "`basename $SECOND_EPOCH__SECOND_IMAGE` >> transient_factory_test31.txt
+   continue
+  else
+   echo "The star elongation is within the allowed range: median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  "`basename $SECOND_EPOCH__SECOND_IMAGE` >> transient_factory_test31.txt
+  fi
+  ###
  fi
  ################################
  # double-check the files
@@ -754,12 +779,13 @@ Reference image center $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE
 Second-epoch image center $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE
 Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
 ###################################" >> transient_factory_test31.txt
- TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.5" | bc -ql`
+ ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
+ TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | bc -ql`
  if [ $TEST -eq 1 ];then
   echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
   echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg." >> transient_factory_test31.txt
  fi
-  
+
  # clean up the local cache
  # We should not remove exclusion_list_gaiadr2.txt and exclusion_list_apass.txt as we want to use them later
  for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.txt exclusion_list_bbsc.txt exclusion_list_tycho2.txt ;do
