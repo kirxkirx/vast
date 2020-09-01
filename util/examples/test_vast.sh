@@ -8013,7 +8013,6 @@ $GREP_RESULT"
   RADECPOSITION_TO_TEST=`grep -e "2020 08 31.7108  2459093.2108  12\.9  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0  00:11:"  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:11:42.960 +66:11:20.78 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
-  # Allow for 5 pixel offset - it's BIG
   TEST=`echo "$DISTANCE_ARCSEC<8.4" | bc -ql`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
@@ -8028,10 +8027,17 @@ $GREP_RESULT"
    fi
   fi
   # Test Stub MPC report line
-  grep --quiet "     TAU0008  C2020 08 31.71030 00 11 42\... +66 11 20\...         1.\.. R      C32" transient_report/index.html
+  grep --quiet "     TAU0008  C2020 08 31.71030 00 11 4.\... +66 11 2.\...         1.\.. R      C32" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110b"
+  fi
+  
+  # Check the total number of candidates (should be exactly 1 in this test)
+  NUMBER_OF_CANDIDATE_TRANSIENTS=`grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink'`
+  if [ $NUMBER_OF_CANDIDATE_TRANSIENTS -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_NCANDIDATES_$NUMBER_OF_CANDIDATE_TRANSIENTS"
   fi
 
  else
