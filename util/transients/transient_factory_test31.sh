@@ -7,6 +7,7 @@
 
 # Also watch for
 ### ===> SExtractor config file <===
+### ===> IMAGE EDGE OFFSET HARDCODED HERE <===
 
 #
 # This script is an example of how an automated transient-detection pipeline may be set up using VaST.
@@ -397,6 +398,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  else
   if [ -f ../bad_region.lst ];then
    cp -v ../bad_region.lst . >> transient_factory_test31.txt
+  else
+   echo "No bad regions file found ../bad_region.lst" >> transient_factory_test31.txt
   fi
  fi
  ###############################################
@@ -466,7 +469,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    if [ "$SEXTRACTOR_CONFIG_FILE" = "default.sex.telephoto_lens_v4" ];then
     echo "(SExtractor parameter file $SEXTRACTOR_CONFIG_FILE -- faint objects)" >> transient_factory_test31.txt
     # link the solved images and catalogs created with this SExtractorconfig file
-    for i in "$WCSCACHEDIR/wcs_"$FIELD"_"* "$WCSCACHEDIR/exclusion_list"* ;do
+    for i in "$WCSCACHEDIR/wcs_"$FIELD"_"*.fts "$WCSCACHEDIR/exclusion_list"* ;do
      if [ -s "$i" ];then
       echo "Creating symlink $i" >> transient_factory_test31.txt
       ln -s $i
@@ -532,6 +535,38 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   echo "ERROR found an unsoved plate in the field $FIELD" >> transient_factory_test31.txt
   continue
  fi
+
+ # Compare image centers of the reference and second-epoch image
+ WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $REFERENCE_EPOCH__FIRST_IMAGE`
+ WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
+ IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE=`util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}'` 
+ WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $SECOND_EPOCH__FIRST_IMAGE`
+ WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
+ IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE=`util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}'`
+ DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=`lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}'`
+ echo "###################################
+# Check the image center offset between the reference and the secondepoch image (pointing accuracy)
+Reference image center $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE
+Second-epoch image center $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE
+Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
+###################################" >> transient_factory_test31.txt
+ ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
+ TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>1.0" | bc -ql`
+ if [ $TEST -eq 1 ];then
+  echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
+  echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg." >> transient_factory_test31.txt
+  break
+  # This should break us form the SEXTRACTOR_CONFIG_FILE cycle
+ fi
+ ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
+ TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | bc -ql`
+ if [ $TEST -eq 1 ];then
+  echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
+  echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg." >> transient_factory_test31.txt
+  #break
+  # Not break'ing here, the offset is not hpelessly large and we want to keep candidates from this field
+ fi
+
  
  echo "Running solve_plate_with_UCAC5" >> transient_factory_test31.txt
  for i in `cat vast_image_details.log | awk '{print $17}' | sort | uniq` ;do 
@@ -616,7 +651,6 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  fi
 
  ################## Quality cuts applied to calibrated magnitudes of the candidate transients ##################
-
  echo "Filter-out faint candidates..." >> transient_factory_test31.txt
  echo "Filter-out faint candidates..."
  # Filter-out faint candidates
@@ -661,13 +695,6 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   fi
  done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
  ############################################
-
- ##### THIS IS WHAT I WANT TO REMOVE ##### 
- # replaced by checking the list of bright stars in util/transients/report_transient.sh
- #echo "Filter-out spurious flares of bright stars..."
- ## Filter-out spurious flares of bright stars
- #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do if [ `cat $i | wc -l` -eq 2 ];then grep $i candidates-transients.lst | head -n1 ;continue ;fi ; A=`head -n1 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($1)<9.0 ) print 1; else print 0 }'` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
- #########################################
 
  echo "Filter-out small-amplitude flares..." >> transient_factory_test31.txt
  echo "Filter-out small-amplitude flares..."
@@ -765,26 +792,26 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  #
 
  done # for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
-
- # Compare image centers of the reference and second-epoch image
- WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $REFERENCE_EPOCH__FIRST_IMAGE`
- WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
- IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE=`util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}'` 
- WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $SECOND_EPOCH__FIRST_IMAGE`
- WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
- IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE=`util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}'`
- DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=`lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}'`
- echo "###################################
-Reference image center $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE
-Second-epoch image center $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE
-Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
-###################################" >> transient_factory_test31.txt
- ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
- TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | bc -ql`
- if [ $TEST -eq 1 ];then
-  echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
-  echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg." >> transient_factory_test31.txt
- fi
+# moved up
+# # Compare image centers of the reference and second-epoch image
+# WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $REFERENCE_EPOCH__FIRST_IMAGE`
+# WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
+# IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE=`util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}'` 
+# WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $SECOND_EPOCH__FIRST_IMAGE`
+# WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
+# IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE=`util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}'`
+# DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=`lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}'`
+# echo "###################################
+#Reference image center $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE
+#Second-epoch image center $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE
+#Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
+####################################" >> transient_factory_test31.txt
+# ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
+# TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | bc -ql`
+# if [ $TEST -eq 1 ];then
+#  echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
+#  echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg." >> transient_factory_test31.txt
+# fi
 
  # clean up the local cache
  # We should not remove exclusion_list_gaiadr2.txt and exclusion_list_apass.txt as we want to use them later

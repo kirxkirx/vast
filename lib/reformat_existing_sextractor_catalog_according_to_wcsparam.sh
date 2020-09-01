@@ -4,7 +4,7 @@
 # $SEXTRACTOR -PARAMETERS_NAME wcs.param 
 
 if [ -z $3 ];then
- echo "Usage: $0 ORIGINAL_FITSFILE.fit wcs_ORIGINAL_FITSFILE.fit SEXTRACTOR_CATALOG.cat" >> /dev/stderr
+ echo "Usage: $0 ORIGINAL_FITSFILE.fit wcs_ORIGINAL_FITSFILE.fit OUTPUT_SEXTRACTOR_CATALOG.cat" >> /dev/stderr
  exit 1
 fi
 
@@ -43,7 +43,7 @@ Checking if the filename extension and FITS header look reasonable..."
 
 done
 
-# Check the input WCS image is catually WCS-solved
+# Check the input WCS image is acatually WCS-solved
 "$VAST_PATH"lib/bin/xy2sky "$WCS_IMAGE_NAME" | grep --quiet 'No WCS'
 if [ $? -eq 0 ];then
  echo "ERROR in $0 : $WCS_IMAGE_NAME does not seem to be WCS-solved!" >> /dev/stderr
