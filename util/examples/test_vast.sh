@@ -138,7 +138,7 @@ if [ $? -ne 0 ];then
   fi
   if [ $TEST -eq 1 ];then
    echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_find_Chandra_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
+   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
     # Simple safety thing
     TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
     if [ $TEST -ne 1 ];then
@@ -7897,20 +7897,20 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 #
 
 
-##### Chandra test (involves three second-epoch images including a bad one) #####
+##### Nova Cas test (involves three second-epoch images including a bad one) #####
 # Download the test dataset if needed
-if [ ! -d ../NMW_find_Chandra_test ];then
+if [ ! -d ../NMW_find_NovaCas_august31_test ];then
  cd ..
- wget -c "http://scan.sai.msu.ru/~kirx/pub/NMW_find_Chandra_test.tar.bz2" && tar -xvjf NMW_find_Chandra_test.tar.bz2 && rm -f NMW_find_Chandra_test.tar.bz2
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/NMW_find_NovaCas_august31_test.tar.bz2" && tar -xvjf NMW_find_NovaCas_august31_test.tar.bz2 && rm -f NMW_find_NovaCas_august31_test.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
-if [ -d ../NMW_find_Chandra_test ];then
+if [ -d ../NMW_find_NovaCas_august31_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Find Chandra test " >> /dev/stderr
- echo -n "Find Chandra test: " >> vast_test_report.txt 
+ echo "Find Nova Cas August 31 test " >> /dev/stderr
+ echo -n "Find Nova Cas August 31 test: " >> vast_test_report.txt 
  #
  if [ -f ../exclusion_list.txt ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
@@ -7921,20 +7921,28 @@ if [ -d ../NMW_find_Chandra_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_find_Chandra_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_find_Chandra_test/second_epoch_images
+ REFERENCE_IMAGES=../NMW_find_NovaCas_august31_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_find_NovaCas_august31_test/second_epoch_images &> test_ncas$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA000_EXIT_CODE"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31000_EXIT_CODE"
  fi
+ # Test for the specific error message
+ grep --quiet 'ERROR: cannot find a star near the specified position' test_ncas$$.tmp
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31000_CANNOT_FIND_STAR_ERROR_MESSAGE"
+ fi
+ rm -f test_ncas$$.tmp
+ #
  if [ -f transient_report/index.html ];then
   grep --quiet 'ERROR' "transient_report/index.html"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA_ERROR_MESSAGE_IN_index_html"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_ERROR_MESSAGE_IN_index_html"
    GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
    CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWCHANDRA_ERROR_MESSAGE_IN_index_html ######
+###### NMWNCASAUG31_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 -----------------
 $CAT_RESULT"
@@ -7943,147 +7951,93 @@ $CAT_RESULT"
   grep --quiet "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA001"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31001"
   fi
   NUMBER_OF_GOOD_SE_RUNS=`grep -c "Images processed 4" transient_report/index.html`
   if [ $NUMBER_OF_GOOD_SE_RUNS -lt 2 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA001a"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31001a"
   fi
   grep --quiet "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA002"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31002"
   fi
   NUMBER_OF_GOOD_SE_RUNS=`grep -c "Images used for photometry 4" transient_report/index.html`
   if [ $NUMBER_OF_GOOD_SE_RUNS -lt 2 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA002a"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31002a"
   fi
-  grep --quiet "First image: 2455961.58044 04.02.2012 01:55:40" transient_report/index.html
+  grep --quiet "First image: 2456005.22259 18.03.2012 17:20:17" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA003"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31003"
   fi
-  grep --quiet "Last  image: 2459087.44020 25.08.2020 22:33:43" transient_report/index.html
+  grep --quiet "Last  image: 2459093.21130 31.08.2020 17:04:06" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA004"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31004"
   fi
   # Hunting the misterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA0_nonzero_ref_frame_rotation"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310_nonzero_ref_frame_rotation"
     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
     DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWCHANDRA0_nonzero_ref_frame_rotation ######
+###### NMWNCASAUG310_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
   else
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA0_NO_vast_image_details_log"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310_NO_vast_image_details_log"
   fi
   #
   #
-  # Chandra has no automatic ID in the current VaST version
-  #grep --quiet "Chandra" transient_report/index.html
+  # Nova Cas 2020 has no automatic ID in the current VaST version
+  #grep --quiet "N Cas 2020" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA0110"
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110"
   #fi
-  grep --quiet "2020 08 25.9400  2459087.4400  12\.8.  18:57:" transient_report/index.html
+  grep --quiet -e "2020 08 31.7108  2459093.2108  12\.9  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0  00:11:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA0110a"
-   GREP_RESULT=`grep "2020 08 25.9400  2459087.4400  12\.8.  18:57:" transient_report/index.html`
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110a"
+   GREP_RESULT=`grep -e "2020 08 31.7108  2459093.2108  12\.9  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0  00:11:" transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWCHANDRA0110a ######
+###### NMWNCASAUG310110a ######
 $GREP_RESULT"
   fi
-  RADECPOSITION_TO_TEST=`grep "2020 08 25.9400  2459087.4400  12\.8.  18:57:"  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
-  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 18:57:09.11 +32:28:26.8 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  RADECPOSITION_TO_TEST=`grep -e "2020 08 31.7108  2459093.2108  12\.9  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0  00:11:"  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:11:42.960 +66:11:20.78 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   # Allow for 5 pixel offset - it's BIG
-  TEST=`echo "$DISTANCE_ARCSEC<5*8.4" | bc -ql`
+  TEST=`echo "$DISTANCE_ARCSEC<8.4" | bc -ql`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
    TEST_PASSED=0
    TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA0110a_TOO_FAR_TEST_ERROR"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110a_TOO_FAR_TEST_ERROR"
   else
    if [ $TEST -eq 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA0110a_TOO_FAR_$DISTANCE_ARCSEC"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110a_TOO_FAR_$DISTANCE_ARCSEC"
    fi
   fi
   # Test Stub MPC report line
-  grep --quiet "     TAU0008  C2020 08 25.93980 18 57 08\... +32 28 15\...         12\.. R      C32" transient_report/index.html
+  grep --quiet "     TAU0008  C2020 08 31.71030 00 11 42\... +66 11 20\...         1.\.. R      C32" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA0110b"
-  fi
-  # Z Lyr 
-  grep --quiet "Z Lyr" transient_report/index.html
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA314"
-  fi
-  grep --quiet "2020 08 25.9400  2459087.4400  9\.9.  18:59:" transient_report/index.html
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA314a"
-  fi
-  RADECPOSITION_TO_TEST=`grep "2020 08 25.9400  2459087.4400  9\.9.  18:59:" transient_report/index.html | awk '{print $6" "$7}'`
-  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 18:59:36.80 +34:57:16.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
-  # NMW scale is 8.4"/pix
-  TEST=`echo "$DISTANCE_ARCSEC<8.4" | bc -ql`
-  re='^[0-9]+$'
-  if ! [[ $TEST =~ $re ]] ; then
-   echo "TEST ERROR"
-   TEST_PASSED=0
-   TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA314a_TOO_FAR_TEST_ERROR"
-  else
-   if [ $TEST -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA314a_TOO_FAR_$DISTANCE_ARCSEC"
-   fi
-  fi
-  # RT Lyr 
-  grep --quiet "RT Lyr" transient_report/index.html
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA314"
-  fi
-  grep --quiet "2020 08 25.9400  2459087.4400  10\.7.  19:01:" transient_report/index.html
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA314a"
-  fi
-  RADECPOSITION_TO_TEST=`grep "2020 08 25.9400  2459087.4400  10\.7.  19:01:" transient_report/index.html | awk '{print $6" "$7}'`
-  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 19:01:14.89 +37:31:20.2 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
-  # NMW scale is 8.4"/pix
-  TEST=`echo "$DISTANCE_ARCSEC<8.4" | bc -ql`
-  re='^[0-9]+$'
-  if ! [[ $TEST =~ $re ]] ; then
-   echo "TEST ERROR"
-   TEST_PASSED=0
-   TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA315a_TOO_FAR_TEST_ERROR"
-  else
-   if [ $TEST -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA315a_TOO_FAR_$DISTANCE_ARCSEC"
-   fi
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110b"
   fi
 
  else
   echo "ERROR running the transient search script" >> /dev/stderr
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA_ALL"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_ALL"
  fi
 
  ###### restore exclusion list after the test if needed
@@ -8094,14 +8048,14 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mFind Chandra test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo -e "\n\033[01;34mFind Nova Cas August 31 test \033[01;32mPASSED\033[00m" >> /dev/stderr
   echo "PASSED" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mFind Chandra test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo -e "\n\033[01;34mFind Nova Cas August 31 test \033[01;31mFAILED\033[00m" >> /dev/stderr
   echo "FAILED" >> vast_test_report.txt
  fi
 else
- FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCHANDRA_TEST_NOT_PERFORMED"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_TEST_NOT_PERFORMED"
 fi
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
@@ -12203,7 +12157,7 @@ if [ $? -ne 0 ];then
   fi
   if [ $TEST -eq 1 ];then
    echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_find_Chandra_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
+   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
     # Simple safety thing
     TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
     if [ $TEST -ne 1 ];then
