@@ -2,7 +2,7 @@
  *
  *  IDENT LIB MODULE: ident_lib.c
  *  
- *  Copyright(C) 2005      Lebedev Alexander <lebedev@xray.sai.msu.ru>,
+ *  Copyright(C) 2005-2020 Lebedev Alexander <lebedev@xray.sai.msu.ru>,
  *                         Sokolovsky Kirill <idkfa@sai.msu.ru>.
  *               
  *  This program is free software ; you can redistribute it and/or modify
@@ -1617,7 +1617,7 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
    fprintf( stderr, "Too few * matched: %d < %d ! Retrying...\n", nm, min_number_of_matched_stars );
    ( *match_retry )= 1; // !!
 
-   // We don't want to exit without freeing the memory allocated for te sturctures
+   // We don't want to exit without freeing the memory allocated for the sturctures
    free( star1 );
    free( star2 );
 
@@ -1625,7 +1625,7 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
   }
 
   // Now, if the match is good - we try to further refine the coordinate transoformation
-  if ( nm >= min_number_of_matched_stars ) {
+  //if ( nm >= min_number_of_matched_stars ) {
    fprintf( stderr, "refining the coordinate transformation... ");
    float dx, dy;                                                // coordinate corrections for a given star
    unsigned int ii;                                             // counter
@@ -1686,7 +1686,18 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
    nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, preobr->sigma_popadaniya, image_size_X, image_size_Y );
    //fprintf(stderr,"%d * matched after the coordinate correction. ",nm);
    fprintf( stderr, "%d * matched, ", nm );
+   // Check the match sucess, otherwise VaST wil crash when reaching fit_plane_lin()
+   // If the match is bad - exit and retry.
+   if ( nm < min_number_of_matched_stars ) {
+    fprintf( stderr, "Too few * matched: %d < %d ! Retrying...\n", nm, min_number_of_matched_stars );
+    ( *match_retry )= 1; // !!
+ 
+    // We don't want to exit without freeing the memory allocated for the sturctures
+    free( star1 );
+    free( star2 );
 
+    return nm; //0;
+   }
 
    /// Second iteration
    // Fit a plane to x residuals
@@ -1714,6 +1725,17 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
    //fprintf(stderr,"%d * matched after the coordinate correction. ",nm);
    fprintf( stderr, "%d * matched (2nd iteration). ", nm );
 
+   // If the match is bad - exit and retry.
+   if ( nm < min_number_of_matched_stars ) {
+    fprintf( stderr, "Too few * matched: %d < %d ! Retrying...\n", nm, min_number_of_matched_stars );
+    ( *match_retry )= 1; // !!
+ 
+    // We don't want to exit without freeing the memory allocated for the sturctures
+    free( star1 );
+    free( star2 );
+
+    return nm; //0;
+   }
 
    /// Third iteration
    // Fit a plane to x residuals
@@ -1741,12 +1763,24 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
    //fprintf(stderr,"%d * matched after the coordinate correction. ",nm);
    fprintf( stderr, "%d * matched (3rd iteration). ", nm );
 
+   // If the match is bad - exit and retry.
+   if ( nm < min_number_of_matched_stars ) {
+    fprintf( stderr, "Too few * matched: %d < %d ! Retrying...\n", nm, min_number_of_matched_stars );
+    ( *match_retry )= 1; // !!
+ 
+    // We don't want to exit without freeing the memory allocated for the sturctures
+    free( star1 );
+    free( star2 );
+
+    return nm; //0;
+   }
+
 /**/
    free( z );
    free( y );
    free( x );
 
-  }
+  //} // if enough stars matched
 
   for ( n= 0; n < NUMBER2; n++ )
    Star_Copy( STAR2 + n, star2 + n ); // Copy stars (with new coordinates) back to struct STAR2

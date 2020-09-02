@@ -9,8 +9,18 @@ if [ ! -s vast_image_details.log ];then
  exit 1
 fi
 
+if [ ! -f vast_summary.log ];then
+ echo "ERROR: cannot find vast_summary.log"
+ exit 1
+fi
+if [ ! -s vast_summary.log ];then
+ echo "ERROR: vast_summary.log is empty"
+ exit 1
+fi
+
 # Check if the reference image is much worth than the other images
-N_STARS_DETECTED_ON_REF_IMG=`cat vast_image_details.log | head -n1 | awk '{print $13}'`
+REF_IMAGE=`grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+N_STARS_DETECTED_ON_REF_IMG=`grep --max-count=1 "$REF_IMAGE" vast_image_details.log | awk '{print $13}'`
 MEDIAN_N_STARS_DETECTED=`cat vast_image_details.log | awk '{print $13}' | util/colstat 2>/dev/null | grep 'MEDIAN=' | awk '{print $2}'`
 SIGMA_N_STARS_DETECTED=`cat vast_image_details.log | awk '{print $13}' | util/colstat 2>/dev/null | grep 'MAD\*1.48=' | awk '{print $2}'`
 

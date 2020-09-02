@@ -558,7 +558,7 @@ void choose_best_reference_image( char **input_images, int Num ) {
  free( copy_of_number_of_good_detected_stars );
  ///
  
- fprintf( stderr, "==> median number of good stars %.0lf, max. number of good stars %.0lf", median_number_of_good_detected_stars, 2.0 * median_number_of_good_detected_stars );
+ fprintf( stderr, "==> median number of good stars %.0lf, max. allowed number of good stars %.0lf = 2*median\n", median_number_of_good_detected_stars, 2.0 * median_number_of_good_detected_stars );
 
  // Avoid choosing an image with double-detections as the best one
  best_image= 0;

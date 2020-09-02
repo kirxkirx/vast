@@ -250,6 +250,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   # There are more than two second-epoch images - do a preliminary VaST run to choose the two images with best seeing
   cp -v default.sex.telephoto_lens_onlybrightstars_v1 default.sex >> transient_factory_test31.txt
   echo "Preliminary VaST run" >> transient_factory_test31.txt
+  echo "./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages"  "$NEW_IMAGES"/*"$FIELD"_*_*.fts >> transient_factory_test31.txt
   ./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages  "$NEW_IMAGES"/*"$FIELD"_*_*.fts  2>&1 > prelim_vast_run.log
   wait
   ## Special test for stuck camera ##
@@ -776,42 +777,27 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  fi
 
  echo "Waiting for UCAC5 plate solver" >> transient_factory_test31.txt  
+ echo "Waiting for UCAC5 plate solver"
  # this is for UCAC5 plate solver
  wait
  echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
+ echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE"
  util/transients/make_report_in_HTML.sh >> transient_factory_test31.txt
  echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
+ echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE"
  
  echo "*------ done with $SEXTRACTOR_CONFIG_FILE ------*" >> transient_factory_test31.txt
+ echo "*------ done with $SEXTRACTOR_CONFIG_FILE ------*"
 
  # Update the local exclusion list (but actually util/transients/report_transient.sh is supposed to take care of that already)
  echo "Updating exclusion_list_local.txt" >> transient_factory_test31.txt
+ echo "Updating exclusion_list_local.txt"
  grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' >> exclusion_list_local.txt
  echo "#### The local exclusion list is exclusion_list_local.txt ####" >> transient_factory_test31.txt
  cat exclusion_list_local.txt >> transient_factory_test31.txt
  #
 
  done # for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
-# moved up
-# # Compare image centers of the reference and second-epoch image
-# WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $REFERENCE_EPOCH__FIRST_IMAGE`
-# WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
-# IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE=`util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}'` 
-# WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $SECOND_EPOCH__FIRST_IMAGE`
-# WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
-# IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE=`util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}'`
-# DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=`lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}'`
-# echo "###################################
-#Reference image center $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE
-#Second-epoch image center $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE
-#Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
-####################################" >> transient_factory_test31.txt
-# ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
-# TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | bc -ql`
-# if [ $TEST -eq 1 ];then
-#  echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
-#  echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg." >> transient_factory_test31.txt
-# fi
 
  # clean up the local cache
  # We should not remove exclusion_list_gaiadr2.txt and exclusion_list_apass.txt as we want to use them later
