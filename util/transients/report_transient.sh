@@ -65,17 +65,21 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  # If there is a UCAC5 plate solution with local corrections - use it,
  # otherwise rely on the positions computed using only the WCS header
  if [ -f $UCAC5_SOLUTION_NAME ];then
+  # this is used by util/transients/transient_factory_test31.sh
   RADEC=`lib/find_star_in_wcs_catalog $X $Y < $UCAC5_SOLUTION_NAME`
   if [ $? -ne 0 ];then
-   echo "error in $0 filed to run  lib/find_star_in_wcs_catalog $X $Y < $UCAC5_SOLUTION_NAME"
+   echo "(1) error in $0 filed to run  lib/find_star_in_wcs_catalog $X $Y < $UCAC5_SOLUTION_NAME"
    exit 1
   fi
  elif [ -f $SEXTRACTOR_CATALOG_NAME ];then
+  # this is used by util/transients/report_transient.sh
   RADEC=`lib/find_star_in_wcs_catalog $X $Y < $SEXTRACTOR_CATALOG_NAME`
-  echo "error in $0 filed to run  lib/find_star_in_wcs_catalog $X $Y < $SEXTRACTOR_CATALOG_NAME"
-  exit 1
+  if [ $? -ne 0 ];then
+   echo "(2) error in $0 filed to run  lib/find_star_in_wcs_catalog $X $Y < $SEXTRACTOR_CATALOG_NAME"
+   exit 1
+  fi
  else
-  echo "ERROR: cannot find any of the plate-solved-image-related catalogs: $UCAC5_SOLUTION_NAME $SEXTRACTOR_CATALOG_NAME" 
+  echo "error in $0 cannot find any of the plate-solved-image-related catalogs: $UCAC5_SOLUTION_NAME $SEXTRACTOR_CATALOG_NAME" 
   exit 1
  fi
  #

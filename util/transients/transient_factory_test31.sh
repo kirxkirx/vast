@@ -176,12 +176,24 @@ The list of candidates will appear below. Please <b>manually reload the page</b>
 
 for NEW_IMAGES in "$@" ;do
 
-LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR=`for IMGFILE in "$NEW_IMAGES"/*.fts ;do basename "$IMGFILE" ;done | awk '{print $1}' FS='_' | sort | uniq`
+if [ ! -d "$NEW_IMAGES" ];then
+ echo "ERROR: $NEW_IMAGES is not a directory"
+ echo "ERROR: $NEW_IMAGES is not a directory" >> transient_factory_test31.txt
+ continue
+fi
+
+LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR=`for IMGFILE in "$NEW_IMAGES"/*.fts ;do if [ -f "$IMGFILE" ];then basename "$IMGFILE" ;fi ;done | awk '{print $1}' FS='_' | sort | uniq`
 
 echo "Fields in the data directory: 
 $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR"
 
 echo "Processing fields $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR <br>" >> transient_report/index.html
+
+if [ -z "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" ];then
+ echo "ERROR: cannot find image files obeying the assumed naming convention in $@"
+ echo "ERROR: cannot find image files obeying the assumed naming convention in $@" >> transient_factory_test31.txt
+ continue
+fi
 
 #exit # !!!
 echo "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" >> transient_factory_test31.txt
@@ -825,7 +837,7 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
 if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ] || [ "$HOST" = "eridan" ];then
  echo "We are allowed to update the exclusion list at $HOST host" >> transient_factory_test31.txt
  # if we are not in the test directory
- echo "$PWD" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
+ echo "$PWD" "$@" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
  if [ $? -ne 0 ];then
   echo "This does not look like a test run" >> transient_factory_test31.txt
   if [ -f ../exclusion_list.txt ];then
