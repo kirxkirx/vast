@@ -138,7 +138,7 @@ if [ $? -ne 0 ];then
   fi
   if [ $TEST -eq 1 ];then
    echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
+   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
     # Simple safety thing
     TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
     if [ $TEST -ne 1 ];then
@@ -6396,8 +6396,8 @@ if [ -d ../transient_detection_test_Ceres ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Find Ceres test " >> /dev/stderr
- echo -n "Find Ceres test: " >> vast_test_report.txt 
+ echo "NMW find Ceres test " >> /dev/stderr
+ echo -n "NMW find Ceres test: " >> vast_test_report.txt 
  cp default.sex.telephoto_lens default.sex
  ./vast -x99 -ukf ../transient_detection_test_Ceres/reference_images/* ../transient_detection_test_Ceres/second_epoch_images/*
  if [ $? -ne 0 ];then
@@ -6856,10 +6856,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mFind Ceres test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo -e "\n\033[01;34mNMW find Ceres test \033[01;32mPASSED\033[00m" >> /dev/stderr
   echo "PASSED" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mFind Ceres test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo -e "\n\033[01;34mNMW find Ceres test \033[01;31mFAILED\033[00m" >> /dev/stderr
   echo "FAILED" >> vast_test_report.txt
  fi
 else
@@ -6892,8 +6892,8 @@ if [ -d ../NMW_Saturn_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Find Saturn/Iapetus test " >> /dev/stderr
- echo -n "Find Saturn/Iapetus test: " >> vast_test_report.txt 
+ echo "NMW find Saturn/Iapetus test " >> /dev/stderr
+ echo -n "NMW find Saturn/Iapetus test: " >> vast_test_report.txt 
  #cp default.sex.telephoto_lens_v4 default.sex
  cp default.sex.telephoto_lens_v3 default.sex
  ./vast -x99 -uf ../NMW_Saturn_test/1referenceepoch/* ../NMW_Saturn_test/2ndepoch/*
@@ -7364,10 +7364,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mFind Saturn/Iapetus test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo -e "\n\033[01;34mNMW find Saturn/Iapetus test \033[01;32mPASSED\033[00m" >> /dev/stderr
   echo "PASSED" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mFind Saturn/Iapetus test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo -e "\n\033[01;34mNMW find Saturn/Iapetus test \033[01;31mFAILED\033[00m" >> /dev/stderr
   echo "FAILED" >> vast_test_report.txt
  fi
 else
@@ -7390,8 +7390,8 @@ if [ -d ../NMW_Saturn_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Find Saturn/Iapetus test 2 " >> /dev/stderr
- echo -n "Find Saturn/Iapetus test 2: " >> vast_test_report.txt 
+ echo "NMW find Saturn/Iapetus test 2 " >> /dev/stderr
+ echo -n "NMW find Saturn/Iapetus test 2: " >> vast_test_report.txt 
  #
  if [ -f ../exclusion_list.txt ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
@@ -7714,10 +7714,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mFind Saturn/Iapetus test 2 \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo -e "\n\033[01;34mNMW find Saturn/Iapetus test 2 \033[01;32mPASSED\033[00m" >> /dev/stderr
   echo "PASSED" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mFind Saturn/Iapetus test 2 \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo -e "\n\033[01;34mNMW find Saturn/Iapetus test 2 \033[01;31mFAILED\033[00m" >> /dev/stderr
   echo "FAILED" >> vast_test_report.txt
  fi
 else
@@ -7740,8 +7740,8 @@ if [ -d ../NMW_Venus_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Find Venus test " >> /dev/stderr
- echo -n "Find Venus test: " >> vast_test_report.txt 
+ echo "NMW find Venus test " >> /dev/stderr
+ echo -n "NMW find Venus test: " >> vast_test_report.txt 
  #
  if [ -f ../exclusion_list.txt ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
@@ -7882,10 +7882,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mFind Venus test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo -e "\n\033[01;34mNMW find Venus test \033[01;32mPASSED\033[00m" >> /dev/stderr
   echo "PASSED" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mFind Venus test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo -e "\n\033[01;34mNMW find Venus test \033[01;31mFAILED\033[00m" >> /dev/stderr
   echo "FAILED" >> vast_test_report.txt
  fi
 else
@@ -7909,8 +7909,8 @@ if [ -d ../NMW_find_NovaCas_august31_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Find Nova Cas August 31 test " >> /dev/stderr
- echo -n "Find Nova Cas August 31 test: " >> vast_test_report.txt 
+ echo "NMW find Nova Cas August 31 test " >> /dev/stderr
+ echo -n "NMW find Nova Cas August 31 test: " >> vast_test_report.txt 
  #
  if [ -f ../exclusion_list.txt ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
@@ -8002,16 +8002,16 @@ $GREP_RESULT"
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110"
   #fi
-  grep --quiet -e "2020 08 31.7108  2459093.2108  12\.9  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0  00:11:" transient_report/index.html
+  grep --quiet -e "2020 08 31.7108  2459093.2108  12\.9.  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0.  00:11:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110a"
-   GREP_RESULT=`grep -e "2020 08 31.7108  2459093.2108  12\.9  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0  00:11:" transient_report/index.html`
+   GREP_RESULT=`grep -e "2020 08 31.7108  2459093.2108  12\.9.  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0.  00:11:" transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNCASAUG310110a ######
 $GREP_RESULT"
   fi
-  RADECPOSITION_TO_TEST=`grep -e "2020 08 31.7108  2459093.2108  12\.9  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0  00:11:"  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2020 08 31.7108  2459093.2108  12\.9.  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0.  00:11:"  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:11:42.960 +66:11:20.78 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_ARCSEC<8.4" | bc -ql`
@@ -8055,10 +8055,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mFind Nova Cas August 31 test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo -e "\n\033[01;34mNMW find Nova Cas August 31 test \033[01;32mPASSED\033[00m" >> /dev/stderr
   echo "PASSED" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mFind Nova Cas August 31 test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo -e "\n\033[01;34mNMW find Nova Cas August 31 test \033[01;31mFAILED\033[00m" >> /dev/stderr
   echo "FAILED" >> vast_test_report.txt
  fi
 else
@@ -8219,12 +8219,12 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH414"
   fi
-  grep --quiet "2020 09 01.7326  2459094.2326  10\.6.  18:08:" transient_report/index.html
+  grep --quiet "2020 09 01.7326  2459094.2326  10\.6.  18:12:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH414a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2020 09 01.7326  2459094.2326  10\.6.  18:08:" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2020 09 01.7326  2459094.2326  10\.6.  18:12:" transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 18:12:18.14 -27:55:16.8  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_ARCSEC<8.4" | bc -ql`
@@ -12392,7 +12392,7 @@ if [ $? -ne 0 ];then
   fi
   if [ $TEST -eq 1 ];then
    echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
+   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
     # Simple safety thing
     TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
     if [ $TEST -ne 1 ];then
