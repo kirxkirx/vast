@@ -90,6 +90,52 @@ function test_https_connection {
 }
 
 
+function remove_test_data_to_save_space {
+ #########################################
+ # Remove test data from the previous tests if we are out of disk space
+ #########################################
+ # Skip free disk space check on some pre-defined machines
+ # hope this check should work even if there is no 'hostname' command
+ hostname | grep --quiet eridan 
+ if [ $? -ne 0 ];then 
+  # Free-up disk space if we run out of it
+  FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+  # If we managed to get the disk space info
+  if [ $? -eq 0 ];then
+   TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
+   re='^[0-9]+$'
+   if ! [[ $TEST =~ $re ]] ; then
+    echo "TEST ERROR"
+    TEST=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
+   fi
+   if [ $TEST -eq 1 ];then
+    echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
+    for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
+     # Simple safety thing
+     TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
+     if [ $TEST -ne 1 ];then
+      continue
+     fi
+     #
+     if [ -d "$TEST_DATASET" ];then
+      rm -rf "$TEST_DATASET"
+      FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+      TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
+      if [ $TEST -eq 0 ];then
+       break
+      fi
+     fi
+    done
+   fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
+  fi # if [ $? -eq 0 ];then
+ fi # if [ $? -ne ];then # hostname check
+ #########################################
+
+ return 0
+}
+
+
 function test_internet_connection {
  curl --max-time 10 --silent http://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
  if [ $? -ne 0 ];then
@@ -120,45 +166,46 @@ fi
 #########################################
 # Remove test data from the previous run if we are out of disk space
 #########################################
-# Skip free disk space check on some pre-defined machines
-# hope this check should work even if there is no 'hostname' command
-hostname | grep --quiet eridan 
-if [ $? -ne 0 ];then 
- # Free-up disk space if we run out of it
- #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
- FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
- # If we managed to get the disk space info
- if [ $? -eq 0 ];then
-  TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
-  re='^[0-9]+$'
-  if ! [[ $TEST =~ $re ]] ; then
-   echo "TEST ERROR"
-   TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
-  fi
-  if [ $TEST -eq 1 ];then
-   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
-    # Simple safety thing
-    TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
-    if [ $TEST -ne 1 ];then
-     continue
-    fi
-    #
-    if [ -d "$TEST_DATASET" ];then
-     rm -rf "$TEST_DATASET"
-     #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
-     FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
-     TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
-     if [ $TEST -eq 0 ];then
-      break
-     fi
-    fi
-   done
-  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
- fi # if [ $? -eq 0 ];then
-fi # if [ $? -ne ];then # hostname check
-#########################################
+remove_test_data_to_save_space
+## Skip free disk space check on some pre-defined machines
+## hope this check should work even if there is no 'hostname' command
+#hostname | grep --quiet eridan 
+#if [ $? -ne 0 ];then 
+# # Free-up disk space if we run out of it
+# #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+# FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+# # If we managed to get the disk space info
+# if [ $? -eq 0 ];then
+#  TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
+#  re='^[0-9]+$'
+#  if ! [[ $TEST =~ $re ]] ; then
+#   echo "TEST ERROR"
+#   TEST=0
+#   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
+#  fi
+#  if [ $TEST -eq 1 ];then
+#   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
+#   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
+#    # Simple safety thing
+#    TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
+#    if [ $TEST -ne 1 ];then
+#     continue
+#    fi
+#    #
+#    if [ -d "$TEST_DATASET" ];then
+#     rm -rf "$TEST_DATASET"
+#     #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+#     FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+#     TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
+#     if [ $TEST -eq 0 ];then
+#      break
+#     fi
+#    fi
+#   done
+#  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
+# fi # if [ $? -eq 0 ];then
+#fi # if [ $? -ne ];then # hostname check
+##########################################
 
 
 
@@ -549,36 +596,36 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
+remove_test_data_to_save_space
 #
 #########################################
-# Skip free disk space check on some pre-defined machines
-# hope this check should work even if there is no 'hostname' command
-hostname | grep --quiet eridan 
-if [ $? -ne 0 ];then 
- # Free-up disk space if we run out of it
- #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
- FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
- # If we managed to get the disk space info
- if [ $? -eq 0 ];then
-  TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
-  re='^[0-9]+$'
-  if ! [[ $TEST =~ $re ]] ; then
-   echo "TEST ERROR"
-   TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
-  fi
-  if [ $TEST -eq 1 ];then
-   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-   if [ -d ../NMW_And1_test_lightcurves_40 ];then
-    echo "Deleting test data!" >> /dev/stderr
-    rm -rf ../NMW_And1_test_lightcurves_40
-   else
-    echo "What was it? o_O" >> /dev/stderr
-   fi
-  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
- fi # if [ $? -eq 0 ];then
-fi # if [ $? -ne ];then # hostname check
-#########################################
+## Skip free disk space check on some pre-defined machines
+## hope this check should work even if there is no 'hostname' command
+#hostname | grep --quiet eridan 
+#if [ $? -ne 0 ];then 
+# # Free-up disk space if we run out of it
+# FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+# # If we managed to get the disk space info
+# if [ $? -eq 0 ];then
+#  TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
+#  re='^[0-9]+$'
+#  if ! [[ $TEST =~ $re ]] ; then
+#   echo "TEST ERROR"
+#   TEST=0
+#   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
+#  fi
+#  if [ $TEST -eq 1 ];then
+#   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
+#   if [ -d ../NMW_And1_test_lightcurves_40 ];then
+#    echo "Deleting test data!" >> /dev/stderr
+#    rm -rf ../NMW_And1_test_lightcurves_40
+#   else
+#    echo "What was it? o_O" >> /dev/stderr
+#   fi
+#  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
+# fi # if [ $? -eq 0 ];then
+#fi # if [ $? -ne ];then # hostname check
+##########################################
 
 
 ##### Photographic plate test #####
@@ -1361,43 +1408,44 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt 
 #
-#########################################
-# Skip free disk space check on some pre-defined machines
-# hope this check should work even if there is no 'hostname' command
-hostname | grep --quiet eridan 
-if [ $? -ne 0 ];then 
- # Free-up disk space if we run out of it
- #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
- FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
- # If we managed to get the disk space info
- if [ $? -eq 0 ];then
-  TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
-  re='^[0-9]+$'
-  if ! [[ $TEST =~ $re ]] ; then
-   echo "TEST ERROR"
-   TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
-  fi
-  if [ $TEST -eq 1 ];then
-   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-   if [ $TEST_PASSED -eq 1 ];then
-    if [ -d ../test_data_photo ];then
-     echo "Deleting test data!" >> /dev/stderr
-     rm -rf ../test_data_photo
-    else
-     echo "What was it? o_O" >> /dev/stderr
-    fi
-   else
-    echo "The previous test did not pass - stopping here!
-   
-Failed test codes: $FAILED_TEST_CODES
-" >> /dev/stderr
-    exit 1
-   fi # if [ $TEST_PASSED -eq 1 ];then
-  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
- fi # if [ $? -eq 0 ];then
-fi # if [ $? -ne ];then # hostname check
-#########################################
+remove_test_data_to_save_space
+##########################################
+## Skip free disk space check on some pre-defined machines
+## hope this check should work even if there is no 'hostname' command
+#hostname | grep --quiet eridan 
+#if [ $? -ne 0 ];then 
+# # Free-up disk space if we run out of it
+# #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+# FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+# # If we managed to get the disk space info
+# if [ $? -eq 0 ];then
+#  TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
+#  re='^[0-9]+$'
+#  if ! [[ $TEST =~ $re ]] ; then
+#   echo "TEST ERROR"
+#   TEST=0
+#   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
+#  fi
+#  if [ $TEST -eq 1 ];then
+#   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
+#   if [ $TEST_PASSED -eq 1 ];then
+#    if [ -d ../test_data_photo ];then
+#     echo "Deleting test data!" >> /dev/stderr
+#     rm -rf ../test_data_photo
+#    else
+#     echo "What was it? o_O" >> /dev/stderr
+#    fi
+#   else
+#    echo "The previous test did not pass - stopping here!
+#   
+#Failed test codes: $FAILED_TEST_CODES
+#" >> /dev/stderr
+#    exit 1
+#   fi # if [ $TEST_PASSED -eq 1 ];then
+#  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
+# fi # if [ $? -eq 0 ];then
+#fi # if [ $? -ne ];then # hostname check
+##########################################
 
 ##### Small CCD images test #####
 # Download the test dataset if needed
@@ -2335,7 +2383,6 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 
-
 ##### Few small CCD images test #####
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
@@ -2514,7 +2561,6 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
-
 
 ##### Small CCD images with no photometric errors rescaling test #####
 # Download the test dataset if needed
@@ -3564,7 +3610,7 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
-
+remove_test_data_to_save_space
 
 ##### Small CCD images test with automated reference image selection #####
 # Download the test dataset if needed
@@ -4924,11 +4970,6 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 #
 
 
-### !!!!!!!!!!!!!
-#echo $FAILED_TEST_CODES
-#exit 1
-
-
 ##### Very few stars on the reference frame #####
 # Download the test dataset if needed
 if [ ! -d ../vast_test_bright_stars_failed_match ];then
@@ -5051,6 +5092,7 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
+remove_test_data_to_save_space
 
 ##### Very few stars on the reference frame #####
 # Download the test dataset if needed
@@ -5173,7 +5215,7 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
-
+remove_test_data_to_save_space
 
 ##### Test the two levels of directory recursion #####
 # Download the test dataset if needed
@@ -5384,7 +5426,7 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
-
+remove_test_data_to_save_space
 
 
 ##### MASTER images test #####
@@ -5503,44 +5545,45 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
-#########################################
-# Skip free disk space check on some pre-defined machines
-# hope this check should work even if there is no 'hostname' command
-hostname | grep --quiet eridan 
-if [ $? -ne 0 ];then 
- # Free-up disk space if we run out of it
- #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
- FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
- # If we managed to get the disk space info
- if [ $? -eq 0 ];then
-  TEST=`echo "($FREE_DISK_SPACE_MB)<2048" | bc -q`
-  re='^[0-9]+$'
-  if ! [[ $TEST =~ $re ]] ; then
-   echo "TEST ERROR"
-   TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
-  fi
-
-  if [ $TEST -eq 1 ];then
-   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-   if [ $TEST_PASSED -eq 1 ];then
-    if [ -d ../MASTER_test ];then
-     echo "Deleting test data!" >> /dev/stderr
-     rm -rf ../MASTER_test
-    else
-     echo "What was it? o_O" >> /dev/stderr
-    fi
-   else
-    echo "The previous test did not pass - stopping here!
-   
-Failed test codes: $FAILED_TEST_CODES
-" >> /dev/stderr
-    exit 1
-   fi # if [ $TEST_PASSED -eq 1 ];then
-  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
- fi # if [ $? -eq 0 ];then
-fi # if [ $? -ne ];then # hostname check
-#########################################
+remove_test_data_to_save_space
+##########################################
+## Skip free disk space check on some pre-defined machines
+## hope this check should work even if there is no 'hostname' command
+#hostname | grep --quiet eridan 
+#if [ $? -ne 0 ];then 
+# # Free-up disk space if we run out of it
+# #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+# FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+# # If we managed to get the disk space info
+# if [ $? -eq 0 ];then
+#  TEST=`echo "($FREE_DISK_SPACE_MB)<2048" | bc -q`
+#  re='^[0-9]+$'
+#  if ! [[ $TEST =~ $re ]] ; then
+#   echo "TEST ERROR"
+#   TEST=0
+#   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
+#  fi
+#
+#  if [ $TEST -eq 1 ];then
+#   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
+#   if [ $TEST_PASSED -eq 1 ];then
+#    if [ -d ../MASTER_test ];then
+#     echo "Deleting test data!" >> /dev/stderr
+#     rm -rf ../MASTER_test
+#    else
+#     echo "What was it? o_O" >> /dev/stderr
+#    fi
+#   else
+#    echo "The previous test did not pass - stopping here!
+#   
+#Failed test codes: $FAILED_TEST_CODES
+#" >> /dev/stderr
+#    exit 1
+#   fi # if [ $TEST_PASSED -eq 1 ];then
+#  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
+# fi # if [ $? -eq 0 ];then
+#fi # if [ $? -ne ];then # hostname check
+##########################################
 
 
 ##### M31 ISON images test #####
@@ -5666,6 +5709,7 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
+remove_test_data_to_save_space
 
 ##### Gaia16aye images by S. Nazarov test #####
 # Download the test dataset if needed
@@ -5780,7 +5824,7 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
-
+remove_test_data_to_save_space
 
 ##### Images with only few stars by S. Nazarov test #####
 # Download the test dataset if needed
@@ -6113,7 +6157,7 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
-
+remove_test_data_to_save_space
 
 ##### test images by JB #####
 # Download the test dataset if needed
@@ -6335,43 +6379,44 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
-#########################################
-# Skip free disk space check on some pre-defined machines
-# hope this check should work even if there is no 'hostname' command
-hostname | grep --quiet eridan 
-if [ $? -ne 0 ];then 
- # Free-up disk space if we run out of it
- #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
- FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
- # If we managed to get the disk space info
- if [ $? -eq 0 ];then
-  TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
-  re='^[0-9]+$'
-  if ! [[ $TEST =~ $re ]] ; then
-   echo "TEST ERROR"
-   TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
-  fi
-  if [ $TEST -eq 1 ];then
-   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-   if [ $TEST_PASSED -eq 1 ];then
-    if [ -d ../test_exclude_ref_image ];then
-     echo "Deleting test data!" >> /dev/stderr
-     rm -rf ../test_exclude_ref_image
-    else
-     echo "What was it? o_O" >> /dev/stderr
-    fi
-   else
-    echo "The previous test did not pass - stopping here!
-   
-Failed test codes: $FAILED_TEST_CODES
-" >> /dev/stderr
-    exit 1
-   fi # if [ $TEST_PASSED -eq 1 ];then
-  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
- fi # if [ $? -eq 0 ];then
-fi # if [ $? -ne ];then # hostname check
-#########################################
+remove_test_data_to_save_space
+##########################################
+## Skip free disk space check on some pre-defined machines
+## hope this check should work even if there is no 'hostname' command
+#hostname | grep --quiet eridan 
+#if [ $? -ne 0 ];then 
+# # Free-up disk space if we run out of it
+# #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+# FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+# # If we managed to get the disk space info
+# if [ $? -eq 0 ];then
+#  TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
+#  re='^[0-9]+$'
+#  if ! [[ $TEST =~ $re ]] ; then
+#   echo "TEST ERROR"
+#   TEST=0
+#   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
+#  fi
+#  if [ $TEST -eq 1 ];then
+#   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
+#   if [ $TEST_PASSED -eq 1 ];then
+#    if [ -d ../test_exclude_ref_image ];then
+#     echo "Deleting test data!" >> /dev/stderr
+#     rm -rf ../test_exclude_ref_image
+#    else
+#     echo "What was it? o_O" >> /dev/stderr
+#    fi
+#   else
+#    echo "The previous test did not pass - stopping here!
+#   
+#Failed test codes: $FAILED_TEST_CODES
+#" >> /dev/stderr
+#    exit 1
+#   fi # if [ $TEST_PASSED -eq 1 ];then
+#  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
+# fi # if [ $? -eq 0 ];then
+#fi # if [ $? -ne ];then # hostname check
+##########################################
 
 
 # Test that the Internet conncation has not failed
@@ -6869,6 +6914,7 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
+remove_test_data_to_save_space
 
 # Test that the Internet conncation has not failed
 test_internet_connection
@@ -7377,6 +7423,7 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
+remove_test_data_to_save_space
 
 ##### Saturn/Iapetus test 2 #####
 # Download the test dataset if needed
@@ -7727,6 +7774,7 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
+remove_test_data_to_save_space
 
 ##### Venus test #####
 # Download the test dataset if needed
@@ -7895,7 +7943,7 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
-
+remove_test_data_to_save_space
 
 ##### Nova Cas test (involves three second-epoch images including a bad one) #####
 # Download the test dataset if needed
@@ -8068,7 +8116,7 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
-
+remove_test_data_to_save_space
 
 ##### Sgr9 crash and no shift test #####
 # Download the test dataset if needed
@@ -8295,8 +8343,112 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
+remove_test_data_to_save_space
 
 
+ ############# NMW exclusion list #############
+# Download the test dataset if needed
+if [ ! -d ../NMW_Vul2_magnitude_calibration_exit_code_test ];then
+ cd ..
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/NMW_Vul2_magnitude_calibration_exit_code_test.tar.bz2" && tar -xvjf NMW_Vul2_magnitude_calibration_exit_code_test.tar.bz2 && rm -f NMW_Vul2_magnitude_calibration_exit_code_test.tar.bz2
+ cd $WORKDIR
+fi
+# If the test data are found
+if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "NMW Vul2 exclusion list test " >> /dev/stderr
+ echo -n "NMW Vul2 exclusion list test: " >> vast_test_report.txt
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ # Purge the old exclusion list, create a fake one
+ echo "06:50:14.55 +00:07:27.8
+06:50:15.79 +00:07:22.0
+07:01:41.33 +00:06:32.7
+06:49:07.80 +01:00:22.0
+07:07:43.22 +00:02:18.7
+" > ../exclusion_list.txt
+ # Run the search
+ REFERENCE_IMAGES=../NMW_Vul2_magnitude_calibration_exit_code_test/ref/ util/transients/transient_factory_test31.sh ../NMW_Vul2_magnitude_calibration_exit_code_test/2nd_epoch/
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_001"
+ fi
+ if [ -f transient_report/index.html ];then
+  grep --quiet '2 Pallas' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_002"
+  fi
+  grep --quiet 'EP Vul' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_003"
+  fi
+  grep --quiet -e 'NSV 11847' -e 'V0556 Vul' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_004"
+  fi
+  grep --quiet 'ASAS J193002+1950.9' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_005"
+  fi
+  # Run the search again
+  REFERENCE_IMAGES=../NMW_Vul2_magnitude_calibration_exit_code_test/ref/ util/transients/transient_factory_test31.sh ../NMW_Vul2_magnitude_calibration_exit_code_test/2nd_epoch/
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_101"
+  fi
+  # Make sure we are finding now only the asteroid Pallas and the variables are excluded
+  grep --quiet '2 Pallas' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_102"
+  fi
+  grep --quiet 'EP Vul' transient_report/index.html
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_103"
+  fi
+  grep --quiet 'NSV 11847' transient_report/index.html
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_104"
+  fi
+  grep --quiet 'ASAS J193002+1950.9' transient_report/index.html
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_105"
+  fi
+ else
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_NO_INDEXHTML"
+ fi
+ rm -f ../exclusion_list.txt
+ ###### restore exclusion list after the test if needed
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mNMW Vul2 exclusion list test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mNMW Vul2 exclusion list test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU__TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+# 
+remove_test_data_to_save_space
 
 
 # Test that the Internet conncation has not failed
@@ -8440,7 +8592,7 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
-
+remove_test_data_to_save_space
 
 # Test that the Internet conncation has not failed
 test_internet_connection
@@ -8756,7 +8908,7 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
-
+remove_test_data_to_save_space
 
 ### Photoplate in the area not covered by APASS
 if [ ! -f ../individual_images_test/SCA13320__00_00.fits ];then
@@ -8814,7 +8966,7 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 
-### date specified with with JDMID keyword
+### date specified with JDMID keyword
 if [ ! -f ../individual_images_test/SCA13320__00_00__date_in_JDMID_keyword.fits ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
@@ -8894,7 +9046,7 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
-
+remove_test_data_to_save_space
 
 ######### ZTF image header test
 if [ ! -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits ];then
@@ -9242,6 +9394,7 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
+remove_test_data_to_save_space
 
 # Test that the Internet conncation has not failed
 test_internet_connection
@@ -9390,43 +9543,44 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
-#########################################
-# Skip free disk space check on some pre-defined machines
-# hope this check should work even if there is no 'hostname' command
-hostname | grep --quiet eridan 
-if [ $? -ne 0 ];then 
- # Free-up disk space if we run out of it
- #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
- FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
- # If we managed to get the disk space info
- if [ $? -eq 0 ];then
-  TEST=`echo "($FREE_DISK_SPACE_MB)<2048" | bc -q`
-  re='^[0-9]+$'
-  if ! [[ $TEST =~ $re ]] ; then
-   echo "TEST ERROR"
-   TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
-  fi
-  if [ $TEST -eq 1 ];then
-   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-   if [ $TEST_PASSED -eq 1 ];then
-    if [ -d ../individual_images_test ];then
-     echo "Deleting test data!" >> /dev/stderr
-     rm -rf ../individual_images_test
-    else
-     echo "What was it? o_O" >> /dev/stderr
-    fi
-   else
-    echo "The previous test did not pass - stopping here!
-   
-Failed test codes: $FAILED_TEST_CODES
-" >> /dev/stderr
-    exit 1
-   fi # if [ $TEST_PASSED -eq 1 ];then
-  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
- fi # if [ $? -eq 0 ];then
-fi # if [ $? -ne ];then # hostname check
-#########################################
+remove_test_data_to_save_space
+##########################################
+## Skip free disk space check on some pre-defined machines
+## hope this check should work even if there is no 'hostname' command
+#hostname | grep --quiet eridan 
+#if [ $? -ne 0 ];then 
+# # Free-up disk space if we run out of it
+# #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+# FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+# # If we managed to get the disk space info
+# if [ $? -eq 0 ];then
+#  TEST=`echo "($FREE_DISK_SPACE_MB)<2048" | bc -q`
+#  re='^[0-9]+$'
+#  if ! [[ $TEST =~ $re ]] ; then
+#   echo "TEST ERROR"
+#   TEST=0
+#   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
+#  fi
+#  if [ $TEST -eq 1 ];then
+#   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
+#   if [ $TEST_PASSED -eq 1 ];then
+#    if [ -d ../individual_images_test ];then
+#     echo "Deleting test data!" >> /dev/stderr
+#     rm -rf ../individual_images_test
+#    else
+#     echo "What was it? o_O" >> /dev/stderr
+#    fi
+#   else
+#    echo "The previous test did not pass - stopping here!
+#   
+#Failed test codes: $FAILED_TEST_CODES
+#" >> /dev/stderr
+#    exit 1
+#   fi # if [ $TEST_PASSED -eq 1 ];then
+#  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
+# fi # if [ $? -eq 0 ];then
+#fi # if [ $? -ne ];then # hostname check
+##########################################
 
 ############# Dark Flat Flag #############
 if [ ! -d ../vast_test__dark_flat_flag ];then
@@ -9452,14 +9606,14 @@ if [ -d ../vast_test__dark_flat_flag ];then
   echo -e "\n\033[01;34mDark Flat Flag test \033[01;31mFAILED\033[00m" >> /dev/stderr
   echo "FAILED" >> vast_test_report.txt
  fi
- #
- echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
- df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
- #
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_DARK_FLAT_FLAG_TEST_NOT_PERFORMED" 
 fi 
-
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+remove_test_data_to_save_space
 
 ############## Sepcial tests that are performed only on the main developement computer ##############
 if [ -d /mnt/usb/M4_F775W_images_Level2_few_links_for_tests ];then
@@ -9669,101 +9823,6 @@ $GREP_RESULT"
  fi
 fi # if [ "$HOSTNAME" = "eridan" ] ;then
 
- ############# NMW exclusion list #############
-if [ "$HOSTNAME" = "eridan" ] ;then
- if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
-  TEST_PASSED=1
-  util/clean_data.sh
-  # Run the test
-  echo "Special NMW exclusion list test " >> /dev/stderr
-  echo -n "Special NMW exclusion list test: " >> vast_test_report.txt
-  if [ -f ../exclusion_list.txt ];then
-   mv ../exclusion_list.txt ../exclusion_list.txt_backup
-  fi
-  # Purge the old exclusion list, create a fake one
-  echo "06:50:14.55 +00:07:27.8
-06:50:15.79 +00:07:22.0
-07:01:41.33 +00:06:32.7
-06:49:07.80 +01:00:22.0
-07:07:43.22 +00:02:18.7
-" > ../exclusion_list.txt
-  # Run the search
-  REFERENCE_IMAGES=../NMW_Vul2_magnitude_calibration_exit_code_test/ref/ util/transients/transient_factory_test31.sh ../NMW_Vul2_magnitude_calibration_exit_code_test/2nd_epoch/
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_001"
-  fi
-  if [ -f transient_report/index.html ];then
-   grep --quiet '2 Pallas' transient_report/index.html
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_002"
-   fi
-   grep --quiet 'EP Vul' transient_report/index.html
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_003"
-   fi
-   grep --quiet -e 'NSV 11847' -e 'V0556 Vul' transient_report/index.html
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_004"
-   fi
-   grep --quiet 'ASAS J193002+1950.9' transient_report/index.html
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_005"
-   fi
-   # Run the search again
-   REFERENCE_IMAGES=../NMW_Vul2_magnitude_calibration_exit_code_test/ref/ util/transients/transient_factory_test31.sh ../NMW_Vul2_magnitude_calibration_exit_code_test/2nd_epoch/
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_101"
-   fi
-   # Make sure we are finding now only the asteroid Pallas and the variables are excluded
-   grep --quiet '2 Pallas' transient_report/index.html
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_102"
-   fi
-   grep --quiet 'EP Vul' transient_report/index.html
-   if [ $? -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_103"
-   fi
-   grep --quiet 'NSV 11847' transient_report/index.html
-   if [ $? -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_104"
-   fi
-   grep --quiet 'ASAS J193002+1950.9' transient_report/index.html
-   if [ $? -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_105"
-   fi
-  else
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_NMWEXCLU_NO_INDEXHTML"
-  fi
-  rm -f ../exclusion_list.txt
-  ###### restore exclusion list after the test if needed
-  if [ -f ../exclusion_list.txt_backup ];then
-   mv ../exclusion_list.txt_backup ../exclusion_list.txt
-  fi
-  #
-  if [ $TEST_PASSED -eq 1 ];then
-   echo -e "\n\033[01;34mSpecial NMW exclusion list test \033[01;32mPASSED\033[00m" >> /dev/stderr
-   echo "PASSED" >> vast_test_report.txt
-  else
-   echo -e "\n\033[01;34mSpecial NMW exclusion list test \033[01;31mFAILED\033[00m" >> /dev/stderr
-   echo "FAILED" >> vast_test_report.txt
-  fi
-  #
-  echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
-  df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
-  # 
- fi
-fi # if [ "$HOSTNAME" = "eridan" ] ;then
 
 #### Valgrind test
 command -v valgrind &> /dev/null
@@ -11068,7 +11127,9 @@ $GREP_RESULT"
   # After dropping one of the 10 brightest stars
   #TEST=`echo "a=($STATIDX)-(0.045071);sqrt(a*a)<0.003" | bc -ql`
   # After disabling mag_psf-mag_aper filter
-  TEST=`echo "a=($STATIDX)-(0.049129);sqrt(a*a)<0.003" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.049129);sqrt(a*a)<0.003" | bc -ql`
+  # Same as above, but relaxed
+  TEST=`echo "a=($STATIDX)-(0.049129);sqrt(a*a)<0.03" | bc -ql`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -12374,45 +12435,46 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 #########################################
 # Remove test data for the next run if we are out of disk space
 #########################################
-# Skip free disk space check on some pre-defined machines
-# hope this check should work even if there is no 'hostname' command
-hostname | grep --quiet eridan 
-if [ $? -ne 0 ];then 
- # Free-up disk space if we run out of it
- #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
- FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
- # If we managed to get the disk space info
- if [ $? -eq 0 ];then
-  TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
-  re='^[0-9]+$'
-  if ! [[ $TEST =~ $re ]] ; then
-   echo "TEST ERROR"
-   TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
-  fi
-  if [ $TEST -eq 1 ];then
-   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
-    # Simple safety thing
-    TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
-    if [ $TEST -ne 1 ];then
-     continue
-    fi
-    #
-    if [ -d "$TEST_DATASET" ];then
-     rm -rf "$TEST_DATASET"
-     #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
-     FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
-     TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
-     if [ $TEST -eq 0 ];then
-      break
-     fi
-    fi
-   done
-  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
- fi # if [ $? -eq 0 ];then
-fi # if [ $? -ne ];then # hostname check
-#########################################
+remove_test_data_to_save_space
+## Skip free disk space check on some pre-defined machines
+## hope this check should work even if there is no 'hostname' command
+#hostname | grep --quiet eridan 
+#if [ $? -ne 0 ];then 
+# # Free-up disk space if we run out of it
+# #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+# FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+# # If we managed to get the disk space info
+# if [ $? -eq 0 ];then
+#  TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
+#  re='^[0-9]+$'
+#  if ! [[ $TEST =~ $re ]] ; then
+#   echo "TEST ERROR"
+#   TEST=0
+#   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
+#  fi
+#  if [ $TEST -eq 1 ];then
+#   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
+#   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
+#    # Simple safety thing
+#    TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
+#    if [ $TEST -ne 1 ];then
+#     continue
+#    fi
+#    #
+#    if [ -d "$TEST_DATASET" ];then
+#     rm -rf "$TEST_DATASET"
+#     #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+#     FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+#     TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
+#     if [ $TEST -eq 0 ];then
+#      break
+#     fi
+#    fi
+#   done
+#  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
+# fi # if [ $? -eq 0 ];then
+#fi # if [ $? -ne ];then # hostname check
+##########################################
 
 
 
@@ -12471,7 +12533,9 @@ if [ "$MAIL_TEST_REPORT_TO_KIRX" = "YES" ];then
  HOST=`hostname`
  HOST="@$HOST"
  NAME="$USER$HOST"
- DATETIME=`LANG=C date --utc`
+# DATETIME=`LANG=C date --utc`
+# bsd dae doesn't know '--utc', but accepts '-u'
+ DATETIME=`LANG=C date -u`
  SCRIPTNAME=`basename $0`
  LOG=`cat vast_test_report.txt`
  MSG="The script $0 has finished on $DATETIME at $PWD $LOG $DEBUG_OUTPUT"
@@ -12507,4 +12571,4 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
 fi
 
 echo "Exit code 0"
-exit
+exit 0

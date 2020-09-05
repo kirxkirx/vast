@@ -834,11 +834,13 @@ done # for NEW_IMAGES in $@ ;do
 ## Automatically update the exclusion list if we are on a production server
 HOST=`hostname`
 echo "The analysis was running at $HOST" >> transient_factory_test31.txt
-if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ] || [ "$HOST" = "eridan" ];then
+# remove restrictions on host for exclusion list update
+#if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ] || [ "$HOST" = "eridan" ];then
  echo "We are allowed to update the exclusion list at $HOST host" >> transient_factory_test31.txt
  # if we are not in the test directory
  echo "$PWD" "$@" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
- if [ $? -ne 0 ];then
+ if [ $? -ne 0 ] || [ "$1" == "../NMW_Vul2_magnitude_calibration_exit_code_test/2nd_epoch/" ] ;then
+  # the NMW_Vul2_magnitude_calibration_exit_code_test tests for exclusion listupdate
   echo "This does not look like a test run" >> transient_factory_test31.txt
   if [ -f ../exclusion_list.txt ];then
    echo "Found ../exclusion_list.txt" >> transient_factory_test31.txt
@@ -903,7 +905,7 @@ if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ] || [ "$HOST" = "eridan" ];then
   echo "This looks like a test run so we are not updating exclusion list" >> transient_factory_test31.txt
   echo "$PWD" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST' >> transient_factory_test31.txt
  fi
-fi
+#fi # host
 ## exclusion list update
 
 
