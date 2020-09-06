@@ -7424,6 +7424,17 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 remove_test_data_to_save_space
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!" >> /dev/stderr
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES" >> /dev/stderr
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ exit 1
+fi
+
+
 
 ##### Saturn/Iapetus test 2 #####
 # Download the test dataset if needed
@@ -7775,6 +7786,16 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 remove_test_data_to_save_space
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!" >> /dev/stderr
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES" >> /dev/stderr
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ exit 1
+fi
+
 
 ##### Venus test #####
 # Download the test dataset if needed
@@ -7944,6 +7965,17 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 remove_test_data_to_save_space
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!" >> /dev/stderr
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES" >> /dev/stderr
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ exit 1
+fi
+
+
 
 ##### Nova Cas test (involves three second-epoch images including a bad one) #####
 # Download the test dataset if needed
@@ -8117,6 +8149,17 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 remove_test_data_to_save_space
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!" >> /dev/stderr
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES" >> /dev/stderr
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ exit 1
+fi
+
+
 
 ##### Sgr9 crash and no shift test #####
 # Download the test dataset if needed
@@ -8344,9 +8387,18 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 remove_test_data_to_save_space
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!" >> /dev/stderr
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES" >> /dev/stderr
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ exit 1
+fi
 
 
- ############# NMW exclusion list #############
+############# NMW exclusion list #############
 # Download the test dataset if needed
 if [ ! -d ../NMW_Vul2_magnitude_calibration_exit_code_test ];then
  cd ..
@@ -8449,8 +8501,6 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 # 
 remove_test_data_to_save_space
-
-
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
@@ -8593,7 +8643,6 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 remove_test_data_to_save_space
-
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
@@ -9395,7 +9444,6 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 remove_test_data_to_save_space
-
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
@@ -9405,6 +9453,7 @@ if [ $? -ne 0 ];then
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
+
 
 ### Check the external plate solve servers
 if [ -d ../individual_images_test ];then
@@ -9500,7 +9549,6 @@ if [ -d ../individual_images_test ];then
   echo "FAILED" >> vast_test_report.txt
  fi
 
-
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES REMOTEPLATESOLVE_TEST_NOT_PERFORMED"
 fi
@@ -9508,6 +9556,15 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!" >> /dev/stderr
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES" >> /dev/stderr
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ exit 1
+fi
 
 
 ### check that we are NOT creating a flag image for photoplates
