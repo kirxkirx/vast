@@ -376,6 +376,8 @@ int remove_directory( const char *path ) {
 
 int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogfilename ); // actually it is declared in src/autodetect_aperture.c
 
+void make_sure_libbin_is_in_path( ); // actually it is declared in src/autodetect_aperture.c
+
 // This function will try to find the deepest image and set it as the reference one
 // by altering the image order in input_images array
 //void choose_best_reference_image( char **input_images, int Num, int maxsextractorflag ) {
@@ -2391,14 +2393,16 @@ int main( int argc, char **argv ) {
  /* The end of the beginning =) */
 
 
- /* Update PATH variable to make sure the local copy of SExtractor is there */
+ // Update PATH variable to make sure the local copy of SExtractor is there 
+ make_sure_libbin_is_in_path();
+/*
  char pathstring[8192];
  strncpy( pathstring, getenv( "PATH" ), 8192 );
  pathstring[8192 - 1]= '\0';
  strncat( pathstring, ":lib/bin", 8192 - 32 );
  pathstring[8192 - 1]= '\0';
  setenv( "PATH", pathstring, 1 );
-
+*/
  /* Check if the SExtractor executable (named "sex") is present in $PATH */
  if ( 0 != system( "lib/look_for_sextractor.sh" ) ) {
   fprintf( stderr, "Error looking for SExtractor. Aborting further computations...\n" );

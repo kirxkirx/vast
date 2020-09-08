@@ -23,6 +23,21 @@
 
 #include "is_point_close_or_off_the_frame_edge.h" // for is_point_close_or_off_the_frame_edge()
 
+// Update PATH variable to make sure the local copy of SExtractor is there
+void make_sure_libbin_is_in_path( ) {
+ char pathstring[8192];
+ strncpy( pathstring, getenv( "PATH" ), 8192 );
+ pathstring[8192 - 1]= '\0';
+ // if :lib/bin is not there
+ if ( NULL == strstr( pathstring, ":lib/bin" ) ) { 
+  strncat( pathstring, ":lib/bin", 8192 - 32 );
+  pathstring[8192 - 1]= '\0';
+  fprintf( stderr, "Updating PATH variable:\n%s\n%s\n", getenv( "PATH" ), pathstring );
+  setenv( "PATH", pathstring, 1 ); 
+ }
+ return;
+}
+
 int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogfilename ) {
  char fitsfilename_to_test[FILENAME_LENGTH];
  FILE *f;
@@ -159,6 +174,8 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
  }
  ////// End of the memory-hungry stuff //////
 
+ // Make sure the local copy of SExtractor will be in PATH in case there is no system-wide one
+ make_sure_libbin_is_in_path();
 
  fprintf( stderr, "Running SExtractor on %s\n", fitsfilename );
 

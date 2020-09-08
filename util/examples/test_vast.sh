@@ -8975,6 +8975,7 @@ if [ ! -f ../individual_images_test/SCA13320__00_00.fits ];then
  wget -c "http://scan.sai.msu.ru/~kirx/pub/SCA13320__00_00.fits.bz2" && bunzip2 SCA13320__00_00.fits.bz2
  cd $WORKDIR
 fi
+
 if [ -f ../individual_images_test/SCA13320__00_00.fits ];then
  TEST_PASSED=1
  util/clean_data.sh
@@ -9021,6 +9022,7 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
+remove_test_data_to_save_space
 
 ### date specified with JDMID keyword
 if [ ! -f ../individual_images_test/SCA13320__00_00__date_in_JDMID_keyword.fits ];then
@@ -9059,6 +9061,7 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
+remove_test_data_to_save_space
 
 ### HST image - check that we are creating a flag image for that one
 if [ ! -f ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits ];then
@@ -9076,6 +9079,16 @@ if [ -f ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits ];the
  # Run the test
  echo "Flag image creation for HST test " >> /dev/stderr
  echo -n "Flag image creation for HST test: " >> vast_test_report.txt 
+ # first run without grep "FLAG_IMAGE image00000.flag" to see the crash log if any
+ cp default.sex.ccd_example default.sex
+ GREP_RESULT=`lib/autodetect_aperture_main ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits 2>&1`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES FLAGHST000"
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### FLAGHST000 ######
+$GREP_RESULT"
+ fi 
  cp default.sex.ccd_example default.sex
  lib/autodetect_aperture_main ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits 2>&1 | grep "FLAG_IMAGE image00000.flag"
  if [ $? -ne 0 ];then
@@ -9463,6 +9476,36 @@ fi
 
 
 ### Check the external plate solve servers
+if [ ! -f ../individual_images_test/1630+3250.20150511T215921000.fit ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/1630+3250.20150511T215921000.fit.bz2" && bunzip2 1630+3250.20150511T215921000.fit.bz2
+ cd $WORKDIR
+fi
+if [ ! -f ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit.bz2" && bunzip2 Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit.bz2
+ cd $WORKDIR
+fi
+if [ ! -f ../individual_images_test/SCA13320__00_00.fits ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/SCA13320__00_00.fits.bz2" && bunzip2 SCA13320__00_00.fits.bz2
+ cd $WORKDIR
+fi
+if [ ! -d ../M31_ISON_test ];then
+ cd ..
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/M31_ISON_test.tar.bz2" && tar -xvjf M31_ISON_test.tar.bz2 && rm -f M31_ISON_test.tar.bz2
+ cd $WORKDIR
+fi
+
 if [ -d ../individual_images_test ];then
  TEST_PASSED=1
  # Run the test
@@ -9575,6 +9618,14 @@ fi
 
 
 ### check that we are NOT creating a flag image for photoplates
+if [ ! -f ../individual_images_test/SCA13320__00_00.fits ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/SCA13320__00_00.fits.bz2" && bunzip2 SCA13320__00_00.fits.bz2
+ cd $WORKDIR
+fi
 if [ -f ../individual_images_test/SCA13320__00_00.fits ];then
  TEST_PASSED=1
  util/clean_data.sh
