@@ -1669,11 +1669,6 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
    fit_plane_lin( x, y, z, (unsigned int)nm, &Ay, &By, &Cy );
    //fprintf(stderr,"dy=(%lf)*x+(%lf)*y+(%lf)\n",Ay,By,Cy);
 
-/*
-   free( z );
-   free( y );
-   free( x );
-*/
    // Now, apply the coordinate correction to ALL stars on the new (= current = star2) frame.
    //fprintf(stderr,"Applying coordinate corrections...\n");
    for ( ii= 0; ii < (unsigned int)NUMBER2; ii++ ) {
@@ -1775,7 +1770,6 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
     return nm; //0;
    }
 
-/**/
    free( z );
    free( y );
    free( x );

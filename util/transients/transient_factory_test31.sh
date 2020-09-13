@@ -351,7 +351,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   SE_CATALOG_FOR_SECOND_EPOCH__FIRST_IMAGE=`grep "$SECOND_EPOCH__FIRST_IMAGE" vast_images_catalogs.log | awk '{print $1}'`
   MEDIAN_DIFFERENCE_AminusB_PIX=`cat $SE_CATALOG_FOR_SECOND_EPOCH__FIRST_IMAGE | awk '{print $18-$20}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.2f", $2}'`
   ### ===> APERTURE LIMITS HARDCODED HERE <=== (this is median difference in pixels between semi-major and semi-minor axes of the source)
-  TEST=`echo "$MEDIAN_DIFFERENCE_AminusB_PIX < 0.5" | bc -ql`
+  TEST=`echo "$MEDIAN_DIFFERENCE_AminusB_PIX < 0.6" | bc -ql`
   if [ $TEST -eq 0 ];then
    echo "ERROR: tracking error (elongated stars), median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  "`basename $SECOND_EPOCH__FIRST_IMAGE` >> transient_factory_test31.txt
    continue
@@ -361,7 +361,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   SE_CATALOG_FOR_SECOND_EPOCH__SECOND_IMAGE=`grep "$SECOND_EPOCH__SECOND_IMAGE" vast_images_catalogs.log | awk '{print $1}'`
   MEDIAN_DIFFERENCE_AminusB_PIX=`cat $SE_CATALOG_FOR_SECOND_EPOCH__SECOND_IMAGE | awk '{print $18-$20}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.2f", $2}'`
   ### ===> APERTURE LIMITS HARDCODED HERE <=== (this is median difference in pixels between semi-major and semi-minor axes of the source)
-  TEST=`echo "$MEDIAN_DIFFERENCE_AminusB_PIX < 0.5" | bc -ql`
+  TEST=`echo "$MEDIAN_DIFFERENCE_AminusB_PIX < 0.6" | bc -ql`
   if [ $TEST -eq 0 ];then
    echo "ERROR: tracking error (elongated stars) median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  "`basename $SECOND_EPOCH__SECOND_IMAGE` >> transient_factory_test31.txt
    continue
@@ -444,12 +444,12 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 
  echo "Starting VaST with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
  # Run VaST
- echo "./vast --starmatchraius 4.0 --matchstarnumber 500 --selectbestaperture -y1 -p -x99 -u -f -k $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_test31.txt
+ echo "./vast --starmatchraius 4.0 --matchstarnumber 500 --selectbestaperture --sysrem 1 --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_test31.txt
  ###./vast -x99 -u -f -k $REFERENCE_IMAGES/*$FIELD* $NEW_IMAGES/*$FIELD*
  ##./vast --selectbestaperture -y1 -p -x99 -u -f -k $REFERENCE_IMAGES/*"$FIELD"_* `ls $NEW_IMAGES/*"$FIELD"_*_001.fts | head -n1` `ls $NEW_IMAGES/*"$FIELD"_*_002.fts | head -n1`
  #./vast --selectbestaperture -y1 -p -x99 -u -f -k "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
  #./vast --matchstarnumber 500 --selectbestaperture -y1 -p -x99 -u -f -k "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
- ./vast --starmatchraius 4.0 --matchstarnumber 500 --selectbestaperture -y1 -p -x99 -u -f -k "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
+ ./vast --starmatchraius 4.0 --matchstarnumber 500 --selectbestaperture --sysrem 1 --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
  if [ $? -ne 0 ];then
   echo "ERROR running VaST on the field $FIELD"
   echo "ERROR running VaST on the field $FIELD" >> transient_factory_test31.txt
