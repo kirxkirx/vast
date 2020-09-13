@@ -30,7 +30,11 @@ echo "<table style='font-family:monospace;font-size:12px;'>
 N=0
 
 # Make sure there are no files with names we want to use
-rm -f ra$$.dat dec$$.dat mag$$.dat dayfrac$$.dat jd$$.dat
+for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat dayfrac$$.dat jd$$.dat x$$.dat y$$.dat ;do
+ if [ -f "$TMP_FILE_TO_REMOVE" ];then
+  rm -f "$TMP_FILE_TO_REMOVE"
+ fi
+done
 
 while read JD MAG MERR X Y APP FITSFILE REST ;do
  #util/wcs_image_calibration.sh $FITSFILE $FOV &>/dev/null
@@ -94,6 +98,10 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
   echo "$RA" >> ra$$.dat
   echo "$DEC" >> dec$$.dat
   echo "$MAG" >> mag$$.dat
+  #
+  echo "$X" >> x$$.dat
+  echo "$Y" >> y$$.dat
+  #
  fi
  
  if [ "$FITSFILE" != "$REFERENCE_IMAGE" ] ;then
@@ -208,10 +216,37 @@ for STRING_TO_TEST in "$RA_MEAN" "$RA_MAX" "$RA_MIN" "$DEC_MEAN" "$DEC_MAX" "$DE
  fi
 done
 ################################
+RA_SECOND_EPOCH_1=`cat ra$$.dat | head -n1`
+DEC_SECOND_EPOCH_1=`cat dec$$.dat | head -n1`
+RA_SECOND_EPOCH_2=`cat ra$$.dat | tail -n1`
+DEC_SECOND_EPOCH_2=`cat dec$$.dat | tail -n1`
 
+ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING=`lib/put_two_sources_in_one_field "$RA_SECOND_EPOCH_1" "$DEC_SECOND_EPOCH_1"  "$RA_SECOND_EPOCH_2" "$DEC_SECOND_EPOCH_2" 2>&1 | grep 'Angular distance'`
+ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING="${ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING/Angular/angular}"
+ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING="${ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING/degrees/deg}"
+ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC=`echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING" | awk '{printf "%.1f", $5*3600}'`
+ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING="$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC"
+TEST=`echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC > 20" | bc -ql`
+if [ $TEST -eq 1 ];then
+ ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING="<font color=\"red\">$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC</font>"
+else
+ ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING="<font color=\"green\">$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC</font>"
+fi
+
+PIX_X_SECOND_EPOCH_1=`cat x$$.dat | head -n1`
+PIX_Y_SECOND_EPOCH_1=`cat y$$.dat | head -n1`
+PIX_X_SECOND_EPOCH_2=`cat x$$.dat | tail -n1`
+PIX_Y_SECOND_EPOCH_2=`cat y$$.dat | tail -n1`
+PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS=`echo "$PIX_X_SECOND_EPOCH_1 $PIX_X_SECOND_EPOCH_2 $PIX_Y_SECOND_EPOCH_1 $PIX_Y_SECOND_EPOCH_2" | awk '{printf "%.1f", sqrt( ($1-$2)*($1-$2) + ($3-$4)*($3-$4) )}'`
+PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING="$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS"
+if [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" = "0.0" ];then
+ PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING="<font color=\"red\">$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS</font>"
+else
+ PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING="<font color=\"green\">$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS</font>"
+fi
 
 # Remove temporary files in case the script will exit after the final check
-for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.dat jd$$.dat ;do
+for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.dat jd$$.dat x$$.dat y$$.dat ;do
  if [ -f "$TMP_FILE_TO_REMOVE" ];then
   rm -f "$TMP_FILE_TO_REMOVE"
  fi
@@ -329,8 +364,13 @@ if [ ! -z "$VIZIER_SITE" ];then
  fi # if this is a new source
 fi # if $VIZIER_SITE is set
 ############
-lib/bin/skycoor -g $RADEC_MEAN_HMS J2000
+# Additional info
+# Galactic coordinates of the transient
+GALACTIC_COORDINATES=`lib/bin/skycoor -g $RADEC_MEAN_HMS J2000`
 
+echo "$GALACTIC_COORDINATES   Second-epoch detections are separated by $ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING\" and $PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING pix"
+
+# Check if this is a known source
 lib/catalogs/check_catalogs_offline $RA_MEAN $DEC_MEAN
 util/transients/MPCheck.sh $RADEC_MEAN_HMS $DATE $TIME H $MAG_MEAN | grep -v "Starting"
 
