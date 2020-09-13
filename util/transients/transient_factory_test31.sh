@@ -8,6 +8,7 @@
 # Also watch for
 ### ===> SExtractor config file <===
 ### ===> IMAGE EDGE OFFSET HARDCODED HERE <===
+### ===> ASSUMED MAX NUMBER OF CANDIDATES <===
 
 #
 # This script is an example of how an automated transient-detection pipeline may be set up using VaST.
@@ -773,12 +774,12 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  # Check if the number of detected transients is suspiciously large
  #NUMBER_OF_DETECTED_TRANSIENTS=`cat vast_summary.log |grep "Transient candidates found:" | awk '{print $4}'`
  NUMBER_OF_DETECTED_TRANSIENTS=`cat candidates-transients.lst | wc -l`
- if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 2000 ];then
+ if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 500 ];then
   echo "WARNING! Too many candidates ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping field..."
   echo "ERROR Too many candidates ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping field..." >> transient_factory_test31.txt
   continue
  fi
- if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 1000 ];then
+ if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 400 ];then
   echo "WARNING! Too many candidates ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..."
   echo "ERROR Too many candidates ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..." >> transient_factory_test31.txt
   # if yes, remove flares, keep only new objects
@@ -839,14 +840,15 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
  echo "We are allowed to update the exclusion list at $HOST host" >> transient_factory_test31.txt
  # if we are not in the test directory
  echo "$PWD" "$@" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
- if [ $? -ne 0 ] || [ "$1" == "../NMW_Vul2_magnitude_calibration_exit_code_test/2nd_epoch/" ] ;then
+ if [ $? -ne 0 ] || [ "$1" == "../NMW_Vul2_magnitude_calibration_exit_code_test/2nd_epoch/" ] || [ "$1" == "../NMW_Sgr9_crash_test/second_epoch_images" ] ;then
   # the NMW_Vul2_magnitude_calibration_exit_code_test tests for exclusion listupdate
+  # and ../NMW_Sgr9_crash_test/second_epoch_images is for that purpose too
   echo "This does not look like a test run" >> transient_factory_test31.txt
   if [ -f ../exclusion_list.txt ];then
    echo "Found ../exclusion_list.txt" >> transient_factory_test31.txt
    grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' > exclusion_list_index_html.txt
    # Filter-out asteroids
-   echo "#### The exclusion list before filtering-out asteroids and adding Gaia sources ####" >> transient_factory_test31.txt
+   echo "#### The exclusion list before filtering-out asteroids, bad pixels and adding Gaia sources ####" >> transient_factory_test31.txt
    cat exclusion_list_index_html.txt >> transient_factory_test31.txt
    echo "###################################################################################" >> transient_factory_test31.txt
    while read RADECSTR ;do
@@ -859,6 +861,29 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
     fi
    done < exclusion_list_index_html.txt > exclusion_list_index_html.txt_noasteroids
    mv -v exclusion_list_index_html.txt_noasteroids exclusion_list_index_html.txt >> transient_factory_test31.txt
+   #
+   while read RADECSTR ;do
+    grep --max-count=1 -A8 "$RADECSTR" transient_report/index.html | grep 'galactic' | grep --quiet '<font color="red">0.0</font> pix'
+    if [ $? -ne 0 ];then
+     echo "$RADECSTR"
+     echo "$RADECSTR  -- does not seem to be a hot pixel (will add it to exclusion list)" >> transient_factory_test31.txt
+    else
+     echo "$RADECSTR  -- seems to be a hot pixel (will NOT add it to exclusion list)" >> transient_factory_test31.txt
+    fi
+   done < exclusion_list_index_html.txt > exclusion_list_index_html.txt_nohotpixels
+   mv -v exclusion_list_index_html.txt_nohotpixels exclusion_list_index_html.txt >> transient_factory_test31.txt
+   #
+   echo "###################################################################################" >> transient_factory_test31.txt
+   N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS=`cat exclusion_list_index_html.txt | wc -l`
+   echo "$N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS candidates found (excluding asteroids and hot pixels)" >> transient_factory_test31.txt
+   # Do this check only if we are processing a single field
+   if [ -z "$2" ];then
+    ### ===> ASSUMED MAX NUMBER OF CANDIDATES <===
+    if [ $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS -gt 50 ];then
+     echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding ateroids and hot pixels)"
+    fi
+   fi
+   echo "###################################################################################" >> transient_factory_test31.txt
    #
    if [ -f exclusion_list_gaiadr2.txt ];then
     if [ -s exclusion_list_gaiadr2.txt ];then
