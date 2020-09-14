@@ -23,6 +23,8 @@
 
 #include "is_point_close_or_off_the_frame_edge.h" // for is_point_close_or_off_the_frame_edge()
 
+#include "count_lines_in_ASCII_file.h" // for count_lines_in_ASCII_file()
+
 // Update PATH variable to make sure the local copy of SExtractor is there
 void make_sure_libbin_is_in_path( ) {
  char pathstring[8192];
@@ -93,6 +95,7 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
 
  //int number_of_cpu_cores=N_FORK; // default
 
+ int max_N_bad_regions_for_malloc;
  int N_bad_regions= 0;
  double *X1;
  double *Y1;
@@ -187,22 +190,24 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
   write_string_to_individual_image_log( output_sextractor_catalog, "autodetect_aperture(): ", "setting the user-specified fixed aperture", "" );
  } else {
 
-  X1= malloc( MAX_NUMBER_OF_BAD_REGIONS_ON_CCD * sizeof( double ) );
+  max_N_bad_regions_for_malloc= 1 + count_lines_in_ASCII_file( "bad_region.lst");
+
+  X1= malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
   if ( X1 == NULL ) {
    fprintf( stderr, "ERROR: in autodetect_aperture() can't allocate memory for X1\n" );
    exit( 1 );
   }
-  Y1= malloc( MAX_NUMBER_OF_BAD_REGIONS_ON_CCD * sizeof( double ) );
+  Y1= malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
   if ( Y1 == NULL ) {
    fprintf( stderr, "ERROR: in autodetect_aperture() can't allocate memory for Y1\n" );
    exit( 1 );
   }
-  X2= malloc( MAX_NUMBER_OF_BAD_REGIONS_ON_CCD * sizeof( double ) );
+  X2= malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
   if ( X2 == NULL ) {
    fprintf( stderr, "ERROR: in autodetect_aperture() can't allocate memory for X2\n" );
    exit( 1 );
   }
-  Y2= malloc( MAX_NUMBER_OF_BAD_REGIONS_ON_CCD * sizeof( double ) );
+  Y2= malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
   if ( Y2 == NULL ) {
    fprintf( stderr, "ERROR: in autodetect_aperture() can't allocate memory for Y2\n" );
    exit( 1 );

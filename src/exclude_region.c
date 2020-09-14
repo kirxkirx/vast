@@ -14,22 +14,31 @@
 
 #include "vast_limits.h" // for MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE
 
+#include "count_lines_in_ASCII_file.h" // for count_lines_in_ASCII_file()
+
 int read_bad_lst( double *X1, double *Y1, double *X2, double *Y2, int *N ) {
 
  char str[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
  int str_len; // string length
  int max_index_for_comments_check;
  int i; // counter
+ int max_N_bad_regions_for_malloc;
 
  double tmp_double;
  FILE *badfile;
 
  ( *N )= 0;
+
+ // we assume this is how many elements were allocated for X1, Y1, X2, Y2 arrays outside of this function
+ max_N_bad_regions_for_malloc=1+count_lines_in_ASCII_file( "bad_region.lst");
+
  badfile= fopen( "bad_region.lst", "r" );
  if ( badfile == NULL ) {
   fprintf( stderr, "WARNING: Cannot open bad_region.lst \n" );
   return 0; // it should not be a fatal error!
  }
+
+ 
  //fprintf( stderr, "Reading bad_region.lst \n" );
  //while ( -1 < fscanf( badfile, "%lf %lf %lf %lf", &X1[( *N )], &Y1[( *N )], &X2[( *N )], &Y2[( *N )] ) ) {
  while ( NULL != fgets( str, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, badfile ) ) {
@@ -114,11 +123,16 @@ int read_bad_lst( double *X1, double *Y1, double *X2, double *Y2, int *N ) {
   ( *N )+= 1;
   
   // Check that we are not out of memory yet
+  if ( ( *N ) >= max_N_bad_regions_for_malloc ) {
+   fprintf( stderr, "ERROR: we reached max_N_bad_regions_for_malloc=%d\n", max_N_bad_regions_for_malloc );
+   break;
+  }
+  /*
   if ( ( *N ) >= MAX_NUMBER_OF_BAD_REGIONS_ON_CCD ) {
    fprintf( stderr, "ERROR: we reached MAX_NUMBER_OF_BAD_REGIONS_ON_CCD\n Please edit the line\n#define MAX_NUMBER_OF_BAD_REGIONS_ON_CCD %d\nin src/vast_limits.h and recompile with 'make'\n\n", MAX_NUMBER_OF_BAD_REGIONS_ON_CCD );
    break;
   }
-  
+  */
  }
  fclose( badfile );
  //fprintf( stderr, "Done reading bad_region.lst \n" );

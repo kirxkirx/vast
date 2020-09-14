@@ -2470,7 +2470,21 @@ int main( int argc, char **argv ) {
  //////////////////////////////////////////////////////////////////////////////////////////////////////////////
  /////// Reading file which defines rectangular regions we want to completely exclude from the analysis ///////
  //////////////////////////////////////////////////////////////////////////////////////////////////////////////
- double X1[MAX_NUMBER_OF_BAD_REGIONS_ON_CCD], Y1[MAX_NUMBER_OF_BAD_REGIONS_ON_CCD], X2[MAX_NUMBER_OF_BAD_REGIONS_ON_CCD], Y2[MAX_NUMBER_OF_BAD_REGIONS_ON_CCD];
+ double *X1;
+ double *Y1;
+ double *X2;
+ double *Y2;
+ int max_N_bad_regions_for_malloc;
+ max_N_bad_regions_for_malloc= 1 + count_lines_in_ASCII_file( "bad_region.lst");
+ X1= (double *)malloc( max_N_bad_regions_for_malloc*sizeof(double) );
+ Y1= (double *)malloc( max_N_bad_regions_for_malloc*sizeof(double) );
+ X2= (double *)malloc( max_N_bad_regions_for_malloc*sizeof(double) );
+ Y2= (double *)malloc( max_N_bad_regions_for_malloc*sizeof(double) );
+ if ( X1==NULL || Y1==NULL || X2==NULL || Y2==NULL ) {
+  fprintf( stderr, "ERROR: cannot allocate memory for exclusion regions array X1, Y1, X2, Y2\n");
+  vast_report_memory_error();
+  return 1;
+ }
  int N_bad_regions= 0;
  read_bad_lst( X1, Y1, X2, Y2, &N_bad_regions );
 
@@ -2481,7 +2495,7 @@ int main( int argc, char **argv ) {
  FILE *excludefile;
  bad_stars_X= malloc( sizeof( double ) );
  if ( bad_stars_X == NULL ) {
-  fprintf( stderr, "ERROR: can't allocate memory for bad_stars_X\n" );
+  fprintf( stderr, "ERROR: cannot allocate memory for bad_stars_X\n" );
   vast_report_memory_error();
   return 1;
  }
@@ -5243,6 +5257,11 @@ int main( int argc, char **argv ) {
  fprintf( stderr, "Done with measurements! =)\n\n" );
  fprintf( stderr, "Total number of measurements %ld (%ld measurements stored in RAM)\n", TOTAL_OBS, obs_in_RAM );
  fprintf( stderr, "Freeing up some memory...\n" );
+ 
+ free( X1 );
+ free( Y1 );
+ free( X2 );
+ free( Y2 );
 
  free( bad_stars_X );
  free( bad_stars_Y );

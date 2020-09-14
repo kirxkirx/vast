@@ -53,13 +53,15 @@ OPTFLAGS = -w -O2 -fomit-frame-pointer $(GOOD_MARCH_OPTIONS) $(LTO_OPTIONS) $(US
 # (note that an older GCC may not understand '-Warray-bounds')
 #OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all -lmcheck -O0 $(USE_BUILTIN_FUNCTIONS) #$(USE_OMP_OPTIONS) # for debugging with valgrind
 ## debug mode with OpenMP
+## simplified debug
+#OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -O0 $(USE_BUILTIN_FUNCTIONS) #$(USE_OMP_OPTIONS) # for debugging with valgrind
 #OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all -O0 $(USE_OMP_OPTIONS) $(USE_BUILTIN_FUNCTIONS) #$(USE_OMP_OPTIONS) # for debugging with valgrind
 ## Check pointer bounds
 #OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all -lmcheck  -mmpx -fcheck-pointer-bounds  -O0 $(USE_BUILTIN_FUNCTIONS) #$(USE_OMP_OPTIONS) # for debugging with valgrind
 ## Address Sanitizer (not compatible with Valgrind)
 #OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer -lmcheck  -fsanitize=address -fsanitize=undefined -fsanitize-address-use-after-scope -O1 $(USE_BUILTIN_FUNCTIONS) 
 #OPTFLAGS := -g -Wall -Wno-error -Warray-bounds -Wformat -Werror=format-security -Werror=array-bounds -Wextra -fno-omit-frame-pointer -lmcheck  -fsanitize=address,undefined -fsanitize-address-use-after-scope -O1 $(USE_BUILTIN_FUNCTIONS) 
-## OK, thia ASAN seems to work
+## OK, this ASAN seems to work
 #OPTFLAGS := -g -Wall  -fsanitize=address,undefined -fsanitize-address-use-after-scope -O1 $(USE_BUILTIN_FUNCTIONS) 
 
 
@@ -429,7 +431,7 @@ lib/find_star_in_wcs_catalog: $(SRC_PATH)find_star_in_wcs_catalog.c
 	 $(CC) $(OPTFLAGS) -o lib/find_star_in_wcs_catalog $(SRC_PATH)find_star_in_wcs_catalog.c -lm
 
 make_outxyls_for_astrometric_calibration.o: $(SRC_PATH)make_outxyls_for_astrometric_calibration.c
-	$(CC) $(OPTFLAGS) -c -o make_outxyls_for_astrometric_calibration.o $(SRC_PATH)make_outxyls_for_astrometric_calibration.c $(GSL_LIB) -I$(GSL_INCLUDE) $(CFITSIO_LIB) -lm
+	$(CC) $(OPTFLAGS) -c -o make_outxyls_for_astrometric_calibration.o $(SRC_PATH)make_outxyls_for_astrometric_calibration.c -I$(GSL_INCLUDE)
 lib/make_outxyls_for_astrometric_calibration: make_outxyls_for_astrometric_calibration.o is_point_close_or_off_the_frame_edge.o
 	$(CC) $(OPTFLAGS) -o lib/make_outxyls_for_astrometric_calibration make_outxyls_for_astrometric_calibration.o is_point_close_or_off_the_frame_edge.o $(GSL_LIB) -I$(GSL_INCLUDE) $(CFITSIO_LIB) -lm
 

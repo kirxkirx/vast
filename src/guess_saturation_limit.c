@@ -198,7 +198,7 @@ int guess_gain( char *fitsfilename, char *resulting_sextractor_cl_parameter_stri
      fits_close_file( fptr, &status ); // close file
      guessed_gain= 0.0;
      sprintf( resulting_sextractor_cl_parameter_string, "-GAIN %.3lf ", guessed_gain );
-     fprintf( stderr, "The gain value is set to 0 for a BITPIX = -32 DSLR image %s\n", guessed_gain, fitsfilename );
+     fprintf( stderr, "The gain value is set to 0 for a BITPIX = -32 DSLR image %s\n", fitsfilename );
      return 0;
     }
    }
