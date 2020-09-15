@@ -8205,15 +8205,15 @@ if [ -d ../NMW_find_Chandra_test ];then
  rm -f test_ncas$$.tmp
  #
  if [ -f transient_report/index.html ];then
-  # there SHOULD be an error message about distance between reference and second-epoch image centers
-  grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
-  if [ $? -ne 0 ];then
+  # there SHOULD NOT be an error message 
+  grep --quiet 'ERROR' "transient_report/index.html"
+  if [ $? -eq 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA_NO_ERROR_MESSAGE_IN_index_html"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA_ERROR_MESSAGE_IN_index_html"
    GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
    CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNFINDCHANDRA_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWNFINDCHANDRA_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 -----------------
 $CAT_RESULT"
@@ -8438,10 +8438,6 @@ if [ -d ../NMW_Sgr9_crash_test ];then
  # Run the test
  echo "NMW Sgr9 crash test " >> /dev/stderr
  echo -n "NMW Sgr9 crash test: " >> vast_test_report.txt 
- #
- if [ -f ../exclusion_list.txt ];then
-  mv ../exclusion_list.txt ../exclusion_list.txt_backup
- fi
  #
  if [ -f transient_report/index.html ];then
   rm -f transient_report/index.html
@@ -9421,7 +9417,15 @@ if [ ! -f ../individual_images_test/SCA13320__00_00__date_in_JDMID_keyword.fits 
  wget -c "http://scan.sai.msu.ru/~kirx/pub/SCA13320__00_00__date_in_JDMID_keyword.fits.bz2" && bunzip2 SCA13320__00_00__date_in_JDMID_keyword.fits.bz2
  cd $WORKDIR
 fi
-if [ -f ../individual_images_test/SCA13320__00_00__date_in_JDMID_keyword.fits ];then
+if [ ! -f ../individual_images_test/SCA13320__00_00.fits ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/SCA13320__00_00.fits.bz2" && bunzip2 SCA13320__00_00.fits.bz2
+ cd $WORKDIR
+fi
+if [ -f ../individual_images_test/SCA13320__00_00__date_in_JDMID_keyword.fits ] && [ -f ../individual_images_test/SCA13320__00_00.fits ] ;then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
