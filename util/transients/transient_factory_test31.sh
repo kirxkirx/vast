@@ -774,6 +774,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  # Check if the number of detected transients is suspiciously large
  #NUMBER_OF_DETECTED_TRANSIENTS=`cat vast_summary.log |grep "Transient candidates found:" | awk '{print $4}'`
  NUMBER_OF_DETECTED_TRANSIENTS=`cat candidates-transients.lst | wc -l`
+ echo "Found $NUMBER_OF_DETECTED_TRANSIENTS candidate transients before the final filtering." >> transient_factory_test31.txt
  if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 500 ];then
   echo "WARNING! Too many candidates ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping field..."
   echo "ERROR Too many candidates ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping field..." >> transient_factory_test31.txt
@@ -838,9 +839,21 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
 # remove restrictions on host for exclusion list update
 #if [ "$HOST" = "scan" ] || [ "$HOST" = "vast" ] || [ "$HOST" = "eridan" ];then
  echo "We are allowed to update the exclusion list at $HOST host" >> transient_factory_test31.txt
+ IS_THIS_TEST_RUN="NO"
  # if we are not in the test directory
  echo "$PWD" "$@" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
- if [ $? -ne 0 ] || [ "$1" == "../NMW_Vul2_magnitude_calibration_exit_code_test/2nd_epoch/" ] || [ "$1" == "../NMW_Sgr9_crash_test/second_epoch_images" ] ;then
+ if [ $? -ne 0 ] ;then
+  IS_THIS_TEST_RUN="YES"
+  echo "The names $PWD $@ suggest this is a test run"
+  echo "The names $PWD $@ suggest this is a test run" >> transient_factory_test31.txt
+ fi
+ echo "$1" | grep --quiet -e 'NMW_Vul2_magnitude_calibration_exit_code_test' -e 'NMW_Sgr9_crash_test'
+ if [ $? -eq 0 ] ;then
+  IS_THIS_TEST_RUN="NO"
+  echo "Allowing the exclusion list update for $1"
+  echo "Allowing the exclusion list update for $1" >> transient_factory_test31.txt
+ fi
+ if [ "$IS_THIS_TEST_RUN" != "YES" ];then
   # the NMW_Vul2_magnitude_calibration_exit_code_test tests for exclusion listupdate
   # and ../NMW_Sgr9_crash_test/second_epoch_images is for that purpose too
   echo "This does not look like a test run" >> transient_factory_test31.txt
@@ -874,65 +887,71 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
    mv -v exclusion_list_index_html.txt_nohotpixels exclusion_list_index_html.txt >> transient_factory_test31.txt
    #
    echo "###################################################################################" >> transient_factory_test31.txt
+   ALLOW_EXCLUSION_LIST_UPDATE="YES"
    N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS=`cat exclusion_list_index_html.txt | wc -l`
    echo "$N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS candidates found (excluding asteroids and hot pixels)" >> transient_factory_test31.txt
    # Do this check only if we are processing a single field
    if [ -z "$2" ];then
     ### ===> ASSUMED MAX NUMBER OF CANDIDATES <===
-    if [ $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS -gt 50 ];then
+    if [ $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS -gt 20 ];then
      echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding ateroids and hot pixels)"
+     ALLOW_EXCLUSION_LIST_UPDATE="NO"
     fi
    fi
    echo "###################################################################################" >> transient_factory_test31.txt
-   #
-   if [ -f exclusion_list_gaiadr2.txt ];then
-    if [ -s exclusion_list_gaiadr2.txt ];then
-     echo "Adding identified Gaia sources from exclusion_list_gaiadr2.txt" >> transient_factory_test31.txt
-     cat exclusion_list_gaiadr2.txt >> exclusion_list_index_html.txt
+   if [ "$ALLOW_EXCLUSION_LIST_UPDATE" = "YES" ];then
+    #
+    if [ -f exclusion_list_gaiadr2.txt ];then
+     if [ -s exclusion_list_gaiadr2.txt ];then
+      echo "Adding identified Gaia sources from exclusion_list_gaiadr2.txt" >> transient_factory_test31.txt
+      cat exclusion_list_gaiadr2.txt >> exclusion_list_index_html.txt
+     else
+      echo "exclusion_list_gaiadr2.txt is empty - nothing to add to the exclusion list" >> transient_factory_test31.txt
+     fi
+     rm -f exclusion_list_gaiadr2.txt
     else
-     echo "exclusion_list_gaiadr2.txt is empty - nothing to add to the exclusion list" >> transient_factory_test31.txt
+     echo "exclusion_list_gaiadr2.txt NOT FOUND" >> transient_factory_test31.txt
     fi
-    rm -f exclusion_list_gaiadr2.txt
-   else
-    echo "exclusion_list_gaiadr2.txt NOT FOUND" >> transient_factory_test31.txt
-   fi
-   #
-   if [ -f exclusion_list_apass.txt ];then
-    if [ -s exclusion_list_apass.txt ];then
-     echo "Adding identified Gaia sources from exclusion_list_apass.txt" >> transient_factory_test31.txt
-     cat exclusion_list_apass.txt >> exclusion_list_index_html.txt
+    #
+    if [ -f exclusion_list_apass.txt ];then
+     if [ -s exclusion_list_apass.txt ];then
+      echo "Adding identified Gaia sources from exclusion_list_apass.txt" >> transient_factory_test31.txt
+      cat exclusion_list_apass.txt >> exclusion_list_index_html.txt
+     else
+      echo "exclusion_list_apass.txt is empty - nothing to add to the exclusion list" >> transient_factory_test31.txt
+     fi
+     rm -f exclusion_list_apass.txt
     else
-     echo "exclusion_list_apass.txt is empty - nothing to add to the exclusion list" >> transient_factory_test31.txt
+     echo "exclusion_list_apass.txt NOT FOUND" >> transient_factory_test31.txt
     fi
-    rm -f exclusion_list_apass.txt
-   else
-    echo "exclusion_list_apass.txt NOT FOUND" >> transient_factory_test31.txt
-   fi
-   #
-   # Write to ../exclusion_list.txt in a single operation in a miserable attempt to minimize chances of a race condition
-   if [ -f exclusion_list_index_html.txt ];then
-    if [ -s exclusion_list_index_html.txt ];then
-     echo "#### Adding the following to the exclusion list ####" >> transient_factory_test31.txt
-     cat exclusion_list_index_html.txt >> transient_factory_test31.txt
-     echo "####################################################" >> transient_factory_test31.txt
-     cat exclusion_list_index_html.txt >> ../exclusion_list.txt
+    #
+    # Write to ../exclusion_list.txt in a single operation in a miserable attempt to minimize chances of a race condition
+    if [ -f exclusion_list_index_html.txt ];then
+     if [ -s exclusion_list_index_html.txt ];then
+      echo "#### Adding the following to the exclusion list ####" >> transient_factory_test31.txt
+      cat exclusion_list_index_html.txt >> transient_factory_test31.txt
+      echo "####################################################" >> transient_factory_test31.txt
+      cat exclusion_list_index_html.txt >> ../exclusion_list.txt
+     else
+      echo "#### Nothing to add to the exclusion list ####" >> transient_factory_test31.txt
+     fi
+     rm -f exclusion_list_index_html.txt
     else
-     echo "#### Nothing to add to the exclusion list ####" >> transient_factory_test31.txt
+     echo "exclusion_list_index_html.txt NOT FOUND" >> transient_factory_test31.txt
     fi
-    rm -f exclusion_list_index_html.txt
    else
-    echo "exclusion_list_index_html.txt NOT FOUND" >> transient_factory_test31.txt
+    echo "NOT found ../exclusion_list.txt" >> transient_factory_test31.txt
    fi
   else
-   echo "NOT found ../exclusion_list.txt" >> transient_factory_test31.txt
+   echo "This looks like a test run so we are not updating exclusion list" >> transient_factory_test31.txt
+   echo "$PWD" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST' >> transient_factory_test31.txt
   fi
  else
-  echo "This looks like a test run so we are not updating exclusion list" >> transient_factory_test31.txt
-  echo "$PWD" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST' >> transient_factory_test31.txt
- fi
+  echo "We are not updating exclusion list - too many candidates for a single field" >> transient_factory_test31.txt
+ fi # if [ "$ALLOW_EXCLUSION_LIST_UPDATE" = "YES" ];then
 #fi # host
 ## exclusion list update
-
+ 
 
 ## Finalize the HTML report
 echo "<H2>Processig complete!</H2>" >> transient_report/index.html
