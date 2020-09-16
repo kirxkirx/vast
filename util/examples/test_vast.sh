@@ -8523,16 +8523,16 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH0110"
   fi
-  grep --quiet "2020 09 01.7326  2459094.2326  11\.5.  18:21:"  transient_report/index.html
+  grep --quiet "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.."  transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH0110a"
-   GREP_RESULT=`grep "2020 09 01.7326  2459094.2326  11\.5.  18:21:" transient_report/index.html`
+   GREP_RESULT=`grep "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWSGR9CRASH0110a ######
 $GREP_RESULT"
   fi
-  RADECPOSITION_TO_TEST=`grep "2020 09 01.7326  2459094.2326  11\.5.  18:21:"  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.."  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 18:21:40.07 -34:11:23.3  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_ARCSEC<8.4" | bc -ql`
@@ -8710,11 +8710,11 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN0110"
   fi
-  grep --quiet "2020 09 01.7326  2459094.2326  11\.5.  18:21:"  transient_report/index.html
+  grep --quiet "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.."  transient_report/index.html
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN0110a"
-   GREP_RESULT=`grep "2020 09 01.7326  2459094.2326  11\.5.  18:21:" transient_report/index.html`
+   GREP_RESULT=`grep "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWSGR9CRASH_RERUN0110a ######
 $GREP_RESULT"
@@ -8725,7 +8725,8 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN314"
   fi
-  grep --quiet "2020 09 01.7326  2459094.2326  10\.6.  18:08:..\... -34:01:..\.." transient_report/index.html
+  # The line may appear in the logs as rejected candidate due to exclusion list, so we check lines before the log starts
+  grep -B10000 'Processig complete' transient_report/index.html | grep --quiet "2020 09 01.7326  2459094.2326  10\.6.  18:08:..\... -34:01:..\.."
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN314a"
@@ -8736,7 +8737,7 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN414"
   fi
-  grep --quiet "2020 09 01.7326  2459094.2326  10\.6.  18:12:..\... -27:55:..\.." transient_report/index.html
+  grep -B10000 'Processig complete' transient_report/index.html | grep --quiet "2020 09 01.7326  2459094.2326  10\.6.  18:12:..\... -27:55:..\.."
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN414a"
@@ -8747,7 +8748,7 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN514"
   fi
-  grep --quiet -e "2020 09 01.7326  2459094.2326  11\.0.  18:15:" -e "2020 09 01.7326  2459094.2326  10\.9.  18:15:" transient_report/index.html
+  grep -B10000 'Processig complete' transient_report/index.html | grep --quiet -e "2020 09 01.7326  2459094.2326  11\.0.  18:15:" -e "2020 09 01.7326  2459094.2326  10\.9.  18:15:"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN514a"
@@ -8815,8 +8816,7 @@ if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
 06:50:15.79 +00:07:22.0
 07:01:41.33 +00:06:32.7
 06:49:07.80 +01:00:22.0
-07:07:43.22 +00:02:18.7
-" > ../exclusion_list.txt
+07:07:43.22 +00:02:18.7" > ../exclusion_list.txt
  # Run the search
  REFERENCE_IMAGES=../NMW_Vul2_magnitude_calibration_exit_code_test/ref/ util/transients/transient_factory_test31.sh ../NMW_Vul2_magnitude_calibration_exit_code_test/2nd_epoch/
  if [ $? -ne 0 ];then
