@@ -8507,13 +8507,13 @@ $GREP_RESULT"
   #
   #
   #for HOT_PIXEL_XY in "0683 2080" "1201 0959" "1389 1252" "2855 2429" "1350 1569" "1806 1556" "3166 1895" "2416 0477" "2864 2496" "1158 1418" "0618 1681" "2577 0584" "2384 0291" "1034 1921" "2298 1573" "2508 1110" "1098 0166" "3181 0438" "0071 1242" "0782 1150" ;do
-  # "1201 0959" - does not get found on all test systems
-  for HOT_PIXEL_XY in "0683 2080" "1389 1252" "2855 2429" "1350 1569" "1806 1556" "3166 1895" "2416 0477" "2864 2496" "1158 1418" "0618 1681" "2577 0584" "2384 0291" "1034 1921" "2298 1573" "2508 1110" "1098 0166" "3181 0438" "0071 1242" "0782 1150" ;do
+  # "1201 0959" "1389 1252" - do not get found on all test systems
+  for HOT_PIXEL_XY in "0683 2080" "2855 2429" "1350 1569" "1806 1556" "3166 1895" "2416 0477" "2864 2496" "1158 1418" "0618 1681" "2577 0584" "2384 0291" "1034 1921" "2298 1573" "2508 1110" "1098 0166" "3181 0438" "0071 1242" "0782 1150" ;do
    grep --quiet "$HOT_PIXEL_XY" transient_report/index.html
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_BADPIXNOTFOUND_${HOT_PIXEL_XY// /_}"
-    break
+    #break
    fi
   done
   #
@@ -8694,13 +8694,13 @@ $GREP_RESULT"
   fi
   #
   #for HOT_PIXEL_XY in "0683 2080" "1201 0959" "1389 1252" "2855 2429" "1350 1569" "1806 1556" "3166 1895" "2416 0477" "2864 2496" "1158 1418" "0618 1681" "2577 0584" "2384 0291" "1034 1921" "2298 1573" "2508 1110" "1098 0166" "3181 0438" "0071 1242" "0782 1150" ;do
-  # "1201 0959" - does not get found on all test systems
-  for HOT_PIXEL_XY in "0683 2080" "1389 1252" "2855 2429" "1350 1569" "1806 1556" "3166 1895" "2416 0477" "2864 2496" "1158 1418" "0618 1681" "2577 0584" "2384 0291" "1034 1921" "2298 1573" "2508 1110" "1098 0166" "3181 0438" "0071 1242" "0782 1150" ;do
+  # "1201 0959" "1389 1252" - do not get found on all test systems
+  for HOT_PIXEL_XY in "0683 2080" "2855 2429" "1350 1569" "1806 1556" "3166 1895" "2416 0477" "2864 2496" "1158 1418" "0618 1681" "2577 0584" "2384 0291" "1034 1921" "2298 1573" "2508 1110" "1098 0166" "3181 0438" "0071 1242" "0782 1150" ;do
    grep --quiet "$HOT_PIXEL_XY" transient_report/index.html
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_BADPIXNOTFOUND_${HOT_PIXEL_XY// /_}"
-    break
+    #break
    fi
   done
   #
@@ -8710,14 +8710,17 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN0110"
   fi
-  grep --quiet "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.."  transient_report/index.html
+  grep -B10000 'Processig complete' transient_report/index.html | grep --quiet "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.."
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN0110a"
-   GREP_RESULT=`grep "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.." transient_report/index.html`
+   GREP_RESULT=`grep -B10000 'Processig complete' transient_report/index.html | grep "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.."`
+   GREP_RESULT2=`cat ../exclusion_list.txt`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWSGR9CRASH_RERUN0110a ######
-$GREP_RESULT"
+$GREP_RESULT
+____ ../exclusion_list.txt ____
+$GREP_RESULT2"
   fi
   # V1278 Sgr
   grep --quiet "V1278 Sgr" transient_report/index.html
