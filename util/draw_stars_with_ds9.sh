@@ -24,7 +24,7 @@ echo "SCRIPT_NAME= $SCRIPT_NAME   WCS_OPERATION_MODE= $WCS_OPERATION_MODE"
 echo "Working..."
 
 # If we whant to draw only one star
-if [ ! -z $3 ];then
+if [ ! -z "$3" ];then
 
  FITSFILE=$1
  if [ $WCS_OPERATION_MODE -eq 0 ];then
@@ -84,20 +84,22 @@ if [ ! -z $3 ];then
  fi
  if [ $WCS_OPERATION_MODE -eq 1 ];then
   X=`echo $X+2.0*$AP| bc -ql`
- fi
   Y=`echo $Y+2.0*$AP| bc -ql` 
-  echo "# text($X,$Y) text={$StringW}" >> /tmp/reg"$$""$USER".reg
+ fi
+ echo "# text($X,$Y) text={$StringW}" >> /tmp/reg"$$""$USER".reg
+
 else
  # Else - draw all stars from data.m_sigma
  WCS_OPERATION_MODE=0 # only works in pixel position mode
  if [ ! -f data.m_sigma ];then
   # if there is no file - make it now!
-  ./find_candidates  
+  #./find_candidates  
+  util/nopgplot.sh
  fi
  # read the file data.m_sigma
  while read TMP TMP2 TMP3 TMP4 FILENAME ;do
   head -n 1 $FILENAME > /tmp/read"$$""$USER".tmp
-  read JD MAG MERR X Y AP FITSFILE < /tmp/read"$$""$USER".tmp
+  read JD MAG MERR X Y AP FITSFILE REST < /tmp/read"$$""$USER".tmp
   # Check if this star was actually detected on the reference image or not
   grep "Ref.  image:" vast_summary.log > /tmp/read"$$""$USER".grp
   read A B C D E F < /tmp/read"$$""$USER".grp
@@ -117,7 +119,7 @@ else
       echo "or"
       echo "$0 image.fit X_star Y_star Ap_size outNNNN.dat"
       echo " -l near each star write it's number and its instrumental magnitude"
-      echo " -s near each star write only number of star"
+      echo " -s near each star write it's number only"
       echo " -h print this message"
       exit 1;;
       -l | --l )
@@ -133,7 +135,7 @@ else
  FITSFILE=$F
 fi
 
-# Chack if WCS-solved image is available
+# Check if WCS-solved image is available
 WCSFITSFILE=wcs_`basename $FITSFILE`
 if [ -f $WCSFITSFILE ];then
  FITSFILE=$WCSFITSFILE
