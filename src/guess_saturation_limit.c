@@ -775,6 +775,7 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
    if ( hdunum > 1 ) {
     fprintf( stderr, "WARNING: trying to handle a multiple-HDU image. Sources will be detected only on the first image HDU!\n" );
     for ( hducounter= 2; hducounter < hdunum; hducounter++ ) {
+     // a new IMAGE extension is appended to end of the file following the other HDUs in the file
      fits_create_img( outfptr_flag, BYTE_IMG, 2, naxes, &status );
      fits_write_img( outfptr_flag, TBYTE, 1, totpix, flag, &status );
      //
@@ -789,7 +790,7 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
    fits_close_file( outfptr_weight, &status );
    free( flag );
    free( weight );
-  }
+  } // create the new empty output file
   fits_close_file( fptr, &status );
  }
 

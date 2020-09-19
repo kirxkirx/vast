@@ -2328,6 +2328,7 @@ int main( int argc, char **argv ) {
    if ( 1 == fscanf( pipe_for_try_to_guess_image_fov, "%lf", &approximate_field_of_view_arcmin ) ) {
     pclose( pipe_for_try_to_guess_image_fov );
    } else {
+    pclose( pipe_for_try_to_guess_image_fov ); // ???
     fprintf( stderr, "WARNING: error parsing the output of the command: %s\n", command_string );
     approximate_field_of_view_arcmin= DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN;
    }

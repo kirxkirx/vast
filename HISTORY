@@ -89,6 +89,10 @@ vast-1.0rc85:
 	* The new script 'util/make_finding_chart_script.sh' will use Swarp ( https://www.astromatic.net/software/swarp ) 
 	to resample the input WCS-calibrated image to the North-up, East-left orientation and make a good-loking finder
 	chart for the object specified by its RA and Dec.
+	* You may display a WCS-calibrated image marking a specified celestial position on it by running:
+	./pgfv wcs_Sgr9_2020-9-1_17-35-4_002.fts -- 18:19:53.946 -30:41:19.78
+	here the wcs_*.fts file is the image, 18:19:53.946 -30:41:19.78 are the J2000 coordinates and
+	'--' marks the end of the command line options (needed for the program to correctly interpret the negative declination). 
 	* Updated TODO list of desired features.
 	* Limited the number of OpenMP threads to no more than 48. Tests on a machine with 192 virtual cores 
 	(2 CPUs x 48 cores x hyper threading) revealed that while it is beneficial to use all cores for running

@@ -135,6 +135,84 @@ int xy2sky( char *fitsfilename, float X, float Y ) {
  return systemcommand_return_value;
 }
 
+int sky2xy( char *fitsfilename, char *input_RA_string, char *input_DEC_string, float *outX, float *outY ) {
+ char path_to_vast_string[VAST_PATH_MAX];
+ char systemcommand[2 * VAST_PATH_MAX];
+ int systemcommand_return_value;
+ unsigned int i, n_semicol; // counter
+ FILE *pipe_for_sky2xy;
+ char command_output_string[VAST_PATH_MAX];
+ 
+ // Check that the input coordinates are in the 01:02:03.45 +06:07:08.9 format
+ n_semicol=0;
+ for( i=0; i<strlen(input_RA_string); i++ ) {
+  if( input_RA_string[i]==':' ) {
+   n_semicol++;
+  }
+ }
+ for( i=0; i<strlen(input_DEC_string); i++ ) {
+  if( input_DEC_string[i]==':' ) {
+   n_semicol++;
+  }
+ }
+ if( n_semicol != 4 ) {
+  (*outX)= (float)atof( input_RA_string );
+  (*outY)= (float)atof( input_DEC_string );
+  return 1;
+ }
+ //
+ 
+ get_path_to_vast( path_to_vast_string );
+ path_to_vast_string[VAST_PATH_MAX - 1]= '\0'; // just in case
+ sprintf( systemcommand, "%slib/bin/sky2xy %s %s %s", path_to_vast_string, fitsfilename, input_RA_string, input_DEC_string );
+ systemcommand[2 * VAST_PATH_MAX - 1]= '\0'; // just in case
+ 
+ pipe_for_sky2xy= popen( systemcommand, "r" );
+ if ( NULL == pipe_for_sky2xy ) {
+  (*outX)= (float)atof( input_RA_string );
+  (*outY)= (float)atof( input_DEC_string );
+  return 1;
+ }
+ if ( NULL == fgets( command_output_string, VAST_PATH_MAX, pipe_for_sky2xy) ) {
+  pclose( pipe_for_sky2xy );
+  (*outX)= (float)atof( input_RA_string );
+  (*outY)= (float)atof( input_DEC_string );
+  return 1;
+ }
+ pclose( pipe_for_sky2xy );
+ command_output_string[VAST_PATH_MAX-1]='\0'; // just in case
+ if ( NULL != strstr( command_output_string, "off") ){
+  fprintf(stderr, "#### The specified celestial position is outside the image! ####\n");
+  (*outX)= 0.0;
+  (*outY)= 0.0;
+  return 1;
+ }
+ // expecting:
+ // 18:19:53.683 -30:41:12.54 J2000 -> 1676.500 1266.500
+ if ( 2 != sscanf( command_output_string, "%*s %*s J2000 -> %f %f", outX, outY ) ) {
+  (*outX)= (float)atof( input_RA_string );
+  (*outY)= (float)atof( input_DEC_string );
+  return 1;
+ }
+
+ if ( (*outX)<=0.0 || (*outY)<=0.0 ) {
+  (*outX)= (float)atof( input_RA_string );
+  (*outY)= (float)atof( input_DEC_string );
+  return 1;
+ }
+  
+ 
+ 
+ //
+ //exit(1);
+ 
+ //systemcommand_return_value= system( systemcommand );
+ //if ( systemcommand_return_value == 0 ) {
+ // fprintf( stderr, "The pixel to celestal coordinates transforamtion is performed using 'xy2sky' from WCSTools.\n" );
+ //}
+ return systemcommand_return_value;
+}
+
 void print_pgfv_help() {
  fprintf( stderr, "\n" );
  fprintf( stderr, "  --*** HOW TO USE THE IMAGE VIEWER ***--\n\n" );
@@ -902,7 +980,7 @@ int main( int argc, char **argv ) {
 
  if ( 0 != strcmp( "select_star_on_reference_image", basename( argv[0] ) ) ) {
   if ( argc == 1 ) {
-   fprintf( stderr, "Usage:\n%s FITSIMAGE.fit\nor\n%s FITSIMAGE.fit X Y\n\n", argv[0], argv[0] );
+   fprintf( stderr, "Usage:\n%s FITSIMAGE.fit\nor\n%s FITSIMAGE.fit X Y\nor\n%s FITSIMAGE.fit RA DEC\n\n", argv[0], argv[0], argv[0] );
    // Do nothing else: if no arguments are provided - display the reference image
    //get_ref_image_name(fits_image_name);
    //return 1;
@@ -1013,12 +1091,6 @@ int main( int argc, char **argv ) {
  }
  //
 
- if ( argc - optind >= 4 ) {
-  mark_trigger= 1;
-  markX= (float)atof( argv[optind + 2] );
-  markY= (float)atof( argv[optind + 3] );
-  //fprintf(stderr,"Putting mark on pixel position %lf %lf\n",markX,markY);
- }
  if ( argc - optind == 5 ) {
   APER= atof( argv[optind + 4] );
  }
@@ -1031,6 +1103,24 @@ int main( int argc, char **argv ) {
  }
 
  replace_file_with_symlink_if_filename_contains_white_spaces( fits_image_name );
+
+ if ( argc - optind >= 4 ) {
+  // Now we need to figure out if the input values are pixel or celestial coordinates
+  // Don't do this check if this is fits2png
+  if ( finding_chart_mode !=1 && use_labels !=0 ) {
+   sky2xy( fits_image_name, argv[optind + 2],  argv[optind + 3], &markX, &markY );
+  } else {
+   markX= (float)atof( argv[optind + 2] );
+   markY= (float)atof( argv[optind + 3] );
+  }
+  if ( markX > 0.0 && markY > 0.0 ) { 
+   mark_trigger= 1;
+   fprintf( stderr, "Putting mark on pixel position %lf %lf\n", markX, markY);
+  } else { 
+   fprintf( stderr, "The pixel position %lf %lf is outside the image!\n", markX, markY);
+  }
+ }
+
 
  // Read manymarkers file if there is one
  manymrkerscounter= 0;

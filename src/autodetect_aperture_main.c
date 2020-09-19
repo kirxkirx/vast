@@ -44,10 +44,10 @@ int main( int argc, char **argv ) {
  fprintf( stderr, "autodetect_aperture()\n" );
  #endif
  if ( 0 == strncmp( "sextract_single_image_noninteractive", basename( argv[0] ), strlen( "sextract_single_image_noninteractive" ) ) ) {
-  // Perform the standard multi-run SEtractor processing and write the output source catalog
+  // Perform the standard multi-run SExtractor processing and write the output source catalog
   aperture= autodetect_aperture( argv[1], char_garbage, 0, 0, 0.0, X_im_size, Y_im_size, 2 );
  } else {
-  // do not write the output source catalog
+  // do not write the output source catalog, just print-out the aperture
   aperture= autodetect_aperture( argv[1], char_garbage, 0, 2, 0.0, X_im_size, Y_im_size, 2 );
  }
  fprintf( stdout, "%.1lf\n", aperture );
