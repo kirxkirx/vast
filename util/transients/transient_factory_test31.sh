@@ -776,13 +776,13 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  NUMBER_OF_DETECTED_TRANSIENTS=`cat candidates-transients.lst | wc -l`
  echo "Found $NUMBER_OF_DETECTED_TRANSIENTS candidate transients before the final filtering." >> transient_factory_test31.txt
  if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 500 ];then
-  echo "WARNING! Too many candidates ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping field..."
-  echo "ERROR Too many candidates ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping field..." >> transient_factory_test31.txt
+  echo "WARNING! Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping field..."
+  echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping field..." >> transient_factory_test31.txt
   continue
  fi
  if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 400 ];then
-  echo "WARNING! Too many candidates ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..."
-  echo "ERROR Too many candidates ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..." >> transient_factory_test31.txt
+  echo "WARNING! Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..."
+  echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..." >> transient_factory_test31.txt
   # if yes, remove flares, keep only new objects
   while read FLAREOUTFILE A B ;do
    grep -v $FLAREOUTFILE candidates-transients.lst > candidates-transients.tmp
