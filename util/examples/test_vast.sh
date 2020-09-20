@@ -8433,8 +8433,7 @@ if [ -d ../NMW_Sgr9_crash_test ];then
 06:50:15.79 +00:07:22.0
 07:01:41.33 +00:06:32.7
 06:49:07.80 +01:00:22.0
-07:07:43.22 +00:02:18.7
-" > ../exclusion_list.txt
+07:07:43.22 +00:02:18.7" > ../exclusion_list.txt
  # Run the test
  echo "NMW Sgr9 crash test " >> /dev/stderr
  echo -n "NMW Sgr9 crash test: " >> vast_test_report.txt 
@@ -8629,6 +8628,51 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH514a_TOO_FAR_$DISTANCE_ARCSEC"
    fi
   fi
+  
+  # Check what is and what is not in the exlcusion list
+  # The variables should be there
+  grep --quiet '18:21:4.\... -34:11:2.\..' ../exclusion_list.txt
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_VAR_NOT_ADDED_TO_EXCLUSION_LIST_01"
+  fi
+  grep --quiet '18:08:3.\... -34:01:4.\..' ../exclusion_list.txt
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_VAR_NOT_ADDED_TO_EXCLUSION_LIST_02"
+  fi
+  grep --quiet '18:12:1.\... -27:55:1.\..' ../exclusion_list.txt
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_VAR_NOT_ADDED_TO_EXCLUSION_LIST_03"
+  fi
+  grep --quiet '18:15:4.\... -30:23:4.\..' ../exclusion_list.txt
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_VAR_NOT_ADDED_TO_EXCLUSION_LIST_04"
+  fi
+  # The hot pixels should not be in the exclusion list
+  grep --quiet '18:10:4.\... -32:58:2.\..' ../exclusion_list.txt
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_HOT_PIXEL_IN_EXCLUSION_LIST_01"
+  fi
+  grep --quiet '18:13:2.\... -27:12:2.\..' ../exclusion_list.txt
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_HOT_PIXEL_IN_EXCLUSION_LIST_02"
+  fi
+  grep --quiet '18:21:3.\... -28:45:0.\..' ../exclusion_list.txt
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_HOT_PIXEL_IN_EXCLUSION_LIST_03"
+  fi
+  grep --quiet '18:31:5.\... -32:00:5.\..' ../exclusion_list.txt
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_HOT_PIXEL_IN_EXCLUSION_LIST_03"
+  fi
+  #
 
  else
   echo "ERROR running the transient search script" >> /dev/stderr
@@ -8755,6 +8799,28 @@ $GREP_RESULT2"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN514a"
+  fi
+
+  # Make sure things don't get added to the exclusion list multiple times
+  N=`grep -c '18:21:4.\... -34:11:2.\..' ../exclusion_list.txt`
+  if [ $N -ne ` ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_VAR_ADDED_MANY_TIMES_TO_EXCLUSION_LIST_01_$N"
+  fi
+  N=`grep -c '18:08:3.\... -34:01:4.\..' ../exclusion_list.txt`
+  if [ $N -ne ` ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_VAR_ADDED_MANY_TIMES_TO_EXCLUSION_LIST_02_$N"
+  fi
+  N=`grep -c '18:12:1.\... -27:55:1.\..' ../exclusion_list.txt`
+  if [ $N -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_VAR_ADDED_MANY_TIMES_TO_EXCLUSION_LIST_03_$N"
+  fi
+  N=`grep -c '18:15:4.\... -30:23:4.\..' ../exclusion_list.txt`
+  if [ $N -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_VAR_ADDED_MANY_TIMES_TO_EXCLUSION_LIST_04_$N"
   fi
 
  else

@@ -876,7 +876,7 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
    mv -v exclusion_list_index_html.txt_noasteroids exclusion_list_index_html.txt >> transient_factory_test31.txt
    #
    while read RADECSTR ;do
-    grep --max-count=1 -A8 "$RADECSTR" transient_report/index.html | grep 'galactic' | grep --quiet '<font color="red">0.0</font> pix'
+    grep --max-count=1 -A8 "$RADECSTR" transient_report/index.html | grep 'galactic' | grep --quiet '<font color="red">0.0</font></b> pix'
     if [ $? -ne 0 ];then
      echo "$RADECSTR"
      echo "$RADECSTR  -- does not seem to be a hot pixel (will add it to exclusion list)" >> transient_factory_test31.txt
@@ -894,7 +894,8 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
    if [ -z "$2" ];then
     ### ===> ASSUMED MAX NUMBER OF CANDIDATES <===
     if [ $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS -gt 20 ];then
-     echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding ateroids and hot pixels)"
+     echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding ateroids and hot pixels), not updating the exclusion list!"
+     echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding ateroids and hot pixels), not updating the exclusion list!" >> transient_factory_test31.txt
      ALLOW_EXCLUSION_LIST_UPDATE="NO"
     fi
    fi
