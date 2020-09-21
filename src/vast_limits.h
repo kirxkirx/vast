@@ -77,6 +77,8 @@
                                       // see http://wise2.ipac.caltech.edu/docs/release/allsky/expsup/sec6_3a.html
                                       // and http://www.eso.org/~ohainaut/ccd/sn.html
 
+#define DEFAULT_PHOTOMETRY_ERROR_MAG 0.02 // Assume this error when no error estimate is given
+
 //#define MIN_MAG_ERR_FROM_SEXTRACTOR 0.005 // Assume that SExtractor-derived photometric errors < MIN_MAG_ERR_FROM_SEXTRACTOR are not realistyc.
 //                                          // (Used for instrumental magnitude calibration.)
 

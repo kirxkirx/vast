@@ -38,6 +38,8 @@
 
 #include "get_path_to_vast.h"
 
+#include "wpolyfit.h" // for robustlinefit()
+
 void print_help() {
  fprintf( stderr, "\n" );
  fprintf( stderr, "  --*** HOW TO USE THE LIGHTCURVE PLOTTER ***--\n" );
@@ -222,7 +224,16 @@ void fit_linear_trend( float *input_JD, float *input_mag, float *mag_err, int N,
  gsl_fit_wmul( fit_jd, 1, fit_w, 1, fit_mag, 1, N, A, &cov11, &chisq );
  ( *B )= 0.0;
 
- fprintf( stderr, "linear trend fit:   %lf mag/day, corresponding to t_2mag= %lf, t_3mag= %lf\n", ( *A ), 2.0/( *A ), 3.0/( *A ) );
+ fprintf( stderr, "Weighted linear trend fit:   %lf mag/day, corresponding to t_2mag= %lf, t_3mag= %lf\n", ( *A ), 2.0/( *A ), 3.0/( *A ) );
+
+ double poly_coeff[8];
+
+ robustlinefit( fit_jd, fit_mag, N, poly_coeff );
+
+ (*B)=poly_coeff[0];
+ (*A)=poly_coeff[1];
+
+ fprintf( stderr, "Robust linear trend fit:   %lf mag/day, corresponding to t_2mag= %lf, t_3mag= %lf\n", ( *A ), 2.0/( *A ), 3.0/( *A ) );
 
  free( difference );
  free( fit_w );

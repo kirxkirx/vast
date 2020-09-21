@@ -122,7 +122,7 @@ static inline int read_lightcurve_point( FILE *lc_file_descriptor, double *jd, d
  // Special case -- yes, we can actually speed up reading by not parsing x, y, app and the comments
  if ( x == NULL ) {
   if ( 3 != sscanf( str, "%lf %lf %lf\n", jd, mag, mag_err ) ) {
-   ( *mag_err )= 0.02;
+   ( *mag_err )= DEFAULT_PHOTOMETRY_ERROR_MAG; // if no error estimate is provided, assume a "typical" CCD photometry error
    if ( 2 != sscanf( str, "%lf %lf\n", jd, mag ) ) {
     ( *jd )= 0.0;
     return 1;
@@ -247,6 +247,11 @@ static inline int read_lightcurve_point( FILE *lc_file_descriptor, double *jd, d
 #endif
 
  } // end else special case
+
+ if ( ( *mag_err )<=0.0 ) {
+  // never allow zero errors as they will lead to negative weights downstream
+  ( *mag_err )= DEFAULT_PHOTOMETRY_ERROR_MAG;
+ }
 
  return 0;
 }

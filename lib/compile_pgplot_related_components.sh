@@ -177,7 +177,7 @@ done
 
 # Older GCC versions complain about isnormal() unless -std=c99 is given explicitly
 "$CC" `cat optflags_for_scripts.tmp` -c src/lc.c -std=c99 -I$GSL_INCLUDE
-"$CC" `cat optflags_for_scripts.tmp` -o lc setenv_local_pgplot.o lc.o variability_indexes.o get_path_to_vast.o -lm $GSL_LIB $PGPLOT_LIBS  -Wall
+"$CC" `cat optflags_for_scripts.tmp` -o lc setenv_local_pgplot.o lc.o variability_indexes.o get_path_to_vast.o wpolyfit.o -lm $GSL_LIB $PGPLOT_LIBS  -Wall
 # Older GCC versions complain about isnormal() unless -std=c99 is given explicitly
 "$CC" `cat optflags_for_scripts.tmp` `lib/check_builtin_functions.sh` -c src/find_candidates.c -std=c99 -D_POSIX_C_SOURCE=199309L -I$GSL_INCLUDE
 "$CC" `cat optflags_for_scripts.tmp` -o find_candidates setenv_local_pgplot.o find_candidates.o $PGPLOT_LIBS -lm
