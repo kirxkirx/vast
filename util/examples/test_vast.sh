@@ -6582,7 +6582,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES_error_copying_astorb_ceres.dat_to_astorb.dat"
   fi
   #################################################################
-  echo "y" | util/transients/search_for_transients_single_field.sh
+  echo "y" | util/transients/search_for_transients_single_field.sh test
   if [ -f astorb.dat_backup ];then
    mv astorb.dat_backup astorb.dat
   else
@@ -7014,7 +7014,7 @@ $GREP_RESULT"
    mv ../exclusion_list.txt ../exclusion_list.txt_backup
   fi
   #
-  echo "y" | util/transients/search_for_transients_single_field.sh
+  echo "y" | util/transients/search_for_transients_single_field.sh test
   ## New stuff the file lib/catalogs/list_of_bright_stars_from_tycho2.txt should be created by util/transients/search_for_transients_single_field.sh
   if [ ! -f lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
    TEST_PASSED=0
@@ -9037,7 +9037,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER0_NO_vast_image_details_log"
   fi
   #
-  echo "y" | util/transients/search_for_transients_single_field.sh
+  echo "y" | util/transients/search_for_transients_single_field.sh test
   if [ ! -f transient_report/index.html ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER005"

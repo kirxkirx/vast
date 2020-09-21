@@ -6,6 +6,11 @@
 # ./vast -x99 -u -f -k /data/first_epoch_image_1.fit /data/first_epoch_image_2.fit /data/second_epoch_image_1.fit /data/second_epoch_image_2.fit
 #
 
+TEST_MODE=0
+if [ "$1" = "test" ];then
+ # Do not start the browser if this is a test run
+ TEST_MODE=1
+fi
 
 # Check if candidates-transients.lst is not empty
 if [ ! -s candidates-transients.lst ];then
@@ -114,6 +119,8 @@ echo "<HTML>" > transient_report/index.html
 util/transients/make_report_in_HTML.sh
 echo "</HTML>" >> transient_report/index.html
 
-# View the transient search report in a web-browser
-#firefox file://$PWD/transient_report/index.html &
-lib/start_web_browser.sh file://$PWD/transient_report/index.html
+if [ $TEST_MODE -ne 1 ];then
+ # View the transient search report in a web-browser
+ #firefox file://$PWD/transient_report/index.html &
+ lib/start_web_browser.sh file://$PWD/transient_report/index.html
+fi
