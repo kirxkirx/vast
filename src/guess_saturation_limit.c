@@ -501,6 +501,7 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
   } else {
    if ( number_of_negatives > number_of_zeroes ) {
     flag_subthreshould_pixels_but_not_zeroes= 1; // KZ Her example
+    fprintf( stderr, "flag_subthreshould_pixels_but_not_zeroes= 1\n");
    }
   } // else if ( (double)number_of_subthreshold_pix / (double)totpix < FRACTION_OF_ZERO_PIXEL_TO_USE_FLAG_IMG ) {
  } // if( 1!=is_flag_image_used ){
@@ -550,17 +551,26 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
   //for(ii = 0; ii < totpix; ii++)number_of_zero_neighbors[ii]=0;
   number_of_zeroes2= 0;
   for ( ii= 0; ii < totpix; ii++ ) {
-   // if a pixel has zero value
-   //if ( pix[ii] == 0.0 || pix[ii] < pixel_value_threshold || pix[ii] < MIN_PIX_VALUE || pix[ii] > MAX_PIX_VALUE ) {
-   if ( flag_subthreshould_pixels_but_not_zeroes == 0 ){
-    if ( pix[ii] != 0.0 && pix[ii] > pixel_value_threshold && pix[ii] > MIN_PIX_VALUE && pix[ii] < MAX_PIX_VALUE ) {
+   // If the pixel does not need to be flagged - continue
+   
+   // First consider the special case of an HST image that is mostly zeroes
+   if ( median == 0.0 && sigma_estimated_from_MAD == 0.0 ) {
+    // we want to flag only the exact 0.0 values leaving all positive and negative values unflaged
+    if ( pix[ii] != 0.0 ) {
      continue;
     }
    } else {
-    if ( pix[ii] > pixel_value_threshold && pix[ii] > MIN_PIX_VALUE && pix[ii] < MAX_PIX_VALUE ) {
-     continue;
-    }
-   }
+    // Consider all other images where sigma and pixel_value_threshold are meaningful
+    if ( flag_subthreshould_pixels_but_not_zeroes == 0 ) {
+     if ( pix[ii] != 0.0 && pix[ii] > pixel_value_threshold && pix[ii] > MIN_PIX_VALUE && pix[ii] < MAX_PIX_VALUE ) {
+      continue;
+     }
+    } else {
+     if ( pix[ii] > pixel_value_threshold && pix[ii] > MIN_PIX_VALUE && pix[ii] < MAX_PIX_VALUE ) {
+      continue;
+     }
+    } // if ( flag_subthreshould_pixels_but_not_zeroes == 0 ) {
+   } // if ( median == 0.0 && sigma_estimated_from_MAD == 0.0 ) {
    ///
    /// indent
    {
@@ -599,7 +609,7 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
   free( number_of_zero_neighbors );
 
   if ( 1 != ( *is_flag_image_used ) ) {
-   // If there are many zero-value neighbors each zero-value pixel - do not create flag image
+   // If there are many zero-value neighbors to each zero-value pixel - do not create flag image
    if ( 0.5 > (double)number_of_zeroes_tmp / ( (double)( 2 * COUNT_N_PIXELS_AROUND_BAD_ONE + 1 ) * (double)( 2 * COUNT_N_PIXELS_AROUND_BAD_ONE + 1 ) ) ) {
     // Nothing to do, we'll be fine even without a flag image
     ( *is_flag_image_used )= 0;
@@ -730,17 +740,23 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
    }
    //
    for ( ii= 0; ii < totpix; ii++ ) {
-    // it was pix[ii]==0.0
-    //if ( pix[ii] == 0.0 || pix[ii] < pixel_value_threshold || pix[ii] < MIN_PIX_VALUE || pix[ii] > MAX_PIX_VALUE ) {
-    if ( flag_subthreshould_pixels_but_not_zeroes == 0 ){
-     if ( pix[ii] != 0.0 && pix[ii] > pixel_value_threshold && pix[ii] > MIN_PIX_VALUE && pix[ii] < MAX_PIX_VALUE ) {
+    // First consider the special case of an HST image that is mostly zeroes
+    if ( median == 0.0 && sigma_estimated_from_MAD == 0.0 ) {
+     // we want to flag only the exact 0.0 values leaving all positive and negative values unflaged
+     if ( pix[ii] != 0.0 ) {
       continue;
      }
     } else {
-     if ( pix[ii] > pixel_value_threshold && pix[ii] > MIN_PIX_VALUE && pix[ii] < MAX_PIX_VALUE ) {
-      continue;
-     }
-    }
+     if ( flag_subthreshould_pixels_but_not_zeroes == 0 ) {
+      if ( pix[ii] != 0.0 && pix[ii] > pixel_value_threshold && pix[ii] > MIN_PIX_VALUE && pix[ii] < MAX_PIX_VALUE ) {
+       continue;
+      }
+     } else {
+      if ( pix[ii] > pixel_value_threshold && pix[ii] > MIN_PIX_VALUE && pix[ii] < MAX_PIX_VALUE ) {
+       continue;
+      }
+     } // if ( flag_subthreshould_pixels_but_not_zeroes == 0 ) {
+    } // if ( median == 0.0 && sigma_estimated_from_MAD == 0.0 ) {
     ///
     //  Mark as suspicious also FLAG_N_PIXELS_AROUND_BAD_ONE pixels around the bad one
     Y0= 1 + (long)( (float)ii / (float)naxes[0] );
