@@ -226,8 +226,16 @@ ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING="${ANGULAR_DISTANCE_BETW
 ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING="${ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING/degrees/deg}"
 ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC=`echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING" | awk '{printf "%.1f", $5*3600}'`
 ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING="$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC"
+# Reject candidates with large distance between the two second-epoch detections
 ### ==> Assumptio about positional accuracy hardcoded here <===
 TEST=`echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC > 10" | bc -ql`
+if [ $TEST -eq 1 ];then
+ echo "Rejecting candidate due to large distance ($ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC\") between the two second-epoch detections"
+ exit 1
+fi
+# Highlight candidates with suspiciously large distance between the two second-epoch detections
+### ==> Assumptio about positional accuracy hardcoded here <===
+TEST=`echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC > 8.4" | bc -ql`
 if [ $TEST -eq 1 ];then
  ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING="<b><font color=\"red\">$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC</font></b>"
 else
@@ -291,9 +299,9 @@ Mean magnitude and position on the discovery images:
 #
 
 ############
-# We are not making a for cycle here because we want different exclusion radii to be applied to different catalogs
-### Apply the exclusion list
-# It may be generated from the previous-day report file 
+### Apply the exclusion list. It may be generated from the previous-day(s) report file(s) 
+#
+# We are not making a 'for' cycle here because we want different exclusion radii to be applied to different catalogs
 EXCLUSION_LIST_FILE="exclusion_list.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates

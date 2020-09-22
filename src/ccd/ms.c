@@ -157,16 +157,26 @@ int main( int argc, char *argv[] ) {
  }
  free( image_array );
  free( dark_array );
- fits_create_file( &fptr, argv[3], &status ); /* create new file */
- fits_report_error( stderr, status );         /* print out any error messages */
- if ( status != 0 )
+ fits_create_file( &fptr, argv[3], &status ); // create new file 
+ fits_report_error( stderr, status );         // print out any error messages 
+ if ( status != 0 ) {
   exit( 1 );
+ }
  fits_create_img( fptr, USHORT_IMG, 2, naxes, &status );
+ fits_report_error( stderr, status );         // print out any error messages
+ if ( status != 0 ) {
+  exit( 1 );
+ }
  fits_write_img( fptr, TUSHORT, fpixel, naxes[0] * naxes[1], result_image_array, &status );
- /* -- Пишем шапку -- */
+ fits_report_error( stderr, status );         // print out any error messages
+ if ( status != 0 ) {
+  exit( 1 );
+ }
+ // Write the FITS header
  for ( ii= 1; ii < No_of_keys; ii++ ) {
   fits_write_record( fptr, key[ii], &status );
  }
+ // Remove duplicate keys
  fits_delete_key( fptr, "SIMPLE", &status );
  fits_delete_key( fptr, "BITPIX", &status );
  fits_delete_key( fptr, "NAXIS", &status );
@@ -179,8 +189,13 @@ int main( int argc, char *argv[] ) {
  fits_delete_key( fptr, "BSCALE", &status );
  fits_write_history( fptr, argv[1], &status );
  fits_write_history( fptr, argv[2], &status );
- fits_report_error( stderr, status ); /* print out any error messages */
+ fits_report_error( stderr, status ); // print out any error messages
+ status= 0; // just in case
  fits_close_file( fptr, &status );
+ fits_report_error( stderr, status );         // print out any error messages
+ if ( status != 0 ) {
+  exit( 1 );
+ }
  free( result_image_array );
  fprintf( stderr, "Dark frame is subtracted, output is written to %s :)\n\n", argv[3] );
  fprintf( stdout, "Spent %f seconds \n", 1.0 * clock() / CLOCKS_PER_SEC );
@@ -189,6 +204,12 @@ int main( int argc, char *argv[] ) {
   free( key[ii] );
  }
  free( key );
+
+ fits_report_error( stderr, status ); // print out any error messages
+ if ( status != 0 ) {
+  fprintf( stderr, "ERROR modyfying the file %s\n", argv[3] );
+  return 1;
+ }
 
  return 0;
 }

@@ -273,18 +273,20 @@ int main( int argc, char *argv[] ) {
  free( float_flat_array );
  fits_create_file( &fptr, argv[3], &status ); /* create new file */
  fits_report_error( stderr, status );         /* print out any error messages */
- if ( status != 0 )
+ if ( status != 0 ) {
+  fprintf( stderr, "Cannot create FITS file %s\n", argv[3] );
   exit( 1 );
+ }
  fits_create_img( fptr, USHORT_IMG, 2, naxes, &status );
  fits_report_error( stderr, status ); /* print out any error messages */
  if ( status != 0 ) {
-  fprintf( stderr, "Can't create image\n" );
+  fprintf( stderr, "Cannot create image\n" );
   exit( 1 );
  }
  fits_write_img( fptr, TUSHORT, fpixel, naxes[0] * naxes[1], result_image_array, &status );
  fits_report_error( stderr, status ); /* print out any error messages */
  if ( status != 0 ) {
-  fprintf( stderr, "Can't write image\n" );
+  fprintf( stderr, "Cannot write image\n" );
   exit( 1 );
  }
  // Write header keys
@@ -304,13 +306,15 @@ int main( int argc, char *argv[] ) {
  fits_delete_key( fptr, "BSCALE", &status );
  fits_write_history( fptr, argv[1], &status );
  fits_write_history( fptr, argv[2], &status );
- fits_report_error( stderr, status ); /* print out any error messages */
+ fits_report_error( stderr, status ); // print out any error messages
+ status= 0; // just in case
  fits_close_file( fptr, &status );
  free( result_image_array );
 
  fits_open_file( &fptr, argv[3], READWRITE, &status );
  fits_update_key( fptr, TDOUBLE, "BZERO", &bzero, " ", &status );
  fits_close_file( fptr, &status );
+
 
  fprintf( stderr, "Output is written to %s :)\n\n", argv[3] );
 
@@ -320,6 +324,12 @@ int main( int argc, char *argv[] ) {
   free( key[ii] );
  }
  free( key );
+
+ fits_report_error( stderr, status ); // print out any error messages
+ if ( status != 0 ) {
+  fprintf( stderr, "ERROR modyfying the file %s\n", argv[3] );
+  return 1;
+ }
 
  return 0;
 }

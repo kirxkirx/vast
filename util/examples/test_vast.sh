@@ -8265,44 +8265,46 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0_NO_vast_image_details_log"
   fi
   #
-  #
-  # Chandra has no automatic ID in the current VaST version
-  #grep --quiet "Chandra" transient_report/index.html
-  #if [ $? -ne 0 ];then
-  # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0110"
-  #fi
-  grep --quiet "2020 08 25.9400  2459087.4400  12\.8.  18:57:" transient_report/index.html
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0110a"
-   GREP_RESULT=`grep "2020 08 25.9400  2459087.4400  12\.8.  18:57:" transient_report/index.html`
-   DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWNFINDCHANDRA0110a ######
-$GREP_RESULT"
-  fi
-  RADECPOSITION_TO_TEST=`grep "2020 08 25.9400  2459087.4400  12\.8.  18:57:"  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
-  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 18:57:09.11 +32:28:26.8 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
-  # NMW scale is 8.4"/pix
-  TEST=`echo "$DISTANCE_ARCSEC<3*8.4" | bc -ql`
-  re='^[0-9]+$'
-  if ! [[ $TEST =~ $re ]] ; then
-   echo "TEST ERROR"
-   TEST_PASSED=0
-   TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0110a_TOO_FAR_TEST_ERROR"
-  else
-   if [ $TEST -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0110a_TOO_FAR_$DISTANCE_ARCSEC"
-   fi
-  fi
-  # Test Stub MPC report line
-  grep --quiet "     TAU0008  C2020 08 25.93997 18 57 0.\... +32 28 2.\...         12\.. R      C32" transient_report/index.html
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0110b"
-  fi
+#### Disableing the Chandra test due to the new 10" restriction on the difference 
+#### in position of second-epoch detections.
+#  #
+#  # Chandra has no automatic ID in the current VaST version
+#  #grep --quiet "Chandra" transient_report/index.html
+#  #if [ $? -ne 0 ];then
+#  # TEST_PASSED=0
+#  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0110"
+#  #fi
+#  grep --quiet "2020 08 25.9400  2459087.4400  12\.8.  18:57:" transient_report/index.html
+#  if [ $? -ne 0 ];then
+#   TEST_PASSED=0
+#   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0110a"
+#   GREP_RESULT=`grep "2020 08 25.9400  2459087.4400  12\.8.  18:57:" transient_report/index.html`
+#   DEBUG_OUTPUT="$DEBUG_OUTPUT
+####### NMWNFINDCHANDRA0110a ######
+#$GREP_RESULT"
+#  fi
+#  RADECPOSITION_TO_TEST=`grep "2020 08 25.9400  2459087.4400  12\.8.  18:57:"  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+#  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 18:57:09.11 +32:28:26.8 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+#  # NMW scale is 8.4"/pix
+#  TEST=`echo "$DISTANCE_ARCSEC<3*8.4" | bc -ql`
+#  re='^[0-9]+$'
+#  if ! [[ $TEST =~ $re ]] ; then
+#   echo "TEST ERROR"
+#   TEST_PASSED=0
+#   TEST=0
+#   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0110a_TOO_FAR_TEST_ERROR"
+#  else
+#   if [ $TEST -eq 0 ];then
+#    TEST_PASSED=0
+#    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0110a_TOO_FAR_$DISTANCE_ARCSEC"
+#   fi
+#  fi
+#  # Test Stub MPC report line
+#  grep --quiet "     TAU0008  C2020 08 25.93997 18 57 0.\... +32 28 2.\...         12\.. R      C32" transient_report/index.html
+#  if [ $? -ne 0 ];then
+#   TEST_PASSED=0
+#   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0110b"
+#  fi
   # RT Lyr
   grep --quiet "RT Lyr" transient_report/index.html
   if [ $? -ne 0 ];then
