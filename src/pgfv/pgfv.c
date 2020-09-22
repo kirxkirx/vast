@@ -138,7 +138,6 @@ int xy2sky( char *fitsfilename, float X, float Y ) {
 int sky2xy( char *fitsfilename, char *input_RA_string, char *input_DEC_string, float *outX, float *outY ) {
  char path_to_vast_string[VAST_PATH_MAX];
  char systemcommand[2 * VAST_PATH_MAX];
- int systemcommand_return_value;
  unsigned int i, n_semicol; // counter
  FILE *pipe_for_sky2xy;
  char command_output_string[VAST_PATH_MAX];
@@ -201,16 +200,7 @@ int sky2xy( char *fitsfilename, char *input_RA_string, char *input_DEC_string, f
   return 1;
  }
   
- 
- 
- //
- //exit(1);
- 
- //systemcommand_return_value= system( systemcommand );
- //if ( systemcommand_return_value == 0 ) {
- // fprintf( stderr, "The pixel to celestal coordinates transforamtion is performed using 'xy2sky' from WCSTools.\n" );
- //}
- return systemcommand_return_value;
+ return 0;
 }
 
 void print_pgfv_help() {

@@ -665,8 +665,20 @@ field identification have good chances to fail. Sorry... :(
    # Note that the timeout is also enforced at the server side
    #`"$VAST_PATH"lib/find_timeout_command.sh` 600 $CURL -F file=@out$$.xyls -F submit="Upload Image" -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
    $TIMEOUT_COMMAND 600 $CURL -F file=@out$$.xyls -F submit="Upload Image" -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
-   if [ $? -ne 0 ];then
-    echo "An ERROR has occured while uploading the star list to the server!"
+   CURL_EXIT_CODE=$?
+   # A reminder from 'man timout':
+   # If the command times out, and --preserve-status is not set, then exit with status 124.
+   # Otherwise, exit with  the  status of  COMMAND.
+   if [ $CURL_EXIT_CODE -eq 124 ];then
+    # the command has timed out 
+    # actually, the course of actions is exactly the same as with any other error
+    echo "Communication with the plate solve server  $PLATE_SOLVE_SERVER  has timed out!"
+    ERROR_STATUS=2
+    continue
+   fi
+   if [ $CURL_EXIT_CODE -ne 0 ];then
+    # something else went wrong
+    echo "An ERROR has occured while uploading the star list to the server $PLATE_SOLVE_SERVER !"
     ERROR_STATUS=2
     continue
    fi
@@ -696,7 +708,7 @@ field identification have good chances to fail. Sorry... :(
    echo "############################"
    SOLVE_FILE_URL=${EXPECTED_WCS_HEAD_URL//out.wcs/out.solved}
    #`"$VAST_PATH"lib/find_timeout_command.sh` 300 $CURL "$SOLVE_FILE_URL" --user vast48:khyzbaojMhztNkWd 2>/dev/null |grep "404 Not Found" >/dev/null
-   $TIMEOUT_COMMAND 300 $CURL "$SOLVE_FILE_URL" --user vast48:khyzbaojMhztNkWd 2>/dev/null |grep "404 Not Found" >/dev/null
+   $TIMEOUT_COMMAND 300 $CURL "$SOLVE_FILE_URL" --user vast48:khyzbaojMhztNkWd 2>/dev/null | grep '404 Not Found' >/dev/null
    # Nope, this interfers with the if statement below
    #if [ $? -ge 130 ];then
    # # Exit if the process is killed by user

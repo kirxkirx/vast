@@ -11,7 +11,8 @@
 ### ===> ASSUMED MAX NUMBER OF CANDIDATES <===
 
 #
-# This script is an example of how an automated transient-detection pipeline may be set up using VaST.
+# This script is used to run transient search in the NMW survey http://scan.sai.msu.ru/nmw/
+# It is intended as an example of how an automated transient-detection pipeline may be set up using VaST.
 # Note, that in this example there are two reference and two second-epoch images.
 # The results will be presented as an HTML page transient_report/index.html
 #
@@ -52,8 +53,7 @@ for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.tx
  fi
 done
 
-
-
+# Check the reference images
 if [ ! -d "$REFERENCE_IMAGES" ];then
  echo "ERROR: cannot find the reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES"
  echo "ERROR: cannot find the reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES" >> transient_factory_test31.txt
@@ -81,11 +81,12 @@ if [ -d /mnt/usb/UCAC5 ];then
  fi
 fi
 #####################################################################################################
-# This script should take care of updating astorb.dat
+# This script should take care of updating astorb.dat and other catalogs
 lib/update_offline_catalogs.sh all
 
 echo "Reference image directory is set to $REFERENCE_IMAGES"
-if [ -z $1 ]; then
+echo "Reference image directory is set to $REFERENCE_IMAGES" >> transient_factory_test31.txt
+if [ -z "$1" ]; then
  echo "Usage: $0 PATH_TO_DIRECTORY_WITH_IMAGE_PAIRS"
  echo "Usage: $0 PATH_TO_DIRECTORY_WITH_IMAGE_PAIRS" >> transient_factory_test31.txt
  exit 1
@@ -98,7 +99,6 @@ TIMEOUTCOMMAND=`"$VAST_PATH"lib/find_timeout_command.sh`
 if [ $? -ne 0 ];then
  echo "WARNING: cannot find timeout command"
 else
- #TIMEOUTCOMMAND="$TIMEOUTCOMMAND 20 "
  TIMEOUTCOMMAND="$TIMEOUTCOMMAND 40 "
 fi
 export TIMEOUTCOMMAND
@@ -118,8 +118,10 @@ if [ ! -L transient_report ];then
  fi
 fi
 
+# remove any remanants of a previous run
 rm -f transient_report/* transient_factory.log
 
+# Write the HML report header
 echo "<HTML>
 
 <HEAD>
@@ -174,7 +176,6 @@ The list of candidates will appear below. Please <b>manually reload the page</b>
 <br><br>" >> transient_report/index.html
 
 # Allow for multiple image directories to be specified on the command line
-
 for NEW_IMAGES in "$@" ;do
 
 if [ ! -d "$NEW_IMAGES" ];then
@@ -196,22 +197,18 @@ if [ -z "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" ];then
  continue
 fi
 
-#exit # !!!
 echo "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" >> transient_factory_test31.txt
 
 PREVIOUS_FIELD="none"
-#for i in "$NEW_IMAGES"/*_001.fts ;do
+
 for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  
  echo "########### Starting $FIELD ###########" >> transient_factory_test31.txt
 
  echo "Processing $FIELD" >> transient_factory_test31.txt
- #STR=`basename $i _001.fts` 
- #FIELD=`echo ${STR:0:8}`
- #FIELD=`echo $FIELD | awk '{print $1}' FS='_'`
  if [ "$FIELD" == "$PREVIOUS_FIELD" ];then
-  echo "Script ERROR! This field has been processed before!"
-  echo "Script ERROR! This field has been processed before!" >> transient_factory_test31.txt
+  echo "Script ERROR! This field has been processed just before!"
+  echo "Script ERROR! This field has been processed just before!" >> transient_factory_test31.txt
   continue
  fi
  PREVIOUS_FIELD="$FIELD"
@@ -231,12 +228,13 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  fi
  echo "Checking input images ($N new)" >> transient_factory_test31.txt
  ################################
- # choose first epoch images
+ # Choose first epoch images
+ # We assume there are two first epoch images, both of them are good
  REFERENCE_EPOCH__FIRST_IMAGE=`ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | head -n1`
  echo "REFERENCE_EPOCH__FIRST_IMAGE= $REFERENCE_EPOCH__FIRST_IMAGE" >> transient_factory_test31.txt
  REFERENCE_EPOCH__SECOND_IMAGE=`ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | tail -n1`
  echo "REFERENCE_EPOCH__SECOND_IMAGE= $REFERENCE_EPOCH__SECOND_IMAGE" >> transient_factory_test31.txt
- # choose second epoch images
+ # Choose second epoch images
  # first, count how many there are
  NUMBER_OF_SECOND_EPOCH_IMAGES=`ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | wc -l`
  
@@ -384,26 +382,13 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   echo "ERROR processing the image series" >> transient_factory_test31.txt
   continue
  fi
-# # check if all images are actually there
-# if [ ! -f $REFERENCE_IMAGES/*"$FIELD"_*_002.fts ];then 
-#  echo "Script ERROR! Cannot find image $REFERENCE_IMAGES/*$FIELD*_002.fts"
-#  continue
-# fi
-# if [ ! -f $NEW_IMAGES/*"$FIELD"_*_001.fts ];then 
-#  echo "Script ERROR! Cannot find image $NEW_IMAGES/*$FIELD*_001.fts"
-#  continue
-# fi
-# if [ ! -f $NEW_IMAGES/*"$FIELD"_*_002.fts ];then 
-#  echo "Script ERROR! Cannot find image $NEW_IMAGES/*$FIELD*_002.fts"
-#  continue
-# fi
 
  ###############################################
  # We may have images from two different cameras that require two different bad region lists
  # ./Nazar_bad_region.lst and ../bad_region.lst
  echo "Choosing bad regions list" >> transient_factory_test31.txt
  # Set custom bad_region.lst if there is one
- # test the file name
+ # the camera name should be present in the input file (directory) name
  echo "$SECOND_EPOCH__FIRST_IMAGE" | grep --quiet -e "Nazar" -e "nazar" -e "NAZAR"
  if [ $? -eq 0 ];then
   if [ -f ../Nazar_bad_region.lst ];then
@@ -445,11 +430,9 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 
  echo "Starting VaST with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
  # Run VaST
- echo "./vast --starmatchraius 4.0 --matchstarnumber 500 --selectbestaperture --sysrem 1 --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_test31.txt
- ###./vast -x99 -u -f -k $REFERENCE_IMAGES/*$FIELD* $NEW_IMAGES/*$FIELD*
- ##./vast --selectbestaperture -y1 -p -x99 -u -f -k $REFERENCE_IMAGES/*"$FIELD"_* `ls $NEW_IMAGES/*"$FIELD"_*_001.fts | head -n1` `ls $NEW_IMAGES/*"$FIELD"_*_002.fts | head -n1`
- #./vast --selectbestaperture -y1 -p -x99 -u -f -k "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
- #./vast --matchstarnumber 500 --selectbestaperture -y1 -p -x99 -u -f -k "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
+ echo "
+ ./vast --starmatchraius 4.0 --matchstarnumber 500 --selectbestaperture --sysrem 1 --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE
+ " >> transient_factory_test31.txt
  ./vast --starmatchraius 4.0 --matchstarnumber 500 --selectbestaperture --sysrem 1 --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
  if [ $? -ne 0 ];then
   echo "ERROR running VaST on the field $FIELD"
@@ -458,11 +441,11 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   # drop this field and continue to the next one
   # We want to break from the SExtractor settings files loop here
   break
- else
-  echo "VaST run complete" >> transient_factory_test31.txt
  fi
+ echo "VaST run complete with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
  echo "The four input images were $REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"  >> transient_factory_test31.txt
  cat vast_summary.log >> transient_factory.log
+ # double-check that the VaST run was OK
  grep --quiet 'Images used for photometry 4' vast_summary.log
  if [ $? -ne 0 ];then
   echo "***** IMAGE PROCESSING ERROR (less than 4 images processed) *****" >> transient_factory.log
@@ -478,7 +461,6 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   echo "Checking WCS cache directory $WCSCACHEDIR" >> transient_factory_test31.txt
   if [ -d "$WCSCACHEDIR" ];then
    echo "Found WCS cache directory $WCSCACHEDIR" >> transient_factory_test31.txt
-   #ls "$WCSCACHEDIR" >> transient_factory_test31.txt
    ### ===> SExtractor config file <===
    if [ "$SEXTRACTOR_CONFIG_FILE" = "default.sex.telephoto_lens_v4" ];then
     echo "(SExtractor parameter file $SEXTRACTOR_CONFIG_FILE -- faint objects)" >> transient_factory_test31.txt
@@ -505,13 +487,10 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  done
  
  echo "Plate-solving the images" >> transient_factory_test31.txt
- # WCS-calibration
+ # WCS-calibration (plate-solving)
  for i in `cat vast_image_details.log | awk '{print $17}' | sort | uniq` ;do 
   # This should ensure the correct field-of-view guess by setting the TELESCOP keyword
-  #util/modhead $i TELESCOP NMW_camera
-  #
   TELESCOP="NMW_camera" util/wcs_image_calibration.sh $i &
-  #TELESCOP="NMW_camera" util/solve_plate_with_UCAC5 $i &
  done 
 
  # Wait for all children to end processing
@@ -588,21 +567,13 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   TELESCOP="NMW_camera" util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1  $i  &
  done 
 
- # We need UCAC5 solution for the first and the third images
-# util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1 `cat vast_image_details.log | awk '{print $17}' | head -n1 | tail -n1` &
-# util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1 `cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1` &
- #
-# util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1 `cat vast_image_details.log | awk '{print $17}' | head -n2 | tail -n1` &
-# util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1 `cat vast_image_details.log | awk '{print $17}' | head -n4 | tail -n1` &
- # wait # moved down
-
  
+ # Calibrate magnitude scale with Tycho-2 stars in the field
+ # In order for this to work, we need the plate-solved reference image 
  echo "Calibrating the magnitude scale with Tycho-2 stars" >> transient_factory_test31.txt
  if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
   rm -f 'lightcurve.tmp_emergency_stop_debug'
  fi
- # Calibrate magnitude scale with Tycho-2 stars in the field
- # In order for this to work, we need the plate-solved reference image 
  WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $REFERENCE_EPOCH__FIRST_IMAGE`
  WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
  if [ ! -s "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
@@ -669,11 +640,6 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  echo "Filter-out faint candidates..."
  # Filter-out faint candidates
  ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
- #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">11.5"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
- #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">12.0"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
- #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($1+$2)/2>12.0 ) print 1; else print 0 }'` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
- #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">12.5"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
- #for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">13.0"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
  for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">13.5"}'|bc -ql` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
  echo "Filter-out suspiciously bright candidates..." >> transient_factory_test31.txt
@@ -685,7 +651,6 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  echo "Filter-out candidates with large difference between measured mags in one epoch..." >> transient_factory_test31.txt
  echo "Filter-out candidates with large difference between measured mags in one epoch..."
  # 2nd epoch
- #cp candidates-transients.lst DEBUG_BACKUP_candidates-transients.lst
  # Filter-out candidates with large difference between measured mags
  for i in `cat candidates-transients.lst | awk '{print $1}'` ;do A=`tail -n2 $i | awk '{print $2}'` ; TEST=`echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($1-$2)>0.4 ) print 1; else print 0 }'` ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
  # Filter-out candidates with large difference between measured mags
@@ -772,7 +737,6 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  ###############################################################################################################
 
  # Check if the number of detected transients is suspiciously large
- #NUMBER_OF_DETECTED_TRANSIENTS=`cat vast_summary.log |grep "Transient candidates found:" | awk '{print $4}'`
  NUMBER_OF_DETECTED_TRANSIENTS=`cat candidates-transients.lst | wc -l`
  echo "Found $NUMBER_OF_DETECTED_TRANSIENTS candidate transients before the final filtering." >> transient_factory_test31.txt
  if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 500 ];then
@@ -970,6 +934,6 @@ echo "</pre>" >> transient_report/index.html
 echo "</BODY></HTML>" >> transient_report/index.html
 
 
-# The uncleaned directory is needed for the test script
+# The uncleaned directory is needed for the test script!!!
 #util/clean_data.sh
 
