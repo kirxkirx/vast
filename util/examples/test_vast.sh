@@ -627,6 +627,12 @@ remove_test_data_to_save_space
 #fi # if [ $? -ne ];then # hostname check
 ##########################################
 
+# Test the connection
+test_internet_connection
+if [ $? -ne 0 ];then
+ exit 1
+fi
+
 
 ##### Photographic plate test #####
 ### Check the consistency of the dest data if its already there
@@ -1446,6 +1452,13 @@ remove_test_data_to_save_space
 # fi # if [ $? -eq 0 ];then
 #fi # if [ $? -ne ];then # hostname check
 ##########################################
+
+# Test the connection
+test_internet_connection
+if [ $? -ne 0 ];then
+ exit 1
+fi
+
 
 ##### Small CCD images test #####
 # Download the test dataset if needed
@@ -8370,7 +8383,9 @@ $GREP_RESULT"
   
   # Check the total number of candidates (should be at least 3 in this test)
   NUMBER_OF_CANDIDATE_TRANSIENTS=`grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink'`
-  if [ $NUMBER_OF_CANDIDATE_TRANSIENTS -lt 3 ];then
+  # Now tha we excluded Chandra
+  #if [ $NUMBER_OF_CANDIDATE_TRANSIENTS -lt 3 ];then
+  if [ $NUMBER_OF_CANDIDATE_TRANSIENTS -lt 2 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA_NCANDIDATES_$NUMBER_OF_CANDIDATE_TRANSIENTS"
   fi
@@ -10038,16 +10053,18 @@ if [ -d ../individual_images_test ];then
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE007"
-   fi
-   if [ ! -f wcs_M31-1-001-001_dupe-1.fts ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE008"
-   fi
-   lib/bin/xy2sky wcs_M31-1-001-001_dupe-1.fts 200 200 &>/dev/null
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE009"
-   fi
+   else
+    if [ ! -f wcs_M31-1-001-001_dupe-1.fts ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE008"
+    else
+     lib/bin/xy2sky wcs_M31-1-001-001_dupe-1.fts 200 200 &>/dev/null
+     if [ $? -ne 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE009"
+     fi # if [ $? -ne 0 ];then  # if lib/bin/xy2sky did not crash
+    fi # if [ ! -f wcs_M31-1-001-001_dupe-1.fts ];then
+   fi # if [ $? -ne 0 ];then # util/wcs_image_calibration.sh exit with code 0 (success)
   else
    FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMING_REMOTE_PLATE_SOLVER_CHECK_FOR_M31_ISON_test"
   fi

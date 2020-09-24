@@ -912,7 +912,7 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
    echo "$PWD" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST' >> transient_factory_test31.txt
   fi
  else
-  echo "We are not updating exclusion list - too many candidates for a single field" >> transient_factory_test31.txt
+  echo "We are not updating exclusion list ALLOW_EXCLUSION_LIST_UPDATE= $ALLOW_EXCLUSION_LIST_UPDATE" >> transient_factory_test31.txt
  fi # if [ "$ALLOW_EXCLUSION_LIST_UPDATE" = "YES" ];then
 #fi # host
 ## exclusion list update
