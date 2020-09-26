@@ -11350,18 +11350,25 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012"
 fi
 
-# new ATLAS via VizieR test
-util/search_databases_with_vizquery.sh 07:29:19.69 -13:23:06.6 | grep 'CBF (ATLAS)' | grep --quiet 'ATOID J112.3320-13.3851'
+# ATLAS via VizieR test 
+util/search_databases_with_vizquery.sh 101.23204 -13.33439 | grep 'dubious (ATLAS)' | grep --quiet 'ATOID J101.2320-13.3343'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012vsx"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012atlas"
+fi
+
+# ATLAS via VizieR test - doesn't work anymore - the star got into VSX under its ZTF name
+util/search_databases_with_vizquery.sh 07:29:19.69 -13:23:06.6 | grep -e 'CBF (ATLAS)' -e '(VSX)' | grep --quiet -e 'ATOID J112.3320-13.3851' -e 'ZTF J072919.68-132306.5'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012vsx01"
 fi
 
 # This one was added to VSX
 util/search_databases_with_vizquery.sh 18:31:04.64 -16:58:22.3 | grep 'M' | grep 'VARIABLE' | grep --quiet 'ATO J277.7693-16.9729'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012vsx"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012vsx02"
 fi
 
 # MASTER_OT J132104.04+560957.8 - AM CVn star, Gaia short timescale variable
