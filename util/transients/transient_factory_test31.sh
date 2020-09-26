@@ -808,7 +808,7 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
  IS_THIS_TEST_RUN="NO"
  # if we are not in the test directory
  echo "$PWD" "$@" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
- if [ $? -ne 0 ] ;then
+ if [ $? -eq 0 ] ;then
   IS_THIS_TEST_RUN="YES"
   echo "The names $PWD $@ suggest this is a test run"
   echo "The names $PWD $@ suggest this is a test run" >> transient_factory_test31.txt
