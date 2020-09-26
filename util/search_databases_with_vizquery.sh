@@ -113,7 +113,7 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=2
    # "A Modern Mean Dwarf Stellar Color and Effective Temperature Sequence"
    # http://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt
    # Eric Mamajek
-   # Version 2018.12.10
+   # Version 2019.3.22
    # 
    SECTRAL_TYPE="unrealisitic color!"
    # Wild guess
@@ -172,8 +172,10 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=2
   echo "Spectral type is according to the table
 'A Modern Mean Dwarf Stellar Color and Effective Temperature Sequence'
 http://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt
-Version 2018.12.10 by Eric Mamajek
-This is the spectral type *assuming zero extinction*."
+Version 2019.3.22 by Eric Mamajek
+http://adsabs.harvard.edu/abs/2013ApJS..208....9P
+
+This is the spectral type *assuming zero extinction*"
   echo "J-Ks=$J_K+/-$eJ_K ($SECTRAL_TYPE)" > 2mass.tmp
  fi
 done
