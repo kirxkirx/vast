@@ -2342,8 +2342,10 @@ int main( int argc, char **argv ) {
  }
 
  if ( Num < SOFT_MIN_NUMBER_OF_POINTS ) {
-  param_rescale_photometric_errors= 0;
-  fprintf( stderr, "WARNING: disabling the photometric error rescaling for the small number of input images (%d<%d)!\nYou may run 'util/rescale_photometric_errors' manually after the processing has finished.\n", Num, SOFT_MIN_NUMBER_OF_POINTS );
+  if ( param_rescale_photometric_errors != 0 ) {
+   param_rescale_photometric_errors= 0;
+   fprintf( stderr, "WARNING: disabling the photometric error rescaling for the small number of input images (%d<%d)!\nYou may run 'util/rescale_photometric_errors' manually after the processing has finished.\n", Num, SOFT_MIN_NUMBER_OF_POINTS );
+  }
  }
 
  // Special settings that are forced for the transient detection mode
