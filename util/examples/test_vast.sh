@@ -7315,7 +7315,7 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN316a"
   fi
-  RADECPOSITION_TO_TEST=`grep --quiet -e "2019 11 03.6470  2458791.1470  12\.9.  19:08:..\... -19:45:..\.." -e "2019 11 03.6470  2458791.1470  13\.0.  19:08:..\... -19:45:..\.." transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep  -e "2019 11 03.6470  2458791.1470  12\.9.  19:08:..\... -19:45:..\.." -e "2019 11 03.6470  2458791.1470  13\.0.  19:08:..\... -19:45:..\.." transient_report/index.html | awk '{print $6" "$7}'`
   # VSX position https://www.aavso.org/vsx/index.php?view=detail.top&oid=561906
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 19:08:15.15 -19:45:31.8 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
@@ -7327,11 +7327,19 @@ $GREP_RESULT"
    echo "TEST ERROR"
    TEST_PASSED=0
    TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN316a_TOO_FAR_TEST_ERROR"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN316a_TOO_FAR_TEST_ERROR($RADECPOSITION_TO_TEST)"
+   GREP_RESULT=`grep --quiet -e "2019 11 03.6470  2458791.1470  12\.9.  19:08:..\... -19:45:..\.." -e "2019 11 03.6470  2458791.1470  13\.0.  19:08:..\... -19:45:..\.." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT                              
+###### SATURN316a_TOO_FAR_TEST_ERROR($RADECPOSITION_TO_TEST) ######
+$GREP_RESULT"
   else
    if [ $TEST -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN316a_TOO_FAR_$DISTANCE_ARCSEC"
+    GREP_RESULT=`grep --quiet -e "2019 11 03.6470  2458791.1470  12\.9.  19:08:..\... -19:45:..\.." -e "2019 11 03.6470  2458791.1470  13\.0.  19:08:..\... -19:45:..\.." transient_report/index.html`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT                              
+###### SATURN316a_TOO_FAR_$DISTANCE_ARCSEC ######
+$GREP_RESULT"
    fi
   fi
   #
