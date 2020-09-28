@@ -10427,310 +10427,314 @@ fi # if [ "$HOSTNAME" = "eridan" ] ;then
 #### Valgrind test
 command -v valgrind &> /dev/null
 if [ $? -eq 0 ];then
+ # Consider running this super-slow test only on selected hosts
  if [ -z "$HOSTNAME" ];then
   HOSTNAME="$HOST"
  fi
- if [ -d ../sample_data ] && [ "$HOSTNAME" = "eridan" ] ;then
-  TEST_PASSED=1
-  util/clean_data.sh
-  # Run the test
-  echo "Special Valgrind test " >> /dev/stderr
-  echo -n "Special Valgrind test: " >> vast_test_report.txt 
-  #
-  # Run the test only if VaST was compiled wthout AddressSanitizer
-  ldd vast | grep --quiet 'libasan'
-  if [ $? -ne 0 ];then
-   cp default.sex.ccd_example default.sex
-   valgrind --error-exitcode=1 -v --tool=memcheck --track-origins=yes ./vast -uf ../sample_data/f_72-00* &> valgrind_test.out
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND001"
-   fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
-    if [ $ERRORS -ne 0 ];then
-     echo "ERROR"
-     break
-    fi
-   done | grep --quiet 'ERROR'
-   if [ $? -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND002"
-   fi
-   #
-   cp default.sex.ccd_example default.sex
-   valgrind -v --tool=memcheck --track-origins=yes ./vast --photocurve --position_dependent_correction -uf ../sample_data/f_72-00* &> valgrind_test.out
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND003"
-   fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
-    if [ $ERRORS -ne 0 ];then
-     echo "ERROR"
-     break
-    fi
-   done | grep --quiet 'ERROR'
-   if [ $? -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND003a"
-   fi
-   valgrind -v --tool=memcheck --track-origins=yes lib/create_data &> valgrind_test.out
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND004"
-   fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
-    if [ $ERRORS -ne 0 ];then
-     echo "ERROR"
-     break
-    fi
-   done | grep --quiet 'ERROR'
-   if [ $? -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND004a"
-   fi
-   valgrind -v --tool=memcheck --track-origins=yes lib/index_vs_mag &> valgrind_test.out
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND005"
-   fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
-    if [ $ERRORS -ne 0 ];then
-     echo "ERROR"
-     break
-    fi
-   done | grep --quiet 'ERROR'
-   if [ $? -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND006"
-   fi
-   cp default.sex.beta_Cas_photoplates default.sex
-   ./vast -u -o -j -f ../test_data_photo/SCA*
-   valgrind -v --tool=memcheck --track-origins=yes lib/create_data &> valgrind_test.out
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND007"
-   fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
-    if [ $ERRORS -ne 0 ];then
-     echo "ERROR"
-     break
-    fi
-   done | grep --quiet 'ERROR'
-   if [ $? -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND008"
-   fi
-   valgrind -v --tool=memcheck --track-origins=yes lib/index_vs_mag &> valgrind_test.out
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND009"
-   fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
-    if [ $ERRORS -ne 0 ];then
-     echo "ERROR"
-     break
-    fi
-   done | grep --quiet 'ERROR'
-   if [ $? -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND010"
-   fi
-   #
-   cp default.sex.beta_Cas_photoplates default.sex
-   valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
-   util/solve_plate_with_UCAC5 ../test_data_photo/SCA1017S_17061_09773__00_00.fit &> valgrind_test.out
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND011"
-   fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
-    if [ $ERRORS -ne 0 ];then
-     echo "ERROR"
-     break
-    fi
-   done | grep --quiet 'ERROR'
-   if [ $? -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND012"
-   fi
-   #
-   cp default.sex.ccd_example default.sex
-   valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
-   lib/autodetect_aperture_main ../test_exclude_ref_image/lm01306trr7b0645.fits &> valgrind_test.out
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND013"
-   fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
-    if [ $ERRORS -ne 0 ];then
-     echo "ERROR"
-     break
-    fi
-   done | grep --quiet 'ERROR'
-   if [ $? -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND014"
-   fi
-   #
-   # Below is the real slow one
-   cp default.sex.ison_m31_test default.sex
-   valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
-   util/solve_plate_with_UCAC5 ../M31_ISON_test/M31-1-001-001_dupe-1.fts &> valgrind_test.out
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND015"
-   fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
-    if [ $ERRORS -ne 0 ];then
-     echo "ERROR"
-     break
-    fi
-   done | grep --quiet 'ERROR'
-   if [ $? -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND016"
-   fi
-   #
-   #
-   cp default.sex.ccd_example default.sex
-   valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
-   lib/autodetect_aperture_main ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits &> valgrind_test.out
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND017"
-   fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
-    if [ $ERRORS -ne 0 ];then
-     echo "ERROR"
-     break
-    fi
-   done | grep --quiet 'ERROR'
-   if [ $? -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND018"
-   fi
-   #
-   #
-   valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
-   util/ccd/mk ../only_few_stars/* &> valgrind_test.out
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND019"
-   fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
-    if [ $ERRORS -ne 0 ];then
-     echo "ERROR"
-     break
-    fi
-   done | grep --quiet 'ERROR'
-   if [ $? -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND020"
-   fi
-   #
-   #
-   valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
-   util/ccd/ms ../vast_test__dark_flat_flag/V523Cas_20_b1-001G60s.fit ../vast_test__dark_flat_flag/mdark60s.fit d_test4.fit &> valgrind_test.out
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND021"
-   fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
-    if [ $ERRORS -ne 0 ];then
-     echo "ERROR"
-     break
-    fi
-   done | grep --quiet 'ERROR'
-   if [ $? -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND022"
-   fi
-   #
-   #
-   valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
-   util/ccd/md d_test4.fit ../vast_test__dark_flat_flag/mflatG.fit fd_test4.fit &> valgrind_test.out
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND023"
-   fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
-    if [ $ERRORS -ne 0 ];then
-     echo "ERROR"
-     break
-    fi
-   done | grep --quiet 'ERROR'
-   if [ $? -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND024"
-   fi
-   #
-   #
+ if [ "$HOSTNAME" = "eridan" ] || [ "$HOSTNAME" = "moria" ] ;then
+  if [ -d ../sample_data ];then
+   TEST_PASSED=1
    util/clean_data.sh
-   cp default.sex.largestars default.sex
-   valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
-   lib/sextract_single_image_noninteractive d_test4.fit &> valgrind_test.out
+   # Run the test
+   echo "Special Valgrind test " >> /dev/stderr
+   echo -n "Special Valgrind test: " >> vast_test_report.txt 
+   #
+   # Run the test only if VaST was compiled wthout AddressSanitizer
+   ldd vast | grep --quiet 'libasan'
    if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND025"
-   fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
-    if [ $ERRORS -ne 0 ];then
-     echo "ERROR"
-     break
+    cp default.sex.ccd_example default.sex
+    valgrind --error-exitcode=1 -v --tool=memcheck --track-origins=yes ./vast -uf ../sample_data/f_72-00* &> valgrind_test.out
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND001"
     fi
-   done | grep --quiet 'ERROR'
-   if [ $? -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND026"
-   fi
-   if [ -f d_test4.fit ];then
-    rm -f d_test4.fit
-   fi
-   if [ -f fd_test4.fit ];then
-    rm -f fd_test4.fit
-   fi
-   #
-   #
-   valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
-   lib/catalogs/check_catalogs_offline `lib/hms2deg 19:50:33.92439 +32:54:50.6097` &> valgrind_test.out
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND026"
-   fi
-   grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
-    if [ $ERRORS -ne 0 ];then
-     echo "ERROR"
-     break
+    grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+     if [ $ERRORS -ne 0 ];then
+      echo "ERROR"
+      break
+     fi
+    done | grep --quiet 'ERROR'
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND002"
     fi
-   done | grep --quiet 'ERROR'
-   if [ $? -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND027"
-   fi
-   #
+    #
+    cp default.sex.ccd_example default.sex
+    valgrind -v --tool=memcheck --track-origins=yes ./vast --photocurve --position_dependent_correction -uf ../sample_data/f_72-00* &> valgrind_test.out
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND003"
+    fi
+    grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+     if [ $ERRORS -ne 0 ];then
+      echo "ERROR"
+      break
+     fi
+    done | grep --quiet 'ERROR'
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND003a"
+    fi
+    valgrind -v --tool=memcheck --track-origins=yes lib/create_data &> valgrind_test.out
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND004"
+    fi
+    grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+     if [ $ERRORS -ne 0 ];then
+      echo "ERROR"
+      break
+     fi
+    done | grep --quiet 'ERROR'
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND004a"
+    fi
+    valgrind -v --tool=memcheck --track-origins=yes lib/index_vs_mag &> valgrind_test.out
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND005"
+    fi
+    grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+     if [ $ERRORS -ne 0 ];then
+      echo "ERROR"
+      break
+     fi
+    done | grep --quiet 'ERROR'
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND006"
+    fi
+    cp default.sex.beta_Cas_photoplates default.sex
+    ./vast -u -o -j -f ../test_data_photo/SCA*
+    valgrind -v --tool=memcheck --track-origins=yes lib/create_data &> valgrind_test.out
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND007"
+    fi
+    grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+     if [ $ERRORS -ne 0 ];then
+      echo "ERROR"
+      break
+     fi
+    done | grep --quiet 'ERROR'
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND008"
+    fi
+    valgrind -v --tool=memcheck --track-origins=yes lib/index_vs_mag &> valgrind_test.out
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND009"
+    fi
+    grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+     if [ $ERRORS -ne 0 ];then
+      echo "ERROR"
+      break
+     fi
+    done | grep --quiet 'ERROR'
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND010"
+    fi
+    #
+    cp default.sex.beta_Cas_photoplates default.sex
+    valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
+    util/solve_plate_with_UCAC5 ../test_data_photo/SCA1017S_17061_09773__00_00.fit &> valgrind_test.out
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND011"
+    fi
+    grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+     if [ $ERRORS -ne 0 ];then
+      echo "ERROR"
+      break
+     fi
+    done | grep --quiet 'ERROR'
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND012"
+    fi
+    #
+    cp default.sex.ccd_example default.sex
+    valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
+    lib/autodetect_aperture_main ../test_exclude_ref_image/lm01306trr7b0645.fits &> valgrind_test.out
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND013"
+    fi
+    grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+     if [ $ERRORS -ne 0 ];then
+      echo "ERROR"
+      break
+     fi
+    done | grep --quiet 'ERROR'
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND014"
+    fi
+    #
+    # Below is the real slow one
+    cp default.sex.ison_m31_test default.sex
+    valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
+    util/solve_plate_with_UCAC5 ../M31_ISON_test/M31-1-001-001_dupe-1.fts &> valgrind_test.out
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND015"
+    fi
+    grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+     if [ $ERRORS -ne 0 ];then
+      echo "ERROR"
+      break
+     fi
+    done | grep --quiet 'ERROR'
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND016"
+    fi
+    #
+    #
+    cp default.sex.ccd_example default.sex
+    valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
+    lib/autodetect_aperture_main ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits &> valgrind_test.out
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND017"
+    fi
+    grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+     if [ $ERRORS -ne 0 ];then
+      echo "ERROR"
+      break
+     fi
+    done | grep --quiet 'ERROR'
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND018"
+    fi
+    #
+    #
+    valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
+    util/ccd/mk ../only_few_stars/* &> valgrind_test.out
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND019"
+    fi
+    grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+     if [ $ERRORS -ne 0 ];then
+      echo "ERROR"
+      break
+     fi
+    done | grep --quiet 'ERROR'
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND020"
+    fi
+    #
+    #
+    valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
+    util/ccd/ms ../vast_test__dark_flat_flag/V523Cas_20_b1-001G60s.fit ../vast_test__dark_flat_flag/mdark60s.fit d_test4.fit &> valgrind_test.out
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND021"
+    fi
+    grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+     if [ $ERRORS -ne 0 ];then
+      echo "ERROR"
+      break
+     fi
+    done | grep --quiet 'ERROR'
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND022"
+    fi
+    #
+    #
+    valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
+    util/ccd/md d_test4.fit ../vast_test__dark_flat_flag/mflatG.fit fd_test4.fit &> valgrind_test.out
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND023"
+    fi
+    grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+     if [ $ERRORS -ne 0 ];then
+      echo "ERROR"
+      break
+     fi
+    done | grep --quiet 'ERROR'
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND024"
+    fi
+    #
+    #
+    util/clean_data.sh
+    cp default.sex.largestars default.sex
+    valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
+    lib/sextract_single_image_noninteractive d_test4.fit &> valgrind_test.out
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND025"
+    fi
+     grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+     if [ $ERRORS -ne 0 ];then
+      echo "ERROR"
+      break
+     fi
+    done | grep --quiet 'ERROR'
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND026"
+    fi
+    if [ -f d_test4.fit ];then
+     rm -f d_test4.fit
+    fi
+    if [ -f fd_test4.fit ];then
+     rm -f fd_test4.fit
+    fi
+    #
+    #
+    valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
+    lib/catalogs/check_catalogs_offline `lib/hms2deg 19:50:33.92439 +32:54:50.6097` &> valgrind_test.out
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND026"
+    fi
+    grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+     if [ $ERRORS -ne 0 ];then
+      echo "ERROR"
+      break
+     fi
+    done | grep --quiet 'ERROR'
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND027"
+    fi
+    #
    
-   # clean up
-   if [ -f valgrind_test.out ];then
-    rm -f valgrind_test.out
-   fi
-   # conclude
-   if [ $TEST_PASSED -eq 1 ];then
-    echo -e "\n\033[01;34mSpecial Valgrind test \033[01;32mPASSED\033[00m" >> /dev/stderr
-    echo "PASSED" >> vast_test_report.txt
+    # clean up
+    if [ -f valgrind_test.out ];then
+     rm -f valgrind_test.out
+    fi
+    # conclude
+    if [ $TEST_PASSED -eq 1 ];then
+     echo -e "\n\033[01;34mSpecial Valgrind test \033[01;32mPASSED\033[00m" >> /dev/stderr
+     echo "PASSED" >> vast_test_report.txt
+    else
+     echo -e "\n\033[01;34mSpecial Valgrind test \033[01;31mFAILED\033[00m" >> /dev/stderr
+     echo "FAILED" >> vast_test_report.txt
+    fi
    else
-    echo -e "\n\033[01;34mSpecial Valgrind test \033[01;31mFAILED\033[00m" >> /dev/stderr
-    echo "FAILED" >> vast_test_report.txt
-   fi
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND_TEST_NOT_PERFORMED_ASAN_ENABLED"
+     echo "SPECIAL_VALGRIND_TEST_NOT_PERFORMED_ASAN_ENABLED" >> vast_test_report.txt
+   fi # ldd vast | grep --quiet 'libasan'
   else
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND_TEST_NOT_PERFORMED_ASAN_ENABLED"
-    echo "SPECIAL_VALGRIND_TEST_NOT_PERFORMED_ASAN_ENABLED" >> vast_test_report.txt
-  fi # ldd vast | grep --quiet 'libasan'
- else
-  # do not distract user with this obscure message if the test host is not eridan
-  if [ "$HOSTNAME" = "eridan" ];then
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND_TEST_NOT_PERFORMED_NO_DATA"
-   echo "SPECIAL_VALGRIND_TEST_NOT_PERFORMED_NO_DATA" >> vast_test_report.txt
+   # do not distract user with this obscure message if the test host is not eridan
+   if [ "$HOSTNAME" = "eridan" ];then
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND_TEST_NOT_PERFORMED_NO_DATA"
+    echo "SPECIAL_VALGRIND_TEST_NOT_PERFORMED_NO_DATA" >> vast_test_report.txt
+   fi
   fi
+  # do not distract user with obscure error message, so no 'else' if this is not one of the test hosts
  fi
  #
  echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
