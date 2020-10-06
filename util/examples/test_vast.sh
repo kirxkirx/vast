@@ -8191,6 +8191,290 @@ if [ $? -ne 0 ];then
 fi
 
 
+##### Nova Sgr 2020 N4 test #####
+# Download the test dataset if needed
+if [ ! -d ../NMW_Sgr1_NovaSgr20N4_test ];then
+ cd ..
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/NMW_Sgr1_NovaSgr20N4_test.tar.bz2" && tar -xvjf NMW_Sgr1_NovaSgr20N4_test.tar.bz2 && rm -f NMW_Sgr1_NovaSgr20N4_test.tar.bz2
+ cd $WORKDIR
+fi
+# If the test data are found
+if [ -d ../NMW_Sgr1_NovaSgr20N4_test ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "NMW find Nova Sgr 2020 N4 test " >> /dev/stderr
+ echo -n "NMW find Nova Sgr 2020 N4 test: " >> vast_test_report.txt 
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ #
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
+ # Instead of running the single-field search,
+ # we test the production NMW script
+ REFERENCE_IMAGES=../NMW_Sgr1_NovaSgr20N4_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Sgr1_NovaSgr20N4_test/second_epoch_images &> test_ncas$$.tmp
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_EXIT_CODE"
+ fi
+ # Test for the specific error message
+ grep --quiet 'ERROR: cannot find a star near the specified position' test_ncas$$.tmp
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_CANNOT_FIND_STAR_ERROR_MESSAGE"
+ fi
+ rm -f test_ncas$$.tmp
+ #
+ if [ -f transient_report/index.html ];then
+  # there SHOULD be an error message about distance between reference and second-epoch image centers
+  grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_NO_ERROR_MESSAGE_IN_index_html"
+   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
+   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNSGR20N4_NO_ERROR_MESSAGE_IN_index_html ######
+$GREP_RESULT
+-----------------
+$CAT_RESULT"
+  fi
+  # The copy of the log file shoule be in the HTML report
+  grep --quiet "Images processed 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4001"
+  fi
+  NUMBER_OF_GOOD_SE_RUNS=`grep -c "Images processed 4" transient_report/index.html`
+  if [ $NUMBER_OF_GOOD_SE_RUNS -lt 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4001a"
+  fi
+  grep --quiet "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4002"
+  fi
+  NUMBER_OF_GOOD_SE_RUNS=`grep -c "Images used for photometry 4" transient_report/index.html`
+  if [ $NUMBER_OF_GOOD_SE_RUNS -lt 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4002a"
+  fi
+  grep --quiet "First image: 2456005.59475 19.03.2012 02:16:06" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4003"
+  fi
+  grep --quiet "Last  image: 2459128.21054 05.10.2020 17:03:01" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4004"
+  fi
+  # Hunting the misterious non-zero reference frame rotation cases
+  if [ -f vast_image_details.log ];then
+   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40_nonzero_ref_frame_rotation"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNSGR20N40_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40_NO_vast_image_details_log"
+  fi
+  #
+  #
+  # Nova Sgr 2020 N4 has no automatic ID in the current VaST version,
+  # even worse, there seems to be a false ID with an OGLE eclipsing binary
+  #grep --quiet "N Sgr 2020 N4" transient_report/index.html
+  #if [ $? -ne 0 ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40110"
+  #fi
+  grep --quiet "2020 10 05.7103  2459128.2103  10\...  17:5.:..\... -21:22:..\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40110a"
+   GREP_RESULT=`grep "2020 10 05.7103  2459128.2103  10\...  17:5.:..\... -21:22:..\.." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNSGR20N40110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2020 10 05.7103  2459128.2103  10\...  17:5.:..\... -21:22:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:55:00.03 -21:22:41.9 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40110a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40110a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  # Test Stub MPC report line
+  grep --quiet "     TAU0008  C2020 10 05.71045 17 5. ..\... -21 22 ..\...         10\.. R      C32" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40110b"
+  fi
+
+  # UZ Sgr
+  grep --quiet "UZ Sgr" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40210"
+  fi
+  grep --quiet "2020 10 05.7103  2459128.2103  11\...  17:53:..\... -21:45:..\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40210a"
+   GREP_RESULT=`grep "2020 10 05.7103  2459128.2103  11\...  17:53:..\... -21:45:..\.." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNSGR20N40210a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2020 10 05.7103  2459128.2103  11\...  17:53:..\... -21:45:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:53:08.73 -21:45:54.8 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40210a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40210a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+
+
+  # V1280 Sgr
+  grep --quiet "V1280 Sgr" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40210"
+  fi
+  grep --quiet "2020 10 05.7103  2459128.2103  10\...  18:10:..\... -26:52:..\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40210a"
+   GREP_RESULT=`grep "2020 10 05.7103  2459128.2103  10\...  18:10:..\... -26:52:..\.." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNSGR20N40110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2020 10 05.7103  2459128.2103  10\...  18:10:..\... -26:52:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 18:10:27.97 -26:51:59.0 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40210a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40210a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+
+
+  # VX Sgr
+  grep --quiet "VX Sgr" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40310"
+  fi
+  grep --quiet "2020 10 05.7103  2459128.2103  7\...  18:08:..\... -22:13:..\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40310a"
+   GREP_RESULT=`grep "2020 10 05.7103  2459128.2103  7\...  18:08:..\... -22:13:..\.." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNSGR20N40110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2020 10 05.7103  2459128.2103  7\...  18:08:..\... -22:13:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 18:08:04.05 -22:13:26.6 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC<8.4" | bc -ql`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40310a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40310a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+
+  
+  # Check the total number of candidates (should be exactly 5 in this test)
+  NUMBER_OF_CANDIDATE_TRANSIENTS=`grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink'`
+  if [ $NUMBER_OF_CANDIDATE_TRANSIENTS -lt 4 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_NCANDIDATES_$NUMBER_OF_CANDIDATE_TRANSIENTS"
+  fi
+
+ else
+  echo "ERROR running the transient search script" >> /dev/stderr
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_ALL"
+ fi
+
+ ###### restore exclusion list after the test if needed
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mNMW find Nova Sgr 2020 N4 test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mNMW find Nova Sgr 2020 N4 test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+remove_test_data_to_save_space
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!" >> /dev/stderr
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES" >> /dev/stderr
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ exit 1
+fi
+
+
+
 ##### find Chandra #####
 # Download the test dataset if needed
 if [ ! -d ../NMW_find_Chandra_test ];then
