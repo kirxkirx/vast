@@ -111,7 +111,7 @@ function remove_test_data_to_save_space {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-    for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
+    for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -8191,7 +8191,7 @@ if [ $? -ne 0 ];then
 fi
 
 
-##### Nova Sgr 2020 N4 test #####
+##### Nova Sgr 2020 N4 test (three second-epoch images, all good) #####
 # Download the test dataset if needed
 if [ ! -d ../NMW_Sgr1_NovaSgr20N4_test ];then
  cd ..
@@ -8229,11 +8229,11 @@ if [ -d ../NMW_Sgr1_NovaSgr20N4_test ];then
  rm -f test_ncas$$.tmp
  #
  if [ -f transient_report/index.html ];then
-  # there SHOULD be an error message about distance between reference and second-epoch image centers
+  # there SHOULD NOT be an error message 
   grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
-  if [ $? -ne 0 ];then
+  if [ $? -eq 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_NO_ERROR_MESSAGE_IN_index_html"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_ERROR_MESSAGE_IN_index_html"
    GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
    CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
@@ -8268,7 +8268,7 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4003"
   fi
-  grep --quiet "Last  image: 2459128.21054 05.10.2020 17:03:01" transient_report/index.html
+  grep --quiet -e "Last  image: 2459128.21054 05.10.2020 17:03:01" -e "Last  image: 2459128.21093 05.10.2020 17:03:34" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4004"
@@ -8297,7 +8297,7 @@ $GREP_RESULT"
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40110"
   #fi
-  grep --quiet "2020 10 05.7103  2459128.2103  10\...  17:5.:..\... -21:22:..\.." transient_report/index.html
+  grep --quiet "2020 10 05.7...  2459128.2...  10\...  17:5.:..\... -21:22:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40110a"
@@ -8306,7 +8306,7 @@ $GREP_RESULT"
 ###### NMWNSGR20N40110a ######
 $GREP_RESULT"
   fi
-  RADECPOSITION_TO_TEST=`grep "2020 10 05.7103  2459128.2103  10\...  17:5.:..\... -21:22:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2020 10 05.7...  2459128.2...  10\...  17:5.:..\... -21:22:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:55:00.03 -21:22:41.9 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_ARCSEC<8.4" | bc -ql`
@@ -8323,7 +8323,7 @@ $GREP_RESULT"
    fi
   fi
   # Test Stub MPC report line
-  grep --quiet "     TAU0008  C2020 10 05.71045 17 5. ..\... -21 22 ..\...         10\.. R      C32" transient_report/index.html
+  grep --quiet "     TAU0008  C2020 10 05.7.... 17 5. ..\... -21 22 ..\...         10\.. R      C32" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40110b"
@@ -8335,16 +8335,16 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40210"
   fi
-  grep --quiet "2020 10 05.7103  2459128.2103  11\...  17:53:..\... -21:45:..\.." transient_report/index.html
+  grep --quiet "2020 10 05.7...  2459128.2...  11\...  17:53:..\... -21:45:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40210a"
-   GREP_RESULT=`grep "2020 10 05.7103  2459128.2103  11\...  17:53:..\... -21:45:..\.." transient_report/index.html`
+   GREP_RESULT=`grep "2020 10 05.7...  2459128.2...  11\...  17:53:..\... -21:45:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNSGR20N40210a ######
 $GREP_RESULT"
   fi
-  RADECPOSITION_TO_TEST=`grep "2020 10 05.7103  2459128.2103  11\...  17:53:..\... -21:45:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2020 10 05.7...  2459128.2...  11\...  17:53:..\... -21:45:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:53:08.73 -21:45:54.8 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_ARCSEC<8.4" | bc -ql`
@@ -8368,16 +8368,16 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40210"
   fi
-  grep --quiet "2020 10 05.7103  2459128.2103  10\...  18:10:..\... -26:52:..\.." transient_report/index.html
+  grep --quiet "2020 10 05.7...  2459128.2...  10\...  18:10:..\... -26:52:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40210a"
-   GREP_RESULT=`grep "2020 10 05.7103  2459128.2103  10\...  18:10:..\... -26:52:..\.." transient_report/index.html`
+   GREP_RESULT=`grep "2020 10 05.7...  2459128.2...  10\...  18:10:..\... -26:52:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNSGR20N40110a ######
 $GREP_RESULT"
   fi
-  RADECPOSITION_TO_TEST=`grep "2020 10 05.7103  2459128.2103  10\...  18:10:..\... -26:52:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2020 10 05.7...  2459128.2...  10\...  18:10:..\... -26:52:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 18:10:27.97 -26:51:59.0 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_ARCSEC<8.4" | bc -ql`
@@ -8401,16 +8401,16 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40310"
   fi
-  grep --quiet "2020 10 05.7103  2459128.2103  7\...  18:08:..\... -22:13:..\.." transient_report/index.html
+  grep --quiet "2020 10 05.7...  2459128.2...  7\...  18:08:..\... -22:13:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40310a"
-   GREP_RESULT=`grep "2020 10 05.7103  2459128.2103  7\...  18:08:..\... -22:13:..\.." transient_report/index.html`
+   GREP_RESULT=`grep "2020 10 05.7...  2459128.2...  7\...  18:08:..\... -22:13:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNSGR20N40110a ######
 $GREP_RESULT"
   fi
-  RADECPOSITION_TO_TEST=`grep "2020 10 05.7103  2459128.2103  7\...  18:08:..\... -22:13:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2020 10 05.7...  2459128.2...  7\...  18:08:..\... -22:13:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 18:08:04.05 -22:13:26.6 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_ARCSEC<8.4" | bc -ql`
