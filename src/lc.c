@@ -233,7 +233,7 @@ void fit_linear_trend( float *input_JD, float *input_mag, float *mag_err, int N,
  (*B)=poly_coeff[0];
  (*A)=poly_coeff[1];
 
- fprintf( stderr, "Robust linear trend fit:   %lf mag/day, corresponding to t_2mag= %lf, t_3mag= %lf\n", ( *A ), 2.0/( *A ), 3.0/( *A ) );
+ fprintf( stderr, "Robust linear trend fit:   %lf mag/day, corresponding to t_2mag= %lf, t_3mag= %lf\n\n", ( *A ), 2.0/( *A ), 3.0/( *A ) );
 
  free( difference );
  free( fit_w );

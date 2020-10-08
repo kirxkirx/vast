@@ -16,6 +16,19 @@ if [ "" = "$SEXTRACTOR" ];then
  SEXTRACTOR=lib/bin/sex
 fi
 
+######### function to clean-up the temporary files before exiting #########
+function clean_tmp_files {
+ for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.dat jd$$.dat x$$.dat y$$.dat ;do
+  if [ -f "$TMP_FILE_TO_REMOVE" ];then
+   #
+   echo "DEBUG:  REMOVING  $TMP_FILE_TO_REMOVE" >> /dev/stderr
+   #
+   rm -f "$TMP_FILE_TO_REMOVE"
+  fi
+ done
+ return 0
+}
+
 
 # TRAP!! If we whant to identify a flare, there will be no sence to search for an asteroid on the reference image.
 # Use the first discovery image instead!
@@ -30,11 +43,7 @@ echo "<table style='font-family:monospace;font-size:12px;'>
 N=0
 
 # Make sure there are no files with names we want to use
-for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat dayfrac$$.dat jd$$.dat x$$.dat y$$.dat ;do
- if [ -f "$TMP_FILE_TO_REMOVE" ];then
-  rm -f "$TMP_FILE_TO_REMOVE"
- fi
-done
+clean_tmp_files
 
 while read JD MAG MERR X Y APP FITSFILE REST ;do
  #util/wcs_image_calibration.sh $FITSFILE $FOV &>/dev/null
@@ -42,6 +51,7 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  WCS_IMAGE_NAME=wcs_`basename $FITSFILE`
  if [ ! -f $WCS_IMAGE_NAME ];then
   echo "ERROR: cannot find plate-solved image $WCS_IMAGE_NAME" 
+  clean_tmp_files
   exit 1
  fi
  SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".cat
@@ -73,6 +83,7 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
   RADEC=`lib/find_star_in_wcs_catalog $X $Y < $UCAC5_SOLUTION_NAME`
   if [ $? -ne 0 ];then
    echo "(1) error in $0 filed to run  lib/find_star_in_wcs_catalog $X $Y < $UCAC5_SOLUTION_NAME"
+   clean_tmp_files
    exit 1
   fi
  elif [ -f $SEXTRACTOR_CATALOG_NAME ];then
@@ -80,10 +91,12 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
   RADEC=`lib/find_star_in_wcs_catalog $X $Y < $SEXTRACTOR_CATALOG_NAME`
   if [ $? -ne 0 ];then
    echo "(2) error in $0 filed to run  lib/find_star_in_wcs_catalog $X $Y < $SEXTRACTOR_CATALOG_NAME"
+   clean_tmp_files
    exit 1
   fi
  else
   echo "error in $0 cannot find any of the plate-solved-image-related catalogs: $UCAC5_SOLUTION_NAME $SEXTRACTOR_CATALOG_NAME" 
+  clean_tmp_files
   exit 1
  fi
  #
@@ -127,11 +140,13 @@ util/colstat < ra$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' 
 ###################
 if [ $? -ne 0 ];then
  echo "ERROR0001 in $0" 
+ clean_tmp_files
  exit 1
 fi
 . script$$.dat
 if [ $? -ne 0 ];then
  echo "ERROR0002 in $0" 
+ clean_tmp_files
  exit 1
 fi
 RA_MEAN=$MEAN
@@ -146,11 +161,13 @@ RA_MIN=${RA_MIN//"+"/}
 util/colstat < dec$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
 if [ $? -ne 0 ];then
  echo "ERROR0003 in $0" 
+ clean_tmp_files
  exit 1
 fi
 . script$$.dat
 if [ $? -ne 0 ];then
  echo "ERROR0004 in $0" 
+ clean_tmp_files
  exit 1
 fi
 DEC_MEAN=$MEAN
@@ -164,11 +181,13 @@ DEC_MIN=${DEC_MIN//"+"/}
 util/colstat < mag$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
 if [ $? -ne 0 ];then
  echo "ERROR0005 in $0" 
+ clean_tmp_files
  exit 1
 fi
 . script$$.dat
 if [ $? -ne 0 ];then
  echo "ERROR0006 in $0" 
+ clean_tmp_files
  exit 1
 fi
 MAG_MEAN=`echo $MEAN|awk '{printf "%.2f",$1}'`
@@ -178,11 +197,13 @@ MAG_MEAN=${MAG_MEAN//"+"/}
 util/colstat < dayfrac$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
 if [ $? -ne 0 ];then
  echo "ERROR0007 in $0" 
+ clean_tmp_files
  exit 1
 fi
 . script$$.dat
 if [ $? -ne 0 ];then
  echo "ERROR0008 in $0" 
+ clean_tmp_files
  exit 1
 fi
 DAYFRAC_MEAN=`echo $MEAN|awk '{printf "%07.4f",$1}'`
@@ -193,6 +214,7 @@ DAYFRAC_MEAN_SHORT=`echo $MEAN|awk '{printf "%05.2f",$1}'`
 util/colstat < jd$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
 if [ $? -ne 0 ];then
  echo "ERROR0009 in $0" 
+ clean_tmp_files
  exit 1
 fi
 ##########################
@@ -203,6 +225,7 @@ fi
 . script$$.dat
 if [ $? -ne 0 ];then
  echo "ERROR0010 in $0" 
+ clean_tmp_files
  exit 1
 fi
 JD_MEAN=`echo $MEAN |awk '{printf "%.4f",$1}'`
@@ -212,6 +235,7 @@ for STRING_TO_TEST in "$RA_MEAN" "$RA_MAX" "$RA_MIN" "$DEC_MEAN" "$DEC_MAX" "$DE
  re='^[+-]?[0-9]+([.][0-9]+)?$'
  if ! [[ $STRING_TO_TEST =~ $re ]] ; then
   echo "ERROR in $0 : the string #$STRING_TO_TEST# is not a floating point number" 
+  clean_tmp_files
   exit 1
  fi
 done
@@ -231,6 +255,7 @@ ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING="$ANGULAR_DISTANC
 TEST=`echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC > 11" | bc -ql`
 if [ $TEST -eq 1 ];then
  echo "Rejecting candidate due to large distance ($ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC\") between the two second-epoch detections"
+ clean_tmp_files
  exit 1
 fi
 # Highlight candidates with suspiciously large distance between the two second-epoch detections
@@ -256,11 +281,12 @@ else
 fi
 
 # Remove temporary files in case the script will exit after the final check
-for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.dat jd$$.dat x$$.dat y$$.dat ;do
- if [ -f "$TMP_FILE_TO_REMOVE" ];then
-  rm -f "$TMP_FILE_TO_REMOVE"
- fi
-done
+clean_tmp_files
+#for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.dat jd$$.dat x$$.dat y$$.dat ;do
+# if [ -f "$TMP_FILE_TO_REMOVE" ];then
+#  rm -f "$TMP_FILE_TO_REMOVE"
+# fi
+#done
 
 
 RADEC_MEAN_HMS=`lib/deg2hms $RA_MEAN $DEC_MEAN`
@@ -308,7 +334,12 @@ if [ -s "$EXCLUSION_LIST_FILE" ];then
  #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
  while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
   lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 17/3600.0 ) print "FOUND" }' | grep "FOUND" && break
- done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"  && exit 1
+ done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND"
+ if [ $? -eq 0 ];then
+  echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
+  clean_tmp_files
+  exit 1
+ fi
 fi 
 ### Apply the bright BSC bright stars exclusion list
 EXCLUSION_LIST_FILE="exclusion_list_bbsc.txt"
@@ -317,7 +348,12 @@ if [ -s "$EXCLUSION_LIST_FILE" ];then
  #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
  while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
   lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 240/3600.0 ) print "FOUND" }' | grep "FOUND" && break
- done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"  && exit 1
+ done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" 
+ if [ $? -eq 0 ];then
+  echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
+  clean_tmp_files
+  exit 1
+ fi
 fi
 ### Apply the BSC bright stars exclusion list
 EXCLUSION_LIST_FILE="exclusion_list_bsc.txt"
@@ -326,7 +362,12 @@ if [ -s "$EXCLUSION_LIST_FILE" ];then
  #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
  while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
   lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 130/3600.0 ) print "FOUND" }' | grep "FOUND" && break
- done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"  && exit 1
+ done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND"
+ if [ $? -eq 0 ];then
+  echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
+  clean_tmp_files
+  exit 1
+ fi
 fi
 ### Apply the Tycho-2 bright stars exclusion list
 EXCLUSION_LIST_FILE="exclusion_list_tycho2.txt"
@@ -335,7 +376,12 @@ if [ -s "$EXCLUSION_LIST_FILE" ];then
  #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
  while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
   lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 20/3600.0 ) print "FOUND" }' | grep "FOUND" && break
- done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"  && exit 1
+ done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND"
+ if [ $? -eq 0 ];then
+  echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
+  clean_tmp_files
+  exit 1
+ fi
 fi 
 # It may be generated from the local
 EXCLUSION_LIST_FILE="exclusion_list_local.txt"
@@ -344,7 +390,12 @@ if [ -s "$EXCLUSION_LIST_FILE" ];then
  #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
  while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
   lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 17/3600.0 ) print "FOUND" }' | grep "FOUND" && break
- done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" && echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"  && exit 1
+ done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND"
+ if [ $? -eq 0 ];then
+  echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
+  clean_tmp_files
+  exit 1
+ fi
 fi
 ############
 # do this only if $VIZIER_SITE is set
@@ -361,6 +412,7 @@ if [ ! -z "$VIZIER_SITE" ];then
   if [ $? -eq 0 ];then
    echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2   (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#)"
    echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt
+   clean_tmp_files
    exit 1
   fi # if Gaia DR2 match found
   # The trouble is... Gaia catalog is missing many obvious bright stars
@@ -369,6 +421,7 @@ if [ ! -z "$VIZIER_SITE" ];then
   if [ $NUMBER_OF_NONEMPTY_LINES -gt 0 ];then
    echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in APASS   (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#)"
    echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_apass.txt
+   clean_tmp_files
    exit 1
   fi # if APASS match found  
  fi # if this is a new source
@@ -478,6 +531,7 @@ TEST=`echo "($DEC_MEAN)<28" |bc -ql`
 re='^[0-9]+$'
 if ! [[ $TEST =~ $re ]] ; then
  echo "TEST ERROR in ($DEC_MEAN)<28" 
+ clean_tmp_files
  exit 1
 else
  if [ $TEST -eq 1 ];then
@@ -489,6 +543,9 @@ echo "<br>"
 
 # Write this transient to local exclusion list
 echo "$RADEC_MEAN_HMS" >> exclusion_list_local.txt
+
+# just in case
+clean_tmp_files
 
 exit 0
 # everything is fine!

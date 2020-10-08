@@ -157,6 +157,27 @@ function test_internet_connection {
  return 0
 }
 
+## These two functions are needed to check that no leftover files are produced by util/transients/report_transient.sh
+function test_if_test31_tmp_files_are_present {
+ for TMP_FILE_TO_REMOVE in ra*.dat dec*.dat mag*.dat script*.dat dayfrac*.dat jd*.dat x*.dat y*.dat ;do
+  if [ -f "$TMP_FILE_TO_REMOVE" ];then
+   #echo "$TMP_FILE_TO_REMOVE"
+   return 1
+  fi
+ done
+ return 0;
+}
+
+function remove_test31_tmp_files_if_present {
+ for TMP_FILE_TO_REMOVE in ra*.dat dec*.dat mag*.dat script*.dat dayfrac*.dat jd*.dat x*.dat y*.dat ;do
+  if [ -f "$TMP_FILE_TO_REMOVE" ];then
+   rm -f "$TMP_FILE_TO_REMOVE"
+  fi
+ done
+ return 0;
+}
+
+
 # Test the connection right away
 test_internet_connection
 if [ $? -ne 0 ];then
@@ -8738,6 +8759,8 @@ if [ -d ../NMW_Sgr9_crash_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  #
+ remove_test31_tmp_files_if_present
+ #
  if [ -f ../exclusion_list.txt ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
  fi
@@ -8985,6 +9008,12 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_HOT_PIXEL_IN_EXCLUSION_LIST_03"
   fi
   #
+  
+  test_if_test31_tmp_files_are_present
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_TMP_FILE_PRESENT"
+  fi
 
  else
   echo "ERROR running the transient search script" >> /dev/stderr
@@ -9134,6 +9163,12 @@ $GREP_RESULT2"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_VAR_ADDED_MANY_TIMES_TO_EXCLUSION_LIST_04_$N"
   fi
 
+  test_if_test31_tmp_files_are_present
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_TMP_FILE_PRESENT"
+  fi
+
  else
   echo "ERROR running the transient search script" >> /dev/stderr
   TEST_PASSED=0
@@ -9254,6 +9289,12 @@ if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
  else
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_NO_INDEXHTML"
+ fi
+ #
+ test_if_test31_tmp_files_are_present
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_TMP_FILE_PRESENT"
  fi
  rm -f ../exclusion_list.txt
  ###### restore exclusion list after the test if needed
