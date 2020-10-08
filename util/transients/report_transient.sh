@@ -21,7 +21,7 @@ function clean_tmp_files {
  for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.dat jd$$.dat x$$.dat y$$.dat ;do
   if [ -f "$TMP_FILE_TO_REMOVE" ];then
    #
-   echo "DEBUG:  REMOVING  $TMP_FILE_TO_REMOVE" >> /dev/stderr
+   #echo "DEBUG:  REMOVING  $TMP_FILE_TO_REMOVE" >> /dev/stderr
    #
    rm -f "$TMP_FILE_TO_REMOVE"
   fi
