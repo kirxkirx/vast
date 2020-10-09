@@ -11193,7 +11193,9 @@ if [ "$MD5COMMAND" != "none" ];then
  
  ############################# Test index sorting in util/cute_lc #############################
  # Test if 'sort' understands the '--random-sort' argument, perform the following tests only if it does
- echo -e "A\nB\n" | $(lib/find_timeout_command.sh) 10 sort --random-sort --random-source=/dev/urandom > /dev/null
+ echo "A
+B
+C" | $(lib/find_timeout_command.sh) 10 sort --random-sort --random-source=/dev/urandom > /dev/null
  if [ $? -eq 0 ];then
   MD5SUM_OF_PROCESSED_LC=`echo "$TEST_LIGHTCURVE" | $(lib/find_timeout_command.sh) 10 sort --random-sort --random-source=/dev/urandom | util/cute_lc | $MD5COMMAND | awk '{print $1}'`
   if [ "$MD5SUM_OF_PROCESSED_LC" != "68a39230fa63eef05af635df4b33cd44" ];then
@@ -11242,7 +11244,9 @@ echo "Testing lightcurve filters " >> /dev/stderr
 echo -n "Testing lightcurve filters: " >> vast_test_report.txt 
 
 # Test if 'sort' understands the '--random-sort' argument, perform the following tests only if it does
-echo -e "A\nB\n" | $(lib/find_timeout_command.sh) 10 sort --random-sort --random-source=/dev/urandom > /dev/null
+echo "A
+B
+C" | $(lib/find_timeout_command.sh) 10 sort --random-sort --random-source=/dev/urandom > /dev/null
 if [ $? -eq 0 ];then
  # The first test relies on the MD5 sum calculation
  if [ "$MD5COMMAND" != "none" ];then
