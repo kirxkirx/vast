@@ -54,7 +54,7 @@ for POSSIBLE_SEXTRACTOR_NAME in source-extractor sourceextractor sextractor ;do
  command -v $POSSIBLE_SEXTRACTOR_NAME &>/dev/null
  if [ $? -eq 0 ];then
   cd $TARGET_DIR/bin/
-  ln -s `command -v $POSSIBLE_SEXTRACTOR_NAME`
+  ln -s `command -v $POSSIBLE_SEXTRACTOR_NAME` sex
   echo "Found a system-wide installation of SExtractor ($POSSIBLE_SEXTRACTOR_NAME), will link it"
   exit
  fi
