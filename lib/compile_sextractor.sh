@@ -60,9 +60,13 @@ for POSSIBLE_SEXTRACTOR_NAME in source-extractor sourceextractor sextractor ;do
  fi
 done
 
+# Set the right C compiler hoping SExtractor configuration process will pick it up
+CC=`lib/find_gcc_compiler.sh`
+export CC
 
+# Alert user that we are going to compile things
 echo -e "\033[01;34mCompiling the local copy of SExtractor\033[00m"
-echo "Using C compiler: $C_COMPILER"
+echo "Using C compiler: $CC"
 
 # We maintain two versions of SExtractor
 for LIBRARY_SOURCE in $LIBRARY_SOURCES ;do
@@ -95,7 +99,7 @@ Failed command:
 ./configure --disable-model-fitting --prefix=$TARGET_DIR CFLAGS="$CFLAGS"
 at
 $LIBRARY_SOURCE
-C compiler: $C_COMPILER
+C compiler: $CC
 
 VaST installation problem: an error occurred while configuring SExtractor
 This should not have happened! Please report the problem (including the above error messages)
@@ -112,7 +116,7 @@ Failed command:
 make -j9
 at
 $LIBRARY_SOURCE
-C compiler: $C_COMPILER
+C compiler: $CC
 
 VaST installation problem: an error occurred while compiling SExtractor
 This should not have happened! Please report the problem (including the above error messages)
@@ -129,7 +133,7 @@ Failed command:
 make install
 at
 $LIBRARY_SOURCE
-C compiler: $C_COMPILER
+C compiler: $CC
 
 VaST installation problem: an error occurred while installing SExtractor
 This should not have happened! Please report the problem (including the above error messages)
