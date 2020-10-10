@@ -27,14 +27,7 @@ CFLAGS="-O2 -Wno-error $MARCH"
 echo " "
 echo -e "Starting script \033[01;32m$0 $1\033[00m"
 
-# Do nothing if there is a system-wide installation of SExtractor
-command -v sex &>/dev/null
-if [ $? -eq 0 ];then
- echo "Found a system-wide installation of SExtractor, will do nothing"
- exit
-fi
-
-
+# If we are asked to clean the source
 if [ "$1" = "clean" ];then
  echo -e "\033[01;34mRemoving the local copy of SExtractor\033[00m"
  for LIBRARY_SOURCE in $LIBRARY_SOURCES ;do
@@ -48,6 +41,25 @@ if [ "$1" = "clean" ];then
  echo " "
  exit
 fi
+
+# Do nothing if there is a system-wide installation of SExtractor
+command -v sex &>/dev/null
+if [ $? -eq 0 ];then
+ echo "Found a system-wide installation of SExtractor, will do nothing"
+ exit
+fi
+
+# If there is a system-wide installation of SExtractor with the executable called by other names
+for POSSIBLE_SEXTRACTOR_NAME in source-extractor sourceextractor sextractor ;do
+ command -v $POSSIBLE_SEXTRACTOR_NAME &>/dev/null
+ if [ $? -eq 0 ];then
+  cd $TARGET_DIR/bin/
+  ln -s `command -v $POSSIBLE_SEXTRACTOR_NAME`
+  echo "Found a system-wide installation of SExtractor ($POSSIBLE_SEXTRACTOR_NAME), will link it"
+  exit
+ fi
+done
+
 
 echo -e "\033[01;34mCompiling the local copy of SExtractor\033[00m"
 echo "Using C compiler: $C_COMPILER"
@@ -77,7 +89,15 @@ for LIBRARY_SOURCE in $LIBRARY_SOURCES ;do
  # features and allows compiling SExtractor without the ATLAS and FFTW libraries.
  ./configure --disable-model-fitting --prefix=$TARGET_DIR CFLAGS="$CFLAGS"
  if [ $? -ne 0 ];then
-  echo "VaST installation problem: an error occurred while configuring SExtractor
+  echo "
+########### VaST installation problem ###########
+Failed command:
+./configure --disable-model-fitting --prefix=$TARGET_DIR CFLAGS="$CFLAGS"
+at
+$LIBRARY_SOURCE
+C compiler: $C_COMPILER
+
+VaST installation problem: an error occurred while configuring SExtractor
 This should not have happened! Please report the problem (including the above error messages)
 to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru>. 
 Thank you and sorry for the inconvenience."
@@ -86,7 +106,15 @@ Thank you and sorry for the inconvenience."
  fi
  make -j9
  if [ $? -ne 0 ];then
-  echo "VaST installation problem: an error occurred while compiling SExtractor
+  echo "
+########### VaST installation problem ###########
+Failed command:
+make -j9
+at
+$LIBRARY_SOURCE
+C compiler: $C_COMPILER
+
+VaST installation problem: an error occurred while compiling SExtractor
 This should not have happened! Please report the problem (including the above error messages)
 to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru>. 
 Thank you and sorry for the inconvenience."
@@ -95,7 +123,15 @@ Thank you and sorry for the inconvenience."
  fi
  make install
  if [ $? -ne 0 ];then
-  echo "VaST installation problem: an error occurred while installing SExtractor
+  echo "
+########### VaST installation problem ###########
+Failed command:
+make install
+at
+$LIBRARY_SOURCE
+C compiler: $C_COMPILER
+
+VaST installation problem: an error occurred while installing SExtractor
 This should not have happened! Please report the problem (including the above error messages)
 to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru>. 
 Thank you and sorry for the inconvenience."
@@ -113,8 +149,6 @@ Thank you and sorry for the inconvenience."
  break
 
 done # for LIBRARY_SOURCE in $LIBRARY_SOURCES ;do
-
-
 
 # Test if executable files were actually created?
 COMPILATION_ERROR=0
