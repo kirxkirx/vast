@@ -1,23 +1,48 @@
 #!/usr/bin/env bash
 
-if [ -z "$2" ];then
- echo "Usage: $0 wcs_image.fits sextractor_catalog.cat"
- exit 1
-fi
+#if [ -z "$2" ];then
+# echo "Usage: $0 wcs_image.fits sextractor_catalog.cat"
+# exit 1
+#fi
+#
+#INPUT_SEXTRACTOR_CATALOG="$2"
+#if [ ! -f "$INPUT_SEXTRACTOR_CATALOG" ];then
+# echo "ERROR: cannot find the input SExtractor catalog $INPUT_SEXTRACTOR_CATALOG"
+# exit 1
+#fi
+#if [ ! -s "$INPUT_SEXTRACTOR_CATALOG" ];then
+# echo "ERROR: input SExtractor catalog $INPUT_SEXTRACTOR_CATALOG is empty!"
+# exit 1
+#fi
 
-INPUT_SEXTRACTOR_CATALOG="$2"
-if [ ! -f "$INPUT_SEXTRACTOR_CATALOG" ];then
- echo "ERROR: cannot find the input SExtractor catalog $INPUT_SEXTRACTOR_CATALOG"
- exit 1
-fi
-if [ ! -s "$INPUT_SEXTRACTOR_CATALOG" ];then
- echo "ERROR: input SExtractor catalog $INPUT_SEXTRACTOR_CATALOG is empty!"
- exit 1
-fi
+function vastrealpath {
+  # On Linux, just go for the fastest option which is 'readlink -f'
+  REALPATH=`readlink -f "$1" 2>/dev/null`
+  if [ $? -ne 0 ];then
+   # If we are on Mac OS X system, GNU readlink might be installed as 'greadlink'
+   REALPATH=`greadlink -f "$1" 2>/dev/null`
+   if [ $? -ne 0 ];then
+    # If not, resort to the black magic from
+    # https://stackoverflow.com/questions/3572030/bash-script-absolute-path-with-os-x
+    OURPWD=$PWD
+    cd "$(dirname "$1")"
+    LINK=$(readlink "$(basename "$1")")
+    while [ "$LINK" ]; do
+      cd "$(dirname "$LINK")"
+      LINK=$(readlink "$(basename "$1")")
+    done
+    REALPATH="$PWD/$(basename "$1")"
+    cd "$OURPWD"
+   fi
+  fi
+  echo "$REALPATH"
+}
+
 
 # Always use the internal copy of WCSTools as the system installation of WCSTools may be corrputed
 if [ -z "$VAST_PATH" ];then
- VAST_PATH=`readlink -f $0`
+# VAST_PATH=`readlink -f $0`
+ VAST_PATH=`vastrealpath $0`
  VAST_PATH=`dirname "$VAST_PATH"`
  VAST_PATH="${VAST_PATH/'util/'/}"
  VAST_PATH="${VAST_PATH/'lib/'/}"
@@ -33,7 +58,7 @@ if [ "$LAST_CHAR_OF_VAST_PATH" != "/" ];then
  VAST_PATH="$VAST_PATH/"
 fi
 #
-
+echo "DEBUG: VAST_PATH=$VAST_PATH"
 
 WCS_IMAGE="$1"
 if [ ! -s "$WCS_IMAGE" ];then

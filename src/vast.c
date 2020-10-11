@@ -1992,10 +1992,8 @@ int main( int argc, char **argv ) {
  Num= 0;
 
  // Clean symlinks to images
- /// !!!! I'm guessing this will work only in BASH !!!!
- /// Should be replaced with C code
  if ( argc > 1 ) {
-  //system("if [ -d symlinks_to_images ];then rm -rf symlinks_to_images/ ;fi");
+  // This cannot be handled in util/clean_data.sh because we start it after creating the symlinks
   #ifdef DEBUGMESSAGES
   fprintf( stderr, "Starting remove_directory( \"symlinks_to_images\" )\n");
   #endif 

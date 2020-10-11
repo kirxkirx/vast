@@ -74,6 +74,7 @@ if [ ! -d lib/catalogs/ucac5 ];then
 fi
 #### Even more specific case: /mnt/usb/UCAC5 is present but the link is set to /dataX/kirx/UCAC5 ####
 if [ -d /mnt/usb/UCAC5 ];then
+ # This will not work on Mac OS X, but I don't care as this trap is specific to my Linux box
  LINK_POINTS_TO=`readlink -f lib/catalogs/ucac5`
  if [ "$LINK_POINTS_TO" = "/dataX/kirx/UCAC5" ];then
   rm -f lib/catalogs/ucac5

@@ -8,6 +8,29 @@
 # 2 - possible server communication error, retry (with another plate solve server?)
 ERROR_STATUS=0
 
+function vastrealpath {
+  # On Linux, just go for the fastest option which is 'readlink -f'
+  REALPATH=`readlink -f "$1" 2>/dev/null`
+  if [ $? -ne 0 ];then
+   # If we are on Mac OS X system, GNU readlink might be installed as 'greadlink'
+   REALPATH=`greadlink -f "$1" 2>/dev/null`
+   if [ $? -ne 0 ];then
+    # If not, resort to the black magic from
+    # https://stackoverflow.com/questions/3572030/bash-script-absolute-path-with-os-x
+    OURPWD=$PWD
+    cd "$(dirname "$1")"
+    LINK=$(readlink "$(basename "$1")")
+    while [ "$LINK" ]; do
+      cd "$(dirname "$LINK")"
+      LINK=$(readlink "$(basename "$1")")
+    done
+    REALPATH="$PWD/$(basename "$1")"
+    cd "$OURPWD"
+   fi
+  fi
+  echo "$REALPATH"
+}
+
 # 0 - no, unknown telescope - have to plate-solve the image in the normal way
 # 1 - yes, we trust WCS solution in images from this telescope
 function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image {
@@ -16,7 +39,8 @@ function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image
  fi
  FITS_IMAGE_TO_CHECK="$1"
  if [ -z "$VAST_PATH" ];then
-  VAST_PATH=`readlink -f $0`
+  #VAST_PATH=`readlink -f $0`
+  VAST_PATH=`vastrealpath $0`
   VAST_PATH=`dirname "$VAST_PATH"`
   VAST_PATH="${VAST_PATH/'util/'/}"
   VAST_PATH="${VAST_PATH/'lib/'/}"
@@ -239,7 +263,8 @@ The reachable servers are:"
 
 fi # if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
 
-VAST_PATH=`readlink -f $0`
+#VAST_PATH=`readlink -f $0`
+VAST_PATH=`vastrealpath $0`
 VAST_PATH=`dirname "$VAST_PATH"`
 VAST_PATH="${VAST_PATH/util/}"
 #VAST_PATH="${VAST_PATH/lib/}"

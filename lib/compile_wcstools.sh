@@ -14,8 +14,9 @@ TARGET_DIR=$VAST_DIR/lib
 LIBRARY_SOURCE=$VAST_DIR/src/wcstools-3.9.5
 
 #
-PATH_TO_THIS_SCRIPT=`readlink -f $0`
-PATH_TO_LIB_DIR=`dirname $PATH_TO_THIS_SCRIPT`
+#PATH_TO_THIS_SCRIPT=`readlink -f $0`
+#PATH_TO_LIB_DIR=`dirname $PATH_TO_THIS_SCRIPT`
+#PATH_TO_LIB_DIR=$TARGET_DIR
 #
 
 echo " "

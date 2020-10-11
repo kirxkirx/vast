@@ -11,6 +11,28 @@
 # Set PNG finding chart dimensions
 export PGPLOT_PNG_HEIGHT=400 ; export PGPLOT_PNG_WIDTH=600
 
+function vastrealpath {
+  # On Linux, just go for the fastest option which is 'readlink -f'
+  REALPATH=`readlink -f "$1" 2>/dev/null`
+  if [ $? -ne 0 ];then
+   # If we are on Mac OS X system, GNU readlink might be installed as 'greadlink'
+   REALPATH=`greadlink -f "$1" 2>/dev/null`
+   if [ $? -ne 0 ];then
+    # If not, resort to the black magic from
+    # https://stackoverflow.com/questions/3572030/bash-script-absolute-path-with-os-x
+    OURPWD=$PWD
+    cd "$(dirname "$1")"
+    LINK=$(readlink "$(basename "$1")")
+    while [ "$LINK" ]; do
+      cd "$(dirname "$LINK")"
+      LINK=$(readlink "$(basename "$1")")
+    done
+    REALPATH="$PWD/$(basename "$1")"
+    cd "$OURPWD"
+   fi
+  fi
+  echo "$REALPATH"
+}
 
 command -v gnuplot &> /dev/null
 if [ $? -ne 0 ];then
@@ -61,7 +83,8 @@ while read JD MAG ERR X Y AP IMAGEFILE REST ;do
   # And the file exist
   if [ -f $IMAGEFILE ];then
    util/make_finding_chart $IMAGEFILE $X $Y $AP &>/dev/null && mv pgplot.png candidates_report/"$LCFILE"_chart.png
-   IMAGEFILE_TRUE_PATH=`readlink -f $IMAGEFILE`
+   #IMAGEFILE_TRUE_PATH=`readlink -f $IMAGEFILE`
+   IMAGEFILE_TRUE_PATH=`vastrealpath $IMAGEFILE`
    echo "<a href=\"file://$IMAGEFILE_TRUE_PATH\"><img src=\""$LCFILE"_chart.png\"></img></a>" >> candidates_report/index.html
    #echo "<br><a href=\"file://$IMAGEFILE_TRUE_PATH\">$IMAGEFILE</a><br>" >> candidates_report/index.html
   fi
@@ -72,7 +95,8 @@ done < $LCFILE
 
 
 # Make lightcurve plot
-LCFILE_TRUE_PATH=`readlink -f $LCFILE`
+#LCFILE_TRUE_PATH=`readlink -f $LCFILE`
+LCFILE_TRUE_PATH=`vastrealpath $LCFILE`
 START_DATE=`head -n1 $LCFILE | awk '{printf "%.0f",$1}'`
 echo "set term png size 600,$PGPLOT_PNG_HEIGHT medium
 $COLOR_SCHEME_COMMAND
