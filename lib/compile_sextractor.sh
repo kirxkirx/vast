@@ -11,9 +11,9 @@ export MFLAGS=""
 
 VAST_DIR=$PWD
 TARGET_DIR=$VAST_DIR/lib
-#LIBRARY_SOURCE=$VAST_DIR/src/sextractor-2.19.5
-#LIBRARY_SOURCE=$VAST_DIR/src/sextractor-2.25.0_fix_disable_model_fitting
-LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.0_fix_disable_model_fitting $VAST_DIR/src/sextractor-2.19.5"
+# Sextractor versions prior to sextractor-2.25.2 will not compile with gcc10
+LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2_fix_disable_model_fitting $VAST_DIR/src/sextractor-2.25.0_fix_disable_model_fitting $VAST_DIR/src/sextractor-2.19.5"
+#LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2_fix_disable_model_fitting"
 
 #
 PATH_TO_THIS_SCRIPT=`readlink -f $0`
@@ -46,7 +46,7 @@ fi
 command -v sex &>/dev/null
 if [ $? -eq 0 ];then
  echo "Found a system-wide installation of SExtractor, will do nothing"
- exit
+# exit
 fi
 
 # If there is a system-wide installation of SExtractor with the executable called by other names
@@ -70,29 +70,57 @@ echo "Using C compiler: $CC"
 
 # We maintain two versions of SExtractor
 for LIBRARY_SOURCE in $LIBRARY_SOURCES ;do
+ if [ ! -d "$LIBRARY_SOURCE" ];then
+  continue
+ fi
  echo "######### Compiling $LIBRARY_SOURCE #########"
  sleep 2
- cd $LIBRARY_SOURCE
- make clean
- make distclean
- # for sextractor-2.25.0
- if [ -x ./autogen.sh ];then
+ cd "$LIBRARY_SOURCE"
+ if [ -f Makefile ] || [ -f makefile ] ;then
+  make clean
+  make distclean
+ fi
+ 
+ CONFIGURE_OK=0
+ 
+ if [ -x ./configure ];then
+  # try to run configure right away if there is such script
+  
+  # --disable-model-fitting configure option turns-off model-fitting
+  # features and allows compiling SExtractor without the ATLAS and FFTW libraries.
+  ./configure --disable-model-fitting --prefix=$TARGET_DIR CFLAGS="$CFLAGS"
+  if [ $? -eq 0 ];then
+   CONFIGURE_OK=1
+   echo "Configure phase went well"
+  fi 
+ fi # if [ -x ./configure ];then
+ 
+ # for sextractor-2.25
+ if [ -x ./autogen.sh ] && [ $CONFIGURE_OK -ne 1 ];then
   command -v autoconf &>/dev/null
   if [ $? -eq 0 ];then
    ./autogen.sh
    if [ $? -ne 0 ];then
-    echo "ERROR running autogen.sh"
+    echo "ERROR running autogen.sh  -- make sure up-to-date autoconfautomake/libtool are installed"
+    # continue to another SExtractor version
     continue
    fi # if [ $? -ne 0 ];then
+   # --disable-model-fitting configure option turns-off model-fitting
+   # features and allows compiling SExtractor without the ATLAS and FFTW libraries.
+   ./configure --disable-model-fitting --prefix=$TARGET_DIR CFLAGS="$CFLAGS"
+   if [ $? -eq 0 ];then
+    CONFIGURE_OK=1
+    echo "Configure phase went well"
+   fi 
   else
    echo "ERROR no autoconf"
+   # continue to another SExtractor version
    continue
   fi # if [ $? -eq 0 ];then
  fi # if [ -x ./autogen.sh ];then
- # --disable-model-fitting configure option turns-off model-fitting
- # features and allows compiling SExtractor without the ATLAS and FFTW libraries.
- ./configure --disable-model-fitting --prefix=$TARGET_DIR CFLAGS="$CFLAGS"
- if [ $? -ne 0 ];then
+ 
+ 
+ if [ $CONFIGURE_OK -ne 1 ];then
   echo "
 ########### VaST installation problem ###########
 Failed command:
