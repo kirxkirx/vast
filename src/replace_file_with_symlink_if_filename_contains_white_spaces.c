@@ -44,11 +44,17 @@ void replace_file_with_symlink_if_filename_contains_white_spaces( char *filename
  //}
  fprintf( stderr, "WARNING: image path \"%s\" contains white spaces - SExtractor will not be able to handle that!\nTrying to circumvent this problem by creating symbolic link %s\n", filename, symlinkname );
 
+ if( 0 == mkdir( "symlinks_to_images", 0766 ) ) {
+  fprintf( stderr, "Creating directory 'symlinks_to_images/'\n");
+ }
+
+/*
  // A super silly way to create symlinks_to_images folder if it does not exist yet
  sprintf( command_string, "if [ ! -d symlinks_to_images ];then mkdir symlinks_to_images ;fi" );
  if ( 0 != system( command_string ) ) {
   fprintf( stderr, "WARNING: there seems to be a problem creating symbolic links to the input images! replace_file_with_symlink_if_filename_contains_white_spaces()\n" );
  }
+*/
 
  // Create symlink
  resolvedpath= realpath( filename, 0 );
