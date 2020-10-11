@@ -46,7 +46,7 @@ fi
 command -v sex &>/dev/null
 if [ $? -eq 0 ];then
  echo "Found a system-wide installation of SExtractor, will do nothing"
-# exit
+ exit
 fi
 
 # If there is a system-wide installation of SExtractor with the executable called by other names
