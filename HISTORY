@@ -98,6 +98,7 @@ vast-1.0rc85:
 	(2 CPUs x 48 cores x hyper threading) revealed that while it is beneficial to use all cores for running
 	instances of SExtractor, all the internal VaST tasks paralellized with OpenMP actually run much faster
 	when the number of threads is limited.
+	* Updated the internal copy of sextractor-2.25.2 that can be compiled with gcc10.
 07 Mar 2019: vast-1.0rc84:
 	* VaST is now on Github ( https://github.com/kirxkirx/vast ), pull requests are welcome!
 	* The new script 'util/get_gaia_lc.sh' gets Gaia G, BP and RP lightcurves for a Gaia DR2 ID that 

@@ -142,6 +142,12 @@ function test_internet_connection {
   echo "ERROR in test_internet_connection(): cannot connect to scan.sai.msu.ru" >> /dev/stderr
   return 1
  fi
+ 
+ # early exit for the fast test
+ if [ "$1" = "fast" ];then
+  return 0
+ fi
+
  curl --max-time 10 --silent http://vast.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
  if [ $? -ne 0 ];then
   echo "ERROR in test_internet_connection(): cannot connect to vast.sai.msu.ru" >> /dev/stderr
@@ -649,7 +655,7 @@ remove_test_data_to_save_space
 ##########################################
 
 # Test the connection
-test_internet_connection
+test_internet_connection fast
 if [ $? -ne 0 ];then
  exit 1
 fi
@@ -751,6 +757,11 @@ $GREP_RESULT"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE003b"
+   fi
+   # Test the connection
+   test_internet_connection fast
+   if [ $? -ne 0 ];then
+    exit 1
    fi
    util/wcs_image_calibration.sh ../test_data_photo/SCA1017S_17061_09773__00_00.fit
    if [ $? -ne 0 ];then
@@ -1475,7 +1486,7 @@ remove_test_data_to_save_space
 ##########################################
 
 # Test the connection
-test_internet_connection
+test_internet_connection fast
 if [ $? -ne 0 ];then
  exit 1
 fi
@@ -3523,6 +3534,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 #
 
 
+
+
 ##### White space name #####
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
@@ -5003,6 +5016,11 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 
+# Test the connection
+test_internet_connection fast
+if [ $? -ne 0 ];then
+ exit 1
+fi
 
 ##### Very few stars on the reference frame #####
 # Download the test dataset if needed

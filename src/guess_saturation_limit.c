@@ -380,6 +380,14 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
   pixel_value_threshold= median - 7.0 * sigma_estimated_from_MAD;
   //
   fprintf( stderr, "Image stats for %s  median=%lf sigma=%lf threshold=%lf\n", basename(fitsfilename), median, sigma_estimated_from_MAD, pixel_value_threshold );
+ } else {
+  fprintf( stderr, "ERROR in check_if_we_need_flag_image(): cannot open image to get stats!\n");
+  status=0; // just in case
+  // Nothing to do, we'll be fine even without a flag image
+  ( *is_flag_image_used )= 0;
+  resulting_sextractor_cl_parameter_string[0]= '\0';
+  flag_image_filename[0]= '\0';
+  return 0;
  } // if( 0==fits_open_image(&fptr, fitsfilename, READONLY, &status) ){
 
  //

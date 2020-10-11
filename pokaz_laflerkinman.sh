@@ -37,8 +37,6 @@ fi
 # fi
 #fi
 #################################
-#VAST_PATH=`readlink -f $0`
-#VAST_PATH=`dirname "$VAST_PATH"`
 if [ -z "$VAST_PATH" ];then
  VAST_PATH=`readlink -f $0`
  VAST_PATH=`dirname "$VAST_PATH"`
