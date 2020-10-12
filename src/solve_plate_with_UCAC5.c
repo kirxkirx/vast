@@ -1481,6 +1481,7 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
  char vizquery_output_filename[FILENAME_LENGTH];
  int vizquery_run_success;
  int search_stars_counter;
+ int zero_radec_counter;
 
  char path_to_vast_string[VAST_PATH_MAX];
  get_path_to_vast( path_to_vast_string );
@@ -1497,9 +1498,19 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
  sprintf( vizquery_output_filename, "vizquery_%d.output", pid );
  vizquery_input= fopen( vizquery_input_filename, "w" );
  search_stars_counter= 0;
+ zero_radec_counter= 0;
  //for(i=0;i<MIN(N,MAX_STARS_IN_VIZQUERY);i++){
  for ( i= 0; i < N; i++ ) {
   if ( stars[i].good_star == 1 ) {
+   // check for a specific problem
+   if ( stars[i].ra_deg_measured == 0.0 && stars[i].dec_deg_measured == 0.0 ) {
+    zero_radec_counter++;
+    if ( zero_radec_counter>10 ) {
+     fprintf( stderr, "ERROR in search_UCAC5_with_vizquery(): too many input positions are '0.000000 0.000000'\nWe cannot got to VizieR with that!\n");
+     exit( 1 ); // terminate everything
+    }
+   }
+   //
    fprintf( vizquery_input, "%lf %lf\n", stars[i].ra_deg_measured, stars[i].dec_deg_measured );
    search_stars_counter++;
    //fprintf(stderr,"DEBUG  %lf %lf\n",stars[i].ra_deg_measured,stars[i].dec_deg_measured);

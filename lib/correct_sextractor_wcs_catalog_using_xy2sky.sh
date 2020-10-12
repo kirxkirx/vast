@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 
-#if [ -z "$2" ];then
-# echo "Usage: $0 wcs_image.fits sextractor_catalog.cat"
-# exit 1
-#fi
-#
-#INPUT_SEXTRACTOR_CATALOG="$2"
-#if [ ! -f "$INPUT_SEXTRACTOR_CATALOG" ];then
-# echo "ERROR: cannot find the input SExtractor catalog $INPUT_SEXTRACTOR_CATALOG"
-# exit 1
-#fi
-#if [ ! -s "$INPUT_SEXTRACTOR_CATALOG" ];then
-# echo "ERROR: input SExtractor catalog $INPUT_SEXTRACTOR_CATALOG is empty!"
-# exit 1
-#fi
+if [ -z "$2" ];then
+ echo "Usage: $0 wcs_image.fits sextractor_catalog.cat"
+ exit 1
+fi
+
+INPUT_SEXTRACTOR_CATALOG="$2"
+if [ ! -f "$INPUT_SEXTRACTOR_CATALOG" ];then
+ echo "ERROR: cannot find the input SExtractor catalog $INPUT_SEXTRACTOR_CATALOG"
+ exit 1
+fi
+if [ ! -s "$INPUT_SEXTRACTOR_CATALOG" ];then
+ echo "ERROR: input SExtractor catalog $INPUT_SEXTRACTOR_CATALOG is empty!"
+ exit 1
+fi
 
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
@@ -58,7 +58,7 @@ if [ "$LAST_CHAR_OF_VAST_PATH" != "/" ];then
  VAST_PATH="$VAST_PATH/"
 fi
 #
-echo "DEBUG: VAST_PATH=$VAST_PATH"
+#echo "DEBUG: VAST_PATH=$VAST_PATH"
 
 WCS_IMAGE="$1"
 if [ ! -s "$WCS_IMAGE" ];then
@@ -93,5 +93,10 @@ if [ ! -s "correct_sextractor_wcs_catalog_usingxy2sky$$.tmp" ];then
  rm -f "correct_sextractor_wcs_catalog_usingxy2sky$$.tmp"
  exit 1
 fi
+
+################### DEBUG
+#cp -v $INPUT_SEXTRACTOR_CATALOG A.cat
+#cp -v correct_sextractor_wcs_catalog_usingxy2sky$$.tmp B.cat
+#########################
 
 mv -f correct_sextractor_wcs_catalog_usingxy2sky$$.tmp "$INPUT_SEXTRACTOR_CATALOG"

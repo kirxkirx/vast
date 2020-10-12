@@ -16,7 +16,7 @@
 void replace_file_with_symlink_if_filename_contains_white_spaces( char *filename ) {
  unsigned int i, need_to_replace_with_symlink;
  char symlinkname[FILENAME_LENGTH];
- char command_string[2 * FILENAME_LENGTH];
+ //char command_string[2 * FILENAME_LENGTH];
  //
  char * resolvedpath;
  //
