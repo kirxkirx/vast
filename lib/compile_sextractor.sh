@@ -15,7 +15,6 @@ TARGET_DIR=$VAST_DIR/lib
 LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2_fix_disable_model_fitting $VAST_DIR/src/sextractor-2.25.0_fix_disable_model_fitting $VAST_DIR/src/sextractor-2.19.5"
 #LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2_fix_disable_model_fitting"
 
-
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
   REALPATH=`readlink -f "$1" 2>/dev/null`
@@ -23,19 +22,19 @@ function vastrealpath {
    # If we are on Mac OS X system, GNU readlink might be installed as 'greadlink'
    REALPATH=`greadlink -f "$1" 2>/dev/null`
    if [ $? -ne 0 ];then
-    # If not, resort to the black magic from
-    # https://stackoverflow.com/questions/3572030/bash-script-absolute-path-with-os-x
-    OURPWD=$PWD
-    cd "$(dirname "$1")"
-    LINK=$(readlink "$(basename "$1")")
-    while [ "$LINK" ]; do
-      cd "$(dirname "$LINK")"
-      LINK=$(readlink "$(basename "$1")")
-    done
-    REALPATH="$PWD/$(basename "$1")"
-    cd "$OURPWD"
-   fi
-  fi
+    REALPATH=`realpath "$1" 2>/dev/null`
+    if [ $? -ne 0 ];then
+     REALPATH=`grealpath "$1" 2>/dev/null`
+     if [ $? -ne 0 ];then
+      # Something that should work well enough in practice
+      OURPWD=$PWD
+      cd "$(dirname "$1")"
+      REALPATH="$PWD/$(basename "$1")"
+      cd "$OURPWD"
+     fi # grealpath
+    fi # realpath
+   fi # greadlink -f
+  fi # readlink -f
   echo "$REALPATH"
 }
 
