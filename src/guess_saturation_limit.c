@@ -177,7 +177,7 @@ int guess_gain( char *fitsfilename, char *resulting_sextractor_cl_parameter_stri
    if ( gain_from_fits_header != -99.9 ) {
     fits_close_file( fptr, &status ); // close file
     guessed_gain= gain_from_fits_header;
-    sprintf( resulting_sextractor_cl_parameter_string, "-GAIN %.3lf ", guessed_gain );
+    sprintf( resulting_sextractor_cl_parameter_string, " -GAIN %.3lf ", guessed_gain );
     fprintf( stderr, "The gain value (GAIN=%.3lf) is set based on the FITS header key BUNIT=%s of the image %s\n", guessed_gain, str, fitsfilename );
     return 0;
    }
@@ -828,7 +828,7 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
  }
 
  ( *is_flag_image_used )= 1;
- sprintf( resulting_sextractor_cl_parameter_string, "-FLAG_IMAGE %s   -WEIGHT_IMAGE %s -WEIGHT_TYPE MAP_WEIGHT", outfilename_flag, outfilename_weight );
+ sprintf( resulting_sextractor_cl_parameter_string, "-FLAG_IMAGE %s   -WEIGHT_IMAGE %s  -WEIGHT_TYPE MAP_WEIGHT  ", outfilename_flag, outfilename_weight );
  sprintf( flag_image_filename, "%s", outfilename_flag );
  sprintf( weight_image_filename, "%s", outfilename_weight );
 
