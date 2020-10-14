@@ -873,7 +873,9 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
    cat exclusion_list_index_html.txt >> transient_factory_test31.txt
    echo "###################################################################################" >> transient_factory_test31.txt
    while read RADECSTR ;do
-    grep --max-count=1 -A8 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep --quiet 'not found'
+    # Mac OS X grep does not handle well the combination --max-count=1 -A8
+    #grep --max-count=1 -A8 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep --quiet 'not found'
+    grep -A8 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep --quiet 'not found'
     if [ $? -eq 0 ];then
      echo "$RADECSTR"
      echo "$RADECSTR  -- not an asteroid (will add it to exclusion list)" >> transient_factory_test31.txt
@@ -884,7 +886,8 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
    mv -v exclusion_list_index_html.txt_noasteroids exclusion_list_index_html.txt >> transient_factory_test31.txt
    #
    while read RADECSTR ;do
-    grep --max-count=1 -A8 "$RADECSTR" transient_report/index.html | grep 'galactic' | grep --quiet '<font color="red">0.0</font></b> pix'
+    #grep --max-count=1 -A8 "$RADECSTR" transient_report/index.html | grep 'galactic' | grep --quiet '<font color="red">0.0</font></b> pix'
+    grep -A8 "$RADECSTR" transient_report/index.html | grep 'galactic' | grep --quiet '<font color="red">0.0</font></b> pix'
     if [ $? -ne 0 ];then
      echo "$RADECSTR"
      echo "$RADECSTR  -- does not seem to be a hot pixel (will add it to exclusion list)" >> transient_factory_test31.txt
