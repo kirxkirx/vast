@@ -11,7 +11,6 @@ export MFLAGS=""
 
 VAST_DIR=$PWD
 TARGET_DIR=$VAST_DIR/lib
-#LIBRARY_SOURCE=$VAST_DIR/src/wcstools-3.9.5
 LIBRARY_SOURCE=$VAST_DIR/src/wcstools-3.9.6
 
 #
@@ -28,6 +27,12 @@ echo -e "\033[01;34mCompiling the local copy of WCSTools\033[00m"
 echo "Using C compiler: $C_COMPILER"
 
 cd $LIBRARY_SOURCE
+# Remove the old symlink if present
+if [ -f find_gcc_compiler.sh ];then
+ rm -f find_gcc_compiler.sh
+fi
+# This symlink is needed by Makefile
+ln -s $VAST_DIR/lib/find_gcc_compiler.sh
 make clean
 make -j9
 if [ ! $? ];then
@@ -49,8 +54,19 @@ Thank you and sorry for the inconvenience."
  exit 1
 fi
 
+# remove debug symbol directories if there are any (Mac OS)
+for DIR_TO_REMOVE in bin/*.dSYM ;do
+ if [ -d "$DIR_TO_REMOVE" ];then
+  rm -rf "$DIR_TO_REMOVE"
+ fi
+done
 #
 cp bin/* "$TARGET_DIR"/bin/
+
+# remove the symlink
+if [ -f find_gcc_compiler.sh ];then
+ rm -f find_gcc_compiler.sh
+fi
 
 # Clean the source tree to save space
 make clean

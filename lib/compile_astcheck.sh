@@ -37,7 +37,7 @@ else
  if [ $? -eq 0 ];then
   MAKE_COMMAND="gmake"
  else
-  echo "ERROR: cannot find 'gmake' while being on a nin-Linux system ($SYSTEM_TYPE)!
+  echo "ERROR: cannot find 'gmake' while being on a non-Linux system ($SYSTEM_TYPE)!
 The VaST compilation may fail. If it does, please install 'gmake' and try again."
   MAKE_COMMAND="make"
  fi
