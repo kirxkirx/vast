@@ -54,8 +54,7 @@ static inline int fitsfile_read_check( char *fitsfilename ) {
  int hdutype, naxis;
  long naxes3;
  long naxes4;
- // check if this is a readable FITS file
- //fits_open_file(&fptr, fitsfilename, READONLY, &status);
+ // check if this is a readable FITS image
  fits_open_image( &fptr, fitsfilename, READONLY, &status );
  if ( 0 != status ) {
   fits_report_error( stderr, status );
@@ -74,6 +73,7 @@ static inline int fitsfile_read_check( char *fitsfilename ) {
    fits_read_key( fptr, TLONG, "NAXIS3", &naxes3, NULL, &status );
    if ( naxes3 == 1 ) {
     fprintf( stderr, "%s image has NAXIS = %d, but NAXIS3 = %ld -- maybe there is some hope to handle this image...\n", fitsfilename, naxis, naxes3 );
+    fits_close_file( fptr, &status );
     return 0;
    }
   }
@@ -83,6 +83,7 @@ static inline int fitsfile_read_check( char *fitsfilename ) {
     fits_read_key( fptr, TLONG, "NAXIS4", &naxes4, NULL, &status );
     if ( naxes4 == 1 ) {
      fprintf( stderr, "%s image has NAXIS = %d, but NAXIS3 = %ld and NAXIS4 = %ld -- maybe there is some hope to handle this image...\n", fitsfilename, naxis, naxes3, naxes4 );
+     fits_close_file( fptr, &status );
      return 0;
     }
    }
