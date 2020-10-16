@@ -1645,8 +1645,8 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
    };
    double *z= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) ); // difference between the measured coordinates
                                                                 // and thouse assumed to be correct (measured
-                                                                // on the reference frame or aarage star position
-                                                                // from multiple frames.
+                                                                // on the reference frame or avarage star position
+                                                                // from multiple frames (in the reference frame coordinate system).
 
    if ( z == NULL ) {
     fprintf( stderr, "ERROR: Couldn't allocate memory for x(ident_lib.c)\n" );
@@ -1691,6 +1691,10 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
     free( star1 );
     free( star2 );
 
+    free( z );
+    free( y );
+    free( x );
+
     return nm; //0;
    }
 
@@ -1728,6 +1732,10 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
     // We don't want to exit without freeing the memory allocated for the sturctures
     free( star1 );
     free( star2 );
+
+    free( z );
+    free( y );
+    free( x );
 
     return nm; //0;
    }
@@ -1767,8 +1775,14 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
     free( star1 );
     free( star2 );
 
+    free( z );
+    free( y );
+    free( x );
+
     return nm; //0;
    }
+
+   // Free memory if everything is OK
 
    free( z );
    free( y );
