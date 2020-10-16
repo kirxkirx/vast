@@ -45,6 +45,7 @@ if [ -z "$VAST_PATH" ];then
  #VAST_PATH=`readlink -f $0`
  VAST_PATH=`vastrealpath $0`
  VAST_PATH=`dirname "$VAST_PATH"`
+ VAST_PATH="${VAST_PATH/transients/}"
  VAST_PATH="${VAST_PATH/util/}"
  VAST_PATH="${VAST_PATH/lib/}"
  VAST_PATH="${VAST_PATH/'//'/'/'}"
@@ -784,29 +785,35 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  NUMBER_OF_DETECTED_TRANSIENTS=`cat candidates-transients.lst | wc -l`
  echo "Found $NUMBER_OF_DETECTED_TRANSIENTS candidate transients before the final filtering." >> transient_factory_test31.txt
  if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 500 ];then
-  echo "WARNING! Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping field..."
+  echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping field..."
   echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping field..." >> transient_factory_test31.txt
-  continue
- fi
- if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 400 ];then
-  echo "WARNING! Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..."
-  echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..." >> transient_factory_test31.txt
-  # if yes, remove flares, keep only new objects
-  while read FLAREOUTFILE A B ;do
-   grep -v $FLAREOUTFILE candidates-transients.lst > candidates-transients.tmp
-   mv candidates-transients.tmp candidates-transients.lst
-  done < candidates-flares.lst
- fi
+  # this is for UCAC5 plate solver
+  wait
+  #
+  #continue
+  # The NUMBER_OF_DETECTED_TRANSIENTS limit may be reached at the first SE run,
+  # In that case, we want to drop this run and continue with the second run hoping it will be better
+ else
+  if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 400 ];then
+   echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..."
+   echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..." >> transient_factory_test31.txt
+   # if yes, remove flares, keep only new objects
+   while read FLAREOUTFILE A B ;do
+    grep -v $FLAREOUTFILE candidates-transients.lst > candidates-transients.tmp
+    mv candidates-transients.tmp candidates-transients.lst
+   done < candidates-flares.lst
+  fi
 
- echo "Waiting for UCAC5 plate solver" >> transient_factory_test31.txt  
- echo "Waiting for UCAC5 plate solver"
- # this is for UCAC5 plate solver
- wait
- echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
- echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE"
- util/transients/make_report_in_HTML.sh >> transient_factory_test31.txt
- echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
- echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE"
+  echo "Waiting for UCAC5 plate solver" >> transient_factory_test31.txt  
+  echo "Waiting for UCAC5 plate solver"
+  # this is for UCAC5 plate solver
+  wait
+  echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
+  echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE"
+  util/transients/make_report_in_HTML.sh >> transient_factory_test31.txt
+  echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
+  echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE"
+ fi # else if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 500 ];then
  
  echo "*------ done with $SEXTRACTOR_CONFIG_FILE ------*" >> transient_factory_test31.txt
  echo "*------ done with $SEXTRACTOR_CONFIG_FILE ------*"
@@ -861,6 +868,7 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
   echo "Allowing the exclusion list update for $1"
   echo "Allowing the exclusion list update for $1" >> transient_factory_test31.txt
  fi
+ ALLOW_EXCLUSION_LIST_UPDATE="YES"
  if [ "$IS_THIS_TEST_RUN" != "YES" ];then
   # the NMW_Vul2_magnitude_calibration_exit_code_test tests for exclusion listupdate
   # and ../NMW_Sgr9_crash_test/second_epoch_images is for that purpose too
@@ -940,27 +948,30 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
     # Write to ../exclusion_list.txt in a single operation in a miserable attempt to minimize chances of a race condition
     if [ -f exclusion_list_index_html.txt ];then
      if [ -s exclusion_list_index_html.txt ];then
-      echo "#### Adding the following to the exclusion list ####" >> transient_factory_test31.txt
+      echo "IS_THIS_TEST_RUN=$IS_THIS_TEST_RUN  ALLOW_EXCLUSION_LIST_UPDATE= $ALLOW_EXCLUSION_LIST_UPDATE
+#### Adding the following to the exclusion list ####"
       cat exclusion_list_index_html.txt >> transient_factory_test31.txt
       echo "####################################################" >> transient_factory_test31.txt
       cat exclusion_list_index_html.txt >> ../exclusion_list.txt
      else
-      echo "#### Nothing to add to the exclusion list ####" >> transient_factory_test31.txt
-     fi
+      echo "IS_THIS_TEST_RUN=$IS_THIS_TEST_RUN  ALLOW_EXCLUSION_LIST_UPDATE= $ALLOW_EXCLUSION_LIST_UPDATE
+#### Nothing to add to the exclusion list ####" >> transient_factory_test31.txt
+     fi # if [ -s exclusion_list_index_html.txt ];then
      rm -f exclusion_list_index_html.txt
     else
-     echo "exclusion_list_index_html.txt NOT FOUND" >> transient_factory_test31.txt
-    fi
+     echo "IS_THIS_TEST_RUN=$IS_THIS_TEST_RUN  ALLOW_EXCLUSION_LIST_UPDATE= $ALLOW_EXCLUSION_LIST_UPDATE
+exclusion_list_index_html.txt NOT FOUND" >> transient_factory_test31.txt
+    fi # if [ -f exclusion_list_index_html.txt ];then
    else
-    echo "NOT found ../exclusion_list.txt" >> transient_factory_test31.txt
-   fi
+    echo "Not allowed to update the exclusion list IS_THIS_TEST_RUN=$IS_THIS_TEST_RUN  ALLOW_EXCLUSION_LIST_UPDATE= $ALLOW_EXCLUSION_LIST_UPDATE" >> transient_factory_test31.txt
+   fi # if [ "$ALLOW_EXCLUSION_LIST_UPDATE" = "YES" ];then
   else
-   echo "This looks like a test run so we are not updating exclusion list" >> transient_factory_test31.txt
-   echo "$PWD" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST' >> transient_factory_test31.txt
-  fi
+   echo "No ../exclusion_list.txt so we are not updating exclusion list IS_THIS_TEST_RUN=$IS_THIS_TEST_RUN  ALLOW_EXCLUSION_LIST_UPDATE= $ALLOW_EXCLUSION_LIST_UPDATE" >> transient_factory_test31.txt
+  fi # if [ -f ../exclusion_list.txt ];then
  else
-  echo "We are not updating exclusion list ALLOW_EXCLUSION_LIST_UPDATE= $ALLOW_EXCLUSION_LIST_UPDATE" >> transient_factory_test31.txt
- fi # if [ "$ALLOW_EXCLUSION_LIST_UPDATE" = "YES" ];then
+  echo "This looks like a test run so we are not updating exclusion list  IS_THIS_TEST_RUN=$IS_THIS_TEST_RUN  ALLOW_EXCLUSION_LIST_UPDATE= $ALLOW_EXCLUSION_LIST_UPDATE" >> transient_factory_test31.txt
+  echo "$PWD" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST' >> transient_factory_test31.txt
+ fi # if [ "$IS_THIS_TEST_RUN" != "YES" ];then
 #fi # host
 ## exclusion list update
  
