@@ -203,12 +203,13 @@ void help_msg( const char *progname, int exit_code ) {
  printf( "  -9 or --ds9        use DS9 instead of pgfv to view FITS files\n" );
  printf( "  -f or --nofind     run ./find_candidates manually\n" );
  printf( "  -d or --debug      run in debug (verbose) mode\n" );
- //	printf("  -t or --time       use ANOVA & BLS period search algorithms\n");
- //	printf("  -s or --small      use small comparison window (1 pix, useful for most CCD images)\n");
- //	printf("  -m or --medium     use medium comparison window (6 pix)\n");
- //	printf("  -w or --wide       use wide comparison window (10 pix, useful for scanned photographic plates)\n");
- printf( "  -p or --poly       DO NOT use polynomial magnitude calibration (useful for good quality CCD images)\n" );
- printf( "  -o or --photocurve use formulas (1) and (3) from Bacher et al. (2005, MNRAS, 362, 542) for \n" );
+ printf( "  -t 2 or --type 2   frame-to-frame magnitude calibration type: \n" );
+ printf( "                     0 - linear magnitude calibration (vary zero-point and slope)\n" );
+ printf( "                     1 - magnitude calibration with parabola (default)\n" );
+ printf( "                     2 - zero-point only magnitude calibration (linear with the fixed slope)\n" );
+ printf( "                     3 - \"photocurve\" magnitude calibration (for photographic plates)\n" );
+ printf( "  -p or --poly       equivalent to '-t 0' [OPTION ONLY FOR BACKWARD COMPATIBILITY] DO NOT use polynomial magnitude calibration (useful for good quality CCD images)\n" );
+ printf( "  -o or --photocurve equivalent to '-t 3' [OPTION ONLY FOR BACKWARD COMPATIBILITY] use formulas (1) and (3) from Bacher et al. (2005, MNRAS, 362, 542) for \n" );
  printf( "                     magnitude calibration. Useful for photographic data\n" );
  printf( "  -P or --PSF        PSF photometry mode with SExtractor and PSFEx\n" );
  printf( "  -r or --norotation assume the input images are not rotated by more than 3 deg. w.r.t. the first (reference) one\n" );
@@ -1737,15 +1738,25 @@ int main( int argc, char **argv ) {
     fprintf( stderr, "The argument is out of range: -%c %s \n", optopt, cvalue );
     exit( 1 );
    }
-   if( photometric_calibration_type == 2 ){
-    apply_position_dependent_correction= 0;
-    param_use_photocurve= 0;
+   if( photometric_calibration_type == 0 ){
+    fprintf( stdout, "opt 't 0': linear magnitude calibration (vary zero-point and slope)\n" );
    }
+   if( photometric_calibration_type == 1 ){
+    fprintf( stdout, "opt 't 1': magnitude calibration with parabola\n" );
+   }
+   if( photometric_calibration_type == 2 ){
+    fprintf( stdout, "opt 't 2': zero-point only magnitude calibration (linear with the fixed slope)\n" );
+    apply_position_dependent_correction= 0;
+    param_use_photocurve= 0; // obviously incompatible with photocurve
+   }
+   if( photometric_calibration_type == 3 ){
+    // equivalent to '-o'
+    param_use_photocurve= 1;
+    photometric_calibration_type= 1; // force parabolic magnitude fit (it should be reasonably good). It is needed to remove outliers.
+    fprintf( stdout, "opt 't 3': \"photocurve\" will be used for magnitude calibration!\n" );
+   }  
+ 
    break;
-//  case 't': //use period search
-//   period_search_switch= 1;
-//   fprintf( stdout, "opt 't': [DEPRECATED] ANOVA & BLS period search algorithms will be used\n" );
-//   break;
   case '9': //use ds9 FITS viewer
    use_ds9_instead_of_pgfv= 1;
    fprintf( stdout, "opt '9': DS9 FITS viewer will be used instead of pgfv\n" );
