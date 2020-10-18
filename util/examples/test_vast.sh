@@ -742,6 +742,15 @@ if [ -d ../test_data_photo ];then
 ###### PHOTOPLATE_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
     fi
+    grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_nonzero_ref_frame_rotation_test2"
+     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+     DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### PHOTOPLATE_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+    fi
    else
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_NO_vast_image_details_log"
@@ -1082,6 +1091,15 @@ $GREP_RESULT"
 ###### PHOTOPLATE1_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
     fi
+    grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE1_nonzero_ref_frame_rotation_test2"
+     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+     DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### PHOTOPLATE1_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+    fi
    else
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE1_NO_vast_image_details_log"
@@ -1260,6 +1278,15 @@ $GREP_RESULT"
      GREP_RESULT=`cat vast_summary.log vast_image_details.log`
      DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### PHOTOPLATE2_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+    fi
+    grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE2_nonzero_ref_frame_rotation_test2"
+     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+     DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### PHOTOPLATE2_nonzero_ref_frame_rotation_test2 ######
 $GREP_RESULT"
     fi
    else
@@ -1555,6 +1582,15 @@ if [ -d ../sample_data ];then
     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### SMALLCCD0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### SMALLCCD0_nonzero_ref_frame_rotation_test2 ######
 $GREP_RESULT"
    fi
   else
@@ -2053,6 +2089,15 @@ if [ -d ../sample_data ];then
 ###### SMALLCCDFILELIST0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### SMALLCCDFILELIST0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST0_NO_vast_image_details_log"
@@ -2488,6 +2533,15 @@ if [ -d ../sample_data ];then
 ###### FEWSMALLCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### FEWSMALLCCD0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD0_NO_vast_image_details_log"
@@ -2665,6 +2719,15 @@ if [ -d ../sample_data ];then
     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### SMALLCCDNOERRORSRESCALE0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### SMALLCCDNOERRORSRESCALE0_nonzero_ref_frame_rotation_test2 ######
 $GREP_RESULT"
    fi
   else
@@ -3088,6 +3151,15 @@ if [ -d ../sample_data ];then
 ###### MAGZEROPOINTSMALLCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### MAGZEROPOINTSMALLCCD0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD0_NO_vast_image_details_log"
@@ -3233,6 +3305,15 @@ if [ -d ../sample_data ];then
 ###### OMP_NUM_THREADS_SMALLCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES OMP_NUM_THREADS_SMALLCCD0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### OMP_NUM_THREADS_SMALLCCD0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES OMP_NUM_THREADS_SMALLCCD0_NO_vast_image_details_log"
@@ -3351,6 +3432,15 @@ if [ -d ../sample_data ];then
 ###### DIRNAME_SMALLCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### DIRNAME_SMALLCCD0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD0_NO_vast_image_details_log"
@@ -3467,6 +3557,15 @@ if [ -d ../sample_data ];then
     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### DIRNAME2_SMALLCCD0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### DIRNAME2_SMALLCCD0_nonzero_ref_frame_rotation_test2 ######
 $GREP_RESULT"
    fi
   else
@@ -3592,6 +3691,15 @@ if [ -d '../sample space' ];then
     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### WHITE_SPACE_NAME_SMALLCCD0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### WHITE_SPACE_NAME_SMALLCCD0_nonzero_ref_frame_rotation_test2 ######
 $GREP_RESULT"
    fi
   else
@@ -3723,6 +3831,15 @@ if [ -d ../sample_data ];then
 ###### AUTOSELECT_REF_IMG_SMALLCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES AUTOSELECT_REF_IMG_SMALLCCD0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### AUTOSELECT_REF_IMG_SMALLCCD0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES AUTOSELECT_REF_IMG_SMALLCCD0_NO_vast_image_details_log"
@@ -3846,6 +3963,15 @@ if [ -d ../sample_data ];then
     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### WITH_KEYWORD_RECORDING_SMALLCCD0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### WITH_KEYWORD_RECORDING_SMALLCCD0_nonzero_ref_frame_rotation_test2 ######
 $GREP_RESULT"
    fi
   else
@@ -3994,6 +4120,15 @@ if [ -d ../sample_data ];then
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NO_KEYWORD_RECORDING_SMALLCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NO_KEYWORD_RECORDING_SMALLCCD0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NO_KEYWORD_RECORDING_SMALLCCD0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
    fi
   else
    TEST_PASSED=0
@@ -4134,6 +4269,15 @@ if [ -d ../sample_data ];then
     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### MAGSIZEFILTERSMALLCCD0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### MAGSIZEFILTERSMALLCCD0_nonzero_ref_frame_rotation_test2 ######
 $GREP_RESULT"
    fi
   else
@@ -4606,6 +4750,15 @@ if [ -d '../sample space' ];then
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### SPACEMAGSIZEFILTERSMALLCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### SPACEMAGSIZEFILTERSMALLCCD0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
    fi
   else
    TEST_PASSED=0
@@ -5081,6 +5234,15 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
 ###### REFIMAGE_WITH_VERY_FEW_STARS0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### REFIMAGE_WITH_VERY_FEW_STARS0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS0_NO_vast_image_details_log"
@@ -5204,6 +5366,15 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
 ###### REFIMAGE_WITH_VERY_FEW_STARS2_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### REFIMAGE_WITH_VERY_FEW_STARS2_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2_NO_vast_image_details_log"
@@ -5324,6 +5495,15 @@ if [ -d ../vast_test_ASASSN-19cq ];then
 ###### TWOLEVELDIRREC0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### TWOLEVELDIRREC0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC0_NO_vast_image_details_log"
@@ -5413,6 +5593,15 @@ $GREP_RESULT"
     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### TWOLEVELDIRREC1_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC1_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### TWOLEVELDIRREC1_nonzero_ref_frame_rotation_test2 ######
 $GREP_RESULT"
    fi
   else
@@ -5534,6 +5723,15 @@ if [ -d ../MASTER_test ];then
     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### MASTERCCD0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCD0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### MASTERCCD0_nonzero_ref_frame_rotation_test2 ######
 $GREP_RESULT"
    fi
   else
@@ -5691,6 +5889,15 @@ if [ -d ../M31_ISON_test ];then
 ###### ISONM31CCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### ISONM31CCD0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD0_NO_vast_image_details_log"
@@ -5816,6 +6023,15 @@ if [ -d ../Gaia16aye_SN ];then
 ###### GAIA16AYESN0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES GAIA16AYESN0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### GAIA16AYESN0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES GAIA16AYESN0_NO_vast_image_details_log"
@@ -5929,6 +6145,15 @@ if [ -d ../only_few_stars ];then
     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### CCDIMGFEWSTARS0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARS0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### CCDIMGFEWSTARS0_nonzero_ref_frame_rotation_test2 ######
 $GREP_RESULT"
    fi
   else
@@ -6046,6 +6271,15 @@ if [ -d ../only_few_stars ];then
     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### CCDIMGFEWSTARSBRIGHTGALMAGSIZE0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### CCDIMGFEWSTARSBRIGHTGALMAGSIZE0_nonzero_ref_frame_rotation_test2 ######
 $GREP_RESULT"
    fi
   else
@@ -6275,6 +6509,15 @@ if [ -d ../test_exclude_ref_image ];then
     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### EXCLUDEREFIMAGE0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### EXCLUDEREFIMAGE0_nonzero_ref_frame_rotation_test2 ######
 $GREP_RESULT"
    fi
   else
@@ -6534,6 +6777,15 @@ if [ -d ../transient_detection_test_Ceres ];then
 ###### CERES0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### CERES0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES0_NO_vast_image_details_log"
@@ -6576,6 +6828,15 @@ $GREP_RESULT"
     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### CERES1_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES1_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### CERES1_nonzero_ref_frame_rotation_test2 ######
 $GREP_RESULT"
    fi
   else
@@ -7030,6 +7291,15 @@ if [ -d ../NMW_Saturn_test ];then
     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### SATURN0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### SATURN0_nonzero_ref_frame_rotation_test2 ######
 $GREP_RESULT"
    fi
   else
@@ -7588,6 +7858,15 @@ $CAT_RESULT"
 ###### SATURN2_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### SATURN2_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_NO_vast_image_details_log"
@@ -7941,6 +8220,15 @@ $CAT_RESULT"
 ###### VENUS0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### VENUS0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS0_NO_vast_image_details_log"
@@ -8140,6 +8428,15 @@ $CAT_RESULT"
 ###### NMWNCASAUG310_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNCASAUG310_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310_NO_vast_image_details_log"
@@ -8321,6 +8618,15 @@ $CAT_RESULT"
     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNSGR20N40_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNSGR20N40_nonzero_ref_frame_rotation_test2 ######
 $GREP_RESULT"
    fi
   else
@@ -8608,6 +8914,15 @@ $CAT_RESULT"
 ###### NMWNFINDCHANDRA0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNFINDCHANDRA0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0_NO_vast_image_details_log"
@@ -8853,6 +9168,15 @@ $CAT_RESULT"
 ###### NMWSGR9CRASH0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWSGR9CRASH0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH0_NO_vast_image_details_log"
@@ -9089,6 +9413,15 @@ $CAT_RESULT"
     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWSGR9CRASH_RERUN0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWSGR9CRASH_RERUN0_nonzero_ref_frame_rotation_test2 ######
 $GREP_RESULT"
    fi
   else
@@ -9400,6 +9733,15 @@ if [ -d ../KZ_Her_DSLR_transient_search_test ];then
     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### DSLRKZHER0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### DSLRKZHER0_nonzero_ref_frame_rotation_test2 ######
 $GREP_RESULT"
    fi
   else
@@ -10611,6 +10953,15 @@ if [ -d /mnt/usb/M4_F775W_images_Level2_few_links_for_tests ];then
     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### SPECIALM4HST0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIALM4HST0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### SPECIALM4HST0_nonzero_ref_frame_rotation_test2 ######
 $GREP_RESULT"
    fi
   else
@@ -11867,6 +12218,15 @@ if [ -d ../sample_data ];then
 ###### SMALLCCDPSF0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### SMALLCCDPSF0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF0_NO_vast_image_details_log"
@@ -12254,6 +12614,15 @@ if [ -d ../MASTER_test ];then
 ###### MASTERCCDPSF0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCDPSF0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### MASTERCCDPSF0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCDPSF0_NO_vast_image_details_log"
@@ -12418,6 +12787,15 @@ if [ -d ../M31_ISON_test ];then
 ###### ISONM31PSF0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### ISONM31PSF0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF0_NO_vast_image_details_log"
@@ -12525,6 +12903,15 @@ if [ -d ../test_exclude_ref_image ];then
     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### EXCLUDEREFIMAGEPSF0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### EXCLUDEREFIMAGEPSF0_nonzero_ref_frame_rotation_test2 ######
 $GREP_RESULT"
    fi
   else
