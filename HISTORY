@@ -1,4 +1,4 @@
-vast-1.0rc85:
+20 Oct 2020: vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911
 	it will understand input as MJD (distinguishing it from JD based on the numerical value):
@@ -83,11 +83,11 @@ vast-1.0rc85:
 	* The script 'util/load.sh' used to restore a set of lightcurves, configuration and log files previously 
 	saved with 'util/save.sh' will now try to use 'find' command to copy the files. This is ten times faster 
 	than the old 'for' loop, but it will not ask if you want to keep the old configuration files (most importantly
-	default.sex) and will just silently owerwrite them, so please beware!
+	default.sex) and will just silently overwrite them, so please beware!
 	* Disabled photometric error rescaling as it works imperfectly and causes lots of confusion.
 	You may still perform the error rescaling manually by running 'util/rescale_photometric_errors'
 	* The new script 'util/make_finding_chart_script.sh' will use Swarp ( https://www.astromatic.net/software/swarp ) 
-	to resample the input WCS-calibrated image to the North-up, East-left orientation and make a good-loking finder
+	to resample the input WCS-calibrated image to the North-up, East-left orientation and make a good-looking finder
 	chart for the object specified by its RA and Dec.
 	* You may display a WCS-calibrated image marking a specified celestial position on it by running:
 	./pgfv wcs_Sgr9_2020-9-1_17-35-4_002.fts -- 18:19:53.946 -30:41:19.78
@@ -96,7 +96,7 @@ vast-1.0rc85:
 	* Updated TODO list of desired features.
 	* Limited the number of OpenMP threads to no more than 48. Tests on a machine with 192 virtual cores 
 	(2 CPUs x 48 cores x hyper threading) revealed that while it is beneficial to use all cores for running
-	instances of SExtractor, all the internal VaST tasks paralellized with OpenMP actually run much faster
+	instances of SExtractor, all the internal VaST tasks parallelized with OpenMP actually run much faster
 	when the number of threads is limited.
 	* Updated the internal copy of sextractor-2.25.2 that can be compiled with gcc10.
 07 Mar 2019: vast-1.0rc84:

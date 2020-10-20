@@ -38,7 +38,7 @@ function toggleElement(id)
 <tr><td bgcolor="#aaaadd">
 
 <div align="center">
-<h1>VaST [Variability Search Toolkit]</h1>
+<h1><tt>VaST [Variability Search Toolkit]</tt></h1>
 <h2>A software for variable star detection<br/>
 on a series of astronomical images</h2>
 </div>
@@ -48,33 +48,33 @@ on a series of astronomical images</h2>
 <h2><a href="http://scan.sai.msu.ru/vast/">The up-to-date version of this document is avaliable at http://scan.sai.msu.ru/vast/</a></h2>
 
 <p>
-<b>See the <a href="http://adsabs.harvard.edu/abs/2018A%26C....22...28S">VaST paper</a>
+<b>See the <a href="http://adsabs.harvard.edu/abs/2018A%26C....22...28S"><tt>VaST</tt> paper</a>
 for a detailed description of the code. The code is <a href="https://github.com/kirxkirx/vast">available on Github</a>.</b>
 </p>
 
 <dl>
 <dt><b>Contents</b></dt>
 <dd>
- <a href="README.html#what">What is VaST?</a><br/>
+ <a href="README.html#what">What is <tt>VaST</tt>?</a><br/>
  <a href="README.html#screen">Screenshots</a><br/>
  <a href="README.html#down">Download</a><br/>
  <a href="README.html#usage">Usage</a><br/>
  <a href="README.html#outputfiles">Output files</a><br/>
- <a href="README.html#mailinglist">VaST mailing list</a><br/>
+ <a href="README.html#mailinglist"><tt>VaST</tt> mailing list</a><br/>
  <a href="README.html#news">News/Release notes</a><br/>
  <a href="README.html#faq">Frequently Asked Questions</a><br/>
- <a href="README.html#public">Publications using VaST</a><br/>
+ <a href="README.html#public">Publications using <tt>VaST</tt></a><br/>
  <a href="README.html#links">Other useful tools</a><br/>
 </dd></dl><br/>
 
-<p><a name="what"></a>VaST is a software tool for finding variable objects on a series of astronomical images.
+<p><a name="what"></a><tt>VaST</tt> is a software tool for finding variable objects on a series of astronomical images.
 The images (CCD frames or digitized photographic plates) must be taken with the
 same instrument using the same filter and saved in the FITS format. 
 CCD images should be calibrated (dark-subtracted and flat-fielded).
 <b>The input images may be shifted and rotated with respect to each other, but they have to have the same
 scale (arcsec/pix).</b> The images in a series should overlap by at least ~40% to ensure successful cross-identification.
-VaST performs object detection and aperture photometry using 
-<a href="http://astromatic.iap.fr/software/sextractor/">SExtractor</a>
+<tt>VaST</tt> performs object detection and aperture photometry using 
+<a href="http://astromatic.iap.fr/software/sextractor/"><tt>SExtractor</tt></a>
 on each image, cross-matches lists of detected stars, performs magnitude
 calibration with respect to the first (reference) image and constructs a lightcurve for each object. 
 The sigma-magnitude, <a href="http://adsabs.harvard.edu/abs/1996PASP..108..851S">Stetson's
@@ -86,9 +86,9 @@ corresponding to the background level on the reference image. If there are refer
 with known magnitudes in the field of view, all magnitudes can be later
 converted to the standard system.</p>
 
-<p>Unlike software based on the image subtraction method, VaST can be used in
+<p>Unlike software based on the image subtraction method, <tt>VaST</tt> can be used in
 case of unstable PSF (e.g., bad guiding or with digitized wide-field photographic images).
-VaST is not tied up to any external catalog and WCS (if operated in its main
+<tt>VaST</tt> is not tied up to any external catalog and WCS (if operated in its main
 "variable star search" mode), so it can be used on images taken with a telephoto lens as well as with a 2.6-m class telescope.
 If needed, absolute astrometric calibration may be performed through an interface to
 the <a href="http://astrometry.net/">Astrometry.net</a> code allowing one to
@@ -96,21 +96,21 @@ perform automatic magnitude scale calibration and variable star identification
 (however, this will work only if the input images are large enough to
 perform blind plate solution).</p>
 
-<p>VaST is written in C (and partly in BASH scripting language) for 
-<a href="http://en.wikipedia.org/wiki/Linux">GNU/Linux</a>
-operating system. The latest versions are also tested on MacOS X 
-and <a href="https://www.freebsd.org/">FreeBSD</a>.
-The best practical way to run VaST under Windows is through Linux installed 
+<p><tt>VaST</tt> is written in C (and partly in BASH scripting language) for 
+<a href="http://en.wikipedia.org/wiki/Linux"><tt>GNU/Linux</tt></a>
+operating system. The latest versions are also tested on Mac OS X 
+and <a href="https://www.freebsd.org/"><tt>FreeBSD</tt></a>.
+The best practical way to run <tt>VaST</tt> under Windows is through Linux installed 
 in a virtual machine (e.g. 
 <a href="https://www.virtualbox.org/">VirtualBox</a>, 
 see also <a href="http://virtualboxes.org/">a collection of pre-built VirtualBox images</a>).
 <a href="http://www.aavso.org/new-vast-release-neat-variable-star-search-program">The AAVSO forum thread</a>
-mentions attempts to run VaST under Windows with Cygwin, but the results
-seem to be inconclusive. On all the supported systems VaST is able to
+mentions attempts to run <tt>VaST</tt> under Windows with Cygwin, but the results
+seem to be inconclusive. On all the supported systems <tt>VaST</tt> is able to
 utilize multiple processing cores to perform most of its computations in
 parallel.</p>
 
-<p><b>VaST is free software:</b> you can redistribute and/or modify
+<p><b><tt>VaST</tt> is free software:</b> you can redistribute and/or modify
 it under the terms of the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License</a>.
 The program is in a continual, albeit slow, state of development. 
 You are welcome to contribute bug reports, patches and feature requests:
@@ -118,7 +118,7 @@ please write me at kirx[at]scan&#046;sai&#046;msu&#046;ru
 </p>
 <h2><a name="screen"></a>Screenshots</h2>
 
-Various VaST subroutines (lightcurve plotter, image viewer) may be started automatically from the main
+Various <tt>VaST</tt> subroutines (lightcurve plotter, image viewer) may be started automatically from the main
 program or manually by a user from a terminal. Names of the
 corresponding executable files are given under each screenshot. 
 Click on images to see them in high resolution:<br/><br/>
@@ -130,7 +130,7 @@ Click on images to see them in high resolution:<br/><br/>
 <img border="0" src="vast_in_aterm-anim-small2.gif" alt="VaST running in a terminal animation"></img>
 </a>
 <br/>
-VaST (the main program) running in a terminal
+<tt>VaST</tt> (the main program) running in a terminal
 <div class="code">./vast</div>
 </td>
 <td align="center">
@@ -156,31 +156,31 @@ The lightcurve inspection program <div class="code">./lc</div>
 <img border="0" src="pgfv-small.jpg" alt="FITS image viewer"></img>
 </a>
 <br/>
-VaST FITS image viewer <div class="code">./pgfv</div>
+<tt>VaST</tt> FITS image viewer <div class="code">./pgfv</div>
 </td>
 </tr>
 </table>
 <br/>
 
 
-<h2><a name="down"></a>Getting VaST</h2>
+<h2><a name="down"></a>Getting <tt>VaST</tt></h2>
 
 
-<b>To compile and use VaST you'll need:</b>
+<b>To compile and use <tt>VaST</tt> you'll need:</b>
 <ul>
- <li><a href="http://en.wikipedia.org/wiki/Linux">GNU/Linux</a> or MacOS X or <a href="https://www.freebsd.org/">FreeBSD</a> and some
+ <li><a href="http://en.wikipedia.org/wiki/Linux"><tt>GNU/Linux</tt></a> or Mac OS X or <a href="https://www.freebsd.org/"><tt>FreeBSD</tt></a> and some
  basic skills in using one of these operating systems through a command line interface (terminal)</li>
- <li><a href="http://gcc.gnu.org/">GCC</a> (including Fortran and C++ compilers), comes with your GNU/Linux
- distribution. Note that you need to install GCC on MacOS X and FreeBSD as
- VaST will not work with the native clang compiler.</li>
- <li><a href="http://www.gnu.org/software/bc/">BC</a> calculator (can be found in your GNU/Linux distribution)</li>
- <li><a href="http://curl.haxx.se/">cURL</a> (can be found in your GNU/Linux distribution)</li>
- <li><a href="http://astromatic.iap.fr/software/sextractor/">SExtractor</a>. If SExtractor is not installed system-wide, VaST will use
- the built-in SExtractor.</li>
+ <li><a href="http://gcc.gnu.org/">GCC</a> (including Fortran and C++ compilers), comes with your <tt>GNU/Linux</tt>
+ distribution. Note that you need to install GCC on Mac OS X and <tt>FreeBSD</tt> as
+ <tt>VaST</tt> will not work with the native clang compiler.</li>
+ <li><a href="http://www.gnu.org/software/bc/">BC</a> calculator (can be found in your <tt>GNU/Linux</tt> distribution)</li>
+ <li><a href="http://curl.haxx.se/">cURL</a> (can be found in your <tt>GNU/Linux</tt> distribution)</li>
+ <li><a href="http://astromatic.iap.fr/software/sextractor/"><tt>SExtractor</tt></a>. If <tt>SExtractor</tt> is not installed system-wide, <tt>VaST</tt> will use
+ the built-in <tt>SExtractor</tt>.</li>
  </ul>
 
 <p>
-You can find at this page the latest version of VaST
+You can find at this page the latest version of <tt>VaST</tt>
 <b>(download via 
 <a href="ftp://scan.sai.msu.ru/pub/software/vast/vast-latest.tar.bz2">ftp</a>
 or
@@ -189,54 +189,55 @@ along with the sample data set
 (<a href="ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2">ftp</a>
 or <a href="sample_data.tar.bz2">http</a>, 24M).</p>
 
-Files described here as well as older versions of VaST are available via 
+Files described here as well as older versions of <tt>VaST</tt> are available via 
 <a href="ftp://scan.sai.msu.ru/pub/software/vast">our anonymous
 FTP.</a><br/><br/>
 
 
 
-<p><a name="compil"></a>You may download VaST with the command 
+<p><a name="compil"></a>You may download <tt>VaST</tt> with the command 
 <div class="code">wget -c ftp://scan.sai.msu.ru/pub/software/vast/vast-latest.tar.bz2</div>
 unpack the archive containing the program
 <div class="code">
  tar -xvjf vast-latest.tar.bz2<br/>
- cd vast-1.0rc82
+ cd vast-1.0rc85
 </div>
 and compile it by running
 <div class="code">
  make
 </div>
 (or '<b><tt>gmake</tt></b>' if you are not on Linux).
-At this point VaST should be ready for work.</p>
+At this point <tt>VaST</tt> should be ready for work.</p>
 
 <p>If compilation fails, read the output carefully. Most probably it
 can't find some necessary libraries, header files or external programs. 
-Please install the required programs and try to compile VaST again.
+Please install the required programs and try to compile <tt>VaST</tt> again.
 If you are sure that the needed libraries and headers are installed in the system
 but the compiler cannot find them, try to open Makefile with a 
 text editor and change the libraries locations to match your environment.
-Very old versions of VaST require 
+Very old versions of <tt>VaST</tt> require 
 <a href="http://www.astro.caltech.edu/~tjp/pgplot/">PGPLOT</a>, 
 <a href="http://heasarc.gsfc.nasa.gov/fitsio/">CFITSIO</a> 
 and <a href="http://www.gnu.org/software/gsl/">GSL</a> 
 libraries to be installed in your system, 
-but most likely you don't want to use such an old VaST version.</p>
+but most likely you don't want to use such an old <tt>VaST</tt> version.</p>
 
 Special note for <b>Ubuntu</b> users! The following installation procedure is recommended:
 <ul>
-<li>Install these libraries from pre-compiled Ubuntu packages. On older Ubuntu
-versions use:
-<div class="code">sudo apt-get install build-essential gfortran g++ libX11-dev libXi-dev libXmu-dev libpng-dev curl wget</div>
-and on newer Ubuntu/Linux Mint:
+<li>Install these libraries from pre-compiled Ubuntu packages (same should
+work for Linux Mint):
 <div class="code">sudo apt-get install build-essential gfortran g++ libx11-dev libxi-dev libxmu-dev libpng-dev curl wget</div>
-If you want to install a newer <a href="http://www.astromatic.net/software/sextractor">SExtractor</a> and <a href="http://www.astromatic.net/software/psfex">PSFEx</a> in order to perform
-PSF-fitting photometry with VaST, you'll need to install also
+and on older Ubuntu systems, the X11 devel packages have the capital X in
+their names:
+<div class="code">sudo apt-get install build-essential gfortran g++ libX11-dev libXi-dev libXmu-dev libpng-dev curl wget</div>
+If you want to install a newer <a href="http://www.astromatic.net/software/sextractor"><tt>SExtractor</tt></a> and <a href="http://www.astromatic.net/software/psfex">PSFEx</a> in order to perform
+PSF-fitting photometry with <tt>VaST</tt>, you'll need to install also
 <div class="code">sudo apt-get install libfftw3-dev libatlas-base-dev</div>
-When compiling <a href="http://www.astromatic.net/software/sextractor">SExtractor</a> and <a href="http://www.astromatic.net/software/psfex">PSFEx</a> from the source code,
+When compiling <a href="http://www.astromatic.net/software/sextractor"><tt>SExtractor</tt></a> and <a href="http://www.astromatic.net/software/psfex">PSFEx</a> from the source code,
 specify explicitly the location of ATLAS include files:
 <div class="code">./configure --with-atlas-incdir=/usr/include/atlas &amp;&amp; make &amp;&amp; sudo make install</div>
 </li>
-<li>Compile VaST <a href="#compil">as described above</a></li>
+<li>Compile <tt>VaST</tt> <a href="#compil">as described above</a></li>
 </ul>
 
 For <b>Red Hat</b> based Linux distributions 
@@ -247,50 +248,50 @@ For <b>Red Hat</b> based Linux distributions
 <li>Install some basic development tools (login as root or use sudo):
 <div class="code">yum install gcc gcc-c++ gcc-gfortran libX11-devel libpng-devel</div>
 </li>
-<li>Compile VaST <a href="#compil">as described above</a></li>
+<li>Compile <tt>VaST</tt> <a href="#compil">as described above</a></li>
 </ul>
 
-Special note for <b>MacOS X</b> users: VaST is tested
-on MacOS X 10.8.2 'Mountain Lion' with XQuartz, Xcode, MacPorts installed in
+Special note for <b>Mac OS X</b> users: <tt>VaST</tt> is tested
+on Mac OS X 10.8.2 'Mountain Lion' with XQuartz, Xcode, MacPorts installed in
 the system and gcc, gfortran, g++, and wget installed through MacPorts.
-<b>VaST will not compile with clang</b>, you really need to
+<b><tt>VaST</tt> will not compile with clang</b>, you really need to
 install gcc, gfortran, g++...
 <br>
-VaST was also reported to successfully compile on OS X 10.11.6, Xcode 8.0 (8A218a) and gcc version 4.9.3 (MacPorts gcc49 4.9.3_0).
+<tt>VaST</tt> was also reported to successfully compile on OS X 10.11.6, Xcode 8.0 (8A218a) and gcc version 4.9.3 (MacPorts gcc49 4.9.3_0).
 <br>
-A common problem on MacOS X systems is the mismatch between the versions of a
+A common problem on Mac OS X systems is the mismatch between the versions of a
 manually installed gfortran and the default system gcc. In that case, you
 may need to manually install gcc, g++ and gfortran as described 
 <a href="https://solarianprogrammer.com/2016/09/22/compiling-gcc-6-macos/">here</a>
-add the directory with the new binaries in the begining of your PATH, the
+add the directory with the new binaries in the beginning of your PATH, the
 command should look something like
 <div class="code">export PATH=/usr/local/gcc-6.3.0/bin:$PATH</div>
 Create a symbolic link to gcc in the directory with the compiler binaries:
-<div class="code">cd /usr/local/gcc-6.3.0/bin
+<div class="code">cd /usr/local/gcc-6.3.0/bin ; 
 ln -s gcc gcc-6.3.0
 </div>
-go back to the VaST directory and compile VaST with
+go back to the <tt>VaST</tt> directory and compile <tt>VaST</tt> with
 <div class="code">
 make
 </div>
-Generally, it would be the easiest for VaST if 'gcc' and 'gfortran' commands
+Generally, it would be the easiest for <tt>VaST</tt> if 'gcc' and 'gfortran' commands
 first appearing in the PATH point to compatible versions of gcc and
 gfortran. Note that you don't need to modify PATH permanently by editing
-.bashrc file (or an equivalent) - it is sufficent to export the correct PATH
+.bashrc file (or an equivalent) - it is sufficient to export the correct PATH
 before running 'make'.
 <br/>
-Special note for <b>FreeBSD</b> users: VaST scripts may fail to compile
+Special note for <b><tt>FreeBSD</tt></b> users: <tt>VaST</tt> scripts may fail to compile
 the internal copy of <a href="http://www.astro.caltech.edu/~tjp/pgplot/">PGPLOT</a>
 library. If that happens, please install <a href="http://www.astro.caltech.edu/~tjp/pgplot/">PGPLOT</a>
 system-wide with the command (as root):
 <div class="code">pkg install pgplot</div>
-then try to compile VaST again. In order to use VaST you will need the
+then try to compile <tt>VaST</tt> again. In order to use <tt>VaST</tt> you will need the
 following packages
 <div class="code">pkg install bash gmake gcc curl wget libx11</div>
 <br/>
 <br/>
 
-<h2><a name="usage"></a>Using VaST</h2>
+<h2><a name="usage"></a>Using <tt>VaST</tt></h2>
 
 Brief usage instructions in Russian may be found 
 <a href="http://astrotourist.info/poisk-peremennykh-zvezd">here.</a>
@@ -298,15 +299,15 @@ Brief usage instructions in Russian may be found
 <br/>
 
 
-<p>To try VaST, download the 
+<p>To try <tt>VaST</tt>, download the 
 <a href="ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2">sample data set</a>, unpack it
 <div class="code">
  wget -c ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2<br/>
  tar -xvjf sample_data.tar.bz2
 </div>
-change to the VaST installation directory and run the program
+change to the <tt>VaST</tt> installation directory and run the program
 <div class="code">
- cd vast-1.0rc82<br/>
+ cd vast-1.0rc85<br/>
  ./vast ../sample_data/*fit
 </div>
 After a brief computation the variability search window will be opened. Click
@@ -339,7 +340,7 @@ enter its catalog magnitude in the terminal window.</p>
 window with the right mouse click and inspect the relation between
 instrumental and catalog magnitudes. This relation may be fitted by a
 linear function with the slope fixed to 1, linear function with a free
-slope, second degree polynome (parabola) or the 
+slope, second degree polynomial (parabola) or the 
 <a href="http://adsabs.harvard.edu/abs/2005MNRAS.362..542B">Bacher et al. (2005, MNRAS, 362, 542)</a>
 magnitude calibration relation a.k.a "photocurve". This option is suitable for
 processing digitized photographic plates. 
@@ -362,7 +363,7 @@ band:
 util/magnitude_calibration.sh V
 </div>
 The acceptable bands are: 
-"C" - UCAC4 unfiltered red band, 
+"C" - UCAC5 unfiltered red band, 
 "B" - APASS B band,
 "V" - APASS V band,
 "R" - APASS R band,
@@ -383,7 +384,7 @@ work, use
 <div class="code">
 util/load.sh my_favorite_field_name
 </div>
-or just copy all saved files from directory [my_favorite_field_name] back to the VaST directory.<br/><br/>
+or just copy all saved files from directory [my_favorite_field_name] back to the <tt>VaST</tt> directory.<br/><br/>
 
 
 To delete all files from the previous work, you can use:
@@ -392,7 +393,7 @@ To delete all files from the previous work, you can use:
 </div>
 </p>
 
-<p>There is a tool to automatically <font color="green">identify variable stars detected with VaST.</font> 
+<p>There is a tool to automatically <font color="green">identify variable stars detected with <tt>VaST</tt>.</font> 
 It requires a working Internet connection at runtime. The tool may or may not work for your field depending
 on luck. If the field of view is greater than, say, 30' and the image
 quality is fine - the odds that the automatic plate solution will work
@@ -428,27 +429,27 @@ publications, the <a href="http://astrometry.net/">Astrometry.net</a> project mu
 and acknowledged. The paper to cite is the Lang et al paper on our
 bibliography page <a href="http://astrometry.net/biblio.html">http://astrometry.net/biblio.html</a>.  
 The acknowledgment text is "This research made use of tools provided
-by <a href="http://astrometry.net/">Astrometry.net</a>." The VaST software developers assume, that this statement
-concerns the work which uses "util/identify.sh" script from the VaST
+by <a href="http://astrometry.net/">Astrometry.net</a>." The <tt>VaST</tt> software developers assume, that this statement
+concerns the work which uses "util/identify.sh" script from the <tt>VaST</tt>
 package.</p>
 
 
 <h2>A note on the graphical user interface</h2>
 
-The VaST GUI is based on the 
+The <tt>VaST</tt> GUI is based on the 
 <a href="http://www.astro.caltech.edu/~tjp/pgplot/">PGPLOT</a> library.
 The main reasons are that this library is perfectly suited for displaying and
 editing data and image plots and is so easy to use from the developer's standpoint.
 The problem is that the resulting interface may look counterintuitive. 
-The unusual thing about the VaST interface is that it has no
+The unusual thing about the <tt>VaST</tt> interface is that it has no
 buttons. (There is a way to program a GUI with buttons and
 graphical input fields in PGPLOT, but, trust me, you'll not be impressed by
 its look and usability.) So, whenever a user has a choice between multiple possible actions,
 instead of clicking a button to execute the desired action, a user will have
 to physically press a key on a keyboard. The list of possible keys is always
-displayed by VaST at the terminal. Please have a look there to know your options.
+displayed by <tt>VaST</tt> at the terminal. Please have a look there to know your options.
 
-Some actions are common to all VaST windows:
+Some actions are common to all <tt>VaST</tt> windows:
 <ul>
 <li>To <b>select a data point</b> on a plot (or a given pixel of an image) -
 click on it with the left mouse button.
@@ -463,15 +464,15 @@ click on it with the left mouse button.
 </ul>
 Before pressing a keyboard key, make sure you have 
 <a href="https://en.wikipedia.org/wiki/Focus_%28computing%29">focus</a> set
-on the VaST graphical window you want to interact with. Naturally, if focus
+on the <tt>VaST</tt> graphical window you want to interact with. Naturally, if focus
 is set on another window (like a terminal), the character you type
 will affect that other window (like appear in the terminal) instead
-of performing an action in the VaST window you are aiming at.
+of performing an action in the <tt>VaST</tt> window you are aiming at.
 
 <br/>
 <br/>
 
-<h2>Using VaST with scanned photographic plates</h2>
+<h2>Using <tt>VaST</tt> with scanned photographic plates</h2>
 <p>If you have to deal with digitized photographic materials, you'll want
 first to convert TIFF images (which are typically produced by scanner
 software) to the FITS format. It can be easily done with the 
@@ -491,27 +492,27 @@ href="http://tdc-www.harvard.edu/wcstools/edhead.html">WCSTools</a> package. You
 enter the observation date and time information in the image header by generating 
 the usual "DATE-OBS" and "EXPTIME" header keys, or by simply putting the
 middle-of-exposure Julian Date into the "JD" key.
-You will most likely need to modify the default SExtractor settings stored
-in the "default.sex" file located in the VaST directory. Please use
+You will most likely need to modify the default <tt>SExtractor</tt> settings stored
+in the "default.sex" file located in the <tt>VaST</tt> directory. Please use
 "default.sex.beta_Cas_photoplates" and "default.sex.PHOTO" as working examples
-(these files are also found in the VaST directory).<p>
+(these files are also found in the <tt>VaST</tt> directory).<p>
 
-<p>Say, you have digitized photographic images in "photo_data" directory. To run VaST
-on them, change to the VaST directory and run the program
+<p>Say, you have digitized photographic images in "photo_data" directory. To run <tt>VaST</tt>
+on them, change to the <tt>VaST</tt> directory and run the program
 <div class="code">
- cd vast-1.0rc82<br/>
+ cd vast-1.0rc85<br/>
  ./vast -o ../photo_data/*fit
 </div>
-The "-o" parameter tells VaST to use formulas (1) and (3) from 
+The "-o" parameter tells <tt>VaST</tt> to use formulas (1) and (3) from 
 <a href="http://adsabs.harvard.edu/abs/2005MNRAS.362..542B">Bacher et al. (2005, MNRAS, 362,
 542)</a> a.k.a. "photocurve" for magnitude calibration. This technique provide slightly better
 results for the aperture photometry on photographic data compared to the
-second-order polynome used in VaST by default for magnitude calibration.
+second-order polynomial used in <tt>VaST</tt> by default for magnitude calibration.
 However, the standard calibration technique should also provide reasonably
 good results (see Figure 2 in <a
 href="http://adsabs.harvard.edu/abs/2008AcA....58..279K">this paper</a>).
 
-The "-j" parameter that forces VaST to use a linear position-dependent
+The "-j" parameter that forces <tt>VaST</tt> to use a linear position-dependent
 magnitude correction (i.e. stars on one side of the image being
 systematically fainter than on the other side) might also be useful for
 photographic plates photometry.
@@ -528,11 +529,11 @@ new variable stars using digitized Moscow collection plates"</a>.</p>
 <br/>
 <br/>
 
-<h2><a name="transientsearch"></a>Search for transients with VaST </h2>
+<h2><a name="transientsearch"></a>Search for transients with <tt>VaST</tt> </h2>
 
-<p>Apart from the standard "variable star search mode", where a long series of images is processed and lightcurves of detected stars are explored using the sigma-magnitude plot, VaST can be also used in the specialized "transient detection mode". In this
-mode VaST will process a series of four images: two first-epoch (reference) images and two second-epoch images. VaST will generate an HTML report containing a list of candidate transients. The transients are defined as either objects that were not
-visible on the reference images, or where at least 1 mag. fainter compared to the second-epoch images. Two first-epoch images are needed because image artifacts and star blending may cause VaST to miss a star on a single reference image, so it will
+<p>Apart from the standard "variable star search mode", where a long series of images is processed and lightcurves of detected stars are explored using the sigma-magnitude plot, <tt>VaST</tt> can be also used in the specialized "transient detection mode". In this
+mode <tt>VaST</tt> will process a series of four images: two first-epoch (reference) images and two second-epoch images. <tt>VaST</tt> will generate an HTML report containing a list of candidate transients. The transients are defined as either objects that were not
+visible on the reference images, or where at least 1 mag. fainter compared to the second-epoch images. Two first-epoch images are needed because image artifacts and star blending may cause <tt>VaST</tt> to miss a star on a single reference image, so it will
 appear as a false transient search mode is available. If there are two reference images - chances that the program will fail to detect a star at both of them is greatly reduced. Also note that two different reference images are needed: it would be
 impossible to "cheat" the program by feeding the same image to it twice.</p>
                                                                                                                                                
@@ -563,15 +564,15 @@ util/transients/search_for_transients_single_field.sh .
   </li><li>The magnitude calibration is based on V magnitudes of Tycho-2 stars. If this is not appropriate for your system, please contact me and I'll try to develop an alternative calibration strategy for your setup.
   </li><li>Reference images should be two different images obtained during one night.
 The reason behind using two reference images (instead of one) is the attempt
-to minimize the number of cases where SExtractor fails to deblend two stars
+to minimize the number of cases where <tt>SExtractor</tt> fails to deblend two stars
 on the reference image, but can successfully perform deblending on the
 second-epoch images. In this case, one of the two stars that "appeared" in
 the detection lists for the second epoch will be erroneously marked as a
 transient. The other measure that can minimize such errors is to try to use
 images with the best seeing as reference.
-  </li><li>There are two files controlling the star-detection behavior of SExtractor: <tt>default.sex</tt> and <tt>default.conv</tt> . You may refer to SExtractor documentation for a detailed description of these files. You may find a few examples of
+  </li><li>There are two files controlling the star-detection behavior of <tt>SExtractor</tt>: <tt>default.sex</tt> and <tt>default.conv</tt> . You may refer to <tt>SExtractor</tt> documentation for a detailed description of these files. You may find a few examples of
   <tt>default.sex</tt> and <tt>default.conv</tt>
-files in the VaST directory. The default files are meant to work for a wide variety of CCD images, however they may not provide an optimal star detection efficiency for a particular instrument. The two files fine-tuned for the
+files in the <tt>VaST</tt> directory. The default files are meant to work for a wide variety of CCD images, however they may not provide an optimal star detection efficiency for a particular instrument. The two files fine-tuned for the
 "transient_detection_test_Ceres" dataset are <tt>default.sex.telephoto_lens</tt> and <tt>default.conv.telephoto_lens</tt> . To use them instead of default files, just copy these files:
 <div class="code">
 cp default.sex.telephoto_lens default.sex</br>
@@ -583,14 +584,14 @@ You may want to edit these file to match your own setup.
 </br>
 
 
-<h2>Some switches that you may use with VaST</h2>
-"-P" &mdash; perform PSF-fitting photometry with <a href="http://www.astromatic.net/software/sextractor">SExtractor</a> and 
+<h2>Some switches that you may use with <tt>VaST</tt></h2>
+"-P" &mdash; perform PSF-fitting photometry with <a href="http://www.astromatic.net/software/sextractor"><tt>SExtractor</tt></a> and 
 <a href="http://www.astromatic.net/software/psfex">PSFEx</a>.<br/>
 "-9" &mdash; use <a href="http://hea-www.harvard.edu/RD/ds9/">DS9</a> instead of
 VaST's own viewer pgfv to view FITS files.<br/>
 "-u" &mdash; always assume UTC time system, don't perform conversion to TT.<br/>
 "-k" &mdash; force VaST to ignore the "JD" keyword in FITS headers.<br/>
-"-x2" &mdash; accept stars with non-zero SExtractor flag: 2 - blended stars,
+"-x2" &mdash; accept stars with non-zero <tt>SExtractor</tt> flag: 2 - blended stars,
 4 - saturated stars, 99 - accept everything.<br/>
 "-e" &mdash; failsafe mode: only stars detected on the reference frame
 will be processed.<br/>
@@ -610,9 +611,9 @@ To get the full list of the available command line arguments run:
 <br/>
 
 
-<h2><a name="outputfiles"></a>Description of output files produced by VaST</h2>
+<h2><a name="outputfiles"></a>Description of output files produced by <tt>VaST</tt></h2>
 
-After processing an image series, VaST will create a number of files in its
+After processing an image series, <tt>VaST</tt> will create a number of files in its
 working directory that may be useful for a future work or problem debugging.
 
 <ul>
@@ -621,7 +622,7 @@ working directory that may be useful for a future work or problem debugging.
 numbered NNNNN. This is a simple ASCII file that may be viewed in a text
 editor. The format is the following:
 <div class="code">
-- 1st column - JD(TT) (default) or JD(UTC) (if VaST was started with "-u" flag)</br>
+- 1st column - JD(TT) (default) or JD(UTC) (if <tt>VaST</tt> was started with "-u" flag)</br>
 - 2nd column - magnitude (with respect to the background level on the reference image if an absolute calibration was not done yet)</br>
 - 3rd column - estimated magnitude error</br>
 - 4th column - X position of the star on the current frame (in pixels)</br>
@@ -629,13 +630,45 @@ editor. The format is the following:
 - 6th column - diameter of the circular aperture used to measure the current frame (in pixels)</br>
 - 7th column - file path corresponding to the current frame
 </div>
-The extra columns specific to VaST may be easily removed as follows
+Additional columns might be present in the files produced by the latest version
+of <tt>VaST</tt>. These might include: the differences between magnitudes of the
+source measured using concentric circular apertures of different diameters
+and the associated errors. The first of these columns will be the magnitude measured
+the aperture specified in the column 6. This difference is non-zero if <tt>VaST</tt>
+is operating in the PSF-fitting photometry mode (and column 3 lists
+PSF-fitting magnitudes). The following column represent measurements
+measured with apertures that are 10% smaller, 10% larger, 20% larger and
+30% larger than the aperture specified in column 6. The difference between
+the sizes of the reference aperture and additional apertures may be tuned by
+changing the parameters <tt>AP01</tt> to <tt>AP04</tt> in <tt>src/vast_limits.h</tt>
+(and recompiling <tt>VaST</tt> with <tt>make</tt>). These magnitude difference columns
+are not intended to be used by user directly. Instead, they are used by
+<tt>lib/select_aperture_with_smallest_scatter_for_each_object</tt> routine
+that might be started manually or by running the analysis with <tt>--selectbestaperture</tt>
+option passed to <tt>./vast</tt>. The routine will select for each object
+the aperture size that minimizes the lightcurve scatter. For brighter
+objects, a larger aperture might be more appropriate than the default one
+selected by <tt>VaST</tt>, while for the fainter and blended objects the smaller
+aperture might be more favorable.
+
+Also, the <tt>VaST</tt> has the possibility to save values of keywords from the
+header of an image associated with each measurement. The keyword names
+should be listed in
+<tt>vast_list_of_FITS_keywords_to_record_in_lightcurves.txt</tt>, see
+the examples in
+<tt>vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_example</tt>.
+This might be useful to record values of external parameters (such as the
+airmass) that might be useful for decorrelating the lightcurves. (The
+external parameter decorrelation is not implemented in <tt>VaST</tt> yet, use
+<a href="https://www.astro.princeton.edu/~jhartman/vartools.html"><tt>VARTOOLS</tt></a>).
+<br>
+The extra columns specific to <tt>VaST</tt> (column 4 and further) may be easily removed as follows
 <div class="code">
 util/cute_lc out00183.dat > out00183_JD_mag_err.dat
 </div>
 the output file out00183_JD_mag_err.dat will contain only three columns "JD", "mag" and "err". By default, util/cute_lc prints its output to stdout.
 If no lightcurve file name is provided as a command line argument, util/cute_lc will expect the input lightcurve to be sent to its stdin.
-You may easily change the number of digits returned by util/cute_lc by editing its source code file src/cute_lc.c and recompiling VaST (make).
+You may easily change the number of digits returned by util/cute_lc by editing its source code file src/cute_lc.c and recompiling <tt>VaST</tt> (make).
 
 </li><li><tt>"data.m_sigma"</tt> file contains the information used to produce the sigma-magnitude plot. It has the following format:
 <div class="code">
@@ -645,6 +678,12 @@ You may easily change the number of digits returned by util/cute_lc by editing i
 - 4th column - Y position of the star on the reference frame (in pixels)</br>
 - 5th column - outNNNNN.dat file containing the lightcurve of this star
 </div>
+
+</li><li><tt>"vast_lightcurve_statistics.log"</tt> is the extended version
+of <tt>"data.m_sigma"</tt> listing all the variability indexes listed in
+<a href="http://adsabs.harvard.edu/abs/2017MNRAS.464..274S">this paper</a>.
+The file format is described in <tt>"vast_lightcurve_statistics_format.log"</tt>
+(as the format may be changed at compile time).
 
 </li><li><tt>"vast_summary.log"</tt> file summarizes the processing results. Its format is rather self-explanatory:
 <div class="code">
@@ -683,7 +722,7 @@ exp_start= 06.07.2004 20:24:42  exp=  180  JD= 2453193.35227  ap=  6.2  rotation
 </div>
 If an image could not be processed, this will be indicated by "status=ERROR".
 
-</li><li><tt>"vast_command_line.log"</tt> contains the command line with which VaST was started, so the exact processing parameters can be always figured out.
+</li><li><tt>"vast_command_line.log"</tt> contains the command line with which <tt>VaST</tt> was started, so the exact processing parameters can be always figured out.
 
 </li><li><tt>"vast_sigma_selection_curve.log"</tt> contains the "sigma-selection curve" displayed on the sigma-magnitude plot.
 
@@ -697,12 +736,12 @@ for i in *.calib ;do ../lib/fit_mag_calib "$i" "$i"_param ;done
 </div>
 This is useful mostly for debugging purposes.
 
-</li><li><tt>"image*.cat"</tt> files are the raw SExtractor catalogs. Their format is defined in the <tt>"default.param"</tt> file (see SExtractor documentation).
+</li><li><tt>"image*.cat"</tt> files are the raw <tt>SExtractor</tt> catalogs. Their format is defined in the <tt>"default.param"</tt> file (see <tt>SExtractor</tt> documentation).
 The correspondence between the catalogs and input images is given in the <tt>"vast_images_catalogs.log"</tt> file. These catalogs are useful mostly for debugging purposes.
 
-</li><li><tt>"image*.cat.aperture"</tt> files contain the aperture diameter (in pixels) used to produce a given SExtractor catalog.
+</li><li><tt>"image*.cat.aperture"</tt> files contain the aperture diameter (in pixels) used to produce a given <tt>SExtractor</tt> catalog.
 
-</li><li><tt>"vast_memory_usage.log"</tt> contains information about VaST usage of RAM.
+</li><li><tt>"vast_memory_usage.log"</tt> contains information about <tt>VaST</tt> usage of RAM.
 
 </li><li><tt>"vast_list_of_all_stars.log"</tt> contains pixel coordinates of
 all selected stars in the reference frame of the first (reference) image.
@@ -721,9 +760,9 @@ viewer</a>).
 
 </br></br>
 
-<h2><a name="mailinglist"></a>VaST mailing list</h2>
+<h2><a name="mailinglist"></a><tt>VaST</tt> mailing list</h2>
 
-If you would like to receive updates about new versions of VaST, 
+If you would like to receive updates about new versions of <tt>VaST</tt>, 
 please enter your e-mail address in the form below
 <!-- Start code for the form-->
 <form method="post" name="vastmailform" action="http://scan.sai.msu.ru/vast/vastemail.php">
@@ -741,6 +780,139 @@ or just drop a line to kirx[at]scan.sai.msu.ru
 <h2><a name="news"></a>Release notes</h2>
 
 <pre>
+20 Oct 2020: vast-1.0rc85:
+
+ * 'util/get_image_date' can be used to convert JD to calendar date/time:
+ util/get_image_date 2456909.72911
+it will understand input as MJD (distinguishing it from JD based on the numerical value):
+ util/get_image_date 58020.39
+Remember the 0.5 day difference between MJD and truncated JD! Never use truncated JD, 
+in my opinion MJD should also be avoided. Spell out a full JD to specify time for the sake of 
+avoiding confusion. Computers nowadays can handle the two extra digits, they really do.
+'util/get_image_date' can also be used to convert calendar date/time to JD:
+ util/get_image_date 2014-09-09T05:29:55
+it will also understand
+ util/get_image_date '2014-09-09 05:29' 
+
+ * The new script 'util/fov_of_wcs_calibrated_image.sh' will print the field of view,
+image scale and the image center position of a WCS-calibrated FITS image.
+
+ * The new tool 'util/fits2png' will produce a PNG finder chart with no labels from 
+the input FITS image. Use 'util/make_finding_chart' to produce a finder chart with labels.
+In all cases the output image will be written to 'pgplot.png' file in the current directory.
+
+ * Lightcurve files (out*.dat) listed as automatically selected candidate variables in vast_autocandidates.log
+as well as the ones listed by user as previously known variables in vast_list_of_previously_known_variables.log
+are now highlighted by the FITS viewer './sextract_single_image'
+
+ * You may now specify on the command line the directory that contains one level of sub-directories 
+with images: './vast -u -f ../vast_test_ASASSN-19cq' where the directory ../vast_test_ASASSN-19cq contains
+sub-directories '2019_05_15 2019_05_25 2019_05_26 2019_06_03 2019_06_10 2019_06_24' with FITS images.
+Note that VaST will only go two levels down the directory tree, i.e. images from the sub-directory
+'2019_05_15/bad_images' in the above example will not be processed.
+
+ * VaST will now understand the exposure start time if it is written in 'SHUTOPEN' keyword instead of
+'DATE-OBS'. This is to process the ZTF 'sciimg' images (see 'ZTF Image Access' at 
+https://irsa.ipac.caltech.edu/Missions/ztf.html ). Example of running VaST on ZTF images:
+ ./vast --UTC --poly /mnt/usb/ZTF_images_test_2/ztf_20180*_zg_*_q1_sciimg.fits
+
+ * For star identification VaST will blindly trust the astrometric solutions produced with SCAMP 
+( https://www.astromatic.net/software/scamp ). In this case, VaST will not attempt to re-solve 
+the image using a local or remote copy of the Astrometry.net code. The same is true if the FITS 
+header indicates that the image was already plate-solved with Astrometry.net
+
+ * When solving plates with a local copy of the Astrometry.net code, VaST will now try to refine 
+the plate solution by performing the second run of the Astrometry.net code restricting the search space
+by using the image center and scale derived from the first run.
+
+ * Updated the flag/weight image generation rules for better handling stacked images with black areas 
+around the image edges.
+
+ * The file names in the vast_magnitude_calibration_details_log directory now include image number as
+well as the image name: useful if multiple input images from different directories have the same name.
+
+ * VaST should warn the user if the reference image seems to be of poor quality (has much less stars)
+than other images in the series. If this happens, you may want to manually specify another reference 
+image by putting it before all other images in VaST command line arguments. For example the command:
+ ./vast ../images/image-012.fit ../images/image-*.fit
+will make VaST use 'image-012.fit' as the reference image.
+
+ * Tweaks to the star list matching algorithm should allow VaST to process images with 
+very few stars (less than 10). You may need to think twice about the magnitude calibration procedure
+for such images: the linear calibration ('--poly' option), or the zero-point-offset-only
+('-t 2' option), or manually selecting the reference stars using 'diffphot' may be good options.
+
+ * VaST will now try to parse the EXPOSURE keyword comment to determine if the exposure time is 
+specified in minutes (like in DSS FITS images) or hours rather than seconds (most FITS images).
+
+ * '--nomagsizefilter' option now switches off also the psf fit quality vs magnitude filter.
+If you don't find your target star in the PSF photometry mode, but it is there when the aperture
+photometry is used - that option might help.
+
+ * Changed the maximum number of stars for plate solution in 'util/solve_plate_with_UCAC5'
+to 1000 in order to speed up communication with VizieR. You may change this default value 
+by editing the line '#define MAX_STARS_IN_VIZQUERY 1000' in 'src/solve_plate_with_UCAC5.c'
+and recompiling VaST with 'make'.
+
+ * The lightcurve plotter './lc' can fit a linear trend to the lightcurve (when viewing a lightcurve 
+press '1' on the keyboard). The fitted line slope is now displayed in mag/day as well as the time of 
+decline by two (t2) and three (t3) magnitudes for convenience.
+
+ * The list of input images may be specified in the text file 'vast_list_of_input_images_with_time_corrections.txt'
+instead of the command line. The file should contain a path to one image per line.
+No white spaces should be present in the path (if there are white spaces - rename the files 
+or create symlinks). A time correction in seconds or the Julian Date of the observation
+may be specified as the second column in the input file list. This correction will be applied 
+to the image date derived from the FITS image header. If the Julian Date is specified - it will
+override the date derived from the FITS header. See the examples in 
+'vast_list_of_input_images_with_time_corrections.txt_example' and 'vast_list_of_input_images_with_time_corrections.txt_test'.
+
+ * Fixed the "Produce list of minor planets with online MPChecker" function in the transient search mode.
+
+ * To speed-up the plate solution step needed for star identification, VaST can now use a local copy of 
+the UCAC5 catalog. The catalog files (5,3G) can be installed using the script 'lib/install_local_copy_of_UCAC5.sh'
+or they can be manually download from VizieR and placed in 'lib/catalogs/ucac5/'. If the files are not found, 
+VaST will access the catalog online through VizieR, as before.
+
+ * Added "A first catalog of variable stars measured by the Asteroid Terrestrial-impact Last Alert System (ATLAS)"
+Heinze et al. (2018, AJ, 156, 241) https://ui.adsabs.harvard.edu/abs/2018AJ....156..241H 
+to the variable star candidate identification script 'util/search_databases_with_vizquery.sh'
+The catalog is accessed via VizieR: http://cdsarc.u-strasbg.fr/viz-bin/cat/J/AJ/156/241
+
+ * Changed the algorithm for automatic reference image selection (activate with '--autoselectrefimage' option).
+Now the reference image will be the image with the best seeing that doesn't have too few or too many stars
+compared to other images in the series. If the option '--autoselectrefimage' is not specified, the reference 
+image will be the first image supplied on the command line, as before.
+
+ * The script 'util/load.sh' used to restore a set of lightcurves, configuration and log files previously 
+saved with 'util/save.sh' will now try to use 'find' command to copy the files. This is ten times faster 
+than the old 'for' loop, but it will not ask if you want to keep the old configuration files (most importantly
+default.sex) and will just silently overwrite them, so please beware!
+
+ * Disabled photometric error rescaling as it works imperfectly and causes lots of confusion.
+You may still perform the error rescaling manually by running 'util/rescale_photometric_errors'
+
+ * The new script 'util/make_finding_chart_script.sh' will use Swarp ( https://www.astromatic.net/software/swarp ) 
+to resample the input WCS-calibrated image to the North-up, East-left orientation and make a good-looking finder
+chart for the object specified by its RA and Dec.
+
+ * You may display a WCS-calibrated image marking a specified celestial position on it by running:
+ ./pgfv wcs_Sgr9_2020-9-1_17-35-4_002.fts -- 18:19:53.946 -30:41:19.78
+here the wcs_*.fts file is the image, 18:19:53.946 -30:41:19.78 are the J2000 coordinates and
+'--' marks the end of the command line options (needed for the program to correctly interpret the negative declination). 
+
+ * Updated TODO list of desired features.
+
+ * Limited the number of OpenMP threads to no more than 48. Tests on a machine with 192 virtual cores 
+(2 CPUs x 48 cores x hyper threading) revealed that while it is beneficial to use all cores for running
+instances of SExtractor, all the internal VaST tasks parallelized with OpenMP actually run much faster
+when the number of threads is limited.
+
+ * Updated the internal copy of sextractor-2.25.2 that can be compiled with gcc10.
+
+
+
+
 07 Mar 2019: vast-1.0rc84:
 
  * VaST is now on Github ( https://github.com/kirxkirx/vast ), pull requests are welcome!
@@ -2008,20 +2180,20 @@ http://scan.sai.msu.ru/vast/#down
 <p><a href="javascript:toggleElement('a1')">How to set the aperture photometry
 parameters such as the aperture diameter, gap size, background region?</a></p>
 <div id="a1" style="display:none">
-<p>You may force VaST to use photometric aperture of a fixed size by specifying
+<p>You may force <tt>VaST</tt> to use photometric aperture of a fixed size by specifying
 the command line argument: '-a APERTURE_SIZE_IN_PIXELS' 
 For example:
 <div class="code">./vast -a 7.0 /path/to/my/images/*</div>
-This will tell VaST to measure all images in /path/to/my/images/ directory
+This will tell <tt>VaST</tt> to measure all images in /path/to/my/images/ directory
 using a fixed aperture 7 pixels in diameter. The aperture size may be
 specified to 1/10 of a pixel.</p>
-<p>In many cases you don't have to set the aperture size manually. VaST will
+<p>In many cases you don't have to set the aperture size manually. <tt>VaST</tt> will
 choose the aperture size for each image automatically by conducting a
-preliminary SExtractor run with the sole purpose of measuring the median size
-of objects on the image. The object size is determined from the SExtractor
+preliminary <tt>SExtractor</tt> run with the sole purpose of measuring the median size
+of objects on the image. The object size is determined from the <tt>SExtractor</tt>
 output parameter 'A_IMAGE' which is the length of the semi-major axis of an
 ellipse approximating the source shape. The reason behind choosing this
-parameter among all SExtractor parameters characterizing size is that for an
+parameter among all <tt>SExtractor</tt> parameters characterizing size is that for an
 image affected by a guiding error (resulting in elongated stars), it is much
 better to choose a larger aperture and pick up some background noise than
 choose a smaller aperture and loose some of the source flux (since the
@@ -2033,32 +2205,62 @@ appropriate for most CCD images, unless you are interested in the brightest
 or faintest stars in the field. The code relevant to the choice of aperture
 size may be found in src/autodetect_aperture.c</p>
 
-<p>VaST relies on SExtractor for background estimation and the procedure is quite 
+<p><tt>VaST</tt> relies on <tt>SExtractor</tt> for background estimation and the procedure is quite 
 different from the one implemented in simple aperture photometry packages such 
 as MaxIM&nbsp;DL, MPO&nbsp;Canopus and 
 <a href="http://www.astrosurf.com/orodeno/fotodif/index.htm">FotoDif</a>.
-The detailed description may be found in <a href="https://www.astromatic.net/pubsvn/software/sextractor/trunk/doc/sextractor.pdf">SExtractor User's manual</a>.
-The relevant parameters set in SExtractor configuration file default.sex are
+The detailed description may be found in <a href="https://www.astromatic.net/pubsvn/software/sextractor/trunk/doc/sextractor.pdf"><tt>SExtractor</tt> User's manual</a>.
+The relevant parameters set in <tt>SExtractor</tt> configuration file default.sex are
+</p>
 <div class="code">
 <pre>
 #------------------------------ Background -----------------------------------
 BACK_SIZE       32              # Background mesh: size or width,height
 BACK_FILTERSIZE 1               # Background filter: size or width,heigh
-BACKPHOTO_TYPE  LOCAL           # can be "GLOBAL" or "LOCAL"</div>
+BACKPHOTO_TYPE  LOCAL           # can be "GLOBAL" or "LOCAL"
 </pre>
-</p>
+</div>
 </div>
 
-<p><a href="javascript:toggleElement('a2')">How to perform differential photometry with VaST?</a></p>
+<p><a href="javascript:toggleElement('a2')">How to perform differential photometry with <tt>VaST</tt>?</a></p>
 <div id="a2" style="display:none">
-<p>VaST is actually doing differential photometry in a sence. If it 
-would be just taking instrumental magnitudes from SExtractor and after 
+<b>New answer</b>
+<p>Starting with <tt>vast-1.0rc85</tt> VaST can emulate the behavior of
+aperture photometry packages, such as MaxIM DL and AstroImageJ. This is
+useful when you want to measure brightness of a known variable star. The
+other typical parts of that story are 1) the variable is one of the few
+brightest stars in the field (which makes life difficult for <tt>VaST</tt>)
+and 2) the variable is marked as blended by SExtractor, because wings of its
+image touch a neighboring star (as the result, <tt>VaST</tt> will drop this
+variable if run with the default settings). In order to calibrate magnitudes
+using one or a few manually selected comparison stars, run the analysis with
+<br>
+<code>
+./diffphot ../sample_data/f_72-0*
+</code>
+The reference image will be displayed and you should point click on the variable
+and enter <tt>v</tt> in the terminal, then click to the first comparison
+star and enter its magnitude in the terminal, then click to the second
+comparison star (if you ant to use one) and enter its magnitude, and so on.
+Use <tt>Z + mouse drag + left mouse click</tt> to zoom in on the image
+region, <tt>Z + Z</tt> to zoom out, <tt>right mouse click</tt> to close the
+image. After <tt>VaST</tt> completes processing the image, you will see the
+lightcurve of the selected variable star as well as the usual mag-sigma
+plot. This way, only the manually selected comparison stars are used to
+calibrate magnitude zero-point offsets between the images (in this mode 
+<tt>VaST</tt> assumes the detector is linear, to match the behavior of
+other photometry packages and to be able to work with a single comparison
+star).
+</p>
+<b>Old answer</b> (still correct, but now there is the above mentioned option)<br>
+<p><tt>VaST</tt> is actually doing differential photometry in a sense. If it 
+would be just taking instrumental magnitudes from <tt>SExtractor</tt> and after 
 cross-matching the stars stitching the raw magnitudes into lightcurves, the 
 resulting lightcurves would have huge (~1 mag) variations due to 
 atmospheric extinction changing with elevation and weather conditions, as 
-you might expect. Instead, VaST uses all the matched stars to construct a 
+you might expect. Instead, <tt>VaST</tt> uses all the matched stars to construct a 
 relation of an instrumental magnitude on the reference (the first) image 
-as a function of the an object's instrumental magnitude on the image VaST 
+as a function of the an object's instrumental magnitude on the image <tt>VaST</tt> 
 is currently processing. This relation is approximated with an analytic 
 function which is used to convert magnitudes of all objects (both matched 
 with the reference image and new ones) to the instrumental magnitude 
@@ -2090,7 +2292,7 @@ are large scale sensitivity variations across the field due to bad
 flat-fielding. In these case, manually picking an individual comparison 
 star with the same color (for the extreme color case) or the one that is 
 close to the target star (bad flat-fielding case) would produce better 
-results compared to the "extreme ensemble photometry" implemented in VaST.
+results compared to the "extreme ensemble photometry" implemented in <tt>VaST</tt>.
 There is a question how to properly choose the comparison star for 
 it to accurately reflect all these additional effects.</p>
 
@@ -2107,14 +2309,14 @@ one dominating effect or a linear combination of a few effects of
 comparable magnitude. Usually SysRem a choice between 1 and 6 iterations 
 is reasonable. This is something to be determined experimentally for a 
 given data set.The caveats here are that this algorithm (or at least it's 
-implementation in VaST) is able to correct measurements of only 
+implementation in <tt>VaST</tt>) is able to correct measurements of only 
 low-amplitude variable stars and that it requires a large number of stars 
 in the field of view, like 1000 or more to work properly. Also there is a 
 danger of overcorrecting when the algorithm starts to remove actual 
 variability (may happen after many iterations in a field with a small number 
 of stars). More robust systematics removal algorithms are suggested in the literature
 (e.g. <a href="http://adsabs.harvard.edu/abs/2013MNRAS.435.3639R">Roberts et al. 2013, MNRAS, 435, 3639</a>)
-but are not yet implemented in VaST. An external implementation of 
+but are not yet implemented in <tt>VaST</tt>. An external implementation of 
 any systematics correction (or lightcurve filtering) algorithm may be used 
 to correct lightcurves saved in 'out*.dat' files. The corrected lightcurves 
 may be fed back to vast by simply running
@@ -2122,12 +2324,35 @@ may be fed back to vast by simply running
 which will recompute statistics and variability indexes for all the 'out*.dat' lightcurves.</p>
 </div>
 
-<p><a href="javascript:toggleElement('a3')">How to obtain a lightcurve of an individual object with VaST?</a></p>
+<p><a href="javascript:toggleElement('a2errors')">What are the photometric errors reported by <tt>VaST</tt>?</a></p>
+<div id="a2errors" style="display:none">
+<p>
+There are two possibilities here:
+<ol>
+<li>The lightcurves may just quote the photometric uncertainties reported by
+<tt>SExtractor</tt>. These uncertainties are computed as a combination of the background
+RMS and photon noise, as described by equation (61) in the <a href="https://www.astromatic.net/pubsvn/software/sextractor/trunk/doc/sextractor.pdf"><tt>SExtractor</tt> manual</a>.
+Note that <code>GAIN</code> in the units of electrons/ADU has to be set correctly either in 
+the FITS image header or in <code>default.sex</code> for the photon noise
+contribution to be computed correctly. The photometric error derived this
+way is a lower limit on the true measurement uncertainty as it does not take
+into account calibration errors (imperfect flat fielding, etc.).
+<li><tt>VaST</tt> will try to rescale the above errors to match the scatter
+in the lightcurves of the brightest stars (assuming they are constant).
+This procedure does not always work as intended. The line 
+<code>Photometric errors rescaling: YES/NO</code> in <code>vast_summary.log</code>
+will tell you if the error rescaling was performed or not. You may disable error
+rescaling by running the analysis with <code>--noerrorsrescale</code> option.
+</ol>
+</p></div>
+
+
+<p><a href="javascript:toggleElement('a3')">How to obtain a lightcurve of an individual object with <tt>VaST</tt>?</a></p>
 <div id="a3" style="display:none">
 <p>Unfortunately, it is a bit tricky to get a lightcurve of a particular star
-with VaST. Here is what you can do to accomplish this:
+with <tt>VaST</tt>. Here is what you can do to accomplish this:
 <ol>
-<li>Process a series of images with VaST in the usual way.</li>
+<li>Process a series of images with <tt>VaST</tt> in the usual way.</li>
 <li>Start the individual object selection script by running
 <div class="code">./select_star_on_reference_image</div>
 The image is displayed and all the detected stars are marked with green
@@ -2137,7 +2362,7 @@ markers can be turned on and off by pressing M on the keyboard.</li>
 window will open displaying the object's lightcurve. Note the name of the
 lightcurve file printed in the terminal (for example - out12345.dat).</li>
 </ol>
-A lightcurve file (out12345.dat) can be displayed again later using the VaST lightcurve plotter:
+A lightcurve file (out12345.dat) can be displayed again later using the <tt>VaST</tt> lightcurve plotter:
 <div class="code">./lc out12345.dat</div>
 (you may send the lightcurve to the online period-search service by pressing
 L on the keyboard). The lightcurve can be converted to a simple "JD Mag Error" format by typing
@@ -2150,24 +2375,24 @@ will produce a "JD Mag" lightcurve. You may google for more examples of how
 to use awk's print and printf commands to produce the output you desire.
 </p></div>
 
-<p><a href="javascript:toggleElement('a4')">VaST doesn't detect my target source. What's wrong?</a></p>
+<p><a href="javascript:toggleElement('a4')"><tt>VaST</tt> doesn't detect my target source. What's wrong?</a></p>
 <div id="a4" style="display:none">
-<p>VaST relies on SExtractor to do source extraction. The details of this process can be
-controlled through the SExtractor parameter file default.sex in the vast
-directory. There is an easy way to see how well SExtractor is doing with
+<p><tt>VaST</tt> relies on <tt>SExtractor</tt> to do source extraction. The details of this process can be
+controlled through the <tt>SExtractor</tt> parameter file default.sex in the vast
+directory. There is an easy way to see how well <tt>SExtractor</tt> is doing with
 the current settings:
 <div class="code">./sextract_single_image /path/to/my/images/my_image_001.fit</div>
 or
 <div class="code">./sextract_single_image -9 /path/to/my/images/my_image_001.fit</div>
-to use DS9 instead of the internal VaST FITS viewer (pgfv).
+to use DS9 instead of the internal <tt>VaST</tt> FITS viewer (pgfv).
 The above command will plot all the detected objects as green circles overlaid on the
 image. The circle diameter corresponds to the photometric aperture size.
 With the internal FITS viewer you may also click on each object to see
-some more details including a flag assigned to this object by SExtractor.
+some more details including a flag assigned to this object by <tt>SExtractor</tt>.
 The meaning of the flags is explained <a href="http://matilda.physics.ucdavis.edu/working/website/SEflags.html">here</a>.</p>
 
-<p>By default, VaST rejects all the objects with non-zero SExtractor flags.
-This behavior can be change by running VaST with the parameter '-x&nbsp;MAXIMUM_ACCEPTED_FLAG' like
+<p>By default, <tt>VaST</tt> rejects all the objects with non-zero <tt>SExtractor</tt> flags.
+This behavior can be change by running <tt>VaST</tt> with the parameter '-x&nbsp;MAXIMUM_ACCEPTED_FLAG' like
 <div class="code">./vast -x3 /path/to/my/images/*.fit</div>
 to accept all blended objects.
 Note that 3 here is 2 + 1 where
@@ -2182,50 +2407,50 @@ To accept everything including saturated and other badly measured stars run
 <div class="code">./vast -x99 /path/to/my/images/*.fit</div>
 </p></div>
 
-<p><a href="javascript:toggleElement('a5')">VaST doesn't run complaining that no images are found.</a></p>
+<p><a href="javascript:toggleElement('a5')"><tt>VaST</tt> doesn't run complaining that no images are found.</a></p>
 <div id="a5" style="display:none">
-<p>The error message that VaST is not able to find images probably means that 
+<p>The error message that <tt>VaST</tt> is not able to find images probably means that 
 there is a typo in the path to the images specified in the command line.
 Check that you can see the image files with "ls" before suppling the same 
 command line argument to "vast". For example, if the images are in the 
 directory /path/to/my/images/ you may check that you see the image files 
 with the command
 <div class="code">ls /path/to/my/images/*</div>
-and then run VaST with
+and then run <tt>VaST</tt> with
 <div class="code">./vast /path/to/my/images/*</div>
 </p></div>
 
-<p><a href="javascript:toggleElement('a6')">Which Linux distribution is suitable for VaST?</a></p>
+<p><a href="javascript:toggleElement('a6')">Which Linux distribution is suitable for <tt>VaST</tt>?</a></p>
 <div id="a6" style="display:none">
-<p>VaST is supposed to run on any contemporary Linux distribution, provided that development tools 
-(gcc, gfortran and the related libraries) needed to compile VaST are installed. VaST is developed under 
+<p><tt>VaST</tt> is supposed to run on any contemporary Linux distribution, provided that development tools 
+(gcc, gfortran and the related libraries) needed to compile <tt>VaST</tt> are installed. <tt>VaST</tt> is developed under 
 <a href="https://www.gentoo.org/">Gentoo</a> and is tested on <a href="http://www.ubuntu.com/">Ubuntu</a> 
 and <a href="https://www.scientificlinux.org/">Scientific Linux</a>.</p></div>
 
-<p><a href="javascript:toggleElement('a7')">Is there a Windows version of VaST?</a></p>
+<p><a href="javascript:toggleElement('a7')">Is there a Windows version of <tt>VaST</tt>?</a></p>
 <div id="a7" style="display:none">
-<p>Sorry, there is no native Windows version of VaST. 
-The best way to run VaST on Windows is through a virtual machine 
+<p>Sorry, there is no native Windows version of <tt>VaST</tt>. 
+The best way to run <tt>VaST</tt> on Windows is through a virtual machine 
 (like <a href="https://www.virtualbox.org/">VirtualBox</a>) with Linux.</p></div>
 
-<p><a href="javascript:toggleElement('a8')">Can VaST process DSLR images?</a></p>
+<p><a href="javascript:toggleElement('a8')">Can <tt>VaST</tt> process DSLR images?</a></p>
 <div id="a8" style="display:none">
 <p>In general, yes, after the images are converted to FITS. But there are caveats:
 <ul>
-<li>VaST may not work well with very wide-field images (obtained with a lens having a focus length of 100mm or shorter).
+<li><tt>VaST</tt> may not work well with very wide-field images (obtained with a lens having a focus length of 100mm or shorter).
 This is a combination of two factors: large geometric distortions and small stars which become difficult to distinguish from hot pixels.
-The problem with distortions is that VaST internally relies on a simple linear transformation to match images.</li>
+The problem with distortions is that <tt>VaST</tt> internally relies on a simple linear transformation to match images.</li>
 <li>Observing date and exposure time information should be included in FITS-header of each image. 
 (Alternatively, the list of images with the corresponding middle-of-exposure JDs may be specified 
 in the text file 'vast_list_of_input_images_with_time_corrections.txt'.)</li>
 <li>With DSLR images one needs to be really careful with source extraction settings specified in default.sex file.
-While with CCD images VaST will most probably work fine with the "out of the box" settings, with DSLR images you will 
-need to change te default settings before getting a meaningful result. Use the various default.sex.* example files as 
+While with CCD images <tt>VaST</tt> will most probably work fine with the "out of the box" settings, with DSLR images you will 
+need to change the default settings before getting a meaningful result. Use the various default.sex.* example files as 
 an inspiration and determine the correct settings for your dataset by trial-and-error changing the settings and inspecting 
 the resulting object detection efficiency with
 <div class="code">./sextract_single_image /path/to/my/images/my_image_001.fit</div></li>
 </ul>
-Here is an example BASH code that converts a Canon EOS 1100D image (green channel only) to a FITS image readable by VaST using 
+Here is an example BASH code that converts a Canon EOS 1100D image (green channel only) to a FITS image readable by <tt>VaST</tt> using 
 <a href="https://www.cybercom.net/~dcoffin/dcraw/">dcraw</a>, <a href="ftp://scan.sai.msu.ru/pub/software/tiff2fits/tiff2fits-2.0.tar.bz2">tiff2fits</a>,
 <a href="http://www.imagemagick.org/script/index.php">ImageMagick</a> (identify)
 and <a href="http://tdc-www.harvard.edu/wcstools/">WCSTools</a> (sethead):
@@ -2252,10 +2477,10 @@ sethead test.fit focallen=$FOCALLEN
 </div> 
 </p></div>
 
-<p><a href="javascript:toggleElement('a9')">VaST cannot match images in the input series.</a></p>
+<p><a href="javascript:toggleElement('a9')"><tt>VaST</tt> cannot match images in the input series.</a></p>
 <div id="a9" style="display:none">
 <p>Usually this indicates a problem with source extraction settings: the input list of objects for 
-VaST to match is not what you expect it to be after looking at image.
+<tt>VaST</tt> to match is not what you expect it to be after looking at image.
 Use <div class="code">./sextract_single_image /path/to/my/images/my_image_001.fit</div>
 to inspect how reasonable are the current extraction settings: the green circles showing the detected 
 objects should be around most of the stars visually identifiable on the image. The circles should mark 
@@ -2267,10 +2492,10 @@ DETECT_THRESH   2.0             # sigmas or threshold,ZP in mag.arcsec-2
 ANALYSIS_THRESH 2.0             # sigmas or threshold,ZP in mag.arcsec-2</pre>
 </div>
 The detailed description of the extraction parameters may be found in 
-<a href="https://www.astromatic.net/pubsvn/software/sextractor/trunk/doc/sextractor.pdf">SExtractor User's manual</a>.
+<a href="https://www.astromatic.net/pubsvn/software/sextractor/trunk/doc/sextractor.pdf"><tt>SExtractor</tt> User's manual</a>.
 </p>
 <p>You may also try to manually specify a different reference image - just
-put it the first on the VaST command line.</p></div>
+put it the first on the <tt>VaST</tt> command line.</p></div>
 
 <p><a href="javascript:toggleElement('a10')">How to minimize the detection of stars near the edge of the field?</a></p>
 <div id="a10" style="display:none">
@@ -2278,7 +2503,7 @@ put it the first on the VaST command line.</p></div>
 <ul>
 <li>Open src/vast_limits.h with a text editor and increase the number of pixels the line
 <div class="code">#define FRAME_EDGE_INDENT_PIXELS 10.0 // Don't take into account stars closer than FRAME_EDGE_INDENT_PIXELS pixels to a frame edge.</div>
-Recompile VaST with
+Recompile <tt>VaST</tt> with
 <div class="code">make</div>
 for the changes to take effect.
 </li>
@@ -2292,20 +2517,20 @@ excluded (like the lower-left and the upper-right corners). The file bad_region.
 </p></div>
 
 <p><a href="javascript:toggleElement('a11')">What exact metadata from the
-FITS image VaST needs, other than the image itself? Exposure time?</a></p>
+FITS image <tt>VaST</tt> needs, other than the image itself? Exposure time?</a></p>
 <div id="a11" style="display:none">
-<p>Apart from the image itself, the only thing VaST really needs to get from the 
+<p>Apart from the image itself, the only thing <tt>VaST</tt> really needs to get from the 
 FITS header is the observing time. There are two options here:
 <ul>
 <li>Just write the JD(UT) of the middle of exposure to "JD" keyword of 
 the image FITS header. (You can use, for example, "edhead" or "sethead" command from 
 <a href="http://tdc-www.harvard.edu/wcstools/">WCSTools</a> to accomplish this). 
 Interpretation of "JD" keyword as a middle of 
-exposure is a VaST-specific feature, not a standard.
+exposure is a <tt>VaST</tt>-specific feature, not a standard.
 An example photographic dataset that follows this route may be found 
 <a href="ftp://scan.sai.msu.ru/pub/software/vast/test_data_photo.tar.bz2">here</a>
 (~1G in size). You may check image headers to see the minimal header 
-required for VaST to work.</li>
+required for <tt>VaST</tt> to work.</li>
 <li>Alternatively, you may try to mimic a header that would be written by a 
 CCD-camera control software. This could consist of just two keyword like 
 this
@@ -2316,31 +2541,31 @@ or three keywords
 TIME-OBS= '12:42:40'
 EXPTIME =   5.0</pre></div>
 The keyword "EXPTIME" may be replaced by the keyword "EXPOSURE".
-If VaST fails to find "EXPTIME" or "EXPOSURE" it assumes zero exposure 
+If <tt>VaST</tt> fails to find "EXPTIME" or "EXPOSURE" it assumes zero exposure 
 time. The exposure time is needed to compute the middle of exposure time, 
 The keyword "TIME-OBS" may be replaced by "START".</li>
 </ul>
-While VaST is running image cross-identification, you may see which 
+While <tt>VaST</tt> is running image cross-identification, you may see which 
 keyword(s) it is using to get the exposure time in the terminal output.</p>
 <p>Additional FITS header keywords, that are not strictly necessary but might
-help are the ones allowing VaST to guess an approximate image scale. This
+help are the ones allowing <tt>VaST</tt> to guess an approximate image scale. This
 information is used to speed-up blind plate solution with the
 <a href="http://astrometry.net/">Astrometry.net</a> software when you want
 to identify the findings with known variable stars. Sometimes, the correct
 image scale is necessary to successfully obtain a blind plate solution (and
-sometimes not). VaST may run a local copy of <a href="http://astrometry.net/">Astrometry.net</a> software
+sometimes not). <tt>VaST</tt> may run a local copy of <a href="http://astrometry.net/">Astrometry.net</a> software
 if it is installed in the system or contact a remote server to obtain plate
 solution form it. The code responsible for communication with 
 <a href="http://astrometry.net/">Astrometry.net</a> is in util/identify.sh
-The keywords VaST is looking for to guess image scale are "FOCALLEN" or
+The keywords <tt>VaST</tt> is looking for to guess image scale are "FOCALLEN" or
 "FOC_LEN", assuming they specify the instrument's focal length in mm.
-VaST also tries to get image scale from an existing WCS information if it is
-already present in the FITS header. Finally, VaST tries to find and parse
+<tt>VaST</tt> also tries to get image scale from an existing WCS information if it is
+already present in the FITS header. Finally, <tt>VaST</tt> tries to find and parse
 the "TELESCOP" keyword to see if the image is taken with one of the few
-telescopes VaST recognizes (and set the appropriate image scale for that
+telescopes <tt>VaST</tt> recognizes (and set the appropriate image scale for that
 telescope/instrument). The field of view guess doesn't need to be very
 accurate, if it's good to ~20%, the blind plate solution usually works.
-You may see if VaST is able to correctly guess the field of view of your
+You may see if <tt>VaST</tt> is able to correctly guess the field of view of your
 images by running
 <div class="code">lib/try_to_guess_image_fov /path/to/my/images/my_image.fits</div>
 which should return an approximate field of view in arcminutes.
@@ -2350,10 +2575,10 @@ The code responsible to guessing the image scale from FITS keywords is in
 src/try_to_guess_image_fov.c
 </p></div>
 
-<p><a href="javascript:toggleElement('a12')">VaST calibrates the magnitude
+<p><a href="javascript:toggleElement('a12')"><tt>VaST</tt> calibrates the magnitude
 scale as a part of data processing... How exactly is this done?</a></p>
 <div id="a12" style="display:none">
-<p>By default, VaST assumes there is a quadratic 
+<p>By default, <tt>VaST</tt> assumes there is a quadratic 
 relation between the 'catalog' and 'measured' magnitudes. For most CCD 
 images, assuming the linear relation is fine. For photographic data the 
 linear assumption will not work, the quadratic relation will work, but 
@@ -2361,7 +2586,7 @@ even better results are obtained assuming the relation from
 <a href="http://adsabs.harvard.edu/abs/2005MNRAS.362..542B">Bacher et al. (2005, MNRAS, 362, 542)</a>
 which I call "photocurve".</p>
 
-<p>The magnitude calibration in VaST is done in two steps.
+<p>The magnitude calibration in <tt>VaST</tt> is done in two steps.
 First, magnitudes measured on the reference image are used as 
 'catalog' magnitudes and magnitudes measured at other images are 
 calibrated against them. Thus all lightcurves are produced in an 
@@ -2400,7 +2625,7 @@ changes. A solution would be to introduce a color correction term, but
 (since I never had a contemporary color information for the photographic 
 plates I was working with) I have never implemented the color term.
 A temporary solution that I use is just to stick to plates of the 
-seme type in an input image series.</p>
+same type in an input image series.</p>
 <p>All images in a series should have the same scale ("/pix), 
 meaning they should all be taken with the same telescope (or, in 
 principle, a pair of identical telescopes).</p>
@@ -2409,19 +2634,19 @@ Changing seeing (as well as guiding errors) are handled by individually choosing
 photometric aperture size for each image. A change in exposure time may make
 a relation between instrumental magnitudes on the current and reference
 images more complex than a simple linear relation passing through zero (when zero
-mag. on reference image corresponds to zero mag. on the current one). VaST is
+mag. on reference image corresponds to zero mag. on the current one). <tt>VaST</tt> is
 well equipped to handle a complex relation between magnitude scales since
 changing an aperture for each image often has a bigger effect on that
 relation than changing exposure time.</p>
 </p></div>
 
 <p><a href="javascript:toggleElement('a14')">Is aperture photometry that
-VaST does enough in most cases, or should I do PSF-fitting photometry?</a></p>
+<tt>VaST</tt> does enough in most cases, or should I do PSF-fitting photometry?</a></p>
 <div id="a14" style="display:none">
-<p>You may try PSF photometry with VaST. For that you'll need 
+<p>You may try PSF photometry with <tt>VaST</tt>. For that you'll need 
 <a href="http://www.astromatic.net/software/psfex">PSFEx</a> and a recent
 version of 
-<a href="http://www.astromatic.net/software/sextractor">SExtractor</a>.
+<a href="http://www.astromatic.net/software/sextractor"><tt>SExtractor</tt></a>.
 The results of PSF-fitting photometry may not be impressive right out of the
 box. You may need to experiment with PSF-fitting parameters in default.psfex
 to get better results.
@@ -2436,11 +2661,11 @@ accuracy is limited by calibration errors and various systematic effects.
 <p><a href="javascript:toggleElement('a15')">Compilation on Mac OS X fails
 with "Undefined symbols for architecture x86_64:"</a></p>
 <div id="a15" style="display:none">
-<p>VaST is untested with clang compiler - it is tested only with gcc.
+<p><tt>VaST</tt> is untested with clang compiler - it is tested only with gcc.
 The problem might be related to clang compiler pretending 
 to be gcc, but not behaving in exactly the same way. 
-Please try to install the actual gcc in your system (from macports?).</p>
-<p>The issue was tracked down to a broken Xcode Tools installation. VaST could
+Please try to install the actual gcc in your system (from MacPorts?).</p>
+<p>The issue was tracked down to a broken Xcode Tools installation. <tt>VaST</tt> could
 be successfully compiled after re-installing Xcode Tools and gmake.</p>
 <p>The backup plan would be to have a VirtualBox virtual machine with Linux 
 (pre-built images may be found at <a href="https://virtualboxes.org/">virtualboxes.org</a> ), but that would 
@@ -2449,14 +2674,14 @@ binary, of course...
 </p></div>
 
 <p><a href="javascript:toggleElement('a16')">How to disable the variability
-search window for running VaST from a script on multiple series of       
+search window for running <tt>VaST</tt> from a script on multiple series of       
 images one after the other?</a></p>
 <div id="a16" style="display:none">
 <p>You may disable the graphical output by running ./vast with the command line option -f or --nofind
 <div class="code">
 ./vast -f ../sample_data/*
 </div>
-In that mode VaST will just produce lightcurves and exit. You may later run the script 
+In that mode <tt>VaST</tt> will just produce lightcurves and exit. You may later run the script 
 <div class="code">
 util/nopgplot.sh
 </div>
@@ -2466,30 +2691,43 @@ them to vast_lightcurve_statistics.log  but it will not open the GUI window.
 
 <p><a href="javascript:toggleElement('a17')">How to specify a reference image?</a></p>
 <div id="a17" style="display:none">
-<p>You may specify an image of your coice as the reference one by putting it
+<p>You may specify an image of your choice as the reference one by putting it
 first on the command line when running ./vast For example:
 <div class="code">
 ./vast ../sample_data/f_72-058r.fit ../sample_data/*
 </div>
-will tell VaST to use f_72-058r.fit as the reference image.
+will tell <tt>VaST</tt> to use f_72-058r.fit as the reference image.
 Note that in this example f_72-058r.fit appears on the list of
 input images twice: the first time it is specified explicitly and the second
 time - when it satisfies the condition specified with the wildcard
-character '*'. VaST will recognize this is again the
+character '*'. <tt>VaST</tt> will recognize this is again the
 reference image and will not try to measure it twice.
 </p></div>
 
+<p><a href="javascript:toggleElement('a18')">How to resize the PGPLOT windows?</a></p>
+<div id="a18" style="display:none">
+<p>Close all PGPLOT windows including the PGPLOT Server window (that small
+window that does not display graphics). Create/Edit the text file 
+.Xdefaults in your home directory 
+(as suggested <a href="http://www.ccp14.ac.uk/exill/tools/tjphtml/xwdriv.html">here</a>)
+adding the line like 
+<div class="code">
+pgxwin.Win.geometry: 1600x900+1+1
+</div>
+where 1600x900 is the desired PGPLOT window size in pixels. Replot something in <tt>VaST</tt>.
+</p></div>
 
-<p><a href="javascript:toggleElement('a999')">How to acknowledge VaST in a publication?</a></p>
+
+<p><a href="javascript:toggleElement('a999')">How to acknowledge <tt>VaST</tt> in a publication?</a></p>
 <div id="a999" style="display:none">
-<p>Please cite the <a href="http://adsabs.harvard.edu/abs/2018A%26C....22...28S">VaST paper</a>.
-You may also include <a href="http://scan.sai.msu.ru/vast/">the URL of the VaST homepage</a> as a footnote.
+<p>Please cite the <a href="http://adsabs.harvard.edu/abs/2018A%26C....22...28S"><tt>VaST</tt> paper</a>.
+You may also include <a href="http://scan.sai.msu.ru/vast/">the URL of the <tt>VaST</tt> homepage</a> as a footnote.
 </p></div>
 
 <br>
 
 
-<h2><a name="public"></a>List of publications which make use of VaST</h2>
+<h2><a name="public"></a>List of publications which make use of <tt>VaST</tt></h2>
 
 The list includes both refereed and non-refereed publications (conference proceedings, electronic telegrams).
 If you are aware of a publication not listed here, please drop me a
@@ -2497,7 +2735,32 @@ line at kirx[at]scan.sai.msu.ru
 
 <ol reversed>
 
-<li>E. G. Lapukhin, S. A. Veselkov, A. M. Zubareva
+<li>M. S. Pshirkov, A. V. Dodin, A. A. Belinski et al. 
+"Discovery of a hot ultramassive rapidly rotating DBA white dwarf"</br>
+MNRAS, 499, L21 (2020) 
+<a href="https://ui.adsabs.harvard.edu/abs/2020MNRAS.499L..21P/abstract">Available here</a>.
+
+</li><li>K. V. Sokolovsky, E. Aydi, L. Izzo et al. 
+"Spectroscopic observations of Nova Cassiopeiae 2020 = TCP J00114297+6611190 = V1391 Cas"
+<a href="http://www.astronomerstelegram.org/?read=14004">ATel #14004</a>
+(2020) The <a href="http://scan.sai.msu.ru/~kirx/ATel/TCPJ00114297+6611190/">photometry page</a> 
+referred in this ATel is prepared using <tt>VaST</tt>.
+
+</li><li>Kirill Sokolovsky, Sergey Karpov, Martin Masek et al. 
+"FRAM-ORM pre-discovery photometry of the Galactic nova TCP J00114297+6611190"</br>
+<a href="http://www.astronomerstelegram.org/?read=13904">ATel #13904</a>
+(2020) <a href="https://aavso.org/vsx/index.php?view=detail.top&oid=1546099">Nova Cas 2020</a> was found using <tt>VaST</tt>. The code was also used
+to measure pre-discovery images obtained by the FRAM-ORM wide field camera.
+
+</li><li>A. Z. Bonanos, M. Yang, K. V. Sokolovsky et al. 
+"The Hubble Catalog of Variables (HCV)"</br>
+A&amp;A, 630, A92 (2019)
+<a href="https://ui.adsabs.harvard.edu/abs/2019A%26A...630A..92B/abstract">Available here</a>.
+(VaST was used for testing the variability detection algorithms for the HCV.
+Implementation of variability indexes in the java-based HCV software is
+cross-checked with their C implementation in VaST.)
+
+</li><li>E. G. Lapukhin, S. A. Veselkov, A. M. Zubareva
 "New Variable Stars in Cepheus: Area of 2.3x2.3 deg., Centered at R.A.=22h00m,
 Dec.=60d00' (2000.0). Part III"</br>
 PZP, vol. 18, N 2 (2018)
@@ -3013,10 +3276,22 @@ Conference on Astronomy and Space Physics, held in Kyiv, Ukraine, April
 <br/>
 <br/>
 
-<h2><a name="links"></a>Variable star search software not related to VaST</h2>
+<h2><a name="links"></a>Mike Rosseel's <tt>vast-automation</tt></h2>
 
-If VaST doesn't suit your needs, you may be interested in trying other software
-(listed roughly in the order of decreasing similarity to VaST in design goals and implementation):
+The <a href="https://github.com/mrosseel/vast-automation">vast-automation</a> code 
+developed by Mike Rosseel provides an alternative way to identify variable
+stars detected with VaST and prepare the information for submission to the
+VSX and AAVSO databases. The code is in python and uses 
+the <a href="http://nova.astrometry.net/">official Astrometry.net</a>
+servers for plate solution. Requires a local copy of UCAC4.
+
+<br/>
+<br/>
+
+<h2></a>Variable star search software not related to <tt>VaST</tt></h2>
+
+If <tt>VaST</tt> doesn't suit your needs, you may be interested in trying other software
+(listed roughly in the order of decreasing similarity to <tt>VaST</tt> in design goals and implementation):
 
 <ul>
 <li><a href="http://c-munipack.sourceforge.net/">C-Munipack/Muniwin</a> - 
@@ -3032,15 +3307,15 @@ recalibrates the photometry using a smart selection of comparison stars and comp
 multiple variability indices. Runs on Windows and Wine. A detailed
 description may be found in the <a href="http://adsabs.harvard.edu/abs/2017AASP....7....3B">paper</a>.
 </li><li><a href="https://fitsh.net/">FITSH</a> - a collection of tasks for advanced image manipulation (including
-image stacking) and lightcurve extraction using aperture, image subtraction, analytic profile modelling and PSF-fitting photometry.
+image stacking) and lightcurve extraction using aperture, image subtraction, analytic profile modeling and PSF-fitting photometry.
 </li><li><a href="https://lemon.readthedocs.io/en/stable/">LEMON</a> - 
-a SExtractor-based pipeline for automated time-series reduction and analysis
+a <tt>SExtractor</tt>-based pipeline for automated time-series reduction and analysis
 written in Python. Input your FITS images and obtain the light curve of each object. 
 See also <a href="http://adsabs.harvard.edu/abs/2011hsa6.conf..755T">this proceedings paper</a>.
 </li><li><a href="https://github.com/mommermi/photometrypipeline/">PHOTOMETRYPIPELINE</a> -
 an automated pipeline that produces calibrated photometry from imaging data through image 
 registration, aperture photometry, photometric calibration, and target identification with only minimal human interaction.
-It is based on SExtractor and SCAMP and licensed under GPLv3. A paper
+It is based on <tt>SExtractor</tt> and <tt>SCAMP</tt> and licensed under GPLv3. A paper
 describing the pipeline may be found <a href="http://adsabs.harvard.edu/abs/2017arXiv170200834M">here</a>.
 </li><li><a href="http://www.astrosurf.com/orodeno/fotodif/">FotoDif</a> -
 CCD photometry package with variable star search and period analysis
@@ -3052,15 +3327,16 @@ of comparison stars for each object in the field.
 meant to be used to generate input photometric data for Astrokit.
 Variable star candidates are selected with Robust Median Statistics.
 Astrokit is licensed under the GPL.
-</li><li><a href="http://www.astro.princeton.edu/~jhartman/vartools.html">VARTOOLS</a> - 
+</li><li><a href="http://www.astro.princeton.edu/~jhartman/vartools.html"><tt>VARTOOLS</tt></a> - 
 is a powerful command line utility that provides tools for processing and analyzing
 astronomical time series data. It includes methods for
 calculating variability/periodicity statistics of light curves; for
 filtering, transforming, and otherwise modifying light curves; and for
 modeling light curves. It is intended primarily for batch processing a large
 number of light curves. The input photometric data should be generated by
-other software (or downloaded from an archive) and then converted to a VARTOOLS-friendly format.
-VARTOOLS is licensed under the GPL.
+other software (or downloaded from an archive) and then converted to a
+<tt>VARTOOLS</tt>-friendly format.
+<tt>VARTOOLS</tt> is licensed under the GPL.
 </li><li><a href="http://www.astro.washington.edu/users/becker/v2.0/hotpants.html">HOTPANTS</a> -
 High Order Transform of PSF ANd Template Subtraction is designed to
 photometrically align one input image with another, after they have been
@@ -3079,11 +3355,11 @@ identifies variable stars via image subtraction, implemented in C, see
 <a href="http://adsabs.harvard.edu/abs/2017arXiv170909572R">this e-print</a>.
 </li><li><a href="https://github.com/transientskp/tkp">TraP</a> - is a Python
 and SQL based system for detecting and responding to transient and variable
-sources in a stream of astronomical images. It primarily targets LOFAR radio
-astronomy data, but is also applicable to a range of other instruments
+sources in a stream of astronomical images. It primarily targets LOFAR and 
+MeerKAT radio astronomy data, but is also applicable to a range of other instruments
 (presumably, including the optical ones).
 </li><li><a href="https://github.com/astrotuvi/pyplate">PyPlate</a> - is a
-Python package (under development) for processing astronomical photographic plates.
+Python package for processing astronomical photographic plates.
 PyPlate is used by the 
 <a href="https://www.plate-archive.org/applause/">APPLAUSE</a> archives.
 </li>
@@ -3105,6 +3381,9 @@ Runs on Windows and <a href="https://www.winehq.org/">wine</a>.
 </li><li><a href="http://scan.sai.msu.ru/nmw/">The New Milky Way survey image
 archive.</a> A detailed description of the survey is available 
 <a href="http://arxiv.org/abs/1303.3268">here</a>.
+</li><li><a href="https://scan.sai.msu.ru/pa/">The Moscow plate archive image cutout service
+(beta!)</a> provides access to the (small) fraction of the Moscow plate
+collection A series (40cm astrograph) images.
 </li><li><a href="http://scan.sai.msu.ru/epcalc/">Times of minima calculator</a> - a
 simple web-based tool to calculate times of minima from light elements.
 </li><li><a href="ftp://scan.sai.msu.ru/pub/software/tiff2fits/">TIFF2FITS</a> - a
@@ -3126,12 +3405,12 @@ the OMC2ASCII code.
 
 
 
-If you have any questions fell free to contact VaST authors via e-mail<br/>
+If you have any questions fell free to contact <tt>VaST</tt> authors via e-mail<br/>
   <b>kirx[at]scan&#046;sai&#046;msu&#046;ru</b><br/>
   
 <div align="right">
-  <big><b><i>Good luck in using VaST!</i></b></big><br/>
-  <small>VaST developers team.</small>
+  <big><b><i>Good luck in using <tt>VaST</tt>!</i></b></big><br/>
+  <small><tt>VaST</tt> developers team.</small>
 </div><br/>
 
 </td></tr><tr><td bgcolor="#f5f5ff">
@@ -3150,7 +3429,7 @@ Transitional" height="31" width="88" border="0"/></img></a> &nbsp; &nbsp;
 </div>
 
 </td></tr><tr><td bgcolor="#aaaadd">
-<div align="center">VaST developers team, 2005-2018</div>
+<div align="center"><tt>VaST</tt> developers team, 2005-2019</div>
 </td></tr></table>
 </body>
 </html>
