@@ -144,6 +144,14 @@ for LIBRARY_SOURCE in $LIBRARY_SOURCES ;do
  
  
  if [ $CONFIGURE_OK -ne 1 ];then
+ 
+  echo "VaST code version/compiler version/compilation date:"
+  for COMPILATION_INFO_FILE in .cc.build .cc.version .cc.date ;do
+   if [ -f $COMPILATION_INFO_FILE ];then
+    cat $COMPILATION_INFO_FILE
+   fi
+  done
+ 
   echo "
 ########### VaST installation problem ###########
 Failed command:
@@ -154,13 +162,23 @@ C compiler: $CC
 
 VaST installation problem: an error occurred while configuring SExtractor
 This should not have happened! Please report the problem (including the above error messages)
-to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru>. 
+to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru> by e-mail or 
+by creating GitHub issue at https://github.com/kirxkirx/vast
+
 Thank you and sorry for the inconvenience."
   #exit 1
   continue
  fi
  make -j9
  if [ $? -ne 0 ];then
+
+  echo "VaST code version/compiler version/compilation date:"
+  for COMPILATION_INFO_FILE in .cc.build .cc.version .cc.date ;do
+   if [ -f $COMPILATION_INFO_FILE ];then
+    cat $COMPILATION_INFO_FILE
+   fi
+  done
+
   echo "
 ########### VaST installation problem ###########
 Failed command:
@@ -171,13 +189,22 @@ C compiler: $CC
 
 VaST installation problem: an error occurred while compiling SExtractor
 This should not have happened! Please report the problem (including the above error messages)
-to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru>. 
+to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru> by e-mail or 
+by creating GitHub issue at https://github.com/kirxkirx/vast
+
 Thank you and sorry for the inconvenience."
   #exit 1
   continue
  fi
  make install
  if [ $? -ne 0 ];then
+
+  for COMPILATION_INFO_FILE in .cc.build .cc.version .cc.date ;do
+   if [ -f $COMPILATION_INFO_FILE ];then
+    cat $COMPILATION_INFO_FILE
+   fi
+  done
+ 
   echo "
 ########### VaST installation problem ###########
 Failed command:
@@ -188,7 +215,9 @@ C compiler: $CC
 
 VaST installation problem: an error occurred while installing SExtractor
 This should not have happened! Please report the problem (including the above error messages)
-to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru>. 
+to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru> by e-mail or 
+by creating GitHub issue at https://github.com/kirxkirx/vast
+
 Thank you and sorry for the inconvenience."
   #exit 1
   continue

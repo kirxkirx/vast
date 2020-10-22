@@ -913,8 +913,8 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
    if [ -z "$2" ];then
     ### ===> ASSUMED MAX NUMBER OF CANDIDATES <===
     if [ $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS -gt 20 ];then
-     echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding ateroids and hot pixels), not updating the exclusion list!"
-     echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding ateroids and hot pixels), not updating the exclusion list!" >> transient_factory_test31.txt
+     echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding asteroids and hot pixels), not updating the exclusion list!"
+     echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding asteroids and hot pixels), not updating the exclusion list!" >> transient_factory_test31.txt
      ALLOW_EXCLUSION_LIST_UPDATE="NO"
     fi
    fi

@@ -36,25 +36,58 @@ cd $LIBRARY_SOURCE
 make clean
 ./configure --prefix=$TARGET_DIR
 if [ ! $? ];then
- echo "VaST installation problem: an error occurred while configuring The GNU Scientific Library (GSL).
+
+ echo "VaST code version/compiler version/compilation date:"
+ for COMPILATION_INFO_FILE in .cc.build .cc.version .cc.date ;do
+  if [ -f $COMPILATION_INFO_FILE ];then
+   cat $COMPILATION_INFO_FILE
+  fi
+ done
+
+ echo "
+VaST installation problem: an error occurred while configuring The GNU Scientific Library (GSL).
 This should not have happened! Please report the problem (including the above error messages)
-to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru>. 
+to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru> by e-mail or 
+by creating GitHub issue at https://github.com/kirxkirx/vast
+
 Thank you and sorry for the inconvenience."
  exit 1
 fi
 make -j9
 if [ ! $? ];then
- echo "VaST installation problem: an error occurred while compiling The GNU Scientific Library (GSL).
+
+ echo "VaST code version/compiler version/compilation date:"
+ for COMPILATION_INFO_FILE in .cc.build .cc.version .cc.date ;do
+  if [ -f $COMPILATION_INFO_FILE ];then
+   cat $COMPILATION_INFO_FILE
+  fi
+ done
+
+ echo "
+VaST installation problem: an error occurred while compiling The GNU Scientific Library (GSL).
 This should not have happened! Please report the problem (including the above error messages)
-to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru>. 
+to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru> by e-mail or 
+by creating GitHub issue at https://github.com/kirxkirx/vast
+
 Thank you and sorry for the inconvenience."
  exit 1
 fi
 make install
 if [ ! $? ];then
- echo "VaST installation problem: an error occurred while installing The GNU Scientific Library (GSL).
+
+ echo "VaST code version/compiler version/compilation date:"
+ for COMPILATION_INFO_FILE in .cc.build .cc.version .cc.date ;do
+  if [ -f $COMPILATION_INFO_FILE ];then
+   cat $COMPILATION_INFO_FILE
+  fi
+ done
+
+ echo "
+VaST installation problem: an error occurred while installing The GNU Scientific Library (GSL).
 This should not have happened! Please report the problem (including the above error messages)
-to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru>. 
+to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru> by e-mail or 
+by creating GitHub issue at https://github.com/kirxkirx/vast
+
 Thank you and sorry for the inconvenience."
  exit 1
 fi
