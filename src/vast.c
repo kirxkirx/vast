@@ -220,7 +220,7 @@ void help_msg( const char *progname, int exit_code ) {
  printf( "  -a 5.0 or --aperture 5.0  use fixed aperture (e.g. 5 pixels) in diameter\n" );
  printf( "  -b 200 or --matchstarnumber 200  use 200 (e.g. 200) reference stars for image matching\n" );
  printf( "  -y 3 or --sysrem 3 conduct a few (e.g. 3) iterations of SysRem\n" );
- printf( "  -x 2 or --maxsextractorflag 2 accept stars with flag <=2 (2 means 'accept blended stars')\n" );
+ printf( "  -x 3 or --maxsextractorflag 3 accept stars with flag <=3 (3 means 'accept blended stars')\n" );
  printf( "  -j or --position_dependent_correction    use position-dependent magnitude correction (recommended for wide-field images)\n" );
  printf( "  -J or --no_position_dependent_correction DO NOT use position-dependent magnitude correction (recommended for narrow-field images with not too many stars on them)\n" );
  printf( "  -g or --guess_saturation_limit try to guess image saturation limit based on the brightest pixels found in the image\n" );
