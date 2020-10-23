@@ -1,3 +1,5 @@
+	* VaST will try to discard images with elongated stars resulting from bad tracking.
+	This can be disabled by specifying the new command line option '-l' or '--nodiscardell'.
 20 Oct 2020: vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911

@@ -213,7 +213,7 @@ void help_msg( const char *progname, int exit_code ) {
  printf( "                     magnitude calibration. Useful for photographic data\n" );
  printf( "  -P or --PSF        PSF photometry mode with SExtractor and PSFEx\n" );
  printf( "  -r or --norotation assume the input images are not rotated by more than 3 deg. w.r.t. the first (reference) one\n" );
- //	printf("  -l or --filter     use sigma-clip filter\n");
+ printf( "  -l or --nodiscardell     do NOT discard images with elliptical stars (bad tracking)\n");
  printf( "  -e or --failsafe   FAILSAFE mode. Only stars detected on the reference frame will be processed\n" );
  printf( "  -u or --UTC        always assume UTC time system, do not perform conversion to TT\n" );
  printf( "  -k or --nojdkeyword  ignore \"JD\" keyword in FITS image header. Time of observation will be taken from the usual keywords instead\n" );
@@ -381,12 +381,12 @@ void make_sure_libbin_is_in_path( ); // actually it is declared in src/autodetec
 
 // This function will try to find the deepest image and set it as the reference one
 // by altering the image order in input_images array
-void choose_best_reference_image( char **input_images, int Num ) {
+void choose_best_reference_image( char **input_images, int *vast_bad_image_flag, int Num ) {
  char sextractor_catalog[FILENAME_LENGTH];
  char copy_input_image_path[FILENAME_LENGTH];
  char sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT];
 
- int star_number_in_sextractor_catalog, sextractor_flag; //, key;
+ int star_number_in_sextractor_catalog, sextractor_flag;
  double flux_adu, flux_adu_err, position_x_pix, position_y_pix, mag, sigma_mag;
  double a_a; // semi-major axis lengths
  double a_a_err;
@@ -526,7 +526,6 @@ void choose_best_reference_image( char **input_images, int Num ) {
     continue;
    }
    A_IMAGE[int_number_of_good_detected_stars]= a_a;
-   //number_of_good_detected_stars[i]= number_of_good_detected_stars[i] + 1.0;
    int_number_of_good_detected_stars++;
   } // while( NULL!=fgets(sextractor_catalog_string,MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT,file) ){
 
@@ -545,7 +544,6 @@ void choose_best_reference_image( char **input_images, int Num ) {
 
  // Determine median number of stars on images
  best_image= 0;
- //best_number_of_good_detected_stars= 0.0;
  copy_of_number_of_good_detected_stars= malloc( Num * sizeof( double ) );
  for ( i= 0; i < Num; i++ ) {
   copy_of_number_of_good_detected_stars[i]= number_of_good_detected_stars[i];
@@ -562,18 +560,21 @@ void choose_best_reference_image( char **input_images, int Num ) {
  //best_number_of_good_detected_stars= 0.0;
  best_aperture= 99.0;
  for ( i= 0; i < Num; i++ ) {
-  fprintf( stderr, "%.1lf %.0lf  %s \n", aperture[i], number_of_good_detected_stars[i], input_images[i] );
+  fprintf( stderr, "%4.1lf %5.0lf %d  %s \n", aperture[i], number_of_good_detected_stars[i], vast_bad_image_flag[i], input_images[i] );
   // avoid images that have too many stars
   if ( number_of_good_detected_stars[i] < 2.0 * median_number_of_good_detected_stars ) {
    // avoid images that have too few stars
    if ( number_of_good_detected_stars[i] >= median_number_of_good_detected_stars && number_of_good_detected_stars[i] > 0.0 ) {
     // avoid images that don't have a good aperture estimate
     if ( aperture[i] > 0.0 ) {
-     // The new way of selecting reference image as the one that has the best seeing
-     if ( aperture[i] < best_aperture ) {
-      best_image= i;
-      best_aperture= aperture[i];
-      fprintf( stderr, "new best!\n" );
+     // Make sure the bad image flag is not set for this image
+     if ( vast_bad_image_flag[i] == 0 ) {
+      // The new way of selecting reference image as the one that has the best seeing
+      if ( aperture[i] < best_aperture ) {
+       best_image= i;
+       best_aperture= aperture[i];
+       fprintf( stderr, "new best!\n" );
+      }
      }
     }
    }
@@ -607,6 +608,218 @@ void choose_best_reference_image( char **input_images, int Num ) {
 
  return;
 }
+
+void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad_image_flag, int Num ) {
+ char sextractor_catalog[FILENAME_LENGTH];
+ char sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT];
+
+ int star_number_in_sextractor_catalog, sextractor_flag;
+ double flux_adu, flux_adu_err, position_x_pix, position_y_pix, mag, sigma_mag;
+ double a_a; // semi-major axis lengths
+ double a_a_err;
+ double a_b; // semi-minor axis lengths
+ double a_b_err;
+ float float_parameters[NUMBER_OF_FLOAT_PARAMETERS];
+
+ int external_flag;
+ double psf_chi2;
+
+ int i;
+
+ int previous_star_number_in_sextractor_catalog; // !! to check that the star count in the output catalog is always increasing
+
+// double *number_of_good_detected_stars; // this is double for the simple reason that I want to use the conveinent double functions from GSL (already included for other purposes)
+
+ int number_of_good_detected_stars; 
+ 
+ //
+// int number_of_stars_current_image;
+ double *a_minus_b;
+ double *a_minus_b__image;
+ double *a_minus_b__image__to_be_runied_by_sort;
+ double median_a_minus_b;
+ double sigma_from_MAD_a_minus_b;
+ //
+
+ FILE *file;
+
+ fprintf( stderr, "Trying to automatically reject images with elongated stars!\n" );
+
+ if ( Num <= 0 ) {
+  fprintf( stderr, "ERROR: Num is too small\n" );
+  exit( 1 );
+ }
+
+ if ( Num <= 20 ) {
+  fprintf( stderr, "WARNING: Num is too small for identifying images with elongated stars! Will do nothing.\n" );
+  return;
+ }
+
+ a_minus_b__image= malloc( Num * sizeof( double ) );
+ a_minus_b__image__to_be_runied_by_sort= malloc( Num * sizeof( double ) );
+ a_minus_b= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
+
+ for ( i= 0; i < Num; i++ ) {
+  // Get the star catalog name from the image name
+  if ( 0 != find_catalog_in_vast_images_catalogs_log( input_images[i], sextractor_catalog ) ) {
+   fprintf( stderr, "WARNING in choose_best_reference_image(): cannot read the catalog file associated with the image %s\n", input_images[i] );
+   a_minus_b__image__to_be_runied_by_sort[i]=a_minus_b__image[i]= -0.1; // is it a good choice?
+   continue;
+  }
+  // count number of detected_stars
+  file= fopen( sextractor_catalog, "r" );
+  if ( file == NULL ) {
+   fprintf( stderr, "WARNING in choose_best_reference_image(): cannot open file %s\n", sextractor_catalog );
+   a_minus_b__image__to_be_runied_by_sort[i]=a_minus_b__image[i]= -0.1; // is it a good choice?
+   continue;
+  }
+
+  previous_star_number_in_sextractor_catalog= 0;
+//  number_of_good_detected_stars[i]= 0.0;
+  number_of_good_detected_stars= 0;
+  while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, file ) ) {
+   sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
+   external_flag= 0;
+   if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &star_number_in_sextractor_catalog, &flux_adu, &flux_adu_err, &mag, &sigma_mag, &position_x_pix, &position_y_pix, &a_a, &a_a_err, &a_b, &a_b_err, &sextractor_flag, &external_flag, &psf_chi2, float_parameters ) ) {
+    continue;
+   }
+   if ( star_number_in_sextractor_catalog < previous_star_number_in_sextractor_catalog ) {
+    break;
+   } else {
+    previous_star_number_in_sextractor_catalog= star_number_in_sextractor_catalog;
+   }
+
+   // Check if the catalog line is a really band one
+   if ( flux_adu <= 0 ) {
+    continue;
+   }
+   if ( flux_adu_err == 999999 ) {
+    continue;
+   }
+   if ( mag == 99.0000 ) {
+    continue;
+   }
+   if ( sigma_mag == 99.0000 ) {
+    continue;
+   }
+   // If we have no error estimates in at least one aperture - assume things are bad with this object
+   if ( float_parameters[3] == 99.0000 ) {
+    continue;
+   }
+   if ( float_parameters[5] == 99.0000 ) {
+    continue;
+   }
+   if ( float_parameters[7] == 99.0000 ) {
+    continue;
+   }
+   if ( float_parameters[9] == 99.0000 ) {
+    continue;
+   }
+   if ( float_parameters[11] == 99.0000 ) {
+    continue;
+   }
+//
+#ifdef STRICT_CHECK_OF_JD_AND_MAG_RANGE
+   if ( mag < BRIGHTEST_STARS ) {
+    continue;
+   }
+   if ( mag > FAINTEST_STARS_ANYMAG ) {
+    continue;
+   }
+   if ( sigma_mag > MAX_MAG_ERROR ) {
+    continue;
+   }
+#endif
+   //
+   if ( flux_adu < MIN_SNR * flux_adu_err ) {
+    continue;
+   }
+   //
+   // https://en.wikipedia.org/wiki/Full_width_at_half_maximum
+   // ok, I'm not sure if A is the sigma or sigma/2
+   if ( SIGMA_TO_FWHM_CONVERSION_FACTOR * (a_a + a_a_err) < FWHM_MIN ) {
+    continue;
+   }
+   if ( SIGMA_TO_FWHM_CONVERSION_FACTOR * (a_b + a_b_err) < FWHM_MIN ) {
+    continue;
+   }
+   // float_parameters[0] is the actual FWHM
+   if ( float_parameters[0] < FWHM_MIN ) {
+    continue;
+   }
+   //
+   if ( external_flag != 0 ) {
+    continue;
+   }
+   //
+   // just in case we mark objects with really bad SExtractor flags
+   if ( sextractor_flag > 7 ) {
+    continue;
+   }
+   a_minus_b[number_of_good_detected_stars]= a_a - a_b;
+   number_of_good_detected_stars++;
+  } // while( NULL!=fgets(sextractor_catalog_string,MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT,file) ){
+
+  fclose( file );
+//  number_of_good_detected_stars[i]= (double)number_of_good_detected_stars;
+  if ( number_of_good_detected_stars < MIN_NUMBER_OF_STARS_ON_FRAME ) {
+   // mark as bad image that has too few stars
+   a_minus_b__image__to_be_runied_by_sort[i]=a_minus_b__image[i]= -0.1; // is it a good choice?
+   continue;
+  }
+  gsl_sort( a_minus_b, 1, number_of_good_detected_stars );
+  a_minus_b__image__to_be_runied_by_sort[i]=a_minus_b__image[i]= gsl_stats_median_from_sorted_data( a_minus_b, 1, number_of_good_detected_stars );
+  fprintf( stderr, "median(A-B) for the image %s %.3lfpix\n", input_images[i], a_minus_b__image[i] );
+ } // for ( i= 0; i < Num; i++ ) { // cycle through the images
+
+ free( a_minus_b );
+ 
+ // Determine median a_minus_b among all images
+ gsl_sort( a_minus_b__image__to_be_runied_by_sort, 1, Num );
+ median_a_minus_b= gsl_stats_median_from_sorted_data( a_minus_b__image__to_be_runied_by_sort, 1, Num );
+ sigma_from_MAD_a_minus_b= esimate_sigma_from_MAD_of_sorted_data( a_minus_b__image__to_be_runied_by_sort, (long)Num );
+ free( a_minus_b__image__to_be_runied_by_sort );
+
+
+ // Write-down the name of the new reference image
+ file= fopen( "vast_automatically_rejected_images_with_elongated_stars.log", "w" );
+ if ( file == NULL ) {
+  fprintf( stderr, "ERROR in mark_images_with_elongated_stars_as_bad(): cannot open vast_automatically_selected_reference_image.log for writing!\n" );
+  return;
+ }
+
+ fprintf( file, "# median(A-B) among all images %.3lf +/-%.3lf pix\n", median_a_minus_b, sigma_from_MAD_a_minus_b );
+ fprintf( stderr, "# median(A-B) among all images %.3lf +/-%.3lf pix\n", median_a_minus_b, sigma_from_MAD_a_minus_b );
+ 
+ // Cycle through all images and mark good and bad ones
+ for ( i= 0; i < Num; i++ ) {
+  // the image is so bad we could not compute A-B 
+  if ( a_minus_b__image[i] == -0.1 ) {
+   vast_bad_image_flag[i]= 1;
+   fprintf( file, "%d  %.3lf  %s\n", vast_bad_image_flag[i], a_minus_b__image[i], input_images[i] );
+   fprintf( stderr, "%d  %.3lf  %s\n", vast_bad_image_flag[i], a_minus_b__image[i], input_images[i] );
+   continue;
+  }
+  // check if image A-B is too large
+  if (  fabs( a_minus_b__image[i] - median_a_minus_b ) > 5.0 * MAX( sigma_from_MAD_a_minus_b, 0.1 ) ) {
+   vast_bad_image_flag[i]= 2;
+   fprintf( file, "%d  %.3lf  %s\n", vast_bad_image_flag[i], a_minus_b__image[i], input_images[i] );
+   fprintf( stderr, "%d  %.3lf  %s\n", vast_bad_image_flag[i], a_minus_b__image[i], input_images[i] );
+   continue;
+  }
+  // this image is good
+  vast_bad_image_flag[i]= 0;
+  fprintf( file, "%d  %.3lf  %s\n", vast_bad_image_flag[i], a_minus_b__image[i], input_images[i] );
+  fprintf( stderr, "%d  %.3lf  %s\n", vast_bad_image_flag[i], a_minus_b__image[i], input_images[i] );
+ }
+ 
+ free( a_minus_b__image );
+ 
+ fclose( file );
+
+ return;
+}
+
 
 //
 // This function is useful for debugging. It will create a DS9 region file from an rray of structures (type struct Star)
@@ -1453,6 +1666,7 @@ int main( int argc, char **argv ) {
  //int param_nocalib = 0;  // do not change magnitude scale
  int param_nofind= 0;                // do not run find_candidates
  int param_nofilter= 1;              // do not run filtering
+ int param_nodiscardell= 0;          // do not discard images with elliptical stars
  int no_rotation= 0;                 // count as error rotation larger than 3 degrees
  int debug= 0;                       // be more verbose
  int period_search_switch= 0;        // do not use period search algorithms
@@ -1638,6 +1852,8 @@ int main( int argc, char **argv ) {
  
  char filename_for_magnitude_calibration_log[2*FILENAME_LENGTH]; // image00001__myimage.fits
  
+ int vast_bad_image_flag[MAX_NUMBER_OF_OBSERVATIONS]; // 0 -- good image; >=1 -- bad image;
+ 
  //        int number_of_elements_in_Pos1; // needed for adding stars not detected on the reference frame
 
  /// end of definitions
@@ -1672,7 +1888,7 @@ int main( int argc, char **argv ) {
 
  const char *const shortopt= "vh9fdqmwpoPngGrlst:eucUijJk12346785:a:b:x:y:";
  const struct option longopt[]= {
-     {"guess_saturation_limit", 0, NULL, 'g'}, {"no_guess_saturation_limit", 0, NULL, 'G'}, {"version", 0, NULL, 'v'}, {"PSF", 0, NULL, 'P'}, {"help", 0, NULL, 'h'}, {"ds9", 0, NULL, '9'}, {"small", 0, NULL, 's'}, {"type", 0, NULL, 't'}, {"medium", 0, NULL, 'm'}, {"wide", 0, NULL, 'w'}, {"starmatchraius", 1, NULL, '5'}, {"poly", 0, NULL, 'p'}, {"filter", 0, NULL, 'l'}, {"norotation", 0, NULL, 'r'}, {"nofind", 0, NULL, 'f'}, {"debug", 0, NULL, 'd'}, {"position_dependent_correction", 0, NULL, 'j'}, {"no_position_dependent_correction", 0, NULL, 'J'}, {"aperture", 1, NULL, 'a'}, {"matchstarnumber", 1, NULL, 'b'}, {"sysrem", 1, NULL, 'y'}, {"failsafe", 0, NULL, 'e'}, {"UTC", 0, NULL, 'u'}, {"utc", 0, NULL, 'c'}, {"Utc", 0, NULL, 'U'}, {"increment", 0, NULL, 'i'}, {"nojdkeyword", 0, NULL, 'k'}, {"maxsextractorflag", 1, NULL, 'x'}, {"photocurve", 0, NULL, 'o'}, {"magsizefilter", 0, NULL, '1'}, {"nomagsizefilter", 0, NULL, '2'}, {"selectbestaperture", 0, NULL, '3'}, {"noerrorsrescale", 0, NULL, '4'}, {"notremovebadimages", 0, NULL, '6'}, {"autoselectrefimage", 0, NULL, '7'}, {"excluderefimage", 0, NULL, '8'}, {NULL, 0, NULL, 0}}; //NULL string must be in the end
+     {"guess_saturation_limit", 0, NULL, 'g'}, {"no_guess_saturation_limit", 0, NULL, 'G'}, {"version", 0, NULL, 'v'}, {"PSF", 0, NULL, 'P'}, {"help", 0, NULL, 'h'}, {"ds9", 0, NULL, '9'}, {"small", 0, NULL, 's'}, {"type", 0, NULL, 't'}, {"medium", 0, NULL, 'm'}, {"wide", 0, NULL, 'w'}, {"starmatchraius", 1, NULL, '5'}, {"poly", 0, NULL, 'p'}, {"nodiscardell", 0, NULL, 'l'}, {"norotation", 0, NULL, 'r'}, {"nofind", 0, NULL, 'f'}, {"debug", 0, NULL, 'd'}, {"position_dependent_correction", 0, NULL, 'j'}, {"no_position_dependent_correction", 0, NULL, 'J'}, {"aperture", 1, NULL, 'a'}, {"matchstarnumber", 1, NULL, 'b'}, {"sysrem", 1, NULL, 'y'}, {"failsafe", 0, NULL, 'e'}, {"UTC", 0, NULL, 'u'}, {"utc", 0, NULL, 'c'}, {"Utc", 0, NULL, 'U'}, {"increment", 0, NULL, 'i'}, {"nojdkeyword", 0, NULL, 'k'}, {"maxsextractorflag", 1, NULL, 'x'}, {"photocurve", 0, NULL, 'o'}, {"magsizefilter", 0, NULL, '1'}, {"nomagsizefilter", 0, NULL, '2'}, {"selectbestaperture", 0, NULL, '3'}, {"noerrorsrescale", 0, NULL, '4'}, {"notremovebadimages", 0, NULL, '6'}, {"autoselectrefimage", 0, NULL, '7'}, {"excluderefimage", 0, NULL, '8'}, {NULL, 0, NULL, 0}}; //NULL string must be in the end
  int nextopt;
  fprintf( stderr, "Parsing command line arguments...\n" );
  while ( nextopt= getopt_long( argc, argv, shortopt, longopt, NULL ), nextopt != -1 ) {
@@ -1834,8 +2050,9 @@ int main( int argc, char **argv ) {
    fprintf( stdout, "opt 'r': assuming no rotation larger than 3 degrees!\n" );
    break;
   case 'l':
-   param_nofilter= 0;
-   fprintf( stdout, "opt 'l': USING sigma filter!\n" );
+   //param_nofilter= 0;
+   param_nodiscardell=1;
+   fprintf( stdout, "opt 'l': will NOT try to discard images with elliptical stars (bad tracking)!\n" );
    break;
   case 'j':
    apply_position_dependent_correction= 1;
@@ -2097,6 +2314,7 @@ int main( int argc, char **argv ) {
          return 1;
         }
         strcpy( input_images[Num], dir_string2 );
+        vast_bad_image_flag[Num]= 0; // mark the image good by default
         // increase image counter
         Num++;
        }
@@ -2141,6 +2359,7 @@ int main( int argc, char **argv ) {
        return 1;
       }
       strcpy( input_images[Num], dir_string );
+      vast_bad_image_flag[Num]= 0; // mark the image good by default
       // increase image counter
       Num++;
      }
@@ -2181,6 +2400,7 @@ int main( int argc, char **argv ) {
     return 1;
    }
    strcpy( input_images[Num], file_or_dir_on_command_line );
+   vast_bad_image_flag[Num]= 0; // mark the image good by default
    Num++;
   } // if((sb.st_mode & S_IFMT) == S_IFREG){
  }
@@ -2695,10 +2915,16 @@ int main( int argc, char **argv ) {
 
  fprintf( stderr, "\n\nMatching stars between images!\n\n" );
 
+ // Mark images with elongated stars as bad
+ if ( param_nodiscardell == 0 ) {
+  mark_images_with_elongated_stars_as_bad( input_images, vast_bad_image_flag, Num );
+ }
+
  // Choose the reference image if we were asked to (otherwise the first image will be used)
  if ( param_automatically_select_reference_image == 1 ) {
-  choose_best_reference_image( input_images, Num );
+  choose_best_reference_image( input_images, vast_bad_image_flag, Num );
  }
+ 
 
  /*  Allocate memory for arrays with coordinates. */
  malloc_size= MAX_NUMBER_OF_STARS * sizeof( int );
@@ -3385,13 +3611,14 @@ int main( int argc, char **argv ) {
  check_and_print_memory_statistics();
  progress( 1, Num );
 
- /* log first observation */
+ // log first observation 
  sprintf( log_output, "JD= %13.5lf  ap= %4.1lf  rotation= %7.3lf  *detected= %5d  *matched= %5d  status=OK     %s\n", JD, aperture, 0.0, NUMBER1, NUMBER1, input_images[0] );
  write_string_to_log_file( log_output, sextractor_catalog );
 
- /* Process other images */
+ ////// Process other images //////
  for ( n= n_start; n < Num; n++ ) {
   fprintf( stderr, "\n\n\n" );
+  
   if ( debug != 0 )
    fprintf( stderr, "DEBUG MSG: gettime() - " );
   fitsfile_read_error= gettime( input_images[n], &JD, &timesys, convert_timesys_to_TT, &X_im_size, &Y_im_size, stderr_output, log_output, param_nojdkeyword, 1 ); //Вот этот код дублирован выше! Зачем?
@@ -3403,11 +3630,25 @@ int main( int argc, char **argv ) {
    aperture= autodetect_aperture( input_images[n], sextractor_catalog, 0, param_P, fixed_aperture, X_im_size, Y_im_size, guess_saturation_limit_operation_mode );
    if ( debug != 0 )
     fprintf( stderr, "OK\n" );
-   /* Write the logfile */
-   if ( aperture < 0.0 )
+    
+   // Check if the image is marked as bad
+   // if it is, set the aperture to an unrealistic value
+   // this will allow the existing mechanism to handle and log the bad image properly
+   if ( vast_bad_image_flag[n] != 0 ) {
+    fprintf( stderr, "WARNING: image marked as bad with flag %d %s\n", vast_bad_image_flag[n], input_images[n] );
+    aperture= 0.0;    
+   }
+   // 
+    
+   // Write the logfile
+   if ( aperture < 0.0 ) {
+    fprintf( stderr, "WARNING: the derivedimae apture is unrealistically small %lf %s\n", aperture, input_images[n] );
     aperture= 0.0; // Do not corrupt the log file with bad apertures
-   if ( aperture > 99.9 )
+   }
+   if ( aperture > 99.9 ) {
+    fprintf( stderr, "WARNING: the derivedimae apture is unrealistically large %lf %s\n", aperture, input_images[n] );
     aperture= 99.9; // Do not corrupt the log file with bad apertures
+   }
    write_string_to_log_file( log_output, sextractor_catalog );
    sprintf( log_output, "JD= %13.5lf  ap= %4.1lf  ", JD, aperture );
    write_string_to_log_file( log_output, sextractor_catalog );
