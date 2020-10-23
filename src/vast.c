@@ -381,7 +381,6 @@ void make_sure_libbin_is_in_path( ); // actually it is declared in src/autodetec
 
 // This function will try to find the deepest image and set it as the reference one
 // by altering the image order in input_images array
-//void choose_best_reference_image( char **input_images, int Num, int maxsextractorflag ) {
 void choose_best_reference_image( char **input_images, int Num ) {
  char sextractor_catalog[FILENAME_LENGTH];
  char copy_input_image_path[FILENAME_LENGTH];
@@ -405,7 +404,6 @@ void choose_best_reference_image( char **input_images, int Num ) {
  double *number_of_good_detected_stars; // this is double for the simple reason that I want to use the conveinent double functions from GSL (already included for other purposes)
  double *copy_of_number_of_good_detected_stars;
  double median_number_of_good_detected_stars;
- //double best_number_of_good_detected_stars;
 
  int int_number_of_good_detected_stars; 
  double *A_IMAGE;
@@ -523,10 +521,6 @@ void choose_best_reference_image( char **input_images, int Num ) {
     continue;
    }
    //
-   //if ( maxsextractorflag < sextractor_flag && sextractor_flag <= 7 ) {
-//   if ( sextractor_flag > maxsextractorflag ) {
-//    continue;
-//   }
    // just in case we mark objects with really bad SExtractor flags
    if ( sextractor_flag > 7 ) {
     continue;
@@ -581,11 +575,6 @@ void choose_best_reference_image( char **input_images, int Num ) {
       best_aperture= aperture[i];
       fprintf( stderr, "new best!\n" );
      }
-// The old way of selecting reference image as the one that has the most detected stars
-//     if ( number_of_good_detected_stars[i] > best_number_of_good_detected_stars ) {
-//      best_image= i;
-//      best_number_of_good_detected_stars= number_of_good_detected_stars[i];
-//     }
     }
    }
   }
@@ -616,24 +605,8 @@ void choose_best_reference_image( char **input_images, int Num ) {
   strncpy( input_images[best_image], copy_input_image_path, FILENAME_LENGTH );
  }
 
- // exit(1); // !!!
-
  return;
 }
-
-/*
-int is_point_close_or_off_the_frame_edge( double x, double y, double X_im_size, double Y_im_size, double indent ) {
- if ( x < indent )
-  return 1;
- if ( y < indent )
-  return 1;
- if ( x > X_im_size - indent )
-  return 1;
- if ( y > Y_im_size - indent )
-  return 1;
- return 0; // if we are still here - the point is well within the image
-}
-*/
 
 //
 // This function is useful for debugging. It will create a DS9 region file from an rray of structures (type struct Star)
@@ -2724,7 +2697,6 @@ int main( int argc, char **argv ) {
 
  // Choose the reference image if we were asked to (otherwise the first image will be used)
  if ( param_automatically_select_reference_image == 1 ) {
-  //choose_best_reference_image( input_images, Num, maxsextractorflag );
   choose_best_reference_image( input_images, Num );
  }
 
