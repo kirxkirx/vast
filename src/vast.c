@@ -801,7 +801,7 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
    continue;
   }
   // check if image A-B is too large
-  if (  fabs( a_minus_b__image[i] - median_a_minus_b ) > 5.0 * MAX( sigma_from_MAD_a_minus_b, 0.1 ) ) {
+  if (  fabs( a_minus_b__image[i] - median_a_minus_b ) > 5.0 * MAX( sigma_from_MAD_a_minus_b, 0.05 ) ) {
    vast_bad_image_flag[i]= 2;
    fprintf( file, "%d  %.3lf  %s\n", vast_bad_image_flag[i], a_minus_b__image[i], input_images[i] );
    fprintf( stderr, "%d  %.3lf  %s\n", vast_bad_image_flag[i], a_minus_b__image[i], input_images[i] );
@@ -1940,6 +1940,7 @@ int main( int argc, char **argv ) {
    }
    if( photometric_calibration_type == 3 ){
     // equivalent to '-o'
+    param_nodiscardell= 1; // incompatible with photocurve
     param_use_photocurve= 1;
     photometric_calibration_type= 1; // force parabolic magnitude fit (it should be reasonably good). It is needed to remove outliers.
     fprintf( stdout, "opt 't 3': \"photocurve\" will be used for magnitude calibration!\n" );
@@ -1996,6 +1997,7 @@ int main( int argc, char **argv ) {
    fprintf( stdout, "opt 'p': Polynomial magnitude calibration will *NOT* be used!\n" );
    break;
   case 'o':
+   param_nodiscardell= 1; // incompatible with photocurve
    param_use_photocurve= 1;
    photometric_calibration_type= 1; // force parabolic magnitude fit (it should be reasonably good). It is needed to remove outliers.
    fprintf( stdout, "opt 'o': \"photocurve\" will be used for magnitude calibration!\n" );
@@ -2550,8 +2552,7 @@ int main( int argc, char **argv ) {
   }
  }
 
- // Special settings that are forced for the transient detection mode
- //if ( Num == 3 || Num == 4 || Num == 5 ) {
+ // Special settings that are forced for the 4-image transient detection mode
  if ( Num == 4 ) {
   fprintf( stderr, "\n\n######## Forcing special settings for the transient detection ########\n" );
   fprintf( stderr, "transient search mode: disabling the mag-size filter as it should be switched off when running a transient search!\n" );
@@ -2588,9 +2589,18 @@ int main( int argc, char **argv ) {
   fprintf(stderr, "diffphot mode: disabling magnitude-size outlier filtering\n");
   fprintf(stderr, "################\n\n");
  }
+ 
+ /// Make photocurve and discard elliptical stars parameters incompatible
+ /// (photoplates too often suffer frm bad guiding and low number of images)
+ if ( param_nodiscardell == 0 && param_use_photocurve == 1 ) {
+  fprintf(stderr, "\n\n######## WARNING ########\n");
+  fprintf(stderr, "Parameter --photocurve is incompatible with elliptical star rejection.\nDisabling eliptical star rejection.");
+  param_nodiscardell= 1;
+  fprintf(stderr, "################\n\n");
+ }
 
  //// Print the TT warning only if UTC was not explicitly requested by user. 
- if ( convert_timesys_to_TT != 0 && Num != 3 && Num != 4 && Num != 5 ){
+ if ( convert_timesys_to_TT != 0 && Num != 3 && Num != 4 && Num != 5 ) {
   print_TT_reminder( 0 );
  }
 

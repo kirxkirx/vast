@@ -9005,11 +9005,11 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0310"
   fi
-  grep --quiet "2020 08 25.9400  2459087.4400  9\...  18:59:" transient_report/index.html
+  grep --quiet -e "2020 08 25.9400  2459087.4400  9\...  18:59:..\... +34:57:..\.." -e "2020 08 25.9400  2459087.4400 10\.0.  18:59:..\... +34:57:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0310a"
-   GREP_RESULT=`grep "2020 08 25.9400  2459087.4400  9\...  18:59:" transient_report/index.html`
+   GREP_RESULT=`grep "2020 08 25.9400  2459087.4400  9\...  18:59:" -e "2020 08 25.9400  2459087.4400 10\.0.  18:59:..\... +34:57:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNFINDCHANDRA0310a ######
 $GREP_RESULT"
@@ -12072,7 +12072,7 @@ if [ $? -ne 0 ];then
 fi
 
 # ATLAS via VizieR test - doesn't work anymore - the star got into VSX under its ZTF name
-util/search_databases_with_vizquery.sh 07:29:19.69 -13:23:06.6 | grep -e 'CBF (ATLAS)' -e '(VSX)' | grep --quiet -e 'ATOID J112.3320-13.3851' -e 'ZTF J072919.68-132306.5'
+util/search_databases_with_vizquery.sh 07:29:19.69 -13:23:06.6 | grep -e 'CBF (ATLAS)' -e '(VSX)' -e '(local)' | grep --quiet -e 'ATOID J112.3320-13.3851' -e 'ZTF J072919.68-132306.5'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012vsx01"
