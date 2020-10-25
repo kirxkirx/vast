@@ -785,8 +785,8 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  NUMBER_OF_DETECTED_TRANSIENTS=`cat candidates-transients.lst | wc -l`
  echo "Found $NUMBER_OF_DETECTED_TRANSIENTS candidate transients before the final filtering." >> transient_factory_test31.txt
  if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 500 ];then
-  echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping field..."
-  echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping field..." >> transient_factory_test31.txt
+  echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping SE run ($SEXTRACTOR_CONFIG_FILE)"
+  echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping SE run ($SEXTRACTOR_CONFIG_FILE)" >> transient_factory_test31.txt
   # this is for UCAC5 plate solver
   wait
   #
