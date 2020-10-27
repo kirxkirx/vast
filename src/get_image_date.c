@@ -18,6 +18,47 @@
 
 #include "vast_limits.h"
 
+void fix_DATEOBS_STRING( char *DATEOBS ); // defined in gettime.c
+
+void remove_multiple_white_spaces_from_string( char *string ){
+ unsigned int i,j;
+ //fprintf(stderr,"DEBUG(1) #%s#\n", string);
+ for( i=1; i<strlen(string); i++ ){
+  if ( string[i-1] == ' ' && string[i] == ' ' ){
+   for( j=i; j<strlen(string)-1; j++ ){
+    string[j]=string[j+1];
+   }
+   string[j]='\0';
+   //fprintf(stderr,"DEBUG(2) #%s#\n", string);
+   i--;
+  }
+ }
+ //fprintf(stderr,"DEBUG(3) #%s#\n", string);
+ return;
+}
+
+void remove_leading_white_spaces_before_first_digit_from_string( char *string ){
+ unsigned int i,j;
+ //fprintf(stderr,"DEBUG(11) #%s#\n", string);
+ for( i=0; i<strlen(string); i++ ){
+  if ( 0 != isdigit( string[i] ) ) { 
+   break;
+  } else { 
+  //if ( string[i] == ' ' ){
+   for( j=i; j<strlen(string)-1; j++ ){
+    string[j]=string[j+1];
+   }
+   string[j]='\0';
+   //fprintf(stderr,"DEBUG(12) #%s#\n", string);
+   i--;
+  }
+ }
+ //fprintf(stderr,"DEBUG(13) #%s#\n", string);
+ return;
+}
+
+
+
 // If the input string is not an image file - assume this is a time string that needs to be converted to other date formats.
 // This is accomplished using a very inefficient way of creating a fake FITS image - all for the sake of consistency 
 // with the existing FITS header reading and JD-conversion code.
@@ -32,11 +73,15 @@ int fake_image_hack( char *input_string ) {
  unsigned short combined_array[]= {0, 0, 0, 0};
 
  char card[FLEN_CARD], newcard[FLEN_CARD], fitsfilename[FILENAME_LENGTH];
+ 
+ char processed_input_string[80];
 
  int input_calendar_date_or_jd=0; // 0 - calendar, 1 - JD
  unsigned int number_of_characters_inputs_str;
  unsigned int i,j; // counter
  double jd_from_string;
+
+ double year,month,day,iday,hour,ihour,min,imin,sec; // for handling the YYYY-MM-DD.DDDD format
 
  FILE *f;
 
@@ -71,7 +116,7 @@ int fake_image_hack( char *input_string ) {
    j++;
    continue;
   }
-  // If we are here, that means there was an ilegal character in the input
+  // If we are here, that means there was an illegal character in the input
   j=99;
   break;
  } // for ( j= 0, i= 0; i < strlen( argv[1] ); i++ ) { 
@@ -93,19 +138,63 @@ int fake_image_hack( char *input_string ) {
  // handle the white space between the input date and time instead of T
  int is_T_found=0;
  if ( input_calendar_date_or_jd == 0 ){
-  for ( j=0, i= 0; i < number_of_characters_inputs_str; i++ ) {
-   if ( input_string[i] == 'T' ) {
+  strncpy( processed_input_string, input_string, 80 );
+  for ( i= 0; i < strlen(processed_input_string); i++ ) {
+   if ( processed_input_string[i] == 'T' ) {
     is_T_found=1;
     break;
    }
   }
   if ( is_T_found == 0 ){
-   for ( i= 1; i < number_of_characters_inputs_str; i++ ) {
-    if ( 0 != isdigit( input_string[i-1] ) && input_string[i] == ' ' ) {
-     input_string[i]='T';
+   remove_multiple_white_spaces_from_string( processed_input_string );
+   remove_leading_white_spaces_before_first_digit_from_string( processed_input_string );
+   // make sure the last character of the string is not white space
+   if ( processed_input_string[strlen(processed_input_string)-1] == ' ' ) {
+    processed_input_string[strlen(processed_input_string)-1]='\0';
+   }
+   if ( 3==sscanf( processed_input_string, "%lf %lf %lf", &year, &month, &day ) ) {
+    for( j=0, i=0; i<strlen(processed_input_string); i++ ) {
+     if ( processed_input_string[i] == ' ' ) {
+      processed_input_string[i]= '-';
+      j++;
+      if( j==2 ) { break; }
+     }
+    }
+   }
+   // We don't want the last character to be T
+   for ( i= 1; i < strlen(processed_input_string) - 1; i++ ) {
+    if ( 0 != isdigit( processed_input_string[i-1] ) && processed_input_string[i] == ' ' ) {
+     processed_input_string[i]='T';
      break;
     }
    }
+   // handle the case where only the date and no time is given (assume 00:00:00 UT),
+   // or a fraction of the day is specified
+   is_T_found=0;
+   for ( i= 0; i < strlen(processed_input_string); i++ ) {
+    if ( processed_input_string[i] == 'T' ) {
+     is_T_found=1;
+     break;
+    }
+   }
+   if ( is_T_found == 0 ){
+    // T was not found, so there was no white space in the input string
+    // handle the insane DD/MM/YYYY format (no fraction of the day)
+    fix_DATEOBS_STRING( processed_input_string );    
+    // handle YYYY-MM-DD.DDDD
+    sscanf( processed_input_string, "%lf%*1[ -]%lf%*1[ -]%lf", &year, &month, &day);
+    //fprintf(stderr, "DEBUG: %.0lf %.0lf %lf\n", year, month, day);
+    iday= (double)(int)day;
+    hour= (day-iday)*24;
+    ihour= (double)(int)( hour );
+    min= (hour-ihour)*60;
+    imin= (double)(int)( min );
+    sec= (min-imin)*60;
+    sprintf( processed_input_string, "%4.0lf-%02.0lf-%02.0lfT%02.0lf:%02.0lf:%06.3lf", year, month, iday, ihour, imin, sec );
+    //fprintf( stderr, "DEBUG: %s\n", processed_input_string );
+    //exit( 1 );
+   }
+   //
   }
  }
  //
@@ -129,7 +218,7 @@ int fake_image_hack( char *input_string ) {
   // The defaultassumption is to write DATE-OBS
   strcpy( newcard, "DATE-OBS" );                                  // keyword name
   strcat( newcard, " = " );                                       // '=' value delimiter
-  strcat( newcard, input_string );                                // new value
+  strcat( newcard, processed_input_string );                                // new value
   strcat( newcard, " / " );                                       // comment delimiter
   strcat( newcard, "Exposure start time (UTC) derived by VaST" ); // append the comment
   // reformat the keyword string to conform to FITS rules
@@ -151,6 +240,7 @@ int fake_image_hack( char *input_string ) {
  fits_close_file( fptr, &status ); // close file
  fits_report_error( stderr, status );
 
+ // why??
  strncpy( input_string, fitsfilename, FILENAME_LENGTH );
 
  return 1; // yes, we created the fake image
@@ -165,6 +255,7 @@ int main( int argc, char **argv ) {
  char *log_output;
  int param_nojdkeyword= 0;
  int param_verbose= 1;
+ int argument_counter;
 
  double MJD, UnixTime, Julian_year;
 
@@ -193,6 +284,17 @@ int main( int argc, char **argv ) {
  }
 
  strncpy( input_fits_image, argv[1], FILENAME_LENGTH );
+ if ( argc > 2 ) {
+  // combine multiple arguments in one string
+  for ( argument_counter=2; argument_counter<argc; argument_counter++ ) {
+   if ( strlen(input_fits_image)+strlen(argv[argument_counter])>FILENAME_LENGTH-1 ) {
+    fprintf( stderr, "The argument list is too long!\n");
+    return 1; 
+   }
+   strncat( input_fits_image, " ", 1 );
+   strncat( input_fits_image, argv[argument_counter], 80 );
+  }
+ }
  input_fits_image[FILENAME_LENGTH - 1]= '\0'; // just in case
 
  fake_image_hack_return= fake_image_hack( input_fits_image );

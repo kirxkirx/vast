@@ -13401,7 +13401,7 @@ fi
 for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  if [ -f "$TMP_FITS_FILE" ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV010b_$TMP_FITS_FILE"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV019b_$TMP_FITS_FILE"
   break
  fi
 done
@@ -13430,7 +13430,7 @@ fi
 for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  if [ -f "$TMP_FITS_FILE" ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV010c_$TMP_FITS_FILE"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV023c_$TMP_FITS_FILE"
   break
  fi
 done
@@ -13445,10 +13445,51 @@ fi
 for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  if [ -f "$TMP_FITS_FILE" ];then
   TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV024c_$TMP_FITS_FILE"
+  break
+ fi
+done
+
+# Check input with multiple arguments and as a fraction of the day
+util/get_image_date 2020 10 27 18:00 2>&1 | grep --quiet 'MPC format 2020 10 27.75000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV025"
+fi
+util/get_image_date 2020 10 27 18:00:00 2>&1 | grep --quiet 'MPC format 2020 10 27.75000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV025"
+fi
+util/get_image_date 2020 10 27.75 2>&1 | grep --quiet 'MPC format 2020 10 27.75000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV026"
+fi
+util/get_image_date 2020 1 7.75 2>&1 | grep --quiet 'MPC format 2020 01  7.75000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV027"
+fi
+
+# Now make sure there are no residual files
+for TMP_FITS_FILE in fake_image_hack_*.fits ;do
+ if [ -f "$TMP_FITS_FILE" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV027c_$TMP_FITS_FILE"
+  break
+ fi
+done
+
+# Now make sure there are no residual files
+for TMP_FITS_FILE in fake_image_hack_*.fits ;do
+ if [ -f "$TMP_FITS_FILE" ];then
+  TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV010c_$TMP_FITS_FILE"
   break
  fi
 done
+
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then

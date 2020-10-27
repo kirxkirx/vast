@@ -3,6 +3,10 @@
 	This is disabled automatically if '--photocurve' magnitude calibration is used as
 	photographic plates often suffer from bad guiding and low number of images (so we cannot
 	afford discarding a few suspicious ones.)
+	* 'util/get_image_date' now understands input dates without quotation marks
+	'util/get_image_date 2020 10 27 18:00'
+	and as a fraction of the day
+	'util/get_image_date 2020 10 27.75'
 20 Oct 2020: vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911
