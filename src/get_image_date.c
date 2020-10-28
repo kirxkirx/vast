@@ -117,10 +117,12 @@ int fake_image_hack( char *input_string ) {
    continue;
   }
   // If we are here, that means there was an illegal character in the input
+  //fprintf( stderr, "DEBUG01\n");
   j=99;
   break;
  } // for ( j= 0, i= 0; i < strlen( argv[1] ); i++ ) { 
  if( j==0 || j==1 ){
+  //fprintf( stderr, "DEBUG02\n");
   // OK, there is only one '.' in the string, that looks promising
   jd_from_string=atof(input_string);
   if ( jd_from_string>EXPECTED_MIN_MJD && jd_from_string<EXPECTED_MAX_JD ) {
@@ -135,55 +137,79 @@ int fake_image_hack( char *input_string ) {
   } // if ( jd_from_string>EXPECTED_MIN_MJD && jd_from_string<EXPECTED_MAX_JD ) {
  } // if( j==1 ){ // OK, there is only one '.' in the string, that looks promising
  //
+ //fprintf( stderr, "DEBUG03\n");
  // handle the white space between the input date and time instead of T
  int is_T_found=0;
- if ( input_calendar_date_or_jd == 0 ){
+ if ( input_calendar_date_or_jd == 0 ) {
+  //fprintf( stderr, "DEBUG04\n");
   strncpy( processed_input_string, input_string, 80 );
   for ( i= 0; i < strlen(processed_input_string); i++ ) {
    if ( processed_input_string[i] == 'T' ) {
     is_T_found=1;
+    //fprintf( stderr, "DEBUG05\n");
     break;
    }
   }
-  if ( is_T_found == 0 ){
+  //fprintf( stderr, "DEBUG06\n");
+  if ( is_T_found == 0 ) {
+   //fprintf( stderr, "DEBUG07 #%s#\n", processed_input_string);
    remove_multiple_white_spaces_from_string( processed_input_string );
+   //fprintf( stderr, "DEBUG08 #%s#\n", processed_input_string);
    remove_leading_white_spaces_before_first_digit_from_string( processed_input_string );
+   //fprintf( stderr, "DEBUG09 #%s#\n", processed_input_string);
    // make sure the last character of the string is not white space
    if ( processed_input_string[strlen(processed_input_string)-1] == ' ' ) {
     processed_input_string[strlen(processed_input_string)-1]='\0';
    }
+   //fprintf( stderr, "DEBUG10 #%s#\n", processed_input_string);
    if ( 3==sscanf( processed_input_string, "%lf %lf %lf", &year, &month, &day ) ) {
+    //fprintf( stderr, "DEBUG11 #%s#\n", processed_input_string);
     for( j=0, i=0; i<strlen(processed_input_string); i++ ) {
+     if ( processed_input_string[i] == '-' ) {
+      //fprintf( stderr, "DEBUG12a #%s#\n", processed_input_string);
+      break;
+     }
      if ( processed_input_string[i] == ' ' ) {
       processed_input_string[i]= '-';
       j++;
-      if( j==2 ) { break; }
+      if( j==2 ) { 
+       //fprintf( stderr, "DEBUG12 #%s#\n", processed_input_string);
+       break; 
+      }
      }
     }
    }
+   //fprintf( stderr, "DEBUG13 #%s#\n", processed_input_string);
    // We don't want the last character to be T
    for ( i= 1; i < strlen(processed_input_string) - 1; i++ ) {
     if ( 0 != isdigit( processed_input_string[i-1] ) && processed_input_string[i] == ' ' ) {
      processed_input_string[i]='T';
+     //fprintf( stderr, "DEBUG14 #%s#\n", processed_input_string);
      break;
     }
    }
+   //fprintf( stderr, "DEBUG15 #%s#\n", processed_input_string);
    // handle the case where only the date and no time is given (assume 00:00:00 UT),
    // or a fraction of the day is specified
    is_T_found=0;
    for ( i= 0; i < strlen(processed_input_string); i++ ) {
     if ( processed_input_string[i] == 'T' ) {
      is_T_found=1;
+     //fprintf( stderr, "DEBUG16 #%s#\n", processed_input_string);
      break;
     }
    }
-   if ( is_T_found == 0 ){
+   //fprintf( stderr, "DEBUG17 #%s#\n", processed_input_string);
+   if ( is_T_found == 0 ) {
+    //fprintf( stderr, "DEBUG18 #%s#\n", processed_input_string);
     // T was not found, so there was no white space in the input string
     // handle the insane DD/MM/YYYY format (no fraction of the day)
     fix_DATEOBS_STRING( processed_input_string );    
+    //fprintf( stderr, "DEBUG19 #%s#\n", processed_input_string);
     // handle YYYY-MM-DD.DDDD
     sscanf( processed_input_string, "%lf%*1[ -]%lf%*1[ -]%lf", &year, &month, &day);
-    //fprintf(stderr, "DEBUG: %.0lf %.0lf %lf\n", year, month, day);
+    //fprintf(stderr, "DEBUG20a: %.0lf %.0lf %lf\n", year, month, day);
+    //fprintf( stderr, "DEBUG20 #%s#\n", processed_input_string);
     iday= (double)(int)day;
     hour= (day-iday)*24;
     ihour= (double)(int)( hour );
@@ -191,12 +217,16 @@ int fake_image_hack( char *input_string ) {
     imin= (double)(int)( min );
     sec= (min-imin)*60;
     sprintf( processed_input_string, "%4.0lf-%02.0lf-%02.0lfT%02.0lf:%02.0lf:%06.3lf", year, month, iday, ihour, imin, sec );
+    //fprintf( stderr, "DEBUG21 #%s#\n", processed_input_string);
     //fprintf( stderr, "DEBUG: %s\n", processed_input_string );
     //exit( 1 );
-   }
+   } // if ( is_T_found == 0 ) {
    //
-  }
- }
+   //fprintf( stderr, "DEBUG22 #%s#\n", processed_input_string);
+  } // if ( is_T_found == 0 ) { // yes the higher level
+  //fprintf( stderr, "DEBUG23 #%s#\n", processed_input_string);
+ } // if ( input_calendar_date_or_jd == 0 ){
+ //fprintf( stderr, "DEBUG24 #%s#\n", processed_input_string);
  //
 
  sprintf( fitsfilename, "fake_image_hack_%d.fits", getpid() );
