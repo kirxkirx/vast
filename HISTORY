@@ -7,6 +7,7 @@
 	'util/get_image_date 2020 10 27 18:00'
 	and as a fraction of the day
 	'util/get_image_date 2020 10 27.75'
+	* Removed the internal copy of sextractor-2.25.0, keeping 2.25.2 and 2.19.5
 20 Oct 2020: vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911
