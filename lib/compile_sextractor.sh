@@ -13,8 +13,8 @@ VAST_DIR=$PWD
 TARGET_DIR=$VAST_DIR/lib
 # Sextractor versions prior to sextractor-2.25.2 will not compile with gcc10
 #LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2_fix_disable_model_fitting $VAST_DIR/src/sextractor-2.25.0_fix_disable_model_fitting $VAST_DIR/src/sextractor-2.19.5"
-#LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2_fix_disable_model_fitting"
-LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2_fix_disable_model_fitting $VAST_DIR/src/sextractor-2.19.5"
+LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2_fix_disable_model_fitting"
+#LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2_fix_disable_model_fitting $VAST_DIR/src/sextractor-2.19.5"
 
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
@@ -106,6 +106,14 @@ for LIBRARY_SOURCE in $LIBRARY_SOURCES ;do
  fi
  
  CONFIGURE_OK=0
+
+ # Try to circumvent the need for aclocal
+ # https://stackoverflow.com/questions/33278928/how-to-overcome-aclocal-1-15-is-missing-on-your-system-warning
+ for FILE_TO_TOUCH in aclocal.m4 configure Makefile.am Makefile.in ;do
+  if [ -f $FILE_TO_TOUCH ];then
+   touch $FILE_TO_TOUCH
+  fi
+ done
  
  if [ -x ./configure ];then
   # try to run configure right away if there is such script
