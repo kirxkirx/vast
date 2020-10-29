@@ -1,0 +1,116 @@
+#!/bin/sh
+
+# zgethead1:
+# Get header parameters from one compressed (or not) FITS file
+# By Jessica Mink, March 30, 2016
+
+if test ! $1
+    then
+    echo zgethead1: Get header parameters from a compressed FITS file
+    echo "   usage: zgethead1 [-v] fits.file keyword1 ... keywordn"
+    echo "		 -v: list file names as they are read"
+    exit
+    fi
+
+# Check for verbose flag as first argument
+if test $1 = "-v"
+    then
+    #echo verbose mode
+    vb=true
+    shift
+else
+    #echo quiet mode
+    vb=
+fi
+dir=
+file=
+
+args=
+while test $1
+    do
+
+    if test -z $file
+	then
+	isfits=`echo $1 | grep fits`
+	bzcomp=`echo $1 | grep \.bz2`
+	gzcomp=`echo $1 | grep \.gz`
+	zcomp=`echo $1 | grep \.Z`
+	#echo isfits: $isfits
+	#echo bzcomp: $bzcomp
+	#echo gzcomp: $gzcomp
+	#echo  zcomp: $zcomp
+
+	# If .bz2 compressed file, make it file to check
+	if test $bzcomp
+	    then
+	    file=$1
+	    if test $vb
+		then
+		echo bz2 compressed file $file
+		fi
+
+	# If .gz compressed file, make it file to check
+	elif test $gzcomp
+	    then
+	    file=$1
+	    if test $vb
+		then
+		echo gzip compressed file $file
+		fi
+
+	# If .Z compressed file, make it file to check
+	elif test $zcomp
+	    then
+	    file=$1
+	    if test $vb
+		then
+		echo Z-compressed file $file
+		fi
+
+	# If FITS file, make it file to check
+	elif test $isfits
+	    then
+	    file=$1
+	else
+	    args=`echo $args $1`
+	fi
+
+    # Add argument to list
+    else
+	args=`echo $args $1`
+    fi
+    shift
+    done
+
+
+if test $bzcomp
+    then
+    if test $vb
+	then
+	echo bzcat $file to gethead stdin $args
+	fi
+    bzcat $file | gethead stdin $args
+elif test $gzcomp
+     then
+    if test $vb
+	then
+	echo zcat $file to gethead stdin $args
+	fi
+    zcat $file | gethead stdin $args
+elif test $zcomp
+    then
+    if test $vb
+	then
+	echo zcat $file to gethead stdin $args
+	fi
+    zcat $file | gethead stdin $args
+else
+    if test $vb
+	then
+	echo gethead $file $args
+	fi
+    gethead $file $args
+    fi
+exit 0
+
+# Mar 30 2016	New program based on zgethead

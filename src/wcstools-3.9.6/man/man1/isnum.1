@@ -1,0 +1,19 @@
+.TH isnum 1 WCSTools "6 November 2015"
+.SH Name
+isnum \- Return code telling whether the input string is numerical
+.SH Synopsis
+isnum string
+.br
+.SH Description
+.I isnum
+is a utility for identifying and classifying an input string.
+<B>isnum</B> returns an integer code depending on how it identifies the 
+input number:
+0: string is not any sort of number
+1: String is an integer
+2: String is a floating point number
+3: String is a hh:mm:ss.ss time
+4: String is a yyyy-mm-dd date
+
+.SH Author
+Jessica Mink, SAO (jmink@cfa.harvard.edu)
