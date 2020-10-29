@@ -4912,10 +4912,10 @@ int main( int argc, char **argv ) {
        // If we use a linear or parabolic calibration curve
        if ( apply_position_dependent_correction == 1 ) {
         // Aplly CCD position dependent correction
-        STAR2[Pos2[i]].mag= STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * poly_coeff[4] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * poly_coeff[3] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * poly_coeff[2] + STAR2[Pos2[i]].mag * poly_coeff[1] + poly_coeff[0] - ( lin_mag_A * STAR2[Pos2[i]].x_frame + lin_mag_B * STAR2[Pos2[i]].y_frame + lin_mag_C );
+        STAR2[Pos2[i]].mag= STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[4] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[3] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[2] + STAR2[Pos2[i]].mag * (float)poly_coeff[1] + (float)poly_coeff[0] - ( lin_mag_A * STAR2[Pos2[i]].x_frame + lin_mag_B * STAR2[Pos2[i]].y_frame + lin_mag_C );
        } else {
         // Do not Aplly CCD position dependent correction
-        STAR2[Pos2[i]].mag= STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * poly_coeff[4] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * poly_coeff[3] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * poly_coeff[2] + STAR2[Pos2[i]].mag * poly_coeff[1] + poly_coeff[0]; //Что это за монстр?
+        STAR2[Pos2[i]].mag= STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[4] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[3] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[2] + STAR2[Pos2[i]].mag * (float)poly_coeff[1] + (float)poly_coeff[0];
        }
       }
      }
