@@ -330,8 +330,11 @@ deeming_compute_periodogram.o: $(SRC_PATH)period_search/deeming_compute_periodog
 lib/deeming_compute_periodogram: deeming_compute_periodogram.o #get_number_of_cpu_cores.o
 	$(CC) $(OPTFLAGS) -o lib/deeming_compute_periodogram deeming_compute_periodogram.o $(USE_SINCOS_OPITION) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 	
-util/sysrem: $(SRC_PATH)sysrem.c
-	$(CC) $(OPTFLAGS) -o util/sysrem $(SRC_PATH)sysrem.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+#util/sysrem: $(SRC_PATH)sysrem.c
+#	$(CC) $(OPTFLAGS) -o util/sysrem $(SRC_PATH)sysrem.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+# sysrem will now be just a symlink to sysrem2
+util/sysrem: util/sysrem2
+	cd util/; ln -s sysrem2 sysrem ; cd ..
 
 get_dates_from_lightcurve_files_function.o: $(SRC_PATH)get_dates_from_lightcurve_files_function.c
 	$(CC) $(OPTFLAGS) -c -o get_dates_from_lightcurve_files_function.o $(SRC_PATH)get_dates_from_lightcurve_files_function.c
@@ -483,14 +486,11 @@ clean: clean_libraries
 	rm -f *.o 
 	rm -f callgrind.out.* # remove files from possible callgrind/kcachegrind profiling run: valgrind --tool=callgrind -v  ./vast -uf ../sample_data/f_72-00* ../sample_data/f_72-01*
 	rm -f massif.out.* # same for the other valgrind tool
-#	rm -f *~ util/*~ util/transients/*~ lib/*~ lib/drop_faint_points lib/drop_bright_points DEADJOE tmp.txt match.txt  util/calibrate_magnitude_scale lib/fit_mag_calib lib/fit_linear lib/fit_zeropoint lib/fit_photocurve util/match_eater 
 	rm -f *~ util/*~ util/transients/*~ lib/*~ lib/drop_faint_points lib/drop_bright_points DEADJOE tmp.txt match.txt  util/calibrate_magnitude_scale lib/fit_mag_calib lib/fit_linear lib/fit_zeropoint lib/fit_photocurve util/match_eater 
-#	rm -f lib/deg2hms lib/coord_v_dva_slova lib/hms2deg $(SRC_PATH)period_search/BLS/*~ $(SRC_PATH)period_search/periodFilter/*~ lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/clean_lightcurves_from_nan lib/put_two_sources_in_one_field lib/new_lightcurve_sigma_filter lib/data_parser lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list lib/remove_points_with_large_errors lib/select_aperture_with_smallest_scatter_for_each_object util/hjd sextract_single_image diffphot select_star_on_reference_image util/mark_wcs_position_with_ds9.sh
 	rm -f lib/deg2hms lib/coord_v_dva_slova lib/hms2deg $(SRC_PATH)period_search/BLS/*~ $(SRC_PATH)period_search/periodFilter/*~ lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/put_two_sources_in_one_field lib/new_lightcurve_sigma_filter lib/data_parser lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list lib/select_aperture_with_smallest_scatter_for_each_object util/hjd sextract_single_image diffphot select_star_on_reference_image util/mark_wcs_position_with_ds9.sh
 	rm -f lib/sine_wave_simulator lib/sine_wave_and_psd_simulator lib/sine_wave_or_psd_simulator
 	rm -f util/rescale_photometric_errors util/estimate_systematic_noise_level
 	rm -f util/colstat
-	#rm -f src/limits.h # these are symlinks
 	rm -f src/*~
 	rm -f util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/astrometry/get_image_dimentions lib/astrometry/insert_wcs_header lib/astrometry/*~ lib/kwee-van-woerden  lib/find_star_in_wcs_catalog
 	rm -f src/heliocentric_correction/*~ util/hjd_input_in_UTC util/hjd_input_in_TT util/UTC2TT util/make_finding_chart util/fits2png lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search lib/catalogs/check_catalogs_offline util/get_image_date lib/make_outxyls_for_astrometric_calibration lib/fits2cat lib/create_data lib/fast_clean_data util/solve_plate_with_UCAC5 lib/autodetect_aperture_main lib/sextract_single_image_noninteractive
