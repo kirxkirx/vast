@@ -109,7 +109,8 @@ for LIBRARY_SOURCE in $LIBRARY_SOURCES ;do
 
  # Try to circumvent the need for aclocal
  # https://stackoverflow.com/questions/33278928/how-to-overcome-aclocal-1-15-is-missing-on-your-system-warning
- for FILE_TO_TOUCH in aclocal.m4 configure Makefile.am Makefile.in ;do
+ # aclocal.m4
+ for FILE_TO_TOUCH in *.m4 configure Makefile.am Makefile.in autoconfig.h configure.ac ;do
   if [ -f $FILE_TO_TOUCH ];then
    touch $FILE_TO_TOUCH
   fi
