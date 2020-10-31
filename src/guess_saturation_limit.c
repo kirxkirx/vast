@@ -284,7 +284,8 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
  fitsfile *fptr; // FITS file pointer
  int status= 0;  // CFITSIO status value MUST be initialized to zero!
  int hdutype, naxis, ii;
- long naxes[2], totpix, fpixel[2];
+ //long naxes[2], totpix, fpixel[2];
+ long naxes[3], totpix, fpixel[3]; // we need naxes[3], fpixel[3] to handle 3D cube slice case with dimentions X*Y*1
  double *pix;
  long number_of_zeroes= 0;
  long number_of_negatives= 0;
@@ -448,6 +449,7 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
 
   // process image one row at a time; increment row # in each loop 
   for ( fpixel[1]= 1; fpixel[1] <= naxes[1]; fpixel[1]++ ) {
+   fprintf( stderr, "DEBUG: reading line fpixel[1]=%d out of naxes[1]=%d, meanwhile naxes[0]=%d\n", fpixel[1], naxes[1], naxes[0]);
    // give starting pixel coordinate and number of pixels to read 
    if ( fits_read_pix( fptr, TDOUBLE, fpixel, naxes[0], 0, pix, 0, &status ) ) {
     break; // jump out of loop on error
@@ -894,7 +896,8 @@ int guess_saturation_limit( char *fitsfilename, char *resulting_sextractor_cl_pa
  fitsfile *fptr; // FITS file pointer
  int status= 0;  // CFITSIO status value MUST be initialized to zero!
  int hdutype, naxis, ii;
- long naxes[2], fpixel[2];
+ //long naxes[2], fpixel[2];
+ long naxes[3], fpixel[3];  // we need naxes[3], fpixel[3] to handle 3D cube slice case with dimentions X*Y*1
  double *pix, minval= 1.E33, maxval= -1.E33;
 
  double guessed_saturation_limit= 0.0;
@@ -1011,7 +1014,8 @@ int guess_saturation_limit( char *fitsfilename, char *resulting_sextractor_cl_pa
   }
   //fprintf(stderr,"Guessing saturation limit for %s\n",fitsfilename);
 
-  pix= (double *)malloc( naxes[0] * sizeof( double ) ); /* memory for 1 row */
+  pix= (double *)malloc( naxes[0] * sizeof( double ) ); // memory for 1 row
+  //pix= (double *)malloc( (naxes[0]+1) * sizeof( double ) ); // memory for 1 row
 
   if ( pix == NULL ) {
    fprintf( stderr, "ERROR5: Couldn't allocate memory for pix(quess_saturation_limit.c)\n" );
