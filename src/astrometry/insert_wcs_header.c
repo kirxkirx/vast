@@ -90,7 +90,7 @@ int main( int argc, char **argv ) {
  }
  fprintf( stderr, "done!\n" );
  // This is a special test for the strange bug when the output file ges created while we are slving the plate 
- if( 0==fitsfile_read_check( outputfitsfilename ) ) {
+ if( 0==fitsfile_read_check_silent( outputfitsfilename ) ) {
   fprintf( stderr, "WARNING: the output file %s already exist! Will not insert any header. (2)\n", outputfitsfilename );
   return 0; // assume success - everything was done by someone else
  }

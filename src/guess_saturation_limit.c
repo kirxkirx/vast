@@ -120,7 +120,7 @@ int guess_gain( char *fitsfilename, char *resulting_sextractor_cl_parameter_stri
 
  fitsfile *fptr; // FITS file pointer
  int status= 0;  // CFITSIO status value MUST be initialized to zero!
- int hdutype;    //, naxis, ii;
+ int hdutype;
 
  double guessed_gain, gain_from_fits_header, double_trash;
 
@@ -156,7 +156,7 @@ int guess_gain( char *fitsfilename, char *resulting_sextractor_cl_parameter_stri
 
  if ( 0 == fits_open_image( &fptr, fitsfilename, READONLY, &status ) ) {
   if ( fits_get_hdu_type( fptr, &hdutype, &status ) || hdutype != IMAGE_HDU ) {
-   fprintf( stderr, "Error: this program only works on images, not tables\n" );
+   fprintf( stderr, "ERROR: this program only works on images, not tables\n" );
    return 1;
   }
   // Special case for HST images
@@ -332,6 +332,12 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
  if ( 0 == fits_open_image( &fptr, fitsfilename, READONLY, &status ) ) {
 
   fits_get_img_dim( fptr, &naxis, &status );
+  if ( naxis>3 ) {
+   fprintf( stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported.\n", naxis );
+   return 1;
+  }
+  // with the above check naxes should not overflow
+  // maxdim = 2 also protects
   fits_get_img_size( fptr, 2, naxes, &status );
 
   if ( status || naxis != 2 ) {
@@ -339,14 +345,14 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
     long naxes3;
     fits_read_key( fptr, TLONG, "NAXIS3", &naxes3, NULL, &status );
     if ( naxes3 != 1 ) {
-     fprintf( stderr, "Error: NAXIS = %d.  Only 2-D images are supported.\n", naxis );
+     fprintf( stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported.\n", naxis );
      ( *is_flag_image_used )= 0;                        // just in case
      resulting_sextractor_cl_parameter_string[0]= '\0'; // just in case
      flag_image_filename[0]= '\0';                      // just in case
      return 1;
     }
    } else {
-    fprintf( stderr, "Error: NAXIS = %d.  Only 2-D images are supported.\n", naxis );
+    fprintf( stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported.\n", naxis );
     ( *is_flag_image_used )= 0;                        // just in case
     resulting_sextractor_cl_parameter_string[0]= '\0'; // just in case
     flag_image_filename[0]= '\0';                      // just in case
@@ -405,7 +411,7 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
  if ( 0 == fits_open_image( &fptr, fitsfilename, READONLY, &status ) ) {
 
   if ( fits_get_hdu_type( fptr, &hdutype, &status ) || hdutype != IMAGE_HDU ) {
-   fprintf( stderr, "Error: this program only works on images, not tables\n" );
+   fprintf( stderr, "ERROR: this program only works on images, not tables\n" );
    ( *is_flag_image_used )= 0;                        // just in case
    resulting_sextractor_cl_parameter_string[0]= '\0'; // just in case
    flag_image_filename[0]= '\0';                      // just in case
@@ -413,6 +419,12 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
   }
 
   fits_get_img_dim( fptr, &naxis, &status );
+  if ( naxis>3 ) {
+   fprintf( stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported.\n", naxis );
+   return 1;
+  }
+  // with the above check naxes should not overflow
+  // maxdim = 2 also protects
   fits_get_img_size( fptr, 2, naxes, &status );
 
   if ( status || naxis != 2 ) {
@@ -420,20 +432,21 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
     long naxes3;
     fits_read_key( fptr, TLONG, "NAXIS3", &naxes3, NULL, &status );
     if ( naxes3 != 1 ) {
-     fprintf( stderr, "Error: NAXIS = %d.  Only 2-D images are supported.\n", naxis );
+     fprintf( stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported.\n", naxis );
      ( *is_flag_image_used )= 0;                        // just in case
      resulting_sextractor_cl_parameter_string[0]= '\0'; // just in case
      flag_image_filename[0]= '\0';                      // just in case
      return 1;
     }
    } else {
-    fprintf( stderr, "Error: NAXIS = %d.  Only 2-D images are supported.\n", naxis );
+    fprintf( stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported.\n", naxis );
     ( *is_flag_image_used )= 0;                        // just in case
     resulting_sextractor_cl_parameter_string[0]= '\0'; // just in case
     flag_image_filename[0]= '\0';                      // just in case
     return 1;
    }
   }
+  status= 0; // if we are still here, one way or the other the status is OK
   pix= (double *)malloc( naxes[0] * sizeof( double ) ); /* memory for 1 row */
 
   if ( pix == NULL ) {
@@ -446,11 +459,17 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
 
   totpix= naxes[0] * naxes[1];
   fpixel[0]= 1; // read starting with first pixel in each row 
+  
+  fpixel[2]= 1; // this is needed to handle the X*Y*1 case
 
   // process image one row at a time; increment row # in each loop 
   for ( fpixel[1]= 1; fpixel[1] <= naxes[1]; fpixel[1]++ ) {
-   fprintf( stderr, "DEBUG: reading line fpixel[1]=%d out of naxes[1]=%d, meanwhile naxes[0]=%d\n", fpixel[1], naxes[1], naxes[0]);
+   // this loop executes only once in the X*Y*1 case i.e. only the first row gets to be read
+   //fprintf( stderr, "DEBUG: reading line fpixel[1]=%ld out of naxes[1]=%ld, meanwhile naxes[0]=%ld\n", fpixel[1], naxes[1], naxes[0]);
    // give starting pixel coordinate and number of pixels to read 
+   // int fits_read_pix(fitsfile *fptr, int  datatype, long *fpixel, 
+   //             long nelements, void *nulval, void *array, 
+   //             int *anynul, int *status)
    if ( fits_read_pix( fptr, TDOUBLE, fpixel, naxes[0], 0, pix, 0, &status ) ) {
     break; // jump out of loop on error
    }
@@ -923,7 +942,7 @@ int guess_saturation_limit( char *fitsfilename, char *resulting_sextractor_cl_pa
  if ( 0 == fits_open_image( &fptr, fitsfilename, READONLY, &status ) ) {
 
   if ( fits_get_hdu_type( fptr, &hdutype, &status ) || hdutype != IMAGE_HDU ) {
-   fprintf( stderr, "Error: this program only works on images, not tables\n" );
+   fprintf( stderr, "ERROR: this program only works on images, not tables\n" );
    //
    fits_report_error( stderr, status ); /* print any error message */
    fits_clear_errmsg();                 // clear the CFITSIO error message stack
@@ -941,7 +960,7 @@ int guess_saturation_limit( char *fitsfilename, char *resulting_sextractor_cl_pa
     long naxes3;
     fits_read_key( fptr, TLONG, "NAXIS3", &naxes3, NULL, &status );
     if ( naxes3 != 1 ) {
-     fprintf( stderr, "Error: NAXIS = %d.  Only 2-D images are supported.\n", naxis );
+     fprintf( stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported.\n", naxis );
      //
      fits_report_error( stderr, status ); /* print any error message */
      fits_clear_errmsg();                 // clear the CFITSIO error message stack
@@ -951,7 +970,7 @@ int guess_saturation_limit( char *fitsfilename, char *resulting_sextractor_cl_pa
      return 1;
     }
    } else {
-    fprintf( stderr, "Error: NAXIS = %d.  Only 2-D images are supported.\n", naxis );
+    fprintf( stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported.\n", naxis );
     //
     fits_report_error( stderr, status ); /* print any error message */
     fits_clear_errmsg();                 // clear the CFITSIO error message stack
@@ -1029,6 +1048,8 @@ int guess_saturation_limit( char *fitsfilename, char *resulting_sextractor_cl_pa
   }
 
   fpixel[0]= 1; /* read starting with first pixel in each row */
+
+  fpixel[2]= 1; // this is needed to handle the X*Y*1 case
 
   /* process image one row at a time; increment row # in each loop */
   for ( fpixel[1]= 1; fpixel[1] <= naxes[1]; fpixel[1]++ ) {

@@ -96,6 +96,56 @@ static inline int fitsfile_read_check( char *fitsfilename ) {
  return 0;
 }
 
+// same as above but never print anything to the terminal
+static inline int fitsfile_read_check_silent( char *fitsfilename ) {
+ int status= 0;  //for cfitsio routines
+ fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h
+ int hdutype, naxis;
+ long naxes3;
+ long naxes4;
+ // check if this is a readable FITS image
+ fits_open_image( &fptr, fitsfilename, READONLY, &status );
+ if ( 0 != status ) {
+  //fits_report_error( stderr, status );
+  fits_clear_errmsg(); // clear the CFITSIO error message stack
+  check_if_the_input_is_MaxIM_compressed_FITS( fitsfilename );
+  return status;
+ }
+ if ( fits_get_hdu_type( fptr, &hdutype, &status ) || hdutype != IMAGE_HDU ) {
+  //fprintf( stderr, "%s is not a FITS image! Is it a FITS table?\n", fitsfilename );
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+ fits_get_img_dim( fptr, &naxis, &status );
+ if ( status || naxis != 2 ) {
+  if ( naxis == 3 ) {
+   fits_read_key( fptr, TLONG, "NAXIS3", &naxes3, NULL, &status );
+   if ( naxes3 == 1 ) {
+    //fprintf( stderr, "%s image has NAXIS = %d, but NAXIS3 = %ld -- maybe there is some hope to handle this image...\n", fitsfilename, naxis, naxes3 );
+    fits_close_file( fptr, &status );
+    return 0;
+   }
+  }
+  if ( naxis == 4 ) {
+   fits_read_key( fptr, TLONG, "NAXIS3", &naxes3, NULL, &status );
+   if ( naxes3 == 1 ) {
+    fits_read_key( fptr, TLONG, "NAXIS4", &naxes4, NULL, &status );
+    if ( naxes4 == 1 ) {
+     //fprintf( stderr, "%s image has NAXIS = %d, but NAXIS3 = %ld and NAXIS4 = %ld -- maybe there is some hope to handle this image...\n", fitsfilename, naxis, naxes3, naxes4 );
+     fits_close_file( fptr, &status );
+     return 0;
+    }
+   }
+  }
+  //fprintf( stderr, "%s image has NAXIS = %d.  Only 2-D images are supported.\n", fitsfilename, naxis );
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+ fits_close_file( fptr, &status );
+ return 0;
+}
+
+
 // The macro below will tell the pre-processor that this header file is already included
 #define VAST_FITSFILE_READ_CHECK_INCLUDE_FILE
 #endif
