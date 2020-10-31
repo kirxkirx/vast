@@ -14,7 +14,8 @@ export MFLAGS=""
 
 VAST_DIR=$PWD
 TARGET_DIR=$VAST_DIR/lib
-LIBRARY_SOURCE=$VAST_DIR/src/cfitsio
+#LIBRARY_SOURCE=$VAST_DIR/src/cfitsio
+LIBRARY_SOURCE=$VAST_DIR/src/cfitsio-3.49
 FITSVERIFY_SOURCE=$VAST_DIR/src/fitsverify
 
 echo " "
@@ -51,7 +52,7 @@ COMPILATION_ERROR=0
 # Compile the library
 cd $LIBRARY_SOURCE
 make clean
-./configure --prefix=$TARGET_DIR
+./configure --prefix=$TARGET_DIR --disable-curl
 if [ $? -ne 0 ];then
  COMPILATION_ERROR=1
 fi

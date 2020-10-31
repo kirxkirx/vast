@@ -448,7 +448,7 @@ if [ ! -s "$WCS_IMAGE_NAME" ];then
  fi
  #
  echo -n "No image with WCS calibration found for $FITSFILE .... "
- IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
+ #IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
  # The stuff below seems to work fine
  CATALOG_NAME=`"$VAST_PATH"lib/fits2cat $FITSFILE`
  if [ -f "$CATALOG_NAME".apphot ];then
@@ -551,6 +551,7 @@ field identification have good chances to fail. Sorry... :(
     PLATE_SOLVE_SERVER="scan.sai.msu.ru"
    fi
    CURL="curl"
+   # need the awk post-processing for curl request to work
    IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
 
    #continue
@@ -687,6 +688,10 @@ field identification have good chances to fail. Sorry... :(
     echo "ERROR: the file out$$.xyls is lost somewhere on the way!"
     exit 1
    fi
+   
+   # Moved here as IMAGE_SIZE without awk postprocessing is defined and used above
+   IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
+   
    #`lib/find_timeout_command.sh` 300 $CURL -F file=@out$$.xyls -F submit="Upload Image" -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
    #echo $CURL -F file=@out$$.xyls -F submit="Upload Image" -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd
    # Note that the timeout is also enforced at the server side

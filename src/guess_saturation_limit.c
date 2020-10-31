@@ -444,13 +444,13 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
   }
 
   totpix= naxes[0] * naxes[1];
-  fpixel[0]= 1; /* read starting with first pixel in each row */
+  fpixel[0]= 1; // read starting with first pixel in each row 
 
-  /* process image one row at a time; increment row # in each loop */
+  // process image one row at a time; increment row # in each loop 
   for ( fpixel[1]= 1; fpixel[1] <= naxes[1]; fpixel[1]++ ) {
-   /* give starting pixel coordinate and number of pixels to read */
+   // give starting pixel coordinate and number of pixels to read 
    if ( fits_read_pix( fptr, TDOUBLE, fpixel, naxes[0], 0, pix, 0, &status ) ) {
-    break; /* jump out of loop on error */
+    break; // jump out of loop on error
    }
 
    for ( ii= 0; ii < naxes[0]; ii++ ) {
