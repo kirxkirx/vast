@@ -111,7 +111,7 @@ function remove_test_data_to_save_space {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-    for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
+    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -120,11 +120,12 @@ function remove_test_data_to_save_space {
      #
      if [ -d "$TEST_DATASET" ];then
       rm -rf "$TEST_DATASET"
-      FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
-      TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
-      if [ $TEST -eq 0 ];then
-       break
-      fi
+      # Don't try to be smart and keep some data - remove everything!
+      #FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+      #TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
+      #if [ $TEST -eq 0 ];then
+      # break
+      #fi
      fi
     done
    fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
