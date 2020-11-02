@@ -45,11 +45,6 @@
 int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_catalog, int parameter_number ) {
  int i, j, k; // counters
 
- /*
- float reference_point_mag[NUMBER_OF_REFERENCE_POINTS];
- float reference_point_float_parameter[NUMBER_OF_REFERENCE_POINTS];
- float reference_point_float_parameter_sigma[NUMBER_OF_REFERENCE_POINTS];
-*/
  //
  float *reference_point_mag;
  float *reference_point_float_parameter;
@@ -137,7 +132,7 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
   float_parameter_min= 0.0;
   float_parameter_max= 1.0e16; // some very large number by default
   if ( parameter_number == -1 )
-   threshold_sigma=2.0*threshold_sigma;  // want to relax the threshould -- red stars appear bigger on refractor images
+   threshold_sigma=2.0*threshold_sigma;  // want to relax the threshold -- red stars appear bigger on refractor images
                                          // also see MAG_AUTO below
                                          // This is based on the test:
                                          // ./vast --failsafe -u --selectbestaperture /mnt/usb/TCPJ00114297+6611190/Stas/2020-08-07_NCas/fd_2020-08-07_NCas_30sec_H_-15C_0*
@@ -514,7 +509,7 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
    if ( parameter_number >= 0 ) {
     float_parameter_value_for_STAR= STAR[i].float_parameters[parameter_number];
    }
-   if ( fabs( reference_point_float_parameter[index_of_the_nearest_reference_point] - float_parameter_value_for_STAR ) > threshold_sigma * reference_point_float_parameter_sigma[index_of_the_nearest_reference_point] ) {
+   if ( fabsf( reference_point_float_parameter[index_of_the_nearest_reference_point] - float_parameter_value_for_STAR ) > threshold_sigma * reference_point_float_parameter_sigma[index_of_the_nearest_reference_point] ) {
     if ( STAR[i].vast_flag == 0 ) {
      flagged_stars_counter++;
     } // update counter only if the star was not flagged earlier

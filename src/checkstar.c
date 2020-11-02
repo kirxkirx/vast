@@ -20,7 +20,7 @@
 #include "vast_limits.h"
 #include "lightcurve_io.h"
 
-void write_fake_log_file( double *jd, int *Nobs ) {
+void write_fake_log_file( double *jd, size_t *Nobs ) {
  int i;
  FILE *logfile;
  fprintf( stderr, "Writing fake vast_image_details.log ... " );
@@ -36,7 +36,7 @@ void write_fake_log_file( double *jd, int *Nobs ) {
  return;
 }
 
-void get_dates_from_lightcurve_files( double *jd, int *Nobs ) {
+void get_dates_from_lightcurve_files( double *jd, size_t *Nobs ) {
  DIR *dp;
  struct dirent *ep;
  FILE *lightcurvefile;
@@ -88,7 +88,7 @@ void get_dates_from_lightcurve_files( double *jd, int *Nobs ) {
  return;
 }
 
-void get_dates( double *jd, int *Nobs ) {
+void get_dates( double *jd, size_t *Nobs ) {
  FILE *vastlogfile;
  char str[MAX_LOG_STR_LENGTH];
  char jd_str[MAX_LOG_STR_LENGTH];
@@ -111,10 +111,10 @@ void get_dates( double *jd, int *Nobs ) {
    ( *Nobs )+= 1;
   }
   fclose( vastlogfile );
-  fprintf( stderr, "Total number of observations (from log file) %d\n", ( *Nobs ) );
+  fprintf( stderr, "Total number of observations (from log file) %ld\n", ( *Nobs ) );
   return;
  }
- fprintf( stderr, "Total number of observations %d\n", ( *Nobs ) );
+ fprintf( stderr, "Total number of observations %ld\n", ( *Nobs ) );
  return;
 }
 
@@ -124,7 +124,7 @@ int main() {
  FILE *datafile;
  char data_m_sigma_line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
 
- int Nobs, Nstars, i, j, k;
+ size_t Nobs, Nstars, i, j, k;
 
  char **star_numbers;
  double *jd;
@@ -163,7 +163,7 @@ int main() {
  while ( NULL != fgets( data_m_sigma_line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, datafile ) )
   Nstars++;
  fclose( datafile );
- fprintf( stderr, "Number of stars in data.m_sigma %d\n", Nstars );
+ fprintf( stderr, "Number of stars in data.m_sigma %ld\n", Nstars );
 
  if ( Nstars <= 0 ) {
   fprintf( stderr, "ERROR: Trying allocate zero or negative bytes amount\n" );

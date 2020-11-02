@@ -1046,8 +1046,7 @@ grid createGrid( frame f ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for gr(ident_lib.c)\n" );
   exit( 1 );
  };
-
- cellSize= sqrt( f.sizeX * f.sizeY / ( (double)f.count ) );
+ cellSize= sqrtf( f.sizeX * f.sizeY / ( (float)f.count ) );
 
  minX= f.minX - f.sizeX;
  minY= f.minY - f.sizeY;

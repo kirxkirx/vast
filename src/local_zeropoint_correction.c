@@ -21,8 +21,8 @@
 
 #define CORRECTION_RADIUS_DEG_OR_PIX 20.0 / 3600.0
 
-void write_fake_log_file( double *jd, int *Nobs ) {
- int i;
+void write_fake_log_file( double *jd, size_t *Nobs ) {
+ size_t i;
  FILE *logfile;
  fprintf( stderr, "Writing fake vast_image_details.log ... " );
  logfile= fopen( "vast_image_details.log", "w" );
@@ -37,7 +37,7 @@ void write_fake_log_file( double *jd, int *Nobs ) {
  return;
 }
 
-void get_dates_from_lightcurve_files( double *jd, int *Nobs ) {
+void get_dates_from_lightcurve_files( double *jd, size_t *Nobs ) {
  DIR *dp;
  struct dirent *ep;
  FILE *lightcurvefile;
@@ -91,11 +91,12 @@ void get_dates_from_lightcurve_files( double *jd, int *Nobs ) {
  return;
 }
 
-void get_dates( double *jd, int *Nobs ) {
+void get_dates( double *jd, size_t *Nobs ) {
  FILE *vastlogfile;
  char str[MAX_LOG_STR_LENGTH];
  char jd_str[MAX_LOG_STR_LENGTH];
- unsigned int i, j, k;
+ //unsigned int i, j, k;
+ size_t i, j, k;
  ( *Nobs )= 0;
  vastlogfile= fopen( "vast_image_details.log", "r" );
  if ( NULL == vastlogfile ) {
@@ -114,10 +115,10 @@ void get_dates( double *jd, int *Nobs ) {
    ( *Nobs )+= 1;
   }
   fclose( vastlogfile );
-  fprintf( stderr, "Total number of observations (from log file) %d\n", ( *Nobs ) );
+  fprintf( stderr, "Total number of observations (from log file) %ld\n", ( *Nobs ) );
   return;
  }
- fprintf( stderr, "Total number of observations %d\n", ( *Nobs ) );
+ fprintf( stderr, "Total number of observations %ld\n", ( *Nobs ) );
  return;
 }
 
@@ -200,8 +201,10 @@ int main() {
 
  char star_number_string[FILENAME_LENGTH];
 
- int Nobs;
- int Nstars;
+// int Nobs;
+// int Nstars;
+ size_t Nobs;
+ size_t Nstars;
 
  float *data;
  float *w;
@@ -238,7 +241,7 @@ int main() {
  while ( -1 < fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename ) )
   Nstars++;
  fclose( datafile );
- fprintf( stderr, "Number of stars in sysrem_input_star_list.lst %d\n", Nstars );
+ fprintf( stderr, "Number of stars in sysrem_input_star_list.lst %ld\n", Nstars );
  if ( Nstars < 100 ) {
   fprintf( stderr, "Too few stars!\n" );
   exit( 1 );

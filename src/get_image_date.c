@@ -366,7 +366,14 @@ int main( int argc, char **argv ) {
   // UnixTime is double, so we add 0.5 for the propoer type conversion
   UnixTime_time_t= (time_t)(UnixTime + 0.5);
  }
+ // Use thread-safe gmtime_r() instead of gmtime() if possible
+ // will need to free( structureTIME ) below
+#if defined(_POSIX_C_SOURCE) || defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
+ structureTIME=malloc( sizeof(struct tm) );
+ gmtime_r( &UnixTime_time_t, structureTIME );
+#else
  structureTIME= gmtime( &UnixTime_time_t );
+#endif
 
  // Print output
  fprintf( stdout, "%s\n", stderr_output );
@@ -384,6 +391,10 @@ int main( int argc, char **argv ) {
  // Clean up
  free( log_output );
  free( stderr_output );
+
+#if defined(_POSIX_C_SOURCE) || defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
+ free( structureTIME );
+#endif
 
 // Check if the output was actually reasonable
 #ifdef STRICT_CHECK_OF_JD_AND_MAG_RANGE
