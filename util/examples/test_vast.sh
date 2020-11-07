@@ -7240,6 +7240,13 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
+
+
+###### Update the catalogs and asteroid database ######
+lib/update_offline_catalogs.sh force
+
+
+
 ##### Saturn/Iapetus test #####
 # Download the test dataset if needed
 if [ ! -d ../NMW_Saturn_test ];then
