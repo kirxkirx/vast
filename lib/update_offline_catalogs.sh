@@ -16,8 +16,8 @@ fi
 # Get current date from the system clock
 CURRENT_DATE_UNIXSEC=`date +%s`
 
-#for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;do
-for FILE_TO_UPDATE in astorb.dat ;do
+for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;do
+#for FILE_TO_UPDATE in astorb.dat ;do
  NEED_TO_UPDATE_THE_FILE=0
 
  # check if the file is there at all
