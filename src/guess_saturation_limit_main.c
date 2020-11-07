@@ -21,7 +21,8 @@ int main( int argc, char **argv ) {
  char flag_image_filename[FILENAME_LENGTH];
  char weight_image_filename[FILENAME_LENGTH];
 
- int is_flag_image_used;
+ int is_flag_image_used= 2; // 2 - guess by default, 1 - always use the flag image, 0 - never use the flag image
+                            // The decision will also be stored in this variable: 1 - use the flag image, 0 - don't use it
 
  if ( argc < 2 ) {
   fprintf( stderr, "Usage: %s image.fits\n", argv[0] );

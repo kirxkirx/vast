@@ -10119,8 +10119,14 @@ if [ -f ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLSKYMARK002a_$TEST"
   fi
- fi 
- #util/get_image_date ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit | grep "Exposure   5 sec, 09.03.2015 13:46:48 UT = JD(UT) 2457091.07419 mid. exp."
+ fi
+ # make sure no flag image is created for this one 
+ lib/guess_saturation_limit_main ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit 2>&1 | grep --quiet -e 'FLAG_IMAGE' -e 'WEIGHT_IMAGE' -e 'WEIGHT_TYPE'
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLSKYMARK_FLAG_IMG_CREATED"
+ fi
+ #
  util/get_image_date ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit | grep 'Exposure   5 sec, 09.03.2015 13:46:48 UT = JD(UT) 2457091.07420 mid. exp.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0

@@ -279,6 +279,9 @@ int guess_gain( char *fitsfilename, char *resulting_sextractor_cl_parameter_stri
 
 // This function will count the number of zeroes in an image and if there are many - will create a flag image
 // for the SExtractor to flag-out stars near zero-leel pixels
+//
+// Note that is_flag_image_used HAS TO BE INITIALIZED to 2, 1 or 0
+// 2 - guess by default, 1 - always use the flag image, 0 - never use the flag image
 int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_cl_parameter_string, int *is_flag_image_used, char *flag_image_filename, char *weight_image_filename ) {
 
  fitsfile *fptr; // FITS file pointer
@@ -539,7 +542,6 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
 
  ///// If we are still here, check how many zero-value neighbors each zero-value pixel has?
  ///// If there are only few for each pixel -- assume we don't need a flag image
- //if ( !fits_open_image(&fptr, fitsfilename, READONLY, &status) ){
  if ( 0 == fits_open_image( &fptr, fitsfilename, READONLY, &status ) ) {
   pix= (double *)malloc( totpix * sizeof( double ) ); // memory for the input image
   if ( pix == NULL ) {
@@ -644,11 +646,15 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
     ( *is_flag_image_used )= 0;
     resulting_sextractor_cl_parameter_string[0]= '\0';
     flag_image_filename[0]= '\0';
-    fprintf(stderr,"Not creating the flag image after all - 0.5 > %d/( 2*%d + 1 )^2 = %lf\n", number_of_zeroes_tmp, COUNT_N_PIXELS_AROUND_BAD_ONE, (double)number_of_zeroes_tmp / ( (double)( 2 * COUNT_N_PIXELS_AROUND_BAD_ONE + 1 ) * (double)( 2 * COUNT_N_PIXELS_AROUND_BAD_ONE + 1 ) ) );
+    fprintf(stderr,"(There are many zero-value neighbors to a typical zero-value pixel)\nNot creating the flag image after all -- 0.5 > %d/( 2*%d + 1 )^2 = %lf\n", number_of_zeroes_tmp, COUNT_N_PIXELS_AROUND_BAD_ONE, (double)number_of_zeroes_tmp / ( (double)( 2 * COUNT_N_PIXELS_AROUND_BAD_ONE + 1 ) * (double)( 2 * COUNT_N_PIXELS_AROUND_BAD_ONE + 1 ) ) );
     return 0;
+   } else {
+    fprintf( stderr, "(There are not too many zero-value neighbors to a typical zero-value pixel)\nCreating the flag image -- 0.5 <= %d/( 2*%d + 1 )^2 = %lf\n", number_of_zeroes_tmp, COUNT_N_PIXELS_AROUND_BAD_ONE, (double)number_of_zeroes_tmp / ( (double)( 2 * COUNT_N_PIXELS_AROUND_BAD_ONE + 1 ) * (double)( 2 * COUNT_N_PIXELS_AROUND_BAD_ONE + 1 ) ) );
    }
+  } else {
+   fprintf( stderr, " ( *is_flag_image_used ) = %d   -- not checking the number of zero neighbors\n", ( *is_flag_image_used ) );
   } // if( 1!=is_flag_image_used ){
- }
+ } // if ( 0 == fits_open_image( &fptr, fitsfilename, READONLY, &status ) ) {
 
  if ( status != 0 ) {
   fprintf( stderr, "WARNING! Cannot open FITS image %s\n", fitsfilename );
