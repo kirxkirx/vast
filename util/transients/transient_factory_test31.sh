@@ -393,7 +393,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   SE_CATALOG_FOR_SECOND_EPOCH__FIRST_IMAGE=`grep "$SECOND_EPOCH__FIRST_IMAGE" vast_images_catalogs.log | awk '{print $1}'`
   MEDIAN_DIFFERENCE_AminusB_PIX=`cat $SE_CATALOG_FOR_SECOND_EPOCH__FIRST_IMAGE | awk '{print $18-$20}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.2f", $2}'`
   ### ===> APERTURE LIMITS HARDCODED HERE <=== (this is median difference in pixels between semi-major and semi-minor axes of the source)
-  TEST=`echo "$MEDIAN_DIFFERENCE_AminusB_PIX < 0.6" | bc -ql`
+  TEST=`echo "$MEDIAN_DIFFERENCE_AminusB_PIX < 0.45" | bc -ql`
   if [ $TEST -eq 0 ];then
    echo "ERROR: tracking error (elongated stars), median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  "`basename $SECOND_EPOCH__FIRST_IMAGE` >> transient_factory_test31.txt
    continue
@@ -403,7 +403,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   SE_CATALOG_FOR_SECOND_EPOCH__SECOND_IMAGE=`grep "$SECOND_EPOCH__SECOND_IMAGE" vast_images_catalogs.log | awk '{print $1}'`
   MEDIAN_DIFFERENCE_AminusB_PIX=`cat $SE_CATALOG_FOR_SECOND_EPOCH__SECOND_IMAGE | awk '{print $18-$20}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.2f", $2}'`
   ### ===> APERTURE LIMITS HARDCODED HERE <=== (this is median difference in pixels between semi-major and semi-minor axes of the source)
-  TEST=`echo "$MEDIAN_DIFFERENCE_AminusB_PIX < 0.6" | bc -ql`
+  TEST=`echo "$MEDIAN_DIFFERENCE_AminusB_PIX < 0.45" | bc -ql`
   if [ $TEST -eq 0 ];then
    echo "ERROR: tracking error (elongated stars) median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  "`basename $SECOND_EPOCH__SECOND_IMAGE` >> transient_factory_test31.txt
    continue
