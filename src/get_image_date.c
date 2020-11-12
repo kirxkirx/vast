@@ -382,9 +382,16 @@ int main( int argc, char **argv ) {
  fprintf( stdout, "        MJD %14.6lf\n", MJD );
  fprintf( stdout, "  Unix Time %.0lf\n", UnixTime );
  fprintf( stdout, "Julian year %14.9lf\n", Julian_year );
-// The roblem is that the sub-second accuracy is lost in this output
+// The problem is that the sub-second accuracy is lost in this output
  fprintf( stdout, " MPC format %04d %02d %8.5lf\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, (double)structureTIME->tm_mday + (double)structureTIME->tm_hour / 24.0 + (double)structureTIME->tm_min / ( 24.0 * 60 ) + (double)structureTIME->tm_sec / ( 24.0 * 60 * 60 ) );
 // fprintf( stdout, " MPC format %04d %02d %8.6lf\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, (double)structureTIME->tm_mday + (double)structureTIME->tm_hour / 24.0 + (double)structureTIME->tm_min / ( 24.0 * 60 ) + (double)structureTIME->tm_sec / ( 24.0 * 60 * 60 ) );
+// The problem is that the sub-second accuracy is lost in this output
+ fprintf( stdout, " ATel style %04d-%02d-%8.5lf\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, (double)structureTIME->tm_mday + (double)structureTIME->tm_hour / 24.0 + (double)structureTIME->tm_min / ( 24.0 * 60 ) + (double)structureTIME->tm_sec / ( 24.0 * 60 * 60 ) );
+// The problem is that the sub-second accuracy is lost in this output
+ fprintf( stdout, " (mid. exp) %04d-%02d-%02d %02d:%02d:%02d\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, structureTIME->tm_mday, structureTIME->tm_hour, structureTIME->tm_min, structureTIME->tm_sec );
+// The problem is that the sub-second accuracy is lost in this output
+ fprintf( stdout, " (mid. exp) %04d-%02d-%02dT%02d:%02d:%02d\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, structureTIME->tm_mday, structureTIME->tm_hour, structureTIME->tm_min, structureTIME->tm_sec );
+
  //
  //fprintf( stderr, "DEBUG UnixTime_time_t=%ld UnixTime(double)=%lf\n",UnixTime_time_t,UnixTime);
 
