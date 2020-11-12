@@ -676,7 +676,8 @@ fi
 # Download the test dataset if needed
 if [ ! -d ../test_data_photo ];then
  cd ..
- wget -c "ftp://scan.sai.msu.ru/pub/software/vast/test_data_photo.tar.bz2"
+ #wget -c "ftp://scan.sai.msu.ru/pub/software/vast/test_data_photo.tar.bz2"
+ wget -c "http://scan.sai.msu.ru/vast/test_data_photo.tar.bz2"
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" >> /dev/stderr
   exit 1
@@ -1524,7 +1525,8 @@ fi
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
  cd ..
- wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ #wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ wget -c "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -2025,7 +2027,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
  cd ..
- wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ #wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ wget -c "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -2478,7 +2481,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
  cd ..
- wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ #wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ wget -c "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -2666,7 +2670,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
  cd ..
- wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ #wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ wget -c "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -3093,7 +3098,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
  cd ..
- wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ #wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ wget -c "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -3254,7 +3260,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
  cd ..
- wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ #wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ wget -c "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -3383,7 +3390,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
  cd ..
- wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ #wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ wget -c "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -3510,7 +3518,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
  cd ..
- wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ #wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ wget -c "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -3640,7 +3649,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
  cd ..
- wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ #wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ wget -c "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd $WORKDIR
 fi
 if [ ! -d '../sample space' ];then
@@ -3772,7 +3782,8 @@ remove_test_data_to_save_space
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
  cd ..
- wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ #wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ wget -c "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -3910,7 +3921,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
  cd ..
- wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ #wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ wget -c "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -4067,7 +4079,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
  cd ..
- wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ #wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ wget -c "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -4223,7 +4236,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
  cd ..
- wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ #wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ wget -c "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -4699,7 +4713,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
  cd ..
- wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ #wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ wget -c "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd $WORKDIR
 fi
 if [ ! -d '../sample space' ];then
@@ -6839,7 +6854,8 @@ fi
 # Download the test dataset if needed
 if [ ! -d ../transient_detection_test_Ceres ];then
  cd ..
- wget -c "ftp://scan.sai.msu.ru/pub/software/vast/transient_detection_test_Ceres.tar.bz2" && tar -xvjf transient_detection_test_Ceres.tar.bz2 && rm -f transient_detection_test_Ceres.tar.bz2
+ #wget -c "ftp://scan.sai.msu.ru/pub/software/vast/transient_detection_test_Ceres.tar.bz2" && tar -xvjf transient_detection_test_Ceres.tar.bz2 && rm -f transient_detection_test_Ceres.tar.bz2
+ wget -c "http://scan.sai.msu.ru/vast/transient_detection_test_Ceres.tar.bz2" && tar -xvjf transient_detection_test_Ceres.tar.bz2 && rm -f transient_detection_test_Ceres.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
