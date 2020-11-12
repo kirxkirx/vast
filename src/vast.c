@@ -655,6 +655,9 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
   return;
  }
 
+ // TEST
+ //sleep(1);
+
  a_minus_b__image= malloc( Num * sizeof( double ) );
  a_minus_b__image__to_be_runied_by_sort= malloc( Num * sizeof( double ) );
  a_minus_b= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
@@ -670,7 +673,7 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
   file= fopen( sextractor_catalog, "r" );
   if ( file == NULL ) {
    fprintf( stderr, "WARNING in choose_best_reference_image(): cannot open file %s\n", sextractor_catalog );
-   a_minus_b__image__to_be_runied_by_sort[i]=a_minus_b__image[i]= -0.1; // is it a good choice?
+   a_minus_b__image__to_be_runied_by_sort[i]=a_minus_b__image[i]= -0.01; // is it a good choice?
    continue;
   }
 
@@ -678,9 +681,12 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
 //  number_of_good_detected_stars[i]= 0.0;
   number_of_good_detected_stars= 0;
   while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, file ) ) {
+ //  fprintf( stderr, "DEBUG000 %s\n", sextractor_catalog_string);
    sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
    external_flag= 0;
    if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &star_number_in_sextractor_catalog, &flux_adu, &flux_adu_err, &mag, &sigma_mag, &position_x_pix, &position_y_pix, &a_a, &a_a_err, &a_b, &a_b_err, &sextractor_flag, &external_flag, &psf_chi2, float_parameters ) ) {
+    sextractor_catalog_string[0]='\0'; // just in case
+    //fprintf( stderr, "DEBUG001 %s\n", sextractor_catalog_string);
     continue;
    }
    if ( star_number_in_sextractor_catalog < previous_star_number_in_sextractor_catalog ) {
@@ -688,6 +694,8 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
    } else {
     previous_star_number_in_sextractor_catalog= star_number_in_sextractor_catalog;
    }
+//   fprintf( stderr, "DEBUG002 %s\n", sextractor_catalog_string);
+   sextractor_catalog_string[0]='\0'; // just in case
 
    // Check if the catalog line is a really band one
    if ( flux_adu <= 0 ) {
@@ -730,41 +738,50 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
     continue;
    }
 #endif
+//   fprintf( stderr, "DEBUG003 %s\n", sextractor_catalog_string);
    //
    if ( flux_adu < MIN_SNR * flux_adu_err ) {
     continue;
    }
+//   fprintf( stderr, "DEBUG004 %s\n", sextractor_catalog_string);
    //
    // https://en.wikipedia.org/wiki/Full_width_at_half_maximum
    // ok, I'm not sure if A is the sigma or sigma/2
    if ( SIGMA_TO_FWHM_CONVERSION_FACTOR * (a_a + a_a_err) < FWHM_MIN ) {
     continue;
    }
+//   fprintf( stderr, "DEBUG005 %s\n", sextractor_catalog_string);
    if ( SIGMA_TO_FWHM_CONVERSION_FACTOR * (a_b + a_b_err) < FWHM_MIN ) {
     continue;
    }
+//   fprintf( stderr, "DEBUG006 %s\n", sextractor_catalog_string);
    // float_parameters[0] is the actual FWHM
    if ( float_parameters[0] < FWHM_MIN ) {
     continue;
    }
+//   fprintf( stderr, "DEBUG007 %s\n", sextractor_catalog_string);
    //
    if ( external_flag != 0 ) {
     continue;
    }
    //
+//   fprintf( stderr, "DEBUG008 %s\n", sextractor_catalog_string);
    // just in case we mark objects with really bad SExtractor flags
    if ( sextractor_flag > 7 ) {
     continue;
    }
+//   fprintf( stderr, "DEBUG009 %s\n", sextractor_catalog_string);
    a_minus_b[number_of_good_detected_stars]= a_a - a_b;
    number_of_good_detected_stars++;
+//   fprintf( stderr, "DEBUG010 %d\n----------------------------------\n", number_of_good_detected_stars);
   } // while( NULL!=fgets(sextractor_catalog_string,MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT,file) ){
+//  fprintf( stderr, "DEBUG011 %d\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n", number_of_good_detected_stars);
 
   fclose( file );
 //  number_of_good_detected_stars[i]= (double)number_of_good_detected_stars;
   if ( number_of_good_detected_stars < MIN_NUMBER_OF_STARS_ON_FRAME ) {
    // mark as bad image that has too few stars
-   a_minus_b__image__to_be_runied_by_sort[i]=a_minus_b__image[i]= -0.1; // is it a good choice?
+   a_minus_b__image__to_be_runied_by_sort[i]=a_minus_b__image[i]= -0.001; // is it a good choice?
    continue;
   }
   gsl_sort( a_minus_b, 1, number_of_good_detected_stars );
@@ -794,7 +811,8 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
  // Cycle through all images and mark good and bad ones
  for ( i= 0; i < Num; i++ ) {
   // the image is so bad we could not compute A-B 
-  if ( a_minus_b__image[i] == -0.1 ) {
+  //if ( a_minus_b__image[i] == -0.1 ) {
+  if ( a_minus_b__image[i] < 0.0 ) {
    vast_bad_image_flag[i]= 1;
    fprintf( file, "%d  %.3lf  %s\n", vast_bad_image_flag[i], a_minus_b__image[i], input_images[i] );
    fprintf( stderr, "%d  %.3lf  %s\n", vast_bad_image_flag[i], a_minus_b__image[i], input_images[i] );
@@ -2565,6 +2583,8 @@ int main( int argc, char **argv ) {
   convert_timesys_to_TT=0;
   fprintf(stderr, "transient search mode: setting the maximum acceptable SExtractor flag to 3\n");
   maxsextractorflag= 99; // 3 + 4; // we want to accept all sorts of blended and saturated sources
+  fprintf(stderr, "transient search mode: disabling rejectin of images with elliptical stars\n");
+  param_nodiscardell= 1;
   fprintf( stderr, "################\n" );
  }
 
@@ -2587,6 +2607,8 @@ int main( int argc, char **argv ) {
   fprintf(stderr, "diffphot mode: setting the maximum acceptable SExtractor flag to 3\n");
   param_filterout_magsize_outliers= 0;
   fprintf(stderr, "diffphot mode: disabling magnitude-size outlier filtering\n");
+  fprintf(stderr, "diffphot mode: disabling rejectin of images with elliptical stars\n");
+  param_nodiscardell= 1;
   fprintf(stderr, "################\n\n");
  }
  
@@ -2910,7 +2932,7 @@ int main( int argc, char **argv ) {
  //
  // n_fork>16 condition is here because the above wild assumption will not
  // work on a highly multi-core system!
- if ( Num < 100 || param_automatically_select_reference_image == 1 || n_fork>16 ) {
+ if ( Num < 100 || param_automatically_select_reference_image == 1 || n_fork > 16 || param_nodiscardell == 0 ) {
   for ( ; i_fork--; ) {
    fprintf( stderr, "Waiting for thread %d to finish...\n", i_fork + 1 );
    if ( i_fork < 0 )
@@ -2918,25 +2940,44 @@ int main( int argc, char **argv ) {
    pid= child_pids[i_fork];
    waitpid( pid, &pid_status, 0 );
   }
+
+  // It seems the above logic may leave off one still running thread???
+  // We'll catch it with the while cycle below
+  // https://stackoverflow.com/questions/19461744/how-to-make-parent-wait-for-all-child-processes-to-finish
+  while ((pid_of_child_that_finished = wait(&pid_status)) > 0); // this way, the parent waits for all the child processes
+  
+  // Sleep 1sec to make sure the image cataog files are actually populated.
+  // It seems that sometimes the followin functions read the the image ctalogs before 
+  // they are actually written despite the above thread has already finished. 
+  // This is an extra precaution as the problem seems to be solved by the above wait loop.
+  //sleep(1);
+
   fprintf( stderr, "\n\nDone with SExtractor!\n\n" );
+  
+  // Elongated image star mark and automatic reference image selection cannot work with 
+  // the fast processing hack: they need all the image catalogs to be present.
+     
+  // Mark images with elongated stars as bad
+  if ( param_nodiscardell == 0 ) {
+   mark_images_with_elongated_stars_as_bad( input_images, vast_bad_image_flag, Num );
+  }
+
+  // Choose the reference image if we were asked to (otherwise the first image will be used)
+  if ( param_automatically_select_reference_image == 1 ) {
+   choose_best_reference_image( input_images, vast_bad_image_flag, Num );
+  }
+  
  } else {
   fprintf( stderr, "Fast processing hack: continue to star matching while SExtractor is still computing!\n");
  }
 
+
  fprintf( stderr, "\n\nMatching stars between images!\n\n" );
 
- // Mark images with elongated stars as bad
- if ( param_nodiscardell == 0 ) {
-  mark_images_with_elongated_stars_as_bad( input_images, vast_bad_image_flag, Num );
- }
 
- // Choose the reference image if we were asked to (otherwise the first image will be used)
- if ( param_automatically_select_reference_image == 1 ) {
-  choose_best_reference_image( input_images, vast_bad_image_flag, Num );
- }
  
 
- /*  Allocate memory for arrays with coordinates. */
+ //  Allocate memory for arrays with coordinates. 
  malloc_size= MAX_NUMBER_OF_STARS * sizeof( int );
  if ( malloc_size <= 0 ) {
   fprintf( stderr, "ERROR008 - trying to allocate zero or negative number of bytes!\n" );

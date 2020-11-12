@@ -5307,7 +5307,8 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
-remove_test_data_to_save_space
+# the next test relies on the same test data, so don't remove it now
+#remove_test_data_to_save_space
 
 ##### Very few stars on the reference frame #####
 # Download the test dataset if needed
@@ -5439,7 +5440,116 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
+# the next test relies on the same test data, so don't remove it now
+#remove_test_data_to_save_space
+
+##### (Multiple VaST runs) Very few stars on the reference frame #####
+# Download the test dataset if needed
+if [ ! -d ../vast_test_bright_stars_failed_match ];then
+ cd ..
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
+ cd $WORKDIR
+fi
+# If the test data are found
+if [ -d ../vast_test_bright_stars_failed_match ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "Reference image with very few stars test 3 " >> /dev/stderr
+ echo -n "Reference image with very few stars test 3: " >> vast_test_report.txt
+ cp default.sex.ccd_bright_star default.sex
+ # Run VaST multiple times to catch a rarely occurring problem
+ for VAST_RUN in `seq 1 100` ;do
+  ./vast -u -t2 -f ../vast_test_bright_stars_failed_match/*
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3000"
+   break
+  fi
+  # Check results
+  if [ -f vast_summary.log ];then
+   grep --quiet "Images processed 23" vast_summary.log
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3001"
+    break
+   fi
+   grep --quiet "Images used for photometry 23" vast_summary.log
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3002"
+    break
+   fi
+   grep --quiet "Ref.  image: 2458689.62122 25.07.2019 02:54:30" vast_summary.log
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3003a"
+    break
+   fi
+   grep --quiet "First image: 2458689.62122 25.07.2019 02:54:30" vast_summary.log
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3003b"
+    break
+   fi
+   grep --quiet "Last  image: 2458689.63980 25.07.2019 03:21:16" vast_summary.log
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3003c"
+    break
+   fi
+   # Hunting the mysterious non-zero reference frame rotation cases
+   if [ -f vast_image_details.log ];then
+    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3_nonzero_ref_frame_rotation"
+     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+     DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+     break
+    fi
+    grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3_nonzero_ref_frame_rotation_test2"
+     GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+     DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+     break
+    fi
+   else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3_NO_vast_image_details_log"
+    break
+   fi
+  #
+  else
+   echo "ERROR: cannot find vast_summary.log" >> /dev/stderr
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3_ALL"
+  fi
+ done # for VAST_RUN in `seq 1 100` ;do
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mReference image with very few stars test 3 \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mReference image with very few stars test 3 \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS3_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
 remove_test_data_to_save_space
+
 
 ##### Test the two levels of directory recursion #####
 # Download the test dataset if needed
@@ -11426,6 +11536,31 @@ if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND027"
     fi
+    #
+    #
+    if [ ! -d ../vast_test_bright_stars_failed_match ];then
+     cd ..
+     wget -c "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
+     cd $WORKDIR
+    fi
+    # If the test data are found
+    if [ -d ../vast_test_bright_stars_failed_match ];then
+     valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes   ./vast -u -t2 -f ../vast_test_bright_stars_failed_match/* &> valgrind_test.out
+     if [ $? -ne 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND028"
+     fi
+     grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+      if [ $ERRORS -ne 0 ];then
+       echo "ERROR"
+       break
+      fi
+     done | grep --quiet 'ERROR'
+     if [ $? -eq 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND029"
+     fi
+    fi # if [ -d ../vast_test_bright_stars_failed_match ];then
     #
    
     # clean up
