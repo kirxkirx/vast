@@ -194,7 +194,8 @@ if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ ! -s "lib/catal
    fi
    # Make sure we have the proper format
    MAG=`echo "$MAG" | awk '{printf "%.2f", $1}'`
-   TEST=`echo "$MAG > 4.0" | bc -ql`
+   #TEST=`echo "$MAG > 4.0" | bc -ql`
+   TEST=`echo "$MAG>4.0" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`   
    if [ $TEST -eq 1 ];then
     continue
    fi

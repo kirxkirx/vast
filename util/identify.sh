@@ -474,8 +474,8 @@ field identification have good chances to fail. Sorry... :(
 
  # Try to solve the image with a range of trial FIELD_OF_VIEW_ARCMINs
 
- #for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN `echo "3/4*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` `echo "2*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` `echo "10*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` ;do
- for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN `echo "3*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` `echo "3/4*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` ;do
+ #for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN `echo "3*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` `echo "3/4*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` ;do
+ for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN `echo "$FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",3*$1}'` `echo "$FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",$1*3/4}'` ;do
  
  echo "######### Trying to solve plate assuming $TRIAL_FIELD_OF_VIEW_ARCMIN' field of view #########
  $FITSFILE"

@@ -5474,7 +5474,8 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
  echo -n "Reference image with very few stars test 3: " >> vast_test_report.txt
  cp default.sex.ccd_bright_star default.sex
  # Run VaST multiple times to catch a rarely occurring problem
- for VAST_RUN in `seq 1 100` ;do
+ # amazon thing is likely to time out with the number of trials set to 100
+ for VAST_RUN in `seq 1 10` ;do
   ./vast -u -t2 -f ../vast_test_bright_stars_failed_match/*
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -14082,7 +14083,9 @@ else
  # Ask user on the command line
  echo "### Send the above report to the VaST developer? (yes/no)"
  read USER_ANSWER
- if [ "yes" = "$USER_ANSWER" ] || [ "y" = "$USER_ANSWER" ] || [ "ys" = "$USER_ANSWER" ] || [ "Yes" = "$USER_ANSWER" ] || [ "YES" = "$USER_ANSWER" ] || [ "1" = "$USER_ANSWER" ] ;then
+ #if [ "yes" = "$USER_ANSWER" ] || [ "y" = "$USER_ANSWER" ] || [ "ys" = "$USER_ANSWER" ] || [ "Yes" = "$USER_ANSWER" ] || [ "YES" = "$USER_ANSWER" ] || [ "1" = "$USER_ANSWER" ] ;then
+ echo "$USER_ANSWER" | grep --quiet -e "yes" -e "yy" -e "ys" -y "Yes" -y "YES"
+ if [ $? -eq 0 ] || [ "y" = "$USER_ANSWER" ] || [ "1" = "$USER_ANSWER" ] ;then
   MAIL_TEST_REPORT_TO_KIRX="YES"
  else
   MAIL_TEST_REPORT_TO_KIRX="NO"

@@ -252,7 +252,8 @@ ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC=`echo "$ANGULAR_DISTANCE
 ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING="$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC"
 # Reject candidates with large distance between the two second-epoch detections
 ### ==> Assumptio about positional accuracy hardcoded here <===
-TEST=`echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC > 11" | bc -ql`
+#TEST=`echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC > 11" | bc -ql`
+TEST=`echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC>11" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
  echo "Rejecting candidate due to large distance ($ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC\") between the two second-epoch detections"
  clean_tmp_files
@@ -260,7 +261,8 @@ if [ $TEST -eq 1 ];then
 fi
 # Highlight candidates with suspiciously large distance between the two second-epoch detections
 ### ==> Assumptio about positional accuracy hardcoded here <===
-TEST=`echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC > 8.4" | bc -ql`
+#TEST=`echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC > 8.4" | bc -ql`
+TEST=`echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC>8.4" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
  ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING="<b><font color=\"red\">$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC</font></b>"
 else

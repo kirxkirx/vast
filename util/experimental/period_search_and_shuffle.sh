@@ -69,16 +69,21 @@ for ITERATION in `seq 1 $ITERATIONS` ;do
  done < ordered_mag_$SESSION_KEY.dat 3< randomized_JD_$SESSION_KEY.dat > current_lightcurve_$SESSION_KEY.dat
 
  PEAK=`lib/deeming_compute_periodogram current_lightcurve_$SESSION_KEY.dat $PMAX $PMIN $PHASESTEP | awk '{print $2}'`
- TEST=`echo "$PEAK>=$HIGHEST_PEAK" | bc -ql`
- if [ $TEST -eq 1 ];then
+ #TEST=`echo "$PEAK>=$HIGHEST_PEAK" | bc -ql`
+ TEST=`echo "$PEAK<$HIGHEST_PEAK" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
+ #if [ $TEST -eq 1 ];then
+ if [ $TEST -eq 0 ];then
   N_PEAKS_ABOVE_THE_HIGHEST_PEAK=$[$N_PEAKS_ABOVE_THE_HIGHEST_PEAK+1]
-  TEST=`echo "$PEAK>=$HIGHEST_FAKE_PEAK" | bc -ql`
-  if [ $TEST -eq 1 ];then
+  #TEST=`echo "$PEAK>=$HIGHEST_FAKE_PEAK" | bc -ql`
+  TEST=`echo "$PEAK<$HIGHEST_FAKE_PEAK" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
+  #if [ $TEST -eq 1 ];then
+  if [ $TEST -eq 0 ];then
    cp current_lightcurve_$SESSION_KEY.dat shuffled_lightcurve.txt
    echo "Saving the best (or the worst) shuffled lightcurve in shuffled_lightcurve.txt"
   fi
  fi
- FRACTION_OF_PEAKS_ABOVE_THE_HIGHEST_PEAK=`echo "$N_PEAKS_ABOVE_THE_HIGHEST_PEAK/$ITERATION" | bc -ql`
+ #FRACTION_OF_PEAKS_ABOVE_THE_HIGHEST_PEAK=`echo "$N_PEAKS_ABOVE_THE_HIGHEST_PEAK/$ITERATION" | bc -ql`
+ FRACTION_OF_PEAKS_ABOVE_THE_HIGHEST_PEAK=`echo "$N_PEAKS_ABOVE_THE_HIGHEST_PEAK $ITERATION" | awk '{print $1/$2}'`
  echo "$FRACTION_OF_PEAKS_ABOVE_THE_HIGHEST_PEAK  $N_PEAKS_ABOVE_THE_HIGHEST_PEAK out of $ITERATION peaks are above the original highest peak of $HIGHEST_PEAK (current peak: $PEAK ). N iterations: $ITERATIONS"
 done
 

@@ -11,6 +11,11 @@
 	* Retired the old VaST implementation of SysRem 'util/sysrem' as it started causing problems
 	with cod maintenance. The new SysRem implementation 'util/sysrem2' is now the only one and
 	'util/sysrem' is a symlink to 'util/sysrem2' kept for backward compatibility.
+	* VaST can now be used from behind an HTTP/HTTPS proxy: just export 'http_proxy' and 'https_proxy' 
+	variables before running VaST. For example:
+	export http_proxy=http://squid.sao.ru:8080
+	export https_proxy=http://squid.sao.ru:8080
+	where squid.sao.ru:8080 is the name and port of the proxy server.
 20 Oct 2020: vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911
