@@ -12224,7 +12224,7 @@ if [ $? -ne 0 ];then
 fi
 
 # this is MDV 9 already included in GCVS
-util/search_databases_with_vizquery.sh 13:21:18.38 +18:08:22.2 | grep 'SXPHE' | grep 'VARIABLE' | grep --quiet 'OU Com'
+util/search_databases_with_vizquery.sh 13:21:18.38 +18:08:22.2 | grep 'SXPHE' | grep 'VARIABLE' | grep --quiet -e 'OU Com' -e 'ASASSN-V J132118.28+180821.9'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012"

@@ -21,6 +21,8 @@ if [ -z "$WEBBROWSER" ];then
    WEBBROWSER="firefox-bin"
   elif command -v chromium &>/dev/null ;then
    WEBBROWSER="chromium"
+  elif command -v chromium-browser &>/dev/null ;then
+   WEBBROWSER="chromium-browser"
   elif command -v google-chrome-stable &>/dev/null ;then
    WEBBROWSER="google-chrome-stable"
   elif command -v google-chrome-unstable &>/dev/null ;then
