@@ -122,9 +122,11 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=2
    continue
   fi
   # Compute J-K
-  J_K=`echo "($J)-($K)" | bc -ql | awk '{printf "%.3f",$1}'`
+  #J_K=`echo "($J)-($K)" | bc -ql | awk '{printf "%.3f",$1}'`
+  J_K=`echo "$J $K" | awk '{printf "%.3f",$1-$2}'
   if [[ $eJ =~ $re ]] && [[ $eK =~ $re ]] ; then
-   eJ_K=`echo "sqrt($eJ*$eJ+$eK*$eK)" | bc -ql | awk '{printf "%.3f",$1}'`  
+   #eJ_K=`echo "sqrt($eJ*$eJ+$eK*$eK)" | bc -ql | awk '{printf "%.3f",$1}'`  
+   eJ_K=`echo "$eJ $eK" | awk '{printf "%.3f", sqrt( $1*$1 + $2*$2 ) }'`  
   else
    eJ_K="     "
   fi
@@ -215,35 +217,42 @@ if [ -f search_databases_with_vizquery_USNOB_ID_OK.tmp ];then
  rm -f search_databases_with_vizquery_USNOB_ID_OK.tmp
 fi
 ####
-R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
+#R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
+R_SEARCH_ARCSEC=`echo "$FOV" | awk '{printf "%.1f",3.0*($1/60)}'`
 B2MAG_RANGE="B2mag=1.0..12.5"
-TEST=`echo "$FOV<400.0" | bc -ql`
+#TEST=`echo "$FOV<400.0" | bc -ql`
+TEST=`echo "$FOV<400.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
- R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
+# R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
  B2MAG_RANGE="B2mag=1.0..15.5"
 fi
-TEST=`echo "$FOV<240.0" | bc -ql`
+#TEST=`echo "$FOV<240.0" | bc -ql`
+TEST=`echo "$FOV<240.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
- R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
+# R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
  B2MAG_RANGE="B2mag=1.0..16.5"
 fi
-TEST=`echo "$FOV<120.0" | bc -ql`
+#TEST=`echo "$FOV<120.0" | bc -ql`
+TEST=`echo "$FOV<120.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
  R_SEARCH_ARCSEC=3.0
  B2MAG_RANGE="B2mag=1.0..17.5"
 fi
-TEST=`echo "$FOV<60.0" | bc -ql`
+#TEST=`echo "$FOV<60.0" | bc -ql`
+TEST=`echo "$FOV<60.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
  R_SEARCH_ARCSEC=3.0
  B2MAG_RANGE="B2mag=1.0..18.5"
 fi
-TEST=`echo "$FOV<30.0" | bc -ql`
+#TEST=`echo "$FOV<30.0" | bc -ql`
+TEST=`echo "$FOV<30.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
  R_SEARCH_ARCSEC=1.5
  B2MAG_RANGE="B2mag=1.0..20.5"
 fi
 ####
-DOUBLE_R_SEARCH_ARCSEC=`echo "$R_SEARCH_ARCSEC*2" | bc -ql`
+#DOUBLE_R_SEARCH_ARCSEC=`echo "$R_SEARCH_ARCSEC*2" | bc -ql`
+DOUBLE_R_SEARCH_ARCSEC=`echo "$R_SEARCH_ARCSEC" | awk '{print 2*$1}'`
 echo " "
 echo "Searching USNO-B1.0 for the brightest objects within $R_SEARCH_ARCSEC\" around $RA $DEC in the range of $B2MAG_RANGE"
 #echo " "
@@ -284,35 +293,42 @@ if [ -f search_databases_with_vizquery_GAIA_ID_OK.tmp ];then
  rm -f search_databases_with_vizquery_GAIA_ID_OK.tmp
 fi
 ####
-R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
+#R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
+R_SEARCH_ARCSEC=`echo "$FOV" | awk '{printf "%.1f",3.0*($1/60)}'`
 GMAG_RANGE="Gmag=1.0..12.5"
-TEST=`echo "$FOV<400.0" | bc -ql`
+#TEST=`echo "$FOV<400.0" | bc -ql`
+TEST=`echo "$FOV<400.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
- R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
+# R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
  GMAG_RANGE="Gmag=1.0..15.5"
 fi
-TEST=`echo "$FOV<240.0" | bc -ql`
+#TEST=`echo "$FOV<240.0" | bc -ql`
+TEST=`echo "$FOV<240.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
- R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
+# R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
  GMAG_RANGE="Gmag=1.0..16.5"
 fi
-TEST=`echo "$FOV<120.0" | bc -ql`
+#TEST=`echo "$FOV<120.0" | bc -ql`
+TEST=`echo "$FOV<120.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
  R_SEARCH_ARCSEC=3.0
  GMAG_RANGE="Gmag=1.0..17.5"
 fi
-TEST=`echo "$FOV<60.0" | bc -ql`
+#TEST=`echo "$FOV<60.0" | bc -ql`
+TEST=`echo "$FOV<60.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
  R_SEARCH_ARCSEC=3.0
  GMAG_RANGE="Gmag=1.0..18.5"
 fi
-TEST=`echo "$FOV<30.0" | bc -ql`
+#TEST=`echo "$FOV<30.0" | bc -ql`
+TEST=`echo "$FOV<30.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
  R_SEARCH_ARCSEC=1.5
  GMAG_RANGE="Gmag=1.0..20.5"
 fi
 ####
-DOUBLE_R_SEARCH_ARCSEC=`echo "$R_SEARCH_ARCSEC*2" | bc -ql`
+#DOUBLE_R_SEARCH_ARCSEC=`echo "$R_SEARCH_ARCSEC*2" | bc -ql`
+DOUBLE_R_SEARCH_ARCSEC=`echo "$R_SEARCH_ARCSEC" | awk '{print 2*$1}'`
 echo " "
 echo "Searching Gaia DR2 for the brightest objects within $R_SEARCH_ARCSEC\" around $RA $DEC in the range of $GMAG_RANGE"
 echo "$TIMEOUTCOMMAND $VAST_PATH""lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/gaia2 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c='$RA $DEC' $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,Var"

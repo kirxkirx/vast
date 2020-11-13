@@ -88,7 +88,8 @@ fi
 while read -r A REST && read -r B REST <&3; do 
 # echo "$A-$B" | bc -ql
  # 0.00010*86400=8.6400 - assume this is an acceptable difference
- TEST=`echo "a=($A-$B);sqrt(a*a)<0.00010" | bc -ql`
+ #TEST=`echo "a=($A-$B);sqrt(a*a)<0.00010" | bc -ql`
+ TEST=`echo "$A $B" | awk -F'<' '{if ( sqrt( ($1-$2)*($1-$2) ) < 0.00010 ) print 1 ;else print 0 }'`
  if [ $TEST -ne 1 ];then
   touch HJDCORRECTON_problem.tmp
   break

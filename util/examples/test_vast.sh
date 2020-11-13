@@ -102,7 +102,8 @@ function remove_test_data_to_save_space {
   FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
   # If we managed to get the disk space info
   if [ $? -eq 0 ];then
-   TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
+   #TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
+   TEST=`echo "$FREE_DISK_SPACE_MB 4096" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
    re='^[0-9]+$'
    if ! [[ $TEST =~ $re ]] ; then
     echo "TEST ERROR"
@@ -120,12 +121,6 @@ function remove_test_data_to_save_space {
      #
      if [ -d "$TEST_DATASET" ];then
       rm -rf "$TEST_DATASET"
-      # Don't try to be smart and keep some data - remove everything!
-      #FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
-      #TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
-      #if [ $TEST -eq 0 ];then
-      # break
-      #fi
      fi
     done
    fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
@@ -195,46 +190,6 @@ fi
 # Remove test data from the previous run if we are out of disk space
 #########################################
 remove_test_data_to_save_space
-## Skip free disk space check on some pre-defined machines
-## hope this check should work even if there is no 'hostname' command
-#hostname | grep --quiet eridan 
-#if [ $? -ne 0 ];then 
-# # Free-up disk space if we run out of it
-# #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
-# FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
-# # If we managed to get the disk space info
-# if [ $? -eq 0 ];then
-#  TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
-#  re='^[0-9]+$'
-#  if ! [[ $TEST =~ $re ]] ; then
-#   echo "TEST ERROR"
-#   TEST=0
-#   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
-#  fi
-#  if [ $TEST -eq 1 ];then
-#   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-#   for TEST_DATASET in ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ;do
-#    # Simple safety thing
-#    TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
-#    if [ $TEST -ne 1 ];then
-#     continue
-#    fi
-#    #
-#    if [ -d "$TEST_DATASET" ];then
-#     rm -rf "$TEST_DATASET"
-#     #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
-#     FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
-#     TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
-#     if [ $TEST -eq 0 ];then
-#      break
-#     fi
-#    fi
-#   done
-#  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
-# fi # if [ $? -eq 0 ];then
-#fi # if [ $? -ne ];then # hostname check
-##########################################
-
 
 
 ##### Report that we are starting the work #####
@@ -326,7 +281,8 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM002"
  fi
- TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM)-(0.0304);sqrt(a*a)<0.005" | bc -ql`
+ #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM)-(0.0304);sqrt(a*a)<0.005" | bc -ql`
+ TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM" | awk -F'<' '{if ( sqrt( ($1-0.0304)*($1-0.0304) ) < 0.005 ) print 1 ;else print 0 }'`
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]] ; then
   echo "TEST ERROR"
@@ -347,7 +303,8 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM005"
  fi
- TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM)-(0.026058);sqrt(a*a)<0.005" | bc -ql`
+ #TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM)-(0.026058);sqrt(a*a)<0.005" | bc -ql`
+ TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM" | awk -F'<' '{if ( sqrt( ($1-0.026058)*($1-0.026058) ) < 0.005 ) print 1 ;else print 0 }'`
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]] ; then
   echo "TEST ERROR"
