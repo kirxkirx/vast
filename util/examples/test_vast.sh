@@ -11519,6 +11519,7 @@ if [ $? -eq 0 ];then
     fi
     # If the test data are found
     if [ -d ../vast_test_bright_stars_failed_match ];then
+     cp default.sex.ccd_bright_star default.sex
      valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes   ./vast -u -t2 -f ../vast_test_bright_stars_failed_match/* &> valgrind_test.out
      if [ $? -ne 0 ];then
       TEST_PASSED=0
