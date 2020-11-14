@@ -790,7 +790,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  # Check if the number of detected transients is suspiciously large
  NUMBER_OF_DETECTED_TRANSIENTS=`cat candidates-transients.lst | wc -l`
  echo "Found $NUMBER_OF_DETECTED_TRANSIENTS candidate transients before the final filtering." >> transient_factory_test31.txt
- if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 500 ];then
+ if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 600 ];then
   echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping SE run ($SEXTRACTOR_CONFIG_FILE)"
   echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping SE run ($SEXTRACTOR_CONFIG_FILE)" >> transient_factory_test31.txt
   # this is for UCAC5 plate solver
@@ -800,7 +800,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   # The NUMBER_OF_DETECTED_TRANSIENTS limit may be reached at the first SE run,
   # In that case, we want to drop this run and continue with the second run hoping it will be better
  else
-  if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 400 ];then
+  if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 500 ];then
    echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..."
    echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..." >> transient_factory_test31.txt
    # if yes, remove flares, keep only new objects
