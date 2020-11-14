@@ -823,7 +823,8 @@ int main( int argc, char **argv ) {
 
  float markX= 0.0;
  float markY= 0.0;
- float finder_char_pix_around_the_target= 10.0; // default thumbnail image size for transient search
+ //float finder_char_pix_around_the_target= 10.0; // default thumbnail image size for transient search
+ float finder_char_pix_around_the_target= 20.0; // default thumbnail image size for transient search
 
  /* new fatures */
  //int buf,v_trigger=0,b_trigger=0;
