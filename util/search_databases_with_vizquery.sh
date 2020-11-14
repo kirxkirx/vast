@@ -123,7 +123,7 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=2
   fi
   # Compute J-K
   #J_K=`echo "($J)-($K)" | bc -ql | awk '{printf "%.3f",$1}'`
-  J_K=`echo "$J $K" | awk '{printf "%.3f",$1-$2}'
+  J_K=`echo "$J $K" | awk '{printf "%.3f",$1-$2}'`
   if [[ $eJ =~ $re ]] && [[ $eK =~ $re ]] ; then
    #eJ_K=`echo "sqrt($eJ*$eJ+$eK*$eK)" | bc -ql | awk '{printf "%.3f",$1}'`  
    eJ_K=`echo "$eJ $eK" | awk '{printf "%.3f", sqrt( $1*$1 + $2*$2 ) }'`  

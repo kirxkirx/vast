@@ -14041,7 +14041,7 @@ else
  echo "### Send the above report to the VaST developer? (yes/no)"
  read USER_ANSWER
  #if [ "yes" = "$USER_ANSWER" ] || [ "y" = "$USER_ANSWER" ] || [ "ys" = "$USER_ANSWER" ] || [ "Yes" = "$USER_ANSWER" ] || [ "YES" = "$USER_ANSWER" ] || [ "1" = "$USER_ANSWER" ] ;then
- echo "$USER_ANSWER" | grep --quiet -e "yes" -e "yy" -e "ys" -y "Yes" -y "YES"
+ echo "$USER_ANSWER" | grep --quiet -e "yes" -e "yy" -e "ys" -e "Yes" -e "YES"
  if [ $? -eq 0 ] || [ "y" = "$USER_ANSWER" ] || [ "1" = "$USER_ANSWER" ] ;then
   MAIL_TEST_REPORT_TO_KIRX="YES"
  else
