@@ -103,7 +103,7 @@ function remove_test_data_to_save_space {
   # If we managed to get the disk space info
   if [ $? -eq 0 ];then
    #TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
-   TEST=`echo "$FREE_DISK_SPACE_MB 4096" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
+   TEST=`echo "$FREE_DISK_SPACE_MB<4096" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
    re='^[0-9]+$'
    if ! [[ $TEST =~ $re ]] ; then
     echo "TEST ERROR"
