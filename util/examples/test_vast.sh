@@ -282,7 +282,7 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM002"
  fi
  #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM)-(0.0304);sqrt(a*a)<0.005" | bc -ql`
- TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM" | awk -F'<' '{if ( sqrt( ($1-0.0304)*($1-0.0304) ) < 0.005 ) print 1 ;else print 0 }'`
+ TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM" | awk '{if ( sqrt( ($1-0.0304)*($1-0.0304) ) < 0.005 ) print 1 ;else print 0 }'`
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]] ; then
   echo "TEST ERROR"
@@ -304,7 +304,7 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM005"
  fi
  #TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM)-(0.026058);sqrt(a*a)<0.005" | bc -ql`
- TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM" | awk -F'<' '{if ( sqrt( ($1-0.026058)*($1-0.026058) ) < 0.005 ) print 1 ;else print 0 }'`
+ TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM" | awk '{if ( sqrt( ($1-0.026058)*($1-0.026058) ) < 0.005 ) print 1 ;else print 0 }'`
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]] ; then
   echo "TEST ERROR"
@@ -326,7 +326,8 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM102"
  fi
- TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM)-(0.0270);sqrt(a*a)<0.005" | bc -ql`
+ #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM)-(0.0270);sqrt(a*a)<0.005" | bc -ql`
+ TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.0270)*($1-0.0270) ) < 0.005 ) print 1 ;else print 0 }'`
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]] ; then
   echo "TEST ERROR"
@@ -347,7 +348,8 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM105"
  fi
- TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM)-(0.021055);sqrt(a*a)<0.005" | bc -ql`
+ #TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM)-(0.021055);sqrt(a*a)<0.005" | bc -ql`
+ TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.021055)*($1-0.021055) ) < 0.005 ) print 1 ;else print 0 }'`
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]] ; then
   echo "TEST ERROR"
@@ -359,7 +361,8 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM106"
  fi
- TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | bc -ql`
+ #TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | bc -ql`
+ TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]] ; then
   echo "TEST ERROR"
@@ -371,7 +374,8 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM0_SYSNOISEDECREASE"
  fi
- TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM > $MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | bc -ql`
+ #TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM > $MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | bc -ql`
+ TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM>$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]] ; then
   echo "TEST ERROR"
@@ -393,7 +397,8 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM102"
  fi
- TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM)-(0.0254);sqrt(a*a)<0.005" | bc -ql`
+ #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM)-(0.0254);sqrt(a*a)<0.005" | bc -ql`
+ TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.0254)*($1-0.0254) ) < 0.005 ) print 1 ;else print 0 }'`
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]] ; then
   echo "TEST ERROR"
@@ -414,7 +419,8 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM105"
  fi
- TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM)-(0.020588);sqrt(a*a)<0.005" | bc -ql`
+ #TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM)-(0.020588);sqrt(a*a)<0.005" | bc -ql`
+ TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.020588)*($1-0.020588) ) < 0.005 ) print 1 ;else print 0 }'`
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]] ; then
   echo "TEST ERROR"
@@ -426,7 +432,8 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM106"
  fi
- TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | bc -ql`
+ #TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | bc -ql`
+ TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM>$SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]] ; then
   echo "TEST ERROR"
@@ -438,7 +445,8 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM1_SYSNOISEDECREASE"
  fi
- TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM > $MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | bc -ql`
+ #TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM > $MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | bc -ql`
+ TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM>$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]] ; then
   echo "TEST ERROR"
