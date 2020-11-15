@@ -955,7 +955,7 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
     # Write to ../exclusion_list.txt in a single operation in a miserable attempt to minimize chances of a race condition
     if [ -f exclusion_list_index_html.txt ];then
      if [ -s exclusion_list_index_html.txt ];then
-      echo "IS_THIS_TEST_RUN=$IS_THIS_TEST_RUN  ALLOW_EXCLUSION_LIST_UPDATE= $ALLOW_EXCLUSION_LIST_UPDATE
+      echo "IS_THIS_TEST_RUN= $IS_THIS_TEST_RUN   ALLOW_EXCLUSION_LIST_UPDATE= $ALLOW_EXCLUSION_LIST_UPDATE
 #### Adding the following to the exclusion list ####"
       cat exclusion_list_index_html.txt >> transient_factory_test31.txt
       echo "####################################################" >> transient_factory_test31.txt
