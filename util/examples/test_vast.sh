@@ -478,7 +478,8 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM502"
  fi
- TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM)-(0.0245);sqrt(a*a)<0.005" | bc -ql`
+ #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM)-(0.0245);sqrt(a*a)<0.005" | bc -ql`
+ TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.0245)*($1-0.0245) ) < 0.005 ) print 1 ;else print 0 }'`
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]] ; then
   echo "TEST ERROR"
@@ -499,7 +500,7 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM505"
  fi
- TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM)-(0.018628);sqrt(a*a)<0.005" | bc -ql`
+ TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.018628)*($1-0.018628) ) < 0.005 ) print 1 ;else print 0 }'`
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]] ; then
   echo "TEST ERROR"
@@ -511,7 +512,8 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM506"
  fi
- TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | bc -ql`
+ #TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | bc -ql`
+ TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM>$SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]] ; then
   echo "TEST ERROR"
@@ -523,7 +525,8 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM5_SYSNOISEDECREASE"
  fi
- TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM > $MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | bc -ql`
+ #TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM > $MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | bc -ql`
+ TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM>$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]] ; then
   echo "TEST ERROR"
@@ -547,7 +550,8 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
   else
    if [ "$XY" = "849.6359900 156.5065000" ];then
     SIGMACLIP=`grep "$LIGHTCURVEFILE" vast_lightcurve_statistics.log | awk '{print $2}'`
-    TEST=`echo "a=($SIGMACLIP)-(0.058346);sqrt(a*a)<0.005" | bc -ql`
+    #TEST=`echo "a=($SIGMACLIP)-(0.058346);sqrt(a*a)<0.005" | bc -ql`
+    TEST=`echo "$SIGMACLIP" | awk '{if ( sqrt( ($1-0.058346)*($1-0.058346) ) < 0.005 ) print 1 ;else print 0 }'`
     re='^[0-9]+$'
     if ! [[ $TEST =~ $re ]] ; then
      echo "TEST ERROR"
@@ -591,34 +595,6 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 #
 remove_test_data_to_save_space
 #
-#########################################
-## Skip free disk space check on some pre-defined machines
-## hope this check should work even if there is no 'hostname' command
-#hostname | grep --quiet eridan 
-#if [ $? -ne 0 ];then 
-# # Free-up disk space if we run out of it
-# FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
-# # If we managed to get the disk space info
-# if [ $? -eq 0 ];then
-#  TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
-#  re='^[0-9]+$'
-#  if ! [[ $TEST =~ $re ]] ; then
-#   echo "TEST ERROR"
-#   TEST=0
-#   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
-#  fi
-#  if [ $TEST -eq 1 ];then
-#   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-#   if [ -d ../NMW_And1_test_lightcurves_40 ];then
-#    echo "Deleting test data!" >> /dev/stderr
-#    rm -rf ../NMW_And1_test_lightcurves_40
-#   else
-#    echo "What was it? o_O" >> /dev/stderr
-#   fi
-#  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
-# fi # if [ $? -eq 0 ];then
-#fi # if [ $? -ne ];then # hostname check
-##########################################
 
 # Test the connection
 test_internet_connection fast
@@ -787,7 +763,8 @@ $GREP_RESULT"
     print ave;          
   }                          
 '`
-     TEST=`echo "$MEAN_ASTROMETRIC_OFFSET<1.0" | bc -ql`
+     #TEST=`echo "$MEAN_ASTROMETRIC_OFFSET<1.0" | bc -ql`
+     TEST=`echo "$MEAN_ASTROMETRIC_OFFSET<1.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
      if [ $TEST -ne 1 ];then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE006d"
@@ -847,7 +824,8 @@ $GREP_RESULT"
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATEMEANSIG005"
    fi
-   TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS)-(0.090508);sqrt(a*a)<0.05" | bc -ql`
+   #TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS)-(0.090508);sqrt(a*a)<0.05" | bc -ql`
+   TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS)-(0.090508);sqrt(a*a)<0.05" | awk '{if ( sqrt( ($1-0.090508)*($1-0.090508) ) < 0.05 ) print 1 ;else print 0 }'`
    re='^[0-9]+$'
    if ! [[ $TEST =~ $re ]] ; then
     echo "TEST ERROR"
@@ -872,7 +850,8 @@ $GREP_RESULT"
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE013_"${CEPHEID_RADEC_STR//" "/"_"}
    fi
-   TEST=`echo "$DISTANCE_ARCSEC<0.3" | bc -ql`
+   #TEST=`echo "$DISTANCE_ARCSEC<0.3" | bc -ql`
+   TEST=`echo "$DISTANCE_ARCSEC<0.3" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
    re='^[0-9]+$'
    if ! [[ $TEST =~ $re ]] ; then
     echo "TEST ERROR"
@@ -922,7 +901,8 @@ $GREP_RESULT"
     # Check that we can find the Cepheid's period (frequency)
     FREQ_LK=`lib/lk_compute_periodogram "$CEPHEIDOUTFILE" 100 0.1 0.1 | awk '{print $1}'`
     # sqrt(a*a) is the sily way to get an absolute value of a
-    TEST=`echo "a=$FREQ_LK-0.211448;sqrt(a*a)<0.01" | bc -ql`
+    #TEST=`echo "a=$FREQ_LK-0.211448;sqrt(a*a)<0.01" | bc -ql`
+    TEST=`echo "$FREQ_LK" | awk '{if ( sqrt( ($1-0.211448)*($1-0.211448) ) < 0.01 ) print 1 ;else print 0 }'`
     re='^[0-9]+$'
     if ! [[ $TEST =~ $re ]] ; then
      echo "TEST ERROR"
@@ -994,7 +974,8 @@ $GREP_RESULT"
    # Both should be within 0.8 arcsec from the input coordinates. Let's check this
    #"$WORKDIR"/util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 | grep 'r=' | grep -v 'var=' | awk '{print $1}' FS='"' | awk '{print $2}' FS='r=' | while read R_DISTANCE_TO_MATCH ;do
    "$WORKDIR"/util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 | grep 'r=' | grep -v 'var=' | awk -F '"' '{print $1}' | awk -F 'r=' '{print $2}' | while read R_DISTANCE_TO_MATCH ;do
-    TEST=`echo "$R_DISTANCE_TO_MATCH<0.8" | bc -ql`
+    #TEST=`echo "$R_DISTANCE_TO_MATCH<0.8" | bc -ql`
+    TEST=`echo "$R_DISTANCE_TO_MATCH<0.8" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
     if [ $TEST -eq 1 ];then
      echo "GOODMATCH"
     fi
@@ -1136,7 +1117,8 @@ $GREP_RESULT"
    # Check that we can find the Cepheid's period (frequency)
    FREQ_LK=`lib/lk_compute_periodogram $TMPSTR 100 0.1 0.1 | awk '{print $1}'`
    # sqrt(a*a) is the sily way to get an absolute value of a
-   TEST=`echo "a=$FREQ_LK-0.211448;sqrt(a*a)<0.01" | bc -ql`
+   #TEST=`echo "a=$FREQ_LK-0.211448;sqrt(a*a)<0.01" | bc -ql`
+   TEST=`echo "$FREQ_LK" | awk '{if ( sqrt( ($1-0.211448)*($1-0.211448) ) < 0.01 ) print 1 ;else print 0 }'`
    re='^[0-9]+$'
    if ! [[ $TEST =~ $re ]] ; then
     echo "TEST ERROR"
@@ -1325,7 +1307,8 @@ $GREP_RESULT"
    # Check that we can find the Cepheid's period (frequency)
    FREQ_LK=`lib/lk_compute_periodogram $TMPSTR 100 0.1 0.1 | awk '{print $1}'`
    # sqrt(a*a) is the sily way to get an absolute value of a
-   TEST=`echo "a=$FREQ_LK-0.211448;sqrt(a*a)<0.01" | bc -ql`
+   #TEST=`echo "a=$FREQ_LK-0.211448;sqrt(a*a)<0.01" | bc -ql`
+   TEST=`echo "$FREQ_LK" | awk '{if ( sqrt( ($1-0.211448)*($1-0.211448) ) < 0.01 ) print 1 ;else print 0 }'`
    re='^[0-9]+$'
    if ! [[ $TEST =~ $re ]] ; then
     echo "TEST ERROR"
@@ -1441,42 +1424,6 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt 
 #
 remove_test_data_to_save_space
-##########################################
-## Skip free disk space check on some pre-defined machines
-## hope this check should work even if there is no 'hostname' command
-#hostname | grep --quiet eridan 
-#if [ $? -ne 0 ];then 
-# # Free-up disk space if we run out of it
-# #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
-# FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
-# # If we managed to get the disk space info
-# if [ $? -eq 0 ];then
-#  TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
-#  re='^[0-9]+$'
-#  if ! [[ $TEST =~ $re ]] ; then
-#   echo "TEST ERROR"
-#   TEST=0
-#   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
-#  fi
-#  if [ $TEST -eq 1 ];then
-#   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-#   if [ $TEST_PASSED -eq 1 ];then
-#    if [ -d ../test_data_photo ];then
-#     echo "Deleting test data!" >> /dev/stderr
-#     rm -rf ../test_data_photo
-#    else
-#     echo "What was it? o_O" >> /dev/stderr
-#    fi
-#   else
-#    echo "The previous test did not pass - stopping here!
-#   
-#Failed test codes: $FAILED_TEST_CODES
-#" >> /dev/stderr
-#    exit 1
-#   fi # if [ $TEST_PASSED -eq 1 ];then
-#  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
-# fi # if [ $? -eq 0 ];then
-#fi # if [ $? -ne ];then # hostname check
 ##########################################
 
 # Test the connection
@@ -1619,7 +1566,8 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDMEANSIG005"
   fi
-  TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS)-(0.061232);sqrt(a*a)<0.005" | bc -ql`
+  #TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS)-(0.061232);sqrt(a*a)<0.005" | bc -ql`
+  TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS" | awk '{if ( sqrt( ($1-0.061232)*($1-0.061232) ) < 0.005 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -1649,7 +1597,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD015_$NLINES_IN_LIGHTCURVEFILE"
   fi
   STATMAG=`echo "$STATSTR" | awk '{print $1}'`
-  TEST=`echo "a=($STATMAG)-(-11.761200);sqrt(a*a)<0.01" | bc -ql`
+  #TEST=`echo "a=($STATMAG)-(-11.761200);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$STATMAG" | awk '{if ( sqrt( ($1-(-11.761200))*($1-(-11.761200)) ) < 0.01 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -1662,7 +1611,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD015a"
   fi
   STATX=`echo "$STATSTR" | awk '{print $3}'`
-  TEST=`echo "a=($STATX)-(218.9535100);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATX)-(218.9535100);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATX" | awk '{if ( sqrt( ($1-218.9535100)*($1-218.9535100) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -1675,7 +1625,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD016"
   fi
   STATY=`echo "$STATSTR" | awk '{print $4}'`
-  TEST=`echo "a=($STATY)-(247.8363000);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATY)-(247.8363000);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATY" | awk '{if ( sqrt( ($1-247.8363000)*($1-247.8363000) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -1698,8 +1649,9 @@ $GREP_RESULT"
   # And the difference HUGEly depends on weighting
   #TEST=`echo "a=($STATIDX)-(0.372294);sqrt(a*a)<0.1" | bc -ql`
   # This is the value on eridan with photometric error rescaling disabled
-  TEST=`echo "a=($STATIDX)-(0.354955);sqrt(a*a)<0.2" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.354955);sqrt(a*a)<0.2" | bc -ql`
   # 0.242372 at HPCC with photometric error rescaling disabled
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.354955)*($1-0.354955) ) < 0.2 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -1713,7 +1665,8 @@ $GREP_RESULT"
   fi
   # idx09_MAD
   STATIDX=`echo "$STATSTR" | awk '{print $14}'`
-  TEST=`echo "a=($STATIDX)-(0.018977);sqrt(a*a)<0.005" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.018977);sqrt(a*a)<0.005" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.018977)*($1-0.018977) ) < 0.005 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -1727,7 +1680,8 @@ $GREP_RESULT"
   fi
   # idx25_IQR
   STATIDX=`echo "$STATSTR" | awk '{print $30}'`
-  TEST=`echo "a=($STATIDX)-(0.025686);sqrt(a*a)<0.001" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.025686);sqrt(a*a)<0.001" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.025686)*($1-0.025686) ) < 0.001 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -1778,7 +1732,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD026_$NLINES_IN_LIGHTCURVEFILE"
   fi
   STATMAG=`echo "$STATSTR" | awk '{print $1}'`
-  TEST=`echo "a=($STATMAG)-(-11.220400);sqrt(a*a)<0.01" | bc -ql`
+  #TEST=`echo "a=($STATMAG)-(-11.220400);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$STATMAG" | awk '{if ( sqrt( ($1-(-11.220400))*($1-(-11.220400)) ) < 0.01 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -1791,7 +1746,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD026a"
   fi
   STATX=`echo "$STATSTR" | awk '{print $3}'`
-  TEST=`echo "a=($STATX)-(87.2039000);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATX)-(87.2039000);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATX" | awk '{if ( sqrt( ($1-87.2039000)*($1-87.2039000) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -1804,7 +1760,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD027"
   fi
   STATY=`echo "$STATSTR" | awk '{print $4}'`
-  TEST=`echo "a=($STATY)-(164.4241000);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATY)-(164.4241000);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATY" | awk '{if ( sqrt( ($1-164.4241000)*($1-164.4241000) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -1818,7 +1775,8 @@ $GREP_RESULT"
   fi
   # indexes
   STATIDX=`echo "$STATSTR" | awk '{print $6}'`
-  TEST=`echo "a=($STATIDX)-(0.037195);sqrt(a*a)<0.01" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.037195);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.037195)*($1-0.037195) ) < 0.01 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -1831,7 +1789,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD029"
   fi
   STATIDX=`echo "$STATSTR" | awk '{print $14}'`
-  TEST=`echo "a=($STATIDX)-(0.044775);sqrt(a*a)<0.002" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.044775);sqrt(a*a)<0.002" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.044775)*($1-0.044775) ) < 0.002 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -1846,7 +1805,8 @@ $GREP_RESULT"
   STATIDX=`echo "$STATSTR" | awk '{print $30}'`
   # Yeah, I have no idea why this difference is so large between machines
   # The difference is in the original lightcurve...
-  TEST=`echo "a=($STATIDX)-(0.050557);sqrt(a*a)<0.003" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.050557);sqrt(a*a)<0.003" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.050557)*($1-0.050557) ) < 0.003 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2136,7 +2096,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST015_$NLINES_IN_LIGHTCURVEFILE"
   fi
   STATMAG=`echo "$STATSTR" | awk '{print $1}'`
-  TEST=`echo "a=($STATMAG)-(-11.761200);sqrt(a*a)<0.01" | bc -ql`
+  #TEST=`echo "a=($STATMAG)-(-11.761200);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$STATMAG" | awk '{if ( sqrt( ($1-(-11.761200))*($1-(-11.761200)) ) < 0.01 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2149,7 +2110,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST015a"
   fi
   STATX=`echo "$STATSTR" | awk '{print $3}'`
-  TEST=`echo "a=($STATX)-(218.9535100);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATX)-(218.9535100);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATX" | awk '{if ( sqrt( ($1-218.9535100)*($1-218.9535100) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2162,7 +2124,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST016"
   fi
   STATY=`echo "$STATSTR" | awk '{print $4}'`
-  TEST=`echo "a=($STATY)-(247.8363000);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATY)-(247.8363000);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATY" | awk '{if ( sqrt( ($1-247.8363000)*($1-247.8363000) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2184,7 +2147,8 @@ $GREP_RESULT"
   # The difference may be pretty huge from machine to mcahine...
   # And the difference HUGEly depends on weighting
   #TEST=`echo "a=($STATIDX)-(0.372294);sqrt(a*a)<0.1" | bc -ql`
-  TEST=`echo "a=($STATIDX)-(0.354955);sqrt(a*a)<0.2" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.354955);sqrt(a*a)<0.2" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.354955)*($1-0.354955) ) < 0.2 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2198,7 +2162,8 @@ $GREP_RESULT"
   fi
   # idx09_MAD
   STATIDX=`echo "$STATSTR" | awk '{print $14}'`
-  TEST=`echo "a=($STATIDX)-(0.018977);sqrt(a*a)<0.005" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.018977);sqrt(a*a)<0.005" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.018977)*($1-0.018977) ) < 0.005 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2212,7 +2177,8 @@ $GREP_RESULT"
   fi
   # idx25_IQR
   STATIDX=`echo "$STATSTR" | awk '{print $30}'`
-  TEST=`echo "a=($STATIDX)-(0.025686);sqrt(a*a)<0.001" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.025686);sqrt(a*a)<0.001" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.025686)*($1-0.025686) ) < 0.001 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2263,7 +2229,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST026_$NLINES_IN_LIGHTCURVEFILE"
   fi
   STATMAG=`echo "$STATSTR" | awk '{print $1}'`
-  TEST=`echo "a=($STATMAG)-(-11.220400);sqrt(a*a)<0.01" | bc -ql`
+  #TEST=`echo "a=($STATMAG)-(-11.220400);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$STATMAG" | awk '{if ( sqrt( ($1-(-11.220400))*($1-(-11.220400)) ) < 0.01 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2276,7 +2243,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST026a"
   fi
   STATX=`echo "$STATSTR" | awk '{print $3}'`
-  TEST=`echo "a=($STATX)-(87.2039000);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATX)-(87.2039000);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATX" | awk '{if ( sqrt( ($1-87.2039000)*($1-87.2039000) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2289,7 +2257,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST027"
   fi
   STATY=`echo "$STATSTR" | awk '{print $4}'`
-  TEST=`echo "a=($STATY)-(164.4241000);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATY)-(164.4241000);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATY" | awk '{if ( sqrt( ($1-164.4241000)*($1-164.4241000) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2303,7 +2272,8 @@ $GREP_RESULT"
   fi
   # indexes
   STATIDX=`echo "$STATSTR" | awk '{print $6}'`
-  TEST=`echo "a=($STATIDX)-(0.037195);sqrt(a*a)<0.01" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.037195);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.037195)*($1-0.037195) ) < 0.01 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2316,7 +2286,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST029"
   fi
   STATIDX=`echo "$STATSTR" | awk '{print $14}'`
-  TEST=`echo "a=($STATIDX)-(0.044775);sqrt(a*a)<0.002" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.044775);sqrt(a*a)<0.002" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.044775)*($1-0.044775) ) < 0.002 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2331,7 +2302,8 @@ $GREP_RESULT"
   STATIDX=`echo "$STATSTR" | awk '{print $30}'`
   # Yeah, I have no idea why this difference is so large between machines
   # The difference is in the original lightcurve...
-  TEST=`echo "a=($STATIDX)-(0.050557);sqrt(a*a)<0.003" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.050557);sqrt(a*a)<0.003" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.050557)*($1-0.050557) ) < 0.003 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2721,7 +2693,8 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE_SYSNOISE01"
   fi
-  TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL)-(0.0130);sqrt(a*a)<0.01" | bc -ql`
+  #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL)-(0.0130);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$SYSTEMATIC_NOISE_LEVEL" | awk '{if ( sqrt( ($1-0.0130)*($1-0.0130) ) < 0.01 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2774,7 +2747,8 @@ $GREP_RESULT"
   # out00201.dat - CV (but we can't rely on it having the same out*.dat name)
   STATSTR=`cat vast_lightcurve_statistics.log | sort -k26 | tail -n1`
   STATMAG=`echo "$STATSTR" | awk '{print $1}'`
-  TEST=`echo "a=($STATMAG)-(-11.761200);sqrt(a*a)<0.01" | bc -ql`
+  #TEST=`echo "a=($STATMAG)-(-11.761200);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$STATMAG" | awk '{if ( sqrt( ($1-(-11.761200))*($1-(-11.761200)) ) < 0.01 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2787,7 +2761,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE015"
   fi
   STATX=`echo "$STATSTR" | awk '{print $3}'`
-  TEST=`echo "a=($STATX)-(218.9535100);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATX)-(218.9535100);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATX" | awk '{if ( sqrt( ($1-218.9535100)*($1-218.9535100) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2800,7 +2775,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE016"
   fi
   STATY=`echo "$STATSTR" | awk '{print $4}'`
-  TEST=`echo "a=($STATY)-(247.8363000);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATY)-(247.8363000);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATY" | awk '{if ( sqrt( ($1-247.8363000)*($1-247.8363000) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2814,7 +2790,8 @@ $GREP_RESULT"
   fi
   # indexes
   STATIDX=`echo "$STATSTR" | awk '{print $6}'`
-  TEST=`echo "a=($STATIDX)-(0.241686);sqrt(a*a)<0.01" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.241686);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.241686)*($1-0.241686) ) < 0.01 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2827,7 +2804,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE018"
   fi
   STATIDX=`echo "$STATSTR" | awk '{print $14}'`
-  TEST=`echo "a=($STATIDX)-(0.018977);sqrt(a*a)<0.005" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.018977);sqrt(a*a)<0.005" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.018977)*($1-0.018977) ) < 0.005 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2840,7 +2818,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE019"
   fi
   STATIDX=`echo "$STATSTR" | awk '{print $30}'`
-  TEST=`echo "a=($STATIDX)-(0.025686);sqrt(a*a)<0.001" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.025686);sqrt(a*a)<0.001" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.025686)*($1-0.025686) ) < 0.001 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2885,7 +2864,8 @@ $GREP_RESULT"
   # out00268.dat - EW (but we can't rely on it having the same out*.dat name)
   STATSTR=`cat vast_lightcurve_statistics.log | sort -k26 | tail -n2 | head -n1`
   STATMAG=`echo "$STATSTR" | awk '{print $1}'`
-  TEST=`echo "a=($STATMAG)-(-11.220400);sqrt(a*a)<0.01" | bc -ql`
+  #TEST=`echo "a=($STATMAG)-(-11.220400);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$STATMAG" | awk '{if ( sqrt( ($1-(-11.220400))*($1-(-11.220400)) ) < 0.01 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2898,7 +2878,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE026"
   fi
   STATX=`echo "$STATSTR" | awk '{print $3}'`
-  TEST=`echo "a=($STATX)-(87.2039000);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATX)-(87.2039000);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATX" | awk '{if ( sqrt( ($1-87.2039000)*($1-87.2039000) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2911,7 +2892,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE027"
   fi
   STATY=`echo "$STATSTR" | awk '{print $4}'`
-  TEST=`echo "a=($STATY)-(164.4241000);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATY)-(164.4241000);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATY" | awk '{if ( sqrt( ($1-164.4241000)*($1-164.4241000) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2925,7 +2907,8 @@ $GREP_RESULT"
   fi
   # indexes
   STATIDX=`echo "$STATSTR" | awk '{print $6}'`
-  TEST=`echo "a=($STATIDX)-(0.037195);sqrt(a*a)<0.01" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.037195);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.037195)*($1-0.037195) ) < 0.01 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2939,7 +2922,8 @@ $GREP_RESULT"
   fi
   STATIDX=`echo "$STATSTR" | awk '{print $14}'`
   #TEST=`echo "a=($STATIDX)-(0.044775);sqrt(a*a)<0.001" | bc -ql`
-  TEST=`echo "a=($STATIDX)-(0.044775);sqrt(a*a)<0.002" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.044775);sqrt(a*a)<0.002" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.044775)*($1-0.044775) ) < 0.002 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -2954,7 +2938,8 @@ $GREP_RESULT"
   STATIDX=`echo "$STATSTR" | awk '{print $30}'`
   # Yeah, I have no idea why this difference is so large between machines
   # The difference is in the original lightcurve...
-  TEST=`echo "a=($STATIDX)-(0.050557);sqrt(a*a)<0.003" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.050557);sqrt(a*a)<0.003" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.050557)*($1-0.050557) ) < 0.003 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4282,7 +4267,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_SYSNOISE01"
   fi
   #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL)-(0.0043);sqrt(a*a)<0.005" | bc -ql`
-  TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL)-(0.0128);sqrt(a*a)<0.005" | bc -ql`
+  #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL)-(0.0128);sqrt(a*a)<0.005" | bc -ql`
+  TEST=`echo "$SYSTEMATIC_NOISE_LEVEL" | awk '{if ( sqrt( ($1-0.0128)*($1-0.0128) ) < 0.005 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4335,7 +4321,8 @@ $GREP_RESULT"
   # out00201.dat - CV (but we can't rely on it having the same out*.dat name)
   STATSTR=`cat vast_lightcurve_statistics.log | sort -k26 | tail -n1`
   STATMAG=`echo "$STATSTR" | awk '{print $1}'`
-  TEST=`echo "a=($STATMAG)-(-11.761200);sqrt(a*a)<0.01" | bc -ql`
+  #TEST=`echo "a=($STATMAG)-(-11.761200);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$STATMAG" | awk '{if ( sqrt( ($1-(-11.761200))*($1-(-11.761200)) ) < 0.01 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4348,7 +4335,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD014"
   fi
   STATX=`echo "$STATSTR" | awk '{print $3}'`
-  TEST=`echo "a=($STATX)-(218.9535100);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATX)-(218.9535100);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATX" | awk '{if ( sqrt( ($1-218.9535100)*($1-218.9535100) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4361,7 +4349,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD015_$STATX"
   fi
   STATY=`echo "$STATSTR" | awk '{print $4}'`
-  TEST=`echo "a=($STATY)-(247.8363000);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATY)-(247.8363000);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATY" | awk '{if ( sqrt( ($1-247.8363000)*($1-247.8363000) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4387,7 +4376,8 @@ $GREP_RESULT"
   # let's add a bit more space here
   #TEST=`echo "a=($STATIDX)-(0.362346);sqrt(a*a)<0.05" | bc -ql`
   # photometric error rescaling disabled
-  TEST=`echo "a=($STATIDX)-(0.242567);sqrt(a*a)<0.05" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.242567);sqrt(a*a)<0.05" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.242567)*($1-0.242567) ) < 0.05 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4400,7 +4390,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD017_$STATIDX"
   fi
   STATIDX=`echo "$STATSTR" | awk '{print $14}'`
-  TEST=`echo "a=($STATIDX)-(0.018977);sqrt(a*a)<0.005" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.018977);sqrt(a*a)<0.005" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.018977)*($1-0.018977) ) < 0.005 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4413,7 +4404,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD018_$STATIDX"
   fi
   STATIDX=`echo "$STATSTR" | awk '{print $30}'`
-  TEST=`echo "a=($STATIDX)-(0.025686);sqrt(a*a)<0.002" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.025686);sqrt(a*a)<0.002" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.025686)*($1-0.025686) ) < 0.002 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4451,7 +4443,8 @@ $GREP_RESULT"
   # out00268.dat - EW (but we can't rely on it having the same out*.dat name)
   STATSTR=`cat vast_lightcurve_statistics.log | sort -k26 | tail -n2 | head -n1`
   STATMAG=`echo "$STATSTR" | awk '{print $1}'`
-  TEST=`echo "a=($STATMAG)-(-11.220400);sqrt(a*a)<0.01" | bc -ql`
+  #TEST=`echo "a=($STATMAG)-(-11.220400);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$STATMAG" | awk '{if ( sqrt( ($1-(-11.220400))*($1-(-11.220400)) ) < 0.01 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4464,7 +4457,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD024"
   fi
   STATX=`echo "$STATSTR" | awk '{print $3}'`
-  TEST=`echo "a=($STATX)-(87.2039000);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATX)-(87.2039000);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATX" | awk '{if ( sqrt( ($1-87.2039000)*($1-87.2039000) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4477,7 +4471,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD025_$STATX"
   fi
   STATY=`echo "$STATSTR" | awk '{print $4}'`
-  TEST=`echo "a=($STATY)-(164.4241000);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATY)-(164.4241000);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATY" | awk '{if ( sqrt( ($1-164.4241000)*($1-164.4241000) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4491,7 +4486,8 @@ $GREP_RESULT"
   fi
   # indexes
   STATIDX=`echo "$STATSTR" | awk '{print $6}'`
-  TEST=`echo "a=($STATIDX)-(0.037195);sqrt(a*a)<0.01" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.037195);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.037195)*($1-0.037195) ) < 0.01 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4504,7 +4500,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD027_$STATIDX"
   fi
   STATIDX=`echo "$STATSTR" | awk '{print $14}'`
-  TEST=`echo "a=($STATIDX)-(0.043737);sqrt(a*a)<0.002" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.043737);sqrt(a*a)<0.002" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.043737)*($1-0.043737) ) < 0.002 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4520,7 +4517,8 @@ $GREP_RESULT"
   # 91 points
   #TEST=`echo "a=($STATIDX)-(0.050557);sqrt(a*a)<0.001" | bc -ql`
   # 90 points, weight image
-  TEST=`echo "a=($STATIDX)-(0.052707);sqrt(a*a)<0.005" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.052707);sqrt(a*a)<0.005" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.052707)*($1-0.052707) ) < 0.005 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4764,7 +4762,8 @@ $GREP_RESULT"
   fi
   #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL)-(0.0043);sqrt(a*a)<0.005" | bc -ql`
   # Photometric error rescalig disabled
-  TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL)-(0.0128);sqrt(a*a)<0.005" | bc -ql`
+  #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL)-(0.0128);sqrt(a*a)<0.005" | bc -ql`
+  TEST=`echo "$SYSTEMATIC_NOISE_LEVEL" | awk '{if ( sqrt( ($1-0.0128)*($1-0.0128) ) < 0.005 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4817,7 +4816,8 @@ $GREP_RESULT"
   # out00201.dat - CV (but we can't rely on it having the same out*.dat name)
   STATSTR=`cat vast_lightcurve_statistics.log | sort -k26 | tail -n1`
   STATMAG=`echo "$STATSTR" | awk '{print $1}'`
-  TEST=`echo "a=($STATMAG)-(-11.761200);sqrt(a*a)<0.01" | bc -ql`
+  #TEST=`echo "a=($STATMAG)-(-11.761200);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$STATMAG" | awk '{if ( sqrt( ($1-(-11.761200))*($1-(-11.761200)) ) < 0.01 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4830,7 +4830,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD014"
   fi
   STATX=`echo "$STATSTR" | awk '{print $3}'`
-  TEST=`echo "a=($STATX)-(218.9535100);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATX)-(218.9535100);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATX" | awk '{if ( sqrt( ($1-218.9535100)*($1-218.9535100) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4843,7 +4844,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD015_$STATX"
   fi
   STATY=`echo "$STATSTR" | awk '{print $4}'`
-  TEST=`echo "a=($STATY)-(247.8363000);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATY)-(247.8363000);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATY" | awk '{if ( sqrt( ($1-247.8363000)*($1-247.8363000) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4869,7 +4871,8 @@ $GREP_RESULT"
   # let's add a bit more space here
   #TEST=`echo "a=($STATIDX)-(0.362346);sqrt(a*a)<0.05" | bc -ql`
   # photometric error rescalingg disabled
-  TEST=`echo "a=($STATIDX)-(0.242567);sqrt(a*a)<0.05" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.242567);sqrt(a*a)<0.05" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.242567)*($1-0.242567) ) < 0.05 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4882,7 +4885,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD017_$STATIDX"
   fi
   STATIDX=`echo "$STATSTR" | awk '{print $14}'`
-  TEST=`echo "a=($STATIDX)-(0.018977);sqrt(a*a)<0.005" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.018977);sqrt(a*a)<0.005" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.018977)*($1-0.018977) ) < 0.005 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4895,7 +4899,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD018_$STATIDX"
   fi
   STATIDX=`echo "$STATSTR" | awk '{print $30}'`
-  TEST=`echo "a=($STATIDX)-(0.025686);sqrt(a*a)<0.002" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.025686);sqrt(a*a)<0.002" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.025686)*($1-0.025686) ) < 0.002 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4933,7 +4938,8 @@ $GREP_RESULT"
   # out00268.dat - EW (but we can't rely on it having the same out*.dat name)
   STATSTR=`cat vast_lightcurve_statistics.log | sort -k26 | tail -n2 | head -n1`
   STATMAG=`echo "$STATSTR" | awk '{print $1}'`
-  TEST=`echo "a=($STATMAG)-(-11.220400);sqrt(a*a)<0.01" | bc -ql`
+  #TEST=`echo "a=($STATMAG)-(-11.220400);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$STATMAG" | awk '{if ( sqrt( ($1-(-11.220400))*($1-(-11.220400)) ) < 0.01 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4946,7 +4952,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD024"
   fi
   STATX=`echo "$STATSTR" | awk '{print $3}'`
-  TEST=`echo "a=($STATX)-(87.2039000);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATX)-(87.2039000);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATX" | awk '{if ( sqrt( ($1-87.2039000)*($1-87.2039000) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4959,7 +4966,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD025_$STATX"
   fi
   STATY=`echo "$STATSTR" | awk '{print $4}'`
-  TEST=`echo "a=($STATY)-(164.4241000);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "a=($STATY)-(164.4241000);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATY" | awk '{if ( sqrt( ($1-164.4241000)*($1-164.4241000) ) < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4973,7 +4981,8 @@ $GREP_RESULT"
   fi
   # indexes
   STATIDX=`echo "$STATSTR" | awk '{print $6}'`
-  TEST=`echo "a=($STATIDX)-(0.037195);sqrt(a*a)<0.01" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.037195);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.037195)*($1-0.037195) ) < 0.01 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4986,7 +4995,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD027_$STATIDX"
   fi
   STATIDX=`echo "$STATSTR" | awk '{print $14}'`
-  TEST=`echo "a=($STATIDX)-(0.043737);sqrt(a*a)<0.002" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.043737);sqrt(a*a)<0.002" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.043737)*($1-0.043737) ) < 0.002 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -5002,7 +5012,8 @@ $GREP_RESULT"
   # 91 points
   #TEST=`echo "a=($STATIDX)-(0.050557);sqrt(a*a)<0.001" | bc -ql`
   # 90 points, weight image
-  TEST=`echo "a=($STATIDX)-(0.052707);sqrt(a*a)<0.005" | bc -ql`
+  #TEST=`echo "a=($STATIDX)-(0.052707);sqrt(a*a)<0.005" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.052707)*($1-0.052707) ) < 0.005 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -5889,43 +5900,6 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 #
 remove_test_data_to_save_space
 ##########################################
-## Skip free disk space check on some pre-defined machines
-## hope this check should work even if there is no 'hostname' command
-#hostname | grep --quiet eridan 
-#if [ $? -ne 0 ];then 
-# # Free-up disk space if we run out of it
-# #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
-# FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
-# # If we managed to get the disk space info
-# if [ $? -eq 0 ];then
-#  TEST=`echo "($FREE_DISK_SPACE_MB)<2048" | bc -q`
-#  re='^[0-9]+$'
-#  if ! [[ $TEST =~ $re ]] ; then
-#   echo "TEST ERROR"
-#   TEST=0
-#   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
-#  fi
-#
-#  if [ $TEST -eq 1 ];then
-#   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-#   if [ $TEST_PASSED -eq 1 ];then
-#    if [ -d ../MASTER_test ];then
-#     echo "Deleting test data!" >> /dev/stderr
-#     rm -rf ../MASTER_test
-#    else
-#     echo "What was it? o_O" >> /dev/stderr
-#    fi
-#   else
-#    echo "The previous test did not pass - stopping here!
-#   
-#Failed test codes: $FAILED_TEST_CODES
-#" >> /dev/stderr
-#    exit 1
-#   fi # if [ $TEST_PASSED -eq 1 ];then
-#  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
-# fi # if [ $? -eq 0 ];then
-#fi # if [ $? -ne ];then # hostname check
-##########################################
 
 
 ##### M31 ISON images test #####
@@ -6767,42 +6741,6 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 remove_test_data_to_save_space
-##########################################
-## Skip free disk space check on some pre-defined machines
-## hope this check should work even if there is no 'hostname' command
-#hostname | grep --quiet eridan 
-#if [ $? -ne 0 ];then 
-# # Free-up disk space if we run out of it
-# #FREE_DISK_SPACE_MB=`df -l -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
-# FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
-# # If we managed to get the disk space info
-# if [ $? -eq 0 ];then
-#  TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
-#  re='^[0-9]+$'
-#  if ! [[ $TEST =~ $re ]] ; then
-#   echo "TEST ERROR"
-#   TEST=0
-#   FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
-#  fi
-#  if [ $TEST -eq 1 ];then
-#   echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." >> /dev/stderr
-#   if [ $TEST_PASSED -eq 1 ];then
-#    if [ -d ../test_exclude_ref_image ];then
-#     echo "Deleting test data!" >> /dev/stderr
-#     rm -rf ../test_exclude_ref_image
-#    else
-#     echo "What was it? o_O" >> /dev/stderr
-#    fi
-#   else
-#    echo "The previous test did not pass - stopping here!
-#   
-#Failed test codes: $FAILED_TEST_CODES
-#" >> /dev/stderr
-#    exit 1
-#   fi # if [ $TEST_PASSED -eq 1 ];then
-#  fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
-# fi # if [ $? -eq 0 ];then
-#fi # if [ $? -ne ];then # hostname check
 ##########################################
 
 
@@ -11941,7 +11879,7 @@ if [ $? -eq 0 ];then
   fi
  fi
 else
- FAILED_TEST_CODES="$FAILED_TEST_CODES LIGHTCURVEVIEWER004_TEST_NOT_PERFORMED"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES LIGHTCURVEVIEWER004_TEST_NOT_PERFORMED_no_gs"
 fi
 
 # cleanup
