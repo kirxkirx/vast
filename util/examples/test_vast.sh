@@ -825,7 +825,7 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATEMEANSIG005"
    fi
    #TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS)-(0.090508);sqrt(a*a)<0.05" | bc -ql`
-   TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS)-(0.090508);sqrt(a*a)<0.05" | awk '{if ( sqrt( ($1-0.090508)*($1-0.090508) ) < 0.05 ) print 1 ;else print 0 }'`
+   TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS" | awk '{if ( sqrt( ($1-0.090508)*($1-0.090508) ) < 0.05 ) print 1 ;else print 0 }'`
    re='^[0-9]+$'
    if ! [[ $TEST =~ $re ]] ; then
     echo "TEST ERROR"

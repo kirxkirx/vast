@@ -34,7 +34,9 @@ fi
 # This symlink is needed by Makefile
 ln -s $VAST_DIR/lib/find_gcc_compiler.sh
 make clean
-make -j9
+# Somehow -j9 doesnt work with the GNUmakefile hack
+#make -j9
+make
 if [ ! $? ];then
 
  echo "VaST code version/compiler version/compilation date:"
