@@ -63,13 +63,13 @@ done
 #
 cp bin/* "$TARGET_DIR"/bin/
 
+# Clean the source tree to save space
+make clean
+
 # remove the symlink
 if [ -f find_gcc_compiler.sh ];then
  rm -f find_gcc_compiler.sh
 fi
-
-# Clean the source tree to save space
-make clean
 
 cd $VAST_DIR
 

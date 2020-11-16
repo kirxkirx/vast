@@ -205,5 +205,5 @@ objclean:
 binclean:
 	rm -rf ./bin/*
 
-clean:
-	make objclean; make binclean
+clean: objclean binclean
+#	make objclean; make binclean

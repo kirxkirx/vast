@@ -2,6 +2,8 @@ CFLAGS= -g -D_FILE_OFFSET_BITS=64
 #CC= cc
 CC := $(shell ../find_gcc_compiler.sh)
 
+all: libwcs.a
+
 OBJS =	imsetwcs.o imgetwcs.o matchstar.o findstar.o daoread.o wcscon.o \
 	fitswcs.o wcsinit.o wcs.o ty2read.o webread.o tmcread.o \
 	gscread.o gsc2read.o ujcread.o uacread.o ubcread.o ucacread.o \
