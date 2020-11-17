@@ -29,6 +29,11 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
   rm -f transient_report/index.tmp2
  fi
  
+ if [ ! -s $LIGHTCURVE_FILE_OUTDAT ];then
+  echo "WARNING: $LIGHTCURVE_FILE_OUTDAT lightcurve file does not exist!!!"
+  continue
+ fi
+ 
  TRANSIENT_NAME=`basename $LIGHTCURVE_FILE_OUTDAT .dat`
  TRANSIENT_NAME=${TRANSIENT_NAME/out/}
  TRANSIENT_NAME="$TRANSIENT_NAME"_`basename $C .fts`

@@ -46,6 +46,7 @@ N=0
 clean_tmp_files
 
 while read JD MAG MERR X Y APP FITSFILE REST ;do
+ echo "##### DEBUG #$JD $MAG $MERR $X $Y $APP $FITSFILE $REST#"
  #util/wcs_image_calibration.sh $FITSFILE $FOV &>/dev/null
  # At this point, we should somehow have a WCS calibrated image named $WCS_IMAGE_NAME
  WCS_IMAGE_NAME=wcs_`basename $FITSFILE`
@@ -125,10 +126,10 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  else
   echo -n "<tr><td>Reference image     &nbsp;&nbsp;</td>"
  fi # if [ "$FITSFILE" != "$REFERENCE_IMAGE" ] ;then
- DAYFRAC=`echo $DAYFRAC |awk '{printf "%07.4f\n",$1}'` # purely for visualisation purposes
- JD=`echo $JD|awk '{printf "%.4f",$1}'` # purely for visualisation purposes
- X=`echo "$X" |awk '{printf "%04.0f",$1}'` # purely for visualisation purposes
- Y=`echo "$Y" |awk '{printf "%04.0f",$1}'` # purely for visualisation purposes
+ DAYFRAC=`echo "$DAYFRAC" | awk '{printf "%07.4f\n",$1}'` # purely for visualisation purposes
+ JD=`echo "$JD" | awk '{printf "%.4f",$1}'` # purely for visualisation purposes
+ X=`echo "$X" | awk '{printf "%04.0f",$1}'` # purely for visualisation purposes
+ Y=`echo "$Y" | awk '{printf "%04.0f",$1}'` # purely for visualisation purposes
  echo "<td>$YEAR $MONTH $DAYFRAC &nbsp;&nbsp;</td><td> $JD &nbsp;&nbsp;</td><td> $MAG &nbsp;&nbsp;</td><td>" `lib/deg2hms $RADEC` "&nbsp;&nbsp;</td><td>$X $Y &nbsp;&nbsp;</td><td>$FITSFILE</td></tr>"
 done < $LIGHTCURVEFILE
 echo "</table>"
@@ -207,8 +208,8 @@ if [ $? -ne 0 ];then
  clean_tmp_files
  exit 1
 fi
-DAYFRAC_MEAN=`echo $MEAN|awk '{printf "%07.4f",$1}'`
-DAYFRAC_MEAN_SHORT=`echo $MEAN|awk '{printf "%05.2f",$1}'`
+DAYFRAC_MEAN=`echo "$MEAN" | awk '{printf "%07.4f",$1}'`
+DAYFRAC_MEAN_SHORT=`echo "$MEAN" | awk '{printf "%05.2f",$1}'`
 
 
 #lib/stat_array < jd$$.dat > script$$.dat

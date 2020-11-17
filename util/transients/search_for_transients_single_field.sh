@@ -61,13 +61,16 @@ util/transients/calibrate_current_field_with_tycho2.sh
 
 # Filter-out faint candidates
 for i in `cat candidates-transients.lst | awk '{print $1}'` ;do 
- A=`tail -n2 $i | awk '{print $2}'` 
+ MAG_ON_FIRST_SECOND_EPOCH_IMAGE=`tail -n2 $i | head -n1 | awk '{print $2}'`
+ MAG_ON_SECOND_SECOND_EPOCH_IMAGE=`tail -n1 $i | awk '{print $2}'`
  #### The limiting magnitude is HARDCODED HERE!!! ####
- TEST=`echo ${A/\n/} | awk '{print ($1+$2)/2">13.5"}'`
+ #TEST=`echo ${A/\n/} | awk '{print ($1+$2)/2">13.5"}'`
+ #echo "################### DEBUG ${A/\n/} ###################"
+ TEST=`echo "$MAG_ON_FIRST_SECOND_EPOCH_IMAGE $MAG_ON_SECOND_SECOND_EPOCH_IMAGE" | awk '{if ( ($1+$2)/2 > 13.5 ) print 1 ;else print 0 }'`
  if [ -z "$TEST" ];then
   echo "ERROR in $0 
   cannot run 
-echo ${A/\n/} | awk '{print (\$1+\$2)/2\">13.5\"}'
+echo $MAG_ON_FIRST_SECOND_EPOCH_IMAGE $MAG_ON_SECOND_SECOND_EPOCH_IMAGE | awk '{print (\$1+\$2)/2\">13.5\"}'
 " >> /dev/stderr
   continue
  fi
