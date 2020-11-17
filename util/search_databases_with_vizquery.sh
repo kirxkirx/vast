@@ -143,49 +143,59 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=2
    # 
    SECTRAL_TYPE="unrealisitic color!"
    # Wild guess
-   TEST=`echo "$J_K > -1.0"|bc -ql`
+   #TEST=`echo "$J_K > -1.0"|bc -ql`
+   TEST=`echo "$J_K>-1.0" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="Very blue!"
    fi
-   TEST=`echo "$J_K > -0.3"|bc -ql`
+   #TEST=`echo "$J_K > -0.3"|bc -ql`
+   TEST=`echo "$J_K>-0.3" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="O"
    fi
    #TEST=`echo "$J_K > -0.230"|bc -ql`
-   TEST=`echo "$J_K > -0.228"|bc -ql`
+   #TEST=`echo "$J_K > -0.228"|bc -ql`
+   TEST=`echo "$J_K>-0.228" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="B"
    fi
    #TEST=`echo "$J_K > 0.0"|bc -ql`
-   TEST=`echo "$J_K > -0.0135"|bc -ql`
+   #TEST=`echo "$J_K > -0.0135"|bc -ql`
+   TEST=`echo "$J_K>-0.0135" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="A"
    fi
    #TEST=`echo "$J_K > 0.16"|bc -ql`
-   TEST=`echo "$J_K > 0.132"|bc -ql`
+   #TEST=`echo "$J_K > 0.132"|bc -ql`
+   TEST=`echo "$J_K>0.132" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="F"
    fi
    #TEST=`echo "$J_K > 0.36"|bc -ql`
-   TEST=`echo "$J_K > 0.3215"|bc -ql`
+   #TEST=`echo "$J_K > 0.3215"|bc -ql`
+   TEST=`echo "$J_K>0.3215" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="G"
    fi
    #TEST=`echo "$J_K > 0.53"|bc -ql`
-   TEST=`echo "$J_K > 0.465"|bc -ql`
+   #TEST=`echo "$J_K > 0.465"|bc -ql`
+   TEST=`echo "$J_K>0.465" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="K"
    fi
    #TEST=`echo "$J_K > 0.86"|bc -ql`
-   TEST=`echo "$J_K > 0.814"|bc -ql`
+   #TEST=`echo "$J_K > 0.814"|bc -ql`
+   TEST=`echo "$J_K>0.814" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="M"
    fi
-   TEST=`echo "$J_K > 1.5"|bc -ql`
+   #TEST=`echo "$J_K > 1.5"|bc -ql`
+   TEST=`echo "$J_K>1.5" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="Very red!"
    fi
-   TEST=`echo "$J_K > 4.0"|bc -ql`
+   #TEST=`echo "$J_K > 4.0"|bc -ql`
+   TEST=`echo "$J_K>4.0" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="unrealisitic color!"
    fi
@@ -269,7 +279,8 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=U
  # skip empty lines if for whatever reason they were not caught before
  if [ ! -z $R ] ;then
   # Skip too faint stars
-  TEST=`echo "($B2+$B1)/2.0>18.0"|bc -ql`
+  #TEST=`echo "($B2+$B1)/2.0>18.0"|bc -ql`
+  TEST=`echo "$B2 $B1"| awk -F'>' '{if ( ($1+$2)/2.0 > 18.0 ) print 1 ;else print 0 }'`
   if [ $TEST -eq 1 ];then
    continue
   fi
@@ -340,7 +351,8 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I
  # skip empty lines if for whatever reason they were not caught before
  if [ ! -z $R ] ;then
   # Skip too faint stars
-  TEST=`echo "$GMAG>18.0"|bc -ql`
+  #TEST=`echo "$GMAG>18.0"|bc -ql`
+  TEST=`echo "$GMAG"| awk -F'>' '{if ( $1 > 18.0 ) print 1 ;else print 0 }'`
   if [ $TEST -eq 1 ];then
    continue
   fi
