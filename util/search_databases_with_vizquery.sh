@@ -280,7 +280,7 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=U
  if [ ! -z $R ] ;then
   # Skip too faint stars
   #TEST=`echo "($B2+$B1)/2.0>18.0"|bc -ql`
-  TEST=`echo "$B2 $B1"| awk -F'>' '{if ( ($1+$2)/2.0 > 18.0 ) print 1 ;else print 0 }'`
+  TEST=`echo "$B2 $B1"| awk '{if ( ($1+$2)/2.0 > 18.0 ) print 1 ;else print 0 }'`
   if [ $TEST -eq 1 ];then
    continue
   fi

@@ -102,9 +102,9 @@ fi
 
 
 #for TESTED_PROGRAM in cc $CC $FC $CXX awk sed bc wc cat cut sort uniq touch head tail grep basename ping curl wget `lib/find_timeout_command.sh` find readlink file $MD5COMMAND df du gzip gunzip $C_HEADER_FILES $X11_DEVELOPEMENT_PACKAGE ;do
-# We should be able to work without 'bc' now,
+# We should be able to work without 'bc' now, --- NOT JUST YET
 # and why test for cc if we have a sophisticated GCC finding script?
-for TESTED_PROGRAM in $CC $FC $CXX awk sed wc cat cut sort uniq touch head tail grep basename ping curl wget `lib/find_timeout_command.sh` find readlink file $MD5COMMAND df du gzip gunzip $C_HEADER_FILES $X11_DEVELOPEMENT_PACKAGE ;do
+for TESTED_PROGRAM in $CC $FC $CXX awk sed bc wc cat cut sort uniq touch head tail grep basename ping curl wget `lib/find_timeout_command.sh` find readlink file $MD5COMMAND df du gzip gunzip $C_HEADER_FILES $X11_DEVELOPEMENT_PACKAGE ;do
  echo -n "Looking for $TESTED_PROGRAM - "
  if ! command -v $TESTED_PROGRAM &>/dev/null ;then
   MISSING_PROGRAM=1

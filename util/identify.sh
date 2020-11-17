@@ -421,7 +421,8 @@ if [ -z $2 ];then
  fi
  #TEST=`echo "$FIELD_OF_VIEW_ARCMIN<15.0"|bc -ql`
  #TEST=`echo "$FIELD_OF_VIEW_ARCMIN<3.0"|bc -ql`
- TEST=`echo "$FIELD_OF_VIEW_ARCMIN<1.0"|bc -ql`
+ #TEST=`echo "$FIELD_OF_VIEW_ARCMIN<1.0"|bc -ql`
+ TEST=`echo "$FIELD_OF_VIEW_ARCMIN<1.0"| awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
  if [ $TEST -eq 1 ];then
   # If we know FIELD_OF_VIEW_ARCMIN is so small we have no hope to blindly solve it 
   # - try to rely on WCS information that may be already inserted in the image
@@ -818,7 +819,8 @@ Retrying..."
     fi
    else
     echo -e "Sadly, the field was \033[01;31mNOT SOLVED\033[00m. :("
-    echo "Try to set a smaller field of view size, for example:  $0 $1 " `echo "$TRIAL_FIELD_OF_VIEW_ARCMIN/2"|bc -ql`
+    #echo "Try to set a smaller field of view size, for example:  $0 $1 " `echo "$TRIAL_FIELD_OF_VIEW_ARCMIN/2"|bc -ql`
+    echo "Try to set a smaller field of view size, for example:  $0 $1 " `echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f", $1/2}'`
     ERROR_STATUS=1
    fi
    # At this point we should remove the completed job from the server

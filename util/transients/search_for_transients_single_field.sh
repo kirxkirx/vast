@@ -63,11 +63,11 @@ util/transients/calibrate_current_field_with_tycho2.sh
 for i in `cat candidates-transients.lst | awk '{print $1}'` ;do 
  A=`tail -n2 $i | awk '{print $2}'` 
  #### The limiting magnitude is HARDCODED HERE!!! ####
- TEST=`echo ${A/\n/} | awk '{print ($1+$2)/2">13.5"}'|bc -ql`
+ TEST=`echo ${A/\n/} | awk '{print ($1+$2)/2">13.5"}'`
  if [ -z "$TEST" ];then
   echo "ERROR in $0 
   cannot run 
-echo ${A/\n/} | awk '{print (\$1+\$2)/2\">13.5\"}'|bc -ql
+echo ${A/\n/} | awk '{print (\$1+\$2)/2\">13.5\"}'
 " >> /dev/stderr
   continue
  fi
