@@ -46,7 +46,7 @@ N=0
 clean_tmp_files
 
 while read JD MAG MERR X Y APP FITSFILE REST ;do
- echo "##### DEBUG #$JD $MAG $MERR $X $Y $APP $FITSFILE $REST#"
+ #echo "##### DEBUG #$JD $MAG $MERR $X $Y $APP $FITSFILE $REST#"
  #util/wcs_image_calibration.sh $FITSFILE $FOV &>/dev/null
  # At this point, we should somehow have a WCS calibrated image named $WCS_IMAGE_NAME
  WCS_IMAGE_NAME=wcs_`basename $FITSFILE`
