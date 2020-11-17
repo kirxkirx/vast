@@ -402,7 +402,8 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
 
   sprintf( sextractor_catalog_filename, "%s.psfex_input_cat", output_sextractor_catalog );
   sprintf( psf_filename, "%s.psf", output_sextractor_catalog );
-  sprintf( command, "sex -c bright_star_blend_check_3.0.sex %s%s -PARAMETERS_NAME %s -CATALOG_TYPE FITS_LDAC -CATALOG_NAME %s -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf %s", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, psfex_param_filename, sextractor_catalog_filename, APERTURE, ap[0], ap[1], ap[2], ap[3], fitsfilename );
+  //sprintf( command, "sex -c bright_star_blend_check_3.0.sex %s%s -PARAMETERS_NAME %s -CATALOG_TYPE FITS_LDAC -CATALOG_NAME %s -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf %s", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, psfex_param_filename, sextractor_catalog_filename, APERTURE, ap[0], ap[1], ap[2], ap[3], fitsfilename );
+  sprintf( command, "sex -c default.sex %s%s -PARAMETERS_NAME %s -CATALOG_TYPE FITS_LDAC -CATALOG_NAME %s -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf %s", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, psfex_param_filename, sextractor_catalog_filename, APERTURE, ap[0], ap[1], ap[2], ap[3], fitsfilename );
   fprintf( stderr, "%s\n", command );
   write_string_to_individual_image_log( output_sextractor_catalog, "autodetect_aperture(): ", "creating PSFEx-compatible SExtractor catalog with the command\n", command );
   if ( 0 != system( command ) ) {

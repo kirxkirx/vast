@@ -2694,11 +2694,13 @@ int main( int argc, char **argv ) {
  } // if ( 0 == strcmp( "diffphot", basename( argv[0] ) ) ) {
 
 
+/*
  //// Generate bright_star_blend_check.sex from default.sex for false transient removal
  if ( 0 != system( "lib/generate_bright_star_blend_check_sex.sh default.sex" ) ) {
   fprintf( stderr, "ERROR running  lib/generate_bright_star_blend_check_sex.sh default.sex\n" );
   return 1;
  }
+*/
 
  /* Start timer */
  start_time= time( NULL );
