@@ -13416,6 +13416,11 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV023"
 fi
+util/get_image_date '2015-08-21T22:18:25.000000' 2>&1 | grep --quiet 'JD 2457256.429456'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV023a"
+fi
 # Now make sure there are no residual files
 for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  if [ -f "$TMP_FITS_FILE" ];then

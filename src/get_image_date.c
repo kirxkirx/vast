@@ -72,9 +72,10 @@ int fake_image_hack( char *input_string ) {
 
  unsigned short combined_array[]= {0, 0, 0, 0};
 
- char card[FLEN_CARD], newcard[FLEN_CARD], fitsfilename[FILENAME_LENGTH];
+ // I want to add some buffer to newcard[]
+ char card[FLEN_CARD], newcard[FLEN_CARD+2048], fitsfilename[FILENAME_LENGTH];
  
- char processed_input_string[80];
+ char processed_input_string[FLEN_CARD];
 
  int input_calendar_date_or_jd=0; // 0 - calendar, 1 - JD
  unsigned int number_of_characters_inputs_str;
@@ -99,7 +100,8 @@ int fake_image_hack( char *input_string ) {
   fprintf(stderr,"ERROR in fake_image_hack(): the number of characters in the input string #%s# is %d, less than expected\n",input_string,number_of_characters_inputs_str);
   return 0;
  }
- if( number_of_characters_inputs_str>26 ){
+ //if( number_of_characters_inputs_str>26 ){
+ if( number_of_characters_inputs_str>40 ){
   fprintf(stderr,"ERROR in fake_image_hack(): the number of characters in the input string #%s# is %d, more than expected\n",input_string,number_of_characters_inputs_str);
   return 0;
  }
@@ -142,7 +144,8 @@ int fake_image_hack( char *input_string ) {
  int is_T_found=0;
  if ( input_calendar_date_or_jd == 0 ) {
   //fprintf( stderr, "DEBUG04\n");
-  strncpy( processed_input_string, input_string, 80 );
+  strncpy( processed_input_string, input_string, FLEN_CARD );
+  processed_input_string[FLEN_CARD-1]='\0'; // just in case
   for ( i= 0; i < strlen(processed_input_string); i++ ) {
    if ( processed_input_string[i] == 'T' ) {
     is_T_found=1;
@@ -218,7 +221,6 @@ int fake_image_hack( char *input_string ) {
     sec= (min-imin)*60;
     sprintf( processed_input_string, "%4.0lf-%02.0lf-%02.0lfT%02.0lf:%02.0lf:%06.3lf", year, month, iday, ihour, imin, sec );
     //fprintf( stderr, "DEBUG21 #%s#\n", processed_input_string);
-    //fprintf( stderr, "DEBUG: %s\n", processed_input_string );
     //exit( 1 );
    } // if ( is_T_found == 0 ) {
    //
@@ -231,10 +233,15 @@ int fake_image_hack( char *input_string ) {
 
  sprintf( fitsfilename, "fake_image_hack_%d.fits", getpid() );
 
+ //fprintf( stderr, "DEBUG24a #%s#\n", processed_input_string);
+
  fits_create_file( &fptr, fitsfilename, &status ); /* create new file */
  naxes[0]= naxes[1]= 2;
+ //fprintf( stderr, "DEBUG24b #%s#\n", processed_input_string);
  fits_create_img( fptr, USHORT_IMG, 2, naxes, &status );
+ //fprintf( stderr, "DEBUG24c #%s#\n", processed_input_string);
  fits_write_img( fptr, TUSHORT, fpixel, naxes[0] * naxes[1], combined_array, &status );
+ //fprintf( stderr, "DEBUG24d #%s#\n", processed_input_string);
 
  if ( input_calendar_date_or_jd== 1 ){
   // Writing this into JD keyword
@@ -245,16 +252,32 @@ int fake_image_hack( char *input_string ) {
   fits_update_card( fptr, "JD", card, &status );
  }
  else{ 
-  // The defaultassumption is to write DATE-OBS
+  // The default assumption is to write DATE-OBS
   strcpy( newcard, "DATE-OBS" );                                  // keyword name
-  strcat( newcard, " = " );                                       // '=' value delimiter
+  //fprintf( stderr, "DEBUG24e #%s#\n", processed_input_string);
+  strcat( newcard, "= " );                                       // '=' value delimiter
+  // truncate the input string so it's not too long
+  processed_input_string[FLEN_CARD-13]='\0';
+  //fprintf( stderr, "DEBUG24f #%s#\n", processed_input_string);
   strcat( newcard, processed_input_string );                                // new value
+  //fprintf( stderr, "DEBUG24g #%s#\n", processed_input_string);
   strcat( newcard, " / " );                                       // comment delimiter
-  strcat( newcard, "Exposure start time (UTC) derived by VaST" ); // append the comment
+  if ( strlen(newcard) < FLEN_CARD-42 ) {
+   // long comment
+   strcat( newcard, "Exposure start time (UTC) derived by VaST" ); // append the comment
+  } else {
+   // short comment
+   strcat( newcard, "UTC" ); // append the comment
+  }
+  // anyhow, truncate the newcard[] string
+  newcard[FLEN_CARD-1]='\0';
+  //fprintf( stderr, "DEBUG24h #%s#\n", processed_input_string);
   // reformat the keyword string to conform to FITS rules
   fits_parse_template( newcard, card, &keytype, &status );
+  //fprintf( stderr, "DEBUG24i #%s#\n", processed_input_string);
   // overwrite the keyword with the new value
   fits_update_card( fptr, "DATE-OBS", card, &status );
+  //fprintf( stderr, "DEBUG24j #%s#\n", processed_input_string);
  }
  
  strcpy( newcard, "EXPTIME" );            // keyword name
@@ -267,11 +290,17 @@ int fake_image_hack( char *input_string ) {
  // overwrite the keyword with the new value
  fits_update_card( fptr, "EXPTIME", card, &status );
 
+ //fprintf( stderr, "DEBUG24k #%s#\n", processed_input_string);
+
  fits_close_file( fptr, &status ); // close file
  fits_report_error( stderr, status );
 
+ //fprintf( stderr, "DEBUG24l #%s#\n", processed_input_string);
+ 
  // why??
  strncpy( input_string, fitsfilename, FILENAME_LENGTH );
+
+ //fprintf( stderr, "DEBUG25\n");
 
  return 1; // yes, we created the fake image
 }
@@ -343,6 +372,8 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for log_output(get_image_date.c)\n" );
   exit( 1 );
  };
+ 
+ //fprintf( stderr, "DEBUG26\n");
 
  // Get the date
  if ( 0 != gettime( input_fits_image, &JD, &timesys, convert_timesys_to_TT, &dimX, &dimY, stderr_output, log_output, param_nojdkeyword, param_verbose ) ) {
@@ -351,6 +382,8 @@ int main( int argc, char **argv ) {
   free( log_output );
   return 1;
  }
+ 
+ //fprintf( stderr, "DEBUG27\n");
 
  if ( fake_image_hack_return == 1 ) {
   unlink( input_fits_image );
@@ -374,6 +407,8 @@ int main( int argc, char **argv ) {
 #else
  structureTIME= gmtime( &UnixTime_time_t );
 #endif
+
+ //fprintf( stderr, "DEBUG28\n");
 
  // Print output
  fprintf( stdout, "%s\n", stderr_output );
