@@ -11422,6 +11422,22 @@ if [ $? -eq 0 ];then
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND027"
     fi
     #
+    valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
+    util/get_image_date '2015-08-21T22:18:25.000000' &> valgrind_test.out
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND028"
+    fi
+    grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+     if [ $ERRORS -ne 0 ];then
+      echo "ERROR"
+      break
+     fi
+    done | grep --quiet 'ERROR'
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND029"
+    fi
     #
     if [ ! -d ../vast_test_bright_stars_failed_match ];then
      cd ..
@@ -11435,7 +11451,7 @@ if [ $? -eq 0 ];then
      OMP_NUM_THREADS=1 valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes   ./vast -u -t2 -f ../vast_test_bright_stars_failed_match/* &> valgrind_test.out
      if [ $? -ne 0 ];then
       TEST_PASSED=0
-      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND028"
+      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND030"
      fi
      grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
       if [ $ERRORS -ne 0 ];then
@@ -11445,7 +11461,7 @@ if [ $? -eq 0 ];then
      done | grep --quiet 'ERROR'
      if [ $? -eq 0 ];then
       TEST_PASSED=0
-      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND029"
+      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND031"
      fi
     fi # if [ -d ../vast_test_bright_stars_failed_match ];then
     #
