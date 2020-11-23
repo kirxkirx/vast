@@ -168,10 +168,11 @@ int main( int argc, char **argv ) {
  };
 
  if ( argc == 1 ) {
-  strncpy( calibfilename, "calib.txt", FILENAME_LENGTH );
+  strncpy( calibfilename, "calib.txt", FILENAME_LENGTH-1 );
  } else {
-  strncpy( calibfilename, argv[1], FILENAME_LENGTH );
+  strncpy( calibfilename, argv[1], FILENAME_LENGTH-1 );
  }
+ calibfilename[FILENAME_LENGTH-1]='\0'; // just in case
 
  // Special case - read only the parameter file
  if ( 0 == strncmp( calibfilename, "-q", FILENAME_LENGTH ) ) {
@@ -341,7 +342,8 @@ int main( int argc, char **argv ) {
 
    if ( argc == 3 ) {
     /* Just read A, B and C from input file */
-    strncpy( calibfilename, argv[2], FILENAME_LENGTH );
+    strncpy( calibfilename, argv[2], FILENAME_LENGTH-1 );
+    calibfilename[FILENAME_LENGTH-1]='\0'; // just in case
     fprintf( stderr, "Reading fitting coefficients from file %s\n", calibfilename );
     calibfile= fopen( calibfilename, "r" );
     if ( NULL == calibfile ) {

@@ -298,15 +298,15 @@ int get_star_number_from_name( char *output_str, char *input_str ) {
  char str[FILENAME_LENGTH];
  unsigned int i;
  int output_star_number;
- strncpy( str1, input_str, FILENAME_LENGTH );
+ strncpy( str1, input_str, FILENAME_LENGTH-1 );
  str1[FILENAME_LENGTH - 1]= '\0';
- strncpy( str, basename( str1 ), FILENAME_LENGTH );
+ strncpy( str, basename( str1 ), FILENAME_LENGTH-1 );
  str[FILENAME_LENGTH - 1]= '\0';
  //fprintf(stderr,"DEBUG: AAAAA\n");
  // if file name is too short
  //if( strlen(str)<8 ){
  if ( strlen( str ) < 2 ) {
-  strncpy( output_str, " ", 2 );
+  strncpy( output_str, " ", 1 );
   return 0;
  }
  // cut-out the extension
@@ -333,11 +333,11 @@ int get_star_number_from_name( char *output_str, char *input_str ) {
   } // if( str[3]=='_'){
   //fprintf(stderr,"DEBUUUUUUU: str=#%s# strlen(str)=%d str1=#%s#\n\n\n",str,strlen(str),str1);
  } else {
-  strncpy( output_str, str, OUTFILENAME_LENGTH );
+  strncpy( output_str, str, OUTFILENAME_LENGTH-1 );
   output_str[OUTFILENAME_LENGTH - 1]= '\0';
   return 1;
  } // if( str[0]=='o' && str[1]=='u' && str[2]=='t' ){
- strncpy( output_str, str1, OUTFILENAME_LENGTH );
+ strncpy( output_str, str1, OUTFILENAME_LENGTH-1 );
  output_str[OUTFILENAME_LENGTH - 1]= '\0';
  output_star_number= atoi( str1 );
  //fprintf(stderr,"\n\n\nDEBUG #%s# %d\n\n\n",str1,output_star_number);
@@ -528,7 +528,8 @@ int main( int argc, char **argv ) {
  lightcurvefile= fopen( lightcurvefilename, "r" );
  if ( NULL == lightcurvefile ) {
   sprintf( tmp_lightcurvefilename, "out%s.dat", lightcurvefilename );
-  strncpy( lightcurvefilename, tmp_lightcurvefilename, FILENAME_LENGTH );
+  strncpy( lightcurvefilename, tmp_lightcurvefilename, FILENAME_LENGTH-1 );
+  lightcurvefilename[FILENAME_LENGTH-1]='\0'; // just in case
   fprintf( stderr, "ERROR: cannot open file!\n Trying %s ... ", lightcurvefilename );
   lightcurvefile= fopen( lightcurvefilename, "r" );
   if ( NULL == lightcurvefile ) {
@@ -1560,16 +1561,16 @@ int main( int argc, char **argv ) {
 
    if ( 0 != get_star_number_from_name( star_name, lightcurvefilename ) ) {
     if ( xw_ps == 1 ) {
-     strncpy( oldpath, "pgplot.ps", 10 );
+     strncpy( oldpath, "pgplot.ps", 9 );
      sprintf( newpath, "%s.ps", star_name );
     }
     if ( xw_ps == 2 ) {
-     strncpy( oldpath, "pgplot.png", 11 );
+     strncpy( oldpath, "pgplot.png", 10 );
      sprintf( newpath, "%s.png", star_name );
     }
     rename( oldpath, newpath );
    } else {
-    strncpy( star_name, "pgplot", 7 );
+    strncpy( star_name, "pgplot", 6 );
    }
 
    if ( xw_ps == 1 )

@@ -249,14 +249,16 @@ int download_hla_image_if_this_is_it_and_modify_imagename( char *fits_image_name
  sprintf( output_fits_image_name, "wcs_%s_%.6f_%.6f.fits", fits_image_name, markX, markY );
  // check if this file already exist
  if ( 0 == fitsfile_read_check( output_fits_image_name ) ) {
-  strncpy( fits_image_name, output_fits_image_name, FILENAME_LENGTH );
+  strncpy( fits_image_name, output_fits_image_name, FILENAME_LENGTH-1 );
+  fits_image_name[FILENAME_LENGTH-1]='\0'; //just in case
   return 0;
  }
  sprintf( system_command, "LANG=C wget -c -O %s 'http://hla.stsci.edu/cgi-bin/fitscut.cgi?red=%s&RA=%.6f&Dec=%.6f&Size=64&Format=fits&ApplyOmega=true'\n", output_fits_image_name, fits_image_name, markX, markY );
  fprintf( stderr, "Downloading a cutout from HLA image %s\n%s\n", fits_image_name, system_command );
  if ( 0 == system( system_command ) ) {
   fprintf( stderr, "Success! =)\n" );
-  strncpy( fits_image_name, output_fits_image_name, FILENAME_LENGTH );
+  strncpy( fits_image_name, output_fits_image_name, FILENAME_LENGTH-1 );
+  fits_image_name[FILENAME_LENGTH-1]='\0'; // just in case
   return 0;
  } else {
   fprintf( stderr, "Failed to download the image! :(\n" );
@@ -1357,8 +1359,10 @@ int main( int argc, char **argv ) {
   /* Check if the SExtractor executable (named "sex") is present in $PATH */
   /* Update PATH variable to make sure the local copy of SExtractor is there */
   char pathstring[8192];
-  strncpy( pathstring, getenv( "PATH" ), 8192 );
-  strcat( pathstring, ":lib/bin" );
+  strncpy( pathstring, getenv( "PATH" ), 8192-1-8 );
+  pathstring[8192-1-8]='\0';
+  strncat( pathstring, ":lib/bin", 8 );
+  pathstring[8192-1]='\0';
   setenv( "PATH", pathstring, 1 );
   if ( 0 != system( "lib/look_for_sextractor.sh" ) ) {
    fprintf( stderr, "ERROR running  lib/look_for_sextractor.sh\n" );
