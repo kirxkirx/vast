@@ -10652,6 +10652,113 @@ else
 fi
 
 
+######### Stacked DSLR image (BITPIX=-32) created with Siril
+if [ ! -f ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit.bz2" && bunzip2 r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit.bz2
+ cd $WORKDIR
+fi
+
+if [ -f ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "Stacked DSLR image (BITPIX=-32, EXPSTART, EXPEND) created with Siril test " >> /dev/stderr
+ echo -n "Stacked DSLR image (BITPIX=-32, EXPSTART, EXPEND) created with Siril test: " >> vast_test_report.txt 
+ #
+ util/get_image_date ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit | grep --quiet 'JD (mid. exp.) 2459177.84869 = 2020-11-24 08:22:06 (UT)'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND001"
+ fi
+ #
+ lib/try_to_guess_image_fov ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit  | grep --quiet ' 672'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND003"
+ fi
+ #
+ #
+ cp default.sex.ccd_example default.sex 
+ # Make sure gain value is set to 0 for a -32 DSLR image 
+ lib/guess_saturation_limit_main ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit 2>&1 | grep --quiet 'The gain value is set to 0 '
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND_gain01"
+ fi
+ #
+ lib/autodetect_aperture_main ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit 2>&1 | grep --quiet 'GAIN 0.0'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND_gain02"
+ fi
+ #
+ util/wcs_image_calibration.sh ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND004"
+ else
+  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit | grep --quiet "Image size: 97...'x64...'"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND005"
+  fi
+  #
+  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit  | grep --quiet 'Image scale: 13'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND006"
+  fi
+  #
+  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit  | grep --quiet 'Image center: 00:03:'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND007"
+  fi
+  #
+  util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit
+  if [ ! -f wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND008"
+  fi 
+  lib/bin/xy2sky wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit 200 200 &>/dev/null
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND009"
+  fi
+  if [ ! -s wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit.cat.ucac5 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND010"
+  else
+   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+   if [ $TEST -lt 100 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND011_$TEST"
+   fi
+  fi 
+  # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
+  util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit 2>&1 | grep --quiet 'The output catalog wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit.cat.ucac5 already exist.'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND012"
+  fi
+ fi # initial plate solve was successful
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mStacked DSLR image (BITPIX=-32, EXPSTART, EXPEND) created with Siril test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mStacked DSLR image (BITPIX=-32, EXPSTART, EXPEND) created with Siril test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND_TEST_NOT_PERFORMED"
+fi
+
+
 
 ### Test the field-of-view guess code
 if [ -d ../individual_images_test ];then
