@@ -571,7 +571,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  int status= 0; //for cfitsio routines
  int j;
  int jj;
- time_t Vrema;
+ time_t unix_time;
  struct tm structureTIME;
  //struct tm *ukaz_struTIME;
  char Vr_h[10], Vr_m[10], Vr_s[10];
@@ -583,6 +583,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  char tymesys_str_in[32];
  char tymesys_str_out[32];
  double inJD= 0.0;
+ double endJD= 0.0; // for paring the Siril-style EXPSTART/EXPEND keywords
 
  /* fitsio */
  fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
@@ -745,6 +746,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   EXPOSURE_COMMENT[2048-1]='\0'; // just in case
   if ( strlen(EXPOSURE_COMMENT)>8 ){
    if( NULL == strstr( EXPOSURE_COMMENT, "Seconds") && NULL == strstr( EXPOSURE_COMMENT, "seconds") ) {
+    // here we should use case rather than multiple ifs?
     if( NULL != strstr( EXPOSURE_COMMENT, "Minutes") ) {
      exposure=60.0*exposure;
     }
@@ -824,6 +826,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 
  if ( status == 202 ) {
   // if DATE-OBS does not exist, try DATE-BEG
+  fits_clear_errmsg(); // clear the CFITSIO error message stack
   status= 0;
   fits_read_key( fptr, TSTRING, "DATE-BEG", DATEOBS, DATEOBS_COMMENT, &status );
   if ( status == 0 ) {
@@ -835,6 +838,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 
  if ( status == 202 ) {
   // if DATE-OBS and DATE-BEG do not exist, try DATE-EXP
+  fits_clear_errmsg(); // clear the CFITSIO error message stack
   status= 0;
   fits_read_key( fptr, TSTRING, "DATE-EXP", DATEOBS, DATEOBS_COMMENT, &status );
   if ( status == 0 ) {
@@ -847,6 +851,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  // SHUTOPEN is in ZTF images
  if ( status == 202 ) {
   // if DATE-OBS, DATE-BEG, DATE-EXP do not exist, try SHUTOPEN
+  fits_clear_errmsg(); // clear the CFITSIO error message stack
   status= 0;
   fits_read_key( fptr, TSTRING, "SHUTOPEN", DATEOBS, DATEOBS_COMMENT, &status );
   if ( status == 0 ) {
@@ -856,11 +861,29 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   DATEOBS_COMMENT[81]= '\0'; // just in case
  }
 
+ // If both EXPSTART and EXPEND keywords are present - we want to use them instead of DATE-OBS and EXPTIME
+ int status_before_EXPSTART_EXPEND_test= status;
+ fits_read_key( fptr, TDOUBLE, "EXPSTART", &inJD, NULL, &status );
+ if ( status == 0 ) {
+  fits_read_key( fptr, TDOUBLE, "EXPEND", &inJD, NULL, &status );
+  if ( status == 0 ) {
+   fprintf( stderr, "Both EXPSTART and EXPEND keywords are present - will use them instead of DATE-OBS\n");
+   DATEOBS[0]= '\0';
+   date_parsed= 0; // we will get the date later
+   //status= 202; // seems unnecessary
+  }
+ }
+ status= status_before_EXPSTART_EXPEND_test;
+
+ 
+
  // if DATE-OBS, DATE-BEG, DATE-EXP and SHUTOPEN do not exist at all, try DATE
  if ( status == 202 ) {
   date_parsed= 0;
-  if ( param_verbose >= 1 )
+  if ( param_verbose >= 1 ) {
    fprintf( stderr, "WARNING: DATE-OBS keyword not found, trying DATE...\n" );
+  }
+  fits_clear_errmsg(); // clear the CFITSIO error message stack
   status= 0;
   // Trying to get the observing date from DATE is realy the last resort
   //fits_read_key(fptr, TSTRING, "DATE", DATEOBS, DATEOBS_COMMENT, &status);
@@ -882,22 +905,17 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    }
    // Do not look at EXPSTART if the image is from Aristarchos telescope!
    if ( 0 != strncmp( telescop, "Aristarchos", 11 ) ) {
+    fits_clear_errmsg(); // clear the CFITSIO error message stack
     status= 0;
     fits_read_key( fptr, TDOUBLE, "EXPSTART", &inJD, NULL, &status );
     if ( status == 0 ) {
-     // check if the EXPSTART value is actually reasonable?
-     // For the HLA images we expect to find / exposure start time (Modified Julian Date)
-     //#ifdef STRICT_CHECK_OF_JD_AND_MAG_RANGE
-     // if( inJD<EXPECTED_MIN_MJD )inJD=0.0;
-     // if( inJD>EXPECTED_MAX_MJD )inJD=0.0;
-     //#endif
-     // THAT CHECK IS DONE LATER
-     //
-     //strncpy(DATEOBS,"",2);
+     // We will parse the EXPSTART date later,
+     // here we just need to mark that we are not using DATE keyword to get the observing date/time
      DATEOBS[0]= '\0';
      date_parsed= 0; // we will get the date later
     }
    }
+   fits_clear_errmsg(); // clear the CFITSIO error message stack
    status= 0;
    //
    if ( param_verbose >= 1 && date_parsed == 1 ) {
@@ -911,6 +929,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   fix_DATEOBS_STRING__DD_MM_YYYY_format( DATEOBS ); // handle '09-10-2017' style DATE-OBS
   fits_read_key( fptr, TSTRING, "TIME-OBS", TIMEOBS, NULL, &status );
   if ( 0 == strcmp( TIMEOBS, "" ) ) {
+   fits_clear_errmsg(); // clear the CFITSIO error message stack
    status= 0; // guess need to set it here or the folowing  FITSIO request will not pass
    if ( param_verbose >= 1 )
     fprintf( stderr, "Looking for time of observation in START keyword (its format is assumed to be similar to TIME-OBS keyword)\n" );
@@ -969,23 +988,50 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
         */
 
  /////// Look for EXPSTART keyword containing MJD (a convention used for HST images in the HLA) ///////
+ /////// The other possibility we test for here is EXPSTART/EXPEND keywords containing JD (a convention used by Siril) ///////
  status= 0;
  if ( date_parsed == 0 ) {
   fprintf( stderr, "Trying to get observing start MJD from EXPSTART keyword...\n" );
   fits_read_key( fptr, TDOUBLE, "EXPSTART", &inJD, NULL, &status );
   if ( status != 202 ) {
-   fprintf( stderr, "Getting MJD of the exposure start from EXPSTART keyword: %.5lf\n", inJD );
+   fprintf( stderr, "Getting the observing time of the exposure start from EXPSTART keyword: %.5lf\n", inJD );
    if ( EXPECTED_MIN_MJD < inJD && inJD < EXPECTED_MAX_MJD ) {
+    fprintf( stderr, "Based on the numerical value, we think EXPSTART contains MJD\nUsing EXPSTART+EXPTIME/2 as the middle of exposure\n");
     inJD= inJD + 2400000.5;
     fprintf( stderr, "Got observation time parameters: JD_start= %.5lf  exptime= %.1lf sec\n", inJD, exposure );
     inJD= inJD + exposure / 86400.0 / 2.0;
     //date_parsed=1;
     expstart_mjd_parsed= 1;
    } else {
-    fprintf( stderr, "WARNING: the value %lf infered from EXPSTART keyword is outside the expected MJD range (%.0lf,%.0lf).\n", inJD, EXPECTED_MIN_MJD, EXPECTED_MAX_MJD );
-   }
-  }
- }
+    // check if the value looks like a JD
+    if ( EXPECTED_MIN_JD < inJD && inJD < EXPECTED_MAX_JD ) {
+     fits_read_key( fptr, TDOUBLE, "EXPEND", &endJD, NULL, &status );
+     if ( status != 202 ) {
+      if ( EXPECTED_MIN_JD < endJD && endJD < EXPECTED_MAX_JD ) {
+       fprintf( stderr, "Setting the middle of exposure time based on EXPSTART and EXPEND keywords.\n"); 
+       fprintf( stderr, "Got observation time parameters: JD_start= %.5lf  JD_end= %.5lf  exptime= %.1lf sec\n", inJD, endJD, exposure );
+       inJD= (inJD + endJD) / 2.0;
+       expstart_mjd_parsed= 1;
+      } else {
+       fprintf( stderr, "JD derived from EXPEND keyword %.5lf is out of the expected range (%.5lf,%.5lf)!\n", endJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD );
+       fprintf( stderr, "Got observation time parameters: JD_start= %.5lf  exptime= %.1lf sec\n", inJD, exposure );
+       inJD= inJD + exposure / 86400.0 / 2.0;
+       expstart_mjd_parsed= 1;
+      } // else if ( EXPECTED_MIN_JD < inJD && inJD < EXPECTED_MAX_JD ) {
+     } else {
+      // no EXPEND keyword
+      fprintf( stderr, "No EXPEND keyword\n" );
+      fprintf( stderr, "Got observation time parameters: JD_start= %.5lf  exptime= %.1lf sec\n", inJD, exposure );
+      inJD= inJD + exposure / 86400.0 / 2.0;
+      expstart_mjd_parsed= 1;
+     } // else if ( status != 202 ) {
+     status= 0;
+    } else {
+     fprintf( stderr, "WARNING: the value %lf infered from EXPSTART keyword is outside the expected MJD range (%.0lf,%.0lf).\n", inJD, EXPECTED_MIN_MJD, EXPECTED_MAX_MJD );
+    } // else if ( EXPECTED_MIN_JD < inJD && inJD < EXPECTED_MAX_JD ) {
+   } // else if ( EXPECTED_MIN_MJD < inJD && inJD < EXPECTED_MAX_MJD ) {
+  } // if ( status != 202 ) {
+ } // if ( date_parsed == 0 ) {
 
  /////// Look for JD keyword (a convention used for Moscow photographic plate scans) ///////
  status= 0;
@@ -1129,7 +1175,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    // Make sure the string is not empty
    if ( strlen( DATEOBS_COMMENT ) > 1 ) {
     if ( param_verbose >= 1 )
-     fprintf( stderr, "Trying to guess the observing date by parsing the comment string '%s'\n", DATEOBS_COMMENT );
+     fprintf( stderr, "Trying to guess the time system by parsing the comment string '%s'\n", DATEOBS_COMMENT );
     // don't start from 0 - if there is no comment, the string will contain 0 characters before \0 !
     for ( j= 1; j < (int)strlen( DATEOBS_COMMENT ) - 1; j++ ) {
      if ( DATEOBS_COMMENT[j] == 'U' && DATEOBS_COMMENT[j + 1] == 'T' ) {
@@ -1290,7 +1336,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    return 1;
   }
   structureTIME.tm_year= atoi( Da_y ) - 1900;
-  Vrema= timegm( &structureTIME );
+  unix_time= timegm( &structureTIME );
   ///////////////////////////////////
   // A silly atempt to accomodate exposures crossing the midnight
   // that have time set through UT-END while date is correponding
@@ -1303,21 +1349,21 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    structureTIME2.tm_mday= structureTIME.tm_mday;
    structureTIME2.tm_mon= structureTIME.tm_mon;
    structureTIME2.tm_year= structureTIME.tm_year;
-   if ( (double)Vrema - (double)timegm( &structureTIME2 ) < ( -1.0 ) * exposure ) {
+   if ( (double)unix_time - (double)timegm( &structureTIME2 ) < ( -1.0 ) * exposure ) {
     fprintf( stderr, "WARNING!!! The exposure is crossing midnight while it's time is set through UT-END!\n" );
-    Vrema+= 86400;
+    unix_time+= 86400;
    }
   }
   ///////////////////////////////////
   // Oh, this is a funny one: cf. date -d '1969-12-31T23:59:59' +%s  and  date -d '1970-01-01T00:00:00' +%s
-  if( (double)Vrema + exposure / 2.0 < 0.0 ){
-   Vrema= ( time_t )( (double)Vrema + exposure / 2.0 - 0.5 );
+  if( (double)unix_time + exposure / 2.0 < 0.0 ){
+   unix_time= ( time_t )( (double)unix_time + exposure / 2.0 - 0.5 );
   }
   else{
-   Vrema= ( time_t )( (double)Vrema + exposure / 2.0 + 0.5 );
+   unix_time= ( time_t )( (double)unix_time + exposure / 2.0 + 0.5 );
   }
 
-  ( *JD )= (double)Vrema / 3600.0 / 24.0 + 2440587.5 + apply_JD_correction_in_days; // note that the time correction is not reflected in the broken down time!
+  ( *JD )= (double)unix_time / 3600.0 / 24.0 + 2440587.5 + apply_JD_correction_in_days; // note that the time correction is not reflected in the broken down time!
   if ( overridingJD_from_input_image_list != 0.0 ) {
    // Override the computed JD!
    ( *JD )= overridingJD_from_input_image_list;
@@ -1378,8 +1424,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    fprintf(stderr,"entering  if ( NULL != stderr_output )\n");
    #endif
    fprintf( stderr, "JD (mid. exp.) %.5lf\n", ( *JD ) );
-   Vrema= ( time_t )( ( ( *JD ) - 2440587.5 ) * 3600.0 * 24.0 + 0.5 );
-   form_DATEOBS_and_EXPTIME_from_UNIXSEC( Vrema, 0.0, formed_str_DATEOBS, formed_str_EXPTIME );
+   unix_time= ( time_t )( ( ( *JD ) - 2440587.5 ) * 3600.0 * 24.0 + 0.5 );
+   form_DATEOBS_and_EXPTIME_from_UNIXSEC( unix_time, 0.0, formed_str_DATEOBS, formed_str_EXPTIME );
    for( counter_i=0; counter_i<strlen(formed_str_DATEOBS); counter_i++ ){
     if( formed_str_DATEOBS[counter_i]=='T' ){
      formed_str_DATEOBS[counter_i]=' ';
@@ -1416,13 +1462,13 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    #ifdef DEBUGMESSAGES
    fprintf(stderr,"entering   if ( param_verbose >= 1 )\n");
    #endif
-   // Compute Vrema so we can convert the JD back to the broken-down time
-   //(*JD) = (double)Vrema/3600.0/24.0+2440587.5+apply_JD_correction_in_days;
-   Vrema= ( time_t )( ( ( *JD ) - 2440587.5 ) * 3600.0 * 24.0 + 0.5 );
+   // Compute unix_time so we can convert the JD back to the broken-down time
+   //(*JD) = (double)unix_time/3600.0/24.0+2440587.5+apply_JD_correction_in_days;
+   unix_time= ( time_t )( ( ( *JD ) - 2440587.5 ) * 3600.0 * 24.0 + 0.5 );
    exposure= fabs( exposure );
-   form_DATEOBS_and_EXPTIME_from_UNIXSEC( Vrema, exposure, formed_str_DATEOBS, formed_str_EXPTIME );
+   form_DATEOBS_and_EXPTIME_from_UNIXSEC( unix_time, exposure, formed_str_DATEOBS, formed_str_EXPTIME );
    #ifdef DEBUGMESSAGES
-   fprintf(stderr,"\n\n\n\nVrema=%ld\nexposure=%lf\nformed_str_DATEOBS=%s\nformed_str_EXPTIME=%s\n\n\n",Vrema,exposure,formed_str_DATEOBS,formed_str_EXPTIME);
+   fprintf(stderr,"\n\n\n\nunix_time=%ld\nexposure=%lf\nformed_str_DATEOBS=%s\nformed_str_EXPTIME=%s\n\n\n",unix_time,exposure,formed_str_DATEOBS,formed_str_EXPTIME);
    #endif
    //
    if ( param_verbose == 2 ) {

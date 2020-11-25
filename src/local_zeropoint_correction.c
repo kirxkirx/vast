@@ -44,7 +44,9 @@ void get_dates_from_lightcurve_files( double *jd, size_t *Nobs ) {
  double _jd, mag, merr, x, y, app;
  char string[FILENAME_LENGTH];
  char comments_string[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
- int i, date_found;
+ //int i;
+ size_t i;
+ int date_found;
 
  ( *Nobs )= 0;
 
@@ -66,7 +68,7 @@ void get_dates_from_lightcurve_files( double *jd, size_t *Nobs ) {
      if ( _jd == 0.0 )
       continue; // if this line could not be parsed, try the next one
      date_found= 0;
-     for ( i= 0; i < ( *Nobs ); i++ ) {
+     for ( i= 0; i < (size_t)( *Nobs ); i++ ) {
       if ( _jd == jd[i] ) {
        date_found= 1;
        break;
@@ -189,9 +191,10 @@ int main() {
 
  double *jd;
 
- int i, j; //,iter;
+// int i, j; //,iter;
+// long k, l;
 
- long k, l;
+ size_t i, j, k, l;
 
  double djd;
  double dmag, dmerr, X, Y, app;
@@ -398,7 +401,7 @@ int main() {
  }
  while ( -1 < fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename ) ) {
   // Get star number from the lightcurve file name
-  for ( k= 3; k < (long)strlen( lightcurvefilename ); k++ ) {
+  for ( k= 3; k < strlen( lightcurvefilename ); k++ ) {
    star_number_string[k - 3]= lightcurvefilename[k];
    if ( lightcurvefilename[k] == '.' ) {
     star_number_string[k - 3]= '\0';

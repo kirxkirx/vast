@@ -1361,7 +1361,7 @@ int main( int argc, char **argv ) {
   char pathstring[8192];
   strncpy( pathstring, getenv( "PATH" ), 8192-1-8 );
   pathstring[8192-1-8]='\0';
-  strncat( pathstring, ":lib/bin", 8 );
+  strncat( pathstring, ":lib/bin", 9 );
   pathstring[8192-1]='\0';
   setenv( "PATH", pathstring, 1 );
   if ( 0 != system( "lib/look_for_sextractor.sh" ) ) {

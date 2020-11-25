@@ -350,7 +350,7 @@ int main( int argc, char **argv ) {
     fprintf( stderr, "The argument list is too long!\n");
     return 1; 
    }
-   strncat( input_fits_image, " ", 1 );
+   strncat( input_fits_image, " ", 2 );
    strncat( input_fits_image, argv[argument_counter], 80 );
   }
  }

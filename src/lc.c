@@ -306,7 +306,7 @@ int get_star_number_from_name( char *output_str, char *input_str ) {
  // if file name is too short
  //if( strlen(str)<8 ){
  if ( strlen( str ) < 2 ) {
-  strncpy( output_str, " ", 1 );
+  strncpy( output_str, " ", 2 );
   return 0;
  }
  // cut-out the extension
@@ -1561,16 +1561,16 @@ int main( int argc, char **argv ) {
 
    if ( 0 != get_star_number_from_name( star_name, lightcurvefilename ) ) {
     if ( xw_ps == 1 ) {
-     strncpy( oldpath, "pgplot.ps", 9 );
+     strncpy( oldpath, "pgplot.ps", 10 );
      sprintf( newpath, "%s.ps", star_name );
     }
     if ( xw_ps == 2 ) {
-     strncpy( oldpath, "pgplot.png", 10 );
+     strncpy( oldpath, "pgplot.png", 11 );
      sprintf( newpath, "%s.png", star_name );
     }
     rename( oldpath, newpath );
    } else {
-    strncpy( star_name, "pgplot", 6 );
+    strncpy( star_name, "pgplot", 7 );
    }
 
    if ( xw_ps == 1 )

@@ -21,7 +21,8 @@
 #include "lightcurve_io.h"
 
 void write_fake_log_file( double *jd, size_t *Nobs ) {
- int i;
+ //int i;
+ size_t i;
  FILE *logfile;
  fprintf( stderr, "Writing fake vast_image_details.log ... " );
  logfile= fopen( "vast_image_details.log", "w" );
@@ -43,7 +44,9 @@ void get_dates_from_lightcurve_files( double *jd, size_t *Nobs ) {
  double _jd, mag, merr, x, y, app;
  char string[FILENAME_LENGTH];
  char comments_string[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
- int i, date_found;
+ //int i;
+ size_t i;
+ int date_found;
 
  ( *Nobs )= 0;
 
@@ -92,7 +95,8 @@ void get_dates( double *jd, size_t *Nobs ) {
  FILE *vastlogfile;
  char str[MAX_LOG_STR_LENGTH];
  char jd_str[MAX_LOG_STR_LENGTH];
- unsigned int i, j, k;
+ //unsigned int i, j, k;
+ size_t i, j, k;
  ( *Nobs )= 0;
  vastlogfile= fopen( "vast_image_details.log", "r" );
  if ( NULL == vastlogfile ) {
@@ -256,7 +260,7 @@ int main() {
  }
  while ( -1 < fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename ) ) {
   // Get star number from the lightcurve file name
-  for ( k= 3; k < (int)strlen( lightcurvefilename ); k++ ) {
+  for ( k= 3; k < strlen( lightcurvefilename ); k++ ) {
    star_number_string[k - 3]= lightcurvefilename[k];
    if ( lightcurvefilename[k] == '.' ) {
     star_number_string[k - 3]= '\0';
