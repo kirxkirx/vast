@@ -7,6 +7,10 @@
 	'util/get_image_date 2020 10 27 18:00'
 	and as a fraction of the day
 	'util/get_image_date 2020 10 27.75'
+	* 'lib/deg2hms_uas' converts the input in decimal degrees
+	to sexagesimal degrees:arcminutes:arcseconds with the 10 microarcsecond accuracy of the output.
+	Example usage: 'lib/deg2hms_uas 126.59917135396 -50.96207264973'
+	'lib/deg2hms' prints out the output with the usual 0.1 arcsec accuracy.
 	* Removed the internal copy of sextractor-2.25.0, keeping 2.25.2 and 2.19.5
 	* Retired the old VaST implementation of SysRem 'util/sysrem' as it started causing problems
 	with cod maintenance. The new SysRem implementation 'util/sysrem2' is now the only one and

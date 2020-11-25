@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> // for strlen()
+#include <string.h> // for strlen() and strcmp()
 #include <math.h>
+
+#include <libgen.h> // for basename()
 
 #include <ctype.h> // for isalpha()
 
@@ -87,7 +89,13 @@ int main( int argc, char **argv ) {
   hh+= 1;
   mm= 0.0;
  }
- fprintf( stdout, "%02d:%02d:%05.2lf ", hh, mm, ss );
+ if ( 0 == strcmp( "deg2hms_uas", basename( argv[0] ) ) ) {
+  // print results with sub-mas precision
+  fprintf( stdout, "%02d:%02d:%09.6lf ", hh, mm, ss ); 
+ } else {
+  // print results with the standard precision
+  fprintf( stdout, "%02d:%02d:%05.2lf ", hh, mm, ss );
+ }
  in= atof( argv[2] );
  if ( in < -90.0 || in > 90.0 ) {
   fprintf( stderr, "ERROR: the input Dec (%s interpreted as %lf) is our of range!\n", argv[2], in );
@@ -112,8 +120,13 @@ int main( int argc, char **argv ) {
   hh+= 1;
   mm= 0.0;
  }
- //if( hh==0 && in<0.0 )fprintf(stdout,"-");
- fprintf( stdout, "%02d:%02d:%04.1lf\n", hh, mm, ss );
+ if ( 0 == strcmp( "deg2hms_uas", basename( argv[0] ) ) ) {
+  // print results with sub-mas precision
+  fprintf( stdout, "%02d:%02d:%08.5lf\n", hh, mm, ss );
+ } else {
+  // print results with the standard precision
+  fprintf( stdout, "%02d:%02d:%04.1lf\n", hh, mm, ss );
+ }
 
  return 0;
 }

@@ -13270,6 +13270,11 @@ if [ $? -eq 0 ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION005_${POSITION_DEG// /_}"
   fi
  done
+ lib/deg2hms_uas 126.59917135396 -50.96207264973 | grep --quiet '08:26:23.801125 -50:57:43.46154'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION006"
+ fi
  
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
