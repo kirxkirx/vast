@@ -10,16 +10,12 @@ Need to inform the user about what is going on!
 
 * Specify image center for plate solver.
 
-* Filter out images with bad tracking based on ellipticity.
-
 * Write warning in sextract_single_image that with the default settings 
 a measurement will be dropped.
 
 * Make sure to go to another period search server if the first one didn't work.
 
-* More tests on M31
-
-* range check for all STAR*[Pos*[i]]
+* Do a range check for all STAR*[Pos*[i]]
 
 * Transfer to double-precision star positions
 

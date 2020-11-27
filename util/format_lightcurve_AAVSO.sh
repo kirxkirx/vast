@@ -90,6 +90,17 @@ fi
  echo "The stub report is written to AAVSO_report.txt
 You may need to edit the header before submitting the file to the AAVSO!"
 
+# Try to find a sensible editor
+if [ ! -z "$EDITOR" ];then
+ for EDITOR_TO_TRY in joe nano vim emacs ;do
+  command -v $EDITOR_TO_TRY &>/dev/null
+  if [ $? -eq 0 ];then
+   EDITOR=joe
+   break
+  fi
+ done
+fi
+
 # Manually edit the report
 if [ ! -z "$EDITOR" ];then
  $EDITOR AAVSO_report.txt
