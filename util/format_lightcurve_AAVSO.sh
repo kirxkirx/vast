@@ -91,7 +91,7 @@ fi
 You may need to edit the header before submitting the file to the AAVSO!"
 
 # Try to find a sensible editor
-if [ ! -z "$EDITOR" ];then
+if [ -z "$EDITOR" ];then
  for EDITOR_TO_TRY in joe nano vim emacs ;do
   command -v $EDITOR_TO_TRY &>/dev/null
   if [ $? -eq 0 ];then
@@ -124,7 +124,7 @@ if [ $N_LINES_STARNAME -ne $N_LINES_MEASUREMENTS ];then
 fi
 
 
-VARIABLE_STAR_NAME_NO_WHITESPACES="${VARIABLE_STAR_NAME//' '/'_'}"
+VARIABLE_STAR_NAME_NO_WHITESPACES="${VARIABLE_STAR_NAME// /_}"
 
 # Filter name
 FILTER_NAME=`cat AAVSO_report.txt | grep -v \# | awk -F',' '{print $5}' | head -n1`
