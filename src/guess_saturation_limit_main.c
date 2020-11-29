@@ -12,7 +12,7 @@
 #include "ident.h"
 //#include "write_individual_image_log.h"
 
-int main( int argc, char **argv ) {
+int main(int argc, char **argv) {
 
  char fitsfilename[FILENAME_LENGTH];
 
@@ -24,23 +24,23 @@ int main( int argc, char **argv ) {
  int is_flag_image_used= 2; // 2 - guess by default, 1 - always use the flag image, 0 - never use the flag image
                             // The decision will also be stored in this variable: 1 - use the flag image, 0 - don't use it
 
- if ( argc < 2 ) {
-  fprintf( stderr, "Usage: %s image.fits\n", argv[0] );
+ if( argc < 2 ) {
+  fprintf(stderr, "Usage: %s image.fits\n", argv[0]);
   return 1;
  }
- strncpy( fitsfilename, argv[1], FILENAME_LENGTH - 1 );
+ strncpy(fitsfilename, argv[1], FILENAME_LENGTH - 1);
  fitsfilename[FILENAME_LENGTH - 1]= '\0';
 
  // Reset
  gain_sextractor_cl_parameter_string[0]= flag_image_sextractor_cl_parameter_string[0]= flag_image_filename[0]= '\0';
 
  // Check if we need a flag image
- check_if_we_need_flag_image( fitsfilename, flag_image_sextractor_cl_parameter_string, &is_flag_image_used, flag_image_filename, weight_image_filename );
+ check_if_we_need_flag_image(fitsfilename, flag_image_sextractor_cl_parameter_string, &is_flag_image_used, flag_image_filename, weight_image_filename);
 
  // Guess gain for the given image
- guess_gain( fitsfilename, gain_sextractor_cl_parameter_string, 2, 1 );
+ guess_gain(fitsfilename, gain_sextractor_cl_parameter_string, 2, 1);
 
- fprintf( stdout, "%s%s\n", flag_image_sextractor_cl_parameter_string, gain_sextractor_cl_parameter_string );
+ fprintf(stdout, "%s%s\n", flag_image_sextractor_cl_parameter_string, gain_sextractor_cl_parameter_string);
 
  return 0;
 }

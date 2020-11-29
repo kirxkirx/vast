@@ -132,14 +132,14 @@ struct Preobr_Sk {
 };
 
 // This function is also used in vast.c so cannot be inlined
-void Star_Copy( struct Star *copy, struct Star *star );
+void Star_Copy(struct Star *copy, struct Star *star);
 
 //void Ecv_Triangle_Copy(struct Ecv_Triangle *ecv_tr1, struct Ecv_Triangle *ecv_tr2);
 
-struct Preobr_Sk *New_Preobr_Sk();                 //Создание нового преобразования (как malloc)
-struct Preobr_Sk *New_Preobr_Sk_W();               //Создание нового преобразования (как malloc)
-struct Preobr_Sk *New_Preobr_Sk_M();               //Создание нового преобразования (как malloc)
-void Delete_Preobr_Sk( struct Preobr_Sk *preobr ); //Удаление преобразования
+struct Preobr_Sk *New_Preobr_Sk();               //Создание нового преобразования (как malloc)
+struct Preobr_Sk *New_Preobr_Sk_W();             //Создание нового преобразования (как malloc)
+struct Preobr_Sk *New_Preobr_Sk_M();             //Создание нового преобразования (как malloc)
+void Delete_Preobr_Sk(struct Preobr_Sk *preobr); //Удаление преобразования
 
 struct Ecv_triangles *Init_ecv_triangles(); //Инициализация массива подобных треугольников
 
@@ -153,7 +153,7 @@ void Add_ecv_triangles(struct Ecv_triangles *ecv_tr, int a1, int b1, int c1,
 /*
   Удаление всего Ecv_triangles
 */
-void Delete_Ecv_triangles( struct Ecv_triangles *ecv_tr );
+void Delete_Ecv_triangles(struct Ecv_triangles *ecv_tr);
 
 //Преобразования
 //void Scale(struct Star *star, int Number, double scale);//Масштаб
@@ -179,26 +179,26 @@ void Delete_Ecv_triangles( struct Ecv_triangles *ecv_tr );
 /*
   Сортировка звезд по яркости
 */
-void Sort_in_mag_of_stars( struct Star *star, int Number );
+void Sort_in_mag_of_stars(struct Star *star, int Number);
 
 /*
   Нахождение треугольника из наиболее близких звезд к данной звезде
   возвращвет треугольник
 */
-struct Triangle Separate( struct Star *star, int Number, int a0 );
+struct Triangle Separate(struct Star *star, int Number, int a0);
 
 /*
   Разбиение звездного поля на треугольники
 */
-struct Triangle *Separate_to_triangles( struct Star *star, int Number, int *Ntriangles );
+struct Triangle *Separate_to_triangles(struct Star *star, int Number, int *Ntriangles);
 /*
   Нахождения пар подобных треугольников на двух кадрах
 */
-int Podobie( struct Preobr_Sk *preobr, struct Ecv_triangles *ecv_tr,
-             //struct Star *star1, int Number1,
-             //struct Star *star2, int Number2,
-             struct Triangle *tr1, int Nt1,
-             struct Triangle *tr2, int Nt2 );
+int Podobie(struct Preobr_Sk *preobr, struct Ecv_triangles *ecv_tr,
+            //struct Star *star1, int Number1,
+            //struct Star *star2, int Number2,
+            struct Triangle *tr1, int Nt1,
+            struct Triangle *tr2, int Nt2);
 
 /*
   Сравнение двух пар подобных треугольников по ошибке подобия
@@ -220,20 +220,20 @@ int Popadanie_star1_to_star2(struct Star *star1, int Number1, struct Star *star2
   Выбор лучшего опорного треугольника из массива подобных
   nm - индекс этого треугольника в массиве
 */
-int Very_Well_triangle( struct Star *star1, int Number1, struct Star *star2, int Number2,
-                        struct Ecv_triangles *ecv_tr,
-                        struct Preobr_Sk *preobr, int *nm, int control1 );
+int Very_Well_triangle(struct Star *star1, int Number1, struct Star *star2, int Number2,
+                       struct Ecv_triangles *ecv_tr,
+                       struct Preobr_Sk *preobr, int *nm, int control1);
 
 /*
   Нахождение линейного преобразования второго кадра к первому
 */
-int Star2_to_star1_on_main_triangle( struct Preobr_Sk *preobr, struct Star *star1, int Number1, struct Star *star2,
-                                     int Number2, struct Ecv_triangles *ecv_tr, int nm );
+int Star2_to_star1_on_main_triangle(struct Preobr_Sk *preobr, struct Star *star1, int Number1, struct Star *star2,
+                                    int Number2, struct Ecv_triangles *ecv_tr, int nm);
 
 /*
   Отождествление звезд на двух полях
 */
-int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Number2, int *St1, int *St2, double sigma_popadaniya, double image_size_X, double image_size_Y );
+int Ident_on_sigma(struct Star *star1, int Number1, struct Star *star2, int Number2, int *St1, int *St2, double sigma_popadaniya, double image_size_X, double image_size_Y);
 
 /*
   Функция отождествления двух кадров возвращает количество отождествленных оъектов
@@ -241,20 +241,20 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
 */
 //int Ident(struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Star *STAR2, int NUMBER2, int START_NUMBER2,
 //	  struct Frame frame1, struct Frame frame2, int *Pos1, int *Pos2, int control1, struct Star *STAR3, int NUMBER3, int START_NUMBER3, int *match_retry, int min_number_of_matched_stars, double image_size_X, double image_size_Y );
-int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Star *STAR2, int NUMBER2, int START_NUMBER2,
-           int *Pos1, int *Pos2, int control1, struct Star *STAR3, int NUMBER3, int START_NUMBER3, int *match_retry, int min_number_of_matched_stars, double image_size_X, double image_size_Y );
+int Ident(struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Star *STAR2, int NUMBER2, int START_NUMBER2,
+          int *Pos1, int *Pos2, int control1, struct Star *STAR3, int NUMBER3, int START_NUMBER3, int *match_retry, int min_number_of_matched_stars, double image_size_X, double image_size_Y);
 
 //double autodetect_aperture(char *fitsfilename, double JD, double LAST_JD, double *LAST_APER, int param_P, double fixed_aperture, double *median_class_star, double *sigma_class_star, double X_im_size, double Y_im_size);
 //double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, int force_recompute, int param_P, double fixed_aperture, int verbose, double X_im_size, double Y_im_size);
-double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog, int force_recompute, int param_P, double fixed_aperture, double X_im_size, double Y_im_size, int guess_saturation_limit_operation_mode );
+double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, int force_recompute, int param_P, double fixed_aperture, double X_im_size, double Y_im_size, int guess_saturation_limit_operation_mode);
 
 // These two should be moved to a new gettime.h
-int check_if_this_fits_image_is_north_up_east_left( char *fitsfilename);
-int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_to_TT, double *dimX, double *dimY, char *stderr_output, char *log_output, int param_nojdkeyword, int verbose );
+int check_if_this_fits_image_is_north_up_east_left(char *fitsfilename);
+int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to_TT, double *dimX, double *dimY, char *stderr_output, char *log_output, int param_nojdkeyword, int verbose);
 
-int read_bad_lst( double *X1, double *Y1, double *X2, double *Y2, int *N );
+int read_bad_lst(double *X1, double *Y1, double *X2, double *Y2, int *N);
 
-int exclude_region( double *X1, double *Y1, double *X2, double *Y2, int N, double X, double Y, double aperture );
+int exclude_region(double *X1, double *Y1, double *X2, double *Y2, int N, double X, double Y, double aperture);
 
 //void set_distance_to_neighbor_in_struct_Star(struct Star *star, int NUMBER, double aperture, double image_size_X, double image_size_Y);
 
