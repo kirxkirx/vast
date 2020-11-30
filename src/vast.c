@@ -2515,7 +2515,7 @@ int main( int argc, char **argv ) {
  fprintf( stderr, "\nPreparing to process %d input FITS images...\n", Num );
 
  if ( Num < HARD_MIN_NUMBER_OF_POINTS && Num != 3 ) {
-  fprintf( stderr, "ERROR: At least %d images are needed for correct processing (much more is much better)!\nYou have supplied only %d images. :(\n", HARD_MIN_NUMBER_OF_POINTS, Num );
+  fprintf( stderr, "ERROR: At least %d images are needed for correct processing (much more is much better)!\nYou have supplied only %d usable images. :(\n", HARD_MIN_NUMBER_OF_POINTS, Num );
   fprintf( stderr, "\nThis error message often appears if there is a TYPO IN THE COMMAND LINE argument(s) specifying path to the images.\nPlease check the input carefully.\n\n" );
   // moved up
   //free(file_or_dir_on_command_line);
