@@ -34,7 +34,8 @@ int main() {
 
  double mean_jd= 0; // Mean jd to be subtracted from the intput data before fitting to avoid problems
 
- double Z; // Z is the maximum number of independent magnitude pairs. In the case of linear interpolation 0.25*N is recomended!
+ double Z; // Z is the maximum number of independent magnitude pairs.
+           // In the case of linear interpolation 0.25*N is recomended!
 
  /* Read data */
  do {
@@ -55,6 +56,7 @@ int main() {
  fprintf( stderr, "n_points=%d\n", n_points_lightcurve );
  Z= 0.25 * (double)n_points_lightcurve;
  fprintf( stderr, "Expecting number of independent pairs Z=%d\n", (int)( Z + 0.0 ) );
+ 
  /* Sort data */
  size_t *order= malloc( sizeof( size_t ) * n_points_lightcurve );
  gsl_sort_index( order, jd, 1, n_points_lightcurve );
@@ -87,12 +89,14 @@ int main() {
  fprintf( stderr, "dt = %lf\n", dt );
 
  /* Form 2n+1 magnitudes spaced by equal time intervals dt */
- interp_m= malloc( 5 * n_points_lightcurve * sizeof( double ) );
+ //interp_m= malloc( 5 * n_points_lightcurve * sizeof( double ) );
+ interp_m= malloc( (2 * n_points_lightcurve + 1) * sizeof( double ) );
  if ( interp_m == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for interp_m(kwee-van-woerden.c)\n" );
   return 1;
  };
- interp_jd= malloc( 5 * n_points_lightcurve * sizeof( double ) );
+ //interp_jd= malloc( 5 * n_points_lightcurve * sizeof( double ) );
+ interp_jd= malloc( (2 * n_points_lightcurve + 1) * sizeof( double ) );
  if ( interp_jd == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for interp_jd(kwee-van-woerden.c)\n" );
   return 1;
@@ -120,13 +124,17 @@ int main() {
    return 1;
   }
  }
- /* for(i=0;i<n;i++){
-  fprintf(stdout,"%lf %lf\n",interp_jd[i],interp_m[i]);
- }*/
+ 
+ fprintf( stderr, "Interpolated lightcurve (%d points):\n", n);
+ for(i=0;i<n;i++){
+  fprintf( stderr,"%+8.6lf %lf\n",interp_jd[i],interp_m[i]);
+ }
 
  /* Find T1 (estimated minima time) */
  mT1= -99.0;
- for ( i= 0; i < n; i++ ) {
+ //for ( i= 0; i < n; i++ ) {
+ // 1 to n - 1 as we have i + 1 and i - 1 array indexes
+ for ( i= 1; i < n - 1; i++ ) {
   if ( interp_m[i] > mT1 ) {
    mT1= interp_m[i];
    T1= interp_jd[i];
@@ -135,20 +143,33 @@ int main() {
    jdT1= i;
   }
  }
- fprintf( stderr, "First guess!  T1 = %lf\n", T1 );
+ fprintf( stderr, "First guess (the faintest point in the interpolated lightcurve)!  T1 = %lf\n", T1 );
 
- delta_m= malloc( 5 * n_points_lightcurve * sizeof( double ) );
+ // is this correct?
+ //delta_m= malloc( 5 * n_points_lightcurve * sizeof( double ) );
+ delta_m= malloc( (2 * n_points_lightcurve + 1) * sizeof( double ) );
  if ( delta_m == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for delta_m(kwee-van-woerden.c)\n" );
   return 1;
- };
- if ( n - jdT1 > jdT1 )
+ }
+ if ( n - jdT1 > jdT1 ) {
   n_delta_m= jdT1 - 1;
- else
+ } else {
   n_delta_m= n - jdT1 - 1;
+ }
 
  n_delta_m--;
  fprintf( stderr, "using %d pairs\n", n_delta_m );
+
+ if ( n_delta_m < 1 ) {
+  fprintf( stderr, "ERROR: too few pairs for minimum determination!\n");
+  free( m );
+  free( jd );
+  free( interp_m );
+  free( interp_jd );
+  free( delta_m );
+  return 1;
+ }
 
  /* sT1 */
  for ( i= 0; i < n_delta_m; i++ ) {
