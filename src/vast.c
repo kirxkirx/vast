@@ -1723,7 +1723,7 @@ int main(int argc, char **argv) {
 
  // Linear magnitude correction as a function of X and Y
  int apply_position_dependent_correction= 0;       // 1 - apply, 2 - do not apply
- int param_apply_position_dependent_correction= 0; // determines if this parameter is specified in the command line
+ int param_apply_position_dependent_correction= 0; // determines if this parameter is specified on the command line
  double *lin_mag_cor_x= NULL;
  double *lin_mag_cor_y= NULL;
  double *lin_mag_cor_z= NULL;
@@ -2219,10 +2219,10 @@ int main(int argc, char **argv) {
 #endif
  }
 
- // Go through images and directories specified in the command line
- fprintf(stderr, "\nChecking the list of input images specified in the command line ...\n");
- for( n= optind; n < argc; ++n ) {
-  strncpy(file_or_dir_on_command_line, argv[n], FILENAME_LENGTH);
+ // Go through images and directories specified on the command line
+ fprintf( stderr, "\nChecking the list of input images specified on the command line ...\n" );
+ for ( n= optind; n < argc; ++n ) {
+  strncpy( file_or_dir_on_command_line, argv[n], FILENAME_LENGTH );
   file_or_dir_on_command_line[FILENAME_LENGTH - 1]= '\0';
   // Try to stat() the input
   if( 0 != stat(file_or_dir_on_command_line, &sb) ) {
@@ -2489,7 +2489,7 @@ int main(int argc, char **argv) {
   fclose(vast_list_of_input_images_with_time_corrections);
  } else {
   // If the file does not exist - never mind
-  fprintf(stderr, "list not found.\nThis is OK if you specify the input images in the command line, not through this text file.\n");
+  fprintf( stderr, "list not found.\nThis is OK if you specify the input images on the command line, not through this text file.\n" );
  }
 
  if( Num == 1 ) {
@@ -2508,6 +2508,7 @@ int main(int argc, char **argv) {
  }
 
  fprintf(stderr, "\nPreparing to process %d input FITS images...\n", Num);
+
 
  if( Num < HARD_MIN_NUMBER_OF_POINTS && Num != 3 ) {
   fprintf(stderr, "ERROR: At least %d images are needed for correct processing (much more is much better)!\nYou have supplied only %d images. :(\n", HARD_MIN_NUMBER_OF_POINTS, Num);
@@ -3442,6 +3443,7 @@ int main(int argc, char **argv) {
  // make a gap in numbering so stars detected on the reference frame can be easily distinguished from those added later by their number
 
  // Turn on the CCD position-dependent magnitude correction if needed
+
  if( param_apply_position_dependent_correction == 0 ) {
   // If this was not specified in the command line, make our own choice
   if( NUMBER1 > MIN_NUMBER_OF_STARS_FOR_CCD_POSITION_DEPENDENT_MAGNITUDE_CORRECTION )

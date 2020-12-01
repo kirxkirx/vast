@@ -1,3 +1,7 @@
+* Add on-the-fly conversion of RGB (X*Y*3 data cube) FITS images to G-only
+(X*Y*1) images, equivalent to this example:
+util/fitscopy r_ncas20201124_stacked.fit[*,*,2:2] r_ncas20201124_stacked_g2.fit
+
 * Add support for "bias + scaled dark" CCD image calibration strategy
 
 * A NOVAS-based routine that would compute geocentric J2000 positions of major planets.

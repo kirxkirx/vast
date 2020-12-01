@@ -113,8 +113,8 @@ void form_DATEOBS_and_EXPTIME_from_UNIXSEC(time_t middle_of_exposure_unixsec, do
  int year, month, day, hour, minute;
  double second;
 
- char output_str_DATEOBS[81];
- char output_str_EXPTIME[81];
+ char output_str_DATEOBS[FLEN_CARD];
+ char output_str_EXPTIME[FLEN_CARD];
 
  exposure_start_time_unixsec= middle_of_exposure_unixsec - (time_t)(exposure_sec / 2.0 + 0.5);
 
@@ -573,8 +573,7 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
  int jj;
  time_t unix_time;
  struct tm structureTIME;
- //struct tm *ukaz_struTIME;
- char Vr_h[10], Vr_m[10], Vr_s[10];
+ char Tm_h[10], Tm_m[10], Tm_s[FLEN_CARD]; // We want a lot of memeory for Tm_s for cases like '2020-11-21T18:10:43.4516245'
  char Da_y[10], Da_m[10], Da_d[10];
 
  char DATEOBS[32], TIMEOBS[32], TIMESYS[32];
@@ -609,19 +608,19 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
  double overridingJD_from_input_image_list= 0.0;
  // ------------------------------------------
 
- char telescop[81];
+ char telescop[FLEN_CARD];
 
  char DATEOBS_KEY_NAME[32];
  char TIMEOBS_KEY_NAME[32];
 
- //
- char formed_str_DATEOBS[81];
- char formed_str_EXPTIME[81];
- memset(formed_str_DATEOBS, 0, 81);
- memset(formed_str_EXPTIME, 0, 81);
+
+ char formed_str_DATEOBS[FLEN_CARD];
+ char formed_str_EXPTIME[FLEN_CARD];
+ memset( formed_str_DATEOBS, 0, FLEN_CARD );
+ memset( formed_str_EXPTIME, 0, FLEN_CARD );
  //
 
- memset(telescop, 0, 81);
+ memset( telescop, 0, FLEN_CARD );
 
  //DATEOBS_KEY_NAME[0]='\0';
  //TIMEOBS_KEY_NAME[0]='\0';
@@ -816,7 +815,7 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
   date_parsed= 1;
   strncpy(DATEOBS_KEY_NAME, "DATE-OBS", 9);
  }
- DATEOBS_COMMENT[81]= '\0'; // just in case
+ DATEOBS_COMMENT[FLEN_CARD-1]= '\0'; // just in case
 
  // Handle the case that DATE-OBS is present, but EMPTY
  if( 0 == strlen(DATEOBS) && status == 0 ) {
@@ -833,7 +832,7 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
    date_parsed= 1;
    strncpy(DATEOBS_KEY_NAME, "DATE-BEG", 9);
   }
-  DATEOBS_COMMENT[81]= '\0'; // just in case
+  DATEOBS_COMMENT[FLEN_CARD-1]= '\0'; // just in case
  }
 
  if( status == 202 ) {
@@ -845,7 +844,7 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
    date_parsed= 1;
    strncpy(DATEOBS_KEY_NAME, "DATE-EXP", 9);
   }
-  DATEOBS_COMMENT[81]= '\0'; // just in case
+  DATEOBS_COMMENT[FLEN_CARD-1]= '\0'; // just in case
  }
 
  // SHUTOPEN is in ZTF images
@@ -858,7 +857,7 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
    date_parsed= 1;
    strncpy(DATEOBS_KEY_NAME, "SHUTOPEN", 9);
   }
-  DATEOBS_COMMENT[81]= '\0'; // just in case
+  DATEOBS_COMMENT[FLEN_CARD-1]= '\0'; // just in case
  }
 
  // If both EXPSTART and EXPEND keywords are present - we want to use them instead of DATE-OBS and EXPTIME
@@ -1120,14 +1119,12 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
  (*dimY)= naxes[1];
 
  // Initiallize just in case
- //char Vr_h[10], Vr_m[10], Vr_s[10];
- //char Da_y[10], Da_m[10], Da_d[10];
- memset(Vr_h, 0, 10);
- memset(Vr_m, 0, 10);
- memset(Vr_s, 0, 10);
- memset(Da_y, 0, 10);
- memset(Da_m, 0, 10);
- memset(Da_d, 0, 10);
+ memset( Tm_h, 0, 10 );
+ memset( Tm_m, 0, 10 );
+ memset( Tm_s, 0, FLEN_CARD );
+ memset( Da_y, 0, 10 );
+ memset( Da_m, 0, 10 );
+ memset( Da_d, 0, 10 );
  //
 
  // status==202 here means the JD keyword is not found
@@ -1262,61 +1259,63 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
   }
 
   ///////////////////////////////////
-  for( j= 0; j < 32; j++ ) {
-   if( TIMEOBS[j] == ':' ) {
-    Vr_h[j]= '\0';
+  for ( j= 0; j < 32; j++ ) {
+   if ( TIMEOBS[j] == ':' ) {
+    Tm_h[j]= '\0';
+
     break;
    }
-   Vr_h[j]= TIMEOBS[j];
+   Tm_h[j]= TIMEOBS[j];
   }
-  for( j+= 1; j < 32; j++ ) {
-   if( TIMEOBS[j] == ':' || TIMEOBS[j] == '\0' ) {
-    Vr_m[j - 3]= '\0';
+  for ( j+= 1; j < 32; j++ ) {
+   if ( TIMEOBS[j] == ':' || TIMEOBS[j] == '\0' ) {
+    Tm_m[j - 3]= '\0';
     break;
    }
-   Vr_m[j - 3]= TIMEOBS[j];
+   Tm_m[j - 3]= TIMEOBS[j];
   }
-  if( j + 1 < (int)strlen(TIMEOBS) ) {
-   for( j+= 1; j < 32; j++ ) {
-    if( TIMEOBS[j] == '\0' ) {
-     Vr_s[j - 6]= '\0';
+  if ( j+1<(int)strlen( TIMEOBS ) ) { 
+   for ( j+= 1; j < 32; j++ ) {
+    if ( TIMEOBS[j] == '\0' ) {
+     Tm_s[j - 6]= '\0';
      break;
     }
-    Vr_s[j - 6]= TIMEOBS[j];
+    Tm_s[j - 6]= TIMEOBS[j];
    }
-   Vr_s[6]= '\0';
+   Tm_s[6]= '\0';
   } else {
-   Vr_s[0]= '0';
-   Vr_s[1]= '0';
-   Vr_s[2]= '\0';
+   Tm_s[0]='0';
+   Tm_s[1]='0';
+   Tm_s[2]='\0';
   }
   //
-  Vr_m[2]= '\0';
-  Vr_m[2]= '\0';
+  Tm_m[2]= '\0';
+  Tm_m[2]= '\0';
   Da_d[2]= '\0';
   Da_m[2]= '\0';
   Da_y[4]= '\0';
-  if( strlen(Vr_s) < 1 || strlen(Vr_m) < 1 || strlen(Vr_h) < 1 || strlen(Da_d) < 1 || strlen(Da_m) < 1 || strlen(Da_y) < 2 ) {
-   fprintf(stderr, "ERROR000 in gettime()\n");
-   fits_close_file(fptr, &status); // close file
+  if ( strlen( Tm_s ) < 1 || strlen( Tm_m ) < 1 || strlen( Tm_h ) < 1 || strlen( Da_d ) < 1 || strlen( Da_m ) < 1 || strlen( Da_y ) < 2 ) {
+   fprintf( stderr, "ERROR000 in gettime(): string length check failed on broken-down time components\n" );
+   fits_close_file( fptr, &status ); // close file
    return 1;
   }
-  structureTIME.tm_sec= (int)(atof(Vr_s) + 0.5);
-  if( structureTIME.tm_sec < 0 || structureTIME.tm_sec > 60 ) {
-   fprintf(stderr, "ERROR001 in gettime()\n");
-   fits_close_file(fptr, &status);
+  // someday I'll need to get rid of this gross simplification
+  structureTIME.tm_sec= (int)( atof( Tm_s ) + 0.5 );
+  if ( structureTIME.tm_sec < 0 || structureTIME.tm_sec > 60 ) {
+   fprintf( stderr, "ERROR001 in gettime(): the derived time is seconds is out of the expected [0:60] range\n" );
+   fits_close_file( fptr, &status );
    return 1;
   }
-  structureTIME.tm_min= atoi(Vr_m);
-  if( structureTIME.tm_min < 0 || structureTIME.tm_min > 60 ) {
-   fprintf(stderr, "ERROR002 in gettime()\n");
-   fits_close_file(fptr, &status);
+  structureTIME.tm_min= atoi( Tm_m );
+  if ( structureTIME.tm_min < 0 || structureTIME.tm_min > 60 ) {
+   fprintf( stderr, "ERROR002 in gettime()\n" );
+   fits_close_file( fptr, &status );
    return 1;
   }
-  structureTIME.tm_hour= atoi(Vr_h);
-  if( structureTIME.tm_hour < 0 || structureTIME.tm_hour > 24 ) {
-   fprintf(stderr, "ERROR003 in gettime()\n");
-   fits_close_file(fptr, &status);
+  structureTIME.tm_hour= atoi( Tm_h );
+  if ( structureTIME.tm_hour < 0 || structureTIME.tm_hour > 24 ) {
+   fprintf( stderr, "ERROR003 in gettime()\n" );
+   fits_close_file( fptr, &status );
    return 1;
   }
   structureTIME.tm_mday= atoi(Da_d);
