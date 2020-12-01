@@ -8,7 +8,7 @@
 
 //////// Settings that control VaST start here ////////
 
-#define N_FORK 0         // Number of SExtractor threads running in parallel
+#define N_FORK 0         // Number of SExtractor threads running in parallel \
                          // 0 - the number of threads is determined at runtime
 #define DEFAULT_N_FORK 5 // number of threads to be used if it cannot be properly determined at runtime
 
@@ -36,20 +36,20 @@
 #define MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT 512                                                 // Maximum string length in image00001.cat
 #define MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG 512                                 // Maximum string length in vast_lightcurve_statistics.log
 
-#define MAX_RAM_USAGE 0.7                      /* Try not to store in RAM more than MAX_RAM_USAGE*RAM_size */
+#define MAX_RAM_USAGE 0.7 /* Try not to store in RAM more than MAX_RAM_USAGE*RAM_size */
 //#define MAX_NUMBER_OF_BAD_REGIONS_ON_CCD 16384 /* Which may be described in bad_region.lst */
-#define MAX_NUMBER_OF_LEAP_SECONDS 100         /* Maximum number of lines in lib/tai-utc.dat file */
+#define MAX_NUMBER_OF_LEAP_SECONDS 100 /* Maximum number of lines in lib/tai-utc.dat file */
 
 /* Star detection */
 #define FRAME_EDGE_INDENT_PIXELS 10.0  // Don't take into account stars closer than FRAME_EDGE_INDENT_PIXELS pixels to a frame edge.
 #define MIN_NUMBER_OF_STARS_ON_FRAME 5 // Frames with less than MIN_NUMBER_OF_STARS_ON_FRAME stars detected will not be used
 #define AUTO_SIGMA_POPADANIYA_COEF 0.6 // Important for star matchning! Stars are matched if their coordinates on two images coincide within AUTO_SIGMA_POPADANIYA_COEF*aperture if -s -m or -w switch is not set.
-#define HARD_MIN_NUMBER_OF_POINTS 2    // Potential transients with less than HARD_MIN_NUMBER_OF_POINTS will be discarded!
+#define HARD_MIN_NUMBER_OF_POINTS 2    // Potential transients with less than HARD_MIN_NUMBER_OF_POINTS will be discarded! \
                                        // Parameter used in  src/remove_lightcurves_with_small_number_of_points.c
 #define SOFT_MIN_NUMBER_OF_POINTS 40   // Recommend a user to use at least SOFT_MIN_NUMBER_OF_POINTS images in the series
 //#define MIN_FRACTION_OF_GOOD_MEASUREMENTS 0.7
-#define MIN_FRACTION_OF_GOOD_MEASUREMENTS 0.9 // at least MIN_FRACTION_OF_GOOD_MEASUREMENTS of detections of this particular source
-                                              // should pass the quality cuts, otherwise it will be rejected                       
+#define MIN_FRACTION_OF_GOOD_MEASUREMENTS 0.9 // at least MIN_FRACTION_OF_GOOD_MEASUREMENTS of detections of this particular source \
+                                              // should pass the quality cuts, otherwise it will be rejected                        \
                                               // MIN_FRACTION_OF_GOOD_MEASUREMENTS should always be between 0.0 and 1.0
 
 ///////////////////// !!! /////////////////////
@@ -69,12 +69,12 @@
 //#define FAINTEST_STARS 50.0      // Instrumental (with respect to the background) magnitude of faintest stars.
 //#define FAINTEST_STARS_PHOTO -1.0 // Same as FAINTEST_STARS but for photographic plate reduction mode.
 // Parameter used in src/data_parser.c
-#define BRIGHTEST_STARS -30.0         /* Instrumental (with respect to the background) magnitude of brightest stars.
+#define BRIGHTEST_STARS -30.0         /* Instrumental (with respect to the background) magnitude of brightest stars. \
                                          Parameter used in src/data_parser.c */
 #define FAINTEST_STARS_ANYMAG 30.0    // Discard observations with (instrumental or whatever) magnitudes > FAINTEST_STARS
 #define MIN_SNR 3.0                   // Discard objects detected with signal-to-noise ratio < MIN_SNR
-#define MAX_MAG_ERROR 1.086 / MIN_SNR // Discard observations with the estimated error >MAX_MAG_ERROR. Note: the meaning of this parameter has changed in vast-1.0rc80
-                                      // see http://wise2.ipac.caltech.edu/docs/release/allsky/expsup/sec6_3a.html
+#define MAX_MAG_ERROR 1.086 / MIN_SNR // Discard observations with the estimated error >MAX_MAG_ERROR. Note: the meaning of this parameter has changed in vast-1.0rc80 \
+                                      // see http://wise2.ipac.caltech.edu/docs/release/allsky/expsup/sec6_3a.html                                                     \
                                       // and http://www.eso.org/~ohainaut/ccd/sn.html
 
 #define DEFAULT_PHOTOMETRY_ERROR_MAG 0.02 // Assume this error when no error estimate is given
@@ -93,16 +93,15 @@
 //
 #define FWHM_MIN 0.1 // safe default value
 //                                            // 0.5 is too high - fails the photographic plate test
-#define MIN_SOURCE_SIZE_APERTURE_FRACTION 0.25 // reject sources for which the comusted aperture size would be less than 
-                                              // MIN_SOURCE_SIZE_APERTURE_FRACTION*image_aperture_size
-                                              // (this should reject very small objects = cosmic rays)
-
+#define MIN_SOURCE_SIZE_APERTURE_FRACTION 0.25 // reject sources for which the comusted aperture size would be less than
+                                               // MIN_SOURCE_SIZE_APERTURE_FRACTION*image_aperture_size
+                                               // (this should reject very small objects = cosmic rays)
 
 #define SATURATION_LIMIT_INDENT 0.1 // guessed_saturation_limit=maxval-SATURATION_LIMIT_INDENT*maxval;
 
 // #define FRACTION_OF_ZERO_PIXEL_TO_USE_FLAG_IMG 0.01
-#define FRACTION_OF_ZERO_PIXEL_TO_USE_FLAG_IMG 0.002 // if the image has more than FRACTION_OF_ZERO_PIXEL_TO_USE_FLAG_IMG*total_number_of_pixels
-                                                     // pixels with zero values - use the flag image to flag-out these bad regions
+#define FRACTION_OF_ZERO_PIXEL_TO_USE_FLAG_IMG 0.002 // if the image has more than FRACTION_OF_ZERO_PIXEL_TO_USE_FLAG_IMG*total_number_of_pixels \
+                                                     // pixels with zero values - use the flag image to flag-out these bad regions               \
                                                      // and avoid numerous supurious detections arond their edges
 #define N_POINTS_PSF_FIT_QUALITY_FILTER 7
 
@@ -119,9 +118,9 @@
 
 #define FLAG_N_PIXELS_AROUND_BAD_ONE 4 // that many pixels will be flagged around each bad pixel (if flag image is to be used)
 
-#define MAX_SEXTRACTOR_FLAG 1 // Maximum star flag value set by sextractor acceptable for VaST
-                              // You may override this at runtime with '-x N' parameter, for example:
-                              // ./vast -x3 ../sample_data/*fit
+#define MAX_SEXTRACTOR_FLAG 1 // Maximum star flag value set by sextractor acceptable for VaST        \
+                              // You may override this at runtime with '-x N' parameter, for example: \
+                              // ./vast -x3 ../sample_data/*fit                                       \
                               // Will accept all stars having flag less or equal to 3
 
 // A reminder:
@@ -139,11 +138,11 @@
 
 #define NUMBER_OF_FLOAT_PARAMETERS 13 // Number of aditional filtering parameters to keep for each star
 
-#define WRITE_ADDITIONAL_APERTURES_TO_LIGHTCURVES // if enable mag(ref)-mag(aper) differences will be written to the lightcurve files
-                                                  // Set aperture sizes: larger and smaller than the reference aperture
-                                                  // ap[0]=APERTURE+AP01*APERTURE;
-                                                  // ap[1]=APERTURE+AP02*APERTURE;
-                                                  // ap[2]=APERTURE+AP03*APERTURE;
+#define WRITE_ADDITIONAL_APERTURES_TO_LIGHTCURVES // if enable mag(ref)-mag(aper) differences will be written to the lightcurve files \
+                                                  // Set aperture sizes: larger and smaller than the reference aperture               \
+                                                  // ap[0]=APERTURE+AP01*APERTURE;                                                    \
+                                                  // ap[1]=APERTURE+AP02*APERTURE;                                                    \
+                                                  // ap[2]=APERTURE+AP03*APERTURE;                                                    \
                                                   // ap[3]=APERTURE+AP04*APERTURE;
 
 #define AP01 -0.1
@@ -152,7 +151,7 @@
 #define AP04 0.3
 
 // Star matching
-#define MAX_FRACTION_OF_AMBIGUOUS_MATCHES 0.05 //  Maximum fraction of stars that match one star on the reference image
+#define MAX_FRACTION_OF_AMBIGUOUS_MATCHES 0.05           //  Maximum fraction of stars that match one star on the reference image
 #define MIN_NUMBER_OF_AMBIGUOUS_MATCHES_TO_TAKE_ACTION 5 // discard the above if there are less than the specified number of stars affected by the problem
 
 #define MAX_MATCH_TRIALS 5                              /* discard image if it was still not matched after MAX_MATCH_TRIALS attempts */
@@ -162,40 +161,40 @@
                                                         /* because something is evidently wrong with that image. */
 #define MATCH_MIN_NUMBER_OF_REFERENCE_STARS 100
 #define MATCH_MIN_NUMBER_OF_TRIANGLES 20 * MATCH_MIN_NUMBER_OF_REFERENCE_STARS
-#define MATCH_REFERENCE_STARS_NUMBER_STEP 500                                  // Search for an optimal number of reference stars between MATCH_MIN_NUMBER_OF_REFERENCE_STARS and
-                                                                               // MATCH_MAX_NUMBER_OF_REFERENCE_STARS with step MATCH_REFERENCE_STARS_NUMBER_STEP
-#define MATCH_MAX_NUMBER_OF_REFERENCE_STARS 3000                               // Give up trying to match frame if it was not matched with MATCH_MAX_NUMBER_OF_REFERENCE_STARS stars
-#define TRIANGLES_PER_STAR 11                                                  // 11 triangles paer star in the current algorithm, see Separate_to_triangles() in src/ident_lib.c
-#define MATCH_MAX_NUMBER_OF_TRIANGLES TRIANGLES_PER_STAR * MATCH_MAX_NUMBER_OF_REFERENCE_STARS // 
-#define MATCH_MAX_NUMBER_OF_STARS_FOR_SMALL_TRIANGLES 700                      // The starfield is divided in triangles using two statagies:
-                                                                               // one produces largi triangles from stars of close brightness while
-                                                                               // the second produces small triangles from closely separated stars.
-                                                                               // The search for closest neighbour becomes very computationally expansive as the number of stars increases.
-                                                                               // So, separation for small triangles will not be performed if the number of reference stars is > MATCH_MAX_NUMBER_OF_STARS_FOR_SMALL_TRIANGLES
-#define MIN_SUCCESS_MATCH_ON_RETRY 5                                           // if more than MIN_SUCCESS_MATCH_ON_RETRY images were successfully matched after increasing the number of reference stars
-                                                                               // - change the number of reference stars
-#define MIN_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES 15                     // Use median position of a star after MIN_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES
-                                                                               // measurements of its position were collected (star's position on the reference frame is used before).
-#define MAX_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES 200                    // Only the first MAX_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES
-                                                                               // will be used to determine average star positions in the reference image coordinate system
-                                                                               // (needed for star matching). This is done to save memory, because otherwise all the coordinates
-                                                                               // needs to be kept in memory all the time...
-#define POSITION_ACCURACY_AS_A_FRACTION_OF_APERTURE 0.1                        // Assume the position of a star may be measured with accuracy of POSITION_ACCURACY_AS_A_FRACTION_OF_APERTURE
-#define MAX_SCALE_FACTOR 0.05                                                  // Assume that images have the same scale to the accuracy of MAX_SCALE_FACTOR - important for star matching.
-#define ONE_PLUS_MAX_SCALE_FACTOR_SIX ( 1.0 + MAX_SCALE_FACTOR ) * ( 1.0 + MAX_SCALE_FACTOR ) * ( 1.0 + MAX_SCALE_FACTOR ) * ( 1.0 + MAX_SCALE_FACTOR ) * ( 1.0 + MAX_SCALE_FACTOR ) * ( 1.0 + MAX_SCALE_FACTOR )
+#define MATCH_REFERENCE_STARS_NUMBER_STEP 500                                                 // Search for an optimal number of reference stars between MATCH_MIN_NUMBER_OF_REFERENCE_STARS and \
+                                                                                              // MATCH_MAX_NUMBER_OF_REFERENCE_STARS with step MATCH_REFERENCE_STARS_NUMBER_STEP
+#define MATCH_MAX_NUMBER_OF_REFERENCE_STARS 3000                                              // Give up trying to match frame if it was not matched with MATCH_MAX_NUMBER_OF_REFERENCE_STARS stars
+#define TRIANGLES_PER_STAR 11                                                                 // 11 triangles paer star in the current algorithm, see Separate_to_triangles() in src/ident_lib.c
+#define MATCH_MAX_NUMBER_OF_TRIANGLES TRIANGLES_PER_STAR *MATCH_MAX_NUMBER_OF_REFERENCE_STARS //
+#define MATCH_MAX_NUMBER_OF_STARS_FOR_SMALL_TRIANGLES 700                                     // The starfield is divided in triangles using two statagies:                                                \
+                                                                                              // one produces largi triangles from stars of close brightness while                                         \
+                                                                                              // the second produces small triangles from closely separated stars.                                         \
+                                                                                              // The search for closest neighbour becomes very computationally expansive as the number of stars increases. \
+                                                                                              // So, separation for small triangles will not be performed if the number of reference stars is > MATCH_MAX_NUMBER_OF_STARS_FOR_SMALL_TRIANGLES
+#define MIN_SUCCESS_MATCH_ON_RETRY 5                                                          // if more than MIN_SUCCESS_MATCH_ON_RETRY images were successfully matched after increasing the number of reference stars \
+                                                                                              // - change the number of reference stars
+#define MIN_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES 15                                    // Use median position of a star after MIN_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES \
+                                                                                              // measurements of its position were collected (star's position on the reference frame is used before).
+#define MAX_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES 200                                   // Only the first MAX_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES                                 \
+                                                                                              // will be used to determine average star positions in the reference image coordinate system      \
+                                                                                              // (needed for star matching). This is done to save memory, because otherwise all the coordinates \
+                                                                                              // needs to be kept in memory all the time...
+#define POSITION_ACCURACY_AS_A_FRACTION_OF_APERTURE 0.1                                       // Assume the position of a star may be measured with accuracy of POSITION_ACCURACY_AS_A_FRACTION_OF_APERTURE
+#define MAX_SCALE_FACTOR 0.05                                                                 // Assume that images have the same scale to the accuracy of MAX_SCALE_FACTOR - important for star matching.
+#define ONE_PLUS_MAX_SCALE_FACTOR_SIX (1.0 + MAX_SCALE_FACTOR) * (1.0 + MAX_SCALE_FACTOR) * (1.0 + MAX_SCALE_FACTOR) * (1.0 + MAX_SCALE_FACTOR) * (1.0 + MAX_SCALE_FACTOR) * (1.0 + MAX_SCALE_FACTOR)
 
 // Magnitude calibration
 #define MAX_MAG_FOR_med_CALIBRATION -3.0 // Do not use too faint stars for magnitude calibration.
 #define CONST 6                          // measurement APERTURE=median_A*CONST where median_A - typical major axis of star images on the current frame (pix.)
 //#define CONST 10
-#define MAX_DIFF_POLY_MAG_CALIBRATION 0.3                                         // Stars that deviate more than MAX_DIFF_POLY_MAG_CALIBRATION from the fit will
+#define MAX_DIFF_POLY_MAG_CALIBRATION 0.3                                         // Stars that deviate more than MAX_DIFF_POLY_MAG_CALIBRATION from the fit will \
                                                                                   // be discarded from the magnitude calibration procedure.
-#define MIN_NUMBER_STARS_POLY_MAG_CALIBR 40                                       // Magnitude calibration with parabola will not be performed
+#define MIN_NUMBER_STARS_POLY_MAG_CALIBR 40                                       // Magnitude calibration with parabola will not be performed \
                                                                                   // if there are less than MIN_NUMBER_STARS_POLY_MAG_CALIBR stars.
-#define MAX_INSTR_MAG_DIFF 99.0                                                   // Do not use stars with instrumental mag difference >MAX_INSTR_MAG_DIFF for magnitude calibration
+#define MAX_INSTR_MAG_DIFF 99.0                                                   // Do not use stars with instrumental mag difference >MAX_INSTR_MAG_DIFF for magnitude calibration \
                                                                                   // (turn out to be not really useful parameter)
-#define MIN_NUMBER_OF_STARS_FOR_CCD_POSITION_DEPENDENT_MAGNITUDE_CORRECTION 10000 // If the reference image has >MIN_NUMBER_OF_STARS_FOR_CCD_POSITION_DEPENDENT_MAGNITUDE_CORRECTION
-                                                                                  // on it, a linear CCD-position-dependent magnitude correctin will be computed.
+#define MIN_NUMBER_OF_STARS_FOR_CCD_POSITION_DEPENDENT_MAGNITUDE_CORRECTION 10000 // If the reference image has >MIN_NUMBER_OF_STARS_FOR_CCD_POSITION_DEPENDENT_MAGNITUDE_CORRECTION \
+                                                                                  // on it, a linear CCD-position-dependent magnitude correctin will be computed.                    \
                                                                                   // You can be override this with command line options -J or -j
 //#define MAX_LIN_CORR_MAG 0.5                // Maximum CCD-position-dependent magnitude correctin/
 #define MAX_LIN_CORR_MAG 1.0 // If the estimated correction is larger at frame's corners, the magnitude calibration will be failed
@@ -245,9 +244,9 @@
 
 // Transient search
 #define TRANSIENT_MIN_TIMESCALE_DAYS 1.0                  // expect transients apearing on timescale > TRANSIENT_MIN_TIMESCALE_DAYS
-#define MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT 1.3 //0.8 //1.3 // Transient candidates should be at least MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT mag
+#define MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT 1.3 //0.8 //1.3 // Transient candidates should be at least MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT mag \
                                                           // above the detection limit on the reference frame.
-#define FLARE_MAG 0.9                                     // Objects which are found to be FLARE_MAG magnitudes brighter on the current image than on the reference image
+#define FLARE_MAG 0.9                                     // Objects which are found to be FLARE_MAG magnitudes brighter on the current image than on the reference image \
                                                           // will be also listed as transient candidates
 #define MIN_DISTANCE_BETWEEN_STARS_IN_APERTURE_DIAMS 0.8  //0.7
 
@@ -258,18 +257,18 @@
 #define M_SIGMA_BIN_SIZE_M 0.35
 #define M_SIGMA_BIN_DROP 1
 #define M_SIGMA_BIN_MAG_OTSTUP 0.1
-#define M_SIGMA_BIN_MAG_SIGMA_DETECT 0.7 /* Increase this parameter
+#define M_SIGMA_BIN_MAG_SIGMA_DETECT 0.7 /* Increase this parameter \
                                             if you want more conservative candidate selection */
 
 // src/variability_indexes.c
-#define WS_BINNING_DAYS 1.0                      // Max time difference in days between data points that can form a pair for Stetson's indexes.
+#define WS_BINNING_DAYS 1.0                      // Max time difference in days between data points that can form a pair for Stetson's indexes. \
                                                  // Stetson's indexes  are sensitive to variability on timescales >> WS_BINNING_DAYS
 #define MAX_PAIR_DIFF_SIGMA_FOR_JKL_MAG_CLIP 5.0 // Do not form pairs from points that differ by more than DEFAULT_MAX_PAIR_DIFF_SIGMA*error mags
 
 #define N3_SIGMA 3.0 // deviation of N3_SIGMA of three consequetive lightcurve points from the mean is considered significant
 
 // Parameters for detecting Excursions
-#define EXCURSIONS_GAP_BETWEEN_SCANS_DAYS 5.0 // Form scans from points that are not more than EXCURSIONS_GAP_BETWEEN_SCANS_DAYS apart to detect excursions
+#define EXCURSIONS_GAP_BETWEEN_SCANS_DAYS 5.0 // Form scans from points that are not more than EXCURSIONS_GAP_BETWEEN_SCANS_DAYS apart to detect excursions \
                                               // 'Excursions' are the significant changes of brightness from scan to scan.
 
 /* src/find_candidates.c */
@@ -282,7 +281,7 @@
 
 /* BLS/bls.c */
 #define BLS_SIGMA 0.05 // assume all points have the same sigma
-#define BLS_CUT 7.3    // consider as real
+#define BLS_CUT 7.3    // consider as real \
                        // periods with snr>BLS_CUT
 #define BLS_MIN_FREQ 0.2
 #define BLS_MAX_FREQ 3.0
@@ -293,7 +292,7 @@
 /* src/vast_math.c (stat) */
 //#define STAT_NDROP 0 // for the simulation!!!!
 // This now affects only the legacy sigma plot (2nd column in data.m_sigma and vast_lightcurve_statistics.log )
-#define STAT_NDROP 5 // Drop STAT_NDROP brightest and STAT_NDROP faintest
+#define STAT_NDROP 5 // Drop STAT_NDROP brightest and STAT_NDROP faintest \
                      // points before calculating sigma
 // Apply lightcurve filtering before computing variability indexes only to the lightcurve
 // having at least STAT_MIN_NUMBER_OF_POINTS_FOR_NDROP points
@@ -324,11 +323,11 @@
 //#define LIGHT_CURVE_ERROR_FILTER_SIGMA 5.0
 
 // src/remove_bad_images.c
-#define REMOVE_BAD_IMAGES__OUTLIER_THRESHOLD 3.0                // Considers outliers measurements that are REMOVE_BAD_IMAGES__OUTLIER_THRESHOLD sigma
-                                                                // above or below the median brightness.
+#define REMOVE_BAD_IMAGES__OUTLIER_THRESHOLD 3.0                 // Considers outliers measurements that are REMOVE_BAD_IMAGES__OUTLIER_THRESHOLD sigma \
+                                                                 // above or below the median brightness.
 #define REMOVE_BAD_IMAGES__DEFAULT_MAX_FRACTION_OF_OUTLIERS 0.11 // Drop images that have a large fraction of outlier measurements
-#define REMOVE_BAD_IMAGES__MAX_ALLOWED_NUMBER_OF_OUTLIERS 20    // Drop bad images only if there are at least the specified number of outlier objects
-                                                                // (regardless of what fraction of the total number of objects these outliers constitute)
+#define REMOVE_BAD_IMAGES__MAX_ALLOWED_NUMBER_OF_OUTLIERS 20     // Drop bad images only if there are at least the specified number of outlier objects \
+                                                                 // (regardless of what fraction of the total number of objects these outliers constitute)
 
 /* src/hjd.c */
 #define EXPECTED_MIN_JD 2400000.0
@@ -348,8 +347,8 @@
 //////// Settings that control VaST end here ////////
 
 /* Auxiliary definitions */
-#define MAX( a, b ) ( ( ( a ) > ( b ) ) ? ( a ) : ( b ) )
-#define MIN( a, b ) ( ( ( a ) < ( b ) ) ? ( a ) : ( b ) )
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
 // 2*sqrt(2*log(2)) see https://en.wikipedia.org/wiki/Full_width_at_half_maximum
 #define SIGMA_TO_FWHM_CONVERSION_FACTOR 2.35482004503095
@@ -360,21 +359,19 @@
 //#define DEBUGFILES
 //#define DEBUGMESSAGES
 
-
 #include "stdio.h" // defines FILE, fopen(), fclose()
 
 // is_file() - a small function which checks is an input string is a name of a readable file
-static inline int is_file( char *filename ) {
+static inline int is_file(char *filename) {
  FILE *f= NULL;
- f= fopen( filename, "r" );
- if ( f == NULL )
+ f= fopen(filename, "r");
+ if( f == NULL )
   return 0;
  else {
-  fclose( f );
+  fclose(f);
   return 1;
  }
 }
-
 
 // The macro below will tell the pre-processor that limits.h is already included
 #define VAST_LIMITS_INCLUDE_FILE

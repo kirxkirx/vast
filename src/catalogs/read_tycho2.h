@@ -1,7 +1,6 @@
 // The following line is just to make sure this file is not included twice in the code
 #ifndef VAST_READTYCHO2_HEADER_FILE
 
-
 // Wide-field camera
 //#define MIN_VT  0.0
 //#define MAX_VT  8.0
@@ -64,23 +63,23 @@ struct CatStar {
  double VT; // Tycho V mag
 };
 
-double get_RA_from_string( char *str );
+double get_RA_from_string(char *str);
 
-double get_Dec_from_string( char *str );
+double get_Dec_from_string(char *str);
 
-double get_BT_from_string( char *str );
+double get_BT_from_string(char *str);
 
-double get_VT_from_string( char *str );
+double get_VT_from_string(char *str);
 
-void get_catnumber_from_string( char *str, char *str2 );
+void get_catnumber_from_string(char *str, char *str2);
 
-int match_stars_with_catalog( struct Star *arrStar, int N, struct CatStar *arrCatStar, long M );
+int match_stars_with_catalog(struct Star *arrStar, int N, struct CatStar *arrCatStar, long M);
 
-int read_tycho_cat( struct CatStar *arrCatStar, long *M, double *image_boundaries_radec );
+int read_tycho_cat(struct CatStar *arrCatStar, long *M, double *image_boundaries_radec);
 
-int read_sextractor_cat( char *catalog_name, struct Star *arrStar, int *N, double *image_boundaries_radec );
+int read_sextractor_cat(char *catalog_name, struct Star *arrStar, int *N, double *image_boundaries_radec);
 
-int create_tycho2_list_of_bright_stars_to_exclude_from_transient_search( double faint_mag_limit_for_the_list );
+int create_tycho2_list_of_bright_stars_to_exclude_from_transient_search(double faint_mag_limit_for_the_list);
 
 // The macro below will tell the pre-processor that limits.h is already included
 #define VAST_READTYCHO2_HEADER_FILE
