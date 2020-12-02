@@ -22,7 +22,8 @@ int main(int argc, char *argv[]) {
  int status= 0;
  int anynul= 0;
  unsigned short nullval= 0;
- unsigned short *image_array[MAX_NUMBER_OF_OBSERVATIONS];
+ //unsigned short *image_array[MAX_NUMBER_OF_OBSERVATIONS];
+ unsigned short **image_array;
  unsigned short *combined_array;
  double y[MAX_NUMBER_OF_OBSERVATIONS];
  double *yy;
@@ -31,6 +32,7 @@ int main(int argc, char *argv[]) {
  int i;
  int bitpix2;
  int file_counter;
+ int good_file_counter;
  // These variables are needed to keep FITS header keys
  char **key;
  int No_of_keys;
@@ -90,6 +92,8 @@ int main(int argc, char *argv[]) {
  }
  //
 
+ image_array= malloc( sizeof(unsigned short) );
+
  // Reading the input files
  for( file_counter= 1; file_counter < argc; file_counter++ ) {
   fits_open_file(&fptr, argv[file_counter], 0, &status);
@@ -100,11 +104,12 @@ int main(int argc, char *argv[]) {
    exit(1);
   }
   // Allocate memory for the input images
-  image_array[file_counter]= malloc(img_size * sizeof(short));
-  if( image_array[file_counter] == NULL ) {
+  image_array= realloc(image_array, file_counter * sizeof(unsigned short *));
+  image_array[file_counter-1]= malloc(img_size * sizeof(unsigned short));
+  if( image_array[file_counter-1] == NULL ) {
    fprintf(stderr, "Error: Couldn't allocate memory for image array\n Current image: %s\n", argv[file_counter]);
    exit(1);
-  };
+  }
 
   // Reading FITS header keywords from the first image we'll need to remember
 
@@ -114,7 +119,7 @@ int main(int argc, char *argv[]) {
    fprintf(stderr, "ERROR: BITPIX = %d.  Only SHORT_IMG (BITPIX = %d) images are currently supported.\n", bitpix2, SHORT_IMG);
    exit(1);
   }
-  fits_read_img(fptr, TUSHORT, 1, naxes[0] * naxes[1], &nullval, image_array[file_counter], &anynul, &status);
+  fits_read_img(fptr, TUSHORT, 1, naxes[0] * naxes[1], &nullval, image_array[file_counter-1], &anynul, &status);
   fits_close_file(fptr, &status);
   fits_report_error(stderr, status); // print out any error messages
   if( status != 0 ) {
@@ -135,6 +140,8 @@ int main(int argc, char *argv[]) {
   //  fprintf(stderr,"%lf %d\n",yy[i],i);
  }
 */
+
+/*
  // Scale everyting to the LAST image
  for( i= 0; i < img_size; i++ ) {
   yy[i]= (double)image_array[file_counter - 1][i];
@@ -143,30 +150,51 @@ int main(int argc, char *argv[]) {
  gsl_sort(yy, 1, img_size);
  ref_index= gsl_stats_median_from_sorted_data(yy, 1, img_size);
  fprintf(stderr, "ref_index=%lf\n", ref_index);
- for( file_counter= 2; file_counter < argc; file_counter++ ) {
+*/
+ good_file_counter= 0;
+ for( file_counter= 1; file_counter < argc; file_counter++ ) {
   for( i= 0; i < img_size; i++ ) {
-   yy[i]= image_array[file_counter][i];
+   yy[i]= image_array[file_counter-1][i];
   }
   gsl_sort(yy, 1, img_size);
   cur_index= gsl_stats_median_from_sorted_data(yy, 1, img_size);
   fprintf(stderr, "cur_index=%lf\n", cur_index);
 
-  for( ii= 0; ii < img_size; ii++ ) {
-   image_array[file_counter][ii]= image_array[file_counter][ii] * ref_index / cur_index;
+  // Reject obviously bad images from the flat-field stack
+
+  if( 20000 > cur_index || cur_index > 50000 ) {
+   fprintf(stderr, "REJECT\n", cur_index);
+   continue; // continue here so good_file_counter does not increase
   }
+
+  if( good_file_counter == 0 ) {
+   ref_index=cur_index;
+   fprintf(stderr, "ref_index=%lf\n", ref_index);
+  }
+
+  for( ii= 0; ii < img_size; ii++ ) {
+   //image_array[file_counter][ii]= image_array[file_counter][ii] * ref_index / cur_index;
+   image_array[good_file_counter][ii]= image_array[file_counter-1][ii] * ref_index / cur_index;
+  }
+  good_file_counter++;
  }
  free(yy);
 
  //
  for( i= 0; i < img_size; i++ ) {
-  for( file_counter= 1; file_counter < argc; file_counter++ ) {
-   y[file_counter - 1]= image_array[file_counter][i];
-   //   fprintf(stderr,"%lf\n",y[file_counter-1]);
+  //for( file_counter= 1; file_counter < argc; file_counter++ ) {
+  for( file_counter= 0; file_counter < good_file_counter; file_counter++ ) {
+   y[file_counter]= image_array[file_counter][i];
+   //fprintf(stderr,"%d %lf\n", file_counter, y[file_counter]);
   }
-  gsl_sort(y, 1, argc - 1);
-  val= gsl_stats_median_from_sorted_data(y, 1, argc - 1);
+  //gsl_sort(y, 1, argc - 1);
+  gsl_sort(y, 1, good_file_counter);
+  //val= gsl_stats_median_from_sorted_data(y, 1, argc - 1);
+  val= gsl_stats_median_from_sorted_data(y, 1, good_file_counter);
   //  fprintf(stderr,"median %lf\n",val);
   combined_array[i]= (unsigned short)(val + 0.5);
+  //fprintf(stderr, "median = %lf _ %d\n ", val, combined_array[i]);
+  //exit( 1 );
  }
 
  // Write the output FITS file
@@ -208,8 +236,9 @@ int main(int argc, char *argv[]) {
  fits_report_error(stderr, status); /* print out any error messages */
  fits_close_file(fptr, &status);
  for( file_counter= 1; file_counter < argc; file_counter++ ) {
-  free(image_array[file_counter]);
+  free(image_array[file_counter-1]);
  }
+ free(image_array);
  fprintf(stderr, "Writing output to median.fit \n");
  fits_report_error(stderr, status); /* print out any error messages */
 
