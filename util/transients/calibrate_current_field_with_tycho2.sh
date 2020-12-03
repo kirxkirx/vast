@@ -38,9 +38,21 @@ function vastrealpath {
   echo "$REALPATH"
 }
 
-# Check if a local copy of Tycho-2 is available?
+##### Check if a local copy of Tycho-2 is available and if its usable?
 VASTDIR=$PWD
 TYCHO_PATH=lib/catalogs/tycho2
+
+# Check if there is a symbolic link, but it is broken
+if [ -L $TYCHO_PATH/tyc2.dat.00 ];then
+ # test if symlink is broken (by seeing if it links to an existing file)
+ if [ ! -e "$TYCHO_PATH/tyc2.dat.00" ] ; then
+  # code if the symlink is broken
+  echo "The symbolic link to Tycho-2 is broken!"
+  rm -rf "$TYCHO_PATH"
+ fi
+fi
+
+# Check if there is a copy of Tycho-2
 if [ ! -f $TYCHO_PATH/tyc2.dat.00 ];then
  echo "No local copy of Tycho-2 found (no $TYCHO_PATH/tyc2.dat.00)"
  # Check if there is a local copy of Tycho-2 in the top directory
