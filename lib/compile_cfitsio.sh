@@ -73,7 +73,12 @@ fi
 if [ $COMPILATION_ERROR -eq 0 ];then
  cp -f fitscopy $VAST_DIR/util
  cp -f libcfitsio.a $TARGET_DIR/libcfitsio.a
- cp -f fitsio.h longnam.h $VAST_DIR/src
+ #cp -f fitsio.h longnam.h $VAST_DIR/src
+ # we want 'splint' tool to ignore fitsio.h
+ echo "#ifndef S_SPLINT_S" > $VAST_DIR/src/fitsio.h
+ cat fitsio.h >> $VAST_DIR/src/fitsio.h
+ echo "#endif" >> $VAST_DIR/src/fitsio.h
+ cp -f longnam.h $VAST_DIR/src
  make clean
 fi
 
