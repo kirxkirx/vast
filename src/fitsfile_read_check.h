@@ -12,8 +12,9 @@ void *memmem(const void *haystack, size_t haystacklen, const void *needle, size_
 
 static void check_if_the_input_is_MaxIM_compressed_FITS(char *fitsfilename) {
  FILE *f;
- char *buffer; // buffer for a part of the header
- char *pointer_to_the_key_start;
+ unsigned char *buffer; // buffer for a part of the header
+ unsigned char *pointer_to_the_key_start;
+ int getc_return_value;
  int i;
  f= fopen(fitsfilename, "r");
  if( f == NULL ) {
@@ -26,18 +27,22 @@ static void check_if_the_input_is_MaxIM_compressed_FITS(char *fitsfilename) {
  }
  memset(buffer, 0, 65535); // wipe the memory just in case there was something there
  for( i= 0; i < 65535; i++ ) {
-  buffer[i]= getc(f);
-  if( buffer[i] == EOF ) {
+  // getc returns int, not unsigned char
+  //buffer[i]= getc(f);
+  getc_return_value= getc(f);
+  //if( buffer[i] == EOF ) {
+  if( getc_return_value == EOF ) {
    break;
   }
+  buffer[i]= (unsigned char)getc_return_value;
  }
  fclose(f);
  // Check for signs of the compressed FITS image
- pointer_to_the_key_start= (char *)memmem(buffer, 65535 - 80, "SIMPLE", 6);
+ pointer_to_the_key_start= (unsigned char *)memmem(buffer, 65535 - 80, "SIMPLE", 6);
  if( pointer_to_the_key_start != NULL ) {
-  pointer_to_the_key_start= (char *)memmem(buffer, 65535 - 80, "BITPIX", 6);
+  pointer_to_the_key_start= (unsigned char *)memmem(buffer, 65535 - 80, "BITPIX", 6);
   if( pointer_to_the_key_start != NULL ) {
-   pointer_to_the_key_start= (char *)memmem(buffer, 65535 - 80, "NAXIS", 5);
+   pointer_to_the_key_start= (unsigned char *)memmem(buffer, 65535 - 80, "NAXIS", 5);
    if( pointer_to_the_key_start != NULL ) {
     fprintf(stderr, "\n#########################################################\nThe file %s \nactually looks like a FITS image compressed by MaxIM DL.\nPlease open the image in MaxIM DL software and save it as\nUncompressed FITS. I'm not aware of any other (legal) way\nto uncompress such images.\n#########################################################\n", fitsfilename);
    }
@@ -62,7 +67,8 @@ static inline int fitsfile_read_check(char *fitsfilename) {
   check_if_the_input_is_MaxIM_compressed_FITS(fitsfilename);
   return status;
  }
- if( fits_get_hdu_type(fptr, &hdutype, &status) || hdutype != IMAGE_HDU ) {
+ fits_get_hdu_type(fptr, &hdutype, &status);
+ if( status || hdutype != IMAGE_HDU ) {
   fprintf(stderr, "%s is not a FITS image! Is it a FITS table?\n", fitsfilename);
   fits_close_file(fptr, &status);
   return 1;

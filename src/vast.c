@@ -2055,11 +2055,6 @@ int main(int argc, char **argv) {
     exit(1);
    }
    break;
-   //			case 'n':
-   //				param_nocalib = 1;
-   //				param_nofind = 1; /* Do not start ./find_candidates it's useless without mag. calibration! */
-   //				fprintf(stdout, "opt 'n': No magnitude calibration will be done!!!\n");
-   //				break;
   case 'r':
    no_rotation= 1;
    fprintf(stdout, "opt 'r': assuming no rotation larger than 3 degrees!\n");

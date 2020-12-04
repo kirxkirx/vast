@@ -84,12 +84,11 @@
 // If the stars are really small use FWHM_MIN=0.0
 // to loose the restrictions on the star image shape!
 // The value of FWHM_MIN for small stars are now used by default.
-// If star images on your CCD frames have normal size (span many pixels), it is strongly
-// recommended to use FWHM_MIN 0.85 (or some similar value).
+// If star images on your CCD frames have normal size (span many pixels), 
+// it is recommended to use FWHM_MIN 0.85 (or some similar value).
 //
-//#define FWHM_MIN 0.85      /* pix, only stars with FWHM > FWHM_MIN (pix) will be processed   */
 //
-#define FWHM_MIN 0.1 // safe default value
+#define FWHM_MIN 0.1 // safe default value -- only stars with FWHM > FWHM_MIN (pix) will be processed
 //                                            // 0.5 is too high - fails the photographic plate test
 #define MIN_SOURCE_SIZE_APERTURE_FRACTION 0.25 // reject sources for which the comusted aperture size would be less than
                                                // MIN_SOURCE_SIZE_APERTURE_FRACTION*image_aperture_size
