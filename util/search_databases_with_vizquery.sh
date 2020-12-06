@@ -100,7 +100,27 @@ if [ -z $4 ];then
  echo "The field of view is not specified on the command line, using the default one"
  FOV=1.0
 else
- FOV=$4
+ # Check if $4 looks like a field of view in arcminutes
+ re='^[0-9]+([.][0-9]+)?$'
+ if ! [[ $4 =~ $re ]] ; then
+  echo "ERROR: argument 4 #$4# does not look like a field of view in arcminutes, using the default value instead"
+  FOV=1.0
+ else
+  TEST=`echo "$4<1.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
+  if [ $TEST -eq 1 ];then
+   echo "ERROR: the specified field of view ($4 arcmin) seems too small, using the default value instead"
+   FOV=1.0
+  else
+   TEST=`echo "$4>2700" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+   if [ $TEST -eq 1 ];then
+    echo "ERROR: the specified field of view ($4 arcmin) seems too large, using the default value instead"
+    FOV=1.0
+   else
+    echo "Setting the field of view ($4 arcmin) specified on the command line"
+    FOV=$4
+   fi
+  fi
+ fi
 fi
 
 ###### 2MASS #####
@@ -260,6 +280,8 @@ if [ $TEST -eq 1 ];then
  R_SEARCH_ARCSEC=1.5
  B2MAG_RANGE="B2mag=1.0..20.5"
 fi
+####
+#echo "#### DEBUG R_SEARCH_ARCSEC=$R_SEARCH_ARCSEC FOV=$FOV" >> /dev/stderr
 ####
 #DOUBLE_R_SEARCH_ARCSEC=`echo "$R_SEARCH_ARCSEC*2" | bc -ql`
 DOUBLE_R_SEARCH_ARCSEC=`echo "$R_SEARCH_ARCSEC" | awk '{print 2*$1}'`

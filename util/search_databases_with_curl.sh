@@ -129,9 +129,11 @@ if [ "$DATABASE_RESULTS" != "" ];then
  DATABASE_RESULTS=`echo $DATABASE_RESULTS |awk -F"<pre>" '{print $6}'`
  DATABASE_RESULTS=`echo ${DATABASE_RESULTS//"</pre>"/""}`
  DATABASE_RESULTS=`echo $DATABASE_RESULTS | sed 's/>[^<]*<//g' | sed 's/<[^>]*>//g'`
+ # Cut out the first word which is the distance from the specified position
+ DATABASE_RESULTS=`echo "${DATABASE_RESULTS#* }"`
+ #
  echo $DATABASE_RESULTS
- exit # !!!
- 
+ exit # !!! 
 else
  if [ $COLOR -eq 1 ];then
   echo -e "The object was \033[01;31mnot found\033[00m in $DATABASE_NAME."

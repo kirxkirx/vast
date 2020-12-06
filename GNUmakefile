@@ -432,7 +432,7 @@ shell_commands: pgplot_components lib/lightcurve_simulator vast
 	ln -s ../pgfv util/make_finding_chart
 	ln -s ../pgfv util/fits2png
 	ln -s draw_stars_with_ds9.sh util/mark_wcs_position_with_ds9.sh
-	cd util && ln -s identify.sh identify_noninteractive.sh && ln -s identify.sh wcs_image_calibration.sh && ln -s identify.sh identify_transient.sh && ln -s identify.sh identify_for_catalog.sh && cd -
+	cd util && ln -s identify.sh identify_noninteractive.sh && ln -s identify.sh identify_justname.sh && ln -s identify.sh wcs_image_calibration.sh && ln -s identify.sh identify_transient.sh && ln -s identify.sh identify_for_catalog.sh && cd -
 	#
 	cd lib && ln -s lightcurve_simulator sine_wave_simulator && ln -s lightcurve_simulator sine_wave_and_psd_simulator && ln -s lightcurve_simulator sine_wave_or_psd_simulator && cd -
 	#
@@ -504,7 +504,7 @@ clean: clean_libraries
 	rm -f .cc.version
 	rm -f .cc.date
 	# we do not delete .cc.build 
-	rm -f util/wcs_image_calibration.sh util/identify_transient.sh util/identify_for_catalog.sh util/identify_noninteractive.sh
+	rm -f util/wcs_image_calibration.sh util/identify_transient.sh util/identify_for_catalog.sh util/identify_noninteractive.sh util/identify_justname.sh
 	rm -f lib/pgplot/cpgdemo lib/pgplot/pgdemo* lib/pgplot/pgxwin_server lib/pgplot/pgplot.doc lib/pgplot/*.a lib/pgplot/*.so lib/pgplot/*~ lib/pgplot/grfont.dat
 	rm -f lib/vizquery
 	rm -f lib/try_to_guess_image_fov
