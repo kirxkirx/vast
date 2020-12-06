@@ -12123,6 +12123,13 @@ if [ $? -eq 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001b_GCVS"
 fi
 
+# Make sure that the following string returns only the correct name of the target
+TEST_STRING=`util/search_databases_with_curl.sh 22:02:43.29 +42:16:39.9 | tail -n1 | awk -F'|' '{print $1}'`
+if [ "$TEST_STRING" != "BL Lac" ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001c_GCVS"
+fi
+
 util/search_databases_with_curl.sh 15:31:40.10 -20:27:17.3 | grep --quiet "BW Lib"
 if [ $? -ne 0 ];then
  TEST_PASSED=0
