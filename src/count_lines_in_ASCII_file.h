@@ -4,6 +4,11 @@
 #include <stdio.h>
 #include <string.h>
 
+// We may have troubles including this file if it's not in the same directory
+#ifndef VAST_LIMITS_INCLUDE_FILE
+#include "vast_limits.h" // defines MAX_LOG_STR_LENGTH FILENAME_LENGTH 
+#endif
+
 static int count_lines_in_ASCII_file(char *asciifilename) {
  FILE *file;
  int linecounter= 0;

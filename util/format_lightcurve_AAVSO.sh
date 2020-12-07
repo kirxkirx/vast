@@ -81,7 +81,8 @@ if [ -f "$PLATE_SOLVED_REFERENCE_IMAGE" ];then
 Trying to automatically ID the star $INPUT_VAST_LIGHTCURVE"
  STAR_NUMBER=`echo "${INPUT_VAST_LIGHTCURVE/out/}"`
  STAR_NUMBER=`echo "${STAR_NUMBER/.dat/}"`
- AUTOMATIC_VARIABLE_STAR_NAME=`util/identify_justname.sh $INPUT_VAST_LIGHTCURVE | grep -A100 'Star:' | grep -v "$STAR_NUMBER  " | tail -n1 ` 
+ # '| while read A ;do echo $A ;done' is to remove the trailing white space if the variable name is from GCVS
+ AUTOMATIC_VARIABLE_STAR_NAME=`util/identify_justname.sh $INPUT_VAST_LIGHTCURVE | grep -A100 'Star:' | grep -v "$STAR_NUMBER  " | tail -n1 | while read A ;do echo $A ;done` 
  if [ ! -z "$AUTOMATIC_VARIABLE_STAR_NAME" ];then
   echo "Automatically setting the variable star name $AUTOMATIC_VARIABLE_STAR_NAME"
   VARIABLE_STAR_NAME="$AUTOMATIC_VARIABLE_STAR_NAME"
