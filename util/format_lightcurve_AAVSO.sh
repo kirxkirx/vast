@@ -35,15 +35,16 @@ fi
 
 # Check that the time system is UTC
 if [ ! -s vast_summary.log ];then
- echo "ERROR: cannot find vast_summary.log to determine the JD time system"
- exit 1
+ echo "ERROR: cannot find vast_summary.log to determine the JD time system, assuming UTC"
+ SOFTWARE_VERSION=`./vast --version 2>/dev/null`
+else
+ grep --quiet 'JD time system (TT/UTC/UNKNOWN): UTC' vast_summary.log
+ if [ $? -ne 0 ];then
+  echo "ERROR: cannot confirm that the JD time system is UTC from vast_summary.log"
+  exit 1
+ fi
+ SOFTWARE_VERSION=`grep 'Software: ' vast_summary.log  | awk '{print $2" "$3}'`
 fi
-grep --quiet 'JD time system (TT/UTC/UNKNOWN): UTC' vast_summary.log
-if [ $? -ne 0 ];then
- echo "ERROR: cannot confirm that the JD time system is UTC from vast_summary.log"
- exit 1
-fi
-SOFTWARE_VERSION=`grep 'Software: ' vast_summary.log  | awk '{print $2" "$3}'`
 
 # Get the observing date for the header
 JD_FIRST_OBS=`util/cute_lc "$INPUT_VAST_LIGHTCURVE" | head -n1 | awk '{print $1}'`
