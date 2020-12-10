@@ -13,8 +13,11 @@ int is_comment(char *str) {
   return 1;
 
  for( i= 0; i < n - 1; i++ ) {
-  if( str[i] != ' ' && str[i] != '0' && str[i] != '1' && str[i] != '2' && str[i] != '3' && str[i] != '4' && str[i] != '5' && str[i] != '6' && str[i] != '7' && str[i] != '8' && str[i] != '9' && str[i] != '.' && str[i] != '\r' && str[i] != '\n' && str[i] != '\t' && str[i] != '+' && str[i] != '-' )
+  //if( str[i] != ' ' && str[i] != '0' && str[i] != '1' && str[i] != '2' && str[i] != '3' && str[i] != '4' && str[i] != '5' && str[i] != '6' && str[i] != '7' && str[i] != '8' && str[i] != '9' && str[i] != '.' && str[i] != '\r' && str[i] != '\n' && str[i] != '\t' && str[i] != '+' && str[i] != '-' )
+  // allow exponential (1e-6) notation
+  if( str[i] != 'E' && str[i] != 'e' && str[i] != ' ' && str[i] != '0' && str[i] != '1' && str[i] != '2' && str[i] != '3' && str[i] != '4' && str[i] != '5' && str[i] != '6' && str[i] != '7' && str[i] != '8' && str[i] != '9' && str[i] != '.' && str[i] != '\r' && str[i] != '\n' && str[i] != '\t' && str[i] != '+' && str[i] != '-' ) {
    return 1;
+  }
   if( str[i] == '\t' )
    str[i]= ' ';
   if( str[i] == '\r' )
@@ -85,8 +88,9 @@ int main(int argc, char *argv[]) {
  if( lightcurve_format == 1 ) {
   fprintf(stderr, "\"JD mag err\" lightcurve format detected!\n");
   while( NULL != fgets(STR, 1000, inputfile) ) {
-   if( 1 == is_comment(STR) )
+   if( 1 == is_comment(STR) ) {
     continue;
+   }
    sscanf(STR, "%lf %lf %lf", &JD, &MAG, &MAGERR);
    //if( JD>2450000.0 )JD-=2450000.0; // to comfort the new version of WinEfk
    fprintf(stdout, "%lf %.6lf %.6lf\r\n", JD, MAG, MAGERR);
