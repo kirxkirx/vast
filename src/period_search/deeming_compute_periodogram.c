@@ -364,7 +364,9 @@ int main(int argc, char **argv) {
  fclose(lcfile);
 
  if( N_obs < 5 ) {
-  fprintf(stderr, "ERROR: to few observations in the input lightcurve: %d<5 \n", N_obs);
+  fprintf(stderr, "ERROR: too few observations in the input lightcurve: %d<5 \n", N_obs);
+  free(m);
+  free(jd);
   return 1;
  }
 
