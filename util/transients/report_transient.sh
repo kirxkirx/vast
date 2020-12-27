@@ -46,6 +46,7 @@ N=0
 clean_tmp_files
 
 while read JD MAG MERR X Y APP FITSFILE REST ;do
+ #echo "##### DEBUG #$JD $MAG $MERR $X $Y $APP $FITSFILE $REST#"
  #util/wcs_image_calibration.sh $FITSFILE $FOV &>/dev/null
  # At this point, we should somehow have a WCS calibrated image named $WCS_IMAGE_NAME
  WCS_IMAGE_NAME=wcs_`basename $FITSFILE`
@@ -75,7 +76,8 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  TIMEH=`echo $TIME |awk -F":" '{print $1}'`
  TIMEM=`echo $TIME |awk -F":" '{print $2}'`
  TIMES=`echo $TIME |awk -F":" '{print $3}'`
- DAYFRAC=`echo "$DAY+$TIMEH/24+$TIMEM/1440+$TIMES/86400+$EXPTIME/(2*86400)" |bc -ql`
+ #DAYFRAC=`echo "$DAY+$TIMEH/24+$TIMEM/1440+$TIMES/86400+$EXPTIME/(2*86400)" |bc -ql`
+ DAYFRAC=`echo "$DAY $TIMEH $TIMEM $TIMES $EXPTIME" | awk '{printf "%.6f",$1+$2/24+$3/1440+$4/86400+$5/(2*86400)}'`
  # If there is a UCAC5 plate solution with local corrections - use it,
  # otherwise rely on the positions computed using only the WCS header
  if [ -f $UCAC5_SOLUTION_NAME ];then
@@ -124,10 +126,10 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  else
   echo -n "<tr><td>Reference image     &nbsp;&nbsp;</td>"
  fi # if [ "$FITSFILE" != "$REFERENCE_IMAGE" ] ;then
- DAYFRAC=`echo $DAYFRAC |awk '{printf "%07.4f\n",$1}'` # purely for visualisation purposes
- JD=`echo $JD|awk '{printf "%.4f",$1}'` # purely for visualisation purposes
- X=`echo "$X" |awk '{printf "%04.0f",$1}'` # purely for visualisation purposes
- Y=`echo "$Y" |awk '{printf "%04.0f",$1}'` # purely for visualisation purposes
+ DAYFRAC=`echo "$DAYFRAC" | awk '{printf "%07.4f\n",$1}'` # purely for visualisation purposes
+ JD=`echo "$JD" | awk '{printf "%.4f",$1}'` # purely for visualisation purposes
+ X=`echo "$X" | awk '{printf "%04.0f",$1}'` # purely for visualisation purposes
+ Y=`echo "$Y" | awk '{printf "%04.0f",$1}'` # purely for visualisation purposes
  echo "<td>$YEAR $MONTH $DAYFRAC &nbsp;&nbsp;</td><td> $JD &nbsp;&nbsp;</td><td> $MAG &nbsp;&nbsp;</td><td>" `lib/deg2hms $RADEC` "&nbsp;&nbsp;</td><td>$X $Y &nbsp;&nbsp;</td><td>$FITSFILE</td></tr>"
 done < $LIGHTCURVEFILE
 echo "</table>"
@@ -206,8 +208,8 @@ if [ $? -ne 0 ];then
  clean_tmp_files
  exit 1
 fi
-DAYFRAC_MEAN=`echo $MEAN|awk '{printf "%07.4f",$1}'`
-DAYFRAC_MEAN_SHORT=`echo $MEAN|awk '{printf "%05.2f",$1}'`
+DAYFRAC_MEAN=`echo "$MEAN" | awk '{printf "%07.4f",$1}'`
+DAYFRAC_MEAN_SHORT=`echo "$MEAN" | awk '{printf "%05.2f",$1}'`
 
 
 #lib/stat_array < jd$$.dat > script$$.dat
@@ -252,7 +254,8 @@ ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC=`echo "$ANGULAR_DISTANCE
 ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING="$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC"
 # Reject candidates with large distance between the two second-epoch detections
 ### ==> Assumptio about positional accuracy hardcoded here <===
-TEST=`echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC > 11" | bc -ql`
+#TEST=`echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC > 11" | bc -ql`
+TEST=`echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC>11" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
  echo "Rejecting candidate due to large distance ($ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC\") between the two second-epoch detections"
  clean_tmp_files
@@ -260,7 +263,8 @@ if [ $TEST -eq 1 ];then
 fi
 # Highlight candidates with suspiciously large distance between the two second-epoch detections
 ### ==> Assumptio about positional accuracy hardcoded here <===
-TEST=`echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC > 8.4" | bc -ql`
+#TEST=`echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC > 8.4" | bc -ql`
+TEST=`echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC>8.4" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
  ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING="<b><font color=\"red\">$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC</font></b>"
 else
@@ -527,10 +531,11 @@ echo -n "<a href=\"https://wis-tns.weizmann.ac.il/search?ra=${RA_MEAN_HMS//:/%3A
 "
 
 # Show the ASAS-3 button only for sources with declination below +28 
-TEST=`echo "($DEC_MEAN)<28" |bc -ql`
+#TEST=`echo "($DEC_MEAN)<28" |bc -ql`
+TEST=`echo "$DEC_MEAN<28" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 re='^[0-9]+$'
 if ! [[ $TEST =~ $re ]] ; then
- echo "TEST ERROR in ($DEC_MEAN)<28" 
+ echo "TEST ERROR in $DEC_MEAN<28" 
  clean_tmp_files
  exit 1
 else

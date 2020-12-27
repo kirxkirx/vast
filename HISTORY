@@ -1,3 +1,25 @@
+	* VaST will try to discard images with elongated stars resulting from bad tracking.
+	This can be disabled by specifying the new command line option '-l' or '--nodiscardell'.
+	This is disabled automatically if '--photocurve' magnitude calibration is used as
+	photographic plates often suffer from bad guiding and low number of images (so we cannot
+	afford discarding a few suspicious ones.)
+	* 'util/get_image_date' now understands input dates without quotation marks
+	'util/get_image_date 2020 10 27 18:00'
+	and as a fraction of the day
+	'util/get_image_date 2020 10 27.75'
+	* 'lib/deg2hms_uas' converts the input in decimal degrees
+	to sexagesimal degrees:arcminutes:arcseconds with the 10 microarcsecond accuracy of the output.
+	Example usage: 'lib/deg2hms_uas 126.59917135396 -50.96207264973'
+	'lib/deg2hms' prints out the output with the usual 0.1 arcsec accuracy.
+	* Removed the internal copy of sextractor-2.25.0, keeping 2.25.2 and 2.19.5
+	* Retired the old VaST implementation of SysRem 'util/sysrem' as it started causing problems
+	with cod maintenance. The new SysRem implementation 'util/sysrem2' is now the only one and
+	'util/sysrem' is a symlink to 'util/sysrem2' kept for backward compatibility.
+	* VaST can now be used from behind an HTTP/HTTPS proxy: just export 'http_proxy' and 'https_proxy' 
+	variables before running VaST. For example:
+	export http_proxy=http://squid.sao.ru:8080
+	export https_proxy=http://squid.sao.ru:8080
+	where squid.sao.ru:8080 is the name and port of the proxy server.
 20 Oct 2020: vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911

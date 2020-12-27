@@ -12,6 +12,7 @@ export MFLAGS=""
 VAST_DIR=$PWD
 TARGET_DIR=$VAST_DIR/lib
 LIBRARY_SOURCE=$VAST_DIR/src/astcheck
+#LIBRARY_SOURCE=$VAST_DIR/src/lunar
 
 echo " "
 echo -e "Starting script \033[01;32m$0 $1\033[00m"
@@ -36,7 +37,7 @@ else
  if [ $? -eq 0 ];then
   MAKE_COMMAND="gmake"
  else
-  echo "ERROR: cannot find 'gmake' while being on a nin-Linux system ($SYSTEM_TYPE)!
+  echo "ERROR: cannot find 'gmake' while being on a non-Linux system ($SYSTEM_TYPE)!
 The VaST compilation may fail. If it does, please install 'gmake' and try again."
   MAKE_COMMAND="make"
  fi
@@ -48,6 +49,8 @@ echo "Using $MAKE_COMMAND to compile ASTCHECK..."
 
 cd $LIBRARY_SOURCE
 $MAKE_COMMAND -f linlunar.mak
+# This is for the new version src/lunar
+#$MAKE_COMMAND
 cp astcheck $VAST_DIR/lib
 rm -f *.a  *.o astcheck astephem get_test jd riseset3
 cd $VAST_DIR

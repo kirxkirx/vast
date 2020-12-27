@@ -4,21 +4,26 @@
 #include <stdio.h>
 #include <string.h>
 
-static int count_lines_in_ASCII_file( char *asciifilename ) {
+// We may have troubles including this file if it's not in the same directory
+#ifndef VAST_LIMITS_INCLUDE_FILE
+#include "vast_limits.h" // defines MAX_LOG_STR_LENGTH FILENAME_LENGTH 
+#endif
+
+static int count_lines_in_ASCII_file(char *asciifilename) {
  FILE *file;
  int linecounter= 0;
  char buf[MAX_LOG_STR_LENGTH];
- if ( strlen( asciifilename ) < 2 )
+ if( strlen(asciifilename) < 2 )
   return 0;
- if ( strlen( asciifilename ) > FILENAME_LENGTH )
+ if( strlen(asciifilename) > FILENAME_LENGTH )
   return 0;
- file= fopen( asciifilename, "r" );
- if ( NULL == file )
+ file= fopen(asciifilename, "r");
+ if( NULL == file )
   return 0;
- while ( NULL != fgets( buf, MAX_LOG_STR_LENGTH, file ) ) {
+ while( NULL != fgets(buf, MAX_LOG_STR_LENGTH, file) ) {
   linecounter++;
  }
- fclose( file );
+ fclose(file);
  return linecounter;
 }
 

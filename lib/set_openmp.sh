@@ -44,7 +44,8 @@ if [ $GONOGO -eq 1 ];then
    if [ $? -eq 0 ];then
     RAM_SIZE_KBYTES=`grep MemTotal /proc/meminfo | awk '{print $2}'`
     if [ ! -z "$RAM_SIZE_KBYTES" ];then
-     RAM_SIZE_BYTES=`echo "$RAM_SIZE_KBYTES*1024" | bc -q`
+     #RAM_SIZE_BYTES=`echo "$RAM_SIZE_KBYTES*1024" | bc -q`
+     RAM_SIZE_BYTES=`echo "$RAM_SIZE_KBYTES*1024" | awk '{print $1*1024}'`
     fi
    fi
   fi
@@ -52,7 +53,8 @@ if [ $GONOGO -eq 1 ];then
  # OK, supposedly we got the memory size, now compare it with 1GB
  if [ ! -z "$RAM_SIZE_BYTES" ] ;then
   #echo "Derived RAM size: $RAM_SIZE_BYTES B" >> /dev/stderr
-  TEST=`echo "$RAM_SIZE_BYTES<1024*1024*1024" | bc -ql`
+  #TEST=`echo "$RAM_SIZE_BYTES<1024*1024*1024" | bc -ql`
+  TEST=`echo "$RAM_SIZE_BYTES<1073741824" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
   # Test if the bc output looks suitable for BASH comparison
   re='^[0-9]+$'
   if [[ $TEST =~ $re ]] ; then

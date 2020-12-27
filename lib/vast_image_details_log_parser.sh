@@ -64,14 +64,16 @@ while read exp_start_name exp_start_date exp_start_time exp_name exp JD_name JD 
  fi
  #
  if [ "$JD" != "0.000000" ];then
-  TEST=`echo "$JD < $FIRST_JD"|bc -ql`
+  #TEST=`echo "$JD < $FIRST_JD"|bc -ql`
+  TEST=`echo "$JD<$FIRST_JD"| awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
   if [ $TEST -eq 1 ];then
    FIRST_JD=$JD
    exp_start_date_first=$exp_start_date
    exp_start_time_first=$exp_start_time
    filename_first=$filename
   fi
-  TEST=`echo "$JD > $LAST_JD"|bc -ql`
+  #TEST=`echo "$JD > $LAST_JD"|bc -ql`
+  TEST=`echo "$JD>$LAST_JD" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
   if [ $TEST -eq 1 ];then
    LAST_JD=$JD
    exp_start_date_last=$exp_start_date

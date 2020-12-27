@@ -1,0 +1,24 @@
+If you use results produced by this code in a scientific paper, please cite 
+
+Sokolovsky K. V. & Lebedev A. A. "VaST: A variability search toolkit"
+2018, Astronomy and Computing, Volume 22, p. 28-47
+
+https://ui.adsabs.harvard.edu/abs/2018A%26C....22...28S/abstract
+
+@ARTICLE{2018A&C....22...28S,
+       author = {{Sokolovsky}, K.~V. and {Lebedev}, A.~A.},
+        title = "{VaST: A variability search toolkit}",
+      journal = {Astronomy and Computing},
+     keywords = {Methods, Data analysis, Techniques, Photometric, Stars, Variables, Astrophysics - Instrumentation and Methods for Astrophysics, Astrophysics - Solar and Stellar Astrophysics},
+         year = 2018,
+        month = jan,
+       volume = {22},
+        pages = {28-47},
+          doi = {10.1016/j.ascom.2017.12.001},
+archivePrefix = {arXiv},
+       eprint = {1702.07715},
+ primaryClass = {astro-ph.IM},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2018A&C....22...28S},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+

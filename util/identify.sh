@@ -421,7 +421,8 @@ if [ -z $2 ];then
  fi
  #TEST=`echo "$FIELD_OF_VIEW_ARCMIN<15.0"|bc -ql`
  #TEST=`echo "$FIELD_OF_VIEW_ARCMIN<3.0"|bc -ql`
- TEST=`echo "$FIELD_OF_VIEW_ARCMIN<1.0"|bc -ql`
+ #TEST=`echo "$FIELD_OF_VIEW_ARCMIN<1.0"|bc -ql`
+ TEST=`echo "$FIELD_OF_VIEW_ARCMIN<1.0"| awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
  if [ $TEST -eq 1 ];then
   # If we know FIELD_OF_VIEW_ARCMIN is so small we have no hope to blindly solve it 
   # - try to rely on WCS information that may be already inserted in the image
@@ -448,7 +449,7 @@ if [ ! -s "$WCS_IMAGE_NAME" ];then
  fi
  #
  echo -n "No image with WCS calibration found for $FITSFILE .... "
- IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
+ #IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
  # The stuff below seems to work fine
  CATALOG_NAME=`"$VAST_PATH"lib/fits2cat $FITSFILE`
  if [ -f "$CATALOG_NAME".apphot ];then
@@ -474,8 +475,8 @@ field identification have good chances to fail. Sorry... :(
 
  # Try to solve the image with a range of trial FIELD_OF_VIEW_ARCMINs
 
- #for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN `echo "3/4*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` `echo "2*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` `echo "10*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` ;do
- for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN `echo "3*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` `echo "3/4*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` ;do
+ #for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN `echo "3*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` `echo "3/4*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` ;do
+ for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN `echo "$FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",3*$1}'` `echo "$FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",$1*3/4}'` ;do
  
  echo "######### Trying to solve plate assuming $TRIAL_FIELD_OF_VIEW_ARCMIN' field of view #########
  $FITSFILE"
@@ -551,6 +552,7 @@ field identification have good chances to fail. Sorry... :(
     PLATE_SOLVE_SERVER="scan.sai.msu.ru"
    fi
    CURL="curl"
+   # need the awk post-processing for curl request to work
    IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
 
    #continue
@@ -687,6 +689,10 @@ field identification have good chances to fail. Sorry... :(
     echo "ERROR: the file out$$.xyls is lost somewhere on the way!"
     exit 1
    fi
+   
+   # Moved here as IMAGE_SIZE without awk postprocessing is defined and used above
+   IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
+   
    #`lib/find_timeout_command.sh` 300 $CURL -F file=@out$$.xyls -F submit="Upload Image" -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
    #echo $CURL -F file=@out$$.xyls -F submit="Upload Image" -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd
    # Note that the timeout is also enforced at the server side
@@ -813,7 +819,8 @@ Retrying..."
     fi
    else
     echo -e "Sadly, the field was \033[01;31mNOT SOLVED\033[00m. :("
-    echo "Try to set a smaller field of view size, for example:  $0 $1 " `echo "$TRIAL_FIELD_OF_VIEW_ARCMIN/2"|bc -ql`
+    #echo "Try to set a smaller field of view size, for example:  $0 $1 " `echo "$TRIAL_FIELD_OF_VIEW_ARCMIN/2"|bc -ql`
+    echo "Try to set a smaller field of view size, for example:  $0 $1 " `echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f", $1/2}'`
     ERROR_STATUS=1
    fi
    # At this point we should remove the completed job from the server
@@ -914,7 +921,7 @@ fi
   "$VAST_PATH"lib/reformat_existing_sextractor_catalog_according_to_wcsparam.sh "$FITSFILE" "$WCS_IMAGE_NAME" "$SEXTRACTOR_CATALOG_NAME"
   if [ $? -ne 0 ];then
    echo "lib/reformat_existing_sextractor_catalog_according_to_wcsparam.sh did not work. Re-running SExtractor..." >> /dev/stderr
-   #$SEXTRACTOR -c "$VAST_PATH"`grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $WCS_IMAGE_NAME 2>/dev/null` $WCS_IMAGE_NAME && echo "ok"
+   echo "Running $SEXTRACTOR from $0"
    echo $SEXTRACTOR -c "$VAST_PATH"`grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $WCS_IMAGE_NAME 2>/dev/null` `"$VAST_PATH"lib/guess_saturation_limit_main $WCS_IMAGE_NAME 2>/dev/null`  $WCS_IMAGE_NAME >> /dev/stderr
    $SEXTRACTOR -c "$VAST_PATH"default.sex -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $WCS_IMAGE_NAME 2>/dev/null` `"$VAST_PATH"lib/guess_saturation_limit_main $WCS_IMAGE_NAME 2>/dev/null`  $WCS_IMAGE_NAME && echo "ok"
   fi
@@ -1023,6 +1030,11 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
    UNCALIBRATED_IMAGE_NAME=`echo ${WCS_IMAGE_NAME//"wcs_"/}`
    DATEANDTIME=`grep "$UNCALIBRATED_IMAGE_NAME" "$VAST_PATH"vast_image_details.log | head -n1 |awk '{print $2" "$3}'`
    "$VAST_PATH"util/transients/MPCheck.sh `"$VAST_PATH"lib/deg2hms $RADEC` $DATEANDTIME H
+  elif [ "$START_NAME" = "identify_justname.sh" ];then
+   # awk -F'|' '{print $1}' is in case this will be a GCVS name
+   # sed 's/^[ \t]*//;s/[ \t]*$//' is to remove the leading and trailing white spaces https://unix.stackexchange.com/questions/102008/how-do-i-trim-leading-and-trailing-whitespace-from-each-line-of-some-output
+   "$VAST_PATH"util/search_databases_with_curl.sh `"$VAST_PATH"lib/deg2hms $RADEC` | grep -v -e 'not found' -e 'Starting' -e 'Searching' | grep -v 'found' | tail -n1 | awk -F'|' '{print $1}' | sed 's/^[ \t]*//;s/[ \t]*$//'
+   exit 0
   else
    "$VAST_PATH"util/search_databases_with_curl.sh `"$VAST_PATH"lib/deg2hms $RADEC`
    ### Give user a chance to interrupt the script

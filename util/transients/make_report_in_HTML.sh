@@ -29,6 +29,11 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
   rm -f transient_report/index.tmp2
  fi
  
+ if [ ! -s $LIGHTCURVE_FILE_OUTDAT ];then
+  echo "WARNING: $LIGHTCURVE_FILE_OUTDAT lightcurve file does not exist!!!"
+  continue
+ fi
+ 
  TRANSIENT_NAME=`basename $LIGHTCURVE_FILE_OUTDAT .dat`
  TRANSIENT_NAME=${TRANSIENT_NAME/out/}
  TRANSIENT_NAME="$TRANSIENT_NAME"_`basename $C .fts`
@@ -61,7 +66,9 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  # plot reference image preview
  BASENAME_REFERENCE_IMAGE=`basename $REFERENCE_IMAGE`
  REFERENCE_IMAGE_PREVIEW="$BASENAME_REFERENCE_IMAGE"_preview.png
+ export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
  util/fits2png $REFERENCE_IMAGE &> /dev/null && mv pgplot.png transient_report/$REFERENCE_IMAGE_PREVIEW
+ unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
  #command -v convert &> /dev/null
  #if [ $? -eq 0 ];then
  # REFERENCE_IMAGE_PREVIEW=`basename $REFERENCE_IMAGE`_preview.png
@@ -117,8 +124,9 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
       BASENAME_IMAGE=`basename $IMAGE`
       PREVIEW_IMAGE="$BASENAME_IMAGE"_preview.png
       if [ ! -f transient_report/$PREVIEW_IMAGE ];then
-       #convert $IMAGE -brightness-contrast 30x30 -resize 10% transient_report/$PREVIEW_IMAGE &
-       util/fits2png $IMAGE &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
+       export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
+       PGPLOT_PNG_HEIGHT=1700 util/fits2png $IMAGE &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
+       unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
       fi
       echo "<br>$BASENAME_IMAGE<br><img src=\"$PREVIEW_IMAGE\"><br>" >> transient_report/index.tmp
      fi

@@ -11,7 +11,7 @@ export MFLAGS=""
 
 VAST_DIR=$PWD
 TARGET_DIR=$VAST_DIR/lib
-LIBRARY_SOURCE=$VAST_DIR/src/wcstools-3.9.5
+LIBRARY_SOURCE=$VAST_DIR/src/wcstools-3.9.6
 
 #
 #PATH_TO_THIS_SCRIPT=`readlink -f $0`
@@ -27,21 +27,51 @@ echo -e "\033[01;34mCompiling the local copy of WCSTools\033[00m"
 echo "Using C compiler: $C_COMPILER"
 
 cd $LIBRARY_SOURCE
+# Remove the old symlink if present
+if [ -f find_gcc_compiler.sh ];then
+ rm -f find_gcc_compiler.sh
+fi
+# This symlink is needed by Makefile
+ln -s $VAST_DIR/lib/find_gcc_compiler.sh
 make clean
-make -j9
+# Somehow -j9 doesnt work with the GNUmakefile hack
+#make -j9
+make
 if [ ! $? ];then
- echo "VaST installation problem: an error occurred while compiling WCSTools
+
+ echo "VaST code version/compiler version/compilation date:"
+ for COMPILATION_INFO_FILE in .cc.build .cc.version .cc.date ;do
+  if [ -f $COMPILATION_INFO_FILE ];then
+   cat $COMPILATION_INFO_FILE
+  fi
+ done
+
+ echo "
+VaST installation problem: an error occurred while compiling WCSTools
 This should not have happened! Please report the problem (including the above error messages)
-to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru>. 
+to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru> by e-mail or 
+by creating GitHub issue at https://github.com/kirxkirx/vast
+
 Thank you and sorry for the inconvenience."
  exit 1
 fi
 
+# remove debug symbol directories if there are any (Mac OS)
+for DIR_TO_REMOVE in bin/*.dSYM ;do
+ if [ -d "$DIR_TO_REMOVE" ];then
+  rm -rf "$DIR_TO_REMOVE"
+ fi
+done
 #
 cp bin/* "$TARGET_DIR"/bin/
 
 # Clean the source tree to save space
 make clean
+
+# remove the symlink
+if [ -f find_gcc_compiler.sh ];then
+ rm -f find_gcc_compiler.sh
+fi
 
 cd $VAST_DIR
 

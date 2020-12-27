@@ -9,8 +9,8 @@
 #include "vast_limits.h"
 #include "lightcurve_io.h"
 
-void write_fake_log_file( double *jd, int *Nobs );
+void write_fake_log_file(double *jd, int *Nobs);
 
-void get_dates_from_lightcurve_files( double *jd, int *Nobs );
+void get_dates_from_lightcurve_files(double *jd, int *Nobs);
 
-void get_dates( double *jd, int *Nobs );
+void get_dates(double *jd, int *Nobs);

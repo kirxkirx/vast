@@ -51,7 +51,8 @@ if [ $? -ne 0 ];then
  echo "ERROR running skycoor -r $RA_DEC_DEG_SKYCOOR $RA_DEC_DEG_VAST" >> /dev/stderr
  exit 1
 fi
-TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | bc -ql`
+#TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | bc -ql`
+TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
  echo "TEST1 failed on $RA_DEC_HMS" >> /dev/stderr
  exit 1
@@ -62,7 +63,8 @@ if [ $? -ne 0 ];then
  echo "ERROR running lib/put_two_sources_in_one_field $RA_DEC_DEG_SKYCOOR $RA_DEC_DEG_VAST" >> /dev/stderr
  exit 1
 fi
-TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | bc -ql`
+#TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | bc -ql`
+TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
  echo "TEST2 failed on $RA_DEC_HMS" >> /dev/stderr
  exit 1
@@ -77,7 +79,8 @@ if [ $? -ne 0 ];then
  echo "ERROR running skycoor -r $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_VAST" >> /dev/stderr
  exit 1
 fi
-TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | bc -ql`
+#TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | bc -ql`
+TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
  echo "TEST3 failed on $RA_DEC_HMS" >> /dev/stderr
  exit 1
@@ -88,7 +91,8 @@ if [ $? -ne 0 ];then
  echo "ERROR running lib/put_two_sources_in_one_field $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_VAST" >> /dev/stderr
  exit 1
 fi
-TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | bc -ql`
+#TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | bc -ql`
+TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
  echo "TEST4 failed on $RA_DEC_HMS" >> /dev/stderr
  exit 1
@@ -103,7 +107,8 @@ if [ $? -ne 0 ];then
  echo "ERROR running skycoor -r $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_WCSTOOLS" >> /dev/stderr
  exit 1
 fi
-TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | bc -ql`
+#TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | bc -ql`
+TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
  echo "TEST5 failed on $RA_DEC_HMS" >> /dev/stderr
  exit 1
@@ -114,7 +119,8 @@ if [ $? -ne 0 ];then
  echo "ERROR running lib/put_two_sources_in_one_field $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_WCSTOOLS" >> /dev/stderr
  exit 1
 fi
-TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | bc -ql`
+#TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | bc -ql`
+TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
  echo "TEST6 failed on $RA_DEC_HMS" >> /dev/stderr
  exit 1
@@ -131,7 +137,8 @@ if [ $? -ne 0 ];then
  echo "ERROR running skycoor -r $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_VAST" >> /dev/stderr
  exit 1
 fi
-TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | bc -ql`
+#TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | bc -ql`
+TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
  echo "TEST7 failed on $RA_DEC_HMS" >> /dev/stderr
  exit 1
@@ -142,7 +149,8 @@ if [ $? -ne 0 ];then
  echo "ERROR running lib/put_two_sources_in_one_field $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_VAST" >> /dev/stderr
  exit 1
 fi
-TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | bc -ql`
+#TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | bc -ql`
+TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
  echo "TEST8 failed on $RA_DEC_HMS" >> /dev/stderr
  exit 1
@@ -157,7 +165,8 @@ if [ $? -ne 0 ];then
  echo "ERROR running skycoor -r $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_WCSTOOLS" >> /dev/stderr
  exit 1
 fi
-TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | bc -ql`
+#TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | bc -ql`
+TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
  echo "TEST9 failed on $RA_DEC_HMS" >> /dev/stderr
  exit 1
@@ -168,7 +177,8 @@ if [ $? -ne 0 ];then
  echo "ERROR running lib/put_two_sources_in_one_field $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_WCSTOOLS" >> /dev/stderr
  exit 1
 fi
-TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | bc -ql`
+#TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | bc -ql`
+TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
  echo "TEST10 failed on $RA_DEC_HMS" >> /dev/stderr
  exit 1

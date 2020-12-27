@@ -10,32 +10,21 @@ if [ -z "$1" ];then
  exit
 fi
 #################################
-# Check if lightcurve file was ($1) exist
+# Check if lightcurve file ($1) exist
 if [ ! -f "$1" ];then
  echo "ERROR: lightcurve file $1 does not exist!"
  echo " "
  echo "Usage:  $0 outNNNN.dat"
  exit
 fi
+# Check if the input lightcurve file is empty
+if [ ! -s "$1" ];then
+ echo "ERROR: lightcurve file $1 is empty!"
+ echo " "
+ echo "Usage:  $0 outNNNN.dat"
+ exit
+fi
 #################################
-## Find a web browser
-#if [ -z "$WEBBROWSER" ];then
-# WEBBROWSER="none"
-# if command -v firefox &>/dev/null ;then
-#  WEBBROWSER="firefox"
-# elif command -v firefox-bin &>/dev/null ;then
-#  WEBBROWSER="firefox-bin"
-# elif command -v chromium &>/dev/null ;then
-#  WEBBROWSER="chromium"
-# elif command -v midori &>/dev/null ;then
-#  WEBBROWSER="midori"
-# fi
-# if [ "$WEBBROWSER" = "none" ];then
-#  echo "ERROR cannot find a known webbrowser in $PATH"
-#  echo "Please edit the script $0 to specify a browser manually!"
-#  exit 1
-# fi
-#fi
 #################################
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
@@ -176,7 +165,15 @@ if [ ! -d "$VAST_PATH"saved_period_search_lightcurves ];then
 fi
 
 # Convert the input lightcurve file to the software-friendly ASCII
+echo "Pre-processing the lightcurve file by running"
+echo "$VAST_PATH"lib/formater_out_wfk "$1"
 "$VAST_PATH"lib/formater_out_wfk "$1" > "$VAST_PATH"saved_period_search_lightcurves/"$NEWFILENAME" #lightcurve$$.tmp
+if [ $? -ne 0 ];then
+ echo "ERROR: lib/formater_out_wfk $1 returned a non-zero exit status"
+ exit 1
+else
+ echo "Pre-processing exist code is 0 (seems fine)"
+fi
 
 # And save the file
 echo "# "
@@ -184,9 +181,23 @@ echo "# Saving lightcurve file to "$VAST_PATH"saved_period_search_lightcurves/"$
 echo "# "
 echo "# "
 
+if [ ! -s "$VAST_PATH"saved_period_search_lightcurves/"$NEWFILENAME" ];then
+ echo "ERROR: the pre-processed lightcurve file is empty"
+ echo "$VAST_PATH"saved_period_search_lightcurves/"$NEWFILENAME"
+ exit 1
+fi
+
 # Determine good period search range
 JD_MIN=`sort -n "$VAST_PATH"saved_period_search_lightcurves/$NEWFILENAME |head -n1 | awk '{print $1}'`
+if [ -z "$JD_MIN" ];then
+ echo "ERROR: cannot determine JD_MIN"
+ exit 1
+fi
 JD_MAX=`sort -n "$VAST_PATH"saved_period_search_lightcurves/$NEWFILENAME |tail -n1 | awk '{print $1}'`
+if [ -z "$JD_MAX" ];then
+ echo "ERROR: cannot determine JD_MAX"
+ exit 1
+fi
 
 echo "# JD range: $JD_MIN -- $JD_MAX"
 

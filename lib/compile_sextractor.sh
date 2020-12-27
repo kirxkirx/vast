@@ -12,8 +12,9 @@ export MFLAGS=""
 VAST_DIR=$PWD
 TARGET_DIR=$VAST_DIR/lib
 # Sextractor versions prior to sextractor-2.25.2 will not compile with gcc10
-LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2_fix_disable_model_fitting $VAST_DIR/src/sextractor-2.25.0_fix_disable_model_fitting $VAST_DIR/src/sextractor-2.19.5"
+#LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2_fix_disable_model_fitting $VAST_DIR/src/sextractor-2.25.0_fix_disable_model_fitting $VAST_DIR/src/sextractor-2.19.5"
 #LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2_fix_disable_model_fitting"
+LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2_fix_disable_model_fitting $VAST_DIR/src/sextractor-2.19.5"
 
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
@@ -105,6 +106,15 @@ for LIBRARY_SOURCE in $LIBRARY_SOURCES ;do
  fi
  
  CONFIGURE_OK=0
+
+ # Try to circumvent the need for aclocal
+ # https://stackoverflow.com/questions/33278928/how-to-overcome-aclocal-1-15-is-missing-on-your-system-warning
+ # aclocal.m4
+ for FILE_TO_TOUCH in *.m4 configure Makefile.am Makefile.in autoconfig.h configure.ac ;do
+  if [ -f $FILE_TO_TOUCH ];then
+   touch $FILE_TO_TOUCH
+  fi
+ done
  
  if [ -x ./configure ];then
   # try to run configure right away if there is such script
@@ -144,6 +154,14 @@ for LIBRARY_SOURCE in $LIBRARY_SOURCES ;do
  
  
  if [ $CONFIGURE_OK -ne 1 ];then
+ 
+  echo "VaST code version/compiler version/compilation date:"
+  for COMPILATION_INFO_FILE in .cc.build .cc.version .cc.date ;do
+   if [ -f $COMPILATION_INFO_FILE ];then
+    cat $COMPILATION_INFO_FILE
+   fi
+  done
+ 
   echo "
 ########### VaST installation problem ###########
 Failed command:
@@ -154,13 +172,23 @@ C compiler: $CC
 
 VaST installation problem: an error occurred while configuring SExtractor
 This should not have happened! Please report the problem (including the above error messages)
-to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru>. 
+to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru> by e-mail or 
+by creating GitHub issue at https://github.com/kirxkirx/vast
+
 Thank you and sorry for the inconvenience."
   #exit 1
   continue
  fi
  make -j9
  if [ $? -ne 0 ];then
+
+  echo "VaST code version/compiler version/compilation date:"
+  for COMPILATION_INFO_FILE in .cc.build .cc.version .cc.date ;do
+   if [ -f $COMPILATION_INFO_FILE ];then
+    cat $COMPILATION_INFO_FILE
+   fi
+  done
+
   echo "
 ########### VaST installation problem ###########
 Failed command:
@@ -171,13 +199,23 @@ C compiler: $CC
 
 VaST installation problem: an error occurred while compiling SExtractor
 This should not have happened! Please report the problem (including the above error messages)
-to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru>. 
+to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru> by e-mail or 
+by creating GitHub issue at https://github.com/kirxkirx/vast
+
 Thank you and sorry for the inconvenience."
   #exit 1
   continue
  fi
  make install
  if [ $? -ne 0 ];then
+
+  echo "VaST code version/compiler version/compilation date:"
+  for COMPILATION_INFO_FILE in .cc.build .cc.version .cc.date ;do
+   if [ -f $COMPILATION_INFO_FILE ];then
+    cat $COMPILATION_INFO_FILE
+   fi
+  done
+ 
   echo "
 ########### VaST installation problem ###########
 Failed command:
@@ -188,7 +226,9 @@ C compiler: $CC
 
 VaST installation problem: an error occurred while installing SExtractor
 This should not have happened! Please report the problem (including the above error messages)
-to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru>. 
+to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru> by e-mail or 
+by creating GitHub issue at https://github.com/kirxkirx/vast
+
 Thank you and sorry for the inconvenience."
   #exit 1
   continue

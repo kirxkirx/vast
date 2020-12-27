@@ -258,7 +258,11 @@ on other Linux distributions you'll need to do the same thing (install gfortran,
 fi
 
 # Remove test files
-rm -f makePNG.c makePNG output.png
+for FILE_TO_REMOVE in makePNG.c makePNG output.png ;do
+ if [ -f "$FILE_TO_REMOVE" ];then
+  rm -f "$FILE_TO_REMOVE"
+ fi
+done
 
 # Copy the appropriate lib/pgplot stub
 rm -rf lib/pgplot

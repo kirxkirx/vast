@@ -315,7 +315,7 @@ void DLL_FUNC full_ctime( char *buff, double jd, const int format)
          }
 
       if( format & FULL_CTIME_TWO_DIGIT_YEAR)
-         sprintf( year_str, "%02d", abs( year % 100));
+         sprintf( year_str, "%02ld", abs( year % 100));
       else
          sprintf( year_str, (leading_zeroes ? "%04ld" : "%4ld"), year);
 

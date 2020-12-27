@@ -75,16 +75,20 @@ if [ ! -z "$3" ];then
     X2=`lib/hms2deg $BEST_RA $BEST_DEC |head -n1`
     Y2=`lib/hms2deg $BEST_RA $BEST_DEC |tail -n1 |awk '{print $1+0.0}'` # get rid of '+' sign if it's there
     echo "circle($X2,$Y2,$AP)" >> /tmp/reg"$$""$USER".reg
-    X2=`echo $X2+2.0*$AP| bc -ql`
-    Y2=`echo $Y2+2.0*$AP| bc -ql`
+    #X2=`echo $X2+2.0*$AP| bc -ql`
+    X2=`echo "$X2 $AP" | awk '{print $1+2.0*$2}'`
+    #Y2=`echo $Y2+2.0*$AP| bc -ql`
+    Y2=`echo "$Y2 $AP" | awk '{print $1+2.0*$2}'`
     echo "# text($X2,$Y2) text={$CLOSEST_STAR_NUMBER}" >> /tmp/reg"$$""$USER".reg
     #echo "point($X2,$Y2) # point=x" >> /tmp/reg"$$""$USER".reg
    fi
   fi
  fi
  if [ $WCS_OPERATION_MODE -eq 1 ];then
-  X=`echo $X+2.0*$AP| bc -ql`
-  Y=`echo $Y+2.0*$AP| bc -ql` 
+  #X=`echo $X+2.0*$AP| bc -ql`
+  X=`echo "$X $AP" | awk '{print $1+2.0*$2}'`
+  #Y=`echo $Y+2.0*$AP| bc -ql` 
+  Y=`echo "$Y $AP" | awk '{print $1+2.0*$2}'` 
  fi
  echo "# text($X,$Y) text={$StringW}" >> /tmp/reg"$$""$USER".reg
 
@@ -108,8 +112,8 @@ else
   
    AP=`echo "$AP/2"|bc -ql`
    echo "circle($X,$Y,$AP)" >> /tmp/reg"$$""$USER".reg
-   #echo "point($X,$Y)" >> /tmp/reg"$$""$USER".reg
-   Y=`echo $Y+1.8*$AP| bc -ql`
+   #Y=`echo $Y+1.8*$AP| bc -ql`
+   Y=`echo "$Y $AP" | awk '{print $1+1.8*$2}'`
    FILENAME=`basename $FILENAME .dat`
  
    case $1 in

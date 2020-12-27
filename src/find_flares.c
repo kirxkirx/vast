@@ -13,9 +13,9 @@
 #include "vast_limits.h"
 #include "lightcurve_io.h"
 
-int main( int argc, char **argv ) {
+int main(int argc, char **argv) {
  FILE *findflareslogfile;
- //double flare_mag_sigma_estimated, flare_mag_sigma_computed_from_difference_with_weights; 
+ //double flare_mag_sigma_estimated, flare_mag_sigma_computed_from_difference_with_weights;
 
  DIR *dp;
  struct dirent *ep;
@@ -25,20 +25,20 @@ int main( int argc, char **argv ) {
  char string[FILENAME_LENGTH];
 
  int number_of_reference_images;
- double *mag_a= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
- if ( mag_a == NULL ) {
-  fprintf( stderr, "ERROR: Cannot allocate memory for mag_a(find_flares.c)\n" );
-  exit( 1 );
+ double *mag_a= malloc(MAX_NUMBER_OF_OBSERVATIONS * sizeof(double));
+ if( mag_a == NULL ) {
+  fprintf(stderr, "ERROR: Cannot allocate memory for mag_a(find_flares.c)\n");
+  exit(1);
  };
- double *mag_a_err= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
- if ( mag_a_err == NULL ) {
-  fprintf( stderr, "ERROR: Cannot allocate memory for mag_a_err(find_flares.c)\n" );
-  exit( 1 );
+ double *mag_a_err= malloc(MAX_NUMBER_OF_OBSERVATIONS * sizeof(double));
+ if( mag_a_err == NULL ) {
+  fprintf(stderr, "ERROR: Cannot allocate memory for mag_a_err(find_flares.c)\n");
+  exit(1);
  };
- double *w= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
- if ( w == NULL ) {
-  fprintf( stderr, "ERROR: Cannot allocate memory for w(find_flares.c)\n" );
-  exit( 1 );
+ double *w= malloc(MAX_NUMBER_OF_OBSERVATIONS * sizeof(double));
+ if( w == NULL ) {
+  fprintf(stderr, "ERROR: Cannot allocate memory for w(find_flares.c)\n");
+  exit(1);
  };
  double preflare_median_mag, flare_median_mag;
  double preflare_mag_sigma, flare_mag_sigma;
@@ -46,160 +46,159 @@ int main( int argc, char **argv ) {
 
  double x_on_reference_image, y_on_reference_image;
 
- if ( argc > 2 ) {
-  fprintf( stderr, "Usage: %s [NUMBER_OF_REFERENCE_IMAGES]\n", argv[0] );
-  exit( 0 );
+ if( argc > 2 ) {
+  fprintf(stderr, "Usage: %s [NUMBER_OF_REFERENCE_IMAGES]\n", argv[0]);
+  exit(0);
  }
 
- if ( argc == 2 ) {
-  number_of_reference_images= atoi( argv[1] );
+ if( argc == 2 ) {
+  number_of_reference_images= atoi(argv[1]);
  } else {
   number_of_reference_images= HARD_MIN_NUMBER_OF_POINTS;
  }
- 
- findflareslogfile=fopen("vast_find_flares.log","w");
- if( NULL==findflareslogfile ) {
-  fprintf( stderr, "ERROR opening vast_find_flares.log for writing\n");
+
+ findflareslogfile= fopen("vast_find_flares.log", "w");
+ if( NULL == findflareslogfile ) {
+  fprintf(stderr, "ERROR opening vast_find_flares.log for writing\n");
   return 1;
  }
 
- dp= opendir( "./" );
- if ( dp != NULL ) {
-  while ( ( ep= readdir( dp ) ) != NULL ) {
-   if ( strlen( ep->d_name ) < 12 )
+ dp= opendir("./");
+ if( dp != NULL ) {
+  while( (ep= readdir(dp)) != NULL ) {
+   if( strlen(ep->d_name) < 12 )
     continue; // make sure the filename is not too short for the following tests
-   if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[strlen( ep->d_name ) - 1] == 't' && ep->d_name[strlen( ep->d_name ) - 2] == 'a' && ep->d_name[strlen( ep->d_name ) - 3] == 'd' ) {
-    lightcurvefile= fopen( ep->d_name, "r" );
-    if ( NULL == lightcurvefile ) {
-     fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
-     exit( 1 );
+   if( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[strlen(ep->d_name) - 1] == 't' && ep->d_name[strlen(ep->d_name) - 2] == 'a' && ep->d_name[strlen(ep->d_name) - 3] == 'd' ) {
+    lightcurvefile= fopen(ep->d_name, "r");
+    if( NULL == lightcurvefile ) {
+     fprintf(stderr, "ERROR: Can't open file %s\n", ep->d_name);
+     exit(1);
     }
     // We accept two cases: the star is visible on two reference images and two second-epoch images
     // and the star is visible on one reference image and two second-epoch images
 
     // Count number of lines
     i= 0;
-    while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
-     if ( jd == 0.0 ) {
+    while( -1 < read_lightcurve_point(lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL) ) {
+     if( jd == 0.0 ) {
       continue; // if this line could not be parsed, try the next one
      }
      i++;
     }
-    if ( i >= 4 ) {
+    if( i >= 4 ) {
      number_of_reference_images= 2;
     }
-    if ( i == 3 ) {
+    if( i == 3 ) {
      number_of_reference_images= 1;
     }
-    if ( i < HARD_MIN_NUMBER_OF_POINTS ) {
-     fclose( lightcurvefile );
+    if( i < HARD_MIN_NUMBER_OF_POINTS ) {
+     fclose(lightcurvefile);
      continue;
     } // TEST
-    fclose( lightcurvefile );
-    lightcurvefile= fopen( ep->d_name, "r" );
-    if ( lightcurvefile == NULL ) {
-     fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
-     exit( 1 );
+    fclose(lightcurvefile);
+    lightcurvefile= fopen(ep->d_name, "r");
+    if( lightcurvefile == NULL ) {
+     fprintf(stderr, "ERROR: Can't open file %s\n", ep->d_name);
+     exit(1);
     };
 
     /* Compute pre-flare mag & sigma */
     i= 0;
-    while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
-     if ( jd == 0.0 ) {
+    while( -1 < read_lightcurve_point(lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL) ) {
+     if( jd == 0.0 ) {
       continue; // if this line could not be parsed, try the next one
      }
-     if ( i == 0 ) {
+     if( i == 0 ) {
       x_on_reference_image= x;
       y_on_reference_image= y;
      }
      mag_a[i]= mag;
      mag_a_err[i]= merr;
-     w[i]= 1.0 / ( merr * merr );
+     w[i]= 1.0 / (merr * merr);
      i++;
-     if ( i == number_of_reference_images ) {
+     if( i == number_of_reference_images ) {
       break;
      }
     }
 
-    if ( i == 1 ) {
+    if( i == 1 ) {
      preflare_median_mag= mag;
      preflare_mag_sigma= merr;
     } else {
-//     gsl_sort( mag_a, 1, i );
-     preflare_median_mag= gsl_stats_wmean( w, 1, mag_a, 1, i );
-     preflare_mag_sigma= sqrt( mag_a_err[0]*mag_a_err[0] + mag_a_err[1]*mag_a_err[1] );
-//     preflare_mag_sigma= MAX( gsl_stats_wsd_m( w, 1, mag_a, 1, i, preflare_median_mag ), sqrt( mag_a_err[0] * mag_a_err[0] + mag_a_err[1] * mag_a_err[1] ) );
+     //     gsl_sort( mag_a, 1, i );
+     preflare_median_mag= gsl_stats_wmean(w, 1, mag_a, 1, i);
+     preflare_mag_sigma= sqrt(mag_a_err[0] * mag_a_err[0] + mag_a_err[1] * mag_a_err[1]);
+     //     preflare_mag_sigma= MAX( gsl_stats_wsd_m( w, 1, mag_a, 1, i, preflare_median_mag ), sqrt( mag_a_err[0] * mag_a_err[0] + mag_a_err[1] * mag_a_err[1] ) );
     }
     /* Compute flare mag & sigma */
     i= 0;
     old_jd= 0.0; // so the compiler wouldn't complain about uninitialaized use
-    while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
-     if ( jd == 0.0 )
+    while( -1 < read_lightcurve_point(lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL) ) {
+     if( jd == 0.0 )
       continue; // if this line could not be parsed, try the next one
      mag_a[i]= mag;
      mag_a_err[i]= merr;
-     w[i]= 1.0 / ( merr * merr );
+     w[i]= 1.0 / (merr * merr);
      i++;
      // Make sure there is no jump in JD between 2nd epoch images
-     if ( i > 1 ) {
-      if ( fabs( old_jd - jd ) > TRANSIENT_MIN_TIMESCALE_DAYS )
+     if( i > 1 ) {
+      if( fabs(old_jd - jd) > TRANSIENT_MIN_TIMESCALE_DAYS )
        continue;
      }
      old_jd= jd;
     }
-    if ( i < HARD_MIN_NUMBER_OF_POINTS ) {
-     fclose( lightcurvefile );
+    if( i < HARD_MIN_NUMBER_OF_POINTS ) {
+     fclose(lightcurvefile);
      continue;
     } // TEST
     //gsl_sort( mag_a, 1, i );
-    flare_median_mag= gsl_stats_wmean( w, 1, mag_a, 1, i );
-    flare_mag_sigma= sqrt( mag_a_err[0] * mag_a_err[0] + mag_a_err[1] * mag_a_err[1] );
-//    flare_mag_sigma_estimated= sqrt( mag_a_err[0] * mag_a_err[0] + mag_a_err[1] * mag_a_err[1] );
- //   flare_mag_sigma_computed_from_difference_with_weights= gsl_stats_wsd_m( w, 1, mag_a, 1, i, flare_median_mag );
-//    flare_mag_sigma= MAX( flare_mag_sigma_estimated, flare_mag_sigma_computed_from_difference_with_weights );
-//    flare_mag_sigma= MAX( gsl_stats_wsd_m( w, 1, mag_a, 1, i, flare_median_mag ), sqrt( mag_a_err[0] * mag_a_err[0] + mag_a_err[1] * mag_a_err[1] ) );
+    flare_median_mag= gsl_stats_wmean(w, 1, mag_a, 1, i);
+    flare_mag_sigma= sqrt(mag_a_err[0] * mag_a_err[0] + mag_a_err[1] * mag_a_err[1]);
+    //    flare_mag_sigma_estimated= sqrt( mag_a_err[0] * mag_a_err[0] + mag_a_err[1] * mag_a_err[1] );
+    //   flare_mag_sigma_computed_from_difference_with_weights= gsl_stats_wsd_m( w, 1, mag_a, 1, i, flare_median_mag );
+    //    flare_mag_sigma= MAX( flare_mag_sigma_estimated, flare_mag_sigma_computed_from_difference_with_weights );
+    //    flare_mag_sigma= MAX( gsl_stats_wsd_m( w, 1, mag_a, 1, i, flare_median_mag ), sqrt( mag_a_err[0] * mag_a_err[0] + mag_a_err[1] * mag_a_err[1] ) );
 
     // Check the difference between the two second-epoch measurements
-    if ( fabs( mag_a[0] - mag_a[1] ) > 0.4 ) {
-     fclose( lightcurvefile );
+    if( fabs(mag_a[0] - mag_a[1]) > 0.4 ) {
+     fclose(lightcurvefile);
      continue;
     } // something is wrong with this star
-    
-    
+
     // TEST if the flare is good
     //if ( preflare_median_mag - preflare_mag_sigma - flare_median_mag + flare_mag_sigma > FLARE_MAG ) {
-    if ( preflare_median_mag - flare_median_mag > FLARE_MAG ) {
+    if( preflare_median_mag - flare_median_mag > FLARE_MAG ) {
      // Make sure the flare is significant at N sigma level given the errorbars
-     if ( preflare_median_mag - flare_median_mag > 5.0*sqrt( preflare_mag_sigma*preflare_mag_sigma + flare_mag_sigma*flare_mag_sigma ) ) {
+     if( preflare_median_mag - flare_median_mag > 5.0 * sqrt(preflare_mag_sigma * preflare_mag_sigma + flare_mag_sigma * flare_mag_sigma) ) {
       //fprintf(stderr,"%s preflare_median_mag=%lf preflare_mag_sigma=%lf i=%d ",ep->d_name,preflare_median_mag,preflare_mag_sigma,i);
       //fprintf(stderr," flare_median_mag=%lf flare_mag_sigma=%lf i=%d\n",flare_median_mag,flare_mag_sigma,i);
-      fprintf( stdout, "%s  %8.3lf %8.3lf\n", ep->d_name, x_on_reference_image, y_on_reference_image );
+      fprintf(stdout, "%s  %8.3lf %8.3lf\n", ep->d_name, x_on_reference_image, y_on_reference_image);
       //
-      fprintf( findflareslogfile, "%s  %8.3lf %8.3lf  preflare_median_mag=%.4lf+/-%.4lf flare_median_mag=%.4lf+/-%.4lf diff=%.4lf \n", 
-       ep->d_name, 
-       x_on_reference_image, 
-       y_on_reference_image,
-       preflare_median_mag, preflare_mag_sigma,
-       flare_median_mag, flare_mag_sigma,
-       preflare_median_mag - flare_median_mag );
+      fprintf(findflareslogfile, "%s  %8.3lf %8.3lf  preflare_median_mag=%.4lf+/-%.4lf flare_median_mag=%.4lf+/-%.4lf diff=%.4lf \n",
+              ep->d_name,
+              x_on_reference_image,
+              y_on_reference_image,
+              preflare_median_mag, preflare_mag_sigma,
+              flare_median_mag, flare_mag_sigma,
+              preflare_median_mag - flare_median_mag);
      }
     }
 
-    fclose( lightcurvefile );
+    fclose(lightcurvefile);
    }
   }
-  (void)closedir( dp );
+  (void)closedir(dp);
  } else {
-  perror( "Couldn't open the directory\n" );
+  perror("Couldn't open the directory\n");
  }
 
- fclose( findflareslogfile );
+ fclose(findflareslogfile);
 
- free( mag_a );
- free( mag_a_err );
- free( w );
+ free(mag_a);
+ free(mag_a_err);
+ free(w);
 
- fprintf( stderr, "Search for flares is completed. =)\n" );
+ fprintf(stderr, "Search for flares is completed. =)\n");
 
  return 0;
 }

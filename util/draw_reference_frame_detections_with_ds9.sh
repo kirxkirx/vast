@@ -18,7 +18,8 @@ echo "Reference image: $FITSFILE"
 # Get aperture size
 AP=`head -n 1 vast_image_details.log | awk '{print $9}'`
 echo "Aperture size: $AP"
-AP=`echo "$AP/2"|bc -ql`
+#AP=`echo "$AP/2"|bc -ql`
+AP=`echo "$AP"| awk '{print $1/2}'`
 
 
 # Read ref_frame_sextractor.cat

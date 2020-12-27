@@ -1,0 +1,4 @@
+	if (nonl)
+	    printf ("%c",(char)0);
+	else
+	    printf ("\n");

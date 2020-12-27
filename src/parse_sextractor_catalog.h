@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "vast_limits.h"
 
 static inline int parse_sextractor_catalog_string( char *input_sextractor_catalog_string,
                                                    int *star_number_in_sextractor_catalog,
@@ -21,7 +22,8 @@ static inline int parse_sextractor_catalog_string( char *input_sextractor_catalo
                                                    double *psf_chi2,
                                                    float *float_parameters_array_output ) {
 
- char external_flag_string[256];
+ //char external_flag_string[256];
+ char external_flag_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT];
  double double_external_flag;
  int ii, jj; // for SExtractor catalog parsing
 
@@ -29,6 +31,13 @@ static inline int parse_sextractor_catalog_string( char *input_sextractor_catalo
 
  ( *external_flag )= 0;
  external_flag_string[0]= '\0';
+ 
+ // The input string length should be checked externally, but just in case let's double-check here
+ if( MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT-1<strlen(input_sextractor_catalog_string) ) {
+  fprintf( stderr, "ERROR in parse_sextractor_catalog_string() strlen(input_sextractor_catalog_string)=%ld>%d\n", strlen(input_sextractor_catalog_string), MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT-1 );
+  //exit(1);
+  input_sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT-1]='\0';
+ }
 
  //if( 14>sscanf(input_sextractor_catalog_string, "%d %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %d  %f %f  %[^\t\n]", star_number_in_sextractor_catalog, flux_adu, flux_adu_err, mag, sigma_mag, position_x_pix, position_y_pix, a_a, a_a_err, a_b, a_b_err, sextractor_flag, &float_parameters_internalcopy[0], &float_parameters_internalcopy[1],  external_flag_string) ){
  if ( 24 > sscanf( input_sextractor_catalog_string, "%d %lf %lf %lf %f %f %f %f %f %lf %f %f %f %f %f  %lf %lf %lf %lf %lf %lf %d  %f %f  %[^\t\n]",

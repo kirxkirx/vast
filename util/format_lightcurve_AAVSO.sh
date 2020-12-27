@@ -35,15 +35,16 @@ fi
 
 # Check that the time system is UTC
 if [ ! -s vast_summary.log ];then
- echo "ERROR: cannot find vast_summary.log to determine the JD time system"
- exit 1
+ echo "ERROR: cannot find vast_summary.log to determine the JD time system, assuming UTC"
+ SOFTWARE_VERSION=`./vast --version 2>/dev/null`
+else
+ grep --quiet 'JD time system (TT/UTC/UNKNOWN): UTC' vast_summary.log
+ if [ $? -ne 0 ];then
+  echo "ERROR: cannot confirm that the JD time system is UTC from vast_summary.log"
+  exit 1
+ fi
+ SOFTWARE_VERSION=`grep 'Software: ' vast_summary.log  | awk '{print $2" "$3}'`
 fi
-grep --quiet 'JD time system (TT/UTC/UNKNOWN): UTC' vast_summary.log
-if [ $? -ne 0 ];then
- echo "ERROR: cannot confirm that the JD time system is UTC from vast_summary.log"
- exit 1
-fi
-SOFTWARE_VERSION=`grep 'Software: ' vast_summary.log  | awk '{print $2" "$3}'`
 
 # Get the observing date for the header
 JD_FIRST_OBS=`util/cute_lc "$INPUT_VAST_LIGHTCURVE" | head -n1 | awk '{print $1}'`
@@ -60,22 +61,55 @@ else
  echo "WARNING: cannot get the exposure time from vast_image_details.log"
 fi
 
-VARIABLE_STAR_NAME="XX Xxx"
+# the default filter name should be manually edited by the user!
 FILTER="X"
+# the default star name should be manually edited by the user!
+VARIABLE_STAR_NAME="XX Xxx"
+# but we can try to guess satre and filter name from the CBA file, if present
 if [ -s CBA_previously_used_header.txt ];then
  echo "Importing the variable star info from CBA_previously_used_header.txt" >> /dev/stderr
  VARIABLE_STAR_NAME=`cat CBA_previously_used_header.txt | grep '# Variable: ' | awk -F '# Variable: ' '{print $2}'`
  FILTER=`cat CBA_previously_used_header.txt | grep '# Filter: ' | awk -F '# Filter: ' '{print $2}'`
 fi
 
-if [ ! -s AAVSO_previously_used_header.txt ];then
- echo "#TYPE=EXTENDED
-#OBSCODE=SKA
+# if automated magnitude calibration was performed,
+# there should be a plate-solved FITS corresonding to the reference image
+# note that we checked above that vast_summary.log exist
+REFERENCE_IMAGE=`grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+PLATE_SOLVED_REFERENCE_IMAGE=wcs_`basename $REFERENCE_IMAGE`
+if [ -f "$PLATE_SOLVED_REFERENCE_IMAGE" ];then
+ echo "Found a plate-solved reference image $PLATE_SOLVED_REFERENCE_IMAGE
+Trying to automatically ID the star $INPUT_VAST_LIGHTCURVE"
+ STAR_NUMBER=`echo "${INPUT_VAST_LIGHTCURVE/out/}"`
+ STAR_NUMBER=`echo "${STAR_NUMBER/.dat/}"`
+ # '| while read A ;do echo $A ;done' is to remove the trailing white space if the variable name is from GCVS
+ AUTOMATIC_VARIABLE_STAR_NAME=`util/identify_justname.sh $INPUT_VAST_LIGHTCURVE | grep -A100 'Star:' | grep -v "$STAR_NUMBER  " | tail -n1 | while read A ;do echo $A ;done` 
+ if [ ! -z "$AUTOMATIC_VARIABLE_STAR_NAME" ];then
+  echo "Automatically setting the variable star name $AUTOMATIC_VARIABLE_STAR_NAME"
+  VARIABLE_STAR_NAME="$AUTOMATIC_VARIABLE_STAR_NAME"
+ else
+  echo "Something wen wrong while trying to ID the star, keeping the name $VARIABLE_STAR_NAME"
+ fi
+fi
+
+# the default obscode should be changed by the user
+AAVSO_OBSCODE="SKA"
+# the previous AAVSO file header should contain the correct OBSCODE
+if [ -s AAVSO_previously_used_header.txt ];then
+ AAVSO_OBSCODE=`grep '#OBSCODE=' AAVSO_previously_used_header.txt | awk -F'=' '{print $2}'`
+ if [ -z "$AAVSO_OBSCODE" ];then
+  echo "ERROR: cannot get OBSCODE from AAVSO_previously_used_header.txt"
+  AAVSO_OBSCODE="XXX"
+ fi
+fi
+
+echo "#TYPE=EXTENDED
+#OBSCODE=$AAVSO_OBSCODE
 #SOFTWARE=$SOFTWARE_VERSION
 #DELIM=,
 #DATE=JD
 #NAME,DATE,MAG,MERR,FILT,TRANS,MTYPE,CNAME,CMAG,KNAME,KMAG,AMASS,GROUP,CHART,NOTES" > AAVSO_previously_used_header.txt
-fi
+
 cp AAVSO_previously_used_header.txt AAVSO_report.txt
 util/cute_lc "$INPUT_VAST_LIGHTCURVE" | while read JD MAG ERR ;do
       ##NAME,DATE,MAG,MERR,FILT,TRANS,MTYPE,CNAME,CMAG,KNAME,KMAG,AMASS,GROUP,CHART,NOTES
@@ -89,6 +123,17 @@ fi
 
  echo "The stub report is written to AAVSO_report.txt
 You may need to edit the header before submitting the file to the AAVSO!"
+
+# Try to find a sensible editor
+if [ -z "$EDITOR" ];then
+ for EDITOR_TO_TRY in joe nano vim emacs ;do
+  command -v $EDITOR_TO_TRY &>/dev/null
+  if [ $? -eq 0 ];then
+   EDITOR=joe
+   break
+  fi
+ done
+fi
 
 # Manually edit the report
 if [ ! -z "$EDITOR" ];then
@@ -113,7 +158,7 @@ if [ $N_LINES_STARNAME -ne $N_LINES_MEASUREMENTS ];then
 fi
 
 
-VARIABLE_STAR_NAME_NO_WHITESPACES="${VARIABLE_STAR_NAME//' '/'_'}"
+VARIABLE_STAR_NAME_NO_WHITESPACES="${VARIABLE_STAR_NAME// /_}"
 
 # Filter name
 FILTER_NAME=`cat AAVSO_report.txt | grep -v \# | awk -F',' '{print $5}' | head -n1`

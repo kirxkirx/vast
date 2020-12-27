@@ -134,7 +134,9 @@ if [ $? -eq 0 ];then
  command -v find &>/dev/null
  if [ $? -eq 0 ];then
   echo "Trying to copy files the fast way using find"
-  find "$REGION_NAME" ! -name "$REGION_NAME" -exec cp -r -t . {} \+
+  #find "$REGION_NAME" ! -name "$REGION_NAME" -exec cp -r -t . {} \+
+  # The above command copies also the directory itself, something we don't want
+  find "$REGION_NAME" ! -wholename "$REGION_NAME" -exec cp -r -t . {} \+
   if [ $? -eq 0 ];then
    # it worked! Exit the scrip
    echo "Done"

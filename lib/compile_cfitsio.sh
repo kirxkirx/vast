@@ -14,7 +14,8 @@ export MFLAGS=""
 
 VAST_DIR=$PWD
 TARGET_DIR=$VAST_DIR/lib
-LIBRARY_SOURCE=$VAST_DIR/src/cfitsio
+#LIBRARY_SOURCE=$VAST_DIR/src/cfitsio
+LIBRARY_SOURCE=$VAST_DIR/src/cfitsio-3.49
 FITSVERIFY_SOURCE=$VAST_DIR/src/fitsverify
 
 echo " "
@@ -51,7 +52,7 @@ COMPILATION_ERROR=0
 # Compile the library
 cd $LIBRARY_SOURCE
 make clean
-./configure --prefix=$TARGET_DIR
+./configure --prefix=$TARGET_DIR --disable-curl
 if [ $? -ne 0 ];then
  COMPILATION_ERROR=1
 fi
@@ -61,15 +62,28 @@ fi
 if [ $? -ne 0 ];then
  COMPILATION_ERROR=1
 fi
+
+# moved down to make sure fitscopy is statically linked
 if [ $COMPILATION_ERROR -eq 0 ];then
- make fitscopy
+ # fitscopy may get dynamically linked with this
+ #make fitscopy
+ $C_COMPILER -o ../../util/fitscopy fitscopy.c libcfitsio.a -lm
 fi
+
 if [ $COMPILATION_ERROR -eq 0 ];then
  cp -f fitscopy $VAST_DIR/util
  cp -f libcfitsio.a $TARGET_DIR/libcfitsio.a
- cp -f fitsio.h longnam.h $VAST_DIR/src
+ #cp -f fitsio.h longnam.h $VAST_DIR/src
+ # we want 'splint' tool to ignore fitsio.h
+ echo "#ifndef S_SPLINT_S" > $VAST_DIR/src/fitsio.h
+ cat fitsio.h >> $VAST_DIR/src/fitsio.h
+ echo "#endif" >> $VAST_DIR/src/fitsio.h
+ cp -f longnam.h $VAST_DIR/src
  make clean
 fi
+
+
+
 cd $VAST_DIR
 
 # Compile FITSVERIFY - A FITS File Format-Verification Tool
@@ -85,7 +99,8 @@ fi
 
 # Compile listhead
 if [ $COMPILATION_ERROR -eq 0 ];then
- $C_COMPILER -o util/listhead src/listhead.c -L$TARGET_DIR -lcfitsio -lm
+ #$C_COMPILER -o util/listhead src/listhead.c -L$TARGET_DIR -lcfitsio -lm
+ $C_COMPILER -o util/listhead src/listhead.c $TARGET_DIR/libcfitsio.a -lm
  if [ $? -ne 0 ];then
   echo "ERROR compiling listhead" >> /dev/stderr
   COMPILATION_ERROR=1
@@ -94,7 +109,8 @@ fi
 
 # Compile modhead
 if [ $COMPILATION_ERROR -eq 0 ];then
- $C_COMPILER -o util/modhead src/modhead.c -L$TARGET_DIR -lcfitsio -lm
+ #$C_COMPILER -o util/modhead src/modhead.c -L$TARGET_DIR -lcfitsio -lm
+ $C_COMPILER -o util/modhead src/modhead.c $TARGET_DIR/libcfitsio.a -lm
  if [ $? -ne 0 ];then
   echo "ERROR compiling modhead" >> /dev/stderr
   COMPILATION_ERROR=1
@@ -104,7 +120,7 @@ fi
 # Test if executable files were actually created?
 if [ $COMPILATION_ERROR -eq 0 ];then
 echo -n "Checking library files:   "
- for TEST_FILE in $TARGET_DIR/libcfitsio.a $TARGET_DIR/fitsverify util/listhead util/modhead ;do
+ for TEST_FILE in $TARGET_DIR/libcfitsio.a $TARGET_DIR/fitsverify util/listhead util/modhead util/fitscopy ;do
   echo -n "$TEST_FILE - "
   if [ ! -f $TEST_FILE ];then
    COMPILATION_ERROR=1

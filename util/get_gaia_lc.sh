@@ -20,7 +20,8 @@ if ! [[ $GAIA_ID =~ $re ]] ; then
  exit 1
 fi
 
-TEST=`echo "$GAIA_ID>100000" | bc -ql`
+#TEST=`echo "$GAIA_ID>100000" | bc -ql`
+TEST=`echo "$GAIA_ID>100000" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if [ $TEST -ne 1 ];then
  echo "ERROR: $GAIA_ID doesn't look like a Gaia ID (the value looks suspiciously small)" >> /dev/stderr
  exit 1
@@ -139,8 +140,10 @@ command -v gnuplot &>/dev/null
 if [ $? -eq 0 ];then
  JD0=`cat "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_G.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_BP.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_RP.txt | awk -F '.' '{print $1}' | sort | uniq | head -n 1`
  JD1=`cat "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_G.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_BP.txt "$VAST_PATH"gaia_lightcurves/"$GAIA_ID"_RP.txt | awk -F '.' '{print $1}' | sort | uniq | tail -n 1`
- PLOT_MIN=`echo "-1*($JD1-$JD0)/10" | bc -ql | awk '{printf "%.1f",$1}'`
- PLOT_MAX=`echo "($JD1-$JD0)+($JD1-$JD0)/10" | bc -ql | awk '{printf "%.1f",$1}'`
+# PLOT_MIN=`echo "-1*($JD1-$JD0)/10" | bc -ql | awk '{printf "%.1f",$1}'`
+ PLOT_MIN=`echo "$JD1 $JD0" | awk '{printf "%.1f",($2-$1)/10}'`
+# PLOT_MAX=`echo "($JD1-$JD0)+($JD1-$JD0)/10" | bc -ql | awk '{printf "%.1f",$1}'`
+ PLOT_MAX=`echo "$JD1 $JD0" | awk '{printf "%.1f", $1 - $2 + ($1-$2)/10}'`
 
  cd "$VAST_PATH"gaia_lightcurves/
 echo "set terminal postscript eps enhanced color solid 'Times' 22 linewidth 2

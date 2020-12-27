@@ -100,7 +100,27 @@ if [ -z $4 ];then
  echo "The field of view is not specified on the command line, using the default one"
  FOV=1.0
 else
- FOV=$4
+ # Check if $4 looks like a field of view in arcminutes
+ re='^[0-9]+([.][0-9]+)?$'
+ if ! [[ $4 =~ $re ]] ; then
+  echo "ERROR: argument 4 #$4# does not look like a field of view in arcminutes, using the default value instead"
+  FOV=1.0
+ else
+  TEST=`echo "$4<1.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
+  if [ $TEST -eq 1 ];then
+   echo "ERROR: the specified field of view ($4 arcmin) seems too small, using the default value instead"
+   FOV=1.0
+  else
+   TEST=`echo "$4>2700" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+   if [ $TEST -eq 1 ];then
+    echo "ERROR: the specified field of view ($4 arcmin) seems too large, using the default value instead"
+    FOV=1.0
+   else
+    echo "Setting the field of view ($4 arcmin) specified on the command line"
+    FOV=$4
+   fi
+  fi
+ fi
 fi
 
 ###### 2MASS #####
@@ -122,9 +142,11 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=2
    continue
   fi
   # Compute J-K
-  J_K=`echo "($J)-($K)" | bc -ql | awk '{printf "%.3f",$1}'`
+  #J_K=`echo "($J)-($K)" | bc -ql | awk '{printf "%.3f",$1}'`
+  J_K=`echo "$J $K" | awk '{printf "%.3f",$1-$2}'`
   if [[ $eJ =~ $re ]] && [[ $eK =~ $re ]] ; then
-   eJ_K=`echo "sqrt($eJ*$eJ+$eK*$eK)" | bc -ql | awk '{printf "%.3f",$1}'`  
+   #eJ_K=`echo "sqrt($eJ*$eJ+$eK*$eK)" | bc -ql | awk '{printf "%.3f",$1}'`  
+   eJ_K=`echo "$eJ $eK" | awk '{printf "%.3f", sqrt( $1*$1 + $2*$2 ) }'`  
   else
    eJ_K="     "
   fi
@@ -141,49 +163,59 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=2
    # 
    SECTRAL_TYPE="unrealisitic color!"
    # Wild guess
-   TEST=`echo "$J_K > -1.0"|bc -ql`
+   #TEST=`echo "$J_K > -1.0"|bc -ql`
+   TEST=`echo "$J_K>-1.0" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="Very blue!"
    fi
-   TEST=`echo "$J_K > -0.3"|bc -ql`
+   #TEST=`echo "$J_K > -0.3"|bc -ql`
+   TEST=`echo "$J_K>-0.3" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="O"
    fi
    #TEST=`echo "$J_K > -0.230"|bc -ql`
-   TEST=`echo "$J_K > -0.228"|bc -ql`
+   #TEST=`echo "$J_K > -0.228"|bc -ql`
+   TEST=`echo "$J_K>-0.228" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="B"
    fi
    #TEST=`echo "$J_K > 0.0"|bc -ql`
-   TEST=`echo "$J_K > -0.0135"|bc -ql`
+   #TEST=`echo "$J_K > -0.0135"|bc -ql`
+   TEST=`echo "$J_K>-0.0135" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="A"
    fi
    #TEST=`echo "$J_K > 0.16"|bc -ql`
-   TEST=`echo "$J_K > 0.132"|bc -ql`
+   #TEST=`echo "$J_K > 0.132"|bc -ql`
+   TEST=`echo "$J_K>0.132" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="F"
    fi
    #TEST=`echo "$J_K > 0.36"|bc -ql`
-   TEST=`echo "$J_K > 0.3215"|bc -ql`
+   #TEST=`echo "$J_K > 0.3215"|bc -ql`
+   TEST=`echo "$J_K>0.3215" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="G"
    fi
    #TEST=`echo "$J_K > 0.53"|bc -ql`
-   TEST=`echo "$J_K > 0.465"|bc -ql`
+   #TEST=`echo "$J_K > 0.465"|bc -ql`
+   TEST=`echo "$J_K>0.465" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="K"
    fi
    #TEST=`echo "$J_K > 0.86"|bc -ql`
-   TEST=`echo "$J_K > 0.814"|bc -ql`
+   #TEST=`echo "$J_K > 0.814"|bc -ql`
+   TEST=`echo "$J_K>0.814" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="M"
    fi
-   TEST=`echo "$J_K > 1.5"|bc -ql`
+   #TEST=`echo "$J_K > 1.5"|bc -ql`
+   TEST=`echo "$J_K>1.5" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="Very red!"
    fi
-   TEST=`echo "$J_K > 4.0"|bc -ql`
+   #TEST=`echo "$J_K > 4.0"|bc -ql`
+   TEST=`echo "$J_K>4.0" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="unrealisitic color!"
    fi
@@ -215,35 +247,44 @@ if [ -f search_databases_with_vizquery_USNOB_ID_OK.tmp ];then
  rm -f search_databases_with_vizquery_USNOB_ID_OK.tmp
 fi
 ####
-R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
+#R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
+R_SEARCH_ARCSEC=`echo "$FOV" | awk '{printf "%.1f",3.0*($1/60)}'`
 B2MAG_RANGE="B2mag=1.0..12.5"
-TEST=`echo "$FOV<400.0" | bc -ql`
+#TEST=`echo "$FOV<400.0" | bc -ql`
+TEST=`echo "$FOV<400.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
- R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
+# R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
  B2MAG_RANGE="B2mag=1.0..15.5"
 fi
-TEST=`echo "$FOV<240.0" | bc -ql`
+#TEST=`echo "$FOV<240.0" | bc -ql`
+TEST=`echo "$FOV<240.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
- R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
+# R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
  B2MAG_RANGE="B2mag=1.0..16.5"
 fi
-TEST=`echo "$FOV<120.0" | bc -ql`
+#TEST=`echo "$FOV<120.0" | bc -ql`
+TEST=`echo "$FOV<120.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
  R_SEARCH_ARCSEC=3.0
  B2MAG_RANGE="B2mag=1.0..17.5"
 fi
-TEST=`echo "$FOV<60.0" | bc -ql`
+#TEST=`echo "$FOV<60.0" | bc -ql`
+TEST=`echo "$FOV<60.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
  R_SEARCH_ARCSEC=3.0
  B2MAG_RANGE="B2mag=1.0..18.5"
 fi
-TEST=`echo "$FOV<30.0" | bc -ql`
+#TEST=`echo "$FOV<30.0" | bc -ql`
+TEST=`echo "$FOV<30.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
  R_SEARCH_ARCSEC=1.5
  B2MAG_RANGE="B2mag=1.0..20.5"
 fi
 ####
-DOUBLE_R_SEARCH_ARCSEC=`echo "$R_SEARCH_ARCSEC*2" | bc -ql`
+#echo "#### DEBUG R_SEARCH_ARCSEC=$R_SEARCH_ARCSEC FOV=$FOV" >> /dev/stderr
+####
+#DOUBLE_R_SEARCH_ARCSEC=`echo "$R_SEARCH_ARCSEC*2" | bc -ql`
+DOUBLE_R_SEARCH_ARCSEC=`echo "$R_SEARCH_ARCSEC" | awk '{print 2*$1}'`
 echo " "
 echo "Searching USNO-B1.0 for the brightest objects within $R_SEARCH_ARCSEC\" around $RA $DEC in the range of $B2MAG_RANGE"
 #echo " "
@@ -260,7 +301,8 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=U
  # skip empty lines if for whatever reason they were not caught before
  if [ ! -z $R ] ;then
   # Skip too faint stars
-  TEST=`echo "($B2+$B1)/2.0>18.0"|bc -ql`
+  #TEST=`echo "($B2+$B1)/2.0>18.0"|bc -ql`
+  TEST=`echo "$B2 $B1"| awk '{if ( ($1+$2)/2.0 > 18.0 ) print 1 ;else print 0 }'`
   if [ $TEST -eq 1 ];then
    continue
   fi
@@ -284,35 +326,42 @@ if [ -f search_databases_with_vizquery_GAIA_ID_OK.tmp ];then
  rm -f search_databases_with_vizquery_GAIA_ID_OK.tmp
 fi
 ####
-R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
+#R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
+R_SEARCH_ARCSEC=`echo "$FOV" | awk '{printf "%.1f",3.0*($1/60)}'`
 GMAG_RANGE="Gmag=1.0..12.5"
-TEST=`echo "$FOV<400.0" | bc -ql`
+#TEST=`echo "$FOV<400.0" | bc -ql`
+TEST=`echo "$FOV<400.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
- R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
+# R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
  GMAG_RANGE="Gmag=1.0..15.5"
 fi
-TEST=`echo "$FOV<240.0" | bc -ql`
+#TEST=`echo "$FOV<240.0" | bc -ql`
+TEST=`echo "$FOV<240.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
- R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
+# R_SEARCH_ARCSEC=`echo "3.0*($FOV/60)" | bc -ql | awk '{printf "%.1f",$1}'`
  GMAG_RANGE="Gmag=1.0..16.5"
 fi
-TEST=`echo "$FOV<120.0" | bc -ql`
+#TEST=`echo "$FOV<120.0" | bc -ql`
+TEST=`echo "$FOV<120.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
  R_SEARCH_ARCSEC=3.0
  GMAG_RANGE="Gmag=1.0..17.5"
 fi
-TEST=`echo "$FOV<60.0" | bc -ql`
+#TEST=`echo "$FOV<60.0" | bc -ql`
+TEST=`echo "$FOV<60.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
  R_SEARCH_ARCSEC=3.0
  GMAG_RANGE="Gmag=1.0..18.5"
 fi
-TEST=`echo "$FOV<30.0" | bc -ql`
+#TEST=`echo "$FOV<30.0" | bc -ql`
+TEST=`echo "$FOV<30.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
 if [ $TEST -eq 1 ];then
  R_SEARCH_ARCSEC=1.5
  GMAG_RANGE="Gmag=1.0..20.5"
 fi
 ####
-DOUBLE_R_SEARCH_ARCSEC=`echo "$R_SEARCH_ARCSEC*2" | bc -ql`
+#DOUBLE_R_SEARCH_ARCSEC=`echo "$R_SEARCH_ARCSEC*2" | bc -ql`
+DOUBLE_R_SEARCH_ARCSEC=`echo "$R_SEARCH_ARCSEC" | awk '{print 2*$1}'`
 echo " "
 echo "Searching Gaia DR2 for the brightest objects within $R_SEARCH_ARCSEC\" around $RA $DEC in the range of $GMAG_RANGE"
 echo "$TIMEOUTCOMMAND $VAST_PATH""lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/gaia2 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c='$RA $DEC' $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,Var"
@@ -324,7 +373,8 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I
  # skip empty lines if for whatever reason they were not caught before
  if [ ! -z $R ] ;then
   # Skip too faint stars
-  TEST=`echo "$GMAG>18.0"|bc -ql`
+  #TEST=`echo "$GMAG>18.0"|bc -ql`
+  TEST=`echo "$GMAG"| awk -F'>' '{if ( $1 > 18.0 ) print 1 ;else print 0 }'`
   if [ $TEST -eq 1 ];then
    continue
   fi

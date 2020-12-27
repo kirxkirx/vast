@@ -16,11 +16,11 @@
 
 #include "erfinv.h"
 
-int filter_MagSize( struct Star *STAR, int NUMBER, char *sextractor_catalog );
+int filter_MagSize(struct Star *STAR, int NUMBER, char *sextractor_catalog);
 
-int filter_MagPSFchi2( struct Star *STAR, int NUMBER, char *sextractor_catalog );
+int filter_MagPSFchi2(struct Star *STAR, int NUMBER, char *sextractor_catalog);
 
-int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_catalog, int parameter_number );
+int filter_on_float_parameters(struct Star *STAR, int NUMBER, char *sextractor_catalog, int parameter_number);
 
 // The macro below will tell the pre-processor that this header file is already included
 #define FILTER_MAGSIZE_INCLUDE_FILE
