@@ -98,6 +98,15 @@ int check_gain_in_default_sex(double *out_gain_from_default_sex) {
 // 0 - no
 // 1 - yes
 int check_if_gain_keyword_comment_looks_suspicious(char *gain_keyword_comment) {
+ if( NULL == gain_keyword_comment ) {
+  return 0;
+ }
+ if( strlen(gain_keyword_comment) < 7 ) {
+  return 0;
+ }
+ if( strlen(gain_keyword_comment) > FLEN_COMMENT ) {
+  return 0;
+ }
  if( NULL != memmem(gain_keyword_comment, sizeof(gain_keyword_comment), "switch", 7) ) {
   if( NULL != memmem(gain_keyword_comment, sizeof(gain_keyword_comment), "position", 9) ) {
    return 1;
@@ -116,7 +125,7 @@ int check_if_gain_keyword_comment_looks_suspicious(char *gain_keyword_comment) {
 int guess_gain(char *fitsfilename, char *resulting_sextractor_cl_parameter_string, int operation_mode, int raise_unset_gain_warning) {
 
  char str[256]; // for TSTRING type keys from FITS header
- char comment_str[256];
+ char comment_str[FLEN_COMMENT];
 
  fitsfile *fptr; // FITS file pointer
  int status= 0;  // CFITSIO status value MUST be initialized to zero!
@@ -210,12 +219,15 @@ int guess_gain(char *fitsfilename, char *resulting_sextractor_cl_parameter_strin
   if( status == 0 ) {
    if( 0 == check_if_gain_keyword_comment_looks_suspicious(comment_str) ) {
     fits_close_file(fptr, &status); // close file
-    guessed_gain= gain_from_fits_header;
-    sprintf(resulting_sextractor_cl_parameter_string, "-GAIN %.3lf ", guessed_gain);
-    fprintf(stderr, "The gain value (GAIN=%.3lf) is obtained from the FITS header of the image %s\n", guessed_gain, fitsfilename);
-    return 0;
-   }
-  }
+    // check if the gain value looks reasonable
+    if( gain_from_fits_header >= 0.0 ) {
+     guessed_gain= gain_from_fits_header;
+     sprintf(resulting_sextractor_cl_parameter_string, "-GAIN %.3lf ", guessed_gain);
+     fprintf(stderr, "The gain value (GAIN=%.3lf) is obtained from the FITS header of the image %s\n", guessed_gain, fitsfilename);
+     return 0;
+    } // if( gain_from_fits_header >= 0.0 ) {
+   } // if( 0 == check_if_gain_keyword_comment_looks_suspicious(comment_str) ) {
+  } // if( status == 0 ) { // after fits_read_key()
   // EGAIN keyword
   status= 0;
   fits_read_key(fptr, TDOUBLE, "EGAIN", &gain_from_fits_header, NULL, &status);
