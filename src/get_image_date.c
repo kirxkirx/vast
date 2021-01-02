@@ -112,18 +112,22 @@ int fake_image_hack(char *input_string) {
   if( 0 != isdigit(input_string[i]) ) {
    continue;
   }
+  // allow for exponential notation
+  if( input_string[i] == 'e' || input_string[i] == 'E' || input_string[i] == '+' ) {
+   continue;
+  }
+  // count decimal points
   if( input_string[i] == '.' ) {
    j++;
    continue;
   }
   // If we are here, that means there was an illegal character in the input
-  //fprintf( stderr, "DEBUG01\n");
   j= 99;
   break;
  } // for ( j= 0, i= 0; i < strlen( argv[1] ); i++ ) {
  if( j == 0 || j == 1 ) {
   //fprintf( stderr, "DEBUG02\n");
-  // OK, there is only one '.' in the string, that looks promising
+  // OK, there is zero or only one '.' in the string, that looks promising
   jd_from_string= atof(input_string);
   if( jd_from_string > EXPECTED_MIN_MJD && jd_from_string < EXPECTED_MAX_JD ) {
    input_calendar_date_or_jd= 1; // this looks like a JD
