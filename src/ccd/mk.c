@@ -161,9 +161,14 @@ int main(int argc, char *argv[]) {
   fprintf(stderr, "cur_index=%lf\n", cur_index);
 
   // Reject obviously bad images from the flat-field stack
-
-  if( 20000 > cur_index || cur_index > 50000 ) {
-   fprintf(stderr, "REJECT\n", cur_index);
+  // (but how do we know it's a flat stack?)
+  // assume if the value is below 5000 counts it's a dark/bias staks and not flat
+  if( 5000 < cur_index && cur_index < 20000 ) {
+   fprintf(stderr, "REJECT (too faint for a flat field)\n", cur_index);
+   continue; // continue here so good_file_counter does not increase
+  }
+  if( cur_index > 50000 ) {
+   fprintf(stderr, "REJECT (too bright)\n", cur_index);
    continue; // continue here so good_file_counter does not increase
   }
 
@@ -179,6 +184,11 @@ int main(int argc, char *argv[]) {
   good_file_counter++;
  }
  free(yy);
+ 
+ if ( good_file_counter < 2 ) {
+  fprintf(stderr, "ERROR: only %d images passed the mean count cuts!\n", good_file_counter); 
+  exit(1);
+ }
 
  //
  for( i= 0; i < img_size; i++ ) {
