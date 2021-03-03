@@ -9,6 +9,7 @@
 ### ===> SExtractor config file <===
 ### ===> IMAGE EDGE OFFSET HARDCODED HERE <===
 ### ===> ASSUMED MAX NUMBER OF CANDIDATES <===
+### ===> FIELD NAME HARDCODED HERE <===
 
 #
 # This script is used to run transient search in the NMW survey http://scan.sai.msu.ru/nmw/
@@ -920,7 +921,9 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
    # Do this check only if we are processing a single field
    if [ -z "$2" ];then
     ### ===> ASSUMED MAX NUMBER OF CANDIDATES <===
-    if [ $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS -gt 20 ];then
+    ### ===> FIELD NAME HARDCODED HERE <===
+    # drop the limit no the number of candidates for the all-important Galactic Center field
+    if [ $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS -gt 20 ] && [ "$FIELD" !="Sco6" ] ;then
      echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding asteroids and hot pixels), not updating the exclusion list!"
      echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding asteroids and hot pixels), not updating the exclusion list!" >> transient_factory_test31.txt
      ALLOW_EXCLUSION_LIST_UPDATE="NO"

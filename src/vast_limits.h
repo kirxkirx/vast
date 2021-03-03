@@ -57,7 +57,7 @@
 // but dropping lightcurves with small number of points dramatically reduces the number of false candidates.
 #define DROP_LIGHTCURVS_WITH_SMALL_NUMBER_OF_POINS_FROM_ALL_PLOTS
 ///////////////////////////////////////////////
-#define STRICT_CHECK_OF_JD_AND_MAG_RANGE
+//#define STRICT_CHECK_OF_JD_AND_MAG_RANGE
 // check that JD and magnitudes of all points in the lightcurves are within the expected range
 // comment-out the above line to disable the strict check
 // The two parameters above are needed for experimenting with unusual data (like non-optical)
@@ -197,6 +197,11 @@
 #define MAX_LIN_CORR_MAG 1.0 // If the estimated correction is larger at frame's corners, the magnitude calibration will be failed
 
 #define MAX_STRING_LENGTH_AUTOCANDIDATESDETAILS 512
+
+///////////////////////////////////////////////////////////
+// You may enable/disable individual variability indices 
+// by editing src/variability_indexes.h
+///////////////////////////////////////////////////////////
 
 /// *** Automated selection of candidate variables *** ///
 // Stars are listed as candidate variables if they have variability index values greater than the threshold values specified below
