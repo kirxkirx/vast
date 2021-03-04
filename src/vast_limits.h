@@ -56,7 +56,7 @@
 // less than MIN(SOFT_MIN_NUMBER_OF_POINTS,(int)(MIN_FRACTION_OF_IMAGES_THE_STAR_SHOULD_APPEAR_IN*number_of_measured_images_from_vast_summary_log))
 // points! You may miss some transient objects that appear only temporary if this option is enabled,
 // but dropping lightcurves with small number of points dramatically reduces the number of false candidate variables.
-#define DROP_LIGHTCURVS_WITH_SMALL_NUMBER_OF_POINS_FROM_ALL_PLOTS
+#define DROP_LIGHTCURVES_WITH_SMALL_NUMBER_OF_POINTS_FROM_ALL_PLOTS
 #define MIN_FRACTION_OF_IMAGES_THE_STAR_SHOULD_APPEAR_IN 0.5
 // Please note that these parameters apply at the lightcurve analysis stage.
 // More strict ruled may be applied at the lightcurve creation stage above (MIN_FRACTION_OF_GOOD_MEASUREMENTS)

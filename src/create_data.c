@@ -251,8 +251,8 @@ int main() {
 
  //fprintf(stderr,"DEBUG05\n");
 
-#ifdef DROP_LIGHTCURVS_WITH_SMALL_NUMBER_OF_POINS_FROM_ALL_PLOTS
- fprintf(stderr, " Will not compute variability indexes for objects having <%d points in lightcurve\nYou may disable this by commenting out the line '#define DROP_LIGHTCURVS_WITH_SMALL_NUMBER_OF_POINS_FROM_ALL_PLOTS' in src/vast_limits.h an re-compiling VaST with 'make'\n\nComputing, please wait a bit\n", MIN(SOFT_MIN_NUMBER_OF_POINTS, (int)(0.5 * number_of_measured_images_from_vast_summary_log)));
+#ifdef DROP_LIGHTCURVES_WITH_SMALL_NUMBER_OF_POINTS_FROM_ALL_PLOTS
+ fprintf(stderr, " Will not compute variability indexes for objects having <%d points in lightcurve\nYou may disable this by commenting out the line '#define DROP_LIGHTCURVES_WITH_SMALL_NUMBER_OF_POINTS_FROM_ALL_PLOTS' in src/vast_limits.h an re-compiling VaST with 'make'\n\nComputing, please wait a bit\n", MIN(SOFT_MIN_NUMBER_OF_POINTS, (int)(0.5 * number_of_measured_images_from_vast_summary_log)));
 #endif
 
  dp= opendir("./");
@@ -308,7 +308,7 @@ int main() {
 //continue; // !!!
 
 // defined in src/vast_limits.h
-#ifdef DROP_LIGHTCURVS_WITH_SMALL_NUMBER_OF_POINS_FROM_ALL_PLOTS
+#ifdef DROP_LIGHTCURVES_WITH_SMALL_NUMBER_OF_POINTS_FROM_ALL_PLOTS
     // Skip the star if it has insufficient number of measurements
     //                                                                                                                                                     0.5 is to correctly round off
     if( i < MIN(SOFT_MIN_NUMBER_OF_POINTS, (int)(MIN_FRACTION_OF_IMAGES_THE_STAR_SHOULD_APPEAR_IN * (double)number_of_measured_images_from_vast_summary_log + 0.5)) || i < HARD_MIN_NUMBER_OF_POINTS ) {
