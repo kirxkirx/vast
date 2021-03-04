@@ -53,12 +53,15 @@
 
 ///////////////////// !!! /////////////////////
 // If defined create_data WILL NOT COMPUTE VARIABILITY INDEXES for the lightcurves having
-// less than MIN(SOFT_MIN_NUMBER_OF_POINTS,(int)(0.5*number_of_measured_images_from_vast_summary_log))
+// less than MIN(SOFT_MIN_NUMBER_OF_POINTS,(int)(MIN_FRACTION_OF_IMAGES_THE_STAR_SHOULD_APPEAR_IN*number_of_measured_images_from_vast_summary_log))
 // points! You may miss some transient objects that appear only temporary if this option is enabled,
-// but dropping lightcurves with small number of points dramatically reduces the number of false candidates.
+// but dropping lightcurves with small number of points dramatically reduces the number of false candidate variables.
 #define DROP_LIGHTCURVS_WITH_SMALL_NUMBER_OF_POINS_FROM_ALL_PLOTS
+#define MIN_FRACTION_OF_IMAGES_THE_STAR_SHOULD_APPEAR_IN 0.5
+// Please note that these parameters apply at the lightcurve analysis stage.
+// More strict ruled may be applied at the lightcurve creation stage above (MIN_FRACTION_OF_GOOD_MEASUREMENTS)
 ///////////////////////////////////////////////
-//#define STRICT_CHECK_OF_JD_AND_MAG_RANGE
+#define STRICT_CHECK_OF_JD_AND_MAG_RANGE
 // check that JD and magnitudes of all points in the lightcurves are within the expected range
 // comment-out the above line to disable the strict check
 // The two parameters above are needed for experimenting with unusual data (like non-optical)

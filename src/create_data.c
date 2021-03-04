@@ -310,8 +310,8 @@ int main() {
 // defined in src/vast_limits.h
 #ifdef DROP_LIGHTCURVS_WITH_SMALL_NUMBER_OF_POINS_FROM_ALL_PLOTS
     // Skip the star if it has insufficient number of measurements
-    //if( i<MIN(SOFT_MIN_NUMBER_OF_POINTS,(int)(0.5*(double)number_of_measured_images_from_vast_summary_log+0.5)) || i<2*HARD_MIN_NUMBER_OF_POINTS ){
-    if( i < MIN(SOFT_MIN_NUMBER_OF_POINTS, (int)(0.5 * (double)number_of_measured_images_from_vast_summary_log + 0.5)) || i < HARD_MIN_NUMBER_OF_POINTS ) {
+    //                                                                                                                                                     0.5 is to correctly round off
+    if( i < MIN(SOFT_MIN_NUMBER_OF_POINTS, (int)(MIN_FRACTION_OF_IMAGES_THE_STAR_SHOULD_APPEAR_IN * (double)number_of_measured_images_from_vast_summary_log + 0.5)) || i < HARD_MIN_NUMBER_OF_POINTS ) {
 #ifdef DEBUGFILES
      fprintf(stderr, "\rWill not compute variability indexes for %s as the lightcurve has only %5d points. ", ep->d_name, i);
 #endif
