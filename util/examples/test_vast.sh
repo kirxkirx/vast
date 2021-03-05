@@ -867,21 +867,23 @@ $GREP_RESULT"
     # CEPHEID_RADEC_STR="03:05:54.66 +57:45:44.3"
     # presumably that should be out00474.dat
     # Check that it is V834 Cas (it should be)
+    # This test should pass with the GCVS server.
+    # No '"' around $CEPHEID_RADEC_STR !! 
     util/search_databases_with_curl.sh $CEPHEID_RADEC_STR | grep "V0834 Cas"
     if [ $? -ne 0 ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE015"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE015_curl_GCVS_V0834_Cas"
     fi
     util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 | grep "V0834 Cas"
     if [ $? -ne 0 ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE016_vizquery"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE016_vizquery_V0834_Cas"
     fi
     # same thing but different input format
     util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR | grep "V0834 Cas"
     if [ $? -ne 0 ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE017_vizquery"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE017_vizquery_V0834_Cas"
     fi
     # Check number of points in the Cepheid's lightcurve
     #CEPHEIDOUTFILE="$TMPSTR"
@@ -963,12 +965,12 @@ $GREP_RESULT"
    "$WORKDIR"/util/search_databases_with_curl.sh $CEPHEID_RADEC_STR | grep "V0834 Cas"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE027"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE027_curl_GCVS_V0834_Cas"
    fi
    "$WORKDIR"/util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 | grep "V0834 Cas"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE028"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE028_vizquery_V0834_Cas"
    fi
    # Here we expect exactly two distances to be reported 2MASS and USNO-B1.0 match
    # Both should be within 0.8 arcsec from the input coordinates. Let's check this
