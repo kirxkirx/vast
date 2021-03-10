@@ -5,6 +5,8 @@
 
 #include "vast_limits.h"
 
+#define ARCSEC_IN_RAD 206264.806247096
+
 int format_hms_or_deg(char *coordinatestring) {
  unsigned int i;
  for( i= 0; i < strlen(coordinatestring); i++ ) {
@@ -139,19 +141,25 @@ int main(int argc, char **argv) {
   hh2+= 1;
   mm2= 0.0;
  }
- if( (hh2 == 0 && in < 0) || (hh2 == 0 && mm2 == 0 && in < 0) )
+ if( (hh2 == 0 && in < 0) || (hh2 == 0 && mm2 == 0 && in < 0) ){
   fprintf(stdout, "-%02d:%02d:%04.1lf\n", hh2, mm2, fabs(ss2));
- else
+ } else {
   fprintf(stdout, "%+02d:%02d:%04.1lf\n", hh2, mm2, ss2);
+ }
 
- RA1_deg*= 3600 / 206264.8;
- RA2_deg*= 3600 / 206264.8;
- DEC1_deg*= 3600 / 206264.8;
- DEC2_deg*= 3600 / 206264.8;
+ RA1_deg*= 3600 / ARCSEC_IN_RAD;
+ RA2_deg*= 3600 / ARCSEC_IN_RAD;
+ DEC1_deg*= 3600 / ARCSEC_IN_RAD;
+ DEC2_deg*= 3600 / ARCSEC_IN_RAD;
 
- distance= acos(cos(DEC1_deg) * cos(DEC2_deg) * cos(MAX(RA1_deg, RA2_deg) - MIN(RA1_deg, RA2_deg)) + sin(DEC1_deg) * sin(DEC2_deg));
+ // we may get a nan if the distance is exactly zero, so let's catch this situation early
+ if( RA1_deg==RA2_deg && DEC1_deg==DEC2_deg ){
+  distance= 0.0;
+ } else {
+  distance= acos(cos(DEC1_deg) * cos(DEC2_deg) * cos(MAX(RA1_deg, RA2_deg) - MIN(RA1_deg, RA2_deg)) + sin(DEC1_deg) * sin(DEC2_deg));
+ }
 
- in= distance * 206264.8 / 3600;
+ in= distance * ARCSEC_IN_RAD / 3600;
  hh2= (int)in;
  mm2= (int)((in - hh2) * 60);
  ss2= ((in - hh2) * 60 - mm2) * 60;
@@ -166,7 +174,7 @@ int main(int argc, char **argv) {
 
  fprintf(stdout, "Angular distance  %02d:%02d:%05.2lf = ", hh2, mm2, ss2);
 
- fprintf(stdout, "%lf degrees\n", distance * 206264.8 / 3600);
+ fprintf(stdout, "%lf degrees\n", distance * ARCSEC_IN_RAD / 3600);
 
  return 0;
 }

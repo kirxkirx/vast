@@ -1225,7 +1225,7 @@ int main(int argc, char **argv) {
      //fprintf(stderr,"%f %f  %f %f\n",MIN(curX,curX2),MAX(curX,curX2),MIN(curY,curY2),MAX(curY,curY2));
      if( float_JD[closest_num] > MIN(curX, curX2) && float_JD[closest_num] < MAX(curX, curX2) && mag[closest_num] > MIN(curY, curY2) && mag[closest_num] < MAX(curY, curY2) ) {
       //fprintf(stderr,"Nobs= %d\n",Nobs); // DEBUG!!
-      fprintf(stderr, "Removing data point %5d %lf %lf\n", closest_num, JD[closest_num], mag[closest_num]);
+      fprintf(stderr, "Removing data point %5d %.5lf %8.4f\n", closest_num, JD[closest_num], mag[closest_num]);
       // kill it
       Nobs--;
       for( i= closest_num; i < Nobs; i++ ) {

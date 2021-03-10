@@ -13287,6 +13287,37 @@ if [ $? -eq 0 ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION006"
  fi
  
+ lib/put_two_sources_in_one_field 304.908333 4.596750 20:19:38.00 +04:35:48.3
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION007"
+ fi
+ # The distance should be exactly zero
+ DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 304.908333 4.596750 20:19:38.00 +04:35:48.3 | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION008"
+ fi
+ if [ -z "$DISTANCE_ARCSEC" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION009"
+ fi
+ TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 0.1 ) print 1 ;else print 0 }'`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION010_TOO_FAR_TEST_ERROR"
+ else
+  if [ $TEST -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION010_TOO_FAR_$DISTANCE_ARCSEC"
+  fi
+ fi
+ #
+ 
+ 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
   echo -e "\n\033[01;34mCoordinate conversion test \033[01;32mPASSED\033[00m" >> /dev/stderr

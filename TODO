@@ -1,3 +1,7 @@
+* Fix the rounding error in date coversion 
+util/get_image_date 2020-07-15.841 != 2459046.340995
+util/get_image_date 2020-08-05.271 != 2459066.770995
+
 * Add on-the-fly conversion of RGB (X*Y*3 data cube) FITS images to G-only
 (X*Y*1) images, equivalent to this example:
 util/fitscopy r_ncas20201124_stacked.fit[*,*,2:2] r_ncas20201124_stacked_g2.fit
