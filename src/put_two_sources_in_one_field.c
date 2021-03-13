@@ -24,6 +24,8 @@ int main(int argc, char **argv) {
  int hh2, mm2;
 
  double distance;
+ 
+ double cosine_value;
 
  if( argc < 5 ) {
   fprintf(stderr, "Usage: %s RA1 DEC1 RA2 DEC2\n", argv[0]);
@@ -147,16 +149,33 @@ int main(int argc, char **argv) {
   fprintf(stdout, "%+02d:%02d:%04.1lf\n", hh2, mm2, ss2);
  }
 
- RA1_deg*= 3600 / ARCSEC_IN_RAD;
- RA2_deg*= 3600 / ARCSEC_IN_RAD;
- DEC1_deg*= 3600 / ARCSEC_IN_RAD;
- DEC2_deg*= 3600 / ARCSEC_IN_RAD;
+ RA1_deg*= 3600.0 / ARCSEC_IN_RAD;
+ RA2_deg*= 3600.0 / ARCSEC_IN_RAD;
+ DEC1_deg*= 3600.0 / ARCSEC_IN_RAD;
+ DEC2_deg*= 3600.0 / ARCSEC_IN_RAD;
 
  // we may get a nan if the distance is exactly zero, so let's catch this situation early
  if( RA1_deg==RA2_deg && DEC1_deg==DEC2_deg ){
   distance= 0.0;
  } else {
-  distance= acos(cos(DEC1_deg) * cos(DEC2_deg) * cos(MAX(RA1_deg, RA2_deg) - MIN(RA1_deg, RA2_deg)) + sin(DEC1_deg) * sin(DEC2_deg));
+  //
+  cosine_value= cos(DEC1_deg) * cos(DEC2_deg) * cos(MAX(RA1_deg, RA2_deg) - MIN(RA1_deg, RA2_deg)) + sin(DEC1_deg) * sin(DEC2_deg);
+  // don't trust acos() to properly handle the cosine_value=+/-1 cases, so we chack the boundary values ourselves
+  if ( cosine_value >= 1.0 ){
+   distance= 0.0;
+  } else {
+   if( cosine_value <= -1.0 ){ 
+    distance= M_PI;
+   } else { 
+    //distance= acos(cos(DEC1_deg) * cos(DEC2_deg) * cos(MAX(RA1_deg, RA2_deg) - MIN(RA1_deg, RA2_deg)) + sin(DEC1_deg) * sin(DEC2_deg));
+    distance= acos( cosine_value );
+   }
+  }
+ }
+ // check if the trick worked
+ if( 0 != isnan(distance) ) {
+  fprintf(stderr, "ERROR in %s distance is 'nan'\n", argv[0]);
+  return 1;
  }
 
  in= distance * ARCSEC_IN_RAD / 3600;
