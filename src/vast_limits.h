@@ -49,7 +49,7 @@
 #define MIN_FRACTION_OF_GOOD_MEASUREMENTS 0.9 // at least MIN_FRACTION_OF_GOOD_MEASUREMENTS of detections of this particular source \
                                               // should pass the quality cuts, otherwise it will be rejected                        \
                                               // MIN_FRACTION_OF_GOOD_MEASUREMENTS should always be between 0.0 and 1.0
-#define MIN_NUMBER_OF_REJECTIONS_FOR_MIN_FRACTION_OF_GOOD_MEASUREMENTS 1 // apply the above only if at least that number of rejections happened
+#define MIN_NUMBER_OF_REJECTIONS_FOR_MIN_FRACTION_OF_GOOD_MEASUREMENTS 2 // apply the above only if at least that number of rejections happened
 
 ///////////////////// !!! /////////////////////
 // If defined create_data WILL NOT COMPUTE VARIABILITY INDEXES for the lightcurves having
