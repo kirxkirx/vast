@@ -23,6 +23,15 @@
 	* util/phase_lc is a new tool to fold a lightcurve with given light elements:
 	util/phase_lc out01234.dat 2459088.0123 0.567891 > phased_lightcurve_01234.txt
 	The phased lightcurve can be plotted with gnuplot or some other plotting tool.
+	* Added robust linear fit option to the absolute magnitude scale calibration interface.
+	The recommended way to automatically calibrate the magnitude scale is now:
+	'util/magnitude_calibration.sh V robust_linear'
+	You may also try to fit zero-point offset only:
+	'util/magnitude_calibration.sh V zero_point'
+	Here V is the filter name, the supported filers are BVRIri 
+	As usual 'util/magnitude_calibration.sh V' will work only if the image can be 
+	automatically plate-solved. If the image is too narrow-field, specify the comparison
+	star magnitudes manually by running 'util/magnitude_calibration.sh' without command line arguments.
 20 Oct 2020: vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911

@@ -256,6 +256,18 @@ if [ "$2" == "linear" ];then
   echo "Error fitting the magnitude scale! :("
   exit 1
  fi
+elif [ "$2" == "robust_linear" ];then
+ FIT_MAG_CALIB_RESULTING_PARARMETERS=`lib/fit_robust_linear`
+ if [ $? -ne 0 ];then
+  echo "Error fitting the magnitude scale! :("
+  exit 1
+ fi
+elif [ "$2" == "zero_point" ];then
+ FIT_MAG_CALIB_RESULTING_PARARMETERS=`lib/fit_zeropoint`
+ if [ $? -ne 0 ];then
+  echo "Error fitting the magnitude scale! :("
+  exit 1
+ fi
 elif [ "$2" == "photocurve" ];then
  FIT_MAG_CALIB_RESULTING_PARARMETERS=`lib/fit_photocurve`
  if [ $? -ne 0 ];then

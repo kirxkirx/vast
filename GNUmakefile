@@ -491,7 +491,7 @@ clean: clean_libraries
 	rm -f *.o 
 	rm -f callgrind.out.* # remove files from possible callgrind/kcachegrind profiling run: valgrind --tool=callgrind -v  ./vast -uf ../sample_data/f_72-00* ../sample_data/f_72-01*
 	rm -f massif.out.* # same for the other valgrind tool
-	rm -f *~ util/*~ util/transients/*~ lib/*~ lib/drop_faint_points lib/drop_bright_points DEADJOE tmp.txt match.txt  util/calibrate_magnitude_scale lib/fit_mag_calib lib/fit_linear lib/fit_zeropoint lib/fit_photocurve util/match_eater 
+	rm -f *~ util/*~ util/transients/*~ lib/*~ lib/drop_faint_points lib/drop_bright_points DEADJOE tmp.txt match.txt  util/calibrate_magnitude_scale lib/fit_mag_calib lib/fit_linear lib/fit_robust_linear lib/fit_zeropoint lib/fit_photocurve util/match_eater 
 	rm -f lib/deg2hms lib/coord_v_dva_slova lib/hms2deg $(SRC_PATH)period_search/BLS/*~ $(SRC_PATH)period_search/periodFilter/*~ lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/put_two_sources_in_one_field lib/new_lightcurve_sigma_filter lib/data_parser lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list lib/select_aperture_with_smallest_scatter_for_each_object util/hjd sextract_single_image diffphot select_star_on_reference_image util/mark_wcs_position_with_ds9.sh
 	rm -f lib/deg2hms_uas
 	rm -f lib/sine_wave_simulator lib/sine_wave_and_psd_simulator lib/sine_wave_or_psd_simulator

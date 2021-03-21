@@ -118,6 +118,8 @@ int main(int argc, char **argv) {
  int operation_mode= 0; // 0 - interactive, default
                         // 1 - non-interactive, linear
                         // 2 - non-interactive, photocurve
+                        // 3 - non-interactive, zero-point only
+                        // 4 - non-interactive, robust linear
  /* */
 
  /* Allocate memory */
@@ -272,6 +274,11 @@ int main(int argc, char **argv) {
   poly_coeff[0]= C;
   poly_coeff[1]= B;
  }
+ if( 0 == strcmp("fit_robust_linear", basename(argv[0])) ) {
+  operation_mode= 4;
+  fit_function= 6;
+  robustlinefit(insmag, catmag, n_stars, poly_coeff);
+ }
  if( 0 == strcmp("fit_zeropoint", basename(argv[0])) ) {
   operation_mode= 1;
   fit_function= 3;
@@ -401,6 +408,13 @@ int main(int argc, char **argv) {
      poly_coeff[7]= poly_coeff[6]= poly_coeff[5]= poly_coeff[4]= poly_coeff[3]= poly_coeff[2]= poly_coeff[1]= poly_coeff[0]= 0.0;
      fit_photocurve(insmag, catmag, insmagerr, n_stars, poly_coeff, &fit_function, NULL);
     }
+    if( fit_function == 6 ) {
+     poly_coeff[7]= poly_coeff[6]= poly_coeff[5]= poly_coeff[4]= poly_coeff[3]= poly_coeff[2]= poly_coeff[1]= poly_coeff[0]= 0.0;
+     robustlinefit(insmag, catmag, n_stars, poly_coeff);
+     A= 0.0;
+     B= poly_coeff[1];
+     C= poly_coeff[0];
+    }
    }
    //
 
@@ -428,7 +442,7 @@ int main(int argc, char **argv) {
    }
 
    /* If we don't read parameters from input file... */
-   if( argc != 3 && fit_function != 4 && fit_function != 5 ) {
+   if( argc != 3 && fit_function != 4 && fit_function != 5 && fit_function != 6 ) {
     sprintf(header_str2, "  press 'P' to change function");
     strcat(header_str, header_str2);
    }
@@ -535,8 +549,14 @@ int main(int argc, char **argv) {
    /* Change fitting function */
    if( curC == 'P' || curC == 'p' ) {
     fit_function++;
-    if( fit_function > 4 )
+    if( fit_function == 4 || fit_function == 5 ) {
+     fit_function++;
+    }
+    if( fit_function > 6 ) {
      fit_function= 1;
+    }
+//    if( fit_function > 4 )
+//     fit_function= 1;
    }
 
    y_to_x_scaling_factor= fabsf(new_X2 - new_X1) / fabsf(new_Y2 - new_Y1);
