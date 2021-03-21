@@ -77,7 +77,7 @@ else
  fi
  # yeah, I know: util/solve_plate_with_UCAC5 is supposed to either produce a correct 
  # output file of fail. But still, let's check that.
- # Error check (just in case)
+ # ERROR check (just in case)
  if [ ! -f $UCAC5_REFERENCE_IMAGE_MATCH_FILE ];then
   echo "ERROR in $0: cannot find file $UCAC5_REFERENCE_IMAGE_MATCH_FILE" >> /dev/stderr
   exit 1
@@ -253,40 +253,44 @@ fi
 if [ "$2" == "linear" ];then
  FIT_MAG_CALIB_RESULTING_PARARMETERS=`lib/fit_linear`
  if [ $? -ne 0 ];then
-  echo "Error fitting the magnitude scale! :("
+  echo "ERROR fitting the magnitude scale! :("
   exit 1
  fi
 elif [ "$2" == "robust_linear" ];then
  FIT_MAG_CALIB_RESULTING_PARARMETERS=`lib/fit_robust_linear`
  if [ $? -ne 0 ];then
-  echo "Error fitting the magnitude scale! :("
+  echo "ERROR fitting the magnitude scale! :("
   exit 1
  fi
 elif [ "$2" == "zero_point" ];then
  FIT_MAG_CALIB_RESULTING_PARARMETERS=`lib/fit_zeropoint`
  if [ $? -ne 0 ];then
-  echo "Error fitting the magnitude scale! :("
+  echo "ERROR fitting the magnitude scale! :("
   exit 1
  fi
 elif [ "$2" == "photocurve" ];then
  FIT_MAG_CALIB_RESULTING_PARARMETERS=`lib/fit_photocurve`
  if [ $? -ne 0 ];then
-  echo "Error fitting the magnitude scale! :("
+  echo "ERROR fitting the magnitude scale! :("
   exit 1
  fi
 else
  FIT_MAG_CALIB_RESULTING_PARARMETERS=`lib/fit_mag_calib`
  if [ $? -ne 0 ];then
-  echo "Error fitting the magnitude scale! :("
+  echo "ERROR fitting the magnitude scale! :("
   exit 1
  fi
 fi
 
 if [ -z "$FIT_MAG_CALIB_RESULTING_PARARMETERS" ];then
- echo "Error in the output parameters of the magnitude scale fit! :("
+ echo "ERROR in the output parameters of the magnitude scale fit! :("
  exit 1
 fi
 echo "Proceeding with the calibration..."
 util/calibrate_magnitude_scale $FIT_MAG_CALIB_RESULTING_PARARMETERS
+if [ $? -ne 0 ];then
+ echo "ERROR running 'util/calibrate_magnitude_scale $FIT_MAG_CALIB_RESULTING_PARARMETERS'"
+ exit 1
+fi
 util/nopgplot.sh -q
 echo "Magnitde calibration complete. :)"

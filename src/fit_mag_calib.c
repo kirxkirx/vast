@@ -271,17 +271,23 @@ int main(int argc, char **argv) {
   fit_function= 1;
   gsl_fit_wlinear(insmag, 1, w, 1, catmag, 1, n_stars, &C, &B, &cov00, &cov01, &cov11, &sumsqres);
   poly_coeff[7]= poly_coeff[6]= poly_coeff[5]= poly_coeff[4]= poly_coeff[3]= poly_coeff[2]= poly_coeff[1]= poly_coeff[0]= 0.0;
+  A= 0.0;
   poly_coeff[0]= C;
   poly_coeff[1]= B;
  }
  if( 0 == strcmp("fit_robust_linear", basename(argv[0])) ) {
   operation_mode= 4;
   fit_function= 6;
+  poly_coeff[7]= poly_coeff[6]= poly_coeff[5]= poly_coeff[4]= poly_coeff[3]= poly_coeff[2]= poly_coeff[1]= poly_coeff[0]= 0.0;
   robustlinefit(insmag, catmag, n_stars, poly_coeff);
+  A= 0.0;
+  B= poly_coeff[1];
+  C= poly_coeff[0];
  }
  if( 0 == strcmp("fit_zeropoint", basename(argv[0])) ) {
   operation_mode= 1;
   fit_function= 3;
+  A= 0.0;
   B= 1.0;
   sum1= sum2= 0.0;
   for( j= 0; j < n_stars; j++ ) {
@@ -447,17 +453,24 @@ int main(int argc, char **argv) {
     strcat(header_str, header_str2);
    }
 
-   //sprintf(header_str,"fitting function: %lf * x\\u2\\d + %lf * x + %lf", A, B, C);
-   cpgmtxt("T", 2.0, 0.0, 0.0, header_str);
-   sprintf(header_str, "use weights: ");
-   if( weights_on == 1 )
-    strcat(header_str, "yes");
-   else
-    strcat(header_str, " no");
-   /* If we don't read parameters from input file... */
-   if( argc != 3 ) {
-    strcat(header_str, "  press 'W' to change it");
+   // robust linear fit uuses no weights
+   if( fit_function != 6 ) {
+    cpgmtxt("T", 2.0, 0.0, 0.0, header_str);
+    sprintf(header_str, "use weights: ");
+    if( weights_on == 1 ) {
+     strcat(header_str, "yes");
+    } else {
+     strcat(header_str, " no");
+    }
+    // If we don't read parameters from input file... 
+    if( argc != 3 ) {
+     strcat(header_str, "  press 'W' to change it");
+    }
+   } else {
+    cpgmtxt("T", 2.0, 0.0, 0.0, header_str);
+    sprintf(header_str, "robust linear fit does not use weights");
    }
+   
    cpgmtxt("T", 1.0, 0.0, 0.0, header_str);
    cpglab("Instrumental magnitude", "Catalog magnitude", "");
    cpgscr(1, 1.0, 1.0, 1.0);
@@ -629,6 +642,12 @@ int main(int argc, char **argv) {
 
  if( fit_function != 4 && fit_function != 5 ) {
   fprintf(stdout, "%lf %lf %lf\n", A, B, C);
+  // Check for an obviously bad fit
+  if( A == 0.0 && B == 0.0 && C == 0.0 ) {
+   fprintf(stderr, "ERROR in %s -- A == 0.0 && B == 0.0 && C == 0.0\n", argv[0]);
+   return 1;
+  }
+  //
  } else {
   fprintf(stdout, "%d %lf %lf %lf %lf\n", fit_function, poly_coeff[0], poly_coeff[1], poly_coeff[2], poly_coeff[3]);
  }
@@ -638,7 +657,7 @@ int main(int argc, char **argv) {
   fprintf(stderr, "ERROR opening the output file calib.txt_param for writing!\n");
   return 1;
  }
- fprintf(calibfile, "%lf %lf %lf %lf %lf", (double)fit_function, poly_coeff[3], poly_coeff[2], poly_coeff[1], poly_coeff[0]);
+ fprintf(calibfile, "%lf %lf %lf %lf %lf\n", (double)fit_function, poly_coeff[3], poly_coeff[2], poly_coeff[1], poly_coeff[0]);
  fclose(calibfile);
  fprintf(stderr, "The calibration function type and coefficients are written to calib.txt_param\n");
  return 0;

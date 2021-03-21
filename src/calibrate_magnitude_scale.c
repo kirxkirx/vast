@@ -90,6 +90,7 @@ int main(int argc, char **argv) {
   }
 #endif
  }
+ 
 
  if( argc == 6 ) {
   operation_mode= atoi(argv[1]);
@@ -142,6 +143,12 @@ int main(int argc, char **argv) {
    return 1;
   }
 #endif
+ }
+
+ // If a = b = c = 0.0 that is suspicious!
+ if( a == 0.0 && b == 0.0 && c == 0.0 ){
+  fprintf(stderr, "a = b = c = 0.0 -- that is suspicious!\n");
+  return 1;
  }
 
  // internal check
