@@ -11178,6 +11178,10 @@ fi
 # yes, we want this test not only @eridan, but on any machine that has enough disk space
 ############# Check free disk space #############
 FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" = "true" ];then
+ FREE_DISK_SPACE_MB=0
+fi
 ############# 61 Cyg #############
 if [ -d /mnt/usb/61Cyg_photoplates_test ] || [ -d ../61Cyg_photoplates_test ] || [ $FREE_DISK_SPACE_MB -gt 8192 ] ;then
  TEST_PASSED=1
@@ -11205,6 +11209,7 @@ $GREP_RESULT"
  df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
  # 
 fi
+
 
 ############# NMW #############
 if [ "$HOSTNAME" = "eridan" ] ;then
