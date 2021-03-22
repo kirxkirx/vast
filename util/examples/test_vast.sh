@@ -775,30 +775,30 @@ $GREP_RESULT"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE007_platesolveucac5"
-   fi
-   if [ ! -s wcs_SCA10670S_13788_08321__00_00.fit ];then
+   elif [ ! -s wcs_SCA10670S_13788_08321__00_00.fit ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE008"
-   fi 
-   lib/bin/xy2sky wcs_SCA10670S_13788_08321__00_00.fit 200 200 &>/dev/null
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE008a"
-   fi
-   if [ ! -s wcs_SCA10670S_13788_08321__00_00.fit.cat ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE009"
-   fi 
-   if [ ! -s wcs_SCA10670S_13788_08321__00_00.fit.cat.ucac5 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE010"
-   else
-    TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_SCA10670S_13788_08321__00_00.fit.cat.ucac5 | wc -l | awk '{print $1}'`
-    if [ $TEST -lt 550 ];then
+   else 
+    lib/bin/xy2sky wcs_SCA10670S_13788_08321__00_00.fit 200 200 &>/dev/null
+    if [ $? -ne 0 ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE010a_$TEST"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE008a"
     fi
-   fi
+    if [ ! -s wcs_SCA10670S_13788_08321__00_00.fit.cat ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE009"
+    fi 
+    if [ ! -s wcs_SCA10670S_13788_08321__00_00.fit.cat.ucac5 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE010"
+    else
+     TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_SCA10670S_13788_08321__00_00.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+     if [ $TEST -lt 550 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE010a_$TEST"
+     fi
+    fi
+   fi # util/solve_plate_with_UCAC5 OK
    ###
    # check that the min number of detections filter is working
    MIN_NUMBER_OF_POINTS_IN_LC=`cat src/vast_limits.h | grep '#define' | grep HARD_MIN_NUMBER_OF_POINTS | awk '{print $1" "$2" "$3}' | grep -v '//' | awk '{print $3}'`
@@ -14257,6 +14257,8 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  FAILED_TEST_CODES="${FAILED_TEST_CODES// none_REMOTEPLATESOLVE007/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// none_REMOTEPLATESOLVE008/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// none_REMOTEPLATESOLVE009/}"
+ #
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// LIGHTCURVEVIEWER004_TEST_NOT_PERFORMED_no_gs/}"
  #
  if [ ! -z "$FAILED_TEST_CODES" ];then
   echo "Exit code 1"
