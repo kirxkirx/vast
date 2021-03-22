@@ -11253,14 +11253,15 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
   fi
   # Plate-solve the reference image
   REF_IMAGE=`grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+  BASENAME_REF_IMAGE=`basename "$REF_IMAGE"`
   util/wcs_image_calibration.sh "$REF_IMAGE"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_wcs_image_calibration_FAILED"
-  elif [ ! -f wcs_Nova-1MHz-76mcs-PreampX4-0001V.fit ];then
+  elif [ ! -f wcs_"$BASENAME_REF_IMAGE" ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_no_wcs_image"
-  elif [ ! -s wcs_Nova-1MHz-76mcs-PreampX4-0001V.fit ];then
+  elif [ ! -s wcs_"$BASENAME_REF_IMAGE" ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_empty_wcs_image"
   else
@@ -11268,10 +11269,10 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_solve_plate_with_UCAC5_FAILED"
-   elif [ ! -f wcs_Nova-1MHz-76mcs-PreampX4-0001V.fit.cat.ucac5 ];then
+   elif [ ! -f wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_no_fit.cat.ucac5_file"
-   elif [ ! -f wcs_Nova-1MHz-76mcs-PreampX4-0001V.fit.cat.ucac5 ];then
+   elif [ ! -f wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_empty_fit.cat.ucac5_file"
    else
@@ -11288,7 +11289,7 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
       FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_empty_calib.txt_param"
      else
       # check the expected fitted line coefficient values
-      TEST=`cat calib.txt_param | awk '{if ( sqrt(($4-0.990217)*($4-0.990217))<0.05 && sqrt(($5-24.539611)*($5-24.539611))<0.05 ) print 1 ;else print 0 }'`
+      TEST=`cat calib.txt_param | awk '{if ( sqrt(($4-0.992089)*($4-0.992089))<0.05 && sqrt(($5-24.562964)*($5-24.562964))<0.05 ) print 1 ;else print 0 }'`
       if [ $TEST -ne 1 ];then
        TEST_PASSED=0
        FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_calibration_curve_fit_parameters_out_of_range"
@@ -11301,10 +11302,200 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
        FAILED_TEST_CODES="$FAILED_TEST_CODES  NCAS21RC600_NCas21_not_found__${XY// /_}"
       else
        NOVA_MAG=`cat "$LIGHTCURVEFILE" | awk '{print $2}' | util/colstat | grep 'MEAN=' | awk '{print $2}'`
-       TEST=`echo $NOVA_MAG | awk '{if ( sqrt(($1-9.297167)*($1-9.297167))<0.05 ) print 1 ;else print 0 }'`
+       TEST=`echo $NOVA_MAG | awk '{if ( sqrt(($1-9.291700)*($1-9.291700))<0.05 ) print 1 ;else print 0 }'`
        if [ $TEST -ne 1 ];then
         TEST_PASSED=0
         FAILED_TEST_CODES="$FAILED_TEST_CODES  NCAS21RC600_NCas21_wrong_photometry__$NOVA_MAG"
+       fi
+      fi # ligthcurve file found
+      #
+     fi # calib.txt_param
+    fi # util/magnitude_calibration.sh V robust_linear OK
+   fi # util/solve_plate_with_UCAC5 OK
+  fi # util/wcs_image_calibration.sh OK
+  #
+ ./vast -f -u -p -x3 -a19.0 ../KGO_RC600_NCas2021_test/*B.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B000"
+ fi
+ # Check results
+ if [ -f vast_summary.log ];then
+  grep --quiet "Images processed 3" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B001"
+  fi
+  grep --quiet "Images used for photometry 3" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B002"
+  fi
+  grep --quiet "Ref.  image: 2459292.18279 18.03.2021 16:23:03" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_REFIMAGE"
+  fi
+  grep --quiet "First image: 2459292.18279 18.03.2021 16:23:03" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B003"
+  fi
+  grep --quiet "Last  image: 2459292.18427 18.03.2021 16:25:11" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B004"
+  fi
+  # Plate-solve the reference image
+  REF_IMAGE=`grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+  BASENAME_REF_IMAGE=`basename "$REF_IMAGE"`
+  util/wcs_image_calibration.sh "$REF_IMAGE"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_wcs_image_calibration_FAILED"
+  elif [ ! -f wcs_"$BASENAME_REF_IMAGE" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_no_wcs_image"
+  elif [ ! -s wcs_"$BASENAME_REF_IMAGE" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_empty_wcs_image"
+  else
+   util/solve_plate_with_UCAC5 "$REF_IMAGE"
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_solve_plate_with_UCAC5_FAILED"
+   elif [ ! -f wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_no_fit.cat.ucac5_file"
+   elif [ ! -f wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_empty_fit.cat.ucac5_file"
+   else
+    util/magnitude_calibration.sh B robust_linear
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_error_running_magnitude_calibration_V_robust_linear"
+    else
+     if [ ! -f calib.txt_param ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_no_calib.txt_param"
+     elif [ ! -s calib.txt_param ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_empty_calib.txt_param"
+     else
+      # check the expected fitted line coefficient values
+      TEST=`cat calib.txt_param | awk '{if ( sqrt(($4-0.979694)*($4-0.979694))<0.05 && sqrt(($5-24.375721)*($5-24.375721))<0.05 ) print 1 ;else print 0 }'`
+      if [ $TEST -ne 1 ];then
+       TEST_PASSED=0
+       FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_calibration_curve_fit_parameters_out_of_range"
+      fi
+      # Find Nova Cas 2021 and perform its photometry
+      XY="1076.4 1020.5"
+      LIGHTCURVEFILE=$(find_source_by_X_Y_in_vast_lightcurve_statistics_log $XY)
+      if [ "$LIGHTCURVEFILE" == "none" ];then
+       TEST_PASSED=0
+       FAILED_TEST_CODES="$FAILED_TEST_CODES  NCAS21RC600B_NCas21_not_found__${XY// /_}"
+      else
+       NOVA_MAG=`cat "$LIGHTCURVEFILE" | awk '{print $2}' | util/colstat | grep 'MEAN=' | awk '{print $2}'`
+       TEST=`echo $NOVA_MAG | awk '{if ( sqrt(($1-9.589533)*($1-9.589533))<0.05 ) print 1 ;else print 0 }'`
+       if [ $TEST -ne 1 ];then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES  NCAS21RC600B_NCas21_wrong_photometry__$NOVA_MAG"
+       fi
+      fi # ligthcurve file found
+      #
+     fi # calib.txt_param
+    fi # util/magnitude_calibration.sh V robust_linear OK
+   fi # util/solve_plate_with_UCAC5 OK
+  fi # util/wcs_image_calibration.sh OK
+  #
+ ./vast -f -u -p -x3 -a19.0 ../KGO_RC600_NCas2021_test/*Rc.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc000"
+ fi
+ # Check results
+ if [ -f vast_summary.log ];then
+  grep --quiet "Images processed 3" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc001"
+  fi
+  grep --quiet "Images used for photometry 3" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc002"
+  fi
+  grep --quiet "Ref.  image: 2459292.18326 18.03.2021 16:23:51" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_REFIMAGE"
+  fi
+  grep --quiet "First image: 2459292.18326 18.03.2021 16:23:51" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc003"
+  fi
+  grep --quiet "Last  image: 2459292.18475 18.03.2021 16:25:59" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc004"
+  fi
+  # Plate-solve the reference image
+  REF_IMAGE=`grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+  BASENAME_REF_IMAGE=`basename "$REF_IMAGE"`
+  util/wcs_image_calibration.sh "$REF_IMAGE"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_wcs_image_calibration_FAILED"
+  elif [ ! -f wcs_"$BASENAME_REF_IMAGE" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_no_wcs_image"
+  elif [ ! -s wcs_"$BASENAME_REF_IMAGE" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_empty_wcs_image"
+  else
+   util/solve_plate_with_UCAC5 "$REF_IMAGE"
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_solve_plate_with_UCAC5_FAILED"
+   elif [ ! -f wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_no_fit.cat.ucac5_file"
+   elif [ ! -f wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_empty_fit.cat.ucac5_file"
+   else
+    util/magnitude_calibration.sh Rc robust_linear
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_error_running_magnitude_calibration_V_robust_linear"
+    else
+     if [ ! -f calib.txt_param ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_no_calib.txt_param"
+     elif [ ! -s calib.txt_param ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_empty_calib.txt_param"
+     else
+      # check the expected fitted line coefficient values
+      TEST=`cat calib.txt_param | awk '{if ( sqrt(($4-0.986287)*($4-0.986287))<0.05 && sqrt(($5-24.009384)*($5-24.009384))<0.05 ) print 1 ;else print 0 }'`
+      if [ $TEST -ne 1 ];then
+       TEST_PASSED=0
+       FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_calibration_curve_fit_parameters_out_of_range"
+      fi
+      # Find Nova Cas 2021 and perform its photometry
+      XY="1075.2 1019.7"
+      LIGHTCURVEFILE=$(find_source_by_X_Y_in_vast_lightcurve_statistics_log $XY)
+      if [ "$LIGHTCURVEFILE" == "none" ];then
+       TEST_PASSED=0
+       FAILED_TEST_CODES="$FAILED_TEST_CODES  NCAS21RC600Rc_NCas21_not_found__${XY// /_}"
+      else
+       NOVA_MAG=`cat "$LIGHTCURVEFILE" | awk '{print $2}' | util/colstat | grep 'MEAN=' | awk '{print $2}'`
+       TEST=`echo $NOVA_MAG | awk '{if ( sqrt(($1-8.805633)*($1-8.805633))<0.05 ) print 1 ;else print 0 }'`
+       if [ $TEST -ne 1 ];then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES  NCAS21RC600Rc_NCas21_wrong_photometry__$NOVA_MAG"
        fi
       fi # ligthcurve file found
       #

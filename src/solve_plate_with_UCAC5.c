@@ -209,17 +209,22 @@ void set_catalog_search_parameters(double approximate_field_of_view_arcmin, stru
   catalog_search_parameters->faintest_mag= 14.0;
  }
  if( approximate_field_of_view_arcmin < 120.0 ) {
-  catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP;
-  catalog_search_parameters->brightest_mag= 9.0;
+  catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP * approximate_field_of_view_arcmin / 60.0;
+  catalog_search_parameters->brightest_mag= 7.0; //9.0;
   catalog_search_parameters->faintest_mag= 16.5;
  }
  if( approximate_field_of_view_arcmin < 60.0 ) {
-  catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP;
-  catalog_search_parameters->brightest_mag= 10.0;
+  catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP; // * approximate_field_of_view_arcmin / 60.0;
+  catalog_search_parameters->brightest_mag=10.0; // let's keep it low becasue of the photographic plates
   catalog_search_parameters->faintest_mag= 17.0;
  }
  if( approximate_field_of_view_arcmin < 30.0 ) {
-  catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP;
+  catalog_search_parameters->search_radius_deg= MAX( 2.0 / 3600.0, MAX_DEVIATION_AT_FIRST_STEP  * approximate_field_of_view_arcmin / 60.0 );
+  catalog_search_parameters->brightest_mag= 9.0;
+  catalog_search_parameters->faintest_mag= 20.0;
+ }
+ if( approximate_field_of_view_arcmin < 15.0 ) {
+  catalog_search_parameters->search_radius_deg= MAX( 1.5 / 3600.0, MAX_DEVIATION_AT_FIRST_STEP  * approximate_field_of_view_arcmin / 60.0 );
   catalog_search_parameters->brightest_mag= 12.0;
   catalog_search_parameters->faintest_mag= 20.0;
  }
