@@ -11495,7 +11495,7 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
    elif [ ! -f wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_no_fit.cat.ucac5_file"
-   elif [ ! -f wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
+   elif [ ! -s wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_empty_fit.cat.ucac5_file"
    else
@@ -11537,6 +11537,10 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
    fi # util/solve_plate_with_UCAC5 OK
   fi # util/wcs_image_calibration.sh OK
   #
+ else
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_no_vast_summary"
+ fi # if [ -f vast_summary.log ];then 
  ./vast -f -u -p -x3 -a19.0 ../KGO_RC600_NCas2021_test/*B.fit
  if [ $? -ne 0 ];then
   TEST_PASSED=0
@@ -11590,7 +11594,7 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
    elif [ ! -f wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_no_fit.cat.ucac5_file"
-   elif [ ! -f wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
+   elif [ ! -s wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_empty_fit.cat.ucac5_file"
    else
@@ -11632,6 +11636,10 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
    fi # util/solve_plate_with_UCAC5 OK
   fi # util/wcs_image_calibration.sh OK
   #
+ else
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_no_vast_summary"
+ fi # if [ -f vast_summary.log ];then 
  ./vast -f -u -p -x3 -a19.0 ../KGO_RC600_NCas2021_test/*Rc.fit
  if [ $? -ne 0 ];then
   TEST_PASSED=0
@@ -11685,7 +11693,7 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
    elif [ ! -f wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_no_fit.cat.ucac5_file"
-   elif [ ! -f wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
+   elif [ ! -s wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_empty_fit.cat.ucac5_file"
    else
@@ -11729,7 +11737,7 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
   #
  else
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_no_vast_summary"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_no_vast_summary"
  fi # if [ -f vast_summary.log ];then 
  #
  if [ $TEST_PASSED -eq 1 ];then
@@ -11743,7 +11751,7 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
  echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
  df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
  # 
-fi
+fi # if [ -d ../KGO_RC600_NCas2021_test/ ];then
 
 ############# NMW #############
 if [ "$HOSTNAME" = "eridan" ] ;then
