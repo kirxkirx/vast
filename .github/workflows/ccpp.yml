@@ -13,6 +13,8 @@ jobs:
       run: sudo apt-get update
     - name: Install gfortran
       run: sudo apt-get install gfortran
+    - name: Install ghostscript
+      run: sudo apt-get install ghostscript
     - name: make VaST
       run: make
     - name: prepare for the test

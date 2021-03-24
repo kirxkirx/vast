@@ -9066,8 +9066,9 @@ $GREP_RESULT"
   echo -e "\n\033[01;34mNMW find Nova Cas 2021 test \033[01;31mFAILED\033[00m" >> /dev/stderr
   echo "FAILED" >> vast_test_report.txt
  fi
-else
- FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_TEST_NOT_PERFORMED"
+# No else HERE AS THIS IS A SPECIAL TEST PERFORMED ONLY ON SELECTED MACHINES
+#else
+# FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_TEST_NOT_PERFORMED"
 fi
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
@@ -10196,7 +10197,9 @@ if [ -f ../individual_images_test/c176.fits ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES HOTPIXIMAGE002"
  else
   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_c176.fits.cat.ucac5 | wc -l | awk '{print $1}'`
-  if [ $TEST -lt 180 ];then
+  #if [ $TEST -lt 180 ];then
+  # we reduced the catalog search radius, so now it's
+  if [ $TEST -lt 170 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES HOTPIXIMAGE002a_$TEST"
   fi
@@ -10254,7 +10257,9 @@ if [ -f ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit 
   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600002"
  else
   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit.cat.ucac5 | wc -l | awk '{print $1}'`
-  if [ $TEST -lt 170 ];then
+  #if [ $TEST -lt 170 ];then
+  # We reduced catalog search radius
+  if [ $TEST -lt 150 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600002a_$TEST"
   fi
