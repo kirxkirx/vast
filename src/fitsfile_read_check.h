@@ -59,6 +59,15 @@ static inline int fitsfile_read_check(char *fitsfilename) {
  int hdutype, naxis;
  long naxes3;
  long naxes4;
+ // Check if the file exist at all
+ FILE *testfile;
+ testfile=fopen(fitsfilename, "r");
+ if( testfile== NULL ){
+  fprintf(stderr, "ERROR opening file %s\n", fitsfilename);
+  return 1;
+ }
+ fclose(testfile);
+ //
  // check if this is a readable FITS image
  fits_open_image(&fptr, fitsfilename, READONLY, &status);
  if( 0 != status ) {
@@ -109,6 +118,15 @@ static inline int fitsfile_read_check_silent(char *fitsfilename) {
  int hdutype, naxis;
  long naxes3;
  long naxes4;
+ // Check if the file exist at all
+ FILE *testfile;
+ testfile=fopen(fitsfilename, "r");
+ if( testfile== NULL ){
+  //fprintf(stderr, "ERROR opening file %s\n", fitsfilename);
+  return 1;
+ }
+ fclose(testfile);
+ //
  // check if this is a readable FITS image
  fits_open_image(&fptr, fitsfilename, READONLY, &status);
  if( 0 != status ) {

@@ -40,6 +40,8 @@
 
 #include "wpolyfit.h" // for robustlinefit()
 
+#include "fitsfile_read_check.h" // for fitsfile_read_check()
+
 void print_help() {
  fprintf(stderr, "\n");
  fprintf(stderr, "  --*** HOW TO USE THE LIGHTCURVE PLOTTER ***--\n");
@@ -1526,27 +1528,35 @@ int main(int argc, char **argv) {
    // start a FITS viewer
    if( lightcurve_format == 0 ) {
     if( NULL != filename[closest_num] ) {
-     if( use_ds9_instead_of_pgfv == 1 ) {
-      sprintf(strmusor, "%s/util/draw_stars_with_ds9.sh %s %.1f %.1f %.1f %s >/dev/null", path_to_vast_string, filename[closest_num], X[closest_num], Y[closest_num], APER[closest_num], lightcurvefilename);
+     if( 0 != fitsfile_read_check( filename[closest_num] ) ){
+      fprintf(stderr, "Cannot open FITS image %s\n", filename[closest_num]);
      } else {
-      // %.6f for the case when the input coordinates are RA/Dec, not pixel coordinates
-      //sprintf(strmusor,"./pgfv -- %s %.6f %.6f %.1f",filename[closest_num],X[closest_num],Y[closest_num],APER[closest_num]);
-      sprintf(strmusor, "%s/pgfv -- %s %.6f %.6f %.1f", path_to_vast_string, filename[closest_num], X[closest_num], Y[closest_num], APER[closest_num]);
-     }
-     fprintf(stderr, "%s\n", strmusor);
-     // fork before system() so the parent process is not blocked
-     if( 0 == fork() ) {
-      if( 0 != system(strmusor) ) {
-       fprintf(stderr, "ERROR in %s", strmusor);
+      if( use_ds9_instead_of_pgfv == 1 ) {
+       sprintf(strmusor, "%s/util/draw_stars_with_ds9.sh %s %.1f %.1f %.1f %s >/dev/null", path_to_vast_string, filename[closest_num], X[closest_num], Y[closest_num], APER[closest_num], lightcurvefilename);
+      } else {
+       // %.6f for the case when the input coordinates are RA/Dec, not pixel coordinates
+       //sprintf(strmusor,"./pgfv -- %s %.6f %.6f %.1f",filename[closest_num],X[closest_num],Y[closest_num],APER[closest_num]);
+       sprintf(strmusor, "%s/pgfv -- %s %.6f %.6f %.1f", path_to_vast_string, filename[closest_num], X[closest_num], Y[closest_num], APER[closest_num]);
       }
-      exit(0);
-     } else {
-      waitpid(-1, &status, WNOHANG);
-     }
-    } else
-     fprintf(stderr, "Oops! There is no file!\n");
-   } else
-    fprintf(stderr, "Oops! The lightcurve is not in VaST format! No information about image corresponding to this data point is available!\n");
+      fprintf(stderr, " Starting FITS image viewer:\n%s\n", strmusor);
+      // fork before system() so the parent process is not blocked
+      if( 0 == fork() ) {
+       if( 0 != system(strmusor) ) {
+        fprintf(stderr, "ERROR in %s", strmusor);
+       }
+       exit(0);
+      } else {
+       waitpid(-1, &status, WNOHANG);
+      }
+     } // if( 0 != fitsfile_read_check( filename[closest_num] ) ){
+    }
+    // else {
+    // fprintf(stderr, "Oops! There is no information about the FITS image filename!\n");
+    //}
+   }
+   // else {
+   // fprintf(stderr, "Oops! The lightcurve is not in VaST format! No information about image corresponding to this data point is available!\n");
+   //}
   }
 
   /* If we were plotting to a file instead of X window... */
