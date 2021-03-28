@@ -101,6 +101,17 @@ if [ ! -d "$REFERENCE_IMAGES" ];then
  echo "ERROR: cannot find the reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES"
  echo "ERROR: cannot find the reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES" >> transient_factory_test31.txt
  exit 1
+else
+ # make sure the reference image directory is not empty
+ for FILE_TO_TEST in "$REFERENCE_IMAGES"/* ;do
+  if [ ! -f "$FILE_TO_TEST" ];then
+   echo "ERROR: empty reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES"
+   echo "ERROR: empty reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES" >> transient_factory_test31.txt
+   exit 1
+  else
+   break
+  fi
+ done
 fi
 
 # Check for a local copy of UCAC5
