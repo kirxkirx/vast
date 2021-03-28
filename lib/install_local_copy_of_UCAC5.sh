@@ -30,7 +30,8 @@ if [ ! -d lib/catalogs/ucac5 ];then
 fi
 
 cd lib/catalogs/ucac5
-wget -c --no-dir ftp://cdsarc.u-strasbg.fr/0/more/UCAC5/u5z/*
+#wget -c --no-dir ftp://cdsarc.u-strasbg.fr/0/more/UCAC5/u5z/*
+wget -r -Az* -c --no-dir "http://scan.sai.msu.ru/~kirx/data/ucac5"
 if [ $? -eq 0 ];then
  echo "Download complete"
 else
