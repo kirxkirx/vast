@@ -100,7 +100,7 @@ void cutout_green_channel_out_of_RGB_DSLR_image(char *filename) {
   if( 0 != status ) {
    fits_report_error(stderr, status); // print out any error messages
    fits_clear_errmsg();               // clear the CFITSIO error message stack
-   fits_close_file(fptr, &status);
+   //fits_close_file(fptr, &status);
   } else {
    if( naxis == 3 ) { 
     fprintf( stderr, "NAXIS=3 %s \n", filename);
@@ -108,17 +108,18 @@ void cutout_green_channel_out_of_RGB_DSLR_image(char *filename) {
     if( 0 != status ) {
      fits_report_error(stderr, status); // print out any error messages
      fits_clear_errmsg();               // clear the CFITSIO error message stack
-     fits_close_file(fptr, &status);
+     //fits_close_file(fptr, &status);
     } else {
      if( naxes3 == 3 ) {
       fprintf( stderr, "NAXIS3=3 %s looks like an RGB DSLR image!\nWe'll extract the second (hopefully green) channel from it!\n", filename);
       need_to_cutout_green_channel= 1;
-      fits_close_file(fptr, &status);
+      //fits_close_file(fptr, &status);
      }
     }
    }
   }
  } // if( 0 == status ) after fits_read_key(fptr, TDOUBLE, "ISOSPEED"
+ fits_close_file(fptr, &status); // if we are here, the FITS file is still open
  fits_clear_errmsg();               // clear the CFITSIO error message stack
  status= 0; // just in case
  
