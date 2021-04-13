@@ -14,7 +14,6 @@
 void replace_file_with_symlink_if_filename_contains_white_spaces(char *filename) {
  unsigned int i, need_to_replace_with_symlink;
  char symlinkname[FILENAME_LENGTH];
- //char command_string[2 * FILENAME_LENGTH];
  //
  char *resolvedpath;
  //
@@ -37,22 +36,11 @@ void replace_file_with_symlink_if_filename_contains_white_spaces(char *filename)
   fprintf(stderr, "ERROR: symlinks_to_images counter is out of range!\n");
   return;
  }
- //if( 0!=fitsfile_read_check(filename) ){
- // fprintf(stderr,"The input does not appear to be a FITS image: %s\n",filename);return;
- //}
  fprintf(stderr, "WARNING: image path \"%s\" contains white spaces - SExtractor will not be able to handle that!\nTrying to circumvent this problem by creating symbolic link %s\n", filename, symlinkname);
 
  if( 0 == mkdir("symlinks_to_images", 0766) ) {
   fprintf(stderr, "Creating directory 'symlinks_to_images/'\n");
  }
-
- /*
- // A super silly way to create symlinks_to_images folder if it does not exist yet
- sprintf( command_string, "if [ ! -d symlinks_to_images ];then mkdir symlinks_to_images ;fi" );
- if ( 0 != system( command_string ) ) {
-  fprintf( stderr, "WARNING: there seems to be a problem creating symbolic links to the input images! replace_file_with_symlink_if_filename_contains_white_spaces()\n" );
- }
-*/
 
  // Create symlink
  resolvedpath= realpath(filename, 0);
@@ -62,15 +50,6 @@ void replace_file_with_symlink_if_filename_contains_white_spaces(char *filename)
   return;
  }
  free(resolvedpath);
-
- /*
- // The old and silly implementation of the above using a shell command
- // (that relies on 'readlink -f' not available on OS X)
- sprintf( command_string, "if [ ! -d symlinks_to_images ];then mkdir symlinks_to_images ;fi ; TRUEPATH=`readlink -f '%s'` ; ln -s \"$TRUEPATH\" %s", filename, symlink );
- if ( 0 != system( command_string ) ) {
-  fprintf( stderr, "WARNING: there seems to be a problem creating symbolic links to the input images! replace_file_with_symlink_if_filename_contains_white_spaces()\n" );
- }
-*/
 
  strncpy(filename, symlinkname, FILENAME_LENGTH - 1);
  filename[FILENAME_LENGTH - 1]= '\0'; // just in case
