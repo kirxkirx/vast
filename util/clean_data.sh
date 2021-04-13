@@ -104,7 +104,7 @@ if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
  rm -f 'lightcurve.tmp_emergency_stop_debug'
 fi
 # Remove symlinks to images
-# THIS CANNOT BE HERE, because util/clean_data.sh is run by vast main program AFTER symlinks arecreated
+# THIS CANNOT BE HERE, because util/clean_data.sh is run by vast main program AFTER symlinks are created
 #rm -rf symlinks_to_images/
 
 # reset exclude.lst

@@ -2202,15 +2202,25 @@ int main(int argc, char **argv) {
  input_images= NULL;
  Num= 0;
 
- // Clean symlinks to images
+ // Clean symlinks to images and on-the-fly converted images from a previous run
  if( argc > 1 ) {
-// This cannot be handled in util/clean_data.sh because we start it after creating the symlinks
+  // This cannot be handled in util/clean_data.sh because we start it after creating the symlinks
+  
+  // symlinks
 #ifdef DEBUGMESSAGES
   fprintf(stderr, "Starting remove_directory( \"symlinks_to_images\" )\n");
 #endif
   remove_directory("symlinks_to_images");
 #ifdef DEBUGMESSAGES
   fprintf(stderr, "Done with remove_directory( \"symlinks_to_images\" )\n");
+#endif
+  // converted images
+#ifdef DEBUGMESSAGES
+  fprintf(stderr, "Starting remove_directory( \"converted_images\" )\n");
+#endif
+  remove_directory("converted_images");
+#ifdef DEBUGMESSAGES
+  fprintf(stderr, "Done with remove_directory( \"converted_images\" )\n");
 #endif
  }
 
@@ -2304,6 +2314,8 @@ int main(int argc, char **argv) {
         }
         // handle file names with white spaces
         replace_file_with_symlink_if_filename_contains_white_spaces(dir_string2);
+        // handle RGB DSLR image
+        cutout_green_channel_out_of_RGB_DSLR_image(dir_string2);
         // allocate memory for each item in the image list
         malloc_size= sizeof(char) * (strlen(dir_string2) + 1);
         // !!!
@@ -2349,6 +2361,8 @@ int main(int argc, char **argv) {
       }
       // handle file names with white spaces
       replace_file_with_symlink_if_filename_contains_white_spaces(dir_string);
+      // handle RGB DSLR image
+      cutout_green_channel_out_of_RGB_DSLR_image(dir_string);
       // allocate memory for each item in the image list
       malloc_size= sizeof(char) * (strlen(dir_string) + 1);
       // !!!
@@ -2385,13 +2399,14 @@ int main(int argc, char **argv) {
     fprintf(stderr, "The input does not appear to be a FITS image: %s\n", file_or_dir_on_command_line);
     continue;
    }
-   //input_images = (char **)realloc(input_images, sizeof(char *) * n);
    input_images= (char **)realloc(input_images, sizeof(char *) * (Num + 1));
    if( input_images == NULL ) {
     fprintf(stderr, "ERROR: can't allocate memory!\n input_images = (char **)realloc(input_images, sizeof(char *) * n); - failed!\n");
     return 1;
    }
    replace_file_with_symlink_if_filename_contains_white_spaces(file_or_dir_on_command_line);
+   // handle RGB DSLR image
+   cutout_green_channel_out_of_RGB_DSLR_image(file_or_dir_on_command_line);
    malloc_size= sizeof(char) * (strlen(file_or_dir_on_command_line) + 1);
    // !!!
    if( malloc_size > FILENAME_LENGTH ) {

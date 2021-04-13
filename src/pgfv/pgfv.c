@@ -1090,6 +1090,7 @@ int main(int argc, char **argv) {
  }
 
  replace_file_with_symlink_if_filename_contains_white_spaces(fits_image_name);
+ cutout_green_channel_out_of_RGB_DSLR_image(fits_image_name);
 
  if( argc - optind >= 4 ) {
   // Now we need to figure out if the input values are pixel or celestial coordinates

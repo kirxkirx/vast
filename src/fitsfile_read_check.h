@@ -86,7 +86,8 @@ static inline int fitsfile_read_check(char *fitsfilename) {
  if( status || naxis != 2 ) {
   if( naxis == 3 ) {
    fits_read_key(fptr, TLONG, "NAXIS3", &naxes3, NULL, &status);
-   if( naxes3 == 1 ) {
+   // Yes, we now support on-the-fly conversion of RGB images (G channel extraction)
+   if( naxes3 == 1 || naxes3 == 3 ) {
     fprintf(stderr, "%s image has NAXIS = %d, but NAXIS3 = %ld -- maybe there is some hope to handle this image...\n", fitsfilename, naxis, naxes3);
     fits_close_file(fptr, &status);
     return 0;
@@ -144,8 +145,8 @@ static inline int fitsfile_read_check_silent(char *fitsfilename) {
  if( status || naxis != 2 ) {
   if( naxis == 3 ) {
    fits_read_key(fptr, TLONG, "NAXIS3", &naxes3, NULL, &status);
-   if( naxes3 == 1 ) {
-    //fprintf( stderr, "%s image has NAXIS = %d, but NAXIS3 = %ld -- maybe there is some hope to handle this image...\n", fitsfilename, naxis, naxes3 );
+   // Yes, we now support on-the-fly conversion of RGB images (G channel extraction)
+   if( naxes3 == 1 || naxes3 == 3 ) {
     fits_close_file(fptr, &status);
     return 0;
    }
