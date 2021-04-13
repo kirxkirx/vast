@@ -92,178 +92,15 @@ function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image
  return 0
 }
 
+
+########### Main part of the script begins here ###########
+
+
+
 # Set the correct path to 'timeout'
 TIMEOUT_COMMAND=`"$VAST_PATH"lib/find_timeout_command.sh`
 export TIMEOUT_COMMAND
 
-# Decide if we want to use local installation of Astrometry.net software or a remote one
-#ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
-# Check the default Astrometry.net install location
-if [ -d /usr/local/astrometry/bin ];then
- echo "$PATH" | grep --quiet '/usr/local/astrometry/bin'
- if [ $? -ne 0 ];then
-  export PATH=$PATH:/usr/local/astrometry/bin
- fi
-fi
-# Check another default Astrometry.net install location
-if [ -d /usr/share/astrometry/bin ];then
- echo "$PATH" | grep --quiet '/usr/share/astrometry/bin'
- if [ $? -ne 0 ];then
-  export PATH=$PATH:/usr/share/astrometry/bin
- fi
-fi
-
-# if ASTROMETRYNET_LOCAL_OR_REMOTE was not set externally to the script
-if [ -z "$ASTROMETRYNET_LOCAL_OR_REMOTE" ];then
- command -v solve-field &>/dev/null
- if [ $? -eq 0 ];then
-  # Check that this is an executable file
-  if [ -x `command -v solve-field` ];then
-   echo "Using the local copy of Astrometry.net software..."
-   ASTROMETRYNET_LOCAL_OR_REMOTE="local"
-  else
-   echo "WARNING: solve-field is found, but it is not an executable file!"
-   echo "Using a remote server hosting Astrometry.net software..."
-   ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
-  fi
- else
-  echo "Using a remote server hosting Astrometry.net software..."
-  ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
- fi
-else
- echo "environment variable set: ASTROMETRYNET_LOCAL_OR_REMOTE=$ASTROMETRYNET_LOCAL_OR_REMOTE"
-fi
-
-
-#### REMOVE BEFORE PRODUCTION: this is to debug the remote plate solve server access
-#ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
-####
-
-HOST_WE_ARE_RUNNING_AT=`hostname`
-
-PLATE_SOLVE_SERVERS="scan.sai.msu.ru polaris.kirx.net vast.sai.msu.ru"
-
-if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
-
- # Check if we are requested to use a specific plate solve server
- if [ ! -z "$FORCE_PLATE_SOLVE_SERVER" ];then
-  if [ "$FORCE_PLATE_SOLVE_SERVER" != "none" ];then
-   echo "WARNING: using the user-specified plate solve server $FORCE_PLATE_SOLVE_SERVER"
-   PLATE_SOLVE_SERVER="$FORCE_PLATE_SOLVE_SERVER"
-   PLATE_SOLVE_SERVERS="$PLATE_SOLVE_SERVER"
-  fi
- fi
-
-
- ###################################################
- echo -n "Checking if we can reach any plate solve servers... "
- # Decide on which plate solve server to use
- # first - set the initial list of servers
- rm -f server$$_*.ping_ok
- for i in $PLATE_SOLVE_SERVERS ;do
-  # make sure we'll not remotely connect to ourselves
-  if [ ! -z "$HOST_WE_ARE_RUNNING_AT" ];then
-   echo "$i" | grep --quiet "$HOST_WE_ARE_RUNNING_AT"
-   if [ $? -eq 0 ];then
-    continue
-   fi
-  fi
-  #
-  ping -c1 -n "$i" &>/dev/null && echo "$i" > server$$_"$i".ping_ok &
-  echo -n "$i "
- done
-
- wait
- ### The ping test will not work if we are behind a firewall that doesn't let ping out
- # If no servers could be reached, try to test for this possibility
- ########################################
- for SERVER_PING_OK_FILE in server$$_*.ping_ok ;do
-  if [ -f $SERVER_PING_OK_FILE ];then
-   # OK we could ping at least one server
-   break
-  fi
-  # If we are still here, that means we are either offline or behind a firewall that doesn't let ping out
-  for i in $PLATE_SOLVE_SERVERS ;do
-   # make sure we'll not remotely connect to ourselves
-   if [ ! -z "$HOST_WE_ARE_RUNNING_AT" ];then
-    echo "$i" | grep --quiet "$HOST_WE_ARE_RUNNING_AT"
-    if [ $? -eq 0 ];then
-     continue
-    fi
-   fi
-   #
-   curl --max-time 10 --silent http://"$i"/astrometry_engine/files/ | grep --quiet 'Parent Directory' && echo "$i" > server$$_"$i".ping_ok &
-   echo -n "$i "
-  done
-  wait
- done
- ########################################
-
- cat server$$_*.ping_ok > servers$$.ping_ok
-
- echo "
-The reachable servers are:"
- cat servers$$.ping_ok
-
- if [ ! -s servers$$.ping_ok ];then
-  echo "ERROR: no servers could be reached"
-  exit 1
- fi
-
- N_REACHABLE_SERVERS=`cat servers$$.ping_ok | wc -l`
- if [ $N_REACHABLE_SERVERS -eq 1 ];then
-  PLATE_SOLVE_SERVER=`head -n1 servers$$.ping_ok`
- else
-  # Choose a random server among the available ones
-  PLATE_SOLVE_SERVER=`$TIMEOUT_COMMAND 10 sort --random-sort --random-source=/dev/urandom servers$$.ping_ok | head -n1`
-  # If the above fails because sort doesn't understand the '--random-sort' option
-  if [ "$PLATE_SOLVE_SERVER" = "" ];then
-   PLATE_SOLVE_SERVER=`head -n1 servers$$.ping_ok`
-  fi
- fi # if [ $N_REACHABLE_SERVERS -eq 1 ];then
-
- # Update the list of available servers
- PLATE_SOLVE_SERVERS=""
- while read SERVER ;do
-  PLATE_SOLVE_SERVERS="$PLATE_SOLVE_SERVERS $SERVER"
- done < servers$$.ping_ok
- echo "Updated list of available servers: $PLATE_SOLVE_SERVERS"
-
- rm -f server$$_*.ping_ok servers$$.ping_ok
-
-# Moved up
-# # Check if we are requested to use a specific plate solve server
-# if [ ! -z "$FORCE_PLATE_SOLVE_SERVER" ];then
-#  if [ "$FORCE_PLATE_SOLVE_SERVER" != "none" ];then
-#   echo "WARNING: using the user-specified plate solve server $FORCE_PLATE_SOLVE_SERVER"
-#   PLATE_SOLVE_SERVER="$FORCE_PLATE_SOLVE_SERVER"
-#   PLATE_SOLVE_SERVERS="$PLATE_SOLVE_SERVER"
-#  fi
-# fi
-
- if [ "$PLATE_SOLVE_SERVER" = "" ];then
-  echo "ERROR choosing the plate solve server"
-  exit 1
- else
-  echo "We choose the plate solve server $PLATE_SOLVE_SERVER"
- fi
- ###################################################
-
- # Find curl
- CURL=`command -v curl`
- if [ $? -ne 0 ];then
-  echo "ERROR: cannot find curl in PATH"
-  exit 1
- else
-  # Set max time for all network communications
-  # note that this is ALSO acomplished by the timeout command before curl
-  # AND at the server side
-  #CURL="$CURL --max-time 299 "
-  # Needed for POST queries to work with cURL
-  CURL="$CURL --max-time 299 -H 'Expect:'"
- fi 
-
-fi # if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
 
 #VAST_PATH=`readlink -f $0`
 VAST_PATH=`vastrealpath $0`
@@ -437,6 +274,179 @@ if [ -z $2 ];then
 else
  FIELD_OF_VIEW_ARCMIN=$2
 fi
+
+
+########### Decide how to reach local or remote installation of Astrometry.net code ###########
+#
+# Decide if we want to use local installation of Astrometry.net software or a remote one
+#ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
+# Check the default Astrometry.net install location
+if [ -d /usr/local/astrometry/bin ];then
+ echo "$PATH" | grep --quiet '/usr/local/astrometry/bin'
+ if [ $? -ne 0 ];then
+  export PATH=$PATH:/usr/local/astrometry/bin
+ fi
+fi
+# Check another default Astrometry.net install location
+if [ -d /usr/share/astrometry/bin ];then
+ echo "$PATH" | grep --quiet '/usr/share/astrometry/bin'
+ if [ $? -ne 0 ];then
+  export PATH=$PATH:/usr/share/astrometry/bin
+ fi
+fi
+
+# if ASTROMETRYNET_LOCAL_OR_REMOTE was not set externally to the script
+if [ -z "$ASTROMETRYNET_LOCAL_OR_REMOTE" ];then
+ command -v solve-field &>/dev/null
+ if [ $? -eq 0 ];then
+  # Check that this is an executable file
+  if [ -x `command -v solve-field` ];then
+   echo "Using the local copy of Astrometry.net software..."
+   ASTROMETRYNET_LOCAL_OR_REMOTE="local"
+  else
+   echo "WARNING: solve-field is found, but it is not an executable file!"
+   echo "Using a remote server hosting Astrometry.net software..."
+   ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
+  fi
+ else
+  echo "Using a remote server hosting Astrometry.net software..."
+  ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
+ fi
+else
+ echo "environment variable set: ASTROMETRYNET_LOCAL_OR_REMOTE=$ASTROMETRYNET_LOCAL_OR_REMOTE"
+fi
+
+
+#### REMOVE BEFORE PRODUCTION: this is to debug the remote plate solve server access
+#ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
+####
+
+HOST_WE_ARE_RUNNING_AT=`hostname`
+
+PLATE_SOLVE_SERVERS="scan.sai.msu.ru polaris.kirx.net vast.sai.msu.ru"
+
+if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
+
+ # Check if we are requested to use a specific plate solve server
+ if [ ! -z "$FORCE_PLATE_SOLVE_SERVER" ];then
+  if [ "$FORCE_PLATE_SOLVE_SERVER" != "none" ];then
+   echo "WARNING: using the user-specified plate solve server $FORCE_PLATE_SOLVE_SERVER"
+   PLATE_SOLVE_SERVER="$FORCE_PLATE_SOLVE_SERVER"
+   PLATE_SOLVE_SERVERS="$PLATE_SOLVE_SERVER"
+  fi
+ fi
+
+
+ ###################################################
+ echo -n "Checking if we can reach any plate solve servers... "
+ # Decide on which plate solve server to use
+ # first - set the initial list of servers
+ rm -f server$$_*.ping_ok
+ for i in $PLATE_SOLVE_SERVERS ;do
+  # make sure we'll not remotely connect to ourselves
+  if [ ! -z "$HOST_WE_ARE_RUNNING_AT" ];then
+   echo "$i" | grep --quiet "$HOST_WE_ARE_RUNNING_AT"
+   if [ $? -eq 0 ];then
+    continue
+   fi
+  fi
+  #
+  ping -c1 -n "$i" &>/dev/null && echo "$i" > server$$_"$i".ping_ok &
+  echo -n "$i "
+ done
+
+ wait
+ ### The ping test will not work if we are behind a firewall that doesn't let ping out
+ # If no servers could be reached, try to test for this possibility
+ ########################################
+ for SERVER_PING_OK_FILE in server$$_*.ping_ok ;do
+  if [ -f $SERVER_PING_OK_FILE ];then
+   # OK we could ping at least one server
+   break
+  fi
+  # If we are still here, that means we are either offline or behind a firewall that doesn't let ping out
+  for i in $PLATE_SOLVE_SERVERS ;do
+   # make sure we'll not remotely connect to ourselves
+   if [ ! -z "$HOST_WE_ARE_RUNNING_AT" ];then
+    echo "$i" | grep --quiet "$HOST_WE_ARE_RUNNING_AT"
+    if [ $? -eq 0 ];then
+     continue
+    fi
+   fi
+   #
+   curl --max-time 10 --silent http://"$i"/astrometry_engine/files/ | grep --quiet 'Parent Directory' && echo "$i" > server$$_"$i".ping_ok &
+   echo -n "$i "
+  done
+  wait
+ done
+ ########################################
+
+ cat server$$_*.ping_ok > servers$$.ping_ok
+
+ echo "
+The reachable servers are:"
+ cat servers$$.ping_ok
+
+ if [ ! -s servers$$.ping_ok ];then
+  echo "ERROR: no servers could be reached"
+  exit 1
+ fi
+
+ N_REACHABLE_SERVERS=`cat servers$$.ping_ok | wc -l`
+ if [ $N_REACHABLE_SERVERS -eq 1 ];then
+  PLATE_SOLVE_SERVER=`head -n1 servers$$.ping_ok`
+ else
+  # Choose a random server among the available ones
+  PLATE_SOLVE_SERVER=`$TIMEOUT_COMMAND 10 sort --random-sort --random-source=/dev/urandom servers$$.ping_ok | head -n1`
+  # If the above fails because sort doesn't understand the '--random-sort' option
+  if [ "$PLATE_SOLVE_SERVER" = "" ];then
+   PLATE_SOLVE_SERVER=`head -n1 servers$$.ping_ok`
+  fi
+ fi # if [ $N_REACHABLE_SERVERS -eq 1 ];then
+
+ # Update the list of available servers
+ PLATE_SOLVE_SERVERS=""
+ while read SERVER ;do
+  PLATE_SOLVE_SERVERS="$PLATE_SOLVE_SERVERS $SERVER"
+ done < servers$$.ping_ok
+ echo "Updated list of available servers: $PLATE_SOLVE_SERVERS"
+
+ rm -f server$$_*.ping_ok servers$$.ping_ok
+
+# Moved up
+# # Check if we are requested to use a specific plate solve server
+# if [ ! -z "$FORCE_PLATE_SOLVE_SERVER" ];then
+#  if [ "$FORCE_PLATE_SOLVE_SERVER" != "none" ];then
+#   echo "WARNING: using the user-specified plate solve server $FORCE_PLATE_SOLVE_SERVER"
+#   PLATE_SOLVE_SERVER="$FORCE_PLATE_SOLVE_SERVER"
+#   PLATE_SOLVE_SERVERS="$PLATE_SOLVE_SERVER"
+#  fi
+# fi
+
+ if [ "$PLATE_SOLVE_SERVER" = "" ];then
+  echo "ERROR choosing the plate solve server"
+  exit 1
+ else
+  echo "We choose the plate solve server $PLATE_SOLVE_SERVER"
+ fi
+ ###################################################
+
+ # Find curl
+ CURL=`command -v curl`
+ if [ $? -ne 0 ];then
+  echo "ERROR: cannot find curl in PATH"
+  exit 1
+ else
+  # Set max time for all network communications
+  # note that this is ALSO acomplished by the timeout command before curl
+  # AND at the server side
+  #CURL="$CURL --max-time 299 "
+  # Needed for POST queries to work with cURL
+  CURL="$CURL --max-time 299 -H 'Expect:'"
+ fi 
+
+fi # if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
+
 
 
 
