@@ -37,6 +37,8 @@
 	'util/fitscopy rgb_image.fit[*,*,2:2] g_image.fit'
 	Note that the converted images are temporarily stored in 'converted_images/' subfolder of 
 	the vast working directory meaning you have to have enough disk space to copy the input image set.
+	An external program like 'siril' ( https://siril.org/ ) can be used to convert RAW DSLR images 
+	to FITS format (that can be read by VaST) and stack the images if needed.
 20 Oct 2020: vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911
