@@ -479,7 +479,7 @@ int read_wcs_catalog(char *fits_image_filename, struct detected_star *stars, int
  (*number_of_stars_in_wcs_catalog)= i;
  fclose(f);
  if( i < MIN_NUMBER_OF_STARS_ON_FRAME ) {
-  fprintf(stderr, "ERROR: too few stars in the SExtractor catalog file %s\n", wcs_catalog_filename);
+  fprintf(stderr, "ERROR: too few stars (%d<%d) in the SExtractor catalog file %s\n", i, MIN_NUMBER_OF_STARS_ON_FRAME, wcs_catalog_filename);
   fclose(f);
   return 1;
  }

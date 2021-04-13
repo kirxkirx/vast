@@ -91,7 +91,7 @@ void cutout_green_channel_out_of_RGB_DSLR_image(char *filename) {
  if( 0 != status ) {
   fits_report_error(stderr, status); // print out any error messages
   fits_clear_errmsg();               // clear the CFITSIO error message stack
-  return status;
+  return;
  }
  fits_read_key(fptr, TDOUBLE, "ISOSPEED", &isospeed, NULL, &status);
  if( 0 == status ) {
