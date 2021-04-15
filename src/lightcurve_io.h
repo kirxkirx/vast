@@ -164,11 +164,19 @@ static inline int read_lightcurve_point(FILE *lc_file_descriptor, double *jd, do
    (*jd)= 0.0;
    return 1;
   }
+  if( 0 != isnan((*mag_err)) ) {
+   (*jd)= 0.0;
+   return 1;
+  }
   if( 0 != isinf((*jd)) ) {
    (*jd)= 0.0;
    return 1;
   }
   if( 0 != isinf((*mag)) ) {
+   (*jd)= 0.0;
+   return 1;
+  }
+  if( 0 != isinf((*mag_err)) ) {
    (*jd)= 0.0;
    return 1;
   }

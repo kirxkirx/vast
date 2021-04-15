@@ -305,31 +305,6 @@ void magnitude_calibration_using_calib_txt(double *mag, int N) {
  return;
 }
 
-/* Extract reference image name from log file */
-/*
-void get_ref_image_name(char *str){
- FILE *outfile;
- char outfilename[2048];
- outfile=fopen("vast_summary.log","r");
- if( outfile==NULL ){
-  fprintf(stderr,"ERROR: can't open the log file vast_summary.log\n");
-  exit(1);
- }
- fclose(outfile);
- system("grep \"Ref.  image:\" vast_summary.log | awk '{print $6}' > tmp.tmp");
- strcpy(outfilename,"tmp.tmp");
- outfile=fopen(outfilename,"r");
- if( NULL==outfile ){
-  fprintf(stderr,"ERROR: Can't open file %s\n",outfilename);
-  exit(1);
- }
- fscanf(outfile,"%s",str);
- fclose(outfile);
- system("rm -f tmp.tmp");
- return;
-}
-*/
-
 void get_ref_image_name(char *str) {
  FILE *outfile;
  char stringbuf[2048];
