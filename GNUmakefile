@@ -87,7 +87,8 @@ etc: stat_outfile util/calibrate_magnitude_scale lib/deg2hms lib/coord_v_dva_slo
 
 old: formater_out_wfk 
 
-astrometry: lib/astrometry/get_image_dimentions lib/astrometry/insert_wcs_header lib/make_outxyls_for_astrometric_calibration lib/fits2cat util/solve_plate_with_UCAC5 lib/autodetect_aperture_main lib/try_to_guess_image_fov cfitsio gsl
+#astrometry: lib/astrometry/get_image_dimentions lib/astrometry/insert_wcs_header lib/make_outxyls_for_astrometric_calibration lib/fits2cat util/solve_plate_with_UCAC5 lib/autodetect_aperture_main lib/try_to_guess_image_fov cfitsio gsl
+astrometry: lib/astrometry/get_image_dimentions lib/astrometry/insert_wcs_header lib/make_outxyls_for_astrometric_calibration util/solve_plate_with_UCAC5 lib/autodetect_aperture_main lib/try_to_guess_image_fov cfitsio gsl
 
 pgplot_components: variability_indexes.o photocurve.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o replace_file_with_symlink_if_filename_contains_white_spaces.o wpolyfit.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o cfitsio gsl
 	lib/test_libpng.sh
@@ -176,8 +177,8 @@ is_point_close_or_off_the_frame_edge.o: $(SRC_PATH)is_point_close_or_off_the_fra
 
 guess_saturation_limit_main.o: $(SRC_PATH)guess_saturation_limit_main.c
 	$(CC) $(OPTFLAGS) -c $(SRC_PATH)guess_saturation_limit_main.c
-lib/guess_saturation_limit_main: guess_saturation_limit_main.o guess_saturation_limit.o autodetect_aperture.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o
-	$(CC) $(OPTFLAGS) -o lib/guess_saturation_limit_main  guess_saturation_limit_main.o guess_saturation_limit.o autodetect_aperture.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o $(GSL_LIB) $(CFITSIO_LIB) -lm
+lib/guess_saturation_limit_main: guess_saturation_limit_main.o guess_saturation_limit.o autodetect_aperture.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o
+	$(CC) $(OPTFLAGS) -o lib/guess_saturation_limit_main  guess_saturation_limit_main.o guess_saturation_limit.o autodetect_aperture.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o $(GSL_LIB) $(CFITSIO_LIB) -lm
 
 variability_indexes.o: $(SRC_PATH)variability_indexes.c $(SRC_PATH)vast_limits.h $(SRC_PATH)variability_indexes.h
 	# Older GCC versions complain about isnormal() unless -std=c99 is given explicitly
@@ -293,8 +294,8 @@ util/get_image_date: get_image_date.o gettime.o
 	cd util/ ; ln -s get_image_date fix_image_date ; cd -
 lib/find_flares: $(SRC_PATH)find_flares.c
 	$(CC) $(OPTFLAGS) -o lib/find_flares $(SRC_PATH)find_flares.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
-lib/autodetect_aperture_main: autodetect_aperture_main.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o gettime.o get_number_of_cpu_cores.o get_path_to_vast.o variability_indexes.o is_point_close_or_off_the_frame_edge.o
-	$(CC) $(OPTFLAGS) -o lib/autodetect_aperture_main autodetect_aperture_main.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o gettime.o get_number_of_cpu_cores.o get_path_to_vast.o variability_indexes.o is_point_close_or_off_the_frame_edge.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE)  -lm
+lib/autodetect_aperture_main: autodetect_aperture_main.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o gettime.o get_number_of_cpu_cores.o get_path_to_vast.o variability_indexes.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o
+	$(CC) $(OPTFLAGS) -o lib/autodetect_aperture_main autodetect_aperture_main.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o gettime.o get_number_of_cpu_cores.o get_path_to_vast.o variability_indexes.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE)  -lm
 	cd lib ; ln -s autodetect_aperture_main sextract_single_image_noninteractive ; cd ..
 autodetect_aperture_main.o: $(SRC_PATH)autodetect_aperture_main.c
 	$(CC) $(OPTFLAGS) -c $(SRC_PATH)autodetect_aperture_main.c
@@ -417,10 +418,10 @@ make_outxyls_for_astrometric_calibration.o: $(SRC_PATH)make_outxyls_for_astromet
 lib/make_outxyls_for_astrometric_calibration: make_outxyls_for_astrometric_calibration.o is_point_close_or_off_the_frame_edge.o
 	$(CC) $(OPTFLAGS) -o lib/make_outxyls_for_astrometric_calibration make_outxyls_for_astrometric_calibration.o is_point_close_or_off_the_frame_edge.o $(GSL_LIB) -I$(GSL_INCLUDE) $(CFITSIO_LIB) -lm
 
-lib/fits2cat: fits2cat.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o
-	$(CC) $(OPTFLAGS) -o lib/fits2cat fits2cat.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
-fits2cat.o: $(SRC_PATH)fits2cat.c
-	$(CC) $(OPTFLAGS) -c -o fits2cat.o $(SRC_PATH)fits2cat.c
+#lib/fits2cat: fits2cat.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o
+#	$(CC) $(OPTFLAGS) -o lib/fits2cat fits2cat.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+#fits2cat.o: $(SRC_PATH)fits2cat.c
+#	$(CC) $(OPTFLAGS) -c -o fits2cat.o $(SRC_PATH)fits2cat.c
 util/solve_plate_with_UCAC5: solve_plate_with_UCAC5.o gettime.o wpolyfit.o variability_indexes.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o
 	$(CC) $(OPTFLAGS) -o util/solve_plate_with_UCAC5 solve_plate_with_UCAC5.o gettime.o fit_plane_lin.o wpolyfit.o variability_indexes.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 	cd util/ ; ln -s solve_plate_with_UCAC5 solve_plate_with_UCAC4 ; cd ..
@@ -439,6 +440,8 @@ shell_commands: pgplot_components lib/lightcurve_simulator vast
 	cd lib && ln -s lightcurve_simulator sine_wave_simulator && ln -s lightcurve_simulator sine_wave_and_psd_simulator && ln -s lightcurve_simulator sine_wave_or_psd_simulator && cd -
 	#
 	cd lib && ln -s deg2hms deg2hms_uas && cd -
+	#
+	cd lib && ln -s autodetect_aperture_main fits2cat && cd -
 	#
 	# This is to remove docs
 	rm -f `find src/ -name '*.pdf'` `find src/ -name '*.ps'`

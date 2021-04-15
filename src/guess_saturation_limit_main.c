@@ -10,7 +10,8 @@
 #include "vast_limits.h"
 #include "guess_saturation_limit.h"
 #include "ident.h"
-//#include "write_individual_image_log.h"
+
+#include "replace_file_with_symlink_if_filename_contains_white_spaces.h"
 
 int main(int argc, char **argv) {
 
@@ -30,6 +31,9 @@ int main(int argc, char **argv) {
  }
  strncpy(fitsfilename, argv[1], FILENAME_LENGTH - 1);
  fitsfilename[FILENAME_LENGTH - 1]= '\0';
+
+ replace_file_with_symlink_if_filename_contains_white_spaces(fitsfilename);
+ cutout_green_channel_out_of_RGB_DSLR_image(fitsfilename);
 
  // Reset
  gain_sextractor_cl_parameter_string[0]= flag_image_sextractor_cl_parameter_string[0]= flag_image_filename[0]= '\0';
