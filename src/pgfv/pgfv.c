@@ -43,14 +43,14 @@
 
 int Kourovka_SBG_date_hack(char *fitsfilename, char *DATEOBS, int *date_parsed, double *exposure); // defined in gettime.c
 
-void save_star_to_vast_list_of_previously_known_variables_and_exclude_lst(int sexNUMBER, float sexX, float sexY) {
+void save_star_to_vast_list_of_previously_known_variables_and_exclude_lst(int sextractor_catalog__star_number, float sextractor_catalog__X, float sextractor_catalog__Y) {
  FILE *filepointer;
- fprintf(stderr, "Marking out%05d.dat as a variable star and excluding it from magnitude calibration\n", sexNUMBER);
+ fprintf(stderr, "Marking out%05d.dat as a variable star and excluding it from magnitude calibration\n", sextractor_catalog__star_number);
  filepointer= fopen("vast_list_of_previously_known_variables.log", "a");
- fprintf(filepointer, "out%05d.dat\n", sexNUMBER);
+ fprintf(filepointer, "out%05d.dat\n", sextractor_catalog__star_number);
  fclose(filepointer);
  filepointer= fopen("exclude.lst", "a");
- fprintf(filepointer, "%.3f %.3f\n", sexX, sexY);
+ fprintf(filepointer, "%.3f %.3f\n", sextractor_catalog__X, sextractor_catalog__Y);
  fclose(filepointer);
  return;
 }
@@ -202,6 +202,90 @@ int sky2xy(char *fitsfilename, char *input_RA_string, char *input_DEC_string, fl
 
  return 0;
 }
+
+void write_list_of_all_stars_with_calibrated_magnitudes_to_file( float *sextractor_catalog__X, float *sextractor_catalog__Y, double *sextractor_catalog__MAG, double *sextractor_catalog__MAG_ERR, int *sextractor_catalog__star_number, int *sextractor_catalog__se_FLAG, int *sextractor_catalog__ext_FLAG, int sextractor_catalog__counter, char *sextractor_catalog_filename) {
+ FILE *outputfile;
+ char outputfilename[FILENAME_LENGTH+12];
+ int i; // counter
+ sprintf(outputfilename, "%s.calibrated", sextractor_catalog_filename);
+ outputfile=fopen(outputfilename,"w");
+ if( NULL==outputfile ){
+  fprintf(stderr,"ERROR writing %s\n",outputfilename);
+  return;
+ }
+ for(i=0;i<sextractor_catalog__counter;i++) {
+  // OK not all, we want to filter-out the obviously bad ones
+  if( 0 != isnan(sextractor_catalog__MAG[i]) ) {
+   continue;
+  }
+  if( 0 != isinf(sextractor_catalog__MAG[i]) ) {
+   continue;
+  }
+  if( 0 != isnan(sextractor_catalog__X[i]) ) {
+   continue;
+  }
+  if( 0 != isnan(sextractor_catalog__Y[i]) ) {
+   continue;
+  }
+  if( 0 != isinf(sextractor_catalog__X[i]) ) {
+   continue;
+  }
+  if( 0 != isinf(sextractor_catalog__Y[i]) ) {
+   continue;
+  }
+#ifdef STRICT_CHECK_OF_JD_AND_MAG_RANGE
+#ifdef VAST_USE_BUILTIN_FUNCTIONS
+// Make a proper check of the input values if isnormal() is defined
+#if defined _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L
+  // We use __builtin_isnormal() as we know it is working if VAST_USE_BUILTIN_FUNCTIONS is defined
+  // Othervise even with the '_ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L' check
+  // isnormal() doesn't work on Ubuntu 14.04 trusty (vast.sai.msu.ru)
+  // BEWARE 0.0 is also not considered normal by isnormal() !!!
+  if( 0 == __builtin_isnormal(sextractor_catalog__MAG[i]) ) {
+   continue;
+  }
+  if( 0 == __builtin_isnormal(sextractor_catalog__MAG_ERR[i]) ) {
+   continue;
+  }
+  if( 0 == __builtin_isnormal(sextractor_catalog__X[i]) ) {
+   continue;
+  }
+  if( 0 == __builtin_isnormal(sextractor_catalog__Y[i]) ) {
+   continue;
+  }
+#endif
+#endif
+  // Check the input mag
+  if( sextractor_catalog__MAG[i] < BRIGHTEST_STARS ) {
+   continue;
+  }
+  // A similar check for the expected faintest stars
+  if( sextractor_catalog__MAG[i] > FAINTEST_STARS_ANYMAG ) {
+   continue;
+  }
+
+  // Check if the measurement errors are not too big
+  if( sextractor_catalog__MAG_ERR[i] > MAX_MAG_ERROR ) {
+   continue;
+  }
+
+#endif
+
+  if( sextractor_catalog__se_FLAG[i] > 3 ) {
+   continue;
+  }
+  if( sextractor_catalog__ext_FLAG[i] > 0 ) {
+   continue;
+  }
+
+  //
+  fprintf(outputfile, "%8.4lf %.4lf  %10.5f %10.5f  %6d  %3d %1d\n", sextractor_catalog__MAG[i], sextractor_catalog__MAG_ERR[i], sextractor_catalog__X[i], sextractor_catalog__Y[i], sextractor_catalog__star_number[i], sextractor_catalog__se_FLAG[i], sextractor_catalog__ext_FLAG[i]);
+ }
+ fclose(outputfile);
+ fprintf(stderr,"The list of stars with calibrated magnitudes is written to %s\n",outputfilename);
+ return;
+}
+
 
 void print_pgfv_help() {
  fprintf(stderr, "\n");
@@ -817,28 +901,28 @@ int main(int argc, char **argv) {
  //double MUSOR;
  //int intMUSOR;
  //int iMUSOR;
- float *sexX= NULL;
- float *sexY= NULL;
- double *sexFLUX= NULL;
- double *sexFLUX_ERR= NULL;
- double *sexMAG= NULL;
- double *sexMAG_ERR= NULL;
- int *sexNUMBER= NULL;
- int *sexFLAG= NULL;
- int *extFLAG= NULL;
- double *psfCHI2= NULL;
+ float *sextractor_catalog__X= NULL;
+ float *sextractor_catalog__Y= NULL;
+ double *sextractor_catalog__FLUX= NULL;
+ double *sextractor_catalog__FLUX_ERR= NULL;
+ double *sextractor_catalog__MAG= NULL;
+ double *sextractor_catalog__MAG_ERR= NULL;
+ int *sextractor_catalog__star_number= NULL;
+ int *sextractor_catalog__se_FLAG= NULL;
+ int *sextractor_catalog__ext_FLAG= NULL;
+ double *sextractor_catalog__psfCHI2= NULL;
 
- double *sexA_IMAGE= NULL;
- double *sexERRA_IMAGE= NULL;
- double *sexB_IMAGE= NULL;
- double *sexERRB_IMAGE= NULL;
+ double *sextractor_catalog__A_IMAGE= NULL;
+ double *sextractor_catalog__ERRA_IMAGE= NULL;
+ double *sextractor_catalog__B_IMAGE= NULL;
+ double *sextractor_catalog__ERRB_IMAGE= NULL;
 
- int sex= 0;
+ int sextractor_catalog__counter= 0;
  int marker_counter;
 
- float *sexX_viewed= NULL;
- float *sexY_viewed= NULL;
- int sex_viewed_counter;
+ float *sextractor_catalog__X_viewed= NULL;
+ float *sextractor_catalog__Y_viewed= NULL;
+ int sextractor_catalog__viewed_counter;
 
  float *markX_known_variable= NULL;
  float *markY_known_variable= NULL;
@@ -890,7 +974,7 @@ int main(int argc, char **argv) {
  static float bw_g[]= {0.0, 0.0, 0.5, 1.0, 1.0, 1.0};
  static float bw_b[]= {0.0, 0.0, 0.5, 1.0, 1.0, 1.0};
 
- char sextractor_catalog[FILENAME_LENGTH];
+ char sextractor_catalog_filename[FILENAME_LENGTH];
 
  int finding_chart_mode= 0; // =1 draw finding chart to an image file instead of interactive plotting
 
@@ -1108,39 +1192,39 @@ int main(int argc, char **argv) {
   }
 
   // Allocate memory for the arrays
-  sexX= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
-  if( sexX == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for sexX\n");
+  sextractor_catalog__X= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
+  if( sextractor_catalog__X == NULL ) {
+   fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__X\n");
    exit(1);
   };
-  sexY= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
-  if( sexY == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for sexY\n");
+  sextractor_catalog__Y= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
+  if( sextractor_catalog__Y == NULL ) {
+   fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__Y\n");
    exit(1);
   };
-  sexMAG= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
-  if( sexMAG == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for sexMAG\n");
+  sextractor_catalog__MAG= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
+  if( sextractor_catalog__MAG == NULL ) {
+   fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__MAG\n");
    exit(1);
   };
-  sexMAG_ERR= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
-  if( sexMAG_ERR == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for sexMAG_ERR\n");
+  sextractor_catalog__MAG_ERR= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
+  if( sextractor_catalog__MAG_ERR == NULL ) {
+   fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__MAG_ERR\n");
    exit(1);
   };
-  sexNUMBER= (int *)malloc(MAX_NUMBER_OF_STARS * sizeof(int));
-  if( sexNUMBER == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for sexNUMBER\n");
+  sextractor_catalog__star_number= (int *)malloc(MAX_NUMBER_OF_STARS * sizeof(int));
+  if( sextractor_catalog__star_number == NULL ) {
+   fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__star_number\n");
    exit(1);
   };
   marker_counter= 0;
 
-  /* Get reference file name from log */
+  // Get reference file name from log
   get_ref_image_name(fits_image_name);
 
-  /* Read data.m_sigma but select only stars detected on the reference frame */
+  // Read data.m_sigma but select only stars detected on the reference frame 
   matchfile= fopen("data.m_sigma", "r");
-  while( -1 < fscanf(matchfile, "%lf %lf %f %f %s", &sexMAG[sex], &sexMAG_ERR[sex], &sexX[sex], &sexY[sex], RADEC) ) {
+  while( -1 < fscanf(matchfile, "%lf %lf %f %f %s", &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &sextractor_catalog__X[sextractor_catalog__counter], &sextractor_catalog__Y[sextractor_catalog__counter], RADEC) ) {
    calibfile= fopen(RADEC, "r");
    if( calibfile != NULL ) {
     //fscanf(calibfile,"%lf %lf %lf %lf %lf %lf %s",&MUSOR,&MUSOR,&MUSOR,&MUSOR,&MUSOR,&tmp_APER,imagefilename);
@@ -1164,18 +1248,18 @@ int main(int argc, char **argv) {
      //system("rm -f grep.tmp");
      unlink( "grep.tmp" );
      */
-     sexMAG_ERR[sex]= sexMAG_ERR[sex] / sqrt(N - 1);
+     sextractor_catalog__MAG_ERR[sextractor_catalog__counter]= sextractor_catalog__MAG_ERR[sextractor_catalog__counter] / sqrt(N - 1);
      // done with errors
      // Note the star name
-     sscanf(RADEC, "out%d.dat", &sexNUMBER[sex]);
+     sscanf(RADEC, "out%d.dat", &sextractor_catalog__star_number[sextractor_catalog__counter]);
      // remember aperture size, increase counter */
      APER= tmp_APER;
-     sex++;
+     sextractor_catalog__counter++;
     }
    }
   }
   fclose(matchfile);
-  sex--; /* We can't be sure that the last star is visible on the reference frame so we just drop it */
+  sextractor_catalog__counter--; /* We can't be sure that the last star is visible on the reference frame so we just drop it */
  }
 
  /* 
@@ -1337,199 +1421,145 @@ int main(int argc, char **argv) {
   }
   //fprintf(stderr," *** Running SExtractor on %s ***\n",fits_image_name);
   // Star match mode (create WCS) or Single image reduction mode
-  //APER=autodetect_aperture(fits_image_name, sextractor_catalog, 0, 0, fixed_aperture, 1, dimX, dimY);
-  APER= autodetect_aperture(fits_image_name, sextractor_catalog, 0, 0, fixed_aperture, dimX, dimY, 2);
+  APER= autodetect_aperture(fits_image_name, sextractor_catalog_filename, 0, 0, fixed_aperture, dimX, dimY, 2);
   if( fixed_aperture != 0.0 ) {
    APER= fixed_aperture;
   }
 
   //fprintf(stderr,"DEBUG-1\n");
 
-  sexX_viewed= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
-  if( sexX_viewed == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for sexX_viewed\n");
+  sextractor_catalog__X_viewed= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
+  if( sextractor_catalog__X_viewed == NULL ) {
+   fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__X_viewed\n");
    exit(1);
   };
-  sexY_viewed= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
-  if( sexY_viewed == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for sexY_viewed\n");
+  sextractor_catalog__Y_viewed= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
+  if( sextractor_catalog__Y_viewed == NULL ) {
+   fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__Y_viewed\n");
    exit(1);
   };
-  sex_viewed_counter= 0; // initialize
+  sextractor_catalog__viewed_counter= 0; // initialize
 
-  sexX= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
-  if( sexX == NULL ) {
-   fprintf(stderr, "ERROR0: Couldn't allocate memory for sexX\n");
+  sextractor_catalog__X= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
+  if( sextractor_catalog__X == NULL ) {
+   fprintf(stderr, "ERROR0: Couldn't allocate memory for sextractor_catalog__X\n");
    exit(1);
   };
-  sexY= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
-  if( sexY == NULL ) {
-   fprintf(stderr, "ERROR0: Couldn't allocate memory for sexY\n");
+  sextractor_catalog__Y= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
+  if( sextractor_catalog__Y == NULL ) {
+   fprintf(stderr, "ERROR0: Couldn't allocate memory for sextractor_catalog__Y\n");
    exit(1);
   };
-  sexFLUX= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
-  if( sexFLUX == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for sexFLUX\n");
+  sextractor_catalog__FLUX= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
+  if( sextractor_catalog__FLUX == NULL ) {
+   fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__FLUX\n");
    exit(1);
   };
-  sexFLUX_ERR= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
-  if( sexFLUX_ERR == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for sexFLUX_ERR\n");
+  sextractor_catalog__FLUX_ERR= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
+  if( sextractor_catalog__FLUX_ERR == NULL ) {
+   fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__FLUX_ERR\n");
    exit(1);
   };
-  sexMAG= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
-  if( sexMAG == NULL ) {
-   fprintf(stderr, "ERROR0: Couldn't allocate memory for sexMAG\n");
+  sextractor_catalog__MAG= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
+  if( sextractor_catalog__MAG == NULL ) {
+   fprintf(stderr, "ERROR0: Couldn't allocate memory for sextractor_catalog__MAG\n");
    exit(1);
   };
-  sexMAG_ERR= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
-  if( sexMAG_ERR == NULL ) {
-   fprintf(stderr, "ERROR0: Couldn't allocate memory for sexFLUX\n");
+  sextractor_catalog__MAG_ERR= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
+  if( sextractor_catalog__MAG_ERR == NULL ) {
+   fprintf(stderr, "ERROR0: Couldn't allocate memory for sextractor_catalog__FLUX\n");
    exit(1);
   };
-  sexNUMBER= (int *)malloc(MAX_NUMBER_OF_STARS * sizeof(int));
-  if( sexNUMBER == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for sexNUMBER\n");
+  sextractor_catalog__star_number= (int *)malloc(MAX_NUMBER_OF_STARS * sizeof(int));
+  if( sextractor_catalog__star_number == NULL ) {
+   fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__star_number\n");
    exit(1);
   };
-  sexFLAG= (int *)malloc(MAX_NUMBER_OF_STARS * sizeof(int));
-  if( sexFLAG == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for sexFLAG\n");
+  sextractor_catalog__se_FLAG= (int *)malloc(MAX_NUMBER_OF_STARS * sizeof(int));
+  if( sextractor_catalog__se_FLAG == NULL ) {
+   fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__se_FLAG\n");
    exit(1);
   };
-  extFLAG= (int *)malloc(MAX_NUMBER_OF_STARS * sizeof(int));
-  if( extFLAG == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for extFLAG\n");
+  sextractor_catalog__ext_FLAG= (int *)malloc(MAX_NUMBER_OF_STARS * sizeof(int));
+  if( sextractor_catalog__ext_FLAG == NULL ) {
+   fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__ext_FLAG\n");
    exit(1);
   };
-  psfCHI2= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
-  if( psfCHI2 == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for psfCHI2\n");
+  sextractor_catalog__psfCHI2= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
+  if( sextractor_catalog__psfCHI2 == NULL ) {
+   fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__psfCHI2\n");
    exit(1);
   };
 
-  sexA_IMAGE= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
-  if( sexA_IMAGE == NULL ) {
+  sextractor_catalog__A_IMAGE= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
+  if( sextractor_catalog__A_IMAGE == NULL ) {
    fprintf(stderr, "ERROR: Couldn't allocate memory for sexA_image\n");
    exit(1);
   };
-  sexERRA_IMAGE= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
-  if( sexERRA_IMAGE == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for sexERRA_IMAGE\n");
+  sextractor_catalog__ERRA_IMAGE= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
+  if( sextractor_catalog__ERRA_IMAGE == NULL ) {
+   fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__ERRA_IMAGE\n");
    exit(1);
   };
-  sexB_IMAGE= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
-  if( sexB_IMAGE == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for sexB_IMAGE\n");
+  sextractor_catalog__B_IMAGE= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
+  if( sextractor_catalog__B_IMAGE == NULL ) {
+   fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__B_IMAGE\n");
    exit(1);
   };
-  sexERRB_IMAGE= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
-  if( sexERRB_IMAGE == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for sexERRB_IMAGE\n");
+  sextractor_catalog__ERRB_IMAGE= (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
+  if( sextractor_catalog__ERRB_IMAGE == NULL ) {
+   fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__ERRB_IMAGE\n");
    exit(1);
   };
 
   //
-  memset(sexX_viewed, 0, MAX_NUMBER_OF_STARS * sizeof(float));
-  memset(sexY_viewed, 0, MAX_NUMBER_OF_STARS * sizeof(float));
-  memset(sexX, 0, MAX_NUMBER_OF_STARS * sizeof(float));
-  memset(sexY, 0, MAX_NUMBER_OF_STARS * sizeof(float));
-  memset(sexFLUX, 0, MAX_NUMBER_OF_STARS * sizeof(double));
-  memset(sexFLUX_ERR, 0, MAX_NUMBER_OF_STARS * sizeof(double));
-  memset(sexMAG, 0, MAX_NUMBER_OF_STARS * sizeof(double));
-  memset(sexMAG_ERR, 0, MAX_NUMBER_OF_STARS * sizeof(double));
-  memset(sexNUMBER, 0, MAX_NUMBER_OF_STARS * sizeof(int));
-  memset(sexFLAG, 0, MAX_NUMBER_OF_STARS * sizeof(int));
-  memset(extFLAG, 0, MAX_NUMBER_OF_STARS * sizeof(int));
-  memset(psfCHI2, 0, MAX_NUMBER_OF_STARS * sizeof(double));
-  memset(sexA_IMAGE, 0, MAX_NUMBER_OF_STARS * sizeof(double));
-  memset(sexERRA_IMAGE, 0, MAX_NUMBER_OF_STARS * sizeof(double));
-  memset(sexERRA_IMAGE, 0, MAX_NUMBER_OF_STARS * sizeof(double));
-  memset(sexB_IMAGE, 0, MAX_NUMBER_OF_STARS * sizeof(double));
-  memset(sexERRB_IMAGE, 0, MAX_NUMBER_OF_STARS * sizeof(double));
+  memset(sextractor_catalog__X_viewed, 0, MAX_NUMBER_OF_STARS * sizeof(float));
+  memset(sextractor_catalog__Y_viewed, 0, MAX_NUMBER_OF_STARS * sizeof(float));
+  memset(sextractor_catalog__X, 0, MAX_NUMBER_OF_STARS * sizeof(float));
+  memset(sextractor_catalog__Y, 0, MAX_NUMBER_OF_STARS * sizeof(float));
+  memset(sextractor_catalog__FLUX, 0, MAX_NUMBER_OF_STARS * sizeof(double));
+  memset(sextractor_catalog__FLUX_ERR, 0, MAX_NUMBER_OF_STARS * sizeof(double));
+  memset(sextractor_catalog__MAG, 0, MAX_NUMBER_OF_STARS * sizeof(double));
+  memset(sextractor_catalog__MAG_ERR, 0, MAX_NUMBER_OF_STARS * sizeof(double));
+  memset(sextractor_catalog__star_number, 0, MAX_NUMBER_OF_STARS * sizeof(int));
+  memset(sextractor_catalog__se_FLAG, 0, MAX_NUMBER_OF_STARS * sizeof(int));
+  memset(sextractor_catalog__ext_FLAG, 0, MAX_NUMBER_OF_STARS * sizeof(int));
+  memset(sextractor_catalog__psfCHI2, 0, MAX_NUMBER_OF_STARS * sizeof(double));
+  memset(sextractor_catalog__A_IMAGE, 0, MAX_NUMBER_OF_STARS * sizeof(double));
+  memset(sextractor_catalog__ERRA_IMAGE, 0, MAX_NUMBER_OF_STARS * sizeof(double));
+  memset(sextractor_catalog__ERRA_IMAGE, 0, MAX_NUMBER_OF_STARS * sizeof(double));
+  memset(sextractor_catalog__B_IMAGE, 0, MAX_NUMBER_OF_STARS * sizeof(double));
+  memset(sextractor_catalog__ERRB_IMAGE, 0, MAX_NUMBER_OF_STARS * sizeof(double));
   //
 
-  catfile= fopen(sextractor_catalog, "r");
+  catfile= fopen(sextractor_catalog_filename, "r");
   if( NULL == catfile ) {
-   fprintf(stderr, "ERROR! Cannot open sextractor catalog file %s for reading!\n", sextractor_catalog);
+   fprintf(stderr, "ERROR! Cannot open sextractor catalog file %s for reading!\n", sextractor_catalog_filename);
    exit(1);
   }
-  //while( -1<fscanf(catfile, "%d %lf %lf %lf %lf %f %f %lf %lf %lf %lf %d\n", &sexNUMBER[sex], &sexFLUX[sex], &sexFLUX_ERR[sex], &sexMAG[sex], &sexMAG_ERR[sex], &sexX[sex], &sexY[sex], &sexA_IMAGE[sex], &sexERRA_IMAGE[sex], &sexB_IMAGE[sex], &sexERRB_IMAGE[sex], &sexFLAG[sex]) ){
+  //while( -1<fscanf(catfile, "%d %lf %lf %lf %lf %f %f %lf %lf %lf %lf %d\n", &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &sextractor_catalog__X[sextractor_catalog__counter], &sextractor_catalog__Y[sextractor_catalog__counter], &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter]) ){
   //fprintf(stderr,"DEBUG01\n");
   while( NULL != fgets(sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, catfile) ) {
-   //fprintf(stderr,"DEBUG02 sex=%d\n",sex);
+   //fprintf(stderr,"DEBUG02 sextractor_catalog__counter=%d\n",sextractor_catalog__counter);
    sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
    external_flag= 0;
    //external_flag_string[0]='\0';
-   if( 0 != parse_sextractor_catalog_string(sextractor_catalog_string, &sexNUMBER[sex], &sexFLUX[sex], &sexFLUX_ERR[sex], &sexMAG[sex], &sexMAG_ERR[sex], &position_x_pix, &position_y_pix, &sexA_IMAGE[sex], &sexERRA_IMAGE[sex], &sexB_IMAGE[sex], &sexERRB_IMAGE[sex], &sexFLAG[sex], &external_flag, &psf_chi2, NULL) ) {
-    fprintf(stderr, "WARNING: problem occurred while parsing SExtractor catalog %s\nThe offending line is:\n%s\n", sextractor_catalog, sextractor_catalog_string);
+   if( 0 != parse_sextractor_catalog_string(sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, NULL) ) {
+    fprintf(stderr, "WARNING: problem occurred while parsing SExtractor catalog %s\nThe offending line is:\n%s\n", sextractor_catalog_filename, sextractor_catalog_string);
     continue;
    }
    // Do not display saturated stars in the magnitude calibration mode
    if( match_mode == 0 ) {
-    if( sexFLAG[sex] >= 4 ) {
+    if( sextractor_catalog__se_FLAG[sextractor_catalog__counter] >= 4 ) {
      continue;
     }
    }
    //
-   sexX[sex]= position_x_pix;
-   sexY[sex]= position_y_pix;
-   //if( 12>sscanf(sextractor_catalog_string, "%d %lf %lf %lf %lf %f %f %lf %lf %lf %lf %d %[^\t\n]\n", &sexNUMBER[sex], &sexFLUX[sex], &sexFLUX_ERR[sex], &sexMAG[sex], &sexMAG_ERR[sex], &sexX[sex], &sexY[sex], &sexA_IMAGE[sex], &sexERRA_IMAGE[sex], &sexB_IMAGE[sex], &sexERRB_IMAGE[sex], &sexFLAG[sex], external_flag_string) ){
-   // fprintf(stderr,"WARNING: problem occurred while parsing SExtractor catalog %s\nThe offending line is:\n%s\n",sextractor_catalog,sextractor_catalog_string);
-   // continue;
-   //}
-   /*
-   // Now this is some crazy stuff:
-   // The last columns of the SExtractor catalog file might be:
-   // ... flags
-   // ... flags external_flags
-   // ... flags external_flags psf_fitting_chi2
-   // ... flags psf_fitting_chi2
-   // Below we try to handle each of the four possibilities
-   //
-   // if these are not just flags
-   // (but make sure we perform the tese only on a line wit ha good measurement)
-   if( strlen(external_flag_string)>0 && sexFLUX[sex]>0.0 && sexMAG[sex]!=99.0000 ){
-    // if these are not flags external_flags psf_fitting_chi2
-    if( 2!=sscanf(external_flag_string,"%lf %lf",&double_external_flag,&psf_chi2) ){
-     // Decide between "flags external_flags" and "flags psf_fitting_chi2"
-     for(ii=0,jj=0;ii<(int)strlen(external_flag_string);ii++){
-      if( external_flag_string[ii]=='.' || external_flag_string[ii]=='e' ){jj=1;break;} // assume that a decimal point indicates psf_chi2 rather than external_flag that is expected be 0 or 1 only
-     }
-     if( jj==0 ){
-      // "flags external_flags" case
-      psf_chi2=1.0; // no PSF fitting results
-      if( 1!=sscanf(external_flag_string,"%lf",&double_external_flag) ){
-       double_external_flag=0.0; // no external flag image used
-      }
-     }
-     else{
-      // "flags psf_fitting_chi2" case
-      double_external_flag=0.0; // no external flag image used
-      if( 1!=sscanf(external_flag_string,"%lf",&psf_chi2) ){
-       psf_chi2=1.0; // no PSF fitting results
-      }
-     }
-    } // if( 2!=sscanf(external_flag_string,"%lf %lf",&double_external_flag,&psf_chi2) ){
-    external_flag=(int)double_external_flag;
-   }
-   else{
-    psf_chi2=1.0; // no PSF fitting results
-    external_flag=0; // no external flag image used
-   }
-   */
-
-   //if( strlen(external_flag_string)>0 ){
-   // if( 1!=sscanf(external_flag_string,"%d",&external_flag) ){
-   //  external_flag=0; // no external flag image used
-   // }
-   //}
-   //else
-   // external_flag=0; // no external flag image used
-   extFLAG[sex]= external_flag;
-   psfCHI2[sex]= psf_chi2;
-   //fprintf(stderr,"\n#%s#\n%d %lf %lf %lf %lf %f %f %lf %lf %lf %lf %d\n",sextractor_catalog_string,  sexNUMBER[sex], sexFLUX[sex], sexFLUX_ERR[sex], sexMAG[sex], sexMAG_ERR[sex], sexX[sex], sexY[sex], sexA_IMAGE[sex], sexERRA_IMAGE[sex], sexB_IMAGE[sex], sexERRB_IMAGE[sex], sexFLAG[sex]);
-   sex++;
+   sextractor_catalog__X[sextractor_catalog__counter]= position_x_pix;
+   sextractor_catalog__Y[sextractor_catalog__counter]= position_y_pix;
+   sextractor_catalog__ext_FLAG[sextractor_catalog__counter]= external_flag;
+   sextractor_catalog__psfCHI2[sextractor_catalog__counter]= psf_chi2;
+   sextractor_catalog__counter++;
   }
   fclose(catfile);
 
@@ -1539,8 +1569,8 @@ int main(int argc, char **argv) {
    sprintf(ds9_region_filename, "ds9_%d_tmp.reg", pid);
    catfile= fopen(ds9_region_filename, "w");
    fprintf(catfile, "# Region file format: DS9 version 4.0\n# Filename: %s\nglobal color=green font=\"sans 8 normal\" select=1 highlite=1 edit=1 move=1 delete=1 include=1 fixed=0 source\nimage\n", fits_image_name);
-   for( ; sex--; )
-    fprintf(catfile, "circle(%.3lf,%.3lf,%.1lf)\n# text(%.3lf,%.3lf) text={%d}\n", sexX[sex], sexY[sex], APER / 2.0, sexX[sex], sexY[sex] - APER, sexNUMBER[sex]);
+   for( ; sextractor_catalog__counter--; )
+    fprintf(catfile, "circle(%.3lf,%.3lf,%.1lf)\n# text(%.3lf,%.3lf) text={%d}\n", sextractor_catalog__X[sextractor_catalog__counter], sextractor_catalog__Y[sextractor_catalog__counter], APER / 2.0, sextractor_catalog__X[sextractor_catalog__counter], sextractor_catalog__Y[sextractor_catalog__counter] - APER, sextractor_catalog__star_number[sextractor_catalog__counter]);
    fclose(catfile);
 
    // execute the system command to run ds9
@@ -1552,18 +1582,18 @@ int main(int argc, char **argv) {
    }
 
    // free the arrays
-   free(sexX);
-   free(sexY);
-   free(sexFLUX);
-   free(sexFLUX_ERR);
-   free(sexMAG);
-   free(sexMAG_ERR);
-   free(sexNUMBER);
-   free(sexFLAG);
-   free(sexA_IMAGE);
-   free(sexERRA_IMAGE);
-   free(sexB_IMAGE);
-   free(sexERRB_IMAGE);
+   free(sextractor_catalog__X);
+   free(sextractor_catalog__Y);
+   free(sextractor_catalog__FLUX);
+   free(sextractor_catalog__FLUX_ERR);
+   free(sextractor_catalog__MAG);
+   free(sextractor_catalog__MAG_ERR);
+   free(sextractor_catalog__star_number);
+   free(sextractor_catalog__se_FLAG);
+   free(sextractor_catalog__A_IMAGE);
+   free(sextractor_catalog__ERRA_IMAGE);
+   free(sextractor_catalog__B_IMAGE);
+   free(sextractor_catalog__ERRB_IMAGE);
    // exit
    return 0;
   }
@@ -1912,25 +1942,25 @@ int main(int argc, char **argv) {
    /* If aperture was changed - repeat measurements with new aperture */
    if( match_mode == 3 || match_mode == 4 ) {
     if( aperture_change == 1 ) {
-     autodetect_aperture(fits_image_name, sextractor_catalog, 1, 0, APER, dimX, dimY, 2);
-     sex= 0;
-     catfile= fopen(sextractor_catalog, "r");
+     autodetect_aperture(fits_image_name, sextractor_catalog_filename, 1, 0, APER, dimX, dimY, 2);
+     sextractor_catalog__counter= 0;
+     catfile= fopen(sextractor_catalog_filename, "r");
      if( NULL == catfile ) {
-      fprintf(stderr, "ERROR! Cannot open sextractor catalog file %s for reading!\n", sextractor_catalog);
+      fprintf(stderr, "ERROR! Cannot open sextractor catalog file %s for reading!\n", sextractor_catalog_filename);
       exit(1);
      }
      while( NULL != fgets(sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, catfile) ) {
       sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
       external_flag= 0;
-      if( 0 != parse_sextractor_catalog_string(sextractor_catalog_string, &sexNUMBER[sex], &sexFLUX[sex], &sexFLUX_ERR[sex], &sexMAG[sex], &sexMAG_ERR[sex], &position_x_pix, &position_y_pix, &sexA_IMAGE[sex], &sexERRA_IMAGE[sex], &sexB_IMAGE[sex], &sexERRB_IMAGE[sex], &sexFLAG[sex], &external_flag, &psf_chi2, NULL) ) {
-       fprintf(stderr, "WARNING: problem occurred while parsing SExtractor catalog %s\nThe offending line is:\n%s\n", sextractor_catalog, sextractor_catalog_string);
+      if( 0 != parse_sextractor_catalog_string(sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, NULL) ) {
+       fprintf(stderr, "WARNING: problem occurred while parsing SExtractor catalog %s\nThe offending line is:\n%s\n", sextractor_catalog_filename, sextractor_catalog_string);
        continue;
       }
-      sexX[sex]= position_x_pix;
-      sexY[sex]= position_y_pix;
-      extFLAG[sex]= external_flag;
-      psfCHI2[sex]= psf_chi2;
-      sex++;
+      sextractor_catalog__X[sextractor_catalog__counter]= position_x_pix;
+      sextractor_catalog__Y[sextractor_catalog__counter]= position_y_pix;
+      sextractor_catalog__ext_FLAG[sextractor_catalog__counter]= external_flag;
+      sextractor_catalog__psfCHI2[sextractor_catalog__counter]= psf_chi2;
+      sextractor_catalog__counter++;
      }
      fclose(catfile);
      fprintf(stderr, "New aperture %.1lf\n", APER);
@@ -1950,8 +1980,9 @@ int main(int argc, char **argv) {
 
    /* Switch to single image inspection mode */
    if( curC == '3' && match_mode == 2 ) {
-    magnitude_calibration_using_calib_txt(sexMAG, sex);
-    fprintf(stderr, "Entering single image inspection mode!\n");
+    magnitude_calibration_using_calib_txt(sextractor_catalog__MAG, sextractor_catalog__counter);
+    write_list_of_all_stars_with_calibrated_magnitudes_to_file( sextractor_catalog__X, sextractor_catalog__Y, sextractor_catalog__MAG, sextractor_catalog__MAG_ERR, sextractor_catalog__star_number, sextractor_catalog__se_FLAG, sextractor_catalog__ext_FLAG, sextractor_catalog__counter, sextractor_catalog_filename);
+    fprintf(stderr, "Entering back the single image inspection mode!\n");
     match_mode= 3;
    }
 
@@ -1982,11 +2013,11 @@ int main(int argc, char **argv) {
     /* Magnitude calibration mode or Single image mode */
     //if( match_mode==2 || match_mode==3 ){
     if( match_mode == 1 || match_mode == 2 || match_mode == 3 || match_mode == 4 ) {
-     for( marker_counter= 0; marker_counter < sex; marker_counter++ ) {
-      if( (curX - sexX[marker_counter]) * (curX - sexX[marker_counter]) + (curY - sexY[marker_counter]) * (curY - sexY[marker_counter]) < (float)(APER * APER / 4.0) ) {
+     for( marker_counter= 0; marker_counter < sextractor_catalog__counter; marker_counter++ ) {
+      if( (curX - sextractor_catalog__X[marker_counter]) * (curX - sextractor_catalog__X[marker_counter]) + (curY - sextractor_catalog__Y[marker_counter]) * (curY - sextractor_catalog__Y[marker_counter]) < (float)(APER * APER / 4.0) ) {
        // mark the star
        cpgsci(2);
-       cpgcirc(sexX[marker_counter], sexY[marker_counter], (float)APER / 2.0);
+       cpgcirc(sextractor_catalog__X[marker_counter], sextractor_catalog__Y[marker_counter], (float)APER / 2.0);
        cpgsci(1);
        //
 
@@ -1994,10 +2025,10 @@ int main(int argc, char **argv) {
        if( match_mode == 2 || match_mode == 4 ) {
         // mark the star
         //cpgsci( 2 );
-        //cpgcirc( sexX[marker_counter], sexY[marker_counter], (float)APER / 2.0 );
+        //cpgcirc( sextractor_catalog__X[marker_counter], sextractor_catalog__Y[marker_counter], (float)APER / 2.0 );
         //cpgsci( 1 );
         //
-        fprintf(stderr, "Star %d. Instrumental magnitude: %.4lf %.4lf\n(In order to cancel the input - type '99' instead of an actual magnitude.)\n Please, enter its catalog magnitude or 'v' to mark it as the target variable:\nComp. star mag: ", sexNUMBER[marker_counter], sexMAG[marker_counter], sexMAG_ERR[marker_counter]);
+        fprintf(stderr, "Star %d. Instrumental magnitude: %.4lf %.4lf\n(In order to cancel the input - type '99' instead of an actual magnitude.)\n Please, enter its catalog magnitude or 'v' to mark it as the target variable:\nComp. star mag: ", sextractor_catalog__star_number[marker_counter], sextractor_catalog__MAG[marker_counter], sextractor_catalog__MAG_ERR[marker_counter]);
         if( NULL == fgets(RADEC, 1024, stdin) ) {
          fprintf(stderr, "Incorrect input!\n");
         }
@@ -2006,7 +2037,7 @@ int main(int argc, char **argv) {
         if( match_mode == 4 ) {
          // Check if we should mark this as a known variable star
          if( NULL != strstr(RADEC, "v") || NULL != strstr(RADEC, "V") ) {
-          save_star_to_vast_list_of_previously_known_variables_and_exclude_lst(sexNUMBER[marker_counter], sexX[marker_counter], sexY[marker_counter]);
+          save_star_to_vast_list_of_previously_known_variables_and_exclude_lst(sextractor_catalog__star_number[marker_counter], sextractor_catalog__X[marker_counter], sextractor_catalog__Y[marker_counter]);
           break;
          }
         }
@@ -2095,18 +2126,18 @@ int main(int argc, char **argv) {
          break;
         }
         if( match_mode == 4 ) {
-         fprintf(stderr, "Adding the star at %.4f %.4f with magnitude %.4lf to manually_selected_comparison_stars.lst\nPick an additional comparison star or right-click to quit.\n", sexX[marker_counter], sexY[marker_counter], catalog_mag);
+         fprintf(stderr, "Adding the star at %.4f %.4f with magnitude %.4lf to manually_selected_comparison_stars.lst\nPick an additional comparison star or right-click to quit.\n", sextractor_catalog__X[marker_counter], sextractor_catalog__Y[marker_counter], catalog_mag);
          matchfile= fopen("manually_selected_comparison_stars.lst", "a");
          if( matchfile == NULL ) {
           fprintf(stderr, "ERROR: failed to poed manually_selected_comparison_stars.lst for writing!\nSomething is really messed-up, so I'll die. :(\n");
           exit(1);
          }
-         fprintf(matchfile, "%.4f %.4f %.4lf\n", sexX[marker_counter], sexY[marker_counter], catalog_mag);
+         fprintf(matchfile, "%.4f %.4f %.4lf\n", sextractor_catalog__X[marker_counter], sextractor_catalog__Y[marker_counter], catalog_mag);
          fclose(matchfile);
         } else {
-         fprintf(stderr, "Writing a new string to calib.txt:\n%.4lf %.4lf %.4lf\n\n", sexMAG[marker_counter], catalog_mag, sexMAG_ERR[marker_counter]);
+         fprintf(stderr, "Writing a new string to calib.txt:\n%.4lf %.4lf %.4lf\n\n", sextractor_catalog__MAG[marker_counter], catalog_mag, sextractor_catalog__MAG_ERR[marker_counter]);
          matchfile= fopen("calib.txt", "a");
-         fprintf(matchfile, "%.4lf %.4lf %.4lf\n", sexMAG[marker_counter], catalog_mag, sexMAG_ERR[marker_counter]);
+         fprintf(matchfile, "%.4lf %.4lf %.4lf\n", sextractor_catalog__MAG[marker_counter], catalog_mag, sextractor_catalog__MAG_ERR[marker_counter]);
          fclose(matchfile);
         }
         match_input++;
@@ -2115,69 +2146,68 @@ int main(int argc, char **argv) {
 
        /* Single image mode */
        if( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
-        fprintf(stderr, "Star %6d\n", sexNUMBER[marker_counter]);
+        fprintf(stderr, "Star %6d\n", sextractor_catalog__star_number[marker_counter]);
 
-        //if ( sexX[marker_counter] > FRAME_EDGE_INDENT_PIXELS && sexY[marker_counter] > FRAME_EDGE_INDENT_PIXELS && fabs( sexX[marker_counter] - (float)naxes[0] ) > FRAME_EDGE_INDENT_PIXELS && fabs( sexY[marker_counter] - (float)naxes[1] ) > FRAME_EDGE_INDENT_PIXELS ) {
-        if( 0 == is_point_close_or_off_the_frame_edge((double)sexX[marker_counter], (double)sexY[marker_counter], (double)naxes[0], (double)naxes[1], FRAME_EDGE_INDENT_PIXELS) ) {
-         fprintf(stderr, "Star coordinates \E[01;32m%6.1lf %6.1lf\E[33;00m (pix)\n", sexX[marker_counter], sexY[marker_counter]);
+        if( 0 == is_point_close_or_off_the_frame_edge((double)sextractor_catalog__X[marker_counter], (double)sextractor_catalog__Y[marker_counter], (double)naxes[0], (double)naxes[1], FRAME_EDGE_INDENT_PIXELS) ) {
+         fprintf(stderr, "Star coordinates \E[01;32m%6.1lf %6.1lf\E[33;00m (pix)\n", sextractor_catalog__X[marker_counter], sextractor_catalog__Y[marker_counter]);
         } else {
-         fprintf(stderr, "Star coordinates \E[01;31m%6.1lf %6.1lf\E[33;00m (pix)\n", sexX[marker_counter], sexY[marker_counter]);
+         fprintf(stderr, "Star coordinates \E[01;31m%6.1lf %6.1lf\E[33;00m (pix)\n", sextractor_catalog__X[marker_counter], sextractor_catalog__Y[marker_counter]);
         }
 
-        if( 0 == exclude_region(X1, Y1, X2, Y2, N_bad_regions, (double)sexX[marker_counter], (double)sexY[marker_counter], APER) ) {
+        if( 0 == exclude_region(X1, Y1, X2, Y2, N_bad_regions, (double)sextractor_catalog__X[marker_counter], (double)sextractor_catalog__Y[marker_counter], APER) ) {
          fprintf(stderr, "The star is not situated in a bad CCD region according to bad_region.lst\n");
         } else {
          fprintf(stderr, "The star is situated in a \E[01;31mbad CCD region\E[33;00m according to bad_region.lst\n");
         }
 
         if( use_xy2sky > 0 ) {
-         xy2sky_return_value= xy2sky(fits_image_name, sexX[marker_counter], sexY[marker_counter]);
+         xy2sky_return_value= xy2sky(fits_image_name, sextractor_catalog__X[marker_counter], sextractor_catalog__Y[marker_counter]);
         }
 
-        if( sexFLUX[marker_counter] > MIN_SNR * sexFLUX_ERR[marker_counter] ) {
-         fprintf(stderr, "SNR \E[01;32m%.1lf\E[33;00m\n", sexFLUX[marker_counter] / sexFLUX_ERR[marker_counter]);
+        if( sextractor_catalog__FLUX[marker_counter] > MIN_SNR * sextractor_catalog__FLUX_ERR[marker_counter] ) {
+         fprintf(stderr, "SNR \E[01;32m%.1lf\E[33;00m\n", sextractor_catalog__FLUX[marker_counter] / sextractor_catalog__FLUX_ERR[marker_counter]);
         } else {
-         fprintf(stderr, "SNR \E[01;31m%.1lf\E[33;00m\n", sexFLUX[marker_counter] / sexFLUX_ERR[marker_counter]);
+         fprintf(stderr, "SNR \E[01;31m%.1lf\E[33;00m\n", sextractor_catalog__FLUX[marker_counter] / sextractor_catalog__FLUX_ERR[marker_counter]);
         }
 
-        if( sexMAG[marker_counter] != 99.0000 ) {
-         fprintf(stderr, "Magnitude \E[01;34m%7.4lf  %6.4lf\E[33;00m\n", sexMAG[marker_counter], sexMAG_ERR[marker_counter]);
+        if( sextractor_catalog__MAG[marker_counter] != 99.0000 ) {
+         fprintf(stderr, "Magnitude \E[01;34m%7.4lf  %6.4lf\E[33;00m\n", sextractor_catalog__MAG[marker_counter], sextractor_catalog__MAG_ERR[marker_counter]);
         } else {
-         fprintf(stderr, "Magnitude \E[01;31m%7.4lf  %6.4lf\E[33;00m\n", sexMAG[marker_counter], sexMAG_ERR[marker_counter]);
+         fprintf(stderr, "Magnitude \E[01;31m%7.4lf  %6.4lf\E[33;00m\n", sextractor_catalog__MAG[marker_counter], sextractor_catalog__MAG_ERR[marker_counter]);
         }
 
-        if( sexFLAG[marker_counter] < 2 ) {
-         fprintf(stderr, "SExtractor flag \E[01;32m%d\E[33;00m\n", sexFLAG[marker_counter]);
+        if( sextractor_catalog__se_FLAG[marker_counter] < 2 ) {
+         fprintf(stderr, "SExtractor flag \E[01;32m%d\E[33;00m\n", sextractor_catalog__se_FLAG[marker_counter]);
         } else {
-         fprintf(stderr, "SExtractor flag \E[01;31m%d\E[33;00m\n", sexFLAG[marker_counter]);
+         fprintf(stderr, "SExtractor flag \E[01;31m%d\E[33;00m\n", sextractor_catalog__se_FLAG[marker_counter]);
         }
 
-        if( extFLAG[marker_counter] == 0 ) {
-         fprintf(stderr, "External flag \E[01;32m%d\E[33;00m\n", extFLAG[marker_counter]);
+        if( sextractor_catalog__ext_FLAG[marker_counter] == 0 ) {
+         fprintf(stderr, "External flag \E[01;32m%d\E[33;00m\n", sextractor_catalog__ext_FLAG[marker_counter]);
         } else {
-         fprintf(stderr, "External flag \E[01;31m%d\E[33;00m\n", extFLAG[marker_counter]);
+         fprintf(stderr, "External flag \E[01;31m%d\E[33;00m\n", sextractor_catalog__ext_FLAG[marker_counter]);
         }
 
         // Print anyway
-        fprintf(stderr, "Reduced chi2 from PSF-fitting: \E[01;32m%lg\E[33;00m (Objects with large values will be mising from the list of detections! If no PSF fitting was performed, this value is set to 1.0)\n", psfCHI2[marker_counter]);
+        fprintf(stderr, "Reduced chi2 from PSF-fitting: \E[01;32m%lg\E[33;00m (Objects with large values will be mising from the list of detections! If no PSF fitting was performed, this value is set to 1.0)\n", sextractor_catalog__psfCHI2[marker_counter]);
 
         bad_size= 0;
-        if( CONST * (sexA_IMAGE[marker_counter] + sexERRA_IMAGE[marker_counter]) < MIN_SOURCE_SIZE_APERTURE_FRACTION * APER ) {
+        if( CONST * (sextractor_catalog__A_IMAGE[marker_counter] + sextractor_catalog__ERRA_IMAGE[marker_counter]) < MIN_SOURCE_SIZE_APERTURE_FRACTION * APER ) {
          bad_size= 1;
         }
-        if( sexA_IMAGE[marker_counter] > APER && sexFLAG[marker_counter] < 4 ) {
+        if( sextractor_catalog__A_IMAGE[marker_counter] > APER && sextractor_catalog__se_FLAG[marker_counter] < 4 ) {
          bad_size= 1;
         }
-        if( sexA_IMAGE[marker_counter] + sexERRA_IMAGE[marker_counter] < FWHM_MIN ) {
+        if( sextractor_catalog__A_IMAGE[marker_counter] + sextractor_catalog__ERRA_IMAGE[marker_counter] < FWHM_MIN ) {
          bad_size= 1;
         }
-        if( sexB_IMAGE[marker_counter] + sexERRB_IMAGE[marker_counter] < FWHM_MIN ) {
+        if( sextractor_catalog__B_IMAGE[marker_counter] + sextractor_catalog__ERRB_IMAGE[marker_counter] < FWHM_MIN ) {
          bad_size= 1;
         }
         if( bad_size == 0 ) {
-         fprintf(stderr, "A= \E[01;32m%lf +/- %lf\E[33;00m  B= \E[01;32m%lf +/- %lf\E[33;00m\nFWHM(A)= \E[01;32m%lf +/- %lf\E[33;00m  FWHM(B)= \E[01;32m%lf +/- %lf\E[33;00m\n", sexA_IMAGE[marker_counter], sexERRA_IMAGE[marker_counter], sexB_IMAGE[marker_counter], sexERRB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sexA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sexERRA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sexB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sexERRB_IMAGE[marker_counter]);
+         fprintf(stderr, "A= \E[01;32m%lf +/- %lf\E[33;00m  B= \E[01;32m%lf +/- %lf\E[33;00m\nFWHM(A)= \E[01;32m%lf +/- %lf\E[33;00m  FWHM(B)= \E[01;32m%lf +/- %lf\E[33;00m\n", sextractor_catalog__A_IMAGE[marker_counter], sextractor_catalog__ERRA_IMAGE[marker_counter], sextractor_catalog__B_IMAGE[marker_counter], sextractor_catalog__ERRB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__A_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__B_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRB_IMAGE[marker_counter]);
         } else {
-         fprintf(stderr, "A= \E[01;31m%lf +/- %lf\E[33;00m  B= \E[01;31m%lf +/- %lf\E[33;00m\nFWHM(A)= \E[01;31m%lf +/- %lf\E[33;00m  FWHM(B)= \E[01;31m%lf +/- %lf\E[33;00m\n", sexA_IMAGE[marker_counter], sexERRA_IMAGE[marker_counter], sexB_IMAGE[marker_counter], sexERRB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sexA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sexERRA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sexB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sexERRB_IMAGE[marker_counter]);
+         fprintf(stderr, "A= \E[01;31m%lf +/- %lf\E[33;00m  B= \E[01;31m%lf +/- %lf\E[33;00m\nFWHM(A)= \E[01;31m%lf +/- %lf\E[33;00m  FWHM(B)= \E[01;31m%lf +/- %lf\E[33;00m\n", sextractor_catalog__A_IMAGE[marker_counter], sextractor_catalog__ERRA_IMAGE[marker_counter], sextractor_catalog__B_IMAGE[marker_counter], sextractor_catalog__ERRB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__A_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__B_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRB_IMAGE[marker_counter]);
         }
         // It's nice to ptint the aperture size here for comparison
         fprintf(stderr, "Aperture diameter = %.1lf pixels\n", APER);
@@ -2190,14 +2220,14 @@ int main(int argc, char **argv) {
        if( match_mode == 1 ) {
         // Mark star as viewed
         cpgsci(2);
-        cpgcirc(sexX[marker_counter], sexY[marker_counter], (float)APER / 2.0);
+        cpgcirc(sextractor_catalog__X[marker_counter], sextractor_catalog__Y[marker_counter], (float)APER / 2.0);
         cpgsci(1);
         // Save the mark information so it isn't lost when we change zoom
-        sexX_viewed[sex_viewed_counter]= sexX[marker_counter];
-        sexY_viewed[sex_viewed_counter]= sexY[marker_counter];
-        sex_viewed_counter++;
+        sextractor_catalog__X_viewed[sextractor_catalog__viewed_counter]= sextractor_catalog__X[marker_counter];
+        sextractor_catalog__Y_viewed[sextractor_catalog__viewed_counter]= sextractor_catalog__Y[marker_counter];
+        sextractor_catalog__viewed_counter++;
         // Generate the command
-        sprintf(system_command, "./lc out%05d.dat", sexNUMBER[marker_counter]);
+        sprintf(system_command, "./lc out%05d.dat", sextractor_catalog__star_number[marker_counter]);
         // fork before system() so the parent process is not blocked
         if( 0 == fork() ) {
          nanosleep(&requested_time, &remaining);
@@ -2506,13 +2536,13 @@ int main(int argc, char **argv) {
     cpgsci(3);
     cpgsfs(2);
     // Draw objects
-    for( marker_counter= 0; marker_counter < sex; marker_counter++ ) {
-     cpgcirc(sexX[marker_counter], sexY[marker_counter], (float)APER / 2.0);
+    for( marker_counter= 0; marker_counter < sextractor_catalog__counter; marker_counter++ ) {
+     cpgcirc(sextractor_catalog__X[marker_counter], sextractor_catalog__Y[marker_counter], (float)APER / 2.0);
     }
     if( match_mode == 1 ) {
      cpgsci(2);
-     for( marker_counter= 0; marker_counter < sex_viewed_counter; marker_counter++ ) {
-      cpgcirc(sexX_viewed[marker_counter], sexY_viewed[marker_counter], (float)APER / 2.0);
+     for( marker_counter= 0; marker_counter < sextractor_catalog__viewed_counter; marker_counter++ ) {
+      cpgcirc(sextractor_catalog__X_viewed[marker_counter], sextractor_catalog__Y_viewed[marker_counter], (float)APER / 2.0);
      }
      cpgsci(1);
     }
@@ -2591,29 +2621,28 @@ int main(int argc, char **argv) {
  } while( curC != 'X' && curC != 'x' );
 
  if( match_mode > 0 ) {
-  free(sexX);
-  free(sexY);
-  free(sexMAG);
-  free(sexMAG_ERR);
-  free(sexNUMBER);
+  free(sextractor_catalog__X);
+  free(sextractor_catalog__Y);
+  free(sextractor_catalog__MAG);
+  free(sextractor_catalog__MAG_ERR);
+  free(sextractor_catalog__star_number);
  }
 
  if( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
-  free(sexX_viewed);
-  free(sexY_viewed);
+  free(sextractor_catalog__X_viewed);
+  free(sextractor_catalog__Y_viewed);
  }
 
  if( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
-  free(sexFLUX);
-  free(sexFLUX_ERR);
-  //free( sexNUMBER );
-  free(sexFLAG);
-  free(extFLAG);
-  free(psfCHI2);
-  free(sexA_IMAGE);
-  free(sexERRA_IMAGE);
-  free(sexB_IMAGE);
-  free(sexERRB_IMAGE);
+  free(sextractor_catalog__FLUX);
+  free(sextractor_catalog__FLUX_ERR);
+  free(sextractor_catalog__se_FLAG);
+  free(sextractor_catalog__ext_FLAG);
+  free(sextractor_catalog__psfCHI2);
+  free(sextractor_catalog__A_IMAGE);
+  free(sextractor_catalog__ERRA_IMAGE);
+  free(sextractor_catalog__B_IMAGE);
+  free(sextractor_catalog__ERRB_IMAGE);
  }
 
  if( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {

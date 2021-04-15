@@ -139,7 +139,8 @@ static inline int read_lightcurve_point(FILE *lc_file_descriptor, double *jd, do
     (*app)= 1.0;
     (*x)= (*y)= 0.0;
     if( 3 != sscanf(str, "%lf %lf %lf\n", jd, mag, mag_err) ) {
-     (*mag_err)= 0.02;
+     //(*mag_err)= 0.02;
+     (*mag_err)= DEFAULT_PHOTOMETRY_ERROR_MAG;
      if( 2 != sscanf(str, "%lf %lf\n", jd, mag) ) {
       (*jd)= 0.0;
       return 1;
