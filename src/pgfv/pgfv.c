@@ -282,7 +282,7 @@ void write_list_of_all_stars_with_calibrated_magnitudes_to_file( float *sextract
   fprintf(outputfile, "%8.4lf %.4lf  %10.5f %10.5f  %6d  %3d %1d\n", sextractor_catalog__MAG[i], sextractor_catalog__MAG_ERR[i], sextractor_catalog__X[i], sextractor_catalog__Y[i], sextractor_catalog__star_number[i], sextractor_catalog__se_FLAG[i], sextractor_catalog__ext_FLAG[i]);
  }
  fclose(outputfile);
- fprintf(stderr,"The list of stars with calibrated magnitudes is written to %s\n",outputfilename);
+ fprintf(stderr,"The list of stars with calibrated magnitudes is written to \E[01;31m %s \E[33;00m\n",outputfilename);
  return;
 }
 
