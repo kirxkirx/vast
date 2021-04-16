@@ -91,6 +91,7 @@ fi
 
 BASENAME_FITSFILE=`basename "$FITSFILE"`
 UCAC5_CATALOG_NAME="wcs_$BASENAME_FITSFILE.cat.ucac5"
+UCAC5_CATALOG_NAME="${UCAC5_CATALOG_NAME/wcs_wcs_/wcs_}"
 
 if [ ! -f "$UCAC5_CATALOG_NAME" ];then
  echo "ERROR in $0  -- no $UCAC5_CATALOG_NAME"
