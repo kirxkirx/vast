@@ -24,6 +24,8 @@
 	util/phase_lc out01234.dat 2459088.0123 0.567891 > phased_lightcurve_01234.txt
 	The phased lightcurve can be plotted with gnuplot or some other plotting tool.
 	* Added robust linear fit option to the absolute magnitude scale calibration interface.
+	(It is now the new default calibration function, as usual, you may change 
+	the calibration function by pressing 'P' on the keyboard.)
 	The recommended way to automatically calibrate the magnitude scale is now:
 	'util/magnitude_calibration.sh V robust_linear'
 	You may also try to fit zero-point offset only:
@@ -36,16 +38,15 @@
 	channel and discarding red and blue channels. The conversion is equivalent to:
 	'util/fitscopy rgb_image.fit[*,*,2:2] g_image.fit'
 	Note that the converted images are temporarily stored in 'converted_images/' subfolder of 
-	the vast working directory meaning you have to have enough disk space to copy the input image set.
+	the vast working directory meaning you have to have enough disk space to copy the input set of images.
 	An external program like 'siril' ( https://siril.org/ ) can be used to convert RAW DSLR images 
 	to FITS format (that can be read by VaST) and stack the images if needed.
-	* In single-image inspection mode './sextract_single_image image.fits' you may now try to 
-	calibrate the magnitude scale automatically by pressing '4' on the keyboard. This will work only
+	* In single-image inspection mode ('./sextract_single_image image.fits') you may now  
+	calibrate the magnitude scale automatically by pressing '4' on the keyboard. This will work only 
 	if the image can be automatically plate-solved. You'll need to enter the filter name in the terminal.
 	* If manual (keyboard key '2') or automatic (keyboard key '4') magnitude calibration is performed 
-	in single-image inspection mode './sextract_single_image image.fits' The file named 
-	'image00000.cat.calibrated' will be written magnitudes of all the detected stars with 
-	the magnitude calibration applied.
+	in single-image inspection mode ('./sextract_single_image image.fits'), the calibrated magnitudes 
+	of all the detected stars are saved to 'image00000.cat.calibrated'.
 20 Oct 2020: vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911

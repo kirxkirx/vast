@@ -107,7 +107,12 @@ int main(int argc, char **argv) {
 
  /* switch */
  int weights_on= 1;
- int fit_function= 2; // 1 - line, 2 - parabola, 3 - line with a=1, 4 - "photocurve", 5 - "inverse photocurve" (will be set automatically if fits better than "photocurve")
+ int fit_function= 6; // 1 - line (a*x+b), 
+                      // 2 - parabola(c*x^2+a*x+b), 
+                      // 3 - line with a=1 (1*x+b), 
+                      // 4 - "photocurve", 
+                      // 5 - "inverse photocurve" (will be set automatically if fits better than "photocurve"),
+                      // 6 - robust linear fit (default) (a*x+b)
 
  /* remove points */
  int remove_best_j;
@@ -226,7 +231,7 @@ int main(int argc, char **argv) {
  }
  fclose(calibfile);
 
- /* Set limits for plotting */
+ // Set limits for plotting 
  mininstmag= maxinstmag= finsmag[0];
  mincatmag= maxcatmag= fcatmag[0];
  for( j= 0; j < n_stars; j++ ) {
@@ -237,18 +242,7 @@ int main(int argc, char **argv) {
  }
  // fprintf(stderr,"mininstmag=%lf maxinstmag=%lf mincatmag=%lf maxcatmag=%lf",mininstmag,maxinstmag,mincatmag,maxcatmag);
 
- /*
- // if n_stars<5 set fit_function=3 (line with fixed a) 
- if( n_stars<5 )
-  fit_function=3;
-
-
- // if n_stars<MIN_NUMBER_STARS_POLY_MAG_CALIBR set fit_function=1 (line) 
- if( n_stars<MIN_NUMBER_STARS_POLY_MAG_CALIBR )
-  fit_function=1;
-*/
-
- /* Special one-star mode */
+ // Special one-star mode 
  if( n_stars == 1 ) {
   fprintf(stdout, "%lf %lf %lf\n", 0.0, 1.0, (catmag[0]) - (insmag[0]));
   //
@@ -309,8 +303,8 @@ int main(int argc, char **argv) {
  // Go interactive
  if( operation_mode == 0 ) {
 
-  // Choose fitting function
-  choose_fittting_function(insmag, catmag, n_stars, &fit_function);
+  // Choose fitting function -- this never worked aprticularly well
+  //choose_fittting_function(insmag, catmag, n_stars, &fit_function);
 
   /* GUI */
   setenv_localpgplot(argv[0]);
@@ -448,8 +442,8 @@ int main(int argc, char **argv) {
    }
 
    /* If we don't read parameters from input file... */
-   if( argc != 3 && fit_function != 4 && fit_function != 5 && fit_function != 6 ) {
-    sprintf(header_str2, "  press 'P' to change function");
+   if( argc != 3 && fit_function != 4 && fit_function != 5 ) {
+    sprintf(header_str2, "  press 'P' to change fitting function");
     strcat(header_str, header_str2);
    }
 
