@@ -59,17 +59,17 @@ int main(int argc, char **argv) {
 #endif
 
 
- if( 0 == strncmp("sextract_single_image_noninteractive", basename(argv[0]), strlen("sextract_single_image_noninteractive")) ) {
+ if( 0 == strncmp("sextract_single_image_noninteractive", basename(argv[0]), strlen("sextract_single_image_noninteractive")) || 0 == strncmp("fits2cat", basename(argv[0]), strlen("fits2cat")) ) {
   // Perform the standard multi-run SExtractor processing and write the output source catalog
   aperture= autodetect_aperture(fitsfilename, sextractor_catalog, 0, 0, 0.0, X_im_size, Y_im_size, 2);
- } else {
-  // do not write the output source catalog, just print-out the aperture
-  aperture= autodetect_aperture(fitsfilename, sextractor_catalog, 0, 2, 0.0, X_im_size, Y_im_size, 2);
   // special case when we are emulating fits2cat
   if( 0 == strncmp("fits2cat", basename(argv[0]), strlen("fits2cat")) ) {
    fprintf(stdout, "%s\n", sextractor_catalog);
    return 0;
   }
+ } else {
+  // do not write the output source catalog, just print-out the aperture
+  aperture= autodetect_aperture(fitsfilename, sextractor_catalog, 0, 2, 0.0, X_im_size, Y_im_size, 2);
  }
  fprintf(stdout, "%.1lf\n", aperture);
  return 0;

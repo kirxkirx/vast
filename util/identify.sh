@@ -190,6 +190,10 @@ if [ ! -s "$FITSFILE" ];then
  echo "ERROR: the input image file $FITSFILE is empty"
  exit 1
 fi
+###############
+# On-the fly convert the input image if necessary
+FITSFILE=`"$VAST_PATH"lib/on_the_fly_symlink_or_convert "$FITSFILE"`
+###############
 # Verify that the input file is a valid FITS file
 "$VAST_PATH"lib/fitsverify -q -e "$FITSFILE"
 if [ $? -ne 0 ];then
