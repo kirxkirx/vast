@@ -10288,6 +10288,91 @@ else
 fi
 
 
+######### Sintez 380mm image
+if [ ! -f ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits.bz2" && bunzip2 LIGHT_21-06-21_V_-39.82_300.00s_0001.fits.bz2
+ cd $WORKDIR
+fi
+
+if [ -f ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "Sintez 380mm image test " >> /dev/stderr
+ echo -n "Sintez 380mm test: " >> vast_test_report.txt 
+ cp default.sex.ccd_example default.sex
+ util/solve_plate_with_UCAC5 ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ000"
+ fi
+ if [ ! -f wcs_LIGHT_21-06-21_V_-39.82_300.00s_0001.fits ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ001"
+ fi 
+ lib/bin/xy2sky wcs_LIGHT_21-06-21_V_-39.82_300.00s_0001.fits 200 200 &>/dev/null
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ001a"
+ fi
+ if [ ! -f wcs_LIGHT_21-06-21_V_-39.82_300.00s_0001.fits.cat.ucac5 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ002"
+ else
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_LIGHT_21-06-21_V_-39.82_300.00s_0001.fits.cat.ucac5 | wc -l | awk '{print $1}'`
+  if [ $TEST -lt 200 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ002a_$TEST"
+  fi
+ fi
+ util/calibrate_single_image.sh ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits V
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ_CALIBRATE_SINGLE_IMAGE"
+ fi
+ lib/fit_robust_linear
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ_FIT_ROBUST_LINEAR"
+ fi
+ TEST=`cat calib.txt_param | awk '{if ( sqrt( ($4-1.000515)*($4-1.000515) ) < 0.05 ) print 1 ;else print 0 }'`
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ_FIT_ROBUST_LINEAR_COEFFA"
+ fi
+ TEST=`cat calib.txt_param | awk '{if ( sqrt( ($5-27.844390)*($5-27.844390) ) < 0.05 ) print 1 ;else print 0 }'`
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ_FIT_ROBUST_LINEAR_COEFFB"
+ fi
+ util/get_image_date ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits | grep --quiet "Exposure 300 sec, 01.04.2021 18:06:22 UT = JD(UT) 2459306.25616 mid. exp."
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ003"
+ fi
+ #
+ FOV=`lib/try_to_guess_image_fov ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits | awk '{print $1}'`
+ if [ "$FOV" != "26" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ004"
+ fi
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mSintez 380mm image test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mSintez 380mm image test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ_TEST_NOT_PERFORMED"
+fi
+
+
 ######### NMW archive image
 if [ ! -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
  if [ ! -d ../individual_images_test ];then
