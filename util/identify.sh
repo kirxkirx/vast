@@ -678,7 +678,8 @@ field identification have good chances to fail. Sorry... :(
   fi # solve-field didn't crash
  #fi # if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "local" ];then
  ############################################################################
- elif [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
+ fi # local
+ if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
  
   echo "Using the remote server with Astrometry.net code"
  
