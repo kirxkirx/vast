@@ -64,6 +64,9 @@ void replace_file_with_symlink_if_filename_contains_white_spaces(char *filename)
 }
 
 void cutout_green_channel_out_of_RGB_DSLR_image(char *filename) {
+ FILE *vast_converted_images_log;
+ char vast_converted_images_log_original_image_name[FILENAME_LENGTH];
+
  unsigned int i, need_to_cutout_green_channel;
  char green_channel_only_image_name[FILENAME_LENGTH];
  //
@@ -85,6 +88,25 @@ void cutout_green_channel_out_of_RGB_DSLR_image(char *filename) {
  if( 0 != fitsfile_read_check_silent(filename) ) {
   return; // the input is not a readable FITS file, so we just quit
  }
+
+ // It may not work if we are outside the vast work directory, but I'll deal with this later
+ // Check if this image has already been converted and is still there
+ vast_converted_images_log=fopen("vast_converted_images.log","r");
+ if( NULL!=vast_converted_images_log ) {
+  while( -1<fscanf(vast_converted_images_log,"%s %s", vast_converted_images_log_original_image_name, green_channel_only_image_name) ) {
+   if( 0 == strncmp(filename, vast_converted_images_log_original_image_name, FILENAME_LENGTH) ) {
+    if( 0 == fitsfile_read_check_silent(filename) ) {
+     fprintf(stderr, "Found previously converted image %s %s\n", vast_converted_images_log_original_image_name, green_channel_only_image_name);
+     strncpy(filename, green_channel_only_image_name, FILENAME_LENGTH - 1);
+     filename[FILENAME_LENGTH - 1]= '\0'; // just in case
+     fclose(vast_converted_images_log);
+     return 0;
+    }
+   }
+  }
+  fclose(vast_converted_images_log);
+ }
+
  
  // Extract data from fits header
  fits_open_file(&fptr, filename, READONLY, &status);
@@ -153,6 +175,14 @@ void cutout_green_channel_out_of_RGB_DSLR_image(char *filename) {
  if( 0 != fitsfile_read_check(green_channel_only_image_name) ) {
   fprintf(stderr,"ERROR: the converted FITS file %s check failed!\n", green_channel_only_image_name);
   return;
+ }
+ 
+ vast_converted_images_log=fopen("vast_converted_images.log","a");
+ if( NULL==vast_converted_images_log ) {
+  fprintf(stderr, "WARNING: cannot open vast_converted_images.log for writing!\n");
+ } else {
+  fprintf(vast_converted_images_log,"%s %s\n", filename, green_channel_only_image_name);
+  fclose(vast_converted_images_log);
  }
  
  strncpy(filename, green_channel_only_image_name, FILENAME_LENGTH - 1);

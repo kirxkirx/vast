@@ -48,6 +48,9 @@
 
 #include "is_point_close_or_off_the_frame_edge.h" // for is_point_close_or_off_the_frame_edge()
 
+#include "replace_file_with_symlink_if_filename_contains_white_spaces.h"
+
+
 struct str_catalog_search_parameters {
  double search_radius_deg;
  double search_radius_second_step_deg;
@@ -2370,6 +2373,11 @@ int main(int argc, char **argv) {
 
  strncpy(fits_image_filename, argv[optind], FILENAME_LENGTH);
  fits_image_filename[FILENAME_LENGTH - 1]= '\0';
+
+ //
+ replace_file_with_symlink_if_filename_contains_white_spaces(fits_image_filename);
+ cutout_green_channel_out_of_RGB_DSLR_image(fits_image_filename);
+ //
 
  // Check if the input file has already been processed
  if( 1 == check_if_the_output_catalog_already_exist(fits_image_filename) ) {

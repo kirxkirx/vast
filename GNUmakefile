@@ -427,8 +427,8 @@ lib/make_outxyls_for_astrometric_calibration: make_outxyls_for_astrometric_calib
 #	$(CC) $(OPTFLAGS) -o lib/fits2cat fits2cat.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 #fits2cat.o: $(SRC_PATH)fits2cat.c
 #	$(CC) $(OPTFLAGS) -c -o fits2cat.o $(SRC_PATH)fits2cat.c
-util/solve_plate_with_UCAC5: solve_plate_with_UCAC5.o gettime.o wpolyfit.o variability_indexes.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o
-	$(CC) $(OPTFLAGS) -o util/solve_plate_with_UCAC5 solve_plate_with_UCAC5.o gettime.o fit_plane_lin.o wpolyfit.o variability_indexes.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+util/solve_plate_with_UCAC5: solve_plate_with_UCAC5.o gettime.o wpolyfit.o variability_indexes.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o
+	$(CC) $(OPTFLAGS) -o util/solve_plate_with_UCAC5 solve_plate_with_UCAC5.o gettime.o fit_plane_lin.o wpolyfit.o variability_indexes.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 	cd util/ ; ln -s solve_plate_with_UCAC5 solve_plate_with_UCAC4 ; cd ..
 solve_plate_with_UCAC5.o:
 	$(CC) $(OPTFLAGS) -c src/solve_plate_with_UCAC5.c -I$(GSL_INCLUDE)
