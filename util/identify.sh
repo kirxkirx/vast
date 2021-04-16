@@ -865,7 +865,8 @@ Retrying..."
    fi
    ############################################################################
   done
- else
+ fi
+ if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" != "remote" ] && "$ASTROMETRYNET_LOCAL_OR_REMOTE" != "local" ;then
   echo "ERROR: the variable ASTROMETRYNET_LOCAL_OR_REMOTE should be set to 'remote' or 'local', instead ASTROMETRYNET_LOCAL_OR_REMOTE=$ASTROMETRYNET_LOCAL_OR_REMOTE"
   exit 1
  fi # if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
