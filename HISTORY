@@ -39,6 +39,13 @@
 	the vast working directory meaning you have to have enough disk space to copy the input image set.
 	An external program like 'siril' ( https://siril.org/ ) can be used to convert RAW DSLR images 
 	to FITS format (that can be read by VaST) and stack the images if needed.
+	* In single-image inspection mode './sextract_single_image image.fits' you may now try to 
+	calibrate the magnitude scale automatically by pressing '4' on the keyboard. This will work only
+	if the image can be automatically plate-solved. You'll need to enter the filter name in the terminal.
+	* If manual (keyboard key '2') or automatic (keyboard key '4') magnitude calibration is performed 
+	in single-image inspection mode './sextract_single_image image.fits' The file named 
+	'image00000.cat.calibrated' will be written magnitudes of all the detected stars with 
+	the magnitude calibration applied.
 20 Oct 2020: vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911

@@ -953,6 +953,8 @@ int main(int argc, char **argv) {
  char filtered_string[1024 + FILENAME_LENGTH];
  int ii, jj, first_number_flag;
 
+ char filter_name_for_automatic_magnitude_calibration[512];
+
  /* For time information from the FITS header */
  double JD;
  double dimX;
@@ -1311,9 +1313,9 @@ int main(int argc, char **argv) {
  if( match_mode == 3 ) {
   fprintf(stderr, "Entering single image reduction mode.\nProcessing image %s\n", fits_image_name);
   fprintf(stderr, "Use '+' or '-' to increase or decrease aperture size.\n");
-  fprintf(stderr, "\E[34;47mTo calibrate magnitude scale press '2'\E[33;00m\n");
+  fprintf(stderr, "\E[34;47mTo calibrate magnitude scale press '2'\E[33;00m (manual calibration) or \E[34;47m'4'\E[33;00m (automatic calibration)\n");
 
-  /* Remove old calib.txt in case we'll want a magnitude calibration */
+  // Remove old calib.txt in case we'll want a magnitude calibration 
   //system("rm -f calib.txt");
   calibfile= fopen("calib.txt", "r");
   if( NULL != calibfile ) {
@@ -1968,7 +1970,7 @@ int main(int argc, char **argv) {
      curC= 'R'; // Redraw screen
     }           // if ( aperture_change == 1 ) {
    }            // if( match_mode == 3 || match_mode == 4 ) {
-   /* Switch to magnitude calibration mode */
+   // Switch to magnitude calibration mode 
    if( curC == '2' && match_mode == 3 ) {
     fprintf(stderr, "Entering megnitude calibration mode!\n");
     fprintf(stderr, "\E[01;31mPlease click on comparison stars and enter their magnitudes...\E[33;00m\n");
@@ -1978,7 +1980,28 @@ int main(int argc, char **argv) {
     match_mode= 2;
    }
 
-   /* Switch to single image inspection mode */
+   // Switch to AUTOMATIC magnitude calibration mode 
+   if( curC == '4' && match_mode == 3 ) {
+    fprintf(stderr, "Entering AUTOMATIC megnitude calibration mode!\n");
+    fprintf(stderr, "\E[01;31mPlease enter the filter name (one of BVriRI):\E[33;00m\n");
+    while( -1<fscanf(stdin, "%s", filter_name_for_automatic_magnitude_calibration) ) {
+     if( strncmp(filter_name_for_automatic_magnitude_calibration, "B", 2) || strncmp(filter_name_for_automatic_magnitude_calibration, "V", 2) || strncmp(filter_name_for_automatic_magnitude_calibration, "r", 2) || strncmp(filter_name_for_automatic_magnitude_calibration, "i", 2) || strncmp(filter_name_for_automatic_magnitude_calibration, "R", 2) || strncmp(filter_name_for_automatic_magnitude_calibration, "Rc", 2) || strncmp(filter_name_for_automatic_magnitude_calibration, "I", 2) || strncmp(filter_name_for_automatic_magnitude_calibration, "Ic", 2) ) {
+      fprintf(stderr, "Trying to perform automatic magnitude calibration for %s filter\n", filter_name_for_automatic_magnitude_calibration);
+      break;
+     }
+     fprintf(stderr,"Unrecognized filter name %s\nPlease enter one of BVriRI: ",filter_name_for_automatic_magnitude_calibration);
+    }
+    sprintf(system_command, "util/calibrate_single_image.sh %s %s", fits_image_name, filter_name_for_automatic_magnitude_calibration);
+    if( 0!=system(system_command) ){
+     fprintf(stderr, "ERROR running %s\nYou may try to calibrate the magnitude scale manually by pressing '2' on the keyboard\n",system_command);
+    } else {
+     // everything worked - go to magnitude calibration
+     curC= '3';
+     match_mode= 2;
+    }
+   }
+   
+   // Switch to single image inspection mode 
    if( curC == '3' && match_mode == 2 ) {
     magnitude_calibration_using_calib_txt(sextractor_catalog__MAG, sextractor_catalog__counter);
     write_list_of_all_stars_with_calibrated_magnitudes_to_file( sextractor_catalog__X, sextractor_catalog__Y, sextractor_catalog__MAG, sextractor_catalog__MAG_ERR, sextractor_catalog__star_number, sextractor_catalog__se_FLAG, sextractor_catalog__ext_FLAG, sextractor_catalog__counter, sextractor_catalog_filename);
