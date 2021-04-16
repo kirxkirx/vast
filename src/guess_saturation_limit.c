@@ -1026,9 +1026,10 @@ int guess_saturation_limit(char *fitsfilename, char *resulting_sextractor_cl_par
     //
     return 0;
    }
-   if( naxes[0] < 3000 || naxes[1] < 3000 ) {
+   //if( naxes[0] < 3000 || naxes[1] < 3000 ) {
+   if( naxes[0] < 3000 || naxes[1] < 2500 ) {
     resulting_sextractor_cl_parameter_string[0]= '\0';
-    fprintf(stderr, "The value of saturation limit (SATUR_LEVEL=%.1lf) from default.sex will be used for image %s\nThe above guess is based on the small image size of %ldx%ld pix\n", saturation_level_from_default_sex, fitsfilename, naxes[0], naxes[1]);
+    fprintf(stderr, "The value of saturation limit (SATUR_LEVEL=%.1lf) from default.sex will be used for image %s\nThe above guess is based on the small image size of %ldx%ld pix (the silly idea here is that a small image might not have a saturated star in it at all)\n", saturation_level_from_default_sex, fitsfilename, naxes[0], naxes[1]);
     //
     fits_report_error(stderr, status); /* print any error message */
     fits_clear_errmsg();               // clear the CFITSIO error message stack
