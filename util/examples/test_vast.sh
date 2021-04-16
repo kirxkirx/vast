@@ -44,7 +44,7 @@ END {
 }
 
 function test_https_connection {
- curl --max-time 10 --silent https://scan.sai.msu.ru/astrometry_engine/files/ | tac | grep --quiet 'Parent Directory'
+ curl --max-time 10 --silent https://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
  if [ $? -ne 0 ];then
   # if the above didn't work, try to download the certificate
   wget -O - https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem > intermediate.pem
@@ -52,7 +52,7 @@ function test_https_connection {
   if [ $? -ne 0 ];then
    return 2
   fi
-  curl --max-time 10 --silent --cacert intermediate.pem https://scan.sai.msu.ru/astrometry_engine/files/ | tac | grep --quiet 'Parent Directory'
+  curl --max-time 10 --silent --cacert intermediate.pem https://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
   if [ $? -ne 0 ];then
    # cleanup
    if [ -f intermediate.pem ];then
@@ -66,7 +66,7 @@ function test_https_connection {
  
  # note there is no https support at vast.sai.msu.ru yet
 
- curl --max-time 10 --silent https://kirx.net/astrometry_engine/files/ | tac | grep --quiet 'Parent Directory'
+ curl --max-time 10 --silent https://kirx.net/astrometry_engine/files/ | grep --quiet 'Parent Directory'
  if [ $? -ne 0 ];then
   if [ ! -f intermediate.pem ];then
    wget -O - https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem > intermediate.pem
@@ -75,7 +75,7 @@ function test_https_connection {
     return 2
    fi
   fi
-  curl --max-time 10 --silent --cacert intermediate.pem https://kirx.net/astrometry_engine/files/ | tac | grep --quiet 'Parent Directory'
+  curl --max-time 10 --silent --cacert intermediate.pem https://kirx.net/astrometry_engine/files/ | grep --quiet 'Parent Directory'
   if [ $? -ne 0 ];then
    echo "ERROR in test_https_connection(): cannot connect to vast.sai.msu.ru" >> /dev/stderr
    return 1
@@ -133,7 +133,7 @@ function remove_test_data_to_save_space {
 
 
 function test_internet_connection {
- curl --max-time 10 --silent http://scan.sai.msu.ru/astrometry_engine/files/ | tac | grep --quiet 'Parent Directory'
+ curl --max-time 10 --silent http://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
  if [ $? -ne 0 ];then
   echo "ERROR in test_internet_connection(): cannot connect to scan.sai.msu.ru" >> /dev/stderr
   return 1
@@ -144,7 +144,7 @@ function test_internet_connection {
   return 0
  fi
 
- curl --max-time 10 --silent http://vast.sai.msu.ru/astrometry_engine/files/ | tac | grep --quiet 'Parent Directory'
+ curl --max-time 10 --silent http://vast.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
  if [ $? -ne 0 ];then
   echo "ERROR in test_internet_connection(): cannot connect to vast.sai.msu.ru" >> /dev/stderr
   return 1
