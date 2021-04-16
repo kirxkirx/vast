@@ -389,6 +389,15 @@ int try_to_recognize_telescop_keyword(char *fitsfilename, double *estimated_fov_
   }
  }
 
+ // CrAO Sintez 380mm
+ if( strlen(telescop) >= 6 ) {                                       //01234567890
+  pointer_to_the_key_start= (char *)memmem(telescop, strlen(telescop), "Sintez", 6);
+  if( pointer_to_the_key_start != NULL ) {
+   (*estimated_fov_arcmin)= 26.0;
+   return 0;
+  }
+ }
+
  // NMW camera
  if( strlen(telescop) >= 10 ) { //01234567890
   pointer_to_the_key_start= (char *)memmem(telescop, strlen(telescop), "NMW_camera", 10);
