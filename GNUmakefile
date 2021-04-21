@@ -222,9 +222,6 @@ index_vs_mag: index_vs_mag.o variability_indexes.o
 
 
 
-#rescale_photometric_errors: $(SRC_PATH)rescale_photometric_errors.c
-#	$(CC) $(OPTFLAGS) -o util/rescale_photometric_errors $(SRC_PATH)rescale_photometric_errors.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
-#	cd util/ ; ln -s rescale_photometric_errors estimate_systematic_noise_level ; cd ..
 rescale_photometric_errors.o: $(SRC_PATH)rescale_photometric_errors.c
 	$(CC) $(OPTFLAGS) -c $(SRC_PATH)rescale_photometric_errors.c -I$(GSL_INCLUDE) -lm
 rescale_photometric_errors: rescale_photometric_errors.o wpolyfit.o
@@ -333,13 +330,9 @@ lib/lk_compute_periodogram: lib/deeming_compute_periodogram
 	cd lib/; ln -s  deeming_compute_periodogram lk_compute_periodogram ; ln -s deeming_compute_periodogram compute_periodogram_allmethods ; cd ..
 deeming_compute_periodogram.o: $(SRC_PATH)period_search/deeming_compute_periodogram.c
 	$(CC) $(OPTFLAGS) -c -o deeming_compute_periodogram.o $(SRC_PATH)period_search/deeming_compute_periodogram.c -I$(GSL_INCLUDE) -lm
-	#$(CC) $(OPTFLAGS) -c -o deeming_compute_periodogram.o $(SRC_PATH)period_search/deeming_compute_periodogram.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 lib/deeming_compute_periodogram: deeming_compute_periodogram.o #get_number_of_cpu_cores.o
 	$(CC) $(OPTFLAGS) -o lib/deeming_compute_periodogram deeming_compute_periodogram.o $(USE_SINCOS_OPITION) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 	
-#util/sysrem: $(SRC_PATH)sysrem.c
-#	$(CC) $(OPTFLAGS) -o util/sysrem $(SRC_PATH)sysrem.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
-# sysrem will now be just a symlink to sysrem2
 util/sysrem: util/sysrem2
 	cd util/; ln -s sysrem2 sysrem ; cd ..
 
@@ -528,6 +521,8 @@ clean: clean_libraries
 	rm -f lib/on_the_fly_symlink_or_convert
 	rm -f util/fix_image_date
 	rm -f util/phase_lc
+	# symlink to cpgplot.h should be re-created by lib/compile_pgplot_related_components.sh
+	rm -f src/cpgplot.h
 	
 
 clean_objects: vast statistics etc pgplot_components old shell_commands period_filter ccd astrometry astcheck cdsclient

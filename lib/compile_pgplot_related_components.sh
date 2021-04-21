@@ -115,12 +115,18 @@ Please install libx11-dev developement package.
 fi
 rm -f test.exe test.c
 
+########### Create cpgplot.h symlink ###########
+cd src/
+ln -s ../lib/pgplot/cpgplot.h cpgplot.h
+cd -
+
 ########### Get info about libpng ###########
 LIBPNG=`lib/test_libpng.sh`
 
 ########### Compile PGPLOT library ###########
 cd lib/pgplot/
-make -j9
+#make -j9
+make
 make cpg CFLAGS='-O2 -Wno-error'
 make clean
 cd -
