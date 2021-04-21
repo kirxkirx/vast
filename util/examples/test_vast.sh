@@ -11378,6 +11378,127 @@ else
  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER_TEST_NOT_PERFORMED"
 fi
 
+######### ZTF image header test 2
+if [ ! -f ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit.bz2" && bunzip2 ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit.bz2
+ cd $WORKDIR
+fi
+
+if [ -f ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "ZTF image header test 2 " >> /dev/stderr
+ echo -n "ZTF image header test 2: " >> vast_test_report.txt 
+ #
+ util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit | grep --quiet 'Exposure  30 sec, 09.12.2018 10:25:07   = JD  2458461.93428 mid. exp.'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2000"
+ fi
+ #
+ util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit 2>&1 | grep --quiet 'DATE-OBS= 2018-12-09T10:25:07'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2000a"
+ fi
+ #
+ util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit  | grep --quiet "Image size: 51.8'x52.0'"
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2000b"
+ fi
+ #
+ util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit  | grep --quiet 'Image scale: 1.01"/pix along the X axis and 1.01"/pix along the Y axis'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2000c"
+ fi
+ #
+ util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit  | grep --quiet 'Image center: 06:56:29.366 -22:50:13.56 J2000 1536.500 1540.500'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2000d"
+ fi
+ #
+ #
+ lib/try_to_guess_image_fov ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit  | grep --quiet ' 47'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2000e"
+ fi
+ #
+ cp default.sex.ccd_example default.sex 
+ util/solve_plate_with_UCAC5 ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit
+ if [ ! -f wcs_ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2001"
+ fi 
+ lib/bin/xy2sky wcs_ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit 200 200 &>/dev/null
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2001a"
+ fi
+ if [ ! -s wcs_ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit.cat.ucac5 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2002"
+ else
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+  if [ $TEST -lt 700 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2002a_$TEST"
+  fi
+ fi 
+ # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
+ util/solve_plate_with_UCAC5 ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit 2>&1 | grep --quiet 'The output catalog wcs_ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit.cat.ucac5 already exist.'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2003"
+ fi
+ util/calibrate_single_image.sh ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit r
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2004"
+ fi
+ lib/fit_robust_linear
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2005"
+ fi
+ TEST=`cat calib.txt_param | awk '{if ( sqrt( ($3-0.000000)*($3-0.000000) ) < 0.0005 ) print 1 ;else print 0 }'`
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2007"
+ fi
+ TEST=`cat calib.txt_param | awk '{if ( sqrt( ($4-0.999569)*($4-0.999569) ) < 0.05 ) print 1 ;else print 0 }'`
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2007"
+ fi
+ TEST=`cat calib.txt_param | awk '{if ( sqrt( ($5-25.768253)*($5-25.768253) ) < 0.05 ) print 1 ;else print 0 }'`
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2008"
+ fi
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mZTF image header test 2 \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mZTF image header test 2 \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2_TEST_NOT_PERFORMED"
+fi
+
+
+
 ######### Stacked DSLR image (BITPIX=16) created with Siril
 if [ ! -f ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit ];then
  if [ ! -d ../individual_images_test ];then
