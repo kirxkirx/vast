@@ -119,6 +119,10 @@ rm -f test.exe test.c
 cd src/
 ln -s ../lib/pgplot/cpgplot.h cpgplot.h
 cd -
+# we need this link in two places
+cd src/pgfv
+ln -s ../../lib/pgplot/cpgplot.h cpgplot.h
+cd -
 
 ########### Get info about libpng ###########
 LIBPNG=`lib/test_libpng.sh`

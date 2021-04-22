@@ -522,7 +522,7 @@ clean: clean_libraries
 	rm -f util/fix_image_date
 	rm -f util/phase_lc
 	# symlink to cpgplot.h should be re-created by lib/compile_pgplot_related_components.sh
-	rm -f src/cpgplot.h
+	rm -f src/cpgplot.h src/pgfv/cpgplot.h
 	
 
 clean_objects: vast statistics etc pgplot_components old shell_commands period_filter ccd astrometry astcheck cdsclient
