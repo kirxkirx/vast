@@ -100,7 +100,7 @@ void cutout_green_channel_out_of_RGB_DSLR_image(char *filename) {
      strncpy(filename, green_channel_only_image_name, FILENAME_LENGTH - 1);
      filename[FILENAME_LENGTH - 1]= '\0'; // just in case
      fclose(vast_converted_images_log);
-     return 0;
+     return;
     }
    }
   }

@@ -417,6 +417,13 @@ int read_wcs_catalog(char *fits_image_filename, struct detected_star *stars, int
  double X_im_size;
  double Y_im_size;
  int good_stars_counter= 0;
+ 
+ int drop_zero_flux_counter;
+ int drop_no_flux_err_counter;
+ int drop_mag_99_counter;
+ int drop_mag_err_99_counter;
+ int drop_low_SNR_counter;
+ int blend_counter;
 
  timesys= 0; // for gettime()
  //gettime( fits_image_filename, &double_garbage, &timesys, 0, &X_im_size, &Y_im_size, char_garbage, char_garbage, 0, 0); // This is just an overkill way to get X_im_size Y_im_size
@@ -428,25 +435,37 @@ int read_wcs_catalog(char *fits_image_filename, struct detected_star *stars, int
  if( f == NULL )
   return 1;
  i= 0;
- //good_stars_counter++; // WHY???
+ drop_zero_flux_counter=drop_no_flux_err_counter=drop_mag_99_counter=drop_mag_err_99_counter=drop_low_SNR_counter=blend_counter= 0;
  while( 0 < fscanf(f, "%d %lf %lf %lf %lf  %lf %lf %lf %lf %d", &stars[i].n_current_frame, &stars[i].ra_deg_measured, &stars[i].dec_deg_measured, &stars[i].x_pix, &stars[i].y_pix, &stars[i].flux, &stars[i].flux_err, &stars[i].mag, &stars[i].mag_err, &stars[i].flag) ) {
   ///
-  if( stars[i].flux == 0 )
+  if( stars[i].flux == 0 ) {
+   drop_zero_flux_counter++;
    continue;
-  if( stars[i].flux_err == 999999 )
+  }
+  if( stars[i].flux_err == 999999 ) {
+   drop_no_flux_err_counter++;
    continue;
-  if( stars[i].mag == 99.0000 )
+  }
+  if( stars[i].mag == 99.0000 ) {
+   drop_mag_99_counter++;
    continue;
-  if( stars[i].mag_err == 99.0000 )
+  }
+  if( stars[i].mag_err == 99.0000 ) {
+   drop_mag_err_99_counter++;
    continue;
-  if( stars[i].flux < MIN_SNR * stars[i].flux_err )
+  }
+  if( stars[i].flux < MIN_SNR * stars[i].flux_err ) {
+   drop_low_SNR_counter++;
    continue;
+  }
   ///
   //if( stars[i].flag==0 )
-  if( stars[i].flag < 2 )
+  if( stars[i].flag < 2 ) {
    stars[i].good_star= 1;
-  else
+  } else { 
    stars[i].good_star= 0;
+   blend_counter++;
+  }
   //
   stars[i].ra_deg_measured_orig= stars[i].ra_deg_measured;
   stars[i].dec_deg_measured_orig= stars[i].dec_deg_measured;
@@ -484,11 +503,13 @@ int read_wcs_catalog(char *fits_image_filename, struct detected_star *stars, int
    return 1;
   }
  }
+ //
+ fprintf(stderr,"SExtractor catalog parsing summary: zero_flux=%d, no_flux_err=%d, no_mag=%d, no_mag_err=%d, low_SNR=%d, blended=%d\n", drop_zero_flux_counter,drop_no_flux_err_counter,drop_mag_99_counter,drop_mag_err_99_counter,drop_low_SNR_counter,blend_counter);
+ //
  (*number_of_stars_in_wcs_catalog)= i;
  fclose(f);
  if( i < MIN_NUMBER_OF_STARS_ON_FRAME ) {
   fprintf(stderr, "ERROR: too few stars (%d<%d) in the SExtractor catalog file %s\n", i, MIN_NUMBER_OF_STARS_ON_FRAME, wcs_catalog_filename);
-  fclose(f);
   return 1;
  }
  fprintf(stderr, "Got %d stars (including %d good ones) from the SExtractor catalog %s \n", i, good_stars_counter, wcs_catalog_filename);
@@ -2395,15 +2416,6 @@ int main(int argc, char **argv) {
   return 1;
  }
 
- /*
- // set the field of view, if needed
- if ( argc == 3 ) {
-  approximate_field_of_view_arcmin= atof( argv[2] );
-  if ( approximate_field_of_view_arcmin < 2.0 || approximate_field_of_view_arcmin > 600.0 ) {
-   fprintf( stderr, "Warining! The supplied approximate field of view (%s = %lf) arcmin seems wrong. Resorting to the default value of %lf.\n", argv[2], approximate_field_of_view_arcmin, DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN );
-   approximate_field_of_view_arcmin= DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN;
-  }
-*/
  if( approximate_field_of_view_arcmin == DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN ) {
   sprintf(command_string, "%slib/try_to_guess_image_fov %s", path_to_vast_string, fits_image_filename);
   pipe_for_try_to_guess_image_fov= popen(command_string, "r");
@@ -2437,6 +2449,7 @@ int main(int argc, char **argv) {
  };
 
  // **** Read the star catalog ****
+ fprintf(stderr, "%s is preparing to read a catalog corresponding to the image %s\n", argv[0], fits_image_filename);
  if( 0 != read_wcs_catalog(fits_image_filename, stars, &number_of_stars_in_wcs_catalog) ) {
   fprintf(stderr, "ERROR: reading SExtractor catalog file...\n");
   free(stars);
@@ -2446,6 +2459,8 @@ int main(int argc, char **argv) {
   fprintf(stderr, "ERROR: number_of_stars_in_wcs_catalog=%d", number_of_stars_in_wcs_catalog);
   free(stars);
   return 1;
+ } else {
+  fprintf(stderr, "%s got %d stars from the SExtractor catalog\n", argv[0], number_of_stars_in_wcs_catalog);
  }
  qsort(stars, number_of_stars_in_wcs_catalog, sizeof(struct detected_star), compare_star_on_mag_solve);
 

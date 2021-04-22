@@ -60,6 +60,8 @@ fi
 #
 #echo "DEBUG: VAST_PATH=$VAST_PATH"
 
+TEMPORARY_CATALOG_NAME="$VAST_PATH"correct_sextractor_wcs_catalog_usingxy2sky$$.tmp
+
 WCS_IMAGE="$1"
 if [ ! -s "$WCS_IMAGE" ];then
  echo "ERROR reading the input FITS image $WCS_IMAGE"
@@ -79,24 +81,34 @@ Checking if the filename extension and FITS header look reasonable..."
  fi
 fi
 
+# Test is xy2sky does not crash on the input image
+"$VAST_PATH"lib/bin/xy2sky "$WCS_IMAGE" 10 10
+if [ $? -ne 0 ];then
+ echo "ERROR in the test run of xy2sky"
+ exit 1
+fi
+
 echo "
  ### Converting SExtractor-derived pixel positions to celestial coordinates using xy2sky from WCSTools ###"
 
 # sed '/^\s*$/d' -- removes empty lines
-"$VAST_PATH"lib/bin/xy2sky -a -k 4 -j -d -n 7 "$WCS_IMAGE" "@$INPUT_SEXTRACTOR_CATALOG" | sed '/^\s*$/d' | grep -v 'Off map' | awk '{printf "%10d %11.7f %+11.7f %11.4f %11.4f %12.7g %12.7g %8.4f %8.4f %3d\n",$4,$1,$2,$7,$8,$9,$10,$11,$12,$13}' > correct_sextractor_wcs_catalog_usingxy2sky$$.tmp
+"$VAST_PATH"lib/bin/xy2sky -a -k 4 -j -d -n 7 "$WCS_IMAGE" "@$INPUT_SEXTRACTOR_CATALOG" | sed '/^\s*$/d' | grep -v 'Off map' | awk '{printf "%10d %11.7f %+11.7f %11.4f %11.4f %12.7g %12.7g %8.4f %8.4f %3d\n",$4,$1,$2,$7,$8,$9,$10,$11,$12,$13}' > "$TEMPORARY_CATALOG_NAME"
 if [ $? -ne 0 ];then
  echo "ERROR running xy2sky"
  exit 1
 fi
-if [ ! -s "correct_sextractor_wcs_catalog_usingxy2sky$$.tmp" ];then
- echo "ERROR: the output file correct_sextractor_wcs_catalog_usingxy2sky$$.tmp is EMPTY"
- rm -f "correct_sextractor_wcs_catalog_usingxy2sky$$.tmp"
+if [ ! -s "$TEMPORARY_CATALOG_NAME" ];then
+ echo "ERROR: the output file $TEMPORARY_CATALOG_NAME is EMPTY"
+ rm -f "$TEMPORARY_CATALOG_NAME"
  exit 1
 fi
 
+N_LINES_OUTPUT_CAT=`cat "$TEMPORARY_CATALOG_NAME" | wc -l`
+echo " ### Converted positions of $N_LINES_OUTPUT_CAT stars ###"
+
 ################### DEBUG
 #cp -v $INPUT_SEXTRACTOR_CATALOG A.cat
-#cp -v correct_sextractor_wcs_catalog_usingxy2sky$$.tmp B.cat
+#cp -v "$VAST_PATH"correct_sextractor_wcs_catalog_usingxy2sky$$.tmp B.cat
 #########################
 
-mv -f correct_sextractor_wcs_catalog_usingxy2sky$$.tmp "$INPUT_SEXTRACTOR_CATALOG"
+mv -f "$TEMPORARY_CATALOG_NAME" "$INPUT_SEXTRACTOR_CATALOG"

@@ -1054,6 +1054,8 @@ int main(int argc, char **argv) {
  //
  int is_this_north_up_east_left_image= 0; // For N/E labels on the finding chart
 
+ int magnitude_calibration_already_performed_flag= 0; // do not perform the magnitude calibration twice if set to 1
+
  // Dummy vars
  // int star_number_in_sextractor_catalog;
  // double flux_adu;
@@ -1068,7 +1070,7 @@ int main(int argc, char **argv) {
  // double a_b_err;
  // int sextractor_flag;
 
- /* Options for getopt() */
+ // Options for getopt() 
  char *cvalue= NULL;
 
  const char *const shortopt= "a:w:9sdnl";
@@ -1261,16 +1263,8 @@ int main(int argc, char **argv) {
    }
   }
   fclose(matchfile);
-  sextractor_catalog__counter--; /* We can't be sure that the last star is visible on the reference frame so we just drop it */
+  sextractor_catalog__counter--; // We can't be sure that the last star is visible on the reference frame so we just drop it 
  }
-
- /* 
- if( 0==strcasecmp(fits_image_name,"match") ){
-  match_mode=1;
-  system("rm -f match.txt");
-  get_ref_image_name(fits_image_name);
- }
-*/
 
  if( 0 == strcasecmp(fits_image_name, "match") ) {
   fprintf(stderr, "The manual star-matching mode is no longer supported, sorry!\n");
@@ -1338,7 +1332,7 @@ int main(int argc, char **argv) {
   }
  }
 
- /* Get time and frame size information from the FITS header */
+ // Get time and frame size information from the FITS header
  if( 0 != fitsfile_read_check(fits_image_name) ) {
   fprintf(stderr, "\nERROR: the input file %s does not appear to be a readable FITS image!\n", fits_image_name);
   return 1;
@@ -1971,7 +1965,7 @@ int main(int argc, char **argv) {
     }           // if ( aperture_change == 1 ) {
    }            // if( match_mode == 3 || match_mode == 4 ) {
    // Switch to magnitude calibration mode 
-   if( curC == '2' && match_mode == 3 ) {
+   if( curC == '2' && match_mode == 3 && magnitude_calibration_already_performed_flag == 0 ) {
     fprintf(stderr, "Entering megnitude calibration mode!\n");
     fprintf(stderr, "\E[01;31mPlease click on comparison stars and enter their magnitudes...\E[33;00m\n");
     fprintf(stderr, "\E[01;31mPress '3' when done!\E[33;00m\n");
@@ -1981,11 +1975,16 @@ int main(int argc, char **argv) {
    }
 
    // Switch to AUTOMATIC magnitude calibration mode 
-   if( curC == '4' && match_mode == 3 ) {
+   if( curC == '4' && match_mode == 3 && magnitude_calibration_already_performed_flag == 0 ) {
     fprintf(stderr, "Entering AUTOMATIC megnitude calibration mode!\n");
     fprintf(stderr, "\E[01;31mPlease enter the filter name (one of BVriRI):\E[33;00m\n");
     while( -1<fscanf(stdin, "%s", filter_name_for_automatic_magnitude_calibration) ) {
-     if( strncmp(filter_name_for_automatic_magnitude_calibration, "B", 2) || strncmp(filter_name_for_automatic_magnitude_calibration, "V", 2) || strncmp(filter_name_for_automatic_magnitude_calibration, "r", 2) || strncmp(filter_name_for_automatic_magnitude_calibration, "i", 2) || strncmp(filter_name_for_automatic_magnitude_calibration, "R", 2) || strncmp(filter_name_for_automatic_magnitude_calibration, "Rc", 2) || strncmp(filter_name_for_automatic_magnitude_calibration, "I", 2) || strncmp(filter_name_for_automatic_magnitude_calibration, "Ic", 2) ) {
+     // we don't expect the filter name to be long
+     if( strlen(filter_name_for_automatic_magnitude_calibration)>2 ){
+      continue;
+     }
+     // check if we recognize the name
+     if( strncmp(filter_name_for_automatic_magnitude_calibration, "B", 1) || strncmp(filter_name_for_automatic_magnitude_calibration, "V", 1) || strncmp(filter_name_for_automatic_magnitude_calibration, "r", 1) || strncmp(filter_name_for_automatic_magnitude_calibration, "i", 1) || strncmp(filter_name_for_automatic_magnitude_calibration, "R", 1) || strncmp(filter_name_for_automatic_magnitude_calibration, "Rc", 2) || strncmp(filter_name_for_automatic_magnitude_calibration, "I", 1) || strncmp(filter_name_for_automatic_magnitude_calibration, "Ic", 2) ) {
       fprintf(stderr, "Trying to perform automatic magnitude calibration for %s filter\n", filter_name_for_automatic_magnitude_calibration);
       break;
      }
@@ -2003,8 +2002,13 @@ int main(int argc, char **argv) {
    
    // Switch to single image inspection mode 
    if( curC == '3' && match_mode == 2 ) {
-    magnitude_calibration_using_calib_txt(sextractor_catalog__MAG, sextractor_catalog__counter);
-    write_list_of_all_stars_with_calibrated_magnitudes_to_file( sextractor_catalog__X, sextractor_catalog__Y, sextractor_catalog__MAG, sextractor_catalog__MAG_ERR, sextractor_catalog__star_number, sextractor_catalog__se_FLAG, sextractor_catalog__ext_FLAG, sextractor_catalog__counter, sextractor_catalog_filename);
+    if( magnitude_calibration_already_performed_flag != 0 ) {
+     fprintf(stderr, "WARNING: magnitude calibration already performed - will not do it twice!\n");
+    } else {
+     magnitude_calibration_using_calib_txt(sextractor_catalog__MAG, sextractor_catalog__counter);
+     write_list_of_all_stars_with_calibrated_magnitudes_to_file( sextractor_catalog__X, sextractor_catalog__Y, sextractor_catalog__MAG, sextractor_catalog__MAG_ERR, sextractor_catalog__star_number, sextractor_catalog__se_FLAG, sextractor_catalog__ext_FLAG, sextractor_catalog__counter, sextractor_catalog_filename);
+     magnitude_calibration_already_performed_flag=1;
+    }
     fprintf(stderr, "Entering back the single image inspection mode!\n");
     match_mode= 3;
    }
