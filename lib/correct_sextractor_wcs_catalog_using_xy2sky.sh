@@ -81,12 +81,17 @@ Checking if the filename extension and FITS header look reasonable..."
  fi
 fi
 
-# Test is xy2sky does not crash on the input image
-"$VAST_PATH"lib/bin/xy2sky "$WCS_IMAGE" 10 10
+# Silently test that xy2sky does not crash on the input image
+"$VAST_PATH"lib/bin/xy2sky "$WCS_IMAGE" 10 10 &> /dev/null
 if [ $? -ne 0 ];then
+ # Run it again to see the error message
+ "$VAST_PATH"lib/bin/xy2sky "$WCS_IMAGE" 10 10
  echo "ERROR in the test run of xy2sky"
  exit 1
 fi
+
+# Print out stats of the WCS-solved image
+"$VAST_PATH"util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE"
 
 echo "
  ### Converting SExtractor-derived pixel positions to celestial coordinates using xy2sky from WCSTools ###"
@@ -107,8 +112,8 @@ N_LINES_OUTPUT_CAT=`cat "$TEMPORARY_CATALOG_NAME" | wc -l`
 echo " ### Converted positions of $N_LINES_OUTPUT_CAT stars ###"
 
 ################### DEBUG
-#cp -v $INPUT_SEXTRACTOR_CATALOG A.cat
-#cp -v "$VAST_PATH"correct_sextractor_wcs_catalog_usingxy2sky$$.tmp B.cat
+cp -v $INPUT_SEXTRACTOR_CATALOG vast_debug_catalog_before_xy2sky_correction.cat.log
+cp -v "$VAST_PATH"correct_sextractor_wcs_catalog_usingxy2sky$$.tmp vast_debug_catalog_after_xy2sky_correction.cat.log
 #########################
 
 mv -f "$TEMPORARY_CATALOG_NAME" "$INPUT_SEXTRACTOR_CATALOG"
