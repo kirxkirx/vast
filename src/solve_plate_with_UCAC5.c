@@ -519,7 +519,7 @@ int read_wcs_catalog(char *fits_image_filename, struct detected_star *stars, int
   if( f == NULL ) {
    fprintf(stderr, "ERROR: re-opening the catalog!\n");
   } else {
-   while( NULL != fgets(sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, file) ) {
+   while( NULL != fgets(sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, f) ) {
     sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
     fprintf(stderr, "%s\n", sextractor_catalog_string);
     // display only the first few lines
