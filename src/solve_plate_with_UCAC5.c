@@ -410,7 +410,6 @@ int read_wcs_catalog(char *fits_image_filename, struct detected_star *stars, int
  FILE *f;
  int i;
  char wcs_catalog_filename[FILENAME_LENGTH];
- //double double_garbage;
  double JD;
  int timesys;
  char char_garbage[4096];
@@ -424,6 +423,8 @@ int read_wcs_catalog(char *fits_image_filename, struct detected_star *stars, int
  int drop_mag_err_99_counter;
  int drop_low_SNR_counter;
  int blend_counter;
+ 
+ char sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT]; // this is for debug only!!!
 
  timesys= 0; // for gettime()
  //gettime( fits_image_filename, &double_garbage, &timesys, 0, &X_im_size, &Y_im_size, char_garbage, char_garbage, 0, 0); // This is just an overkill way to get X_im_size Y_im_size
@@ -432,11 +433,12 @@ int read_wcs_catalog(char *fits_image_filename, struct detected_star *stars, int
  guess_wcs_catalog_filename(wcs_catalog_filename, fits_image_filename);
  fprintf(stderr, "WCS catalog name: %s \n", wcs_catalog_filename);
  f= fopen(wcs_catalog_filename, "r");
- if( f == NULL )
+ if( f == NULL ) {
   return 1;
+ }
  i= 0;
  drop_zero_flux_counter=drop_no_flux_err_counter=drop_mag_99_counter=drop_mag_err_99_counter=drop_low_SNR_counter=blend_counter= 0;
- while( 0 < fscanf(f, "%d %lf %lf %lf %lf  %lf %lf %lf %lf %d", &stars[i].n_current_frame, &stars[i].ra_deg_measured, &stars[i].dec_deg_measured, &stars[i].x_pix, &stars[i].y_pix, &stars[i].flux, &stars[i].flux_err, &stars[i].mag, &stars[i].mag_err, &stars[i].flag) ) {
+ while( -1 < fscanf(f, "%d %lf %lf %lf %lf  %lf %lf %lf %lf %d", &stars[i].n_current_frame, &stars[i].ra_deg_measured, &stars[i].dec_deg_measured, &stars[i].x_pix, &stars[i].y_pix, &stars[i].flux, &stars[i].flux_err, &stars[i].mag, &stars[i].mag_err, &stars[i].flag) ) {
   ///
   if( stars[i].flux == 0 ) {
    drop_zero_flux_counter++;
@@ -510,6 +512,25 @@ int read_wcs_catalog(char *fits_image_filename, struct detected_star *stars, int
  fclose(f);
  if( i < MIN_NUMBER_OF_STARS_ON_FRAME ) {
   fprintf(stderr, "ERROR: too few stars (%d<%d) in the SExtractor catalog file %s\n", i, MIN_NUMBER_OF_STARS_ON_FRAME, wcs_catalog_filename);
+  // Print the catalog for debug purposes
+  fprintf(stderr, "Here are the first few lines of the catalog - check for obvious formatting problems:\n");
+  i=0;
+  f= fopen(wcs_catalog_filename, "r");
+  if( f == NULL ) {
+   fprintf(stderr, "ERROR: re-opening the catalog!\n");
+  } else {
+   while( NULL != fgets(sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, file) ) {
+    sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
+    fprintf(stderr, "%s\n", sextractor_catalog_string);
+    // display only the first few lines
+    i++;
+    if( i>5 ) {
+     break;
+    }
+   }
+   fclose(f);
+  }
+  //
   return 1;
  }
  fprintf(stderr, "Got %d stars (including %d good ones) from the SExtractor catalog %s \n", i, good_stars_counter, wcs_catalog_filename);
