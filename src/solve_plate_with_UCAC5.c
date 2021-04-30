@@ -417,6 +417,7 @@ int read_wcs_catalog(char *fits_image_filename, struct detected_star *stars, int
  double Y_im_size;
  int good_stars_counter= 0;
  
+ int nodrop_counter;
  int drop_zero_flux_counter;
  int drop_no_flux_err_counter;
  int drop_mag_99_counter;
@@ -437,7 +438,7 @@ int read_wcs_catalog(char *fits_image_filename, struct detected_star *stars, int
   return 1;
  }
  i= 0;
- drop_zero_flux_counter=drop_no_flux_err_counter=drop_mag_99_counter=drop_mag_err_99_counter=drop_low_SNR_counter=blend_counter= 0;
+ nodrop_counter=drop_zero_flux_counter=drop_no_flux_err_counter=drop_mag_99_counter=drop_mag_err_99_counter=drop_low_SNR_counter=blend_counter= 0;
  while( -1 < fscanf(f, "%d %lf %lf %lf %lf  %lf %lf %lf %lf %d", &stars[i].n_current_frame, &stars[i].ra_deg_measured, &stars[i].dec_deg_measured, &stars[i].x_pix, &stars[i].y_pix, &stars[i].flux, &stars[i].flux_err, &stars[i].mag, &stars[i].mag_err, &stars[i].flag) ) {
   ///
   if( stars[i].flux == 0 ) {
@@ -485,6 +486,8 @@ int read_wcs_catalog(char *fits_image_filename, struct detected_star *stars, int
    good_stars_counter++;
   }
   //
+  nodrop_counter++;
+  //
   stars[i].estimated_local_correction_accuracy= 0.0; // initialize
   //
   // Initialize all the remaining stuff
@@ -506,7 +509,7 @@ int read_wcs_catalog(char *fits_image_filename, struct detected_star *stars, int
   }
  }
  //
- fprintf(stderr,"SExtractor catalog parsing summary: zero_flux=%d, no_flux_err=%d, no_mag=%d, no_mag_err=%d, low_SNR=%d, blended=%d\n", drop_zero_flux_counter,drop_no_flux_err_counter,drop_mag_99_counter,drop_mag_err_99_counter,drop_low_SNR_counter,blend_counter);
+ fprintf(stderr,"SExtractor catalog parsing summary: zero_flux=%d, no_flux_err=%d, no_mag=%d, no_mag_err=%d, low_SNR=%d, blended=%d, passed=%d\n", drop_zero_flux_counter,drop_no_flux_err_counter,drop_mag_99_counter,drop_mag_err_99_counter,drop_low_SNR_counter,blend_counter,nodrop_counter);
  //
  (*number_of_stars_in_wcs_catalog)= i;
  fclose(f);
