@@ -9895,12 +9895,180 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_NCANDIDATES_$NUMBER_OF_CANDIDATE_TRANSIENTS"
   fi
+  
 
  else
   echo "ERROR running the transient search script" >> /dev/stderr
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_ALL"
  fi
+
+ #############################################################################
+  
+ REFERENCE_IMAGES=../NMW_find_Mars_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_find_Mars_test/third_epoch/
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_EXIT_CODE"
+ fi
+ # Test for the specific error message
+ grep --quiet 'ERROR: cannot find a star near the specified position' test_ncas$$.tmp
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_CANNOT_FIND_STAR_ERROR_MESSAGE"
+ fi
+ rm -f test_ncas$$.tmp
+ #
+ if [ -f transient_report/index.html ];then
+  # there SHOULD NOT be an error message 
+  grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_ERROR_MESSAGE_IN_index_html"
+   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
+   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWMARS3_NO_ERROR_MESSAGE_IN_index_html ######
+$GREP_RESULT
+-----------------
+$CAT_RESULT"
+  fi
+  # The copy of the log file shoule be in the HTML report
+  grep --quiet "Images processed 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3001"
+  fi
+  NUMBER_OF_GOOD_SE_RUNS=`grep -c "Images processed 4" transient_report/index.html`
+  if [ $NUMBER_OF_GOOD_SE_RUNS -lt 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3001a"
+  fi
+  grep --quiet "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3002"
+  fi
+  NUMBER_OF_GOOD_SE_RUNS=`grep -c "Images used for photometry 4" transient_report/index.html`
+  if [ $NUMBER_OF_GOOD_SE_RUNS -lt 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3002a"
+  fi
+  grep --quiet "First image: 2455929.28115 02.01.2012 18:44:31" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3003"
+  fi
+  grep --quiet -e "Last  image: 2459337.27924 02.05.2021 18:41:56" -e "Last  image: 2459334.28212 29.04.2021 18:46:05" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3004"
+  fi
+  # Hunting the mysterious non-zero reference frame rotation cases
+  if [ -f vast_image_details.log ];then
+   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS30_nonzero_ref_frame_rotation"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWMARS30_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS30_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWMARS30_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS30_NO_vast_image_details_log"
+  fi
+  #
+  #
+  # Mars has no automatic ID in the current VaST version,
+  #grep --quiet "N Cas 2021" transient_report/index.html
+  #if [ $? -ne 0 ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS30110"
+  #fi
+  grep --quiet "2021 05 02.77..  2459337.27..  7\...  06:23:..\... +24:46:..\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS30110a"
+   GREP_RESULT=`grep "2021 05 02.77..  2459337.27..  7\...  06:23:..\... +24:46:..\.." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWMARS30110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2021 05 02.77..  2459337.27..  7\...  06:23:..\... +24:46:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 06:23:33.10 +24:46:13.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  # relax position tolerance as this is an extended saturated thing
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 10*8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS30110a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS30110a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+
+  # ASAS J061734+2526.7
+  grep --quiet "ASAS J061734+2526.7" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS30210"
+  fi
+  grep --quiet "2021 05 02.77..  2459337.27..  12\...  06:17:..\... +25:26:..\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS30210a"
+   GREP_RESULT=`grep "2021 05 02.77..  2459337.27..  12\...  06:17:..\... +25:26:..\.." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWMARS30210a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2021 05 02.77..  2459337.27..  12\...  06:17:..\... +25:26:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 06:17:33.83 +25:26:42.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 2*8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS30210a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS30210a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+    
+  # Check the total number of candidates (should be exactly 6 in this test)
+  NUMBER_OF_CANDIDATE_TRANSIENTS=`grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink'`
+  if [ $NUMBER_OF_CANDIDATE_TRANSIENTS -lt 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_NCANDIDATES_$NUMBER_OF_CANDIDATE_TRANSIENTS"
+  fi
+  
+
+ else
+  echo "ERROR running the transient search script" >> /dev/stderr
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_ALL"
+ fi
+
+
 
  ###### restore exclusion list after the test if needed
  if [ -f ../exclusion_list.txt_backup ];then
