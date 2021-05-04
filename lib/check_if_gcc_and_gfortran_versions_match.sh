@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 # Check if C compiler name was supplied
 if [ ! -z $1 ];then
  CC=$1

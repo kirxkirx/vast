@@ -3,6 +3,13 @@
 # This script will draw all detected stars or a single star using DS9 FITS viewer.
 #
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 # Determine operation mode
 SCRIPT_NAME=$0
 if [ "$SCRIPT_NAME" = "util/mark_wcs_position_with_ds9.sh" ];then

@@ -6,6 +6,13 @@
 # The results will be presented as an HTML page transient_report/index.html
 #
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 # The following script will set up variable describing the survey
 #. util/transients/transient_factory_setup.sh
 REFERENCE_IMAGES="../NMW_transient_detection_test/reference_test/"

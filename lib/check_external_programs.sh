@@ -2,6 +2,14 @@
 #
 # This script will check if the external programs (mostly standard *nix tools) are present in the $PATH
 #
+
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 MISSING_PROGRAM=0
 LIST_OF_MISSING_PROGRAMS=""
 echo " "

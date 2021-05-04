@@ -8,6 +8,12 @@ PATH_TO_WINEFK="$HOME/winefk"
 # With the latest version of WinEfk the lightcurve file will be opened automatically.
 #
 #################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+#################################
 # Check if $PATH_TO_WINEFK exist
 if [ ! -d "$PATH_TO_WINEFK" ];then
  echo "ERROR: Can't locate WinEfk!"

@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 # Check GCC version
 CC=`lib/find_gcc_compiler.sh`
 GCC_MAJOR_VERSION=`$CC -dumpversion | cut -f1 -d.` ; 

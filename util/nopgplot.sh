@@ -7,6 +7,13 @@
 #
 #
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 # Check if any lightcurve files are actually present in the directory
 for i in out*dat ;do if [ -f $i ]; then break ;else echo "ERROR: There are no light curve files!!!" && exit 1 ;fi ;done
 

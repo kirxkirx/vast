@@ -3,6 +3,13 @@
 # This script will compile The GNU Scientific Library (GSL) inside the VaST source tree.
 #
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 # For compatibility with BSD Make:
 # if the script is called by GNU Make MFLAGS="-w" will be set that confuses BSD Make.
 export MAKEFLAGS=""

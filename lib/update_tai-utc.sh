@@ -1,10 +1,18 @@
 #!/usr/bin/env bash
 
+# Sadly, maia is long dead
+
 # This script should check how old is the TAI-UTC file lib/tai-utc.dat
 # and update it from http://maia.usno.navy.mil/ser7/tai-utc.dat if needed
 
-NEED_TO_UPDATE_THE_FILE=0
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
 
+NEED_TO_UPDATE_THE_FILE=0
 
 # Get current date from the system clock
 CURRENT_DATE_UNIXSEC=`date +%s`

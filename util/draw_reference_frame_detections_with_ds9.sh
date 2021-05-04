@@ -3,6 +3,14 @@
 # This script will draw all stars detected on the reference image *BY SExtractor* 
 # using DS9 FITS viewer. These stars will NOT necessary pass all VaST tests
 #
+
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 echo "Working..."
 
 if [ ! -f "vast_summary.log" ];then

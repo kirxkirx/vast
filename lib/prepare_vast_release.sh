@@ -5,6 +5,13 @@
 # The defaule SExtractor settings will be restored.
 #
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 #### Restore default settings ####
 cp default.sex.ccd_example default.sex
 cp default.conv.backup default.conv

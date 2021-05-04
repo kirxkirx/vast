@@ -3,6 +3,14 @@
 # This script will interface with MPChecker: Minor Planet Checker
 # http://scully.harvard.edu/~cgi/CheckMP
 #
+
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 echo -e "Starting $0"
 
 # Test the command line arguments

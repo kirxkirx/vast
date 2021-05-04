@@ -2,7 +2,12 @@
 
 # This script will get Gaia lightcurves from VizieR
 
-
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
 
 # Check that the Gaia ID is set
 if [ -z "$1" ];then

@@ -3,6 +3,14 @@
 # This small script will copy all content of the directory REGION_NAME (previously created bu util/save.sh script)
 # to the current directory. Useful to load previously saved work to the VsST working directory.
 #
+
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 ##########################################################################
 # function definitions
 function check_if_two_files_are_the_same {

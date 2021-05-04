@@ -37,6 +37,13 @@ FORCE_FILTER="no"
 # You probably don't want to change anything below this line.
 ##################################################################
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 function write_vast_CPCS_log {
  if [ -z "$1" ];then
   STATUS="UNKNOWN"

@@ -2,6 +2,14 @@
 #
 # This script will search the web for known variable stars
 #
+
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 echo -e "Starting $0"
 
 # Test the command line arguments

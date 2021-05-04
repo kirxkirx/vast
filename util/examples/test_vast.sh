@@ -7,6 +7,13 @@ unset TELESCOP
 # for test runs with AddressSanitizer 
 export ASAN_OPTIONS=strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 # remove suspisious files
 ## File names equal to small numbers will confuse VaST when it tries to parse command line options
 for SUSPICIOUS_FILE in 1 2 3 4 5 6 7 8 9 10 11 12 ;do

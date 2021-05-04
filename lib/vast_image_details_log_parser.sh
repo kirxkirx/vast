@@ -3,6 +3,14 @@
 # This script will parse vast_image_details.log and generate a stub vast_summary.log
 # It is not intended to be run by a user, the main vast program will start it automatically...
 #
+
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 LAST_JD=0
 FIRST_JD=9953219
 IS_REF_IMAGE=1

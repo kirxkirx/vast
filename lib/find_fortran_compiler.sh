@@ -4,6 +4,13 @@
 # It tries to find C, Fortran and C++ compilers
 #
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 # Default guess
 CC="gcc"
 CXX="g++"

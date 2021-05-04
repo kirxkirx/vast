@@ -3,6 +3,13 @@
 # This script will create a catalog of detected stars with teir equatorial coordinates
 #
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 #REF_IMAGE=`grep "Ref.  image:" vast_summary.log |awk '{print $6}'`
 #REF_IMAGE_CATALOG=`util/wcs_image_calibration.sh $REF_IMAGE |grep ".cat" | awk '{print $2}'`
 #cat $REF_IMAGE_CATALOG | awk '{printf "%05d  %.5f %.5f ",$1,$2,$3}' | while read N RA DEC ;do

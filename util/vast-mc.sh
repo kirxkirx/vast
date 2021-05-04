@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 key=$1
 case $key in
  -h | --h | --help )

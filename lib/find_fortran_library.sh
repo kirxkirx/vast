@@ -4,6 +4,13 @@
 # It tries to find a C-Fortran library
 #
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 CC=`lib/find_gcc_compiler.sh`
 
 # and here is a really good one

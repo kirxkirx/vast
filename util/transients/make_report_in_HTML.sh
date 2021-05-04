@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 
-
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
 
 ## Set PNG finding chart dimensions
 #export PGPLOT_PNG_HEIGHT=400 ; export PGPLOT_PNG_WIDTH=400
@@ -124,7 +129,8 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
       BASENAME_IMAGE=`basename $IMAGE`
       PREVIEW_IMAGE="$BASENAME_IMAGE"_preview.png
       if [ ! -f transient_report/$PREVIEW_IMAGE ];then
-       export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
+       #export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
+       unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
        PGPLOT_PNG_HEIGHT=1700 util/fits2png $IMAGE &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
        unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
       fi

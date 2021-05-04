@@ -6,6 +6,13 @@
 # Note, from this version on the command line parameter "all" is no longer needed.
 #
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 echo -n "Checking write permissions for the current directory ( $PWD ) ...  "
 
 touch testfile$$.tmp

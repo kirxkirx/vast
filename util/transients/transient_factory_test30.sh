@@ -6,6 +6,13 @@
 # The results will be presented as an HTML page transient_report/index.html
 #
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 # Set the directory with reference images
 # You may set a few alternative locations, but only the first one that exist will be used
 if [ -z "$REFERENCE_IMAGES" ];then

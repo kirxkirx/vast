@@ -6,6 +6,13 @@
 # ./vast -x99 -u -f -k /data/first_epoch_image_1.fit /data/first_epoch_image_2.fit /data/second_epoch_image_1.fit /data/second_epoch_image_2.fit
 #
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 TEST_MODE=0
 if [ "$1" = "test" ];then
  # Do not start the browser if this is a test run

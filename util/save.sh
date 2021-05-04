@@ -4,6 +4,14 @@
 # To resume work with the current field, just copy all files from the directory REGION_NAME to to the
 # VaST directory and run ./find_candidates aa
 #
+
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 if [ ! -z $1 ];then
  REGION_NAME="$1""$2""$3""$4""$5"
 else

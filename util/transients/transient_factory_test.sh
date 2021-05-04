@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 #REFERENCE_IMAGES=../transients/reference
 #REFERENCE_IMAGES=../reference_test
 REFERENCE_IMAGES=/mnt/usb/NMW_NG/NMW_reference_images_2012

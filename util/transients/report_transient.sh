@@ -2,6 +2,14 @@
 #
 # This script writes out a short summary about the possible transient
 #
+
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 # Parse the command line arguments
 if [ -z $1 ]; then
  echo "Usage: $0 outNUMBER.dat"

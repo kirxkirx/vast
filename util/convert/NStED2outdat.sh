@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 for TBLFILENAME in *_lc.tbl ;do
 
  OUTFILENAME="out"`basename $TBLFILENAME "_lc.tbl"`.dat

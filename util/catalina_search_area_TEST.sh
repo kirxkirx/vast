@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 # Default values
 SEARCH_AREA_RADIUS_DEGREES=0.5
 INDIVIDUAL_OBJECT_SEARCH_RADIUS_ARCMIN=0.1

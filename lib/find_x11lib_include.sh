@@ -1,5 +1,13 @@
 #!/usr/bin/env bash                                              
 ########### Try to guess a non-standard X11 libray path ###########
+
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 # Test other possible library paths
 for POSSIBLE_LIBRARY_PATH in /opt/X11/lib /usr/X11R6/lib /usr/lib/X11 /usr/local/lib/X11 /usr/lib64/X11 /usr/local/lib64/X11 /usr/lib32/X11 /usr/local/lib32/X11 /opt/local/lib ;do
  if [ -d "$POSSIBLE_LIBRARY_PATH" ];then

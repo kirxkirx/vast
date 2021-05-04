@@ -2,6 +2,13 @@
 
 #exit 0
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 # This script will try to set a safe value of MAX_MEASUREMENTS_IN_RAM in src/vast_max_measurements_in_ram.h
 # before compiling VaST
 

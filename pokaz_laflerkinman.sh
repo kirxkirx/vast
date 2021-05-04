@@ -10,6 +10,12 @@ if [ -z "$1" ];then
  exit
 fi
 #################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+#################################
 # Check if lightcurve file ($1) exist
 if [ ! -f "$1" ];then
  echo "ERROR: lightcurve file $1 does not exist!"

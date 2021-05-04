@@ -9,6 +9,13 @@
 # NOT NEEDED ANYMORE
 #########################################################
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 # Find SExtractor
 SEXTRACTOR=`command -v sex 2>/dev/null`
 if [ "" = "$SEXTRACTOR" ];then

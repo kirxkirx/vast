@@ -4,6 +4,14 @@
 # format *assuming* all files in the directory are ASCII lightcurves 
 # in the "JD mag err" format.
 #
+
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 ###################################
 SCRIPTNAME=`basename $0`
 ###################################

@@ -2,6 +2,13 @@
 
 # This script will update the copies of VSX and ASASSN-V catalogs for offline use
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 # By default, do not download VSX and astorb.dat ifthey were not downloaded earlier
 DOWNLOAD_EVERYTHING=0
 if [ ! -z "$1" ];then

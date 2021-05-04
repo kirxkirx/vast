@@ -2,10 +2,16 @@
 
 PMAX=10.0
 PMIN=0.1
-#PMIN=1.0
 PHASESTEP=0.001
 
 ITERATIONS=1000
+
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
 
 if [ -z $1 ];then
  echo "Usage: $0 out12345.dat"

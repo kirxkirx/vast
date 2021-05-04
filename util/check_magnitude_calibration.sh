@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 if [ ! -d vast_magnitude_calibration_details_log/ ];then
  echo "Can't open vast_magnitude_calibration_details_log/ "
  exit

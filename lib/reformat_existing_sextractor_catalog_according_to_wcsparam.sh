@@ -3,6 +3,13 @@
 # This script should take an existing SExtractor catalog and simulate the output of 
 # $SEXTRACTOR -PARAMETERS_NAME wcs.param 
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 if [ -z $3 ];then
  echo "Usage: $0 ORIGINAL_FITSFILE.fit wcs_ORIGINAL_FITSFILE.fit OUTPUT_SEXTRACTOR_CATALOG.cat" >> /dev/stderr
  exit 1
