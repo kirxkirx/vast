@@ -51,6 +51,8 @@
 	key and instead try to determine the observation time from other keywords. This (together with 
 	'-k' or '--nojdkeyword' option to ignore 'JD' keyword) is implemented only in './vast', 
 	but not in './pgfv' or 'util/get_image_date'
+	* VaST will now use SHUTOPEN instead of DATE-OBS to read the observation start time if both
+	DATE-OBS and SHUTOPEN are present in the FITS image header.
 20 Oct 2020: vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911

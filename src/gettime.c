@@ -768,6 +768,18 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
   exposure= 0.0;
  }
 
+ // Special case: we want to always use SHUTOPEN instead of DATE-OBS for ZTF images, even if DATE-OBS is present
+ fits_read_key(fptr, TSTRING, "SHUTOPEN", DATEOBS, DATEOBS_COMMENT, &status);
+ if( status == 0 ) {
+  if( param_nojdkeyword == 1 ) {
+   fprintf(stderr, "WARNING: cannot ignore both 'JD' and 'DATE-OBS' keywords! Will allow use of 'JD' keyword. \n");
+  }
+  fprintf(stderr, "WARNING: ignoring 'DATE-OBS' keyword as 'SHUTOPEN' is present.\n");
+  param_nojdkeyword= 2;
+ }
+ fits_clear_errmsg(); // clear the CFITSIO error message stack
+ status= 0;
+
  // Check if these are EROS observations were DATE-OBS corresponds to the middle of exposure
  // so we need to set exposure=0.0 in order not to introduce the middle of exposure correction twice.
  is_this_an_EROS_image= 0;
