@@ -611,6 +611,8 @@ fi
 
 
 ##### Photographic plate test #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" = "true" ];then
 ### Check the consistency of the dest data if its already there
 if [ -d ../test_data_photo ];then
  NUMBER_OF_IMAGES_IN_TEST_FOLDER=`ls -1 ../test_data_photo | wc -l | awk '{print $1}'`
@@ -1440,6 +1442,9 @@ test_internet_connection fast
 if [ $? -ne 0 ];then
  exit 1
 fi
+
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" = "true" ];then
 
 
 ##### Small CCD images test #####
@@ -11419,26 +11424,25 @@ if [ -f ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits ];the
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2000"
- fi
- if [ ! -f wcs_LIGHT_21-22-58_B_-42.00_60.00s_0001.fits ];then
+ elif [ ! -f wcs_LIGHT_21-22-58_B_-42.00_60.00s_0001.fits ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2001"
- fi 
- lib/bin/xy2sky wcs_LIGHT_21-22-58_B_-42.00_60.00s_0001.fits 200 200 &>/dev/null
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2001a"
- fi
- if [ ! -f wcs_LIGHT_21-22-58_B_-42.00_60.00s_0001.fits.cat.ucac5 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2002"
- else
-  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_LIGHT_21-22-58_B_-42.00_60.00s_0001.fits.cat.ucac5 | wc -l | awk '{print $1}'`
-  if [ $TEST -lt 400 ];then
+ else 
+  lib/bin/xy2sky wcs_LIGHT_21-22-58_B_-42.00_60.00s_0001.fits 200 200 &>/dev/null
+  if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2002a_$TEST"
-  fi
- fi
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2001a"
+  elif [ ! -f wcs_LIGHT_21-22-58_B_-42.00_60.00s_0001.fits.cat.ucac5 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2002"
+  else
+   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_LIGHT_21-22-58_B_-42.00_60.00s_0001.fits.cat.ucac5 | wc -l | awk '{print $1}'`
+   if [ $TEST -lt 400 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2002a_$TEST"
+   fi # if [ $TEST -lt 400 ];then
+  fi # else if [ $? -ne 0 ];then
+ fi # else if [ $? -ne 0 ];then
  util/calibrate_single_image.sh ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits B
  if [ $? -ne 0 ];then
   TEST_PASSED=0
