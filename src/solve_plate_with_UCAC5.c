@@ -2,11 +2,9 @@
 #define _GNU_SOURCE // for sincos()
 #endif
 
-//#define MAX_STARS_IN_VIZQUERY 2000
 #define MAX_STARS_IN_VIZQUERY 1000
 
 #define MAX_DEVIATION_AT_FIRST_STEP 6.0 / 3600.0 // 5.0/3600.0 //1.8/3600.0
-//#define MAX_DEVIATION_AT_SECOND_STEP 0.5*MAX_DEVIATION_AT_FIRST_STEP //5.0/6.0*MAX_DEVIATION_AT_FIRST_STEP // 3.0/3600.0 //0.9/3600.0
 #define REFERENCE_LOCAL_SOLUTION_RADIUS_DEG 1.0
 
 #define MIN_APASS_MAG 1.0
@@ -16,8 +14,9 @@
 
 #define DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN 40.0
 
-//#define VIZIER_SITE "$(lib/choose_vizier_mirror.sh)"
 #define VIZIER_SITE "$(\"$VAST_PATH\"lib/choose_vizier_mirror.sh)"
+
+#define VIZIER_TIMEOUT_SEC 120
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1169,136 +1168,6 @@ int read_APASS_from_vizquery(struct detected_star *stars, int N, char *vizquery_
  return 0;
 }
 
-/*
-int usno_hack_read_USNOB1_from_vizquery( struct detected_star * stars, int N, char *vizquery_output_filename, struct str_catalog_search_parameters * catalog_search_parameters){
- FILE *f;
- char string[1024];
- //char string_with_APASS_magnitudes[1024];
- int i;
- double measured_ra,measured_dec,distance,catalog_ra,catalog_dec;//,catalog_mag,catalog_mag_err;
- char ucac4id[32];
- double cos_delta;
- int N_stars_matched_with_astrometric_catalog=0;
- 
- double APASS_B;
- double APASS_B_err=0.1;
- double APASS_V;
- double APASS_V_err=0.1;
- double APASS_r;
- double APASS_r_err=0.1;
- double APASS_i;
- double APASS_i_err=0.1;
-
- double USNO_B1mag;
- double USNO_R1mag;
- double USNO_B2mag;
- double USNO_R2mag;
-
- for(i=0;i<N;i++){
-  stars[i].matched_with_astrometric_catalog=0; // reset any possible previous UCAC match
-  stars[i].matched_with_photometric_catalog=0; // reset any possible previous UCAC match
- }
- 
- f=fopen(vizquery_output_filename,"r");
- while(NULL!=fgets(string, 1024, f)){
-  if( string[0]=='#' )continue;
-  if( string[0]=='\n' )continue;
-  if( string[0]=='-' )continue;
-  if( string[0]=='_' )continue;
-  if( string[0]==' ' )continue;
-  if( string[0]!=' ' && string[0]!='0' && string[0]!='1' && string[0]!='2' && string[0]!='3' && string[0]!='4' && string[0]!='5' && string[0]!='6' && string[0]!='7' && string[0]!='8' && string[0]!='9' )continue;
-  
-  //string_with_APASS_magnitudes[0]='\0'; // reset the string with APASS magnitudes
-  // We expect that all UCAC4-specific data including UCAC magnitude error are available  
-  //if( 8>sscanf(string,"%lf %lf %lf %s %lf %lf %lf %lf %39[^\t\n]",&distance,&measured_ra,&measured_dec,ucac4id,&catalog_ra,&catalog_dec,&catalog_mag,&catalog_mag_err,string_with_APASS_magnitudes) )continue;
-  // Evil CDS people changed the column order in vizquery output AGAIN!!!!
-  if( 10>sscanf(string,"%lf %lf %lf %s %lf %lf %lf %lf %lf %lf",&measured_ra,&measured_dec,&distance,ucac4id,&catalog_ra,&catalog_dec,&USNO_B1mag,&USNO_R1mag,&USNO_B2mag,&USNO_R2mag) )continue;
-  
-  cos_delta=cos(measured_dec*M_PI/180.0);
-  for(i=0;i<N;i++){
-   if( stars[i].matched_with_astrometric_catalog==1 )continue;
-   if( fabs(stars[i].dec_deg_measured-measured_dec)<catalog_search_parameters->search_radius_deg ){
-    if( fabs(stars[i].ra_deg_measured-measured_ra)*cos_delta<catalog_search_parameters->search_radius_deg ){
-     if( distance>catalog_search_parameters->search_radius_deg*3600 )continue;
-     stars[i].matched_with_astrometric_catalog=1;
-     stars[i].d_ra=catalog_ra-measured_ra;
-     stars[i].d_dec=catalog_dec-measured_dec;
-     stars[i].catalog_ra=catalog_ra;
-     stars[i].catalog_dec=catalog_dec;
-     stars[i].catalog_mag=USNO_B2mag;
-     stars[i].catalog_mag_err=0.1;
-     strncpy(stars[i].ucac4id,ucac4id,32);stars[i].ucac4id[32-1]='\0';
-     
-     APASS_B=(USNO_B1mag+USNO_B2mag)/2.0;
-     APASS_V= 0.444*USNO_B1mag + 0.556*USNO_R1mag; // John Greaves, see http://www.aerith.net/astro/color_conversion/JG/USNO-B1.0.html
-     stars[i].Rc_computed_from_APASS_ri=APASS_i=APASS_r=(USNO_R1mag+USNO_R2mag)/2.0;
-     stars[i].Rc_computed_from_APASS_ri_err=APASS_i_err=APASS_r_err=0.1;
-     // No I-band!!!
-     stars[i].Ic_computed_from_APASS_ri=0.0;
-     stars[i].Ic_computed_from_APASS_ri_err=0.0;
-     //
-
-     stars[i].APASS_B=APASS_B;
-     stars[i].APASS_B_err=APASS_B_err;
-     stars[i].APASS_V=APASS_V;
-     stars[i].APASS_V_err=APASS_V_err;
-     stars[i].APASS_r=APASS_r;
-     stars[i].APASS_r_err=APASS_r_err;
-     stars[i].APASS_i=APASS_i;
-     stars[i].APASS_i_err=APASS_i_err;
-     
-     N_stars_matched_with_astrometric_catalog++;
-    }
-   }
-   //else{
-   // fprintf(stderr,"DEBUG MAX_DEVIATION_AT_FIRST_STEP: stars[i].x_pix= %8.3lf\n",stars[i].x_pix);
-   //}//if( fabs(stars[i].dec_deg_measured-measured_dec)<MAX_DEVIATION_AT_FIRST_STEP )
-  }//for(i=0;i<N;i++)
- }
- fclose(f);
- fprintf(stderr,"Matched %d stars with USNO-B1.0.\n",N_stars_matched_with_astrometric_catalog);
- if( N_stars_matched_with_astrometric_catalog<10 ){
-  fprintf(stderr,"ERROR: too few stars matched!\n");
-  return 1;
- }
- return 0;
-}
-
-void usno_hack_create_vizquery_input_from_ucac4_output( char *vizquery_output_filename, char *vizquery_input_filename){
- FILE *f;
- FILE *f2;
- char string[1024];
- char string_with_APASS_magnitudes[1024];
- //int i;
- double measured_ra,measured_dec,distance,catalog_ra,catalog_dec,catalog_mag,catalog_mag_err;
- char ucac4id[32];
- //double cos_delta;
- //int N_stars_matched_with_catalog=0;
- f2=fopen(vizquery_input_filename,"w");
- f=fopen(vizquery_output_filename,"r");
- while(NULL!=fgets(string, 1024, f)){
-  if( string[0]=='#' )continue;
-  if( string[0]=='\n' )continue;
-  if( string[0]=='-' )continue;
-  if( string[0]=='_' )continue;
-  if( string[0]==' ' )continue;
-  if( string[0]!=' ' && string[0]!='0' && string[0]!='1' && string[0]!='2' && string[0]!='3' && string[0]!='4' && string[0]!='5' && string[0]!='6' && string[0]!='7' && string[0]!='8' && string[0]!='9' )continue;
-  
-  string_with_APASS_magnitudes[0]='\0'; // reset the string with APASS magnitudes
-  // We expect that all UCAC4-specific data including UCAC magnitude error are available  
-  //if( 8>sscanf(string,"%lf %lf %lf %s %lf %lf %lf %lf %39[^\t\n]",&distance,&measured_ra,&measured_dec,ucac4id,&catalog_ra,&catalog_dec,&catalog_mag,&catalog_mag_err,string_with_APASS_magnitudes) )continue;
-  // Evil CDS people changed the column order in vizquery output AGAIN!!!!
-  if( 8>sscanf(string,"%lf %lf %lf %s %lf %lf %lf %lf %39[^\t\n]",&measured_ra,&measured_dec,&distance,ucac4id,&catalog_ra,&catalog_dec,&catalog_mag,&catalog_mag_err,string_with_APASS_magnitudes) )continue;
-  if( catalog_mag_err>MAX_APASS_MAG_ERR )continue; // make sure APASS_B is not read instead of catalog_mag_err
-  //fprintf(f2,"%11.7lf %11.7lf\n",catalog_ra,catalog_dec);
-  fprintf(f2,"%11.7lf %11.7lf\n",measured_ra,measured_dec);
- }
- fclose(f);
- fclose(f2);
- return;
-}
-*/
-
 int search_UCAC5_localcopy(struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters) {
 
  double faintest_mag, brightest_mag;
@@ -1649,16 +1518,18 @@ int search_UCAC5_with_vizquery(struct detected_star *stars, int N, struct str_ca
  // Astrometric catalog search
  fprintf(stderr, "Searchig UCAC5...\n");
  // yes, sorting in magnitude works
- sprintf(command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) 300 %slib/vizquery -site=%s -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=%.1lf..%.1lf -sort=f.mag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename);
+ sprintf(command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=%.1lf..%.1lf -sort=f.mag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename);
 
  fprintf(stderr, "%s\n", command);
  vizquery_run_success= system(command);
  if( vizquery_run_success != 0 ) {
   fprintf(stderr, "WARNING: some problem running lib/vizquery script. Is this an internet connection problem? Retrying...\n");
+  sleep(10);
   fprintf(stderr, "%s\n", command);
   vizquery_run_success= system(command);
   if( vizquery_run_success != 0 ) {
    fprintf(stderr, "WARNING: some problem running lib/vizquery script. Is this an internet connection problem? Retrying...\n");
+   sleep(10);
    fprintf(stderr, "%s\n", command);
    vizquery_run_success= system(command);
    if( vizquery_run_success != 0 ) {
@@ -1686,116 +1557,6 @@ int search_UCAC5_with_vizquery(struct detected_star *stars, int N, struct str_ca
 
  return 0;
 }
-
-/*
-int search_UCAC4_with_vizquery( struct detected_star * stars, int N, struct str_catalog_search_parameters * catalog_search_parameters){
- char command[1024];
- FILE *vizquery_input;
- int i;
- int pid=getpid();
- char vizquery_input_filename[FILENAME_LENGTH];
- char vizquery_output_filename[FILENAME_LENGTH];
- int vizquery_run_success;
- int search_stars_counter;
-
- char path_to_vast_string[VAST_PATH_MAX];
- get_path_to_vast(path_to_vast_string);
-
- sprintf(vizquery_input_filename,"vizquery_%d.input",pid);
- sprintf(vizquery_output_filename,"vizquery_%d.output",pid);
- vizquery_input=fopen(vizquery_input_filename,"w");
- search_stars_counter=0;
- for(i=0;i<MIN(N,MAX_STARS_IN_VIZQUERY);i++){
-  if( stars[i].good_star==1 ){
-   fprintf(vizquery_input,"%lf %lf\n",stars[i].ra_deg_measured,stars[i].dec_deg_measured);
-   search_stars_counter++;
-   //fprintf(stderr,"DEBUG  %lf %lf\n",stars[i].ra_deg_measured,stars[i].dec_deg_measured);
-  }
- }
- fclose(vizquery_input);
- 
- if( search_stars_counter<MIN_NUMBER_OF_STARS_ON_FRAME ){
-  fprintf(stderr,"ERROR in search_UCAC4_with_vizquery(): only %d stars are in the vizquery input list - that's too few!\n",search_stars_counter);
-  return 1;
- }
- 
- // Print search stat
- fprintf(stderr,"Searchig VizieR for %d good reference stars...\n",search_stars_counter);
-
- // Astrometric catalog search
- fprintf(stderr,"Searchig UCAC4...\n"); 
- // yes, sorting in magnitude works
- //sprintf(command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) 180 %slib/vizquery -site=%s -mime=text -source=UCAC4 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=UCAC4,RAJ2000,DEJ2000,a.mag,e_a.mag,Bmag,e_Bmag,Vmag,e_Vmag,rmag,e_rmag,imag,e_imag a.mag=%.1lf..%.1lf -sort=a.mag -c.rs=%.1lf -list=%s > %s", path_to_vast_string,path_to_vast_string,path_to_vast_string, VIZIER_SITE,catalog_search_parameters->brightest_mag,catalog_search_parameters->faintest_mag,catalog_search_parameters->search_radius_deg*3600,vizquery_input_filename,vizquery_output_filename);
- sprintf(command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) 180 %slib/vizquery -site=%s -mime=text -source=UCAC4 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=UCAC4,RAJ2000,DEJ2000,a.mag,e_a.mag a.mag=%.1lf..%.1lf -sort=a.mag -c.rs=%.1lf -list=%s > %s", path_to_vast_string,path_to_vast_string,path_to_vast_string, VIZIER_SITE,catalog_search_parameters->brightest_mag,catalog_search_parameters->faintest_mag,catalog_search_parameters->search_radius_deg*3600,vizquery_input_filename,vizquery_output_filename);
- 
- fprintf(stderr, "%s\n", command);
- vizquery_run_success=system(command);
- if(vizquery_run_success!=0){
-  fprintf(stderr,"WARNING: some problem running lib/vizquery script. Is this an internet connection problem? Retrying...\n");
-  fprintf(stderr, "%s\n", command);
-  vizquery_run_success=system(command);
-  if(vizquery_run_success!=0){
-   fprintf(stderr,"WARNING: some problem running lib/vizquery script. Is this an internet connection problem? Retrying...\n");
-   fprintf(stderr, "%s\n", command);
-   vizquery_run_success=system(command);
-   if(vizquery_run_success!=0){fprintf(stderr,"ERROR: problem running lib/vizquery script :(\n");exit(1);}
-  }
- }
-
- //if(0!=read_UCAC4_from_vizquery( stars, N, vizquery_output_filename, catalog_search_parameters)){
- if(0!=read_UCAC5_from_vizquery( stars, N, vizquery_output_filename, catalog_search_parameters)){
-  fprintf(stderr,"Problem getting data from VizieR. :(\n");
-  fprintf(stderr,"Maybe this sky area is not covered yet?\nTrying the USNO-B1.0 hack...\n\nWARNING: using USNO-B1.0 instead of UCAC4 and APASS!!!!\n\n");
-  usno_hack_create_vizquery_input_from_ucac4_output( vizquery_output_filename, vizquery_input_filename);
-  //sprintf(command, "export PATH=\"$PATH:lib/bin\"; $(lib/find_timeout_command.sh) 180 lib/vizquery -site=%s -mime=text -source=USNO-B1.0 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=USNO-B1.0,RAJ2000,DEJ2000,B1mag,R1mag,B2mag,R2mag -sort=B2mag B2mag=%.1lf..%.1lf B1mag=%.1lf..%.1lf R2mag=%.1lf..%.1lf -c.rs=%.1lf -list=%s > %s",VIZIER_SITE,MIN_APASS_MAG,MAX_APASS_MAG,MIN_APASS_MAG,MAX_APASS_MAG,catalog_search_parameters->brightest_mag,catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg*3600,vizquery_input_filename,vizquery_output_filename);
-  sprintf(command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) 180 %slib/vizquery -site=%s -mime=text -source=USNO-B1.0 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=USNO-B1.0,RAJ2000,DEJ2000,B1mag,R1mag,B2mag,R2mag -sort=B2mag B2mag=%.1lf..%.1lf B1mag=%.1lf..%.1lf R2mag=%.1lf..%.1lf -c.rs=%.1lf -list=%s > %s", path_to_vast_string,path_to_vast_string,path_to_vast_string,  VIZIER_SITE,MIN_APASS_MAG,MAX_APASS_MAG,MIN_APASS_MAG,MAX_APASS_MAG,catalog_search_parameters->brightest_mag,catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg*3600,vizquery_input_filename,vizquery_output_filename);
-  fprintf(stderr, "%s\n", command);
-  vizquery_run_success=system(command);
-  if(vizquery_run_success!=0){
-   fprintf(stderr,"WARNING: some problem running lib/vizquery script. Is this an internet connection problem? Retrying...\n");
-   fprintf(stderr, "%s\n", command);
-   vizquery_run_success=system(command);
-   if(vizquery_run_success!=0){
-    fprintf(stderr,"WARNING: some problem running lib/vizquery script. Is this an internet connection problem? Retrying...\n");
-    fprintf(stderr, "%s\n", command);
-    vizquery_run_success=system(command);
-    if(vizquery_run_success!=0){fprintf(stderr,"ERROR: problem running lib/vizquery script :(\n");exit(1);}
-   }
-  }
-  if(0!=usno_hack_read_USNOB1_from_vizquery( stars, N, vizquery_output_filename, catalog_search_parameters)){fprintf(stderr,"Problem getting data from VizieR. :(\n");return 1;}
- }
-
-// 
-// // Photometric catalog search
-// fprintf(stderr,"Searchig APASS...\n");
-// sprintf(command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) 180 %slib/vizquery -site=%s -mime=text -source=APASS -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s", path_to_vast_string,path_to_vast_string,path_to_vast_string, VIZIER_SITE,catalog_search_parameters->brightest_mag,catalog_search_parameters->faintest_mag,catalog_search_parameters->search_radius_deg*3600,vizquery_input_filename,vizquery_output_filename);
-// 
-// fprintf(stderr, "%s\n", command);
-// vizquery_run_success=system(command);
-// if(vizquery_run_success!=0){
-//  fprintf(stderr,"WARNING: some problem running lib/vizquery script. Is this an internet connection problem? Retrying...\n");
-//  fprintf(stderr, "%s\n", command);
-//  vizquery_run_success=system(command);
-//  if(vizquery_run_success!=0){
-//   fprintf(stderr,"WARNING: some problem running lib/vizquery script. Is this an internet connection problem? Retrying...\n");
-//   fprintf(stderr, "%s\n", command);
-//   vizquery_run_success=system(command);
-//   if(vizquery_run_success!=0){fprintf(stderr,"ERROR: problem running lib/vizquery script :(\n");exit(1);}
-//  }
-// }
-//
-// vizquery_run_success=read_APASS_from_vizquery( stars, N, vizquery_output_filename, catalog_search_parameters);
-//
- 
- // delete temporary files only on success
- if( vizquery_run_success==0 ){
-  if(0!=unlink(vizquery_input_filename))fprintf(stderr,"WARNING! Cannot delete temporary file %s\n",vizquery_input_filename);
-  if(0!=unlink(vizquery_output_filename))fprintf(stderr,"WARNING! Cannot delete temporary file %s\n",vizquery_output_filename);
- }
- 
- return 0;
-}
-*/
 
 int search_PANSTARRS1_with_vizquery(struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters) {
  char command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
@@ -1840,16 +1601,18 @@ int search_PANSTARRS1_with_vizquery(struct detected_star *stars, int N, struct s
 
  // Photometric catalog search
  fprintf(stderr, "Searchig PANSTARRS1...\n");
- sprintf(command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) 300 %slib/vizquery -site=%s -mime=text -source=PS1 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,gmag,e_gmag,rmag,e_rmag,imag,e_imag rmag=%.1lf..%.1lf -sort=rmag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename);
+ sprintf(command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=PS1 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,gmag,e_gmag,rmag,e_rmag,imag,e_imag rmag=%.1lf..%.1lf -sort=rmag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename);
 
  fprintf(stderr, "%s\n", command);
  vizquery_run_success= system(command);
  if( vizquery_run_success != 0 ) {
   fprintf(stderr, "WARNING: some problem running lib/vizquery script. Is this an internet connection problem? Retrying...\n");
+  sleep(10);
   fprintf(stderr, "%s\n", command);
   vizquery_run_success= system(command);
   if( vizquery_run_success != 0 ) {
    fprintf(stderr, "WARNING: some problem running lib/vizquery script. Is this an internet connection problem? Retrying...\n");
+   sleep(10);
    fprintf(stderr, "%s\n", command);
    vizquery_run_success= system(command);
    if( vizquery_run_success != 0 ) {
@@ -1916,23 +1679,18 @@ int search_APASS_with_vizquery(struct detected_star *stars, int N, struct str_ca
  // Photometric catalog search
  fprintf(stderr, "Searchig APASS...\n");
  sprintf(command,
-         "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) 300 %slib/vizquery -site=%s -mime=text -source=APASS -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
-         path_to_vast_string, path_to_vast_string, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename);
+         "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=APASS -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
+         path_to_vast_string, path_to_vast_string, VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename);
 
  fprintf(stderr, "%s\n", command);
  vizquery_run_success= system(command);
  if( vizquery_run_success != 0 ) {
   fprintf(stderr, "WARNING: some problem running lib/vizquery script. Is this an internet connection problem? Retrying...\n");
+  sleep(10);
   fprintf(stderr, "%s\n", command);
   vizquery_run_success= system(command);
   if( vizquery_run_success != 0 ) {
-   //fprintf(stderr,"WARNING: some problem running lib/vizquery script. Is this an internet connection problem? Retrying...\n");
-   //fprintf(stderr, "%s\n", command);
-   //vizquery_run_success=system(command);
-   //if(vizquery_run_success!=0){
    fprintf(stderr, "ERROR: problem running lib/vizquery script :(\n");
-   //exit(1); // do not exit here as there might be a fallback option
-   //}
   }
  }
 
@@ -2097,17 +1855,6 @@ int correct_measured_positions(struct detected_star *stars, int N, double search
  double best_local_correction_dec;
  double cos_delta;
 
- // And finally make a correction using the few nearby stars
- // if this is not a global solution
- //if( target_ra!=0.0 && target_dec!=0.0 ){
- /*
- #ifdef VAST_ENABLE_OPENMP                            
-  #ifdef _OPENMP                                      
-   #pragma omp parallel for private(j, target_x_pix, target_ra, target_dec, cos_delta, best_accuracy, best_search_radius, current_search_radius, i, distance, z1, z2, N_good, current_accuracy_ra, current_accuracy_dec, current_accuracy)
-  #endif
- #endif
-*/
-
  // Create a copy of the star catalog containing only the good ones matched with catalog
  only_good_starsmatched_with_catalog= malloc(N * sizeof(struct detected_star));
  if( only_good_starsmatched_with_catalog == NULL ) {
@@ -2270,24 +2017,6 @@ int correct_measured_positions(struct detected_star *stars, int N, double search
   } else {
    stars[j].estimated_local_correction_accuracy= sqrt(best_accuracy) / c4(N_good);
   }
-  //fprintf(stderr,"stars[%d].estimated_local_correction_accuracy=%lg best_accuracy=%lg N_good=%d\n",j,stars[j].estimated_local_correction_accuracy*3600,sqrt(best_accuracy)*3600,N_good);
-  //fprintf(stderr,"stars[%d].estimated_local_correction_accuracy=%.2lf sqrt(best_accuracy)/c4(N_good)=%.2lf best_accuracy=%lg  N_good=%d  c4(N_good)=%lg\n",j,stars[j].estimated_local_correction_accuracy*3600,sqrt(best_accuracy)/c4(N_good)*3600,N_good,c4(N_good)); // !!! DEBUG !!!
-  // yeah, above is a slipery point as best_accuracy was estimated from MAD, not computed in the normal way
-
-  /*
-  // Moved out of this cycle to parallellize
-  stars[j].corrected_ra_local=stars[j].corrected_mag_ra+stars[j].local_correction_ra;
-  stars[j].corrected_dec_local=stars[j].corrected_mag_dec+stars[j].local_correction_dec;
-  
-  // clean-up outliers
-  if( stars[j].matched_with_catalog==1 ){
-   distance=compute_distance_on_sphere(stars[j].corrected_ra_local, stars[j].corrected_dec_local, stars[j].catalog_ra, stars[j].catalog_dec);
-   if( distance>catalog_search_parameters->search_radius_second_step_deg )
-    stars[j].matched_with_catalog=0;
-  }
-  //
-  
-  */
 
  } //for(j=0;j<N;j++){
  //}
