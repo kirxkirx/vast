@@ -27,7 +27,7 @@
 
 #include <libgen.h>    // for basename()
 #include <sys/types.h> // for getpid()
-#include <unistd.h>    // also for getpid() and unlink() ...
+#include <unistd.h>    // also for getpid(), unlink(), sleep() ...
 #include <math.h>
 
 #include <gsl/gsl_statistics.h>
@@ -1518,7 +1518,7 @@ int search_UCAC5_with_vizquery(struct detected_star *stars, int N, struct str_ca
  // Astrometric catalog search
  fprintf(stderr, "Searchig UCAC5...\n");
  // yes, sorting in magnitude works
- sprintf(command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=%.1lf..%.1lf -sort=f.mag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename);
+ sprintf(command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=%.1lf..%.1lf -sort=f.mag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename);
 
  fprintf(stderr, "%s\n", command);
  vizquery_run_success= system(command);
@@ -1601,7 +1601,7 @@ int search_PANSTARRS1_with_vizquery(struct detected_star *stars, int N, struct s
 
  // Photometric catalog search
  fprintf(stderr, "Searchig PANSTARRS1...\n");
- sprintf(command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=PS1 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,gmag,e_gmag,rmag,e_rmag,imag,e_imag rmag=%.1lf..%.1lf -sort=rmag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename);
+ sprintf(command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=PS1 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,gmag,e_gmag,rmag,e_rmag,imag,e_imag rmag=%.1lf..%.1lf -sort=rmag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename);
 
  fprintf(stderr, "%s\n", command);
  vizquery_run_success= system(command);
@@ -1680,7 +1680,7 @@ int search_APASS_with_vizquery(struct detected_star *stars, int N, struct str_ca
  fprintf(stderr, "Searchig APASS...\n");
  sprintf(command,
          "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=APASS -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
-         path_to_vast_string, path_to_vast_string, VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename);
+         path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename);
 
  fprintf(stderr, "%s\n", command);
  vizquery_run_success= system(command);
