@@ -47,6 +47,10 @@
 	* If manual (keyboard key '2') or automatic (keyboard key '4') magnitude calibration is performed 
 	in single-image inspection mode ('./sextract_single_image image.fits'), the calibrated magnitudes 
 	of all the detected stars are saved to 'image00000.cat.calibrated'.
+	* The new 'vast' command line option '-K' or '--nodateobskeyword' tells the code to ignore DATE-OBS 
+	key and instead try to determine the observation time from other keywords. This (together with 
+	'-k' or '--nojdkeyword' option to ignore 'JD' keyword) is implemented only in './vast', 
+	but not in './pgfv' or 'util/get_image_date'
 20 Oct 2020: vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911

@@ -562,7 +562,6 @@ int check_if_this_fits_image_is_north_up_east_left(char *fitsfilename) {
  return 0; // assume - no
 }
 
-//int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to_TT, double *dimX, double *dimY, char *stderr_output, char *log_output, int param_nojdkeyword, int param_verbose, int param_get_start_time_instead_of_midexp) {
 int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to_TT, double *dimX, double *dimY, char *stderr_output, char *log_output, int param_nojdkeyword, int param_verbose) {
 
  unsigned int counter_i;
@@ -773,7 +772,13 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
  // so we need to set exposure=0.0 in order not to introduce the middle of exposure correction twice.
  is_this_an_EROS_image= 0;
  // all EROS images have DATE-OBS
- fits_read_key(fptr, TSTRING, "DATE-OBS", DATEOBS, DATEOBS_COMMENT, &status);
+ //
+ // check if we are allowed to use JD keyword
+ if( param_nojdkeyword==2 ) {
+  status=202;
+ } else {
+  fits_read_key(fptr, TSTRING, "DATE-OBS", DATEOBS, DATEOBS_COMMENT, &status);
+ }
  if( status == 0 ) {
   // The first type of images
   fits_read_key(fptr, TSTRING, "TU-START", DATEOBS, DATEOBS_COMMENT, &status);
@@ -810,7 +815,12 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
  // end of cleanup
 
  DATEOBS_COMMENT[0]= '\0'; // just in case
- fits_read_key(fptr, TSTRING, "DATE-OBS", DATEOBS, DATEOBS_COMMENT, &status);
+ // check if we are allowed to use JD keyword
+ if( param_nojdkeyword==2 ) {
+  status=202;
+ } else {
+  fits_read_key(fptr, TSTRING, "DATE-OBS", DATEOBS, DATEOBS_COMMENT, &status);
+ }
  if( status == 0 ) {
   date_parsed= 1;
   strncpy(DATEOBS_KEY_NAME, "DATE-OBS", 9);

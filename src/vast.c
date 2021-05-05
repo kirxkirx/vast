@@ -215,6 +215,7 @@ void help_msg(const char *progname, int exit_code) {
  printf("  -e or --failsafe   FAILSAFE mode. Only stars detected on the reference frame will be processed\n");
  printf("  -u or --UTC        always assume UTC time system, do not perform conversion to TT\n");
  printf("  -k or --nojdkeyword  ignore \"JD\" keyword in FITS image header. Time of observation will be taken from the usual keywords instead\n");
+ printf("  -K or --nodateobskeyword  ignore \"DATE-OBS\" keyword in FITS header. VaST will try to derive observing time from other keywords\n");
  printf("  -a 5.0 or --aperture 5.0  use fixed aperture (e.g. 5 pixels) in diameter\n");
  printf("  -b 200 or --matchstarnumber 200  use 200 (e.g. 200) reference stars for image matching\n");
  printf("  -y 3 or --sysrem 3 conduct a few (e.g. 3) iterations of SysRem\n");
@@ -1899,9 +1900,9 @@ int main(int argc, char **argv) {
  /* Options for getopt() */
  char *cvalue= NULL;
 
- const char *const shortopt= "vh9fdqmwpoPngGrlst:eucUijJk12346785:a:b:x:y:";
+ const char *const shortopt= "vh9fdqmwpoPngGrlst:eucUijJkK12346785:a:b:x:y:";
  const struct option longopt[]= {
-     {"guess_saturation_limit", 0, NULL, 'g'}, {"no_guess_saturation_limit", 0, NULL, 'G'}, {"version", 0, NULL, 'v'}, {"PSF", 0, NULL, 'P'}, {"help", 0, NULL, 'h'}, {"ds9", 0, NULL, '9'}, {"small", 0, NULL, 's'}, {"type", 0, NULL, 't'}, {"medium", 0, NULL, 'm'}, {"wide", 0, NULL, 'w'}, {"starmatchraius", 1, NULL, '5'}, {"poly", 0, NULL, 'p'}, {"nodiscardell", 0, NULL, 'l'}, {"norotation", 0, NULL, 'r'}, {"nofind", 0, NULL, 'f'}, {"debug", 0, NULL, 'd'}, {"position_dependent_correction", 0, NULL, 'j'}, {"no_position_dependent_correction", 0, NULL, 'J'}, {"aperture", 1, NULL, 'a'}, {"matchstarnumber", 1, NULL, 'b'}, {"sysrem", 1, NULL, 'y'}, {"failsafe", 0, NULL, 'e'}, {"UTC", 0, NULL, 'u'}, {"utc", 0, NULL, 'c'}, {"Utc", 0, NULL, 'U'}, {"increment", 0, NULL, 'i'}, {"nojdkeyword", 0, NULL, 'k'}, {"maxsextractorflag", 1, NULL, 'x'}, {"photocurve", 0, NULL, 'o'}, {"magsizefilter", 0, NULL, '1'}, {"nomagsizefilter", 0, NULL, '2'}, {"selectbestaperture", 0, NULL, '3'}, {"noerrorsrescale", 0, NULL, '4'}, {"notremovebadimages", 0, NULL, '6'}, {"autoselectrefimage", 0, NULL, '7'}, {"excluderefimage", 0, NULL, '8'}, {NULL, 0, NULL, 0}}; //NULL string must be in the end
+     {"guess_saturation_limit", 0, NULL, 'g'}, {"no_guess_saturation_limit", 0, NULL, 'G'}, {"version", 0, NULL, 'v'}, {"PSF", 0, NULL, 'P'}, {"help", 0, NULL, 'h'}, {"ds9", 0, NULL, '9'}, {"small", 0, NULL, 's'}, {"type", 0, NULL, 't'}, {"medium", 0, NULL, 'm'}, {"wide", 0, NULL, 'w'}, {"starmatchraius", 1, NULL, '5'}, {"poly", 0, NULL, 'p'}, {"nodiscardell", 0, NULL, 'l'}, {"norotation", 0, NULL, 'r'}, {"nofind", 0, NULL, 'f'}, {"debug", 0, NULL, 'd'}, {"position_dependent_correction", 0, NULL, 'j'}, {"no_position_dependent_correction", 0, NULL, 'J'}, {"aperture", 1, NULL, 'a'}, {"matchstarnumber", 1, NULL, 'b'}, {"sysrem", 1, NULL, 'y'}, {"failsafe", 0, NULL, 'e'}, {"UTC", 0, NULL, 'u'}, {"utc", 0, NULL, 'c'}, {"Utc", 0, NULL, 'U'}, {"increment", 0, NULL, 'i'}, {"nojdkeyword", 0, NULL, 'k'}, {"nodateobskeyword", 0, NULL, 'K'}, {"maxsextractorflag", 1, NULL, 'x'}, {"photocurve", 0, NULL, 'o'}, {"magsizefilter", 0, NULL, '1'}, {"nomagsizefilter", 0, NULL, '2'}, {"selectbestaperture", 0, NULL, '3'}, {"noerrorsrescale", 0, NULL, '4'}, {"notremovebadimages", 0, NULL, '6'}, {"autoselectrefimage", 0, NULL, '7'}, {"excluderefimage", 0, NULL, '8'}, {NULL, 0, NULL, 0}}; //NULL string must be in the end
  int nextopt;
  fprintf(stderr, "Parsing command line arguments...\n");
  while( nextopt= getopt_long(argc, argv, shortopt, longopt, NULL), nextopt != -1 ) {
@@ -2098,6 +2099,13 @@ int main(int argc, char **argv) {
   case 'k':
    param_nojdkeyword= 1;
    fprintf(stdout, "opt 'k': \"JD\" keyword in FITS image header will be ignored!\n");
+   break;
+  case 'K':
+   if( param_nojdkeyword == 1 ) {
+    fprintf(stderr, "WARNING: VaST can't ignore both 'JD' and 'DATE-OBS' keywords!\nWill ignore 'DATE-OBS' keyword.\n");
+   }
+   param_nojdkeyword= 2;
+   fprintf(stdout, "opt 'K': \"DATE-OBS\" keyword in FITS image header will be ignored!\n");
    break;
   case 'a':
    cvalue= optarg;
