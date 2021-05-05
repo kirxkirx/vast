@@ -16,7 +16,7 @@
 
 #define VIZIER_SITE "$(\"$VAST_PATH\"lib/choose_vizier_mirror.sh)"
 
-#define VIZIER_TIMEOUT_SEC 120
+#define VIZIER_TIMEOUT_SEC 300
 
 #include <stdio.h>
 #include <stdlib.h>
