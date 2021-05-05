@@ -612,7 +612,7 @@ fi
 
 ##### Photographic plate test #####
 ### Disable this test for GitHub Actions
-if [ "$GITHUB_ACTIONS" = "true" ];then
+if [ "$GITHUB_ACTIONS" != "true" ];then
 ### Check the consistency of the dest data if its already there
 if [ -d ../test_data_photo ];then
  NUMBER_OF_IMAGES_IN_TEST_FOLDER=`ls -1 ../test_data_photo | wc -l | awk '{print $1}'`
@@ -1444,7 +1444,7 @@ if [ $? -ne 0 ];then
 fi
 
 ### Disable the above test for GitHub Actions
-fi # if [ "$GITHUB_ACTIONS" = "true" ];then
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ##### Small CCD images test #####
