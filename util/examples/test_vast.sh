@@ -14225,7 +14225,7 @@ if [ -d ../sample_data ];then
  echo -n "Small CCD PSF-fitting test: " >> vast_test_report.txt 
  cp default.sex.ccd_example default.sex
  cp default.psfex.small_FoV default.psfex
- ./vast -P -u -f --noerrorsrescale ../sample_data/*.fit
+ ./vast -P -u -f --noerrorsrescale --notremovebadimages ../sample_data/*.fit
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF000"
