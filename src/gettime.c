@@ -922,6 +922,12 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
     DATEOBS[0]= '\0';
     date_parsed= 0; // we will get the date later
    }
+   fits_read_key(fptr, TDOUBLE, "MJD-OBS", &inJD, NULL, &status);
+   if( status == 0 ) {
+    //strncpy(DATEOBS,"",2);
+    DATEOBS[0]= '\0';
+    date_parsed= 0; // we will get the date later
+   }
    // Do not look at EXPSTART if the image is from Aristarchos telescope!
    if( 0 != strncmp(telescop, "Aristarchos", 11) ) {
     fits_clear_errmsg(); // clear the CFITSIO error message stack
@@ -1072,7 +1078,7 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
    fprintf(stderr, "Getting JD of the middle of exposure from JD keyword: %.5lf\n", inJD);
    // Check that JD is within the reasonable range
    if( inJD < EXPECTED_MIN_JD || inJD > EXPECTED_MAX_JD ) {
-    fprintf(stderr, "ERROR: JD out of expected range (%.1lf, %.1lf)!\nYou may change EXPECTED_MIN_JD and EXPECTED_MAX_JD in src/vast_limits.h and recompile VaST if you are _really sure_ you know what you are doing...\n", EXPECTED_MIN_JD, EXPECTED_MAX_JD);
+    fprintf(stderr, "ERROR: JD %lf is out of expected range (%.1lf, %.1lf)!\nYou may change EXPECTED_MIN_JD and EXPECTED_MAX_JD in src/vast_limits.h and recompile VaST if you are _really sure_ you know what you are doing...\n", inJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD);
     exit(1);
    }
   } else {
@@ -1089,11 +1095,30 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
     fprintf(stderr, "Getting JD of the middle of exposure from JDMID keyword: %.5lf\n", inJD);
     // Check that JD is within the reasonable range
     if( inJD < EXPECTED_MIN_JD || inJD > EXPECTED_MAX_JD ) {
-     fprintf(stderr, "ERROR: JD out of expected range (%.1lf, %.1lf)!\nYou may change EXPECTED_MIN_JD and EXPECTED_MAX_JD in src/vast_limits.h and recompile VaST if you are _really sure_ you know what you are doing...\n", EXPECTED_MIN_JD, EXPECTED_MAX_JD);
+     fprintf(stderr, "ERROR: JD %lf is out of expected range (%.1lf, %.1lf)!\nYou may change EXPECTED_MIN_JD and EXPECTED_MAX_JD in src/vast_limits.h and recompile VaST if you are _really sure_ you know what you are doing...\n", inJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD);
      exit(1);
     }
-   }
-  }
+   } else {
+    // MJD-OBS
+    status= 0; // reset
+    fprintf(stderr, "Trying to get observing date from MJD-OBS keyword...\n");
+    fits_read_key(fptr, TDOUBLE, "MJD-OBS", &inJD, NULL, &status);
+    if( status == 0 ) {
+     fprintf(stderr, "Getting MJD of the middle of exposure from MJD-OBS keyword: %.5lf\n", inJD);
+     // Check that MJD is within the reasonable range
+     if( inJD < EXPECTED_MIN_MJD || inJD > EXPECTED_MAX_MJD ) {
+      fprintf(stderr, "ERROR: MJD %lf is out of expected range (%.1lf, %.1lf)!\nYou may change EXPECTED_MIN_MJD and EXPECTED_MAX_MJD in src/vast_limits.h and recompile VaST if you are _really sure_ you know what you are doing...\n", inJD, EXPECTED_MIN_MJD, EXPECTED_MAX_MJD);
+      exit(1);
+     }
+     inJD= inJD + 2400000.5; // convert MJD to JD
+     // Check that JD is within the reasonable range
+     if( inJD < EXPECTED_MIN_JD || inJD > EXPECTED_MAX_JD ) {
+      fprintf(stderr, "ERROR: JD %lf is out of expected range (%.1lf, %.1lf)!\nYou may change EXPECTED_MIN_JD and EXPECTED_MAX_JD in src/vast_limits.h and recompile VaST if you are _really sure_ you know what you are doing...\n", inJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD);
+      exit(1);
+     }
+    } // if( status == 0 ) { for MJD-OBS
+   } // else for JDMID keyword
+  } // else for JD keyword
   if( status != 0 ) {
 #ifdef DEBUGMESSAGES
    fprintf(stderr, "entering  if ( status != 0 )\n");
@@ -1107,7 +1132,8 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
     fprintf(stderr, "entering  if ( status != 0 )\n");
 #endif
     date_parsed= 0; // if Kourovka_SBG_date_hack() failed...
-    fprintf(stderr, "No, it's not.\nWARNING: cannot determine date/time associated with this image!\n");
+    //fprintf(stderr, "No, it's not.\nWARNING: cannot determine date/time associated with this image!\n");
+    fprintf(stderr, "No, it's not a Kourovka SBG camera image.\n \E[01;31m WARNING: cannot determine date/time associated with this image! \E[33;00m \n");
     // Special case - no date information in the image file
     inJD= 0.0;
     status= 0;

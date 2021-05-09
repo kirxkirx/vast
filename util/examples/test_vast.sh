@@ -11487,6 +11487,42 @@ else
 fi
 
 
+
+######### Blank image with MJD-OBS
+if [ ! -f ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/blank_image_with_only_MJD-OBS_keyword.fits.bz2" && bunzip2 blank_image_with_only_MJD-OBS_keyword.fits.bz2
+ cd $WORKDIR
+fi
+
+if [ -f ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "Blank image with MJD-OBS test " >> /dev/stderr
+ echo -n "Blank image with MJD-OBS test: " >> vast_test_report.txt 
+ util/get_image_date ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits | grep --quiet 'JD (mid. exp.) 2450862.85250 = 1998-02-18 08:27:36'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES BLANKMJDOBS001"
+ fi
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mBlank image with MJD-OBS test \033[01;32mPASSED\033[00m" >> /dev/stderr
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mBlank image with MJD-OBS test \033[01;31mFAILED\033[00m" >> /dev/stderr
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES BLANKMJDOBS_TEST_NOT_PERFORMED"
+fi
+
+
+
 ######### NMW archive image
 if [ ! -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
  if [ ! -d ../individual_images_test ];then
