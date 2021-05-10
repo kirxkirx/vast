@@ -357,6 +357,29 @@ double convert_jdUT_to_jdTT(double jdUT, int *timesys) {
  return jdTT;
 }
 
+/* We can't accept all these date writing options. but we'll try to handle some
+1999-09-01 58
+1999-09-1  58
+1999-9-01  57
+1999-9-1   57
+
+99-09-01   36
+99-09-1    36
+99-9-01    35
+99-9-1     35
+
+
+1-9-1999   24
+1-09-1999  25
+01-9-1999  35
+01-09-1999 36
+
+1-9-99     24
+1-09-99    25
+01-9-99    35
+01-09-99   36
+*/
+
 // This function will handle '25/12/2011' style DATE-OBS
 void fix_DATEOBS_STRING(char *DATEOBS) {
  int i, j, date_part; // counters
@@ -413,6 +436,17 @@ void fix_DATEOBS_STRING(char *DATEOBS) {
  day= atoi(substring_day);
  month= atoi(substring_month);
  year= atoi(substring_year);
+ // try fix a two-digit year
+ if( year<100 ) {
+  fprintf(stderr, "WARNING -- two-digit year in the input DATEOBS string: %d -> ", year);
+  if( year<50 ) {
+   year= year + 2000;
+  } else {
+   year= year + 1900;
+  }
+  fprintf(stderr, "%d\n", year);
+ }
+ //
  // sprintf(DATEOBS,"%d-%02d-%02d",year,month,day);
 
  fprintf(stderr, "WARNING -- fixing the input DATEOBS string: %s -> ", DATEOBS);
@@ -432,16 +466,28 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format(char *DATEOBS) {
  char substring_year[32];
  int day, month, year;
 
+ //fprintf(stderr,"\n0123456789\n%s \n", DATEOBS);
+
  // check if this is an empty string (and assume that the date will be provided as 'JD' keyword)
- if( 0 == strlen(DATEOBS) )
+ if( 0 == strlen(DATEOBS) ) {
   return;
- if( strlen(DATEOBS) < 8 )
+ }
+ //if( strlen(DATEOBS) < 8 ) {
+ // we want to aslo handle a two-digit year 21-09-99
+ if( strlen(DATEOBS) < 6 ) {
+  // the string is too short for the following trick to work
   return;
+ }
+
 
  //                            0123456789
  // check if this is a normal '2004-07-05' style DATE-OBS
- if( DATEOBS[4] == '-' )
-  return;
+ if( DATEOBS[4] == '-' ) {
+  // special cases 1-09-99 and 01-9-1999
+  if( DATEOBS[1] != '-' && DATEOBS[2] != '-' ) {
+   return;
+  }
+ }
 
  for( i= 0; i < (int)strlen(DATEOBS); i++ )
 
@@ -485,6 +531,17 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format(char *DATEOBS) {
  day= atoi(substring_day);
  month= atoi(substring_month);
  year= atoi(substring_year);
+ // try fix a two-digit year
+ if( year<100 ) {
+  fprintf(stderr, "WARNING -- two-digit year in the input DATEOBS string: %d -> ", year);
+  if( year<50 ) {
+   year= year + 2000;
+  } else {
+   year= year + 1900;
+  }
+  fprintf(stderr, "%d\n", year);
+ }
+ //
 
  fprintf(stderr, "WARNING -- fixing the input DATEOBS string: %s -> ", DATEOBS);
 
@@ -1255,12 +1312,20 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
   if( param_verbose >= 1 ) {
    fprintf(stderr, "Setting observation date using %s keyword: %s\n", DATEOBS_KEY_NAME, DATEOBS);
   }
+  //
   if( 0 == strlen(DATEOBS) ) {
    fprintf(stderr, "ERROR in gettime(): the %s FITS header key that is supposed to report the observation date is missing or empty!\n", DATEOBS_KEY_NAME);
    fits_close_file(fptr, &status); // close file
    return 1;
   }
-
+  if( strlen(DATEOBS) < 8 ) {
+   fprintf( stderr, "ERROR in gettime(): strlen(%s) < 8\n", DATEOBS);
+   fits_close_file(fptr, &status); // close file
+   return 1;
+  }
+  //fprintf( stderr, " %d #%s#\n", strlen(DATEOBS), DATEOBS);
+  //
+  
   for( j= 0; j < 32; j++ ) {
    if( DATEOBS[j] == 45 ) {
     Da_y[j]= '\0';
@@ -1270,15 +1335,35 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
   }
   for( j+= 1; j < 32; j++ ) {
    if( DATEOBS[j] == 45 ) {
+    if( j - 5 < 0 ) {
+     fprintf( stderr, "ERROR100 in gettime()\n");
+     fits_close_file(fptr, &status); // close file
+     return 1;
+    }
     Da_m[j - 5]= '\0';
     break;
+   }
+   if( j - 5 < 0 ) {
+    fprintf( stderr, "ERROR101 in gettime()\n");
+    fits_close_file(fptr, &status); // close file
+    return 1;
    }
    Da_m[j - 5]= DATEOBS[j];
   }
   for( j+= 1; j < 32; j++ ) {
    if( DATEOBS[j] == '\0' || DATEOBS[j] == 'T' ) {
+    if( j - 7 < 0 ) {
+     fprintf( stderr, "ERROR102 in gettime()\n");
+     fits_close_file(fptr, &status); // close file
+     return 1;
+    }
     Da_d[j - 7]= '\0';
     break;
+   }
+   if( j - 8 < 0 ) {
+    fprintf( stderr, "ERROR103 in gettime()\n");
+    fits_close_file(fptr, &status); // close file
+    return 1;
    }
    Da_d[j - 8]= DATEOBS[j];
   }
@@ -1356,25 +1441,25 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
   }
   structureTIME.tm_min= atoi( Tm_m );
   if ( structureTIME.tm_min < 0 || structureTIME.tm_min > 60 ) {
-   fprintf( stderr, "ERROR002 in gettime()\n" );
+   fprintf( stderr, "ERROR002 in gettime(): the minute is not between 0 and 60\n" );
    fits_close_file( fptr, &status );
    return 1;
   }
   structureTIME.tm_hour= atoi( Tm_h );
   if ( structureTIME.tm_hour < 0 || structureTIME.tm_hour > 24 ) {
-   fprintf( stderr, "ERROR003 in gettime()\n" );
+   fprintf( stderr, "ERROR003 in gettime(): the hour is not between 0 and 24\n" );
    fits_close_file( fptr, &status );
    return 1;
   }
   structureTIME.tm_mday= atoi(Da_d);
   if( structureTIME.tm_mday < 0 || structureTIME.tm_mday > 31 ) {
-   fprintf(stderr, "ERROR004 in gettime()\n");
+   fprintf(stderr, "ERROR004 in gettime(): the month day is not between 0 and 31\n");
    fits_close_file(fptr, &status);
    return 1;
   }
   structureTIME.tm_mon= atoi(Da_m) - 1;
   if( structureTIME.tm_mon < 0 || structureTIME.tm_mon > 12 ) {
-   fprintf(stderr, "ERROR005 in gettime()\n");
+   fprintf(stderr, "ERROR005 in gettime(): the month is not between 0 and 12\n");
    fits_close_file(fptr, &status);
    return 1;
   }

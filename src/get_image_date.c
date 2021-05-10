@@ -19,6 +19,7 @@
 #include "vast_limits.h"
 
 void fix_DATEOBS_STRING(char *DATEOBS); // defined in gettime.c
+void fix_DATEOBS_STRING__DD_MM_YYYY_format(char *DATEOBS); // defined in gettime.c
 
 void remove_multiple_white_spaces_from_string(char *string) {
  unsigned int i, j;
@@ -210,6 +211,7 @@ int fake_image_hack(char *input_string) {
     // T was not found, so there was no white space in the input string
     // handle the insane DD/MM/YYYY format (no fraction of the day)
     fix_DATEOBS_STRING(processed_input_string);
+    fix_DATEOBS_STRING__DD_MM_YYYY_format(processed_input_string); // handle '09-10-2017' style DATE-OBS
     //fprintf( stderr, "DEBUG19 #%s#\n", processed_input_string);
     // handle YYYY-MM-DD.DDDD
     sscanf(processed_input_string, "%lf%*1[ -]%lf%*1[ -]%lf", &year, &month, &day);
@@ -378,7 +380,7 @@ int main(int argc, char **argv) {
 
  // Get the date
  if( 0 != gettime(input_fits_image, &JD, &timesys, convert_timesys_to_TT, &dimX, &dimY, stderr_output, log_output, param_nojdkeyword, param_verbose) ) {
-  fprintf(stderr, "ERROR getting observing time from the input image %s\n", argv[1]);
+  fprintf(stderr, "ERROR getting observing time from the input %s\n", argv[1]);
   free(stderr_output);
   free(log_output);
   return 1;

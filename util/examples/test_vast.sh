@@ -15401,6 +15401,71 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV007"
 fi
+util/get_image_date 21/09/99 2>&1 | grep --quiet 'Exposure   0 sec, 21.09.1999 00:00:00 UT = JD(UT) 2451442.50000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV107"
+fi
+util/get_image_date 21-09-99 2>&1 | grep --quiet 'Exposure   0 sec, 21.09.1999 00:00:00 UT = JD(UT) 2451442.50000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV108"
+fi
+util/get_image_date 21-09-1999 2>&1 | grep --quiet 'Exposure   0 sec, 21.09.1999 00:00:00 UT = JD(UT) 2451442.50000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV109"
+fi
+util/get_image_date 1-09-99 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV110"
+fi
+util/get_image_date 1-09-1999 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV111"
+fi
+util/get_image_date 1-9-1999 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV112"
+fi
+util/get_image_date 01-09-1999 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV113"
+fi
+util/get_image_date 01-9-1999 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV114"
+fi
+util/get_image_date 01-9-99 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV115"
+fi
+util/get_image_date 1-9-99 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV116"
+fi
+util/get_image_date 1999-9-1 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV117"
+fi
+util/get_image_date 1999-09-1 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV118"
+fi
+util/get_image_date 1999-09-01 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV119"
+fi
 # Now make sure there are no residual files
 for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  if [ -f "$TMP_FITS_FILE" ];then
