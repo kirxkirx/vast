@@ -10789,12 +10789,12 @@ $GREP_RESULT2"
 
   # Make sure things don't get added to the exclusion list multiple times
   N=`grep -c '18:21:4.\... -34:11:2.\..' ../exclusion_list.txt`
-  if [ $N -ne ` ];then
+  if [ $N -ne 1 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_VAR_ADDED_MANY_TIMES_TO_EXCLUSION_LIST_01_$N"
   fi
   N=`grep -c '18:08:3.\... -34:01:4.\..' ../exclusion_list.txt`
-  if [ $N -ne ` ];then
+  if [ $N -ne 1 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_VAR_ADDED_MANY_TIMES_TO_EXCLUSION_LIST_02_$N"
   fi
