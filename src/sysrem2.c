@@ -511,11 +511,11 @@ int main() {
     }
    }
 
-   // More debug
-   fprintf(stderr, "\nSysRem \"airmass\" coefficients for each image (not the actual airmass, of course):\n");
-   for( i= Nobs; i--; ) {
-    fprintf(stderr, "a[%d]=%lf\n", i, a[i]);
-   }
+//   // More debug
+//   fprintf(stderr, "\nSysRem \"airmass\" coefficients for each image (not the actual airmass, of course):\n");
+//   for( i= Nobs; i--; ) {
+//    fprintf(stderr, "a[%d]=%lf\n", i, a[i]);
+//   }
 
    // Should we stop now?
    // Yes, if both a and c change by less than Ai_Ci_DIFFERENCE_TO_STOP_ITERATIONS compared to the previous step
@@ -650,11 +650,11 @@ int main() {
     }
    }
 
-   // More debug
-   fprintf(stderr, "\nSysRem \"airmass\" coefficients for each image (not the actual airmass, of course):\n");
-   for( i= Nobs; i--; ) {
-    fprintf(stderr, "a[%d]=%lf\n", i, a[i]);
-   }
+//   // More debug
+//   fprintf(stderr, "\nSysRem \"airmass\" coefficients for each image (not the actual airmass, of course):\n");
+//   for( i= Nobs; i--; ) {
+//    fprintf(stderr, "a[%d]=%lf\n", i, a[i]);
+//   }
 
    // Should we stop now?
    stop_iterations= 1;
@@ -786,12 +786,12 @@ int main() {
  fprintf( stderr, "Skipped corrections for %d out of %d stars\n", bad_stars_counter, Nstars );
 */
 
-  // Print out some stats
-  //
-  fprintf(stderr, "\nFinal SysRem \"airmass\" coefficients for each image (not the actual airmass, of course):\n");
-  for( i= Nobs; i--; ) {
-   fprintf(stderr, "a[%d]=%lf\n", i, a[i]);
-  }
+//  // Print out some stats
+//  //
+//  fprintf(stderr, "\nFinal SysRem \"airmass\" coefficients for each image (not the actual airmass, of course):\n");
+//  for( i= Nobs; i--; ) {
+//   fprintf(stderr, "a[%d]=%lf\n", i, a[i]);
+//  }
   //
   /*
  // We need a ton of memory to compute it!

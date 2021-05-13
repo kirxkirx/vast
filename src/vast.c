@@ -4775,14 +4775,22 @@ int main(int argc, char **argv) {
       write_magnitude_calibration_log_plane(lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, N_good_stars, filename_for_magnitude_calibration_log, lin_mag_A, lin_mag_B, lin_mag_C);
 
       // Check if the magnitude correction is not too large
-      if( fabs(lin_mag_C) > MAX_LIN_CORR_MAG )
+      if( fabs(lin_mag_C) > MAX_LIN_CORR_MAG ) {
+       fprintf(stderr, "ERROR in magnitude calibration: fabs(lin_mag_C) > MAX_LIN_CORR_MAG\n");
        wpolyfit_exit_code= 1;
-      if( fabs(lin_mag_A * X_im_size + lin_mag_C) > MAX_LIN_CORR_MAG )
+      }
+      if( fabs(lin_mag_A * X_im_size + lin_mag_C) > MAX_LIN_CORR_MAG ) {
+       fprintf(stderr, "ERROR in magnitude calibration: fabs(lin_mag_A * X_im_size + lin_mag_C) > MAX_LIN_CORR_MAG\n");
        wpolyfit_exit_code= 1;
-      if( fabs(lin_mag_B * Y_im_size + lin_mag_C) > MAX_LIN_CORR_MAG )
+      }
+      if( fabs(lin_mag_B * Y_im_size + lin_mag_C) > MAX_LIN_CORR_MAG ) {
+       fprintf(stderr, "ERROR in magnitude calibration: fabs(lin_mag_B * Y_im_size + lin_mag_C) > MAX_LIN_CORR_MAG\n");
        wpolyfit_exit_code= 1;
-      if( fabs(lin_mag_A * X_im_size + lin_mag_B * Y_im_size + lin_mag_C) > MAX_LIN_CORR_MAG )
+      }
+      if( fabs(lin_mag_A * X_im_size + lin_mag_B * Y_im_size + lin_mag_C) > MAX_LIN_CORR_MAG ) {
+       fprintf(stderr, "ERROR in magnitude calibration: fabs(lin_mag_A * X_im_size + lin_mag_B * Y_im_size + lin_mag_C) > MAX_LIN_CORR_MAG\n");
        wpolyfit_exit_code= 1;
+      }
 
       // Use linear function as an approximation
       if( wpolyfit_exit_code == 0 ) {
@@ -4932,8 +4940,9 @@ int main(int argc, char **argv) {
      free(lin_mag_cor_z);
     }
 
-    if( debug != 0 )
+    if( debug != 0 ) {
      fprintf(stderr, "DEBUG MSG: It was a lot of work, OK now\n");
+    }
     if( wpolyfit_exit_code == 0 ) {
      /* Transform all magnitudes to the ref-frame system. */
      if( debug != 0 )
@@ -4973,7 +4982,7 @@ int main(int argc, char **argv) {
     } else {
      sprintf(log_output, "status=ERROR  %s\n", input_images[n]);
      write_string_to_log_file(log_output, sextractor_catalog);
-     fprintf(stderr, "ERROR!!! Magnitude calibration failure. Dropping image.\n"); // and print to the terminal that there was a problem
+     fprintf(stderr, "\E[01;31m ERROR!!! Magnitude calibration failure. Dropping image. \E[33;00m\n"); // and print to the terminal that there was a problem
     }
 
     // ADD NEW STARS ONLY IF THE MAGNITUDE SCALE COULD BE SUCCESSFULY CALIBRATED

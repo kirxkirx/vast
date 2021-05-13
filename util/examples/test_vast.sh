@@ -14947,7 +14947,11 @@ if [ -d ../test_exclude_ref_image ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF001"
   fi
   N_IMG_USED_FOR_PHOTOMETRY=`grep "Images used for photometry " vast_summary.log | awk '{printf "%d",$5}'`
-  if [ $N_IMG_USED_FOR_PHOTOMETRY -lt 302 ];then
+  #if [ $N_IMG_USED_FOR_PHOTOMETRY -lt 302 ];then
+  # The test images have extreme position-dependent magnitude correction.
+  # With the introduction of robust linear fitting the number of imgages that pass 
+  # the position-dependent magnitude correction value cut has changed.
+  if [ $N_IMG_USED_FOR_PHOTOMETRY -lt 269 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF002"
   fi
@@ -15868,6 +15872,12 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 command -v vartools &>/dev/null
 if [ $? -eq 0 ];then
  TEST_PASSED=1
+
+ vartools &> /dev/null
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES HJDCORRECTION_PROBLE_RUNNING_VARTOOLS"
+ fi
 
  if [ ! -d ../vast_test_lightcurves ];then
   mkdir ../vast_test_lightcurves

@@ -930,7 +930,7 @@ int main(int argc, char **argv) {
     for( i= 0; i < Nobs; i++ ) {
      if( float_JD[i] <= breaks[0] ) {
       //
-      fprintf(stderr, "fit_n=%d i=%d breaks[0]=%f\n", fit_n, i, breaks[0]);
+      //fprintf(stderr, "fit_n=%d i=%d breaks[0]=%f\n", fit_n, i, breaks[0]);
       //
       fit_jd[fit_n]= float_JD[i];
       fit_mag[fit_n]= mag[i];
@@ -1340,6 +1340,8 @@ int main(int argc, char **argv) {
    fprintf(stderr, "Edited lightcurve is written to %s\n", lightcurvefilename);
   }
   if( start_pokaz_script == 1 ) {
+   // TODO: make sure lightcurvefilename exist
+   //
    start_pokaz_script= 0; // don't do it again unless 'P' will be pressed again
    sprintf(pokaz_start, "%s/pokaz_winefk.sh %s ", path_to_vast_string, lightcurvefilename);
    // fork before system() so the parent process is not blocked
@@ -1355,6 +1357,8 @@ int main(int argc, char **argv) {
    change_limits_trigger= 1;
   }
   if( start_pokaz_script == 2 ) {
+   // TODO: make sure lightcurvefilename exist
+   //
    start_pokaz_script= 0; // don't do it again unless 'L' will be pressed again
    sprintf(pokaz_start, "%s/pokaz_laflerkinman.sh %s ", path_to_vast_string, lightcurvefilename);
    // fork before system() so the parent process is not blocked
@@ -1580,10 +1584,12 @@ int main(int argc, char **argv) {
     strncpy(star_name, "pgplot", 7);
    }
 
-   if( xw_ps == 1 )
-    fprintf(stderr, "Lightcurve saved to %s.ps\n", star_name);
-   if( xw_ps == 2 )
-    fprintf(stderr, "Lightcurve saved to %s.png\n", star_name);
+   if( xw_ps == 1 ) {
+    fprintf(stderr, "Lightcurve plot saved to %s.ps\n", star_name);
+   }
+   if( xw_ps == 2 ) {
+    fprintf(stderr, "Lightcurve plot saved to %s.png\n", star_name);
+   }
 
    xw_ps= -1;
    curC= ' ';
