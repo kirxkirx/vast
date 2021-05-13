@@ -1,3 +1,7 @@
+	* VaST will not try to update the leap second 'tai-utc.dat' file as there is no more
+	an official way to do it: the links http://maia.usno.navy.mil/ser7/tai-utc.dat and 
+	ftp://toshi.nofs.navy.mil/ser7/tai-utc.dat are down forever. If you know how to get 
+	updated versions of 'tai-utc.dat' in the future - please let me know!
 	* VaST will try to discard images with elongated stars resulting from bad tracking.
 	This can be disabled by specifying the new command line option '-l' or '--nodiscardell'.
 	This is disabled automatically if '--photocurve' magnitude calibration is used as
