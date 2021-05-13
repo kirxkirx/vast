@@ -4831,7 +4831,9 @@ $GREP_RESULT"
   STATSTR=`cat vast_lightcurve_statistics.log | sort -k26 | tail -n1`
   STATMAG=`echo "$STATSTR" | awk '{print $1}'`
   #TEST=`echo "a=($STATMAG)-(-11.761200);sqrt(a*a)<0.01" | bc -ql`
-  TEST=`echo "$STATMAG" | awk '{if ( sqrt( ($1-(-11.761200))*($1-(-11.761200)) ) < 0.01 ) print 1 ;else print 0 }'`
+  #TEST=`echo "$STATMAG" | awk '{if ( sqrt( ($1-(-11.761200))*($1-(-11.761200)) ) < 0.01 ) print 1 ;else print 0 }'`
+  # We have to relax this as we don't know which image will end up being the reference one when specifying directory as an input!
+  TEST=`echo "$STATMAG" | awk '{if ( sqrt( ($1-(-11.761200))*($1-(-11.761200)) ) < 0.5 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4843,34 +4845,34 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD014"
   fi
-  STATX=`echo "$STATSTR" | awk '{print $3}'`
-  #TEST=`echo "a=($STATX)-(218.9535100);sqrt(a*a)<0.1" | bc -ql`
-  TEST=`echo "$STATX" | awk '{if ( sqrt( ($1-218.9535100)*($1-218.9535100) ) < 0.1 ) print 1 ;else print 0 }'`
-  re='^[0-9]+$'
-  if ! [[ $TEST =~ $re ]] ; then
-   echo "TEST ERROR"
-   TEST_PASSED=0
-   TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD015_TEST_ERROR"
-  fi
-  if [ $TEST -ne 1 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD015_$STATX"
-  fi
-  STATY=`echo "$STATSTR" | awk '{print $4}'`
-  #TEST=`echo "a=($STATY)-(247.8363000);sqrt(a*a)<0.1" | bc -ql`
-  TEST=`echo "$STATY" | awk '{if ( sqrt( ($1-247.8363000)*($1-247.8363000) ) < 0.1 ) print 1 ;else print 0 }'`
-  re='^[0-9]+$'
-  if ! [[ $TEST =~ $re ]] ; then
-   echo "TEST ERROR"
-   TEST_PASSED=0
-   TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD016_TEST_ERROR"
-  fi
-  if [ $TEST -ne 1 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD016_$STATY"
-  fi
+  #STATX=`echo "$STATSTR" | awk '{print $3}'`
+  ##TEST=`echo "a=($STATX)-(218.9535100);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "$STATX" | awk '{if ( sqrt( ($1-218.9535100)*($1-218.9535100) ) < 0.1 ) print 1 ;else print 0 }'`
+  #re='^[0-9]+$'
+  #if ! [[ $TEST =~ $re ]] ; then
+  # echo "TEST ERROR"
+  # TEST_PASSED=0
+  # TEST=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD015_TEST_ERROR"
+  #fi
+  #if [ $TEST -ne 1 ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD015_$STATX"
+  #fi
+  #STATY=`echo "$STATSTR" | awk '{print $4}'`
+  ##TEST=`echo "a=($STATY)-(247.8363000);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "$STATY" | awk '{if ( sqrt( ($1-247.8363000)*($1-247.8363000) ) < 0.1 ) print 1 ;else print 0 }'`
+  #re='^[0-9]+$'
+  #if ! [[ $TEST =~ $re ]] ; then
+  # echo "TEST ERROR"
+  # TEST_PASSED=0
+  # TEST=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD016_TEST_ERROR"
+  #fi
+  #if [ $TEST -ne 1 ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD016_$STATY"
+  #fi
   # indexes
   STATIDX=`echo "$STATSTR" | awk '{print $6}'`
   #TEST=`echo "a=($STATIDX)-(0.241686);sqrt(a*a)<0.01" | bc -ql`
@@ -4914,7 +4916,8 @@ $GREP_RESULT"
   fi
   STATIDX=`echo "$STATSTR" | awk '{print $30}'`
   #TEST=`echo "a=($STATIDX)-(0.025686);sqrt(a*a)<0.002" | bc -ql`
-  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.025686)*($1-0.025686) ) < 0.002 ) print 1 ;else print 0 }'`
+  #TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.025686)*($1-0.025686) ) < 0.002 ) print 1 ;else print 0 }'`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.025686)*($1-0.025686) ) < 0.02 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4953,7 +4956,8 @@ $GREP_RESULT"
   STATSTR=`cat vast_lightcurve_statistics.log | sort -k26 | tail -n2 | head -n1`
   STATMAG=`echo "$STATSTR" | awk '{print $1}'`
   #TEST=`echo "a=($STATMAG)-(-11.220400);sqrt(a*a)<0.01" | bc -ql`
-  TEST=`echo "$STATMAG" | awk '{if ( sqrt( ($1-(-11.220400))*($1-(-11.220400)) ) < 0.01 ) print 1 ;else print 0 }'`
+  #TEST=`echo "$STATMAG" | awk '{if ( sqrt( ($1-(-11.220400))*($1-(-11.220400)) ) < 0.01 ) print 1 ;else print 0 }'`
+  TEST=`echo "$STATMAG" | awk '{if ( sqrt( ($1-(-11.220400))*($1-(-11.220400)) ) < 0.5 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -4965,34 +4969,34 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD024"
   fi
-  STATX=`echo "$STATSTR" | awk '{print $3}'`
-  #TEST=`echo "a=($STATX)-(87.2039000);sqrt(a*a)<0.1" | bc -ql`
-  TEST=`echo "$STATX" | awk '{if ( sqrt( ($1-87.2039000)*($1-87.2039000) ) < 0.1 ) print 1 ;else print 0 }'`
-  re='^[0-9]+$'
-  if ! [[ $TEST =~ $re ]] ; then
-   echo "TEST ERROR"
-   TEST_PASSED=0
-   TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD025_TEST_ERROR"
-  fi
-  if [ $TEST -ne 1 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD025_$STATX"
-  fi
-  STATY=`echo "$STATSTR" | awk '{print $4}'`
-  #TEST=`echo "a=($STATY)-(164.4241000);sqrt(a*a)<0.1" | bc -ql`
-  TEST=`echo "$STATY" | awk '{if ( sqrt( ($1-164.4241000)*($1-164.4241000) ) < 0.1 ) print 1 ;else print 0 }'`
-  re='^[0-9]+$'
-  if ! [[ $TEST =~ $re ]] ; then
-   echo "TEST ERROR"
-   TEST_PASSED=0
-   TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD026_TEST_ERROR"
-  fi
-  if [ $TEST -ne 1 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD026_$STATY"
-  fi
+  #STATX=`echo "$STATSTR" | awk '{print $3}'`
+  ##TEST=`echo "a=($STATX)-(87.2039000);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "$STATX" | awk '{if ( sqrt( ($1-87.2039000)*($1-87.2039000) ) < 0.1 ) print 1 ;else print 0 }'`
+  #re='^[0-9]+$'
+  #if ! [[ $TEST =~ $re ]] ; then
+  # echo "TEST ERROR"
+  # TEST_PASSED=0
+  # TEST=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD025_TEST_ERROR"
+  #fi
+  #if [ $TEST -ne 1 ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD025_$STATX"
+  #fi
+  #STATY=`echo "$STATSTR" | awk '{print $4}'`
+  ##TEST=`echo "a=($STATY)-(164.4241000);sqrt(a*a)<0.1" | bc -ql`
+  #TEST=`echo "$STATY" | awk '{if ( sqrt( ($1-164.4241000)*($1-164.4241000) ) < 0.1 ) print 1 ;else print 0 }'`
+  #re='^[0-9]+$'
+  #if ! [[ $TEST =~ $re ]] ; then
+  # echo "TEST ERROR"
+  # TEST_PASSED=0
+  # TEST=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD026_TEST_ERROR"
+  #fi
+  #if [ $TEST -ne 1 ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD026_$STATY"
+  #fi
   # indexes
   STATIDX=`echo "$STATSTR" | awk '{print $6}'`
   #TEST=`echo "a=($STATIDX)-(0.037195);sqrt(a*a)<0.01" | bc -ql`
@@ -12638,12 +12642,13 @@ if [ -d /mnt/usb/M4_F775W_images_Level2_few_links_for_tests ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIALM4HST002"
   fi
-  grep --quiet "First image: 2456311.38443 18.01.2013 21:13:25" vast_summary.log
+  # Calendar time will be set to 00.00.0000 00:00:00 if JD is taken from EXPSTART instead of DATE-OBS
+  grep --quiet -e "First image: 2456311.38443 18.01.2013 21:13:25" -e "First image: 2456311.38443 00.00.0000 00:00:00" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIALM4HST003"
   fi
-  grep --quiet "Last  image: 2456312.04468 19.01.2013 13:04:10" vast_summary.log
+  grep --quiet -e "Last  image: 2456312.04468 19.01.2013 13:04:10" -e "Last  image: 2456312.04468 00.00.0000 00:00:00" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIALM4HST004"

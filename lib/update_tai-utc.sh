@@ -12,7 +12,17 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
-NEED_TO_UPDATE_THE_FILE=0
+############################################
+exit 0
+# There is no more proper way to update tai-utc.dat so we just quit
+############################################
+
+
+if [ -z "$1" ];then
+ NEED_TO_UPDATE_THE_FILE=0
+else
+ NEED_TO_UPDATE_THE_FILE=1
+fi
 
 # Get current date from the system clock
 CURRENT_DATE_UNIXSEC=`date +%s`
@@ -38,27 +48,33 @@ if [ $[$CURRENT_DATE_UNIXSEC-$TAImUTC_DAT_FILE_MODIFICATION_DATE] -gt 15552000 ]
  NEED_TO_UPDATE_THE_FILE=1
 fi
 
+# everything is down forever
+
 # Update the file if needed
-if [ $NEED_TO_UPDATE_THE_FILE -eq 1 ];then
- wget --timeout=120 --tries=3 -O tai-utc.dat.new "http://maia.usno.navy.mil/ser7/tai-utc.dat"
- if [ $? -ne 0 ];then
-  echo "ERROR running wget" >> /dev/stderr
-  if [ -f tai-utc.dat.new ];then
-   rm -f tai-utc.dat.new
-  fi
-  wget --timeout=120 --tries=3 -O tai-utc.dat.new "ftp://toshi.nofs.navy.mil/ser7/tai-utc.dat"
-  if [ $? -ne 0 ];then
-   echo "ERROR2 running wget" >> /dev/stderr
-   if [ -f tai-utc.dat.new ];then
-    rm -f tai-utc.dat.new
-   fi
-   wget --timeout=120 --tries=3 -O tai-utc.dat.new "ftp://cddis.gsfc.nasa.gov/pub/products/iers/tai-utc.dat"
-   if [ $? -ne 0 ];then
-    echo "ERROR2 running wget" >> /dev/stderr
-    exit 1
-   fi
-  fi
- fi
+#if [ $NEED_TO_UPDATE_THE_FILE -eq 1 ];then
+# # down forever
+# wget --timeout=20 --tries=1 -O tai-utc.dat.new "http://maia.usno.navy.mil/ser7/tai-utc.dat"
+# if [ $? -ne 0 ];then
+#  echo "ERROR running wget" >> /dev/stderr
+#  if [ -f tai-utc.dat.new ];then
+#   rm -f tai-utc.dat.new
+#  fi
+##Here we would try other servers, but there are no other servers anymore
+#  # down forever
+#  wget --timeout=20 --tries=1 -O tai-utc.dat.new "ftp://toshi.nofs.navy.mil/ser7/tai-utc.dat"
+#  if [ $? -ne 0 ];then
+#   echo "ERROR2 running wget" >> /dev/stderr
+#   if [ -f tai-utc.dat.new ];then
+#    rm -f tai-utc.dat.new
+#   fi
+#   # ftp link down forever, http access requires registration
+#   wget --timeout=20 --tries=1 -O tai-utc.dat.new "ftp://cddis.gsfc.nasa.gov/pub/products/iers/tai-utc.dat"
+#   if [ $? -ne 0 ];then
+#    echo "ERROR2 running wget" >> /dev/stderr
+#    exit 1
+#   fi
+#  fi
+# fi
  if [ ! -s tai-utc.dat.new ];then
   echo "ERROR: tai-utc.dat.new is EMPTY!"  >> /dev/stderr
   exit 1
