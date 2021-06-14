@@ -379,12 +379,25 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I
  fi
  # skip empty lines if for whatever reason they were not caught before
  if [ ! -z $R ] ;then
-  # Skip too faint stars
-  #TEST=`echo "$GMAG>18.0"|bc -ql`
-  TEST=`echo "$GMAG"| awk -F'>' '{if ( $1 > 18.0 ) print 1 ;else print 0 }'`
+  ######################################################################################
+  # Do not drop faint Gaia stars if we have good astrometry
+  SHOULD_WE_DROP_FAINT_GAIA_STARS=1
+  TEST=`echo "$FOV<30.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
   if [ $TEST -eq 1 ];then
-   continue
+   TEST=`echo "$R<0.2" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
+   if [ $TEST -eq 1 ];then
+    SHOULD_WE_DROP_FAINT_GAIA_STARS=0
+   fi
   fi
+  if [ $SHOULD_WE_DROP_FAINT_GAIA_STARS -eq 1 ];then
+   # Skip too faint stars
+   #TEST=`echo "$GMAG>18.0"|bc -ql`
+   TEST=`echo "$GMAG"| awk -F'>' '{if ( $1 > 18.0 ) print 1 ;else print 0 }'`
+   if [ $TEST -eq 1 ];then
+    continue
+   fi
+  fi # if [ $SHOULD_WE_DROP_FAINT_GAIA_STARS -eq 1 ];then
+  ######################################################################################
   GOOD_CATALOG_POSITION_GAIA=`"$VAST_PATH"lib/deg2hms $GAIA_CATRA_DEG $GAIA_CATDEC_DEG` 
   #
   GOOD_CATALOG_NAME_GAIA=$GAIA_SOURCE
@@ -589,7 +602,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    ### Check other large variable star lists
    # OGLE Bulge LPV
    if [ $KNOWN_VARIABLE -eq 0 ];then
-    OGLE_LPV_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=vizier.u-strasbg.fr -mime=text -source=J/AcA/63/21/catalog -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Star,Type,Per 2>/dev/null |grep -v \# | grep -v "_" | grep -v "\-\-\-" | grep -A 1 'Star' | tail -n1`
+    OGLE_LPV_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/AcA/63/21/catalog -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Star,Type,Per 2>/dev/null |grep -v \# | grep -v "_" | grep -v "\-\-\-" | grep -A 1 'Star' | tail -n1`
     if [ ! -z "$OGLE_LPV_RESULTS" ];then
      OGLENAME=`echo "$OGLE_LPV_RESULTS" | awk '{print $1}'`
      OGLETYPE=`echo "$OGLE_LPV_RESULTS" | awk '{print $2}'`
@@ -602,7 +615,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    fi   
    # ATLAS
    if [ $KNOWN_VARIABLE -eq 0 ];then
-    ATLAS_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=vizier.u-strasbg.fr -mime=text -source=J/AJ/156/241/table4 -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=ATOID,Class 2>/dev/null |grep -v \# | grep -v "_" | grep -v "\-\-\-" | grep J | tail -n1`
+    ATLAS_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/AJ/156/241/table4 -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=ATOID,Class 2>/dev/null |grep -v \# | grep -v "_" | grep -v "\-\-\-" | grep J | tail -n1`
     if [ ! -z "$ATLAS_RESULTS" ];then
      ATLASNAME=`echo "$ATLAS_RESULTS" | awk '{print $1}'`
      ATLASTYPE=`echo "$ATLAS_RESULTS" | awk '{print $2}'`
@@ -615,7 +628,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    fi
    # OGLE Bulge RR Lyr
    #if [ $KNOWN_VARIABLE -eq 0 ];then
-   # OGLE_LPV_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=vizier.u-strasbg.fr -mime=text -source=J/AcA/61/1/ident -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Star,Type 2>/dev/null |grep -v \# | grep -v "_" | grep -v "\-\-\-" | grep -A 1 'Star' | tail -n1`
+   # OGLE_LPV_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/AcA/61/1/ident -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Star,Type 2>/dev/null |grep -v \# | grep -v "_" | grep -v "\-\-\-" | grep -A 1 'Star' | tail -n1`
    # echo "#$OGLE_LPV_RESULTS#"
    # if [ ! -z "$OGLE_LPV_RESULTS" ];then
    #  OGLENAME=`echo "$OGLE_LPV_RESULTS" | awk '{print $1}'`

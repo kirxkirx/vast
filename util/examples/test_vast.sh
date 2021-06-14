@@ -14445,6 +14445,13 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT019"
 fi
 
+# Make sure the script doesn't drop faint Gaia stars if the position match is perfect
+util/search_databases_with_vizquery.sh 14:08:10.55777 -45:26:50.7000 | grep --quiet '|'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT019a"
+fi
+
 ### Test the local catalog search thing
 # MOVED UP
 #lib/update_offline_catalogs.sh
