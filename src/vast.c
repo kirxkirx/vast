@@ -1662,7 +1662,9 @@ int main(int argc, char **argv) {
  double *manually_selected_comparison_stars_Y;
  double *manually_selected_comparison_stars_catalog_mag;
  int manually_selected_comparison_stars_index;
+ FILE *cmparisonstarsfile;
  FILE *calibtxtfile;
+ double tmp_manually_selected_comparison_stars_X,tmp_manually_selected_comparison_stars_Y,tmp_manually_selected_comparison_stars_catalog_mag;
  //
  double X_im_size= 0.0;
  double Y_im_size= 0.0;
@@ -2698,6 +2700,38 @@ int main(int argc, char **argv) {
    return 1;
   } else {
 
+
+   // Check if at least one comparison star was provided
+   cmparisonstarsfile= fopen("manually_selected_comparison_stars.lst", "r");
+   if( cmparisonstarsfile == NULL ) {
+    fprintf(stderr, "No manually selected comparison stars file manually_selected_comparison_stars.lst\n");
+    // Free memory for a clean exit
+    for( n= Num; n--; ) {
+     free(input_images[n]);
+    }
+    free(input_images);
+    //
+    return 1;
+   } else {
+    N_manually_selected_comparison_stars=0;
+    while( -1 < fscanf(cmparisonstarsfile, "%lf %lf %lf", &tmp_manually_selected_comparison_stars_X, &tmp_manually_selected_comparison_stars_Y, &tmp_manually_selected_comparison_stars_catalog_mag) ) {
+     N_manually_selected_comparison_stars+= 1;
+    }
+    fclose(cmparisonstarsfile);
+    if( N_manually_selected_comparison_stars<1 ) {
+     fprintf(stderr, "ERROR too few (%d) comparison stars in manually_selected_comparison_stars.lst or there is aproblem reading the file\n", N_manually_selected_comparison_stars);
+     // Free memory for a clean exit
+     for( n= Num; n--; ) {
+      free(input_images[n]);
+     }
+     free(input_images);
+     //
+     return 1;
+    }
+    N_manually_selected_comparison_stars=0; // reset the counter for future use
+   }
+   //
+
    // Check if the aperture size was manually set by the user
    manually_selected_aperture_txt_file=fopen("manually_selected_aperture.txt","r");
    if( NULL != manually_selected_aperture_txt_file ) {
@@ -3070,7 +3104,6 @@ int main(int argc, char **argv) {
  /////// Reading file with manually selected comparison stars ///////
  ////////////////////////////////////////////////////////////////////
  // The stars are specified with their X Y positions on the reference frame
- FILE *cmparisonstarsfile;
  manually_selected_comparison_stars_X= malloc(sizeof(double));
  if( manually_selected_comparison_stars_X == NULL ) {
   fprintf(stderr, "ERROR: can't allocate memory for manually_selected_comparison_stars_X\n");
@@ -3103,6 +3136,11 @@ int main(int argc, char **argv) {
   }
   fclose(cmparisonstarsfile);
   fprintf(stderr, "Loaded %d manually selected compariosn stars from manually_selected_comparison_stars.lst file\n", N_manually_selected_comparison_stars);
+  if( N_manually_selected_comparison_stars < 1 ) {
+   fprintf(stderr, "ERROR: too few comparison stars loaded\n");
+   // probably some manual memory free-up should be here
+   return 1;
+  }
   photometric_calibration_type= 2;
   fprintf(stderr, "Resetting the magnitude calibration mode to zero-point offset only!\n\n\n");
  }
