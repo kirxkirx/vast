@@ -5,7 +5,7 @@
  This file is part of VaST -
  a SExtractor front-end for search of variable objects in a series of FITS images.
 
- Copyleft 2005-2020  Kirill Sokolovsky <kirx@scan.sai.msu.ru>,
+ Copyleft 2005-2021  Kirill Sokolovsky <kirx@scan.sai.msu.ru>,
                      Alexandr Lebedev  <lebastr@gmail.com>,
                      Dmitry Nasonov,    
                      Sergey Nazarov,
@@ -2536,54 +2536,6 @@ int main(int argc, char **argv) {
   return 1; // disable the cheating mode
  }
 
- // allocate memory for the list of FITS keyword strings
- malloc_size= sizeof(char *) * (Num + 1);
- if( malloc_size <= 0 ) {
-  fprintf(stderr, "ERROR005 - trying to allocate zero or negative number of bytes!\n");
-  exit(1);
- }
- str_with_fits_keywords_to_capture_from_input_images= (char **)malloc((size_t)malloc_size);
- if( str_with_fits_keywords_to_capture_from_input_images == NULL ) {
-  fprintf(stderr, "ERROR: can't allocate memory!\n str_with_fits_keywords_to_capture_from_input_images = (char **)realloc(input_images, sizeof(char *) * (Num+1)); - failed!\n");
-  return 1;
- }
- for( i= 0; i < Num; i++ ) {
-  malloc_size= sizeof(char) * FITS_KEYWORDS_IN_LC_LENGTH;
-  if( malloc_size <= 0 ) {
-   fprintf(stderr, "ERROR006 - trying to allocate zero or negative number of bytes!\n");
-   exit(1);
-  }
-  str_with_fits_keywords_to_capture_from_input_images[i]= malloc((size_t)malloc_size);
-  if( str_with_fits_keywords_to_capture_from_input_images[i] == NULL ) {
-   fprintf(stderr, "ERROR: can't allocate memory!\n str_with_fits_keywords_to_capture_from_input_images[i] = malloc(sizeof(char) * FITS_KEYWORDS_IN_LC_LENGTH); - failed!\n");
-   vast_report_memory_error();
-   return 1;
-  }
-  // populate the list of keywords to store
-  record_specified_fits_keywords(input_images[i], str_with_fits_keywords_to_capture_from_input_images[i]);
- }
-
- // Num==3, 4, or 5 - is likely the triplet mode for transient detection, we'll skip the usual stupid warnings
- if( Num > HARD_MIN_NUMBER_OF_POINTS && Num < SOFT_MIN_NUMBER_OF_POINTS && Num != 3 && Num != 4 && Num != 5 && debug == 0 && convert_timesys_to_TT != 0 ) {
-  fprintf(stderr, "WARNING: It is recommended to use VaST with more than %d images (much more is much better)!\nYou have supplied only %d images. :(\n", SOFT_MIN_NUMBER_OF_POINTS, Num);
-  fprintf(stderr, "\n");
-  fprintf(stderr, "This warning message will disappear in...   ");
-  /* sleep for 6 seconds to make sure user saw the above message */
-  for( n= 5; n > 0; n-- ) {
-   sleep(1);
-   fprintf(stderr, "%d ", n);
-  }
-  sleep(1);
-  fprintf(stderr, "NOW!\n");
- }
-
- if( Num < SOFT_MIN_NUMBER_OF_POINTS ) {
-  if( param_rescale_photometric_errors != 0 ) {
-   param_rescale_photometric_errors= 0;
-   fprintf(stderr, "WARNING: disabling the photometric error rescaling for the small number of input images (%d<%d)!\nYou may run 'util/rescale_photometric_errors' manually after the processing has finished.\n", Num, SOFT_MIN_NUMBER_OF_POINTS);
-  }
- }
-
  // Special settings that are forced for the 4-image transient detection mode
  if( Num == 4 ) {
   fprintf(stderr, "\n\n######## Forcing special settings for the transient detection ########\n");
@@ -2634,6 +2586,56 @@ int main(int argc, char **argv) {
   param_nodiscardell= 1;
   fprintf(stderr, "################\n\n");
  }
+
+
+ // allocate memory for the list of FITS keyword strings
+ malloc_size= sizeof(char *) * (Num + 1);
+ if( malloc_size <= 0 ) {
+  fprintf(stderr, "ERROR005 - trying to allocate zero or negative number of bytes!\n");
+  exit(1);
+ }
+ str_with_fits_keywords_to_capture_from_input_images= (char **)malloc((size_t)malloc_size);
+ if( str_with_fits_keywords_to_capture_from_input_images == NULL ) {
+  fprintf(stderr, "ERROR: can't allocate memory!\n str_with_fits_keywords_to_capture_from_input_images = (char **)realloc(input_images, sizeof(char *) * (Num+1)); - failed!\n");
+  return 1;
+ }
+ for( i= 0; i < Num; i++ ) {
+  malloc_size= sizeof(char) * FITS_KEYWORDS_IN_LC_LENGTH;
+  if( malloc_size <= 0 ) {
+   fprintf(stderr, "ERROR006 - trying to allocate zero or negative number of bytes!\n");
+   exit(1);
+  }
+  str_with_fits_keywords_to_capture_from_input_images[i]= malloc((size_t)malloc_size);
+  if( str_with_fits_keywords_to_capture_from_input_images[i] == NULL ) {
+   fprintf(stderr, "ERROR: can't allocate memory!\n str_with_fits_keywords_to_capture_from_input_images[i] = malloc(sizeof(char) * FITS_KEYWORDS_IN_LC_LENGTH); - failed!\n");
+   vast_report_memory_error();
+   return 1;
+  }
+  // populate the list of keywords to store
+  record_specified_fits_keywords(input_images[i], str_with_fits_keywords_to_capture_from_input_images[i]);
+ }
+
+ // Num==3, 4, or 5 - is likely the triplet mode for transient detection, we'll skip the usual stupid warnings
+ if( Num > HARD_MIN_NUMBER_OF_POINTS && Num < SOFT_MIN_NUMBER_OF_POINTS && Num != 3 && Num != 4 && Num != 5 && debug == 0 && convert_timesys_to_TT != 0 ) {
+  fprintf(stderr, "WARNING: It is recommended to use VaST with more than %d images (much more is much better)!\nYou have supplied only %d images. :(\n", SOFT_MIN_NUMBER_OF_POINTS, Num);
+  fprintf(stderr, "\n");
+  fprintf(stderr, "This warning message will disappear in...   ");
+  /* sleep for 6 seconds to make sure user saw the above message */
+  for( n= 5; n > 0; n-- ) {
+   sleep(1);
+   fprintf(stderr, "%d ", n);
+  }
+  sleep(1);
+  fprintf(stderr, "NOW!\n");
+ }
+
+ if( Num < SOFT_MIN_NUMBER_OF_POINTS ) {
+  if( param_rescale_photometric_errors != 0 ) {
+   param_rescale_photometric_errors= 0;
+   fprintf(stderr, "WARNING: disabling the photometric error rescaling for the small number of input images (%d<%d)!\nYou may run 'util/rescale_photometric_errors' manually after the processing has finished.\n", Num, SOFT_MIN_NUMBER_OF_POINTS);
+  }
+ }
+
 
  //// Print the TT warning only if UTC was not explicitly requested by user.
  if( convert_timesys_to_TT != 0 && Num != 3 && Num != 4 && Num != 5 ) {

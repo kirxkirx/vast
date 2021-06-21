@@ -469,7 +469,7 @@ fi
 ###### ID with variability catalogs and write summary string #####
 KNOWN_VARIABLE=0
 echo "
-Summary string:"
+Summary string (old format):"
 
 # Local catalogs
 if [ $KNOWN_VARIABLE -eq 0 ];then
