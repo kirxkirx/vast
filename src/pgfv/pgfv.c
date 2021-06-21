@@ -298,7 +298,7 @@ void print_pgfv_help() {
  fprintf(stderr, "press 'V' to invert Y axis.\n");
  fprintf(stderr, "move mouse and press 'F' to adjust image brightness/contrast. If an image apears too bright, move the pointer to the lower left and press 'F'. Repeat it many times to achive the desired result.\n");
  fprintf(stderr, "press 'M' to turn star markers on/off.\n");
- fprintf(stderr, "press 'X' or right click to exit!\nClick on image to get coordinates and value of the current pixel...\n");
+ fprintf(stderr, "press 'X' or right click to exit!\nclick on image to get coordinates and value of the current pixel.\n");
  fprintf(stderr, "\n");
  return;
 }
@@ -1896,6 +1896,9 @@ int main(int argc, char **argv) {
   if( match_mode == 2 ) {
    fprintf(stderr, "Click on a comparison star and enter its magnitude in the terminal window.\nRight-click after entering all the comparison stars.\n");
   }
+  if( match_mode == 4 ) {
+   fprintf(stderr, "\E[01;35mSelect one or multiple comparison stars\E[33;00m with know magnitudes.\nClick on the star then enter its magnitude in the terminal.\nYou may mark the variable star by clicking on it and typing 'v' instead of the magnitude.\nUse +/- keys on the keyboard to increase/decrease the aperture size\n\n");
+  }
  } // if ( finding_chart_mode == 0 ) {
 
  if( finding_chart_mode == 1 ) {
@@ -2029,7 +2032,6 @@ int main(int argc, char **argv) {
 
    /* Process left mouse button click */
    if( curC == 'A' ) {
-    //fprintf(stderr,"Pixel: %7.1f %7.1f %9.3f\n",curX+0.5,curY+0.5,real_float_array[(int)(curX-0.5)+(int)(curY-0.5)*naxes[0]]);
     fprintf(stderr, "\nPixel: %7.1f %7.1f %9.3f\n", curX, curY, real_float_array[(int)(curX - 0.5) + (int)(curY - 0.5) * naxes[0]]);
     ///
     if( use_xy2sky > 0 ) {
@@ -2038,7 +2040,6 @@ int main(int argc, char **argv) {
     //
 
     /* Magnitude calibration mode or Single image mode */
-    //if( match_mode==2 || match_mode==3 ){
     if( match_mode == 1 || match_mode == 2 || match_mode == 3 || match_mode == 4 ) {
      for( marker_counter= 0; marker_counter < sextractor_catalog__counter; marker_counter++ ) {
       if( (curX - sextractor_catalog__X[marker_counter]) * (curX - sextractor_catalog__X[marker_counter]) + (curY - sextractor_catalog__Y[marker_counter]) * (curY - sextractor_catalog__Y[marker_counter]) < (float)(APER * APER / 4.0) ) {

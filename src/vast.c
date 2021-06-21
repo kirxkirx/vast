@@ -2686,6 +2686,12 @@ int main(int argc, char **argv) {
   }
   if( 0 != system(system_command_select_comparison_stars) ) {
    fprintf(stderr, "ERROR running  '%s'\n", system_command_select_comparison_stars);
+   // Free memory for a clean exit
+   for( n= Num; n--; ) {
+    free(input_images[n]);
+   }
+   free(input_images);
+   //
    return 1;
   }
   /*
