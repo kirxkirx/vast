@@ -1290,6 +1290,13 @@ int main(int argc, char **argv) {
    fclose(matchfile);
    unlink("manually_selected_comparison_stars.lst");
   }
+  // Remove old manually_selected_aperture.txt
+  matchfile= fopen("manually_selected_aperture.txt", "r");
+  if( NULL != matchfile ) {
+   fclose(matchfile);
+   unlink("manually_selected_aperture.txt");
+  }
+  
 
  } // if ( 0 == strcmp( "select_comparison_stars", basename( argv[0] ) ) ) {
 
@@ -1963,6 +1970,18 @@ int main(int argc, char **argv) {
      }
      fclose(catfile);
      fprintf(stderr, "New aperture %.1lf\n", APER);
+     // Save the manually selected aperture for possible future use
+     if( match_mode == 4 ) {
+      fprintf(stderr, "Writing the aperture diameter of %.1lf pix to manually_selected_aperture.txt\n", APER);
+      matchfile= fopen("manually_selected_aperture.txt", "w");
+      if( matchfile == NULL ) {
+       fprintf(stderr, "ERROR: failed to open manually_selected_aperture.txt for writing!\nSomething is really messed-up, so I'll die. :(\n");
+       exit(1);
+      }
+      fprintf(matchfile, "%.1lf\n", APER);
+      fclose(matchfile);
+     }
+     //
      aperture_change= 0;
      curC= 'R'; // Redraw screen
     }           // if ( aperture_change == 1 ) {
@@ -2157,7 +2176,7 @@ int main(int argc, char **argv) {
          fprintf(stderr, "Adding the star at %.4f %.4f with magnitude %.4lf to manually_selected_comparison_stars.lst\nPick an additional comparison star or right-click to quit.\n", sextractor_catalog__X[marker_counter], sextractor_catalog__Y[marker_counter], catalog_mag);
          matchfile= fopen("manually_selected_comparison_stars.lst", "a");
          if( matchfile == NULL ) {
-          fprintf(stderr, "ERROR: failed to poed manually_selected_comparison_stars.lst for writing!\nSomething is really messed-up, so I'll die. :(\n");
+          fprintf(stderr, "ERROR: failed to open manually_selected_comparison_stars.lst for writing!\nSomething is really messed-up, so I'll die. :(\n");
           exit(1);
          }
          fprintf(matchfile, "%.4f %.4f %.4lf\n", sextractor_catalog__X[marker_counter], sextractor_catalog__Y[marker_counter], catalog_mag);

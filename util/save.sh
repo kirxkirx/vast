@@ -88,7 +88,7 @@ else
  echo "Not saving default.sex and default.psfex - assuming this is some kind of imported data since there is no vast_summary.log"
 fi
 
-for SPECIAL_FILE_TO_COPY in manually_selected_comparison_stars.lst exclude.lst bad_region.lst ;do
+for SPECIAL_FILE_TO_COPY in manually_selected_comparison_stars.lst manually_selected_aperture.txt exclude.lst bad_region.lst ;do
  if [ -f "$SPECIAL_FILE_TO_COPY" ];then
   cp -v "$SPECIAL_FILE_TO_COPY" "$REGION_NAME"/
  fi

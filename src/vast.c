@@ -1862,6 +1862,9 @@ int main(int argc, char **argv) {
  char system_command_select_comparison_stars[2 * FILENAME_LENGTH];
 
  //FILE *image00000_cat_aperture_file;
+ 
+ FILE *manually_selected_aperture_txt_file;
+ double manually_selected_aperture;
  //////////////////////////////////
 
  char filename_for_magnitude_calibration_log[2 * FILENAME_LENGTH]; // image00001__myimage.fits
@@ -2683,7 +2686,7 @@ int main(int argc, char **argv) {
    sprintf(system_command_select_comparison_stars, "lib/select_comparison_stars %s -a %lf", input_images[0], fixed_aperture);
   } else {
    sprintf(system_command_select_comparison_stars, "lib/select_comparison_stars %s", input_images[0]);
-  }
+  } // else if( fixed_aperture != 0.0 ) {
   if( 0 != system(system_command_select_comparison_stars) ) {
    fprintf(stderr, "ERROR running  '%s'\n", system_command_select_comparison_stars);
    // Free memory for a clean exit
@@ -2693,7 +2696,27 @@ int main(int argc, char **argv) {
    free(input_images);
    //
    return 1;
-  }
+  } else {
+
+   // Check if the aperture size was manually set by the user
+   manually_selected_aperture_txt_file=fopen("manually_selected_aperture.txt","r");
+   if( NULL != manually_selected_aperture_txt_file ) {
+    if( 1 != fscanf(manually_selected_aperture_txt_file,"%lf",&manually_selected_aperture) ) {
+     fprintf(stderr, "ERROR parsing manually_selected_aperture.txt\n");
+    } else {
+     if( manually_selected_aperture< 1.0 ) {
+      fprintf(stderr, "ERROR: the manually selected aperture diameter from manually_selected_aperture.txt is too small: %lf < 1.0\n", manually_selected_aperture);
+     } else {
+      fixed_aperture= manually_selected_aperture;
+      fprintf(stderr, "Using %lf pix diameter aperture for the whole image series \n", fixed_aperture);
+     } // else if( manually_selected_aperture< 1.0 ) {
+    } // else if( 1 != fscanf(manually_selected_aperture_txt_file,"%lf",&manually_selected_aperture) ) {
+    fclose(manually_selected_aperture_txt_file);
+   } // if( NULL != manually_selected_aperture_txt_file ) {
+   //
+
+  } // else if( 0 != system(system_command_select_comparison_stars) ) {
+
   /*
   //// Apply the first-image apperture diameter to the whole image series ////
   image00000_cat_aperture_file=fopen("image00000.cat.aperture","r");
