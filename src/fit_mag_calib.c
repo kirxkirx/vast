@@ -186,7 +186,7 @@ int main(int argc, char **argv) {
   strcpy(calibfilename, "calib.txt_param");
   calibfile= fopen(calibfilename, "r");
   if( NULL == calibfile ) {
-   fprintf(stderr, "ERROR: Can't open file %s\n", calibfilename);
+   fprintf(stderr, "ERROR: Cannot open file %s\n", calibfilename);
    return 1;
   }
   if( 5 > fscanf(calibfile, "%lf %lf %lf %lf %lf", &poly_coeff[4], &poly_coeff[3], &poly_coeff[2], &poly_coeff[1], &poly_coeff[0]) ) {
@@ -208,7 +208,16 @@ int main(int argc, char **argv) {
  /* Read data file */
  calibfile= fopen(calibfilename, "r");
  if( NULL == calibfile ) {
-  fprintf(stderr, "ERROR: Can't open file %s\n", calibfilename);
+  fprintf(stderr, "ERROR: Cannot open file %s\n", calibfilename);
+  free(insmag);
+  free(finsmag);
+  free(insmagerr);
+  free(finsmagerr);
+  free(catmag);
+  free(fcatmag);
+  free(w);
+  free(computed_x);
+  free(computed_y);
   return 1;
  }
  while( -1 < fscanf(calibfile, "%lf %lf %lf", &insmag[n_stars], &catmag[n_stars], &insmagerr[n_stars]) ) {
@@ -230,6 +239,20 @@ int main(int argc, char **argv) {
   n_stars++;
  }
  fclose(calibfile);
+ 
+ if( n_stars==0 ) {
+  fprintf(stderr, "ERROR: the input calibration file %s is empty - there are no calibration stars!\n", calibfilename );
+  free(insmag);
+  free(finsmag);
+  free(insmagerr);
+  free(finsmagerr);
+  free(catmag);
+  free(fcatmag);
+  free(w);
+  free(computed_x);
+  free(computed_y);
+  return 1;
+ }
 
  // Set limits for plotting 
  mininstmag= maxinstmag= finsmag[0];
@@ -354,7 +377,7 @@ int main(int argc, char **argv) {
     fprintf(stderr, "Reading fitting coefficients from file %s\n", calibfilename);
     calibfile= fopen(calibfilename, "r");
     if( NULL == calibfile ) {
-     fprintf(stderr, "ERROR: Can't open file %s\n", calibfilename);
+     fprintf(stderr, "ERROR: Cannot open file %s\n", calibfilename);
      exit(1);
     }
     if( 5 > fscanf(calibfile, "%lf %lf %lf %lf %lf", &poly_coeff[4], &poly_coeff[3], &poly_coeff[2], &poly_coeff[1], &poly_coeff[0]) ) {
