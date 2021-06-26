@@ -237,14 +237,15 @@
 
 /// *** Automated selection of candidate CONSTANT stars *** ///
 // Stars are assumed to be constant if they have variability index values less than the threshold values specified below
-#define CONSTANT_STARS__MAD_THRESHOLD 2.0
-#define CONSTANT_STARS__IQR_THRESHOLD 2.0
-#define CONSTANT_STARS__ETA_THRESHOLD 2.0
-#define CONSTANT_STARS__WEIGHTED_SIGMA_THRESHOLD 2.0
-#define CONSTANT_STARS__CLIPPED_SIGMA_THRESHOLD 2.0
-#define CONSTANT_STARS__RoMS_THRESHOLD 2.0
+#define CONSTANT_STARS__MAD_THRESHOLD 3.0
+#define CONSTANT_STARS__IQR_THRESHOLD 3.0
+#define CONSTANT_STARS__ETA_THRESHOLD 3.0
+#define CONSTANT_STARS__WEIGHTED_SIGMA_THRESHOLD 3.0
+#define CONSTANT_STARS__CLIPPED_SIGMA_THRESHOLD 3.0
+#define CONSTANT_STARS__RoMS_THRESHOLD 3.0
 // Not cutting on reducied chi2 as the photometric errors in the input lightcurve may be *heavily* underestimated
 #define DROP_FRACTION_OF_BRIGHTEST_CONST_STARS 0.01 // exclude the brightest 1% of stars from the list
+#define DROP_MAX_NUMBER_OF_BRIGHTEST_CONST_STARS 10
 #define DROP_FRACTION_OF_FAINTEST_CONST_STARS 0.1   // exclude the faintest 10% of stars from the list
 //////////////////////////////////////////////////////////
 

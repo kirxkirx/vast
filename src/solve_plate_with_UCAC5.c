@@ -1059,6 +1059,9 @@ int read_APASS_from_vizquery(struct detected_star *stars, int N, char *vizquery_
  double cos_delta;
  int N_stars_matched_with_photometric_catalog= 0;
 
+ int N_catalog_lines_parsed= 0;
+ int N_rejected_on_distance= 0;
+
  double APASS_B;
  double APASS_B_err;
  double APASS_V;
@@ -1084,9 +1087,11 @@ int read_APASS_from_vizquery(struct detected_star *stars, int N, char *vizquery_
    continue;
 
   APASS_B= APASS_B_err= APASS_V= APASS_V_err= APASS_r= APASS_r_err= APASS_i= APASS_i_err= 0.0; // reset, just in case
-  //                                        B  eB   V  eV   r  er   i  ri
-  if( 13 > sscanf(string, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &APASS_B, &APASS_B_err, &APASS_V, &APASS_V_err, &APASS_r, &APASS_r_err, &APASS_i, &APASS_i_err) )
+  //                                            B  eB   V  eV   r  er   i  ei
+  if( 13 > sscanf(string, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &APASS_B, &APASS_B_err, &APASS_V, &APASS_V_err, &APASS_r, &APASS_r_err, &APASS_i, &APASS_i_err) ){
    continue;
+  }
+  N_catalog_lines_parsed++;
   //fprintf(stderr,"\n\n DEBUG \n#%s#%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf\n",
   //string,
   //measured_ra,measured_dec,distance,catalog_ra,catalog_dec,   APASS_B, APASS_B_err, APASS_V, APASS_V_err, APASS_r, APASS_r_err, APASS_i, APASS_i_err
@@ -1102,8 +1107,10 @@ int read_APASS_from_vizquery(struct detected_star *stars, int N, char *vizquery_
     continue;
    if( fabs(stars[i].dec_deg_measured - measured_dec) < catalog_search_parameters->search_radius_deg )
     if( fabs(stars[i].ra_deg_measured - measured_ra) * cos_delta < catalog_search_parameters->search_radius_deg ) {
-     if( distance > catalog_search_parameters->search_radius_deg * 3600 )
+     if( distance > catalog_search_parameters->search_radius_deg * 3600 ) {
+      N_rejected_on_distance++;
       continue;
+     }
      stars[i].matched_with_photometric_catalog= 1;
 
      // if the star is matched with APASS
@@ -1160,6 +1167,8 @@ int read_APASS_from_vizquery(struct detected_star *stars, int N, char *vizquery_
   } //for(i=0;i<N;i++)
  }
  fclose(f);
+ fprintf(stderr, "Parsed %d APASS catalog lines.\n", N_catalog_lines_parsed);
+ fprintf(stderr, "%d stars rejected on distance.\n", N_rejected_on_distance);
  fprintf(stderr, "Matched %d stars with APASS.\n", N_stars_matched_with_photometric_catalog);
  if( N_stars_matched_with_photometric_catalog < 5 ) {
   fprintf(stderr, "ERROR: too few stars matched!\n");

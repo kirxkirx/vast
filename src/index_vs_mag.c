@@ -849,9 +849,11 @@ int main() {
       }
 #endif
       // here we rely on the fact that the input list is sorted in mag
-      // Exclude faint stars from the list
+      // Exclude bright stars from the list
       if( i < (int)(DROP_FRACTION_OF_BRIGHTEST_CONST_STARS * (double)n_stars_in_lightcurve_statistics_file + 0.5) ) {
-       is_this_star_constant= 0;
+       if( i < DROP_MAX_NUMBER_OF_BRIGHTEST_CONST_STARS ) {
+        is_this_star_constant= 0;
+       }
       }
       // Exclude faint stars from the list
       if( i > n_stars_in_lightcurve_statistics_file - (int)(DROP_FRACTION_OF_FAINTEST_CONST_STARS * (double)n_stars_in_lightcurve_statistics_file + 0.5) ) {

@@ -94,12 +94,13 @@ else
   exit 1
  fi
 
- # Parse the ctalog match file
+ # Parse the catalog match file
  case "$BAND" in
  #"C")
  # cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{print $8" "$11" "sqrt($9*$9+$12*$12)}' | while read A B C ;do if [ ! -z $C ];then  if [ "$B" != "0.000" ];then echo "$A  $B  $C" ;fi  ;fi ;done | sort -n > calib.txt
  #;;
  "B")
+  export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$13,$14}' | grep -v 0.000000 | wc -l`
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$13,$14}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then
     continue
@@ -107,9 +108,17 @@ else
    if [ "$B" == "0.000000" ];then
     continue
    fi
-   # Check if this star is constant
-   grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
-   if [ $? -ne 0 ];then
+   # strict variability check only if we have many comparison stars
+   if [ $N_COMP_STARS -gt 100 ];then
+    # Check if this star is constant
+    grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
+    if [ $? -ne 0 ];then
+     continue
+    fi
+   fi
+   # Check if this star not variable
+   grep --quiet "$OUTDATFILE" vast_autocandidates.log
+   if [ $? -eq 0 ];then
     continue
    fi
    # Replace the magnitude and error measured at this image with the median mag and scatter from all images
@@ -127,7 +136,7 @@ else
   done | sort -n > calib.txt
  ;;
  "V")
-#  cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{print $8" "$15" "sqrt($9*$9+$16*$16)}' | while read A B C ;do if [ ! -z $C ];then  if [ "$B" != "0.000" ];then echo "$A  $B  $C" ;fi  ;fi ;done | sort -n > calib.txt
+  export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$15,$16}' | grep -v 0.000000 | wc -l`
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$15,$16}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then
     continue
@@ -135,9 +144,17 @@ else
    if [ "$B" == "0.000000" ];then
     continue
    fi
-   # Check if this star is constant
-   grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
-   if [ $? -ne 0 ];then
+   # strict variability check only if we have many comparison stars
+   if [ $N_COMP_STARS -gt 100 ];then
+    # Check if this star is constant
+    grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
+    if [ $? -ne 0 ];then
+     continue
+    fi
+   fi
+   # Check if this star not variable
+   grep --quiet "$OUTDATFILE" vast_autocandidates.log
+   if [ $? -eq 0 ];then
     continue
    fi
    # Replace the magnitude and error measured at this image with the median mag and scatter from all images
@@ -150,7 +167,7 @@ else
   done | sort -n > calib.txt
  ;;
  "r")
-#  cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{print $8" "$17" "sqrt($9*$9+$18*$18)}' | while read A B C ;do if [ ! -z $C ];then  if [ "$B" != "0.000" ];then echo "$A  $B  $C" ;fi  ;fi ;done | sort -n > calib.txt
+  export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$17,$18}' | grep -v 0.000000 | wc -l`
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$17,$18}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then
     continue
@@ -158,9 +175,17 @@ else
    if [ "$B" == "0.000000" ];then
     continue
    fi
-   # Check if this star is constant
-   grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
-   if [ $? -ne 0 ];then
+   # strict variability check only if we have many comparison stars
+   if [ $N_COMP_STARS -gt 100 ];then
+    # Check if this star is constant
+    grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
+    if [ $? -ne 0 ];then
+     continue
+    fi
+   fi
+   # Check if this star not variable
+   grep --quiet "$OUTDATFILE" vast_autocandidates.log
+   if [ $? -eq 0 ];then
     continue
    fi
    # Replace the magnitude and error measured at this image with the median mag and scatter from all images
@@ -173,7 +198,7 @@ else
   done | sort -n > calib.txt
  ;;
  "i")
-#  cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{print $8" "$19" "sqrt($9*$9+$20*$20)}' | while read A B C ;do if [ ! -z $C ];then  if [ "$B" != "0.000" ];then echo "$A  $B  $C" ;fi  ;fi ;done | sort -n > calib.txt
+  export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$19,$20}' | grep -v 0.000000 | wc -l`
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$19,$20}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then
     continue
@@ -181,9 +206,17 @@ else
    if [ "$B" == "0.000000" ];then
     continue
    fi
-   # Check if this star is constant
-   grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
-   if [ $? -ne 0 ];then
+   # strict variability check only if we have many comparison stars
+   if [ $N_COMP_STARS -gt 100 ];then
+    # Check if this star is constant
+    grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
+    if [ $? -ne 0 ];then
+     continue
+    fi
+   fi
+   # Check if this star not variable
+   grep --quiet "$OUTDATFILE" vast_autocandidates.log
+   if [ $? -eq 0 ];then
     continue
    fi
    # Replace the magnitude and error measured at this image with the median mag and scatter from all images
@@ -196,7 +229,7 @@ else
   done | sort -n > calib.txt
  ;;
  "R"|"Rc")
-#  cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{print $8" "$21" "sqrt($9*$9+$22*$22)}' | while read A B C ;do if [ ! -z $C ];then  if [ "$B" != "0.000" ];then echo "$A  $B  $C" ;fi  ;fi ;done | sort -n > calib.txt
+  export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$21,$22}' | grep -v 0.000000 | wc -l`
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$21,$22}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then
     continue
@@ -204,9 +237,17 @@ else
    if [ "$B" == "0.000000" ];then
     continue
    fi
-   # Check if this star is constant
-   grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
-   if [ $? -ne 0 ];then
+   # strict variability check only if we have many comparison stars
+   if [ $N_COMP_STARS -gt 100 ];then
+    # Check if this star is constant
+    grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
+    if [ $? -ne 0 ];then
+     continue
+    fi
+   fi
+   # Check if this star not variable
+   grep --quiet "$OUTDATFILE" vast_autocandidates.log
+   if [ $? -eq 0 ];then
     continue
    fi
    # Replace the magnitude and error measured at this image with the median mag and scatter from all images
@@ -219,7 +260,7 @@ else
   done | sort -n > calib.txt
  ;;
  "I"|"Ic")
-#  cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{print $8" "$23" "sqrt($9*$9+$24*$24)}' | while read A B C ;do if [ ! -z $C ];then  if [ "$B" != "0.000" ];then echo "$A  $B  $C" ;fi  ;fi ;done | sort -n > calib.txt
+  export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$23,$24}' | grep -v 0.000000 | wc -l`
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$23,$24}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then
     continue
@@ -227,9 +268,17 @@ else
    if [ "$B" == "0.000000" ];then
     continue
    fi
-   # Check if this star is constant
-   grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
-   if [ $? -ne 0 ];then
+   # strict variability check only if we have many comparison stars
+   if [ $N_COMP_STARS -gt 100 ];then
+    # Check if this star is constant
+    grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
+    if [ $? -ne 0 ];then
+     continue
+    fi
+   fi
+   # Check if this star not variable
+   grep --quiet "$OUTDATFILE" vast_autocandidates.log
+   if [ $? -eq 0 ];then
     continue
    fi
    # Replace the magnitude and error measured at this image with the median mag and scatter from all images
