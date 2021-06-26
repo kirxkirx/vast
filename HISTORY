@@ -59,6 +59,9 @@
 	DATE-OBS and SHUTOPEN are present in the FITS image header.
 	* VaST can now get the middle of exposure time from MJD-OBS keyword.
 	* Fixed segfault with '--type' photometric calibration type argument (the short version '-t' was working fine).
+	* Relaxed the way for constant stars (listed in vast_list_of_likely_constant_stars.log) are selected 
+	as this affects automatic magnitude calibration. There may be only a small overlap between 1000 brightest
+	stars in the field used for catalog search and the list of non-variable stars.
 20 Oct 2020: vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911
