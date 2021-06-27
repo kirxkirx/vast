@@ -104,6 +104,8 @@ int main(int argc, char **argv) {
  char header_str[512];
  char header_str2[512];
  /* ----------- */
+ 
+ char string[1024]; // buffer string to be parsed
 
  /* switch */
  int weights_on= 1;
@@ -205,7 +207,7 @@ int main(int argc, char **argv) {
   return 0; // exit OK
  }
 
- /* Read data file */
+ // Read data file 
  calibfile= fopen(calibfilename, "r");
  if( NULL == calibfile ) {
   fprintf(stderr, "ERROR: Cannot open file %s\n", calibfilename);
@@ -220,7 +222,13 @@ int main(int argc, char **argv) {
   free(computed_y);
   return 1;
  }
- while( -1 < fscanf(calibfile, "%lf %lf %lf", &insmag[n_stars], &catmag[n_stars], &insmagerr[n_stars]) ) {
+ // We should allow for hte possibility that some files in the input file are corrupted
+ //while( -1 < fscanf(calibfile, "%lf %lf %lf", &insmag[n_stars], &catmag[n_stars], &insmagerr[n_stars]) ) {
+ while( NULL != fgets(string, 1024, calibfile) ) {
+  string[1024-1]='\0'; // just in case
+  if( 3 != sscanf(string, "%lf %lf %lf", &insmag[n_stars], &catmag[n_stars], &insmagerr[n_stars]) ) {
+   continue;
+  }
   finsmag[n_stars]= (float)insmag[n_stars];
   fcatmag[n_stars]= (float)catmag[n_stars];
   // Make sure insmagerr[n_stars] is not 0
