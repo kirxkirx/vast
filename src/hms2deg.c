@@ -12,6 +12,10 @@ int main(int argc, char **argv) {
  }
  // Check that we have exactly two ':'
  for( j= 0, i= 0; i < strlen(argv[1]); i++ ) {
+  if( argv[1][i] == ',' ) {
+   argv[1][i]=' ';
+   continue;
+  }
   if( 0 != isdigit(argv[1][i]) ) {
    continue;
   }

@@ -1143,7 +1143,7 @@ int read_APASS_from_vizquery(struct detected_star *stars, int N, char *vizquery_
       stars[i].Rc_computed_from_APASS_ri_err= sqrt(stars[i].Rc_computed_from_APASS_ri_err * stars[i].Rc_computed_from_APASS_ri_err + APASS_V_err * APASS_V_err);
       //////////////////////////////////////////////////
       stars[i].Ic_computed_from_APASS_ri= stars[i].Rc_computed_from_APASS_ri - 1.00 * (APASS_r - APASS_i) + 0.21;
-      stars[i].Ic_computed_from_APASS_ri_err= stars[i].Rc_computed_from_APASS_ri_err;
+      stars[i].Ic_computed_from_APASS_ri_err= stars[i].Rc_computed_from_APASS_ri_err; // above we assumed 1.09 ~ 1.00 to simplify error propagation, but what's the uncertainty of the relation?
       //////////////////////////////////////////////////
      } else {
       stars[i].APASS_B= 0.0;

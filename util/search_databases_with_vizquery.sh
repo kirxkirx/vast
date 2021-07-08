@@ -86,6 +86,10 @@ Example: $0 18:38:06.47677 +39:40:05.9835
  exit 1
 fi   
 RA=$1
+# Handle a coma in RA
+RA=${RA/','/''}
+echo "RA=#$RA#"
+#
 DEC=$2
 
 # Check if the input coordinates are good
