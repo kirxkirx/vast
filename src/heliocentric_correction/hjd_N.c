@@ -46,7 +46,16 @@ double hjd_N(double ra_obj_d, double dec_obj_d, double jd_tt) {
  double pm_dec_mas_per_year= 0.0;
  double parallax_mas= 0.0;
  double rv_kms= 0.0;
- make_cat_entry("STAR", "FK6", 0, ra_obj_h, dec_obj_d, pm_ra_mas_per_year, pm_dec_mas_per_year, parallax_mas, rv_kms, &star);
+ //
+ char word_star[SIZE_OF_OBJ_NAME];
+ char word_catalog[SIZE_OF_CAT_NAME];
+ strncpy(word_star,"STAR",SIZE_OF_OBJ_NAME);
+ word_star[SIZE_OF_OBJ_NAME-1]='\0';
+ strncpy(word_catalog,"FK6",SIZE_OF_CAT_NAME);
+ word_catalog[SIZE_OF_CAT_NAME-1]='\0';
+ //
+ //make_cat_entry("STAR", "FK6", 0, ra_obj_h, dec_obj_d, pm_ra_mas_per_year, pm_dec_mas_per_year, parallax_mas, rv_kms, &star);
+ make_cat_entry(word_star, word_catalog, 0, ra_obj_h, dec_obj_d, pm_ra_mas_per_year, pm_dec_mas_per_year, parallax_mas, rv_kms, &star);
  error= app_star(jd_tt, &star, 1, &ra_obj_h, &dec_obj_d);
  if( error != 0 )
   fprintf(stderr, "ERROR: %d\n", error);
