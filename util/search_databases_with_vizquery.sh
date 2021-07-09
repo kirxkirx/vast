@@ -30,6 +30,15 @@ function vastrealpath {
   echo "$REALPATH"
 }
 
+function print_usage {
+ echo "
+Usage: $0 RA DEC [STAR_NAME] [FOV_arcmin]
+
+Example: $0 18:38:06.47677 +39:40:05.9835
+
+"
+}
+
 if [ -z "$VAST_PATH" ];then
  #VAST_PATH=`readlink -f $0`
  VAST_PATH=`vastrealpath $0`
@@ -72,25 +81,29 @@ else
  TIMEOUTCOMMAND="$TIMEOUTCOMMAND 300 "
 fi
 
-
-###### Test the command line arguments #####
-if [ -z $2 ];then
- echo " "
- echo "ERROR: search coordinates are not given! :(
-
-Usage: $0 RA DEC [STAR_NAME] [FOV_arcmin]
-
-Example: $0 18:38:06.47677 +39:40:05.9835
-
-"
- exit 1
-fi   
+######
 RA=$1
+# Handle coma as RA Dec separator
+if [ -z "$2" ];then
+ echo "$RA" | grep --quiet -e ',+' -e ',-' -e ',[0-9]'
+ DEC=`echo $RA | awk -F',' '{print $2}'`
+ RA=`echo $RA | awk -F',' '{print $1}'`
+ echo "RA=#$RA#  DEC=#$DEC#"
+else
+ DEC=$2
+fi
 # Handle a coma in RA
 RA=${RA/','/''}
-#echo "RA=#$RA#"
+# Get rid of any remaining white spaces
+RA=${RA//' '/''}
+DEC=${DEC//' '/''}
 #
-DEC=$2
+###### Test the command line arguments #####
+if [ -z "$RA" ] || [ -z "$DEC" ];then
+ echo "ERROR: search coordinates are not given! :("
+ print_usage
+ exit 1
+fi   
 
 # Check if the input coordinates are good
 if "$VAST_PATH"lib/hms2deg "$RA" "$DEC" &>/dev/null || "$VAST_PATH"lib/deg2hms "$RA" "$DEC" &>/dev/null ;then echo YES ;fi | grep --quiet 'YES'

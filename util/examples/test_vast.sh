@@ -14452,14 +14452,15 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT019a"
 fi
 
-### Test the local catalog search thing
-# MOVED UP
-#lib/update_offline_catalogs.sh
-#if [ $? -ne 0 ];then
-# TEST_PASSED=0
-# FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT__LOCAL_CAT_UPDATE"
-#fi
+# Coma as RA,Dec separator
+util/search_databases_with_vizquery.sh 18:49:05.97,-19:02:03.2 | grep --quiet 'V6594 Sgr'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT019b"
+fi
 
+
+### Test the local catalog search thing
 lib/catalogs/check_catalogs_offline 17.25656 47.30456 | grep --quiet 'ASASSN-V J010901.57+471816.4'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
