@@ -122,6 +122,8 @@ elif [ "$FILTER" == "R" ] || [ "$FILTER" == "Rc" ] ;then
  cat "$UCAC5_CATALOG_NAME" | awk '{if ( $21 > 0.0 ) printf "%+7.4f %7.4f %6.4f\n", $8, $21, sqrt($9*$9+$22*$22)}' > calib.txt
 elif [ "$FILTER" == "I" ] || [ "$FILTER" == "Ic" ] ;then
  cat "$UCAC5_CATALOG_NAME" | awk '{if ( $23 > 0.0 ) printf "%+7.4f %7.4f %6.4f\n", $8, $23, sqrt($9*$9+$24*$24)}' > calib.txt
+elif [ "$FILTER" == "g" ];then
+ cat "$UCAC5_CATALOG_NAME" | awk '{if ( $25 > 0.0 ) printf "%+7.4f %7.4f %6.4f\n", $8, $25, sqrt($9*$9+$26*$26)}' > calib.txt
 else 
  echo "ERROR: unrecognized filter $FILTER"
  exit 1

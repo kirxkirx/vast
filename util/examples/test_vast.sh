@@ -12127,7 +12127,35 @@ if [ -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.f
   if [ $TEST -lt 700 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER002a_$TEST"
-  fi
+  else
+   #
+   util/calibrate_single_image.sh ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits g
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER004"
+   fi
+   lib/fit_robust_linear
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER005"
+   fi
+   TEST=`cat calib.txt_param | awk '{if ( sqrt( ($3-0.000000)*($3-0.000000) ) < 0.0005 ) print 1 ;else print 0 }'`
+   if [ $TEST -ne 1 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER006"
+   fi
+   TEST=`cat calib.txt_param | awk '{if ( sqrt( ($4-1.001314)*($4-1.001314) ) < 0.05 ) print 1 ;else print 0 }'`
+   if [ $TEST -ne 1 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER007"
+   fi
+   TEST=`cat calib.txt_param | awk '{if ( sqrt( ($5-26.153664)*($5-26.153664) ) < 0.05 ) print 1 ;else print 0 }'`
+   if [ $TEST -ne 1 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER008"
+   fi
+   #
+  fi # else if [ $TEST -lt 700 ];then
  fi 
  # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
  util/solve_plate_with_UCAC5 ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits 2>&1 | grep --quiet 'The output catalog wcs_ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits.cat.ucac5 already exist.'
@@ -12243,7 +12271,7 @@ if [ -f ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.f
  TEST=`cat calib.txt_param | awk '{if ( sqrt( ($3-0.000000)*($3-0.000000) ) < 0.0005 ) print 1 ;else print 0 }'`
  if [ $TEST -ne 1 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2007"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2006"
  fi
  TEST=`cat calib.txt_param | awk '{if ( sqrt( ($4-0.999569)*($4-0.999569) ) < 0.05 ) print 1 ;else print 0 }'`
  if [ $TEST -ne 1 ];then

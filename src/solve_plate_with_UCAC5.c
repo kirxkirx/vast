@@ -105,6 +105,8 @@ struct detected_star {
  double APASS_r_err;
  double APASS_i;
  double APASS_i_err;
+ double APASS_g;
+ double APASS_g_err;
  /////////////////////////
  double Rc_computed_from_APASS_ri;
  double Rc_computed_from_APASS_ri_err;
@@ -317,7 +319,7 @@ void write_wcs_catalog(char *fits_image_filename, struct detected_star *stars, i
   return;
  }
  for( i= 0; i < number_of_stars_in_wcs_catalog; i++ ) {
-  fprintf(f, "%6d %11.7lf %+10.7lf %9.4lf %9.4lf  %9.1lf %9.1lf %+7.4lf %6.4lf %3d    %6.3lf %5.3lf  %6.3lf %5.3lf  %6.3lf %5.3lf  %6.3lf %5.3lf  %6.3lf %5.3lf  %6.3lf %5.3lf %6.3lf %5.3lf\n",
+  fprintf(f, "%6d %11.7lf %+10.7lf %9.4lf %9.4lf  %9.1lf %9.1lf %+7.4lf %6.4lf %3d    %6.3lf %5.3lf  %6.3lf %5.3lf  %6.3lf %5.3lf  %6.3lf %5.3lf  %6.3lf %5.3lf  %6.3lf %5.3lf %6.3lf %5.3lf  %6.3lf %5.3lf\n",
           stars[i].n_current_frame,
           stars[i].corrected_ra_local,
           stars[i].corrected_dec_local,
@@ -341,7 +343,9 @@ void write_wcs_catalog(char *fits_image_filename, struct detected_star *stars, i
           stars[i].Rc_computed_from_APASS_ri,
           stars[i].Rc_computed_from_APASS_ri_err,
           stars[i].Ic_computed_from_APASS_ri,
-          stars[i].Ic_computed_from_APASS_ri_err);
+          stars[i].Ic_computed_from_APASS_ri_err,
+          stars[i].APASS_g, 
+          stars[i].APASS_g_err);
  }
  fclose(f);
  fprintf(stderr, "The image catalog is written to %s\n", wcs_catalog_filename);
@@ -497,6 +501,7 @@ int read_wcs_catalog(char *fits_image_filename, struct detected_star *stars, int
   stars[i].catalog_ra_original= stars[i].catalog_dec_original= 0.0;
   stars[i].catalog_mag= stars[i].catalog_mag_err= stars[i].APASS_B= stars[i].APASS_B_err= stars[i].APASS_V= stars[i].APASS_V_err= 0.0;
   stars[i].APASS_r= stars[i].APASS_r_err= stars[i].APASS_i= stars[i].APASS_i_err= stars[i].Rc_computed_from_APASS_ri= stars[i].Rc_computed_from_APASS_ri_err= stars[i].Ic_computed_from_APASS_ri= stars[i].Ic_computed_from_APASS_ri_err= 0.0;
+  stars[i].APASS_g= stars[i].APASS_g_err= 0.0;
   //
   stars[i].observing_epoch_jd= JD;
   //
@@ -539,7 +544,8 @@ int read_wcs_catalog(char *fits_image_filename, struct detected_star *stars, int
  return 0;
 }
 
-int parse_string_with_APASS_magnitudes(char *string_with_APASS_magnitudes, double *APASS_B, double *APASS_B_err, double *APASS_V, double *APASS_V_err, double *APASS_r, double *APASS_r_err, double *APASS_i, double *APASS_i_err) {
+/*
+int parse_string_with_APASS_magnitudes(char *string_with_APASS_magnitudes, double *APASS_B, double *APASS_B_err, double *APASS_V, double *APASS_V_err, double *APASS_r, double *APASS_r_err, double *APASS_i, double *APASS_i_err, double *APASS_g, double *APASS_g_err) {
  char str[32];
  // check if the string is not too long
  if( 1023 < strlen(string_with_APASS_magnitudes) )
@@ -645,30 +651,19 @@ int parse_string_with_APASS_magnitudes(char *string_with_APASS_magnitudes, doubl
   return 1; // simple check
  return 0;
 }
+*/
 
 int read_UCAC5_from_vizquery(struct detected_star *stars, int N, char *vizquery_output_filename, struct str_catalog_search_parameters *catalog_search_parameters) {
  FILE *f;
  char string[1024];
- //char string_with_APASS_magnitudes[1024];
  int i;
  double measured_ra, measured_dec, distance, catalog_ra, catalog_dec, catalog_mag; //,catalog_mag_err;
  double catalog_ra_original, catalog_dec_original;
- //char ucac4id[32];
  double cos_delta;
  int N_stars_matched_with_astrometric_catalog= 0;
 
  double epoch, pmRA, e_pmRA, pmDE, e_pmDE;
 
- /* 
- double APASS_B;
- double APASS_B_err;
- double APASS_V;
- double APASS_V_err;
- double APASS_r;
- double APASS_r_err;
- double APASS_i;
- double APASS_i_err;
-*/
  double observing_epoch_jy, dt;
 
  f= fopen(vizquery_output_filename, "r");
@@ -686,7 +681,6 @@ int read_UCAC5_from_vizquery(struct detected_star *stars, int N, char *vizquery_
   if( string[0] != ' ' && string[0] != '0' && string[0] != '1' && string[0] != '2' && string[0] != '3' && string[0] != '4' && string[0] != '5' && string[0] != '6' && string[0] != '7' && string[0] != '8' && string[0] != '9' )
    continue;
 
-  //string_with_APASS_magnitudes[0]='\0'; // reset the string with APASS magnitudes
   // This returns only stars with measured PM
   //if( 8>sscanf(string,"%lf %lf %lf  %lf %lf %lf  %lf %lf %lf %lf %lf",&measured_ra,&measured_dec,&distance, &catalog_ra,&catalog_dec,&catalog_mag,&epoch, &pmRA,&e_pmRA,&pmDE,&e_pmDE) )continue;
   epoch= pmRA= e_pmRA= pmDE= e_pmDE= 0.0;
@@ -696,13 +690,7 @@ int read_UCAC5_from_vizquery(struct detected_star *stars, int N, char *vizquery_
    }
    epoch= pmRA= e_pmRA= pmDE= e_pmDE= 0.0;
   }
-  //if( catalog_mag_err>MAX_APASS_MAG_ERR )continue; // make sure APASS_B is not read instead of catalog_mag_err
-  //if( 0!=parse_string_with_APASS_magnitudes(string_with_APASS_magnitudes, &APASS_B, &APASS_B_err, &APASS_V, &APASS_V_err, &APASS_r, &APASS_r_err, &APASS_i, &APASS_i_err) )continue;
-  //if( 0!=parse_string_with_APASS_magnitudes(string_with_APASS_magnitudes, &APASS_B, &APASS_B_err, &APASS_V, &APASS_V_err, &APASS_r, &APASS_r_err, &APASS_i, &APASS_i_err) ){
-  // APASS_B=APASS_B_err=APASS_V=APASS_V_err=APASS_r=APASS_r_err=APASS_i=APASS_i_err=0.0;
-  //}
 
-  //cos_delta=cos(measured_dec*M_PI/180.0);
   cos_delta= cos(catalog_dec * M_PI / 180.0);
 
   ///////////////// Account for proper motion /////////////////
@@ -751,6 +739,8 @@ int read_UCAC5_from_vizquery(struct detected_star *stars, int N, char *vizquery_
      stars[i].Rc_computed_from_APASS_ri_err= 0.0;
      stars[i].Ic_computed_from_APASS_ri= 0.0;
      stars[i].Ic_computed_from_APASS_ri_err= 0.0;
+     stars[i].APASS_g= 0.0;
+     stars[i].APASS_g_err= 0.0;
      //     }
 
      N_stars_matched_with_astrometric_catalog++;
@@ -768,120 +758,6 @@ int read_UCAC5_from_vizquery(struct detected_star *stars, int N, char *vizquery_
  return 0;
 }
 
-/*
-int read_UCAC4_from_vizquery( struct detected_star * stars, int N, char *vizquery_output_filename, struct str_catalog_search_parameters * catalog_search_parameters){
- FILE *f;
- char string[1024];
- //char string_with_APASS_magnitudes[1024];
- int i;
- double measured_ra,measured_dec,distance,catalog_ra,catalog_dec,catalog_mag,catalog_mag_err;
- char ucac4id[32];
- double cos_delta;
- int N_stars_matched_with_astrometric_catalog=0;
- 
-// double APASS_B;
-// double APASS_B_err;
-// double APASS_V;
-// double APASS_V_err;
-// double APASS_r;
-// double APASS_r_err;
-// double APASS_i;
-// double APASS_i_err;
- 
- f=fopen(vizquery_output_filename,"r");
- while(NULL!=fgets(string, 1024, f)){
-  if( string[0]=='#' )continue;
-  if( string[0]=='\n' )continue;
-  if( string[0]=='-' )continue;
-  if( string[0]=='_' )continue;
-  if( string[0]==' ' )continue;
-  if( string[0]!=' ' && string[0]!='0' && string[0]!='1' && string[0]!='2' && string[0]!='3' && string[0]!='4' && string[0]!='5' && string[0]!='6' && string[0]!='7' && string[0]!='8' && string[0]!='9' )continue;
-  
-  //string_with_APASS_magnitudes[0]='\0'; // reset the string with APASS magnitudes
-  // We expect that all UCAC4-specific data including UCAC magnitude error are available  
-  //if( 8>sscanf(string,"%lf %lf %lf %s %lf %lf %lf %lf %39[^\t\n]",&distance,&measured_ra,&measured_dec,ucac4id,&catalog_ra,&catalog_dec,&catalog_mag,&catalog_mag_err,string_with_APASS_magnitudes) )continue;
-  // Evil CDS people changed the column order in vizquery output AGAIN!!!!
-  //if( 8>=sscanf(string,"%lf %lf %lf %s %lf %lf %lf %lf %39[^\t\n]",&measured_ra,&measured_dec,&distance,ucac4id,&catalog_ra,&catalog_dec,&catalog_mag,&catalog_mag_err,string_with_APASS_magnitudes) )continue;
-  if( 8>sscanf(string,"%lf %lf %lf %s %lf %lf %lf %lf",&measured_ra,&measured_dec,&distance,ucac4id,&catalog_ra,&catalog_dec,&catalog_mag,&catalog_mag_err) )continue;
-  if( catalog_mag_err>MAX_APASS_MAG_ERR )continue; // make sure APASS_B is not read instead of catalog_mag_err
-  //if( 0!=parse_string_with_APASS_magnitudes(string_with_APASS_magnitudes, &APASS_B, &APASS_B_err, &APASS_V, &APASS_V_err, &APASS_r, &APASS_r_err, &APASS_i, &APASS_i_err) )continue;
-  //if( 0!=parse_string_with_APASS_magnitudes(string_with_APASS_magnitudes, &APASS_B, &APASS_B_err, &APASS_V, &APASS_V_err, &APASS_r, &APASS_r_err, &APASS_i, &APASS_i_err) ){
-  // APASS_B=APASS_B_err=APASS_V=APASS_V_err=APASS_r=APASS_r_err=APASS_i=APASS_i_err=0.0;
-  //}
-  
-  cos_delta=cos(measured_dec*M_PI/180.0);
-  for(i=0;i<N;i++){
-   if( stars[i].matched_with_astrometric_catalog==1 )continue;
-   if( fabs(stars[i].dec_deg_measured-measured_dec)<catalog_search_parameters->search_radius_deg )
-    if( fabs(stars[i].ra_deg_measured-measured_ra)*cos_delta<catalog_search_parameters->search_radius_deg ){
-     if( distance>catalog_search_parameters->search_radius_deg*3600 )continue;
-     stars[i].matched_with_astrometric_catalog=1;
-     stars[i].d_ra=catalog_ra-measured_ra;
-     stars[i].d_dec=catalog_dec-measured_dec;
-     stars[i].catalog_ra=catalog_ra;
-     stars[i].catalog_dec=catalog_dec;
-     stars[i].catalog_mag=catalog_mag;
-     stars[i].catalog_mag_err=catalog_mag_err;
-     strncpy(stars[i].ucac4id,ucac4id,32);stars[i].ucac4id[32-1]='\0';
-
- // Moved to APASS section
-     
-//     // if the star is matched with APASS
-//     if( 0.0!=APASS_B && 0.0!=APASS_B_err && 0.0!=APASS_V && 0.0!=APASS_V_err && 0.0!=APASS_r && 0.0!=APASS_r_err && 0.0!=APASS_i && 0.0!=APASS_i_err ){
-//      stars[i].APASS_B=APASS_B;
-//      stars[i].APASS_B_err=APASS_B_err;
-//      stars[i].APASS_V=APASS_V;
-//      stars[i].APASS_V_err=APASS_V_err;
-//      stars[i].APASS_r=APASS_r;
-//      stars[i].APASS_r_err=APASS_r_err;
-//      stars[i].APASS_i=APASS_i;
-//      stars[i].APASS_i_err=APASS_i_err;
-//     
-//      // Jester et al. (2005)
-//      // All stars with Rc-Ic < 1.15    
-//      // V-R    =    1.09*(r-i) + 0.22        0.03
-//      stars[i].Rc_computed_from_APASS_ri=APASS_V - 1.09*(APASS_r-APASS_i) - 0.22;
-//      stars[i].Rc_computed_from_APASS_ri_err=sqrt( 1.09*1.09*(APASS_r_err*APASS_r_err+APASS_i_err*APASS_i_err) + 0.03*0.03 );
-//      // Forgot the V error
-//      stars[i].Rc_computed_from_APASS_ri_err=sqrt( stars[i].Rc_computed_from_APASS_ri_err*stars[i].Rc_computed_from_APASS_ri_err + APASS_V_err*APASS_V_err );
-//      //////////////////////////////////////////////////
-//      stars[i].Ic_computed_from_APASS_ri=stars[i].Rc_computed_from_APASS_ri - 1.00*(APASS_r-APASS_i) + 0.21;
-//      stars[i].Ic_computed_from_APASS_ri_err=stars[i].Rc_computed_from_APASS_ri_err;
-//      //////////////////////////////////////////////////
-//     }
-//     else{
-//
-// reset photometric info
-      stars[i].APASS_B=0.0;
-      stars[i].APASS_B_err=0.0;
-      stars[i].APASS_V=0.0;
-      stars[i].APASS_V_err=0.0;
-      stars[i].APASS_r=0.0;
-      stars[i].APASS_r_err=0.0;
-      stars[i].APASS_i=0.0;
-      stars[i].APASS_i_err=0.0;
-      stars[i].Rc_computed_from_APASS_ri=0.0;
-      stars[i].Rc_computed_from_APASS_ri_err=0.0;
-      stars[i].Rc_computed_from_APASS_ri_err=0.0;
-      stars[i].Ic_computed_from_APASS_ri=0.0;
-      stars[i].Ic_computed_from_APASS_ri_err=0.0;
-//     }
-          
-     N_stars_matched_with_astrometric_catalog++;
-     //fprintf(stderr,"DEBUG MATCHED: stars[i].x_pix= %8.3lf\n",stars[i].x_pix);
-    }
-   //if( fabs(stars[i].dec_deg_measured-measured_dec)<MAX_DEVIATION_AT_FIRST_STEP )
-  }//for(i=0;i<N;i++)
- }
- fclose(f);
- fprintf(stderr,"Matched %d stars with UCAC4.\n",N_stars_matched_with_astrometric_catalog);
- if( N_stars_matched_with_astrometric_catalog<5 ){
-  fprintf(stderr,"ERROR: too few stars matched!\n");
-  return 1;
- }
- return 0;
-}
-*/
 
 int read_PANSTARRS1_from_vizquery(struct detected_star *stars, int N, char *vizquery_output_filename, struct str_catalog_search_parameters *catalog_search_parameters) {
  FILE *f;
@@ -909,6 +785,9 @@ int read_PANSTARRS1_from_vizquery(struct detected_star *stars, int N, char *vizq
  double APASS_r_err;
  double APASS_i;
  double APASS_i_err;
+ double APASS_g;
+ double APASS_g_err;
+
 
  f= fopen(vizquery_output_filename, "r");
  while( NULL != fgets(string, 1024, f) ) {
@@ -974,6 +853,9 @@ int read_PANSTARRS1_from_vizquery(struct detected_star *stars, int N, char *vizq
   APASS_i= PS1_i + B0 + B1 * PS1_gr;
   APASS_i_err= sqrt(PS1_i_err * PS1_i_err + B1 * PS1_gr_err * B1 * PS1_gr_err + E * E);
   //
+  APASS_g= PS1_g;
+  APASS_g_err= PS1_g_err;
+  //
 
   cos_delta= cos(measured_dec * M_PI / 180.0);
   for( i= 0; i < N; i++ ) {
@@ -1009,6 +891,8 @@ int read_PANSTARRS1_from_vizquery(struct detected_star *stars, int N, char *vizq
       stars[i].APASS_r_err= APASS_r_err;
       stars[i].APASS_i= APASS_i;
       stars[i].APASS_i_err= APASS_i_err;
+      stars[i].APASS_g= APASS_g;
+      stars[i].APASS_g_err= APASS_g_err;
 
       // Jester et al. (2005) https://ui.adsabs.harvard.edu/abs/2005AJ....130..873J
       // All stars with Rc-Ic < 1.15
@@ -1034,6 +918,8 @@ int read_PANSTARRS1_from_vizquery(struct detected_star *stars, int N, char *vizq
       stars[i].Rc_computed_from_APASS_ri_err= 0.0;
       stars[i].Ic_computed_from_APASS_ri= 0.0;
       stars[i].Ic_computed_from_APASS_ri_err= 0.0;
+      stars[i].APASS_g= 0.0;
+      stars[i].APASS_g_err= 0.0;
      }
 
      N_stars_matched_with_photometric_catalog++;
@@ -1070,9 +956,15 @@ int read_APASS_from_vizquery(struct detected_star *stars, int N, char *vizquery_
  double APASS_r_err;
  double APASS_i;
  double APASS_i_err;
+ double APASS_g;
+ double APASS_g_err;
 
  f= fopen(vizquery_output_filename, "r");
  while( NULL != fgets(string, 1024, f) ) {
+  // moved down
+  //string[1024-1]='\0'; // just in case
+
+  // check the first character of the input string
   if( string[0] == '#' )
    continue;
   if( string[0] == '\n' )
@@ -1085,10 +977,16 @@ int read_APASS_from_vizquery(struct detected_star *stars, int N, char *vizquery_
    continue;
   if( string[0] != ' ' && string[0] != '0' && string[0] != '1' && string[0] != '2' && string[0] != '3' && string[0] != '4' && string[0] != '5' && string[0] != '6' && string[0] != '7' && string[0] != '8' && string[0] != '9' )
    continue;
+  
+  // check if the string looks sufficiently long to contain useful data
+  string[1024-1]='\0'; // just in case
+  if( strlen(string) < 123 ) {
+   continue;
+  }
 
-  APASS_B= APASS_B_err= APASS_V= APASS_V_err= APASS_r= APASS_r_err= APASS_i= APASS_i_err= 0.0; // reset, just in case
-  //                                            B  eB   V  eV   r  er   i  ei
-  if( 13 > sscanf(string, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &APASS_B, &APASS_B_err, &APASS_V, &APASS_V_err, &APASS_r, &APASS_r_err, &APASS_i, &APASS_i_err) ){
+  APASS_B= APASS_B_err= APASS_V= APASS_V_err= APASS_r= APASS_r_err= APASS_i= APASS_i_err= APASS_g= APASS_g_err= 0.0; // reset, just in case
+  //                                            B  eB   V  eV   r  er   i  ei   g  eg
+  if( 15 > sscanf(string, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &APASS_B, &APASS_B_err, &APASS_V, &APASS_V_err, &APASS_r, &APASS_r_err, &APASS_i, &APASS_i_err, &APASS_g, &APASS_g_err) ){
    continue;
   }
   N_catalog_lines_parsed++;
@@ -1124,6 +1022,8 @@ int read_APASS_from_vizquery(struct detected_star *stars, int N, char *vizquery_
        APASS_r_err= 0.02;
       if( 0.0 == APASS_i_err )
        APASS_i_err= 0.02;
+      if( 0.0 == APASS_g_err )
+       APASS_g_err= 0.02;
       //
       stars[i].APASS_B= APASS_B;
       stars[i].APASS_B_err= APASS_B_err;
@@ -1133,6 +1033,8 @@ int read_APASS_from_vizquery(struct detected_star *stars, int N, char *vizquery_
       stars[i].APASS_r_err= APASS_r_err;
       stars[i].APASS_i= APASS_i;
       stars[i].APASS_i_err= APASS_i_err;
+      stars[i].APASS_g= APASS_g;
+      stars[i].APASS_g_err= APASS_g_err;
 
       // Jester et al. (2005)
       // All stars with Rc-Ic < 1.15
@@ -1158,6 +1060,8 @@ int read_APASS_from_vizquery(struct detected_star *stars, int N, char *vizquery_
       stars[i].Rc_computed_from_APASS_ri_err= 0.0;
       stars[i].Ic_computed_from_APASS_ri= 0.0;
       stars[i].Ic_computed_from_APASS_ri_err= 0.0;
+      stars[i].APASS_g= 0.0;
+      stars[i].APASS_g_err= 0.0;
      }
 
      N_stars_matched_with_photometric_catalog++;
@@ -1688,7 +1592,7 @@ int search_APASS_with_vizquery(struct detected_star *stars, int N, struct str_ca
  // Photometric catalog search
  fprintf(stderr, "Searchig APASS...\n");
  sprintf(command,
-         "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=APASS -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
+         "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=APASS -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
          path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename);
 
  fprintf(stderr, "%s\n", command);

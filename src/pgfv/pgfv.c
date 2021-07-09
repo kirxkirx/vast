@@ -2006,7 +2006,7 @@ int main(int argc, char **argv) {
       continue;
      }
      // check if we recognize the name
-     if( strncmp(filter_name_for_automatic_magnitude_calibration, "B", 1) || strncmp(filter_name_for_automatic_magnitude_calibration, "V", 1) || strncmp(filter_name_for_automatic_magnitude_calibration, "r", 1) || strncmp(filter_name_for_automatic_magnitude_calibration, "i", 1) || strncmp(filter_name_for_automatic_magnitude_calibration, "R", 1) || strncmp(filter_name_for_automatic_magnitude_calibration, "Rc", 2) || strncmp(filter_name_for_automatic_magnitude_calibration, "I", 1) || strncmp(filter_name_for_automatic_magnitude_calibration, "Ic", 2) ) {
+     if( strncmp(filter_name_for_automatic_magnitude_calibration, "B", 1) || strncmp(filter_name_for_automatic_magnitude_calibration, "V", 1) || strncmp(filter_name_for_automatic_magnitude_calibration, "r", 1) || strncmp(filter_name_for_automatic_magnitude_calibration, "i", 1) || strncmp(filter_name_for_automatic_magnitude_calibration, "R", 1) || strncmp(filter_name_for_automatic_magnitude_calibration, "Rc", 2) || strncmp(filter_name_for_automatic_magnitude_calibration, "I", 1) || strncmp(filter_name_for_automatic_magnitude_calibration, "Ic", 2) || strncmp(filter_name_for_automatic_magnitude_calibration, "g", 1) ) {
       fprintf(stderr, "Trying to perform automatic magnitude calibration for %s filter\n", filter_name_for_automatic_magnitude_calibration);
       break;
      }
