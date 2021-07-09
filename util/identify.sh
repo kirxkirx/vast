@@ -1124,7 +1124,7 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
   #echo -n "rm all; load $WCS_IMAGE_NAME/;" `"$VAST_PATH"lib/deg2hms $RADEC`" ; zoom 5 arcmin ; stick ; get Aladin(POSSII J,JPEG)" `"$VAST_PATH"lib/deg2hms $RADEC`" ; get VizieR(USNO-B1)" `"$VAST_PATH"lib/deg2hms $RADEC`" 1'; get Simbad " `"$VAST_PATH"lib/deg2hms $RADEC`" 1'; get VizieR(2MASS)" `"$VAST_PATH"lib/deg2hms $RADEC`" 1' ;" > Aladin.script
   # new syntax
   RADEC_HMS=`"$VAST_PATH"lib/deg2hms $RADEC`
-  echo -n "rm all; get hips(CDS/P/DSS2/color) $RADEC_HMS ; load $WCS_IMAGE_NAME/; $RADEC_HMS ; zoom 5 arcmin ; get VizieR(USNO-B1) $RADEC_HMS 1'; get Simbad $RADEC_HMS 1'; get VizieR(2MASS) $RADEC_HMS 1' ; get hips(CDS/I/350/gaiaedr3) $RADEC_HMS 1'" > Aladin.script
+  echo -n "rm all; get hips(CDS/P/DSS2/color) $RADEC_HMS ; load $WCS_IMAGE_NAME/; $RADEC_HMS ; zoom 5 arcmin ; get VizieR(USNO-B1) $RADEC_HMS 1'; get Simbad $RADEC_HMS 1'; get VizieR(2MASS) $RADEC_HMS 1' ; get hips(CDS/I/350/gaiaedr3) $RADEC_HMS ; get VizieR(J/AJ/156/241/table4) 18:46:37.16 -12:38:49.7 1'" > Aladin.script
   # If the star is matched with USNO-B1.0 - mark the USNO-B1.0 star in Aladin
   if [ -f search_databases_with_vizquery_USNOB_ID_OK.tmp ];then
    echo -n " draw green circle("`cat search_databases_with_vizquery_USNOB_ID_OK.tmp`" 2.5arcsec) ;" >> Aladin.script
