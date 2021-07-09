@@ -6773,6 +6773,8 @@ if [ $? -ne 0 ];then
 fi
 
 ##### Ceres test #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../transient_detection_test_Ceres ];then
  cd ..
@@ -7288,6 +7290,8 @@ if [ $? -ne 0 ];then
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
+
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 
@@ -8585,6 +8589,8 @@ fi
 
 
 ##### Nova Sgr 2020 N4 test (three second-epoch images, all good) #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then 
 # Download the test dataset if needed
 if [ ! -d ../NMW_Sgr1_NovaSgr20N4_test ];then
  cd ..
@@ -8875,9 +8881,13 @@ if [ $? -ne 0 ];then
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
+
 
 
 ##### Nova Her 2021 test (three second-epoch images, all good) #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then 
 # Download the test dataset if needed
 if [ ! -d ../NMW_Aql11_NovaHer21_test ];then
  cd ..
@@ -9102,7 +9112,7 @@ if [ $? -ne 0 ];then
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
-
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ##### Nova Cas 2021 test (three second-epoch images, all good) #####
@@ -10349,6 +10359,8 @@ fi
 
 
 ##### find Chandra #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then 
 # Download the test dataset if needed
 if [ ! -d ../NMW_find_Chandra_test ];then
  cd ..
@@ -10604,6 +10616,7 @@ if [ $? -ne 0 ];then
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
 
 
 
@@ -11756,6 +11769,9 @@ fi
 
 
 ######### NMW archive image
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
+# this test should be mostly covered by the NMW transient search tests above
 if [ ! -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
@@ -11764,7 +11780,7 @@ if [ ! -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
  wget -c "http://scan.sai.msu.ru/~kirx/pub/wcs_fd_Per3_2011-10-31_001.fts.bz2" && bunzip2 wcs_fd_Per3_2011-10-31_001.fts.bz2
  cd $WORKDIR
 fi
-
+#
 if [ -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
  TEST_PASSED=1
  util/clean_data.sh
@@ -11809,6 +11825,7 @@ if [ -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWARCHIVEIMG_TEST_NOT_PERFORMED"
 fi
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 # T30
@@ -12254,6 +12271,8 @@ fi
 
 
 ######### Stacked DSLR image (BITPIX=16) created with Siril
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -f ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
@@ -12262,7 +12281,7 @@ if [ ! -f ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit ];then
  wget -c "http://scan.sai.msu.ru/~kirx/pub/r_ncas20200820_stacked_16bit_g2.fit.bz2" && bunzip2 r_ncas20200820_stacked_16bit_g2.fit.bz2
  cd $WORKDIR
 fi
-
+#
 if [ -f ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit ];then
  TEST_PASSED=1
  util/clean_data.sh
@@ -12358,8 +12377,12 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit ];then
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL_TEST_NOT_PERFORMED"
 fi
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+
 
 ######### Stacked DSLR image (BITPIX=-32) created with Siril
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -f ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
@@ -12368,7 +12391,7 @@ if [ ! -f ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit ];then
  wget -c "http://scan.sai.msu.ru/~kirx/pub/r_ncas20200820_stacked_32bit_g2.fit.bz2" && bunzip2 r_ncas20200820_stacked_32bit_g2.fit.bz2
  cd $WORKDIR
 fi
-
+#
 if [ -f ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit ];then
  TEST_PASSED=1
  util/clean_data.sh
@@ -12470,6 +12493,7 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit ];then
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32_TEST_NOT_PERFORMED"
 fi
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ######### Stacked DSLR image (BITPIX=-32) created with Siril
@@ -12625,6 +12649,8 @@ fi
 
 
 ### Check the external plate solve servers
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -f ../individual_images_test/1630+3250.20150511T215921000.fit ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
@@ -12654,7 +12680,7 @@ if [ ! -d ../M31_ISON_test ];then
  wget -c "http://scan.sai.msu.ru/~kirx/pub/M31_ISON_test.tar.bz2" && tar -xvjf M31_ISON_test.tar.bz2 && rm -f M31_ISON_test.tar.bz2
  cd $WORKDIR
 fi
-
+#
 if [ -d ../individual_images_test ];then
  TEST_PASSED=1
  # Run the test
@@ -12766,7 +12792,7 @@ if [ $? -ne 0 ];then
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
-
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 ### check that we are NOT creating a flag image for photoplates
 if [ ! -f ../individual_images_test/SCA13320__00_00.fits ];then
