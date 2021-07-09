@@ -14125,10 +14125,10 @@ fi
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mPeriod search test \033[01;32mPASSED\033[00m" >> /dev/stderr
+ echo -e "\n\033[01;34mLightcurve viewer test \033[01;32mPASSED\033[00m" >> /dev/stderr
  echo "PASSED" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mPeriod search test \033[01;31mFAILED\033[00m" >> /dev/stderr
+ echo -e "\n\033[01;34mLightcurve viewer test \033[01;31mFAILED\033[00m" >> /dev/stderr
  echo "FAILED" >> vast_test_report.txt
 fi 
 #
