@@ -88,7 +88,7 @@ fi
 RA=$1
 # Handle a coma in RA
 RA=${RA/','/''}
-echo "RA=#$RA#"
+#echo "RA=#$RA#"
 #
 DEC=$2
 
