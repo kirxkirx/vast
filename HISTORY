@@ -1,3 +1,5 @@
+	* Automatic magnitude calibration scripts now support g magnitudes derived from
+	APASS or PanSTARRS1 catalogs.
 	* VaST will not try to update the leap second 'tai-utc.dat' file as there is no more
 	an official way to do it: the links http://maia.usno.navy.mil/ser7/tai-utc.dat and 
 	ftp://toshi.nofs.navy.mil/ser7/tai-utc.dat are down forever. If you know how to get 
