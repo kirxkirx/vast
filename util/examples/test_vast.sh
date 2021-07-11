@@ -12144,12 +12144,12 @@ if [ -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.f
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER006"
    fi
-   TEST=`cat calib.txt_param | awk '{if ( sqrt( ($4-1.001314)*($4-1.001314) ) < 0.05 ) print 1 ;else print 0 }'`
+   TEST=`cat calib.txt_param | awk '{if ( sqrt( ($4-1.005331)*($4-1.005331) ) < 0.05 ) print 1 ;else print 0 }'`
    if [ $TEST -ne 1 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER007"
    fi
-   TEST=`cat calib.txt_param | awk '{if ( sqrt( ($5-26.153664)*($5-26.153664) ) < 0.05 ) print 1 ;else print 0 }'`
+   TEST=`cat calib.txt_param | awk '{if ( sqrt( ($5-26.204981)*($5-26.204981) ) < 0.05 ) print 1 ;else print 0 }'`
    if [ $TEST -ne 1 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER008"
