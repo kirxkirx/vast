@@ -1135,15 +1135,21 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
   echo " "
   cat Aladin.script
   echo " "
-  command -v Aladin &>/dev/null
+  # Aladin command may be upper or lower case
+  command -v Aladin &>/dev/null || command -v aladin &>/dev/null
   if [ $? -ne 0 ];then
    echo "Please note, that you may also put the Aladin executable and the Aladin.jar archive" 
    echo "into your home directory ( $HOME ) to let $0 start Aladin automatically."
   else
    echo "Aladin is starting..."
    if [ "$START_NAME" != "identify_noninteractive.sh" ];then
-    Aladin < Aladin.script &>/dev/null &
-   fi
+    command -v Aladin &>/dev/null
+    if [ $? -ne 0 ];then
+     Aladin < Aladin.script &>/dev/null &
+    else
+     aladin < Aladin.script &>/dev/null &
+    fi
+   fi # if [ "$START_NAME" != "identify_noninteractive.sh" ];then
   fi 
   echo " "
   if [ "$START_NAME" != "identify_noninteractive.sh" ];then
