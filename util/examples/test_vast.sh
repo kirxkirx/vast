@@ -97,6 +97,19 @@ function test_https_connection {
 }
 
 
+function check_if_vast_install_looks_reasonably_healthy {
+ for FILE_TO_CHECK in ./vast lib/autodetect_aperture_main lib/bin/xy2sky lib/catalogs/check_catalogs_offline lib/choose_vizier_mirror.sh lib/deeming_compute_periodogram lib/deg2hms_uas lib/drop_bright_points lib/drop_faint_points lib/fit_robust_linear lib/guess_saturation_limit_main lib/hms2deg lib/lk_compute_periodogram lib/new_lightcurve_sigma_filter lib/put_two_sources_in_one_field lib/remove_bad_images lib/remove_lightcurves_with_small_number_of_points lib/select_only_n_random_points_from_set_of_lightcurves lib/sextract_single_image_noninteractive lib/try_to_guess_image_fov lib/update_offline_catalogs.sh lib/update_tai-utc.sh lib/vizquery util/calibrate_magnitude_scale util/calibrate_single_image.sh util/ccd/md util/ccd/mk util/ccd/ms util/clean_data.sh util/examples/test_coordinate_converter.sh util/examples/test__dark_flat_flag.sh util/examples/test_heliocentric_correction.sh util/fov_of_wcs_calibrated_image.sh util/get_image_date util/hjd_input_in_UTC util/load.sh util/magnitude_calibration.sh util/make_finding_chart util/nopgplot.sh util/rescale_photometric_errors util/save.sh util/search_databases_with_curl.sh util/search_databases_with_vizquery.sh util/solve_plate_with_UCAC5 util/stat_outfile util/sysrem2 util/transients/transient_factory_test31.sh util/wcs_image_calibration.sh ;do
+  if [ ! -s "$FILE_TO_CHECK" ];then
+   echo "ERROR: cannot find a proper VaST installation in the current directory"
+   echo "The problematic file is $FILE_TO_CHECK"
+   echo "CANCEL TEST"
+   return 1
+  fi
+ done
+ return 0
+}
+
+
 function remove_test_data_to_save_space {
  #########################################
  # Remove test data from the previous tests if we are out of disk space
@@ -193,16 +206,24 @@ function test_internet_connection {
  return 0
 }
 
+
+# Check if the main VaST sub-programs exist
+check_if_vast_install_looks_reasonably_healthy
+if [ $? -ne 0 ];then
+ exit 1
+fi
+
+
 ## These two functions are needed to check that no leftover files are produced by util/transients/report_transient.sh
 function test_if_test31_tmp_files_are_present {
  for TMP_FILE_TO_REMOVE in ra*.dat dec*.dat mag*.dat script*.dat dayfrac*.dat jd*.dat x*.dat y*.dat ;do
   if [ -f "$TMP_FILE_TO_REMOVE" ];then
-   #echo "$TMP_FILE_TO_REMOVE"
    return 1
   fi
  done
  return 0;
 }
+
 
 function remove_test31_tmp_files_if_present {
  for TMP_FILE_TO_REMOVE in ra*.dat dec*.dat mag*.dat script*.dat dayfrac*.dat jd*.dat x*.dat y*.dat ;do
