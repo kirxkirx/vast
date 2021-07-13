@@ -103,13 +103,12 @@ function remove_test_data_to_save_space {
  #########################################
  # Skip free disk space check on some pre-defined machines
  # hope this check should work even if there is no 'hostname' command
- hostname | grep --quiet eridan 
+ hostname | grep --quiet 'eridan' 
  if [ $? -ne 0 ];then 
   # Free-up disk space if we run out of it
   FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
   # If we managed to get the disk space info
   if [ $? -eq 0 ];then
-   #TEST=`echo "($FREE_DISK_SPACE_MB)<4096" | bc -q`
    TEST=`echo "$FREE_DISK_SPACE_MB<4096" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
    re='^[0-9]+$'
    if ! [[ $TEST =~ $re ]] ; then
@@ -130,6 +129,34 @@ function remove_test_data_to_save_space {
       rm -rf "$TEST_DATASET"
      fi
     done
+   fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
+  fi # if [ $? -eq 0 ];then
+ fi # if [ $? -ne ];then # hostname check
+ #########################################
+
+ return 0
+}
+
+
+function check_if_enough_disk_space_for_tests {
+ hostname | grep --quiet 'eridan' 
+ if [ $? -ne 0 ];then 
+  # Check free disk space
+  FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
+  # If we managed to get the disk space info
+  if [ $? -eq 0 ];then
+   TEST=`echo "$FREE_DISK_SPACE_MB<2048" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
+   re='^[0-9]+$'
+   if ! [[ $TEST =~ $re ]] ; then
+    echo "TEST ERROR"
+    TEST=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
+    # if test failed assume good things
+    return 0
+   fi
+   if [ $TEST -eq 1 ];then
+    echo "ERROR: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining - CANCEL TEST" >> /dev/stderr
+    return 1
    fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
   fi # if [ $? -eq 0 ];then
  fi # if [ $? -ne ];then # hostname check
@@ -193,10 +220,18 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
+
 #########################################
 # Remove test data from the previous run if we are out of disk space
 #########################################
 remove_test_data_to_save_space
+
+
+# Test if we have enough disk space for the tests
+check_if_enough_disk_space_for_tests
+if [ $? -ne 0 ];then
+ exit 1
+fi
 
 
 ##### Report that we are starting the work #####
