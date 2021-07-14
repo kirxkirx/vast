@@ -63,7 +63,6 @@ function vastrealpath {
 }
 
 if [ -z "$VAST_PATH" ];then
- #VAST_PATH=`readlink -f $0`
  VAST_PATH=`vastrealpath $0`
  VAST_PATH=`dirname "$VAST_PATH"`
  VAST_PATH="${VAST_PATH/util/}"

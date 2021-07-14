@@ -246,7 +246,8 @@ VAST_PATH="${VAST_PATH/util/}"
 VAST_PATH="${VAST_PATH/lib/}"
 VAST_PATH="${VAST_PATH/examples/}"
 VAST_PATH="${VAST_PATH/'//'/'/'}"
-VAST_PATH="${VAST_PATH//"'"/""}"
+# In case the above line didn't work
+VAST_PATH=`echo "$VAST_PATH" | sed "s:/'/:/:g"`
 export VAST_PATH
 if [ "$VAST_PATH" != "$PWD/" ];then
  echo "WARNING: we are currently at the wrong directory: $PWD while we should be at $VAST_PATH
