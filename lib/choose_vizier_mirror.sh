@@ -91,14 +91,14 @@ done
 
 # If we are still here - somthing is wrong
 echo "ERROR in $0
-No VizieR mirrors could be reached!" >> /dev/stderr
+No VizieR mirrors could be reached!" 1>&2
 
 # Make sure we are not confusing the user with "check internet connection"
-# message if the user is connected remorely
+# message if the user is already connected remorely
 if [ ! -z "$PPID" ];then
  is_ssh_or_vnc $PPID
  if [ $? -ne 0 ];then
-  echo "Please check your internet connection." >> /dev/stderr
+  echo "Please check your internet connection." 1>&2
  fi
 fi # if [ ! -z "$PPID" ];then
 
