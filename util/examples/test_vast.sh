@@ -248,7 +248,15 @@ VAST_PATH="${VAST_PATH/examples/}"
 VAST_PATH="${VAST_PATH/'//'/'/'}"
 # In case the above line didn't work
 VAST_PATH=`echo "$VAST_PATH" | sed "s:/'/:/:g"`
+# Make sure no quotation marks are left in VAST_PATH
+VAST_PATH=`echo "$VAST_PATH" | sed "s:'::g"`
+# Check that VAST_PATH ends with '/'
+LAST_CHAR_OF_VAST_PATH="${VAST_PATH: -1}"
+if [ "$LAST_CHAR_OF_VAST_PATH" != "/" ];then
+ VAST_PATH="$VAST_PATH/"
+fi
 export VAST_PATH
+# Check if we are in the VaST root directory
 if [ "$VAST_PATH" != "$PWD/" ];then
  echo "WARNING: we are currently at the wrong directory: $PWD while we should be at $VAST_PATH
 Changing directory"

@@ -102,22 +102,28 @@ function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image
 
 ########### Main part of the script begins here ###########
 
-
+VAST_PATH=`vastrealpath $0`
+VAST_PATH=`dirname "$VAST_PATH"`
+VAST_PATH="${VAST_PATH/util/}"
+VAST_PATH="${VAST_PATH/lib/}"
+VAST_PATH="${VAST_PATH/'//'/'/'}"
+# In case the above line didn't work
+VAST_PATH=`echo "$VAST_PATH" | sed "s:/'/:/:g"`
+# Make sure no quotation marks are left in VAST_PATH
+VAST_PATH=`echo "$VAST_PATH" | sed "s:'::g"`
+# Check that VAST_PATH ends with '/'
+LAST_CHAR_OF_VAST_PATH="${VAST_PATH: -1}"
+if [ "$LAST_CHAR_OF_VAST_PATH" != "/" ];then
+ VAST_PATH="$VAST_PATH/"
+fi
+export VAST_PATH
+OLDDDIR_TO_CHECK_INPUT_FILE="$PWD"
+cd "$VAST_PATH"
 
 # Set the correct path to 'timeout'
 TIMEOUT_COMMAND=`"$VAST_PATH"lib/find_timeout_command.sh`
 export TIMEOUT_COMMAND
 
-
-#VAST_PATH=`readlink -f $0`
-VAST_PATH=`vastrealpath $0`
-VAST_PATH=`dirname "$VAST_PATH"`
-VAST_PATH="${VAST_PATH/util/}"
-#VAST_PATH="${VAST_PATH/lib/}"
-VAST_PATH="${VAST_PATH/'//'/'/'}"
-export VAST_PATH
-OLDDDIR_TO_CHECK_INPUT_FILE="$PWD"
-cd "$VAST_PATH"
 
 # Set SExtractor executable
 SEXTRACTOR=sex
