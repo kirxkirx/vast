@@ -85,7 +85,6 @@ for vizier_mirror in vizier.u-strasbg.fr vizier.cfa.harvard.edu vizier.hia.nrc.c
  if [ $? -eq 0 ];then
   echo $vizier_mirror
   exit 0
-  #break
  fi
 done
 

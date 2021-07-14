@@ -221,8 +221,9 @@ function test_internet_connection {
   return 1
  fi
  
- lib/choose_vizier_mirror.sh 2>&1 | grep --quiet 'ERROR'
- if [ $? -eq 0 ];then
+ # lib/choose_vizier_mirror.sh will retunr non-zero exit code if it could not actually reach a VizieR mirror
+ lib/choose_vizier_mirror.sh 2>&1
+ if [ $? -ne 0 ];then
   echo "ERROR in test_internet_connection(): cannot connect to VizieR" 1>&2
   return 1
  fi
@@ -245,6 +246,7 @@ VAST_PATH="${VAST_PATH/util/}"
 VAST_PATH="${VAST_PATH/lib/}"
 VAST_PATH="${VAST_PATH/examples/}"
 VAST_PATH="${VAST_PATH/'//'/'/'}"
+VAST_PATH="${VAST_PATH//"'"/""}"
 export VAST_PATH
 if [ "$VAST_PATH" != "$PWD/" ];then
  echo "WARNING: we are currently at the wrong directory: $PWD while we should be at $VAST_PATH
