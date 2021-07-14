@@ -13,7 +13,7 @@ export LANGUAGE LC_ALL
 if [ -z "$1" ];then
  echo "This script should print filed of view of an input WCS-calibrated image
  
- Usage: $0 wcs_image.fits" >> /dev/stderr
+ Usage: $0 wcs_image.fits" 1>&2
  exit 1
 fi
 
@@ -21,11 +21,11 @@ FITS_IMAGE_TO_CHECK="$1"
 
 # Check input
 if [ ! -f "$FITS_IMAGE_TO_CHECK" ];then
- echo "ERROR in $0 cannot find the input FITS image $FITS_IMAGE_TO_CHECK" >> /dev/stderr
+ echo "ERROR in $0 cannot find the input FITS image $FITS_IMAGE_TO_CHECK" 1>&2
  exit 1
 fi
 if [ ! -s "$FITS_IMAGE_TO_CHECK" ];then
- echo "ERROR in $0 the input image $FITS_IMAGE_TO_CHECK is empty" >> /dev/stderr
+ echo "ERROR in $0 the input image $FITS_IMAGE_TO_CHECK is empty" 1>&2
  exit 1
 fi
 
@@ -98,7 +98,7 @@ FITS_IMAGE_TO_CHECK_HEADER=`"$VAST_PATH"util/listhead "$FITS_IMAGE_TO_CHECK"`
 for TYPICAL_WCS_KEYWORD in CTYPE1 CTYPE2 CRVAL1 CRVAL2 CRPIX1 CRPIX2 CD1_1 CD1_2 CD2_1 CD2_2 ;do
  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet "$TYPICAL_WCS_KEYWORD"
  if [ $? -ne 0 ];then
-  echo "ERROR in $0 $TYPICAL_WCS_KEYWORD keyword is not found in the image header" >> /dev/stderr
+  echo "ERROR in $0 $TYPICAL_WCS_KEYWORD keyword is not found in the image header" 1>&2
   exit 1
  fi
 done

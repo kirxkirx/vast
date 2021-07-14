@@ -9,7 +9,7 @@ TEST_PASSED=1
 
 function find_source_by_X_Y_in_vast_lightcurve_statistics_log {
  if [ ! -s vast_lightcurve_statistics.log ];then
-  echo "ERROR: no vast_lightcurve_statistics.log" >> /dev/stderr
+  echo "ERROR: no vast_lightcurve_statistics.log" 1>&2
   return 1
  fi
  if [ -z $2 ];then

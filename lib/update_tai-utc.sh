@@ -29,7 +29,7 @@ CURRENT_DATE_UNIXSEC=`date +%s`
 
 # check if the file is there at all
 if [ ! -f lib/tai-utc.dat ];then
- echo "ERROR opening file lib/tai-utc.dat" >> /dev/stderr
+ echo "ERROR opening file lib/tai-utc.dat" 1>&2
  NEED_TO_UPDATE_THE_FILE=1
 else
  # First try Linux-style stat
@@ -37,7 +37,7 @@ else
  if [ $? -ne 0 ];then
   TAImUTC_DAT_FILE_MODIFICATION_DATE=`stat -f "%m" lib/tai-utc.dat 2>/dev/null`
   if [ $? -ne 0 ];then
-   echo "ERROR cannot get modification time for lib/tai-utc.dat" >> /dev/stderr
+   echo "ERROR cannot get modification time for lib/tai-utc.dat" 1>&2
    exit 1
   fi
  fi
@@ -55,7 +55,7 @@ fi
 # # down forever
 # wget --timeout=20 --tries=1 -O tai-utc.dat.new "http://maia.usno.navy.mil/ser7/tai-utc.dat"
 # if [ $? -ne 0 ];then
-#  echo "ERROR running wget" >> /dev/stderr
+#  echo "ERROR running wget" 1>&2
 #  if [ -f tai-utc.dat.new ];then
 #   rm -f tai-utc.dat.new
 #  fi
@@ -63,20 +63,20 @@ fi
 #  # down forever
 #  wget --timeout=20 --tries=1 -O tai-utc.dat.new "ftp://toshi.nofs.navy.mil/ser7/tai-utc.dat"
 #  if [ $? -ne 0 ];then
-#   echo "ERROR2 running wget" >> /dev/stderr
+#   echo "ERROR2 running wget" 1>&2
 #   if [ -f tai-utc.dat.new ];then
 #    rm -f tai-utc.dat.new
 #   fi
 #   # ftp link down forever, http access requires registration
 #   wget --timeout=20 --tries=1 -O tai-utc.dat.new "ftp://cddis.gsfc.nasa.gov/pub/products/iers/tai-utc.dat"
 #   if [ $? -ne 0 ];then
-#    echo "ERROR2 running wget" >> /dev/stderr
+#    echo "ERROR2 running wget" 1>&2
 #    exit 1
 #   fi
 #  fi
 # fi
  if [ ! -s tai-utc.dat.new ];then
-  echo "ERROR: tai-utc.dat.new is EMPTY!"  >> /dev/stderr
+  echo "ERROR: tai-utc.dat.new is EMPTY!" 1>&2
   exit 1
  fi
  mv -v tai-utc.dat.new lib/tai-utc.dat && touch lib/tai-utc.dat

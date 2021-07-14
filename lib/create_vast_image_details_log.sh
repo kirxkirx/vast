@@ -7,7 +7,7 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
-echo "Creating vast_image_details.log ... " >> /dev/stderr
+echo "Creating vast_image_details.log ... " 1>&2
 
 if [ -f vast_image_details.log ];then
  rm -f vast_image_details.log

@@ -229,7 +229,7 @@ On Ubuntu you may install all packages needed to build VaST by executing:
 sudo apt-get install build-essential gfortran g++ libx11-dev libxi-dev libxmu-dev libpng-dev curl wget
 
 on other Linux distributions you'll need to do the same thing (install gfortran, g++, X11 developement libraries and libpng) using your native package manager.
-" >> /dev/stderr
+" 1>&2
  LIBPNG_OK=0
 fi
 
@@ -246,7 +246,7 @@ On Ubuntu you may install all packages needed to build VaST by executing:
 sudo apt-get install build-essential gfortran g++ libx11-dev libxi-dev libxmu-dev libpng-dev curl wget
 
 on other Linux distributions you'll need to do the same thing (install gfortran, g++, X11 developement libraries and libpng) using your native package manager.
-" >> /dev/stderr
+" 1>&2
   LIBPNG_OK=0
  fi
 fi
@@ -260,7 +260,7 @@ On Ubuntu you may install all packages needed to build VaST by executing:
 sudo apt-get install build-essential gfortran g++ libx11-dev libxi-dev libxmu-dev libpng-dev curl wget
 
 on other Linux distributions you'll need to do the same thing (install gfortran, g++, X11 developement libraries and libpng) using your native package manager.
-" >> /dev/stderr
+" 1>&2
  LIBPNG_OK=0 
 fi
 
@@ -274,11 +274,11 @@ done
 # Copy the appropriate lib/pgplot stub
 rm -rf lib/pgplot
 if [ $LIBPNG_OK -eq 1 ];then
- echo "libpng found and is working properly! :)" >> /dev/stderr
+ echo "libpng found and is working properly! :)" 1>&2
  cp -r lib/pgplot_with_libpng lib/pgplot
  echo "-lpng"
 else
- echo "libpng is not found! PNG output disabled... :/" >> /dev/stderr
+ echo "libpng is not found! PNG output disabled... :/" 1>&2
  cp -r lib/pgplot_without_libpng lib/pgplot
  echo ""
 fi

@@ -61,7 +61,7 @@ for BACK in 0 1 ;do
   
   MEAN_MAG=`grep "mean_magnitude($INDEX)=" test_lightcurve.tmp | head -n1 | awk '{print $2}'`
 
-  echo "Plotting $INPUTFILE BLABEL=$BLABEL VLABEL=$VLABEL" >> /dev/stderr
+  echo "Plotting $INPUTFILE BLABEL=$BLABEL VLABEL=$VLABEL" 1>&2
   while read JD MAG ERR ;do
  
    JD_OFFSET="-0.09"

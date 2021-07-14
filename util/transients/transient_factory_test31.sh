@@ -444,7 +444,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  for FILE_TO_CHECK in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" ;do
   ls "$FILE_TO_CHECK" 
   if [ $? -ne 0 ];then
-   echo "ERROR opening file $FILE_TO_CHECK" >> /dev/stderr
+   echo "ERROR opening file $FILE_TO_CHECK" 1>&2
+   echo "ERROR opening file $FILE_TO_CHECK"
   fi
  done | grep "ERROR opening file"
  if [ $? -eq 0 ];then

@@ -33,15 +33,14 @@ if [ "$1" = "-q" ];then
  exit
 fi
 
-#echo " " >>/dev/stderr
 echo "util/nopgplot.sh is done with computations! =)
  
 ### vast_summary.log ###
 ####################################################################################"
 if [ -f vast_summary.log ] ;then
- cat vast_summary.log #>>/dev/stderr
+ cat vast_summary.log
 else
- echo "WARNING! Something may be terribly wrong: the main log file vast_summary.log is not found." #>>/dev/stderr
+ echo "WARNING! Something may be terribly wrong: the main log file vast_summary.log is not found."
 fi
 echo "####################################################################################
 

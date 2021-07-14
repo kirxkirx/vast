@@ -21,7 +21,7 @@ fi
 
 # Check if candidates-transients.lst is not empty
 if [ ! -s candidates-transients.lst ];then
- echo "candidates-transients.lst is empty!" >> /dev/stderr
+ echo "candidates-transients.lst is empty!" 1>&2
  exit 1
 fi
 
@@ -43,7 +43,7 @@ for i in `cat vast_image_details.log |awk '{print $17}'` ;do
  #
  # Moved the following check outside this loop
  # if [ $? -ne 0 ];then
- #  echo "ERROR plate solving $i" >> /dev/stderr
+ #  echo "ERROR plate solving $i" 1>&2
  #  exit 1 # Makes no sence to go on if not all images were plate-solved
  # fi
 done
@@ -55,7 +55,7 @@ wait
 for i in `cat vast_image_details.log |awk '{print $17}'` ;do
  ls wcs_`basename $i`
  if [ $? -ne 0 ];then
-  echo "ERROR plate solving $i" >> /dev/stderr
+  echo "ERROR plate solving $i" 1>&2
   exit 1 # Makes no sence to go on if not all images were plate-solved
  fi
 done
@@ -78,7 +78,7 @@ for i in `cat candidates-transients.lst | awk '{print $1}'` ;do
   echo "ERROR in $0 
   cannot run 
 echo $MAG_ON_FIRST_SECOND_EPOCH_IMAGE $MAG_ON_SECOND_SECOND_EPOCH_IMAGE | awk '{print (\$1+\$2)/2\">13.5\"}'
-" >> /dev/stderr
+" 1>&2
   continue
  fi
  # the test below will fail if $TEST is not set

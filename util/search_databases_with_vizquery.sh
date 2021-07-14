@@ -63,7 +63,7 @@ fi
 #VIZIER_SITE=vizier.u-strasbg.fr
 VIZIER_SITE=`"$VAST_PATH"lib/choose_vizier_mirror.sh`
 #
-echo -e "Starting $0" >> /dev/stderr
+echo -e "Starting $0" 1>&2
 
 ### Set path to wwwget in lib/bin/
 #PATH_TO_THIS_SCRIPT=`readlink -f $0`
@@ -307,7 +307,7 @@ if [ $TEST -eq 1 ];then
  B2MAG_RANGE="B2mag=1.0..20.5"
 fi
 ####
-#echo "#### DEBUG R_SEARCH_ARCSEC=$R_SEARCH_ARCSEC FOV=$FOV" >> /dev/stderr
+#echo "#### DEBUG R_SEARCH_ARCSEC=$R_SEARCH_ARCSEC FOV=$FOV" 1>&2
 ####
 #DOUBLE_R_SEARCH_ARCSEC=`echo "$R_SEARCH_ARCSEC*2" | bc -ql`
 DOUBLE_R_SEARCH_ARCSEC=`echo "$R_SEARCH_ARCSEC" | awk '{print 2*$1}'`
@@ -720,7 +720,7 @@ if [ ! -z "$GOOD_CATALOG_NAME_GAIA" ];then
 You may get Gaia time-resolved photometry for this source by running
 
 util/get_gaia_lc.sh $GOOD_CATALOG_NAME_GAIA
-" >> /dev/stderr
+" 1>&2
   # Automatically get the lightcurve
   "$VAST_PATH"util/get_gaia_lc.sh $GOOD_CATALOG_NAME_GAIA
   #

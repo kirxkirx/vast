@@ -59,7 +59,7 @@ I expect it to be named $WCS_SOLVED_REFERENCE_IMAGE , but..."
  exit 1
 fi
 
-echo "Processing (may take A LOT OF TIME)" >> /dev/stderr
+echo "Processing (may take A LOT OF TIME)" 1>&2
 while read STARNUM X Y ;do
  LIGHTCURVEFILENAME="out$STARNUM.dat"
  grep "$LIGHTCURVEFILENAME" vast_lightcurve_statistics.log &> /dev/null
@@ -69,9 +69,9 @@ while read STARNUM X Y ;do
  fi
  echo -n "$LIGHTCURVEFILENAME  "
  xy2sky $WCS_SOLVED_REFERENCE_IMAGE $X $Y
- echo -n "." >> /dev/stderr
+ echo -n "." 1>&2
 done < vast_list_of_all_stars.log > vast_approximate_astrometry_from_reference_image.log
 echo "
 All done! 
-The results are written to vast_approximate_astrometry_from_reference_image.log" >> /dev/stderr
+The results are written to vast_approximate_astrometry_from_reference_image.log" 1>&2
 

@@ -123,7 +123,7 @@ fi
 #
 #$CURL --silent --max-time 30 \"http://www.sai.msu.su/gcvs/cgi-bin/co-h.cgi?coor=${RA//:/+}+${DEC_STUPID_PLUS_GCVS//:/+}&radius=60\"
 #
-#" >> /dev/stderr
+#" 1>&2
 DATABASE_RESULTS=`$TIMEOUTCOMMAND $CURL --silent --max-time 30 "http://www.sai.msu.su/gcvs/cgi-bin/co-h.cgi?coor=${RA//:/+}+${DEC_STUPID_PLUS_GCVS//:/+}&radius=60"|grep \|`
 #DATABASE_RESULTS=`$CURL --silent --max-time 30 "http://www.sai.msu.su/gcvs/cgi-bin/co-h.cgi?coor=${RA//:/+}+${DEC_STUPID_PLUS_GCVS//:/+}&radius=60" |grep \|`
 #echo $CURL --silent --max-time 30 \""http://www.sai.msu.su/gcvs/cgi-bin/co-h.cgi?coor=${RA//:/+}+${DEC_STUPID_PLUS_GCVS//:/+}&radius=60"\"

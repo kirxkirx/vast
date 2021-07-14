@@ -2,7 +2,7 @@
 
 command -v vartools &>/dev/null
 if [ $? -ne 0 ];then
- echo "'vartools' command is not found, please install VARTOOLS" >> /dev/stderr
+ echo "'vartools' command is not found, please install VARTOOLS" 1>&2
  exit 1
 fi
 
@@ -33,13 +33,13 @@ RA_DEC_HMS="$HH:$MM:$SS $DD:$DM:$DS"
 
 RANDOM_JD=`echo "$RANDOM" | awk '{printf "%06.2f",2458000+$1/32767*365.242}'`
 
-echo "Random sky position $RA_DEC_HMS and JD $RANDOM_JD" >> /dev/stderr
+echo "Random sky position $RA_DEC_HMS and JD $RANDOM_JD" 1>&2
 ############################################################
 
 ############ Conver HMS->deg using VaST ############
 RA_DEC_DEG_VAST=`lib/hms2deg $RA_DEC_HMS`
 if [ $? -ne 0 ];then
- echo "ERROR running lib/hms2deg $RA_DEC_HMS" >> /dev/stderr
+ echo "ERROR running lib/hms2deg $RA_DEC_HMS" 1>&2
  exit 1
 fi
 ############ Generate fake lightcurve ############
@@ -103,7 +103,7 @@ fi
 
 #TEST_PASSED=0
 if [ $TEST_PASSED -ne 1 ];then
- echo "HJD conversion test failed!" >> /dev/stderr
+ echo "HJD conversion test failed!" 1>&2
  exit 1
 fi
 

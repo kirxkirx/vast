@@ -122,7 +122,7 @@ if [ $? -eq 0 ];then
  if [ $? -eq 0 ];then
   if [ $FREE_DISK_SPACE_MB -le $SIZE_OF_DATA_TO_BE_LOADED_MB ] && [ $SIZE_OF_DATA_TO_BE_LOADED_MB -ge 0 ] ;then
    echo "ERROR: not enough disk space to load  $REGION_NAME
-the dataset size is $SIZE_OF_DATA_TO_BE_LOADED_MB MB while only $FREE_DISK_SPACE_MB MB is free on the current disk." >> /dev/stderr
+the dataset size is $SIZE_OF_DATA_TO_BE_LOADED_MB MB while only $FREE_DISK_SPACE_MB MB is free on the current disk." 1>&2
    exit 1
   fi # if [ $FREE_DISK_SPACE_MB -le $SIZE_OF_DATA_TO_BE_LOADED_MB ];then
  fi # if [ $? -eq 0 ];then

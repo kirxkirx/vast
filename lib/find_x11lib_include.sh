@@ -23,7 +23,7 @@ for POSSIBLE_LIBRARY_PATH in /opt/X11/include /usr/X11R6/include /usr/include/X1
  fi
 done
 if [ ! -z "$LX11" ];then
- echo "Adding the following to include and library path: $LX11" >> /dev/stderr
+ echo "Adding the following to include and library path: $LX11" 1>&2
 fi
 
 # Print result

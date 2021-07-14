@@ -54,7 +54,7 @@ cd $PATH_TO_WINEFK
 sort -bn POKAZ > POKAZs
 rm -f POKAZ
 cp POKAZs win-`basename $1`
-echo "Writing file in the WinEfk format: win-"`basename $1` >/dev/stderr
-echo "Open file POKAZs or win-"`basename $1`" in the WinEfk direcory when the WinEfk window will appear." >/dev/stderr
-echo "If the latest version of WinEfk is used - the file will be opened automatically." >/dev/stderr
+echo "Writing file in the WinEfk format: win-"`basename $1` 1>&2
+echo "Open file POKAZs or win-"`basename $1`" in the WinEfk direcory when the WinEfk window will appear." 1>&2
+echo "If the latest version of WinEfk is used - the file will be opened automatically." 1>&2
 wine winefk.exe POKAZs &>/dev/null

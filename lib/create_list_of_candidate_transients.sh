@@ -9,12 +9,12 @@ export LANGUAGE LC_ALL
 
 lib/transient_list
 if [ $? -ne 0 ];then
- echo "ERROR running lib/transient_list" >> /dev/stderr
+ echo "ERROR running lib/transient_list" 1>&2
  exit 1
 fi
 
 if [ ! -f vast_image_details.log ];then
- echo "ERROR: cannot find vast_image_details.log" >> /dev/stderr
+ echo "ERROR: cannot find vast_image_details.log" 1>&2
  exit 1
 fi
 
@@ -23,7 +23,7 @@ NUMBER_OF_GOOD_IMAGES=`grep -v 'status=ERROR' vast_image_details.log | wc -l`
 if [ $NUMBER_OF_GOOD_IMAGES -eq 4 ];then
  lib/find_flares >> candidates-flares.lst
  if [ $? -ne 0 ];then
-  echo "ERROR running lib/transient_list" >> /dev/stderr
+  echo "ERROR running lib/transient_list" 1>&2
   exit 1
  fi
  while read A B ;do echo $A `cat $A | wc -l` `tail -n1 $A | awk '{printf "%s %8.3f %8.3f  ",$7,$4,$5}'` `head -n1 $A | awk '{printf "%s %8.3f %8.3f  ",$7,$4,$5}'` ;done < candidates-flares.lst >> candidates-transients.lst

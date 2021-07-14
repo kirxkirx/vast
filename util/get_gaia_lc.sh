@@ -12,7 +12,7 @@ export LANGUAGE LC_ALL
 # Check that the Gaia ID is set
 if [ -z "$1" ];then
  echo "Usage:  $0 4064863289398606208
-Here 4064863289398606208 is the Gaia DR2 ID" >> /dev/stderr
+Here 4064863289398606208 is the Gaia DR2 ID" 1>&2
  exit 1
 fi
 
@@ -21,14 +21,14 @@ GAIA_ID="$1"
 # Check that the argument indeed looks like a Gaia DR2 ID
 re='^[0-9]+$'
 if ! [[ $GAIA_ID =~ $re ]] ; then
- echo "ERROR: $GAIA_ID doesn't look like a Gaia ID" >> /dev/stderr
+ echo "ERROR: $GAIA_ID doesn't look like a Gaia ID" 1>&2
  exit 1
 fi
 
 #TEST=`echo "$GAIA_ID>100000" | bc -ql`
 TEST=`echo "$GAIA_ID>100000" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if [ $TEST -ne 1 ];then
- echo "ERROR: $GAIA_ID doesn't look like a Gaia ID (the value looks suspiciously small)" >> /dev/stderr
+ echo "ERROR: $GAIA_ID doesn't look like a Gaia ID (the value looks suspiciously small)" 1>&2
  exit 1
 fi
 
@@ -79,7 +79,7 @@ VIZIER_SITE=`"$VAST_PATH"lib/choose_vizier_mirror.sh`
 #
 TIMEOUTCOMMAND=`"$VAST_PATH"lib/find_timeout_command.sh`
 if [ $? -ne 0 ];then
- echo "WARNING: cannot find timeout command" >> /dev/stderr
+ echo "WARNING: cannot find timeout command" 1>&2
 else
  TIMEOUTCOMMAND="$TIMEOUTCOMMAND 300 "
 fi

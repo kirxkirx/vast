@@ -249,7 +249,7 @@ if [ -f vast_summary.log ];then
  #
  #util/save.sh TEST_VB_APPHOT
 else
- echo "ERROR: cannot find vast_summary.log" >> /dev/stderr
+ echo "ERROR: cannot find vast_summary.log" 1>&2
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_000__ALL"
 fi
@@ -361,7 +361,7 @@ if [ -f vast_summary.log ];then
  #
  #util/save.sh TEST_VB_PSFPHOT
 else
- echo "ERROR: cannot find vast_summary.log" >> /dev/stderr
+ echo "ERROR: cannot find vast_summary.log" 1>&2
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_100__ALL"
 fi

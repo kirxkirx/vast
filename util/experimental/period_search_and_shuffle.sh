@@ -44,7 +44,7 @@ function set_session_key {
  elif [ -r /dev/random ];then
   local RANDOMFILE=/dev/random
  else
-  echo "ERROR: cannot find /dev/random" >> /dev/stderr
+  echo "ERROR: cannot find /dev/random" 1>&2
   local RANDOMFILE=""
  fi
  if [ "$RANDOMFILE" != "" ];then

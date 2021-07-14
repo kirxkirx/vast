@@ -2,7 +2,7 @@
 
 command -v skycoor &>/dev/null
 if [ $? -ne 0 ];then
- echo "'skycoor' command is not found, please install WCSTools" >> /dev/stderr
+ echo "'skycoor' command is not found, please install WCSTools" 1>&2
  exit 1
 fi
 
@@ -35,38 +35,38 @@ echo "Random sky position $RA_DEC_HMS"
 ############ Conver HMS->deg using WCSTools ############
 RA_DEC_DEG_SKYCOOR=`skycoor -d -j $RA_DEC_HMS J2000 | awk '{print $1" "$2}'`
 if [ $? -ne 0 ];then
- echo "ERROR running skycoor -d -j $RA_DEC_HMS J2000" >> /dev/stderr
+ echo "ERROR running skycoor -d -j $RA_DEC_HMS J2000" 1>&2
  exit 1
 fi
 ############ Conver HMS->deg using VaST ############
 RA_DEC_DEG_VAST=`lib/hms2deg $RA_DEC_HMS`
 if [ $? -ne 0 ];then
- echo "ERROR running lib/hms2deg $RA_DEC_HMS" >> /dev/stderr
+ echo "ERROR running lib/hms2deg $RA_DEC_HMS" 1>&2
  exit 1
 fi
 
 ############ Compute distance using WCSTools, input in deg ############
 DISTANCE_ARCSEC_SKYCOOR=`skycoor -r $RA_DEC_DEG_SKYCOOR $RA_DEC_DEG_VAST`
 if [ $? -ne 0 ];then
- echo "ERROR running skycoor -r $RA_DEC_DEG_SKYCOOR $RA_DEC_DEG_VAST" >> /dev/stderr
+ echo "ERROR running skycoor -r $RA_DEC_DEG_SKYCOOR $RA_DEC_DEG_VAST" 1>&2
  exit 1
 fi
 #TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | bc -ql`
 TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
- echo "TEST1 failed on $RA_DEC_HMS" >> /dev/stderr
+ echo "TEST1 failed on $RA_DEC_HMS" 1>&2
  exit 1
 fi
 ############ Compute distance using VaST, input in deg ############
 DISTANCE_ARCSEC_VAST=`lib/put_two_sources_in_one_field $RA_DEC_DEG_SKYCOOR $RA_DEC_DEG_VAST 2>/dev/null | grep 'Angular distance' | awk '{print $5*3600}'`
 if [ $? -ne 0 ];then
- echo "ERROR running lib/put_two_sources_in_one_field $RA_DEC_DEG_SKYCOOR $RA_DEC_DEG_VAST" >> /dev/stderr
+ echo "ERROR running lib/put_two_sources_in_one_field $RA_DEC_DEG_SKYCOOR $RA_DEC_DEG_VAST" 1>&2
  exit 1
 fi
 #TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | bc -ql`
 TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
- echo "TEST2 failed on $RA_DEC_HMS" >> /dev/stderr
+ echo "TEST2 failed on $RA_DEC_HMS" 1>&2
  exit 1
 fi
 
@@ -76,25 +76,25 @@ RA_DEC_HMS_converted_back_from_deg_with_VAST=`lib/deg2hms $RA_DEC_DEG_VAST`
 ############ Compute distance using WCSTools, input in HMS ############
 DISTANCE_ARCSEC_SKYCOOR=`skycoor -r $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_VAST`
 if [ $? -ne 0 ];then
- echo "ERROR running skycoor -r $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_VAST" >> /dev/stderr
+ echo "ERROR running skycoor -r $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_VAST" 1>&2
  exit 1
 fi
 #TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | bc -ql`
 TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
- echo "TEST3 failed on $RA_DEC_HMS" >> /dev/stderr
+ echo "TEST3 failed on $RA_DEC_HMS" 1>&2
  exit 1
 fi
 ############ Compute distance using VaST, input in HMS ############
 DISTANCE_ARCSEC_VAST=`lib/put_two_sources_in_one_field $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_VAST 2>/dev/null | grep 'Angular distance' | awk '{print $5*3600}'`
 if [ $? -ne 0 ];then
- echo "ERROR running lib/put_two_sources_in_one_field $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_VAST" >> /dev/stderr
+ echo "ERROR running lib/put_two_sources_in_one_field $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_VAST" 1>&2
  exit 1
 fi
 #TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | bc -ql`
 TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
- echo "TEST4 failed on $RA_DEC_HMS" >> /dev/stderr
+ echo "TEST4 failed on $RA_DEC_HMS" 1>&2
  exit 1
 fi
 
@@ -104,25 +104,25 @@ RA_DEC_HMS_converted_back_from_deg_with_WCSTOOLS=`skycoor -j  $RA_DEC_DEG_VAST J
 ############ Compute distance using WCSTools, input in HMS ############
 DISTANCE_ARCSEC_SKYCOOR=`skycoor -r $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_WCSTOOLS`
 if [ $? -ne 0 ];then
- echo "ERROR running skycoor -r $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_WCSTOOLS" >> /dev/stderr
+ echo "ERROR running skycoor -r $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_WCSTOOLS" 1>&2
  exit 1
 fi
 #TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | bc -ql`
 TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
- echo "TEST5 failed on $RA_DEC_HMS" >> /dev/stderr
+ echo "TEST5 failed on $RA_DEC_HMS" 1>&2
  exit 1
 fi
 ############ Compute distance using VaST, input in HMS ############
 DISTANCE_ARCSEC_VAST=`lib/put_two_sources_in_one_field $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_WCSTOOLS 2>/dev/null | grep 'Angular distance' | awk '{print $5*3600}'`
 if [ $? -ne 0 ];then
- echo "ERROR running lib/put_two_sources_in_one_field $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_WCSTOOLS" >> /dev/stderr
+ echo "ERROR running lib/put_two_sources_in_one_field $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_WCSTOOLS" 1>&2
  exit 1
 fi
 #TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | bc -ql`
 TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
- echo "TEST6 failed on $RA_DEC_HMS" >> /dev/stderr
+ echo "TEST6 failed on $RA_DEC_HMS" 1>&2
  exit 1
 fi
 
@@ -134,25 +134,25 @@ RA_DEC_HMS_converted_back_from_deg_with_VAST=`lib/deg2hms $RA_DEC_DEG_SKYCOOR`
 ############ Compute distance using WCSTools, input in HMS ############
 DISTANCE_ARCSEC_SKYCOOR=`skycoor -r $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_VAST`
 if [ $? -ne 0 ];then
- echo "ERROR running skycoor -r $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_VAST" >> /dev/stderr
+ echo "ERROR running skycoor -r $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_VAST" 1>&2
  exit 1
 fi
 #TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | bc -ql`
 TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
- echo "TEST7 failed on $RA_DEC_HMS" >> /dev/stderr
+ echo "TEST7 failed on $RA_DEC_HMS" 1>&2
  exit 1
 fi
 ############ Compute distance using VaST, input in HMS ############
 DISTANCE_ARCSEC_VAST=`lib/put_two_sources_in_one_field $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_VAST 2>/dev/null | grep 'Angular distance' | awk '{print $5*3600}'`
 if [ $? -ne 0 ];then
- echo "ERROR running lib/put_two_sources_in_one_field $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_VAST" >> /dev/stderr
+ echo "ERROR running lib/put_two_sources_in_one_field $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_VAST" 1>&2
  exit 1
 fi
 #TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | bc -ql`
 TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
- echo "TEST8 failed on $RA_DEC_HMS" >> /dev/stderr
+ echo "TEST8 failed on $RA_DEC_HMS" 1>&2
  exit 1
 fi
 
@@ -162,25 +162,25 @@ RA_DEC_HMS_converted_back_from_deg_with_WCSTOOLS=`skycoor -j  $RA_DEC_DEG_SKYCOO
 ############ Compute distance using WCSTools, input in HMS ############
 DISTANCE_ARCSEC_SKYCOOR=`skycoor -r $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_WCSTOOLS`
 if [ $? -ne 0 ];then
- echo "ERROR running skycoor -r $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_WCSTOOLS" >> /dev/stderr
+ echo "ERROR running skycoor -r $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_WCSTOOLS" 1>&2
  exit 1
 fi
 #TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | bc -ql`
 TEST=`echo "$DISTANCE_ARCSEC_SKYCOOR>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
- echo "TEST9 failed on $RA_DEC_HMS" >> /dev/stderr
+ echo "TEST9 failed on $RA_DEC_HMS" 1>&2
  exit 1
 fi
 ############ Compute distance using VaST, input in HMS ############
 DISTANCE_ARCSEC_VAST=`lib/put_two_sources_in_one_field $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_WCSTOOLS 2>/dev/null | grep 'Angular distance' | awk '{print $5*3600}'`
 if [ $? -ne 0 ];then
- echo "ERROR running lib/put_two_sources_in_one_field $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_WCSTOOLS" >> /dev/stderr
+ echo "ERROR running lib/put_two_sources_in_one_field $RA_DEC_HMS $RA_DEC_HMS_converted_back_from_deg_with_WCSTOOLS" 1>&2
  exit 1
 fi
 #TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | bc -ql`
 TEST=`echo "$DISTANCE_ARCSEC_VAST>0.1" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
 if  [ $TEST -eq 1 ];then
- echo "TEST10 failed on $RA_DEC_HMS" >> /dev/stderr
+ echo "TEST10 failed on $RA_DEC_HMS" 1>&2
  exit 1
 fi
 

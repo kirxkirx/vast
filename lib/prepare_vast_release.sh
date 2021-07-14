@@ -235,7 +235,7 @@ fi
 for i in `find .` ;do 
  file $i | grep --quiet ELF 
  if [ $? -eq 0 ];then
-  file $i >> /dev/stderr
+  file $i 1>&2
   echo "BINARY_FILE_FOUND"
  fi
 done | grep --quiet "BINARY_FILE_FOUND"

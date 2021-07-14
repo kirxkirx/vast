@@ -76,7 +76,7 @@ if [ ! -s "$WCS_IMAGE" ];then
  echo "ERROR reading the input FITS image $WCS_IMAGE"
  exit 1
 fi
-"$VAST_PATH"lib/fitsverify -q -e "$WCS_IMAGE" >> /dev/stderr
+"$VAST_PATH"lib/fitsverify -q -e "$WCS_IMAGE" 1>&2
 if [ $? -ne 0 ];then
  echo "WARNING: the input file $WCS_IMAGE seems to be a FITS image that does not fully comply with the FITS standard.
 Checking if the filename extension and FITS header look reasonable..."

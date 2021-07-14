@@ -25,7 +25,7 @@ fi
 
 # Check that this is a directory
 if [ ! -d vast_magnitude_calibration_details_log ];then
- echo "ERROR: cannot create directory vast_magnitude_calibration_details_log" >> /dev/stderr
+ echo "ERROR: cannot create directory vast_magnitude_calibration_details_log" 1>&2
  exit 1
 fi
 

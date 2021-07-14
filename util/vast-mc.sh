@@ -59,7 +59,6 @@ fi
 
 if [ -e $filename ] ;
   then
-    #echo "Analyzing $filename..." #>> /dev/stderr
     grep -v status=ERROR $filename \
     |awk '{d +=$13; m +=$15} END {AD=d/NR; AM=m/NR; AMP=100*(AM/AD);\
      print "Average stars detected per image: "AD "\n" "Average stars matched: "AM " ("AMP" %)"}'

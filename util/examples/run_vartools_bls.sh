@@ -59,7 +59,7 @@ function set_session_key {
  elif [ -r /dev/random ];then  
   local RANDOMFILE=/dev/random
  else
-  echo "ERROR: cannot find /dev/random" >> /dev/stderr
+  echo "ERROR: cannot find /dev/random" 1>&2
   local RANDOMFILE=""
  fi
  if [ "$RANDOMFILE" != "" ];then
@@ -73,13 +73,13 @@ function set_session_key {
 function function_to_fork {
  local LIGHTCURVEFILE=$1
  if [ ! -s "$LIGHTCURVEFILE" ];then
-  echo "Skipping the lightcurve file $LIGHTCURVEFILE" >> /dev/stderr
+  echo "Skipping the lightcurve file $LIGHTCURVEFILE" 1>&2
   return 0;
  fi
- echo "Processing lightcurve $LIGHTCURVEFILE" >> /dev/stderr
+ echo "Processing lightcurve $LIGHTCURVEFILE" 1>&2
  local BLS_SNR=`vartools -i "$LIGHTCURVEFILE" -ascii -oneline  -clip 3.0 0    -BLS q $BLS_MIN_FRACTIONAL_TRANSIT_DURATION $BLS_MAX_FRACTIONAL_TRANSIT_DURATION $BLS_PMIN_DAYS $BLS_PMAX_DAYS $BLS_NFREQ $BLS_NPHASEBINS 0 1         0 0 0 fittrap | grep BLS_SN | awk '{printf "%.2f",$3}'`
  echo "$LIGHTCURVEFILE $BLS_SNR" >> run_vartools_bls_results/run_vartools_bls.out
- echo "$LIGHTCURVEFILE $BLS_SNR" >> /dev/stderr
+ echo "$LIGHTCURVEFILE $BLS_SNR" 1>&2
  TEST=`echo "$BLS_SNR>$BLS_SNR_CUTOFF" | bc -ql`
  if [ $TEST -eq 1 ];then
   # Recompute and plot
@@ -137,17 +137,17 @@ plot '$BLSMODELFILENAME' u (\$5 > 0.5 ? \$5-1:\$5):2 title '', '$BLSMODELFILENAM
 # Check the necessary programs
 command -v vartools &>/dev/null
 if [ $? -ne 0 ];then
- echo "Please install vartools" >> /dev/stderr
+ echo "Please install vartools" 1>&2
  exit 1
 fi
 command -v gnuplot &>/dev/null
 if [ $? -ne 0 ];then
- echo "Please install gnuplot" >> /dev/stderr
+ echo "Please install gnuplot" 1>&2
  exit 1
 fi
 command -v convert &>/dev/null
 if [ $? -ne 0 ];then
- echo "Please install convert (imagemagick)" >> /dev/stderr
+ echo "Please install convert (imagemagick)" 1>&2
  exit 1
 fi
 
@@ -220,14 +220,14 @@ wait
 rm -f /tmp/"$SCRIPTNAME"_"$SESSION_KEY"_pids.tmp &
 
 
-echo "#####################" >> /dev/stderr
+echo "#####################" 1>&2
 NCANDIDATES=0
 for CANDIDATE in run_vartools_bls_results/*.bls.summary ;do
- grep `basename "$CANDIDATE" .bls.summary` run_vartools_bls_results/run_vartools_bls.out >> /dev/stderr
+ grep `basename "$CANDIDATE" .bls.summary` run_vartools_bls_results/run_vartools_bls.out 1>&2
  NCANDIDATES=$[$NCANDIDATES+1]
 done
 echo "#####################
 Identified $NCANDIDATES transit candidates.
 
 The results are written to run_vartools_bls_results/
-" >> /dev/stderr
+" 1>&2

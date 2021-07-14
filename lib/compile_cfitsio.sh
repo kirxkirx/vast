@@ -98,7 +98,7 @@ if [ $COMPILATION_ERROR -eq 0 ];then
  cd $FITSVERIFY_SOURCE
  $C_COMPILER -o $TARGET_DIR/fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c fvrf_key.c fvrf_misc.c -DSTANDALONE -I$LIBRARY_SOURCE  -L$TARGET_DIR -lcfitsio -lm #-lnsl
  if [ $? -ne 0 ];then
-  echo "ERROR compiling fitsverify" >> /dev/stderr
+  echo "ERROR compiling fitsverify" 1>&2
   COMPILATION_ERROR=1
  fi
  cd $VAST_DIR
@@ -109,7 +109,7 @@ if [ $COMPILATION_ERROR -eq 0 ];then
  #$C_COMPILER -o util/listhead src/listhead.c -L$TARGET_DIR -lcfitsio -lm
  $C_COMPILER -o util/listhead src/listhead.c $TARGET_DIR/libcfitsio.a -lm
  if [ $? -ne 0 ];then
-  echo "ERROR compiling listhead" >> /dev/stderr
+  echo "ERROR compiling listhead" 1>&2
   COMPILATION_ERROR=1
  fi
 fi
@@ -119,7 +119,7 @@ if [ $COMPILATION_ERROR -eq 0 ];then
  #$C_COMPILER -o util/modhead src/modhead.c -L$TARGET_DIR -lcfitsio -lm
  $C_COMPILER -o util/modhead src/modhead.c $TARGET_DIR/libcfitsio.a -lm
  if [ $? -ne 0 ];then
-  echo "ERROR compiling modhead" >> /dev/stderr
+  echo "ERROR compiling modhead" 1>&2
   COMPILATION_ERROR=1
  fi
 fi

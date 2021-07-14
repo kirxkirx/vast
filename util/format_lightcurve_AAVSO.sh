@@ -74,7 +74,7 @@ FILTER="X"
 VARIABLE_STAR_NAME="XX Xxx"
 # but we can try to guess satre and filter name from the CBA file, if present
 if [ -s CBA_previously_used_header.txt ];then
- echo "Importing the variable star info from CBA_previously_used_header.txt" >> /dev/stderr
+ echo "Importing the variable star info from CBA_previously_used_header.txt" 1>&2
  VARIABLE_STAR_NAME=`cat CBA_previously_used_header.txt | grep '# Variable: ' | awk -F '# Variable: ' '{print $2}'`
  FILTER=`cat CBA_previously_used_header.txt | grep '# Filter: ' | awk -F '# Filter: ' '{print $2}'`
 fi

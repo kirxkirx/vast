@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ ! -s vast_list_of_previously_known_variables.log ];then
- echo "ERROR: we need vast_list_of_previously_known_variables.log to proceed" >> /dev/stderr
+ echo "ERROR: we need vast_list_of_previously_known_variables.log to proceed"
  exit 1
 fi
 

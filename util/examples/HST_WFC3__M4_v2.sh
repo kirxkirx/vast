@@ -451,4 +451,5 @@ echo "
 Results plotted in .eps and converted to .jpg files. 
 
 Enjoy! :)
-" >> /dev/stderr
+" 
+

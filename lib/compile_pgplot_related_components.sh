@@ -30,7 +30,7 @@ if [ ! -z $2 ];then
  CFITSIO_LIB=$2 
 else
  if [ ! -f lib/libcfitsio.a ];then
-  echo "ERROR in $0  -- cannot find lib/libcfitsio.a" >> /dev/stderr
+  echo "ERROR in $0  -- cannot find lib/libcfitsio.a" 1>&2
   exit 1
  fi
  CFITSIO_LIB=lib/libcfitsio.a

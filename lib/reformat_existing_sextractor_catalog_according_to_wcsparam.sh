@@ -11,7 +11,7 @@ export LANGUAGE LC_ALL
 #################################
 
 if [ -z $3 ];then
- echo "Usage: $0 ORIGINAL_FITSFILE.fit wcs_ORIGINAL_FITSFILE.fit OUTPUT_SEXTRACTOR_CATALOG.cat" >> /dev/stderr
+ echo "Usage: $0 ORIGINAL_FITSFILE.fit wcs_ORIGINAL_FITSFILE.fit OUTPUT_SEXTRACTOR_CATALOG.cat" 1>&2
  exit 1
 fi
 
@@ -67,11 +67,11 @@ for FITSFILE_TO_CHECK in "$FITSFILE" "$WCS_IMAGE_NAME" ;do
 
  #echo "Checking $FITSFILE_TO_CHECK"
  if [ ! -f "$FITSFILE_TO_CHECK" ];then
-  echo "ERROR in $0 : $FITSFILE_TO_CHECK does not exist!" >> /dev/stderr
+  echo "ERROR in $0 : $FITSFILE_TO_CHECK does not exist!" 1>&2
   exit 1
  fi
  if [ ! -s "$FITSFILE_TO_CHECK" ];then
-  echo "ERROR in $0 : $FITSFILE_TO_CHECK is empty!" >> /dev/stderr
+  echo "ERROR in $0 : $FITSFILE_TO_CHECK is empty!" 1>&2
   exit 1
  fi
  # Verify that the input file is a valid FITS file
@@ -95,7 +95,7 @@ done
 # Check the input WCS image is acatually WCS-solved
 "$VAST_PATH"lib/bin/xy2sky "$WCS_IMAGE_NAME" | grep --quiet 'No WCS'
 if [ $? -eq 0 ];then
- echo "ERROR in $0 : $WCS_IMAGE_NAME does not seem to be WCS-solved!" >> /dev/stderr
+ echo "ERROR in $0 : $WCS_IMAGE_NAME does not seem to be WCS-solved!" 1>&2
  exit 1
 fi
 ############################################
@@ -122,7 +122,7 @@ if [ ! -s "$ORIGONAL_SEXTRACTOR_CATALOG" ];then
 fi
 
 # OK, assume we are good
-echo "Generating $OUTPUT_SEXTRACTOR_CATALOG from $ORIGONAL_SEXTRACTOR_CATALOG" >> /dev/stderr
+echo "Generating $OUTPUT_SEXTRACTOR_CATALOG from $ORIGONAL_SEXTRACTOR_CATALOG" 1>&2
 cat "$ORIGONAL_SEXTRACTOR_CATALOG" | awk '{printf "%10d %11.7f %+11.7f %11.4f %11.4f %12.7g %12.7g %8.4f %8.4f %3d\n", $1, 0.0,0.0, $16,$17, $2,$3, $4,$10, $22}' > correct_sextractor_wcs_catalog_usingxy2sky$$.tmp
 # The desired output:
 # NUMBER

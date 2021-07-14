@@ -29,7 +29,7 @@ function clean_tmp_files {
  for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.dat jd$$.dat x$$.dat y$$.dat ;do
   if [ -f "$TMP_FILE_TO_REMOVE" ];then
    #
-   #echo "DEBUG:  REMOVING  $TMP_FILE_TO_REMOVE" >> /dev/stderr
+   #echo "DEBUG:  REMOVING  $TMP_FILE_TO_REMOVE" 1>&2
    #
    rm -f "$TMP_FILE_TO_REMOVE"
   fi
@@ -71,7 +71,7 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  #fi # if [ ! -f $SEXTRACTOR_CATALOG_NAME ];then
  # Keeping this step for backward compatibility with the old scripts used in the tests
  #if [ ! -f $UCAC5_SOLUTION_NAME ];then
- # util/solve_plate_with_UCAC5 $FITSFILE >> /dev/stderr
+ # util/solve_plate_with_UCAC5 $FITSFILE 1>&2
  #fi
  DATETIMEJD=`grep $FITSFILE vast_image_details.log |awk '{print $2" "$3"  "$5"  "$7}'`
  DATE=`echo $DATETIMEJD|awk '{print $1}'`

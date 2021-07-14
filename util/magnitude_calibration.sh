@@ -88,11 +88,11 @@ else
  # output file of fail. But still, let's check that.
  # ERROR check (just in case)
  if [ ! -f $UCAC5_REFERENCE_IMAGE_MATCH_FILE ];then
-  echo "ERROR in $0: cannot find file $UCAC5_REFERENCE_IMAGE_MATCH_FILE" >> /dev/stderr
+  echo "ERROR in $0: cannot find file $UCAC5_REFERENCE_IMAGE_MATCH_FILE" 1>&2
   exit 1
  fi
  if [ ! -s $UCAC5_REFERENCE_IMAGE_MATCH_FILE ];then
-  echo "ERROR in $0: empty file $UCAC5_REFERENCE_IMAGE_MATCH_FILE" >> /dev/stderr
+  echo "ERROR in $0: empty file $UCAC5_REFERENCE_IMAGE_MATCH_FILE" 1>&2
   exit 1
  fi
 

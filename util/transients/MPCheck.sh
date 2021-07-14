@@ -83,9 +83,9 @@ lib/update_offline_catalogs.sh all
 if [ -f lib/astcheck ];then
  if [ ! -f astorb.dat ];then
   # astorb.dat needs to be downloaded
-  echo "Downloading the asteroid database (astorb.dat)" >> /dev/stderr
-  #wget -c ftp://ftp.lowell.edu/pub/elgb/astorb.dat.gz &> /dev/stderr
-  wget -c http://scan.sai.msu.ru/~kirx/pub/astorb.dat.gz &> /dev/stderr
+  echo "Downloading the asteroid database (astorb.dat)" 1>&2
+  #wget -c ftp://ftp.lowell.edu/pub/elgb/astorb.dat.gz 1>&2
+  wget -c http://scan.sai.msu.ru/~kirx/pub/astorb.dat.gz 1>&2
   gunzip astorb.dat.gz
   if [ ! -f astorb.dat ];then
    echo "ERROR: cannot download astorb.dat.gz"

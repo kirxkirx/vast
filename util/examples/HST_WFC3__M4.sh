@@ -283,4 +283,4 @@ gnuplot sigma_m_band2_sysrem.gnuplot
 echo "
 
 Results plotted in .eps files. Enjoy! :)
-" >> /dev/stderr
+" 

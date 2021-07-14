@@ -31,6 +31,7 @@ gnuplot mag-sigma_plot_psf-app.gnuplot
 echo "
 
 Results plotted in mag-sigma_plot_psf-app.eps
-" >> /dev/stderr
+" 
+
 
 
