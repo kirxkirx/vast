@@ -11686,6 +11686,95 @@ else
  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600_TEST_NOT_PERFORMED"
 fi
 
+######### SAI RC600 B image
+# this image requires index-204-03.fits to get solved
+if [ ! -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit.bz2" && bunzip2 J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit.bz2
+ cd $WORKDIR
+fi
+
+if [ -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "SAI RC600 B image test " 1>&2
+ echo -n "SAI RC600 B image test: " >> vast_test_report.txt 
+ cp default.sex.ccd_example default.sex
+ util/solve_plate_with_UCAC5 ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B000"
+ fi
+ if [ ! -f wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B001"
+ fi 
+ lib/bin/xy2sky wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit 200 200 &>/dev/null
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B001a"
+ fi
+ if [ ! -f wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit.cat.ucac5 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B002"
+ else
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+  #if [ $TEST -lt 170 ];then
+  # We reduced catalog search radius
+  if [ $TEST -lt 100 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B002a_$TEST"
+  fi
+ fi 
+ util/get_image_date ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit | grep --quiet "Exposure  60 sec, 16.07.2021 18:02:27 UT = JD(UT) 2459412.25205 mid. exp."
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B003"
+ fi
+ #
+ FOV=`lib/try_to_guess_image_fov ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit | awk '{print $1}'`
+ if [ "$FOV" != "23" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B004"
+ fi
+ #
+ util/calibrate_single_image.sh ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit B
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_CALIBRATE_SINGLE_IMAGE"
+ fi
+ lib/fit_robust_linear
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_FIT_ROBUST_LINEAR"
+ fi
+ TEST=`cat calib.txt_param | awk '{if ( sqrt( ($4-1.018597)*($4-1.018597) ) < 0.05 ) print 1 ;else print 0 }'`
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_FIT_ROBUST_LINEAR_COEFFA"
+ fi
+ TEST=`cat calib.txt_param | awk '{if ( sqrt( ($5-26.007315)*($5-26.007315) ) < 0.05 ) print 1 ;else print 0 }'`
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_FIT_ROBUST_LINEAR_COEFFB"
+ fi
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mSAI RC600 B image test \033[01;32mPASSED\033[00m" 1>&2
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mSAI RC600 B image test \033[01;31mFAILED\033[00m" 1>&2
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_TEST_NOT_PERFORMED"
+fi
+
+
 
 ######### Sintez 380mm image
 if [ ! -f ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits ];then
