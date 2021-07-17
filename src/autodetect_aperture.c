@@ -34,7 +34,7 @@ void make_sure_libbin_is_in_path() {
  if( NULL == strstr(pathstring, ":lib/bin") ) {
   strncat(pathstring, ":lib/bin", 8192 - 32);
   pathstring[8192 - 1]= '\0';
-  fprintf(stderr, "Updating PATH variable:\n%s\n%s\n", getenv("PATH"), pathstring);
+  //fprintf(stderr, "\nUpdating PATH variable:\n%s\n\n%s\n\n", getenv("PATH"), pathstring);
   setenv("PATH", pathstring, 1);
  }
  return;
