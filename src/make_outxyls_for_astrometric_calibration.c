@@ -60,24 +60,15 @@ int main(int argc, char **argv) {
   fprintf(stderr, "[%s] ERROR: cannot open %s\n", argv[0], ascii_catalog_filename);
   return 1;
  }
- for( n= 0; NULL != fgets(ascii_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, ascii_catalog); n++ )
-  ;
- // fprintf(stderr,"Allocating %d elements.\n",n);
+ for( n= 0; NULL != fgets(ascii_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, ascii_catalog); n++ );
  X= malloc(n * sizeof(float));
  Y= malloc(n * sizeof(float));
  FLUX= malloc(n * sizeof(float));
  fseek(ascii_catalog, 0, SEEK_SET); // go back to the beginning of the file
- //for(i=0,n_good=0,n_high_snr=0;NULL!=fgets(ascii_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, ascii_catalog),i<n;i++){
  for( i= 0, n_good= 0, n_high_snr= 0; i < n; i++ ) {
   if( NULL == fgets(ascii_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, ascii_catalog) ) {
    break;
   }
-  //fscanf(ascii_catalog,"%d  %f %f  %f %f  %f %f  %f %f %f %f %d %[^\n]",&star_number,&flux,&flux_err,&mag,&mag_err,&x,&y,&a,&a_err,&b,&b_err,&flags,external_flag_string);
-  //fscanf(ascii_catalog,"%d  %f %f  %f %f  %f %f  %f %f %f %f %d",&star_number,&flux,&flux_err,&mag,&mag_err,&x,&y,&a,&a_err,&b,&b_err,&flags);
-  /*
-  sscanf(ascii_catalog_string,"%d  %f %f  %f %f  %f %f  %f %f %f %f %d %[^\t\n]",&star_number,&flux,&flux_err,&mag,&mag_err,&x,&y,&a,&a_err,&b,&b_err,&flags,external_flag_string);
-  //
-*/
 
   if( 0 != parse_sextractor_catalog_string(ascii_catalog_string, &star_number, &flux, &flux_err, &mag, &mag_err, &x, &y, &a, &a_err, &b, &b_err, &flags, &external_flag, &psf_chi2, NULL) ) {
    fprintf(stderr, "WARNING: problem occurred while parsing SExtractor catalog %s\nThe offending line is:\n%s\n", ascii_catalog_filename, ascii_catalog_string);
@@ -97,11 +88,8 @@ int main(int argc, char **argv) {
    continue;
   if( b + b_err < FWHM_MIN )
    continue;
-  //if( a_a>aperture )continue; // we have no info on aperture here, also I'm afraid bright stars might be lost due to the upper limit on size and the bright stars are the ones needed for blind astrometric solution
 
   //
-  //if(flags!=0)continue;
-  //if ( x < FRAME_EDGE_INDENT_PIXELS || y < FRAME_EDGE_INDENT_PIXELS || fabs( x - X_im_size ) < FRAME_EDGE_INDENT_PIXELS || fabs( y - Y_im_size ) < FRAME_EDGE_INDENT_PIXELS )
   if( 1 == is_point_close_or_off_the_frame_edge(x, y, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS) ) {
    continue;
   }
@@ -113,10 +101,58 @@ int main(int argc, char **argv) {
   Y[n_good]= y;
   FLUX[n_good]= flux;
   n_good++;
-  if( flux / flux_err > 50.0 )
+  if( flux / flux_err > 50.0 ){
+  //if( flux / flux_err > 20.0 ){
    n_high_snr++;
+  }
  }
+ if( n_high_snr<100 ) {
+  // if there are too few high-snr stars - lower the SNR limit
+  fseek(ascii_catalog, 0, SEEK_SET); // go back to the beginning of the file
+  for( i= 0, n_good= 0, n_high_snr= 0; i < n; i++ ) {
+   if( NULL == fgets(ascii_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, ascii_catalog) ) {
+    break;
+   }
+
+   if( 0 != parse_sextractor_catalog_string(ascii_catalog_string, &star_number, &flux, &flux_err, &mag, &mag_err, &x, &y, &a, &a_err, &b, &b_err, &flags, &external_flag, &psf_chi2, NULL) ) {
+    fprintf(stderr, "WARNING: problem occurred while parsing SExtractor catalog %s\nThe offending line is:\n%s\n", ascii_catalog_filename, ascii_catalog_string);
+    continue;
+   }
+
+   // legacy code
+   if( flux == 0 )
+    continue;
+   if( flux_err == 999999 )
+    continue;
+   if( mag == 99.0000 )
+    continue;
+   if( mag_err == 99.0000 )
+    continue;
+   if( a + a_err < FWHM_MIN )
+    continue;
+   if( b + b_err < FWHM_MIN )
+    continue;
+ 
+   //
+   if( 1 == is_point_close_or_off_the_frame_edge(x, y, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS) ) {
+    continue;
+   }
+   if( flux / flux_err < MIN_SNR ) {
+    continue;
+   }
+   // else this is a reasonably good star
+   X[n_good]= x;
+   Y[n_good]= y;
+   FLUX[n_good]= flux;
+   n_good++;
+   if( flux / flux_err > 20.0 ){
+    n_high_snr++;
+   }
+  }
+ } // if too few high-SNR stars
  fclose(ascii_catalog);
+ 
+ fprintf(stderr, "%s found %d high-SNR stars for plate solving\n",argv[0], n_high_snr);
 
  // Check if we have enough high-SNR stars to attempt plate solving
  //if ( n_high_snr < 10 ) {
@@ -149,6 +185,9 @@ int main(int argc, char **argv) {
  // Use only N brightest stars!
  if( n_good > 10000 )
   n_good= 10000;
+ 
+ if( n_good > n_high_snr )
+  n_good= n_high_snr;
 
  // Create FITS table
  char *ttype[3]= {"X_IMAGE", "Y_IMAGE", "FLUX_APER"};
