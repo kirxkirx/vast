@@ -344,9 +344,10 @@ EXCLUSION_LIST_FILE="exclusion_list.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
  #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
- while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
-  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 17/3600.0 ) print "FOUND" }' | grep "FOUND" && break
- done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND"
+# while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
+#  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 17/3600.0 ) print "FOUND" }' | grep "FOUND" && break
+# done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND"
+ lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 17 | grep --quiet "FOUND"
  if [ $? -eq 0 ];then
   echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
   clean_tmp_files
@@ -358,9 +359,10 @@ EXCLUSION_LIST_FILE="exclusion_list_bbsc.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
  #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
- while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
-  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 240/3600.0 ) print "FOUND" }' | grep "FOUND" && break
- done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" 
+# while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
+#  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 240/3600.0 ) print "FOUND" }' | grep "FOUND" && break
+# done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" 
+ lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 240 | grep --quiet "FOUND"
  if [ $? -eq 0 ];then
   echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
   clean_tmp_files
@@ -372,9 +374,10 @@ EXCLUSION_LIST_FILE="exclusion_list_bsc.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
  #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
- while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
-  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 130/3600.0 ) print "FOUND" }' | grep "FOUND" && break
- done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND"
+# while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
+#  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 130/3600.0 ) print "FOUND" }' | grep "FOUND" && break
+# done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND"
+ lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 130 | grep --quiet "FOUND"
  if [ $? -eq 0 ];then
   echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
   clean_tmp_files
@@ -386,9 +389,10 @@ EXCLUSION_LIST_FILE="exclusion_list_tycho2.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
  #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
- while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
-  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 20/3600.0 ) print "FOUND" }' | grep "FOUND" && break
- done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND"
+# while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
+#  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 20/3600.0 ) print "FOUND" }' | grep "FOUND" && break
+# done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND"
+ lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 20 | grep --quiet "FOUND"
  if [ $? -eq 0 ];then
   echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
   clean_tmp_files
@@ -400,9 +404,10 @@ EXCLUSION_LIST_FILE="exclusion_list_local.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
  #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
- while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
-  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 17/3600.0 ) print "FOUND" }' | grep "FOUND" && break
- done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND"
+# while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
+#  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 17/3600.0 ) print "FOUND" }' | grep "FOUND" && break
+# done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND"
+ lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 17 | grep --quiet "FOUND"
  if [ $? -eq 0 ];then
   echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
   clean_tmp_files
