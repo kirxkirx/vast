@@ -192,7 +192,7 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
   fprintf(stdout, "Angular distance  %02d:%02d:%05.2lf = ", hh2, mm2, ss2);
   fprintf(stdout, "%lf degrees\n", distance * ARCSEC_IN_RAD / 3600);
  } else {
-  if( distance * ARCSEC_IN_RAD / 3600.0 < search_radius_arcsec ) {
+  if( distance * ARCSEC_IN_RAD < search_radius_arcsec ) {
    return 0;
   } else {
    return 1;
