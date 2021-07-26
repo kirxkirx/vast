@@ -29,6 +29,7 @@
 #endif
 
 #define TWOPI 2.0 * M_PI
+#define FOURPI 4.0 * M_PI
 
 void get_min_max(double *x, int N, double *min, double *max) {
  int i;
@@ -64,6 +65,80 @@ unsigned long int random_seed() {
  return (seed);
 }
 
+void compute_LS(double *jd, double *m, unsigned int N_obs, double f, double *LS_Power) {
+ unsigned int i;
+ double ReF, ImF, C, S, angle;
+ 
+ double t, tau;
+
+ double ReF2, ImF2;
+ 
+ double mean,sigma_squared;
+
+ // Compute tau:  Eq. (34) of 2018ApJS..236...16V
+ ReF= ImF= 0.0;
+ for( i= N_obs; i--; ) {
+  // not sure if we should bother subtracting jd[0], but I'm afraid of large numbers
+  t= jd[i] - jd[0];
+  angle= FOURPI * f * t;
+#ifdef VAST_USE_SINCOS
+  sincos(angle, &S, &C);
+#else
+  C= cos(angle);
+  S= sin(angle);
+#endif
+  ImF+= S;
+  ReF+= C;
+ }
+ tau= 1.0/(FOURPI * f) * atan2( ImF, ReF);
+ //
+
+ // Compute LS Power:  Eq. (33) of 2018ApJS..236...16V
+ ReF2= ImF2= ReF= ImF= 0.0;
+ //for(i=0;i<N_obs;i++){
+ for( i= N_obs; i--; ) {
+  
+  // not sure if we should bother subtracting jd[0], but I'm afraid of large numbers
+  t= jd[i] - jd[0];
+  angle= TWOPI * f * (t - tau);
+#ifdef VAST_USE_SINCOS
+  sincos(angle, &S, &C);
+#else
+  C= cos(angle);
+  S= sin(angle);
+#endif
+  ReF+= m[i] * C;
+  ImF+= m[i] * S;
+  ReF2+= C*C;
+  ImF2+= S*S;
+ }
+ 
+ // This how the LS periodogram is normalized in Eq. (10) of 1982ApJ...263..835S and Eq. (33) of 2018ApJS..236...16V
+ // This is also astropy's 'psd' normalization when no errors are supplied.
+ //(*LS_Power)= 0.5 * ( ReF*ReF/ReF2 + ImF*ImF/ImF2 ); 
+ //
+ // "Numerical recipes in C" 1992nrca.book.....P Eq. (13.8.4) shows that the above thing should be divided by 
+ // the variance of the data to get the normalization that can be used as the input of FAP calculations.
+ //
+ // Actually, man should be 0,0 as it only make sence to tun the LS computation on the mean-subtracted lightcurve!
+ // We compute it here just for the sake of completeness.
+ mean= 0.0;
+ for( i= N_obs; i--; ) {
+  mean+= m[i];
+ }
+ mean= mean/(double)N_obs;
+ sigma_squared= 0.0;
+ for( i= N_obs; i--; ) {
+  sigma_squared+= (m[i] - mean) * (m[i] - mean);
+ }
+ sigma_squared= sigma_squared/(double)(N_obs-1);
+ (*LS_Power)= 1.0/(2.0*sigma_squared) * ( ReF*ReF/ReF2 + ImF*ImF/ImF2 );
+ //
+
+ return;
+}
+
+
 void compute_DFT(double *jd, double *m, unsigned int N_obs, double f, double *DFT, double T_DFT) {
  unsigned int i;
  double ReF, ImF, C, S, angle, dN_obs;
@@ -93,7 +168,7 @@ void compute_DFT(double *jd, double *m, unsigned int N_obs, double f, double *DF
  return;
 }
 
-void normalize_spectral_window_file(unsigned long int N_freq) {
+void normalize_spectral_window_file(unsigned long int N_freq, char *periodogramfilename) {
 
  // Normilize window function
 
@@ -107,7 +182,10 @@ void normalize_spectral_window_file(unsigned long int N_freq) {
 
  unsigned long int i;
 
- periodogramfile= fopen("deeming.periodogram", "r");
+ periodogramfile= fopen(periodogramfilename, "r");
+ if( NULL==periodogramfile ){
+  fprintf(stderr,"ERROR in normalize_spectral_window_file(): cannot open file %s\n", periodogramfilename);
+ }
  i= 0;
  while( -1 < fscanf(periodogramfile, "%lf %lf %lf", &freq[i], &theta[i], &window[i]) )
   i++;
@@ -121,7 +199,7 @@ void normalize_spectral_window_file(unsigned long int N_freq) {
    max_W= window[i];
  }
  max_F_to_max_W= max_F / max_W;
- periodogramfile= fopen("deeming.periodogram", "w");
+ periodogramfile= fopen(periodogramfilename, "w");
  for( i= 0; i < N_freq; i++ ) {
   window[i]= window[i] * max_F_to_max_W;
   fprintf(periodogramfile, "%5.10lf %5.10lf %5.10lf\n", freq[i], theta[i], window[i]);
@@ -186,6 +264,7 @@ int main(int argc, char **argv) {
  FILE *lcfile= NULL;
  FILE *LK_periodogramfile= NULL;
  FILE *DFT_periodogramfile= NULL;
+ FILE *LS_periodogramfile= NULL;
 
  double pmax= atof(argv[2]);
  double pmin= atof(argv[3]);
@@ -245,7 +324,9 @@ int main(int argc, char **argv) {
  unsigned long int N_freq;
  double *freq= NULL;
  double *power= NULL;
+ double *power_LS= NULL;
  double *spectral_window= NULL;
+ double *spectral_window_LS= NULL;
  double *theta= NULL;
 
  unsigned int N_obs;
@@ -256,14 +337,25 @@ int main(int argc, char **argv) {
  double merr, x, y, app;       // not actually used, needed for compatibility with read_lightcurve_point()
  char string[FILENAME_LENGTH]; // used for comaptibility with read_lightcurve_point() and re-used later
 
- double LK_periodogram_max, LK_periodogram_max_freq;
- double DFT_periodogram_max, DFT_periodogram_max_freq;
- double noshuffle_DFT_periodogram_max, noshuffle_DFT_periodogram_max_freq;
- double noshuffle_LK_periodogram_max, noshuffle_LK_periodogram_max_freq;
+ // I initialize everything to make gcc happy
+ double LK_periodogram_max= 0.0;
+ double LK_periodogram_max_freq= 0.0;
+ double DFT_periodogram_max= 0.0;
+ double DFT_periodogram_max_freq= 0.0;
+ double LS_periodogram_max= 0.0;
+ double LS_periodogram_max_freq= 0.0;
+ double noshuffle_DFT_periodogram_max= 0.0;
+ double noshuffle_DFT_periodogram_max_freq= 0.0;
+ double noshuffle_LK_periodogram_max= 0.0;
+ double noshuffle_LK_periodogram_max_freq= 0.0;
+ double noshuffle_LS_periodogram_max= 0.0;
+ double noshuffle_LS_periodogram_max_freq= 0.0;
  double DFT_p= 0.0;                // propability of false peak estimated from shuffling
  double LK_p= 0.0;                 // same as above but for the LK peak
+ double LS_p= 0.0;                 // same as above but for the LK peak
  int DFT_shuffled_peak_counter= 0; // peaks higher then the one found in the original non-shuffled lightcurve
  int LK_shuffled_peak_counter= 0;  // peaks higher then the one found in the original non-shuffled lightcurve
+ int LS_shuffled_peak_counter= 0;  // peaks higher then the one found in the original non-shuffled lightcurve
 
  double jdmin, jdmax, T;
 
@@ -291,17 +383,26 @@ int main(int argc, char **argv) {
 
  // Select operation mode
  // Use all methods by default
+ int compute_LombScargle= 1; // 1 - yes, 0 - no
  int compute_Deeming= 1; // 1 - yes, 0 - no
  int compute_LK= 1;      // 1 - yes, 0 - no
  if( 0 == strcmp("deeming_compute_periodogram", basename(argv[0])) ) {
   // Only Deeming
+  compute_LombScargle= 0;      // 1 - yes, 0 - no
   compute_Deeming= 1; // 1 - yes, 0 - no
   compute_LK= 0;      // 1 - yes, 0 - no
  }
  if( 0 == strcmp("lk_compute_periodogram", basename(argv[0])) ) {
-  // Only Deeming
+  // Only LK
+  compute_LombScargle= 0;      // 1 - yes, 0 - no
   compute_Deeming= 0; // 1 - yes, 0 - no
   compute_LK= 1;      // 1 - yes, 0 - no
+ }
+ if( 0 == strcmp("ls_compute_periodogram", basename(argv[0])) ) {
+  // Only LombScargle
+  compute_LombScargle= 1;      // 1 - yes, 0 - no
+  compute_Deeming= 0; // 1 - yes, 0 - no
+  compute_LK= 0;      // 1 - yes, 0 - no
  }
  //
 
@@ -337,9 +438,9 @@ int main(int argc, char **argv) {
   fclose(lcfile);
   return 1;
  }
- if( compute_Deeming == 1 ) {
-  // if this is one iteration and the Deeming method is to be used - we'll also need the spectral window
-  if( compute_Deeming == 1 && shuffle_iterations == 0 ) {
+ if( compute_Deeming == 1 || compute_LombScargle == 1 ) {
+  // if this is one iteration and the Deeming or LombScargle method is to be used - we'll also need the spectral window
+  if( shuffle_iterations == 0 ) {
    m_fake= malloc(N_obs * sizeof(double));
    if( m_fake == NULL ) {
     fprintf(stderr, "ERROR: allocating memory for the m_fake array!\n");
@@ -367,6 +468,13 @@ int main(int argc, char **argv) {
   fprintf(stderr, "ERROR: too few observations in the input lightcurve: %d<5 \n", N_obs);
   free(m);
   free(jd);
+  //
+  if( compute_Deeming == 1 || compute_LombScargle == 1 ) {
+   if( shuffle_iterations == 0 ) {
+    free(m_fake);
+   }
+  }
+  //
   return 1;
  }
 
@@ -409,12 +517,25 @@ int main(int argc, char **argv) {
  }
 
  freq= malloc(N_freq * sizeof(double));
- if( compute_Deeming == 1 )
+ if( compute_LombScargle == 1 ) {
+  power_LS= malloc(N_freq * sizeof(double));
+ }
+ if( compute_Deeming == 1 ) {
   power= malloc(N_freq * sizeof(double));
- if( compute_Deeming == 1 && shuffle_iterations == 0 )
-  spectral_window= malloc(N_freq * sizeof(double));
- if( compute_LK == 1 )
+ }
+ if( compute_Deeming == 1 ) {
+  if( shuffle_iterations == 0 ) {
+   spectral_window= malloc(N_freq * sizeof(double));
+  }
+ }
+ if( compute_LombScargle == 1 ) {
+  if( shuffle_iterations == 0 ) {
+   spectral_window_LS= malloc(N_freq * sizeof(double));
+  }
+ }
+ if( compute_LK == 1 ) {
   theta= malloc(N_freq * sizeof(double));
+ }
 
  // +1 as we always want at least one iteration - the run at the original non-shuffled lightcurve
  for( shuffle_iteration= 0; shuffle_iteration < shuffle_iterations + 1; shuffle_iteration++ ) {
@@ -439,20 +560,35 @@ int main(int argc, char **argv) {
 #endif
   for( i= 0; i < N_freq; i++ ) {
    freq[i]= fmin + i * df;
-   if( compute_Deeming == 1 )
+   if( compute_LombScargle == 1 ) {
+    compute_LS(jd, m, N_obs, freq[i], &power_LS[i]);
+    if( shuffle_iterations == 0 ) {
+     compute_LS(jd, m_fake, N_obs, freq[i], &spectral_window_LS[i]);
+    }
+   }
+   if( compute_Deeming == 1 ) {
     compute_DFT(jd, m, N_obs, freq[i], &power[i], T_DFT);
-   if( compute_Deeming == 1 && shuffle_iterations == 0 )
-    compute_DFT(jd, m_fake, N_obs, freq[i], &spectral_window[i], T_DFT);
-   if( compute_LK == 1 )
+    if( shuffle_iterations == 0 ) {
+     compute_DFT(jd, m_fake, N_obs, freq[i], &spectral_window[i], T_DFT);
+    }
+   }
+   if( compute_LK == 1 ) {
     theta[i]= compute_LK_reciprocal_theta(jd, m, N_obs, freq[i], 0.0); // mean mag is always 0.0 as we subtracted it from the LC
-   //                                          (double *jd, double *m, unsigned int N_obs, double f, double M)
+   }
   }
 
   DFT_periodogram_max= 0.0;
   LK_periodogram_max= 0.0;
+  LS_periodogram_max= 0.0;
   // This part is not parrallell for simplicity
   //for(i=0;i<N_freq;i++){
   for( i= N_freq; i--; ) {
+   if( compute_LombScargle == 1 ) {
+    if( power_LS[i] >= LS_periodogram_max ) {
+     LS_periodogram_max= power_LS[i];
+     LS_periodogram_max_freq= freq[i];
+    }
+   }
    if( compute_Deeming == 1 ) {
     if( power[i] >= DFT_periodogram_max ) {
      DFT_periodogram_max= power[i];
@@ -469,6 +605,10 @@ int main(int argc, char **argv) {
 
   if( shuffle_iteration == 0 ) {
    // If this is the first (or the only shuffle iteration)
+   if( compute_LombScargle == 1 ) {
+    noshuffle_LS_periodogram_max_freq= LS_periodogram_max_freq;
+    noshuffle_LS_periodogram_max= LS_periodogram_max;
+   }
    if( compute_Deeming == 1 ) {
     noshuffle_DFT_periodogram_max_freq= DFT_periodogram_max_freq;
     noshuffle_DFT_periodogram_max= DFT_periodogram_max;
@@ -479,6 +619,11 @@ int main(int argc, char **argv) {
    }
   } else {
    // If this is not the first iteration
+   if( compute_LombScargle == 1 ) {
+    if( LS_periodogram_max >= noshuffle_LS_periodogram_max ) {
+     LS_shuffled_peak_counter++;
+    }
+   }
    if( compute_Deeming == 1 ) {
     if( DFT_periodogram_max >= noshuffle_DFT_periodogram_max ) {
      DFT_shuffled_peak_counter++;
@@ -492,6 +637,10 @@ int main(int argc, char **argv) {
   }
 
   if( shuffle_iteration > 0 ) {
+   if( compute_LombScargle == 1 ) {
+    LS_p= (double)LS_shuffled_peak_counter / (double)shuffle_iteration;
+    fprintf(stderr, " LS: %.6lf +/- %.6lf  %5d out of %5d peaks are above the original highest peak of %.6lf (current peak: %.6lf ); %5d iterations\n", LS_p, sqrt((double)LS_shuffled_peak_counter) / (double)shuffle_iteration, LS_shuffled_peak_counter, shuffle_iteration, noshuffle_LS_periodogram_max, LS_periodogram_max, shuffle_iterations);
+   }
    if( compute_Deeming == 1 ) {
     DFT_p= (double)DFT_shuffled_peak_counter / (double)shuffle_iteration;
     fprintf(stderr, "DFT: %.6lf +/- %.6lf  %5d out of %5d peaks are above the original highest peak of %.6lf (current peak: %.6lf ); %5d iterations\n", DFT_p, sqrt((double)DFT_shuffled_peak_counter) / (double)shuffle_iteration, DFT_shuffled_peak_counter, shuffle_iteration, noshuffle_DFT_periodogram_max, DFT_periodogram_max, shuffle_iterations);
@@ -513,6 +662,32 @@ int main(int argc, char **argv) {
  free(m);
 
  // Print out the results
+ if( compute_LombScargle == 1 ) {
+  fprintf(stdout, "%.10lf %lf", noshuffle_LS_periodogram_max_freq, noshuffle_LS_periodogram_max);
+  if( shuffle_iterations > 0 )
+   fprintf(stdout, "  %lf +/- %lf", LS_p, sqrt((double)LS_shuffled_peak_counter) / (double)shuffle_iterations);
+  //fprintf(stdout, " LS\n");
+  // naively estimate FAP
+  // estimate the number of independent frequencies
+  df= 1.0 / T;
+  unsigned long int N_freq_presumably_independent= ( unsigned long int )( ( fmax - fmin ) / df + 0.5 );
+  // update the estimated number of independent frequencies following the shaman ritual of Schwarzenberg-Czerny (2003), Sec. 5.3
+  // https://ui.adsabs.harvard.edu/abs/2003ASPC..292..383S/abstract
+  if ( N_freq_presumably_independent > N_freq ) {
+   N_freq_presumably_independent= N_freq;
+  }
+  if ( N_freq_presumably_independent > N_obs ) {
+   N_freq_presumably_independent= N_obs;
+  }
+  // compute FAP
+  double FAP_single= exp(-1.0*noshuffle_LS_periodogram_max);
+  double Psingle= 1.0 - FAP_single;
+  double FAP= 1.0 - pow(Psingle, (double)N_freq_presumably_independent);
+  //
+  
+  fprintf(stdout, " LS  FAP= %lg for %ld presumably independent frequencies (FAP_single_freq= %lg )\n", FAP, N_freq_presumably_independent, FAP_single);
+  //
+ }
  if( compute_Deeming == 1 ) {
   fprintf(stdout, "%.10lf %lf", noshuffle_DFT_periodogram_max_freq, noshuffle_DFT_periodogram_max);
   if( shuffle_iterations > 0 )
@@ -542,29 +717,60 @@ int main(int argc, char **argv) {
     return 1;
    }
   }
+  if( compute_LombScargle == 1 ) {
+   LS_periodogramfile= fopen("ls.periodogram", "w");
+   if( NULL == LS_periodogramfile ) {
+    fprintf(stderr, "ERROR  writing ls.periodogram\n");
+    return 1;
+   }
+  }
   for( i= 0; i < N_freq; i++ ) {
    if( compute_LK == 1 )
     fprintf(LK_periodogramfile, "%5.10lf %5.10lf\n", freq[i], theta[i]);
    if( compute_Deeming == 1 )
     fprintf(DFT_periodogramfile, "%5.10lf %5.10lf %5.10lf\n", freq[i], power[i], spectral_window[i]);
+   if( compute_LombScargle == 1 )
+    fprintf(LS_periodogramfile, "%5.10lf %5.10lf %5.10lf\n", freq[i], power_LS[i], spectral_window_LS[i]);
   }
-  if( compute_LK == 1 )
+  if( compute_LK == 1 ) {
    fclose(LK_periodogramfile);
+  }
   if( compute_Deeming == 1 ) {
    fclose(DFT_periodogramfile);
    // We don't care if we didn't compute spectral window
-   normalize_spectral_window_file(N_freq);
+   normalize_spectral_window_file(N_freq, "deeming.periodogram");
+  }
+  if( compute_LombScargle == 1 ) {
+   fclose(LS_periodogramfile);
+   // We don't care if we didn't compute spectral window
+   normalize_spectral_window_file(N_freq, "ls.periodogram");
   }
  }
 
  free(freq);
- if( compute_LK == 1 )
+ if( compute_LK == 1 ) {
   free(theta);
- if( compute_Deeming == 1 )
+ }
+ if( compute_Deeming == 1 ) {
   free(power);
- if( compute_Deeming == 1 && shuffle_iterations == 0 ) {
-  free(m_fake);
-  free(spectral_window);
+ }
+ if( compute_LombScargle == 1 ) {
+  free(power_LS);
+ }
+ if( compute_Deeming == 1 || compute_LombScargle == 1 ) {
+  if( shuffle_iterations == 0 ) {
+   free(m_fake);
+  }
+ }
+ if( compute_Deeming == 1 ) {
+  if( shuffle_iterations == 0 ) {
+   free(spectral_window);
+  }
+ }
+ if( compute_LombScargle == 1 ) {
+  if( shuffle_iterations == 0 ) {
+   free(spectral_window_LS);
+  }
  }
 
  return 0;

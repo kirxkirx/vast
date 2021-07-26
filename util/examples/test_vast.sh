@@ -15840,6 +15840,11 @@ TEST_PASSED=1
 echo "Performing the second period search test " 1>&2
 echo -n "Performing the second period search test: " >> vast_test_report.txt 
 
+lib/ls_compute_periodogram lib/test/hads_p0.060.dat 0.20 0.05 0.1 | grep "16.661" &>/dev/null
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH001"
+fi
 lib/lk_compute_periodogram lib/test/hads_p0.060.dat 1.0 0.05 0.1 | grep "16.661" &>/dev/null
 if [ $? -ne 0 ];then
  TEST_PASSED=0
@@ -15854,6 +15859,16 @@ lib/deeming_compute_periodogram lib/test/hads_p0.060.dat 1.0 0.05 0.1 10 2>/dev/
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH103"
+fi
+NUMBER=`lib/compute_periodogram_allmethods lib/test/hads_p0.060.dat 0.20 0.05 0.1 | grep -e 'LS' -e 'DFT' -e 'LK' | grep -c '16.661'`
+if [ $NUMBER -ne 3 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH104"
+fi
+FAP=`lib/ls_compute_periodogram lib/test/hads_p0.060.dat 0.20 0.05 0.1 | awk '{print $5}'`
+if [ $FAP -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH105"
 fi
 
 # Make an overall conclusion for this test

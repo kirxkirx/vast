@@ -1,5 +1,17 @@
 	* Automatic magnitude calibration scripts now support g magnitudes derived from
 	APASS or PanSTARRS1 catalogs.
+	* The period search routine 'lib/ls_compute_periodogram' can now compute 
+	the Lomb-Scargle periodogram and the associated False Alarm Probabilities as defined by 
+	https://ui.adsabs.harvard.edu/abs/1982ApJ...263..835S/abstract
+	https://ui.adsabs.harvard.edu/abs/2018ApJS..236...16V/abstract
+	https://ui.adsabs.harvard.edu/abs/1992nrca.book.....P/abstract (the "Numerical recipes in C" book).
+	As these False Alarm Probabilities have limited practical use (as they assume independent Gaussian 
+	noise in measurements), Lomb-Scargle periodogram has virtually no advantages over Deeming's Discrete 
+	Fourier Transform. But co-authors and referees keep asking for is as Lomb-Scargle is so popular, 
+	so here is an implementation. As with the DFT and Lafler & Kinman (string-length) period search 
+	implementations in VaST, the Lomb-Scargle periodogram is implemented as a command line tool
+	(the periodogram file it produces 'ls.periodogram' may be visualized with 'gnuplot').
+	The Lomb-Scargle support in the interactive online period search tool integrated with VaST is coming soon.
 	* VaST will not try to update the leap second 'tai-utc.dat' file as there is no more
 	an official way to do it: the links http://maia.usno.navy.mil/ser7/tai-utc.dat and 
 	ftp://toshi.nofs.navy.mil/ser7/tai-utc.dat are down forever. If you know how to get 

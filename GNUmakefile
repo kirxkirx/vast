@@ -327,7 +327,7 @@ lib/periodFilter/periodFilter: $(SRC_PATH)period_search/periodFilter/periodFilte
 lib/BLS/bls: $(SRC_PATH)period_search/BLS/bls.c
 	$(CC) $(OPTFLAGS) -o lib/BLS/bls $(SRC_PATH)period_search/BLS/bls.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 lib/lk_compute_periodogram: lib/deeming_compute_periodogram
-	cd lib/; ln -s  deeming_compute_periodogram lk_compute_periodogram ; ln -s deeming_compute_periodogram compute_periodogram_allmethods ; cd ..
+	cd lib/; ln -s  deeming_compute_periodogram lk_compute_periodogram ; ln -s deeming_compute_periodogram compute_periodogram_allmethods ; ln -s deeming_compute_periodogram ls_compute_periodogram ; cd ..
 deeming_compute_periodogram.o: $(SRC_PATH)period_search/deeming_compute_periodogram.c
 	$(CC) $(OPTFLAGS) -c -o deeming_compute_periodogram.o $(SRC_PATH)period_search/deeming_compute_periodogram.c -I$(GSL_INCLUDE) -lm
 lib/deeming_compute_periodogram: deeming_compute_periodogram.o #get_number_of_cpu_cores.o
@@ -513,7 +513,7 @@ clean: clean_libraries
 	rm -f lib/try_to_guess_image_fov
 	rm -f lib/test/stetson_test
 	rm -f util/split_multiextension_fits
-	rm -f lib/lk_compute_periodogram lib/deeming_compute_periodogram lib/compute_periodogram_allmethods
+	rm -f lib/ls_compute_periodogram lib/lk_compute_periodogram lib/deeming_compute_periodogram lib/compute_periodogram_allmethods
 	rm -f lib/guess_saturation_limit_main
 	rm -f lib/remove_bad_images lib/MagSize_filter_standalone
 	rm -f lib/select_only_n_random_points_from_set_of_lightcurves
