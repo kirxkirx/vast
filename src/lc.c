@@ -53,7 +53,7 @@ void print_help() {
  fprintf(stderr, "  'D' or 'Z'+'Z' - default zoom\n");
  fprintf(stderr, "  'E' - display error bars (on/off)\n");
  fprintf(stderr, "  'S' - save lightcurve to .ps file\n");
- // fprintf(stderr,"  'N' - save lightcurve to .png file\n");
+ fprintf(stderr, "  'N' - save lightcurve to .png file (if compiled with libpng support)\n");
  fprintf(stderr, "  'T' - terminate a single point\n");
  fprintf(stderr, "  'C' + draw a rectangle - remove many point\n");
  fprintf(stderr, "  '1' - display linear trend fit to the lightcurve (on/off)\n");
@@ -90,55 +90,73 @@ void minumum_kwee_van_woerden(float *fit_jd, float *fit_mag, int fit_n, double d
  return;
 }
 
-void remove_linear_trend(float *fit_jd, float *mag, int N, double A, double B, double mean_jd, double mean_mag, float jd_min, float jd_max) {
+void remove_linear_trend(float *fit_jd, float *mag, int N, double A, double B, double mean_jd, double mean_mag, float jd_min, float jd_max, double mag_zeropoint_for_log, double *JD_double_array_for_log) {
+
+ FILE *vast_lc_remove_linear_trend_logfile;
+
  int i;
  float *plot_jd;
  float *plot_y;
  float E1, E2;
+
+ float E3, E4;
+ float *corrected_mag;
+
  if( N <= 0 ) {
   fprintf(stderr, "ERROR: Trying allocate zero or negative bytes amount(lc.c)\n");
   exit(1);
- };
+ }
  plot_jd= malloc(N * sizeof(float));
  if( plot_jd == NULL ) {
   fprintf(stderr, "ERROR: Couldn't allocate memory for plot_jd(lc.c)\n");
   exit(1);
- };
+ }
  plot_y= malloc(N * sizeof(float));
  if( plot_y == NULL ) {
   fprintf(stderr, "ERROR: Couldn't allocate memory for plot_y(lc.c)\n");
   exit(1);
- };
+ }
+ corrected_mag= malloc(N * sizeof(float));
+ if( corrected_mag == NULL ) {
+  fprintf(stderr, "ERROR: Couldn't allocate memory for plot_y(lc.c)\n");
+  exit(1);
+ }
+ 
+ vast_lc_remove_linear_trend_logfile=fopen("vast_lc_remove_linear_trend.log","a");
+ if( vast_lc_remove_linear_trend_logfile == NULL ) {
+  fprintf(stderr, "ERROR: Cannot open file vast_lc_remove_linear_trend.log\n");
+  exit(1);
+ }
+
  for( i= 0; i < N; i++ ) {
   if( fit_jd[i] >= jd_min && fit_jd[i] <= jd_max ) {
    plot_jd[i]= fit_jd[i] - (float)(mean_jd);
    plot_y[i]= (float)(A)*plot_jd[i] + (float)(B);
    plot_jd[i]= plot_jd[i] + (float)mean_jd;
    if( mag[i] > 100.0 ) {
-    mag[i]= mag[i] - plot_y[i]; // assume it's not magnitude but something linear
+    corrected_mag[i]= mag[i] - plot_y[i]; // assume it's not magnitude but something linear
+    corrected_mag[i]= corrected_mag[i] - (float)mean_mag; // assume it's not magnitude but something linear
    } else {
     // subtract magnitudes
     E1= powf(10.0f, -0.4f * plot_y[i]);
     E2= powf(10.0f, -0.4f * mag[i]);
-    mag[i]= 2.5f * log10f(E1 / E2);
+    //corrected_mag[i]= 2.5f * log10f(E1 / E2);
+    E3= powf(10.0f, -0.4f * (float)mean_mag);
+    E4= powf(10.0f, -0.4f * ( 2.5f * log10f(E1 / E2) )  );
+    corrected_mag[i]= 2.5f * log10f(E3 / E4);
    }
+   //
+   E1= powf(10.0f, -0.4f * plot_y[i]);
+   E3= powf(10.0f, -0.4f * (float)mean_mag);
+   //
+   fprintf(vast_lc_remove_linear_trend_logfile, "%.5lf  %9.5f  %9.5f  %9.5f \n", JD_double_array_for_log[i], corrected_mag[i],  plot_y[i] + (float)mean_mag + (float)mag_zeropoint_for_log, mag[i]);
+   mag[i]= corrected_mag[i];
   } // if( fit_jd[i]>jd_min && fit_jd[i]<jd_max )
  }
 
- // correct for mean_mag
- for( i= 0; i < N; i++ ) {
-  if( fit_jd[i] >= jd_min && fit_jd[i] <= jd_max ) {
-   if( mag[i] > 100.0 ) {
-    mag[i]= mag[i] - mean_mag; // assume it's not magnitude but something linear
-   } else {
-    // subtract magnitudes
-    E1= powf(10.0f, -0.4f * mean_mag);
-    E2= powf(10.0f, -0.4f * mag[i]);
-    mag[i]= 2.5f * log10f(E1 / E2);
-   }
-  } // if( fit_jd[i]>jd_min && fit_jd[i]<jd_max )
- }
+ fclose(vast_lc_remove_linear_trend_logfile);
 
+ free(corrected_mag);
  free(plot_y);
  free(plot_jd);
 
@@ -1065,6 +1083,9 @@ int main(int argc, char **argv) {
 
   // subtract one or many linear trends (many trends may be defined in regions separated by breaks)
   if( curC == '-' ) {
+   //
+   unlink("vast_lc_remove_linear_trend.log");
+   //
 
    if( fit_n == 0 ) {
     // allocate memory
@@ -1088,11 +1109,12 @@ int main(int argc, char **argv) {
 
    // if there are no breaks, just one trend
    if( n_breaks == 0 ) {
-    if( jump_instead_of_break == 0 )
+    if( jump_instead_of_break == 0 ) {
      fit_linear_trend(float_JD, mag, mag_err, Nobs, &A, &B, &mean_jd, &mean_mag);
-    else
+    } else {
      fit_median_for_jumps(float_JD, mag, mag_err, Nobs, &A, &B, &mean_jd, &mean_mag);
-    remove_linear_trend(float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, minJD, maxJD);
+    }
+    remove_linear_trend(float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, minJD, maxJD, m_mean, JD);
    }
 
    // if there is only one break
@@ -1107,11 +1129,12 @@ int main(int argc, char **argv) {
       fit_n++;
      }
     }
-    if( jump_instead_of_break == 0 )
+    if( jump_instead_of_break == 0 ) {
      fit_linear_trend(fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag);
-    else
+    } else {
      fit_median_for_jumps(fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag);
-    remove_linear_trend(float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, minJD, breaks[0]);
+    }
+    remove_linear_trend(float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, minJD, breaks[0], m_mean, JD);
     //
     //
     fit_n= 0;
@@ -1123,11 +1146,12 @@ int main(int argc, char **argv) {
       fit_n++;
      }
     }
-    if( jump_instead_of_break == 0 )
+    if( jump_instead_of_break == 0 ) {
      fit_linear_trend(fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag);
-    else
+    } else {
      fit_median_for_jumps(fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag);
-    remove_linear_trend(float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, breaks[0], maxJD);
+    }
+    remove_linear_trend(float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, breaks[0], maxJD, m_mean, JD);
     //
    }
 
@@ -1143,11 +1167,12 @@ int main(int argc, char **argv) {
       fit_n++;
      }
     }
-    if( jump_instead_of_break == 0 )
+    if( jump_instead_of_break == 0 ) {
      fit_linear_trend(fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag);
-    else
+    } else {
      fit_median_for_jumps(fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag);
-    remove_linear_trend(float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, minJD, breaks[0]);
+    }
+    remove_linear_trend(float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, minJD, breaks[0], m_mean, JD);
     //
     //
     for( j= 1; j < n_breaks; j++ ) {
@@ -1160,11 +1185,12 @@ int main(int argc, char **argv) {
        fit_n++;
       }
      }
-     if( jump_instead_of_break == 0 )
+     if( jump_instead_of_break == 0 ) {
       fit_linear_trend(fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag);
-     else
+     } else {
       fit_median_for_jumps(fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag);
-     remove_linear_trend(float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, breaks[j - 1], breaks[j]);
+     }
+     remove_linear_trend(float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, breaks[j - 1], breaks[j], m_mean, JD);
     }
     //
     //
@@ -1177,12 +1203,15 @@ int main(int argc, char **argv) {
       fit_n++;
      }
     }
-    if( jump_instead_of_break == 0 )
+    if( jump_instead_of_break == 0 ) {
      fit_linear_trend(fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag);
-    else
+    } else {
      fit_median_for_jumps(fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag);
-    remove_linear_trend(float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, breaks[n_breaks - 1], maxJD);
+    }
+    remove_linear_trend(float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, breaks[n_breaks - 1], maxJD, m_mean, JD);
    }
+   
+   fprintf(stderr, "Writing the trend-subtraction log file \E[34;47m vast_lc_remove_linear_trend.log \E[33;00m\n");
 
    was_lightcurve_changed= 1; // note, that lightcurve was changed
 
@@ -1585,10 +1614,10 @@ int main(int argc, char **argv) {
    }
 
    if( xw_ps == 1 ) {
-    fprintf(stderr, "Lightcurve plot saved to %s.ps\n", star_name);
+    fprintf(stderr, "Lightcurve plot saved to \E[34;47m %s.ps \E[33;00m \n", star_name);
    }
    if( xw_ps == 2 ) {
-    fprintf(stderr, "Lightcurve plot saved to %s.png\n", star_name);
+    fprintf(stderr, "Lightcurve plot saved to \E[34;47m %s.png \E[33;00m \n", star_name);
    }
 
    xw_ps= -1;
