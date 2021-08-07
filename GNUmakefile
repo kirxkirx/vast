@@ -372,7 +372,8 @@ cute_lc.o: $(SRC_PATH)cute_lc.c
 util/observations_per_star: $(SRC_PATH)observations_per_star.c
 	$(CC) $(OPTFLAGS) -o util/observations_per_star $(SRC_PATH)observations_per_star.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 util/phase_lc: $(SRC_PATH)phase_lc.c
-	$(CC) $(OPTFLAGS) -o util/phase_lc $(SRC_PATH)phase_lc.c -lm
+	$(CC) $(OPTFLAGS) -o util/phase_lc $(SRC_PATH)phase_lc.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+	cd util/ ; ln -s phase_lc phase_and_bin_lc ; cd ..
 
 util/UTC2TT: UTC2TT.o gettime.o
 	$(CC) $(OPTFLAGS) -o util/UTC2TT UTC2TT.o gettime.o $(CFITSIO_LIB) -lm
@@ -520,7 +521,7 @@ clean: clean_libraries
 	rm -f lib/index_vs_mag
 	rm -f lib/on_the_fly_symlink_or_convert
 	rm -f util/fix_image_date
-	rm -f util/phase_lc
+	rm -f util/phase_lc util/phase_and_bin_lc
 	# symlink to cpgplot.h should be re-created by lib/compile_pgplot_related_components.sh
 	rm -f src/cpgplot.h src/pgfv/cpgplot.h
 	
