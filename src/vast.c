@@ -1984,6 +1984,7 @@ int main(int argc, char **argv) {
    preobr= New_Preobr_Sk();
    fprintf(stdout, "opt 's': Using small match radius (comparison window)\n");
    break;
+/*
   case 'm': //medium comparison window
    param_w= 2;
    preobr= New_Preobr_Sk_M();
@@ -1996,6 +1997,7 @@ int main(int argc, char **argv) {
    fprintf(stdout, "opt 'w': Using wide match radius (comparison window)\n");
    break;
   ///
+*/
   case '5':
    cvalue= optarg;
    if( 1 == is_file(cvalue) ) {
@@ -3486,11 +3488,17 @@ int main(int argc, char **argv) {
  fputs(sextractor_catalog_filtering_results_string, stderr);
  fprintf(stderr, "You may change some of the filtering parameters by editing src/vast_limits.h and re-running 'make'.\n");
  // Check the stats and issue warnings if needed
- if( (double)counter_rejected_too_small / (double)NUMBER1 > 0.3 )
+ if( (double)counter_rejected_too_small / (double)NUMBER1 > 0.3 && counter_rejected_too_small>3 ) {
   fprintf(stderr, "\E[01;31m WARNING: \E[33;00m suspiciously many stars are rejected as being too small. Please check FWHM_MIN in src/vast_limits.h and re-run 'make' if you change it.\n");
+ }
 
  /* Check if enough stars were detected on the reference frame */
  if( NUMBER1 < MIN_NUMBER_OF_STARS_ON_FRAME || NUMBER3 < MIN_NUMBER_OF_STARS_ON_FRAME ) {
+  // Wait for the children to finish or the error message will be swamped in the normal output
+  pid_t wpid;
+  int waitstatus;
+  while ((wpid = wait(&waitstatus)) > 0); // this way, the father waits for all the child processes 
+  //
   fprintf(stderr, "ERROR! Too few stars detected on the reference frame: %d<%d\n", NUMBER1, MIN_NUMBER_OF_STARS_ON_FRAME);
   fprintf(stderr, "\nPlease check that the reference image file is readable and looks reasonably good.\n");
   fprintf(stderr, "\nThe SExtractor catalog for the reference image may be found in image00001.cat \n");
@@ -4100,6 +4108,11 @@ int main(int argc, char **argv) {
      preobr->Number_of_ecv_triangle= default_Number_of_ecv_triangle;
      preobr->Number_of_main_star= default_Number_of_main_star;
      previous_Number_of_main_star= 0;
+     // Special case: relax scale criterea for images with very few stars
+     if( NUMBER2<10 && NUMBER3<10 ) {
+      preobr->sigma_podobia= 0.02; // cf. the default value in ident_lib.c
+     }
+     //
      for( match_try= 0; match_try < MAX_MATCH_TRIALS; match_try++ ) {
       match_retry= 0;
 
@@ -4212,11 +4225,17 @@ int main(int argc, char **argv) {
 
      /* If it still doesn't work - try to decrease an accpetable number of matched stars */
      if( match_retry == 1 ) {
-      preobr->Number_of_main_star= best_number_of_reference_stars;
-      // is this correct?
-      preobr->Number_of_ecv_triangle= MATCH_MAX_NUMBER_OF_TRIANGLES; // best_number_of_reference_stars;
-      fprintf(stderr, "Trying again the best match with %d reference stars\n", best_number_of_reference_stars);
-      Number_of_ecv_star= Ident(preobr, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)(1.5 * MIN_FRACTION_OF_MATCHED_STARS * MIN(NUMBER3, NUMBER2)), max_X_im_size, max_Y_im_size);
+      if( best_number_of_reference_stars>0 ) {
+       preobr->Number_of_main_star= best_number_of_reference_stars;
+       // is this correct?
+       preobr->Number_of_ecv_triangle= MATCH_MAX_NUMBER_OF_TRIANGLES; // best_number_of_reference_stars;
+       fprintf(stderr, "Trying again the best match with %d reference stars\n", best_number_of_reference_stars);
+       Number_of_ecv_star= Ident(preobr, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)(1.5 * MIN_FRACTION_OF_MATCHED_STARS * MIN(NUMBER3, NUMBER2)), max_X_im_size, max_Y_im_size);
+      } else {
+       fprintf(stderr, "ERROR: we ended up with only %d reference stars\n", best_number_of_reference_stars);
+       Number_of_ecv_star=0 ;
+       match_retry=0;
+      }
      }
      /*----------------------------------------------------------------------------------*/
      if( match_retry == 1 ) {
@@ -4479,7 +4498,7 @@ int main(int argc, char **argv) {
 
     /* If not enough stars were matched...*/
     if( Number_of_ecv_star < (int)(MIN_FRACTION_OF_MATCHED_STARS * MIN(NUMBER3, NUMBER2)) ) { // We should compare with the number of stars on the reference frame, not with the total number of stars!
-     fprintf(stderr, "ERROR! Too few stars matched. Wrong match? Skipping file...\n");
+     fprintf(stderr, "ERROR! Too few stars matched (%d < %d) . Wrong match? Skipping file...\n", Number_of_ecv_star, (int)(MIN_FRACTION_OF_MATCHED_STARS * MIN(NUMBER3, NUMBER2))  );
      write_string_to_individual_image_log(sextractor_catalog, "main(): ", "ERROR! Too few stars matched. Wrong match? Skipping file...", "");
      Number_of_ecv_star= 0;
     }

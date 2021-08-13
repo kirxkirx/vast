@@ -137,8 +137,8 @@ void Star_Copy(struct Star *copy, struct Star *star);
 //void Ecv_Triangle_Copy(struct Ecv_Triangle *ecv_tr1, struct Ecv_Triangle *ecv_tr2);
 
 struct Preobr_Sk *New_Preobr_Sk();               //Создание нового преобразования (как malloc)
-struct Preobr_Sk *New_Preobr_Sk_W();             //Создание нового преобразования (как malloc)
-struct Preobr_Sk *New_Preobr_Sk_M();             //Создание нового преобразования (как malloc)
+//struct Preobr_Sk *New_Preobr_Sk_W();             //Создание нового преобразования (как malloc)
+//struct Preobr_Sk *New_Preobr_Sk_M();             //Создание нового преобразования (как malloc)
 void Delete_Preobr_Sk(struct Preobr_Sk *preobr); //Удаление преобразования
 
 struct Ecv_triangles *Init_ecv_triangles(); //Инициализация массива подобных треугольников

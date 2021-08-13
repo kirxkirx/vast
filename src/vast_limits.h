@@ -41,7 +41,7 @@
 
 /* Star detection */
 #define FRAME_EDGE_INDENT_PIXELS 10.0  // Don't take into account stars closer than FRAME_EDGE_INDENT_PIXELS pixels to a frame edge.
-#define MIN_NUMBER_OF_STARS_ON_FRAME 5 // Frames with less than MIN_NUMBER_OF_STARS_ON_FRAME stars detected will not be used
+#define MIN_NUMBER_OF_STARS_ON_FRAME 2 // Frames with less than MIN_NUMBER_OF_STARS_ON_FRAME stars detected will not be used
 #define AUTO_SIGMA_POPADANIYA_COEF 0.6 // Important for star matchning! Stars are matched if their coordinates on two images coincide within AUTO_SIGMA_POPADANIYA_COEF*aperture if -s -m or -w switch is not set.
 #define HARD_MIN_NUMBER_OF_POINTS 2    // Potential transients with less than HARD_MIN_NUMBER_OF_POINTS will be discarded! \
                                        // Parameter used in  src/remove_lightcurves_with_small_number_of_points.c

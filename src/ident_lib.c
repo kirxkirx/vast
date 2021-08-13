@@ -88,6 +88,7 @@ struct Preobr_Sk *New_Preobr_Sk() {
  return (preobr);
 }
 
+/*
 struct Preobr_Sk *New_Preobr_Sk_W() {
  struct Preobr_Sk *preobr;
  preobr= malloc(sizeof(struct Preobr_Sk));
@@ -116,7 +117,9 @@ struct Preobr_Sk *New_Preobr_Sk_W() {
  preobr->Number_of_main_star= 300;
  return (preobr);
 }
+*/
 
+/*
 struct Preobr_Sk *New_Preobr_Sk_M() {
  struct Preobr_Sk *preobr;
  preobr= malloc(sizeof(struct Preobr_Sk));
@@ -145,6 +148,7 @@ struct Preobr_Sk *New_Preobr_Sk_M() {
  preobr->Number_of_main_star= 100;
  return (preobr);
 }
+*/
 
 void Delete_Preobr_Sk(struct Preobr_Sk *preobr) {
  free(preobr);
@@ -413,6 +417,24 @@ struct Triangle *Separate_to_triangles(struct Star *star, int Number, int *Ntria
  //for ( n= 0, m= 0; n < Number - 11; n++ ) {
  for( n= 0, m= 0; n < Number; n++ ) {
 
+
+  // Special case: only three stars on image - make a single triangle of them and exit the loop
+  if( n == 0 && 3 == Number ) {
+   fprintf(stderr,"Wow, this image actually has only three stars on it! Making a single triangle...\n");
+   m=1;
+   triangles[0].a[0]= iskl[0];
+   triangles[0].a[1]= iskl[0 + 1];
+   triangles[0].a[2]= iskl[0 + 2];
+   break;  
+  }
+
+
+  // If there only three stars left
+  if( n + 2 == Number ) {
+   break;
+  }
+  //
+
   //  if ( m > MATCH_MAX_NUMBER_OF_TRIANGLES - 11 ) {
   //  if ( m > MATCH_MAX_NUMBER_OF_TRIANGLES - 22 ) {
   if( m > MATCH_MAX_NUMBER_OF_TRIANGLES - TRIANGLES_PER_STAR ) {
@@ -446,11 +468,15 @@ struct Triangle *Separate_to_triangles(struct Star *star, int Number, int *Ntria
    triangles[m - 1].a[2]= tr.a[2];
   }
 
+  //fprintf(stderr,"DEBUUUG01: n=%d m=%d\n", n, m);
+
   // Add triangles consisting of stars with close brightness
 
   if( n + 1 == Number ) {
    break;
   }
+  
+  //fprintf(stderr,"DEBUUUG02: n=%d m=%d\n", n, m);
 
   if( n + 2 == Number ) {
    break;
@@ -460,6 +486,8 @@ struct Triangle *Separate_to_triangles(struct Star *star, int Number, int *Ntria
   triangles[m - 1].a[0]= iskl[n];
   triangles[m - 1].a[1]= iskl[n + 1];
   triangles[m - 1].a[2]= iskl[n + 2];
+  
+  //fprintf(stderr,"DEBUUUG03: n=%d m=%d\n", n, m);
 
   if( n + 3 == Number ) {
    continue;
@@ -474,6 +502,8 @@ struct Triangle *Separate_to_triangles(struct Star *star, int Number, int *Ntria
   triangles[m - 1].a[0]= iskl[n];
   triangles[m - 1].a[1]= iskl[n + 2];
   triangles[m - 1].a[2]= iskl[n + 3];
+
+  //fprintf(stderr,"DEBUUUG04: n=%d m=%d\n", n, m);
 
   if( n + 4 == Number ) {
    continue;
@@ -603,12 +633,21 @@ int Podobie(struct Preobr_Sk *preobr, struct Ecv_triangles *ecv_tr,
  for( n1= 0; n1 < Nt1; n1++ ) {
   ab1= tr1[n1].ab;
   bc1= tr1[n1].bc;
+  //fprintf(stderr,"\nDEBUUUG: tr1 %d-%d-%d \n", tr1[n1].a[0], tr1[n1].a[1], tr1[n1].a[2]);
   for( n2= 0; n2 < Nt2; n2++ ) {
+  
+   //fprintf(stderr,"DEBUUUG: tr2 %d-%d-%d \n", tr2[n2].a[0], tr2[n2].a[1], tr2[n2].a[2]);
+    
+   // First, check if the triangles overall have the same scale
    // .ab_bc_ac is pre-computed by Compute_sides_of_triangles()
    podobie= tr1[n1].ab_bc_ac / tr2[n2].ab_bc_ac;
-   if( 0 != compare_two_floats_to_absolute_accuracy(podobie, 1.0, MAX_SCALE_FACTOR) )
+   if( 0 != compare_two_floats_to_absolute_accuracy(podobie, 1.0, MAX_SCALE_FACTOR) ) {
     continue;
+   }
+   // Once the overall scale is established to be the same, we need to match two specific sides
+   //fprintf(stderr,"DEBUUUGtriangle 0\n");
 
+   // Now try to match the specific sides of the triangles
    ab2= tr2[n2].ab;
    bc2= tr2[n2].bc;
    ac2= tr2[n2].ac;
@@ -624,6 +663,7 @@ int Podobie(struct Preobr_Sk *preobr, struct Ecv_triangles *ecv_tr,
      continue;
     }
    }
+   //fprintf(stderr,"DEBUUUGtriangle 1 %lf %lf %lf\n",podobie1, podobie, sigma);
 
    podobie1= ab1 / bc2;
    podobie1= podobie1 * podobie1 * podobie1;
@@ -636,8 +676,9 @@ int Podobie(struct Preobr_Sk *preobr, struct Ecv_triangles *ecv_tr,
      continue;
     }
    }
+   //fprintf(stderr,"DEBUUUGtriangle 2\n");
 
-   podobie1= ab1 / ac2;
+   podobie1= ab1 / bc2;
    podobie1= podobie1 * podobie1 * podobie1;
    if( 0 == compare_two_floats_to_absolute_accuracy(podobie1, podobie, sigma) ) {
     podobie1= bc1 / ab2;
@@ -648,12 +689,54 @@ int Podobie(struct Preobr_Sk *preobr, struct Ecv_triangles *ecv_tr,
      continue;
     }
    }
+   //fprintf(stderr,"DEBUUUGtriangle 3\n");
+
+   // new
+   podobie1= ab1 / ac2;
+   podobie1= podobie1 * podobie1 * podobie1;
+   if( 0 == compare_two_floats_to_absolute_accuracy(podobie1, podobie, sigma) ) {
+    podobie1= bc1 / ab2;
+    podobie1= podobie1 * podobie1 * podobie1;
+    if( 0 == compare_two_floats_to_absolute_accuracy(podobie1, podobie, sigma) ) {
+     Add_ecv_triangles(ecv_tr, tr1[n1].a[0], tr1[n1].a[1], tr1[n1].a[2],
+                       tr2[n2].a[2], tr2[n2].a[1], tr2[n2].a[0]); //,
+     continue;
+    }
+   }
+   //fprintf(stderr,"DEBUUUGtriangle 4\n");
+
+   podobie1= ab1 / ac2;
+   podobie1= podobie1 * podobie1 * podobie1;
+   if( 0 == compare_two_floats_to_absolute_accuracy(podobie1, podobie, sigma) ) {
+    podobie1= bc1 / bc2;
+    podobie1= podobie1 * podobie1 * podobie1;
+    if( 0 == compare_two_floats_to_absolute_accuracy(podobie1, podobie, sigma) ) {
+     Add_ecv_triangles(ecv_tr, tr1[n1].a[0], tr1[n1].a[1], tr1[n1].a[2],
+                       tr2[n2].a[0], tr2[n2].a[2], tr2[n2].a[1]); //,
+     continue;
+    }
+   }
+   //fprintf(stderr,"DEBUUUGtriangle 5\n");
+
+   podobie1= ab1 / ab2;
+   podobie1= podobie1 * podobie1 * podobie1;
+   if( 0 == compare_two_floats_to_absolute_accuracy(podobie1, podobie, sigma) ) {
+    podobie1= bc1 / ac2;
+    podobie1= podobie1 * podobie1 * podobie1;
+    if( 0 == compare_two_floats_to_absolute_accuracy(podobie1, podobie, sigma) ) {
+     Add_ecv_triangles(ecv_tr, tr1[n1].a[0], tr1[n1].a[1], tr1[n1].a[2],
+                       tr2[n2].a[1], tr2[n2].a[0], tr2[n2].a[2]); //,
+     continue;
+    }
+   }
+   //fprintf(stderr,"DEBUUUGtriangle 6\n");
+   //
   }
  }
  if( ecv_tr->Number == 0 ) {
-  return (0);
+  return 0;
  }
- return (1);
+ return 1;
 }
 
 /*
@@ -1249,7 +1332,7 @@ int Ident_on_sigma(struct Star *star1, int Number1, struct Star *star2, int Numb
    p1= disjoinList(&ps_1);
    R= (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y);
    //
-   if( fabs(p1.x - 1494.6) < 1.0 && fabs(p1.y - 2081.4) < 1.0 ) {
+   if( fabs(p1.x - 496.1) < 1.0 && fabs(p1.y - 65.3) < 1.0 ) {
     if( R < 3 * epsilon ) {
      fprintf(stderr, "\n--- p1.x=%lf p1.y=%lf  p2.i=%d R=%lf R_best=%lf  p2.x=%lf p2.x=%lf\n", p1.x, p1.y, p2.i, sqrt(R), sqrt(R_best), p2.x, p2.y);
     }
@@ -1333,7 +1416,12 @@ int Ident_on_sigma(struct Star *star1, int Number1, struct Star *star2, int Numb
  freeList(points2);
  freeList(points1);
 
- fraction_of_ambiguous_matches= (double)number_of_ambiguous_matches / (double)number_of_matched_stars;
+ if( number_of_matched_stars>0 ) {
+  fraction_of_ambiguous_matches= (double)number_of_ambiguous_matches / (double)number_of_matched_stars;
+ } else {
+  // things are bad anyhow - we have zero matched stars
+  fraction_of_ambiguous_matches=0.0;
+ }
  if( fraction_of_ambiguous_matches > MAX_FRACTION_OF_AMBIGUOUS_MATCHES && number_of_ambiguous_matches > MIN_NUMBER_OF_AMBIGUOUS_MATCHES_TO_TAKE_ACTION ) {
   fprintf(stderr, "ERROR: ambiguous match for too many stars!!!\n");
   fprintf(stderr, "fraction_of_ambiguous_matches= %lf, number_of_ambiguous_matches=%d \n", fraction_of_ambiguous_matches, number_of_ambiguous_matches);
@@ -1508,6 +1596,12 @@ int Ident(struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Star
   Number1= MATCH_MIN_NUMBER_OF_REFERENCE_STARS;
  }
  Number2= preobr->Number_of_main_star;
+ // New test for very few star images
+ if( Number2 == 0 ) {
+  (*match_retry)= 0;
+  return 0;
+ }
+ //
  if( Number1 > NUMBER3 - START_NUMBER3 ) {
   Number1= NUMBER3 - START_NUMBER3;
  }
@@ -1539,16 +1633,21 @@ int Ident(struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Star
   Star_Copy(star2 + m, STAR2 + n);
 
  ecv_tr= Init_ecv_triangles();                     // Initialize tructure which will store similar triangles.
+ //fprintf(stderr,"DEBUUUG - tr1= Separate_to_triangles(star1, Number1, &Nt1); \n");
  tr1= Separate_to_triangles(star1, Number1, &Nt1); // Create a list of triangles from stars detected on the reference frame.
+ //fprintf(stderr,"DEBUUUG - tr2= Separate_to_triangles(star2, Number2, &Nt2); \n");
  tr2= Separate_to_triangles(star2, Number2, &Nt2); // Create a list of triangles from stars detected on the current frame.
-
+ //fprintf(stderr,"DEBUUUG - write_Star_struct_to_ds9_region_file() \n");
+ //fprintf(stderr,"DEBUUUG - Nt1=%d Nt2=%d\n", Nt1, Nt2);
  // DEBUG !!!
  //write_Star_struct_to_ds9_region_file(star1, 0, Number1, "star1.reg", 6.6);
  //write_Star_struct_to_ds9_region_file(star2, 0, Number2, "star2.reg", 6.6);
 
  // Search for similar triangles
  key= Podobie(preobr, ecv_tr, tr1, Nt1, tr2, Nt2);
+ //fprintf(stderr,"DEBUUUG Podobie()=%d", key);
  fprintf(stderr, "    %5d * detected, using %4d/%4d * for reference/current image matching, ", NUMBER2, Number1, Number2);
+ 
  // Select the best trianle which allows to match the largest number of reference stars and determine the corrdinate transormation
  // using this best triangle. This coordinate tresformation is returned as the structure preobr .
  if( key != 0 ) {
