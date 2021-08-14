@@ -81,7 +81,7 @@
 
 #define DEFAULT_PHOTOMETRY_ERROR_MAG 0.02 // Assume this error when no error estimate is given
 
-//#define MIN_MAG_ERR_FROM_SEXTRACTOR 0.005 // Assume that SExtractor-derived photometric errors < MIN_MAG_ERR_FROM_SEXTRACTOR are not realistyc.
+//#define MIN_MAG_ERR_FROM_SEXTRACTOR 0.005 // Assume that SExtractor-derived photometric errors < MIN_MAG_ERR_FROM_SEXTRACTOR are not realistic.
 //                                          // (Used for instrumental magnitude calibration.)
 
 // ATTENTION!

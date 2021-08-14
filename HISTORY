@@ -42,6 +42,10 @@
 	util/phase_lc out01234.dat 2459088.0123 0.567891 > phased_lightcurve_01234.txt
 	The phased lightcurve can be plotted with gnuplot or some other plotting tool.
 	The similar tool 'util/phase_and_bin_lc' can also bin the lightcurve in phase.
+	* The new tool 'util/bin_lightcurve_in_time' can bin the input lightcurve in time. Example use:
+	'util/bin_lightcurve_in_time out01234.dat 120 > binned_lightcurve_120sec.dat' 
+	will bin the lightcurve file out01234.dat in 120s time bins and write the binned data 
+	to 'binned_lightcurve_120sec.dat'.
 	* Added robust linear fit option to the absolute magnitude scale calibration interface.
 	(It is now the new default calibration function, as usual, you may change 
 	the calibration function by pressing 'P' on the keyboard.)

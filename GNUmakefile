@@ -83,7 +83,7 @@ main: vast.o vast statistics stetson_test lib/create_data
 
 statistics: m_sigma_bin index_vs_mag select_sysrem_input_star_list drop lib/select_only_n_random_points_from_set_of_lightcurves lib/new_lightcurve_sigma_filter lib/select_aperture_with_smallest_scatter_for_each_object lib/create_data rescale_photometric_errors util/colstat
 
-etc: stat_outfile util/calibrate_magnitude_scale lib/deg2hms lib/coord_v_dva_slova lib/hms2deg lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/remove_bad_images lib/put_two_sources_in_one_field lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list util/hjd util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/kwee-van-woerden lib/find_star_in_wcs_catalog util/UTC2TT lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search lib/catalogs/check_catalogs_offline util/get_image_date lib/fast_clean_data stetson_test util/split_multiextension_fits lib/guess_saturation_limit_main lib/MagSize_filter_standalone util/phase_lc lib/on_the_fly_symlink_or_convert
+etc: stat_outfile util/calibrate_magnitude_scale lib/deg2hms lib/coord_v_dva_slova lib/hms2deg lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/remove_bad_images lib/put_two_sources_in_one_field lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list util/hjd util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/kwee-van-woerden lib/find_star_in_wcs_catalog util/UTC2TT lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search lib/catalogs/check_catalogs_offline util/get_image_date lib/fast_clean_data stetson_test util/split_multiextension_fits lib/guess_saturation_limit_main lib/MagSize_filter_standalone util/phase_lc lib/on_the_fly_symlink_or_convert util/bin_lightcurve_in_time
 
 old: formater_out_wfk 
 
@@ -427,6 +427,10 @@ util/solve_plate_with_UCAC5: solve_plate_with_UCAC5.o gettime.o wpolyfit.o varia
 solve_plate_with_UCAC5.o:
 	$(CC) $(OPTFLAGS) -c src/solve_plate_with_UCAC5.c -I$(GSL_INCLUDE)
 
+util/bin_lightcurve_in_time: $(SRC_PATH)bin_lightcurve_in_time.c
+	$(CC) $(OPTFLAGS) -o util/bin_lightcurve_in_time $(SRC_PATH)bin_lightcurve_in_time.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+
+
 shell_commands: pgplot_components lib/lightcurve_simulator vast
 	ln -s vast diffphot
 	ln -s pgfv sextract_single_image
@@ -522,6 +526,7 @@ clean: clean_libraries
 	rm -f lib/on_the_fly_symlink_or_convert
 	rm -f util/fix_image_date
 	rm -f util/phase_lc util/phase_and_bin_lc
+	rm -f util/bin_lightcurve_in_time
 	# symlink to cpgplot.h should be re-created by lib/compile_pgplot_related_components.sh
 	rm -f src/cpgplot.h src/pgfv/cpgplot.h
 	

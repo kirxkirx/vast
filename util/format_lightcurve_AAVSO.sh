@@ -30,7 +30,7 @@ if [ $? -ne 0 ];then
 fi
 
 # Check that the magnitudes are reasonable
-if [ 1 -ne `util/cute_lc "$INPUT_VAST_LIGHTCURVE" | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEAN=' | awk '{if ( $2 > 5 ) print 1 ;else print 0 }'` ];then
+if [ 1 -ne `util/cute_lc "$INPUT_VAST_LIGHTCURVE" | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEAN=' | awk '{if ( $2 > 1.0 ) print 1 ;else print 0 }'` ];then
  echo "The magnitudes seem too small! Are you forgetting to convert the instrumental magnitudes to the absolute scale?"
  exit 1
 fi
@@ -145,6 +145,43 @@ fi
 # Manually edit the report
 if [ ! -z "$EDITOR" ];then
  $EDITOR AAVSO_report.txt
+ # Check that the edit looks reasonable
+ # variable star name 
+ grep --quiet 'XX Xxx' AAVSO_report.txt
+ if [ $? -eq 0 ];then
+  echo "
+  
+It seems you forgot to set the correct variable star name! Please search and replace the default 'XX Xxx' !
+Press 'Q' to quit or any other key to re-start the text editor"
+  read -n 1 KEY
+  if [ "$KEY" != "q" ] && [ "$KEY" != "Q" ];then
+   $EDITOR AAVSO_report.txt
+  fi
+ fi
+ # filter name
+ grep --quiet ',X,' AAVSO_report.txt
+ if [ $? -eq 0 ];then
+  echo "
+  
+It seems you forgot to set the correct filter name! Please search and replace the default ',X,' !
+Press 'Q' to quit or any other key to re-start the text editor"
+  read -n 1 KEY
+  if [ "$KEY" != "q" ] && [ "$KEY" != "Q" ];then
+   $EDITOR AAVSO_report.txt
+  fi
+ fi
+ # AAVSO observer code
+ grep --quiet 'XXX' AAVSO_report.txt
+ if [ $? -eq 0 ];then
+  echo "
+  
+It seems you forgot to set the correct AAVSO observer code! Please search and replace the default 'XXX' !
+Press 'Q' to quit or any other key to re-start the text editor"
+  read -n 1 KEY
+  if [ "$KEY" != "q" ] && [ "$KEY" != "Q" ];then
+   $EDITOR AAVSO_report.txt
+  fi
+ fi
 fi
 
 # Update the variable star name as the user might have changed it

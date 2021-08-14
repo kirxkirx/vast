@@ -846,16 +846,6 @@ double c4(int n) {
   return 1.0;
  c4_result= sqrt(2.0 / (double_n - 1.0)) * gsl_sf_gamma(double_n / 2.0) / gsl_sf_gamma((double_n - 1.0) / 2.0);
 
- // DEBUG //
- //fprintf(stderr,"FML\n");
- //exit(1);
- // THIS SHOULD NEVER HAPPEN
- //if( c4_result>1.0 ){
- // fprintf(stderr,"ERROR: c4_result=%lg\n sqrt(2.0/(%lg-1.0)) gamma(%lg/2.0)/gamma( (%lg-1.0)/2.0 )\n",c4_result, double_n, double_n, double_n);
- // exit(1);
- //}
- ///////////
-
  return c4_result;
 }
 
