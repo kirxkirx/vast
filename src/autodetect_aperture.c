@@ -409,7 +409,9 @@ double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, 
    fprintf(stderr, "ERROR: the command returned a non-zero exit code!\n");
   }
 
-  sprintf(command, "psfex -c default.psfex -NTHREADS 1 -SAMPLE_FWHMRANGE %.2lf,%.2lf -XML_NAME %s %s > %s 2>&1", 0.3 * APERTURE / 2.2528, 1.3 * APERTURE / 2.2528, psfex_XML_check_filename, sextractor_catalog_filename, psfex_log_entry_filename);
+  // Check FWHM limits
+  //sprintf(command, "psfex -c default.psfex -NTHREADS 1 -SAMPLE_FWHMRANGE %.2lf,%.2lf -XML_NAME %s %s > %s 2>&1", 0.3 * APERTURE / 2.2528, 1.3 * APERTURE / 2.2528, psfex_XML_check_filename, sextractor_catalog_filename, psfex_log_entry_filename);
+  sprintf(command, "psfex -c default.psfex -NTHREADS 1 -SAMPLE_FWHMRANGE %.2lf,%.2lf -XML_NAME %s %s > %s 2>&1", 0.3 * APERTURE / CONST * SIGMA_TO_FWHM_CONVERSION_FACTOR, 3 * APERTURE / CONST * SIGMA_TO_FWHM_CONVERSION_FACTOR, psfex_XML_check_filename, sextractor_catalog_filename, psfex_log_entry_filename);
   fprintf(stderr, "%s\n", command);
   write_string_to_individual_image_log(output_sextractor_catalog, "autodetect_aperture(): ", "extracting PSF with PSFEx using the command\n", command);
   if( 0 != system(command) ) {

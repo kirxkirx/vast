@@ -2052,6 +2052,7 @@ int main(int argc, char **argv) {
    fprintf(stdout, "opt '8': the reference image will not be used for photometry!\n");
    break;
   case 'P':
+   //param_nodiscardell= 1; // incompatible with PSF photometry and I'm not sure why - probably a bug
    param_P= 1;
    fprintf(stdout, "opt 'P': PSF photometry mode!\n");
    /* Check if the PSFEx executable (named "psfex") is present in $PATH */
