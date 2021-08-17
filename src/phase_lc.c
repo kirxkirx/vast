@@ -113,8 +113,8 @@ void bin_lightcurve_in_phase(double *jd, double *phase, double *m, unsigned int 
   internal_array_binnedmag[j]= gsl_stats_mean( mag_in_bin, 1, points_in_bin);
   //gsl_sort(mag_in_bin, 1, points_in_bin);
   //internal_array_binnedmag[j]= gsl_stats_median_from_sorted_data(mag_in_bin, 1, points_in_bin);
-  internal_array_binnedmag_sd[j]= gsl_stats_sd(mag_in_bin, 1, points_in_bin);
-  
+  //internal_array_binnedmag_sd[j]= gsl_stats_sd(mag_in_bin, 1, points_in_bin);
+  internal_array_binnedmag_sd[j]= gsl_stats_sd(mag_in_bin, 1, points_in_bin)/sqrt(points_in_bin);
  } // for each bin
  
  // Replace the input arrays with the binned data
