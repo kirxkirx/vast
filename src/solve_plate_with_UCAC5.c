@@ -432,7 +432,7 @@ int read_wcs_catalog(char *fits_image_filename, struct detected_star *stars, int
 
  timesys= 0; // for gettime()
  //gettime( fits_image_filename, &double_garbage, &timesys, 0, &X_im_size, &Y_im_size, char_garbage, char_garbage, 0, 0); // This is just an overkill way to get X_im_size Y_im_size
- gettime(fits_image_filename, &JD, &timesys, 0, &X_im_size, &Y_im_size, char_garbage, char_garbage, 0, 0); // This is to get observing time for proper motion correction and X_im_size Y_im_size
+ gettime(fits_image_filename, &JD, &timesys, 0, &X_im_size, &Y_im_size, NULL, NULL, 0, 0, NULL); // This is to get observing time for proper motion correction and X_im_size Y_im_size
 
  guess_wcs_catalog_filename(wcs_catalog_filename, fits_image_filename);
  fprintf(stderr, "WCS catalog name: %s \n", wcs_catalog_filename);

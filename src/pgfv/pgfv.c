@@ -55,7 +55,7 @@ void save_star_to_vast_list_of_previously_known_variables_and_exclude_lst(int se
  return;
 }
 
-int get_string_with_fov_of_wcs_calibrated_image(char *fitsfilename, char *output_string, int finding_chart_mode, float finder_char_pix_around_the_target) {
+int get_string_with_fov_of_wcs_calibrated_image(char *fitsfilename, char *output_string, int finder_chart_mode, float finder_char_pix_around_the_target) {
  float image_scale, image_size;
  unsigned int string_char_counter;
  char path_to_vast_string[VAST_PATH_MAX];
@@ -66,7 +66,7 @@ int get_string_with_fov_of_wcs_calibrated_image(char *fitsfilename, char *output
  //
  output_string[0]= '\0'; // reset output just in case
  //
- if( finding_chart_mode == 1 ) {
+ if( finder_chart_mode == 1 ) {
   // This is a zoom-in image
   sprintf(systemcommand, "%sutil/fov_of_wcs_calibrated_image.sh %s | grep 'Image scale:' | awk '{print $3}' | awk -F'\"' '{print $1}'", path_to_vast_string, fitsfilename);
   fprintf(stderr, "Trying to run\n %s\n", systemcommand);
@@ -78,7 +78,8 @@ int get_string_with_fov_of_wcs_calibrated_image(char *fitsfilename, char *output
    if( image_scale > 0.0 ) {
     image_size= image_scale * 2.0 * finder_char_pix_around_the_target / 60.0;
     if( image_size > 0.0 ) {
-     sprintf(output_string, "Image size: %.0f'x%.0f'", image_size, image_size);
+     //sprintf(output_string, "Image size: %.0f'x%.0f'", image_size, image_size);
+     sprintf(output_string, "Field of view: %.0f'x%.0f'", image_size, image_size);
     }
    }
   }
@@ -935,6 +936,7 @@ int main(int argc, char **argv) {
  int use_labels= 1;
  int use_datestringinsideimg= 0;
  int use_imagesizestringinsideimg= 0;
+ int fits2png_fullframe= 0;
 
  /* Match File */
  FILE *matchfile;
@@ -961,6 +963,8 @@ int main(int argc, char **argv) {
  double dimY;
  char stderr_output[2 * 1024 + 2 * FILENAME_LENGTH];
  char log_output[1024 + FILENAME_LENGTH];
+ char finder_chart_timestring_output[2 * 1024 + 2 * FILENAME_LENGTH];
+ char finder_chart_string_to_print[2 * 1024 + 2 * FILENAME_LENGTH + 8];
 
  int timesys= 0;
  int convert_timesys_to_TT= 0;
@@ -978,7 +982,7 @@ int main(int argc, char **argv) {
 
  char sextractor_catalog_filename[FILENAME_LENGTH];
 
- int finding_chart_mode= 0; // =1 draw finding chart to an image file instead of interactive plotting
+ int finder_chart_mode= 0; // =1 draw finding chart to an image file instead of interactive plotting
 
  int inverted_X_axis= 0;
  int inverted_Y_axis= 1; // start with inverted Y axis
@@ -992,18 +996,24 @@ int main(int argc, char **argv) {
  int use_xy2sky= 2; // 0 - no, 1 - yes, 2 - don't know
  int xy2sky_return_value;
 
+ if( 0 == strcmp("make_finder_chart", basename(argv[0])) ) {
+  fprintf(stderr, "Plotting finder chart...\n");
+  finder_chart_mode= 1;
+  //mark_trigger= 1;
+ }
+
  if( 0 == strcmp("make_finding_chart", basename(argv[0])) ) {
   fprintf(stderr, "Plotting finding chart...\n");
-  finding_chart_mode= 1;
+  finder_chart_mode= 1;
   //mark_trigger= 1;
  }
 
  if( 0 == strcmp("fits2png", basename(argv[0])) ) {
   fprintf(stderr, "Plotting finding chart with no labels...\n");
-  finding_chart_mode= 1;
+  finder_chart_mode= 1;
   use_north_east_marks= 0;
   use_labels= 0;
-  //mark_trigger= 1;
+  fits2png_fullframe= 1;
  }
 
  /* Reading file which defines rectangular regions we want to exclude */
@@ -1073,7 +1083,7 @@ int main(int argc, char **argv) {
  // Options for getopt() 
  char *cvalue= NULL;
 
- const char *const shortopt= "a:w:9sdnl";
+ const char *const shortopt= "a:w:9sdnlf";
  const struct option longopt[]= {
      {"apeture", 1, NULL, 'a'}, {"width", 1, NULL, 'w'}, {"ds9", 0, NULL, '9'}, {"imgsizestringinsideimg", 0, NULL, 's'}, {"datestringinsideimg", 0, NULL, 'd'}, {"nonortheastmarks", 0, NULL, 'n'}, {"nolabels", 0, NULL, 'l'}, {NULL, 0, NULL, 0}}; //NULL string must be in the end
  int nextopt;
@@ -1158,7 +1168,7 @@ int main(int argc, char **argv) {
  if( argc - optind >= 4 ) {
   // Now we need to figure out if the input values are pixel or celestial coordinates
   // Don't do this check if this is fits2png
-  if( finding_chart_mode != 1 && use_labels != 0 ) {
+  if( finder_chart_mode != 1 && use_labels != 0 ) {
    sky2xy(fits_image_name, argv[optind + 2], argv[optind + 3], &markX, &markY);
   } else {
    markX= (float)atof(argv[optind + 2]);
@@ -1345,7 +1355,7 @@ int main(int argc, char **argv) {
   return 1;
  }
  int param_nojdkeyword= 0; // Temporary fix!!! pgfv cannot accept the --nojdkeyword parameter yet, only the main program vast understands it
- gettime(fits_image_name, &JD, &timesys, convert_timesys_to_TT, &dimX, &dimY, stderr_output, log_output, param_nojdkeyword, 0);
+ gettime(fits_image_name, &JD, &timesys, convert_timesys_to_TT, &dimX, &dimY, stderr_output, log_output, param_nojdkeyword, 0, finder_chart_timestring_output);
  if( strlen(stderr_output) < 10 ) {
   fprintf(stderr, "Warning after running gettime(): stderr_output is suspiciously short:\n");
   fprintf(stderr, "#%s#\n", stderr_output);
@@ -1356,7 +1366,7 @@ int main(int argc, char **argv) {
   stderr_output[0]= '\0';
  }
  //
- if( finding_chart_mode == 1 ) {
+ if( finder_chart_mode == 1 ) {
   is_this_north_up_east_left_image= check_if_this_fits_image_is_north_up_east_left(fits_image_name);
  }
 
@@ -1743,7 +1753,7 @@ int main(int argc, char **argv) {
  //fprintf(stderr,"DEBUG-3e\n");
 
  // Don't do this check if this is fits2png
- if( finding_chart_mode != 1 && use_labels != 0 ) {
+ if( finder_chart_mode != 1 && use_labels != 0 ) {
   // Decide if we want to use xy2sky()
   xy2sky_return_value= xy2sky(fits_image_name, (float)naxes[0] / 2.0, (float)naxes[1] / 2.0);
   if( xy2sky_return_value == 0 ) {
@@ -1781,7 +1791,7 @@ int main(int argc, char **argv) {
 
  //setenv("PGPLOT_DIR","lib/pgplot/",1);
  setenv_localpgplot(argv[0]);
- if( finding_chart_mode == 1 ) {
+ if( finder_chart_mode == 1 ) {
 
   //
   inverted_Y_axis= 0; // do not invert Y axis for finding charts!
@@ -1802,13 +1812,14 @@ int main(int argc, char **argv) {
 
  //cpgpap( 0.0, 1.0); /* Make square plot */
 
- //if( finding_chart_mode==0 ){
+ //if( finder_chart_mode==0 ){
  cpgscr(0, 0.10, 0.31, 0.32); /* set default vast window background */
  cpgpage();
  //}
- // (finding_chart_mode == 1 && use_north_east_marks == 0 && use_labels == 0)
+ // (finder_chart_mode == 1 && use_north_east_marks == 0 && use_labels == 0)
  // should correspond to fits2png settings
- if( finding_chart_mode == 0 || (finding_chart_mode == 1 && use_north_east_marks == 0 && use_labels == 0) ) {
+ //if( finder_chart_mode == 0 || (finder_chart_mode == 1 && use_north_east_marks == 0 && use_labels == 0) ) {
+ if( finder_chart_mode == 0 || fits2png_fullframe == 1 ) {
   //fprintf(stderr,"DEBUG-3h\n");
   cpgpap(0.0, 1.0 / axis_ratio);
   //cpgpap( 0.0, (float)naxes[1] / (float)( naxes[0] ) );
@@ -1853,7 +1864,7 @@ int main(int argc, char **argv) {
  }
 
  // start with a zoom if a marker position is specified
- if( markX != 0.0 && markY != 0.0 && finding_chart_mode == 0 ) {
+ if( markX != 0.0 && markY != 0.0 && finder_chart_mode == 0 ) {
   drawX1= markX - MIN(100.0, markX);
   drawY1= markY - MIN(100.0, markY);
   drawX2= drawX1 + MIN(200.0, (float)naxes[0]);
@@ -1897,7 +1908,7 @@ int main(int argc, char **argv) {
   fprintf(stderr, "\n Press 'D' or 'Z''Z' to view the full image.\n\n");
  }
 
- if( finding_chart_mode == 0 ) {
+ if( finder_chart_mode == 0 ) {
   // Print user instructions here!!!
   print_pgfv_help();
   if( match_mode == 2 ) {
@@ -1906,9 +1917,9 @@ int main(int argc, char **argv) {
   if( match_mode == 4 ) {
    fprintf(stderr, "\E[01;35mSelect one or multiple comparison stars\E[33;00m with know magnitudes.\nClick on the star then enter its magnitude in the terminal.\nYou may mark the variable star by clicking on it and typing 'v' instead of the magnitude.\nUse +/- keys on the keyboard to increase/decrease the aperture size\n\n");
   }
- } // if ( finding_chart_mode == 0 ) {
+ } // if ( finder_chart_mode == 0 ) {
 
- if( finding_chart_mode == 1 ) {
+ if( finder_chart_mode == 1 ) {
   curX= markX;
   curY= markY;
  } else {
@@ -2291,13 +2302,13 @@ int main(int argc, char **argv) {
     }
    } // if( curC=='A' ){
 
-   if( finding_chart_mode == 1 ) {
+   if( finder_chart_mode == 1 ) {
     curC= 'Z';
    }
 
    /* Zoom in or out */
    if( curC == 'z' || curC == 'Z' ) {
-    if( finding_chart_mode == 1 ) {
+    if( finder_chart_mode == 1 ) {
      drawX1= markX - finder_char_pix_around_the_target;
      drawX2= markX + finder_char_pix_around_the_target;
      drawY1= markY - finder_char_pix_around_the_target;
@@ -2311,7 +2322,7 @@ int main(int argc, char **argv) {
     if( curC == 'Z' || curC == 'z' )
      curC= 'D';
     else {
-     if( finding_chart_mode == 0 ) {
+     if( finder_chart_mode == 0 ) {
       drawX1= mymin(curX, curX2);
       drawX2= mymax(curX, curX2);
       drawY1= mymin(curY, curY2);
@@ -2326,10 +2337,12 @@ int main(int argc, char **argv) {
      if( razmer_y == naxes[1] ) {
       razmer_y= (double)MIN(drawX2 - drawX1, naxes[0]) / (double)naxes[0] * razmer_y;
      }
-     // finding_chart_mode=1 use_north_east_marks= 0; use_labels= 0;
+     // finder_chart_mode=1 use_north_east_marks= 0; use_labels= 0;
      // corresponds to fits2png settings where we presumably whant the whole image
-     //if ( finding_chart_mode == 1 && ( use_north_east_marks!= 0 && use_labels!= 0 ) ) {
-     if( finding_chart_mode == 1 && (use_north_east_marks != 0 && use_labels != 0) ) {
+     //if ( finder_chart_mode == 1 && ( use_north_east_marks!= 0 && use_labels!= 0 ) ) {
+     //if( finder_chart_mode == 1 && (use_north_east_marks != 0 && use_labels != 0) ) {
+     //if( finder_chart_mode == 1 && (use_north_east_marks != 0 || use_labels != 0) ) {
+     if( finder_chart_mode == 1 && fits2png_fullframe == 0 ) {
       // we want a square finding chart !
       razmer_x= razmer_y;
       fprintf(stderr, "Making a square plot\n");
@@ -2441,7 +2454,7 @@ int main(int argc, char **argv) {
     drawX2= buf;
    }
 
-   if( finding_chart_mode == 0 ) {
+   if( finder_chart_mode == 0 ) {
     cpgbbuf();
     cpgscr(0, 0.10, 0.31, 0.32); /* set default vast window background */
     cpgeras();
@@ -2466,7 +2479,7 @@ int main(int argc, char **argv) {
    image_minmax3(naxes[0] * naxes[1], float_array, &max_val, &min_val, drawX1, drawX2, drawY1, drawY2, naxes);
 
    /* Draw image */
-   if( finding_chart_mode == 0 ) {
+   if( finder_chart_mode == 0 ) {
     cpgscr(0, 0.0, 0.0, 0.0); /* set black background */
     cpgimag(float_array, (int)naxes[0], (int)naxes[1], drawX1, drawX2, drawY1, drawY2, min_val, max_val, tr);
    } else {
@@ -2481,7 +2494,7 @@ int main(int argc, char **argv) {
    }
    /* Make labels with general information: time, filename... */
    if( use_labels == 1 ) {
-    if( finding_chart_mode == 0 ) {
+    if( finder_chart_mode == 0 ) {
      cpgscr(1, 0.62, 0.81, 0.38); /* set color of lables */
      cpgsch(0.9);                 /* Set small font size */
      cpgmtxt("T", 0.5, 0.5, 0.5, fits_image_name);
@@ -2511,7 +2524,7 @@ int main(int argc, char **argv) {
 
    if( use_labels == 1 ) {
     // Always put mark in te center of the finding chart
-    if( finding_chart_mode == 1 ) {
+    if( finder_chart_mode == 1 ) {
      markX= ((float)naxes[0] / 2.0);
      markY= ((float)naxes[1] / 2.0);
      cpgsci(2);
@@ -2531,30 +2544,38 @@ int main(int argc, char **argv) {
     cpgsci(1);
    }
 
-   if( finding_chart_mode == 1 ) {
+   if( finder_chart_mode == 1 ) {
 
     if( use_north_east_marks == 1 ) {
      // Make N/E labels
      if( is_this_north_up_east_left_image == 1 ) {
-      cpgsci(2);
+      //cpgsci(2);
+      cpgscr(15, 1.0, 0.973, 0.580);
+      cpgsci(15);
+      //
       cpgsch(2.0); /* Set small font size */
       cpgslw(4);   // increase line width
-      cpgmtxt("T", -1.0, 0.5, 0.5, "N");
-      cpgmtxt("LV", -0.5, 0.5, 0.5, "E");
+      //cpgslw(10);   // increase line width
+      cpgmtxt("T", -1.0, 0.5, 0.5, "\\fR N");
+      cpgmtxt("LV", -0.5, 0.5, 0.5, "\\fR E");
       //
       if( 1 == use_datestringinsideimg ) {
-       cpgsch(1.0);
-       cpgmtxt("B", -1.0, 0.5, 0.5, stderr_output);
-       cpgsch(2.0);
+       //cpgsch(1.0);
+       //cpgmtxt("B", -1.0, 0.5, 0.5, stderr_output);
+       sprintf(finder_chart_string_to_print, "\\fR %s", finder_chart_timestring_output);
+       cpgmtxt("B", -1.0, 0.05, 0.0, finder_chart_string_to_print);
+       //cpgsch(2.0);
       }
       //
       if( 1 == use_imagesizestringinsideimg ) {
-       if( 0 == get_string_with_fov_of_wcs_calibrated_image(fits_image_name, fov_string, finding_chart_mode, finder_char_pix_around_the_target) ) {
-        fprintf(stderr, "The image is %s\n", fov_string);
+       if( 0 == get_string_with_fov_of_wcs_calibrated_image(fits_image_name, fov_string, finder_chart_mode, finder_char_pix_around_the_target) ) {
+        fprintf(stderr, "The image has %s\n", fov_string);
         if( 1 == use_datestringinsideimg ) {
-         cpgsch(1.0);
-         cpgmtxt("B", -2.2, 0.05, 0.0, fov_string);
-         cpgsch(2.0);
+         //cpgsch(1.0);
+         //cpgmtxt("B", -2.2, 0.05, 0.0, fov_string);
+         sprintf(finder_chart_string_to_print, "\\fR %s", fov_string);
+         cpgmtxt("B", -2.2, 0.05, 0.0, finder_chart_string_to_print);
+         //cpgsch(2.0);
         } else {
          // Use large letters
          cpgmtxt("B", -1.0, 0.05, 0.0, fov_string);
@@ -2654,8 +2675,8 @@ int main(int argc, char **argv) {
     cpgsci(1);
    }
 
-   //fprintf(stderr,"finding_chart_mode=%d\n",finding_chart_mode);
-   if( finding_chart_mode == 0 )
+   //fprintf(stderr,"finder_chart_mode=%d\n",finder_chart_mode);
+   if( finder_chart_mode == 0 )
     cpgebuf();
    else {
     fprintf(stderr, "Writing the output image file pgplot.png (or.ps)\n");

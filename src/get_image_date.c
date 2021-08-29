@@ -379,7 +379,7 @@ int main(int argc, char **argv) {
  //fprintf( stderr, "DEBUG26\n");
 
  // Get the date
- if( 0 != gettime(input_fits_image, &JD, &timesys, convert_timesys_to_TT, &dimX, &dimY, stderr_output, log_output, param_nojdkeyword, param_verbose) ) {
+ if( 0 != gettime(input_fits_image, &JD, &timesys, convert_timesys_to_TT, &dimX, &dimY, stderr_output, log_output, param_nojdkeyword, param_verbose, NULL) ) {
   fprintf(stderr, "ERROR getting observing time from the input %s\n", argv[1]);
   free(stderr_output);
   free(log_output);

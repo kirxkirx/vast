@@ -232,6 +232,7 @@ TEST_SUBSTRING="$BASENAME_FITSFILE"
 TEST_SUBSTRING="${TEST_SUBSTRING:0:4}"
 #TEST_SUBSTRING=`expr substr $TEST_SUBSTRING  1 4`
 if [ "$TEST_SUBSTRING" = "wcs_" ];then
+ echo "Special case: the file name suggests the file has already been plate-solved with VaST"
  cp -v "$FITSFILE" .
  WCS_IMAGE_NAME="$BASENAME_FITSFILE"
 else
@@ -533,6 +534,10 @@ field identification have good chances to fail. Sorry... :(
   #$TIMEOUT_COMMAND 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   #
   # HACK Hack hack -- manually specify the field center and size
+  #
+  #$TIMEOUT_COMMAND 600 solve-field --ra 18:57:30.98 --dec +16:53:39.6  --objs 1000 --depth 1-20  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # Gaia21dyi
+  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 17:26:19.38 --dec -33:27:10.66 --radius 0.2  --objs 1000 --depth 1-30,30-50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # j1408
   #$TIMEOUT_COMMAND 600 solve-field --ra 14:08:26.79 --dec -29:22:21.2 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # PGIR19brv
@@ -596,10 +601,14 @@ field identification have good chances to fail. Sorry... :(
    fi
    if [ -s out$$.wcs ];then
     echo -n "Inserting WCS header...  "
-    cp -v $FITSFILE "$BASENAME_FITSFILE"
-    if [ $? -ne 0 ];then
-     echo "ERROR: cannot copy $FITSFILE to $BASENAME_FITSFILE"
-     exit 1
+    if [[ "$FITSFILE" -ef "$BASENAME_FITSFILE" ]];then
+     echo "Not creating a local copy of the FITS image as the input image is already in the current directory. The input image will be modified!"
+    else
+     cp -v "$FITSFILE" "$BASENAME_FITSFILE"
+     if [ $? -ne 0 ];then
+      echo "ERROR: cannot copy $FITSFILE to $BASENAME_FITSFILE"
+      exit 1
+     fi
     fi
     "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
     if [ $? -ne 0 ];then

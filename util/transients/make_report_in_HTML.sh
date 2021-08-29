@@ -241,24 +241,40 @@ for i in $REFERENCE_IMAGE " >> transient_report/index.tmp
      echo -n "$IMAGE "
     fi
    done < $LIGHTCURVE_FILE_OUTDAT >> transient_report/index.tmp
-   echo -n ";do util/wcs_image_calibration.sh \$i && util/make_finding_chart_script.sh wcs_\`basename \$i\` $TARGET_MEAN_POSITION ;done
-# Combine the finder charts into one image (note the '*' subols meaning the command will work only if you have a single transient in that field)
+   echo -n ";do util/wcs_image_calibration.sh \$i && util/make_finding_chart_script.sh wcs_\`basename \$i\` $TARGET_MEAN_POSITION ;done 
+# Combine the finder charts into one image (note the '*' symbols meaning the command will work only if you have a single transient in that field)
 montage " >> transient_report/index.tmp
 ORIG_FITS_IMG="$REFERENCE_IMAGE"
 BASENAME_RESAMPLE_WCS_FITS_IMG="resample_wcs_"`basename "$REFERENCE_IMAGE"`
 # nope, we don't have a solved image when we run this
 PIXEL_POSITION_TO_MARK="*"
-#PIXEL_POSITION_TO_MARK=`lib/bin/sky2xy "$BASENAME_RESAMPLE_WCS_FITS_IMG" 16:34:35.13 -26:58:03.4 | awk '{print $5" "$6}'`
 FITSFILE=${BASENAME_RESAMPLE_WCS_FITS_IMG//./_}
 FITSFILE=${FITSFILE//" "/_}
 echo -n $FITSFILE"__"$PIXEL_POSITION_TO_MARK"pix.png" >> transient_report/index.tmp
+#
 ORIG_FITS_IMG=`tail -n1 $LIGHTCURVE_FILE_OUTDAT | awk '{print $7}'`
 BASENAME_RESAMPLE_WCS_FITS_IMG="resample_wcs_"`basename "$ORIG_FITS_IMG"`
-#PIXEL_POSITION_TO_MARK=`lib/bin/sky2xy "$BASENAME_RESAMPLE_WCS_FITS_IMG" 16:34:35.13 -26:58:03.4 | awk '{print $5" "$6}'`
 FITSFILE=${BASENAME_RESAMPLE_WCS_FITS_IMG//./_}
 FITSFILE=${FITSFILE//" "/_}
-   echo -n " "$FITSFILE"__"$PIXEL_POSITION_TO_MARK"pix.png" >> transient_report/index.tmp
-   echo " -tile 2x1 -geometry +0+0 out.png" >> transient_report/index.tmp
+#   echo -n " "$FITSFILE"__"$PIXEL_POSITION_TO_MARK"pix.png" >> transient_report/index.tmp
+   echo -n " "$FITSFILE"__"$PIXEL_POSITION_TO_MARK"pix_nofov.png" >> transient_report/index.tmp
+   echo " -tile 2x1 -geometry +0+0 finder_chart_v1.png" >> transient_report/index.tmp
+### 2nd version of the finder chart
+   echo -n "montage " >> transient_report/index.tmp
+PIXEL_POSITION_TO_MARK="*"
+ORIG_FITS_IMG="$REFERENCE_IMAGE"
+BASENAME_RESAMPLE_WCS_FITS_IMG="resample_wcs_"`basename "$REFERENCE_IMAGE"`
+FITSFILE=${BASENAME_RESAMPLE_WCS_FITS_IMG//./_}
+FITSFILE=${FITSFILE//" "/_}
+echo -n $FITSFILE"__"$PIXEL_POSITION_TO_MARK"pix.png" >> transient_report/index.tmp
+#
+ORIG_FITS_IMG=`tail -n2 $LIGHTCURVE_FILE_OUTDAT | head -n1 | awk '{print $7}'`
+BASENAME_RESAMPLE_WCS_FITS_IMG="resample_wcs_"`basename "$ORIG_FITS_IMG"`
+FITSFILE=${BASENAME_RESAMPLE_WCS_FITS_IMG//./_}
+FITSFILE=${FITSFILE//" "/_}
+#   echo -n " "$FITSFILE"__"$PIXEL_POSITION_TO_MARK"pix.png" >> transient_report/index.tmp
+   echo -n " "$FITSFILE"__"$PIXEL_POSITION_TO_MARK"pix_nofov.png" >> transient_report/index.tmp
+   echo " -tile 2x1 -geometry +0+0 finder_chart_v2.png" >> transient_report/index.tmp
    echo "
 </pre>
 </div>" >> transient_report/index.tmp

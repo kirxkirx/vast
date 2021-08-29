@@ -607,8 +607,10 @@ int check_if_this_fits_image_is_north_up_east_left(char *fitsfilename) {
  status= 0;                      // just in case
 
  // main test
- // WCS axes are paralllell to the image axes
- if( CD1_2 == 0.0 && CD2_1 == 0.0 ) {
+ // WCS axes are paralloell to the image axes
+ //if( CD1_2 == 0.0 && CD2_1 == 0.0 ) {
+ // OK, let's allow for slight rotation
+ if( fabs(CD1_2)/fabs(CD1_1)<0.1 && fabs(CD2_1)/fabs(CD2_2)<0.1 ) {
   // east left, north up
   if( CD1_1 < 0.0 && CD2_2 > 0.0 ) {
    return 1; // yes!!!!
@@ -619,7 +621,7 @@ int check_if_this_fits_image_is_north_up_east_left(char *fitsfilename) {
  return 0; // assume - no
 }
 
-int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to_TT, double *dimX, double *dimY, char *stderr_output, char *log_output, int param_nojdkeyword, int param_verbose) {
+int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to_TT, double *dimX, double *dimY, char *stderr_output, char *log_output, int param_nojdkeyword, int param_verbose, char *finder_chart_timestring_output) {
 
  unsigned int counter_i;
 
@@ -1517,6 +1519,29 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
 
   if( NULL != log_output ) {
    sprintf(log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, structureTIME.tm_sec, exposure);
+  }
+
+  if( NULL != finder_chart_timestring_output ) {
+   if( exposure>0.0 ) {
+    sprintf(finder_chart_timestring_output, "%4d-%02d-%02d %02d:%02d:%02d %s, %.0lf sec", 
+    structureTIME.tm_year - 100 + 2000, 
+    structureTIME.tm_mon + 1, 
+    structureTIME.tm_mday, 
+    structureTIME.tm_hour, 
+    structureTIME.tm_min, 
+    structureTIME.tm_sec, 
+    tymesys_str_in,
+    exposure);
+   } else {
+    sprintf(finder_chart_timestring_output, "%4d-%02d-%02d %02d:%02d:%02d %s", 
+    structureTIME.tm_year - 100 + 2000, 
+    structureTIME.tm_mon + 1, 
+    structureTIME.tm_mday, 
+    structureTIME.tm_hour, 
+    structureTIME.tm_min, 
+    structureTIME.tm_sec, 
+    tymesys_str_in);
+   }
   }
 
   if( NULL != stderr_output ) {

@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
  fprintf(stderr, "gettime()\n");
 #endif
  int_garbage_timesys= 0;
- gettime(fitsfilename, &double_garbage_JD, &int_garbage_timesys, 0, &X_im_size, &Y_im_size, char_garbage, char_garbage, 0, 0);
+ gettime(fitsfilename, &double_garbage_JD, &int_garbage_timesys, 0, &X_im_size, &Y_im_size, NULL, NULL, 0, 0, NULL);
 #ifdef DEBUGMESSAGES
  fprintf(stderr, "autodetect_aperture()\n");
 #endif

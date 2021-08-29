@@ -118,13 +118,19 @@ done
 
 ########### End of checks - start the work ###########
 
-# R
-swarp -SUBTRACT_BACK N "$FITSFILE"
+# Resample the image to the new grid
+swarp -SUBTRACT_BACK N -IMAGEOUT_NAME resample_"$FITSFILE" -WEIGHTOUT_NAME resample_weights_"$FITSFILE" "$FITSFILE"
 if [ $? -ne 0 ];then
  echo "ERROR running swarp"
  exit 1
 fi
-mv -v coadd.fits resample_"$FITSFILE"
+#mv -v coadd.fits resample_"$FITSFILE"
+
+# Solve the image again in attempt to mitigate this SIP vs TPV nonsesnse
+util/wcs_image_calibration.sh resample_"$FITSFILE"
+if [ -f wcs_resample_"$FITSFILE" ];then
+ mv -vf wcs_resample_"$FITSFILE" resample_"$FITSFILE"
+fi
 
 # Get the pixel position we want to mark
 PIXEL_POSITION_TO_MARK=`lib/bin/sky2xy resample_"$FITSFILE" $TARGET_RA $TARGET_DEC | awk '{print $5" "$6}'`
@@ -137,8 +143,10 @@ if [ -z "$PIXEL_POSITION_TO_MARK" ] || [ " " = "$PIXEL_POSITION_TO_MARK" ] ;then
  exit 1
 fi
 
+############ Make plot without the FoV string ############
+echo "Plotting the finder chart without the field of view label"
 # Make the PNG finding chart
-COMMAND="util/make_finding_chart  -w $PIXELS_AROUND_TARGET -l -d -s -- resample_$FITSFILE $PIXEL_POSITION_TO_MARK "
+COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --datestringinsideimg -- resample_$FITSFILE $PIXEL_POSITION_TO_MARK "
 echo $COMMAND
 $COMMAND
 if [ $? -ne 0 ];then
@@ -149,11 +157,30 @@ if [ ! -s pgplot.png ];then
  echo "ERROR: the output image pgplot.png does not exist or is empty"
  exit 1
 fi
-
 # Everything is fine
-PIXEL_POSITION_TO_MARK=${PIXEL_POSITION_TO_MARK//" "/_}
-FITSFILE=${FITSFILE//./_}
-mv -v "pgplot.png" resample_"$FITSFILE"__"$PIXEL_POSITION_TO_MARK"pix.png
+PIXEL_POSITION_TO_MARK_FOR_PNG=${PIXEL_POSITION_TO_MARK//" "/_}
+FITSFILE_NAME_FOR_PNG=${FITSFILE//./_}
+mv -v "pgplot.png" resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov.png
+
+
+############ Make plot with the FoV string ############
+echo "Plotting the finder chart with the field of view label"
+# Make the PNG finding chart
+COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --datestringinsideimg --imgsizestringinsideimg -- resample_$FITSFILE $PIXEL_POSITION_TO_MARK "
+echo $COMMAND
+$COMMAND
+if [ $? -ne 0 ];then
+ echo "ERROR running util/make_finding_chart"
+ exit 1
+fi
+if [ ! -s pgplot.png ];then
+ echo "ERROR: the output image pgplot.png does not exist or is empty"
+ exit 1
+fi
+# Everything is fine
+PIXEL_POSITION_TO_MARK_FOR_PNG=${PIXEL_POSITION_TO_MARK//" "/_}
+FITSFILE_NAME_FOR_PNG=${FITSFILE//./_}
+mv -v "pgplot.png" resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix.png
 
 # Note that you may combine multiple images side-by-side using something like
 # montage resample_wcs_Sco3_20*png -tile 3x2 -geometry +0+0 out.png

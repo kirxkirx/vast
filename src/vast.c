@@ -2909,7 +2909,7 @@ int main(int argc, char **argv) {
  }
  //
  for( i= 0; i < Num; i++ ) {
-  fitsfile_read_error= gettime(input_images[i], &JD, &timesys, convert_timesys_to_TT, &X_im_size, &Y_im_size, stderr_output, log_output, param_nojdkeyword, 0);
+  fitsfile_read_error= gettime(input_images[i], &JD, &timesys, convert_timesys_to_TT, &X_im_size, &Y_im_size, stderr_output, log_output, param_nojdkeyword, 0, NULL);
   if( fitsfile_read_error != 0 && i == 0 ) {
    fprintf(stderr, "Error reading reference file: code %d\nI'll die :(\n", fitsfile_read_error);
    fits_report_error(stderr, fitsfile_read_error);
@@ -3152,7 +3152,7 @@ int main(int argc, char **argv) {
  // Process the reference image
  if( debug != 0 )
   fprintf(stderr, "DEBUG MSG: (ref) gettime(input_images[0])\n"); // Debug message!
- fitsfile_read_error= gettime(input_images[0], &JD, &timesys, convert_timesys_to_TT, &X_im_size, &Y_im_size, stderr_output, log_output, param_nojdkeyword, 1);
+ fitsfile_read_error= gettime(input_images[0], &JD, &timesys, convert_timesys_to_TT, &X_im_size, &Y_im_size, stderr_output, log_output, param_nojdkeyword, 1, NULL);
  if( fitsfile_read_error != 0 ) {
   fprintf(stderr, "Error reading reference file: code %d\nI'll die :(\n", fitsfile_read_error);
   fits_report_error(stderr, fitsfile_read_error);
@@ -3752,7 +3752,7 @@ int main(int argc, char **argv) {
 
   if( debug != 0 )
    fprintf(stderr, "DEBUG MSG: gettime() - ");
-  fitsfile_read_error= gettime(input_images[n], &JD, &timesys, convert_timesys_to_TT, &X_im_size, &Y_im_size, stderr_output, log_output, param_nojdkeyword, 1); //Вот этот код дублирован выше! Зачем?
+  fitsfile_read_error= gettime(input_images[n], &JD, &timesys, convert_timesys_to_TT, &X_im_size, &Y_im_size, stderr_output, log_output, param_nojdkeyword, 1, NULL); //Вот этот код дублирован выше! Зачем?
   if( fitsfile_read_error == 0 ) {
    if( debug != 0 )
     fprintf(stderr, "OK\n");
