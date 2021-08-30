@@ -337,7 +337,7 @@ fi
 
 #### REMOVE BEFORE PRODUCTION: this is to debug the remote plate solve server access
 #ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
-ASTROMETRYNET_LOCAL_OR_REMOTE="local"
+#ASTROMETRYNET_LOCAL_OR_REMOTE="local"
 ####
 
 HOST_WE_ARE_RUNNING_AT=`hostname`
