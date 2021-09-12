@@ -1843,7 +1843,8 @@ int main(int argc, char **argv) {
  int counter_rejected_bad_flux, counter_rejected_low_snr, counter_rejected_bad_region, counter_rejected_frame_edge, counter_rejected_too_small, counter_rejected_too_large, counter_rejected_external_flag, counter_rejected_bad_psf_fit, counter_rejected_seflags_gt7, counter_rejected_MagSize;
  int counter_rejected_seflags_gt_user_spec_threshold;
 
- long malloc_size= 0; // we want to have it a signed type (not size_t) so the negative value of malloc_size may indicate an error
+ //long malloc_size= 0; // we want to have it a signed type (not size_t) so the negative value of malloc_size may indicate an error
+ long long int malloc_size= 0; // we want to have it a signed type (not size_t) so the negative value of malloc_size may indicate an error
 
  double fraction_of_good_measurements_for_this_source; // fraction of good measurements used to filter-out bad sources
 
@@ -5629,20 +5630,29 @@ int main(int argc, char **argv) {
 
  fprintf(stderr, "Done with measurements! =)\n\n");
  fprintf(stderr, "Total number of measurements %ld (%ld measurements stored in RAM)\n", TOTAL_OBS, obs_in_RAM);
- fprintf(stderr, "Freeing up some memory...\n");
+ fprintf(stderr, "Freeing up some memory...  ");
 
  free(X1);
+ fprintf(stderr, "1 ");
  free(Y1);
+ fprintf(stderr, "2 ");
  free(X2);
+ fprintf(stderr, "3 ");
  free(Y2);
+ fprintf(stderr, "4 ");
 
  free(bad_stars_X);
+ fprintf(stderr, "5 ");
  free(bad_stars_Y);
+ fprintf(stderr, "6 ");
 
  free(manually_selected_comparison_stars_X);
+ fprintf(stderr, "7 ");
  free(manually_selected_comparison_stars_Y);
+ fprintf(stderr, "8 ");
  free(manually_selected_comparison_stars_catalog_mag);
-
+ fprintf(stderr, "9 ");
+ 
  //// Moved up here
  if( debug != 0 ) {
   fprintf(stderr, "DEBUG MSG: free(Pos1);\n");
@@ -5651,6 +5661,7 @@ int main(int argc, char **argv) {
  if( debug != 0 ) {
   fprintf(stderr, "DEBUG MSG: freeing coordinate arrays\n");
  }
+ fprintf(stderr, "10 ");
  for( coordinate_array_index= coordinate_array_counter; coordinate_array_index--; ) {
   free(coordinate_array_x[coordinate_array_index]);
   free(coordinate_array_y[coordinate_array_index]);
@@ -5658,38 +5669,48 @@ int main(int argc, char **argv) {
  if( debug != 0 ) {
   fprintf(stderr, "DEBUG MSG: free(coordinate_array_x);\n");
  }
+ fprintf(stderr, "11 ");
  free(coordinate_array_x);
  if( debug != 0 ) {
   fprintf(stderr, "DEBUG MSG: free(coordinate_array_y);\n");
  }
+ fprintf(stderr, "12 ");
  free(coordinate_array_y);
  if( debug != 0 ) {
   fprintf(stderr, "DEBUG MSG: free(star_numbers_for_coordinate_arrays);\n");
  }
+ fprintf(stderr, "13 ");
  free(star_numbers_for_coordinate_arrays);
  if( debug != 0 ) {
   fprintf(stderr, "DEBUG MSG: free(number_of_coordinate_measurements_for_star);\n");
  }
+ fprintf(stderr, "14 ");
  free(number_of_coordinate_measurements_for_star);
  if( debug != 0 ) {
   fprintf(stderr, "DEBUG MSG: for(n = 0; n < Num; n++)free(input_images[n]);\n");
  }
+ fprintf(stderr, "15 ");
  for( n= Num; n--; ) {
   free(input_images[n]);
  }
  if( debug != 0 ) {
   fprintf(stderr, "DEBUG MSG: free(input_images);\n");
  }
+ fprintf(stderr, "16 ");
  free(input_images);
+ fprintf(stderr, "17 ");
  //
  for( n= Num; n--; ) {
   free(str_with_fits_keywords_to_capture_from_input_images[n]);
  }
+ fprintf(stderr, "18 ");
  free(str_with_fits_keywords_to_capture_from_input_images);
  if( debug != 0 ) {
   fprintf(stderr, "DEBUG MSG: Delete_Preobr_Sk(preobr);\n");
  }
+ fprintf(stderr, "19 ");
  Delete_Preobr_Sk(preobr);
+ fprintf(stderr, "20\n");
  ////
 
  fprintf(stderr, "Writing lightcurve (outNNNNN.dat) files...\n");
