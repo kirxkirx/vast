@@ -1,3 +1,5 @@
+* For file already exist in ms and md add chec kthat the directory is actually writable.
+
 * Add ZTF periodic variables catalog support
 http://variables.cn:88/ztf/
 https://ui.adsabs.harvard.edu/abs/2020ApJS..249...18C/abstract

@@ -3784,7 +3784,8 @@ int main(int argc, char **argv) {
    sprintf(log_output, "JD= %13.5lf  ap= %4.1lf  ", JD, aperture);
    write_string_to_log_file(log_output, sextractor_catalog);
 
-   if( aperture < 50.0 && aperture > 1.0 ) {
+   // WARNING!!! Hardcoded aperture limits here!
+   if( aperture < 75.0 && aperture > 1.0 ) {
     //
     // Make sure we record the largest image size
     //
@@ -5609,7 +5610,7 @@ int main(int argc, char **argv) {
     if( debug != 0 )
      fprintf(stderr, "OK\n");
    } else {
-    fprintf(stderr, "ERROR! APERTURE > 50\n");
+    fprintf(stderr, "ERROR! APERTURE > 75\n");
     /* Write error to the logfile */
     sprintf(log_output, "rotation=   0.000  *detected= %5d  *matched= %5d  status=ERROR  %s\n", 0, 0, input_images[n]);
     write_string_to_log_file(log_output, sextractor_catalog);
