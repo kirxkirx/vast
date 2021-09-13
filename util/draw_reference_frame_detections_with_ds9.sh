@@ -31,9 +31,16 @@ AP=`echo "$AP"| awk '{print $1/2}'`
 
 
 # Read ref_frame_sextractor.cat
-while read NUM FLUX FLUX_ERR MAG MAG_ERR X Y MUSOR ;do
+# 
+REF_FRAME_CATALOG=`grep "$FITSFILE" vast_images_catalogs.log | awk '{print $1}'`
+if [ ! -f "$REF_FRAME_CATALOG" ];then
+ echo "ERROR: cannot open $REF_FRAME_CATALOG"
+fi
+#          1     12533.28     346.8921 -10.2452 -10.2452 -10.1869 -10.2850 -10.3134 -10.3424   0.0301   0.0301   0.0286   0.0318   0.0338   0.0359    219.3718     76.6184     1.601   0.05378     1.442   0.04632   0     4.16 -10.3581         0
+
+while read NUM FLUX FLUX_ERR MAG1 MAG2 MAG3 MAG4 MAG5 MAG6 MAG_ERR1 MAG_ERR2 MAG_ERR3 MAG_ERR4 MAG_ERR5 MAG_ERR6 X Y MUSOR ;do
  echo "circle($X,$Y,$AP)" >> /tmp/reg"$$""$USER".reg
-done < ref_frame_sextractor.cat
+done < $REF_FRAME_CATALOG
 
 # Prepare a header for DS9 region file 
 echo "# Region file format: DS9 version 4.0" > /tmp/reg2"$$""$USER".reg

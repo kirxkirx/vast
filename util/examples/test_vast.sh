@@ -2741,14 +2741,14 @@ if [ -d ../sample_data ];then
  # Run the test
  echo "Small CCD images random options test " 1>&2
  echo -n "Small CCD images random options test: " >> vast_test_report.txt 
- cp default.sex.ccd_example default.sex
  OPTIONS=""
- for OPTION in "-u" "--UTC" "-r" "--norotation" "-l" "--nodiscardell" "-e" "--failsafe" "-k" "--nojdkeyword" "-x3" "--maxsextractorflag 3" "-j" "--position_dependent_correction" "-7" "--autoselectrefimage" "-3" "--selectbestaperture" "-1" "--magsizefilter" ;do
+ for OPTION in "-u" "--UTC" "-l" "--nodiscardell" "-e" "--failsafe" "-k" "--nojdkeyword" "-x3" "--maxsextractorflag 3" "-j" "--position_dependent_correction" "-7" "--autoselectrefimage" "-3" "--selectbestaperture" "-1" "--magsizefilter" ;do
   MONTECARLO=$[ $RANDOM % 10 ]
   if [ $MONTECARLO -gt 5 ];then
    OPTIONS="$OPTIONS $OPTION"
   fi
  done
+ cp default.sex.ccd_example default.sex
  ./vast --nofind $OPTIONS ../sample_data/f_72-0*
  if [ $? -ne 0 ];then
   TEST_PASSED=0
