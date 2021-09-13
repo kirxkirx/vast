@@ -199,6 +199,7 @@ REFERENCE_IMAGES="`dirname $REFERENCE_IMAGE` >> transient_report/index.tmp
 
    #
    if [ -f test.mpc ];then
+    # Stub MPC report
     echo "<a href=\"javascript:toggleElement('mpcstub_$TRANSIENT_NAME')\">Stub MPC report</a> (for online MPChecker) " >> transient_report/index.tmp  
     echo -n "<div id=\"mpcstub_$TRANSIENT_NAME\" style=\"display:none\">
 Don't forget to copy the leading white spaces and change the observatory code! 
@@ -220,6 +221,17 @@ Position measured on individual images:
 <a href='https://minorplanetcenter.net/cgi-bin/checkneocmt.cgi'>NEOCMTChecker</a> (NEO's and comets)<br>
 <a href='https://www.projectpluto.com/sat_id2.htm'>sat_id2</a> (artificial satellites; needs at least two observations to work)<br>
 <a href='http://www.fitsblink.net/satellites/'>fitsblink_satellites</a> (art. sat.; you'll need to save the astrometry as a text file and upload it)
+<br>
+</div>" >> transient_report/index.tmp
+    # Stub TOCP report
+    echo "<a href=\"javascript:toggleElement('tocpstub_$TRANSIENT_NAME')\">Stub TOCP report</a> " >> transient_report/index.tmp  
+    echo -n "<div id=\"tocpstub_$TRANSIENT_NAME\" style=\"display:none\">
+Here is a stub line for <a href='http://www.cbat.eps.harvard.edu/tocp_report'>reporting a new transient to the TOCP</a>. 
+Don't forget to set the constellation name and the number of days since the last non-detection!
+<pre style='font-family:monospace;font-size:12px;'>
+" >> transient_report/index.tmp
+    cat test.mpc | sed 's: C2: 2:g' | awk '{printf "TCP %d %02d %07.4f*  %02d %02d %05.2f %+02d %02d %04.1f  %4.1f U             Con       0 1\n", $2, $3, $4,  $5, $6, $7,  $8, $9, $10,  $11}' >> transient_report/index.tmp
+    echo "</pre>
 <br>
 </div>" >> transient_report/index.tmp
    fi
