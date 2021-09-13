@@ -2749,7 +2749,7 @@ if [ -d ../sample_data ];then
    OPTIONS="$OPTIONS $OPTION"
   fi
  done
- ./vast --nofind $OPTIONS ../sample_data/f_72-00*
+ ./vast --nofind $OPTIONS ../sample_data/f_72-0*
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDRANDOMOPTIONS000($OPTIONS)"
