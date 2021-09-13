@@ -2552,6 +2552,252 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 
+
+##### Small CCD images with file list input and --autoselectrefimage test #####
+# Download the test dataset if needed
+if [ ! -d ../sample_data ];then
+ cd ..
+ #wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ wget -c "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ cd $WORKDIR
+fi
+# If the test data are found
+if [ -d ../sample_data ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "Small CCD images with file list input and --autoselectrefimage test " 1>&2
+ echo -n "Small CCD images with file list input and --autoselectrefimage test: " >> vast_test_report.txt 
+ if [ -f vast_list_of_input_images_with_time_corrections.txt_test ];then
+  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
+   mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP
+  fi
+  cp vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_example vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+  cp default.sex.ccd_example default.sex
+  cp vast_list_of_input_images_with_time_corrections.txt_test vast_list_of_input_images_with_time_corrections.txt
+  ./vast -u -f --nomagsizefilter --autoselectrefimage
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF000"
+  fi
+  rm -f vast_list_of_input_images_with_time_corrections.txt
+  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP ];then
+    mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+  fi
+ fi
+ # Check results
+ if [ -f vast_summary.log ];then
+  grep --quiet "Images processed 91" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF001"
+  fi
+  grep --quiet "Images used for photometry 91" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF002"
+  fi
+  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF003"
+  fi
+  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF004"
+  fi
+  grep --quiet "Magnitude-Size filter: Disabled" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF005"
+  fi
+  grep --quiet "Photometric errors rescaling: YES" vast_summary.log
+  #if [ $? -ne 0 ];then
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF006"
+  fi
+  if [ ! -f vast_lightcurve_statistics.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF007"
+  fi
+  if [ ! -s vast_lightcurve_statistics.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF008"
+  fi
+  if [ ! -f vast_lightcurve_statistics_format.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF009"
+  fi
+  if [ ! -s vast_lightcurve_statistics_format.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF010"
+  fi
+  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF011"
+  fi
+  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF012"
+  fi
+  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF013"
+  fi
+  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF014"
+  fi
+  N_AUTOCANDIDATES=`cat vast_autocandidates.log | wc -l | awk '{print $1}'`
+  # actually we get two more false candidates depending on binning if filtering is disabled
+  if [ $N_AUTOCANDIDATES -lt 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF000_N_AUTOCANDIDATES"
+  fi
+  ###############################################
+  # Both stars should be selected using the following criterea, but let's check at least one
+  cat vast_autocandidates_details.log | grep --quiet 'IQR  IQR+MAD  eta+IQR+MAD  eta+CLIPPED_SIGMA'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF_AUTOCANDIDATEDETAILS"
+  fi
+  ###############################################
+  lib/remove_bad_images 0.1 &> /dev/null
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF036"
+  fi
+  ###############################################
+  if [ -s vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
+   grep --quiet "CCD-TEMP" vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+   if [ $? -eq 0 ];then
+    for LIGHTCURVEFILE_TO_TEST in out*.dat ;do
+     grep --quiet "CCD-TEMP" "$LIGHTCURVEFILE_TO_TEST"
+     if [ $? -ne 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF037_$LIGHTCURVEFILE_TO_TEST"
+      break
+     fi
+    done
+   else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF037_NOT_PERFORMED_1"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF037_NOT_PERFORMED_2"
+  fi
+  ################################################################################
+  # Check vast_image_details.log format
+  NLINES=`cat vast_image_details.log | awk '{print $18}' | sed '/^\s*$/d' | wc -l | awk '{print $1}'`
+  if [ $NLINES -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF_VAST_IMG_DETAILS_FORMAT"
+  fi
+  ################################################################################
+
+ else
+  echo "ERROR: cannot find vast_summary.log" 1>&2
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF_ALL"
+ fi
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mSmall CCD images with file list input and --autoselectrefimage test \033[01;32mPASSED\033[00m" 1>&2
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mSmall CCD images with file list input and --autoselectrefimage test \033[01;31mFAILED\033[00m" 1>&2
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+
+
+
+##### Small CCD images random options test #####
+# Download the test dataset if needed
+if [ ! -d ../sample_data ];then
+ cd ..
+ #wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ wget -c "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ cd $WORKDIR
+fi
+# If the test data are found
+if [ -d ../sample_data ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "Small CCD images random options test " 1>&2
+ echo -n "Small CCD images random options test: " >> vast_test_report.txt 
+ cp default.sex.ccd_example default.sex
+ OPTIONS=""
+ for OPTION in "-u" "--UTC" "-r" "--norotation" "-l" "--nodiscardell" "-e" "--failsafe" "-k" "--nojdkeyword" "-x3" "--maxsextractorflag 3" "-j" "--position_dependent_correction" "-7" "--autoselectrefimage" "-3" "--selectbestaperture" "-1" "--magsizefilter" ;do
+  MONTECARLO=$[ $RANDOM % 10 ]
+  if [ $MONTECARLO -gt 5 ];then
+   OPTIONS="$OPTIONS $OPTION"
+  fi
+ done
+ ./vast --nofind $OPTIONS ../sample_data/f_72-00*
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDRANDOMOPTIONS000($OPTIONS)"
+ fi
+ # Check results
+ if [ -f vast_summary.log ];then
+  grep --quiet "Images processed 91" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDRANDOMOPTIONS001($OPTIONS)"
+  fi
+  grep --quiet "Images used for photometry 91" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDRANDOMOPTIONS002($OPTIONS)"
+  fi
+  N_AUTOCANDIDATES=`cat vast_autocandidates.log | wc -l | awk '{print $1}'`
+  # actually we get two more false candidates depending on binning if filtering is disabled
+  if [ $N_AUTOCANDIDATES -lt 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDRANDOMOPTIONS000_N_AUTOCANDIDATES($OPTIONS)"
+  fi
+  ###############################################
+
+ else
+  echo "ERROR: cannot find vast_summary.log" 1>&2
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDRANDOMOPTIONS_ALL($OPTIONS)"
+ fi
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mSmall CCD images random options test \033[01;32mPASSED\033[00m" 1>&2
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mSmall CCD images random options test \033[01;31mFAILED\033[00m" 1>&2
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDRANDOMOPTIONS_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+
+
+
 ##### Few small CCD images test #####
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then

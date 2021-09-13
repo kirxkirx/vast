@@ -2498,6 +2498,11 @@ int main(int argc, char **argv) {
      return 1;
     }
     malloc_size= sizeof(char) * (strlen(image_filename_from_input_list) + 1);
+    if( malloc_size > FILENAME_LENGTH ) {
+     fprintf(stderr, "ERROR in main(): filename is too long %s\n", image_filename_from_input_list);
+     exit(1);
+    }
+    malloc_size= FILENAME_LENGTH;
     if( malloc_size <= 0 ) {
      fprintf(stderr, "ERROR004 - trying to allocate zero or negative number of bytes!\n");
      exit(1);
