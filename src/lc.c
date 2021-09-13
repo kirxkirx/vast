@@ -461,6 +461,8 @@ int main(int argc, char **argv) {
  int plot_minimum_fitting_boundaries= 0;
  /* ----------- */
  int closest_num;
+ int removed_points_counter_total= 0;
+ int removed_points_counter_this_run= 0;
  int lightcurve_format;
  /* Statistic */
  double JD_first, JD_last;
@@ -809,11 +811,15 @@ int main(int argc, char **argv) {
   if( xw_ps == 0 )
    cpgscr(1, 0.62, 0.81, 0.38); /* set color of lables */
   get_star_number_from_name(star_name, lightcurvefilename);
-  sprintf(header_str, "Object %s, %d observations, start JD=%.4lf end JD=%.4lf", star_name, Nobs, JD_first, JD_last);
-  if( strlen(header_str) > 78 )
-   sprintf(header_str, "Object %s, %d observations, start JD=%.2lf end JD=%.2lf", star_name, Nobs, JD_first, JD_last);
-  if( strlen(header_str) > 78 )
-   cpgsch(0.9); /* make lables with small characters */
+  //sprintf(header_str, "Object %s, %d observations, start JD=%.4lf end JD=%.4lf", star_name, Nobs, JD_first, JD_last);
+  sprintf(header_str, "Object %s, %d observations over %.2lf days starting on JD %.4lf", star_name, Nobs, JD_last-JD_first, JD_first);
+  if( strlen(header_str) > 78 ) {
+   //sprintf(header_str, "Object %s, %d observations, start JD=%.2lf end JD=%.2lf", star_name, Nobs, JD_first, JD_last);
+   sprintf(header_str, "Object %s, %d observations over %.2lf days", star_name, Nobs, JD_last-JD_first);
+  }
+  if( strlen(header_str) > 78 ) {
+   cpgsch(0.9); // make lables with small characters 
+  }
 
   //fprintf(stderr,"#%s#\n#%s#\n",header_str,lightcurvefilename);
 
@@ -1252,6 +1258,7 @@ int main(int argc, char **argv) {
    cpgband(2, 0, curX, curY, &curX2, &curY2, &curC);
    // last chance to cancel!
    if( curC != 'X' && curC != 'x' ) {
+    removed_points_counter_this_run= 0;
     for( closest_num= 0; closest_num < Nobs; closest_num++ ) {
      //fprintf(stderr,"%f %f  %f %f\n",MIN(curX,curX2),MAX(curX,curX2),MIN(curY,curY2),MAX(curY,curY2));
      if( float_JD[closest_num] > MIN(curX, curX2) && float_JD[closest_num] < MAX(curX, curX2) && mag[closest_num] > MIN(curY, curY2) && mag[closest_num] < MAX(curY, curY2) ) {
@@ -1280,8 +1287,11 @@ int main(int argc, char **argv) {
         closest_num--; /// ! TEST !
       }                // for(i=closest_num;i<Nobs;i++)
       was_lightcurve_changed= 1;
+      removed_points_counter_total++;
+      removed_points_counter_this_run++;
      } // if inside the rectangle
     }  // for(closest_num=0;i<Nobs;i++)
+    fprintf(stderr, "Removed %5d data points (%5d removed data points in total)\n", removed_points_counter_this_run, removed_points_counter_total); 
    }   // if( curC!='X' && curC!='x' )
    curC= ' ';
   } // if( curC=='C' || curC=='c' )
