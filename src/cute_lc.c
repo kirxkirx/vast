@@ -73,6 +73,12 @@ int main(int argc, char **argv) {
 
  // Print results
  for( observation_counter= 0; observation_counter < number_of_observations; observation_counter++ ) {
+  // never print zero errors!!!
+  // 0.001 corresponds to %5.3lf printf format below
+  if( mag_err[observation_index[observation_counter]] < 0.001 ) {
+   mag_err[observation_index[observation_counter]]= 0.001;
+  }
+  //
   fprintf(stdout, "%.5lf  %6.3lf %5.3lf\n", jd[observation_index[observation_counter]], mag[observation_index[observation_counter]], mag_err[observation_index[observation_counter]]);
  }
 

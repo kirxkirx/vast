@@ -22,12 +22,19 @@ static inline int write_lightcurve_point(FILE *lc_file_descriptor, double jd, do
  }
 */
  //
- if( NULL == comments_string ) {
-  fprintf(lc_file_descriptor, "%.5lf %8.4lf %.4lf  %10.5lf %10.5lf %4.1lf %s\n", jd, mag, mag_err, x, y, app, string);
-  //  fprintf( lc_file_descriptor, "%.5lf %12.8lf %.8lf  %10.5lf %10.5lf %4.1lf %s\n", jd, mag, mag_err, x, y, app, string );
+ // Never print zero errors!
+ double nonzero_mag_err;
+ // 0.0001 has to match the printf format %.4lf below
+ if( mag_err < 0.0001 ) {
+  nonzero_mag_err= 0.0001;
  } else {
-  fprintf(lc_file_descriptor, "%.5lf %8.4lf %.4lf  %10.5lf %10.5lf %4.1lf %s  %s\n", jd, mag, mag_err, x, y, app, string, comments_string);
-  //  fprintf( lc_file_descriptor, "%.5lf %12.8lf %.8lf  %10.5lf %10.5lf %4.1lf %s  %s\n", jd, mag, mag_err, x, y, app, string, comments_string );
+  nonzero_mag_err=mag_err;  
+ }
+ //
+ if( NULL == comments_string ) {
+  fprintf(lc_file_descriptor, "%.5lf %8.4lf %.4lf  %10.5lf %10.5lf %4.1lf %s\n", jd, mag, nonzero_mag_err, x, y, app, string);
+ } else {
+  fprintf(lc_file_descriptor, "%.5lf %8.4lf %.4lf  %10.5lf %10.5lf %4.1lf %s  %s\n", jd, mag, nonzero_mag_err, x, y, app, string, comments_string);
  }
  return 0;
 }
