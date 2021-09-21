@@ -104,7 +104,7 @@ static inline int fitsfile_read_check(char *fitsfilename) {
     }
    }
   }
-  fprintf(stderr, "%s image has NAXIS = %d.  Only 2-D images are supported.\n", fitsfilename, naxis);
+  fprintf(stderr, "%s image has NAXIS = %d.  Only 2-D images are supported. -- fitsfile_read_check()\n", fitsfilename, naxis);
   fits_close_file(fptr, &status);
   return 1;
  }

@@ -353,9 +353,10 @@ int check_if_we_need_flag_image(char *fitsfilename, char *resulting_sextractor_c
  // Calculate image median and sigma
  if( 0 == fits_open_image(&fptr, fitsfilename, READONLY, &status) ) {
 
+  // actually, this should be handled by fitsfile_read_check()
   fits_get_img_dim(fptr, &naxis, &status);
   if( naxis > 3 ) {
-   fprintf(stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported.\n", naxis);
+   fprintf(stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported. (1)\n", naxis);
    fits_close_file(fptr, &status);
    return 1;
   }
@@ -367,8 +368,8 @@ int check_if_we_need_flag_image(char *fitsfilename, char *resulting_sextractor_c
    if( naxis == 3 ) {
     long naxes3;
     fits_read_key(fptr, TLONG, "NAXIS3", &naxes3, NULL, &status);
-    if( naxes3 != 1 ) {
-     fprintf(stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported.\n", naxis);
+    if( naxes3 != 1 && naxes3 != 3 ) {
+     fprintf(stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported. (2)\n", naxis);
      (*is_flag_image_used)= 0;                          // just in case
      resulting_sextractor_cl_parameter_string[0]= '\0'; // just in case
      flag_image_filename[0]= '\0';                      // just in case
@@ -376,7 +377,7 @@ int check_if_we_need_flag_image(char *fitsfilename, char *resulting_sextractor_c
      return 1;
     }
    } else {
-    fprintf(stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported.\n", naxis);
+    fprintf(stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported. (3)\n", naxis);
     (*is_flag_image_used)= 0;                          // just in case
     resulting_sextractor_cl_parameter_string[0]= '\0'; // just in case
     flag_image_filename[0]= '\0';                      // just in case
@@ -447,7 +448,8 @@ int check_if_we_need_flag_image(char *fitsfilename, char *resulting_sextractor_c
 
   fits_get_img_dim(fptr, &naxis, &status);
   if( naxis > 3 ) {
-   fprintf(stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported.\n", naxis);
+   fprintf(stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported. (4)\n", naxis);
+   fits_close_file(fptr, &status);
    return 1;
   }
   // with the above check naxes should not overflow
@@ -458,18 +460,20 @@ int check_if_we_need_flag_image(char *fitsfilename, char *resulting_sextractor_c
    if( naxis == 3 ) {
     long naxes3;
     fits_read_key(fptr, TLONG, "NAXIS3", &naxes3, NULL, &status);
-    if( naxes3 != 1 ) {
-     fprintf(stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported.\n", naxis);
+    if( naxes3 != 1 && naxes3 != 3 ) {
+     fprintf(stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported. (5)\n", naxis);
      (*is_flag_image_used)= 0;                          // just in case
      resulting_sextractor_cl_parameter_string[0]= '\0'; // just in case
      flag_image_filename[0]= '\0';                      // just in case
+     fits_close_file(fptr, &status);
      return 1;
     }
    } else {
-    fprintf(stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported.\n", naxis);
+    fprintf(stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported. (6)\n", naxis);
     (*is_flag_image_used)= 0;                          // just in case
     resulting_sextractor_cl_parameter_string[0]= '\0'; // just in case
     flag_image_filename[0]= '\0';                      // just in case
+    fits_close_file(fptr, &status);
     return 1;
    }
   }
