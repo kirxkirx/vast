@@ -18,6 +18,8 @@
 
 #include "variability_indexes.h" // for esimate_sigma_from_MAD_of_sorted_data_float()
 
+#include "fitsfile_read_check.h"
+
 #define COUNT_N_PIXELS_AROUND_BAD_ONE 2
 
 // defined in autodetect_aperture.c
@@ -343,12 +345,18 @@ int check_if_we_need_flag_image(char *fitsfilename, char *resulting_sextractor_c
   return 0;
  }
 
+ if( 0 != fitsfile_read_check( fitsfilename ) ) {
+  fprintf(stderr, "ERROR: the input file did not pass fitsfile_read_check()\n");
+  return 1;
+ }
+
  // Calculate image median and sigma
  if( 0 == fits_open_image(&fptr, fitsfilename, READONLY, &status) ) {
 
   fits_get_img_dim(fptr, &naxis, &status);
   if( naxis > 3 ) {
    fprintf(stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported.\n", naxis);
+   fits_close_file(fptr, &status);
    return 1;
   }
   // with the above check naxes should not overflow
@@ -364,6 +372,7 @@ int check_if_we_need_flag_image(char *fitsfilename, char *resulting_sextractor_c
      (*is_flag_image_used)= 0;                          // just in case
      resulting_sextractor_cl_parameter_string[0]= '\0'; // just in case
      flag_image_filename[0]= '\0';                      // just in case
+     fits_close_file(fptr, &status);
      return 1;
     }
    } else {
@@ -371,11 +380,13 @@ int check_if_we_need_flag_image(char *fitsfilename, char *resulting_sextractor_c
     (*is_flag_image_used)= 0;                          // just in case
     resulting_sextractor_cl_parameter_string[0]= '\0'; // just in case
     flag_image_filename[0]= '\0';                      // just in case
+    fits_close_file(fptr, &status);
     return 1;
    }
   }
   if( naxes[0] < 1 || naxes[1] < 1 ) {
    fprintf(stderr, "ERROR in check_if_we_need_flag_image() the image dimensions are clearly wrong!\n");
+   fits_close_file(fptr, &status);
    return 1;
   }
   totpix= naxes[0] * naxes[1];
@@ -385,6 +396,7 @@ int check_if_we_need_flag_image(char *fitsfilename, char *resulting_sextractor_c
    (*is_flag_image_used)= 0;                          // just in case
    resulting_sextractor_cl_parameter_string[0]= '\0'; // just in case
    flag_image_filename[0]= '\0';                      // just in case
+   fits_close_file(fptr, &status);
    return 1;
   }
   fits_read_img(fptr, TDOUBLE, 1, totpix, &nullval, pix, &anynul, &status);

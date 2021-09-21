@@ -1665,8 +1665,10 @@ int main(int argc, char **argv) {
    exit(1);
   };
   fits_read_img(fptr, TBYTE, 1, naxes[0] * naxes[1], &nullval_uchar, image_array_uchar, &anynul, &status);
-  for( i= 0; i < naxes[0] * naxes[1]; i++ )
+  for( i= 0; i < naxes[0] * naxes[1]; i++ ) {
    float_array[i]= (float)image_array_uchar[i];
+  }
+  free(image_array_uchar);
  }
  // 16 bit image
  if( bitpix == 16 ) {
