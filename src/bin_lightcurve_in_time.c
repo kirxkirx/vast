@@ -12,7 +12,8 @@
 
 int main(int argc, char **argv) {
 
- unsigned int i,j,bin_counter,points_in_bin_counter,points_in_next_bin; // counters
+ //unsigned int i,j,bin_counter,points_in_bin_counter,points_in_next_bin; // counters
+ unsigned int i,bin_counter,points_in_bin_counter; // counters
 
 
  // JD is the array with dates

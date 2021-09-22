@@ -415,7 +415,7 @@ int read_wcs_catalog(char *fits_image_filename, struct detected_star *stars, int
  char wcs_catalog_filename[FILENAME_LENGTH];
  double JD;
  int timesys;
- char char_garbage[4096];
+ //char char_garbage[4096];
  double X_im_size;
  double Y_im_size;
  int good_stars_counter= 0;
