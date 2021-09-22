@@ -67,12 +67,16 @@ void cutout_green_channel_out_of_RGB_DSLR_image(char *filename) {
  FILE *vast_converted_images_log;
  char vast_converted_images_log_original_image_name[FILENAME_LENGTH];
 
- unsigned int i, need_to_cutout_green_channel;
+ unsigned int i; // counter
  char green_channel_only_image_name[FILENAME_LENGTH];
  //
  struct stat sb; // structure returned by stat() system call
  
- need_to_cutout_green_channel= 0; // default is that we don't do anything
+ unsigned int need_to_cutout_green_channel= 0; // default is that we don't do anything
+ unsigned int does_the_header_look_like_DSLR_image= 0; // default - it does not
+ char *pointer_to_the_key_start; // for substring search with memmem()
+ 
+ char program[FLEN_CARD]; // FLEN_CARD length of a FITS header card defined in fitsio.h
 
  char command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
  char path_to_vast_string[VAST_PATH_MAX];
@@ -115,9 +119,32 @@ void cutout_green_channel_out_of_RGB_DSLR_image(char *filename) {
   fits_clear_errmsg();               // clear the CFITSIO error message stack
   return;
  }
+ 
+ // Check if there is any hint in the header that this is a color DSLR image
+ // (as ther may be many other types of images with NAXIS=3)
+ 
+ // First, check for the presence of ISOSPEED keyword
  fits_read_key(fptr, TDOUBLE, "ISOSPEED", &isospeed, NULL, &status);
  if( 0 == status ) {
   fprintf( stderr, "Found key ISOSPEED= %.0lf %s looks like a DSLR image\n", isospeed, filename);
+  does_the_header_look_like_DSLR_image= 1;
+ }
+ status= 0; // reset status: no problem if there was no ISOSPEED keyword
+ // Second, check  if the image was created with Siril
+ fits_read_key(fptr, TSTRING, "PROGRAM", program, NULL, &status);
+ if( 0 == status ) {
+  if( strlen(program) >= 5 ) {
+   pointer_to_the_key_start= (char *)memmem(program, strlen(program), "Siril", 5);
+   if( pointer_to_the_key_start != NULL ) {
+    fprintf( stderr, "Found key PROGRAM= %s  -- %s looks like a DSLR image\n", program, filename);
+    does_the_header_look_like_DSLR_image= 1;
+   }
+  }
+ }
+ status= 0; // reset status
+ 
+ 
+ if( does_the_header_look_like_DSLR_image == 1 ) {
   fits_get_img_dim(fptr, &naxis, &status);
   if( 0 != status ) {
    fits_report_error(stderr, status); // print out any error messages

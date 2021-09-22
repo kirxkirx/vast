@@ -993,8 +993,8 @@ int guess_saturation_limit(char *fitsfilename, char *resulting_sextractor_cl_par
    if( naxis == 3 ) {
     long naxes3;
     fits_read_key(fptr, TLONG, "NAXIS3", &naxes3, NULL, &status);
-    if( naxes3 != 1 ) {
-     fprintf(stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported.\n", naxis);
+    if( naxes3 != 1 && naxes3 != 3 ) {
+     fprintf(stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported. (7)\n", naxis);
      //
      fits_report_error(stderr, status); /* print any error message */
      fits_clear_errmsg();               // clear the CFITSIO error message stack
@@ -1004,7 +1004,7 @@ int guess_saturation_limit(char *fitsfilename, char *resulting_sextractor_cl_par
      return 1;
     }
    } else {
-    fprintf(stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported.\n", naxis);
+    fprintf(stderr, "ERROR: NAXIS = %d.  Only 2-D images are supported. (8)\n", naxis);
     //
     fits_report_error(stderr, status); /* print any error message */
     fits_clear_errmsg();               // clear the CFITSIO error message stack

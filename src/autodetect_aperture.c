@@ -25,6 +25,8 @@
 
 #include "count_lines_in_ASCII_file.h" // for count_lines_in_ASCII_file()
 
+#include "replace_file_with_symlink_if_filename_contains_white_spaces.h" // for cutout_green_channel_out_of_RGB_DSLR_image()
+
 // Update PATH variable to make sure the local copy of SExtractor is there
 void make_sure_libbin_is_in_path() {
  char pathstring[8192];
@@ -167,8 +169,9 @@ double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, 
  }
 
  // Guess gain for the given image
- if( do_PSF_fitting == 1 )
+ if( do_PSF_fitting == 1 ) {
   raise_unset_gain_warning= 1; // always warn about unset gain when doing PSF-fitting photometry
+ }
  if( 0 != guess_gain(fitsfilename, gain_sextractor_cl_parameter_string, 2, raise_unset_gain_warning) ) {
   sprintf(error_message_string, "An ERROR ocurred while trying to guess CCD gain for %s\n", fitsfilename);
   fputs(error_message_string, stderr);
@@ -179,6 +182,9 @@ double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, 
 
  // Make sure the local copy of SExtractor will be in PATH in case there is no system-wide one
  make_sure_libbin_is_in_path();
+
+ // What will happen if we have an RGB image here?????
+ cutout_green_channel_out_of_RGB_DSLR_image(fitsfilename);
 
  fprintf(stderr, "Running SExtractor on %s\n", fitsfilename);
 
