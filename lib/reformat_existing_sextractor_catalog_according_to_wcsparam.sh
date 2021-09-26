@@ -67,7 +67,7 @@ for FITSFILE_TO_CHECK in "$FITSFILE" "$WCS_IMAGE_NAME" ;do
 
  #echo "Checking $FITSFILE_TO_CHECK"
  if [ ! -f "$FITSFILE_TO_CHECK" ];then
-  echo "ERROR in $0 : $FITSFILE_TO_CHECK does not exist!" 1>&2
+  echo "WARNING from $0 : $FITSFILE_TO_CHECK does not exist (this may be OK if the file gets recreated afterwards)" 1>&2
   exit 1
  fi
  if [ ! -s "$FITSFILE_TO_CHECK" ];then
