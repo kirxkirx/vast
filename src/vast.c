@@ -3172,8 +3172,8 @@ int main(int argc, char **argv) {
  if( debug != 0 )
   fprintf(stderr, "DEBUG MSG: (ref) autodetect_aperture(input_images[0])\n");
  aperture= autodetect_aperture(input_images[0], sextractor_catalog, 0, param_P, fixed_aperture, X_im_size, Y_im_size, guess_saturation_limit_operation_mode);
- if( aperture > 50 || aperture < 1.0 ) {
-  fprintf(stderr, "APERTURE = %.1lf is > 50.0 or < 1.0\nBad reference image...\n", aperture);
+ if( aperture > 75 || aperture < 1.0 ) {
+  fprintf(stderr, "APERTURE = %.1lf is > 75.0 or < 1.0\nBad reference image...\n", aperture);
   write_string_to_individual_image_log(sextractor_catalog, "main(): ", "Bad reference image: the estimated aperture is out of range!", "");
   exit(1);
  }
