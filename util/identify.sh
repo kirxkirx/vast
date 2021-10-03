@@ -534,8 +534,12 @@ field identification have good chances to fail. Sorry... :(
   #$TIMEOUT_COMMAND 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   #
   # HACK Hack hack -- manually specify the field center and size
-  #
-  #$TIMEOUT_COMMAND 600 solve-field --ra 18:57:30.98 --dec +16:53:39.6  --objs 1000 --depth 1-20  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # Fermi transient near U Sco 16:23:16.80 -17:52:48.0
+  #$TIMEOUT_COMMAND 600 solve-field --ra 16:23:16.80 --dec -17:52:48.0 --radius 0.8 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # TCP J04023940+4250546
+  #$TIMEOUT_COMMAND 600 solve-field --ra 04:02:39.40 --dec +42:50:54.6 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # Nova Her
+  #$TIMEOUT_COMMAND 600 solve-field --ra 18:57:30.98 --dec +16:53:39.6 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # Gaia21dyi
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 17:26:19.38 --dec -33:27:10.66 --radius 0.2  --objs 1000 --depth 1-30,30-50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # j1408
@@ -732,6 +736,8 @@ field identification have good chances to fail. Sorry... :(
    
    # Moved here as IMAGE_SIZE without awk postprocessing is defined and used above
    IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
+   
+   echo "Plate solving parameters: -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py"
    
    #`lib/find_timeout_command.sh` 300 $CURL -F file=@out$$.xyls -F submit="Upload Image" -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
    #echo $CURL -F file=@out$$.xyls -F submit="Upload Image" -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd
@@ -1010,8 +1016,11 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
   ############################################################################
   # Check for a local copy of UCAC5
   # (this is specific to our in-house setup)
+  #
+  # Reminder to kirx: /mnt/usb/UCAC5 -- local, /dataN/kirx/UCAC5 -- scan, /dataX/kirx/UCAC5 -- vast
+  #
   if [ ! -d lib/catalogs/ucac5 ];then
-   for TEST_THIS_DIR in /dataX/kirx/UCAC5 /mnt/usb/UCAC5 /home/kirx/UCAC5 $HOME/UCAC5 ../UCAC5 ;do
+   for TEST_THIS_DIR in /mnt/usb/UCAC5 /dataN/kirx/UCAC5 /dataX/kirx/UCAC5 /home/kirx/UCAC5 $HOME/UCAC5 ../UCAC5 ;do
     if [ -d $TEST_THIS_DIR ];then
      ln -s $TEST_THIS_DIR lib/catalogs/ucac5
      echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR"
