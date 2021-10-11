@@ -12,6 +12,7 @@
 
 #define MIN_REAL_COUNT 5 // The minimum count assumed to be real. The default is 5
 
+/*
 unsigned short detect_overscan(float *image_array, long *naxes) {
  int i, j;
  int binsize= 15;
@@ -57,17 +58,17 @@ unsigned short detect_overscan(float *image_array, long *naxes) {
  fprintf(stderr, "Overscan detected!\n");
  return min_real_count_estimate;
 }
+*/
 
 unsigned short detect_overscan2(float *image_array, long *naxes) {
- /* Two main ideas of this alghorithm:
-     * 1. Signal from overscan is lower than signal from image background
-     * 2. Overscan zone located on the edge of the image
-     * */
+ // Two main ideas of this alghorithm:
+ //    * 1. Signal from overscan is lower than signal from image background
+ //    * 2. Overscan zone located on the edge of the image
+ //
 
  int i; // counter
 
  int posY= (int)(naxes[1] / 2 + 0.5);
- //double img_profile[naxes[0]]; // horizontal slice of the image
  double *img_profile;
 
  if( naxes[0] <= 0 ) {
@@ -105,6 +106,12 @@ unsigned short detect_overscan2(float *image_array, long *naxes) {
  // calculating medians
  double left_median= gsl_stats_median_from_sorted_data(left, 1, binsize);
  double right_median= gsl_stats_median_from_sorted_data(right, 1, binsize);
+
+ // do not test if the values seem high
+ if( left_median > 5000 && right_median > 5000 ){
+  fprintf(stdout, "No overscan detected - all values seem high!\n");
+  return MIN_REAL_COUNT;
+ }
 
  // getting median value of overscan
  double median= (left_median < right_median) ? left_median : right_median;

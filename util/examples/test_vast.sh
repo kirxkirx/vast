@@ -155,7 +155,7 @@ function remove_test_data_to_save_space {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." 1>&2
-    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' ;do
+    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' ../NMW_corrupt_calibration_test ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -16839,6 +16839,57 @@ if [ $TEST_PASSED -eq 1 ];then
  echo "PASSED" >> vast_test_report.txt
 else
  echo -e "\n\033[01;34mImage field of view script test \033[01;31mFAILED\033[00m" 1>&2
+ echo "FAILED" >> vast_test_report.txt
+fi 
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+
+
+
+# flatfielding test
+TEST_PASSED=1
+echo "Performing NMW flatfielding test " 1>&2
+echo -n "Performing NMW flatfielding test: " >> vast_test_report.txt 
+
+if [ ! -d ../NMW_corrupt_calibration_test ];then
+ cd ../
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/NMW_corrupt_calibration_test.tar.bz2" && bunzip2 NMW_corrupt_calibration_test.tar.bz2
+ cd $WORKDIR
+fi
+if [ -f ../NMW_corrupt_calibration_test/d_test.fit ] && [ -f ../NMW_corrupt_calibration_test/mff_Stas_2021-08-28.fit ];then
+ util/ccd/md ../NMW_corrupt_calibration_test/d_test.fit ../NMW_corrupt_calibration_test/mff_Stas_2021-08-28.fit fd_test.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWFLATFIELDING_001"
+ fi
+ if [ ! -f fd_test.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWFLATFIELDING_002"
+ fi
+ if [ ! -s fd_test.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWFLATFIELDING_003"
+ fi
+ lib/autodetect_aperture_main fd_test.fit 2>&1 | grep --quiet FLAG_IMAGE
+ if [ $? -eq 0 ];then
+  # There should be no flag image for this flatfielded frame
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWFLATFIELDING_004"
+ fi
+ rm -f fd_test.fit
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NMWFLATFIELDING_TEST_NOT_PERFORMED"
+fi
+
+
+# Make an overall conclusion for this test
+if [ $TEST_PASSED -eq 1 ];then
+ echo -e "\n\033[01;34mNMW flatfielding test \033[01;32mPASSED\033[00m" 1>&2
+ echo "PASSED" >> vast_test_report.txt
+else
+ echo -e "\n\033[01;34mNMW flatfielding test \033[01;31mFAILED\033[00m" 1>&2
  echo "FAILED" >> vast_test_report.txt
 fi 
 #
