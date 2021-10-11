@@ -16855,7 +16855,7 @@ echo -n "Performing NMW flatfielding test: " >> vast_test_report.txt
 
 if [ ! -d ../NMW_corrupt_calibration_test ];then
  cd ../
- wget -c "http://scan.sai.msu.ru/~kirx/pub/NMW_corrupt_calibration_test.tar.bz2" && bunzip2 NMW_corrupt_calibration_test.tar.bz2
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/NMW_corrupt_calibration_test.tar.bz2" && tar -xf NMW_corrupt_calibration_test.tar.bz2
  cd $WORKDIR
 fi
 if [ -f ../NMW_corrupt_calibration_test/d_test.fit ] && [ -f ../NMW_corrupt_calibration_test/mff_Stas_2021-08-28.fit ];then
