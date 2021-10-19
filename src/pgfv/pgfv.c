@@ -2286,7 +2286,13 @@ int main(int argc, char **argv) {
         sextractor_catalog__X_viewed[sextractor_catalog__viewed_counter]= sextractor_catalog__X[marker_counter];
         sextractor_catalog__Y_viewed[sextractor_catalog__viewed_counter]= sextractor_catalog__Y[marker_counter];
         sextractor_catalog__viewed_counter++;
-        // Generate the command
+        // Generate the log view command
+        sprintf(system_command, "grep %05d vast*.log", sextractor_catalog__star_number[marker_counter]);
+        if( 0 != system(system_command) ) {
+         fprintf(stderr, "ERROR running  %s\n", system_command);
+        }
+        fprintf(stdout, " \n");
+        // Generate the lightcurve viewer command
         sprintf(system_command, "./lc out%05d.dat", sextractor_catalog__star_number[marker_counter]);
         // fork before system() so the parent process is not blocked
         if( 0 == fork() ) {
