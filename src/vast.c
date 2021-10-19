@@ -1868,6 +1868,10 @@ int main(int argc, char **argv) {
  
  FILE *manually_selected_aperture_txt_file;
  double manually_selected_aperture;
+ 
+ 
+ int diffphot_flag= 0; // 0 -- the usual mode, 1 -- diffphot (manually selected comparison stars, zero-point offset only)
+ 
  //////////////////////////////////
 
  char filename_for_magnitude_calibration_log[2 * FILENAME_LENGTH]; // image00001__myimage.fits
@@ -2570,6 +2574,7 @@ int main(int argc, char **argv) {
 
  /// Special mode for manual comparison star selection
  if( 0 == strcmp("diffphot", basename(argv[0])) ) {
+  diffphot_flag= 1;
   fprintf(stderr, "\n\n######## Applying a set of special settings for the simple differential photometry mode ########\n");
   fprintf(stderr, "diffphot mode: magnitude calibration type is set to zeropoint offset only\n");
   photometric_calibration_type= 2;
@@ -2691,7 +2696,8 @@ int main(int argc, char **argv) {
  save_command_line_to_log_file(argc, argv);
 
  /// Special mode for manual comparison star selection
- if( 0 == strcmp("diffphot", basename(argv[0])) ) {
+ //if( 0 == strcmp("diffphot", basename(argv[0])) ) {
+ if( diffphot_flag == 1 ) {
   fprintf(stderr, "\n\n Select a comparison star with a click and change the measurement aperture by pressing '+'/'-' on the keyboard.\n\n");
   if( fixed_aperture != 0.0 ) {
    sprintf(system_command_select_comparison_stars, "lib/select_comparison_stars %s -a %lf", input_images[0], fixed_aperture);
@@ -5896,10 +5902,13 @@ int main(int argc, char **argv) {
     unlink(tmpNAME);
     continue;
    }
-   // do not rely on a single rejection - accidents happen
-   if( fraction_of_good_measurements_for_this_source < MIN_FRACTION_OF_GOOD_MEASUREMENTS && STAR1[i].n_rejected > MIN_NUMBER_OF_REJECTIONS_FOR_MIN_FRACTION_OF_GOOD_MEASUREMENTS ) {
-    unlink(tmpNAME);
-    continue;
+   // do not remove lightcurves in in diffphot mode
+   if( diffphot_flag != 1 ) {
+    // do not rely on a single rejection - accidents happen
+    if( fraction_of_good_measurements_for_this_source < MIN_FRACTION_OF_GOOD_MEASUREMENTS && STAR1[i].n_rejected > MIN_NUMBER_OF_REJECTIONS_FOR_MIN_FRACTION_OF_GOOD_MEASUREMENTS ) {
+     unlink(tmpNAME);
+     continue;
+    }
    }
    //
   }
@@ -6205,7 +6214,8 @@ int main(int argc, char **argv) {
  //fprintf(stderr,"\n\n\nDEEEEEEEEEEEEEEEEEEEEEEBUG MATCH_SUCESS=%d Num=%d\n\n\n",MATCH_SUCESS,Num);
 
  if( Num <= SOFT_MIN_NUMBER_OF_POINTS && Num != 4 ) {
-  if( 0 != strcmp("diffphot", basename(argv[0])) ) {
+  //if( 0 != strcmp("diffphot", basename(argv[0])) ) {
+  if( diffphot_flag != 1 ) {
    // suppress the message if we are in the manual differential photometry mode
    fprintf(stderr, "\n\n\n----***** VaST processing message *****----\nYou asked VaST to process only %d images. Under most circumstances this \nis a BAD IDEA that will lead to inconclusive results.\nUnless you are sure about what you are doing, please consider\none of the 'normal' ways to run VaST:\n\n * 'Transient detection mode' - run VaST on four (4) images: two reference and two second-epoch.\nThen create an HTML search report by running util/transients/search_for_transients_single_field.sh\n\n * 'Variable star search mode' - run VaST on a long (50-100-1000) series of images and inspect\nlightcurves that show a large scatter.\n\n * 'Individual star photometry mode' - run VaST with './diffphot' command an manually specify\nthe comparison stars and the variable star you want to measure.\n\n\n\n", Num);
   }
@@ -6241,7 +6251,8 @@ int main(int argc, char **argv) {
  }
 
  /// Special mode for manual comparison star selection
- if( 0 == strcmp("diffphot", basename(argv[0])) ) {
+ //if( 0 == strcmp("diffphot", basename(argv[0])) ) {
+ if( diffphot_flag == 1 ) {
   sprintf(stderr_output, "if [ -s vast_list_of_previously_known_variables.log ];then while read A ;do ./lc $A & done < vast_list_of_previously_known_variables.log ;fi");
   if( !system(stderr_output) ) {
    fprintf(stderr, "ERROR running the command:\n %s\n", stderr_output);
