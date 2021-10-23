@@ -308,6 +308,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   for FITS_IMAGE_TO_PREVIEW in "$NEW_IMAGES"/*"$FIELD"_*_*.fts ;do
    BASENAME_FITS_IMAGE_TO_PREVIEW=`basename $FITS_IMAGE_TO_PREVIEW`
    PREVIEW_IMAGE="$BASENAME_FITS_IMAGE_TO_PREVIEW"_preview.png
+   # image size needs to match the one set in util/transients/make_report_in_HTML.sh
    export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
    util/fits2png $FITS_IMAGE_TO_PREVIEW &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
    unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT

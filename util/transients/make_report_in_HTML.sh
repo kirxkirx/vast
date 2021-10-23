@@ -71,6 +71,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  # plot reference image preview
  BASENAME_REFERENCE_IMAGE=`basename $REFERENCE_IMAGE`
  REFERENCE_IMAGE_PREVIEW="$BASENAME_REFERENCE_IMAGE"_preview.png
+ # image size needs to match the one set in util/transients/transient_factory_test31.sh and below
  export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
  util/fits2png $REFERENCE_IMAGE &> /dev/null && mv pgplot.png transient_report/$REFERENCE_IMAGE_PREVIEW
  unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
@@ -129,9 +130,10 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
       BASENAME_IMAGE=`basename $IMAGE`
       PREVIEW_IMAGE="$BASENAME_IMAGE"_preview.png
       if [ ! -f transient_report/$PREVIEW_IMAGE ];then
-       #export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
        unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
-       PGPLOT_PNG_HEIGHT=1700 util/fits2png $IMAGE &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
+       # image size needs to match the one set in util/transients/transient_factory_test31.sh and above
+       export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
+       util/fits2png $IMAGE &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
        unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
       fi
       echo "<br>$BASENAME_IMAGE<br><img src=\"$PREVIEW_IMAGE\"><br>" >> transient_report/index.tmp
