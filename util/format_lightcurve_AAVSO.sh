@@ -91,6 +91,10 @@ Trying to automatically ID the star $INPUT_VAST_LIGHTCURVE"
  STAR_NUMBER=`echo "${STAR_NUMBER/.dat/}"`
  # '| while read A ;do echo $A ;done' is to remove the trailing white space if the variable name is from GCVS
  AUTOMATIC_VARIABLE_STAR_NAME=`util/identify_justname.sh $INPUT_VAST_LIGHTCURVE | grep -A100 'Star:' | grep -v "$STAR_NUMBER  " | tail -n1 | while read A ;do echo $A ;done` 
+ # Handle 'V* BT Mon -- Nova'
+ AUTOMATIC_VARIABLE_STAR_NAME=${AUTOMATIC_VARIABLE_STAR_NAME/"V* "}
+ AUTOMATIC_VARIABLE_STAR_NAME=`echo "$AUTOMATIC_VARIABLE_STAR_NAME" | awk -F' --' '{print $1}'`
+ #
  if [ ! -z "$AUTOMATIC_VARIABLE_STAR_NAME" ];then
   echo "Automatically setting the variable star name $AUTOMATIC_VARIABLE_STAR_NAME"
   VARIABLE_STAR_NAME="$AUTOMATIC_VARIABLE_STAR_NAME"
