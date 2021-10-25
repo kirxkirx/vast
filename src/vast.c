@@ -2594,6 +2594,8 @@ int main(int argc, char **argv) {
   fprintf(stderr, "diffphot mode: disabling magnitude-size outlier filtering\n");
   fprintf(stderr, "diffphot mode: disabling rejectin of images with elliptical stars\n");
   param_nodiscardell= 1;
+  fprintf(stderr, "diffphot mode: will not display sigma-mag plot after completing the VaST run\n(you may display it manualy by running './find_candidates')\n");
+  param_nofind= 1;
   fprintf(stderr, "################\n\n");
  }
 
@@ -6253,9 +6255,15 @@ int main(int argc, char **argv) {
  /// Special mode for manual comparison star selection
  //if( 0 == strcmp("diffphot", basename(argv[0])) ) {
  if( diffphot_flag == 1 ) {
+  // Display lightcurves of user-marked variables
   sprintf(stderr_output, "if [ -s vast_list_of_previously_known_variables.log ];then while read A ;do ./lc $A & done < vast_list_of_previously_known_variables.log ;fi");
   if( !system(stderr_output) ) {
-   fprintf(stderr, "ERROR running the command:\n %s\n", stderr_output);
+   //fprintf(stderr, "ERROR running the command:\n %s\n", stderr_output);
+   fprintf(stderr, "\n\n \E[34;47mClick on a star which lightcurve you want to display.\E[33;00m \n\n");
+   sprintf(stderr_output, "./select_star_on_reference_image");
+   if( !system(stderr_output) ) {
+    fprintf(stderr, "ERROR running the command:\n %s\n", stderr_output);
+   }
   }
  }
 
