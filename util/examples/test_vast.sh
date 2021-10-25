@@ -75,7 +75,10 @@ function test_https_connection {
  curl --max-time 10 --silent https://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
  if [ $? -ne 0 ];then
   # if the above didn't work, try to download the certificate
+  # The old cert that has expired already, will keep it in case clocks on the test machine are really off
   wget -O - https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem > intermediate.pem
+  # The new one
+  wget -O - https://letsencrypt.org/certs/lets-encrypt-r3.pem >> intermediate.pem
   # if that fails - abort the test
   if [ $? -ne 0 ];then
    return 2
@@ -97,7 +100,10 @@ function test_https_connection {
  curl --max-time 10 --silent https://kirx.net/astrometry_engine/files/ | grep --quiet 'Parent Directory'
  if [ $? -ne 0 ];then
   if [ ! -f intermediate.pem ];then
+   # The old cert that has expired already, will keep it in case clocks on the test machine are really off
    wget -O - https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem > intermediate.pem
+   # The old cert that has expired already, will keep it in case clocks on the test machine are really off
+   wget -O - https://letsencrypt.org/certs/lets-encrypt-r3.pem > intermediate.pem
    # if that fails - abort the test
    if [ $? -ne 0 ];then
     return 2
