@@ -461,12 +461,29 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  echo "Choosing bad regions list" >> transient_factory_test31.txt
  # Set custom bad_region.lst if there is one
  # the camera name should be present in the input file (directory) name
+ KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE=0
  echo "$SECOND_EPOCH__FIRST_IMAGE" | grep --quiet -e "Nazar" -e "nazar" -e "NAZAR"
  if [ $? -eq 0 ];then
+  KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE=1
   if [ -f ../Nazar_bad_region.lst ];then
    cp -v ../Nazar_bad_region.lst bad_region.lst >> transient_factory_test31.txt
   fi
- else
+ fi
+ echo "$SECOND_EPOCH__FIRST_IMAGE" | grep --quiet -e "Planeta" -e "planeta" -e "PLANETA"
+ if [ $? -eq 0 ];then
+  KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE=1
+  if [ -f ../Planeta_bad_region.lst ];then
+   cp -v ../Planeta_bad_region.lst bad_region.lst >> transient_factory_test31.txt
+  fi
+ fi
+ echo "$SECOND_EPOCH__FIRST_IMAGE" | grep --quiet -e "Stas" -e "stas" -e "STAS"
+ if [ $? -eq 0 ];then
+  KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE=1
+  if [ -f ../Stas_bad_region.lst ];then
+   cp -v ../Stas_bad_region.lst bad_region.lst >> transient_factory_test31.txt
+  fi
+ fi
+ if [ $KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE -eq 0 ];then
   if [ -f ../bad_region.lst ];then
    cp -v ../bad_region.lst . >> transient_factory_test31.txt
   else
