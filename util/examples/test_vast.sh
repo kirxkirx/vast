@@ -80,6 +80,8 @@ function test_https_connection {
   # The new one
   wget -O - https://letsencrypt.org/certs/lets-encrypt-r3.pem >> intermediate.pem
   # if that fails - abort the test
+  # latest CA list from cURL
+  wget -O - https://curl.haxx.se/ca/cacert.pem > intermediate.pem
   if [ $? -ne 0 ];then
    return 2
   fi
@@ -104,6 +106,8 @@ function test_https_connection {
    wget -O - https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem > intermediate.pem
    # The old cert that has expired already, will keep it in case clocks on the test machine are really off
    wget -O - https://letsencrypt.org/certs/lets-encrypt-r3.pem > intermediate.pem
+   # latest CA list from cURL
+   wget -O - https://curl.haxx.se/ca/cacert.pem > intermediate.pem
    # if that fails - abort the test
    if [ $? -ne 0 ];then
     return 2
