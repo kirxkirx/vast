@@ -591,6 +591,9 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # Check that the plates were actually solved
  for i in `cat vast_image_details.log |awk '{print $17}'` ;do 
   WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $i`
+  # make sure we do not have wcs_wcs_
+  WCS_IMAGE_NAME_FOR_CHECKS=${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}
+  #
   if [ ! -s "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
    echo "***** PLATE SOLVE PROCESSING ERROR *****" >> transient_factory.log
    echo "***** cannot find $WCS_IMAGE_NAME_FOR_CHECKS  *****" >> transient_factory.log
