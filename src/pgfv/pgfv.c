@@ -1434,6 +1434,7 @@ int main(int argc, char **argv) {
   }
   //fprintf(stderr," *** Running SExtractor on %s ***\n",fits_image_name);
   // Star match mode (create WCS) or Single image reduction mode
+  fprintf(stderr, "%s is starting autodetect_aperture(%s, %s, 0, 0, %.2lf, %lf, %lf, 2);\n", argv[0], fits_image_name, sextractor_catalog_filename, fixed_aperture, dimX, dimY);
   APER= autodetect_aperture(fits_image_name, sextractor_catalog_filename, 0, 0, fixed_aperture, dimX, dimY, 2);
   if( fixed_aperture != 0.0 ) {
    APER= fixed_aperture;
@@ -1641,7 +1642,7 @@ int main(int argc, char **argv) {
  fits_get_img_type(fptr, &bitpix, &status);
  fits_read_key(fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status);
  fits_read_key(fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status);
- fprintf(stderr, "Image: %ldx%ld pixels, BITPIX data type code: %d\n", naxes[0], naxes[1], bitpix);
+ fprintf(stderr, "Image %s: %ldx%ld pixels, BITPIX data type code: %d\n", fits_image_name, naxes[0], naxes[1], bitpix);
  if( naxes[0] * naxes[1] <= 0 ) {
   fprintf(stderr, "ERROR: Trying allocate zero or negative sized array\n");
   exit(1);
@@ -1961,6 +1962,7 @@ int main(int argc, char **argv) {
    /* If aperture was changed - repeat measurements with new aperture */
    if( match_mode == 3 || match_mode == 4 ) {
     if( aperture_change == 1 ) {
+     fprintf(stderr, "%s is re-starting autodetect_aperture(%s, %s, 1, 0, %.2lf, %lf, %lf, 2);\n", argv[0], fits_image_name, sextractor_catalog_filename, fixed_aperture, dimX, dimY);
      autodetect_aperture(fits_image_name, sextractor_catalog_filename, 1, 0, APER, dimX, dimY, 2);
      sextractor_catalog__counter= 0;
      catfile= fopen(sextractor_catalog_filename, "r");

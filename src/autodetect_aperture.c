@@ -186,7 +186,7 @@ double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, 
  // What will happen if we have an RGB image here?????
  cutout_green_channel_out_of_RGB_DSLR_image(fitsfilename);
 
- fprintf(stderr, "Running SExtractor on %s\n", fitsfilename);
+ fprintf(stderr, "autodetect_aperture() is running SExtractor on %s\n", fitsfilename);
 
  sprintf(sextractor_messages_filename, "%s.sex_log", output_sextractor_catalog);
 
@@ -228,7 +228,8 @@ double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, 
   }
 
   write_string_to_individual_image_log(output_sextractor_catalog, "autodetect_aperture(): ", "Calculating the aperture size", "");
-  /* Calculate best aperture size from seeing */
+  //// Calculate best aperture size from seeing ///
+  fprintf(stderr, "autodetect_aperture() is making preliminary SExtractor run to determin an appropriate aperture size\n");
   //sprintf( sextractor_catalog_filename, "autodetect_aper_%d.cat", pid );
   sprintf(sextractor_catalog_filename, "autodetect_aper_%s", output_sextractor_catalog);
   // and yes, we are re-using the .sex_log files
@@ -375,6 +376,7 @@ double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, 
  // ap[3]
 
  if( do_PSF_fitting == 0 ) {
+  fprintf(stderr, "autodetect_aperture() is making the main SExtractor run\n");
   if( is_flag_image_used == 1 ) {
    sprintf(command, "sex %s%s%s -PARAMETERS_NAME default_flag.param -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf,%.1lf -VERBOSE_TYPE NORMAL -CATALOG_NAME %s %s > %s 2>&1", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, flag_image_sextractor_cl_parameter_string, APERTURE, APERTURE, ap[0], ap[1], ap[2], ap[3], output_sextractor_catalog, fitsfilename, sextractor_messages_filename);
   } else {
@@ -407,6 +409,7 @@ double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, 
 
   sprintf(sextractor_catalog_filename, "%s.psfex_input_cat", output_sextractor_catalog);
   sprintf(psf_filename, "%s.psf", output_sextractor_catalog);
+  fprintf(stderr, "autodetect_aperture() is making preliminary SExtractor run for PSF shape extraction\n");
   //sprintf( command, "sex -c bright_star_blend_check_3.0.sex %s%s -PARAMETERS_NAME %s -CATALOG_TYPE FITS_LDAC -CATALOG_NAME %s -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf %s", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, psfex_param_filename, sextractor_catalog_filename, APERTURE, ap[0], ap[1], ap[2], ap[3], fitsfilename );
   sprintf(command, "sex -c default.sex %s%s -PARAMETERS_NAME %s -CATALOG_TYPE FITS_LDAC -CATALOG_NAME %s -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf %s", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, psfex_param_filename, sextractor_catalog_filename, APERTURE, ap[0], ap[1], ap[2], ap[3], fitsfilename);
   fprintf(stderr, "%s\n", command);
@@ -416,6 +419,7 @@ double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, 
   }
 
   // Check FWHM limits
+  fprintf(stderr, "autodetect_aperture() is extracting the PSF with psfex\n");
   //sprintf(command, "psfex -c default.psfex -NTHREADS 1 -SAMPLE_FWHMRANGE %.2lf,%.2lf -XML_NAME %s %s > %s 2>&1", 0.3 * APERTURE / 2.2528, 1.3 * APERTURE / 2.2528, psfex_XML_check_filename, sextractor_catalog_filename, psfex_log_entry_filename);
   sprintf(command, "psfex -c default.psfex -NTHREADS 1 -SAMPLE_FWHMRANGE %.2lf,%.2lf -XML_NAME %s %s > %s 2>&1", 0.3 * APERTURE / CONST * SIGMA_TO_FWHM_CONVERSION_FACTOR, 3 * APERTURE / CONST * SIGMA_TO_FWHM_CONVERSION_FACTOR, psfex_XML_check_filename, sextractor_catalog_filename, psfex_log_entry_filename);
   fprintf(stderr, "%s\n", command);
@@ -424,6 +428,7 @@ double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, 
    fprintf(stderr, "ERROR: the command returned a non-zero exit code!\n");
   }
 
+  fprintf(stderr, "autodetect_aperture() is making the main SExtractor run to perform PSF-fitting photometry\n");
   if( is_flag_image_used == 1 ) {
    sprintf(command, "sex -c default.sex %s%s%s -PARAMETERS_NAME psfex_sextractor_2nd_pass_flag.param -PSF_NMAX 1 -PSF_NAME %s -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf -VERBOSE_TYPE NORMAL -CATALOG_NAME %s %s > %s 2>&1", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, flag_image_sextractor_cl_parameter_string, psf_filename, APERTURE, ap[0], ap[1], ap[2], ap[3], output_sextractor_catalog, fitsfilename, sextractor_messages_filename);
   } else {
@@ -439,6 +444,7 @@ double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, 
   // The thing is that SExtractor will not PSF-fit saturated stars,
   // but we need to have a catalog containing all the stars (including the brightest ones)
   // in order to be able to perform blind astrometric solution with the Astrometry.net code
+  fprintf(stderr, "autodetect_aperture() is making an additional SExtractor run to perform aperture photometry\n");
   if( is_flag_image_used == 1 ) {
    sprintf(command, "sex %s%s%s -PARAMETERS_NAME default_flag.param -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf,%.1lf -CATALOG_NAME %s.apphot %s", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, flag_image_sextractor_cl_parameter_string, APERTURE, APERTURE, ap[0], ap[1], ap[2], ap[3], output_sextractor_catalog, fitsfilename);
   } else {
@@ -466,6 +472,8 @@ double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, 
    fprintf(stderr, "WARNING! Cannot delete temporary file %s\n", sextractor_messages_filename);
 #endif
  }
+ 
+ fprintf(stderr, "autodetect_aperture() is done with this image\n");
 
  return APERTURE;
 }
