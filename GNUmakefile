@@ -202,12 +202,12 @@ stat_outfile: $(SRC_PATH)stat_outfile.c
 	$(CC) $(OPTFLAGS) -o util/stat_outfile $(SRC_PATH)stat_outfile.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 
 colstat.o: $(SRC_PATH)colstat.c
-	$(CC) $(OPTFLAGS) -c -o colstat.o $(SRC_PATH)colstat.c
+	$(CC) $(OPTFLAGS) -c -o colstat.o $(SRC_PATH)colstat.c -I$(GSL_INCLUDE)
 util/colstat: colstat.o variability_indexes.o
 	$(CC) $(OPTFLAGS) -o util/colstat colstat.o variability_indexes.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 
 imstat_vast.o: $(SRC_PATH)imstat_vast.c
-	$(CC) $(OPTFLAGS) -c -o imstat_vast.o $(SRC_PATH)imstat_vast.c
+	$(CC) $(OPTFLAGS) -c -o imstat_vast.o $(SRC_PATH)imstat_vast.c -I$(GSL_INCLUDE)
 util/imstat_vast: imstat_vast.o variability_indexes.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o
 	$(CC) $(OPTFLAGS) -o util/imstat_vast imstat_vast.o variability_indexes.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 
