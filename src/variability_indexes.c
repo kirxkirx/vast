@@ -804,7 +804,7 @@ double esimate_sigma_from_MAD_of_sorted_data(double *sorted_data, long n) {
 
 // float version of the above functions
 float compute_MAD_of_sorted_data_float(float *sorted_data, long n) {
- float median_data, MAD, sigma;
+ float median_data, MAD; //, sigma;
  float *AD;
  int i;
 
@@ -841,7 +841,7 @@ float esimate_sigma_from_MAD_of_sorted_data_float(float *sorted_data, long n) {
 
 // as the above, but messes-up the input array in order to save memory
 double compute_MAD_of_sorted_data_and_ruin_input_array(double *sorted_data, long n) {
- double median_data, MAD, sigma;
+ double median_data, MAD; //, sigma;
  int i;
 
  // The input dataset has to be sorted so we can compute its median

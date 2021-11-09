@@ -24,19 +24,37 @@ void replace_file_with_symlink_if_filename_contains_white_spaces(char *filename)
  char *resolvedpath;
  //
  struct stat sb; // structure returned by stat() system call
+ 
+ // Check that the input is not a NULL string
+ if( NULL == filename ) {
+  fprintf(stderr, "ERROR in replace_file_with_symlink_if_filename_contains_white_spaces() the input is the NULL string!\n");
+  return;
+ }
+ 
+ // Check that the input file actually exist
+ if( 0 != stat(filename, &sb) ) {
+  fprintf(stderr, "ERROR in replace_file_with_symlink_if_filename_contains_white_spaces() the input file %s does not exits\n", filename);
+  return;
+ }
+ 
+ //
+
  for( need_to_replace_with_symlink= 0, i= 0; i < strlen(filename); i++ ) {
   if( filename[i] == ' ' ) {
    need_to_replace_with_symlink= 1;
    break;
   }
  }
- if( need_to_replace_with_symlink == 0 )
+ if( need_to_replace_with_symlink == 0 ) {
   return;
+ }
  // create symlink name
  for( i= 1; i < MAX_NUMBER_OF_OBSERVATIONS; i++ ) {
   sprintf(symlinkname, "symlinks_to_images/symlink_to_image_%05d.fits", i);
-  if( 0 != stat(symlinkname, &sb) )
+  //if( 0 != stat(symlinkname, &sb) ) {
+  if( 0 != lstat(symlinkname, &sb) ) {
    break; // continue if such a symlink already exists, break if this name is still empty
+  }
  }
  if( i >= MAX_NUMBER_OF_OBSERVATIONS ) {
   fprintf(stderr, "ERROR: symlinks_to_images counter is out of range!\n");
@@ -49,9 +67,18 @@ void replace_file_with_symlink_if_filename_contains_white_spaces(char *filename)
  }
 
  // Create symlink
- resolvedpath= realpath(filename, 0);
+ //resolvedpath= realpath(filename, 0);
+ resolvedpath=malloc(PATH_MAX*sizeof(char));
+ if( NULL==realpath(filename, resolvedpath) ){
+  fprintf(stderr, "ERROR in realpath(%s,%s)\n",filename,resolvedpath);
+  free(resolvedpath);
+  return;
+ }
+ // before getting here make sure symlinkname does not exist already, or symlink() will throw an incorrect error message
+ //
  if( 0 != symlink(resolvedpath, symlinkname) ) {
   fprintf(stderr, "ERROR in replace_file_with_symlink_if_filename_contains_white_spaces() -- cannot creat symlink to image containing a white space!\n");
+  fprintf(stderr, "symlink(%s, %s) -- failed\n", resolvedpath, symlinkname);
   free(resolvedpath);
   return;
  }

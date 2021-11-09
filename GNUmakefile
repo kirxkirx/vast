@@ -81,7 +81,7 @@ q: vast statistics etc pgplot_components old period_filter ccd
 
 main: vast.o vast statistics stetson_test lib/create_data
 
-statistics: m_sigma_bin index_vs_mag select_sysrem_input_star_list drop lib/select_only_n_random_points_from_set_of_lightcurves lib/new_lightcurve_sigma_filter lib/select_aperture_with_smallest_scatter_for_each_object lib/create_data rescale_photometric_errors util/colstat
+statistics: m_sigma_bin index_vs_mag select_sysrem_input_star_list drop lib/select_only_n_random_points_from_set_of_lightcurves lib/new_lightcurve_sigma_filter lib/select_aperture_with_smallest_scatter_for_each_object lib/create_data rescale_photometric_errors util/colstat util/imstat_vast
 
 etc: stat_outfile util/calibrate_magnitude_scale lib/deg2hms lib/coord_v_dva_slova lib/hms2deg lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/remove_bad_images lib/put_two_sources_in_one_field lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list util/hjd util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/kwee-van-woerden lib/find_star_in_wcs_catalog util/UTC2TT lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search lib/catalogs/check_catalogs_offline util/get_image_date lib/fast_clean_data stetson_test util/split_multiextension_fits lib/guess_saturation_limit_main lib/MagSize_filter_standalone util/phase_lc lib/on_the_fly_symlink_or_convert util/bin_lightcurve_in_time
 
@@ -205,6 +205,11 @@ colstat.o: $(SRC_PATH)colstat.c
 	$(CC) $(OPTFLAGS) -c -o colstat.o $(SRC_PATH)colstat.c
 util/colstat: colstat.o variability_indexes.o
 	$(CC) $(OPTFLAGS) -o util/colstat colstat.o variability_indexes.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+
+imstat_vast.o: $(SRC_PATH)imstat_vast.c
+	$(CC) $(OPTFLAGS) -c -o imstat_vast.o $(SRC_PATH)imstat_vast.c
+util/imstat_vast: imstat_vast.o variability_indexes.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o
+	$(CC) $(OPTFLAGS) -o util/imstat_vast imstat_vast.o variability_indexes.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 
 
 simulate_2_colors: $(SRC_PATH)simulate_2_colors.c
@@ -509,6 +514,7 @@ clean: clean_libraries
 	rm -f lib/sine_wave_simulator lib/sine_wave_and_psd_simulator lib/sine_wave_or_psd_simulator
 	rm -f util/rescale_photometric_errors util/estimate_systematic_noise_level
 	rm -f util/colstat
+	rm -f util/imstat_vast
 	rm -f src/*~
 	rm -f util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/astrometry/get_image_dimentions lib/astrometry/insert_wcs_header lib/astrometry/*~ lib/kwee-van-woerden  lib/find_star_in_wcs_catalog
 	rm -f src/heliocentric_correction/*~ util/hjd_input_in_UTC util/hjd_input_in_TT util/UTC2TT util/make_finding_chart util/make_finder_chart util/fits2png lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search lib/catalogs/check_catalogs_offline util/get_image_date lib/make_outxyls_for_astrometric_calibration lib/fits2cat lib/create_data lib/fast_clean_data util/solve_plate_with_UCAC5 lib/autodetect_aperture_main lib/sextract_single_image_noninteractive

@@ -185,7 +185,7 @@ int main() {
  MEDIAN= gsl_stats_median_from_sorted_data(x, 1, i);
  MEAN= gsl_stats_mean(x, 1, i);
  SD= gsl_stats_sd_m(x, 1, i, MEAN);
- MEAN_ERR= SD / sqrt(i);
+ MEAN_ERR= SD / sqrt( (double)i);
  MAD= compute_MAD_of_sorted_data(x, i); //esimate_sigma_from_MAD_of_sorted_data(x, i);
  IQR= compute_IQR_of_unsorted_data(x, i);
 

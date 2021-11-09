@@ -4104,6 +4104,12 @@ $GREP_RESULT"
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD_ALL"
  fi
+ 
+ util/imstat_vast '../sample space/f_72-001r.fit'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD_IMSTAT01"
+ fi
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then

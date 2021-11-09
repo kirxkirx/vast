@@ -46,6 +46,9 @@
 	'util/bin_lightcurve_in_time out01234.dat 120 > binned_lightcurve_120sec.dat' 
 	will bin the lightcurve file out01234.dat in 120s time bins and write the binned data 
 	to 'binned_lightcurve_120sec.dat'.
+	* The new tool 'util/imstat_vast image.fits' will print out some basic image statistics.
+	Works pretty much as 'util/colstat', but for an image instead of a data column.
+	The intended use is automating image quality control.
 	* Added robust linear fit option to the absolute magnitude scale calibration interface.
 	(It is now the new default calibration function, as usual, you may change 
 	the calibration function by pressing 'P' on the keyboard.)
