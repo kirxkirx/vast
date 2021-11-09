@@ -7,6 +7,11 @@
 
 #include <ctype.h> // for isalpha()
 
+#include "variability_indexes.h" // for esimate_sigma_from_MAD_of_sorted_data() etc.
+
+
+/*
+
 // This function computes interquartile range
 // (a range containing the innr 50% of values)
 // for an unsorted dataset
@@ -110,6 +115,8 @@ double esimate_sigma_from_MAD_of_sorted_data(double *sorted_data, int n) {
  return MAD;
 }
 
+*/
+
 int main() {
  double *x= NULL;
  double MIN, MAX;
@@ -179,9 +186,7 @@ int main() {
  MEAN= gsl_stats_mean(x, 1, i);
  SD= gsl_stats_sd_m(x, 1, i, MEAN);
  MEAN_ERR= SD / sqrt(i);
- gsl_sort(x, 1, i);
- MEDIAN= gsl_stats_median_from_sorted_data(x, 1, i);
- MAD= esimate_sigma_from_MAD_of_sorted_data(x, i);
+ MAD= compute_MAD_of_sorted_data(x, i); //esimate_sigma_from_MAD_of_sorted_data(x, i);
  IQR= compute_IQR_of_unsorted_data(x, i);
 
  fprintf(stdout, "     MIN= %.6lf\n", MIN);
@@ -195,7 +200,7 @@ int main() {
  // 1.48260221850560 = 1/norminv(3/4)
  fprintf(stdout, "MAD*1.48=  %.6lf\n", 1.48260221850560 * MAD);
  fprintf(stdout, "     IQR=  %.6lf\n", IQR);
- // Scale IQR top sigma
+ // Scale IQR to sigma
  // ${\rm IQR} = 2 \Phi^{-1}(0.75)
  // 2*norminv(0.75) = 1.34897950039216
  //IQR=IQR/( 2.0*gsl_cdf_ugaussian_Pinv(0.75) );

@@ -42,18 +42,21 @@ double classic_welch_stetson_I_from_sorted_lightcurve(size_t *input_array_index_
 
 double sign_only_welch_stetson_I_from_sorted_lightcurve(size_t *input_array_index_p, double *input_JD, double *input_m, double *input_merr, int input_Nobs);
 
+double estimate_sigma_from_IQR_of_unsorted_data(double *unsorted_data, int n);
+
 double compute_IQR_of_unsorted_data(double *unsorted_data, int n);
 
-/*
-float clipped_mean_of_unsorted_data_float( float *unsorted_data, long n ); 
-double clipped_mean_of_unsorted_data( double *unsorted_data, long n );
-*/
-
 double esimate_sigma_from_MAD_of_unsorted_data(double *unsorted_data, long n);
+
+double compute_MAD_of_sorted_data(double *sorted_data, long n);
 
 double esimate_sigma_from_MAD_of_sorted_data(double *sorted_data, long n);
 
 float esimate_sigma_from_MAD_of_sorted_data_float(float *sorted_data, long n);
+
+float esimate_sigma_from_MAD_of_sorted_data_float(float *sorted_data, long n);
+
+double compute_MAD_of_sorted_data_and_ruin_input_array(double *sorted_data, long n);
 
 double esimate_sigma_from_MAD_of_sorted_data_and_ruin_input_array(double *sorted_data, long n);
 

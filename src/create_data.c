@@ -388,7 +388,7 @@ int main() {
     NXS= Normalized_excess_variance(m, merr, i);
 
     // Compute IQR
-    IQR= compute_IQR_of_unsorted_data(m, i);
+    IQR= estimate_sigma_from_IQR_of_unsorted_data(m, i); //compute_IQR_of_unsorted_data(m, i);
 
     //////////////////////// end of indexes that do not depend on sorting ////////////////////////
 

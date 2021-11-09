@@ -200,8 +200,13 @@ formater_out_wfk: $(SRC_PATH)formater_out_wfk.c
 	$(CC) $(OPTFLAGS) -o $(LIB_DIR)formater_out_wfk $(SRC_PATH)formater_out_wfk.c
 stat_outfile: $(SRC_PATH)stat_outfile.c
 	$(CC) $(OPTFLAGS) -o util/stat_outfile $(SRC_PATH)stat_outfile.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
-util/colstat: $(SRC_PATH)colstat.c
-	$(CC) $(OPTFLAGS) -o util/colstat $(SRC_PATH)colstat.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+
+colstat.o: $(SRC_PATH)colstat.c
+	$(CC) $(OPTFLAGS) -c -o colstat.o $(SRC_PATH)colstat.c
+util/colstat: colstat.o variability_indexes.o
+	$(CC) $(OPTFLAGS) -o util/colstat colstat.o variability_indexes.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+
+
 simulate_2_colors: $(SRC_PATH)simulate_2_colors.c
 	$(CC) $(OPTFLAGS) -o $(LIB_DIR)simulate_2_colors $(SRC_PATH)simulate_2_colors.c
 

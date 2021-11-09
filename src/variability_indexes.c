@@ -647,14 +647,24 @@ double compute_IQR_of_unsorted_data(double *unsorted_data, int n) {
  free(x2);
  free(x);
 
+// // Scale IQR top sigma
+// // ${\rm IQR} = 2 \Phi^{-1}(0.75)
+// // 2*norminv(0.75) = 1.34897950039216
+// //IQR=IQR/( 2.0*gsl_cdf_ugaussian_Pinv(0.75) );
+// IQR= IQR / 1.34897950039216;
+
+ // return result
+ return IQR;
+}
+double estimate_sigma_from_IQR_of_unsorted_data(double *unsorted_data, int n) {
+ double IQR, sigma;
+ IQR= compute_IQR_of_unsorted_data(unsorted_data, n);
  // Scale IQR top sigma
  // ${\rm IQR} = 2 \Phi^{-1}(0.75)
  // 2*norminv(0.75) = 1.34897950039216
  //IQR=IQR/( 2.0*gsl_cdf_ugaussian_Pinv(0.75) );
- IQR= IQR / 1.34897950039216;
-
- // return result
- return IQR;
+ sigma= IQR / 1.34897950039216;
+ return sigma;
 }
 
 /*
@@ -755,8 +765,8 @@ double esimate_sigma_from_MAD_of_unsorted_data(double *unsorted_data, long n) {
 // The input dataset will not be changed. For a detailed discussion of MAD
 // see http://en.wikipedia.org/wiki/Robust_measures_of_scale
 // and http://en.wikipedia.org/wiki/Median_absolute_deviation#relation_to_standard_deviation
-double esimate_sigma_from_MAD_of_sorted_data(double *sorted_data, long n) {
- double median_data, MAD, sigma;
+double compute_MAD_of_sorted_data(double *sorted_data, long n) {
+ double median_data, MAD; //, sigma;
  double *AD;
  int i;
 
@@ -778,12 +788,22 @@ double esimate_sigma_from_MAD_of_sorted_data(double *sorted_data, long n) {
 
  free(AD);
 
+ return MAD;
+ 
+// // 1.48260221850560 = 1/norminv(3/4)
+// sigma= 1.48260221850560 * MAD;
+// return sigma;
+}
+double esimate_sigma_from_MAD_of_sorted_data(double *sorted_data, long n) {
+ double sigma, MAD;
+ MAD= compute_MAD_of_sorted_data( sorted_data, n);
  // 1.48260221850560 = 1/norminv(3/4)
  sigma= 1.48260221850560 * MAD;
  return sigma;
 }
-// float version of the above function
-float esimate_sigma_from_MAD_of_sorted_data_float(float *sorted_data, long n) {
+
+// float version of the above functions
+float compute_MAD_of_sorted_data_float(float *sorted_data, long n) {
  float median_data, MAD, sigma;
  float *AD;
  int i;
@@ -806,12 +826,21 @@ float esimate_sigma_from_MAD_of_sorted_data_float(float *sorted_data, long n) {
 
  free(AD);
 
+ return MAD;
+// // 1.48260221850560 = 1/norminv(3/4)
+// sigma= 1.48260221850560 * MAD;
+// return sigma;
+}
+float esimate_sigma_from_MAD_of_sorted_data_float(float *sorted_data, long n) {
+ float MAD, sigma;
+ MAD= compute_MAD_of_sorted_data_float(sorted_data, n);
  // 1.48260221850560 = 1/norminv(3/4)
  sigma= 1.48260221850560 * MAD;
- return sigma;
+ return sigma; 
 }
+
 // as the above, but messes-up the input array in order to save memory
-double esimate_sigma_from_MAD_of_sorted_data_and_ruin_input_array(double *sorted_data, long n) {
+double compute_MAD_of_sorted_data_and_ruin_input_array(double *sorted_data, long n) {
  double median_data, MAD, sigma;
  int i;
 
@@ -824,9 +853,19 @@ double esimate_sigma_from_MAD_of_sorted_data_and_ruin_input_array(double *sorted
  gsl_sort(sorted_data, 1, n);
  MAD= gsl_stats_median_from_sorted_data(sorted_data, 1, n);
 
+
+ return MAD;
+
+// // 1.48260221850560 = 1/norminv(3/4)
+// sigma= 1.48260221850560 * MAD;
+// return sigma;
+}
+double esimate_sigma_from_MAD_of_sorted_data_and_ruin_input_array(double *sorted_data, long n) {
+ double MAD, sigma;
+ MAD= compute_MAD_of_sorted_data_and_ruin_input_array(sorted_data, n);
  // 1.48260221850560 = 1/norminv(3/4)
  sigma= 1.48260221850560 * MAD;
- return sigma;
+ return sigma; 
 }
 
 // https://en.wikipedia.org/wiki/Unbiased_estimation_of_standard_deviation
