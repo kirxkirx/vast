@@ -34,6 +34,12 @@
 // The following is for internal use only, do not change the default value!
 #define DEFAULT_MAX_PAIR_DIFF_SIGMA 999.0 // Do not form pairs from points that differ by more than DEFAULT_MAX_PAIR_DIFF_SIGMA*error mags
 
+/*
+static int vast_compare_double(const void *a1, const void *a2);
+
+void vast_qsort_double(double *x, int n);
+*/
+
 void compute_variability_indexes_that_need_time_sorting(double *input_JD, double *input_m, double *input_merr, int input_Nobs, int input_Nmax, double *output_index_I, double *output_index_J, double *output_index_K, double *output_index_L, double *output_index_J_clip, double *output_index_L_clip, double *output_index_J_time, double *output_index_L_time, double *output_index_I_sign_only, double *N3, double *excursions, double *eta, double *E_A, double *SB);
 
 void stetson_JKL_from_sorted_lightcurve(size_t *input_array_index_p, double *input_JD, double *input_m, double *input_merr, int input_Nobs, int input_Nmax, double input_max_pair_diff_sigma, int input_use_time_based_weighting, double *output_J, double *output_K, double *output_L);
@@ -43,6 +49,8 @@ double classic_welch_stetson_I_from_sorted_lightcurve(size_t *input_array_index_
 double sign_only_welch_stetson_I_from_sorted_lightcurve(size_t *input_array_index_p, double *input_JD, double *input_m, double *input_merr, int input_Nobs);
 
 double estimate_sigma_from_IQR_of_unsorted_data(double *unsorted_data, int n);
+
+double compute_IQR_of_sorted_data(double *unsorted_data, int n);
 
 double compute_IQR_of_unsorted_data(double *unsorted_data, int n);
 

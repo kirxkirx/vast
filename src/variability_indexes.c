@@ -35,6 +35,23 @@ double sgn(double a) {
  return 1.0;
 }
 
+/*
+#define COMPARE(a, b) (((a) > (b)) - ((a) < (b)))
+
+static int vast_compare_double(const void *a1, const void *a2) {
+ // Get the values at given addresses
+ double a = *(const int *)a1;
+ double b = *(const int *)a2;
+ 
+ return COMPARE(a, b);
+}
+
+void vast_qsort_double(double *x, int n) {
+ qsort((void *)x, n, sizeof(double), vast_compare_double); 
+ return;
+}
+*/
+
 // input_max_pair_diff_sigma - do not form pairs if magnitude difference is more than input_max_pair_diff_sigma*error
 void stetson_JKL_from_sorted_lightcurve(size_t *input_array_index_p, double *input_JD, double *input_m, double *input_merr, int input_Nobs, int input_Nmax, double input_max_pair_diff_sigma, int input_use_time_based_weighting, double *output_J, double *output_K, double *output_L) {
 
@@ -587,6 +604,7 @@ double classic_welch_stetson_I_from_sorted_lightcurve(size_t *input_array_index_
 // This function computes interquartile range
 // (a range containing the innr 50% of values)
 // for an unsorted dataset
+/*
 double compute_IQR_of_unsorted_data(double *unsorted_data, int n) {
 #ifdef DISABLE_INDEX_IQR
  return 0.0;
@@ -652,6 +670,60 @@ double compute_IQR_of_unsorted_data(double *unsorted_data, int n) {
 // // 2*norminv(0.75) = 1.34897950039216
 // //IQR=IQR/( 2.0*gsl_cdf_ugaussian_Pinv(0.75) );
 // IQR= IQR / 1.34897950039216;
+
+ // return result
+ return IQR;
+}
+*/
+double compute_IQR_of_sorted_data(double *sorted_data, int n) {
+ double Q1, Q2, Q3;
+ double IQR; // the result
+ int i, j, k; // counters
+
+ // compute median
+ Q2= gsl_stats_median_from_sorted_data(sorted_data, 1, n);
+
+ // make copies of the lower (x2) and upper (x3) 50% of the data
+ for( j= k= i= 0; i < n; i++ ) {
+  if( sorted_data[i] <= Q2 ) {
+   j++;
+  } else {
+   k++;
+  }
+ }
+ Q1= gsl_stats_median_from_sorted_data(sorted_data, 1, j);
+ Q3= gsl_stats_median_from_sorted_data(&sorted_data[j], 1, k);
+
+ IQR= Q3 - Q1;
+
+ // return result
+ return IQR;
+}
+double compute_IQR_of_unsorted_data(double *unsorted_data, int n) {
+#ifdef DISABLE_INDEX_IQR
+ return 0.0;
+#endif
+
+ double IQR; // the result
+ double *x;  // copy of the input dataset that will be sorted
+ int i;      // counter
+
+ // allocate memory
+ x= malloc(n * sizeof(double));
+ if( x == NULL ) {
+  fprintf(stderr, "ERROR allocating memory for x in compute_IQR_of_unsorted_data()\n");
+  exit(1);
+ }
+ // make a copy of the input dataset
+ for( i= 0; i < n; i++ ) {
+  x[i]= unsorted_data[i];
+ }
+ // sort the copy
+ gsl_sort(x, 1, n);
+
+ IQR= compute_IQR_of_sorted_data(x, n);
+
+ free(x);
 
  // return result
  return IQR;
@@ -749,6 +821,8 @@ double esimate_sigma_from_MAD_of_unsorted_data(double *unsorted_data, long n) {
  }
  // sort the copy
  gsl_sort(x, 1, n);
+ // that is slower than gsl_sort()
+ //vast_qsort_double(x, n);
 
  // compute MAD scaled to sigma
  MAD_scaled_to_sigma= esimate_sigma_from_MAD_of_sorted_data(x, n);

@@ -96,10 +96,10 @@ int compute_image_stratistics(char *fitsfilename, double *min, double *max, doub
  (*max)= pix[totpix-1];
  (*range)= (*max) - (*min);
  (*median)= gsl_stats_median_from_sorted_data(pix, 1, totpix);
- (*iqr)= compute_IQR_of_unsorted_data(pix, totpix);
+ (*iqr)= compute_IQR_of_sorted_data(pix, totpix);
  // 2*norminv(0.75) = 1.34897950039216
  (*iqr_scaled_to_sigma)= (*iqr) / 1.34897950039216;
- (*mad)= compute_MAD_of_sorted_data_and_ruin_input_array(pix, totpix);
+ (*mad)= compute_MAD_of_sorted_data(pix, totpix);
  // 1.48260221850560 = 1/norminv(3/4)
  (*mad_scaled_to_sigma)= 1.48260221850560 * (*mad);
 
@@ -140,21 +140,21 @@ int main(int argc, char **argv) {
   return 1;
  }
 
- fprintf(stdout, "     MIN= %.6lf\n", min);
- fprintf(stdout, "     MAX= %.6lf\n", max);
- fprintf(stdout, " MAX-MIN=  %.6lf\n", range);
- fprintf(stdout, "  MEDIAN= %.6lf\n", median);
- fprintf(stdout, "    MEAN= %.6lf\n", mean);
- fprintf(stdout, "MEAN_ERR=  %.6lf\n", mean_err);
- fprintf(stdout, "      SD=  %.6lf\n", std);
- fprintf(stdout, "     MAD=  %.6lf\n", mad);
+ fprintf(stdout, "     MIN= %10.4lf\n", min);
+ fprintf(stdout, "     MAX= %10.4lf\n", max);
+ fprintf(stdout, " MAX-MIN= %10.4f\n", range);
+ fprintf(stdout, "  MEDIAN= %10.4f\n", median);
+ fprintf(stdout, "    MEAN= %10.4f\n", mean);
+ fprintf(stdout, "MEAN_ERR= %10.4lf\n", mean_err);
+ fprintf(stdout, "      SD= %10.4f\n", std);
+ fprintf(stdout, "     MAD= %10.4lf\n", mad);
  // 1.48260221850560 = 1/norminv(3/4)
- fprintf(stdout, "MADx1.48=  %.6lf\n", mad_scaled_to_sigma);
- fprintf(stdout, "     IQR=  %.6lf\n", iqr);
+ fprintf(stdout, "MADx1.48= %10.4lf\n", mad_scaled_to_sigma);
+ fprintf(stdout, "     IQR= %10.4lf\n", iqr);
  // Scale IQR to sigma
  // ${\rm IQR} = 2 \Phi^{-1}(0.75)
  // 2*norminv(0.75) = 1.34897950039216
- fprintf(stdout, "IQR/1.34=  %lf\n", iqr_scaled_to_sigma);
+ fprintf(stdout, "IQR/1.34= %10.4lf\n", iqr_scaled_to_sigma);
 
  return 0;
 }
