@@ -410,7 +410,9 @@ int check_if_we_need_flag_image(char *fitsfilename, char *resulting_sextractor_c
   fits_close_file(fptr, &status);
   gsl_sort(pix, 1, totpix);
   median= gsl_stats_median_from_sorted_data(pix, 1, totpix);
-  sigma_estimated_from_MAD= esimate_sigma_from_MAD_of_sorted_data_and_ruin_input_array(pix, totpix);
+  //sigma_estimated_from_MAD= esimate_sigma_from_MAD_of_sorted_data_and_ruin_input_array(pix, totpix);
+  // this should be faster than MAD as it avoids an additional sorting
+  sigma_estimated_from_MAD= estimate_sigma_from_IQR_of_sorted_data(pix, totpix);
   free(pix); // we'll mess-up the order of pix while calculating median
   pixel_value_threshold= median - 7.0 * sigma_estimated_from_MAD;
   //

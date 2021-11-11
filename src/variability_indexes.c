@@ -738,6 +738,16 @@ double estimate_sigma_from_IQR_of_unsorted_data(double *unsorted_data, int n) {
  sigma= IQR / 1.34897950039216;
  return sigma;
 }
+double estimate_sigma_from_IQR_of_sorted_data(double *sorted_data, int n) {
+ double IQR, sigma;
+ IQR= compute_IQR_of_sorted_data(sorted_data, n);
+ // Scale IQR top sigma
+ // ${\rm IQR} = 2 \Phi^{-1}(0.75)
+ // 2*norminv(0.75) = 1.34897950039216
+ //IQR=IQR/( 2.0*gsl_cdf_ugaussian_Pinv(0.75) );
+ sigma= IQR / 1.34897950039216;
+ return sigma;
+}
 
 /*
 float clipped_mean_of_unsorted_data_float( float *unsorted_data, long n ) {
