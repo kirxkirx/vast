@@ -3,6 +3,8 @@
 #include <string.h>
 #include <math.h>
 
+#include <libgen.h> // for basename()
+
 #include <gsl/gsl_sort.h>
 #include <gsl/gsl_statistics.h>
 
@@ -16,7 +18,7 @@
 
 #include "replace_file_with_symlink_if_filename_contains_white_spaces.h"
 
-int compute_image_stratistics(char *fitsfilename, double *min, double *max, double *range, double *median, double *mean, double *mean_err, double *std, double *mad, double *mad_scaled_to_sigma, double *iqr, double *iqr_scaled_to_sigma) {
+int compute_image_stratistics(char *fitsfilename, int no_sorting_fast_computation, double *min, double *max, double *range, double *median, double *mean, double *mean_err, double *std, double *mad, double *mad_scaled_to_sigma, double *iqr, double *iqr_scaled_to_sigma) {
 
  fitsfile *fptr; // FITS file pointer
  int status= 0;  // CFITSIO status value MUST be initialized to zero!
@@ -91,20 +93,21 @@ int compute_image_stratistics(char *fitsfilename, double *min, double *max, doub
  (*std)= gsl_stats_sd_m(pix, 1, totpix, (*mean));
  (*mean_err)= (*mean) / sqrt( (double)totpix);
 
- gsl_sort(pix, 1, totpix);
- (*min)= pix[0];
- (*max)= pix[totpix-1];
- (*range)= (*max) - (*min);
- (*median)= gsl_stats_median_from_sorted_data(pix, 1, totpix);
- (*iqr)= compute_IQR_of_sorted_data(pix, totpix);
- // 2*norminv(0.75) = 1.34897950039216
- (*iqr_scaled_to_sigma)= (*iqr) / 1.34897950039216;
- (*mad)= compute_MAD_of_sorted_data(pix, totpix);
- // 1.48260221850560 = 1/norminv(3/4)
- (*mad_scaled_to_sigma)= 1.48260221850560 * (*mad);
+ if( no_sorting_fast_computation != 1 ) {
+  gsl_sort(pix, 1, totpix);
+  (*min)= pix[0];
+  (*max)= pix[totpix-1];
+  (*range)= (*max) - (*min);
+  (*median)= gsl_stats_median_from_sorted_data(pix, 1, totpix);
+  (*iqr)= compute_IQR_of_sorted_data(pix, totpix);
+  // 2*norminv(0.75) = 1.34897950039216
+  (*iqr_scaled_to_sigma)= (*iqr) / 1.34897950039216;
+  (*mad)= compute_MAD_of_sorted_data(pix, totpix);
+  // 1.48260221850560 = 1/norminv(3/4)
+  (*mad_scaled_to_sigma)= 1.48260221850560 * (*mad);
+ }
 
  free(pix); // we messed up the order of pix while calculating median anyhow
-
  
  return 0;
 }
@@ -135,26 +138,35 @@ int main(int argc, char **argv) {
  
  cutout_green_channel_out_of_RGB_DSLR_image(fitsfilename);
 
- if( 0 != compute_image_stratistics(fitsfilename, &min, &max, &range, &median, &mean, &mean_err, &std, &mad, &mad_scaled_to_sigma, &iqr, &iqr_scaled_to_sigma) ) {
-  fprintf(stderr, "ERROR in %s while running compute_image_stratistics()\n", argv[0]);
-  return 1;
+
+ if( 0 == strncmp("imstat_vast_fast", basename(argv[0]), MIN( strlen("imstat_vast_fast"), strlen(basename(argv[0])) ) ) ) {
+  // fast computation avoiding sorting
+  if( 0 != compute_image_stratistics(fitsfilename, 1, &min, &max, &range, &median, &mean, &mean_err, &std, &mad, &mad_scaled_to_sigma, &iqr, &iqr_scaled_to_sigma) ) {
+   fprintf(stderr, "ERROR in %s while running compute_image_stratistics()\n", argv[0]);
+   return 1;
+  }
+ } else {
+  if( 0 != compute_image_stratistics(fitsfilename, 0, &min, &max, &range, &median, &mean, &mean_err, &std, &mad, &mad_scaled_to_sigma, &iqr, &iqr_scaled_to_sigma) ) {
+   fprintf(stderr, "ERROR in %s while running compute_image_stratistics()\n", argv[0]);
+   return 1;
+  }
+  fprintf(stdout, "     MIN= %10.4lf\n", min);
+  fprintf(stdout, "     MAX= %10.4lf\n", max);
+  fprintf(stdout, " MAX-MIN= %10.4lf\n", range);
+  fprintf(stdout, "  MEDIAN= %10.4lf\n", median);
+  fprintf(stdout, "     MAD= %10.4lf\n", mad);
+  // 1.48260221850560 = 1/norminv(3/4)
+  fprintf(stdout, "MADx1.48= %10.4lf\n", mad_scaled_to_sigma);
+  fprintf(stdout, "     IQR= %10.4lf\n", iqr);
+  // Scale IQR to sigma
+  // ${\rm IQR} = 2 \Phi^{-1}(0.75)
+  // 2*norminv(0.75) = 1.34897950039216
+  fprintf(stdout, "IQR/1.34= %10.4lf\n", iqr_scaled_to_sigma);
  }
 
- fprintf(stdout, "     MIN= %10.4lf\n", min);
- fprintf(stdout, "     MAX= %10.4lf\n", max);
- fprintf(stdout, " MAX-MIN= %10.4f\n", range);
- fprintf(stdout, "  MEDIAN= %10.4f\n", median);
- fprintf(stdout, "    MEAN= %10.4f\n", mean);
+ fprintf(stdout, "    MEAN= %10.4lf\n", mean);
  fprintf(stdout, "MEAN_ERR= %10.4lf\n", mean_err);
- fprintf(stdout, "      SD= %10.4f\n", std);
- fprintf(stdout, "     MAD= %10.4lf\n", mad);
- // 1.48260221850560 = 1/norminv(3/4)
- fprintf(stdout, "MADx1.48= %10.4lf\n", mad_scaled_to_sigma);
- fprintf(stdout, "     IQR= %10.4lf\n", iqr);
- // Scale IQR to sigma
- // ${\rm IQR} = 2 \Phi^{-1}(0.75)
- // 2*norminv(0.75) = 1.34897950039216
- fprintf(stdout, "IQR/1.34= %10.4lf\n", iqr_scaled_to_sigma);
+ fprintf(stdout, "      SD= %10.4lf\n", std);
 
  return 0;
 }

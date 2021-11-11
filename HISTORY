@@ -49,6 +49,8 @@
 	* The new tool 'util/imstat_vast image.fits' will print out some basic image statistics.
 	Works pretty much as 'util/colstat', but for an image instead of a data column.
 	The intended use is automating image quality control.
+	The tool 'util/imstat_vast_fast' is the faster version of 'util/imstat_vast' that outputs 
+	fewer parameters, but works ten times faster (by avoiding sorting the image array).
 	* Added robust linear fit option to the absolute magnitude scale calibration interface.
 	(It is now the new default calibration function, as usual, you may change 
 	the calibration function by pressing 'P' on the keyboard.)
