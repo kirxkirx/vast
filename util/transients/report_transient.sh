@@ -58,6 +58,7 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  #util/wcs_image_calibration.sh $FITSFILE $FOV &>/dev/null
  # At this point, we should somehow have a WCS calibrated image named $WCS_IMAGE_NAME
  WCS_IMAGE_NAME=wcs_`basename $FITSFILE`
+ WCS_IMAGE_NAME=${WCS_IMAGE_NAME/wcs_wcs_/wcs_}
  if [ ! -f $WCS_IMAGE_NAME ];then
   echo "ERROR: cannot find plate-solved image $WCS_IMAGE_NAME" 
   clean_tmp_files
