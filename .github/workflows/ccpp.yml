@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: Ubuntu Latest C/C++ CI
 
 on: [push]
 
