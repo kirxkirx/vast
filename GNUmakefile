@@ -67,7 +67,7 @@ OPTFLAGS = -w -O2 -fomit-frame-pointer $(GOOD_MARCH_OPTIONS) $(LTO_OPTIONS) $(US
 
 
 
-all: print_check_start_message check print_compile_start_message clean shell_commands_record_compiler_version cfitsio gsl sextractor wcstools set_vast_limits vast.o vast statistics etc pgplot_components old shell_commands period_filter ccd astrometry astcheck cdsclient  clean_objects print_compile_success_message
+all: print_check_start_message check print_compile_start_message clean shell_commands_record_compiler_version cfitsio gsl sextractor wcstools set_vast_limits vast.o vast statistics etc pgplot_components old shell_commands period_filter ccd astrometry astcheck cdsclient test  clean_objects print_compile_success_message
 
 ifneq ($(RECOMPILE_VAST_ONLY),yes)
 check:
@@ -87,7 +87,6 @@ etc: stat_outfile util/calibrate_magnitude_scale lib/deg2hms lib/coord_v_dva_slo
 
 old: formater_out_wfk 
 
-#astrometry: lib/astrometry/get_image_dimentions lib/astrometry/insert_wcs_header lib/make_outxyls_for_astrometric_calibration lib/fits2cat util/solve_plate_with_UCAC5 lib/autodetect_aperture_main lib/try_to_guess_image_fov cfitsio gsl
 astrometry: lib/astrometry/get_image_dimentions lib/astrometry/insert_wcs_header lib/make_outxyls_for_astrometric_calibration util/solve_plate_with_UCAC5 lib/autodetect_aperture_main lib/try_to_guess_image_fov cfitsio gsl
 
 pgplot_components: variability_indexes.o photocurve.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o replace_file_with_symlink_if_filename_contains_white_spaces.o wpolyfit.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o cfitsio gsl
@@ -110,6 +109,15 @@ sextractor: shell_commands_record_compiler_version
 	lib/compile_sextractor.sh
 wcstools: shell_commands_record_compiler_version
 	lib/compile_wcstools.sh
+test: vast
+	@echo " "
+	@echo -e "\033[01;34mTesting VaST installation...\033[00m"
+	@echo " "
+	./vast
+	lib/look_for_sextractor.sh
+	@echo " "
+	@echo -e "\033[01;34mVaST installation test passed\033[00m"
+	@echo " "
 else
 cfitsio:
 	# do nothing
@@ -118,6 +126,8 @@ gsl:
 sextractor:
 	# do nothing
 wcstools:
+	# do nothing
+test: vast
 	# do nothing
 endif
 
@@ -546,9 +556,6 @@ clean: clean_libraries
 
 clean_objects: vast statistics etc pgplot_components old shell_commands period_filter ccd astrometry astcheck cdsclient
 	rm -f *.o $(SRC_PATH)*.o $(SRC_PATH)pgfv/*.o $(SRC_PATH)diferential/*.o  $(SRC_PATH)astrometry/*.o $(SRC_PATH)heliocentric_correction/*.o
-
-test: ../sample_data/f_72-001r.fit
-	./vast ../sample_data/f_72-*r.fit
 
 print_check_start_message:
 	@echo " "
