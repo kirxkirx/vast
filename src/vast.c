@@ -323,7 +323,9 @@ int remove_directory(const char *path) {
 #ifdef DEBUGMESSAGES
       fprintf(stderr, "Removing %s\n", buf);
 #endif
-      r2= unlink(buf);
+      if( !stat(buf, &statbuf) ) { //
+       r2= unlink(buf);
+      } //
      }
     } else {
 #ifdef DEBUGMESSAGES
