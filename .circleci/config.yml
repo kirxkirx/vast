@@ -14,7 +14,7 @@ jobs:
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
-      - run: "sudo apt-get install gfortran ghostscript && make"
+      - run: "sudo apt-get install gfortran ghostscript bc && make"
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
