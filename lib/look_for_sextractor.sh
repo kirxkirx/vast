@@ -34,6 +34,8 @@ if [ ! -f lib/bin/sex ];then
  echo "WARNING: cannot find a local copy of SExtractor..."
 else
  echo -n "found. "
+ # make sure SExtractor is in the PATH for the next test
+ export PATH=$PATH:lib/bin/
 fi
 if [ ! -x lib/bin/sex ];then
  echo -n "WARNING: the local copy of SExtractor is not an exacuable file Trying to fix... "
