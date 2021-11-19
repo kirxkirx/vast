@@ -21,7 +21,8 @@ TARGET_DIR=$VAST_DIR/lib
 # Sextractor versions prior to sextractor-2.25.2 will not compile with gcc10
 #LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2_fix_disable_model_fitting $VAST_DIR/src/sextractor-2.25.0_fix_disable_model_fitting $VAST_DIR/src/sextractor-2.19.5"
 #LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2_fix_disable_model_fitting"
-LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2_fix_disable_model_fitting $VAST_DIR/src/sextractor-2.19.5"
+#LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2_fix_disable_model_fitting $VAST_DIR/src/sextractor-2.19.5"
+LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2 $VAST_DIR/src/sextractor-2.19.5"
 
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
