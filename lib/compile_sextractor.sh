@@ -119,7 +119,8 @@ for LIBRARY_SOURCE in $LIBRARY_SOURCES ;do
  # Try to circumvent the need for aclocal
  # https://stackoverflow.com/questions/33278928/how-to-overcome-aclocal-1-15-is-missing-on-your-system-warning
  # aclocal.m4
- for FILE_TO_TOUCH in *.m4 configure Makefile.am Makefile.in autoconfig.h configure.ac ;do
+ #for FILE_TO_TOUCH in *.m4 configure Makefile.am Makefile.in autoconfig.h configure.ac config.h.in  autoconf autoconf/* autom4te.cache autom4te.cache/* debian debian/* doc doc/* m4 m4/* ;do
+ for FILE_TO_TOUCH in *.m4 configure Makefile.in config.h.in  autoconf/*  autom4te.cache/*  debian/Makefile.in  doc/Makefile.in  m4/*  src/Makefile.in src/fits/Makefile.in src/levmar/Makefile.in src/wcs/Makefile.in  tests/Makefile.in ;do
   if [ -f $FILE_TO_TOUCH ];then
    touch $FILE_TO_TOUCH
   fi
