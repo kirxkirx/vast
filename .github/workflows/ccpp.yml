@@ -19,5 +19,5 @@ jobs:
       run: make
     - name: prepare for the test
       run: echo "1" > ../THIS_IS_HPCC 
-    - name: test VaST
-      run: util/examples/test_vast.sh
+#    - name: test VaST
+#      run: util/examples/test_vast.sh
