@@ -52,7 +52,9 @@ PATH_TO_THIS_SCRIPT=`vastrealpath $0`
 PATH_TO_LIB_DIR=`dirname $PATH_TO_THIS_SCRIPT`
 #
 MARCH=`"$PATH_TO_LIB_DIR"/set_good_march.sh`
-CFLAGS="-O2 -Wno-error $MARCH"
+#CFLAGS="-O2 -Wno-error $MARCH"
+# -fcommon is needed on Ubuntu 20.10 to compile SExtractor
+CFLAGS="-O2 -Wno-error -fcommon $MARCH"
 #
 
 echo " "
