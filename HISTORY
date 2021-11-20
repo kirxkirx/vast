@@ -87,6 +87,8 @@
 	as this affects automatic magnitude calibration. There may be only a small overlap between 1000 brightest
 	stars in the field used for catalog search and the list of non-variable stars.
 	* VaST scripts now write to '>&2' instead of '/dev/stderr' so they should be able to run fine under 'su'.
+	* Fixed the bug with the internal copy of SExtractor not compiling on Ubuntu 20.10 
+	(new GCC supplied with Ubuntu requires '-fno-common' flag to compile SExtractor).
 20 Oct 2020: vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911

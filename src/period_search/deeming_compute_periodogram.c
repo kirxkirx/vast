@@ -19,6 +19,8 @@
 
 #include <sys/time.h> // for gettimeofday()
 
+#include <limits.h> // for ULONG_MAX
+
 // Location of the include files changes if this is a web_lk source, not VaST
 #ifdef VAST_WEB_LK
 #include "vast_limits.h"
@@ -31,8 +33,8 @@
 #define TWOPI 2.0 * M_PI
 #define FOURPI 4.0 * M_PI
 
-void get_min_max(double *x, int N, double *min, double *max) {
- int i;
+void get_min_max(double *x, unsigned long N, double *min, double *max) {
+ unsigned long i;
  (*min)= (*max)= x[0];
  for( i= 1; i < N; i++ ) {
   if( x[i] < (*min) )
@@ -65,8 +67,8 @@ unsigned long int random_seed() {
  return (seed);
 }
 
-void compute_LS(double *jd, double *m, unsigned int N_obs, double f, double *LS_Power) {
- unsigned int i;
+void compute_LS(double *jd, double *m, unsigned long N_obs, double f, double *LS_Power) {
+ unsigned long i;
  double ReF, ImF, C, S, angle;
  
  double t, tau;
@@ -139,8 +141,8 @@ void compute_LS(double *jd, double *m, unsigned int N_obs, double f, double *LS_
 }
 
 
-void compute_DFT(double *jd, double *m, unsigned int N_obs, double f, double *DFT, double T_DFT) {
- unsigned int i;
+void compute_DFT(double *jd, double *m, unsigned long N_obs, double f, double *DFT, double T_DFT) {
+ unsigned long i;
  double ReF, ImF, C, S, angle, dN_obs;
 
  ReF= ImF= 0.0;
@@ -168,7 +170,7 @@ void compute_DFT(double *jd, double *m, unsigned int N_obs, double f, double *DF
  return;
 }
 
-void normalize_spectral_window_file(unsigned long int N_freq, char *periodogramfilename) {
+void normalize_spectral_window_file(unsigned long N_freq, char *periodogramfilename) {
 
  // Normilize window function
 
@@ -180,7 +182,7 @@ void normalize_spectral_window_file(unsigned long int N_freq, char *periodogramf
 
  double max_F, max_W, max_F_to_max_W;
 
- unsigned long int i;
+ unsigned long i;
 
  periodogramfile= fopen(periodogramfilename, "r");
  if( NULL==periodogramfile ){
@@ -215,7 +217,7 @@ void normalize_spectral_window_file(unsigned long int N_freq, char *periodogramf
 
 struct Obs {
  float phase;
- unsigned int n;
+ unsigned long n;
 };
 
 static int compare_phases(const void *obs11, const void *obs22) {
@@ -226,8 +228,8 @@ static int compare_phases(const void *obs11, const void *obs22) {
  return 1;
 }
 
-double compute_LK_reciprocal_theta(double *jd, double *m, unsigned int N_obs, double f, double M) {
- unsigned int i;
+double compute_LK_reciprocal_theta(double *jd, double *m, unsigned long N_obs, double f, double M) {
+ unsigned long i;
  struct Obs *obs= malloc(N_obs * sizeof(struct Obs));
  double sum1, sum2;
  double jdi_over_period;
@@ -321,7 +323,7 @@ int main(int argc, char **argv) {
  double df;
 
  // the number of frequencies will be determined later based on the JD range of observations
- unsigned long int N_freq;
+ unsigned long N_freq;
  double *freq= NULL;
  double *power= NULL;
  double *power_LS= NULL;
@@ -329,7 +331,7 @@ int main(int argc, char **argv) {
  double *spectral_window_LS= NULL;
  double *theta= NULL;
 
- unsigned int N_obs;
+ unsigned long N_obs;
  double *jd= NULL;
  double *m= NULL;
  double *m_fake= NULL;
@@ -359,7 +361,7 @@ int main(int argc, char **argv) {
 
  double jdmin, jdmax, T;
 
- unsigned int i;
+ unsigned long i;
 
  double M;
 
@@ -420,10 +422,17 @@ int main(int argc, char **argv) {
   if( NULL == fgets(temporary_string_for_line_counter, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lcfile) ) {
    break;
   }
+  if( N_obs == ULONG_MAX ) {
+   fprintf(stderr, "ERROR: too many lines in the input file >%d\n", MAX_NUMBER_OF_OBSERVATIONS);
+   return 1;
+  } // just in case it is infinite length
+/*
+  // Why would we need that?!
   if( N_obs == MAX_NUMBER_OF_OBSERVATIONS ) {
    fprintf(stderr, "ERROR: too many lines in the input file >%d\n", MAX_NUMBER_OF_OBSERVATIONS);
    return 1;
   } // just in case it is infinite length
+*/
  }
  fseek(lcfile, 0, SEEK_SET); // go back to the beginning of the lightcurve file
  jd= malloc(N_obs * sizeof(double));
@@ -465,7 +474,7 @@ int main(int argc, char **argv) {
  fclose(lcfile);
 
  if( N_obs < 5 ) {
-  fprintf(stderr, "ERROR: too few observations in the input lightcurve: %d<5 \n", N_obs);
+  fprintf(stderr, "ERROR: too few observations in the input lightcurve: %ld<5 \n", N_obs);
   free(m);
   free(jd);
   //
@@ -481,7 +490,8 @@ int main(int argc, char **argv) {
  // Sort the lightcurve for compatibility with the web-based version
  // http://scan.sai.msu.ru/lk/
  // that does sorting
- gsl_sort2(jd, 1, m, 1, N_obs);
+ // We might have a problem here on 32bit systems where size_t is unsigned int if N_obs is very large
+ gsl_sort2(jd, (size_t)1, m, (size_t)1, (size_t)N_obs);
  // also for the stuff below we need the sorted lightcurve
  // f_Nyq = N/2T_DFT is the Nyquist frequency as defined in 2014MNRAS.445..437M
  T_DFT= (double)N_obs * (jd[N_obs - 1] - jd[0]) / (double)(N_obs - 1);
@@ -497,7 +507,7 @@ int main(int argc, char **argv) {
  // WARNING! Here we assume that the input period range is OK
  // Get number of frequencies in the spectrum
  df= step / T;
- N_freq= (unsigned long int)((fmax - fmin) / df + 0.5);
+ N_freq= (unsigned long)((fmax - fmin) / df + 0.5);
  //fprintf(stderr,"df=%lg N_freq=%ld\n",df,N_freq);
  //exit(1);
  /*
@@ -670,7 +680,7 @@ int main(int argc, char **argv) {
   // naively estimate FAP
   // estimate the number of independent frequencies
   df= 1.0 / T;
-  unsigned long int N_freq_presumably_independent= ( unsigned long int )( ( fmax - fmin ) / df + 0.5 );
+  unsigned long N_freq_presumably_independent= ( unsigned long )( ( fmax - fmin ) / df + 0.5 );
   // update the estimated number of independent frequencies following the shaman ritual of Schwarzenberg-Czerny (2003), Sec. 5.3
   // https://ui.adsabs.harvard.edu/abs/2003ASPC..292..383S/abstract
   if ( N_freq_presumably_independent > N_freq ) {
