@@ -1249,19 +1249,6 @@ int main(int argc, char **argv) {
     if( 0 == strcmp(imagefilename, fits_image_name) ) {
      // Get number of observations for correct error estimation
      N= count_lines_in_ASCII_file(RADEC);
-     /*
-     sprintf( system_command, "grep -c \" \" %s > grep.tmp", RADEC );
-     if ( 0 != system( system_command ) ) {
-      fprintf( stderr, "ERROR running  %s\n", system_command );
-     }
-     calibfile= fopen( "grep.tmp", "r" );
-     if ( 1 > fscanf( calibfile, "%d", &N ) ) {
-      fprintf( stderr, "ERROR parsing grep.tmp\n" );
-     }
-     fclose( calibfile );
-     //system("rm -f grep.tmp");
-     unlink( "grep.tmp" );
-     */
      sextractor_catalog__MAG_ERR[sextractor_catalog__counter]= sextractor_catalog__MAG_ERR[sextractor_catalog__counter] / sqrt(N - 1);
      // done with errors
      // Note the star name
@@ -2289,7 +2276,8 @@ int main(int argc, char **argv) {
         sextractor_catalog__Y_viewed[sextractor_catalog__viewed_counter]= sextractor_catalog__Y[marker_counter];
         sextractor_catalog__viewed_counter++;
         // Generate the log view command
-        sprintf(system_command, "grep %05d vast*.log", sextractor_catalog__star_number[marker_counter]);
+        fprintf(stderr, "This star in VaST log files:\n");
+        sprintf(system_command, "grep 'out%05d.dat' vast*.log", sextractor_catalog__star_number[marker_counter]);
         if( 0 != system(system_command) ) {
          fprintf(stderr, "ERROR running  %s\n", system_command);
         }
