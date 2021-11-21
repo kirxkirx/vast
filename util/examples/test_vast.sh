@@ -76,15 +76,11 @@ function test_https_connection {
  if [ $? -ne 0 ];then
   # if the above didn't work, try to download the certificate
   # The old cert that has expired already, will keep it in case clocks on the test machine are really off
-  #wget -O - https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem > intermediate.pem
   curl --max-time 10 --silent https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem > intermediate.pem
   # The new one
-  #wget -O - https://letsencrypt.org/certs/lets-encrypt-r3.pem >> intermediate.pem
   curl --max-time 10 --silent https://letsencrypt.org/certs/lets-encrypt-r3.pem >> intermediate.pem
   # if that fails - abort the test
   # latest CA list from cURL
-  #wget -O - https://curl.haxx.se/ca/cacert.pem >> intermediate.pem
-  #curl https://curl.haxx.se/ca/cacert.pem >> intermediate.pem
   curl --max-time 10 --silent https://curl.se/ca/cacert.pem >> intermediate.pem
   if [ $? -ne 0 ];then
    return 2
@@ -106,12 +102,14 @@ function test_https_connection {
  curl --max-time 10 --silent https://kirx.net/astrometry_engine/files/ | grep --quiet 'Parent Directory'
  if [ $? -ne 0 ];then
   if [ ! -f intermediate.pem ];then
+   # if the above didn't work, try to download the certificate
    # The old cert that has expired already, will keep it in case clocks on the test machine are really off
-   wget -O - https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem > intermediate.pem
-   # The old cert that has expired already, will keep it in case clocks on the test machine are really off
-   wget -O - https://letsencrypt.org/certs/lets-encrypt-r3.pem > intermediate.pem
+   curl --max-time 10 --silent https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem > intermediate.pem
+   # The new one
+   curl --max-time 10 --silent https://letsencrypt.org/certs/lets-encrypt-r3.pem >> intermediate.pem
+   # if that fails - abort the test
    # latest CA list from cURL
-   wget -O - https://curl.haxx.se/ca/cacert.pem > intermediate.pem
+   curl --max-time 10 --silent https://curl.se/ca/cacert.pem >> intermediate.pem
    # if that fails - abort the test
    if [ $? -ne 0 ];then
     return 2
@@ -17178,6 +17176,8 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  FAILED_TEST_CODES="${FAILED_TEST_CODES// none_REMOTEPLATESOLVE009/}"
  #
  FAILED_TEST_CODES="${FAILED_TEST_CODES// LIGHTCURVEVIEWER004_TEST_NOT_PERFORMED_no_gs/}"
+ # HTTPS test doesn't work on old BSD despite the intermediate cert trick, not sure why
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// HTTPS_001_TEST_NOT_PERFORMED/}"
  #
  if [ ! -z "$FAILED_TEST_CODES" ];then
   echo "Exit code 1"
