@@ -1,4 +1,14 @@
-* For file already exist in ms and md add chec kthat the directory is actually writable.
+* Add a possibility to always use either wget or curl, not both!
+
+* Fix NMW errors:
+wcs_Cyg5_2021-10-16_19-25-12_003.fts: broken symbolic link to local_wcs_cache/wcs_Cyg5_2021-10-16_19-25-12_003.fts
+
+
+* Test with bad images
+./diffphot /mnt/usb/MSU_Obs/2021_09_30/alternative_mffC_morning/fd_TOI2025_C_10sec_run01-*.fit
+default.sex 10 10 10
+
+* For file already exist in ms and md add check that the directory is actually writable.
 
 * Add ZTF periodic variables catalog support
 http://variables.cn:88/ztf/

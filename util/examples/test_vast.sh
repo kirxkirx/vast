@@ -16771,6 +16771,70 @@ else
  fi
 fi
 
+# NMW Sky archive
+# clean-up from possible incomplete previous run
+if [ -f wwwtest.tmp ];then
+ rm -f wwwtest.tmp
+fi
+if [ -f wwwtest.png ];then
+ rm -f wwwtest.png
+fi
+curl --silent 'http://scan.sai.msu.ru/cgi-bin/nmw/sky_archive?ra=17%3A45%3A28.02&dec=-23%3A05%3A23.1&r=64&n=0' | grep -A500 'Sky image archive search results' | grep 'crop_wcs_fd_Sgr1_2011-11-3_001.fts.png' > wwwtest.tmp
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMWSKYARCHIVE_001"
+fi
+curl --silent --output wwwtest.png `cat wwwtest.tmp | awk -F'"' '{print $2}'`
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMWSKYARCHIVE_002"
+fi
+file wwwtest.png | grep --quiet 'PNG image data'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMWSKYARCHIVE_003"
+fi
+# clean-up
+if [ -f wwwtest.tmp ];then
+ rm -f wwwtest.tmp
+fi
+if [ -f wwwtest.png ];then
+ rm -f wwwtest.png
+fi
+
+
+# PA Sky archive
+# clean-up from possible incomplete previous run
+if [ -f wwwtest.tmp ];then
+ rm -f wwwtest.tmp
+fi
+if [ -f wwwtest.png ];then
+ rm -f wwwtest.png
+fi
+curl --silent 'http://scan.sai.msu.ru/cgi-bin/pa/sky_archive?ra=02%3A34%3A18.77&dec=%2B63%3A12%3A43.0&r=256' | grep -A500 'Sky image archive search results' | grep 'crop_SCA255N__05_-1.fits.png' > wwwtest.tmp
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_001"
+fi
+curl --silent --output wwwtest.png `cat wwwtest.tmp | awk -F'"' '{print $2}'`
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_002"
+fi
+file wwwtest.png | grep --quiet 'PNG image data'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_003"
+fi
+# clean-up
+if [ -f wwwtest.tmp ];then
+ rm -f wwwtest.tmp
+fi
+if [ -f wwwtest.png ];then
+ rm -f wwwtest.png
+fi
+
+
 ####### HTTPS
 test_https_connection
 TEST_EXIT_CODE=$?
