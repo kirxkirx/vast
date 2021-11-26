@@ -115,6 +115,8 @@ int compute_image_stratistics(char *fitsfilename, int no_sorting_fast_computatio
 
 int main(int argc, char **argv) {
 
+ int do_only_fast_computations= 0;
+
  char fitsfilename[FILENAME_LENGTH];
  double min,max,range,median,mean,mean_err,std,mad,mad_scaled_to_sigma,iqr,iqr_scaled_to_sigma;
 
@@ -139,13 +141,21 @@ int main(int argc, char **argv) {
  cutout_green_channel_out_of_RGB_DSLR_image(fitsfilename);
 
 
- if( 0 == strncmp("imstat_vast_fast", basename(argv[0]), MIN( strlen("imstat_vast_fast"), strlen(basename(argv[0])) ) ) ) {
+ if( strlen(basename(argv[0])) >= 16 ) {
+  if( 0 == strncmp("imstat_vast_fast", basename(argv[0]), MIN( strlen("imstat_vast_fast"), strlen(basename(argv[0])) ) ) ) {
+   do_only_fast_computations= 1;
+  }
+ }
+ if( do_only_fast_computations == 1 ) {
   // fast computation avoiding sorting
+  //fprintf(stderr, "Computing fast image stats\n");
   if( 0 != compute_image_stratistics(fitsfilename, 1, &min, &max, &range, &median, &mean, &mean_err, &std, &mad, &mad_scaled_to_sigma, &iqr, &iqr_scaled_to_sigma) ) {
    fprintf(stderr, "ERROR in %s while running compute_image_stratistics()\n", argv[0]);
    return 1;
   }
  } else {
+  // normal computations
+  //fprintf(stderr, "Computing image stats\n");
   if( 0 != compute_image_stratistics(fitsfilename, 0, &min, &max, &range, &median, &mean, &mean_err, &std, &mad, &mad_scaled_to_sigma, &iqr, &iqr_scaled_to_sigma) ) {
    fprintf(stderr, "ERROR in %s while running compute_image_stratistics()\n", argv[0]);
    return 1;
@@ -164,6 +174,7 @@ int main(int argc, char **argv) {
   fprintf(stdout, "IQR/1.34= %10.4lf\n", iqr_scaled_to_sigma);
  }
 
+ // these simple stats get computed anyway
  fprintf(stdout, "    MEAN= %10.4lf\n", mean);
  fprintf(stdout, "MEAN_ERR= %10.4lf\n", mean_err);
  fprintf(stdout, "      SD= %10.4lf\n", std);
