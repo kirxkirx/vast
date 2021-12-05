@@ -328,8 +328,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   # There are more than two second-epoch images - do a preliminary VaST run to choose the two images with best seeing
   cp -v default.sex.telephoto_lens_onlybrightstars_v1 default.sex >> transient_factory_test31.txt
   echo "Preliminary VaST run" >> transient_factory_test31.txt
-  echo "./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages"  "$NEW_IMAGES"/*"$FIELD"_*_*.fts >> transient_factory_test31.txt
-  ./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages  "$NEW_IMAGES"/*"$FIELD"_*_*.fts  2>&1 > prelim_vast_run.log
+  echo "./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit"  "$NEW_IMAGES"/*"$FIELD"_*_*.fts >> transient_factory_test31.txt
+  ./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit  "$NEW_IMAGES"/*"$FIELD"_*_*.fts  2>&1 > prelim_vast_run.log
   wait
   ## Special test for stuck camera ##
   if [ -s vast_image_details.log ];then
