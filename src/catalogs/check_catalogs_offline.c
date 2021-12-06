@@ -194,20 +194,27 @@ int search_asassnv(double target_RA_deg, double target_Dec_deg) {
    //   fprintf(stderr,"WARNING from search_asassnv() a string in lib/catalogs/asassnv.csv is too short:\n%s\n",string);
    continue;
   }
-  // fix the string for strtok() as it cannot handle empty cells ",,"
-  for( i= 0, j= 0; i < 4096 - 1; i++, j++ ) {
+  // fix the FIRST PART of string for strtok() as it cannot handle empty cells ",,"
+  // Assume Name RA and Dec will all fit within the first 100 characters
+  //for( i= 0, j= 0; i < 4096 - 1; i++, j++ ) {
+  for( i= 0, j= 0; i < 100; i++, j++ ) {
    if( j == 4096 - 1 ) {
     string_noemptycells[j]= '\0';
     break;
    }
    string_noemptycells[j]= string[i];
-   if( i < 4096 - 1 ) {
-    if( string[i] == ',' && string[i + 1] == ',' ) {
-     j++;
-     string_noemptycells[j]= ' '; // add empty cell
+   //if( i < 4096 - 1 ) {
+   if( i < 4096 - 2 ) {
+    if( string[i] == ',' ) {
+     if( string[i + 1] == ',' ) {
+      j++;
+      string_noemptycells[j]= ' '; // add empty cell
+     }
     }
    }
   }
+  //
+  string_noemptycells[j]= '\0'; // !!
   //
   if( NULL == string_noemptycells ) {
    fprintf(stderr, "ERROR in search_asassnv(): string_noemptycells==NULL\n");
@@ -247,6 +254,28 @@ int search_asassnv(double target_RA_deg, double target_Dec_deg) {
   if( distance_deg < VSX_SEARCH_RADIUS_DEG ) {
 
    ////// Do the nasty conversions only if this is our star //////
+
+   // fix the FULL string for strtok() as it cannot handle empty cells ",,"
+   for( i= 0, j= 0; i < 4096 - 1; i++, j++ ) {
+    if( j == 4096 - 1 ) {
+     string_noemptycells[j]= '\0';
+     break;
+    }
+    string_noemptycells[j]= string[i];
+    //if( i < 4096 - 1 ) {
+    if( i < 4096 - 2 ) {
+     if( string[i] == ',' ) {
+      if( string[i + 1] == ',' ) {
+       j++;
+       string_noemptycells[j]= ' '; // add empty cell
+      }
+     }
+    }
+   }
+   //
+   string_noemptycells[j]= '\0'; // !!
+   //
+
    //// Name
    // We should do this before each invocation of getfield_from_csv_string() !!!
    strncpy(string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1);
