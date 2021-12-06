@@ -102,6 +102,26 @@ void get_catnumber_from_string(char *str, char *str2) {
  return;
 }
 
+static int compare_star_on_mag_to_sort_arrStar(const void *a1, const void *a2) {
+ struct Star *s1, *s2;
+ s1= (struct Star *)a1;
+ s2= (struct Star *)a2;
+ if( s1->MAG_APER < s2->MAG_APER ) {
+  return -1;
+ }
+ return 1;
+}
+
+static int compare_star_on_mag_to_sort_arrCatStar(const void *a1, const void *a2) {
+ struct CatStar *s1, *s2;
+ s1= (struct CatStar *)a1;
+ s2= (struct CatStar *)a2;
+ if( s1->VT < s2->VT ) {
+  return -1;
+ }
+ return 1;
+}
+
 int match_stars_with_catalog(struct Star *arrStar, int N, struct CatStar *arrCatStar, long M) {
  double *mag_zeropoint; //=malloc(MAX_NUMBER_OF_STARS_ON_IMAGE*sizeof(double));
  int mag_zeropoint_counter= 0;
@@ -111,6 +131,7 @@ int match_stars_with_catalog(struct Star *arrStar, int N, struct CatStar *arrCat
  //long max_M=0; // for debug
  double distance;
  double best_distance;
+ int match_only_N_brightest_stars;
 
  mag_zeropoint= malloc(N * sizeof(double));
  if( NULL == mag_zeropoint ) {
@@ -118,8 +139,22 @@ int match_stars_with_catalog(struct Star *arrStar, int N, struct CatStar *arrCat
   return 0;
  }
 
- for( i= 0; i < N; i++ ) {
-  best_distance= 90;
+ // sort arrays in magnitude
+ qsort(arrStar, N, sizeof(struct Star), compare_star_on_mag_to_sort_arrStar);
+ qsort(arrCatStar, M, sizeof(struct CatStar), compare_star_on_mag_to_sort_arrCatStar);
+
+ //match_only_N_brightest_stars= MIN(N, 3*M);
+ match_only_N_brightest_stars= N;
+ // for each SExtractor catalog star
+#ifdef VAST_ENABLE_OPENMP
+#ifdef _OPENMP
+#pragma omp parallel for private(i, j, best_distance, distance)
+#endif
+#endif
+ for( i= 0; i < match_only_N_brightest_stars; i++ ) {
+  // Check distances to all other stars
+  //best_distance= 90;
+  best_distance= MAX_DISTANCE_DEGREES;
   for( j= 0; j < M; j++ ) {
    //   if( max_M<M )max_M=M;
    // First rough check
@@ -156,6 +191,10 @@ int match_stars_with_catalog(struct Star *arrStar, int N, struct CatStar *arrCat
      memset(arrStar[i].catnumber, 0, TYCHONUMBER); // just in case
      strncpy(arrStar[i].catnumber, arrCatStar[j].catnumber, TYCHONUMBER);
      //fprintf(stderr,"arrStar[i].catnumber=_%s_ arrCatStar[i].catnumber=_%s_\n",arrStar[i].catnumber,arrCatStar[i].catnumber);
+     // The positional coincidence is so good that we accept this mathc with no further consideration
+//     if( distance < ACCEPT_DISTANCE_DEGREES ) {
+//      break;
+//     }
     }
    }
   }
