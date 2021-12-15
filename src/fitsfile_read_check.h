@@ -1,21 +1,37 @@
 // The following line is just to make sure this file is not included twice in the code
 #ifndef VAST_FITSFILE_READ_CHECK_INCLUDE_FILE
 
+#include "vast_limits.h" // defines FILENAME_LENGTH
+
 #include "fitsio.h" // we use a local copy of this file because we use a local copy of cfitsio
 
 #include <stdio.h>
+#include <ctype.h> // for isalnum()
 
 #define _GNU_SOURCE // doesn't seem to work!
-#include <string.h> // for memmem()
+#include <string.h> // for memmem() and strlen()
 
 void *memmem(const void *haystack, size_t haystacklen, const void *needle, size_t needlelen);
+
+static inline int any_unusual_characters_in_string(char *fitsfilename) {
+ size_t i;
+ size_t string_size=strlen(fitsfilename);
+ for(i=0; i<string_size; i++){
+  // allow the following characters in filename
+  if( 0==isalnum(fitsfilename[i]) && fitsfilename[i]!=' ' && fitsfilename[i]!='\\' && fitsfilename[i]!='/' && fitsfilename[i]!='.' && fitsfilename[i]!='_' && fitsfilename[i]!='-' && fitsfilename[i]!='~' && fitsfilename[i]!=',' && fitsfilename[i]!=';' ) {
+   fprintf(stderr,"ERROR in any_unusual_characters_in_string(): I'm unhappy with the character '%c' in the input string '%s'\n", fitsfilename[i], fitsfilename);
+   return 1;
+  }
+ }
+ return 0;
+}
 
 static void check_if_the_input_is_MaxIM_compressed_FITS(char *fitsfilename) {
  FILE *f;
  unsigned char *buffer; // buffer for a part of the header
  unsigned char *pointer_to_the_key_start;
  int getc_return_value;
- int i;
+ int i; 
  f= fopen(fitsfilename, "r");
  if( f == NULL ) {
   return;
@@ -59,6 +75,16 @@ static inline int fitsfile_read_check(char *fitsfilename) {
  int hdutype, naxis;
  long naxes3;
  long naxes4;
+ //
+ if( (int)strlen(fitsfilename)>FILENAME_LENGTH ) {
+  fprintf(stderr, "ERROR in fitsfile_read_check(): the input filename is too long: %d bytes while FILENAME_LENGTH=%d %s\n", (int)strlen(fitsfilename), FILENAME_LENGTH, fitsfilename);
+  return 1;
+ }
+ if( 0 != any_unusual_characters_in_string(fitsfilename) ){
+  fprintf(stderr, "The input filename contains unexpected characters!\n");
+  return 1;
+ }
+ //
  // Check if the file exist at all
  FILE *testfile;
  testfile=fopen(fitsfilename, "r");
@@ -169,6 +195,7 @@ static inline int fitsfile_read_check_silent(char *fitsfilename) {
  fits_close_file(fptr, &status);
  return 0;
 }
+
 
 // The macro below will tell the pre-processor that this header file is already included
 #define VAST_FITSFILE_READ_CHECK_INCLUDE_FILE
