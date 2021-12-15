@@ -19,6 +19,8 @@
 #include "detailed_error_messages.h"
 #include "index_vs_mag.h" // for get_index_by_column_number()
 
+#include "fitsfile_read_check.h"
+
 /*
 
 From http://www.cse.iitb.ac.in/~cs101/2003.2/resources/notesPgplot/chapter5.html
@@ -217,6 +219,7 @@ int main(int argc, char **argv) {
  FILE *lightcurve_statistics_file;
  float *mag= NULL;
  char **outfilename= NULL;
+ char tmpfilename[OUTFILENAME_LENGTH];
  int Nstar= 0;
  int i;
  //
@@ -436,10 +439,18 @@ int main(int argc, char **argv) {
   // reset the string to make valgrind happy
   memset(substring_to_parse, 0, MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG);
   //
-  if( 6 > sscanf(string_to_parse, "%lf %lf %lf %lf %s %[^\t\n]", &tmpmag, &tmpsigma, &tmpdouble, &tmpdouble, outfilename[i], substring_to_parse) ) {
+  //if( 6 > sscanf(string_to_parse, "%lf %lf %lf %lf %s %[^\t\n]", &tmpmag, &tmpsigma, &tmpdouble, &tmpdouble, outfilename[i], substring_to_parse) ) {
+  if( 6 > sscanf(string_to_parse, "%lf %lf %lf %lf %s %[^\t\n]", &tmpmag, &tmpsigma, &tmpdouble, &tmpdouble, tmpfilename, substring_to_parse) ) {
    fprintf(stderr, "ERROR parsing vast_lightcurve_statistics.log string: %s\n", string_to_parse);
    continue;
   }
+  //
+  tmpfilename[OUTFILENAME_LENGTH-1]= '\0';
+  if( 0 != safely_encode_user_input_string(outfilename[i], tmpfilename, OUTFILENAME_LENGTH) ) {
+   fprintf(stderr, "ERROR encoding filename %s\n", tmpfilename);
+   continue;
+  }
+  //
   mag[i]= (float)tmpmag;
   fvarindex[0][i]= (float)tmpsigma;
   for( j= 1; j < MAX_NUMBER_OF_INDEXES_TO_STORE; j++ ) {

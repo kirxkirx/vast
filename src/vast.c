@@ -2254,7 +2254,9 @@ int main(int argc, char **argv) {
    fprintf(stderr, "ERROR: the input filename is too long (FILENAME_LENGTH = %d, while this one is %d) %s\n", FILENAME_LENGTH, (int)strlen(argv[n]), argv[n]);
    exit(1);
   }
-  strncpy( file_or_dir_on_command_line, argv[n], FILENAME_LENGTH );
+  //strncpy( file_or_dir_on_command_line, argv[n], FILENAME_LENGTH );
+  safely_encode_user_input_string(file_or_dir_on_command_line, argv[n], FILENAME_LENGTH);
+  //
   file_or_dir_on_command_line[FILENAME_LENGTH - 1]= '\0'; // just in case
   // Try to stat() the input
   if( 0 != stat(file_or_dir_on_command_line, &sb) ) {
@@ -2363,7 +2365,8 @@ int main(int argc, char **argv) {
          return 1;
         }
         //strcpy(input_images[Num], dir_string2);
-        strncpy(input_images[Num], dir_string2, malloc_size);
+        //strncpy(input_images[Num], dir_string2, malloc_size);
+        safely_encode_user_input_string(input_images[Num], dir_string2, malloc_size);
         input_images[Num][malloc_size-1]='\0'; // just in case
         vast_bad_image_flag[Num]= 0; // mark the image good by default
         // increase image counter
@@ -2412,7 +2415,8 @@ int main(int argc, char **argv) {
        return 1;
       }
       //strcpy(input_images[Num], dir_string);
-      strncpy(input_images[Num], dir_string, malloc_size);
+      //strncpy(input_images[Num], dir_string, malloc_size);
+      safely_encode_user_input_string(input_images[Num], dir_string, malloc_size);
       input_images[Num][malloc_size-1]='\0'; // just in case
       vast_bad_image_flag[Num]= 0; // mark the image good by default
       // increase image counter
@@ -2456,7 +2460,8 @@ int main(int argc, char **argv) {
     return 1;
    }
    //strcpy(input_images[Num], file_or_dir_on_command_line);
-   strncpy(input_images[Num], file_or_dir_on_command_line, malloc_size);
+   //strncpy(input_images[Num], file_or_dir_on_command_line, malloc_size);
+   safely_encode_user_input_string(input_images[Num], file_or_dir_on_command_line, malloc_size);
    input_images[Num][malloc_size-1]= '\0'; // just in case
    vast_bad_image_flag[Num]= 0; // mark the image good by default
    Num++;
@@ -2531,7 +2536,8 @@ int main(int argc, char **argv) {
      return 1;
     }
     //strcpy(input_images[Num], image_filename_from_input_list);
-    strncpy(input_images[Num], image_filename_from_input_list, malloc_size);
+    //strncpy(input_images[Num], image_filename_from_input_list, malloc_size);
+    safely_encode_user_input_string(input_images[Num], image_filename_from_input_list, malloc_size);
     input_images[Num][malloc_size-1]='\0'; // just in case
     Num++;
    } // if((sb.st_mode & S_IFMT) == S_IFREG){

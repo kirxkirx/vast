@@ -390,12 +390,14 @@ void magnitude_calibration_using_calib_txt(double *mag, int N) {
  return;
 }
 
-void get_ref_image_name(char *str) {
+int get_ref_image_name(char *str) {
  FILE *outfile;
  char stringbuf[2048];
  char stringtrash1[2048];
  char stringtrash2[2048];
  char stringtrash3[2048];
+ char filenamestring[FILENAME_LENGTH];
+ 
  fprintf(stderr, "Getting the reference image name from vast_summary.log\n");
  outfile= fopen("vast_summary.log", "r");
  if( outfile == NULL ) {
@@ -409,7 +411,8 @@ void get_ref_image_name(char *str) {
   }
   // Example string to parse
   // Ref.  image: 2453192.38876 05.07.2004 21:18:19   ../sample_data/f_72-001r.fit
-  sscanf(stringbuf, "Ref.  image: %s %s %s   %s", stringtrash1, stringtrash2, stringtrash3, str);
+  //sscanf(stringbuf, "Ref.  image: %s %s %s   %s", stringtrash1, stringtrash2, stringtrash3, str);
+  sscanf(stringbuf, "Ref.  image: %s %s %s   %s", stringtrash1, stringtrash2, stringtrash3, filenamestring);
   stringtrash1[2048 - 1]= '\0'; // just in case
   stringtrash2[2048 - 1]= '\0'; // just in case
   stringtrash3[2048 - 1]= '\0'; // just in case
@@ -419,11 +422,17 @@ void get_ref_image_name(char *str) {
  fclose(outfile);
  fprintf(stderr, "The reference image is %s \n", str);
 
- if( 0 != fitsfile_read_check(str) ) {
-  fprintf(stderr, "WARNING: cannot open the reference image file %s \nHas this file moved?\n", str);
+ if( 0 != safely_encode_user_input_string(str, filenamestring, FILENAME_LENGTH) ) {
+  fprintf(stderr, "ERROR: the reference image filename contains unexpected characters %s\n", filenamestring);
+  return 1;
  }
 
- return;
+ if( 0 != fitsfile_read_check(str) ) {
+  fprintf(stderr, "ERROR: cannot open the reference image file %s \nHas this file moved?\n", str);
+  return 1;
+ }
+
+ return 0;
 }
 
 void fix_array_with_negative_values(long NUM_OF_PIXELS, float *im) {
@@ -1040,14 +1049,14 @@ int main(int argc, char **argv) {
  if( 0 != strcmp("select_star_on_reference_image", basename(argv[0])) ) {
   if( argc == 1 ) {
    fprintf(stderr, "Usage:\n%s FITSIMAGE.fit\nor\n%s FITSIMAGE.fit X Y\nor\n%s FITSIMAGE.fit RA DEC\n\n", argv[0], argv[0], argv[0]);
-   // Do nothing else: if no arguments are provided - display the reference image
-   //get_ref_image_name(fits_image_name);
-   //return 1;
   }
  } else {
   // This is star selection on reference image mode
   match_mode= 1;
-  get_ref_image_name(fits_image_name);
+  if( 0 != get_ref_image_name(fits_image_name) ) {
+   fprintf(stderr, "ERROR getting the reference image name from the log file\n");
+   exit(1);
+  }
  }
 
  double fixed_aperture= 0.0;
@@ -1156,10 +1165,15 @@ int main(int argc, char **argv) {
  }
 
  if( match_mode != 1 && argc != 1 ) {
-  strcpy(fits_image_name, argv[optind + 1]);
+  //strcpy(fits_image_name, argv[optind + 1]);
+  safely_encode_user_input_string(fits_image_name, argv[optind + 1], FILENAME_LENGTH);
  } else {
-  /* Get reference file name from log */
-  get_ref_image_name(fits_image_name);
+  // Get reference file name from log 
+  //get_ref_image_name(fits_image_name);
+  if( 0 != get_ref_image_name(fits_image_name) ) {
+   fprintf(stderr, "ERROR getting the reference image name from the log file\n");
+   exit(1);
+  }
  }
 
  replace_file_with_symlink_if_filename_contains_white_spaces(fits_image_name);
@@ -1234,7 +1248,11 @@ int main(int argc, char **argv) {
   marker_counter= 0;
 
   // Get reference file name from log
-  get_ref_image_name(fits_image_name);
+  //get_ref_image_name(fits_image_name);
+  if( 0 != get_ref_image_name(fits_image_name) ) {
+   fprintf(stderr, "ERROR getting the reference image name from the log file\n");
+   exit(1);
+  }
 
   // Read data.m_sigma but select only stars detected on the reference frame 
   matchfile= fopen("data.m_sigma", "r");
@@ -1305,7 +1323,8 @@ int main(int argc, char **argv) {
    fprintf(stderr, "Usage: ./pgfv detect image.fit\n");
    exit(1);
   }
-  strcpy(fits_image_name, argv[optind + 2]);
+  //strcpy(fits_image_name, argv[optind + 2]);
+  safely_encode_user_input_string(fits_image_name, argv[optind + 2], FILENAME_LENGTH);
   match_mode= 3;
  }
  if( match_mode == 3 ) {
