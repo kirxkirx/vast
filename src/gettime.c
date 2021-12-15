@@ -632,7 +632,7 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
  time_t unix_time;
  struct tm structureTIME;
  char Tm_h[10], Tm_m[10], Tm_s[FLEN_CARD]; // We want a lot of memeory for Tm_s for cases like '2020-11-21T18:10:43.4516245'
- char Da_y[10], Da_m[10], Da_d[10];
+ char Da_y[10], Da_m[10], Da_d[FLEN_CARD]; // We want more memeory for Da_d for cases like '2020-11-21.1234567
 
  char DATEOBS[32], TIMEOBS[32], TIMESYS[32];
  char DATEOBS_COMMENT[2048];  // make it long, just in case
@@ -1231,7 +1231,7 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
  memset( Tm_s, 0, FLEN_CARD );
  memset( Da_y, 0, 10 );
  memset( Da_m, 0, 10 );
- memset( Da_d, 0, 10 );
+ memset( Da_d, 0, FLEN_CARD );
  //
 
  // status==202 here means the JD keyword is not found
@@ -1328,15 +1328,19 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
   //fprintf( stderr, " %d #%s#\n", strlen(DATEOBS), DATEOBS);
   //
   
-  for( j= 0; j < 32; j++ ) {
-   if( DATEOBS[j] == 45 ) {
+  //for( j= 0; j < 32; j++ ) {
+  for( j= 0; j < 5; j++ ) {
+   //if( DATEOBS[j] == 45 ) {
+   if( DATEOBS[j] == '-' ) {
     Da_y[j]= '\0';
     break;
    }
    Da_y[j]= DATEOBS[j];
   }
-  for( j+= 1; j < 32; j++ ) {
-   if( DATEOBS[j] == 45 ) {
+  //for( j+= 1; j < 32; j++ ) {
+  for( j+= 1; j < 8; j++ ) {
+   //if( DATEOBS[j] == 45 ) {
+   if( DATEOBS[j] == '-' ) {
     if( j - 5 < 0 ) {
      fprintf( stderr, "ERROR100 in gettime()\n");
      fits_close_file(fptr, &status); // close file
@@ -1394,15 +1398,16 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
   }
 
   ///////////////////////////////////
-  for ( j= 0; j < 32; j++ ) {
+  //for ( j= 0; j < 32; j++ ) {
+  for ( j= 0; j < 3; j++ ) {
    if ( TIMEOBS[j] == ':' ) {
     Tm_h[j]= '\0';
-
     break;
    }
    Tm_h[j]= TIMEOBS[j];
   }
-  for ( j+= 1; j < 32; j++ ) {
+  //for ( j+= 1; j < 32; j++ ) {
+  for ( j+= 1; j < 3+3; j++ ) {
    if ( TIMEOBS[j] == ':' || TIMEOBS[j] == '\0' ) {
     Tm_m[j - 3]= '\0';
     break;
@@ -1419,6 +1424,7 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
    }
    Tm_s[6]= '\0';
   } else {
+   // no seconds
    Tm_s[0]='0';
    Tm_s[1]='0';
    Tm_s[2]='\0';
