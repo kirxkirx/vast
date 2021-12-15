@@ -143,40 +143,53 @@ int sky2xy(char *fitsfilename, char *input_RA_string, char *input_DEC_string, fl
  FILE *pipe_for_sky2xy;
  char command_output_string[VAST_PATH_MAX];
 
+ char encoded_fitsfilename[FILENAME_LENGTH];
+ char encoded_input_RA_string[FILENAME_LENGTH];
+ char encoded_input_DEC_string[FILENAME_LENGTH];
+ 
+ // Check all input strings
+ safely_encode_user_input_string(encoded_fitsfilename,fitsfilename,FILENAME_LENGTH);
+ encoded_fitsfilename[FILENAME_LENGTH-1]= '\0';
+ safely_encode_user_input_string(encoded_input_RA_string,input_RA_string,FILENAME_LENGTH);
+ encoded_input_RA_string[FILENAME_LENGTH-1]= '\0';
+ safely_encode_user_input_string(encoded_input_DEC_string,input_DEC_string,FILENAME_LENGTH);
+ encoded_input_DEC_string[FILENAME_LENGTH-1]= '\0';
+ 
+
  // Check that the input coordinates are in the 01:02:03.45 +06:07:08.9 format
  n_semicol= 0;
- for( i= 0; i < strlen(input_RA_string); i++ ) {
-  if( input_RA_string[i] == ':' ) {
+ for( i= 0; i < strlen(encoded_input_RA_string); i++ ) {
+  if( encoded_input_RA_string[i] == ':' ) {
    n_semicol++;
   }
  }
- for( i= 0; i < strlen(input_DEC_string); i++ ) {
-  if( input_DEC_string[i] == ':' ) {
+ for( i= 0; i < strlen(encoded_input_DEC_string); i++ ) {
+  if( encoded_input_DEC_string[i] == ':' ) {
    n_semicol++;
   }
  }
  if( n_semicol != 4 ) {
-  (*outX)= (float)atof(input_RA_string);
-  (*outY)= (float)atof(input_DEC_string);
+  (*outX)= (float)atof(encoded_input_RA_string);
+  (*outY)= (float)atof(encoded_input_DEC_string);
   return 1;
  }
  //
 
  get_path_to_vast(path_to_vast_string);
  path_to_vast_string[VAST_PATH_MAX - 1]= '\0'; // just in case
- sprintf(systemcommand, "%slib/bin/sky2xy %s %s %s", path_to_vast_string, fitsfilename, input_RA_string, input_DEC_string);
+ sprintf(systemcommand, "%slib/bin/sky2xy %s %s %s", path_to_vast_string, encoded_fitsfilename, encoded_input_RA_string, encoded_input_DEC_string);
  systemcommand[2 * VAST_PATH_MAX - 1]= '\0'; // just in case
 
  pipe_for_sky2xy= popen(systemcommand, "r");
  if( NULL == pipe_for_sky2xy ) {
-  (*outX)= (float)atof(input_RA_string);
-  (*outY)= (float)atof(input_DEC_string);
+  (*outX)= (float)atof(encoded_input_RA_string);
+  (*outY)= (float)atof(encoded_input_DEC_string);
   return 1;
  }
  if( NULL == fgets(command_output_string, VAST_PATH_MAX, pipe_for_sky2xy) ) {
   pclose(pipe_for_sky2xy);
-  (*outX)= (float)atof(input_RA_string);
-  (*outY)= (float)atof(input_DEC_string);
+  (*outX)= (float)atof(encoded_input_RA_string);
+  (*outY)= (float)atof(encoded_input_DEC_string);
   return 1;
  }
  pclose(pipe_for_sky2xy);
@@ -190,14 +203,14 @@ int sky2xy(char *fitsfilename, char *input_RA_string, char *input_DEC_string, fl
  // expecting:
  // 18:19:53.683 -30:41:12.54 J2000 -> 1676.500 1266.500
  if( 2 != sscanf(command_output_string, "%*s %*s J2000 -> %f %f", outX, outY) ) {
-  (*outX)= (float)atof(input_RA_string);
-  (*outY)= (float)atof(input_DEC_string);
+  (*outX)= (float)atof(encoded_input_RA_string);
+  (*outY)= (float)atof(encoded_input_DEC_string);
   return 1;
  }
 
  if( (*outX) <= 0.0 || (*outY) <= 0.0 ) {
-  (*outX)= (float)atof(input_RA_string);
-  (*outY)= (float)atof(input_DEC_string);
+  (*outX)= (float)atof(encoded_input_RA_string);
+  (*outY)= (float)atof(encoded_input_DEC_string);
   return 1;
  }
 

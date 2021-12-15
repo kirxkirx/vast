@@ -18,7 +18,8 @@ static inline int any_unusual_characters_in_string(char *fitsfilename) {
  size_t string_size=strlen(fitsfilename);
  for(i=0; i<string_size; i++){
   // allow the following characters in filename
-  if( 0==isalnum(fitsfilename[i]) && fitsfilename[i]!=' ' && fitsfilename[i]!='\\' && fitsfilename[i]!='/' && fitsfilename[i]!='.' && fitsfilename[i]!='_' && fitsfilename[i]!='-' && fitsfilename[i]!='~' && fitsfilename[i]!=',' && fitsfilename[i]!=';' ) {
+  // ':' is needed because we also use the same function to check input coordinates string
+  if( 0==isalnum(fitsfilename[i]) && fitsfilename[i]!=' ' && fitsfilename[i]!='\\' && fitsfilename[i]!='/' && fitsfilename[i]!='.' && fitsfilename[i]!='_' && fitsfilename[i]!='-' && fitsfilename[i]!='+' && fitsfilename[i]!='~' && fitsfilename[i]!=',' && fitsfilename[i]!=';' && fitsfilename[i]!=':' ) {
    fprintf(stderr,"ERROR in any_unusual_characters_in_string(): I'm unhappy with the character '%c' in the input string '%s'\n", fitsfilename[i], fitsfilename);
    return 1;
   }
@@ -37,7 +38,7 @@ static inline int safely_encode_user_input_string(char *output_filename, char *i
   fprintf(stderr,"ERROR in safely_encode_user_input_string(): the output in a NULL pointer\n");
   return 1;
  }
- if( 0 !=any_unusual_characters_in_string(input_filename) ) {
+ if( 0 != any_unusual_characters_in_string(input_filename) ) {
   output_filename[0]= '\0';
   fprintf(stderr, "ERROR in safely_encode_user_input_string(): unusual character in input string\n");
   return 1;

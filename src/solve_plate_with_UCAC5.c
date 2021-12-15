@@ -2063,7 +2063,15 @@ int main(int argc, char **argv) {
   }
  }
 
- strncpy(fits_image_filename, argv[optind], FILENAME_LENGTH);
+ //strncpy(fits_image_filename, argv[optind], FILENAME_LENGTH);
+ if( 0 != any_unusual_characters_in_string(argv[optind]) ) {
+  fprintf( stderr, "ERROR preparing to encode the input file name\n");
+  exit(1);
+ }
+ if( 0 != safely_encode_user_input_string(fits_image_filename, argv[optind], FILENAME_LENGTH) ) {
+  fprintf( stderr, "ERROR trying to encode the input file name\n");
+  exit(1);
+ }
  fits_image_filename[FILENAME_LENGTH - 1]= '\0';
 
  //

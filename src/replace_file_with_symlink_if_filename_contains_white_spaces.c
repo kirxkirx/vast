@@ -30,13 +30,17 @@ void replace_file_with_symlink_if_filename_contains_white_spaces(char *filename)
   fprintf(stderr, "ERROR in replace_file_with_symlink_if_filename_contains_white_spaces() the input is the NULL string!\n");
   return;
  }
- 
+ // Check
  // Check that the input file actually exist
  if( 0 != stat(filename, &sb) ) {
   fprintf(stderr, "ERROR in replace_file_with_symlink_if_filename_contains_white_spaces() the input file %s does not exits\n", filename);
   return;
  }
- 
+ // Check that the input file is not a symlink itself
+ if( 0 == lstat(filename, &sb) ) {
+  fprintf(stderr, "ERROR in replace_file_with_symlink_if_filename_contains_white_spaces() the input file %s is already a symlink and we do not allow symlinks on symlinks\n", filename);
+  return;
+ } 
  //
 
  for( need_to_replace_with_symlink= 0, i= 0; i < strlen(filename); i++ ) {
