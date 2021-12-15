@@ -2250,8 +2250,12 @@ int main(int argc, char **argv) {
  // Go through images and directories specified on the command line
  fprintf( stderr, "\nChecking the list of input images specified on the command line ...\n" );
  for ( n= optind; n < argc; ++n ) {
+  if( (int)strlen(argv[n]) > FILENAME_LENGTH ) {
+   fprintf(stderr, "ERROR: the input filename is too long (FILENAME_LENGTH = %d, while this one is %d) %s\n", FILENAME_LENGTH, (int)strlen(argv[n]), argv[n]);
+   exit(1);
+  }
   strncpy( file_or_dir_on_command_line, argv[n], FILENAME_LENGTH );
-  file_or_dir_on_command_line[FILENAME_LENGTH - 1]= '\0';
+  file_or_dir_on_command_line[FILENAME_LENGTH - 1]= '\0'; // just in case
   // Try to stat() the input
   if( 0 != stat(file_or_dir_on_command_line, &sb) ) {
    fprintf(stderr, "Cannot stat() %s - No such file or directory. Skipping the input.\n", file_or_dir_on_command_line);
