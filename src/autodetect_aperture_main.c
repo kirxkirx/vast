@@ -38,7 +38,8 @@ int main(int argc, char **argv) {
  }
  fprintf(stderr, "Choosing aperture...\n");
 
- strncpy(fitsfilename, argv[1], FILENAME_LENGTH - 1);
+ //strncpy(fitsfilename, argv[1], FILENAME_LENGTH - 1);
+ safely_encode_user_input_string(fitsfilename, argv[1], FILENAME_LENGTH - 1);
  fitsfilename[FILENAME_LENGTH - 1]= '\0';
 
  replace_file_with_symlink_if_filename_contains_white_spaces(fitsfilename);

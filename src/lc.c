@@ -541,7 +541,8 @@ int main(int argc, char **argv) {
   exit(1);
  }
  for( n= optind; n < argc; ++n ) {
-  strcpy(lightcurvefilename, argv[n]);
+  //strcpy(lightcurvefilename, argv[n]);
+  safely_encode_user_input_string(lightcurvefilename, argv[n], FILENAME_LENGTH - 1);
  }
 
  fprintf(stderr, "Opening \E[34;47m %s \E[33;00m ...  ", lightcurvefilename);
