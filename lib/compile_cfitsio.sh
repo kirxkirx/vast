@@ -77,8 +77,29 @@ if [ $COMPILATION_ERROR -eq 0 ];then
  $C_COMPILER -o ../../util/fitscopy fitscopy.c libcfitsio.a -lm
 fi
 
+# Compile funpack.c
 if [ $COMPILATION_ERROR -eq 0 ];then
- cp -f fitscopy $VAST_DIR/util
+ $C_COMPILER -c -o fpackutil.o fpackutil.c
+ if [ $? -ne 0 ];then
+  echo "ERROR compiling fpackutil.o" 1>&2
+  COMPILATION_ERROR=1
+ fi
+ $C_COMPILER -c -o funpack.o funpack.c
+ if [ $? -ne 0 ];then
+  echo "ERROR compiling funpack.o" 1>&2
+  COMPILATION_ERROR=1
+ fi
+ $C_COMPILER -o ../../util/funpack funpack.o fpackutil.o libcfitsio.a -lm
+ if [ $? -ne 0 ];then
+  echo "ERROR compiling funpack" 1>&2
+  COMPILATION_ERROR=1
+ fi
+fi
+
+
+if [ $COMPILATION_ERROR -eq 0 ];then
+ #cp -f fitscopy $VAST_DIR/util
+ #cp -f funpack $VAST_DIR/util
  cp -f libcfitsio.a $TARGET_DIR/libcfitsio.a
  #cp -f fitsio.h longnam.h $VAST_DIR/src
  # we want 'splint' tool to ignore fitsio.h
@@ -124,10 +145,14 @@ if [ $COMPILATION_ERROR -eq 0 ];then
  fi
 fi
 
+
+
+
+
 # Test if executable files were actually created?
 if [ $COMPILATION_ERROR -eq 0 ];then
 echo -n "Checking library files:   "
- for TEST_FILE in $TARGET_DIR/libcfitsio.a $TARGET_DIR/fitsverify util/listhead util/modhead util/fitscopy ;do
+ for TEST_FILE in $TARGET_DIR/libcfitsio.a $TARGET_DIR/fitsverify util/listhead util/modhead util/fitscopy util/funpack ;do
   echo -n "$TEST_FILE - "
   if [ ! -f $TEST_FILE ];then
    COMPILATION_ERROR=1

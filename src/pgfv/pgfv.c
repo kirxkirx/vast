@@ -1342,6 +1342,11 @@ int main(int argc, char **argv) {
  }
  if( match_mode == 3 ) {
   fprintf(stderr, "Entering single image reduction mode.\nProcessing image %s\n", fits_image_name);
+  // We want to have this check early in order not to distract user with the following messages if the file is unreadable
+  if( 0 != fitsfile_read_check(fits_image_name) ) {
+   fprintf(stderr, "\nERROR: the input file %s does not appear to be a readable FITS image!\n", fits_image_name);
+   return 1;
+  }
   fprintf(stderr, "Use '+' or '-' to increase or decrease aperture size.\n");
   fprintf(stderr, "\E[34;47mTo calibrate magnitude scale press '2'\E[33;00m (manual calibration) or \E[34;47m'4'\E[33;00m (automatic calibration)\n");
 

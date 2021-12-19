@@ -55,6 +55,66 @@ static inline int safely_encode_user_input_string(char *output_filename, char *i
  return 0;
 }
 
+static int check_if_the_input_is_FPack_compressed_FITS(char *fitsfilename) {
+ int status= 0;  //for cfitsio routines
+ fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h
+ int hdutype;      // 0 = primary array, 1 = ASCII table, 2 = binary table 
+ char keystring[FLEN_CARD];
+ char keycomment[FLEN_CARD];
+ int number_of_hdus;
+ // Check if the file exist at all
+ FILE *testfile;
+ testfile=fopen(fitsfilename, "r");
+ if( testfile== NULL ){
+  //fprintf(stderr, "ERROR opening file %s\n", fitsfilename);
+  return 1;
+ }
+ fclose(testfile);
+ //
+ // check if this is a readable FITS file (of any kind: image, table)
+ fits_open_file(&fptr, fitsfilename, READONLY, &status);
+ if( 0 != status ) {
+  fits_report_error(stderr, status);
+  fits_clear_errmsg(); // clear the CFITSIO error message stack
+  return status;
+ }
+ //fprintf(stderr,"DEBUG01\n");
+ fits_get_num_hdus(fptr, &number_of_hdus, &status);
+ if( number_of_hdus==1 ) {
+  fits_close_file(fptr, &status);
+  return 1;
+ }
+ // LCO images have HDU 2 as the compressed FITS image
+ fits_movabs_hdu(fptr, 2, &hdutype, &status);
+ fits_read_key(fptr, TSTRING, "XTENSION", keystring, keycomment, &status);
+ if( 0 != status ) {
+  fits_report_error(stderr, status);
+  fits_clear_errmsg(); // clear the CFITSIO error message stack
+  fits_close_file(fptr, &status);
+  return 1;
+ }
+ //fprintf(stderr,"DEBUG02\n");
+ if( 0 != strncmp(keystring, "BINTABLE", 8) ) {
+  fits_close_file(fptr, &status);
+  return 1;
+ }
+ //fprintf(stderr,"DEBUG03\n");
+ fits_read_key(fptr, TSTRING, "TTYPE1", keystring, keycomment, &status);
+ if( 0 != status ) {
+  fits_report_error(stderr, status);
+  fits_clear_errmsg(); // clear the CFITSIO error message stack
+  fits_close_file(fptr, &status);
+  return 1;
+ }
+ //fprintf(stderr,"DEBUG04\n");
+ if( 0 != strncmp(keystring, "COMPRESSED_DATA", 15) ) {
+  fits_close_file(fptr, &status);
+  return 1;
+ } 
+ fits_close_file(fptr, &status);
+ return 0;
+}
+
 static void check_if_the_input_is_MaxIM_compressed_FITS(char *fitsfilename) {
  FILE *f;
  unsigned char *buffer; // buffer for a part of the header
@@ -164,6 +224,12 @@ static inline int fitsfile_read_check(char *fitsfilename) {
   return 1;
  }
  fits_close_file(fptr, &status);
+ //
+ if( 0 == check_if_the_input_is_FPack_compressed_FITS( fitsfilename ) ) {
+  fprintf(stderr, "ERROR in fitsfile_read_check(): the input file is a compressed FITS image.\nPlease uncompressed the FITS image with 'util/funpack' before processing with VaST.\n");
+  return 1;
+ }
+ //
  return 0;
 }
 
@@ -222,6 +288,12 @@ static inline int fitsfile_read_check_silent(char *fitsfilename) {
   return 1;
  }
  fits_close_file(fptr, &status);
+ //
+ if( 0 == check_if_the_input_is_FPack_compressed_FITS( fitsfilename ) ) {
+  fprintf(stderr, "ERROR in fitsfile_read_check(): the input file is a compressed FITS image.\nPlease uncompressed the FITS image with 'util/funpack' before processing with VaST.\n");
+  return 1;
+ }
+ //
  return 0;
 }
 
