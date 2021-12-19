@@ -423,6 +423,7 @@ int main(int argc, char **argv) {
  float *Y= NULL;
  float *APER= NULL;
  char **filename;
+ char unsanitized_filename[FILENAME_LENGTH];
  int Nobs= 0;
  int i, j;
  float minJD, maxJD, minmag, maxmag;
@@ -656,13 +657,15 @@ int main(int argc, char **argv) {
  Nobs= 0; // reset it here just in case
  dmag= dmerr= dx= dy= dap= 0.0;
  JD[Nobs]= 0.0; // initialize
- while( -1 < read_lightcurve_point(lightcurvefile, &JD[Nobs], &dmag, &dmerr, &dx, &dy, &dap, filename[Nobs], NULL) ) {
+ //while( -1 < read_lightcurve_point(lightcurvefile, &JD[Nobs], &dmag, &dmerr, &dx, &dy, &dap, filename[Nobs], NULL) ) {
+ while( -1 < read_lightcurve_point(lightcurvefile, &JD[Nobs], &dmag, &dmerr, &dx, &dy, &dap, unsanitized_filename, NULL) ) {
   if( JD[Nobs] != 0.0 ) {
    mag[Nobs]= (float)dmag;
    mag_err[Nobs]= (float)dmerr;
    X[Nobs]= (float)dx;
    Y[Nobs]= (float)dy;
    APER[Nobs]= (float)dap;
+   safely_encode_user_input_string(filename[Nobs], unsanitized_filename, FILENAME_LENGTH );
    Nobs++;
    JD[Nobs]= 0.0; // initialize the next one
   }
