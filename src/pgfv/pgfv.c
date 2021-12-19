@@ -2038,7 +2038,7 @@ int main(int argc, char **argv) {
    // Switch to AUTOMATIC magnitude calibration mode 
    if( curC == '4' && match_mode == 3 && magnitude_calibration_already_performed_flag == 0 ) {
     fprintf(stderr, "Entering AUTOMATIC megnitude calibration mode!\n");
-    fprintf(stderr, "\E[01;31mPlease enter the filter name (one of BVriRI):\E[33;00m\n");
+    fprintf(stderr, "\E[01;31mPlease enter the filter name (one of BVRIgri):\E[33;00m\n");
     while( -1<fscanf(stdin, "%s", filter_name_for_automatic_magnitude_calibration) ) {
      // we don't expect the filter name to be long
      if( strlen(filter_name_for_automatic_magnitude_calibration)>2 ){

@@ -89,6 +89,8 @@
 	* VaST scripts now write to '>&2' instead of '/dev/stderr' so they should be able to run fine under 'su'.
 	* Fixed the bug with the internal copy of SExtractor not compiling on Ubuntu 20.10 
 	(new GCC supplied with Ubuntu requires '-fno-common' flag to compile SExtractor).
+	* VaST will warn a user if the input is a compressed FITS image. The compressed images
+	should be unpacked with 'util/funpack' before processing.
 20 Oct 2020: vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911
