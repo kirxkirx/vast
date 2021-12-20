@@ -4112,6 +4112,21 @@ $GREP_RESULT"
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD_IMSTAT01"
  fi
+ util/imstat_vast '../sample space/f_72-001r.fit' | grep --quiet 'MEDIAN=   919.0'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD_IMSTAT02"
+ fi
+ util/imstat_vast_fast '../sample space/f_72-001r.fit' | grep --quiet 'MEDIAN'
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD_IMSTAT03"
+ fi
+ util/imstat_vast_fast '../sample space/f_72-001r.fit' | grep --quiet 'MEAN=   924.'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD_IMSTAT04"
+ fi
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -11730,6 +11745,29 @@ if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
 07:01:41.33 +00:06:32.7
 06:49:07.80 +01:00:22.0
 07:07:43.22 +00:02:18.7" > ../exclusion_list.txt
+ #################################################################
+ # We need a special astorb.dat for Pallas
+ if [ -f astorb.dat ];then
+  mv astorb.dat astorb.dat_backup
+ fi
+ if [ ! -f astorb_pallas.dat ];then
+  wget -c http://scan.sai.msu.ru/~kirx/pub/astorb_pallas.dat.gz 1>&2
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_error_downloading_custom_astorb_pallas.dat"
+  fi
+  gunzip astorb_pallas.dat.gz
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_error_unpacking_custom_astorb_pallas.dat"
+  fi
+ fi
+ cp astorb_pallas.dat astorb.dat
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_error_copying_astorb_pallas.dat_to_astorb.dat"
+ fi
+ #################################################################
  # Run the search
  REFERENCE_IMAGES=../NMW_Vul2_magnitude_calibration_exit_code_test/ref/ util/transients/transient_factory_test31.sh ../NMW_Vul2_magnitude_calibration_exit_code_test/2nd_epoch/
  if [ $? -ne 0 ];then
@@ -11789,10 +11827,17 @@ if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_NO_INDEXHTML"
  fi
  #
+ if [ -f astorb.dat_backup ];then
+  mv astorb.dat_backup astorb.dat
+ else
+  # remove the custom astorb.dat
+  rm -f astorb.dat
+ fi
+ #
  test_if_test31_tmp_files_are_present
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_TMP_FILE_PRESENT"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_RERUN_TMP_FILE_PRESENT"
  fi
  rm -f ../exclusion_list.txt
  ###### restore exclusion list after the test if needed

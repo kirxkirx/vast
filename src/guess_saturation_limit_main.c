@@ -13,6 +13,9 @@
 
 #include "replace_file_with_symlink_if_filename_contains_white_spaces.h"
 
+#include "fitsfile_read_check.h"
+
+
 int main(int argc, char **argv) {
 
  char fitsfilename[FILENAME_LENGTH];
@@ -29,11 +32,18 @@ int main(int argc, char **argv) {
   fprintf(stderr, "Usage: %s image.fits\n", argv[0]);
   return 1;
  }
- strncpy(fitsfilename, argv[1], FILENAME_LENGTH - 1);
+ //strncpy(fitsfilename, argv[1], FILENAME_LENGTH - 1);
+ safely_encode_user_input_string(fitsfilename, argv[1], FILENAME_LENGTH);
  fitsfilename[FILENAME_LENGTH - 1]= '\0';
 
  replace_file_with_symlink_if_filename_contains_white_spaces(fitsfilename);
  cutout_green_channel_out_of_RGB_DSLR_image(fitsfilename);
+
+ if( 0 != fitsfile_read_check(fitsfilename) ) {
+  fprintf(stderr, "ERROR reading FITS file %s\n", fitsfilename);
+  return 1;
+ }
+
 
  // Reset
  gain_sextractor_cl_parameter_string[0]= flag_image_sextractor_cl_parameter_string[0]= flag_image_filename[0]= '\0';
