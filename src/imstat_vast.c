@@ -126,7 +126,14 @@ int main(int argc, char **argv) {
  } else {
   fprintf(stderr, "Running: %s %s\n", argv[0], argv[1]);
  }
- strncpy(fitsfilename, argv[1], FILENAME_LENGTH - 1);
+ 
+ if( 0 != any_unusual_characters_in_string(argv[1]) ) {
+  fprintf(stderr, "ERROR: unexpected characters in the input file name\n");
+  return 1;
+ }
+ 
+ //strncpy(fitsfilename, argv[1], FILENAME_LENGTH - 1);
+ safely_encode_user_input_string(fitsfilename, argv[1], FILENAME_LENGTH - 1);
  fitsfilename[FILENAME_LENGTH - 1]= '\0';
 
  fprintf(stderr, "Computing image statistics for the file %s\n", fitsfilename);

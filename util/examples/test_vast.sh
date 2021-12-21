@@ -13371,6 +13371,44 @@ else
  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND_TEST_NOT_PERFORMED"
 fi
 
+### Test imstat code
+if [ -d ../individual_images_test ];then
+ TEST_PASSED=1
+ # Run the test
+ echo "Test imstat code " 1>&2
+ echo -n "Test imstat code: " >> vast_test_report.txt 
+
+ ### Specific test to make sure lib/try_to_guess_image_fov does not crash
+ for IMAGE in ../individual_images_test/* ;do
+  util/imstat_vast $IMAGE
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   IMAGE=`basename $IMAGE`
+   FAILED_TEST_CODES="$FAILED_TEST_CODES IMSTAT01_$IMAGE"
+  fi
+  util/imstat_vast_fast $IMAGE
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   IMAGE=`basename $IMAGE`
+   FAILED_TEST_CODES="$FAILED_TEST_CODES IMSTAT02_$IMAGE"
+  fi
+ done
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mimstat code test \033[01;32mPASSED\033[00m" 1>&2
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mimstat code test \033[01;31mFAILED\033[00m" 1>&2
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES IMSTAT_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+
 
 
 ### Test the field-of-view guess code
