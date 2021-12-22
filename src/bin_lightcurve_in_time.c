@@ -13,7 +13,7 @@
 int main(int argc, char **argv) {
 
  //unsigned int i,j,bin_counter,points_in_bin_counter,points_in_next_bin; // counters
- unsigned int i,bin_counter,points_in_bin_counter; // counters
+ unsigned int i,bin_counter,points_in_bin_counter,number_of_measurements; // counters
 
 
  // JD is the array with dates
@@ -41,8 +41,6 @@ int main(int argc, char **argv) {
 
  char fake_str[FILENAME_LENGTH + 32];
 
- int number_of_measurements;
-
  char outfilename[256];
  FILE *outfile;
 
@@ -61,7 +59,7 @@ int main(int argc, char **argv) {
 
  // Parse the command line arguments
  if( argc >= 3 ) {
-  number_of_measurements= count_points_in_lightcurve_file(argv[1]);
+  number_of_measurements= (unsigned int)count_points_in_lightcurve_file(argv[1]);
   if( number_of_measurements < 2 ) {
    fprintf(stderr, "ERROR: something is wrong with the input lightcurve file %s - number_of_measurements = %d < 2 \n", argv[1], number_of_measurements);
    return 1;

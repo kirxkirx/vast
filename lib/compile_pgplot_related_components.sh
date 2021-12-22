@@ -197,7 +197,7 @@ done
 "$CC" `cat optflags_for_scripts.tmp` -o lc setenv_local_pgplot.o lc.o variability_indexes.o get_path_to_vast.o wpolyfit.o -lm $CFITSIO_LIB $GSL_LIB $PGPLOT_LIBS  -Wall
 # Older GCC versions complain about isnormal() unless -std=c99 is given explicitly
 "$CC" `cat optflags_for_scripts.tmp` `lib/check_builtin_functions.sh` -c src/find_candidates.c -std=c99 -D_POSIX_C_SOURCE=199309L -I$GSL_INCLUDE
-"$CC" `cat optflags_for_scripts.tmp` -o find_candidates setenv_local_pgplot.o find_candidates.o $PGPLOT_LIBS -lm
+"$CC" `cat optflags_for_scripts.tmp` -o find_candidates setenv_local_pgplot.o find_candidates.o $PGPLOT_LIBS $CFITSIO_LIB -lm
 "$CC" `cat optflags_for_scripts.tmp` -c -o photocurve.o src/photocurve.c -I$GSL_INCLUDE -Wall
 "$CC" `cat optflags_for_scripts.tmp` -c src/pgfv/pgfv.c -I$GSL_INCLUDE
 "$CC" `cat optflags_for_scripts.tmp` -o pgfv pgfv.o setenv_local_pgplot.o photocurve.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o $CFITSIO_LIB -lm $GSL_LIB -I$GSL_INCLUDE $PGPLOT_LIBS
