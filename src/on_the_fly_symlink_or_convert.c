@@ -3,6 +3,9 @@
 
 #include "vast_limits.h"
 #include "get_path_to_vast.h"
+
+#include "fitsfile_read_check.h"
+
 #include <unistd.h> // for chdir
 
 #include "replace_file_with_symlink_if_filename_contains_white_spaces.h"
@@ -22,7 +25,8 @@ int main(int argc, char **argv) {
   return 1;
  }
 
- strncpy(fitsfilename, argv[1], FILENAME_LENGTH - 1);
+ //strncpy(fitsfilename, argv[1], FILENAME_LENGTH - 1);
+ safely_encode_user_input_string(fitsfilename, argv[1], FILENAME_LENGTH - 1);
  fitsfilename[FILENAME_LENGTH - 1]= '\0';
 
  replace_file_with_symlink_if_filename_contains_white_spaces(fitsfilename);

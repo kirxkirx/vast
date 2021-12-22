@@ -121,7 +121,7 @@ void cutout_green_channel_out_of_RGB_DSLR_image(char *filename) {
  int naxis;
  int status= 0;
  fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h
- 
+
  if( 0 != fitsfile_read_check_silent(filename) ) {
   return; // the input is not a readable FITS file, so we just quit
  }

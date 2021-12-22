@@ -80,7 +80,7 @@ int compute_image_stratistics(char *fitsfilename, int no_sorting_fast_computatio
    return 1;
   }
   if( naxes[2] != 1 && naxes[2] != 3 ) {
-   fprintf(stderr, "ERROR in compute_images_stratistics(): NAXES3 = %d.  Only 2-D images are supported. (1)\n", naxes[3]);
+   fprintf(stderr, "ERROR in compute_images_stratistics(): NAXES3 = %ld.  Only 2-D images are supported. (1)\n", naxes[3]);
    fits_close_file(fptr, &status);
    return 1;
   }
