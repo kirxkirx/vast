@@ -49,9 +49,10 @@ int compute_image_stratistics(char *fitsfilename, int no_sorting_fast_computatio
  }
 
  // maxdim = 2 is for the X*Y*1 case
- fits_get_img_size(fptr, 2, naxes, &status);
+ fits_get_img_size(fptr, 3, naxes, &status);
 
- if( status || naxis != 2 ) {
+ //if( status || naxis != 2 ) {
+ if( status != 0 ) {
   fprintf(stderr, "ERROR in compute_images_stratistics() while trying to fits_get_img_size()\n");
   fits_report_error(stderr, status); // print any error message         
   fits_clear_errmsg();               // clear the CFITSIO error message stack
@@ -61,13 +62,30 @@ int compute_image_stratistics(char *fitsfilename, int no_sorting_fast_computatio
  }
  
  if( naxes[0] < 1 || naxes[1] < 1 ) {
-  fprintf(stderr, "ERROR in compute_images_stratistics() the image dimensions are clearly wrong!\n");
+  fprintf(stderr, "ERROR in compute_images_stratistics() the image dimensions are clearly wrong in axis 1 or 2!\n");
   fits_report_error(stderr, status); // print any error message         
   fits_clear_errmsg();               // clear the CFITSIO error message stack
   fits_close_file(fptr, &status);
   status= 0;
   return 1;
  }
+
+ if( naxis == 3 ) {
+  if( naxes[2] < 1 ) {
+   fprintf(stderr, "ERROR in compute_images_stratistics() the image dimensions are clearly wrong in axis 3!\n");
+   fits_report_error(stderr, status); // print any error message         
+   fits_clear_errmsg();               // clear the CFITSIO error message stack
+   fits_close_file(fptr, &status);
+   status= 0;
+   return 1;
+  }
+  if( naxes[2] != 1 && naxes[2] != 3 ) {
+   fprintf(stderr, "ERROR in compute_images_stratistics(): NAXES3 = %d.  Only 2-D images are supported. (1)\n", naxes[3]);
+   fits_close_file(fptr, &status);
+   return 1;
+  }
+ }
+
  
  totpix= naxes[0] * naxes[1];
  pix= (double *)malloc(totpix * sizeof(double)); // memory for the input image
