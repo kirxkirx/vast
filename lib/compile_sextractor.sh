@@ -23,6 +23,30 @@ TARGET_DIR=$VAST_DIR/lib
 #LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2_fix_disable_model_fitting"
 LIBRARY_SOURCES="$VAST_DIR/src/sextractor-2.25.2_fix_disable_model_fitting $VAST_DIR/src/sextractor-2.19.5"
 
+function explicitly_set_build_type {
+ command -v uname &>/dev/null
+ if [ $? -ne 0 ];then
+  echo ""
+  return
+ fi
+ OS_TYPE=`uname`
+ if [ "$OS_TYPE" != "Linux" ];then
+  echo ""
+  return
+ fi
+ command -v arch &>/dev/null
+ if [ $? -ne 0 ];then
+  echo ""
+  return
+ fi
+ ARCH_TYPE=`arch`
+ if [ "$ARCH_TYPE" != "aarch64" ];then
+  echo ""
+  return
+ fi
+ echo "--build=aarch64-unknown-linux-gnu"
+}
+
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
   REALPATH=`readlink -f "$1" 2>/dev/null`
@@ -131,7 +155,7 @@ for LIBRARY_SOURCE in $LIBRARY_SOURCES ;do
   
   # --disable-model-fitting configure option turns-off model-fitting
   # features and allows compiling SExtractor without the ATLAS and FFTW libraries.
-  ./configure --disable-model-fitting --prefix=$TARGET_DIR CFLAGS="$CFLAGS"
+  ./configure --disable-model-fitting --prefix=$TARGET_DIR `explicitly_set_build_type` CFLAGS="$CFLAGS"
   if [ $? -eq 0 ];then
    CONFIGURE_OK=1
    echo "Configure phase went well"
