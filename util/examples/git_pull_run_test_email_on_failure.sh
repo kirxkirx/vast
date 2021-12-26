@@ -95,23 +95,30 @@ fi
 
 
 # update VaST
-LANG=C git remote update
+LANG=C git remote update &>/dev/null
 if [ $? -ne 0 ];then
  echo "ERROR: cannot run 'git remote update'"
  exit 1
 fi
 
+# Does not work with old git that will not say 'Your branch is up to date with'
 LANG=C git status -uno 2>&1 | grep --quiet 'Your branch is up to date with'
 if [ $? -ne 0 ];then
 # echo "We are up to date - no updates needed"
  exit 0
 fi
 
-LANG=C git pull 2>&1 | grep --quiet 'Already up to date.'
-if [ $? -eq 0 ];then
- echo "ERROR: 'git pull' reports 'Already up to date.'"
- exit 1
+LANG=C git pull 2>&1 | grep --quiet 'Updating'
+if [ $? -ne 0 ];then
+# echo "ERROR: 'git pull' reports 'Already up to date.'"
+ exit 0
 fi
+
+#LANG=C git pull 2>&1 | grep --quiet 'Already up to date.'
+#if [ $? -eq 0 ];then
+# echo "ERROR: 'git pull' reports 'Already up to date.'"
+# exit 1
+#fi
 
 # compile VaST
 make &> make.log
