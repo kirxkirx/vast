@@ -19,6 +19,30 @@ export LANGUAGE LC_ALL
 
 ##### Auxiliary functions #####
 
+function email_vast_test_report {
+ HOST=`hostname`
+ HOST="@$HOST"
+ NAME="$USER$HOST"
+# DATETIME=`LANG=C date --utc`
+# bsd dae doesn't know '--utc', but accepts '-u'
+ DATETIME=`LANG=C date -u`
+ SCRIPTNAME=`basename $0`
+ LOG=`cat vast_test_report.txt`
+ MSG="The script $0 has finished on $DATETIME at $PWD $LOG $DEBUG_OUTPUT"
+echo "
+$MSG
+#########################################################
+$DEBUG_OUTPUT
+
+" > vast_test_email_message.log
+ curl --silent 'http://scan.sai.msu.ru/vast/vasttestreport.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode message@vast_test_email_message.log --data-urlencode 'submit=submit'
+ if [ $? -eq 0 ];then
+  echo "The test report was sent successfully"
+ else
+  echo "There was a problem sending the test report"
+ fi
+}
+
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
   REALPATH=`readlink -f "$1" 2>/dev/null`
@@ -17280,29 +17304,34 @@ else
  fi
 fi
 
-if [ "$MAIL_TEST_REPORT_TO_KIRX" = "YES" ];then
- HOST=`hostname`
- HOST="@$HOST"
- NAME="$USER$HOST"
-# DATETIME=`LANG=C date --utc`
-# bsd dae doesn't know '--utc', but accepts '-u'
- DATETIME=`LANG=C date -u`
- SCRIPTNAME=`basename $0`
- LOG=`cat vast_test_report.txt`
- MSG="The script $0 has finished on $DATETIME at $PWD $LOG $DEBUG_OUTPUT"
-echo "
-$MSG
-#########################################################
-$DEBUG_OUTPUT
+# see below
+if [ -f ../THIS_IS_HPCC__email_only_on_failure ];then
+ MAIL_TEST_REPORT_TO_KIRX="NO"
+fi
 
-" > vast_test_email_message.log
-# curl --silent 'http://scan.sai.msu.ru/vast/vasttestreport.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode "message=$MSG" --data-urlencode 'submit=submit'
- curl --silent 'http://scan.sai.msu.ru/vast/vasttestreport.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode message@vast_test_email_message.log --data-urlencode 'submit=submit'
- if [ $? -eq 0 ];then
-  echo "The test report was sent successfully"
- else
-  echo "There was a problem sending the test report"
- fi
+if [ "$MAIL_TEST_REPORT_TO_KIRX" = "YES" ];then
+ email_vast_test_report
+# HOST=`hostname`
+# HOST="@$HOST"
+# NAME="$USER$HOST"
+## DATETIME=`LANG=C date --utc`
+## bsd dae doesn't know '--utc', but accepts '-u'
+# DATETIME=`LANG=C date -u`
+# SCRIPTNAME=`basename $0`
+# LOG=`cat vast_test_report.txt`
+# MSG="The script $0 has finished on $DATETIME at $PWD $LOG $DEBUG_OUTPUT"
+#echo "
+#$MSG
+##########################################################
+#$DEBUG_OUTPUT
+#
+#" > vast_test_email_message.log
+# curl --silent 'http://scan.sai.msu.ru/vast/vasttestreport.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode message@vast_test_email_message.log --data-urlencode 'submit=submit'
+# if [ $? -eq 0 ];then
+#  echo "The test report was sent successfully"
+# else
+#  echo "There was a problem sending the test report"
+# fi
 fi
 
 if [ "$FAILED_TEST_CODES" != "NONE" ];then
@@ -17328,6 +17357,11 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  #
  if [ ! -z "$FAILED_TEST_CODES" ];then
   echo "Exit code 1"
+  #
+  if [ -f ../THIS_IS_HPCC__email_only_on_failure ];then
+   email_vast_test_report
+  fi
+  #
   exit 1
  fi
 fi

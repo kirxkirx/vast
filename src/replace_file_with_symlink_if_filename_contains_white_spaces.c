@@ -39,7 +39,7 @@ void replace_file_with_symlink_if_filename_contains_white_spaces(char *filename)
  // Check that the input file is not a symlink itself
  if( 0 == lstat(filename, &sb) ) {
   if( S_ISLNK(sb.st_mode) ) {
-   fprintf(stderr, "ERROR in replace_file_with_symlink_if_filename_contains_white_spaces() the input file %s is already a symlink and we do not allow symlinks on symlinks\n", filename);
+   fprintf(stderr, "WARNING from replace_file_with_symlink_if_filename_contains_white_spaces() the input file %s is already a symlink and we do not allow symlinks on symlinks\n", filename);
    return;
   }
  } 
