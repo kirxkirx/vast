@@ -95,13 +95,13 @@ fi
 
 
 # update VaST
-git remote update
+LANG=C git remote update
 if [ $? -ne 0 ];then
  echo "ERROR: cannot run 'git remote update'"
  exit 1
 fi
 
-git status -uno 2>&1 | grep --quiet 'Your branch is up to date with'
+LANG=C git status -uno 2>&1 | grep --quiet 'Your branch is up to date with'
 if [ $? -ne 0 ];then
 # echo "We are up to date - no updates needed"
  exit 0
