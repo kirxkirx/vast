@@ -146,7 +146,7 @@ fi
 
 # if we are still here - run the VaST test
 touch ../THIS_IS_HPCC__email_only_on_failure
-util/examples/test_vast.sh
+util/examples/test_vast.sh &>/dev/null
 rm -f ../THIS_IS_HPCC__email_only_on_failure
 # it will take care of reporting results on failure
 
