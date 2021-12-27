@@ -16809,7 +16809,7 @@ fi
 echo "Performing auxiliary web services test " 1>&2
 echo -n "Performing auxiliary web services test: " >> vast_test_report.txt 
 
-# OMC2ASCII converter
+# OMC2ASCII converter test 1
 if [ ! -f ../vast_test_lightcurves/IOMC_4011000047.fits ];then
  cd ../vast_test_lightcurves
  wget -c "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/IOMC_4011000047.fits.bz2" && bunzip2 IOMC_4011000047.fits.bz2
@@ -16828,6 +16828,43 @@ else
  if [ $NLINES_IN_OUTPUT_ASCII_FILE -ne 2110 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII_003"
+ fi
+fi
+
+# OMC2ASCII converter test 2
+if [ ! -f ../vast_test_lightcurves/IOMC_2677000065.fits ];then
+ cd ../vast_test_lightcurves
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/IOMC_2677000065.fits.bz2" && bunzip2 IOMC_2677000065.fits.bz2
+ cd $WORKDIR
+fi
+RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/IOMC_2677000065.fits" 'http://scan.sai.msu.ru/cgi-bin/omc_converter/process_omc.py' | grep 'Refresh' | awk -F 'url=' '{print $2}' | sed 's:"::g' | awk -F '>' '{print $1}'`
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_001"
+fi
+if [ -z "$RESULTSURL" ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_002"
+else
+ curl --silent "$RESULTSURL"IOMC_2677000065.txt > IOMC_2677000065.txt
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_cannot_download_txt_lc"
+ else
+  NLINES_IN_OUTPUT_ASCII_FILE=`cat IOMC_2677000065.txt | wc -l | awk '{print $1}'`
+  if [ $NLINES_IN_OUTPUT_ASCII_FILE -ne 6274 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_003"
+  else
+   lib/lk_compute_periodogram IOMC_2677000065.txt 100 1.0 0.1 | grep --quiet '0.308703'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_LK_local_period_search_failed"
+   fi
+  fi
+ fi
+ if [ -f IOMC_2677000065.txt ];then
+  rm -f IOMC_2677000065.txt
  fi
 fi
 
