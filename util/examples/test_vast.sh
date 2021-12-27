@@ -16815,7 +16815,6 @@ if [ ! -f ../vast_test_lightcurves/IOMC_4011000047.fits ];then
  wget -c "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/IOMC_4011000047.fits.bz2" && bunzip2 IOMC_4011000047.fits.bz2
  cd $WORKDIR
 fi
-#RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/IOMC_4011000047.fits" 'http://scan.sai.msu.ru/cgi-bin/omc_converter/process_omc.py' | grep 'Refresh' | awk '{print $2}' FS='url=' | sed 's:"::g' | awk '{print $1}' FS='>'`
 RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/IOMC_4011000047.fits" 'http://scan.sai.msu.ru/cgi-bin/omc_converter/process_omc.py' | grep 'Refresh' | awk -F 'url=' '{print $2}' | sed 's:"::g' | awk -F '>' '{print $1}'`
 if [ $? -ne 0 ];then
  TEST_PASSED=0
@@ -16838,7 +16837,6 @@ if [ ! -f ../vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits ];then
  wget -c "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits.bz2" && bunzip2 1SWASP_J013623.20+480028.4.fits.bz2
  cd $WORKDIR
 fi
-#RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits" 'http://scan.sai.msu.ru/cgi-bin/swasp_converter/process_swasp.py' | grep 'Refresh' | awk '{print $2}' FS='url=' | sed 's:"::g' | awk '{print $1}' FS='>'`
 RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits" 'http://scan.sai.msu.ru/cgi-bin/swasp_converter/process_swasp.py' | grep 'Refresh' | awk -F 'url=' '{print $2}' | sed 's:"::g' | awk -F '>' '{print $1}'`
 if [ $? -ne 0 ];then
  TEST_PASSED=0
