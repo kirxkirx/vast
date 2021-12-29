@@ -22,13 +22,13 @@ int main(int argc, char *argv[]) {
  int status= 0;
  int anynul= 0;
  unsigned short nullval= 0;
- //unsigned short *image_array[MAX_NUMBER_OF_OBSERVATIONS];
  unsigned short **image_array;
  unsigned short *combined_array;
  double y[MAX_NUMBER_OF_OBSERVATIONS];
  double *yy;
  double val;
- double ref_index, cur_index;
+ double ref_index= 1.0; // just to make the compiler happy
+ double cur_index= 1.0; // just to make the compiler happy
  int i;
  int bitpix2;
  int file_counter;
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
 
  FILE *filedescriptor_for_opening_test;
 
- fprintf(stderr, "Median combiner v2.1\n\n");
+ fprintf(stderr, "Median combiner v2.2\n\n");
  fprintf(stderr, "Combining %d files\n", argc - 1);
  if( argc < 3 ) {
   fprintf(stderr, "Not enough arguments...\n  Usage: %s flat01.fit flat02.fit flat03.fit ...\n", argv[0]);
@@ -92,7 +92,11 @@ int main(int argc, char *argv[]) {
  }
  //
 
- image_array= malloc( sizeof(unsigned short) );
+ image_array= malloc( sizeof(unsigned short *) ); // this will be realloc'ed before use anyhow
+  if( image_array == NULL ) {
+   fprintf(stderr, "ERROR in mk: Couldn't allocate memory for image array (0)\n");
+   exit(1);
+  }
 
  // Reading the input files
  for( file_counter= 1; file_counter < argc; file_counter++ ) {
@@ -107,7 +111,7 @@ int main(int argc, char *argv[]) {
   image_array= realloc(image_array, file_counter * sizeof(unsigned short *));
   image_array[file_counter-1]= malloc(img_size * sizeof(unsigned short));
   if( image_array[file_counter-1] == NULL ) {
-   fprintf(stderr, "Error: Couldn't allocate memory for image array\n Current image: %s\n", argv[file_counter]);
+   fprintf(stderr, "ERROR in mk: Couldn't allocate memory for image array\n Current image: %s\n", argv[file_counter]);
    exit(1);
   }
 
@@ -164,21 +168,20 @@ int main(int argc, char *argv[]) {
   // (but how do we know it's a flat stack?)
   // assume if the value is below 5000 counts it's a dark/bias staks and not flat
   if( 5000 < cur_index && cur_index < 20000 ) {
-   fprintf(stderr, "REJECT (too faint for a flat field)\n", cur_index);
+   fprintf(stderr, "REJECT (too faint for a flat field)\n");
    continue; // continue here so good_file_counter does not increase
   }
   if( cur_index > 50000 ) {
-   fprintf(stderr, "REJECT (too bright)\n", cur_index);
+   fprintf(stderr, "REJECT (too bright)\n");
    continue; // continue here so good_file_counter does not increase
   }
 
   if( good_file_counter == 0 ) {
-   ref_index=cur_index;
+   ref_index= cur_index;
    fprintf(stderr, "ref_index=%lf\n", ref_index);
   }
 
   for( ii= 0; ii < img_size; ii++ ) {
-   //image_array[file_counter][ii]= image_array[file_counter][ii] * ref_index / cur_index;
    image_array[good_file_counter][ii]= image_array[file_counter-1][ii] * ref_index / cur_index;
   }
   good_file_counter++;

@@ -93,6 +93,7 @@
 	should be unpacked with 'util/funpack' before processing.
 	* Added the new VaST test script 'util/examples/git_pull_run_test_email_on_failure.sh' that can be run 
 	from a cron job and e-mail test report on failure. 
+	* Added CFITSIO example program 'util/imarith' allowing simple arithmetic operations on images (used in test script).
 20 Oct 2020: vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911

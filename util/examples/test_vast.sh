@@ -1611,7 +1611,6 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
  cd ..
- #wget -c "ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  wget -c "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  cd $WORKDIR
 fi
@@ -2105,6 +2104,82 @@ $GREP_RESULT"
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_ALL"
  fi
+
+ # median stacker test
+ for TEST_FILE_TO_REMOVE in nul.fit one.fit two.fit median.fit ];then
+  if [ -f "$TEST_FILE_TO_REMOVE" ];then
+   rm -f "$TEST_FILE_TO_REMOVE"
+  fi
+ fi
+ util/imarith ../sample_data/f_72-001r.fit 0.000001 mul nul.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_imarith_nul"
+ fi
+ util/imarith nul.fit 1.0 add one.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_imarith_one"
+ fi
+ util/imarith nul.fit 2.0 add two.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_imarith_two"
+ fi
+ util/ccd/mk one.fit nul.fit two.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_onenultwo_01"
+ fi
+ if [ ! -f median.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_onenultwo_02"
+ else
+  util/imstat_vast median.fit | grep 'MEDIAN=     1.000'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_imstat_vast_03"
+  fi
+  rm -f median.fit
+ fi
+ util/ccd/mk two.fit one.fit nul.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_onenultwo_11"
+ fi
+ if [ ! -f median.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_onenultwo_12"
+ else
+  util/imstat_vast median.fit | grep 'MEDIAN=     2.000'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_imstat_vast_13"
+  fi
+  rm -f median.fit
+ fi
+ util/ccd/mk two.fit nul.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_onenultwo_21"
+ fi
+ if [ ! -f median.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_onenultwo_22"
+ else
+  util/imstat_vast median.fit | grep 'MEDIAN=     1.000'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_imstat_vast_23"
+  fi
+  rm -f median.fit
+ fi
+ for TEST_FILE_TO_REMOVE in nul.fit one.fit two.fit median.fit ];then
+  if [ -f "$TEST_FILE_TO_REMOVE" ];then
+   rm -f "$TEST_FILE_TO_REMOVE"
+  fi
+ fi
+
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then

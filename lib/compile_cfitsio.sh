@@ -44,6 +44,10 @@ if [ "$1" = "clean" ];then
   rm -f $VAST_DIR/util/modhead
  fi
  #
+ if [ -f $VAST_DIR/util/imarith ];then
+  rm -f $VAST_DIR/util/imarith
+ fi
+ #
  echo "Script $0 is done."
  echo " "
  exit
@@ -127,7 +131,6 @@ fi
 
 # Compile listhead
 if [ $COMPILATION_ERROR -eq 0 ];then
- #$C_COMPILER -o util/listhead src/listhead.c -L$TARGET_DIR -lcfitsio -lm
  $C_COMPILER -o util/listhead src/listhead.c $TARGET_DIR/libcfitsio.a -lm
  if [ $? -ne 0 ];then
   echo "ERROR compiling listhead" 1>&2
@@ -137,7 +140,6 @@ fi
 
 # Compile modhead
 if [ $COMPILATION_ERROR -eq 0 ];then
- #$C_COMPILER -o util/modhead src/modhead.c -L$TARGET_DIR -lcfitsio -lm
  $C_COMPILER -o util/modhead src/modhead.c $TARGET_DIR/libcfitsio.a -lm
  if [ $? -ne 0 ];then
   echo "ERROR compiling modhead" 1>&2
@@ -145,14 +147,20 @@ if [ $COMPILATION_ERROR -eq 0 ];then
  fi
 fi
 
-
-
+# Compile imarith
+if [ $COMPILATION_ERROR -eq 0 ];then
+ $C_COMPILER -o util/imarith src/imarith.c $TARGET_DIR/libcfitsio.a -lm
+ if [ $? -ne 0 ];then
+  echo "ERROR compiling imarith" 1>&2
+  COMPILATION_ERROR=1
+ fi
+fi
 
 
 # Test if executable files were actually created?
 if [ $COMPILATION_ERROR -eq 0 ];then
 echo -n "Checking library files:   "
- for TEST_FILE in $TARGET_DIR/libcfitsio.a $TARGET_DIR/fitsverify util/listhead util/modhead util/fitscopy util/funpack ;do
+ for TEST_FILE in $TARGET_DIR/libcfitsio.a $TARGET_DIR/fitsverify util/listhead util/modhead util/imarith util/fitscopy util/funpack ;do
   echo -n "$TEST_FILE - "
   if [ ! -f $TEST_FILE ];then
    COMPILATION_ERROR=1
