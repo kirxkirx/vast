@@ -2106,11 +2106,11 @@ $GREP_RESULT"
  fi
 
  # median stacker test
- for TEST_FILE_TO_REMOVE in nul.fit one.fit two.fit median.fit ];then
+ for TEST_FILE_TO_REMOVE in nul.fit one.fit two.fit median.fit ;do
   if [ -f "$TEST_FILE_TO_REMOVE" ];then
    rm -f "$TEST_FILE_TO_REMOVE"
   fi
- fi
+ done
  util/imarith ../sample_data/f_72-001r.fit 0.000001 mul nul.fit
  if [ $? -ne 0 ];then
   TEST_PASSED=0
@@ -2174,11 +2174,11 @@ $GREP_RESULT"
   fi
   rm -f median.fit
  fi
- for TEST_FILE_TO_REMOVE in nul.fit one.fit two.fit median.fit ];then
+ for TEST_FILE_TO_REMOVE in nul.fit one.fit two.fit median.fit ;do
   if [ -f "$TEST_FILE_TO_REMOVE" ];then
    rm -f "$TEST_FILE_TO_REMOVE"
   fi
- fi
+ done
 
 
  # Make an overall conclusion for this test
