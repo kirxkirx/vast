@@ -16977,6 +16977,14 @@ if [ -f wwwtest.png ];then
 fi
 
 
+# EpCalc
+curl --silent 'http://scan.sai.msu.ru/cgi-bin/epcalc/ecalc?HJD0=2453810.90213&Period=10.55&JD1=2453903.90213&JD2=2453930.90213' | grep --quiet '2453937.502130'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_EPCALC_001"
+fi
+
+
 ####### HTTPS
 test_https_connection
 TEST_EXIT_CODE=$?
