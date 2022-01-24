@@ -2,8 +2,11 @@
 #include <stdlib.h>
 #include <math.h>
 #include <gsl/gsl_sort.h>
+#include <gsl/gsl_statistics.h>
 
+#include "vast_limits.h" // for MIN()
 #include "lightcurve_io.h" // for read_lightcurve_point()
+
 
 /*
    Based on: http://adsabs.harvard.edu/abs/1956BAN....12..327K
@@ -64,6 +67,7 @@ int main() {
  fprintf( stderr, "Expecting number of independent pairs Z=%d\n", (int)( Z + 0.0 ) );
  
  /* Sort data */
+ /*
  size_t *order= malloc(sizeof(size_t) * n_points_lightcurve);
  gsl_sort_index(order, jd, 1, n_points_lightcurve);
 
@@ -78,8 +82,10 @@ int main() {
   m[id]= tmp_m;
  };
  free(order);
-
- mean_jd= mean_jd / n_points_lightcurve;
+ */
+ gsl_sort2(jd, 1, m, 1, n_points_lightcurve);
+ //mean_jd= mean_jd / n_points_lightcurve;
+ mean_jd= gsl_stats_mean( jd, 1, n_points_lightcurve );
  fprintf(stderr, "Mean JD = %lf\n", mean_jd);
  // mean_jd=mean_jd-10.0;
  for( i= 0; i < n_points_lightcurve; i++ ) {
@@ -131,7 +137,7 @@ int main() {
  
  fprintf( stderr, "Interpolated lightcurve (%d points):\n", n);
  for(i=0;i<n;i++){
-  fprintf( stderr,"%+8.6lf %lf\n",interp_jd[i],interp_m[i]);
+  fprintf( stderr,"%+8.6lf %lf  %3d\n",interp_jd[i],interp_m[i], i);
  }
 
  /* Find T1 (estimated minima time) */
@@ -140,29 +146,35 @@ int main() {
  // 1 to n - 1 as we have i + 1 and i - 1 array indexes
  for ( i= 1; i < n - 1; i++ ) {
   if ( interp_m[i] > mT1 ) {
+   jdT1= i;
    mT1= interp_m[i];
    T1= interp_jd[i];
    T2= interp_jd[i + 1];
    T3= interp_jd[i - 1];
-   jdT1= i;
   }
  }
- fprintf( stderr, "First guess (the faintest point in the interpolated lightcurve)!  T1 = %lf\n", T1 );
+ fprintf( stderr, "First guess (the faintest point in the interpolated lightcurve):  T1 = %lf is the point with index i=%d\n", T1, jdT1 );
 
  // is this correct?
- delta_m= malloc( (2 * n_points_lightcurve + 1) * sizeof( double ) );
- if ( delta_m == NULL ) {
-  fprintf( stderr, "ERROR: Couldn't allocate memory for delta_m(kwee-van-woerden.c)\n" );
-  return 1;
- }
+/*
  if ( n - jdT1 > jdT1 ) {
   n_delta_m= jdT1 - 1;
  } else {
   n_delta_m= n - jdT1 - 1;
  }
+*/
+ n_delta_m= MIN( jdT1, n - jdT1 );
+ //delta_m= malloc( (2 * n_points_lightcurve + 1) * sizeof( double ) );
+ delta_m= malloc( n_delta_m * sizeof( double ) );
+ if ( delta_m == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for delta_m(kwee-van-woerden.c)\n" );
+  return 1;
+ }
 
- n_delta_m--;
+ //n_delta_m--;
  fprintf(stderr, "using %d pairs\n", n_delta_m);
+ // NO, this will ruin sT3 calculation
+ //n_delta_m++; // because it is used as the index offset: for i=0  0.0= delta_m[i]= interp_m[jdT1 - i] - interp_m[jdT1 + i] 
 
  if ( n_delta_m < 1 ) {
   fprintf( stderr, "ERROR: too few pairs for minimum determination!\n");
@@ -175,6 +187,7 @@ int main() {
  }
 
  /* sT1 */
+ // for i=0 we'll have the faintest point subtracted from itself
  for( i= 0; i < n_delta_m; i++ ) {
   delta_m[i]= interp_m[jdT1 - i] - interp_m[jdT1 + i];
  }
@@ -182,8 +195,8 @@ int main() {
  for( i= 0; i < n_delta_m; i++ ) {
   sT1+= delta_m[i] * delta_m[i];
  }
- sT1= sT1 / n_delta_m;
- fprintf(stderr, "sT1 = %lf\n", sT1);
+ sT1= sT1 / (n_delta_m - 1);
+ fprintf(stderr, "sT1 = %lg\n", sT1);
 
  /* sT2 */
  jdT1+= 1;
@@ -194,8 +207,8 @@ int main() {
  for( i= 0; i < n_delta_m; i++ ) {
   sT2+= delta_m[i] * delta_m[i];
  }
- sT2= sT2 / n_delta_m;
- fprintf(stderr, "sT2 = %lf\n", sT2);
+ sT2= sT2 / (n_delta_m - 1);
+ fprintf(stderr, "sT2 = %lg\n", sT2);
 
  /* sT3 */
  jdT1-= 2;
@@ -206,8 +219,8 @@ int main() {
  for( i= 0; i < n_delta_m; i++ ) {
   sT3+= delta_m[i] * delta_m[i];
  }
- sT3= sT3 / n_delta_m;
- fprintf(stderr, "sT3 = %lf\n", sT3);
+ sT3= sT3 / (n_delta_m - 1);
+ fprintf(stderr, "sT3 = %lg\n", sT3);
 
  B= -1 * (-T2 * T2 * sT1 + T2 * T2 * sT3 + sT2 * T1 * T1 - sT2 * T3 * T3 + T3 * T3 * sT1 - sT3 * T1 * T1) / (T3 * T1 * T1 - T2 * T1 * T1 + T2 * T3 * T3 - T1 * T3 * T3 + T1 * T2 * T2 - T3 * T2 * T2);
  C= (-1 * sT3 * T2 * T1 * T1 + T2 * T2 * T1 * sT3 + T3 * T3 * T2 * sT1 - T3 * T3 * T1 * sT2 - T2 * T2 * T3 * sT1 + sT2 * T3 * T1 * T1) / (T3 * T1 * T1 - T2 * T1 * T1 + T2 * T3 * T3 - T1 * T3 * T3 + T1 * T2 * T2 - T3 * T2 * T2);
