@@ -185,7 +185,7 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=2
    # "A Modern Mean Dwarf Stellar Color and Effective Temperature Sequence"
    # http://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt
    # Eric Mamajek
-   # Version 2019.3.22
+   # Version 2021.03.02
    # 
    SECTRAL_TYPE="unrealisitic color!"
    # Wild guess
@@ -213,7 +213,8 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=2
    fi
    #TEST=`echo "$J_K > 0.16"|bc -ql`
    #TEST=`echo "$J_K > 0.132"|bc -ql`
-   TEST=`echo "$J_K>0.132" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+   #TEST=`echo "$J_K>0.132" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+   TEST=`echo "$J_K>0.1355" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="F"
    fi
@@ -225,7 +226,8 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=2
    fi
    #TEST=`echo "$J_K > 0.53"|bc -ql`
    #TEST=`echo "$J_K > 0.465"|bc -ql`
-   TEST=`echo "$J_K>0.465" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+   #TEST=`echo "$J_K>0.465" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+   TEST=`echo "$J_K>0.46450" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="K"
    fi
@@ -235,8 +237,13 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=2
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="M"
    fi
+   TEST=`echo "$J_K>1.2575" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+   if [ $TEST -eq 1 ];then
+    SECTRAL_TYPE="Very red! L if it's a dwarf"
+   fi
    #TEST=`echo "$J_K > 1.5"|bc -ql`
-   TEST=`echo "$J_K>1.5" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+   #TEST=`echo "$J_K>1.5" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+   TEST=`echo "$J_K>1.77" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="Very red!"
    fi
@@ -254,7 +261,7 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=2
   echo "Spectral type is according to the table
 'A Modern Mean Dwarf Stellar Color and Effective Temperature Sequence'
 http://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt
-Version 2019.3.22 by Eric Mamajek
+Version 2021.03.02 by Eric Mamajek
 http://adsabs.harvard.edu/abs/2013ApJS..208....9P
 
 This is the spectral type *assuming zero extinction*"
