@@ -3,6 +3,8 @@
 #include <math.h>
 #include <gsl/gsl_sort.h>
 
+#include "lightcurve_io.h" // for read_lightcurve_point()
+
 /*
    Based on: http://adsabs.harvard.edu/abs/1956BAN....12..327K
 */
@@ -37,6 +39,8 @@ int main() {
  double Z; // Z is the maximum number of independent magnitude pairs.
            // In the case of linear interpolation 0.25*N is recomended!
 
+ double merr_not_used;
+
  /* Read data */
  do {
   jd= realloc(jd, n_points_lightcurve * sizeof(double));
@@ -50,7 +54,8 @@ int main() {
    exit(1);
   };
   n_points_lightcurve++;
- } while( -1 < fscanf(stdin, "%lf %lf", &jd[n_points_lightcurve - 2], &m[n_points_lightcurve - 2]) );
+ } while( -1 < read_lightcurve_point(stdin, &jd[n_points_lightcurve - 2], &m[n_points_lightcurve - 2], &merr_not_used, NULL, NULL, NULL, NULL, NULL) );
+ //while( -1 < fscanf(stdin, "%lf %lf", &jd[n_points_lightcurve - 2], &m[n_points_lightcurve - 2]) );
  n_points_lightcurve--;
  n_points_lightcurve--;
  fprintf(stderr, "n_points=%d\n", n_points_lightcurve);
@@ -90,13 +95,11 @@ int main() {
  fprintf(stderr, "dt = %lf\n", dt);
 
  /* Form 2n+1 magnitudes spaced by equal time intervals dt */
- //interp_m= malloc( 5 * n_points_lightcurve * sizeof( double ) );
  interp_m= malloc( (2 * n_points_lightcurve + 1) * sizeof( double ) );
  if ( interp_m == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for interp_m(kwee-van-woerden.c)\n" );
   return 1;
  };
- //interp_jd= malloc( 5 * n_points_lightcurve * sizeof( double ) );
  interp_jd= malloc( (2 * n_points_lightcurve + 1) * sizeof( double ) );
  if ( interp_jd == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for interp_jd(kwee-van-woerden.c)\n" );
@@ -147,7 +150,6 @@ int main() {
  fprintf( stderr, "First guess (the faintest point in the interpolated lightcurve)!  T1 = %lf\n", T1 );
 
  // is this correct?
- //delta_m= malloc( 5 * n_points_lightcurve * sizeof( double ) );
  delta_m= malloc( (2 * n_points_lightcurve + 1) * sizeof( double ) );
  if ( delta_m == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for delta_m(kwee-van-woerden.c)\n" );
