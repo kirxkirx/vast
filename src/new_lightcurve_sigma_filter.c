@@ -46,40 +46,53 @@ int main(int argc, char **argv) {
  long filename_counter;
  long filenamelen;
 
- if( argc >= 2 && 0 == strcmp("-h", argv[1]) ) {
+ if( argc < 2 ) {
   fprintf(stderr, "Clean out*dat files from outliers (sigma clip).\n");
   fprintf(stderr, "Usage:\n");
   fprintf(stderr, "%s [SIGMA]\n", argv[0]);
+  fprintf(stderr, "%s [SIGMA] file\n", argv[0]);
   exit(0);
  }
 
- if( argc == 2 ) {
+ if( argc >= 2 ) {
   sigma_filter= atof(argv[1]);
- } else
-  sigma_filter= LIGHT_CURVE_FILTER_SIGMA; /* Use default value from vast_limits.h */
-
+ } else {
+  sigma_filter= LIGHT_CURVE_FILTER_SIGMA; // Use default value from vast_limits.h
+ }
+ 
  filenamelist= (char **)malloc(MAX_NUMBER_OF_STARS * sizeof(char *));
  filename_counter= 0;
- dp= opendir("./");
- if( dp != NULL ) {
-  fprintf(stderr, "Removing (%.1lf sigma) outliers from lightcurves... ", sigma_filter);
-
-  while( (ep= readdir(dp)) != NULL ) {
-   /// For each file
-   filenamelen= strlen(ep->d_name);
-   if( filenamelen < 8 )
-    continue; // make sure the filename is not too short for the following tests
-   if( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[filenamelen - 1] == 't' && ep->d_name[filenamelen - 2] == 'a' && ep->d_name[filenamelen - 3] == 'd' ) {
-    filenamelist[filename_counter]= malloc((filenamelen + 1) * sizeof(char));
-    strncpy(filenamelist[filename_counter], ep->d_name, (filenamelen + 1));
-    filename_counter++;
-   }
-  }
-  (void)closedir(dp);
+ if( argc == 3 ) {
+  // single-file mode
+  filenamelen= strlen(argv[2]); 
+  filenamelist[filename_counter]= malloc((filenamelen + 1) * sizeof(char));
+  strncpy(filenamelist[filename_counter], argv[2], (filenamelen + 1));
+  filename_counter++;
  } else {
-  perror("Couldn't open the directory");
-  free(filenamelist);
-  return 2;
+  // all files mode
+  // Populate filenamelist[]
+  dp= opendir("./");
+  if( dp != NULL ) {
+   fprintf(stderr, "Removing (%.1lf sigma) outliers from lightcurves... ", sigma_filter);
+ 
+   while( (ep= readdir(dp)) != NULL ) {
+    /// For each file
+    filenamelen= strlen(ep->d_name);
+    if( filenamelen < 8 )
+     continue; // make sure the filename is not too short for the following tests
+    if( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[filenamelen - 1] == 't' && ep->d_name[filenamelen - 2] == 'a' && ep->d_name[filenamelen - 3] == 'd' ) {
+     filenamelist[filename_counter]= malloc((filenamelen + 1) * sizeof(char));
+     strncpy(filenamelist[filename_counter], ep->d_name, (filenamelen + 1));
+     filename_counter++;
+    }
+   }
+   (void)closedir(dp);
+  } else {
+   perror("Couldn't open the directory");
+   free(filenamelist);
+   return 2;
+  }
+  //
  }
 
  // Process each file in the list

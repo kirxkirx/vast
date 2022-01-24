@@ -94,6 +94,8 @@
 	* Added the new VaST test script 'util/examples/git_pull_run_test_email_on_failure.sh' that can be run 
 	from a cron job and e-mail test report on failure. 
 	* Added CFITSIO example program 'util/imarith' allowing simple arithmetic operations on images (used in test script).
+	* You may now run the sigma-clip filter on an individual lightcurve file:
+	lib/new_lightcurve_sigma_filter 3.0 out12345.dat # here 3.0 is the sigma-clip level
 20 Oct 2020: vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911
