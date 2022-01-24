@@ -160,7 +160,7 @@ int main( int argc, char **argv){
  //
  
  if( argc<4 ){
-  fprintf(stderr,"Usage: %s lightcurve.dat JD0 period\n or\n%s lightcurve.dat JD0 period phase_range_type\nThe phase range type:\n 1 -- 0.5 to 1 (default)\n 2 -- 0.0 to 2.0\n 3 -- 0.0 to 1.0\nExample: %s out01234.dat 2459165.002 486.61 2\n\nYou may also construct a binned lightcurve with:\nutil/phase_and_bin_lc lightcurve.dat JD0 period phase_range_type number_of_bins\nExample (bin the lightcurve in 10 phase bins): util/phase_and_bin_lc out01234.dat 2459165.002 486.61 2 10\n", argv[0], argv[0], argv[0]);
+  fprintf(stderr,"Usage: %s lightcurve.dat JD0 period\n or\n%s lightcurve.dat JD0 period phase_range_type\nThe phase range type:\n 1 -- -0.5 to 1 (default)\n 2 --  0.0 to 2.0\n 3 --  0.0 to 1.0\nExample: %s out01234.dat 2459165.002 486.61 2\n\nYou may also construct a binned lightcurve with:\nutil/phase_and_bin_lc lightcurve.dat JD0 period phase_range_type number_of_bins\nExample (bin the lightcurve in 10 phase bins): util/phase_and_bin_lc out01234.dat 2459165.002 486.61 2 10\n", argv[0], argv[0], argv[0]);
   return 1;
  }
  

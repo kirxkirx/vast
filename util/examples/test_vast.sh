@@ -15244,26 +15244,26 @@ if [ $? -ne 0 ];then
 fi
 
 # Coordinates in the deg fromat
-util/search_databases_with_vizquery.sh 34.8366337 -2.9776377 | grep 'omi Cet' | grep --quiet 'J-Ks=1.481+/-0.262 (M)'
+util/search_databases_with_vizquery.sh 34.8366337 -2.9776377 | grep 'omi Cet' | grep --quiet -e 'J-Ks=1.481+/-0.262 (M)' -e 'J-Ks=1.481+/-0.262 (Very red! L if it'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT005_vizquery"
 fi
 # on-the-fly conversion
-util/search_databases_with_vizquery.sh `lib/hms2deg 02:19:20.79 -02:58:39.5` | grep 'omi Cet' | grep --quiet 'J-Ks=1.481+/-0.262 (M)'
+util/search_databases_with_vizquery.sh `lib/hms2deg 02:19:20.79 -02:58:39.5` | grep 'omi Cet' | grep --quiet -e 'J-Ks=1.481+/-0.262 (M)' -e 'J-Ks=1.481+/-0.262 (Very red! L if it'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT005a_vizquery"
 fi
 
 # Coordinates in the HMS fromat
-util/search_databases_with_vizquery.sh 02:19:20.79 -02:58:39.5 | grep 'omi Cet' | grep --quiet 'J-Ks=1.481+/-0.262 (M)'
+util/search_databases_with_vizquery.sh 02:19:20.79 -02:58:39.5 | grep 'omi Cet' | grep --quiet -e 'J-Ks=1.481+/-0.262 (M)' -e 'J-Ks=1.481+/-0.262 (Very red! L if it'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT006_vizquery"
 fi
 
-util/search_databases_with_vizquery.sh 19:50:33.92439 +32:54:50.6097 | grep 'khi Cyg' | grep --quiet 'J-Ks=1.863+/-0.240 (Very red!)'
+util/search_databases_with_vizquery.sh 19:50:33.92439 +32:54:50.6097 | grep 'khi Cyg' | grep --quiet -e 'J-Ks=1.863+/-0.240 (Very red!)'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT007_vizquery"
