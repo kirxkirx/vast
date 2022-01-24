@@ -1,6 +1,6 @@
 #define _GNU_SOURCE // for memmem() in Kourovka_SBG_date_hack()
 
-#define WARN_IF_TAImUTC_DAT_IS_OLDER_THAN_DAYS 5.0 * 365.242
+#define WARN_IF_TAImUTC_DAT_IS_OLDER_THAN_DAYS 8.0 * 365.242
 
 #include <stdio.h>
 #include <time.h>
