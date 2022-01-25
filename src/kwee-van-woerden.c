@@ -32,7 +32,7 @@ int main() {
  double T1= 0.0;
  double mT1= 0.0;
  int i, j;
- double tmp_m, tmp_jd;
+ //double tmp_m, tmp_jd;
  double *jd= NULL;
  double *m= NULL;
  int n_points_lightcurve= 1;
