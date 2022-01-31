@@ -151,6 +151,11 @@
 #define AP03 0.2
 #define AP04 0.3
 
+// If the measured aperture is not between BELIEVABLE_APERTURE_MIN_PIX and BELIEVABLE_APERTURE_MAX_PIX -
+// assume the measurement is bad
+#define BELIEVABLE_APERTURE_MAX_PIX 95.0
+#define BELIEVABLE_APERTURE_MIN_PIX  1.0
+
 // Star matching
 #define MAX_FRACTION_OF_AMBIGUOUS_MATCHES 0.05           //  Maximum fraction of stars that match one star on the reference image
 #define MIN_NUMBER_OF_AMBIGUOUS_MATCHES_TO_TAKE_ACTION 5 // discard the above if there are less than the specified number of stars affected by the problem
@@ -307,6 +312,7 @@
 
 // src/pgfv/pgfv.c
 #define PGFV_CUTS_PERCENT 99.5 //99.75 //95.0 //99.5  // this determines how bright is the displayed image
+#define PGFV_CUTS_PERCENT 97.0
 
 // src/match_eater.c SOME CRAZY OLD OBSOLETE STUFF
 //#define MIN_MATCH_DISTANCE_PIX 600

@@ -3820,7 +3820,7 @@ int main(int argc, char **argv) {
    write_string_to_log_file(log_output, sextractor_catalog);
 
    // WARNING!!! Hardcoded aperture limits here!
-   if( aperture < 75.0 && aperture > 1.0 ) {
+   if( aperture < BELIEVABLE_APERTURE_MAX_PIX && aperture > BELIEVABLE_APERTURE_MIN_PIX ) {
     //
     // Make sure we record the largest image size
     //
@@ -5645,7 +5645,7 @@ int main(int argc, char **argv) {
     if( debug != 0 )
      fprintf(stderr, "OK\n");
    } else {
-    fprintf(stderr, "ERROR! APERTURE > 75\n");
+    fprintf(stderr, "ERROR! APERTURE > %.1lf\n",BELIEVABLE_APERTURE_MAX_PIX);
     /* Write error to the logfile */
     sprintf(log_output, "rotation=   0.000  *detected= %5d  *matched= %5d  status=ERROR  %s\n", 0, 0, input_images[n]);
     write_string_to_log_file(log_output, sextractor_catalog);
