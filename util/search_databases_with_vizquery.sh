@@ -693,10 +693,20 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
 fi
 
 # Try to get a spectral type
+SPECTRAL_TYPE=""
+# First try Skiff
 SKIFF_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=B/mk/mktypes  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=SpType,Bibcode,Name -out.max=1 2>/dev/null | grep -B2 '#END#' | head -n1 | grep -v \# | sed 's:  ::g' `
 if [ ! -z "$SKIFF_RESULTS" ];then
-  SPECTRAL_TYPE=`echo $SKIFF_RESULTS`
-  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING SpType: $SKIFF_RESULTS  "
+ SPECTRAL_TYPE=`echo $SKIFF_RESULTS`
+ SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING SpType: $SKIFF_RESULTS  "
+fi
+# Then try LAMOST
+if [ -z "$SPECTRAL_TYPE" ];then
+ LAMOST_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=V/164/dr5  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=SubClass,Class -out.max=1 2>/dev/null | grep -B2 '#END#' | head -n1 | grep -v \# | grep 'STAR' | awk '{print $1}'`
+ if [ ! -z "$LAMOST_RESULTS" ];then
+  SPECTRAL_TYPE=`echo $LAMOST_RESULTS`
+  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING SpType: $LAMOST_RESULTS (LAMOST DR5)  "
+ fi
 fi
 
 
