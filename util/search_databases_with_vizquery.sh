@@ -616,14 +616,6 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
     SUGGESTED_PERIOD_STRING="$MDV_PERIOD (MDV)"
     SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING "
     KNOWN_VARIABLE=1
-#   else
-#    # NEW var
-#    #echo -n " $STAR_NAME | B1.0 $GOOD_CATALOG_NAME | $GOOD_CATALOG_POSITION | T | P | B2=$B2 "
-#    SUGGESTED_NAME_STRING="$GOOD_CATALOG_NAME"
-#    SUGGESTED_TYPE_STRING="T"
-#    SUGGESTED_PERIOD_STRING="P"
-#    SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING B2=$B2"
-   #
    fi # if [ "$MDV_NAME" != "" ];then
    ### Check other large variable star lists
    # OGLE Bulge LPV
@@ -666,6 +658,25 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    #  KNOWN_VARIABLE=1
    # fi
    #fi   
+   # Gaia DR2 large amplitude variable
+   if [ $KNOWN_VARIABLE -eq 0 ];then
+    GAIA_DR2_LARGE_AMP_VAR_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/A+A/648/A44/tabled1 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $1}' | grep -v \#`
+    if [ ! -z "$GAIA_DR2_LARGE_AMP_VAR_RESULTS" ];then
+     SUGGESTED_NAME_STRING="Large-amplitude variable Gaia DR2 $GAIA_DR2_LARGE_AMP_VAR_RESULTS"
+     SUGGESTED_TYPE_STRING="2021A&A...648A..44M"
+     SUGGESTED_PERIOD_STRING=""
+     KNOWN_VARIABLE=1
+    fi
+   fi
+   #
+   # Generic VizieR search for the word 'variable'
+   if [ $KNOWN_VARIABLE -eq 0 ];then
+    GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -words='variable' -meta -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep Title | grep 'ariable' | sed 's:#Title\: ::g'`
+    if [ ! -z "$GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS" ];then
+     SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING may be a known variable - check VizieR  "
+    fi
+   fi
+   #
   fi
  fi
 fi
@@ -720,6 +731,13 @@ if [ ! -z "$GOOD_CATALOG_NAME_GAIA" ];then
  else
   echo "                      "
  fi
+ 
+ if [ ! -z "$GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS" ];then
+  echo "
+This may be a know variable star according to the titles of VizieR catalogs it is listed in:
+$GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS"
+ fi
+ 
  echo "$SUGGESTED_COMMENT_STRING" | grep --quiet -e 'CONSTANT' -e 'VARIABLE'
  if [ $? -eq 0 ];then
   echo "
