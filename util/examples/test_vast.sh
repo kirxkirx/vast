@@ -12335,28 +12335,30 @@ if [ -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fi
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B000"
- fi
- if [ ! -f wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B001"
- fi 
- lib/bin/xy2sky wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit 200 200 &>/dev/null
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B001a"
- fi
- if [ ! -f wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit.cat.ucac5 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B002"
  else
-  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit.cat.ucac5 | wc -l | awk '{print $1}'`
-  #if [ $TEST -lt 170 ];then
-  # We reduced catalog search radius
-  if [ $TEST -lt 100 ];then
+  if [ ! -f wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B002a_$TEST"
-  fi
- fi 
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B001"
+  else
+   lib/bin/xy2sky wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit 200 200 &>/dev/null
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B001a"
+   fi
+   if [ ! -f wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit.cat.ucac5 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B002"
+   else
+    TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+    #if [ $TEST -lt 170 ];then
+    # We reduced catalog search radius
+    if [ $TEST -lt 100 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B002a_$TEST"
+    fi
+   fi 
+  fi # else if [ ! -f wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit ];then
+ fi # check if util/solve_plate_with_UCAC5 returned 0 exit code
  util/get_image_date ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit | grep --quiet "Exposure  60 sec, 16.07.2021 18:02:27 UT = JD(UT) 2459412.25205 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
