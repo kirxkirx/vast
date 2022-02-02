@@ -298,16 +298,18 @@ int try_to_recognize_MSUcampusObs06m_with_APOGEEcam(char *fitsfilename, double *
 }
 
 int try_to_recognize_telescop_keyword(char *fitsfilename, double *estimated_fov_arcmin) {
- char telescop[1024];
- char telescop_comment[1024];
+ char telescop[FLEN_VALUE];
+ char telescop_comment[FLEN_COMMENT];
+ char roi[FLEN_VALUE];
+ char roi_comment[FLEN_COMMENT];
  char *pointer_to_the_key_start;
  // fitsio
  int status= 0;
  fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
  // Hack allowing to owerride the FITS TELESCOP keyword by setting the environment variable of the same name
  if( NULL != getenv("TELESCOP") ) {
-  strncpy(telescop, getenv("TELESCOP"), 1024);
-  telescop[1024 - 1]= '\0';
+  strncpy(telescop, getenv("TELESCOP"), FLEN_VALUE);
+  telescop[FLEN_VALUE - 1]= '\0';
  } else {
   // Else extract data from FITS header
   fits_open_file(&fptr, fitsfilename, READONLY, &status);
@@ -326,7 +328,7 @@ int try_to_recognize_telescop_keyword(char *fitsfilename, double *estimated_fov_
   //
  }
  // TELESCOP= 'Lens  2.8/170'
- if( 0 == strncasecmp(telescop, "Lens  2.8/170", 1024 - 1) ) {
+ if( 0 == strncasecmp(telescop, "Lens  2.8/170", FLEN_VALUE - 1) ) {
   (*estimated_fov_arcmin)= 180.0;
   return 0;
  }
@@ -372,9 +374,32 @@ int try_to_recognize_telescop_keyword(char *fitsfilename, double *estimated_fov_
  if( strlen(telescop) >= 9 ) { //01234567890
   pointer_to_the_key_start= (char *)memmem(telescop, strlen(telescop), "SOAR 4.1m", 9);
   if( pointer_to_the_key_start != NULL ) {
-   (*estimated_fov_arcmin)= 3.2;
    // Print the special waring
-   fprintf(stderr, "\n\n\nWARNING! WARNING! WARNING!\nThis is a SOAR 4.1m image.\nRemember to trim the black areas around the actual image or it will not be plate-solved!\nYou may trim it by running  util/fitscopy %s[700:1370] test.fit\n\n\n", fitsfilename);
+   //fprintf(stderr, "\n\n\nWARNING! WARNING! WARNING!\nThis is a SOAR 4.1m image.\nRemember to trim the black areas around the actual image or it will not be plate-solved!\n", fitsfilename);
+   // We should distinguish Spectroscopy and iamging mode images
+   // By default, we assume the small 'Spectroscopic 2x2' FoV
+   (*estimated_fov_arcmin)= 3.2;
+   // Check if this is a larger 'Imaging 2x2' frame
+   // We need to repoen the FITS file
+   fits_open_file(&fptr, fitsfilename, READONLY, &status);
+   if( 0 == status ) {
+    fits_read_key(fptr, TSTRING, "ROI", roi, roi_comment, &status);
+    if( 0 == status ) {
+     if( strlen(roi) >= 11 ) { //01234567890
+      pointer_to_the_key_start= (char *)memmem(roi, strlen(roi), "Imaging 2x2", 11);
+      if( pointer_to_the_key_start != NULL ) {
+       // This is a large 'Imaging 2x2' frame
+       (*estimated_fov_arcmin)= 5.0;
+      }
+     }
+    }
+    status= 0; // reset the status regardless of what happened above
+    fits_close_file(fptr, &status);
+   }
+   status= 0; // reset the status regardless of what happened above
+   
+   // Print the special waring
+   fprintf(stderr, "\n\n\nWARNING! WARNING! WARNING!\nThis is a SOAR 4.1m image.\nRemember to trim the black areas around the actual image or it will not be plate-solved!\nYou may trim it by running something like\n  util/fitscopy %s[700:1370] test.fit  # 'Spectroscopic 2x2' ROI\nor\n  util/fitscopy %s[290:1300,290:1300] test.fit  # 'Imaging 2x2' ROI\n\n\n", fitsfilename, fitsfilename);
    //
    return 0;
   }

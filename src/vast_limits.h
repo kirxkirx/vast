@@ -312,7 +312,6 @@
 
 // src/pgfv/pgfv.c
 #define PGFV_CUTS_PERCENT 99.5 //99.75 //95.0 //99.5  // this determines how bright is the displayed image
-#define PGFV_CUTS_PERCENT 97.0
 
 // src/match_eater.c SOME CRAZY OLD OBSOLETE STUFF
 //#define MIN_MATCH_DISTANCE_PIX 600
