@@ -559,7 +559,8 @@ echo -n "<a href=\"https://wis-tns.weizmann.ac.il/search?ra=${RA_MEAN_HMS//:/%3A
 <form style='display: inline;' NAME=\"$$FORMNMW$1\" method=\"get\" TARGET=\"_blank\" action=\"http://scan.sai.msu.ru/cgi-bin/nmw/sky_archive\" enctype=\"application/x-www-form-urlencoded\">
 <input id=\"h2\" name=\"ra\" type=\"hidden\" required value=\"$RA_MEAN_HMS\">
 <input id=\"h3\" name=\"dec\" type=\"hidden\" required value=\"$DEC_MEAN_HMS\"> 
-<input id=\"h4\" name=\"r\" type=\"hidden\" required=\"\" value=\"32\" size=\"3\"> 
+<input id=\"h4\" name=\"r\" type=\"hidden\" required value=\"32\"> 
+<input id=\"h5\" name=\"n\" type=\"hidden\" required value=\"0\">
 <input type=\"submit\" value='NMW images'>
 </form>
 "

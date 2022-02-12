@@ -9006,11 +9006,10 @@ $GREP_RESULT"
   fi
   #
   #
-  # Nova Cas 2020 has no automatic ID in the current VaST version
-  #grep --quiet "N Cas 2020" transient_report/index.html
-  #if [ $? -ne 0 ];then
-  # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110"
+  grep --quiet "V1391 Cas" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110"
   #fi
   grep --quiet -e "2020 08 31.7108  2459093.2108  12\.9.  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0.  00:11:" transient_report/index.html
   if [ $? -ne 0 ];then
@@ -9050,6 +9049,9 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_NCANDIDATES_$NUMBER_OF_CANDIDATE_TRANSIENTS"
   fi
+  
+  # Check NMW image cutout service
+  # TBA
 
  else
   echo "ERROR running the transient search script" 1>&2
