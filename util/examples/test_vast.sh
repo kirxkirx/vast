@@ -9128,15 +9128,15 @@ if [ -d ../NMW_ATLAS_Mira_in_Ser1 ];then
  rm -f test_ncas$$.tmp
  #
  if [ -f transient_report/index.html ];then
-  # there SHOULD be an error message about distance between reference and second-epoch image centers
-  grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
-  if [ $? -ne 0 ];then
+  # there SHOULD NOT be an error message about distance between reference and second-epoch image centers
+  grep --quiet 'ERROR:' "transient_report/index.html"
+  if [ $? -eq 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_NO_ERROR_MESSAGE_IN_index_html"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_ERROR_MESSAGE_IN_index_html"
    GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
    CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWATLASMIRA_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWATLASMIRA_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 -----------------
 $CAT_RESULT"
