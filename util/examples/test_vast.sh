@@ -9010,7 +9010,7 @@ $GREP_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110"
-  #fi
+  fi
   grep --quiet -e "2020 08 31.7108  2459093.2108  12\.9.  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0.  00:11:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -9050,9 +9050,6 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_NCANDIDATES_$NUMBER_OF_CANDIDATE_TRANSIENTS"
   fi
   
-  # Check NMW image cutout service
-  # TBA
-
  else
   echo "ERROR running the transient search script" 1>&2
   TEST_PASSED=0
