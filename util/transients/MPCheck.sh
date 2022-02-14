@@ -11,7 +11,7 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
-echo -e "Starting $0"
+#echo -e "Starting $0"
 
 # Test the command line arguments
 if [ -z $4 ];then
@@ -20,7 +20,7 @@ if [ -z $4 ];then
  echo " "
  echo "Usage: $0 RA DEC DATE TIME"
  echo "Example: $0 01:02:03.5 +05:06:07.8 10.12.2010 00:23:40"
- exit
+ exit 1
 fi
 RA=$1
 DEC=$2
@@ -58,16 +58,17 @@ else
  MAG_FOR_MPC_REPORT="$6"
 fi
 
-# Thest if curl is installed
-CURL=`command -v curl`
-if [ $? -ne 0 ];then
- echo " "
- echo "ERROR: curl not found. :("
- echo "No web search will be done!"
- echo " "
- exit
-fi
-CURL="$CURL -H 'Expect:'"
+# The online section is commented out
+## Thest if curl is installed
+#CURL=`command -v curl`
+#if [ $? -ne 0 ];then
+# echo " "
+# echo "ERROR: curl not found. :("
+# echo "No web search will be done!"
+# echo " "
+# exit 
+#fi
+#CURL="$CURL -H 'Expect:'"
          
 # Querry local copy of astcheck
 if [ $COLOR -eq 1 ];then
@@ -80,7 +81,7 @@ fi
 lib/update_offline_catalogs.sh all
 
 
-if [ -f lib/astcheck ];then
+if [ -x lib/astcheck ];then
  if [ ! -f astorb.dat ];then
   # astorb.dat needs to be downloaded
   echo "Downloading the asteroid database (astorb.dat)" 1>&2
@@ -89,7 +90,7 @@ if [ -f lib/astcheck ];then
   gunzip astorb.dat.gz
   if [ ! -f astorb.dat ];then
    echo "ERROR: cannot download astorb.dat.gz"
-   exit
+   exit 1
   fi
  fi
 # echo "Using local copy of astcheck to identify asteroids! See http://home.gwi.net/~pluto/devel/astcheck.htm for details."
@@ -104,17 +105,19 @@ if [ -f lib/astcheck ];then
   else
    echo -e "The object was <font color=\"red\">not found</font> in $DATABASE_NAME."
   fi
-  else
+  exit 1 # return code will signal we have no ID
+ else
   if [ $COLOR -eq 1 ];then
    echo -e "The object was \033[01;32mfound\033[00m in $DATABASE_NAME.  "
   else
    echo -e "The object was <font color=\"green\">found</font> in $DATABASE_NAME.  "
   fi 
- fi
-fi
+  exit 0 # return code will signal we have an ID
+ fi # else lib/astcheck 
+fi # if [ -f lib/astcheck ];then
 
-# !!!
-exit
+# !!! No online search !!!
+exit 1
 
 # Querry MPChecker (works only for recent data!)
 if [ $COLOR -eq 1 ];then

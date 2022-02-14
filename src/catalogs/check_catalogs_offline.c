@@ -369,7 +369,7 @@ int main(int argc, char **argv) {
   is_found= search_asassnv(target_RA_deg, target_Dec_deg);
  }
 
- // Return 0 if the sourceis found
+ // Return 0 if the source is found
  if( is_found == 1 ) {
   return 0;
  }

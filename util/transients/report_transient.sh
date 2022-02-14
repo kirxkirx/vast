@@ -471,9 +471,21 @@ GALACTIC_COORDINATES=`lib/bin/skycoor -g $RADEC_MEAN_HMS J2000`
 
 echo "$GALACTIC_COORDINATES   Second-epoch detections are separated by $ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING\" and $PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING pix"
 
-# Check if this is a known source
+# Check if this is a known source or if it looks like a hot pixel
 lib/catalogs/check_catalogs_offline $RA_MEAN $DEC_MEAN
-util/transients/MPCheck.sh $RADEC_MEAN_HMS $DATE $TIME H $MAG_MEAN | grep -v "Starting"
+VARIABLE_STAR_ID=$?
+#util/transients/MPCheck.sh $RADEC_MEAN_HMS $DATE $TIME H $MAG_MEAN | grep -v "Starting"
+util/transients/MPCheck.sh $RADEC_MEAN_HMS $DATE $TIME H $MAG_MEAN
+ASTEROID_ID=$?
+# If the candidate transient is not a known variable star or asteroid - try online search
+#echo "VARIABLE_STAR_ID=$VARIABLE_STAR_ID ASTEROID_ID=$ASTEROID_ID PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS=$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS"
+#echo util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS test `lib/try_to_guess_image_fov $REFERENCE_IMAGE`
+if [ $VARIABLE_STAR_ID -ne 0 ] && [ $ASTEROID_ID -ne 0 ] && [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.0" ] ;then
+ # Slow online ID
+ #echo util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS test `lib/try_to_guess_image_fov $REFERENCE_IMAGE`
+ util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS online_id `lib/try_to_guess_image_fov $REFERENCE_IMAGE` 2>&1 | grep '|' | tail -n1
+ #
+fi
 
 echo -n "<a href=\"https://wis-tns.weizmann.ac.il/search?ra=${RA_MEAN_HMS//:/%3A}&decl=${DEC_MEAN_HMS//:/%3A}&radius=15&coords_unit=arcsec\" target=\"_blank\">Check this position in <font color=\"tomato\">TNS</font>.</a>                         <a href='http://www.astronomy.ohio-state.edu/asassn/transients.html' target='_blank'>Manually check the ASAS-SN list of transients!</a>
 <a href=\"http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=$RA_MEAN%20$DEC_MEAN&CooDefinedFrames=J2000&Radius=1.0&Radius.unit=arcmin\" target=\"_blank\">Search this object in <font color=\"maroon\">SIMBAD</font>.</a>

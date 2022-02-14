@@ -274,6 +274,8 @@ if [ -f wget-log ];then
  rm -f wget-log
 fi
 
+echo "Image field of view: $FOV"
+
 ###### USNO-B1 #####
 # by default we don't have an ID
 if [ -f search_databases_with_vizquery_USNOB_ID_OK.tmp ];then
@@ -638,7 +640,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
      ATLASNAME=`echo "$ATLAS_RESULTS" | awk '{print $1}'`
      ATLASTYPE=`echo "$ATLAS_RESULTS" | awk '{print $2}'`
      ATLASPERIOD=" "
-     SUGGESTED_NAME_STRING="ATOID $ATLASNAME"
+     SUGGESTED_NAME_STRING="ATO $ATLASNAME"
      SUGGESTED_TYPE_STRING="$ATLASTYPE (ATLAS)"
      SUGGESTED_PERIOD_STRING="$ATLASPERIOD (ATLAS)"
      KNOWN_VARIABLE=1

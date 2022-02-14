@@ -8377,7 +8377,7 @@ if [ -d ../NMW_Saturn_test ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2009"
   #fi 
-  # The copy of the log file shoule be in the HTML report
+  # The copy of the log file should be in the HTML report
   grep --quiet "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -8751,7 +8751,7 @@ $GREP_RESULT
 -----------------
 $CAT_RESULT"
   fi
-  # The copy of the log file shoule be in the HTML report
+  # The copy of the log file should be in the HTML report
   grep --quiet "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -8949,7 +8949,7 @@ $GREP_RESULT
 -----------------
 $CAT_RESULT"
   fi
-  # The copy of the log file shoule be in the HTML report
+  # The copy of the log file should be in the HTML report
   grep --quiet "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -9089,6 +9089,452 @@ if [ $? -ne 0 ];then
 fi
 
 
+
+##### ATLAS Mira not in VSX ID test #####
+# Download the test dataset if needed
+if [ ! -d ../NMW_ATLAS_Mira_in_Ser1 ];then
+ cd ..
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/NMW_ATLAS_Mira_in_Ser1.tar.bz2" && tar -xvjf NMW_ATLAS_Mira_in_Ser1.tar.bz2 && rm -f NMW_ATLAS_Mira_in_Ser1.tar.bz2
+ cd $WORKDIR
+fi
+# If the test data are found
+if [ -d ../NMW_ATLAS_Mira_in_Ser1 ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "NMW ATLAS Mira not in VSX ID test " 1>&2
+ echo -n "NMW ATLAS Mira not in VSX ID test: " >> vast_test_report.txt 
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ #
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
+ # Instead of running the single-field search,
+ # we test the production NMW script
+ REFERENCE_IMAGES=../NMW_ATLAS_Mira_in_Ser1/reference_images/ util/transients/transient_factory_test31.sh ../NMW_ATLAS_Mira_in_Ser1/second_epoch_images &> test_ncas$$.tmp
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA000_EXIT_CODE"
+ fi
+ # Test for the specific error message
+ grep --quiet 'ERROR: cannot find a star near the specified position' test_ncas$$.tmp
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA000_CANNOT_FIND_STAR_ERROR_MESSAGE"
+ fi
+ rm -f test_ncas$$.tmp
+ #
+ if [ -f transient_report/index.html ];then
+  # there SHOULD be an error message about distance between reference and second-epoch image centers
+  grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_NO_ERROR_MESSAGE_IN_index_html"
+   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
+   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWATLASMIRA_NO_ERROR_MESSAGE_IN_index_html ######
+$GREP_RESULT
+-----------------
+$CAT_RESULT"
+  fi
+  # The copy of the log file should be in the HTML report
+  grep --quiet "Images processed 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA001"
+  fi
+  NUMBER_OF_GOOD_SE_RUNS=`grep -c "Images processed 4" transient_report/index.html`
+  if [ $NUMBER_OF_GOOD_SE_RUNS -lt 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA001a"
+  fi
+  grep --quiet "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA002"
+  fi
+  NUMBER_OF_GOOD_SE_RUNS=`grep -c "Images used for photometry 4" transient_report/index.html`
+  if [ $NUMBER_OF_GOOD_SE_RUNS -lt 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA002a"
+  fi
+  # Hunting the mysterious non-zero reference frame rotation cases
+  if [ -f vast_image_details.log ];then
+   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0_nonzero_ref_frame_rotation"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWATLASMIRA0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWATLASMIRA0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0_NO_vast_image_details_log"
+  fi
+  #
+  #
+  grep --quiet "ATO J264.4812-15.6857" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0110"
+  fi
+  grep --quiet "2022 02 12.0...  2459622.5...  12...  17:37:..... -15:41:" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0110a"
+   GREP_RESULT=`grep "2022 02 12.0...  2459622.5...  12...  17:37:..... -15:41:" transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWATLASMIRA0110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2022 02 12.0...  2459622.5...  12...  17:37:..... -15:41:" transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:37:55.48 -15:41:08.4 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0110a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0110a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  # Test Stub MPC report line
+  grep --quiet "     TAU0008  C2022 02 12.0.... 17 37 ..... -15 41 0....         12.. R      C32" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0110b"
+  fi
+
+  #
+  grep --quiet "FK Sgr" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0111"
+  fi
+  grep --quiet "2022 02 12.0...  2459622.5...  10...  17:45:4.... -16:07:1..." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0111a"
+   GREP_RESULT=`grep "2022 02 12.0...  2459622.5...  10...  17:45:4.... -16:07:1..." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWATLASMIRA0110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2022 02 12.0...  2459622.5...  10...  17:45:4.... -16:07:1..." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:45:48.09 -16:07:09.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0111a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0111a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+
+  #
+  grep --quiet "ASAS J173723-1621.2" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0112"
+  fi
+  grep --quiet "2022 02 12.0...  2459622.5...  9...  17:37:2.... -16:21:1..." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0112a"
+   GREP_RESULT=`grep "2022 02 12.0...  2459622.5...  9...  17:37:2.... -16:21:1..." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWATLASMIRA0110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2022 02 12.0...  2459622.5...  9...  17:37:2.... -16:21:1..." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:37:22.69 -16:21:11.1 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0112a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0112a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+
+  #
+  grep --quiet "NSVS 16588457" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0113"
+  fi
+  grep --quiet "2022 02 12.0...  2459622.5...  1....  17:27:0.... -18:23:1..." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0113a"
+   GREP_RESULT=`grep "2022 02 12.0...  2459622.5...  1....  17:27:0.... -18:23:1..." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWATLASMIRA0110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2022 02 12.0...  2459622.5...  1....  17:27:0.... -18:23:1..." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:27:00.51 -18:23:15.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0113a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0113a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+
+  #
+  grep --quiet "ASAS J174125-1731.7" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0114"
+  fi
+  grep --quiet "2022 02 12.0...  2459622.5...  12...  17:41:2.... -17:31:4..." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0114a"
+   GREP_RESULT=`grep "2022 02 12.0...  2459622.5...  12...  17:41:2.... -17:31:4..." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWATLASMIRA0110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2022 02 12.0...  2459622.5...  12...  17:41:2.... -17:31:4..." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:41:24.90 -17:31:46.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0114a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0114a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+
+  #
+  grep --quiet "V0604 Ser" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0115"
+  fi
+  grep --quiet "2022 02 12.0...  2459622.5...  12...  17:36:4.... -15:30:4..." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0115a"
+   GREP_RESULT=`grep "2022 02 12.0...  2459622.5...  12...  17:36:4.... -15:30:4..." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWATLASMIRA0110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2022 02 12.0...  2459622.5...  12...  17:36:4.... -15:30:4..." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:36:46.51 -15:30:49.9 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0115a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0115a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+
+  #
+  grep --quiet "ASAS J173214-1402.8" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0116"
+  fi
+  grep --quiet "2022 02 12.0...  2459622.5...  11...  17:32:1.... -14:02:...." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0116a"
+   GREP_RESULT=`grep "2022 02 12.0...  2459622.5...  11...  17:32:1.... -14:02:...." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWATLASMIRA0110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2022 02 12.0...  2459622.5...  11...  17:32:1.... -14:02:...." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:32:13.49 -14:02:49.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0116a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0116a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+
+  #
+  grep --quiet "V0835 Oph" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0117"
+  fi
+  grep --quiet "2022 02 12.0...  2459622.5...  10...  17:36:1.... -16:34:3..." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0117a"
+   GREP_RESULT=`grep "2022 02 12.0...  2459622.5...  10...  17:36:1.... -16:34:3..." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWATLASMIRA0110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2022 02 12.0...  2459622.5...  10...  17:36:1.... -16:34:3..." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:36:11.77 -16:34:38.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0117a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0117a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+
+  #
+  grep --quiet "ASAS J172912-1321.1" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0118"
+  fi
+  grep --quiet "2022 02 12.0...  2459622.5...  9...  17:29:1.... -13:21:0..." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0118a"
+   GREP_RESULT=`grep "2022 02 12.0...  2459622.5...  9...  17:29:1.... -13:21:0..." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWATLASMIRA0110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2022 02 12.0...  2459622.5...  9...  17:29:1.... -13:21:0..." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:29:12.22 -13:21:05.6 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0118a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0118a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+
+  # Check the total number of candidates
+  NUMBER_OF_CANDIDATE_TRANSIENTS=`grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink'`
+  if [ $NUMBER_OF_CANDIDATE_TRANSIENTS -lt 9 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_NCANDIDATES_$NUMBER_OF_CANDIDATE_TRANSIENTS"
+  fi
+  
+ else
+  echo "ERROR running the transient search script" 1>&2
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_ALL"
+ fi
+
+ ###### restore exclusion list after the test if needed
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mNMW ATLAS Mira not in VSX ID test \033[01;32mPASSED\033[00m" 1>&2
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mNMW ATLAS Mira not in VSX ID test \033[01;31mFAILED\033[00m" 1>&2
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+remove_test_data_to_save_space
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ exit 1
+fi
+
+
 ##### Nova Sgr 2020 N4 test (three second-epoch images, all good) #####
 ### Disable this test for GitHub Actions
 if [ "$GITHUB_ACTIONS" != "true" ];then 
@@ -9142,7 +9588,7 @@ $GREP_RESULT
 -----------------
 $CAT_RESULT"
   fi
-  # The copy of the log file shoule be in the HTML report
+  # The copy of the log file should be in the HTML report
   grep --quiet "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -9439,7 +9885,7 @@ $GREP_RESULT
 -----------------
 $CAT_RESULT"
   fi
-  # The copy of the log file shoule be in the HTML report
+  # The copy of the log file should be in the HTML report
   grep --quiet "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -9667,7 +10113,7 @@ $GREP_RESULT
 -----------------
 $CAT_RESULT"
   fi
-  # The copy of the log file shoule be in the HTML report
+  # The copy of the log file should be in the HTML report
   grep --quiet "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -9892,7 +10338,7 @@ $GREP_RESULT
 -----------------
 $CAT_RESULT"
   fi
-  # The copy of the log file shoule be in the HTML report
+  # The copy of the log file should be in the HTML report
   grep --quiet "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -10175,7 +10621,7 @@ $GREP_RESULT
 -----------------
 $CAT_RESULT"
   fi
-  # The copy of the log file shoule be in the HTML report
+  # The copy of the log file should be in the HTML report
   grep --quiet "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -10522,7 +10968,7 @@ $GREP_RESULT
 -----------------
 $CAT_RESULT"
   fi
-  # The copy of the log file shoule be in the HTML report
+  # The copy of the log file should be in the HTML report
   grep --quiet "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -10741,7 +11187,7 @@ $GREP_RESULT
 -----------------
 $CAT_RESULT"
   fi
-  # The copy of the log file shoule be in the HTML report
+  # The copy of the log file should be in the HTML report
   grep --quiet "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -10906,7 +11352,7 @@ $GREP_RESULT
 -----------------
 $CAT_RESULT"
   fi
-  # The copy of the log file shoule be in the HTML report
+  # The copy of the log file should be in the HTML report
   grep --quiet "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -11131,7 +11577,7 @@ $GREP_RESULT
 -----------------
 $CAT_RESULT"
   fi
-  # The copy of the log file shoule be in the HTML report
+  # The copy of the log file should be in the HTML report
   grep --quiet "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -15312,14 +15758,14 @@ if [ $? -ne 0 ];then
 fi
 
 # ATLAS via VizieR test 
-util/search_databases_with_vizquery.sh 101.23204 -13.33439 | grep 'dubious (ATLAS)' | grep --quiet 'ATOID J101.2320-13.3343'
+util/search_databases_with_vizquery.sh 101.23204 -13.33439 | grep 'dubious (ATLAS)' | grep --quiet 'ATO J101.2320-13.3343'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012atlas"
 fi
 
 # ATLAS via VizieR test - doesn't work anymore - the star got into VSX under its ZTF name
-util/search_databases_with_vizquery.sh 07:29:19.69 -13:23:06.6 | grep -e 'CBF (ATLAS)' -e '(VSX)' -e '(local)' | grep --quiet -e 'ATOID J112.3320-13.3851' -e 'ZTF J072919.68-132306.5'
+util/search_databases_with_vizquery.sh 07:29:19.69 -13:23:06.6 | grep -e 'CBF (ATLAS)' -e '(VSX)' -e '(local)' | grep --quiet -e 'ATO J112.3320-13.3851' -e 'ZTF J072919.68-132306.5'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012vsx01"
@@ -15372,7 +15818,7 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT018"
 fi
 
-util/search_databases_with_vizquery.sh 17.25656 47.30456 | grep --quiet -e 'ATOID J017.2565+47.3045' -e 'ASASSN-V J010901.57+471816.4'
+util/search_databases_with_vizquery.sh 17.25656 47.30456 | grep --quiet -e 'ATO J017.2565+47.3045' -e 'ASASSN-V J010901.57+471816.4'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT019"
