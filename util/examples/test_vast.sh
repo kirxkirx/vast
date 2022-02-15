@@ -35,7 +35,7 @@ $MSG
 $DEBUG_OUTPUT
 
 " > vast_test_email_message.log
- curl --silent 'http://scan.sai.msu.ru/vast/vasttestreport.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode message@vast_test_email_message.log --data-urlencode 'submit=submit'
+ curl --silent 'http://scan.sai.msu.ru/vast/vasttestreport.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode "message=@vast_test_email_message.log" --data-urlencode 'submit=submit'
  if [ $? -eq 0 ];then
   echo "The test report was sent successfully"
  else
