@@ -139,7 +139,7 @@ $MSG
  cat make.log >> vast_test_email_message.log
  echo "#########################################################" >> vast_test_email_message.log
  # send e-mail
- curl --silent 'http://scan.sai.msu.ru/vast/vasttestreport.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode "message=@vast_test_email_message.log" --data-urlencode 'submit=submit'
+ curl --silent 'http://scan.sai.msu.ru/vast/vasttestreport.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode message@vast_test_email_message.log --data-urlencode 'submit=submit'
  # Failure is an option
  exit 0
 fi
