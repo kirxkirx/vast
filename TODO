@@ -1,4 +1,4 @@
-* Add a possibility to always use either wget or curl, not both!
+* Add a possibility to always use either wget or curl, not both! 
 
 * Fix NMW errors:
 wcs_Cyg5_2021-10-16_19-25-12_003.fts: broken symbolic link to local_wcs_cache/wcs_Cyg5_2021-10-16_19-25-12_003.fts
