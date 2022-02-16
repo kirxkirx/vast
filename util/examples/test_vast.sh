@@ -1080,11 +1080,12 @@ $GREP_RESULT"
      TEST_PASSED=0
      TEST=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE020_TEST_ERROR"
-    fi
-    if [ $TEST -eq 0 ];then
-     TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE020"
-    fi
+    else
+     if [ $TEST -eq 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE020"
+     fi
+    fi # if ! [[ $TEST =~ $re ]] ; then
     #
     if [ ! -s vast_autocandidates.log ];then
      TEST_PASSED=0
@@ -1296,11 +1297,12 @@ $GREP_RESULT"
     TEST_PASSED=0
     TEST=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE111_TEST_ERROR"
-   fi
-   if [ $TEST -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE111"
-   fi
+   else
+    if [ $TEST -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE111"
+    fi
+   fi # if ! [[ $TEST =~ $re ]] ; then
    #
    if [ ! -s vast_autocandidates.log ];then
     TEST_PASSED=0
@@ -1486,11 +1488,12 @@ $GREP_RESULT"
     TEST_PASSED=0
     TEST=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE211_TEST_ERROR"
-   fi
-   if [ $TEST -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE211"
-   fi
+   else
+    if [ $TEST -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE211"
+    fi
+   fi # if ! [[ $TEST =~ $re ]] ; then
    #
    if [ ! -s vast_autocandidates.log ];then
     TEST_PASSED=0
@@ -15434,11 +15437,12 @@ LOCAL_FREQUENCY_CD=`lib/lk_compute_periodogram ../vast_test_lightcurves/out00095
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH001"
-fi
-if [ "$LOCAL_FREQUENCY_CD" != "0.8202" ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH002"
-fi
+else
+ if [ "$LOCAL_FREQUENCY_CD" != "0.8202" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH002"
+ fi
+fi # if [ $? -ne 0 ];then
 
 # Remote period search
 for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
