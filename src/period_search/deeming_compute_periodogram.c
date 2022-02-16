@@ -672,6 +672,8 @@ int main(int argc, char **argv) {
  free(m);
 
  // Print out the results
+ /////////////////5.1750108489 23.627805 LS  FAP=
+ fprintf(stdout, "Peak_Freq(c/d) Power Type  Notes\n");
  if( compute_LombScargle == 1 ) {
   fprintf(stdout, "%.10lf %lf", noshuffle_LS_periodogram_max_freq, noshuffle_LS_periodogram_max);
   if( shuffle_iterations > 0 )
