@@ -257,7 +257,7 @@ function test_internet_connection {
   return 1
  fi
  
- # lib/choose_vizier_mirror.sh will retunr non-zero exit code if it could not actually reach a VizieR mirror
+ # lib/choose_vizier_mirror.sh will return non-zero exit code if it could not actually reach a VizieR mirror
  lib/choose_vizier_mirror.sh 2>&1
  if [ $? -ne 0 ];then
   echo "ERROR in test_internet_connection(): cannot connect to VizieR" 1>&2
@@ -1070,7 +1070,7 @@ $GREP_RESULT"
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE019_NOT_PERFORMED" 
     fi
     # Check that we can find the Cepheid's period (frequency)
-    FREQ_LK=`lib/lk_compute_periodogram "$CEPHEIDOUTFILE" 100 0.1 0.1 | awk '{print $1}'`
+    FREQ_LK=`lib/lk_compute_periodogram "$CEPHEIDOUTFILE" 100 0.1 0.1 | grep 'LK' | awk '{print $1}'`
     # sqrt(a*a) is the sily way to get an absolute value of a
     #TEST=`echo "a=$FREQ_LK-0.211448;sqrt(a*a)<0.01" | bc -ql`
     TEST=`echo "$FREQ_LK" | awk '{if ( sqrt( ($1-0.211448)*($1-0.211448) ) < 0.01 ) print 1 ;else print 0 }'`
@@ -1286,7 +1286,7 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE110_NOT_PERFORMED" 
    fi
    # Check that we can find the Cepheid's period (frequency)
-   FREQ_LK=`lib/lk_compute_periodogram $TMPSTR 100 0.1 0.1 | awk '{print $1}'`
+   FREQ_LK=`lib/lk_compute_periodogram $TMPSTR 100 0.1 0.1 | grep 'LK' | awk '{print $1}'`
    # sqrt(a*a) is the sily way to get an absolute value of a
    #TEST=`echo "a=$FREQ_LK-0.211448;sqrt(a*a)<0.01" | bc -ql`
    TEST=`echo "$FREQ_LK" | awk '{if ( sqrt( ($1-0.211448)*($1-0.211448) ) < 0.01 ) print 1 ;else print 0 }'`
@@ -1476,7 +1476,7 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE210_NOT_PERFORMED" 
    fi
    # Check that we can find the Cepheid's period (frequency)
-   FREQ_LK=`lib/lk_compute_periodogram $TMPSTR 100 0.1 0.1 | awk '{print $1}'`
+   FREQ_LK=`lib/lk_compute_periodogram $TMPSTR 100 0.1 0.1 | grep 'LK' | awk '{print $1}'`
    # sqrt(a*a) is the sily way to get an absolute value of a
    #TEST=`echo "a=$FREQ_LK-0.211448;sqrt(a*a)<0.01" | bc -ql`
    TEST=`echo "$FREQ_LK" | awk '{if ( sqrt( ($1-0.211448)*($1-0.211448) ) < 0.01 ) print 1 ;else print 0 }'`
@@ -14044,54 +14044,74 @@ if [ -d ../individual_images_test ];then
   unset TELESCOP
   util/clean_data.sh
   cp default.sex.ccd_example default.sex
-  unset TELESCOP
-  export ASTROMETRYNET_LOCAL_OR_REMOTE="remote" 
-  util/wcs_image_calibration.sh ../individual_images_test/1630+3250.20150511T215921000.fit
-  export ASTROMETRYNET_LOCAL_OR_REMOTE=""
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE001"
+  if [ -f ../individual_images_test/1630+3250.20150511T215921000.fit ];then
+   unset TELESCOP
+   export ASTROMETRYNET_LOCAL_OR_REMOTE="remote" 
+   util/wcs_image_calibration.sh ../individual_images_test/1630+3250.20150511T215921000.fit
+   export ASTROMETRYNET_LOCAL_OR_REMOTE=""
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE001"
+   else
+    if [ ! -f wcs_1630+3250.20150511T215921000.fit ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE002"
+    else
+     lib/bin/xy2sky wcs_1630+3250.20150511T215921000.fit 200 200 &>/dev/null
+     if [ $? -ne 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE002a"
+     fi
+    fi # if [ ! -f wcs_1630+3250.20150511T215921000.fit ];then
+   fi # if [ $? -ne 0 ];then
+  else
+   FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"NOT_PERFORMING_REMOTE_PLATE_SOLVER_CHECK_FOR_1630_test"
   fi
-  if [ ! -f wcs_1630+3250.20150511T215921000.fit ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE002"
+  #
+  if [ -f ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit ];then
+   unset TELESCOP
+   cp default.sex.ccd_example default.sex
+   ASTROMETRYNET_LOCAL_OR_REMOTE="remote" util/wcs_image_calibration.sh ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE003"
+   else
+    if [ ! -f wcs_Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE004"
+    else
+     lib/bin/xy2sky wcs_Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit 200 200 &>/dev/null
+     if [ $? -ne 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE004a"
+     fi
+    fi # if [ ! -f wcs_Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit ];then
+   fi # if [ $? -ne 0 ];then
+  else
+   FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"NOT_PERFORMING_REMOTE_PLATE_SOLVER_CHECK_FOR_T30_test"
   fi
-  lib/bin/xy2sky wcs_1630+3250.20150511T215921000.fit 200 200 &>/dev/null
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE002a"
-  fi
-  unset TELESCOP
-  cp default.sex.ccd_example default.sex
-  ASTROMETRYNET_LOCAL_OR_REMOTE="remote" util/wcs_image_calibration.sh ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE003"
-  fi
-  if [ ! -f wcs_Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE004"
-  fi
-  lib/bin/xy2sky wcs_Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit 200 200 &>/dev/null
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE004a"
-  fi
-  unset TELESCOP
-  cp default.sex.beta_Cas_photoplates default.sex
-  ASTROMETRYNET_LOCAL_OR_REMOTE="remote" util/wcs_image_calibration.sh ../individual_images_test/SCA13320__00_00.fits
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE005"
-  fi
-  if [ ! -f wcs_SCA13320__00_00.fits ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE006"
-  fi
-  lib/bin/xy2sky wcs_SCA13320__00_00.fits 200 200 &>/dev/null
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE006a"
+  #
+  if [ -f ../individual_images_test/SCA13320__00_00.fits ];then
+   unset TELESCOP
+   cp default.sex.beta_Cas_photoplates default.sex
+   ASTROMETRYNET_LOCAL_OR_REMOTE="remote" util/wcs_image_calibration.sh ../individual_images_test/SCA13320__00_00.fits
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE005"
+   else
+    if [ ! -f wcs_SCA13320__00_00.fits ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE006"
+    else
+     lib/bin/xy2sky wcs_SCA13320__00_00.fits 200 200 &>/dev/null
+     if [ $? -ne 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE006a"
+     fi
+    fi # if [ ! -f wcs_SCA13320__00_00.fits ];then
+   fi # if [ $? -ne 0 ];then
+  else
+   FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"NOT_PERFORMING_REMOTE_PLATE_SOLVER_CHECK_FOR_SCA13320_test"
   fi
   #
   if [ -f ../M31_ISON_test/M31-1-001-001_dupe-1.fts ];then
@@ -14114,7 +14134,7 @@ if [ -d ../individual_images_test ];then
     fi # if [ ! -f wcs_M31-1-001-001_dupe-1.fts ];then
    fi # if [ $? -ne 0 ];then # util/wcs_image_calibration.sh exit with code 0 (success)
   else
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMING_REMOTE_PLATE_SOLVER_CHECK_FOR_M31_ISON_test"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"NOT_PERFORMING_REMOTE_PLATE_SOLVER_CHECK_FOR_M31_ISON_test"
   fi
   # restore default settings file, just in case
   cp default.sex.ccd_example default.sex
@@ -15410,7 +15430,7 @@ fi
 
 PERIOD_SEARCH_SERVERS="none scan.sai.msu.ru vast.sai.msu.ru"
 # Local period search
-LOCAL_FREQUENCY_CD=`lib/lk_compute_periodogram ../vast_test_lightcurves/out00095_edit_edit.dat 2 0.1 0.1 | awk '{printf "%.4f",$1}'`
+LOCAL_FREQUENCY_CD=`lib/lk_compute_periodogram ../vast_test_lightcurves/out00095_edit_edit.dat 2 0.1 0.1 | grep 'LK' | awk '{printf "%.4f",$1}'`
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH001"
@@ -16733,22 +16753,22 @@ TEST_PASSED=1
 echo "Performing the second period search test " 1>&2
 echo -n "Performing the second period search test: " >> vast_test_report.txt 
 
-lib/ls_compute_periodogram lib/test/hads_p0.060.dat 0.20 0.05 0.1 | grep "16.661" &>/dev/null
+lib/ls_compute_periodogram lib/test/hads_p0.060.dat 0.20 0.05 0.1 | grep 'LS' | grep "16.661" &>/dev/null
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH001"
 fi
-lib/lk_compute_periodogram lib/test/hads_p0.060.dat 1.0 0.05 0.1 | grep "16.661" &>/dev/null
+lib/lk_compute_periodogram lib/test/hads_p0.060.dat 1.0 0.05 0.1 | grep 'LK' | grep "16.661" &>/dev/null
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH101"
 fi
-lib/deeming_compute_periodogram lib/test/hads_p0.060.dat 1.0 0.05 0.1 | grep "16.661" &>/dev/null
+lib/deeming_compute_periodogram lib/test/hads_p0.060.dat 1.0 0.05 0.1 | grep 'DFT' | grep "16.661" &>/dev/null
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH102"
 fi
-lib/deeming_compute_periodogram lib/test/hads_p0.060.dat 1.0 0.05 0.1 10 2>/dev/null | grep "16.661" | grep -- '+/-' &> /dev/null
+lib/deeming_compute_periodogram lib/test/hads_p0.060.dat 1.0 0.05 0.1 10 2>/dev/null | grep 'DFT' | grep "16.661" | grep -- '+/-' &> /dev/null
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH103"
@@ -16758,7 +16778,7 @@ if [ $NUMBER -ne 3 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH104"
 fi
-FAP=`lib/ls_compute_periodogram lib/test/hads_p0.060.dat 0.20 0.05 0.1 | awk '{print $5}'`
+FAP=`lib/ls_compute_periodogram lib/test/hads_p0.060.dat 0.20 0.05 0.1 | grep 'LS' | awk '{print $5}'`
 if [ $FAP -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH105"
@@ -17378,7 +17398,7 @@ else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_003"
   else
-   lib/lk_compute_periodogram IOMC_2677000065.txt 100 1.0 0.1 | grep --quiet '0.308703'
+   lib/lk_compute_periodogram IOMC_2677000065.txt 100 1.0 0.1 | grep 'LK' | grep --quiet '0.308703'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_LK_local_period_search_failed"
