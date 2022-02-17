@@ -797,6 +797,8 @@ void mark_images_with_elongated_stars_as_bad(char **input_images, int *vast_bad_
  median_a_minus_b= gsl_stats_median_from_sorted_data(a_minus_b__image__to_be_runied_by_sort, 1, Num);
  sigma_from_MAD_a_minus_b= esimate_sigma_from_MAD_of_sorted_data(a_minus_b__image__to_be_runied_by_sort, (long)Num);
  free(a_minus_b__image__to_be_runied_by_sort);
+ // !!! We should consider the possibility that sigma_from_MAD_a_minus_b= 0.0
+ // !!! and median_a_minus_b= -0.001
 
  // Write-down the name of the new reference image
  file= fopen("vast_automatically_rejected_images_with_elongated_stars.log", "w");
@@ -3442,8 +3444,10 @@ int main(int argc, char **argv) {
   if( debug != 0 )
    fprintf(stderr, "DEBUG MSG: filter_MagPSFchi2()\n");
   if( param_filterout_magsize_outliers == 1 )
-   counter_rejected_bad_psf_fit= filter_on_float_parameters(STAR1, NUMBER1, sextractor_catalog, -2); // psfchi2
-                                                                                                     /*
+  /// !!! Disable PSF fit quality filter - it never works well (see also below) !!!
+//   counter_rejected_bad_psf_fit= filter_on_float_parameters(STAR1, NUMBER1, sextractor_catalog, -2); // psfchi2
+  counter_rejected_bad_psf_fit= 0;
+/*                                                                                                     
   if ( param_filterout_magsize_outliers != 1 ) {
    // do this ONLY if no other filtering will be done, otherwise it will mess-up the flags
    if ( debug != 0 )
@@ -4026,7 +4030,9 @@ int main(int argc, char **argv) {
      if( debug != 0 )
       fprintf(stderr, "DEBUG MSG: filter_MagPSFchi2()\n");
      if( param_filterout_magsize_outliers == 1 )
-      counter_rejected_bad_psf_fit= filter_on_float_parameters(STAR2, NUMBER2, sextractor_catalog, -2); // psfchi2
+     /// !!! Disable PSF fit quality filter - it never works well (see also above) !!!
+//      counter_rejected_bad_psf_fit= filter_on_float_parameters(STAR2, NUMBER2, sextractor_catalog, -2); // psfchi2
+      counter_rejected_bad_psf_fit= 0;
                                                                                                         /*
      if ( param_filterout_magsize_outliers != 1 ) {
       if ( debug != 0 )
