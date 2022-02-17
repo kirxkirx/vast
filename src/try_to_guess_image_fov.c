@@ -409,7 +409,8 @@ int try_to_recognize_telescop_keyword(char *fitsfilename, double *estimated_fov_
  if( strlen(telescop) >= 28 ) { //01234567890
   pointer_to_the_key_start= (char *)memmem(telescop, strlen(telescop), "CMO SAI MSU ASA RC600 PHOTON", 28);
   if( pointer_to_the_key_start != NULL ) {
-   (*estimated_fov_arcmin)= 22.8;
+   //(*estimated_fov_arcmin)= 22.8;
+   (*estimated_fov_arcmin)= 20.0; // not sure, but this migth work better in practice than the actual value
    return 0;
   }
  }
