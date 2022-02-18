@@ -13205,26 +13205,28 @@ if [ -f ../individual_images_test/SCA13320__00_00.fits ];then
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES 104HER000"
- fi
- if [ ! -f wcs_SCA13320__00_00.fits ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES 104HER001"
- fi 
- lib/bin/xy2sky wcs_SCA13320__00_00.fits 200 200 &>/dev/null
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES 104HER001a"
- fi
- if [ ! -f wcs_SCA13320__00_00.fits.cat.ucac5 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES 104HER002"
  else
-  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_SCA13320__00_00.fits.cat.ucac5 | wc -l | awk '{print $1}'`
-  if [ $TEST -lt 700 ];then
+  if [ ! -f wcs_SCA13320__00_00.fits ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES 104HER002a_$TEST"
-  fi
- fi 
+   FAILED_TEST_CODES="$FAILED_TEST_CODES 104HER001"
+  else 
+   lib/bin/xy2sky wcs_SCA13320__00_00.fits 200 200 &>/dev/null
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES 104HER001a"
+   fi
+   if [ ! -f wcs_SCA13320__00_00.fits.cat.ucac5 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES 104HER002"
+   else
+    TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_SCA13320__00_00.fits.cat.ucac5 | wc -l | awk '{print $1}'`
+    if [ $TEST -lt 700 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES 104HER002a_$TEST"
+    fi
+   fi # if [ ! -f wcs_SCA13320__00_00.fits.cat.ucac5 ];then
+  fi # if [ ! -f wcs_SCA13320__00_00.fits ];then
+ fi # if [ $? -ne 0 ];then 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
   echo -e "\n\033[01;34m104 Her test \033[01;32mPASSED\033[00m" 1>&2
