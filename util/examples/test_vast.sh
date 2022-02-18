@@ -12747,7 +12747,9 @@ if [ -f ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit 
  fi
  #
  FOV=`lib/try_to_guess_image_fov ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit | awk '{print $1}'`
- if [ "$FOV" != "23" ];then
+ # Changed to the fake value that might work better than the real ones
+ #if [ "$FOV" != "23" ];then
+ if [ "$FOV" != "20" ] && [ "$FOV" != "23" ] ;then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600004"
  fi
@@ -12816,7 +12818,8 @@ if [ -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fi
  fi
  #
  FOV=`lib/try_to_guess_image_fov ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit | awk '{print $1}'`
- if [ "$FOV" != "23" ];then
+ # Changed to the fake value that might work better than the real one
+ if [ "$FOV" != "20" ] && [ "$FOV" != "23" ] ;then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B004"
  fi
