@@ -368,6 +368,7 @@ DEBUG_OUTPUT=""
 FAILED_TEST_CODES=""
 WORKDIR="$PWD"
 VAST_VERSION_STRING=`./vast --version`
+VAST_BUILD_NUMBER=`cat .cc.build`
 STARTTIME_UNIXSEC=`date +%s`
 # BSD date will not understand `date -d @$STARTTIME_UNIXSEC`
 #STARTTIME_HUMAN_RADABLE=`date -d @$STARTTIME_UNIXSEC`
@@ -394,6 +395,7 @@ else
  sysctl -a | grep -e "hw.machine_arch" -e "hw.model" -e "hw.ncpu" -e "hw.physmem" -e "hw.memsize" >> vast_test_report.txt
 fi
 echo "$VAST_VERSION_STRING compiled with "`cat .cc.version` >> vast_test_report.txt
+echo "VaST build number $VAST_BUILD_NUMBER" >> vast_test_report.txt
 export PATH="$PATH:lib/bin"
 sex -v >> vast_test_report.txt
 
