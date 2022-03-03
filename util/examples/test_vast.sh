@@ -9242,7 +9242,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0111a"
    GREP_RESULT=`grep "2022 02 12.0...  2459622.5...  10...  17:45:4.... -16:07:1..." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWATLASMIRA0110a ######
+###### NMWATLASMIRA0111a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2022 02 12.0...  2459622.5...  10...  17:45:4.... -16:07:1..." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -9275,7 +9275,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0112a"
    GREP_RESULT=`grep "2022 02 12.0...  2459622.5...  9...  17:37:2.... -16:21:1..." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWATLASMIRA0110a ######
+###### NMWATLASMIRA0112a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2022 02 12.0...  2459622.5...  9...  17:37:2.... -16:21:1..." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -9308,7 +9308,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0113a"
    GREP_RESULT=`grep "2022 02 12.0...  2459622.5...  1....  17:27:0.... -18:23:1..." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWATLASMIRA0110a ######
+###### NMWATLASMIRA0113a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2022 02 12.0...  2459622.5...  1....  17:27:0.... -18:23:1..." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -9341,7 +9341,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0114a"
    GREP_RESULT=`grep "2022 02 12.0...  2459622.5...  12...  17:41:2.... -17:31:4..." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWATLASMIRA0110a ######
+###### NMWATLASMIRA0114a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2022 02 12.0...  2459622.5...  12...  17:41:2.... -17:31:4..." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -9374,7 +9374,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0115a"
    GREP_RESULT=`grep "2022 02 12.0...  2459622.5...  12...  17:36:4.... -15:30:4..." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWATLASMIRA0110a ######
+###### NMWATLASMIRA0115a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2022 02 12.0...  2459622.5...  12...  17:36:4.... -15:30:4..." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -9407,7 +9407,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0116a"
    GREP_RESULT=`grep "2022 02 12.0...  2459622.5...  11...  17:32:1.... -14:02:...." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWATLASMIRA0110a ######
+###### NMWATLASMIRA0116a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2022 02 12.0...  2459622.5...  11...  17:32:1.... -14:02:...." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -9440,7 +9440,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0117a"
    GREP_RESULT=`grep "2022 02 12.0...  2459622.5...  10...  17:36:1.... -16:34:3..." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWATLASMIRA0110a ######
+###### NMWATLASMIRA0117a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2022 02 12.0...  2459622.5...  10...  17:36:1.... -16:34:3..." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
@@ -9473,7 +9473,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0118a"
    GREP_RESULT=`grep "2022 02 12.0...  2459622.5...  9...  17:29:1.... -13:21:0..." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWATLASMIRA0110a ######
+###### NMWATLASMIRA0118a ######
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2022 02 12.0...  2459622.5...  9...  17:29:1.... -13:21:0..." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
