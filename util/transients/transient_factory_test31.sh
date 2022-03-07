@@ -730,6 +730,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  fi
 
  ################## Quality cuts applied to calibrated magnitudes of the candidate transients ##################
+ cp -v candidates-transients.lst DEBUG_BACKUP_candidates-transients.lst
  echo "Filter-out faint candidates..." >> transient_factory_test31.txt
  echo "Filter-out faint candidates..."
  # Filter-out faint candidates

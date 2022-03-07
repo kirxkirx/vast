@@ -19,7 +19,9 @@ static inline int any_unusual_characters_in_string(char *fitsfilename) {
  for(i=0; i<string_size; i++){
   // allow the following characters in filename
   // ':' is needed because we also use the same function to check input coordinates string
-  if( 0==isalnum(fitsfilename[i]) && fitsfilename[i]!=' ' && fitsfilename[i]!='\\' && fitsfilename[i]!='/' && fitsfilename[i]!='.' && fitsfilename[i]!='_' && fitsfilename[i]!='-' && fitsfilename[i]!='+' && fitsfilename[i]!='~' && fitsfilename[i]!=',' && fitsfilename[i]!=';' && fitsfilename[i]!=':' ) {
+  // '[', ',', ']' are needed to use CFITSIO image cutout interface
+  //if( 0==isalnum(fitsfilename[i]) && fitsfilename[i]!=' ' && fitsfilename[i]!='\\' && fitsfilename[i]!='/' && fitsfilename[i]!='.' && fitsfilename[i]!='_' && fitsfilename[i]!='-' && fitsfilename[i]!='+' && fitsfilename[i]!='~' && fitsfilename[i]!=',' && fitsfilename[i]!=';' && fitsfilename[i]!=':' ) {
+  if( 0==isalnum(fitsfilename[i]) && fitsfilename[i]!=' ' && fitsfilename[i]!='\\' && fitsfilename[i]!='/' && fitsfilename[i]!='.' && fitsfilename[i]!='_' && fitsfilename[i]!='-' && fitsfilename[i]!='+' && fitsfilename[i]!='~' && fitsfilename[i]!=',' && fitsfilename[i]!=';' && fitsfilename[i]!=':' && fitsfilename[i]!='[' && fitsfilename[i]!=',' && fitsfilename[i]!=']' ) {
    fprintf(stderr,"ERROR in any_unusual_characters_in_string(): I'm unhappy with the character '%c' in the input string '%s'\n", fitsfilename[i], fitsfilename);
    return 1;
   }
@@ -165,6 +167,8 @@ static inline int fitsfile_read_check(char *fitsfilename) {
  long naxes3;
  long naxes4;
  //
+ unsigned int i,cfitsio_image_cutout;
+ //
  if( (int)strlen(fitsfilename)>FILENAME_LENGTH ) {
   fprintf(stderr, "ERROR in fitsfile_read_check(): the input filename is too long: %d bytes while FILENAME_LENGTH=%d %s\n", (int)strlen(fitsfilename), FILENAME_LENGTH, fitsfilename);
   return 1;
@@ -176,12 +180,22 @@ static inline int fitsfile_read_check(char *fitsfilename) {
  //
  // Check if the file exist at all
  FILE *testfile;
- testfile=fopen(fitsfilename, "r");
- if( testfile== NULL ){
-  fprintf(stderr, "ERROR opening file %s\n", fitsfilename);
-  return 1;
+ // do this check only if the file does not use CFITSIO image cutout interface
+ cfitsio_image_cutout= 0;
+ for( i=0; i<strlen(fitsfilename); i++ ) {
+  if( fitsfilename[i] == '[' ) {
+   cfitsio_image_cutout= 1;
+   break;
+  }
  }
- fclose(testfile);
+ if( cfitsio_image_cutout == 0 ) {
+  testfile=fopen(fitsfilename, "r");
+  if( testfile== NULL ){
+   fprintf(stderr, "ERROR opening file %s\n", fitsfilename);
+   return 1;
+  }
+  fclose(testfile);
+ }
  //
  // check if this is a readable FITS image
  fits_open_image(&fptr, fitsfilename, READONLY, &status);

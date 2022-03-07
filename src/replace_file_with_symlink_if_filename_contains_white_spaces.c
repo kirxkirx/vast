@@ -30,7 +30,15 @@ void replace_file_with_symlink_if_filename_contains_white_spaces(char *filename)
   fprintf(stderr, "ERROR in replace_file_with_symlink_if_filename_contains_white_spaces() the input is the NULL string!\n");
   return;
  }
- // Check
+ // Do not do the symlink thing if the file names uses CFITSIO image cutout interface
+ for( i=0; i < strlen(filename); i++ ) {
+  if( filename[i] == '[' ) {
+   fprintf(stderr, "WARNING from replace_file_with_symlink_if_filename_contains_white_spaces() the input filename seems to be using CFITSIO image cutout interface\n");
+   return;
+  }
+ }
+ 
+ 
  // Check that the input file actually exist
  if( 0 != stat(filename, &sb) ) {
   fprintf(stderr, "ERROR in replace_file_with_symlink_if_filename_contains_white_spaces() the input file %s does not exits\n", filename);
