@@ -2618,6 +2618,8 @@ int main(int argc, char **argv) {
   param_nodiscardell= 1;
   fprintf(stderr, "diffphot mode: will not display sigma-mag plot after completing the VaST run\n(you may display it manualy by running './find_candidates')\n");
   param_nofind= 1;
+  fprintf(stderr, "diffphot mode: disable automated reference image selection\n");
+  param_automatically_select_reference_image= 0;  
   fprintf(stderr, "################\n\n");
  }
 
