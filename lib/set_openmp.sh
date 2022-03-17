@@ -14,16 +14,23 @@ GCC_MINOR_VERSION=`$CC -dumpversion | cut -f2 -d.` ;
 
 GONOGO=0 # 0 - no-go; 1 - go
 
-if [ $GCC_MAJOR_VERSION -gt 4 ];then
- GONOGO=1
-fi
-
-# if >gcc-4.3  
-if [ $GCC_MAJOR_VERSION -ge 4 ];then 
- if [ $GCC_MINOR_VERSION -ge 3 ];then
+# $GCC_MAJOR_VERSION and $GCC_MINOR_VERSION may not be set properly
+if [ ! -z "$GCC_MAJOR_VERSION" ];then
+ if [ $GCC_MAJOR_VERSION -gt 4 ];then
   GONOGO=1
- fi 
-fi
+ fi
+
+ if [ ! -z "$GCC_MINOR_VERSION" ];then
+  # if >gcc-4.3  
+  if [ $GCC_MAJOR_VERSION -ge 4 ];then 
+   if [ $GCC_MINOR_VERSION -ge 3 ];then
+    GONOGO=1
+   fi 
+  fi
+ fi # if [ ! -z "$GCC_MINOR_VERSION" ];then
+fi # if [ ! -z "$GCC_MAJOR_VERSION" ];then
+
+
 
 # Disable OpenMP on systems with small physical memory as it may cause problems there
 if [ $GONOGO -eq 1 ];then
