@@ -667,6 +667,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
      SUGGESTED_NAME_STRING="Large-amplitude variable Gaia DR2 $GAIA_DR2_LARGE_AMP_VAR_RESULTS"
      SUGGESTED_TYPE_STRING="2021A&A...648A..44M"
      SUGGESTED_PERIOD_STRING=""
+     SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING (the VSX policy as of May 2022 seems to be not to regard variables from 2021A&A...648A..44M as new for the lack of classification)  "
      KNOWN_VARIABLE=1
     fi
    fi
