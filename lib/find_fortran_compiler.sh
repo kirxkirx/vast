@@ -201,12 +201,20 @@ if [ "$OS" != "Linux" ];then
 fi # if [ "$OS" != "Linux" ];then
 
 # General case
+FC="gfortran"
 GCC_MAJOR_VERSION=`$CC -dumpversion | cut -f1 -d.`
-if [ $GCC_MAJOR_VERSION -lt 4 ];then
- FC="g77"
+if [ $? -ne 0 ];then
+ echo "ERROR in $0 -- failed to get the GCC version: non-zero exit code for '$CC -dumpversion | cut -f1 -d.'" 1>&2
+fi
+if [ ! -z "$GCC_MAJOR_VERSION" ];then
+ if [ $GCC_MAJOR_VERSION -lt 4 ];then
+  FC="g77"
+ else
+  FC="gfortran"
+  # Do not perform gcc/g77 versions match check - it's too complex and who needs gcc-3.x anyway?
+ fi
 else
- FC="gfortran"
- # Do not perform gcc/g77 versions match check - it's too complex and who needs gcc-3.x anyway?
+ echo "ERROR in $0 -- failed to get the GCC version: empty version string" 1>&2
 fi
 
 # Check if there is a C compiler in the same dir as Fortran compiler

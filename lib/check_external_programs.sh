@@ -55,11 +55,12 @@ if [ $? -eq 0 ];then
   fi
   rm -f test.c
   echo -e "
-\033[01;31mThe development environment seems to be seriously broken!\033[00m
-The C compiler $CC 
-failed while producing a test executable file.
+\033[01;31mThe development environment seems to be seriously broken!\033[00m"
+  echo "The C compiler $CC "
+  ls -l $CC
+  echo "failed while producing a test executable file.
 
-Please fix this before compiling VaST."
+Please make sure you have a working GCC before compiling VaST."
   exit 1
  fi
  rm -f test.exe test.c

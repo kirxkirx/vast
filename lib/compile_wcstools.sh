@@ -18,7 +18,8 @@ export MFLAGS=""
 
 VAST_DIR=$PWD
 TARGET_DIR=$VAST_DIR/lib
-LIBRARY_SOURCE=$VAST_DIR/src/wcstools-3.9.6
+#LIBRARY_SOURCE=$VAST_DIR/src/wcstools-3.9.6
+LIBRARY_SOURCE=$VAST_DIR/src/wcstools-3.9.7
 
 #
 #PATH_TO_THIS_SCRIPT=`readlink -f $0`

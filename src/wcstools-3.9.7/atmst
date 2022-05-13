@@ -1,0 +1,61 @@
+#!/bin/ksh
+#
+# Run a command at MST time via 'at(1)', i.e. delaying the
+# right amount of time from the local time to the MST time.
+# 
+# For example, if the command should execute at 0730 MST, then
+# run it at 0730 local time, and the script will sleep the right 
+# amount of time (if we're east of MT, of course).
+#
+# check timezone info, then sleep for 
+# 0 to 3 hours and then exec the command given on the command line
+
+OS=$(uname -s)
+if [[ $OS == Linux ]]; then
+  hmbin=$HOME/bin.linux
+elif [[ $OS == SunOS ]]; then
+  hmbin=$HOME/bin.solaris
+fi  
+ 
+PATH=/data/oiropt/bin:/data/oir/bin:/bin:/usr/bin:/opt/bin:${hmbin}:$HOME/bin
+export PATH
+ 
+unixtime=$(mktime -F%t)                           # get time in sec
+
+target="US/Arizona"   # default for MST year-round
+t24=0                 # default check for >12 hours waiting
+debug="eval"          # "echo" for debugging, "eval" for normal use
+atshell=""            # at runs Bourne shell by default
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -24) t24=1; shift;;        # override warning if negative time (>12 hrs)
+     -z) target=$2; shift 2;;  # use -z to set to other time zones
+     -d) debug="echo"; shift;; # echos command instead of running it
+     -s) atshell=$2; shift 2;; # tell at to use a certain shell (see at(1))
+      *) break;;
+  esac
+done
+
+local=$(mktime -t $unixtime -F "%H")              # hour in local timezone
+remtime=$(TZ=$target mktime -t $unixtime -F "%H")  # hour in target timezone
+
+val=$((local - remtime))
+
+if [[ $val -eq 0 ]]; then $debug "$@"; exit; fi
+
+if [[ $val -lt -24 || $val -lt 0 && $t24 -eq 0 ]]; then 
+  echo "$0 wait time = $val hours?"; exit 1
+fi
+[[ $val -lt 0 ]] && val=$((val + 24))
+
+if [[ "$debug" == "echo" ]]; then
+   echo at $atshell now + $val hours", command= $*"
+else
+  comm="$1"; shift
+  for x in "$@"; do comm="$comm \"$x\""; done
+  at $atshell now + $val hours <<EOFoEOF 1>/dev/null 2>&1
+$comm
+EOFoEOF
+fi
+
