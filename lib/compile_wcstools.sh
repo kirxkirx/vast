@@ -23,6 +23,7 @@ TARGET_DIR=$VAST_DIR/lib
 # mv Makefile GNUmakefile
 # edit the CC line in GNUmakefile
 # add makefile that will run gmake
+# REPEAT THE SAME for wcstools-?.?.?/libwcs
 
 #LIBRARY_SOURCE=$VAST_DIR/src/wcstools-3.9.6
 LIBRARY_SOURCE=$VAST_DIR/src/wcstools-3.9.7
