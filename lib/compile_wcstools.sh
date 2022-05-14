@@ -48,6 +48,12 @@ fi
 # This symlink is needed by Makefile
 ln -s $VAST_DIR/lib/find_gcc_compiler.sh
 make clean
+
+# The oputput bin/ dir is needed for compilation
+if [ ! -d bin ];then
+ mkdir bin
+fi
+
 # Somehow -j9 doesnt work with the GNUmakefile hack
 #make -j9
 make
