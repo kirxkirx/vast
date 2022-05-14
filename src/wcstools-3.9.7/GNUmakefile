@@ -1,5 +1,6 @@
 CFLAGS= -g -D_FILE_OFFSET_BITS=64
-CC= cc
+#CC= cc
+CC := $(shell ./find_gcc_compiler.sh)
 LIBWCS = libwcs/libwcs.a
 LIBS = $(LIBWCS) -lm
 #LIBS = $(LIBWCS) -lm -lnsl -lsocket
