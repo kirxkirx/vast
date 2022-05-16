@@ -529,17 +529,50 @@ field identification have good chances to fail. Sorry... :(
   # Blind solve
   # old parameters - they work
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  $TIMEOUT_COMMAND 600 solve-field  --objs 1000 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  $TIMEOUT_COMMAND 900 solve-field  --objs 1000 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # has to be 900, otherwise cannot solve ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit resulting in test error SAIRC600B000
   #$TIMEOUT_COMMAND 600 solve-field  --objs 1000 --depth 1-10,11-20,21-30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   #$TIMEOUT_COMMAND 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   #
   # HACK Hack hack -- manually specify the field center and size
+  # 2022-Mar-29 02:00     12:08:38.06 +15:47:02.8
+  #$TIMEOUT_COMMAND 600 solve-field --ra 12:08:38.06 --dec +15:47:02.8 --radius 2.0 --objs 100 --depth 1-10,1-20  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # JWST 2022-Mar-28 02:10     11:59:54.41 +16:16:54.3
+  #$TIMEOUT_COMMAND 600 solve-field --ra 11:59:54.39 --dec +16:16:54.3 --radius 0.2 --objs 100 --depth 1-10,1-20  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # JWST 2022-Mar-21 01:20 A   10 59 27.58 +18 41 14.1
+  #$TIMEOUT_COMMAND 600 solve-field --ra 10:59:27.58 --dec +18:41:14.1 --radius 2.0 --objs 100 --depth 1-20  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # RA 2022 03 21 01:00  08:09:00.099   +06:42:00.95
+  #$TIMEOUT_COMMAND 600 solve-field --ra 08:09:00.099 --dec +06:42:00.95 --radius 2.0 --objs 100 --depth 1-20  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # RA 2022 03 09 02:00  07:14:54.055   +23:20:21.06
+  #$TIMEOUT_COMMAND 600 solve-field --ra 07:14:54.055 --dec +23:20:21.06 --radius 2.0 --objs 100 --depth 1-20  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # RA 2021 03 03 08:58:09.763   -07:32:21.96
+  #$TIMEOUT_COMMAND 600 solve-field --ra 08:58:09.763 --dec -07:32:21.96 --radius 1.0 --objs 100 --depth 1-20  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # JWST 2022-Mar-04 02:00     08:59:30.72 +17:44:20.5
+  #$TIMEOUT_COMMAND 600 solve-field --ra 08:59:30.72 --dec +17:44:20.5 --radius 0.5 --objs 100 --depth 1-20  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # JWST 2022-Mar-09 09:10     09:30:01.30 +18:50:55.0
+  #$TIMEOUT_COMMAND 600 solve-field --ra 09:30:01.30 --dec +18:50:55.0 --radius 0.5 --objs 100 --depth 1-20  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # RA 2021 09 30 09:30  07:59:52.171   +33:51:36.42
+  #$TIMEOUT_COMMAND 600 solve-field --ra 07:59:52.171 --dec +33:51:36.42 --radius 2.0 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # TCP J14420760-1758238 14:42:07.60 -17:58:23.0
+  #$TIMEOUT_COMMAND 600 solve-field --ra 14:42:07.60 --dec -17:58:23.0 --radius 0.1 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # ASASSN-22an
+  #$TIMEOUT_COMMAND 600 solve-field --ra 15:24:49.56 --dec -57:39:52.7 --radius 0.1 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # JWST 2022-01-26
+  #$TIMEOUT_COMMAND 600 solve-field --ra 07:00:49.58 --dec +05:44:15.4 --radius 0.3 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # JWST 2022-01-28
+  #$TIMEOUT_COMMAND 600 solve-field --ra 07:04:04.03 --dec +06:20:21.0 --radius 0.3 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # Fermi trans
+  #$TIMEOUT_COMMAND 600 solve-field --ra 06:14:31.20 --dec +17:13:48.0 --radius 0.4 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # Fermi transient near U Sco 16:23:16.80 -17:52:48.0
   #$TIMEOUT_COMMAND 600 solve-field --ra 16:23:16.80 --dec -17:52:48.0 --radius 0.8 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # TCP J04023940+4250546
   #$TIMEOUT_COMMAND 600 solve-field --ra 04:02:39.40 --dec +42:50:54.6 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # Nova Her
   #$TIMEOUT_COMMAND 600 solve-field --ra 18:57:30.98 --dec +16:53:39.6 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # PNV_J06501960 the dwarf nova
+  #$TIMEOUT_COMMAND 600 solve-field --ra 06:50:19.50 --dec +30:02:43.5 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # BT Mon
+  #$TIMEOUT_COMMAND 600 solve-field --ra 06:43:47.24 --dec -02:01:13.9 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # Gaia21dyi
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 17:26:19.38 --dec -33:27:10.66 --radius 0.2  --objs 1000 --depth 1-30,30-50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # j1408
