@@ -121,8 +121,9 @@ void compute_LS(double *jd, double *m, unsigned long N_obs, double f, double *LS
  //
  // "Numerical recipes in C" 1992nrca.book.....P Eq. (13.8.4) shows that the above thing should be divided by 
  // the variance of the data to get the normalization that can be used as the input of FAP calculations.
+ // The same is reported by 1986ApJ...302..757H
  //
- // Actually, man should be 0,0 as it only make sence to tun the LS computation on the mean-subtracted lightcurve!
+ // Actually, man should be 0,0 as it only make sence to run the LS computation on the mean-subtracted lightcurve!
  // We compute it here just for the sake of completeness.
  mean= 0.0;
  for( i= N_obs; i--; ) {
