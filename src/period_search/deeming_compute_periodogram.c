@@ -692,13 +692,26 @@ int main(int argc, char **argv) {
   if ( N_freq_presumably_independent > N_obs ) {
    N_freq_presumably_independent= N_obs;
   }
+  // alternative way of computing the number of independent frequencies from Horne & Baliunas (1986) eq. (13)
+  // https://ui.adsabs.harvard.edu/abs/1986ApJ...302..757H/abstract
+  double N_freq_presumably_independent__HorneBaliunas_style= -6.362 + 1.193 * N_obs + 0.00098 * N_obs * N_obs;
   // compute FAP
   double FAP_single= exp(-1.0*noshuffle_LS_periodogram_max);
   double Psingle= 1.0 - FAP_single;
   double FAP= 1.0 - pow(Psingle, (double)N_freq_presumably_independent);
+  double FAP__HorneBaliunas_style= 1.0 - pow(Psingle, N_freq_presumably_independent__HorneBaliunas_style);
   //
-  
-  fprintf(stdout, " LS  FAP= %lg for %ld presumably independent frequencies (FAP_single_freq= %lg )\n", FAP, N_freq_presumably_independent, FAP_single);
+//  fprintf(stdout, " LS  FAP= %lg for %ld presumably independent frequencies (FAP_single_freq= %lg )\n", FAP, N_freq_presumably_independent, FAP_single);
+//  fprintf(stdout, " LS  FAP_HB= %lg for %lg presumably independent frequencies (FAP_single_freq= %lg )\n", FAP__HorneBaliunas_style, N_freq_presumably_independent__HorneBaliunas_style, FAP_single);
+ 
+  fprintf(stdout, 
+" LS  FAP= %lg for %ld presumably independent frequencies computed Schwarzenberg-Czerny (2003) style, \
+FAP_HB= %lg for %lg presumably independent frequencies computed Horne & Baliunas (1986) style \
+(FAP_single_freq= %lg )\n", 
+           FAP, N_freq_presumably_independent, 
+           FAP__HorneBaliunas_style, N_freq_presumably_independent__HorneBaliunas_style, 
+           FAP_single);
+
   //
  }
  if( compute_Deeming == 1 ) {
