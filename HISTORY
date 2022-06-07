@@ -185,8 +185,9 @@
 	* Disabled photometric error rescaling as it works imperfectly and causes lots of confusion.
 	You may still perform the error rescaling manually by running 'util/rescale_photometric_errors'
 	* The new script 'util/make_finding_chart_script.sh' will use Swarp ( https://www.astromatic.net/software/swarp ) 
-	to resample the input WCS-calibrated image to the North-up, East-left orientation and make a good-looking finder
-	chart for the object specified by its RA and Dec.
+	to resample the input WCS-calibrated image to the North-up, East-left orientation and make good-looking finder 
+	charts for the object specified by its RA and Dec. The charts will be produced with a range of fields of view,
+	so one can choose the most appropriate one.
 	* You may display a WCS-calibrated image marking a specified celestial position on it by running:
 	./pgfv wcs_Sgr9_2020-9-1_17-35-4_002.fts -- 18:19:53.946 -30:41:19.78
 	here the wcs_*.fts file is the image, 18:19:53.946 -30:41:19.78 are the J2000 coordinates and

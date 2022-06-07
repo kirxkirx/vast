@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Specify how many pixels around the target you want to display
-# (how big the finding chart should be)
+# (how big the standard finding chart should be)
 PIXELS_AROUND_TARGET=64
 
 # Tweak the util/make_finding_chart command line options below
@@ -63,8 +63,14 @@ fi
 if [ -z "$3" ];then
  echo "This script will make a good looking finder chart from the input image.
  
-Usage: $0 wcs_calibrated_image.fits RA DEC
-Example: $0 wcs_calibrated_image.fits 12:34:56.78 -01:23:45.6"
+Usage: 
+$0 wcs_calibrated_image.fits RA DEC
+or
+$0 wcs_calibrated_image.fits RA DEC 'Target Name'
+Examples: 
+$0 wcs_calibrated_image.fits 12:34:56.78 -01:23:45.6
+or 
+$0 wcs_sds163_2022-6-6_22-14-49_001.fts 16:22:30.78 -17:52:42.8 'U Sco'"
 
 fi
 
@@ -184,3 +190,33 @@ mv -v "pgplot.png" resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_F
 
 # Note that you may combine multiple images side-by-side using something like
 # montage resample_wcs_Sco3_20*png -tile 3x2 -geometry +0+0 out.png
+
+
+###################################################################
+# Make a set of finding charts with different scales
+
+for PIXELS_AROUND_TARGET in 64 128 256 512 1024 ;do
+
+ echo "Plotting the finder chart with the field of view label"
+ # Make the PNG finding chart
+ COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --targetmark --datestringinsideimg --imgsizestringinsideimg resample_$FITSFILE $PIXEL_POSITION_TO_MARK "
+ echo $COMMAND
+ if [ ! -z "$4" ];then
+  $COMMAND --namelabel "$4"
+ else
+  $COMMAND
+ fi
+ if [ $? -ne 0 ];then
+  echo "ERROR running util/make_finding_chart"
+  exit 1
+ fi
+ if [ ! -s pgplot.png ];then
+  echo "ERROR: the output image pgplot.png does not exist or is empty"
+  exit 1
+ fi
+ # Everything is fine
+ PIXEL_POSITION_TO_MARK_FOR_PNG=${PIXEL_POSITION_TO_MARK//" "/_}
+ FITSFILE_NAME_FOR_PNG=${FITSFILE//./_}
+ mv -v "pgplot.png" finder_"$PIXELS_AROUND_TARGET"pix_resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix.png
+
+done
