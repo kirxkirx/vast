@@ -9,12 +9,12 @@ jobs:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     machine:
-      image: ubuntu-1604:202104-01
+      image: ubuntu-2204:2022.04.1
     # Add steps to the job
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
-      - run: "sudo sed -i.bak -r 's/(archive|security).ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list && sudo apt-get update && sudo apt-get install gfortran ghostscript bc && make"
+      - run: "sudo apt-get update && sudo apt-get install -f && sudo apt-get install gfortran ghostscript bc && make"
   build_ubuntu2004:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
@@ -24,12 +24,12 @@ jobs:
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
-      - run: "sudo apt-get update && sudo apt-get install gfortran ghostscript bc && make"
+      - run: "sudo apt-get update && sudo apt-get install -f && sudo apt-get install gfortran ghostscript bc && make"
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
   build-workflow:
     jobs:
-      - build_ubuntu1604
+      - build_ubuntu2204
       - build_ubuntu2004
