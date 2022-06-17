@@ -337,7 +337,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    if [ $N_SAME_IMAGE -gt 1 ];then
     # Stuck camera
     echo "ERROR the camera is stuck repeatedly sending the same image!"
-    echo "***** IMAGE PROCESSING ERROR (stuck camera repeatedly sending the same image) *****" >> transient_factory.log
+    echo "***** ACTION NEEDED - RESET CAMERA!!! *****   IMAGE PROCESSING ERROR (stuck camera repeatedly sending the same image) " >> transient_factory.log
     echo "###################################################################################" >> transient_factory.log
     echo "ERROR the camera is stuck repeatedly sending the same image!" >> transient_factory_test31.txt
     rm -f prelim_vast_run.log
