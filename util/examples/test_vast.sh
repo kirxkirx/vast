@@ -8743,13 +8743,13 @@ if [ -d ../NMW_Venus_test ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS000_EXIT_CODE"
  fi
- if [ -f transient_report/index.html ];then
-  grep --quiet 'ERROR' "transient_report/index.html"
+ if [ -f 'transient_report/index.html' ];then
+  grep --quiet 'ERROR' 'transient_report/index.html'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep 'ERROR' 'transient_report/index.html'`
+   CAT_RESULT=`cat 'transient_report/index.html' | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### VENUS_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT

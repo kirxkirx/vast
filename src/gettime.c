@@ -388,15 +388,29 @@ void fix_DATEOBS_STRING(char *DATEOBS) {
  char substring_year[32];
  int day, month, year;
 
- // check if this is an empty string (and assume that the date will be provided as 'JD' keyword)
- if( 0 == strlen(DATEOBS) )
+ // do nothing if this is a NULL string
+ if( NULL == DATEOBS ) {
+  fprintf(stderr,"ERROR in fix_DATEOBS_STRING(): NULL input string!\n");
   return;
+ }
+
+ // check if this is an empty string (and assume that the date will be provided as 'JD' keyword)
+ if( 0 == strlen(DATEOBS) ) {
+  return;
+ }
 
  // check if this is a normal '2004-07-05' style DATE-OBS
- for( i= 0; i < (int)strlen(DATEOBS); i++ )
+ for( i= 0; i < (int)strlen(DATEOBS); i++ ) {
   // if yes - do nothing
-  if( DATEOBS[i] == '-' )
+  if( DATEOBS[i] == '-' ) {
    return;
+  }
+ }
+
+ // reset strings, just in case
+ memset( substring_day, 0, 32 );
+ memset( substring_month, 0, 32 );
+ memset( substring_year, 0, 32 );
 
  // Parse '25/12/2011' style DATE-OBS
  for( i= 0, j= 0, date_part= 1; i < (int)strlen(DATEOBS); i++ ) {
@@ -488,6 +502,12 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format(char *DATEOBS) {
    return;
   }
  }
+
+
+ // reset strings, just in case
+ memset( substring_day, 0, 32 );
+ memset( substring_month, 0, 32 );
+ memset( substring_year, 0, 32 );
 
  for( i= 0; i < (int)strlen(DATEOBS); i++ )
 
