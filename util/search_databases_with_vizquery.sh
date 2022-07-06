@@ -660,6 +660,22 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    #  KNOWN_VARIABLE=1
    # fi
    #fi   
+   # Gaia DR3 variable
+   if [ $KNOWN_VARIABLE -eq 0 ];then
+    GAIA_DR3_VAR_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/358/varisum -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $1}' | grep -v \#`
+    if [ ! -z "$GAIA_DR3_VAR_RESULTS" ];then
+     SUGGESTED_NAME_STRING="Gaia DR3 varaible $GAIA_DR3_VAR_RESULTS"
+     SUGGESTED_TYPE_STRING=""
+     GAIA_DR3_VAR_TYPE_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/358/vclassre -out.max=1 -out.form=mini  Source=$GAIA_DR3_VAR_RESULTS 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $4}' | grep -v \#`
+     if [ ! -z "$GAIA_DR3_VAR_TYPE_RESULTS" ];then
+      SUGGESTED_TYPE_STRING="$GAIA_DR3_VAR_TYPE_RESULTS (Gaia DR3)"
+     fi
+     SUGGESTED_PERIOD_STRING="2022yCat.1358....0G"
+     SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING Gaia DR3 varaible (the VSX policy as of July 2022 is to regard variables from Gaia DR3 as 'known')  "
+     KNOWN_VARIABLE=1
+    fi
+   fi
+   #
    # Gaia DR2 large amplitude variable
    if [ $KNOWN_VARIABLE -eq 0 ];then
     GAIA_DR2_LARGE_AMP_VAR_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/A+A/648/A44/tabled1 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $1}' | grep -v \#`
