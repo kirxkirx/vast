@@ -355,7 +355,7 @@ $GOOD_CATALOG_NAME_USNOB" > search_databases_with_vizquery_USNOB_ID_OK.tmp
 done
 
 
-###### GAIA DR2 #####
+###### GAIA DR3 #####
 # by default we don't have an ID
 if [ -f search_databases_with_vizquery_GAIA_ID_OK.tmp ];then
  rm -f search_databases_with_vizquery_GAIA_ID_OK.tmp
@@ -398,9 +398,9 @@ fi
 #DOUBLE_R_SEARCH_ARCSEC=`echo "$R_SEARCH_ARCSEC*2" | bc -ql`
 DOUBLE_R_SEARCH_ARCSEC=`echo "$R_SEARCH_ARCSEC" | awk '{print 2*$1}'`
 echo " "
-echo "Searching Gaia DR2 for the brightest objects within $R_SEARCH_ARCSEC\" around $RA $DEC in the range of $GMAG_RANGE"
-echo "$TIMEOUTCOMMAND $VAST_PATH""lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/gaia2 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c='$RA $DEC' $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,Var"
-$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/gaia2 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c="$RA $DEC" $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null |grep -v \# | grep -v "\-\-\-" |grep -v "sec" | grep -v 'Gma' |grep -v "RA_ICRS" | grep -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE' | while read R GAIA_SOURCE GAIA_CATRA_DEG GAIA_CATDEC_DEG GMAG VARFLAG REST ;do
+echo "Searching Gaia DR3 for the brightest objects within $R_SEARCH_ARCSEC\" around $RA $DEC in the range of $GMAG_RANGE"
+echo "$TIMEOUTCOMMAND $VAST_PATH""lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c='$RA $DEC' $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag"
+$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c="$RA $DEC" $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag 2>/dev/null |grep -v \# | grep -v "\-\-\-" |grep -v "sec" | grep -v 'Gma' |grep -v "RA_ICRS" | grep -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE' | while read R GAIA_SOURCE GAIA_CATRA_DEG GAIA_CATDEC_DEG GMAG VARFLAG REST ;do
  # skip stars with unknown Gmag
  if [ -z $GMAG ] ;then
   continue
@@ -457,40 +457,40 @@ else
 fi
 # Exit if therere is no reliable ID with astrometric catalog
 if [ ! -f search_databases_with_vizquery_GAIA_ID_OK.tmp ];then
- echo "Could not match the source with Gaia DR2 :("
+ echo "Could not match the source with Gaia DR3 :("
 else
  GOOD_CATALOG_POSITION_GAIA=`head -n1 search_databases_with_vizquery_GAIA_ID_OK.tmp`
  GOOD_CATALOG_POSITION="$GOOD_CATALOG_POSITION_GAIA"
  GOOD_CATALOG_NAME_GAIA=`head -n2 search_databases_with_vizquery_GAIA_ID_OK.tmp | tail -n1`
- GOOD_CATALOG_NAME="Gaia DR2 $GOOD_CATALOG_NAME_GAIA"
+ GOOD_CATALOG_NAME="Gaia DR3 $GOOD_CATALOG_NAME_GAIA"
  VARFLAG=`tail -n1 search_databases_with_vizquery_GAIA_ID_OK.tmp`
  while [ ${#VARFLAG} -lt 13 ];do
   VARFLAG="$VARFLAG "
  done
 
- SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING Gaia2var=$VARFLAG "
+ SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING Gaia3var=$VARFLAG "
  rm -f search_databases_with_vizquery_GAIA_ID_OK.tmp
  # Get additional variability info from Gaia
- # Gaia short-time var
- $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/shortts -out.max=10 -out.form=mini Source="$GOOD_CATALOG_NAME_GAIA" 2>/dev/null | grep -v \# | grep --quiet "$GOOD_CATALOG_NAME_GAIA"
- if [ $? -eq 0 ];then
-  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING Gaia2_SHORTTS "
- fi
- # Gaia Cepheids
- $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/cepheid -out.max=10 -out.form=mini Source="$GOOD_CATALOG_NAME_GAIA" 2>/dev/null | grep -v \# | grep --quiet "$GOOD_CATALOG_NAME_GAIA"
- if [ $? -eq 0 ];then
-  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING Gaia2_CEPHEID "
- fi
- # Gaia RR Lyrae
- $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/rrlyrae -out.max=10 -out.form=mini Source="$GOOD_CATALOG_NAME_GAIA" 2>/dev/null | grep -v \# | grep --quiet "$GOOD_CATALOG_NAME_GAIA"
- if [ $? -eq 0 ];then
-  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING Gaia2_RRLYR "
- fi
- # Gaia LPV
- $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/lpv -out.max=10 -out.form=mini Source="$GOOD_CATALOG_NAME_GAIA" 2>/dev/null | grep -v \# | grep --quiet "$GOOD_CATALOG_NAME_GAIA"
- if [ $? -eq 0 ];then
-  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING Gaia2_LPV "
- fi
+# # Gaia short-time var
+# $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/shortts -out.max=10 -out.form=mini Source="$GOOD_CATALOG_NAME_GAIA" 2>/dev/null | grep -v \# | grep --quiet "$GOOD_CATALOG_NAME_GAIA"
+# if [ $? -eq 0 ];then
+#  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING Gaia2_SHORTTS "
+# fi
+# # Gaia Cepheids
+# $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/cepheid -out.max=10 -out.form=mini Source="$GOOD_CATALOG_NAME_GAIA" 2>/dev/null | grep -v \# | grep --quiet "$GOOD_CATALOG_NAME_GAIA"
+# if [ $? -eq 0 ];then
+#  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING Gaia2_CEPHEID "
+# fi
+# # Gaia RR Lyrae
+# $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/rrlyrae -out.max=10 -out.form=mini Source="$GOOD_CATALOG_NAME_GAIA" 2>/dev/null | grep -v \# | grep --quiet "$GOOD_CATALOG_NAME_GAIA"
+# if [ $? -eq 0 ];then
+#  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING Gaia2_RRLYR "
+# fi
+# # Gaia LPV
+# $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/lpv -out.max=10 -out.form=mini Source="$GOOD_CATALOG_NAME_GAIA" 2>/dev/null | grep -v \# | grep --quiet "$GOOD_CATALOG_NAME_GAIA"
+# if [ $? -eq 0 ];then
+#  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING Gaia2_LPV "
+# fi
  #
 fi
 
@@ -762,7 +762,7 @@ if [ ! -z "$GOOD_CATALOG_NAME_GAIA" ];then
 
  #########################################################
  echo "New summary string:"
- echo -n " $STAR_NAME | $SUGGESTED_NAME_STRING | $GOOD_CATALOG_POSITION_GAIA(Gaia DR2)  | $SUGGESTED_TYPE_STRING | $SUGGESTED_PERIOD_STRING | $SUGGESTED_COMMENT_STRING"
+ echo -n " $STAR_NAME | $SUGGESTED_NAME_STRING | $GOOD_CATALOG_POSITION_GAIA(Gaia DR3)  | $SUGGESTED_TYPE_STRING | $SUGGESTED_PERIOD_STRING | $SUGGESTED_COMMENT_STRING"
  # Add 2MASS color and spectral type guess as a final comment
  if [ -f 2mass.tmp ];then
   cat 2mass.tmp
@@ -775,19 +775,22 @@ if [ ! -z "$GOOD_CATALOG_NAME_GAIA" ];then
 This may be a know variable star according to the titles of VizieR catalogs it is listed in:
 $GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS"
  fi
- 
- echo "$SUGGESTED_COMMENT_STRING" | grep --quiet -e 'CONSTANT' -e 'VARIABLE'
- if [ $? -eq 0 ];then
-  echo "
 
-You may get Gaia time-resolved photometry for this source by running
+# Temporary disable Gaia lightcurve download before I figure out how to get Gaia DR3 epoch photometry
+# 
+# echo "$SUGGESTED_COMMENT_STRING" | grep --quiet -e 'CONSTANT' -e 'VARIABLE'
+# if [ $? -eq 0 ];then
+#  echo "
+#
+#You may get Gaia time-resolved photometry for this source by running
+#
+#util/get_gaia_lc.sh $GOOD_CATALOG_NAME_GAIA
+#" 1>&2
+#  # Automatically get the lightcurve
+#  "$VAST_PATH"util/get_gaia_lc.sh $GOOD_CATALOG_NAME_GAIA
+#  #
+# fi
 
-util/get_gaia_lc.sh $GOOD_CATALOG_NAME_GAIA
-" 1>&2
-  # Automatically get the lightcurve
-  "$VAST_PATH"util/get_gaia_lc.sh $GOOD_CATALOG_NAME_GAIA
-  #
- fi
 fi
 
 

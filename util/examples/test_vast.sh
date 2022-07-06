@@ -15827,40 +15827,40 @@ if [ $? -ne 0 ];then
 fi
 
 # MASTER_OT J132104.04+560957.8 - AM CVn star, Gaia short timescale variable
-util/search_databases_with_vizquery.sh 200.26675923087 +56.16607967965 | grep -e 'V0496 UMa' -e 'MASTER_OT J132104.04+560957.8' | grep --quiet 'Gaia2_SHORTTS'
+util/search_databases_with_vizquery.sh 200.26675923087 +56.16607967965 | grep -e 'V0496 UMa' -e 'MASTER_OT J132104.04+560957.8' | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_SHORTTS'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT013"
 fi
 
 # Gaia Cepheid, first in the list
-util/search_databases_with_vizquery.sh 237.17375455558 -42.26556630747 | grep 'VARIABLE' | grep --quiet 'Gaia2_CEPHEID'
+util/search_databases_with_vizquery.sh 237.17375455558 -42.26556630747 | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_CEPHEID'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT014"
 fi
 
 # Gaia RR Lyr, first in the list
-util/search_databases_with_vizquery.sh 272.04211425638 -25.91123076425 | grep 'RRAB' | grep 'VARIABLE' | grep --quiet 'Gaia2_RRLYR'
+util/search_databases_with_vizquery.sh 272.04211425638 -25.91123076425 | grep 'RRAB' | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_RRLYR'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT015"
 fi
 
 # Gaia LPV, first in the list. Do not mix it up with OGLE-BLG-RRLYR-01707 that is 36" away!
-util/search_databases_with_vizquery.sh 265.86100820754 -34.10333534797 | grep -v 'OGLE-BLG-RRLYR-01707' | grep 'OGLE-BLG-LPV-022489' | grep 'VARIABLE' | grep --quiet 'Gaia2_LPV'
+util/search_databases_with_vizquery.sh 265.86100820754 -34.10333534797 | grep -v 'OGLE-BLG-RRLYR-01707' | grep 'OGLE-BLG-LPV-022489' | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_LPV'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT016"
 fi
 
 # Check that we are correctly formatting the OGLE variable name
-util/search_databases_with_vizquery.sh 17:05:07.49 -32:37:57.2 | grep 'OGLE-BLG-RRLYR-00001' | grep 'VARIABLE' | grep --quiet 'Gaia2_RRLYR'
+util/search_databases_with_vizquery.sh 17:05:07.49 -32:37:57.2 | grep 'OGLE-BLG-RRLYR-00001' | grep --quiet 'VARIABLE' # | grep --quiet 'Gaia2_RRLYR'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT017"
 fi
-util/search_databases_with_vizquery.sh `lib/hms2deg 17:05:07.49 -32:37:57.2` | grep 'OGLE-BLG-RRLYR-00001' | grep 'VARIABLE' | grep --quiet 'Gaia2_RRLYR'
+util/search_databases_with_vizquery.sh `lib/hms2deg 17:05:07.49 -32:37:57.2` | grep 'OGLE-BLG-RRLYR-00001' | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_RRLYR'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT018"
