@@ -14804,7 +14804,7 @@ if [ $? -eq 0 ];then
  if [ -z "$HOSTNAME" ];then
   HOSTNAME="$HOST"
  fi
- if [ "$HOSTNAME" = "eridan" ] || [ "$HOSTNAME" = "moria" ] ;then
+ if [ "$HOSTNAME" = "eridan" ] || [ "$HOSTNAME" = "moria" ] || [ "$HOSTNAME" = "kadar" ] ;then
   if [ -d ../sample_data ];then
    TEST_PASSED=1
    util/clean_data.sh
