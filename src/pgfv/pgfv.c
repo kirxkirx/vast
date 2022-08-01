@@ -320,6 +320,9 @@ void print_pgfv_help() {
  fprintf(stderr, "press 'M' to turn star markers on/off.\n");
  fprintf(stderr, "press 'X' or right click to exit!\nclick on image to get coordinates and value of the current pixel.\n");
  fprintf(stderr, "\n");
+ fprintf(stderr, "press '2' to perform manual single-image magnitude calibration.\n");
+ fprintf(stderr, "press '4' to perform automated single-image magnitude calibration.\n");
+ fprintf(stderr, "\n");
  return;
 }
 
@@ -2634,7 +2637,7 @@ int main(int argc, char **argv) {
       //
       if( 1 == use_imagesizestringinsideimg ) {
        if( 0 == get_string_with_fov_of_wcs_calibrated_image(fits_image_name, fov_string, &fov_float, finder_chart_mode, finder_char_pix_around_the_target) ) {
-        fprintf(stderr, "The image is %s\n", fov_string);
+        fprintf(stderr, "The image has %s\n", fov_string);
         if( 1 == use_datestringinsideimg ) {
          //cpgsch(1.0);
          //cpgmtxt("B", -2.2, 0.05, 0.0, fov_string);
@@ -2666,14 +2669,14 @@ int main(int argc, char **argv) {
        }
        // up
        lineX[0]=markX;
-       lineY[0]=markY+5.0*marker_scaling;
+       lineY[0]=markY+9.0*marker_scaling;
        lineX[1]=markX;
-       lineY[1]=markY+5.0*marker_scaling+15.0*marker_scaling;
+       lineY[1]=markY+9.0*marker_scaling+15.0*marker_scaling;
        cpgline(2, lineX, lineY);
        // right
-       lineX[0]=markX+5.0*marker_scaling;
+       lineX[0]=markX+9.0*marker_scaling;
        lineY[0]=markY;
-       lineX[1]=markX+5.0*marker_scaling+15.0*marker_scaling;
+       lineX[1]=markX+9.0*marker_scaling+15.0*marker_scaling;
        lineY[1]=markY;
        cpgline(2, lineX, lineY);       
        //

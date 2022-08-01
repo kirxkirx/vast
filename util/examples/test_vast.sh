@@ -15887,6 +15887,13 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT019b"
 fi
 
+# Check good formatting of Skiff's spectral type
+util/search_databases_with_vizquery.sh 20:07:36.82 +44:06:55.1 | grep --quiet 'SpType: G5/K1IV 2016A&A...594A..39F'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_SKIFFSPTYPEFORMAT"
+fi
+
 
 ### Test the local catalog search thing
 lib/catalogs/check_catalogs_offline 17.25656 47.30456 | grep --quiet 'ASASSN-V J010901.57+471816.4'

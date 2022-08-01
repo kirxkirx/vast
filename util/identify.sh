@@ -213,7 +213,7 @@ if [ $? -ne 0 ];then
  echo "WARNING: the input file $FITSFILE seems to be a FITS image that does not fully comply with the FITS standard.
 Checking if the filename extension and FITS header look reasonable..."
  ## Exampt from the rule for files that have at least some correct keywords
- echo "$FITSFILE" | grep  -e ".fits"  -e ".FITS"  -e ".fts" -e ".FTS"  -e ".fit"  -e ".FIT" && "$VAST_PATH"util/listhead "$FITSFILE" | grep -e "SIMPLE  =                    T" -e "TELESCOP= 'Aristarchos'" && "$VAST_PATH"util/listhead "$FITSFILE" | grep -e "NAXIS   =                    2" -e "TELESCOP= 'Aristarchos'"
+ echo "$FITSFILE" | grep  -e ".fits"  -e ".FITS"  -e ".fts" -e ".FTS"  -e ".fit"  -e ".FIT" && "$VAST_PATH"util/listhead "$FITSFILE" | grep -e "SIMPLE  =                    T" -e "TELESCOP= 'Aristarchos'" && "$VAST_PATH"util/listhead "$FITSFILE" | grep -e "NAXIS   =                    2"  -e "NAXIS3  =                    1" -e "TELESCOP= 'Aristarchos'"
  if [ $? -eq 0 ];then
   echo "OK, let's assume this is a valid FITS file"
  else
@@ -529,12 +529,14 @@ field identification have good chances to fail. Sorry... :(
   # Blind solve
   # old parameters - they work
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  $TIMEOUT_COMMAND 900 solve-field  --objs 1000 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  #$TIMEOUT_COMMAND 900 solve-field  --objs 1000 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # has to be 900, otherwise cannot solve ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit resulting in test error SAIRC600B000
   #$TIMEOUT_COMMAND 600 solve-field  --objs 1000 --depth 1-10,11-20,21-30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   #$TIMEOUT_COMMAND 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   #
   # HACK Hack hack -- manually specify the field center and size
+  # TCPJ1524 15:24:47.60 -60:59:47.3
+  #$TIMEOUT_COMMAND 600 solve-field --ra 15:24:47.60 --dec -60:59:47.3 --radius 0.1 --objs 100 --depth 1-10,1-20,20-30 --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # 2022-Mar-29 02:00     12:08:38.06 +15:47:02.8
   #$TIMEOUT_COMMAND 600 solve-field --ra 12:08:38.06 --dec +15:47:02.8 --radius 2.0 --objs 100 --depth 1-10,1-20  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # JWST 2022-Mar-28 02:10     11:59:54.41 +16:16:54.3
@@ -568,7 +570,7 @@ field identification have good chances to fail. Sorry... :(
   # TCP J04023940+4250546
   #$TIMEOUT_COMMAND 600 solve-field --ra 04:02:39.40 --dec +42:50:54.6 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # Nova Her
-  #$TIMEOUT_COMMAND 600 solve-field --ra 18:57:30.98 --dec +16:53:39.6 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  $TIMEOUT_COMMAND 600 solve-field --ra 18:57:30.98 --dec +16:53:39.6 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # PNV_J06501960 the dwarf nova
   #$TIMEOUT_COMMAND 600 solve-field --ra 06:50:19.50 --dec +30:02:43.5 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # BT Mon
