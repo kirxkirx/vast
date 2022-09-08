@@ -561,8 +561,17 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
     # link the solved images and catalogs created with this SExtractorconfig file
     for i in "$WCSCACHEDIR/wcs_"$FIELD"_"*.fts "$WCSCACHEDIR/exclusion_list"* ;do
      if [ -s "$i" ];then
-      echo "Creating symlink $i" >> transient_factory_test31.txt
-      ln -s $i
+      # We need some quality check before trusting the solved reference images
+      # It may be one of the NMW archive images with broken WCS
+      FITS_IMAGE_TO_CHECK_HEADER=`"$VAST_PATH"util/listhead "$i"`
+      echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet 'A_0_0' && echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet 'PV1_1'
+      if [ $? -eq 0 ];then
+       echo "$0  -- WARNING, the input image has both A_0_0 and PV1_1 distortions kewords! Will try to re-solve the image."
+      else
+       #
+       echo "Creating symlink $i" >> transient_factory_test31.txt
+       ln -s $i
+      fi
      fi
     done
    else
