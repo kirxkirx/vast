@@ -17,6 +17,11 @@
 # Note, that in this example there are two reference and two second-epoch images.
 # The results will be presented as an HTML page transient_report/index.html
 #
+#################################
+
+# Normally should be YES,
+# if set to NO '===> POINTING ACCURACY LIMITS HARDCODED HERE <===' will be ignored.
+CHECK_POINTING_ACCURACY="YES"
 
 #################################
 # Set the safe locale that should be available on any POSIX system
@@ -639,19 +644,23 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>1.0" | bc -ql`
  TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>1.0" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
  if [ $TEST -eq 1 ];then
-  echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
-  echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg." >> transient_factory_test31.txt
-  break
-  # This should break us form the SEXTRACTOR_CONFIG_FILE cycle
+  if [ "$CHECK_POINTING_ACCURACY" = "YES" ] || [ "$CHECK_POINTING_ACCURACY" = "Yes" ] || [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
+   echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
+   echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg." >> transient_factory_test31.txt
+   break
+   # This should break us form the SEXTRACTOR_CONFIG_FILE cycle
+  fi
  fi
  ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
  #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | bc -ql`
  TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
  if [ $TEST -eq 1 ];then
-  echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
-  echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg." >> transient_factory_test31.txt
-  #break
-  # Not break'ing here, the offset is not hpelessly large and we want to keep candidates from this field
+  if [ "$CHECK_POINTING_ACCURACY" = "YES" ] || [ "$CHECK_POINTING_ACCURACY" = "Yes" ] || [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
+   echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
+   echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg." >> transient_factory_test31.txt
+   #break
+   # Not break'ing here, the offset is not hpelessly large and we want to keep candidates from this field
+  fi
  fi
 
  

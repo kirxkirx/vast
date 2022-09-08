@@ -289,6 +289,41 @@ FITSFILE=${FITSFILE//" "/_}
 #   echo -n " "$FITSFILE"__"$PIXEL_POSITION_TO_MARK"pix.png" >> transient_report/index.tmp
    echo -n " "$FITSFILE"__"$PIXEL_POSITION_TO_MARK"pix_nofov.png" >> transient_report/index.tmp
    echo " -tile 2x1 -geometry +0+0 finder_chart_v2.png" >> transient_report/index.tmp
+### Animated GIF 
+   echo -n "# Create GIF animation
+convert -delay 50 -loop 0   " >> transient_report/index.tmp
+ORIG_FITS_IMG="$REFERENCE_IMAGE"
+BASENAME_RESAMPLE_WCS_FITS_IMG="resample_wcs_"`basename "$REFERENCE_IMAGE"`
+# nope, we don't have a solved image when we run this
+PIXEL_POSITION_TO_MARK="*"
+FITSFILE=${BASENAME_RESAMPLE_WCS_FITS_IMG//./_}
+FITSFILE=${FITSFILE//" "/_}
+echo -n $FITSFILE"__"$PIXEL_POSITION_TO_MARK"pix.png" >> transient_report/index.tmp
+#
+ORIG_FITS_IMG=`tail -n1 $LIGHTCURVE_FILE_OUTDAT | awk '{print $7}'`
+BASENAME_RESAMPLE_WCS_FITS_IMG="resample_wcs_"`basename "$ORIG_FITS_IMG"`
+FITSFILE=${BASENAME_RESAMPLE_WCS_FITS_IMG//./_}
+FITSFILE=${FITSFILE//" "/_}
+#   echo -n " "$FITSFILE"__"$PIXEL_POSITION_TO_MARK"pix.png" >> transient_report/index.tmp
+   echo -n " "$FITSFILE"__"$PIXEL_POSITION_TO_MARK"pix_nofov.png" >> transient_report/index.tmp
+   echo " animation_v1.gif" >> transient_report/index.tmp
+### Animated GIF v2
+   echo -n "convert -delay 50 -loop 0   " >> transient_report/index.tmp
+PIXEL_POSITION_TO_MARK="*"
+ORIG_FITS_IMG="$REFERENCE_IMAGE"
+BASENAME_RESAMPLE_WCS_FITS_IMG="resample_wcs_"`basename "$REFERENCE_IMAGE"`
+FITSFILE=${BASENAME_RESAMPLE_WCS_FITS_IMG//./_}
+FITSFILE=${FITSFILE//" "/_}
+echo -n $FITSFILE"__"$PIXEL_POSITION_TO_MARK"pix.png" >> transient_report/index.tmp
+#
+ORIG_FITS_IMG=`tail -n2 $LIGHTCURVE_FILE_OUTDAT | head -n1 | awk '{print $7}'`
+BASENAME_RESAMPLE_WCS_FITS_IMG="resample_wcs_"`basename "$ORIG_FITS_IMG"`
+FITSFILE=${BASENAME_RESAMPLE_WCS_FITS_IMG//./_}
+FITSFILE=${FITSFILE//" "/_}
+#   echo -n " "$FITSFILE"__"$PIXEL_POSITION_TO_MARK"pix.png" >> transient_report/index.tmp
+   echo -n " "$FITSFILE"__"$PIXEL_POSITION_TO_MARK"pix_nofov.png" >> transient_report/index.tmp
+   echo " animation_v2.gif" >> transient_report/index.tmp
+
    echo "
 </pre>
 </div>" >> transient_report/index.tmp
