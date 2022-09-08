@@ -80,7 +80,14 @@ function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image
  ### !!! Blindly trust WCS if it was created by Astrometry.net code !!! ###
  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet -e 'HISTORY Created by the Astrometry.net suite.' -e 'HISTORY WCS created by AIJ link to Astronomy.net website'
  if [ $? -eq 0 ];then
-  return 1
+  # TEST for the possibility that this is one of the messed-up NMW archive images
+  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet 'A_0_0' && echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet 'PV1_1'
+  if [ $? -eq 0 ];then
+   echo "$0  -- WARNING, the input image has both A_0_0 and PV1_1 distortions kewords! Will try to re-solve the image."
+  else
+   # Trust this image
+   return 1
+  fi
  fi
  
  ### !!! Blindly trust WCS if it was created by SCAMP code !!! ###
@@ -529,7 +536,7 @@ field identification have good chances to fail. Sorry... :(
   # Blind solve
   # old parameters - they work
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  #$TIMEOUT_COMMAND 900 solve-field  --objs 1000 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  $TIMEOUT_COMMAND 900 solve-field  --objs 1000 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # has to be 900, otherwise cannot solve ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit resulting in test error SAIRC600B000
   #$TIMEOUT_COMMAND 600 solve-field  --objs 1000 --depth 1-10,11-20,21-30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   #$TIMEOUT_COMMAND 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
@@ -570,7 +577,7 @@ field identification have good chances to fail. Sorry... :(
   # TCP J04023940+4250546
   #$TIMEOUT_COMMAND 600 solve-field --ra 04:02:39.40 --dec +42:50:54.6 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # Nova Her
-  $TIMEOUT_COMMAND 600 solve-field --ra 18:57:30.98 --dec +16:53:39.6 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  #$TIMEOUT_COMMAND 600 solve-field --ra 18:57:30.98 --dec +16:53:39.6 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # PNV_J06501960 the dwarf nova
   #$TIMEOUT_COMMAND 600 solve-field --ra 06:50:19.50 --dec +30:02:43.5 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # BT Mon
