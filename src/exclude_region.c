@@ -117,7 +117,7 @@ int read_bad_lst(double *X1, double *Y1, double *X2, double *Y2, int *N) {
 
   // Don't print example region from bad_region.lst - 0 0 0 0
   if( X1[(*N)] != 0.0 || Y1[(*N)] != 0.0 || X2[(*N)] != 0.0 || Y2[(*N)] != 0.0 ) {
-   fprintf(stderr, "excluding region: %7.1lf %7.1lf %7.1lf %7.1lf\n", X1[(*N)], Y1[(*N)], X2[(*N)], Y2[(*N)]);
+   fprintf(stderr, "Excluding image region: %7.1lf %7.1lf %7.1lf %7.1lf  (defined in bad_region.lst)\n", X1[(*N)], Y1[(*N)], X2[(*N)], Y2[(*N)]);
   }
   (*N)+= 1;
 
@@ -126,12 +126,6 @@ int read_bad_lst(double *X1, double *Y1, double *X2, double *Y2, int *N) {
    fprintf(stderr, "ERROR: we reached max_N_bad_regions_for_malloc=%d\n", max_N_bad_regions_for_malloc);
    break;
   }
-  /*
-  if ( ( *N ) >= MAX_NUMBER_OF_BAD_REGIONS_ON_CCD ) {
-   fprintf( stderr, "ERROR: we reached MAX_NUMBER_OF_BAD_REGIONS_ON_CCD\n Please edit the line\n#define MAX_NUMBER_OF_BAD_REGIONS_ON_CCD %d\nin src/vast_limits.h and recompile with 'make'\n\n", MAX_NUMBER_OF_BAD_REGIONS_ON_CCD );
-   break;
-  }
-  */
  }
  fclose(badfile);
  //fprintf( stderr, "Done reading bad_region.lst \n" );
