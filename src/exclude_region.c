@@ -81,6 +81,12 @@ int read_bad_lst(double *X1, double *Y1, double *X2, double *Y2, int *N) {
    continue;
   } // assume that a string shorter than 3 bytes will contain no useful information
 
+  // Check that the value of (*N) is still reasonable
+  if( (*N) < 0 ) {
+   fprintf(stderr, "ERROR in read_bad_lst()  (*N)<0 \n");
+   break;
+  }
+
   // Now let's parse the string
 
   // first - try the usual format lower-left corner upper-right corner
@@ -101,6 +107,41 @@ int read_bad_lst(double *X1, double *Y1, double *X2, double *Y2, int *N) {
   } else {
    //fprintf( stderr, "Parsed as two corners of a rectangle: %.1lf %.1lf %.1lf %.1lf\n", X1[( *N )], Y1[( *N )], X2[( *N )], Y2[( *N )]);
   }
+  
+  // Check the values
+  if( X2[(*N)] < -1*MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+   fprintf(stderr,"WARNING from read_bad_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   continue;
+  }
+  if( X2[(*N)] > MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+   fprintf(stderr,"WARNING from read_bad_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   continue;
+  }
+  if( Y2[(*N)] < -1*MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+   fprintf(stderr,"WARNING from read_bad_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   continue;
+  }
+  if( Y2[(*N)] > MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+   fprintf(stderr,"WARNING from read_bad_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   continue;
+  }
+  if( X1[(*N)] < -1*MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+   fprintf(stderr,"WARNING from read_bad_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   continue;
+  }
+  if( X1[(*N)] > MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+   fprintf(stderr,"WARNING from read_bad_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   continue;
+  }
+  if( Y1[(*N)] < -1*MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+   fprintf(stderr,"WARNING from read_bad_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   continue;
+  }
+  if( Y1[(*N)] > MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+   fprintf(stderr,"WARNING from read_bad_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   continue;
+  }
+  //
 
   // Make sure the corners are in the correct order
   if( X1[(*N)] > X2[(*N)] ) {

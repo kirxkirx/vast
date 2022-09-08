@@ -113,6 +113,8 @@
 #define DISABLE_MAGSIZE_FILTER_LOGS
 ///////////////////////////////////////////////////////////////////////
 
+#define MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK 1000000
+
 // Only image pixels with values between MIN_PIX_VALUE and MAX_PIX_VALUE are considered good ones
 #define MIN_PIX_VALUE -100000
 #define MAX_PIX_VALUE 100000
