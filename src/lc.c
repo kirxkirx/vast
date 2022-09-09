@@ -316,17 +316,25 @@ int get_star_number_from_name(char *output_str, char *input_str) {
  char str[FILENAME_LENGTH];
  unsigned int i;
  int output_star_number;
- strncpy(str1, input_str, FILENAME_LENGTH - 1);
+ //strncpy(str1, input_str, FILENAME_LENGTH - 1);
+ safely_encode_user_input_string(str1, input_str, FILENAME_LENGTH - 1);
  str1[FILENAME_LENGTH - 1]= '\0';
- strncpy(str, basename(str1), FILENAME_LENGTH - 1);
+ //strncpy(str, basename(str1), FILENAME_LENGTH - 1);
+ safely_encode_user_input_string(str, basename(str1), FILENAME_LENGTH - 1);
  str[FILENAME_LENGTH - 1]= '\0';
  //fprintf(stderr,"DEBUG: AAAAA\n");
  // if file name is too short
  //if( strlen(str)<8 ){
- if( strlen(str) < 2 ) {
-  strncpy(output_str, " ", 2);
+// if( strlen(str) < 2 ) {
+//  strncpy(output_str, " ", 2);
+//  return 0;
+// }
+ if( strlen(str) < 3 ) {
+  safely_encode_user_input_string(output_str, str, OUTFILENAME_LENGTH - 1);
+  output_str[OUTFILENAME_LENGTH - 1]= '\0';
   return 0;
  }
+
  // cut-out the extension
  for( i= strlen(str); i--; ) {
   if( str[i] == '.' ) {
@@ -334,7 +342,13 @@ int get_star_number_from_name(char *output_str, char *input_str) {
    break;
   }
  }
- //str[strlen(str)-4]='\0'; // remove ".dat"
+
+ if( strlen(str) < 3 ) {
+  safely_encode_user_input_string(output_str, str, OUTFILENAME_LENGTH - 1);
+  output_str[OUTFILENAME_LENGTH - 1]= '\0';
+  return 0;
+ }
+
  // remove 'out' if it is part of the name
  if( str[0] == 'o' && str[1] == 'u' && str[2] == 't' ) {
   // Special case if the name starts with 'out_'
@@ -351,11 +365,13 @@ int get_star_number_from_name(char *output_str, char *input_str) {
   } // if( str[3]=='_'){
   //fprintf(stderr,"DEBUUUUUUU: str=#%s# strlen(str)=%d str1=#%s#\n\n\n",str,strlen(str),str1);
  } else {
-  strncpy(output_str, str, OUTFILENAME_LENGTH - 1);
+  //strncpy(output_str, str, OUTFILENAME_LENGTH - 1);
+  safely_encode_user_input_string(output_str, str, OUTFILENAME_LENGTH - 1);
   output_str[OUTFILENAME_LENGTH - 1]= '\0';
   return 1;
  } // if( str[0]=='o' && str[1]=='u' && str[2]=='t' ){
- strncpy(output_str, str1, OUTFILENAME_LENGTH - 1);
+ //strncpy(output_str, str1, OUTFILENAME_LENGTH - 1);
+ safely_encode_user_input_string(output_str, str1, OUTFILENAME_LENGTH - 1);
  output_str[OUTFILENAME_LENGTH - 1]= '\0';
  output_star_number= atoi(str1);
  //fprintf(stderr,"\n\n\nDEBUG #%s# %d\n\n\n",str1,output_star_number);
@@ -1407,7 +1423,7 @@ int main(int argc, char **argv) {
    // fork before system() so the parent process is not blocked
    if( 0 == fork() ) {
     if( 0 != system(pokaz_start) ) {
-     fprintf(stderr, "ERROR in %s", pokaz_start);
+     fprintf(stderr, "ERROR in %s \nGoing back to the lightcurve viewer.\n", pokaz_start);
     }
     exit(0);
    } else {

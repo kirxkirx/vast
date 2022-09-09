@@ -276,6 +276,20 @@ RESULTURL=`grep "The output will be written to" server_reply$$.html |awk -F"<a" 
 RESULTURL=${RESULTURL//\"/ }
 RESULTURL=`echo $RESULTURL | awk '{print $2}'`
 
+if [ -z "$RESULTURL" ];then
+ echo "ERROR in $0: cannot find the results URL
+Here is the full server reply:
+
+################################"
+ cat server_reply$$.html
+ echo "################################
+The period search script $0 is terminated."
+ rm -f server_reply$$.html
+ exit 1
+fi
+
+
+
 # Remove temporary files
 #rm -f lightcurve$$.tmp
 rm -f server_reply$$.html
@@ -288,5 +302,7 @@ rm -f server_reply$$.html
 #else
 # $WEBBROWSER $RESULTURL
 #fi
+
+
 "$VAST_PATH"lib/start_web_browser.sh $RESULTURL
 
