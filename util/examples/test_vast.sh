@@ -12915,6 +12915,10 @@ if [ -f ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit ];then
   if [ $TEST -ne 1 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED_FIT_ROBUST_LINEAR_COEFFB"
+   GREP_RESULT=`cat calib.txt_param`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT                              
+###### SAIRC600MANYBLEED_FIT_ROBUST_LINEAR_COEFFB ######
+$GREP_RESULT"
   fi
 
  fi # check if util/wcs_image_calibration.sh returned 0 exit code
