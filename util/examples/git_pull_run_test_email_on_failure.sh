@@ -145,9 +145,11 @@ $MSG
 fi
 
 # if we are still here - run the VaST test
-touch ../THIS_IS_HPCC__email_only_on_failure
+#touch ../THIS_IS_HPCC__email_only_on_failure
+touch ../THIS_IS_HPCC
 util/examples/test_vast.sh &>/dev/null
-rm -f ../THIS_IS_HPCC__email_only_on_failure
+#rm -f ../THIS_IS_HPCC__email_only_on_failure
+rm -f ../THIS_IS_HPCC
 # it will take care of reporting results on failure
 
 
