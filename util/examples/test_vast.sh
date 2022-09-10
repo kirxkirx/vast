@@ -8361,27 +8361,12 @@ if [ -d ../NMW_Saturn_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- util/transients/transient_factory_test31.sh ../NMW_Saturn_test/2ndepoch
+ REFERENCE_IMAGES=../NMW_Saturn_test/1referenceepoch/ util/transients/transient_factory_test31.sh ../NMW_Saturn_test/2ndepoch
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2000_EXIT_CODE"
  fi
  if [ -f transient_report/index.html ];then
-  ## New stuff the file lib/catalogs/list_of_bright_stars_from_tycho2.txt should be created by util/transients/search_for_transients_single_field.sh
-  #if [ ! -f lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
-  # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2200"
-  #fi
-  #if [ ! -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
-  # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2201"
-  #fi
-  ##
-  # we test this above
-  #if [ ! -f transient_report/index.html ];then
-  # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2009"
-  #fi 
   # The copy of the log file should be in the HTML report
   grep --quiet "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then

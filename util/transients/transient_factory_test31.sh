@@ -92,10 +92,10 @@ if [ -z "$REFERENCE_IMAGES" ];then
  if [ ! -d "$REFERENCE_IMAGES" ];then
   REFERENCE_IMAGES=/home/kirx/current_work/NMW_crashtest/ref 
  fi
- # saturn test
- if [ ! -d "$REFERENCE_IMAGES" ];then
-  REFERENCE_IMAGES="../NMW_Saturn_test/1referenceepoch/"
- fi
+ ## saturn test
+ #if [ ! -d "$REFERENCE_IMAGES" ];then
+ # REFERENCE_IMAGES="../NMW_Saturn_test/1referenceepoch/"
+ #fi
 fi
 
 # Clean whatever may remain from a possible incomplete previous run

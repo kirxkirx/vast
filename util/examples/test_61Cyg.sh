@@ -40,7 +40,12 @@ if [ ! -d "$TEST_DIR" ];then
  TEST_DIR="../61Cyg_photoplates_test_edge_segfault"
  if [ ! -d "$TEST_DIR" ];then
   cd ..
-  wget http://scan.sai.msu.ru/~kirx/data/vast_tests/61Cyg_photoplates_test_edge_segfault.tar.bz2 && tar -xf 61Cyg_photoplates_test_edge_segfault.tar.bz2 && rm -f 61Cyg_photoplates_test_edge_seg.tar.bz2
+  ######## Not sure how 61Cyg_photoplates_test_edge_segfault.tar.bz2 keeps surviving
+  if [ -f 61Cyg_photoplates_test_edge_segfault.tar.bz2 ];then
+   rm -f 61Cyg_photoplates_test_edge_segfault.tar.bz2
+  fi
+  #######################
+  wget http://scan.sai.msu.ru/~kirx/data/vast_tests/61Cyg_photoplates_test_edge_segfault.tar.bz2 && tar -xf 61Cyg_photoplates_test_edge_segfault.tar.bz2 && rm -f 61Cyg_photoplates_test_edge_segfault.tar.bz2
   WGET_AND_UNPACK_RETURN_STATUS=$?
   cd -
   if [ $WGET_AND_UNPACK_RETURN_STATUS -ne 0 ];then
