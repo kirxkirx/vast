@@ -50,12 +50,12 @@ if [ ! -d "$TEST_DIR" ];then
 #  fi
 # fi
  # Test data directory not found
- exit 1
+ exit 0
 fi
 
 # Run the test
 cp default.sex.ccd_example default.sex
-./vast -x3 --notremovebadimages -f $TEST_DIR/*
+./vast -x3 --notremovebadimages -f $TEST_DIR/*/*
 
 ############ Uncalibrated lightcurves ############
 #
