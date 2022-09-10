@@ -367,15 +367,18 @@ if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
  echo -n "Checking if we can reach any plate solve servers... "
  # Decide on which plate solve server to use
  # first - set the initial list of servers
- rm -f server$$_*.ping_ok
+ if [ -f server$$_*.ping_ok ];then
+  rm -f server$$_*.ping_ok
+ fi
  for i in $PLATE_SOLVE_SERVERS ;do
-  # make sure we'll not remotely connect to ourselves
-  if [ ! -z "$HOST_WE_ARE_RUNNING_AT" ];then
-   echo "$i" | grep --quiet "$HOST_WE_ARE_RUNNING_AT"
-   if [ $? -eq 0 ];then
-    continue
-   fi
-  fi
+  # Why? Maybe we want remotely connect to ourselves for a test
+  ## make sure we'll not remotely connect to ourselves
+  #if [ ! -z "$HOST_WE_ARE_RUNNING_AT" ];then
+  # echo "$i" | grep --quiet "$HOST_WE_ARE_RUNNING_AT"
+  # if [ $? -eq 0 ];then
+  #  continue
+  # fi
+  #fi
   #
   ping -c1 -n "$i" &>/dev/null && echo "$i" > server$$_"$i".ping_ok &
   echo -n "$i "
