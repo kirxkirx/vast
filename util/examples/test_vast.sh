@@ -12922,6 +12922,10 @@ if [ -f ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit ];then
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED003"
+  GREP_RESULT=`util/get_image_date ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit 2>&1`
+  DEBUG_OUTPUT="$DEBUG_OUTPUT                              
+###### SAIRC600MANYBLEED003 ######
+$GREP_RESULT"
  fi
  #
  FOV=`lib/try_to_guess_image_fov ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit | awk '{print $1}'`
