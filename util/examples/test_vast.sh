@@ -12876,33 +12876,64 @@ if [ -f ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit ];then
  echo "SAI RC600 many bleeding stars image test " 1>&2
  echo -n "SAI RC600 many bleeding stars image test: " >> vast_test_report.txt 
  cp default.sex.ccd_example default.sex
- util/solve_plate_with_UCAC5 ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit
+ util/wcs_image_calibration.sh
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED000"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED_WCSCALIB"
  else
-  if [ ! -f wcs_V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit ];then
+  util/solve_plate_with_UCAC5 ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit
+  if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED001"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED000"
   else
-   lib/bin/xy2sky wcs_V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit 200 200 &>/dev/null
-   if [ $? -ne 0 ];then
+   if [ ! -f wcs_V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED001a"
-   fi
-   if [ ! -f wcs_V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit.cat.ucac5 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED002"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED001"
    else
-    TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit.cat.ucac5 | wc -l | awk '{print $1}'`
-    if [ $TEST -lt 50 ];then
+    lib/bin/xy2sky wcs_V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit 200 200 &>/dev/null
+    if [ $? -ne 0 ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED002a_$TEST"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED001a"
     fi
-   fi 
-  fi # else if [ ! -f wcs_V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit ];then
- fi # check if util/solve_plate_with_UCAC5 returned 0 exit code
- util/get_image_date ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit | grep --quiet "Exposure  60 sec, 16.07.2021 18:02:27 UT = JD(UT) 2459412.25205 mid. exp."
+    if [ ! -f wcs_V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit.cat.ucac5 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED002"
+    else
+     TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+     if [ $TEST -lt 50 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED002a_$TEST"
+     fi
+    fi 
+   fi # else if [ ! -f wcs_V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit ];then
+  fi # check if util/solve_plate_with_UCAC5 returned 0 exit code
+
+  #
+  util/calibrate_single_image.sh ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit R
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED_CALIBRATE_SINGLE_IMAGE"
+  fi
+  # linear fit is inappropriate here as the magnitude range of comparison stars is very narrow
+  #lib/fit_robust_linear
+  lib/fit_zeropoint
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED_FIT_ROBUST_LINEAR"
+  fi
+  TEST=`cat calib.txt_param | awk '{if ( sqrt( ($4-1.0)*($4-1.0) ) < 0.05 ) print 1 ;else print 0 }'`
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED_FIT_ROBUST_LINEAR_COEFFA"
+  fi
+  TEST=`cat calib.txt_param | awk '{if ( sqrt( ($5-29.704115)*($5-29.704115) ) < 0.05 ) print 1 ;else print 0 }'`
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED_FIT_ROBUST_LINEAR_COEFFB"
+  fi
+
+ fi # check if util/wcs_image_calibration.sh returned 0 exit code
+ util/get_image_date ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit | grep --quiet "Exposure 600 sec, 24.06.2019 21:34:19 UT = JD(UT) 2458659.40230 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED003"
@@ -12913,27 +12944,6 @@ if [ -f ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit ];then
  if [ "$FOV" != "20" ] && [ "$FOV" != "23" ] ;then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED004"
- fi
- #
- util/calibrate_single_image.sh ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit R
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED_CALIBRATE_SINGLE_IMAGE"
- fi
- lib/fit_robust_linear
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED_FIT_ROBUST_LINEAR"
- fi
- TEST=`cat calib.txt_param | awk '{if ( sqrt( ($4-1.082070)*($4-1.082070) ) < 0.05 ) print 1 ;else print 0 }'`
- if [ $TEST -ne 1 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED_FIT_ROBUST_LINEAR_COEFFA"
- fi
- TEST=`cat calib.txt_param | awk '{if ( sqrt( ($5-30.873040)*($5-30.873040) ) < 0.05 ) print 1 ;else print 0 }'`
- if [ $TEST -ne 1 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED_FIT_ROBUST_LINEAR_COEFFB"
  fi
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
