@@ -12861,7 +12861,7 @@ if [ -f ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit ];then
  echo "SAI RC600 many bleeding stars image test " 1>&2
  echo -n "SAI RC600 many bleeding stars image test: " >> vast_test_report.txt 
  cp default.sex.ccd_example default.sex
- util/wcs_image_calibration.sh
+ util/wcs_image_calibration.sh ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED_WCSCALIB"
