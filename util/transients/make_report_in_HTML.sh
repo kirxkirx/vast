@@ -7,9 +7,6 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
-## Set PNG finding chart dimensions
-#export PGPLOT_PNG_HEIGHT=400 ; export PGPLOT_PNG_WIDTH=400
-
 # Make sure there is a directory to put the report in
 if [ ! -d transient_report/ ];then
  mkdir transient_report
@@ -82,6 +79,8 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  #  convert $REFERENCE_IMAGE -brightness-contrast 30x30 -resize 10% transient_report/$REFERENCE_IMAGE_PREVIEW
  # fi
  #fi
+
+
                         
 
  DATE=`grep $REFERENCE_IMAGE vast_image_details.log |awk '{print $2" "$3"  "$7}'`
@@ -105,7 +104,8 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    util/make_finding_chart $IMAGE $X $Y &>/dev/null && mv pgplot.png transient_report/"$TRANSIENT_NAME"_discovery"$N".png
    unset PGPLOT_PNG_HEIGHT ; unset PGPLOT_PNG_WIDTH
    echo "<img src=\""$TRANSIENT_NAME"_discovery"$N".png\">" >> transient_report/index.tmp
-  fi
+   
+  fi # if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then
  done < $LIGHTCURVE_FILE_OUTDAT
  
  echo "</br>" >> transient_report/index.tmp
@@ -120,29 +120,45 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
   # Only do this if we are going for javascript
   if [ $USE_JAVASCRIPT -eq 1 ];then
 
-   # Only generate the full-frame previews if convert is installed
-   #command -v convert &> /dev/null
-   #if [ $? -eq 0 ];then
-    echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Preview of the reference image(s) and two 2nd epoch images</a> (are there clouds/trees in the view?)</br>" >> transient_report/index.tmp  
+   #echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Preview of the reference image(s) and two 2nd epoch images</a> (are there clouds/trees in the view?)</br>" >> transient_report/index.tmp  
+   echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Preview of the reference image(s) and two 2nd epoch images</a> (are there clouds/trees in the view?)" >> transient_report/index.tmp  
+   if [ ! -z "$URL_OF_DATA_PROCESSING_ROOT" ];then
+    DIRNAME_2ND_EPOCH_IMAGES=`dirname $REFERENCE_IMAGE`
+    DIRNAME_2ND_EPOCH_IMAGES=`basename $DIRNAME_2ND_EPOCH_IMAGES`
+    echo "<div id=\"fullframepreview_$TRANSIENT_NAME\" style=\"display:none\"><a href='$URL_OF_DATA_PROCESSING_ROOT/$DIRNAME_2ND_EPOCH_IMAGES/$BASENAME_REFERENCE_IMAGE'>$BASENAME_REFERENCE_IMAGE</a><br><img src=\"$REFERENCE_IMAGE_PREVIEW\"><br>" >> transient_report/index.tmp
+   else
     echo "<div id=\"fullframepreview_$TRANSIENT_NAME\" style=\"display:none\">$BASENAME_REFERENCE_IMAGE<br><img src=\"$REFERENCE_IMAGE_PREVIEW\"><br>" >> transient_report/index.tmp
-    while read JD MAG ERR X Y APP IMAGE REST ;do
-     if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then
-      BASENAME_IMAGE=`basename $IMAGE`
-      PREVIEW_IMAGE="$BASENAME_IMAGE"_preview.png
-      if [ ! -f transient_report/$PREVIEW_IMAGE ];then
-       unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
-       # image size needs to match the one set in util/transients/transient_factory_test31.sh and above
-       export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-       util/fits2png $IMAGE &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
-       unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
-      fi
+   fi
+   while read JD MAG ERR X Y APP IMAGE REST ;do
+    if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then
+     BASENAME_IMAGE=`basename $IMAGE`
+     PREVIEW_IMAGE="$BASENAME_IMAGE"_preview.png
+     if [ ! -f transient_report/$PREVIEW_IMAGE ];then
+      unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
+      # image size needs to match the one set in util/transients/transient_factory_test31.sh and above
+      export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
+      util/fits2png $IMAGE &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
+      unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
+     fi # if [ ! -f transient_report/$PREVIEW_IMAGE ];then
+     # Link to the images dir if $URL_OF_DATA_PROCESSING_ROOT is set
+     if [ ! -z "$URL_OF_DATA_PROCESSING_ROOT" ];then
+      DIRNAME_2ND_EPOCH_IMAGES=`dirname $IMAGE`
+      DIRNAME_2ND_EPOCH_IMAGES=`basename $DIRNAME_2ND_EPOCH_IMAGES`
+      echo "<br><a href='$URL_OF_DATA_PROCESSING_ROOT/$DIRNAME_2ND_EPOCH_IMAGES/$BASENAME_IMAGE'>$BASENAME_IMAGE</a><br><img src=\"$PREVIEW_IMAGE\"><br>" >> transient_report/index.tmp
+     else
       echo "<br>$BASENAME_IMAGE<br><img src=\"$PREVIEW_IMAGE\"><br>" >> transient_report/index.tmp
      fi
-    done < $LIGHTCURVE_FILE_OUTDAT
-    wait # just to speed-up the convert thing a bit
-    echo "</div>" >> transient_report/index.tmp
-   #fi # if [ $? -eq 0 ];then
- 
+    fi
+   done < $LIGHTCURVE_FILE_OUTDAT
+   wait # just to speed-up the convert thing a bit
+   echo "</div>" >> transient_report/index.tmp
+
+   if [ ! -z "$URL_OF_DATA_PROCESSING_ROOT" ];then
+    echo -n " <a href='$URL_OF_DATA_PROCESSING_ROOT/$DIRNAME_2ND_EPOCH_IMAGES'>2nd epoch FITS</a> " >> transient_report/index.tmp
+   fi
+
+   echo "</br>" >> transient_report/index.tmp 
+   
    #
    echo "<a href=\"javascript:toggleElement('manualvast_$TRANSIENT_NAME')\">Example VaST+ds9 commands for visual image inspection</a> (blink images in ds9). " >> transient_report/index.tmp  
    echo -n "<div id=\"manualvast_$TRANSIENT_NAME\" style=\"display:none\">
@@ -326,7 +342,6 @@ FITSFILE=${FITSFILE//" "/_}
 </pre>
 </div>" >> transient_report/index.tmp
    #
-
 
   fi # if [ $USE_JAVASCRIPT -eq 1 ];then
 
