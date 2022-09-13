@@ -21,6 +21,8 @@
 	This is disabled automatically if '--photocurve' magnitude calibration is used as
 	photographic plates often suffer from bad guiding and low number of images (so we cannot
 	afford discarding a few suspicious ones.)
+	The line 'Number of identified bad images:' in 'vast_summary.log' now shows a sum of bad images
+	identified via the 'elongated stars' and 'lightcurve outlier' routes.
 	* 'util/get_image_date' now understands input dates without quotation marks
 	'util/get_image_date 2020 10 27 18:00'
 	and as a fraction of the day
@@ -92,7 +94,7 @@
 	* VaST will warn a user if the input is a compressed FITS image. The compressed images
 	should be unpacked with 'util/funpack' before processing.
 	* Added the new VaST test script 'util/examples/git_pull_run_test_email_on_failure.sh' that can be run 
-	from a cron job and e-mail test report on failure. 
+	from a cron job and e-mail a test report. 
 	* Added CFITSIO example program 'util/imarith' allowing simple arithmetic operations on images (used in test script).
 	* You may now run the sigma-clip filter on an individual lightcurve file:
 	lib/new_lightcurve_sigma_filter 3.0 out12345.dat # here 3.0 is the sigma-clip level

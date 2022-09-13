@@ -632,7 +632,7 @@ void mark_images_with_elongated_stars_as_bad(char **input_images, int *vast_bad_
  // double *number_of_good_detected_stars; // this is double for the simple reason that I want to use the conveinent double functions from GSL (already included for other purposes)
 
  int number_of_good_detected_stars;
-
+ 
  //
  // int number_of_stars_current_image;
  double *a_minus_b;
@@ -1761,7 +1761,7 @@ int main(int argc, char **argv) {
 
  FILE *vast_exclude_reference_image_log;
 
- /* Hunt for transients */
+ //// Hunt for transients ////
  double search_area_boundaries[6]; // Xmin, Xmax, Ymin, Ymax, MAGmin, MAGmax
 
  double a_a; // semi-major axis lengths
@@ -1772,12 +1772,12 @@ int main(int argc, char **argv) {
  float float_parameters[NUMBER_OF_FLOAT_PARAMETERS];
  int float_parameters_counter;
 
- /* Execution time measurements */
+ //// Execution time measurements ////
  time_t start_time;
  time_t end_time;
  double elapsed_time;
 
- /* Time system */
+ //// Time system ////
  int timesys= 0;               // 0 - unknown
                                // 1 - UTC
                                // 2 - TT
@@ -1796,7 +1796,7 @@ int main(int argc, char **argv) {
  int best_number_of_matched_stars= 0;
  int best_number_of_reference_stars= 0;
 
- // Coordinate arrays
+ //// Coordinate arrays ////
  int coordinate_array_index;
  int coordinate_array_counter;
  int *number_of_coordinate_measurements_for_star;
@@ -1847,7 +1847,6 @@ int main(int argc, char **argv) {
  int counter_rejected_bad_flux, counter_rejected_low_snr, counter_rejected_bad_region, counter_rejected_frame_edge, counter_rejected_too_small, counter_rejected_too_large, counter_rejected_external_flag, counter_rejected_bad_psf_fit, counter_rejected_seflags_gt7, counter_rejected_MagSize;
  int counter_rejected_seflags_gt_user_spec_threshold;
 
- //long malloc_size= 0; // we want to have it a signed type (not size_t) so the negative value of malloc_size may indicate an error
  long long int malloc_size= 0; // we want to have it a signed type (not size_t) so the negative value of malloc_size may indicate an error
 
  double fraction_of_good_measurements_for_this_source; // fraction of good measurements used to filter-out bad sources
@@ -1868,12 +1867,9 @@ int main(int argc, char **argv) {
 
  char system_command_select_comparison_stars[2 * FILENAME_LENGTH];
 
- //FILE *image00000_cat_aperture_file;
- 
  FILE *manually_selected_aperture_txt_file;
  double manually_selected_aperture;
- 
- 
+  
  int diffphot_flag= 0; // 0 -- the usual mode, 1 -- diffphot (manually selected comparison stars, zero-point offset only)
  
  //////////////////////////////////
@@ -1881,6 +1877,11 @@ int main(int argc, char **argv) {
  char filename_for_magnitude_calibration_log[2 * FILENAME_LENGTH]; // image00001__myimage.fits
 
  int vast_bad_image_flag[MAX_NUMBER_OF_OBSERVATIONS]; // 0 -- good image; >=1 -- bad image;
+
+ int vast_bad_image_flag_counter = 0; // count bad images flagged during image analysis
+                                      // note that there is another step when bad images are falgged - lightcurve analysis
+
+
 
  //        int number_of_elements_in_Pos1; // needed for adding stars not detected on the reference frame
 
@@ -3809,6 +3810,7 @@ int main(int argc, char **argv) {
    if( vast_bad_image_flag[n] != 0 ) {
     fprintf(stderr, "WARNING: image marked as bad with flag %d %s\n", vast_bad_image_flag[n], input_images[n]);
     aperture= 0.0;
+    vast_bad_image_flag_counter++;
    }
    //
 
@@ -6178,7 +6180,9 @@ int main(int argc, char **argv) {
  } else {
   fprintf(vast_image_details, "Photometric errors rescaling: NO\n");
  }
- fprintf(vast_image_details, "Number of identified bad images: %d\n", count_lines_in_ASCII_file("vast_list_of_bad_images.log"));
+ //fprintf(vast_image_details, "Number of identified bad images: %d\n", count_lines_in_ASCII_file("vast_list_of_bad_images.log"));
+ // The number is a combination of image stats and lightcurve stats identified bad images
+ fprintf(vast_image_details, "Number of identified bad images: %d\n", count_lines_in_ASCII_file("vast_list_of_bad_images.log") + vast_bad_image_flag_counter );
  fprintf(vast_image_details, "Number of SysRem iterations: %d\n", number_of_sysrem_iterations);
  fprintf(vast_image_details, "Computation time: %.0lf seconds\n", elapsed_time);
  fprintf(vast_image_details, "Number of parallel threads: %d\n", n_fork);
