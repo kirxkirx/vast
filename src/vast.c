@@ -6185,7 +6185,12 @@ int main(int argc, char **argv) {
  fprintf(vast_image_details, "SExtractor parameter file: default.sex\n"); // actually, for now this is always default.sex
  fclose(vast_image_details);
 
- /* Write more stats */
+ //// Highlight SExtractor settings ////
+ if( 0 != system("echo 'Some important SExtractor parameters:' >> vast_summary.log ; export LANG=C ; grep '^[^#]' default.sex | grep -e 'SATUR_LEVEL' -e 'DETECT_MINAREA' -e 'DETECT_THRESH' -e 'ANALYSIS_THRESH' -e 'GAIN' -e 'WEIGHT_TYPE' >> vast_summary.log") ) {
+  fprintf(stderr, "ERROR_SYSTEM_SE_PARAM\n");
+ }
+
+ //// Write more stats ////
  if( Num > 3 ) {
   if( debug != 0 )
    fprintf(stderr, "DEBUG MSG: vast.c is starting util/observations_per_star >> vast_summary.log\n");
@@ -6199,7 +6204,7 @@ int main(int argc, char **argv) {
   fprintf(stderr, "ERROR running  util/vast-mc.sh\n");
  }
 
- /* Write information about maximum memory usage (if /proc/PID/status is readable) */
+ //// Write information about maximum memory usage (if /proc/PID/status is readable) ////
  if( debug != 0 )
   fprintf(stderr, "DEBUG MSG: vast.c is getting memory usage stats from /proc\n");
  sprintf(stderr_output, "/proc/%d/status", getpid());
@@ -6229,7 +6234,6 @@ int main(int argc, char **argv) {
   fprintf(stderr, "ERROR_SYSTEM001\n");
  }
  if( param_P == 1 ) {
-  //if( 0!=system("psfex -v 2>/dev/null >> vast_summary.log") ){fprintf(stderr,"ERROR_SYSTEM002\n");}
   if( 0 != system("`lib/look_for_psfex.sh | awk '{print $4}'` -v 2>/dev/null >> vast_summary.log") ) {
    fprintf(stderr, "ERROR_SYSTEM002\n");
   }

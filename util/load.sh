@@ -146,8 +146,16 @@ if [ $? -eq 0 ];then
   # The above command copies also the directory itself, something we don't want
   find "$REGION_NAME" ! -wholename "$REGION_NAME" -exec cp -r -t . {} \+
   if [ $? -eq 0 ];then
-   # it worked! Exit the scrip
+   # it worked!
+      
+   # Exit the scrip
    echo "Done"
+
+   # Warn the user that we have re-written SExtractor setting file
+   echo "
+Remember: SExtractor settings file default.sex is rewritten when you load a dataset!
+"
+
    exit 0
   else
    echo "Oh, find returned a non-zero exit code"
