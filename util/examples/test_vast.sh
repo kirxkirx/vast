@@ -16014,6 +16014,14 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT021"
 fi
 
+# Multiple known variables within the search radius - unrelated OGLE one from VSX and the correct ASASSN-V
+# This test relies on the local catalog search!
+util/search_databases_with_vizquery.sh 17:54:41.41077 -30:21:59.3417 | grep --quiet 'ASASSN-V J175441.41-302159.3'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_MULTCLOSEVAR"
+fi
+
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
