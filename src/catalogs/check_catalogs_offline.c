@@ -3,8 +3,9 @@
 #include <string.h>
 #include <math.h>
 
-//#define VSX_SEARCH_RADIUS_DEG 120.0/3600.0
 #define VSX_SEARCH_RADIUS_DEG 35.0 / 3600.0
+
+#define ASASSN_SEARCH_RADIUS_DEG 20.0 / 3600.0
 
 /* Auxiliary definitions */
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
@@ -26,7 +27,7 @@ void download_vsx() {
  return;
 }
 
-int search_vsx(double target_RA_deg, double target_Dec_deg) {
+int search_vsx(double target_RA_deg, double target_Dec_deg, double search_radius_deg) {
  FILE *vsx_dat;
  char name[32];
  char RA_char[32];
@@ -70,7 +71,7 @@ int search_vsx(double target_RA_deg, double target_Dec_deg) {
   Dec_char[j]= '\0';
 
   Dec_deg= atof(Dec_char);
-  if( fabs(target_Dec_deg - Dec_deg) > VSX_SEARCH_RADIUS_DEG )
+  if( fabs(target_Dec_deg - Dec_deg) > search_radius_deg )
    continue;
 
   for( j= 0, i= 8; i < 38; i++, j++ )
@@ -104,7 +105,7 @@ int search_vsx(double target_RA_deg, double target_Dec_deg) {
   // yes, it mathces the definition in src/put_two_sources_in_one_field.c
   distance_deg= acos(cos(DEC1_rad) * cos(DEC2_rad) * cos(MAX(RA1_rad, RA2_rad) - MIN(RA1_rad, RA2_rad)) + sin(DEC1_rad) * sin(DEC2_rad)) * 206264.8 / 3600.0;
 
-  if( distance_deg < VSX_SEARCH_RADIUS_DEG ) {
+  if( distance_deg < search_radius_deg ) {
    if( is_found == 0 )
     fprintf(stdout, "The object was <font color=\"green\">found</font> in <font color=\"blue\">VSX</font>\n");
    is_found= 1;
@@ -158,7 +159,7 @@ const char *getfield_from_csv_string(char *line, int num) {
  return NULL;
 }
 
-int search_asassnv(double target_RA_deg, double target_Dec_deg) {
+int search_asassnv(double target_RA_deg, double target_Dec_deg, double search_radius_deg) {
  FILE *vsx_dat;
  char name[32];
  // char RA_char[32];
@@ -234,7 +235,7 @@ int search_asassnv(double target_RA_deg, double target_Dec_deg) {
   strncpy(string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1);
   string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
   Dec_deg= atof(getfield_from_csv_string(string_to_be_ruined_by_strok, 5));
-  if( fabs(target_Dec_deg - Dec_deg) > VSX_SEARCH_RADIUS_DEG )
+  if( fabs(target_Dec_deg - Dec_deg) > search_radius_deg )
    continue;
 
   //// RA
@@ -251,7 +252,7 @@ int search_asassnv(double target_RA_deg, double target_Dec_deg) {
   // yes, it mathces the definition in src/put_two_sources_in_one_field.c
   distance_deg= acos(cos(DEC1_rad) * cos(DEC2_rad) * cos(MAX(RA1_rad, RA2_rad) - MIN(RA1_rad, RA2_rad)) + sin(DEC1_rad) * sin(DEC2_rad)) * 206264.8 / 3600.0;
 
-  if( distance_deg < VSX_SEARCH_RADIUS_DEG ) {
+  if( distance_deg < search_radius_deg ) {
 
    ////// Do the nasty conversions only if this is our star //////
 
@@ -364,9 +365,20 @@ int main(int argc, char **argv) {
 
  is_found= 0; // init
 
- is_found= search_vsx(target_RA_deg, target_Dec_deg);
+ // The use of the reduced search radius is a silly attempt to handle the situation where 
+ // multiple known variables are within the search radius and ideally we want the nearest one to the search position.
+ 
+ // First try small search radius
+ is_found= search_vsx(target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG/3.0);
  if( is_found != 1 ) {
-  is_found= search_asassnv(target_RA_deg, target_Dec_deg);
+  is_found= search_asassnv(target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG/3.0);
+ }
+ // If nothing found - try a larger search radius
+ if( is_found != 1 ) {
+  is_found= search_vsx(target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG);
+ } 
+ if( is_found != 1 ) {
+  is_found= search_asassnv(target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG);
  }
 
  // Return 0 if the source is found
