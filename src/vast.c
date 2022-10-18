@@ -242,6 +242,32 @@ void help_msg(const char *progname, int exit_code) {
  exit(exit_code);
 }
 
+void ask_user_to_click_on_moving_object(char **input_images, float *moving_object__user_array_x, float *moving_object__user_array_y, int Num) {
+ FILE *pipe_for_reading_coordinates_from_sextract_single_image;
+ int i;
+ char command_string[2 * FILENAME_LENGTH + VAST_PATH_MAX];
+ for(i=0; i<Num; i++ ) {
+  fprintf(stderr, "Image: %s\nLeft-click on the moving target then right-click to go to the next image.\n", input_images[i]);
+  sprintf(command_string, "./sextract_single_image %s 2>&1 | grep 'Star coordinates' | sed 's/\\x1B\\[[0-9;]\\{1,\\}[A-Za-z]//g' | tail -n1", input_images[i]);
+  pipe_for_reading_coordinates_from_sextract_single_image= popen(command_string, "r");
+  if( 2 != fscanf(pipe_for_reading_coordinates_from_sextract_single_image, "Star coordinates %f %f (pix)", &moving_object__user_array_x[i], &moving_object__user_array_y[i] ) ) {
+   fprintf(stderr, "No moving object selected (or failed to parse './sextract_single_image' output)\n");
+   moving_object__user_array_x[i]=moving_object__user_array_y[i]= 0.0;
+  }
+  if( moving_object__user_array_x[i] < 0.0 ) {
+   moving_object__user_array_x[i]=0.0;
+   fprintf(stderr, "No moving object selected (or failed to parse './sextract_single_image' output) (case B)\n");
+  }
+  if( moving_object__user_array_y[i] < 0.0 ) {
+   moving_object__user_array_y[i]=0.0;
+   fprintf(stderr, "No moving object selected (or failed to parse './sextract_single_image' output) (case C)\n");
+  }
+  pclose(pipe_for_reading_coordinates_from_sextract_single_image);
+  fprintf(stderr,"ask_user_to_click_on_moving_object() %f %f\n", moving_object__user_array_x[i], moving_object__user_array_y[i]);
+ }
+ return;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////
 // https://stackoverflow.com/questions/2256945/removing-a-non-empty-directory-programmatically-in-c-or-c
 int remove_directory(const char *path) {
@@ -1895,6 +1921,23 @@ int main(int argc, char **argv) {
 
  char string_with_float_parameters_and_saved_FITS_keywords[2048 + FITS_KEYWORDS_IN_LC_LENGTH];
 
+
+ // Moving object hack 
+ int moving_object = 0;
+// int moving_object__i_refframe;
+// int moving_object__i_best;
+// float moving_object__R_best_squared;
+// float moving_object__R_squared;     
+// float moving_object__x_refframe;
+// float moving_object__y_refframe;
+// float moving_object__x_current_frame;
+// float moving_object__y_current_frame;
+ float *moving_object__user_array_x;
+ float *moving_object__user_array_y;
+ char str_moving_object_lightcurve_file[OUTFILENAME_LENGTH];
+ //
+
+
  //memset(sextractor_catalog, 0, FILENAME_LENGTH); // just to make vlagrind happy
 
  print_vast_version();
@@ -1915,9 +1958,10 @@ int main(int argc, char **argv) {
  /* Options for getopt() */
  char *cvalue= NULL;
 
- const char *const shortopt= "vh9fdqmwpoPngGrlseucUijJkK12346785:a:b:x:y:t:";
+ //const char *const shortopt= "vh9fdqmwpoPngGrlseucUijJkK12346785:a:b:x:y:t:";
+ const char *const shortopt= "a:b:cdefgGhijJkKlmnopPqrst:uUvwx:y:z12345:6789";
  const struct option longopt[]= {
-     {"guess_saturation_limit", 0, NULL, 'g'}, {"no_guess_saturation_limit", 0, NULL, 'G'}, {"version", 0, NULL, 'v'}, {"PSF", 0, NULL, 'P'}, {"help", 0, NULL, 'h'}, {"ds9", 0, NULL, '9'}, {"small", 0, NULL, 's'}, {"type", 1, NULL, 't'}, {"medium", 0, NULL, 'm'}, {"wide", 0, NULL, 'w'}, {"starmatchraius", 1, NULL, '5'}, {"poly", 0, NULL, 'p'}, {"nodiscardell", 0, NULL, 'l'}, {"norotation", 0, NULL, 'r'}, {"nofind", 0, NULL, 'f'}, {"debug", 0, NULL, 'd'}, {"position_dependent_correction", 0, NULL, 'j'}, {"no_position_dependent_correction", 0, NULL, 'J'}, {"aperture", 1, NULL, 'a'}, {"matchstarnumber", 1, NULL, 'b'}, {"sysrem", 1, NULL, 'y'}, {"failsafe", 0, NULL, 'e'}, {"UTC", 0, NULL, 'u'}, {"utc", 0, NULL, 'c'}, {"Utc", 0, NULL, 'U'}, {"increment", 0, NULL, 'i'}, {"nojdkeyword", 0, NULL, 'k'}, {"nodateobskeyword", 0, NULL, 'K'}, {"maxsextractorflag", 1, NULL, 'x'}, {"photocurve", 0, NULL, 'o'}, {"magsizefilter", 0, NULL, '1'}, {"nomagsizefilter", 0, NULL, '2'}, {"selectbestaperture", 0, NULL, '3'}, {"noerrorsrescale", 0, NULL, '4'}, {"notremovebadimages", 0, NULL, '6'}, {"autoselectrefimage", 0, NULL, '7'}, {"excluderefimage", 0, NULL, '8'}, {NULL, 0, NULL, 0}}; //NULL string must be in the end
+     {"guess_saturation_limit", 0, NULL, 'g'}, {"no_guess_saturation_limit", 0, NULL, 'G'}, {"version", 0, NULL, 'v'}, {"PSF", 0, NULL, 'P'}, {"help", 0, NULL, 'h'}, {"ds9", 0, NULL, '9'}, {"small", 0, NULL, 's'}, {"type", 1, NULL, 't'}, {"medium", 0, NULL, 'm'}, {"wide", 0, NULL, 'w'}, {"starmatchraius", 1, NULL, '5'}, {"poly", 0, NULL, 'p'}, {"nodiscardell", 0, NULL, 'l'}, {"norotation", 0, NULL, 'r'}, {"nofind", 0, NULL, 'f'}, {"debug", 0, NULL, 'd'}, {"position_dependent_correction", 0, NULL, 'j'}, {"no_position_dependent_correction", 0, NULL, 'J'}, {"aperture", 1, NULL, 'a'}, {"matchstarnumber", 1, NULL, 'b'}, {"sysrem", 1, NULL, 'y'}, {"failsafe", 0, NULL, 'e'}, {"UTC", 0, NULL, 'u'}, {"utc", 0, NULL, 'c'}, {"Utc", 0, NULL, 'U'}, {"increment", 0, NULL, 'i'}, {"nojdkeyword", 0, NULL, 'k'}, {"nodateobskeyword", 0, NULL, 'K'}, {"maxsextractorflag", 1, NULL, 'x'}, {"photocurve", 0, NULL, 'o'}, {"magsizefilter", 0, NULL, '1'}, {"nomagsizefilter", 0, NULL, '2'}, {"selectbestaperture", 0, NULL, '3'}, {"noerrorsrescale", 0, NULL, '4'}, {"notremovebadimages", 0, NULL, '6'}, {"autoselectrefimage", 0, NULL, '7'}, {"excluderefimage", 0, NULL, '8'}, {"movingobject", 0, NULL, 'z'}, {NULL, 0, NULL, 0}}; //NULL string must be in the end
  int nextopt;
  fprintf(stderr, "Parsing command line arguments...\n");
  while( nextopt= getopt_long(argc, argv, shortopt, longopt, NULL), nextopt != -1 ) {
@@ -2032,6 +2076,12 @@ int main(int argc, char **argv) {
    param_use_photocurve= 1;
    photometric_calibration_type= 1; // force parabolic magnitude fit (it should be reasonably good). It is needed to remove outliers.
    fprintf(stdout, "opt 'o': \"photocurve\" will be used for magnitude calibration!\n");
+   break;
+  case 'z':
+   moving_object= 1;
+   fprintf(stdout, "opt 'z': Experimental moving object tracking mode!\n");
+   convert_timesys_to_TT= 0;
+   fprintf(stdout, "opt 'u': Stick with UTC time system, no conversion to TT will be done!\n");
    break;
   case '1':
    param_filterout_magsize_outliers= 1;
@@ -3045,7 +3095,7 @@ int main(int argc, char **argv) {
  //
  // n_fork>16 condition is here because the above wild assumption will not
  // work on a highly multi-core system!
- if( Num < 100 || param_automatically_select_reference_image == 1 || n_fork > 16 || param_nodiscardell == 0 ) {
+ if( Num < 100 || param_automatically_select_reference_image == 1 || moving_object == 1 || n_fork > 16 || param_nodiscardell == 0 ) {
   for( ; i_fork--; ) {
    fprintf(stderr, "Waiting for thread %d to finish...\n", i_fork + 1);
    if( i_fork < 0 )
@@ -3079,6 +3129,16 @@ int main(int argc, char **argv) {
   // Choose the reference image if we were asked to (otherwise the first image will be used)
   if( param_automatically_select_reference_image == 1 ) {
    choose_best_reference_image(input_images, vast_bad_image_flag, Num);
+  }
+  
+  if( moving_object == 1 ) {
+   moving_object__user_array_x= malloc( Num*sizeof(float) );
+   moving_object__user_array_y= malloc( Num*sizeof(float) );
+   //
+   memset(moving_object__user_array_x, 0, Num*sizeof(float) );
+   memset(moving_object__user_array_y, 0, Num*sizeof(float) );
+   //
+   ask_user_to_click_on_moving_object(input_images, moving_object__user_array_x, moving_object__user_array_y, Num);
   }
 
  } else {
@@ -3403,12 +3463,24 @@ int main(int argc, char **argv) {
   STAR1[NUMBER1 - 1].n= star_number_in_sextractor_catalog;
   STAR1[NUMBER1 - 1].x_frame= STAR1[NUMBER1 - 1].x= (float)position_x_pix;
   STAR1[NUMBER1 - 1].y_frame= STAR1[NUMBER1 - 1].y= (float)position_y_pix;
+  // for moving object match
+  if( moving_object == 1 ) {
+   if( (position_x_pix-moving_object__user_array_x[0])*(position_x_pix-moving_object__user_array_x[0])+(position_y_pix-moving_object__user_array_y[0])*(position_y_pix-moving_object__user_array_y[0]) < 1.0 ) {
+    STAR1[NUMBER1 - 1].moving_object= 1;
+    snprintf(str_moving_object_lightcurve_file, OUTFILENAME_LENGTH, "out%05d.dat", STAR1[NUMBER1 - 1].n);
+   } else {
+    STAR1[NUMBER1 - 1].moving_object= 0;
+   }
+  } else {
+   STAR1[NUMBER1 - 1].moving_object= 0;
+  }
+  //
   STAR1[NUMBER1 - 1].flux= flux_adu;
   STAR1[NUMBER1 - 1].mag= (float)mag;
   STAR1[NUMBER1 - 1].sigma_mag= (float)sigma_mag;
   STAR1[NUMBER1 - 1].JD= JD;
   STAR1[NUMBER1 - 1].detected_on_ref_frame= 1;               // Mark the star that it was detected on the reference frame and not added later
-  STAR1[NUMBER1 - 1].sextractor_flag= (char)sextractor_flag; // SEXtractor flag ;)
+  STAR1[NUMBER1 - 1].sextractor_flag= (char)sextractor_flag; // SExtractor flag
   STAR1[NUMBER1 - 1].star_size= (float)a_a;
   //
   STAR1[NUMBER1 - 1].star_psf_chi2= (float)psf_chi2;
@@ -4001,6 +4073,17 @@ int main(int argc, char **argv) {
      STAR2[NUMBER2 - 1].JD= JD;
      STAR2[NUMBER2 - 1].x_frame= STAR2[NUMBER2 - 1].x;
      STAR2[NUMBER2 - 1].y_frame= STAR2[NUMBER2 - 1].y;
+     // for moving object match
+     if( moving_object == 1 ) {
+      if( (position_x_pix-moving_object__user_array_x[n])*(position_x_pix-moving_object__user_array_x[n])+(position_y_pix-moving_object__user_array_y[n])*(position_y_pix-moving_object__user_array_y[n]) < 1.0 ) {
+       STAR2[NUMBER2 - 1].moving_object= 1;
+      } else {
+       STAR2[NUMBER2 - 1].moving_object= 0;
+      }
+     } else {
+      STAR2[NUMBER2 - 1].moving_object= 0;
+     }
+     //
      STAR2[NUMBER2 - 1].detected_on_ref_frame= 0;               // Mark the star that it is not on the reference frame
      STAR2[NUMBER2 - 1].sextractor_flag= (char)sextractor_flag; // SExtractor flag
      //STAR2[NUMBER2-1].distance_to_neighbor_squared=4*a_a*a_a; // EXPERIMENTAL !!!
@@ -4623,9 +4706,9 @@ int main(int argc, char **argv) {
      // STAR1[Pos1[i]].magmag==0.0 if the star was not detected on the reference frame
      if( -1 == exclude_test(STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, bad_stars_X, bad_stars_Y, N_bad_stars) && fabs(STAR1[Pos1[i]].mag - STAR2[Pos2[i]].mag) < MAX_INSTR_MAG_DIFF && STAR1[Pos1[i]].mag != 0.0
          //&& STAR1[Pos1[i]].sextractor_flag==0
-         && STAR1[Pos1[i]].sextractor_flag <= 1 && STAR1[Pos1[i]].vast_flag == 0
+         && STAR1[Pos1[i]].sextractor_flag <= 1 && STAR1[Pos1[i]].vast_flag == 0 && STAR1[Pos1[i]].moving_object == 0 
          //&& STAR2[Pos2[i]].sextractor_flag==0
-         && STAR2[Pos2[i]].sextractor_flag <= 1 && STAR2[Pos2[i]].vast_flag == 0 ) {
+         && STAR2[Pos2[i]].sextractor_flag <= 1 && STAR2[Pos2[i]].vast_flag == 0 && STAR2[Pos2[i]].moving_object == 0 ) {
 
       if( N_manually_selected_comparison_stars > 0 ) {
        //fprintf(stderr, "Performing magnitude calibration using manually selected comparison stars\n");
@@ -5119,10 +5202,54 @@ int main(int argc, char **argv) {
      write_string_to_log_file(log_output, sextractor_catalog);
      fprintf(stderr, "\E[01;31m ERROR!!! Magnitude calibration failure. Dropping image. \E[33;00m\n"); // and print to the terminal that there was a problem
     }
+    
+    // MOVING OBJECT HACK
+    //
+    // Assume there is one moving object at the image with the user-specified coordinates.
+    // Find this object in STAR2 and match it to STAR1
+    //
+    /*
+    if( moving_object == 1 && moving_object__user_array_x[n] != 0.0 && moving_object__user_array_y[n] != 0.0 && Number_of_ecv_star > 0 && wpolyfit_exit_code == 0 ) {
+     // Setup
+     moving_object__x_refframe= moving_object__user_array_x[0];
+     moving_object__y_refframe= moving_object__user_array_y[0];
+     moving_object__x_current_frame= moving_object__user_array_x[n];
+     moving_object__y_current_frame= moving_object__user_array_y[n];
+     fprintf(stderr, "\n\nMOVING OBJECT ref: %f %f   cur: %f %f\n\n",moving_object__x_refframe,moving_object__y_refframe,moving_object__x_current_frame,moving_object__y_current_frame);
+     //
+     // OK, silly but let's do it - search for the moving object on reference frame every time 
+     moving_object__R_best_squared= preobr->sigma_popadaniya * preobr->sigma_popadaniya;
+     // cycle through STAR1
+     for( i= 0; i < NUMBER1; i++ ) {
+      moving_object__R_squared= (STAR1[i].x_frame - moving_object__x_refframe)*(STAR1[i].x_frame - moving_object__x_refframe) + (STAR1[i].y_frame - moving_object__y_refframe)*(STAR1[i].y_frame - moving_object__y_refframe);
+      if( moving_object__R_squared < moving_object__R_best_squared ) {
+       moving_object__i_refframe= i;
+       moving_object__R_best_squared= moving_object__R_squared;
+      }
+     }
+     //
+     moving_object__R_best_squared= preobr->sigma_popadaniya * preobr->sigma_popadaniya;
+     // cycle through STAR2
+     for( i= 0; i < NUMBER2; i++ ) {
+      moving_object__R_squared= (STAR2[Pos2[i]].x_frame - moving_object__x_current_frame)*(STAR2[Pos2[i]].x_frame - moving_object__x_current_frame) + (STAR2[Pos2[i]].y_frame - moving_object__y_current_frame)*(STAR2[Pos2[i]].y_frame - moving_object__y_current_frame);
+      if( moving_object__R_squared < moving_object__R_best_squared ) {
+       moving_object__i_best= i;
+       moving_object__R_best_squared= moving_object__R_squared;
+      }
+     }
+     // If we found the moving object
+     if( moving_object__R_best_squared < preobr->sigma_popadaniya * preobr->sigma_popadaniya ) {
+      Pos1[Number_of_ecv_star]= moving_object__i_refframe;
+      Pos2[Number_of_ecv_star]= moving_object__i_best;
+      Number_of_ecv_star++;
+     }
+    }
+    */
+    //
 
     // ADD NEW STARS ONLY IF THE MAGNITUDE SCALE COULD BE SUCCESSFULY CALIBRATED
     //
-    // If we can't calibrate magnitudes, something is not right with this image, better skip it altogether
+    // If we can't calibrate magnitudes, something is not right with this image - better skip it altogether
     //
 
     //// **** Add new stars (which were not detected on the reference frame) to STAR1 - the structure with reference stars  ****
@@ -5675,6 +5802,13 @@ int main(int argc, char **argv) {
  fprintf(stderr, "Done with measurements! =)\n\n");
  fprintf(stderr, "Total number of measurements %ld (%ld measurements stored in RAM)\n", TOTAL_OBS, obs_in_RAM);
  fprintf(stderr, "Freeing up some memory...  ");
+
+ //
+ if( moving_object == 1 ) {
+  free(moving_object__user_array_x);
+  free(moving_object__user_array_y);
+ }
+ //
 
  free(X1);
  fprintf(stderr, "1 ");
@@ -6300,6 +6434,15 @@ int main(int argc, char **argv) {
    if( !system(stderr_output) ) {
     fprintf(stderr, "ERROR running the command:\n %s\n", stderr_output);
    }
+  }
+ }
+ 
+ //
+ if( moving_object == 1 ) {
+  fprintf(stderr, "\n\n\nDisplaying the moving object lightcurve %s\n\n\n", str_moving_object_lightcurve_file);
+  sprintf(stderr_output, "./lc %s", str_moving_object_lightcurve_file);
+  if( !system(stderr_output) ) {
+   fprintf(stderr, "ERROR running the command:\n %s\n", stderr_output);
   }
  }
 

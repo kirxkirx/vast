@@ -179,6 +179,8 @@ void Star_Copy(struct Star *copy, struct Star *star) {
  copy->n_detected= star->n_detected;
  copy->n_rejected= star->n_rejected;
  //
+ copy->moving_object= star->moving_object;
+ //
 }
 
 static inline void Ecv_Triangle_Copy(struct Ecv_Triangle *ecv_tr1, struct Ecv_Triangle *ecv_tr2) {
@@ -1037,6 +1039,7 @@ typedef struct Point {
  int i;
  float x;
  float y;
+ int moving_object;
 } point;
 
 typedef struct List {
@@ -1230,6 +1233,7 @@ list loadPoint(struct Star *star, int number) {
   p.x= star[i].x;
   p.y= star[i].y;
   p.i= i;
+  p.moving_object= star[i].moving_object;
   l= addToList(p, l);
  }
  return (l);
@@ -1332,11 +1336,11 @@ int Ident_on_sigma(struct Star *star1, int Number1, struct Star *star2, int Numb
    p1= disjoinList(&ps_1);
    R= (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y);
    //
-   if( fabs(p1.x - 496.1) < 1.0 && fabs(p1.y - 65.3) < 1.0 ) {
-    if( R < 3 * epsilon ) {
-     fprintf(stderr, "\n--- p1.x=%lf p1.y=%lf  p2.i=%d R=%lf R_best=%lf  p2.x=%lf p2.x=%lf\n", p1.x, p1.y, p2.i, sqrt(R), sqrt(R_best), p2.x, p2.y);
-    }
-   }
+   //if( fabs(p1.x - 496.1) < 1.0 && fabs(p1.y - 65.3) < 1.0 ) {
+   // if( R < 3 * epsilon ) {
+   //  fprintf(stderr, "\n--- p1.x=%lf p1.y=%lf  p2.i=%d R=%lf R_best=%lf  p2.x=%lf p2.x=%lf\n", p1.x, p1.y, p2.i, sqrt(R), sqrt(R_best), p2.x, p2.y);
+   // }
+   //}
    //
    if( R < R_best ) { // && R<star1[p1.i].distance_to_neighbor_squared && R<star2[p2.i].distance_to_neighbor_squared) {
     find_flag= 1;
@@ -1344,6 +1348,13 @@ int Ident_on_sigma(struct Star *star1, int Number1, struct Star *star2, int Numb
     R_best= R;
     //        number_of_matched_stars++;
    }
+   // Manually match the moving object using the flag
+   if( p2.moving_object == 1 && p1.moving_object == 1 ) {
+    find_flag= 1;
+    p_best= p1;
+    R_best= 0.0;
+   }
+   //
   }
   if( find_flag == 1 ) {
    xs_matched= addToList(p_best, xs_matched);

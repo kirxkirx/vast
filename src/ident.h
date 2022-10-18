@@ -104,6 +104,7 @@ struct Star {
                                                      // ... and many more!
  int n_detected;                                     // how many times this star was detected
  int n_rejected;                                     // how many times this star was detected, but rejected according to the quality flags (mag-size, etc)
+ int moving_object;    // manually match a moving object
 };
 
 #define MAXIMUM_POPADANIY 1

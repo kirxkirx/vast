@@ -116,7 +116,7 @@ int main() {
   n_stars_in_lightcurve_statistics_file++;
  fseek(lightcurve_statistics_file, 0, SEEK_SET); // go back to the beginning of the file
  if( n_stars_in_lightcurve_statistics_file <= 0 ) {
-  fprintf(stderr, "ERROR: Too small stars amount(index_vs_mag.c)\n");
+  fprintf(stderr, "ERROR: Too few stars (index_vs_mag.c)\n");
   return 1;
  };
  // allocate memory
