@@ -243,9 +243,13 @@ void help_msg(const char *progname, int exit_code) {
 }
 
 void ask_user_to_click_on_moving_object(char **input_images, float *moving_object__user_array_x, float *moving_object__user_array_y, int Num) {
+
  FILE *pipe_for_reading_coordinates_from_sextract_single_image;
  int i;
  char command_string[2 * FILENAME_LENGTH + VAST_PATH_MAX];
+
+ fprintf(stderr, "\n\nPlease mark the moving object on each image.\n\n");
+ 
  for(i=0; i<Num; i++ ) {
   fprintf(stderr, "Image: %s\nLeft-click on the moving target then right-click to go to the next image.\n", input_images[i]);
   sprintf(command_string, "./sextract_single_image %s 2>&1 | grep 'Star coordinates' | sed 's/\\x1B\\[[0-9;]\\{1,\\}[A-Za-z]//g' | tail -n1", input_images[i]);
@@ -263,7 +267,15 @@ void ask_user_to_click_on_moving_object(char **input_images, float *moving_objec
    fprintf(stderr, "No moving object selected (or failed to parse './sextract_single_image' output) (case C)\n");
   }
   pclose(pipe_for_reading_coordinates_from_sextract_single_image);
-  fprintf(stderr,"ask_user_to_click_on_moving_object() %f %f\n", moving_object__user_array_x[i], moving_object__user_array_y[i]);
+  //fprintf(stderr,"ask_user_to_click_on_moving_object() %f %f\n", moving_object__user_array_x[i], moving_object__user_array_y[i]);
+  // Crash if the moving object is not visible on the reference image
+  if( i == 0 ) {
+   if( moving_object__user_array_x[0] == 0.0 || moving_object__user_array_y[0] == 0.0 ) {
+    fprintf(stderr, "ERROR: the user-selected moving object MUST be visible on the reference image!\n");
+    exit(1);
+   }
+  }
+  //
  }
  return;
 }
