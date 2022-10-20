@@ -254,11 +254,11 @@ void ask_user_to_click_on_moving_object(char **input_images, float *moving_objec
    fprintf(stderr, "No moving object selected (or failed to parse './sextract_single_image' output)\n");
    moving_object__user_array_x[i]=moving_object__user_array_y[i]= 0.0;
   }
-  if( moving_object__user_array_x[i] < 0.0 ) {
+  if( moving_object__user_array_x[i] < 0.0 || moving_object__user_array_x[i] > MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
    moving_object__user_array_x[i]=0.0;
    fprintf(stderr, "No moving object selected (or failed to parse './sextract_single_image' output) (case B)\n");
   }
-  if( moving_object__user_array_y[i] < 0.0 ) {
+  if( moving_object__user_array_y[i] < 0.0 || moving_object__user_array_y[i] > MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
    moving_object__user_array_y[i]=0.0;
    fprintf(stderr, "No moving object selected (or failed to parse './sextract_single_image' output) (case C)\n");
   }
@@ -1924,14 +1924,6 @@ int main(int argc, char **argv) {
 
  // Moving object hack 
  int moving_object = 0;
-// int moving_object__i_refframe;
-// int moving_object__i_best;
-// float moving_object__R_best_squared;
-// float moving_object__R_squared;     
-// float moving_object__x_refframe;
-// float moving_object__y_refframe;
-// float moving_object__x_current_frame;
-// float moving_object__y_current_frame;
  float *moving_object__user_array_x;
  float *moving_object__user_array_y;
  char str_moving_object_lightcurve_file[OUTFILENAME_LENGTH];
@@ -2078,10 +2070,16 @@ int main(int argc, char **argv) {
    fprintf(stdout, "opt 'o': \"photocurve\" will be used for magnitude calibration!\n");
    break;
   case 'z':
+   // switch on to the user-specified moving object mode
    moving_object= 1;
    fprintf(stdout, "opt 'z': Experimental moving object tracking mode!\n");
+   // set additional flags to make things compatible with this mode
    convert_timesys_to_TT= 0;
    fprintf(stdout, "opt 'u': Stick with UTC time system, no conversion to TT will be done!\n");
+   param_filterout_magsize_outliers= 0;
+   fprintf(stdout, "opt '2': disabling filter out outliers on mag-size plot!\n");
+   param_automatically_select_reference_image= 0;
+   fprintf(stdout, "opt ' ': diable automated reference-image selection!\n");
    break;
   case '1':
    param_filterout_magsize_outliers= 1;
@@ -2871,8 +2869,18 @@ int main(int argc, char **argv) {
  }
 */
 
- /* Start timer */
+ ///// Start timer /////
  start_time= time(NULL);
+ 
+ // Allocate memory for moving object coordinates
+ // we only need it for user-specified moving object (moving_object==1)
+ // but we want to avoid compiler warning about possible unitizlized memory use
+ moving_object__user_array_x= malloc( Num*sizeof(float) );
+ moving_object__user_array_y= malloc( Num*sizeof(float) );
+ //
+ memset(moving_object__user_array_x, 0, Num*sizeof(float) );
+ memset(moving_object__user_array_y, 0, Num*sizeof(float) );
+ //////////////////
 
  //////////////////////////////////////////////////////////////////////////////////////////////////////////////
  /////// Reading file which defines rectangular regions we want to completely exclude from the analysis ///////
@@ -3132,12 +3140,14 @@ int main(int argc, char **argv) {
   }
   
   if( moving_object == 1 ) {
+   /* // moved up
    moving_object__user_array_x= malloc( Num*sizeof(float) );
    moving_object__user_array_y= malloc( Num*sizeof(float) );
    //
    memset(moving_object__user_array_x, 0, Num*sizeof(float) );
    memset(moving_object__user_array_y, 0, Num*sizeof(float) );
    //
+   */
    ask_user_to_click_on_moving_object(input_images, moving_object__user_array_x, moving_object__user_array_y, Num);
   }
 
@@ -5203,49 +5213,6 @@ int main(int argc, char **argv) {
      fprintf(stderr, "\E[01;31m ERROR!!! Magnitude calibration failure. Dropping image. \E[33;00m\n"); // and print to the terminal that there was a problem
     }
     
-    // MOVING OBJECT HACK
-    //
-    // Assume there is one moving object at the image with the user-specified coordinates.
-    // Find this object in STAR2 and match it to STAR1
-    //
-    /*
-    if( moving_object == 1 && moving_object__user_array_x[n] != 0.0 && moving_object__user_array_y[n] != 0.0 && Number_of_ecv_star > 0 && wpolyfit_exit_code == 0 ) {
-     // Setup
-     moving_object__x_refframe= moving_object__user_array_x[0];
-     moving_object__y_refframe= moving_object__user_array_y[0];
-     moving_object__x_current_frame= moving_object__user_array_x[n];
-     moving_object__y_current_frame= moving_object__user_array_y[n];
-     fprintf(stderr, "\n\nMOVING OBJECT ref: %f %f   cur: %f %f\n\n",moving_object__x_refframe,moving_object__y_refframe,moving_object__x_current_frame,moving_object__y_current_frame);
-     //
-     // OK, silly but let's do it - search for the moving object on reference frame every time 
-     moving_object__R_best_squared= preobr->sigma_popadaniya * preobr->sigma_popadaniya;
-     // cycle through STAR1
-     for( i= 0; i < NUMBER1; i++ ) {
-      moving_object__R_squared= (STAR1[i].x_frame - moving_object__x_refframe)*(STAR1[i].x_frame - moving_object__x_refframe) + (STAR1[i].y_frame - moving_object__y_refframe)*(STAR1[i].y_frame - moving_object__y_refframe);
-      if( moving_object__R_squared < moving_object__R_best_squared ) {
-       moving_object__i_refframe= i;
-       moving_object__R_best_squared= moving_object__R_squared;
-      }
-     }
-     //
-     moving_object__R_best_squared= preobr->sigma_popadaniya * preobr->sigma_popadaniya;
-     // cycle through STAR2
-     for( i= 0; i < NUMBER2; i++ ) {
-      moving_object__R_squared= (STAR2[Pos2[i]].x_frame - moving_object__x_current_frame)*(STAR2[Pos2[i]].x_frame - moving_object__x_current_frame) + (STAR2[Pos2[i]].y_frame - moving_object__y_current_frame)*(STAR2[Pos2[i]].y_frame - moving_object__y_current_frame);
-      if( moving_object__R_squared < moving_object__R_best_squared ) {
-       moving_object__i_best= i;
-       moving_object__R_best_squared= moving_object__R_squared;
-      }
-     }
-     // If we found the moving object
-     if( moving_object__R_best_squared < preobr->sigma_popadaniya * preobr->sigma_popadaniya ) {
-      Pos1[Number_of_ecv_star]= moving_object__i_refframe;
-      Pos2[Number_of_ecv_star]= moving_object__i_best;
-      Number_of_ecv_star++;
-     }
-    }
-    */
-    //
 
     // ADD NEW STARS ONLY IF THE MAGNITUDE SCALE COULD BE SUCCESSFULY CALIBRATED
     //
@@ -5803,11 +5770,11 @@ int main(int argc, char **argv) {
  fprintf(stderr, "Total number of measurements %ld (%ld measurements stored in RAM)\n", TOTAL_OBS, obs_in_RAM);
  fprintf(stderr, "Freeing up some memory...  ");
 
- //
- if( moving_object == 1 ) {
+ // we'll do it all the time to avoid uninitialized-use compiler warning
+ //if( moving_object == 1 ) {
   free(moving_object__user_array_x);
   free(moving_object__user_array_y);
- }
+ //}
  //
 
  free(X1);
@@ -6318,6 +6285,12 @@ int main(int argc, char **argv) {
  // The number is a combination of image stats and lightcurve stats identified bad images
  fprintf(vast_image_details, "Number of identified bad images: %d\n", count_lines_in_ASCII_file("vast_list_of_bad_images.log") + vast_bad_image_flag_counter );
  fprintf(vast_image_details, "Number of SysRem iterations: %d\n", number_of_sysrem_iterations);
+ // and mention the user-specified moving object
+ if( moving_object == 1 ) {
+  fprintf(vast_image_details, "User-specified moving object: %s\n", str_moving_object_lightcurve_file);
+ } else {
+  fprintf(vast_image_details, "User-specified moving object: %s\n", "none"); 
+ }
  fprintf(vast_image_details, "Computation time: %.0lf seconds\n", elapsed_time);
  fprintf(vast_image_details, "Number of parallel threads: %d\n", n_fork);
  fprintf(vast_image_details, "SExtractor parameter file: default.sex\n"); // actually, for now this is always default.sex
@@ -6360,6 +6333,7 @@ int main(int argc, char **argv) {
   fprintf(stderr, "ERROR: cannot open vast_summary.log for writing!\n");
   return 1;
  }
+ //
  fprintf(vast_image_details, "Software: %s ", stderr_output);
  compiler_version(stderr_output);
  fprintf(vast_image_details, "compiled with %s", stderr_output);
