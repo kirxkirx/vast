@@ -6048,7 +6048,7 @@ int main(int argc, char **argv) {
     continue;
    }
    // do not remove lightcurves in in diffphot mode
-   if( diffphot_flag != 1 ) {
+   if( diffphot_flag != 1 && moving_object != 1 ) {
     // do not rely on a single rejection - accidents happen
     if( fraction_of_good_measurements_for_this_source < MIN_FRACTION_OF_GOOD_MEASUREMENTS && STAR1[i].n_rejected > MIN_NUMBER_OF_REJECTIONS_FOR_MIN_FRACTION_OF_GOOD_MEASUREMENTS ) {
      unlink(tmpNAME);

@@ -2149,7 +2149,7 @@ int main(int argc, char **argv) {
   fprintf(stderr, "ERROR: number_of_stars_in_wcs_catalog=%d", number_of_stars_in_wcs_catalog);
   free(stars);
   return 1;
- } else {
+                                  } else {
   fprintf(stderr, "%s got %d stars from the SExtractor catalog\n", argv[0], number_of_stars_in_wcs_catalog);
  }
  qsort(stars, number_of_stars_in_wcs_catalog, sizeof(struct detected_star), compare_star_on_mag_solve);
@@ -2313,6 +2313,10 @@ int main(int argc, char **argv) {
   if( 0 != search_APASS_with_vizquery(stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters) ) {
    fprintf(stderr, "ERROR running search_APASS_with_vizquery()\n");
    fprintf(stderr, "Maybe this sky area is not covered by APASS yet?\nTrying the Pan-STARRS1 catalog as the fallback option...\n\nWARNING: using Pan-STARRS1 instead of APASS for magnitude calibration!!!!\n\n");
+   // We need to reset matched_with_astrometric_catalog flags before re-running the search!
+   for(i=0;i<number_of_stars_in_wcs_catalog;i++) {
+    stars[i].matched_with_photometric_catalog= 0;
+   }
    if( 0 != search_PANSTARRS1_with_vizquery(stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters) ) {
     fprintf(stderr, "ERROR running search_PANSTARRS1_with_vizquery()\n");
     free(stars);
