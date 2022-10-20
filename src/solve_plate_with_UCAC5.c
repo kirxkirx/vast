@@ -696,23 +696,34 @@ int read_UCAC5_from_vizquery(struct detected_star *stars, int N, char *vizquery_
   ///////////////// Account for proper motion /////////////////
   catalog_ra_original= catalog_ra;
   catalog_dec_original= catalog_dec;
-  //fprintf(stderr,"%lf  %lf %lf  %lf %lf\n Before correction: %lf %lf\n", epoch,pmRA,e_pmRA,pmDE,e_pmDE, catalog_ra, catalog_dec);
+  fprintf(stderr,"%lf  %lf %lf  %lf %lf\n Before correction: %lf %lf\n", epoch,pmRA,e_pmRA,pmDE,e_pmDE, catalog_ra, catalog_dec);
   // assuming the epoch is a Julian Year https://en.wikipedia.org/wiki/Epoch_(astronomy)#Julian_years_and_J2000
   // assuming observing_epoch_jd is the same for all stars!
   observing_epoch_jy= 2000.0 + (stars[0].observing_epoch_jd - 2451545.0) / 365.25;
   dt= observing_epoch_jy - epoch;
-  catalog_ra= catalog_ra + pmRA / 3600000 * cos_delta * dt;
+  // https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/340
+  // pmRA is UCAC/Gaia proper motion in RA*cosDE
+  catalog_ra= catalog_ra + pmRA / ( 3600000 * cos_delta ) * dt;
+  //catalog_ra= catalog_ra + pmRA / 3600000 * cos_delta * dt;
   catalog_dec= catalog_dec + pmDE / 3600000 * dt;
-  //fprintf(stderr,"observing_epoch_jy=%lf\n After correction:  %lf %lf\n",observing_epoch_jy, catalog_ra, catalog_dec);
+  fprintf(stderr,"observing_epoch_jy=%lf\n After correction:  %lf %lf\nSearch radius %.1lf arcsec\n",observing_epoch_jy, catalog_ra, catalog_dec, catalog_search_parameters->search_radius_deg * 3600 );
   /////////////////////////////////////////////////////////////
 
   for( i= 0; i < N; i++ ) {
-   if( stars[i].matched_with_astrometric_catalog == 1 )
+   fprintf(stderr, "DEBUG: i=%d\n", i);
+   if( stars[i].matched_with_astrometric_catalog == 1 ) {
     continue;
-   if( fabs(stars[i].dec_deg_measured - measured_dec) < catalog_search_parameters->search_radius_deg )
+   }
+   fprintf(stderr, "DEBUG: i=%d (after checking .matched_with_astrometric_catalog)  %lf  %lf\n", i,  fabs(stars[i].dec_deg_measured - measured_dec)*3600, fabs(stars[i].ra_deg_measured - measured_ra) * cos_delta * 3600  );
+   if( fabs(stars[i].dec_deg_measured - measured_dec) < catalog_search_parameters->search_radius_deg ) {
     if( fabs(stars[i].ra_deg_measured - measured_ra) * cos_delta < catalog_search_parameters->search_radius_deg ) {
-     if( distance > catalog_search_parameters->search_radius_deg * 3600 )
+     if( distance > catalog_search_parameters->search_radius_deg * 3600 ) {
       continue;
+     }
+     
+     fprintf(stderr,"DEBUG: we've got a match!\n");
+     
+     // if we are here - this is a match
      stars[i].matched_with_astrometric_catalog= 1;
      stars[i].d_ra= catalog_ra - measured_ra;
      stars[i].d_dec= catalog_dec - measured_dec;
@@ -746,11 +757,11 @@ int read_UCAC5_from_vizquery(struct detected_star *stars, int N, char *vizquery_
      N_stars_matched_with_astrometric_catalog++;
      //fprintf(stderr,"DEBUG MATCHED: stars[i].x_pix= %8.3lf\n",stars[i].x_pix);
     }
-   //if( fabs(stars[i].dec_deg_measured-measured_dec)<MAX_DEVIATION_AT_FIRST_STEP )
+   }
   } //for(i=0;i<N;i++)
  }
  fclose(f);
- fprintf(stderr, "Matched %d stars with UCAC5.\n", N_stars_matched_with_astrometric_catalog);
+ fprintf(stderr, "Matched %d stars with UCAC5 using vizquery.\n", N_stars_matched_with_astrometric_catalog);
  if( N_stars_matched_with_astrometric_catalog < 5 ) {
   fprintf(stderr, "ERROR: too few stars matched!\n");
   return 1;
@@ -1322,7 +1333,8 @@ int search_UCAC5_localcopy(struct detected_star *stars, int N, struct str_catalo
       catalog_dec_original= catalog_dec;
       observing_epoch_jy= 2000.0 + (stars[0].observing_epoch_jd - 2451545.0) / 365.25;
       dt= observing_epoch_jy - epoch;
-      catalog_ra= catalog_ra + pmRA / 3600000 * cos_delta * dt;
+      catalog_ra= catalog_ra + pmRA / ( 3600000 * cos_delta ) * dt;
+      //catalog_ra= catalog_ra + pmRA / 3600000 * cos_delta * dt;
       catalog_dec= catalog_dec + pmDE / 3600000 * dt;
       //
       stars[detected_star_counter].matched_with_astrometric_catalog= 1;
@@ -1405,7 +1417,7 @@ int search_UCAC5_with_vizquery(struct detected_star *stars, int N, struct str_ca
    if( stars[i].ra_deg_measured == 0.0 && stars[i].dec_deg_measured == 0.0 ) {
     zero_radec_counter++;
     if( zero_radec_counter > 10 ) {
-     fprintf(stderr, "ERROR in search_UCAC5_with_vizquery(): too many input positions are '0.000000 0.000000'\nWe cannot got to VizieR with that!\n");
+     fprintf(stderr, "ERROR in search_UCAC5_with_vizquery(): too many input positions are '0.000000 0.000000'\nWe cannot go to VizieR with that!\n");
      exit(1); // terminate everything
     }
    }
@@ -2107,7 +2119,7 @@ int main(int argc, char **argv) {
   }
  }
 
- fprintf(stderr, "Seting catalog search parameters based on the expected field of view %lf arcmin\n", approximate_field_of_view_arcmin);
+ fprintf(stderr, "Seting catalog search parameters based on the expected field of view %.1lf arcmin\n", approximate_field_of_view_arcmin);
  set_catalog_search_parameters(approximate_field_of_view_arcmin, &catalog_search_parameters);
 
  // **** Blind plate solution with Astrometry.net ****
@@ -2156,17 +2168,28 @@ int main(int argc, char **argv) {
   if( stars[i].matched_with_astrometric_catalog == 1 )
    stars_matched_at_this_iteration++;
  }
+ //////// EVIL HARDCODED NUMBER
  if( stars_matched_at_this_iteration < 50 ) {
   fprintf(stderr, "\nRetrying with a larger catalog search radius.\n");
   catalog_search_parameters.search_radius_deg= 2.0 * catalog_search_parameters.search_radius_deg;
   catalog_search_parameters.search_radius_second_step_deg= 2.0 * catalog_search_parameters.search_radius_second_step_deg;
+  // We need to reset matched_with_astrometric_catalog flags before re-running the search!
+  for(i=0;i<number_of_stars_in_wcs_catalog;i++) {
+   stars[i].matched_with_astrometric_catalog= 0;
+  }
+  //
   //if( 0!=search_UCAC4_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters) ){fprintf(stderr,"ERROR running vizquery\n");return 1;}
   if( 0 != search_UCAC5_with_vizquery(stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters) ) {
    fprintf(stderr, "ERROR running vizquery\n");
    free(stars);
    return 1;
   }
- }
+  // if we are still here - re-compute the number of stars matched at this iteration
+  for( stars_matched_at_this_iteration= 0, i= 0; i < number_of_stars_in_wcs_catalog; i++ ) {
+   if( stars[i].matched_with_astrometric_catalog == 1 )
+    stars_matched_at_this_iteration++;
+  }
+ } // if( stars_matched_at_this_iteration < 50 ) {
 
  // Correct the measured positions
  fprintf(stderr, "Correcting the measured astrometric positions...\n");
