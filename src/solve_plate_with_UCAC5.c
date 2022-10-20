@@ -71,11 +71,10 @@ struct detected_star {
  /////////////////////////
  double ra_deg_measured_orig;
  double dec_deg_measured_orig;
- //double aperture;
- //double distance_from_image_edge;
  /////////////////////////
  int matched_with_astrometric_catalog;
  int matched_with_photometric_catalog;
+ //double match_distance_astrometric_catalog_arcsec;
  // char ucac4id[32];
  double d_ra;
  double d_dec;
@@ -1321,8 +1320,9 @@ int search_UCAC5_localcopy(struct detected_star *stars, int N, struct str_catalo
       //
       //fprintf(stderr,"DEBUG: we've got a match!\n");
       //
-      if( stars[detected_star_counter].matched_with_astrometric_catalog == 0 )
+      if( stars[detected_star_counter].matched_with_astrometric_catalog == 0 ) {
        N_stars_matched_with_astrometric_catalog++;
+      }
       //
       catalog_ra= ucac_ra_deg;
       catalog_dec= ucac_dec_deg;
