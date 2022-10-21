@@ -1332,29 +1332,29 @@ int Ident_on_sigma(struct Star *star1, int Number1, struct Star *star2, int Numb
   p2= disjoinList(&points_2);
   ps= getListFromGrid(gr, p2.x, p2.y);
   ps_1= ps;
-  while( isEmpty(ps_1) == 0 ) {
-   p1= disjoinList(&ps_1);
-   R= (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y);
-   //
-   //if( fabs(p1.x - 496.1) < 1.0 && fabs(p1.y - 65.3) < 1.0 ) {
-   // if( R < 3 * epsilon ) {
-   //  fprintf(stderr, "\n--- p1.x=%lf p1.y=%lf  p2.i=%d R=%lf R_best=%lf  p2.x=%lf p2.x=%lf\n", p1.x, p1.y, p2.i, sqrt(R), sqrt(R_best), p2.x, p2.y);
-   // }
-   //}
-   //
-   if( R < R_best ) { // && R<star1[p1.i].distance_to_neighbor_squared && R<star2[p2.i].distance_to_neighbor_squared) {
-    find_flag= 1;
-    p_best= p1;
-    R_best= R;
-    //        number_of_matched_stars++;
+  // First, check the user-specified moving object
+  if ( p2.moving_object == 1 ) { 
+   while( isEmpty(ps_1) == 0 ) {
+    p1= disjoinList(&ps_1);
+    // Manually match the moving object using the flag (we assume there is only one moving object on the series of images)
+    if( p1.moving_object == 1 ) {
+     find_flag= 1;
+     p_best= p1;
+     R_best= 0.0;
+     break;
+    }
    }
-   // Manually match the moving object using the flag
-   if( p2.moving_object == 1 && p1.moving_object == 1 ) {
-    find_flag= 1;
-    p_best= p1;
-    R_best= 0.0;
+  } else {
+   // the normal route - coordinate-based match
+   while( isEmpty(ps_1) == 0 ) {
+    p1= disjoinList(&ps_1);
+    R= (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y);
+    if( R < R_best ) { // && R<star1[p1.i].distance_to_neighbor_squared && R<star2[p2.i].distance_to_neighbor_squared) {
+     find_flag= 1;
+     p_best= p1;
+     R_best= R;
+    }
    }
-   //
   }
   if( find_flag == 1 ) {
    xs_matched= addToList(p_best, xs_matched);

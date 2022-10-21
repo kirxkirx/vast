@@ -242,7 +242,49 @@ void help_msg(const char *progname, int exit_code) {
  exit(exit_code);
 }
 
+int read_onput_file_with_user_specified_moving_object_opsition(char **input_images, float *moving_object__user_array_x, float *moving_object__user_array_y, int Num) {
+ FILE *file_user_specified_moving_object_position;
+ int i;
+ 
+ char imagefilename_from_input_file[FILENAME_LENGTH];
+ float moving_object_x_from_input_file;
+ float moving_object_y_from_input_file;
+ 
+ file_user_specified_moving_object_position= fopen("vast_input_user_specified_moving_object_position.txt","r");
+ if( file_user_specified_moving_object_position == NULL ) {
+  fprintf(stderr, "\n\nNo vast_input_user_specified_moving_object_position.txt - will ask for the moving target posiiton interactively\n\n");
+  return 1;
+ }
+ // Initialize, just in case
+ for(i=0;i<Num;i++) {
+  moving_object__user_array_x[i]=moving_object__user_array_y[i]= 0.0;
+ }
+ moving_object_x_from_input_file=moving_object_y_from_input_file= 0.0; // reset just in case
+ while( -1<fscanf(file_user_specified_moving_object_position, "%s %f %f", imagefilename_from_input_file, &moving_object_x_from_input_file, &moving_object_y_from_input_file) ) {
+  // Coarse input check
+  if( moving_object_x_from_input_file<0.0 || moving_object_x_from_input_file>MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK || moving_object_y_from_input_file<0.0 || moving_object_y_from_input_file>MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+   fprintf(stderr,"WARNING from read_onput_file_with_user_specified_moving_object_opsition(): a problem encountered while parsing vast_input_user_specified_moving_object_position.txt\n");
+   continue;
+  }
+  //
+  for(i=0;i<Num;i++) {
+   if( 0==strncmp(input_images[i],imagefilename_from_input_file,FILENAME_LENGTH) ) {
+    moving_object__user_array_x[i]= moving_object_x_from_input_file;
+    moving_object__user_array_y[i]= moving_object_y_from_input_file;
+    break;
+   }
+  }
+  moving_object_x_from_input_file=moving_object_y_from_input_file= 0.0; // reset just in case
+ }
+
+ fclose(file_user_specified_moving_object_position); 
+ 
+ return 0;
+}
+
 void ask_user_to_click_on_moving_object(char **input_images, float *moving_object__user_array_x, float *moving_object__user_array_y, int Num) {
+
+ FILE *file_user_specified_moving_object_position;
 
  FILE *pipe_for_reading_coordinates_from_sextract_single_image;
  int i;
@@ -277,6 +319,19 @@ void ask_user_to_click_on_moving_object(char **input_images, float *moving_objec
   }
   //
  }
+ 
+ // Write the log file
+ file_user_specified_moving_object_position=fopen("vast_user_specified_moving_object_position.log","w");
+ if( file_user_specified_moving_object_position == NULL ) {
+  fprintf(stderr, "ERROR in ask_user_to_click_on_moving_object(): cannot open vast_user_specified_moving_object_position.log for writing!\n");
+  return;
+ }
+ // Cycle through images and the arrays with the pixel coordinates of the moving target
+ for(i=0; i<Num; i++ ) {
+  fprintf(file_user_specified_moving_object_position,"%s  %7.1f %7.1f\n", input_images[i], moving_object__user_array_x[i], moving_object__user_array_y[i]);
+ }
+ fclose(file_user_specified_moving_object_position);
+ 
  return;
 }
 
@@ -3160,7 +3215,11 @@ int main(int argc, char **argv) {
    memset(moving_object__user_array_y, 0, Num*sizeof(float) );
    //
    */
-   ask_user_to_click_on_moving_object(input_images, moving_object__user_array_x, moving_object__user_array_y, Num);
+   // Try to read the input file with moving object positions
+   if( 0 != read_onput_file_with_user_specified_moving_object_opsition(input_images, moving_object__user_array_x, moving_object__user_array_y, Num) ) {
+    // if no input file - ask user to specify the moving object position interactively
+    ask_user_to_click_on_moving_object(input_images, moving_object__user_array_x, moving_object__user_array_y, Num);
+   }
   }
 
  } else {
@@ -6428,7 +6487,8 @@ int main(int argc, char **argv) {
   fprintf(stderr, "\n\n\nDisplaying the moving object lightcurve %s\n\n\n", str_moving_object_lightcurve_file);
   sprintf(stderr_output, "./lc %s", str_moving_object_lightcurve_file);
   if( !system(stderr_output) ) {
-   fprintf(stderr, "ERROR running the command:\n %s\n", stderr_output);
+   fprintf(stderr, " \n"); // ./lc will exit with an error
+   //fprintf(stderr, "ERROR running the command:\n %s\n", stderr_output);
   }
  }
 
