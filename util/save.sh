@@ -105,7 +105,7 @@ if [ -d candidates_report/ ];then
 fi
 
 echo -n "Saving the lightcurves and the other files ... "
-for i in vast_list_of_input_images_with_time_corrections.txt vast_list_of_FITS_keywords_to_record_in_lightcurves.txt vast_list_of_all_stars.ds9.reg out*dat candidates*lst data* vast*.log sysrem_input_star_list.lst ref_frame_sextractor.cat aavso_* image*.cat*  vast_index_vs_mag*.txt vast_index_vs_mag*.eps ;do 
+for i in vast_input_user_specified_moving_object_position.txt vast_list_of_input_images_with_time_corrections.txt vast_list_of_FITS_keywords_to_record_in_lightcurves.txt vast_list_of_all_stars.ds9.reg out*dat candidates*lst data* vast*.log sysrem_input_star_list.lst ref_frame_sextractor.cat aavso_* image*.cat*  vast_index_vs_mag*.txt vast_index_vs_mag*.eps ;do 
  if [ -f $i ];then
   mv $i "$REGION_NAME" 
  fi

@@ -1206,6 +1206,32 @@ list getListFromGrid(grid gr, double x, double y) {
  return (ps2);
 }
 
+list getListFromGrid__getAllStarsNevermindGrid(grid gr, double x, double y) {
+ int ic, jc, i_min, j_min, i_max, j_max;
+ int i, j;
+ list ps1, ps2;
+ point p;
+
+ //pointToCell(gr, x, y, &ic, &jc);
+ i_min= 0; // MAX(ic - 1, 0);
+ j_min= 0; // MAX(jc - 1, 0);
+ i_max= gr->columns - 1 ; // MIN(ic + 1, gr->columns - 1);
+ j_max= gr->rows - 1; // MIN(jc + 1, gr->rows - 1);
+
+ ps2= emptyList();
+ for( i= i_min; i <= i_max; i++ ) {
+  for( j= j_min; j <= j_max; j++ ) {
+   ps1= gr->array[i][j];
+   while( isEmpty(ps1) == 0 ) {
+    p= disjoinList(&ps1);
+    ps2= addToList(p, ps2);
+   }
+  }
+ }
+ // printf("i = %d, j = %d\n", ic, jc);
+ return (ps2);
+}
+
 void freeGrid(grid gr) {
  int i, j;
  //  list ps;
@@ -1316,7 +1342,9 @@ int Ident_on_sigma(struct Star *star1, int Number1, struct Star *star2, int Numb
  points1= loadPoint(star1, Number1);
  points2= loadPoint(star2, Number2);
 
+ // Create frame with stars on it
  fr= createFrame(0, 0, image_size_X, image_size_Y, points1);
+ // Create the spatial indexin grid
  gr= createGrid(fr);
 
  points_2= points2;
@@ -1330,24 +1358,38 @@ int Ident_on_sigma(struct Star *star1, int Number1, struct Star *star2, int Numb
   R_best= epsilon;
   find_flag= 0;
   p2= disjoinList(&points_2);
-  ps= getListFromGrid(gr, p2.x, p2.y);
-  ps_1= ps;
+  //ps= getListFromGrid(gr, p2.x, p2.y);
+  //ps_1= ps;
   // First, check the user-specified moving object
   if ( p2.moving_object == 1 ) { 
+   // If this is a moving object - we want to match it against all objects on the reference frame without using the spatial indexing.
+   // The moving object might have moved out of its original indexing square by now.
+   ps= getListFromGrid__getAllStarsNevermindGrid(gr, p2.x, p2.y);
+   ps_1= ps;
+   fprintf(stderr, "\n\n\nDEBUG: YES HERE IS THE MOVING OBJECT IN P2  (%f,%f)\n\n\n",p2.x,p2.y);
    while( isEmpty(ps_1) == 0 ) {
     p1= disjoinList(&ps_1);
+    // WE NEED TO CHECK ALL STARS, NOT JUST THE ONES IN THE SAME SPATIAL SEGMENT
     // Manually match the moving object using the flag (we assume there is only one moving object on the series of images)
     if( p1.moving_object == 1 ) {
      find_flag= 1;
      p_best= p1;
      R_best= 0.0;
-     break;
+     fprintf(stderr, "DEBUG: --- HERE IT IS IN P1  (%f,%f)\n\n\n",p1.x,p1.y);
+     //break; // we probably can break here as we need to empty ps_1
     }
    }
   } else {
-   // the normal route - coordinate-based match
+   // Second - the normal route - coordinate-based match
+   ps= getListFromGrid(gr, p2.x, p2.y);
+   ps_1= ps;
    while( isEmpty(ps_1) == 0 ) {
     p1= disjoinList(&ps_1);
+    // do not allow moving object to participate in positional match!
+    if( p1.moving_object == 1 ) {
+     continue;
+    }
+    //
     R= (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y);
     if( R < R_best ) { // && R<star1[p1.i].distance_to_neighbor_squared && R<star2[p2.i].distance_to_neighbor_squared) {
      find_flag= 1;
@@ -1735,7 +1777,7 @@ int Ident(struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Star
   //if ( nm >= min_number_of_matched_stars ) {
   fprintf(stderr, "refining the coordinate transformation... ");
   float dx, dy;                                            // coordinate corrections for a given star
-  unsigned int ii;                                         // counter
+  unsigned int ii, iii;                                    // counters
   double Ax, Bx, Cx, Ay, By, Cy;                           // coefficients for the two planes which will describe the residuals
                                                            // in x (dx=Ax*x+Bx*y+Cx) and y (dy=Ay*x+By*y+Cy).
                                                            // We will fit these two planes to the remaining systematic
@@ -1761,19 +1803,25 @@ int Ident(struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Star
   };
 
   // Fit a plane to x residuals
-  for( ii= 0; ii < (unsigned int)nm; ii++ ) {
-   x[ii]= star2[Pos2[ii]].x_frame;
-   y[ii]= star2[Pos2[ii]].y_frame;
-   z[ii]= star2[Pos2[ii]].x - STAR1[Pos1[ii]].x;
-   //fprintf(stdout,"%lf %lf %lf\n",x[ii],y[ii],z[ii]);
+  for( iii=0, ii= 0; ii < (unsigned int)nm; ii++ ) {
+   if( star2[Pos2[ii]].moving_object == 0 ) {
+    x[iii]= star2[Pos2[ii]].x_frame;
+    y[iii]= star2[Pos2[ii]].y_frame;
+    z[iii]= star2[Pos2[ii]].x - STAR1[Pos1[ii]].x;
+    iii++;
+   }
   }
-  fit_plane_lin(x, y, z, (unsigned int)nm, &Ax, &Bx, &Cx);
+  fit_plane_lin(x, y, z, iii, &Ax, &Bx, &Cx);
   //fprintf(stderr,"dx=(%lf)*x+(%lf)*y+(%lf)\n",Ax,Bx,Cx);
 
   // Fit a plane to y residuals
-  for( ii= 0; ii < (unsigned int)nm; ii++ )
-   z[ii]= star2[Pos2[ii]].y - STAR1[Pos1[ii]].y;
-  fit_plane_lin(x, y, z, (unsigned int)nm, &Ay, &By, &Cy);
+  for( iii=0, ii= 0; ii < (unsigned int)nm; ii++ ) {
+   if( star2[Pos2[ii]].moving_object == 0 ) {
+    z[iii]= star2[Pos2[ii]].y - STAR1[Pos1[ii]].y;
+    iii++;
+   }
+  }
+  fit_plane_lin(x, y, z, iii, &Ay, &By, &Cy);
   //fprintf(stderr,"dy=(%lf)*x+(%lf)*y+(%lf)\n",Ay,By,Cy);
 
   // Now, apply the coordinate correction to ALL stars on the new (= current = star2) frame.
@@ -1807,17 +1855,24 @@ int Ident(struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Star
 
   /// Second iteration
   // Fit a plane to x residuals
-  for( ii= 0; ii < (unsigned int)nm; ii++ ) {
-   x[ii]= star2[Pos2[ii]].x_frame;
-   y[ii]= star2[Pos2[ii]].y_frame;
-   z[ii]= star2[Pos2[ii]].x - STAR1[Pos1[ii]].x;
+  for( iii=0, ii= 0; ii < (unsigned int)nm; ii++ ) {
+   if( star2[Pos2[ii]].moving_object == 0 ) {
+    x[iii]= star2[Pos2[ii]].x_frame;
+    y[iii]= star2[Pos2[ii]].y_frame;
+    z[iii]= star2[Pos2[ii]].x - STAR1[Pos1[ii]].x;
+    iii++;
+   }
   }
-  fit_plane_lin(x, y, z, (unsigned int)nm, &Ax, &Bx, &Cx);
+  fit_plane_lin(x, y, z, iii, &Ax, &Bx, &Cx);
 
   // Fit a plane to y residuals
-  for( ii= 0; ii < (unsigned int)nm; ii++ )
-   z[ii]= star2[Pos2[ii]].y - STAR1[Pos1[ii]].y;
-  fit_plane_lin(x, y, z, (unsigned int)nm, &Ay, &By, &Cy);
+  for( iii=0, ii= 0; ii < (unsigned int)nm; ii++ ) {
+   if( star2[Pos2[ii]].moving_object == 0 ) {
+    z[iii]= star2[Pos2[ii]].y - STAR1[Pos1[ii]].y;
+    iii++;
+   }
+  }
+  fit_plane_lin(x, y, z, iii, &Ay, &By, &Cy);
 
   // Now, apply the coordinate correction to ALL stars on the new (= current = star2) frame.
   for( ii= 0; ii < (unsigned int)NUMBER2; ii++ ) {
@@ -1849,17 +1904,24 @@ int Ident(struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Star
 
   /// Third iteration
   // Fit a plane to x residuals
-  for( ii= 0; ii < (unsigned int)nm; ii++ ) {
-   x[ii]= star2[Pos2[ii]].x_frame;
-   y[ii]= star2[Pos2[ii]].y_frame;
-   z[ii]= star2[Pos2[ii]].x - STAR1[Pos1[ii]].x;
+  for( iii=0, ii= 0; ii < (unsigned int)nm; ii++ ) {
+   if( star2[Pos2[ii]].moving_object == 0 ) {
+    x[iii]= star2[Pos2[ii]].x_frame;
+    y[iii]= star2[Pos2[ii]].y_frame;
+    z[iii]= star2[Pos2[ii]].x - STAR1[Pos1[ii]].x;
+    iii++;
+   }
   }
-  fit_plane_lin(x, y, z, (unsigned int)nm, &Ax, &Bx, &Cx);
+  fit_plane_lin(x, y, z, iii, &Ax, &Bx, &Cx);
 
   // Fit a plane to y residuals
-  for( ii= 0; ii < (unsigned int)nm; ii++ )
-   z[ii]= star2[Pos2[ii]].y - STAR1[Pos1[ii]].y;
-  fit_plane_lin(x, y, z, (unsigned int)nm, &Ay, &By, &Cy);
+  for( iii=0, ii= 0; ii < (unsigned int)nm; ii++ ) {
+   if( star2[Pos2[ii]].moving_object == 0 ) {
+    z[iii]= star2[Pos2[ii]].y - STAR1[Pos1[ii]].y;
+    iii++;
+   }
+  }
+  fit_plane_lin(x, y, z, iii, &Ay, &By, &Cy);
 
   // Now, apply the coordinate correction to ALL stars on the new (= current = star2) frame.
   for( ii= 0; ii < (unsigned int)NUMBER2; ii++ ) {

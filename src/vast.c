@@ -2147,6 +2147,8 @@ int main(int argc, char **argv) {
    fprintf(stdout, "opt '2': disabling filter out outliers on mag-size plot!\n");
    param_automatically_select_reference_image= 0;
    fprintf(stdout, "opt ' ': diable automated reference-image selection!\n");
+   maxsextractorflag=3;
+   fprintf(stdout, "opt 'x': %d is the maximum acceptable SExtractor flag!\n", maxsextractorflag);
    break;
   case '1':
    param_filterout_magsize_outliers= 1;
@@ -3545,15 +3547,21 @@ int main(int argc, char **argv) {
   STAR1[NUMBER1 - 1].x_frame= STAR1[NUMBER1 - 1].x= (float)position_x_pix;
   STAR1[NUMBER1 - 1].y_frame= STAR1[NUMBER1 - 1].y= (float)position_y_pix;
   // for moving object match
+  STAR1[NUMBER1 - 1].moving_object= 0;
   if( moving_object == 1 ) {
-   if( (position_x_pix-moving_object__user_array_x[0])*(position_x_pix-moving_object__user_array_x[0])+(position_y_pix-moving_object__user_array_y[0])*(position_y_pix-moving_object__user_array_y[0]) < 1.0 ) {
-    STAR1[NUMBER1 - 1].moving_object= 1;
-    snprintf(str_moving_object_lightcurve_file, OUTFILENAME_LENGTH, "out%05d.dat", STAR1[NUMBER1 - 1].n);
-   } else {
-    STAR1[NUMBER1 - 1].moving_object= 0;
+   if( 0.0 < position_x_pix  &&  position_x_pix < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+    if( 0.0 < position_y_pix  &&  position_y_pix < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+     if( 0.0 < moving_object__user_array_x[0]  &&  moving_object__user_array_x[0] < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+      if( 0.0 < moving_object__user_array_y[0]  &&  moving_object__user_array_y[0] < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+       if( (position_x_pix-moving_object__user_array_x[0])*(position_x_pix-moving_object__user_array_x[0])+(position_y_pix-moving_object__user_array_y[0])*(position_y_pix-moving_object__user_array_y[0]) < 1.0 ) {
+        STAR1[NUMBER1 - 1].moving_object= 1;
+        snprintf(str_moving_object_lightcurve_file, OUTFILENAME_LENGTH, "out%05d.dat", STAR1[NUMBER1 - 1].n);
+        fprintf(stderr,"DEBUG: here is the moving object on REF FRAME!!!\n");
+       }
+      }
+     }
+    }
    }
-  } else {
-   STAR1[NUMBER1 - 1].moving_object= 0;
   }
   //
   STAR1[NUMBER1 - 1].flux= flux_adu;
@@ -4155,14 +4163,20 @@ int main(int argc, char **argv) {
      STAR2[NUMBER2 - 1].x_frame= STAR2[NUMBER2 - 1].x;
      STAR2[NUMBER2 - 1].y_frame= STAR2[NUMBER2 - 1].y;
      // for moving object match
+     STAR2[NUMBER2 - 1].moving_object= 0;
      if( moving_object == 1 ) {
-      if( (position_x_pix-moving_object__user_array_x[n])*(position_x_pix-moving_object__user_array_x[n])+(position_y_pix-moving_object__user_array_y[n])*(position_y_pix-moving_object__user_array_y[n]) < 1.0 ) {
-       STAR2[NUMBER2 - 1].moving_object= 1;
-      } else {
-       STAR2[NUMBER2 - 1].moving_object= 0;
-      }
-     } else {
-      STAR2[NUMBER2 - 1].moving_object= 0;
+      if( 0.0 < position_x_pix  &&  position_x_pix < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+       if( 0.0 < position_y_pix  &&  position_y_pix < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+        if( 0.0 < moving_object__user_array_x[n]  &&  moving_object__user_array_x[n] < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+         if( 0.0 < moving_object__user_array_y[n]  &&  moving_object__user_array_y[n] < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+          if( (position_x_pix-moving_object__user_array_x[n])*(position_x_pix-moving_object__user_array_x[n])+(position_y_pix-moving_object__user_array_y[n])*(position_y_pix-moving_object__user_array_y[n]) < 1.0 ) {
+           STAR2[NUMBER2 - 1].moving_object= 1;
+           fprintf(stderr,"\E[01;31mDEBUG: here is the moving object on %s !!!\E[33;00m\n", input_images[n]);
+          }
+         } // if( 0.0 < moving_object__user_array_y[n]  &&  moving_object__user_array_y[n] < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+        } // if( 0.0 < moving_object__user_array_x[n]  &&  moving_object__user_array_x[n] < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+       } // if( 0.0 < position_y_pix  &&  position_y_pix < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+      } // if( 0.0 < position_x_pix  && position_x_pix < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
      }
      //
      STAR2[NUMBER2 - 1].detected_on_ref_frame= 0;               // Mark the star that it is not on the reference frame
@@ -5531,8 +5545,11 @@ int main(int argc, char **argv) {
        //for( i_update_coordinates_STAR3=0; i_update_coordinates_STAR3<NUMBER3; i_update_coordinates_STAR3++ ){
        for( i_update_coordinates_STAR3= NUMBER3; i_update_coordinates_STAR3--; ) {
         if( STAR1[Pos1[i]].n == STAR3[i_update_coordinates_STAR3].n ) {
-         STAR3[i_update_coordinates_STAR3].x= STAR1[Pos1[i]].x;
-         STAR3[i_update_coordinates_STAR3].y= STAR1[Pos1[i]].y;
+         // never update for a moving object
+         if( STAR1[Pos1[i]].moving_object != 1 && STAR3[i_update_coordinates_STAR3].moving_object != 1 ) {
+          STAR3[i_update_coordinates_STAR3].x= STAR1[Pos1[i]].x;
+          STAR3[i_update_coordinates_STAR3].y= STAR1[Pos1[i]].y;
+         }
         } // if( STAR1[Pos1[i]].n==STAR3[i_update_coordinates_STAR3].n ){
        }  // for( i_update_coordinates_STAR3=0; i_update_coordinates_STAR3<NUMBER3; i_update_coordinates_STAR3++ ){
       }   // if( n>MIN_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ){
