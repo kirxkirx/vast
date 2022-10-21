@@ -922,6 +922,7 @@ int main(int argc, char **argv) {
  double razmer_x, razmer_y;
 
  char fits_image_name[FILENAME_LENGTH];
+ char fits_image_name_string_for_display[FILENAME_LENGTH];
  int match_mode= 0;
  //char sex_command_string[2048];
  double APER= 0.0; // just reset it
@@ -1218,6 +1219,13 @@ int main(int argc, char **argv) {
    exit(1);
   }
  }
+ 
+ // Reformat file anme for display
+ strncpy(fits_image_name_string_for_display, fits_image_name, FILENAME_LENGTH); // display the original file name, not symlink
+ if( strlen(fits_image_name_string_for_display) > 70 ) {
+  strncpy(fits_image_name_string_for_display, basename(fits_image_name), FILENAME_LENGTH); // display just the file name if the full path is too long and will not fit the screen anyhow
+ }
+ //
 
  replace_file_with_symlink_if_filename_contains_white_spaces(fits_image_name);
  cutout_green_channel_out_of_RGB_DSLR_image(fits_image_name);
@@ -2562,7 +2570,8 @@ int main(int argc, char **argv) {
     if( finder_chart_mode == 0 ) {
      cpgscr(1, 0.62, 0.81, 0.38); /* set color of lables */
      cpgsch(0.9);                 /* Set small font size */
-     cpgmtxt("T", 0.5, 0.5, 0.5, fits_image_name);
+     //cpgmtxt("T", 0.5, 0.5, 0.5, fits_image_name);
+     cpgmtxt("T", 0.5, 0.5, 0.5, fits_image_name_string_for_display);
      cpgmtxt("T", 1.5, 0.5, 0.5, stderr_output);
      cpgsch(1.0);              /* Set normal font size */
      cpgscr(1, 1.0, 1.0, 1.0); /* */
