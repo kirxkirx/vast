@@ -191,7 +191,7 @@ function remove_test_data_to_save_space {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." 1>&2
-    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ;do
+    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -412,6 +412,123 @@ echo "---------- $VAST_VERSION_STRING test results ----------" >> vast_test_repo
 # Reset the increpmental list of failed test codes
 # (this list is useful if you cancel the test before it completes)
 cat vast_test_report.txt > vast_test_incremental_list_of_failed_test_codes.txt
+
+
+##### DART Didymos moving object photometry test #####
+if [ ! -d ../DART_Didymos_moving_object_photometry_test ];then
+ cd ..
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/DART_Didymos_moving_object_photometry_test.tar.bz2" && tar -xjf DART_Didymos_moving_object_photometry_test.tar.bz2 && rm -f DART_Didymos_moving_object_photometry_test.tar.bz2
+ cd $WORKDIR
+fi
+
+if [ -d ../DART_Didymos_moving_object_photometry_test ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "DART Didymos moving object photometry test " 1>&2
+ echo -n "DART Didymos moving object photometry test: " >> vast_test_report.txt 
+ cp -v default.sex.MSU_DART default.sex
+ cp -v ../DART_Didymos_moving_object_photometry_test/vast_input_user_specified_moving_object_position.txt .
+ ./vast --nofind --type 2 -a33 --movingobject ../DART_Didymos_moving_object_photometry_test/wcs_fd_DART_60sec_Clear_run03-*.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DART_VAST_RUN_FAILED"  
+ else
+ 
+  if [ -f vast_summary.log ];then
+   grep --quiet "Images processed 35" vast_summary.log
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DART_IMG_PROC"
+   fi
+   grep --quiet "Images used for photometry 34" vast_summary.log
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DART_IMG_MEA"
+   fi
+   grep --quiet 'Ref.  image: 2459852.89419 30.09.2022 09:27:08' vast_summary.log
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DART_REF_IMG_DATE"
+   fi
+   grep --quiet 'First image: 2459852.89419 30.09.2022 09:27:08' vast_summary.log
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DART_FIRST_IMG_DATE"
+   fi
+   grep --quiet 'Last  image: 2459852.91936 30.09.2022 10:03:23' vast_summary.log
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DART_LAST_IMG_DATE"
+   fi
+   
+   ###############################################
+
+   MOVING_OBJECT_LIGHTCURVE=`grep 'User-specified moving object:' vast_summary.log | awk '{print $4}'`
+   if [ ! -f "$MOVING_OBJECT_LIGHTCURVE" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DART_NO_MOVING_OBJECT_LIGHTCURVE"
+   else
+    if [ ! -s "$MOVING_OBJECT_LIGHTCURVE" ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES DART_EMPTY_MOVING_OBJECT_LIGHTCURVE"
+    else
+     util/magnitude_calibration.sh V zero_point
+     if [ $? -ne 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES DART_MAGNITUDE_CALIBRATION_FAILED"  
+     else
+      #
+      N_LINES=`cat "$MOVING_OBJECT_LIGHTCURVE" | wc -l`
+      if [ $N_LINES -lt 28 ];then
+       TEST_PASSED=0
+       FAILED_TEST_CODES="$FAILED_TEST_CODES DART_N_LINES_$N_LINES"
+      fi
+      #
+      MEAN_MAG=`cat "$MOVING_OBJECT_LIGHTCURVE" | awk '{print $2}' | util/colstat | grep 'MEAN=' | awk '{print $2}'`
+      TEST=`echo "$MEAN_MAG" | awk '{if ( sqrt( ($1-13.578386)*($1-13.578386) ) < 0.05 ) print 1 ;else print 0 }'`
+      re='^[0-9]+$'
+      if ! [[ $TEST =~ $re ]] ; then
+       echo "TEST ERROR"
+       TEST_PASSED=0
+       TEST=0
+       FAILED_TEST_CODES="$FAILED_TEST_CODES DART_MEAN_MAG_TEST_ERROR"
+      else
+       if [ $TEST -eq 0 ];then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES DART_MEAN_MAG"
+       fi
+      fi # if ! [[ $TEST =~ $re ]] ; then
+      #
+     fi # util/magnitude_calibration.sh V zero_point
+    fi # check MOVING_OBJECT_LIGHTCURVE file nonempty
+   fi # check MOVING_OBJECT_LIGHTCURVE file exist
+
+  else
+   echo "ERROR: cannot find vast_summary.log" 1>&2
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DART_ALL"
+  fi # if [ -f vast_summary.log ];then
+
+ fi # check vast run success
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mDART Didymos moving object photometry test \033[01;32mPASSED\033[00m" 1>&2
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mDART Didymos moving object photometry test \033[01;31mFAILED\033[00m" 1>&2
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DART_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+remove_test_data_to_save_space
+#
 
 
 

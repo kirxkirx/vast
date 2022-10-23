@@ -1366,7 +1366,7 @@ int Ident_on_sigma(struct Star *star1, int Number1, struct Star *star2, int Numb
    // The moving object might have moved out of its original indexing square by now.
    ps= getListFromGrid__getAllStarsNevermindGrid(gr, p2.x, p2.y);
    ps_1= ps;
-   fprintf(stderr, "\n\n\nDEBUG: YES HERE IS THE MOVING OBJECT IN P2  (%f,%f)\n\n\n",p2.x,p2.y);
+   //fprintf(stderr, "\n\n\nDEBUG: YES HERE IS THE MOVING OBJECT IN P2  (%f,%f)\n\n\n",p2.x,p2.y);
    while( isEmpty(ps_1) == 0 ) {
     p1= disjoinList(&ps_1);
     // WE NEED TO CHECK ALL STARS, NOT JUST THE ONES IN THE SAME SPATIAL SEGMENT
@@ -1375,7 +1375,7 @@ int Ident_on_sigma(struct Star *star1, int Number1, struct Star *star2, int Numb
      find_flag= 1;
      p_best= p1;
      R_best= 0.0;
-     fprintf(stderr, "DEBUG: --- HERE IT IS IN P1  (%f,%f)\n\n\n",p1.x,p1.y);
+     //fprintf(stderr, "DEBUG: --- HERE IT IS IN P1  (%f,%f)\n\n\n",p1.x,p1.y);
      //break; // we probably can break here as we need to empty ps_1
     }
    }

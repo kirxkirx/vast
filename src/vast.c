@@ -6500,7 +6500,7 @@ int main(int argc, char **argv) {
  }
  
  //
- if( moving_object == 1 ) {
+ if( moving_object == 1 && param_nofind != 1 ) {
   fprintf(stderr, "\n\n\nDisplaying the moving object lightcurve %s\n\n\n", str_moving_object_lightcurve_file);
   sprintf(stderr_output, "./lc %s", str_moving_object_lightcurve_file);
   if( !system(stderr_output) ) {
