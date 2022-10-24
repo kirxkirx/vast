@@ -72,6 +72,11 @@ void print_help() {
 void minumum_kwee_van_woerden(float *fit_jd, float *fit_mag, int fit_n, double double_JD2float_JD) {
  FILE *tmp_lc_file;
  int i;
+
+ if( fit_n == 0 ) {
+  return;
+ }
+
  tmp_lc_file= fopen("lightcurve_for_kwee_van_woerden.tmp", "w");
  if( tmp_lc_file == NULL ) {
   fprintf(stderr, "ERROR: cannot open the temporary lightcurve file for writing! Aborting minimum determination routine...\n");
@@ -102,8 +107,12 @@ void remove_linear_trend(float *fit_jd, float *mag, int N, double A, double B, d
  float E3, E4;
  float *corrected_mag;
 
+ if( N == 0 ) {
+  return;
+ }
+
  if( N <= 0 ) {
-  fprintf(stderr, "ERROR: Trying allocate zero or negative bytes amount(lc.c)\n");
+  fprintf(stderr, "ERROR: Trying allocate zero or negative number of bytes(lc.c)\n");
   exit(1);
  }
  plot_jd= malloc(N * sizeof(float));
@@ -167,8 +176,13 @@ void plot_linear_trend(float *fit_jd, int N, double A, double B, double mean_jd,
  int i;
  float *plot_jd;
  float *plot_y;
+ 
+ if( N == 0 ) {
+  return;
+ }
+ 
  if( N <= 0 ) {
-  fprintf(stderr, "ERROR2: Trying allocate zero or negative bytes amount(lc.c)\n");
+  fprintf(stderr, "ERROR2: Trying allocate zero or negative number of bytes(lc.c)\n");
   exit(1);
  };
  plot_jd= malloc(N * sizeof(float));
@@ -202,8 +216,13 @@ void fit_linear_trend(float *input_JD, float *input_mag, float *mag_err, int N, 
  double *fit_w;
  double *difference;
  int i;
+ 
+ if( N == 0 ) {
+  return;
+ }
+ 
  if( N <= 0 ) {
-  fprintf(stderr, "ERROR3: Trying allocate zero or negative bytes amount(lc.c)\n");
+  fprintf(stderr, "ERROR3: Trying allocate zero or negative number of bytes(lc.c)\n");
   exit(1);
  };
  fit_jd= malloc(N * sizeof(double));
@@ -242,7 +261,10 @@ void fit_linear_trend(float *input_JD, float *input_mag, float *mag_err, int N, 
  gsl_fit_wmul(fit_jd, 1, fit_w, 1, fit_mag, 1, N, A, &cov11, &chisq);
  (*B)= 0.0;
 
- fprintf(stderr, "Weighted linear trend fit:   %lf mag/day, corresponding to t_2mag= %lf, t_3mag= %lf\n", (*A), 2.0 / (*A), 3.0 / (*A));
+ // Suppress output if it's flat
+ if( (*A) < 1e-6 || 1e-6 < (*A) ) {
+  fprintf(stderr, "Weighted linear trend fit:   %lf mag/day, corresponding to t_2mag= %lf, t_3mag= %lf\n", (*A), 2.0 / (*A), 3.0 / (*A));
+ }
 
  double poly_coeff[8];
 
@@ -251,7 +273,10 @@ void fit_linear_trend(float *input_JD, float *input_mag, float *mag_err, int N, 
  (*B)= poly_coeff[0];
  (*A)= poly_coeff[1];
 
- fprintf(stderr, "Robust linear trend fit:   %lf mag/day, corresponding to t_2mag= %lf, t_3mag= %lf\n\n", (*A), 2.0 / (*A), 3.0 / (*A));
+ // Suppress output if it's flat
+ if( (*A) < 1e-6 || 1e-6 < (*A) ) {
+  fprintf(stderr, "Robust linear trend fit:   %lf mag/day, corresponding to t_2mag= %lf, t_3mag= %lf\n\n", (*A), 2.0 / (*A), 3.0 / (*A));
+ }
 
  free(difference);
  free(fit_w);
@@ -266,8 +291,13 @@ void fit_median_for_jumps(float *input_JD, float *input_mag, float *mag_err, int
  double *fit_w;
  double *difference;
  int i;
+
+ if( N == 0 ) {
+  return;
+ }
+
  if( N <= 0 ) {
-  fprintf(stderr, "ERROR4: Trying allocate zero or negative bytes amount(lc.c)\n");
+  fprintf(stderr, "ERROR4: Trying allocate zero or negative number of bytes(lc.c)\n");
   exit(1);
  };
  fit_jd= malloc(N * sizeof(double));
@@ -831,12 +861,28 @@ int main(int argc, char **argv) {
   if( xw_ps == 0 )
    cpgscr(1, 0.62, 0.81, 0.38); /* set color of lables */
   get_star_number_from_name(star_name, lightcurvefilename);
-  //sprintf(header_str, "Object %s, %d observations, start JD=%.4lf end JD=%.4lf", star_name, Nobs, JD_first, JD_last);
-  sprintf(header_str, "Object %s, %d observations over %.2lf days starting on JD %.4lf", star_name, Nobs, JD_last-JD_first, JD_first);
-  if( strlen(header_str) > 78 ) {
-   //sprintf(header_str, "Object %s, %d observations, start JD=%.2lf end JD=%.2lf", star_name, Nobs, JD_first, JD_last);
-   sprintf(header_str, "Object %s, %d observations over %.2lf days", star_name, Nobs, JD_last-JD_first);
+  
+  //// What we don't know ishow long is the target name
+  if( JD_last-JD_first < 1.0 ) {
+   if( JD_last-JD_first < 2.0/24.0 ) {
+    sprintf(header_str, "Object %s, %d observations over %.0lf minutes starting on JD %.4lf", star_name, Nobs, (JD_last-JD_first)*24*60, JD_first);
+    if( strlen(header_str) > 78 ) {
+     sprintf(header_str, "Object %s, %d observations over %.0lf minutes", star_name, Nobs, (JD_last-JD_first)*24*60);
+    }
+   } else {
+    sprintf(header_str, "Object %s, %d observations over %.2lf hours starting on JD %.4lf", star_name, Nobs, (JD_last-JD_first)*24, JD_first);
+    if( strlen(header_str) > 78 ) {
+     sprintf(header_str, "Object %s, %d observations over %.2lf hours", star_name, Nobs, (JD_last-JD_first)*24);
+    }
+   }
+  } else {
+   sprintf(header_str, "Object %s, %d observations over %.2lf days starting on JD %.4lf", star_name, Nobs, JD_last-JD_first, JD_first);
+   if( strlen(header_str) > 78 ) {
+    sprintf(header_str, "Object %s, %d observations over %.2lf days", star_name, Nobs, JD_last-JD_first);
+   }
   }
+  ////
+  
   if( strlen(header_str) > 78 ) {
    cpgsch(0.9); // make lables with small characters 
   }
@@ -1237,7 +1283,7 @@ int main(int argc, char **argv) {
     remove_linear_trend(float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, breaks[n_breaks - 1], maxJD, m_mean, JD);
    }
    
-   fprintf(stderr, "Writing the trend-subtraction log file \E[34;47m vast_lc_remove_linear_trend.log \E[33;00m\n");
+   fprintf(stderr, "Writing the trend-subtraction log file \E[34;47m vast_lc_remove_linear_trend.log \E[33;00m\n\n");
 
    was_lightcurve_changed= 1; // note, that lightcurve was changed
 

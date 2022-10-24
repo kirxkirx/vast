@@ -268,11 +268,21 @@ else
  echo "# OK, got the server reply..."
 fi
 
+if [ ! -f server_reply$$.html ];then
+ echo "ERROR in $0: no server reply file server_reply$$.html"
+ exit 1
+fi
+
+if [ ! -s server_reply$$.html ];then
+ echo "ERROR in $0: empty server reply file server_reply$$.html"
+ exit 1
+fi
+
 ### DEBUG
 #cat server_reply$$.html
 
 # Parse the server reply
-RESULTURL=`grep "The output will be written to" server_reply$$.html |awk -F"<a" '{print $2}' |awk -F">" '{print $1}'`
+RESULTURL=`grep "The output will be written to" server_reply$$.html | awk -F"<a" '{print $2}' |awk -F">" '{print $1}'`
 RESULTURL=${RESULTURL//\"/ }
 RESULTURL=`echo $RESULTURL | awk '{print $2}'`
 

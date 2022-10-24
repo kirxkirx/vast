@@ -506,6 +506,14 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
   # The input position is already in decimal degrees
   GOOD_CATALOG_POSITION_DEG="$GOOD_CATALOG_POSITION"
  fi
+ # Warn the user that lib/catalogs/check_catalogs_offline might need to download a catalog
+ if [ ! -f "$VAST_PATH"lib/catalogs/asassnv.csv ] || [ ! -f "$VAST_PATH"lib/catalogs/vsx.dat ];then
+  echo "
+WARNING: cannot find catalogs lib/catalogs/asassnv.csv and/or lib/catalogs/vsx.dat
+The script will try to download these catalogs now - it will take some time!
+" >&2
+ fi
+ #
  LOCAL_CATALOG_SEARCH_RESULTS=`lib/catalogs/check_catalogs_offline $GOOD_CATALOG_POSITION_DEG 2>/dev/null`
  if [ $? -eq 0 ];then
   # The object is found in local catalogs

@@ -62,8 +62,13 @@ int main() {
  n_points_lightcurve--;
  n_points_lightcurve--;
  fprintf(stderr, "n_points=%d\n", n_points_lightcurve);
+ 
+ if( n_points_lightcurve<6 ) {
+  fprintf(stderr, "ERROR in kwee-van-woerden.c  -- too few points for lightcurve minimum search\n" );
+  exit(1);
+ }
+ 
  Z= 0.25 * (double)n_points_lightcurve;
-
  fprintf( stderr, "Expecting number of independent pairs Z=%d\n", (int)( Z + 0.0 ) );
  
  /* Sort data */
