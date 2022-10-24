@@ -218,11 +218,14 @@ int robustzeropointfit(double *datax, double *datay, double *dataerr, int n, dou
   return 1;
  }
  for( i= 0; i < n; i++ ) {
+  fprintf(stderr, "DEBUG   %lf %lf  %lf   %lf \n", datay[i], datax[i], dataerr[i], datay[i] - datax[i] );
   mag_diff[i]= datay[i] - datax[i];
   w[i]= 1.0 / (dataerr[i] * dataerr[i]);
+  //w[i]= 1.0 / dataerr[i]; // less aggressive weighting -- tried that - yes, it's worse
+  //w[i]= 1.0 / (dataerr[i] * dataerr[i] * dataerr[i]); // ovwerwheight the errors -- nope, no better than 1/sigma^2 weighting
  }
  //gsl_sort( mag_diff, 1, n );
- //median_mag_diff= gsl_stats_median_from_sorted_data( mag_diff, 1, n );
+ //median_mag_diff= gsl_stats_median_from_sorted_data( mag_diff, 1, n ); // -- tried that - yes, it's worse
  //median_mag_diff= gsl_stats_mean( mag_diff, 1, n );
  median_mag_diff= gsl_stats_wmean(w, 1, mag_diff, 1, n);
  free(w);

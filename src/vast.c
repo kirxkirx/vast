@@ -3558,7 +3558,7 @@ int main(int argc, char **argv) {
        if( (position_x_pix-moving_object__user_array_x[0])*(position_x_pix-moving_object__user_array_x[0])+(position_y_pix-moving_object__user_array_y[0])*(position_y_pix-moving_object__user_array_y[0]) < 1.0 ) {
         STAR1[NUMBER1 - 1].moving_object= 1;
         snprintf(str_moving_object_lightcurve_file, OUTFILENAME_LENGTH, "out%05d.dat", STAR1[NUMBER1 - 1].n);
-        fprintf(stderr,"DEBUG: here is the moving object on REF FRAME!!!\n");
+        //fprintf(stderr,"DEBUG: here is the moving object on REF FRAME!!!\n");
        }
       }
      }
@@ -4173,7 +4173,7 @@ int main(int argc, char **argv) {
          if( 0.0 < moving_object__user_array_y[n]  &&  moving_object__user_array_y[n] < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
           if( (position_x_pix-moving_object__user_array_x[n])*(position_x_pix-moving_object__user_array_x[n])+(position_y_pix-moving_object__user_array_y[n])*(position_y_pix-moving_object__user_array_y[n]) < 1.0 ) {
            STAR2[NUMBER2 - 1].moving_object= 1;
-           fprintf(stderr,"\E[01;31mDEBUG: here is the moving object on %s !!!\E[33;00m\n", input_images[n]);
+           //fprintf(stderr,"\E[01;31mDEBUG: here is the moving object on %s !!!\E[33;00m\n", input_images[n]);
           }
          } // if( 0.0 < moving_object__user_array_y[n]  &&  moving_object__user_array_y[n] < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
         } // if( 0.0 < moving_object__user_array_x[n]  &&  moving_object__user_array_x[n] < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
@@ -4823,6 +4823,8 @@ int main(int argc, char **argv) {
        poly_x[N_good_stars]= (double)STAR2[Pos2[i]].mag;
        poly_y[N_good_stars]= (double)STAR1[Pos1[i]].mag;
        poly_err[N_good_stars]= (double)STAR2[Pos2[i]].sigma_mag;
+       // no obvious gain if we take into acocunt the reference frame-derived errors (as we collect more images - we iprove reference magnitudes?)
+       //poly_err[N_good_stars]= sqrt( (double)STAR2[Pos2[i]].sigma_mag*(double)STAR2[Pos2[i]].sigma_mag + (double)STAR1[Pos1[i]].sigma_mag*(double)STAR1[Pos1[i]].sigma_mag );
        poly_err_fake[N_good_stars]= 0.01; // fake error for unweighted fitting
 
        if( apply_position_dependent_correction == 1 ) {
@@ -4977,12 +4979,13 @@ int main(int argc, char **argv) {
        comparison_star_counter2= 0;
        for( comparison_star_counter= 0; comparison_star_counter < N_good_stars; comparison_star_counter++ ) {
         if( fabs((poly_y[comparison_star_counter] - poly_x[comparison_star_counter]) - comparison_star_median_mag_diff) < 3.0 * sigma_from_MAD ) {
+        //if( fabs((poly_y[comparison_star_counter] - poly_x[comparison_star_counter]) - comparison_star_median_mag_diff) < 6.0 * sigma_from_MAD ) {
          comparison_star_poly_x_good[comparison_star_counter2]= poly_x[comparison_star_counter];
          comparison_star_poly_y_good[comparison_star_counter2]= poly_y[comparison_star_counter];
          comparison_star_poly_err_good[comparison_star_counter2]= poly_err[comparison_star_counter];
          comparison_star_counter2++;
         } else {
-         fprintf(stderr, "Rejecting a star from magnitude calibration\n");
+         fprintf(stderr, "Rejecting a star from magnitude calibration (sigma-clipping magnitude difference): m1=%.3lf m2=%.3lf |(m1-m2)-mediandiff|=%.3lf  sigma(MAD)=%.3lf \n", poly_y[comparison_star_counter], poly_x[comparison_star_counter], fabs((poly_y[comparison_star_counter] - poly_x[comparison_star_counter]) - comparison_star_median_mag_diff), sigma_from_MAD);
         }
        }
        // Copy the good points back

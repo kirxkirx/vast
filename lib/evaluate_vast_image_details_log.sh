@@ -31,5 +31,10 @@ N_STARS_DETECTED_ON_REF_IMG=`grep --max-count=1 "$REF_IMAGE" vast_image_details.
 MEDIAN_N_STARS_DETECTED=`cat vast_image_details.log | awk '{print $13}' | util/colstat 2>/dev/null | grep 'MEDIAN=' | awk '{print $2}'`
 SIGMA_N_STARS_DETECTED=`cat vast_image_details.log | awk '{print $13}' | util/colstat 2>/dev/null | grep 'MAD\*1.48=' | awk '{print $2}'`
 
-echo "$N_STARS_DETECTED_ON_REF_IMG $MEDIAN_N_STARS_DETECTED $SIGMA_N_STARS_DETECTED" | awk '{if ( $1 < $2-$3 ) printf "\n\n #### Check the reference image - it seems to have too few stars! ####\n\n" ;else printf "The reference image seems OK.\n" }'
+#echo "$N_STARS_DETECTED_ON_REF_IMG $MEDIAN_N_STARS_DETECTED $SIGMA_N_STARS_DETECTED" | awk '{if ( $1 < $2-$3 ) printf "\n\n #### Check the reference image - it seems to have too few stars! ####\n\n" ;else printf "The reference image seems OK.\n" }'
+
+#echo "$N_STARS_DETECTED_ON_REF_IMG $MEDIAN_N_STARS_DETECTED $SIGMA_N_STARS_DETECTED"
+
+echo "$N_STARS_DETECTED_ON_REF_IMG $MEDIAN_N_STARS_DETECTED $SIGMA_N_STARS_DETECTED" | awk '{if ( $1 < $2-$3 && $2-$1 > 10 ) printf "\n\n #### Check the reference image - it seems to have too few stars! ####\n\n" ;else printf "The reference image seems OK.\n" }'
+
 
