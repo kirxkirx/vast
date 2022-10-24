@@ -204,6 +204,7 @@ int robustlinefit(double *datax, double *datay, int n, double *poly_coeff) {
 
 int robustzeropointfit(double *datax, double *datay, double *dataerr, int n, double *poly_coeff) {
  int i;
+ double weighted_sigma;
  double median_mag_diff;
  double *mag_diff;
  double *w;
@@ -218,7 +219,7 @@ int robustzeropointfit(double *datax, double *datay, double *dataerr, int n, dou
   return 1;
  }
  for( i= 0; i < n; i++ ) {
-  fprintf(stderr, "DEBUG   %lf %lf  %lf   %lf \n", datay[i], datax[i], dataerr[i], datay[i] - datax[i] );
+  //fprintf(stderr, "DEBUG   %lf %lf  %lf   %lf \n", datay[i], datax[i], dataerr[i], datay[i] - datax[i] );
   mag_diff[i]= datay[i] - datax[i];
   w[i]= 1.0 / (dataerr[i] * dataerr[i]);
   //w[i]= 1.0 / dataerr[i]; // less aggressive weighting -- tried that - yes, it's worse
@@ -228,11 +229,14 @@ int robustzeropointfit(double *datax, double *datay, double *dataerr, int n, dou
  //median_mag_diff= gsl_stats_median_from_sorted_data( mag_diff, 1, n ); // -- tried that - yes, it's worse
  //median_mag_diff= gsl_stats_mean( mag_diff, 1, n );
  median_mag_diff= gsl_stats_wmean(w, 1, mag_diff, 1, n);
+ //
+ weighted_sigma=gsl_stats_wsd_m(w,1,mag_diff,1,n,median_mag_diff);
+ //
  free(w);
  free(mag_diff);
  poly_coeff[7]= poly_coeff[6]= poly_coeff[5]= poly_coeff[4]= poly_coeff[3]= poly_coeff[2]= poly_coeff[1]= poly_coeff[0]= 0.0;
  poly_coeff[1]= 1.0;
  poly_coeff[0]= median_mag_diff;
- fprintf(stderr, "Final zero-point offset %.4lf mag\n", median_mag_diff);
+ fprintf(stderr, "Final zero-point offset %.4lf +/-%.4lf mag (sigma= %.4lf mag)\n", median_mag_diff, weighted_sigma/sqrt((double)n), weighted_sigma);
  return 0;
 }

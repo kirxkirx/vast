@@ -4844,9 +4844,9 @@ int main(int argc, char **argv) {
       // STAR1[Pos1[i]].magmag==0.0 if the star was not detected on the reference frame
       if( -1 == exclude_test(STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, bad_stars_X, bad_stars_Y, N_bad_stars) && fabs(STAR1[Pos1[i]].mag - STAR2[Pos2[i]].mag) < MAX_INSTR_MAG_DIFF && STAR1[Pos1[i]].mag != 0.0
           //&& STAR1[Pos1[i]].sextractor_flag==0
-          && STAR1[Pos1[i]].sextractor_flag <= 3 && STAR1[Pos1[i]].vast_flag == 0
+          && STAR1[Pos1[i]].sextractor_flag <= 3 && STAR1[Pos1[i]].vast_flag == 0 && STAR1[Pos1[i]].moving_object == 0
           //&& STAR2[Pos2[i]].sextractor_flag==0
-          && STAR2[Pos2[i]].sextractor_flag <= 3 && STAR2[Pos2[i]].vast_flag == 0 ) {
+          && STAR2[Pos2[i]].sextractor_flag <= 3 && STAR2[Pos2[i]].vast_flag == 0 && STAR2[Pos2[i]].moving_object == 0 ) {
        poly_x[N_good_stars]= (double)STAR2[Pos2[i]].mag;
        poly_y[N_good_stars]= (double)STAR1[Pos1[i]].mag;
        poly_err[N_good_stars]= (double)STAR2[Pos2[i]].sigma_mag;
@@ -4965,7 +4965,7 @@ int main(int argc, char **argv) {
        gsl_sort(comparison_star_mag_diff, 1, N_good_stars);
        comparison_star_median_mag_diff= gsl_stats_median_from_sorted_data(comparison_star_mag_diff, 1, N_good_stars);
        sigma_from_MAD= esimate_sigma_from_MAD_of_sorted_data(comparison_star_mag_diff, (long)N_good_stars);
-       fprintf(stderr, "Zero-point offset = %.4lf +/-%.4lf mag\n", comparison_star_median_mag_diff, sigma_from_MAD);
+       fprintf(stderr, "Zero-point offset = %.4lf +/-%.4lf mag (sigma= %.4lf mag)\n", comparison_star_median_mag_diff, sigma_from_MAD/sqrt((double)N_good_stars), sigma_from_MAD);
        free(comparison_star_mag_diff);
        // Now filter-out the outliers
        comparison_star_poly_x_good= malloc(malloc_size);
