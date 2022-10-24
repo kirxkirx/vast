@@ -1207,7 +1207,8 @@ list getListFromGrid(grid gr, double x, double y) {
 }
 
 list getListFromGrid__getAllStarsNevermindGrid(grid gr, double x, double y) {
- int ic, jc, i_min, j_min, i_max, j_max;
+ //int ic, jc, i_min, j_min, i_max, j_max;
+ int i_min, j_min, i_max, j_max;
  int i, j;
  list ps1, ps2;
  point p;

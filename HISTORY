@@ -1,3 +1,8 @@
+	* New experimental moving object photometry mode:
+	'./vast --movingobject ../moving_object_images/*.fit'
+	VaST will ask you to mark moving object position on each image with a click.
+        The intended use is comet/asteroid/space junk photometry. 
+	Only one moving object can be measured on a series of images at at a time.
 	* Automatic magnitude calibration scripts now support g magnitudes derived from
 	APASS or PanSTARRS1 catalogs.
 	* The period search routine 'lib/ls_compute_periodogram' can now compute 

@@ -5,7 +5,7 @@
  This file is part of VaST -
  a SExtractor front-end for search of variable objects in a series of FITS images.
 
- Copyleft 2005-2021  Kirill Sokolovsky <kirx@scan.sai.msu.ru>,
+ Copyleft 2005-2022  Kirill Sokolovsky <kirx@scan.sai.msu.ru>,
                      Alexandr Lebedev  <lebastr@gmail.com>,
                      Dmitry Nasonov,    
                      Sergey Nazarov,
@@ -232,10 +232,12 @@ void help_msg(const char *progname, int exit_code) {
  printf("  -6 or --notremovebadimages disable automated identification of bad images\n");
  printf("  -7 or --autoselectrefimage  automatically select the deepest image as the reference image\n");
  printf("  -8 or --excluderefimage  do not use the reference image for photometry\n");
+ printf("        --movingobject  manually specify moving object position at each image (comet/asteroid/space junk photometry)\n");
  printf("\nExamples:\n");
  printf("  ./vast ../data/ccd_image-001.fit ../data/ccd_image-*.fit       # Typical CCD image reduction.\n");
  printf("  ./vast --UTC ../data/ccd_image-001.fit ../data/ccd_image-*.fit # CCD image reduction, UTC time will be used instead of TT.\n");
  printf("  ./vast -y 1 ../data/ccd_image-001.fit ../data/ccd_image-*.fit  # CCD image reduction with one SysRem iteration.\n");
+ printf("  ./vast --movingobject -a33 --type 2 ../data/ccd_image-*.fit    # moving object, fixed 33pix-diameter aperture, magnitude zero-point offset calibration only (mag-mag relation slope fixed to 1.0)\n");
 
  print_TT_reminder(1);
 
