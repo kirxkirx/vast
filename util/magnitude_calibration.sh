@@ -98,6 +98,42 @@ else
 
  # Parse the catalog match file
  case "$BAND" in
+ "C")
+  export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$11,$12}' | grep -v '0.000000' | wc -l`
+  cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$11,$12}' | while read OUTDATFILE A B C ;do 
+   if [ -z $C ];then
+    continue
+   fi
+   if [ "$B" == "0.000000" ];then
+    continue
+   fi
+   # strict variability check only if we have many comparison stars
+   if [ $N_COMP_STARS -gt 100 ];then
+    # Check if this star is constant
+    grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
+    if [ $? -ne 0 ];then
+     continue
+    fi
+   fi
+   # Check if this star not variable
+   grep --quiet "$OUTDATFILE" vast_autocandidates.log
+   if [ $? -eq 0 ];then
+    continue
+   fi
+   # Check if this star is good enough to be listed in vast_lightcurve_statistics.log (useful if we did not check vast_list_of_likely_constant_stars.log )
+   grep --quiet "$OUTDATFILE" vast_lightcurve_statistics.log
+   if [ $? -ne 0 ];then
+    continue
+   fi
+   # Replace the magnitude and error measured at this image with the median mag and scatter from all images
+   MEDIAN_MAG_AND_SCATTER=`grep "$OUTDATFILE" vast_lightcurve_statistics.log | awk '{print $1" "$2}'`
+   MEDIAN_MAG=`echo $MEDIAN_MAG_AND_SCATTER | awk '{print $1}'`
+   SCATTER=`echo $MEDIAN_MAG_AND_SCATTER | awk '{print $2}'`
+   COMBINED_ERROR=`echo "$SCATTER $C" | awk '{print sqrt($1*$1+$2*$2)}'`
+   # Write output
+   echo "$MEDIAN_MAG  $B  $COMBINED_ERROR"
+  done | sort -n > calib.txt
+ ;;
  "B")
   export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$13,$14}' | grep -v '0.000000' | wc -l`
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$13,$14}' | while read OUTDATFILE A B C ;do 
@@ -132,11 +168,6 @@ else
    COMBINED_ERROR=`echo "$SCATTER $C" | awk '{print sqrt($1*$1+$2*$2)}'`
    # Write output
    echo "$MEDIAN_MAG  $B  $COMBINED_ERROR"
-   #if [ ! -z $C ];then  
-   # if [ "$B" != "0.000000" ];then 
-   #  #echo "$A  $B  $C" 
-   # fi
-   #fi
   done | sort -n > calib.txt
  ;;
  "V")
@@ -320,7 +351,7 @@ else
   done | sort -n > calib.txt
  ;;
  "g")
-  export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$23,$24}' | grep -v '0.000000' | wc -l`
+  export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$25,$26}' | grep -v '0.000000' | wc -l`
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$25,$26}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then
     continue

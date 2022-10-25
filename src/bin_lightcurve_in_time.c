@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
  }
  
  jd_bin_width=atof(argv[2]);
- if( jd_bin_width<=0.0 || jd_bin_width>8640000 ) {
+ if( jd_bin_width<=0.0 || jd_bin_width>86400*100 ) {
   fprintf(stderr, "ERROR: the interpreted bin width in seconds (%lf) is out of the epected range!\n", jd_bin_width);
   return 1;
  } else {
