@@ -1086,7 +1086,8 @@ int read_APASS_from_vizquery(struct detected_star *stars, int N, char *vizquery_
  fprintf(stderr, "Parsed %d APASS catalog lines.\n", N_catalog_lines_parsed);
  fprintf(stderr, "%d stars rejected on distance.\n", N_rejected_on_distance);
  fprintf(stderr, "Matched %d stars with APASS.\n", N_stars_matched_with_photometric_catalog);
- if( N_stars_matched_with_photometric_catalog < 5 ) {
+ //if( N_stars_matched_with_photometric_catalog < 5 ) {
+ if( N_stars_matched_with_photometric_catalog < 4 ) {
   fprintf(stderr, "ERROR: too few stars matched!\n");
   return 1;
  }

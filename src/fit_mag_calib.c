@@ -18,6 +18,7 @@
 
 #include "wpolyfit.h"
 
+/*
 void choose_fittting_function(double *insmag, double *catmag, int n_stars, int *fit_function) {
 
  double poly_coeff[8]= {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -30,12 +31,12 @@ void choose_fittting_function(double *insmag, double *catmag, int n_stars, int *
  (*fit_function)= 2;
 
  // Consider two special cases:
- // if n_stars<5 set fit_function=3 (line with fixed a)
+ // if n_stars<5 set fit_function=3 (line with a slope fixed to 1.0)
  if( n_stars < 5 ) {
   (*fit_function)= 3;
   return;
  }
- // if n_stars<MIN_NUMBER_STARS_POLY_MAG_CALIBR set fit_function=1 (line)
+ // if n_stars<MIN_NUMBER_STARS_POLY_MAG_CALIBR set fit_function=1 (line with the variable slope)
  if( n_stars < MIN_NUMBER_STARS_POLY_MAG_CALIBR ) {
   (*fit_function)= 1;
   return;
@@ -66,6 +67,7 @@ void choose_fittting_function(double *insmag, double *catmag, int n_stars, int *
 
  return;
 }
+*/
 
 int main(int argc, char **argv) {
  char calibfilename[FILENAME_LENGTH];
@@ -334,7 +336,7 @@ int main(int argc, char **argv) {
  // Go interactive
  if( operation_mode == 0 ) {
 
-  // Choose fitting function -- this never worked aprticularly well
+  // Choose fitting function -- this never worked particularly well
   //choose_fittting_function(insmag, catmag, n_stars, &fit_function);
 
   /* GUI */
@@ -406,7 +408,47 @@ int main(int argc, char **argv) {
     }
     fclose(calibfile);
    } else {
-    /* Compute A, B and C using current fitting function */
+    // Make sure fitting function is OK for the number of points we have (left)
+    if( n_stars < 8 ) {
+     if( fit_function == 4 || fit_function == 5 ) {
+      // disable photocurve
+      fprintf(stderr, "WARNING: too few points to fit photocurve!\n");
+      fit_function=6;
+     }
+    }
+    if( n_stars < 3 ) {
+     fit_function=3; // 3 - line with a=1 (1*x+b)
+    }
+    // Special one-star mode 
+    if( n_stars == 1 ) {
+     poly_coeff[7]= poly_coeff[6]= poly_coeff[5]= poly_coeff[4]= poly_coeff[3]= poly_coeff[2]= poly_coeff[1]= poly_coeff[0]= 0.0;
+     poly_coeff[1]= 1.0;
+     poly_coeff[0]= catmag[0] - insmag[0];
+     fprintf(stdout, "%lf %lf %lf\n", 0.0, 1.0, poly_coeff[0]);
+     calibfile= fopen("calib.txt_param", "w");
+     if( NULL == calibfile ) {
+      fprintf(stderr, "ERROR opening the output file calib.txt_param for writing!\n");
+      return 1;
+     }
+     fprintf(calibfile, "%lf %lf %lf %lf %lf\n", (double)fit_function, poly_coeff[3], poly_coeff[2], poly_coeff[1], poly_coeff[0]);
+     //
+     free(computed_x);
+     free(computed_y);
+     free(catmag);
+     free(fcatmag);
+     free(w);
+     free(insmagerr);
+     free(finsmag);
+     free(insmag);
+     free(finsmagerr);
+     //
+     //curC='X';
+     return 0;
+    }
+    if( n_stars < 1 ) {
+     fprintf(stderr, "ERROR: no comparison stars left!\n");
+    }
+    // Compute A, B and C using current fitting function 
     if( fit_function == 1 ) {
      gsl_fit_wlinear(insmag, 1, w, 1, catmag, 1, n_stars, &C, &B, &cov00, &cov01, &cov11, &sumsqres);
      poly_coeff[7]= poly_coeff[6]= poly_coeff[5]= poly_coeff[4]= poly_coeff[3]= poly_coeff[2]= poly_coeff[1]= poly_coeff[0]= 0.0;
