@@ -237,7 +237,9 @@ int main(int argc, char **argv) {
     // multiple points in the bin
     out_JD[bin_counter]= gsl_stats_wmean(bin_weight, 1, bin_JD, 1, points_in_bin_counter);
     out_mag[bin_counter]= gsl_stats_wmean(bin_weight, 1, bin_mag, 1, points_in_bin_counter);
-    out_magerr[bin_counter]= MAX( gsl_stats_wsd_m(bin_weight, 1, bin_mag, 1, points_in_bin_counter, out_mag[bin_counter])/sqrt( (double)points_in_bin_counter ), gsl_stats_mean(bin_magerr, 1, points_in_bin_counter)/sqrt( (double)points_in_bin_counter ) );
+    //out_magerr[bin_counter]= MAX( gsl_stats_wsd_m(bin_weight, 1, bin_mag, 1, points_in_bin_counter, out_mag[bin_counter])/sqrt( (double)points_in_bin_counter ), gsl_stats_mean(bin_magerr, 1, points_in_bin_counter)/sqrt( (double)points_in_bin_counter ) );
+    // this way the errors are incorrect, ut consistent bwtween one-point and multi-point bins
+    out_magerr[bin_counter]= gsl_stats_mean(bin_magerr, 1, points_in_bin_counter)/sqrt( (double)points_in_bin_counter ); 
     if( 0 != isnan(out_magerr[bin_counter]) ) {
      out_magerr[bin_counter]= DEFAULT_PHOTOMETRY_ERROR_MAG;
     }
