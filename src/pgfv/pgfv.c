@@ -1646,7 +1646,7 @@ int main(int argc, char **argv) {
    external_flag= 0;
    //external_flag_string[0]='\0';
    if( 0 != parse_sextractor_catalog_string(sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, NULL) ) {
-    fprintf(stderr, "WARNING: problem occurred while parsing SExtractor catalog %s\nThe offending line is:\n%s\n", sextractor_catalog_filename, sextractor_catalog_string);
+    fprintf(stderr, "WARNING: problem occurred while parsing SExtractor catalog %s  (1)\nThe offending line is:\n%s\n", sextractor_catalog_filename, sextractor_catalog_string);
     continue;
    }
    // Do not display saturated stars in the magnitude calibration mode
@@ -2061,7 +2061,7 @@ int main(int argc, char **argv) {
       sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
       external_flag= 0;
       if( 0 != parse_sextractor_catalog_string(sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, NULL) ) {
-       fprintf(stderr, "WARNING: problem occurred while parsing SExtractor catalog %s\nThe offending line is:\n%s\n", sextractor_catalog_filename, sextractor_catalog_string);
+       fprintf(stderr, "WARNING: problem occurred while parsing SExtractor catalog %s  (2)\nThe offending line is:\n%s\n", sextractor_catalog_filename, sextractor_catalog_string);
        continue;
       }
       sextractor_catalog__X[sextractor_catalog__counter]= position_x_pix;

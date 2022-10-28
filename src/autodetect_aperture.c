@@ -473,7 +473,7 @@ double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, 
 #endif
  }
  
- fprintf(stderr, "autodetect_aperture() is done with this image\n");
+ fprintf(stderr, "autodetect_aperture() is done with image %s\n", fitsfilename);
 
  return APERTURE;
 }

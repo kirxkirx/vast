@@ -685,6 +685,11 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
  double apply_JD_correction_in_days= 0.0;
  double overridingJD_from_input_image_list= 0.0;
  // ------------------------------------------
+ 
+ // Stuff to suppoert TESS images
+ int get_header_info_from_first_image_hdu_instead_of_just_first_hdu= 0; 
+ double TESS_style_deadtime_correction= 1.0;
+ // ------------------------------------------
 
  char telescop[FLEN_CARD];
 
@@ -779,19 +784,29 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
  }
  status= 0;
 
- // Close the FITS file and re-open it with fits_open_file() instead of fits_open_image()
- // as the observing date information may be in a different HDU than the image!
- fits_close_file(fptr, &status); // close file
- if( 0 != status ) {
-  fits_report_error(stderr, status); // print out any error messages
-  fits_clear_errmsg();               // clear the CFITSIO error message stack
-  return status;
+ //
+ if( 4 <= strlen(telescop) ) {
+  if( 0 == strncmp(telescop, "TESS", 4) ) {
+   // for TESS some important information is in the second HDU
+   get_header_info_from_first_image_hdu_instead_of_just_first_hdu= 1;
+  }
  }
- fits_open_file(&fptr, fitsfilename, READONLY, &status);
- if( 0 != status ) {
-  fits_report_error(stderr, status); // print out any error messages
-  fits_clear_errmsg();               // clear the CFITSIO error message stack
-  return status;
+
+ if( get_header_info_from_first_image_hdu_instead_of_just_first_hdu != 1 ) { 
+  // Close the FITS file and re-open it with fits_open_file() instead of fits_open_image()
+  // as the observing date information may be in a different HDU than the image!
+  fits_close_file(fptr, &status); // close file
+  if( 0 != status ) {
+   fits_report_error(stderr, status); // print out any error messages
+   fits_clear_errmsg();               // clear the CFITSIO error message stack
+   return status;
+  }
+  fits_open_file(&fptr, fitsfilename, READONLY, &status);
+  if( 0 != status ) {
+   fits_report_error(stderr, status); // print out any error messages
+   fits_clear_errmsg();               // clear the CFITSIO error message stack
+   return status;
+  }
  }
 
  // Moved here as we may need the exposure time to set time using UT-END
@@ -801,7 +816,7 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
   if( status == 202 ) {
    status= 0;
    if( param_verbose >= 1 )
-    fprintf(stderr, "Looking for exposure in EXPOSURE \n");
+    fprintf(stderr, "Looking for exposure in EXPOSURE (after checking EXPTIME)\n");
    fits_read_key(fptr, TDOUBLE, "EXPOSURE", &exposure, EXPOSURE_COMMENT, &status);
    if( status == 202 ) {
     status= 0;
@@ -836,8 +851,20 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
     if( NULL != strstr(EXPOSURE_COMMENT, "hours") ) {
      exposure= 3600.0 * exposure;
     }
+    // TESS
+    if( NULL != strstr(EXPOSURE_COMMENT, "[d] time on source") ) {
+     exposure= 86400.0 * exposure;
+    }
    }
   }
+  //
+  // Search for the deadtime correction keyword like in TESS
+  fits_read_key(fptr, TDOUBLE, "DEADC", &TESS_style_deadtime_correction, NULL, &status);
+  if( status == 0 ) {
+   fprintf(stderr, "WARNING: applying dead time correction %lf from 'DEADC'\n", TESS_style_deadtime_correction);
+   exposure= exposure/TESS_style_deadtime_correction;
+  }
+  status= 0; // we are fine even if there is no DEADC key
   //
  } // if( exposure!=0.0 ){
 
@@ -1275,14 +1302,22 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
    fprintf(stderr, "entering  if ( status != 202 )\n");
 #endif
    // TIMESYS keyword found
-   if( param_verbose >= 1 )
+   if( param_verbose >= 1 ) {
     fprintf(stderr, "TIMESYS keyword found: %s\n", TIMESYS);
-   if( TIMESYS[0] == 'T' && TIMESYS[1] == 'T' )
+   }
+   if( TIMESYS[0] == 'T' && TIMESYS[1] == 'T' ) {
     (*timesys)= 2; // TT
-   else if( TIMESYS[0] == 'U' && TIMESYS[1] == 'T' )
-    (*timesys)= 1; // UT
-   else
-    (*timesys)= 0; // UNKNOWN
+   } else {
+    if( TIMESYS[0] == 'U' && TIMESYS[1] == 'T' ) {
+     (*timesys)= 1; // UT
+    } else {
+     (*timesys)= 0; // UNKNOWN
+    }
+   }
+   // Another common option is 
+   // TIMESYS = 'TDB     '           / time system is Barycentric Dynamical Time (TDB)
+   // but we don't support it yet. When we do - check times derived from TESS image headers
+   // as currently we take the UTC ones from DATE-OBS + EXPOSURE + DEADC
   } else {
 #ifdef DEBUGMESSAGES
    fprintf(stderr, "entering  else corresponding to if ( status != 202 )\n");
