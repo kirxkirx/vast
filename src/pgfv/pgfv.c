@@ -797,6 +797,27 @@ int mymin(float A, float B) {
   return trunc(round(B));
 }
 
+int return_one_if_the_input_image_is_among_the_recently_processed_onses_listed_in_vast_image_details_log(char *fits_image_name) {
+ FILE *file_vast_image_details_log;
+ char image_filename_from_the_file[FILENAME_LENGTH];
+ file_vast_image_details_log=fopen("vast_image_details.log","r");
+ if( NULL == file_vast_image_details_log ) {
+  // no vast_image_details.log, so the input image is surely not there
+  return 0;
+ }
+ //                                            1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16  17
+ while( -1<fscanf(file_vast_image_details_log,"%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %s",image_filename_from_the_file) ) {
+  //fprintf(stderr,"DEBUG: %s\n",image_filename_from_the_file);
+  if( 0 == strncmp(image_filename_from_the_file, fits_image_name, MIN(strlen(fits_image_name),strlen(image_filename_from_the_file)) ) ) {
+   //fprintf(stderr,"DEBUG: %s       ---- YESS\n",image_filename_from_the_file);
+   fclose(file_vast_image_details_log);
+   return 1;
+  }
+ }
+ fclose(file_vast_image_details_log);
+ return 0;
+}
+
 int find_XY_position_of_a_star_on_image_from_vast_format_lightcurve(float *X_known_variable, float *Y_known_variable, char *lightcurvefilename, char *fits_image_name) {
  double jd, mag, merr, x, y, app;
  char string[FILENAME_LENGTH];
@@ -819,7 +840,7 @@ int find_XY_position_of_a_star_on_image_from_vast_format_lightcurve(float *X_kno
   }
  }
  fclose(lightcurvefile);
- fprintf(stderr, "not found\n");
+ fprintf(stderr, "not found on this image\n");
  return 0; // not found, if we are still here
 }
 
@@ -1435,48 +1456,52 @@ int main(int argc, char **argv) {
  //fprintf(stderr,"DEBUG-3\n");
 
  if( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
-  // Allocate memory for the array of known variables markers
-  markX_known_variable= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
-  if( markX_known_variable == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for markX_known_variable\n");
-   exit(1);
-  };
-  markY_known_variable= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
-  if( markY_known_variable == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for markY_known_variable\n");
-   exit(1);
-  };
-  mark_known_variable_counter= 0; // initialize
-  load_markers_for_known_variables(markX_known_variable, markY_known_variable, &mark_known_variable_counter, fits_image_name);
-  //
-  if( mark_known_variable_counter == 0 ) {
-   // Free memory for the array of known variables markers, as non known variables were loaded
-   free(markX_known_variable);
-   free(markY_known_variable);
-  }
-  fprintf(stderr, "Loaded %d known variables.\n", mark_known_variable_counter);
+  // load markers only if the image was recently processed
+  if( 1 == return_one_if_the_input_image_is_among_the_recently_processed_onses_listed_in_vast_image_details_log(fits_image_name) ) {
+   // Allocate memory for the array of known variables markers
+   markX_known_variable= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
+   if( markX_known_variable == NULL ) {
+    fprintf(stderr, "ERROR: Couldn't allocate memory for markX_known_variable\n");
+    exit(1);
+   };
+   markY_known_variable= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
+   if( markY_known_variable == NULL ) {
+    fprintf(stderr, "ERROR: Couldn't allocate memory for markY_known_variable\n");
+    exit(1);
+   };
+   mark_known_variable_counter= 0; // initialize
+   // load known variables
+   load_markers_for_known_variables(markX_known_variable, markY_known_variable, &mark_known_variable_counter, fits_image_name);
+   //
+   if( mark_known_variable_counter == 0 ) {
+    // Free memory for the array of known variables markers, as non known variables were loaded
+    free(markX_known_variable);
+    free(markY_known_variable);
+   }
+   fprintf(stderr, "Loaded %d known variables.\n", mark_known_variable_counter);
 
-  // Allocate memory for the array of autocandidate variables markers
-  markX_autocandidate_variable= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
-  if( markX_autocandidate_variable == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for markX_autocandidate_variable\n");
-   exit(1);
-  };
-  markY_autocandidate_variable= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
-  if( markY_autocandidate_variable == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for markY_autocandidate_variable\n");
-   exit(1);
-  };
-  mark_autocandidate_variable_counter= 0; // initialize
-  // TBA: load autocandidate variables
-  load_markers_for_autocandidate_variables(markX_autocandidate_variable, markY_autocandidate_variable, &mark_autocandidate_variable_counter, fits_image_name);
-  //
-  if( mark_autocandidate_variable_counter == 0 ) {
-   // Free memory for the array of autocandidate variables markers, as non autocandidate variables were loaded
-   free(markX_autocandidate_variable);
-   free(markY_autocandidate_variable);
+   // Allocate memory for the array of autocandidate variables markers
+   markX_autocandidate_variable= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
+   if( markX_autocandidate_variable == NULL ) {
+    fprintf(stderr, "ERROR: Couldn't allocate memory for markX_autocandidate_variable\n");
+    exit(1);
+   };
+   markY_autocandidate_variable= (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
+   if( markY_autocandidate_variable == NULL ) {
+    fprintf(stderr, "ERROR: Couldn't allocate memory for markY_autocandidate_variable\n");
+    exit(1);
+   };
+   mark_autocandidate_variable_counter= 0; // initialize
+   // load autocandidate variables
+   load_markers_for_autocandidate_variables(markX_autocandidate_variable, markY_autocandidate_variable, &mark_autocandidate_variable_counter, fits_image_name);
+   //
+   if( mark_autocandidate_variable_counter == 0 ) {
+    // Free memory for the array of autocandidate variables markers, as non autocandidate variables were loaded
+    free(markX_autocandidate_variable);
+    free(markY_autocandidate_variable);
+   }
+   fprintf(stderr, "Loaded %d candidate variables.\n", mark_autocandidate_variable_counter);
   }
-  fprintf(stderr, "Loaded %d candidate variables.\n", mark_autocandidate_variable_counter);
  }
 
  //fprintf(stderr,"DEBUG-3a\n");
