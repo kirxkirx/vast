@@ -174,15 +174,27 @@ int guess_gain(char *fitsfilename, char *resulting_sextractor_cl_parameter_strin
   fits_read_key(fptr, TSTRING, "BUNIT", str, NULL, &status);
   if( status == 0 ) {
    gain_from_fits_header= -99.9;
-   if( 0 == strncmp(str, "count   ", 8) )
+   //if( 0 == strncmp(str, "count   ", 8) )
+   if( 0 == strncasecmp(str, "count   ", 8) )
     gain_from_fits_header= 1.0; // Swift/UVOT
-   if( 0 == strncmp(str, "ELECTRONS", 9) )
+   //if( 0 == strncmp(str, "ELECTRONS", 9) )
+   if( 0 == strncasecmp(str, "ELECTRONS", 9) )
     gain_from_fits_header= 1.0;                 // HST raw images
-   if( 0 == strncmp(str, "ELECTRONS/S", 11) ) { // HST level 1 (drizzled/resampled images)
+   //if( 0 == strncmp(str, "ELECTRONS/S", 11) ) { // HST level 1 (drizzled/resampled images)
+   if( 0 == strncasecmp(str, "ELECTRONS/S", 11) ) { // HST level 1 (drizzled/resampled images) and TESS FFI (lowercase)
+    // This is how the exposure time is stored for HST
     fits_read_key(fptr, TDOUBLE, "EXPTIME", &exposure, NULL, &status);
     if( status == 0 ) {
      gain_from_fits_header= exposure; // Gain is equal to exposure time if this is a count rate image!
+    } else {
+     status=0;
+     // exposure time in days (sic!) in TESS FFI
+     fits_read_key(fptr, TDOUBLE, "EXPOSURE", &exposure, NULL, &status);
+     if( status == 0 ) {
+      gain_from_fits_header= exposure*86400; // Gain is equal to exposure time in seconds if this is a count rate image!
+     }
     }
+    status=0;
    }
    // If we managed to recognize the BUNIT key...
    if( gain_from_fits_header != -99.9 ) {
