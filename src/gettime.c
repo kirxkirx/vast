@@ -861,7 +861,9 @@ int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to
   // Search for the deadtime correction keyword like in TESS
   fits_read_key(fptr, TDOUBLE, "DEADC", &TESS_style_deadtime_correction, NULL, &status);
   if( status == 0 ) {
-   fprintf(stderr, "WARNING: applying dead time correction %lf from 'DEADC'\n", TESS_style_deadtime_correction);
+   if( param_verbose >= 1 ) {
+    fprintf(stderr, "WARNING: applying dead time correction %lf from 'DEADC'\n", TESS_style_deadtime_correction);
+   }
    exposure= exposure/TESS_style_deadtime_correction;
   }
   status= 0; // we are fine even if there is no DEADC key
