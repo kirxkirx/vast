@@ -102,6 +102,12 @@ function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image
  if [ $? -eq 0 ];then
   return 1
  fi
+
+ ### !!! Blindly trust TESS FFI astrometry !!! ###
+ echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -B500 -A500 "TELESCOP= 'TESS    '" | grep -B500 -A500 "INSTRUME= 'TESS Photometer'" |  grep --quiet "CTYPE1  = 'RA---TAN-SIP'"
+ if [ $? -eq 0 ];then
+  return 1
+ fi
  
  return 0
 }
@@ -547,6 +553,8 @@ field identification have good chances to fail. Sorry... :(
   #$TIMEOUT_COMMAND 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   #
   # HACK Hack hack -- manually specify the field center and size
+  # DART 04:57:09.65 -25:21:48.3
+  #$TIMEOUT_COMMAND 600 solve-field --ra 04:57:09.65 --dec -25:21:48.3 --radius 30.0 --objs 100 --depth 1-10,1-20,20-30 --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # TCPJ1524 15:24:47.60 -60:59:47.3
   #$TIMEOUT_COMMAND 600 solve-field --ra 15:24:47.60 --dec -60:59:47.3 --radius 0.1 --objs 100 --depth 1-10,1-20,20-30 --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # 2022-Mar-29 02:00     12:08:38.06 +15:47:02.8
