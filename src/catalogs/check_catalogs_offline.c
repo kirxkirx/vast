@@ -16,7 +16,8 @@ void download_vsx() {
  f= fopen("lib/catalogs/vsx.dat", "r");
  if( f == NULL ) {
   fprintf(stderr, "Downloading VSX catalog!\n");
-  if( 0 != system("cd lib/catalogs/ ; rm -f vsx.dat.gz ; wget ftp://cdsarc.u-strasbg.fr/pub/cats/B/vsx/vsx.dat.gz ; gunzip vsx.dat.gz") ) {
+  // try to avoid double-downlaod
+  if( 0 != system("ps aux | grep wget | grep vsx.dat.gz && exit 1 || cd lib/catalogs/ ; rm -f vsx.dat.gz ; wget ftp://cdsarc.u-strasbg.fr/pub/cats/B/vsx/vsx.dat.gz ; gunzip vsx.dat.gz") ) {
    fprintf(stderr, "ERROR downloading the VSX catalog!\n");
   }
  } else {
@@ -137,7 +138,8 @@ void download_asassnv() {
  f= fopen("lib/catalogs/asassnv.csv", "r");
  if( f == NULL ) {
   fprintf(stderr, "Downloading ASASSN-V catalog!\n");
-  if( 0 != system("cd lib/catalogs/ ; rm -f  asassnv.csv ; wget -O 'asassnv.csv' 'https://asas-sn.osu.edu/variables/catalog.csv'") ) {
+  // try to avoid double-download
+  if( 0 != system("ps aux | grep wget | grep asassnv.csv && exit 1 || cd lib/catalogs/ ; rm -f  asassnv.csv ; wget -O 'asassnv.csv' 'https://asas-sn.osu.edu/variables/catalog.csv'") ) {
    fprintf(stderr, "ERROR downloading the ASASSN-V catalog!\n");
   }
  } else {
