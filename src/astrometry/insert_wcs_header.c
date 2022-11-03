@@ -13,6 +13,8 @@
 int Kourovka_SBG_date_hack(char *fitsfilename, char *DATEOBS, int *date_parsed, double *exposure);
 
 int main(int argc, char **argv) {
+ int this_is_a_good_image_hdu= 0;
+ int hdutype;
  int status= 0;  //, anynul=0,nullval=0; //for cfitsio routines
  fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
  char fitsfilename[FILENAME_LENGTH];
@@ -36,7 +38,6 @@ int main(int argc, char **argv) {
  short *image_array;
  long naxes[2];
  int anynul= 0;
- //int nullval=0;
  short nullval;
  long fpixel= 1;
  //////////////////////////////
@@ -72,7 +73,7 @@ int main(int argc, char **argv) {
  }
  fits_close_file(fptr, &status); // close file
 
- /* Read image */
+ // Read image //
  strncpy(fitsfilename, argv[2], 1024);
  sprintf(outputfitsfilename, "wcs_%s", fitsfilename);
  fprintf(stderr, "Opening FITS image file %s for reading...  ", fitsfilename);
@@ -80,7 +81,7 @@ int main(int argc, char **argv) {
  if( 0 != status ) {
   fits_report_error(stderr, status);
   fprintf(stderr, "WARNING: cannot open file %s for reading (2)\n", fitsfilename);
-  // This is a special test for the strange bug when the output file ges created while we are slving the plate
+  // This is a special test for the strange bug when the output file gets created while we are still solving the plate
   if( 0 == fitsfile_read_check(outputfitsfilename) ) {
    fprintf(stderr, "WARNING: the output file %s already exist! Will not insert any header. (1)\n", outputfitsfilename);
    return 0; // assume success - everything was done by someone else
@@ -89,7 +90,7 @@ int main(int argc, char **argv) {
   return status;
  }
  fprintf(stderr, "done!\n");
- // This is a special test for the strange bug when the output file ges created while we are slving the plate
+ // This is a special test for the strange bug when the output file gets created while we are still solving the plate
  if( 0 == fitsfile_read_check_silent(outputfitsfilename) ) {
   fprintf(stderr, "WARNING: the output file %s already exist! Will not insert any header. (2)\n", outputfitsfilename);
   return 0; // assume success - everything was done by someone else
@@ -103,8 +104,9 @@ int main(int argc, char **argv) {
   return status;
  }
  fprintf(stderr, "done!\n");
- fprintf(stderr, "Copying HDU...  ");
- fits_copy_hdu(inputfptr, outputfptr, 0, &status);
+ //fprintf(stderr, "Copying HDU...  ");
+ //fits_copy_hdu(inputfptr, outputfptr, 0, &status);
+ fits_copy_file(inputfptr, outputfptr, 1, 1, 1, &status);
  //
  if( status == 207 ) {
   fprintf(stderr, "Oh, is this a Kourovka SBG image?!\n Will try to handle it...\n");
@@ -179,6 +181,55 @@ int main(int argc, char **argv) {
   return status;
  }
  fprintf(stderr, "done!\n");
+ 
+ // Normal close the input file
+ fits_close_file(inputfptr, &status);  // close input file 
+ 
+ // Move to the first image HDU - we want all the following operations to be applied to it
+ this_is_a_good_image_hdu= 0;
+ status= 0;
+ fits_movabs_hdu(outputfptr, 1, &hdutype, &status); //move to the first HDU
+ if( status != 0 ) {
+  fprintf(stderr,"ERROR: moving to the first HDU\n");
+  return 1;
+ }
+ if( hdutype == IMAGE_HDU ) {
+  // this looks promising
+  fits_read_key(outputfptr, TLONG, "NAXIS1", &naxes[0], NULL, &status);
+  if( status == 0 ) {
+   if( naxes[0] > 1 ) {
+    this_is_a_good_image_hdu= 1;
+   }
+  }
+  status= 0; // reset status - no key - no problem
+ }
+
+ // if the first HDU is no good - try the next one
+ if( this_is_a_good_image_hdu == 0 ) {
+
+  fits_movrel_hdu(outputfptr, 1, &hdutype, &status); //move to the next HDU
+  if( status != 0 ) {
+   fprintf(stderr,"ERROR: moving to the next HDU\n");
+   return 1;
+  }
+
+  if( hdutype == IMAGE_HDU ) {
+   // this looks promising
+   fits_read_key(outputfptr, TLONG, "NAXIS1", &naxes[0], NULL, &status);
+   if( status == 0 ) {
+    if( naxes[0] > 1 ) {
+     this_is_a_good_image_hdu= 1;
+    }
+   }
+   status= 0; // reset status - no key - no problem
+  }
+  
+ } // if( this_is_a_good_image_hdu == 0 ) {
+ 
+ if( this_is_a_good_image_hdu != 1 ) {
+  fprintf(stderr,"ERROR: the none of the first two HDUs has  hdutype = IMAGE_HDU  with  NAXIS1 > 1\n");
+  return 1;
+ }
 
  // Remove all keys which we absolutely don't want to see duplicated
  status= 0;
@@ -283,8 +334,8 @@ int main(int argc, char **argv) {
   fits_write_record(outputfptr, wcs_key[i], &status);
  }
 
- fits_close_file(inputfptr, &status);  // close file
- fits_close_file(outputfptr, &status); // close file
+ //fits_close_file(inputfptr, &status);  // close file // moved up
+ fits_close_file(outputfptr, &status); // close output file
 
  fits_report_error(stderr, status); /* print out any error messages */
 
