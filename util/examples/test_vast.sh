@@ -14138,6 +14138,107 @@ else
  FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND_TEST_NOT_PERFORMED"
 fi
 
+######### A bad TESS FFI with no WCS
+if [ ! -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test
+ wget -c "http://scan.sai.msu.ru/~kirx/pub/tess2020107065919-s0024-4-4-0180-s_ffic.fits.bz2" && bunzip2 tess2020107065919-s0024-4-4-0180-s_ffic.fits.bz2
+ cd $WORKDIR
+fi
+
+if [ -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits.fit ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "TESS FFI with no WCS test " 1>&2
+ echo -n "TESS FFI with no WCS test: " >> vast_test_report.txt 
+ #
+ util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:38   = JD  2458955.79836 mid. exp.'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS001"
+ fi
+ #
+ lib/try_to_guess_image_fov ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits  | grep --quiet ' 720'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS003"
+ fi
+ #
+ #
+ cp default.sex.ccd_example default.sex 
+ # Make sure gain value is set to exposure time for the count rate image 
+ lib/autodetect_aperture_main ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits 2>&1 | grep --quiet 'GAIN 1425'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS_gain"
+ fi
+ #
+ util/wcs_image_calibration.sh ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS004"
+ else
+  util/fov_of_wcs_calibrated_image.sh wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet "Image size: 7..\..'x7..\..'"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS005"
+  fi
+  #
+  util/fov_of_wcs_calibrated_image.sh wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits  | grep --quiet -e 'Image scale: 19.' -e 'Image scale: 20.'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS006"
+  fi
+  #
+  util/fov_of_wcs_calibrated_image.sh wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits  | grep --quiet 'Image center: 01:04:'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS007"
+  fi
+  #
+  util/solve_plate_with_UCAC5 ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits
+  if [ ! -f wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS008"
+  fi 
+  lib/bin/xy2sky wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits 200 200 &>/dev/null
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS009"
+  fi
+  if [ ! -s wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits.cat.ucac5 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS010"
+  else
+   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits.cat.ucac5 | wc -l | awk '{print $1}'`
+   if [ $TEST -lt 20 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS011_$TEST"
+   fi
+  fi 
+  # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
+  util/solve_plate_with_UCAC5 ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits 2>&1 | grep --quiet 'The output catalog wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits.cat.ucac5 already exist.'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS012"
+  fi
+ fi # initial plate solve was successful
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mTESS FFI with no WCS test \033[01;32mPASSED\033[00m" 1>&2
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mTESS FFI with no WCS test \033[01;31mFAILED\033[00m" 1>&2
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS_TEST_NOT_PERFORMED"
+fi
+
+
 ### Test imstat code
 if [ -d ../individual_images_test ];then
  TEST_PASSED=1

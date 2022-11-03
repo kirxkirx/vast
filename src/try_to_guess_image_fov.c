@@ -188,6 +188,83 @@ int try_to_recognize_Zeiss2_with_FLIcam(char *fitsfilename, double *estimated_fo
  return 0; // if we are still here - this is Zeiss-2
 }
 
+int try_to_recognize_TESS_FFI(char *fitsfilename, double *estimated_fov_arcmin) {
+ char telescop[1024];
+ char telescop_comment[1024];
+
+ // fitsio
+ long naxes[2];
+ int hdutype;
+ int status= 0;
+ fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
+ // Extract data from fits header
+ fits_open_file(&fptr, fitsfilename, READONLY, &status);
+ if( 0 != status ) {
+  fits_report_error(stderr, status); // print out any error messages
+  fits_clear_errmsg();               // clear the CFITSIO error message stack
+  return status;
+ }
+
+ fits_read_key(fptr, TSTRING, "TELESCOP", telescop, telescop_comment, &status);
+ if( 0 != status ) {
+  status= 0;
+  fits_close_file(fptr, &status);
+  return 1;
+ }
+ if( 0 != strncasecmp(telescop, "TESS", 4) ) {
+  fits_close_file(fptr, &status);
+  return 1;
+ }
+
+ fits_read_key(fptr, TSTRING, "INSTRUME", telescop, telescop_comment, &status);
+ if( 0 != status ) {
+  status= 0;
+  fits_close_file(fptr, &status);
+  return 1;
+ }
+ if( 0 != strncasecmp(telescop, "TESS Photometer", 15) ) {
+  fits_close_file(fptr, &status);
+  return 1;
+ }
+ 
+ fits_movabs_hdu(fptr, 2, &hdutype, &status); // move to the second HDU where the actual image is
+ if( 0 != status ) {
+  // if we can't move to the second HDU - this is probably not a TESS FFI
+  status= 0;
+  fits_close_file(fptr, &status);
+  return 1;
+ }
+
+ fits_read_key(fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status);
+ if( 0 != status ) {
+  fits_report_error(stderr, status); // print out any error messages
+  fits_clear_errmsg();               // clear the CFITSIO error message stack
+  fits_close_file(fptr, &status);
+  return status;
+ }
+ if( naxes[0] != 2136 ) {
+  fits_close_file(fptr, &status);
+  return 1;
+ }
+
+ fits_read_key(fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status);
+ if( 0 != status ) {
+  fits_report_error(stderr, status); // print out any error messages
+  fits_clear_errmsg();               // clear the CFITSIO error message stack
+  fits_close_file(fptr, &status);
+  return status;
+ }
+ if( naxes[1] != 2078 ) {
+  fits_close_file(fptr, &status);
+  return 1;
+ }
+
+ (*estimated_fov_arcmin)= 720;
+
+ fits_close_file(fptr, &status);
+ return 0; // if we are still here - this is Zeiss-2
+}
+
 int try_to_recognize_MSUcampusObs06m_with_APOGEEcam(char *fitsfilename, double *estimated_fov_arcmin) {
  double xpixsz;
  double ypixsz;
@@ -589,10 +666,14 @@ int look_for_existing_wcs_header(char *fitsfilename, double *estimated_fov_arcmi
  }
  fits_read_key(fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status);
  if( 0 != status ) {
-  fits_report_error(stderr, status); // print out any error messages
+  //fits_report_error(stderr, status); // print out any error messages
   fits_clear_errmsg();               // clear the CFITSIO error message stack
   fits_close_file(fptr, &status);
   return status;
+ }
+ if( naxes[0]<2 ) {
+  fits_close_file(fptr, &status);
+  return 1;
  }
  fits_read_key(fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status);
  if( 0 != status ) {
@@ -605,16 +686,20 @@ int look_for_existing_wcs_header(char *fitsfilename, double *estimated_fov_arcmi
  fits_read_key(fptr, TDOUBLE, "CDELT1", &CDELT1, NULL, &status);
  if( 0 != status ) {
   status= 0;
+  fits_clear_errmsg();               // clear the CFITSIO error message stack
   CDELT1= 0.0; // OK, no such keyword, will indicate this by simple setting CDELT1=0.0
  }
  // Try to get WCS info using the built-in CFITSIO mechanism
  xinc= 0.0;
  fits_read_img_coord(fptr, &xrefval, &yrefval, &xrefpix, &yrefpix, &xinc, &yinc, &rot, coordtype, &status);
- if( status == APPROX_WCS_KEY )
+ if( status == APPROX_WCS_KEY ) {
   status= 0; // we are fine with approximate WCS key values
+  fits_clear_errmsg();               // clear the CFITSIO error message stack
+ }
  if( status != 0 ) {
   xinc= 0.0;
   status= 0; // reset status
+  fits_clear_errmsg();               // clear the CFITSIO error message stack
  }
 
  fits_get_hdrspace(fptr, &No_of_wcs_keys, &wcs_keys_left, &status);
@@ -715,14 +800,14 @@ int main(int argc, char **argv) {
   fprintf(stderr, "This program will make a naive attempt to guess image field of view in arcminutes based on various circumstantial evidence.\n Usage: %s my_image.fits\n", argv[0]);
   return 1;
  }
-
+ 
  strncpy(fitsfile_name, argv[1], FILENAME_LENGTH);
  fitsfile_name[FILENAME_LENGTH - 1]= '\0';
  if( 0 != fitsfile_read_check(fitsfile_name) ) {
   fprintf(stderr, "ERROR: %s is not a readbale FITS image!\n", fitsfile_name);
   return 1;
  }
-
+ 
  // First test: see if there is a WCS header in the image itself?
  if( 0 == look_for_existing_wcs_header(fitsfile_name, &estimated_fov_arcmin) ) {
   fprintf(stdout, "%4.0lf\n", estimated_fov_arcmin);
@@ -779,7 +864,7 @@ int main(int argc, char **argv) {
 #endif
   return 0;
  }
-
+ 
  if( 0 == look_for_focallen_keyword(fitsfile_name, &estimated_fov_arcmin) ) {
   fprintf(stdout, "%4.0lf\n", estimated_fov_arcmin);
 #ifdef FOV_DEBUG_MESSAGES
@@ -787,7 +872,7 @@ int main(int argc, char **argv) {
 #endif
   return 0;
  }
-
+ 
  if( 0 == try_to_recognize_Zeiss2_with_FLIcam(fitsfile_name, &estimated_fov_arcmin) ) {
   fprintf(stdout, "%4.0lf\n", estimated_fov_arcmin);
 #ifdef FOV_DEBUG_MESSAGES
@@ -795,7 +880,15 @@ int main(int argc, char **argv) {
 #endif
   return 0;
  }
-
+ 
+ if( 0 == try_to_recognize_TESS_FFI(fitsfile_name, &estimated_fov_arcmin) ) {
+  fprintf(stdout, "%4.0lf\n", estimated_fov_arcmin);
+#ifdef FOV_DEBUG_MESSAGES
+  fprintf(stderr, "That's a TESS FFI.\n");
+#endif
+  return 0;
+ }
+ 
  if( 0 == try_to_recognize_MSUcampusObs06m_with_APOGEEcam(fitsfile_name, &estimated_fov_arcmin) ) {
   fprintf(stdout, "%4.0lf\n", estimated_fov_arcmin);
 #ifdef FOV_DEBUG_MESSAGES
@@ -803,7 +896,7 @@ int main(int argc, char **argv) {
 #endif
   return 0;
  }
-
+ 
  if( 0 == is_it_a_photopate_scan_from_SAI_collection_with_the_basic_header(fitsfile_name, &estimated_fov_arcmin) ) {
   fprintf(stdout, "%4.0lf\n", estimated_fov_arcmin);
 #ifdef FOV_DEBUG_MESSAGES
