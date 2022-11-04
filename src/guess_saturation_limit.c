@@ -303,6 +303,84 @@ int guess_gain(char *fitsfilename, char *resulting_sextractor_cl_parameter_strin
  return 1; // we are not supposed to get here under the normal circumstances
 }
 
+
+
+int try_to_recognize_TESS_FFI_for_flag_image_creation(char *fitsfilename) {
+ char telescop[1024];
+ char telescop_comment[1024];
+
+ // fitsio
+ long naxes[2];
+ int hdutype;
+ int status= 0;
+ fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
+ // Extract data from fits header
+ fits_open_file(&fptr, fitsfilename, READONLY, &status);
+ if( 0 != status ) {
+  fits_report_error(stderr, status); // print out any error messages
+  fits_clear_errmsg();               // clear the CFITSIO error message stack
+  return status;
+ }
+
+ fits_read_key(fptr, TSTRING, "TELESCOP", telescop, telescop_comment, &status);
+ if( 0 != status ) {
+  status= 0;
+  fits_close_file(fptr, &status);
+  return 1;
+ }
+ if( 0 != strncasecmp(telescop, "TESS", 4) ) {
+  fits_close_file(fptr, &status);
+  return 1;
+ }
+
+ fits_read_key(fptr, TSTRING, "INSTRUME", telescop, telescop_comment, &status);
+ if( 0 != status ) {
+  status= 0;
+  fits_close_file(fptr, &status);
+  return 1;
+ }
+ if( 0 != strncasecmp(telescop, "TESS Photometer", 15) ) {
+  fits_close_file(fptr, &status);
+  return 1;
+ }
+ 
+ fits_movabs_hdu(fptr, 2, &hdutype, &status); // move to the second HDU where the actual image is
+ if( 0 != status ) {
+  // if we can't move to the second HDU - this is probably not a TESS FFI
+  status= 0;
+  fits_close_file(fptr, &status);
+  return 1;
+ }
+
+ fits_read_key(fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status);
+ if( 0 != status ) {
+  fits_report_error(stderr, status); // print out any error messages
+  fits_clear_errmsg();               // clear the CFITSIO error message stack
+  fits_close_file(fptr, &status);
+  return status;
+ }
+ if( naxes[0] != 2136 ) {
+  fits_close_file(fptr, &status);
+  return 1;
+ }
+
+ fits_read_key(fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status);
+ if( 0 != status ) {
+  fits_report_error(stderr, status); // print out any error messages
+  fits_clear_errmsg();               // clear the CFITSIO error message stack
+  fits_close_file(fptr, &status);
+  return status;
+ }
+ if( naxes[1] != 2078 ) {
+  fits_close_file(fptr, &status);
+  return 1;
+ }
+
+ fits_close_file(fptr, &status);
+ return 0; // if we are still here - this is Zeiss-2
+}
+
+
 // This function will count the number of zeroes in an image and if there are many - will create a flag image
 // for the SExtractor to flag-out stars near zero-leel pixels
 //
@@ -362,6 +440,7 @@ int check_if_we_need_flag_image(char *fitsfilename, char *resulting_sextractor_c
   return 1;
  }
 
+ 
  // Calculate image median and sigma
  if( 0 == fits_open_image(&fptr, fitsfilename, READONLY, &status) ) {
 
@@ -439,19 +518,21 @@ int check_if_we_need_flag_image(char *fitsfilename, char *resulting_sextractor_c
   return 0;
  } // if( 0==fits_open_image(&fptr, fitsfilename, READONLY, &status) ){
 
+
+ // Override what was done above if this is a known image type
  //
- /*
- if ( median != 0.0 ) {
-  pixel_value_threshold= MAX( 0.0, pixel_value_threshold );
- } else {
-  pixel_value_threshold= MIN_PIX_VALUE;
+ // Check if we know the input image and therefore know if a flag image is needed for it
+ if( 0 == try_to_recognize_TESS_FFI_for_flag_image_creation(fitsfilename) ) {
+  (*is_flag_image_used)= 1;
+  pixel_value_threshold= 10.0;
+  flag_subthreshould_pixels_but_not_zeroes= 1 ;
+  median=sigma_estimated_from_MAD= 0.1; // fake placeholder value
  }
-*/
- //
+
 
  // If user requests to use the flag image, we don't need to guess
  if( 0 == fits_open_image(&fptr, fitsfilename, READONLY, &status) ) {
-
+  // fits_open_image actually ensures that we'll open the first IMAGE_HDU
   if( fits_get_hdu_type(fptr, &hdutype, &status) || hdutype != IMAGE_HDU ) {
    fprintf(stderr, "ERROR: this program only works on images, not tables\n");
    (*is_flag_image_used)= 0;                          // just in case
@@ -554,6 +635,9 @@ int check_if_we_need_flag_image(char *fitsfilename, char *resulting_sextractor_c
   flag_image_filename[0]= '\0';                      // just in case
   return 1;
  }
+
+
+
 
  if( 1 != (*is_flag_image_used) ) {
 
