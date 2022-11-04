@@ -14161,7 +14161,7 @@ if [ -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits ]
   FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS001"
  fi
  #
- lib/try_to_guess_image_fov ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits  | grep --quiet ' 720'
+ lib/try_to_guess_image_fov ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits  | grep --quiet ' 710'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS003"
