@@ -28,8 +28,10 @@ int main(int argc, char **argv) {
 
  float Xtmp, Ytmp, FLUXtmp;
 
- int star_number, flags;
+ int star_number_in_sextractor_catalog, flags;
  double flux, flux_err, mag, mag_err, x, y, a, a_err, b, b_err;
+ 
+ int previous_star_number_in_sextractor_catalog; // !! to check that the star count in the output catalog is always increasing
 
  char ascii_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT];
  char ascii_catalog_filename[512];
@@ -65,14 +67,23 @@ int main(int argc, char **argv) {
  Y= malloc(n * sizeof(float));
  FLUX= malloc(n * sizeof(float));
  fseek(ascii_catalog, 0, SEEK_SET); // go back to the beginning of the file
+ previous_star_number_in_sextractor_catalog=0;
  for( i= 0, n_good= 0, n_high_snr= 0; i < n; i++ ) {
   if( NULL == fgets(ascii_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, ascii_catalog) ) {
    break;
   }
 
-  if( 0 != parse_sextractor_catalog_string(ascii_catalog_string, &star_number, &flux, &flux_err, &mag, &mag_err, &x, &y, &a, &a_err, &b, &b_err, &flags, &external_flag, &psf_chi2, NULL) ) {
+  if( 0 != parse_sextractor_catalog_string(ascii_catalog_string, &star_number_in_sextractor_catalog, &flux, &flux_err, &mag, &mag_err, &x, &y, &a, &a_err, &b, &b_err, &flags, &external_flag, &psf_chi2, NULL) ) {
    fprintf(stderr, "WARNING: problem occurred while parsing SExtractor catalog %s\nThe offending line is:\n%s\n", ascii_catalog_filename, ascii_catalog_string);
    continue;
+  }
+
+  // Read only stars detected at the first FITS image extension.
+  // The start of the second image extension will be signified by a jump in star numbering
+  if( star_number_in_sextractor_catalog < previous_star_number_in_sextractor_catalog ) {
+   break;
+  } else {
+   previous_star_number_in_sextractor_catalog= star_number_in_sextractor_catalog;
   }
 
   // legacy code
@@ -114,9 +125,17 @@ int main(int argc, char **argv) {
     break;
    }
 
-   if( 0 != parse_sextractor_catalog_string(ascii_catalog_string, &star_number, &flux, &flux_err, &mag, &mag_err, &x, &y, &a, &a_err, &b, &b_err, &flags, &external_flag, &psf_chi2, NULL) ) {
+   if( 0 != parse_sextractor_catalog_string(ascii_catalog_string, &star_number_in_sextractor_catalog, &flux, &flux_err, &mag, &mag_err, &x, &y, &a, &a_err, &b, &b_err, &flags, &external_flag, &psf_chi2, NULL) ) {
     fprintf(stderr, "WARNING: problem occurred while parsing SExtractor catalog %s\nThe offending line is:\n%s\n", ascii_catalog_filename, ascii_catalog_string);
     continue;
+   }
+
+   // Read only stars detected at the first FITS image extension.
+   // The start of the second image extension will be signified by a jump in star numbering
+   if( star_number_in_sextractor_catalog < previous_star_number_in_sextractor_catalog ) {
+    break;
+   } else {
+    previous_star_number_in_sextractor_catalog= star_number_in_sextractor_catalog;
    }
 
    // legacy code

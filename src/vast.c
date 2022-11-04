@@ -548,6 +548,8 @@ void choose_best_reference_image(char **input_images, int *vast_bad_image_flag, 
    if( 0 != parse_sextractor_catalog_string(sextractor_catalog_string, &star_number_in_sextractor_catalog, &flux_adu, &flux_adu_err, &mag, &sigma_mag, &position_x_pix, &position_y_pix, &a_a, &a_a_err, &a_b, &a_b_err, &sextractor_flag, &external_flag, &psf_chi2, float_parameters) ) {
     continue;
    }
+   // Read only stars detected at the first FITS image extension.
+   // The start of the second image extension will be signified by a jump in star numbering
    if( star_number_in_sextractor_catalog < previous_star_number_in_sextractor_catalog ) {
     break;
    } else {
@@ -785,6 +787,8 @@ void mark_images_with_elongated_stars_as_bad(char **input_images, int *vast_bad_
     //fprintf( stderr, "DEBUG001 %s\n", sextractor_catalog_string);
     continue;
    }
+   // Read only stars detected at the first FITS image extension.
+   // The start of the second image extension will be signified by a jump in star numbering
    if( star_number_in_sextractor_catalog < previous_star_number_in_sextractor_catalog ) {
     break;
    } else {
@@ -3423,6 +3427,8 @@ int main(int argc, char **argv) {
    fprintf(stderr, "WARNING: problem occurred while parsing SExtractor catalog %s\nThe offending line is:\n%s\n", sextractor_catalog, sextractor_catalog_string);
    continue;
   }
+  // Read only stars detected at the first FITS image extension.
+  // The start of the second image extension will be signified by a jump in star numbering
   if( star_number_in_sextractor_catalog < previous_star_number_in_sextractor_catalog ) {
    fprintf(stderr, "WARNING: the input SExtractor catalog is not sorted. Was this catalog created from a multi-extension FITS? In this case, only sources detected on the first image extension will be processed!\n");
    break;
@@ -4038,6 +4044,8 @@ int main(int argc, char **argv) {
      // fprintf(stderr,"WARNING: problem occurred while parsing SExtractor catalog %s\nThe offending line is:\n%s\n",sextractor_catalog,sextractor_catalog_string);
      // continue;
      //}
+     // Read only stars detected at the first FITS image extension.
+     // The start of the second image extension will be signified by a jump in star numbering
      if( star_number_in_sextractor_catalog < previous_star_number_in_sextractor_catalog ) {
       fprintf(stderr, "WARNING: the input SExtractor catalog is not sorted. Was this catalog created from a multi-extension FITS? In this case, only sources detected on the first image extension will be processed!\n");
       break;

@@ -1507,9 +1507,8 @@ int main(int argc, char **argv) {
  //fprintf(stderr,"DEBUG-3a\n");
 
  if( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
-  //fprintf(stderr,"DEBUG-2\n");
-  /* Check if the SExtractor executable (named "sex") is present in $PATH */
-  /* Update PATH variable to make sure the local copy of SExtractor is there */
+  // Check if the SExtractor executable (named "sex") is present in $PATH 
+  // Update PATH variable to make sure the local copy of SExtractor is there 
   char pathstring[8192];
   strncpy(pathstring, getenv("PATH"), 8192 - 1 - 8);
   pathstring[8192 - 1 - 8]= '\0';
@@ -1649,6 +1648,16 @@ int main(int argc, char **argv) {
     fprintf(stderr, "WARNING: problem occurred while parsing SExtractor catalog %s  (1)\nThe offending line is:\n%s\n", sextractor_catalog_filename, sextractor_catalog_string);
     continue;
    }
+   ////////////////////
+   // Read only stars detected at the first FITS image extension.
+   // The start of the second image extension will be signified by a jump in star numbering
+   if( sextractor_catalog__counter > 0 ) {
+    if( sextractor_catalog__star_number[sextractor_catalog__counter] < sextractor_catalog__star_number[sextractor_catalog__counter-1] ){
+     fprintf(stderr,"WARNING: it seems SExtractor catalog contains detection at multiple FITS extensions. Only the first extension detections are displayed!\n");
+     break;
+    } 
+   }
+   ////////////////////
    // Do not display saturated stars in the magnitude calibration mode
    if( match_mode == 0 ) {
     if( sextractor_catalog__se_FLAG[sextractor_catalog__counter] >= 4 ) {
@@ -2064,6 +2073,16 @@ int main(int argc, char **argv) {
        fprintf(stderr, "WARNING: problem occurred while parsing SExtractor catalog %s  (2)\nThe offending line is:\n%s\n", sextractor_catalog_filename, sextractor_catalog_string);
        continue;
       }
+      ////////////////////
+      // Read only stars detected at the first FITS image extension.
+      // The start of the second image extension will be signified by a jump in star numbering
+      if( sextractor_catalog__counter > 0 ) {
+       if( sextractor_catalog__star_number[sextractor_catalog__counter] < sextractor_catalog__star_number[sextractor_catalog__counter-1] ){
+        fprintf(stderr,"WARNING: it seems SExtractor catalog contains detection at multiple FITS extensions. Only the first extension detections are displayed!\n");
+        break;
+       } 
+      }
+      ////////////////////
       sextractor_catalog__X[sextractor_catalog__counter]= position_x_pix;
       sextractor_catalog__Y[sextractor_catalog__counter]= position_y_pix;
       sextractor_catalog__ext_FLAG[sextractor_catalog__counter]= external_flag;
