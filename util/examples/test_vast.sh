@@ -14200,7 +14200,7 @@ if [ -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits ]
   fi
   #
   util/solve_plate_with_UCAC5 ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits
-  if [ ! -f wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit ];then
+  if [ ! -f wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS008"
   fi 
