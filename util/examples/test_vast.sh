@@ -14148,7 +14148,7 @@ if [ ! -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits
  cd $WORKDIR
 fi
 
-if [ -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits.fit ];then
+if [ -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
