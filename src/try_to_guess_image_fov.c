@@ -259,7 +259,7 @@ int try_to_recognize_TESS_FFI(char *fitsfilename, double *estimated_fov_arcmin) 
   return 1;
  }
 
- (*estimated_fov_arcmin)= 720;
+ (*estimated_fov_arcmin)= 710;
 
  fits_close_file(fptr, &status);
  return 0; // if we are still here - this is Zeiss-2
