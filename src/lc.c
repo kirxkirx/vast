@@ -894,8 +894,14 @@ int main(int argc, char **argv) {
    cpgmtxt("T", 2.0, 0.0, 0.0, header_str);
 
    sprintf(header_str, "<m>=%.3f +/-%.3f,  sigma= %.3f", m_mean, error_mean, sigma);
+   if( sigma < 0.002 ) {
+    sprintf(header_str, "<m>=%.4f +/-%.4f,  sigma= %.4f", m_mean, error_mean, sigma);
+   }
    if( lightcurve_format != 2 ) {
     sprintf(header_str2, ", expected sigma = %.3f", mean_sigma);
+    if( mean_sigma < 0.002 ) {
+     sprintf(header_str2, ", expected sigma = %.4f", mean_sigma);
+    }
     strcat(header_str, header_str2);
    }
    cpgmtxt("T", 1.0, 0.0, 0.0, header_str);
