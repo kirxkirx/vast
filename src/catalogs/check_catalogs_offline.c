@@ -28,7 +28,7 @@ void download_vsx() {
  return;
 }
 
-int search_vsx(double target_RA_deg, double target_Dec_deg, double search_radius_deg) {
+int search_vsx(double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found) {
  FILE *vsx_dat;
  char name[32];
  char RA_char[32];
@@ -107,8 +107,10 @@ int search_vsx(double target_RA_deg, double target_Dec_deg, double search_radius
   distance_deg= acos(cos(DEC1_rad) * cos(DEC2_rad) * cos(MAX(RA1_rad, RA2_rad) - MIN(RA1_rad, RA2_rad)) + sin(DEC1_rad) * sin(DEC2_rad)) * 206264.8 / 3600.0;
 
   if( distance_deg < search_radius_deg ) {
-   if( is_found == 0 )
+   if( is_found == 0 ) {
+    // say it only once even if we'll have a better match later
     fprintf(stdout, "The object was <font color=\"green\">found</font> in <font color=\"blue\">VSX</font>\n");
+   }
    is_found= 1;
    //fprintf(stdout,"%2.0lf\"  %s\nType: %s\n#   Max.           Min./Amp.       JD0           Period\n%s",distance_deg*3600.0,name,type,descr);
    if( distance_deg < best_distance_deg ) {
@@ -123,7 +125,9 @@ int search_vsx(double target_RA_deg, double target_Dec_deg, double search_radius
   }
  }
  if( is_found == 0 ) {
-  fprintf(stdout, "The object was <font color=\"red\">not found</font> in <font color=\"blue\">VSX</font>\n");
+  if( be_silent_if_not_found == 0 ) {
+   fprintf(stdout, "The object was <font color=\"red\">not found</font> in <font color=\"blue\">VSX</font>\n");
+  }
  } else {
   fprintf(stdout, "%2.0lf\"  %s\nType: %s\n#   Max.           Min./Amp.       JD0           Period\n%s", best_distance_deg * 3600.0, best_name, best_type, best_descr);
  }
@@ -161,7 +165,7 @@ const char *getfield_from_csv_string(char *line, int num) {
  return NULL;
 }
 
-int search_asassnv(double target_RA_deg, double target_Dec_deg, double search_radius_deg) {
+int search_asassnv(double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found) {
  FILE *vsx_dat;
  char name[32];
  // char RA_char[32];
@@ -322,14 +326,14 @@ int search_asassnv(double target_RA_deg, double target_Dec_deg, double search_ra
    Url[32 - 1]= '\0'; // just in case
    ///////////////////////////////////////////////////////////////
 
-   if( is_found == 0 )
-    fprintf(stdout, "The object was <font color=\"green\">found</font> in <font color=\"green\">ASASSN-V</font>\n");
+   //if( is_found == 0 )
+   fprintf(stdout, "The object was <font color=\"green\">found</font> in <font color=\"green\">ASASSN-V</font>\n");
    is_found= 1;
    fprintf(stdout, "%2.0lf\"  %s\nType: %s\nMeanMag %s m  Amp. %s m  Period %s d\n<a href=\"https://asas-sn.osu.edu%s\">ASASSN lightcurve</a>\n", distance_deg * 3600.0, name, type, MeanMag, Amplitude, Period, Url);
    break; // find one and be happy
   }
  }
- if( is_found == 0 ) {
+ if( is_found == 0 && be_silent_if_not_found == 0 ) {
   fprintf(stdout, "The object was <font color=\"red\">not found</font> in <font color=\"green\">ASASSN-V</font>\n");
  }
 
@@ -371,16 +375,16 @@ int main(int argc, char **argv) {
  // multiple known variables are within the search radius and ideally we want the nearest one to the search position.
  
  // First try small search radius
- is_found= search_vsx(target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG/3.0);
+ is_found= search_vsx(target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG/3.0, 1);
  if( is_found != 1 ) {
-  is_found= search_asassnv(target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG/3.0);
+  is_found= search_asassnv(target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG/3.0, 1);
  }
  // If nothing found - try a larger search radius
  if( is_found != 1 ) {
-  is_found= search_vsx(target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG);
+  is_found= search_vsx(target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG, 0);
  } 
  if( is_found != 1 ) {
-  is_found= search_asassnv(target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG);
+  is_found= search_asassnv(target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG, 0);
  }
 
  // Return 0 if the source is found
