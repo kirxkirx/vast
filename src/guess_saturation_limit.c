@@ -207,7 +207,7 @@ int guess_gain(char *fitsfilename, char *resulting_sextractor_cl_parameter_strin
   }
   status= 0; // reset status, it is OK not to find this keyword
 
-  // Special case Siril imae stacking code producess some really strange normalization when writing 32bit floating-point images.
+  // Special case Siril image stacking code producess some really strange normalization when writing 32bit floating-point images.
   // As the result, the default non-zero gain value completely messes up error estimation for the detected sources.
   // If this is a DSLR image (as indicated by the presence of ISOSPEED key) and it is 32bit floatng point - set gain to 0.
   status= 0;
@@ -270,6 +270,16 @@ int guess_gain(char *fitsfilename, char *resulting_sextractor_cl_parameter_strin
    guessed_gain= gain_from_fits_header;
    sprintf(resulting_sextractor_cl_parameter_string, "-GAIN %.3lf ", guessed_gain);
    fprintf(stderr, "The gain value (CCDGAIN=%.3lf) is obtained from the FITS header of the image %s\n", guessed_gain, fitsfilename);
+   return 0;
+  }
+  // CVF keyword
+  status= 0;
+  fits_read_key(fptr, TDOUBLE, "CVF", &gain_from_fits_header, NULL, &status);
+  if( status == 0 ) {
+   fits_close_file(fptr, &status); // close file
+   guessed_gain= gain_from_fits_header;
+   sprintf(resulting_sextractor_cl_parameter_string, "-GAIN %.3lf ", guessed_gain);
+   fprintf(stderr, "The gain value (CVF=%.3lf) is obtained from the FITS header of the image %s\n", guessed_gain, fitsfilename);
    return 0;
   }
   // GAINCCD keyword
