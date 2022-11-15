@@ -1,3 +1,21 @@
+	* Experimental support for TESS Full-Frame Images (FFIs). In terms of photometric precision, 
+	VaST cannot compete with the analysis codes specifically designed for TESS. It is rather an attempt to apply 
+	quick mass-photometry to TESS images to enable discovery and characterization of bright and high-amplitude 
+	(by TESS standards) variable stars. TESS has 4 cameras and each camera has 4 CCD chips. VaST can process 
+	a series of images taken with one chip of a given camera during one TESS observing sector at a time.
+	The command line for processing a set of TESS FFIs with VaST may look like this: 
+	'./vast -u -f -t2 --selectbestaperture --autoselectrefimage --sysrem 3 /data1/TESS/sector_24/tess*-4-4-*'
+	where '-u' explicitly sets the time scale to UTC, '-f' disables the graphical output,
+	'-t2' set the photometric calibration type to 'zero-point offset only' (found most appropriate for TESS FFIs),
+	'--selectbestaperture' for each object VaST will select aperture size that minimizes the lightcurve scatter, 
+	'--autoselectrefimage' let VaST automatically select the best reference image,
+	'--sysrem 3' apply 3 iterations of SysRem to suppress residual systematics. 
+	As much as 9 SysRem iterations may be appropriate for TESS FFIs.
+	The numbers '-4-4-' in the files names are the camera and CCD chip numbers.
+	Processing TESS FFIs with VaST requires considerable computational resources.
+	You may try to make cutouts (with 'util/fitscopy' or other tools) rather than processing full-chip images.
+	You may want to process only the FFIs with good data quality flags ('DQUALITY= 0' key in FITS header).
+	TESS FFIs may be downloaded at https://archive.stsci.edu/tess/bulk_downloads/bulk_downloads_ffi-tp-lc-dv.html
 	* New experimental moving object photometry mode:
 	'./vast --movingobject ../moving_object_images/*.fit'
 	VaST will ask you to mark moving object position on each image with a click.
@@ -104,6 +122,7 @@
 	* Added CFITSIO example program 'util/imarith' allowing simple arithmetic operations on images (used in test script).
 	* You may now run the sigma-clip filter on an individual lightcurve file:
 	lib/new_lightcurve_sigma_filter 3.0 out12345.dat # here 3.0 is the sigma-clip level
+	* VaST is now able to read the CCD gain value from CVF keyword written by N.I.N.A. camera control software.
 20 Oct 2020: vast-1.0rc85:
 	* 'util/get_image_date' can be used to convert JD to calendar date/time:
 	util/get_image_date 2456909.72911
