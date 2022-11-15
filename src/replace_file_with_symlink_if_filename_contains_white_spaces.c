@@ -177,7 +177,8 @@ void cutout_green_channel_out_of_RGB_DSLR_image(char *filename) {
   if( strlen(program) >= 5 ) {
    pointer_to_the_key_start= (char *)memmem(program, strlen(program), "Siril", 5);
    if( pointer_to_the_key_start != NULL ) {
-    fprintf( stderr, "Found key PROGRAM= %s  -- %s looks like a DSLR image\n", program, filename);
+    // It looks like CCD images are also often processed with Siril, so don't annoy a user with this message
+    // fprintf( stderr, "Found key PROGRAM= %s  -- %s looks like a DSLR image\n", program, filename);
     does_the_header_look_like_DSLR_image= 1;
    }
   }
