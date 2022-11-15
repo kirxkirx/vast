@@ -1353,20 +1353,29 @@ int check_and_print_memory_statistics() {
  return 0;
 }
 
-/* progress(int done, int all) - print out progress status, how many images were sextracted */
+// progress(int done, int all) - print out progress status, how many images were sextracted 
 void progress(int done, int all) {
  fprintf(stderr, "processed %d of %d images (%5.1lf%%)\n", done, all, (double)done / (double)all * 100.0);
  return;
 }
 
-/* save_command_line_to_log_file(int argc, char **argv) - save command line arguments to the log file vast_command_line.log */
+// save_command_line_to_log_file(int argc, char **argv) - save command line arguments to the log file vast_command_line.log 
 void save_command_line_to_log_file(int argc, char **argv) {
  int i;
  FILE *cmdlogfile;
  cmdlogfile= fopen("vast_command_line.log", "w");
- for( i= 0; i < argc; i++ )
-  fprintf(cmdlogfile, "%s ", argv[i]);
+ if( NULL == cmdlogfile ) {
+  fprintf(stderr, "ERROR: cannot open vast_command_line.log for writing - something is very wrong.\n");
+  return;
+ }
+ // Print to the terminal in addition to the log file
+ fprintf(stderr, "\n VaST was started with the following command line: \n");
+ for( i= 0; i < argc; i++ ) {
+  fprintf(cmdlogfile, "%s ", argv[i]); // log file
+  fprintf(stderr, "%s ", argv[i]); // terminal
+ }
  fclose(cmdlogfile);
+ fprintf(stderr, "\n\n");
 }
 
 // TODO: replace with memove
@@ -2842,7 +2851,7 @@ int main(int argc, char **argv) {
  }
  fprintf(stderr, "Done with cleaning!\n");
 
- /* Save command line arguments to the log file vast_command_line.log */
+ // Save command line arguments to the log file vast_command_line.log 
  save_command_line_to_log_file(argc, argv);
 
  /// Special mode for manual comparison star selection
