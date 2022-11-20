@@ -54,7 +54,7 @@ if [ ! $? ];then
  echo "
 VaST installation problem: an error occurred while configuring The GNU Scientific Library (GSL).
 This should not have happened! Please report the problem (including the above error messages)
-to the VaST developer Kirill Sokolovsky <kirx@scan.sai.msu.ru> by e-mail or 
+to the VaST developer Kirill Sokolovsky <kirx@kirx.net> by e-mail or 
 by creating GitHub issue at https://github.com/kirxkirx/vast
 
 Thank you and sorry for the inconvenience."

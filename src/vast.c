@@ -5,7 +5,7 @@
  This file is part of VaST -
  a SExtractor front-end for search of variable objects in a series of FITS images.
 
- Copyleft 2005-2022  Kirill Sokolovsky <kirx@scan.sai.msu.ru>,
+ Copyleft 2005-2022  Kirill Sokolovsky <kirx@kirx.net>,
                      Alexandr Lebedev  <lebastr@gmail.com>,
                      Dmitry Nasonov,    
                      Sergey Nazarov,
