@@ -13,25 +13,35 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
-echo -n "Checking write permissions for the current directory ( $PWD ) ...  "
+echo -n "$0 is checking write permissions for the current directory ( $PWD ) ...  "
 
 touch testfile$$.tmp
 if [ $? -eq 0 ];then
  rm -f testfile$$.tmp
  echo "OK"
 else
- echo "ERROR: please make sure you have write permissions for the current directory.
+ # Retry to see if we are completely out of disk space
+ touch testfile$$.tmp 2>&1 | grep 'No space left on device'
+ if [ $? -eq 0 ];then
+  echo "ERROR in $0: the device is compleltely out of disk space! Will try to clean-up some."
+ else
+  # Aitn't gonna happen, but just in case
+  if [ -f testfile$$.tmp ];then
+   rm -f testfile$$.tmp
+  fi
+  echo "ERROR in $0: please make sure you have write permissions for the current directory.
 
 Maybe you need something like:
 sudo chown -R $USER $PWD"
- exit 1
+  exit 1
+ fi # see if we are completely out of disk space
 fi
 
 ## Clean the silly *.chk files produced by astcheck
 rm -f -- *.chk
 
 rm -f test.cat CPCS.cat  
-echo "deleting ALL data files"
+echo "$0 is deleting ALL data files from $PWD"
 # lib/fast_clean_data exists only if the source code is compiled
 if [ -x lib/fast_clean_data ];then
  lib/fast_clean_data # This will quickly remove out*dat files
