@@ -2319,6 +2319,458 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 
+
+##### Small CCD images star exclusion test #####
+# Download the test dataset if needed
+if [ ! -d ../sample_data ];then
+ cd ..
+ wget -c "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ cd $WORKDIR
+fi
+# If the test data are found
+if [ -d ../sample_data ];then
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "Small CCD images star exclusion test " 1>&2 
+ echo -n "Small CCD images star exclusion test: " >> vast_test_report.txt 
+ if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
+  mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP
+ fi
+ cp vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_example vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+ cp default.sex.ccd_example default.sex
+ echo "218.95351  247.83630" > exclude.lst
+ ./vast -u -f --nomagsizefilter ../sample_data/*.fit 2>&1 | grep ' 218\.' | grep ' 247\.' | grep --quiet 'is listed in exclude.lst'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX000"
+ fi
+ N_EXCLUDED_STAR=`./vast -u -f --nomagsizefilter ../sample_data/*.fit 2>&1 | grep ' 218\.' | grep ' 247\.' | grep -c 'is listed in exclude.lst'`
+ if [ $N_EXCLUDED_STAR -ne 90 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX000_N$N_EXCLUDED_STAR"
+ fi
+ echo "# Reference image pixel coordinates of stars
+# that should be excluded from magnitude calibration
+#
+0.0 0.0" > exclude.lst
+ if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP ];then
+  mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+ fi
+ # Check results
+ if [ -f vast_summary.log ];then
+  grep --quiet "Images processed 91" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX001"
+  fi
+  grep --quiet "Images used for photometry 91" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX002"
+  fi
+  grep --quiet "Ref.  image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX_REFIMAGE"
+  fi
+  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX003"
+  fi
+  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX004"
+  fi
+  # Hunting the mysterious non-zero reference frame rotation cases
+  if [ -f vast_image_details.log ];then
+   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX0_nonzero_ref_frame_rotation"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### STAREX0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### STAREX0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX0_NO_vast_image_details_log"
+  fi
+  #
+  grep --quiet "Magnitude-Size filter: Disabled" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX005"
+  fi
+  grep --quiet "Photometric errors rescaling: YES" vast_summary.log
+  #if [ $? -ne 0 ];then
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX006"
+  fi
+  if [ ! -f vast_lightcurve_statistics.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX007"
+  fi
+  if [ ! -s vast_lightcurve_statistics.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX008"
+  fi
+  if [ ! -f vast_lightcurve_statistics_format.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX009"
+  fi
+  if [ ! -s vast_lightcurve_statistics_format.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX010"
+  fi
+  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX011"
+  fi
+  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX012"
+  fi
+  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX013"
+  fi
+  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX014"
+  fi
+  #
+  MEDIAN_SIGMACLIP_BRIGHTSTARS=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREXMEANSIG005"
+  fi
+  #TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS)-(0.061232);sqrt(a*a)<0.005" | bc -ql`
+  TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS" | awk '{if ( sqrt( ($1-0.061232)*($1-0.061232) ) < 0.005 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREXMEANSIG006_TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREXMEANSIG006__$MEDIAN_SIGMACLIP_BRIGHTSTARS"
+  fi
+  #
+  N_AUTOCANDIDATES=`cat vast_autocandidates.log | wc -l | awk '{print $1}'`
+  # actually we get two more false candidates depending on binning if filtering is disabled
+  if [ $N_AUTOCANDIDATES -lt 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX000_N_AUTOCANDIDATES"
+  fi
+  ###############################################
+  ### Now let's check the candidate variables ###
+  # out00201.dat - CV (but we can't rely on it having the same out*.dat name)
+  STATSTR=`cat vast_lightcurve_statistics.log | sort -k26 | tail -n1`
+  LIGHTCURVEFILE=`echo "$STATSTR" | awk '{print $5}'`
+  NLINES_IN_LIGHTCURVEFILE=`cat $LIGHTCURVEFILE | wc -l | awk '{print $1}'`
+  if [ $NLINES_IN_LIGHTCURVEFILE -lt 91 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX015_$NLINES_IN_LIGHTCURVEFILE"
+  fi
+  STATMAG=`echo "$STATSTR" | awk '{print $1}'`
+  #TEST=`echo "a=($STATMAG)-(-11.761200);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$STATMAG" | awk '{if ( sqrt( ($1-(-11.761200))*($1-(-11.761200)) ) < 0.01 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX015a_TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX015a"
+  fi
+  STATX=`echo "$STATSTR" | awk '{print $3}'`
+  #TEST=`echo "a=($STATX)-(218.9535100);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATX" | awk '{if ( sqrt( ($1-218.9535100)*($1-218.9535100) ) < 0.1 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX016_TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX016"
+  fi
+  STATY=`echo "$STATSTR" | awk '{print $4}'`
+  #TEST=`echo "a=($STATY)-(247.8363000);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATY" | awk '{if ( sqrt( ($1-247.8363000)*($1-247.8363000) ) < 0.1 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX017_TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX017"
+  fi
+  # indexes
+  # idx01_wSTD
+  STATIDX=`echo "$STATSTR" | awk '{print $6}'`
+  #TEST=`echo "a=($STATIDX)-(0.241686);sqrt(a*a)<0.01" | bc -ql`
+  # wSTD with rescaled errorbars
+  #TEST=`echo "a=($STATIDX)-(0.325552);sqrt(a*a)<0.01" | bc -ql`
+  # wSTD with rescaled errorbars (robust line fitting)
+  # The difference may be pretty huge from machine to mcahine...
+  # And the difference HUGEly depends on weighting
+  #TEST=`echo "a=($STATIDX)-(0.372294);sqrt(a*a)<0.1" | bc -ql`
+  # This is the value on eridan with photometric error rescaling disabled
+  #TEST=`echo "a=($STATIDX)-(0.354955);sqrt(a*a)<0.2" | bc -ql`
+  # 0.242372 at HPCC with photometric error rescaling disabled
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.354955)*($1-0.354955) ) < 0.2 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX018_TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX018"
+  fi
+  # idx09_MAD
+  STATIDX=`echo "$STATSTR" | awk '{print $14}'`
+  #TEST=`echo "a=($STATIDX)-(0.018977);sqrt(a*a)<0.005" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.018977)*($1-0.018977) ) < 0.005 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX019_TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX019"
+  fi
+  # idx25_IQR
+  STATIDX=`echo "$STATSTR" | awk '{print $30}'`
+  #TEST=`echo "a=($STATIDX)-(0.025686);sqrt(a*a)<0.001" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.025686)*($1-0.025686) ) < 0.001 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX020_TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX020"
+  fi
+  STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
+  NUMBER_OF_LINES=`cat "$STATOUTFILE" | wc -l | awk '{print $1}'`
+  if [ $NUMBER_OF_LINES -ne 91 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX021_$NUMBER_OF_LINES"
+  fi
+  # Check if star is in the list of candidate vars
+  if [ ! -s vast_autocandidates.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX022 STAREX023_NOT_PERFORMED"
+  else
+   STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
+   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX023"
+   fi
+  fi
+  # Check that this star is not in the list of constant stars
+  if [ ! -s vast_list_of_likely_constant_stars.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX024 STAREX025_NOT_PERFORMED"
+  else
+   STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
+   grep --quiet "$STATOUTFILE" vast_list_of_likely_constant_stars.log
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX025"
+   fi
+  fi  
+  # out00268.dat - EW (but we can't rely on it having the same out*.dat name)
+  STATSTR=`cat vast_lightcurve_statistics.log | sort -k26 | tail -n2 | head -n1`
+  LIGHTCURVEFILE=`echo "$STATSTR" | awk '{print $5}'`
+  NLINES_IN_LIGHTCURVEFILE=`cat $LIGHTCURVEFILE | wc -l | awk '{print $1}'`
+  if [ $NLINES_IN_LIGHTCURVEFILE -lt 90 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX026_$NLINES_IN_LIGHTCURVEFILE"
+  fi
+  STATMAG=`echo "$STATSTR" | awk '{print $1}'`
+  #TEST=`echo "a=($STATMAG)-(-11.220400);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$STATMAG" | awk '{if ( sqrt( ($1-(-11.220400))*($1-(-11.220400)) ) < 0.01 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX026a_TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX026a"
+  fi
+  STATX=`echo "$STATSTR" | awk '{print $3}'`
+  #TEST=`echo "a=($STATX)-(87.2039000);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATX" | awk '{if ( sqrt( ($1-87.2039000)*($1-87.2039000) ) < 0.1 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX027_TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX027"
+  fi
+  STATY=`echo "$STATSTR" | awk '{print $4}'`
+  #TEST=`echo "a=($STATY)-(164.4241000);sqrt(a*a)<0.1" | bc -ql`
+  TEST=`echo "$STATY" | awk '{if ( sqrt( ($1-164.4241000)*($1-164.4241000) ) < 0.1 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX028_TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX028"
+  fi
+  # indexes
+  STATIDX=`echo "$STATSTR" | awk '{print $6}'`
+  #TEST=`echo "a=($STATIDX)-(0.037195);sqrt(a*a)<0.01" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.037195)*($1-0.037195) ) < 0.01 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX029_TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX029"
+  fi
+  STATIDX=`echo "$STATSTR" | awk '{print $14}'`
+  #TEST=`echo "a=($STATIDX)-(0.044775);sqrt(a*a)<0.002" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.044775)*($1-0.044775) ) < 0.002 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX030_TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX030"
+  fi
+  STATIDX=`echo "$STATSTR" | awk '{print $30}'`
+  # Yeah, I have no idea why this difference is so large between machines
+  # The difference is in the original lightcurve...
+  #TEST=`echo "a=($STATIDX)-(0.050557);sqrt(a*a)<0.003" | bc -ql`
+  TEST=`echo "$STATIDX" | awk '{if ( sqrt( ($1-0.050557)*($1-0.050557) ) < 0.003 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX031_TEST_ERROR"
+  fi
+  if [ $TEST -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX031"
+  fi
+  STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
+  NUMBER_OF_LINES=`cat "$STATOUTFILE" | wc -l | awk '{print $1}'`
+  if [ $NUMBER_OF_LINES -lt 90 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX032_$NUMBER_OF_LINES"
+  fi
+  # Check if star is in the list of candidate vars
+  if [ ! -s vast_autocandidates.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX033 STAREX034_NOT_PERFORMED"
+  else
+   STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
+   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX034"
+   fi
+  fi
+  STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
+  grep --quiet "$STATOUTFILE" vast_list_of_likely_constant_stars.log
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX035"
+  fi
+  ###############################################
+  # Both stars should be selected using the following criterea, but let's check at least one
+  cat vast_autocandidates_details.log | grep --quiet 'IQR  IQR+MAD  eta+IQR+MAD  eta+CLIPPED_SIGMA'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX_AUTOCANDIDATEDETAILS"
+  fi
+  ###############################################
+
+ else
+  echo "ERROR: cannot find vast_summary.log" 1>&2
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX_ALL"
+ fi
+
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mSmall CCD images star exclusion test \033[01;32mPASSED\033[00m" 1>&2
+  echo "PASSED" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mSmall CCD images star exclusion test \033[01;31mFAILED\033[00m" 1>&2
+  echo "FAILED" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+
+
 ##### Small CCD images with file list input test #####
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then

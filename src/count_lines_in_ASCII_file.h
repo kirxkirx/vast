@@ -13,13 +13,16 @@ static int count_lines_in_ASCII_file(char *asciifilename) {
  FILE *file;
  int linecounter= 0;
  char buf[MAX_LOG_STR_LENGTH];
- if( strlen(asciifilename) < 2 )
+ if( strlen(asciifilename) < 2 ) {
   return 0;
- if( strlen(asciifilename) > FILENAME_LENGTH )
+ }
+ if( strlen(asciifilename) > FILENAME_LENGTH ) {
   return 0;
+ }
  file= fopen(asciifilename, "r");
- if( NULL == file )
+ if( NULL == file ) {
   return 0;
+ }
  while( NULL != fgets(buf, MAX_LOG_STR_LENGTH, file) ) {
   linecounter++;
  }

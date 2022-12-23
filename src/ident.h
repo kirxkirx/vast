@@ -253,7 +253,9 @@ double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, 
 int check_if_this_fits_image_is_north_up_east_left(char *fitsfilename);
 int gettime(char *fitsfilename, double *JD, int *timesys, int convert_timesys_to_TT, double *dimX, double *dimY, char *stderr_output, char *log_output, int param_nojdkeyword, int verbose, char *finder_chart_timestring_output);
 
-int read_bad_lst(double *X1, double *Y1, double *X2, double *Y2, int *N);
+int read_exclude_stars_on_ref_image_lst(double *bad_stars_X, double *bad_stars_Y, int *N_bad_stars);
+
+int read_bad_CCD_regions_lst(double *X1, double *Y1, double *X2, double *Y2, int *N);
 
 int exclude_region(double *X1, double *Y1, double *X2, double *Y2, int N, double X, double Y, double aperture);
 

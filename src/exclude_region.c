@@ -16,7 +16,115 @@
 
 #include "count_lines_in_ASCII_file.h" // for count_lines_in_ASCII_file()
 
-int read_bad_lst(double *X1, double *Y1, double *X2, double *Y2, int *N) {
+int read_exclude_stars_on_ref_image_lst(double *X1, double *Y1, int *N) {
+
+ char str[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+ int str_len; // string length
+ int max_index_for_comments_check;
+ int i; // counter
+ int max_N_bad_regions_for_malloc;
+
+ FILE *badfile;
+
+ (*N)= 0;
+
+ // we assume this is how many elements were allocated for X1, Y1, X2, Y2 arrays outside of this function
+ max_N_bad_regions_for_malloc= 1 + count_lines_in_ASCII_file("exclude.lst");
+
+ badfile= fopen("exclude.lst", "r");
+ if( badfile == NULL ) {
+  fprintf(stderr, "WARNING: Cannot open bad_region.lst \n");
+  return 0; // it should not be a fatal error!
+ }
+
+ while( NULL != fgets(str, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, badfile) ) {
+
+  str[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1]= '\0'; // just in case
+
+  // exclude comments (based on lightcurve_io.h)
+  // Get string length
+  str_len= strlen(str);
+  if( str_len < 3 ) {
+   continue;
+  } // assume that a string shorter than 3 bytes will contain no useful information
+  max_index_for_comments_check= MIN(str_len, 10);
+  // Check if there are comments in the first 10 bytes of this string
+  // If there are, assume this string contains no useful data
+  for( i= 0; i < max_index_for_comments_check; i++ ) {
+   // in most cases we expect the first symbol of the string to be a comment mark
+   if( str[i] == '#' ) {
+    str[i]= '\0';
+    break;
+   }
+   if( str[i] == '%' ) {
+    str[i]= '\0';
+    break;
+   }
+   if( str[i] == '/' ) {
+    str[i]= '\0';
+    break;
+   }
+   if( 0 != isalpha(str[i]) ) {
+    str[i]= '\0';
+    break;
+   }
+  }
+  // re-check string length after removing comments
+  // Get string length
+  str_len= strlen(str);
+  if( str_len < 3 ) {
+   continue;
+  } // assume that a string shorter than 3 bytes will contain no useful information
+
+  // Check that the value of (*N) is still reasonable
+  if( (*N) < 0 ) {
+   fprintf(stderr, "ERROR in read_bad_CCD_regions_lst()  (*N)<0 \n");
+   break;
+  }
+
+  // Now let's parse the string
+
+  if( 2 != sscanf(str, "%lf %lf", &X1[(*N)], &Y1[(*N)]) ) {
+   continue;
+  }
+  
+  // Check the values
+  if( X1[(*N)] < -1*MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+   fprintf(stderr,"WARNING from read_bad_CCD_regions_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   continue;
+  }
+  if( X1[(*N)] > MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+   fprintf(stderr,"WARNING from read_bad_CCD_regions_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   continue;
+  }
+  if( Y1[(*N)] < -1*MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+   fprintf(stderr,"WARNING from read_bad_CCD_regions_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   continue;
+  }
+  if( Y1[(*N)] > MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+   fprintf(stderr,"WARNING from read_bad_CCD_regions_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   continue;
+  }
+  //
+
+  // Don't print example region from exclude.lst - 0 0 
+  if( X1[(*N)] != 0.0 || Y1[(*N)] != 0.0 ) {
+   fprintf(stderr, "Excluding star with pixel coordinates on reference image: %7.1lf %7.1lf  (defined in exclude.lst)\n", X1[(*N)], Y1[(*N)] );
+  }
+  (*N)+= 1;
+
+  // Check that we are not out of memory yet
+  if( (*N) >= max_N_bad_regions_for_malloc ) {
+   fprintf(stderr, "ERROR: we reached max_N_bad_regions_for_malloc=%d\n", max_N_bad_regions_for_malloc);
+   break;
+  }
+ }
+ fclose(badfile);
+ return 0;
+}
+
+
+int read_bad_CCD_regions_lst(double *X1, double *Y1, double *X2, double *Y2, int *N) {
 
  char str[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
  int str_len; // string length
@@ -83,7 +191,7 @@ int read_bad_lst(double *X1, double *Y1, double *X2, double *Y2, int *N) {
 
   // Check that the value of (*N) is still reasonable
   if( (*N) < 0 ) {
-   fprintf(stderr, "ERROR in read_bad_lst()  (*N)<0 \n");
+   fprintf(stderr, "ERROR in read_bad_CCD_regions_lst()  (*N)<0 \n");
    break;
   }
 
@@ -104,41 +212,41 @@ int read_bad_lst(double *X1, double *Y1, double *X2, double *Y2, int *N) {
     //fprintf( stderr, "Cannot parse this string\n" );
     continue;
    }
-  } else {
-   //fprintf( stderr, "Parsed as two corners of a rectangle: %.1lf %.1lf %.1lf %.1lf\n", X1[( *N )], Y1[( *N )], X2[( *N )], Y2[( *N )]);
+//  } else {
+//   //fprintf( stderr, "Parsed as two corners of a rectangle: %.1lf %.1lf %.1lf %.1lf\n", X1[( *N )], Y1[( *N )], X2[( *N )], Y2[( *N )]);
   }
   
   // Check the values
   if( X2[(*N)] < -1*MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
-   fprintf(stderr,"WARNING from read_bad_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   fprintf(stderr,"WARNING from read_bad_CCD_regions_lst(): a bad region pixel coordinate is outside of bounds!\n");
    continue;
   }
   if( X2[(*N)] > MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
-   fprintf(stderr,"WARNING from read_bad_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   fprintf(stderr,"WARNING from read_bad_CCD_regions_lst(): a bad region pixel coordinate is outside of bounds!\n");
    continue;
   }
   if( Y2[(*N)] < -1*MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
-   fprintf(stderr,"WARNING from read_bad_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   fprintf(stderr,"WARNING from read_bad_CCD_regions_lst(): a bad region pixel coordinate is outside of bounds!\n");
    continue;
   }
   if( Y2[(*N)] > MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
-   fprintf(stderr,"WARNING from read_bad_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   fprintf(stderr,"WARNING from read_bad_CCD_regions_lst(): a bad region pixel coordinate is outside of bounds!\n");
    continue;
   }
   if( X1[(*N)] < -1*MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
-   fprintf(stderr,"WARNING from read_bad_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   fprintf(stderr,"WARNING from read_bad_CCD_regions_lst(): a bad region pixel coordinate is outside of bounds!\n");
    continue;
   }
   if( X1[(*N)] > MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
-   fprintf(stderr,"WARNING from read_bad_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   fprintf(stderr,"WARNING from read_bad_CCD_regions_lst(): a bad region pixel coordinate is outside of bounds!\n");
    continue;
   }
   if( Y1[(*N)] < -1*MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
-   fprintf(stderr,"WARNING from read_bad_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   fprintf(stderr,"WARNING from read_bad_CCD_regions_lst(): a bad region pixel coordinate is outside of bounds!\n");
    continue;
   }
   if( Y1[(*N)] > MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
-   fprintf(stderr,"WARNING from read_bad_lst(): a bad region pixel coordinate is outside of bounds!\n");
+   fprintf(stderr,"WARNING from read_bad_CCD_regions_lst(): a bad region pixel coordinate is outside of bounds!\n");
    continue;
   }
   //

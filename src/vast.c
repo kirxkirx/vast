@@ -5,7 +5,7 @@
  This file is part of VaST -
  a SExtractor front-end for search of variable objects in a series of FITS images.
 
- Copyleft 2005-2022  Kirill Sokolovsky <kirx@kirx.net>,
+ Copyleft 2005-2023  Kirill Sokolovsky <kirx@kirx.net>,
                      Alexandr Lebedev  <lebastr@gmail.com>,
                      Dmitry Nasonov,    
                      Sergey Nazarov,
@@ -1525,9 +1525,16 @@ void write_string_to_log_file(char *log_string, char *sextractor_catalog) {
  return;
 }
 
-// -1 - not found
-// 0, 1, 2... - index of the found star
-int exclude_test(double X, double Y, double *exX, double *exY, int N) {
+// The function is used to find a star specified with its pixel coordinates 
+// in a list of stars (with their X Y coordinates listed in two arrays).
+//
+// The function is used both for the exclusion test and for finding 
+// the manually selected comparison stars.
+//
+// Return values:
+//                -1 - not found
+//                 0, 1, 2... - index of the found star
+int exclude_test(double X, double Y, double *exX, double *exY, int N, int verbose) {
  int result= -1;
  int i;
  for( i= 0; i < N; i++ ) {
@@ -1537,9 +1544,9 @@ int exclude_test(double X, double Y, double *exX, double *exY, int N) {
    break;
   }
  }
- // if ( result != 0 ) {
- //  fprintf( stderr, "The star %lg %lg is listed in exclude.lst => excluded from magnitude calibration\n", X, Y );
- // }
+ if( result > -1 ) {
+  fprintf( stderr, "The star %.3lf %.3lf is listed in exclude.lst => excluded from magnitude calibration\n", X, Y );
+ }
  return result;
 }
 
@@ -2824,26 +2831,19 @@ int main(int argc, char **argv) {
 
  // Update PATH variable to make sure the local copy of SExtractor is there
  make_sure_libbin_is_in_path();
- /*
- char pathstring[8192];
- strncpy( pathstring, getenv( "PATH" ), 8192 );
- pathstring[8192 - 1]= '\0';
- strncat( pathstring, ":lib/bin", 8192 - 32 );
- pathstring[8192 - 1]= '\0';
- setenv( "PATH", pathstring, 1 );
-*/
- /* Check if the SExtractor executable (named "sex") is present in $PATH */
+
+ /// Check if the SExtractor executable (named "sex") is present in $PATH 
  if( 0 != system("lib/look_for_sextractor.sh") ) {
   fprintf(stderr, "Error looking for SExtractor. Aborting further computations...\n");
   return 1;
  }
 
- /* Update TAI-UTC file if needed */
+ // Update TAI-UTC file if needed 
  if( 0 != system("lib/update_tai-utc.sh") ) {
   fprintf(stderr, "WARNING: an error occured while trying to update lib/tai-utc.dat\nNo internet connection?\n");
  }
 
- /* Destroy files created by previous session */
+ // Destroy files created by previous session 
  fprintf(stderr, "Cleaning old outNNNNN.dat files.\n");
  if( 0 != system("util/clean_data.sh all >/dev/null") ) {
   fprintf(stderr, "Error while cleaning old files. Aborting further computations...\n");
@@ -2925,33 +2925,8 @@ int main(int argc, char **argv) {
 
   } // else if( 0 != system(system_command_select_comparison_stars) ) {
 
-  /*
-  //// Apply the first-image apperture diameter to the whole image series ////
-  image00000_cat_aperture_file=fopen("image00000.cat.aperture","r");
-  if( NULL != image00000_cat_aperture_file ){
-   if ( 1!=fscanf( image00000_cat_aperture_file, "%lf", &fixed_aperture ) ){
-    fprintf( stderr, "ERROR: getting the fixed aperture dameter from image00000.cat.aperture\nWill fall back to automatically-selected apertures!\n" );
-    fixed_aperture= 0.0;
-   }
-   fclose( image00000_cat_aperture_file );
-   if ( fixed_aperture < 1.0 && fixed_aperture > 100.0 ) {
-    fprintf( stderr, "ERROR: the fixed aperture dameter of %lf pix is out of the expected range!\nWill fall back to automatically-selected apertures!\n", fixed_aperture );
-    fixed_aperture= 0.0;
-   }
-  } else {
-   fprintf( stderr, "WARNING: cannot read image00000.cat.aperture\nWill fall back to automatically-selected apertures!\n");
-  }
-  ////////////////////////////////////////////////////////////////////////////
-  */
  } // if ( 0 == strcmp( "diffphot", basename( argv[0] ) ) ) {
 
- /*
- //// Generate bright_star_blend_check.sex from default.sex for false transient removal
- if ( 0 != system( "lib/generate_bright_star_blend_check_sex.sh default.sex" ) ) {
-  fprintf( stderr, "ERROR running  lib/generate_bright_star_blend_check_sex.sh default.sex\n" );
-  return 1;
- }
-*/
 
  ///// Start timer /////
  start_time= time(NULL);
@@ -2974,7 +2949,8 @@ int main(int argc, char **argv) {
  double *X2;
  double *Y2;
  int max_N_bad_regions_for_malloc;
- max_N_bad_regions_for_malloc= 1 + count_lines_in_ASCII_file("bad_region.lst");
+ //max_N_bad_regions_for_malloc= 1 + count_lines_in_ASCII_file("bad_region.lst");
+ max_N_bad_regions_for_malloc= count_lines_in_ASCII_file("bad_region.lst");
  X1= (double *)malloc(max_N_bad_regions_for_malloc * sizeof(double));
  Y1= (double *)malloc(max_N_bad_regions_for_malloc * sizeof(double));
  X2= (double *)malloc(max_N_bad_regions_for_malloc * sizeof(double));
@@ -2985,13 +2961,29 @@ int main(int argc, char **argv) {
   return 1;
  }
  int N_bad_regions= 0;
- read_bad_lst(X1, Y1, X2, Y2, &N_bad_regions);
+ read_bad_CCD_regions_lst(X1, Y1, X2, Y2, &N_bad_regions);
 
  //////////////////////////////////////////////////////////////////////////////////////////
  /////// Reading file with stars which should not be used for magnitude calibration ///////
  //////////////////////////////////////////////////////////////////////////////////////////
  // The stars are specified with their X Y positions on the reference frame
- FILE *excludefile;
+ //FILE *excludefile;
+ //N_bad_stars= 1 + count_lines_in_ASCII_file("exclude.lst");
+ N_bad_stars= count_lines_in_ASCII_file("exclude.lst");
+ bad_stars_X= malloc(N_bad_stars * sizeof(double));
+ if( bad_stars_X == NULL ) {
+  fprintf(stderr, "ERROR: cannot allocate memory for bad_stars_X\n");
+  vast_report_memory_error();
+  return 1;
+ }
+ bad_stars_Y= malloc(N_bad_stars * sizeof(double));
+ if( bad_stars_Y == NULL ) {
+  fprintf(stderr, "ERROR: can't allocate memory for bad_stars_Y\n");
+  vast_report_memory_error();
+  return 1;
+ }
+ read_exclude_stars_on_ref_image_lst(bad_stars_X, bad_stars_Y, &N_bad_stars);
+ /*
  bad_stars_X= malloc(sizeof(double));
  if( bad_stars_X == NULL ) {
   fprintf(stderr, "ERROR: cannot allocate memory for bad_stars_X\n");
@@ -3018,6 +3010,8 @@ int main(int argc, char **argv) {
   fclose(excludefile);
   fprintf(stderr, "Excluding %d stars (listed in exclude.lst file) from magnitude calibration\n\n\n", N_bad_stars);
  }
+ */
+ 
 
  ///// From now on, ignore SIGHUP! /////
  signal(SIGHUP, SIG_IGN);
@@ -3596,7 +3590,7 @@ int main(int argc, char **argv) {
   }
   // If there are manually supplied calibration stars - write calib.txt
   if( N_manually_selected_comparison_stars > 0 ) {
-   manually_selected_comparison_stars_index= exclude_test(position_x_pix, position_y_pix, manually_selected_comparison_stars_X, manually_selected_comparison_stars_Y, N_manually_selected_comparison_stars);
+   manually_selected_comparison_stars_index= exclude_test(position_x_pix, position_y_pix, manually_selected_comparison_stars_X, manually_selected_comparison_stars_Y, N_manually_selected_comparison_stars, 0);
    if( manually_selected_comparison_stars_index != -1 ) {
     calibtxtfile= fopen("calib.txt", "a");
     if( calibtxtfile == NULL ) {
@@ -4818,7 +4812,7 @@ int main(int argc, char **argv) {
     // populate the arrays of comparison stars for magnitude calibration
     for( i= 0; i < MIN(Number_of_ecv_star, NUMBER3); i++ ) {
      // STAR1[Pos1[i]].magmag==0.0 if the star was not detected on the reference frame
-     if( -1 == exclude_test(STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, bad_stars_X, bad_stars_Y, N_bad_stars) && fabs(STAR1[Pos1[i]].mag - STAR2[Pos2[i]].mag) < MAX_INSTR_MAG_DIFF && STAR1[Pos1[i]].mag != 0.0
+     if( -1 == exclude_test(STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, bad_stars_X, bad_stars_Y, N_bad_stars, 1) && fabs(STAR1[Pos1[i]].mag - STAR2[Pos2[i]].mag) < MAX_INSTR_MAG_DIFF && STAR1[Pos1[i]].mag != 0.0
          //&& STAR1[Pos1[i]].sextractor_flag==0
          && STAR1[Pos1[i]].sextractor_flag <= 1 && STAR1[Pos1[i]].vast_flag == 0 && STAR1[Pos1[i]].moving_object == 0 
          //&& STAR2[Pos2[i]].sextractor_flag==0
@@ -4827,7 +4821,7 @@ int main(int argc, char **argv) {
       if( N_manually_selected_comparison_stars > 0 ) {
        //fprintf(stderr, "Performing magnitude calibration using manually selected comparison stars\n");
        // Handle the special case of a set of manually selected comparison stars
-       if( exclude_test(STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, manually_selected_comparison_stars_X, manually_selected_comparison_stars_Y, N_manually_selected_comparison_stars) != -1 ) {
+       if( exclude_test(STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, manually_selected_comparison_stars_X, manually_selected_comparison_stars_Y, N_manually_selected_comparison_stars, 0) != -1 ) {
         poly_x[N_good_stars]= (double)STAR2[Pos2[i]].mag;
         poly_y[N_good_stars]= (double)STAR1[Pos1[i]].mag;
         poly_err[N_good_stars]= (double)STAR2[Pos2[i]].sigma_mag;
@@ -4850,6 +4844,8 @@ int main(int argc, char **argv) {
        }
        N_good_stars+= 1;
       } // else if ( N_manually_selected_comparison_stars>0 ) {
+     //} else {
+     // fprintf(stderr, "Excluding star %.3f %.3f from magnitude calibration - it's close to the pixel position specified in exclude.lst\n", STAR1[Pos1[i]].x, STAR1[Pos1[i]].y );
      }  // if ( 0 == exclude_test( STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, bad_stars_X, bad_stars_Y, N_bad_stars ) && fabs( STAR1[Pos1[i]].mag - STAR2[Pos2[i]].mag ) ...
     }   // for ( i= 0; i < MIN( Number_of_ecv_star, NUMBER3 ); i++ ) {
     // Handle the case where the majority of stars have the 'blended' flag
@@ -4859,7 +4855,7 @@ int main(int argc, char **argv) {
      // repopulate the arrays
      for( i= 0; i < MIN(Number_of_ecv_star, NUMBER3); i++ ) {
       // STAR1[Pos1[i]].magmag==0.0 if the star was not detected on the reference frame
-      if( -1 == exclude_test(STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, bad_stars_X, bad_stars_Y, N_bad_stars) && fabs(STAR1[Pos1[i]].mag - STAR2[Pos2[i]].mag) < MAX_INSTR_MAG_DIFF && STAR1[Pos1[i]].mag != 0.0
+      if( -1 == exclude_test(STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, bad_stars_X, bad_stars_Y, N_bad_stars, 1) && fabs(STAR1[Pos1[i]].mag - STAR2[Pos2[i]].mag) < MAX_INSTR_MAG_DIFF && STAR1[Pos1[i]].mag != 0.0
           //&& STAR1[Pos1[i]].sextractor_flag==0
           && STAR1[Pos1[i]].sextractor_flag <= 3 && STAR1[Pos1[i]].vast_flag == 0 && STAR1[Pos1[i]].moving_object == 0
           //&& STAR2[Pos2[i]].sextractor_flag==0

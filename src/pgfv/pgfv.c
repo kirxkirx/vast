@@ -1080,7 +1080,7 @@ int main(int argc, char **argv) {
  float cpgline_tmp_y[2];
  double X1[500], Y1[500], X2[500], Y2[500];
  int N_bad_regions= 0;
- read_bad_lst(X1, Y1, X2, Y2, &N_bad_regions);
+ read_bad_CCD_regions_lst(X1, Y1, X2, Y2, &N_bad_regions);
 
  int use_ds9= 0; // if 1 - use ds9 instead of pgplot to display an image
  pid_t pid= getpid();

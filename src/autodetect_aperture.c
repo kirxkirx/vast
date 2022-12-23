@@ -219,7 +219,7 @@ double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, 
    exit(1);
   }
 
-  read_bad_lst(X1, Y1, X2, Y2, &N_bad_regions);
+  read_bad_CCD_regions_lst(X1, Y1, X2, Y2, &N_bad_regions);
 
   A= malloc(MAX_NUMBER_OF_STARS * sizeof(double));
   if( A == NULL ) {

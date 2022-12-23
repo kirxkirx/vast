@@ -124,6 +124,7 @@ fi
 # THIS CANNOT BE HERE, because util/clean_data.sh is run by vast main program AFTER symlinks are created
 #rm -rf symlinks_to_images/
 
-# reset exclude.lst
-echo "0.0 0.0" > exclude.lst
+# Reset exclude.lst
+# THIS CANNOT BE HERE, because util/clean_data.sh is run by vast main program
+#echo "0.0 0.0" > exclude.lst
 
