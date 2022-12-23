@@ -1,10 +1,14 @@
-# This is NMW bad region file.
+# This is the bad region file.
+#
 # There are two ways to specify pixel coordinates
-# of a bad reginon:
-# 1) as coordinates of the lower left and upper 
+# of a bad image reginon:
+#
+# 1) as X Y coordinates of the lower left and upper 
 # right corners of a rectangle, like this 
-0 0 0 0
-# 2) as a bad pixel, describe it like this
+# X_ll Y_ll  X_ur Y_ur
+0 0  0 0
+#
+# 2) as a single bad pixel specified with 
+# its X Y coordinates:
 0 0
-# You may have many bad regions.
-
+# You may specify many bad regions.
