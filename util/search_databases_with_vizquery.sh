@@ -521,17 +521,13 @@ The script will try to download these catalogs now - it will take some time!
   #LOCAL_NAME=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -m1 -A1 '>found<' | tail -n1 | awk '{print $2}' FS='"' | sed 's:MASTER OT:MASTER_OT:g'`  
   # | awk '{$1=$1;print}' Would trim leading and trailing space or tab characters and also squeeze sequences of tabs and spaces into a single space. https://unix.stackexchange.com/questions/102008/how-do-i-trim-leading-and-trailing-whitespace-from-each-line-of-some-output
   #LOCAL_NAME=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -A 1 '>found<' | tail -n 1 | awk '{print $2}' FS='"' | sed 's:MASTER OT:MASTER_OT:g' | awk '{$1=$1;print}'`  
-  echo "DEBUG01" >> /dev/stderr
   LOCAL_NAME=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -A 1 '>found<' | tail -n 1 | awk -F '"' '{print $2}' | sed 's:MASTER OT:MASTER_OT:g' | awk '{$1=$1;print}'`  
   #LOCAL_TYPE=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep 'Type:' | awk '{print $2}' FS='Type:' | awk '{$1=$1;print}'`
-  echo "DEBUG02" >> /dev/stderr
   LOCAL_TYPE=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep 'Type:' | awk -F 'Type:' '{print $2}' | awk '{$1=$1;print}'`
   #LOCAL_PERIOD=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -m1 -A1 '#   Max.' | tail -n1 | sed 's:)::g' | sed 's:(::g' | awk '{print $6}'`
-  echo "DEBUG03" >> /dev/stderr
   LOCAL_PERIOD=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -A 1 '#   Max.' | tail -n 1 | sed 's:)::g' | sed 's:(::g' | awk '{print $6}'`
   if [ -z "$LOCAL_PERIOD" ];then
    #LOCAL_PERIOD=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep 'Period' | awk '{print $2}' FS='Period' | awk '{print $1}'`
-   echo "DEBUG04" >> /dev/stderr
    LOCAL_PERIOD=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep 'Period' | awk -F 'Period' '{print $2}' | awk '{print $1}'`
   fi
   SUGGESTED_NAME_STRING="$LOCAL_NAME"
@@ -543,7 +539,6 @@ The script will try to download these catalogs now - it will take some time!
 fi
 
 # GCVS
-echo "DEBUG05" >> /dev/stderr
 if [ $KNOWN_VARIABLE -eq 0 ];then 
  GCVS_RESULT=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=B/gcvs -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs=$DOUBLE_R_SEARCH_ARCSEC -out=GCVS,VarType,Period 2>/dev/null  | grep -v \# | grep -v "_" | grep -v "\---" | grep -v "GCVS" |head -n2 |tail -n 1`
  GCVS_V=`echo "$GCVS_RESULT" | awk '{print $1}'`
@@ -560,7 +555,6 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
   KNOWN_VARIABLE=1
  fi
 fi
-echo "DEBUG06" >> /dev/stderr
 if [ $KNOWN_VARIABLE -eq 0 ];then
  VSX_RESULT=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs=$DOUBLE_R_SEARCH_ARCSEC -out=Name,Type,Period 2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" | grep -A 1 Name | tail -n1 | sed 's:MASTER OT:MASTER_OT:g'`
  #echo "########$VSX_RESULT#########"
@@ -713,7 +707,6 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
   fi
  fi
 fi
-echo "DEBUG07" >> /dev/stderr
 if [ $KNOWN_VARIABLE -eq 0 ];then
  # NEW var
  #echo -n " $STAR_NAME | B1.0 $GOOD_CATALOG_NAME | $GOOD_CATALOG_POSITION | T | P | B2=$B2 "
@@ -724,7 +717,6 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
   SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING B2=$B2 "
  fi
 fi
-echo "DEBUG08" >> /dev/stderr
 # Try to get a spectral type
 SPECTRAL_TYPE=""
 # First try Skiff
@@ -744,7 +736,6 @@ if [ -z "$SPECTRAL_TYPE" ];then
 fi
 
 
-echo "DEBUG09" >> /dev/stderr
 # Print the summary string
 if [ ! -z "$GOOD_CATALOG_NAME_USNOB" ];then
  echo -n " $STAR_NAME | $SUGGESTED_NAME_STRING | $GOOD_CATALOG_POSITION_USNOB(USNO-B1.0) | $SUGGESTED_TYPE_STRING | $SUGGESTED_PERIOD_STRING | $SUGGESTED_COMMENT_STRING"
