@@ -72,7 +72,9 @@ echo -e "Starting $0" 1>&2
 #export PATH="$PATH:$PATH_TO_VAST_DIR/lib/bin/"
 echo "$PATH" | grep --quiet "$VAST_PATH"lib/bin
 if [ $? -ne 0 ];then
- export PATH="$VAST_PATH"lib/bin":$PATH"
+ #export PATH="$VAST_PATH"lib/bin":$PATH"
+ NEWPATH="$VAST_PATH"lib/bin
+ export PATH="$VAST_PATH:$PATH"
 fi
 
 ### 
@@ -115,14 +117,14 @@ if [ $? -ne 0 ];then
 fi
 
 
-if [ -z $3 ];then
+if [ -z "$3" ];then
  echo "The object name is not specified on the command line, using the default one"
  STAR_NAME="object"
 else
  STAR_NAME=$3
 fi
 
-if [ -z $4 ];then
+if [ -z "$4" ];then
  echo "The field of view is not specified on the command line, using the default one"
  FOV=1.0
 else
@@ -326,15 +328,15 @@ echo "Searching USNO-B1.0 for the brightest objects within $R_SEARCH_ARCSEC\" ar
 echo "$TIMEOUTCOMMAND $VAST_PATH""lib/vizquery -site=$VIZIER_SITE -mime=text -source=USNO-B1 -out.max=10 -out.add=_r -out.form=mini -sort=B2mag  -c="$RA $DEC" $B2MAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=USNO-B1.0,RAJ2000,DEJ2000,B2mag,B1mag"
 $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=USNO-B1 -out.max=10 -out.add=_r -out.form=mini -sort=B2mag  -c="$RA $DEC" $B2MAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=USNO-B1.0,RAJ2000,DEJ2000,B2mag,B1mag  2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" |grep -v "sec"  |grep -v "RAJ" |grep -v "B" | while read R USNOB1 CATRA_DEG CATDEC_DEG B2 B1 REST ;do
  # skip stars with unknown B2mag
- if [ -z $B2 ] ;then
+ if [ -z "$B2" ] ;then
   continue
  fi
  # skip stars with unknown B1mag
- if [ -z $B1 ] ;then
+ if [ -z "$B1" ] ;then
   continue
  fi
  # skip empty lines if for whatever reason they were not caught before
- if [ ! -z $R ] ;then
+ if [ ! -z "$R" ] ;then
   # Skip too faint stars
   #TEST=`echo "($B2+$B1)/2.0>18.0"|bc -ql`
   TEST=$(echo "$B2 $B1"| awk '{if ( ($1+$2)/2.0 > 18.0 ) print 1 ;else print 0 }')
@@ -402,11 +404,11 @@ echo "Searching Gaia DR3 for the brightest objects within $R_SEARCH_ARCSEC\" aro
 echo "$TIMEOUTCOMMAND $VAST_PATH""lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c='$RA $DEC' $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag"
 $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c="$RA $DEC" $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag 2>/dev/null | grep -v \# | grep -v "\---" |grep -v "sec" | grep -v 'Gma' |grep -v "RA_ICRS" | grep -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE' | while read R GAIA_SOURCE GAIA_CATRA_DEG GAIA_CATDEC_DEG GMAG VARFLAG REST ;do
  # skip stars with unknown Gmag
- if [ -z $GMAG ] ;then
+ if [ -z "$GMAG" ] ;then
   continue
  fi
  # skip empty lines if for whatever reason they were not caught before
- if [ ! -z $R ] ;then
+ if [ ! -z "$R" ] ;then
   ######################################################################################
   # Do not drop faint Gaia stars if we have good astrometry
   SHOULD_WE_DROP_FAINT_GAIA_STARS=1
@@ -723,14 +725,16 @@ SPECTRAL_TYPE=""
 #SKIFF_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=B/mk/mktypes  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=SpType,Bibcode,Name -out.max=1 2>/dev/null | grep -B2 '#END#' | head -n1 | grep -v \# | sed 's:  ::g' `
 SKIFF_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=B/mk/mktypes  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=SpType,Bibcode,Name -out.max=1 2>/dev/null | grep -B2 '#END#' | head -n1 | grep -v \# | sed 's:  : :g' | sed 's:  : :g' | sed 's:  : :g' | sed 's:  : :g' | sed 's:  : :g')
 if [ ! -z "$SKIFF_RESULTS" ];then
- SPECTRAL_TYPE=$(echo $SKIFF_RESULTS)
+ #SPECTRAL_TYPE=$(echo $SKIFF_RESULTS)
+ SPECTRAL_TYPE="$SKIFF_RESULTS"
  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING SpType: $SKIFF_RESULTS  "
 fi
 # Then try LAMOST
 if [ -z "$SPECTRAL_TYPE" ];then
  LAMOST_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=V/164/dr5  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=SubClass,Class -out.max=1 2>/dev/null | grep -B2 '#END#' | head -n1 | grep -v \# | grep 'STAR' | awk '{print $1}')
  if [ ! -z "$LAMOST_RESULTS" ];then
-  SPECTRAL_TYPE=$(echo $LAMOST_RESULTS)
+  #SPECTRAL_TYPE=$(echo $LAMOST_RESULTS)
+  SPECTRAL_TYPE="$LAMOST_RESULTS"
   SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING SpType: $LAMOST_RESULTS (LAMOST DR5)  "
  fi
 fi
