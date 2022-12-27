@@ -152,7 +152,7 @@ fi
 ###### 2MASS #####
 R_SEARCH_ARCSEC=2.5
 echo "Searching 2MASS $R_SEARCH_ARCSEC\" around $RA $DEC"
-$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=2MASS  -out.max=1 -out.add=_r -out.form=mini  -sort=_r  -c="$RA $DEC" -c.rs=$R_SEARCH_ARCSEC -out=Jmag,e_Jmag,Kmag,e_Kmag  2>/dev/null |grep -v \# | grep -v "_" | grep -v "\-\-\-" |grep -v "sec"  | while read R J eJ K eK REST ;do
+$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=2MASS  -out.max=1 -out.add=_r -out.form=mini  -sort=_r  -c="$RA $DEC" -c.rs=$R_SEARCH_ARCSEC -out=Jmag,e_Jmag,Kmag,e_Kmag  2>/dev/null |grep -v \# | grep -v "_" | grep -v "\---" |grep -v "sec"  | while read R J eJ K eK REST ;do
  if [ ! -z "$R" ];then
   if [ -z "$J" ];then
    continue
@@ -324,7 +324,7 @@ echo " "
 echo "Searching USNO-B1.0 for the brightest objects within $R_SEARCH_ARCSEC\" around $RA $DEC in the range of $B2MAG_RANGE"
 #echo " "
 echo "$TIMEOUTCOMMAND $VAST_PATH""lib/vizquery -site=$VIZIER_SITE -mime=text -source=USNO-B1 -out.max=10 -out.add=_r -out.form=mini -sort=B2mag  -c="$RA $DEC" $B2MAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=USNO-B1.0,RAJ2000,DEJ2000,B2mag,B1mag"
-$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=USNO-B1 -out.max=10 -out.add=_r -out.form=mini -sort=B2mag  -c="$RA $DEC" $B2MAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=USNO-B1.0,RAJ2000,DEJ2000,B2mag,B1mag  2>/dev/null |grep -v \# | grep -v "_" | grep -v "\-\-\-" |grep -v "sec"  |grep -v "RAJ" |grep -v "B" | while read R USNOB1 CATRA_DEG CATDEC_DEG B2 B1 REST ;do
+$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=USNO-B1 -out.max=10 -out.add=_r -out.form=mini -sort=B2mag  -c="$RA $DEC" $B2MAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=USNO-B1.0,RAJ2000,DEJ2000,B2mag,B1mag  2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" |grep -v "sec"  |grep -v "RAJ" |grep -v "B" | while read R USNOB1 CATRA_DEG CATDEC_DEG B2 B1 REST ;do
  # skip stars with unknown B2mag
  if [ -z $B2 ] ;then
   continue
@@ -400,7 +400,7 @@ DOUBLE_R_SEARCH_ARCSEC=`echo "$R_SEARCH_ARCSEC" | awk '{print 2*$1}'`
 echo " "
 echo "Searching Gaia DR3 for the brightest objects within $R_SEARCH_ARCSEC\" around $RA $DEC in the range of $GMAG_RANGE"
 echo "$TIMEOUTCOMMAND $VAST_PATH""lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c='$RA $DEC' $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag"
-$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c="$RA $DEC" $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag 2>/dev/null |grep -v \# | grep -v "\-\-\-" |grep -v "sec" | grep -v 'Gma' |grep -v "RA_ICRS" | grep -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE' | while read R GAIA_SOURCE GAIA_CATRA_DEG GAIA_CATDEC_DEG GMAG VARFLAG REST ;do
+$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c="$RA $DEC" $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag 2>/dev/null | grep -v \# | grep -v "\---" |grep -v "sec" | grep -v 'Gma' |grep -v "RA_ICRS" | grep -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE' | while read R GAIA_SOURCE GAIA_CATRA_DEG GAIA_CATDEC_DEG GMAG VARFLAG REST ;do
  # skip stars with unknown Gmag
  if [ -z $GMAG ] ;then
   continue
@@ -521,13 +521,17 @@ The script will try to download these catalogs now - it will take some time!
   #LOCAL_NAME=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -m1 -A1 '>found<' | tail -n1 | awk '{print $2}' FS='"' | sed 's:MASTER OT:MASTER_OT:g'`  
   # | awk '{$1=$1;print}' Would trim leading and trailing space or tab characters and also squeeze sequences of tabs and spaces into a single space. https://unix.stackexchange.com/questions/102008/how-do-i-trim-leading-and-trailing-whitespace-from-each-line-of-some-output
   #LOCAL_NAME=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -A 1 '>found<' | tail -n 1 | awk '{print $2}' FS='"' | sed 's:MASTER OT:MASTER_OT:g' | awk '{$1=$1;print}'`  
+  echo "DEBUG01" >> /dev/stderr
   LOCAL_NAME=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -A 1 '>found<' | tail -n 1 | awk -F '"' '{print $2}' | sed 's:MASTER OT:MASTER_OT:g' | awk '{$1=$1;print}'`  
   #LOCAL_TYPE=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep 'Type:' | awk '{print $2}' FS='Type:' | awk '{$1=$1;print}'`
+  echo "DEBUG02" >> /dev/stderr
   LOCAL_TYPE=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep 'Type:' | awk -F 'Type:' '{print $2}' | awk '{$1=$1;print}'`
   #LOCAL_PERIOD=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -m1 -A1 '#   Max.' | tail -n1 | sed 's:)::g' | sed 's:(::g' | awk '{print $6}'`
+  echo "DEBUG03" >> /dev/stderr
   LOCAL_PERIOD=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -A 1 '#   Max.' | tail -n 1 | sed 's:)::g' | sed 's:(::g' | awk '{print $6}'`
   if [ -z "$LOCAL_PERIOD" ];then
    #LOCAL_PERIOD=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep 'Period' | awk '{print $2}' FS='Period' | awk '{print $1}'`
+   echo "DEBUG04" >> /dev/stderr
    LOCAL_PERIOD=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep 'Period' | awk -F 'Period' '{print $2}' | awk '{print $1}'`
   fi
   SUGGESTED_NAME_STRING="$LOCAL_NAME"
@@ -539,8 +543,9 @@ The script will try to download these catalogs now - it will take some time!
 fi
 
 # GCVS
-if [ $KNOWN_VARIABLE -eq 0 ];then
- GCVS_RESULT=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=B/gcvs -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs=$DOUBLE_R_SEARCH_ARCSEC -out=GCVS,VarType,Period 2>/dev/null  |grep -v \# | grep -v "_" | grep -v "\-\-\-" |grep -v "GCVS" |head -n2 |tail -n 1`
+echo "DEBUG05" >> /dev/stderr
+if [ $KNOWN_VARIABLE -eq 0 ];then 
+ GCVS_RESULT=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=B/gcvs -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs=$DOUBLE_R_SEARCH_ARCSEC -out=GCVS,VarType,Period 2>/dev/null  | grep -v \# | grep -v "_" | grep -v "\---" | grep -v "GCVS" |head -n2 |tail -n 1`
  GCVS_V=`echo "$GCVS_RESULT" | awk '{print $1}'`
  if [ "$GCVS_V" != "" ] ;then
   # STAR FROM GCVS
@@ -555,8 +560,9 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
   KNOWN_VARIABLE=1
  fi
 fi
+echo "DEBUG06" >> /dev/stderr
 if [ $KNOWN_VARIABLE -eq 0 ];then
- VSX_RESULT=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs=$DOUBLE_R_SEARCH_ARCSEC -out=Name,Type,Period 2>/dev/null |grep -v \# | grep -v "_" | grep -v "\-\-\-" |grep -A 1 Name | tail -n1 | sed 's:MASTER OT:MASTER_OT:g'`
+ VSX_RESULT=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs=$DOUBLE_R_SEARCH_ARCSEC -out=Name,Type,Period 2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" | grep -A 1 Name | tail -n1 | sed 's:MASTER OT:MASTER_OT:g'`
  #echo "########$VSX_RESULT#########"
  VSX_V=`echo "$VSX_RESULT" | awk '{print $1}'`
  if [ "$VSX_V" != "" ] ;then
@@ -596,14 +602,14 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    # check if this is a previously-published MDV star?
    MDV_NAME=""
    # SA9
-   MDV_RESULT=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/AZh/91/382 -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=MDV,Type,Per 2>/dev/null |grep -v \# | grep -v "_" | grep -v "\-\-\-" |grep -A 1 MDV | tail -n1`
+   MDV_RESULT=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/AZh/91/382 -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=MDV,Type,Per 2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" | grep -A 1 MDV | tail -n1`
    if [ "$MDV_RESULT" != "" ] ;then
     MDV_NAME=`echo "$MDV_RESULT" | awk '{print $1}'`
     MDV_TYPE=`echo "$MDV_RESULT" | awk '{print $2}'`
     MDV_PERIOD=`echo "$MDV_RESULT" | awk '{print $3}'`
    fi
    if [ "$MDV_NAME" == "" ];then
-    MDV_RESULT=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/AZh/87/1087/table2 -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=MDV,Type,Per 2>/dev/null |grep -v \# | grep -v "_" | grep -v "\-\-\-" |grep -A 1 MDV | tail -n1`
+    MDV_RESULT=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/AZh/87/1087/table2 -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=MDV,Type,Per 2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" | grep -A 1 MDV | tail -n1`
     if [ "$MDV_RESULT" != "" ] ;then
      MDV_NAME=`echo "$MDV_RESULT" | awk '{print $1}'`
      MDV_TYPE=`echo "$MDV_RESULT" | awk '{print $2}'`
@@ -611,7 +617,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
     fi
    fi
    if [ "$MDV_NAME" == "" ];then
-    MDV_RESULT=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/AZh/87/1087/table1 -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=MDV,Type 2>/dev/null |grep -v \# | grep -v "_" | grep -v "\-\-\-" |grep -A 1 MDV | tail -n1`
+    MDV_RESULT=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/AZh/87/1087/table1 -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=MDV,Type 2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" | grep -A 1 MDV | tail -n1`
     if [ "$MDV_RESULT" != "" ] ;then
      MDV_NAME=`echo "$MDV_RESULT" | awk '{print $1}'`
      MDV_TYPE=`echo "$MDV_RESULT" | awk '{print $2}'`
@@ -630,7 +636,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    ### Check other large variable star lists
    # OGLE Bulge LPV
    if [ $KNOWN_VARIABLE -eq 0 ];then
-    OGLE_LPV_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/AcA/63/21/catalog -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Star,Type,Per 2>/dev/null |grep -v \# | grep -v "_" | grep -v "\-\-\-" | grep -A 1 'Star' | tail -n1`
+    OGLE_LPV_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/AcA/63/21/catalog -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Star,Type,Per 2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" | grep -A 1 'Star' | tail -n1`
     if [ ! -z "$OGLE_LPV_RESULTS" ];then
      OGLENAME=`echo "$OGLE_LPV_RESULTS" | awk '{print $1}'`
      OGLETYPE=`echo "$OGLE_LPV_RESULTS" | awk '{print $2}'`
@@ -643,7 +649,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    fi   
    # ATLAS
    if [ $KNOWN_VARIABLE -eq 0 ];then
-    ATLAS_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/AJ/156/241/table4 -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=ATOID,Class 2>/dev/null |grep -v \# | grep -v "_" | grep -v "\-\-\-" | grep J | tail -n1`
+    ATLAS_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/AJ/156/241/table4 -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=ATOID,Class 2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" | grep J | tail -n1`
     if [ ! -z "$ATLAS_RESULTS" ];then
      ATLASNAME=`echo "$ATLAS_RESULTS" | awk '{print $1}'`
      ATLASTYPE=`echo "$ATLAS_RESULTS" | awk '{print $2}'`
@@ -656,7 +662,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    fi
    # OGLE Bulge RR Lyr
    #if [ $KNOWN_VARIABLE -eq 0 ];then
-   # OGLE_LPV_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/AcA/61/1/ident -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Star,Type 2>/dev/null |grep -v \# | grep -v "_" | grep -v "\-\-\-" | grep -A 1 'Star' | tail -n1`
+   # OGLE_LPV_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/AcA/61/1/ident -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Star,Type 2>/dev/null |grep -v \# | grep -v "_" | grep -v "\---" | grep -A 1 'Star' | tail -n1`
    # echo "#$OGLE_LPV_RESULTS#"
    # if [ ! -z "$OGLE_LPV_RESULTS" ];then
    #  OGLENAME=`echo "$OGLE_LPV_RESULTS" | awk '{print $1}'`
@@ -707,7 +713,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
   fi
  fi
 fi
-
+echo "DEBUG07" >> /dev/stderr
 if [ $KNOWN_VARIABLE -eq 0 ];then
  # NEW var
  #echo -n " $STAR_NAME | B1.0 $GOOD_CATALOG_NAME | $GOOD_CATALOG_POSITION | T | P | B2=$B2 "
@@ -718,7 +724,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
   SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING B2=$B2 "
  fi
 fi
-
+echo "DEBUG08" >> /dev/stderr
 # Try to get a spectral type
 SPECTRAL_TYPE=""
 # First try Skiff
@@ -738,7 +744,7 @@ if [ -z "$SPECTRAL_TYPE" ];then
 fi
 
 
-
+echo "DEBUG09" >> /dev/stderr
 # Print the summary string
 if [ ! -z "$GOOD_CATALOG_NAME_USNOB" ];then
  echo -n " $STAR_NAME | $SUGGESTED_NAME_STRING | $GOOD_CATALOG_POSITION_USNOB(USNO-B1.0) | $SUGGESTED_TYPE_STRING | $SUGGESTED_PERIOD_STRING | $SUGGESTED_COMMENT_STRING"
