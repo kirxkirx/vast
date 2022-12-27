@@ -182,62 +182,81 @@ for i in "$REGION_NAME"/* ;do
   continue
  fi
  ### interactive copy for some files
- if [ "$i" = "$REGION_NAME/default.sex.PHOTO" ];then
-  check_if_two_files_are_the_same $i default.sex.PHOTO
-  if [ $? -ne 1 ];then
-   cp -i $i .
-  fi
- elif [ "$i" = "$REGION_NAME/default.sex" ];then
+ #if [ "$i" = "$REGION_NAME/default.sex.PHOTO" ];then
+ # check_if_two_files_are_the_same $i default.sex.PHOTO
+ # if [ $? -ne 1 ];then
+ #  cp -i $i .
+ # fi
+ #el
+ if [ "$i" = "$REGION_NAME/default.sex" ];then
   check_if_two_files_are_the_same $i default.sex
   if [ $? -ne 1 ];then
-   cp -i $i .
+   #cp -i $i .
+   echo "Note that $REGION_NAME/default.sex is owerwriting default.sex"
+   cp $i .
   fi
  elif [ "$i" = "$REGION_NAME/default.psfex" ];then
   check_if_two_files_are_the_same $i default.psfex
   if [ $? -ne 1 ];then
-   cp -i $i .
+   #cp -i $i .
+   echo "Note that $REGION_NAME/default.psfex is owerwriting default.psfex"
+   cp $i .
   fi
  elif [ "$i" = "$REGION_NAME/manually_selected_comparison_stars.lst" ];then
   check_if_two_files_are_the_same $i manually_selected_comparison_stars.lst
   if [ $? -ne 1 ];then
-   cp -i $i .
+   #cp -i $i .
+   echo "Note that $REGION_NAME/manually_selected_comparison_stars.lst is owerwriting manually_selected_comparison_stars.lst"
+   cp $i .
   fi
  elif [ "$i" = "$REGION_NAME/exclude.lst" ];then
   check_if_two_files_are_the_same $i exclude.lst
   if [ $? -ne 1 ];then
-   cp -i $i .
+   #cp -i $i .
+   echo "Note that $REGION_NAME/exclude.lst is owerwriting exclude.lst"
+   cp $i .
   fi
  elif [ "$i" = "$REGION_NAME/bad_region.lst" ];then
   check_if_two_files_are_the_same $i bad_region.lst
   if [ $? -ne 1 ];then
-   cp -i $i .
+   #cp -i $i .
+   echo "Note that $REGION_NAME/bad_region.lst is owerwriting bad_region.lst"
+   cp $i .
   fi
  elif [ "$i" = "$REGION_NAME/vast_list_of_input_images_with_time_corrections.txt" ];then
   check_if_two_files_are_the_same $i vast_list_of_input_images_with_time_corrections.txt
   if [ $? -ne 1 ];then
-   cp -i $i .
+   #cp -i $i .
+   echo "Note that $REGION_NAME/vast_list_of_input_images_with_time_corrections.txt is owerwriting vast_list_of_input_images_with_time_corrections.txt"
+   cp $i .
   fi
  elif [ "$i" = "$REGION_NAME/vast_list_of_FITS_keywords_to_record_in_lightcurves.txt" ];then
   check_if_two_files_are_the_same $i vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
   if [ $? -ne 1 ];then
-   cp -i $i .
+   #cp -i $i .
+   echo "Note that $REGION_NAME/vast_list_of_FITS_keywords_to_record_in_lightcurves.txt is owerwriting vast_list_of_FITS_keywords_to_record_in_lightcurves.txt"
+   cp $i .
   fi
  elif [ "$i" = "$REGION_NAME/default.conv" ];then
   check_if_two_files_are_the_same $i default.conv
   if [ $? -ne 1 ];then
-   cp -i $i .
+   #cp -i $i .
+   echo "Note that $REGION_NAME/default.conv is owerwriting default.conv"
+   cp $i .
   fi
  elif [[ $i =~ .*conv.* ]];then
   check_if_two_files_are_the_same $i `basename $i`
   if [ $? -ne 1 ];then
-   cp -i $i .
+   #cp -i $i .
+   echo "Note that $i is owerwriting "`basename $i`
+   cp $i .
   fi
  elif [[ $i =~ .*_saved_limits.h.* ]];then
-  # We don't want to copy back the VaST settings file
+  # We don't want to copy back the VaST compile-time settings file
   continue
  elif [ "$i" = "$REGION_NAME/"`basename $REGION_NAME`_saved_limits.h ];then
   # An older version of the above
-  # We don't want to copy back the VaST settings file
+  # We don't want to copy back the VaST compile-time settings file
   continue
  else
   cp -r $i .
