@@ -88,8 +88,8 @@ RA=$1
 # Handle coma as RA Dec separator
 if [ -z "$2" ];then
  echo "$RA" | grep --quiet -e ',+' -e ',-' -e ',[0-9]'
- DEC=;(echo $RA | awk -F',' '{print $2}')
- RA=;(echo $RA | awk -F',' '{print $1}')
+ DEC=$(echo $RA | awk -F',' '{print $2}')
+ RA=$(echo $RA | awk -F',' '{print $1}')
  echo "RA=#$RA#  DEC=#$DEC#"
 else
  DEC=$2
