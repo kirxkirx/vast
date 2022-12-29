@@ -20,7 +20,6 @@ static inline int any_unusual_characters_in_string(char *fitsfilename) {
   // allow the following characters in filename
   // ':' is needed because we also use the same function to check input coordinates string
   // '[', ',', ']' are needed to use CFITSIO image cutout interface
-  //if( 0==isalnum(fitsfilename[i]) && fitsfilename[i]!=' ' && fitsfilename[i]!='\\' && fitsfilename[i]!='/' && fitsfilename[i]!='.' && fitsfilename[i]!='_' && fitsfilename[i]!='-' && fitsfilename[i]!='+' && fitsfilename[i]!='~' && fitsfilename[i]!=',' && fitsfilename[i]!=';' && fitsfilename[i]!=':' ) {
   if( 0==isalnum(fitsfilename[i]) && fitsfilename[i]!=' ' && fitsfilename[i]!='\\' && fitsfilename[i]!='/' && fitsfilename[i]!='.' && fitsfilename[i]!='_' && fitsfilename[i]!='-' && fitsfilename[i]!='+' && fitsfilename[i]!='~' && fitsfilename[i]!=',' && fitsfilename[i]!=';' && fitsfilename[i]!=':' && fitsfilename[i]!='[' && fitsfilename[i]!=',' && fitsfilename[i]!=']' ) {
    fprintf(stderr,"ERROR in any_unusual_characters_in_string(): I'm unhappy with the character '%c' in the input string '%s'\n", fitsfilename[i], fitsfilename);
    return 1;
@@ -60,7 +59,10 @@ static inline int safely_encode_user_input_string(char *output_filename, char *i
 static int check_if_the_input_is_FPack_compressed_FITS(char *fitsfilename) {
  int status= 0;  //for cfitsio routines
  fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h
- int hdutype;      // 0 = primary array, 1 = ASCII table, 2 = binary table 
+ int hdutype;    // HDU types:
+                 //  0 = primary array,
+                 //  1 = ASCII table,
+                 //  2 = binary table 
  char keystring[FLEN_CARD];
  char keycomment[FLEN_CARD];
  int number_of_hdus;
