@@ -120,7 +120,8 @@ or perhaps FLAGS = 8+16+32 = 56.
 */
 
 void version(char *version_string) {
- strcpy(version_string, "VaST 1.0rc86");
+ //strcpy(version_string, "VaST 1.0rc86");
+ strncpy(version_string, "VaST 1.0rc86", 32);
  return;
 }
 
@@ -466,7 +467,6 @@ int remove_directory(const char *path) {
   error= 1;
  }
 
- //return r;
  return error;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -1093,6 +1093,10 @@ void write_magnitude_calibration_log(double *mag1, double *mag2, double *mag_err
 }
 
 void write_magnitude_calibration_log2(double *mag1, double *mag2, double *mag_err, int N, char *fitsimagename) {
+ // Calculate the size of dest, minus the null terminator, to ensure
+ // that it is large enough to hold the concatenated string
+ size_t dest_size = FILENAME_LENGTH - 1;
+
  char logfilename[FILENAME_LENGTH];
  FILE *logfile;
  int i;
@@ -1104,7 +1108,9 @@ void write_magnitude_calibration_log2(double *mag1, double *mag2, double *mag_er
    break;
   }
  }
- strcat(logfilename, ".calib2");
+ //strcat(logfilename, ".calib2");
+ strncat(logfilename, ".calib2", dest_size - strlen(logfilename));
+
  logfile= fopen(logfilename, "w");
  if( NULL == logfile ) {
   fprintf(stderr, "WARNING: can't open %s for writing!\n", logfilename);
@@ -1119,6 +1125,10 @@ void write_magnitude_calibration_log2(double *mag1, double *mag2, double *mag_er
 }
 
 void write_magnitude_calibration_log_plane(double *mag1, double *mag2, double *mag_err, int N, char *fitsimagename, double A, double B, double C) {
+ // Calculate the size of dest, minus the null terminator, to ensure
+ // that it is large enough to hold the concatenated string
+ size_t dest_size = FILENAME_LENGTH - 1;
+
  char logfilename[FILENAME_LENGTH];
  FILE *logfile;
  int i;
@@ -1134,7 +1144,9 @@ void write_magnitude_calibration_log_plane(double *mag1, double *mag2, double *m
    break;
   }
  }
- strcat(logfilename, ".calib_plane");
+ //strcat(logfilename, ".calib_plane");
+ strncat(logfilename, ".calib_plane", dest_size - strlen(logfilename));
+
  logfile= fopen(logfilename, "w");
  if( NULL == logfile ) {
   fprintf(stderr, "WARNING: can't open %s for writing!\n", logfilename);
@@ -1144,7 +1156,8 @@ void write_magnitude_calibration_log_plane(double *mag1, double *mag2, double *m
   fprintf(logfile, "%8.4lf %8.4lf %.4lf\n", mag1[i], mag2[i], mag_err[i]);
  }
  fclose(logfile);
- strcat(logfilename, ".calib_plane_param");
+ //strcat(logfilename, ".calib_plane_param");
+ strncat(logfilename, ".calib_plane_param", dest_size - strlen(logfilename));
  logfile= fopen(logfilename, "w");
  if( NULL == logfile ) {
   fprintf(stderr, "WARNING: can't open %s for writing!\n", logfilename);
@@ -1155,8 +1168,12 @@ void write_magnitude_calibration_log_plane(double *mag1, double *mag2, double *m
  return;
 }
 
-/* Write parameters of magnitude calibration to another log file */
+// Write parameters of magnitude calibration to another log file 
 void write_magnitude_calibration_param_log(double *poly_coeff, char *fitsimagename) {
+ // Calculate the size of dest, minus the null terminator, to ensure
+ // that it is large enough to hold the concatenated string
+ size_t dest_size = FILENAME_LENGTH - 1;
+
  char logfilename[FILENAME_LENGTH];
  FILE *logfile;
  int i;
@@ -1168,7 +1185,8 @@ void write_magnitude_calibration_param_log(double *poly_coeff, char *fitsimagena
    break;
   }
  }
- strncat(logfilename, ".calib_param", FILENAME_LENGTH - 32);
+ //strncat(logfilename, ".calib_param", FILENAME_LENGTH - 32);
+ strncat(logfilename, ".calib_param", dest_size - strlen(logfilename));
  logfilename[FILENAME_LENGTH - 1]= '\0';
  logfile= fopen(logfilename, "w");
  if( NULL == logfile ) {
@@ -1180,7 +1198,7 @@ void write_magnitude_calibration_param_log(double *poly_coeff, char *fitsimagena
  return;
 }
 
-/* New memory check - try to allocate lots of space */
+// New memory check - try to allocate lots of space 
 int check_if_we_can_allocate_lots_of_memory() {
  char *big_chunk_of_memory;
  big_chunk_of_memory= malloc(134217728 * sizeof(char)); // try to allocate 128MB
@@ -1192,8 +1210,9 @@ int check_if_we_can_allocate_lots_of_memory() {
  return 0;
 }
 
-/* Memory check */
+// Memory check 
 int check_and_print_memory_statistics() {
+
  FILE *meminfofile;
  char string1[256 + 256]; // should be big enough to accomodate string2
  char string2[256];
@@ -1207,7 +1226,7 @@ int check_and_print_memory_statistics() {
  pid_t pid;
  pid= getpid();
 
- /* Check if process status information is available in /proc */
+ // Check if process status information is available in /proc 
  sprintf(string2, "/proc/%d/status", pid);
  if( 0 == is_file(string2) ) {
   // This means we are probably on a BSD-like system
@@ -1280,41 +1299,41 @@ int check_and_print_memory_statistics() {
   }
   if( 0 == strcasecmp(string1, "VmPeak:") ) {
    VmPeak= mem;
-   strcpy(VmPeak_units, string2);
+   strncpy(VmPeak_units, string2, 256-1);
   }
   if( 0 == strcasecmp(string1, "VmSize:") ) {
    VmSize= mem;
-   strcpy(VmSize_units, string2);
+   strncpy(VmSize_units, string2, 256-1);
   }
   if( 0 == strcasecmp(string1, "MemTotal:") ) {
    RAM_size= mem;
-   strcpy(RAM_size_units, string2);
+   strncpy(RAM_size_units, string2, 256-1);
   }
   if( 3 == fscanf(meminfofile, "%s %lf %s ", string1, &mem, string2) ) {
    if( 0 == strcasecmp(string1, "VmPeak:") ) {
     VmPeak= mem;
-    strcpy(VmPeak_units, string2);
+    strncpy(VmPeak_units, string2, 256-1);
    }
    if( 0 == strcasecmp(string1, "VmSize:") ) {
     VmSize= mem;
-    strcpy(VmSize_units, string2);
+    strncpy(VmSize_units, string2, 256-1);
    }
    if( 0 == strcasecmp(string1, "MemTotal:") ) {
     RAM_size= mem;
-    strcpy(RAM_size_units, string2);
+    strncpy(RAM_size_units, string2, 256-1);
    }
    if( 3 == fscanf(meminfofile, "%s %lf %s ", string1, &mem, string2) ) {
     if( 0 == strcasecmp(string1, "VmPeak:") ) {
      VmPeak= mem;
-     strcpy(VmPeak_units, string2);
+     strncpy(VmPeak_units, string2, 256-1);
     }
     if( 0 == strcasecmp(string1, "VmSize:") ) {
      VmSize= mem;
-     strcpy(VmSize_units, string2);
+     strncpy(VmSize_units, string2, 256-1);
     }
     if( 0 == strcasecmp(string1, "MemTotal:") ) {
      RAM_size= mem;
-     strcpy(RAM_size_units, string2);
+     strncpy(RAM_size_units, string2, 256-1);
     }
    }
   }
@@ -1490,9 +1509,7 @@ void drop_one_point_that_changes_fit_the_most(double *poly_x_external, double *p
  } // for(i_drop=0;i_drop<(*N_good_stars_external);i_drop++){
 
  // Apply the result
- //fprintf(stderr,"\n\n\nDEBUG drop_one_point_that_changes_fit_the_most(): excluding the star %d  %lf %lf %lf\n\n\n",i_drop_best,poly_x_external[i_drop_best],poly_y_external[i_drop_best],poly_err_external[i_drop_best]);
  exclude_from_3_double_arrays(poly_x_external, poly_y_external, poly_err_external, i_drop_best, N_good_stars_external);
- // (*N_good_stars_external)=(*N_good_stars_external)-1;
 
  return;
 }
@@ -1504,7 +1521,7 @@ void write_string_to_log_file(char *log_string, char *sextractor_catalog) {
  char vast_image_details_log_filename[256];
  int i;
  // Guess the log file name
- strcpy(vast_image_details_log_filename, sextractor_catalog);
+ strncpy(vast_image_details_log_filename, sextractor_catalog, 256-1);
  for( i= (int)strlen(vast_image_details_log_filename); i--; ) {
   if( vast_image_details_log_filename[i] == '.' ) {
    vast_image_details_log_filename[i + 1]= 'l';
