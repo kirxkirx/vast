@@ -7,7 +7,7 @@
 #include "vast_limits.h"
 
 void setenv_localpgplot( char *path_to_the_executable ) {
- char *path_to_vast; //=dirname(path_to_the_executable);
+ char *path_to_vast;
  char *path_to_pgplot;
  char *last_dir_name;
  // path_to_pgplot=malloc( (2*strlen(path_to_vast)+32)*sizeof(char)); // just a wild guess how big the thing should be
