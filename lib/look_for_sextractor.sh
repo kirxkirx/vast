@@ -29,6 +29,13 @@ if [ $? -eq 0 ];then
  exit 0
 fi
 
+echo -n "Checking the HOME directory installation of SExtractor...  "
+if [ -x $HOME/bin/sex ];then
+ echo "Found the HOME directory installation of SExtractor"
+ echo "You should have added \$HOME/bin/ to \$PATH..."
+ export PATH=$PATH:$HOME/bin/
+fi
+
 echo -n "Checking the local copy of SExtractor...  "
 if [ ! -f lib/bin/sex ];then
  echo "WARNING: cannot find a local copy of SExtractor..."
