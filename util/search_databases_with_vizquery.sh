@@ -58,23 +58,18 @@ if [ "$LAST_CHAR_OF_VAST_PATH" != "/" ];then
 fi
 #
 
-
-#VIZIER_SITE=vizier.cfa.harvard.edu
 #VIZIER_SITE=vizier.u-strasbg.fr
 VIZIER_SITE=$("$VAST_PATH"lib/choose_vizier_mirror.sh)
 #
 echo -e "Starting $0" 1>&2
 
 ### Set path to wwwget in lib/bin/
-#PATH_TO_THIS_SCRIPT=`readlink -f $0`
-#PATH_TO_UTIL_DIR=`dirname $PATH_TO_THIS_SCRIPT`
-#PATH_TO_VAST_DIR=`dirname $PATH_TO_UTIL_DIR`
-#export PATH="$PATH:$PATH_TO_VAST_DIR/lib/bin/"
 echo "$PATH" | grep --quiet "$VAST_PATH"lib/bin
 if [ $? -ne 0 ];then
  #export PATH="$VAST_PATH"lib/bin":$PATH"
  NEWPATH="$VAST_PATH"lib/bin
- export PATH="$VAST_PATH:$PATH"
+ #export PATH="$VAST_PATH:$PATH"
+ export PATH="$NEWPATH:$PATH"
 fi
 
 ### 
@@ -155,7 +150,7 @@ fi
 R_SEARCH_ARCSEC=2.5
 echo "Searching 2MASS $R_SEARCH_ARCSEC\" around $RA $DEC"
 $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=2MASS  -out.max=1 -out.add=_r -out.form=mini  -sort=_r  -c="$RA $DEC" -c.rs=$R_SEARCH_ARCSEC -out=Jmag,e_Jmag,Kmag,e_Kmag  2>/dev/null |grep -v \# | grep -v "_" | grep -v "\---" |grep -v "sec"  | while read R J eJ K eK REST ;do
- if [ ! -z "$R" ];then
+ if [ -n "$R" ];then
   if [ -z "$J" ];then
    continue
   fi
@@ -178,7 +173,7 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=2
   else
    eJ_K="     "
   fi
-  if [ ! -z "$J_K" ];then
+  if [ -n "$J_K" ];then
    # Guess spectral type *assuming zero extinction*
    #
    # The old color boundaries between the spectral types were based on http://adsabs.harvard.edu/abs/1988PASP..100.1134B
@@ -256,7 +251,7 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=2
    fi
   else
    SECTRAL_TYPE="Sorry, cannot get 2MASS color"
-  fi # if [ ! -z $J_K ];then
+  fi # if [ -n $J_K ];then
   # Print results
   echo "r=$R\" J = $J +/-$eJ  Ks = $K +/-$eK  J-Ks =  $J_K +/-$eJ_K  ($SECTRAL_TYPE)"
   #echo "Spectral type is according to Bessell & Brett (1988, PASP, 100, 1134) *assuming zero extinction*."
@@ -336,7 +331,7 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=U
   continue
  fi
  # skip empty lines if for whatever reason they were not caught before
- if [ ! -z "$R" ] ;then
+ if [ -n "$R" ] ;then
   # Skip too faint stars
   #TEST=`echo "($B2+$B1)/2.0>18.0"|bc -ql`
   TEST=$(echo "$B2 $B1"| awk '{if ( ($1+$2)/2.0 > 18.0 ) print 1 ;else print 0 }')
@@ -408,7 +403,7 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I
   continue
  fi
  # skip empty lines if for whatever reason they were not caught before
- if [ ! -z "$R" ] ;then
+ if [ -n "$R" ] ;then
   ######################################################################################
   # Do not drop faint Gaia stars if we have good astrometry
   SHOULD_WE_DROP_FAINT_GAIA_STARS=1
@@ -590,7 +585,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    SUGGESTED_TYPE_STRING="T (VSX)"
    SUGGESTED_PERIOD_STRING="P (VSX)"
    KNOWN_VARIABLE=1
-   if [ ! -z "$B2" ];then
+   if [ -n "$B2" ];then
     SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING B2=$B2 "
    fi
   else
@@ -633,7 +628,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    # OGLE Bulge LPV
    if [ $KNOWN_VARIABLE -eq 0 ];then
     OGLE_LPV_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/AcA/63/21/catalog -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Star,Type,Per 2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" | grep -A 1 'Star' | tail -n1)
-    if [ ! -z "$OGLE_LPV_RESULTS" ];then
+    if [ -n "$OGLE_LPV_RESULTS" ];then
      OGLENAME=$(echo "$OGLE_LPV_RESULTS" | awk '{print $1}')
      OGLETYPE=$(echo "$OGLE_LPV_RESULTS" | awk '{print $2}')
      OGLEPERIOD=$(echo "$OGLE_LPV_RESULTS" | awk '{print $3}')
@@ -646,7 +641,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    # ATLAS
    if [ $KNOWN_VARIABLE -eq 0 ];then
     ATLAS_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/AJ/156/241/table4 -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=ATOID,Class 2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" | grep J | tail -n1)
-    if [ ! -z "$ATLAS_RESULTS" ];then
+    if [ -n "$ATLAS_RESULTS" ];then
      ATLASNAME=$(echo "$ATLAS_RESULTS" | awk '{print $1}')
      ATLASTYPE=$(echo "$ATLAS_RESULTS" | awk '{print $2}')
      ATLASPERIOD=" "
@@ -660,7 +655,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    #if [ $KNOWN_VARIABLE -eq 0 ];then
    # OGLE_LPV_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/AcA/61/1/ident -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Star,Type 2>/dev/null |grep -v \# | grep -v "_" | grep -v "\---" | grep -A 1 'Star' | tail -n1`
    # echo "#$OGLE_LPV_RESULTS#"
-   # if [ ! -z "$OGLE_LPV_RESULTS" ];then
+   # if [ -n "$OGLE_LPV_RESULTS" ];then
    #  OGLENAME=`echo "$OGLE_LPV_RESULTS" | awk '{print $1}'`
    #  OGLETYPE=`echo "$OGLE_LPV_RESULTS" | awk '{print $2}'`
    #  OGLEPERIOD="P"
@@ -673,11 +668,11 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    # Gaia DR3 variable
    if [ $KNOWN_VARIABLE -eq 0 ];then
     GAIA_DR3_VAR_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/358/varisum -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $1}' | grep -v \#)
-    if [ ! -z "$GAIA_DR3_VAR_RESULTS" ];then
+    if [ -n "$GAIA_DR3_VAR_RESULTS" ];then
      SUGGESTED_NAME_STRING="Gaia DR3 varaible $GAIA_DR3_VAR_RESULTS"
      SUGGESTED_TYPE_STRING=""
      GAIA_DR3_VAR_TYPE_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/358/vclassre -out.max=1 -out.form=mini  Source=$GAIA_DR3_VAR_RESULTS 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $4}' | grep -v \#)
-     if [ ! -z "$GAIA_DR3_VAR_TYPE_RESULTS" ];then
+     if [ -n "$GAIA_DR3_VAR_TYPE_RESULTS" ];then
       SUGGESTED_TYPE_STRING="$GAIA_DR3_VAR_TYPE_RESULTS (Gaia DR3)"
      fi
      SUGGESTED_PERIOD_STRING="2022yCat.1358....0G"
@@ -689,7 +684,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    # Gaia DR2 large amplitude variable
    if [ $KNOWN_VARIABLE -eq 0 ];then
     GAIA_DR2_LARGE_AMP_VAR_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/A+A/648/A44/tabled1 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $1}' | grep -v \#)
-    if [ ! -z "$GAIA_DR2_LARGE_AMP_VAR_RESULTS" ];then
+    if [ -n "$GAIA_DR2_LARGE_AMP_VAR_RESULTS" ];then
      SUGGESTED_NAME_STRING="Large-amplitude variable Gaia DR2 $GAIA_DR2_LARGE_AMP_VAR_RESULTS"
      SUGGESTED_TYPE_STRING="2021A&A...648A..44M"
      SUGGESTED_PERIOD_STRING=""
@@ -701,7 +696,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    # Generic VizieR search for the word 'variable'
    if [ $KNOWN_VARIABLE -eq 0 ];then
     GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -words='variable' -meta -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep Title | grep 'ariable' | sed 's:#Title\: ::g')
-    if [ ! -z "$GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS" ];then
+    if [ -n "$GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS" ];then
      SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING may be a known variable - check VizieR  "
     fi
    fi
@@ -715,7 +710,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
  SUGGESTED_NAME_STRING="$GOOD_CATALOG_NAME"
  SUGGESTED_TYPE_STRING="T"
  SUGGESTED_PERIOD_STRING="P"
- if [ ! -z "$B2" ];then
+ if [ -n "$B2" ];then
   SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING B2=$B2 "
  fi
 fi
@@ -724,7 +719,7 @@ SPECTRAL_TYPE=""
 # First try Skiff
 #SKIFF_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=B/mk/mktypes  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=SpType,Bibcode,Name -out.max=1 2>/dev/null | grep -B2 '#END#' | head -n1 | grep -v \# | sed 's:  ::g' `
 SKIFF_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=B/mk/mktypes  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=SpType,Bibcode,Name -out.max=1 2>/dev/null | grep -B2 '#END#' | head -n1 | grep -v \# | sed 's:  : :g' | sed 's:  : :g' | sed 's:  : :g' | sed 's:  : :g' | sed 's:  : :g')
-if [ ! -z "$SKIFF_RESULTS" ];then
+if [ -n "$SKIFF_RESULTS" ];then
  #SPECTRAL_TYPE=$(echo $SKIFF_RESULTS)
  SPECTRAL_TYPE="$SKIFF_RESULTS"
  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING SpType: $SKIFF_RESULTS  "
@@ -732,7 +727,7 @@ fi
 # Then try LAMOST
 if [ -z "$SPECTRAL_TYPE" ];then
  LAMOST_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=V/164/dr5  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=SubClass,Class -out.max=1 2>/dev/null | grep -B2 '#END#' | head -n1 | grep -v \# | grep 'STAR' | awk '{print $1}')
- if [ ! -z "$LAMOST_RESULTS" ];then
+ if [ -n "$LAMOST_RESULTS" ];then
   #SPECTRAL_TYPE=$(echo $LAMOST_RESULTS)
   SPECTRAL_TYPE="$LAMOST_RESULTS"
   SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING SpType: $LAMOST_RESULTS (LAMOST DR5)  "
@@ -741,7 +736,7 @@ fi
 
 
 # Print the summary string
-if [ ! -z "$GOOD_CATALOG_NAME_USNOB" ];then
+if [ -n "$GOOD_CATALOG_NAME_USNOB" ];then
  echo -n " $STAR_NAME | $SUGGESTED_NAME_STRING | $GOOD_CATALOG_POSITION_USNOB(USNO-B1.0) | $SUGGESTED_TYPE_STRING | $SUGGESTED_PERIOD_STRING | $SUGGESTED_COMMENT_STRING"
  # Add 2MASS color and spectral type guess as a final comment
  if [ -f 2mass.tmp ];then
@@ -750,7 +745,7 @@ if [ ! -z "$GOOD_CATALOG_NAME_USNOB" ];then
   echo " "
  fi
 fi
-if [ ! -z "$GOOD_CATALOG_NAME_GAIA" ];then
+if [ -n "$GOOD_CATALOG_NAME_GAIA" ];then
  ### Make the columns have an approximately same width ###
  while [ ${#STAR_NAME} -lt 16 ];do
   STAR_NAME="$STAR_NAME "
@@ -780,7 +775,7 @@ if [ ! -z "$GOOD_CATALOG_NAME_GAIA" ];then
   echo "                      "
  fi
  
- if [ ! -z "$GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS" ];then
+ if [ -n "$GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS" ];then
   echo "
 This may be a know variable star according to the titles of VizieR catalogs it is listed in:
 $GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS"
