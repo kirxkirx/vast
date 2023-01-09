@@ -16692,6 +16692,12 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_MULTCLOSEVAR"
 fi
 
+# Make sure the script gives 'may be a known variable' suggestion from parsing VizieR catalog names
+util/search_databases_with_vizquery.sh 00:39:16.81 +60:36:57.1 | grep --quiet 'may be a known variable'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_VIZKNOWNVAR"
+fi
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
