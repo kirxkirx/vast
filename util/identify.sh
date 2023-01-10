@@ -81,7 +81,7 @@ function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image
  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet -e 'HISTORY Created by the Astrometry.net suite.' -e 'HISTORY WCS created by AIJ link to Astronomy.net website'
  if [ $? -eq 0 ];then
   # TEST for the possibility that this is one of the messed-up NMW archive images
-  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet 'A_0_0' && echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet 'PV1_1'
+  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet -e 'A_0_0' -e 'A_2_0' && echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet 'PV1_1'
   if [ $? -eq 0 ];then
    echo "$0  -- WARNING, the input image has both A_0_0 and PV1_1 distortions kewords! Will try to re-solve the image."
   else
@@ -542,6 +542,10 @@ field identification have good chances to fail. Sorry... :(
   #SCALE_HIGH=`echo "1.6*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'`
   SCALE_HIGH=`echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",1.6*$1}'`
   #
+  #
+  echo "Using solve-field binary"
+  command -v solve-field
+  #
   # Blind solve
   # old parameters - they work
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
@@ -555,6 +559,8 @@ field identification have good chances to fail. Sorry... :(
   # HACK Hack hack -- manually specify the field center and size
   # DART 04:57:09.65 -25:21:48.3
   #$TIMEOUT_COMMAND 600 solve-field --ra 04:57:09.65 --dec -25:21:48.3 --radius 30.0 --objs 100 --depth 1-10,1-20,20-30 --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # DART 07:45:59.02 +05:38:02.7
+  #$TIMEOUT_COMMAND 600 solve-field --ra 07:45:59.02 --dec +05:38:02.7 --radius 30.0 --pixel-error 3  --objs 100 --depth 1-10,1-20 --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # TCPJ1524 15:24:47.60 -60:59:47.3
   #$TIMEOUT_COMMAND 600 solve-field --ra 15:24:47.60 --dec -60:59:47.3 --radius 0.1 --objs 100 --depth 1-10,1-20,20-30 --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # 2022-Mar-29 02:00     12:08:38.06 +15:47:02.8
@@ -639,6 +645,10 @@ field identification have good chances to fail. Sorry... :(
   # exit 1
   #fi
   if [ $? -ne 0 ];then
+   #
+   #echo "EMERGENCY STOP"
+   #exit 1
+   #
    echo "ERROR running solve-field locally. Retrying with a remote plate-solve server."
    ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
    if [ "$PLATE_SOLVE_SERVER" = "" ];then
