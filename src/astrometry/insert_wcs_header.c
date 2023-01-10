@@ -320,6 +320,7 @@ int main(int argc, char **argv) {
   status= 0;
  }
 
+/*
  fits_delete_key(outputfptr, "PV1_1", &status);status= 0;
  fits_delete_key(outputfptr, "PV2_1", &status);status= 0;
  fits_delete_key(outputfptr, "PV1_2", &status);status= 0;
@@ -330,7 +331,93 @@ int main(int argc, char **argv) {
  fits_delete_key(outputfptr, "PV2_5", &status);status= 0;
  fits_delete_key(outputfptr, "PV1_6", &status);status= 0;
  fits_delete_key(outputfptr, "PV2_6", &status);status= 0;
+*/
 
+// list all possible PV keywords
+
+// PV1_
+ fits_delete_key(outputfptr, "PV1_0", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_1", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_2", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_3", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_4", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_5", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_6", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_7", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_8", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_9", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_10", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_11", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_12", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_13", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_14", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_15", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_16", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_17", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_18", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_19", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_20", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_21", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_22", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_23", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_24", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_25", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_26", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_27", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_28", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_29", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_30", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_31", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_32", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_33", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_34", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_35", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_36", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_37", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_38", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_39", &status);status= 0;
+//
+// PV2_
+ fits_delete_key(outputfptr, "PV2_0", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_1", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_2", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_3", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_4", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_5", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_6", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_7", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_8", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_9", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_10", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_11", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_12", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_13", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_14", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_15", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_16", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_17", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_18", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_19", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_20", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_21", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_22", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_23", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_24", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_25", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_26", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_27", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_28", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_29", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_30", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_31", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_32", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_33", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_34", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_35", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_36", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_37", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_38", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_39", &status);status= 0;
 
  // somehow this doesn't seem to work
  for( i= 0; i < 10000; i++ ) {
