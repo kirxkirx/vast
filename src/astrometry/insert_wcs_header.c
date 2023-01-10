@@ -315,9 +315,26 @@ int main(int argc, char **argv) {
  status= 0;
  fits_delete_key(outputfptr, "CROTA2", &status);
  status= 0;
-
  for( i= 0; i < 10000; i++ ) {
   fits_delete_key(outputfptr, "TR?_*", &status);
+  status= 0;
+ }
+
+ fits_delete_key(outputfptr, "PV1_1", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_1", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_2", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_2", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_4", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_4", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_5", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_5", &status);status= 0;
+ fits_delete_key(outputfptr, "PV1_6", &status);status= 0;
+ fits_delete_key(outputfptr, "PV2_6", &status);status= 0;
+
+
+ // somehow this doesn't seem to work
+ for( i= 0; i < 10000; i++ ) {
+  fits_delete_key(outputfptr, "PV*_*", &status);
   status= 0;
  }
 
@@ -337,7 +354,7 @@ int main(int argc, char **argv) {
  //fits_close_file(inputfptr, &status);  // close file // moved up
  fits_close_file(outputfptr, &status); // close output file
 
- fits_report_error(stderr, status); /* print out any error messages */
+ fits_report_error(stderr, status); // print out any error messages
 
  fprintf(stderr, "All done!\n");
 
