@@ -1097,18 +1097,8 @@ int main(int argc, char **argv) {
  char fov_string[1024];
  float fov_float= 0.0;
 
- if( 0 != strcmp("select_star_on_reference_image", basename(argv[0])) ) {
-  if( argc == 1 ) {
-   fprintf(stderr, "Usage:\n%s FITSIMAGE.fit\nor\n%s FITSIMAGE.fit X Y\nor\n%s FITSIMAGE.fit RA DEC\n\n", argv[0], argv[0], argv[0]);
-  }
- } else {
-  // This is star selection on reference image mode
-  match_mode= 1;
-  if( 0 != get_ref_image_name(fits_image_name) ) {
-   fprintf(stderr, "ERROR getting the reference image name from the log file\n");
-   exit(1);
-  }
- }
+ int image_specified_on_command_line__0_is_yes= 0; // 0 - yes, 1 - no, we'll get the image name from log file
+
 
  double fixed_aperture= 0.0;
 
@@ -1225,14 +1215,77 @@ int main(int argc, char **argv) {
  }
  //
 
- if( argc - optind == 5 ) {
-  APER= atof(argv[optind + 4]);
+ if( argc > 1 ) { 
+
+  // check for the depricated special case
+  if( 0 == strcasecmp( argv[optind + 1], "match") ) {
+   fprintf(stderr, "The manual star-matching mode is no longer supported, sorry!\n");
+   return 1;
+  }
+
+  if( 0 == strcasecmp( argv[optind + 1] , "calib") ) {
+   // special case to handle: './pgfv calib'
+   // Magnitude calibration mode
+   match_mode= 2;
+   // that will be handled later
+  } else {
+   // the normal way
+   
+   if( 0 == fitsfile_read_check_silent(argv[optind + 1]) ) {
+    // An image is specified on the command line
+    image_specified_on_command_line__0_is_yes= 0;
+   } else {
+    // no image is specified on the comamnd line - try to get it from vast_summary.log
+//    if( 0 != get_ref_image_name(fits_image_name) ) {
+//     fprintf(stderr, "Usage:\n%s FITSIMAGE.fit\nor\n%s FITSIMAGE.fit X Y\nor\n%s FITSIMAGE.fit RA DEC\n\n", argv[0], argv[0], argv[0]);
+//     exit(1);
+//    }
+    image_specified_on_command_line__0_is_yes= 1;
+   }
+  }
+ } else {
+  image_specified_on_command_line__0_is_yes= 1; // no image on the command line as there is nothing there at all
+ } // else if( argc > 1 ) {
+
+
+/*
+ if( 0 != strcmp("select_star_on_reference_image", basename(argv[0])) ) {
+  if( argc == 1 ) {
+   fprintf(stderr, "Usage:\n%s FITSIMAGE.fit\nor\n%s FITSIMAGE.fit X Y\nor\n%s FITSIMAGE.fit RA DEC\n\n", argv[0], argv[0], argv[0]);
+  }
+  // the normal way
+ } else {
+  // This is star selection on reference image mode
+  match_mode= 1;
+  // handle the special case where the image is specified on the command line when running select_star_on_reference_image
+  if( 0 == fitsfile_read_check_silent(argv[optind + 1]) ) {
+   image_specified_on_command_line__0_is_yes= 0;
+   fprintf(stderr,"\n\nWARNING: an image is specified on the command line whne rinning %s!\nWill display the reference image instead.\n\n", basename(argv[0]) );
+  } else {
+   // the normal way when no image is specified on the command line when using select_star_on_reference_image
+   image_specified_on_command_line__0_is_yes= 1;
+  }
+  if( 0 != get_ref_image_name(fits_image_name) ) {
+   fprintf(stderr, "ERROR getting the reference image name from the log file\n");
+   exit(1);
+  }
  }
 
- if( match_mode != 1 && argc != 1 ) {
+ //if( match_mode != 1 && argc != 1 ) {
+ // Somehow we handle match_mode==1 case separately above
+ if( match_mode != 1 ) {
   //strcpy(fits_image_name, argv[optind + 1]);
   safely_encode_user_input_string(fits_image_name, argv[optind + 1], FILENAME_LENGTH);
  } else {
+  fprintf(stderr, "DEBUUUUUUUGAAAAA");
+  // handle the special case where the image is specified on the command line when running select_star_on_reference_image/other
+  if( 0 == fitsfile_read_check_silent(argv[optind + 1]) ) {
+   image_specified_on_command_line__0_is_yes= 0;
+   fprintf(stderr,"\n\nWARNING: an image is specified on the command line while running %s!\nWill display the reference image instead.\n\n", basename(argv[0]) );
+  } else {
+   // the normal way when no image is specified on the command line when using select_star_on_reference_image/other
+   image_specified_on_command_line__0_is_yes= 1;
+  }
   // Get reference file name from log 
   //get_ref_image_name(fits_image_name);
   if( 0 != get_ref_image_name(fits_image_name) ) {
@@ -1240,25 +1293,149 @@ int main(int argc, char **argv) {
    exit(1);
   }
  }
+*/
+
+ if( image_specified_on_command_line__0_is_yes != 0 && image_specified_on_command_line__0_is_yes != 1 ) {
+  fprintf(stderr, "ERROR in %s: image_specified_on_command_line__0_is_yes = %d \n", argv[0], image_specified_on_command_line__0_is_yes );
+  exit(1);
+ }
+
+// if( argc - optind == 5 ) {
+//  APER= atof(argv[optind + 4]);
+// }
+/*
+ if( argc - optind + image_specified_on_command_line__0_is_yes == 5 ) {
+  APER= atof(argv[optind - image_specified_on_command_line__0_is_yes + 4]);
+  fprintf(stderr, "Aperture size specified on the command line: %.1lf (%s)\n", APER, argv[optind - image_specified_on_command_line__0_is_yes + 4] );
+ }
+*/
+
+// moved up
+// if( 0 == strcasecmp(fits_image_name, "calib") ) {
+//  // Magnitude calibration mode
+//  match_mode= 2;
+// }
+
+
+// if( 0 == strcasecmp(fits_image_name, "match") ) {
+//  fprintf(stderr, "The manual star-matching mode is no longer supported, sorry!\n");
+//  return 1;
+// }
+
+ // moved here from above
+ if( 0 == strcmp("select_star_on_reference_image", basename(argv[0])) && match_mode==0 ) {
+  match_mode= 1;
+ }
+
+ if( 0 == strcmp("sextract_single_image", basename(argv[0])) && match_mode==0 ) {
+  match_mode= 3;
+ }
+
+ if( 0 == strcmp("select_comparison_stars", basename(argv[0])) && match_mode==0 ) {
+  match_mode= 4;
+
+  // Remove old calib.txt
+  matchfile= fopen("calib.txt", "r");
+  if( NULL != matchfile ) {
+   fclose(matchfile);
+   unlink("calib.txt");
+  }
+  // Remove old manually_selected_comparison_stars.lst
+  matchfile= fopen("manually_selected_comparison_stars.lst", "r");
+  if( NULL != matchfile ) {
+   fclose(matchfile);
+   unlink("manually_selected_comparison_stars.lst");
+  }
+  // Remove old manually_selected_aperture.txt
+  matchfile= fopen("manually_selected_aperture.txt", "r");
+  if( NULL != matchfile ) {
+   fclose(matchfile);
+   unlink("manually_selected_aperture.txt");
+  }
+  
+
+ } // if ( 0 == strcmp( "select_comparison_stars", basename( argv[0] ) ) ) {
+
+ // A reminder to myself: 
+  // match_mode == 0   - the normal image display
+  // match_mode == 3   - sextract single image - not necessary the reference one
+  
+ if( image_specified_on_command_line__0_is_yes == 1 ) {
+  // no image specified on the comamnd line
+  if( match_mode == 0 ) {
+   fprintf(stderr, "Usage:\n%s FITSIMAGE.fit\nor\n%s FITSIMAGE.fit X Y\nor\n%s FITSIMAGE.fit RA DEC\n\n", argv[0], argv[0], argv[0]);
+   return 1;
+  }
+  // the image is not specified on the command line or this is some funny data reduction mode
+  // -- get the image name from vast_summary.log
+  if( 0 != get_ref_image_name(fits_image_name) ) {
+   fprintf(stderr, "ERROR(1) getting the reference image name from the log file\n");
+   return 1;
+  }
+ } else {
+  // an image is specified on the command line
+  if( match_mode == 0 || match_mode == 3 ) {
+   safely_encode_user_input_string(fits_image_name, argv[optind + 1], FILENAME_LENGTH);
+  } else {
+   fprintf(stderr,"\n\nWARNING: an image is specified on the command line while running %s!\nWill display the reference image instead.\n\n", basename(argv[0]) );
+   // -- get the image name from vast_summary.log
+   if( 0 != get_ref_image_name(fits_image_name) ) {
+    fprintf(stderr, "ERROR(2) getting the reference image name from the log file\n");
+    return 1;
+   }
+  } 
+ }
+
  
- // Reformat file anme for display
+ //////////////////////////////////////////////////////////////////////////////
+ // by this time we should have the desired image name in fits_image_name
+ // derived from the command line or the vast_summary.log file
+
+ // Reformat file name for display
  strncpy(fits_image_name_string_for_display, fits_image_name, FILENAME_LENGTH); // display the original file name, not symlink
  if( strlen(fits_image_name_string_for_display) > 70 ) {
   strncpy(fits_image_name_string_for_display, basename(fits_image_name), FILENAME_LENGTH); // display just the file name if the full path is too long and will not fit the screen anyhow
  }
  //
-
+ 
  replace_file_with_symlink_if_filename_contains_white_spaces(fits_image_name);
  cutout_green_channel_out_of_RGB_DSLR_image(fits_image_name);
 
- if( argc - optind >= 4 ) {
+// fprintf(stderr,"\n\n\nDEBUUUUUUUG argc=%d  optind=%d  image_specified_on_command_line__0_is_yes=%d argv[optind - image_specified_on_command_line__0_is_yes + 2]=%s \n\n\n", argc, optind, image_specified_on_command_line__0_is_yes, argv[optind - image_specified_on_command_line__0_is_yes + 2]);
+
+// if( argc - optind >= 4 ) {
+//  // Now we need to figure out if the input values are pixel or celestial coordinates
+//  // Don't do this check if this is fits2png
+//  if( finder_chart_mode != 1 && use_labels != 0 ) {
+//   sky2xy(fits_image_name, argv[optind + 2], argv[optind + 3], &markX, &markY);
+//  } else {
+//   markX= (float)atof(argv[optind + 2]);
+//   markY= (float)atof(argv[optind + 3]);
+//  }
+//  if( markX > 0.0 && markY > 0.0 ) {
+//   mark_trigger= 1;
+//   fprintf(stderr, "Putting mark on pixel position %lf %lf\n", markX, markY);
+//  } else {
+//   fprintf(stderr, "The pixel position %lf %lf is outside the image!\n", markX, markY);
+//  }
+// }
+ if( argc - optind + image_specified_on_command_line__0_is_yes >= 4 ) {
+  //
+  
+  // that will only work with pgfv - in star display modes APER
+  // will be reset to the aperture size
+  if( argc - optind + image_specified_on_command_line__0_is_yes >= 5 ) {
+   APER= atof(argv[optind - image_specified_on_command_line__0_is_yes + 4]);
+   fprintf(stderr, "Aperture size specified on the command line: %.1lf (%s)\n", APER, argv[optind - image_specified_on_command_line__0_is_yes + 4] );
+  }
+
   // Now we need to figure out if the input values are pixel or celestial coordinates
   // Don't do this check if this is fits2png
   if( finder_chart_mode != 1 && use_labels != 0 ) {
-   sky2xy(fits_image_name, argv[optind + 2], argv[optind + 3], &markX, &markY);
+   sky2xy(fits_image_name, argv[optind - image_specified_on_command_line__0_is_yes + 2], argv[optind - image_specified_on_command_line__0_is_yes + 3], &markX, &markY);
   } else {
-   markX= (float)atof(argv[optind + 2]);
-   markY= (float)atof(argv[optind + 3]);
+   markX= (float)atof(argv[optind - image_specified_on_command_line__0_is_yes + 2]);
+   markY= (float)atof(argv[optind - image_specified_on_command_line__0_is_yes + 3]);
   }
   if( markX > 0.0 && markY > 0.0 ) {
    mark_trigger= 1;
@@ -1277,12 +1454,14 @@ int main(int argc, char **argv) {
   fprintf(stderr, "vast_manymarkersfile.log - %d markers\n", manymrkerscounter);
  }
 
- if( 0 == strcasecmp(fits_image_name, "calib") ) {
-  // Magnitude calibration mode
-  match_mode= 2;
- }
+
+
+ //fprintf(stderr,"DEBUG-5\n");
+
 
  if( match_mode == 2 ) {
+  // Magnitude calibration mode
+  
   // Remove old calib.txt
   matchfile= fopen("calib.txt", "r");
   if( NULL != matchfile ) {
@@ -1353,42 +1532,8 @@ int main(int argc, char **argv) {
   sextractor_catalog__counter--; // We can't be sure that the last star is visible on the reference frame so we just drop it 
  }
 
- if( 0 == strcasecmp(fits_image_name, "match") ) {
-  fprintf(stderr, "The manual star-matching mode is no longer supported, sorry!\n");
-  return 1;
- }
 
- if( 0 == strcmp("sextract_single_image", basename(argv[0])) ) {
-  match_mode= 3;
- }
-
- if( 0 == strcmp("select_comparison_stars", basename(argv[0])) ) {
-  match_mode= 4;
-
-  // Remove old calib.txt
-  matchfile= fopen("calib.txt", "r");
-  if( NULL != matchfile ) {
-   fclose(matchfile);
-   unlink("calib.txt");
-  }
-  // Remove old manually_selected_comparison_stars.lst
-  matchfile= fopen("manually_selected_comparison_stars.lst", "r");
-  if( NULL != matchfile ) {
-   fclose(matchfile);
-   unlink("manually_selected_comparison_stars.lst");
-  }
-  // Remove old manually_selected_aperture.txt
-  matchfile= fopen("manually_selected_aperture.txt", "r");
-  if( NULL != matchfile ) {
-   fclose(matchfile);
-   unlink("manually_selected_aperture.txt");
-  }
-  
-
- } // if ( 0 == strcmp( "select_comparison_stars", basename( argv[0] ) ) ) {
-
- //fprintf(stderr,"DEBUG-5\n");
-
+/*
  // WTF is this????
  if( 0 == strcasecmp(fits_image_name, "detect") ) {
   if( argc - optind < 3 ) {
@@ -1396,9 +1541,11 @@ int main(int argc, char **argv) {
    exit(1);
   }
   //strcpy(fits_image_name, argv[optind + 2]);
+  //safely_encode_user_input_string(fits_image_name, argv[optind + 2], FILENAME_LENGTH);
   safely_encode_user_input_string(fits_image_name, argv[optind + 2], FILENAME_LENGTH);
   match_mode= 3;
  }
+*/ 
  if( match_mode == 3 ) {
   fprintf(stderr, "Entering single image reduction mode.\nProcessing image %s\n", fits_image_name);
   // We want to have this check early in order not to distract user with the following messages if the file is unreadable
