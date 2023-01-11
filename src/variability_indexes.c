@@ -4,7 +4,7 @@
   suggested by Stetson, Peter B. in 1996PASP..108..851S
   see http://adsabs.harvard.edu/abs/1996PASP..108..851S
   
-  ...and many other variability indexes.
+  ...and many other variability indexes!
   
   See http://adsabs.harvard.edu/abs/2017MNRAS.464..274S
   for a detailed discussion of the implemented indexes.
@@ -34,23 +34,6 @@ double sgn(double a) {
   return -1.0;
  return 1.0;
 }
-
-/*
-#define COMPARE(a, b) (((a) > (b)) - ((a) < (b)))
-
-static int vast_compare_double(const void *a1, const void *a2) {
- // Get the values at given addresses
- double a = *(const int *)a1;
- double b = *(const int *)a2;
- 
- return COMPARE(a, b);
-}
-
-void vast_qsort_double(double *x, int n) {
- qsort((void *)x, n, sizeof(double), vast_compare_double); 
- return;
-}
-*/
 
 // input_max_pair_diff_sigma - do not form pairs if magnitude difference is more than input_max_pair_diff_sigma*error
 void stetson_JKL_from_sorted_lightcurve(size_t *input_array_index_p, double *input_JD, double *input_m, double *input_merr, int input_Nobs, int input_Nmax, double input_max_pair_diff_sigma, int input_use_time_based_weighting, double *output_J, double *output_K, double *output_L) {
@@ -105,7 +88,7 @@ void stetson_JKL_from_sorted_lightcurve(size_t *input_array_index_p, double *inp
   fprintf(stderr, "ERROR: Couldn't allocate memory for array P\n");
   exit(1);
  };
- double di, dj; //,dk;
+ double di, dj;
 
  double sum, sum_w;
 

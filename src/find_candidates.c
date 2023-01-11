@@ -64,14 +64,16 @@ float myfmax(float x, float y) {
   return y;
 }
 
-void call_scripts(int period_search_switch) {
+//void call_scripts(int period_search_switch) {
+void call_scripts() {
  char cmd[512];
  strcpy(cmd, "util/nopgplot.sh");
- if( period_search_switch == 1 )
-  strcat(cmd, " -t"); // DEPRICATED!!!
+// if( period_search_switch == 1 )
+//  strcat(cmd, " -t"); // DEPRICATED!!!
  if( 0 != system(cmd) ) {
   fprintf(stderr, "ERROR running %s\n", cmd);
  }
+ fprintf(stderr, "NOTE: to create the lightcurve statistics file 'vast_lightcurve_statistics.log' non-interactively you may run 'util/nopgplot.sh'\n\n");
  return;
 }
 
@@ -270,7 +272,7 @@ int main(int argc, char **argv) {
  //setenv("MALLOC_CHECK_", "0", 1);
 
  int use_old_files= 0;
- int t_option_set= 0;
+ //int t_option_set= 0;
  int use_ds9_instead_of_pgfv= 0;
 
  int display_mode= 1; // 1 - mag-sigma plot
@@ -309,10 +311,10 @@ int main(int argc, char **argv) {
   case '9':
    use_ds9_instead_of_pgfv= 1;
    break;
-  case 't':
-   t_option_set= 1;
-   break;
-   // do we need break here???
+//  case 't':
+//   t_option_set= 1;
+//   break;
+//   // do we need break here???
   case '?':
    use_old_files= 1;
    //     fprintf(stderr,"Using the old vast_lightcurve_statistics.log and other log files.\n");
@@ -342,17 +344,19 @@ int main(int argc, char **argv) {
 
  if( use_old_files == 0 ) {
   fprintf(stderr, "Computing lightcurves statistics, this may take some time...\nThe results will be written to vast_lightcurve_statistics.log\n");
+  call_scripts();
  } else {
   fprintf(stderr, "Using the old vast_lightcurve_statistics.log and other log files.\n");
  }
 
- /* else - call external scripts to produce data files */
- if( t_option_set == 0 && use_old_files == 0 ) {
-  call_scripts(0); /* Do not use period search */
- }
- if( t_option_set == 1 && use_old_files == 0 ) {
-  call_scripts(1); /* Use period search */
- }
+// moved to the inside of if() above
+// // else - call external scripts to produce data files 
+// if( t_option_set == 0 && use_old_files == 0 ) {
+//  call_scripts(0); // Do not use period search 
+// }
+// if( t_option_set == 1 && use_old_files == 0 ) {
+//  call_scripts(1); // Use period search 
+// }
 
  // read vast_lightcurve_statistics.log file
  lightcurve_statistics_file= fopen("vast_lightcurve_statistics.log", "r");
