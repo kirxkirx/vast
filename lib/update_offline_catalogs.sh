@@ -79,8 +79,10 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
   if [ "$FILE_TO_UPDATE" == "astorb.dat" ];then
    TMP_OUTPUT="astorb_dat_new"
 #   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 ftp://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
-   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 https://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
-   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 http://scan.sai.msu.ru/~kirx/catalogs/compressed/astorb.dat.gz"
+#   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 https://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
+   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 --no-check-certificate http://kirx.net/~kirx/tmp/astorb.dat.gz"
+#   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 http://scan.sai.msu.ru/~kirx/catalogs/compressed/astorb.dat.gz"
+   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 http://kirx.net/~kirx/tmp/astorb.dat.gz"
    UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz"
 #mv $TMP_OUTPUT astorb.dat"
   fi
