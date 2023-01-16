@@ -86,7 +86,8 @@ if [ -x lib/astcheck ];then
   # astorb.dat needs to be downloaded
   echo "Downloading the asteroid database (astorb.dat)" 1>&2
   #wget -c ftp://ftp.lowell.edu/pub/elgb/astorb.dat.gz 1>&2
-  wget -c http://scan.sai.msu.ru/~kirx/pub/astorb.dat.gz 1>&2
+  #wget -c http://scan.sai.msu.ru/~kirx/pub/astorb.dat.gz 1>&2
+  wget -c https://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
   gunzip astorb.dat.gz
   if [ ! -f astorb.dat ];then
    echo "ERROR: cannot download astorb.dat.gz"
@@ -99,6 +100,7 @@ if [ -x lib/astcheck ];then
  # We need the 250" search radius to find ceres with the available custom (=old) astorb.dat
  #lib/astcheck test.mpc -r300 -m15 |grep -A 50 "TAU0008" |grep -v "TAU0008" |head -n 1 | grep -v ObsCodes.html
  lib/astcheck test.mpc -r400 -m15 |grep -A 50 "TAU0008" |grep -v "TAU0008" |head -n 1 | grep -v ObsCodes.html
+ #lib/astcheck test.mpc -r1000 -m15 |grep -A 50 "TAU0008" |grep -v "TAU0008" |head -n 1 | grep -v ObsCodes.html
  if [ $? -eq 1 ];then
   if [ $COLOR -eq 1 ];then
    echo -e "The object was \033[01;31mnot found\033[00m in $DATABASE_NAME."

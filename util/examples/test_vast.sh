@@ -9290,6 +9290,29 @@ if [ -d ../NMW_Venus_test ];then
  if [ -f transient_report/index.html ];then
   rm -f transient_report/index.html
  fi
+ #################################################################
+ # We need a special astorb.dat for Ceres
+ if [ -f astorb.dat ];then
+  mv astorb.dat astorb.dat_backup
+ fi
+ if [ ! -f astorb_2020.dat ];then
+  wget -c http://scan.sai.msu.ru/~kirx/pub/astorb_2020.dat.gz 1>&2
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_error_downloading_custom_astorb_2020.dat"
+  fi
+  gunzip astorb_2020.dat.gz
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_error_unpacking_custom_astorb_2020.dat"
+  fi
+ fi
+ cp astorb_2020.dat astorb.dat
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_error_copying_astorb_2020.dat_to_astorb.dat"
+ fi
+ #################################################################
  # Instead of running the single-field search,
  # we test the production NMW script
  REFERENCE_IMAGES=../NMW_Venus_test/reference/ util/transients/transient_factory_test31.sh ../NMW_Venus_test/2nd_epoch
@@ -9297,6 +9320,14 @@ if [ -d ../NMW_Venus_test ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS000_EXIT_CODE"
  fi
+ #
+ if [ -f astorb.dat_backup ];then
+  mv astorb.dat_backup astorb.dat
+ else
+  # remove the custom astorb.dat
+  rm -f astorb.dat
+ fi
+ #
  if [ -f 'transient_report/index.html' ];then
   grep --quiet 'ERROR' 'transient_report/index.html'
   if [ $? -eq 0 ];then
