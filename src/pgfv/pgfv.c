@@ -185,6 +185,8 @@ int sky2xy(char *fitsfilename, char *input_RA_string, char *input_DEC_string, fl
  path_to_vast_string[VAST_PATH_MAX - 1]= '\0'; // just in case
  sprintf(systemcommand, "%slib/bin/sky2xy %s %s %s", path_to_vast_string, encoded_fitsfilename, encoded_input_RA_string, encoded_input_DEC_string);
  systemcommand[2 * VAST_PATH_MAX - 1]= '\0'; // just in case
+ 
+ fprintf(stderr,"%s\n",systemcommand);
 
  pipe_for_sky2xy= popen(systemcommand, "r");
  if( NULL == pipe_for_sky2xy ) {
