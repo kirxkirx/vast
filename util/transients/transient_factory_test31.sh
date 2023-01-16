@@ -563,10 +563,11 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
      if [ -s "$i" ];then
       # We need some quality check before trusting the solved reference images
       # It may be one of the NMW archive images with broken WCS
+      # (pubdate this check - some problematic NMW archive images have no 'A_0_0')
       FITS_IMAGE_TO_CHECK_HEADER=`"$VAST_PATH"util/listhead "$i"`
-      echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet 'A_0_0' && echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet 'PV1_1'
+      echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet -e 'A_0_0' -e 'A_2_0' && echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet 'PV1_1'
       if [ $? -eq 0 ];then
-       echo "$0  -- WARNING, the input image has both A_0_0 and PV1_1 distortions kewords! Will try to re-solve the image."
+       echo "$0  -- WARNING, the input image has both SIP and PV distortions kewords! Will try to re-solve the image."
       else
        #
        echo "Creating symlink $i" >> transient_factory_test31.txt
