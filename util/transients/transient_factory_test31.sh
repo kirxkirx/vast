@@ -102,11 +102,10 @@ fi
 if [ -f transient_factory_test31.txt ];then
  rm -f transient_factory_test31.txt
 fi
-# clean up the local cache
+# clean up the local cache (just in case - the proper cache cleaning is done for every new field below)
 for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.txt exclusion_list_bbsc.txt exclusion_list_tycho2.txt exclusion_list_gaiadr2.txt exclusion_list_apass.txt ;do
  if [ -f "$FILE_TO_REMOVE" ];then
   rm -f "$FILE_TO_REMOVE"
-  echo "Removing $FILE_TO_REMOVE" >> transient_factory_test31.txt
  fi
 done
 
@@ -189,6 +188,14 @@ fi
 
 # remove any remanants of a previous run
 rm -f transient_report/* transient_factory.log
+# clean up the local cache
+# We should not remove exclusion_list_gaiadr2.txt and exclusion_list_apass.txt as we want to use them later
+for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.txt exclusion_list_bbsc.txt exclusion_list_tycho2.txt ;do
+ if [ -f "$FILE_TO_REMOVE" ];then
+  rm -f "$FILE_TO_REMOVE"
+  echo "Removing $FILE_TO_REMOVE" >> transient_factory_test31.txt
+ fi
+done
 
 # Write the HML report header
 echo "<HTML>
@@ -281,6 +288,16 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   continue
  fi
  PREVIOUS_FIELD="$FIELD"
+
+
+ # clean up the local cache
+ for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.txt exclusion_list_bbsc.txt exclusion_list_tycho2.txt ;do
+  if [ -f "$FILE_TO_REMOVE" ];then
+   rm -f "$FILE_TO_REMOVE"
+   echo "Removing $FILE_TO_REMOVE" >> transient_factory_test31.txt
+  fi
+ done
+
  ############## Two reference images and two second-epoch images # check if all images are actually there
  # check if all images are actually there
  N=`ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | wc -l`
@@ -624,7 +641,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
     if [ "$SEXTRACTOR_CONFIG_FILE" != "default.sex.telephoto_lens_v4" ];then
      # save the solved plate to local cache, but only if it's not already a symlink
      echo "Saving $WCS_IMAGE_NAME_FOR_CHECKS to local_wcs_cache/" >> transient_factory_test31.txt
-     cp "$WCS_IMAGE_NAME_FOR_CHECKS" local_wcs_cache/
+     cp -v "$WCS_IMAGE_NAME_FOR_CHECKS" local_wcs_cache/ &>> transient_factory_test31.txt
     else
      echo "NOT SAVING $WCS_IMAGE_NAME_FOR_CHECKS to local_wcs_cache/ as this is the run with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
     fi
@@ -817,7 +834,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
    WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
    lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @../exclusion_list.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list.txt
-   cp -v exclusion_list.txt local_wcs_cache/ >> transient_factory_test31.txt
+   cp -v exclusion_list.txt local_wcs_cache/ &>> transient_factory_test31.txt
   fi
  fi
  # Exclude stars from the Bright Star Catalog with magnitudes < 3
@@ -826,7 +843,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
    WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
    lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/brightbright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bbsc.txt
-   cp -v exclusion_list_bbsc.txt local_wcs_cache/ >> transient_factory_test31.txt
+   cp -v exclusion_list_bbsc.txt local_wcs_cache/ &>> transient_factory_test31.txt
   fi
  fi
  # Exclude stars from the Bright Star Catalog with magnitudes < 7
@@ -835,7 +852,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
    WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
    lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/bright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bsc.txt
-   cp -v exclusion_list_bsc.txt local_wcs_cache/ >> transient_factory_test31.txt
+   cp -v exclusion_list_bsc.txt local_wcs_cache/ &>> transient_factory_test31.txt
   fi
  fi
  # Exclude bright Tycho-2 stars, by default the magnitude limit is set to vt < 9
@@ -844,7 +861,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
    WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
    lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | while read A ;do lib/deg2hms $A ;done > exclusion_list_tycho2.txt
-   cp -v exclusion_list_tycho2.txt local_wcs_cache/ >> transient_factory_test31.txt
+   cp -v exclusion_list_tycho2.txt local_wcs_cache/ &>> transient_factory_test31.txt
   fi
  fi
  ###
@@ -899,14 +916,15 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
 
  done # for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
 
- # clean up the local cache
- # We should not remove exclusion_list_gaiadr2.txt and exclusion_list_apass.txt as we want to use them later
- for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.txt exclusion_list_bbsc.txt exclusion_list_tycho2.txt ;do
-  if [ -f "$FILE_TO_REMOVE" ];then
-   rm -f "$FILE_TO_REMOVE"
-   echo "Removing $FILE_TO_REMOVE" >> transient_factory_test31.txt
-  fi
- done
+# Why do we clean up the local cache at all? That's missing the whole point of having a cache.
+# # clean up the local cache
+# # We should not remove exclusion_list_gaiadr2.txt and exclusion_list_apass.txt as we want to use them later
+# for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.txt exclusion_list_bbsc.txt exclusion_list_tycho2.txt ;do
+#  if [ -f "$FILE_TO_REMOVE" ];then
+#   rm -f "$FILE_TO_REMOVE"
+#   echo "Removing $FILE_TO_REMOVE" >> transient_factory_test31.txt
+#  fi
+# done
 
  # We need a local exclusion list not to find the same things in multiple SExtractor runs
  if [ -f exclusion_list_local.txt ];then
