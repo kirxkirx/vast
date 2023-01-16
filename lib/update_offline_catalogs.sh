@@ -9,7 +9,7 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
-# By default, do not download VSX and astorb.dat ifthey were not downloaded earlier
+# By default, do not download VSX and astorb.dat if they were not downloaded earlier
 DOWNLOAD_EVERYTHING=0
 if [ ! -z "$1" ];then
  DOWNLOAD_EVERYTHING=1
@@ -19,6 +19,21 @@ if [ ! -d lib/catalogs ];then
  echo "ERROR locating lib/catalogs" 
  exit 1
 fi
+
+
+# Try to get the country code
+COUNTRY_CODE=$(curl --silent --connect-timeout 10 https://ipinfo.io/ | grep '"country":' | awk -F'"country":' '{print $2}' | awk -F'"' '{print $2}')
+if [ -z "$COUNTRY_CODE" ];then
+ # Set UN code for UNknown
+ COUNTRY_CODE="UN"
+fi
+
+if [ "$COUNTRY_CODE" == "RU" ];then
+ LOCAL_SERVER="http://scan.sai.msu.ru/~kirx/vast_catalogs"
+else
+ LOCAL_SERVER="https://kirx.net/~kirx/vast_catalogs"
+fi
+export LOCAL_SERVER
 
 # Get current date from the system clock
 CURRENT_DATE_UNIXSEC=`date +%s`
@@ -79,23 +94,25 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
   if [ "$FILE_TO_UPDATE" == "astorb.dat" ];then
    TMP_OUTPUT="astorb_dat_new"
 #   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 ftp://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
-#   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 https://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
-   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 --no-check-certificate http://kirx.net/~kirx/tmp/astorb.dat.gz"
+   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 https://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
+#   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 --no-check-certificate http://kirx.net/~kirx/tmp/astorb.dat.gz"
 #   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 http://scan.sai.msu.ru/~kirx/catalogs/compressed/astorb.dat.gz"
-   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 http://kirx.net/~kirx/tmp/astorb.dat.gz"
+   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 $LOCAL_SERVER/astorb.dat.gz"
    UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz"
-#mv $TMP_OUTPUT astorb.dat"
   fi
   if [ "$FILE_TO_UPDATE" == "lib/catalogs/vsx.dat" ];then
    TMP_OUTPUT="vsx.dat"
    WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 ftp://cdsarc.u-strasbg.fr/pub/cats/B/vsx/vsx.dat.gz"
-   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 http://scan.sai.msu.ru/~kirx/catalogs/compressed/vsx.dat.gz"
+#   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 http://scan.sai.msu.ru/~kirx/catalogs/compressed/vsx.dat.gz"
+   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 $LOCAL_SERVER/vsx.dat.gz"
    UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz"
   fi
   if [ "$FILE_TO_UPDATE" == "lib/catalogs/asassnv.csv" ];then
    TMP_OUTPUT="asassnv.csv"
-   WGET_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 --no-check-certificate https://asas-sn.osu.edu/variables/catalog.csv"
-   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 http://scan.sai.msu.ru/~kirx/catalogs/asassnv.csv"
+   #WGET_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 --no-check-certificate https://asas-sn.osu.edu/variables/catalog.csv"
+   WGET_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 --no-check-certificate 'https://asas-sn.osu.edu/variables.csv?action=index&controller=variables'"
+#   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 http://scan.sai.msu.ru/~kirx/catalogs/asassnv.csv"
+   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 $LOCAL_SERVER/asassnv.csv"
    UNPACK_COMMAND=""
   fi
   if [ -z "$WGET_COMMAND" ];then
@@ -180,7 +197,8 @@ if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ ! -s "lib/catal
  # The CDS link is down
  #curl --silent ftp://cdsarc.u-strasbg.fr/pub/cats/V/50/catalog.gz | gunzip > lib/catalogs/bright_star_catalog_original.txt
  # Changed to local copy
- curl --silent http://scan.sai.msu.ru/~kirx/data/bright_star_catalog_original.txt.gz | gunzip > lib/catalogs/bright_star_catalog_original.txt
+ #curl --silent http://scan.sai.msu.ru/~kirx/data/bright_star_catalog_original.txt.gz | gunzip > lib/catalogs/bright_star_catalog_original.txt
+ curl --silent "$LOCAL_SERVER/bright_star_catalog_original.txt.gz" | gunzip > lib/catalogs/bright_star_catalog_original.txt
  if [ $? -eq 0 ];then
   echo "Extracting the R.A. Dec. list (all BSC)"
   cat lib/catalogs/bright_star_catalog_original.txt | grep -v -e 'NOVA' -e '47    Tuc' -e 'M 31' -e 'NGC 2281' -e 'M 67' -e 'NGC 2808' | while IFS= read -r STR ;do 
