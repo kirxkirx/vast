@@ -76,8 +76,10 @@ fi
 TIMEOUTCOMMAND=$("$VAST_PATH"lib/find_timeout_command.sh)
 if [ $? -ne 0 ];then
  echo "WARNING: cannot find timeout command"
+ LONGTIMEOUTCOMMAND=""
 else
- TIMEOUTCOMMAND="$TIMEOUTCOMMAND 300 "
+ LONGTIMEOUTCOMMAND="$TIMEOUTCOMMAND 300 "
+ TIMEOUTCOMMAND="$TIMEOUTCOMMAND 60 "
 fi
 
 ######
@@ -320,8 +322,8 @@ DOUBLE_R_SEARCH_ARCSEC=$(echo "$R_SEARCH_ARCSEC" | awk '{print 2*$1}')
 echo " "
 echo "Searching USNO-B1.0 for the brightest objects within $R_SEARCH_ARCSEC\" around $RA $DEC in the range of $B2MAG_RANGE"
 #echo " "
-echo "$TIMEOUTCOMMAND $VAST_PATH""lib/vizquery -site=$VIZIER_SITE -mime=text -source=USNO-B1 -out.max=10 -out.add=_r -out.form=mini -sort=B2mag  -c="$RA $DEC" $B2MAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=USNO-B1.0,RAJ2000,DEJ2000,B2mag,B1mag"
-$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=USNO-B1 -out.max=10 -out.add=_r -out.form=mini -sort=B2mag  -c="$RA $DEC" $B2MAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=USNO-B1.0,RAJ2000,DEJ2000,B2mag,B1mag  2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" |grep -v "sec"  |grep -v "RAJ" |grep -v "B" | while read R USNOB1 CATRA_DEG CATDEC_DEG B2 B1 REST ;do
+echo "$LONGTIMEOUTCOMMAND $VAST_PATH""lib/vizquery -site=$VIZIER_SITE -mime=text -source=USNO-B1 -out.max=10 -out.add=_r -out.form=mini -sort=B2mag  -c="$RA $DEC" $B2MAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=USNO-B1.0,RAJ2000,DEJ2000,B2mag,B1mag"
+$LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=USNO-B1 -out.max=10 -out.add=_r -out.form=mini -sort=B2mag  -c="$RA $DEC" $B2MAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=USNO-B1.0,RAJ2000,DEJ2000,B2mag,B1mag  2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" |grep -v "sec"  |grep -v "RAJ" |grep -v "B" | while read R USNOB1 CATRA_DEG CATDEC_DEG B2 B1 REST ;do
  # skip stars with unknown B2mag
  if [ -z "$B2" ] ;then
   continue
@@ -396,8 +398,8 @@ fi
 DOUBLE_R_SEARCH_ARCSEC=$(echo "$R_SEARCH_ARCSEC" | awk '{print 2*$1}')
 echo " "
 echo "Searching Gaia DR3 for the brightest objects within $R_SEARCH_ARCSEC\" around $RA $DEC in the range of $GMAG_RANGE"
-echo "$TIMEOUTCOMMAND $VAST_PATH""lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c='$RA $DEC' $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag"
-$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c="$RA $DEC" $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag 2>/dev/null | grep -v \# | grep -v "\---" |grep -v "sec" | grep -v 'Gma' |grep -v "RA_ICRS" | grep -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE' | while read R GAIA_SOURCE GAIA_CATRA_DEG GAIA_CATDEC_DEG GMAG VARFLAG REST ;do
+echo "$LONGTIMEOUTCOMMAND $VAST_PATH""lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c='$RA $DEC' $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag"
+$LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c="$RA $DEC" $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag 2>/dev/null | grep -v \# | grep -v "\---" |grep -v "sec" | grep -v 'Gma' |grep -v "RA_ICRS" | grep -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE' | while read R GAIA_SOURCE GAIA_CATRA_DEG GAIA_CATDEC_DEG GMAG VARFLAG REST ;do
  # skip stars with unknown Gmag
  if [ -z "$GMAG" ] ;then
   continue
@@ -667,11 +669,11 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    #fi   
    # Gaia DR3 variable
    if [ $KNOWN_VARIABLE -eq 0 ];then
-    GAIA_DR3_VAR_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/358/varisum -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $1}' | grep -v \#)
+    GAIA_DR3_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/358/varisum -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $1}' | grep -v \#)
     if [ -n "$GAIA_DR3_VAR_RESULTS" ];then
      SUGGESTED_NAME_STRING="Gaia DR3 varaible $GAIA_DR3_VAR_RESULTS"
      SUGGESTED_TYPE_STRING=""
-     GAIA_DR3_VAR_TYPE_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/358/vclassre -out.max=1 -out.form=mini  Source=$GAIA_DR3_VAR_RESULTS 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $4}' | grep -v \#)
+     GAIA_DR3_VAR_TYPE_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/358/vclassre -out.max=1 -out.form=mini  Source=$GAIA_DR3_VAR_RESULTS 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $4}' | grep -v \#)
      if [ -n "$GAIA_DR3_VAR_TYPE_RESULTS" ];then
       SUGGESTED_TYPE_STRING="$GAIA_DR3_VAR_TYPE_RESULTS (Gaia DR3)"
      fi
@@ -683,7 +685,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    #
    # Gaia DR2 large amplitude variable
    if [ $KNOWN_VARIABLE -eq 0 ];then
-    GAIA_DR2_LARGE_AMP_VAR_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/A+A/648/A44/tabled1 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $1}' | grep -v \#)
+    GAIA_DR2_LARGE_AMP_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=J/A+A/648/A44/tabled1 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $1}' | grep -v \#)
     if [ -n "$GAIA_DR2_LARGE_AMP_VAR_RESULTS" ];then
      SUGGESTED_NAME_STRING="Large-amplitude variable Gaia DR2 $GAIA_DR2_LARGE_AMP_VAR_RESULTS"
      SUGGESTED_TYPE_STRING="2021A&A...648A..44M"
@@ -695,7 +697,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    #
    # Generic VizieR search for the word 'variable'
    if [ $KNOWN_VARIABLE -eq 0 ];then
-    GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -words='variable' -meta -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep Title | grep 'ariable' | sed 's:#Title\: ::g')
+    GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -words='variable' -meta -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep Title | grep 'ariable' | sed 's:#Title\: ::g')
     if [ -n "$GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS" ];then
      SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING may be a known variable - check VizieR  "
     fi

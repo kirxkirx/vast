@@ -70,8 +70,11 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
  fi
 
  if [ $NEED_TO_UPDATE_THE_FILE -eq 0 ];then 
-  # 2592000 is 30 days
-  if [ $[$CURRENT_DATE_UNIXSEC-$FILE_MODIFICATION_DATE] -gt 2592000 ];then
+  # 2592000 seconds is 30 days
+  # 4320000 seconds is 50 days - astorb.dat is supposed to provide 1" accuracy 
+  # asteroid positions for +/-50 days of the file download.
+  # See details at https://asteroid.lowell.edu/main/astorb/
+  if [ $[$CURRENT_DATE_UNIXSEC-$FILE_MODIFICATION_DATE] -gt 4320000 ];then
    NEED_TO_UPDATE_THE_FILE=1
   fi
  fi
