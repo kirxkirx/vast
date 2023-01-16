@@ -382,13 +382,6 @@ fi
 EXCLUSION_LIST_FILE="exclusion_list_bsc.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
- #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
-# while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
-#  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 130/3600.0 ) print "FOUND" }' | grep "FOUND" && break
-# done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND"
- #
- #echo 3 lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 130 1>&2
- #cp "$EXCLUSION_LIST_FILE" /tmp/
  #
  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 130 | grep --quiet "FOUND"
  if [ $? -eq 0 ];then
@@ -401,13 +394,6 @@ fi
 EXCLUSION_LIST_FILE="exclusion_list_tycho2.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
- #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
-# while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
-#  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 20/3600.0 ) print "FOUND" }' | grep "FOUND" && break
-# done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND"
- #
- #echo 4 lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 20 1>&2
- #cp "$EXCLUSION_LIST_FILE" /tmp/
  #
  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 20 | grep --quiet "FOUND"
  if [ $? -eq 0 ];then
@@ -420,13 +406,6 @@ fi
 EXCLUSION_LIST_FILE="exclusion_list_local.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
  # Exclude previously considered candidates
- #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
-# while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
-#  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 17/3600.0 ) print "FOUND" }' | grep "FOUND" && break
-# done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND"
- #
- #echo 5 lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 17 1>&2
- #cp "$EXCLUSION_LIST_FILE" /tmp/
  #
  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 17 | grep --quiet "FOUND"
  if [ $? -eq 0 ];then
@@ -442,7 +421,6 @@ if [ ! -z "$VIZIER_SITE" ];then
  if [ `cat $LIGHTCURVEFILE | wc -l` -eq 2 ];then
   # New last-ditch effort, search Gaia DR2 for a known star of approximately the same brightenss
   ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
-  #MAG_BRIGHT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1-0.5}'`
   MAG_BRIGHT_SEARCH_LIMIT=0.0
   MAG_FAINT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1+1.00}'`
   # We assume $TIMEOUTCOMMAND is set by the parent script
@@ -478,11 +456,8 @@ VARIABLE_STAR_ID=$?
 util/transients/MPCheck.sh $RADEC_MEAN_HMS $DATE $TIME H $MAG_MEAN
 ASTEROID_ID=$?
 # If the candidate transient is not a known variable star or asteroid - try online search
-#echo "VARIABLE_STAR_ID=$VARIABLE_STAR_ID ASTEROID_ID=$ASTEROID_ID PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS=$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS"
-#echo util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS test `lib/try_to_guess_image_fov $REFERENCE_IMAGE`
 if [ $VARIABLE_STAR_ID -ne 0 ] && [ $ASTEROID_ID -ne 0 ] && [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.0" ] ;then
  # Slow online ID
- #echo util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS test `lib/try_to_guess_image_fov $REFERENCE_IMAGE`
  util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS online_id `lib/try_to_guess_image_fov $REFERENCE_IMAGE` 2>&1 | grep '|' | tail -n1
  #
 fi
