@@ -311,13 +311,6 @@ RA_MEAN_SPACES=${RA_MEAN_HMS//":"/" "}
 #DEC_MEAN_SPACES=`lib/deg2hms $RA_MEAN $DEC_MEAN | awk '{print $2}'`
 DEC_MEAN_SPACES=${DEC_MEAN_HMS//":"/" "}
 
-#echo "<pre style='font-family:monospace;font-size:12px;'>
-#Mean magnitude and position on the discovery images: 
-#                   $YEAR $MONTH $DAYFRAC_MEAN  $JD_MEAN  $MAG_MEAN " `lib/deg2hms $RA_MEAN $DEC_MEAN`
-#     Reference image    2010 12 10.0833  2455540.5834  13.61  06:29:12.25 +26:24:19.4
-echo "<pre style='font-family:monospace;font-size:12px;'>
-Mean magnitude and position on the discovery images: 
-                   $YEAR $MONTH $DAYFRAC_MEAN  $JD_MEAN  $MAG_MEAN  $RADEC_MEAN_HMS"
 
 
 ### FINAL CHECK: make sure the transient is not jumping in RA or DEC ###
@@ -445,6 +438,15 @@ if [ ! -z "$VIZIER_SITE" ];then
  fi # if this is a new source
 fi # if $VIZIER_SITE is set
 ############
+
+### Print it only of the source passes the final check in order not to confuse the test script
+#     Reference image    2010 12 10.0833  2455540.5834  13.61  06:29:12.25 +26:24:19.4
+echo "<pre style='font-family:monospace;font-size:12px;'>
+Mean magnitude and position on the discovery images: 
+                   $YEAR $MONTH $DAYFRAC_MEAN  $JD_MEAN  $MAG_MEAN  $RADEC_MEAN_HMS"
+
+
+
 # Additional info
 # Galactic coordinates of the transient
 GALACTIC_COORDINATES=`lib/bin/skycoor -g $RADEC_MEAN_HMS J2000`
