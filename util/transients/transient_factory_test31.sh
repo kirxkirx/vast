@@ -655,18 +655,56 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   continue
  fi
 
+
  # Compare image centers of the reference and second-epoch image
  WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $REFERENCE_EPOCH__FIRST_IMAGE`
  WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
  IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE=`util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}'` 
+
+ #### Do the pointing check for the first image of the second epoch
  WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $SECOND_EPOCH__FIRST_IMAGE`
  WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
  IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE=`util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}'`
  DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=`lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}'`
  echo "###################################
-# Check the image center offset between the reference and the secondepoch image (pointing accuracy)
+# Check the image center offset between the reference and the second epoch image (pointing accuracy)
 Reference image center $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE
 Second-epoch image center $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE
+Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
+###################################" >> transient_factory_test31.txt
+ ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
+ #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>1.0" | bc -ql`
+ TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>1.0" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+ if [ $TEST -eq 1 ];then
+  if [ "$CHECK_POINTING_ACCURACY" = "YES" ] || [ "$CHECK_POINTING_ACCURACY" = "Yes" ] || [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
+   echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
+   echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg." >> transient_factory_test31.txt
+   break
+   # This should break us form the SEXTRACTOR_CONFIG_FILE cycle
+  fi
+ fi
+ ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
+ #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | bc -ql`
+ TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+ if [ $TEST -eq 1 ];then
+  if [ "$CHECK_POINTING_ACCURACY" = "YES" ] || [ "$CHECK_POINTING_ACCURACY" = "Yes" ] || [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
+   echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
+   echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg." >> transient_factory_test31.txt
+   #break
+   # Not break'ing here, the offset is not hpelessly large and we want to keep candidates from this field
+  fi
+ fi
+
+
+ #### Do the pointing check for the second image of the second epoch
+ WCS_IMAGE_NAME_FOR_CHECKS=wcs_`basename $SECOND_EPOCH__SECOND_IMAGE`
+ WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
+ IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE=`util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}'`
+ DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=`lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}'`
+ echo "###################################
+# Check the image center offset between the reference and the second epoch image (pointing accuracy)
+Reference image center $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE
+Second-epoch image center $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE
 Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
 ###################################" >> transient_factory_test31.txt
  ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
