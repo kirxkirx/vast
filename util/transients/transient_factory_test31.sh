@@ -667,7 +667,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE=`util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}'`
  DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=`lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}'`
  echo "###################################
-# Check the image center offset between the reference and the second epoch image (pointing accuracy)
+# Check the image center offset between the reference and the first second-epoch image (pointing accuracy)
 Reference image center $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE
 Second-epoch image center $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE
 Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
@@ -702,7 +702,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE=`util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}'`
  DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=`lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}'`
  echo "###################################
-# Check the image center offset between the reference and the second epoch image (pointing accuracy)
+# Check the image center offset between the reference and the second second-epoch image (pointing accuracy)
 Reference image center $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE
 Second-epoch image center $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE
 Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.

@@ -422,11 +422,13 @@ if [ ! -z "$VIZIER_SITE" ];then
   # New last-ditch effort, search Gaia DR2 for a known star of approximately the same brightenss
   ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
   MAG_BRIGHT_SEARCH_LIMIT=0.0
-  MAG_FAINT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1+1.00}'`
+  # Changed to handle the borderline case of V1858 Sgr
+  #MAG_FAINT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1+1.00}'`
+  MAG_FAINT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.99}'
   # We assume $TIMEOUTCOMMAND is set by the parent script
   $TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/345/gaia2  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=17  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -v \# | grep -v "\---" | grep -v "sec" | grep -v 'Gma' | grep -v "RA_ICRS" | grep --quiet -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE'
   if [ $? -eq 0 ];then
-   echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2   (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#)"
+   echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2   (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND# MAG_MEAN=$MAG_MEAN MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT)"
    echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt
    clean_tmp_files
    exit 1
