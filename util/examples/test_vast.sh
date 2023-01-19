@@ -9717,15 +9717,15 @@ if [ -d ../NMW_nomatch_test ];then
  rm -f test_nomatch$$.tmp
  #
  if [ -f transient_report/index.html ];then
-  # there SHOULD be an error message about distance between reference and second-epoch image centers
+  # there should NOT be an error message about distance between reference and second-epoch image centers
   grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
-  if [ $? -ne 0 ];then
+  if [ $? -eq 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET_NO_ERROR_MESSAGE_IN_index_html"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET_DIST_ERROR_MESSAGE_IN_index_html"
    GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
    CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWLARGEOFFSET_NO_ERROR_MESSAGE_IN_index_html ######
+###### NMWLARGEOFFSET_DIST_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
 -----------------
 $CAT_RESULT"

@@ -143,7 +143,8 @@ void download_asassnv() {
  if( f == NULL ) {
   fprintf(stderr, "Downloading ASASSN-V catalog!\n");
   // try to avoid double-download
-  if( 0 != system("ps aux | grep wget | grep asassnv.csv && exit 1 || cd lib/catalogs/ ; rm -f  asassnv.csv ; wget -O 'asassnv.csv' 'https://asas-sn.osu.edu/variables/catalog.csv'") ) {
+  //if( 0 != system("ps aux | grep wget | grep asassnv.csv && exit 1 || cd lib/catalogs/ ; rm -f  asassnv.csv ; wget -O 'asassnv.csv' 'https://asas-sn.osu.edu/variables/catalog.csv'") ) {
+  if( 0 != system("ps aux | grep wget | grep asassnv.csv && exit 1 || cd lib/catalogs/ ; rm -f  asassnv.csv ; wget -O 'asassnv.csv' --no-check-certificate 'https://asas-sn.osu.edu/variables.csv?action=index&controller=variables'") ) {
    fprintf(stderr, "ERROR downloading the ASASSN-V catalog!\n");
   }
  } else {
