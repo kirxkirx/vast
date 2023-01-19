@@ -167,7 +167,7 @@ const char *getfield_from_csv_string(char *line, int num) {
 }
 
 int search_asassnv(double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found) {
- FILE *vsx_dat;
+ FILE *asassnv_csv;
  char name[32];
  // char RA_char[32];
  // char Dec_char[32];
@@ -177,7 +177,6 @@ int search_asassnv(double target_RA_deg, double target_Dec_deg, double search_ra
  char Amplitude[32];
  char Period[32];
  char Url[32];
- //char descr[128];
  char string[4096];
  char string_noemptycells[4096];
  char string_to_be_ruined_by_strok[4096];
@@ -187,13 +186,23 @@ int search_asassnv(double target_RA_deg, double target_Dec_deg, double search_ra
 
  int is_found= 0;
 
+ // old format (the new format is described below and should be detected automatically)
+ int asassn_name_token= 1;
+ int type_token= 9;
+ int meanmag_token= 6;
+ int amplitude_token= 7;
+ int period_token= 8;
+// int url_token= 10;
+ //
+
+
  download_asassnv();
- vsx_dat= fopen("lib/catalogs/asassnv.csv", "r");
- if( NULL == vsx_dat ) {
+ asassnv_csv= fopen("lib/catalogs/asassnv.csv", "r");
+ if( NULL == asassnv_csv ) {
   fprintf(stderr, "ERROR: Cannot open asassnv.csv\n");
   exit(1);
  }
- while( NULL != fgets(string, 4096 - 1, vsx_dat) ) {
+ while( NULL != fgets(string, 4096 - 1, asassnv_csv) ) {
   if( NULL == string ) {
    continue;
   }
@@ -231,8 +240,21 @@ int search_asassnv(double target_RA_deg, double target_Dec_deg, double search_ra
   // We should do this before each invocation of getfield_from_csv_string() !!!
   strncpy(string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1);
   string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
-  // Skip the header line
-  if( 0 == strncmp("ASAS-SN Name", getfield_from_csv_string(string_to_be_ruined_by_strok, 1), strlen("ASAS-SN Name")) ) {
+  // Skip the header line -- old file format
+  if( 0 == strncmp("ASAS-SN Name", getfield_from_csv_string(string_to_be_ruined_by_strok, asassn_name_token), strlen("ASAS-SN Name")) ) {
+   continue;
+  }
+  //
+  // Skip the header line -- and detect new file format
+  if( 0 == strncmp("source_id", getfield_from_csv_string(string_to_be_ruined_by_strok, asassn_name_token), strlen("source_id")) ) {
+   // new file format
+   asassn_name_token= 2;
+   type_token= 11;
+   meanmag_token= 8;
+   amplitude_token= 9;
+   period_token= 10;
+//   url_token= 0;
+   //
    continue;
   }
   //
@@ -288,49 +310,51 @@ int search_asassnv(double target_RA_deg, double target_Dec_deg, double search_ra
    // We should do this before each invocation of getfield_from_csv_string() !!!
    strncpy(string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1);
    string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
-   strncpy(name, getfield_from_csv_string(string_to_be_ruined_by_strok, 1), 32);
+   strncpy(name, getfield_from_csv_string(string_to_be_ruined_by_strok, asassn_name_token), 32);
    name[32 - 1]= '\0'; // just in case
 
    //// Type
    // We should do this before each invocation of getfield_from_csv_string() !!!
    strncpy(string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1);
    string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
-   strncpy(type, getfield_from_csv_string(string_to_be_ruined_by_strok, 9), 32);
+   strncpy(type, getfield_from_csv_string(string_to_be_ruined_by_strok, type_token), 32);
    type[32 - 1]= '\0'; // just in case
 
    //// MeanMag
    // We should do this before each invocation of getfield_from_csv_string() !!!
    strncpy(string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1);
    string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
-   strncpy(MeanMag, getfield_from_csv_string(string_to_be_ruined_by_strok, 6), 32);
+   strncpy(MeanMag, getfield_from_csv_string(string_to_be_ruined_by_strok, meanmag_token), 32);
    MeanMag[32 - 1]= '\0'; // just in case
 
    //// Amplitude
    // We should do this before each invocation of getfield_from_csv_string() !!!
    strncpy(string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1);
    string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
-   strncpy(Amplitude, getfield_from_csv_string(string_to_be_ruined_by_strok, 7), 32);
+   strncpy(Amplitude, getfield_from_csv_string(string_to_be_ruined_by_strok, amplitude_token), 32);
    Amplitude[32 - 1]= '\0'; // just in case
 
    //// Period
    // We should do this before each invocation of getfield_from_csv_string() !!!
    strncpy(string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1);
    string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
-   strncpy(Period, getfield_from_csv_string(string_to_be_ruined_by_strok, 8), 32);
+   strncpy(Period, getfield_from_csv_string(string_to_be_ruined_by_strok, period_token), 32);
    Period[32 - 1]= '\0'; // just in case
 
-   //// Url
-   // We should do this before each invocation of getfield_from_csv_string() !!!
-   strncpy(string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1);
-   string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
-   strncpy(Url, getfield_from_csv_string(string_to_be_ruined_by_strok, 10), 32);
-   Url[32 - 1]= '\0'; // just in case
+// no URL in new format
+//   //// Url
+//   // We should do this before each invocation of getfield_from_csv_string() !!!
+//   strncpy(string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1);
+//   string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
+//   strncpy(Url, getfield_from_csv_string(string_to_be_ruined_by_strok, url_token), 32);
+//   Url[32 - 1]= '\0'; // just in case
    ///////////////////////////////////////////////////////////////
 
    //if( is_found == 0 )
    fprintf(stdout, "The object was <font color=\"green\">found</font> in <font color=\"green\">ASASSN-V</font>\n");
    is_found= 1;
-   fprintf(stdout, "%2.0lf\"  %s\nType: %s\nMeanMag %s m  Amp. %s m  Period %s d\n<a href=\"https://asas-sn.osu.edu%s\">ASASSN lightcurve</a>\n", distance_deg * 3600.0, name, type, MeanMag, Amplitude, Period, Url);
+   //fprintf(stdout, "%2.0lf\"  %s\nType: %s\nMeanMag %s m  Amp. %s m  Period %s d\n<a href=\"https://asas-sn.osu.edu%s\">ASASSN lightcurve</a>\n", distance_deg * 3600.0, name, type, MeanMag, Amplitude, Period, Url);
+   fprintf(stdout, "%2.0lf\"  %s\nType: %s\nMeanMag %s m  Amp. %s m  Period %s d\n", distance_deg * 3600.0, name, type, MeanMag, Amplitude, Period);
    break; // find one and be happy
   }
  }
@@ -338,7 +362,7 @@ int search_asassnv(double target_RA_deg, double target_Dec_deg, double search_ra
   fprintf(stdout, "The object was <font color=\"red\">not found</font> in <font color=\"green\">ASASSN-V</font>\n");
  }
 
- fclose(vsx_dat);
+ fclose(asassnv_csv);
 
  return is_found;
 }
