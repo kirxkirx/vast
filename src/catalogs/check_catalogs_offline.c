@@ -245,6 +245,9 @@ int search_asassnv(double target_RA_deg, double target_Dec_deg, double search_ra
    continue;
   }
   //
+  // We should do this before each invocation of getfield_from_csv_string() !!!
+  strncpy(string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1);
+  string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
   // Skip the header line -- and detect new file format
   if( 0 == strncmp("source_id", getfield_from_csv_string(string_to_be_ruined_by_strok, asassn_name_token), strlen("source_id")) ) {
    // new file format
