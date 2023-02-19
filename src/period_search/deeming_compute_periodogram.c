@@ -33,6 +33,86 @@
 #define TWOPI 2.0 * M_PI
 #define FOURPI 4.0 * M_PI
 
+
+
+void bin_log_power_spectrum_points_and_write_to_file(double *x, double *y, double *z, int num_points, int num_bins) {
+    double min_x = INFINITY, max_x = -INFINITY;
+    double *bin_log10x_sums = calloc(num_bins, sizeof(double));
+    double *bin_log10x_means = calloc(num_bins, sizeof(double));
+    double *bin_log10y_sums = calloc(num_bins, sizeof(double));
+    double *bin_log10y_means = calloc(num_bins, sizeof(double));
+    double *bin_log10z_sums = calloc(num_bins, sizeof(double));
+    double *bin_log10z_means = calloc(num_bins, sizeof(double));
+    int *bin_counts = calloc(num_bins, sizeof(int));
+    int i;
+
+    // Find the minimum and maximum values of x
+    for (i = 0; i < num_points; i++) {
+        if (x[i] < min_x) {
+            min_x = x[i];
+        }
+        if (x[i] > max_x) {
+            max_x = x[i];
+        }
+    }
+
+    // Compute the bin width in log space
+    double log_min_x = log10(min_x);
+    double log_max_x = log10(max_x);
+    double log_bin_width = (log_max_x - log_min_x) / num_bins;
+
+    // Bin the points
+    for (i = 0; i < num_points; i++) {
+        double log_x = log10(x[i]);
+        int bin_index = (int)((log_x - log_min_x) / log_bin_width);
+        if (bin_index < 0) {
+            bin_index = 0;
+        }
+        if (bin_index >= num_bins) {
+            bin_index = num_bins - 1;
+        }
+        bin_log10x_sums[bin_index] += log10(x[i]);
+        bin_log10y_sums[bin_index] += log10(y[i]);
+        bin_log10z_sums[bin_index] += log10(z[i]);
+        bin_counts[bin_index]++;
+    }
+
+    // Compute the mean log10(y) for each bin
+    for (i = 0; i < num_bins; i++) {
+        if (bin_counts[i] > 0) {
+            bin_log10x_means[i] = bin_log10x_sums[i] / bin_counts[i];
+            bin_log10y_means[i] = bin_log10y_sums[i] / bin_counts[i];
+            bin_log10z_means[i] = bin_log10z_sums[i] / bin_counts[i];
+        } else {
+            bin_log10x_means[i] = NAN;
+            bin_log10y_means[i] = NAN;
+            bin_log10z_means[i] = NAN;
+        }
+    }
+    
+    FILE * binned_powerspectrum_file= fopen("binned_powerspectrum.periodogram", "w");
+    if( NULL == binned_powerspectrum_file ) {
+     fprintf(stderr, "ERROR opening file binned_powerspectrum.periodogram for writing! \n");
+     return;
+    }
+    
+    for (i = 0; i < num_bins; i++) {
+     if( 0 == isnan(bin_log10x_means[i]) && 0 == isnan(bin_log10y_means[i]) ){
+      fprintf(binned_powerspectrum_file, "%lg  %lg  %lg\n", bin_log10x_means[i], bin_log10y_means[i], bin_log10z_means[i]);
+     }
+    }
+
+    fclose(binned_powerspectrum_file);
+
+    free(bin_log10x_sums);
+    free(bin_log10x_means);
+    free(bin_log10y_sums);
+    free(bin_log10y_means);
+    free(bin_log10z_sums);
+    free(bin_log10z_means);
+    free(bin_counts);
+}
+
 void get_min_max(double *x, unsigned long N, double *min, double *max) {
  unsigned long i;
  (*min)= (*max)= x[0];
@@ -215,6 +295,33 @@ void normalize_spectral_window_file(unsigned long N_freq, char *periodogramfilen
 
  return;
 }
+
+void normalize_spectral_window_arrays(double *theta, double *window, unsigned long N_freq) {
+
+ // Normilize window function
+
+ double max_F, max_W, max_F_to_max_W;
+
+ unsigned long i;
+
+ max_F= theta[0];
+ max_W= window[0];
+ for( i= 0; i < N_freq; i++ ) {
+  if( max_F < theta[i] )
+   max_F= theta[i];
+  if( max_W < window[i] )
+   max_W= window[i];
+ }
+
+ max_F_to_max_W= max_F / max_W;
+
+ for( i= 0; i < N_freq; i++ ) {
+  window[i]= window[i] * max_F_to_max_W;
+ }
+
+ return;
+}
+
 
 struct Obs {
  float phase;
@@ -742,6 +849,9 @@ FAP_HB= %lg for %lg presumably independent frequencies computed Horne & Baliunas
     fprintf(stderr, "ERROR  writing deeming.periodogram\n");
     return 1;
    }
+   // Normalize spectral window to the highest point of power spectrum
+   normalize_spectral_window_arrays( power, spectral_window, N_freq);
+   //
   }
   if( compute_LombScargle == 1 ) {
    LS_periodogramfile= fopen("ls.periodogram", "w");
@@ -764,7 +874,10 @@ FAP_HB= %lg for %lg presumably independent frequencies computed Horne & Baliunas
   if( compute_Deeming == 1 ) {
    fclose(DFT_periodogramfile);
    // We don't care if we didn't compute spectral window
-   normalize_spectral_window_file(N_freq, "deeming.periodogram");
+   //normalize_spectral_window_file(N_freq, "deeming.periodogram");
+   // Write the binned power spectrum
+   bin_log_power_spectrum_points_and_write_to_file(freq, power, spectral_window, N_freq, 20);   
+   //
   }
   if( compute_LombScargle == 1 ) {
    fclose(LS_periodogramfile);
