@@ -150,9 +150,10 @@ int main(int argc, char **argv) {
     continue; // if this line could not be parsed, try the next one
    mag_a[0][i]= mag;
    magerr_a[0][i]= magerr;
-   if( comments_string == NULL ) {
-    continue;
-   }
+   // comments_string will not be null after read_lightcurve_point() if it was not NULL before
+   //if( comments_string == NULL ) {
+   // continue;
+   //}
    sscanf_return_value= sscanf(comments_string, "%lf %lf  %lf %lf %lf %lf %lf %lf %lf %lf %[^\t\n]", &mag_a[1][i], &magerr_a[1][i], &mag_a[2][i], &magerr_a[2][i], &mag_a[3][i], &magerr_a[3][i], &mag_a[4][i], &magerr_a[4][i], &mag_a[5][i], &magerr_a[5][i], comments_string_without_multiple_apertures);
    //fprintf(stderr, "sscanf_return_value=%d\n", sscanf_return_value);
    if( 10 > sscanf_return_value ) {

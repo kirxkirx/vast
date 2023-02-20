@@ -176,7 +176,7 @@ int search_asassnv(double target_RA_deg, double target_Dec_deg, double search_ra
  char MeanMag[32];
  char Amplitude[32];
  char Period[32];
- char Url[32];
+ //char Url[32];
  char string[4096];
  char string_noemptycells[4096];
  char string_to_be_ruined_by_strok[4096];
@@ -203,9 +203,6 @@ int search_asassnv(double target_RA_deg, double target_Dec_deg, double search_ra
   exit(1);
  }
  while( NULL != fgets(string, 4096 - 1, asassnv_csv) ) {
-  if( NULL == string ) {
-   continue;
-  }
   if( strlen(string) < 180 ) {
    // That happens all too often!
    //   fprintf(stderr,"WARNING from search_asassnv() a string in lib/catalogs/asassnv.csv is too short:\n%s\n",string);
@@ -232,11 +229,11 @@ int search_asassnv(double target_RA_deg, double target_Dec_deg, double search_ra
   }
   //
   string_noemptycells[j]= '\0'; // !!
-  //
-  if( NULL == string_noemptycells ) {
-   fprintf(stderr, "ERROR in search_asassnv(): string_noemptycells==NULL\n");
-   exit(1);
-  }
+  // The following can never be NULL
+  //if( NULL == string_noemptycells ) {
+  // fprintf(stderr, "ERROR in search_asassnv(): string_noemptycells==NULL\n");
+  // exit(1);
+  //}
   // We should do this before each invocation of getfield_from_csv_string() !!!
   strncpy(string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1);
   string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case

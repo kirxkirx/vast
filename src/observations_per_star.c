@@ -18,8 +18,9 @@ int main() {
  double mmag, mmerr, mx, my;
  char outfilename[FILENAME_LENGTH];
 
- double mmean;
- double mmedian;
+ // initialize to 0.0 to make the compiler happy
+ double mmean= 0.0;
+ double mmedian= 0.0;
  double mmax;
  double mmin;
 
