@@ -18527,7 +18527,7 @@ elif [ -z "$RESULTSURL" ];then
 else
  # The new upsilon incorrectly classifies the test lightcurve as a cepheid, because it cannot correctly derive its period
  # but whatever, here we just want to check that the web service is working
- curl --silent "$RESULTSURL" | grep --quiet -e 'class =  RRL_ab' -e 'class = CEPH_F'
+ curl --silent "$RESULTSURL" | grep --quiet -e 'class =  RRL_ab' -e 'class = RRL_ab' -e 'class = CEPH_F'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_WWWU_003"
