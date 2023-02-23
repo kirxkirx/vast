@@ -14,7 +14,9 @@ int main() {
  FILE *lightcurvefile;
 
  double transient_best_mag= 99.0;
- double transient_best_x, transient_best_y;
+ // initialize to 0.0 to make compiler happy
+ double transient_best_x= 0.0;
+ double transient_best_y= 0.0;
  char transient_best_image[FILENAME_LENGTH];
  int i;
  double jd, mag, merr, x, y, app;

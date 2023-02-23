@@ -44,7 +44,11 @@ int main(int argc, char **argv) {
  double preflare_mag_sigma, flare_mag_sigma;
  int i;
 
- double x_on_reference_image, y_on_reference_image;
+ // initialize to zero to make the compiler happy
+ double x_on_reference_image = 0.0;
+ double y_on_reference_image = 0.0;
+ 
+ 
 
  if( argc > 2 ) {
   fprintf(stderr, "Usage: %s [NUMBER_OF_REFERENCE_IMAGES]\n", argv[0]);

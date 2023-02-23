@@ -1117,7 +1117,7 @@ int search_UCAC5_localcopy(struct detected_star *stars, int N, struct str_catalo
 
  // based on https://stackoverflow.com/questions/17598572/read-and-write-to-binary-files-in-c
  // and http://cdsarc.u-strasbg.fr/ftp/I/340/readmeU5.txt
- int zone_counter;
+ unsigned int zone_counter;
  char zonefilename[24]; // should match the length of sprintf string below
 
  //double gaia_ra_deg, garia_dec_deg;

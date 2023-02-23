@@ -141,35 +141,19 @@ int main() {
  double jd, mag, magerr, x, y, app;
  char string[FILENAME_LENGTH];
 
- //fprintf(stderr,"DEBUG01\n");
-
  int number_of_measured_images_from_vast_summary_log= get_number_of_measured_images_from_vast_summary_log();
- //
- //fprintf(stderr,"DEBUG: number_of_measured_images_from_vast_summary_log=%d \n",number_of_measured_images_from_vast_summary_log);
- //return 1;
- /*
- // the commented-out string was active in v77
- //int n_points_to_drop=MIN((int)(0.1*number_of_measured_images_from_vast_summary_log),STAT_NDROP);
- int n_points_to_drop=MIN((int)(0.05*number_of_measured_images_from_vast_summary_log),STAT_NDROP);
- fprintf(stderr,"n_points_to_drop=%d number_of_measured_images_from_vast_summary_log=%d STAT_NDROP=%d\n",n_points_to_drop,number_of_measured_images_from_vast_summary_log,STAT_NDROP);
- // Handle the special situation if there is no vast_summary.log file
- if( number_of_measured_images_from_vast_summary_log==MAX_NUMBER_OF_OBSERVATIONS )n_points_to_drop=0;
- fprintf(stderr,"n_points_to_drop=%d number_of_measured_images_from_vast_summary_log=%d STAT_NDROP=%d\n",n_points_to_drop,number_of_measured_images_from_vast_summary_log,STAT_NDROP);
- */
  int n_points_to_drop;
 
  // n_points_to_drop was determined based on number_of_measured_images_from_vast_summary_log
  // but we want n_points_to_drop to depend on the number of points in a given lightcurve
 
- //fprintf(stderr,"DEBUG02\n");
-
- double x_ref, y_ref;
+ double x_ref= 0.0;
+ double y_ref= 0.0;
  double m_median, sigma_series;
  int i, j; // just counters
  double *m;
  double *merr;
  double *w;
- //double a,b,d;
 
  double m_mean, weighted_sigma, MAD_scaled_to_sigma, lag1_autocorrelation, IQR;
 
