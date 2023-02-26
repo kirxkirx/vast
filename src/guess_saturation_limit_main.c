@@ -44,6 +44,11 @@ int main(int argc, char **argv) {
   return 1;
  }
 
+ // Guess and print aimage saturation limit
+ gain_sextractor_cl_parameter_string[0]= flag_image_sextractor_cl_parameter_string[0]= flag_image_filename[0]= '\0';
+ guess_saturation_limit(fitsfilename, flag_image_sextractor_cl_parameter_string, 1);
+ fprintf(stderr,"FYI: the guessed saturation limit may be passed to SExtractor as %s\n",flag_image_sextractor_cl_parameter_string);
+
 
  // Reset
  gain_sextractor_cl_parameter_string[0]= flag_image_sextractor_cl_parameter_string[0]= flag_image_filename[0]= '\0';
