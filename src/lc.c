@@ -862,7 +862,30 @@ int main(int argc, char **argv) {
    cpgscr(1, 0.62, 0.81, 0.38); /* set color of lables */
   get_star_number_from_name(star_name, lightcurvefilename);
   
-  //// What we don't know ishow long is the target name
+  //// What we don't know is how long is the target name
+  sprintf(header_str, "Object %s, %d observations over %.1lf years starting on JD %.4lf", star_name, Nobs, (JD_last-JD_first)/365.25, JD_first);
+  if( strlen(header_str) > 78 ) {
+   sprintf(header_str, "Object %s, %d observations over %.1lf years", star_name, Nobs, (JD_last-JD_first)/365.25);
+  }
+  if( JD_last-JD_first < 2*365.0 ) {
+   sprintf(header_str, "Object %s, %d observations over %.2lf days starting on JD %.4lf", star_name, Nobs, JD_last-JD_first, JD_first);
+   if( strlen(header_str) > 78 ) {
+    sprintf(header_str, "Object %s, %d observations over %.2lf days", star_name, Nobs, JD_last-JD_first);
+   }
+  }
+  if( JD_last-JD_first < 1.0 ) {
+   sprintf(header_str, "Object %s, %d observations over %.2lf hours starting on JD %.4lf", star_name, Nobs, (JD_last-JD_first)*24, JD_first);
+   if( strlen(header_str) > 78 ) {
+    sprintf(header_str, "Object %s, %d observations over %.2lf hours", star_name, Nobs, (JD_last-JD_first)*24);
+   }
+  }
+  if( JD_last-JD_first < 2.0/24.0 ) {
+   sprintf(header_str, "Object %s, %d observations over %.0lf minutes starting on JD %.4lf", star_name, Nobs, (JD_last-JD_first)*24*60, JD_first);
+   if( strlen(header_str) > 78 ) {
+    sprintf(header_str, "Object %s, %d observations over %.0lf minutes", star_name, Nobs, (JD_last-JD_first)*24*60);
+   }
+  }
+/*
   if( JD_last-JD_first < 1.0 ) {
    if( JD_last-JD_first < 2.0/24.0 ) {
     sprintf(header_str, "Object %s, %d observations over %.0lf minutes starting on JD %.4lf", star_name, Nobs, (JD_last-JD_first)*24*60, JD_first);
@@ -881,6 +904,7 @@ int main(int argc, char **argv) {
     sprintf(header_str, "Object %s, %d observations over %.2lf days", star_name, Nobs, JD_last-JD_first);
    }
   }
+ */
   ////
   
   if( strlen(header_str) > 78 ) {
