@@ -195,7 +195,7 @@ mv -v "pgplot.png" resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_F
 ###################################################################
 # Make a set of finding charts with different scales
 
-for PIXELS_AROUND_TARGET in 64 128 256 512 1024 ;do
+for PIXELS_AROUND_TARGET in 32 64 128 256 512 1024 ;do
 
  echo "Plotting the finder chart with the field of view label"
  # Make the PNG finding chart
