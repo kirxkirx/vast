@@ -110,7 +110,6 @@ int main(){return 0;}" > test.c
   X11_TEST_LOG_OUTPUT="$CC -o test.exe test.c $CUSTOM_X11_INCLUDE_AND_LIB -lX11 &> .x11test.log
 $X11_TEST_LOG_OUTPUT"
  fi
- fi
  rm -f test.exe test.c
 fi
 
