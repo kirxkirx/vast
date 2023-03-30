@@ -1,0 +1,21 @@
+name: macOS 11 CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: macos-11
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install MacPorts
+      run: |
+        curl -LO https://raw.githubusercontent.com/GiovanniBussi/macports-ci/master/macports-ci
+        source ./macports-ci install
+    - name: Install gcc, g++, gfortran, and wget
+      run: sudo port install gcc10 g++10 gfortran10 wget
+    - name: Install X11 header files
+      run: sudo port install xorg-libX11
+    - name: Build code
+      run: make

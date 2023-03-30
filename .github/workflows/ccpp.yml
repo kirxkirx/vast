@@ -2,6 +2,10 @@ name: Ubuntu Latest C/C++ CI
 
 on: [push]
 
+# Manually enable/disable this long test
+# Add a conditional statement that evaluates to false for all events
+if: false
+
 jobs:
   build:
 
