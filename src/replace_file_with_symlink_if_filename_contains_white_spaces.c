@@ -140,6 +140,13 @@ void cutout_green_channel_out_of_RGB_DSLR_image(char *filename) {
  if( NULL!=vast_converted_images_log ) {
   while( -1<fscanf(vast_converted_images_log,"%s %s", vast_converted_images_log_original_image_name, green_channel_only_image_name) ) {
    if( 0 == strncmp(filename, vast_converted_images_log_original_image_name, FILENAME_LENGTH) ) {
+    // escape special characters in the green_channel_only_image_name (as it was derived from "user input" fscanf() )
+    if( 0 != any_unusual_characters_in_string(green_channel_only_image_name) ) {
+     fprintf(stderr, "WARNING: any_unusual_characters_in_string(%s) returned 1\n", green_channel_only_image_name);
+     continue;
+     //fclose(vast_converted_images_log);
+     //return;
+    }
     if( 0 == fitsfile_read_check_silent(filename) ) {
      fprintf(stderr, "Found previously converted image %s %s\n", vast_converted_images_log_original_image_name, green_channel_only_image_name);
      strncpy(filename, green_channel_only_image_name, FILENAME_LENGTH - 1);

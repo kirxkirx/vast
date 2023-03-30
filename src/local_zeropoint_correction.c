@@ -18,6 +18,7 @@
 
 #include "vast_limits.h"
 #include "lightcurve_io.h"
+#include "fitsfile_read_check.h" // any_unusual_characters_in_string(lightcurvefilename)
 
 #define CORRECTION_RADIUS_DEG_OR_PIX 20.0 / 3600.0
 
@@ -400,6 +401,11 @@ int main() {
   exit(1);
  }
  while( -1 < fscanf(datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename) ) {
+  // escape special characters in the green_channel_only_image_name (as it was derived from "user input" fscanf() )
+  if( 0 != any_unusual_characters_in_string(lightcurvefilename) ) {
+    fprintf(stderr, "WARNING: any_unusual_characters_in_string(%s) returned 1\n", lightcurvefilename);
+    continue;
+  }
   // Get star number from the lightcurve file name
   for( k= 3; k < strlen(lightcurvefilename); k++ ) {
    star_number_string[k - 3]= lightcurvefilename[k];
