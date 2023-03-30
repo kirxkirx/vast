@@ -7,23 +7,23 @@ on: [push]
 
 # Write an if statement that is always false
 
-if: ${{ false }}
-  jobs:
-    build:
+if: false
+jobs:
+  build:
 
-      runs-on: ubuntu-latest
+  runs-on: ubuntu-latest
     
-      steps:
-      - uses: actions/checkout@v1
-      - name: Update apt-get
-        run: sudo apt-get update
-      - name: Install gfortran
-        run: sudo apt-get install gfortran
-      - name: Install ghostscript
-        run: sudo apt-get install ghostscript
-      - name: make VaST
-        run: make
-      - name: prepare for the test
-        run: echo "1" > ../THIS_IS_HPCC 
-      - name: test VaST
-        run: util/examples/test_vast.sh
+  steps:
+    - uses: actions/checkout@v1
+    - name: Update apt-get
+      run: sudo apt-get update
+    - name: Install gfortran
+      run: sudo apt-get install gfortran
+    - name: Install ghostscript
+      run: sudo apt-get install ghostscript
+    - name: make VaST
+      run: make
+    - name: prepare for the test
+      run: echo "1" > ../THIS_IS_HPCC 
+    - name: test VaST
+      run: util/examples/test_vast.sh
