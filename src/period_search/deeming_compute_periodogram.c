@@ -33,6 +33,16 @@
 #define TWOPI 2.0 * M_PI
 #define FOURPI 4.0 * M_PI
 
+// INFINITY and NAN are undeclared in the older versions of GCC
+// if this is the case - define them using GCC builtin functions
+#ifndef INFINITY
+#define INFINITY (__builtin_inf())
+#endif
+
+#ifndef NAN
+#define NAN (__builtin_nan(""))
+#endif
+
 
 
 void bin_log_power_spectrum_points_and_write_to_file(double *x, double *y, double *z, int num_points, int num_bins) {
