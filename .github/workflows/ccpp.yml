@@ -2,17 +2,13 @@ name: Ubuntu Latest C/C++ CI
 
 on: [push]
 
-# Manually enable/disable this long test
-# Add a conditional statement that evaluates to false for all events
-
-# Write an if statement that is always false
-
-if: false
-
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+    # Manually enable/disable this long test
+    # Add a conditional statement that evaluates to false for all events
+    # Write an if statement that is always false
+    if: false
     steps:
       - uses: actions/checkout@v1
       - name: Update apt-get
