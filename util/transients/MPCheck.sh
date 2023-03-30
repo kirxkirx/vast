@@ -87,10 +87,23 @@ if [ -x lib/astcheck ];then
   echo "Downloading the asteroid database (astorb.dat)" 1>&2
   #wget -c ftp://ftp.lowell.edu/pub/elgb/astorb.dat.gz 1>&2
   #wget -c http://scan.sai.msu.ru/~kirx/pub/astorb.dat.gz 1>&2
-  wget -c https://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
+  #wget -c https://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
+  wget -c --no-check-certificate https://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
+  if [ $? -ne 0 ];then
+   # a desperate recovery attempt
+   wget -c http://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
+   if [ $? -ne 0 ];then
+    echo "ERROR: cannot download astorb.dat.gz"
+    exit 1
+   fi
+  fi
   gunzip astorb.dat.gz
+  if [ $? -ne 0 ];then
+   echo "ERROR: cannot gunzip astorb.dat.gz"
+   exit 1
+  fi
   if [ ! -f astorb.dat ];then
-   echo "ERROR: cannot download astorb.dat.gz"
+   echo "ERROR: cannot find astorb.dat"
    exit 1
   fi
  fi

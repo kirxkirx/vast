@@ -97,17 +97,17 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
   if [ "$FILE_TO_UPDATE" == "astorb.dat" ];then
    TMP_OUTPUT="astorb_dat_new"
 #   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 ftp://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
-   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 https://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
+   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 --no-check-certificate https://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
 #   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 --no-check-certificate http://kirx.net/~kirx/tmp/astorb.dat.gz"
 #   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 http://scan.sai.msu.ru/~kirx/catalogs/compressed/astorb.dat.gz"
-   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 $LOCAL_SERVER/astorb.dat.gz"
+   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 --no-check-certificate $LOCAL_SERVER/astorb.dat.gz"
    UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz"
   fi
   if [ "$FILE_TO_UPDATE" == "lib/catalogs/vsx.dat" ];then
    TMP_OUTPUT="vsx.dat"
    WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 ftp://cdsarc.u-strasbg.fr/pub/cats/B/vsx/vsx.dat.gz"
 #   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 http://scan.sai.msu.ru/~kirx/catalogs/compressed/vsx.dat.gz"
-   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 $LOCAL_SERVER/vsx.dat.gz"
+   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 --no-check-certificate $LOCAL_SERVER/vsx.dat.gz"
    UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz"
   fi
   if [ "$FILE_TO_UPDATE" == "lib/catalogs/asassnv.csv" ];then
@@ -115,7 +115,7 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
    #WGET_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 --no-check-certificate https://asas-sn.osu.edu/variables/catalog.csv"
    WGET_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 --no-check-certificate 'https://asas-sn.osu.edu/variables.csv?action=index&controller=variables'"
 #   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 http://scan.sai.msu.ru/~kirx/catalogs/asassnv.csv"
-   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 $LOCAL_SERVER/asassnv.csv"
+   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 --no-check-certificate $LOCAL_SERVER/asassnv.csv"
    UNPACK_COMMAND=""
   fi
   if [ -z "$WGET_COMMAND" ];then
