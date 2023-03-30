@@ -14,7 +14,7 @@ jobs:
         curl -LO https://raw.githubusercontent.com/GiovanniBussi/macports-ci/master/macports-ci
         source ./macports-ci install
     - name: Install gcc, g++, gfortran, and wget
-      run: sudo port install gcc10 g++10 gfortran10 wget
+      run: sudo port install gcc g++ gfortran wget
     - name: Install X11 header files
       run: sudo port install xorg-libX11
     - name: Build code
