@@ -96,14 +96,20 @@ fi
 
 # Test if we have X11 include files
 X11_DEVELOPEMENT_PACKAGE=""
+X11_TEST_LOG_OUTPUT=""
 # do the following test only if we found the C compiler in order not to confuse the user if we have a bigger problem
 command -v $CC &> /dev/null
 if [ $? -eq 0 ];then
  echo "#include <X11/Xos.h>
 int main(){return 0;}" > test.c
- $CC -o test.exe test.c `lib/find_x11lib_include.sh` -lX11 &>/dev/null
+ CUSTOM_X11_INCLUDE_AND_LIB=`lib/find_x11lib_include.sh`
+ $CC -o test.exe test.c $CUSTOM_X11_INCLUDE_AND_LIB -lX11 &> .x11test.log
  if [ $? -ne 0 ];then
   X11_DEVELOPEMENT_PACKAGE="libx11-dev"
+  X11_TEST_LOG_OUTPUT=`cat .x11test.log`
+  X11_TEST_LOG_OUTPUT="$CC -o test.exe test.c $CUSTOM_X11_INCLUDE_AND_LIB -lX11 &> .x11test.log
+$X11_TEST_LOG_OUTPUT"
+ fi
  fi
  rm -f test.exe test.c
 fi
@@ -134,6 +140,10 @@ Some of these programs may be installed, but missing from the the \$PATH=$PATH
 
 $LIST_OF_MISSING_PROGRAMS\033[00m
 "
+  if [ ! -z "$X11_TEST_LOG_OUTPUT" ];then
+    echo "Specifically, the test script failed to compile the test X11 program:
+$X11_TEST_LOG_OUTPUT"
+  fi
  exit 1
 else
  echo "All the external programs were found!"
