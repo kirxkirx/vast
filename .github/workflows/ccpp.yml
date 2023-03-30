@@ -4,8 +4,10 @@ on: [push]
 
 # Manually enable/disable this long test
 # Add a conditional statement that evaluates to false for all events
-if: false
 
+# Write an if statement that is always false
+
+if: ${{ false }}
   jobs:
     build:
 
