@@ -7,6 +7,9 @@ jobs:
 
     runs-on: macos-11
 
+    # Manually enable/disable this long test
+    # Write an if statement that is always false/true
+    if: true
     steps:
     - uses: actions/checkout@v3
     - name: Install MacPorts
@@ -17,5 +20,9 @@ jobs:
       run: sudo port install gcc12 wget
     - name: Install X11 header files
       run: sudo port install xorg-libX11
-    - name: Build code
+    - name: make VaST
       run: make
+    - name: prepare for the test
+      run: echo "1" > ../THIS_IS_HPCC 
+    - name: test VaST
+      run: util/examples/test_vast.sh
