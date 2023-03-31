@@ -1,0 +1,12 @@
+paths:
+  - src
+paths-ignore:
+  - src/gsl
+  - src/wcstools-3.9.7
+  - src/sextractor-2.19.5
+  - src/sextractor-2.25.2_fix_disable_model_fitting
+  - src/pgplot
+  - src/cfitsio-3.49
+  - src/cdsclient
+  - src/astcheck
+  
