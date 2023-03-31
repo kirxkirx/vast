@@ -16,7 +16,6 @@
 int main(int argc, char **argv) {
  double double_garbage_JD;
  int int_garbage_timesys;
- //char char_garbage[4096];
  double X_im_size;
  double Y_im_size;
  double aperture;
