@@ -30,6 +30,11 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
+# Are we on Linux or something else?
+SYSTEM_TYPE=`uname`
+if [ "$SYSTEM_TYPE" = "Linux" ];then
+
+
 # Find the real path to VaST home directory
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
@@ -640,10 +645,18 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  done 
 
  # Wait for all children to end processing
- ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+ if [ "$SYSTEM_TYPE" = "Linux" ];then
+  # --forest will not fly if we are not on Linux
+  ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+ fi
+ #####
  echo "wait"   >> transient_factory_test31.txt
  wait
- ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+ #####
+ if [ "$SYSTEM_TYPE" = "Linux" ];then
+  # --forest will not fly if we are not on Linux
+  ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+ fi
  
  # Check that the plates were actually solved
  for i in `cat vast_image_details.log |awk '{print $17}'` ;do 
@@ -666,7 +679,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
     if [ "$SEXTRACTOR_CONFIG_FILE" != "default.sex.telephoto_lens_v4" ];then
      # save the solved plate to local cache, but only if it's not already a symlink
      echo "Saving $WCS_IMAGE_NAME_FOR_CHECKS to local_wcs_cache/" >> transient_factory_test31.txt
-     cp -v "$WCS_IMAGE_NAME_FOR_CHECKS" local_wcs_cache/ &>> transient_factory_test31.txt
+     cp -v "$WCS_IMAGE_NAME_FOR_CHECKS" local_wcs_cache/ 2>&1 >> transient_factory_test31.txt
     else
      echo "NOT SAVING $WCS_IMAGE_NAME_FOR_CHECKS to local_wcs_cache/ as this is the run with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
     fi
@@ -777,15 +790,26 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  if [ ! -s "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
   echo "$WCS_IMAGE_NAME_FOR_CHECKS does not exist or is empty: waiting for solve_plate_with_UCAC5" >> transient_factory_test31.txt
   # Wait here hoping util/solve_plate_with_UCAC5 will plate-solve the reference image
-  ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+  if [ "$SYSTEM_TYPE" = "Linux" ];then
+   # --forest will not fly if we are not on Linux
+   ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+  fi
+  #####
   echo "wait"   >> transient_factory_test31.txt
   wait
-  ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+  #####
+  if [ "$SYSTEM_TYPE" = "Linux" ];then
+   # --forest will not fly if we are not on Linux
+   ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+  fi
  else
   echo "Found non-empty $WCS_IMAGE_NAME_FOR_CHECKS" >> transient_factory_test31.txt
  fi
  # Print the process tree
- ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+ if [ "$SYSTEM_TYPE" = "Linux" ];then
+  # --forest will not fly if we are not on Linux 
+  ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+ fi
  echo "____ Start of magnitude calibration ____" >> transient_factory_test31.txt
  echo "y" | util/transients/calibrate_current_field_with_tycho2.sh 2>&1 >> transient_factory_test31.txt
  echo "____ End of magnitude calibration ____" >> transient_factory_test31.txt
@@ -902,7 +926,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
    WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
    lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @../exclusion_list.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list.txt
-   cp -v exclusion_list.txt local_wcs_cache/ &>> transient_factory_test31.txt
+   cp -v exclusion_list.txt local_wcs_cache/ 2>&1 >> transient_factory_test31.txt
   fi
  fi
  # Exclude stars from the Bright Star Catalog with magnitudes < 3
@@ -911,7 +935,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
    WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
    lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/brightbright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bbsc.txt
-   cp -v exclusion_list_bbsc.txt local_wcs_cache/ &>> transient_factory_test31.txt
+   cp -v exclusion_list_bbsc.txt local_wcs_cache/ 2>&1 >> transient_factory_test31.txt
   fi
  fi
  # Exclude stars from the Bright Star Catalog with magnitudes < 7
@@ -920,7 +944,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
    WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
    lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/bright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bsc.txt
-   cp -v exclusion_list_bsc.txt local_wcs_cache/ &>> transient_factory_test31.txt
+   cp -v exclusion_list_bsc.txt local_wcs_cache/ 2>&1 >> transient_factory_test31.txt
   fi
  fi
  # Exclude bright Tycho-2 stars, by default the magnitude limit is set to vt < 9
@@ -929,7 +953,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    SECOND_EPOCH_IMAGE_ONE=`cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1`
    WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_`basename $SECOND_EPOCH_IMAGE_ONE`
    lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | while read A ;do lib/deg2hms $A ;done > exclusion_list_tycho2.txt
-   cp -v exclusion_list_tycho2.txt local_wcs_cache/ &>> transient_factory_test31.txt
+   cp -v exclusion_list_tycho2.txt local_wcs_cache/ 2>&1 >> transient_factory_test31.txt
   fi
  fi
  ###
