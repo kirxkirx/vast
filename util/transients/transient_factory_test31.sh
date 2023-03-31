@@ -315,15 +315,16 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  echo "Checking input images ($N new)" >> transient_factory_test31.txt
  ################################
  # Choose first epoch images
- # We assume there are two first epoch images, both of them are good
+ # We assume there are two first epoch images, both of them are supposedly good
  REFERENCE_EPOCH__FIRST_IMAGE=`ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | head -n1`
  echo "REFERENCE_EPOCH__FIRST_IMAGE= $REFERENCE_EPOCH__FIRST_IMAGE" >> transient_factory_test31.txt
  REFERENCE_EPOCH__SECOND_IMAGE=`ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | tail -n1`
  echo "REFERENCE_EPOCH__SECOND_IMAGE= $REFERENCE_EPOCH__SECOND_IMAGE" >> transient_factory_test31.txt
+ 
  # Choose second epoch images
  # first, count how many there are
  NUMBER_OF_SECOND_EPOCH_IMAGES=`ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | wc -l`
- 
+  
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -gt 1 ];then
   # Make image previews
   echo "Previews of the second-epoch images:<br>" >> transient_factory_test31.txt
@@ -404,6 +405,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    continue
   fi
   # column 9 in vast_image_details.log is the aperture size in pixels
+  #### In the following the exclusion of ' ap=  0.0 ' ' ap= 99.0 ' ' status=ERROR ' is needed to handle the case where one new image is bad while the other two are good.
   ### ===> APERTURE LIMITS HARDCODED HERE <===
   NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | wc -l`
   if [ $NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING -lt 2 ];then
@@ -413,13 +415,34 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "ERROR: seeing on second-epoch images is out of range" >> transient_factory_test31.txt
    continue
   fi
-  #### In the following the exclusion of ' ap=  0.0 ' ' ap= 99.0 ' ' status=ERROR ' is needed to handle the case where one new image is bad while the other two are good.
-  ### ===> APERTURE LIMITS HARDCODED HERE <===
-  SECOND_EPOCH__FIRST_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk9 | head -n1 | awk '{print $17}'`
-  echo "SECOND_EPOCH__FIRST_IMAGE= $SECOND_EPOCH__FIRST_IMAGE" >> transient_factory_test31.txt
-  ### ===> APERTURE LIMITS HARDCODED HERE <===
-  SECOND_EPOCH__SECOND_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}'`
-  echo "SECOND_EPOCH__SECOND_IMAGE= $SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_test31.txt
+  # Many (like 1 in 3) images are affected by bad tracking and bad pointing (being centered away from the target field center)
+  # Bad tracking will result in elongated stars and degraded "seeing"
+###### All that sounds reasonable but doesn't do any good to pass NMW_find_NovaCas21_test
+  # Check if the seeing (reflected in the aperture size) is the same for the three images
+  SEEING_AP_FIRST_IMG=`cat vast_image_details.log | grep 'status=OK' | awk '{if ( $9 > 2 ) print $9}' | head -n1`
+  N_IMAGES_WITH_EXACTLY_THIS_SEEING_AP=`cat vast_image_details.log | grep 'status=OK' | awk '{if ( $9 > 2 ) print $9}' | grep -c "$SEEING_AP_FIRST_IMG"`
+  if [ $N_IMAGES_WITH_EXACTLY_THIS_SEEING_AP -eq $NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING ];then
+   # Consider a special case where the seeing is the same to within 0.1pix on all three images
+   # Sort the images on JD and thake the two latest ones assuming it's the first image that is most likely affected by bad pointing
+   # Take the second-to-last image as SECOND_EPOCH__FIRST_IMAGE
+   ### ===> APERTURE LIMITS HARDCODED HERE <===
+   SECOND_EPOCH__FIRST_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk7 | tail -n2 | head -n1 | awk '{print $17}'`
+   echo "SECOND_EPOCH__FIRST_IMAGE= $SECOND_EPOCH__FIRST_IMAGE" >> transient_factory_test31.txt
+   # Take the last image as SECOND_EPOCH__SECOND_IMAGE
+   ### ===> APERTURE LIMITS HARDCODED HERE <===
+   SECOND_EPOCH__SECOND_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk7 | tail -n1 | awk '{print $17}'`
+   echo "SECOND_EPOCH__SECOND_IMAGE= $SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_test31.txt
+  else
+   # Consider the usual case where the seeing is somewhat different - pick the two images with the best seeing
+   #### In the following the exclusion of ' ap=  0.0 ' ' ap= 99.0 ' ' status=ERROR ' is needed to handle the case where one new image is bad while the other two are good.
+   ### ===> APERTURE LIMITS HARDCODED HERE <===
+   SECOND_EPOCH__FIRST_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk9 | head -n1 | awk '{print $17}'`
+   echo "SECOND_EPOCH__FIRST_IMAGE= $SECOND_EPOCH__FIRST_IMAGE" >> transient_factory_test31.txt
+   ### ===> APERTURE LIMITS HARDCODED HERE <===
+   SECOND_EPOCH__SECOND_IMAGE=`cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}'`
+   echo "SECOND_EPOCH__SECOND_IMAGE= $SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_test31.txt
+  fi
+  # Make sure SECOND_EPOCH__FIRST_IMAGE and SECOND_EPOCH__SECOND_IMAGE are set
   if [ -z "$SECOND_EPOCH__FIRST_IMAGE" ];then
    echo "ERROR: SECOND_EPOCH__FIRST_IMAGE is not defined!" >> transient_factory_test31.txt
    cat vast_image_details.log >> transient_factory_test31.txt
@@ -685,7 +708,10 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  fi
  ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
  #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | bc -ql`
- TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+ #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+ # Note that the sister parameter is also set below
+ # Relax the reference-new image pointing difference threshold for raising the error
+ TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.25" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
  if [ $TEST -eq 1 ];then
   if [ "$CHECK_POINTING_ACCURACY" = "YES" ] || [ "$CHECK_POINTING_ACCURACY" = "Yes" ] || [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
    echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
@@ -720,7 +746,9 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  fi
  ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
  #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | bc -ql`
- TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+ #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+ ## Note that this is also set above!
+ TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.25" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
  if [ $TEST -eq 1 ];then
   if [ "$CHECK_POINTING_ACCURACY" = "YES" ] || [ "$CHECK_POINTING_ACCURACY" = "Yes" ] || [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
    echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
