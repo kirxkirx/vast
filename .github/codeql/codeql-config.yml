@@ -1,3 +1,4 @@
+# Sadly, the "paths"/"paths-ignore" fields of the config only have effect for JavaScript, Python, and Ruby
 paths:
   - src
 paths-ignore:
