@@ -1,4 +1,4 @@
-name: Ubuntu Latest C/C++ CI
+name: Ubuntu Latest build and test
 
 on: [push]
 

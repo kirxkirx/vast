@@ -1,4 +1,4 @@
-name: macOS 11 CI
+name: macOS 11 build and test
 
 on: [push]
 
