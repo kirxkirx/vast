@@ -65,9 +65,11 @@ if [ -z "$VAST_PATH" ];then
  VAST_PATH="${VAST_PATH/lib/}"
  VAST_PATH="${VAST_PATH/'//'/'/'}"
  # In case the above line didn't work
- VAST_PATH=$(echo "$VAST_PATH" | sed "s:/'/:/:g")
+ #VAST_PATH=$(echo "$VAST_PATH" | sed "s:/'/:/:g")
+ VAST_PATH=${VAST_PATH//\'\//\/}
  # Make sure no quotation marks are left in VAST_PATH
- VAST_PATH=$(echo "$VAST_PATH" | sed "s:'::g")
+ #VAST_PATH=$(echo "$VAST_PATH" | sed "s:'::g")
+ VAST_PATH=${VAST_PATH//\'/}
 fi
 # Check that VAST_PATH ends with '/'
 LAST_CHAR_OF_VAST_PATH="${VAST_PATH: -1}"
@@ -198,7 +200,11 @@ for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.tx
  fi
 done
 
-# Write the HML report header
+# Convert the array of arguments to string so shellcheck does not complain
+# Use * instead of @ to concatenate the array elements into a single string, like this:
+string_command_line_argumants="${*@}"
+
+# Write the HTML report header
 echo "<HTML>
 
 <HEAD>
@@ -248,7 +254,7 @@ function printCandidateNameWithAbsLink( transientname) {
 
 <BODY>
 <h2>NMW transient search results</h2>
-This analysis is done by the script  <code>$0 $@</code><br><br>
+This analysis is done by the script  <code>$0 $string_command_line_argumants</code><br><br>
 The list of candidates will appear below. Please <b>manually reload the page</b> every few minutes untill the 'Processing complete' message appears.
 <br><br>" >> transient_report/index.html
 
@@ -269,8 +275,8 @@ $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR"
 echo "Processing fields $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR <br>" >> transient_report/index.html
 
 if [ -z "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" ];then
- echo "ERROR: cannot find image files obeying the assumed naming convention in $@"
- echo "ERROR: cannot find image files obeying the assumed naming convention in $@" >> transient_factory_test31.txt
+ echo "ERROR: cannot find image files obeying the assumed naming convention in $string_command_line_argumants"
+ echo "ERROR: cannot find image files obeying the assumed naming convention in $string_command_line_argumants" >> transient_factory_test31.txt
  continue
 fi
 
@@ -409,8 +415,11 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "ERROR: vast_image_details.log is not created (preliminary VaST run)" >> transient_factory_test31.txt
    continue
   fi
-  echo "___ vast_image_details.log from the preliminary VaST run ___" >> transient_factory_test31.txt
-  cat vast_image_details.log >> transient_factory_test31.txt
+  # we can't print the content of vast_image_details.log to transient_factory_test31.txt
+  # as it may contain status=ERROR message that will trigger the log parser
+  #echo "___ vast_image_details.log from the preliminary VaST run ___" >> transient_factory_test31.txt
+  #cat vast_image_details.log >> transient_factory_test31.txt
+  #
   # column 9 in vast_image_details.log is the aperture size in pixels
   #### In the following the exclusion of ' ap=  0.0 ' ' ap= 99.0 ' ' status=ERROR ' is needed to handle the case where one new image is bad while the other two are good.
   ### ===> APERTURE LIMITS HARDCODED HERE <===
@@ -476,20 +485,20 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   #TEST=`echo "$MEDIAN_DIFFERENCE_AminusB_PIX<0.45" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
   TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<0.30" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
   if [ $TEST -eq 0 ];then
-   echo "ERROR: tracking error (elongated stars), median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  "$(basename $SECOND_EPOCH__FIRST_IMAGE) >> transient_factory_test31.txt
+   echo "ERROR: tracking error (elongated stars), median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  $(basename $SECOND_EPOCH__FIRST_IMAGE)" >> transient_factory_test31.txt
    continue
   else
-   echo "The star elongation is within the allowed range: median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  "$(basename $SECOND_EPOCH__FIRST_IMAGE) >> transient_factory_test31.txt
+   echo "The star elongation is within the allowed range: median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  $(basename $SECOND_EPOCH__FIRST_IMAGE)" >> transient_factory_test31.txt
   fi
   SE_CATALOG_FOR_SECOND_EPOCH__SECOND_IMAGE=$(grep "$SECOND_EPOCH__SECOND_IMAGE" vast_images_catalogs.log | awk '{print $1}')
   MEDIAN_DIFFERENCE_AminusB_PIX=$(cat $SE_CATALOG_FOR_SECOND_EPOCH__SECOND_IMAGE | awk '{print $18-$20}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.2f", $2}')
   ### ===> APERTURE LIMITS HARDCODED HERE <=== (this is median difference in pixels between semi-major and semi-minor axes of the source)
   TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<0.30" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
   if [ $TEST -eq 0 ];then
-   echo "ERROR: tracking error (elongated stars) median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  "$(basename $SECOND_EPOCH__SECOND_IMAGE) >> transient_factory_test31.txt
+   echo "ERROR: tracking error (elongated stars) median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  $(basename $SECOND_EPOCH__SECOND_IMAGE)" >> transient_factory_test31.txt
    continue
   else
-   echo "The star elongation is within the allowed range: median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  "$(basename $SECOND_EPOCH__SECOND_IMAGE) >> transient_factory_test31.txt
+   echo "The star elongation is within the allowed range: median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  $(basename $SECOND_EPOCH__SECOND_IMAGE)" >> transient_factory_test31.txt
   fi
   ###
  fi # above was the procedure for handling more than two second-epoch images
@@ -608,7 +617,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    if [ "$SEXTRACTOR_CONFIG_FILE" = "default.sex.telephoto_lens_v4" ];then
     echo "(SExtractor parameter file $SEXTRACTOR_CONFIG_FILE -- faint objects)" >> transient_factory_test31.txt
     # link the solved images and catalogs created with this SExtractorconfig file
-    for i in "$WCSCACHEDIR/wcs_"$FIELD"_"*.fts "$WCSCACHEDIR/exclusion_list"* ;do
+    #for i in "$WCSCACHEDIR/wcs_"$FIELD"_"*.fts "$WCSCACHEDIR/exclusion_list"* ;do
+    for i in "$WCSCACHEDIR"/wcs_"$FIELD"_*.fts "$WCSCACHEDIR"/exclusion_list*; do
      if [ -s "$i" ];then
       # We need some quality check before trusting the solved reference images
       # It may be one of the NMW archive images with broken WCS
@@ -628,7 +638,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
     # we are using a different config file
     # link only the solved images (and the exclusion lists)
     echo "(SExtractor parameter file $SEXTRACTOR_CONFIG_FILE -- bright objects)" >> transient_factory_test31.txt
-    for i in "$WCSCACHEDIR/wcs_"$FIELD"_"*.fts "$WCSCACHEDIR/exclusion_list"* ;do
+    #for i in "$WCSCACHEDIR/wcs_"$FIELD"_"*.fts "$WCSCACHEDIR/exclusion_list"* ;do
+    for i in "$WCSCACHEDIR"/wcs_"$FIELD"_*.fts "$WCSCACHEDIR"/exclusion_list*; do
      if [ -s "$i" ];then
       echo "Creating symlink $i" >> transient_factory_test31.txt
       ln -s $i
@@ -954,7 +965,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   if [ -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
    SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
    WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
-   lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | while read A ;do lib/deg2hms $A ;done > exclusion_list_tycho2.txt
+   lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | while read -r A ;do lib/deg2hms $A ;done > exclusion_list_tycho2.txt
    cp -v exclusion_list_tycho2.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
   fi
  fi
@@ -980,7 +991,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..."
    echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..." >> transient_factory_test31.txt
    # if yes, remove flares, keep only new objects
-   while read FLAREOUTFILE A B ;do
+   while read -r FLAREOUTFILE A B ;do
     grep -v $FLAREOUTFILE candidates-transients.lst > candidates-transients.tmp
     mv candidates-transients.tmp candidates-transients.lst
    done < candidates-flares.lst
@@ -1042,8 +1053,8 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
  echo "$PWD" "$@" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
  if [ $? -eq 0 ] ;then
   IS_THIS_TEST_RUN="YES"
-  echo "The names $PWD $@ suggest this is a test run"
-  echo "The names $PWD $@ suggest this is a test run" >> transient_factory_test31.txt
+  echo "The names $PWD $string_command_line_argumants suggest this is a test run"
+  echo "The names $PWD $string_command_line_argumants suggest this is a test run" >> transient_factory_test31.txt
  fi
  echo "$1" | grep --quiet -e 'NMW_Vul2_magnitude_calibration_exit_code_test' -e 'NMW_Sgr9_crash_test'
  if [ $? -eq 0 ] ;then
@@ -1063,7 +1074,7 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
    echo "#### The exclusion list before filtering-out asteroids, bad pixels and adding Gaia sources ####" >> transient_factory_test31.txt
    cat exclusion_list_index_html.txt >> transient_factory_test31.txt
    echo "###################################################################################" >> transient_factory_test31.txt
-   while read RADECSTR ;do
+   while read -r RADECSTR ;do
     # Mac OS X grep does not handle well the combination --max-count=1 -A8
     #grep --max-count=1 -A8 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep --quiet 'not found'
     grep -A8 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep --quiet 'not found'
@@ -1076,7 +1087,7 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
    done < exclusion_list_index_html.txt > exclusion_list_index_html.txt_noasteroids
    mv -v exclusion_list_index_html.txt_noasteroids exclusion_list_index_html.txt >> transient_factory_test31.txt
    #
-   while read RADECSTR ;do
+   while read -r RADECSTR ;do
     #grep --max-count=1 -A8 "$RADECSTR" transient_report/index.html | grep 'galactic' | grep --quiet '<font color="red">0.0</font></b> pix'
     grep -A8 "$RADECSTR" transient_report/index.html | grep 'galactic' | grep --quiet '<font color="red">0.0</font></b> pix'
     if [ $? -ne 0 ];then
