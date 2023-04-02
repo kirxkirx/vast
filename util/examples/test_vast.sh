@@ -19028,6 +19028,10 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  FAILED_TEST_CODES="${FAILED_TEST_CODES// LIGHTCURVEVIEWER004_TEST_NOT_PERFORMED_no_gs/}"
  # HTTPS test doesn't work on old BSD despite the intermediate cert trick, not sure why
  FAILED_TEST_CODES="${FAILED_TEST_CODES// HTTPS_001_TEST_NOT_PERFORMED/}"
+ # Mac-specific problems
+ # 'sort --random-sort --random-source=/dev/urandom' times out om Mac
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// LCPARSER002_TEST_NOT_PERFORMED/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// LCFILTER_TEST_NOT_PERFORMED/}"
  #
  if [ ! -z "$FAILED_TEST_CODES" ];then
   echo "Exit code 1"
