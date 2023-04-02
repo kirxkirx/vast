@@ -15,4 +15,5 @@ query-filters:
         id: 
           - cpp/unbounded-write
           - cpp/path-injection
+          - cpp/diagnostics/successfully-extracted-files
             
