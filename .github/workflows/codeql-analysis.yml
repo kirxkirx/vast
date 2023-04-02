@@ -5,6 +5,10 @@
 # or to provide custom queries or build logic.
 name: "CodeQL"
 
+env:
+  ACTIONS_STEP_DEBUG: true
+  ACTIONS_RUNNER_DEBUG: true
+
 on:
   push:
     branches: [master]

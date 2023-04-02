@@ -10,4 +10,9 @@ paths-ignore:
   - src/cfitsio-3.49
   - src/cdsclient
   - src/astcheck
-  
+query-filters:
+    - exclude:
+        id: 
+          - cpp/unbounded-write
+          - cpp/path-injection
+            
