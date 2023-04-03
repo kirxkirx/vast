@@ -7256,6 +7256,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 remove_test_data_to_save_space
 
 ##### Gaia16aye images by S. Nazarov test #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../Gaia16aye_SN ];then
  cd ..
@@ -7382,6 +7384,9 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 remove_test_data_to_save_space
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+
 
 ##### Images with only few stars by S. Nazarov test #####
 # Download the test dataset if needed
@@ -7743,8 +7748,6 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 remove_test_data_to_save_space
 
 ##### test images by JB #####
-### Disable this test for GitHub Actions
-if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../test_exclude_ref_image ];then
  cd ..
