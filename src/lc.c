@@ -535,6 +535,8 @@ int main(int argc, char **argv) {
  int status= 0; // for wait3()
 
  int number_of_lines_in_lc_file_for_malloc;
+ 
+ int pgplot_status;
 
  //char bin_dir_name[512]="./";
  int use_ds9_instead_of_pgfv= 0;
@@ -791,7 +793,25 @@ int main(int argc, char **argv) {
    strcpy(PGPLOT_CONTROL, "/XW");
 
   if( change_limits_trigger == 0 || xw_ps != 0 ) {
-   cpgopen(PGPLOT_CONTROL);
+   pgplot_status= cpgopen(PGPLOT_CONTROL);
+   if( pgplot_status <= 0 ) {
+    fprintf(stderr, "ERROR opening PGPLOT device %s\n", PGPLOT_CONTROL);
+    if( 0==strcmp(PGPLOT_CONTROL, "/PNG") ) {
+     // fall back to PS plotting
+     fprintf(stderr,"Falling back to PGPLOT device /CPS\n");
+     strcpy(PGPLOT_CONTROL, "/CPS");
+     xw_ps= 1;
+     curC= 's';
+     cpgclos();
+     fprintf(stderr,"Retrying to open PGPLOT device %s\n", PGPLOT_CONTROL);
+     pgplot_status= cpgopen(PGPLOT_CONTROL);
+    }
+    // If the fallback option didn't work
+    if( pgplot_status <= 0 ) {
+     fprintf(stderr,"Emergency exit.\n");
+     exit(1);
+    }
+   }
    if( 0 == strcmp(PGPLOT_CONTROL, "/XW") ) {
     xw_ps= 0;
     if( change_limits_trigger == 0 )
@@ -1698,7 +1718,7 @@ int main(int argc, char **argv) {
    //}
   }
 
-  /* If we were plotting to a file instead of X window... */
+  // If we were plotting to a file instead of X window...
   if( 0 == strcmp(PGPLOT_CONTROL, "/CPS") || 0 == strcmp(PGPLOT_CONTROL, "/PNG") ) {
    cpgclos();
 
@@ -1720,10 +1740,10 @@ int main(int argc, char **argv) {
    }
 
    if( xw_ps == 1 ) {
-    fprintf(stderr, "Lightcurve plot saved to \E[34;47m %s.ps \E[33;00m \n", star_name);
+    fprintf(stderr, "Lightcurve plot should be saved to \E[34;47m %s.ps \E[33;00m \n", star_name);
    }
    if( xw_ps == 2 ) {
-    fprintf(stderr, "Lightcurve plot saved to \E[34;47m %s.png \E[33;00m \n", star_name);
+    fprintf(stderr, "Lightcurve plot should be saved to \E[34;47m %s.png \E[33;00m \n", star_name);
    }
 
    xw_ps= -1;
