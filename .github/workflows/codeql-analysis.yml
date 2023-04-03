@@ -5,9 +5,9 @@
 # or to provide custom queries or build logic.
 name: "CodeQL"
 
-env:
-  ACTIONS_STEP_DEBUG: true
-  ACTIONS_RUNNER_DEBUG: true
+#env:
+#  ACTIONS_STEP_DEBUG: true
+#  ACTIONS_RUNNER_DEBUG: true
 
 on:
   push:
@@ -40,7 +40,7 @@ jobs:
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v2
       with:
-        debug: true
+        #debug: true
         languages: ${{ matrix.language }}
         config-file: ./.github/codeql/codeql-config.yml
         # If you wish to specify custom queries, you can do so here or in a config file.
