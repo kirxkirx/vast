@@ -12806,6 +12806,8 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ##### Sgr9 crash and no shift test #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../NMW_Sgr9_crash_test ];then
  cd ..
@@ -13280,6 +13282,9 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 remove_test_data_to_save_space
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
