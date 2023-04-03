@@ -1017,6 +1017,7 @@ int main(int argc, char **argv) {
  int ii, jj, first_number_flag;
 
  char filter_name_for_automatic_magnitude_calibration[512];
+ char filter_name_for_automatic_magnitude_calibration_local[512];
 
  /* For time information from the FITS header */
  double JD;
@@ -2270,7 +2271,11 @@ int main(int argc, char **argv) {
    if( curC == '4' && match_mode == 3 && magnitude_calibration_already_performed_flag == 0 ) {
     fprintf(stderr, "Entering AUTOMATIC megnitude calibration mode!\n");
     fprintf(stderr, "\E[01;31mPlease enter the filter name (one of BVRIgri):\E[33;00m\n");
-    while( -1<fscanf(stdin, "%s", filter_name_for_automatic_magnitude_calibration) ) {
+    // The %511s format specifier reads at most 511 characters from stdin into the filter_name_for_automatic_magnitude_calibration_local string, leaving space for a null terminator at the end of the string.
+    // Let's limit ourselves to 2 characters
+    while( -1<fscanf(stdin, "%2s", filter_name_for_automatic_magnitude_calibration_local) ) {
+     filter_name_for_automatic_magnitude_calibration_local[512-1]='\0';
+     safely_encode_user_input_string(filter_name_for_automatic_magnitude_calibration, filter_name_for_automatic_magnitude_calibration_local, 512-1);
      // we don't expect the filter name to be long
      if( strlen(filter_name_for_automatic_magnitude_calibration)>2 ){
       continue;

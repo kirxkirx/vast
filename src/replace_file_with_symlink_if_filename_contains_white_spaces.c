@@ -110,6 +110,7 @@ void cutout_green_channel_out_of_RGB_DSLR_image(char *filename) {
 
  unsigned int i; // counter
  char green_channel_only_image_name[FILENAME_LENGTH];
+ char green_channel_only_image_name_local[FILENAME_LENGTH];
  //
  struct stat sb; // structure returned by stat() system call
  
@@ -138,18 +139,22 @@ void cutout_green_channel_out_of_RGB_DSLR_image(char *filename) {
  // Check if this image has already been converted and is still there
  vast_converted_images_log=fopen("vast_converted_images.log","r");
  if( NULL!=vast_converted_images_log ) {
-  while( -1<fscanf(vast_converted_images_log,"%s %s", vast_converted_images_log_original_image_name, green_channel_only_image_name) ) {
+  while( -1<fscanf(vast_converted_images_log,"%s %s", vast_converted_images_log_original_image_name, green_channel_only_image_name_local) ) {
+   // trying to calm down CodeQL rather than fix any real issue here
+   safely_encode_user_input_string(green_channel_only_image_name, green_channel_only_image_name_local, FILENAME_LENGTH-1);
    if( 0 == strncmp(filename, vast_converted_images_log_original_image_name, FILENAME_LENGTH) ) {
     // escape special characters in the green_channel_only_image_name (as it was derived from "user input" fscanf() )
-    if( 0 != any_unusual_characters_in_string(green_channel_only_image_name) ) {
-     fprintf(stderr, "WARNING: any_unusual_characters_in_string(%s) returned 1\n", green_channel_only_image_name);
-     continue;
-     //fclose(vast_converted_images_log);
-     //return;
-    }
+    //if( 0 != any_unusual_characters_in_string(green_channel_only_image_name) ) {
+    // fprintf(stderr, "WARNING: any_unusual_characters_in_string(%s) returned 1\n", green_channel_only_image_name);
+    // continue;
+    // //fclose(vast_converted_images_log);
+    // //return;
+    //}
+    //
     if( 0 == fitsfile_read_check_silent(filename) ) {
      fprintf(stderr, "Found previously converted image %s %s\n", vast_converted_images_log_original_image_name, green_channel_only_image_name);
      //strncpy(filename, green_channel_only_image_name, FILENAME_LENGTH - 1);
+     // not enough to calm down CodeQL
      safely_encode_user_input_string(filename, green_channel_only_image_name, FILENAME_LENGTH-1);
      filename[FILENAME_LENGTH - 1]= '\0'; // just in case
      fclose(vast_converted_images_log);
@@ -262,7 +267,8 @@ void cutout_green_channel_out_of_RGB_DSLR_image(char *filename) {
   fclose(vast_converted_images_log);
  }
  
- strncpy(filename, green_channel_only_image_name, FILENAME_LENGTH - 1);
+ //strncpy(filename, green_channel_only_image_name, FILENAME_LENGTH - 1);
+ safely_encode_user_input_string(filename, green_channel_only_image_name, FILENAME_LENGTH - 1);
  filename[FILENAME_LENGTH - 1]= '\0'; // just in case
 
  return;

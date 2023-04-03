@@ -219,6 +219,7 @@ int main() {
 
  FILE *datafile;
  char lightcurvefilename[OUTFILENAME_LENGTH];
+ char lightcurvefilename_local[OUTFILENAME_LENGTH];
 
  //int stop_iterations=0;
 
@@ -242,8 +243,10 @@ int main() {
   fprintf(stderr, "ERROR! Can't open file data.m_sigma(local_zeropoint_correction.c)\n");
   exit(1);
  }
- while( -1 < fscanf(datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename) )
+ while( -1 < fscanf(datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename_local) ) {
+  safely_encode_user_input_string(lightcurvefilename, lightcurvefilename_local, OUTFILENAME_LENGTH - 1);
   Nstars++;
+ }
  fclose(datafile);
  fprintf(stderr, "Number of stars in sysrem_input_star_list.lst %ld\n", Nstars);
  if( Nstars < 100 ) {

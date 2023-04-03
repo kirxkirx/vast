@@ -27,6 +27,8 @@
 
 #include "replace_file_with_symlink_if_filename_contains_white_spaces.h" // for cutout_green_channel_out_of_RGB_DSLR_image()
 
+#include "fitsfile_read_check.h" // for safely_encode_user_input_string()
+
 // Update PATH variable to make sure the local copy of SExtractor is there
 void make_sure_libbin_is_in_path() {
  char pathstring[8192];
@@ -44,6 +46,7 @@ void make_sure_libbin_is_in_path() {
 
 int find_catalog_in_vast_images_catalogs_log(char *fitsfilename, char *catalogfilename) {
  char fitsfilename_to_test[FILENAME_LENGTH];
+ char local_catalogfilename[FILENAME_LENGTH];
  FILE *f;
  f= fopen("vast_images_catalogs.log", "r");
  if( f == NULL ) {
@@ -51,23 +54,25 @@ int find_catalog_in_vast_images_catalogs_log(char *fitsfilename, char *catalogfi
   return 1; // not only this image has not been processed, even "vast_images_catalogs.log" is not created yet!
  }
  int found= 0;
- while( -1 < fscanf(f, "%s %s", catalogfilename, fitsfilename_to_test) )
+ while( -1 < fscanf(f, "%s %s", local_catalogfilename, fitsfilename_to_test) ) {
   if( 0 == strcmp(fitsfilename_to_test, fitsfilename) ) {
+   safely_encode_user_input_string(catalogfilename, local_catalogfilename, FILENAME_LENGTH-1);
    found= 1;
    break;
   }
+ }
  fclose(f);
  if( found == 0 ) {
   strcpy(catalogfilename, "image00000.cat");
   return 1; // it is possible that image00000.cat is referring to another image, so we'll recompute...
  }
- /* Check if the catalog already exist */
+ // Check if the catalog already exist 
  f= fopen(catalogfilename, "r");
- if( f == NULL )
+ if( f == NULL ) {
   return 1;
- else {
+ } else {
   fclose(f);
-  /* Check if default.sex was modified after catalog's creation*/
+  // Check if default.sex was modified after catalog's creation
   struct stat defSex;
   struct stat cat;
   stat("default.sex", &defSex);
@@ -95,8 +100,6 @@ double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, 
  char aperture_filename[FILENAME_LENGTH]; // this file simply stores the aperture size
  FILE *aperture_file;
 
- //int number_of_cpu_cores=N_FORK; // default
-
  int max_N_bad_regions_for_malloc;
  int N_bad_regions= 0;
  double *X1;
@@ -104,7 +107,6 @@ double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, 
  double *X2;
  double *Y2;
 
- // int pid= getpid();
  char sextractor_catalog_filename[FILENAME_LENGTH];
  char psf_filename[FILENAME_LENGTH];
 
@@ -190,7 +192,7 @@ double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, 
 
  sprintf(sextractor_messages_filename, "%s.sex_log", output_sextractor_catalog);
 
- /* Set fixed aperture size if we whant to use it */
+ // Set fixed aperture size if we whant to use one
  if( fixed_aperture != 0.0 ) {
   APERTURE= fixed_aperture;
   write_string_to_individual_image_log(output_sextractor_catalog, "autodetect_aperture(): ", "setting the user-specified fixed aperture", "");
