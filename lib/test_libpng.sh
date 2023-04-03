@@ -10,6 +10,13 @@ export LANGUAGE LC_ALL
 # Set the default result
 LIBPNG_OK=1
 
+# This should work if libpng is installed properly and GCC can find it
+LPNG_GCC_COMMAND_LINE_OPTION="-lpng"
+# If we are on mac - assume libpng is not installed properly
+if [ -d /opt/local/include/ ];then
+ LPNG_GCC_COMMAND_LINE_OPTION="-I/opt/local/include/ -L/opt/local/lib/ -lpng"
+fi
+
 # Write a simple program using libpng
 echo "#include <stdio.h>
 #include <math.h>
@@ -218,7 +225,7 @@ float *createMandelbrotImage(int width, int height, float xS, float yS, float ra
 
 # Compile it
 CC=`lib/find_gcc_compiler.sh`
-$CC -o makePNG makePNG.c -lpng -lm
+$CC -o makePNG makePNG.c $LPNG_GCC_COMMAND_LINE_OPTION -lm
 if [ $? != 0 ];then
  echo "
  WARNING: $CC cannot find libpng! The PNG plotting support will be disabled.
@@ -276,7 +283,7 @@ rm -rf lib/pgplot
 if [ $LIBPNG_OK -eq 1 ];then
  echo "libpng found and is working properly! :)" 1>&2
  cp -r lib/pgplot_with_libpng lib/pgplot
- echo "-lpng"
+ echo "$LPNG_GCC_COMMAND_LINE_OPTION"
 else
  echo "libpng is not found! PNG output disabled... :/" 1>&2
  cp -r lib/pgplot_without_libpng lib/pgplot

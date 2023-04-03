@@ -802,7 +802,7 @@ int main(int argc, char **argv) {
      strcpy(PGPLOT_CONTROL, "/CPS");
      xw_ps= 1;
      curC= 's';
-     cpgclos();
+     //cpgclos(); // seems to be not needed if the device was not open
      fprintf(stderr,"Retrying to open PGPLOT device %s\n", PGPLOT_CONTROL);
      pgplot_status= cpgopen(PGPLOT_CONTROL);
     }
