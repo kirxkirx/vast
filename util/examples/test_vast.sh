@@ -526,7 +526,7 @@ if [ -d ../DART_Didymos_moving_object_photometry_test ];then
  fi # check vast run success
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
   echo -e "\n\033[01;34mDART Didymos moving object photometry test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
@@ -885,7 +885,7 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
   echo -e "\n\033[01;34mSysRem test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
@@ -1725,7 +1725,7 @@ $GREP_RESULT"
   fi
 
   THIS_TEST_STOP_UNIXSEC=$(date +%s)
-  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
   # Make an overall conclusion for this test
   if [ $TEST_PASSED -eq 1 ];then
@@ -2334,7 +2334,7 @@ $GREP_RESULT"
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -2788,7 +2788,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -3258,7 +3258,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -3433,7 +3433,7 @@ if [ -d ../sample_data ];then
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -3508,7 +3508,7 @@ if [ -d ../sample_data ];then
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -3703,7 +3703,7 @@ $GREP_RESULT"
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -4146,7 +4146,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -4312,7 +4312,7 @@ $GREP_RESULT"
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -4446,7 +4446,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -4577,7 +4577,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -4708,7 +4708,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -4867,7 +4867,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -5009,7 +5009,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -5170,7 +5170,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -5330,7 +5330,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -5820,7 +5820,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -6320,7 +6320,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -6465,7 +6465,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -6605,7 +6605,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -6721,7 +6721,7 @@ $GREP_RESULT"
  done # for VAST_RUN in `seq 1 100` ;do
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -6955,7 +6955,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -7093,7 +7093,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -7236,7 +7236,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -7364,7 +7364,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -7495,7 +7495,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -7723,7 +7723,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -7951,7 +7951,7 @@ $GREP_RESULT"
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -8478,7 +8478,7 @@ $GREP_RESULT"
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -9020,7 +9020,7 @@ $GREP_RESULT"
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -9387,7 +9387,7 @@ $GREP_RESULT"
  #
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -9610,7 +9610,7 @@ $GREP_RESULT"
  #
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -9806,7 +9806,7 @@ $GREP_RESULT"
  #
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -10028,7 +10028,7 @@ $GREP_RESULT"
  #
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -10484,7 +10484,7 @@ $GREP_RESULT"
  #
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -10786,7 +10786,7 @@ $GREP_RESULT"
  #
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -11021,7 +11021,7 @@ $GREP_RESULT"
  #
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -11250,7 +11250,7 @@ $GREP_RESULT"
  #
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -11538,7 +11538,7 @@ $GREP_RESULT"
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -11891,7 +11891,7 @@ $GREP_RESULT"
  #
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -12114,7 +12114,7 @@ $GREP_RESULT"
  #
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -12506,7 +12506,7 @@ $GREP_RESULT"
  #
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -12771,7 +12771,7 @@ $GREP_RESULT"
  #
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -13259,7 +13259,7 @@ $GREP_RESULT2"
  #
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -13415,7 +13415,7 @@ if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  if [ $TEST_PASSED -eq 1 ];then
   echo -e "\n\033[01;34mNMW Vul2 exclusion list test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
@@ -13570,7 +13570,7 @@ $GREP_RESULT"
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -13663,7 +13663,7 @@ if [ -f ../individual_images_test/1630+3250.20150511T215921000.fit ];then
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -13733,7 +13733,7 @@ if [ -f ../individual_images_test/c176.fits ];then
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -13807,7 +13807,7 @@ if [ -f ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit 
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -13906,7 +13906,7 @@ if [ -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fi
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -14024,7 +14024,7 @@ $GREP_RESULT"
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -14117,7 +14117,7 @@ if [ -f ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits ];th
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -14209,7 +14209,7 @@ if [ -f ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits ];the
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -14254,7 +14254,7 @@ if [ -f ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits ];t
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -14322,7 +14322,7 @@ if [ -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -14391,7 +14391,7 @@ if [ -f ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -14457,7 +14457,7 @@ if [ -f ../individual_images_test/SCA13320__00_00.fits ];then
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -14510,7 +14510,7 @@ if [ -f ../individual_images_test/SCA13320__00_00__date_in_JDMID_keyword.fits ] 
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -14570,7 +14570,7 @@ $GREP_RESULT"
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -14703,7 +14703,7 @@ if [ -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.f
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -14831,7 +14831,7 @@ if [ -f ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.f
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -14949,7 +14949,7 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit ];then
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -15073,7 +15073,7 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit ];then
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -15191,7 +15191,7 @@ if [ -f ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -15303,7 +15303,7 @@ if [ -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits ]
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -15347,7 +15347,7 @@ if [ -d ../individual_images_test ];then
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -15386,7 +15386,7 @@ if [ -d ../individual_images_test ];then
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -15557,7 +15557,7 @@ if [ -d ../individual_images_test ];then
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -15621,7 +15621,7 @@ if [ -f ../individual_images_test/SCA13320__00_00.fits ];then
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -15665,7 +15665,7 @@ if [ -d ../vast_test__dark_flat_flag ];then
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  if [ $TEST_PASSED -eq 1 ];then
   echo -e "\n\033[01;34mDark Flat Flag test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
@@ -15763,7 +15763,7 @@ $GREP_RESULT"
  
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  if [ $TEST_PASSED -eq 1 ];then
   echo -e "\n\033[01;34mSpecial HST M4 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
@@ -15797,7 +15797,7 @@ $CAT_RESULT"
   fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
   if [ $TEST_PASSED -eq 1 ];then
    echo -e "\n\033[01;34mSpecial VB test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
@@ -15833,7 +15833,7 @@ $CAT_RESULT"
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  if [ $TEST_PASSED -eq 1 ];then
   echo -e "\n\033[01;34mSpecial VB test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
@@ -15874,7 +15874,7 @@ $GREP_RESULT"
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  if [ $TEST_PASSED -eq 1 ];then
   echo -e "\n\033[01;34mSpecial 61 Cyg test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
@@ -16213,7 +16213,7 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  if [ $TEST_PASSED -eq 1 ];then
   echo -e "\n\033[01;34mSpecial Nova Cas 2021 RC600 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
@@ -16256,7 +16256,7 @@ $GREP_RESULT"
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
   if [ $TEST_PASSED -eq 1 ];then
    echo -e "\n\033[01;34mSpecial NMW test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
@@ -16632,7 +16632,7 @@ if [ $? -eq 0 ];then
 
 
     THIS_TEST_STOP_UNIXSEC=$(date +%s)
-    THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+    THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
     # conclude
     if [ $TEST_PASSED -eq 1 ];then
@@ -16711,7 +16711,7 @@ if [ -d ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails 
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -16814,7 +16814,7 @@ C" | $(lib/find_timeout_command.sh) 10 sort --random-sort --random-source=/dev/u
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -16926,7 +16926,7 @@ fi # if random sort is supported
 
 
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
-THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
@@ -16986,7 +16986,7 @@ done
 
 
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
-THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
@@ -17062,7 +17062,7 @@ fi
 
 
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
-THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
@@ -17160,7 +17160,7 @@ fi
 
 
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
-THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
@@ -17444,7 +17444,7 @@ fi
 
 
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
-THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
@@ -17855,7 +17855,7 @@ $GREP_RESULT"
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -18008,7 +18008,7 @@ $GREP_RESULT"
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -18131,7 +18131,7 @@ $GREP_RESULT"
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -18304,7 +18304,7 @@ $GREP_RESULT"
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -18388,7 +18388,7 @@ fi
 
 
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
-THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
@@ -18524,7 +18524,7 @@ if [ $? -eq 0 ];then
  
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
  
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
@@ -18557,7 +18557,7 @@ fi
 
 
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
-THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
@@ -18942,7 +18942,7 @@ done
 
 
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
-THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
@@ -19162,7 +19162,7 @@ fi
 
 
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
-THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
@@ -19233,7 +19233,7 @@ fi
 
 
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
-THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
@@ -19288,7 +19288,7 @@ fi
 
 
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
-THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
@@ -19447,7 +19447,7 @@ if [ $? -eq 0 ];then
 
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min" ($1-$2)/60.0}')
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
