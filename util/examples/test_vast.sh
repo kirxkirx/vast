@@ -417,7 +417,10 @@ cat vast_test_report.txt > vast_test_incremental_list_of_failed_test_codes.txt
 ##### DART Didymos moving object photometry test #####
 if [ ! -d ../DART_Didymos_moving_object_photometry_test ];then
  cd ..
- wget -c "http://scan.sai.msu.ru/~kirx/pub/DART_Didymos_moving_object_photometry_test.tar.bz2" && tar -xjf DART_Didymos_moving_object_photometry_test.tar.bz2 && rm -f DART_Didymos_moving_object_photometry_test.tar.bz2
+ if [ -f DART_Didymos_moving_object_photometry_test.tar.bz2 ] ;then
+  rm -f DART_Didymos_moving_object_photometry_test.tar.bz2
+ fi
+ $(lib/find_timeout_command.sh) 300 wget -c "http://scan.sai.msu.ru/~kirx/pub/DART_Didymos_moving_object_photometry_test.tar.bz2" && tar -xjf DART_Didymos_moving_object_photometry_test.tar.bz2 && rm -f DART_Didymos_moving_object_photometry_test.tar.bz2
  cd $WORKDIR
 fi
 
@@ -539,7 +542,10 @@ remove_test_data_to_save_space
 ##### Check SysRem #####
 if [ ! -d ../NMW_And1_test_lightcurves_40 ];then
  cd ..
- wget -c "http://scan.sai.msu.ru/~kirx/pub/NMW_And1_test_lightcurves_40.tar.bz2" && tar -xjf NMW_And1_test_lightcurves_40.tar.bz2 && rm -f NMW_And1_test_lightcurves_40.tar.bz2
+ if [ -f NMW_And1_test_lightcurves_40.tar.bz2 ];then
+  rm -f NMW_And1_test_lightcurves_40.tar.bz2
+ fi
+ $(lib/find_timeout_command.sh) 300 wget -c "http://scan.sai.msu.ru/~kirx/pub/NMW_And1_test_lightcurves_40.tar.bz2" && tar -xjf NMW_And1_test_lightcurves_40.tar.bz2 && rm -f NMW_And1_test_lightcurves_40.tar.bz2
  cd $WORKDIR
 fi
 
@@ -6349,7 +6355,10 @@ fi
 # Download the test dataset if needed
 if [ ! -d ../vast_test_bright_stars_failed_match ];then
  cd ..
- wget -c "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
+ if [ -f vast_test_bright_stars_failed_match.tar.bz2 ];then
+  rm -f vast_test_bright_stars_failed_match.tar.bz2
+ fi
+ $(lib/find_timeout_command.sh) 300 wget -c "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -6487,7 +6496,10 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Download the test dataset if needed
 if [ ! -d ../vast_test_bright_stars_failed_match ];then
  cd ..
- wget -c "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
+ if [ -f vast_test_bright_stars_failed_match.tar.bz2 ];then
+  rm -f vast_test_bright_stars_failed_match.tar.bz2
+ fi
+ $(lib/find_timeout_command.sh) 300 wget -c "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -6624,7 +6636,10 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Download the test dataset if needed
 if [ ! -d ../vast_test_bright_stars_failed_match ];then
  cd ..
- wget -c "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
+ if [ -f vast_test_bright_stars_failed_match.tar.bz2 ];then
+  rm -f vast_test_bright_stars_failed_match.tar.bz2
+ fi
+ $(lib/find_timeout_command.sh) 300 wget -c "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -6968,10 +6983,15 @@ remove_test_data_to_save_space
 
 
 ##### MASTER images test #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../MASTER_test ];then
  cd ..
- wget -c "http://scan.sai.msu.ru/~kirx/pub/MASTER_test.tar.bz2" && tar -xvjf MASTER_test.tar.bz2 && rm -f MASTER_test.tar.bz2
+ if [ -f MASTER_test.tar.bz2 ];then
+  rm -f MASTER_test.tar.bz2
+ fi
+ $(lib/find_timeout_command.sh) 300 wget -c "http://scan.sai.msu.ru/~kirx/pub/MASTER_test.tar.bz2" && tar -xvjf MASTER_test.tar.bz2 && rm -f MASTER_test.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -7098,6 +7118,8 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 remove_test_data_to_save_space
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 ##########################################
 
 
@@ -7728,10 +7750,15 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 remove_test_data_to_save_space
 
 ##### test images by JB #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../test_exclude_ref_image ];then
  cd ..
- wget -c "http://scan.sai.msu.ru/~kirx/data/vast_tests/test_exclude_ref_image.tar.bz2" && tar -xvjf test_exclude_ref_image.tar.bz2 && rm -f test_exclude_ref_image.tar.bz2
+ if [ -f test_exclude_ref_image.tar.bz2 ];then
+  rm -f test_exclude_ref_image.tar.bz2
+ fi
+ $(lib/find_timeout_command.sh) 300 wget -c "http://scan.sai.msu.ru/~kirx/data/vast_tests/test_exclude_ref_image.tar.bz2" && tar -xvjf test_exclude_ref_image.tar.bz2 && rm -f test_exclude_ref_image.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -7949,6 +7976,8 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 remove_test_data_to_save_space
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 ##########################################
 
 
@@ -16385,22 +16414,26 @@ if [ $? -eq 0 ];then
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND012"
     fi
     #
-    cp default.sex.ccd_example default.sex
-    valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
-    lib/autodetect_aperture_main ../test_exclude_ref_image/lm01306trr7b0645.fits &> valgrind_test.out
-    if [ $? -ne 0 ];then
-     TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND013"
-    fi
-    grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
-     if [ $ERRORS -ne 0 ];then
-      echo "ERROR"
-      break
+    if [ -f ../test_exclude_ref_image/lm01306trr7b0645.fits ];then
+     cp default.sex.ccd_example default.sex
+     valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
+     lib/autodetect_aperture_main ../test_exclude_ref_image/lm01306trr7b0645.fits &> valgrind_test.out
+     if [ $? -ne 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND013"
      fi
-    done | grep --quiet 'ERROR'
-    if [ $? -eq 0 ];then
-     TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND014"
+     grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+      if [ $ERRORS -ne 0 ];then
+       echo "ERROR"
+       break
+      fi
+     done | grep --quiet 'ERROR'
+     if [ $? -eq 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND014"
+     fi
+    else
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND_missing_datafile_test_exclude_ref_image"
     fi
     #
     # Below is the real slow one
@@ -17850,6 +17883,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 
 
 ##### PSF-fitting of MASTER images test #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../MASTER_test ];then
  cd ..
@@ -18002,6 +18037,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Remove test data from the previous run if we are out of disk space
 #########################################
 remove_test_data_to_save_space
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 #
 
 # Download the test dataset if needed
