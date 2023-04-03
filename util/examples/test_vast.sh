@@ -429,7 +429,7 @@ if [ ! -d ../DART_Didymos_moving_object_photometry_test ];then
  if [ -f DART_Didymos_moving_object_photometry_test.tar.bz2 ] ;then
   rm -f DART_Didymos_moving_object_photometry_test.tar.bz2
  fi
- $(lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/pub/DART_Didymos_moving_object_photometry_test.tar.bz2" && tar -xjf DART_Didymos_moving_object_photometry_test.tar.bz2 && rm -f DART_Didymos_moving_object_photometry_test.tar.bz2
+ $($WORKDIR/lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/pub/DART_Didymos_moving_object_photometry_test.tar.bz2" && tar -xjf DART_Didymos_moving_object_photometry_test.tar.bz2 && rm -f DART_Didymos_moving_object_photometry_test.tar.bz2
  cd $WORKDIR
 fi
 
@@ -554,7 +554,7 @@ if [ ! -d ../NMW_And1_test_lightcurves_40 ];then
  if [ -f NMW_And1_test_lightcurves_40.tar.bz2 ];then
   rm -f NMW_And1_test_lightcurves_40.tar.bz2
  fi
- $(lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/pub/NMW_And1_test_lightcurves_40.tar.bz2" && tar -xjf NMW_And1_test_lightcurves_40.tar.bz2 && rm -f NMW_And1_test_lightcurves_40.tar.bz2
+ $($WORKDIR/lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/pub/NMW_And1_test_lightcurves_40.tar.bz2" && tar -xjf NMW_And1_test_lightcurves_40.tar.bz2 && rm -f NMW_And1_test_lightcurves_40.tar.bz2
  cd $WORKDIR
 fi
 
@@ -6351,7 +6351,7 @@ if [ ! -d ../vast_test_bright_stars_failed_match ];then
  if [ -f vast_test_bright_stars_failed_match.tar.bz2 ];then
   rm -f vast_test_bright_stars_failed_match.tar.bz2
  fi
- $(lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
+ $($WORKDIR/lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -6492,7 +6492,7 @@ if [ ! -d ../vast_test_bright_stars_failed_match ];then
  if [ -f vast_test_bright_stars_failed_match.tar.bz2 ];then
   rm -f vast_test_bright_stars_failed_match.tar.bz2
  fi
- $(lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
+ $($WORKDIR/lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -6632,7 +6632,7 @@ if [ ! -d ../vast_test_bright_stars_failed_match ];then
  if [ -f vast_test_bright_stars_failed_match.tar.bz2 ];then
   rm -f vast_test_bright_stars_failed_match.tar.bz2
  fi
- $(lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
+ $($WORKDIR/lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -6984,7 +6984,7 @@ if [ ! -d ../MASTER_test ];then
  if [ -f MASTER_test.tar.bz2 ];then
   rm -f MASTER_test.tar.bz2
  fi
- $(lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/pub/MASTER_test.tar.bz2" && tar -xvjf MASTER_test.tar.bz2 && rm -f MASTER_test.tar.bz2
+ $($WORKDIR/lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/pub/MASTER_test.tar.bz2" && tar -xvjf MASTER_test.tar.bz2 && rm -f MASTER_test.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
@@ -7751,7 +7751,7 @@ if [ ! -d ../test_exclude_ref_image ];then
  if [ -f test_exclude_ref_image.tar.bz2 ];then
   rm -f test_exclude_ref_image.tar.bz2
  fi
- $(lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/data/vast_tests/test_exclude_ref_image.tar.bz2" && tar -xvjf test_exclude_ref_image.tar.bz2 && rm -f test_exclude_ref_image.tar.bz2
+ $($WORKDIR/lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/data/vast_tests/test_exclude_ref_image.tar.bz2" && tar -xvjf test_exclude_ref_image.tar.bz2 && rm -f test_exclude_ref_image.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found

@@ -20,6 +20,8 @@ jobs:
       run: sudo port install gcc12 wget
     - name: Install X11 header files
       run: sudo port install xorg-libX11
+    - name: Install libpng
+      run: sudo port install libpng
     - name: make VaST
       run: make
     - name: prepare for the test
