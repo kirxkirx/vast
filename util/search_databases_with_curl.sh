@@ -84,7 +84,7 @@ fi
 
 echo "Searching databases for object $RA $DEC"
 
-# Thest if curl is installed
+# Test if curl is installed
 CURL=`command -v curl`
 if [ $? -ne 0 ];then
  echo " "
