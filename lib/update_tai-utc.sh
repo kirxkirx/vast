@@ -80,4 +80,4 @@ fi
   exit 1
  fi
  mv -v tai-utc.dat.new lib/tai-utc.dat && touch lib/tai-utc.dat
-fi
+#fi

@@ -38,15 +38,21 @@ for i in "$NEW_IMAGES"/*_002.fit ;do
  #echo $FIELD
  #exit # !!!
  # check if all images are actually there
- if [ ! -f $REFERENCE_IMAGES/*$FIELD*_002.fit ];then 
+ FILE_TO_TEST=$(ls $REFERENCE_IMAGES/*$FIELD*_002.fit | head -n1)
+ #if [ ! -f $REFERENCE_IMAGES/*$FIELD*_002.fit ];then 
+ if [ ! -f "$FILE_TO_TEST" ];then
   echo "Script ERROR! Cannot find image $REFERENCE_IMAGES/*$FIELD*_002.fit"
   continue
  fi
- if [ ! -f $NEW_IMAGES/*$FIELD*_001.fit ];then 
+ FILE_TO_TEST=$(ls $NEW_IMAGES/*$FIELD*_001.fit | head -n1)
+ #if [ ! -f $NEW_IMAGES/*$FIELD*_001.fit ];then 
+ if [ ! -f "$FILE_TO_TEST" ];then
   echo "Script ERROR! Cannot find image $NEW_IMAGES/*$FIELD*_001.fit"
   continue
  fi
- if [ ! -f $NEW_IMAGES/*$FIELD*_002.fit ];then 
+ FILE_TO_TEST=$(ls $NEW_IMAGES/*$FIELD*_002.fit | head -n1)
+ #if [ ! -f $NEW_IMAGES/*$FIELD*_002.fit ];then 
+ if [ ! -f "$FILE_TO_TEST" ];then
   echo "Script ERROR! Cannot find image $NEW_IMAGES/*$FIELD*_002.fit"
   continue
  fi

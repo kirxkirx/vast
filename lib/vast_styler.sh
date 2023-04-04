@@ -55,7 +55,7 @@ fi
 
 SRC_FOLDER="$VAST_PATH"src
 EXCLUDE_FOLDER=\(-path './cfitsio/*' -o -path './fitsverify/*' -o - path './gsl/*' -o -path './pgplot*' -o -path './sextractor-2.19.5/*' -o -path './sextractor-2.25.2_fix_disable_model_fitting/*' -o -path './wcstools-3.9.6/*' -o -path './astcheck/*'\)
-FORMAT_FILES=`find "${SRC_FOLDER}" -type f "${EXCLUDE_FOLDER}" -prune -name "*.c" -o -name "*.h"
+FORMAT_FILES=`find "${SRC_FOLDER}" -type f "${EXCLUDE_FOLDER}" -prune -name "*.c" -o -name "*.h"`
 
 for FILE_TO_FORMAT in $FORMAT_FILES
 do

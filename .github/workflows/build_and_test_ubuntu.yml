@@ -16,9 +16,15 @@ jobs:
         run: sudo apt-get install gfortran
       - name: Install ghostscript
         run: sudo apt-get install ghostscript
+      - name: Install shellcheck
+        run: sudo apt-get install shellcheck
       - name: make VaST
         run: make
-      - name: prepare for the test
+      - name: Syntax-check the test script
+        run: bash -n util/examples/test_vast.sh
+      - name: Syntax-check the NMW transient search script
+        run: bash -n util/transients/transient_factory_test31.sh
+      - name: Prepare for the test
         run: echo "1" > ../THIS_IS_HPCC 
-      - name: test VaST
+      - name: Test VaST
         run: util/examples/test_vast.sh

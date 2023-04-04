@@ -422,6 +422,71 @@ echo "---------- $VAST_VERSION_STRING test results ----------" >> vast_test_repo
 # (this list is useful if you cancel the test before it completes)
 cat vast_test_report.txt > vast_test_incremental_list_of_failed_test_codes.txt
 
+##### Syntax-check VaST shell scripts #####
+THIS_TEST_START_UNIXSEC=$(date +%s)
+TEST_PASSED=1
+
+# Run the test
+echo "Syntax-check VaST shell scripts " 1>&2
+echo -n "Syntax-check VaST shell scripts: " >> vast_test_report.txt 
+
+# First, use BASH itself to run the check
+for i in lib/*sh ;do /usr/bin/env bash -n $i ;done
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SYNTAX_CHECK_FAILED_LIB"  
+fi
+for i in util/*sh ;do /usr/bin/env bash -n $i ;done
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SYNTAX_CHECK_FAILED_UTIL"  
+fi
+for i in util/transients/*sh ;do /usr/bin/env bash -n $i ;done
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SYNTAX_CHECK_FAILED_UTIL_TRANSIENTS"  
+fi
+
+# Second, if shellcheck is installed - use it
+command -v shellcheck &> /dev/null
+if [ $? -eq 0 ];then
+for i in lib/*sh ;do shellcheck --severity=error $i ;done
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SHELLCHECK_FAILED_LIB"  
+ fi
+ for i in util/*sh ;do shellcheck --severity=error $i ;done
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SHELLCHECK_FAILED_UTIL"  
+ fi
+ for i in util/transients/*sh ;do shellcheck --severity=error $i ;done
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SHELLCHECK_FAILED_UTIL_TRANSIENTS"  
+ fi 
+fi
+
+
+THIS_TEST_STOP_UNIXSEC=$(date +%s)
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+# Make an overall conclusion for this test
+if [ $TEST_PASSED -eq 1 ];then
+ echo -e "\n\033[01;34mSyntax-check VaST shell scripts \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+else
+ echo -e "\n\033[01;34mSyntax-check VaST shell scripts \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+fi
+# If the syntax-check fails - don't bother with the other tests - exit now
+if [ $TEST_PASSED -eq 0 ];then
+ echo "Script syntax check failed!" 1>&2
+ echo "Script syntax check failed!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ exit 1
+fi
+
 
 ##### DART Didymos moving object photometry test #####
 if [ ! -d ../DART_Didymos_moving_object_photometry_test ];then
@@ -7518,6 +7583,7 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 
+
 ##### Images with only few stars and a brigh galaxy by S. Nazarov test #####
 # Download the test dataset if needed
 if [ ! -d ../only_few_stars ];then
@@ -7747,7 +7813,10 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 #
 remove_test_data_to_save_space
 
+
 ##### test images by JB #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../test_exclude_ref_image ];then
  cd ..
@@ -13294,6 +13363,7 @@ if [ $? -ne 0 ];then
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
+
 
 
 ############# NMW exclusion list #############
