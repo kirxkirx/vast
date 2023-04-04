@@ -36,101 +36,99 @@
 // INFINITY and NAN are undeclared in the older versions of GCC
 // if this is the case - define them using GCC builtin functions
 #ifndef INFINITY
-#define INFINITY (__builtin_inf())
+#define INFINITY ( __builtin_inf() )
 #endif
 
 #ifndef NAN
-#define NAN (__builtin_nan(""))
+#define NAN ( __builtin_nan( "" ) )
 #endif
 
+void bin_log_power_spectrum_points_and_write_to_file( double *x, double *y, double *z, int num_points, int num_bins ) {
+ double min_x= INFINITY, max_x= -INFINITY;
+ double *bin_log10x_sums= calloc( num_bins, sizeof( double ) );
+ double *bin_log10x_means= calloc( num_bins, sizeof( double ) );
+ double *bin_log10y_sums= calloc( num_bins, sizeof( double ) );
+ double *bin_log10y_means= calloc( num_bins, sizeof( double ) );
+ double *bin_log10z_sums= calloc( num_bins, sizeof( double ) );
+ double *bin_log10z_means= calloc( num_bins, sizeof( double ) );
+ int *bin_counts= calloc( num_bins, sizeof( int ) );
+ int i;
 
+ // Find the minimum and maximum values of x
+ for ( i= 0; i < num_points; i++ ) {
+  if ( x[i] < min_x ) {
+   min_x= x[i];
+  }
+  if ( x[i] > max_x ) {
+   max_x= x[i];
+  }
+ }
 
-void bin_log_power_spectrum_points_and_write_to_file(double *x, double *y, double *z, int num_points, int num_bins) {
-    double min_x = INFINITY, max_x = -INFINITY;
-    double *bin_log10x_sums = calloc(num_bins, sizeof(double));
-    double *bin_log10x_means = calloc(num_bins, sizeof(double));
-    double *bin_log10y_sums = calloc(num_bins, sizeof(double));
-    double *bin_log10y_means = calloc(num_bins, sizeof(double));
-    double *bin_log10z_sums = calloc(num_bins, sizeof(double));
-    double *bin_log10z_means = calloc(num_bins, sizeof(double));
-    int *bin_counts = calloc(num_bins, sizeof(int));
-    int i;
+ // Compute the bin width in log space
+ double log_min_x= log10( min_x );
+ double log_max_x= log10( max_x );
+ double log_bin_width= ( log_max_x - log_min_x ) / num_bins;
 
-    // Find the minimum and maximum values of x
-    for (i = 0; i < num_points; i++) {
-        if (x[i] < min_x) {
-            min_x = x[i];
-        }
-        if (x[i] > max_x) {
-            max_x = x[i];
-        }
-    }
+ // Bin the points
+ for ( i= 0; i < num_points; i++ ) {
+  double log_x= log10( x[i] );
+  int bin_index= (int)( ( log_x - log_min_x ) / log_bin_width );
+  if ( bin_index < 0 ) {
+   bin_index= 0;
+  }
+  if ( bin_index >= num_bins ) {
+   bin_index= num_bins - 1;
+  }
+  bin_log10x_sums[bin_index]+= log10( x[i] );
+  bin_log10y_sums[bin_index]+= log10( y[i] );
+  bin_log10z_sums[bin_index]+= log10( z[i] );
+  bin_counts[bin_index]++;
+ }
 
-    // Compute the bin width in log space
-    double log_min_x = log10(min_x);
-    double log_max_x = log10(max_x);
-    double log_bin_width = (log_max_x - log_min_x) / num_bins;
+ // Compute the mean log10(y) for each bin
+ for ( i= 0; i < num_bins; i++ ) {
+  if ( bin_counts[i] > 0 ) {
+   bin_log10x_means[i]= bin_log10x_sums[i] / bin_counts[i];
+   bin_log10y_means[i]= bin_log10y_sums[i] / bin_counts[i];
+   bin_log10z_means[i]= bin_log10z_sums[i] / bin_counts[i];
+  } else {
+   bin_log10x_means[i]= NAN;
+   bin_log10y_means[i]= NAN;
+   bin_log10z_means[i]= NAN;
+  }
+ }
 
-    // Bin the points
-    for (i = 0; i < num_points; i++) {
-        double log_x = log10(x[i]);
-        int bin_index = (int)((log_x - log_min_x) / log_bin_width);
-        if (bin_index < 0) {
-            bin_index = 0;
-        }
-        if (bin_index >= num_bins) {
-            bin_index = num_bins - 1;
-        }
-        bin_log10x_sums[bin_index] += log10(x[i]);
-        bin_log10y_sums[bin_index] += log10(y[i]);
-        bin_log10z_sums[bin_index] += log10(z[i]);
-        bin_counts[bin_index]++;
-    }
+ FILE *binned_powerspectrum_file= fopen( "binned_powerspectrum.periodogram", "w" );
+ if ( NULL == binned_powerspectrum_file ) {
+  fprintf( stderr, "ERROR opening file binned_powerspectrum.periodogram for writing! \n" );
+  return;
+ }
 
-    // Compute the mean log10(y) for each bin
-    for (i = 0; i < num_bins; i++) {
-        if (bin_counts[i] > 0) {
-            bin_log10x_means[i] = bin_log10x_sums[i] / bin_counts[i];
-            bin_log10y_means[i] = bin_log10y_sums[i] / bin_counts[i];
-            bin_log10z_means[i] = bin_log10z_sums[i] / bin_counts[i];
-        } else {
-            bin_log10x_means[i] = NAN;
-            bin_log10y_means[i] = NAN;
-            bin_log10z_means[i] = NAN;
-        }
-    }
-    
-    FILE * binned_powerspectrum_file= fopen("binned_powerspectrum.periodogram", "w");
-    if( NULL == binned_powerspectrum_file ) {
-     fprintf(stderr, "ERROR opening file binned_powerspectrum.periodogram for writing! \n");
-     return;
-    }
-    
-    for (i = 0; i < num_bins; i++) {
-     if( 0 == isnan(bin_log10x_means[i]) && 0 == isnan(bin_log10y_means[i]) ){
-      fprintf(binned_powerspectrum_file, "%lg  %lg  %lg\n", bin_log10x_means[i], bin_log10y_means[i], bin_log10z_means[i]);
-     }
-    }
+ for ( i= 0; i < num_bins; i++ ) {
+  if ( 0 == isnan( bin_log10x_means[i] ) && 0 == isnan( bin_log10y_means[i] ) ) {
+   fprintf( binned_powerspectrum_file, "%lg  %lg  %lg\n", bin_log10x_means[i], bin_log10y_means[i], bin_log10z_means[i] );
+  }
+ }
 
-    fclose(binned_powerspectrum_file);
+ fclose( binned_powerspectrum_file );
 
-    free(bin_log10x_sums);
-    free(bin_log10x_means);
-    free(bin_log10y_sums);
-    free(bin_log10y_means);
-    free(bin_log10z_sums);
-    free(bin_log10z_means);
-    free(bin_counts);
+ free( bin_log10x_sums );
+ free( bin_log10x_means );
+ free( bin_log10y_sums );
+ free( bin_log10y_means );
+ free( bin_log10z_sums );
+ free( bin_log10z_means );
+ free( bin_counts );
 }
 
-void get_min_max(double *x, unsigned long N, double *min, double *max) {
+void get_min_max( double *x, unsigned long N, double *min, double *max ) {
  unsigned long i;
- (*min)= (*max)= x[0];
- for( i= 1; i < N; i++ ) {
-  if( x[i] < (*min) )
-   (*min)= x[i];
-  if( x[i] > (*max) )
-   (*max)= x[i];
+ ( *min )= ( *max )= x[0];
+ for ( i= 1; i < N; i++ ) {
+  if ( x[i] < ( *min ) )
+   ( *min )= x[i];
+  if ( x[i] > ( *max ) )
+   ( *max )= x[i];
  }
  return;
 }
@@ -140,112 +138,111 @@ unsigned long int random_seed() {
  struct timeval tv;
  FILE *devrandom;
 
- if( (devrandom= fopen("/dev/random", "r")) == NULL ) {
-  gettimeofday(&tv, 0);
+ if ( ( devrandom= fopen( "/dev/random", "r" ) ) == NULL ) {
+  gettimeofday( &tv, 0 );
   seed= tv.tv_sec + tv.tv_usec;
-  fprintf(stderr, "Got seed %u from gettimeofday()\n", seed);
+  fprintf( stderr, "Got seed %u from gettimeofday()\n", seed );
  } else {
-  if( 0 != fread(&seed, sizeof(seed), 1, devrandom) )
-   fprintf(stderr, "Got seed %u from /dev/random\n", seed);
+  if ( 0 != fread( &seed, sizeof( seed ), 1, devrandom ) )
+   fprintf( stderr, "Got seed %u from /dev/random\n", seed );
   else {
-   fprintf(stderr, "ERROR setting the random seed!\n");
-   exit(1);
+   fprintf( stderr, "ERROR setting the random seed!\n" );
+   exit( 1 );
   }
-  fclose(devrandom);
+  fclose( devrandom );
  }
 
- return (seed);
+ return ( seed );
 }
 
-void compute_LS(double *jd, double *m, unsigned long N_obs, double f, double *LS_Power) {
+void compute_LS( double *jd, double *m, unsigned long N_obs, double f, double *LS_Power ) {
  unsigned long i;
  double ReF, ImF, C, S, angle;
- 
+
  double t, tau;
 
  double ReF2, ImF2;
- 
- double mean,sigma_squared;
+
+ double mean, sigma_squared;
 
  // Compute tau:  Eq. (34) of 2018ApJS..236...16V
  ReF= ImF= 0.0;
- for( i= N_obs; i--; ) {
+ for ( i= N_obs; i--; ) {
   // not sure if we should bother subtracting jd[0], but I'm afraid of large numbers
   t= jd[i] - jd[0];
   angle= FOURPI * f * t;
 #ifdef VAST_USE_SINCOS
-  sincos(angle, &S, &C);
+  sincos( angle, &S, &C );
 #else
-  C= cos(angle);
-  S= sin(angle);
+  C= cos( angle );
+  S= sin( angle );
 #endif
   ImF+= S;
   ReF+= C;
  }
- tau= 1.0/(FOURPI * f) * atan2( ImF, ReF);
+ tau= 1.0 / ( FOURPI * f ) * atan2( ImF, ReF );
  //
 
  // Compute LS Power:  Eq. (33) of 2018ApJS..236...16V
  ReF2= ImF2= ReF= ImF= 0.0;
- //for(i=0;i<N_obs;i++){
- for( i= N_obs; i--; ) {
-  
+ // for(i=0;i<N_obs;i++){
+ for ( i= N_obs; i--; ) {
+
   // not sure if we should bother subtracting jd[0], but I'm afraid of large numbers
   t= jd[i] - jd[0];
-  angle= TWOPI * f * (t - tau);
+  angle= TWOPI * f * ( t - tau );
 #ifdef VAST_USE_SINCOS
-  sincos(angle, &S, &C);
+  sincos( angle, &S, &C );
 #else
-  C= cos(angle);
-  S= sin(angle);
+  C= cos( angle );
+  S= sin( angle );
 #endif
   ReF+= m[i] * C;
   ImF+= m[i] * S;
-  ReF2+= C*C;
-  ImF2+= S*S;
+  ReF2+= C * C;
+  ImF2+= S * S;
  }
- 
+
  // This how the LS periodogram is normalized in Eq. (10) of 1982ApJ...263..835S and Eq. (33) of 2018ApJS..236...16V
  // This is also astropy's 'psd' normalization when no errors are supplied.
- //(*LS_Power)= 0.5 * ( ReF*ReF/ReF2 + ImF*ImF/ImF2 ); 
+ //(*LS_Power)= 0.5 * ( ReF*ReF/ReF2 + ImF*ImF/ImF2 );
  //
- // "Numerical recipes in C" 1992nrca.book.....P Eq. (13.8.4) shows that the above thing should be divided by 
+ // "Numerical recipes in C" 1992nrca.book.....P Eq. (13.8.4) shows that the above thing should be divided by
  // the variance of the data to get the normalization that can be used as the input of FAP calculations.
  // The same is reported by 1986ApJ...302..757H
  //
  // Actually, mean should be 0,0 as it only make sence to run the LS computation on the mean-subtracted lightcurve!
  // We compute it here just for the sake of completeness.
  mean= 0.0;
- for( i= N_obs; i--; ) {
+ for ( i= N_obs; i--; ) {
   mean+= m[i];
  }
- mean= mean/(double)N_obs;
+ mean= mean / (double)N_obs;
  sigma_squared= 0.0;
- for( i= N_obs; i--; ) {
-  sigma_squared+= (m[i] - mean) * (m[i] - mean);
+ for ( i= N_obs; i--; ) {
+  sigma_squared+= ( m[i] - mean ) * ( m[i] - mean );
  }
- sigma_squared= sigma_squared/(double)(N_obs-1);
- (*LS_Power)= 1.0/(2.0*sigma_squared) * ( ReF*ReF/ReF2 + ImF*ImF/ImF2 );
+ sigma_squared= sigma_squared / (double)( N_obs - 1 );
+ ( *LS_Power )= 1.0 / ( 2.0 * sigma_squared ) * ( ReF * ReF / ReF2 + ImF * ImF / ImF2 );
  //
 
  return;
 }
 
-
-void compute_DFT(double *jd, double *m, unsigned long N_obs, double f, double *DFT, double T_DFT) {
+void compute_DFT( double *jd, double *m, unsigned long N_obs, double f, double *DFT, double T_DFT ) {
  unsigned long i;
  double ReF, ImF, C, S, angle, dN_obs;
 
  ReF= ImF= 0.0;
- //for(i=0;i<N_obs;i++){
- for( i= N_obs; i--; ) {
-  angle= TWOPI * f * (jd[i] - jd[0]);
+ // for(i=0;i<N_obs;i++){
+ for ( i= N_obs; i--; ) {
+  angle= TWOPI * f * ( jd[i] - jd[0] );
 // not sure if we should bother subtracting jd[0], but I'm afraid of large numbers
 #ifdef VAST_USE_SINCOS
-  sincos(angle, &S, &C);
+  sincos( angle, &S, &C );
 #else
-  C= cos(angle);
-  S= sin(angle);
+  C= cos( angle );
+  S= sin( angle );
 #endif
   ReF+= m[i] * C;
   ImF+= m[i] * S;
@@ -256,57 +253,57 @@ void compute_DFT(double *jd, double *m, unsigned long N_obs, double f, double *D
  // The multiplicative factor is a normalization, such that the integral
  // from f_i to f_f is equal to the variance contributed to the light curve
  // in this frequency range.
- (*DFT)= 2.0 * T_DFT / (dN_obs * dN_obs) * (ReF * ReF + ImF * ImF);
+ ( *DFT )= 2.0 * T_DFT / ( dN_obs * dN_obs ) * ( ReF * ReF + ImF * ImF );
 
  return;
 }
 
-void normalize_spectral_window_file(unsigned long N_freq, char *periodogramfilename) {
+void normalize_spectral_window_file( unsigned long N_freq, char *periodogramfilename ) {
 
  // Normilize window function
 
  FILE *periodogramfile;
 
- double *freq= malloc(N_freq * sizeof(double));
- double *theta= malloc(N_freq * sizeof(double));
- double *window= malloc(N_freq * sizeof(double));
+ double *freq= malloc( N_freq * sizeof( double ) );
+ double *theta= malloc( N_freq * sizeof( double ) );
+ double *window= malloc( N_freq * sizeof( double ) );
 
  double max_F, max_W, max_F_to_max_W;
 
  unsigned long i;
 
- periodogramfile= fopen(periodogramfilename, "r");
- if( NULL==periodogramfile ){
-  fprintf(stderr,"ERROR in normalize_spectral_window_file(): cannot open file %s\n", periodogramfilename);
+ periodogramfile= fopen( periodogramfilename, "r" );
+ if ( NULL == periodogramfile ) {
+  fprintf( stderr, "ERROR in normalize_spectral_window_file(): cannot open file %s\n", periodogramfilename );
  }
  i= 0;
- while( -1 < fscanf(periodogramfile, "%lf %lf %lf", &freq[i], &theta[i], &window[i]) )
+ while ( -1 < fscanf( periodogramfile, "%lf %lf %lf", &freq[i], &theta[i], &window[i] ) )
   i++;
- fclose(periodogramfile);
+ fclose( periodogramfile );
  max_F= theta[0];
  max_W= window[0];
- for( i= 0; i < N_freq; i++ ) {
-  if( max_F < theta[i] )
+ for ( i= 0; i < N_freq; i++ ) {
+  if ( max_F < theta[i] )
    max_F= theta[i];
-  if( max_W < window[i] )
+  if ( max_W < window[i] )
    max_W= window[i];
  }
  max_F_to_max_W= max_F / max_W;
- periodogramfile= fopen(periodogramfilename, "w");
- for( i= 0; i < N_freq; i++ ) {
+ periodogramfile= fopen( periodogramfilename, "w" );
+ for ( i= 0; i < N_freq; i++ ) {
   window[i]= window[i] * max_F_to_max_W;
-  fprintf(periodogramfile, "%5.10lf %5.10lf %5.10lf\n", freq[i], theta[i], window[i]);
+  fprintf( periodogramfile, "%5.10lf %5.10lf %5.10lf\n", freq[i], theta[i], window[i] );
  }
- fclose(periodogramfile);
+ fclose( periodogramfile );
 
- free(freq);
- free(theta);
- free(window);
+ free( freq );
+ free( theta );
+ free( window );
 
  return;
 }
 
-void normalize_spectral_window_arrays(double *theta, double *window, unsigned long N_freq) {
+void normalize_spectral_window_arrays( double *theta, double *window, unsigned long N_freq ) {
 
  // Normilize window function
 
@@ -316,68 +313,67 @@ void normalize_spectral_window_arrays(double *theta, double *window, unsigned lo
 
  max_F= theta[0];
  max_W= window[0];
- for( i= 0; i < N_freq; i++ ) {
-  if( max_F < theta[i] )
+ for ( i= 0; i < N_freq; i++ ) {
+  if ( max_F < theta[i] )
    max_F= theta[i];
-  if( max_W < window[i] )
+  if ( max_W < window[i] )
    max_W= window[i];
  }
 
  max_F_to_max_W= max_F / max_W;
 
- for( i= 0; i < N_freq; i++ ) {
+ for ( i= 0; i < N_freq; i++ ) {
   window[i]= window[i] * max_F_to_max_W;
  }
 
  return;
 }
-
 
 struct Obs {
  float phase;
  unsigned long n;
 };
 
-static int compare_phases(const void *obs11, const void *obs22) {
+static int compare_phases( const void *obs11, const void *obs22 ) {
  struct Obs *obs1= (struct Obs *)obs11;
  struct Obs *obs2= (struct Obs *)obs22;
- if( obs1->phase < obs2->phase )
+ if ( obs1->phase < obs2->phase )
   return -1;
  return 1;
 }
 
-double compute_LK_reciprocal_theta(double *jd, double *m, unsigned long N_obs, double f, double M) {
+double compute_LK_reciprocal_theta( double *jd, double *m, unsigned long N_obs, double f, double M ) {
  unsigned long i;
- struct Obs *obs= malloc(N_obs * sizeof(struct Obs));
+ struct Obs *obs= malloc( N_obs * sizeof( struct Obs ) );
  double sum1, sum2;
  double jdi_over_period;
 
- for( sum2= 0.0, i= 0; i < N_obs; i++ ) {
-  jdi_over_period= (jd[i] - jd[0]) * f;
-  obs[i].phase= (float)(jdi_over_period - (double)(int)(jdi_over_period));
-  if( obs[i].phase < 0.0 )
+ for ( sum2= 0.0, i= 0; i < N_obs; i++ ) {
+  jdi_over_period= ( jd[i] - jd[0] ) * f;
+  obs[i].phase= (float)( jdi_over_period - (double)(int)( jdi_over_period ) );
+  if ( obs[i].phase < 0.0 )
    obs[i].phase+= 1.0;
-  obs[i].n= i;                    // index
-  sum2+= (m[i] - M) * (m[i] - M); // yeah, I know it is silly to repeat this calculation every time the funtion is called
+  obs[i].n= i;                        // index
+  sum2+= ( m[i] - M ) * ( m[i] - M ); // yeah, I know it is silly to repeat this calculation every time the funtion is called
  }
 
- qsort(obs, N_obs, sizeof(struct Obs), compare_phases);
+ qsort( obs, N_obs, sizeof( struct Obs ), compare_phases );
 
- for( sum1= 0.0, i= 1; i < N_obs; i++ ) {
-  sum1+= (m[obs[i].n] - m[obs[i - 1].n]) * (m[obs[i].n] - m[obs[i - 1].n]);
+ for ( sum1= 0.0, i= 1; i < N_obs; i++ ) {
+  sum1+= ( m[obs[i].n] - m[obs[i - 1].n] ) * ( m[obs[i].n] - m[obs[i - 1].n] );
  }
  // Consider also the N+1 case!!!
- sum1+= (m[obs[0].n] - m[obs[N_obs - 1].n]) * (m[obs[0].n] - m[obs[N_obs - 1].n]);
+ sum1+= ( m[obs[0].n] - m[obs[N_obs - 1].n] ) * ( m[obs[0].n] - m[obs[N_obs - 1].n] );
 
- free(obs);
+ free( obs );
 
  return sum2 / sum1; // 1.0/theta;
 }
 
-int main(int argc, char **argv) {
+int main( int argc, char **argv ) {
 
- if( argc < 4 ) {
-  fprintf(stderr, "Usage:\n Search for the best period\n  %s lightcurve.dat Pmax Pmin Step\n or search for the best period AND estimeate it's significance through lightcurve shuffling\n  %s lightcurve.dat Pmax Pmin Step Niterations\n", argv[0], argv[0]);
+ if ( argc < 4 ) {
+  fprintf( stderr, "Usage:\n Search for the best period\n  %s lightcurve.dat Pmax Pmin Step\n or search for the best period AND estimeate it's significance through lightcurve shuffling\n  %s lightcurve.dat Pmax Pmin Step Niterations\n", argv[0], argv[0] );
   return 1;
  }
 
@@ -386,55 +382,55 @@ int main(int argc, char **argv) {
  FILE *DFT_periodogramfile= NULL;
  FILE *LS_periodogramfile= NULL;
 
- double pmax= atof(argv[2]);
- double pmin= atof(argv[3]);
- double step= atof(argv[4]);
+ double pmax= atof( argv[2] );
+ double pmin= atof( argv[3] );
+ double step= atof( argv[4] );
  double tmp_period_shuffle;
 
  // Range check
- if( pmax <= 0.0 ) {
-  fprintf(stderr, "ERROR: pmax should be > 0\n");
+ if ( pmax <= 0.0 ) {
+  fprintf( stderr, "ERROR: pmax should be > 0\n" );
   return 1;
  }
- if( pmin <= 0.0 ) {
-  fprintf(stderr, "ERROR: pmin should be > 0\n");
+ if ( pmin <= 0.0 ) {
+  fprintf( stderr, "ERROR: pmin should be > 0\n" );
   return 1;
  }
- if( pmin == pmax ) {
-  fprintf(stderr, "ERROR: pmax should be > pmin\n");
+ if ( pmin == pmax ) {
+  fprintf( stderr, "ERROR: pmax should be > pmin\n" );
   return 1;
  }
- if( pmin > pmax ) {
-  //fprintf(stderr,"WARNING: pmax should be > pmin, assuming the input order is mixed-up\n");
+ if ( pmin > pmax ) {
+  // fprintf(stderr,"WARNING: pmax should be > pmin, assuming the input order is mixed-up\n");
   tmp_period_shuffle= pmax;
   pmax= pmin;
   pmin= tmp_period_shuffle;
  }
- if( step <= 0.0 ) {
-  fprintf(stderr, "ERROR: the phase step should be > 0\n");
+ if ( step <= 0.0 ) {
+  fprintf( stderr, "ERROR: the phase step should be > 0\n" );
   return 1;
  }
- if( step > 0.5 ) {
-  fprintf(stderr, "ERROR: the phase step should be < 0.5\n");
+ if ( step > 0.5 ) {
+  fprintf( stderr, "ERROR: the phase step should be < 0.5\n" );
   return 1;
  }
 
  int shuffle_iteration;
  int shuffle_iterations= 0;
- if( argc == 6 ) {
-  shuffle_iterations= atoi(argv[5]);
+ if ( argc == 6 ) {
+  shuffle_iterations= atoi( argv[5] );
   // Check range!
-  if( shuffle_iterations < 0 ) {
-   fprintf(stderr, "ERROR: the number of shuffle iteration cannot be <0\n");
+  if ( shuffle_iterations < 0 ) {
+   fprintf( stderr, "ERROR: the number of shuffle iteration cannot be <0\n" );
    return 1;
   }
-  if( shuffle_iterations > 1000000 ) {
-   fprintf(stderr, "ERROR: the number of shuffle iteration cannot be >1000000\n");
+  if ( shuffle_iterations > 1000000 ) {
+   fprintf( stderr, "ERROR: the number of shuffle iteration cannot be >1000000\n" );
    return 1;
   }
  }
- if( shuffle_iterations > 0 )
-  fprintf(stderr, "Lightcurve shuffle iterations: %d\n", shuffle_iterations);
+ if ( shuffle_iterations > 0 )
+  fprintf( stderr, "Lightcurve shuffle iterations: %d\n", shuffle_iterations );
 
  double fmin; //=1.0/pmax;
  double fmax; //=1.0/pmin;
@@ -491,92 +487,92 @@ int main(int argc, char **argv) {
  const gsl_rng_type *RNG_TYPE;
  gsl_rng *r= NULL;
  // if we'll be shuffling the lightcurve
- if( shuffle_iterations > 0 ) {
+ if ( shuffle_iterations > 0 ) {
   // create a generator chosen by the
   //  environment variable GSL_RNG_TYPE
   gsl_rng_env_setup();
   RNG_TYPE= gsl_rng_default;
-  r= gsl_rng_alloc(RNG_TYPE);
-  gsl_rng_set(r, random_seed()); // set random seed
+  r= gsl_rng_alloc( RNG_TYPE );
+  gsl_rng_set( r, random_seed() ); // set random seed
  }
  // done RNG initialization
 
  // Select operation mode
  // Use all methods by default
  int compute_LombScargle= 1; // 1 - yes, 0 - no
- int compute_Deeming= 1; // 1 - yes, 0 - no
- int compute_LK= 1;      // 1 - yes, 0 - no
- if( 0 == strcmp("deeming_compute_periodogram", basename(argv[0])) ) {
+ int compute_Deeming= 1;     // 1 - yes, 0 - no
+ int compute_LK= 1;          // 1 - yes, 0 - no
+ if ( 0 == strcmp( "deeming_compute_periodogram", basename( argv[0] ) ) ) {
   // Only Deeming
-  compute_LombScargle= 0;      // 1 - yes, 0 - no
-  compute_Deeming= 1; // 1 - yes, 0 - no
-  compute_LK= 0;      // 1 - yes, 0 - no
+  compute_LombScargle= 0; // 1 - yes, 0 - no
+  compute_Deeming= 1;     // 1 - yes, 0 - no
+  compute_LK= 0;          // 1 - yes, 0 - no
  }
- if( 0 == strcmp("lk_compute_periodogram", basename(argv[0])) ) {
+ if ( 0 == strcmp( "lk_compute_periodogram", basename( argv[0] ) ) ) {
   // Only LK
-  compute_LombScargle= 0;      // 1 - yes, 0 - no
-  compute_Deeming= 0; // 1 - yes, 0 - no
-  compute_LK= 1;      // 1 - yes, 0 - no
+  compute_LombScargle= 0; // 1 - yes, 0 - no
+  compute_Deeming= 0;     // 1 - yes, 0 - no
+  compute_LK= 1;          // 1 - yes, 0 - no
  }
- if( 0 == strcmp("ls_compute_periodogram", basename(argv[0])) ) {
+ if ( 0 == strcmp( "ls_compute_periodogram", basename( argv[0] ) ) ) {
   // Only LombScargle
-  compute_LombScargle= 1;      // 1 - yes, 0 - no
-  compute_Deeming= 0; // 1 - yes, 0 - no
-  compute_LK= 0;      // 1 - yes, 0 - no
+  compute_LombScargle= 1; // 1 - yes, 0 - no
+  compute_Deeming= 0;     // 1 - yes, 0 - no
+  compute_LK= 0;          // 1 - yes, 0 - no
  }
  //
 
  // Read the input lightcurve file
- lcfile= fopen(argv[1], "r");
- if( lcfile == NULL ) {
-  fprintf(stderr, "ERROR opening the lightcurve file %s\n", argv[1]);
+ lcfile= fopen( argv[1], "r" );
+ if ( lcfile == NULL ) {
+  fprintf( stderr, "ERROR opening the lightcurve file %s\n", argv[1] );
   return 1;
  }
 
  // Get the number of lines in the input file
  N_obs= 0;
- for( N_obs= 1;; N_obs++ ) {
+ for ( N_obs= 1;; N_obs++ ) {
   // the file cannot be of infinite length, right?!
-  if( NULL == fgets(temporary_string_for_line_counter, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lcfile) ) {
+  if ( NULL == fgets( temporary_string_for_line_counter, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lcfile ) ) {
    break;
   }
-  if( N_obs == ULONG_MAX ) {
-   fprintf(stderr, "ERROR: too many lines in the input file >%d\n", MAX_NUMBER_OF_OBSERVATIONS);
+  if ( N_obs == ULONG_MAX ) {
+   fprintf( stderr, "ERROR: too many lines in the input file >%d\n", MAX_NUMBER_OF_OBSERVATIONS );
    return 1;
   } // just in case it is infinite length
-/*
-  // Why would we need that?!
-  if( N_obs == MAX_NUMBER_OF_OBSERVATIONS ) {
-   fprintf(stderr, "ERROR: too many lines in the input file >%d\n", MAX_NUMBER_OF_OBSERVATIONS);
-   return 1;
-  } // just in case it is infinite length
-*/
+    /*
+      // Why would we need that?!
+      if( N_obs == MAX_NUMBER_OF_OBSERVATIONS ) {
+       fprintf(stderr, "ERROR: too many lines in the input file >%d\n", MAX_NUMBER_OF_OBSERVATIONS);
+       return 1;
+      } // just in case it is infinite length
+    */
  }
- fseek(lcfile, 0, SEEK_SET); // go back to the beginning of the lightcurve file
- jd= malloc(N_obs * sizeof(double));
- if( jd == NULL ) {
-  fprintf(stderr, "ERROR: allocating memory for the jd array!\n");
-  fclose(lcfile);
+ fseek( lcfile, 0, SEEK_SET ); // go back to the beginning of the lightcurve file
+ jd= malloc( N_obs * sizeof( double ) );
+ if ( jd == NULL ) {
+  fprintf( stderr, "ERROR: allocating memory for the jd array!\n" );
+  fclose( lcfile );
   return 1;
  }
- m= malloc(N_obs * sizeof(double));
- if( m == NULL ) {
-  fprintf(stderr, "ERROR: allocating memory for the m array!\n");
-  fclose(lcfile);
+ m= malloc( N_obs * sizeof( double ) );
+ if ( m == NULL ) {
+  fprintf( stderr, "ERROR: allocating memory for the m array!\n" );
+  fclose( lcfile );
   return 1;
  }
- if( compute_Deeming == 1 || compute_LombScargle == 1 ) {
+ if ( compute_Deeming == 1 || compute_LombScargle == 1 ) {
   // if this is one iteration and the Deeming or LombScargle method is to be used - we'll also need the spectral window
-  if( shuffle_iterations == 0 ) {
-   m_fake= malloc(N_obs * sizeof(double));
-   if( m_fake == NULL ) {
-    fprintf(stderr, "ERROR: allocating memory for the m_fake array!\n");
-    fclose(lcfile);
+  if ( shuffle_iterations == 0 ) {
+   m_fake= malloc( N_obs * sizeof( double ) );
+   if ( m_fake == NULL ) {
+    fprintf( stderr, "ERROR: allocating memory for the m_fake array!\n" );
+    fclose( lcfile );
     return 1;
    }
    // Initialize the fake array for computing the window function
-   //for(i=0;i<N_obs;i++){
-   for( i= N_obs; i--; ) {
+   // for(i=0;i<N_obs;i++){
+   for ( i= N_obs; i--; ) {
     m_fake[i]= 1.0;
    }
    // And if it'll turn out that we have a bit less observations than N_obs - not a big problem
@@ -584,21 +580,21 @@ int main(int argc, char **argv) {
  }
 
  N_obs= 0; // re-compute N_obs as not all lines in the input file might actually contain observations
- while( -1 < read_lightcurve_point(lcfile, &jd[N_obs], &m[N_obs], &merr, &x, &y, &app, string, NULL) ) {
-  if( jd[N_obs] == 0.0 )
+ while ( -1 < read_lightcurve_point( lcfile, &jd[N_obs], &m[N_obs], &merr, &x, &y, &app, string, NULL ) ) {
+  if ( jd[N_obs] == 0.0 )
    continue;
   N_obs++;
  }
- fclose(lcfile);
+ fclose( lcfile );
 
- if( N_obs < 5 ) {
-  fprintf(stderr, "ERROR: too few observations in the input lightcurve: %ld<5 \n", N_obs);
-  free(m);
-  free(jd);
+ if ( N_obs < 5 ) {
+  fprintf( stderr, "ERROR: too few observations in the input lightcurve: %ld<5 \n", N_obs );
+  free( m );
+  free( jd );
   //
-  if( compute_Deeming == 1 || compute_LombScargle == 1 ) {
-   if( shuffle_iterations == 0 ) {
-    free(m_fake);
+  if ( compute_Deeming == 1 || compute_LombScargle == 1 ) {
+   if ( shuffle_iterations == 0 ) {
+    free( m_fake );
    }
   }
   //
@@ -609,14 +605,14 @@ int main(int argc, char **argv) {
  // http://scan.sai.msu.ru/lk/
  // that does sorting
  // We might have a problem here on 32bit systems where size_t is unsigned int if N_obs is very large
- gsl_sort2(jd, (size_t)1, m, (size_t)1, (size_t)N_obs);
+ gsl_sort2( jd, (size_t)1, m, (size_t)1, (size_t)N_obs );
  // also for the stuff below we need the sorted lightcurve
  // f_Nyq = N/2T_DFT is the Nyquist frequency as defined in 2014MNRAS.445..437M
- T_DFT= (double)N_obs * (jd[N_obs - 1] - jd[0]) / (double)(N_obs - 1);
+ T_DFT= (double)N_obs * ( jd[N_obs - 1] - jd[0] ) / (double)( N_obs - 1 );
  // we compute T_DFT once here and then pass to compute_DFT()
  // so we don't need to recompute it every time
 
- get_min_max(jd, N_obs, &jdmin, &jdmax);
+ get_min_max( jd, N_obs, &jdmin, &jdmax );
  T= jdmax - jdmin;
 
  fmin= 1.0 / pmax;
@@ -625,9 +621,9 @@ int main(int argc, char **argv) {
  // WARNING! Here we assume that the input period range is OK
  // Get number of frequencies in the spectrum
  df= step / T;
- N_freq= (unsigned long)((fmax - fmin) / df + 0.5);
- //fprintf(stderr,"df=%lg N_freq=%ld\n",df,N_freq);
- //exit(1);
+ N_freq= (unsigned long)( ( fmax - fmin ) / df + 0.5 );
+ // fprintf(stderr,"df=%lg N_freq=%ld\n",df,N_freq);
+ // exit(1);
  /*
  // Well this doesn't work
  df=step/(pmax-pmin);
@@ -635,42 +631,42 @@ int main(int argc, char **argv) {
  */
 
  // compute mean magnitude (M) here
- for( M= 0.0, i= 0; i < N_obs; i++ ) {
+ for ( M= 0.0, i= 0; i < N_obs; i++ ) {
   M+= m[i];
  }
  M= M / (double)N_obs;
  // subtract mean magnitude
- for( i= 0; i < N_obs; i++ ) {
+ for ( i= 0; i < N_obs; i++ ) {
   m[i]-= M;
  }
 
- freq= malloc(N_freq * sizeof(double));
- if( compute_LombScargle == 1 ) {
-  power_LS= malloc(N_freq * sizeof(double));
+ freq= malloc( N_freq * sizeof( double ) );
+ if ( compute_LombScargle == 1 ) {
+  power_LS= malloc( N_freq * sizeof( double ) );
  }
- if( compute_Deeming == 1 ) {
-  power= malloc(N_freq * sizeof(double));
+ if ( compute_Deeming == 1 ) {
+  power= malloc( N_freq * sizeof( double ) );
  }
- if( compute_Deeming == 1 ) {
-  if( shuffle_iterations == 0 ) {
-   spectral_window= malloc(N_freq * sizeof(double));
+ if ( compute_Deeming == 1 ) {
+  if ( shuffle_iterations == 0 ) {
+   spectral_window= malloc( N_freq * sizeof( double ) );
   }
  }
- if( compute_LombScargle == 1 ) {
-  if( shuffle_iterations == 0 ) {
-   spectral_window_LS= malloc(N_freq * sizeof(double));
+ if ( compute_LombScargle == 1 ) {
+  if ( shuffle_iterations == 0 ) {
+   spectral_window_LS= malloc( N_freq * sizeof( double ) );
   }
  }
- if( compute_LK == 1 ) {
-  theta= malloc(N_freq * sizeof(double));
+ if ( compute_LK == 1 ) {
+  theta= malloc( N_freq * sizeof( double ) );
  }
 
  // +1 as we always want at least one iteration - the run at the original non-shuffled lightcurve
- for( shuffle_iteration= 0; shuffle_iteration < shuffle_iterations + 1; shuffle_iteration++ ) {
+ for ( shuffle_iteration= 0; shuffle_iteration < shuffle_iterations + 1; shuffle_iteration++ ) {
 
   // If this is not the first iteration - shuffle the lightcurve
-  if( shuffle_iteration != 0 ) {
-   gsl_ran_shuffle(r, m, N_obs, sizeof(double));
+  if ( shuffle_iteration != 0 ) {
+   gsl_ran_shuffle( r, m, N_obs, sizeof( double ) );
   }
 
   /*
@@ -683,25 +679,25 @@ int main(int argc, char **argv) {
 // Main loop in frequency
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
-#pragma omp parallel for private(i)
+#pragma omp parallel for private( i )
 #endif
 #endif
-  for( i= 0; i < N_freq; i++ ) {
+  for ( i= 0; i < N_freq; i++ ) {
    freq[i]= fmin + i * df;
-   if( compute_LombScargle == 1 ) {
-    compute_LS(jd, m, N_obs, freq[i], &power_LS[i]);
-    if( shuffle_iterations == 0 ) {
-     compute_LS(jd, m_fake, N_obs, freq[i], &spectral_window_LS[i]);
+   if ( compute_LombScargle == 1 ) {
+    compute_LS( jd, m, N_obs, freq[i], &power_LS[i] );
+    if ( shuffle_iterations == 0 ) {
+     compute_LS( jd, m_fake, N_obs, freq[i], &spectral_window_LS[i] );
     }
    }
-   if( compute_Deeming == 1 ) {
-    compute_DFT(jd, m, N_obs, freq[i], &power[i], T_DFT);
-    if( shuffle_iterations == 0 ) {
-     compute_DFT(jd, m_fake, N_obs, freq[i], &spectral_window[i], T_DFT);
+   if ( compute_Deeming == 1 ) {
+    compute_DFT( jd, m, N_obs, freq[i], &power[i], T_DFT );
+    if ( shuffle_iterations == 0 ) {
+     compute_DFT( jd, m_fake, N_obs, freq[i], &spectral_window[i], T_DFT );
     }
    }
-   if( compute_LK == 1 ) {
-    theta[i]= compute_LK_reciprocal_theta(jd, m, N_obs, freq[i], 0.0); // mean mag is always 0.0 as we subtracted it from the LC
+   if ( compute_LK == 1 ) {
+    theta[i]= compute_LK_reciprocal_theta( jd, m, N_obs, freq[i], 0.0 ); // mean mag is always 0.0 as we subtracted it from the LC
    }
   }
 
@@ -709,98 +705,98 @@ int main(int argc, char **argv) {
   LK_periodogram_max= 0.0;
   LS_periodogram_max= 0.0;
   // This part is not parrallell for simplicity
-  //for(i=0;i<N_freq;i++){
-  for( i= N_freq; i--; ) {
-   if( compute_LombScargle == 1 ) {
-    if( power_LS[i] >= LS_periodogram_max ) {
+  // for(i=0;i<N_freq;i++){
+  for ( i= N_freq; i--; ) {
+   if ( compute_LombScargle == 1 ) {
+    if ( power_LS[i] >= LS_periodogram_max ) {
      LS_periodogram_max= power_LS[i];
      LS_periodogram_max_freq= freq[i];
     }
    }
-   if( compute_Deeming == 1 ) {
-    if( power[i] >= DFT_periodogram_max ) {
+   if ( compute_Deeming == 1 ) {
+    if ( power[i] >= DFT_periodogram_max ) {
      DFT_periodogram_max= power[i];
      DFT_periodogram_max_freq= freq[i];
     }
    }
-   if( compute_LK == 1 ) {
-    if( theta[i] >= LK_periodogram_max ) {
+   if ( compute_LK == 1 ) {
+    if ( theta[i] >= LK_periodogram_max ) {
      LK_periodogram_max= theta[i];
      LK_periodogram_max_freq= freq[i];
     }
    }
   }
 
-  if( shuffle_iteration == 0 ) {
+  if ( shuffle_iteration == 0 ) {
    // If this is the first (or the only shuffle iteration)
-   if( compute_LombScargle == 1 ) {
+   if ( compute_LombScargle == 1 ) {
     noshuffle_LS_periodogram_max_freq= LS_periodogram_max_freq;
     noshuffle_LS_periodogram_max= LS_periodogram_max;
    }
-   if( compute_Deeming == 1 ) {
+   if ( compute_Deeming == 1 ) {
     noshuffle_DFT_periodogram_max_freq= DFT_periodogram_max_freq;
     noshuffle_DFT_periodogram_max= DFT_periodogram_max;
    }
-   if( compute_LK == 1 ) {
+   if ( compute_LK == 1 ) {
     noshuffle_LK_periodogram_max_freq= LK_periodogram_max_freq;
     noshuffle_LK_periodogram_max= LK_periodogram_max;
    }
   } else {
    // If this is not the first iteration
-   if( compute_LombScargle == 1 ) {
-    if( LS_periodogram_max >= noshuffle_LS_periodogram_max ) {
+   if ( compute_LombScargle == 1 ) {
+    if ( LS_periodogram_max >= noshuffle_LS_periodogram_max ) {
      LS_shuffled_peak_counter++;
     }
    }
-   if( compute_Deeming == 1 ) {
-    if( DFT_periodogram_max >= noshuffle_DFT_periodogram_max ) {
+   if ( compute_Deeming == 1 ) {
+    if ( DFT_periodogram_max >= noshuffle_DFT_periodogram_max ) {
      DFT_shuffled_peak_counter++;
     }
    }
-   if( compute_LK == 1 ) {
-    if( LK_periodogram_max >= noshuffle_LK_periodogram_max ) {
+   if ( compute_LK == 1 ) {
+    if ( LK_periodogram_max >= noshuffle_LK_periodogram_max ) {
      LK_shuffled_peak_counter++;
     }
    }
   }
 
-  if( shuffle_iteration > 0 ) {
-   if( compute_LombScargle == 1 ) {
+  if ( shuffle_iteration > 0 ) {
+   if ( compute_LombScargle == 1 ) {
     LS_p= (double)LS_shuffled_peak_counter / (double)shuffle_iteration;
-    fprintf(stderr, " LS: %.6lf +/- %.6lf  %5d out of %5d peaks are above the original highest peak of %.6lf (current peak: %.6lf ); %5d iterations\n", LS_p, sqrt((double)LS_shuffled_peak_counter) / (double)shuffle_iteration, LS_shuffled_peak_counter, shuffle_iteration, noshuffle_LS_periodogram_max, LS_periodogram_max, shuffle_iterations);
+    fprintf( stderr, " LS: %.6lf +/- %.6lf  %5d out of %5d peaks are above the original highest peak of %.6lf (current peak: %.6lf ); %5d iterations\n", LS_p, sqrt( (double)LS_shuffled_peak_counter ) / (double)shuffle_iteration, LS_shuffled_peak_counter, shuffle_iteration, noshuffle_LS_periodogram_max, LS_periodogram_max, shuffle_iterations );
    }
-   if( compute_Deeming == 1 ) {
+   if ( compute_Deeming == 1 ) {
     DFT_p= (double)DFT_shuffled_peak_counter / (double)shuffle_iteration;
-    fprintf(stderr, "DFT: %.6lf +/- %.6lf  %5d out of %5d peaks are above the original highest peak of %.6lf (current peak: %.6lf ); %5d iterations\n", DFT_p, sqrt((double)DFT_shuffled_peak_counter) / (double)shuffle_iteration, DFT_shuffled_peak_counter, shuffle_iteration, noshuffle_DFT_periodogram_max, DFT_periodogram_max, shuffle_iterations);
+    fprintf( stderr, "DFT: %.6lf +/- %.6lf  %5d out of %5d peaks are above the original highest peak of %.6lf (current peak: %.6lf ); %5d iterations\n", DFT_p, sqrt( (double)DFT_shuffled_peak_counter ) / (double)shuffle_iteration, DFT_shuffled_peak_counter, shuffle_iteration, noshuffle_DFT_periodogram_max, DFT_periodogram_max, shuffle_iterations );
    }
-   if( compute_LK == 1 ) {
+   if ( compute_LK == 1 ) {
     LK_p= (double)LK_shuffled_peak_counter / (double)shuffle_iteration;
-    fprintf(stderr, " LK: %.6lf +/- %.6lf  %5d out of %5d peaks are above the original highest peak of %.6lf (current peak: %.6lf ); %5d iterations\n", LK_p, sqrt((double)LK_shuffled_peak_counter) / (double)shuffle_iteration, LK_shuffled_peak_counter, shuffle_iteration, noshuffle_LK_periodogram_max, LK_periodogram_max, shuffle_iterations);
+    fprintf( stderr, " LK: %.6lf +/- %.6lf  %5d out of %5d peaks are above the original highest peak of %.6lf (current peak: %.6lf ); %5d iterations\n", LK_p, sqrt( (double)LK_shuffled_peak_counter ) / (double)shuffle_iteration, LK_shuffled_peak_counter, shuffle_iteration, noshuffle_LK_periodogram_max, LK_periodogram_max, shuffle_iterations );
    }
   }
 
  } // for(shuffle_iteration=0;shuffle_iteration<shuffle_iterations;shuffle_iteration++){
 
  // if we've ben shuffling the lightcurve
- if( shuffle_iterations > 0 ) {
-  gsl_rng_free(r); // RNG de-allocation
+ if ( shuffle_iterations > 0 ) {
+  gsl_rng_free( r ); // RNG de-allocation
  }
 
- free(jd);
- free(m);
+ free( jd );
+ free( m );
 
  // Print out the results
  /////////////////5.1750108489 23.627805 LS  FAP=
- fprintf(stdout, "Peak_Freq(c/d) Power Type  Notes\n");
- if( compute_LombScargle == 1 ) {
-  fprintf(stdout, "%.10lf %lf", noshuffle_LS_periodogram_max_freq, noshuffle_LS_periodogram_max);
-  if( shuffle_iterations > 0 )
-   fprintf(stdout, "  %lf +/- %lf", LS_p, sqrt((double)LS_shuffled_peak_counter) / (double)shuffle_iterations);
-  //fprintf(stdout, " LS\n");
-  // naively estimate FAP
-  // estimate the number of independent frequencies
+ fprintf( stdout, "Peak_Freq(c/d) Power Type  Notes\n" );
+ if ( compute_LombScargle == 1 ) {
+  fprintf( stdout, "%.10lf %lf", noshuffle_LS_periodogram_max_freq, noshuffle_LS_periodogram_max );
+  if ( shuffle_iterations > 0 )
+   fprintf( stdout, "  %lf +/- %lf", LS_p, sqrt( (double)LS_shuffled_peak_counter ) / (double)shuffle_iterations );
+  // fprintf(stdout, " LS\n");
+  //  naively estimate FAP
+  //  estimate the number of independent frequencies
   df= 1.0 / T;
-  unsigned long N_freq_presumably_independent= ( unsigned long )( ( fmax - fmin ) / df + 0.5 );
+  unsigned long N_freq_presumably_independent= (unsigned long)( ( fmax - fmin ) / df + 0.5 );
   // update the estimated number of independent frequencies following the shaman ritual of Schwarzenberg-Czerny (2003), Sec. 5.3
   // https://ui.adsabs.harvard.edu/abs/2003ASPC..292..383S/abstract
   if ( N_freq_presumably_independent > N_freq ) {
@@ -813,112 +809,112 @@ int main(int argc, char **argv) {
   // https://ui.adsabs.harvard.edu/abs/1986ApJ...302..757H/abstract
   double N_freq_presumably_independent__HorneBaliunas_style= -6.362 + 1.193 * N_obs + 0.00098 * N_obs * N_obs;
   // compute FAP
-  double FAP_single= exp(-1.0*noshuffle_LS_periodogram_max);
+  double FAP_single= exp( -1.0 * noshuffle_LS_periodogram_max );
   double Psingle= 1.0 - FAP_single;
-  double FAP= 1.0 - pow(Psingle, (double)N_freq_presumably_independent);
-  double FAP__HorneBaliunas_style= 1.0 - pow(Psingle, N_freq_presumably_independent__HorneBaliunas_style);
+  double FAP= 1.0 - pow( Psingle, (double)N_freq_presumably_independent );
+  double FAP__HorneBaliunas_style= 1.0 - pow( Psingle, N_freq_presumably_independent__HorneBaliunas_style );
   //
-//  fprintf(stdout, " LS  FAP= %lg for %ld presumably independent frequencies (FAP_single_freq= %lg )\n", FAP, N_freq_presumably_independent, FAP_single);
-//  fprintf(stdout, " LS  FAP_HB= %lg for %lg presumably independent frequencies (FAP_single_freq= %lg )\n", FAP__HorneBaliunas_style, N_freq_presumably_independent__HorneBaliunas_style, FAP_single);
- 
-  fprintf(stdout, 
-" LS  FAP= %lg for %ld presumably independent frequencies computed Schwarzenberg-Czerny (2003) style, \
+  //  fprintf(stdout, " LS  FAP= %lg for %ld presumably independent frequencies (FAP_single_freq= %lg )\n", FAP, N_freq_presumably_independent, FAP_single);
+  //  fprintf(stdout, " LS  FAP_HB= %lg for %lg presumably independent frequencies (FAP_single_freq= %lg )\n", FAP__HorneBaliunas_style, N_freq_presumably_independent__HorneBaliunas_style, FAP_single);
+
+  fprintf( stdout,
+           " LS  FAP= %lg for %ld presumably independent frequencies computed Schwarzenberg-Czerny (2003) style, \
 FAP_HB= %lg for %lg presumably independent frequencies computed Horne & Baliunas (1986) style \
-(FAP_single_freq= %lg )\n", 
-           FAP, N_freq_presumably_independent, 
-           FAP__HorneBaliunas_style, N_freq_presumably_independent__HorneBaliunas_style, 
-           FAP_single);
+(FAP_single_freq= %lg )\n",
+           FAP, N_freq_presumably_independent,
+           FAP__HorneBaliunas_style, N_freq_presumably_independent__HorneBaliunas_style,
+           FAP_single );
 
   //
  }
- if( compute_Deeming == 1 ) {
-  fprintf(stdout, "%.10lf %lf", noshuffle_DFT_periodogram_max_freq, noshuffle_DFT_periodogram_max);
-  if( shuffle_iterations > 0 )
-   fprintf(stdout, "  %lf +/- %lf", DFT_p, sqrt((double)DFT_shuffled_peak_counter) / (double)shuffle_iterations);
-  fprintf(stdout, " DFT\n");
+ if ( compute_Deeming == 1 ) {
+  fprintf( stdout, "%.10lf %lf", noshuffle_DFT_periodogram_max_freq, noshuffle_DFT_periodogram_max );
+  if ( shuffle_iterations > 0 )
+   fprintf( stdout, "  %lf +/- %lf", DFT_p, sqrt( (double)DFT_shuffled_peak_counter ) / (double)shuffle_iterations );
+  fprintf( stdout, " DFT\n" );
  }
- if( compute_LK == 1 ) {
-  fprintf(stdout, "%.10lf %lf", noshuffle_LK_periodogram_max_freq, noshuffle_LK_periodogram_max);
-  if( shuffle_iterations > 0 )
-   fprintf(stdout, "  %lf +/- %lf", LK_p, sqrt((double)LK_shuffled_peak_counter) / (double)shuffle_iterations);
-  fprintf(stdout, " LK\n");
+ if ( compute_LK == 1 ) {
+  fprintf( stdout, "%.10lf %lf", noshuffle_LK_periodogram_max_freq, noshuffle_LK_periodogram_max );
+  if ( shuffle_iterations > 0 )
+   fprintf( stdout, "  %lf +/- %lf", LK_p, sqrt( (double)LK_shuffled_peak_counter ) / (double)shuffle_iterations );
+  fprintf( stdout, " LK\n" );
  }
 
- if( shuffle_iterations == 0 ) {
+ if ( shuffle_iterations == 0 ) {
   // Write the output files
-  if( compute_LK == 1 ) {
-   LK_periodogramfile= fopen("lk.periodogram", "w");
-   if( NULL == LK_periodogramfile ) {
-    fprintf(stderr, "ERROR writing lk.periodogram\n");
+  if ( compute_LK == 1 ) {
+   LK_periodogramfile= fopen( "lk.periodogram", "w" );
+   if ( NULL == LK_periodogramfile ) {
+    fprintf( stderr, "ERROR writing lk.periodogram\n" );
     return 1;
    }
   }
-  if( compute_Deeming == 1 ) {
-   DFT_periodogramfile= fopen("deeming.periodogram", "w");
-   if( NULL == DFT_periodogramfile ) {
-    fprintf(stderr, "ERROR  writing deeming.periodogram\n");
+  if ( compute_Deeming == 1 ) {
+   DFT_periodogramfile= fopen( "deeming.periodogram", "w" );
+   if ( NULL == DFT_periodogramfile ) {
+    fprintf( stderr, "ERROR  writing deeming.periodogram\n" );
     return 1;
    }
    // Normalize spectral window to the highest point of power spectrum
-   normalize_spectral_window_arrays( power, spectral_window, N_freq);
+   normalize_spectral_window_arrays( power, spectral_window, N_freq );
    //
   }
-  if( compute_LombScargle == 1 ) {
-   LS_periodogramfile= fopen("ls.periodogram", "w");
-   if( NULL == LS_periodogramfile ) {
-    fprintf(stderr, "ERROR  writing ls.periodogram\n");
+  if ( compute_LombScargle == 1 ) {
+   LS_periodogramfile= fopen( "ls.periodogram", "w" );
+   if ( NULL == LS_periodogramfile ) {
+    fprintf( stderr, "ERROR  writing ls.periodogram\n" );
     return 1;
    }
   }
-  for( i= 0; i < N_freq; i++ ) {
-   if( compute_LK == 1 )
-    fprintf(LK_periodogramfile, "%5.10lf %5.10lf\n", freq[i], theta[i]);
-   if( compute_Deeming == 1 )
-    fprintf(DFT_periodogramfile, "%5.10lf %5.10lf %5.10lf\n", freq[i], power[i], spectral_window[i]);
-   if( compute_LombScargle == 1 )
-    fprintf(LS_periodogramfile, "%5.10lf %5.10lf %5.10lf\n", freq[i], power_LS[i], spectral_window_LS[i]);
+  for ( i= 0; i < N_freq; i++ ) {
+   if ( compute_LK == 1 )
+    fprintf( LK_periodogramfile, "%5.10lf %5.10lf\n", freq[i], theta[i] );
+   if ( compute_Deeming == 1 )
+    fprintf( DFT_periodogramfile, "%5.10lf %5.10lf %5.10lf\n", freq[i], power[i], spectral_window[i] );
+   if ( compute_LombScargle == 1 )
+    fprintf( LS_periodogramfile, "%5.10lf %5.10lf %5.10lf\n", freq[i], power_LS[i], spectral_window_LS[i] );
   }
-  if( compute_LK == 1 ) {
-   fclose(LK_periodogramfile);
+  if ( compute_LK == 1 ) {
+   fclose( LK_periodogramfile );
   }
-  if( compute_Deeming == 1 ) {
-   fclose(DFT_periodogramfile);
+  if ( compute_Deeming == 1 ) {
+   fclose( DFT_periodogramfile );
    // We don't care if we didn't compute spectral window
-   //normalize_spectral_window_file(N_freq, "deeming.periodogram");
+   // normalize_spectral_window_file(N_freq, "deeming.periodogram");
    // Write the binned power spectrum
-   bin_log_power_spectrum_points_and_write_to_file(freq, power, spectral_window, N_freq, 20);   
+   bin_log_power_spectrum_points_and_write_to_file( freq, power, spectral_window, N_freq, 20 );
    //
   }
-  if( compute_LombScargle == 1 ) {
-   fclose(LS_periodogramfile);
+  if ( compute_LombScargle == 1 ) {
+   fclose( LS_periodogramfile );
    // We don't care if we didn't compute spectral window
-   normalize_spectral_window_file(N_freq, "ls.periodogram");
+   normalize_spectral_window_file( N_freq, "ls.periodogram" );
   }
  }
 
- free(freq);
- if( compute_LK == 1 ) {
-  free(theta);
+ free( freq );
+ if ( compute_LK == 1 ) {
+  free( theta );
  }
- if( compute_Deeming == 1 ) {
-  free(power);
+ if ( compute_Deeming == 1 ) {
+  free( power );
  }
- if( compute_LombScargle == 1 ) {
-  free(power_LS);
+ if ( compute_LombScargle == 1 ) {
+  free( power_LS );
  }
- if( compute_Deeming == 1 || compute_LombScargle == 1 ) {
-  if( shuffle_iterations == 0 ) {
-   free(m_fake);
+ if ( compute_Deeming == 1 || compute_LombScargle == 1 ) {
+  if ( shuffle_iterations == 0 ) {
+   free( m_fake );
   }
  }
- if( compute_Deeming == 1 ) {
-  if( shuffle_iterations == 0 ) {
-   free(spectral_window);
+ if ( compute_Deeming == 1 ) {
+  if ( shuffle_iterations == 0 ) {
+   free( spectral_window );
   }
  }
- if( compute_LombScargle == 1 ) {
-  if( shuffle_iterations == 0 ) {
-   free(spectral_window_LS);
+ if ( compute_LombScargle == 1 ) {
+  if ( shuffle_iterations == 0 ) {
+   free( spectral_window_LS );
   }
  }
 

@@ -11,7 +11,7 @@
 // Author: Lakshay Garg <lakshayg@outlook.in>
 // Date: Jun 28, 2017
 
-double erfinv(double x) {
+double erfinv( double x ) {
 
  /*
   if (x < -1 || x > 1) {
@@ -79,29 +79,29 @@ double erfinv(double x) {
  const double F6= 2.010321207683943062279931e-7;
  const double F7= 2.891024605872965461538222e-15;
 
- double abs_x= fabs(x);
+ double abs_x= fabs( x );
 
- if( abs_x <= 0.85 ) {
+ if ( abs_x <= 0.85 ) {
   double r= 0.180625 - 0.25 * x * x;
-  double num= (((((((A7 * r + A6) * r + A5) * r + A4) * r + A3) * r + A2) * r + A1) * r + A0);
-  double den= (((((((B7 * r + B6) * r + B5) * r + B4) * r + B3) * r + B2) * r + B1) * r + B0);
+  double num= ( ( ( ( ( ( ( A7 * r + A6 ) * r + A5 ) * r + A4 ) * r + A3 ) * r + A2 ) * r + A1 ) * r + A0 );
+  double den= ( ( ( ( ( ( ( B7 * r + B6 ) * r + B5 ) * r + B4 ) * r + B3 ) * r + B2 ) * r + B1 ) * r + B0 );
   return x * num / den;
  }
 
- double r= sqrt(LN2 - log(1.0 - abs_x));
+ double r= sqrt( LN2 - log( 1.0 - abs_x ) );
 
  double num, den;
- if( r <= 5.0 ) {
+ if ( r <= 5.0 ) {
   r= r - 1.6;
-  num= (((((((C7 * r + C6) * r + C5) * r + C4) * r + C3) * r + C2) * r + C1) * r + C0);
-  den= (((((((D7 * r + D6) * r + D5) * r + D4) * r + D3) * r + D2) * r + D1) * r + D0);
+  num= ( ( ( ( ( ( ( C7 * r + C6 ) * r + C5 ) * r + C4 ) * r + C3 ) * r + C2 ) * r + C1 ) * r + C0 );
+  den= ( ( ( ( ( ( ( D7 * r + D6 ) * r + D5 ) * r + D4 ) * r + D3 ) * r + D2 ) * r + D1 ) * r + D0 );
  } else {
   r= r - 5.0;
-  num= (((((((E7 * r + E6) * r + E5) * r + E4) * r + E3) * r + E2) * r + E1) * r + E0);
-  den= (((((((F7 * r + F6) * r + F5) * r + F4) * r + F3) * r + F2) * r + F1) * r + F0);
+  num= ( ( ( ( ( ( ( E7 * r + E6 ) * r + E5 ) * r + E4 ) * r + E3 ) * r + E2 ) * r + E1 ) * r + E0 );
+  den= ( ( ( ( ( ( ( F7 * r + F6 ) * r + F5 ) * r + F4 ) * r + F3 ) * r + F2 ) * r + F1 ) * r + F0 );
  }
 
- if( x < 0 ) {
+ if ( x < 0 ) {
   return -num / den;
  } else {
   return num / den;

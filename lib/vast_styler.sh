@@ -52,13 +52,18 @@ if [ "$LAST_CHAR_OF_VAST_PATH" != "/" ];then
  VAST_PATH="$VAST_PATH/"
 fi
 
+cd "$VAST_PATH"
 
-SRC_FOLDER="$VAST_PATH"src
-EXCLUDE_FOLDER=\(-path './cfitsio/*' -o -path './fitsverify/*' -o - path './gsl/*' -o -path './pgplot*' -o -path './sextractor-2.19.5/*' -o -path './sextractor-2.25.2_fix_disable_model_fitting/*' -o -path './wcstools-3.9.6/*' -o -path './astcheck/*'\)
-FORMAT_FILES=`find "${SRC_FOLDER}" -type f "${EXCLUDE_FOLDER}" -prune -name "*.c" -o -name "*.h"`
+command -v clang-format &> /dev/null
+if [ $? -ne 0 ];then
+ echo "ERROR in $0: clang-format not found in PATH"
+ exit 1
+fi
 
-for FILE_TO_FORMAT in $FORMAT_FILES
-do
+FORMAT_FILES="src/*c src/pgfv/*c src/period_search/*c src/catalogs/*c"
+
+for FILE_TO_FORMAT in $FORMAT_FILES ;do
   clang-format -i "$FILE_TO_FORMAT" -style="{IndentWidth : 1, ColumnLimit: 0, SpaceBeforeAssignmentOperators: false, SpacesInParentheses: true, SortIncludes: false}"
+  git add "$FILE_TO_FORMAT"
 done
 
