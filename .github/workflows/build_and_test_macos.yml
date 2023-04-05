@@ -16,6 +16,8 @@ jobs:
       run: |
         curl -LO https://raw.githubusercontent.com/GiovanniBussi/macports-ci/master/macports-ci
         source ./macports-ci install
+    - name: port upgrade outdated
+      run: sudo port upgrade outdated
     - name: Install gcc, g++, gfortran, and wget
       run: sudo port install gcc12 wget
     - name: Install X11 header files
