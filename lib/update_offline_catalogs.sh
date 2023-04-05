@@ -202,7 +202,7 @@ if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ ! -s "lib/catal
  # Changed to local copy
  #curl --silent http://scan.sai.msu.ru/~kirx/data/bright_star_catalog_original.txt.gz | gunzip > lib/catalogs/bright_star_catalog_original.txt
  #curl --silent "$LOCAL_SERVER/bright_star_catalog_original.txt.gz" | gunzip > lib/catalogs/bright_star_catalog_original.txt
- curl --silent "$LOCAL_SERVER/bright_star_catalog_original.txt" > lib/catalogs/bright_star_catalog_original.txt
+ curl --insecure --silent "$LOCAL_SERVER/bright_star_catalog_original.txt" > lib/catalogs/bright_star_catalog_original.txt
  if [ $? -eq 0 ];then
   echo "Extracting the R.A. Dec. list (all BSC)"
   cat lib/catalogs/bright_star_catalog_original.txt | grep -v -e 'NOVA' -e '47    Tuc' -e 'M 31' -e 'NGC 2281' -e 'M 67' -e 'NGC 2808' | while IFS= read -r STR ;do 
