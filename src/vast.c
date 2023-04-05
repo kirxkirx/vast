@@ -1562,7 +1562,9 @@ int exclude_test( double X, double Y, double *exX, double *exY, int N, int verbo
   }
  }
  if ( result > -1 ) {
-  fprintf( stderr, "The star %.3lf %.3lf is listed in exclude.lst => excluded from magnitude calibration\n", X, Y );
+  if ( verbose != 0 ) {
+   fprintf( stderr, "The star %.3lf %.3lf is listed in exclude.lst => excluded from magnitude calibration\n", X, Y );
+  }
  }
  return result;
 }

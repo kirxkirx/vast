@@ -1204,14 +1204,14 @@ list getListFromGrid( grid gr, double x, double y ) {
  return ( ps2 );
 }
 
-list getListFromGrid__getAllStarsNevermindGrid( grid gr, double x, double y ) {
+// we are getting all stars, so no need for x,y
+list getListFromGrid__getAllStarsNevermindGrid( grid gr ) {
  // int ic, jc, i_min, j_min, i_max, j_max;
  int i_min, j_min, i_max, j_max;
  int i, j;
  list ps1, ps2;
  point p;
 
- // pointToCell(gr, x, y, &ic, &jc);
  i_min= 0;               // MAX(ic - 1, 0);
  j_min= 0;               // MAX(jc - 1, 0);
  i_max= gr->columns - 1; // MIN(ic + 1, gr->columns - 1);
@@ -1363,7 +1363,7 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
   if ( p2.moving_object == 1 ) {
    // If this is a moving object - we want to match it against all objects on the reference frame without using the spatial indexing.
    // The moving object might have moved out of its original indexing square by now.
-   ps= getListFromGrid__getAllStarsNevermindGrid( gr, p2.x, p2.y );
+   ps= getListFromGrid__getAllStarsNevermindGrid( gr );
    ps_1= ps;
    // fprintf(stderr, "\n\n\nDEBUG: YES HERE IS THE MOVING OBJECT IN P2  (%f,%f)\n\n\n",p2.x,p2.y);
    while ( isEmpty( ps_1 ) == 0 ) {
