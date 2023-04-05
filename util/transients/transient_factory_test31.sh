@@ -202,7 +202,7 @@ done
 
 # Convert the array of arguments to string so shellcheck does not complain
 # Use * instead of @ to concatenate the array elements into a single string, like this:
-string_command_line_argumants="${*@}"
+string_command_line_argumants="$*"
 
 # Write the HTML report header
 echo "<HTML>
