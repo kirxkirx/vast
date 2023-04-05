@@ -1,16 +1,14 @@
-# VaST
-The Variability Search Toolkit (VaST) is a software tool for finding variable objects on a series of astronomical images. 
-The images (CCD frames or digitized photographic plates) must be taken with the same instrument using the same filter 
-and saved in the FITS format. The input images may be shifted/rotated/flipped with respect to each other, but they have 
-to have the same scale (arcsec/pix) and overlap with each other by at least ~40%. No WCS information in FITS image header
-is necessary for the basic processing and lightcurve construction, but VaST may need to plate-solve the images if automated
-object identification is needed.
+![build_and_test_ubuntu](https://github.com/kirxkirx/vast/actions/workflows/build_and_test_ubuntu.yml/badge.svg)
+![build_and_test_ubuntu](https://github.com/kirxkirx/vast/actions/workflows/build_and_test_macos.yml/badge.svg)
+![circlci build test](https://circleci.com/gh/kirxkirx/vast.svg?style=svg)
 
-VaST is written in C (and partly in BASH scripting language) for GNU/Linux operating system. The latest versions are 
-also tested on MacOS X and FreeBSD. The best practical way to run VaST under Windows is through Linux installed in a 
-virtual machine (like VirtualBox).
+## VaST: A Software Tool for Finding Variable Objects
 
-The detailed description of the code may be found at [the project's homepage](http://scan.sai.msu.ru/vast/) and 
-in [the VaST paper](http://adsabs.harvard.edu/abs/2018A%26C....22...28S).
+The **Variability Search Toolkit (VaST)** is a software tool that helps in finding variable objects in a series of astronomical images. VaST can process a series of CCD frames or digitized photographic plates that are taken with the same instrument using the same filter and saved in the FITS format. The input images may be shifted, rotated, or flipped with respect to each other, but they have to have the same scale (arcsec/pix) and overlap with each other by at least ~40%. It is not necessary to have World Coordinate System (WCS) information in the FITS image header for basic processing and light curve construction. However, VaST may need to plate-solve the images using the [astrometry.net](https://github.com/dstndstn/astrometry.net) code if automated object identification is required. VaST relies on [Source Extractor](https://github.com/astromatic/sextractor) for source detection and photometry.
 
-Bug reports and pull requests, as well as new feature suggestions are warmly welcome!
+VaST is written in **C** (and partly in **BASH scripting language**) and is intended to work on **Linux** operating system. The latest versions of VaST have also been tested on **macOS** (with [XQuartz](https://www.xquartz.org/) and [MacPorts](https://www.macports.org/)) and **FreeBSD**. The most practical way to run VaST on **Windows** is through Linux installed in a [VirtualBox](https://www.virtualbox.org/).
+
+To install VaST, clone this repository and type `make`. It will inform you of any missing packages. Generally, to compile VaST, you'll need `gcc`, `g++`, `gfortran`, `X11` libraries, and optionally `libpng`. A more detailed description of the installation procedure for various systems and the code itself can be found at [the project's homepage](http://scan.sai.msu.ru/vast/) and in [the VaST paper](http://adsabs.harvard.edu/abs/2018A%26C....22...28S).
+
+Bug reports and pull requests, as well as new feature suggestions, are warmly welcomed!
+
