@@ -7,8 +7,7 @@
 #include "../fitsio.h"
 
 int main(int argc, char *argv[]) {
- /* Для чтения фитсов */
- fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
+ fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h 
  long fpixel= 1;
  long naxes[2];
  long testX, testY;
@@ -20,11 +19,9 @@ int main(int argc, char *argv[]) {
  unsigned short *dark_array;
  unsigned short *result_image_array;
 
- /* ----- */
+ // -----
  int i;
  int bitpix2;
- /* -- Для хранения ключей из шапки -- */
- //char *key[10000];
  char **key;
  int No_of_keys;
  int keys_left;
@@ -37,21 +34,19 @@ int main(int argc, char *argv[]) {
   exit(1);
  }
 
- /* Читаем файл */
  fprintf(stderr, "Exploring image header: %s \n", argv[1]);
  fits_open_file(&fptr, argv[1], 0, &status);
- fits_report_error(stderr, status); /* print out any error messages */
+ fits_report_error(stderr, status); // print out any error messages
  if( status != 0 )
   exit(status);
  fits_read_key(fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status);
- fits_report_error(stderr, status); /* print out any error messages */
+ fits_report_error(stderr, status); // print out any error messages
  if( status != 0 )
   exit(status);
  fits_read_key(fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status);
- fits_report_error(stderr, status); /* print out any error messages */
+ fits_report_error(stderr, status); // print out any error messages
  if( status != 0 )
   exit(status);
- // Читаем из шапки то что стоит запомнить
  fits_get_hdrspace(fptr, &No_of_keys, &keys_left, &status);
  fprintf(stderr, "Header: %d keys total, %d keys left\n", No_of_keys, keys_left);
  key= malloc(No_of_keys * sizeof(char *));
@@ -59,7 +54,8 @@ int main(int argc, char *argv[]) {
   fprintf(stderr, "ERROR: Couldn't allocate memory for FITS header\n");
   exit(1);
  }
- for( ii= 1; ii < No_of_keys; ii++ ) {
+ //for( ii= 1; ii < No_of_keys; ii++ ) {
+ for( ii= 0; ii < No_of_keys; ii++ ) {
   key[ii]= malloc(FLEN_CARD * sizeof(char)); // FLEN_CARD length of a FITS header card defined in fitsio.h
   if( key[ii] == NULL ) {
    fprintf(stderr, "ERROR: Couldn't allocate memory for FITS header\n");
@@ -67,15 +63,14 @@ int main(int argc, char *argv[]) {
   }
   fits_read_record(fptr, ii, key[ii], &status);
   fprintf(stderr, "Record %d: \"%s\" status=%d\n", ii, key[ii], status);
-  fits_report_error(stderr, status); /* print out any error messages */
+  fits_report_error(stderr, status); // print out any error messages
   status= 0;                         // continue on any errors at this stage
  }
  fits_get_img_type(fptr, &bitpix2, &status);
- fits_report_error(stderr, status); /* print out any error messages */
+ fits_report_error(stderr, status); // print out any error messages
  if( status != 0 )
   exit(status);
 
- /* Выделяем память */
  fprintf(stderr, "Allocating memory for image, dark and result arrays...\n");
  long img_size= naxes[0] * naxes[1];
  if( img_size <= 0 ) {
@@ -104,24 +99,23 @@ int main(int argc, char *argv[]) {
   fits_close_file(fptr, &status);
   exit(1);
  };
- /* И читаем картинку */
+
  fits_read_img(fptr, TUSHORT, 1, img_size, &nullval, image_array, &anynul, &status);
  fprintf(stderr, "Reading image %s %ld %ld  %d bitpix\n", argv[1], naxes[0], naxes[1], bitpix2);
  fits_close_file(fptr, &status);
- fits_report_error(stderr, status); /* print out any error messages */
+ fits_report_error(stderr, status); // print out any error messages
  status= 0;
 
- /* Читаем дарк */
  fits_open_file(&fptr, argv[2], 0, &status);
- fits_report_error(stderr, status); /* print out any error messages */
+ fits_report_error(stderr, status); // print out any error messages
  if( status != 0 )
   exit(status);
  fits_read_key(fptr, TLONG, "NAXIS1", &testX, NULL, &status);
- fits_report_error(stderr, status); /* print out any error messages */
+ fits_report_error(stderr, status); // print out any error messages
  if( status != 0 )
   exit(status);
  fits_read_key(fptr, TLONG, "NAXIS2", &testY, NULL, &status);
- fits_report_error(stderr, status); /* print out any error messages */
+ fits_report_error(stderr, status); // print out any error messages
  if( status != 0 )
   exit(status);
  if( testX != naxes[0] || testY != naxes[1] ) {
@@ -132,9 +126,8 @@ int main(int argc, char *argv[]) {
  fits_read_img(fptr, TUSHORT, 1, naxes[0] * naxes[1], &nullval, dark_array, &anynul, &status);
  fprintf(stderr, "Reading dark frame %s %ld %ld  %d bitpix\n", argv[2], testX, testY, bitpix2);
  fits_close_file(fptr, &status);
- fits_report_error(stderr, status); /* print out any error messages */
+ fits_report_error(stderr, status); // print out any error messages
  status= 0;
- /* Вычитаем темновой кадр */
  for( i= 0; i < naxes[0] * naxes[1]; i++ ) {
   /* Try to avoid messing up overscan region */
   if( dark_array[i] < image_array[i] ) {
@@ -157,25 +150,48 @@ int main(int argc, char *argv[]) {
  }
  free(image_array);
  free(dark_array);
+ 
  fits_create_file(&fptr, argv[3], &status); // create new file
  fits_report_error(stderr, status);         // print out any error messages
  if( status != 0 ) {
-  exit(1);
+  // free-up memory before exiting
+  free(result_image_array);
+  for( ii= 0; ii < No_of_keys; ii++ ) {
+   free(key[ii]);
+  }
+  free(key);
+  //
+  return 1;
  }
  fits_create_img(fptr, USHORT_IMG, 2, naxes, &status);
  fits_report_error(stderr, status); // print out any error messages
  if( status != 0 ) {
-  exit(1);
+  // free-up memory before exiting
+  free(result_image_array);
+  for( ii= 0; ii < No_of_keys; ii++ ) {
+   free(key[ii]);
+  }
+  free(key);
+  //
+  return 1;
  }
  fits_write_img(fptr, TUSHORT, fpixel, naxes[0] * naxes[1], result_image_array, &status);
  fits_report_error(stderr, status); // print out any error messages
  if( status != 0 ) {
-  exit(1);
+  // free-up memory before exiting
+  free(result_image_array);
+  for( ii= 0; ii < No_of_keys; ii++ ) {
+   free(key[ii]);
+  }
+  free(key);
+  //
+  return 1;
  }
  // Write the FITS header
  for( ii= 1; ii < No_of_keys; ii++ ) {
   fits_write_record(fptr, key[ii], &status);
  }
+ 
  // Remove duplicate keys
  fits_delete_key(fptr, "SIMPLE", &status);
  fits_delete_key(fptr, "BITPIX", &status);
@@ -194,13 +210,22 @@ int main(int argc, char *argv[]) {
  fits_close_file(fptr, &status);
  fits_report_error(stderr, status); // print out any error messages
  if( status != 0 ) {
-  exit(1);
+  // free-up memory before exiting
+  free(result_image_array);
+  for( ii= 0; ii < No_of_keys; ii++ ) {
+   free(key[ii]);
+  }
+  free(key);
+  //
+  return 1;
  }
- free(result_image_array);
+
  fprintf(stderr, "Dark frame is subtracted, output is written to %s :)\n\n", argv[3]);
  fprintf(stdout, "Spent %f seconds \n", 1.0 * clock() / CLOCKS_PER_SEC);
 
- for( ii= 1; ii < No_of_keys; ii++ ) {
+ free(result_image_array);
+
+ for( ii= 0; ii < No_of_keys; ii++ ) {
   free(key[ii]);
  }
  free(key);

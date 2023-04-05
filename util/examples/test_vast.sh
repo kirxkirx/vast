@@ -16545,6 +16545,10 @@ if [ $? -eq 0 ];then
     fi
     #
     #
+    # make sure the output file does not exist
+    if [ -f median.fit ];then
+     rm -f median.fit
+    fi
     valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
     util/ccd/mk ../only_few_stars/* &> valgrind_test.out
     if [ $? -ne 0 ];then
@@ -16563,6 +16567,10 @@ if [ $? -eq 0 ];then
     fi
     #
     #
+    # make sure the output file does not exist
+    if [ -f d_test4.fit ];then
+     rm -f d_test4.fit
+    fi
     valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
     util/ccd/ms ../vast_test__dark_flat_flag/V523Cas_20_b1-001G60s.fit ../vast_test__dark_flat_flag/mdark60s.fit d_test4.fit &> valgrind_test.out
     if [ $? -ne 0 ];then
@@ -16581,6 +16589,10 @@ if [ $? -eq 0 ];then
     fi
     #
     #
+    # make sure the output file does not exist
+    if [ -f fd_test4.fit ];then
+     rm -f fd_test4.fit
+    fi
     valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
     util/ccd/md d_test4.fit ../vast_test__dark_flat_flag/mflatG.fit fd_test4.fit &> valgrind_test.out
     if [ $? -ne 0 ];then
@@ -16616,6 +16628,29 @@ if [ $? -eq 0 ];then
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND026"
+    fi
+    #
+    util/clean_data.sh
+    cp default.sex.largestars default.sex
+    valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
+    lib/sextract_single_image_noninteractive fd_test4.fit &> valgrind_test.out
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND027"
+    fi
+     grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+     if [ $ERRORS -ne 0 ];then
+      echo "ERROR"
+      break
+     fi
+    done | grep --quiet 'ERROR'
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND028"
+    fi
+    # clean-up the output files
+    if [ -f median.fit ];then
+     rm -f median.fit
     fi
     if [ -f d_test4.fit ];then
      rm -f d_test4.fit
