@@ -5,14 +5,17 @@
 
 #include "fitsio.h" // we use a local copy of this file because we use a local copy of cfitsio
 
+#include "safely_encode_user_input_string.h" // for any_unusual_characters_in_string()
+
 #include <stdio.h>
-#include <ctype.h> // for isalnum()
+//#include <ctype.h> // for isalnum()
 
 #define _GNU_SOURCE // doesn't seem to work!
 #include <string.h> // for memmem() and strlen()
 
 void *memmem(const void *haystack, size_t haystacklen, const void *needle, size_t needlelen);
 
+/*
 static inline int any_unusual_characters_in_string(char *fitsfilename) {
  size_t i;
  size_t string_size=strlen(fitsfilename);
@@ -55,6 +58,7 @@ static inline int safely_encode_user_input_string(char *output_filename, char *i
  output_filename[i]= '\0';
  return 0;
 }
+*/
 
 static int check_if_the_input_is_FPack_compressed_FITS(char *fitsfilename) {
  int status= 0;  //for cfitsio routines

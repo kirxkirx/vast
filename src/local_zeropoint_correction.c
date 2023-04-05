@@ -18,7 +18,7 @@
 
 #include "vast_limits.h"
 #include "lightcurve_io.h"
-#include "fitsfile_read_check.h" // any_unusual_characters_in_string(lightcurvefilename)
+#include "safely_encode_user_input_string.h" // for safely_encode_user_input_string()
 
 #define CORRECTION_RADIUS_DEG_OR_PIX 20.0 / 3600.0
 

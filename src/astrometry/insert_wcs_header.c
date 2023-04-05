@@ -7,6 +7,7 @@
 
 #include "../fitsio.h"
 #include "../vast_limits.h"
+#include "../safely_encode_user_input_string.h" // needed by fitsfile_read_check.h
 #include "../fitsfile_read_check.h"
 
 // function defined in gettime.c

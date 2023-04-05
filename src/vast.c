@@ -1648,13 +1648,13 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
 
  search_area_boundaries[5]= search_area_boundaries[5] - MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT;
 
- fprintf( stderr, "\nParameter box for transient search: %7.1lf<X<%7.1lf %7.1lf<Y<%7.1lf %5.2lf<m<%5.2lf\n \n", 
-  search_area_boundaries[0], 
-  search_area_boundaries[1], 
-  search_area_boundaries[2], 
-  search_area_boundaries[3], 
-  search_area_boundaries[4], 
-  search_area_boundaries[5] );
+ fprintf( stderr, "\nParameter box for transient search: %7.1lf<X<%7.1lf %7.1lf<Y<%7.1lf %5.2lf<m<%5.2lf\n \n",
+          search_area_boundaries[0],
+          search_area_boundaries[1],
+          search_area_boundaries[2],
+          search_area_boundaries[3],
+          search_area_boundaries[4],
+          search_area_boundaries[5] );
 
  return;
 }
@@ -1814,7 +1814,7 @@ int main( int argc, char **argv ) {
  double aperture;
  double reference_image_aperture;
 
- // Variables to set special parameters 
+ // Variables to set special parameters
  int fitsfile_read_error= 0;          // returned by gettime
  int photometric_calibration_type= 1; // do not calibrate mags by polynom
  int param_P= 0;                      // PSF photometry mode (1 - do it; 2 - do usual aperture photometry)
@@ -1983,7 +1983,7 @@ int main( int argc, char **argv ) {
 
  int counter_rejected_bad_flux, counter_rejected_low_snr, counter_rejected_bad_region;
  int counter_rejected_frame_edge, counter_rejected_too_small, counter_rejected_too_large;
- int counter_rejected_external_flag, counter_rejected_bad_psf_fit, counter_rejected_seflags_gt7; 
+ int counter_rejected_external_flag, counter_rejected_bad_psf_fit, counter_rejected_seflags_gt7;
  int counter_rejected_MagSize, counter_rejected_seflags_gt_user_spec_threshold;
 
  long long int malloc_size= 0; // we want to have it a signed type (not size_t) so the negative value of malloc_size may indicate an error
@@ -2062,44 +2062,44 @@ int main( int argc, char **argv ) {
  // const char *const shortopt= "vh9fdqmwpoPngGrlseucUijJkK12346785:a:b:x:y:t:";
  const char *const shortopt= "a:b:cdefgGhijJkKlmnopPqrst:uUvwx:y:z12345:6789";
  const struct option longopt[]= {
-     { "guess_saturation_limit", 0, NULL, 'g' }, 
-     { "no_guess_saturation_limit", 0, NULL, 'G' }, 
-     { "version", 0, NULL, 'v' }, 
-     { "PSF", 0, NULL, 'P' }, 
-     { "help", 0, NULL, 'h' }, 
-     { "ds9", 0, NULL, '9' }, 
-     { "small", 0, NULL, 's' }, 
-     { "type", 1, NULL, 't' }, 
-     { "medium", 0, NULL, 'm' }, 
-     { "wide", 0, NULL, 'w' }, 
-     { "starmatchraius", 1, NULL, '5' }, 
-     { "poly", 0, NULL, 'p' }, 
-     { "nodiscardell", 0, NULL, 'l' }, 
-     { "norotation", 0, NULL, 'r' }, 
-     { "nofind", 0, NULL, 'f' }, 
-     { "debug", 0, NULL, 'd' }, 
-     { "position_dependent_correction", 0, NULL, 'j' }, 
-     { "no_position_dependent_correction", 0, NULL, 'J' }, 
-     { "aperture", 1, NULL, 'a' }, 
-     { "matchstarnumber", 1, NULL, 'b' }, 
-     { "sysrem", 1, NULL, 'y' }, 
-     { "failsafe", 0, NULL, 'e' }, 
-     { "UTC", 0, NULL, 'u' }, 
-     { "utc", 0, NULL, 'c' }, 
-     { "Utc", 0, NULL, 'U' }, 
-     { "increment", 0, NULL, 'i' }, 
-     { "nojdkeyword", 0, NULL, 'k' }, 
-     { "nodateobskeyword", 0, NULL, 'K' }, 
-     { "maxsextractorflag", 1, NULL, 'x' }, 
-     { "photocurve", 0, NULL, 'o' }, 
-     { "magsizefilter", 0, NULL, '1' }, 
-     { "nomagsizefilter", 0, NULL, '2' }, 
-     { "selectbestaperture", 0, NULL, '3' }, 
-     { "noerrorsrescale", 0, NULL, '4' }, 
-     { "notremovebadimages", 0, NULL, '6' }, 
-     { "autoselectrefimage", 0, NULL, '7' }, 
-     { "excluderefimage", 0, NULL, '8' }, 
-     { "movingobject", 0, NULL, 'z' }, 
+     { "guess_saturation_limit", 0, NULL, 'g' },
+     { "no_guess_saturation_limit", 0, NULL, 'G' },
+     { "version", 0, NULL, 'v' },
+     { "PSF", 0, NULL, 'P' },
+     { "help", 0, NULL, 'h' },
+     { "ds9", 0, NULL, '9' },
+     { "small", 0, NULL, 's' },
+     { "type", 1, NULL, 't' },
+     { "medium", 0, NULL, 'm' },
+     { "wide", 0, NULL, 'w' },
+     { "starmatchraius", 1, NULL, '5' },
+     { "poly", 0, NULL, 'p' },
+     { "nodiscardell", 0, NULL, 'l' },
+     { "norotation", 0, NULL, 'r' },
+     { "nofind", 0, NULL, 'f' },
+     { "debug", 0, NULL, 'd' },
+     { "position_dependent_correction", 0, NULL, 'j' },
+     { "no_position_dependent_correction", 0, NULL, 'J' },
+     { "aperture", 1, NULL, 'a' },
+     { "matchstarnumber", 1, NULL, 'b' },
+     { "sysrem", 1, NULL, 'y' },
+     { "failsafe", 0, NULL, 'e' },
+     { "UTC", 0, NULL, 'u' },
+     { "utc", 0, NULL, 'c' },
+     { "Utc", 0, NULL, 'U' },
+     { "increment", 0, NULL, 'i' },
+     { "nojdkeyword", 0, NULL, 'k' },
+     { "nodateobskeyword", 0, NULL, 'K' },
+     { "maxsextractorflag", 1, NULL, 'x' },
+     { "photocurve", 0, NULL, 'o' },
+     { "magsizefilter", 0, NULL, '1' },
+     { "nomagsizefilter", 0, NULL, '2' },
+     { "selectbestaperture", 0, NULL, '3' },
+     { "noerrorsrescale", 0, NULL, '4' },
+     { "notremovebadimages", 0, NULL, '6' },
+     { "autoselectrefimage", 0, NULL, '7' },
+     { "excluderefimage", 0, NULL, '8' },
+     { "movingobject", 0, NULL, 'z' },
      { NULL, 0, NULL, 0 } }; // NULL string must be in the end
  int nextopt;
  fprintf( stderr, "Parsing command line arguments...\n" );
@@ -3374,9 +3374,9 @@ int main( int argc, char **argv ) {
   // exit( 1 );
   //  We should not quit if there is no manually_selected_comparison_stars.lst
  } else {
-  while ( -1 < fscanf( cmparisonstarsfile, "%lf %lf %lf", 
-                       &manually_selected_comparison_stars_X[N_manually_selected_comparison_stars], 
-                       &manually_selected_comparison_stars_Y[N_manually_selected_comparison_stars], 
+  while ( -1 < fscanf( cmparisonstarsfile, "%lf %lf %lf",
+                       &manually_selected_comparison_stars_X[N_manually_selected_comparison_stars],
+                       &manually_selected_comparison_stars_Y[N_manually_selected_comparison_stars],
                        &manually_selected_comparison_stars_catalog_mag[N_manually_selected_comparison_stars] ) ) {
    manually_selected_comparison_stars_X= realloc( manually_selected_comparison_stars_X, sizeof( double ) * ( N_manually_selected_comparison_stars + 2 ) );
    manually_selected_comparison_stars_Y= realloc( manually_selected_comparison_stars_Y, sizeof( double ) * ( N_manually_selected_comparison_stars + 2 ) );
@@ -5748,14 +5748,14 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 #else
          sprintf( string_with_float_parameters_and_saved_FITS_keywords, "  %s", ptr_struct_Obs[j].fits_header_keywords_to_be_recorded_in_lightcurve );
 #endif
-         write_lightcurve_point( file_out, 
-                                 ptr_struct_Obs[j].JD, 
-                                 ptr_struct_Obs[j].mag, 
-                                 ptr_struct_Obs[j].mag_err, 
-                                 ptr_struct_Obs[j].X, 
-                                 ptr_struct_Obs[j].Y, 
-                                 ptr_struct_Obs[j].APER, 
-                                 ptr_struct_Obs[j].filename, 
+         write_lightcurve_point( file_out,
+                                 ptr_struct_Obs[j].JD,
+                                 ptr_struct_Obs[j].mag,
+                                 ptr_struct_Obs[j].mag_err,
+                                 ptr_struct_Obs[j].X,
+                                 ptr_struct_Obs[j].Y,
+                                 ptr_struct_Obs[j].APER,
+                                 ptr_struct_Obs[j].filename,
                                  string_with_float_parameters_and_saved_FITS_keywords );
          //
          ptr_struct_Obs[j].is_used= 1;
@@ -5805,14 +5805,14 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 #else
            sprintf( string_with_float_parameters_and_saved_FITS_keywords, "  %s", ptr_struct_Obs[j].fits_header_keywords_to_be_recorded_in_lightcurve );
 #endif
-           write_lightcurve_point( file_out, 
-                                   ptr_struct_Obs[j].JD, 
-                                   ptr_struct_Obs[j].mag, 
-                                   ptr_struct_Obs[j].mag_err, 
-                                   ptr_struct_Obs[j].X, 
-                                   ptr_struct_Obs[j].Y, 
-                                   ptr_struct_Obs[j].APER, 
-                                   ptr_struct_Obs[j].filename, 
+           write_lightcurve_point( file_out,
+                                   ptr_struct_Obs[j].JD,
+                                   ptr_struct_Obs[j].mag,
+                                   ptr_struct_Obs[j].mag_err,
+                                   ptr_struct_Obs[j].X,
+                                   ptr_struct_Obs[j].Y,
+                                   ptr_struct_Obs[j].APER,
+                                   ptr_struct_Obs[j].filename,
                                    string_with_float_parameters_and_saved_FITS_keywords );
            ptr_struct_Obs[j].is_used= 1;
           }
@@ -6548,7 +6548,8 @@ Then create an HTML search report by running util/transients/search_for_transien
  * 'Variable star search mode' - run VaST on a long (50-100-1000) series of images and inspect\n\
 lightcurves that show a large scatter.\n\n\
  * 'Individual star photometry mode' - run VaST with './diffphot' command an manually specify\n\
-the comparison stars and the variable star you want to measure.\n\n\n\n", Num );
+the comparison stars and the variable star you want to measure.\n\n\n\n",
+            Num );
   }
  }
 

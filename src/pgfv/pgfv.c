@@ -28,6 +28,7 @@
 #include "../vast_limits.h"
 #include "../photocurve.h"
 #include "../ident.h"
+#include "../safely_encode_user_input_string.h" // for safely_encode_user_input_string() and also needed by fitsfile_read_check.h
 #include "../fitsfile_read_check.h"
 #include "../replace_file_with_symlink_if_filename_contains_white_spaces.h"
 
