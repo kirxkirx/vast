@@ -2,6 +2,10 @@
 
 # This script will update the copies of VSX and ASASSN-V catalogs for offline use
 
+# Max total time for catalog download
+# Assume the connection is fast enough for the catalog to be downlaoded in less than 
+CATALOG_DOWNLOAD_TIMEOUT_SEC=900
+
 #################################
 # Set the safe locale that should be available on any POSIX system
 LC_ALL=C
@@ -96,26 +100,26 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
   TMP_OUTPUT=""
   if [ "$FILE_TO_UPDATE" == "astorb.dat" ];then
    TMP_OUTPUT="astorb_dat_new"
-#   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 ftp://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
-   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 --no-check-certificate https://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
-#   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 --no-check-certificate http://kirx.net/~kirx/tmp/astorb.dat.gz"
-#   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 http://scan.sai.msu.ru/~kirx/catalogs/compressed/astorb.dat.gz"
-   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 --no-check-certificate $LOCAL_SERVER/astorb.dat.gz"
+#   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 --no-check-certificate https://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
+   WGET_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure -o $TMP_OUTPUT.gz https://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
+#   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 --no-check-certificate $LOCAL_SERVER/astorb.dat.gz"
+   WGET_LOCAL_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure -o $TMP_OUTPUT.gz $LOCAL_SERVER/astorb.dat.gz"
    UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz"
   fi
   if [ "$FILE_TO_UPDATE" == "lib/catalogs/vsx.dat" ];then
    TMP_OUTPUT="vsx.dat"
-   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 ftp://cdsarc.u-strasbg.fr/pub/cats/B/vsx/vsx.dat.gz"
-#   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 http://scan.sai.msu.ru/~kirx/catalogs/compressed/vsx.dat.gz"
-   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 --no-check-certificate $LOCAL_SERVER/vsx.dat.gz"
+#   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 ftp://cdsarc.u-strasbg.fr/pub/cats/B/vsx/vsx.dat.gz"
+   WGET_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure -o $TMP_OUTPUT.gz  $TMP_OUTPUT.gz ftp://cdsarc.u-strasbg.fr/pub/cats/B/vsx/vsx.dat.gz"
+#   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 --no-check-certificate $LOCAL_SERVER/vsx.dat.gz"
+   WGET_LOCAL_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure -o $TMP_OUTPUT.gz $LOCAL_SERVER/vsx.dat.gz"
    UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz"
   fi
   if [ "$FILE_TO_UPDATE" == "lib/catalogs/asassnv.csv" ];then
    TMP_OUTPUT="asassnv.csv"
-   #WGET_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 --no-check-certificate https://asas-sn.osu.edu/variables/catalog.csv"
-   WGET_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 --no-check-certificate 'https://asas-sn.osu.edu/variables.csv?action=index&controller=variables'"
-#   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 http://scan.sai.msu.ru/~kirx/catalogs/asassnv.csv"
-   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 --no-check-certificate $LOCAL_SERVER/asassnv.csv"
+#   WGET_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 --no-check-certificate 'https://asas-sn.osu.edu/variables.csv?action=index&controller=variables'"
+   WGET_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure -o $TMP_OUTPUT 'https://asas-sn.osu.edu/variables.csv?action=index&controller=variables'"
+#   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 --no-check-certificate $LOCAL_SERVER/asassnv.csv"
+   WGET_LOCAL_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure -o $TMP_OUTPUT $LOCAL_SERVER/asassnv.csv"
    UNPACK_COMMAND=""
   fi
   if [ -z "$WGET_COMMAND" ];then
@@ -146,11 +150,11 @@ $PWD"
   $WGET_LOCAL_COMMAND
   if [ $? -ne 0 ];then
    # if that failed, try to download the catalog from the original link
-   echo "$WGET_COMMAND" 
+   echo "We are currently at $WGET_COMMAND" 
    $WGET_COMMAND
-   ls -lh $TMP_OUTPUT   
+   #ls -lh $TMP_OUTPUT   
    if [ $? -ne 0 ];then
-    echo "ERROR running wget" 
+    echo "ERROR running the download command" 
     if [ -f "$TMP_OUTPUT" ];then
      rm -f "$TMP_OUTPUT"
     fi
@@ -158,13 +162,15 @@ $PWD"
    fi
    #
   fi # if that failed
-  ls -lh $TMP_OUTPUT $TMP_OUTPUT.gz 
+  # The output of this ls run makes me nervous as on of the files does not exist
+  #ls -lh $TMP_OUTPUT $TMP_OUTPUT.gz 
   # If we are still here, we downloaded the catalog, one way or the other
   if [ ! -z "$UNPACK_COMMAND" ];then
    echo "### UNPACK_COMMAND ###
-$PWD
-$UNPACK_COMMAND" 
-   ls -lh $TMP_OUTPUT $TMP_OUTPUT.gz 
+We are currently at $PWD
+Will run the unpack command: $UNPACK_COMMAND" 
+   # The output of this ls run makes me nervous as on of the files does not exist
+   #ls -lh $TMP_OUTPUT $TMP_OUTPUT.gz 
    $UNPACK_COMMAND
    if [ $? -ne 0 ];then
     echo "ERROR running $UNPACK_COMMAND" 
@@ -202,7 +208,7 @@ if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ ! -s "lib/catal
  # Changed to local copy
  #curl --silent http://scan.sai.msu.ru/~kirx/data/bright_star_catalog_original.txt.gz | gunzip > lib/catalogs/bright_star_catalog_original.txt
  #curl --silent "$LOCAL_SERVER/bright_star_catalog_original.txt.gz" | gunzip > lib/catalogs/bright_star_catalog_original.txt
- curl --insecure --silent "$LOCAL_SERVER/bright_star_catalog_original.txt" > lib/catalogs/bright_star_catalog_original.txt
+ curl --connect-timeout 10 --insecure --silent "$LOCAL_SERVER/bright_star_catalog_original.txt" > lib/catalogs/bright_star_catalog_original.txt
  if [ $? -eq 0 ];then
   echo "Extracting the R.A. Dec. list (all BSC)"
   cat lib/catalogs/bright_star_catalog_original.txt | grep -v -e 'NOVA' -e '47    Tuc' -e 'M 31' -e 'NGC 2281' -e 'M 67' -e 'NGC 2808' | while IFS= read -r STR ;do 
