@@ -33,6 +33,22 @@ export LANGUAGE LC_ALL
 # Are we on Linux or something else?
 SYSTEM_TYPE="$(uname)"
 
+function check_if_vast_install_looks_reasonably_healthy {
+ for FILE_TO_CHECK in ./vast GNUmakefile makefile lib/autodetect_aperture_main lib/bin/xy2sky lib/catalogs/check_catalogs_offline lib/choose_vizier_mirror.sh lib/deeming_compute_periodogram lib/deg2hms_uas lib/drop_bright_points lib/drop_faint_points lib/fit_robust_linear lib/guess_saturation_limit_main lib/hms2deg lib/lk_compute_periodogram lib/new_lightcurve_sigma_filter lib/put_two_sources_in_one_field lib/remove_bad_images lib/remove_lightcurves_with_small_number_of_points lib/select_only_n_random_points_from_set_of_lightcurves lib/sextract_single_image_noninteractive lib/try_to_guess_image_fov lib/update_offline_catalogs.sh lib/update_tai-utc.sh lib/vizquery util/calibrate_magnitude_scale util/calibrate_single_image.sh util/ccd/md util/ccd/mk util/ccd/ms util/clean_data.sh util/examples/test_coordinate_converter.sh util/examples/test__dark_flat_flag.sh util/examples/test_heliocentric_correction.sh util/fov_of_wcs_calibrated_image.sh util/get_image_date util/hjd_input_in_UTC util/load.sh util/magnitude_calibration.sh util/make_finding_chart util/nopgplot.sh util/rescale_photometric_errors util/save.sh util/search_databases_with_curl.sh util/search_databases_with_vizquery.sh util/solve_plate_with_UCAC5 util/stat_outfile util/sysrem2 util/transients/transient_factory_test31.sh util/wcs_image_calibration.sh ;do
+  if [ ! -s "$FILE_TO_CHECK" ];then
+   echo "
+ERROR: cannot find a proper VaST installation in the current directory
+$PWD
+
+check_if_vast_install_looks_reasonably_healthy() failed while checking the file $FILE_TO_CHECK
+CANCEL TEST"
+   return 1
+  fi
+ done
+ return 0
+}
+
+
 # Find the real path to VaST home directory
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
@@ -77,6 +93,14 @@ if [ "$LAST_CHAR_OF_VAST_PATH" != "/" ];then
  VAST_PATH="$VAST_PATH/"
 fi
 #
+
+# Go to VaST working directory
+cd "$VAST_PATH" || exit 1
+# Make sure the current directly has compiled VaST installation
+check_if_vast_install_looks_reasonably_healthy
+if [ $? -ne 0 ];then
+ exit 1
+fi
 
 # Set the directory with reference images
 # You may set a few alternative locations, but only the first one that exist will be used
