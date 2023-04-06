@@ -9,14 +9,14 @@ export LANGUAGE LC_ALL
 #################################
 
 # Test other possible library paths
-for POSSIBLE_LIBRARY_PATH in /opt/local/lib /opt/X11/lib /usr/X11R6/lib /usr/lib/X11 /usr/local/lib/X11 /usr/lib64/X11 /usr/local/lib64/X11 /usr/lib32/X11 /usr/local/lib32/X11 ;do
+for POSSIBLE_LIBRARY_PATH in /opt/local/lib /usr/local/lib /opt/X11/lib /usr/X11R6/lib /usr/lib/X11 /usr/local/lib/X11 /usr/lib64/X11 /usr/local/lib64/X11 /usr/lib32/X11 /usr/local/lib32/X11 ;do
  if [ -d "$POSSIBLE_LIBRARY_PATH" ];then
   LX11="$LX11 -L$POSSIBLE_LIBRARY_PATH"
   #break
  fi
 done
 # Test other possible include paths
-for POSSIBLE_LIBRARY_PATH in /opt/local/include /opt/X11/include /usr/X11R6/include /usr/include/X11 /usr/local/include/X11 ;do
+for POSSIBLE_LIBRARY_PATH in /opt/local/include /usr/local/include /opt/X11/include /usr/X11R6/include /usr/include/X11 /usr/local/include/X11 ;do
  if [ -d "$POSSIBLE_LIBRARY_PATH" ];then
   LX11="$LX11 -I$POSSIBLE_LIBRARY_PATH"
   #break
