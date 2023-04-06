@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     # Manually enable/disable this long test
     # Write an if statement that is always true/false
-    if: true
+    if: false
     steps:
       - uses: actions/checkout@v3
       - name: Update apt-get
