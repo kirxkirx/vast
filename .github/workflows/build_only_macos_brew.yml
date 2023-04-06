@@ -1,0 +1,28 @@
+name: macOS 11 Homebrew build only
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: macos-11
+
+    # Manually enable/disable this long test
+    # Write an if statement that is always true/false
+    if: true
+    steps:
+    - uses: actions/checkout@v3
+    - name: brew update
+      run: brew update
+    - name: Install gcc, g++, gfortran, and wget
+      run: brew install gcc wget
+    - name: Install X11 header files
+      run: brew install libx11
+    - name: Install libpng
+      run: brew install libpng
+    - name: make VaST
+      run: make
+    #- name: prepare for the test
+    #  run: echo "1" > ../THIS_IS_HPCC 
+    #- name: test VaST
+    #  run: util/examples/test_vast.sh
