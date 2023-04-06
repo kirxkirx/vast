@@ -9,7 +9,7 @@ jobs:
 
     # Manually enable/disable this long test
     # Write an if statement that is always true/false
-    if: false
+    if: true
     steps:
     - uses: actions/checkout@v3
     - name: Install MacPorts

@@ -10469,7 +10469,8 @@ $GREP_RESULT"
   fi
   #
 
-# disabling this one as the results seem to strongly depend on SExtractor version (compare BSD with eridan)
+# Disabling this one as the results strongly depend on wich machine we are running on (compare BSD-eridan, boinc-eridan).
+# The tharget is an incorrect double-detection on the reference frame.
 #  #
 #  grep --quiet "V0835 Oph" transient_report/index.html
 #  if [ $? -ne 0 ];then
@@ -10538,7 +10539,9 @@ $GREP_RESULT"
 
   # Check the total number of candidates
   NUMBER_OF_CANDIDATE_TRANSIENTS=`grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink'`
-  if [ $NUMBER_OF_CANDIDATE_TRANSIENTS -lt 9 ];then
+  #if [ $NUMBER_OF_CANDIDATE_TRANSIENTS -lt 9 ];then
+  # it's 8 on boinc test machine becasue of V0835 Oph blended-detections case
+  if [ $NUMBER_OF_CANDIDATE_TRANSIENTS -lt 8 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_NCANDIDATES_$NUMBER_OF_CANDIDATE_TRANSIENTS"
   fi
