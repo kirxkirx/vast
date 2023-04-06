@@ -120,7 +120,6 @@ or perhaps FLAGS = 8+16+32 = 56.
 */
 
 void version( char *version_string ) {
- // strcpy(version_string, "VaST 1.0rc86");
  strncpy( version_string, "VaST 1.0rc86", 32 );
  return;
 }
@@ -243,6 +242,28 @@ void help_msg( const char *progname, int exit_code ) {
  print_TT_reminder( 1 );
 
  exit( exit_code );
+}
+
+void flag_blended_detections_within_one_pix_of_a_brighter_star_in_sorted_Star_struct( struct Star *STAR, int NUMBER ) {
+ unsigned int i,j;
+ // Cycle through the star list
+ for ( i= 0; i < NUMBER - 1; i++ ) {
+  if( STAR[i].sextractor_flag == 0 ) {
+   continue;
+  }
+  for ( j= i+1; j < NUMBER; j++ ) {
+   if( STAR[i].x - STAR[j].x < -1.0 )continue;
+   if( STAR[i].x - STAR[j].x >  1.0 )continue;
+   if( STAR[i].y - STAR[j].y < -1.0 )continue;
+   if( STAR[i].y - STAR[j].y >  1.0 )continue;
+   // the two stars are within 1pix box
+   if( STAR[i].sextractor_flag < STAR[j].sextractor_flag ) {
+    // so STAR[i] is brighter and has a smaller sextractor_flag than STAR[j] - set bad vast_flag for STAR[j]
+    STAR[j].vast_flag += 1;
+   }
+  }
+ }
+ return;
 }
 
 int read_onput_file_with_user_specified_moving_object_opsition( char **input_images, float *moving_object__user_array_x, float *moving_object__user_array_y, int Num ) {
@@ -3831,9 +3852,11 @@ int main( int argc, char **argv ) {
  if ( debug != 0 )
   fprintf( stderr, "DEBUG MSG: Sort arrays for Ident STAR1, NUMBER1...\n" );
  Sort_in_mag_of_stars( STAR1, NUMBER1 );
+ flag_blended_detections_within_one_pix_of_a_brighter_star_in_sorted_Star_struct( STAR1, NUMBER1 ); 
  if ( debug != 0 )
   fprintf( stderr, "DEBUG MSG: Sort arrays for Ident STAR3, NUMBER3...\n" );
  Sort_in_mag_of_stars( STAR3, NUMBER3 );
+ flag_blended_detections_within_one_pix_of_a_brighter_star_in_sorted_Star_struct( STAR3, NUMBER3 );
  if ( debug != 0 )
   fprintf( stderr, "DEBUG MSG: Done with sorting arrays...\n" );
 
@@ -4398,6 +4421,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      // set_distance_to_neighbor_in_struct_Star(STAR2, NUMBER2, aperture, X_im_size, Y_im_size); // set distance to the closest neighbor for each star.
 
      Sort_in_mag_of_stars( STAR2, NUMBER2 );
+     flag_blended_detections_within_one_pix_of_a_brighter_star_in_sorted_Star_struct( STAR2, NUMBER2 );
      best_number_of_matched_stars= 0;
      best_number_of_matched_stars= 0;
      preobr->Number_of_ecv_triangle= default_Number_of_ecv_triangle;
