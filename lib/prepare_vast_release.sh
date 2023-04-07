@@ -73,7 +73,7 @@ rm -f prelim_vast_run.log
 rm -f src/cpgplot.h src/pgfv/cpgplot.h
 #
 ####################################
-for BADFILE in shuffled_lightcurve.txt test_lightcurve_outlier.txt test_lightcurve.tex test_lightcurve_without_outlier.txt lk.periodogram deeming.periodogram binned_powerspectrum.periodogram out_Cepheid_TDB_HJD_VARTOOLS.tmp out_Cepheid_TT_HJD_VaST.tmp test_heliocentric_correction.tmp test_heliocentric_correction.tmp_hjdTT test_heliocentric_correction.tmp_vartools valgrind_test.out magcalibdebug.txt A 2mass.tmp script.tmp IOMC_2677000065.txt ;do
+for BADFILE in shuffled_lightcurve.txt test_lightcurve_outlier.txt test_lightcurve.tex test_lightcurve_without_outlier.txt lk.periodogram deeming.periodogram binned_powerspectrum.periodogram out_Cepheid_TDB_HJD_VARTOOLS.tmp out_Cepheid_TT_HJD_VaST.tmp test_heliocentric_correction.tmp test_heliocentric_correction.tmp_hjdTT test_heliocentric_correction.tmp_vartools valgrind_test.out magcalibdebug.txt A 2mass.tmp script.tmp IOMC_2677000065.txt transient_factory_test31.txt write_individual_image_log.h.gcov ;do
  if [ -f "$BADFILE" ];then
   rm -f "$BADFILE"
  fi
@@ -125,6 +125,13 @@ for CORE_FILE in core.* ;do
  fi
 done
 ####################################
+# Remove gcov code coverage files, if any
+for CORE_FILE in *.gcda *.gcno *.gcov ;do
+ if [ -f "$CORE_FILE" ];then
+  rm -f "$CORE_FILE"
+ fi
+done
+####################################
 # Remove fake_image_hack files, if any
 for BADDIR in SIMULATOR_reference simulation_results ;do
  if [ -d "$BADDIR" ];then
@@ -160,7 +167,7 @@ cd "$VASTDIR"
 lib/update_tai-utc.sh
 
 # Check that the fast compile option is disabled
-grep -v "\#" GNUmakefile | grep --quiet 'RECOMPILE_VAST_ONLY = yes'
+grep -v "#" GNUmakefile | grep --quiet 'RECOMPILE_VAST_ONLY = yes'
 if [ $? -eq 0 ];then
  echo "
 
@@ -211,23 +218,23 @@ in src/vast_limits.h before release!
 fi
 
 N_LINES_BAD_REGION=`cat bad_region.lst | wc -l`
-if [ $N_LINES_BAD_REGION -ne 9 ];then
+if [ $N_LINES_BAD_REGION -ne 14 ];then
  echo "
-ERROR: please set up the default bad_region.lst before release!
+ERROR: please set up the default bad_region.lst before release! (1)
 "
 fi
 
-grep --quiet '0 0 0 0' bad_region.lst
+grep --quiet '0 0  0 0' bad_region.lst
 if [ $? -ne 0 ];then
  echo "
-ERROR: please set up the default bad_region.lst before release!
+ERROR: please set up the default bad_region.lst before release! (2)
 "
 fi
 
 grep --quiet '0 0' bad_region.lst
 if [ $? -ne 0 ];then
  echo "
-ERROR: please set up the default bad_region.lst before release!
+ERROR: please set up the default bad_region.lst before release! (3)
 "
 fi
 
@@ -243,7 +250,7 @@ if [ $? -eq 0 ];then
  echo "ERROR: please remove the above binary file(s) from the source tree"
 fi
 
-grep -A3 'Blind solve' util/identify.sh | grep 'solve-field' | tail -n1 | grep --quiet '\#'
+grep -A3 'Blind solve' util/identify.sh | grep 'solve-field' | tail -n1 | grep --quiet '#'
 if [ $? -eq 0 ];then
  echo "
 ERROR: please set up the blind plate solve mode in util/identify.sh !
