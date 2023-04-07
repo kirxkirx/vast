@@ -139,6 +139,15 @@ for CORE_FILE in astorb_2020.dat astorb_ceres.dat astorb_pallas.dat ;do
  fi
 done
 ####################################
+# Clean local_wcs_cache
+if [ -d local_wcs_cache ];then
+ for CORE_FILE in local_wcs_cache/* ;do
+  if [ -f "$CORE_FILE" ];then
+   rm -f "$CORE_FILE"
+  fi
+ done
+fi
+####################################
 # Remove fake_image_hack files, if any
 for BADDIR in SIMULATOR_reference simulation_results ;do
  if [ -d "$BADDIR" ];then
