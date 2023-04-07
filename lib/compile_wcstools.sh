@@ -25,7 +25,6 @@ TARGET_DIR=$VAST_DIR/lib
 # add makefile that will run gmake
 # REPEAT THE SAME for wcstools-?.?.?/libwcs
 
-#LIBRARY_SOURCE=$VAST_DIR/src/wcstools-3.9.6
 LIBRARY_SOURCE=$VAST_DIR/src/wcstools-3.9.7
 
 #
@@ -49,6 +48,18 @@ fi
 # This symlink is needed by Makefile
 ln -s $VAST_DIR/lib/find_gcc_compiler.sh
 make clean
+
+# If we are asked to clean the source
+if [ "$1" = "clean" ];then
+ echo -e "\033[01;34mRemoving the local copy of SExtractor\033[00m"
+ #if [ -f $TARGET_DIR/bin/sex ];then
+ # rm -f $TARGET_DIR/bin/sex
+ #fi
+ echo "Script $0 is done."
+ echo " "
+ exit
+fi
+
 
 # The oputput bin/ dir is needed for compilation
 if [ ! -d bin ];then
