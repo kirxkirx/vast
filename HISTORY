@@ -1,8 +1,10 @@
+07 Apr 2023: vast-1.0rc86:
 	* Experimental support for TESS Full-Frame Images (FFIs). In terms of photometric precision, 
-	VaST cannot compete with the analysis codes specifically designed for TESS. It is rather an attempt to apply 
-	quick mass-photometry to TESS images to enable discovery and characterization of bright and high-amplitude 
-	(by TESS standards) variable stars. TESS has 4 cameras and each camera has 4 CCD chips. VaST can process 
-	a series of images taken with one chip of a given camera during one TESS observing sector at a time.
+	VaST currently cannot compete with the analysis codes specifically designed for TESS. 
+	It is rather an attempt to apply quick mass-photometry to TESS images to enable discovery and 
+	characterization of bright and high-amplitude (by TESS standards) variable stars. TESS has 4 cameras 
+	and each camera has 4 CCD chips. VaST can process a series of images taken with one chip of a given 
+	camera during one TESS observing sector at a time.
 	The command line for processing a set of TESS FFIs with VaST may look like this: 
 	'./vast -u -f -t2 --selectbestaperture --autoselectrefimage --sysrem 3 /data1/TESS/sector_24/tess*-4-4-*'
 	where '-u' explicitly sets the time scale to UTC, '-f' disables the graphical output,

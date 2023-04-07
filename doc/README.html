@@ -47,9 +47,10 @@ on a series of astronomical images</h2>
 
 <h2><a href="http://scan.sai.msu.ru/vast/">The up-to-date version of this document is avaliable at http://scan.sai.msu.ru/vast/</a></h2>
 
+
 <p>
 <b>See the <a href="http://adsabs.harvard.edu/abs/2018A%26C....22...28S"><tt>VaST</tt> paper</a>
-for a detailed description of the code. The code is <a href="https://github.com/kirxkirx/vast">available on Github</a>.</b>
+for a detailed description of the code. The latest version of code is <a href="https://github.com/kirxkirx/vast">available on Github</a>.</b>
 </p>
 
 <dl>
@@ -65,7 +66,14 @@ for a detailed description of the code. The code is <a href="https://github.com/
  <a href="README.html#faq">Frequently Asked Questions</a><br/>
  <a href="README.html#public">Publications using <tt>VaST</tt></a><br/>
  <a href="README.html#links">Other useful tools</a><br/>
-</dd></dl><br/>
+</dd></dl>
+
+<div align="right">
+Automated testing status: 
+<img border="0" src="https://github.com/kirxkirx/vast/actions/workflows/build_and_test_ubuntu.yml/badge.svg" alt="build and test ubuntu status"></img>
+<img border="0" src="https://github.com/kirxkirx/vast/actions/workflows/build_and_test_macos.yml/badge.svg" alt="build and test macOS status"></img>
+<img border="0" src="https://circleci.com/gh/kirxkirx/vast.svg?style=svg" alt="CircleCI build status"></img>
+</div>
 
 <p><a name="what"></a><tt>VaST</tt> is a software tool for finding variable objects on a series of astronomical images.
 The images (CCD frames or digitized photographic plates) must be taken with the
@@ -77,8 +85,9 @@ scale (arcsec/pix).</b> The images in a series should overlap by at least ~40% t
 <a href="http://astromatic.iap.fr/software/sextractor/"><tt>SExtractor</tt></a>
 on each image, cross-matches lists of detected stars, performs magnitude
 calibration with respect to the first (reference) image and constructs a lightcurve for each object. 
-The sigma-magnitude, <a href="http://adsabs.harvard.edu/abs/1996PASP..108..851S">Stetson's
-L variability index</a>, <a href="http://adsabs.harvard.edu/abs/2003AJ....126.1006E">Robust Median Statistic (RoMS)</a>
+The sigma-magnitude, 
+<a href="http://adsabs.harvard.edu/abs/1996PASP..108..851S">Stetson's L variability index</a>, 
+<a href="http://adsabs.harvard.edu/abs/2003AJ....126.1006E">Robust Median Statistic (RoMS)</a>
 and other plots may be used to visually identify variable star candidates. 
 If data permit, period-search techniques may be employed to identify periodic variable stars among the candidates.
 All lightcurves are constructed in arbitrary magnitudes with zero magnitude
@@ -98,15 +107,23 @@ perform blind plate solution).</p>
 
 <p><tt>VaST</tt> is written in C (and partly in BASH scripting language) for 
 <a href="http://en.wikipedia.org/wiki/Linux"><tt>GNU/Linux</tt></a>
-operating system. The latest versions are also tested on Mac OS X 
+operating system. The it is also tested on <tt>macOS</tt> 
 and <a href="https://www.freebsd.org/"><tt>FreeBSD</tt></a>.
-The best practical way to run <tt>VaST</tt> under Windows is through Linux installed 
+The best practical way to run <tt>VaST</tt> under 
+<tt>Windows</tt> is through <tt>Linux</tt> installed 
 in a virtual machine (e.g. 
 <a href="https://www.virtualbox.org/">VirtualBox</a>, 
 see also <a href="http://virtualboxes.org/">a collection of pre-built VirtualBox images</a>).
 <a href="http://www.aavso.org/new-vast-release-neat-variable-star-search-program">The AAVSO forum thread</a>
 mentions attempts to run <tt>VaST</tt> under Windows with Cygwin, but the results
-seem to be inconclusive. On all the supported systems <tt>VaST</tt> is able to
+seem to be mixed. 
+I haven't tested the code with Windows Subsystem for Linux (WSL).
+In principle, <tt>VaST</tt> should be able to work with WSL, 
+but one will need to set up a working <tt>X window</tt> system on <tt>Windows</tt>
+before attempting to run <tt>VaST</tt> interactively.
+<tt>VaST</tt> is successfully tested on <tt>Raspberry Pi 4</tt> (controlled
+by <tt>Raspberry Pi OS</tt> aka <tt>Raspbian</tt>).
+On all the supported systems <tt>VaST</tt> is able to
 utilize multiple processing cores to perform most of its computations in
 parallel.</p>
 
@@ -166,12 +183,12 @@ The lightcurve inspection program <div class="code">./lc</div>
 <h2><a name="down"></a>Getting <tt>VaST</tt></h2>
 
 
-<b>To compile and use <tt>VaST</tt> you'll need:</b>
+<a name="compil"><b>To compile and use <tt>VaST</tt> you'll need:</b>
 <ul>
- <li><a href="http://en.wikipedia.org/wiki/Linux"><tt>GNU/Linux</tt></a> or Mac OS X or <a href="https://www.freebsd.org/"><tt>FreeBSD</tt></a> and some
+ <li><a href="http://en.wikipedia.org/wiki/Linux"><tt>GNU/Linux</tt></a> or <tt>macOS</tt> or <a href="https://www.freebsd.org/"><tt>FreeBSD</tt></a> and some
  basic skills in using one of these operating systems through a command line interface (terminal)</li>
  <li><a href="http://gcc.gnu.org/">GCC</a> (including Fortran and C++ compilers), comes with your <tt>GNU/Linux</tt>
- distribution. Note that you need to install GCC on Mac OS X and <tt>FreeBSD</tt> as
+ distribution. Note that you need to install GCC on <tt>macOS</tt> and <tt>FreeBSD</tt> as
  <tt>VaST</tt> will not work with the native clang compiler.</li>
  <li><a href="http://www.gnu.org/software/bc/">BC</a> calculator (can be found in your <tt>GNU/Linux</tt> distribution)</li>
  <li><a href="http://curl.haxx.se/">cURL</a> (can be found in your <tt>GNU/Linux</tt> distribution)</li>
@@ -180,27 +197,32 @@ The lightcurve inspection program <div class="code">./lc</div>
  </ul>
 
 <p>
-You can find at this page the latest version of <tt>VaST</tt>
-<b>(download via 
+<b>The best way to get VaST is to clone the current development version from  
+<a href="https://github.com/kirxkirx/vast">GitHub</a>:</b>
+<div class="code">git clone https://github.com/kirxkirx/vast.git</div><br>
+Alternatively, you may download the quasi-stable version of <tt>VaST</tt> from this
+page 
+<b>via 
 <a href="ftp://scan.sai.msu.ru/pub/software/vast/vast-latest.tar.bz2">ftp</a>
 or
-<a href="vast-latest.tar.bz2">http</a>, ~15M)</b>
-along with the sample data set
+<a href="vast-latest.tar.bz2">http</a> (~15M).</b>
+You may also want to download the sample data set
 (<a href="ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2">ftp</a>
-or <a href="sample_data.tar.bz2">http</a>, 24M).</p>
+or <a href="sample_data.tar.bz2">http</a>, 24M).
+</p>
 
-Files described here as well as older versions of <tt>VaST</tt> are available via 
-<a href="ftp://scan.sai.msu.ru/pub/software/vast">our anonymous
-FTP.</a><br/><br/>
+The older versions of <tt>VaST</tt> are available via 
+<a href="ftp://scan.sai.msu.ru/pub/software/vast">ftp</a> or 
+<a href="http://scan.sai.msu.ru/pub/software/vast">http</a>.<br/><br/>
 
 
 
-<p><a name="compil"></a>You may download <tt>VaST</tt> with the command 
+<p>You may download <tt>VaST</tt> with the command 
 <div class="code">wget -c ftp://scan.sai.msu.ru/pub/software/vast/vast-latest.tar.bz2</div>
 unpack the archive containing the program
 <div class="code">
  tar -xvjf vast-latest.tar.bz2<br/>
- cd vast-1.0rc85
+ cd vast-1.0rc86
 </div>
 and compile it by running
 <div class="code">
@@ -248,20 +270,39 @@ For <b>Red Hat</b> based Linux distributions
 <li>Install some basic development tools (login as root or use sudo):
 <div class="code">yum install gcc gcc-c++ gcc-gfortran libX11-devel libpng-devel</div>
 </li>
-<li>Compile <tt>VaST</tt> <a href="#compil">as described above</a></li>
+<li>Download from GitHub or this page, as <a href="#compil">described above</a>.</li>
+<li>Change directory to the one containing <tt>VaST</tt> source code <div class="code">cd vast</div>
+or <div class="code">cd vast-1.0rc86</div> (the directory name may differ for the GitHub
+and quasi-stable version).</li>
+<li>Compile <tt>VaST</tt> by running <div class="code">make</div></li>
 </ul>
 
-Special note for <b>Mac OS X</b> users: <tt>VaST</tt> is tested
-on Mac OS X 10.8.2 'Mountain Lion' with XQuartz, Xcode, MacPorts installed in
-the system and gcc, gfortran, g++, and wget installed through MacPorts.
-<b><tt>VaST</tt> will not compile with clang</b>, you really need to
-install gcc, gfortran, g++...
+Special note for <b><tt>macOS</tt></b> users: <tt>VaST</tt> is tested
+on <tt>macOS 12.6 'Monterey'</tt> with Xcode. The additional packages   
+<a href="https://www.xquartz.org/">XQuartz</a>
+and
+<a href="https://www.macports.org/">MacPorts</a> 
+or
+<a href="https://brew.sh/">Homebrew</a>
+need to be installed in the system
+from the manually-downloaded .pkg files, while
+gcc, gfortran, g++, wget, X11 library and libpng installed through 
+<a href="https://www.macports.org/">MacPorts</a>
+using the following terminal command:
+<div class="code">
+sudo port install gcc12 wget xorg-libX11 libpng
+</div>
+or, alternatively, through <a href="https://brew.sh/">Homebrew</a>:
+<div class="code">
+sudo port install gcc wget libx11 libpng
+</div>
+(note the difference in the X11 libraries package name).
+
+<b><tt>VaST</tt> will not compile with clang</b>, you do need to install gcc, gfortran, g++...
 <br>
-<tt>VaST</tt> was also reported to successfully compile on OS X 10.11.6, Xcode 8.0 (8A218a) and gcc version 4.9.3 (MacPorts gcc49 4.9.3_0).
-<br>
-A common problem on Mac OS X systems is the mismatch between the versions of a
-manually installed gfortran and the default system gcc. In that case, you
-may need to manually install gcc, g++ and gfortran as described 
+Previously, a common problem on <tt>macOS</tt> systems was the mismatch between the versions of a
+manually installed gfortran and the default system gcc. This should be
+resolved by now, but if the version mismatch affects you, you may try to manually install gcc, g++ and gfortran as described 
 <a href="https://solarianprogrammer.com/2016/09/22/compiling-gcc-6-macos/">here</a>
 add the directory with the new binaries in the beginning of your PATH, the
 command should look something like
@@ -280,6 +321,7 @@ gfortran. Note that you don't need to modify PATH permanently by editing
 .bashrc file (or an equivalent) - it is sufficient to export the correct PATH
 before running 'make'.
 <br/>
+<br/>
 Special note for <b><tt>FreeBSD</tt></b> users: <tt>VaST</tt> scripts may fail to compile
 the internal copy of <a href="http://www.astro.caltech.edu/~tjp/pgplot/">PGPLOT</a>
 library. If that happens, please install <a href="http://www.astro.caltech.edu/~tjp/pgplot/">PGPLOT</a>
@@ -288,6 +330,63 @@ system-wide with the command (as root):
 then try to compile <tt>VaST</tt> again. In order to use <tt>VaST</tt> you will need the
 following packages
 <div class="code">pkg install bash gmake gcc curl wget libx11</div>
+
+<p>
+If you want to do <b>PSF-photometry with <tt>VaST</tt>, but have no root access</b> 
+to install <tt>ATLAS</tt> library using the system's package manager - there
+is a way to compile and install all the needed programs and libraries at
+your home directory, but it's a pain. Here is what worked for me on <tt>CentOS 8</tt>:
+<div class="code">
+<pre>
+# Download FFTW, compile and install it using
+./configure --prefix=$HOME &amp;&amp; make &amp;&amp; make install
+# Download ATLAS, compile and install it using
+mkdir my_build_dir
+cd my_build_dir
+../configure --cflags="-fPIC" --cripple-atlas-performance --shared --with-netlib-lapack-tarfile=$HOME/src/v3.11.0.tar.gz --prefix=$HOME
+# --cflags="-fPIC" and --shared --with-netlib-lapack-tarfile=$HOME/src/v3.11.0.tar.gz
+# may not be necessary as the dynamic libraries will fail to build anyway,
+# only the static libraries will be built.
+# Install whatever we have:
+make
+make install
+# Clone SExtractor repository from GitHub, then
+./autogen.sh
+# Now manually edit configure script adding after the line
+# '$as_echo_n "checking for library containing clapack_dpotrf... " >&amp;6; }'
+# the following new line
+ac_cv_search_clapack_dpotrf="$HOME/lib/liblapack.a $HOME/lib/libcblas.a $HOME/lib/libatlas.a"
+# then
+./configure --prefix=$HOME --with-atlas-libdir=$HOME/lib --with-atlas-incdir=$HOME/include --with-fftw-libdir=$HOME/lib --with-fftw-incdir=$HOME/include
+make
+make install
+# Clone PSFEx repository from GitHub and follow the same installation
+# procedure as for SExtractor:
+./autogen.sh
+# Now manually edit configure script adding after the line
+# '$as_echo_n "checking for library containing clapack_dpotrf... " >&amp;6; }'
+# the following new line
+ac_cv_search_clapack_dpotrf="$HOME/lib/liblapack.a $HOME/lib/libcblas.a $HOME/lib/libatlas.a"
+# then
+./configure --prefix=$HOME --with-atlas-libdir=$HOME/lib --with-atlas-incdir=$HOME/include --with-fftw-libdir=$HOME/lib --with-fftw-incdir=$HOME/include
+make
+make install
+#
+# I also have
+export LIBRARY_PATH=$HOME/lib:$LIBRARY_PATH
+export LD_LIBRARY_PATH=$HOME/lib:$LD_LIBRARY_PATH
+export C_INCLUDE_PATH=$HOME/include:$C_INCLUDE_PATH
+export CPLUS_INCLUDE_PATH=$C_INCLUDE_PATH:$CPLUS_INCLUDE_PATH
+export PATH=$HOME/bin:$PATH
+# in $HOME/.bashrc
+#
+# After compiling/installing SExtractor and PSFEx you'll be able to run VaST
+# in the PSF-photometry mode using '-P' flag like this:
+./vast -u -P ../sample_data/f_72-0*
+</pre>
+</div>
+
+</p>
 <br/>
 <br/>
 
@@ -307,7 +406,7 @@ Brief usage instructions in Russian may be found
 </div>
 change to the <tt>VaST</tt> installation directory and run the program
 <div class="code">
- cd vast-1.0rc85<br/>
+ cd vast-1.0rc86<br/>
  ./vast ../sample_data/*fit
 </div>
 After a brief computation the variability search window will be opened. Click
@@ -500,7 +599,7 @@ in the "default.sex" file located in the <tt>VaST</tt> directory. Please use
 <p>Say, you have digitized photographic images in "photo_data" directory. To run <tt>VaST</tt>
 on them, change to the <tt>VaST</tt> directory and run the program
 <div class="code">
- cd vast-1.0rc85<br/>
+ cd vast-1.0rc86<br/>
  ./vast -o ../photo_data/*fit
 </div>
 The "-o" parameter tells <tt>VaST</tt> to use formulas (1) and (3) from 
@@ -780,6 +879,168 @@ or just drop a line to kirx[at]scan.sai.msu.ru
 <h2><a name="news"></a>Release notes</h2>
 
 <pre>
+07 Apr 2023: vast-1.0rc86:
+
+ * Experimental support for TESS Full-Frame Images (FFIs). In terms of photometric precision, 
+VaST currently cannot compete with the analysis codes specifically designed for TESS. 
+It is rather an attempt to apply quick mass-photometry to TESS images to enable discovery and 
+characterization of bright and high-amplitude (by TESS standards) variable stars. TESS has 4 cameras 
+and each camera has 4 CCD chips. VaST can process a series of images taken with one chip of a given 
+camera during one TESS observing sector at a time.
+The command line for processing a set of TESS FFIs with VaST may look like this: 
+'./vast -u -f -t2 --selectbestaperture --autoselectrefimage --sysrem 3 /data1/TESS/sector_24/tess*-4-4-*'
+where '-u' explicitly sets the time scale to UTC, '-f' disables the graphical output,
+'-t2' set the photometric calibration type to 'zero-point offset only' (found most appropriate for TESS FFIs),
+'--selectbestaperture' for each object VaST will select aperture size that minimizes the lightcurve scatter, 
+'--autoselectrefimage' let VaST automatically select the best reference image,
+'--sysrem 3' apply 3 iterations of SysRem to suppress residual systematics. 
+As much as 9 SysRem iterations may be appropriate for TESS FFIs.
+The numbers '-4-4-' in the files names are the camera and CCD chip numbers.
+Processing TESS FFIs with VaST requires considerable computational resources.
+You may try to make cutouts (with 'util/fitscopy' or other tools) rather than processing full-chip images.
+You may want to process only the FFIs with good data quality flags ('DQUALITY= 0' key in FITS header).
+TESS FFIs may be downloaded at https://archive.stsci.edu/tess/bulk_downloads/bulk_downloads_ffi-tp-lc-dv.html
+
+ * New experimental moving object photometry mode:
+'./vast --movingobject ../moving_object_images/*.fit'
+VaST will ask you to mark moving object position on each image with a click.
+The intended use is comet/asteroid/space junk photometry. 
+Only one moving object can be measured on a series of images at at a time.
+The lightcurve filename of the moving object is listed in vast_summary.log
+
+ * Automatic magnitude calibration scripts now support g magnitudes derived from
+APASS or PanSTARRS1 catalogs.
+
+ * The period search routine 'lib/ls_compute_periodogram' can now compute 
+the Lomb-Scargle periodogram and the associated False Alarm Probabilities as defined by 
+https://ui.adsabs.harvard.edu/abs/1982ApJ...263..835S/abstract
+https://ui.adsabs.harvard.edu/abs/2018ApJS..236...16V/abstract
+https://ui.adsabs.harvard.edu/abs/1992nrca.book.....P/abstract (the "Numerical recipes in C" book).
+As these False Alarm Probabilities have limited practical use (as they assume independent Gaussian 
+noise in measurements), Lomb-Scargle periodogram has virtually no advantages over Deeming's Discrete 
+Fourier Transform. But co-authors and referees keep asking for is as Lomb-Scargle is so popular, 
+so here is an implementation. As with the DFT and Lafler & Kinman (string-length) period search 
+implementations in VaST, the Lomb-Scargle periodogram is implemented as a command line tool
+(the periodogram file it produces 'ls.periodogram' may be visualized with 'gnuplot').
+The Lomb-Scargle support in the interactive online period search tool integrated with VaST is coming soon.
+
+ * VaST will not try to update the leap second 'tai-utc.dat' file as there is no more
+an official way to do it: the links http://maia.usno.navy.mil/ser7/tai-utc.dat and 
+ftp://toshi.nofs.navy.mil/ser7/tai-utc.dat are down forever. If you know how to get 
+updated versions of 'tai-utc.dat' in the future - please let me know!
+
+ * VaST will try to discard images with elongated stars resulting from bad tracking.
+This can be disabled by specifying the new command line option '-l' or '--nodiscardell'.
+This is disabled automatically if '--photocurve' magnitude calibration is used as
+photographic plates often suffer from bad guiding and low number of images (so we cannot
+afford discarding a few suspicious ones.)
+The line 'Number of identified bad images:' in 'vast_summary.log' now shows a sum of bad images
+identified via the 'elongated stars' and 'lightcurve outlier' routes.
+
+ * 'util/get_image_date' now understands input dates without quotation marks
+'util/get_image_date 2020 10 27 18:00'
+and as a fraction of the day
+'util/get_image_date 2020 10 27.75'
+
+ * 'lib/deg2hms_uas' converts the input in decimal degrees
+to sexagesimal degrees:arcminutes:arcseconds with the 10 microarcsecond accuracy of the output.
+Example usage: 'lib/deg2hms_uas 126.59917135396 -50.96207264973'
+'lib/deg2hms' prints out the output with the usual 0.1 arcsec accuracy.
+
+ * Removed the internal copy of sextractor-2.25.0, keeping 2.25.2 and 2.19.5
+
+ * Retired the old VaST implementation of SysRem 'util/sysrem' as it started causing problems
+with cod maintenance. The new SysRem implementation 'util/sysrem2' is now the only one and
+'util/sysrem' is a symlink to 'util/sysrem2' kept for backward compatibility.
+
+ * VaST can now be used from behind an HTTP/HTTPS proxy: just export 'http_proxy' and 'https_proxy' 
+variables before running VaST. For example:
+export http_proxy=http://squid.sao.ru:8080
+export https_proxy=http://squid.sao.ru:8080
+where squid.sao.ru:8080 is the name and port of the proxy server.
+
+ * 'util/phase_lc' is a new tool to fold a lightcurve with given light elements:
+util/phase_lc out01234.dat 2459088.0123 0.567891 > phased_lightcurve_01234.txt
+The phased lightcurve can be plotted with gnuplot or some other plotting tool.
+The similar tool 'util/phase_and_bin_lc' can also bin the lightcurve in phase.
+
+ * The new tool 'util/bin_lightcurve_in_time' can bin the input lightcurve in time. Example use:
+'util/bin_lightcurve_in_time out01234.dat 120 > binned_lightcurve_120sec.dat' 
+will bin the lightcurve file out01234.dat in 120s time bins and write the binned data 
+to 'binned_lightcurve_120sec.dat'.
+
+ * The new tool 'util/imstat_vast image.fits' will print out some basic image statistics.
+Works pretty much as 'util/colstat', but for an image instead of a data column.
+The intended use is automating image quality control.
+The tool 'util/imstat_vast_fast' is the faster version of 'util/imstat_vast' that outputs 
+fewer parameters, but works ten times faster (by avoiding sorting the image array).
+
+ * Added robust linear fit option to the absolute magnitude scale calibration interface.
+(It is now the new default calibration function, as usual, you may change 
+the calibration function by pressing 'P' on the keyboard.)
+The recommended way to automatically calibrate the magnitude scale is now:
+'util/magnitude_calibration.sh V robust_linear'
+You may also try to fit zero-point offset only:
+'util/magnitude_calibration.sh V zero_point'
+Here V is the filter name, the supported filers are BVRIri 
+As usual 'util/magnitude_calibration.sh V' will work only if the image can be 
+automatically plate-solved. If the image is too narrow-field, specify the comparison
+star magnitudes manually by running 'util/magnitude_calibration.sh' without command line arguments.
+
+ * VaST can now handle RGB DSLR images as input. It performs on-the-fly conversion extracting green
+channel and discarding red and blue channels. The conversion is equivalent to:
+'util/fitscopy rgb_image.fit[*,*,2:2] g_image.fit'
+Note that the converted images are temporarily stored in 'converted_images/' subfolder of 
+the vast working directory meaning you have to have enough disk space to copy the input set of images.
+An external program like 'siril' ( https://siril.org/ ) can be used to convert RAW DSLR images 
+to FITS format (that can be read by VaST) and stack the images if needed.
+
+ * In single-image inspection mode ('./sextract_single_image image.fits') you may now  
+calibrate the magnitude scale automatically by pressing '4' on the keyboard. This will work only 
+if the image can be automatically plate-solved. You'll need to enter the filter name in the terminal.
+
+ * If manual (keyboard key '2') or automatic (keyboard key '4') magnitude calibration is performed 
+in single-image inspection mode ('./sextract_single_image image.fits'), the calibrated magnitudes 
+of all the detected stars are saved to 'image00000.cat.calibrated'.
+
+ * The new 'vast' command line option '-K' or '--nodateobskeyword' tells the code to ignore DATE-OBS 
+key and instead try to determine the observation time from other keywords. This (together with 
+'-k' or '--nojdkeyword' option to ignore 'JD' keyword) is implemented only in './vast', 
+but not in './pgfv' or 'util/get_image_date'
+
+ * VaST will now use SHUTOPEN instead of DATE-OBS to read the observation start time if both
+DATE-OBS and SHUTOPEN are present in the FITS image header.
+
+ * VaST can now get the middle of exposure time from MJD-OBS keyword.
+
+ * Fixed segfault with '--type' photometric calibration type argument (the short version '-t' was working fine).
+
+ * Relaxed the way for constant stars (listed in vast_list_of_likely_constant_stars.log) are selected 
+as this affects automatic magnitude calibration. There may be only a small overlap between 1000 brightest
+stars in the field used for catalog search and the list of non-variable stars.
+
+ * VaST scripts now write to '>&2' instead of '/dev/stderr' so they should be able to run fine under 'su'.
+
+ * Fixed the bug with the internal copy of SExtractor not compiling on Ubuntu 20.10 
+(new GCC supplied with Ubuntu requires '-fno-common' flag to compile SExtractor).
+
+ * VaST will warn a user if the input is a compressed FITS image. The compressed images
+should be unpacked with 'util/funpack' before processing.
+
+ * Added the new VaST test script 'util/examples/git_pull_run_test_email_on_failure.sh' that can be run 
+from a cron job and e-mail a test report. 
+
+ * Added CFITSIO example program 'util/imarith' allowing simple arithmetic operations on images (used in test script).
+
+ * You may now run the sigma-clip filter on an individual lightcurve file:
+lib/new_lightcurve_sigma_filter 3.0 out12345.dat # here 3.0 is the sigma-clip level
+
+ * VaST is now able to read the CCD gain value from CVF keyword written by N.I.N.A. camera control software.
+
+ * 'lib/deeming_compute_periodogram' will now write a binned power spectrum and spectral window 
+to 'binned_powerspectrum.periodogram' file that can be displayed with gnuplot or other tools.
+
+
 20 Oct 2020: vast-1.0rc85:
 
  * 'util/get_image_date' can be used to convert JD to calendar date/time:
@@ -2073,7 +2334,7 @@ discovering it!
 * "JD" keyword is read form a FITS header only if "DATE-OBS" keyword was not
 found. Useful for FITS files that have both keywords in their headers.
 
-* Fixed an issue that prevented VaST to compile on Mac OS after the latest
+* Fixed an issue that prevented VaST to compile on macOS after the latest
 development environment update. Thanks to Alexei Alakoz for his valuable
 help in testing!
 
@@ -2658,7 +2919,7 @@ with PSF-fitting photometry) is negligible and the resulting photometric
 accuracy is limited by calibration errors and various systematic effects.
 </p></div>
 
-<p><a href="javascript:toggleElement('a15')">Compilation on Mac OS X fails
+<p><a href="javascript:toggleElement('a15')">Compilation on <tt>macOS</tt> fails
 with "Undefined symbols for architecture x86_64:"</a></p>
 <div id="a15" style="display:none">
 <p><tt>VaST</tt> is untested with clang compiler - it is tested only with gcc.
@@ -2717,6 +2978,84 @@ pgxwin.Win.geometry: 1600x900+1+1
 where 1600x900 is the desired PGPLOT window size in pixels. Replot something in <tt>VaST</tt>.
 </p></div>
 
+<p><a href="javascript:toggleElement('a19')">How to use VaST from behind a proxy?</a></p>
+<div id="a19" style="display:none">
+<p>Plate solving and catalog search tools in VaST require internet
+connection. If you are behind a proxy (hello SAO RAS), you'll need to export
+the following variables before running VaST; you may want to add them to
+<tt>.bashrc</tt>
+<div class="code">
+export http_proxy=http://squid.sao.ru:8080
+</div>
+<div class="code">
+export https_proxy=http://squid.sao.ru:8080
+</div>
+Where <tt>squid.sao.ru:8080</tt> is the address of the proxy server. If you
+don't know the proxy address, you may try your luck with something like
+<div class="code">
+curl http://wpad.sao.ru/wpad.dat
+</div>
+Note that the names of the variables <tt>http_proxy</tt> and <tt>https_proxy</tt>
+should be in the lower case so <tt>curl</tt> can understand them (<tt>wget</tt>
+will be happy with both lower and upper case names).
+</p></div>
+
+<p><a href="javascript:toggleElement('a20')">Why do many columns in <tt>vast_lightcurve_statistics.log</tt> are filled with 0?</a></p>
+<div id="a20" style="display:none">
+<p>Some of the variability indices described in 
+<a href="https://ui.adsabs.harvard.edu/abs/2017MNRAS.464..274S">the paper</a>
+are disabled in <tt>VaST</tt> by default, the aim is to speed up the
+computations. You may enable all indices by commenting out
+<div class="code">
+#define SKIP_EXPERIMENTAL_VARIABILITY_INDEXES
+</div>
+in <tt>src/variability_indexes.h</tt> and re-compiling <tt>VaST</tt> by
+running <tt>make</tt>
+</p></div>
+
+<p><a href="javascript:toggleElement('a21')"><tt>VaST</tt> automatically analyzes only those stars which have at least a minimum of N_max/2 measurements?</a></p>
+<div id="a21" style="display:none">
+<p>You may change this default behavior by commenting out the line 
+<div class="code">
+#define DROP_LIGHTCURVES_WITH_SMALL_NUMBER_OF_POINTS_FROM_ALL_PLOTS
+</div>
+in <tt>src/vast_limits.h</tt> or changing the value of 
+<div class="code">
+#define MIN_FRACTION_OF_IMAGES_THE_STAR_SHOULD_APPEAR_IN 0.5
+</div>
+in the same file and re-compiling <tt>VaST</tt> by running <tt>make</tt>
+</p>
+<p>Note that the above parameters are applied at the stage when the
+variability indices are computed from the lightcurves. Much more strict
+cuts may be applied at the lightcurve creation stage, specifically 
+<div class="code">
+#define MIN_FRACTION_OF_GOOD_MEASUREMENTS 0.9
+</div>
+in <tt>src/vast_limits.h</tt> meaning that after a star is first detected,
+it should be also detected with no bad flags at MIN_FRACTION_OF_GOOD_MEASUREMENTS
+of the remaining images covering the star's position.
+</p>
+</div>
+
+<p><a href="javascript:toggleElement('a22')">How to detrend a lightcurve with <tt>VaST</tt>?</a></p>
+<div id="a22" style="display:none">
+<p>You may detrend a lightcurve displayed by the lightcurve viewer <tt>./lc</tt>
+by pressing the following keys on the keyboard:
+<ul>
+<li><tt>1</tt> - fit a straight line to the lightcurve</li>
+<li><tt>B</tt> - introduce a break: parts of the lightcurve before and after the
+break will be fitted independently. You may insert as many breaks as you
+wish</li>
+<li><tt>0</tt> - fix the fitted line slope at 0 (fit the median flux instead of
+a linear trend)</li>
+<li><tt>-</tt> - subtract the fitted line(s) from the lightcurve</li>
+<li><tt>W</tt> - write the subtracted lightcurve to a file (you'll see
+the filename in the terminal)</li>
+<li><tt>L</tt> - send the subtracted lightcurve to 
+<a href='http://scan.sai.msu.ru/lk/'>online period-search service</a></li>
+</ul>
+</p>
+</div>
 
 <p><a href="javascript:toggleElement('a999')">How to acknowledge <tt>VaST</tt> in a publication?</a></p>
 <div id="a999" style="display:none">
@@ -2730,12 +3069,57 @@ You may also include <a href="http://scan.sai.msu.ru/vast/">the URL of the <tt>V
 <h2><a name="public"></a>List of publications which make use of <tt>VaST</tt></h2>
 
 The list includes both refereed and non-refereed publications (conference proceedings, electronic telegrams).
-If you are aware of a publication not listed here, please drop me a
+If you are aware of a <tt>VaST</tt>-related publication that should be listed here, please drop me a
 line at kirx[at]scan.sai.msu.ru 
 
 <ol reversed>
 
-<li>M. S. Pshirkov, A. V. Dodin, A. A. Belinski et al. 
+<li>M. Catelan
+"Stellar Variability in Ground-Based Photometric Surveys: An Overview"</br>
+arXiv:2302.01436 (2023)
+<a href="https://ui.adsabs.harvard.edu/abs/2023arXiv230201436C/abstract">Available here</a>.
+
+</li><li>O. Burkhonov, S. Egamberdiev, B. Satovskiy et al.
+"Discovery of Six New Variables: Center alpha=23h58m delta=+62o37'"</br>
+PZP, vol. 22, N 3 (2022)
+<a href="http://www.astronet.ru/db/varstars/msg/1842675">Available here</a>.
+
+</li><li>Theron W. Carmichael, Jonathan M. Irwin, Felipe Murgas et al.
+"TOI-2119: a transiting brown dwarf orbiting an active M-dwarf from NASA's TESS mission"</br>
+MNRAS, 514, 4944 (2022)
+<a href="https://ui.adsabs.harvard.edu/abs/2022MNRAS.514.4944C/abstract">Available here</a>.
+
+</li><li>C. C. Cheung, T. J. Johnson, P. Jean et al.
+"Fermi LAT Gamma-ray Detection of the Recurrent Nova RS Ophiuchi during its 2021 Outburst"</br>
+ApJ, 935, 44 (2022)
+<a href="https://ui.adsabs.harvard.edu/abs/2022ApJ...935...44C/abstract">Available here</a>.
+
+</li><li>Tianrui Sun, Xiaoyan Li, Lei Hu et al.
+"Antarctic Survey Telescope 3-3: Overview, System Performance and Preliminary Observations at Yaoan, Yunnan"</br>
+Universe, vol. 8, issue 6, p. 303
+<a href="https://ui.adsabs.harvard.edu/abs/2022Univ....8..303S/abstract">Available here</a>.
+
+</li><li>Jillian R. Neeley, Matteo Monelli, Massimo Marengo et al. 
+"Variable Stars in Local Group Galaxies. VI. The Isolated Dwarfs VV 124 and KKr 25"</br>
+ApJ, 920, 152 (2021)
+<a href="https://ui.adsabs.harvard.edu/abs/2021ApJ...920..152N/abstract">Available here</a>.
+
+</li><li>S. V. Antipin, A. M. Zubareva, A. A. Belinski et al.
+"New SU UMa-type star ZTF18abdlzhd in the Zwicky Transient Facility data"</br>
+Contributions of the Astronomical Observatory Skalnate Pleso, vol. 51, no. 2, p. 132-137 (2021)
+<a href="https://ui.adsabs.harvard.edu/abs/2021CoSka..51..132A/abstract">Available here</a>.
+
+</li><li>M. Monelli 
+"Variable Stars at the Fringes of the Local Group"</br>
+ASPC, 529, 39 (2021)
+<a href="https://ui.adsabs.harvard.edu/abs/2021ASPC..529...39M/abstract">Available here</a>.
+
+</li><li>E. G. Lapukhin, A. M. Zubareva, E. Kryukova, F. Khamrakulov 
+"Variable stars in Lacerta: area of 2.3x2.3 deg., center R.A.=22h50m Dec.=54d00' (2000.0). Part I"</br>
+PZP, vol. 20, N 2 (2020)
+<a href="http://www.astronet.ru/db/varstars/msg/1372288">Available here</a>.
+
+</li><li>M. S. Pshirkov, A. V. Dodin, A. A. Belinski et al. 
 "Discovery of a hot ultramassive rapidly rotating DBA white dwarf"</br>
 MNRAS, 499, L21 (2020) 
 <a href="https://ui.adsabs.harvard.edu/abs/2020MNRAS.499L..21P/abstract">Available here</a>.
@@ -3429,7 +3813,7 @@ Transitional" height="31" width="88" border="0"/></img></a> &nbsp; &nbsp;
 </div>
 
 </td></tr><tr><td bgcolor="#aaaadd">
-<div align="center"><tt>VaST</tt> developers team, 2005-2019</div>
+<div align="center"><tt>VaST</tt> developers team, 2005-2023</div>
 </td></tr></table>
 </body>
 </html>
