@@ -99,28 +99,28 @@ int main( int argc, char **argv ) {
  mean_estimated_sigma= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
  if ( mean_estimated_sigma == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mean_estimated_sigma\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  actual_sigma= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
  if ( actual_sigma == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for actual_sigma\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  w= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
  if ( w == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for w array\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  mag_array= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( mag_array == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mag_array(rescale_photometric_errors.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  magerr_array= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( magerr_array == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for magerr_array(rescale_photometric_errors.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  star_counter= 0;
@@ -336,13 +336,13 @@ int main( int argc, char **argv ) {
   input_lightcurve_file= fopen( filenamelist[filename_counter], "r" );
   if ( NULL == input_lightcurve_file ) {
    fprintf( stderr, "ERROR: Can't open file %s\n", filenamelist[filename_counter] );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   outlightcurvefile= fopen( "lightcurve.tmp", "w" );
   if ( NULL == outlightcurvefile ) {
    fprintf( stderr, "\nAn ERROR has occured while processing file %s \n", filenamelist[filename_counter] );
    fprintf( stderr, "ERROR: Can't open file %s for writing\n", "lightcurve.tmp" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   while ( -1 < read_lightcurve_point( input_lightcurve_file, &jd, &mag, &magerr, &x, &y, &app, string, comments_string ) ) {
    if ( jd == 0.0 )

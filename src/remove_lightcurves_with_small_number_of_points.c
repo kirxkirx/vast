@@ -67,7 +67,7 @@ int main( int argc, char **argv ) {
 
   if ( NULL == lightcurvefile ) {
    fprintf( stderr, "ERROR: Can't open file %s\n", filenamelist[filename_counter] );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
 
   // Count observations

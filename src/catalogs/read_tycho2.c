@@ -205,7 +205,7 @@ int match_stars_with_catalog( struct Star *arrStar, int N, struct CatStar *arrCa
  calibfile= fopen( "calib.txt", "w" );
  if ( NULL == calibfile ) {
   fprintf( stderr, "ERROR! Cannot open calib.txt for writing!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  for ( i= 0; i < N; i++ ) {
   if ( arrStar[i].matched_with_catalog == 1 ) {
@@ -244,7 +244,7 @@ int read_tycho_cat( struct CatStar *arrCatStar, long *M, double *image_boundarie
   tychofile= fopen( tychofiles[tychofilecounter], "r" );
   if ( tychofile == NULL ) {
    fprintf( stderr, "ERROR: cannot open Tycho2 catalog file %s\n", tychofiles[tychofilecounter] );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   memset( tychostr, 0, TYCHOSTRING ); // reset the string just in case
   while ( NULL != fgets( tychostr, TYCHOSTRING, tychofile ) ) {
@@ -286,7 +286,7 @@ int read_sextractor_cat( char *catalog_name, struct Star *arrStar, int *N, doubl
  N_lines_in_catalog= count_lines_in_ASCII_file( catalog_name );
  if ( N_lines_in_catalog < MIN_NUMBER_OF_STARS_ON_FRAME ) {
   fprintf( stderr, "ERROR in read_sextractor_cat(): too few lines in %s!\n", catalog_name );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  // RA_array=malloc(MAX_NUMBER_OF_STARS_ON_IMAGE*sizeof(double));
  RA_array= malloc( N_lines_in_catalog * sizeof( double ) );
@@ -296,7 +296,7 @@ int read_sextractor_cat( char *catalog_name, struct Star *arrStar, int *N, doubl
  sexcatfile= fopen( catalog_name, "r" );
  if ( sexcatfile == NULL ) {
   fprintf( stderr, "ERROR: cannot open %s!\n", catalog_name );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  // while(-1<fscanf(sexcatfile,"%d  %lf %lf  %lf %lf  %lf %lf %lf %lf  %lf %lf %lf %lf %lf %lf  %d %lf", &arrStar[i].NUMBER, &arrStar[i].FLUX_APER, &arrStar[i].FLUXERR_APER,
  //  &arrStar[i].MAG_APER, &arrStar[i].MAGERR_APER, &arrStar[i].X_IMAGE, &arrStar[i].Y_IMAGE, &arrStar[i].ALPHA_SKY, &arrStar[i].DELTA_SKY,
@@ -373,7 +373,7 @@ int create_tycho2_list_of_bright_stars_to_exclude_from_transient_search( double 
   tychofile= fopen( tychofiles[tychofilecounter], "r" );
   if ( tychofile == NULL ) {
    fprintf( stderr, "ERROR: cannot open Tycho2 catalog file %s\n", tychofiles[tychofilecounter] );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   memset( tychostr, 0, TYCHOSTRING ); // reset the string just in case
   while ( NULL != fgets( tychostr, TYCHOSTRING, tychofile ) ) {

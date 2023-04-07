@@ -32,7 +32,7 @@ int main() {
  a= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
  if ( a == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for array a(observations_per_star.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  double mean;
  double median;
@@ -57,7 +57,7 @@ int main() {
     lightcurvefile= fopen( ep->d_name, "r" );
     if ( NULL == lightcurvefile ) {
      fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     a[number_of_stars]= 0.0;
     while ( NULL != fgets( str, 2048, lightcurvefile ) ) {
@@ -102,7 +102,7 @@ int main() {
     lightcurvefile= fopen( outfilename, "r" );
     if ( NULL == lightcurvefile ) {
      fprintf( stderr, "ERROR: Can't open file %s\n", outfilename );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     a[mnumber_of_stars]= 0.0;
     while ( NULL != fgets( str, 2048, lightcurvefile ) )

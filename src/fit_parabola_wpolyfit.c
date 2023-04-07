@@ -17,17 +17,17 @@ int main() {
  datax= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
  if ( datax == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for datax(fit_parabola_wpolyfit.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  datay= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
  if ( datay == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for datax(fit_parabola_wpolyfit.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  dataerr= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
  if ( dataerr == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for datax(fit_parabola_wpolyfit.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  while ( -1 < fscanf( stdin, "%lf %lf %lf", &datax[n], &datay[n], &dataerr[n] ) )

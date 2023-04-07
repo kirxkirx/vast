@@ -301,13 +301,13 @@ int main() {
    data_for_stat= malloc( n_stars_in_lightcurve_statistics_file * sizeof( double ) );
    if ( data_for_stat == NULL ) {
     fprintf( stderr, "Memory allocation ERROR: data_for_stat\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    // !!!
    data_for_stat_median_subtracted= malloc( n_stars_in_lightcurve_statistics_file * sizeof( double ) );
    if ( data_for_stat_median_subtracted == NULL ) {
     fprintf( stderr, "Memory allocation ERROR: data_for_stat_median_subtracted\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
 
 #ifdef VAST_ENABLE_OPENMP
@@ -461,7 +461,7 @@ int main() {
  {
   // We allocate it here and de-allcoate at the end of the cycle to make OpenMP parallelization work
   data_for_stat=malloc(n_stars_in_lightcurve_statistics_file*sizeof(double));
-  if( data_for_stat==NULL ){fprintf(stderr,"Memory allocation ERROR: data_for_stat\n");exit(1);}
+  if( data_for_stat==NULL ){fprintf(stderr,"Memory allocation ERROR: data_for_stat\n");exit( EXIT_FAILURE );}
   // !!!
 
   #ifdef VAST_ENABLE_OPENMP
@@ -541,9 +541,9 @@ int main() {
  {
   // We allocate it here and de-allcoate at the end of the cycle to make OpenMP parallelization work
   data_for_stat=malloc(n_stars_in_lightcurve_statistics_file*sizeof(double));
-  if( data_for_stat==NULL ){fprintf(stderr,"Memory allocation ERROR: data_for_stat\n");exit(1);}
+  if( data_for_stat==NULL ){fprintf(stderr,"Memory allocation ERROR: data_for_stat\n");exit( EXIT_FAILURE );}
   data_for_stat_spread=malloc(n_stars_in_lightcurve_statistics_file*sizeof(double));
-  if( data_for_stat_spread==NULL ){fprintf(stderr,"Memory allocation ERROR: data_for_stat_spread\n");exit(1);}
+  if( data_for_stat_spread==NULL ){fprintf(stderr,"Memory allocation ERROR: data_for_stat_spread\n");exit( EXIT_FAILURE );}
   // !!!
 
   #ifdef VAST_ENABLE_OPENMP
@@ -994,7 +994,7 @@ int main() {
   vast_detection_efficiency_log= fopen( "vast_detection_efficiency.log", "w" );
   if ( NULL == vast_detection_efficiency_log ) {
    fprintf( stderr, "ERROR: opening file vast_detection_efficiency.log for writing!\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   fprintf( vast_detection_efficiency_log, "#   Index    threshold_at_Fmax threshold_at_Cmax C_at_Fmax P_at_Fmax  Fmax     Cmax   P_at_Cmax fraction_of_obj_rejected_at_Cmax fraction_of_obj_rejected_at_Fmax #\n" );
   for ( j= 0; j < MAX_NUMBER_OF_INDEXES_TO_STORE; j++ ) {

@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
 
   if( NULL == fgets(string, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) ) {
    fprintf(stderr, "ERROR: empty lightcurve file!\n");
-   exit(1);
+   exit( EXIT_FAILURE );
   }
   /* Identify lightcurve format */
   if( 2 == sscanf(string, "%lf %lf", &jd, &mag) ) {
@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
    }
   } else {
    fprintf(stderr, "ERROR: can't parse the lightcurve file!\n");
-   exit(1);
+   exit( EXIT_FAILURE );
   }
   if( lightcurve_format == 0 )
    fprintf(stderr, "VaST lightcurve format detected!\n");

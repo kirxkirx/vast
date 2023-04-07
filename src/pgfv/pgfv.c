@@ -425,7 +425,7 @@ int get_ref_image_name( char *str ) {
  outfile= fopen( "vast_summary.log", "r" );
  if ( outfile == NULL ) {
   fprintf( stderr, "ERROR: cannot get the reference image name as there is no vast_summary.log\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  while ( NULL != fgets( stringbuf, 2048, outfile ) ) {
   stringbuf[2048 - 1]= '\0'; // just in case
@@ -602,7 +602,7 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
 
  if ( NUM_OF_PIXELS <= 0 ) {
   fprintf( stderr, "FATAL ERROR in image_minmax3(): NUM_OF_PIXELS<=0 \n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  /*
@@ -1191,15 +1191,15 @@ int main( int argc, char **argv ) {
   case '?':
    if ( optopt == 'a' ) {
     fprintf( stderr, "Option -%c requires an argument: fixed aperture size in pix.!\n", optopt );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    if ( optopt == 'w' ) {
     fprintf( stderr, "Option -%c requires an argument: finder chart size in pix.!\n", optopt );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    if ( optopt == 'b' ) {
     fprintf( stderr, "Option -%c requires an argument: string with the target name!\n", optopt );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    break;
   case -1:
@@ -1239,7 +1239,7 @@ int main( int argc, char **argv ) {
     // no image is specified on the comamnd line - try to get it from vast_summary.log
     //    if( 0 != get_ref_image_name(fits_image_name) ) {
     //     fprintf(stderr, "Usage:\n%s FITSIMAGE.fit\nor\n%s FITSIMAGE.fit X Y\nor\n%s FITSIMAGE.fit RA DEC\n\n", argv[0], argv[0], argv[0]);
-    //     exit(1);
+    //     exit( EXIT_FAILURE );
     //    }
     image_specified_on_command_line__0_is_yes= 1;
    }
@@ -1267,7 +1267,7 @@ int main( int argc, char **argv ) {
    }
    if( 0 != get_ref_image_name(fits_image_name) ) {
     fprintf(stderr, "ERROR getting the reference image name from the log file\n");
-    exit(1);
+    exit( EXIT_FAILURE );
    }
   }
 
@@ -1290,14 +1290,14 @@ int main( int argc, char **argv ) {
    //get_ref_image_name(fits_image_name);
    if( 0 != get_ref_image_name(fits_image_name) ) {
     fprintf(stderr, "ERROR getting the reference image name from the log file\n");
-    exit(1);
+    exit( EXIT_FAILURE );
    }
   }
  */
 
  if ( image_specified_on_command_line__0_is_yes != 0 && image_specified_on_command_line__0_is_yes != 1 ) {
   fprintf( stderr, "ERROR in %s: image_specified_on_command_line__0_is_yes = %d \n", argv[0], image_specified_on_command_line__0_is_yes );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  // if( argc - optind == 5 ) {
@@ -1468,27 +1468,27 @@ int main( int argc, char **argv ) {
   sextractor_catalog__X= (float *)malloc( MAX_NUMBER_OF_STARS * sizeof( float ) );
   if ( sextractor_catalog__X == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__X\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   sextractor_catalog__Y= (float *)malloc( MAX_NUMBER_OF_STARS * sizeof( float ) );
   if ( sextractor_catalog__Y == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__Y\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   sextractor_catalog__MAG= (double *)malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
   if ( sextractor_catalog__MAG == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__MAG\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   sextractor_catalog__MAG_ERR= (double *)malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
   if ( sextractor_catalog__MAG_ERR == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__MAG_ERR\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   sextractor_catalog__star_number= (int *)malloc( MAX_NUMBER_OF_STARS * sizeof( int ) );
   if ( sextractor_catalog__star_number == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__star_number\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   marker_counter= 0;
 
@@ -1496,7 +1496,7 @@ int main( int argc, char **argv ) {
   // get_ref_image_name(fits_image_name);
   if ( 0 != get_ref_image_name( fits_image_name ) ) {
    fprintf( stderr, "ERROR getting the reference image name from the log file\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
 
   // Read data.m_sigma but select only stars detected on the reference frame
@@ -1531,7 +1531,7 @@ int main( int argc, char **argv ) {
   if( 0 == strcasecmp(fits_image_name, "detect") ) {
    if( argc - optind < 3 ) {
     fprintf(stderr, "Usage: ./pgfv detect image.fit\n");
-    exit(1);
+    exit( EXIT_FAILURE );
    }
    //strcpy(fits_image_name, argv[optind + 2]);
    //safely_encode_user_input_string(fits_image_name, argv[optind + 2], FILENAME_LENGTH);
@@ -1602,12 +1602,12 @@ int main( int argc, char **argv ) {
    markX_known_variable= (float *)malloc( MAX_NUMBER_OF_STARS * sizeof( float ) );
    if ( markX_known_variable == NULL ) {
     fprintf( stderr, "ERROR: Couldn't allocate memory for markX_known_variable\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    };
    markY_known_variable= (float *)malloc( MAX_NUMBER_OF_STARS * sizeof( float ) );
    if ( markY_known_variable == NULL ) {
     fprintf( stderr, "ERROR: Couldn't allocate memory for markY_known_variable\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    };
    mark_known_variable_counter= 0; // initialize
    // load known variables
@@ -1624,12 +1624,12 @@ int main( int argc, char **argv ) {
    markX_autocandidate_variable= (float *)malloc( MAX_NUMBER_OF_STARS * sizeof( float ) );
    if ( markX_autocandidate_variable == NULL ) {
     fprintf( stderr, "ERROR: Couldn't allocate memory for markX_autocandidate_variable\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    };
    markY_autocandidate_variable= (float *)malloc( MAX_NUMBER_OF_STARS * sizeof( float ) );
    if ( markY_autocandidate_variable == NULL ) {
     fprintf( stderr, "ERROR: Couldn't allocate memory for markY_autocandidate_variable\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    };
    mark_autocandidate_variable_counter= 0; // initialize
    // load autocandidate variables
@@ -1671,85 +1671,85 @@ int main( int argc, char **argv ) {
   sextractor_catalog__X_viewed= (float *)malloc( MAX_NUMBER_OF_STARS * sizeof( float ) );
   if ( sextractor_catalog__X_viewed == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__X_viewed\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   sextractor_catalog__Y_viewed= (float *)malloc( MAX_NUMBER_OF_STARS * sizeof( float ) );
   if ( sextractor_catalog__Y_viewed == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__Y_viewed\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   sextractor_catalog__viewed_counter= 0; // initialize
 
   sextractor_catalog__X= (float *)malloc( MAX_NUMBER_OF_STARS * sizeof( float ) );
   if ( sextractor_catalog__X == NULL ) {
    fprintf( stderr, "ERROR0: Couldn't allocate memory for sextractor_catalog__X\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   sextractor_catalog__Y= (float *)malloc( MAX_NUMBER_OF_STARS * sizeof( float ) );
   if ( sextractor_catalog__Y == NULL ) {
    fprintf( stderr, "ERROR0: Couldn't allocate memory for sextractor_catalog__Y\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   sextractor_catalog__FLUX= (double *)malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
   if ( sextractor_catalog__FLUX == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__FLUX\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   sextractor_catalog__FLUX_ERR= (double *)malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
   if ( sextractor_catalog__FLUX_ERR == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__FLUX_ERR\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   sextractor_catalog__MAG= (double *)malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
   if ( sextractor_catalog__MAG == NULL ) {
    fprintf( stderr, "ERROR0: Couldn't allocate memory for sextractor_catalog__MAG\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   sextractor_catalog__MAG_ERR= (double *)malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
   if ( sextractor_catalog__MAG_ERR == NULL ) {
    fprintf( stderr, "ERROR0: Couldn't allocate memory for sextractor_catalog__FLUX\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   sextractor_catalog__star_number= (int *)malloc( MAX_NUMBER_OF_STARS * sizeof( int ) );
   if ( sextractor_catalog__star_number == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__star_number\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   sextractor_catalog__se_FLAG= (int *)malloc( MAX_NUMBER_OF_STARS * sizeof( int ) );
   if ( sextractor_catalog__se_FLAG == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__se_FLAG\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   sextractor_catalog__ext_FLAG= (int *)malloc( MAX_NUMBER_OF_STARS * sizeof( int ) );
   if ( sextractor_catalog__ext_FLAG == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__ext_FLAG\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   sextractor_catalog__psfCHI2= (double *)malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
   if ( sextractor_catalog__psfCHI2 == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__psfCHI2\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
 
   sextractor_catalog__A_IMAGE= (double *)malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
   if ( sextractor_catalog__A_IMAGE == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for sexA_image\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   sextractor_catalog__ERRA_IMAGE= (double *)malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
   if ( sextractor_catalog__ERRA_IMAGE == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__ERRA_IMAGE\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   sextractor_catalog__B_IMAGE= (double *)malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
   if ( sextractor_catalog__B_IMAGE == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__B_IMAGE\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   sextractor_catalog__ERRB_IMAGE= (double *)malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
   if ( sextractor_catalog__ERRB_IMAGE == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__ERRB_IMAGE\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
 
   //
@@ -1775,7 +1775,7 @@ int main( int argc, char **argv ) {
   catfile= fopen( sextractor_catalog_filename, "r" );
   if ( NULL == catfile ) {
    fprintf( stderr, "ERROR! Cannot open sextractor catalog file %s for reading!\n", sextractor_catalog_filename );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   // while( -1<fscanf(catfile, "%d %lf %lf %lf %lf %f %f %lf %lf %lf %lf %d\n", &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &sextractor_catalog__X[sextractor_catalog__counter], &sextractor_catalog__Y[sextractor_catalog__counter], &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter]) ){
   // fprintf(stderr,"DEBUG01\n");
@@ -1881,17 +1881,17 @@ int main( int argc, char **argv ) {
  fprintf( stderr, "Image %s: %ldx%ld pixels, BITPIX data type code: %d\n", fits_image_name, naxes[0], naxes[1], bitpix );
  if ( naxes[0] * naxes[1] <= 0 ) {
   fprintf( stderr, "ERROR: Trying allocate zero or negative sized array\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  float_array= malloc( naxes[0] * naxes[1] * sizeof( float ) );
  if ( float_array == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for float_array\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  real_float_array= malloc( naxes[0] * naxes[1] * sizeof( float ) );
  if ( real_float_array == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for real_float_array\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  // 8 bit image
@@ -1899,7 +1899,7 @@ int main( int argc, char **argv ) {
   image_array_uchar= (unsigned char *)malloc( naxes[0] * naxes[1] * sizeof( unsigned char ) );
   if ( image_array_uchar == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for image_array_uchar\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   fits_read_img( fptr, TBYTE, 1, naxes[0] * naxes[1], &nullval_uchar, image_array_uchar, &anynul, &status );
   for ( i= 0; i < naxes[0] * naxes[1]; i++ ) {
@@ -1912,7 +1912,7 @@ int main( int argc, char **argv ) {
   image_array_ushort= (unsigned short *)malloc( naxes[0] * naxes[1] * sizeof( short ) );
   if ( image_array_ushort == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for image_array_ushort\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   // fprintf(stderr,"Trying to read the image as TUSHORT\n");
   fits_read_img( fptr, TUSHORT, 1, naxes[0] * naxes[1], &nullval_ushort, image_array_ushort, &anynul, &status );
@@ -1954,7 +1954,7 @@ int main( int argc, char **argv ) {
   image_array_uint= (unsigned int *)malloc( naxes[0] * naxes[1] * sizeof( int ) );
   if ( image_array_uint == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for image_array_uint\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   fits_read_img( fptr, TUINT, 1, naxes[0] * naxes[1], &nullval_uint, image_array_uint, &anynul, &status );
   if ( status == 412 ) {
@@ -1971,7 +1971,7 @@ int main( int argc, char **argv ) {
   image_array_double= (double *)malloc( naxes[0] * naxes[1] * sizeof( double ) );
   if ( image_array_double == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for image_array_double\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   fits_read_img( fptr, TDOUBLE, 1, naxes[0] * naxes[1], &nullval_double, image_array_double, &anynul, &status );
   for ( i= 0; i < naxes[0] * naxes[1]; i++ )
@@ -2204,7 +2204,7 @@ int main( int argc, char **argv ) {
      catfile= fopen( sextractor_catalog_filename, "r" );
      if ( NULL == catfile ) {
       fprintf( stderr, "ERROR! Cannot open sextractor catalog file %s for reading!\n", sextractor_catalog_filename );
-      exit( 1 );
+      exit( EXIT_FAILURE );
      }
      while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, catfile ) ) {
       sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
@@ -2237,7 +2237,7 @@ int main( int argc, char **argv ) {
       matchfile= fopen( "manually_selected_aperture.txt", "w" );
       if ( matchfile == NULL ) {
        fprintf( stderr, "ERROR: failed to open manually_selected_aperture.txt for writing!\nSomething is really messed-up, so I'll die. :(\n" );
-       exit( 1 );
+       exit( EXIT_FAILURE );
       }
       fprintf( matchfile, "%.1lf\n", APER );
       fclose( matchfile );
@@ -2442,7 +2442,7 @@ int main( int argc, char **argv ) {
          matchfile= fopen( "manually_selected_comparison_stars.lst", "a" );
          if ( matchfile == NULL ) {
           fprintf( stderr, "ERROR: failed to open manually_selected_comparison_stars.lst for writing!\nSomething is really messed-up, so I'll die. :(\n" );
-          exit( 1 );
+          exit( EXIT_FAILURE );
          }
          fprintf( matchfile, "%.4f %.4f %.4lf\n", sextractor_catalog__X[marker_counter], sextractor_catalog__Y[marker_counter], catalog_mag );
          fclose( matchfile );
@@ -2649,7 +2649,7 @@ int main( int argc, char **argv ) {
     float_array2= malloc( naxes[0] * naxes[1] * sizeof( float ) );
     if ( float_array2 == NULL ) {
      fprintf( stderr, "ERROR: Couldn't allocate memory for float_array2\n" );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     };
     for ( i= 0; i < naxes[0] * naxes[1]; i++ ) {
      float_array2[i]= float_array[i];

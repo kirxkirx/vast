@@ -820,7 +820,7 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
    // Make sure this is not a directory or some funny file
    if ( ( sb.st_mode & S_IFMT ) != S_IFREG ) {
     fprintf( stderr, "%s is not a regular file or symlink!\nSomething is very-very wrong. Aborting computations.\n", outfilename_flag );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    // If this is just an old file - delete it.
    fprintf( stderr, "Removing the old flag file %s\n", outfilename_flag );
@@ -833,7 +833,7 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
    // Make sure this is not a directory or some funny file
    if ( ( sb.st_mode & S_IFMT ) != S_IFREG ) {
     fprintf( stderr, "%s is not a regular file or symlink!\nSomething is very-very wrong. Aborting computations.\n", outfilename_flag );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    // If this is just an old file - delete it.
    fprintf( stderr, "Removing the old weight file %s\n", outfilename_weight );
@@ -843,7 +843,7 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
   // create the new empty output file for the weight image
   if ( 0 != fits_create_file( &outfptr_weight, outfilename_weight, &status ) ) {
    fprintf( stderr, "ERROR creating the weight image file %s\n", outfilename_weight );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   // create the new empty output file if the above checks are OK
   if ( 0 == fits_create_file( &outfptr_flag, outfilename_flag, &status ) ) {

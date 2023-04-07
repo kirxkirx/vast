@@ -86,7 +86,7 @@ void stetson_JKL_from_sorted_lightcurve( size_t *input_array_index_p, double *in
  double *P= malloc( 4 * input_Nobs * sizeof( double ) );
  if ( P == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for array P\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  double di, dj;
 
@@ -113,7 +113,7 @@ void stetson_JKL_from_sorted_lightcurve( size_t *input_array_index_p, double *in
  w= malloc( 4 * input_Nobs * sizeof( double ) );
  if ( w == NULL ) {
   fprintf( stderr, "ERROR in variability_indexes.c - cannot allocate memory\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  // Check if we should use time-based weighting
@@ -412,7 +412,7 @@ double sign_only_welch_stetson_I_from_sorted_lightcurve( size_t *input_array_ind
  w= malloc( input_Nobs * sizeof( double ) );
  if ( w == NULL ) {
   fprintf( stderr, "ERROR in variability_indexes.c - cannot allocate memory\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  // Set weights
@@ -469,7 +469,7 @@ double classic_welch_stetson_I_from_sorted_lightcurve( size_t *input_array_index
  w= malloc( input_Nobs * sizeof( double ) );
  if ( w == NULL ) {
   fprintf( stderr, "ERROR in variability_indexes.c - cannot allocate memory\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  // Set weights
@@ -579,7 +579,7 @@ double classic_welch_stetson_I_from_sorted_lightcurve( size_t *input_array_index
 
  free( w );
 
- // exit(1);
+ // exit( EXIT_FAILURE );
 
  return I;
 }
@@ -604,17 +604,17 @@ double compute_IQR_of_unsorted_data(double *unsorted_data, int n) {
  x= malloc(n * sizeof(double));
  if( x == NULL ) {
   fprintf(stderr, "ERROR allocating memory for x in compute_IQR_of_unsorted_data()\n");
-  exit(1);
+  exit( EXIT_FAILURE );
  }
  x2= malloc(n * sizeof(double));
  if( x2 == NULL ) {
   fprintf(stderr, "ERROR allocating memory for x2 in compute_IQR_of_unsorted_data()\n");
-  exit(1);
+  exit( EXIT_FAILURE );
  }
  x3= malloc(n * sizeof(double));
  if( x3 == NULL ) {
   fprintf(stderr, "ERROR allocating memory for x3 in compute_IQR_of_unsorted_data()\n");
-  exit(1);
+  exit( EXIT_FAILURE );
  }
 
  // make a copy of the input dataset
@@ -695,7 +695,7 @@ double compute_IQR_of_unsorted_data( double *unsorted_data, int n ) {
  x= malloc( n * sizeof( double ) );
  if ( x == NULL ) {
   fprintf( stderr, "ERROR allocating memory for x in compute_IQR_of_unsorted_data()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  // make a copy of the input dataset
  for ( i= 0; i < n; i++ ) {
@@ -761,7 +761,7 @@ double clipped_mean_of_unsorted_data( double *unsorted_data, long n ) {
  x= malloc( n * sizeof( double ) );
  if ( x == NULL ) {
   fprintf( stderr, "ERROR allocating memory for x in esimate_sigma_from_MAD_of_unsorted_data()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  // make a copy of the input dataset
@@ -805,7 +805,7 @@ double esimate_sigma_from_MAD_of_unsorted_data( double *unsorted_data, long n ) 
  x= malloc( n * sizeof( double ) );
  if ( x == NULL ) {
   fprintf( stderr, "ERROR allocating memory for x in esimate_sigma_from_MAD_of_unsorted_data()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  // make a copy of the input dataset
@@ -840,7 +840,7 @@ double compute_MAD_of_sorted_data( double *sorted_data, long n ) {
  AD= malloc( n * sizeof( double ) );
  if ( AD == NULL ) {
   fprintf( stderr, "ERROR allocating memory for AD in esimate_sigma_from_MAD_of_sorted_data()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  // The input dataset has to be sorted so we can compute its median
@@ -878,7 +878,7 @@ float compute_MAD_of_sorted_data_float( float *sorted_data, long n ) {
  AD= malloc( n * sizeof( float ) );
  if ( AD == NULL ) {
   fprintf( stderr, "ERROR allocating memory for AD in esimate_sigma_from_MAD_of_sorted_data_float()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  // The input dataset has to be sorted so we can compute its median
@@ -994,7 +994,7 @@ double N3_consecutive_samesign_deviations_in_sorted_lightcurve( size_t *input_ar
  data= malloc( input_Nobs * sizeof( double ) );
  if ( data == NULL ) {
   fprintf( stderr, "ERROR allocating memory for data array in variability_indexes.c\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  for ( i= 0; i < input_Nobs; i++ ) {
@@ -1034,12 +1034,12 @@ double lag1_autocorrelation_of_unsorted_lightcurve( double *JD, double *m, int N
  data_x= malloc( N * sizeof( double ) );
  if ( data_x == NULL ) {
   fprintf( stderr, "MEMORY ERROR!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  data_y= malloc( N * sizeof( double ) );
  if ( data_y == NULL ) {
   fprintf( stderr, "MEMORY ERROR!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  for ( i= 0; i < N; i++ ) {
@@ -1081,13 +1081,13 @@ double detect_excursions_in_sorted_lightcurve( size_t *p, double *JD, double *m,
  points_in_scans= malloc( N_points_in_lightcurve * sizeof( int ) );
  if ( points_in_scans == NULL ) {
   fprintf( stderr, "MEMORY ERROR!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  data= malloc( N_points_in_lightcurve * sizeof( double ) );
  if ( data == NULL ) {
   fprintf( stderr, "MEMORY ERROR!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  n_scan_alloc= N_points_in_lightcurve; // We assume that there will be no more scans than points in a lightcurve
@@ -1095,36 +1095,36 @@ double detect_excursions_in_sorted_lightcurve( size_t *p, double *JD, double *m,
  scan_mag= malloc( n_scan_alloc * sizeof( double * ) );
  if ( scan_mag == NULL ) {
   fprintf( stderr, "MEMORY ERROR!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  scan_err= malloc( n_scan_alloc * sizeof( double * ) );
  if ( scan_err == NULL ) {
   fprintf( stderr, "MEMORY ERROR!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  scan_w= malloc( n_scan_alloc * sizeof( double * ) );
  if ( scan_w == NULL ) {
   fprintf( stderr, "MEMORY ERROR!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  for ( i= 0; i < n_scan_alloc; i++ ) {
   scan_mag[i]= malloc( N_points_in_lightcurve * sizeof( double ) );
   if ( scan_mag[i] == NULL ) {
    fprintf( stderr, "MEMORY ERROR!\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   scan_err[i]= malloc( N_points_in_lightcurve * sizeof( double ) );
   if ( scan_err[i] == NULL ) {
    fprintf( stderr, "MEMORY ERROR!\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   scan_w[i]= malloc( N_points_in_lightcurve * sizeof( double ) );
   if ( scan_w[i] == NULL ) {
    fprintf( stderr, "MEMORY ERROR!\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
  }
 
@@ -1170,7 +1170,7 @@ double detect_excursions_in_sorted_lightcurve( size_t *p, double *JD, double *m,
  test_results_for_pairs_of_scans= malloc( n_scan * n_scan * sizeof( double ) );
  if ( test_results_for_pairs_of_scans == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for test_results_for_pairs_of_scans\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  scan_pair= 0;
  for ( i= 0; i < n_scan; i++ ) {
@@ -1286,17 +1286,17 @@ double excess_Abbe_value_from_sorted_lightcurve( size_t *p, double *JD, double *
  JD_for_Asub= malloc( N_points_in_lightcurve * sizeof( double ) );
  if ( JD_for_Asub == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for JD_for_Asub\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  m_for_Asub= malloc( N_points_in_lightcurve * sizeof( double ) );
  if ( m_for_Asub == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for m_for_Asub\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  index_for_Asub= malloc( N_points_in_lightcurve * sizeof( size_t ) );
  if ( index_for_Asub == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for index_for_Asub\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  // fake the index! We rely on the input lightcurve to be sorted
  for ( i= 0; i < N_points_in_lightcurve; i++ )
@@ -1456,7 +1456,7 @@ double compute_RoMS( double *unsorted_m, double *unsorted_merr, int N ) {
  x= malloc( N * sizeof( double ) );
  if ( x == NULL ) {
   fprintf( stderr, "ERROR allocating memory for x in compute_RoMS()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  // make a copy of the input dataset
@@ -1522,7 +1522,7 @@ void compute_variability_indexes_that_need_time_sorting( double *input_JD, doubl
  p= malloc( input_Nobs * sizeof( size_t ) ); // allocate memory for the index array
  if ( p == NULL ) {
   fprintf( stderr, "ERROR in variability_indexes.c - cannot allocate memory for p\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  // Sort the lightcurve in time
@@ -1558,7 +1558,7 @@ double compute_median_of_usorted_array_without_changing_it( double *data, int n 
  local_copy_data= malloc( n * sizeof( double ) );
  if ( local_copy_data == NULL ) {
   fprintf( stderr, "ERROR in variability_indexes.c - cannot allocate memory for local_copy_data\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  for ( i= n; i--; ) {

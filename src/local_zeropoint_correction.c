@@ -29,7 +29,7 @@ void write_fake_log_file( double *jd, size_t *Nobs ) {
  logfile= fopen( "vast_image_details.log", "w" );
  if ( logfile == NULL ) {
   fprintf( stderr, "ERROR: Couldn't open vast_image_details.log(local_zeropoint_correction.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  for ( i= 0; i < ( *Nobs ); i++ )
   fprintf( logfile, "JD= %.5lf\n", jd[i] );
@@ -62,7 +62,7 @@ void get_dates_from_lightcurve_files( double *jd, size_t *Nobs ) {
     lightcurvefile= fopen( ep->d_name, "r" );
     if ( NULL == lightcurvefile ) {
      fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
 
     while ( -1 < read_lightcurve_point( lightcurvefile, &_jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
@@ -241,7 +241,7 @@ int main() {
  datafile= fopen( "data.m_sigma", "r" );
  if ( NULL == datafile ) {
   fprintf( stderr, "ERROR! Can't open file data.m_sigma(local_zeropoint_correction.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  while ( -1 < fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename_local ) ) {
   safely_encode_user_input_string( lightcurvefilename, lightcurvefilename_local, OUTFILENAME_LENGTH - 1 );
@@ -251,25 +251,25 @@ int main() {
  fprintf( stderr, "Number of stars in sysrem_input_star_list.lst %ld\n", Nstars );
  if ( Nstars < 100 ) {
   fprintf( stderr, "Too few stars!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  bad_stars= malloc( Nstars * sizeof( int ) );
  if ( bad_stars == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for bad_stars(local_zeropoint_correction.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  star_numbers= malloc( Nstars * sizeof( char * ) );
  if ( star_numbers == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for star_numbers(local_zeropoint_correction.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  // for(i=0;i<Nstars;i++){
  for ( i= Nstars; i--; ) {
   star_numbers[i]= malloc( OUTFILENAME_LENGTH * sizeof( char ) );
   if ( star_numbers[i] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for star_numbers[i](local_zeropoint_correction.c)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   bad_stars[i]= 0;
  }
@@ -278,7 +278,7 @@ int main() {
  jd= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( jd == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for jd(local_zeropoint_correction.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  get_dates( jd, &Nobs );
 
@@ -286,38 +286,38 @@ int main() {
  mag_err= malloc( Nstars * sizeof( float * ) );
  if ( mag_err == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mag_err(local_zeropoint_correction.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  r= malloc( Nstars * sizeof( float * ) );
  if ( r == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for r(local_zeropoint_correction.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  x= malloc( Nstars * sizeof( float * ) );
  if ( x == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for x(local_zeropoint_correction.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  y= malloc( Nstars * sizeof( float * ) );
  if ( y == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for y(local_zeropoint_correction.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  corr= malloc( Nstars * sizeof( float * ) );
  if ( corr == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for corr(local_zeropoint_correction.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  data= malloc( Nstars * Nobs * sizeof( float ) );
  if ( data == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for data(local_zeropoint_correction.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  w= malloc( Nstars * Nobs * sizeof( float ) );
  if ( w == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for w(local_zeropoint_correction.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  // for(i=0;i<Nstars;i++){
@@ -325,27 +325,27 @@ int main() {
   corr[i]= malloc( Nobs * sizeof( float ) );
   if ( corr[i] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for corr[i](local_zeropoint_correction.c)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   x[i]= malloc( Nobs * sizeof( float ) );
   if ( x[i] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for x[i](local_zeropoint_correction.c)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   y[i]= malloc( Nobs * sizeof( float ) );
   if ( y[i] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for y[i](local_zeropoint_correction.c)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   mag_err[i]= malloc( Nobs * sizeof( float ) );
   if ( mag_err[i] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for mag_err[i](local_zeropoint_correction.c)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   r[i]= malloc( Nobs * sizeof( float ) );
   if ( r[i] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for r[i](local_zeropoint_correction.c)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
  }
 
@@ -365,23 +365,23 @@ int main() {
  c= malloc( Nstars * sizeof( float ) );
  if ( c == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for bad_stars(local_zeropoint_correction.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  a= malloc( Nobs * sizeof( float ) );
  if ( a == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for a(local_zeropoint_correction.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  old_c= malloc( Nstars * sizeof( float ) );
  if ( old_c == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for old_c(local_zeropoint_correction.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  old_a= malloc( Nobs * sizeof( float ) );
  if ( old_a == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for old_a(local_zeropoint_correction.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  // for(i=0;i<Nstars;i++){
@@ -401,7 +401,7 @@ int main() {
  datafile= fopen( "data.m_sigma", "r" );
  if ( NULL == datafile ) {
   fprintf( stderr, "ERROR! Can't open file data.m_sigma\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  while ( -1 < fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename_local ) ) {
   safely_encode_user_input_string( lightcurvefilename, lightcurvefilename_local, OUTFILENAME_LENGTH - 1 );
@@ -422,7 +422,7 @@ int main() {
   lightcurvefile= fopen( lightcurvefilename, "r" );
   if ( NULL == lightcurvefile ) {
    fprintf( stderr, "ERROR: Can't read file %s\n", lightcurvefilename );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   // while(-1<fscanf(lightcurvefile,"%lf %f %f %f %f %f %s",&djd,&dmag,&dmerr,&X,&Y,&app,string)){
   while ( -1 < read_lightcurve_point( lightcurvefile, &djd, &dmag, &dmerr, &X, &Y, &app, string, comments_string ) ) {
@@ -534,12 +534,12 @@ int main() {
    lightcurvefile= fopen( lightcurvefilename, "r" );
    if ( NULL == lightcurvefile ) {
     fprintf( stderr, "ERROR: Can't read file %s\n", lightcurvefilename );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    outlightcurvefile= fopen( "TMP.dat", "w" );
    if ( outlightcurvefile == NULL ) {
     fprintf( stderr, "ERROR: Couldn't open outlightcurvefile for writing(local_zeropoint_correction.c)\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    };
    // while(-1<fscanf(lightcurvefile,"%lf %f %f %f %f %f %s",&djd,&dmag,&dmerr,&X,&Y,&app,string)){
    while ( -1 < read_lightcurve_point( lightcurvefile, &djd, &dmag, &dmerr, &X, &Y, &app, string, comments_string ) ) {

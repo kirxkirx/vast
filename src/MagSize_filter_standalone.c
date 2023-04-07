@@ -102,51 +102,51 @@ int main( int argc, char **argv ) {
  jd_a= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( jd_a == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for jd_a(MagSize_filter_standalone.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  mag_a= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( mag_a == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mag_a(MagSize_filter_standalone.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  image_jd= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( image_jd == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for image_a(MagSize_filter_standalone.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  image_Noutliers= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( int ) );
  if ( image_Noutliers == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for image_Noutliers(MagSize_filter_standalone.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  image_Nall= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( int ) );
  if ( image_Nall == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for image_Nall(MagSize_filter_standalone.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  star= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( struct Star * ) );
  if ( star == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for star(MagSize_filter_standalone.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  NUMBER1= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( int ) );
  if ( NUMBER1 == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for NUMBER1(MagSize_filter_standalone.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  starfilenames= malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );
  if ( starfilenames == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for starfilenames(MagSize_filter_standalone.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  starfilecounter= 0;
 
  observations_to_flag= malloc( 10 * MAX_NUMBER_OF_STARS * sizeof( struct a_thing_to_flag ) );
  if ( observations_to_flag == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for observations_to_flag(MagSize_filter_standalone.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  image_Number= 0;
@@ -160,7 +160,7 @@ int main( int argc, char **argv ) {
     lightcurvefile= fopen( ep->d_name, "r" );
     if ( NULL == lightcurvefile ) {
      fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     // Compute median mag & sigma
     star_num= star_number_from_outfilename( ep->d_name );
@@ -225,13 +225,13 @@ int main( int argc, char **argv ) {
     lightcurvefile= fopen( ep->d_name, "r" );
     if ( NULL == lightcurvefile ) {
      fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     outlightcurvefile= fopen( lightcurve_tmp_filename, "w" );
     if ( NULL == outlightcurvefile ) {
      fprintf( stderr, "\nAn ERROR has occured while processing file %s\n", ep->d_name );
      fprintf( stderr, "ERROR: Can't open file %s\n", lightcurve_tmp_filename );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
      if ( jd == 0.0 )
@@ -290,7 +290,7 @@ int main( int argc, char **argv ) {
    images_bad= realloc( images_bad, images_Nbad * sizeof( double ) );
    if ( images_bad == NULL ) {
     fprintf( stderr, "ERROR: Couldn't allocate memory for images_bad(MagSize_filter_standalone.c)\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    };
    images_bad[images_Nbad - 1]= image_jd[image_counter];
    // fprintf(stderr,"Bad image %03d  JD%lf   Nall = %05d  Noutliers = %05d  fraction=%lf\n",image_counter,image_jd[image_counter],image_Nall[image_counter],image_Noutliers[image_counter], (double)image_Noutliers[image_counter]/(double)image_Nall[image_counter]  );
@@ -322,13 +322,13 @@ int main( int argc, char **argv ) {
      lightcurvefile= fopen( ep->d_name, "r" );
      if ( NULL == lightcurvefile ) {
       fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
-      exit( 1 );
+      exit( EXIT_FAILURE );
      }
      outlightcurvefile= fopen( lightcurve_tmp_filename, "w" );
      if ( NULL == outlightcurvefile ) {
       fprintf( stderr, "\nAn ERROR has occured while processing file %s\n", ep->d_name );
       fprintf( stderr, "ERROR: Can't open file %s\n", lightcurve_tmp_filename );
-      exit( 1 );
+      exit( EXIT_FAILURE );
      }
      // The while cycle is needed to handle the situation that the first lines are comments
      jd= 0.0;

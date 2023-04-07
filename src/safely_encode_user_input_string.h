@@ -9,7 +9,8 @@
 #include <ctype.h> // for isalnum()
 
 //#define _GNU_SOURCE // doesn't seem to work!
-#include <string.h> // for memmem() and strlen()
+//#include <string.h> // for memmem() and strlen()
+#include <stddef.h> // for size_t, stddef.h is normally included in string.h
 
 static inline int any_unusual_characters_in_string(char *fitsfilename) {
  size_t i;

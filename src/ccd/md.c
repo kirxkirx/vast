@@ -73,12 +73,12 @@ unsigned short detect_overscan2(float *image_array, long *naxes) {
 
  if( naxes[0] <= 0 ) {
   fprintf(stderr, "ERROR in detect_overscan2(): invalid value of naxes[0]=%ld\n", naxes[0]);
-  exit(1);
+  exit( EXIT_FAILURE );
  }
  img_profile= malloc(naxes[0] * sizeof(double));
  if( NULL == img_profile ) {
   fprintf(stderr, "ERROR in detect_overscan2() while allocating memory for img_profile\n");
-  exit(1);
+  exit( EXIT_FAILURE );
  }
 
  // slicing row from the middle of the image
@@ -181,13 +181,13 @@ int main(int argc, char *argv[]) {
  key= malloc(No_of_keys * sizeof(char *));
  if( key == NULL ) {
   fprintf(stderr, "ERROR: Couldn't allocate memory for FITS header\n");
-  exit(1);
+  exit( EXIT_FAILURE );
  }
  for( ii= 1; ii < No_of_keys; ii++ ) {
   key[ii]= malloc(FLEN_CARD * sizeof(char)); // FLEN_CARD length of a FITS header card defined in fitsio.h
   if( key[ii] == NULL ) {
    fprintf(stderr, "ERROR: Couldn't allocate memory for key[ii]\n");
-   exit(1);
+   exit( EXIT_FAILURE );
   };
   fits_read_record(fptr, ii, key[ii], &status);
  }
@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
  int img_size= naxes[0] * naxes[1];
  if( img_size <= 0 ) {
   fprintf(stderr, "ERROR: negative or zero image size\n");
-  exit(1);
+  exit( EXIT_FAILURE );
  };
  image_array= malloc(img_size * sizeof(short));
 
@@ -226,7 +226,7 @@ int main(int argc, char *argv[]) {
   exit(status);
  if( testX != naxes[0] || testY != naxes[1] ) {
   fprintf(stderr, "Flat field and image must be the same size!\n");
-  exit(1);
+  exit( EXIT_FAILURE );
  }
  fits_get_img_type(fptr, &bitpix2, &status);
  fprintf(stderr, "Reading flat %s %ld %ld  %d bitpix\n", argv[2], testX, testY, bitpix2);
@@ -282,19 +282,19 @@ int main(int argc, char *argv[]) {
  fits_report_error(stderr, status);         /* print out any error messages */
  if( status != 0 ) {
   fprintf(stderr, "Cannot create FITS file %s\n", argv[3]);
-  exit(1);
+  exit( EXIT_FAILURE );
  }
  fits_create_img(fptr, USHORT_IMG, 2, naxes, &status);
  fits_report_error(stderr, status); /* print out any error messages */
  if( status != 0 ) {
   fprintf(stderr, "Cannot create image\n");
-  exit(1);
+  exit( EXIT_FAILURE );
  }
  fits_write_img(fptr, TUSHORT, fpixel, naxes[0] * naxes[1], result_image_array, &status);
  fits_report_error(stderr, status); /* print out any error messages */
  if( status != 0 ) {
   fprintf(stderr, "Cannot write image\n");
-  exit(1);
+  exit( EXIT_FAILURE );
  }
  // Write header keys
  for( ii= 1; ii < No_of_keys; ii++ ) {

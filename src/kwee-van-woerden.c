@@ -48,12 +48,12 @@ int main() {
   jd= realloc( jd, n_points_lightcurve * sizeof( double ) );
   if ( jd == NULL ) {
    fprintf( stderr, "ERROR: Couldn't (re)allocate memory for jd(kwee-van-woerden.c)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   m= realloc( m, n_points_lightcurve * sizeof( double ) );
   if ( m == NULL ) {
    fprintf( stderr, "ERROR: Couldn't (re)allocate memory for m(kwee-van-woerden.c)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   n_points_lightcurve++;
  } while ( -1 < read_lightcurve_point( stdin, &jd[n_points_lightcurve - 2], &m[n_points_lightcurve - 2], &merr_not_used, NULL, NULL, NULL, NULL, NULL ) );
@@ -64,7 +64,7 @@ int main() {
 
  if ( n_points_lightcurve < 6 ) {
   fprintf( stderr, "ERROR in kwee-van-woerden.c  -- too few points for lightcurve minimum search\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  Z= 0.25 * (double)n_points_lightcurve;

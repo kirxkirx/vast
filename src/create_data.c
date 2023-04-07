@@ -42,7 +42,7 @@ void sort_log_file_in_mag() {
  if ( f == NULL ) {
   fprintf( stderr, "ERROR in create_data.c : cannot open vast_lightcurve_statistics.log for reading!\n" );
   report_lightcurve_statistics_computation_problem();
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  // while(NULL!=fgets(buf,MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE,f)){
  while ( NULL != fgets( buf, MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG, f ) ) {
@@ -56,12 +56,12 @@ void sort_log_file_in_mag() {
  fclose( f ); // close file for now, we'll re-open it later
  if ( longest_line_length < 10 ) {
   fprintf( stderr, "ERROR: the longest line length in vast_lightcurve_statistics.log is suspiciously short, only %d bytes! Something is very wrong.\n", longest_line_length );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  longest_line_length++; // to account for the final '\n' at the end of the line that is not visible to strlen()
  if ( number_of_lines_in_file < MIN_NUMBER_OF_STARS_ON_FRAME ) {
   fprintf( stderr, "ERROR: the number of lines in vast_lightcurve_statistics.log is suspiciously short, only %d! Something is very wrong.\n", number_of_lines_in_file );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  number_of_lines_in_file++; // Oh, this is the non-obvious one! It is needed for the last fgets() that will return NULL
  ///
@@ -71,13 +71,13 @@ void sort_log_file_in_mag() {
  mag= (double *)malloc( number_of_lines_in_file * sizeof( double ) );
  if ( NULL == mag ) {
   fprintf( stderr, "memory error\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  file_content= (char **)malloc( number_of_lines_in_file * sizeof( char * ) );
  if ( NULL == file_content ) {
   fprintf( stderr, "memory error\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  for ( i= 0; i < number_of_lines_in_file; i++ )
@@ -91,7 +91,7 @@ void sort_log_file_in_mag() {
   for ( i= 0; i < number_of_lines_in_file; i++ )
    free( file_content[i] );
   free( file_content );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  i= 0;
  while ( NULL != fgets( file_content[i], longest_line_length, f ) ) {
@@ -107,7 +107,7 @@ void sort_log_file_in_mag() {
  p= malloc( n * sizeof( size_t ) );
  if ( p == NULL ) {
   fprintf( stderr, "ERROR in create_data.c - cannot allocate memory\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  // don't forget to initialize the index array "p"!
  /// WHY initialize the index array "p"????
@@ -255,7 +255,7 @@ int main() {
     lightcurvefile= fopen( ep->d_name, "r" );
     if ( NULL == lightcurvefile ) {
      fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     // fprintf(stderr,"DEBUG02\n"); // !!!
     // puts(ep->d_name);

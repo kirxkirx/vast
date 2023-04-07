@@ -10,12 +10,11 @@
 
 #include "../vast_limits.h"
 
-//#define MIN_COUNT 15 //Это типа минимальный отсчёт, который мы считаем реальным.
 
 char *beztochki(char *);
 
 int main(int argc, char *argv[]) {
- /* Для чтения фитсов */
+ // For FITS file reasing
  fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
  long fpixel= 1;
  long naxes[2];
@@ -30,12 +29,12 @@ int main(int argc, char *argv[]) {
  double *yy;
  double val;
  double ref_index, cur_index;
- /* ----- */
+ //
  int i;
  int bitpix2;
- int counter; //Считаем файлы
+ int counter; // file counter
  int uje= 0;
- /* -- Для хранения ключей из шапки -- */
+ // For FITS header keywords
  char *key[10000];
  int No_of_keys;
  int keys_left;
@@ -53,7 +52,7 @@ int main(int argc, char *argv[]) {
  fprintf(stderr, "Combining %d files\n", argc - 1);
  if( argc < 3 ) {
   fprintf(stderr, "Not enough arguments...\n  Usage: ./mk flat01.fit flat02.fit flat03.fit ...\n");
-  exit(1);
+  exit( EXIT_FAILURE );
  }
 
  /* Читаем файлы */
@@ -65,18 +64,18 @@ int main(int argc, char *argv[]) {
   img_size= naxes[0] * naxes[1];
   if( img_size <= 0 ) {
    fprintf(stderr, "ERROR: Trying allocate zero or negative bytes amount\n");
-   exit(1);
+   exit( EXIT_FAILURE );
   };
   image_array[counter]= malloc(img_size * sizeof(short));
   if( image_array == NULL ) {
    fprintf(stderr, "ERROR: Couldn't allocate memory for image_array\n");
-   exit(1);
+   exit( EXIT_FAILURE );
   };
   if( uje == 0 ) {
    combined_array= malloc(img_size * sizeof(short));
    if( combined_array == NULL ) {
     fprintf(stderr, "ERROR: Couldn't allocate memory for combined_array\n");
-    exit(1);
+    exit( EXIT_FAILURE );
    };
    uje= 1;
   }
@@ -87,7 +86,7 @@ int main(int argc, char *argv[]) {
    key[ii]= malloc(FLEN_CARD * sizeof(char)); // FLEN_CARD length of a FITS header card defined in fitsio.h
    if( key[ii] == NULL ) {
     fprintf(stderr, "ERROR: Couldn't allocate memory for key[ii]\n");
-    exit(1);
+    exit( EXIT_FAILURE );
    };
    fits_read_record(fptr, ii, key[ii], &status);
   }
@@ -103,7 +102,7 @@ int main(int argc, char *argv[]) {
  yy= malloc(img_size * sizeof(double));
  if( yy == NULL ) {
   fprintf(stderr, "ERROR: Couldn't allocate memory for yy\n");
-  exit(1);
+  exit( EXIT_FAILURE );
  };
  //Приводим всё к первому кадру
  for( i= 0; i < img_size; i++ ) {

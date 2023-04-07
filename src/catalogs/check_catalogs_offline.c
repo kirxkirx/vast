@@ -199,7 +199,7 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
  asassnv_csv= fopen( "lib/catalogs/asassnv.csv", "r" );
  if ( NULL == asassnv_csv ) {
   fprintf( stderr, "ERROR: Cannot open asassnv.csv\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  while ( NULL != fgets( string, 4096 - 1, asassnv_csv ) ) {
   if ( strlen( string ) < 180 ) {

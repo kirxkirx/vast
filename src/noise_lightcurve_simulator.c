@@ -73,17 +73,17 @@ int main( int argc, char **argv ) {
  JD= malloc( number_of_measurements * sizeof( double ) );
  if ( JD == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for JD(lighcurve_simulator.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  out_mag= malloc( number_of_measurements * sizeof( double ) );
  if ( out_mag == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for out_mag(lighcurve_simulator.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  out_magerr= malloc( number_of_measurements * sizeof( double ) );
  if ( out_magerr == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for out_magerr(lighcurve_simulator.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  /* create a generator chosen by the

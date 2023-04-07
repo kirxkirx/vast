@@ -27,22 +27,22 @@ int main() {
  y_limit_sigma= malloc( sizeof( double ) * MAX_NUMBER_OF_STARS );
  if ( y_limit_sigma == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for y_limit_sigma(m_sigma_bin.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  x_sigma= malloc( sizeof( double ) * MAX_NUMBER_OF_STARS );
  if ( x_sigma == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for x_sigma(m_sigma_bin.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  y= malloc( sizeof( double ) * MAX_NUMBER_OF_STARS );
  if ( y == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for y(m_sigma_bin.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  data_sigma= malloc( sizeof( double ) * MAX_NUMBER_OF_STARS );
  if ( data_sigma == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for data_sigma(m_sigma_bin.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  char str[256];
  int n= 0;
@@ -56,14 +56,14 @@ int main() {
  m_arr= malloc( sizeof( double ) * MAX_NUMBER_OF_STARS );
  if ( m_arr == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for m_arr(m_sigma_bin.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  dmsf= fopen( "data.m_sigma", "r" );
  if ( dmsf == NULL ) {
   fprintf( stderr, "ERROR: Can't open file data.m_sigma !\n" );
   report_lightcurve_statistics_computation_problem();
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  i= 0;
@@ -105,7 +105,7 @@ int main() {
 
  if ( i < 5 ) {
   fprintf( stderr, "ERROR: not enough bins (only %d) to construct the selection curve!\n", i );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  gsl_set_error_handler_off(); // The function call to gsl_set_error_handler_off stops the default error handler from aborting the program.
@@ -117,14 +117,14 @@ int main() {
 
  if ( interpolation_status_gsl != 0 ) {
   fprintf( stderr, "Interpolation error!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  // Compute interpolating function and write it to file
  sigma_selection_curve_log= fopen( "vast_sigma_selection_curve.log", "w" );
  if ( sigma_selection_curve_log == NULL ) {
   fprintf( stderr, "ERROR: Can't open file vast_sigma_selection_curve.log for writing!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  double xi, yi;
  for ( xi= x_sigma[0]; xi < x_sigma[i - 1]; xi+= 0.01 ) {
@@ -140,7 +140,7 @@ int main() {
  if ( dmsf == NULL ) {
   fprintf( stderr, "ERROR: Can't open file data.m_sigma for reading\n" );
   report_lightcurve_statistics_computation_problem();
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  while ( -1 < fscanf( dmsf, "%lf %lf %lf %lf %s", &m, &sigma, &X, &Y, str ) ) { // fprintf(stderr,"%lf %lf\n",m,sigma);
   // This should avoid "interpolation error" crash.

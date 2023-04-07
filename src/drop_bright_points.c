@@ -80,7 +80,7 @@ int main( int argc, char **argv ) {
    infile= fopen( infilename, "r" );
    if ( NULL == infile ) {
     fprintf( stderr, "ERROR: Can't open file %s\n", filenamelist[filename_counter] );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    while ( -1 < read_lightcurve_point( infile, &JD, &M, &MERR, &X, &Y, &APP, str, str2 ) ) {
     if ( JD == 0.0 )

@@ -290,13 +290,13 @@ static inline double get_index_by_column_number(char *substring_to_parse, int in
 
  if( 10 > string_length ) {
   fprintf(stderr, "ERROR: the substring_to_parse is suspiciously short %s\n", substring_to_parse);
-  exit(1);
+  exit( EXIT_FAILURE );
  }
 
  // Is there a mixup between 24 and 29???
  if( index_number_in_substring >= MAX_NUMBER_OF_INDEXES_TO_STORE ) {
   fprintf(stderr, "ERROR in get_index_by_column_number() %d >= %d\n", index_number_in_substring, MAX_NUMBER_OF_INDEXES_TO_STORE);
-  exit(1);
+  exit( EXIT_FAILURE );
  }
 
  index_value= INVALID_INDEX_VALUE; // reset the variable, just in case

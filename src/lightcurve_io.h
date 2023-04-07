@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+//#include <stddef.h> // for size_t, but stddef.h is included in string.h
 #include <ctype.h> // for isalpha()
 #include <math.h>  // for isnormal()
 
@@ -49,26 +50,18 @@ static inline int write_lightcurve_point(FILE *lc_file_descriptor, double jd, do
 */
 
 static inline int read_lightcurve_point(FILE *lc_file_descriptor, double *jd, double *mag, double *mag_err, double *x, double *y, double *app, char *string, char *comments_string) {
- //char *string_for_additional_columns_in_lc_file; // !!
-
- //char *str;
  char str[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
 
- int str_len; // string length
- int max_index_for_comments_check;
- int i; // counter
+ //int str_len; // string length
+ size_t str_len; // string length
+ size_t max_index_for_comments_check;
+ size_t i; // counter
 
- // !!
- //string_for_additional_columns_in_lc_file= malloc( MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE * sizeof( char ) );
  char string_for_additional_columns_in_lc_file[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
- // !!
  string_for_additional_columns_in_lc_file[0]= '\0';                                        // just in case
  string_for_additional_columns_in_lc_file[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1]= '\0'; // just in case
 
- // str= malloc( MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE * sizeof( char ) );
  if( NULL == fgets(str, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lc_file_descriptor) ) {
-  //  free( str );
-  //  free( string_for_additional_columns_in_lc_file ); // !!
   return -1;
  }
  str[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1]= '\0'; // just in case
@@ -79,8 +72,6 @@ static inline int read_lightcurve_point(FILE *lc_file_descriptor, double *jd, do
   str_len= strlen(str);
   if( str_len < 5 ) {
    (*jd)= 0.0;
-   //   free( str );
-   //   free( string_for_additional_columns_in_lc_file ); // !!
    return 1;
   } // assume that a string shorter than 5 bytes will contain no useful lightcurve information
   max_index_for_comments_check= MIN(str_len, 10);
@@ -90,26 +81,18 @@ static inline int read_lightcurve_point(FILE *lc_file_descriptor, double *jd, do
    // in most cases we expect the first symbol of the string to be a comment mark
    if( str[i] == '#' ) {
     (*jd)= 0.0;
-    //    free( str );
-    //    free( string_for_additional_columns_in_lc_file ); // !!
     return 1;
    }
    if( str[i] == '%' ) {
     (*jd)= 0.0;
-    //    free( str );
-    //    free( string_for_additional_columns_in_lc_file ); // !!
     return 1;
    }
    if( str[i] == '/' ) {
     (*jd)= 0.0;
-    //    free( str );
-    //    free( string_for_additional_columns_in_lc_file ); // !!
     return 1;
    }
    if( 0 != isalpha(str[i]) ) {
     (*jd)= 0.0;
-    //    free( str );
-    //    free( string_for_additional_columns_in_lc_file ); // !!
     return 1;
    }
   }
@@ -122,7 +105,7 @@ static inline int read_lightcurve_point(FILE *lc_file_descriptor, double *jd, do
  // Consistency check
  if( MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE < 512 ) {
   fprintf(stderr, "ERROR: MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE defined in src/vast_limits.h should be >512\n");
-  exit(1);
+  exit( EXIT_FAILURE );
  }
 
  // Special case -- yes, we can actually speed up reading by not parsing x, y, app and the comments
@@ -161,7 +144,6 @@ static inline int read_lightcurve_point(FILE *lc_file_descriptor, double *jd, do
    strncpy(comments_string, string_for_additional_columns_in_lc_file, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE);
    comments_string[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1]= '\0'; // just in case
   }
-  // free( string_for_additional_columns_in_lc_file );
 
   // isnan() and isinf() are normally defined
   if( 0 != isnan((*jd)) ) {
@@ -274,7 +256,6 @@ static inline int read_lightcurve_point(FILE *lc_file_descriptor, double *jd, do
 static inline int count_points_in_lightcurve_file(char *lightcurvefilename) {
  int n;
  FILE *lightcurvefile;
- //double jd, mag, merr, x, y, app;
  double jd, mag, merr, y, app;
  char string[FILENAME_LENGTH];
 
@@ -285,7 +266,6 @@ static inline int count_points_in_lightcurve_file(char *lightcurvefilename) {
  }
 
  n= 0;
- //while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
  while( -1 < read_lightcurve_point(lightcurvefile, &jd, &mag, &merr, NULL, &y, &app, string, NULL) ) {
   if( jd == 0.0 )
    continue; // if this line could not be parsed, try the next one

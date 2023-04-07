@@ -21,7 +21,7 @@ int main( int argc, char **argv ) {
  int i= 0;
  if ( argc < 2 ) {
   fprintf( stderr, "Usage: %s outNUMBER.dat\n", argv[0] );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  // allocte memory

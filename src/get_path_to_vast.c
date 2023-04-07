@@ -34,7 +34,7 @@ void get_path_to_vast( char *path_to_vast ) {
  // struct stat info;
  if ( path_to_vast == NULL ) {
   fprintf( stderr, "ERROR in get_path_to_vast(): the input string is NULL !!!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  pid_t pid= getpid();
  sprintf( path, "/proc/%d/exe", pid );

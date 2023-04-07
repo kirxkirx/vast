@@ -44,7 +44,7 @@ int main( int argc, char **argv ) {
   fprintf( stderr, " magnitude will be calibrated using relation Mout=A*Min*Min+B*Min+C\n" );
   fprintf( stderr, "\n" );
   fprintf( stderr, "There is also an alternative operation mode for use with lib/fit_mag_calib\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  if ( argc == 4 ) {
@@ -188,12 +188,12 @@ int main( int argc, char **argv ) {
   lightcurvefile= fopen( filenamelist[filename_counter], "r" );
   if ( NULL == lightcurvefile ) {
    fprintf( stderr, "ERROR: Cannot open file %s (filenamelist[%ld]) for reading\n", filenamelist[filename_counter], filename_counter );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   outlightcurvefile= fopen( "lightcurve.tmp", "w" );
   if ( NULL == outlightcurvefile ) {
    fprintf( stderr, "ERROR: Can't open file lightcurve.tmp for writing\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
    if ( jd == 0.0 ) {

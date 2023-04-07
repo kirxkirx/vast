@@ -35,7 +35,6 @@ static inline int parse_sextractor_catalog_string( char *input_sextractor_catalo
  // The input string length should be checked externally, but just in case let's double-check here
  if( MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT-1<strlen(input_sextractor_catalog_string) ) {
   fprintf( stderr, "ERROR in parse_sextractor_catalog_string() strlen(input_sextractor_catalog_string)=%ld>%d\n", strlen(input_sextractor_catalog_string), MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT-1 );
-  //exit(1);
   input_sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT-1]='\0';
  }
 

@@ -147,7 +147,7 @@ unsigned long int random_seed() {
    fprintf( stderr, "Got seed %u from /dev/random\n", seed );
   else {
    fprintf( stderr, "ERROR setting the random seed!\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   fclose( devrandom );
  }

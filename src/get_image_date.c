@@ -225,7 +225,7 @@ int fake_image_hack( char *input_string ) {
     sec= ( min - imin ) * 60;
     sprintf( processed_input_string, "%4.0lf-%02.0lf-%02.0lfT%02.0lf:%02.0lf:%06.3lf", year, month, iday, ihour, imin, sec );
     // fprintf( stderr, "DEBUG21 #%s#\n", processed_input_string);
-    // exit( 1 );
+    // exit( EXIT_FAILURE );
    } // if ( is_T_found == 0 ) {
    //
    // fprintf( stderr, "DEBUG22 #%s#\n", processed_input_string);
@@ -368,12 +368,12 @@ int main( int argc, char **argv ) {
  stderr_output= malloc( 1024 * sizeof( char ) );
  if ( stderr_output == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for stderr_output(get_image_date.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  log_output= malloc( 1024 * sizeof( char ) );
  if ( log_output == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for log_output(get_image_date.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  // fprintf( stderr, "DEBUG26\n");

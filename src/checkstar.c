@@ -28,7 +28,7 @@ void write_fake_log_file( double *jd, size_t *Nobs ) {
  logfile= fopen( "vast_image_details.log", "w" );
  if ( logfile == NULL ) {
   fprintf( stderr, "ERROR: Cam't open vast_image_details.log\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  for ( i= 0; i < ( *Nobs ); i++ )
   fprintf( logfile, "JD= %.5lf\n", jd[i] );
@@ -60,7 +60,7 @@ void get_dates_from_lightcurve_files( double *jd, size_t *Nobs ) {
     lightcurvefile= fopen( ep->d_name, "r" );
     if ( NULL == lightcurvefile ) {
      fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     while ( -1 < read_lightcurve_point( lightcurvefile, &_jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
      if ( _jd == 0.0 )
@@ -171,18 +171,18 @@ int main() {
 
  if ( Nstars <= 0 ) {
   fprintf( stderr, "ERROR: Trying allocate zero or negative bytes amount\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  star_numbers= malloc( Nstars * sizeof( char * ) );
  if ( star_numbers == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for star_numbers\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  for ( i= Nstars; i--; ) {
   star_numbers[i]= malloc( OUTFILENAME_LENGTH * sizeof( char ) );
   if ( star_numbers[i] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for star_numbers[i]\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
  }
 
@@ -190,7 +190,7 @@ int main() {
  jd= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( jd == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for jd\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  get_dates( jd, &Nobs );
 
@@ -198,35 +198,35 @@ int main() {
  mag_err= malloc( Nstars * sizeof( float * ) );
  if ( mag_err == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mag_err\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  r= malloc( Nstars * sizeof( float * ) );
  if ( r == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for r\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  median_arr= malloc( Nstars * sizeof( float ) );
  if ( median_arr == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for median_arr\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  data= malloc( Nstars * Nobs * sizeof( float ) );
  if ( data == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for data\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  mag_diff= malloc( Nobs * sizeof( float ) );
  if ( mag_diff == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mag_diff\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  diff_err= malloc( Nobs * sizeof( float ) );
  if ( diff_err == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for diff_err\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  // for(i=0;i<Nstars;i++){
@@ -234,12 +234,12 @@ int main() {
   mag_err[i]= malloc( Nobs * sizeof( float ) );
   if ( mag_err[i] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for mag_err[i]\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   r[i]= malloc( Nobs * sizeof( float ) ); // is it correct ?????
   if ( r[i] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for r[i]\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
  }
 
@@ -256,7 +256,7 @@ int main() {
  datafile= fopen( "data.m_sigma", "r" );
  if ( NULL == datafile ) {
   fprintf( stderr, "ERROR! Can't open file data.m_sigma\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  while ( -1 < fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename ) ) {
   // Get star number from the lightcurve file name
@@ -271,7 +271,7 @@ int main() {
   lightcurvefile= fopen( lightcurvefilename, "r" );
   if ( NULL == lightcurvefile ) {
    fprintf( stderr, "ERROR: Can't read file %s\n", lightcurvefilename );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   while ( -1 < read_lightcurve_point( lightcurvefile, &djd, &dmag, &dmerr, &x, &y, &app, string, comments_string ) ) {
    if ( djd == 0.0 )
@@ -363,7 +363,7 @@ int main() {
    //
    if ( best_k < 0 ) {
     fprintf( stderr, "ERROR in src/checkstar.c  best_k<0\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    //
    if ( r[i][j] != 0.0 && r[best_k][j] != 0.0 ) {

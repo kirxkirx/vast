@@ -54,7 +54,7 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "\nUsage: %s XXXX.fit\n\n", argv[0] );
   fprintf( stderr, "The lightcurve in the VaST format will be written to outXXXX.dat\n" );
   fprintf( stderr, "Enjoy! =)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  status= 0;
 
@@ -160,27 +160,27 @@ int main( int argc, char **argv ) {
  fits_report_error( stderr, status );
  if ( num_rows <= 0 || num_cols <= 0 ) {
   fprintf( stderr, "ERROR: Wrong table size: %d x %ld\n", num_cols, num_rows );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  mag= malloc( num_rows * sizeof( double ) );
  if ( mag == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mag(CoRoT_FITS2ASCII.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  mag_err= malloc( num_rows * sizeof( double ) );
  if ( mag_err == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mag_err(CoRoT_FITS2ASCII.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  JD= malloc( num_rows * sizeof( double ) );
  if ( JD == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for JD(CoRoT_FITS2ASCII.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  status_flag= malloc( num_rows * sizeof( int ) );
  if ( status_flag == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for status_flag(CoRoT_FITS2ASCII.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  fits_read_col( fptr, TDOUBLE, colnum_TIME, 1, 1, num_rows, NULL, JD, NULL, &status );
@@ -195,7 +195,7 @@ int main( int argc, char **argv ) {
  outfile= fopen( name, "w" );
  if ( outfile == NULL ) {
   fprintf( stderr, "ERROR: Can't open file %s\n", name );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  for ( i= 0; i < num_rows; i++ ) {
   JD[i]+= 2451545.00000;

@@ -361,7 +361,7 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
   median_subtracted_float_parameter_for_each_star= malloc( NUMBER * sizeof( float ) );
   if ( NULL == median_subtracted_float_parameter_for_each_star ) {
    fprintf( stderr, "ERROR: cannot allocate median_subtracted_float_parameter_for_each_star\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
 // for each star
 #ifdef VAST_ENABLE_OPENMP
@@ -381,7 +381,7 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
    }
    if ( index_of_the_nearest_reference_point == number_of_reference_points ) {
     fprintf( stderr, "ERROR in filter_on_float_parameters() cannot find the nearest reference point!\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    float_parameter_value_for_STAR= 0.0; // reset to make the compiler happy
    if ( parameter_number == -2 ) {
@@ -491,7 +491,7 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
    }
    if ( number_of_reference_points == index_of_the_nearest_reference_point ) {
     fprintf( stderr, "ERROR in filter_on_float_parameters() cannot find the nearest reference point!\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    float_parameter_value_for_STAR= 0.0; // reset just in case
    // Check if the star is too large/small for its magnitude

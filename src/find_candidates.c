@@ -164,11 +164,11 @@ void load_candidate_star_numbers( char *mark_as_candidate, int Max_number_of_lin
  // some basic checks of the input
  if ( input_filename == NULL ) {
   fprintf( stderr, "ERROR in load_candidate_star_numbers(): input_filename==NULL\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  if ( 1 > strlen( input_filename ) ) {
   fprintf( stderr, "ERROR in load_candidate_star_numbers(): 1<strlen(input_filename)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  f= fopen( input_filename, "r" );
  if ( f == NULL )
@@ -363,7 +363,7 @@ int main( int argc, char **argv ) {
  if ( lightcurve_statistics_file == NULL ) {
   fprintf( stderr, "ERROR: Can't open file \"vast_lightcurve_statistics.log\"!\n" );
   report_lightcurve_statistics_computation_problem();
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  // count lines in file
  Nstar= 0;
@@ -377,39 +377,39 @@ int main( int argc, char **argv ) {
  mag= malloc( Nstar * sizeof( float ) );
  if ( mag == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mag\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  mark_as_candidate= malloc( Nstar * sizeof( char ) );
  if ( mark_as_candidate == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mark_as_candidate\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  mark_as_known_variable= malloc( Nstar * sizeof( char ) );
  if ( mark_as_known_variable == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mark_as_known_variable\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  mark_as_viewed= malloc( Nstar * sizeof( char ) );
  if ( mark_as_viewed == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mark_as_viewed\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  mark_as_last_viewed= malloc( Nstar * sizeof( char ) );
  if ( mark_as_last_viewed == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mark_as_last_viewed\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  fvarindex= malloc( MAX_NUMBER_OF_INDEXES_TO_STORE * sizeof( float * ) );
  if ( fvarindex == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for fvarindex\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  // Note here i cycles through indexes
  for ( i= 0; i < MAX_NUMBER_OF_INDEXES_TO_STORE; i++ ) {
   fvarindex[i]= malloc( Nstar * sizeof( float ) );
   if ( NULL == fvarindex[i] ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for fvarindex[i]\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   // just to make valgrind happy
   // memset(fvarindex[i], '\0', Nstar*sizeof(float) );
@@ -417,7 +417,7 @@ int main( int argc, char **argv ) {
  outfilename= malloc( Nstar * sizeof( char * ) );
  if ( outfilename == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for outfilename\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  // Note here i cycles through stars
  for ( i= 0; i < Nstar; i++ ) {
@@ -430,7 +430,7 @@ int main( int argc, char **argv ) {
   outfilename[i]= malloc( OUTFILENAME_LENGTH * sizeof( char ) );
   if ( outfilename[i] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for outfilename[i]\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
  }
  i= 0;
@@ -482,12 +482,12 @@ int main( int argc, char **argv ) {
  mag_viewed= malloc( 3 * Nstar * sizeof( float ) );
  if ( mag_viewed == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mag_viewed\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  sigma_viewed= malloc( 3 * Nstar * sizeof( float ) );
  if ( sigma_viewed == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for sigma_viewed\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  /*  Load the curve indicating stars with high (suspected
@@ -496,12 +496,12 @@ int main( int argc, char **argv ) {
  high_sigma_curve_mag= malloc( sizeof( float ) * MAX_NUMBER_OF_STARS );
  if ( high_sigma_curve_mag == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for high_sigma_curve_mag\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  high_sigma_curve_limit= malloc( sizeof( float ) * MAX_NUMBER_OF_STARS );
  if ( high_sigma_curve_limit == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for high_sigma_curve_limit\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  vast_sigma_selection_curve_file= fopen( "vast_sigma_selection_curve.log", "r" );
  if ( vast_sigma_selection_curve_file != NULL ) {

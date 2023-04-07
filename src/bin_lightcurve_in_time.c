@@ -76,105 +76,105 @@ int main( int argc, char **argv ) {
  out_JD= malloc( number_of_measurements * sizeof( double ) );
  if ( out_JD == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for out_JD()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  out_mag= malloc( number_of_measurements * sizeof( double ) );
  if ( out_mag == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for out_mag()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  out_magerr= malloc( number_of_measurements * sizeof( double ) );
  if ( out_magerr == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for out_magerr()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  out_x= malloc( number_of_measurements * sizeof( double ) );
  if ( out_x == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for out_x()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  out_y= malloc( number_of_measurements * sizeof( double ) );
  if ( out_y == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for out_y()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  out_app= malloc( number_of_measurements * sizeof( double ) );
  if ( out_app == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for out_app()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  bin_JD= malloc( number_of_measurements * sizeof( double ) );
  if ( bin_JD == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for bin_JD()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  bin_mag= malloc( number_of_measurements * sizeof( double ) );
  if ( bin_mag == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for bin_mag()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  bin_magerr= malloc( number_of_measurements * sizeof( double ) );
  if ( bin_magerr == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for bin_magerr()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  bin_weight= malloc( number_of_measurements * sizeof( double ) );
  if ( bin_weight == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for bin_weight()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  bin_x= malloc( number_of_measurements * sizeof( double ) );
  if ( bin_x == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for bin_x()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  bin_y= malloc( number_of_measurements * sizeof( double ) );
  if ( bin_y == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for bin_y()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  bin_app= malloc( number_of_measurements * sizeof( double ) );
  if ( bin_app == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for bin_app()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  in_JD= malloc( number_of_measurements * sizeof( double ) );
  if ( in_JD == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for in_JD()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  in_mag= malloc( number_of_measurements * sizeof( double ) );
  if ( in_mag == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for in_mag()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  in_magerr= malloc( number_of_measurements * sizeof( double ) );
  if ( in_magerr == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for in_magerr()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  in_x= malloc( number_of_measurements * sizeof( double ) );
  if ( in_x == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for in_x()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  in_y= malloc( number_of_measurements * sizeof( double ) );
  if ( in_y == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for in_y()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  in_app= malloc( number_of_measurements * sizeof( double ) );
  if ( in_app == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for in_app()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  observation_index= malloc( number_of_measurements * sizeof( size_t ) );
  if ( observation_index == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for observation_index()\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  // Read the input lightcurve

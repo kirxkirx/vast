@@ -21,7 +21,7 @@ void write_fake_log_file( double *jd, int *Nobs ) {
  logfile= fopen( "vast_image_details.log", "w" );
  if ( logfile == NULL ) {
   fprintf( stderr, "ERROR: Couldn't create file vast_image_details.log\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  for ( i= 0; i < ( *Nobs ); i++ )
   fprintf( logfile, "JD= %.5lf\n", jd[i] );
@@ -50,7 +50,7 @@ void get_dates_from_lightcurve_files( double *jd, int *Nobs ) {
     lightcurvefile= fopen( ep->d_name, "r" );
     if ( NULL == lightcurvefile ) {
      fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     while ( -1 < read_lightcurve_point( lightcurvefile, &_jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
      if ( _jd == 0.0 )
@@ -110,11 +110,11 @@ void get_dates( double *jd, int *Nobs ) {
      // Check that we have parsed the log file correclty
      if ( 0 != isnan( jd[( *Nobs )] ) ) {
       fprintf( stderr, "ERROR in get_dates(): failed to convert string #%s# to double\n", jd_str );
-      exit( 1 );
+      exit( EXIT_FAILURE );
      }
      if ( 0 != isinf( jd[( *Nobs )] ) ) {
       fprintf( stderr, "ERROR in get_dates(): failed to convert string #%s# to double (1)\n", jd_str );
-      exit( 1 );
+      exit( EXIT_FAILURE );
      }
 #ifdef STRICT_CHECK_OF_JD_AND_MAG_RANGE
 #ifdef VAST_USE_BUILTIN_FUNCTIONS
@@ -126,7 +126,7 @@ void get_dates( double *jd, int *Nobs ) {
      // BEWARE 0.0 is also not considered normal by isnormal() !!!
      if ( 0 == __builtin_isnormal( jd[( *Nobs )] ) ) {
       fprintf( stderr, "ERROR in get_dates(): failed to convert string #%s# to double (2)\n", jd_str );
-      exit( 1 );
+      exit( EXIT_FAILURE );
      }
 #endif
 #endif
@@ -134,11 +134,11 @@ void get_dates( double *jd, int *Nobs ) {
      // Check the input date, note that wedon't know if it's JD or MJD
      if ( jd[( *Nobs )] < EXPECTED_MIN_MJD ) {
       fprintf( stderr, "ERROR in get_dates(): JD%.5lf<%.5lf #%s#\n", jd[( *Nobs )], EXPECTED_MIN_MJD, jd_str );
-      exit( 1 );
+      exit( EXIT_FAILURE );
      }
      if ( jd[( *Nobs )] > EXPECTED_MAX_JD ) {
       fprintf( stderr, "ERROR in get_dates(): JD%.5lf>%.5lf #%s#\n", jd[( *Nobs )], EXPECTED_MAX_JD, jd_str );
-      exit( 1 );
+      exit( EXIT_FAILURE );
      }
 #endif
      // everything is fine, go parse the next line in the log file

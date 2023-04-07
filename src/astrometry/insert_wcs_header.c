@@ -61,14 +61,14 @@ int main(int argc, char **argv) {
  wcs_key= malloc(No_of_wcs_keys * sizeof(char *));
  if( wcs_key == NULL ) {
   fprintf(stderr, "ERROR: Couldn't allocate memory for wcs_key\n");
-  exit(1);
+  exit( EXIT_FAILURE );
  };
  // Why on earth we start from 1???
  for( i= 1; i < No_of_wcs_keys; i++ ) {
   wcs_key[i]= (char *)malloc(FLEN_CARD * sizeof(char)); // FLEN_CARD length of a FITS header card defined in fitsio.h
   if( wcs_key[i] == NULL ) {
    fprintf(stderr, "ERROR: Couldn't allocate memory for wcs_key[i]\n");
-   exit(1);
+   exit( EXIT_FAILURE );
   };
   fits_read_record(fptr, i, wcs_key[i], &status);
  }

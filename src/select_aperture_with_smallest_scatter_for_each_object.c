@@ -85,23 +85,23 @@ int main( int argc, char **argv ) {
  mag_a= (double **)malloc( 6 * sizeof( double * ) );
  if ( mag_a == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory mag_a(select_aperture_with_smallest_scatter_for_each_object.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  magerr_a= (double **)malloc( 6 * sizeof( double * ) );
  if ( magerr_a == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory magerr_a(select_aperture_with_smallest_scatter_for_each_object.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  for ( i= 0; i < 6; i++ ) {
   mag_a[i]= (double *)malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
   if ( mag_a[i] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory mag_a[i](select_aperture_with_smallest_scatter_for_each_object.c)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   magerr_a[i]= (double *)malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
   if ( magerr_a[i] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory magerr_a[i](select_aperture_with_smallest_scatter_for_each_object.c)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   counter_ap[i]= 0;
  }
@@ -141,7 +141,7 @@ int main( int argc, char **argv ) {
   lightcurvefile= fopen( filenamelist[filename_counter], "r" );
   if ( NULL == lightcurvefile ) {
    fprintf( stderr, "ERROR: Can't open file %s\n", filenamelist[filename_counter] );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   /* Compute median mag & sigma */
   i= 0;
@@ -251,7 +251,7 @@ int main( int argc, char **argv ) {
   if ( NULL == outlightcurvefile ) {
    fprintf( stderr, "\nAn ERROR has occured while processing file %s \n", filenamelist[filename_counter] );
    fprintf( stderr, "ERROR: Can't open file %s\n", lightcurve_tmp_filename );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   i= 0;
   while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &magerr, &x, &y, &app, string, comments_string ) ) {

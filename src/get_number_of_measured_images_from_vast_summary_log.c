@@ -44,7 +44,7 @@ int get_number_of_measured_images_from_lightcurves() {
     lightcurvefile= fopen( ep->d_name, "r" );
     if ( NULL == lightcurvefile ) {
      fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     // Count observations
     i= 0;

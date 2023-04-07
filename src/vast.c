@@ -316,7 +316,7 @@ void ask_user_to_click_on_moving_object( char **input_images, float *moving_obje
   if ( i == 0 ) {
    if ( moving_object__user_array_x[0] == 0.0 || moving_object__user_array_y[0] == 0.0 ) {
     fprintf( stderr, "ERROR: the user-selected moving object MUST be visible on the reference image!\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
   }
   //
@@ -383,13 +383,13 @@ int remove_directory( const char *path ) {
    len= path_len + strlen( p->d_name ) + 2;
    if ( len <= 0 ) {
     fprintf( stderr, "ERROR: wrong path len\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    buf= malloc( len );
    if ( buf == NULL ) {
     fprintf( stderr, "ERROR: Couldn't allocate buf\n" );
     vast_report_memory_error();
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    if ( buf ) {
     struct stat statbuf;
@@ -511,7 +511,7 @@ void choose_best_reference_image( char **input_images, int *vast_bad_image_flag,
 
  if ( Num <= 0 ) {
   fprintf( stderr, "ERROR: Num is too small for choosing best reference image\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  number_of_good_detected_stars= malloc( Num * sizeof( double ) );
@@ -744,7 +744,7 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
 
  if ( Num <= 0 ) {
   fprintf( stderr, "ERROR: Num is too small\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  if ( Num <= 20 ) {
@@ -1453,7 +1453,7 @@ void drop_one_point_that_changes_fit_the_most( double *poly_x_external, double *
   N_good_stars= ( *N_good_stars_external );
   if ( N_good_stars <= 0 ) {
    fprintf( stderr, "Error: no good stars for magnitude calibration\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   poly_x= (double *)malloc( N_good_stars * sizeof( double ) );
   poly_y= (double *)malloc( N_good_stars * sizeof( double ) );
@@ -1671,7 +1671,7 @@ void record_specified_fits_keywords( char *input_image, char *output_str_with_fi
  char list_of_keywords_to_record[MAX_NUMBER_OF_FITS_KEYWORDS_TO_CAPTURE_IN_LC][81];
  if ( NULL == input_image ) {
   fprintf( stderr, "ERROR in record_specified_fits_keywords() the input image string is NULL\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  if ( NULL == output_str_with_fits_keywords_to_capture_from_input_images ) {
   // that's OK, just quietly return
@@ -2133,12 +2133,12 @@ int main( int argc, char **argv ) {
    cvalue= optarg;
    if ( 1 == is_file( cvalue ) ) {
     fprintf( stderr, "Option -%c requires an argument: the desired photometric calibration type!\n", optopt );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    photometric_calibration_type= atoi( cvalue );
    if ( photometric_calibration_type < 0 || photometric_calibration_type > 3 ) {
     fprintf( stderr, "The argument is out of range: -%c %s \n", optopt, cvalue );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    if ( photometric_calibration_type == 0 ) {
     fprintf( stdout, "opt 't 0': linear magnitude calibration (vary zero-point and slope)\n" );
@@ -2196,13 +2196,13 @@ int main( int argc, char **argv ) {
    cvalue= optarg;
    if ( 1 == is_file( cvalue ) ) {
     fprintf( stderr, "Option -%c requires an argument: star matching radius in pixels\n", optopt );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    param_w= 4;
    fixed_star_matching_radius_pix= atof( cvalue );
    if ( fixed_star_matching_radius_pix < 0.1 || fixed_star_matching_radius_pix > 100.0 ) {
     fprintf( stderr, "ERROR: fixed_star_matching_radius_pix is out of range!\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    fprintf( stdout, "opt '5': %lf pix is the new fixed star matching radius!\n", fixed_star_matching_radius_pix );
    break;
@@ -2265,11 +2265,11 @@ int main( int argc, char **argv ) {
    fprintf( stdout, "opt 'P': PSF photometry mode!\n" );
    /* Check if the PSFEx executable (named "psfex") is present in $PATH */
    if ( 0 != system( "lib/look_for_psfex.sh" ) ) {
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    // psfex.found will be created by lib/look_for_psfex.sh if PSFEx is found
    if ( 0 == is_file( "psfex.found" ) ) {
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    break;
   case 'r':
@@ -2327,7 +2327,7 @@ int main( int argc, char **argv ) {
    cvalue= optarg;
    if ( 1 == is_file( cvalue ) ) {
     fprintf( stderr, "Option -%c requires an argument: fixed aperture size in pix.!\n", optopt );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    fixed_aperture= atof( cvalue );
    fprintf( stdout, "opt 'a': Using fixed aperture %.1lf pix. in diameter!\n", fixed_aperture );
@@ -2340,7 +2340,7 @@ int main( int argc, char **argv ) {
    cvalue= optarg;
    if ( 1 == is_file( cvalue ) ) {
     fprintf( stderr, "Option -%c requires an argument: number of reference stars!\n", optopt );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    param_set_manually_Number_of_main_star= 1;
    default_Number_of_main_star= atoi( cvalue );
@@ -2351,7 +2351,7 @@ int main( int argc, char **argv ) {
    cvalue= optarg;
    if ( 1 == is_file( cvalue ) ) {
     fprintf( stderr, "Option -%c requires an argument: number of SysRem iterations!\n", optopt );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    if ( number_of_sysrem_iterations != 1 )
     number_of_sysrem_iterations= atoi( cvalue );
@@ -2361,7 +2361,7 @@ int main( int argc, char **argv ) {
    cvalue= optarg;
    if ( 1 == is_file( cvalue ) ) {
     fprintf( stderr, "Option -%c requires an argument: Maximum acceptable SExtractor flag!\n", optopt );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    maxsextractorflag= atoi( cvalue );
    if ( maxsextractorflag < 0 || maxsextractorflag > 255 ) {
@@ -2379,10 +2379,10 @@ int main( int argc, char **argv ) {
   case '?':
    if ( optopt == 'a' ) {
     fprintf( stderr, "Option -%c requires an argument: fixed aperture size in pix.!\n", optopt );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    fprintf( stderr, "ERROR: unknown option!\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
    break;
   case -1:
    fprintf( stderr, "That's all\n" );
@@ -2415,7 +2415,7 @@ int main( int argc, char **argv ) {
  malloc_size= sizeof( char ) * FILENAME_LENGTH;
  if ( malloc_size <= 0 ) {
   fprintf( stderr, "ERROR001 - trying to allocate zero or negative number of bytes!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  file_or_dir_on_command_line= malloc( (size_t)malloc_size );
  if ( file_or_dir_on_command_line == NULL ) {
@@ -2453,7 +2453,7 @@ int main( int argc, char **argv ) {
  for ( n= optind; n < argc; ++n ) {
   if ( (int)strlen( argv[n] ) > FILENAME_LENGTH ) {
    fprintf( stderr, "ERROR: the input filename is too long (FILENAME_LENGTH = %d, while this one is %d) %s\n", FILENAME_LENGTH, (int)strlen( argv[n] ), argv[n] );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   // strncpy( file_or_dir_on_command_line, argv[n], FILENAME_LENGTH );
   safely_encode_user_input_string( file_or_dir_on_command_line, argv[n], FILENAME_LENGTH );
@@ -2551,13 +2551,13 @@ int main( int argc, char **argv ) {
         // !!!
         if ( malloc_size > FILENAME_LENGTH ) {
          fprintf( stderr, "ERROR in main(): filename is too long %s\n", dir_string2 );
-         exit( 1 );
+         exit( EXIT_FAILURE );
         }
         malloc_size= FILENAME_LENGTH;
         //
         if ( malloc_size <= 0 ) {
          fprintf( stderr, "ERROR002 - trying to allocate zero or negative number of bytes!\n" );
-         exit( 1 );
+         exit( EXIT_FAILURE );
         }
         input_images[Num]= malloc( (size_t)malloc_size );
         if ( input_images[Num] == NULL ) {
@@ -2601,13 +2601,13 @@ int main( int argc, char **argv ) {
       // !!!
       if ( malloc_size > FILENAME_LENGTH ) {
        fprintf( stderr, "ERROR in main(): filename is too long %s\n", dir_string );
-       exit( 1 );
+       exit( EXIT_FAILURE );
       }
       malloc_size= FILENAME_LENGTH;
       //
       if ( malloc_size <= 0 ) {
        fprintf( stderr, "ERROR002 - trying to allocate zero or negative number of bytes!\n" );
-       exit( 1 );
+       exit( EXIT_FAILURE );
       }
       input_images[Num]= malloc( (size_t)malloc_size );
       if ( input_images[Num] == NULL ) {
@@ -2647,12 +2647,12 @@ int main( int argc, char **argv ) {
    // !!!
    if ( malloc_size > FILENAME_LENGTH ) {
     fprintf( stderr, "ERROR in main(): filename(2) is too long %s\n", dir_string );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    malloc_size= FILENAME_LENGTH;
    if ( malloc_size <= 0 ) {
     fprintf( stderr, "ERROR003 - trying to allocate zero or negative number of bytes!\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    input_images[Num]= malloc( (size_t)malloc_size );
    if ( input_images[Num] == NULL ) {
@@ -2722,12 +2722,12 @@ int main( int argc, char **argv ) {
     malloc_size= sizeof( char ) * ( strlen( image_filename_from_input_list ) + 1 );
     if ( malloc_size > FILENAME_LENGTH ) {
      fprintf( stderr, "ERROR in main(): filename is too long %s\n", image_filename_from_input_list );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     malloc_size= FILENAME_LENGTH;
     if ( malloc_size <= 0 ) {
      fprintf( stderr, "ERROR004 - trying to allocate zero or negative number of bytes!\n" );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     input_images[Num]= malloc( (size_t)malloc_size );
     // input_images[Num] = malloc(sizeof(char) * (strlen(image_filename_from_input_list) + 1));
@@ -2834,7 +2834,7 @@ int main( int argc, char **argv ) {
  malloc_size= sizeof( char * ) * ( Num + 1 );
  if ( malloc_size <= 0 ) {
   fprintf( stderr, "ERROR005 - trying to allocate zero or negative number of bytes!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  str_with_fits_keywords_to_capture_from_input_images= (char **)malloc( (size_t)malloc_size );
  if ( str_with_fits_keywords_to_capture_from_input_images == NULL ) {
@@ -2845,7 +2845,7 @@ int main( int argc, char **argv ) {
   malloc_size= sizeof( char ) * FITS_KEYWORDS_IN_LC_LENGTH;
   if ( malloc_size <= 0 ) {
    fprintf( stderr, "ERROR006 - trying to allocate zero or negative number of bytes!\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   str_with_fits_keywords_to_capture_from_input_images[i]= malloc( (size_t)malloc_size );
   if ( str_with_fits_keywords_to_capture_from_input_images[i] == NULL ) {
@@ -3053,7 +3053,7 @@ int main( int argc, char **argv ) {
  excludefile= fopen("exclude.lst", "r");
  if( excludefile == NULL ) {
   fprintf(stderr, "WARNING: no exclude.lst\n");
-  //exit( 1 );
+  //exit( EXIT_FAILURE );
   // Why should we quit if there is no exclude.lst ?
  } else {
   while( -1 < fscanf(excludefile, "%lf %lf", &bad_stars_X[N_bad_stars], &bad_stars_Y[N_bad_stars]) ) {
@@ -3121,7 +3121,7 @@ int main( int argc, char **argv ) {
  malloc_size= n_fork * sizeof( int );
  if ( malloc_size <= 0 ) {
   fprintf( stderr, "ERROR007 - trying to allocate zero or negative number of bytes!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  child_pids= malloc( (size_t)malloc_size );
  if ( child_pids == NULL ) {
@@ -3200,7 +3200,7 @@ int main( int argc, char **argv ) {
     }
     if ( fork_found_empty_slot != 1 ) {
      fprintf( stderr, "FATAL ERROR 11\n" );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     ///// #####################################
     if ( i_fork == MIN( n_fork, Num ) ) {
@@ -3296,7 +3296,7 @@ int main( int argc, char **argv ) {
  malloc_size= MAX_NUMBER_OF_STARS * sizeof( int );
  if ( malloc_size <= 0 ) {
   fprintf( stderr, "ERROR008 - trying to allocate zero or negative number of bytes!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  number_of_coordinate_measurements_for_star= malloc( (size_t)malloc_size );
  if ( number_of_coordinate_measurements_for_star == NULL ) {
@@ -3307,7 +3307,7 @@ int main( int argc, char **argv ) {
  malloc_size= MAX_NUMBER_OF_STARS * sizeof( int );
  if ( malloc_size <= 0 ) {
   fprintf( stderr, "ERROR009 - trying to allocate zero or negative number of bytes!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  star_numbers_for_coordinate_arrays= malloc( (size_t)malloc_size );
  if ( star_numbers_for_coordinate_arrays == NULL ) {
@@ -3318,7 +3318,7 @@ int main( int argc, char **argv ) {
  malloc_size= MAX_NUMBER_OF_STARS * sizeof( float * );
  if ( malloc_size <= 0 ) {
   fprintf( stderr, "ERROR010 - trying to allocate zero or negative number of bytes!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  coordinate_array_x= malloc( (size_t)malloc_size );
  if ( coordinate_array_x == NULL ) {
@@ -3329,7 +3329,7 @@ int main( int argc, char **argv ) {
  malloc_size= MAX_NUMBER_OF_STARS * sizeof( float * );
  if ( malloc_size <= 0 ) {
   fprintf( stderr, "ERROR011 - trying to allocate zero or negative number of bytes!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  coordinate_array_y= malloc( (size_t)malloc_size );
  if ( coordinate_array_y == NULL ) {
@@ -3372,7 +3372,7 @@ int main( int argc, char **argv ) {
  cmparisonstarsfile= fopen( "manually_selected_comparison_stars.lst", "r" );
  if ( cmparisonstarsfile == NULL ) {
   fprintf( stderr, "No manually selected comparison stars file manually_selected_comparison_stars.lst which is fine.\n" );
-  // exit( 1 );
+  // exit( EXIT_FAILURE );
   //  We should not quit if there is no manually_selected_comparison_stars.lst
  } else {
   while ( -1 < fscanf( cmparisonstarsfile, "%lf %lf %lf",
@@ -3417,7 +3417,7 @@ int main( int argc, char **argv ) {
   // TBA: wait so the error message doesn't get swamped
   fprintf( stderr, "APERTURE = %.1lf is > 75.0 or < 1.0\nBad reference image...\n", aperture );
   write_string_to_individual_image_log( sextractor_catalog, "main(): ", "Bad reference image: the estimated aperture is out of range!", "" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  reference_image_aperture= aperture;
  if ( param_w == 0 ) {
@@ -3439,7 +3439,7 @@ int main( int argc, char **argv ) {
  file= fopen( sextractor_catalog, "r" );
  if ( file == NULL ) {
   fprintf( stderr, "Can't open file %s\n", sextractor_catalog );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  } else {
   if ( debug != 0 )
    fprintf( stderr, "DEBUG MSG: Opened file %s\n", sextractor_catalog );
@@ -3447,7 +3447,7 @@ int main( int argc, char **argv ) {
  malloc_size= MAX_NUMBER_OF_STARS * sizeof( struct Star );
  if ( malloc_size <= 0 ) {
   fprintf( stderr, "ERROR012 - trying to allocate zero or negative number of bytes!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  STAR1= malloc( (size_t)malloc_size );
  if ( STAR1 == NULL ) {
@@ -3458,7 +3458,7 @@ int main( int argc, char **argv ) {
  malloc_size= MAX_NUMBER_OF_STARS * sizeof( struct Star );
  if ( malloc_size <= 0 ) {
   fprintf( stderr, "ERROR013 - trying to allocate zero or negative number of bytes!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  STAR3= malloc( (size_t)malloc_size );
  if ( STAR3 == NULL ) {
@@ -3650,7 +3650,7 @@ int main( int argc, char **argv ) {
     calibtxtfile= fopen( "calib.txt", "a" );
     if ( calibtxtfile == NULL ) {
      fprintf( stderr, "ERROR: cannot open file calib.txt for writing!\n" );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     // -13.5161 14.4000 0.0032
     fprintf( calibtxtfile, "%lf %lf %lf\n", mag, manually_selected_comparison_stars_catalog_mag[manually_selected_comparison_stars_index], sigma_mag );
@@ -3839,7 +3839,7 @@ int main( int argc, char **argv ) {
  malloc_size= sizeof( int ) * NUMBER1;
  if ( malloc_size <= 0 ) {
   fprintf( stderr, "ERROR014 - trying to allocate zero or negative number of bytes!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  Pos1= malloc( (size_t)malloc_size );
  if ( Pos1 == NULL ) {
@@ -3863,7 +3863,7 @@ int main( int argc, char **argv ) {
  malloc_size= sizeof( struct Observation ) * Max_obs_in_RAM;
  if ( malloc_size <= 0 ) {
   fprintf( stderr, "ERROR015 - trying to allocate zero or negative number of bytes!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  ptr_struct_Obs= malloc( (size_t)malloc_size );
  /// Potential big source of problems: malloc() may succeed, but not enough memory may actually be available!
@@ -3881,7 +3881,7 @@ int main( int argc, char **argv ) {
   malloc_size= sizeof( struct Observation ) * Max_obs_in_RAM;
   if ( malloc_size <= 0 ) {
    fprintf( stderr, "ERROR016 - trying to allocate zero or negative number of bytes!\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   ptr_struct_Obs= malloc( (size_t)malloc_size );
  }
@@ -3912,7 +3912,7 @@ int main( int argc, char **argv ) {
    report_and_handle_too_many_stars_error();
    //   fprintf( stderr, "########## Oops!!! Too many stars! ##########\nChange string \"#define MAX_NUMBER_OF_STARS %d\" in src/vast_limits.h file and recompile the program by running \"make\".\n\nOr you may choose a higher star detection limit (get less stars per frame) by changing DETECT_MINAREA and DETECT_THRESH/ANALYSIS_THRESH parameters in default.sex file\n",
    //            MAX_NUMBER_OF_STARS );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -3928,7 +3928,7 @@ int main( int argc, char **argv ) {
   if ( 1 == is_point_close_or_off_the_frame_edge( (double)STAR1[i].x_frame, (double)STAR1[i].y_frame, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) ) {
    // This is supposed to be checked above!
    fprintf( stderr, "FRAME EDGE REJECTION ERROR!!!\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   //  if( STAR1[i].n == 375 )
   //   fprintf(stderr, "\n\n\n DEBUGVENUS STAR1[i].n -- CHECK2\n\n\n");
@@ -4075,18 +4075,18 @@ int main( int argc, char **argv ) {
     malloc_size= MAX_NUMBER_OF_STARS * sizeof( struct Star );
     if ( malloc_size <= 0 ) {
      fprintf( stderr, "ERROR017 - trying to allocate zero or negative number of bytes!\n" );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     STAR2= malloc( (size_t)malloc_size );
     if ( STAR2 == NULL ) {
      fprintf( stderr, "ERROR: No memory (STAR2)\n" );
      vast_report_memory_error();
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     file= fopen( sextractor_catalog, "r" );
     if ( file == NULL ) {
      fprintf( stderr, "Can't open file %s\n", sextractor_catalog );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     NUMBER2= 0;
     counter_rejected_bad_flux= counter_rejected_low_snr= counter_rejected_bad_region= counter_rejected_frame_edge= counter_rejected_too_small= counter_rejected_too_large= counter_rejected_external_flag= counter_rejected_seflags_gt7= counter_rejected_seflags_gt_user_spec_threshold= 0; // reset bad star counters
@@ -4377,7 +4377,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      malloc_size= sizeof( int ) * NUMBER2;
      if ( malloc_size <= 0 ) {
       fprintf( stderr, "ERROR018 - trying to allocate zero or negative number of bytes!\n" );
-      exit( 1 );
+      exit( EXIT_FAILURE );
      }
      Pos2= malloc( (size_t)malloc_size );
      if ( Pos2 == NULL ) {
@@ -4830,7 +4830,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
     malloc_size= MIN( Number_of_ecv_star, NUMBER3 ) * sizeof( double );
     if ( malloc_size <= 0 ) {
      fprintf( stderr, "ERROR: trying allocate xero or negative bites amount\n malloc_size = MIN(Number_of_ecv_star, NUMBER3) * sizeof(double)\n" );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     // poly_x = (double *)malloc(MIN( Number_of_ecv_star, NUMBER3) * sizeof(double));
     // poly_y = (double *)malloc(MIN( Number_of_ecv_star, NUMBER3) * sizeof(double));
@@ -5435,7 +5435,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
        // fprintf( stderr, "ERROR while adding new stars: Too many stars!\nChange string \"#define MAX_NUMBER_OF_STARS %d\" in src/vast_limits.h file and recompile the program by running \"make\".\n", MAX_NUMBER_OF_STARS );
        fprintf( stderr, "ERROR while adding new stars!" );
        report_and_handle_too_many_stars_error();
-       exit( 1 );
+       exit( EXIT_FAILURE );
       }
       //} // // If this is a good star
       // else
@@ -5484,7 +5484,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
        fprintf( stderr, "FRAME EDGE REJECTION ERROR 2!!! Please report to kirx@kirx.net the following informaiton:\n" );
        fprintf( stderr, "X_im_size-STAR2[Pos2[i]].x_frame<FRAME_EDGE_INDENT_PIXELS\n%f-%f<%f\n", X_im_size, STAR2[Pos2[i]].x_frame, FRAME_EDGE_INDENT_PIXELS );
        fprintf( stderr, "Y_im_size-STAR2[Pos2[i]].y_frame<FRAME_EDGE_INDENT_PIXELS\n%f-%f<%f\n", Y_im_size, STAR2[Pos2[i]].y_frame, FRAME_EDGE_INDENT_PIXELS );
-       exit( 1 );
+       exit( EXIT_FAILURE );
       }
       if ( STAR2[Pos2[i]].sextractor_flag > maxsextractorflag ) {
        // That should work only for i<Number_of_ecv_star ,so we check that
@@ -5555,7 +5555,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
                                            fprintf(stderr,"Pos1[%5d]=%d  NUMBER1=%d Number_of_ecv_star=%d\n",coordinate_array_index,Pos1[coordinate_array_index],NUMBER1, Number_of_ecv_star);
                                           }
                                           fprintf(stderr,"-------------------\n");
-                                          exit(1); // !!
+                                          exit( EXIT_FAILURE ); // !!
                                          }
                                          //
                                          */
@@ -5649,7 +5649,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       ptr_struct_Obs[obs_in_RAM - 1].APER= aperture;
       if ( strlen( input_images[n] ) > FILENAME_LENGTH ) {
        fprintf( stderr, "ERROR: strlen(input_images[n])>FILENAME_LENGTH \nFILENAME_LENGTH=%d\nFilename: %s\nPlease, increase FILENAME_LENGTH in src/vast_limits.h and recompile the program using make!\n", FILENAME_LENGTH, input_images[n] );
-       exit( 1 );
+       exit( EXIT_FAILURE );
       }
 
       strncpy( ptr_struct_Obs[obs_in_RAM - 1].filename, input_images[n], FILENAME_LENGTH );
@@ -5905,12 +5905,12 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      malloc_size= sizeof( struct Observation ) * Max_obs_in_RAM;
      if ( malloc_size <= 0 ) {
       fprintf( stderr, "ERROR019 - trying to allocate zero or negative number of bytes!\n" );
-      exit( 1 );
+      exit( EXIT_FAILURE );
      }
      ptr_struct_Obs= malloc( (size_t)malloc_size );
      if ( ptr_struct_Obs == NULL ) {
       fprintf( stderr, "ERROR: couldn't allocate ptr_struct_Obs\n" );
-      exit( 1 );
+      exit( EXIT_FAILURE );
      }
     } // if( obs_in_RAM>Max_obs_in_RAM ){
 

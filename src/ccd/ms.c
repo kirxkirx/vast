@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 
  if( argc != 4 ) {
   fprintf(stderr, "Wrong arguments amount... :(\n  Usage: %s image.fit dark.fit result.fit\n", argv[0]);
-  exit(1);
+  exit( EXIT_FAILURE );
  }
 
  fprintf(stderr, "Exploring image header: %s \n", argv[1]);
@@ -52,14 +52,14 @@ int main(int argc, char *argv[]) {
  key= malloc(No_of_keys * sizeof(char *));
  if( key == NULL ) {
   fprintf(stderr, "ERROR: Couldn't allocate memory for FITS header\n");
-  exit(1);
+  exit( EXIT_FAILURE );
  }
  //for( ii= 1; ii < No_of_keys; ii++ ) {
  for( ii= 0; ii < No_of_keys; ii++ ) {
   key[ii]= malloc(FLEN_CARD * sizeof(char)); // FLEN_CARD length of a FITS header card defined in fitsio.h
   if( key[ii] == NULL ) {
    fprintf(stderr, "ERROR: Couldn't allocate memory for FITS header\n");
-   exit(1);
+   exit( EXIT_FAILURE );
   }
   fits_read_record(fptr, ii, key[ii], &status);
   fprintf(stderr, "Record %d: \"%s\" status=%d\n", ii, key[ii], status);
@@ -76,20 +76,20 @@ int main(int argc, char *argv[]) {
  if( img_size <= 0 ) {
   fprintf(stderr, "ERROR: Trying allocate negative or zero bytes of memory\n");
   fits_close_file(fptr, &status);
-  exit(1);
+  exit( EXIT_FAILURE );
  };
  image_array= malloc(img_size * sizeof(short));
  if( image_array == NULL ) {
   fprintf(stderr, "ERROR: Couldn't allocate memory for image_array\n");
   fits_close_file(fptr, &status);
-  exit(1);
+  exit( EXIT_FAILURE );
  };
  dark_array= malloc(img_size * sizeof(short));
  if( dark_array == NULL ) {
   fprintf(stderr, "ERROR: Couldn't allocate memory for dark_array\n");
   free(image_array);
   fits_close_file(fptr, &status);
-  exit(1);
+  exit( EXIT_FAILURE );
  };
  result_image_array= malloc(img_size * sizeof(short));
  if( result_image_array == NULL ) {
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
   free(image_array);
   free(dark_array);
   fits_close_file(fptr, &status);
-  exit(1);
+  exit( EXIT_FAILURE );
  };
 
  fits_read_img(fptr, TUSHORT, 1, img_size, &nullval, image_array, &anynul, &status);
@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
   exit(status);
  if( testX != naxes[0] || testY != naxes[1] ) {
   fprintf(stderr, "Image frame and dark frame must have same dimensions!\n");
-  exit(1);
+  exit( EXIT_FAILURE );
  }
  fits_get_img_type(fptr, &bitpix2, &status);
  fits_read_img(fptr, TUSHORT, 1, naxes[0] * naxes[1], &nullval, dark_array, &anynul, &status);

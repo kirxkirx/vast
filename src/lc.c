@@ -113,28 +113,28 @@ void remove_linear_trend( float *fit_jd, float *mag, int N, double A, double B, 
 
  if ( N <= 0 ) {
   fprintf( stderr, "ERROR: Trying allocate zero or negative number of bytes(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  plot_jd= malloc( N * sizeof( float ) );
  if ( plot_jd == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for plot_jd(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  plot_y= malloc( N * sizeof( float ) );
  if ( plot_y == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for plot_y(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  corrected_mag= malloc( N * sizeof( float ) );
  if ( corrected_mag == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for plot_y(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  vast_lc_remove_linear_trend_logfile= fopen( "vast_lc_remove_linear_trend.log", "a" );
  if ( vast_lc_remove_linear_trend_logfile == NULL ) {
   fprintf( stderr, "ERROR: Cannot open file vast_lc_remove_linear_trend.log\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  for ( i= 0; i < N; i++ ) {
@@ -183,17 +183,17 @@ void plot_linear_trend( float *fit_jd, int N, double A, double B, double mean_jd
 
  if ( N <= 0 ) {
   fprintf( stderr, "ERROR2: Trying allocate zero or negative number of bytes(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  plot_jd= malloc( N * sizeof( float ) );
  if ( plot_jd == NULL ) {
   fprintf( stderr, "ERROR2: Couldn't allocate memory for plot_y(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  plot_y= malloc( N * sizeof( float ) );
  if ( plot_y == NULL ) {
   fprintf( stderr, "ERROR2: Couldn't allocate memory for plot_y(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  for ( i= 0; i < N; i++ ) {
   plot_jd[i]= fit_jd[i] - (float)( mean_jd );
@@ -223,27 +223,27 @@ void fit_linear_trend( float *input_JD, float *input_mag, float *mag_err, int N,
 
  if ( N <= 0 ) {
   fprintf( stderr, "ERROR3: Trying allocate zero or negative number of bytes(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  fit_jd= malloc( N * sizeof( double ) );
  if ( fit_jd == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for fit_jd(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  fit_mag= malloc( N * sizeof( double ) );
  if ( fit_mag == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for fit_mag(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  fit_w= malloc( N * sizeof( double ) );
  if ( fit_w == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for fit_w(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  difference= malloc( N * sizeof( double ) );
  if ( difference == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for difference(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  for ( i= 0; i < N; i++ ) {
@@ -298,27 +298,27 @@ void fit_median_for_jumps( float *input_JD, float *input_mag, float *mag_err, in
 
  if ( N <= 0 ) {
   fprintf( stderr, "ERROR4: Trying allocate zero or negative number of bytes(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  fit_jd= malloc( N * sizeof( double ) );
  if ( fit_jd == NULL ) {
   fprintf( stderr, "ERROR2: Couldn't allocate memory for difference(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  fit_mag= malloc( N * sizeof( double ) );
  if ( fit_mag == NULL ) {
   fprintf( stderr, "ERROR2: Couldn't allocate memory for difference(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  fit_w= malloc( N * sizeof( double ) );
  if ( fit_w == NULL ) {
   fprintf( stderr, "ERROR2: Couldn't allocate memory for difference(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  difference= malloc( N * sizeof( double ) );
  if ( difference == NULL ) {
   fprintf( stderr, "ERROR2: Couldn't allocate memory for difference(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  for ( i= 0; i < N; i++ ) {
@@ -587,7 +587,7 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "./lc FILENAME -s    # plot lightcurve to a .ps file\n" );
   fprintf( stderr, "./lc FILENAME -n    # plot lightcurve to a .png file\n" );
   fprintf( stderr, "./lc FILENAME -e    # plot errorbars\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  for ( n= optind; n < argc; ++n ) {
   // strcpy(lightcurvefilename, argv[n]);
@@ -604,12 +604,12 @@ int main( int argc, char **argv ) {
   lightcurvefile= fopen( lightcurvefilename, "r" );
   if ( NULL == lightcurvefile ) {
    fprintf( stderr, "ERROR: cannot open file!\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
  }
  if ( NULL == fgets( strmusor, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) ) {
   fprintf( stderr, "ERROR: empty lightcurve file!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  if ( 1 == is_comment( strmusor ) ) {
@@ -631,7 +631,7 @@ int main( int argc, char **argv ) {
   }
  } else {
   fprintf( stderr, "ERROR: cannot parse the lightcurve file!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  if ( lightcurve_format == 0 )
   fprintf( stderr, "VaST lightcurve format detected!\n" );
@@ -659,44 +659,44 @@ int main( int argc, char **argv ) {
  JD= malloc( number_of_lines_in_lc_file_for_malloc * sizeof( double ) );
  if ( JD == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for JD(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  mag= malloc( number_of_lines_in_lc_file_for_malloc * sizeof( float ) );
  if ( mag == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mag(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  mag_err= malloc( number_of_lines_in_lc_file_for_malloc * sizeof( float ) );
  if ( mag_err == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mag_err(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  X= malloc( number_of_lines_in_lc_file_for_malloc * sizeof( float ) );
  if ( X == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for X(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  Y= malloc( number_of_lines_in_lc_file_for_malloc * sizeof( float ) );
  if ( Y == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for Y(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  APER= malloc( number_of_lines_in_lc_file_for_malloc * sizeof( float ) );
  if ( APER == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for APER(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  filename= (char **)malloc( number_of_lines_in_lc_file_for_malloc * sizeof( char * ) );
  if ( filename == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for filename(lc.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  for ( i= 0; i < number_of_lines_in_lc_file_for_malloc; i++ ) {
   filename[i]= (char *)malloc( FILENAME_LENGTH * sizeof( char ) );
   if ( filename[i] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for filename[i](lc.c)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
  }
 
@@ -809,7 +809,7 @@ int main( int argc, char **argv ) {
     // If the fallback option didn't work
     if ( pgplot_status <= 0 ) {
      fprintf( stderr, "Emergency exit.\n" );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
    }
    if ( 0 == strcmp( PGPLOT_CONTROL, "/XW" ) ) {
@@ -1006,17 +1006,17 @@ int main( int argc, char **argv ) {
     fit_jd= malloc( Nobs * sizeof( float ) );
     if ( fit_jd == NULL ) {
      fprintf( stderr, "ERROR3: Couldn't allocate memory for fit_jd(lc.c)\n" );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     };
     fit_mag= malloc( Nobs * sizeof( float ) );
     if ( fit_mag == NULL ) {
      fprintf( stderr, "ERROR3: Couldn't allocate memory for fit_mag(lc.c)\n" );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     };
     fit_mag_err= malloc( Nobs * sizeof( float ) );
     if ( fit_mag_err == NULL ) {
      fprintf( stderr, "ERROR3: Couldn't allocate memory for fit_mag_err(lc.c)\n" );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     };
     fit_n= Nobs;
    }
@@ -1214,17 +1214,17 @@ int main( int argc, char **argv ) {
     fit_jd= malloc( Nobs * sizeof( float ) );
     if ( fit_jd == NULL ) {
      fprintf( stderr, "ERROR4: Couldn't allocate memory for fit_jd(lc.c)\n" );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     };
     fit_mag= malloc( Nobs * sizeof( float ) );
     if ( fit_mag == NULL ) {
      fprintf( stderr, "ERROR4: Couldn't allocate memory for fit_mag(lc.c)\n" );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     };
     fit_mag_err= malloc( Nobs * sizeof( float ) );
     if ( fit_mag_err == NULL ) {
      fprintf( stderr, "ERROR3: Couldn't allocate memory for fit_mag_err(lc.c)\n" );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     };
     fit_n= Nobs;
    }
@@ -1608,12 +1608,12 @@ int main( int argc, char **argv ) {
    fit_jd= malloc( Nobs * sizeof( float ) );
    if ( fit_jd == NULL ) {
     fprintf( stderr, "ERROR5: Couldn't allocate memory for fit_jd(lc.c)\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    };
    fit_mag= malloc( Nobs * sizeof( float ) );
    if ( fit_mag == NULL ) {
     fprintf( stderr, "ERROR5: Couldn't allocate memory for fit_mag(lc.c)\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    };
 
    fit_n= 0;

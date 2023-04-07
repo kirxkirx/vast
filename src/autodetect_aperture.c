@@ -203,22 +203,22 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
   X1= malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
   if ( X1 == NULL ) {
    fprintf( stderr, "ERROR: in autodetect_aperture() can't allocate memory for X1\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   Y1= malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
   if ( Y1 == NULL ) {
    fprintf( stderr, "ERROR: in autodetect_aperture() can't allocate memory for Y1\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   X2= malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
   if ( X2 == NULL ) {
    fprintf( stderr, "ERROR: in autodetect_aperture() can't allocate memory for X2\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   Y2= malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
   if ( Y2 == NULL ) {
    fprintf( stderr, "ERROR: in autodetect_aperture() can't allocate memory for Y2\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
 
   read_bad_CCD_regions_lst( X1, Y1, X2, Y2, &N_bad_regions );
@@ -226,7 +226,7 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
   A= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
   if ( A == NULL ) {
    fprintf( stderr, "ERROR: out of memory in function autodetect_aperture() A !!!\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
 
   write_string_to_individual_image_log( output_sextractor_catalog, "autodetect_aperture(): ", "Calculating the aperture size", "" );
@@ -294,7 +294,7 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
    }
    if ( i >= MAX_NUMBER_OF_STARS ) {
     fprintf( stderr, "Oops!!! Too many stars!\nChange string \"#define MAX_NUMBER_OF_STARS %d\" in src/vast_limits.h file and recompile the program by running \"make\".\n", MAX_NUMBER_OF_STARS );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
   }
   // If most of the stars are flagged out - use flagged stars to choose aperture size
@@ -323,7 +323,7 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
     }
     if ( i >= MAX_NUMBER_OF_STARS ) {
      fprintf( stderr, "Oops!!! Too many stars!\nChange string \"#define MAX_NUMBER_OF_STARS %d\" in src/vast_limits.h file and recompile the program by running \"make\".\n", MAX_NUMBER_OF_STARS );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
    }
   } // if( good_stars_in_the_catalog<0.5*all_stars_in_the_catalog ){
@@ -404,7 +404,7 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
   psfex_compatible_sextractor_parameters_file= fopen( psfex_param_filename, "w" );
   if ( NULL == psfex_compatible_sextractor_parameters_file ) {
    fprintf( stderr, "ERROR writing %s\n", psfex_param_filename );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   fprintf( psfex_compatible_sextractor_parameters_file, "VIGNET(%.0lf,%.0lf)\nXWIN_IMAGE\nYWIN_IMAGE\nFLUX_RADIUS\nFLUX_MAX\nFLUX_APER(1)\nELONGATION\nFLAGS\nSNR_WIN\n", 2.0 * APERTURE + 0.5, 2.0 * APERTURE + 0.5 );
   fclose( psfex_compatible_sextractor_parameters_file );

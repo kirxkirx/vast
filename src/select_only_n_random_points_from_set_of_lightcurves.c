@@ -71,13 +71,13 @@ int main( int argc, char **argv ) {
  input_jd= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( input_jd == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for input_jd(select_only_n_random_points_from_set_of_light_curves.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  get_dates( input_jd, &Nobs );
  selected_jd= malloc( N * sizeof( double ) );
  if ( selected_jd == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for selected_jd(select_only_n_random_points_from_set_of_light_curves.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  fprintf( stderr, "Keeping only %d randomly selected dates out of %d...\n", N, Nobs );

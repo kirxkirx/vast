@@ -146,28 +146,28 @@ int main( int argc, char **argv ) {
  jd_a= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( jd_a == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for jd_a(remove_bad_images.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  mag_a= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( mag_a == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mag_a(remove_bad_images.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  image_jd= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( image_jd == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for image_jd(remove_bad_images.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  image_Noutliers= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( int ) );
  if ( image_Noutliers == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for image_Noutliers(remove_bad_images.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  image_Nall= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( int ) );
  if ( image_Nall == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for image_Nall(remove_bad_images.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  image_Number= 0;
@@ -184,7 +184,7 @@ int main( int argc, char **argv ) {
     lightcurvefile= fopen( ep->d_name, "r" );
     if ( NULL == lightcurvefile ) {
      fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     /* Compute median mag & sigma */
     i= 0;
@@ -243,7 +243,7 @@ int main( int argc, char **argv ) {
    images_bad= realloc( images_bad, images_Nbad * sizeof( double ) );
    if ( images_bad == NULL ) {
     fprintf( stderr, "ERROR: Couldn't allocate memory for images_bad(remove_bad_images.c)\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    };
    images_bad[images_Nbad - 1]= image_jd[image_counter];
    fprintf( stderr, "Identified bad image %03d  JD%lf   Nall = %05d  Noutliers = %05d  fraction=%lf\n", image_counter, image_jd[image_counter], image_Nall[image_counter], image_Noutliers[image_counter], (double)image_Noutliers[image_counter] / (double)image_Nall[image_counter] );
@@ -308,14 +308,14 @@ int main( int argc, char **argv ) {
    lightcurvefile= fopen( filenamelist[filename_counter], "r" );
    if ( NULL == lightcurvefile ) {
     fprintf( stderr, "ERROR: Can't open file %s\n", filenamelist[filename_counter] );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    sprintf( lightcurve_tmp_filename, "lightcurve.tmp%05ld", filename_counter );
    outlightcurvefile= fopen( lightcurve_tmp_filename, "w" );
    if ( NULL == outlightcurvefile ) {
     fprintf( stderr, "\nAn ERROR has occured while processing file %s  median_mag=%lf mag_sigma=%lf\n", filenamelist[filename_counter], median_mag, mag_sigma );
     fprintf( stderr, "ERROR: Can't open file %s\n", lightcurve_tmp_filename );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    // fscanf(lightcurvefile,"%lf %lf %lf %lf %lf %lf %s",&jd,&mag,&merr,&x,&y,&app,string); // Never drop the first point!
    //  The while cycle is needed to handle the situation that the first lines are comments

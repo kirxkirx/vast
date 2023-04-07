@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
  fprintf(stderr, "Combining %d files\n", argc - 1);
  if( argc < 3 ) {
   fprintf(stderr, "Not enough arguments...\n  Usage: %s flat01.fit flat02.fit flat03.fit ...\n", argv[0]);
-  exit(1);
+  exit( EXIT_FAILURE );
  }
 
  // Allocate combined array
@@ -59,13 +59,13 @@ int main(int argc, char *argv[]) {
  key= malloc(No_of_keys * sizeof(char *));
  if( key == NULL ) {
   fprintf(stderr, "ERROR: Couldn't allocate memory for FITS header\n");
-  exit(1);
+  exit( EXIT_FAILURE );
  }
  for( ii= 1; ii < No_of_keys; ii++ ) {
   key[ii]= malloc(FLEN_CARD * sizeof(char)); // FLEN_CARD length of a FITS header card defined in fitsio.h
   if( key[ii] == NULL ) {
    fprintf(stderr, "ERROR: Couldn't allocate memory for key[ii]\n");
-   exit(1);
+   exit( EXIT_FAILURE );
   }
   //fprintf( stderr, "DEBUG: ii=%d No_of_keys=%d FLEN_CARD=%d\n", ii, No_of_keys, FLEN_CARD );
   fits_read_record(fptr, ii, key[ii], &status);
@@ -83,19 +83,19 @@ int main(int argc, char *argv[]) {
  long img_size= naxes_ref[0] * naxes_ref[1];
  if( img_size <= 0 ) {
   fprintf(stderr, "ERROR: The image size cannot be negative\n");
-  exit(1);
+  exit( EXIT_FAILURE );
  }
  combined_array= malloc(img_size * sizeof(short));
  if( combined_array == NULL ) {
   fprintf(stderr, "ERROR: Couldn't allocate memory for combined_array\n");
-  exit(1);
+  exit( EXIT_FAILURE );
  }
  //
 
  image_array= malloc( sizeof(unsigned short *) ); // this will be realloc'ed before use anyhow
   if( image_array == NULL ) {
    fprintf(stderr, "ERROR in mk: Couldn't allocate memory for image array (0)\n");
-   exit(1);
+   exit( EXIT_FAILURE );
   }
 
  // Reading the input files
@@ -105,14 +105,14 @@ int main(int argc, char *argv[]) {
   fits_read_key(fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status);
   if( naxes_ref[0] != naxes[0] || naxes_ref[1] != naxes[1] ) {
    fprintf(stderr, "ERROR: image size mismatch %ldx%ld for %s vs. %ldx%ld for %s\n", naxes[0], naxes[1], argv[file_counter], naxes_ref[0], naxes_ref[1], argv[1]);
-   exit(1);
+   exit( EXIT_FAILURE );
   }
   // Allocate memory for the input images
   image_array= realloc(image_array, file_counter * sizeof(unsigned short *));
   image_array[file_counter-1]= malloc(img_size * sizeof(unsigned short));
   if( image_array[file_counter-1] == NULL ) {
    fprintf(stderr, "ERROR in mk: Couldn't allocate memory for image array\n Current image: %s\n", argv[file_counter]);
-   exit(1);
+   exit( EXIT_FAILURE );
   }
 
   // Reading FITS header keywords from the first image we'll need to remember
@@ -121,13 +121,13 @@ int main(int argc, char *argv[]) {
   fprintf(stderr, "Reading %s %ld %ld  %d bitpix\n", argv[file_counter], naxes[0], naxes[1], bitpix2);
   if( bitpix2 != SHORT_IMG ) {
    fprintf(stderr, "ERROR: BITPIX = %d.  Only SHORT_IMG (BITPIX = %d) images are currently supported.\n", bitpix2, SHORT_IMG);
-   exit(1);
+   exit( EXIT_FAILURE );
   }
   fits_read_img(fptr, TUSHORT, 1, naxes[0] * naxes[1], &nullval, image_array[file_counter-1], &anynul, &status);
   fits_close_file(fptr, &status);
   fits_report_error(stderr, status); // print out any error messages
   if( status != 0 ) {
-   exit(1);
+   exit( EXIT_FAILURE );
   }
   //fprintf(stderr,"DEBUUG: file_counter=%d\n",file_counter);
  }
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
  yy= malloc(img_size * sizeof(double));
  if( yy == NULL ) {
   fprintf(stderr, "ERROR: Couldn't allocate memory for yy array\n");
-  exit(1);
+  exit( EXIT_FAILURE );
  };
  /*
  // Scale everyting to the first image
@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
  
  if ( good_file_counter < 2 ) {
   fprintf(stderr, "ERROR: only %d images passed the mean count cuts!\n", good_file_counter); 
-  exit(1);
+  exit( EXIT_FAILURE );
  }
 
  //
@@ -207,7 +207,7 @@ int main(int argc, char *argv[]) {
   //  fprintf(stderr,"median %lf\n",val);
   combined_array[i]= (unsigned short)(val + 0.5);
   //fprintf(stderr, "median = %lf _ %d\n ", val, combined_array[i]);
-  //exit( 1 );
+  //exit( EXIT_FAILURE );
  }
 
  // Write the output FITS file

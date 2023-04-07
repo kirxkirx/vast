@@ -28,17 +28,17 @@ int main( int argc, char **argv ) {
  double *mag_a= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( mag_a == NULL ) {
   fprintf( stderr, "ERROR: Cannot allocate memory for mag_a(find_flares.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  double *mag_a_err= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( mag_a_err == NULL ) {
   fprintf( stderr, "ERROR: Cannot allocate memory for mag_a_err(find_flares.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  double *w= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( w == NULL ) {
   fprintf( stderr, "ERROR: Cannot allocate memory for w(find_flares.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  double preflare_median_mag, flare_median_mag;
  double preflare_mag_sigma, flare_mag_sigma;
@@ -74,7 +74,7 @@ int main( int argc, char **argv ) {
     lightcurvefile= fopen( ep->d_name, "r" );
     if ( NULL == lightcurvefile ) {
      fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     // We accept two cases: the star is visible on two reference images and two second-epoch images
     // and the star is visible on one reference image and two second-epoch images
@@ -101,7 +101,7 @@ int main( int argc, char **argv ) {
     lightcurvefile= fopen( ep->d_name, "r" );
     if ( lightcurvefile == NULL ) {
      fprintf( stderr, "ERROR: Can't open file %s\n", ep->d_name );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     };
 
     /* Compute pre-flare mag & sigma */

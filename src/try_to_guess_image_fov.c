@@ -706,13 +706,13 @@ int look_for_existing_wcs_header( char *fitsfilename, double *estimated_fov_arcm
  wcs_key= malloc( No_of_wcs_keys * sizeof( char * ) );
  if ( wcs_key == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for wcs_key(try_to_guess_image_fov)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  for ( i= 1; i < No_of_wcs_keys; i++ ) {
   wcs_key[i]= (char *)malloc( FLEN_CARD * sizeof( char ) ); // FLEN_CARD length of a FITS header card defined in fitsio.h
   if ( wcs_key[i] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for wcs_key[i](try_to_guess_image_fov)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   fits_read_record( fptr, i, wcs_key[i], &status );
  }

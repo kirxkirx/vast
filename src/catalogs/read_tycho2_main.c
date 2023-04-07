@@ -17,13 +17,13 @@ int main() {
  arrStar= malloc( N * sizeof( struct Star ) );
  if ( arrStar == NULL ) {
   fprintf( stderr, "ERROR: Couldnt allocate memory for arrStar\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  read_sextractor_cat( "wcsmag.cat", arrStar, &N, image_boundaries_radec );
  arrCatStar= malloc( STARS_IN_TYC2 * sizeof( struct CatStar ) );
  if ( arrCatStar == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for arrCatStar\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  read_tycho_cat( arrCatStar, &M, image_boundaries_radec );
  N_match= match_stars_with_catalog( arrStar, N, arrCatStar, M );

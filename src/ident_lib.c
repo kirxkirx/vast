@@ -65,7 +65,7 @@ struct Preobr_Sk *New_Preobr_Sk() {
  if ( preobr == NULL ) {
   fprintf( stderr, "ERROR in New_Preobr_Sk():\n preobr = malloc(sizeof(struct Preobr_Sk)); - failed\n" );
   vast_report_memory_error();
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  // preobr->podobie = 1;
  preobr->translate1[0]= 0;
@@ -95,7 +95,7 @@ struct Preobr_Sk *New_Preobr_Sk_W() {
  if( preobr == NULL ) {
   fprintf(stderr, "ERROR in New_Preobr_Sk_W():\n preobr = malloc(sizeof(struct Preobr_Sk)); - failed\n");
   vast_report_memory_error();
-  exit(1);
+  exit( EXIT_FAILURE );
  }
  //preobr->podobie = 1;
  preobr->translate1[0]= 0;
@@ -126,7 +126,7 @@ struct Preobr_Sk *New_Preobr_Sk_M() {
  if( preobr == NULL ) {
   fprintf(stderr, "ERROR in New_Preobr_Sk_M():\n preobr = malloc(sizeof(struct Preobr_Sk)); - failed\n");
   vast_report_memory_error();
-  exit(1);
+  exit( EXIT_FAILURE );
  }
  //preobr->podobie = 1;
  preobr->translate1[0]= 0;
@@ -198,7 +198,7 @@ struct Ecv_triangles *Init_ecv_triangles() {
  if ( ecv_tr == NULL ) {
   fprintf( stderr, "ERROR in Init_ecv_triangles:\n ecv_tr = malloc(sizeof(struct Ecv_triangles)); - failed\n" );
   vast_report_memory_error();
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  ecv_tr->tr= NULL;
  ecv_tr->Number= 0;
@@ -213,7 +213,7 @@ static inline void Add_ecv_triangles( struct Ecv_triangles *ecv_tr, int a1, int 
  ecv_tr->tr= realloc( ecv_tr->tr, sizeof( struct Ecv_Triangle ) * n ); /// !!!!! THIS IS MAD, USE MALLOC !!!!
  if ( ecv_tr->tr == NULL ) {
   fprintf( stderr, "ERROR in Add_ecv_triangles:\n ecv_tr->tr = realloc(ecv_tr->tr, sizeof(struct Ecv_Triangle) * n); - failed\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  ecv_tr->tr[n - 1].tr1.a[0]= a1;
  ecv_tr->tr[n - 1].tr1.a[1]= b1;
@@ -399,7 +399,7 @@ struct Triangle *Separate_to_triangles( struct Star *star, int Number, int *Ntri
  if ( iskl == NULL ) {
   fprintf( stderr, "ERROR in Separate_to_triangles:\n iskl = malloc(sizeof(int)*Number); - failed\n" );
   vast_report_memory_error();
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  for ( n= 0; n < Number; n++ ) {
   iskl[n]= n;
@@ -461,7 +461,7 @@ struct Triangle *Separate_to_triangles( struct Star *star, int Number, int *Ntri
    m++;
    if ( triangles == NULL ) {
     fprintf( stderr, "ERROR in Separate_to_triangles:\n triangles = realloc(triangles, sizeof(struct Triangle) * m); - failed\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    } // ???
    triangles[m - 1].a[0]= tr.a[0];
    triangles[m - 1].a[1]= tr.a[1];
@@ -882,7 +882,7 @@ int Very_Well_triangle( struct Star *star1, int Number1, struct Star *star2, int
  if ( copy_star1 == NULL || copy_star2 == NULL ) {
   fprintf( stderr, "ERROR in Very_Well_triangle(): Out of memory while allocating copy_star1 or copy_star2\n" );
   vast_report_memory_error();
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  N_ecv= preobr->Number_of_ecv_triangle;
@@ -987,7 +987,7 @@ int Star2_to_star1_on_main_triangle( struct Preobr_Sk *preobr, struct Star *star
  if ( star_copy == NULL ) {
   fprintf( stderr, "ERROR in Star2_to_star1_on_main_triangle(): star_copy = malloc(sizeof(struct Star) * Number2); - failed!\n" );
   vast_report_memory_error();
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  // for (n = 0; n < Number2; n++)
  for ( n= Number2; n--; )
@@ -1072,7 +1072,7 @@ list addToList( point p, list l ) {
  newL= malloc( sizeof( struct List ) );
  if ( newL == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for newL(ident_lib.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  newL->p= p;
  newL->next= l;
@@ -1126,7 +1126,7 @@ grid createGrid( frame f ) {
  gr= malloc( sizeof( struct Grid ) );
  if ( gr == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for gr(ident_lib.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  cellSize= sqrtf( f.sizeX * f.sizeY / ( (float)f.count ) );
 
@@ -1148,7 +1148,7 @@ grid createGrid( frame f ) {
 
  if ( gr->columns <= 0 ) {
   fprintf( stderr, "ERROR: Trying allocate zero or negative bytes amount(ident_lib.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  // fprintf(stderr,"minX: %lf, minY: %lf, maxX: %lf, maxY: %lf, cellSize: %lf, columns: %d, rows: %d, count: %d\n", minX, minY, maxX, maxY, cellSize, columns, rows, f.count);
@@ -1156,13 +1156,13 @@ grid createGrid( frame f ) {
  gr->array= malloc( sizeof( list ** ) * columns );
  if ( gr->array == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for gr->array(ident_lib.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  for ( i= 0; i < columns; i++ ) {
   gr->array[i]= malloc( sizeof( list * ) * rows );
   if ( gr->array[i] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for gr->array[i](ident_lib.c)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   for ( j= 0; j < rows; j++ ) {
    gr->array[i][j]= emptyList();
@@ -1404,7 +1404,7 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
    //
    // if ( fabs(p1.x - 1494.6) < 1.0 && fabs(p1.y - 2081.4) < 1.0 ){
    // fprintf( stderr, "\n--- NO MATCH!!!   p2.i=%d R=%lf R_best=%lf  p2.x=%lf p2.x=%lf  \n", p2.i, sqrt(R), sqrt(R_best), p2.x, p2.y );
-   // exit(1);
+   // exit( EXIT_FAILURE );
    //}
    //
    ys_unmatched= addToList( p2, ys_unmatched );
@@ -1424,11 +1424,11 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
    //
    if ( number_of_matched_stars >= Number1 ) {
     fprintf( stderr, "ERROR in Ident_on_sigma(): number_of_matched_stars>=Number1 while it shouldn't\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    if ( number_of_matched_stars >= Number2 ) {
     fprintf( stderr, "ERROR in Ident_on_sigma(): number_of_matched_stars>=Number2 while it shouldn't\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    //
    //
@@ -1549,7 +1549,7 @@ int Ident_on_sigma(struct Star *star1, int Number1, struct Star *star2, int Numb
         copy_star1 = malloc(sizeof(struct Star) * Number1);
         copy_star2 = malloc(sizeof(struct Star) * Number2);
 
-        if( copy_star1==NULL || copy_star2==NULL ){fprintf(stderr,"ERROR in Ident_on_sigma(): Out of memory while allocating copy_star1 or copy_star2\n");vast_report_memory_error();exit(1);}
+        if( copy_star1==NULL || copy_star2==NULL ){fprintf(stderr,"ERROR in Ident_on_sigma(): Out of memory while allocating copy_star1 or copy_star2\n");vast_report_memory_error();exit( EXIT_FAILURE );}
 
         //for (n = 0; n < Number1; n++)
         for (n = Number1; n--; )
@@ -1674,7 +1674,7 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
  if ( ( star1 == NULL ) || ( star2 == NULL ) ) {
   fprintf( stderr, "ERROR in Ident(): No enough memory for two arrays of stars!\n" );
   vast_report_memory_error();
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  // Now we make local copies of the reference star list (STAR3) and the list of stars detected on the current image
  // (STAR2). We may be requested to skip the first START_NUMBER3 or START_NUMBER2 stars in the structure if needed.
@@ -1784,12 +1784,12 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
   double *x= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) ); // x coordinate of stars on the current frame
   if ( x == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for x(ident_lib.c)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   double *y= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) ); // y coordinate of stars on the current frame
   if ( y == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for x(ident_lib.c)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   double *z= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) ); // difference between the measured coordinates
                                                                // and thouse assumed to be correct (measured
@@ -1798,7 +1798,7 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
 
   if ( z == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for x(ident_lib.c)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
 
   // Fit a plane to x residuals

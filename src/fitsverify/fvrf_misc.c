@@ -84,7 +84,7 @@ int wrterr( FILE *out, char *mess, int severity ) {
   fprintf( stderr, "??? Too many Errors! I give up...\n" );
 #endif
   close_report( out );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  fits_clear_errmsg();
  return nerrs;
@@ -128,7 +128,7 @@ int wrtferr( FILE *out, char *mess, int *status, int severity )
   fprintf( stderr, "??? Too many Errors! I give up...\n" );
 #endif
   close_report( out );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  return nerrs;
 }
@@ -185,7 +185,7 @@ int wrtserr( FILE *out, char *mess, int *status, int severity )
   fprintf( stderr, "??? Too many Errors! I give up...\n" );
 #endif
   close_report( out );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  return nerrs;
 }

@@ -18,57 +18,6 @@
 
 #include "wpolyfit.h"
 
-/*
-void choose_fittting_function(double *insmag, double *catmag, int n_stars, int *fit_function) {
-
- double poly_coeff[8]= {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
- double *w;
- int i; // just a counter
-
- double sumsqres_photocurve, sumsqres_parabola;
-
- // set default
- (*fit_function)= 2;
-
- // Consider two special cases:
- // if n_stars<5 set fit_function=3 (line with a slope fixed to 1.0)
- if( n_stars < 5 ) {
-  (*fit_function)= 3;
-  return;
- }
- // if n_stars<MIN_NUMBER_STARS_POLY_MAG_CALIBR set fit_function=1 (line with the variable slope)
- if( n_stars < MIN_NUMBER_STARS_POLY_MAG_CALIBR ) {
-  (*fit_function)= 1;
-  return;
- }
-
- // Prepare fake weights
- w= malloc(n_stars * sizeof(double));
- if( w == NULL ) {
-  fprintf(stderr, "ERROR: Couldn't allocate memory for w(fit_mag_calib.c)\n");
-  exit(1);
- };
- for( i= 0; i < n_stars; i++ )
-  w[i]= 1.0;
-
- // Now try to fit various functions and see which one works best:
- // try photocurve
- fit_photocurve(insmag, catmag, w, n_stars, poly_coeff, fit_function, &sumsqres_photocurve);
- // try linear function
- wpolyfit(insmag, catmag, w, n_stars, poly_coeff, &sumsqres_parabola);
- // this is now returned by fit_photocurve()
- // for(sumsqres_parabola=0.0,i=0;i<n_stars;i++)sumsqres_parabola+=(catmag[i] - (A*insmag[i]*insmag[i]+B*insmag[i]+C) )*(catmag[i] - (A*insmag[i]*insmag[i]+B*insmag[i]+C) );
- if( sumsqres_parabola < sumsqres_photocurve )
-  (*fit_function)= 2;
-
- free(w);
-
- fprintf(stderr, "sumsqres_photocurve=%lf sumsqres_parabola=%lf\n", sumsqres_photocurve, sumsqres_parabola);
-
- return;
-}
-*/
-
 int main( int argc, char **argv ) {
  char calibfilename[FILENAME_LENGTH];
  FILE *calibfile;
@@ -135,47 +84,47 @@ int main( int argc, char **argv ) {
  insmag= malloc( MAX_NUMBER_OF_STARS_MAG_CALIBR * sizeof( double ) );
  if ( insmag == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for insmag(fit_mag_calib.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  finsmag= malloc( MAX_NUMBER_OF_STARS_MAG_CALIBR * sizeof( float ) );
  if ( finsmag == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for finsmag(fit_mag_calib.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  insmagerr= malloc( MAX_NUMBER_OF_STARS_MAG_CALIBR * sizeof( double ) );
  if ( insmagerr == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for insmagerr(fit_mag_calib.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  finsmagerr= malloc( MAX_NUMBER_OF_STARS_MAG_CALIBR * sizeof( float ) );
  if ( finsmagerr == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for finsmagerr(fit_mag_calib.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  catmag= malloc( MAX_NUMBER_OF_STARS_MAG_CALIBR * sizeof( double ) );
  if ( catmag == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for catmag(fit_mag_calib.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  fcatmag= malloc( MAX_NUMBER_OF_STARS_MAG_CALIBR * sizeof( float ) );
  if ( fcatmag == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for fcatmag(fit_mag_calib.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  w= malloc( MAX_NUMBER_OF_STARS_MAG_CALIBR * sizeof( double ) );
  if ( w == NULL ) {
   fprintf( stderr, "ERROR2: Couldn't allocate memory for w(fit_mag_calib.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  computed_x= malloc( MAX_NUMBER_OF_STARS_MAG_CALIBR * sizeof( float ) );
  if ( computed_x == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for computed_x(fit_mag_calib.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  computed_y= malloc( MAX_NUMBER_OF_STARS_MAG_CALIBR * sizeof( float ) );
  if ( computed_y == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for computed_y(fit_mag_calib.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  if ( argc == 1 ) {
@@ -388,11 +337,11 @@ int main( int argc, char **argv ) {
     calibfile= fopen( calibfilename, "r" );
     if ( NULL == calibfile ) {
      fprintf( stderr, "ERROR: Cannot open file %s\n", calibfilename );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     if ( 5 > fscanf( calibfile, "%lf %lf %lf %lf %lf", &poly_coeff[4], &poly_coeff[3], &poly_coeff[2], &poly_coeff[1], &poly_coeff[0] ) ) {
      fprintf( stderr, "ERROR parsing %s\n", calibfilename );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     if ( poly_coeff[4] == 4.0 || poly_coeff[4] == 5.0 ) {
      fit_function= (int)poly_coeff[4];

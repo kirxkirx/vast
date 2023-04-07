@@ -15,17 +15,17 @@ void setenv_localpgplot( char *path_to_the_executable ) {
  path_to_vast= malloc( FILENAME_LENGTH * sizeof( char ) );
  if ( path_to_vast == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for path_to_vast(setenv_local_pgplot.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  path_to_pgplot= malloc( FILENAME_LENGTH * sizeof( char ) ); // just a wild guess how big the thing should be
  if ( path_to_pgplot == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for path_to_pgplot(setenv_local_pgplot.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  last_dir_name= malloc( FILENAME_LENGTH * sizeof( char ) ); // just a wild guess how big the thing should be
  if ( last_dir_name == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for last_dir_name(setenv_local_pgplot.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  strncpy( path_to_vast, dirname( path_to_the_executable ), FILENAME_LENGTH );
  path_to_vast[FILENAME_LENGTH - 1]= '\0'; // just in case

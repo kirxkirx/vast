@@ -47,22 +47,22 @@ int main() {
  y_limit= malloc( sizeof( double ) * MAX_NUMBER_OF_STARS );
  if ( y_limit == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for y_limit\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  x= malloc( sizeof( double ) * MAX_NUMBER_OF_STARS );
  if ( x == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for x(select_sysrem_input_star_list.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  y= malloc( sizeof( double ) * MAX_NUMBER_OF_STARS );
  if ( y == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for y(select_sysrem_input_star_list.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  data= malloc( sizeof( double ) * MAX_NUMBER_OF_STARS );
  if ( data == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for data(select_sysrem_input_star_list.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  char str[256];
  sum= -1;
@@ -71,7 +71,7 @@ int main() {
  dmsf= fopen( inputfilename, "r" );
  if ( dmsf == NULL ) {
   fprintf( stderr, "ERROR: Can't open file %s !\n", inputfilename );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  while ( -1 < fscanf( dmsf, "%lf %lf %lf %lf %s", &m, &sigma, &X, &Y, str ) ) {
   if ( sum == -1 ) {
@@ -113,12 +113,12 @@ int main() {
  dmsf= fopen( inputfilename, "r" );
  if ( dmsf == NULL ) {
   fprintf( stderr, "ERROR: Couldn't open file %s(select_sysrem_input_star_list.c)\n", inputfilename );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  f= fopen( "sysrem_input_star_list.tmp", "w" );
  if ( f == NULL ) {
   fprintf( stderr, "ERROR: Couldn't open file sysrem_input_star_list.tmp(select_sysrem_input_star_list.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  while ( -1 < fscanf( dmsf, "%lf %lf %lf %lf %s", &m, &sigma, &X, &Y, str ) ) {
   // if( m>sum+M_SIGMA_BIN_MAG_OTSTUP ){

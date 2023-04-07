@@ -25,7 +25,7 @@ int main( int argc, char **argv ) {
  double *mag_a= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( mag_a == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mag_a(new_lightcurve_sigma_filter.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  double median_mag;
  double mag_sigma;
@@ -104,7 +104,7 @@ int main( int argc, char **argv ) {
    lightcurvefile= fopen( filenamelist[filename_counter], "r" );
    if ( NULL == lightcurvefile ) {
     fprintf( stderr, "ERROR: Can't open file %s\n", filenamelist[filename_counter] );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
 
    /* Compute median mag & sigma */
@@ -126,13 +126,13 @@ int main( int argc, char **argv ) {
    lightcurvefile= fopen( filenamelist[filename_counter], "r" );
    if ( NULL == lightcurvefile ) {
     fprintf( stderr, "ERROR: Can't open file %s\n", filenamelist[filename_counter] );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    outlightcurvefile= fopen( lightcurve_tmp_filename, "w" );
    if ( NULL == outlightcurvefile ) {
     fprintf( stderr, "\nAn ERROR has occurred while processing file %s  median_mag=%lf mag_sigma=%lf\n", filenamelist[filename_counter], median_mag, mag_sigma );
     fprintf( stderr, "ERROR: Can't open file %s\n", lightcurve_tmp_filename );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
     if ( jd == 0.0 )

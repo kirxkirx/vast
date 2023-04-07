@@ -49,7 +49,7 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "\nUsage: %s XXXX.fit\n\n", argv[0] );
   fprintf( stderr, "The lightcurve in the VaST format will be written to outXXXX.dat\n" );
   fprintf( stderr, "Enjoy! =)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  status= 0;
 
@@ -126,22 +126,22 @@ int main( int argc, char **argv ) {
  mag= malloc( num_rows * sizeof( double ) );
  if ( mag == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mag\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  mag_err= malloc( num_rows * sizeof( double ) );
  if ( mag_err == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for mag_err\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  JD= malloc( num_rows * sizeof( double ) );
  if ( JD == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for JD\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  status_flag= malloc( num_rows * sizeof( int ) );
  if ( status_flag == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for status_flag\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  fits_read_col( fptr, TDOUBLE, colnum_TIME, 1, 1, num_rows, NULL, JD, NULL, &status );
  fits_read_col( fptr, TDOUBLE, colnum_MAG, 1, 1, num_rows, NULL, mag, NULL, &status );
@@ -154,7 +154,7 @@ int main( int argc, char **argv ) {
  outfile= fopen( name, "w" );
  if ( outfile == NULL ) {
   fprintf( stderr, "ERROR: Couldn't open file %s\n", name );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  for ( i= 0; i < num_rows; i++ ) {
   JD[i]= JD[i] / 86400 + 2453005.5; // Butters et al. 2010A&A...520L..10B

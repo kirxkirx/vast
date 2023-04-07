@@ -49,7 +49,7 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
  input_sysrem_input_star_list_lst= fopen( "sysrem_input_star_list.lst", "r" );
  if ( NULL == input_sysrem_input_star_list_lst ) {
   fprintf( stderr, "ERROR! Can't open file sysrem_input_star_list.lst\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  while ( NULL != fgets( full_string, MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG, input_sysrem_input_star_list_lst ) ) {
   Nstars++;
@@ -58,7 +58,7 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
  fprintf( stderr, "Number of stars in sysrem_input_star_list.lst %d\n", Nstars );
  if ( Nstars < SYSREM_MIN_NUMBER_OF_STARS ) {
   fprintf( stderr, "Too few stars!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  // This is the trivial case of one processing block
@@ -80,7 +80,7 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
   outputfile[oputput_file_counter]= fopen( split_sysrem_input_star_list_lst_filenames[oputput_file_counter], "w" );
   if ( NULL == outputfile[oputput_file_counter] ) {
    fprintf( stderr, "ERROR opening file %s for writing\n", split_sysrem_input_star_list_lst_filenames[oputput_file_counter] );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   fprintf( stderr, "Opening file %s for writing\n", split_sysrem_input_star_list_lst_filenames[oputput_file_counter] );
  }
@@ -89,7 +89,7 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
  input_sysrem_input_star_list_lst= fopen( "sysrem_input_star_list.lst", "r" );
  if ( NULL == input_sysrem_input_star_list_lst ) {
   fprintf( stderr, "ERROR! Can't open file sysrem_input_star_list.lst (2)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  oputput_file_counter= 0;
  while ( NULL != fgets( full_string, MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG, input_sysrem_input_star_list_lst ) ) {
@@ -103,7 +103,7 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
  fprintf( stderr, "Number of stars in sysrem_input_star_list.lst %d\n", Nstars );
  if ( Nstars < SYSREM_MIN_NUMBER_OF_STARS ) {
   fprintf( stderr, "Too few stars!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  // close the output files
@@ -114,7 +114,7 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
 
  ( *N_sysrem_input_star_list_lst )= Noutput_files;
 
- // exit( 1 ); // !!!!!!!!!!!!
+ // exit( EXIT_FAILURE ); // !!!!!!!!!!!!
 
  return 0;
 }
@@ -203,7 +203,7 @@ int main() {
  // This will make sysrem_input_star_list.lst
  if ( 0 != system( "lib/index_vs_mag" ) ) {
   fprintf( stderr, "ERROR in sysrem2.c while running lib/index_vs_mag\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  for ( sysrem_input_star_list_lst_counter= 0; sysrem_input_star_list_lst_counter < SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS; sysrem_input_star_list_lst_counter++ ) {
@@ -221,7 +221,7 @@ int main() {
   datafile= fopen( split_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter], "r" );
   if ( NULL == datafile ) {
    fprintf( stderr, "ERROR! Can't open file %s\n", split_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter] );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
 
   while ( -1 < fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename ) ) {
@@ -231,25 +231,25 @@ int main() {
   fprintf( stderr, "Number of stars in sysrem_input_star_list.lst %d\n", Nstars );
   if ( Nstars < SYSREM_MIN_NUMBER_OF_STARS ) {
    fprintf( stderr, "Too few stars!\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
 
   bad_stars= malloc( Nstars * sizeof( int ) );
   if ( bad_stars == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for bad_stars\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   star_numbers= malloc( Nstars * sizeof( char * ) );
   if ( star_numbers == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for star_numbers\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   // for(i=0;i<Nstars;i++){
   for ( i= Nstars; i--; ) {
    star_numbers[i]= malloc( OUTFILENAME_LENGTH * sizeof( char ) );
    if ( star_numbers[i] == NULL ) {
     fprintf( stderr, "ERROR: Couldn't allocate memory for star_numbers[i]\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    };
    bad_stars[i]= 0;
   }
@@ -258,32 +258,32 @@ int main() {
   jd= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
   if ( jd == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for jd\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   Nobs= 0; // initialize it here, just in case
   get_dates( jd, &Nobs );
   if ( Nobs <= 0 ) {
    fprintf( stderr, "ERROR: Trying allocate zero or negative memory amount(Nobs <= 0)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
 
   // Allocate memory
   mag_err= malloc( Nstars * sizeof( float * ) );
   if ( mag_err == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for mag_err\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   r= malloc( Nstars * sizeof( float * ) );
   if ( r == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for r\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
 
   /*
  data= malloc( Nstars * Nobs * sizeof( float ) ); // ??
  if ( data == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for data\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 */
 
@@ -293,7 +293,7 @@ int main() {
  double_data= malloc( MAX( Nstars, Nobs ) * sizeof( double ) );
  if ( double_data == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for double_data_Nstars\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 */
 
@@ -303,7 +303,7 @@ int main() {
    r[i]= malloc( Nobs * sizeof( float ) );       // is it correct ????? // !!
    if ( r[i] == NULL || mag_err[i] == NULL ) {
     fprintf( stderr, "ERROR: Couldn't allocate memory(i=%d)\n", i );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
   }
 
@@ -318,23 +318,23 @@ int main() {
   c= malloc( Nstars * sizeof( float ) );
   if ( c == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for c array\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   a= malloc( Nobs * sizeof( float ) );
   if ( a == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for a array\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
 
   old_c= malloc( Nstars * sizeof( float ) );
   if ( old_c == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for old_c\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   old_a= malloc( Nobs * sizeof( float ) );
   if ( old_a == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for ald_a\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
 
   // for(i=0;i<Nstars;i++){
@@ -355,7 +355,7 @@ int main() {
   datafile= fopen( split_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter], "r" );
   if ( NULL == datafile ) {
    fprintf( stderr, "ERROR! Can't open file %s\n", split_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter] );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   while ( -1 < fscanf( datafile, "%f %f %f %f %s", &mean, &mean, &mean, &mean, lightcurvefilename ) ) {
    memset( star_number_string, 0, FILENAME_LENGTH ); // just in case
@@ -372,7 +372,7 @@ int main() {
    lightcurvefile= fopen( lightcurvefilename, "r" );
    if ( NULL == lightcurvefile ) {
     fprintf( stderr, "ERROR: Can't read file %s\n", lightcurvefilename );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    memset( string, 0, FILENAME_LENGTH );
    memset( comments_string, 0, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE );
@@ -421,7 +421,7 @@ int main() {
   double_data= malloc( Nobs * sizeof( double ) );
   if ( double_data == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for double_data_Nstars\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
   for ( i= Nstars; i--; ) {
    k= 0;
@@ -548,7 +548,7 @@ int main() {
   double_data= malloc( Nstars * sizeof( double ) );
   if ( double_data == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for double_data\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
 
   // A filtering attempt: if a single star dominates the solution, it should have c~1 while
@@ -686,7 +686,7 @@ int main() {
   double_data= malloc( Nstars * sizeof( double ) );
   if ( double_data == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for double_data_Nstars\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   }
 
   // Not sure how effective that is, considering that c[i] filtering with the same parameters is also done above...
@@ -735,7 +735,7 @@ int main() {
     lightcurvefile= fopen( lightcurvefilename, "r" );
     if ( NULL == lightcurvefile ) {
      fprintf( stderr, "ERROR: Can't read file %s\n", lightcurvefilename );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
     outlightcurvefile= fopen( outlightcurvefilename, "w" );
     while ( -1 < read_lightcurve_point( lightcurvefile, &djd, &ddmag, &ddmerr, &x, &y, &app, string, comments_string ) ) {

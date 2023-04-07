@@ -27,27 +27,27 @@ int main( int argc, char **argv ) {
  NUMBER= malloc( MAX_NUMBER_OF_STARS * sizeof( int ) );
  if ( NUMBER == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for NUMBER(find_star_in_wcs_catalog.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  ALPHA_SKY= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
  if ( ALPHA_SKY == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for ALPHA_SKY(find_star_in_wcs_catalog.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  DELTA_SKY= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
  if ( DELTA_SKY == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for DELTA_SKY(find_star_in_wcs_catalog.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  X_IMAGE= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
  if ( X_IMAGE == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for X_IMAGE(find_star_in_wcs_catalog.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  Y_IMAGE= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
  if ( Y_IMAGE == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for Y_IMAGE(find_star_in_wcs_catalog.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  /*

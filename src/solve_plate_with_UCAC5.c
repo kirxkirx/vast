@@ -157,7 +157,7 @@ void remove_outliers_from_a_pair_of_arrays( double *a, double *b, int *N_good ) 
  copy_a= malloc( copy_N_good * sizeof( double ) );
  if ( copy_a == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for copy_a\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  //
  for ( i= 0; i < copy_N_good; i++ )
@@ -1420,7 +1420,7 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
     zero_radec_counter++;
     if ( zero_radec_counter > 10 ) {
      fprintf( stderr, "ERROR in search_UCAC5_with_vizquery(): too many input positions are '0.000000 0.000000'\nWe cannot go to VizieR with that!\n" );
-     exit( 1 ); // terminate everything
+     exit( EXIT_FAILURE ); // terminate everything
     }
    }
    //
@@ -1461,7 +1461,7 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
    vizquery_run_success= system( command );
    if ( vizquery_run_success != 0 ) {
     fprintf( stderr, "ERROR: problem running lib/vizquery script :(\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
   }
  }
@@ -1544,7 +1544,7 @@ int search_PANSTARRS1_with_vizquery( struct detected_star *stars, int N, struct 
    vizquery_run_success= system( command );
    if ( vizquery_run_success != 0 ) {
     fprintf( stderr, "ERROR: problem running lib/vizquery script :(\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
   }
  }
@@ -1676,22 +1676,22 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
  x= malloc( N * sizeof( double ) );
  if ( x == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for x(solve_plate_with_UCAC5.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  y= malloc( N * sizeof( double ) );
  if ( y == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for y(solve_plate_with_UCAC5.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  z1= malloc( N * sizeof( double ) );
  if ( z1 == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for z1(solve_plate_with_UCAC5.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  z2= malloc( N * sizeof( double ) );
  if ( z2 == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for z2(solve_plate_with_UCAC5.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  // *** Find global linear solution  ***
@@ -1786,7 +1786,7 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
  only_good_starsmatched_with_catalog= malloc( N * sizeof( struct detected_star ) );
  if ( only_good_starsmatched_with_catalog == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for x(solve_plate_with_UCAC5.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  N_only_good= 0;
@@ -2045,7 +2045,7 @@ int main( int argc, char **argv ) {
    cvalue= optarg;
    if ( 1 == is_file( cvalue ) ) {
     fprintf( stderr, "Option '-i' requires an argument: maximum number of iterations\n" );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    requested_number_of_iterations= atoi( cvalue );
    if ( requested_number_of_iterations < 1 || requested_number_of_iterations > 10 ) {
@@ -2058,7 +2058,7 @@ int main( int argc, char **argv ) {
    cvalue= optarg;
    if ( 1 == is_file( cvalue ) ) {
     fprintf( stderr, "Option '-%c' requires an argument: field of view in arcminutes\n", optopt );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
    approximate_field_of_view_arcmin= atof( cvalue );
    if ( approximate_field_of_view_arcmin < 2.0 || approximate_field_of_view_arcmin > 600.0 ) {
@@ -2069,7 +2069,7 @@ int main( int argc, char **argv ) {
    break;
   case '?':
    fprintf( stderr, "ERROR: unknown option!\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
    break;
   case -1:
    fprintf( stderr, "Done parsing the options\n" );
@@ -2080,11 +2080,11 @@ int main( int argc, char **argv ) {
  // strncpy(fits_image_filename, argv[optind], FILENAME_LENGTH);
  if ( 0 != any_unusual_characters_in_string( argv[optind] ) ) {
   fprintf( stderr, "ERROR preparing to encode the input file name\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  if ( 0 != safely_encode_user_input_string( fits_image_filename, argv[optind], FILENAME_LENGTH ) ) {
   fprintf( stderr, "ERROR trying to encode the input file name\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  fits_image_filename[FILENAME_LENGTH - 1]= '\0';
 
@@ -2133,7 +2133,7 @@ int main( int argc, char **argv ) {
  stars= malloc( MAX_NUMBER_OF_STARS * sizeof( struct detected_star ) );
  if ( stars == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for stars(solve_plate_with_UCAC5.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  // **** Read the star catalog ****

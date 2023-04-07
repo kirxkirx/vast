@@ -188,54 +188,54 @@ int main( int argc, char **argv ) {
  JD= malloc( number_of_measurements * sizeof( double ) );
  if ( JD == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for JD(lighcurve_simulator.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  out_mag= malloc( number_of_measurements * sizeof( double ) );
  if ( out_mag == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for out_mag(lighcurve_simulator.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  out_magerr= malloc( number_of_measurements * sizeof( double ) );
  if ( out_magerr == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for out_magerr(lighcurve_simulator.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  out_x= malloc( number_of_measurements * sizeof( double ) );
  if ( out_x == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for out_x(lighcurve_simulator.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  out_y= malloc( number_of_measurements * sizeof( double ) );
  if ( out_y == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for out_y(lighcurve_simulator.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  out_app= malloc( number_of_measurements * sizeof( double ) );
  if ( out_app == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for out_app(lighcurve_simulator.c)\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
 
  if ( sine_wave_mode_instead_of_psd != 1 ) {
   simulated_mag= malloc( number_of_measurements * sizeof( double ) );
   if ( simulated_mag == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for simulated_mag(lighcurve_simulator.c)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   expected_power= malloc( N_SPECTRAL_POINTS * sizeof( double ) );
   if ( expected_power == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for expected_power(lighcurve_simulator.c)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   amplitudes= malloc( N_SPECTRAL_POINTS * sizeof( double ) );
   if ( amplitudes == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for amplitudes(lighcurve_simulator.c)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   frequencies= malloc( N_SPECTRAL_POINTS * sizeof( double ) );
   if ( frequencies == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for frequencies(lighcurve_simulator.c)\n" );
-   exit( 1 );
+   exit( EXIT_FAILURE );
   };
   phases= malloc( N_SPECTRAL_POINTS * sizeof( double ) );
  }
@@ -291,7 +291,7 @@ int main( int argc, char **argv ) {
  outfile= fopen( outfilename, "w" );
  if ( outfile == NULL ) {
   fprintf( stderr, "ERROR: Couldn't open file %s(lightcurve_simulator.c)\n", outfilename );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  };
  strncpy( fake_str, "constant", FILENAME_LENGTH );
 

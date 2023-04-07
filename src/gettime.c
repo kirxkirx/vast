@@ -266,13 +266,13 @@ double convert_jdUT_to_jdTT( double jdUT, int *timesys ) {
  jd_leap_second= malloc( MAX_NUMBER_OF_LEAP_SECONDS * sizeof( double ) );
  if ( jd_leap_second == NULL ) {
   fprintf( stderr, "ERROR: in convert_jdUT_to_jdTT() can't allocate memory for jd_leap_second\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  double *TAI_minus_UTC;
  TAI_minus_UTC= malloc( MAX_NUMBER_OF_LEAP_SECONDS * sizeof( double ) );
  if ( TAI_minus_UTC == NULL ) {
   fprintf( stderr, "ERROR: in convert_jdUT_to_jdTT() can't allocate memory for TAI_minus_UTC\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  double tai_utc;
  char str1[256], str2[256];
@@ -284,13 +284,13 @@ double convert_jdUT_to_jdTT( double jdUT, int *timesys ) {
  MJD0= malloc( MAX_NUMBER_OF_LEAP_SECONDS * sizeof( double ) );
  if ( MJD0 == NULL ) {
   fprintf( stderr, "ERROR: in convert_jdUT_to_jdTT() can't allocate memory for MJD0\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  double *leap_second_rate;
  leap_second_rate= malloc( MAX_NUMBER_OF_LEAP_SECONDS * sizeof( double ) );
  if ( leap_second_rate == NULL ) {
   fprintf( stderr, "ERROR: in convert_jdUT_to_jdTT() can't allocate memory for leap_second_rate\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  /*
@@ -301,7 +301,7 @@ double convert_jdUT_to_jdTT( double jdUT, int *timesys ) {
  tai_utc_dat= fopen( "lib/tai-utc.dat", "r" );
  if ( NULL == tai_utc_dat ) {
   fprintf( stderr, "ERROR: can't open file lib/tai-utc.dat\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
  while ( NULL != fgets( str1, 256, tai_utc_dat ) ) {
   for ( i= 17; i < 26; i++ )
@@ -442,7 +442,7 @@ void fix_DATEOBS_STRING( char *DATEOBS ) {
 
  if ( date_part == 1 ) {
   fprintf( stderr, "ERROR: cannot parse DATE-OBS keyword!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  // Print result
@@ -541,7 +541,7 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
 
  if ( date_part == 1 ) {
   fprintf( stderr, "ERROR: cannot parse DATE-OBS keyword!\n" );
-  exit( 1 );
+  exit( EXIT_FAILURE );
  }
 
  // Print result
@@ -1184,7 +1184,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    // Check that JD is within the reasonable range
    if ( inJD < EXPECTED_MIN_JD || inJD > EXPECTED_MAX_JD ) {
     fprintf( stderr, "ERROR: JD %lf is out of expected range (%.1lf, %.1lf)!\nYou may change EXPECTED_MIN_JD and EXPECTED_MAX_JD in src/vast_limits.h and recompile VaST if you are _really sure_ you know what you are doing...\n", inJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD );
-    exit( 1 );
+    exit( EXIT_FAILURE );
    }
   } else {
 #ifdef DEBUGMESSAGES
@@ -1201,7 +1201,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     // Check that JD is within the reasonable range
     if ( inJD < EXPECTED_MIN_JD || inJD > EXPECTED_MAX_JD ) {
      fprintf( stderr, "ERROR: JD %lf is out of expected range (%.1lf, %.1lf)!\nYou may change EXPECTED_MIN_JD and EXPECTED_MAX_JD in src/vast_limits.h and recompile VaST if you are _really sure_ you know what you are doing...\n", inJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD );
-     exit( 1 );
+     exit( EXIT_FAILURE );
     }
    } else {
     // MJD-OBS
@@ -1213,13 +1213,13 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
      // Check that MJD is within the reasonable range
      if ( inJD < EXPECTED_MIN_MJD || inJD > EXPECTED_MAX_MJD ) {
       fprintf( stderr, "ERROR: MJD %lf is out of expected range (%.1lf, %.1lf)!\nYou may change EXPECTED_MIN_MJD and EXPECTED_MAX_MJD in src/vast_limits.h and recompile VaST if you are _really sure_ you know what you are doing...\n", inJD, EXPECTED_MIN_MJD, EXPECTED_MAX_MJD );
-      exit( 1 );
+      exit( EXIT_FAILURE );
      }
      inJD= inJD + 2400000.5; // convert MJD to JD
      // Check that JD is within the reasonable range
      if ( inJD < EXPECTED_MIN_JD || inJD > EXPECTED_MAX_JD ) {
       fprintf( stderr, "ERROR: JD %lf is out of expected range (%.1lf, %.1lf)!\nYou may change EXPECTED_MIN_JD and EXPECTED_MAX_JD in src/vast_limits.h and recompile VaST if you are _really sure_ you know what you are doing...\n", inJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD );
-      exit( 1 );
+      exit( EXIT_FAILURE );
      }
     } // if( status == 0 ) { for MJD-OBS
    }  // else for JDMID keyword

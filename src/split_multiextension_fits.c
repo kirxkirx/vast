@@ -62,7 +62,7 @@ int main( int argc, char *argv[] ) {
   fits_create_file( &fptrout, outfilename, &status );
   fits_report_error( stderr, status ); // print out any error messages
   if ( status != 0 )
-   exit( 1 );
+   exit( EXIT_FAILURE );
   fits_copy_hdu( fptr, fptrout, 0, &status );
   fits_close_file( fptrout, &status );
   success_counter++;
