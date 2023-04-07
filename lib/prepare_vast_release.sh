@@ -73,7 +73,7 @@ rm -f prelim_vast_run.log
 rm -f src/cpgplot.h src/pgfv/cpgplot.h
 #
 ####################################
-for BADFILE in shuffled_lightcurve.txt test_lightcurve_outlier.txt test_lightcurve.tex test_lightcurve_without_outlier.txt lk.periodogram deeming.periodogram binned_powerspectrum.periodogram out_Cepheid_TDB_HJD_VARTOOLS.tmp out_Cepheid_TT_HJD_VaST.tmp test_heliocentric_correction.tmp test_heliocentric_correction.tmp_hjdTT test_heliocentric_correction.tmp_vartools valgrind_test.out magcalibdebug.txt A 2mass.tmp script.tmp IOMC_2677000065.txt transient_factory_test31.txt write_individual_image_log.h.gcov ;do
+for BADFILE in vast_input_user_specified_moving_object_position.txt shuffled_lightcurve.txt test_lightcurve_outlier.txt test_lightcurve.tex test_lightcurve_without_outlier.txt ls.periodogram lk.periodogram deeming.periodogram binned_powerspectrum.periodogram out_Cepheid_TDB_HJD_VARTOOLS.tmp out_Cepheid_TT_HJD_VaST.tmp test_heliocentric_correction.tmp test_heliocentric_correction.tmp_hjdTT test_heliocentric_correction.tmp_vartools valgrind_test.out magcalibdebug.txt A 2mass.tmp script.tmp IOMC_2677000065.txt transient_factory_test31.txt testfile ;do
  if [ -f "$BADFILE" ];then
   rm -f "$BADFILE"
  fi
@@ -127,6 +127,13 @@ done
 ####################################
 # Remove gcov code coverage files, if any
 for CORE_FILE in *.gcda *.gcno *.gcov ;do
+ if [ -f "$CORE_FILE" ];then
+  rm -f "$CORE_FILE"
+ fi
+done
+####################################
+# Remove asteroid orbit files produced by the tests
+for CORE_FILE in astorb_2020.dat astorb_ceres.dat astorb_pallas.dat ;do
  if [ -f "$CORE_FILE" ];then
   rm -f "$CORE_FILE"
  fi

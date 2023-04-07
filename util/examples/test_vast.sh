@@ -506,6 +506,12 @@ if [ -d ../DART_Didymos_moving_object_photometry_test ];then
  echo "DART Didymos moving object photometry test " 1>&2
  echo -n "DART Didymos moving object photometry test: " >> vast_test_report.txt 
  cp -v default.sex.MSU_DART default.sex
+ if [ -f vast_input_user_specified_moving_object_position.txt ];then
+  echo "WARNING: found vast_input_user_specified_moving_object_position.txt - will back the file up and mark the test as failed"
+  mv -v vast_input_user_specified_moving_object_position.txt vast_input_user_specified_moving_object_position.txt_backup
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DART_VAST_EXIST_vast_input_user_specified_moving_object_position.txt"
+ fi
  cp -v ../DART_Didymos_moving_object_photometry_test/vast_input_user_specified_moving_object_position.txt .
  ./vast --nofind --type 2 -a33 --movingobject ../DART_Didymos_moving_object_photometry_test/wcs_fd_DART_60sec_Clear_run03-*.fit
  if [ $? -ne 0 ];then
