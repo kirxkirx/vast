@@ -10,9 +10,9 @@
 
 #include "../vast_limits.h"
 
-char *beztochki(char *);
+char *beztochki( char * );
 
-int main(int argc, char *argv[]) {
+int main( int argc, char *argv[] ) {
  // Varaibles for FITS file reading
  fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h
  long fpixel= 1;
@@ -44,97 +44,97 @@ int main(int argc, char *argv[]) {
 
  FILE *filedescriptor_for_opening_test;
 
- fprintf(stderr, "Median combiner v2.2\n\n");
- fprintf(stderr, "Combining %d files\n", argc - 1);
- if( argc < 3 ) {
-  fprintf(stderr, "Not enough arguments...\n  Usage: %s flat01.fit flat02.fit flat03.fit ...\n", argv[0]);
+ fprintf( stderr, "Median combiner v2.2\n\n" );
+ fprintf( stderr, "Combining %d files\n", argc - 1 );
+ if ( argc < 3 ) {
+  fprintf( stderr, "Not enough arguments...\n  Usage: %s flat01.fit flat02.fit flat03.fit ...\n", argv[0] );
   exit( EXIT_FAILURE );
  }
 
  // Allocate combined array
- fits_open_file(&fptr, argv[1], 0, &status);
- fits_read_key(fptr, TLONG, "NAXIS1", &naxes_ref[0], NULL, &status);
- fits_read_key(fptr, TLONG, "NAXIS2", &naxes_ref[1], NULL, &status);
- fits_get_hdrspace(fptr, &No_of_keys, &keys_left, &status);
- key= malloc(No_of_keys * sizeof(char *));
- if( key == NULL ) {
-  fprintf(stderr, "ERROR: Couldn't allocate memory for FITS header\n");
+ fits_open_file( &fptr, argv[1], 0, &status );
+ fits_read_key( fptr, TLONG, "NAXIS1", &naxes_ref[0], NULL, &status );
+ fits_read_key( fptr, TLONG, "NAXIS2", &naxes_ref[1], NULL, &status );
+ fits_get_hdrspace( fptr, &No_of_keys, &keys_left, &status );
+ key= malloc( No_of_keys * sizeof( char * ) );
+ if ( key == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for FITS header\n" );
   exit( EXIT_FAILURE );
  }
- for( ii= 1; ii < No_of_keys; ii++ ) {
-  key[ii]= malloc(FLEN_CARD * sizeof(char)); // FLEN_CARD length of a FITS header card defined in fitsio.h
-  if( key[ii] == NULL ) {
-   fprintf(stderr, "ERROR: Couldn't allocate memory for key[ii]\n");
+ for ( ii= 1; ii < No_of_keys; ii++ ) {
+  key[ii]= malloc( FLEN_CARD * sizeof( char ) ); // FLEN_CARD length of a FITS header card defined in fitsio.h
+  if ( key[ii] == NULL ) {
+   fprintf( stderr, "ERROR: Couldn't allocate memory for key[ii]\n" );
    exit( EXIT_FAILURE );
   }
-  //fprintf( stderr, "DEBUG: ii=%d No_of_keys=%d FLEN_CARD=%d\n", ii, No_of_keys, FLEN_CARD );
-  fits_read_record(fptr, ii, key[ii], &status);
+  // fprintf( stderr, "DEBUG: ii=%d No_of_keys=%d FLEN_CARD=%d\n", ii, No_of_keys, FLEN_CARD );
+  fits_read_record( fptr, ii, key[ii], &status );
  }
- fits_read_key(fptr, TLONG, "BZERO", &bzero, bzero_comment, &status);
- if( status != 0 ) {
+ fits_read_key( fptr, TLONG, "BZERO", &bzero, bzero_comment, &status );
+ if ( status != 0 ) {
   status= 0;
   bzero_key_found= 0;
  } else {
   bzero_key_found= 1;
  }
- fits_close_file(fptr, &status);
- fits_report_error(stderr, status); // print out any error messages
+ fits_close_file( fptr, &status );
+ fits_report_error( stderr, status ); // print out any error messages
 
  long img_size= naxes_ref[0] * naxes_ref[1];
- if( img_size <= 0 ) {
-  fprintf(stderr, "ERROR: The image size cannot be negative\n");
+ if ( img_size <= 0 ) {
+  fprintf( stderr, "ERROR: The image size cannot be negative\n" );
   exit( EXIT_FAILURE );
  }
- combined_array= malloc(img_size * sizeof(short));
- if( combined_array == NULL ) {
-  fprintf(stderr, "ERROR: Couldn't allocate memory for combined_array\n");
+ combined_array= malloc( img_size * sizeof( short ) );
+ if ( combined_array == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for combined_array\n" );
   exit( EXIT_FAILURE );
  }
  //
 
- image_array= malloc( sizeof(unsigned short *) ); // this will be realloc'ed before use anyhow
-  if( image_array == NULL ) {
-   fprintf(stderr, "ERROR in mk: Couldn't allocate memory for image array (0)\n");
-   exit( EXIT_FAILURE );
-  }
+ image_array= malloc( sizeof( unsigned short * ) ); // this will be realloc'ed before use anyhow
+ if ( image_array == NULL ) {
+  fprintf( stderr, "ERROR in mk: Couldn't allocate memory for image array (0)\n" );
+  exit( EXIT_FAILURE );
+ }
 
  // Reading the input files
- for( file_counter= 1; file_counter < argc; file_counter++ ) {
-  fits_open_file(&fptr, argv[file_counter], 0, &status);
-  fits_read_key(fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status);
-  fits_read_key(fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status);
-  if( naxes_ref[0] != naxes[0] || naxes_ref[1] != naxes[1] ) {
-   fprintf(stderr, "ERROR: image size mismatch %ldx%ld for %s vs. %ldx%ld for %s\n", naxes[0], naxes[1], argv[file_counter], naxes_ref[0], naxes_ref[1], argv[1]);
+ for ( file_counter= 1; file_counter < argc; file_counter++ ) {
+  fits_open_file( &fptr, argv[file_counter], 0, &status );
+  fits_read_key( fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status );
+  fits_read_key( fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status );
+  if ( naxes_ref[0] != naxes[0] || naxes_ref[1] != naxes[1] ) {
+   fprintf( stderr, "ERROR: image size mismatch %ldx%ld for %s vs. %ldx%ld for %s\n", naxes[0], naxes[1], argv[file_counter], naxes_ref[0], naxes_ref[1], argv[1] );
    exit( EXIT_FAILURE );
   }
   // Allocate memory for the input images
-  image_array= realloc(image_array, file_counter * sizeof(unsigned short *));
-  image_array[file_counter-1]= malloc(img_size * sizeof(unsigned short));
-  if( image_array[file_counter-1] == NULL ) {
-   fprintf(stderr, "ERROR in mk: Couldn't allocate memory for image array\n Current image: %s\n", argv[file_counter]);
+  image_array= realloc( image_array, file_counter * sizeof( unsigned short * ) );
+  image_array[file_counter - 1]= malloc( img_size * sizeof( unsigned short ) );
+  if ( image_array[file_counter - 1] == NULL ) {
+   fprintf( stderr, "ERROR in mk: Couldn't allocate memory for image array\n Current image: %s\n", argv[file_counter] );
    exit( EXIT_FAILURE );
   }
 
   // Reading FITS header keywords from the first image we'll need to remember
 
-  fits_get_img_type(fptr, &bitpix2, &status);
-  fprintf(stderr, "Reading %s %ld %ld  %d bitpix\n", argv[file_counter], naxes[0], naxes[1], bitpix2);
-  if( bitpix2 != SHORT_IMG ) {
-   fprintf(stderr, "ERROR: BITPIX = %d.  Only SHORT_IMG (BITPIX = %d) images are currently supported.\n", bitpix2, SHORT_IMG);
+  fits_get_img_type( fptr, &bitpix2, &status );
+  fprintf( stderr, "Reading %s %ld %ld  %d bitpix\n", argv[file_counter], naxes[0], naxes[1], bitpix2 );
+  if ( bitpix2 != SHORT_IMG ) {
+   fprintf( stderr, "ERROR: BITPIX = %d.  Only SHORT_IMG (BITPIX = %d) images are currently supported.\n", bitpix2, SHORT_IMG );
    exit( EXIT_FAILURE );
   }
-  fits_read_img(fptr, TUSHORT, 1, naxes[0] * naxes[1], &nullval, image_array[file_counter-1], &anynul, &status);
-  fits_close_file(fptr, &status);
-  fits_report_error(stderr, status); // print out any error messages
-  if( status != 0 ) {
+  fits_read_img( fptr, TUSHORT, 1, naxes[0] * naxes[1], &nullval, image_array[file_counter - 1], &anynul, &status );
+  fits_close_file( fptr, &status );
+  fits_report_error( stderr, status ); // print out any error messages
+  if ( status != 0 ) {
    exit( EXIT_FAILURE );
   }
-  //fprintf(stderr,"DEBUUG: file_counter=%d\n",file_counter);
+  // fprintf(stderr,"DEBUUG: file_counter=%d\n",file_counter);
  }
 
- yy= malloc(img_size * sizeof(double));
- if( yy == NULL ) {
-  fprintf(stderr, "ERROR: Couldn't allocate memory for yy array\n");
+ yy= malloc( img_size * sizeof( double ) );
+ if ( yy == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for yy array\n" );
   exit( EXIT_FAILURE );
  };
  /*
@@ -145,120 +145,120 @@ int main(int argc, char *argv[]) {
  }
 */
 
-/*
- // Scale everyting to the LAST image
- for( i= 0; i < img_size; i++ ) {
-  yy[i]= (double)image_array[file_counter - 1][i];
-  //  fprintf(stderr,"%lf %d\n",yy[i],i);
- }
- gsl_sort(yy, 1, img_size);
- ref_index= gsl_stats_median_from_sorted_data(yy, 1, img_size);
- fprintf(stderr, "ref_index=%lf\n", ref_index);
-*/
- good_file_counter= 0;
- for( file_counter= 1; file_counter < argc; file_counter++ ) {
+ /*
+  // Scale everyting to the LAST image
   for( i= 0; i < img_size; i++ ) {
-   yy[i]= image_array[file_counter-1][i];
+   yy[i]= (double)image_array[file_counter - 1][i];
+   //  fprintf(stderr,"%lf %d\n",yy[i],i);
   }
   gsl_sort(yy, 1, img_size);
-  cur_index= gsl_stats_median_from_sorted_data(yy, 1, img_size);
-  fprintf(stderr, "cur_index=%lf\n", cur_index);
+  ref_index= gsl_stats_median_from_sorted_data(yy, 1, img_size);
+  fprintf(stderr, "ref_index=%lf\n", ref_index);
+ */
+ good_file_counter= 0;
+ for ( file_counter= 1; file_counter < argc; file_counter++ ) {
+  for ( i= 0; i < img_size; i++ ) {
+   yy[i]= image_array[file_counter - 1][i];
+  }
+  gsl_sort( yy, 1, img_size );
+  cur_index= gsl_stats_median_from_sorted_data( yy, 1, img_size );
+  fprintf( stderr, "cur_index=%lf\n", cur_index );
 
   // Reject obviously bad images from the flat-field stack
   // (but how do we know it's a flat stack?)
   // assume if the value is below 5000 counts it's a dark/bias staks and not flat
-  if( 5000 < cur_index && cur_index < 20000 ) {
-   fprintf(stderr, "REJECT (too faint for a flat field)\n");
+  if ( 5000 < cur_index && cur_index < 20000 ) {
+   fprintf( stderr, "REJECT (too faint for a flat field)\n" );
    continue; // continue here so good_file_counter does not increase
   }
-  if( cur_index > 50000 ) {
-   fprintf(stderr, "REJECT (too bright)\n");
+  if ( cur_index > 50000 ) {
+   fprintf( stderr, "REJECT (too bright)\n" );
    continue; // continue here so good_file_counter does not increase
   }
 
-  if( good_file_counter == 0 ) {
+  if ( good_file_counter == 0 ) {
    ref_index= cur_index;
-   fprintf(stderr, "ref_index=%lf\n", ref_index);
+   fprintf( stderr, "ref_index=%lf\n", ref_index );
   }
 
-  for( ii= 0; ii < img_size; ii++ ) {
-   image_array[good_file_counter][ii]= image_array[file_counter-1][ii] * ref_index / cur_index;
+  for ( ii= 0; ii < img_size; ii++ ) {
+   image_array[good_file_counter][ii]= image_array[file_counter - 1][ii] * ref_index / cur_index;
   }
   good_file_counter++;
  }
- free(yy);
- 
+ free( yy );
+
  if ( good_file_counter < 2 ) {
-  fprintf(stderr, "ERROR: only %d images passed the mean count cuts!\n", good_file_counter); 
+  fprintf( stderr, "ERROR: only %d images passed the mean count cuts!\n", good_file_counter );
   exit( EXIT_FAILURE );
  }
 
  //
- for( i= 0; i < img_size; i++ ) {
-  //for( file_counter= 1; file_counter < argc; file_counter++ ) {
-  for( file_counter= 0; file_counter < good_file_counter; file_counter++ ) {
+ for ( i= 0; i < img_size; i++ ) {
+  // for( file_counter= 1; file_counter < argc; file_counter++ ) {
+  for ( file_counter= 0; file_counter < good_file_counter; file_counter++ ) {
    y[file_counter]= image_array[file_counter][i];
-   //fprintf(stderr,"%d %lf\n", file_counter, y[file_counter]);
+   // fprintf(stderr,"%d %lf\n", file_counter, y[file_counter]);
   }
-  //gsl_sort(y, 1, argc - 1);
-  gsl_sort(y, 1, good_file_counter);
-  //val= gsl_stats_median_from_sorted_data(y, 1, argc - 1);
-  val= gsl_stats_median_from_sorted_data(y, 1, good_file_counter);
+  // gsl_sort(y, 1, argc - 1);
+  gsl_sort( y, 1, good_file_counter );
+  // val= gsl_stats_median_from_sorted_data(y, 1, argc - 1);
+  val= gsl_stats_median_from_sorted_data( y, 1, good_file_counter );
   //  fprintf(stderr,"median %lf\n",val);
-  combined_array[i]= (unsigned short)(val + 0.5);
-  //fprintf(stderr, "median = %lf _ %d\n ", val, combined_array[i]);
-  //exit( EXIT_FAILURE );
+  combined_array[i]= (unsigned short)( val + 0.5 );
+  // fprintf(stderr, "median = %lf _ %d\n ", val, combined_array[i]);
+  // exit( EXIT_FAILURE );
  }
 
  // Write the output FITS file
  // (DELETE the file with this name if it already exists)
- filedescriptor_for_opening_test= fopen("median.fit", "r");
- if( NULL != filedescriptor_for_opening_test ) {
-  fprintf(stderr, "WARNING: removing the output file from the previous run: median.fit\n");
-  fclose(filedescriptor_for_opening_test);
-  unlink("median.fit");
+ filedescriptor_for_opening_test= fopen( "median.fit", "r" );
+ if ( NULL != filedescriptor_for_opening_test ) {
+  fprintf( stderr, "WARNING: removing the output file from the previous run: median.fit\n" );
+  fclose( filedescriptor_for_opening_test );
+  unlink( "median.fit" );
  }
- fits_create_file(&fptr, "median.fit", &status); /* create new file */
- fits_create_img(fptr, USHORT_IMG, 2, naxes, &status);
- fits_write_img(fptr, TUSHORT, fpixel, img_size, combined_array, &status);
- free(combined_array);
+ fits_create_file( &fptr, "median.fit", &status ); /* create new file */
+ fits_create_img( fptr, USHORT_IMG, 2, naxes, &status );
+ fits_write_img( fptr, TUSHORT, fpixel, img_size, combined_array, &status );
+ free( combined_array );
 
  // Write the FITS header
- for( ii= 1; ii < No_of_keys; ii++ ) {
-  fits_write_record(fptr, key[ii], &status);
+ for ( ii= 1; ii < No_of_keys; ii++ ) {
+  fits_write_record( fptr, key[ii], &status );
  }
  // Delete the following keywords to avoid duplication
- fits_delete_key(fptr, "SIMPLE", &status);
- fits_delete_key(fptr, "BITPIX", &status);
- fits_delete_key(fptr, "NAXIS", &status);
- fits_delete_key(fptr, "NAXIS1", &status);
- fits_delete_key(fptr, "NAXIS2", &status);
- fits_delete_key(fptr, "EXTEND", &status);
- fits_delete_key(fptr, "COMMENT", &status);
- fits_delete_key(fptr, "COMMENT", &status);
- fits_delete_key(fptr, "BZERO", &status);
- fits_delete_key(fptr, "BSCALE", &status);
+ fits_delete_key( fptr, "SIMPLE", &status );
+ fits_delete_key( fptr, "BITPIX", &status );
+ fits_delete_key( fptr, "NAXIS", &status );
+ fits_delete_key( fptr, "NAXIS1", &status );
+ fits_delete_key( fptr, "NAXIS2", &status );
+ fits_delete_key( fptr, "EXTEND", &status );
+ fits_delete_key( fptr, "COMMENT", &status );
+ fits_delete_key( fptr, "COMMENT", &status );
+ fits_delete_key( fptr, "BZERO", &status );
+ fits_delete_key( fptr, "BSCALE", &status );
 
- if( bzero_key_found == 1 ) {
-  fits_write_key(fptr, TLONG, "BZERO", &bzero, bzero_comment, &status);
+ if ( bzero_key_found == 1 ) {
+  fits_write_key( fptr, TLONG, "BZERO", &bzero, bzero_comment, &status );
  }
 
- for( file_counter= 1; file_counter < argc; file_counter++ ) {
-  fits_write_history(fptr, argv[file_counter], &status);
+ for ( file_counter= 1; file_counter < argc; file_counter++ ) {
+  fits_write_history( fptr, argv[file_counter], &status );
  }
- fits_report_error(stderr, status); /* print out any error messages */
- fits_close_file(fptr, &status);
- for( file_counter= 1; file_counter < argc; file_counter++ ) {
-  free(image_array[file_counter-1]);
+ fits_report_error( stderr, status ); /* print out any error messages */
+ fits_close_file( fptr, &status );
+ for ( file_counter= 1; file_counter < argc; file_counter++ ) {
+  free( image_array[file_counter - 1] );
  }
- free(image_array);
- fprintf(stderr, "Writing output to median.fit \n");
- fits_report_error(stderr, status); /* print out any error messages */
+ free( image_array );
+ fprintf( stderr, "Writing output to median.fit \n" );
+ fits_report_error( stderr, status ); /* print out any error messages */
 
- for( ii= 1; ii < No_of_keys; ii++ ) {
-  free(key[ii]);
+ for ( ii= 1; ii < No_of_keys; ii++ ) {
+  free( key[ii] );
  }
- free(key);
+ free( key );
 
  return status;
 }
