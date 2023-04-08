@@ -596,6 +596,10 @@ if [ -d ../DART_Didymos_moving_object_photometry_test ];then
 
  fi # check vast run success
 
+ if [ -f vast_input_user_specified_moving_object_position.txt ];then
+  rm -f vast_input_user_specified_moving_object_position.txt
+ fi
+
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
  # Make an overall conclusion for this test
