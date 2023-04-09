@@ -120,7 +120,7 @@ or perhaps FLAGS = 8+16+32 = 56.
 */
 
 void version( char *version_string ) {
- strncpy( version_string, "VaST 1.0rc86", 32 );
+ strncpy( version_string, "VaST 1.0rc87", 32 );
  return;
 }
 
