@@ -1,4 +1,4 @@
-name: macOS 11 MacPorts build only
+name: macOS 11 MacPorts build
 
 on: [push]
 
@@ -7,7 +7,7 @@ jobs:
 
     runs-on: macos-11
 
-    # Manually enable/disable this long test
+    # Manually enable/disable this test
     # Write an if statement that is always true/false
     if: true
     steps:
@@ -26,7 +26,3 @@ jobs:
       run: sudo port install libpng
     - name: make VaST
       run: make
-    #- name: prepare for the test
-    #  run: echo "1" > ../THIS_IS_HPCC 
-    #- name: test VaST
-    #  run: util/examples/test_vast.sh

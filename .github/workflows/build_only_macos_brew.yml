@@ -1,4 +1,4 @@
-name: macOS 11 Homebrew build only
+name: macOS 11 Homebrew build
 
 on: [push]
 
