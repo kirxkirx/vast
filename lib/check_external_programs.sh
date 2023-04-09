@@ -105,7 +105,15 @@ int main(){return 0;}" > test.c
  CUSTOM_X11_INCLUDE_AND_LIB=`lib/find_x11lib_include.sh`
  $CC -o test.exe test.c $CUSTOM_X11_INCLUDE_AND_LIB -lX11 &> .x11test.log
  if [ $? -ne 0 ];then
-  X11_DEVELOPEMENT_PACKAGE="libx11-dev"
+  SYSTEM_TYPE=$(uname)
+  if [ "$SYSTEM_TYPE" = "Linux" ];then   
+   # RedHat-style distributions tend to split headers into spearate -dev packages
+   # Hope the users of normal Linux distributions will figure out the proper package name
+   X11_DEVELOPEMENT_PACKAGE="libx11-dev"
+  else
+   # If we are not even on Linux, do not confuse user with -dev in the suggested package name
+   X11_DEVELOPEMENT_PACKAGE="libx11"
+  fi
   X11_TEST_LOG_OUTPUT=`cat .x11test.log`
   X11_TEST_LOG_OUTPUT="$CC -o test.exe test.c $CUSTOM_X11_INCLUDE_AND_LIB -lX11 &> .x11test.log
 $X11_TEST_LOG_OUTPUT"

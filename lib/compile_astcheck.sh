@@ -36,15 +36,15 @@ if [ "$1" = "clean" ];then
  exit
 fi
 
-SYSTEM_TYPE=`uname`
-if [ "$SYSTEM_TYPE" = "Linux" ];then
+OS_TYPE=$(uname)
+if [ "$OS_TYPE" = "Linux" ];then
  MAKE_COMMAND="make"
 else
  command -v gmake &>/dev/null
  if [ $? -eq 0 ];then
   MAKE_COMMAND="gmake"
  else
-  echo "ERROR: cannot find 'gmake' while being on a non-Linux system ($SYSTEM_TYPE)!
+  echo "ERROR: cannot find 'gmake' while being on a non-Linux system ($OS_TYPE)!
 The VaST compilation may fail. If it does, please install 'gmake' and try again."
   MAKE_COMMAND="make"
  fi

@@ -1,0 +1,23 @@
+name: FreeBSD build
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: macos-12
+    env:
+      MYTOKEN : ${{ secrets.MYTOKEN }}
+      MYTOKEN2: "value2"
+    steps:
+    - uses: actions/checkout@v3
+    - name: Test in FreeBSD
+      id: test
+      uses: vmactions/freebsd-vm@v0
+      with:
+        envs: 'MYTOKEN MYTOKEN2'
+        usesh: true
+        prepare: |
+          pkg install -y bash gcc gmake libx11 wget pgplot 
+
+        run: |
+          make

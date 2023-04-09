@@ -29,7 +29,7 @@ function explicitly_set_build_type {
   echo ""
   return
  fi
- OS_TYPE=`uname`
+ OS_TYPE=$(uname)
  if [ "$OS_TYPE" != "Linux" ];then
   echo ""
   return

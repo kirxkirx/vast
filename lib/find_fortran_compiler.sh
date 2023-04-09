@@ -97,9 +97,9 @@ SCRIPT_NAME=`basename $0`
 
 command -v uname &> /dev/null
 if [ $? -eq 0 ];then
- OS=$(uname)
+ OS_TYPE=$(uname)
 else
- OS="unknown"
+ OS_TYPE="unknown"
 fi
 
 
@@ -108,7 +108,7 @@ fi
 # or a gcc with no corresponding gfortran version. If a normal GCC is installed 
 # on FreeBSD or Mac OS it is likely to be found in /usr/local/bin/ so let's check there
 #
-if [ "$OS" != "Linux" ];then
+if [ "$OS_TYPE" != "Linux" ];then
  # some Macs have macports istalled under /usr while others under /opt
  for USR_OR_OPT in usr opt ;do
   # Special FreeBSD case
@@ -240,7 +240,7 @@ if [ "$OS" != "Linux" ];then
    fi # if [ -x "$LOCAL_GCC" ];then
   fi # if [ "$LOCAL_GCC" != "" ];then
  done # for USR_OR_OPT in usr opt ;do
-fi # if [ "$OS" != "Linux" ];then
+fi # if [ "$OS_TYPE" != "Linux" ];then
 
 # General case
 FC="gfortran"

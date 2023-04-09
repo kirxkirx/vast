@@ -8,8 +8,8 @@ export LANGUAGE LC_ALL
 #################################
 
 # Check OS
-OS_NAME=`uname`
-if [ "$OS_NAME" != "Linux" ];then
+OS_TYPE=$(uname)
+if [ "$OS_TYPE" != "Linux" ];then
  echo -en "\n"
  exit
 fi
