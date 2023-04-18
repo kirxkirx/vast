@@ -37,7 +37,7 @@ if [ $GONOGO -eq 1 ];then
  RAM_SIZE_BYTES=""
  command -v uname &> /dev/null
  if [ $? -eq 0 ];then
-  OS=`uname`
+  OS=$(uname)
  else
   OS="unknown"
  fi
