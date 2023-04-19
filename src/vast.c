@@ -5587,15 +5587,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 
       // Coordinates averaging
       for ( coordinate_array_index= 0; coordinate_array_index < coordinate_array_counter; coordinate_array_index++ ) {
-       /*
-                                          if( debug!=0 ){fprintf(stderr, "coordinate_array_index=%d ",coordinate_array_index);}
-                                          if( debug!=0 ){fprintf(stderr, "star_numbers_for_coordinate_arrays[coordinate_array_index]=%d ",star_numbers_for_coordinate_arrays[coordinate_array_index]);}
-                                          if( debug!=0 ){fprintf(stderr, "NUMBER1=%d Number_of_ecv_star=%d NUMBER3=%d ",NUMBER1, Number_of_ecv_star,NUMBER3);}
-                                          if( debug!=0 ){fprintf(stderr, "i=%d ",i);}
-                                          if( debug!=0 ){fprintf(stderr, "Pos1[i]=%d ",Pos1[i]);}
-                                          if( debug!=0 ){fprintf(stderr, "STAR1[Pos1[i]].n=%d \n",STAR1[Pos1[i]].n);}
-                                          */
-
+       // SLOW: 5.12%
        if ( STAR1[Pos1[i]].n == star_numbers_for_coordinate_arrays[coordinate_array_index] ) {
         // maybe we don't want to do it if number_of_coordinate_measurements_for_star[coordinate_array_index] > something ?
         if ( number_of_coordinate_measurements_for_star[coordinate_array_index] < MAX_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ) {
@@ -5633,21 +5625,23 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
                // coordinate_array_index=coordinate_array_counter; // break the loop
                //  cannot use the usual break here if OpenMP is active
                //                                            #ifndef VAST_ENABLE_OPENMP
-        break; // threr should be only one match STAR1[Pos1[i]].n==star_numbers_for_coordinate_arrays[coordinate_array_index] , right?
+        break; // there should be only one match STAR1[Pos1[i]].n==star_numbers_for_coordinate_arrays[coordinate_array_index] , right?
                //                                           #endif
         /////////////////
        } // if( STAR1[Pos1[i]].n==star_numbers_for_coordinate_arrays[coordinate_array_index] ){
       }  // for(coordinate_array_index=0;coordinate_array_index<NUMBER1;coordinate_array_index++){
       // Update coordinates in STAR3 (reference structure for image metching)
       if ( n > MIN_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ) { // this step make sence only if coordinates in STAR1 have (or could have) been updated, and that if checks it!
-       // for( i_update_coordinates_STAR3=0; i_update_coordinates_STAR3<NUMBER3; i_update_coordinates_STAR3++ ){
-       for ( i_update_coordinates_STAR3= NUMBER3; i_update_coordinates_STAR3--; ) {
+       for( i_update_coordinates_STAR3=0; i_update_coordinates_STAR3<NUMBER3; i_update_coordinates_STAR3++ ){
+       //for ( i_update_coordinates_STAR3= NUMBER3; i_update_coordinates_STAR3--; ) {
+        // SLOW: 4.13%
         if ( STAR1[Pos1[i]].n == STAR3[i_update_coordinates_STAR3].n ) {
          // never update for a moving object
          if ( STAR1[Pos1[i]].moving_object != 1 && STAR3[i_update_coordinates_STAR3].moving_object != 1 ) {
           STAR3[i_update_coordinates_STAR3].x= STAR1[Pos1[i]].x;
           STAR3[i_update_coordinates_STAR3].y= STAR1[Pos1[i]].y;
          }
+         break; // there should be only one match, correct?!
         } // if( STAR1[Pos1[i]].n==STAR3[i_update_coordinates_STAR3].n ){
        }  // for( i_update_coordinates_STAR3=0; i_update_coordinates_STAR3<NUMBER3; i_update_coordinates_STAR3++ ){
       }   // if( n>MIN_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ){
