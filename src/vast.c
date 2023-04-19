@@ -5766,7 +5766,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
 //#pragma omp parallel for private( k, tmpNAME, file_out, j, string_with_float_parameters_and_saved_FITS_keywords )
-#pragma omp parallel for private( start_index, k, tmpNAME, file_out, j, string_with_float_parameters_and_saved_FITS_keywords )
+#pragma omp parallel for private( start_index, k, tmpNAME, file_out, j )
 #endif
      // The new OpenMP-based lightcurve writer
      for ( k= 0; k < NUMBER1; k++ ) {
@@ -5808,21 +5808,16 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
          fprintf( stderr, "ERROR: can't open file %s\n", tmpNAME );
          return 1;
         }
-        for ( j= 0; j < obs_in_RAM; j++ ) {
-         //if ( ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num != STAR1[k].n || ptr_struct_Obs[j].star_num == 0) {
-         if ( ptr_struct_Obs[j].star_num != STAR1[k].n || ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0) {
+
+        start_index = binary_search_first(ptr_struct_Obs, obs_in_RAM, STAR1[k].n);
+
+        for (j = start_index; j < obs_in_RAM && ptr_struct_Obs[j].star_num == STAR1[k].n; j++) {
+         if (ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0) {
           continue;
          }
-
-         start_index = binary_search_first(ptr_struct_Obs, obs_in_RAM, STAR1[k].n);
-
-         for (j = start_index; j < obs_in_RAM && ptr_struct_Obs[j].star_num == STAR1[k].n; j++) {
-          if (ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0) {
-           continue;
-          }
-          write_obs_to_file(file_out, &ptr_struct_Obs[j]);
-         }
+         write_obs_to_file(file_out, &ptr_struct_Obs[j]);
         }
+
         fclose( file_out );
         // end of process one star
        }
@@ -6049,7 +6044,8 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 /* Write observation to disk */
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
-#pragma omp parallel for private( start_index, k, tmpNAME, file_out, j, string_with_float_parameters_and_saved_FITS_keywords )
+//#pragma omp parallel for private( k, tmpNAME, file_out, j, string_with_float_parameters_and_saved_FITS_keywords )
+#pragma omp parallel for private( start_index, k, tmpNAME, file_out, j )
 #endif
  // The new OpenMP-based lightcurve writer
  for ( k= 0; k < NUMBER1; k++ ) {
@@ -6059,21 +6055,15 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
   if ( file_out == NULL ) {
    continue;
   }
-  for ( j= 0; j < obs_in_RAM; j++ ) {
-   //if ( ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num != STAR1[k].n || ptr_struct_Obs[j].star_num == 0) {
-   if ( ptr_struct_Obs[j].star_num != STAR1[k].n || ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0) {
+
+  start_index = binary_search_first(ptr_struct_Obs, obs_in_RAM, STAR1[k].n);
+
+  for (j = start_index; j < obs_in_RAM && ptr_struct_Obs[j].star_num == STAR1[k].n; j++) {
+   if (ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0) {
     continue;
    }
-
-   start_index = binary_search_first(ptr_struct_Obs, obs_in_RAM, STAR1[k].n);
-
-   for (j = start_index; j < obs_in_RAM && ptr_struct_Obs[j].star_num == STAR1[k].n; j++) {
-    if (ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0) {
-     continue;
-    }
-    write_obs_to_file(file_out, &ptr_struct_Obs[j]);
-   }
-  }   // for(j = 0; j<obs_in_RAM; j++){
+   write_obs_to_file(file_out, &ptr_struct_Obs[j]);
+  }
   fclose( file_out );
   // end of process one star
  } // for(k=0; k<NUMBER1; k++){
@@ -6097,20 +6087,14 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      fprintf( stderr, "ERROR: can't open file %s for appending!\n", tmpNAME );
      return 1;
     }
-    for ( j= 0; j < obs_in_RAM; j++ ) {
-     //if ( ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num != STAR1[k].n || ptr_struct_Obs[j].star_num == 0) {
-     if ( ptr_struct_Obs[j].star_num != STAR1[k].n || ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0) {
+
+    start_index = binary_search_first(ptr_struct_Obs, obs_in_RAM, STAR1[k].n);
+
+    for (j = start_index; j < obs_in_RAM && ptr_struct_Obs[j].star_num == STAR1[k].n; j++) {
+     if (ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0) {
       continue;
      }
-
-     start_index = binary_search_first(ptr_struct_Obs, obs_in_RAM, STAR1[k].n);
-
-     for (j = start_index; j < obs_in_RAM && ptr_struct_Obs[j].star_num == STAR1[k].n; j++) {
-      if (ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0) {
-       continue;
-      }
-      write_obs_to_file(file_out, &ptr_struct_Obs[j]);
-     }
+     write_obs_to_file(file_out, &ptr_struct_Obs[j]);
     }
     fclose( file_out );
     // end of process one star
