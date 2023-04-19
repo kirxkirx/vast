@@ -244,9 +244,33 @@ void help_msg( const char *progname, int exit_code ) {
  exit( exit_code );
 }
 
+// a comparison function to qsort the observations chached in memory
+int compare_star_num(const void *a, const void *b) {
+  const struct Observation *obs_a = (const struct Observation *)a;
+  const struct Observation *obs_b = (const struct Observation *)b;
+
+  return (obs_a->star_num - obs_b->star_num);
+}
+
+size_t binary_search_first(struct Obs *arr, size_t size, int target) {
+  size_t left = 0;
+  size_t right = size;
+  size_t mid;
+
+  while (left < right) {
+    mid = left + (right - left) / 2;
+    if (arr[mid].star_num < target) {
+      left = mid + 1;
+    } else {
+      right = mid;
+    }
+  }
+
+  return left;
+}
 
 void write_obs_to_file(FILE *file_out, struct Observation *obs) {
-  char string_with_float_parameters_and_saved_FITS_keywords[1024];
+  char string_with_float_parameters_and_saved_FITS_keywords[2048 + FITS_KEYWORDS_IN_LC_LENGTH];
 #ifdef WRITE_ADDITIONAL_APERTURES_TO_LIGHTCURVES
   snprintf(string_with_float_parameters_and_saved_FITS_keywords, sizeof(string_with_float_parameters_and_saved_FITS_keywords),
            "  %+.4lf %.4lf  %+.4lf %.4lf  %+.4lf %.4lf  %+.4lf %.4lf  %+.4lf %.4lf  %s",
@@ -267,6 +291,7 @@ void write_obs_to_file(FILE *file_out, struct Observation *obs) {
 #endif
   write_lightcurve_point(file_out, obs->JD, obs->mag, obs->mag_err, obs->X, obs->Y, obs->APER, obs->filename, string_with_float_parameters_and_saved_FITS_keywords);
   obs->is_used = 1;
+  return;
 }
 
 int read_onput_file_with_user_specified_moving_object_opsition( char **input_images, float *moving_object__user_array_x, float *moving_object__user_array_y, int Num ) {
@@ -2056,7 +2081,7 @@ int main( int argc, char **argv ) {
 
  char sextractor_catalog_filtering_results_string[2048];
 
- char string_with_float_parameters_and_saved_FITS_keywords[2048 + FITS_KEYWORDS_IN_LC_LENGTH];
+ //char string_with_float_parameters_and_saved_FITS_keywords[2048 + FITS_KEYWORDS_IN_LC_LENGTH];
 
  // Moving object hack
  int moving_object= 0;
@@ -5733,6 +5758,8 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
     }
     if ( obs_in_RAM > Max_obs_in_RAM ) {
      fprintf( stderr, "Total number of measurements %ld (%ld measurements stored in RAM)\n", TOTAL_OBS, obs_in_RAM );
+     fprintf( stderr, "sorting the measurements cached in memory..." );
+     qsort(ptr_struct_Obs, obs_in_RAM, sizeof(struct Observation), compare_star_num);
      fprintf( stderr, "writing lightcurve (outNNNNN.dat) files...\n" );
 /* Write observation to disk */
 #ifdef VAST_ENABLE_OPENMP
@@ -5748,66 +5775,10 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
        continue;
       }
       for ( j= 0; j < obs_in_RAM; j++ ) {
-       // is it faster to evaulate all three conditions?
-       if ( ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num != STAR1[k].n || ptr_struct_Obs[j].star_num == 0) {
+       if ( ptr_struct_Obs[j].star_num != STAR1[k].n || ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0) {
         continue;
        }
        write_obs_to_file(file_out, &ptr_struct_Obs[j]);
-//       if ( ptr_struct_Obs[j].is_used == 1 ) {
-//        continue;
-//       }
-       //if ( ptr_struct_Obs[j].star_num == STAR1[k].n ) {
-        //if ( ptr_struct_Obs[j].star_num != 0 ) {
-//#ifdef WRITE_ADDITIONAL_APERTURES_TO_LIGHTCURVES
-//         sprintf( string_with_float_parameters_and_saved_FITS_keywords, "  %+.4lf %.4lf  %+.4lf %.4lf  %+.4lf %.4lf  %+.4lf %.4lf  %+.4lf %.4lf  %s",
-//                  ptr_struct_Obs[j].float_parameters[2],
-//                  ptr_struct_Obs[j].float_parameters[3],
-//                  ptr_struct_Obs[j].float_parameters[4],
-//                  ptr_struct_Obs[j].float_parameters[5],
-//                  ptr_struct_Obs[j].float_parameters[6],
-//                  ptr_struct_Obs[j].float_parameters[7],
-//                  ptr_struct_Obs[j].float_parameters[8],
-//                  ptr_struct_Obs[j].float_parameters[9],
-//                  ptr_struct_Obs[j].float_parameters[10],
-//                  ptr_struct_Obs[j].float_parameters[11],
-//                  ptr_struct_Obs[j].fits_header_keywords_to_be_recorded_in_lightcurve );
-//#else
-//         sprintf( string_with_float_parameters_and_saved_FITS_keywords, "  %s", ptr_struct_Obs[j].fits_header_keywords_to_be_recorded_in_lightcurve );
-//#endif
-// snprintf is supposed to be more efficient than sprintf
-/////
-//#ifdef WRITE_ADDITIONAL_APERTURES_TO_LIGHTCURVES
-//         snprintf(string_with_float_parameters_and_saved_FITS_keywords, sizeof(string_with_float_parameters_and_saved_FITS_keywords),
-//           "  %+.4lf %.4lf  %+.4lf %.4lf  %+.4lf %.4lf  %+.4lf %.4lf  %+.4lf %.4lf  %s",
-//           obs->float_parameters[2],
-//           obs->float_parameters[3],
-//           obs->float_parameters[4],
-//           obs->float_parameters[5],
-//           obs->float_parameters[6],
-//           obs->float_parameters[7],
-//           obs->float_parameters[8],
-//           obs->float_parameters[9],
-//           obs->float_parameters[10],
-//           obs->float_parameters[11],
-//           obs->fits_header_keywords_to_be_recorded_in_lightcurve);
-//#else
-//         snprintf(string_with_float_parameters_and_saved_FITS_keywords, sizeof(string_with_float_parameters_and_saved_FITS_keywords),
-//           "  %s", obs->fits_header_keywords_to_be_recorded_in_lightcurve);
-//#endif
-//         write_lightcurve_point( file_out,
-//                                 ptr_struct_Obs[j].JD,
-//                                 ptr_struct_Obs[j].mag,
-//                                 ptr_struct_Obs[j].mag_err,
-//                                 ptr_struct_Obs[j].X,
-//                                 ptr_struct_Obs[j].Y,
-//                                 ptr_struct_Obs[j].APER,
-//                                 ptr_struct_Obs[j].filename,
-//                                 string_with_float_parameters_and_saved_FITS_keywords );
-//         //
-//         ptr_struct_Obs[j].is_used= 1;
-         //
-        //} // if( ptr_struct_Obs[j].star_num != 0){
-       //}  // if( ptr_struct_Obs[j].star_num == STAR1[k].n ){
       }   // for(j = 0; j<obs_in_RAM; j++){
       fclose( file_out );
       // end of process one star
@@ -5833,6 +5804,12 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
          return 1;
         }
         for ( j= 0; j < obs_in_RAM; j++ ) {
+         //if ( ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num != STAR1[k].n || ptr_struct_Obs[j].star_num == 0) {
+         if ( ptr_struct_Obs[j].star_num != STAR1[k].n || ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0) {
+          continue;
+         }
+         write_obs_to_file(file_out, &ptr_struct_Obs[j]);
+/*
          if ( ptr_struct_Obs[j].is_used == 0 ) {
           if ( ptr_struct_Obs[j].star_num == STAR1[k].n && ptr_struct_Obs[j].star_num != 0 ) {
 #ifdef WRITE_ADDITIONAL_APERTURES_TO_LIGHTCURVES
@@ -5863,6 +5840,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
            ptr_struct_Obs[j].is_used= 1;
           }
          }
+*/
         }
         fclose( file_out );
         // end of process one star
@@ -6081,6 +6059,10 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  fprintf( stderr, "20\n" );
  ////
 
+ //
+ fprintf( stderr, "Sorting the measurements cached in memory..." );
+ qsort(ptr_struct_Obs, obs_in_RAM, sizeof(struct Observation), compare_star_num);
+
  fprintf( stderr, "Writing lightcurve (outNNNNN.dat) files...\n" );
 
 /* Write observation to disk */
@@ -6097,7 +6079,8 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
    continue;
   }
   for ( j= 0; j < obs_in_RAM; j++ ) {
-   if (ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num != STAR1[k].n || ptr_struct_Obs[j].star_num == 0) {
+   //if ( ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num != STAR1[k].n || ptr_struct_Obs[j].star_num == 0) {
+   if ( ptr_struct_Obs[j].star_num != STAR1[k].n || ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0) {
     continue;
    }
    write_obs_to_file(file_out, &ptr_struct_Obs[j]);
@@ -6151,6 +6134,12 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      return 1;
     }
     for ( j= 0; j < obs_in_RAM; j++ ) {
+     //if ( ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num != STAR1[k].n || ptr_struct_Obs[j].star_num == 0) {
+     if ( ptr_struct_Obs[j].star_num != STAR1[k].n || ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0) {
+      continue;
+     }
+     write_obs_to_file(file_out, &ptr_struct_Obs[j]);
+/*
      if ( ptr_struct_Obs[j].is_used == 0 ) {
       if ( ptr_struct_Obs[j].star_num == STAR1[k].n ) {
        if ( ptr_struct_Obs[j].star_num != 0 ) {
@@ -6175,6 +6164,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
        }
       }
      }
+*/
     }
     fclose( file_out );
     // end of process one star
