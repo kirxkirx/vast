@@ -2453,7 +2453,7 @@ if [ -d ../sample_data ];then
  ./vast -u -f --nomagsizefilter ../sample_data/*.fit 2>&1 | grep ' 218\.' | grep ' 247\.' | grep --quiet 'is listed in exclude.lst'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX000"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX000_$OPENMP_STATUS"
  fi
  N_EXCLUDED_STAR=`./vast -u -f --nomagsizefilter ../sample_data/*.fit 2>&1 | grep ' 218\.' | grep ' 247\.' | grep -c 'is listed in exclude.lst'`
  if [ $N_EXCLUDED_STAR -ne 90 ];then
@@ -2472,12 +2472,12 @@ if [ -d ../sample_data ];then
   grep --quiet "Images processed 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX001"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX001_$OPENMP_STATUS"
   fi
   grep --quiet "Images used for photometry 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX002"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX002_$OPENMP_STATUS"
   fi
   grep --quiet "Ref.  image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   if [ $? -ne 0 ];then
