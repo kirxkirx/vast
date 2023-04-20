@@ -6292,7 +6292,13 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
   fprintf( stderr, "ERROR running  lib/create_vast_image_details_log.sh\n" );
   return 1;
  }
-
+ 
+ // Sort all lightcurve files in JD
+ if ( 0 != system( "lib/sort_all_lightcurve_files_in_jd" ) ) {
+  fprintf( stderr, "ERROR running  lib/sort_all_lightcurve_files_in_jd\n" );
+  return 1;
+ }
+ 
  // Generate summary log
  if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: vast.c is starting echo and lib/vast_image_details_log_parser.sh > vast_summary.log && echo OK\n" );
@@ -6502,8 +6508,11 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  fprintf( vast_image_details, "VaST compiled on  %s", stderr_output );
  vast_build_number( stderr_output );
  fprintf( vast_image_details, "VaST build number  %s", stderr_output );
+ // This actually reflects the output of lib/set_openmp.sh
+ // If the output was ignored - the following would not reflect how the code was actually compiled
  vast_is_openmp_enabled( stderr_output );
  fprintf( vast_image_details, "OpenMP enabled: %s", stderr_output );
+ //
  fclose( vast_image_details );
  if ( 0 != system( "sex -v >> vast_summary.log" ) ) {
   fprintf( stderr, "ERROR_SYSTEM001\n" );
