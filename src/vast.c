@@ -5759,7 +5759,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
     }
     if ( obs_in_RAM > Max_obs_in_RAM ) {
      fprintf( stderr, "Total number of measurements %ld (%ld measurements stored in RAM)\n", TOTAL_OBS, obs_in_RAM );
-     fprintf( stderr, "sorting the measurements cached in memory..." );
+     fprintf( stderr, "sorting the measurements cached in memory,\n" );
      qsort(ptr_struct_Obs, obs_in_RAM, sizeof(struct Observation), compare_star_num);
      fprintf( stderr, "writing lightcurve (outNNNNN.dat) files...\n" );
 /* Write observation to disk */
@@ -6036,7 +6036,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  ////
 
  //
- fprintf( stderr, "Sorting the measurements cached in memory..." );
+ fprintf( stderr, "Sorting the measurements cached in memory...\n" );
  qsort(ptr_struct_Obs, obs_in_RAM, sizeof(struct Observation), compare_star_num);
 
  fprintf( stderr, "Writing lightcurve (outNNNNN.dat) files...\n" );
