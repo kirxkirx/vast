@@ -1088,6 +1088,20 @@ void vast_build_number( char *vast_build_number_string ) {
  return;
 }
 
+void vast_is_openmp_enabled( char *vast_openmp_enabled_string ) {
+ FILE *cc_version_file;
+ cc_version_file= fopen( ".cc.openmp", "r" );
+ if ( NULL == cc_version_file ) {
+  strncpy( vast_openmp_enabled_string, "unknown\n", 18 );
+  return;
+ }
+ if ( NULL == fgets( vast_openmp_enabled_string, 256, cc_version_file ) ) {
+  strncpy( vast_openmp_enabled_string, "unknown\n", 18 );
+ }
+ fclose( cc_version_file );
+ return;
+}
+
 /* is_file() - a small function which checks is an input string is a name of a readable file
 int is_file( char *filename ) {
  FILE *f= NULL;
@@ -6488,6 +6502,8 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  fprintf( vast_image_details, "VaST compiled on  %s", stderr_output );
  vast_build_number( stderr_output );
  fprintf( vast_image_details, "VaST build number  %s", stderr_output );
+ vast_is_openmp_enabled( stderr_output );
+ fprintf( vast_image_details, "OpenMP enabled: %s", stderr_output );
  fclose( vast_image_details );
  if ( 0 != system( "sex -v >> vast_summary.log" ) ) {
   fprintf( stderr, "ERROR_SYSTEM001\n" );
