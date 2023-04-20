@@ -366,6 +366,7 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
+OPENMP_STATUS="OpenMP_"$(cat .cc.openmp)
 
 
 ##### Report that we are starting the work #####
@@ -2022,7 +2023,7 @@ $GREP_RESULT"
   fi
   if [ $TEST -ne 1 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD016"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD016_$OPENMP_STATUS"
   fi
   STATY=`echo "$STATSTR" | awk '{print $4}'`
   #TEST=`echo "a=($STATY)-(247.8363000);sqrt(a*a)<0.1" | bc -ql`
@@ -2036,7 +2037,7 @@ $GREP_RESULT"
   fi
   if [ $TEST -ne 1 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD017"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD017_$OPENMP_STATUS"
   fi
   # indexes
   # idx01_wSTD
@@ -2157,7 +2158,7 @@ $GREP_RESULT"
   fi
   if [ $TEST -ne 1 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD027"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD027_$OPENMP_STATUS"
   fi
   STATY=`echo "$STATSTR" | awk '{print $4}'`
   #TEST=`echo "a=($STATY)-(164.4241000);sqrt(a*a)<0.1" | bc -ql`
@@ -2171,7 +2172,7 @@ $GREP_RESULT"
   fi
   if [ $TEST -ne 1 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD028"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD028_$OPENMP_STATUS"
   fi
   # indexes
   STATIDX=`echo "$STATSTR" | awk '{print $6}'`
