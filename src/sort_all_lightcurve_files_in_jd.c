@@ -20,6 +20,7 @@ int compare_julian_date(const void* a, const void* b) {
 
 // Function to sort the content of a file
 void sort_file(const char* file_name) {
+    size_t i;
     FILE* file = fopen(file_name, "r");
     if (!file) {
         perror("Error opening file");
@@ -54,7 +55,7 @@ void sort_file(const char* file_name) {
         return;
     }
 
-    for (size_t i = 0; i < data_count; i++) {
+    for (i = 0; i < data_count; i++) {
         fprintf(output_file, "%s", data_arr[i].line);
         free(data_arr[i].line);
     }
@@ -63,6 +64,7 @@ void sort_file(const char* file_name) {
 }
 
 int main() {
+    int i;
     DIR* dir;
     struct dirent* ent;
     const char* dir_path = "./"; // Your directory path here
@@ -85,7 +87,7 @@ int main() {
         #pragma omp parallel for
         #endif
         #endif
-        for (int i = 0; i < file_count; i++) {
+        for (i = 0; i < file_count; i++) {
             while ((ent = readdir(dir)) != NULL) {
                 if (strstr(ent->d_name, "out") && strstr(ent->d_name, ".dat")) {
                     //fprintf(stderr,"Processing file: %s\n", ent->d_name);
