@@ -802,30 +802,36 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
   return;
  }
 
- // TEST
- // sleep(1);
+
 
  a_minus_b__image= malloc( Num * sizeof( double ) );
  a_minus_b__image__to_be_runied_by_sort= malloc( Num * sizeof( double ) );
- a_minus_b= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
 
+
+#ifdef VAST_ENABLE_OPENMP
+#ifdef _OPENMP
+#pragma omp parallel for private( i, a_minus_b, sextractor_catalog, file, previous_star_number_in_sextractor_catalog, number_of_good_detected_stars, sextractor_catalog_string, star_number_in_sextractor_catalog, flux_adu, flux_adu_err, mag, sigma_mag, position_x_pix, position_y_pix, a_a, a_a_err, a_b, a_b_err, sextractor_flag, external_flag, psf_chi2, float_parameters )
+#endif
+#endif
  for ( i= 0; i < Num; i++ ) {
+
+  a_minus_b= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
+
   // Get the star catalog name from the image name
   if ( 0 != find_catalog_in_vast_images_catalogs_log( input_images[i], sextractor_catalog ) ) {
-   fprintf( stderr, "WARNING in choose_best_reference_image(): cannot read the catalog file associated with the image %s\n", input_images[i] );
+   fprintf( stderr, "WARNING in mark_images_with_elongated_stars_as_bad(): cannot read the catalog file associated with the image %s\n", input_images[i] );
    a_minus_b__image__to_be_runied_by_sort[i]= a_minus_b__image[i]= -0.1; // is it a good choice?
    continue;
   }
   // count number of detected_stars
   file= fopen( sextractor_catalog, "r" );
   if ( file == NULL ) {
-   fprintf( stderr, "WARNING in choose_best_reference_image(): cannot open file %s\n", sextractor_catalog );
+   fprintf( stderr, "WARNING in mark_images_with_elongated_stars_as_bad(): cannot open file %s\n", sextractor_catalog );
    a_minus_b__image__to_be_runied_by_sort[i]= a_minus_b__image[i]= -0.01; // is it a good choice?
    continue;
   }
 
   previous_star_number_in_sextractor_catalog= 0;
-  //  number_of_good_detected_stars[i]= 0.0;
   number_of_good_detected_stars= 0;
   while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, file ) ) {
    //  fprintf( stderr, "DEBUG000 %s\n", sextractor_catalog_string);
@@ -839,6 +845,7 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
    // Read only stars detected at the first FITS image extension.
    // The start of the second image extension will be signified by a jump in star numbering
    if ( star_number_in_sextractor_catalog < previous_star_number_in_sextractor_catalog ) {
+    fprintf(stderr, "WARNING in mark_images_with_elongated_stars_as_bad(): this seems to be a multi-extension FITS\n");
     break;
    } else {
     previous_star_number_in_sextractor_catalog= star_number_in_sextractor_catalog;
@@ -936,9 +943,11 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
   gsl_sort( a_minus_b, 1, number_of_good_detected_stars );
   a_minus_b__image__to_be_runied_by_sort[i]= a_minus_b__image[i]= gsl_stats_median_from_sorted_data( a_minus_b, 1, number_of_good_detected_stars );
   fprintf( stderr, "median(A-B) for the image %s %.3lfpix\n", input_images[i], a_minus_b__image[i] );
+
+  free( a_minus_b );
+
  } // for ( i= 0; i < Num; i++ ) { // cycle through the images
 
- free( a_minus_b );
 
  // Determine median a_minus_b among all images
  gsl_sort( a_minus_b__image__to_be_runied_by_sort, 1, Num );
@@ -1853,7 +1862,7 @@ int main( int argc, char **argv ) {
  int *Pos1, *Pos2;
 
  double JD= 0;
- char tmpNAME[OUTFILENAME_LENGTH];             /* Array to store generated lightcurve filenames */
+ char tmpNAME[OUTFILENAME_LENGTH];             // Array to store generated lightcurve filenames 
  struct Observation *ptr_struct_Obs= NULL;     // Structure to store all observations
  long TOTAL_OBS= 0;                            // Total number of measurements
  long obs_in_RAM= 0;                           // Number of observations which were not written to disk
@@ -1943,8 +1952,8 @@ int main( int argc, char **argv ) {
 
  int previous_Number_of_main_star;
 
- /* LOG-file */
- FILE *vast_image_details; /* May refer to both vast_image_details.log and vast_summary.log when needed */
+ // LOG-file 
+ FILE *vast_image_details; // May refer to both vast_image_details.log and vast_summary.log when needed 
 
  char stderr_output[1024];
  char log_output[1024];
@@ -1955,7 +1964,7 @@ int main( int argc, char **argv ) {
  double abs_computed_predicted_mag_diff;
  double computed_mag;
 
- double fixed_aperture= 0.0; /* If fixed_aperture!=0.0 - use fixed aperture for all images */
+ double fixed_aperture= 0.0; // If fixed_aperture!=0.0 - use fixed aperture for all images 
 
  FILE *vast_list_of_all_stars_log;
  FILE *vast_list_of_all_stars_ds9;
@@ -2091,7 +2100,7 @@ int main( int argc, char **argv ) {
  /// end of definitions
  lin_mag_A= lin_mag_B= lin_mag_C= 0.0; // just in case
 
- /* Protection against strange free() crashes */
+ // Protection against strange free() crashes 
  // setenv("MALLOC_CHECK_", "0", 1);
 
  char sextractor_catalog_filtering_results_string[2048];
@@ -2109,7 +2118,7 @@ int main( int argc, char **argv ) {
 
  print_vast_version();
 
- /* argv[] parsing begins */
+ // argv[] parsing begins 
  if ( argc == 1 ) {
   // no command line arguments! Is this is a mistake or should we read the input list of images from a file
   vast_list_of_input_images_with_time_corrections= fopen( "vast_list_of_input_images_with_time_corrections.txt", "r" );
@@ -2122,7 +2131,7 @@ int main( int argc, char **argv ) {
   //
  }
 
- /* Options for getopt() */
+ // Options for getopt() 
  char *cvalue= NULL;
 
  // const char *const shortopt= "vh9fdqmwpoPngGrlseucUijJkK12346785:a:b:x:y:t:";
@@ -2243,20 +2252,6 @@ int main( int argc, char **argv ) {
    preobr= New_Preobr_Sk();
    fprintf( stdout, "opt 's': Using small match radius (comparison window)\n" );
    break;
-   /*
-     case 'm': //medium comparison window
-      param_w= 2;
-      preobr= New_Preobr_Sk_M();
-      fprintf(stdout, "opt 'm': Using medium match radius (comparison window)\n");
-      break;
-     case 'w': //wide comparison window - 10 pix.
-      param_w= 1;
-      preobr= New_Preobr_Sk_W();
-      //faintest_stars = FAINTEST_STARS_PHOTO;
-      fprintf(stdout, "opt 'w': Using wide match radius (comparison window)\n");
-      break;
-     ///
-   */
   case '5':
    cvalue= optarg;
    if ( 1 == is_file( cvalue ) ) {
@@ -2328,7 +2323,7 @@ int main( int argc, char **argv ) {
    // param_nodiscardell= 1; // incompatible with PSF photometry and I'm not sure why - probably a bug
    param_P= 1;
    fprintf( stdout, "opt 'P': PSF photometry mode!\n" );
-   /* Check if the PSFEx executable (named "psfex") is present in $PATH */
+   // Check if the PSFEx executable (named "psfex") is present in $PATH 
    if ( 0 != system( "lib/look_for_psfex.sh" ) ) {
     exit( EXIT_FAILURE );
    }
@@ -2467,7 +2462,7 @@ int main( int argc, char **argv ) {
    // param_filterout_magsize_outliers=0
    fprintf( stderr, "WARNING: mag-size filter is enabled while VaST is asked to accept blended stars marked by SExtractor (flag>=%d)!\nThe mag-size filter WILL REJECT BLENDED STARS.\n", maxsextractorflag );
    fprintf( stderr, "This warning message will disappear in...   " );
-   /* sleep for 6 seconds to make sure user saw the message */
+   // sleep for 6 seconds to make sure user saw the message 
    for ( n= 5; n > 0; n-- ) {
     sleep( 1 );
     fprintf( stderr, "%d ", n );
@@ -2927,7 +2922,7 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "WARNING: It is recommended to use VaST with more than %d images (much more is much better)!\nYou have supplied only %d images. :(\n", SOFT_MIN_NUMBER_OF_POINTS, Num );
   fprintf( stderr, "\n" );
   fprintf( stderr, "This warning message will disappear in...   " );
-  /* sleep for 6 seconds to make sure user saw the above message */
+  // sleep for 6 seconds to make sure user saw the above message 
   for ( n= 5; n > 0; n-- ) {
    sleep( 1 );
    fprintf( stderr, "%d ", n );
@@ -2948,7 +2943,7 @@ int main( int argc, char **argv ) {
   print_TT_reminder( 0 );
  }
 
- /* The end of the beginning =) */
+ // The end of the beginning 
 
  // Update PATH variable to make sure the local copy of SExtractor is there
  make_sure_libbin_is_in_path();
@@ -3102,34 +3097,6 @@ int main( int argc, char **argv ) {
   return 1;
  }
  read_exclude_stars_on_ref_image_lst( bad_stars_X, bad_stars_Y, &N_bad_stars );
- /*
- bad_stars_X= malloc(sizeof(double));
- if( bad_stars_X == NULL ) {
-  fprintf(stderr, "ERROR: cannot allocate memory for bad_stars_X\n");
-  vast_report_memory_error();
-  return 1;
- }
- bad_stars_Y= malloc(sizeof(double));
- if( bad_stars_Y == NULL ) {
-  fprintf(stderr, "ERROR: can't allocate memory for bad_stars_Y\n");
-  vast_report_memory_error();
-  return 1;
- }
- excludefile= fopen("exclude.lst", "r");
- if( excludefile == NULL ) {
-  fprintf(stderr, "WARNING: no exclude.lst\n");
-  //exit( EXIT_FAILURE );
-  // Why should we quit if there is no exclude.lst ?
- } else {
-  while( -1 < fscanf(excludefile, "%lf %lf", &bad_stars_X[N_bad_stars], &bad_stars_Y[N_bad_stars]) ) {
-   bad_stars_X= realloc(bad_stars_X, sizeof(double) * (N_bad_stars + 2));
-   bad_stars_Y= realloc(bad_stars_Y, sizeof(double) * (N_bad_stars + 2));
-   N_bad_stars+= 1;
-  }
-  fclose(excludefile);
-  fprintf(stderr, "Excluding %d stars (listed in exclude.lst file) from magnitude calibration\n\n\n", N_bad_stars);
- }
- */
 
  ///// From now on, ignore SIGHUP! /////
  signal( SIGHUP, SIG_IGN );
@@ -3161,7 +3128,7 @@ int main( int argc, char **argv ) {
  // for(i=0;i<Num;i++)
  // fprintf(stderr,"%s\n",input_images[i]);
 
- /* Create vast_images_catalogs.log */
+ // Create vast_images_catalogs.log 
  write_images_catalogs_logfile( input_images, Num );
 
  int n_fork;    //=get_number_of_cpu_cores(); // number of parallel threads
@@ -3336,14 +3303,6 @@ int main( int argc, char **argv ) {
   }
 
   if ( moving_object == 1 ) {
-   /* // moved up
-   moving_object__user_array_x= malloc( Num*sizeof(float) );
-   moving_object__user_array_y= malloc( Num*sizeof(float) );
-   //
-   memset(moving_object__user_array_x, 0, Num*sizeof(float) );
-   memset(moving_object__user_array_y, 0, Num*sizeof(float) );
-   //
-   */
    // Try to read the input file with moving object positions
    if ( 0 != read_onput_file_with_user_specified_moving_object_opsition( input_images, moving_object__user_array_x, moving_object__user_array_y, Num ) ) {
     // if no input file - ask user to specify the moving object position interactively
@@ -3732,24 +3691,17 @@ int main( int argc, char **argv ) {
  fclose( file );
  if ( debug != 0 )
   fprintf( stderr, "DEBUG MSG: image00001.cat was closed...\n" );
- /* end of Read_sex_cat2 */
+ // end of Read_sex_cat2 
 
  if ( param_P == 1 ) {
   fprintf( stderr, "Filtering-out stars with bad PSF fit... " );
   if ( debug != 0 )
    fprintf( stderr, "DEBUG MSG: filter_MagPSFchi2()\n" );
-  if ( param_filterout_magsize_outliers == 1 )
+  if ( param_filterout_magsize_outliers == 1 ) {
    /// !!! Disable PSF fit quality filter - it never works well (see also below) !!!
    //   counter_rejected_bad_psf_fit= filter_on_float_parameters(STAR1, NUMBER1, sextractor_catalog, -2); // psfchi2
    counter_rejected_bad_psf_fit= 0;
-  /*
-    if ( param_filterout_magsize_outliers != 1 ) {
-     // do this ONLY if no other filtering will be done, otherwise it will mess-up the flags
-     if ( debug != 0 )
-      fprintf( stderr, "DEBUG MSG: filter_on_float_parameters(2)\n" );
-     counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR1, NUMBER1, sextractor_catalog, 2 ); // magpsf-magaper
-    }
-  */
+  }
   fprintf( stderr, "done!\n" );
  } else {
   if ( debug != 0 )
@@ -3771,13 +3723,6 @@ int main( int argc, char **argv ) {
    fprintf( stderr, "DEBUG MSG: filter_on_float_parameters(1)\n" );
   counter_rejected_MagSize+= filter_on_float_parameters( STAR1, NUMBER1, sextractor_catalog, 1 );
   //
-  /*
-  if ( param_P == 1 ) {
-   if ( debug != 0 )
-    fprintf( stderr, "DEBUG MSG: filter_on_float_parameters(2)\n" );
-   counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR1, NUMBER1, sextractor_catalog, 2 ); // magpsf-magaper
-  }
-*/
   //
   if ( debug != 0 )
    fprintf( stderr, "DEBUG MSG: filter_on_float_parameters(4)\n" );
@@ -5532,16 +5477,11 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 
      for ( i= 0; i < cache_counter; i++ ) {
       //
-      // fprintf(stderr,"%7d/%7d\n",i,cache_counter);
-      //
       // Update the detection counter
       if ( i < Number_of_ecv_star ) {
        STAR1[Pos1[i]].n_detected++;
       }
       //
-
-      //      if( STAR1[Pos1[i]].n == 375 )
-      //       fprintf(stderr, "\n\n\n DEBUGVENUS STAR1[i].n - CHECK\n\n\n");
 
       // !!! ONE LAST CHECK IF THIS IS A GOOD STAR !!!
       if ( 1 == is_point_close_or_off_the_frame_edge( (double)STAR2[Pos2[i]].x_frame, (double)STAR2[Pos2[i]].y_frame, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) ) {
@@ -5597,33 +5537,6 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       }
       //
 
-      /*
-                                         fprintf(stderr,"i=%5d  ",i);
-                                         fprintf(stderr,"Pos1[i]=%5d  ",Pos1[i]);
-                                         fprintf(stderr,"STAR1[Pos1[i]].n=STAR1[Pos1[%5d]].n=STAR1[%5d].n=%5d  cache_counter=%d NUMBER2=%d\n",i,Pos1[i],STAR1[Pos1[i]].n,cache_counter, NUMBER2);
-*/
-
-      // AAAAAAAAAAAAAAAAAAAAA   NO OMP HERE!!!!!!!!!!!!!!   AAAAAAAAAAAAAAAAAAAAA
-      // Save coordinates to the array and compute average (median) coordinates
-      // fprintf(stderr,"Updating star position in the reference system of the first frame...\n");
-      //                                         #ifdef VAST_ENABLE_OPENMP
-      //                                           #ifdef _OPENMP
-      //                                            #pragma omp parallel for private(coordinate_array_counter)
-      //                                           #endif
-      //                                         #endif
-      ///////////////////////////////////////////////////////////////////////////////
-      /*
-                                         if( debug!=0 ){fprintf(stderr, "################### Coordinates averaging i=%d ###################\n",i);}
-                                         //
-                                         if( debug!=0 ){
-                                          for(coordinate_array_index=0;coordinate_array_index<NUMBER1;coordinate_array_index++){
-                                           fprintf(stderr,"Pos1[%5d]=%d  NUMBER1=%d Number_of_ecv_star=%d\n",coordinate_array_index,Pos1[coordinate_array_index],NUMBER1, Number_of_ecv_star);
-                                          }
-                                          fprintf(stderr,"-------------------\n");
-                                          exit( EXIT_FAILURE ); // !!
-                                         }
-                                         //
-                                         */
 
       // Coordinates averaging
       for ( coordinate_array_index= 0; coordinate_array_index < coordinate_array_counter; coordinate_array_index++ ) {
@@ -5640,16 +5553,6 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
          if ( number_of_coordinate_measurements_for_star[coordinate_array_index] > MIN_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ) {
           //
 
-          /*
-                                             int debugcounter;
-                                             if( STAR1[Pos1[i]].n==201 ){
-                                              fprintf(stderr,"\n\n\n########################################\n");
-                                              for(debugcounter=0;debugcounter<number_of_coordinate_measurements_for_star[coordinate_array_index];debugcounter++){
-                                               fprintf(stderr,"%.3f %.3f\n",coordinate_array_x[coordinate_array_index][debugcounter],coordinate_array_y[coordinate_array_index][debugcounter]);
-                                              }
-                                              fprintf(stderr,"########################################\n\n\n");
-                                             }
-                                             */
           //
           gsl_sort_float( coordinate_array_x[coordinate_array_index], 1, number_of_coordinate_measurements_for_star[coordinate_array_index] );
           gsl_sort_float( coordinate_array_y[coordinate_array_index], 1, number_of_coordinate_measurements_for_star[coordinate_array_index] );
