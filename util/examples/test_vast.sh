@@ -2318,6 +2318,23 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_MAKE_FINDER_CHART_002"
   fi
   ###############################################
+  ### Check elongated stars log
+  if [ ! -f vast_automatically_rejected_images_with_elongated_stars.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_NO_vast_automatically_rejected_images_with_elongated_stars.log"
+  else
+   if [ ! -s vast_automatically_rejected_images_with_elongated_stars.log ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_EMPTY_vast_automatically_rejected_images_with_elongated_stars.log"
+   else
+    grep --quiet 'median(A-B) among all images 0.145 +/-0.025 pix' vast_automatically_rejected_images_with_elongated_stars.log
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_MEDIAN_AmB_CHANGE_vast_automatically_rejected_images_with_elongated_stars.log"
+    fi
+   fi
+  fi
+  ###############################################
   ### Flag image test should always be the last one
   for IMAGE in ../sample_data/*.fit ;do
    util/clean_data.sh
