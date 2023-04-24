@@ -1240,7 +1240,9 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE013_"${CEPHEID_RADEC_STR//" "/"_"}
    fi
    #TEST=`echo "$DISTANCE_ARCSEC<0.3" | bc -ql`
-   TEST=`echo "$DISTANCE_ARCSEC<0.3" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
+   #TEST=`echo "$DISTANCE_ARCSEC<0.3" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
+   # The plate-to-plate scatter is sadly larger than 0.3 arcsec
+   TEST=`echo "$DISTANCE_ARCSEC<1.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
    re='^[0-9]+$'
    if ! [[ $TEST =~ $re ]] ; then
     echo "TEST ERROR"
