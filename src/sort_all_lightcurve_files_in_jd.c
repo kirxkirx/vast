@@ -47,7 +47,7 @@ void sort_file(const char* file_name) {
 
     // Write sorted data to the output file
     char output_file_name[OUTFILENAME_LENGTH];
-    snprintf(output_file_name, sizeof(output_file_name), "%s", file_name);
+    snprintf(output_file_name, sizeof(output_file_name), "%s.sorted", file_name);
     FILE* output_file = fopen(output_file_name, "w");
 
     if (!output_file) {
@@ -61,6 +61,18 @@ void sort_file(const char* file_name) {
     }
 
     fclose(output_file);
+    
+    // Replace the original file with the sorted file
+    if (remove(file_name) != 0) {
+        perror("Error deleting original file");
+        return;
+    }
+    if (rename(output_file_name, file_name) != 0) {
+        perror("Error renaming sorted file");
+        return;
+    }
+    
+    return;
 }
 
 int main() {
