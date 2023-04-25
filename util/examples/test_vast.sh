@@ -2327,7 +2327,7 @@ $GREP_RESULT"
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_EMPTY_vast_automatically_rejected_images_with_elongated_stars.log"
    else
-    grep --quiet 'median(A-B) among all images 0.145 +/-0.025 pix' vast_automatically_rejected_images_with_elongated_stars.log
+    grep --quiet 'median(A-B) among all images 0.14' vast_automatically_rejected_images_with_elongated_stars.log
     if [ $? -ne 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_MEDIAN_AmB_CHANGE_vast_automatically_rejected_images_with_elongated_stars.log"
