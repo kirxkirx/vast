@@ -277,7 +277,7 @@ int main( int argc, char **argv ) {
     i++;
     continue;
    }
-   fprintf( stderr, "ERROR parsing the comments string %s in %s\n", comments_string, filenamelist[filename_counter] );
+   fprintf( stderr, "ERROR parsing the comments string '%s' in %s\n", comments_string, filenamelist[filename_counter] );
   }
   fclose( outlightcurvefile );
   fclose( lightcurvefile );
