@@ -14449,7 +14449,7 @@ fi
 fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
-# T30
+# T30 with focal reducer
 if [ ! -f ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
@@ -14520,6 +14520,82 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 remove_test_data_to_save_space
+
+
+# T33 no focal reducer
+if [ ! -f ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test
+ curl -O "http://scan.sai.msu.ru/~kirx/pub/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit.bz2" && bunzip2 raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit.bz2
+ cd $WORKDIR
+fi
+
+if [ -f ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "T33 test " 1>&2
+ echo -n "T33 test: " >> vast_test_report.txt 
+ cp default.sex.ccd_example default.sex
+ util/solve_plate_with_UCAC5 ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit
+ if [ ! -f wcs_raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED001"
+ fi 
+ lib/bin/xy2sky wcs_raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit 200 200 &>/dev/null
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED001a"
+ fi
+ if [ ! -f wcs_raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit.cat.ucac5 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED002"
+ else
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+  # expect 93
+  if [ $TEST -lt 50 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED002a_$TEST"
+  fi
+ fi
+ # make sure no flag image is created for this one 
+ lib/guess_saturation_limit_main ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit 2>&1 | grep --quiet -e 'FLAG_IMAGE' -e 'WEIGHT_IMAGE' -e 'WEIGHT_TYPE'
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED_FLAG_IMG_CREATED"
+ fi
+ #
+ util/get_image_date ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit | grep 'Exposure   0 sec, 21.04.2023 18:28:30 UT = JD(UT) 2460056.26979 mid. exp.'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED003"
+ fi
+
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mT33 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mT33 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+remove_test_data_to_save_space
+
+
 
 ### Photoplate in the area not covered by APASS
 if [ ! -f ../individual_images_test/SCA13320__00_00.fits ];then
