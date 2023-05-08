@@ -2105,6 +2105,26 @@ int main( int argc, char **argv ) {
  }
 
  if ( approximate_field_of_view_arcmin == DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN ) {
+  if ( NULL != strstr(fits_image_filename, "wcs_") ) {
+   // If the input is already a VaST plate-solved image, we want the exact field of view, not a guess
+   sprintf( command_string, "%sutil/fov_of_wcs_calibrated_image.sh %s | grep 'Image size:' | awk -F\"[ 'x]\" '{if ($3 > $4) print $3; else print $4}'", path_to_vast_string, fits_image_filename );
+   if ( NULL == pipe_for_try_to_guess_image_fov ) {
+    fprintf( stderr, "WARNING: failed to run command: %s\n", command_string );
+    approximate_field_of_view_arcmin= DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN;
+   } else {
+    if ( 1 == fscanf( pipe_for_try_to_guess_image_fov, "%lf", &approximate_field_of_view_arcmin ) ) {
+     pclose( pipe_for_try_to_guess_image_fov );
+    } else {
+     pclose( pipe_for_try_to_guess_image_fov ); // ???
+     fprintf( stderr, "WARNING: error parsing the output of the command: %s\n", command_string );
+     approximate_field_of_view_arcmin= DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN;
+    }
+   }
+  }
+ } // if ( approximate_field_of_view_arcmin == DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN ) {
+ 
+ if ( approximate_field_of_view_arcmin == DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN ) {
+  // If the input image is not plate-solved or something whent wrong while extracting its Fov - we try to guess
   sprintf( command_string, "%slib/try_to_guess_image_fov %s", path_to_vast_string, fits_image_filename );
   pipe_for_try_to_guess_image_fov= popen( command_string, "r" );
   if ( NULL == pipe_for_try_to_guess_image_fov ) {
@@ -2119,7 +2139,7 @@ int main( int argc, char **argv ) {
     approximate_field_of_view_arcmin= DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN;
    }
   }
- }
+ } // if ( approximate_field_of_view_arcmin == DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN ) {
 
  fprintf( stderr, "Seting catalog search parameters based on the expected field of view %.1lf arcmin\n", approximate_field_of_view_arcmin );
  set_catalog_search_parameters( approximate_field_of_view_arcmin, &catalog_search_parameters );
