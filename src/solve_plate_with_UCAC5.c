@@ -2166,8 +2166,6 @@ int main( int argc, char **argv ) {
   }
  } // if ( approximate_field_of_view_arcmin == DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN ) {
 
- fprintf( stderr, "Seting catalog search parameters based on the expected field of view %.1lf arcmin\n", approximate_field_of_view_arcmin );
- set_catalog_search_parameters( approximate_field_of_view_arcmin, &catalog_search_parameters );
 
  // **** Blind plate solution with Astrometry.net ****
  if ( 0 != blind_plate_solve_with_astrometry_net( fits_image_filename, approximate_field_of_view_arcmin ) ) {
@@ -2219,6 +2217,8 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "Updated FoV from the plate-solved image: %.1lf'\n", approximate_field_of_view_arcmin);
  }
 
+ fprintf( stderr, "Seting catalog search parameters based on the expected field of view %.1lf arcmin\n", approximate_field_of_view_arcmin );
+ set_catalog_search_parameters( approximate_field_of_view_arcmin, &catalog_search_parameters );
 
  // **** Querry UCAC5 ****
  fprintf( stderr, "\nITERATION 01 -- talking to VizieR, this might be slow!\n" );
