@@ -146,6 +146,29 @@ static inline double compute_distance_on_sphere( double RA1_deg, double DEC1_deg
  return distance;
 }
 
+char *wcs_basename(const char *filename, char *new_filename) {
+    // Duplicate the filename, as basename might modify the original string
+    char filename_copy[FILENAME_LENGTH];
+    char basename_str[FILENAME_LENGTH];
+    strncpy(filename_copy, filename, FILENAME_LENGTH - 1 );
+    filename_copy[FILENAME_LENGTH - 1]='\0'; // just in case
+    strncpy(basename_str, basename(filename_copy), FILENAME_LENGTH - 1);
+    basename_str[FILENAME_LENGTH - 1]='\0'; // just in case
+
+    // Check if the basename already starts with "wcs_"
+    if (strncmp(basename_str, "wcs_", 4) == 0) {
+        // No need to add the prefix, return the duplicated name
+        strncpy(new_filename, filename, FILENAME_LENGTH - 1 );
+        return;
+    }
+
+    // Copy the "wcs_" prefix and the basename to the new string
+    strcpy(new_filename, "wcs_");
+    strcat(new_filename, basename_str);
+
+    return;
+}
+
 void remove_outliers_from_a_pair_of_arrays( double *a, double *b, int *N_good ) {
  int i, j;
  double median1, MAD1, M1;
@@ -2010,6 +2033,7 @@ int main( int argc, char **argv ) {
  int number_of_stars_in_wcs_catalog;
  struct detected_star *stars;
  char fits_image_filename[FILENAME_LENGTH];
+ char wcs_basename_fits_image_filename[FILENAME_LENGTH];
  int i;
 
  double approximate_field_of_view_arcmin= DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN;
@@ -2175,6 +2199,26 @@ int main( int argc, char **argv ) {
 
  // Make sure all stars have a flag that they are not matched with a catalog yet
  // for(i=0;i<number_of_stars_in_wcs_catalog;i++)stars[i].matched_with_catalog=0;
+
+ // Update cataog search parameters base on FoV of the solved image
+ wcs_basename( fits_image_filename, wcs_basename_fits_image_filename);
+ sprintf( command_string, "%sutil/fov_of_wcs_calibrated_image.sh %s | grep 'Image size:' | awk -F\"[ 'x]\" '{if ($3 > $4) print $3; else print $4}'", path_to_vast_string, wcs_basename_fits_image_filename );
+ //sprintf( command_string, "%sutil/fov_of_wcs_calibrated_image.sh %s | grep 'Image size:' | awk -F\"[ 'x]\" '{if ($3 > $4) print $3; else print $4}'", path_to_vast_string, wcs_basename( fits_image_filename ) );
+ pipe_for_try_to_guess_image_fov= popen( command_string, "r" );
+ if ( NULL == pipe_for_try_to_guess_image_fov ) {
+  fprintf( stderr, "WARNING: failed to run command: %s\n", command_string );
+  //approximate_field_of_view_arcmin= DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN;
+ } else {
+  if ( 1 == fscanf( pipe_for_try_to_guess_image_fov, "%lf", &approximate_field_of_view_arcmin ) ) {
+   pclose( pipe_for_try_to_guess_image_fov );
+  } else {
+   pclose( pipe_for_try_to_guess_image_fov ); // ???
+   fprintf( stderr, "WARNING: error parsing the output of the command: %s\n", command_string );
+   approximate_field_of_view_arcmin= DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN;
+  }
+  fprintf( stderr, "Updated FoV from the plate-solved image: %.1lf'\n", approximate_field_of_view_arcmin);
+ }
+
 
  // **** Querry UCAC5 ****
  fprintf( stderr, "\nITERATION 01 -- talking to VizieR, this might be slow!\n" );
