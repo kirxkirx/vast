@@ -2108,6 +2108,7 @@ int main( int argc, char **argv ) {
   if ( NULL != strstr(fits_image_filename, "wcs_") ) {
    // If the input is already a VaST plate-solved image, we want the exact field of view, not a guess
    sprintf( command_string, "%sutil/fov_of_wcs_calibrated_image.sh %s | grep 'Image size:' | awk -F\"[ 'x]\" '{if ($3 > $4) print $3; else print $4}'", path_to_vast_string, fits_image_filename );
+   pipe_for_try_to_guess_image_fov= popen( command_string, "r" );
    if ( NULL == pipe_for_try_to_guess_image_fov ) {
     fprintf( stderr, "WARNING: failed to run command: %s\n", command_string );
     approximate_field_of_view_arcmin= DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN;
