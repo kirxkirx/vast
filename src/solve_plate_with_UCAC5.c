@@ -146,7 +146,7 @@ static inline double compute_distance_on_sphere( double RA1_deg, double DEC1_deg
  return distance;
 }
 
-char *wcs_basename(const char *filename, char *new_filename) {
+void wcs_basename(const char *filename, char *new_filename) {
     // Duplicate the filename, as basename might modify the original string
     char filename_copy[FILENAME_LENGTH];
     char basename_str[FILENAME_LENGTH];

@@ -815,7 +815,6 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
 #endif
  for ( i= 0; i < Num; i++ ) {
 
-  a_minus_b= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
 
   // Get the star catalog name from the image name
   if ( 0 != find_catalog_in_vast_images_catalogs_log( input_images[i], sextractor_catalog ) ) {
@@ -831,15 +830,18 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
    continue;
   }
 
+  a_minus_b= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
+  if ( a_minus_b == NULL ) {
+   fprintf( stderr, "MEMORY ERROR in mark_images_with_elongated_stars_as_bad()\n");
+    exit( EXIT_FAILURE );
+  }
   previous_star_number_in_sextractor_catalog= 0;
   number_of_good_detected_stars= 0;
   while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, file ) ) {
-   //  fprintf( stderr, "DEBUG000 %s\n", sextractor_catalog_string);
    sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
    external_flag= 0;
    if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &star_number_in_sextractor_catalog, &flux_adu, &flux_adu_err, &mag, &sigma_mag, &position_x_pix, &position_y_pix, &a_a, &a_a_err, &a_b, &a_b_err, &sextractor_flag, &external_flag, &psf_chi2, float_parameters ) ) {
     sextractor_catalog_string[0]= '\0'; // just in case
-    // fprintf( stderr, "DEBUG001 %s\n", sextractor_catalog_string);
     continue;
    }
    // Read only stars detected at the first FITS image extension.
@@ -850,7 +852,6 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
    } else {
     previous_star_number_in_sextractor_catalog= star_number_in_sextractor_catalog;
    }
-   //   fprintf( stderr, "DEBUG002 %s\n", sextractor_catalog_string);
    sextractor_catalog_string[0]= '\0'; // just in case
 
    // Check if the catalog line is a really band one
@@ -894,50 +895,42 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
     continue;
    }
 #endif
-   //   fprintf( stderr, "DEBUG003 %s\n", sextractor_catalog_string);
    //
    if ( flux_adu < MIN_SNR * flux_adu_err ) {
     continue;
    }
-   //   fprintf( stderr, "DEBUG004 %s\n", sextractor_catalog_string);
    //
    // https://en.wikipedia.org/wiki/Full_width_at_half_maximum
    // ok, I'm not sure if A is the sigma or sigma/2
    if ( SIGMA_TO_FWHM_CONVERSION_FACTOR * ( a_a + a_a_err ) < FWHM_MIN ) {
     continue;
    }
-   //   fprintf( stderr, "DEBUG005 %s\n", sextractor_catalog_string);
    if ( SIGMA_TO_FWHM_CONVERSION_FACTOR * ( a_b + a_b_err ) < FWHM_MIN ) {
     continue;
    }
-   //   fprintf( stderr, "DEBUG006 %s\n", sextractor_catalog_string);
    // float_parameters[0] is the actual FWHM
    if ( float_parameters[0] < FWHM_MIN ) {
     continue;
    }
-   //   fprintf( stderr, "DEBUG007 %s\n", sextractor_catalog_string);
    //
    if ( external_flag != 0 ) {
     continue;
    }
    //
-   //   fprintf( stderr, "DEBUG008 %s\n", sextractor_catalog_string);
    // just in case we mark objects with really bad SExtractor flags
    if ( sextractor_flag > 7 ) {
     continue;
    }
-   //   fprintf( stderr, "DEBUG009 %s\n", sextractor_catalog_string);
    a_minus_b[number_of_good_detected_stars]= a_a - a_b;
    number_of_good_detected_stars++;
-   //   fprintf( stderr, "DEBUG010 %d\n----------------------------------\n", number_of_good_detected_stars);
   } // while( NULL!=fgets(sextractor_catalog_string,MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT,file) ){
-    //  fprintf( stderr, "DEBUG011 %d\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n", number_of_good_detected_stars);
 
   fclose( file );
-  //  number_of_good_detected_stars[i]= (double)number_of_good_detected_stars;
+
   if ( number_of_good_detected_stars < MIN_NUMBER_OF_STARS_ON_FRAME ) {
    // mark as bad image that has too few stars
    a_minus_b__image__to_be_runied_by_sort[i]= a_minus_b__image[i]= -0.001; // is it a good choice?
+   free( a_minus_b );
    continue;
   }
   gsl_sort( a_minus_b, 1, number_of_good_detected_stars );
@@ -993,7 +986,7 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
  free( a_minus_b__image );
 
  fclose( file );
-
+ 
  return;
 }
 
@@ -5843,7 +5836,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
     if ( debug != 0 )
      fprintf( stderr, "OK\n" );
    } else {
-    fprintf( stderr, "ERROR! APERTURE > %.1lf\n", BELIEVABLE_APERTURE_MAX_PIX );
+    fprintf( stderr, "ERROR! APERTURE %.1lf is outside the expected range of %.1lf to  %.1lf\n", aperture, BELIEVABLE_APERTURE_MIN_PIX, BELIEVABLE_APERTURE_MAX_PIX );
     /* Write error to the logfile */
     sprintf( log_output, "rotation=   0.000  *detected= %5d  *matched= %5d  status=ERROR  %s\n", 0, 0, input_images[n] );
     write_string_to_log_file( log_output, sextractor_catalog );
