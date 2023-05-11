@@ -2478,6 +2478,9 @@ int main( int argc, char **argv ) {
  }
  input_images= NULL;
  Num= 0;
+ 
+ // just in case - assume all images are good by default
+ memset(vast_bad_image_flag, 0, sizeof(vast_bad_image_flag));
 
  // Clean symlinks to images and on-the-fly converted images from a previous run
  if ( argc > 1 ) {
@@ -2718,6 +2721,7 @@ int main( int argc, char **argv ) {
    safely_encode_user_input_string( input_images[Num], file_or_dir_on_command_line, malloc_size );
    input_images[Num][malloc_size - 1]= '\0'; // just in case
    vast_bad_image_flag[Num]= 0;              // mark the image good by default
+   // increase image counter
    Num++;
   } // if((sb.st_mode & S_IFMT) == S_IFREG){
  }
@@ -2793,6 +2797,8 @@ int main( int argc, char **argv ) {
     // strncpy(input_images[Num], image_filename_from_input_list, malloc_size);
     safely_encode_user_input_string( input_images[Num], image_filename_from_input_list, malloc_size );
     input_images[Num][malloc_size - 1]= '\0'; // just in case
+    vast_bad_image_flag[Num]= 0;              // mark the image good by default
+    // increase image counter
     Num++;
    } // if((sb.st_mode & S_IFMT) == S_IFREG){
   }
@@ -4039,7 +4045,7 @@ int main( int argc, char **argv ) {
    // if it is, set the aperture to an unrealistic value
    // this will allow the existing mechanism to handle and log the bad image properly
    if ( vast_bad_image_flag[n] != 0 ) {
-    fprintf( stderr, "WARNING: image marked as bad with flag %d %s\n", vast_bad_image_flag[n], input_images[n] );
+    fprintf( stderr, "WARNING: image marked as bad with flag %d %s (indicating this by settin APERTURE=0.0)\n", vast_bad_image_flag[n], input_images[n] );
     aperture= 0.0;
     vast_bad_image_flag_counter++;
    }
