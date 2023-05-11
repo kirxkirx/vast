@@ -19530,6 +19530,64 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 
 
 
+# best aperture selection test
+THIS_TEST_START_UNIXSEC=$(date +%s)
+TEST_PASSED=1
+echo "Performing best aperture selection test " 1>&2
+echo -n "Performing best aperture selection test: " >> vast_test_report.txt 
+
+# preapare
+util/clean_data.sh
+
+# generate test data
+for i in $(seq -w 1 1000)
+do
+  outfile="out0${i}.dat"  
+  echo "2442659.54300 -11.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +11.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  
+2442659.54300 -12.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +12.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  
+2442659.54300 -13.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +13.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  
+2442659.54300 -14.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +14.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  
+2442659.54300 -15.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +15.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  
+" > $outfile
+done
+
+# 1st run should find the non-default aperture as the best one for all the stars
+lib/select_aperture_with_smallest_scatter_for_each_object 2>&1 | grep 'Aperture with index 3 (REFERENCE_APERTURE_DIAMETER +0.10\*REFERENCE_APERTURE_DIAMETER) seems best for  1000 stars'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES BESTAPSEL_001"
+fi
+
+# 2nd run should find no non-default apertures
+lib/select_aperture_with_smallest_scatter_for_each_object 2>&1 | grep 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for  1000 stars'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES BESTAPSEL_002"
+fi
+
+# clean up
+util/clean_data.sh
+
+
+THIS_TEST_STOP_UNIXSEC=$(date +%s)
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+# Make an overall conclusion for this test
+if [ $TEST_PASSED -eq 1 ];then
+ echo -e "\n\033[01;34mBest aperture selection test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+else
+ echo -e "\n\033[01;34mBest aperture selection test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+fi 
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+
+
+
+
 
 #### HJD correction test
 # needs VARTOOLS to run
@@ -19537,13 +19595,6 @@ command -v vartools &>/dev/null
 if [ $? -eq 0 ];then
  THIS_TEST_START_UNIXSEC=$(date +%s)
  TEST_PASSED=1
-
-# As of VARTOOLS version 1.40 it does not exit with code 0 if called without arguments
-# vartools &> /dev/null
-# if [ $? -ne 0 ];then
-#  TEST_PASSED=0
-#  FAILED_TEST_CODES="$FAILED_TEST_CODES HJDCORRECTION_PROBLEM_RUNNING_VARTOOLS"
-# fi
 
  if [ ! -d ../vast_test_lightcurves ];then
   mkdir ../vast_test_lightcurves
@@ -19758,27 +19809,6 @@ fi
 
 if [ "$MAIL_TEST_REPORT_TO_KIRX" = "YES" ];then
  email_vast_test_report
-# HOST=`hostname`
-# HOST="@$HOST"
-# NAME="$USER$HOST"
-## DATETIME=`LANG=C date --utc`
-## bsd dae doesn't know '--utc', but accepts '-u'
-# DATETIME=`LANG=C date -u`
-# SCRIPTNAME=`basename $0`
-# LOG=`cat vast_test_report.txt`
-# MSG="The script $0 has finished on $DATETIME at $PWD $LOG $DEBUG_OUTPUT"
-#echo "
-#$MSG
-##########################################################
-#$DEBUG_OUTPUT
-#
-#" > vast_test_email_message.log
-# curl --silent 'http://scan.sai.msu.ru/vast/vasttestreport.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode message@vast_test_email_message.log --data-urlencode 'submit=submit'
-# if [ $? -eq 0 ];then
-#  echo "The test report was sent successfully"
-# else
-#  echo "There was a problem sending the test report"
-# fi
 fi
 
 if [ "$FAILED_TEST_CODES" != "NONE" ];then
