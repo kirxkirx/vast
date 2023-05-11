@@ -4045,7 +4045,7 @@ int main( int argc, char **argv ) {
    // if it is, set the aperture to an unrealistic value
    // this will allow the existing mechanism to handle and log the bad image properly
    if ( vast_bad_image_flag[n] != 0 ) {
-    fprintf( stderr, "WARNING: image marked as bad with flag %d %s (indicating this by settin APERTURE=0.0)\n", vast_bad_image_flag[n], input_images[n] );
+    fprintf( stderr, "WARNING: image marked as bad with flag %d %s (indicating this by setting APERTURE=0.0)\n", vast_bad_image_flag[n], input_images[n] );
     aperture= 0.0;
     vast_bad_image_flag_counter++;
    }
