@@ -815,7 +815,6 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
 #endif
  for ( i= 0; i < Num; i++ ) {
 
-  a_minus_b= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
 
   // Get the star catalog name from the image name
   if ( 0 != find_catalog_in_vast_images_catalogs_log( input_images[i], sextractor_catalog ) ) {
@@ -831,15 +830,18 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
    continue;
   }
 
+  a_minus_b= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
+  if ( a_minus_b == NULL ) {
+   fprintf( stderr, "MEMORY ERROR in mark_images_with_elongated_stars_as_bad()\n");
+    exit( EXIT_FAILURE );
+  }
   previous_star_number_in_sextractor_catalog= 0;
   number_of_good_detected_stars= 0;
   while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, file ) ) {
-   //  fprintf( stderr, "DEBUG000 %s\n", sextractor_catalog_string);
    sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
    external_flag= 0;
    if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &star_number_in_sextractor_catalog, &flux_adu, &flux_adu_err, &mag, &sigma_mag, &position_x_pix, &position_y_pix, &a_a, &a_a_err, &a_b, &a_b_err, &sextractor_flag, &external_flag, &psf_chi2, float_parameters ) ) {
     sextractor_catalog_string[0]= '\0'; // just in case
-    // fprintf( stderr, "DEBUG001 %s\n", sextractor_catalog_string);
     continue;
    }
    // Read only stars detected at the first FITS image extension.
@@ -850,7 +852,6 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
    } else {
     previous_star_number_in_sextractor_catalog= star_number_in_sextractor_catalog;
    }
-   //   fprintf( stderr, "DEBUG002 %s\n", sextractor_catalog_string);
    sextractor_catalog_string[0]= '\0'; // just in case
 
    // Check if the catalog line is a really band one
@@ -894,50 +895,42 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
     continue;
    }
 #endif
-   //   fprintf( stderr, "DEBUG003 %s\n", sextractor_catalog_string);
    //
    if ( flux_adu < MIN_SNR * flux_adu_err ) {
     continue;
    }
-   //   fprintf( stderr, "DEBUG004 %s\n", sextractor_catalog_string);
    //
    // https://en.wikipedia.org/wiki/Full_width_at_half_maximum
    // ok, I'm not sure if A is the sigma or sigma/2
    if ( SIGMA_TO_FWHM_CONVERSION_FACTOR * ( a_a + a_a_err ) < FWHM_MIN ) {
     continue;
    }
-   //   fprintf( stderr, "DEBUG005 %s\n", sextractor_catalog_string);
    if ( SIGMA_TO_FWHM_CONVERSION_FACTOR * ( a_b + a_b_err ) < FWHM_MIN ) {
     continue;
    }
-   //   fprintf( stderr, "DEBUG006 %s\n", sextractor_catalog_string);
    // float_parameters[0] is the actual FWHM
    if ( float_parameters[0] < FWHM_MIN ) {
     continue;
    }
-   //   fprintf( stderr, "DEBUG007 %s\n", sextractor_catalog_string);
    //
    if ( external_flag != 0 ) {
     continue;
    }
    //
-   //   fprintf( stderr, "DEBUG008 %s\n", sextractor_catalog_string);
    // just in case we mark objects with really bad SExtractor flags
    if ( sextractor_flag > 7 ) {
     continue;
    }
-   //   fprintf( stderr, "DEBUG009 %s\n", sextractor_catalog_string);
    a_minus_b[number_of_good_detected_stars]= a_a - a_b;
    number_of_good_detected_stars++;
-   //   fprintf( stderr, "DEBUG010 %d\n----------------------------------\n", number_of_good_detected_stars);
   } // while( NULL!=fgets(sextractor_catalog_string,MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT,file) ){
-    //  fprintf( stderr, "DEBUG011 %d\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n", number_of_good_detected_stars);
 
   fclose( file );
-  //  number_of_good_detected_stars[i]= (double)number_of_good_detected_stars;
+
   if ( number_of_good_detected_stars < MIN_NUMBER_OF_STARS_ON_FRAME ) {
    // mark as bad image that has too few stars
    a_minus_b__image__to_be_runied_by_sort[i]= a_minus_b__image[i]= -0.001; // is it a good choice?
+   free( a_minus_b );
    continue;
   }
   gsl_sort( a_minus_b, 1, number_of_good_detected_stars );
@@ -993,7 +986,7 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
  free( a_minus_b__image );
 
  fclose( file );
-
+ 
  return;
 }
 
@@ -2189,7 +2182,7 @@ int main( int argc, char **argv ) {
    break;
   case 'f':
    param_nofind= 1;
-   fprintf( stdout, "opt 'f': Run ./find_candidates manually!\n" );
+   fprintf( stderr, "opt 'f': Run ./find_candidates manually!\n" );
    break;
   case 'd':
    debug= 1;
@@ -2215,13 +2208,13 @@ int main( int argc, char **argv ) {
     exit( EXIT_FAILURE );
    }
    if ( photometric_calibration_type == 0 ) {
-    fprintf( stdout, "opt 't 0': linear magnitude calibration (vary zero-point and slope)\n" );
+    fprintf( stderr, "opt 't 0': linear magnitude calibration (vary zero-point and slope)\n" );
    }
    if ( photometric_calibration_type == 1 ) {
-    fprintf( stdout, "opt 't 1': magnitude calibration with parabola\n" );
+    fprintf( stderr, "opt 't 1': magnitude calibration with parabola\n" );
    }
    if ( photometric_calibration_type == 2 ) {
-    fprintf( stdout, "opt 't 2': zero-point only magnitude calibration (linear with the fixed slope)\n" );
+    fprintf( stderr, "opt 't 2': zero-point only magnitude calibration (linear with the fixed slope)\n" );
     apply_position_dependent_correction= 0;
     param_use_photocurve= 0; // obviously incompatible with photocurve
    }
@@ -2230,27 +2223,27 @@ int main( int argc, char **argv ) {
     param_nodiscardell= 1; // incompatible with photocurve
     param_use_photocurve= 1;
     photometric_calibration_type= 1; // force parabolic magnitude fit (it should be reasonably good). It is needed to remove outliers.
-    fprintf( stdout, "opt 't 3': \"photocurve\" will be used for magnitude calibration!\n" );
+    fprintf( stderr, "opt 't 3': \"photocurve\" will be used for magnitude calibration!\n" );
    }
 
    break;
   case '9': // use ds9 FITS viewer
    use_ds9_instead_of_pgfv= 1;
-   fprintf( stdout, "opt '9': DS9 FITS viewer will be used instead of pgfv\n" );
+   fprintf( stderr, "opt '9': DS9 FITS viewer will be used instead of pgfv\n" );
    break;
   case 'g': // Auto-detect saturation limit
    guess_saturation_limit_operation_mode= 1;
-   fprintf( stdout, "opt 'g': Will try to guess saturation limit for each image\n" );
+   fprintf( stderr, "opt 'g': Will try to guess saturation limit for each image\n" );
    break;
   case 'G': // Auto-detect saturation limit
    guess_saturation_limit_operation_mode= 0;
-   fprintf( stdout, "opt 'G': Will NOT try to guess saturation limit for each image\n" );
+   fprintf( stderr, "opt 'G': Will NOT try to guess saturation limit for each image\n" );
    break;
   /// Should be replaces with the new option 'starmatchraius'
   case 's': // small comparison window - 1 pix.
    param_w= 3;
    preobr= New_Preobr_Sk();
-   fprintf( stdout, "opt 's': Using small match radius (comparison window)\n" );
+   fprintf( stderr, "opt 's': Using small match radius (comparison window)\n" );
    break;
   case '5':
    cvalue= optarg;
@@ -2264,65 +2257,65 @@ int main( int argc, char **argv ) {
     fprintf( stderr, "ERROR: fixed_star_matching_radius_pix is out of range!\n" );
     exit( EXIT_FAILURE );
    }
-   fprintf( stdout, "opt '5': %lf pix is the new fixed star matching radius!\n", fixed_star_matching_radius_pix );
+   fprintf( stderr, "opt '5': %lf pix is the new fixed star matching radius!\n", fixed_star_matching_radius_pix );
    break;
   ///
   case 'p':
    photometric_calibration_type= 0;
-   fprintf( stdout, "opt 'p': Polynomial magnitude calibration will *NOT* be used!\n" );
+   fprintf( stderr, "opt 'p': Polynomial magnitude calibration will *NOT* be used!\n" );
    break;
   case 'o':
    param_nodiscardell= 1; // incompatible with photocurve
    param_use_photocurve= 1;
    photometric_calibration_type= 1; // force parabolic magnitude fit (it should be reasonably good). It is needed to remove outliers.
-   fprintf( stdout, "opt 'o': \"photocurve\" will be used for magnitude calibration!\n" );
+   fprintf( stderr, "opt 'o': \"photocurve\" will be used for magnitude calibration!\n" );
    break;
   case 'z':
    // switch on to the user-specified moving object mode
    moving_object= 1;
-   fprintf( stdout, "opt 'z': Experimental moving object tracking mode!\n" );
+   fprintf( stderr, "opt 'z': Experimental moving object tracking mode!\n" );
    // set additional flags to make things compatible with this mode
    convert_timesys_to_TT= 0;
-   fprintf( stdout, "opt 'u': Stick with UTC time system, no conversion to TT will be done!\n" );
+   fprintf( stderr, "opt 'u': Stick with UTC time system, no conversion to TT will be done!\n" );
    param_filterout_magsize_outliers= 0;
-   fprintf( stdout, "opt '2': disabling filter out outliers on mag-size plot!\n" );
+   fprintf( stderr, "opt '2': disabling filter out outliers on mag-size plot!\n" );
    param_automatically_select_reference_image= 0;
-   fprintf( stdout, "opt ' ': diable automated reference-image selection!\n" );
+   fprintf( stderr, "opt ' ': diable automated reference-image selection!\n" );
    maxsextractorflag= 3;
-   fprintf( stdout, "opt 'x': %d is the maximum acceptable SExtractor flag!\n", maxsextractorflag );
+   fprintf( stderr, "opt 'x': %d is the maximum acceptable SExtractor flag!\n", maxsextractorflag );
    break;
   case '1':
    param_filterout_magsize_outliers= 1;
-   fprintf( stdout, "opt '1': filter out outliers on mag-size plot!\n" );
+   fprintf( stderr, "opt '1': filter out outliers on mag-size plot!\n" );
    break;
   case '2':
    param_filterout_magsize_outliers= 0;
-   fprintf( stdout, "opt '2': disabling filter out outliers on mag-size plot!\n" );
+   fprintf( stderr, "opt '2': disabling filter out outliers on mag-size plot!\n" );
    break;
   case '3':
    param_select_best_aperture_for_each_source= 1;
-   fprintf( stdout, "opt '3': Will try to select best aperture for each source!\n" );
+   fprintf( stderr, "opt '3': Will try to select best aperture for each source!\n" );
    break;
   case '4':
    param_rescale_photometric_errors= 0;
-   fprintf( stdout, "opt '4': Will not re-scale photometric errors!\n" );
+   fprintf( stderr, "opt '4': Will not re-scale photometric errors!\n" );
    break;
   case '6':
    param_remove_bad_images= 0;
-   fprintf( stdout, "opt '6': Will not remove bad images!\n" );
+   fprintf( stderr, "opt '6': Will not remove bad images!\n" );
    break;
   case '7':
    param_automatically_select_reference_image= 1;
-   fprintf( stdout, "opt '7': Will try to automatically select the deepest reference image!\n" );
+   fprintf( stderr, "opt '7': Will try to automatically select the deepest reference image!\n" );
    break;
   case '8':
    param_exclude_reference_image= 1;
-   fprintf( stdout, "opt '8': the reference image will not be used for photometry!\n" );
+   fprintf( stderr, "opt '8': the reference image will not be used for photometry!\n" );
    break;
   case 'P':
    // param_nodiscardell= 1; // incompatible with PSF photometry and I'm not sure why - probably a bug
    param_P= 1;
-   fprintf( stdout, "opt 'P': PSF photometry mode!\n" );
+   fprintf( stderr, "opt 'P': PSF photometry mode!\n" );
    // Check if the PSFEx executable (named "psfex") is present in $PATH 
    if ( 0 != system( "lib/look_for_psfex.sh" ) ) {
     exit( EXIT_FAILURE );
@@ -2334,54 +2327,54 @@ int main( int argc, char **argv ) {
    break;
   case 'r':
    no_rotation= 1;
-   fprintf( stdout, "opt 'r': assuming no rotation larger than 3 degrees!\n" );
+   fprintf( stderr, "opt 'r': assuming no rotation larger than 3 degrees!\n" );
    break;
   case 'l':
    // param_nofilter= 0;
    param_nodiscardell= 1;
-   fprintf( stdout, "opt 'l': will NOT try to discard images with elliptical stars (bad tracking)!\n" );
+   fprintf( stderr, "opt 'l': will NOT try to discard images with elliptical stars (bad tracking)!\n" );
    break;
   case 'j':
    apply_position_dependent_correction= 1;
    param_apply_position_dependent_correction= 1;
-   fprintf( stdout, "opt 'j': USING image-position-dependent correction!\n" );
+   fprintf( stderr, "opt 'j': USING image-position-dependent correction!\n" );
    break;
   case 'J':
    apply_position_dependent_correction= 0;
    param_apply_position_dependent_correction= 1;
-   fprintf( stdout, "opt 'J': NOT USING image-position-dependent correction!\n" );
+   fprintf( stderr, "opt 'J': NOT USING image-position-dependent correction!\n" );
    break;
   case 'e':
    param_failsafe= 1;
-   fprintf( stdout, "opt 'e': FAILSAFE mode. Only stars detected on the reference frame will be processed!\n" );
+   fprintf( stderr, "opt 'e': FAILSAFE mode. Only stars detected on the reference frame will be processed!\n" );
    break;
    // UTC the following options duplicate each other to allow for both --UTC and --utc
   case 'u':
    convert_timesys_to_TT= 0;
    timesys= 1;
-   fprintf( stdout, "opt 'u': Stick with UTC time system, no conversion to TT will be done!\n" );
+   fprintf( stderr, "opt 'u': Stick with UTC time system, no conversion to TT will be done!\n" );
    break;
   case 'c':
    convert_timesys_to_TT= 0;
    timesys= 1;
-   fprintf( stdout, "opt 'c': Stick with UTC time system, no conversion to TT will be done!\n" );
+   fprintf( stderr, "opt 'c': Stick with UTC time system, no conversion to TT will be done!\n" );
    break;
   case 'U':
    convert_timesys_to_TT= 0;
    timesys= 1;
-   fprintf( stdout, "opt 'U': Stick with UTC time system, no conversion to TT will be done!\n" );
+   fprintf( stderr, "opt 'U': Stick with UTC time system, no conversion to TT will be done!\n" );
    break;
    // end of UTC
   case 'k':
    param_nojdkeyword= 1;
-   fprintf( stdout, "opt 'k': \"JD\" keyword in FITS image header will be ignored!\n" );
+   fprintf( stderr, "opt 'k': \"JD\" keyword in FITS image header will be ignored!\n" );
    break;
   case 'K':
    if ( param_nojdkeyword == 1 ) {
     fprintf( stderr, "WARNING: VaST can't ignore both 'JD' and 'DATE-OBS' keywords!\nWill ignore 'DATE-OBS' keyword.\n" );
    }
    param_nojdkeyword= 2;
-   fprintf( stdout, "opt 'K': \"DATE-OBS\" keyword in FITS image header will be ignored!\n" );
+   fprintf( stderr, "opt 'K': \"DATE-OBS\" keyword in FITS image header will be ignored!\n" );
    break;
   case 'a':
    cvalue= optarg;
@@ -2390,7 +2383,7 @@ int main( int argc, char **argv ) {
     exit( EXIT_FAILURE );
    }
    fixed_aperture= atof( cvalue );
-   fprintf( stdout, "opt 'a': Using fixed aperture %.1lf pix. in diameter!\n", fixed_aperture );
+   fprintf( stderr, "opt 'a': Using fixed aperture %.1lf pix. in diameter!\n", fixed_aperture );
    if ( fixed_aperture < 1.0 ) {
     fprintf( stderr, "ERROR: the specified fixed aperture dameter is out of the expected range!\n" );
     return 1;
@@ -2405,7 +2398,7 @@ int main( int argc, char **argv ) {
    param_set_manually_Number_of_main_star= 1;
    default_Number_of_main_star= atoi( cvalue );
    default_Number_of_ecv_triangle= MATCH_MAX_NUMBER_OF_TRIANGLES;
-   fprintf( stdout, "opt 'b': Using %d reference stars for image matching!\n", default_Number_of_main_star );
+   fprintf( stderr, "opt 'b': Using %d reference stars for image matching!\n", default_Number_of_main_star );
    break;
   case 'y':
    cvalue= optarg;
@@ -2415,7 +2408,7 @@ int main( int argc, char **argv ) {
    }
    if ( number_of_sysrem_iterations != 1 )
     number_of_sysrem_iterations= atoi( cvalue );
-   fprintf( stdout, "opt 'y': %d SysRem iterations will be conducted!\n", number_of_sysrem_iterations );
+   fprintf( stderr, "opt 'y': %d SysRem iterations will be conducted!\n", number_of_sysrem_iterations );
    break;
   case 'x':
    cvalue= optarg;
@@ -2428,7 +2421,7 @@ int main( int argc, char **argv ) {
     fprintf( stderr, "WARNING: maximum acceptable flag value %d is set incorrectly!\nResorting to the default value of %d.\n", maxsextractorflag, MAX_SEXTRACTOR_FLAG );
     maxsextractorflag= MAX_SEXTRACTOR_FLAG;
    }
-   fprintf( stdout, "opt 'x': %d is the maximum acceptable SExtractor flag!\n", maxsextractorflag );
+   fprintf( stderr, "opt 'x': %d is the maximum acceptable SExtractor flag!\n", maxsextractorflag );
    if ( maxsextractorflag > 1 ) {
     if ( param_filterout_magsize_outliers == 1 ) {
      param_filterout_magsize_outliers= 0;
@@ -2485,6 +2478,9 @@ int main( int argc, char **argv ) {
  }
  input_images= NULL;
  Num= 0;
+ 
+ // just in case - assume all images are good by default
+ memset(vast_bad_image_flag, 0, sizeof(vast_bad_image_flag));
 
  // Clean symlinks to images and on-the-fly converted images from a previous run
  if ( argc > 1 ) {
@@ -2725,6 +2721,7 @@ int main( int argc, char **argv ) {
    safely_encode_user_input_string( input_images[Num], file_or_dir_on_command_line, malloc_size );
    input_images[Num][malloc_size - 1]= '\0'; // just in case
    vast_bad_image_flag[Num]= 0;              // mark the image good by default
+   // increase image counter
    Num++;
   } // if((sb.st_mode & S_IFMT) == S_IFREG){
  }
@@ -2800,6 +2797,8 @@ int main( int argc, char **argv ) {
     // strncpy(input_images[Num], image_filename_from_input_list, malloc_size);
     safely_encode_user_input_string( input_images[Num], image_filename_from_input_list, malloc_size );
     input_images[Num][malloc_size - 1]= '\0'; // just in case
+    vast_bad_image_flag[Num]= 0;              // mark the image good by default
+    // increase image counter
     Num++;
    } // if((sb.st_mode & S_IFMT) == S_IFREG){
   }
@@ -4046,7 +4045,7 @@ int main( int argc, char **argv ) {
    // if it is, set the aperture to an unrealistic value
    // this will allow the existing mechanism to handle and log the bad image properly
    if ( vast_bad_image_flag[n] != 0 ) {
-    fprintf( stderr, "WARNING: image marked as bad with flag %d %s\n", vast_bad_image_flag[n], input_images[n] );
+    fprintf( stderr, "WARNING: image marked as bad with flag %d %s (indicating this by setting APERTURE=0.0)\n", vast_bad_image_flag[n], input_images[n] );
     aperture= 0.0;
     vast_bad_image_flag_counter++;
    }
@@ -5843,7 +5842,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
     if ( debug != 0 )
      fprintf( stderr, "OK\n" );
    } else {
-    fprintf( stderr, "ERROR! APERTURE > %.1lf\n", BELIEVABLE_APERTURE_MAX_PIX );
+    fprintf( stderr, "ERROR! APERTURE %.1lf is outside the expected range of %.1lf to  %.1lf\n", aperture, BELIEVABLE_APERTURE_MIN_PIX, BELIEVABLE_APERTURE_MAX_PIX );
     /* Write error to the logfile */
     sprintf( log_output, "rotation=   0.000  *detected= %5d  *matched= %5d  status=ERROR  %s\n", 0, 0, input_images[n] );
     write_string_to_log_file( log_output, sextractor_catalog );
