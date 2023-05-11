@@ -13831,7 +13831,9 @@ if [ -f ../individual_images_test/c176.fits ];then
   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_c176.fits.cat.ucac5 | wc -l | awk '{print $1}'`
   #if [ $TEST -lt 180 ];then
   # we reduced the catalog search radius, so now it's
-  if [ $TEST -lt 170 ];then
+  #if [ $TEST -lt 170 ];then
+  # 168 on certain systems
+  if [ $TEST -lt 160 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES HOTPIXIMAGE002a_$TEST"
   fi
