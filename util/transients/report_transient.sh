@@ -462,7 +462,12 @@ ASTEROID_ID=$?
 # If the candidate transient is not a known variable star or asteroid - try online search
 if [ $VARIABLE_STAR_ID -ne 0 ] && [ $ASTEROID_ID -ne 0 ] && [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.0" ] ;then
  # Slow online ID
- util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS online_id `lib/try_to_guess_image_fov $REFERENCE_IMAGE` 2>&1 | grep '|' | tail -n1
+ # Instead of a guess
+ #util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS online_id `lib/try_to_guess_image_fov $REFERENCE_IMAGE` 2>&1 | grep '|' | tail -n1
+ # Use the actual field of view - the reference image is supposed to be solved by now
+ WCS_REFERENCE_IMAGE_NAME=wcs_`basename $REFERENCE_IMAGE`
+ WCS_REFERENCE_IMAGE_NAME=${WCS_REFERENCE_IMAGE_NAME/wcs_wcs_/wcs_}
+ util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS online_id $(util/fov_of_wcs_calibrated_image.sh $WCS_REFERENCE_IMAGE_NAME | grep 'Image size:' | awk -F"[ 'x]" '{if ($3 > $4) print $3; else print $4}') 2>&1 | grep '|' | tail -n1
  #
 fi
 
