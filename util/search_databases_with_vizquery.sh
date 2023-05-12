@@ -446,7 +446,7 @@ done
 
 
 
-# Exit if therere is no reliable ID with astrometric catalog
+# Check if we have the USNO-B1.0 ID
 if [ ! -f search_databases_with_vizquery_USNOB_ID_OK.tmp ];then
  echo "Could not match the source with USNO-B1.0 :("
 else
@@ -456,7 +456,7 @@ else
  GOOD_CATALOG_NAME="B1.0 $GOOD_CATALOG_NAME_USNOB"
  rm -f search_databases_with_vizquery_USNOB_ID_OK.tmp
 fi
-# Exit if therere is no reliable ID with astrometric catalog
+# Check if we have the Gaia ID
 if [ ! -f search_databases_with_vizquery_GAIA_ID_OK.tmp ];then
  echo "Could not match the source with Gaia DR3 :("
 else
@@ -708,7 +708,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
      SUGGESTED_NAME_STRING="Large-amplitude variable Gaia DR2 $GAIA_DR2_LARGE_AMP_VAR_RESULTS"
      SUGGESTED_TYPE_STRING="2021A&A...648A..44M"
      SUGGESTED_PERIOD_STRING=""
-     SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING (the VSX policy as of May 2022 seems to be not to regard variables from 2021A&A...648A..44M as 'known' for the lack of classification)  "
+     SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING (the VSX policy as of May 2022 seems to be NOT to regard variables from 2021A&A...648A..44M as 'known' for the lack of classification)  "
      KNOWN_VARIABLE=1
     fi
    fi
@@ -735,13 +735,12 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
  # SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING B2=$B2 "
  #fi
 fi
+
 # Try to get a spectral type
 SPECTRAL_TYPE=""
 # First try Skiff
-#SKIFF_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=B/mk/mktypes  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=SpType,Bibcode,Name -out.max=1 2>/dev/null | grep -B2 '#END#' | head -n1 | grep -v \# | sed 's:  ::g' `
 SKIFF_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/mk/mktypes  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=SpType,Bibcode,Name -out.max=1 2>/dev/null | grep -B2 '#END#' | head -n1 | grep -v \# | sed 's:  : :g' | sed 's:  : :g' | sed 's:  : :g' | sed 's:  : :g' | sed 's:  : :g')
 if [ -n "$SKIFF_RESULTS" ];then
- #SPECTRAL_TYPE=$(echo $SKIFF_RESULTS)
  SPECTRAL_TYPE="$SKIFF_RESULTS"
  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING SpType: $SKIFF_RESULTS  "
 fi
@@ -749,7 +748,6 @@ fi
 if [ -z "$SPECTRAL_TYPE" ];then
  LAMOST_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=V/164/dr5  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=SubClass,Class -out.max=1 2>/dev/null | grep -B2 '#END#' | head -n1 | grep -v \# | grep 'STAR' | awk '{print $1}')
  if [ -n "$LAMOST_RESULTS" ];then
-  #SPECTRAL_TYPE=$(echo $LAMOST_RESULTS)
   SPECTRAL_TYPE="$LAMOST_RESULTS"
   SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING SpType: $LAMOST_RESULTS (LAMOST DR5)  "
  fi
