@@ -98,7 +98,8 @@ FITS_IMAGE_TO_CHECK_HEADER=`"$VAST_PATH"util/listhead "$FITS_IMAGE_TO_CHECK"`
 for TYPICAL_WCS_KEYWORD in NAXIS1 NAXIS2  CTYPE1 CTYPE2 CRVAL1 CRVAL2 CRPIX1 CRPIX2 CD1_1 CD1_2 CD2_1 CD2_2 ;do
  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet "$TYPICAL_WCS_KEYWORD"
  if [ $? -ne 0 ];then
-  echo "ERROR in $0 $TYPICAL_WCS_KEYWORD keyword is not found in the image header" 1>&2
+  echo "ERROR in $0 $TYPICAL_WCS_KEYWORD keyword is not found in the image header.
+Is the input image $FITS_IMAGE_TO_CHECK actually plate-solved?" 1>&2
   exit 1
  fi
 done
