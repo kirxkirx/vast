@@ -17441,6 +17441,13 @@ if [ $? -eq 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001b_GCVS"
 fi
 
+# This should specifically test VSX search with util/search_databases_with_curl.sh
+util/search_databases_with_curl.sh 07:29:19.69 -13:23:06.6 | grep --quiet 'ZTF J072919.68-132306.5'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001c_VSX"
+fi
+
 # Make sure that the following string returns only the correct name of the target
 TEST_STRING=`util/search_databases_with_curl.sh 22:02:43.29 +42:16:39.9 | tail -n1 | awk -F'|' '{print $1}' | while read A ;do echo $A ;done`
 if [ "$TEST_STRING" != "BL Lac" ];then
