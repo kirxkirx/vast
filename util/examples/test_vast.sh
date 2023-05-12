@@ -17522,6 +17522,13 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT007_check_MDVtest_offline"
 fi
 
+util/search_databases_with_vizquery.sh 01:23:45.67 +89:10:11.1 | grep --quiet 'TEST'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT007_MDVtestINTEGRATION"
+fi
+
+
 # XY Lyr is listed as SRC in VSX following the Hipparcos periodic variables paper
 util/search_databases_with_vizquery.sh 18:38:06.47677 +39:40:05.9835 | grep 'XY Lyr' | grep -e 'LC' -e 'SRC' | grep --quiet 'J-Ks=1.098+/-0.291 (M)'
 if [ $? -ne 0 ];then
