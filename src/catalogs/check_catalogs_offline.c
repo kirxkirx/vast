@@ -11,6 +11,85 @@
 #define MAX( a, b ) ( ( ( a ) > ( b ) ) ? ( a ) : ( b ) )
 #define MIN( a, b ) ( ( ( a ) < ( b ) ) ? ( a ) : ( b ) )
 
+
+int search_myMDV( double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found ) {
+    FILE *mymdvfile;
+    char name[32];
+    double RA_deg, Dec_deg, RA1_rad, RA2_rad, DEC1_rad, DEC2_rad;
+    char type[32];
+    char string[256];
+    int i;
+
+    double RA_hour, RA_min, RA_sec, Dec_degrees, Dec_min, Dec_sec;
+    double distance_deg;
+
+    double best_distance_deg= 90.0;
+    char best_name[32];
+    char best_type[32];
+
+    int is_found= 0;
+
+    // Initialize memory
+    memset( name, '\0', 32 );
+    memset( type, '\0', 32 );
+    memset( string, '\0', 256 );
+    memset( best_name, '\0', 32 );
+    memset( best_type, '\0', 32 );
+
+    //mymdvfile= fopen( "lib/catalogs/myMDV.dat", "r" );
+    // I put it in lib as the catalog is so small it is easier to just bundle it with the source code
+    mymdvfile= fopen( "lib/myMDV.dat", "r" );
+    if ( NULL == mymdvfile ) {
+        fprintf( stderr, "ERROR: Cannot open myMDV.dat\n" );
+        return -1;
+    }
+    while ( NULL != fgets( string, 256, mymdvfile ) ) {
+        sscanf(string, "%d %lf %lf %lf %lf %lf %lf %s", &i, &RA_hour, &RA_min, &RA_sec, &Dec_degrees, &Dec_min, &Dec_sec, type);
+
+        // Convert RA and Dec to degrees
+        RA_deg = (RA_hour*15.0) + (RA_min/4.0) + (RA_sec/240.0);
+        Dec_deg = fabs(Dec_degrees) + (Dec_min/60.0) + (Dec_sec/3600.0);
+        if (Dec_degrees < 0) Dec_deg *= -1; 
+
+        if ( fabs( target_Dec_deg - Dec_deg ) > search_radius_deg )
+            continue;
+
+        RA1_rad= RA_deg * 3600 / 206264.8;
+        RA2_rad= target_RA_deg * 3600 / 206264.8;
+        DEC1_rad= Dec_deg * 3600 / 206264.8;
+        DEC2_rad= target_Dec_deg * 3600 / 206264.8;
+
+        distance_deg= acos( cos( DEC1_rad ) * cos( DEC2_rad ) * cos( MAX( RA1_rad, RA2_rad ) - MIN( RA1_rad, RA2_rad ) ) + sin( DEC1_rad ) * sin( DEC2_rad ) ) * 206264.8 / 3600.0;
+
+        if ( distance_deg < search_radius_deg ) {
+            if ( is_found == 0 ) {
+                fprintf( stdout, "The object was <font color=\"green\">found</font> in <font color=\"red\">MDV</font>\n" );
+            }
+            is_found= 1;
+            if ( distance_deg < best_distance_deg ) {
+                best_distance_deg= distance_deg;
+                sprintf(best_name, "MDV %d", i); // Star's name is its ID in this case
+                strncpy( best_type, type, 32 );
+                best_type[31 - 1]= '\0';
+            }
+        }
+    }
+    if ( is_found == 0 ) {
+        if ( be_silent_if_not_found == 0 ) {
+            //fprintf( stdout, "The object was <font color=\"red\">not found</font> in <font color=\"blue\">MDV</font>\n" );
+            fprintf( stdout, " " );
+        }
+    } else {    
+        fprintf( stdout, "%2.0lf\"  %s\nType: %s\n", best_distance_deg * 3600.0, best_name, best_type);
+    }
+
+    fclose( mymdvfile );
+
+    return is_found;
+}
+
+
+/*
 void download_vsx() {
  FILE *f;
  f= fopen( "lib/catalogs/vsx.dat", "r" );
@@ -27,6 +106,7 @@ void download_vsx() {
 
  return;
 }
+*/
 
 int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found ) {
  FILE *vsx_dat;
@@ -137,6 +217,7 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
  return is_found;
 }
 
+/*
 void download_asassnv() {
  FILE *f;
  f= fopen( "lib/catalogs/asassnv.csv", "r" );
@@ -154,6 +235,7 @@ void download_asassnv() {
 
  return;
 }
+*/
 
 const char *getfield_from_csv_string( char *line, int num ) {
  const char *tok;
@@ -195,7 +277,7 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
  // int url_token= 10;
  //
 
- download_asassnv();
+ //download_asassnv();
  asassnv_csv= fopen( "lib/catalogs/asassnv.csv", "r" );
  if ( NULL == asassnv_csv ) {
   fprintf( stderr, "ERROR: Cannot open asassnv.csv\n" );
@@ -398,6 +480,7 @@ int main( int argc, char **argv ) {
  // The use of the reduced search radius is a silly attempt to handle the situation where
  // multiple known variables are within the search radius and ideally we want the nearest one to the search position.
 
+
  // First try small search radius
  is_found= search_vsx( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG / 3.0, 1 );
  if ( is_found != 1 ) {
@@ -409,6 +492,9 @@ int main( int argc, char **argv ) {
  }
  if ( is_found != 1 ) {
   is_found= search_asassnv( target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG, 0 );
+ }
+ if ( is_found != 1 ) {
+  is_found= search_myMDV( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG, 0 );
  }
 
  // Return 0 if the source is found
