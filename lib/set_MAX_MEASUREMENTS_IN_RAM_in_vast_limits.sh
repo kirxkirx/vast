@@ -19,7 +19,7 @@ MAX_MEASUREMENTS_IN_RAM=12000
 # try to get the RAM size BSD-style
 command -v sysctl &>/dev/null
 if [ $? -eq 0 ];then
- NEWMEM=`sysctl hw.physmem | awk '{print $2}'`
+ NEWMEM=$(sysctl hw.physmem | awk '{print $2}')
  if [ ! -z "$NEWMEM" ];then
   if [ $NEWMEM -gt 0 ];then
    PHYSMEM_BYTES="$NEWMEM"
@@ -30,7 +30,7 @@ fi
 # try to get the RAM size Linux-style
 command -v free &>/dev/null
 if [ $? -eq 0 ];then
- NEWMEM=`free -b | grep 'Mem' | awk '{print $2}'`
+ NEWMEM=$(free -b | grep 'Mem' | awk '{print $2}')
  if [ ! -z "$NEWMEM" ];then
   if [ $NEWMEM -gt 0 ];then
    PHYSMEM_BYTES="$NEWMEM"
@@ -47,10 +47,11 @@ elif [ $PHYSMEM_BYTES -lt 4294967296 ];then
  MAX_MEASUREMENTS_IN_RAM=48000
 elif [ $PHYSMEM_BYTES -lt 8589934592 ];then
  MAX_MEASUREMENTS_IN_RAM=96000
-elif [ $PHYSMEM_BYTES -lt 17179869184 ];then
- MAX_MEASUREMENTS_IN_RAM=192000
+#elif [ $PHYSMEM_BYTES -lt 17179869184 ];then
+# MAX_MEASUREMENTS_IN_RAM=192000
 else
- MAX_MEASUREMENTS_IN_RAM=384000
+# MAX_MEASUREMENTS_IN_RAM=384000
+ MAX_MEASUREMENTS_IN_RAM=192000
 fi
 
 # report the result
@@ -75,7 +76,7 @@ if [ ! -s src/vast_max_measurements_in_ram.h ];then
 " > src/vast_max_measurements_in_ram.h
 fi
 
-N=`grep -c '#define MAX_MEASUREMENTS_IN_RAM' src/vast_max_measurements_in_ram.h`
+N=$(grep -c '#define MAX_MEASUREMENTS_IN_RAM' src/vast_max_measurements_in_ram.h)
 
 if [ $N -ne 1 ];then
  echo "ERROR in $0 '#define MAX_MEASUREMENTS_IN_RAM' appears in src/vast_max_measurements_in_ram.h more than one time!"
@@ -83,7 +84,7 @@ if [ $N -ne 1 ];then
  exit 1
 fi
 
-LINE_TO_REPLACE=`grep '#define MAX_MEASUREMENTS_IN_RAM' src/vast_max_measurements_in_ram.h`
+LINE_TO_REPLACE=$(grep '#define MAX_MEASUREMENTS_IN_RAM' src/vast_max_measurements_in_ram.h)
 REPLACE_WITH="#define MAX_MEASUREMENTS_IN_RAM $MAX_MEASUREMENTS_IN_RAM  // set automatically at compile time based on PHYSMEM_BYTES=$PHYSMEM_BYTES by $0"
 
 cat src/vast_max_measurements_in_ram.h | sed "s:$LINE_TO_REPLACE:$REPLACE_WITH:g" > src/vast_max_measurements_in_ram.tmp

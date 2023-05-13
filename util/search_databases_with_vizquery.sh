@@ -341,6 +341,7 @@ $LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -so
    continue
   fi
   GOOD_CATALOG_POSITION=$("$VAST_PATH"lib/deg2hms "$CATRA_DEG" "$CATDEC_DEG")
+  GOOD_CATALOG_POSITION_REF="(USNO-B1.0)"
   #
   GOOD_CATALOG_NAME_USNOB=$USNOB1
   # mark that we have an ID
@@ -426,6 +427,7 @@ $LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -so
   fi # if [ $SHOULD_WE_DROP_FAINT_GAIA_STARS -eq 1 ];then
   ######################################################################################
   GOOD_CATALOG_POSITION_GAIA=$("$VAST_PATH"lib/deg2hms $GAIA_CATRA_DEG $GAIA_CATDEC_DEG)
+  GOOD_CATALOG_POSITION_REF="(Gaia DR3)"
   #
   GOOD_CATALOG_NAME_GAIA=$GAIA_SOURCE
   # mark that we have an ID
@@ -444,7 +446,7 @@ done
 
 
 
-# Exit if therere is no reliable ID with astrometric catalog
+# Check if we have the USNO-B1.0 ID
 if [ ! -f search_databases_with_vizquery_USNOB_ID_OK.tmp ];then
  echo "Could not match the source with USNO-B1.0 :("
 else
@@ -454,12 +456,13 @@ else
  GOOD_CATALOG_NAME="B1.0 $GOOD_CATALOG_NAME_USNOB"
  rm -f search_databases_with_vizquery_USNOB_ID_OK.tmp
 fi
-# Exit if therere is no reliable ID with astrometric catalog
+# Check if we have the Gaia ID
 if [ ! -f search_databases_with_vizquery_GAIA_ID_OK.tmp ];then
  echo "Could not match the source with Gaia DR3 :("
 else
  GOOD_CATALOG_POSITION_GAIA=$(head -n1 search_databases_with_vizquery_GAIA_ID_OK.tmp)
  GOOD_CATALOG_POSITION="$GOOD_CATALOG_POSITION_GAIA"
+ GOOD_CATALOG_POSITION_REF="(Gaia DR3)"
  GOOD_CATALOG_NAME_GAIA=$(head -n2 search_databases_with_vizquery_GAIA_ID_OK.tmp | tail -n1)
  GOOD_CATALOG_NAME="Gaia DR3 $GOOD_CATALOG_NAME_GAIA"
  VARFLAG=$(tail -n1 search_databases_with_vizquery_GAIA_ID_OK.tmp)
@@ -493,6 +496,18 @@ else
  #
 fi
 
+# Handle the case where there is no good catalog match
+if [ -z "$GOOD_CATALOG_POSITION" ];then
+ GOOD_CATALOG_POSITION="$RA $DEC"
+ echo "Will use the input corrdicates as the target position (as there is no deep catalog match)
+$GOOD_CATALOG_POSITION"
+ GOOD_CATALOG_POSITION_GAIA="$GOOD_CATALOG_POSITION"
+ GOOD_CATALOG_POSITION_REF=" (user input)"
+ GOOD_CATALOG_NAME="target"
+ GOOD_CATALOG_NAME_GAIA="$GOOD_CATALOG_NAME"
+ SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING (position from user input) "
+fi
+
 ###### ID with variability catalogs and write summary string #####
 KNOWN_VARIABLE=0
 echo "
@@ -512,7 +527,8 @@ WARNING: cannot find catalogs lib/catalogs/asassnv.csv and/or lib/catalogs/vsx.d
 The script will try to download these catalogs now - it will take some time!
 " >&2
  fi
- #
+ ######
+ ######
  LOCAL_CATALOG_SEARCH_RESULTS=$("$VAST_PATH"lib/catalogs/check_catalogs_offline $GOOD_CATALOG_POSITION_DEG 2>/dev/null)
  if [ $? -eq 0 ];then
   # The object is found in local catalogs
@@ -592,41 +608,42 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    # SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING B2=$B2 "
    #fi
   else
+   ###### MOVED to built-in offline catalog ######
    # The least likely, but possible case:
    # check if this is a previously-published MDV star?
-   MDV_NAME=""
-   # SA9
-   MDV_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AZh/91/382 -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=MDV,Type,Per 2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" | grep -A 1 MDV | tail -n1)
-   if [ "$MDV_RESULT" != "" ] ;then
-    MDV_NAME=$(echo "$MDV_RESULT" | awk '{print $1}')
-    MDV_TYPE=$(echo "$MDV_RESULT" | awk '{print $2}')
-    MDV_PERIOD=$(echo "$MDV_RESULT" | awk '{print $3}')
-   fi
-   if [ "$MDV_NAME" == "" ];then
-    MDV_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AZh/87/1087/table2 -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=MDV,Type,Per 2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" | grep -A 1 MDV | tail -n1)
-    if [ "$MDV_RESULT" != "" ] ;then
-     MDV_NAME=$(echo "$MDV_RESULT" | awk '{print $1}')
-     MDV_TYPE=$(echo "$MDV_RESULT" | awk '{print $2}')
-     MDV_PERIOD=$(echo "$MDV_RESULT" | awk '{print $3}')
-    fi
-   fi
-   if [ "$MDV_NAME" == "" ];then
-    MDV_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AZh/87/1087/table1 -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=MDV,Type 2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" | grep -A 1 MDV | tail -n1)
-    if [ "$MDV_RESULT" != "" ] ;then
-     MDV_NAME=$(echo "$MDV_RESULT" | awk '{print $1}')
-     MDV_TYPE=$(echo "$MDV_RESULT" | awk '{print $2}')
-     MDV_PERIOD="0.0"
-    fi
-   fi
-   if [ "$MDV_NAME" != "" ];then
-    # MDV var
-    #echo -n " $STAR_NAME | MDV $MDV_NAME | $GOOD_CATALOG_POSITION | $MDV_TYPE (MDV) | $MDV_PERIOD (MDV) | "
-    SUGGESTED_NAME_STRING="MDV $MDV_NAME"
-    SUGGESTED_TYPE_STRING="$MDV_TYPE (MDV)"
-    SUGGESTED_PERIOD_STRING="$MDV_PERIOD (MDV)"
-    SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING "
-    KNOWN_VARIABLE=1
-   fi # if [ "$MDV_NAME" != "" ];then
+   #MDV_NAME=""
+   ## SA9
+   #MDV_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AZh/91/382 -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=MDV,Type,Per 2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" | grep -A 1 MDV | tail -n1)
+   #if [ "$MDV_RESULT" != "" ] ;then
+   # MDV_NAME=$(echo "$MDV_RESULT" | awk '{print $1}')
+   # MDV_TYPE=$(echo "$MDV_RESULT" | awk '{print $2}')
+   # MDV_PERIOD=$(echo "$MDV_RESULT" | awk '{print $3}')
+   #fi
+   #if [ "$MDV_NAME" == "" ];then
+   # MDV_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AZh/87/1087/table2 -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=MDV,Type,Per 2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" | grep -A 1 MDV | tail -n1)
+   # if [ "$MDV_RESULT" != "" ] ;then
+   #  MDV_NAME=$(echo "$MDV_RESULT" | awk '{print $1}')
+   #  MDV_TYPE=$(echo "$MDV_RESULT" | awk '{print $2}')
+   #  MDV_PERIOD=$(echo "$MDV_RESULT" | awk '{print $3}')
+   # fi
+   #fi
+   #if [ "$MDV_NAME" == "" ];then
+   # MDV_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AZh/87/1087/table1 -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=MDV,Type 2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" | grep -A 1 MDV | tail -n1)
+   # if [ "$MDV_RESULT" != "" ] ;then
+   #  MDV_NAME=$(echo "$MDV_RESULT" | awk '{print $1}')
+   #  MDV_TYPE=$(echo "$MDV_RESULT" | awk '{print $2}')
+   #  MDV_PERIOD="0.0"
+   # fi
+   #fi
+   #if [ "$MDV_NAME" != "" ];then
+   # # MDV var
+   # #echo -n " $STAR_NAME | MDV $MDV_NAME | $GOOD_CATALOG_POSITION | $MDV_TYPE (MDV) | $MDV_PERIOD (MDV) | "
+   # SUGGESTED_NAME_STRING="MDV $MDV_NAME"
+   # SUGGESTED_TYPE_STRING="$MDV_TYPE (MDV)"
+   # SUGGESTED_PERIOD_STRING="$MDV_PERIOD (MDV)"
+   # SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING "
+   # KNOWN_VARIABLE=1
+   #fi # if [ "$MDV_NAME" != "" ];then
    ### Check other large variable star lists
    # OGLE Bulge LPV
    if [ $KNOWN_VARIABLE -eq 0 ];then
@@ -691,7 +708,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
      SUGGESTED_NAME_STRING="Large-amplitude variable Gaia DR2 $GAIA_DR2_LARGE_AMP_VAR_RESULTS"
      SUGGESTED_TYPE_STRING="2021A&A...648A..44M"
      SUGGESTED_PERIOD_STRING=""
-     SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING (the VSX policy as of May 2022 seems to be not to regard variables from 2021A&A...648A..44M as 'known' for the lack of classification)  "
+     SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING (the VSX policy as of May 2022 seems to be NOT to regard variables from 2021A&A...648A..44M as 'known' for the lack of classification)  "
      KNOWN_VARIABLE=1
     fi
    fi
@@ -718,13 +735,12 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
  # SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING B2=$B2 "
  #fi
 fi
+
 # Try to get a spectral type
 SPECTRAL_TYPE=""
 # First try Skiff
-#SKIFF_RESULTS=`$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=B/mk/mktypes  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=SpType,Bibcode,Name -out.max=1 2>/dev/null | grep -B2 '#END#' | head -n1 | grep -v \# | sed 's:  ::g' `
 SKIFF_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/mk/mktypes  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=SpType,Bibcode,Name -out.max=1 2>/dev/null | grep -B2 '#END#' | head -n1 | grep -v \# | sed 's:  : :g' | sed 's:  : :g' | sed 's:  : :g' | sed 's:  : :g' | sed 's:  : :g')
 if [ -n "$SKIFF_RESULTS" ];then
- #SPECTRAL_TYPE=$(echo $SKIFF_RESULTS)
  SPECTRAL_TYPE="$SKIFF_RESULTS"
  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING SpType: $SKIFF_RESULTS  "
 fi
@@ -732,7 +748,6 @@ fi
 if [ -z "$SPECTRAL_TYPE" ];then
  LAMOST_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=V/164/dr5  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=SubClass,Class -out.max=1 2>/dev/null | grep -B2 '#END#' | head -n1 | grep -v \# | grep 'STAR' | awk '{print $1}')
  if [ -n "$LAMOST_RESULTS" ];then
-  #SPECTRAL_TYPE=$(echo $LAMOST_RESULTS)
   SPECTRAL_TYPE="$LAMOST_RESULTS"
   SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING SpType: $LAMOST_RESULTS (LAMOST DR5)  "
  fi
@@ -771,7 +786,8 @@ if [ -n "$GOOD_CATALOG_NAME_GAIA" ];then
 
  #########################################################
  echo "New summary string:"
- echo -n " $STAR_NAME | $SUGGESTED_NAME_STRING | $GOOD_CATALOG_POSITION_GAIA(Gaia DR3)  | $SUGGESTED_TYPE_STRING | $SUGGESTED_PERIOD_STRING | $SUGGESTED_COMMENT_STRING"
+ #echo -n " $STAR_NAME | $SUGGESTED_NAME_STRING | $GOOD_CATALOG_POSITION_GAIA(Gaia DR3)  | $SUGGESTED_TYPE_STRING | $SUGGESTED_PERIOD_STRING | $SUGGESTED_COMMENT_STRING"
+ echo -n " $STAR_NAME | $SUGGESTED_NAME_STRING | $GOOD_CATALOG_POSITION_GAIA$GOOD_CATALOG_POSITION_REF  | $SUGGESTED_TYPE_STRING | $SUGGESTED_PERIOD_STRING | $SUGGESTED_COMMENT_STRING"
  # Add 2MASS color and spectral type guess as a final comment
  if [ -f 2mass.tmp ];then
   cat 2mass.tmp

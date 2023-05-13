@@ -143,7 +143,7 @@ int main( int argc, char **argv ) {
    fprintf( stderr, "ERROR: Can't open file %s\n", filenamelist[filename_counter] );
    exit( EXIT_FAILURE );
   }
-  /* Compute median mag & sigma */
+  // Compute median mag & sigma 
   i= 0;
   while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &magerr, &x, &y, &app, string, comments_string ) ) {
    if ( jd == 0.0 )
@@ -155,12 +155,8 @@ int main( int argc, char **argv ) {
    // continue;
    //}
    sscanf_return_value= sscanf( comments_string, "%lf %lf  %lf %lf %lf %lf %lf %lf %lf %lf %[^\t\n]", &mag_a[1][i], &magerr_a[1][i], &mag_a[2][i], &magerr_a[2][i], &mag_a[3][i], &magerr_a[3][i], &mag_a[4][i], &magerr_a[4][i], &mag_a[5][i], &magerr_a[5][i], comments_string_without_multiple_apertures );
-   // fprintf(stderr, "sscanf_return_value=%d\n", sscanf_return_value);
-   if ( 10 > sscanf_return_value ) {
-    // fprintf( stderr, "ERROR parsing the comments string: %s\n", comments_string );
-    // fprintf( stderr, "##%s##\n", comments_string );
-    // fprintf( stderr, "#%s#\n", comments_string_without_multiple_apertures );
-    // fprintf( stderr, "#%lf %lf#\n", mag_a[5][i], magerr_a[5][i] );
+   if ( 10 < sscanf_return_value ) {
+    fprintf( stderr, "ERROR parsing the comments string '%s' in %s while determining the best aperture for this object\n", comments_string, filenamelist[filename_counter] );
     continue;
    }
 
@@ -224,6 +220,7 @@ int main( int argc, char **argv ) {
    i++;
   }
   fclose( lightcurvefile );
+  
   bestap= 0;
   best_MAD= 99999999;
   for ( apcounter= 0; apcounter < 6; apcounter++ ) {
@@ -244,22 +241,49 @@ int main( int argc, char **argv ) {
 
   // Compute the aperture correction (we'll need it to make sure the avarage magnitude will not change)
   dm= compute_median_of_usorted_array_without_changing_it( mag_a[0], i ) - compute_median_of_usorted_array_without_changing_it( mag_a[bestap], i );
-  sprintf( lightcurve_tmp_filename, "lightcurve.tmp" );
-  // Re-open the lightcurve file and apply the correction
+  
+
+  // Re-open the lightcurve file to apply the correction
   lightcurvefile= fopen( filenamelist[filename_counter], "r" );
+
+  // Open the temporary file to write the corrected version of the data
+  sprintf( lightcurve_tmp_filename, "lightcurve.tmp" );
   outlightcurvefile= fopen( lightcurve_tmp_filename, "w" );
   if ( NULL == outlightcurvefile ) {
    fprintf( stderr, "\nAn ERROR has occured while processing file %s \n", filenamelist[filename_counter] );
    fprintf( stderr, "ERROR: Can't open file %s\n", lightcurve_tmp_filename );
    exit( EXIT_FAILURE );
   }
-  i= 0;
+  i= 0; // here we just keep reusing the mag_a[][0] magerr_a[][0] arrays
   while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &magerr, &x, &y, &app, string, comments_string ) ) {
    if ( jd == 0.0 )
     continue; // if this line could not be parsed, try the next one
-   if ( 10 <= sscanf( comments_string, "%lf %lf  %lf %lf %lf %lf %lf %lf %lf %lf %[^\t\n]", &mag_a[1][i], &magerr_a[1][i], &mag_a[2][i], &magerr_a[2][i], &mag_a[3][i], &magerr_a[3][i], &mag_a[4][i], &magerr_a[4][i], &mag_a[5][i], &magerr_a[5][i], comments_string_without_multiple_apertures ) ) {
+   sscanf_return_value = sscanf( comments_string, "%lf %lf  %lf %lf %lf %lf %lf %lf %lf %lf %[^\t\n]", 
+                      &mag_a[1][i], 
+                      &magerr_a[1][i], 
+                      &mag_a[2][i], 
+                      &magerr_a[2][i], 
+                      &mag_a[3][i], 
+                      &magerr_a[3][i], 
+                      &mag_a[4][i], 
+                      &magerr_a[4][i], 
+                      &mag_a[5][i], 
+                      &magerr_a[5][i], 
+                      comments_string_without_multiple_apertures );
+    
+   
+   // if no comments_string_without_multiple_apertures wass read
+   if ( sscanf_return_value == 10 ) {
+    // set comments_string_without_multiple_apertures to '\0'
+    memset( comments_string_without_multiple_apertures, 0, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE );
+   }
+
+   if ( sscanf_return_value >= 10 ) {
+    // Compute the corrected magnitude 
     mag= mag + mag_a[bestap][i] + dm;
     magerr= magerr_a[bestap][i];
+    
+    // Compute the corrected aperture size
     if ( bestap == 2 ) {
      app+= AP01 * app;
     }
@@ -272,18 +296,19 @@ int main( int argc, char **argv ) {
     if ( bestap == 5 ) {
      app+= AP04 * app;
     }
-    // write_lightcurve_point( outlightcurvefile, jd, mag, magerr, x, y, app, string, comments_string);
-    write_lightcurve_point( outlightcurvefile, jd, mag, magerr, x, y, app, string, comments_string_without_multiple_apertures );
-    i++;
-    continue;
+   } else {
+    fprintf( stderr, "ERROR parsing the comments string '%s' in %s while applying the corrected magnitude\n", comments_string, filenamelist[filename_counter] );   
    }
-   fprintf( stderr, "ERROR parsing the comments string %s in %s\n", comments_string, filenamelist[filename_counter] );
+
+   // Write the corrected (or uncorrected) data to the temporary output file
+   write_lightcurve_point( outlightcurvefile, jd, mag, magerr, x, y, app, string, comments_string_without_multiple_apertures );
   }
   fclose( outlightcurvefile );
   fclose( lightcurvefile );
+  
   unlink( filenamelist[filename_counter] );                          // delete old lightcurve file
   rename( lightcurve_tmp_filename, filenamelist[filename_counter] ); // move lightcurve.tmp to lightcurve file
-  free( filenamelist[filename_counter] );
+  free( filenamelist[filename_counter] );                            // free-up memory
  }
 
  free( filenamelist );
@@ -307,8 +332,7 @@ int main( int argc, char **argv ) {
    aperture_coefficient_to_print= AP03;
   if ( i == 5 )
    aperture_coefficient_to_print= AP04;
-  // fprintf( stderr, "Aperture with index %d (%lf*REFERENCE_APERTURE_DIAMETER) seems best for %d stars\n", i, aperture_coefficient_to_print, counter_ap[i] );
-  fprintf( stderr, "Aperture with index %d (REFERENCE_APERTURE_DIAMETER + (%.2lf)*REFERENCE_APERTURE_DIAMETER) seems best for %d stars\n", i, aperture_coefficient_to_print, counter_ap[i] );
+  fprintf( stderr, "Aperture with index %d (REFERENCE_APERTURE_DIAMETER %+4.2lf*REFERENCE_APERTURE_DIAMETER) seems best for %5d stars\n", i, aperture_coefficient_to_print, counter_ap[i] );
  }
 
  fprintf( stderr, "\ndone!  =)\n" );

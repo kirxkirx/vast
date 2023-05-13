@@ -7,10 +7,15 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
+# Remove old status report file
+if [ -f .cc.openmp ];then
+ rm -f .cc.openmp
+fi
+
 # Check GCC version
-CC=`lib/find_gcc_compiler.sh`
-GCC_MAJOR_VERSION=`$CC -dumpversion | cut -f1 -d.` ; 
-GCC_MINOR_VERSION=`$CC -dumpversion | cut -f2 -d.` ;
+CC=$(lib/find_gcc_compiler.sh)
+GCC_MAJOR_VERSION=$($CC -dumpversion | cut -f1 -d.) 
+GCC_MINOR_VERSION=$($CC -dumpversion | cut -f2 -d.)
 
 GONOGO=0 # 0 - no-go; 1 - go
 
@@ -45,9 +50,9 @@ if [ $GONOGO -eq 1 ];then
   # FreeBSD or Mac
   command -v sysctl &> /dev/null
   if [ $? -eq 0 ];then
-   RAM_SIZE_BYTES=`sysctl -n hw.physmem`
+   RAM_SIZE_BYTES=$(sysctl -n hw.physmem)
    if [ $? -ne 0 ] || [ -z "$RAM_SIZE_BYTES" ] ;then
-    RAM_SIZE_BYTES=`sysctl -n hw.memsize`
+    RAM_SIZE_BYTES=$(sysctl -n hw.memsize)
    fi
   fi # sysctl
  else 
@@ -56,18 +61,18 @@ if [ $GONOGO -eq 1 ];then
    # Check that the memory size is written in units of kB
    grep MemTotal /proc/meminfo | grep --quiet kB
    if [ $? -eq 0 ];then
-    RAM_SIZE_KBYTES=`grep MemTotal /proc/meminfo | awk '{print $2}'`
+    RAM_SIZE_KBYTES=$(grep MemTotal /proc/meminfo | awk '{print $2}')
     if [ ! -z "$RAM_SIZE_KBYTES" ];then
      #RAM_SIZE_BYTES=`echo "$RAM_SIZE_KBYTES*1024" | bc -q`
-     RAM_SIZE_BYTES=`echo "$RAM_SIZE_KBYTES*1024" | awk '{print $1*1024}'`
+     RAM_SIZE_BYTES=$(echo "$RAM_SIZE_KBYTES" | awk '{print $1*1024}')
     fi
    fi
   fi
  fi # if [ "$OS_TYPE" != "Linux" ];then
  # OK, supposedly we got the memory size, now compare it with 1GB
  if [ ! -z "$RAM_SIZE_BYTES" ] ;then
-  TEST=`echo "$RAM_SIZE_BYTES<1073741824" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
-  # Test if the bc output looks suitable for BASH comparison
+  TEST=$(echo "$RAM_SIZE_BYTES<1073741824" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
+  # Test if the calculation output looks suitable for BASH comparison
   re='^[0-9]+$'
   if [[ $TEST =~ $re ]] ; then
    if [ $TEST -eq 1 ];then
@@ -119,9 +124,16 @@ int main (int argc, char *argv[]) {
   ./test &> /dev/null
   if [ $? -eq 0 ];then
    echo -n "-fopenmp -DVAST_ENABLE_OPENMP "
+   echo "Yes" > .cc.openmp
+  else
+   echo "No (OpenMP test program failed)" > .cc.openmp
   fi
+ else
+  echo "No (could not compile the OpenMP test program)" > .cc.openmp
  fi
  rm -f test test.c
+else
+ echo "No" > .cc.openmp
 fi
 
 echo -en "\n"

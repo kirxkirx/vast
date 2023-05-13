@@ -161,6 +161,13 @@ for SUSPICIOUS_FILE in 1 2 3 4 5 6 7 8 9 10 11 12 ;do
   rm -f "$SUSPICIOUS_FILE"
  fi
 done
+####################################
+# Remove compiler version tracking files
+for SUSPICIOUS_FILE in .cc.build  .cc.date  .cc.openmp  .cc.version ;do
+ if [ -f "$SUSPICIOUS_FILE" ];then
+  rm -f "$SUSPICIOUS_FILE"
+ fi
+done
 
 
 ####################################

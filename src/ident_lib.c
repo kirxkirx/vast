@@ -1300,6 +1300,7 @@ static inline int isNumberInIntArray(int *array, int n_elements, int number_to_c
 }
 */
 
+// The reference version that works fine
 static inline int isNumberInIntArray( int *array, int n_elements, int number_to_check ) {
  int i;
  // Actually tests show that we make fewer operations when going from 0 to n_elements, not the other way

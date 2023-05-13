@@ -513,17 +513,22 @@ if [ ! -s "$WCS_IMAGE_NAME" ];then
  fi
  echo " 
 This service uses tools provided by Astrometry.net.
-For more information visit http://astrometry.net/ .
+For more information visit http://astrometry.net/ 
+"
 
-Please note, the automatic identification usually works fine with a large field 
+# Print the small FoV warning only if the guessed FoV is actually small
+TEST=$(echo "$FIELD_OF_VIEW_ARCMIN" | awk '{if ( $1 < 20 ) print 1 ;else print 0 }')
+if [ $TEST -eq 1 ];then
+ echo "Please note, the automatic identification usually works fine with a large field 
 of view (say, >40 arcmin). If the images are smaller than 20', the automatic 
 field identification have good chances to fail. Sorry... :(
 "
+fi
 
  # Try to solve the image with a range of trial FIELD_OF_VIEW_ARCMINs
 
- #for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN `echo "3*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` `echo "3/4*$FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'` ;do
- for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN `echo "$FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",3*$1}'` `echo "$FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",$1*3/4}'` ;do
+ #for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN `echo "$FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",3*$1}'` `echo "$FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",$1*3/4}'` ;do
+ for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN `echo "$FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",3*$1}'` `echo "$FIELD_OF_VIEW_ARCMIN" | awk '{if ( $1 < 60 ) printf "%.1f",$1*3/4; else printf "%.1f",0.5*$1}'` ;do
  
  echo "######### Trying to solve plate assuming $TRIAL_FIELD_OF_VIEW_ARCMIN' field of view #########
  $FITSFILE"
@@ -559,6 +564,8 @@ field identification have good chances to fail. Sorry... :(
   #$TIMEOUT_COMMAND 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   #
   # HACK Hack hack -- manually specify the field center and size
+  # V1716 Sco VSX position 17:22:45.05 -41:37:16.3
+  #$TIMEOUT_COMMAND 600 solve-field --ra 17:22:45.05 --dec -41:37:16.3 --radius 1.0 --objs 100 --depth 1-10,1-20,20-30 --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # DART 04:57:09.65 -25:21:48.3
   #$TIMEOUT_COMMAND 600 solve-field --ra 04:57:09.65 --dec -25:21:48.3 --radius 30.0 --objs 100 --depth 1-10,1-20,20-30 --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # DART 07:45:59.02 +05:38:02.7

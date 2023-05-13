@@ -106,7 +106,6 @@ int main( int argc, char **argv ) {
  }
  fprintf( stderr, "done!\n" );
  // fprintf(stderr, "Copying HDU...  ");
- // fits_copy_hdu(inputfptr, outputfptr, 0, &status);
  fits_copy_file( inputfptr, outputfptr, 1, 1, 1, &status );
  //
  if ( status == 207 ) {

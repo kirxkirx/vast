@@ -605,14 +605,15 @@ int look_for_focallen_keyword( char *fitsfilename, double *estimated_fov_arcmin 
  fprintf( stderr, "Internal estimated FoV %.1lf'\n", internal_estimated_fov_arcmin );
 #endif
 
+/*
  // If focallen>1000mm the telescope is likely to have a focal reducer installed
- // if( focallen>1000 )internal_estimated_fov_arcmin=internal_estimated_fov_arcmin*2.0;
  if ( focallen > 1000 ) {
   internal_estimated_fov_arcmin= internal_estimated_fov_arcmin * 1.5;
 #ifdef FOV_DEBUG_MESSAGES
   fprintf( stderr, "The focal length %lf > 1000mm - guessing the telescope has a focal reducer.\nInternal estimated FoV %.1lf'\n", focallen, internal_estimated_fov_arcmin );
 #endif
  }
+*/
 
  // It actually works better if we don't reduce the field of view estimate
  // internal_estimated_fov_arcmin= internal_estimated_fov_arcmin - 0.1 * internal_estimated_fov_arcmin;

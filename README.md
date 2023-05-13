@@ -1,7 +1,8 @@
-![build_and_test_ubuntu](https://github.com/kirxkirx/vast/actions/workflows/build_and_test_ubuntu.yml/badge.svg)
-![build_and_test_macos](https://github.com/kirxkirx/vast/actions/workflows/build_and_test_macos.yml/badge.svg)
-![build_freebsd](https://github.com/kirxkirx/vast/actions/workflows/build_only_freebsdvm.yml/badge.svg)
+[![build_and_test_ubuntu](https://github.com/kirxkirx/vast/actions/workflows/build_and_test_ubuntu.yml/badge.svg)](https://github.com/kirxkirx/vast/actions/workflows/build_and_test_ubuntu.yml)
+[![build_and_test_macos](https://github.com/kirxkirx/vast/actions/workflows/build_and_test_macos.yml/badge.svg)](https://github.com/kirxkirx/vast/actions/workflows/build_and_test_macos.yml)
+[![build_freebsd](https://github.com/kirxkirx/vast/actions/workflows/build_only_freebsdvm.yml/badge.svg)](https://github.com/kirxkirx/vast/actions/workflows/build_only_freebsdvm.yml)
 ![circlci build test](https://circleci.com/gh/kirxkirx/vast.svg?style=svg)
+[![Version](https://img.shields.io/github/v/release/kirxkirx/vast.svg?sort=semver)](https://github.com/kirxkirx/vast/releases)
 
 ## VaST: A Software Tool for Finding Variable Objects
 
