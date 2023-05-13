@@ -6267,6 +6267,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  fclose( vast_image_details );
 
  if ( param_select_best_aperture_for_each_source == 1 ) {
+  fprintf(stderr,"Selecting the best aperture for each source\n");
   if ( 0 != system( "lib/select_aperture_with_smallest_scatter_for_each_object" ) ) {
    fprintf( stderr, "ERROR running  lib/select_aperture_with_smallest_scatter_for_each_object\n" );
    return 1;
