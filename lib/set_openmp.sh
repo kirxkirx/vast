@@ -37,11 +37,11 @@ if [ $GONOGO -eq 1 ];then
  RAM_SIZE_BYTES=""
  command -v uname &> /dev/null
  if [ $? -eq 0 ];then
-  OS=`uname`
+  OS_TYPE=$(uname)
  else
-  OS="unknown"
+  OS_TYPE="unknown"
  fi
- if [ "$OS" != "Linux" ];then 
+ if [ "$OS_TYPE" != "Linux" ];then 
   # FreeBSD or Mac
   command -v sysctl &> /dev/null
   if [ $? -eq 0 ];then
@@ -63,7 +63,7 @@ if [ $GONOGO -eq 1 ];then
     fi
    fi
   fi
- fi # if [ "$OS" != "Linux" ];then
+ fi # if [ "$OS_TYPE" != "Linux" ];then
  # OK, supposedly we got the memory size, now compare it with 1GB
  if [ ! -z "$RAM_SIZE_BYTES" ] ;then
   TEST=`echo "$RAM_SIZE_BYTES<1073741824" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
