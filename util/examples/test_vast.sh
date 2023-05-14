@@ -12797,16 +12797,16 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0210"
   fi
-  grep --quiet "2020 08 25.9400  2459087.4400  10\.7.  19:01:" transient_report/index.html
+  grep --quiet -e "2020 08 25.9400  2459087.4400  10\.7.  19:01:" -e "2020 08 25.9400  2459087.4400  10\.6.  19:01:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0210a"
-   GREP_RESULT=`grep "2020 08 25.9400  2459087.4400  10\.7.  19:01:" transient_report/index.html`
+   GREP_RESULT=`grep -e "2020 08 25.9400  2459087.4400  10\.7.  19:01:" -e "2020 08 25.9400  2459087.4400  10\.6.  19:01:" transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNFINDCHANDRA0210a ######
 $GREP_RESULT"
   fi
-  RADECPOSITION_TO_TEST=`grep "2020 08 25.9400  2459087.4400  10\.7.  19:01:"  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2020 08 25.9400  2459087.4400  10\.7.  19:01:" -e "2020 08 25.9400  2459087.4400  10\.6.  19:01:" transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 19:01:14.89 +37:31:20.2 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
