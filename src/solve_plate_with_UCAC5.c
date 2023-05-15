@@ -2,7 +2,8 @@
 #define _GNU_SOURCE // for sincos()
 #endif
 
-#define MAX_STARS_IN_VIZQUERY 1000
+#define MAX_STARS_IN_VIZQUERY 500
+#define MAX_STARS_IN_LOCAL_CAT_QUERY 2*MAX_STARS_IN_VIZQUERY
 
 #define MAX_DEVIATION_AT_FIRST_STEP 6.0 / 3600.0 // 5.0/3600.0 //1.8/3600.0
 #define REFERENCE_LOCAL_SOLUTION_RADIUS_DEG 1.0
@@ -16,7 +17,8 @@
 
 #define VIZIER_SITE "$(\"$VAST_PATH\"lib/choose_vizier_mirror.sh)"
 
-#define VIZIER_TIMEOUT_SEC 300
+// When VizieR is in a bad mood, 300 sec is not nearly enough
+#define VIZIER_TIMEOUT_SEC 900
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -228,12 +230,12 @@ void set_catalog_search_parameters( double approximate_field_of_view_arcmin, str
  // change as the input approximate_field_of_view_arcmin is now the actual major side of the frame rather than a crude estiamte
  //if ( approximate_field_of_view_arcmin < 400.0 ) {
  if ( approximate_field_of_view_arcmin < 500.0 ) {
-  catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP * approximate_field_of_view_arcmin / 60.0;
+  catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP * 0.5 * approximate_field_of_view_arcmin / 60.0;
   catalog_search_parameters->brightest_mag= 5.0;
   catalog_search_parameters->faintest_mag= 13.0;
  }
  if ( approximate_field_of_view_arcmin < 240.0 ) {
-  catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP * approximate_field_of_view_arcmin / 60.0;
+  catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP * 0.5 * approximate_field_of_view_arcmin / 60.0;
   catalog_search_parameters->brightest_mag= 6.0;
   catalog_search_parameters->faintest_mag= 14.0;
  }
@@ -569,114 +571,6 @@ int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, in
  return 0;
 }
 
-/*
-int parse_string_with_APASS_magnitudes(char *string_with_APASS_magnitudes, double *APASS_B, double *APASS_B_err, double *APASS_V, double *APASS_V_err, double *APASS_r, double *APASS_r_err, double *APASS_i, double *APASS_i_err, double *APASS_g, double *APASS_g_err) {
- char str[32];
- // check if the string is not too long
- if( 1023 < strlen(string_with_APASS_magnitudes) )
-  return 1;
- if( 9 > strlen(string_with_APASS_magnitudes) )
-  return 1;
- // fprintf(stderr,"#%s#\n",string_with_APASS_magnitudes);
- str[0]= string_with_APASS_magnitudes[0];
- str[1]= string_with_APASS_magnitudes[1];
- str[2]= string_with_APASS_magnitudes[2];
- str[3]= string_with_APASS_magnitudes[3];
- str[4]= string_with_APASS_magnitudes[4];
- str[5]= string_with_APASS_magnitudes[5];
- str[6]= '\0';
- // fprintf(stderr,"#%s#\n",str);
- if( str[5] == ' ' )
-  return 1;
- (*APASS_B)= atof(str);
- // fprintf(stderr,"#%6.3lf#\n",(*APASS_B));
- if( (*APASS_B) > MAX_APASS_MAG || (*APASS_B) < MIN_APASS_MAG )
-  return 1; // simple check
- str[0]= string_with_APASS_magnitudes[7];
- str[1]= string_with_APASS_magnitudes[8];
- str[2]= '\0';
- // fprintf(stderr,"#%s#\n",str);
- if( str[1] == ' ' )
-  return 1;
- (*APASS_B_err)= atof(str) / 100.0;
- // fprintf(stderr,"#%6.3lf#\n",(*APASS_B_err));
- if( (*APASS_B_err) > MAX_APASS_MAG_ERR || (*APASS_B_err) < MIN_APASS_MAG_ERR )
-  return 1; // simple check
- str[0]= string_with_APASS_magnitudes[10];
- str[1]= string_with_APASS_magnitudes[11];
- str[2]= string_with_APASS_magnitudes[12];
- str[3]= string_with_APASS_magnitudes[13];
- str[4]= string_with_APASS_magnitudes[14];
- str[5]= string_with_APASS_magnitudes[15];
- str[6]= '\0';
- // fprintf(stderr,"#%s#\n",str);
- if( str[5] == ' ' )
-  return 1;
- (*APASS_V)= atof(str);
- // fprintf(stderr,"#%6.3lf#\n",(*APASS_V));
- if( (*APASS_V) > MAX_APASS_MAG || (*APASS_V) < MIN_APASS_MAG )
-  return 1; // simple check
- str[0]= string_with_APASS_magnitudes[17];
- str[1]= string_with_APASS_magnitudes[18];
- str[2]= '\0';
- // fprintf(stderr,"#%s#\n",str);
- if( str[1] == ' ' )
-  return 1;
- (*APASS_V_err)= atof(str) / 100.0;
- // fprintf(stderr,"#%6.3lf#\n",(*APASS_V_err));
- if( (*APASS_V_err) > MAX_APASS_MAG_ERR || (*APASS_V_err) < MIN_APASS_MAG_ERR )
-  return 1; // simple check
- str[0]= string_with_APASS_magnitudes[20];
- str[1]= string_with_APASS_magnitudes[21];
- str[2]= string_with_APASS_magnitudes[22];
- str[3]= string_with_APASS_magnitudes[23];
- str[4]= string_with_APASS_magnitudes[24];
- str[5]= string_with_APASS_magnitudes[25];
- str[6]= '\0';
- // fprintf(stderr,"#%s#\n",str);
- if( str[5] == ' ' )
-  return 1;
- (*APASS_r)= atof(str);
- // fprintf(stderr,"#%6.3lf#\n",(*APASS_r));
- if( (*APASS_r) > MAX_APASS_MAG || (*APASS_r) < MIN_APASS_MAG )
-  return 1; // simple check
- str[0]= string_with_APASS_magnitudes[27];
- str[1]= string_with_APASS_magnitudes[28];
- str[2]= '\0';
- // fprintf(stderr,"#%s#\n",str);
- if( str[1] == ' ' )
-  return 1;
- (*APASS_r_err)= atof(str) / 100.0;
- // fprintf(stderr,"#%6.3lf#\n",(*APASS_r_err));
- if( (*APASS_r_err) > MAX_APASS_MAG_ERR || (*APASS_r_err) < MIN_APASS_MAG_ERR )
-  return 1; // simple check
- str[0]= string_with_APASS_magnitudes[30];
- str[1]= string_with_APASS_magnitudes[31];
- str[2]= string_with_APASS_magnitudes[32];
- str[3]= string_with_APASS_magnitudes[33];
- str[4]= string_with_APASS_magnitudes[34];
- str[5]= string_with_APASS_magnitudes[35];
- str[6]= '\0';
- // fprintf(stderr,"#%s#\n",str);
- if( str[5] == ' ' )
-  return 1;
- (*APASS_i)= atof(str);
- // fprintf(stderr,"#%6.3lf#\n",(*APASS_i));
- if( (*APASS_i) > MAX_APASS_MAG || (*APASS_i) < MIN_APASS_MAG )
-  return 1; // simple check
- str[0]= string_with_APASS_magnitudes[37];
- str[1]= string_with_APASS_magnitudes[38];
- str[2]= '\0';
- // fprintf(stderr,"#%s#\n",str);
- if( str[1] == ' ' )
-  return 1;
- (*APASS_i_err)= atof(str) / 100.0;
- // fprintf(stderr,"#%6.3lf#\n",(*APASS_i_err));
- if( (*APASS_i_err) > MAX_APASS_MAG_ERR || (*APASS_i_err) < MIN_APASS_MAG_ERR )
-  return 1; // simple check
- return 0;
-}
-*/
 
 int read_UCAC5_from_vizquery( struct detected_star *stars, int N, char *vizquery_output_filename, struct str_catalog_search_parameters *catalog_search_parameters ) {
  FILE *f;
@@ -1333,7 +1227,7 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
     if ( stars[detected_star_counter].good_star != 1 ) {
      continue;
     }
-    if ( search_stars_counter == MAX_STARS_IN_VIZQUERY ) {
+    if ( search_stars_counter == MAX_STARS_IN_LOCAL_CAT_QUERY ) {
      break;
     }
     search_stars_counter++;
@@ -1412,6 +1306,7 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
  return 0;
 }
 
+
 int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
  char command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
  FILE *vizquery_input;
@@ -1439,7 +1334,6 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
  vizquery_input= fopen( vizquery_input_filename, "w" );
  search_stars_counter= 0;
  zero_radec_counter= 0;
- // for(i=0;i<MIN(N,MAX_STARS_IN_VIZQUERY);i++){
  for ( i= 0; i < N; i++ ) {
   if ( stars[i].good_star == 1 ) {
    // check for a specific problem
@@ -1472,20 +1366,31 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
  // Astrometric catalog search
  fprintf( stderr, "Searchig UCAC5...\n" );
  // yes, sorting in magnitude works
- sprintf( command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=%.1lf..%.1lf -sort=f.mag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
+ //sprintf( command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=%.1lf..%.1lf -sort=f.mag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
+ sprintf( command, "export BEST_VIZIER_MIRROR=%s; echo $BEST_VIZIER_MIRROR; export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$BEST_VIZIER_MIRROR -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=%.1lf..%.1lf -sort=f.mag -c.rs=%.1lf -list=%s > %s", VIZIER_SITE, path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
 
  fprintf( stderr, "%s\n", command );
  vizquery_run_success= system( command );
+ if ( vizquery_run_success == 124 ) {
+  fprintf( stderr, "ERROR: the script lib/vizquery has timed out :(\n" );
+ }
  if ( vizquery_run_success != 0 ) {
   fprintf( stderr, "WARNING: some problem running lib/vizquery script. Is this an internet connection problem? Retrying...\n" );
   sleep( 10 );
   fprintf( stderr, "%s\n", command );
   vizquery_run_success= system( command );
+   if ( vizquery_run_success == 124 ) {
+    fprintf( stderr, "ERROR: the script lib/vizquery has timed out :(\n" );
+   }
   if ( vizquery_run_success != 0 ) {
    fprintf( stderr, "WARNING: some problem running lib/vizquery script. Is this an internet connection problem? Retrying...\n" );
    sleep( 10 );
    fprintf( stderr, "%s\n", command );
    vizquery_run_success= system( command );
+   if ( vizquery_run_success == 124 ) {
+    fprintf( stderr, "ERROR: the script lib/vizquery has timed out :(\n" );
+    exit( EXIT_FAILURE );
+   }
    if ( vizquery_run_success != 0 ) {
     fprintf( stderr, "ERROR: problem running lib/vizquery script :(\n" );
     exit( EXIT_FAILURE );
@@ -1497,9 +1402,6 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
   fprintf( stderr, "Problem getting UCAC5 data from VizieR. :(\n" );
   return 1;
  }
-
- //
- // exit(1);
 
  // delete temporary files only on success
  if ( vizquery_run_success == 0 ) {
@@ -1529,7 +1431,6 @@ int search_PANSTARRS1_with_vizquery( struct detected_star *stars, int N, struct 
  sprintf( vizquery_output_filename, "vizquery_%d.output", pid );
  vizquery_input= fopen( vizquery_input_filename, "w" );
  search_stars_counter= 0;
- // for(i=0;i<MIN(N,MAX_STARS_IN_VIZQUERY);i++){
  for ( i= 0; i < N; i++ ) {
   if ( stars[i].good_star == 1 && stars[i].matched_with_astrometric_catalog == 1 ) {
    // fprintf(vizquery_input,"%lf %lf\n",stars[i].ra_deg_measured,stars[i].dec_deg_measured);
@@ -1555,7 +1456,8 @@ int search_PANSTARRS1_with_vizquery( struct detected_star *stars, int N, struct 
 
  // Photometric catalog search
  fprintf( stderr, "Searchig PANSTARRS1...\n" );
- sprintf( command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=PS1 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,gmag,e_gmag,rmag,e_rmag,imag,e_imag rmag=%.1lf..%.1lf -sort=rmag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
+ //sprintf( command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=PS1 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,gmag,e_gmag,rmag,e_rmag,imag,e_imag rmag=%.1lf..%.1lf -sort=rmag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
+ sprintf( command, "export BEST_VIZIER_MIRROR=%s; echo $BEST_VIZIER_MIRROR; export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$BEST_VIZIER_MIRROR -mime=text -source=PS1 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,gmag,e_gmag,rmag,e_rmag,imag,e_imag rmag=%.1lf..%.1lf -sort=rmag -c.rs=%.1lf -list=%s > %s", VIZIER_SITE, path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
 
  fprintf( stderr, "%s\n", command );
  vizquery_run_success= system( command );
@@ -1606,16 +1508,13 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
  sprintf( vizquery_output_filename, "vizquery_%d.output", pid );
  vizquery_input= fopen( vizquery_input_filename, "w" );
  search_stars_counter= 0;
- // for(i=0;i<MIN(N,MAX_STARS_IN_VIZQUERY);i++){
  for ( i= 0; i < N; i++ ) {
   if ( stars[i].good_star == 1 && stars[i].matched_with_astrometric_catalog == 1 ) {
-   // fprintf(vizquery_input,"%lf %lf\n",stars[i].ra_deg_measured,stars[i].dec_deg_measured);
-   // fprintf(vizquery_input,"%lf %lf\n",stars[i].catalog_ra,stars[i].catalog_dec);
    //  The reference catalog epoch is expected to be closer to APASS epoch than some of the images we are going to process
    fprintf( vizquery_input, "%lf %lf\n", stars[i].catalog_ra_original, stars[i].catalog_dec_original );
    search_stars_counter++;
-   // fprintf(stderr,"DEBUG  %lf %lf\n",stars[i].ra_deg_measured,stars[i].dec_deg_measured);
-   if ( search_stars_counter == MAX_STARS_IN_VIZQUERY ) {
+   //if ( search_stars_counter == MAX_STARS_IN_VIZQUERY ) {
+   if ( search_stars_counter == MAX_STARS_IN_LOCAL_CAT_QUERY ) {
     break;
    }
   }
@@ -1632,9 +1531,12 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
 
  // Photometric catalog search
  fprintf( stderr, "Searchig APASS...\n" );
+ //sprintf( command,
+ //         "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=APASS -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
+ //         path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
  sprintf( command,
-          "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=APASS -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
-          path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
+          "export BEST_VIZIER_MIRROR=%s; echo $BEST_VIZIER_MIRROR; export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$BEST_VIZIER_MIRROR -mime=text -source=APASS -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
+          VIZIER_SITE, path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
 
  fprintf( stderr, "%s\n", command );
  vizquery_run_success= system( command );

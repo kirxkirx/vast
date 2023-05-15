@@ -103,10 +103,13 @@ fi
 
 for vizier_mirror in vizier.u-strasbg.fr vizier.cfa.harvard.edu vizier.nao.ac.jp ;do
  (
-  start_time=$(date +%s%N)
+  # We are limited to 1sec accuracy if %N is not supported
+  #start_time=$(date +%s%N)
+  start_time=$(date +%s)
   $("$VAST_PATH"lib/find_timeout_command.sh) 30 "$VAST_PATH"lib/vizquery -site=$vizier_mirror -mime=text -out.form=mini -source=USNO-B1 -out.add=_r -sort=_r -c="HD 226868" -c.rs=2 2>/dev/null | grep --quiet "1252-0378302"
   if [ $? -eq 0 ];then
-   end_time=$(date +%s%N)
+   #end_time=$(date +%s%N)
+   end_time=$(date +%s)
    elapsed_time=$((end_time - start_time))
    echo $elapsed_time $vizier_mirror >> $temp_file
   fi

@@ -7300,7 +7300,8 @@ $GREP_RESULT"
    TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_M31-1-001-001_dupe-1.fts.cat.ucac5 | wc -l | awk '{print $1}'`
    #if [ $TEST -lt 1500 ];then
    #if [ $TEST -lt 750 ];then
-   if [ $TEST -lt 500 ];then
+   #if [ $TEST -lt 500 ];then
+   if [ $TEST -lt 300 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD005b_$TEST"
    fi
@@ -13753,7 +13754,8 @@ if [ -f ../individual_images_test/1630+3250.20150511T215921000.fit ];then
   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_1630+3250.20150511T215921000.fit.cat.ucac5 | wc -l | awk '{print $1}'`
   #if [ $TEST -lt 1800 ];then
   #if [ $TEST -lt 900 ];then
-  if [ $TEST -lt 500 ];then
+  #if [ $TEST -lt 500 ];then
+  if [ $TEST -lt 300 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ULTRAWIDEFIELD002a_$TEST"
   fi
@@ -14422,7 +14424,8 @@ if [ -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
  else
   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_fd_Per3_2011-10-31_001.fts.cat.ucac5 | wc -l | awk '{print $1}'`
   #if [ $TEST -lt 1700 ];then
-  if [ $TEST -lt 700 ];then
+  #if [ $TEST -lt 700 ];then
+  if [ $TEST -lt 300 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWARCHIVEIMG002a_$TEST"
   fi
@@ -14636,7 +14639,8 @@ if [ -f ../individual_images_test/SCA13320__00_00.fits ];then
     FAILED_TEST_CODES="$FAILED_TEST_CODES 104HER002"
    else
     TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_SCA13320__00_00.fits.cat.ucac5 | wc -l | awk '{print $1}'`
-    if [ $TEST -lt 700 ];then
+    #if [ $TEST -lt 700 ];then
+    if [ $TEST -lt 300 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES 104HER002a_$TEST"
     fi
@@ -14850,7 +14854,8 @@ if [ -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.f
  else
   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits.cat.ucac5 | wc -l | awk '{print $1}'`
   #if [ $TEST -lt 1200 ];then
-  if [ $TEST -lt 700 ];then
+  #if [ $TEST -lt 700 ];then
+  if [ $TEST -lt 300 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER002a_$TEST"
   else
@@ -14981,7 +14986,8 @@ if [ -f ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.f
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2002"
  else
   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit.cat.ucac5 | wc -l | awk '{print $1}'`
-  if [ $TEST -lt 700 ];then
+  #if [ $TEST -lt 700 ];then
+  if [ $TEST -lt 300 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2002a_$TEST"
   fi
@@ -18199,7 +18205,8 @@ $GREP_RESULT"
   else
    TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_fd_MASTER-KISL-WFC-1_EAST_W_-30_LIGHT_5_878280.fit.cat.ucac5 | wc -l | awk '{print $1}'`
    #if [ $TEST -lt 1100 ];then
-   if [ $TEST -lt 800 ];then
+   #if [ $TEST -lt 800 ];then
+   if [ $TEST -lt 300 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCDPSF004a"
    fi
@@ -18352,7 +18359,8 @@ $GREP_RESULT"
   else
    TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_M31-1-001-001_dupe-1.fts.cat.ucac5 | wc -l | awk '{print $1}'`
    #if [ $TEST -lt 1500 ];then
-   if [ $TEST -lt 700 ];then
+   #if [ $TEST -lt 700 ];then
+   if [ $TEST -lt 300 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF004a_$TEST"
    fi
