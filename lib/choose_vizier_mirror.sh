@@ -80,14 +80,57 @@ if [ "$LAST_CHAR_OF_VAST_PATH" != "/" ];then
 fi
 #
 
-for vizier_mirror in vizier.u-strasbg.fr vizier.cfa.harvard.edu vizier.hia.nrc.ca vizier.nao.ac.jp ;do
- # 1252-0378302 is the USNO-B1.0 number of the test star
- `"$VAST_PATH"lib/find_timeout_command.sh` 30 "$VAST_PATH"lib/vizquery -site=$vizier_mirror -mime=text -out.form=mini -source=USNO-B1 -out.add=_r -sort=_r -c="HD 226868" -c.rs=2 2>/dev/null | grep --quiet "1252-0378302"
- if [ $? -eq 0 ];then
-  echo $vizier_mirror
-  exit 0
- fi
+# The old code that returned the first responsive VizieR mirror
+##for vizier_mirror in vizier.u-strasbg.fr vizier.cfa.harvard.edu vizier.hia.nrc.ca vizier.nao.ac.jp ;do
+#for vizier_mirror in vizier.u-strasbg.fr vizier.cfa.harvard.edu vizier.nao.ac.jp ;do
+# # 1252-0378302 is the USNO-B1.0 number of the test star
+# `"$VAST_PATH"lib/find_timeout_command.sh` 30 "$VAST_PATH"lib/vizquery -site=$vizier_mirror -mime=text -out.form=mini -source=USNO-B1 -out.add=_r -sort=_r -c="HD 226868" -c.rs=2 2>/dev/null | grep --quiet "1252-0378302"
+# if [ $? -eq 0 ];then
+#  echo $vizier_mirror
+#  exit 0
+# fi
+#done
+
+# The new code that should return the fastest VizieR mirror
+fastest_vizier_mirror=''
+fastest_time=30000000000
+
+#!/bin/bash
+temp_file=choose_vizier_mirror$$.tmp
+if [ -f $temp_file ];then
+ rm -f $temp_file
+fi
+
+for vizier_mirror in vizier.u-strasbg.fr vizier.cfa.harvard.edu vizier.nao.ac.jp ;do
+ (
+  start_time=$(date +%s%N)
+  $("$VAST_PATH"lib/find_timeout_command.sh) 30 "$VAST_PATH"lib/vizquery -site=$vizier_mirror -mime=text -out.form=mini -source=USNO-B1 -out.add=_r -sort=_r -c="HD 226868" -c.rs=2 2>/dev/null | grep --quiet "1252-0378302"
+  if [ $? -eq 0 ];then
+   end_time=$(date +%s%N)
+   elapsed_time=$((end_time - start_time))
+   echo $elapsed_time $vizier_mirror >> $temp_file
+  fi
+ ) &
 done
+
+# wait for all background jobs to finish
+wait
+
+# find the fastest server
+if [ -s "$temp_file" ]; then
+ fastest_vizier_mirror=$(sort -n -k1 $temp_file | head -n1 | awk '{print $2}')
+else
+ echo "No server responded"
+fi
+
+# clean up
+rm $temp_file
+
+# print the fastest server
+if [ -n "$fastest_vizier_mirror" ]; then
+ echo $fastest_vizier_mirror
+ exit 0
+fi
 
 # If we are still here - somthing is wrong
 echo "ERROR in $0
