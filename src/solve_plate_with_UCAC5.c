@@ -218,12 +218,16 @@ void set_catalog_search_parameters( double approximate_field_of_view_arcmin, str
  catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP * approximate_field_of_view_arcmin / 60.0;
  catalog_search_parameters->brightest_mag= 1.0;
  catalog_search_parameters->faintest_mag= 9.0;
- if ( approximate_field_of_view_arcmin < 500.0 ) {
+ //if ( approximate_field_of_view_arcmin < 500.0 ) {
+ if ( approximate_field_of_view_arcmin < 600.0 ) {
   catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP * approximate_field_of_view_arcmin / 60.0;
   catalog_search_parameters->brightest_mag= 2.0;
   catalog_search_parameters->faintest_mag= 12.0;
  }
- if ( approximate_field_of_view_arcmin < 400.0 ) {
+ // NMW scale
+ // change as the input approximate_field_of_view_arcmin is now the actual major side of the frame rather than a crude estiamte
+ //if ( approximate_field_of_view_arcmin < 400.0 ) {
+ if ( approximate_field_of_view_arcmin < 500.0 ) {
   catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP * approximate_field_of_view_arcmin / 60.0;
   catalog_search_parameters->brightest_mag= 5.0;
   catalog_search_parameters->faintest_mag= 13.0;
