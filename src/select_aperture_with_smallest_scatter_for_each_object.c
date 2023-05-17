@@ -155,7 +155,7 @@ int main( int argc, char **argv ) {
    // continue;
    //}
    sscanf_return_value= sscanf( comments_string, "%lf %lf  %lf %lf %lf %lf %lf %lf %lf %lf %[^\t\n]", &mag_a[1][i], &magerr_a[1][i], &mag_a[2][i], &magerr_a[2][i], &mag_a[3][i], &magerr_a[3][i], &mag_a[4][i], &magerr_a[4][i], &mag_a[5][i], &magerr_a[5][i], comments_string_without_multiple_apertures );
-   if ( 10 < sscanf_return_value ) {
+   if ( sscanf_return_value < 10 ) {
     fprintf( stderr, "ERROR parsing the comments string '%s' in %s while determining the best aperture for this object\n", comments_string, filenamelist[filename_counter] );
     continue;
    }

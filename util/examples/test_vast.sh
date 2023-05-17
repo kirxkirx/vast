@@ -19565,6 +19565,7 @@ TEST_PASSED=1
 echo "Performing best aperture selection test " 1>&2
 echo -n "Performing best aperture selection test: " >> vast_test_report.txt 
 
+### run with no extra comments
 # preapare
 util/clean_data.sh
 
@@ -19593,6 +19594,38 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES BESTAPSEL_002"
 fi
+
+### run with extra comments
+# preapare
+util/clean_data.sh
+
+# generate test data
+for i in $(seq -w 1 1000)
+do
+  outfile="out0${i}.dat"  
+  echo "2442659.54300 -11.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +11.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  CCD-TEMP=  -20.417621345447451  
+2442659.54300 -12.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +12.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  CCD-TEMP=  -20.417621345447451  
+2442659.54300 -13.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +13.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  CCD-TEMP=  -20.417621345447451  
+2442659.54300 -14.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +14.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  CCD-TEMP=  -20.417621345447451  
+2442659.54300 -15.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +15.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  CCD-TEMP=  -20.417621345447451  
+" > $outfile
+done
+
+# 1st run should find the non-default aperture as the best one for all the stars
+lib/select_aperture_with_smallest_scatter_for_each_object 2>&1 | grep 'Aperture with index 3 (REFERENCE_APERTURE_DIAMETER +0.10\*REFERENCE_APERTURE_DIAMETER) seems best for  1000 stars'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES BESTAPSEL_003"
+fi
+
+# 2nd run should find no non-default apertures
+lib/select_aperture_with_smallest_scatter_for_each_object 2>&1 | grep 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for  1000 stars'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES BESTAPSEL_004"
+fi
+
+#####
 
 # clean up
 util/clean_data.sh

@@ -117,7 +117,7 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
   if [ "$FILE_TO_UPDATE" == "lib/catalogs/asassnv.csv" ];then
    TMP_OUTPUT="asassnv.csv"
 #   WGET_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 --no-check-certificate 'https://asas-sn.osu.edu/variables.csv?action=index&controller=variables'"
-   WGET_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure -o $TMP_OUTPUT 'https://asas-sn.osu.edu/variables.csv?action=index&controller=variables'"
+   WGET_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure -o $TMP_OUTPUT \"https://asas-sn.osu.edu/variables.csv?action=index&controller=variables\""
 #   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 --no-check-certificate $LOCAL_SERVER/asassnv.csv"
    WGET_LOCAL_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure -o $TMP_OUTPUT $LOCAL_SERVER/asassnv.csv"
    UNPACK_COMMAND=""
