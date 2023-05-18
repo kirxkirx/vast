@@ -80,6 +80,12 @@ if [ "$LAST_CHAR_OF_VAST_PATH" != "/" ];then
 fi
 #
 
+################# !!!!!!!!!!!!!!!!!! #################
+echo "vizier.u-strasbg.fr"
+exit 0
+################# !!!!!!!!!!!!!!!!!! #################
+
+
 # The old code that returned the first responsive VizieR mirror
 ##for vizier_mirror in vizier.u-strasbg.fr vizier.cfa.harvard.edu vizier.hia.nrc.ca vizier.nao.ac.jp ;do
 #for vizier_mirror in vizier.u-strasbg.fr vizier.cfa.harvard.edu vizier.nao.ac.jp ;do
@@ -101,7 +107,8 @@ if [ -f $temp_file ];then
  rm -f $temp_file
 fi
 
-for vizier_mirror in vizier.u-strasbg.fr vizier.cfa.harvard.edu vizier.nao.ac.jp ;do
+#for vizier_mirror in vizier.u-strasbg.fr vizier.cfa.harvard.edu vizier.nao.ac.jp ;do
+for vizier_mirror in vizier.u-strasbg.fr vizier.cfa.harvard.edu ;do
  (
   # We are limited to 1sec accuracy if %N is not supported
   #start_time=$(date +%s%N)
