@@ -75,7 +75,7 @@ struct detected_star {
  /////////////////////////
  int matched_with_astrometric_catalog;
  int matched_with_photometric_catalog;
- // double match_distance_astrometric_catalog_arcsec;
+ double match_distance_astrometric_catalog_arcsec;
  //  char ucac4id[32];
  double d_ra;
  double d_dec;
@@ -146,6 +146,23 @@ static inline double compute_distance_on_sphere( double RA1_deg, double DEC1_deg
  distance= acos( cos_DEC1_rad * cos_DEC2_rad * cos( MAX( RA1_rad, RA2_rad ) - MIN( RA1_rad, RA2_rad ) ) + sin_DEC1_rad * sin_DEC2_rad ) / deg2rad_conversion;
 
  return distance;
+}
+
+void debug_dump_star_struct( struct detected_star *stars, int N ){
+ int i;
+ FILE *f;
+ f= fopen("debug_dump_star_struct.txt","w");
+ for ( i= 0; i < N ; i++ ) {
+  fprintf(f, "%lf %lf %lf %lf %lf %lf\n",
+                   stars[i].ra_deg_measured,
+                   stars[i].dec_deg_measured, 
+                   stars[i].match_distance_astrometric_catalog_arcsec,
+                   stars[i].catalog_ra,
+                   stars[i].catalog_dec,
+                   stars[i].catalog_mag);
+ }
+ fclose(f);
+ return;
 }
 
 void wcs_basename(const char *filename, char *new_filename) {
@@ -648,6 +665,8 @@ int read_UCAC5_from_vizquery( struct detected_star *stars, int N, char *vizquery
      stars[i].catalog_ra_original= catalog_ra_original;
      stars[i].catalog_dec_original= catalog_dec_original;
      // strncpy(stars[i].ucac4id,ucac4id,32);stars[i].ucac4id[32-1]='\0';
+     //
+     stars[i].match_distance_astrometric_catalog_arcsec= distance;
 
      // reset photometric info
      stars[i].APASS_B= 0.0;
@@ -1012,7 +1031,7 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
  double observing_epoch_jy, dt;
 
  double measured_ra, measured_dec, catalog_ra, catalog_dec, catalog_mag;
- // double distance;
+ double distance;
  double catalog_ra_original, catalog_dec_original;
  double cos_delta;
  int N_stars_matched_with_astrometric_catalog= 0;
@@ -1227,7 +1246,8 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
     //
     measured_ra= stars[detected_star_counter].ra_deg_measured;
     measured_dec= stars[detected_star_counter].dec_deg_measured;
-    if ( compute_distance_on_sphere( ucac_ra_deg, ucac_dec_deg, measured_ra, measured_dec ) < catalog_search_parameters->search_radius_deg ) {
+    distance= compute_distance_on_sphere( ucac_ra_deg, ucac_dec_deg, measured_ra, measured_dec );
+    if ( distance < catalog_search_parameters->search_radius_deg ) {
      if ( ( ucac_mag < stars[detected_star_counter].catalog_mag && stars[detected_star_counter].matched_with_astrometric_catalog == 1 ) || stars[detected_star_counter].matched_with_astrometric_catalog == 0 ) {
       //
       // fprintf(stderr,"DEBUG: we've got a match!\n");
@@ -1260,6 +1280,8 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
       stars[detected_star_counter].catalog_mag_err= 0.0;
       stars[detected_star_counter].catalog_ra_original= catalog_ra_original;
       stars[detected_star_counter].catalog_dec_original= catalog_dec_original;
+      //
+      stars[detected_star_counter].match_distance_astrometric_catalog_arcsec= distance;
       // reset photometric info
       stars[detected_star_counter].APASS_B= 0.0;
       stars[detected_star_counter].APASS_B_err= 0.0;
@@ -1300,6 +1322,7 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
 }
 
 int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
+ double epoch, pmRA, e_pmRA, pmDE, e_pmDE, dt, observing_epoch_jy, catalog_ra_original, catalog_dec_original;
  int N_stars_matched_with_astrometric_catalog= 0;
  double measured_ra, measured_dec, distance, catalog_ra, catalog_dec, catalog_mag;
  double cos_delta;
@@ -1365,11 +1388,12 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
   return 1;
  }
 
+/*
  // reset the catalog match flag if this wasn't the first iteration
  for ( i= 0; i < N; i++ ) {
   stars[i].matched_with_astrometric_catalog= 0;
  }
-
+*/
 
  f= fopen( vizquery_output_filename, "r" );
  while ( NULL != fgets( string, 1024, f ) ) {
@@ -1387,29 +1411,33 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
   if ( string[0] != ' ' && string[0] != '0' && string[0] != '1' && string[0] != '2' && string[0] != '3' && string[0] != '4' && string[0] != '5' && string[0] != '6' && string[0] != '7' && string[0] != '8' && string[0] != '9' )
    continue;
 */
-  //epoch= pmRA= e_pmRA= pmDE= e_pmDE= 0.0;
-  if ( 6 > sscanf( string, "%lf %lf %lf  %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &catalog_mag ) ) {
+  epoch= pmRA= e_pmRA= pmDE= e_pmDE= 0.0;
+  int sscanf_return_code = sscanf( string, "%lf %lf %lf %lf %lf %lf %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &catalog_mag, &epoch, &pmRA, &pmDE );
+  if ( 6 > sscanf_return_code ) { 
    continue;
   }
-  //epoch= pmRA= e_pmRA= pmDE= e_pmDE= 0.0;
+  if ( 9 > sscanf_return_code ) {
+   epoch= pmRA= e_pmRA= pmDE= e_pmDE= 0.0;
+  }
 
   cos_delta= cos( catalog_dec * M_PI / 180.0 );
 
   ///////////////// Account for proper motion /////////////////
-  //catalog_ra_original= catalog_ra;
-  //catalog_dec_original= catalog_dec;
-  //  assuming the epoch is a Julian Year https://en.wikipedia.org/wiki/Epoch_(astronomy)#Julian_years_and_J2000
-  //  assuming observing_epoch_jd is the same for all stars!
-  //observing_epoch_jy= 2000.0 + ( stars[0].observing_epoch_jd - 2451545.0 ) / 365.25;
-  //dt= observing_epoch_jy - epoch;
+  catalog_ra_original= catalog_ra;
+  catalog_dec_original= catalog_dec;
+  // assuming the epoch is a Julian Year https://en.wikipedia.org/wiki/Epoch_(astronomy)#Julian_years_and_J2000
+  // assuming observing_epoch_jd is the same for all stars!
+  observing_epoch_jy= 2000.0 + ( stars[0].observing_epoch_jd - 2451545.0 ) / 365.25;
+  dt= observing_epoch_jy - epoch;
   // https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/340
   // pmRA is UCAC/Gaia proper motion in RA*cosDE
-  //catalog_ra= catalog_ra + pmRA / ( 3600000 * cos_delta ) * dt;
-  //catalog_dec= catalog_dec + pmDE / 3600000 * dt;
+  catalog_ra= catalog_ra + pmRA / ( 3600000 * cos_delta ) * dt;
+  catalog_dec= catalog_dec + pmDE / 3600000 * dt;
   /////////////////////////////////////////////////////////////
 
   // Now find which input star that was
-  for ( i= 0; i < N; i++ ) {
+  //for ( i= 0; i < N; i++ ) {
+  for ( i= 0; i < MIN( N, MAX_STARS_IN_VIZQUERY) ; i++ ) {
    if ( stars[i].matched_with_astrometric_catalog == 1 ) {
     continue;
    }
@@ -1429,10 +1457,13 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
      // stars[i].catalog_mag_err=catalog_mag_err;
      stars[i].catalog_mag_err= 0.0;
      //stars[i].catalog_ra_original= catalog_ra_original;
-     stars[i].catalog_ra_original= stars[i].catalog_ra;
+     stars[i].catalog_ra_original= catalog_ra_original;
      //stars[i].catalog_dec_original= catalog_dec_original;
-     stars[i].catalog_dec_original= stars[i].catalog_dec;
+     stars[i].catalog_dec_original= catalog_dec_original;
      // strncpy(stars[i].ucac4id,ucac4id,32);stars[i].ucac4id[32-1]='\0';
+     
+     //
+     stars[i].match_distance_astrometric_catalog_arcsec= distance / 3600;
 
      // reset photometric info
      stars[i].APASS_B= 0.0;
@@ -1465,8 +1496,25 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
   fprintf( stderr, "ERROR: too few stars matched!\n" );
   return 1;
  }
+ 
+ /*
+ //
+ fprintf(stderr,"######################################\n");
+ for ( i= 0; i < MIN( N, MAX_STARS_IN_VIZQUERY) ; i++ ) {
+  if ( stars[i].matched_with_astrometric_catalog == 1 ) {
+   fprintf(stderr, "%lf %lf %lf %lf %lf %lf\n",
+                   stars[i].ra_deg_measured,
+                   stars[i].dec_deg_measured, 
+                   stars[i].match_distance_astrometric_catalog_arcsec,
+                   stars[i].catalog_ra,
+                   stars[i].catalog_dec,
+                   stars[i].catalog_mag);
+  }
+ }
+ fprintf(stderr,"######################################\n");
+ //
+ */
 
-/*
  // delete temporary files only on success
  if ( vizquery_run_success == 0 ) {
   if ( 0 != unlink( vizquery_input_filename ) )
@@ -1474,7 +1522,6 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
   if ( 0 != unlink( vizquery_output_filename ) )
    fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_output_filename );
  }
-*/
 
  return 0;
 }
@@ -1494,6 +1541,7 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
  char path_to_vast_string[VAST_PATH_MAX];
  get_path_to_vast( path_to_vast_string );
 
+
  // Try the local copy of UCAC5
  if ( 0 == search_UCAC5_localcopy( stars, N, catalog_search_parameters ) ) {
   fprintf( stderr, "The local UCAC5 search seems to be a success\n" );
@@ -1501,8 +1549,8 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
  } else {
   fprintf( stderr, "The local UCAC5 search failed. Trying remote search at scan\n" );
  }
- 
-/* 
+
+
  // Try the copy of UCAC5 at scan
  if ( 0 == search_UCAC5_at_scan( stars, N, catalog_search_parameters ) ) {
   fprintf( stderr, "The scan UCAC5 search seems to be a success\n" );
@@ -1511,7 +1559,8 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
   fprintf( stderr, "The scan UCAC5 search failed. Trying remote search with vizquery\n" );
   exit( 1 ); 
  }
-*/
+
+
  sprintf( vizquery_input_filename, "vizquery_%d.input", pid );
  sprintf( vizquery_output_filename, "vizquery_%d.output", pid );
  vizquery_input= fopen( vizquery_input_filename, "w" );
@@ -1799,6 +1848,8 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
  struct detected_star *only_good_starsmatched_with_catalog;
  int N_only_good; // counter for the structures array above
 
+ //debug_dump_star_struct( stars, N ); exit(1); // !!!!!!!!!!!!!!!!!!!!!!!!!!
+
  x= malloc( N * sizeof( double ) );
  if ( x == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for x(solve_plate_with_UCAC5.c)\n" );
@@ -2062,7 +2113,6 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
   // save the determined value of the local correction for this star
   stars[j].local_correction_ra= local_correction_ra;
   stars[j].local_correction_dec= local_correction_dec;
-  // stars[j].estimated_local_correction_accuracy=best_accuracy;
   //  If no correction was applied
   if ( best_accuracy > 9000 ) {
    stars[j].estimated_local_correction_accuracy= 0.0;
