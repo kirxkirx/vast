@@ -355,7 +355,8 @@ fi
 
 HOST_WE_ARE_RUNNING_AT=`hostname`
 
-PLATE_SOLVE_SERVERS="scan.sai.msu.ru polaris.kirx.net vast.sai.msu.ru"
+#PLATE_SOLVE_SERVERS="scan.sai.msu.ru polaris.kirx.net vast.sai.msu.ru"
+PLATE_SOLVE_SERVERS="polaris.kirx.net vast.sai.msu.ru"
 
 if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
 
@@ -566,6 +567,7 @@ fi
   # HACK Hack hack -- manually specify the field center and size
   # V1716 Sco VSX position 17:22:45.05 -41:37:16.3
   #$TIMEOUT_COMMAND 600 solve-field --ra 17:22:45.05 --dec -41:37:16.3 --radius 1.0 --objs 100 --depth 1-10,1-20,20-30 --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  #$TIMEOUT_COMMAND 600 solve-field --ra 17:22:45.05 --dec -41:37:16.3 --radius 40.0 --objs 100 --depth 1-10,1-20,20-30,1-100 --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # DART 04:57:09.65 -25:21:48.3
   #$TIMEOUT_COMMAND 600 solve-field --ra 04:57:09.65 --dec -25:21:48.3 --radius 30.0 --objs 100 --depth 1-10,1-20,20-30 --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # DART 07:45:59.02 +05:38:02.7
