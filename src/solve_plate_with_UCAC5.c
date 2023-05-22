@@ -1438,8 +1438,9 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
   /////////////////////////////////////////////////////////////
 
   // Now find which input star that was
-  //for ( i= 0; i < N; i++ ) {
-  for ( i= 0; i < MIN( N, MAX_STARS_IN_VIZQUERY) ; i++ ) {
+  for ( i= 0; i < N; i++ ) {
+  // nope, the for conditions below are wrong
+  //for ( i= 0; i < MIN( N, MAX_STARS_IN_VIZQUERY) ; i++ ) {
    if ( stars[i].matched_with_astrometric_catalog == 1 ) {
     continue;
    }
