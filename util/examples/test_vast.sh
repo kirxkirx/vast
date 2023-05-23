@@ -17341,7 +17341,7 @@ if [ ! -s test_vizquery_M31.output ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST003"
 fi
 # check that the whole output was received, if not - retry
-cat test_vizquery_M31.output | grep --quiet '#END#  -ref=VOT'
+cat test_vizquery_M31.output | grep --quiet '#END#'
 if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST_RETRY"
  # maybe this was a random network glitch? sleep 30 sec and retry
@@ -17377,7 +17377,7 @@ else
   FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST004_$TEST"
  fi
 fi
-cat test_vizquery_M31.output | grep --quiet '#END#  -ref=VOT'
+cat test_vizquery_M31.output | grep --quiet '#END#'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST005"
