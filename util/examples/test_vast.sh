@@ -5132,6 +5132,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 
 
 ##### Small CCD images test with FITS keyword recording #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then 
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
  cd ..
@@ -5290,9 +5292,13 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ##### Small CCD images test with NO FITS keyword recording #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then 
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
  cd ..
@@ -5450,6 +5456,8 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ##### Small CCD images test with size-mag filter enabled #####
@@ -7220,6 +7228,8 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ##### M31 ISON images test #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../M31_ISON_test ];then
  cd ..
@@ -7358,6 +7368,8 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 remove_test_data_to_save_space
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 ##### Gaia16aye images by S. Nazarov test #####
 ### Disable this test for GitHub Actions
@@ -14791,6 +14803,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 remove_test_data_to_save_space
 
 ######### ZTF image header test
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
@@ -14918,6 +14932,8 @@ if [ -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.f
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER_TEST_NOT_PERFORMED"
 fi
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 ######### ZTF image header test 2
 ### Disable this test for GitHub Actions
@@ -16905,6 +16921,9 @@ fi # if [ $? -eq 0 ];then
 
 
 ### Check the photometry error rescaling code
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then 
+
 if [ ! -d ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ];then
  cd ..
  curl -O "http://scan.sai.msu.ru/~kirx/pub/M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails.tar.bz2" && tar -xjf M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails.tar.bz2 && rm -f M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails.tar.bz2
@@ -16966,6 +16985,8 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 # Test if 'md5sum' is installed 
