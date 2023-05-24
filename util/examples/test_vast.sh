@@ -174,6 +174,10 @@ function remove_test_data_to_save_space {
  #########################################
  # Remove test data from the previous tests if we are out of disk space
  #########################################
+ ### Disable this for GitHub Actions
+ if [ "$GITHUB_ACTIONS" != "true" ];then 
+  return 0
+ fi
  # Skip free disk space check on some pre-defined machines
  # hope this check should work even if there is no 'hostname' command
  hostname | grep --quiet 'eridan' 
@@ -212,6 +216,10 @@ function remove_test_data_to_save_space {
 
 
 function check_if_enough_disk_space_for_tests {
+ ### Disable this for GitHub Actions
+ if [ "$GITHUB_ACTIONS" != "true" ];then 
+  return 0
+ fi
  hostname | grep --quiet 'eridan' 
  if [ $? -ne 0 ];then 
   # Check free disk space
