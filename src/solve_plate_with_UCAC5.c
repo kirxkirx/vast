@@ -1776,8 +1776,9 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
  //         "export BEST_VIZIER_MIRROR=%s; echo $BEST_VIZIER_MIRROR; export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$BEST_VIZIER_MIRROR -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
  //         VIZIER_SITE, path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
  // vizier.u-strasbg.fr - seems to be the only mirror serving APASS
+ // changing vizier.u-strasbg.fr to vizier.cds.unistra.fr 
  sprintf( command,
-          "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=vizier.u-strasbg.fr -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
+          "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=vizier.cds.unistra.fr -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
           path_to_vast_string, 
           path_to_vast_string, 
           (double)VIZIER_TIMEOUT_SEC, 

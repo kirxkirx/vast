@@ -81,7 +81,8 @@ fi
 #
 
 ################# !!!!!!!!!!!!!!!!!! #################
-echo "vizier.u-strasbg.fr"
+#echo "vizier.u-strasbg.fr"
+echo "vizier.cds.unistra.fr"
 exit 0
 ################# !!!!!!!!!!!!!!!!!! #################
 
