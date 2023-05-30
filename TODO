@@ -1,5 +1,3 @@
-* If both EGAIN and GAIN are present in the header - use EGAIN because NINA.
-
 * Fix 'catalog already exist' when trying to do single-image magnitude calibration,
 but the existing catalog contains only astrometry.
 

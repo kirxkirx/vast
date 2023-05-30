@@ -1,5 +1,7 @@
 vast-1.0rc87:
 	* Change the depricated VizieR vizier.u-strasbg.fr domain to vizier.cds.unistra.fr
+	Always use the CDS VizieR, do not try to use mirrors as they fail too often.
+	* When determining CCD gain in e-/ADU from a FITS header, prefer EGAIN over GAIN keyword.
 07 Apr 2023: vast-1.0rc86:
 	* Experimental support for TESS Full-Frame Images (FFIs). In terms of photometric precision, 
 	VaST currently cannot compete with the analysis codes specifically designed for TESS. 
