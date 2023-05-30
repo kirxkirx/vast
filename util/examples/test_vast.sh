@@ -13813,6 +13813,95 @@ fi
 ### Disable the above test for GitHub Actions
 fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
+######### SN2023ixf N130 image
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
+
+if [ ! -f ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test
+ curl -O "http://scan.sai.msu.ru/~kirx/pub/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit.bz2" && bunzip2 2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit.bz2
+ cd $WORKDIR
+fi
+
+if [ -f ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "SN2023ixf N130 image test " 1>&2
+ echo -n "SN2023ixf N130 image test: " >> vast_test_report.txt 
+ cp default.sex.ccd_example default.sex
+ lib/autodetect_aperture_main ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit 2>&1 | grep --quiet -- '-GAIN 1.001'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN1300EGAIN"
+ fi
+ lib/try_to_guess_image_fov ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit | grep --quiet '71'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN1300GUESSFOV"
+ fi
+ util/wcs_image_calibration.sh ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN1300PLATESOLVE"
+ fi
+ if [ ! -f wcs_2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130001"
+ fi 
+ lib/bin/xy2sky wcs_2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit 200 200 &>/dev/null
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130001a"
+ fi
+ util/solve_plate_with_UCAC5 ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit
+ if [ ! -s wcs_2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit.cat.ucac5 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130002"
+ else
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+  # expect 431
+  if [ $TEST -lt 300 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130002a_$TEST"
+  fi
+ fi 
+ # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
+ util/solve_plate_with_UCAC5 ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit 2>&1 | grep --quiet 'The output catalog wcs_2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit.cat.ucac5 already exist.'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130003"
+ fi
+ #
+ util/get_image_date ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit | grep --quiet "Exposure 400 sec, 18.05.2023 20:29:41 UT = JD(UT) 2460083.35626 mid. exp."
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130004"
+ fi
+
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mSN2023ixf N130 image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mSN2023ixf N130 image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130_TEST_NOT_PERFORMED"
+fi
+
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+
 
 ######### Many hot pixels image
 if [ ! -f ../individual_images_test/c176.fits ];then
