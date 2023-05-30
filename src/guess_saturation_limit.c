@@ -117,7 +117,7 @@ int check_if_gain_keyword_comment_looks_suspicious( char *gain_keyword_comment )
  return 0;
 }
 
-// Try to set the correct CCD gain from FITS image header
+// Try to set the correct CCD gain (in the units of e-/ADU) from FITS image header
 // operation_mode=0 // do nothing
 // operation_mode=1 // force the use of gain guessed from images
 // operation_mode=2 // try to be clever
@@ -227,6 +227,18 @@ int guess_gain( char *fitsfilename, char *resulting_sextractor_cl_parameter_stri
    }
   }
 
+  // N.I.N.A. (or is it PixInsight?) writes both EGAIN and GAIN keywords and the gain value is in EGAIN, so we try to find this keyword first
+  // EGAIN keyword
+  status= 0;
+  fits_read_key( fptr, TDOUBLE, "EGAIN", &gain_from_fits_header, NULL, &status );
+  if ( status == 0 ) {
+   fits_close_file( fptr, &status ); // close file
+   guessed_gain= gain_from_fits_header;
+   sprintf( resulting_sextractor_cl_parameter_string, "-GAIN %.3lf ", guessed_gain );
+   fprintf( stderr, "The gain value (EGAIN=%.3lf) is obtained from the FITS header of the image %s\n", guessed_gain, fitsfilename );
+   return 0;
+  }
+  
   // Normal GAIN keyword
   status= 0;
   fits_read_key( fptr, TDOUBLE, "GAIN", &gain_from_fits_header, comment_str, &status );
@@ -242,16 +254,7 @@ int guess_gain( char *fitsfilename, char *resulting_sextractor_cl_parameter_stri
     } // if( gain_from_fits_header >= 0.0 ) {
    }  // if( 0 == check_if_gain_keyword_comment_looks_suspicious(comment_str) ) {
   }   // if( status == 0 ) { // after fits_read_key()
-  // EGAIN keyword
-  status= 0;
-  fits_read_key( fptr, TDOUBLE, "EGAIN", &gain_from_fits_header, NULL, &status );
-  if ( status == 0 ) {
-   fits_close_file( fptr, &status ); // close file
-   guessed_gain= gain_from_fits_header;
-   sprintf( resulting_sextractor_cl_parameter_string, "-GAIN %.3lf ", guessed_gain );
-   fprintf( stderr, "The gain value (EGAIN=%.3lf) is obtained from the FITS header of the image %s\n", guessed_gain, fitsfilename );
-   return 0;
-  }
+
   // CCDSENS keyword
   status= 0;
   fits_read_key( fptr, TDOUBLE, "CCDSENS", &gain_from_fits_header, NULL, &status );
