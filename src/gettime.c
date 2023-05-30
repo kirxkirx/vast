@@ -652,7 +652,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  char Tm_h[10], Tm_m[10], Tm_s[FLEN_CARD]; // We want a lot of memeory for Tm_s for cases like '2020-11-21T18:10:43.4516245'
  char Da_y[10], Da_m[10], Da_d[FLEN_CARD]; // We want more memeory for Da_d for cases like '2020-11-21.1234567
 
- char DATEOBS[32], TIMEOBS[32], TIMESYS[32];
+ //char DATEOBS[32], TIMEOBS[32], TIMESYS[32];
+ char DATEOBS[FLEN_CARD], TIMEOBS[FLEN_CARD], TIMESYS[FLEN_CARD];
  char DATEOBS_COMMENT[2048];  // make it long, just in case
  char EXPOSURE_COMMENT[2048]; // make it long, just in case
  char tymesys_str_in[32];
@@ -709,9 +710,12 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 
  // char DATEOBS[32], TIMEOBS[32], TIMESYS[32];
  // char DATEOBS_COMMENT[2048]; // make it long, just in case
- memset( DATEOBS, 0, 32 );
- memset( TIMEOBS, 0, 32 );
- memset( TIMESYS, 0, 32 );
+ //memset( DATEOBS, 0, 32 );
+ //memset( TIMEOBS, 0, 32 );
+ //memset( TIMESYS, 0, 32 );
+ memset( DATEOBS, 0, FLEN_CARD );
+ memset( TIMEOBS, 0, FLEN_CARD );
+ memset( TIMESYS, 0, FLEN_CARD );
  memset( DATEOBS_COMMENT, 0, 2048 );
  memset( EXPOSURE_COMMENT, 0, 2048 );
 
@@ -925,7 +929,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   exposure= 0.0;
  }
  // cleanup
- memset( DATEOBS, 0, 32 );
+ //memset( DATEOBS, 0, 32 );
+ memset( DATEOBS, 0, FLEN_CARD );
  memset( DATEOBS_COMMENT, 0, 2048 );
  fits_clear_errmsg(); // clear the CFITSIO error message stack
  status= 0;
@@ -1433,7 +1438,9 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     fprintf( stderr, "Setting observation time using %s keyword: %s\n", DATEOBS_KEY_NAME, DATEOBS );
    jj= 0;
    for ( j+= 1; j < 32; j++ ) {
-    if ( DATEOBS[j] == '\0' ) {
+    //if ( DATEOBS[j] == '\0' ) {
+    // explicitly handle 2023-05-17T23:22:38.894T00:00:24.955
+    if ( DATEOBS[j] == '\0' || DATEOBS[j] == 'T' ) {
      TIMEOBS[jj]= '\0';
      break;
     }

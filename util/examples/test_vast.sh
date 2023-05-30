@@ -19302,6 +19302,18 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  fi
 done
 
+# Check funny input
+util/get_image_date 2023-05-17T23:22:38.894T00:00:24.955 | grep --quiet 'Exposure   0 sec, 17.05.2023 23:22:39   = JD  2460082.47406'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV027"
+fi
+util/get_image_date 2023-05-17T23:22:38.894T99:00:24.955 | grep --quiet 'Exposure   0 sec, 17.05.2023 23:22:39   = JD  2460082.47406'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV027"
+fi
+
 # Now make sure there are no residual files
 for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  if [ -f "$TMP_FITS_FILE" ];then
