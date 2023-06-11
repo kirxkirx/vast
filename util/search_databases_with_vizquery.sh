@@ -715,8 +715,9 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    #
    # Generic VizieR search for the word 'variable'
    if [ $KNOWN_VARIABLE -eq 0 ];then
-    #GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -words='variable' -meta -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep Title | grep 'ariable' | sed 's:#Title\: ::g')
-    GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -words='variable' -meta -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep 'rights' | grep 'ariable' | awk -F'.html' '{print $2}')
+    GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -words='variable' -meta -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep 'Title' | grep --ignore-case -e 'variable' -e 'variability' | grep -v 'Northern Sky Variability Survey' | sed 's:#Title\: ::g')
+    #echo $LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -words='variable' -meta -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" # 2>/dev/null | grep 'rights' | grep 'ariable' | awk -F'.html' '{print $2}'
+    #GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -words='variable' -meta -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep 'rights' | grep 'ariable' | awk -F'.html' '{print $2}')
     if [ -n "$GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS" ];then
      SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING may be a known variable - check VizieR  "
     fi
