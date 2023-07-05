@@ -73,6 +73,7 @@ for i in `cat candidates-transients.lst | awk '{print $1}'` ;do
  #### The limiting magnitude is HARDCODED HERE!!! ####
  #TEST=`echo ${A/\n/} | awk '{print ($1+$2)/2">13.5"}'`
  #echo "################### DEBUG ${A/\n/} ###################"
+ #     !!!!!!!!!!!! HARDCODED MAGNITUDE LIMIT !!!!!!!!!!!!
  TEST=`echo "$MAG_ON_FIRST_SECOND_EPOCH_IMAGE $MAG_ON_SECOND_SECOND_EPOCH_IMAGE" | awk '{if ( ($1+$2)/2 > 13.5 ) print 1 ;else print 0 }'`
  if [ -z "$TEST" ];then
   echo "ERROR in $0 
