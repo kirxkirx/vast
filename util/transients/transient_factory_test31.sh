@@ -30,9 +30,12 @@ FILTER_MAX_ELONGATION_AminusB_PIX=0.55
 FILTER_BRIGHT_MAG_CUTOFF="-5"
 FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="13.5"
 
+MAX_NUMBER_OF_CANDIDATES_PER_FIELD=20
+
 # One or more Source Extractor configuration files to run the analysis with
 # Typically, the first run is optimized to detect bright targets while the second one is optimized for faint targets
 SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4"
+SEXTRACTOR_CONFIG_BRIGHTSTARPASS=$(echo $SEXTRACTOR_CONFIG_FILES | awk '{print $1}')
 
 # Comment-out TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION if unsure
 TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
@@ -398,7 +401,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  fi
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -gt 2 ];then
   # There are more than two second-epoch images - do a preliminary VaST run to choose the two images with best seeing
-  cp -v default.sex.telephoto_lens_onlybrightstars_v1 default.sex >> transient_factory_test31.txt
+  #cp -v default.sex.telephoto_lens_onlybrightstars_v1 default.sex >> transient_factory_test31.txt
+  cp -v $SEXTRACTOR_CONFIG_BRIGHTSTARPASS default.sex >> transient_factory_test31.txt
   echo "Preliminary VaST run on the second-epoch images only" >> transient_factory_test31.txt
   echo "./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit"  "$NEW_IMAGES"/*"$FIELD"_*_*.fts >> transient_factory_test31.txt
   ./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit  "$NEW_IMAGES"/*"$FIELD"_*_*.fts > prelim_vast_run.log 2>&1
@@ -763,7 +767,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    fi
    if [ ! -L "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
     ### ===> SExtractor config file <===
-    if [ "$SEXTRACTOR_CONFIG_FILE" != "default.sex.telephoto_lens_v4" ];then
+    #if [ "$SEXTRACTOR_CONFIG_FILE" != "default.sex.telephoto_lens_v4" ];then
+    if [ "$SEXTRACTOR_CONFIG_FILE" == "$SEXTRACTOR_CONFIG_BRIGHTSTARPASS" ];then
      # save the solved plate to local cache, but only if it's not already a symlink
      echo "Saving $WCS_IMAGE_NAME_FOR_CHECKS to local_wcs_cache/" >> transient_factory_test31.txt
      cp -v "$WCS_IMAGE_NAME_FOR_CHECKS" local_wcs_cache/ >> transient_factory_test31.txt 2>&1
@@ -783,9 +788,9 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
  IMAGE_FOV_ARCMIN=$(util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image size:' | awk '{print $3}' | awk -F"'" '{print $1}')
  # 1 deg hard limit for the NMW camera
- FOV_DEG_LIMIT_HARD=$(echo "$IMAGE_FOV" | awk '{printf "%.1lf",$1/466.5*1.0}')
+ FOV_DEG_LIMIT_HARD=$(echo "$IMAGE_FOV_ARCMIN" | awk '{printf "%.3f",$1/466.5*1.0}')
  # 0.25 deg soft limit for the NMW camera
- FOV_DEG_LIMIT_SOFT=$(echo "$IMAGE_FOV" | awk '{printf "%.1lf",$1/466.5*0.25}')
+ FOV_DEG_LIMIT_SOFT=$(echo "$IMAGE_FOV_ARCMIN" | awk '{printf "%.3f",$1/466.5*0.25}')
 
  # Compare image centers of the reference and second-epoch image
  WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $REFERENCE_EPOCH__FIRST_IMAGE)"
@@ -802,14 +807,15 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 Reference image center $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE
 Second-epoch image center $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE
 Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
+Soft limit: $FOV_DEG_LIMIT_SOFT deg.  Hard limit: $FOV_DEG_LIMIT_HARD deg.
 ###################################" >> transient_factory_test31.txt
  ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
  #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>1.0" | bc -ql`
  TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_HARD" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
  if [ $TEST -eq 1 ];then
   if [ "$CHECK_POINTING_ACCURACY" = "YES" ] || [ "$CHECK_POINTING_ACCURACY" = "Yes" ] || [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
-   echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
-   echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg." >> transient_factory_test31.txt
+   echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)"
+   echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" >> transient_factory_test31.txt
    break
    # This should break us form the SEXTRACTOR_CONFIG_FILE cycle
   fi
@@ -820,8 +826,8 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_SOFT" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
  if [ $TEST -eq 1 ];then
   if [ "$CHECK_POINTING_ACCURACY" = "YES" ] || [ "$CHECK_POINTING_ACCURACY" = "Yes" ] || [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
-   echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
-   echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg." >> transient_factory_test31.txt
+   echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)"
+   echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" >> transient_factory_test31.txt
    #break
    # Not break'ing here, the offset is not hpelessly large and we want to keep candidates from this field
   fi
@@ -1192,7 +1198,8 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
     ### ===> ASSUMED MAX NUMBER OF CANDIDATES <===
     ### ===> FIELD NAME HARDCODED HERE <===
     # drop the limit no the number of candidates for the all-important Galactic Center field
-    if [ $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS -gt 20 ] && [ "$FIELD" != "Sco6" ] ;then
+    #if [ $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS -gt 20 ] && [ "$FIELD" != "Sco6" ] ;then
+    if [ $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS -gt $MAX_NUMBER_OF_CANDIDATES_PER_FIELD ] && [ "$FIELD" != "Sco6" ] ;then
      echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding asteroids and hot pixels), not updating the exclusion list!"
      echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding asteroids and hot pixels), not updating the exclusion list!" >> transient_factory_test31.txt
      ALLOW_EXCLUSION_LIST_UPDATE="NO"
