@@ -881,7 +881,13 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  echo "Running solve_plate_with_UCAC5" >> transient_factory_test31.txt
  for i in $(cat vast_image_details.log | awk '{print $17}' | sort | uniq) ;do 
   # This should ensure the correct field-of-view guess by setting the TELESCOP keyword
-  TELESCOP="NMW_camera" util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1  $i  &
+  #TELESCOP="NMW_camera" util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1  $i  &
+  if [ -z "$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" ];then
+   TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/wcs_image_calibration.sh $i &
+  else
+   # Not explicitly setting the telescope name, let the script guess the FoV
+   util/wcs_image_calibration.sh $i &
+  fi
  done 
 
  
@@ -917,7 +923,12 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
  fi
  echo "____ Start of magnitude calibration ____" >> transient_factory_test31.txt
+ # Decide which catalog to use for magnitude calibration depending on the image filed of view
+ # Tycho-2 magnitude calibration for wide-field images
+ # (Tycho-2 is relatively small, so it's convenient to have a local copy of the catalog)
  echo "y" | util/transients/calibrate_current_field_with_tycho2.sh >> transient_factory_test31.txt 2>&1
+ # APASS magnitude calibration for narrow-field images
+ # util/magnitude_calibration.sh V zero_point >> transient_factory_test31.txt
  echo "____ End of magnitude calibration ____" >> transient_factory_test31.txt
  MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
  # Check that the magnitude calibration actually worked
