@@ -3627,7 +3627,7 @@ int main( int argc, char **argv ) {
   STAR1[NUMBER1 - 1].n_rejected= 0; // init
                                     //
   // It is OK for a very bright saturated object to be big
-  if ( a_a > aperture && sextractor_flag < 4 ) {
+  if ( a_a > 2*aperture && sextractor_flag < 4 ) {
    counter_rejected_too_large++;
    STAR1[NUMBER1 - 1].vast_flag= 1;
   }
@@ -4225,7 +4225,7 @@ int main( int argc, char **argv ) {
      NUMBER2++;
      STAR2[NUMBER2 - 1].vast_flag= 0;
      // It is OK for a very bright saturated object to be big
-     if ( a_a > aperture && sextractor_flag < 4 ) {
+     if ( a_a > 2*aperture && sextractor_flag < 4 ) {
       counter_rejected_too_large++;
       STAR2[NUMBER2 - 1].vast_flag= 1;
      }

@@ -379,6 +379,8 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
  char telescop_comment[FLEN_COMMENT];
  char roi[FLEN_VALUE];
  char roi_comment[FLEN_COMMENT];
+ char instrume[FLEN_VALUE];
+ char instrume_comment[FLEN_COMMENT];
  char *pointer_to_the_key_start;
  // fitsio
  int status= 0;
@@ -513,7 +515,29 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
  if ( strlen( telescop ) >= 12 ) { // 01234567890
   pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "F=135mm, 2.0", 12 );
   if ( pointer_to_the_key_start != NULL ) {
+   // Sweet, but we may have TELESCOP= 'F=135mm, 2.0' for both the old SBIG ST-8300M and
+   // the new SBIG STL-11000 CCD camera, which is twice as big
+   //
+   // default
+   // SBIG ST-8300M
    ( *estimated_fov_arcmin )= 350.0;
+   // We need to repoen the FITS file
+   fits_open_file( &fptr, fitsfilename, READONLY, &status );
+   if ( 0 == status ) {
+    // check if it's actually SBIG STL-11000
+    fits_read_key( fptr, TSTRING, "INSTRUME", instrume, instrume_comment, &status );
+    if ( 0 == status ) {
+     if ( strlen( instrume ) >= 13 ) {                                      // 012345678901234
+      pointer_to_the_key_start= (char *)memmem( instrume, strlen( instrume ), "SBIG STL-11000", 13 );
+      if ( pointer_to_the_key_start != NULL ) {
+       ( *estimated_fov_arcmin )= 600.0;
+       return 0;
+      }
+     }
+    }
+    fits_close_file( fptr, &status );
+   }
+   status= 0; // reset status
    return 0;
   }
  }

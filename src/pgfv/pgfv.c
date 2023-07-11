@@ -2507,7 +2507,10 @@ int main( int argc, char **argv ) {
         if ( CONST * ( sextractor_catalog__A_IMAGE[marker_counter] + sextractor_catalog__ERRA_IMAGE[marker_counter] ) < MIN_SOURCE_SIZE_APERTURE_FRACTION * APER ) {
          bad_size= 1;
         }
-        if ( sextractor_catalog__A_IMAGE[marker_counter] > APER && sextractor_catalog__se_FLAG[marker_counter] < 4 ) {
+        // That has to match two filtering lines in vast.c
+        //if ( sextractor_catalog__A_IMAGE[marker_counter] > APER && sextractor_catalog__se_FLAG[marker_counter] < 4 ) {
+        // Allow for large unsaturrated stars: example - VX Sgr with low detection limit, test NMWNSGR20N40410
+        if ( sextractor_catalog__A_IMAGE[marker_counter] > 2*APER && sextractor_catalog__se_FLAG[marker_counter] < 4 ) {
          bad_size= 1;
         }
         if ( sextractor_catalog__A_IMAGE[marker_counter] + sextractor_catalog__ERRA_IMAGE[marker_counter] < FWHM_MIN ) {
@@ -2516,6 +2519,7 @@ int main( int argc, char **argv ) {
         if ( sextractor_catalog__B_IMAGE[marker_counter] + sextractor_catalog__ERRB_IMAGE[marker_counter] < FWHM_MIN ) {
          bad_size= 1;
         }
+        
         if ( bad_size == 0 ) {
          fprintf( stderr, "A= \E[01;32m%lf +/- %lf\E[33;00m  B= \E[01;32m%lf +/- %lf\E[33;00m\nFWHM(A)= \E[01;32m%lf +/- %lf\E[33;00m  FWHM(B)= \E[01;32m%lf +/- %lf\E[33;00m\n", sextractor_catalog__A_IMAGE[marker_counter], sextractor_catalog__ERRA_IMAGE[marker_counter], sextractor_catalog__B_IMAGE[marker_counter], sextractor_catalog__ERRB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__A_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__B_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRB_IMAGE[marker_counter] );
         } else {

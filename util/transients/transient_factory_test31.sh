@@ -19,6 +19,9 @@
 #
 #################################
 
+########### Default settings describing the old NMW camera:
+# Canon 135 mm f/2.0 telephoto lens + SBIG ST-8300M CCD, 20 sec exposures
+
 # Normally should be YES,
 # if set to NO '===> POINTING ACCURACY LIMITS HARDCODED HERE <===' will be ignored.
 CHECK_POINTING_ACCURACY="YES"
@@ -34,11 +37,15 @@ MAX_NUMBER_OF_CANDIDATES_PER_FIELD=20
 
 # One or more Source Extractor configuration files to run the analysis with
 # Typically, the first run is optimized to detect bright targets while the second one is optimized for faint targets
-SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4"
+#SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4"
+SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v5"
 SEXTRACTOR_CONFIG_BRIGHTSTARPASS=$(echo $SEXTRACTOR_CONFIG_FILES | awk '{print $1}')
 
 # Comment-out TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION if unsure
 TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
+
+# You probably don't need to change anything below this line
+#################################
 
 #################################
 # Set the safe locale that should be available on any POSIX system
