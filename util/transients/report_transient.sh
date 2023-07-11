@@ -331,113 +331,104 @@ DEC_MEAN_SPACES=${DEC_MEAN_HMS//":"/" "}
 #
 
 ############
-### Apply the exclusion list. It may be generated from the previous-day(s) report file(s) 
+### Apply the never_exclude list to override all the following exclusion lists
+SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=0
+STAR_IN_NEVEREXCLUDE_LIST_MESSAGE=""
+EXCLUSION_LIST_FILE="neverexclude_list.txt"
+if [ -s "$EXCLUSION_LIST_FILE" ];then
+ lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 17 | grep --quiet "FOUND"
+ if [ $? -eq 0 ];then
+  SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
+  STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="THIS STAR IS LISTED IN $EXCLUSION_LIST_FILE "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 17 | grep "FOUND" | awk -F'FOUND' '{print $2}')
+ fi
+fi
 #
-# We are not making a 'for' cycle here because we want different exclusion radii to be applied to different catalogs
-EXCLUSION_LIST_FILE="exclusion_list.txt"
-if [ -s "$EXCLUSION_LIST_FILE" ];then
- # Exclude previously considered candidates
- #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
-# while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
-#  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 17/3600.0 ) print "FOUND" }' | grep "FOUND" && break
-# done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND"
+if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
+ ### Apply the exclusion list. It may be generated from the previous-day(s) report file(s) 
  #
- #echo 1 lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 17 1>&2
- #cp "$EXCLUSION_LIST_FILE" /tmp/
- #
- lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 17 | grep --quiet "FOUND"
- if [ $? -eq 0 ];then
-  echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
-  clean_tmp_files
-  exit 1
- fi
-fi 
-### Apply the bright BSC bright stars exclusion list
-EXCLUSION_LIST_FILE="exclusion_list_bbsc.txt"
-if [ -s "$EXCLUSION_LIST_FILE" ];then
- # Exclude previously considered candidates
- #echo "Checking $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE" 
-# while read RA_EXLUSION_LIST DEC_EXLUSION_LIST REST_JUST_IN_CASE ;do
-#  lib/put_two_sources_in_one_field "$RA_EXLUSION_LIST" "$DEC_EXLUSION_LIST" "$RA_MEAN_HMS" "$DEC_MEAN_HMS" 2>/dev/null | grep 'Angular distance' | awk '{if ( $5 < 240/3600.0 ) print "FOUND" }' | grep "FOUND" && break
-# done < "$EXCLUSION_LIST_FILE" | grep --quiet "FOUND" 
- #
- #echo 2 lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 240 1>&2
- #cp "$EXCLUSION_LIST_FILE" /tmp/
- #
- lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 240 | grep --quiet "FOUND"
- if [ $? -eq 0 ];then
-  echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
-  clean_tmp_files
-  exit 1
- fi
-fi
-### Apply the BSC bright stars exclusion list
-EXCLUSION_LIST_FILE="exclusion_list_bsc.txt"
-if [ -s "$EXCLUSION_LIST_FILE" ];then
- # Exclude previously considered candidates
- #
- lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 130 | grep --quiet "FOUND"
- if [ $? -eq 0 ];then
-  echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
-  clean_tmp_files
-  exit 1
- fi
-fi
-### Apply the Tycho-2 bright stars exclusion list
-EXCLUSION_LIST_FILE="exclusion_list_tycho2.txt"
-if [ -s "$EXCLUSION_LIST_FILE" ];then
- # Exclude previously considered candidates
- #
- lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 20 | grep --quiet "FOUND"
- if [ $? -eq 0 ];then
-  echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
-  clean_tmp_files
-  exit 1
- fi
-fi 
-# It may be generated from the local
-EXCLUSION_LIST_FILE="exclusion_list_local.txt"
-if [ -s "$EXCLUSION_LIST_FILE" ];then
- # Exclude previously considered candidates
- #
- lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 17 | grep --quiet "FOUND"
- if [ $? -eq 0 ];then
-  echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
-  clean_tmp_files
-  exit 1
- fi
-fi
-############
-# do this only if $VIZIER_SITE is set
-if [ ! -z "$VIZIER_SITE" ];then
- # if this is a new source
- if [ `cat $LIGHTCURVEFILE | wc -l` -eq 2 ];then
-  # New last-ditch effort, search Gaia DR2 for a known star of approximately the same brightenss
-  ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
-  MAG_BRIGHT_SEARCH_LIMIT=0.0
-  #MAG_FAINT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1+1.00}'`
-  # V1858 Sgr from NMW_Sgr9_crash_test is the borderline case
-  MAG_FAINT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.98}'`
-  # We assume $TIMEOUTCOMMAND is set by the parent script
-  $TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/345/gaia2  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=17  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -v \# | grep -v "\---" | grep -v "sec" | grep -v 'Gma' | grep -v "RA_ICRS" | grep --quiet -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE'
+ # We are not making a 'for' cycle here because we want different exclusion radii to be applied to different catalogs
+ EXCLUSION_LIST_FILE="exclusion_list.txt"
+ if [ -s "$EXCLUSION_LIST_FILE" ];then
+  # Exclude previously considered candidates
+  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 17 | grep --quiet "FOUND"
   if [ $? -eq 0 ];then
-   echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2   (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT)"
-   echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt
+   echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
    clean_tmp_files
    exit 1
-  fi # if Gaia DR2 match found
-  # The trouble is... Gaia catalog is missing many obvious bright stars
-  # So if the Gaia search didn't work well - let's try APASS (chosen because it has good magnitudes and is deep enough for NMW)
-  NUMBER_OF_NONEMPTY_LINES=`$TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=II/336  -out.max=1 -out.add=_r -out.form=mini  -sort=Vmag Vmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=17  -out=recno,RAJ2000,DEJ2000,Vmag 2>/dev/null | grep -v \# | grep -v "\---" |grep -v "sec" | grep -v 'Vma' | grep -v "RAJ" | sed '/^[[:space:]]*$/d' | wc -l`
-  if [ $NUMBER_OF_NONEMPTY_LINES -gt 0 ];then
-   echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in APASS   (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#)"
-   echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_apass.txt
+  fi
+ fi 
+ ### Apply the bright BSC bright stars exclusion list
+ EXCLUSION_LIST_FILE="exclusion_list_bbsc.txt"
+ if [ -s "$EXCLUSION_LIST_FILE" ];then
+  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 240 | grep --quiet "FOUND"
+  if [ $? -eq 0 ];then
+   echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
    clean_tmp_files
    exit 1
-  fi # if APASS match found  
- fi # if this is a new source
-fi # if $VIZIER_SITE is set
-############
+  fi
+ fi
+ ### Apply the BSC bright stars exclusion list
+ EXCLUSION_LIST_FILE="exclusion_list_bsc.txt"
+ if [ -s "$EXCLUSION_LIST_FILE" ];then
+  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 130 | grep --quiet "FOUND"
+  if [ $? -eq 0 ];then
+   echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
+   clean_tmp_files
+   exit 1
+  fi
+ fi
+ ### Apply the Tycho-2 bright stars exclusion list
+ EXCLUSION_LIST_FILE="exclusion_list_tycho2.txt"
+ if [ -s "$EXCLUSION_LIST_FILE" ];then
+  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 20 | grep --quiet "FOUND"
+  if [ $? -eq 0 ];then
+   echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
+   clean_tmp_files
+   exit 1
+  fi
+ fi 
+ # It may be generated from the local
+ EXCLUSION_LIST_FILE="exclusion_list_local.txt"
+ if [ -s "$EXCLUSION_LIST_FILE" ];then
+  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 17 | grep --quiet "FOUND"
+  if [ $? -eq 0 ];then
+   echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
+   clean_tmp_files
+   exit 1
+  fi
+ fi
+ ############
+ # do this only if $VIZIER_SITE is set
+ if [ ! -z "$VIZIER_SITE" ];then
+  # if this is a new source
+  if [ `cat $LIGHTCURVEFILE | wc -l` -eq 2 ];then
+   # New last-ditch effort, search Gaia DR2 for a known star of approximately the same brightenss
+   ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
+   MAG_BRIGHT_SEARCH_LIMIT=0.0
+   #MAG_FAINT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1+1.00}'`
+   # V1858 Sgr from NMW_Sgr9_crash_test is the borderline case
+   MAG_FAINT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.98}'`
+   # We assume $TIMEOUTCOMMAND is set by the parent script
+   $TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/345/gaia2  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=17  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -v \# | grep -v "\---" | grep -v "sec" | grep -v 'Gma' | grep -v "RA_ICRS" | grep --quiet -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE'
+   if [ $? -eq 0 ];then
+    echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2   (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT)"
+    echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt
+    clean_tmp_files
+    exit 1
+   fi # if Gaia DR2 match found
+   # The trouble is... Gaia catalog is missing many obvious bright stars
+   # So if the Gaia search didn't work well - let's try APASS (chosen because it has good magnitudes and is deep enough for NMW)
+   NUMBER_OF_NONEMPTY_LINES=`$TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=II/336  -out.max=1 -out.add=_r -out.form=mini  -sort=Vmag Vmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=17  -out=recno,RAJ2000,DEJ2000,Vmag 2>/dev/null | grep -v \# | grep -v "\---" |grep -v "sec" | grep -v 'Vma' | grep -v "RAJ" | sed '/^[[:space:]]*$/d' | wc -l`
+   if [ $NUMBER_OF_NONEMPTY_LINES -gt 0 ];then
+    echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in APASS   (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#)"
+    echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_apass.txt
+    clean_tmp_files
+    exit 1
+   fi # if APASS match found  
+  fi # if this is a new source
+ fi # if $VIZIER_SITE is set
+ ############
+fi # if [ SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
 
 ### Print it only of the source passes the final check in order not to confuse the test script
 #     Reference image    2010 12 10.0833  2455540.5834  13.61  06:29:12.25 +26:24:19.4
@@ -451,7 +442,7 @@ Mean magnitude and position on the discovery images:
 # Galactic coordinates of the transient
 GALACTIC_COORDINATES=`lib/bin/skycoor -g $RADEC_MEAN_HMS J2000`
 
-echo "$GALACTIC_COORDINATES   Second-epoch detections are separated by $ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING\" and $PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING pix"
+echo "$GALACTIC_COORDINATES   Second-epoch detections are separated by $ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING\" and $PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING pix   $STAR_IN_NEVEREXCLUDE_LIST_MESSAGE"
 
 # Check if this is a known source or if it looks like a hot pixel
 lib/catalogs/check_catalogs_offline $RA_MEAN $DEC_MEAN
@@ -578,8 +569,10 @@ fi
 
 echo "<br>"
 
-# Write this transient to local exclusion list
-echo "$RADEC_MEAN_HMS" >> exclusion_list_local.txt
+if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
+ # Write this transient to local exclusion list
+ echo "$RADEC_MEAN_HMS" >> exclusion_list_local.txt
+fi
 
 # just in case
 clean_tmp_files

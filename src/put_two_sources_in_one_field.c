@@ -206,10 +206,14 @@ int main( int argc, char **argv ) {
  FILE *filelist_input_positions;
  char str1[512];
  char str2[512];
+ char str_comment[512];
+ int sscanf_return_value;
  char input_buffer[4096];
  double search_radius_arcsec;
  unsigned int i;
  int string_looks_ok;
+ int string_contains_number;
+ int string_dot_or_semicolon;
 
  if ( argc < 5 ) {
   fprintf( stderr, "Usage:\n%s RA1 DEC1 RA2 DEC2\nor\n%s RA1 DEC1 radeclist.txt search_radius_arcsec\n", argv[0], argv[0] );
@@ -247,18 +251,49 @@ int main( int argc, char **argv ) {
   if ( 0 == string_looks_ok ) {
    continue;
   }
-  //
-  if ( 2 != sscanf( input_buffer, "%s %s", str1, str2 ) ) {
+  // check that the string contains a number
+  string_contains_number= 0;
+  for ( i= 0; i < strlen( input_buffer ) - 1; i++ ) {
+   if( 0 != isdigit(input_buffer[i]) ) {
+    string_contains_number= 1;
+   }
+  }
+  if ( 0 == string_contains_number ) {
+   continue;
+  }
+  // check that the string contains dot or semicolon
+  string_dot_or_semicolon= 0;
+  for ( i= 0; i < strlen( input_buffer ) - 1; i++ ) {
+   if( input_buffer[i] == '.' || input_buffer[i] == ':' ) {
+    string_dot_or_semicolon= 1;
+   }
+  }
+  if ( 0 == string_dot_or_semicolon ) {
+   continue;
+  }
+  
+  // OK, this may be a "RA DEC" or "RA DEC COMMENTS" type string
+  sscanf_return_value= sscanf( input_buffer, "%s %s %[^\n]", str1, str2, str_comment );
+  
+  if( sscanf_return_value < 2 ) {
    str1[0]= '\0';
    str2[0]= '\0';
+   str_comment[0]= '\0';
    continue;
   }
   str1[512 - 1]= '\0';
   str2[512 - 1]= '\0';
+  if( sscanf_return_value == 2 ){
+   str_comment[0]= '\0';
+  } else {
+   str_comment[512 - 1]= '\0';
+  }
   // fprintf(stderr, "str1='%s' str2='%s'\n",str1,str2);
   if ( 0 == compute_angular_distance_and_print_result( argv[1], argv[2], str1, str2, search_radius_arcsec ) ) {
-   fprintf( stdout, "FOUND\n" );
-   return 0;
+   //fprintf( stdout, "FOUND\n" );
+   fprintf( stdout, "FOUND %s\n", str_comment);
+   break;
+   //return 0;
   }
  }
  fclose( filelist_input_positions );

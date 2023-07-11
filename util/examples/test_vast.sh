@@ -18899,6 +18899,128 @@ if [ $? -eq 0 ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION014_TOO_FAR_$DISTANCE_ARCSEC"
   fi
  fi
+ # test put_two_sources_in_one_field with lists
+ # the simple exclusion list
+ echo "15:57:35.3 +26:52:40
+15:59:30.2 +25:55:13
+16:01:26.6 +29:51:04
+16:12:45.3 +26:40:15
+16:15:47.4 +27:25:20
+16:16:44.8 +29:09:01" > exclusion_list_autotest.txt
+ lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_001"
+ fi
+ lib/put_two_sources_in_one_field 15:59:30.2 +25:55:13 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_002"
+ fi
+ lib/put_two_sources_in_one_field 16:16:44.8 +29:09:01 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_003"
+ fi
+ lib/put_two_sources_in_one_field 16:16:44.8 -29:09:01 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_004"
+ fi
+ # a more complex exclusion list with comments
+ echo "15:57:35.3 +26:52:40 Star1
+15:59:30.2 +25:55:13
+16:01:26.6 +29:51:04 Star 3
+16:12:45.3 +26:40:15
+16:15:47.4 +27:25:20 Star5
+16:16:44.8 +29:09:01" > exclusion_list_autotest.txt
+ lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+ fi
+ lib/put_two_sources_in_one_field 15:59:30.2 +25:55:13 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_102"
+ fi
+ lib/put_two_sources_in_one_field 16:16:44.8 +29:09:01 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_103"
+ fi
+ lib/put_two_sources_in_one_field 16:16:44.8 -29:09:01 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_104"
+ fi
+ lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep 'Star1' | grep --quiet 'FOUND'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+ fi
+ lib/put_two_sources_in_one_field 16:01:26.6 +29:51:04 exclusion_list_autotest.txt 17 | grep 'Star 3' | grep --quiet 'FOUND'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+ fi
+ lib/put_two_sources_in_one_field 16:15:47.4 +27:25:20 exclusion_list_autotest.txt 17 | grep 'Star5' | grep --quiet 'FOUND'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+ fi
+ # a complex exclusion list with comments
+ echo "15:57:35.3 +26:52:40 Star1
+ 
+15:59:30.2 +25:55:13
+
+
+16:01:26.6 +29:51:04 Star 3
+# Oh ohoho
+16:12:45.3 +26:40:15
+ # I'm a bad evil comment
+16:15:47.4 +27:25:20 Star5
+16:16:44.8 +29:09:01
+
+ 
+" > exclusion_list_autotest.txt
+ lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+ fi
+ lib/put_two_sources_in_one_field 15:59:30.2 +25:55:13 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_102"
+ fi
+ lib/put_two_sources_in_one_field 16:16:44.8 +29:09:01 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_103"
+ fi
+ lib/put_two_sources_in_one_field 16:16:44.8 -29:09:01 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_104"
+ fi
+ lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep 'Star1' | grep --quiet 'FOUND'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+ fi
+ lib/put_two_sources_in_one_field 16:01:26.6 +29:51:04 exclusion_list_autotest.txt 17 | grep 'Star 3' | grep --quiet 'FOUND'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+ fi
+ lib/put_two_sources_in_one_field 16:15:47.4 +27:25:20 exclusion_list_autotest.txt 17 | grep 'Star5' | grep --quiet 'FOUND'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
+ fi
+ #
+ rm -f exclusion_list_autotest.txt
  #
  
 

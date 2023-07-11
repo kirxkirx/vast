@@ -1166,16 +1166,6 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
 
  done # for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
 
-# Why do we clean up the local cache at all? That's missing the whole point of having a cache.
-# # clean up the local cache
-# # We should not remove exclusion_list_gaiadr2.txt and exclusion_list_apass.txt as we want to use them later
-# for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.txt exclusion_list_bbsc.txt exclusion_list_tycho2.txt ;do
-#  if [ -f "$FILE_TO_REMOVE" ];then
-#   rm -f "$FILE_TO_REMOVE"
-#   echo "Removing $FILE_TO_REMOVE" >> transient_factory_test31.txt
-#  fi
-# done
-
  # We need a local exclusion list not to find the same things in multiple SExtractor runs
  if [ -f exclusion_list_local.txt ];then
   rm -f exclusion_list_local.txt
@@ -1220,6 +1210,11 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
    cat exclusion_list_index_html.txt >> transient_factory_test31.txt
    echo "###################################################################################" >> transient_factory_test31.txt
    while read -r RADECSTR ;do
+    grep -A8 "$RADECSTR" transient_report/index.html | grep 'neverexclude_list.txt' | grep --quiet 'THIS STAR IS LISTED IN'
+    if [ $? -eq 0 ];then
+     echo "$RADECSTR  -- listed in neverexclude_list.txt (will NOT add it to exclusion list)" >> transient_factory_test31.txt
+     continue
+    fi
     # Mac OS X grep does not handle well the combination --max-count=1 -A8
     #grep --max-count=1 -A8 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep --quiet 'not found'
     grep -A8 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep --quiet 'not found'
