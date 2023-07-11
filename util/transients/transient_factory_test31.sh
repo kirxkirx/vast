@@ -33,7 +33,7 @@ FILTER_MAX_ELONGATION_AminusB_PIX=0.55
 FILTER_BRIGHT_MAG_CUTOFF="-5"
 FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="13.5"
 
-MAX_NUMBER_OF_CANDIDATES_PER_FIELD=20
+MAX_NUMBER_OF_CANDIDATES_PER_FIELD=40
 
 # One or more Source Extractor configuration files to run the analysis with
 # Typically, the first run is optimized to detect bright targets while the second one is optimized for faint targets
