@@ -35,14 +35,29 @@ FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="13.5"
 
 MAX_NUMBER_OF_CANDIDATES_PER_FIELD=40
 
+NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=500
+NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=600
+
 # One or more Source Extractor configuration files to run the analysis with
 # Typically, the first run is optimized to detect bright targets while the second one is optimized for faint targets
 #SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4"
 SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v5"
+# The first SExtractor config file in the list should be optimized for detecting bright stars
 SEXTRACTOR_CONFIG_BRIGHTSTARPASS=$(echo $SEXTRACTOR_CONFIG_FILES | awk '{print $1}')
 
 # Comment-out TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION if unsure
 TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
+
+# CAMERA_SETTINGS environment vairable may be set to override the default settings with the ones needed for a different camera
+if [ -n "$CAMERA_SETTINGS" ];then
+ if [ "$CAMERA_SETTINGS" = "NMW-STL" ];then
+  echo "### Using search settings for $CAMERA_SETTINGS camera ###"
+  TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION=""
+  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=1000
+  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=1500
+  # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
+ fi
+fi
 
 # You probably don't need to change anything below this line
 #################################
@@ -412,7 +427,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   cp -v $SEXTRACTOR_CONFIG_BRIGHTSTARPASS default.sex >> transient_factory_test31.txt
   echo "Preliminary VaST run on the second-epoch images only" >> transient_factory_test31.txt
   echo "./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit"  "$NEW_IMAGES"/*"$FIELD"_*_*.fts >> transient_factory_test31.txt
-  ./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit  "$NEW_IMAGES"/*"$FIELD"_*_*.fts > prelim_vast_run.log 2>&1
+  ./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit  "$NEW_IMAGES"/*"$FIELD"_*_*.fts > prelim_vast_run.log 2>&1  
+  echo "wait"   >> transient_factory_test31.txt
   wait
   ## Special test for stuck camera ##
   if [ -s vast_image_details.log ];then
@@ -625,6 +641,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  for SEXTRACTOR_CONFIG_FILE in $SEXTRACTOR_CONFIG_FILES ;do
 
  # make sure nothing is left running from the previous run (in case it ended early with 'continue')
+ echo "wait"   >> transient_factory_test31.txt
  wait
  #
  
@@ -857,8 +874,8 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_HARD" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
  if [ $TEST -eq 1 ];then
   if [ "$CHECK_POINTING_ACCURACY" = "YES" ] || [ "$CHECK_POINTING_ACCURACY" = "Yes" ] || [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
-   echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
-   echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg." >> transient_factory_test31.txt
+   echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)"
+   echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" >> transient_factory_test31.txt
    break
    # This should break us form the SEXTRACTOR_CONFIG_FILE cycle
   fi
@@ -870,8 +887,8 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_SOFT" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
  if [ $TEST -eq 1 ];then
   if [ "$CHECK_POINTING_ACCURACY" = "YES" ] || [ "$CHECK_POINTING_ACCURACY" = "Yes" ] || [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
-   echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg."
-   echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg." >> transient_factory_test31.txt
+   echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)"
+   echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" >> transient_factory_test31.txt
    #break
    # Not break'ing here, the offset is not hpelessly large and we want to keep candidates from this field
   fi
@@ -883,17 +900,27 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   # This should ensure the correct field-of-view guess by setting the TELESCOP keyword
   #TELESCOP="NMW_camera" util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1  $i  &
   if [ -z "$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" ];then
-   TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/wcs_image_calibration.sh $i &
+   if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
+    # for a narrow field of view we actually need the photometric catalog
+    TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/solve_plate_with_UCAC5 --iterations 1 $i &
+   else
+    # for a wide field of view Tycho-2 will be used, so no need for other photometric information - let's speed-up things
+    TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1 $i &
+   fi # if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
   else
    # Not explicitly setting the telescope name, let the script guess the FoV
-   util/wcs_image_calibration.sh $i &
+   if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
+    util/solve_plate_with_UCAC5 --iterations 1 $i &
+   else
+    util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1 $i &
+   fi # if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
   fi
  done 
 
  
  # Calibrate magnitude scale with Tycho-2 stars in the field
  # In order for this to work, we need the plate-solved reference image 
- echo "Calibrating the magnitude scale with Tycho-2 stars" >> transient_factory_test31.txt
+ echo "Calibrating the magnitude scale" >> transient_factory_test31.txt
  if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
   rm -f 'lightcurve.tmp_emergency_stop_debug'
  fi
@@ -924,13 +951,18 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  fi
  echo "____ Start of magnitude calibration ____" >> transient_factory_test31.txt
  # Decide which catalog to use for magnitude calibration depending on the image filed of view
- # Tycho-2 magnitude calibration for wide-field images
- # (Tycho-2 is relatively small, so it's convenient to have a local copy of the catalog)
- echo "y" | util/transients/calibrate_current_field_with_tycho2.sh >> transient_factory_test31.txt 2>&1
- # APASS magnitude calibration for narrow-field images
- # util/magnitude_calibration.sh V zero_point >> transient_factory_test31.txt
- echo "____ End of magnitude calibration ____" >> transient_factory_test31.txt
+ if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
+  # APASS magnitude calibration for narrow-field images
+  echo "Calibrating the magnitude scale with APASS stars" >> transient_factory_test31.txt
+  util/magnitude_calibration.sh V zero_point >> transient_factory_test31.txt
+ else
+  # Tycho-2 magnitude calibration for wide-field images
+  # (Tycho-2 is relatively small, so it's convenient to have a local copy of the catalog)
+  echo "Calibrating the magnitude scale with Tycho-2 stars" >> transient_factory_test31.txt
+  echo "y" | util/transients/calibrate_current_field_with_tycho2.sh >> transient_factory_test31.txt 2>&1
+ fi
  MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
+ echo "____ End of magnitude calibration ____" >> transient_factory_test31.txt
  # Check that the magnitude calibration actually worked
  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
   ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
@@ -941,6 +973,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  #
  if [ $? -eq 0 ];then
   # Wait for the solve_plate_with_UCAC5 stuff to finish
+  echo "wait"   >> transient_factory_test31.txt
   wait
   # Throw an error
   echo "ERROR calibrating magnitudes in the field $FIELD (mean mag outside of range)"
@@ -952,6 +985,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  fi
  if [ $MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE -ne 0 ];then
   # Wait for the solve_plate_with_UCAC5 stuff to finish
+  echo "wait"   >> transient_factory_test31.txt
   wait
   # Throw an error
   echo "ERROR calibrating magnitudes in the field $FIELD MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE"
@@ -963,6 +997,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  fi
  if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
   # Wait for the solve_plate_with_UCAC5 stuff to finish
+  echo "wait"   >> transient_factory_test31.txt
   wait
   # Throw an error
   echo "ERROR calibrating magnitudes in the field $FIELD (found lightcurve.tmp_emergency_stop_debug)"
@@ -1085,17 +1120,18 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  # Check if the number of detected transients is suspiciously large
  NUMBER_OF_DETECTED_TRANSIENTS=$(cat candidates-transients.lst | wc -l)
  echo "Found $NUMBER_OF_DETECTED_TRANSIENTS candidate transients before the final filtering." >> transient_factory_test31.txt
- if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 600 ];then
+ if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt $NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT ];then
   echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping SE run ($SEXTRACTOR_CONFIG_FILE)"
   echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping SE run ($SEXTRACTOR_CONFIG_FILE)" >> transient_factory_test31.txt
   # this is for UCAC5 plate solver
+  echo "wait"   >> transient_factory_test31.txt
   wait
   #
   #continue
   # The NUMBER_OF_DETECTED_TRANSIENTS limit may be reached at the first SE run,
   # In that case, we want to drop this run and continue with the second run hoping it will be better
  else
-  if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 500 ];then
+  if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt $NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT ];then
    echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..."
    echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..." >> transient_factory_test31.txt
    # if yes, remove flares, keep only new objects
@@ -1108,6 +1144,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   echo "Waiting for UCAC5 plate solver" >> transient_factory_test31.txt  
   echo "Waiting for UCAC5 plate solver"
   # this is for UCAC5 plate solver
+  echo "wait"   >> transient_factory_test31.txt
   wait
   echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
   echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE"
