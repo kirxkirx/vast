@@ -15998,6 +15998,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 remove_test_data_to_save_space
 
 ############## Sepcial tests that are performed only on the main developement computer ##############
+### This test needs A LOT of disk space!
 if [ -d /mnt/usb/M4_F775W_images_Level2_few_links_for_tests ];then
  THIS_TEST_START_UNIXSEC=$(date +%s)
  TEST_PASSED=1
