@@ -9915,7 +9915,10 @@ $GREP_RESULT"
   NUMBER_OF_CANDIDATE_TRANSIENTS=`grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink'`
   #if [ $NUMBER_OF_CANDIDATE_TRANSIENTS -ne 1 ];then
   # ASASSN-V J234330.93+601239.8 is a valid false candidate as it actually is a blend
-  if [ $NUMBER_OF_CANDIDATE_TRANSIENTS -gt 2 ] || [ $NUMBER_OF_CANDIDATE_TRANSIENTS -lt 1 ] ;then
+  #if [ $NUMBER_OF_CANDIDATE_TRANSIENTS -gt 2 ] || [ $NUMBER_OF_CANDIDATE_TRANSIENTS -lt 1 ] ;then
+  # Allow for more false candidates as they might be dependant on VizierR
+  # (Normally there should be just two candidates in this field.)
+  if [ $NUMBER_OF_CANDIDATE_TRANSIENTS -gt 6 ] || [ $NUMBER_OF_CANDIDATE_TRANSIENTS -lt 1 ] ;then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_NCANDIDATES_$NUMBER_OF_CANDIDATE_TRANSIENTS"
   fi
