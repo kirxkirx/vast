@@ -45,6 +45,9 @@ SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.s
 # The first SExtractor config file in the list should be optimized for detecting bright stars
 SEXTRACTOR_CONFIG_BRIGHTSTARPASS=$(echo $SEXTRACTOR_CONFIG_FILES | awk '{print $1}')
 
+#FRAME_EDGE_OFFSET_PIX=30
+FRAME_EDGE_OFFSET_PIX=25
+
 # Comment-out TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION if unsure
 TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
 
@@ -1046,7 +1049,6 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  DIMX=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS1 | awk '{print $3}')
  DIMY=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS2 | awk '{print $3}')
  ### ===> IMAGE EDGE OFFSET HARDCODED HERE <===
- FRAME_EDGE_OFFSET_PIX=30
  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
   cat $i | awk "{if ( \$4>$FRAME_EDGE_OFFSET_PIX && \$4<$DIMX-$FRAME_EDGE_OFFSET_PIX && \$5>$FRAME_EDGE_OFFSET_PIX && \$5<$DIMY-$FRAME_EDGE_OFFSET_PIX ) print \"YES\"; else print \"NO\" }" | grep --quiet 'NO'
   if [ $? -ne 0 ];then
