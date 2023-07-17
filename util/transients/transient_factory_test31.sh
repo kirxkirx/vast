@@ -31,7 +31,13 @@ FILTER_MAX_APERTURE_STAR_SIZE_PIX=9.5
 FILTER_MAX_ELONGATION_AminusB_PIX=0.55
 
 FILTER_BRIGHT_MAG_CUTOFF="-5"
-FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="13.5"
+FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="14.0"
+#FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="13.5"
+
+# MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT and MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_OFTLIMIT
+# are used for filtering candidates in util/transients/report_transient.sh
+#export MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT=20
+
 
 MAX_NUMBER_OF_CANDIDATES_PER_FIELD=40
 
@@ -40,7 +46,7 @@ NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=600
 
 # One or more Source Extractor configuration files to run the analysis with
 # Typically, the first run is optimized to detect bright targets while the second one is optimized for faint targets
-#SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4"
+#SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vTEST"
 SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v5"
 # The first SExtractor config file in the list should be optimized for detecting bright stars
 SEXTRACTOR_CONFIG_BRIGHTSTARPASS=$(echo $SEXTRACTOR_CONFIG_FILES | awk '{print $1}')
@@ -814,6 +820,17 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $REFERENCE_EPOCH__FIRST_IMAGE)"
  WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
  IMAGE_FOV_ARCMIN=$(util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image size:' | awk '{print $3}' | awk -F"'" '{print $1}')
+
+ ##### Set astrometric match limits
+ IMAGE_SCALE_ARCSECPIX_STRING=$(util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image scale:' | awk '{print $3}')
+ IMAGE_SCALE_ARCSECPIX=$(echo "$IMAGE_SCALE_ARCSECPIX_STRING" | awk -F'"' '{print $1}')
+ # MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT and MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_OFTLIMIT
+ # are used for filtering candidates in util/transients/report_transient.sh
+ export MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1}')
+ export MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1*2}')
+ echo "The image scale is $IMAGE_SCALE_ARCSECPIX_STRING, setting the soft and hard astrometric limits for filtering second-epoch detections: $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT pix and $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT pix" >> transient_factory_test31.txt
+
+ ##### Set pointing accuracy limits
  # 1 deg hard limit for the NMW camera
  FOV_DEG_LIMIT_HARD=$(echo "$IMAGE_FOV_ARCMIN" | awk '{printf "%.3f",$1/466.5*1.0}')
  # 0.25 deg soft limit for the NMW camera
@@ -1317,6 +1334,9 @@ exclusion_list_index_html.txt NOT FOUND" >> transient_factory_test31.txt
 
 ## Finalize the HTML report
 echo "<H2>Processig complete!</H2>" >> transient_report/index.html
+
+TOTAL_NUMBER_OF_CANDIDATES=$(grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink')
+echo "Total number of candidates identified: $TOTAL_NUMBER_OF_CANDIDATES" >> transient_report/index.html
 
 echo "<H3>Processing log:</H3>
 <pre>" >> transient_report/index.html

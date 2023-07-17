@@ -1635,7 +1635,6 @@ int exclude_test( double X, double Y, double *exX, double *exY, int N, int verbo
 }
 
 // Transients are objects which were not detected on the reference frame but have now suddenly appeared.
-// void test_transient( double *search_area_boundaries, struct Star star, double reference_image_JD, double X_im_size, double Y_im_size ) {
 void test_transient( double *search_area_boundaries, struct Star star, double reference_image_JD, double X_im_size, double Y_im_size, double *X1, double *Y1, double *X2, double *Y2, int N_bad_regions, double aperture ) {
  FILE *transientfile;
  int n= star.n;
@@ -1744,15 +1743,11 @@ void record_specified_fits_keywords( char *input_image, char *output_str_with_fi
   return;
  }
  output_str_with_fits_keywords_to_capture_from_input_images[0]= '\0'; // maybe no keywords will be recorded
- // dummy
- // strncpy(output_str_with_fits_keywords_to_capture_from_input_images,input_image,FITS_KEYWORDS_IN_LC_LENGTH);
  //
  // Open the ASCII file containing the list of FITS keywords we want to record
  //
  filelist_of_keywords_to_record= fopen( "vast_list_of_FITS_keywords_to_record_in_lightcurves.txt", "r" );
  if ( NULL == filelist_of_keywords_to_record ) {
-  // fprintf(stderr,"WARNING: the list of FITS keywords to record is not found in vast_list_of_FITS_keywords_to_record_in_lightcurves.txt\n");
-  // output_str_with_fits_keywords_to_capture_from_input_images[FITS_KEYWORDS_IN_LC_LENGTH-1]='\0'; // just in case
   return;
  }
  i= 0;

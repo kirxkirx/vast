@@ -23,8 +23,8 @@ FLAG_IMAGE      flag.fits       # filename for an input FLAG-image
 
 # More conservative
 DETECT_MINAREA  3.0             # minimum number of pixels above threshold
-DETECT_THRESH   3.0             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
-ANALYSIS_THRESH 3.0             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
+DETECT_THRESH   2.0             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
+ANALYSIS_THRESH 2.0             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
 
 SATUR_LEVEL     55000.0         # level (in ADUs) at which arises saturation
 
