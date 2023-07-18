@@ -5,9 +5,6 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Manually enable/disable this long test
-    # Write an if statement that is always true/false
-    if: true
     steps:
       - uses: actions/checkout@v3
       - name: Update apt-get
@@ -24,18 +21,19 @@ jobs:
         run: bash -n util/examples/test_vast.sh
       - name: Syntax-check the NMW transient search script
         run: bash -n util/transients/transient_factory_test31.sh
-      - id: check_commit
+      - name: Check commit message
+        id: check_commit
         run: |
           commit_message=$(git log --format=%B -n 1 ${{ github.event.after }})
           if [[ "${commit_message}" == *"notest"* ]]; then
             echo "Commit contains 'notest'. Skipping tests."
-            echo "::set-output name=skip::true"
+            echo "SKIP=true" >> $GITHUB_ENV
           else
-            echo "::set-output name=skip::false"
+            echo "SKIP=false" >> $GITHUB_ENV
           fi
       - name: Prepare for the test
         run: echo "1" > ../THIS_IS_HPCC
-        if: steps.check_commit.outputs.skip != 'true' 
+        if: env.SKIP != 'true' 
       - name: Test VaST
         run: util/examples/test_vast.sh
-        if: steps.check_commit.outputs.skip != 'true'
+        if: env.SKIP != 'true'
