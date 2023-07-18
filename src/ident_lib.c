@@ -2,7 +2,7 @@
  *
  *  IDENT LIB MODULE: ident_lib.c
  *
- *  Copyright(C) 2005-2020 Lebedev Alexander <lebedev@xray.sai.msu.ru>,
+ *  Copyright(C) 2005-2023 Lebedev Alexander <lebedev@xray.sai.msu.ru>,
  *                         Sokolovsky Kirill <idkfa@sai.msu.ru>.
  *
  *  This program is free software ; you can redistribute it and/or modify
@@ -87,68 +87,6 @@ struct Preobr_Sk *New_Preobr_Sk() {
  preobr->Number_of_main_star= 100;
  return ( preobr );
 }
-
-/*
-struct Preobr_Sk *New_Preobr_Sk_W() {
- struct Preobr_Sk *preobr;
- preobr= malloc(sizeof(struct Preobr_Sk));
- if( preobr == NULL ) {
-  fprintf(stderr, "ERROR in New_Preobr_Sk_W():\n preobr = malloc(sizeof(struct Preobr_Sk)); - failed\n");
-  vast_report_memory_error();
-  exit( EXIT_FAILURE );
- }
- //preobr->podobie = 1;
- preobr->translate1[0]= 0;
- preobr->translate1[1]= 0;
- preobr->translate2[0]= 0;
- preobr->translate2[1]= 0;
- preobr->line[0]= 1;
- preobr->line[1]= 0;
- preobr->line[2]= 0;
- preobr->line[3]= 1;
- preobr->fi= 0;
-
- preobr->sigma_podobia= 0.009;
- preobr->Number_of_ecv_triangle= 300;
- preobr->sigma_popadaniya= 10.0; // 10.0;
- preobr->sigma_popadaniya_multiple= 3.0;
- preobr->persent_popadaniy_of_ecv_triangle= 0.6;
- preobr->method= MAXIMUM_POPADANIY;
- preobr->Number_of_main_star= 300;
- return (preobr);
-}
-*/
-
-/*
-struct Preobr_Sk *New_Preobr_Sk_M() {
- struct Preobr_Sk *preobr;
- preobr= malloc(sizeof(struct Preobr_Sk));
- if( preobr == NULL ) {
-  fprintf(stderr, "ERROR in New_Preobr_Sk_M():\n preobr = malloc(sizeof(struct Preobr_Sk)); - failed\n");
-  vast_report_memory_error();
-  exit( EXIT_FAILURE );
- }
- //preobr->podobie = 1;
- preobr->translate1[0]= 0;
- preobr->translate1[1]= 0;
- preobr->translate2[0]= 0;
- preobr->translate2[1]= 0;
- preobr->line[0]= 1;
- preobr->line[1]= 0;
- preobr->line[2]= 0;
- preobr->line[3]= 1;
- preobr->fi= 0;
-
- preobr->sigma_podobia= 0.01;
- preobr->Number_of_ecv_triangle= 100;
- preobr->sigma_popadaniya= 2.0; // 3.0;
- preobr->sigma_popadaniya_multiple= 3.0;
- preobr->persent_popadaniy_of_ecv_triangle= 0.6;
- preobr->method= MAXIMUM_POPADANIY;
- preobr->Number_of_main_star= 100;
- return (preobr);
-}
-*/
 
 void Delete_Preobr_Sk( struct Preobr_Sk *preobr ) {
  free( preobr );
