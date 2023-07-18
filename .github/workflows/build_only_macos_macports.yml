@@ -12,6 +12,13 @@ jobs:
     if: true
     steps:
     - uses: actions/checkout@v3
+    - name: Check commit message
+        run: |
+          commit_message=$(git log --format=%B -n 1)
+          if [[ "${commit_message}" == *"notest"* ]]; then
+            echo "Commit contains 'notest'. Skipping tests."
+            exit 0
+          fi
     - name: Install MacPorts
       run: |
         curl -LO https://raw.githubusercontent.com/GiovanniBussi/macports-ci/master/macports-ci

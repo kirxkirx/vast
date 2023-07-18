@@ -24,6 +24,13 @@ jobs:
         run: bash -n util/examples/test_vast.sh
       - name: Syntax-check the NMW transient search script
         run: bash -n util/transients/transient_factory_test31.sh
+      - name: Check commit message
+        run: |
+          commit_message=$(git log --format=%B -n 1)
+          if [[ "${commit_message}" == *"notest"* ]]; then
+            echo "Commit contains 'notest'. Skipping tests."
+            exit 0
+          fi
       - name: Prepare for the test
         run: echo "1" > ../THIS_IS_HPCC 
       - name: Test VaST

@@ -11,6 +11,13 @@ jobs:
       MYTOKEN2: "value2"
     steps:
     - uses: actions/checkout@v3
+    - name: Check commit message
+        run: |
+          commit_message=$(git log --format=%B -n 1)
+          if [[ "${commit_message}" == *"notest"* ]]; then
+            echo "Commit contains 'notest'. Skipping tests."
+            exit 0
+          fi
     - name: Test in FreeBSD
       id: test
       uses: vmactions/freebsd-vm@v0
