@@ -18,14 +18,6 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
-// all these troubles for PATH_MAX
-/*
-#ifdef __gnu_linux__
- #include <linux/limits.h>
-#else
- #include <sys/syslimits.h>
-#endif
-*/
 
 #include <stdio.h>
 
@@ -164,6 +156,7 @@ void remove_linear_trend( float *fit_jd, float *mag, int N, double A, double B, 
  }
 
  fclose( vast_lc_remove_linear_trend_logfile );
+ fprintf( stderr, "The detrending log is added to \E[34;47m vast_lc_remove_linear_trend.log \E[33;00m\n\n");
 
  free( corrected_mag );
  free( plot_y );
@@ -275,7 +268,7 @@ void fit_linear_trend( float *input_JD, float *input_mag, float *mag_err, int N,
 
  // Suppress output if it's flat
  if ( ( *A ) < 1e-6 || 1e-6 < ( *A ) ) {
-  fprintf( stderr, "Robust linear trend fit:   %lf mag/day, corresponding to t_2mag= %lf, t_3mag= %lf\n\n", ( *A ), 2.0 / ( *A ), 3.0 / ( *A ) );
+  fprintf( stderr, "Robust linear trend fit:   %lf mag/day, corresponding to t_2mag= %lf, t_3mag= %lf\n", ( *A ), 2.0 / ( *A ), 3.0 / ( *A ) );
  }
 
  free( difference );
@@ -1206,7 +1199,9 @@ int main( int argc, char **argv ) {
   // subtract one or many linear trends (many trends may be defined in regions separated by breaks)
   if ( curC == '-' ) {
    //
-   unlink( "vast_lc_remove_linear_trend.log" );
+   if( 0 == unlink( "vast_lc_remove_linear_trend.log" ) ){
+    fprintf( stderr, "Rewriting the trend-subtraction log file \E[34;47m vast_lc_remove_linear_trend.log \E[33;00m\n\n" );
+   }
    //
 
    if ( fit_n == 0 ) {
@@ -1333,7 +1328,7 @@ int main( int argc, char **argv ) {
     remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, breaks[n_breaks - 1], maxJD, m_mean, JD );
    }
 
-   fprintf( stderr, "Writing the trend-subtraction log file \E[34;47m vast_lc_remove_linear_trend.log \E[33;00m\n\n" );
+   fprintf( stderr, "Completed writing the trend-subtraction log file \E[34;47m vast_lc_remove_linear_trend.log \E[33;00m\n\n" );
 
    was_lightcurve_changed= 1; // note, that lightcurve was changed
 

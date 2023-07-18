@@ -4,29 +4,42 @@ on: [push]
 
 jobs:
   build:
-
     runs-on: macos-latest
-
-    # Manually enable/disable this long test
-    # Write an if statement that is always true/false
-    if: true
     steps:
     - uses: actions/checkout@v3
+    - name: Check commit message
+      id: check_commit
+      run: |
+        commit_message=$(git log --format=%B -n 1 ${{ github.event.after }})
+        if [[ "${commit_message}" == *"notest"* ]]; then
+          echo "Commit contains 'notest'. Skipping tests."
+          echo "SKIP=true" >> $GITHUB_ENV
+        else
+          echo "SKIP=false" >> $GITHUB_ENV
+        fi
     - name: Install MacPorts
       run: |
         curl -LO https://raw.githubusercontent.com/GiovanniBussi/macports-ci/master/macports-ci
         source ./macports-ci install
+      if: env.SKIP != 'true'
     - name: port upgrade outdated
       run: sudo port upgrade outdated
+      if: env.SKIP != 'true'
     - name: Install gcc, g++, gfortran, and wget
       run: sudo port install gcc12 wget
+      if: env.SKIP != 'true'
     - name: Install X11 header files
       run: sudo port install xorg-libX11
+      if: env.SKIP != 'true'
     - name: Install libpng
       run: sudo port install libpng
+      if: env.SKIP != 'true'
     - name: make VaST
       run: make
+      if: env.SKIP != 'true'
     - name: prepare for the test
       run: echo "1" > ../THIS_IS_HPCC 
+      if: env.SKIP != 'true'
     - name: test VaST
       run: util/examples/test_vast.sh
+      if: env.SKIP != 'true'
