@@ -2508,9 +2508,9 @@ int main( int argc, char **argv ) {
          bad_size= 1;
         }
         // That has to match two filtering lines in vast.c
-        //if ( sextractor_catalog__A_IMAGE[marker_counter] > APER && sextractor_catalog__se_FLAG[marker_counter] < 4 ) {
+        if ( sextractor_catalog__A_IMAGE[marker_counter] > APER && sextractor_catalog__se_FLAG[marker_counter] < 4 ) {
         // Allow for large unsaturrated stars: example - VX Sgr with low detection limit, test NMWNSGR20N40410
-        if ( sextractor_catalog__A_IMAGE[marker_counter] > 2*APER && sextractor_catalog__se_FLAG[marker_counter] < 4 ) {
+        //if ( sextractor_catalog__A_IMAGE[marker_counter] > 2*APER && sextractor_catalog__se_FLAG[marker_counter] < 4 ) {
          bad_size= 1;
         }
         if ( sextractor_catalog__A_IMAGE[marker_counter] + sextractor_catalog__ERRA_IMAGE[marker_counter] < FWHM_MIN ) {
