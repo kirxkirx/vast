@@ -1408,7 +1408,12 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
  freeList( points1 );
 
  if ( number_of_matched_stars > 0 ) {
-  fraction_of_ambiguous_matches= (double)number_of_ambiguous_matches / (double)number_of_matched_stars;
+  //fraction_of_ambiguous_matches= (double)number_of_ambiguous_matches / (double)number_of_matched_stars;
+  // The above does not work well if the new frame is much better than the reference frame, as one may get lots of ambiguous matches.
+  // The test case is NMWSGR9CRASH_ERROR_MESSAGE_IN_index_html
+  // cp default.sex.telephoto_lens_v5 default.sex
+  // ./vast --starmatchraius 4.0 --matchstarnumber 500 --selectbestaperture --sysrem 1 --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword ../NMW_Sgr9_crash_test/reference_images//Sgr9_2012-4-13_1-2-28_001.fts ../NMW_Sgr9_crash_test/reference_images//Sgr9_2012-4-18_0-37-34_003.fts ../NMW_Sgr9_crash_test/second_epoch_images/Sgr9_2020-9-1_17-35-4_002.fts ../NMW_Sgr9_crash_test/second_epoch_images/Sgr9_2020-9-1_17-35-35_003.fts
+  fraction_of_ambiguous_matches= (double)number_of_ambiguous_matches / (double)MAX( Number1, Number2);
  } else {
   // things are bad anyhow - we have zero matched stars
   fraction_of_ambiguous_matches= 0.0;
