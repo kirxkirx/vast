@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
  ra_d= atof(argv[2]);
  dec_d= atof(argv[3]);
 
- /* Try to open the input lightcurve file */
+ // Try to open the input lightcurve file //
  lightcurvefile= fopen(argv[1], "r");
  if( NULL != lightcurvefile ) {
   // If the loghtcurve file was sucesfully opened, apply the corrections to each observation in it
@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
    fprintf(stderr, "ERROR: empty lightcurve file!\n");
    exit( EXIT_FAILURE );
   }
-  /* Identify lightcurve format */
+  // Identify lightcurve format //
   if( 2 == sscanf(string, "%lf %lf", &jd, &mag) ) {
    lightcurve_format= 2; // "JD mag" format
    // Check that JD is within the reasonable range

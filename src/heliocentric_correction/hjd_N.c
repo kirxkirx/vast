@@ -64,7 +64,7 @@ double hjd_N(double ra_obj_d, double dec_obj_d, double jd_tt) {
  ra_obj_rad= ra_obj_d / RAD2DEG;
  dec_obj_rad= dec_obj_d / RAD2DEG;
 
- /* Compute apparent position of the Sun */
+ // Compute apparent position of the Sun //
  sun_eph(jd_tt, &ra_sun_h, &dec_sun_d, &dist_sun);
  ra_sun_d= ra_sun_h * 360 / 24;
  ra_sun_rad= ra_sun_d / RAD2DEG;
@@ -72,17 +72,9 @@ double hjd_N(double ra_obj_d, double dec_obj_d, double jd_tt) {
 
  //fprintf(stderr,"Geocentric distance of the Sun: %.10lf AU\n",dist_sun);
 
- /* Compute and apply Heliocentric correction */
- //fprintf(stderr,"dist_sun=%lf; C_AUDAY=%lf; dec_obj_rad=%lf; dec_sun_rad=%lf; ra_obj_rad=%lf; ra_sun_rad=%lf\n",dist_sun,C_AUDAY,dec_obj_rad,dec_sun_rad,ra_obj_rad,ra_sun_rad);
- //fprintf(stderr,"-1*dist_sun/C_AUDAY*( sin(dec_obj_rad)*sin(dec_sun_rad)+cos(dec_obj_rad)*cos(dec_sun_rad)*cos(ra_obj_rad-ra_sun_rad)\n");
+ // Compute and apply Heliocentric correction //
  jd_correction= -1 * dist_sun / C_AUDAY * (sin(dec_obj_rad) * sin(dec_sun_rad) + cos(dec_obj_rad) * cos(dec_sun_rad) * cos(ra_obj_rad - ra_sun_rad));
  hjd_tt= jd_tt + jd_correction;
-
- /* For debug purposes...
- fprintf(stderr,"dist_sun=%lf; C_AUDAY=%lf; dec_obj_rad=%lf; dec_sun_rad=%lf; ra_obj_rad=%lf; ra_sun_rad=%lf\n",dist_sun,C_AUDAY,dec_obj_rad,dec_sun_rad,ra_obj_rad,ra_sun_rad);
- fprintf(stderr,"-1*dist_sun/C_AUDAY*( sin(dec_obj_rad)*sin(dec_sun_rad)+cos(dec_obj_rad)*cos(dec_sun_rad)*cos(ra_obj_rad-ra_sun_rad)\n");
- fprintf(stderr,"jd_correction=%lf\n",jd_correction);
-*/
 
  return hjd_tt;
 }
