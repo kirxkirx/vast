@@ -1083,8 +1083,8 @@ int main( int argc, char **argv ) {
  }
 
  /* Reading file which defines rectangular regions we want to exclude */
- float cpgline_tmp_x[2];
- float cpgline_tmp_y[2];
+ //float cpgline_tmp_x[2];
+ //float cpgline_tmp_y[2];
  //double X1[500], Y1[500], X2[500], Y2[500];
  double *X1;
  double *Y1;
@@ -2911,6 +2911,12 @@ int main( int argc, char **argv ) {
     // exit now
     cpgclos();
     fprintf( stderr, "Writing the output image file pgplot.png (or .ps)\n" );
+
+    free( X1 );
+    free( X2 );
+    free( Y1 );
+    free( Y2 );
+
     free( float_array );
     free( real_float_array );
     return 0;
@@ -3022,6 +3028,12 @@ int main( int argc, char **argv ) {
    else {
     fprintf( stderr, "Writing the output image file pgplot.png (or.ps)\n" );
     cpgclos();
+
+    free( X1 );
+    free( X2 );
+    free( Y1 );
+    free( Y2 );
+
     return 0;
    }
   }
