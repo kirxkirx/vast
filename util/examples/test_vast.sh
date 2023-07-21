@@ -17793,6 +17793,12 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_SKIFFSPTYPEFORMAT"
 fi
 
+# Check correct parsing of ATLAS dubious candidate + LAMOST
+util/search_databases_with_vizquery.sh 23:44:51.23 +27:21:33.1 target 600 | grep 'ATO J356.2104+27.3581' | grep 'dubious' | grep --quiet 'F5 (LAMOST DR5)'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_ATLASLAMOSTFARAWAY"
+fi
 
 ### Test the local catalog search thing
 lib/catalogs/check_catalogs_offline 17.25656 47.30456 | grep --quiet 'ASASSN-V J010901.57+471816.4'
