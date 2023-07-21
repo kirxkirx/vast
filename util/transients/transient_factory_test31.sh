@@ -65,6 +65,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=1000
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=1500
   # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
+  SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v5"
  fi
 fi
 

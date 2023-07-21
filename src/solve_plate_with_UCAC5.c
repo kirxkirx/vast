@@ -53,6 +53,8 @@
 
 #include "replace_file_with_symlink_if_filename_contains_white_spaces.h"
 
+#include "count_lines_in_ASCII_file.h" // for count_lines_in_ASCII_file()
+
 struct str_catalog_search_parameters {
  double search_radius_deg;
  double search_radius_second_step_deg;
@@ -1390,6 +1392,11 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
   return 1;
  }
 
+ if( count_lines_in_ASCII_file(vizquery_output_filename) < 5 ) {
+  fprintf( stderr, "ERROR in search_UCAC5_at_scan(): the server response file contains too few lines!\n" );
+  return 1; 
+ }
+
 /*
  // reset the catalog match flag if this wasn't the first iteration
  for ( i= 0; i < N; i++ ) {
@@ -1560,7 +1567,7 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
   return 0;
  } else {
   fprintf( stderr, "The scan UCAC5 search failed. Trying remote search with vizquery\n" );
-  exit( 1 ); 
+  exit( EXIT_FAILURE ); 
  }
 
 

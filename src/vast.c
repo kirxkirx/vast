@@ -3057,7 +3057,6 @@ int main( int argc, char **argv ) {
  double *X2;
  double *Y2;
  int max_N_bad_regions_for_malloc;
- // max_N_bad_regions_for_malloc= 1 + count_lines_in_ASCII_file("bad_region.lst");
  max_N_bad_regions_for_malloc= count_lines_in_ASCII_file( "bad_region.lst" );
  X1= (double *)malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
  Y1= (double *)malloc( max_N_bad_regions_for_malloc * sizeof( double ) );

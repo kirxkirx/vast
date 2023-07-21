@@ -1057,6 +1057,11 @@ int main( int argc, char **argv ) {
  int use_xy2sky= 2; // 0 - no, 1 - yes, 2 - don't know
  int xy2sky_return_value;
 
+
+ float polygondraw_x[5];
+ float polygondraw_y[5];
+
+
  if ( 0 == strcmp( "make_finder_chart", basename( argv[0] ) ) ) {
   fprintf( stderr, "Plotting finder chart...\n" );
   finder_chart_mode= 1;
@@ -1080,7 +1085,21 @@ int main( int argc, char **argv ) {
  /* Reading file which defines rectangular regions we want to exclude */
  float cpgline_tmp_x[2];
  float cpgline_tmp_y[2];
- double X1[500], Y1[500], X2[500], Y2[500];
+ //double X1[500], Y1[500], X2[500], Y2[500];
+ double *X1;
+ double *Y1;
+ double *X2;
+ double *Y2;
+ int max_N_bad_regions_for_malloc;
+ max_N_bad_regions_for_malloc= count_lines_in_ASCII_file( "bad_region.lst" );
+ X1= (double *)malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
+ Y1= (double *)malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
+ X2= (double *)malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
+ Y2= (double *)malloc( max_N_bad_regions_for_malloc * sizeof( double ) );
+ if ( X1 == NULL || Y1 == NULL || X2 == NULL || Y2 == NULL ) {
+  fprintf( stderr, "ERROR: cannot allocate memory for exclusion regions array X1, Y1, X2, Y2\n" );
+  return 1;
+ }
  int N_bad_regions= 0;
  read_bad_CCD_regions_lst( X1, Y1, X2, Y2, &N_bad_regions );
 
@@ -2937,8 +2956,29 @@ int main( int argc, char **argv ) {
     }
     /* And draw bad regions */
     if ( 0 != N_bad_regions ) {
+     //fprintf(stderr, "YOIYOYOYOYOYOYOYOY count_lines_in_ASCII_file( \"bad_region.lst\" )=%d  N_bad_regions=%d\n", count_lines_in_ASCII_file( "bad_region.lst" ), N_bad_regions);
      cpgsci( 2 );
      for ( marker_counter= 0; marker_counter < N_bad_regions; marker_counter++ ) {
+      // Set the fill style to solid
+      cpgsfs(1);
+
+      // Define the X and Y points of the rectangle
+      polygondraw_x[0]= (float)X1[marker_counter];
+      polygondraw_x[1]= (float)X2[marker_counter];
+      polygondraw_x[2]= (float)X2[marker_counter];
+      polygondraw_x[3]= (float)X1[marker_counter];
+      polygondraw_x[4]= (float)X1[marker_counter];
+      polygondraw_y[0]= (float)Y1[marker_counter]; 
+      polygondraw_y[1]= (float)Y1[marker_counter];
+      polygondraw_y[2]= (float)Y2[marker_counter];
+      polygondraw_y[3]= (float)Y2[marker_counter];
+      polygondraw_y[4]= (float)Y1[marker_counter];
+
+      // Draw the filled rectangle
+      cpgpoly(5, polygondraw_x, polygondraw_y);
+
+//      cpgrect( (float)X1[marker_counter], (float)X2[marker_counter], (float)Y1[marker_counter], (float)Y2[marker_counter]);
+/*
       cpgline_tmp_x[0]= (float)X1[marker_counter];
       cpgline_tmp_y[0]= (float)Y1[marker_counter];
       cpgline_tmp_x[1]= (float)X1[marker_counter];
@@ -2962,6 +3002,7 @@ int main( int argc, char **argv ) {
       cpgline_tmp_x[1]= (float)X1[marker_counter];
       cpgline_tmp_y[1]= (float)Y1[marker_counter];
       cpgline( 2, cpgline_tmp_x, cpgline_tmp_y );
+*/
      }
     }
     cpgsci( 1 );
@@ -2987,6 +3028,11 @@ int main( int argc, char **argv ) {
 
   cpgcurs( &curX, &curY, &curC );
  } while ( curC != 'X' && curC != 'x' );
+
+ free( X1 );
+ free( X2 );
+ free( Y1 );
+ free( Y2 );
 
  if ( match_mode > 0 ) {
   free( sextractor_catalog__X );
