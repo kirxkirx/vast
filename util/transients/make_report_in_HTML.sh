@@ -166,7 +166,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
 # Set SExtractor parameters file
 cp default.sex.telephoto_lens_onlybrightstars_v1 default.sex
 # Plate-solve the FITS images
-export TELESCOP='NMW_camera'
+export TELESCOP='$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION'
 for i in $REFERENCE_IMAGE " >> transient_report/index.tmp
    while read JD MAG ERR X Y APP IMAGE REST ;do
     if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then
@@ -264,7 +264,7 @@ Don't forget to set the constellation name and the number of days since the last
 # Set SExtractor parameters file
 cp default.sex.telephoto_lens_onlybrightstars_v1 default.sex
 # Plate-solve the FITS images and produce the finder charts
-export TELESCOP='NMW_camera'
+export TELESCOP='$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION'
 for i in $REFERENCE_IMAGE " >> transient_report/index.tmp
    while read JD MAG ERR X Y APP IMAGE REST ;do
     if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then

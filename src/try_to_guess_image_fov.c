@@ -384,12 +384,20 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
  char *pointer_to_the_key_start;
  // fitsio
  int status= 0;
- fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
+ fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h 
+ //
+ int env_var_good= 0;
  // Hack allowing to owerride the FITS TELESCOP keyword by setting the environment variable of the same name
  if ( NULL != getenv( "TELESCOP" ) ) {
   strncpy( telescop, getenv( "TELESCOP" ), FLEN_VALUE );
   telescop[FLEN_VALUE - 1]= '\0';
- } else {
+  // make sure the variable is not empty!
+  if( strlen(telescop) > 1 ) {
+   env_var_good==1;
+  }
+ } 
+ // The normal way - get the TELESCOP string from the FITS header rather than the environment variable
+ if ( env_var_good == 0 ) {
   // Else extract data from FITS header
   fits_open_file( &fptr, fitsfilename, READONLY, &status );
   if ( 0 != status ) {
@@ -511,6 +519,15 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
    return 0;
   }
  }
+ // new NMW camera SBIG STL-11000 CCD
+ if ( strlen( telescop ) >= 7 ) { // 01234567890
+  pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "NMW-STL", 7 );
+  if ( pointer_to_the_key_start != NULL ) {
+   ( *estimated_fov_arcmin )= 600.0;
+   return 0;
+  }
+ }
+ 
  // NMW camera (new header)
  if ( strlen( telescop ) >= 12 ) { // 01234567890
   pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "F=135mm, 2.0", 12 );
