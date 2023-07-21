@@ -139,7 +139,7 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  JD=`echo "$JD" | awk '{printf "%.4f",$1}'` # purely for visualisation purposes
  X=`echo "$X" | awk '{printf "%04.0f",$1}'` # purely for visualisation purposes
  Y=`echo "$Y" | awk '{printf "%04.0f",$1}'` # purely for visualisation purposes
- echo "<td>$YEAR $MONTH $DAYFRAC &nbsp;&nbsp;</td><td> $JD &nbsp;&nbsp;</td><td> $MAG &nbsp;&nbsp;</td><td>" `lib/deg2hms $RADEC` "&nbsp;&nbsp;</td><td>$X $Y &nbsp;&nbsp;</td><td>$FITSFILE</td></tr>"
+ echo "<td>$YEAR $MONTH $DAYFRAC &nbsp;&nbsp;</td><td> $JD &nbsp;&nbsp;</td><td> $MAG &nbsp;&nbsp;</td><td>" $(lib/deg2hms $RADEC) "&nbsp;&nbsp;</td><td>$X $Y &nbsp;&nbsp;</td><td>$FITSFILE</td></tr>"
 done < $LIGHTCURVEFILE
 echo "</table>"
 
@@ -414,15 +414,15 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
  fi
  ############
  # do this only if $VIZIER_SITE is set
- if [ ! -z "$VIZIER_SITE" ];then
+ if [ -n "$VIZIER_SITE" ];then
   # if this is a new source
-  if [ `cat $LIGHTCURVEFILE | wc -l` -eq 2 ];then
+  if [ $(cat "$LIGHTCURVEFILE" | wc -l) -eq 2 ];then
    # New last-ditch effort, search Gaia DR2 for a known star of approximately the same brightenss
    ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
    MAG_BRIGHT_SEARCH_LIMIT=0.0
    #MAG_FAINT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1+1.00}'`
    # V1858 Sgr from NMW_Sgr9_crash_test is the borderline case
-   MAG_FAINT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.98}'`
+   MAG_FAINT_SEARCH_LIMIT=$(echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.98}')
    # We assume $TIMEOUTCOMMAND is set by the parent script
    #$TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/345/gaia2  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -v \# | grep -v "\---" | grep -v "sec" | grep -v 'Gma' | grep -v "RA_ICRS" | grep --quiet -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE'
    $TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/345/gaia2  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS|NOT_AVAILABLE|CONSTANT|VARIABLE" --quiet

@@ -265,7 +265,6 @@
                                                           // above the detection limit on the reference frame.
 #define FLARE_MAG 0.9                                     // Objects which are found to be FLARE_MAG magnitudes brighter on the current image than on the reference image 
                                                           // will be also listed as transient candidates
-#define MIN_DISTANCE_BETWEEN_STARS_IN_APERTURE_DIAMS 0.8  //0.7
 
 //// src/fit_mag_calib.c ////
 #define MAX_NUMBER_OF_STARS_MAG_CALIBR MAX_NUMBER_OF_STARS

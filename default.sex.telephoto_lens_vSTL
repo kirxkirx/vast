@@ -26,7 +26,7 @@ DETECT_MINAREA  3.0             # minimum number of pixels above threshold
 DETECT_THRESH   3.0             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
 ANALYSIS_THRESH 3.0             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
 
-SATUR_LEVEL     60000.0         # level (in ADUs) at which arises saturation
+SATUR_LEVEL     57000.0         # level (in ADUs) at which arises saturation
 
 FILTER          Y               # apply filter for detection ("Y" or "N")?
 FILTER_NAME     default.conv.telephoto_lens    # name of the file containing the filter
