@@ -654,7 +654,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    # OGLE Bulge LPV
    if [ $KNOWN_VARIABLE -eq 0 ];then
     #OGLE_LPV_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AcA/63/21/catalog -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Star,Type,Per 2>/dev/null | grep -v \# | grep -v '(' | grep -v "_" | grep -v "\---" | grep -A 1 'Star' | tail -n1)
-    OGLE_LPV_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AcA/63/21/catalog -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Star,Type,Per 2>/dev/null | grep -vE '(\#|\(|_|\\---)' | grep -A 1 'Star' | tail -n1)
+    OGLE_LPV_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AcA/63/21/catalog -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Star,Type,Per 2>/dev/null | grep -vE '(#|\(|_|\---)' | grep -A 1 'Star' | tail -n1)
     if [ -n "$OGLE_LPV_RESULTS" ];then
      OGLENAME=$(echo "$OGLE_LPV_RESULTS" | awk '{print $1}')
      OGLETYPE=$(echo "$OGLE_LPV_RESULTS" | awk '{print $2}')
@@ -668,7 +668,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    # ATLAS
    if [ $KNOWN_VARIABLE -eq 0 ];then
     #ATLAS_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AJ/156/241/table4 -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=ATOID,Class 2>/dev/null | grep -v \# | grep -v '(' | grep -v "_" | grep -v "\---" | grep J | tail -n1)
-    ATLAS_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AJ/156/241/table4 -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=ATOID,Class 2>/dev/null | grep -vE '(\#|\(|_|\\---|J)' | tail -n1)
+    ATLAS_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AJ/156/241/table4 -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=ATOID,Class 2>/dev/null | grep -vE '(#|\(|_|\---|J)' | tail -n1)
     if [ -n "$ATLAS_RESULTS" ];then
      ATLASNAME=$(echo "$ATLAS_RESULTS" | awk '{print $1}')
      ATLASTYPE=$(echo "$ATLAS_RESULTS" | awk '{print $2}')

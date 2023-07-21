@@ -351,10 +351,10 @@ SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=0
 STAR_IN_NEVEREXCLUDE_LIST_MESSAGE=""
 EXCLUSION_LIST_FILE="neverexclude_list.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
- lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 17 | grep --quiet "FOUND"
+ lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT | grep --quiet "FOUND"
  if [ $? -eq 0 ];then
   SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
-  STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="THIS STAR IS LISTED IN $EXCLUSION_LIST_FILE "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 17 | grep "FOUND" | awk -F'FOUND' '{print $2}')
+  STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="THIS STAR IS LISTED IN $EXCLUSION_LIST_FILE "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT | grep "FOUND" | awk -F'FOUND' '{print $2}')
  fi
 fi
 #
@@ -365,7 +365,7 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
  EXCLUSION_LIST_FILE="exclusion_list.txt"
  if [ -s "$EXCLUSION_LIST_FILE" ];then
   # Exclude previously considered candidates
-  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 17 | grep --quiet "FOUND"
+  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT | grep --quiet "FOUND"
   if [ $? -eq 0 ];then
    echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
    clean_tmp_files
@@ -405,7 +405,7 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
  # It may be generated from the local
  EXCLUSION_LIST_FILE="exclusion_list_local.txt"
  if [ -s "$EXCLUSION_LIST_FILE" ];then
-  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 17 | grep --quiet "FOUND"
+  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT | grep --quiet "FOUND"
   if [ $? -eq 0 ];then
    echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in the exclusion list $EXCLUSION_LIST_FILE ****"
    clean_tmp_files
@@ -424,7 +424,10 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
    # V1858 Sgr from NMW_Sgr9_crash_test is the borderline case
    MAG_FAINT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.98}'`
    # We assume $TIMEOUTCOMMAND is set by the parent script
-   $TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/345/gaia2  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=17  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -v \# | grep -v "\---" | grep -v "sec" | grep -v 'Gma' | grep -v "RA_ICRS" | grep --quiet -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE'
+   #$TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/345/gaia2  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -v \# | grep -v "\---" | grep -v "sec" | grep -v 'Gma' | grep -v "RA_ICRS" | grep --quiet -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE'
+   $TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/345/gaia2  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS|NOT_AVAILABLE|CONSTANT|VARIABLE" --quiet
+   # Switch to Gaia DR3
+   #$TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/355/gaiadr3  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=17  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -v \# | grep -v "\---" | grep -v "sec" | grep -v 'Gma' | grep -v "RA_ICRS" | grep --quiet -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE'
    if [ $? -eq 0 ];then
     echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2   (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT)"
     echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt
@@ -433,9 +436,11 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
    fi # if Gaia DR2 match found
    # The trouble is... Gaia catalog is missing many obvious bright stars
    # So if the Gaia search didn't work well - let's try APASS (chosen because it has good magnitudes and is deep enough for NMW)
-   NUMBER_OF_NONEMPTY_LINES=`$TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=II/336  -out.max=1 -out.add=_r -out.form=mini  -sort=Vmag Vmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=17  -out=recno,RAJ2000,DEJ2000,Vmag 2>/dev/null | grep -v \# | grep -v "\---" |grep -v "sec" | grep -v 'Vma' | grep -v "RAJ" | sed '/^[[:space:]]*$/d' | wc -l`
+   #NUMBER_OF_NONEMPTY_LINES=`$TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=II/336  -out.max=1 -out.add=_r -out.form=mini  -sort=Vmag Vmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT  -out=recno,RAJ2000,DEJ2000,Vmag 2>/dev/null | grep -v \# | grep -v "\---" |grep -v "sec" | grep -v 'Vma' | grep -v "RAJ" | sed '/^[[:space:]]*$/d' | wc -l`
+   # The awk 'NF > 0' command is equivalent to sed '/^[[:space:]]*$/d', but is generally faster and more efficient. It checks if the number of fields (NF) is greater than 0, which means the line is not empty.
+   NUMBER_OF_NONEMPTY_LINES=`$TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=II/336  -out.max=1 -out.add=_r -out.form=mini  -sort=Vmag Vmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT  -out=recno,RAJ2000,DEJ2000,Vmag 2>/dev/null | grep -vE "#|---|sec|Vma|RAJ" | awk 'NF > 0' | wc -l`
    if [ $NUMBER_OF_NONEMPTY_LINES -gt 0 ];then
-    echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in APASS   (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#)"
+    echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in APASS   (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT)"
     echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_apass.txt
     clean_tmp_files
     exit 1
