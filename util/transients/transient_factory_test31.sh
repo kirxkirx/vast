@@ -60,15 +60,17 @@ TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
 # CAMERA_SETTINGS environment vairable may be set to override the default settings with the ones needed for a different camera
 if [ -n "$CAMERA_SETTINGS" ];then
  if [ "$CAMERA_SETTINGS" = "NMW-STL" ];then
+  # Canon 135 mm f/2.0 telephoto lens + SBIG STL-11000 CCD, 20 sec exposures
   echo "### Using search settings for $CAMERA_SETTINGS camera ###"
   TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION=""
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=1000
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=1500
+  FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="14.5"
   # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
-  SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v5"
+  SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
   # REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES rejects candidates with exactly the same pixel coordinates on two new images
   # as these are likely to be hot pixels sneaking into the list of candidates if no shift has been applied between the two second-epoch images.
-  export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="true"
+  export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="yes"
  fi
 fi
 
@@ -80,6 +82,24 @@ fi
 LC_ALL=C
 LANGUAGE=C
 export LANGUAGE LC_ALL
+#################################
+
+#################################
+# Homogenize optional variables
+if [ -n "$CHECK_POINTING_ACCURACY" ];then
+ if [ "$CHECK_POINTING_ACCURACY" = "y" ] || [ "$CHECK_POINTING_ACCURACY" = "Y" ] || [ "$CHECK_POINTING_ACCURACY" = "yes" ] || [ "$CHECK_POINTING_ACCURACY" = "Yes" ] || [ "$CHECK_POINTING_ACCURACY" = "YES" ] || [ "$CHECK_POINTING_ACCURACY" = "true" ] || [ "$CHECK_POINTING_ACCURACY" = "True" ] || [ "$CHECK_POINTING_ACCURACY" = "TRUE" ];then
+  CHECK_POINTING_ACCURACY="yes"
+  export CHECK_POINTING_ACCURACY
+ fi
+fi
+
+if [ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ];then
+ if [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "y" ] || [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "Y" ] || [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "yes" ] || [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "Yes" ] || [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "YES" ] || [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "true" ] || [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "True" ] || [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "TRUE" ];then
+  REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="yes"
+  export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES
+ fi
+fi
+
 #################################
 
 # Are we on Linux or something else?
@@ -861,7 +881,7 @@ Soft limit: $FOV_DEG_LIMIT_SOFT deg.  Hard limit: $FOV_DEG_LIMIT_HARD deg.
  #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>1.0" | bc -ql`
  TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_HARD" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
  if [ $TEST -eq 1 ];then
-  if [ "$CHECK_POINTING_ACCURACY" = "YES" ] || [ "$CHECK_POINTING_ACCURACY" = "Yes" ] || [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
+  if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
    echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)"
    echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" >> transient_factory_test31.txt
    break
@@ -873,11 +893,11 @@ Soft limit: $FOV_DEG_LIMIT_SOFT deg.  Hard limit: $FOV_DEG_LIMIT_HARD deg.
  # Relax the reference-new image pointing difference threshold for raising the error
  TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_SOFT" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
  if [ $TEST -eq 1 ];then
-  if [ "$CHECK_POINTING_ACCURACY" = "YES" ] || [ "$CHECK_POINTING_ACCURACY" = "Yes" ] || [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
+  if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
    echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)"
    echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" >> transient_factory_test31.txt
    #break
-   # Not break'ing here, the offset is not hpelessly large and we want to keep candidates from this field
+   # Not break'ing here, the offset is not hopelessly large and we want to keep candidates from this field
   fi
  fi
 
@@ -897,7 +917,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>1.0" | bc -ql`
  TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_HARD" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
  if [ $TEST -eq 1 ];then
-  if [ "$CHECK_POINTING_ACCURACY" = "YES" ] || [ "$CHECK_POINTING_ACCURACY" = "Yes" ] || [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
+  if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
    echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)"
    echo "ERROR: (NO CANDIDATES LISTED) distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" >> transient_factory_test31.txt
    break
@@ -910,13 +930,44 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  ## Note that this is also set above!
  TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_SOFT" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
  if [ $TEST -eq 1 ];then
-  if [ "$CHECK_POINTING_ACCURACY" = "YES" ] || [ "$CHECK_POINTING_ACCURACY" = "Yes" ] || [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
+  if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
    echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)"
    echo "ERROR: distance between reference and second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" >> transient_factory_test31.txt
    #break
-   # Not break'ing here, the offset is not hpelessly large and we want to keep candidates from this field
+   # Not break'ing here, the offset is not hopelessly large and we want to keep candidates from this field
   fi
  fi
+ 
+ # Check if shift is applied to secondepoch images
+ if [ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ];then
+  if [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "yes" ];then
+   ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
+   # Require a 5 pixel shift, but no less than 1"
+   MIN_IMAGE_SHIFT_ARCSEC=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{val = 5*$1; printf "%.1f", (val<1.0?1.0:val)}')
+   MIN_IMAGE_SHIFT_DEG=$(echo "$MIN_IMAGE_SHIFT_ARCSEC" | awk '{printf "%.5f", $1/3600}')
+   #
+   DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}')
+   echo "###################################
+# Check the image center offset between the first and the second second-epoch image (ahift should be applied between the second-epoch images)
+Second-epoch first image center  $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE
+Second-epoch second image center $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE
+Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
+###################################" >> transient_factory_test31.txt
+   TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$MIN_IMAGE_SHIFT_DEG" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+   if [ $TEST -eq 1 ];then
+    if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
+     echo "ERROR: no shift applied between second-epoch images! The distance between image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (limit: $MIN_IMAGE_SHIFT_DEG deg.)"
+     echo "ERROR: no shift applied between second-epoch images! The distance between image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (limit: $MIN_IMAGE_SHIFT_DEG deg.)" >> transient_factory_test31.txt
+     #break
+     # Not break'ing here
+    fi # if [ "$CHECK_POINTING_ACCURACY" = "YES"
+   fi
+   #
+   
+   #
+   
+  fi # if [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "yes" ]
+ fi # if [ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ];then
 
  
  echo "Running solve_plate_with_UCAC5" >> transient_factory_test31.txt
