@@ -66,6 +66,7 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".cat
  UCAC5_SOLUTION_NAME="$WCS_IMAGE_NAME".cat.ucac5
  # util/solve_plate_with_UCAC5 is supposed to be called before running this script
+ ### The lines below probably should be replaced with a run of util/get_image_date
  DATETIMEJD=`grep $FITSFILE vast_image_details.log |awk '{print $2" "$3"  "$5"  "$7}'`
  DATE=`echo $DATETIMEJD|awk '{print $1}'`
  TIME=`echo $DATETIMEJD|awk '{print $2}'`
@@ -77,7 +78,6 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  TIMEH=`echo $TIME |awk -F":" '{print $1}'`
  TIMEM=`echo $TIME |awk -F":" '{print $2}'`
  TIMES=`echo $TIME |awk -F":" '{print $3}'`
- #DAYFRAC=`echo "$DAY+$TIMEH/24+$TIMEM/1440+$TIMES/86400+$EXPTIME/(2*86400)" |bc -ql`
  DAYFRAC=`echo "$DAY $TIMEH $TIMEM $TIMES $EXPTIME" | awk '{printf "%.6f",$1+$2/24+$3/1440+$4/86400+$5/(2*86400)}'`
  # If there is a UCAC5 plate solution with local corrections - use it,
  # otherwise rely on the positions computed using only the WCS header
