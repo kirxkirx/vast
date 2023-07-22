@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+	#!/usr/bin/env bash
 
 #################################
 # Set the safe locale that should be available on any POSIX system
@@ -119,6 +119,12 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
   
   # Only do this if we are going for javascript
   if [ $USE_JAVASCRIPT -eq 1 ];then
+  
+   # Get constellation name
+   CONSTELLATION=$(grep 'Second-epoch detections' transient_report/index.tmp | awk '{print $4}')
+   if [ -z "$CONSTELLATION" ];then
+    CONSTELLATION="Con"
+   fi
 
    #echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Preview of the reference image(s) and two 2nd epoch images</a> (are there clouds/trees in the view?)</br>" >> transient_report/index.tmp  
    echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Preview of the reference image(s) and two 2nd epoch images</a> (are there clouds/trees in the view?)" >> transient_report/index.tmp  
@@ -248,7 +254,7 @@ Here is a stub line for <a href='http://www.cbat.eps.harvard.edu/tocp_report'>re
 Don't forget to set the constellation name and the number of days since the last non-detection!
 <pre style='font-family:monospace;font-size:12px;'>
 " >> transient_report/index.tmp
-    cat test.mpc | sed 's: C2: 2:g' | awk '{printf "TCP %d %02d %07.4f*  %02d %02d %05.2f %+03d %02d %04.1f  %4.1f U             Con       9 0\n", $2, $3, $4,  $5, $6, $7,  $8, $9, $10,  $11}' >> transient_report/index.tmp
+    cat test.mpc | sed 's: C2: 2:g' | awk -v val="$CONSTELLATION" '{printf "TCP %d %02d %07.4f*  %02d %02d %05.2f %+03d %02d %04.1f  %4.1f U             %s       9 0\n", $2, $3, $4,  $5, $6, $7,  $8, $9, $10,  $11,  val}' >> transient_report/index.tmp
     echo "</pre>
 <br>
 </div>" >> transient_report/index.tmp

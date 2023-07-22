@@ -439,9 +439,12 @@ Mean magnitude and position on the discovery images:
 
 # Additional info
 # Galactic coordinates of the transient
-GALACTIC_COORDINATES=`lib/bin/skycoor -g $RADEC_MEAN_HMS J2000`
+GALACTIC_COORDINATES=$(lib/bin/skycoor -g $RADEC_MEAN_HMS J2000)
 
-echo "$GALACTIC_COORDINATES   Second-epoch detections are separated by $ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING\" and $PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING pix   $STAR_IN_NEVEREXCLUDE_LIST_MESSAGE"
+# Constellation where the transient is located
+CONSTELLATION=$(util/constellation.sh $RADEC_MEAN_HMS)
+
+echo "$GALACTIC_COORDINATES  $CONSTELLATION  Second-epoch detections are separated by $ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING\" and $PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING pix   $STAR_IN_NEVEREXCLUDE_LIST_MESSAGE"
 
 # Check if this is a known source or if it looks like a hot pixel
 lib/catalogs/check_catalogs_offline $RA_MEAN $DEC_MEAN

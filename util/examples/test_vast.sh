@@ -17828,6 +17828,75 @@ if [ $? -ne 0 ];then
 fi
 
 
+# Constellations
+util/constellation.sh 0.0 0.0 | grep --quiet 'Psc'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION001"
+fi
+
+util/constellation.sh 00:00:00.00 00:00:00.0 | grep --quiet 'Psc'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION002"
+fi
+
+util/constellation.sh 22:57:00 +35:20:00 | grep --quiet 'Lac'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION003"
+fi
+
+util/constellation.sh 17:44:17 -30:00:00 | grep --quiet 'Sgr'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION004"
+fi
+
+util/constellation.sh 17:43:52 -30:02:30 | grep --quiet 'Oph'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION005"
+fi
+
+util/constellation.sh 17:44:00 -30:05:00 | grep --quiet 'Sco'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION006"
+fi
+
+
+
+# V0437 Peg
+util/constellation.sh 21:30:03.96 +12:04:59.4 | grep --quiet 'Peg'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION007"
+fi
+
+# V0581 Aur
+util/constellation.sh 05:12:06.91 +45:46:42.8 | grep --quiet 'Aur'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION008"
+fi
+
+# LW Ara
+util/constellation.sh 17:28:09.26 -46:38:14.4 | grep --quiet 'Ara'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION009"
+fi
+
+# V0443 Sge
+util/constellation.sh 19:53:20.02 +18:59:33.9 | grep --quiet 'Sge'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION010"
+fi
+
+
+
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
 THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
