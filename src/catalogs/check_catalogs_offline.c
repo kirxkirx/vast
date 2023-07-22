@@ -74,6 +74,7 @@ int search_myMDV( double target_RA_deg, double target_Dec_deg, double search_rad
             }
         }
     }
+/*    
     if ( is_found == 0 ) {
         if ( be_silent_if_not_found == 0 ) {
             //fprintf( stdout, "The object was <font color=\"red\">not found</font> in <font color=\"blue\">MDV</font>\n" );
@@ -82,6 +83,13 @@ int search_myMDV( double target_RA_deg, double target_Dec_deg, double search_rad
     } else {    
         fprintf( stdout, "%2.0lf\"  %s\nType: %s\n", best_distance_deg * 3600.0, best_name, best_type);
     }
+*/
+    if ( is_found ) {
+     fprintf( stdout, "%2.0lf\"  %s\nType: %s\n", best_distance_deg * 3600.0, best_name, best_type);
+    } else if ( be_silent_if_not_found ) {
+      fprintf( stdout, "The object was not found in MDV\n" );
+    }
+
 
     fclose( mymdvfile );
 
@@ -432,7 +440,7 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
    ///////////////////////////////////////////////////////////////
 
    // if( is_found == 0 )
-   fprintf( stdout, "The object was <font color=\"green\">found</font> in <font color=\"green\">ASASSN-V</font>\n" );
+   fprintf( stdout, "The object was <font color=\"green\">found</font> in <font color=\"green\">ASASSN-V</font>\n");
    is_found= 1;
    // fprintf(stdout, "%2.0lf\"  %s\nType: %s\nMeanMag %s m  Amp. %s m  Period %s d\n<a href=\"https://asas-sn.osu.edu%s\">ASASSN lightcurve</a>\n", distance_deg * 3600.0, name, type, MeanMag, Amplitude, Period, Url);
    fprintf( stdout, "%2.0lf\"  %s\nType: %s\nMeanMag %s m  Amp. %s m  Period %s d\n", distance_deg * 3600.0, name, type, MeanMag, Amplitude, Period );
@@ -440,7 +448,7 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
   }
  }
  if ( is_found == 0 && be_silent_if_not_found == 0 ) {
-  fprintf( stdout, "The object was <font color=\"red\">not found</font> in <font color=\"green\">ASASSN-V</font>\n" );
+  fprintf( stdout, "The object was <font color=\"red\">not found</font> in <font color=\"green\">ASASSN-V</font>\n");
  }
 
  fclose( asassnv_csv );

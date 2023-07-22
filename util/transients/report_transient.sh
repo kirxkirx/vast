@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 #
-# This script writes out a short summary about the possible transient
+# This script writes out a short summary about the possible transient.
+# It is normally called by other scripts like util/transients/transient_factory_test31.sh
+# and is not supposed to be run directly by user.
 #
 
 #################################
@@ -16,9 +18,7 @@ if [ -z $1 ]; then
 fi
 LIGHTCURVEFILE=$1
 
-#. util/transients/transient_factory_setup.sh
-
-# Find SExtractor
+# Find Source Extractor
 SEXTRACTOR=`command -v sex 2>/dev/null`
 if [ "" = "$SEXTRACTOR" ];then
  SEXTRACTOR=lib/bin/sex
@@ -48,14 +48,13 @@ SECOND_REFERENCE_IMAGE=`cat vast_image_details.log | head -n2 | tail -n1 | awk '
 #     Reference image    2010 12 10.0833  2455540.5834  13.61  06:29:12.25 +26:24:19.4
 echo "<table style='font-family:monospace;font-size:12px;'>
 <tr><th></th><th>                     Date (UTC)   </th><th>    JD(UTC)  </th><th>    mag. </th><th> R.A. & Dec.(J2000)   </th><th>X & Y (pix)</th><th>    Image</th></tr>"
+
 N=0
 
 # Make sure there are no files with names we want to use
 clean_tmp_files
 
 while read JD MAG MERR X Y APP FITSFILE REST ;do
- #echo "##### DEBUG #$JD $MAG $MERR $X $Y $APP $FITSFILE $REST#"
- #util/wcs_image_calibration.sh $FITSFILE $FOV &>/dev/null
  # At this point, we should somehow have a WCS calibrated image named $WCS_IMAGE_NAME
  WCS_IMAGE_NAME=wcs_`basename $FITSFILE`
  WCS_IMAGE_NAME=${WCS_IMAGE_NAME/wcs_wcs_/wcs_}
@@ -66,14 +65,7 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  fi
  SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".cat
  UCAC5_SOLUTION_NAME="$WCS_IMAGE_NAME".cat.ucac5
- # We believe this should be done before calling this script
- #if [ ! -f $SEXTRACTOR_CATALOG_NAME ];then  
- # $SEXTRACTOR -c `grep "SExtractor parameter file:" vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME $WCS_IMAGE_NAME
- #fi # if [ ! -f $SEXTRACTOR_CATALOG_NAME ];then
- # Keeping this step for backward compatibility with the old scripts used in the tests
- #if [ ! -f $UCAC5_SOLUTION_NAME ];then
- # util/solve_plate_with_UCAC5 $FITSFILE 1>&2
- #fi
+ # util/solve_plate_with_UCAC5 is supposed to be called before running this script
  DATETIMEJD=`grep $FITSFILE vast_image_details.log |awk '{print $2" "$3"  "$5"  "$7}'`
  DATE=`echo $DATETIMEJD|awk '{print $1}'`
  TIME=`echo $DATETIMEJD|awk '{print $2}'`
@@ -129,7 +121,6 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  fi
  
  if [ "$FITSFILE" != "$REFERENCE_IMAGE" ] ;then
-  #N=`echo $N+1|bc -q`
   N=$[$N+1]
   echo -n "<tr><td>Discovery image $N   &nbsp;&nbsp;</td>"
  else
@@ -143,10 +134,9 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
 done < $LIGHTCURVEFILE
 echo "</table>"
 
-#lib/stat_array < ra$$.dat > script$$.dat
 # We need to reformat util/colstat output to make it look like a small shell script
 util/colstat < ra$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
-# AAAA ###################
+###################
 #cp script$$.dat /tmp/
 ###################
 if [ $? -ne 0 ];then
@@ -168,7 +158,6 @@ RA_MAX=${RA_MAX//"+"/}
 RA_MIN=$MIN
 RA_MIN=${RA_MIN//"+"/}
 
-#lib/stat_array < dec$$.dat > script$$.dat
 util/colstat < dec$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
 if [ $? -ne 0 ];then
  echo "ERROR0003 in $0" 
@@ -188,7 +177,6 @@ DEC_MAX=${DEC_MAX//"+"/}
 DEC_MIN=$MIN
 DEC_MIN=${DEC_MIN//"+"/}
 
-#lib/stat_array < mag$$.dat > script$$.dat
 util/colstat < mag$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
 if [ $? -ne 0 ];then
  echo "ERROR0005 in $0" 
@@ -204,7 +192,6 @@ fi
 MAG_MEAN=`echo $MEAN|awk '{printf "%.2f",$1}'`
 MAG_MEAN=${MAG_MEAN//"+"/}
 
-#lib/stat_array < dayfrac$$.dat > script$$.dat
 util/colstat < dayfrac$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
 if [ $? -ne 0 ];then
  echo "ERROR0007 in $0" 
@@ -221,7 +208,6 @@ DAYFRAC_MEAN=`echo "$MEAN" | awk '{printf "%07.4f",$1}'`
 DAYFRAC_MEAN_SHORT=`echo "$MEAN" | awk '{printf "%05.2f",$1}'`
 
 
-#lib/stat_array < jd$$.dat > script$$.dat
 util/colstat < jd$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
 if [ $? -ne 0 ];then
  echo "ERROR0009 in $0" 
@@ -321,29 +307,10 @@ RADEC_MEAN_HMS=`lib/deg2hms $RA_MEAN $DEC_MEAN`
 RADEC_MEAN_HMS=${RADEC_MEAN_HMS//'\n'/}
 RA_MEAN_HMS=`echo "$RADEC_MEAN_HMS" | awk '{print $1}'`
 DEC_MEAN_HMS=`echo "$RADEC_MEAN_HMS" | awk '{print $2}'`
-#RA_MEAN_SPACES=`lib/deg2hms $RA_MEAN $DEC_MEAN | awk '{print $1}'`
 RA_MEAN_SPACES=${RA_MEAN_HMS//":"/" "}
-#DEC_MEAN_SPACES=`lib/deg2hms $RA_MEAN $DEC_MEAN | awk '{print $2}'`
 DEC_MEAN_SPACES=${DEC_MEAN_HMS//":"/" "}
 
 
-
-### FINAL CHECK: make sure the transient is not jumping in RA or DEC ###
-#EXTREME_POSITION_1=`lib/deg2hms $RA_MAX $DEC_MAX`
-#EXTREME_POSITION_2=`lib/deg2hms $RA_MIN $DEC_MIN`
-#JUMP=`lib/put_two_sources_in_one_field $EXTREME_POSITION_1 $EXTREME_POSITION_2 |grep "Angular distance" | awk '{print $5}'`
-#JUMP_ARCSEC=`echo "$JUMP*3600"|bc -ql`
-#echo "Maximum position difference between discovery images is $JUMP degrees ($JUMP_ARCSEC arcsec)."
-# CONSERVATIVE_ASTROMETRIC_ACCURACY_ARCSEC is not defined!!!
-#TEST=`echo "$JUMP_ARCSEC>$CONSERVATIVE_ASTROMETRIC_ACCURACY_ARCSEC"|bc -ql`
-#if [ $TEST -eq 1 ];then
-# exit 1
-#fi  
-### end of FINAL CHECK ###
-
-#
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#
 
 ############
 ### Apply the never_exclude list to override all the following exclusion lists
@@ -354,7 +321,19 @@ if [ -s "$EXCLUSION_LIST_FILE" ];then
  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT | grep --quiet "FOUND"
  if [ $? -eq 0 ];then
   SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
-  STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="THIS STAR IS LISTED IN $EXCLUSION_LIST_FILE "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT | grep "FOUND" | awk -F'FOUND' '{print $2}')
+  STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<font color=\"maroon\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT | grep "FOUND" | awk -F'FOUND' '{print $2}')
+ fi
+fi
+# Check if the transient is a major planet
+# The difference with the never_exclude list is the search radius
+if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
+ EXCLUSION_LIST_FILE="planets.txt"
+ if [ -s "$EXCLUSION_LIST_FILE" ];then
+  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 3600 | grep --quiet "FOUND"
+  if [ $? -eq 0 ];then
+   SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
+   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<font color=\"maroon\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 3600 | grep "FOUND" | awk -F'FOUND' '{print $2}')
+  fi
  fi
 fi
 #
@@ -425,7 +404,7 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
    MAG_FAINT_SEARCH_LIMIT=$(echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.98}')
    # We assume $TIMEOUTCOMMAND is set by the parent script
    #$TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/345/gaia2  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -v \# | grep -v "\---" | grep -v "sec" | grep -v 'Gma' | grep -v "RA_ICRS" | grep --quiet -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE'
-   $TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/345/gaia2  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS|NOT_AVAILABLE|CONSTANT|VARIABLE" --quiet
+   $TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/345/gaia2  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE" --quiet
    # Switch to Gaia DR3
    #$TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/355/gaiadr3  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=17  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -v \# | grep -v "\---" | grep -v "sec" | grep -v 'Gma' | grep -v "RA_ICRS" | grep --quiet -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE'
    if [ $? -eq 0 ];then
@@ -467,15 +446,12 @@ echo "$GALACTIC_COORDINATES   Second-epoch detections are separated by $ANGULAR_
 # Check if this is a known source or if it looks like a hot pixel
 lib/catalogs/check_catalogs_offline $RA_MEAN $DEC_MEAN
 VARIABLE_STAR_ID=$?
-#util/transients/MPCheck.sh $RADEC_MEAN_HMS $DATE $TIME H $MAG_MEAN | grep -v "Starting"
 util/transients/MPCheck.sh $RADEC_MEAN_HMS $DATE $TIME H $MAG_MEAN
 ASTEROID_ID=$?
 # If the candidate transient is not a known variable star or asteroid - try online search
 if [ $VARIABLE_STAR_ID -ne 0 ] && [ $ASTEROID_ID -ne 0 ] && [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.0" ] ;then
  # Slow online ID
- # Instead of a guess
- #util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS online_id `lib/try_to_guess_image_fov $REFERENCE_IMAGE` 2>&1 | grep '|' | tail -n1
- # Use the actual field of view - the reference image is supposed to be solved by now
+ # Instead of a guess, use the actual field of view - the reference image is supposed to be solved by now
  WCS_REFERENCE_IMAGE_NAME=wcs_`basename $REFERENCE_IMAGE`
  WCS_REFERENCE_IMAGE_NAME=${WCS_REFERENCE_IMAGE_NAME/wcs_wcs_/wcs_}
  util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS online_id $(util/fov_of_wcs_calibrated_image.sh $WCS_REFERENCE_IMAGE_NAME | grep 'Image size:' | awk -F"[ 'x]" '{if ($3 > $4) print $3; else print $4}') 2>&1 | grep '|' | tail -n1

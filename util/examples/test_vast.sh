@@ -9662,12 +9662,11 @@ $GREP_RESULT"
   fi
   #
   #
-  # Venus has no automatic ID in the current VaST version
-  #grep --quiet "Venus" transient_report/index.html
-  #if [ $? -ne 0 ];then
-  # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS0110"
-  #fi
+  grep --quiet "Venus" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_PLANETID"
+  fi
   grep --quiet -e "2020 04 19.7683  2458959.2683  6\...  04:41:" -e "2020 04 19.7683  2458959.2683  5\...  04:41:" -e "2020 04 19.7683  2458959.2683  7\...  04:41:"  transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0

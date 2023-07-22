@@ -379,6 +379,12 @@ fi
 
 echo "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" >> transient_factory_test31.txt
 
+# Update planet positions taking the date of the first input image
+JD_FIRSTIMAGE_FOR_LANET_POSITIONS=$(for IMGFILE in "$NEW_IMAGES"/*.fts ;do if [ -f "$IMGFILE" ];then util/get_image_date "$IMGFILE" 2>&1 | grep ' JD ' | awk '{print $2}' ; break ;fi ;done)
+echo "The reference JD for computing planet position: $JD_FIRSTIMAGE_FOR_LANET_POSITIONS"
+echo "The reference JD for computing planet position: $JD_FIRSTIMAGE_FOR_LANET_POSITIONS" >> transient_factory_test31.txt
+$TIMEOUTCOMMAND util/planets.sh "$JD_FIRSTIMAGE_FOR_LANET_POSITIONS" > planets.txt &
+
 PREVIOUS_FIELD="none"
 
 for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
@@ -542,7 +548,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   N_IMAGES_WITH_EXACTLY_THIS_SEEING_AP=$(cat vast_image_details.log | grep 'status=OK' | awk '{if ( $9 > 2 ) print $9}' | grep -c "$SEEING_AP_FIRST_IMG")
   if [ $N_IMAGES_WITH_EXACTLY_THIS_SEEING_AP -eq $NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING ];then
    # Consider a special case where the seeing is the same to within 0.1pix on all three images
-   # Sort the images on JD and thake the two latest ones assuming it's the first image that is most likely affected by bad pointing
+   # Sort the images on JD and take the two latest ones assuming it's the first image that is most likely affected by bad pointing
    echo "INFO: same seeing for all $NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING images with reasonable seeing" >> transient_factory_test31.txt
    # Take the second-to-last image as SECOND_EPOCH__FIRST_IMAGE
    ### ===> APERTURE LIMITS HARDCODED HERE <===
@@ -1192,6 +1198,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  echo "Done with filtering! =)"
  ###############################################################################################################
 
+ ###############################################################################################################
  # Check if the number of detected transients is suspiciously large
  NUMBER_OF_DETECTED_TRANSIENTS=$(cat candidates-transients.lst | wc -l)
  echo "Found $NUMBER_OF_DETECTED_TRANSIENTS candidate transients before the final filtering." >> transient_factory_test31.txt
@@ -1251,6 +1258,9 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
 done # for i in "$NEW_IMAGES"/*_001.fts ;do
 
 done # for NEW_IMAGES in $@ ;do
+
+
+
 
 ## Automatically update the exclusion list if we are on a production server
 HOST=$(hostname)
@@ -1386,8 +1396,15 @@ exclusion_list_index_html.txt NOT FOUND" >> transient_factory_test31.txt
  fi # if [ "$IS_THIS_TEST_RUN" != "YES" ];then
 #fi # host
 ## exclusion list update
- 
 
+###############################################################################################################
+# Moved here as we run HORIZONS script in parallel to the main script
+echo "Planet positions from JPL HORIZONS for JD$JD_FIRSTIMAGE_FOR_LANET_POSITIONS:"
+cat planets.txt
+echo "Planet positions from JPL HORIZONS for JD$JD_FIRSTIMAGE_FOR_LANET_POSITIONS:" >> transient_factory_test31.txt
+cat planets.txt >> transient_factory_test31.txt
+###############################################################################################################
+ 
 ## Finalize the HTML report
 echo "<H2>Processig complete!</H2>" >> transient_report/index.html
 
@@ -1406,6 +1423,9 @@ echo "</pre>" >> transient_report/index.html
 
 echo "</BODY></HTML>" >> transient_report/index.html
 
+if [ -f planets.txt ];then
+ rm -f planets.txt
+fi
 
 # The uncleaned directory is needed for the test script!!!
 #util/clean_data.sh
