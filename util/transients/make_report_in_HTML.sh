@@ -1,4 +1,4 @@
-	#!/usr/bin/env bash
+#!/usr/bin/env bash
 
 #################################
 # Set the safe locale that should be available on any POSIX system
