@@ -38,7 +38,7 @@ function clean_tmp_files {
 }
 
 
-# TRAP!! If we whant to identify a flare, there will be no sence to search for an asteroid on the reference image.
+# TRAP!! If we whant to identify a flare, there will be no sense to search for an asteroid on the reference image.
 # Use the first discovery image instead!
 REFERENCE_IMAGE=`cat vast_summary.log |grep "Ref.  image:" | awk '{print $6}'`
 
@@ -66,19 +66,23 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".cat
  UCAC5_SOLUTION_NAME="$WCS_IMAGE_NAME".cat.ucac5
  # util/solve_plate_with_UCAC5 is supposed to be called before running this script
- DATETIMEJD=`grep $FITSFILE vast_image_details.log |awk '{print $2" "$3"  "$5"  "$7}'`
- DATE=`echo $DATETIMEJD|awk '{print $1}'`
- TIME=`echo $DATETIMEJD|awk '{print $2}'`
- EXPTIME=`echo $DATETIMEJD|awk '{print $3}'`
- JD=`echo $DATETIMEJD|awk '{print $4}'`
- DAY=`echo $DATE |awk -F"." '{print $1}'`
- MONTH=`echo $DATE |awk -F"." '{print $2}'`
- YEAR=`echo $DATE |awk -F"." '{print $3}'` 
- TIMEH=`echo $TIME |awk -F":" '{print $1}'`
- TIMEM=`echo $TIME |awk -F":" '{print $2}'`
- TIMES=`echo $TIME |awk -F":" '{print $3}'`
- #DAYFRAC=`echo "$DAY+$TIMEH/24+$TIMEM/1440+$TIMES/86400+$EXPTIME/(2*86400)" |bc -ql`
- DAYFRAC=`echo "$DAY $TIMEH $TIMEM $TIMES $EXPTIME" | awk '{printf "%.6f",$1+$2/24+$3/1440+$4/86400+$5/(2*86400)}'`
+ DATE_INFO=$(util/get_image_date "$FITSFILE" 2>&1)
+ JD=$(echo "$DATE_INFO" | grep ' JD ' | awk '{print $2}')
+ YEAR=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $3}')
+ MONTH=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $4}')
+ DAYFRAC=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{printf "%.6f", $5}')
+ #DATETIMEJD=`grep $FITSFILE vast_image_details.log |awk '{print $2" "$3"  "$5"  "$7}'`
+ #DATE=`echo $DATETIMEJD|awk '{print $1}'`
+ #TIME=`echo $DATETIMEJD|awk '{print $2}'`
+ #EXPTIME=`echo $DATETIMEJD|awk '{print $3}'`
+ #JD=`echo $DATETIMEJD|awk '{print $4}'`
+ #DAY=`echo $DATE |awk -F"." '{print $1}'`
+ #MONTH=`echo $DATE |awk -F"." '{print $2}'`
+ #YEAR=`echo $DATE |awk -F"." '{print $3}'` 
+ #TIMEH=`echo $TIME |awk -F":" '{print $1}'`
+ #TIMEM=`echo $TIME |awk -F":" '{print $2}'`
+ #TIMES=`echo $TIME |awk -F":" '{print $3}'`
+ #DAYFRAC=`echo "$DAY $TIMEH $TIMEM $TIMES $EXPTIME" | awk '{printf "%.6f",$1+$2/24+$3/1440+$4/86400+$5/(2*86400)}'`
  # If there is a UCAC5 plate solution with local corrections - use it,
  # otherwise rely on the positions computed using only the WCS header
  if [ -f $UCAC5_SOLUTION_NAME ];then
@@ -110,7 +114,7 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  # Do not use the first-epoch images for computing average values (positions, dates, magnitdes)
  if [ "$FITSFILE" != "$REFERENCE_IMAGE" ] && [ "$FITSFILE" != "$SECOND_REFERENCE_IMAGE" ] ;then
   echo "$JD" >> jd$$.dat
-  echo "$DAYFRAC" >> dayfrac$$.dat
+  #echo "$DAYFRAC" >> dayfrac$$.dat
   echo "$RA" >> ra$$.dat
   echo "$DEC" >> dec$$.dat
   echo "$MAG" >> mag$$.dat
@@ -126,11 +130,11 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  else
   echo -n "<tr><td>Reference image     &nbsp;&nbsp;</td>"
  fi # if [ "$FITSFILE" != "$REFERENCE_IMAGE" ] ;then
- DAYFRAC=`echo "$DAYFRAC" | awk '{printf "%07.4f\n",$1}'` # purely for visualisation purposes
+ DAYFRAC_SHORT=`echo "$DAYFRAC" | awk '{printf "%07.4f\n",$1}'` # purely for visualisation purposes
  JD=`echo "$JD" | awk '{printf "%.4f",$1}'` # purely for visualisation purposes
  X=`echo "$X" | awk '{printf "%04.0f",$1}'` # purely for visualisation purposes
  Y=`echo "$Y" | awk '{printf "%04.0f",$1}'` # purely for visualisation purposes
- echo "<td>$YEAR $MONTH $DAYFRAC &nbsp;&nbsp;</td><td> $JD &nbsp;&nbsp;</td><td> $MAG &nbsp;&nbsp;</td><td>" $(lib/deg2hms $RADEC) "&nbsp;&nbsp;</td><td>$X $Y &nbsp;&nbsp;</td><td>$FITSFILE</td></tr>"
+ echo "<td>$YEAR $MONTH $DAYFRAC_SHORT &nbsp;&nbsp;</td><td> $JD &nbsp;&nbsp;</td><td> $MAG &nbsp;&nbsp;</td><td>" $(lib/deg2hms $RADEC) "&nbsp;&nbsp;</td><td>$X $Y &nbsp;&nbsp;</td><td>$FITSFILE</td></tr>"
 done < $LIGHTCURVEFILE
 echo "</table>"
 
@@ -192,20 +196,20 @@ fi
 MAG_MEAN=`echo $MEAN|awk '{printf "%.2f",$1}'`
 MAG_MEAN=${MAG_MEAN//"+"/}
 
-util/colstat < dayfrac$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
-if [ $? -ne 0 ];then
- echo "ERROR0007 in $0" 
- clean_tmp_files
- exit 1
-fi
-. script$$.dat
-if [ $? -ne 0 ];then
- echo "ERROR0008 in $0" 
- clean_tmp_files
- exit 1
-fi
-DAYFRAC_MEAN=`echo "$MEAN" | awk '{printf "%07.4f",$1}'`
-DAYFRAC_MEAN_SHORT=`echo "$MEAN" | awk '{printf "%05.2f",$1}'`
+#util/colstat < dayfrac$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
+#if [ $? -ne 0 ];then
+# echo "ERROR0007 in $0" 
+# clean_tmp_files
+# exit 1
+#fi
+#. script$$.dat
+#if [ $? -ne 0 ];then
+# echo "ERROR0008 in $0" 
+# clean_tmp_files
+# exit 1
+#fi
+#DAYFRAC_MEAN=`echo "$MEAN" | awk '{printf "%07.4f",$1}'`
+#DAYFRAC_MEAN_SHORT=`echo "$MEAN" | awk '{printf "%05.2f",$1}'`
 
 
 util/colstat < jd$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
@@ -225,10 +229,18 @@ if [ $? -ne 0 ];then
  clean_tmp_files
  exit 1
 fi
-JD_MEAN=`echo $MEAN |awk '{printf "%.4f",$1}'`
+JD_MEAN="$MEAN"
+JD_MEAN_SHORT=$(echo $JD_MEAN |awk '{printf "%.4f",$1}')
+DATE_INFO=$(util/get_image_date "$JD_MEAN" 2>&1)
+YEAR_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $3}')
+MONTH_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $4}')
+DAYFRAC_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $5}' | awk '{printf "%08.5f",$1}')
+DAYFRAC_MEAN_SHORT=$(echo "$DAYFRAC_MEAN" | awk '{printf "%07.4f",$1}')
+DAYFRAC_MEAN_SUPERSHORT=$(echo "$DAYFRAC_MEAN" | awk '{printf "%05.2f",$1}')
+
 
 #### Test for float numbers ####
-for STRING_TO_TEST in "$RA_MEAN" "$RA_MAX" "$RA_MIN" "$DEC_MEAN" "$DEC_MAX" "$DEC_MIN" "$MAG_MEAN" "$DAYFRAC_MEAN" "$DAYFRAC_MEAN_SHORT" "$JD_MEAN" ;do
+for STRING_TO_TEST in "$RA_MEAN" "$RA_MAX" "$RA_MIN" "$DEC_MEAN" "$DEC_MAX" "$DEC_MIN" "$MAG_MEAN" "$DAYFRAC_MEAN" "$DAYFRAC_MEAN_SHORT" "$DAYFRAC_MEAN_SUPERSHORT" "$JD_MEAN" "$JD_MEAN_SHORT" ;do
  re='^[+-]?[0-9]+([.][0-9]+)?$'
  if ! [[ $STRING_TO_TEST =~ $re ]] ; then
   echo "ERROR in $0 : the string #$STRING_TO_TEST# is not a floating point number" 
@@ -433,7 +445,7 @@ fi # if [ SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
 #     Reference image    2010 12 10.0833  2455540.5834  13.61  06:29:12.25 +26:24:19.4
 echo "<pre style='font-family:monospace;font-size:12px;'>
 Mean magnitude and position on the discovery images: 
-                   $YEAR $MONTH $DAYFRAC_MEAN  $JD_MEAN  $MAG_MEAN  $RADEC_MEAN_HMS"
+                   $YEAR_MEAN $MONTH_MEAN $DAYFRAC_MEAN_SHORT  $JD_MEAN_SHORT  $MAG_MEAN  $RADEC_MEAN_HMS"
 
 
 
@@ -449,7 +461,8 @@ echo "$GALACTIC_COORDINATES  $CONSTELLATION  Second-epoch detections are separat
 # Check if this is a known source or if it looks like a hot pixel
 lib/catalogs/check_catalogs_offline $RA_MEAN $DEC_MEAN
 VARIABLE_STAR_ID=$?
-util/transients/MPCheck.sh $RADEC_MEAN_HMS $DATE $TIME H $MAG_MEAN
+#util/transients/MPCheck.sh $RADEC_MEAN_HMS $DATE $TIME H $MAG_MEAN
+util/transients/MPCheck_v2.sh $RADEC_MEAN_HMS $YEAR_MEAN $MONTH_MEAN $DAYFRAC_MEAN H $MAG_MEAN
 ASTEROID_ID=$?
 # If the candidate transient is not a known variable star or asteroid - try online search
 if [ $VARIABLE_STAR_ID -ne 0 ] && [ $ASTEROID_ID -ne 0 ] && [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.0" ] ;then
@@ -471,9 +484,9 @@ Online MPChecker may fail to identify bright comets! Please manually check the <
 </pre>
 <form style='display: inline;' NAME='$$FORMMPC$1' METHOD=POST TARGET='_blank' ACTION='https://minorplanetcenter.net/cgi-bin/mpcheck.cgi'>
 <input type=submit value=' Online MPChecker '>
-<input type='hidden' name='year' maxlength=4 size=4 value='$YEAR'>
-<input type='hidden' name='month' maxlength=2 size=2 value='$MONTH'>
-<input type='hidden' name='day' maxlength=5 size=5 value='$DAYFRAC_MEAN_SHORT'>
+<input type='hidden' name='year' maxlength=4 size=4 value='$YEAR_MEAN'>
+<input type='hidden' name='month' maxlength=2 size=2 value='$MONTH_MEAN'>
+<input type='hidden' name='day' maxlength=5 size=5 value='$DAYFRAC_MEAN_SUPERSHORT'>
 <input type='radio' name='which' VALUE='pos' CHECKED style='display:none;'>
 <input type='hidden' name='ra' value='$RA_MEAN_SPACES' maxlength=12 size=12>
 <input type='hidden' name='decl' value='$DEC_MEAN_SPACES' maxlength=12 size=12>

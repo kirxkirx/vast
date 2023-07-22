@@ -381,8 +381,8 @@ echo "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" >> transient_factory_test31.txt
 
 # Update planet positions taking the date of the first input image
 JD_FIRSTIMAGE_FOR_LANET_POSITIONS=$(for IMGFILE in "$NEW_IMAGES"/*.fts ;do if [ -f "$IMGFILE" ];then util/get_image_date "$IMGFILE" 2>&1 | grep ' JD ' | awk '{print $2}' ; break ;fi ;done)
-echo "The reference JD for computing planet position: $JD_FIRSTIMAGE_FOR_LANET_POSITIONS"
-echo "The reference JD for computing planet position: $JD_FIRSTIMAGE_FOR_LANET_POSITIONS" >> transient_factory_test31.txt
+echo "The reference JD(UT) for computing planet position: $JD_FIRSTIMAGE_FOR_LANET_POSITIONS"
+echo "The reference JD(UT) for computing planet position: $JD_FIRSTIMAGE_FOR_LANET_POSITIONS" >> transient_factory_test31.txt
 $TIMEOUTCOMMAND util/planets.sh "$JD_FIRSTIMAGE_FOR_LANET_POSITIONS" > planets.txt &
 
 PREVIOUS_FIELD="none"
