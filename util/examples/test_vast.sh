@@ -496,6 +496,12 @@ if [ $TEST_PASSED -eq 0 ];then
  exit 1
 fi
 
+########## remove bad regions file 
+echo "Flusing bad_region.lst"
+if [ -f bad_region.lst ];then
+ mv -v bad_region.lst bad_region.lst_backup
+fi
+cp -v bad_region.lst_default bad_region.lst
 
 ##### DART Didymos moving object photometry test #####
 if [ ! -d ../DART_Didymos_moving_object_photometry_test ];then
