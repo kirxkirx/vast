@@ -72,6 +72,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   # REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES rejects candidates with exactly the same pixel coordinates on two new images
   # as these are likely to be hot pixels sneaking into the list of candidates if no shift has been applied between the two second-epoch images.
   export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="yes"
+  BAD_REGION_FILE="../STL_bad_region.lst"
  fi
 fi
 
@@ -381,8 +382,8 @@ echo "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" >> transient_factory_test31.txt
 
 # Update planet positions taking the date of the first input image
 JD_FIRSTIMAGE_FOR_LANET_POSITIONS=$(for IMGFILE in "$NEW_IMAGES"/*.fts ;do if [ -f "$IMGFILE" ];then util/get_image_date "$IMGFILE" 2>&1 | grep ' JD ' | awk '{print $2}' ; break ;fi ;done)
-echo "The reference JD for computing planet position: $JD_FIRSTIMAGE_FOR_LANET_POSITIONS"
-echo "The reference JD for computing planet position: $JD_FIRSTIMAGE_FOR_LANET_POSITIONS" >> transient_factory_test31.txt
+echo "The reference JD(UT) for computing planet position: $JD_FIRSTIMAGE_FOR_LANET_POSITIONS"
+echo "The reference JD(UT) for computing planet position: $JD_FIRSTIMAGE_FOR_LANET_POSITIONS" >> transient_factory_test31.txt
 $TIMEOUTCOMMAND util/planets.sh "$JD_FIRSTIMAGE_FOR_LANET_POSITIONS" > planets.txt &
 
 PREVIOUS_FIELD="none"
@@ -659,6 +660,19 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE=1
   if [ -f ../Stas_bad_region.lst ];then
    cp -v ../Stas_bad_region.lst bad_region.lst >> transient_factory_test31.txt
+  fi
+ fi
+ echo "$SECOND_EPOCH__FIRST_IMAGE" | grep --quiet -e "NMW-STL"
+ if [ $? -eq 0 ];then
+  KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE=1
+  if [ -f ../STL_bad_region.lst ];then
+   cp -v ../STL_bad_region.lst bad_region.lst >> transient_factory_test31.txt
+  fi
+ fi
+ if [ -n "$BAD_REGION_FILE" ];then
+  if [ -f "$BAD_REGION_FILE" ];then
+   KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE=1
+   cp -v "$BAD_REGION_FILE" bad_region.lst >> transient_factory_test31.txt
   fi
  fi
  if [ $KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE -eq 0 ];then
