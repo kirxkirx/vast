@@ -67,7 +67,7 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  UCAC5_SOLUTION_NAME="$WCS_IMAGE_NAME".cat.ucac5
  # util/solve_plate_with_UCAC5 is supposed to be called before running this script
  DATE_INFO=$(util/get_image_date "$FITSFILE" 2>&1)
- JD=$(echo "$DATE_INFO" | grep ' JD ' | awk '{print $2}')
+ JD_FROM_IMAGE_HEADER=$(echo "$DATE_INFO" | grep -v '= JD' | grep '        JD ' | awk '{print $2}')
  YEAR=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $3}')
  MONTH=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $4}')
  DAYFRAC=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{printf "%.6f", $5}')
@@ -113,7 +113,7 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
 
  # Do not use the first-epoch images for computing average values (positions, dates, magnitdes)
  if [ "$FITSFILE" != "$REFERENCE_IMAGE" ] && [ "$FITSFILE" != "$SECOND_REFERENCE_IMAGE" ] ;then
-  echo "$JD" >> jd$$.dat
+  echo "$JD_FROM_IMAGE_HEADER" >> jd$$.dat
   #echo "$DAYFRAC" >> dayfrac$$.dat
   echo "$RA" >> ra$$.dat
   echo "$DEC" >> dec$$.dat
@@ -131,10 +131,10 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
   echo -n "<tr><td>Reference image     &nbsp;&nbsp;</td>"
  fi # if [ "$FITSFILE" != "$REFERENCE_IMAGE" ] ;then
  DAYFRAC_SHORT=`echo "$DAYFRAC" | awk '{printf "%07.4f\n",$1}'` # purely for visualisation purposes
- JD=`echo "$JD" | awk '{printf "%.4f",$1}'` # purely for visualisation purposes
+ JD_SHORT=`echo "$JD_FROM_IMAGE_HEADER" | awk '{printf "%.4f",$1}'` # purely for visualisation purposes
  X=`echo "$X" | awk '{printf "%04.0f",$1}'` # purely for visualisation purposes
  Y=`echo "$Y" | awk '{printf "%04.0f",$1}'` # purely for visualisation purposes
- echo "<td>$YEAR $MONTH $DAYFRAC_SHORT &nbsp;&nbsp;</td><td> $JD &nbsp;&nbsp;</td><td> $MAG &nbsp;&nbsp;</td><td>" $(lib/deg2hms $RADEC) "&nbsp;&nbsp;</td><td>$X $Y &nbsp;&nbsp;</td><td>$FITSFILE</td></tr>"
+ echo "<td>$YEAR $MONTH $DAYFRAC_SHORT &nbsp;&nbsp;</td><td> $JD_SHORT &nbsp;&nbsp;</td><td> $MAG &nbsp;&nbsp;</td><td>" $(lib/deg2hms $RADEC) "&nbsp;&nbsp;</td><td>$X $Y &nbsp;&nbsp;</td><td>$FITSFILE</td></tr>"
 done < $LIGHTCURVEFILE
 echo "</table>"
 
