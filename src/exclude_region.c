@@ -265,7 +265,13 @@ int read_bad_CCD_regions_lst( double *X1, double *Y1, double *X2, double *Y2, in
 
   // Don't print example region from bad_region.lst - 0 0 0 0
   if ( X1[( *N )] != 0.0 || Y1[( *N )] != 0.0 || X2[( *N )] != 0.0 || Y2[( *N )] != 0.0 ) {
-   fprintf( stderr, "Excluding image region: %7.1lf %7.1lf %7.1lf %7.1lf  (defined in bad_region.lst)\n", X1[( *N )], Y1[( *N )], X2[( *N )], Y2[( *N )] );
+   // Do not print each region if we have thousands of them
+   if( ( *N ) < 10 ) { 
+    fprintf( stderr, "Excluding image region: %7.1lf %7.1lf %7.1lf %7.1lf  (defined in bad_region.lst)\n", X1[( *N )], Y1[( *N )], X2[( *N )], Y2[( *N )] );
+   }
+   if( ( *N ) == 10 ) {
+    fprintf( stderr, "Excluding more image regions!.. (will not print them all)\n" );
+   }
   }
   ( *N )+= 1;
 
@@ -276,7 +282,11 @@ int read_bad_CCD_regions_lst( double *X1, double *Y1, double *X2, double *Y2, in
   }
  }
  fclose( badfile );
- // fprintf( stderr, "Done reading bad_region.lst \n" );
+
+ if ( ( *N ) >= 10 ) {
+  fprintf( stderr, "Excluded a total of %d image regions  (defined in bad_region.lst).\n", ( *N ) );
+ }
+ 
  return 0;
 }
 
