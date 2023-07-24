@@ -9668,7 +9668,7 @@ $GREP_RESULT"
   fi
   #
   #
-  grep --quiet "Venus" transient_report/index.html
+  grep 'galactic' transient_report/index.html | grep --quiet 'Venus'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_PLANETID"
@@ -12392,13 +12392,11 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS0_NO_vast_image_details_log"
   fi
   #
-  #
-  # Mars has no automatic ID in the current VaST version,
-  #grep --quiet "N Cas 2021" transient_report/index.html
-  #if [ $? -ne 0 ];then
-  # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS0110"
-  #fi
+  grep 'galactic' transient_report/index.html | grep --quiet 'Mars'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS0110"
+  fi
   grep --quiet "2021 04 29\.781.  2459334\.281.  7\...  06:15:..\... +24:50:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -13616,6 +13614,29 @@ if [ -d ../NMW-STL__find_Neptune_test ];then
  if [ -f transient_report/index.html ];then
   rm -f transient_report/index.html
  fi
+ #################################################################
+ # We need a special astorb.dat for the asteroids
+ if [ -f astorb.dat ];then
+  mv astorb.dat astorb.dat_backup
+ fi
+ if [ ! -f astorb_2023.dat ];then
+  curl -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 1>&2
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_error_downloading_custom_astorb_2023.dat"
+  fi
+  gunzip astorb_2023.dat.gz
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_error_unpacking_custom_astorb_2023.dat"
+  fi
+ fi
+ cp astorb_2023.dat astorb.dat
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_error_copying_astorb_2023.dat_to_astorb.dat"
+ fi
+ #################################################################
  # Set STL camera bad regions file
  if [ ! -f ../STL_bad_region.lst ];then
   cp -v ../NMW-STL__find_Neptune_test/STL_bad_region.lst ../STL_bad_region.lst
@@ -13626,6 +13647,14 @@ if [ -d ../NMW-STL__find_Neptune_test ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE000_EXIT_CODE"
  fi
+ #
+ if [ -f astorb.dat_backup ];then
+  mv astorb.dat_backup astorb.dat
+ else
+  # remove the custom astorb.dat
+  rm -f astorb.dat
+ fi
+ #
  if [ -f transient_report/index.html ];then
   grep --quiet 'ERROR' "transient_report/index.html"
   if [ $? -eq 0 ];then
@@ -13802,12 +13831,12 @@ $GREP_RESULT"
   grep --quiet "Newtonia" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE514"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE614"
   fi
   grep --quiet "2023 07 19.892.  2460145.392.  13\...  23:42:2.\... -03:49:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE514a"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE614a"
   fi
   RADECPOSITION_TO_TEST=`grep "2023 07 19.892.  2460145.392.  13\...  23:42:2.\... -03:49:..\.." transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:42:27.68 -03:49:30.2  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
@@ -13818,23 +13847,23 @@ $GREP_RESULT"
    echo "TEST ERROR"
    TEST_PASSED=0
    TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE514a_TOO_FAR_TEST_ERROR"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE614a_TOO_FAR_TEST_ERROR"
   else
    if [ $TEST -eq 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE514a_TOO_FAR_$DISTANCE_ARCSEC"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE614a_TOO_FAR_$DISTANCE_ARCSEC"
    fi
   fi
   # Pandora
   grep --quiet "Pandora" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE514"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE714"
   fi
   grep --quiet "2023 07 19.892.  2460145.392.  12\...  00:18:2.\... -03:14:3.\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE514a"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE714a"
   fi
   RADECPOSITION_TO_TEST=`grep "2023 07 19.892.  2460145.392.  12\...  00:18:2.\... -03:14:3.\.." transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:18:21.02 -03:14:35.4  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
@@ -13845,11 +13874,11 @@ $GREP_RESULT"
    echo "TEST ERROR"
    TEST_PASSED=0
    TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE514a_TOO_FAR_TEST_ERROR"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE714a_TOO_FAR_TEST_ERROR"
   else
    if [ $TEST -eq 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE514a_TOO_FAR_$DISTANCE_ARCSEC"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE714a_TOO_FAR_$DISTANCE_ARCSEC"
    fi
   fi
   
