@@ -19,6 +19,19 @@
 #
 #################################
 
+# We need to check the input early as we may need to set camera settings based on the input path
+if [ -z "$1" ]; then
+ echo "Usage: $0 PATH_TO_DIRECTORY_WITH_IMAGE_PAIRS"
+ echo "Usage: $0 PATH_TO_DIRECTORY_WITH_IMAGE_PAIRS" >> transient_factory_test31.txt
+ exit 1
+fi
+INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING="$1"
+if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"NMW-STL"* ]] || [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"NMW_STL"* ]] ; then
+ echo "The input indicates the images are from NMW-STL camera"
+ export CAMERA_SETTINGS="NMW-STL"
+fi
+
+
 ########### Default settings describing the old NMW camera:
 # Canon 135 mm f/2.0 telephoto lens + SBIG ST-8300M CCD, 20 sec exposures
 
