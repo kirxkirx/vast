@@ -660,7 +660,8 @@ void choose_best_reference_image( char **input_images, int *vast_bad_image_flag,
     continue;
    }
    // float_parameters[0] is the actual FWHM
-   if ( float_parameters[0] < FWHM_MIN ) {
+   //if ( float_parameters[0] < FWHM_MIN ) {
+   if ( MAX( float_parameters[0], SIGMA_TO_FWHM_CONVERSION_FACTOR * a_a ) < FWHM_MIN ) {
     continue;
    }
    //
@@ -909,7 +910,8 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
     continue;
    }
    // float_parameters[0] is the actual FWHM
-   if ( float_parameters[0] < FWHM_MIN ) {
+   //if ( float_parameters[0] < FWHM_MIN ) {
+   if ( MAX( float_parameters[0], SIGMA_TO_FWHM_CONVERSION_FACTOR * a_a ) < FWHM_MIN ) {
     continue;
    }
    //
@@ -3590,8 +3592,8 @@ int main( int argc, char **argv ) {
    counter_rejected_too_small++;
    continue;
   }
-  //
-  if ( float_parameters[0] < FWHM_MIN ) {
+  // FWHM may be incoorectly set to 0.0 for a saaturated object
+  if ( MAX( float_parameters[0], SIGMA_TO_FWHM_CONVERSION_FACTOR * a_a ) < FWHM_MIN ) {
    counter_rejected_too_small++;
    continue;
   }
@@ -4195,7 +4197,8 @@ int main( int argc, char **argv ) {
       counter_rejected_too_small++;
       continue;
      }
-     if ( float_parameters[0] < FWHM_MIN ) {
+     //if ( float_parameters[0] < FWHM_MIN ) {
+     if ( MAX( float_parameters[0], SIGMA_TO_FWHM_CONVERSION_FACTOR * a_a ) < FWHM_MIN ) {
       counter_rejected_too_small++;
       continue;
      }
@@ -4225,7 +4228,7 @@ int main( int argc, char **argv ) {
       counter_rejected_too_large++;
       STAR2[NUMBER2 - 1].vast_flag= 1;
      }
-
+     
      STAR2[NUMBER2 - 1].n= star_number_in_sextractor_catalog;
      STAR2[NUMBER2 - 1].x= (float)position_x_pix;
      STAR2[NUMBER2 - 1].y= (float)position_y_pix;
@@ -4272,6 +4275,14 @@ int main( int argc, char **argv ) {
      /// if( debug_d<aperture ){
      // fprintf(stderr,"READING SEXTRACTOR CAT: %d  %.3f %.3f  (%f)  s=%d v=%6d\n",STAR2[NUMBER2-1].n,STAR2[NUMBER2-1].x_frame,STAR2[NUMBER2-1].y_frame,STAR2[NUMBER2-1].star_size,STAR2[NUMBER2-1].sextractor_flag,STAR2[NUMBER2-1].vast_flag);
      //}
+
+     /// !!! Debug !!!
+     float debug_x=2535.0;
+     float debug_y=1901.5;
+     float debug_d=sqrt((STAR2[NUMBER2-1].x_frame-debug_x)*(STAR2[NUMBER2-1].x_frame-debug_x)+(STAR2[NUMBER2-1].y_frame-debug_y)*(STAR2[NUMBER2-1].y_frame-debug_y));
+     if( debug_d<aperture ){
+      fprintf(stderr,"READING SEXTRACTOR CAT: %d  %.3f %.3f  (%f)  s=%d v=%6d\n",STAR2[NUMBER2-1].n,STAR2[NUMBER2-1].x_frame,STAR2[NUMBER2-1].y_frame,STAR2[NUMBER2-1].star_size,STAR2[NUMBER2-1].sextractor_flag,STAR2[NUMBER2-1].vast_flag);
+     }
 
      if ( debug != 0 )
       fprintf( stderr, "DEBUG MSG: Reading test.cat NUMBER2=%d OK\n", NUMBER2 );

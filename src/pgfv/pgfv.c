@@ -2526,7 +2526,7 @@ int main( int argc, char **argv ) {
         if ( sextractor_catalog__B_IMAGE[marker_counter] + sextractor_catalog__ERRB_IMAGE[marker_counter] < FWHM_MIN ) {
          bad_size= 1;
         }
-        if ( sextractor_catalog__FWHM_float_parameters0[marker_counter] < FWHM_MIN ) {
+        if ( MAX( sextractor_catalog__FWHM_float_parameters0[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__A_IMAGE[marker_counter] ) < FWHM_MIN ) {
          bad_size= 1;
         }
         
