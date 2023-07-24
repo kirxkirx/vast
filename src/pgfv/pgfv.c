@@ -891,14 +891,12 @@ void load_markers_for_autocandidate_variables( float *markX_known_variable, floa
 
 int main( int argc, char **argv ) {
 
- /* For FITS file reading */
- fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
- // long  fpixel = 1, naxis = 2, nelements, exposure;
+ // For FITS file reading
+ fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h 
  long naxes[2];
  int status= 0;
  int bitpix;
  int anynul= 0;
- // int nullval=0;
  float nullval= 0.0;
  unsigned char nullval_uchar= 0;
  unsigned short nullval_ushort= 0;
@@ -911,10 +909,8 @@ int main( int argc, char **argv ) {
  float *real_float_array;
  float *float_array;
  float *float_array2;
- // long x,y;
  int i;
- /* PGPLOT vars */
- // float current_color=0.0;
+ // PGPLOT vars 
  float curX, curY, curX2, curY2;
  char curC= 'R';
  float tr[6];
@@ -933,25 +929,21 @@ int main( int argc, char **argv ) {
 
  float markX= 0.0;
  float markY= 0.0;
- // float finder_char_pix_around_the_target= 10.0; // default thumbnail image size for transient search
  float finder_char_pix_around_the_target= 20.0; // default thumbnail image size for transient search
 
- /* new fatures */
- // int buf,v_trigger=0,b_trigger=0;
+ // new fatures 
  int buf;
- // int j;
  float axis_ratio;
  double razmer_x, razmer_y;
 
  char fits_image_name[FILENAME_LENGTH];
  char fits_image_name_string_for_display[FILENAME_LENGTH];
  int match_mode= 0;
- // char sex_command_string[2048];
  double APER= 0.0; // just reset it
 
  int bad_size;
 
- /* Sex Cat */
+ // Source Extractor Catalog 
  FILE *catfile;
  // double MUSOR;
  // int intMUSOR;
@@ -971,6 +963,7 @@ int main( int argc, char **argv ) {
  double *sextractor_catalog__ERRA_IMAGE= NULL;
  double *sextractor_catalog__B_IMAGE= NULL;
  double *sextractor_catalog__ERRB_IMAGE= NULL;
+ double *sextractor_catalog__FWHM_float_parameters0= NULL;
 
  int sextractor_catalog__counter= 0;
  int marker_counter;
@@ -997,15 +990,15 @@ int main( int argc, char **argv ) {
  float marker_scaling;
  char namelabel[256];
  namelabel[0]= '\0';
+ 
+ float float_parameters[NUMBER_OF_FLOAT_PARAMETERS]; // new
 
- /* Match File */
+ // Match File //
  FILE *matchfile;
  char RADEC[1024];
  int match_input= 0;
- // double HH,HM,HS,DD,DM,DS;
- // char syscommand[1024];
 
- /* Calib mode */
+ // Calib mode //
  FILE *calibfile;
  double tmp_APER= 0.0;
  char imagefilename[1024 + FILENAME_LENGTH];
@@ -1034,7 +1027,6 @@ int main( int argc, char **argv ) {
  int aperture_change= 0;
 
  double median_class_star;
- // double sigma_class_star;
 
  static float bw_l[]= { -0.5, 0.0, 0.5, 1.0, 1.5, 2.0 };
  static float bw_r[]= { 0.0, 0.0, 0.5, 1.0, 1.0, 1.0 };
@@ -1052,7 +1044,6 @@ int main( int argc, char **argv ) {
  int external_flag; // flag image info, if available
                     // double double_external_flag;
  double psf_chi2;
- // char external_flag_string[256];
 
  int use_xy2sky= 2; // 0 - no, 1 - yes, 2 - don't know
  int xy2sky_return_value;
@@ -1082,10 +1073,7 @@ int main( int argc, char **argv ) {
   fits2png_fullframe= 1;
  }
 
- /* Reading file which defines rectangular regions we want to exclude */
- //float cpgline_tmp_x[2];
- //float cpgline_tmp_y[2];
- //double X1[500], Y1[500], X2[500], Y2[500];
+ // Reading file which defines rectangular regions we want to exclude 
  double *X1;
  double *Y1;
  double *X2;
@@ -1137,18 +1125,8 @@ int main( int argc, char **argv ) {
  int magnitude_calibration_already_performed_flag= 0; // do not perform the magnitude calibration twice if set to 1
 
  // Dummy vars
- // int star_number_in_sextractor_catalog;
- // double flux_adu;
- // double flux_adu_err;
- // double mag;
- // double sigma_mag;
  double position_x_pix;
  double position_y_pix;
- // double a_a;
- // double a_a_err;
- // double a_b;
- // double a_b_err;
- // int sextractor_flag;
 
  // Options for getopt()
  char *cvalue= NULL;
@@ -1455,9 +1433,9 @@ int main( int argc, char **argv ) {
   }
   if ( markX > 0.0 && markY > 0.0 ) {
    mark_trigger= 1;
-   fprintf( stderr, "Putting mark on pixel position %lf %lf\n", markX, markY );
+   fprintf( stderr, "Putting mark on pixel position \E[01;35m %lf %lf \E[33;00m \n", markX, markY );
   } else {
-   fprintf( stderr, "The pixel position %lf %lf is outside the image!\n", markX, markY );
+   fprintf( stderr, "The pixel position \E[01;31m %lf %lf is outside the image! \E[33;00m\n", markX, markY );
   }
  }
 
@@ -1770,6 +1748,11 @@ int main( int argc, char **argv ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__ERRB_IMAGE\n" );
    exit( EXIT_FAILURE );
   };
+  sextractor_catalog__FWHM_float_parameters0= (double *)malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
+  if ( sextractor_catalog__FWHM_float_parameters0 == NULL ) {
+   fprintf( stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__FWHM_float_parameters0\n" );
+   exit( EXIT_FAILURE );
+  };
 
   //
   memset( sextractor_catalog__X_viewed, 0, MAX_NUMBER_OF_STARS * sizeof( float ) );
@@ -1789,6 +1772,7 @@ int main( int argc, char **argv ) {
   memset( sextractor_catalog__ERRA_IMAGE, 0, MAX_NUMBER_OF_STARS * sizeof( double ) );
   memset( sextractor_catalog__B_IMAGE, 0, MAX_NUMBER_OF_STARS * sizeof( double ) );
   memset( sextractor_catalog__ERRB_IMAGE, 0, MAX_NUMBER_OF_STARS * sizeof( double ) );
+  memset( sextractor_catalog__FWHM_float_parameters0, 0, MAX_NUMBER_OF_STARS * sizeof( double ) );
   //
 
   catfile= fopen( sextractor_catalog_filename, "r" );
@@ -1803,7 +1787,8 @@ int main( int argc, char **argv ) {
    sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
    external_flag= 0;
    // external_flag_string[0]='\0';
-   if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, NULL ) ) {
+   //if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, NULL ) ) {
+   if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, float_parameters ) ) {
     fprintf( stderr, "WARNING: problem occurred while parsing SExtractor catalog %s  (1)\nThe offending line is:\n%s\n", sextractor_catalog_filename, sextractor_catalog_string );
     continue;
    }
@@ -1828,6 +1813,7 @@ int main( int argc, char **argv ) {
    sextractor_catalog__Y[sextractor_catalog__counter]= position_y_pix;
    sextractor_catalog__ext_FLAG[sextractor_catalog__counter]= external_flag;
    sextractor_catalog__psfCHI2[sextractor_catalog__counter]= psf_chi2;
+   sextractor_catalog__FWHM_float_parameters0[sextractor_catalog__counter]= (double)float_parameters[0];
    sextractor_catalog__counter++;
   }
   fclose( catfile );
@@ -1863,6 +1849,7 @@ int main( int argc, char **argv ) {
    free( sextractor_catalog__ERRA_IMAGE );
    free( sextractor_catalog__B_IMAGE );
    free( sextractor_catalog__ERRB_IMAGE );
+   free( sextractor_catalog__FWHM_float_parameters0 );
    // exit
    return 0;
   }
@@ -2228,7 +2215,8 @@ int main( int argc, char **argv ) {
      while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, catfile ) ) {
       sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
       external_flag= 0;
-      if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, NULL ) ) {
+      //if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, NULL ) ) {
+      if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, float_parameters ) ) {
        fprintf( stderr, "WARNING: problem occurred while parsing SExtractor catalog %s  (2)\nThe offending line is:\n%s\n", sextractor_catalog_filename, sextractor_catalog_string );
        continue;
       }
@@ -2475,7 +2463,7 @@ int main( int argc, char **argv ) {
         break;
        }
 
-       /* Single image mode */
+       // Single image mode //
        if ( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
         fprintf( stderr, "Star %6d\n", sextractor_catalog__star_number[marker_counter] );
 
@@ -2538,18 +2526,21 @@ int main( int argc, char **argv ) {
         if ( sextractor_catalog__B_IMAGE[marker_counter] + sextractor_catalog__ERRB_IMAGE[marker_counter] < FWHM_MIN ) {
          bad_size= 1;
         }
+        if ( sextractor_catalog__FWHM_float_parameters0[marker_counter] < FWHM_MIN ) {
+         bad_size= 1;
+        }
         
         if ( bad_size == 0 ) {
-         fprintf( stderr, "A= \E[01;32m%lf +/- %lf\E[33;00m  B= \E[01;32m%lf +/- %lf\E[33;00m\nFWHM(A)= \E[01;32m%lf +/- %lf\E[33;00m  FWHM(B)= \E[01;32m%lf +/- %lf\E[33;00m\n", sextractor_catalog__A_IMAGE[marker_counter], sextractor_catalog__ERRA_IMAGE[marker_counter], sextractor_catalog__B_IMAGE[marker_counter], sextractor_catalog__ERRB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__A_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__B_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRB_IMAGE[marker_counter] );
+         fprintf( stderr, "A= \E[01;32m%lf +/- %lf\E[33;00m  B= \E[01;32m%lf +/- %lf\E[33;00m\nFWHM(A)= \E[01;32m%lf +/- %lf\E[33;00m  FWHM(B)= \E[01;32m%lf +/- %lf\E[33;00m\nFWHM= \E[01;32m%lf\E[33;00m\n", sextractor_catalog__A_IMAGE[marker_counter], sextractor_catalog__ERRA_IMAGE[marker_counter], sextractor_catalog__B_IMAGE[marker_counter], sextractor_catalog__ERRB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__A_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__B_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRB_IMAGE[marker_counter], sextractor_catalog__FWHM_float_parameters0[marker_counter] );
         } else {
-         fprintf( stderr, "A= \E[01;31m%lf +/- %lf\E[33;00m  B= \E[01;31m%lf +/- %lf\E[33;00m\nFWHM(A)= \E[01;31m%lf +/- %lf\E[33;00m  FWHM(B)= \E[01;31m%lf +/- %lf\E[33;00m\n", sextractor_catalog__A_IMAGE[marker_counter], sextractor_catalog__ERRA_IMAGE[marker_counter], sextractor_catalog__B_IMAGE[marker_counter], sextractor_catalog__ERRB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__A_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__B_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRB_IMAGE[marker_counter] );
+         fprintf( stderr, "A= \E[01;31m%lf +/- %lf\E[33;00m  B= \E[01;31m%lf +/- %lf\E[33;00m\nFWHM(A)= \E[01;31m%lf +/- %lf\E[33;00m  FWHM(B)= \E[01;31m%lf +/- %lf\E[33;00m\nFWHM= \E[01;31m%lf\E[33;00m\n", sextractor_catalog__A_IMAGE[marker_counter], sextractor_catalog__ERRA_IMAGE[marker_counter], sextractor_catalog__B_IMAGE[marker_counter], sextractor_catalog__ERRB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__A_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__B_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRB_IMAGE[marker_counter], sextractor_catalog__FWHM_float_parameters0[marker_counter] );
         }
         // It's nice to ptint the aperture size here for comparison
         fprintf( stderr, "Aperture diameter = %.1lf pixels\n", APER );
 
         fprintf( stderr, "%s\n", stderr_output );
         fprintf( stderr, "\n" );
-       }
+       } // if ( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
 
        // Star selection from reference image mode
        if ( match_mode == 1 ) {
@@ -3069,6 +3060,7 @@ int main( int argc, char **argv ) {
   free( sextractor_catalog__ERRA_IMAGE );
   free( sextractor_catalog__B_IMAGE );
   free( sextractor_catalog__ERRB_IMAGE );
+  free( sextractor_catalog__FWHM_float_parameters0 );
  }
 
  if ( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
