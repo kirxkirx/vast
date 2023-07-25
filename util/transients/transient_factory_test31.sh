@@ -993,7 +993,7 @@ Second-epoch first image center  $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE
 Second-epoch second image center $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE
 Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
 ###################################" >> transient_factory_test31.txt
-   TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$MIN_IMAGE_SHIFT_DEG" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+   TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG<$MIN_IMAGE_SHIFT_DEG" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
    if [ $TEST -eq 1 ];then
     if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
      echo "ERROR: no shift applied between second-epoch images! The distance between image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (limit: $MIN_IMAGE_SHIFT_DEG deg.)"
