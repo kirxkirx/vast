@@ -26,9 +26,9 @@ if [ -z "$1" ]; then
  exit 1
 fi
 INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING="$1"
-if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"NMW-STL"* ]] || [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"NMW_STL"* ]] ; then
- echo "The input indicates the images are from NMW-STL camera"
- export CAMERA_SETTINGS="NMW-STL"
+if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"STL-11000M"* ]] || [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"NMW-STL"* ]] ; then
+ echo "The input indicates the images are from STL-11000M camera"
+ export CAMERA_SETTINGS="STL-11000M"
 fi
 
 
@@ -72,10 +72,10 @@ TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
 
 # CAMERA_SETTINGS environment vairable may be set to override the default settings with the ones needed for a different camera
 if [ -n "$CAMERA_SETTINGS" ];then
- if [ "$CAMERA_SETTINGS" = "NMW-STL" ];then
+ if [ "$CAMERA_SETTINGS" = "STL-11000M" ];then
   # Canon 135 mm f/2.0 telephoto lens + SBIG STL-11000 CCD, 20 sec exposures
   echo "### Using search settings for $CAMERA_SETTINGS camera ###"
-  TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW-STL"
+  TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="STL-11000M"
   export TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=1000
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=1500
@@ -689,7 +689,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    cp -v ../Stas_bad_region.lst bad_region.lst >> transient_factory_test31.txt
   fi
  fi
- echo "$SECOND_EPOCH__FIRST_IMAGE" | grep --quiet -e "NMW-STL"
+ echo "$SECOND_EPOCH__FIRST_IMAGE" | grep --quiet -e "STL-11000M" -e "NMW-STL"
  if [ $? -eq 0 ];then
   KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE=1
   if [ -f ../STL_bad_region.lst ];then

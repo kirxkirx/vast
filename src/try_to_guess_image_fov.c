@@ -520,6 +520,14 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
   }
  }
  // new NMW camera SBIG STL-11000 CCD
+ if ( strlen( telescop ) >= 10 ) { // 01234567890
+  pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "STL-11000M", 10 );
+  if ( pointer_to_the_key_start != NULL ) {
+   ( *estimated_fov_arcmin )= 600.0;
+   return 0;
+  }
+ }
+ // alternative name for the same camera
  if ( strlen( telescop ) >= 7 ) { // 01234567890
   pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "NMW-STL", 7 );
   if ( pointer_to_the_key_start != NULL ) {
