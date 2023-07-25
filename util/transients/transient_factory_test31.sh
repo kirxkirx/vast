@@ -230,7 +230,8 @@ if [ ! -d "$REFERENCE_IMAGES" ];then
 else
  # make sure the reference image directory is not empty
  for FILE_TO_TEST in "$REFERENCE_IMAGES"/* ;do
-  if [ ! -f "$FILE_TO_TEST" ];then
+  # If the content of the direcotry is no a regular file and is not a symlink
+  if [ ! -f "$FILE_TO_TEST" ] && [ ! -L "$FILE_TO_TEST" ];then
    echo "ERROR: empty reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES"
    echo "ERROR: empty reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES" >> transient_factory_test31.txt
    exit 1
