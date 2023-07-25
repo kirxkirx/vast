@@ -13758,7 +13758,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE314a"
   fi
   RADECPOSITION_TO_TEST=`grep "2023 07 19\.892.  2460145\.392.  11\...  00:05:2.\... +00:34:..\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
-  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 18:08:39.56 -34:01:42.8  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:05:24.47 +00:34:38.9  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
@@ -13860,12 +13860,12 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE714"
   fi
-  grep --quiet "2023 07 19.892.  2460145.392.  12\...  00:18:2.\... -03:14:3.\.." transient_report/index.html
+  grep --quiet "2023 07 19.892.  2460145.392.  12\...  00:18:..\... -03:14:3.\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE714a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2023 07 19.892.  2460145.392.  12\...  00:18:2.\... -03:14:3.\.." transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2023 07 19.892.  2460145.392.  12\...  00:18:..\... -03:14:3.\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:18:21.02 -03:14:35.4  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
