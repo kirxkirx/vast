@@ -70,6 +70,8 @@ FRAME_EDGE_OFFSET_PIX=25
 # Comment-out TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION if unsure
 TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
 
+EXCLUSION_LIST="../exclusion_list.txt"
+
 # CAMERA_SETTINGS environment vairable may be set to override the default settings with the ones needed for a different camera
 if [ -n "$CAMERA_SETTINGS" ];then
  if [ "$CAMERA_SETTINGS" = "STL-11000M" ];then
@@ -86,6 +88,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   # as these are likely to be hot pixels sneaking into the list of candidates if no shift has been applied between the two second-epoch images.
   export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="yes"
   BAD_REGION_FILE="../STL_bad_region.lst"
+  EXCLUSION_LIST="../exclusion_list_STL.txt"
  fi
 fi
 
@@ -1201,10 +1204,10 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  echo "Preparing the exclusion lists for this field" >> transient_factory_test31.txt
  # Exclude the previously considered candidates
  if [ ! -s exclusion_list.txt ];then
-  if [ -s ../exclusion_list.txt ];then
+  if [ -s "$EXCLUSION_LIST" ];then
    SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
    WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
-   lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @../exclusion_list.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list.txt
+   lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @$EXCLUSION_LIST | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list.txt
    cp -v exclusion_list.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
   fi
  fi
@@ -1329,8 +1332,8 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
   # the NMW_Vul2_magnitude_calibration_exit_code_test tests for exclusion listupdate
   # and ../NMW_Sgr9_crash_test/second_epoch_images is for that purpose too
   echo "This does not look like a test run" >> transient_factory_test31.txt
-  if [ -f ../exclusion_list.txt ];then
-   echo "Found ../exclusion_list.txt" >> transient_factory_test31.txt
+  if [ -f "$EXCLUSION_LIST" ];then
+   echo "Found $EXCLUSION_LIST" >> transient_factory_test31.txt
    grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' > exclusion_list_index_html.txt
    # Filter-out asteroids
    echo "#### The exclusion list before filtering-out asteroids, bad pixels and adding Gaia sources ####" >> transient_factory_test31.txt
@@ -1417,7 +1420,7 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
 #### Adding the following to the exclusion list ####"
       cat exclusion_list_index_html.txt >> transient_factory_test31.txt
       echo "####################################################" >> transient_factory_test31.txt
-      cat exclusion_list_index_html.txt >> ../exclusion_list.txt
+      cat exclusion_list_index_html.txt >> "$EXCLUSION_LIST"
      else
       echo "IS_THIS_TEST_RUN=$IS_THIS_TEST_RUN  ALLOW_EXCLUSION_LIST_UPDATE= $ALLOW_EXCLUSION_LIST_UPDATE
 #### Nothing to add to the exclusion list ####" >> transient_factory_test31.txt
@@ -1431,8 +1434,8 @@ exclusion_list_index_html.txt NOT FOUND" >> transient_factory_test31.txt
     echo "Not allowed to update the exclusion list IS_THIS_TEST_RUN=$IS_THIS_TEST_RUN  ALLOW_EXCLUSION_LIST_UPDATE= $ALLOW_EXCLUSION_LIST_UPDATE" >> transient_factory_test31.txt
    fi # if [ "$ALLOW_EXCLUSION_LIST_UPDATE" = "YES" ];then
   else
-   echo "No ../exclusion_list.txt so we are not updating exclusion list IS_THIS_TEST_RUN=$IS_THIS_TEST_RUN  ALLOW_EXCLUSION_LIST_UPDATE= $ALLOW_EXCLUSION_LIST_UPDATE" >> transient_factory_test31.txt
-  fi # if [ -f ../exclusion_list.txt ];then
+   echo "No $EXCLUSION_LIST so we are not updating exclusion list IS_THIS_TEST_RUN=$IS_THIS_TEST_RUN  ALLOW_EXCLUSION_LIST_UPDATE= $ALLOW_EXCLUSION_LIST_UPDATE" >> transient_factory_test31.txt
+  fi # if [ -f $EXCLUSION_LIST ];then
  else
   echo "This looks like a test run so we are not updating exclusion list  IS_THIS_TEST_RUN=$IS_THIS_TEST_RUN  ALLOW_EXCLUSION_LIST_UPDATE= $ALLOW_EXCLUSION_LIST_UPDATE" >> transient_factory_test31.txt
   echo "$PWD" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST' >> transient_factory_test31.txt
