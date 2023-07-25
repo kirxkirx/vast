@@ -646,7 +646,13 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   echo "ERROR processing the image series" >> transient_factory_test31.txt
   continue
  fi
-
+ 
+ ###############################################
+ # Update neverexclude_list.txt
+ if [ -f ../neverexclude_list.txt ];then
+  echo "Updating neverexclude_list.txt"
+  cp -v ../neverexclude_list.txt .
+ fi
  ###############################################
  # We may have images from two different cameras that require two different bad region lists
  # ./Nazar_bad_region.lst and ../bad_region.lst
@@ -1322,7 +1328,8 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
    cat exclusion_list_index_html.txt >> transient_factory_test31.txt
    echo "###################################################################################" >> transient_factory_test31.txt
    while read -r RADECSTR ;do
-    grep -A8 "$RADECSTR" transient_report/index.html | grep 'neverexclude_list.txt' | grep --quiet 'THIS STAR IS LISTED IN'
+    # The following line should match that in util/transients/report_transient.sh
+    grep -A8 "$RADECSTR" transient_report/index.html | grep 'neverexclude_list.txt' | grep --quiet 'This object is listed in'
     if [ $? -eq 0 ];then
      echo "$RADECSTR  -- listed in neverexclude_list.txt (will NOT add it to exclusion list)" >> transient_factory_test31.txt
      continue
