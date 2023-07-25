@@ -424,13 +424,15 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 
  ############## Two reference images and two second-epoch images # check if all images are actually there
  # check if all images are actually there
- N=$(ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | wc -l)
+ #N=$(ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | wc -l)
+ N=$(ls "$REFERENCE_IMAGES"/"$FIELD"_*_*.fts | wc -l)
  if [ $N -lt 2 ];then
   echo "ERROR: too few refereence images for the field $FIELD"
   echo "ERROR: too few refereence images for the field $FIELD" >> transient_factory_test31.txt
   continue
  fi
- N=$(ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | wc -l)
+ #N=$(ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | wc -l)
+ N=$(ls "$NEW_IMAGES"/"$FIELD"_*_*.fts | wc -l)
  if [ $N -lt 2 ];then
   echo "ERROR: too few new images for the field $FIELD"
   echo "ERROR: too few new images for the field $FIELD" >> transient_factory_test31.txt
@@ -440,19 +442,23 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  ################################
  # Choose first epoch images
  # We assume there are two first epoch images, both of them are supposedly good
- REFERENCE_EPOCH__FIRST_IMAGE=$(ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | head -n1)
+ #REFERENCE_EPOCH__FIRST_IMAGE=$(ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | head -n1)
+ REFERENCE_EPOCH__FIRST_IMAGE=$(ls "$REFERENCE_IMAGES"/"$FIELD"_*_*.fts | head -n1)
  echo "REFERENCE_EPOCH__FIRST_IMAGE= $REFERENCE_EPOCH__FIRST_IMAGE" >> transient_factory_test31.txt
- REFERENCE_EPOCH__SECOND_IMAGE=$(ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | tail -n1)
+ #REFERENCE_EPOCH__SECOND_IMAGE=$(ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | tail -n1)
+ REFERENCE_EPOCH__SECOND_IMAGE=$(ls "$REFERENCE_IMAGES"/"$FIELD"_*_*.fts | tail -n1)
  echo "REFERENCE_EPOCH__SECOND_IMAGE= $REFERENCE_EPOCH__SECOND_IMAGE" >> transient_factory_test31.txt
  
  # Choose second epoch images
  # first, count how many there are
- NUMBER_OF_SECOND_EPOCH_IMAGES=$(ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | wc -l)
+ #NUMBER_OF_SECOND_EPOCH_IMAGES=$(ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | wc -l)
+ NUMBER_OF_SECOND_EPOCH_IMAGES=$(ls "$NEW_IMAGES"/"$FIELD"_*_*.fts | wc -l)
   
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -gt 1 ];then
   # Make image previews
   echo "Previews of the second-epoch images:<br>" >> transient_factory_test31.txt
-  for FITS_IMAGE_TO_PREVIEW in "$NEW_IMAGES"/*"$FIELD"_*_*.fts ;do
+  #for FITS_IMAGE_TO_PREVIEW in "$NEW_IMAGES"/*"$FIELD"_*_*.fts ;do
+  for FITS_IMAGE_TO_PREVIEW in "$NEW_IMAGES"/"$FIELD"_*_*.fts ;do
    BASENAME_FITS_IMAGE_TO_PREVIEW=$(basename $FITS_IMAGE_TO_PREVIEW)
    PREVIEW_IMAGE="$BASENAME_FITS_IMAGE_TO_PREVIEW"_preview.png
    # image size needs to match the one set in util/transients/make_report_in_HTML.sh
@@ -472,16 +478,18 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   continue
  fi
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -eq 2 ];then
-  SECOND_EPOCH__FIRST_IMAGE=$(ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | head -n1)
-  SECOND_EPOCH__SECOND_IMAGE=$(ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | tail -n1)
+  #SECOND_EPOCH__FIRST_IMAGE=$(ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | head -n1)
+  SECOND_EPOCH__FIRST_IMAGE=$(ls "$NEW_IMAGES"/"$FIELD"_*_*.fts | head -n1)
+  #SECOND_EPOCH__SECOND_IMAGE=$(ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | tail -n1)
+  SECOND_EPOCH__SECOND_IMAGE=$(ls "$NEW_IMAGES"/"$FIELD"_*_*.fts | tail -n1)
  fi
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -gt 2 ];then
   # There are more than two second-epoch images - do a preliminary VaST run to choose the two images with best seeing
   #cp -v default.sex.telephoto_lens_onlybrightstars_v1 default.sex >> transient_factory_test31.txt
   cp -v $SEXTRACTOR_CONFIG_BRIGHTSTARPASS default.sex >> transient_factory_test31.txt
   echo "Preliminary VaST run on the second-epoch images only" >> transient_factory_test31.txt
-  echo "./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit"  "$NEW_IMAGES"/*"$FIELD"_*_*.fts >> transient_factory_test31.txt
-  ./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit  "$NEW_IMAGES"/*"$FIELD"_*_*.fts > prelim_vast_run.log 2>&1  
+  echo "./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit"  "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory_test31.txt
+  ./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit  "$NEW_IMAGES"/"$FIELD"_*_*.fts > prelim_vast_run.log 2>&1  
   echo "wait"   >> transient_factory_test31.txt
   wait
   ## Special test for stuck camera ##
