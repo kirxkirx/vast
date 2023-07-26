@@ -297,7 +297,7 @@ if [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" = "0.0" ];then
  PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING="<b><font color=\"red\">$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS</font></b>"
  if [ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ];then
   if [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "yes" ];then
-   echo "Rejecting candidate as there is no shift in pixel posiiton (shift $PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS\" pix) between the two second-epoch detections and REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES is set to '$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES'"
+   echo "Rejecting candidate as there is no shift in pixel posiiton (shift $PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS pix) between the two second-epoch detections and REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES is set to '$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES'"
    clean_tmp_files
    exit 1   
   fi
