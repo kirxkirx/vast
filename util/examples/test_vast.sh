@@ -18155,6 +18155,13 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_ATLASLAMOSTFARAWAY"
 fi
 
+# ATLAS multiple candidates within the search radius
+util/search_databases_with_vizquery.sh 17:03:58.52 -19:33:32.5 object 350 | grep 'ATO J255.9939-19.5591' | grep --quiet 'LPV (ATLAS)'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_ATLASMULTICAND"
+fi
+
 ### Test the local catalog search thing
 lib/catalogs/check_catalogs_offline 17.25656 47.30456 | grep --quiet 'ASASSN-V J010901.57+471816.4'
 if [ $? -ne 0 ];then
