@@ -1360,7 +1360,7 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
    #
    while read -r RADECSTR ;do
     #grep --max-count=1 -A8 "$RADECSTR" transient_report/index.html | grep 'galactic' | grep --quiet '<font color="red">0.0</font></b> pix'
-    grep -A8 "$RADECSTR" transient_report/index.html | grep 'galactic' | grep --quiet '<font color="red">0.0</font></b> pix'
+    grep -A8 "$RADECSTR" transient_report/index.html | grep 'galactic' | grep --quiet -e '<font color="red">0.0</font></b> pix' -e '<font color="red">0.1</font></b> pix'
     if [ $? -ne 0 ];then
      echo "$RADECSTR"
      echo "$RADECSTR  -- does not seem to be a hot pixel (will add it to exclusion list)" >> transient_factory_test31.txt

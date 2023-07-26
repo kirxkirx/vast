@@ -293,7 +293,7 @@ PIX_Y_SECOND_EPOCH_2=`cat y$$.dat | tail -n1`
 PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS=`echo "$PIX_X_SECOND_EPOCH_1 $PIX_X_SECOND_EPOCH_2 $PIX_Y_SECOND_EPOCH_1 $PIX_Y_SECOND_EPOCH_2" | awk '{printf "%.1f", sqrt( ($1-$2)*($1-$2) + ($3-$4)*($3-$4) )}'`
 PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING="$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS"
 ### ==> Assumptio about shift between secon-spoch images hardcoded here <===
-if [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" = "0.0" ];then
+if [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" = "0.0" ] || [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" = "0.1" ] ;then
  PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING="<b><font color=\"red\">$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS</font></b>"
  if [ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ];then
   if [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "yes" ];then
@@ -464,8 +464,8 @@ VARIABLE_STAR_ID=$?
 #util/transients/MPCheck.sh $RADEC_MEAN_HMS $DATE $TIME H $MAG_MEAN
 util/transients/MPCheck_v2.sh $RADEC_MEAN_HMS $YEAR_MEAN $MONTH_MEAN $DAYFRAC_MEAN H $MAG_MEAN
 ASTEROID_ID=$?
-# If the candidate transient is not a known variable star or asteroid - try online search
-if [ $VARIABLE_STAR_ID -ne 0 ] && [ $ASTEROID_ID -ne 0 ] && [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.0" ] ;then
+# If the candidate transient is not a known variable star or asteroid and doesn't seem to be a hot pixel - try online search
+if [ $VARIABLE_STAR_ID -ne 0 ] && [ $ASTEROID_ID -ne 0 ] && [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.0" ] && [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.1" ] ;then
  # Slow online ID
  # Instead of a guess, use the actual field of view - the reference image is supposed to be solved by now
  WCS_REFERENCE_IMAGE_NAME=wcs_`basename $REFERENCE_IMAGE`
