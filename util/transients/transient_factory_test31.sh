@@ -123,6 +123,16 @@ fi
 # Are we on Linux or something else?
 SYSTEM_TYPE="$(uname)"
 
+function print_image_date_for_logs_in_case_of_emergency_stop {
+ for INTPUT_IMAGE in $@ ;do
+  if [ -f "$INTPUT_IMAGE" ];then
+   util/get_image_date "$INTPUT_IMAGE" 2>&1 | grep 'Exposure' | awk '{printf "Last  image: %s %s %s %s", $9, $4, $5, $6}'
+   break
+  fi
+ done
+ return 0
+}
+
 function check_if_vast_install_looks_reasonably_healthy {
  for FILE_TO_CHECK in ./vast GNUmakefile makefile lib/autodetect_aperture_main lib/bin/xy2sky lib/catalogs/check_catalogs_offline lib/choose_vizier_mirror.sh lib/deeming_compute_periodogram lib/deg2hms_uas lib/drop_bright_points lib/drop_faint_points lib/fit_robust_linear lib/guess_saturation_limit_main lib/hms2deg lib/lk_compute_periodogram lib/new_lightcurve_sigma_filter lib/put_two_sources_in_one_field lib/remove_bad_images lib/remove_lightcurves_with_small_number_of_points lib/select_only_n_random_points_from_set_of_lightcurves lib/sextract_single_image_noninteractive lib/try_to_guess_image_fov lib/update_offline_catalogs.sh lib/update_tai-utc.sh lib/vizquery util/calibrate_magnitude_scale util/calibrate_single_image.sh util/ccd/md util/ccd/mk util/ccd/ms util/clean_data.sh util/examples/test_coordinate_converter.sh util/examples/test__dark_flat_flag.sh util/examples/test_heliocentric_correction.sh util/fov_of_wcs_calibrated_image.sh util/get_image_date util/hjd_input_in_UTC util/load.sh util/magnitude_calibration.sh util/make_finding_chart util/nopgplot.sh util/rescale_photometric_errors util/save.sh util/search_databases_with_curl.sh util/search_databases_with_vizquery.sh util/solve_plate_with_UCAC5 util/stat_outfile util/sysrem2 util/transients/transient_factory_test31.sh util/wcs_image_calibration.sh ;do
   if [ ! -s "$FILE_TO_CHECK" ];then
@@ -398,10 +408,10 @@ fi
 echo "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" >> transient_factory_test31.txt
 
 # Update planet positions taking the date of the first input image
-JD_FIRSTIMAGE_FOR_LANET_POSITIONS=$(for IMGFILE in "$NEW_IMAGES"/*.fts ;do if [ -f "$IMGFILE" ];then util/get_image_date "$IMGFILE" 2>&1 | grep ' JD ' | awk '{print $2}' ; break ;fi ;done)
-echo "The reference JD(UT) for computing planet position: $JD_FIRSTIMAGE_FOR_LANET_POSITIONS"
-echo "The reference JD(UT) for computing planet position: $JD_FIRSTIMAGE_FOR_LANET_POSITIONS" >> transient_factory_test31.txt
-$TIMEOUTCOMMAND util/planets.sh "$JD_FIRSTIMAGE_FOR_LANET_POSITIONS" > planets.txt &
+JD_FIRSTIMAGE_FOR_PLANET_POSITIONS=$(for IMGFILE in "$NEW_IMAGES"/*.fts ;do if [ -f "$IMGFILE" ];then util/get_image_date "$IMGFILE" 2>&1 | grep ' JD ' | awk '{print $2}' ; break ;fi ;done)
+echo "The reference JD(UT) for computing planet position: $JD_FIRSTIMAGE_FOR_PLANET_POSITIONS"
+echo "The reference JD(UT) for computing planet position: $JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" >> transient_factory_test31.txt
+$TIMEOUTCOMMAND util/planets.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > planets.txt &
 
 PREVIOUS_FIELD="none"
 
@@ -431,6 +441,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  #N=$(ls "$REFERENCE_IMAGES"/*"$FIELD"_*_*.fts | wc -l)
  N=$(ls "$REFERENCE_IMAGES"/"$FIELD"_*_*.fts | wc -l)
  if [ $N -lt 2 ];then
+  # Save image date for it to be displayed in the summary file
+  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory.log
   echo "ERROR: too few refereence images for the field $FIELD"
   echo "ERROR: too few refereence images for the field $FIELD" >> transient_factory_test31.txt
   continue
@@ -438,6 +450,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  #N=$(ls "$NEW_IMAGES"/*"$FIELD"_*_*.fts | wc -l)
  N=$(ls "$NEW_IMAGES"/"$FIELD"_*_*.fts | wc -l)
  if [ $N -lt 2 ];then
+  # Save image date for it to be displayed in the summary file
+  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory.log
   echo "ERROR: too few new images for the field $FIELD"
   echo "ERROR: too few new images for the field $FIELD" >> transient_factory_test31.txt
   continue
@@ -477,6 +491,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # The following three if statements should cover all the possibilities:
  # less than 2 images, 2 images, mere than 2 images
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -lt 2 ];then
+  # Save image date for it to be displayed in the summary file
+  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory.log
   echo "ERROR processing the image series - only $NUMBER_OF_SECOND_EPOCH_IMAGES second-epoch images found"
   echo "ERROR processing the image series - only $NUMBER_OF_SECOND_EPOCH_IMAGES second-epoch images found" >> transient_factory_test31.txt
   continue
@@ -500,6 +516,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   if [ -s vast_image_details.log ];then
    N_SAME_IMAGE=$(grep -c ' rotation= 180.000 ' vast_image_details.log)
    if [ $N_SAME_IMAGE -gt 1 ];then
+    # Save image date for it to be displayed in the summary file
+    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory.log
     # Stuck camera
     echo "ERROR the camera is stuck repeatedly sending the same image!"
     echo "***** ACTION NEEDED - RESET CAMERA!!! *****   IMAGE PROCESSING ERROR (stuck camera repeatedly sending the same image) " >> transient_factory.log
@@ -511,6 +529,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   fi
   cat prelim_vast_run.log | grep 'Bad reference image...' >> transient_factory.log
   if [ $? -eq 0 ];then
+   # Save image date for it to be displayed in the summary file
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory.log
    # Bad reference image
    echo "ERROR clouds on second-epoch images?"
    echo "***** IMAGE PROCESSING ERROR (clouds?) *****" >> transient_factory.log
@@ -523,11 +543,15 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    rm -f prelim_vast_run.log
   fi
   if [ ! -s vast_summary.log ];then
+   # Save image date for it to be displayed in the summary file
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory.log
    echo "ERROR: vast_summary.log is not created during the preliminary VaST run" >> transient_factory_test31.txt
    continue
   fi
   N_PROCESSED_IMAGES_PRELIM_RUN=$(cat vast_summary.log | grep 'Images processed' | awk '{print $3}')
   if [ $N_PROCESSED_IMAGES_PRELIM_RUN -lt 2 ];then
+   # Save image date for it to be displayed in the summary file
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory.log
    echo "ERROR processing second-epoch images!"
    echo "***** IMAGE PROCESSING ERROR (preliminary VaST run) *****" >> transient_factory.log
    echo "############################################################" >> transient_factory.log
@@ -536,6 +560,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   fi
   N_PROCESSED_IMAGES_PRELIM_RUN=$(cat vast_summary.log | grep 'Images used for photometry' | awk '{print $5}')
   if [ $N_PROCESSED_IMAGES_PRELIM_RUN -lt 2 ];then
+   # Save image date for it to be displayed in the summary file
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory.log
    echo "ERROR processing second-epoch images!"
    echo "***** IMAGE PROCESSING ERROR (preliminary VaST run) *****" >> transient_factory.log
    echo "############################################################" >> transient_factory.log
@@ -543,6 +569,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    continue   
   fi
   if [ ! -s vast_image_details.log ];then
+   # Save image date for it to be displayed in the summary file
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory.log
    echo "ERROR: vast_image_details.log is not created (preliminary VaST run)" >> transient_factory_test31.txt
    continue
   fi
@@ -558,6 +586,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   #NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk -v var="$FILTER_MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 < var ) print }' | wc -l)
   NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | wc -l)
   if [ $NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING -lt 2 ];then
+   # Save image date for it to be displayed in the summary file
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory.log
    echo "ERROR: seeing on second-epoch images is out of range"
    echo "***** ERROR: seeing on second-epoch images is out of range *****" >> transient_factory.log
    echo "############################################################" >> transient_factory.log
@@ -625,6 +655,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   #TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<0.30" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
   TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<$FILTER_MAX_ELONGATION_AminusB_PIX" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
   if [ $TEST -eq 0 ];then
+   # Save image date for it to be displayed in the summary file
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory.log
    echo "ERROR: tracking error (elongated stars), median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  $(basename $SECOND_EPOCH__FIRST_IMAGE)" >> transient_factory_test31.txt
    continue
   else
@@ -654,6 +686,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   fi
  done | grep "ERROR opening file"
  if [ $? -eq 0 ];then
+  # Save image date for it to be displayed in the summary file
+  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory.log
   echo "ERROR processing the image series"
   echo "ERROR processing the image series" >> transient_factory_test31.txt
   continue
@@ -749,6 +783,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  " >> transient_factory_test31.txt
  ./vast --starmatchraius 4.0 --matchstarnumber 500 --selectbestaperture --sysrem 1 --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
  if [ $? -ne 0 ];then
+  # Save image date for it to be displayed in the summary file
+  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory.log
   echo "ERROR running VaST on the field $FIELD"
   echo "ERROR running VaST on the field $FIELD" >> transient_factory_test31.txt
   echo "ERROR running VaST on the field $FIELD" >> transient_factory.log
@@ -762,6 +798,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # double-check that the VaST run was OK
  grep --quiet 'Images used for photometry 4' vast_summary.log
  if [ $? -ne 0 ];then
+  # Save image date for it to be displayed in the summary file
+  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory.log
   echo "***** IMAGE PROCESSING ERROR (less than 4 images processed) *****" >> transient_factory.log
   echo "############################################################" >> transient_factory.log
   echo "ERROR running VaST on the field $FIELD (less than 4 images processed)" >> transient_factory_test31.txt
@@ -888,6 +926,9 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   fi
  done | grep --quiet 'UNSOLVED_PLATE'
  if [ $? -eq 0 ];then
+  # Save image date for it to be displayed in the summary file
+  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory.log
+  echo "ERROR found an unsoved plate in the field $FIELD" >> transient_factory.log
   echo "ERROR found an unsoved plate in the field $FIELD" >> transient_factory_test31.txt
   continue
  fi
@@ -934,6 +975,8 @@ Soft limit: $FOV_DEG_LIMIT_SOFT deg.  Hard limit: $FOV_DEG_LIMIT_HARD deg.
  TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_HARD" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
  if [ $TEST -eq 1 ];then
   if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
+   # Save image date for it to be displayed in the summary file
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory.log
    echo "ERROR: (NO CANDIDATES LISTED) distance between 1st reference and 1st second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)"
    echo "ERROR: (NO CANDIDATES LISTED) distance between 1st reference and 1st second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" >> transient_factory_test31.txt
    break
@@ -970,6 +1013,8 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_HARD" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
  if [ $TEST -eq 1 ];then
   if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
+   # Save image date for it to be displayed in the summary file
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory.log
    echo "ERROR: (NO CANDIDATES LISTED) distance between 1st reference and 2nd second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)"
    echo "ERROR: (NO CANDIDATES LISTED) distance between 1st reference and 2nd second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" >> transient_factory_test31.txt
    break
@@ -1101,6 +1146,8 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  if [ $? -eq 0 ];then
   # Wait for the solve_plate_with_UCAC5 stuff to finish
   echo "wait"   >> transient_factory_test31.txt
+  # Save image date for it to be displayed in the summary file
+  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory.log
   wait
   # Throw an error
   echo "ERROR calibrating magnitudes in the field $FIELD (mean mag outside of range)"
@@ -1114,6 +1161,8 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   # Wait for the solve_plate_with_UCAC5 stuff to finish
   echo "wait"   >> transient_factory_test31.txt
   wait
+  # Save image date for it to be displayed in the summary file
+  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory.log
   # Throw an error
   echo "ERROR calibrating magnitudes in the field $FIELD MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE"
   echo "ERROR calibrating magnitudes in the field $FIELD MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE" >> transient_factory_test31.txt
@@ -1445,9 +1494,9 @@ exclusion_list_index_html.txt NOT FOUND" >> transient_factory_test31.txt
 
 ###############################################################################################################
 # Moved here as we run HORIZONS script in parallel to the main script
-echo "Planet positions from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_LANET_POSITIONS:"
+echo "Planet positions from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
 cat planets.txt
-echo "Planet positions from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_LANET_POSITIONS:" >> transient_factory_test31.txt
+echo "Planet positions from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
 cat planets.txt >> transient_factory_test31.txt
 ###############################################################################################################
  
