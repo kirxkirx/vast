@@ -68,6 +68,8 @@ int get_string_with_fov_of_wcs_calibrated_image( char *fitsfilename, char *outpu
  output_string[0]= '\0';            // reset output just in case
  ( *output_float_fov_arcmin )= 0.0; // reset output just in case
  //
+ //fprintf(stderr,"DEBUG get_string_with_fov_of_wcs_calibrated_image(): finder_chart_mode=%d \n",finder_chart_mode);
+ //
  if ( finder_chart_mode == 1 ) {
   // This is a zoom-in image
   sprintf( systemcommand, "%sutil/fov_of_wcs_calibrated_image.sh %s | grep 'Image scale:' | awk '{print $3}' | awk -F'\"' '{print $1}'", path_to_vast_string, fitsfilename );
@@ -2822,6 +2824,8 @@ int main( int argc, char **argv ) {
     cpgpt1( manymarkersX[marker_counter], manymarkersY[marker_counter], 2 );
     cpgsci( 1 );
    }
+
+   //fprintf(stderr,"DEBUG main(): finder_chart_mode=%d use_north_east_marks=%d is_this_north_up_east_left_image=%d use_datestringinsideimg=%d use_target_mark=%d\n",finder_chart_mode,use_north_east_marks,is_this_north_up_east_left_image,use_datestringinsideimg,use_target_mark);
 
    if ( finder_chart_mode == 1 ) {
 

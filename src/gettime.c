@@ -628,7 +628,8 @@ int check_if_this_fits_image_is_north_up_east_left( char *fitsfilename ) {
  // WCS axes are paralloell to the image axes
  // if( CD1_2 == 0.0 && CD2_1 == 0.0 ) {
  // OK, let's allow for slight rotation
- if ( fabs( CD1_2 ) / fabs( CD1_1 ) < 0.1 && fabs( CD2_1 ) / fabs( CD2_2 ) < 0.1 ) {
+ //if ( fabs( CD1_2 ) / fabs( CD1_1 ) < 0.1 && fabs( CD2_1 ) / fabs( CD2_2 ) < 0.1 ) {
+ if ( fabs( CD1_2 ) / fabs( CD1_1 ) < 0.12 && fabs( CD2_1 ) / fabs( CD2_2 ) < 0.12 ) {
   // east left, north up
   if ( CD1_1 < 0.0 && CD2_2 > 0.0 ) {
    return 1; // yes!!!!
