@@ -9810,7 +9810,7 @@ if [ -d ../NMW_find_NovaCas_august31_test ];then
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD be an error message about distance between reference and second-epoch image centers
-  grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
+  grep --quiet 'ERROR: distance between 1st reference and 1st second-epoch image centers is' "transient_report/index.html"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_NO_ERROR_MESSAGE_IN_index_html"
