@@ -393,7 +393,7 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
   telescop[FLEN_VALUE - 1]= '\0';
   // make sure the variable is not empty!
   if( strlen(telescop) > 1 ) {
-   env_var_good==1;
+   env_var_good=1;
   }
  } 
  // The normal way - get the TELESCOP string from the FITS header rather than the environment variable

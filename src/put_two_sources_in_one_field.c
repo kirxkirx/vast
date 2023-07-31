@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <ctype.h> // for isdigit()
 
 #include "vast_limits.h"
 

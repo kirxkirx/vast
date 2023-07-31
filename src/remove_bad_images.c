@@ -313,7 +313,7 @@ int main( int argc, char **argv ) {
    sprintf( lightcurve_tmp_filename, "lightcurve.tmp%05ld", filename_counter );
    outlightcurvefile= fopen( lightcurve_tmp_filename, "w" );
    if ( NULL == outlightcurvefile ) {
-    fprintf( stderr, "\nAn ERROR has occured while processing file %s  median_mag=%lf mag_sigma=%lf\n", filenamelist[filename_counter], median_mag, mag_sigma );
+    fprintf( stderr, "\nAn ERROR has occured while processing file %s \n", filenamelist[filename_counter] );
     fprintf( stderr, "ERROR: Can't open file %s\n", lightcurve_tmp_filename );
     exit( EXIT_FAILURE );
    }
