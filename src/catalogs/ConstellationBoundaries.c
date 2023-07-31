@@ -16,7 +16,7 @@
 #include <stdlib.h> // for atof()
 
 typedef struct zz{char cab[4];}  ZZ;
-typedef struct node{char iSplit; double Split; int nLow; int nHi;} NODE;
+typedef struct node{int iSplit; double Split; int nLow; int nHi;} NODE;
 
 int Levels;
 
@@ -261,7 +261,8 @@ int main(int argc, char **argv)
     
     //printf("\n Constellation: %s \n",&Names[GetConstellationIndex(Rect,Decl)]);
     //printf(" Found in %i steps.\n",Levels);
-    printf("%s\n", &Names[GetConstellationIndex(Rect,Decl)]);
+    //printf("%s\n", &Names[GetConstellationIndex(Rect,Decl)]);
+    printf("%s\n", Names[GetConstellationIndex(Rect,Decl)].cab);
     
     return 0;
 }
