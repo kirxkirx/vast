@@ -127,7 +127,7 @@ function print_image_date_for_logs_in_case_of_emergency_stop {
  # $hell4eck says $@ needs to be double-quotted
  for INTPUT_IMAGE in "$@" ;do
   if [ -f "$INTPUT_IMAGE" ];then
-   util/get_image_date "$INTPUT_IMAGE" 2>&1 | grep 'Exposure' | awk '{printf "Last  image: %s %s %s %s", $9, $4, $5, $6}'
+   util/get_image_date "$INTPUT_IMAGE" 2>&1 | grep 'Exposure' | awk '{printf "Last  image: %s %s %s %s\n", $9, $4, $5, $6}'
    break
   fi
  done
