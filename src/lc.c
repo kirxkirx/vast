@@ -466,7 +466,7 @@ int main( int argc, char **argv ) {
  int Nobs= 0;
  int i, j;
  float minJD, maxJD, minmag, maxmag;
- /* PGPLOT vars */
+ // PGPLOT vars //
  float curX, curY;
  float curX2, curY2;
  char curC;
@@ -698,6 +698,7 @@ int main( int argc, char **argv ) {
  Nobs= 0; // reset it here just in case
  dmag= dmerr= dx= dy= dap= 0.0;
  JD[Nobs]= 0.0; // initialize
+ mag[Nobs]= mag_err[Nobs]= X[Nobs]= Y[Nobs]= APER[Nobs]= 0.0;
  // while( -1 < read_lightcurve_point(lightcurvefile, &JD[Nobs], &dmag, &dmerr, &dx, &dy, &dap, filename[Nobs], NULL) ) {
  while ( -1 < read_lightcurve_point( lightcurvefile, &JD[Nobs], &dmag, &dmerr, &dx, &dy, &dap, unsanitized_filename, NULL ) ) {
   if ( JD[Nobs] != 0.0 ) {
@@ -709,6 +710,7 @@ int main( int argc, char **argv ) {
    safely_encode_user_input_string( filename[Nobs], unsanitized_filename, FILENAME_LENGTH );
    Nobs++;
    JD[Nobs]= 0.0; // initialize the next one
+   mag[Nobs]= mag_err[Nobs]= X[Nobs]= Y[Nobs]= APER[Nobs]= 0.0;
   }
  }
 
@@ -722,7 +724,7 @@ int main( int argc, char **argv ) {
  get_path_to_vast( path_to_vast_string );
  ///
 
- /* Searching min max for double (for stats only) */
+ // Searching min max for double (for stats only) //
  JD_first= JD_last= JD[0];
  for ( i= 0; i < Nobs; i++ ) {
   if ( JD[i] > JD_last )
@@ -733,9 +735,10 @@ int main( int argc, char **argv ) {
 
  if ( Nobs <= 0 ) {
   fprintf( stderr, "ERROR: Trying allocate zero or negative memory amount(Nobs<= 0, lc.c)\n" );
+  exit( EXIT_FAILURE );
  };
 
- /* Determine plot limits */
+ // Determine plot limits 
  minmag= maxmag= mag[0];
  minJD= maxJD= (float)JD[0];
  for ( i= 1; i < Nobs; i++ ) {

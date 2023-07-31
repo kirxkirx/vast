@@ -91,6 +91,7 @@ static void check_if_the_input_is_MaxIM_compressed_FITS(char *fitsfilename) {
  buffer= malloc(65536 * sizeof(char));
  if( buffer == NULL ) {
   fprintf(stderr, "ERROR in check_if_the_input_is_MaxIM_compressed_FITS(): cannot allocate buffer memory\n");
+  fclose(f);
   return;
  }
  memset(buffer, 0, 65535); // wipe the memory just in case there was something there

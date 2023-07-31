@@ -753,23 +753,39 @@ int look_for_existing_wcs_header( char *fitsfilename, double *estimated_fov_arcm
  }
 
  fits_get_hdrspace( fptr, &No_of_wcs_keys, &wcs_keys_left, &status );
+ if ( No_of_wcs_keys < 5 ) {
+  fprintf( stderr, "ERROR: No_of_wcs_keys < 5 \n" );
+  exit( EXIT_FAILURE );
+ };
  wcs_key= malloc( No_of_wcs_keys * sizeof( char * ) );
  if ( wcs_key == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for wcs_key(try_to_guess_image_fov)\n" );
   exit( EXIT_FAILURE );
  };
+ //
+ wcs_key[0]= (char *)malloc( FLEN_CARD * sizeof( char ) );
+ if( wcs_key[0] == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for wcs_key[0](try_to_guess_image_fov)\n" );
+  exit( EXIT_FAILURE );
+ };
+ memset( wcs_key[0], 0, FLEN_CARD * sizeof( char ) );
+ //
  for ( i= 1; i < No_of_wcs_keys; i++ ) {
   wcs_key[i]= (char *)malloc( FLEN_CARD * sizeof( char ) ); // FLEN_CARD length of a FITS header card defined in fitsio.h
   if ( wcs_key[i] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for wcs_key[i](try_to_guess_image_fov)\n" );
    exit( EXIT_FAILURE );
   };
+  memset( wcs_key[i], 0, FLEN_CARD * sizeof( char ) ); // just in case
   fits_read_record( fptr, i, wcs_key[i], &status );
  }
  fits_close_file( fptr, &status ); // close file
 
  // Look for the COMMENT that is inserted by the Astrometry.net software
  for ( i= 1; i < No_of_wcs_keys; i++ ) {
+  if( strlen(wcs_key[i])<7 ) {
+   continue;
+  }
   if ( wcs_key[i][0] == 'C' && wcs_key[i][1] == 'O' && wcs_key[i][2] == 'M' && wcs_key[i][3] == 'M' && wcs_key[i][4] == 'E' && wcs_key[i][5] == 'N' && wcs_key[i][6] == 'T' ) {
    //
    // fprintf(stderr,"%s\n",wcs_key[i]);
@@ -782,8 +798,10 @@ int look_for_existing_wcs_header( char *fitsfilename, double *estimated_fov_arcm
      ( *estimated_fov_arcmin )= scale_arcsec_pix * MIN( naxes[0], naxes[1] ) / 60.0;
      ( *estimated_fov_arcmin )= ( *estimated_fov_arcmin ) - 0.1 * ( *estimated_fov_arcmin );
      // deallocate memory before leaving
-     for ( j= 1; j < No_of_wcs_keys; j++ )
+     for ( j= 1; j < No_of_wcs_keys; j++ ) {
       free( wcs_key[j] );
+     }
+     free( wcs_key[0] );
      free( wcs_key );
      //
      return 0;
@@ -792,8 +810,10 @@ int look_for_existing_wcs_header( char *fitsfilename, double *estimated_fov_arcm
  }
 
  // Deallocate wcs_key as we don't need it anymore
- for ( j= 1; j < No_of_wcs_keys; j++ )
+ for ( j= 1; j < No_of_wcs_keys; j++ ) {
   free( wcs_key[j] );
+ }
+ free( wcs_key[0] );
  free( wcs_key );
  //
 

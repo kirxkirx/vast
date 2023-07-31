@@ -29,7 +29,7 @@ static inline int any_unusual_characters_in_string(char *fitsfilename) {
 
 static inline int safely_encode_user_input_string(char *output_filename, char *input_filename, size_t max_string_size) {
  size_t i;
- size_t string_size=strlen(input_filename);
+ size_t string_size;
  if( input_filename==NULL ) {
   fprintf(stderr,"ERROR in safely_encode_user_input_string(): the input in a NULL pointer\n");
   return 1;
@@ -43,6 +43,7 @@ static inline int safely_encode_user_input_string(char *output_filename, char *i
   fprintf(stderr, "ERROR in safely_encode_user_input_string(): unusual character in input string\n");
   return 1;
  }
+ string_size=strlen(input_filename);
  for(i=0; i<string_size; i++) {
   if( i==max_string_size ) {
    output_filename[0]= '\0';

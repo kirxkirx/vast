@@ -81,11 +81,49 @@ void bin_lightcurve_in_phase( double *jd, double *phase, double *m, unsigned int
   return;
  }
 
+/*
  internal_array_phase= malloc( N_bins * sizeof( double ) );
  internal_array_binnedmag= malloc( N_bins * sizeof( double ) );
  internal_array_binnedmag_sd= malloc( N_bins * sizeof( double ) );
+ 
+ mag_in_bin= malloc( ( *N_obs ) * sizeof( double ) );
+
+ if ( NULL == internal_array_phase || NULL == internal_array_binnedmag || NULL == internal_array_binnedmag_sd || NULL == mag_in_bin ) {
+  fprintf( stderr, "ERROR allocating memory in bin_lightcurve_in_phase()\n" );
+  return;
+ }
+*/
+
+ internal_array_phase= malloc( N_bins * sizeof( double ) );
+ if ( NULL == internal_array_phase ) {
+  fprintf( stderr, "ERROR allocating memory for internal_array_phase in bin_lightcurve_in_phase()\n" );
+  return;
+ }
+
+ internal_array_binnedmag= malloc( N_bins * sizeof( double ) );
+ if ( NULL == internal_array_binnedmag ) {
+  fprintf( stderr, "ERROR allocating memory for internal_array_binnedmag in bin_lightcurve_in_phase()\n" );
+  free(internal_array_phase);
+  return;
+ }
+
+ internal_array_binnedmag_sd= malloc( N_bins * sizeof( double ) );
+ if ( NULL == internal_array_binnedmag_sd ) {
+  fprintf( stderr, "ERROR allocating memory for internal_array_binnedmag_sd in bin_lightcurve_in_phase()\n" );
+  free(internal_array_phase);
+  free(internal_array_binnedmag);
+  return;
+ }
 
  mag_in_bin= malloc( ( *N_obs ) * sizeof( double ) );
+ if ( NULL == mag_in_bin ) {
+  fprintf( stderr, "ERROR allocating memory for mag_in_bin in bin_lightcurve_in_phase()\n" );
+  free(internal_array_phase);
+  free(internal_array_binnedmag);
+  free(internal_array_binnedmag_sd);
+  return;
+ }
+ 
 
  for ( j= 0; j < N_bins; j++ ) {
   points_in_bin= 0;
@@ -212,6 +250,14 @@ int main( int argc, char **argv ) {
  jd= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  phase= malloc( 2 * MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  m= malloc( 2 * MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
+ 
+ if ( NULL == jd || NULL == phase || NULL == m ) {
+  fprintf(stderr, "ERROR allocating memory in %s\n", argv[0]);
+  return 1;
+ }
+ memset( jd, 0, MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) ); // just in case
+ memset( phase, 0, 2 * MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
+ memset( m, 0, 2 * MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
 
  // read the lightcurve from file
  lightcurvefile= fopen( argv[1], "r" );

@@ -65,6 +65,12 @@ static inline int read_lightcurve_point(FILE *lc_file_descriptor, double *jd, do
   return -1;
  }
  str[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1]= '\0'; // just in case
+ 
+ // everything else can burn, but *jd cannot be pointing to NULL
+ if ( NULL == jd ) {
+  fprintf( stderr, "ERROR in read_lightcurve_point() the output jd is a NULL pointer!\n");
+  return 1;
+ }
 
  // A naive attempt to optimize: if the first symbol is a number, assume this is a valid measurement, not a comment
  if( 0 == isdigit(str[0]) ) {

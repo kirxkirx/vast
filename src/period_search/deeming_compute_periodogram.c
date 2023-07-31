@@ -33,6 +33,8 @@
 #define TWOPI 2.0 * M_PI
 #define FOURPI 4.0 * M_PI
 
+#define MIN_OBS_PERIOD_SEARCH 2 // that's very optimistic
+
 // INFINITY and NAN are undeclared in the older versions of GCC
 // if this is the case - define them using GCC builtin functions
 #ifndef INFINITY
@@ -69,6 +71,11 @@ void bin_log_power_spectrum_points_and_write_to_file( double *x, double *y, doub
  double log_max_x= log10( max_x );
  double log_bin_width= ( log_max_x - log_min_x ) / num_bins;
 
+ if ( NULL == bin_log10x_sums || NULL == bin_log10x_means || NULL == bin_log10y_sums || NULL == bin_log10y_means || NULL == bin_log10z_sums || NULL == bin_log10z_means || NULL == bin_counts ) {
+  fprintf(stderr, "ERROR allocating memory in bin_log_power_spectrum_points_and_write_to_file()\n");
+  exit( EXIT_FAILURE );
+ } 
+
  // Bin the points
  for ( i= 0; i < num_points; i++ ) {
   double log_x= log10( x[i] );
@@ -101,6 +108,13 @@ void bin_log_power_spectrum_points_and_write_to_file( double *x, double *y, doub
  FILE *binned_powerspectrum_file= fopen( "binned_powerspectrum.periodogram", "w" );
  if ( NULL == binned_powerspectrum_file ) {
   fprintf( stderr, "ERROR opening file binned_powerspectrum.periodogram for writing! \n" );
+  free( bin_log10x_sums );
+  free( bin_log10x_means );
+  free( bin_log10y_sums );
+  free( bin_log10y_means );
+  free( bin_log10z_sums );
+  free( bin_log10z_means );
+  free( bin_counts );
   return;
  }
 
@@ -119,6 +133,8 @@ void bin_log_power_spectrum_points_and_write_to_file( double *x, double *y, doub
  free( bin_log10z_sums );
  free( bin_log10z_means );
  free( bin_counts );
+ 
+ return;
 }
 
 void get_min_max( double *x, unsigned long N, double *min, double *max ) {
@@ -290,6 +306,10 @@ void normalize_spectral_window_file( unsigned long N_freq, char *periodogramfile
  }
  max_F_to_max_W= max_F / max_W;
  periodogramfile= fopen( periodogramfilename, "w" );
+ if ( NULL == periodogramfile ) {
+  fprintf(stderr, "ERROR in normalize_spectral_window_file(): cannot open %s for writing\n", periodogramfilename);
+  exit( EXIT_FAILURE );
+ }
  for ( i= 0; i < N_freq; i++ ) {
   window[i]= window[i] * max_F_to_max_W;
   fprintf( periodogramfile, "%5.10lf %5.10lf %5.10lf\n", freq[i], theta[i], window[i] );
@@ -344,9 +364,20 @@ static int compare_phases( const void *obs11, const void *obs22 ) {
 
 double compute_LK_reciprocal_theta( double *jd, double *m, unsigned long N_obs, double f, double M ) {
  unsigned long i;
- struct Obs *obs= malloc( N_obs * sizeof( struct Obs ) );
+ struct Obs *obs;
  double sum1, sum2;
  double jdi_over_period;
+
+ if ( N_obs < MIN_OBS_PERIOD_SEARCH ) {
+  fprintf( stderr, "ERROR in compute_LK_reciprocal_theta(): N_obs < MIN_OBS_PERIOD_SEARCH\n");
+  exit( EXIT_FAILURE );
+ }
+
+ obs= malloc( N_obs * sizeof( struct Obs ) );
+ if ( NULL == obs ) {
+  fprintf( stderr, "ERROR in compute_LK_reciprocal_theta(): cannot allocate memory for obs\n");
+  exit( EXIT_FAILURE );
+ }
 
  for ( sum2= 0.0, i= 0; i < N_obs; i++ ) {
   jdi_over_period= ( jd[i] - jd[0] ) * f;
@@ -540,13 +571,10 @@ int main( int argc, char **argv ) {
    fprintf( stderr, "ERROR: too many lines in the input file >%d\n", MAX_NUMBER_OF_OBSERVATIONS );
    return 1;
   } // just in case it is infinite length
-    /*
-      // Why would we need that?!
-      if( N_obs == MAX_NUMBER_OF_OBSERVATIONS ) {
-       fprintf(stderr, "ERROR: too many lines in the input file >%d\n", MAX_NUMBER_OF_OBSERVATIONS);
-       return 1;
-      } // just in case it is infinite length
-    */
+ }
+ if( N_obs < MIN_OBS_PERIOD_SEARCH ){
+  fclose(lcfile);
+  return 1;
  }
  fseek( lcfile, 0, SEEK_SET ); // go back to the beginning of the lightcurve file
  jd= malloc( N_obs * sizeof( double ) );
@@ -622,13 +650,6 @@ int main( int argc, char **argv ) {
  // Get number of frequencies in the spectrum
  df= step / T;
  N_freq= (unsigned long)( ( fmax - fmin ) / df + 0.5 );
- // fprintf(stderr,"df=%lg N_freq=%ld\n",df,N_freq);
- // exit(1);
- /*
- // Well this doesn't work
- df=step/(pmax-pmin);
- N_freq=(int)((fmax-fmin)/df+0.5);
- */
 
  // compute mean magnitude (M) here
  for ( M= 0.0, i= 0; i < N_obs; i++ ) {
@@ -668,13 +689,6 @@ int main( int argc, char **argv ) {
   if ( shuffle_iteration != 0 ) {
    gsl_ran_shuffle( r, m, N_obs, sizeof( double ) );
   }
-
-  /*
-  freq=malloc(N_freq*sizeof(double));
-  if( compute_Deeming==1 )power=malloc(N_freq*sizeof(double));
-  if( compute_Deeming==1 && shuffle_iterations==0 )spectral_window=malloc(N_freq*sizeof(double));
-  if( compute_LK==1 )theta=malloc(N_freq*sizeof(double));
-*/
 
 // Main loop in frequency
 #ifdef VAST_ENABLE_OPENMP

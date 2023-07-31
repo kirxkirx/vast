@@ -57,7 +57,8 @@ OPTFLAGS = -w -O2 -fomit-frame-pointer $(GOOD_MARCH_OPTIONS) $(LTO_OPTIONS) $(US
 #OPTFLAGS := -g -Wall -Wno-comment  -fsanitize=address,leak,undefined -fsanitize-address-use-after-scope -O1 $(USE_BUILTIN_FUNCTIONS) 
 ## flags to measure test coverage with GCC/gcov
 #OPTFLAGS = -fprofile-arcs -ftest-coverage
-
+## Static Analysis
+#OPTFLAGS := -g -Wall -Wno-comment  -fanalyzer
 
 ##############################################################################
 ########################### Make targets are below ###########################

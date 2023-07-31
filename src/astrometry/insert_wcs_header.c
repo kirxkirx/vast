@@ -63,6 +63,14 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for wcs_key\n" );
   exit( EXIT_FAILURE );
  };
+ //
+ wcs_key[0]= (char *)malloc( FLEN_CARD * sizeof( char ) );
+ if( wcs_key[0] == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for wcs_key[0](try_to_guess_image_fov)\n" );
+  exit( EXIT_FAILURE );
+ };
+ memset( wcs_key[0], 0, FLEN_CARD * sizeof( char ) );
+ //
  // Why on earth we start from 1???
  for ( i= 1; i < No_of_wcs_keys; i++ ) {
   wcs_key[i]= (char *)malloc( FLEN_CARD * sizeof( char ) ); // FLEN_CARD length of a FITS header card defined in fitsio.h
@@ -70,6 +78,7 @@ int main( int argc, char **argv ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for wcs_key[i]\n" );
    exit( EXIT_FAILURE );
   };
+  memset( wcs_key[i], 0, FLEN_CARD * sizeof( char ) );
   fits_read_record( fptr, i, wcs_key[i], &status );
  }
  fits_close_file( fptr, &status ); // close file
@@ -505,13 +514,6 @@ int main( int argc, char **argv ) {
   status= 0;
  }
 
- /* Why do we want to delete HISTORY??
- for ( i= 0; i < 10000; i++ ) {
-  fits_delete_key( outputfptr, "HISTORY", &status );
-  status= 0;
- }
-*/
-
  status= 0;
 
  for ( i= 5; i < No_of_wcs_keys; i++ ) {
@@ -528,6 +530,9 @@ int main( int argc, char **argv ) {
  for ( i= 1; i < No_of_wcs_keys; i++ ) {
   free( wcs_key[i] );
  }
+ //
+ free( wcs_key[0] );
+ //
  free( wcs_key );
 
  return 0;

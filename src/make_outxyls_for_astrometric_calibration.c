@@ -62,12 +62,21 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "[%s] ERROR: cannot open %s\n", argv[0], ascii_catalog_filename );
   return 1;
  }
+ // count the number of lines in the file
  for ( n= 0; NULL != fgets( ascii_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, ascii_catalog ); n++ )
   ;
+ // allocate the appropriate ammount of memory
  X= malloc( n * sizeof( float ) );
  Y= malloc( n * sizeof( float ) );
  FLUX= malloc( n * sizeof( float ) );
- fseek( ascii_catalog, 0, SEEK_SET ); // go back to the beginning of the file
+ if ( NULL == X || NULL == Y || NULL == FLUX ) {
+  fprintf( stderr, "[%s] ERROR allocating memory for X, Y or FLUX\n", argv[0]);
+  fclose(ascii_catalog);
+  return 1;
+ }
+ 
+ // go back to the beginning of the file
+ fseek( ascii_catalog, 0, SEEK_SET );
  previous_star_number_in_sextractor_catalog= 0;
  for ( i= 0, n_good= 0, n_high_snr= 0; i < n; i++ ) {
   if ( NULL == fgets( ascii_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, ascii_catalog ) ) {
