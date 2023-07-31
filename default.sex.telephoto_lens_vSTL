@@ -65,7 +65,7 @@ BACKPHOTO_TYPE  LOCAL           # can be "GLOBAL" or "LOCAL"
  
 #------------------------------ Check Image ----------------------------------
  
-CHECKIMAGE_TYPE BACKGROUND            # can be one of "NONE", "BACKGROUND",
+CHECKIMAGE_TYPE NONE            # can be one of "NONE", "BACKGROUND",
                                 # "MINIBACKGROUND", "-BACKGROUND", "OBJECTS",
                                 # "-OBJECTS", "SEGMENTATION", "APERTURES",
                                 # or "FILTERED"
