@@ -142,6 +142,7 @@ fi
 
 if [ ! -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
  # Create a list of stars brighter than mag 9.1 for filtering transient candidates
+ # also in lib/update_offline_catalogs.sh !!!
  lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search 9.1
 fi
 

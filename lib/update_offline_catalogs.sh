@@ -287,5 +287,10 @@ if [ ! -f $TYCHO_PATH/tyc2.dat.00 ];then
   cd $VASTDIR
  fi # if [ -s ../tycho2/tyc2.dat.19 ];then 
 fi
-
+cd $VASTDIR
+if [ ! -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
+ # Create a list of stars brighter than mag 9.1 for filtering transient candidates
+ # also in 
+ lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search 9.1
+fi
 
