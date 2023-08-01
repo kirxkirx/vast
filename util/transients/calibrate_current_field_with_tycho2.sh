@@ -46,7 +46,7 @@ function vastrealpath {
 }
 
 ##### Check if a local copy of Tycho-2 is available and if its usable?
-VASTDIR=$PWD
+VASTDIR=$(vastrealpath $PWD)
 TYCHO_PATH=lib/catalogs/tycho2
 
 # Check if there is a symbolic link, but it is broken

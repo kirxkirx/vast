@@ -13,6 +13,30 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
+function vastrealpath {
+  # On Linux, just go for the fastest option which is 'readlink -f'
+  REALPATH=$(readlink -f "$1" 2>/dev/null)
+  if [ $? -ne 0 ];then
+   # If we are on Mac OS X system, GNU readlink might be installed as 'greadlink'
+   REALPATH=$(greadlink -f "$1" 2>/dev/null)
+   if [ $? -ne 0 ];then
+    REALPATH=$(realpath "$1" 2>/dev/null)
+    if [ $? -ne 0 ];then
+     REALPATH=$(grealpath "$1" 2>/dev/null)
+     if [ $? -ne 0 ];then
+      # Something that should work well enough in practice
+      OURPWD=$PWD
+      cd "$(dirname "$1")"
+      REALPATH="$PWD/$(basename "$1")"
+      cd "$OURPWD"
+     fi # grealpath
+    fi # realpath
+   fi # greadlink -f
+  fi # readlink -f
+  echo "$REALPATH"
+}
+VASTDIR=$(vastrealpath $PWD)
+
 # By default, do not download VSX and astorb.dat if they were not downloaded earlier
 DOWNLOAD_EVERYTHING=0
 if [ ! -z "$1" ];then
