@@ -224,7 +224,7 @@ float *createMandelbrotImage(int width, int height, float xS, float yS, float ra
 " > makePNG.c
 
 # Compile it
-CC=`lib/find_gcc_compiler.sh`
+CC=$(lib/find_gcc_compiler.sh)
 $CC -o makePNG makePNG.c $LPNG_GCC_COMMAND_LINE_OPTION -lm
 if [ $? != 0 ];then
  echo "
@@ -277,6 +277,20 @@ for FILE_TO_REMOVE in makePNG.c makePNG output.png ;do
   rm -f "$FILE_TO_REMOVE"
  fi
 done
+
+# If the script name contians test_libpng_justtest_nomovepgplot.sh
+# just exit with an appropriate exit code
+script_name=$(basename "$0")
+search_string="test_libpng_justtest_nomovepgplot.sh"
+if [[ $script_name =~ $search_string ]]; then
+ if [ $LIBPNG_OK -eq 1 ];then
+  exit 0
+ else
+  exit 1
+ fi
+fi
+
+# Otherwise, if we are still here...
 
 # Copy the appropriate lib/pgplot stub
 rm -rf lib/pgplot

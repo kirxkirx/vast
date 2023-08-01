@@ -37,11 +37,21 @@ if [ ! -d "$REFERENCE_IMAGES" ];then
  exit 1
 fi
 
+# Check if we are expected to produce PNG images or just text
+MAKE_PNG_PLOTS="yes"
+if [ -x lib/test_libpng_justtest_nomovepgplot.sh ];then
+ lib/test_libpng_justtest_nomovepgplot.sh
+ if [ $? -ne 0 ];then
+  MAKE_PNG_PLOTS="no"
+ fi
+fi
+export MAKE_PNG_PLOTS
+
+
 # This script should take care of updating astorb.dat
 lib/update_offline_catalogs.sh all
 
 # Set the SExtractor parameters file
-#cp default.sex.telephoto_lens_v4 default.sex
 cp default.sex.telephoto_lens_v3 default.sex
 
 echo "Reference image directory is set to $REFERENCE_IMAGES"
@@ -50,7 +60,6 @@ if [ -z $1 ]; then
  exit
 fi
 
-#NEW_IMAGES=$1
 
 if [ ! -d transient_report ];then
  mkdir transient_report

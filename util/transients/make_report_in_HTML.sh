@@ -7,6 +7,12 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
+# MAKE_PNG_PLOTS should always be "yes" for producing finder chart images
+if [ -z "$MAKE_PNG_PLOTS" ];then
+ MAKE_PNG_PLOTS="yes"
+ export MAKE_PNG_PLOTS
+fi
+
 # Make sure there is a directory to put the report in
 if [ ! -d transient_report/ ];then
  mkdir transient_report
@@ -59,29 +65,31 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  else
   echo "<h3>$TRANSIENT_NAME</h3>" >> transient_report/index.tmp
  fi
- # plot reference image
- # Set PNG finding chart dimensions
- export PGPLOT_PNG_HEIGHT=400 ; export PGPLOT_PNG_WIDTH=400
- util/make_finding_chart $REFERENCE_IMAGE $G $H &>/dev/null && mv pgplot.png transient_report/"$TRANSIENT_NAME"_reference.png
- unset PGPLOT_PNG_HEIGHT ; unset PGPLOT_PNG_WIDTH
+ #####
+ if [ -n "$MAKE_PNG_PLOTS" ];then
+  if [ "$MAKE_PNG_PLOTS" == "yes" ];then
+   # plot reference image
+   # Set PNG finding chart dimensions
+   export PGPLOT_PNG_HEIGHT=400 ; export PGPLOT_PNG_WIDTH=400
+   util/make_finding_chart $REFERENCE_IMAGE $G $H &>/dev/null && mv pgplot.png transient_report/"$TRANSIENT_NAME"_reference.png
+   unset PGPLOT_PNG_HEIGHT ; unset PGPLOT_PNG_WIDTH
+  fi
+ fi
+ #####
  echo "<img src=\""$TRANSIENT_NAME"_reference.png\">" >> transient_report/index.tmp
  # plot reference image preview
  BASENAME_REFERENCE_IMAGE=`basename $REFERENCE_IMAGE`
  REFERENCE_IMAGE_PREVIEW="$BASENAME_REFERENCE_IMAGE"_preview.png
- # image size needs to match the one set in util/transients/transient_factory_test31.sh and below
- export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
- util/fits2png $REFERENCE_IMAGE &> /dev/null && mv pgplot.png transient_report/$REFERENCE_IMAGE_PREVIEW
- unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
- #command -v convert &> /dev/null
- #if [ $? -eq 0 ];then
- # REFERENCE_IMAGE_PREVIEW=`basename $REFERENCE_IMAGE`_preview.png
- # if [ ! -f transient_report/$REFERENCE_IMAGE_PREVIEW ];then
- #  convert $REFERENCE_IMAGE -brightness-contrast 30x30 -resize 10% transient_report/$REFERENCE_IMAGE_PREVIEW
- # fi
- #fi
-
-
-                        
+ #####
+ if [ -n "$MAKE_PNG_PLOTS" ];then
+  if [ "$MAKE_PNG_PLOTS" == "yes" ];then
+   # image size needs to match the one set in util/transients/transient_factory_test31.sh and below
+   export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
+   util/fits2png $REFERENCE_IMAGE &> /dev/null && mv pgplot.png transient_report/$REFERENCE_IMAGE_PREVIEW
+   unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
+  fi
+ fi
+ #####                       
 
  DATE=`grep $REFERENCE_IMAGE vast_image_details.log |awk '{print $2" "$3"  "$7}'`
  rm -f tmp.description
@@ -97,12 +105,22 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    #N=`echo $N+1|bc -q`
    N=$[$N+1]
    DATE=`grep $IMAGE vast_image_details.log |awk '{print $2" "$3"  "$7}'`
-   #echo "Discovery image $N: $DATE  $IMAGE  $X $Y (pix)" >> tmp.description
-   # convert -density 45 pgplot.ps pgplot.png
-   # Set PNG finding chart dimensions
-   export PGPLOT_PNG_HEIGHT=400 ; export PGPLOT_PNG_WIDTH=400
-   util/make_finding_chart $IMAGE $X $Y &>/dev/null && mv pgplot.png transient_report/"$TRANSIENT_NAME"_discovery"$N".png
-   unset PGPLOT_PNG_HEIGHT ; unset PGPLOT_PNG_WIDTH
+   #####
+   if [ -n "$MAKE_PNG_PLOTS" ];then
+    if [ "$MAKE_PNG_PLOTS" == "yes" ];then
+     # Set PNG finding chart dimensions
+     export PGPLOT_PNG_HEIGHT=400 ; export PGPLOT_PNG_WIDTH=400
+     util/make_finding_chart $IMAGE $X $Y &>/dev/null && mv pgplot.png transient_report/"$TRANSIENT_NAME"_discovery"$N".png
+     if [ ! -f transient_report/"$TRANSIENT_NAME"_discovery"$N".png ];then
+      # something whent wrong while creating the plot!
+      # wait and retry
+      sleep 1
+      util/make_finding_chart $IMAGE $X $Y &>/dev/null && sleep 1 && mv pgplot.png transient_report/"$TRANSIENT_NAME"_discovery"$N".png
+     fi
+     unset PGPLOT_PNG_HEIGHT ; unset PGPLOT_PNG_WIDTH
+    fi
+   fi
+   #####
    echo "<img src=\""$TRANSIENT_NAME"_discovery"$N".png\">" >> transient_report/index.tmp
    
   fi # if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then
@@ -140,11 +158,17 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
      BASENAME_IMAGE=`basename $IMAGE`
      PREVIEW_IMAGE="$BASENAME_IMAGE"_preview.png
      if [ ! -f transient_report/$PREVIEW_IMAGE ];then
-      unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
-      # image size needs to match the one set in util/transients/transient_factory_test31.sh and above
-      export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-      util/fits2png $IMAGE &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
-      unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
+      #####
+      if [ -n "$MAKE_PNG_PLOTS" ];then
+       if [ "$MAKE_PNG_PLOTS" == "yes" ];then
+        #unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
+        # image size needs to match the one set in util/transients/transient_factory_test31.sh and above
+        export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
+        util/fits2png $IMAGE &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
+        unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
+       fi
+      fi
+      #####
      fi # if [ ! -f transient_report/$PREVIEW_IMAGE ];then
      # Link to the images dir if $URL_OF_DATA_PROCESSING_ROOT is set
      if [ ! -z "$URL_OF_DATA_PROCESSING_ROOT" ];then

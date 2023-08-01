@@ -19,6 +19,15 @@ REFERENCE_IMAGES="../NMW_transient_detection_test/reference_test/"
 #export APPROXIMATE_FIELD_OF_VIEW_ARCMIN=180
 #export CONSERVATIVE_ASTROMETRIC_ACCURACY_ARCSEC=20
 
+# Check if we are expected to produce PNG images or just text
+MAKE_PNG_PLOTS="yes"
+if [ -x lib/test_libpng_justtest_nomovepgplot.sh ];then
+ lib/test_libpng_justtest_nomovepgplot.sh
+ if [ $? -ne 0 ];then
+  MAKE_PNG_PLOTS="no"
+ fi
+fi
+export MAKE_PNG_PLOTS
 
 echo "Reference image directory is set to $REFERENCE_IMAGES"
 if [ -z $1 ]; then
@@ -100,7 +109,7 @@ for i in "$NEW_IMAGES"/*_002.fit ;do
 
  
  # Calibrate magnitude scale with Tycho-2 stars in the field 
- util/transients/calibrate_current_field_with_tycho2.sh 
+ echo "y" | util/transients/calibrate_current_field_with_tycho2.sh 
 
  # Check if the number of detected transients is suspiciously large
  NUMBER_OF_DETECTED_TRANSIENTS=`cat vast_summary.log |grep "Transient candidates found:" | awk '{print $4}'`

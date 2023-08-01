@@ -302,6 +302,15 @@ for SUSPICIOUS_FILE in 1 2 3 4 5 6 7 8 9 10 11 12 ;do
  fi
 done
 
+# Check if we are expected to produce PNG images or just text
+MAKE_PNG_PLOTS="yes"
+if [ -x lib/test_libpng_justtest_nomovepgplot.sh ];then
+ lib/test_libpng_justtest_nomovepgplot.sh
+ if [ $? -ne 0 ];then
+  MAKE_PNG_PLOTS="no"
+ fi
+fi
+export MAKE_PNG_PLOTS
 
 # do this only if transient_report is not a symlink
 if [ ! -L transient_report ];then
@@ -475,10 +484,16 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   for FITS_IMAGE_TO_PREVIEW in "$NEW_IMAGES"/"$FIELD"_*_*.fts ;do
    BASENAME_FITS_IMAGE_TO_PREVIEW=$(basename $FITS_IMAGE_TO_PREVIEW)
    PREVIEW_IMAGE="$BASENAME_FITS_IMAGE_TO_PREVIEW"_preview.png
-   # image size needs to match the one set in util/transients/make_report_in_HTML.sh
-   export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-   util/fits2png $FITS_IMAGE_TO_PREVIEW &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
-   unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
+   ######
+   if [ -n "$MAKE_PNG_PLOTS" ];then
+    if [ "$MAKE_PNG_PLOTS" == "yes" ];then
+     # image size needs to match the one set in util/transients/make_report_in_HTML.sh
+     export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
+     util/fits2png $FITS_IMAGE_TO_PREVIEW &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
+     unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
+    fi
+   fi
+   ######
    echo "<br>$BASENAME_FITS_IMAGE_TO_PREVIEW<br><img src=\"$PREVIEW_IMAGE\"><br>" >> transient_factory_test31.txt
   done
   echo "<br>" >> transient_factory_test31.txt

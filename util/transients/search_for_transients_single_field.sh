@@ -25,6 +25,16 @@ if [ ! -s candidates-transients.lst ];then
  exit 1
 fi
 
+# Check if we are expected to produce PNG images or just text
+MAKE_PNG_PLOTS="yes"
+if [ -x lib/test_libpng_justtest_nomovepgplot.sh ];then
+ lib/test_libpng_justtest_nomovepgplot.sh
+ if [ $? -ne 0 ];then
+  MAKE_PNG_PLOTS="no"
+ fi
+fi
+export MAKE_PNG_PLOTS
+
 # This script should take care of updating astorb.dat
 lib/update_offline_catalogs.sh all
 
