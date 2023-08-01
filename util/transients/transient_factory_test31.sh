@@ -1088,21 +1088,20 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  echo "Running solve_plate_with_UCAC5" >> transient_factory_test31.txt
  for i in $(cat vast_image_details.log | awk '{print $17}' | sort | uniq) ;do 
   # This should ensure the correct field-of-view guess by setting the TELESCOP keyword
-  #TELESCOP="NMW_camera" util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1  $i  &
   if [ -z "$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" ];then
    if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
     # for a narrow field of view we actually need the photometric catalog
-    TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/solve_plate_with_UCAC5 --iterations 1 $i &
+    TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/solve_plate_with_UCAC5 --iterations 2 $i &
    else
     # for a wide field of view Tycho-2 will be used, so no need for other photometric information - let's speed-up things
-    TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1 $i &
+    TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 2 $i &
    fi # if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
   else
    # Not explicitly setting the telescope name, let the script guess the FoV
    if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
-    util/solve_plate_with_UCAC5 --iterations 1 $i &
+    util/solve_plate_with_UCAC5 --iterations 2 $i &
    else
-    util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 1 $i &
+    util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 2 $i &
    fi # if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
   fi
  done 
