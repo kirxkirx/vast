@@ -17,21 +17,21 @@ export LANGUAGE LC_ALL
 #################################
 
 # Find SExtractor
-SEXTRACTOR=`command -v sex 2>/dev/null`
+SEXTRACTOR=$(command -v sex 2>/dev/null)
 if [ "" = "$SEXTRACTOR" ];then
  SEXTRACTOR=lib/bin/sex
 fi
 
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
-  REALPATH=`readlink -f "$1" 2>/dev/null`
+  REALPATH=$(readlink -f "$1" 2>/dev/null)
   if [ $? -ne 0 ];then
    # If we are on Mac OS X system, GNU readlink might be installed as 'greadlink'
-   REALPATH=`greadlink -f "$1" 2>/dev/null`
+   REALPATH=$(greadlink -f "$1" 2>/dev/null)
    if [ $? -ne 0 ];then
-    REALPATH=`realpath "$1" 2>/dev/null`
+    REALPATH=$(realpath "$1" 2>/dev/null)
     if [ $? -ne 0 ];then
-     REALPATH=`grealpath "$1" 2>/dev/null`
+     REALPATH=$(grealpath "$1" 2>/dev/null)
      if [ $? -ne 0 ];then
       # Something that should work well enough in practice
       OURPWD=$PWD
@@ -67,7 +67,7 @@ if [ ! -f $TYCHO_PATH/tyc2.dat.00 ];then
   echo "Found nonempty ../tycho2/tyc2.dat.19
   ln -s ../tycho2 $TYCHO_PATH"
   #ln -s `readlink -f ../tycho2` $TYCHO_PATH
-  ln -s `vastrealpath ../tycho2` $TYCHO_PATH
+  ln -s $(vastrealpath ../tycho2) $TYCHO_PATH
  else
   #
   echo "Tycho-2 catalog was not found at $TYCHO_PATH"
@@ -93,11 +93,11 @@ if [ ! -f $TYCHO_PATH/tyc2.dat.00 ];then
    echo "Download complete. Unpacking..."
    for i in tyc2.dat.*gz ;do
     # handle a very special case: `basename $i .gz` is a broken symlink
-    if [ -L `basename $i .gz` ];then
+    if [ -L $(basename $i .gz) ];then
      # if this is a symlink
-     if [ ! -e `basename $i .gz` ];then
+     if [ ! -e $(basename $i .gz) ];then
       # if it is broken
-      rm -f `basename $i .gz`
+      rm -f $(basename $i .gz)
       # remove that symlink
      fi
     fi
@@ -125,11 +125,11 @@ else
   echo "Download complete. Unpacking..."
   for i in tyc2.dat.*gz ;do
    # handle a very special case: `basename $i .gz` is a broken symlink
-   if [ -L `basename $i .gz` ];then
+   if [ -L $(basename $i .gz) ];then
     # if this is a symlink
-    if [ ! -e `basename $i .gz` ];then
+    if [ ! -e $(basename $i .gz) ];then
      # if it is broken
-     rm -f `basename $i .gz`
+     rm -f $(basename $i .gz)
      # remove that symlink
     fi
    fi
@@ -146,14 +146,14 @@ if [ ! -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
 fi
 
 # WCS-calibrate the reference image if it has not been done
-REFERENCE_IMAGE=`cat vast_summary.log | grep "Ref.  image:" |awk '{print $6}'`
-TEST_SUBSTRING=`basename $REFERENCE_IMAGE`
+REFERENCE_IMAGE=$(cat vast_summary.log | grep "Ref.  image:" |awk '{print $6}')
+TEST_SUBSTRING=$(basename $REFERENCE_IMAGE)
 TEST_SUBSTRING="${TEST_SUBSTRING:0:4}"
 if [ "$TEST_SUBSTRING" = "wcs_" ];then
  cp $REFERENCE_IMAGE .
- WCS_CALIBRATED_REFERENCE_IMAGE=`basename $REFERENCE_IMAGE`
+ WCS_CALIBRATED_REFERENCE_IMAGE=$(basename $REFERENCE_IMAGE)
 else
- WCS_CALIBRATED_REFERENCE_IMAGE=wcs_`basename $REFERENCE_IMAGE`
+ WCS_CALIBRATED_REFERENCE_IMAGE=wcs_$(basename $REFERENCE_IMAGE)
 fi
 SEXTRACTOR_CATALOG_NAME="$WCS_CALIBRATED_REFERENCE_IMAGE".cat
 if [ ! -s "$WCS_CALIBRATED_REFERENCE_IMAGE" ] || [ ! -s "$SEXTRACTOR_CATALOG_NAME" ] ;then
@@ -178,7 +178,7 @@ echo "The reference image ($WCS_CALIBRATED_REFERENCE_IMAGE) and catalog ($SEXTRA
 cp -v "$SEXTRACTOR_CATALOG_NAME" wcsmag.cat
 
 #valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes lib/catalogs/read_tycho2
-MAGNITUDE_CALIBRATION_PARAMETERS=`lib/catalogs/read_tycho2`
+MAGNITUDE_CALIBRATION_PARAMETERS=$(lib/catalogs/read_tycho2)
 echo "util/calibrate_magnitude_scale $MAGNITUDE_CALIBRATION_PARAMETERS"
 util/calibrate_magnitude_scale $MAGNITUDE_CALIBRATION_PARAMETERS
 if [ $? -ne 0 ];then
