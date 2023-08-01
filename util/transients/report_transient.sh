@@ -407,7 +407,11 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
  # do this only if $VIZIER_SITE is set
  if [ -n "$VIZIER_SITE" ];then
   # if this is a new source
-  if [ $(cat "$LIGHTCURVEFILE" | wc -l) -eq 2 ];then
+  NUBER_OF_LIGHTCURVE_POINTS=$(cat "$LIGHTCURVEFILE" | wc -l)
+  #if [ $(cat "$LIGHTCURVEFILE" | wc -l) -eq 2 ];then
+  # Assume that two-reference images detectios is a good match
+  # If it's a flare with only one reference-image detection - check Gaia anyway as the first detection migth be a mismatch
+  if [ $NUBER_OF_LIGHTCURVE_POINTS -eq 2 ] || [ $NUBER_OF_LIGHTCURVE_POINTS -eq 3 ] ;then
    # New last-ditch effort, search Gaia DR2 for a known star of approximately the same brightenss
    ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
    MAG_BRIGHT_SEARCH_LIMIT=0.0
