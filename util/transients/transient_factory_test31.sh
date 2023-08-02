@@ -968,7 +968,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  ## 0.25 deg soft limit for the NMW camera
  #FOV_DEG_LIMIT_SOFT=$(echo "$IMAGE_FOV_ARCMIN" | awk '{printf "%.3f",$1/466.5*0.25}')
  # Relax the pointing limits
- FOV_DEG_LIMIT_HARD=$(echo "$IMAGE_FOV_ARCMIN" | awk '{printf "%.3f",$1/466.5*2.0}')
+ FOV_DEG_LIMIT_HARD=$(echo "$IMAGE_FOV_ARCMIN" | awk '{printf "%.3f",$1/466.5*1.0}')
  FOV_DEG_LIMIT_SOFT=$(echo "$IMAGE_FOV_ARCMIN" | awk '{printf "%.3f",$1/466.5*0.5}')
 
  # Compare image centers of the reference and second-epoch image
