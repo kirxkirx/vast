@@ -54,10 +54,10 @@ int search_myMDV( double target_RA_deg, double target_Dec_deg, double search_rad
         if ( fabs( target_Dec_deg - Dec_deg ) > search_radius_deg )
             continue;
 
-        RA1_rad= RA_deg * 3600 / 206264.8;
-        RA2_rad= target_RA_deg * 3600 / 206264.8;
-        DEC1_rad= Dec_deg * 3600 / 206264.8;
-        DEC2_rad= target_Dec_deg * 3600 / 206264.8;
+        RA1_rad= RA_deg * M_PI / 180.0;
+        RA2_rad= target_RA_deg * M_PI / 180.0;
+        DEC1_rad= Dec_deg * M_PI / 180.0;
+        DEC2_rad= target_Dec_deg * M_PI / 180.0;
 
         distance_deg= acos( cos( DEC1_rad ) * cos( DEC2_rad ) * cos( MAX( RA1_rad, RA2_rad ) - MIN( RA1_rad, RA2_rad ) ) + sin( DEC1_rad ) * sin( DEC2_rad ) ) * 206264.8 / 3600.0;
 
@@ -186,10 +186,10 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
 
   RA_deg= atof( RA_char );
 
-  RA1_rad= RA_deg * 3600 / 206264.8;
-  RA2_rad= target_RA_deg * 3600 / 206264.8;
-  DEC1_rad= Dec_deg * 3600 / 206264.8;
-  DEC2_rad= target_Dec_deg * 3600 / 206264.8;
+  RA1_rad= RA_deg * M_PI / 180.0;
+  RA2_rad= target_RA_deg * M_PI / 180.0;
+  DEC1_rad= Dec_deg * M_PI / 180.0;
+  DEC2_rad= target_Dec_deg * M_PI / 180.0;
 
   // yes, it mathces the definition in src/put_two_sources_in_one_field.c
   distance_deg= acos( cos( DEC1_rad ) * cos( DEC2_rad ) * cos( MAX( RA1_rad, RA2_rad ) - MIN( RA1_rad, RA2_rad ) ) + sin( DEC1_rad ) * sin( DEC2_rad ) ) * 206264.8 / 3600.0;
@@ -369,17 +369,10 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
    continue;
   } 
 
-/*
-  RA1_rad= RA_deg * 3600 / 206264.8;
-  RA2_rad= target_RA_deg * 3600 / 206264.8;
-  DEC1_rad= Dec_deg * 3600 / 206264.8;
-  DEC2_rad= target_Dec_deg * 3600 / 206264.8;
-*/
-
-  RA1_rad= RA_deg * 180.0 / M_PI;
-  RA2_rad= target_RA_deg * 180.0 / M_PI;
-  DEC1_rad= Dec_deg * 180.0 / M_PI;
-  DEC2_rad= target_Dec_deg * 180.0 / M_PI;
+  RA1_rad= RA_deg * M_PI / 180.0;
+  RA2_rad= target_RA_deg * M_PI / 180.0;
+  DEC1_rad= Dec_deg * M_PI / 180.0;
+  DEC2_rad= target_Dec_deg * M_PI / 180.0;
 
 
   // yes, it mathces the definition in src/put_two_sources_in_one_field.c
@@ -480,6 +473,11 @@ int main( int argc, char **argv ) {
  if ( argc < 3 ) {
   fprintf( stderr, "Usage: %s 12.345 67.890\n", argv[0] );
   return 1;
+ }
+
+ if ( strchr( argv[1], ':') != NULL || strchr( argv[2], ':') != NULL ) {
+  fprintf(stderr, "ERROR: The input RA contains a colon ':'.\nOnly decimal degrees are supported by this binary! Sorry!\n");
+  return 2;
  }
 
  target_RA_deg= atof( argv[1] );
