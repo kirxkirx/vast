@@ -135,7 +135,7 @@ int main( int argc, char **argv ) {
  if ( argc >= 2 && 0 == strcmp( "-h", argv[1] ) ) {
   fprintf( stderr, "Clean measurements associated with bad images from all lightcurves (out*dat files).\n" );
   fprintf( stderr, "Usage:\n %s [FRACTION_OF_BAD_DETECTIONS]\nExample:\n %s 0.1 # will remove measurements form all images having at least 10 per cent of outliers.\n", argv[0], argv[0] );
-  exit( 0 );
+  exit( EXIT_SUCCESS );
  }
 
  if ( argc == 2 ) {
@@ -188,10 +188,12 @@ int main( int argc, char **argv ) {
     }
     /* Compute median mag & sigma */
     i= 0;
+    jd= mag= merr= y= app= 0.0; // initialize just in case
     // while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {
     while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, NULL, &y, &app, string, comments_string ) ) {
-     if ( jd == 0.0 )
+     if ( jd == 0.0 ) {
       continue; // if this line could not be parsed, try the next one
+     }
      jd_a[i]= jd;
      mag_a[i]= mag;
      i++;

@@ -23,7 +23,7 @@ int main() {
  char string[FILENAME_LENGTH];
  char ref_frame[FILENAME_LENGTH];
 
- /* Get file name of reference image from log */
+ /// Get file name of reference image from log 
  transient_list_input= fopen( "vast_summary.log", "r" );
  if ( transient_list_input == NULL ) {
   fprintf( stderr, "ERROR: Can't open vast_summary.log for reading!\n" );
@@ -41,18 +41,18 @@ int main() {
  }
  fclose( transient_list_input );
 
- /* Deal with the list of transients */
+ // Deal with the list of transients
 
  // DEBUG
  // system("cat candidates-transients.lst");
 
- /* Open candidates-transients.lst which was prepared by vast */
+ // Open candidates-transients.lst which was prepared by vast 
  transient_list_input= fopen( "candidates-transients.lst", "r" );
  if ( transient_list_input == NULL ) {
   fprintf( stderr, "WARNING: Can't open candidates-transients.lst for reading! -- No candidates found?\n" );
   return 1;
  }
- /* Open temporary output file candidates-transients.tmp */
+ // Open temporary output file candidates-transients.tmp 
  transient_list_output= fopen( "candidates-transients.tmp", "w" );
  if ( transient_list_output == NULL ) {
   fprintf( stderr, "ERROR: Can't open candidates-transients.tmp for writing!\n" );
@@ -64,8 +64,15 @@ int main() {
   lightcurvefile= fopen( outfilename, "r" );
   if ( lightcurvefile != NULL ) {
    i= 0;
+   mag= transient_best_mag; // reset, just in case
+   memset( transient_best_image, 0, FILENAME_LENGTH * sizeof( char ) ); // reset, just in case
+   memset( string, 0, FILENAME_LENGTH * sizeof( char ) ); // reset, just in case
+   transient_best_x= transient_best_y= x= y= 0.0; // reset, just in case
    // while(-1<fscanf(lightcurvefile,"%lf %lf %lf %lf %lf %lf %s",&jd,&mag,&merr,&x,&y,&app,string) ){
    while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
+    if ( 0.0 == jd ) {
+     continue;
+    }
     if ( mag < transient_best_mag ) {
      transient_best_x= x;
      transient_best_y= y;
@@ -81,6 +88,7 @@ int main() {
  fclose( transient_list_input );
  fclose( transient_list_output );
 
+ // Overwrite candidates-transients.lst with candidates-transients.tmp
  unlink( "candidates-transients.lst" );
  rename( "candidates-transients.tmp", "candidates-transients.lst" );
 

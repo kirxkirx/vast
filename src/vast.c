@@ -3213,7 +3213,7 @@ int main( int argc, char **argv ) {
       fprintf( stderr, "DEBUG MSG %d: CHILD free() -- still alive\n", getpid() );
      }
      //
-     exit( 0 ); // exit only if this is actually a child
+     exit( EXIT_SUCCESS ); // exit only if this is actually a child
     }           // if ( pid == 0 ) {
     // the other possibility is that this is a parent that could not fork - no exit in this case
    } else {
@@ -5802,7 +5802,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
         if ( debug != 0 ) {
          fprintf( stderr, "DEBUG MSG: CHILD free() -- still alive\n" );
         }
-        exit( 0 ); // exit only if this is actually a child
+        exit( EXIT_SUCCESS ); // exit only if this is actually a child
         // end of child
        }
        // the other possibility is that this is a parent that could not fork - no exit in this case
@@ -6042,7 +6042,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      fprintf( stderr, "DEBUG MSG: CHILD free() -- still alive\n" );
     }
     //
-    exit( 0 ); // exit only if this is actually a child
+    exit( EXIT_SUCCESS ); // exit only if this is actually a child
     // end of child
    }
    // the other possibility is that this is a parent that could not fork - no exit in this case

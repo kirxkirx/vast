@@ -110,7 +110,7 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "Reprocess out*dat files setting the magnitude measured with the best aperture as the reference one (2nd column in the lightcurve file).\n" );
   fprintf( stderr, "Usage:\n" );
   fprintf( stderr, "%s \n", argv[0] );
-  exit( 0 );
+  exit( EXIT_SUCCESS );
  }
 
  // Create a list of files

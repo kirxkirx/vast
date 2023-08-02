@@ -21,8 +21,8 @@ int main() {
  // initialize to 0.0 to make the compiler happy
  double mmean= 0.0;
  double mmedian= 0.0;
- double mmax;
- double mmin;
+ double mmax= 0.0;
+ double mmin= 0.0;
 
  int mnumber_of_stars= 0;
 
@@ -36,7 +36,6 @@ int main() {
  };
  double mean;
  double median;
- // double sigma;
  double max;
  double min;
 
@@ -44,7 +43,7 @@ int main() {
 
  char str[2048];
 
- // int ch; // -- the character buffer int (not char) for the EOF
+ 
 
  dp= opendir( "./" );
  if ( dp != NULL ) {
@@ -63,21 +62,15 @@ int main() {
     while ( NULL != fgets( str, 2048, lightcurvefile ) ) {
      a[number_of_stars]+= 1.0;
     }
-    // YES, this is slower
-    // while (EOF != (ch=getc(lightcurvefile))){
-    // if(ch=='\n'){
-    //  a[number_of_stars]+=1.0;
-    // }
-    //}
-    //
     fclose( lightcurvefile );
     number_of_stars++;
    }
   }
   (void)closedir( dp );
- } else
+ } else {
   perror( "Couldn't open the directory\n" );
-
+ }
+ 
  if ( number_of_stars != 0 ) {
 
   mean= gsl_stats_mean( a, 1, number_of_stars );

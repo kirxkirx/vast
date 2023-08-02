@@ -39,12 +39,15 @@ void sort_file(const char* file_name) {
 
     data_count = 0;
     while (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, file)) {
-        //strncpy(line_copy,line,MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE);
-        //sscanf(line_copy, "%lf", &julian_date);
         sscanf(line, "%lf", &julian_date);
 
         data_arr[data_count].julian_date = julian_date;
         data_arr[data_count].line = malloc( MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE * sizeof(char));
+        if ( NULL == data_arr[data_count].line ) {
+         fprintf( stderr, "ERROR: NULL == data_arr[data_count].line \n");
+         fclose(file);
+         return;
+        }        
         strncpy(data_arr[data_count].line,line,MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE);
         data_count++;
     }
@@ -100,10 +103,18 @@ int main() {
     
         // Allocate memory only if we successfully opened the directory
         file_list= malloc( sizeof(char*) * MAX_NUMBER_OF_STARS) ;
+        if ( NULL == file_list ) {
+         fprintf( stderr, "ERROR: NULL == file_list \n");
+         return EXIT_FAILURE;
+        }
     
         for(i=0; i<MAX_NUMBER_OF_STARS; i++){
          // allocate memoery for each file name
          file_list[i]= malloc( sizeof(char)*OUTFILENAME_LENGTH );
+         if ( NULL == file_list[i] ) {
+          fprintf( stderr, "ERROR: NULL == file_list[i] \n");
+          return EXIT_FAILURE;
+         }
          // reset the file name string to '\0'
          memset(file_list[i], '\0', sizeof(char)*OUTFILENAME_LENGTH);
         }

@@ -51,7 +51,7 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "Usage:\n" );
   fprintf( stderr, "%s [SIGMA]\n", argv[0] );
   fprintf( stderr, "%s [SIGMA] file\n", argv[0] );
-  exit( 0 );
+  exit( EXIT_SUCCESS );
  }
 
  if ( argc >= 2 ) {

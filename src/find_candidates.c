@@ -720,7 +720,7 @@ int main( int argc, char **argv ) {
     if ( 0 != system( COMMAND_STR ) ) {
      fprintf( stderr, "ERROR running %s\n", COMMAND_STR );
     }
-    exit( 0 );
+    exit( EXIT_SUCCESS );
    } else {
     waitpid( -1, &status, WNOHANG );
    }

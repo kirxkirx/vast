@@ -19,8 +19,6 @@
 #include <sys/resource.h>
 
 
-#include <stdio.h>
-
 #include "cpgplot.h"
 
 #include "setenv_local_pgplot.h"
@@ -1502,7 +1500,7 @@ int main( int argc, char **argv ) {
     if ( 0 != system( pokaz_start ) ) {
      fprintf( stderr, "ERROR in %s", pokaz_start );
     }
-    exit( 0 );
+    exit( EXIT_SUCCESS );
    } else {
     sleep( 1 );
     waitpid( -1, &status, WNOHANG );
@@ -1519,7 +1517,7 @@ int main( int argc, char **argv ) {
     if ( 0 != system( pokaz_start ) ) {
      fprintf( stderr, "ERROR in %s \nGoing back to the lightcurve viewer.\n", pokaz_start );
     }
-    exit( 0 );
+    exit( EXIT_SUCCESS );
    } else {
     sleep( 1 );
     waitpid( -1, &status, WNOHANG );
@@ -1534,7 +1532,7 @@ int main( int argc, char **argv ) {
     if ( 0 != system( pokaz_start ) ) {
      fprintf( stderr, "ERROR in %s", pokaz_start );
     }
-    exit( 0 );
+    exit( EXIT_SUCCESS );
    } else {
     sleep( 1 );
     waitpid( -1, &status, WNOHANG );
@@ -1659,7 +1657,7 @@ int main( int argc, char **argv ) {
     if ( 0 != system( strmusor ) ) {
      fprintf( stderr, "ERROR in %s", strmusor );
     }
-    exit( 0 );
+    exit( EXIT_SUCCESS );
    } else {
     waitpid( -1, &status, WNOHANG );
    }
@@ -1701,7 +1699,7 @@ int main( int argc, char **argv ) {
        if ( 0 != system( strmusor ) ) {
         fprintf( stderr, "ERROR in %s", strmusor );
        }
-       exit( 0 );
+       exit( EXIT_SUCCESS );
       } else {
        waitpid( -1, &status, WNOHANG );
       }

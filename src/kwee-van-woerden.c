@@ -43,6 +43,7 @@ int main() {
  double merr_not_used;
 
  // Read data 
+ /*
  do {
   jd= realloc( jd, n_points_lightcurve * sizeof( double ) );
   if ( jd == NULL ) {
@@ -58,6 +59,26 @@ int main() {
  } while ( -1 < read_lightcurve_point( stdin, &jd[n_points_lightcurve - 2], &m[n_points_lightcurve - 2], &merr_not_used, NULL, NULL, NULL, NULL, NULL ) );
  n_points_lightcurve--;
  n_points_lightcurve--;
+ */
+ 
+ jd= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
+ m= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
+ if ( NULL == jd || NULL == m ) {
+  fprintf( stderr, "ERROR: null pointer\n");
+  exit( EXIT_FAILURE );
+ }
+ n_points_lightcurve= 0;
+ while ( -1 < read_lightcurve_point( stdin, &jd[n_points_lightcurve], &m[n_points_lightcurve], &merr_not_used, NULL, NULL, NULL, NULL, NULL ) ) {
+  if ( jd[n_points_lightcurve] == 0.0 ) {
+   continue;
+  }
+  n_points_lightcurve++;
+  if( MAX_NUMBER_OF_OBSERVATIONS == n_points_lightcurve ) {
+   fprintf(stderr, "ERROR: too may points!\n");
+   exit( EXIT_FAILURE );
+  }
+ }
+ 
  fprintf( stderr, "n_points=%d\n", n_points_lightcurve );
 
  if ( n_points_lightcurve < 6 ) {

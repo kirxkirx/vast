@@ -114,8 +114,6 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
 
  ( *N_sysrem_input_star_list_lst )= Noutput_files;
 
- // exit( EXIT_FAILURE ); // !!!!!!!!!!!!
-
  return 0;
 }
 
@@ -169,7 +167,6 @@ int main() {
  double corrected_magnitude, correction_mag;
 
  double djd;
- // float dmag, dmerr;
  double ddmag, ddmerr, x, y, app;
  char string[FILENAME_LENGTH];
  char comments_string[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
@@ -208,6 +205,10 @@ int main() {
 
  for ( sysrem_input_star_list_lst_counter= 0; sysrem_input_star_list_lst_counter < SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS; sysrem_input_star_list_lst_counter++ ) {
   split_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter]= malloc( FILENAME_LENGTH * sizeof( char ) );
+  if ( NULL == split_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter] ) {
+   fprintf( stderr, "ERROR allocating memory for plit_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter]\n" );
+   exit( EXIT_FAILURE );
+  }
   memset( split_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter], 0, FILENAME_LENGTH ); // just in case
  }
  split_sysrem_input_star_list_lst( split_sysrem_input_star_list_lst_filenames, &N_sysrem_input_star_list_lst );
@@ -279,23 +280,6 @@ int main() {
    exit( EXIT_FAILURE );
   }
 
-  /*
- data= malloc( Nstars * Nobs * sizeof( float ) ); // ??
- if ( data == NULL ) {
-  fprintf( stderr, "ERROR: Couldn't allocate memory for data\n" );
-  exit( EXIT_FAILURE );
- }
-*/
-
-  // Moved below
-  /*
- //double_data_Nstars= malloc( Nstars * Nobs * sizeof( double ) );
- double_data= malloc( MAX( Nstars, Nobs ) * sizeof( double ) );
- if ( double_data == NULL ) {
-  fprintf( stderr, "ERROR: Couldn't allocate memory for double_data_Nstars\n" );
-  exit( EXIT_FAILURE );
- }
-*/
 
   // for(i=0;i<Nstars;i++){
   for ( i= Nstars; i--; ) {
@@ -380,8 +364,6 @@ int main() {
    while ( -1 < read_lightcurve_point( lightcurvefile, &djd, &ddmag, &ddmerr, NULL, &y, &app, string, comments_string ) ) {
     if ( djd == 0.0 )
      continue; // if this line could not be parsed, try the next one
-    // dmag= (float)ddmag;
-    // dmerr= (float)ddmerr;
     //  Find which j is corresponding to the current JD
     for ( k= 0; k < Nobs; k++ ) {
      if ( fabs( jd[k] - djd ) <= 0.00001 ) { // 0.8 sec
@@ -425,15 +407,6 @@ int main() {
   }
   for ( i= Nstars; i--; ) {
    k= 0;
-   /*
-  // No obvious speed-up with OpenMP here
-  // data[] array is very big, so we cannot have a private copy of it for each thread!
-  #ifdef VAST_ENABLE_OPENMP
-   #ifdef _OPENMP
-    #pragma omp parallel for private(j) reduction(+: k)
-   #endif
-  #endif
-  */
    // for ( j= 0; j < Nobs; j++ ) {
    for ( j= Nobs; j--; ) {
     if ( r[i][j] != 0.0 ) {
@@ -442,8 +415,6 @@ int main() {
      k++;
     }
    }
-   //  gsl_sort_float( data, 1, k );
-   //  median= gsl_stats_float_median_from_sorted_data( data, 1, k );
    gsl_sort( double_data, 1, k );
    median= gsl_stats_median_from_sorted_data( double_data, 1, k );
 #ifdef VAST_ENABLE_OPENMP
@@ -741,16 +712,10 @@ int main() {
     while ( -1 < read_lightcurve_point( lightcurvefile, &djd, &ddmag, &ddmerr, &x, &y, &app, string, comments_string ) ) {
      if ( djd == 0.0 )
       continue; // if this line could not be parsed, try the next one
-     // dmag= (float)ddmag;
-     // dmerr= (float)ddmerr;
      //  Find which j is corresponding to the current JD
      for ( k= 0; k < Nobs; k++ ) {
       if ( fabs( jd[k] - djd ) <= 0.00001 ) { // 0.8 sec
        j= k;
-       //
-       // if ( fabs(c[i] * a[j]) >2.0 ) {
-       // fprintf( stderr, "DEBUG: %s  c[i] * a[j]=%lf  c[i]=%lf a[j]=%lf\n", outlightcurvefilename, c[i] * a[j], c[i], a[j] );
-       //}
        // reject large corrections
        corrected_magnitude= ddmag;
        correction_mag= (double)( c[i] * a[j] );
@@ -772,48 +737,7 @@ int main() {
   }
   fprintf( stderr, "done\n" );
 
-  /*
- // This should not be parallel as it relies on system() commands
- bad_stars_counter=0;
- for ( i= Nstars; i--; ) {
-  if ( bad_stars[i] != 0 ) {
-   bad_stars_counter++;
-   sprintf( lightcurvefilename, "out%s.dat", star_numbers[i] );
-   fprintf( stderr, "Skip correction for %s", lightcurvefilename );
-   fprintf( stderr, "\n" );
-  }
- }
- fprintf( stderr, "Skipped corrections for %d out of %d stars\n", bad_stars_counter, Nstars );
-*/
-
-  //  // Print out some stats
-  //  //
-  //  fprintf(stderr, "\nFinal SysRem \"airmass\" coefficients for each image (not the actual airmass, of course):\n");
-  //  for( i= Nobs; i--; ) {
-  //   fprintf(stderr, "a[%d]=%lf\n", i, a[i]);
-  //  }
-  //
-  /*
- // We need a ton of memory to compute it!
- k= 0;
- for ( i= 0; i < Nstars; i++ ) {
-  if ( bad_stars[i] == 0 ) {
-   for ( j= 0; j < Nobs; j++ ) {
-    if ( r[i][j] != 0.0 ) {
-     data[k]= fabsf( a[j] * c[i] );
-     k++;
-    }
-   }
-  }
- }
- mean= gsl_stats_float_mean( data, 1, k );
- sigma= gsl_stats_float_sd_m( data, 1, k, mean );
- gsl_sort_float( data, 1, k );
- median= gsl_stats_float_median_from_sorted_data( data, 1, k );
- fprintf( stderr, "Mean correction %.6f +/-%.6f  (median=%lf)\n", mean, sigma, median );
- */
-
-  // Free memory
+  // Free-up memory
   free( bad_stars );
   // for ( i= 0; i < Nstars; i++ ) {
   for ( i= Nstars; i--; ) {
@@ -830,7 +754,6 @@ int main() {
   free( a );
   free( c );
   free( jd );
-  // free( data );
 
   fprintf( stderr, "Removing %s\n", split_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter] );
   unlink( split_sysrem_input_star_list_lst_filenames[sysrem_input_star_list_lst_counter] );

@@ -2569,7 +2569,7 @@ int main( int argc, char **argv ) {
          if ( 0 != system( system_command ) ) {
           fprintf( stderr, "ERROR running  %s\n", system_command );
          }
-         exit( 0 );
+         exit( EXIT_SUCCESS );
         } else {
          waitpid( -1, &status, WNOHANG );
         }

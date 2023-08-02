@@ -49,7 +49,7 @@ int main( int argc, char **argv ) {
 
  if ( argc > 2 ) {
   fprintf( stderr, "Usage: %s [NUMBER_OF_REFERENCE_IMAGES]\n", argv[0] );
-  exit( 0 );
+  exit( EXIT_SUCCESS );
  }
 
  if ( argc == 2 ) {

@@ -11,7 +11,6 @@
 int main( int argc, char **argv ) {
 
  FILE *lightcurvefile;
- // double jd, mag, merr, x, y, app;
  double jd, mag, merr, y, app;
  char string[FILENAME_LENGTH];
  int i;
@@ -29,16 +28,23 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "Delete out*dat files with too small number of observations.\n" );
   fprintf( stderr, "Usage:\n" );
   fprintf( stderr, "%s [MIN_NUMBER_OF_POINTS]\n", argv[0] );
-  exit( 0 );
+  exit( EXIT_SUCCESS );
  }
 
  if ( argc == 2 ) {
   min_number_of_points= atoi( argv[1] );
- } else
-  min_number_of_points= HARD_MIN_NUMBER_OF_POINTS; /* Use default value from vast_limits.h */
+ } else {
+  min_number_of_points= HARD_MIN_NUMBER_OF_POINTS; // Use default value from vast_limits.h 
+ }
 
  // Create a list of files
  filenamelist= (char **)malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );
+ 
+ if ( NULL == filenamelist ) {
+  fprintf( stderr, "ERROR: allocating memory for filenamelist\n");
+  exit( EXIT_FAILURE );
+ }
+ 
  filename_counter= 0;
  dp= opendir( "./" );
  if ( dp != NULL ) {
@@ -49,6 +55,10 @@ int main( int argc, char **argv ) {
     continue; // make sure the filename is not too short for the following tests
    if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[filenamelen - 1] == 't' && ep->d_name[filenamelen - 2] == 'a' && ep->d_name[filenamelen - 3] == 'd' ) {
     filenamelist[filename_counter]= malloc( ( filenamelen + 1 ) * sizeof( char ) );
+    if( NULL == filenamelist[filename_counter] ) {
+     fprintf( stderr, "ERROR: allocating memory\n" );
+     exit( EXIT_FAILURE );
+    }
     strncpy( filenamelist[filename_counter], ep->d_name, ( filenamelen + 1 ) );
     filename_counter++;
    }
@@ -74,8 +84,9 @@ int main( int argc, char **argv ) {
   i= 0;
   // while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
   while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, NULL, &y, &app, string, NULL ) ) {
-   if ( jd == 0.0 )
+   if ( jd == 0.0 ) {
     continue; // if this line could not be parsed, try the next one
+   }
    i++;
   }
   fclose( lightcurvefile );
