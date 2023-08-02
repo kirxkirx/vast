@@ -246,6 +246,7 @@ void download_asassnv() {
 */
 
 const char *getfield_from_csv_string( char *line, int num ) {
+ static const char whitespace[32] = "                               "; // 31 white space
  const char *tok;
  for ( tok= strtok( line, "," );
        tok && *tok;
@@ -253,7 +254,8 @@ const char *getfield_from_csv_string( char *line, int num ) {
   if ( !--num )
    return tok;
  }
- return NULL;
+ // The idea is to return an empty line that is longer than anything we would like to compare it to
+ return whitespace; // Return pointer to 31 white space on failure
 }
 
 int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found ) {
@@ -269,7 +271,7 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
  // char Url[32];
  char string[4096];
  char string_noemptycells[4096];
- char string_to_be_ruined_by_strok[4096];
+ char string_to_be_ruined_by_strtok[4096];
  int i, j;
 
  double distance_deg;
@@ -318,24 +320,20 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
   }
   //
   string_noemptycells[j]= '\0'; // !!
-  // The following can never be NULL
-  // if( NULL == string_noemptycells ) {
-  // fprintf(stderr, "ERROR in search_asassnv(): string_noemptycells==NULL\n");
-  // exit(1);
-  //}
+
   // We should do this before each invocation of getfield_from_csv_string() !!!
-  strncpy( string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1 );
-  string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
+  strncpy( string_to_be_ruined_by_strtok, string_noemptycells, 4096 - 1 );
+  string_to_be_ruined_by_strtok[4096 - 1]= '\0'; // just in case
   // Skip the header line -- old file format
-  if ( 0 == strncmp( "ASAS-SN Name", getfield_from_csv_string( string_to_be_ruined_by_strok, asassn_name_token ), strlen( "ASAS-SN Name" ) ) ) {
+  if ( 0 == strncmp( "ASAS-SN Name", getfield_from_csv_string( string_to_be_ruined_by_strtok, asassn_name_token ), strlen( "ASAS-SN Name" ) ) ) {
    continue;
   }
   //
   // We should do this before each invocation of getfield_from_csv_string() !!!
-  strncpy( string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1 );
-  string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
+  strncpy( string_to_be_ruined_by_strtok, string_noemptycells, 4096 - 1 );
+  string_to_be_ruined_by_strtok[4096 - 1]= '\0'; // just in case
   // Skip the header line -- and detect new file format
-  if ( 0 == strncmp( "source_id", getfield_from_csv_string( string_to_be_ruined_by_strok, asassn_name_token ), strlen( "source_id" ) ) ) {
+  if ( 0 == strncmp( "source_id", getfield_from_csv_string( string_to_be_ruined_by_strtok, asassn_name_token ), strlen( "source_id" ) ) ) {
    // new file format
    asassn_name_token= 2;
    type_token= 11;
@@ -350,22 +348,39 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
 
   //// Dec
   // We should do this before each invocation of getfield_from_csv_string() !!!
-  strncpy( string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1 );
-  string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
-  Dec_deg= atof( getfield_from_csv_string( string_to_be_ruined_by_strok, 5 ) );
-  if ( fabs( target_Dec_deg - Dec_deg ) > search_radius_deg )
+  strncpy( string_to_be_ruined_by_strtok, string_noemptycells, 4096 - 1 );
+  string_to_be_ruined_by_strtok[4096 - 1]= '\0'; // just in case
+  Dec_deg= atof( getfield_from_csv_string( string_to_be_ruined_by_strtok, 5 ) );
+  // atof() may return 0.0 if the input is just white spaces
+  if( Dec_deg < -90.0 || Dec_deg > +90.0 || Dec_deg == 0.0 ) {
    continue;
+  } 
+  if ( fabs( target_Dec_deg - Dec_deg ) > search_radius_deg ) {
+   continue;
+  }
 
   //// RA
   // We should do this before each invocation of getfield_from_csv_string() !!!
-  strncpy( string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1 );
-  string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
-  RA_deg= atof( getfield_from_csv_string( string_to_be_ruined_by_strok, 4 ) );
+  strncpy( string_to_be_ruined_by_strtok, string_noemptycells, 4096 - 1 );
+  string_to_be_ruined_by_strtok[4096 - 1]= '\0'; // just in case
+  RA_deg= atof( getfield_from_csv_string( string_to_be_ruined_by_strtok, 4 ) );
+  // atof() may return 0.0 if the input is just white spaces
+  if( RA_deg < 0.0 || RA_deg > 360.0 || RA_deg == 0.0 ) {
+   continue;
+  } 
 
+/*
   RA1_rad= RA_deg * 3600 / 206264.8;
   RA2_rad= target_RA_deg * 3600 / 206264.8;
   DEC1_rad= Dec_deg * 3600 / 206264.8;
   DEC2_rad= target_Dec_deg * 3600 / 206264.8;
+*/
+
+  RA1_rad= RA_deg * 180.0 / M_PI;
+  RA2_rad= target_RA_deg * 180.0 / M_PI;
+  DEC1_rad= Dec_deg * 180.0 / M_PI;
+  DEC2_rad= target_Dec_deg * 180.0 / M_PI;
+
 
   // yes, it mathces the definition in src/put_two_sources_in_one_field.c
   distance_deg= acos( cos( DEC1_rad ) * cos( DEC2_rad ) * cos( MAX( RA1_rad, RA2_rad ) - MIN( RA1_rad, RA2_rad ) ) + sin( DEC1_rad ) * sin( DEC2_rad ) ) * 206264.8 / 3600.0;
@@ -397,45 +412,45 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
 
    //// Name
    // We should do this before each invocation of getfield_from_csv_string() !!!
-   strncpy( string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1 );
-   string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
-   strncpy( name, getfield_from_csv_string( string_to_be_ruined_by_strok, asassn_name_token ), 32 );
+   strncpy( string_to_be_ruined_by_strtok, string_noemptycells, 4096 - 1 );
+   string_to_be_ruined_by_strtok[4096 - 1]= '\0'; // just in case
+   strncpy( name, getfield_from_csv_string( string_to_be_ruined_by_strtok, asassn_name_token ), 32 );
    name[32 - 1]= '\0'; // just in case
 
    //// Type
    // We should do this before each invocation of getfield_from_csv_string() !!!
-   strncpy( string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1 );
-   string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
-   strncpy( type, getfield_from_csv_string( string_to_be_ruined_by_strok, type_token ), 32 );
+   strncpy( string_to_be_ruined_by_strtok, string_noemptycells, 4096 - 1 );
+   string_to_be_ruined_by_strtok[4096 - 1]= '\0'; // just in case
+   strncpy( type, getfield_from_csv_string( string_to_be_ruined_by_strtok, type_token ), 32 );
    type[32 - 1]= '\0'; // just in case
 
    //// MeanMag
    // We should do this before each invocation of getfield_from_csv_string() !!!
-   strncpy( string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1 );
-   string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
-   strncpy( MeanMag, getfield_from_csv_string( string_to_be_ruined_by_strok, meanmag_token ), 32 );
+   strncpy( string_to_be_ruined_by_strtok, string_noemptycells, 4096 - 1 );
+   string_to_be_ruined_by_strtok[4096 - 1]= '\0'; // just in case
+   strncpy( MeanMag, getfield_from_csv_string( string_to_be_ruined_by_strtok, meanmag_token ), 32 );
    MeanMag[32 - 1]= '\0'; // just in case
 
    //// Amplitude
    // We should do this before each invocation of getfield_from_csv_string() !!!
-   strncpy( string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1 );
-   string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
-   strncpy( Amplitude, getfield_from_csv_string( string_to_be_ruined_by_strok, amplitude_token ), 32 );
+   strncpy( string_to_be_ruined_by_strtok, string_noemptycells, 4096 - 1 );
+   string_to_be_ruined_by_strtok[4096 - 1]= '\0'; // just in case
+   strncpy( Amplitude, getfield_from_csv_string( string_to_be_ruined_by_strtok, amplitude_token ), 32 );
    Amplitude[32 - 1]= '\0'; // just in case
 
    //// Period
    // We should do this before each invocation of getfield_from_csv_string() !!!
-   strncpy( string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1 );
-   string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
-   strncpy( Period, getfield_from_csv_string( string_to_be_ruined_by_strok, period_token ), 32 );
+   strncpy( string_to_be_ruined_by_strtok, string_noemptycells, 4096 - 1 );
+   string_to_be_ruined_by_strtok[4096 - 1]= '\0'; // just in case
+   strncpy( Period, getfield_from_csv_string( string_to_be_ruined_by_strtok, period_token ), 32 );
    Period[32 - 1]= '\0'; // just in case
 
    // no URL in new format
    //   //// Url
    //   // We should do this before each invocation of getfield_from_csv_string() !!!
-   //   strncpy(string_to_be_ruined_by_strok, string_noemptycells, 4096 - 1);
-   //   string_to_be_ruined_by_strok[4096 - 1]= '\0'; // just in case
-   //   strncpy(Url, getfield_from_csv_string(string_to_be_ruined_by_strok, url_token), 32);
+   //   strncpy(string_to_be_ruined_by_strtok, string_noemptycells, 4096 - 1);
+   //   string_to_be_ruined_by_strtok[4096 - 1]= '\0'; // just in case
+   //   strncpy(Url, getfield_from_csv_string(string_to_be_ruined_by_strtok, url_token), 32);
    //   Url[32 - 1]= '\0'; // just in case
    ///////////////////////////////////////////////////////////////
 

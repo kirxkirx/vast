@@ -292,6 +292,11 @@ int read_sextractor_cat( char *catalog_name, struct Star *arrStar, int *N, doubl
  RA_array= malloc( N_lines_in_catalog * sizeof( double ) );
  // DEC_array=malloc(MAX_NUMBER_OF_STARS_ON_IMAGE*sizeof(double));
  DEC_array= malloc( N_lines_in_catalog * sizeof( double ) );
+ 
+ if ( NULL == RA_array || NULL == DEC_array ) {
+  fprintf( stderr, "ERROR: allocating memory in read_sextractor_cat()\n" );
+  exit( EXIT_FAILURE );
+ } 
 
  sexcatfile= fopen( catalog_name, "r" );
  if ( sexcatfile == NULL ) {
