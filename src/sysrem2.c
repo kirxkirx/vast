@@ -93,6 +93,10 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
  oputput_file_counter= 0;
 
  while ( NULL != fgets( full_string, MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG, input_sysrem_input_star_list_lst ) ) {
+  if ( NULL == outputfile[oputput_file_counter % Noutput_files] ) {
+   fprintf( stderr, "ERROR: NULL == outputfile[oputput_file_counter modulus Noutput_files] this shouldn't be happening!\n");
+   exit( EXIT_FAILURE );
+  }
   fputs( full_string, outputfile[oputput_file_counter % Noutput_files] );
   oputput_file_counter++;
  }
