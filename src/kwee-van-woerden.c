@@ -7,9 +7,9 @@
 #include "vast_limits.h"   // for MIN()
 #include "lightcurve_io.h" // for read_lightcurve_point()
 
-/*
-   Based on: http://adsabs.harvard.edu/abs/1956BAN....12..327K
-*/
+//
+//   Time of minima determination based on http://adsabs.harvard.edu/abs/1956BAN....12..327K
+//
 
 int main() {
  double T0= 0.0;
@@ -31,7 +31,6 @@ int main() {
  double T1= 0.0;
  double mT1= 0.0;
  int i, j;
- // double tmp_m, tmp_jd;
  double *jd= NULL;
  double *m= NULL;
  int n_points_lightcurve= 1;
@@ -43,7 +42,7 @@ int main() {
 
  double merr_not_used;
 
- /* Read data */
+ // Read data 
  do {
   jd= realloc( jd, n_points_lightcurve * sizeof( double ) );
   if ( jd == NULL ) {
@@ -57,7 +56,6 @@ int main() {
   };
   n_points_lightcurve++;
  } while ( -1 < read_lightcurve_point( stdin, &jd[n_points_lightcurve - 2], &m[n_points_lightcurve - 2], &merr_not_used, NULL, NULL, NULL, NULL, NULL ) );
- // while( -1 < fscanf(stdin, "%lf %lf", &jd[n_points_lightcurve - 2], &m[n_points_lightcurve - 2]) );
  n_points_lightcurve--;
  n_points_lightcurve--;
  fprintf( stderr, "n_points=%d\n", n_points_lightcurve );
@@ -70,41 +68,19 @@ int main() {
  Z= 0.25 * (double)n_points_lightcurve;
  fprintf( stderr, "Expecting number of independent pairs Z=%d\n", (int)( Z + 0.0 ) );
 
- /* Sort data */
- /*
- size_t *order= malloc(sizeof(size_t) * n_points_lightcurve);
- gsl_sort_index(order, jd, 1, n_points_lightcurve);
-
- for( i= 0; i < n_points_lightcurve; i++ ) {
-  mean_jd+= jd[i];
-  int id= order[i];
-  tmp_jd= jd[i];
-  tmp_m= m[i];
-  jd[i]= jd[id];
-  m[i]= m[id];
-  jd[id]= tmp_jd;
-  m[id]= tmp_m;
- };
- free(order);
- */
+ // Sort data 
  gsl_sort2( jd, 1, m, 1, n_points_lightcurve );
- // mean_jd= mean_jd / n_points_lightcurve;
  mean_jd= gsl_stats_mean( jd, 1, n_points_lightcurve );
  fprintf( stderr, "Mean JD = %lf\n", mean_jd );
- // mean_jd=mean_jd-10.0;
  for ( i= 0; i < n_points_lightcurve; i++ ) {
   jd[i]= jd[i] - mean_jd;
  }
 
- /* for(i=0;i<n_points_lightcurve;i++){
-  fprintf(stderr,"%lf %lf\n",jd[i],m[i]);
- }*/
-
- /* dt is the typical distance between data points */
+ // dt is the typical distance between data points 
  dt= ( jd[n_points_lightcurve - 1] - jd[0] ) / n_points_lightcurve;
  fprintf( stderr, "dt = %lf\n", dt );
 
- /* Form 2n+1 magnitudes spaced by equal time intervals dt */
+ // Form 2n+1 magnitudes spaced by equal time intervals dt 
  interp_m= malloc( ( 2 * n_points_lightcurve + 1 ) * sizeof( double ) );
  if ( interp_m == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for interp_m(kwee-van-woerden.c)\n" );
@@ -144,7 +120,7 @@ int main() {
   fprintf( stderr, "%+8.6lf %lf  %3d\n", interp_jd[i], interp_m[i], i );
  }
 
- /* Find T1 (estimated minima time) */
+ // Find T1 (estimated minima time) 
  mT1= -99.0;
  // for ( i= 0; i < n; i++ ) {
  //  1 to n - 1 as we have i + 1 and i - 1 array indexes
@@ -159,26 +135,14 @@ int main() {
  }
  fprintf( stderr, "First guess (the faintest point in the interpolated lightcurve):  T1 = %lf is the point with index i=%d\n", T1, jdT1 );
 
- // is this correct?
- /*
-  if ( n - jdT1 > jdT1 ) {
-   n_delta_m= jdT1 - 1;
-  } else {
-   n_delta_m= n - jdT1 - 1;
-  }
- */
  n_delta_m= MIN( jdT1, n - jdT1 );
- // delta_m= malloc( (2 * n_points_lightcurve + 1) * sizeof( double ) );
  delta_m= malloc( n_delta_m * sizeof( double ) );
  if ( delta_m == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for delta_m(kwee-van-woerden.c)\n" );
   return 1;
  }
 
- // n_delta_m--;
  fprintf( stderr, "using %d pairs\n", n_delta_m );
- // NO, this will ruin sT3 calculation
- // n_delta_m++; // because it is used as the index offset: for i=0  0.0= delta_m[i]= interp_m[jdT1 - i] - interp_m[jdT1 + i]
 
  if ( n_delta_m < 1 ) {
   fprintf( stderr, "ERROR: too few pairs for minimum determination!\n" );
@@ -190,7 +154,7 @@ int main() {
   return 1;
  }
 
- /* sT1 */
+ // sT1
  // for i=0 we'll have the faintest point subtracted from itself
  for ( i= 0; i < n_delta_m; i++ ) {
   delta_m[i]= interp_m[jdT1 - i] - interp_m[jdT1 + i];
@@ -202,7 +166,7 @@ int main() {
  sT1= sT1 / ( n_delta_m - 1 );
  fprintf( stderr, "sT1 = %lg\n", sT1 );
 
- /* sT2 */
+ // sT2 
  jdT1+= 1;
  for ( i= 0; i < n_delta_m; i++ ) {
   delta_m[i]= interp_m[jdT1 - i] - interp_m[jdT1 + i];
@@ -214,7 +178,7 @@ int main() {
  sT2= sT2 / ( n_delta_m - 1 );
  fprintf( stderr, "sT2 = %lg\n", sT2 );
 
- /* sT3 */
+ // sT3 
  jdT1-= 2;
  for ( i= 0; i < n_delta_m; i++ ) {
   delta_m[i]= interp_m[jdT1 - i] - interp_m[jdT1 + i];
