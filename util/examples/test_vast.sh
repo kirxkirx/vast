@@ -18174,11 +18174,25 @@ if [ $? -ne 0 ];then
 fi
 
 ### Test the local catalog search thing
+grep --quiet 'ASASSN-V J010901.57+471816.4' lib/catalogs/asassnv.csv
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT020csv"
+fi
+# Now find this variable using check_catalogs_offline
 lib/catalogs/check_catalogs_offline 17.25656 47.30456 | grep --quiet 'ASASSN-V J010901.57+471816.4'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT020"
 fi
+
+# laststar in the current asassnv.csv, but it's already in VSX
+lib/catalogs/check_catalogs_offline 225.53308 -45.05244 | grep --quiet 'ASASSN-V J150207.95-450307.5'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT020"
+fi
+
 
 lib/catalogs/check_catalogs_offline 34.8366337 -2.9776377 | grep --quiet 'omi Cet'
 if [ $? -ne 0 ];then

@@ -59,7 +59,7 @@ int search_myMDV( double target_RA_deg, double target_Dec_deg, double search_rad
         DEC1_rad= Dec_deg * M_PI / 180.0;
         DEC2_rad= target_Dec_deg * M_PI / 180.0;
 
-        distance_deg= acos( cos( DEC1_rad ) * cos( DEC2_rad ) * cos( MAX( RA1_rad, RA2_rad ) - MIN( RA1_rad, RA2_rad ) ) + sin( DEC1_rad ) * sin( DEC2_rad ) ) * 206264.8 / 3600.0;
+        distance_deg= acos( cos( DEC1_rad ) * cos( DEC2_rad ) * cos( MAX( RA1_rad, RA2_rad ) - MIN( RA1_rad, RA2_rad ) ) + sin( DEC1_rad ) * sin( DEC2_rad ) ) * 180.0 / M_PI;
 
         if ( distance_deg < search_radius_deg ) {
             if ( is_found == 0 ) {
@@ -192,7 +192,7 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
   DEC2_rad= target_Dec_deg * M_PI / 180.0;
 
   // yes, it mathces the definition in src/put_two_sources_in_one_field.c
-  distance_deg= acos( cos( DEC1_rad ) * cos( DEC2_rad ) * cos( MAX( RA1_rad, RA2_rad ) - MIN( RA1_rad, RA2_rad ) ) + sin( DEC1_rad ) * sin( DEC2_rad ) ) * 206264.8 / 3600.0;
+  distance_deg= acos( cos( DEC1_rad ) * cos( DEC2_rad ) * cos( MAX( RA1_rad, RA2_rad ) - MIN( RA1_rad, RA2_rad ) ) + sin( DEC1_rad ) * sin( DEC2_rad ) ) * 180.0 / M_PI;
 
   if ( distance_deg < search_radius_deg ) {
    if ( is_found == 0 ) {
@@ -376,7 +376,7 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
 
 
   // yes, it mathces the definition in src/put_two_sources_in_one_field.c
-  distance_deg= acos( cos( DEC1_rad ) * cos( DEC2_rad ) * cos( MAX( RA1_rad, RA2_rad ) - MIN( RA1_rad, RA2_rad ) ) + sin( DEC1_rad ) * sin( DEC2_rad ) ) * 206264.8 / 3600.0;
+  distance_deg= acos( cos( DEC1_rad ) * cos( DEC2_rad ) * cos( MAX( RA1_rad, RA2_rad ) - MIN( RA1_rad, RA2_rad ) ) + sin( DEC1_rad ) * sin( DEC2_rad ) ) * 180.0 / M_PI;
 
   if ( distance_deg < search_radius_deg ) {
 

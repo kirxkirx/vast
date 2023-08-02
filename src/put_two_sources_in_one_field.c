@@ -6,7 +6,8 @@
 
 #include "vast_limits.h"
 
-#define ARCSEC_IN_RAD 206264.806247096
+//#define ARCSEC_IN_RAD 206264.806247096
+#define ARCSEC_IN_RAD 3600.0 * 180.0 / M_PI
 
 int format_hms_or_deg( char *coordinatestring ) {
  unsigned int i;

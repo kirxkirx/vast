@@ -39,11 +39,9 @@
 int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_filenames, int *N_sysrem_input_star_list_lst ) {
 
  FILE *input_sysrem_input_star_list_lst;
- FILE **outputfile;
- int Nstars, Noutput_files, oputput_file_counter;
+ FILE *outputfile[SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS] = {NULL}; // I'm initializing it to NULL just to make the compiler happy
+ unsigned int Nstars, Noutput_files, oputput_file_counter;
  char full_string[MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG];
-
- outputfile= malloc( SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS * sizeof( FILE * ) );
 
  Nstars= 0;
  input_sysrem_input_star_list_lst= fopen( "sysrem_input_star_list.lst", "r" );
@@ -65,13 +63,14 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
  if ( Nstars < 2 * SYSREM_N_STARS_IN_PROCESSING_BLOCK ) {
   strncpy( split_sysrem_input_star_list_lst_filenames[0], "sysrem_input_star_list.lst", 27 );
   ( *N_sysrem_input_star_list_lst )= 1;
-  free( outputfile );
   return 0;
  }
 
  // Split the input sysrem_input_star_list.lst into Noutput_files
  Noutput_files= (int)( (double)Nstars / (double)SYSREM_N_STARS_IN_PROCESSING_BLOCK );
  Noutput_files= MIN( Noutput_files, SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS );
+ //
+ Noutput_files= MAX( Noutput_files, 2 );
  fprintf( stderr, "Will split sysrem_input_star_list.lst into %d processing blocks\n", Noutput_files );
 
  // open the output files
@@ -92,13 +91,12 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
   exit( EXIT_FAILURE );
  }
  oputput_file_counter= 0;
+
  while ( NULL != fgets( full_string, MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG, input_sysrem_input_star_list_lst ) ) {
-  fputs( full_string, outputfile[oputput_file_counter] );
+  fputs( full_string, outputfile[oputput_file_counter % Noutput_files] );
   oputput_file_counter++;
-  if ( oputput_file_counter == Noutput_files ) {
-   oputput_file_counter= 0;
-  }
  }
+
  fclose( input_sysrem_input_star_list_lst );
  fprintf( stderr, "Number of stars in sysrem_input_star_list.lst %d\n", Nstars );
  if ( Nstars < SYSREM_MIN_NUMBER_OF_STARS ) {
@@ -110,7 +108,6 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
  for ( oputput_file_counter= 0; oputput_file_counter < Noutput_files; oputput_file_counter++ ) {
   fclose( outputfile[oputput_file_counter] );
  }
- free( outputfile );
 
  ( *N_sysrem_input_star_list_lst )= Noutput_files;
 
