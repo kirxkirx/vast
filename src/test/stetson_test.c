@@ -53,6 +53,12 @@ int main(int argc, char **argv) {
  m= malloc(MAX_NUMBER_OF_OBSERVATIONS * sizeof(double));
  merr= malloc(MAX_NUMBER_OF_OBSERVATIONS * sizeof(double));
  w= malloc(MAX_NUMBER_OF_OBSERVATIONS * sizeof(double));
+ 
+ if ( NULL == JD || NULL == m || NULL == merr || NULL == w ) {
+  fprintf(stderr, "ERROR: allocating memory\n");
+  return 1;
+ }
+ 
  while( -1 < read_lightcurve_point(lc_file_descriptor, &jd, &mag, &mag_err, &x, &y, &app, string, NULL) ) {
   if( jd == 0.0 )
    continue; // if this line could not be parsed, try the next one

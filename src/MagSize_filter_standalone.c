@@ -54,8 +54,6 @@ int main( int argc, char **argv ) {
 
  double *jd_a;
  double *mag_a;
- // double median_mag;
- // double mag_sigma;
  int i;
 
  double max_fraction_of_outliers;
@@ -73,8 +71,6 @@ int main( int argc, char **argv ) {
  double *images_bad= NULL;
  int images_Nbad;
  int is_this_image_good;
-
- // char imagfilename[FILENAME_LENGTH];
 
  struct Star **star;
  int *NUMBER1;
@@ -164,6 +160,9 @@ int main( int argc, char **argv ) {
     }
     // Compute median mag & sigma
     star_num= star_number_from_outfilename( ep->d_name );
+    
+    // Initialize to make GCC static analyzer happy
+    jd= mag= merr= x= y= app= 0.0;
 
     while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {
      if ( jd == 0.0 )
@@ -176,6 +175,10 @@ int main( int argc, char **argv ) {
      if ( image_counter == image_Number ) {
       image_jd[image_counter]= jd; // initialize
       star[image_counter]= malloc( MAX_NUMBER_OF_STARS * sizeof( struct Star ) );
+      if ( NULL == star[image_counter] ) {
+       fprintf( stderr, "ERROR: failed to allocate memory  star[image_counter]= malloc( MAX_NUMBER_OF_STARS * sizeof( struct Star ) \n" );
+       exit( EXIT_FAILURE );
+      }
       NUMBER1[image_counter]= 0;
 
       image_Number++;
