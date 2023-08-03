@@ -6,8 +6,9 @@
 
 #include "vast_limits.h"
 
-//#define ARCSEC_IN_RAD 206264.806247096
-#define ARCSEC_IN_RAD 3600.0 * 180.0 / M_PI
+#define ARCSEC_IN_RAD 206264.806247096
+// LOL, can't use M_PI in define
+//#define ARCSEC_IN_RAD 3600.0 * 180.0 / M_PI
 
 int format_hms_or_deg( char *coordinatestring ) {
  unsigned int i;
@@ -122,7 +123,7 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
   mm2= 0.0;
  }
  if ( 0.0 == search_radius_arcsec )
-  fprintf( stdout, "Average position  %02d:%02d:%05.2lf ", hh2, mm2, ss2 );
+  fprintf( stdout, "Average position  %02d:%02d:%+06.2lf ", hh2, mm2, ss2 );
 
  in= ( DEC1_deg + DEC2_deg ) / 2.0;
  hh2= (int)in;
@@ -292,10 +293,8 @@ int main( int argc, char **argv ) {
   }
   // fprintf(stderr, "str1='%s' str2='%s'\n",str1,str2);
   if ( 0 == compute_angular_distance_and_print_result( argv[1], argv[2], str1, str2, search_radius_arcsec ) ) {
-   //fprintf( stdout, "FOUND\n" );
    fprintf( stdout, "FOUND %s\n", str_comment);
    break;
-   //return 0;
   }
  }
  fclose( filelist_input_positions );
