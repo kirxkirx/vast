@@ -159,6 +159,12 @@ int main( int argc, char **argv ) {
 
  // Create a list of files
  filenamelist= (char **)malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );
+ 
+ if ( NULL == filenamelist ) {
+  perror( "Silly memory error" );
+  return 2;
+ }
+ 
  filename_counter= 0;
  dp= opendir( "./" );
  if ( dp != NULL ) {
@@ -170,6 +176,10 @@ int main( int argc, char **argv ) {
    }
    if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[filenamelen - 1] == 't' && ep->d_name[filenamelen - 2] == 'a' && ep->d_name[filenamelen - 3] == 'd' ) {
     filenamelist[filename_counter]= malloc( ( filenamelen + 1 ) * sizeof( char ) );
+    if ( NULL == filenamelist[filename_counter] ) {
+     perror( "Memory error" );
+     return 2;
+    } 
     strncpy( filenamelist[filename_counter], ep->d_name, ( filenamelen + 1 ) );
     filename_counter++;
    }

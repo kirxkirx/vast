@@ -20493,6 +20493,79 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 
 
 
+# colstat test
+THIS_TEST_START_UNIXSEC=$(date +%s)
+TEST_PASSED=1
+echo "Performing colstat test " 1>&2
+echo -n "Performing colstat test: " >> vast_test_report.txt 
+
+echo "1
+2
+3" | util/colstat 2> /dev/null | grep --quiet 'MIN= 1.000000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
+fi
+echo "1
+2
+3" | util/colstat 2> /dev/null | grep --quiet 'MAX= 3.000000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
+fi
+echo "1
+2
+3" | util/colstat 2> /dev/null | grep --quiet 'MEDIAN= 2.000000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
+fi
+echo "1
+2
+3" | util/colstat 2> /dev/null | grep --quiet 'MEAN= 2.000000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
+fi
+echo "1
+2
+3
+" | util/colstat 2> /dev/null | grep --quiet 'MEAN= 2.000000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
+fi
+echo "1
+2
+3
+ 
+ 
+" | util/colstat 2> /dev/null | grep --quiet 'MEAN= 2.000000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
+fi
+
+
+THIS_TEST_STOP_UNIXSEC=$(date +%s)
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+# Make an overall conclusion for this test
+if [ $TEST_PASSED -eq 1 ];then
+ echo -e "\n\033[01;34mcolstat test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+else
+ echo -e "\n\033[01;34mcolstat test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+fi 
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+
+
+
+
 
 #### HJD correction test
 # needs VARTOOLS to run

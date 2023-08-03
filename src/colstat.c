@@ -5,12 +5,24 @@
 #include <string.h>
 #include <math.h>
 
-#include <ctype.h> // for isalpha()
+#include <ctype.h> // for isalpha() and isspace()
 
 #include "variability_indexes.h" // for esimate_sigma_from_MAD_of_sorted_data() etc.
 
+int isOnlyWhitespace(const char *str) {
+  while (*str) {
+    if (!isspace((unsigned char)*str)) {
+      return 0; // Found a non-whitespace character
+    }
+    str++;
+  }
+  return 1; // All characters were whitespace
+}
+
+
 int main() {
  double *x= NULL;
+ double *temp_pointer_for_realloc= NULL;
  double MIN, MAX;
  double MEAN;
  double MEDIAN;
@@ -28,6 +40,11 @@ int main() {
  fprintf( stderr, "Enter a column of numbers:\n" );
 
  x= malloc( sizeof( double ) );
+
+ if ( NULL == x ) {
+  fprintf( stderr, "MEMORY ERROR\n");
+  return 1;
+ }
 
  datasumm= 0.0;
  while ( NULL != fgets( str, 2048, stdin ) ) {
@@ -60,26 +77,56 @@ int main() {
     break;
    }
   }
-  if ( str_is_good != 1 )
+  
+  if ( 1 == isOnlyWhitespace(str) ) {
+   str_is_good= 0;
+  }
+  
+  if ( str_is_good != 1 ) {
    continue; // bad string
+  }
   x[i]= atof( str );
   datasumm= datasumm + x[i];
   i+= 1;
-  x= realloc( x, ( i + 1 ) * sizeof( double ) );
+  //x= realloc( x, ( i + 1 ) * sizeof( double ) );
+  temp_pointer_for_realloc= realloc(x, (i + 1) * sizeof(double));
+  if (temp_pointer_for_realloc == NULL) {
+   fprintf(stderr, "MEMORY ERROR\n");
+   free(x); // free the original memory
+   return 1;
+  }
+  x = temp_pointer_for_realloc; // assign the newly allocated memory to x
+
  }
 
  fprintf( stderr, "-----------------------------------------------------\n" );
  fprintf( stdout, "N= %d\n", i );
 
- gsl_sort( x, 1, i );
- MIN= x[0];
- MAX= x[i - 1];
- MEDIAN= gsl_stats_median_from_sorted_data( x, 1, i );
- MEAN= gsl_stats_mean( x, 1, i );
- SD= gsl_stats_sd_m( x, 1, i, MEAN );
- MEAN_ERR= SD / sqrt( (double)i );
- MAD= compute_MAD_of_sorted_data( x, i ); // esimate_sigma_from_MAD_of_sorted_data(x, i);
- IQR= compute_IQR_of_unsorted_data( x, i );
+ // initialize
+ MIN= MAX= MEDIAN= MEAN= SD= MEAN_ERR= MAD= IQR= 0.0;
+
+ if ( i > 1 ) {
+  if ( NULL == x ) {
+   fprintf( stderr, "Impossible error\n");
+   return 1;
+  } 
+  gsl_sort( x, 1, i );
+  MIN= x[0];
+  MAX= x[i - 1];
+  MEDIAN= gsl_stats_median_from_sorted_data( x, 1, i );
+  MEAN= gsl_stats_mean( x, 1, i );
+  SD= gsl_stats_sd_m( x, 1, i, MEAN );
+  MEAN_ERR= SD / sqrt( (double)i );
+  MAD= compute_MAD_of_sorted_data( x, i ); // esimate_sigma_from_MAD_of_sorted_data(x, i);
+  IQR= compute_IQR_of_unsorted_data( x, i );
+ }
+ if ( i == 1 ) {
+  if ( NULL == x ) {
+   fprintf( stderr, "Impossible error 2\n");
+   return 1;
+  } 
+  MIN= MAX= MEDIAN= MEAN= x[0];
+ }
 
  fprintf( stdout, "     MIN= %.6lf\n", MIN );
  fprintf( stdout, "     MAX= %.6lf\n", MAX );
