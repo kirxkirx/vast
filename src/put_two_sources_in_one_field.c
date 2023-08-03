@@ -123,7 +123,7 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
   mm2= 0.0;
  }
  if ( 0.0 == search_radius_arcsec )
-  fprintf( stdout, "Average position  %02d:%02d:%+06.2lf ", hh2, mm2, ss2 );
+  fprintf( stdout, "Average position  %02d:%02d:%05.2lf ", hh2, mm2, ss2 );
 
  in= ( DEC1_deg + DEC2_deg ) / 2.0;
  hh2= (int)in;
@@ -146,7 +146,7 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
    fprintf( stdout, "-%02d:%02d:%04.1lf\n", hh2, mm2, fabs( ss2 ) );
  } else {
   if ( 0.0 == search_radius_arcsec )
-   fprintf( stdout, "%+02d:%02d:%04.1lf\n", hh2, mm2, ss2 );
+   fprintf( stdout, "+%02d:%02d:%04.1lf\n", hh2, mm2, ss2 );
  }
 
  RA1_deg*= 3600.0 / ARCSEC_IN_RAD;

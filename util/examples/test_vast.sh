@@ -19255,7 +19255,8 @@ if [ $? -ne 0 ];then
  export PATH=$PATH:lib/bin
 fi
 # needs WCSTools to run
-command -v skycoor &>/dev/null
+#command -v skycoor &>/dev/null
+command -v lib/bin/skycoor &>/dev/null
 if [ $? -eq 0 ];then
  THIS_TEST_START_UNIXSEC=$(date +%s)
  TEST_PASSED=1
@@ -19286,7 +19287,7 @@ if [ $? -eq 0 ];then
  fi
  for POSITION_DEG in "172.9707500 +29.9958611" "172.9707500 -29.9958611" ;do
   POSITION_HMS_VAST=`lib/deg2hms $POSITION_DEG`
-  POSITION_HMS_SKYCOOR=`skycoor -j $POSITION_DEG J2000 | awk '{print $1" "$2}'`
+  POSITION_HMS_SKYCOOR=`lib/bin/skycoor -j $POSITION_DEG J2000 | awk '{print $1" "$2}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field $POSITION_HMS_VAST $POSITION_HMS_SKYCOOR | grep 'Angular distance' | awk '{print $5*3600}'`
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 0.1 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
@@ -19305,6 +19306,17 @@ if [ $? -eq 0 ];then
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION006"
+ fi
+ 
+ lib/put_two_sources_in_one_field 0.0 0.0 1.0 1.0 | grep --quiet 'Average position  00:02:00.00 +00:30:00.0'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_MIDPOINT"
+ fi
+ lib/put_two_sources_in_one_field 0.0 0.0 1.0 1.0 | grep --quiet 'Angular distance  01:24:51.04 = 1.4141'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_DIST"
  fi
  
  lib/put_two_sources_in_one_field 304.908333 4.596750 20:19:38.00 +04:35:48.3
