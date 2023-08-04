@@ -59,13 +59,14 @@ SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.s
 # The first SExtractor config file in the list should be optimized for detecting bright stars
 SEXTRACTOR_CONFIG_BRIGHTSTARPASS=$(echo $SEXTRACTOR_CONFIG_FILES | awk '{print $1}')
 
-#FRAME_EDGE_OFFSET_PIX=30
-FRAME_EDGE_OFFSET_PIX=25
+FRAME_EDGE_OFFSET_PIX=30
 
 # Comment-out TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION if unsure
 TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
 
 EXCLUSION_LIST="../exclusion_list.txt"
+SYSREM_ITERATIONS=1
+UCAC5_PLATESOLVE_ITERATIONS=1
 
 # CAMERA_SETTINGS environment vairable may be set to override the default settings with the ones needed for a different camera
 if [ -n "$CAMERA_SETTINGS" ];then
@@ -85,6 +86,9 @@ if [ -n "$CAMERA_SETTINGS" ];then
   export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="yes"
   BAD_REGION_FILE="../STL_bad_region.lst"
   EXCLUSION_LIST="../exclusion_list_STL.txt"
+  export OMP_NUM_THREADS=4
+  SYSREM_ITERATIONS=0
+  UCAC5_PLATESOLVE_ITERATIONS=2
  fi
 fi
 
@@ -97,6 +101,8 @@ LC_ALL=C
 LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
+
+
 
 #################################
 # Homogenize optional variables
@@ -793,9 +799,9 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  echo "Starting VaST with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
  # Run VaST
  echo "
- ./vast --starmatchraius 4.0 --matchstarnumber 500 --selectbestaperture --sysrem 1 --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE
+ ./vast --starmatchraius 4.0 --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE
  " >> transient_factory_test31.txt
- ./vast --starmatchraius 4.0 --matchstarnumber 500 --selectbestaperture --sysrem 1 --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
+ ./vast --starmatchraius 4.0 --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
  if [ $? -ne 0 ];then
   # Save image date for it to be displayed in the summary file
   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory_test31.txt
@@ -1093,17 +1099,17 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   if [ -z "$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" ];then
    if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
     # for a narrow field of view we actually need the photometric catalog
-    TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/solve_plate_with_UCAC5 --iterations 2 $i &
+    TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
    else
     # for a wide field of view Tycho-2 will be used, so no need for other photometric information - let's speed-up things
-    TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 2 $i &
+    TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
    fi # if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
   else
    # Not explicitly setting the telescope name, let the script guess the FoV
    if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
-    util/solve_plate_with_UCAC5 --iterations 2 $i &
+    util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
    else
-    util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations 2 $i &
+    util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
    fi # if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
   fi
  done 
