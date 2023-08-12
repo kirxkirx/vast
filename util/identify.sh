@@ -236,7 +236,7 @@ Checking if the filename extension and FITS header look reasonable..."
 fi
 
 ###
-BASENAME_FITSFILE=`basename "$FITSFILE"`
+BASENAME_FITSFILE=$(basename "$FITSFILE")
 ###
 
 # Test if the original image is already a calibrated one
@@ -1107,10 +1107,30 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
   fi
   ############################################################################
   echo "Performing plate solution with UCAC5..."
-  "$VAST_PATH"util/solve_plate_with_UCAC5 $WCS_IMAGE_NAME $FIELD_OF_VIEW_ARCMIN
-  if [ $? -ne 0 ];then
-   echo "ERROR matching the stars with UCAC5"
-   exit 1
+  # If this is not the reference image - do not do the slow VizieR APASS search!
+  REFERENCE_IMAGE=$(cat "$VAST_PATH"vast_summary.log |grep "Ref.  image:" | awk '{print $6}')
+  BASENAME_REFERENCE_IMAGE=$(basename $REFERENCE_IMAGE)
+  TEST_SUBSTRING="$BASENAME_REFERENCE_IMAGE"
+  TEST_SUBSTRING="${TEST_SUBSTRING:0:4}"
+  if [ "$TEST_SUBSTRING" = "wcs_" ];then
+   WCS_REFERENCE_IMAGE_NAME="$BASENAME_REFERENCE_IMAGE"
+  else
+   WCS_REFERENCE_IMAGE_NAME=wcs_"$BASENAME_REFERENCE_IMAGE"
+  fi
+  if [ "$WCS_REFERENCE_IMAGE_NAME" = "$WCS_IMAGE_NAME" ];then
+   echo "This is the reference image so we'll do the slow photometric catalog query"
+   "$VAST_PATH"util/solve_plate_with_UCAC5 $WCS_IMAGE_NAME $FIELD_OF_VIEW_ARCMIN
+   if [ $? -ne 0 ];then
+    echo "ERROR matching the stars with UCAC5"
+    exit 1
+   fi
+  else
+   echo "This is not the reference image so we'll skip the slow photometric catalog query"
+   "$VAST_PATH"util/solve_plate_with_UCAC5 --no_photometric_catalog $WCS_IMAGE_NAME $FIELD_OF_VIEW_ARCMIN
+   if [ $? -ne 0 ];then
+    echo "ERROR matching the stars with UCAC5"
+    exit 1
+   fi
   fi
   if [ ! -f $UCAC5_SOLUTION_NAME ];then
    echo "ERROR: cannot find the UCAC5 plate solution file $UCAC5_SOLUTION_NAME"

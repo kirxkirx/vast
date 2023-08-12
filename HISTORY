@@ -7,6 +7,8 @@ vast-1.0rc87:
 	* New script 'util/planets.sh' prints geocentric positions of major planets for a given JD(UT).
 	The positions are retrieved from JPL HORIZONS https://ssd.jpl.nasa.gov/horizons/
 	* Multiple improvements in the NMW transient search script 'util/transients/transient_factory_test31.sh'
+	* Do not perform slow VizieR query for a photometric catalog when identifying a star using 
+	'util/identify.sh' or 'U' in the lightcurve viewer.
 07 Apr 2023: vast-1.0rc86:
 	* Experimental support for TESS Full-Frame Images (FFIs). In terms of photometric precision, 
 	VaST currently cannot compete with the analysis codes specifically designed for TESS. 
