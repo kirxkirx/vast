@@ -20141,6 +20141,36 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_EPCALC_001"
 fi
 
+# Horizons direct and reverse proxy
+HORIZONS_DIRECT=$(curl --insecure --silent "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='2460145.3926'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
+HORIZONS_REVERSE_PROXY=$(curl --insecure --silent "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='2460145.3926'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
+if [ "$HORIZONS_DIRECT" != "$HORIZONS_REVERSE_PROXY" ] ;then
+ if [ -n "$HORIZONS_DIRECT" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_HORIZONS_REVERSE_PROXY_FAILED"
+ fi
+fi
+if [ -z "$HORIZONS_DIRECT" ] && [ -z "$HORIZONS_REVERSE_PROXY" ] ;then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_HORIZONS_DIRECT_AND_REVERSE_PROXY_FAILED"
+fi
+# if HORIZONS_DIRECT failed - that's not an error - that's why we need the reverse proxy
+
+# VSX direct and reverse proxy
+VSX_DIRECT=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'https://www.aavso.org/vsx/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
+VSX_REVERSE_PROXY=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'https://kirx.net/vsx/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
+if [ "$VSX_DIRECT" != "$VSX_REVERSE_PROXY" ] ;then
+ if [ -n "$VSX_DIRECT" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_VSX_REVERSE_PROXY_FAILED"
+ fi
+fi
+if [ -z "$VSX_DIRECT" ] && [ -z "$VSX_REVERSE_PROXY" ] ;then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_VSX_DIRECT_AND_REVERSE_PROXY_FAILED"
+fi
+# if VSX_DIRECT failed - that's not an error - that's why we need the reverse proxy
+
 
 ####### HTTPS
 test_https_connection
