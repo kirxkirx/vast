@@ -1683,6 +1683,72 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
  return;
 }
 
+int compare(const double *a, const double *b) {
+    if (*a < *b) return -1;
+    else if (*a > *b) return 1;
+    else return 0;
+}
+
+void set_transient_search_boundaries( double *search_area_boundaries, struct Star *star, int NUMBER, double X_im_size, double Y_im_size ) {
+ int i;
+ double *filtered_mag_values;
+ int filtered_count = 0;
+
+ search_area_boundaries[0]= search_area_boundaries[1]= search_area_boundaries[2]= search_area_boundaries[3]= FRAME_EDGE_INDENT_PIXELS;
+ search_area_boundaries[4]= search_area_boundaries[5]= (double)star[0].mag;
+
+ filtered_mag_values = (double*)malloc(NUMBER * sizeof(double));
+
+ for ( i= NUMBER; i--; ) {
+  if ( star[i].sextractor_flag > 7 )
+   continue;
+  if ( star[i].vast_flag != 0 )
+   continue;
+  if ( star[i].mag != 0.0 ) { // just in case
+   // Make sure a star defining the search area is not too close to image edge
+   if ( 1 == is_point_close_or_off_the_frame_edge( (double)star[i].x, (double)star[i].y, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) )
+    continue;
+   //
+   if ( (double)star[i].x < search_area_boundaries[0] )
+    search_area_boundaries[0]= (double)star[i].x;
+   if ( (double)star[i].x > search_area_boundaries[1] )
+    search_area_boundaries[1]= (double)star[i].x;
+   if ( (double)star[i].y < search_area_boundaries[2] )
+    search_area_boundaries[2]= (double)star[i].y;
+   if ( (double)star[i].y > search_area_boundaries[3] )
+    search_area_boundaries[3]= (double)star[i].y;
+   if ( (double)star[i].mag < search_area_boundaries[4] )
+    search_area_boundaries[4]= (double)star[i].mag;
+
+   filtered_mag_values[filtered_count++] = (double)star[i].mag;
+  }
+ }
+
+ if( filtered_count <= 0 ) {
+  fprintf(stderr, "ERROR determining the transient search bondaries - no stars pass the filtering!\n");
+  exit( EXIT_FAILURE );
+ }
+
+ // Sort the filtered_mag_values array and get the value that is 5% from the largest value
+ qsort(filtered_mag_values, filtered_count, sizeof(double), (int (*)(const void *, const void *))compare);
+ search_area_boundaries[5] = filtered_mag_values[(int)(0.95 * (double)filtered_count)]; // 5% from the end
+ search_area_boundaries[5] = search_area_boundaries[5] - MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT;
+
+ fprintf( stderr, "\nParameter box for transient search: %7.1lf<X<%7.1lf %7.1lf<Y<%7.1lf %5.2lf<m<%5.2lf\n \n",
+          search_area_boundaries[0],
+          search_area_boundaries[1],
+          search_area_boundaries[2],
+          search_area_boundaries[3],
+          search_area_boundaries[4],
+          search_area_boundaries[5] );
+
+ free(filtered_mag_values);
+
+ return;
+}
+
+
+/*
 void set_transient_search_boundaries( double *search_area_boundaries, struct Star *star, int NUMBER, double X_im_size, double Y_im_size ) {
  int i;
  search_area_boundaries[0]= search_area_boundaries[1]= search_area_boundaries[2]= search_area_boundaries[3]= 3 * FRAME_EDGE_INDENT_PIXELS;
@@ -1726,6 +1792,7 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
 
  return;
 }
+*/
 
 void record_specified_fits_keywords( char *input_image, char *output_str_with_fits_keywords_to_capture_from_input_images ) {
  //

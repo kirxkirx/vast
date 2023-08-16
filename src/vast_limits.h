@@ -261,7 +261,8 @@
 
 // Transient search
 #define TRANSIENT_MIN_TIMESCALE_DAYS 1.0                  // expect transients apearing on timescale > TRANSIENT_MIN_TIMESCALE_DAYS
-#define MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT 1.3 //0.8 //1.3 // Transient candidates should be at least MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT mag 
+// THIS DOES NOT WORK WELL AS SOME ODD DETECTIONS ARE THE ONES DEFINING THE REF FRAME LIMIT
+#define MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT 0.0 //0.8 //1.3 // Transient candidates should be at least MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT mag 
                                                           // above the detection limit on the reference frame.
 #define FLARE_MAG 0.9                                     // Objects which are found to be FLARE_MAG magnitudes brighter on the current image than on the reference image 
                                                           // will be also listed as transient candidates
