@@ -148,11 +148,8 @@ else
 fi
 
 # Querry VSX now, but parse later, so this querry is parallel to SIMBAD
-# old HTTP version does not work anymore
-#$TIMEOUTCOMMAND $CURL  --silent --max-time 30 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "http://www.aavso.org/vsx/index.php?view=results.submit1" > vsx_page_content$$.html &
-# same as above, but HTTPS
-$TIMEOUTCOMMAND $CURL --insecure --silent --max-time 30 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "https://www.aavso.org/vsx/index.php?view=results.submit1" 2> vsx_page_content$$.error > vsx_page_content$$.html &
-#$TIMEOUTCOMMAND $CURL --insecure --silent --max-time 30 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "https://kirx.net/vsx/index.php?view=results.submit1" > vsx_page_content$$.html &
+# cannot use --silent here as it will print no error message if there is an error
+$TIMEOUTCOMMAND $CURL --insecure --max-time 30 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "https://www.aavso.org/vsx/index.php?view=results.submit1" 2> vsx_page_content$$.error > vsx_page_content$$.html &
 # a working example as of 2023-05-12:
 #curl 'https://www.aavso.org/vsx/index.php?view=results.submit1' -X POST -H 'Content-Type: application/x-www-form-urlencoded' -H 'DNT: 1' -H 'Connection: keep-alive' -H 'Upgrade-Insecure-Requests: 1' -H 'Sec-Fetch-Dest: document' -H 'Sec-Fetch-Mode: navigate' -H 'Sec-Fetch-Site: same-origin' -H 'Sec-Fetch-User: ?1' --data-raw 'ql=1&getCoordinates=0&plotType=Search&special=index.php%3Fview%3Dresults.special%26sid%3D2&ident=&constid=0&targetcenter=07%3A29%3A19.69+-13%3A23%3A06.6&format=s&fieldsize=1&fieldunit=3&geometry=r&filter%5B%5D=0&filter%5B%5D=1&filter%5B%5D=2&filter%5B%5D=3&order=1' > vsx_page_content$$.html &
 
