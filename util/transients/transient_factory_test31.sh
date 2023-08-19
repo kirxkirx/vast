@@ -92,8 +92,8 @@ if [ -n "$CAMERA_SETTINGS" ];then
   export OMP_NUM_THREADS=4
   SYSREM_ITERATIONS=0
   UCAC5_PLATESOLVE_ITERATIONS=2
-  # The funny ghost image seems to be no more than 50pix away from frame edge
-  FRAME_EDGE_OFFSET_PIX=50
+  # The funny ghost image seems to be no more than 80pix away from frame edge
+  FRAME_EDGE_OFFSET_PIX=80
  fi
 fi
 
