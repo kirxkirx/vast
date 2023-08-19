@@ -61,6 +61,7 @@ SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.s
 # The first SExtractor config file in the list should be optimized for detecting bright stars
 SEXTRACTOR_CONFIG_BRIGHTSTARPASS=$(echo $SEXTRACTOR_CONFIG_FILES | awk '{print $1}')
 
+# Note that this is an additional (normally more strict) filter to the FRAME_EDGE_INDENT_PIXELS parameter defined in src/vast_limits.h
 FRAME_EDGE_OFFSET_PIX=30
 
 # Comment-out TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION if unsure
@@ -91,6 +92,8 @@ if [ -n "$CAMERA_SETTINGS" ];then
   export OMP_NUM_THREADS=4
   SYSREM_ITERATIONS=0
   UCAC5_PLATESOLVE_ITERATIONS=2
+  # The funny ghost image seems to be no more than 50pix away from frame edge
+  FRAME_EDGE_OFFSET_PIX=50
  fi
 fi
 
