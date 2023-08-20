@@ -884,48 +884,6 @@ int main( int argc, char **argv ) {
   return 0;
  }
 
- // Second test: try to see if the reference image from this series has already been solved
- image_details_logfile= fopen( "vast_image_details.log", "r" );
- if ( NULL != image_details_logfile ) {
-  if ( 10 == fscanf( image_details_logfile, "exp_start= %s %s  exp= %lf  JD= %lf  ap= %lf  rotation= %lf  *detected= %d  *matched= %d  status=%s  %s", exp_start_date, exp_start_time, &exp, &jd, &ap, &rotation, &detected, &matched, status, full_path_to_fits_image ) ) {
-   // If the current image is not the reference image
-   if ( 0 != strncmp( fitsfile_name, full_path_to_fits_image, FILENAME_LENGTH ) ) {
-    strncpy( name_of_fits_image, basename( full_path_to_fits_image ), FILENAME_LENGTH );
-    fitsfile_name[FILENAME_LENGTH - 1]= '\0';
-    if ( strlen( name_of_fits_image ) < 5 ) {
-     fprintf( stderr, "ERROR: too short image name: %s\n", name_of_fits_image );
-     return 1;
-    }
-    if ( name_of_fits_image[0] == 'w' && name_of_fits_image[1] == 'c' && name_of_fits_image[2] == 's' && name_of_fits_image[3] == '_' )
-     sprintf( name_of_wcs_solved_reference_image, "%s", name_of_fits_image );
-    else
-     sprintf( name_of_wcs_solved_reference_image, "wcs_%s", name_of_fits_image );
-    name_of_wcs_solved_reference_image[FILENAME_LENGTH - 1]= '\0';
-    // If the wcs-solved reference image is available
-    if ( 0 == fitsfile_read_check( name_of_wcs_solved_reference_image ) ) {
-     // If the current image is from the same image series as the reference image
-     fseek( image_details_logfile, 0, SEEK_SET ); // go back to the beginning of the log file
-     while ( 0 < fscanf( image_details_logfile, "exp_start= %s %s  exp= %lf  JD= %lf  ap= %lf  rotation= %lf  *detected= %d  *matched= %d  status=%s  %s\n", exp_start_date, exp_start_time, &exp, &jd, &ap, &rotation, &detected, &matched, status, full_path_to_fits_image ) ) {
-      if ( 0 == strncmp( fitsfile_name, full_path_to_fits_image, FILENAME_LENGTH ) ) {
-       // fprintf(stderr,"Oh yeah, %s is found in vast_image_details.log and this is not the reference image!\n",fitsfile_name);
-       if ( 0 == look_for_existing_wcs_header( name_of_wcs_solved_reference_image, &estimated_fov_arcmin ) ) {
-        fprintf( stdout, "%4.0lf\n", estimated_fov_arcmin );
-        fclose( image_details_logfile );
-#ifdef FOV_DEBUG_MESSAGES
-        fprintf( stderr, "The guess is based on the previously solved image %s\n", name_of_wcs_solved_reference_image );
-#endif
-        return 0;
-       }
-       break;
-      }
-     }       // while(0<fscanf(image_details_logfile...
-    } else { // if(0==fitsfile_read_check(name_of_wcs_solved_reference_image)){
-     fprintf( stderr, "This was an attempt to see if there is a plate-solved reference image from the same image series. Never mind.\n" );
-    } // else if(0==fitsfile_read_check(name_of_wcs_solved_reference_image)){
-   }  // if( 0!=strncmp(fitsfile_name,full_path_to_fits_image,FILENAME_LENGTH) ){
-  }   // if( 10=fscanf(image_details_logfile,"exp_start=  ...
-  fclose( image_details_logfile );
- }
 
  if ( 0 == try_to_recognize_telescop_keyword( fitsfile_name, &estimated_fov_arcmin ) ) {
   fprintf( stdout, "%4.0lf\n", estimated_fov_arcmin );
@@ -974,6 +932,51 @@ int main( int argc, char **argv ) {
 #endif
   return 0;
  }
+
+ // This often does not work well, so try it as the last resort:
+ // try to see if the reference image from this series has already been solved
+ image_details_logfile= fopen( "vast_image_details.log", "r" );
+ if ( NULL != image_details_logfile ) {
+  if ( 10 == fscanf( image_details_logfile, "exp_start= %s %s  exp= %lf  JD= %lf  ap= %lf  rotation= %lf  *detected= %d  *matched= %d  status=%s  %s", exp_start_date, exp_start_time, &exp, &jd, &ap, &rotation, &detected, &matched, status, full_path_to_fits_image ) ) {
+   // If the current image is not the reference image
+   if ( 0 != strncmp( fitsfile_name, full_path_to_fits_image, FILENAME_LENGTH ) ) {
+    strncpy( name_of_fits_image, basename( full_path_to_fits_image ), FILENAME_LENGTH );
+    fitsfile_name[FILENAME_LENGTH - 1]= '\0';
+    if ( strlen( name_of_fits_image ) < 5 ) {
+     fprintf( stderr, "ERROR: too short image name: %s\n", name_of_fits_image );
+     return 1;
+    }
+    if ( name_of_fits_image[0] == 'w' && name_of_fits_image[1] == 'c' && name_of_fits_image[2] == 's' && name_of_fits_image[3] == '_' )
+     sprintf( name_of_wcs_solved_reference_image, "%s", name_of_fits_image );
+    else
+     sprintf( name_of_wcs_solved_reference_image, "wcs_%s", name_of_fits_image );
+    name_of_wcs_solved_reference_image[FILENAME_LENGTH - 1]= '\0';
+    // If the wcs-solved reference image is available
+    if ( 0 == fitsfile_read_check( name_of_wcs_solved_reference_image ) ) {
+     // If the current image is from the same image series as the reference image
+     fseek( image_details_logfile, 0, SEEK_SET ); // go back to the beginning of the log file
+     while ( 0 < fscanf( image_details_logfile, "exp_start= %s %s  exp= %lf  JD= %lf  ap= %lf  rotation= %lf  *detected= %d  *matched= %d  status=%s  %s\n", exp_start_date, exp_start_time, &exp, &jd, &ap, &rotation, &detected, &matched, status, full_path_to_fits_image ) ) {
+      if ( 0 == strncmp( fitsfile_name, full_path_to_fits_image, FILENAME_LENGTH ) ) {
+       // fprintf(stderr,"Oh yeah, %s is found in vast_image_details.log and this is not the reference image!\n",fitsfile_name);
+       if ( 0 == look_for_existing_wcs_header( name_of_wcs_solved_reference_image, &estimated_fov_arcmin ) ) {
+        fprintf( stdout, "%4.0lf\n", estimated_fov_arcmin );
+        fclose( image_details_logfile );
+#ifdef FOV_DEBUG_MESSAGES
+        fprintf( stderr, "The guess is based on the previously solved image %s\n", name_of_wcs_solved_reference_image );
+#endif
+        return 0;
+       }
+       break;
+      }
+     }       // while(0<fscanf(image_details_logfile...
+    } else { // if(0==fitsfile_read_check(name_of_wcs_solved_reference_image)){
+     fprintf( stderr, "This was an attempt to see if there is a plate-solved reference image from the same image series. Never mind.\n" );
+    } // else if(0==fitsfile_read_check(name_of_wcs_solved_reference_image)){
+   }  // if( 0!=strncmp(fitsfile_name,full_path_to_fits_image,FILENAME_LENGTH) ){
+  }   // if( 10=fscanf(image_details_logfile,"exp_start=  ...
+  fclose( image_details_logfile );
+ }
+
 
  // print out the default value anyhow
  fprintf( stdout, "%4.0lf\n", estimated_fov_arcmin );
