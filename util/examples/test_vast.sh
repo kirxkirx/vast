@@ -14117,7 +14117,10 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE414a"
   fi
   RADECPOSITION_TO_TEST=`grep "2023 08 20\.8680  2460177\.3680  12\...  00:35:0.\... +14:05:..\.." transient_report/index.html | awk '{print $6" "$7}'`
-  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:35:04.52 +14:05:01.7  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # Measured posiiton
+  #DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:35:04.52 +14:05:01.7  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # Predicted position from JPL HORIZONS
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:35:04.60 +14:05:06.6  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
@@ -14133,6 +14136,90 @@ $GREP_RESULT"
    fi
   fi
   # 
+  ####
+  # Test for degraded plate solution for STL with newer Astrometry.net code that requires '--uniformize 0' to work properly
+  # Here is a more careful test based on Fredegundis position
+  #678 Fredegundis position from JPL HORIZONS for C32                                                                                                                               
+  #00 35 04.60 +14 05 06.7 ../NMW-STL__plate_solve_failure_test/second_epoch_images/025_2023-8-20_20-51-4_003.fts
+  #2023-Aug-20 20:49:29.280     00 35 04.60 +14 05 06.5   12.672   5.466  1.31494748546398 -16.5119819  132.8824 /L   20.3125   0.2103849   350.54790   -78.55117         n.a.     n.a.
+  #2023-Aug-20 20:49:55.200     00 35 04.60 +14 05 06.6   12.672   5.466  1.31494462461205 -16.5114821  132.8827 /L   20.3124   0.2103815   350.53826   -78.55104         n.a.     n.a.
+  #2023-Aug-20 20:50:21.120     00 35 04.60 +14 05 06.7   12.672   5.466  1.31494176384069 -16.5109816  132.8830 /L   20.3123   0.2103780   350.52863   -78.55091         n.a.     n.a.
+  #00 35 04.60 +14 05 06.5 ../NMW-STL__plate_solve_failure_test/second_epoch_images/025_2023-8-20_20-50-10_002.fts
+  # 3581.7809 269.8186 - the measured pixel position of Fredegundis at the image wcs_025_2023-8-20_20-50-10_002.fts
+  RADECPOSITION_TO_TEST=$(lib/bin/xy2sky wcs_025_2023-8-20_20-50-10_002.fts 3581.7809 269.8186 | awk '{print $1" "$2}' )
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:35:04.60 +14:05:06.5  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW-STL scale is 13.80"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_TESTPOINT1_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_TESTPOINT1_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  # 
+  # Try the same with another image
+  # 3590.90552  269.14890 - the measured pixel position of Fredegundis at the image wcs_025_2023-8-20_20-51-4_003.fts
+  RADECPOSITION_TO_TEST=$(lib/bin/xy2sky wcs_025_2023-8-20_20-51-4_003.fts 3590.90552 269.14890 | awk '{print $1" "$2}' )
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:35:04.60 +14:05:06.7  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW-STL scale is 13.80"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_TESTPOINT2_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_TESTPOINT2_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+  if [ -s wcs_025_2023-8-20_20-50-10_002.fts.cat.astrometric_residuals ] && [ wcs_025_2023-8-20_20-51-4_003.fts.cat.astrometric_residuals ];then 
+   #
+   MEDIAN_DISTANCE_TO_CATALOG_ARCSEC=$(cat wcs_025_2023-8-20_20-50-10_002.fts.cat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}')
+   TEST=`echo "$MEDIAN_DISTANCE_TO_CATALOG_ARCSEC" | awk '{if ( $1 < 13.8/3 ) print 1 ;else print 0 }'`
+   re='^[0-9]+$'
+   if ! [[ $TEST =~ $re ]] ; then
+    echo "TEST ERROR"
+    TEST_PASSED=0
+    TEST=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_MEDIANCATDIST_IMG1_TOO_FAR_TEST_ERROR"
+   else
+    if [ $TEST -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_MEDIANCATDIST_IMG1_TOO_FAR_$DISTANCE_ARCSEC"
+    fi
+   fi
+   # 
+   #
+   MEDIAN_DISTANCE_TO_CATALOG_ARCSEC=$(cat wcs_025_2023-8-20_20-51-4_003.fts.cat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}')
+   TEST=`echo "$MEDIAN_DISTANCE_TO_CATALOG_ARCSEC" | awk '{if ( $1 < 13.8/3 ) print 1 ;else print 0 }'`
+   re='^[0-9]+$'
+   if ! [[ $TEST =~ $re ]] ; then
+    echo "TEST ERROR"
+    TEST_PASSED=0
+    TEST=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_MEDIANCATDIST_IMG2_TOO_FAR_TEST_ERROR"
+   else
+    if [ $TEST -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_MEDIANCATDIST_IMG2_TOO_FAR_$DISTANCE_ARCSEC"
+    fi
+   fi
+   #
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_MEDIANCATDIST_NO_ASTROMETRIC_RESIDUALS_FILES"
+  fi 
+  ####
   
   test_if_test31_tmp_files_are_present
   if [ $? -ne 0 ];then
