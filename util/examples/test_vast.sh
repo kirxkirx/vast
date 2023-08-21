@@ -17202,7 +17202,7 @@ if [ $? -eq 0 ];then
  if [ -z "$HOSTNAME" ];then
   HOSTNAME="$HOST"
  fi
- if [ "$HOSTNAME" = "eridan" ] || [ "$HOSTNAME" = "ariel" ] || [ "$HOSTNAME" = "kadar" ] ;then
+ if [ "$HOSTNAME" = "eridan" ] || [ "$HOSTNAME" = "ariel" ] ;then
   if [ -d ../sample_data ];then
    THIS_TEST_START_UNIXSEC=$(date +%s)
    TEST_PASSED=1
