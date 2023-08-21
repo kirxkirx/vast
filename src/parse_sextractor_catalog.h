@@ -123,6 +123,7 @@ static inline int parse_sextractor_catalog_string( char *input_sextractor_catalo
  if ( 0 == __builtin_isnormal( ( *a_b ) ) ) {
   return 1;
  }
+ // Also it seems that it can be negative and the value is highly dependent on the SExtractor version
  //if( 0==__builtin_isnormal( (float_parameters_internalcopy[0]) ) ){return 1;} // FWHM can be zero! %(
 
 #endif

@@ -711,7 +711,17 @@ fi
     else   
      ERROR_STATUS=0
      echo "The WCS header appears to be added with no errors in $FITSFILE ($BASENAME_FITSFILE)"
+     # Insert VaST headers for debugging
+     if [ -z "$PLATE_SOLVE_SERVER" ];then
+      PLATE_SOLVE_SERVER="local"
+     fi
+     "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST001 $(basename $0)" / VaST script name"
+     "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST002 "$ASTROMETRYNET_LOCAL_OR_REMOTE / ASTROMETRYNET_LOCAL_OR_REMOTE"
+     "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST003 "$PLATE_SOLVE_SERVER / PLATE_SOLVE_SERVER"
+     "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST004 "iteration01 / astometry.net run"
+     #
     fi
+    #
     # clean up
     #rm -f "$BASENAME_FITSFILE" out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$.xyls out$$-indx.xyls
     rm -f out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$-indx.xyls
@@ -724,7 +734,8 @@ fi
     IMAGE_SCALE_ARCSECPIX_HIGH=`echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%f",1.05*$1}'`
     RADECCOMMAND="$RADECCOMMAND --radius $FOV --scale-low $IMAGE_SCALE_ARCSECPIX_LOW --scale-high $IMAGE_SCALE_ARCSECPIX_HIGH --scale-units arcsecperpix"
     #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
-    $TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
+    #$TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
+    $TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30-50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
     if [ $? -ne 0 ];then
      echo "ERROR running the second iteration of solve-field on $BASENAME_FITSFILE"
      exit 1
@@ -764,6 +775,12 @@ fi
     else   
      ERROR_STATUS=0
      echo "The WCS header appears to be added with no errors."
+     # Insert VaST headers for debugging
+     "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST001 $(basename $0)" / VaST script name"
+     "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST002 "$ASTROMETRYNET_LOCAL_OR_REMOTE / ASTROMETRYNET_LOCAL_OR_REMOTE"
+     "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST003 "$PLATE_SOLVE_SERVER / PLATE_SOLVE_SERVER"
+     "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST004 "iteration02 / astometry.net run"
+     #
     fi
     # clean up
     rm -f "$BASENAME_FITSFILE" out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$.xyls out$$-indx.xyls
@@ -925,7 +942,15 @@ Retrying..."
      else
       ERROR_STATUS=0
       echo "The WCS header appears to be added with no errors."
+      # Insert VaST headers for debugging
+      "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST001 "$0 / VaST script name"
+      "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST002 "$ASTROMETRYNET_LOCAL_OR_REMOTE / ASTROMETRYNET_LOCAL_OR_REMOTE"
+      "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST003 "$PLATE_SOLVE_SERVER / PLATE_SOLVE_SERVER"
+      "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST004 "iteration01 / astometry.net run"
+      #     
      fi
+     #
+     #
      # The output plate-solved image wcs_"$BASENAME_FITSFILE" will be produced by lib/astrometry/insert_wcs_header
      for FILE_TO_REMOVE in "$BASENAME_FITSFILE" out$$.wcs ;do
       if [ -f "$FILE_TO_REMOVE" ];then
