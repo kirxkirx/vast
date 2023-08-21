@@ -1,9 +1,34 @@
 name: Ubuntu build and test
 
-on: [push]
+on:
+  push:
+    branches: [ master ]
 
 jobs:
-  build:
+  ubuntu2204build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Update apt-get
+        run: sudo apt-get update
+      - name: Fix
+        run: sudo apt-get install -f
+      - name: Install gfortran
+        run: sudo apt-get install gfortran
+      - name: Install ghostscript
+        run: sudo apt-get install ghostscript
+      - name: Install shellcheck
+        run: sudo apt-get install shellcheck
+      - name: make VaST
+        run: make
+      - name: Shellcheck VaST BASH scripts
+        run: |
+          for i in lib/*sh util/*sh util/transients/*sh util/examples/*sh; do
+            shellcheck --severity=error $i
+          done
+
+  ubuntuLatestBuildAndTest:
+    needs: ubuntu2204build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
