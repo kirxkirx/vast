@@ -943,7 +943,7 @@ Retrying..."
       ERROR_STATUS=0
       echo "The WCS header appears to be added with no errors."
       # Insert VaST headers for debugging
-      "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST001 "$0 / VaST script name"
+      "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST001 $(basename $0)" / VaST script name"
       "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST002 "$ASTROMETRYNET_LOCAL_OR_REMOTE / ASTROMETRYNET_LOCAL_OR_REMOTE"
       "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST003 "$PLATE_SOLVE_SERVER / PLATE_SOLVE_SERVER"
       "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST004 "iteration01 / astometry.net run"
