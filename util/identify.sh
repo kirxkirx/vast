@@ -791,10 +791,44 @@ fi
      "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST003 "$PLATE_SOLVE_SERVER / PLATE_SOLVE_SERVER"
      "$VAST_PATH"util/modhead wcs_"$BASENAME_FITSFILE" VAST004 "iteration02 / astometry.net run"
      #
+     ############
+     ############
+     # An absolute desperate move to get a rliable astrometry with very wide-field images like STL
+     # Just run solve-field on the _image_
+     #
+     # As Dustin Lang explains here https://groups.google.com/g/astrometry/c/1Pw6WjGmJD8
+     # "At the moment, it "tweaks" using only the stars in the index containing the matching quad. 
+     #  This means that for large quads (large in the image), there are few stars so the tweak might not be very good. 
+     #  However, if you re-run solve-field using the "--verify" option on the wcs file you get, it will then check that WCS file against ALL the index files,
+     # and tune up the best one.  Doing that can often produce improved results."
+     #
+     TEST=$(echo "$FOV_MAJORAXIS_DEG" | awk '{if ( $1 > 10.0 ) print 1 ;else print 0 }')
+     if [ $TEST -eq 1 ];then
+      #if fasle ;then
+      echo "The field of view is large: we'll try to run Astromety.net code on the image itself rather than a star list"
+      AN_WCS_BASE=wcs_"$BASENAME_FITSFILE"
+      AN_WCS_BASE="${AN_WCS_BASE%.*}"
+      AN_NEW_FITS_WITH_UPDATED_WCS="$AN_WCS_BASE".new
+      AN_WCSONLY_FILE="$AN_WCS_BASE".wcs
+      AN_AXY_FILE="$AN_WCS_BASE".axy
+      echo wcs_"$BASENAME_FITSFILE" | solve-field --files-on-stdin --fits-image --overwrite --no-plots --corr none --index-xyls none --match none --rdls none --solved none  --nsigma 10
+      if [ $? -eq 0 ];then
+       # if there is an output file - replace the original with it
+       if [ -s "$AN_NEW_FITS_WITH_UPDATED_WCS" ];then
+        mv -v "$AN_NEW_FITS_WITH_UPDATED_WCS" wcs_"$BASENAME_FITSFILE"
+       fi
+      fi # if [ $? -eq 0 ];then
+      # cleanup
+      for AN_TMP_FILE_TO_REMOVE in "$AN_NEW_FITS_WITH_UPDATED_WCS" "$AN_WCSONLY_FILE" "$AN_AXY_FILE" ;do
+       if [ -f "$AN_TMP_FILE_TO_REMOVE" ];then
+        rm -f "$AN_TMP_FILE_TO_REMOVE"
+       fi
+      done
+     fi
+     ############
     fi
     # clean up
     rm -f "$BASENAME_FITSFILE" out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$.xyls out$$-indx.xyls
-    ############
    else
     if [ -f out$$.wcs ];then
      echo "ERROR: out$$.wcs is empty"
