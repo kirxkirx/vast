@@ -728,7 +728,7 @@ fi
     ############
     # Attempt the second iteration with restricted parameters
     RADECCOMMAND=`"$VAST_PATH"util/fov_of_wcs_calibrated_image.sh wcs_"$BASENAME_FITSFILE" | grep 'Image center:' | awk '{print "--ra "$3" --dec "$4}'`
-    FOV=`"$VAST_PATH"util/fov_of_wcs_calibrated_image.sh wcs_"$BASENAME_FITSFILE" | grep 'Image size:' | awk '{print $3}' | sed "s:'::g" | sed "s:x: :g"  | awk '{if ( $1 < $2 ) print $2/60 ;else print $1/60 }'`
+    FOV_MAJORAXIS_DEG=`"$VAST_PATH"util/fov_of_wcs_calibrated_image.sh wcs_"$BASENAME_FITSFILE" | grep 'Image size:' | awk '{print $3}' | sed "s:'::g" | sed "s:x: :g"  | awk '{if ( $1 < $2 ) print $2/60 ;else print $1/60 }'`
     IMAGE_SCALE_ARCSECPIX=`"$VAST_PATH"util/fov_of_wcs_calibrated_image.sh wcs_"$BASENAME_FITSFILE" | grep 'Image scale:' | awk '{print $3}' | awk -F '"' '{print $1}'`
     IMAGE_SCALE_ARCSECPIX_LOW=`echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%f",0.95*$1}'`
     IMAGE_SCALE_ARCSECPIX_HIGH=`echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%f",1.05*$1}'`
@@ -736,7 +736,13 @@ fi
     # --uniformize <int> select sources uniformly using roughly this many boxes (0=disable; default 10)
     # as the quality of the solution degrades for wide-field images when this feature is enabled.
     # Test case: ../NMW-STL__plate_solve_failure_test/second_epoch_images/025_2023-8-20_20-51-4_003.fts
-    RADECCOMMAND="--crpix-center --uniformize 0 $RADECCOMMAND --radius $FOV --scale-low $IMAGE_SCALE_ARCSECPIX_LOW --scale-high $IMAGE_SCALE_ARCSECPIX_HIGH --scale-units arcsecperpix"
+    # '--quad-size-max 0.25' seems to be useful for wide-field distorted images
+    QUAD_SIZE_MAX_OPTION=""
+    TEST=$(echo "$FOV_MAJORAXIS_DEG" | awk '{if ( $1 > 10.0 ) print 1 ;else print 0 }')
+    if [ $TEST -eq 1 ];then
+     QUAD_SIZE_MAX_OPTION="--quad-size-max 0.25"
+    fi
+    RADECCOMMAND="$QUAD_SIZE_MAX_OPTION --crpix-center --uniformize 0 $RADECCOMMAND --radius $FOV_MAJORAXIS_DEG --scale-low $IMAGE_SCALE_ARCSECPIX_LOW --scale-high $IMAGE_SCALE_ARCSECPIX_HIGH --scale-units arcsecperpix"
     #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
     #$TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
     $TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 100  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
