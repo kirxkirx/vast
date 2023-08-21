@@ -14185,7 +14185,7 @@ $GREP_RESULT"
   if [ -s wcs_025_2023-8-20_20-50-10_002.fts.cat.astrometric_residuals ] && [ -s wcs_025_2023-8-20_20-51-4_003.fts.cat.astrometric_residuals ];then 
    #
    MEDIAN_DISTANCE_TO_CATALOG_ARCSEC=$(cat wcs_025_2023-8-20_20-50-10_002.fts.cat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}')
-   TEST=`echo "$MEDIAN_DISTANCE_TO_CATALOG_ARCSEC" | awk '{if ( $1 < 13.8/3 ) print 1 ;else print 0 }'`
+   TEST=`echo "$MEDIAN_DISTANCE_TO_CATALOG_ARCSEC" | awk '{if ( $1 > 0.0 && $1 < 13.8/3 ) print 1 ;else print 0 }'`
    re='^[0-9]+$'
    if ! [[ $TEST =~ $re ]] ; then
     echo "TEST ERROR"
@@ -14201,7 +14201,7 @@ $GREP_RESULT"
    # 
    #
    MEDIAN_DISTANCE_TO_CATALOG_ARCSEC=$(cat wcs_025_2023-8-20_20-51-4_003.fts.cat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}')
-   TEST=`echo "$MEDIAN_DISTANCE_TO_CATALOG_ARCSEC" | awk '{if ( $1 < 13.8/3 ) print 1 ;else print 0 }'`
+   TEST=`echo "$MEDIAN_DISTANCE_TO_CATALOG_ARCSEC" | awk '{if ( $1 > 0.0 && $1 < 13.8/3 ) print 1 ;else print 0 }'`
    re='^[0-9]+$'
    if ! [[ $TEST =~ $re ]] ; then
     echo "TEST ERROR"
