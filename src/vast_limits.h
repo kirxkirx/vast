@@ -120,7 +120,8 @@
 
 // Only image pixels with values between MIN_PIX_VALUE and MAX_PIX_VALUE are considered good ones
 #define MIN_PIX_VALUE -100000
-#define MAX_PIX_VALUE 100000
+//#define MAX_PIX_VALUE 100000
+#define MAX_PIX_VALUE 1e9 // TICA TESS FFIs have pretty big values
 
 #define FLAG_N_PIXELS_AROUND_BAD_ONE 4 // that many pixels will be flagged around each bad pixel (if flag image is to be used)
 
