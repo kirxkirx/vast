@@ -661,6 +661,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  char tymesys_str_out[32];
  double inJD= 0.0;
  double endJD= 0.0; // for paring the Siril-style EXPSTART/EXPEND keywords
+ double tjd_zero= 0.0; // for parsing TESS TICA FFIs
+ double midtjd= 0.0; // for parsing TESS TICA FFIs
 
  /* fitsio */
  fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
@@ -1136,6 +1138,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     inJD= inJD + 2400000.5;
     fprintf( stderr, "Got observation time parameters: JD_start= %.5lf  exptime= %.1lf sec\n", inJD, exposure );
     inJD= inJD + exposure / 86400.0 / 2.0;
+    ( *timesys )= 0; // UNKNOWN
     // date_parsed=1;
     expstart_mjd_parsed= 1;
    } else {
@@ -1147,11 +1150,13 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
        fprintf( stderr, "Setting the middle of exposure time based on EXPSTART and EXPEND keywords.\n" );
        fprintf( stderr, "Got observation time parameters: JD_start= %.5lf  JD_end= %.5lf  exptime= %.1lf sec\n", inJD, endJD, exposure );
        inJD= ( inJD + endJD ) / 2.0;
+       ( *timesys )= 0; // UNKNOWN
        expstart_mjd_parsed= 1;
       } else {
        fprintf( stderr, "JD derived from EXPEND keyword %.5lf is out of the expected range (%.5lf,%.5lf)!\n", endJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD );
        fprintf( stderr, "Got observation time parameters: JD_start= %.5lf  exptime= %.1lf sec\n", inJD, exposure );
        inJD= inJD + exposure / 86400.0 / 2.0;
+       ( *timesys )= 0; // UNKNOWN
        expstart_mjd_parsed= 1;
       } // else if ( EXPECTED_MIN_JD < inJD && inJD < EXPECTED_MAX_JD ) {
      } else {
@@ -1159,6 +1164,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
       fprintf( stderr, "No EXPEND keyword\n" );
       fprintf( stderr, "Got observation time parameters: JD_start= %.5lf  exptime= %.1lf sec\n", inJD, exposure );
       inJD= inJD + exposure / 86400.0 / 2.0;
+      ( *timesys )= 0; // UNKNOWN
       expstart_mjd_parsed= 1;
      } // else if ( status != 202 ) {
      status= 0;
@@ -1168,6 +1174,32 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    }  // else if ( EXPECTED_MIN_MJD < inJD && inJD < EXPECTED_MAX_MJD ) {
   }   // if ( status != 202 ) {
  }    // if ( date_parsed == 0 ) {
+
+ // Check if this is a TICA TESS FFI https://archive.stsci.edu/hlsp/tica#section-c34b9669-b0be-40b2-853e-a59997d1b7c5
+ status= 0;
+ if ( date_parsed == 0 && expstart_mjd_parsed == 0 ) {
+  fprintf( stderr, "Trying to see if this is a TICA TESS FFI by looking for TJD_ZERO keyword...\n" );
+  fits_read_key( fptr, TDOUBLE, "TJD_ZERO", &tjd_zero, NULL, &status );
+  if ( status != 202 ) {
+   fprintf( stderr, "Found TJD_ZERO keyword: %.5lf\nNow looking for MIDTJD keyword...\n", tjd_zero );
+   fits_read_key( fptr, TDOUBLE, "MIDTJD", &midtjd, NULL, &status );
+   if ( status != 202 ) {
+    fprintf( stderr, "Found MIDTJD keyword: %.5lf\n", midtjd );
+    inJD= tjd_zero + midtjd;
+    if ( EXPECTED_MIN_JD < inJD && inJD < EXPECTED_MAX_JD ) { 
+     fprintf( stderr, "Getting the observing time (middle of exposure) from TJD_ZERO + MIDTJD: %.5lf\n", inJD );
+     ( *timesys )= 3; // TDB
+     expstart_mjd_parsed= 1;
+    } else {
+     fprintf( stderr, "WARNING: the value %.5lf infered from TJD_ZERO + MIDTJD is outside the expected JD range (%.0lf,%.0lf).\n\n", inJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD );
+     inJD= 0.0;
+    }
+   } else {
+    fprintf( stderr, "Found no MIDTJD keyword!\n" );
+   } // MIDTJD
+  } // TJD_ZERO
+ } // if ( date_parsed == 0 && expstart_mjd_parsed == 0 ) { 
+
 
  /////// Look for JD keyword (a convention used for Moscow photographic plate scans) ///////
  status= 0;
@@ -1187,10 +1219,11 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    fprintf( stderr, "entering   if ( status == 0 )\n" );
 #endif
    fprintf( stderr, "Getting JD of the middle of exposure from JD keyword: %.5lf\n", inJD );
+   ( *timesys )= 1; // UT -- the convention for digitized Moscow collection plates
    // Check that JD is within the reasonable range
    if ( inJD < EXPECTED_MIN_JD || inJD > EXPECTED_MAX_JD ) {
     fprintf( stderr, "ERROR: JD %lf is out of expected range (%.1lf, %.1lf)!\nYou may change EXPECTED_MIN_JD and EXPECTED_MAX_JD in src/vast_limits.h and recompile VaST if you are _really sure_ you know what you are doing...\n", inJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD );
-    exit( EXIT_FAILURE );
+    exit( EXIT_FAILURE ); // should this be return ?! we probably don't want a catastrophic crash based on one image with funny JD in the header
    }
   } else {
 #ifdef DEBUGMESSAGES
@@ -1204,6 +1237,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     fprintf( stderr, "entering  if ( status == 0 )\n" );
 #endif
     fprintf( stderr, "Getting JD of the middle of exposure from JDMID keyword: %.5lf\n", inJD );
+    ( *timesys )= 0; // UNKNOWN
     // Check that JD is within the reasonable range
     if ( inJD < EXPECTED_MIN_JD || inJD > EXPECTED_MAX_JD ) {
      fprintf( stderr, "ERROR: JD %lf is out of expected range (%.1lf, %.1lf)!\nYou may change EXPECTED_MIN_JD and EXPECTED_MAX_JD in src/vast_limits.h and recompile VaST if you are _really sure_ you know what you are doing...\n", inJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD );
@@ -1222,6 +1256,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
       exit( EXIT_FAILURE );
      }
      inJD= inJD + 2400000.5; // convert MJD to JD
+     ( *timesys )= 0; // UNKNOWN
      // Check that JD is within the reasonable range
      if ( inJD < EXPECTED_MIN_JD || inJD > EXPECTED_MAX_JD ) {
       fprintf( stderr, "ERROR: JD %lf is out of expected range (%.1lf, %.1lf)!\nYou may change EXPECTED_MIN_JD and EXPECTED_MAX_JD in src/vast_limits.h and recompile VaST if you are _really sure_ you know what you are doing...\n", inJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD );
@@ -1310,14 +1345,14 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    if ( param_verbose >= 1 ) {
     fprintf( stderr, "TIMESYS keyword found: %s\n", TIMESYS );
    }
-   if ( TIMESYS[0] == 'T' && TIMESYS[1] == 'T' ) {
+   if ( TIMESYS[0] == 'T' && TIMESYS[1] == 'D' && TIMESYS[1] == 'B' ) {
+    ( *timesys )= 3; // TDB
+   } else if ( TIMESYS[0] == 'T' && TIMESYS[1] == 'T' ) {
     ( *timesys )= 2; // TT
+   } else if ( TIMESYS[0] == 'U' && TIMESYS[1] == 'T' ) {
+    ( *timesys )= 1; // UT
    } else {
-    if ( TIMESYS[0] == 'U' && TIMESYS[1] == 'T' ) {
-     ( *timesys )= 1; // UT
-    } else {
-     ( *timesys )= 0; // UNKNOWN
-    }
+    ( *timesys )= 0; // UNKNOWN
    }
    // Another common option is
    // TIMESYS = 'TDB     '           / time system is Barycentric Dynamical Time (TDB)
@@ -1328,7 +1363,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    fprintf( stderr, "entering  else corresponding to if ( status != 202 )\n" );
 #endif
    // Here we assume that TT system can be only set from TIMESYS keyword.
-   // If it's not there - the only temaing options are UTC or UNKNOWN
+   // If it's not there - the only timing options are UTC or UNKNOWN
 
    // TIMESYS keyword not found, try to parse DATE-OBS comment string
    if ( param_verbose >= 1 ) {
@@ -1352,15 +1387,19 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
      fprintf( stderr, "No suitable comment string found\n" );
    } // if( strlen(DATEOBS_COMMENT)>1 ){
 
-   if ( ( *timesys ) != 1 ) {
+   // make sure we have one of the expected timesys values
+   if ( ( *timesys ) != 1 && ( *timesys ) != 2 && ( *timesys ) != 3 ) {
     ( *timesys )= 0; // UNKNOWN
     if ( param_verbose >= 1 )
      fprintf( stderr, "Time system is set to UNKNOWN\n" );
    }
+   
   }
 
-  /* Choose string to describe time system */
-  if ( ( *timesys ) == 2 ) {
+  // Choose string to describe time system
+  if ( ( *timesys ) == 3 ) {
+   sprintf( tymesys_str_in, "TDB" );
+  } else if ( ( *timesys ) == 2 ) {
    sprintf( tymesys_str_in, "TT" );
   } else if ( ( *timesys ) == 1 ) {
    sprintf( tymesys_str_in, "UT" );
@@ -1571,13 +1610,15 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    }
   }
 
-  /* Convert JD(UT) to JD(TT) if needed */
+  // Convert JD(UT) to JD(TT) if needed 
   if ( ( *timesys ) == 1 && convert_timesys_to_TT == 1 ) {
    ( *JD )= convert_jdUT_to_jdTT( ( *JD ), timesys );
   }
 
-  /* Choose string to describe new time system */
-  if ( ( *timesys ) == 2 ) {
+  // Choose string to describe new time system 
+  if ( ( *timesys ) == 3 ) {
+   sprintf( tymesys_str_out, "(TDB)" );
+  } else if ( ( *timesys ) == 2 ) {
    sprintf( tymesys_str_out, "(TT)" );
   } else if ( ( *timesys ) == 1 ) {
    sprintf( tymesys_str_out, "(UT)" );
@@ -1622,9 +1663,20 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 #ifdef DEBUGMESSAGES
   fprintf( stderr, "entering  else corresponding to if ( status == 202 && date_parsed != 0 && expstart_mjd_parsed == 0 )\n" );
 #endif
-  /* Setting pre-calculated JD(UT) mid. exp. from the JD keyword */
-  ( *timesys )= 1;
-  sprintf( tymesys_str_out, "(UT)" );
+  // Setting pre-calculated JD(UT) mid. exp. from the JD keyword 
+  //( *timesys )= 1;
+  //sprintf( tymesys_str_out, "(UT)" );
+  // Choose string to describe new time system 
+  if ( ( *timesys ) == 3 ) {
+   sprintf( tymesys_str_out, "(TDB)" );
+  } else if ( ( *timesys ) == 2 ) {
+   sprintf( tymesys_str_out, "(TT)" );
+  } else if ( ( *timesys ) == 1 ) {
+   sprintf( tymesys_str_out, "(UT)" );
+  } else {
+   sprintf( tymesys_str_out, " " );
+  }
+  //
   ( *JD )= inJD + apply_JD_correction_in_days;
   if ( overridingJD_from_input_image_list != 0.0 ) {
 #ifdef DEBUGMESSAGES
@@ -1632,6 +1684,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 #endif
    // Override the computed JD!
    ( *JD )= overridingJD_from_input_image_list;
+   ( *timesys )= 0; // UNKNOWN
   }
 #ifdef DEBUGMESSAGES
   fprintf( stderr, "debug checkpoint a01\n" );

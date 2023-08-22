@@ -2051,6 +2051,7 @@ int main( int argc, char **argv ) {
  int timesys= 0;               // 0 - unknown
                                // 1 - UTC
                                // 2 - TT
+                               // 3 - TDB (with our current precision it is the same as TT)
  int convert_timesys_to_TT= 1; // Convert JD from UTC to TT?
                                // 0 - no
                                // 1 - yes
@@ -6316,7 +6317,13 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  }
 
  // Choose string to describe time system
- if ( timesys == 2 ) {
+ if ( timesys == 3 ) {
+  sprintf( tymesys_str, "TDB" );
+  fprintf( stderr, "\n\n   ##### The JD time system is set to TDB, not UTC!!! #####\n " );
+  fprintf( stderr, "Within the time accuracy of VaST it is the same as TT.\n " );
+  print_TT_reminder( 2 ); // print the TT reminder once more, just to be sure the user have noticed it
+  fprintf( stderr, "   #######################################################\n\n " );
+ } else if ( timesys == 2 ) {
   sprintf( tymesys_str, "TT" );
   fprintf( stderr, "\n\n   ##### The JD time system is set to TT, not UTC!!! #####\n " );
   print_TT_reminder( 2 ); // print the TT reminder once more, just to be sure the user have noticed it
