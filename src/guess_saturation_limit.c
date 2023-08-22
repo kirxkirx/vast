@@ -206,6 +206,19 @@ int guess_gain( char *fitsfilename, char *resulting_sextractor_cl_parameter_stri
    }
   }
   status= 0; // reset status, it is OK not to find this keyword
+  // Special case for TICA TESS images
+  fits_read_key( fptr, TSTRING, "UNITS", str, NULL, &status );
+  if ( status == 0 ) {
+   if ( 0 == strncasecmp( str, "electrons", 9 ) ) {
+    gain_from_fits_header= 1.0; // TICA TESS FFI
+    fits_close_file( fptr, &status ); // close file
+    guessed_gain= gain_from_fits_header;
+    sprintf( resulting_sextractor_cl_parameter_string, " -GAIN %.3lf ", guessed_gain );
+    fprintf( stderr, "The gain value (GAIN=%.3lf) is set based on the FITS header key UNITS=%s of the image %s\n", guessed_gain, str, fitsfilename );
+    return 0;
+   }
+  }
+  status= 0; // reset status, it is OK not to find this keyword
 
   // Special case Siril image stacking code producess some really strange normalization when writing 32bit floating-point images.
   // As the result, the default non-zero gain value completely messes up error estimation for the detected sources.
@@ -302,6 +315,7 @@ int guess_gain( char *fitsfilename, char *resulting_sextractor_cl_parameter_stri
    resulting_sextractor_cl_parameter_string[0]= '\0';
    return 0;
   }
+  //
   fits_close_file( fptr, &status ); // close file
  }
 
