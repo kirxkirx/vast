@@ -18401,8 +18401,9 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT007_vizquery"
 fi
 
+
 # Make sure the damn thing doesn't crash, especially with AddressSanitizer
-lib/catalogs/check_catalogs_offline `lib/hms2deg 19:50:33.92439 +32:54:50.6097` &>/dev/null
+lib/catalogs/check_catalogs_offline $(lib/hms2deg 19:50:33.92439 +32:54:50.6097) &>/dev/null
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT007_check_catalogs_offline"
@@ -18600,6 +18601,12 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_VIZKNOWNVAR"
 fi
 
+# No false ID with Gaia DR2 high-amplitude variable
+util/search_databases_with_vizquery.sh 18:53:19.68 -04:58:21.6 online_id 350 | grep 'online_id' | grep --quiet 'Gaia DR3 4254944797873326720'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_NOWRONGGAIAVAR"
+fi
 
 # Constellations
 util/constellation.sh 0.0 0.0 | grep --quiet 'Psc'

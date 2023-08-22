@@ -695,8 +695,11 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    #fi   
    # Gaia DR3 variable
    if [ $KNOWN_VARIABLE -eq 0 ];then
+    # Gaia goes deep and will surely find somethig variable within a search radius, if one goes to faint-enough magnitudes.
+    # For this reason we go for a fixed small search radius.
     #GAIA_DR3_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/358/varisum -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $1}' | grep -v \#)
-    GAIA_DR3_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/358/varisum -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $1}' | grep -v \#)
+    #GAIA_DR3_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/358/varisum -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $1}' | grep -v \#)
+    GAIA_DR3_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/358/varisum -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs=3.0 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $1}' | grep -v \#)
     if [ -n "$GAIA_DR3_VAR_RESULTS" ];then
      SUGGESTED_NAME_STRING="Gaia DR3 varaible $GAIA_DR3_VAR_RESULTS"
      SUGGESTED_TYPE_STRING=""
@@ -714,7 +717,8 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    # Gaia DR2 large amplitude variable
    if [ $KNOWN_VARIABLE -eq 0 ];then
     #GAIA_DR2_LARGE_AMP_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/A+A/648/A44/tabled1 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $1}' | grep -v \#)
-    GAIA_DR2_LARGE_AMP_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/A+A/648/A44/tabled1 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $1}' | grep -v \#)
+    #GAIA_DR2_LARGE_AMP_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/A+A/648/A44/tabled1 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $1}' | grep -v \#)
+    GAIA_DR2_LARGE_AMP_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/A+A/648/A44/tabled1 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs=3.0 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $1}' | grep -v \#)
     if [ -n "$GAIA_DR2_LARGE_AMP_VAR_RESULTS" ];then
      SUGGESTED_NAME_STRING="Large-amplitude variable Gaia DR2 $GAIA_DR2_LARGE_AMP_VAR_RESULTS"
      SUGGESTED_TYPE_STRING="2021A&A...648A..44M"
@@ -727,8 +731,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    # Generic VizieR search for the word 'variable'
    if [ $KNOWN_VARIABLE -eq 0 ];then
     GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -words='variable' -meta -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep 'Title' | grep --ignore-case -e 'variable' -e 'variability' | grep -v 'Northern Sky Variability Survey' | sed 's:#Title\: ::g')
-    #echo $LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -words='variable' -meta -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" # 2>/dev/null | grep 'rights' | grep 'ariable' | awk -F'.html' '{print $2}'
-    #GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -words='variable' -meta -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep 'rights' | grep 'ariable' | awk -F'.html' '{print $2}')
+    GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -words='variable' -meta -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" 2>/dev/null | grep 'Title' | grep --ignore-case -e 'variable' -e 'variability' | grep -v 'Northern Sky Variability Survey' | sed 's:#Title\: ::g')
     if [ -n "$GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS" ];then
      SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING may be a known variable - check VizieR  "
     fi
