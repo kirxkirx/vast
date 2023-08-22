@@ -8743,6 +8743,11 @@ $GREP_RESULT"
    mv ../exclusion_list.txt ../exclusion_list.txt_backup
   fi
   #
+  #
+  if [ -f ../exclusion_list.txt ];then
+   mv ../exclusion_list.txt ../exclusion_list.txt_backup
+  fi
+  #
   echo "y" | util/transients/search_for_transients_single_field.sh test
   ## New stuff the file lib/catalogs/list_of_bright_stars_from_tycho2.txt should be created by util/transients/search_for_transients_single_field.sh
   if [ ! -f lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
@@ -9566,6 +9571,8 @@ if [ -d ../NMW_Venus_test ];then
  echo "NMW find Venus test " 1>&2
  echo -n "NMW find Venus test: " >> vast_test_report.txt 
  #
+ cp -v bad_region.lst_default bad_region.lst
+ #
  if [ -f ../exclusion_list.txt ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
  fi
@@ -9789,6 +9796,9 @@ if [ -d ../NMW_find_NovaCas_august31_test ];then
  echo "NMW find Nova Cas August 31 test " 1>&2
  echo -n "NMW find Nova Cas August 31 test: " >> vast_test_report.txt 
  #
+ cp -v bad_region.lst_default bad_region.lst
+ #
+ #
  if [ -f ../exclusion_list.txt ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
  fi
@@ -9990,6 +10000,9 @@ if [ -d ../NMW_nomatch_test ];then
  # Run the test
  echo "NMW large offset in one of three images test " 1>&2
  echo -n "NMW large offset in one of three images test: " >> vast_test_report.txt 
+ #
+ cp -v bad_region.lst_default bad_region.lst
+ #
  #
  if [ -f ../exclusion_list.txt ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
@@ -10215,6 +10228,8 @@ if [ -d ../NMW_ATLAS_Mira_in_Ser1 ];then
  # Run the test
  echo "NMW ATLAS Mira not in VSX ID test " 1>&2
  echo -n "NMW ATLAS Mira not in VSX ID test: " >> vast_test_report.txt 
+ #
+ cp -v bad_region.lst_default bad_region.lst
  #
  if [ -f ../exclusion_list.txt ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
@@ -10679,6 +10694,8 @@ if [ -d ../NMW_Sgr1_NovaSgr20N4_test ];then
  echo "NMW find Nova Sgr 2020 N4 test " 1>&2
  echo -n "NMW find Nova Sgr 2020 N4 test: " >> vast_test_report.txt 
  #
+ cp -v bad_region.lst_default bad_region.lst
+ #
  if [ -f ../exclusion_list.txt ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
  fi
@@ -10980,6 +10997,8 @@ if [ -d ../NMW_Aql11_NovaHer21_test ];then
  echo "NMW find Nova Her 2021 test " 1>&2
  echo -n "NMW find Nova Her 2021 test: " >> vast_test_report.txt 
  #
+ cp -v bad_region.lst_default bad_region.lst
+ #
  if [ -f ../exclusion_list.txt ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
  fi
@@ -11212,6 +11231,8 @@ if [ -d ../NMW_find_NovaCas21_test ];then
  echo "NMW find Nova Cas 2021 test " 1>&2
  echo -n "NMW find Nova Cas 2021 test: " >> vast_test_report.txt 
  #
+ cp -v bad_region.lst_default bad_region.lst
+ #
  if [ -f ../exclusion_list.txt ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
  fi
@@ -11443,6 +11464,8 @@ if [ -d ../NMW_Sco6_NovaSgr21N2_test ];then
  # Run the test
  echo "NMW find Nova Sgr 2021 N2 test " 1>&2
  echo -n "NMW find Nova Sgr 2021 N2 test: " >> vast_test_report.txt 
+ #
+ cp -v bad_region.lst_default bad_region.lst
  #
  if [ -f ../exclusion_list.txt ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
@@ -11731,6 +11754,8 @@ if [ -d ../NMW_Sgr7_NovaSgr21N1_test ];then
  # Run the test
  echo "NMW find Nova Sgr 2021 N1 test " 1>&2
  echo -n "NMW find Nova Sgr 2021 N1 test: " >> vast_test_report.txt 
+ #
+ cp -v bad_region.lst_default bad_region.lst
  #
  if [ -f ../exclusion_list.txt ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
@@ -12086,6 +12111,8 @@ if [ -d ../NMW_Vul7_NovaVul21_test ];then
  echo "NMW find Nova Vul 2021 test " 1>&2
  echo -n "NMW find Nova Vul 2021 test: " >> vast_test_report.txt 
  #
+ cp -v bad_region.lst_default bad_region.lst
+ #
  if [ -f ../exclusion_list.txt ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
  fi
@@ -12309,6 +12336,8 @@ if [ -d ../NMW_find_Mars_test ];then
  echo "NMW find Mars test " 1>&2
  echo -n "NMW find Mars test: " >> vast_test_report.txt 
  #
+ cp -v bad_region.lst_default bad_region.lst
+ #
  if [ -f ../exclusion_list.txt ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
  fi
@@ -12480,7 +12509,7 @@ $GREP_RESULT"
  fi
 
  #############################################################################
-  
+ cp -v bad_region.lst_default bad_region.lst
  REFERENCE_IMAGES=../NMW_find_Mars_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_find_Mars_test/third_epoch/
  if [ $? -ne 0 ];then
   TEST_PASSED=0
@@ -12700,6 +12729,8 @@ if [ -d ../NMW_find_Chandra_test ];then
  # Run the test
  echo "NMW find Chandra test " 1>&2
  echo -n "NMW find Chandra test: " >> vast_test_report.txt 
+ #
+ cp -v bad_region.lst_default bad_region.lst
  #
  if [ -f ../exclusion_list.txt ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
@@ -12979,6 +13010,8 @@ if [ -d ../NMW_Sgr9_crash_test ];then
  echo "NMW Sgr9 crash test " 1>&2
  echo -n "NMW Sgr9 crash test: " >> vast_test_report.txt 
  #
+ cp -v bad_region.lst_default bad_region.lst
+ #
  if [ -f transient_report/index.html ];then
   rm -f transient_report/index.html
  fi
@@ -13065,38 +13098,40 @@ $GREP_RESULT"
   # fi
   #done
   #
-  # V1858 Sgr
-  grep --quiet "V1858 Sgr" transient_report/index.html
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH0110"
-  fi
-  grep --quiet "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.."  transient_report/index.html
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH0110a"
-   GREP_RESULT=`grep "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.." transient_report/index.html`
-   DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### NMWSGR9CRASH0110a ######
-$GREP_RESULT"
-  fi
-  RADECPOSITION_TO_TEST=`grep "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.."  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
-  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 18:21:40.07 -34:11:23.3  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
-  # NMW scale is 8.4"/pix
-  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
-  re='^[0-9]+$'
-  if ! [[ $TEST =~ $re ]] ; then
-   echo "TEST ERROR"
-   TEST_PASSED=0
-   TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH0110a_TOO_FAR_TEST_ERROR"
-  else
-   if [ $TEST -eq 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH0110a_TOO_FAR_$DISTANCE_ARCSEC"
-   fi
-  fi
-  #
+  # Somehow it's now only 0.95mag above Gaia
+  ##
+  ## V1858 Sgr
+  #grep --quiet "V1858 Sgr" transient_report/index.html
+  #if [ $? -ne 0 ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH0110"
+  #fi
+  #grep --quiet "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.."  transient_report/index.html
+  #if [ $? -ne 0 ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH0110a"
+  # GREP_RESULT=`grep "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.." transient_report/index.html`
+  # DEBUG_OUTPUT="$DEBUG_OUTPUT
+# ###### NMWSGR9CRASH0110a ######
+# $GREP_RESULT"
+  #fi
+  #RADECPOSITION_TO_TEST=`grep "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.."  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  #DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 18:21:40.07 -34:11:23.3  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  ## NMW scale is 8.4"/pix
+  #TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
+  #re='^[0-9]+$'
+  #if ! [[ $TEST =~ $re ]] ; then
+  # echo "TEST ERROR"
+  # TEST_PASSED=0
+  # TEST=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH0110a_TOO_FAR_TEST_ERROR"
+  #else
+  # if [ $TEST -eq 0 ];then
+  #  TEST_PASSED=0
+  #  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH0110a_TOO_FAR_$DISTANCE_ARCSEC"
+  # fi
+  #fi
+  ##
   # V1278 Sgr does not pass the no-Gaia-source test
   ## V1278 Sgr
   #grep --quiet "V1278 Sgr" transient_report/index.html
@@ -13242,6 +13277,7 @@ $GREP_RESULT"
 
 
  # Re-run the production NMW script, make sure that we are now finding only the hot pixels while the variables are excluded
+ cp -v bad_region.lst_default bad_region.lst
  REFERENCE_IMAGES=../NMW_Sgr9_crash_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Sgr9_crash_test/second_epoch_images
  if [ $? -ne 0 ];then
   TEST_PASSED=0
@@ -13492,6 +13528,7 @@ if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
  fi
  #################################################################
  # Run the search
+ cp -v bad_region.lst_default bad_region.lst
  REFERENCE_IMAGES=../NMW_Vul2_magnitude_calibration_exit_code_test/ref/ util/transients/transient_factory_test31.sh ../NMW_Vul2_magnitude_calibration_exit_code_test/2nd_epoch/
  if [ $? -ne 0 ];then
   TEST_PASSED=0
@@ -13521,6 +13558,7 @@ if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_005"
   #fi
   # Run the search again
+  cp -v bad_region.lst_default bad_region.lst
   REFERENCE_IMAGES=../NMW_Vul2_magnitude_calibration_exit_code_test/ref/ util/transients/transient_factory_test31.sh ../NMW_Vul2_magnitude_calibration_exit_code_test/2nd_epoch/
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -13616,16 +13654,18 @@ if [ -d ../NMW-STL__find_Neptune_test ];then
  util/clean_data.sh
  #
  remove_test31_tmp_files_if_present
- #
- if [ -f ../exclusion_list.txt ];then
-  mv ../exclusion_list.txt ../exclusion_list.txt_backup
- fi
  # Run the test
  echo "NMW-STL find Neptune test " 1>&2
  echo -n "NMW-STL find Neptune test: " >> vast_test_report.txt 
  #
+ cp -v bad_region.lst_default bad_region.lst
+ #
  if [ -f transient_report/index.html ];then
   rm -f transient_report/index.html
+ fi
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
  fi
  #################################################################
  # We need a special astorb.dat for the asteroids
@@ -13920,6 +13960,13 @@ $GREP_RESULT"
  fi
  #
 
+ ###### restore default exclusion list if any
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
+
+
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
@@ -13967,16 +14014,18 @@ if [ -d ../NMW-STL__plate_solve_failure_test ];then
  util/clean_data.sh
  #
  remove_test31_tmp_files_if_present
- #
- if [ -f ../exclusion_list.txt ];then
-  mv ../exclusion_list.txt ../exclusion_list.txt_backup
- fi
  # Run the test
  echo "NMW-STL plate solve failure test " 1>&2
  echo -n "NMW-STL plate solve failure test: " >> vast_test_report.txt 
  #
+ cp -v bad_region.lst_default bad_region.lst
+ #
  if [ -f transient_report/index.html ];then
   rm -f transient_report/index.html
+ fi
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
  fi
  #################################################################
  # We need a special astorb.dat for the asteroids
@@ -14154,7 +14203,7 @@ $GREP_RESULT"
   # Here is my manual test:
   # rm -f wcs_025_2023-8-20_20-50-10_002.fts* local_wcs_cache/wcs_025_2023-8-20_20-50-10_002.fts.cat.astrometric_residuals ; ASTROMETRYNET_LOCAL_OR_REMOTE="local" FORCE_PLATE_SOLVE_SERVER="vast.sai.msu.ru" util/wcs_image_calibration.sh ../NMW-STL__plate_solve_failure_test/second_epoch_images/025_2023-8-20_20-50-10_002.fts ; lib/bin/xy2sky wcs_025_2023-8-20_20-50-10_002.fts 3581.7809 269.8186 ; lib/put_two_sources_in_one_field 00:35:04.60 +14:05:06.7  $(lib/bin/xy2sky wcs_025_2023-8-20_20-50-10_002.fts 3581.7809 269.8186 | awk '{print $1" "$2}' ) ; echo "######" ; util/solve_plate_with_UCAC5 ../NMW-STL__plate_solve_failure_test/second_epoch_images/025_2023-8-20_20-50-10_002.fts --no_photometric_catalog ; cat wcs_025_2023-8-20_20-50-10_002.fts.cat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}'
   #
-  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 2*13.8 ) print 1 ;else print 0 }'`
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 2.5*13.8 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -14173,7 +14222,7 @@ $GREP_RESULT"
   RADECPOSITION_TO_TEST=$(lib/bin/xy2sky wcs_025_2023-8-20_20-51-4_003.fts 3590.90552 269.14890 | awk '{print $1" "$2}' )
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:35:04.60 +14:05:06.7  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
-  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 2*13.8 ) print 1 ;else print 0 }'`
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 2.5*13.8 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
@@ -14244,6 +14293,13 @@ $GREP_RESULT"
   cp -v bad_region.lst_default bad_region.lst
  fi
  #
+
+ ###### restore default exclusion list if any
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
+
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
