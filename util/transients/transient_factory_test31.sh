@@ -30,8 +30,8 @@ if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"STL-11000M"* ]] || [[ "$
  echo "The input indicates the images are from STL-11000M camera"
  export CAMERA_SETTINGS="STL-11000M"
 fi
-if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"tica_tess_ffi"* ]] ; then
- echo "The input indicates the images are from STL-11000M camera"
+if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"TICA_TESS"* ]] ; then
+ echo "The input indicates the images are TICA TESS FFIs"
  export CAMERA_SETTINGS="TICA_TESS_FFI"
 fi
 
@@ -1273,8 +1273,8 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   ############################################
   # Remove candidates close to frame edge
   # here we assume that all images are the samesize as $SECOND_EPOCH__SECOND_IMAGE
-  DIMX=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS1 | awk '{print $3}')
-  DIMY=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS2 | awk '{print $3}')
+  DIMX=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS1 | awk '{print $3}' | head -n1)
+  DIMY=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS2 | awk '{print $3}' | head -n1)
   ### ===> IMAGE EDGE OFFSET HARDCODED HERE <===
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
    cat $i | awk "{if ( \$4>$FRAME_EDGE_OFFSET_PIX && \$4<$DIMX-$FRAME_EDGE_OFFSET_PIX && \$5>$FRAME_EDGE_OFFSET_PIX && \$5<$DIMY-$FRAME_EDGE_OFFSET_PIX ) print \"YES\"; else print \"NO\" }" | grep --quiet 'NO'
