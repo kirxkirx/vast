@@ -804,634 +804,596 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  #for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
  for SEXTRACTOR_CONFIG_FILE in $SEXTRACTOR_CONFIG_FILES ;do
 
- # make sure nothing is left running from the previous run (in case it ended early with 'continue')
- echo "wait"   >> transient_factory_test31.txt
- wait
- #
- 
- # just to make sure all the child loops will see it
- export SEXTRACTOR_CONFIG_FILE
- 
- echo "*------ $SEXTRACTOR_CONFIG_FILE ------*" >> transient_factory_test31.txt
- 
- ## Set the SExtractor parameters file
- if [ ! -f "$SEXTRACTOR_CONFIG_FILE" ];then
-  echo "ERROR finding $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
-  continue
- fi
- cp -v "$SEXTRACTOR_CONFIG_FILE" default.sex >> transient_factory_test31.txt
+  # make sure nothing is left running from the previous run (in case it ended early with 'continue')
+  echo "wait"   >> transient_factory_test31.txt
+  wait
+  #
+  
+  # just to make sure all the child loops will see it
+  export SEXTRACTOR_CONFIG_FILE
+  
+  echo "*------ $SEXTRACTOR_CONFIG_FILE ------*" >> transient_factory_test31.txt
+  
+  ## Set the SExtractor parameters file
+  if [ ! -f "$SEXTRACTOR_CONFIG_FILE" ];then
+   echo "ERROR finding $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
+   continue
+  fi
+  cp -v "$SEXTRACTOR_CONFIG_FILE" default.sex >> transient_factory_test31.txt
 
- echo "Starting VaST with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
- # Run VaST
- echo "
- ./vast --starmatchraius 4.0 --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE
- " >> transient_factory_test31.txt
- ./vast --starmatchraius 4.0 --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
- if [ $? -ne 0 ];then
-  # Save image date for it to be displayed in the summary file
-  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory_test31.txt
-  echo "ERROR running VaST on the field $FIELD"
-  echo "ERROR running VaST on the field $FIELD" >> transient_factory_test31.txt
-  echo "ERROR running VaST on the field $FIELD" >> transient_factory.log
-  # drop this field and continue to the next one
-  # We want to break from the SExtractor settings files loop here
-  break
- fi
- echo "VaST run complete with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
- echo "The four input images were $REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"  >> transient_factory_test31.txt
- cat vast_summary.log >> transient_factory.log
- # double-check that the VaST run was OK
- grep --quiet 'Images used for photometry 4' vast_summary.log
- if [ $? -ne 0 ];then
-  # Save image date for it to be displayed in the summary file
-  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory_test31.txt
-  echo "***** IMAGE PROCESSING ERROR (less than 4 images processed) *****" >> transient_factory.log
+  echo "Starting VaST with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
+  # Run VaST
+  echo "
+  ./vast --starmatchraius 4.0 --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE
+  " >> transient_factory_test31.txt
+  ./vast --starmatchraius 4.0 --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
+  if [ $? -ne 0 ];then
+   # Save image date for it to be displayed in the summary file
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory_test31.txt
+   echo "ERROR running VaST on the field $FIELD"
+   echo "ERROR running VaST on the field $FIELD" >> transient_factory_test31.txt
+   echo "ERROR running VaST on the field $FIELD" >> transient_factory.log
+   # drop this field and continue to the next one
+   # We want to break from the SExtractor settings files loop here
+   break
+  fi
+  echo "VaST run complete with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
+  echo "The four input images were $REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"  >> transient_factory_test31.txt
+  cat vast_summary.log >> transient_factory.log
+  # double-check that the VaST run was OK
+  grep --quiet 'Images used for photometry 4' vast_summary.log
+  if [ $? -ne 0 ];then
+   # Save image date for it to be displayed in the summary file
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory_test31.txt
+   echo "***** IMAGE PROCESSING ERROR (less than 4 images processed) *****" >> transient_factory.log
+   echo "############################################################" >> transient_factory.log
+   echo "ERROR running VaST on the field $FIELD (less than 4 images processed)" >> transient_factory_test31.txt
+   cat vast_image_details.log >> transient_factory_test31.txt
+   continue
+  fi
   echo "############################################################" >> transient_factory.log
-  echo "ERROR running VaST on the field $FIELD (less than 4 images processed)" >> transient_factory_test31.txt
-  cat vast_image_details.log >> transient_factory_test31.txt
-  continue
- fi
- echo "############################################################" >> transient_factory.log
- 
- # Use cache if possible to speed-up WCS calibration
- for WCSCACHEDIR in "local_wcs_cache" "/mnt/usb/NMW_NG/solved_reference_images" "/home/NMW_web_upload/solved_reference_images" "/dataX/kirx/NMW_NG_rt3_autumn2019/solved_reference_images" ;do
-  echo "Checking WCS cache directory $WCSCACHEDIR" >> transient_factory_test31.txt
-  if [ -d "$WCSCACHEDIR" ];then
-   echo "Found WCS cache directory $WCSCACHEDIR" >> transient_factory_test31.txt
-   ### ===> SExtractor config file <===
-   #if [ "$SEXTRACTOR_CONFIG_FILE" = "default.sex.telephoto_lens_v4" ];then
-   # echo "(SExtractor parameter file $SEXTRACTOR_CONFIG_FILE -- faint objects)" >> transient_factory_test31.txt
-   # # link the solved images and catalogs created with this SExtractorconfig file
-   # for i in "$WCSCACHEDIR"/wcs_"$FIELD"_*.fts "$WCSCACHEDIR"/exclusion_list*; do
-   #  if [ -s "$i" ];then
-   #   # We need some quality check before trusting the solved reference images
-   #   # It may be one of the NMW archive images with broken WCS
-   #   # (pubdate this check - some problematic NMW archive images have no 'A_0_0')
-   #   FITS_IMAGE_TO_CHECK_HEADER=$("$VAST_PATH"util/listhead "$i")
-   #   echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet -e 'A_0_0' -e 'A_2_0' && echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet 'PV1_1'
-   #   if [ $? -eq 0 ];then
-   #    echo "$0  -- WARNING, the input image has both SIP and PV distortions kewords! Will try to re-solve the image."
-   #   else
-   #    #
-   #    echo "Creating symlink $i" >> transient_factory_test31.txt
-   #    ln -s $i
-   #   fi
-   #  fi
-   # done
-   #else
-   # # we are using a different config file
-   # # link only the solved images (and the exclusion lists)
-   # echo "(SExtractor parameter file $SEXTRACTOR_CONFIG_FILE -- bright objects)" >> transient_factory_test31.txt
-   # for i in "$WCSCACHEDIR"/wcs_"$FIELD"_*.fts "$WCSCACHEDIR"/exclusion_list*; do
-   #  if [ -s "$i" ];then
-   #   echo "Creating symlink $i" >> transient_factory_test31.txt
-   #   ln -s $i
-   #  fi
-   # done
-   #fi
-   #break
-   
+  
+  # Use cache if possible to speed-up WCS calibration
+  for WCSCACHEDIR in "local_wcs_cache" "/mnt/usb/NMW_NG/solved_reference_images" "/home/NMW_web_upload/solved_reference_images" "/dataX/kirx/NMW_NG_rt3_autumn2019/solved_reference_images" ;do
+   echo "Checking WCS cache directory $WCSCACHEDIR" >> transient_factory_test31.txt
+   if [ -d "$WCSCACHEDIR" ];then
+    echo "Found WCS cache directory $WCSCACHEDIR" >> transient_factory_test31.txt
+    for i in "$WCSCACHEDIR"/wcs_"$FIELD"_*.fts "$WCSCACHEDIR"/exclusion_list*; do
+     if [ -s "$i" ];then
+      # We need some quality check before trusting the solved reference images
+      # It may be one of the NMW archive images with broken WCS
+      # (pubdate this check - some problematic NMW archive images have no 'A_0_0')
+      FITS_IMAGE_TO_CHECK_HEADER=$("$VAST_PATH"util/listhead "$i")
+      echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet -e 'A_0_0' -e 'A_2_0' && echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet 'PV1_1'
+      if [ $? -eq 0 ];then
+       echo "$0  -- WARNING, the input image has both SIP and PV distortions kewords! Will try to re-solve the image."
+      else
+       #
+       echo "Creating symlink $i" >> transient_factory_test31.txt
+       ln -s $i
+      fi
+     fi # if [ -s "$i" ];then
+    done # for i in "$WCSCACHEDIR"/wcs_"$FIELD"_*.fts "$WCSCACHEDIR"/exclusion_list*; do
+   fi # if [ -d "$WCSCACHEDIR" ];then
+  done # for WCSCACHEDIR in 
+  
+  echo "Plate-solving the images" >> transient_factory_test31.txt
+  # WCS-calibration (plate-solving)
+  for i in $(cat vast_image_details.log | awk '{print $17}' | sort | uniq) ;do 
+   # This should ensure the correct field-of-view guess by setting the TELESCOP keyword
+   #TELESCOP="NMW_camera" util/wcs_image_calibration.sh $i &
+   if [ -z "$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" ];then
+    TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/wcs_image_calibration.sh $i &
+   else
+    # Not explicitly setting the telescope name, let the script guess the FoV
+    util/wcs_image_calibration.sh $i &
+   fi
+  done 
+
+  # Wait for all children to end processing
+  if [ "$SYSTEM_TYPE" = "Linux" ];then
+   # --forest will not fly if we are not on Linux
+   ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+  fi
+  #####
+  echo "wait"   >> transient_factory_test31.txt
+  wait
+  #####
+  if [ "$SYSTEM_TYPE" = "Linux" ];then
+   # --forest will not fly if we are not on Linux
+   ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+  fi
+  
+  # Check that the plates were actually solved
+  for i in $(cat vast_image_details.log |awk '{print $17}') ;do 
+   WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $i)"
+   # make sure we do not have wcs_wcs_
+   WCS_IMAGE_NAME_FOR_CHECKS=${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}
    #
-   for i in "$WCSCACHEDIR"/wcs_"$FIELD"_*.fts "$WCSCACHEDIR"/exclusion_list*; do
-    if [ -s "$i" ];then
-     # We need some quality check before trusting the solved reference images
-     # It may be one of the NMW archive images with broken WCS
-     # (pubdate this check - some problematic NMW archive images have no 'A_0_0')
-     FITS_IMAGE_TO_CHECK_HEADER=$("$VAST_PATH"util/listhead "$i")
-     echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet -e 'A_0_0' -e 'A_2_0' && echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet 'PV1_1'
-     if [ $? -eq 0 ];then
-      echo "$0  -- WARNING, the input image has both SIP and PV distortions kewords! Will try to re-solve the image."
+   if [ ! -s "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
+    echo "***** PLATE SOLVE PROCESSING ERROR *****" >> transient_factory.log
+    echo "***** cannot find $WCS_IMAGE_NAME_FOR_CHECKS  *****" >> transient_factory.log
+    echo "############################################################" >> transient_factory.log
+    echo 'UNSOLVED_PLATE'
+   else
+    echo "$WCS_IMAGE_NAME_FOR_CHECKS exists and is non-empty" >> transient_factory_test31.txt
+    if [ ! -d local_wcs_cache/ ];then
+     mkdir local_wcs_cache
+    fi
+    if [ ! -L "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
+     ### ===> SExtractor config file <===
+     #if [ "$SEXTRACTOR_CONFIG_FILE" != "default.sex.telephoto_lens_v4" ];then
+     if [ "$SEXTRACTOR_CONFIG_FILE" == "$SEXTRACTOR_CONFIG_BRIGHTSTARPASS" ];then
+      # save the solved plate to local cache, but only if it's not already a symlink
+      echo "Saving $WCS_IMAGE_NAME_FOR_CHECKS to local_wcs_cache/" >> transient_factory_test31.txt
+      cp -v "$WCS_IMAGE_NAME_FOR_CHECKS" local_wcs_cache/ >> transient_factory_test31.txt 2>&1
      else
-      #
-      echo "Creating symlink $i" >> transient_factory_test31.txt
-      ln -s $i
+      echo "NOT SAVING $WCS_IMAGE_NAME_FOR_CHECKS to local_wcs_cache/ as this is the run with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
      fi
     fi
-   done
-
-   #
-
-  fi
- done
- 
- echo "Plate-solving the images" >> transient_factory_test31.txt
- # WCS-calibration (plate-solving)
- for i in $(cat vast_image_details.log | awk '{print $17}' | sort | uniq) ;do 
-  # This should ensure the correct field-of-view guess by setting the TELESCOP keyword
-  #TELESCOP="NMW_camera" util/wcs_image_calibration.sh $i &
-  if [ -z "$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" ];then
-   TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/wcs_image_calibration.sh $i &
-  else
-   # Not explicitly setting the telescope name, let the script guess the FoV
-   util/wcs_image_calibration.sh $i &
-  fi
- done 
-
- # Wait for all children to end processing
- if [ "$SYSTEM_TYPE" = "Linux" ];then
-  # --forest will not fly if we are not on Linux
-  ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
- fi
- #####
- echo "wait"   >> transient_factory_test31.txt
- wait
- #####
- if [ "$SYSTEM_TYPE" = "Linux" ];then
-  # --forest will not fly if we are not on Linux
-  ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
- fi
- 
- # Check that the plates were actually solved
- for i in $(cat vast_image_details.log |awk '{print $17}') ;do 
-  WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $i)"
-  # make sure we do not have wcs_wcs_
-  WCS_IMAGE_NAME_FOR_CHECKS=${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}
-  #
-  if [ ! -s "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
-   echo "***** PLATE SOLVE PROCESSING ERROR *****" >> transient_factory.log
-   echo "***** cannot find $WCS_IMAGE_NAME_FOR_CHECKS  *****" >> transient_factory.log
-   echo "############################################################" >> transient_factory.log
-   echo 'UNSOLVED_PLATE'
-  else
-   echo "$WCS_IMAGE_NAME_FOR_CHECKS exists and is non-empty" >> transient_factory_test31.txt
-   if [ ! -d local_wcs_cache/ ];then
-    mkdir local_wcs_cache
    fi
-   if [ ! -L "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
-    ### ===> SExtractor config file <===
-    #if [ "$SEXTRACTOR_CONFIG_FILE" != "default.sex.telephoto_lens_v4" ];then
-    if [ "$SEXTRACTOR_CONFIG_FILE" == "$SEXTRACTOR_CONFIG_BRIGHTSTARPASS" ];then
-     # save the solved plate to local cache, but only if it's not already a symlink
-     echo "Saving $WCS_IMAGE_NAME_FOR_CHECKS to local_wcs_cache/" >> transient_factory_test31.txt
-     cp -v "$WCS_IMAGE_NAME_FOR_CHECKS" local_wcs_cache/ >> transient_factory_test31.txt 2>&1
-    else
-     echo "NOT SAVING $WCS_IMAGE_NAME_FOR_CHECKS to local_wcs_cache/ as this is the run with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
-    fi
-   fi
+  done | grep --quiet 'UNSOLVED_PLATE'
+  if [ $? -eq 0 ];then
+   # Save image date for it to be displayed in the summary file
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory_test31.txt
+   echo "ERROR found an unsoved plate in the field $FIELD" >> transient_factory.log
+   echo "ERROR found an unsoved plate in the field $FIELD" >> transient_factory_test31.txt
+   continue
   fi
- done | grep --quiet 'UNSOLVED_PLATE'
- if [ $? -eq 0 ];then
-  # Save image date for it to be displayed in the summary file
-  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory_test31.txt
-  echo "ERROR found an unsoved plate in the field $FIELD" >> transient_factory.log
-  echo "ERROR found an unsoved plate in the field $FIELD" >> transient_factory_test31.txt
-  continue
- fi
 
- # Determine image FoV to compute limits on the pointing accuracy
- WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $REFERENCE_EPOCH__FIRST_IMAGE)"
- WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
- IMAGE_FOV_ARCMIN=$(util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image size:' | awk '{print $3}' | awk -F"'" '{print $1}')
+  # Determine image FoV to compute limits on the pointing accuracy
+  WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $REFERENCE_EPOCH__FIRST_IMAGE)"
+  WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
+  IMAGE_FOV_ARCMIN=$(util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image size:' | awk '{print $3}' | awk -F"'" '{print $1}')
 
- ##### Set astrometric match limits
- IMAGE_SCALE_ARCSECPIX_STRING=$(util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image scale:' | awk '{print $3}')
- IMAGE_SCALE_ARCSECPIX=$(echo "$IMAGE_SCALE_ARCSECPIX_STRING" | awk -F'"' '{print $1}')
- # MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT and MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_OFTLIMIT
- # are used for filtering candidates in util/transients/report_transient.sh
- export MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1}')
- export MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1*1.5}')
- export MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1*2.0}')
- echo "The image scale is $IMAGE_SCALE_ARCSECPIX_STRING, setting the soft and hard astrometric limits for filtering second-epoch detections: $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT pix and $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT pix" >> transient_factory_test31.txt
+  ##### Set astrometric match limits
+  IMAGE_SCALE_ARCSECPIX_STRING=$(util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image scale:' | awk '{print $3}')
+  IMAGE_SCALE_ARCSECPIX=$(echo "$IMAGE_SCALE_ARCSECPIX_STRING" | awk -F'"' '{print $1}')
+  # MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT and MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_OFTLIMIT
+  # are used for filtering candidates in util/transients/report_transient.sh
+  export MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1}')
+  export MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1*1.5}')
+  export MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1*2.0}')
+  echo "The image scale is $IMAGE_SCALE_ARCSECPIX_STRING, setting the soft and hard astrometric limits for filtering second-epoch detections: $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT pix and $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT pix" >> transient_factory_test31.txt
 
- ##### Set pointing accuracy limits
- ## 1 deg hard limit for the NMW camera
- #FOV_DEG_LIMIT_HARD=$(echo "$IMAGE_FOV_ARCMIN" | awk '{printf "%.3f",$1/466.5*1.0}')
- ## 0.25 deg soft limit for the NMW camera
- #FOV_DEG_LIMIT_SOFT=$(echo "$IMAGE_FOV_ARCMIN" | awk '{printf "%.3f",$1/466.5*0.25}')
- # Relax the pointing limits
- #FOV_DEG_LIMIT_HARD=$(echo "$IMAGE_FOV_ARCMIN" | awk '{printf "%.3f",$1/466.5*1.0}')
- #FOV_DEG_LIMIT_SOFT=$(echo "$IMAGE_FOV_ARCMIN" | awk '{printf "%.3f",$1/466.5*0.5}')
- FOV_DEG_LIMIT_HARD=$(echo "$IMAGE_FOV_ARCMIN" | awk '{val = $1/466.5*1.0; if (val < 0.2) val = 0.2; else if (val > 1.0) val = 1.0; printf "%.3f", val}')
- FOV_DEG_LIMIT_SOFT=$(echo "$IMAGE_FOV_ARCMIN" | awk '{val = $1/466.5*0.5; if (val < 0.1) val = 0.1; else if (val > 0.5) val = 0.5; printf "%.3f", val}')
+  ##### Set pointing accuracy limits
+  ## 1 deg hard limit for the NMW camera
+  #FOV_DEG_LIMIT_HARD=$(echo "$IMAGE_FOV_ARCMIN" | awk '{printf "%.3f",$1/466.5*1.0}')
+  ## 0.25 deg soft limit for the NMW camera
+  #FOV_DEG_LIMIT_SOFT=$(echo "$IMAGE_FOV_ARCMIN" | awk '{printf "%.3f",$1/466.5*0.25}')
+  # Relax the pointing limits
+  #FOV_DEG_LIMIT_HARD=$(echo "$IMAGE_FOV_ARCMIN" | awk '{printf "%.3f",$1/466.5*1.0}')
+  #FOV_DEG_LIMIT_SOFT=$(echo "$IMAGE_FOV_ARCMIN" | awk '{printf "%.3f",$1/466.5*0.5}')
+  FOV_DEG_LIMIT_HARD=$(echo "$IMAGE_FOV_ARCMIN" | awk '{val = $1/466.5*1.0; if (val < 0.2) val = 0.2; else if (val > 1.0) val = 1.0; printf "%.3f", val}')
+  FOV_DEG_LIMIT_SOFT=$(echo "$IMAGE_FOV_ARCMIN" | awk '{val = $1/466.5*0.5; if (val < 0.1) val = 0.1; else if (val > 0.5) val = 0.5; printf "%.3f", val}')
 
- # Compare image centers of the reference and second-epoch image
- WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $REFERENCE_EPOCH__FIRST_IMAGE)"
- WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
- IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE=$(util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}')
+  # Compare image centers of the reference and second-epoch image
+  WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $REFERENCE_EPOCH__FIRST_IMAGE)"
+  WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
+  IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE=$(util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}')
 
- #### Do the pointing check for the first image of the second epoch
- WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $SECOND_EPOCH__FIRST_IMAGE)"
- WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
- IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE=$(util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}')
- DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}')
- echo "###################################
+  #### Do the pointing check for the first image of the second epoch
+  WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $SECOND_EPOCH__FIRST_IMAGE)"
+  WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
+  IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE=$(util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}')
+  DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}')
+  echo "###################################
 # Check the image center offset between the reference and the first second-epoch image (pointing accuracy)
 Reference image center $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE
 Second-epoch image center $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE
 Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
 Soft limit: $FOV_DEG_LIMIT_SOFT deg.  Hard limit: $FOV_DEG_LIMIT_HARD deg.
 ###################################" >> transient_factory_test31.txt
- ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
- #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>1.0" | bc -ql`
- TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_HARD" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
- if [ $TEST -eq 1 ];then
-  if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
-   # Save image date for it to be displayed in the summary file
-   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory_test31.txt
-   echo "ERROR: (NO CANDIDATES LISTED) distance between 1st reference and 1st second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)"
-   echo "ERROR: (NO CANDIDATES LISTED) distance between 1st reference and 1st second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" >> transient_factory_test31.txt
-   break
-   # This should break us form the SEXTRACTOR_CONFIG_FILE cycle
+  ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
+  #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>1.0" | bc -ql`
+  TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_HARD" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+  if [ $TEST -eq 1 ];then
+   if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
+    # Save image date for it to be displayed in the summary file
+    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory_test31.txt
+    echo "ERROR: (NO CANDIDATES LISTED) distance between 1st reference and 1st second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)"
+    echo "ERROR: (NO CANDIDATES LISTED) distance between 1st reference and 1st second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" >> transient_factory_test31.txt
+    break
+    # This should break us form the SEXTRACTOR_CONFIG_FILE cycle
+   fi
   fi
- fi
- ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
- # Note that the sister parameter is also set below
- # Relax the reference-new image pointing difference threshold for raising the error
- TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_SOFT" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
- if [ $TEST -eq 1 ];then
-  if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
-   echo "ERROR: distance between 1st reference and 1st second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)"
-   echo "ERROR: distance between 1st reference and 1st second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" >> transient_factory_test31.txt
-   #break
-   # Not break'ing here, the offset is not hopelessly large and we want to keep candidates from this field
+  ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
+  # Note that the sister parameter is also set below
+  # Relax the reference-new image pointing difference threshold for raising the error
+  TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_SOFT" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+  if [ $TEST -eq 1 ];then
+   if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
+    echo "ERROR: distance between 1st reference and 1st second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)"
+    echo "ERROR: distance between 1st reference and 1st second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" >> transient_factory_test31.txt
+    #break
+    # Not break'ing here, the offset is not hopelessly large and we want to keep candidates from this field
+   fi
   fi
- fi
 
 
- #### Do the pointing check for the second image of the second epoch
- WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $SECOND_EPOCH__SECOND_IMAGE)"
- WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
- IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE=$(util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}')
- DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}')
- echo "###################################
+  #### Do the pointing check for the second image of the second epoch
+  WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $SECOND_EPOCH__SECOND_IMAGE)"
+  WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
+  IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE=$(util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}')
+  DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}')
+  echo "###################################
 # Check the image center offset between the reference and the second second-epoch image (pointing accuracy)
 Reference image center $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE
 Second-epoch image center $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE
 Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
 ###################################" >> transient_factory_test31.txt
- ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
- #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>1.0" | bc -ql`
- TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_HARD" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
- if [ $TEST -eq 1 ];then
-  if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
-   # Save image date for it to be displayed in the summary file
-   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory_test31.txt
-   echo "ERROR: (NO CANDIDATES LISTED) distance between 1st reference and 2nd second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)"
-   echo "ERROR: (NO CANDIDATES LISTED) distance between 1st reference and 2nd second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" >> transient_factory_test31.txt
-   break
-   # This should break us form the SEXTRACTOR_CONFIG_FILE cycle
+  ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
+  #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>1.0" | bc -ql`
+  TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_HARD" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+  if [ $TEST -eq 1 ];then
+   if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
+    # Save image date for it to be displayed in the summary file
+    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory_test31.txt
+    echo "ERROR: (NO CANDIDATES LISTED) distance between 1st reference and 2nd second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)"
+    echo "ERROR: (NO CANDIDATES LISTED) distance between 1st reference and 2nd second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" >> transient_factory_test31.txt
+    break
+    # This should break us form the SEXTRACTOR_CONFIG_FILE cycle
+   fi
   fi
- fi
- ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
- #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | bc -ql`
- #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
- ## Note that this is also set above!
- TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_SOFT" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
- if [ $TEST -eq 1 ];then
-  if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
-   echo "ERROR: distance between 1st reference and 2nd second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)"
-   echo "ERROR: distance between 1st reference and 2nd second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" >> transient_factory_test31.txt
-   #break
-   # Not break'ing here, the offset is not hopelessly large and we want to keep candidates from this field
+  ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
+  #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | bc -ql`
+  #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+  ## Note that this is also set above!
+  TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_SOFT" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+  if [ $TEST -eq 1 ];then
+   if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
+    echo "ERROR: distance between 1st reference and 2nd second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)"
+    echo "ERROR: distance between 1st reference and 2nd second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" >> transient_factory_test31.txt
+    #break
+    # Not break'ing here, the offset is not hopelessly large and we want to keep candidates from this field
+   fi
   fi
- fi
- 
- # Check if shift is applied to secondepoch images
- if [ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ];then
-  if [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "yes" ];then
-   ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
-   # Require a 3 pixel shift, but no less than 1"
-   MIN_IMAGE_SHIFT_ARCSEC=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{val = 3*$1; printf "%.1f", (val<1.0?1.0:val)}')
-   MIN_IMAGE_SHIFT_DEG=$(echo "$MIN_IMAGE_SHIFT_ARCSEC" | awk '{printf "%.5f", $1/3600}')
-   #
-   DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.5f", $5}')
-   echo "###################################
+  
+  # Check if shift is applied to secondepoch images
+  if [ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ];then
+   if [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "yes" ];then
+    ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
+    # Require a 3 pixel shift, but no less than 1"
+    MIN_IMAGE_SHIFT_ARCSEC=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{val = 3*$1; printf "%.1f", (val<1.0?1.0:val)}')
+    MIN_IMAGE_SHIFT_DEG=$(echo "$MIN_IMAGE_SHIFT_ARCSEC" | awk '{printf "%.5f", $1/3600}')
+    #
+    DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.5f", $5}')
+    echo "###################################
 # Check the image center offset between the first and the second second-epoch image (ahift should be applied between the second-epoch images)
 Second-epoch first image center  $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE
 Second-epoch second image center $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE
 Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
 ###################################" >> transient_factory_test31.txt
-   TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG<$MIN_IMAGE_SHIFT_DEG" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
-   if [ $TEST -eq 1 ];then
-    if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
-     echo "ERROR: no shift applied between second-epoch images! The distance between image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (min. required shift: $MIN_IMAGE_SHIFT_DEG deg.)"
-     echo "ERROR: no shift applied between second-epoch images! The distance between image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (min. required shift: $MIN_IMAGE_SHIFT_DEG deg.)" >> transient_factory_test31.txt
-     #break
-     # Not break'ing here
-    fi # if [ "$CHECK_POINTING_ACCURACY" = "YES"
+    TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG<$MIN_IMAGE_SHIFT_DEG" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
+    if [ $TEST -eq 1 ];then
+     if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
+      echo "ERROR: no shift applied between second-epoch images! The distance between image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (min. required shift: $MIN_IMAGE_SHIFT_DEG deg.)"
+      echo "ERROR: no shift applied between second-epoch images! The distance between image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (min. required shift: $MIN_IMAGE_SHIFT_DEG deg.)" >> transient_factory_test31.txt
+      #break
+      # Not break'ing here
+     fi # if [ "$CHECK_POINTING_ACCURACY" = "YES"
+    fi
+    #
+    
+    #
+    
+   fi # if [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "yes" ]
+  fi # if [ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ];then
+
+  
+  echo "Running solve_plate_with_UCAC5" >> transient_factory_test31.txt
+  for i in $(cat vast_image_details.log | awk '{print $17}' | sort | uniq) ;do 
+   # This should ensure the correct field-of-view guess by setting the TELESCOP keyword
+   if [ -z "$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" ];then
+    if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
+     # for a narrow field of view we actually need the photometric catalog
+     TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
+    else
+     # for a wide field of view Tycho-2 will be used, so no need for other photometric information - let's speed-up things
+     TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
+    fi # if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
+   else
+    # Not explicitly setting the telescope name, let the script guess the FoV
+    if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
+     util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
+    else
+     util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
+    fi # if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
    fi
-   #
-   
-   #
-   
-  fi # if [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "yes" ]
- fi # if [ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ];then
+  done 
 
- 
- echo "Running solve_plate_with_UCAC5" >> transient_factory_test31.txt
- for i in $(cat vast_image_details.log | awk '{print $17}' | sort | uniq) ;do 
-  # This should ensure the correct field-of-view guess by setting the TELESCOP keyword
-  if [ -z "$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" ];then
-   if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
-    # for a narrow field of view we actually need the photometric catalog
-    TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
-   else
-    # for a wide field of view Tycho-2 will be used, so no need for other photometric information - let's speed-up things
-    TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
-   fi # if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
-  else
-   # Not explicitly setting the telescope name, let the script guess the FoV
-   if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
-    util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
-   else
-    util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
-   fi # if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
+  
+  # Calibrate magnitude scale with Tycho-2 stars in the field
+  # In order for this to work, we need the plate-solved reference image 
+  echo "Calibrating the magnitude scale" >> transient_factory_test31.txt
+  if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
+   rm -f 'lightcurve.tmp_emergency_stop_debug'
   fi
- done 
-
- 
- # Calibrate magnitude scale with Tycho-2 stars in the field
- # In order for this to work, we need the plate-solved reference image 
- echo "Calibrating the magnitude scale" >> transient_factory_test31.txt
- if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
-  rm -f 'lightcurve.tmp_emergency_stop_debug'
- fi
- WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $REFERENCE_EPOCH__FIRST_IMAGE)"
- WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
- if [ ! -s "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
-  echo "$WCS_IMAGE_NAME_FOR_CHECKS does not exist or is empty: waiting for solve_plate_with_UCAC5" >> transient_factory_test31.txt
-  # Wait here hoping util/solve_plate_with_UCAC5 will plate-solve the reference image
+  WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $REFERENCE_EPOCH__FIRST_IMAGE)"
+  WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
+  if [ ! -s "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
+   echo "$WCS_IMAGE_NAME_FOR_CHECKS does not exist or is empty: waiting for solve_plate_with_UCAC5" >> transient_factory_test31.txt
+   # Wait here hoping util/solve_plate_with_UCAC5 will plate-solve the reference image
+   if [ "$SYSTEM_TYPE" = "Linux" ];then
+    # --forest will not fly if we are not on Linux
+    ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+   fi
+   #####
+   echo "wait"   >> transient_factory_test31.txt
+   wait
+   #####
+   if [ "$SYSTEM_TYPE" = "Linux" ];then
+    # --forest will not fly if we are not on Linux
+    ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+   fi
+  else
+   echo "Found non-empty $WCS_IMAGE_NAME_FOR_CHECKS" >> transient_factory_test31.txt
+  fi
+  # Print the process tree
   if [ "$SYSTEM_TYPE" = "Linux" ];then
-   # --forest will not fly if we are not on Linux
+   # --forest will not fly if we are not on Linux 
    ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
   fi
-  #####
-  echo "wait"   >> transient_factory_test31.txt
-  wait
-  #####
-  if [ "$SYSTEM_TYPE" = "Linux" ];then
-   # --forest will not fly if we are not on Linux
-   ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+  echo "____ Start of magnitude calibration ____" >> transient_factory_test31.txt
+  # Decide which catalog to use for magnitude calibration depending on the image filed of view
+  if [ -z "$PHOTOMETRIC_CALIBRATION" ];then
+   if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
+    # APASS magnitude calibration for narrow-field images
+    PHOTOMETRIC_CALIBRATION="APASS_V"
+   else
+    # Tycho-2 magnitude calibration for wide-field images
+    # (Tycho-2 is relatively small, so it's convenient to have a local copy of the catalog)
+    PHOTOMETRIC_CALIBRATION="TYCHO2_V"
+   fi
   fi
- else
-  echo "Found non-empty $WCS_IMAGE_NAME_FOR_CHECKS" >> transient_factory_test31.txt
- fi
- # Print the process tree
- if [ "$SYSTEM_TYPE" = "Linux" ];then
-  # --forest will not fly if we are not on Linux 
-  ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
- fi
- echo "____ Start of magnitude calibration ____" >> transient_factory_test31.txt
- # Decide which catalog to use for magnitude calibration depending on the image filed of view
- if [ -z "$PHOTOMETRIC_CALIBRATION" ];then
-  if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
-   # APASS magnitude calibration for narrow-field images
-   PHOTOMETRIC_CALIBRATION="APASS_V"
-  else
-   # Tycho-2 magnitude calibration for wide-field images
-   # (Tycho-2 is relatively small, so it's convenient to have a local copy of the catalog)
-   PHOTOMETRIC_CALIBRATION="TYCHO2_V"
-  fi
- fi
- echo "PHOTOMETRIC_CALIBRATION=$PHOTOMETRIC_CALIBRATION" >> transient_factory_test31.txt
- case $PHOTOMETRIC_CALIBRATION in
-  "APASS_B")
-   echo "Calibrating the magnitude scale with APASS B stars" >> transient_factory_test31.txt
-   util/magnitude_calibration.sh B zero_point >> transient_factory_test31.txt
-   MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
-   ;;
-  "APASS_g")
-   echo "Calibrating the magnitude scale with APASS g stars" >> transient_factory_test31.txt
-   util/magnitude_calibration.sh g zero_point >> transient_factory_test31.txt
-   MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
-   ;;
-  "APASS_V")
-   echo "Calibrating the magnitude scale with APASS V stars" >> transient_factory_test31.txt
-   util/magnitude_calibration.sh V zero_point >> transient_factory_test31.txt
-   MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
-   ;;
-  "APASS_r")
-   echo "Calibrating the magnitude scale with APASS r stars" >> transient_factory_test31.txt
-   util/magnitude_calibration.sh r zero_point >> transient_factory_test31.txt
-   MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
-   ;;
-  "APASS_R")
-   echo "Calibrating the magnitude scale with APASS R stars" >> transient_factory_test31.txt
-   util/magnitude_calibration.sh R zero_point >> transient_factory_test31.txt
-   MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
-   ;;
-  "APASS_I")
-   echo "Calibrating the magnitude scale with APASS I stars" >> transient_factory_test31.txt
-   util/magnitude_calibration.sh I zero_point >> transient_factory_test31.txt
-   MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
-   ;;
-  "TYCHO2_V")
-   echo "Calibrating the magnitude scale with Tycho-2 stars" >> transient_factory_test31.txt
-   echo "y" | util/transients/calibrate_current_field_with_tycho2.sh >> transient_factory_test31.txt 2>&1
-   MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
-   ;;
-  *)
-   echo "ERROR: unknown value PHOTOMETRIC_CALIBRATION=$PHOTOMETRIC_CALIBRATION" >> transient_factory_test31.txt
-   MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=1
-   ;;
- esac
- fi
- echo "____ End of magnitude calibration ____" >> transient_factory_test31.txt
- # Check that the magnitude calibration actually worked
- for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
-  ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
-  #cat "$i" | awk '{print $2}' | util/colstat 2>&1 | grep 'MEAN=' | awk '{if ( $2 < -5 && $2 >18 ) print "ERROR"}' | grep 'ERROR' && break
-  # The reference frame might be a few magnitudes deeper than the new frames
-  cat "$i" | awk '{print $2}' | util/colstat 2>&1 | grep 'MEAN=' | awk -v var="$FILTER_BRIGHT_MAG_CUTOFF" -v var2="$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" '{if ( $2 < var && $2 > var2+5.0 ) print "ERROR"}' | grep 'ERROR' && break
- done | grep --quiet 'ERROR'
- #
- if [ $? -eq 0 ];then
-  # Wait for the solve_plate_with_UCAC5 stuff to finish
-  echo "wait"   >> transient_factory_test31.txt
-  # Save image date for it to be displayed in the summary file
-  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory_test31.txt
-  wait
-  # Throw an error
-  echo "ERROR calibrating magnitudes in the field $FIELD (mean mag outside of range)"
-  echo "ERROR calibrating magnitudes in the field $FIELD (mean mag outside of range)" >> transient_factory_test31.txt
-  echo "***** MAGNITUDE CALIBRATION ERROR (candidate mag is out of the expected range) *****" >> transient_factory.log
-  echo "############################################################" >> transient_factory.log
-  # continue to the next field
-  continue
- fi
- if [ $MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE -ne 0 ];then
-  # Wait for the solve_plate_with_UCAC5 stuff to finish
-  echo "wait"   >> transient_factory_test31.txt
-  wait
-  # Save image date for it to be displayed in the summary file
-  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory_test31.txt
-  # Throw an error
-  echo "ERROR calibrating magnitudes in the field $FIELD MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE"
-  echo "ERROR calibrating magnitudes in the field $FIELD MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE" >> transient_factory_test31.txt
-  echo "***** MAGNITUDE CALIBRATION ERROR (mag calibration script exited with code $MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE) *****" >> transient_factory.log
-  echo "############################################################" >> transient_factory.log
-  # continue to the next field
-  continue
- fi
- if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
-  # Wait for the solve_plate_with_UCAC5 stuff to finish
-  echo "wait"   >> transient_factory_test31.txt
-  wait
-  # Throw an error
-  echo "ERROR calibrating magnitudes in the field $FIELD (found lightcurve.tmp_emergency_stop_debug)"
-  echo "ERROR calibrating magnitudes in the field $FIELD (found lightcurve.tmp_emergency_stop_debug)" >> transient_factory_test31.txt
-  echo "############################################################" >> transient_factory_test31.txt
-  cat lightcurve.tmp_emergency_stop_debug >> transient_factory_test31.txt
-  echo "############################################################" >> transient_factory_test31.txt
-  echo "***** MAGNITUDE CALIBRATION ERROR (lightcurve.tmp_emergency_stop_debug) *****" >> transient_factory.log
-  echo "############################################################" >> transient_factory.log
-  # continue to the next field
-  continue
- fi
-
- ################## Quality cuts applied to calibrated magnitudes of the candidate transients ##################
- cp -v candidates-transients.lst DEBUG_BACKUP_candidates-transients.lst
- echo "Filter-out faint candidates..." >> transient_factory_test31.txt
- echo "Filter-out faint candidates..."
- # Filter-out faint candidates
- ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
- #for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">13.5"}'|bc -ql) ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
- for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk -v var="$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" '{print ((($1+$2)/2>var)?1:0)}' ) ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
-
- echo "Filter-out suspiciously bright candidates..." >> transient_factory_test31.txt
- echo "Filter-out suspiciously bright candidates..."
- # Filter-out suspiciously bright candidates
- ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
- #for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2"<-5.0"}'|bc -ql) ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
- for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk -v var="$FILTER_BRIGHT_MAG_CUTOFF" '{print ((($1+$2)/2<var)?1:0)}' ) ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
-
- echo "Filter-out candidates with large difference between measured mags in one epoch..." >> transient_factory_test31.txt
- echo "Filter-out candidates with large difference between measured mags in one epoch..."
- # 2nd epoch
- # Filter-out candidates with large difference between measured mags
- for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($1-$2)>0.4 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
- # Filter-out candidates with large difference between measured mags
- for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($2-$1)>0.4 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
- # 1st epoch (only for sources detected on two reference images)
- # Filter-out candidates with large difference between measured mags
- for i in $(cat candidates-transients.lst | awk '{print $1}') ;do if [ $(cat $i | wc -l) -lt 4 ];then grep $i candidates-transients.lst | head -n1 ;continue ;fi ; A=$(head -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($1-$2)>1.0 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
- # Filter-out candidates with large difference between measured mags
- for i in $(cat candidates-transients.lst | awk '{print $1}') ;do if [ $(cat $i | wc -l) -lt 4 ];then grep $i candidates-transients.lst | head -n1 ;continue ;fi ; A=$(head -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($2-$1)>1.0 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
-
- ############################################
- # Remove candidates close to frame edge
- # here we assume that all images are the samesize as $SECOND_EPOCH__SECOND_IMAGE
- DIMX=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS1 | awk '{print $3}')
- DIMY=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS2 | awk '{print $3}')
- ### ===> IMAGE EDGE OFFSET HARDCODED HERE <===
- for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
-  cat $i | awk "{if ( \$4>$FRAME_EDGE_OFFSET_PIX && \$4<$DIMX-$FRAME_EDGE_OFFSET_PIX && \$5>$FRAME_EDGE_OFFSET_PIX && \$5<$DIMY-$FRAME_EDGE_OFFSET_PIX ) print \"YES\"; else print \"NO\" }" | grep --quiet 'NO'
-  if [ $? -ne 0 ];then
-   # If there was no "NO" answer for any of the lines
-   grep $i candidates-transients.lst | head -n1 
-  fi
- done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
- ############################################
-
- echo "Filter-out small-amplitude flares..." >> transient_factory_test31.txt
- echo "Filter-out small-amplitude flares..."
- # Filter-out small-amplitude flares
- for i in $(cat candidates-transients.lst | awk '{print $1}') ;do if [ $(cat $i | wc -l) -eq 2 ];then grep $i candidates-transients.lst | head -n1 ;continue ;fi ; A=$(head -n1 $i | awk '{print $2}') ; B=$(tail -n2 $i | awk '{print $2}') ; MEANMAGSECONDEPOCH=$(echo ${B//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2}') ; TEST=$(echo $A $MEANMAGSECONDEPOCH | awk '{if ( ($1-$2)<0.5 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
-
- # Make sure each candidate is detected on the two second-epoch images, not any other combination
- for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
-  grep --quiet "$SECOND_EPOCH__FIRST_IMAGE" "$i"
-  if [ $? -ne 0 ];then
-   continue
-  fi
-  grep --quiet "$SECOND_EPOCH__SECOND_IMAGE" "$i"
-  if [ $? -ne 0 ];then
-   continue
-  fi
-  grep $i candidates-transients.lst | head -n1 
- done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
-
- ### Prepare the exclusion lists for this field
- echo "Preparing the exclusion lists for this field" >> transient_factory_test31.txt
- # Exclude the previously considered candidates
- if [ ! -s exclusion_list.txt ];then
-  if [ -s "$EXCLUSION_LIST" ];then
-   SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
-   WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
-   lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @$EXCLUSION_LIST | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list.txt
-   cp -v exclusion_list.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
-  fi
- fi
- # Exclude stars from the Bright Star Catalog with magnitudes < 3
- if [ ! -s exclusion_list_bbsc.txt ];then
-  if [ -s lib/catalogs/brightbright_star_catalog_radeconly.txt ];then
-   SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
-   WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
-   lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/brightbright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bbsc.txt
-   cp -v exclusion_list_bbsc.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
-  fi
- fi
- # Exclude stars from the Bright Star Catalog with magnitudes < 7
- if [ ! -s exclusion_list_bsc.txt ];then
-  if [ -s lib/catalogs/bright_star_catalog_radeconly.txt ];then
-   SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
-   WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
-   lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/bright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bsc.txt
-   cp -v exclusion_list_bsc.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
-  fi
- fi
- # Exclude bright Tycho-2 stars, by default the magnitude limit is set to vt < 9
- if [ ! -s exclusion_list_tycho2.txt ];then
-  if [ -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
-   SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
-   WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
-   lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | while read -r A ;do lib/deg2hms $A ;done > exclusion_list_tycho2.txt
-   cp -v exclusion_list_tycho2.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
-  fi
- fi
- ###
- echo "Done with filtering" >> transient_factory_test31.txt
- echo "Done with filtering! =)"
- ###############################################################################################################
-
- ###############################################################################################################
- # Check if the number of detected transients is suspiciously large
- NUMBER_OF_DETECTED_TRANSIENTS=$(cat candidates-transients.lst | wc -l)
- echo "Found $NUMBER_OF_DETECTED_TRANSIENTS candidate transients before the final filtering." >> transient_factory_test31.txt
- if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt $NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT ];then
-  echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping SE run ($SEXTRACTOR_CONFIG_FILE)"
-  echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping SE run ($SEXTRACTOR_CONFIG_FILE)" >> transient_factory_test31.txt
-  # this is for UCAC5 plate solver
-  echo "wait"   >> transient_factory_test31.txt
-  wait
+  echo "PHOTOMETRIC_CALIBRATION=$PHOTOMETRIC_CALIBRATION" >> transient_factory_test31.txt
+  case $PHOTOMETRIC_CALIBRATION in
+   "APASS_B")
+    echo "Calibrating the magnitude scale with APASS B stars" >> transient_factory_test31.txt
+    util/magnitude_calibration.sh B zero_point >> transient_factory_test31.txt
+    MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
+    ;;
+   "APASS_g")
+    echo "Calibrating the magnitude scale with APASS g stars" >> transient_factory_test31.txt
+    util/magnitude_calibration.sh g zero_point >> transient_factory_test31.txt
+    MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
+    ;;
+   "APASS_V")
+    echo "Calibrating the magnitude scale with APASS V stars" >> transient_factory_test31.txt
+    util/magnitude_calibration.sh V zero_point >> transient_factory_test31.txt
+    MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
+    ;;
+   "APASS_r")
+    echo "Calibrating the magnitude scale with APASS r stars" >> transient_factory_test31.txt
+    util/magnitude_calibration.sh r zero_point >> transient_factory_test31.txt
+    MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
+    ;;
+   "APASS_R")
+    echo "Calibrating the magnitude scale with APASS R stars" >> transient_factory_test31.txt
+    util/magnitude_calibration.sh R zero_point >> transient_factory_test31.txt
+    MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
+    ;;
+   "APASS_I")
+    echo "Calibrating the magnitude scale with APASS I stars" >> transient_factory_test31.txt
+    util/magnitude_calibration.sh I zero_point >> transient_factory_test31.txt
+    MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
+    ;;
+   "TYCHO2_V")
+    echo "Calibrating the magnitude scale with Tycho-2 stars" >> transient_factory_test31.txt
+    echo "y" | util/transients/calibrate_current_field_with_tycho2.sh >> transient_factory_test31.txt 2>&1
+    MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
+    ;;
+   *)
+    echo "ERROR: unknown value PHOTOMETRIC_CALIBRATION=$PHOTOMETRIC_CALIBRATION" >> transient_factory_test31.txt
+    MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=1
+    ;;
+  esac
+  echo "____ End of magnitude calibration ____" >> transient_factory_test31.txt
+  # Check that the magnitude calibration actually worked
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
+   ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
+   #cat "$i" | awk '{print $2}' | util/colstat 2>&1 | grep 'MEAN=' | awk '{if ( $2 < -5 && $2 >18 ) print "ERROR"}' | grep 'ERROR' && break
+   # The reference frame might be a few magnitudes deeper than the new frames
+   cat "$i" | awk '{print $2}' | util/colstat 2>&1 | grep 'MEAN=' | awk -v var="$FILTER_BRIGHT_MAG_CUTOFF" -v var2="$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" '{if ( $2 < var && $2 > var2+5.0 ) print "ERROR"}' | grep 'ERROR' && break
+  done | grep --quiet 'ERROR'
   #
-  #continue
-  # The NUMBER_OF_DETECTED_TRANSIENTS limit may be reached at the first SE run,
-  # In that case, we want to drop this run and continue with the second run hoping it will be better
- else
-  if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt $NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT ];then
-   echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..."
-   echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..." >> transient_factory_test31.txt
-   # if yes, remove flares, keep only new objects
-   while read -r FLAREOUTFILE A B ;do
-    grep -v $FLAREOUTFILE candidates-transients.lst > candidates-transients.tmp
-    mv candidates-transients.tmp candidates-transients.lst
-   done < candidates-flares.lst
+  if [ $? -eq 0 ];then
+   # Wait for the solve_plate_with_UCAC5 stuff to finish
+   echo "wait"   >> transient_factory_test31.txt
+   # Save image date for it to be displayed in the summary file
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory_test31.txt
+   wait
+   # Throw an error
+   echo "ERROR calibrating magnitudes in the field $FIELD (mean mag outside of range)"
+   echo "ERROR calibrating magnitudes in the field $FIELD (mean mag outside of range)" >> transient_factory_test31.txt
+   echo "***** MAGNITUDE CALIBRATION ERROR (candidate mag is out of the expected range) *****" >> transient_factory.log
+   echo "############################################################" >> transient_factory.log
+   # continue to the next field
+   continue
+  fi
+  if [ $MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE -ne 0 ];then
+   # Wait for the solve_plate_with_UCAC5 stuff to finish
+   echo "wait"   >> transient_factory_test31.txt
+   wait
+   # Save image date for it to be displayed in the summary file
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*.fts >> transient_factory_test31.txt
+   # Throw an error
+   echo "ERROR calibrating magnitudes in the field $FIELD MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE"
+   echo "ERROR calibrating magnitudes in the field $FIELD MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE" >> transient_factory_test31.txt
+   echo "***** MAGNITUDE CALIBRATION ERROR (mag calibration script exited with code $MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE) *****" >> transient_factory.log
+   echo "############################################################" >> transient_factory.log
+   # continue to the next field
+   continue
+  fi
+  if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
+   # Wait for the solve_plate_with_UCAC5 stuff to finish
+   echo "wait"   >> transient_factory_test31.txt
+   wait
+   # Throw an error
+   echo "ERROR calibrating magnitudes in the field $FIELD (found lightcurve.tmp_emergency_stop_debug)"
+   echo "ERROR calibrating magnitudes in the field $FIELD (found lightcurve.tmp_emergency_stop_debug)" >> transient_factory_test31.txt
+   echo "############################################################" >> transient_factory_test31.txt
+   cat lightcurve.tmp_emergency_stop_debug >> transient_factory_test31.txt
+   echo "############################################################" >> transient_factory_test31.txt
+   echo "***** MAGNITUDE CALIBRATION ERROR (lightcurve.tmp_emergency_stop_debug) *****" >> transient_factory.log
+   echo "############################################################" >> transient_factory.log
+   # continue to the next field
+   continue
   fi
 
-  echo "Waiting for UCAC5 plate solver" >> transient_factory_test31.txt  
-  echo "Waiting for UCAC5 plate solver"
-  # this is for UCAC5 plate solver
-  echo "wait"   >> transient_factory_test31.txt
-  wait
-  echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
-  echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE"
-  util/transients/make_report_in_HTML.sh >> transient_factory_test31.txt
-  echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
-  echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE"
- fi # else if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 500 ];then
- 
- echo "*------ done with $SEXTRACTOR_CONFIG_FILE ------*" >> transient_factory_test31.txt
- echo "*------ done with $SEXTRACTOR_CONFIG_FILE ------*"
+  ################## Quality cuts applied to calibrated magnitudes of the candidate transients ##################
+  cp -v candidates-transients.lst DEBUG_BACKUP_candidates-transients.lst
+  echo "Filter-out faint candidates..." >> transient_factory_test31.txt
+  echo "Filter-out faint candidates..."
+  # Filter-out faint candidates
+  ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
+  #for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">13.5"}'|bc -ql) ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk -v var="$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" '{print ((($1+$2)/2>var)?1:0)}' ) ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
- # Update the local exclusion list (but actually util/transients/report_transient.sh is supposed to take care of that already)
- echo "Updating exclusion_list_local.txt" >> transient_factory_test31.txt
- echo "Updating exclusion_list_local.txt"
- grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' >> exclusion_list_local.txt
- echo "#### The local exclusion list is exclusion_list_local.txt ####" >> transient_factory_test31.txt
- cat exclusion_list_local.txt >> transient_factory_test31.txt
- #
+  echo "Filter-out suspiciously bright candidates..." >> transient_factory_test31.txt
+  echo "Filter-out suspiciously bright candidates..."
+  # Filter-out suspiciously bright candidates
+  ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
+  #for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2"<-5.0"}'|bc -ql) ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk -v var="$FILTER_BRIGHT_MAG_CUTOFF" '{print ((($1+$2)/2<var)?1:0)}' ) ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
+  echo "Filter-out candidates with large difference between measured mags in one epoch..." >> transient_factory_test31.txt
+  echo "Filter-out candidates with large difference between measured mags in one epoch..."
+  # 2nd epoch
+  # Filter-out candidates with large difference between measured mags
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($1-$2)>0.4 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  # Filter-out candidates with large difference between measured mags
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($2-$1)>0.4 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  # 1st epoch (only for sources detected on two reference images)
+  # Filter-out candidates with large difference between measured mags
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do if [ $(cat $i | wc -l) -lt 4 ];then grep $i candidates-transients.lst | head -n1 ;continue ;fi ; A=$(head -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($1-$2)>1.0 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  # Filter-out candidates with large difference between measured mags
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do if [ $(cat $i | wc -l) -lt 4 ];then grep $i candidates-transients.lst | head -n1 ;continue ;fi ; A=$(head -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($2-$1)>1.0 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+
+  ############################################
+  # Remove candidates close to frame edge
+  # here we assume that all images are the samesize as $SECOND_EPOCH__SECOND_IMAGE
+  DIMX=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS1 | awk '{print $3}')
+  DIMY=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS2 | awk '{print $3}')
+  ### ===> IMAGE EDGE OFFSET HARDCODED HERE <===
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
+   cat $i | awk "{if ( \$4>$FRAME_EDGE_OFFSET_PIX && \$4<$DIMX-$FRAME_EDGE_OFFSET_PIX && \$5>$FRAME_EDGE_OFFSET_PIX && \$5<$DIMY-$FRAME_EDGE_OFFSET_PIX ) print \"YES\"; else print \"NO\" }" | grep --quiet 'NO'
+   if [ $? -ne 0 ];then
+    # If there was no "NO" answer for any of the lines
+    grep $i candidates-transients.lst | head -n1 
+   fi
+  done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  ############################################
+
+  echo "Filter-out small-amplitude flares..." >> transient_factory_test31.txt
+  echo "Filter-out small-amplitude flares..."
+  # Filter-out small-amplitude flares
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do if [ $(cat $i | wc -l) -eq 2 ];then grep $i candidates-transients.lst | head -n1 ;continue ;fi ; A=$(head -n1 $i | awk '{print $2}') ; B=$(tail -n2 $i | awk '{print $2}') ; MEANMAGSECONDEPOCH=$(echo ${B//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2}') ; TEST=$(echo $A $MEANMAGSECONDEPOCH | awk '{if ( ($1-$2)<0.5 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+
+  # Make sure each candidate is detected on the two second-epoch images, not any other combination
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
+   grep --quiet "$SECOND_EPOCH__FIRST_IMAGE" "$i"
+   if [ $? -ne 0 ];then
+    continue
+   fi
+   grep --quiet "$SECOND_EPOCH__SECOND_IMAGE" "$i"
+   if [ $? -ne 0 ];then
+    continue
+   fi
+   grep $i candidates-transients.lst | head -n1 
+  done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+
+  ### Prepare the exclusion lists for this field
+  echo "Preparing the exclusion lists for this field" >> transient_factory_test31.txt
+  # Exclude the previously considered candidates
+  if [ ! -s exclusion_list.txt ];then
+   if [ -s "$EXCLUSION_LIST" ];then
+    SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
+    WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
+    lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @$EXCLUSION_LIST | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list.txt
+    cp -v exclusion_list.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+   fi
+  fi
+  # Exclude stars from the Bright Star Catalog with magnitudes < 3
+  if [ ! -s exclusion_list_bbsc.txt ];then
+   if [ -s lib/catalogs/brightbright_star_catalog_radeconly.txt ];then
+    SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
+    WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
+    lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/brightbright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bbsc.txt
+    cp -v exclusion_list_bbsc.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+   fi
+  fi
+  # Exclude stars from the Bright Star Catalog with magnitudes < 7
+  if [ ! -s exclusion_list_bsc.txt ];then
+   if [ -s lib/catalogs/bright_star_catalog_radeconly.txt ];then
+    SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
+    WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
+    lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/bright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bsc.txt
+    cp -v exclusion_list_bsc.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+   fi
+  fi
+  # Exclude bright Tycho-2 stars, by default the magnitude limit is set to vt < 9
+  if [ ! -s exclusion_list_tycho2.txt ];then
+   if [ -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
+    SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
+    WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
+    lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | while read -r A ;do lib/deg2hms $A ;done > exclusion_list_tycho2.txt
+    cp -v exclusion_list_tycho2.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+   fi
+  fi
+  ###
+  echo "Done with filtering" >> transient_factory_test31.txt
+  echo "Done with filtering! =)"
+  ###############################################################################################################
+
+  ###############################################################################################################
+  # Check if the number of detected transients is suspiciously large
+  NUMBER_OF_DETECTED_TRANSIENTS=$(cat candidates-transients.lst | wc -l)
+  echo "Found $NUMBER_OF_DETECTED_TRANSIENTS candidate transients before the final filtering." >> transient_factory_test31.txt
+  if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt $NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT ];then
+   echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping SE run ($SEXTRACTOR_CONFIG_FILE)"
+   echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping SE run ($SEXTRACTOR_CONFIG_FILE)" >> transient_factory_test31.txt
+   # this is for UCAC5 plate solver
+   echo "wait"   >> transient_factory_test31.txt
+   wait
+   #
+   #continue
+   # The NUMBER_OF_DETECTED_TRANSIENTS limit may be reached at the first SE run,
+   # In that case, we want to drop this run and continue with the second run hoping it will be better
+  else
+   if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt $NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT ];then
+    echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..."
+    echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..." >> transient_factory_test31.txt
+    # if yes, remove flares, keep only new objects
+    while read -r FLAREOUTFILE A B ;do
+     grep -v $FLAREOUTFILE candidates-transients.lst > candidates-transients.tmp
+     mv candidates-transients.tmp candidates-transients.lst
+    done < candidates-flares.lst
+   fi
+
+   echo "Waiting for UCAC5 plate solver" >> transient_factory_test31.txt  
+   echo "Waiting for UCAC5 plate solver"
+   # this is for UCAC5 plate solver
+   echo "wait"   >> transient_factory_test31.txt
+   wait
+   echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
+   echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE"
+   util/transients/make_report_in_HTML.sh >> transient_factory_test31.txt
+   echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
+   echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE"
+  fi # else if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 500 ];then
+  
+  echo "*------ done with $SEXTRACTOR_CONFIG_FILE ------*" >> transient_factory_test31.txt
+  echo "*------ done with $SEXTRACTOR_CONFIG_FILE ------*"
+
+  # Update the local exclusion list (but actually util/transients/report_transient.sh is supposed to take care of that already)
+  echo "Updating exclusion_list_local.txt" >> transient_factory_test31.txt
+  echo "Updating exclusion_list_local.txt"
+  grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' >> exclusion_list_local.txt
+  echo "#### The local exclusion list is exclusion_list_local.txt ####" >> transient_factory_test31.txt
+  cat exclusion_list_local.txt >> transient_factory_test31.txt
+  #
+  
  done # for SEXTRACTOR_CONFIG_FILE in default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 ;do
 
  # We need a local exclusion list not to find the same things in multiple SExtractor runs
