@@ -30,6 +30,10 @@ if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"STL-11000M"* ]] || [[ "$
  echo "The input indicates the images are from STL-11000M camera"
  export CAMERA_SETTINGS="STL-11000M"
 fi
+if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"tica_tess_ffi"* ]] ; then
+ echo "The input indicates the images are from STL-11000M camera"
+ export CAMERA_SETTINGS="TICA_TESS_FFI"
+fi
 
 
 ########### Default settings describing the old NMW camera:
@@ -94,6 +98,22 @@ if [ -n "$CAMERA_SETTINGS" ];then
   UCAC5_PLATESOLVE_ITERATIONS=2
   # The funny ghost image seems to be no more than 80pix away from frame edge
   FRAME_EDGE_OFFSET_PIX=80
+ fi
+ if [ "$CAMERA_SETTINGS" = "TICA_TESS_FFI" ];then
+  # TICA TESS FFIs downloaded from https://archive.stsci.edu/hlsp/tica#section-c34b9669-b0be-40b2-853e-a59997d1b7c5
+  echo "### Using search settings for $CAMERA_SETTINGS camera ###"
+  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=1000
+  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=1500
+  FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="15.0"
+  # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
+  SEXTRACTOR_CONFIG_FILES="default.sex.TICA_TESS"
+  # REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES rejects candidates with exactly the same pixel coordinates on two new images
+  # as these are likely to be hot pixels sneaking into the list of candidates if no shift has been applied between the two second-epoch images.
+  export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="no"
+  #BAD_REGION_FILE="../STL_bad_region.lst"
+  EXCLUSION_LIST="../exclusion_list_TICATESS.txt"
+  SYSREM_ITERATIONS=0
+  UCAC5_PLATESOLVE_ITERATIONS=2
  fi
 fi
 
@@ -1153,17 +1173,59 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
  fi
  echo "____ Start of magnitude calibration ____" >> transient_factory_test31.txt
  # Decide which catalog to use for magnitude calibration depending on the image filed of view
- if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
-  # APASS magnitude calibration for narrow-field images
-  echo "Calibrating the magnitude scale with APASS stars" >> transient_factory_test31.txt
-  util/magnitude_calibration.sh V zero_point >> transient_factory_test31.txt
- else
-  # Tycho-2 magnitude calibration for wide-field images
-  # (Tycho-2 is relatively small, so it's convenient to have a local copy of the catalog)
-  echo "Calibrating the magnitude scale with Tycho-2 stars" >> transient_factory_test31.txt
-  echo "y" | util/transients/calibrate_current_field_with_tycho2.sh >> transient_factory_test31.txt 2>&1
+ if [ -z "$PHOTOMETRIC_CALIBRATION" ];then
+  if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
+   # APASS magnitude calibration for narrow-field images
+   PHOTOMETRIC_CALIBRATION="APASS_V"
+  else
+   # Tycho-2 magnitude calibration for wide-field images
+   # (Tycho-2 is relatively small, so it's convenient to have a local copy of the catalog)
+   PHOTOMETRIC_CALIBRATION="TYCHO2_V"
+  fi
  fi
- MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
+ echo "PHOTOMETRIC_CALIBRATION=$PHOTOMETRIC_CALIBRATION" >> transient_factory_test31.txt
+ case $PHOTOMETRIC_CALIBRATION in
+  "APASS_B")
+   echo "Calibrating the magnitude scale with APASS B stars" >> transient_factory_test31.txt
+   util/magnitude_calibration.sh B zero_point >> transient_factory_test31.txt
+   MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
+   ;;
+  "APASS_g")
+   echo "Calibrating the magnitude scale with APASS g stars" >> transient_factory_test31.txt
+   util/magnitude_calibration.sh g zero_point >> transient_factory_test31.txt
+   MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
+   ;;
+  "APASS_V")
+   echo "Calibrating the magnitude scale with APASS V stars" >> transient_factory_test31.txt
+   util/magnitude_calibration.sh V zero_point >> transient_factory_test31.txt
+   MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
+   ;;
+  "APASS_r")
+   echo "Calibrating the magnitude scale with APASS r stars" >> transient_factory_test31.txt
+   util/magnitude_calibration.sh r zero_point >> transient_factory_test31.txt
+   MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
+   ;;
+  "APASS_R")
+   echo "Calibrating the magnitude scale with APASS R stars" >> transient_factory_test31.txt
+   util/magnitude_calibration.sh R zero_point >> transient_factory_test31.txt
+   MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
+   ;;
+  "APASS_I")
+   echo "Calibrating the magnitude scale with APASS I stars" >> transient_factory_test31.txt
+   util/magnitude_calibration.sh I zero_point >> transient_factory_test31.txt
+   MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
+   ;;
+  "TYCHO2_V")
+   echo "Calibrating the magnitude scale with Tycho-2 stars" >> transient_factory_test31.txt
+   echo "y" | util/transients/calibrate_current_field_with_tycho2.sh >> transient_factory_test31.txt 2>&1
+   MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
+   ;;
+  *)
+   echo "ERROR: unknown value PHOTOMETRIC_CALIBRATION=$PHOTOMETRIC_CALIBRATION" >> transient_factory_test31.txt
+   MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=1
+   ;;
+ esac
+ fi
  echo "____ End of magnitude calibration ____" >> transient_factory_test31.txt
  # Check that the magnitude calibration actually worked
  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
