@@ -1237,7 +1237,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     fprintf( stderr, "entering  if ( status == 0 )\n" );
 #endif
     fprintf( stderr, "Getting JD of the middle of exposure from JDMID keyword: %.5lf\n", inJD );
-    ( *timesys )= 0; // UNKNOWN
+    ( *timesys )= 1; // UT
     // Check that JD is within the reasonable range
     if ( inJD < EXPECTED_MIN_JD || inJD > EXPECTED_MAX_JD ) {
      fprintf( stderr, "ERROR: JD %lf is out of expected range (%.1lf, %.1lf)!\nYou may change EXPECTED_MIN_JD and EXPECTED_MAX_JD in src/vast_limits.h and recompile VaST if you are _really sure_ you know what you are doing...\n", inJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD );
