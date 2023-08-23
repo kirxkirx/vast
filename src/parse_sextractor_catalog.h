@@ -99,22 +99,22 @@ static inline int parse_sextractor_catalog_string( char *input_sextractor_catalo
  if ( 0 == __builtin_isnormal( ( float_parameters_internalcopy[10] ) ) ) {
   return 1;
  }
- if ( 0 == __builtin_isnormal( ( *sigma_mag ) ) ) {
+ if ( 0 == __builtin_isnormal( ( *sigma_mag ) ) && ( *sigma_mag ) != 0.0 ) {
   return 1;
  }
- if ( 0 == __builtin_isnormal( ( float_parameters_internalcopy[3] ) ) ) {
+ if ( 0 == __builtin_isnormal( ( float_parameters_internalcopy[3] ) ) && float_parameters_internalcopy[3] != 0.0 ) {
   return 1;
  }
- if ( 0 == __builtin_isnormal( ( float_parameters_internalcopy[5] ) ) ) {
+ if ( 0 == __builtin_isnormal( ( float_parameters_internalcopy[5] ) ) && float_parameters_internalcopy[5] != 0.0 ) {
   return 1;
  }
- if ( 0 == __builtin_isnormal( ( float_parameters_internalcopy[7] ) ) ) {
+ if ( 0 == __builtin_isnormal( ( float_parameters_internalcopy[7] ) ) && float_parameters_internalcopy[7] != 0.0 ) {
   return 1;
  }
- if ( 0 == __builtin_isnormal( ( float_parameters_internalcopy[9] ) ) ) {
+ if ( 0 == __builtin_isnormal( ( float_parameters_internalcopy[9] ) ) && float_parameters_internalcopy[9] != 0.0 ) {
   return 1;
  }
- if ( 0 == __builtin_isnormal( ( float_parameters_internalcopy[11] ) ) ) {
+ if ( 0 == __builtin_isnormal( ( float_parameters_internalcopy[11] ) )&& float_parameters_internalcopy[11] != 0.0  ) {
   return 1;
  }
  if ( 0 == __builtin_isnormal( ( *a_a ) ) ) {
