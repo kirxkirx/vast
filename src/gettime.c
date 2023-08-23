@@ -1150,7 +1150,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
        fprintf( stderr, "Setting the middle of exposure time based on EXPSTART and EXPEND keywords.\n" );
        fprintf( stderr, "Got observation time parameters: JD_start= %.5lf  JD_end= %.5lf  exptime= %.1lf sec\n", inJD, endJD, exposure );
        inJD= ( inJD + endJD ) / 2.0;
-       ( *timesys )= 0; // UNKNOWN
+       ( *timesys )= 1; // UT
        expstart_mjd_parsed= 1;
       } else {
        fprintf( stderr, "JD derived from EXPEND keyword %.5lf is out of the expected range (%.5lf,%.5lf)!\n", endJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD );

@@ -261,7 +261,8 @@
 //////////////////////////////////////////////////////////
 
 // Transient search
-#define TRANSIENT_MIN_TIMESCALE_DAYS 1.0                  // expect transients apearing on timescale > TRANSIENT_MIN_TIMESCALE_DAYS
+//#define TRANSIENT_MIN_TIMESCALE_DAYS 1.0                  // expect transients apearing on timescale > TRANSIENT_MIN_TIMESCALE_DAYS
+#define TRANSIENT_MIN_TIMESCALE_DAYS 0.000                  // expect transients apearing on timescale > TRANSIENT_MIN_TIMESCALE_DAYS
 // THIS DOES NOT WORK WELL AS SOME ODD DETECTIONS ARE THE ONES DEFINING THE REF FRAME LIMIT
 #define MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT 0.0 //0.8 //1.3 // Transient candidates should be at least MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT mag 
                                                           // above the detection limit on the reference frame.

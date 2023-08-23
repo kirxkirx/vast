@@ -16423,7 +16423,7 @@ if [ -f ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4
  fi
  #
  #
- cp default.sex.ccd_example default.sex 
+ cp default.sex.TICA_TESS default.sex 
  # Make sure gain value is set to exposure time for the count rate image 
  lib/autodetect_aperture_main ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep --quiet 'GAIN 1.000'
  if [ $? -ne 0 ];then
@@ -16453,27 +16453,27 @@ if [ -f ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG007"
   fi
-  # That one doesn't work well yet as we need a custom default.sex for TICA TESS FFIs
-  #util/solve_plate_with_UCAC5 ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits
-  #if [ ! -f wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits ];then
-  # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG008"
-  #fi 
+  util/solve_plate_with_UCAC5 ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits
+  if [ ! -f wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG008"
+  fi 
   lib/bin/xy2sky wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 200 200 &>/dev/null
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG009"
   fi
-  #if [ ! -s wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.cat.ucac5 ];then
-  # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG010"
-  #else
-  # TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.cat.ucac5 | wc -l | awk '{print $1}'`
-  # if [ $TEST -lt 20 ];then
-  #  TEST_PASSED=0
-  #  FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG011_$TEST"
-  # fi
-  #fi 
+  if [ ! -s wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.cat.ucac5 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG010"
+  else
+   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.cat.ucac5 | wc -l | awk '{print $1}'`
+   # 1606 with 2000 ref stars
+   if [ $TEST -lt 200 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG011_$TEST"
+   fi
+  fi 
   # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
   util/solve_plate_with_UCAC5 ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep --quiet 'The output catalog wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.cat.ucac5 already exist.'
   if [ $? -ne 0 ];then
