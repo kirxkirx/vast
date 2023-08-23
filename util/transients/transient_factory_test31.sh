@@ -114,6 +114,8 @@ if [ -n "$CAMERA_SETTINGS" ];then
   EXCLUSION_LIST="../exclusion_list_TICATESS.txt"
   SYSREM_ITERATIONS=0
   UCAC5_PLATESOLVE_ITERATIONS=2
+  PHOTOMETRIC_CALIBRATION="APASS_I"
+  export GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK="RPmag"
  fi
 fi
 
@@ -146,6 +148,10 @@ if [ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ];then
 fi
 
 #################################
+
+if [ -n "$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" ];then
+ export TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION"
+fi
 
 # Are we on Linux or something else?
 SYSTEM_TYPE="$(uname)"
@@ -879,16 +885,19 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   
   echo "Plate-solving the images" >> transient_factory_test31.txt
   # WCS-calibration (plate-solving)
-  for i in $(cat vast_image_details.log | awk '{print $17}' | sort | uniq) ;do 
-   # This should ensure the correct field-of-view guess by setting the TELESCOP keyword
-   #TELESCOP="NMW_camera" util/wcs_image_calibration.sh $i &
-   if [ -z "$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" ];then
-    TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/wcs_image_calibration.sh $i &
-   else
-    # Not explicitly setting the telescope name, let the script guess the FoV
-    util/wcs_image_calibration.sh $i &
-   fi
-  done 
+  for i in $(cat vast_image_details.log | awk '{print $17}' | sort | uniq) ;do
+   util/wcs_image_calibration.sh $i &
+  done
+#  for i in $(cat vast_image_details.log | awk '{print $17}' | sort | uniq) ;do 
+#   # This should ensure the correct field-of-view guess by setting the TELESCOP keyword
+#   #TELESCOP="NMW_camera" util/wcs_image_calibration.sh $i &
+#   if [ -z "$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" ];then
+#    TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/wcs_image_calibration.sh $i &
+#   else
+#    # Not explicitly setting the telescope name, let the script guess the FoV
+#    util/wcs_image_calibration.sh $i &
+#   fi
+#  done 
 
   # Wait for all children to end processing
   if [ "$SYSTEM_TYPE" = "Linux" ];then
@@ -1080,27 +1089,52 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    fi # if [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "yes" ]
   fi # if [ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ];then
 
+
+  # Here we need to know if we need photometic calibration for hte astrometic catalog - it's slow
+  if [ -z "$PHOTOMETRIC_CALIBRATION" ];then
+   if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
+    # APASS magnitude calibration for narrow-field images
+    PHOTOMETRIC_CALIBRATION="APASS_V"
+   else
+    # Tycho-2 magnitude calibration for wide-field images
+    # (Tycho-2 is relatively small, so it's convenient to have a local copy of the catalog)
+    PHOTOMETRIC_CALIBRATION="TYCHO2_V"
+   fi
+  fi
+
   
   echo "Running solve_plate_with_UCAC5" >> transient_factory_test31.txt
-  for i in $(cat vast_image_details.log | awk '{print $17}' | sort | uniq) ;do 
-   # This should ensure the correct field-of-view guess by setting the TELESCOP keyword
-   if [ -z "$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" ];then
-    if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
-     # for a narrow field of view we actually need the photometric catalog
-     TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
-    else
-     # for a wide field of view Tycho-2 will be used, so no need for other photometric information - let's speed-up things
-     TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
-    fi # if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
-   else
-    # Not explicitly setting the telescope name, let the script guess the FoV
-    if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
-     util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
-    else
-     util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
-    fi # if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
-   fi
-  done 
+  
+  
+  
+  # We need photometric info for the referenc image 
+  if [ "$PHOTOMETRIC_CALIBRATION" != "TYCHO2_V" ];then
+   util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE_EPOCH__FIRST_IMAGE
+  fi
+  # Now solve all images in parallel with no photomeric calibration
+  for i in $(cat vast_image_details.log | awk '{print $17}' | sort | uniq) ;do
+   util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $REFERENCE_EPOCH__FIRST_IMAGE &
+  done
+  
+#  for i in $(cat vast_image_details.log | awk '{print $17}' | sort | uniq) ;do 
+#   # This should ensure the correct field-of-view guess by setting the TELESCOP keyword
+#   if [ -z "$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" ];then
+#    if [ "$PHOTOMETRIC_CALIBRATION" != "TYCHO2_V" ];then
+#     # for a narrow field of view we actually need the photometric catalog
+#     TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
+#    else
+#     # for a wide field of view Tycho-2 will be used, so no need for other photometric information - let's speed-up things
+#     TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
+#    fi # if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
+#   else
+#    # Not explicitly setting the telescope name, let the script guess the FoV
+#    if [ "$PHOTOMETRIC_CALIBRATION" != "TYCHO2_V" ];then
+#     util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
+#    else
+#     util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
+#    fi # if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
+#   fi
+#  done 
 
   
   # Calibrate magnitude scale with Tycho-2 stars in the field
@@ -1462,9 +1496,10 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
    mv -v exclusion_list_index_html.txt_noasteroids exclusion_list_index_html.txt >> transient_factory_test31.txt
    #
    while read -r RADECSTR ;do
-    #grep --max-count=1 -A8 "$RADECSTR" transient_report/index.html | grep 'galactic' | grep --quiet '<font color="red">0.0</font></b> pix'
     grep -A8 "$RADECSTR" transient_report/index.html | grep 'galactic' | grep --quiet -e '<font color="red">0.0</font></b> pix' -e '<font color="red">0.1</font></b> pix' -e '<font color="red">0.2</font></b> pix'
-    if [ $? -ne 0 ];then
+    if [ $? -ne 0 ] || ( [[ ! -z "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ]] &&
+     [[ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" == "no" ]] ); then
+     # assume there are no hot pixels in TICA TESS images
      echo "$RADECSTR"
      echo "$RADECSTR  -- does not seem to be a hot pixel (will add it to exclusion list)" >> transient_factory_test31.txt
     else

@@ -1730,9 +1730,9 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
   exit( EXIT_FAILURE );
  }
 
- // Sort the filtered_mag_values array and get the value that is 5% from the largest value
+ // Sort the filtered_mag_values array and get the value that is 20% from the largest value
  qsort(filtered_mag_values, filtered_count, sizeof(double), (int (*)(const void *, const void *))compare);
- search_area_boundaries[5] = filtered_mag_values[(int)(0.95 * (double)filtered_count)]; // 5% from the end
+ search_area_boundaries[5] = filtered_mag_values[(int)(0.80 * (double)filtered_count)]; // 20% from the end
  search_area_boundaries[5] = search_area_boundaries[5] - MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT;
 
  fprintf( stderr, "\nParameter box for transient search: %7.1lf<X<%7.1lf %7.1lf<Y<%7.1lf %5.2lf<m<%5.2lf\n \n",

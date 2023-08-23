@@ -416,16 +416,15 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
   # If it's a flare with only one reference-image detection - check Gaia anyway as the first detection migth be a mismatch
   if [ $NUBER_OF_LIGHTCURVE_POINTS -eq 2 ] || [ $NUBER_OF_LIGHTCURVE_POINTS -eq 3 ] ;then
    # New last-ditch effort, search Gaia DR2 for a known star of approximately the same brightenss
+   if [ -z "$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK" ];then
+    GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK="Gmag"
+   fi
    ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
    MAG_BRIGHT_SEARCH_LIMIT=0.0
    #MAG_FAINT_SEARCH_LIMIT=`echo "$MAG_MEAN" | awk '{printf "%.2f", $1+1.00}'`
    # V1858 Sgr from NMW_Sgr9_crash_test is the borderline case
    MAG_FAINT_SEARCH_LIMIT=$(echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.98}')
-   # We assume $TIMEOUTCOMMAND is set by the parent script
-   #$TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/345/gaia2  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -v \# | grep -v "\---" | grep -v "sec" | grep -v 'Gma' | grep -v "RA_ICRS" | grep --quiet -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE'
    RA_MEAN_HMS_DEC_MEAN_HMS_ONSESTRING="$RA_MEAN_HMS $DEC_MEAN_HMS"
-   #VIZIER_COMMAND="lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/gaia2  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c=\"$RA_MEAN_HMS_DEC_MEAN_HMS_ONSESTRING\" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var"
-   #echo "$VIZIER_COMMAND"
    VIZIER_COMMAND=("lib/vizquery"
                 "-site=$VIZIER_SITE"
                 "-mime=text"
@@ -433,11 +432,11 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
                 "-out.max=1"
                 "-out.add=_r"
                 "-out.form=mini"
-                "-sort=Gmag"
-                "Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT"
+                "-sort=$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK"
+                "$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT"
                 "-c=$RA_MEAN_HMS_DEC_MEAN_HMS_ONSESTRING"
                 "-c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH"
-                "-out=Source,RA_ICRS,DE_ICRS,Gmag,Var")
+                "-out=Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var")
    $TIMEOUTCOMMAND "${VIZIER_COMMAND[@]}" 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE" --quiet
    #$TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/345/gaia2  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE" --quiet
    # Switch to Gaia DR3
@@ -490,13 +489,20 @@ VARIABLE_STAR_ID=$?
 util/transients/MPCheck_v2.sh $RADEC_MEAN_HMS $YEAR_MEAN $MONTH_MEAN $DAYFRAC_MEAN H $MAG_MEAN
 ASTEROID_ID=$?
 # If the candidate transient is not a known variable star or asteroid and doesn't seem to be a hot pixel - try online search
-if [ $VARIABLE_STAR_ID -ne 0 ] && [ $ASTEROID_ID -ne 0 ] && [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.0" ] && [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.1" ] ;then
- # Slow online ID
- # Instead of a guess, use the actual field of view - the reference image is supposed to be solved by now
- WCS_REFERENCE_IMAGE_NAME=wcs_`basename $REFERENCE_IMAGE`
- WCS_REFERENCE_IMAGE_NAME=${WCS_REFERENCE_IMAGE_NAME/wcs_wcs_/wcs_}
- util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS online_id $(util/fov_of_wcs_calibrated_image.sh $WCS_REFERENCE_IMAGE_NAME | grep 'Image size:' | awk -F"[ 'x]" '{if ($3 > $4) print $3; else print $4}') 2>&1 | grep '|' | tail -n1
- #
+if [ $VARIABLE_STAR_ID -ne 0 ] && [ $ASTEROID_ID -ne 0 ] ;then
+# if [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.0" ] && [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.1" ] && [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.2" ] ;then
+ if [[ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.0" ]] &&
+    [[ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.1" ]] &&
+    [[ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.2" ]] ||
+    ( [[ ! -z "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ]] &&
+      [[ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" == "no" ]] ); then
+  # Slow online ID
+  # Instead of a guess, use the actual field of view - the reference image is supposed to be solved by now
+  WCS_REFERENCE_IMAGE_NAME=wcs_`basename $REFERENCE_IMAGE`
+  WCS_REFERENCE_IMAGE_NAME=${WCS_REFERENCE_IMAGE_NAME/wcs_wcs_/wcs_}
+  util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS online_id $(util/fov_of_wcs_calibrated_image.sh $WCS_REFERENCE_IMAGE_NAME | grep 'Image size:' | awk -F"[ 'x]" '{if ($3 > $4) print $3; else print $4}') 2>&1 | grep '|' | tail -n1
+  #
+ fi
 fi
 
 echo -n "<a href=\"https://wis-tns.weizmann.ac.il/search?ra=${RA_MEAN_HMS//:/%3A}&decl=${DEC_MEAN_HMS//:/%3A}&radius=15&coords_unit=arcsec\" target=\"_blank\">Check this position in <font color=\"tomato\">TNS</font>.</a>                         <a href='http://www.astronomy.ohio-state.edu/asassn/transients.html' target='_blank'>Manually check the ASAS-SN list of transients!</a>
