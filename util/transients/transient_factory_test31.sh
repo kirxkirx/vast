@@ -435,8 +435,7 @@ if [ -z "$FITS_FILE_EXT" ];then
  FITS_FILE_EXT="fts"
 fi
 export FITS_FILE_EXT
-echo FITS_FILE_EXT=$FITS_FILE_EXT
-exit 1 # !!!!!!!!!!!!!!!!!!!!
+echo "FITS_FILE_EXT=$FITS_FILE_EXT"
 
 LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR=$(for IMGFILE in "$NEW_IMAGES"/*."$FITS_FILE_EXT" ;do if [ -f "$IMGFILE" ];then basename "$IMGFILE" ;fi ;done | awk '{print $1}' FS='_' | sort | uniq)
 
