@@ -34,8 +34,17 @@ jobs:
     - name: Install libpng
       run: sudo port install libpng
       if: env.SKIP != 'true'
+    - name: Install shellcheck
+      run: sudo port install shellcheck
+      if: env.SKIP != 'true'
     - name: make VaST
       run: make
+      if: env.SKIP != 'true'
+    - name: Shellcheck VaST BASH scripts
+      run: |
+        for i in lib/*sh util/*sh util/transients/*sh util/examples/*sh; do
+          shellcheck --severity=error $i
+        done
       if: env.SKIP != 'true'
     - name: prepare for the test
       run: echo "1" > ../THIS_IS_HPCC 
