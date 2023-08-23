@@ -16390,6 +16390,118 @@ fi
 fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
+######### TICA TESS FFI 
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
+if [ ! -f ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test
+ curl -O "http://scan.sai.msu.ru/~kirx/pub/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.bz2" && bunzip2 hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.bz2
+ cd $WORKDIR
+fi
+
+if [ -f ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "TICA TESS FFI individual image test " 1>&2
+ echo -n "TICA TESS FFI individual image test: " >> vast_test_report.txt 
+ #
+ util/get_image_date ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep --quiet 'JD (mid. exp.) 2460168.93614 = 2023-08-12 10:28:03 (TDB)'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG001"
+ fi
+ #
+ lib/try_to_guess_image_fov ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits  | grep --quiet ' 667'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG003"
+ fi
+ #
+ #
+ cp default.sex.ccd_example default.sex 
+ # Make sure gain value is set to exposure time for the count rate image 
+ lib/autodetect_aperture_main ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep --quiet 'GAIN 1.000'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG_gain"
+ fi
+ #
+ util/wcs_image_calibration.sh ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG004"
+ else
+  util/fov_of_wcs_calibrated_image.sh wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits | grep --quiet "Image size: 7..\..'x7..\..'"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG005"
+  fi
+  #
+  util/fov_of_wcs_calibrated_image.sh wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits  | grep --quiet -e 'Image scale: 19.' -e 'Image scale: 20.'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG006"
+  fi
+  #
+  util/fov_of_wcs_calibrated_image.sh wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits  | grep --quiet 'Image center: 06:08:'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG007"
+  fi
+  # That one doesn't work well yet as we need a custom default.sex for TICA TESS FFIs
+  #util/solve_plate_with_UCAC5 ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits
+  #if [ ! -f wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG008"
+  #fi 
+  lib/bin/xy2sky wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 200 200 &>/dev/null
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG009"
+  fi
+  #if [ ! -s wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.cat.ucac5 ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG010"
+  #else
+  # TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.cat.ucac5 | wc -l | awk '{print $1}'`
+  # if [ $TEST -lt 20 ];then
+  #  TEST_PASSED=0
+  #  FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG011_$TEST"
+  # fi
+  #fi 
+  # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
+  util/solve_plate_with_UCAC5 ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep --quiet 'The output catalog wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.cat.ucac5 already exist.'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG012"
+  fi
+ fi # initial plate solve was successful
+
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mTICA TESS FFI individual image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mTICA TESS FFI individual image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG_TEST_NOT_PERFORMED"
+fi
+
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+
+
 ### Test imstat code
 if [ -d ../individual_images_test ];then
  THIS_TEST_START_UNIXSEC=$(date +%s)
