@@ -346,7 +346,7 @@ double convert_jdUT_to_jdTT( double jdUT, int *timesys ) {
 
  // fprintf(stderr,"DEBUG: TT-UTC=%.3lf \n",(32.184+tai_utc) );
 
- /* Set marker that time system was changed */
+ /// Set marker that time system was changed 
  ( *timesys )= 2; // TT
 
  free( jd_leap_second );
@@ -1187,9 +1187,16 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     fprintf( stderr, "Found MIDTJD keyword: %.5lf\n", midtjd );
     inJD= tjd_zero + midtjd;
     if ( EXPECTED_MIN_JD < inJD && inJD < EXPECTED_MAX_JD ) { 
+     //
      fprintf( stderr, "Getting the observing time (middle of exposure) from TJD_ZERO + MIDTJD: %.5lf\n", inJD );
      ( *timesys )= 3; // TDB
      expstart_mjd_parsed= 1;
+     //
+     if ( param_nojdkeyword == 1 ) {
+      fprintf( stderr, "WARNING: overriding '--nojdkeyword' parameter for TICA TESS images! \n" );
+      param_nojdkeyword= 0;
+     }
+     //
     } else {
      fprintf( stderr, "WARNING: the value %.5lf infered from TJD_ZERO + MIDTJD is outside the expected JD range (%.0lf,%.0lf).\n\n", inJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD );
      inJD= 0.0;

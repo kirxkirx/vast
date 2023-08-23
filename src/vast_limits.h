@@ -336,9 +336,6 @@
 // src/new_lightcurve_sigma_filter.c
 #define LIGHT_CURVE_FILTER_SIGMA 7.0
 
-// src/remove_points_with_large_errors.c
-//#define LIGHT_CURVE_ERROR_FILTER_SIGMA 5.0
-
 // src/remove_bad_images.c
 #define REMOVE_BAD_IMAGES__OUTLIER_THRESHOLD 3.0                 // Considers outliers measurements that are REMOVE_BAD_IMAGES__OUTLIER_THRESHOLD sigma 
                                                                  // above or below the median brightness.
@@ -346,7 +343,6 @@
 #define REMOVE_BAD_IMAGES__MAX_ALLOWED_NUMBER_OF_OUTLIERS 20     // Drop bad images only if there are at least the specified number of outlier objects 
                                                                  // (regardless of what fraction of the total number of objects these outliers constitute)
 
-//// src/hjd.c ////
 #define EXPECTED_MIN_JD 2400000.0
 #define EXPECTED_MAX_JD 2500000.0
 // EXPECTED_MIN_JD and EXPECTED_MAX_JD are useful for checking if an input number actually looks like a correct JD
