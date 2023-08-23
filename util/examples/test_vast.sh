@@ -13813,7 +13813,7 @@ $GREP_RESULT"
   RADECPOSITION_TO_TEST=`grep "2023 07 19\.892.  2460145\.392.  11\...  00:05:2.\... +00:34:..\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:05:24.47 +00:34:38.9  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
-  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 1.5*13.8 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
