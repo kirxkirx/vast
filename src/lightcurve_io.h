@@ -67,6 +67,20 @@ static inline int read_lightcurve_point(FILE *lc_file_descriptor, double *jd, do
   fprintf( stderr, "ERROR in read_lightcurve_point() the output jd is a NULL pointer!\n");
   return 1;
  }
+ 
+ // Actually we kid of want mag also
+ if ( NULL == mag ) {
+  fprintf( stderr, "ERROR in read_lightcurve_point() the output mag is a NULL pointer!\n");
+  return 1;
+ }
+ (*mag) = 99.999; // initialize mag to an obviously wrong value
+
+ // Actually we kid of want mag also
+ if ( NULL == mag_err ) {
+  fprintf( stderr, "ERROR in read_lightcurve_point() the output mag_err is a NULL pointer!\n");
+  return 1;
+ }
+ (*mag_err)= DEFAULT_PHOTOMETRY_ERROR_MAG; // initialize mag_err
 
  // A naive attempt to optimize: if the first symbol is a number, assume this is a valid measurement, not a comment
  if( 0 == isdigit(str[0]) ) {
@@ -131,7 +145,6 @@ static inline int read_lightcurve_point(FILE *lc_file_descriptor, double *jd, do
     (*app)= 1.0;
     (*x)= (*y)= 0.0;
     if( 3 != sscanf(str, "%lf %lf %lf\n", jd, mag, mag_err) ) {
-     //(*mag_err)= 0.02;
      (*mag_err)= DEFAULT_PHOTOMETRY_ERROR_MAG;
      if( 2 != sscanf(str, "%lf %lf\n", jd, mag) ) {
       (*jd)= 0.0;

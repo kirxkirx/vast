@@ -157,22 +157,26 @@ int main( int argc, char **argv ) {
   // Read the lightcure
   i= 0;
   while ( -1 < read_lightcurve_point( input_lightcurve_file, &jd, &mag, &magerr, &x, &y, &app, string, comments_string ) ) {
-   if ( jd == 0.0 )
+   if ( jd == 0.0 ) {
     continue; // if this line could not be parsed, try the next one
+   }
    mag_array[i]= mag;
    magerr_array[i]= magerr;
    i++;
   }
   fclose( input_lightcurve_file );
-  if ( i < HARD_MIN_NUMBER_OF_POINTS )
+  if ( i < HARD_MIN_NUMBER_OF_POINTS ) {
    continue;
+  }
   //
   mean_estimated_sigma[star_counter]= gsl_stats_mean( magerr_array, 1, i );
-  if ( mean_estimated_sigma[star_counter] <= 0.0 )
+  if ( mean_estimated_sigma[star_counter] <= 0.0 ) {
    continue;
+  }
   actual_sigma[star_counter]= gsl_stats_sd( mag_array, 1, i );
-  if ( actual_sigma[star_counter] <= 0.0 )
+  if ( actual_sigma[star_counter] <= 0.0 ) {
    continue;
+  }
   //
   mean_estimated_sigma[star_counter]= mean_estimated_sigma[star_counter] * mean_estimated_sigma[star_counter];
   actual_sigma[star_counter]= actual_sigma[star_counter] * actual_sigma[star_counter];

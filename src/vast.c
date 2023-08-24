@@ -1730,6 +1730,9 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
   exit( EXIT_FAILURE );
  }
 
+ // Here is a short discussion on how the normal people estimate limiting magnitude of an image
+ // https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/en/megapipe/docs/photo.html
+ //
  // Sort the filtered_mag_values array and get the value that is 20% from the largest value
  qsort(filtered_mag_values, filtered_count, sizeof(double), (int (*)(const void *, const void *))compare);
  search_area_boundaries[5] = filtered_mag_values[(int)(0.80 * (double)filtered_count)]; // 20% from the end
@@ -6418,6 +6421,8 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
   fprintf( stderr, "ERROR: cannot open vast_summary.log for writing!\n" );
   return 1;
  }
+ //                            01234567890123
+ fprintf( vast_image_details, "Estimated ref. image limiting mag.: %6.2lf\n", search_area_boundaries[5] );
  if ( param_filterout_magsize_outliers == 1 ) {
   fprintf( vast_image_details, "Magnitude-Size filter: Enabled\n" );
  } else {
