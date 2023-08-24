@@ -565,10 +565,28 @@ void choose_best_reference_image( char **input_images, int *vast_bad_image_flag,
  }
 
  number_of_good_detected_stars= malloc( Num * sizeof( double ) );
+ if ( NULL == number_of_good_detected_stars ) {
+  fprintf( stderr, "ERROR in choose_best_reference_image() while allocating memory for number_of_good_detected_stars\n" );
+  exit( EXIT_FAILURE );
+ }
 
  aperture= malloc( Num * sizeof( double ) );
+ if ( NULL == aperture ) {
+  fprintf( stderr, "ERROR in choose_best_reference_image() while allocating memory for aperture\n" );
+  exit( EXIT_FAILURE );
+ }
 
  A_IMAGE= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
+ if ( NULL == A_IMAGE ) {
+  fprintf( stderr, "ERROR in choose_best_reference_image() while allocating memory for A_IMAGE\n" );
+  exit( EXIT_FAILURE );
+ }
+ 
+ // Initialize values to make the compiler happy
+ for( i= 0; i<NUMBER_OF_FLOAT_PARAMETERS; i++ ) {
+  float_parameters[i]= 0.0;
+ }
+ 
 
  for ( i= 0; i < Num; i++ ) {
   // Get the star catalog name from the image name
@@ -693,6 +711,10 @@ void choose_best_reference_image( char **input_images, int *vast_bad_image_flag,
  // Determine median number of stars on images
  best_image= 0;
  copy_of_number_of_good_detected_stars= malloc( Num * sizeof( double ) );
+ if ( NULL == copy_of_number_of_good_detected_stars ) {
+  fprintf( stderr, "ERROR allocating memory for copy_of_number_of_good_detected_stars in choose_best_reference_image()\n");
+  exit( EXIT_FAILURE );
+ } 
  for ( i= 0; i < Num; i++ ) {
   copy_of_number_of_good_detected_stars[i]= number_of_good_detected_stars[i];
  }
@@ -803,10 +825,17 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
   return;
  }
 
-
-
  a_minus_b__image= malloc( Num * sizeof( double ) );
  a_minus_b__image__to_be_runied_by_sort= malloc( Num * sizeof( double ) );
+ if ( NULL == a_minus_b__image || NULL == a_minus_b__image__to_be_runied_by_sort ) {
+  fprintf( stderr, "ERROR allocating memory in mark_images_with_elongated_stars_as_bad()\n");
+  exit( EXIT_FAILURE );
+ }
+ 
+ // Initialize the values to make the compier happy
+ for( i= 0; i<NUMBER_OF_FLOAT_PARAMETERS; i++ ) {
+  float_parameters[i]= 0.0;
+ }
 
 
 #ifdef VAST_ENABLE_OPENMP
@@ -956,6 +985,7 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
  file= fopen( "vast_automatically_rejected_images_with_elongated_stars.log", "w" );
  if ( file == NULL ) {
   fprintf( stderr, "ERROR in mark_images_with_elongated_stars_as_bad(): cannot open vast_automatically_selected_reference_image.log for writing!\n" );
+  free( a_minus_b__image );
   return;
  }
 
@@ -1000,6 +1030,10 @@ void write_Star_struct_to_ds9_region_file( struct Star *star, int N_start, int N
  int i;
  FILE *f;
  f= fopen( filename, "w" );
+ if ( NULL == f ) {
+  fprintf( stderr, "ERROR in write_Star_struct_to_ds9_region_file() while opening file %s for writing!\n", filename);
+  return;
+ }
  fprintf( f, "# Region file format: DS9 version 4.0\n" );
  fprintf( f, "# Filename:\n" );
  fprintf( f, "global color=green font=\"sans 10 normal\" select=1 highlite=1 edit=1 move=1 delete=1 include=1 fixed=0 source\n" );
@@ -1016,9 +1050,13 @@ void write_single_Star_from_struct_to_ds9_region_file( struct Star *star, int N_
  FILE *f;
  // try to open the file
  f= fopen( filename, "r" );
- if ( f == NULL ) {
+ if ( f == NULL  ) {
   // write header
   f= fopen( filename, "w" );
+  if ( NULL == f ) {
+   fprintf( stderr, "ERROR in write_single_Star_from_struct_to_ds9_region_file() while opening file %s for writing\n", filename );
+   return;
+  }
   fprintf( f, "# Region file format: DS9 version 4.0\n" );
   fprintf( f, "# Filename:\n" );
   fprintf( f, "global color=green font=\"sans 10 normal\" select=1 highlite=1 edit=1 move=1 delete=1 include=1 fixed=0 source\n" );
@@ -1026,6 +1064,10 @@ void write_single_Star_from_struct_to_ds9_region_file( struct Star *star, int N_
  }
  fclose( f );
  f= fopen( filename, "a" );
+ if ( NULL == f ) {
+  fprintf( stderr, "ERROR in write_single_Star_from_struct_to_ds9_region_file() while opening file %s for addition\n", filename );
+  return;
+ }
  for ( i= N_start; i < N_stop; i++ ) {
   fprintf( f, "circle(%f,%f,%lf)\n", star[i].x_frame, star[i].y_frame, aperture * 0.5 ); /// 2.0);
  }
@@ -1040,6 +1082,10 @@ void write_Star_struct_to_ASCII_file( struct Star *star, int N_start, int N_stop
  int i;
  FILE *f;
  f= fopen( filename, "w" );
+ if ( NULL == f ) {
+  fprintf( stderr, "ERROR in write_Star_struct_to_ASCII_file() while opening file %s for writing\n", filename );
+  return;
+ }
  for ( i= N_start; i < N_stop; i++ ) {
   fprintf( f, "%f  %f   %lf\n", star[i].x, star[i].y, aperture * 0.5 ); /// 2.0);
  }
@@ -1126,8 +1172,13 @@ void write_images_catalogs_logfile( char **filelist, int n ) {
  FILE *f;
  int i;
  f= fopen( "vast_images_catalogs.log", "w" );
- for ( i= 0; i < n; i++ )
+ if ( NULL == f ) {
+  fprintf( stderr, "ERROR in write_images_catalogs_logfile() while opening file %s for writing\n", "vast_images_catalogs.log" );
+  return;
+ }
+ for ( i= 0; i < n; i++ ) {
   fprintf( f, "image%05d.cat %s\n", i + 1, filelist[i] );
+ }
  fclose( f );
  return;
 }
@@ -1507,7 +1558,7 @@ void drop_one_point_that_changes_fit_the_most( double *poly_x_external, double *
  double chi2_best;
  int i;
  int i_drop;
- int i_drop_best;
+ int i_drop_best= -1;
  int N_good_stars;
  int wpolyfit_exit_code;
 
@@ -1524,11 +1575,24 @@ void drop_one_point_that_changes_fit_the_most( double *poly_x_external, double *
    exit( EXIT_FAILURE );
   }
   poly_x= (double *)malloc( N_good_stars * sizeof( double ) );
-  poly_y= (double *)malloc( N_good_stars * sizeof( double ) );
-  poly_err= (double *)malloc( N_good_stars * sizeof( double ) );
-  if ( poly_x == NULL || poly_y == NULL || poly_err == NULL ) {
+  if ( poly_x == NULL ) {
    fprintf( stderr, "ERROR in drop_one_point_that_changes_fit_the_most(): can't allocate memory for magnitude calibration!\n" );
    vast_report_memory_error();
+   return;
+  }
+  poly_y= (double *)malloc( N_good_stars * sizeof( double ) );
+  if ( poly_y == NULL ) {
+   fprintf( stderr, "ERROR in drop_one_point_that_changes_fit_the_most(): can't allocate memory for magnitude calibration!\n" );
+   vast_report_memory_error();
+   free( poly_x );
+   return;
+  }
+  poly_err= (double *)malloc( N_good_stars * sizeof( double ) );
+  if ( poly_err == NULL ) {
+   fprintf( stderr, "ERROR in drop_one_point_that_changes_fit_the_most(): can't allocate memory for magnitude calibration!\n" );
+   vast_report_memory_error();
+   free( poly_x );
+   free( poly_y );
    return;
   }
 
@@ -1702,6 +1766,10 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
  search_area_boundaries[4]= search_area_boundaries[5]= (double)star[0].mag;
 
  filtered_mag_values = (double*)malloc(NUMBER * sizeof(double));
+ if ( NULL == filtered_mag_values ) {
+  fprintf( stderr, "ERROR allocating memory for filtered_mag_values in set_transient_search_boundaries()\n" );
+  exit( EXIT_FAILURE );
+ }
 
  for ( i= NUMBER; i--; ) {
   if ( star[i].sextractor_flag > 7 )

@@ -37,20 +37,32 @@ int main( int argc, char **argv ) {
  }
  // strcpy(infilename,argv[2]);
  strcpy( outfilename, "lightcurve.tmp" );
+ 
+ // Initialize the values to make the compiler happy
+ JD= M= MERR= X= Y= APP= 0.0;
 
  total_number_of_points_to_drop= atoi( argv[1] );
 
  filenamelist= (char **)malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );
+ if( NULL == filenamelist ) {
+  fprintf( stderr, "ERROR allocating memory for filenamelist\n");
+  exit( EXIT_FAILURE );
+ }
  filename_counter= 0;
  dp= opendir( "./" );
  if ( dp != NULL ) {
   fprintf( stderr, "Dropping %d brightest points from lightcurves... \n", total_number_of_points_to_drop );
   while ( ( ep= readdir( dp ) ) != NULL ) {
    filenamelen= strlen( ep->d_name );
-   if ( filenamelen < 8 )
+   if ( filenamelen < 8 ) {
     continue; // make sure the filename is not too short for the following tests
+   }
    if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[filenamelen - 1] == 't' && ep->d_name[filenamelen - 2] == 'a' && ep->d_name[filenamelen - 3] == 'd' ) {
     filenamelist[filename_counter]= malloc( ( filenamelen + 1 ) * sizeof( char ) );
+    if( NULL == filenamelist[filename_counter] ) {
+     fprintf( stderr, "ERROR allocating memory for filenamelist[%ld]\n", filename_counter);
+     exit( EXIT_FAILURE );
+    }
     strncpy( filenamelist[filename_counter], ep->d_name, ( filenamelen + 1 ) );
     filename_counter++;
    }
