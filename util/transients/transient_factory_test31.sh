@@ -1222,7 +1222,6 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=1
     ;;
   esac
-  cat vast_summary.log | grep 'Estimated ref. image limiting mag.:' >> transient_factory_test31.txt
   echo "____ End of magnitude calibration ____" >> transient_factory_test31.txt
   # Check that the magnitude calibration actually worked
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 

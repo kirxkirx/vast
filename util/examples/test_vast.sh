@@ -16434,10 +16434,19 @@ if [ -f ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4
   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG003"
  fi
  #
- #
- cp default.sex.TICA_TESS default.sex 
+ # First run with a generic source extractor settings file to make sure VaST knows how to set gain for TICA TESS images
+ cp default.sex.ccd_example default.sex 
  # Make sure gain value is set to exposure time for the count rate image 
  lib/autodetect_aperture_main ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep --quiet 'GAIN 1.000'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG_gain"
+ fi
+ #
+ # Re-run with a proper source extractor settings file
+ cp default.sex.TICA_TESS default.sex 
+ # and make sure flag and weight images are produced
+ lib/autodetect_aperture_main ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep 'FLAG_IMAGE' | grep --quiet 'WEIGHT_IMAGE'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG_gain"
