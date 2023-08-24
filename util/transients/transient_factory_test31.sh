@@ -1113,7 +1113,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   fi
   # Now solve all images in parallel with no photomeric calibration
   for i in $(cat vast_image_details.log | awk '{print $17}' | sort | uniq) ;do
-   util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $REFERENCE_EPOCH__FIRST_IMAGE &
+   util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
   done
   
 #  for i in $(cat vast_image_details.log | awk '{print $17}' | sort | uniq) ;do 
