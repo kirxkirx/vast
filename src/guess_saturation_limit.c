@@ -53,6 +53,7 @@ int check_gain_in_default_sex( double *out_gain_from_default_sex ) {
     break; // go to next line
    if ( str1[i] == 'G' && str1[i + 1] == 'A' && str1[i + 2] == 'I' && str1[i + 3] == 'N' && str1[i + 4] == '_' && str1[i + 5] == 'K' && str1[i + 6] == 'E' && str1[i + 7] == 'Y' ) {
     // GAIN_KEY is found
+    fclose( f );
     return 2;
    }
   }
@@ -414,7 +415,7 @@ int try_to_recognize_TICA_TESS_FFI_for_flag_image_creation( char *fitsfilename )
 
  // fitsio
  long naxes[2];
- int hdutype;
+ //int hdutype;
  int status= 0;
  fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
  // Extract data from fits header

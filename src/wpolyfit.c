@@ -209,13 +209,14 @@ int robustzeropointfit( double *datax, double *datay, double *dataerr, int n, do
  double *mag_diff;
  double *w;
  mag_diff= malloc( n * sizeof( double ) );
- if ( mag_diff == NULL ) {
+ if ( NULL == mag_diff ) {
   fprintf( stderr, "Memory allocation ERROR in robustzeropointfit()\n" );
   return 1;
  }
  w= malloc( n * sizeof( double ) );
- if ( w == NULL ) {
+ if ( NULL == w ) {
   fprintf( stderr, "Memory allocation ERROR in robustzeropointfit()\n" );
+  free( mag_diff );
   return 1;
  }
  for ( i= 0; i < n; i++ ) {

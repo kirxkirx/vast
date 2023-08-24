@@ -12,6 +12,8 @@ vast-1.0rc87:
 	* 'vast_summary.log' now includes an estimate of the limiting magnitude of the reference frame.
 	The magnitude is in the instrumental units (negative value) and gets updated to actual magnitudes 
 	as soon as magnitude calibration is performed with 'util/magnitude_calibration.sh'.
+	* VaST can now handle TICA TESS Full-Frame Images that may be found at
+	https://archive.stsci.edu/hlsp/tica#section-c34b9669-b0be-40b2-853e-a59997d1b7c5
 07 Apr 2023: vast-1.0rc86:
 	* Experimental support for TESS Full-Frame Images (FFIs). In terms of photometric precision, 
 	VaST currently cannot compete with the analysis codes specifically designed for TESS. 

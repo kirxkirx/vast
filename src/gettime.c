@@ -507,10 +507,11 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
  memset( substring_month, 0, 32 );
  memset( substring_year, 0, 32 );
 
- for ( i= 0; i < (int)strlen( DATEOBS ); i++ )
+ // ?????
+ //for ( i= 0; i < (int)strlen( DATEOBS ); i++ )
 
-  // Parse '09-10-2017' style DATE-OBS
-  j= 0;
+ // Parse '09-10-2017' style DATE-OBS
+ j= 0;
  date_part= 1;
  for ( i= 0; i < (int)strlen( DATEOBS ); i++ ) {
   if ( DATEOBS[i] == '-' ) {

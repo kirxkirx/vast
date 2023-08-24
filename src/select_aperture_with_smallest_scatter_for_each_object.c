@@ -83,23 +83,23 @@ int main( int argc, char **argv ) {
  memset( comments_string_without_multiple_apertures, 0, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE );
 
  mag_a= (double **)malloc( 6 * sizeof( double * ) );
- if ( mag_a == NULL ) {
+ if ( NULL == mag_a ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory mag_a(select_aperture_with_smallest_scatter_for_each_object.c)\n" );
   exit( EXIT_FAILURE );
  };
  magerr_a= (double **)malloc( 6 * sizeof( double * ) );
- if ( magerr_a == NULL ) {
+ if ( NULL == magerr_a ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory magerr_a(select_aperture_with_smallest_scatter_for_each_object.c)\n" );
   exit( EXIT_FAILURE );
  };
  for ( i= 0; i < 6; i++ ) {
   mag_a[i]= (double *)malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
-  if ( mag_a[i] == NULL ) {
+  if ( NULL == mag_a[i] ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory mag_a[i](select_aperture_with_smallest_scatter_for_each_object.c)\n" );
    exit( EXIT_FAILURE );
   };
   magerr_a[i]= (double *)malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
-  if ( magerr_a[i] == NULL ) {
+  if ( NULL == magerr_a[i] ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory magerr_a[i](select_aperture_with_smallest_scatter_for_each_object.c)\n" );
    exit( EXIT_FAILURE );
   };
@@ -115,15 +115,24 @@ int main( int argc, char **argv ) {
 
  // Create a list of files
  filenamelist= (char **)malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );
+ if( NULL == filenamelist ) {
+  fprintf( stderr, "ERROR allocating memory for filenamelist\n");
+  exit( EXIT_FAILURE );
+ }
  filename_counter= 0;
  dp= opendir( "./" );
  if ( dp != NULL ) {
   while ( ( ep= readdir( dp ) ) != NULL ) {
    filenamelen= strlen( ep->d_name );
-   if ( filenamelen < 8 )
+   if ( filenamelen < 8 ) {
     continue; // make sure the filename is not too short for the following tests
+   }
    if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[filenamelen - 1] == 't' && ep->d_name[filenamelen - 2] == 'a' && ep->d_name[filenamelen - 3] == 'd' ) {
     filenamelist[filename_counter]= malloc( ( filenamelen + 1 ) * sizeof( char ) );
+    if( NULL == filenamelist[filename_counter] ) {
+     fprintf( stderr, "ERROR allocating memory for filenamelist[%d]\n", filename_counter);
+     exit( EXIT_FAILURE );
+    }
     strncpy( filenamelist[filename_counter], ep->d_name, ( filenamelen + 1 ) );
     filename_counter++;
    }
