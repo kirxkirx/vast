@@ -262,12 +262,14 @@ int main() {
     i= 0;
 
     // fprintf(stderr,"DEBUG06 - rading %s\n",ep->d_name);
+    x= y= -1.0; // initialize x and y to obviously wrong values
     // while(-1<fscanf(lightcurvefile,"%lf %lf %lf %lf %lf %lf %s",&jd,&mag,&magerr,&x,&y,&app,string)){
     while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &magerr, &x, &y, &app, string, NULL ) ) {
      // continue; // !!!
      // puts(string);
-     if ( jd == 0.0 )
+     if ( jd == 0.0 ) {
       continue; // if this line could not be parsed, try the next one
+     }
      if ( i == 0 ) {
       x_ref= x;
       y_ref= y;
