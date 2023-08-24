@@ -1664,11 +1664,13 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
     }
     // double-check that it's not in a bad region
     if ( 0 != exclude_region( X1, Y1, X2, Y2, N_bad_regions, star.x_frame, star.y_frame, aperture ) ) {
+     fprintf( stderr, "The transient candidate %9.3lf %9.3lf is rejected, see bad_region.lst\n", star.x_frame, star.y_frame );
      return;
     }
     // Check that it's not in a bad region on the reference frame - there will be no reference object!
     // increase the bad region, just in case
     if ( 0 != exclude_region( X1, Y1, X2, Y2, N_bad_regions, x, y, 1.5 * aperture ) ) {
+     fprintf( stderr, "The transient candidate %9.3lf %9.3lf is rejected as at the reference frame it would land at a bad region listed in bad_region.lst\n", x, y );
      return;
     }
     // OK, we like this candidate
@@ -3644,6 +3646,12 @@ int main( int argc, char **argv ) {
    continue;
   }
   if ( 0 != exclude_region( X1, Y1, X2, Y2, N_bad_regions, position_x_pix, position_y_pix, aperture ) ) {
+   if( counter_rejected_bad_region < 10 ) {
+    fprintf( stderr, "The reference image star %9.3lf %9.3lf is rejected, see bad_region.lst\n", position_x_pix, position_y_pix );
+   }
+   if( counter_rejected_bad_region == 10 ) {
+    fprintf( stderr, "Excluding more reference image stars falling at bad regions!.. (will not print them all)\n" );
+   }
    counter_rejected_bad_region++;
    continue;
   }
@@ -4249,6 +4257,12 @@ int main( int argc, char **argv ) {
       continue;
      }
      if ( 0 != exclude_region( X1, Y1, X2, Y2, N_bad_regions, position_x_pix, position_y_pix, aperture ) ) {
+      if( counter_rejected_bad_region < 10 ) {
+       fprintf( stderr, "The star %9.3lf %9.3lf is rejected, see bad_region.lst\n", position_x_pix, position_y_pix );
+      }
+      if( counter_rejected_bad_region == 10 ) {
+       fprintf( stderr, "Excluding more stars falling at bad regions!.. (will not print them all)\n" );
+      }
       counter_rejected_bad_region++;
       continue;
      }

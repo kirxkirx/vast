@@ -294,7 +294,7 @@ int exclude_region( double *X1, double *Y1, double *X2, double *Y2, int N, doubl
  int i;
  for ( i= 0; i < N; i++ ) {
   if ( X + aperture / 2.0 >= X1[i] && Y + aperture / 2.0 >= Y1[i] && X - aperture / 2.0 <= X2[i] && Y - aperture / 2.0 <= Y2[i] ) {
-   fprintf( stderr, "The star %9.3lf %9.3lf is rejected, see bad_region.lst\n", X, Y );
+   //fprintf( stderr, "The star %9.3lf %9.3lf is rejected, see bad_region.lst\n", X, Y );
    return 1;
   }
  }
