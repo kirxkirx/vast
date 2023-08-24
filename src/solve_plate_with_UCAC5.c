@@ -4,8 +4,7 @@
 
 //#define MAX_STARS_IN_VIZQUERY 500
 //#define MAX_STARS_IN_LOCAL_CAT_QUERY 2*MAX_STARS_IN_VIZQUERY
-//#define MAX_STARS_IN_VIZQUERY 1000
-#define MAX_STARS_IN_VIZQUERY 2000
+#define MAX_STARS_IN_VIZQUERY 1000
 #define MAX_STARS_IN_LOCAL_CAT_QUERY MAX_STARS_IN_VIZQUERY
 
 #define MAX_DEVIATION_AT_FIRST_STEP 6.0 / 3600.0 // 5.0/3600.0 //1.8/3600.0
@@ -239,14 +238,14 @@ void remove_outliers_from_a_pair_of_arrays( double *a, double *b, int *N_good ) 
 }
 
 void set_catalog_search_parameters( double approximate_field_of_view_arcmin, struct str_catalog_search_parameters *catalog_search_parameters ) {
- catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP * approximate_field_of_view_arcmin / 60.0;
+ catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP * 0.5 * approximate_field_of_view_arcmin / 60.0;
  catalog_search_parameters->brightest_mag= 1.0;
  //catalog_search_parameters->faintest_mag= 9.0;
  // We need fainter stars for UCAC5!
  catalog_search_parameters->faintest_mag= 13.0;
  //if ( approximate_field_of_view_arcmin < 500.0 ) {
  if ( approximate_field_of_view_arcmin < 600.0 ) {
-  catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP * approximate_field_of_view_arcmin / 60.0;
+  catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP * 0.5 * approximate_field_of_view_arcmin / 60.0;
   catalog_search_parameters->brightest_mag= 2.0;
   catalog_search_parameters->faintest_mag= 13.0;
  }
