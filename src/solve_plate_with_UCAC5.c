@@ -288,7 +288,6 @@ void set_catalog_search_parameters( double approximate_field_of_view_arcmin, str
   catalog_search_parameters->brightest_mag= 12.0;
   catalog_search_parameters->faintest_mag= 22.0;
  }
- // catalog_search_parameters->search_radius_second_step_deg=0.6*catalog_search_parameters->search_radius_deg;
  catalog_search_parameters->search_radius_second_step_deg= 0.8 * catalog_search_parameters->search_radius_deg;
  return;
 }
