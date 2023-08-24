@@ -13784,7 +13784,8 @@ $GREP_RESULT"
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2023 07 19.892.  2460145.392.  8...  23:51:5.... -02:13:5..."  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
-  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:51:55.83 -02:13:57.9  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # JPL HORIZONS position of Neptune
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:51:55.76 -02:13:58.7  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 2*13.8 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
@@ -13811,7 +13812,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE314a"
   fi
   RADECPOSITION_TO_TEST=`grep "2023 07 19\.892.  2460145\.392.  11\...  00:05:2.\... +00:34:..\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
-  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:05:24.47 +00:34:38.9  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # JPL HORIZONS position of Klotho
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:05:24.18 +00:34:39.4  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 1.5*13.8 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
@@ -13838,7 +13840,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE414a"
   fi
   RADECPOSITION_TO_TEST=`grep "2023 07 19\.892.  2460145\.392.  11\...  23:41:..\... +03:01:3.\.." transient_report/index.html | awk '{print $6" "$7}'`
-  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:41:59.56 +03:01:34.0  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # JPL HORIZONS position of Nemausa
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:41:58.91 +03:01:35.3  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
@@ -13866,7 +13869,8 @@ $GREP_RESULT"
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE514a"
   #fi
   #RADECPOSITION_TO_TEST=`grep "2023 07 19\.892.  2460145\.392.  13\...  23:41:1.\... -01:10:0.\.." transient_report/index.html | awk '{print $6" "$7}'`
-  #DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:41:16.19 -01:10:06.7  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # JPL HORIZONS position of Messalina
+  #DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:41:15.46 -01:10:06.1  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   ## NMW-STL scale is 13.80"/pix
   #TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
   #re='^[0-9]+$'
@@ -13894,7 +13898,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE614a"
   fi
   RADECPOSITION_TO_TEST=`grep "2023 07 19.892.  2460145.392.  13\...  23:42:2.\... -03:49:..\.." transient_report/index.html | awk '{print $6" "$7}'`
-  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:42:27.68 -03:49:30.2  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # JPL HORIZONS position of Newtonia
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:42:26.98 -03:49:30.2  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
@@ -13925,7 +13930,8 @@ $GREP_RESULT"
 $GREP_RESULT"
   fi
   RADECPOSITION_TO_TEST=`grep "2023 07 19.892.  2460145.392.  12\...  00:18:..\... -03:14:..\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
-  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:18:21.02 -03:14:35.4  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # JPL HORIZONS position of Pandora
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:18:20.83 -03:14:37.9  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
@@ -14139,7 +14145,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE314a"
   fi
   RADECPOSITION_TO_TEST=`grep "2023 08 20\.8680  2460177\.3680  9\...  00:55:..\... +06:07:..\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
-  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:55:41.69 +06:07:56.6  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # JPL HORIZONS position of Amphitrite
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:55:41.90 +06:07:55.9  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
@@ -14166,9 +14173,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE414a"
   fi
   RADECPOSITION_TO_TEST=`grep "2023 08 20\.8680  2460177\.3680  12\...  00:35:0.\... +14:05:..\.." transient_report/index.html | awk '{print $6" "$7}'`
-  # Measured posiiton
-  #DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:35:04.52 +14:05:01.7  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
-  # Predicted position from JPL HORIZONS
+  # Predicted position from JPL HORIZON for FredegundisS
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:35:04.60 +14:05:06.6  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
