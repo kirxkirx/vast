@@ -344,7 +344,7 @@ fi
 if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
  EXCLUSION_LIST_FILE="planets.txt"
  if [ -s "$EXCLUSION_LIST_FILE" ];then
-  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 3600 | grep --quiet "FOUND"
+  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 1800 | grep --quiet "FOUND"
   if [ $? -eq 0 ];then
    SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
    STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<font color=\"maroon\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" 3600 | grep "FOUND" | awk -F'FOUND' '{print $2}')
