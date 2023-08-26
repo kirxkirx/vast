@@ -97,6 +97,21 @@ Checking if the filename extension and FITS header look reasonable..."
 fi
 
 
+BASENAME_FITSFILE=`basename "$FITSFILE"`
+UCAC5_CATALOG_NAME="wcs_$BASENAME_FITSFILE.cat.ucac5"
+UCAC5_CATALOG_NAME="${UCAC5_CATALOG_NAME/wcs_wcs_/wcs_}"
+
+
+# If there is an UCAC5 file already
+if [ -s "$UCAC5_CATALOG_NAME" ];then
+ # Test if the UCAC5 file has the photometric calibration in if
+ TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' "$UCAC5_CATALOG_NAME" | wc -l | awk '{print $1}'`
+ if [ $TEST -lt 5 ];then
+  echo "The existing UCAC5 file $UCAC5_CATALOG_NAME has no photometric info"
+  rm -f "$UCAC5_CATALOG_NAME"
+ fi
+fi
+
 
 util/solve_plate_with_UCAC5 "$FITSFILE"
 if [ $? -ne 0 ];then
@@ -104,9 +119,6 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
-BASENAME_FITSFILE=`basename "$FITSFILE"`
-UCAC5_CATALOG_NAME="wcs_$BASENAME_FITSFILE.cat.ucac5"
-UCAC5_CATALOG_NAME="${UCAC5_CATALOG_NAME/wcs_wcs_/wcs_}"
 
 if [ ! -f "$UCAC5_CATALOG_NAME" ];then
  echo "ERROR in $0  -- no $UCAC5_CATALOG_NAME"
