@@ -291,7 +291,7 @@ fi
 # Check for a local copy of UCAC5
 # (this is specific to our in-house setup)
 if [ ! -d lib/catalogs/ucac5 ];then
- for TEST_THIS_DIR in /mnt/usb/UCAC5 /dataX/kirx/UCAC5 /home/kirx/UCAC5 $HOME/UCAC5 ../UCAC5 ../ucac5 ;do
+ for TEST_THIS_DIR in /mnt/usb/UCAC5 /dataX/kirx/UCAC5 /home/kirx/UCAC5 /home/apache/ucac5 $HOME/UCAC5 $HOME/ucac5 ../UCAC5 ../ucac5 ;do
   if [ -d $TEST_THIS_DIR ];then
    ln -s $TEST_THIS_DIR lib/catalogs/ucac5
    echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR"
@@ -308,6 +308,10 @@ if [ -d /mnt/usb/UCAC5 ];then
   rm -f lib/catalogs/ucac5
   ln -s /mnt/usb/UCAC5 lib/catalogs/ucac5
  fi
+fi
+#####################################################################################################
+if [ ! -d lib/catalogs/ucac5 ];then
+ echo "WARNING: no local copy of UCAC5 was found (will be using a remote one)"
 fi
 #####################################################################################################
 # This script should take care of updating astorb.dat and other catalogs
