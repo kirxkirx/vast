@@ -14362,6 +14362,7 @@ if [ -d ../KZ_Her_DSLR_transient_search_test ];then
  # Run the test
  echo "DSLR transient search test " 1>&2
  echo -n "DSLR transient search test: " >> vast_test_report.txt 
+ cp -v bad_region.lst_default bad_region.lst
  cp default.sex.DSLR_test default.sex
  ./vast -x99 -ukf -b200 \
  ../KZ_Her_DSLR_transient_search_test/v838her1.fit \
