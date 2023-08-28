@@ -744,7 +744,7 @@ fi
      QUAD_SIZE_MAX_OPTION="--quad-size-max 0.25 --uniformize 0"
     fi
     #RADECCOMMAND="$QUAD_SIZE_MAX_OPTION --crpix-center --uniformize 0 $RADECCOMMAND --radius $FOV_MAJORAXIS_DEG --scale-low $IMAGE_SCALE_ARCSECPIX_LOW --scale-high $IMAGE_SCALE_ARCSECPIX_HIGH --scale-units arcsecperpix"
-    RADECCOMMAND="$QUAD_SIZE_MAX_OPTION --crpix-center --uniformize 0 $RADECCOMMAND --radius $FOV_MAJORAXIS_DEG --scale-low $IMAGE_SCALE_ARCSECPIX_LOW --scale-high $IMAGE_SCALE_ARCSECPIX_HIGH --scale-units arcsecperpix"
+    RADECCOMMAND="$QUAD_SIZE_MAX_OPTION --crpix-center $RADECCOMMAND --radius $FOV_MAJORAXIS_DEG --scale-low $IMAGE_SCALE_ARCSECPIX_LOW --scale-high $IMAGE_SCALE_ARCSECPIX_HIGH --scale-units arcsecperpix"
     #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
     #$TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
     $TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 100  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
