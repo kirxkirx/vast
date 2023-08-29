@@ -355,8 +355,8 @@ fi
 
 HOST_WE_ARE_RUNNING_AT=`hostname`
 
-PLATE_SOLVE_SERVERS="scan.sai.msu.ru polaris.kirx.net vast.sai.msu.ru"
-#PLATE_SOLVE_SERVERS="polaris.kirx.net vast.sai.msu.ru"
+#PLATE_SOLVE_SERVERS="scan.sai.msu.ru polaris.kirx.net vast.sai.msu.ru"
+PLATE_SOLVE_SERVERS="scan.sai.msu.ru polaris.kirx.net"
 
 if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
 
