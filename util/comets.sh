@@ -56,7 +56,7 @@ echo "$PERIODIC_COMETS" | while read PERIODIC_COMET_DESIGNATION_AND_NAME ;do
    PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER=$(curl --silent --insecure "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_DESIGNATION'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='$JD'&QUANTITIES='1,9'" | grep "$PERIODIC_COMET_DESIGNATION" | grep -v 'DES' | tail -n1 | awk '{print $1}')
   fi
   if [ -z "$PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER" ];then
-   echo "ERROR getting JPL HORIZONS designation for periodic comet $PERIODIC_COMET_DESIGNATION_AND_NAME"
+   echo "00:00:00.00 +00:00.0 cannot get JPL HORIZONS designation for periodic comet $PERIODIC_COMET_DESIGNATION_AND_NAME"
    continue
   fi
   HORIZONS_REPLY=$(curl --insecure --silent "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='$JD'&QUANTITIES='1,9'")

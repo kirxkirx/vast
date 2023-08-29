@@ -1590,19 +1590,24 @@ exclusion_list_index_html.txt NOT FOUND" >> transient_factory_test31.txt
 
 ###############################################################################################################
 # Moved here as we run HORIZONS script in parallel to the main script
-echo "Planet positions from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
+echo "############################################################
+Planet positions from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
 cat planets.txt
-echo "Planet positions from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
+echo "############################################################
+Planet positions from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
 cat planets.txt >> transient_factory_test31.txt
 #
-echo "Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
+echo "############################################################
+Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
 cat comets.txt
-echo "Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
+echo "############################################################
+Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
 cat comets.txt >> transient_factory_test31.txt
 #
-echo "List of recently discovered ASAS-SN transients:"
+echo "############################################################
+List of recent ASAS-SN transients:"
 cat asassn_transients_list.txt
-echo "List of recently discovered ASAS-SN transients:" >> transient_factory_test31.txt
+echo "List of recentl ASAS-SN transients:" >> transient_factory_test31.txt
 cat asassn_transients_list.txt >> transient_factory_test31.txt
 ###############################################################################################################
 
