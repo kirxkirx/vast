@@ -353,6 +353,21 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
  fi
 fi
 #
+# Check if the transient is a bright comet
+# The difference with the never_exclude list is the search radius
+if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
+ EXCLUSION_LIST_FILE="comets.txt"
+ if [ -s "$EXCLUSION_LIST_FILE" ];then
+  # Set the same search radius as for the asteroids in util/transients/MPCheck_v2.sh
+  EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC=400
+  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep --quiet "FOUND"
+  if [ $? -eq 0 ];then
+   SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
+   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<font color=\"maroon\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')
+  fi
+ fi
+fi
+#
 # Check if the transient was recently seen by ASAS-SN
 # The difference with the never_exclude list is the search radius
 if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then

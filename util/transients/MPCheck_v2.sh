@@ -59,14 +59,26 @@ fi
 
 #####
 # Check if the thing is (close to) a major planet
-THIS_A_PLANET=0
+THIS_A_PLANET_OR_COMET=0
 EXCLUSION_LIST_FILE="planets.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
  PLANET_SEARCH_RESULTS=$(lib/put_two_sources_in_one_field "$RAHH:$RAMM:$RASS" "$DECDD:$DECMM:$DECSS" "$EXCLUSION_LIST_FILE" 400)
  echo "$PLANET_SEARCH_RESULTS" | grep --quiet "FOUND"
  if [ $? -eq 0 ];then
   echo "$PLANET_SEARCH_RESULTS" | awk -F'FOUND' '{print $2}'
-  THIS_A_PLANET=1
+  THIS_A_PLANET_OR_COMET=1
+ fi
+fi
+#####
+#####
+# Check if the thing is a bright comet
+EXCLUSION_LIST_FILE="comets.txt"
+if [ -s "$EXCLUSION_LIST_FILE" ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then
+ PLANET_SEARCH_RESULTS=$(lib/put_two_sources_in_one_field "$RAHH:$RAMM:$RASS" "$DECDD:$DECMM:$DECSS" "$EXCLUSION_LIST_FILE" 400)
+ echo "$PLANET_SEARCH_RESULTS" | grep --quiet "FOUND"
+ if [ $? -eq 0 ];then
+  echo "$PLANET_SEARCH_RESULTS" | awk -F'FOUND' '{print $2}'
+  THIS_A_PLANET_OR_COMET=1
  fi
 fi
 #####
@@ -105,7 +117,7 @@ if [ -x lib/astcheck ];then
  echo "$YEAR $MONTH $DAYFRAC $RAHH $RAMM $RASS  $DECDD $DECMM $DECSS  $MAG_FOR_MPC_REPORT" |awk '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+02.0f %02.0f %05.2f         %4.1f R      500\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' > test.mpc
  # 400" is the search radius
  lib/astcheck test.mpc -r400 -m15 |grep -A 50 "TAU0008" |grep -v "TAU0008" |head -n 1 | grep -v ObsCodes.html
- if [ $? -ne 0 ] && [ $THIS_A_PLANET -eq 0 ] ;then
+ if [ $? -ne 0 ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then
   if [ $COLOR -eq 1 ];then
    #echo -e "The object was \033[01;31mnot found\033[00m in $DATABASE_NAME."
    echo -e "The object was \033[01;32mnot found\033[00m in $DATABASE_NAME."
@@ -125,46 +137,3 @@ if [ -x lib/astcheck ];then
   exit 0 # return code will signal we have an ID
  fi # else lib/astcheck 
 fi # if [ -f lib/astcheck ];then
-
-# !!! No online search !!!
-exit 1
-
-# Querry MPChecker (works only for recent data!)
-if [ $COLOR -eq 1 ];then
- DATABASE_NAME="\033[01;36mMPChecker\033[00m"
-else
- DATABASE_NAME="<font color=\"teal\">MPChecker</font>"
-fi
-
-echo -e "$DATABASE_NAME querry:  $RAHH $RAMM $RASS  $DECDD $DECMM $DECSS  $YEAR $MONTH $DAYFRAC"
-
-#$CURL  --silent --max-time 90 --data "year=$YEAR&month=$MONTH&day=$DAYFRAC&which=pos&ra=$RAHH+$RAMM+$RASS&decl=$DECDD+$DECMM+$DECSS&TextArea=&radius=5&limit=15.0&oc=500&sort=d&mot=h&tmot=t&pdes=u&needed=f&ps=n&type=p" "http://scully.cfa.harvard.edu/~cgi/MPCheck.COM" > curlhack.html
-grep "No known minor planets" curlhack.html
-if [ $? -eq 0 ];then
- if [ $COLOR -eq 1 ];then
-  echo -e "The object was \033[01;31mnot found\033[00m in $DATABASE_NAME."
- else
-  echo -e "The object was <font color=\"red\">not found</font> in $DATABASE_NAME."
- fi
-else
- if [ $COLOR -eq 1 ];then
-  echo -e "The object was \033[01;32mfound\033[00m in $DATABASE_NAME:  "
- else
-  echo -e "The object was <font color=\"green\">found</font> in $DATABASE_NAME:  "
- fi 
- SWITCH=1
- while read STR ;do
-  if [ $SWITCH -eq 0 ];then
-   echo $STR
-  fi
-  echo "$STR" | grep "<pre>" &>/dev/null
-  if [ $? -eq 0 ];then
-   SWITCH=0
-  fi
-  echo "$STR" | grep "</pre>" &>/dev/null
-  if [ $? -eq 0 ];then
-   break
-  fi
- done < curlhack.html
-fi
-   

@@ -464,9 +464,10 @@ echo "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" >> transient_factory_test31.txt
 
 # Update planet positions taking the date of the first input image
 JD_FIRSTIMAGE_FOR_PLANET_POSITIONS=$(for IMGFILE in "$NEW_IMAGES"/*."$FITS_FILE_EXT" ;do if [ -f "$IMGFILE" ];then util/get_image_date "$IMGFILE" 2>&1 | grep ' JD ' | awk '{print $2}' ; break ;fi ;done)
-echo "The reference JD(UT) for computing planet position: $JD_FIRSTIMAGE_FOR_PLANET_POSITIONS"
-echo "The reference JD(UT) for computing planet position: $JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" >> transient_factory_test31.txt
+echo "The reference JD(UT) for computing planet and comet positions: $JD_FIRSTIMAGE_FOR_PLANET_POSITIONS"
+echo "The reference JD(UT) for computing planet and comet positions: $JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" >> transient_factory_test31.txt
 $TIMEOUTCOMMAND util/planets.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > planets.txt &
+$TIMEOUTCOMMAND util/comets.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > comets.txt &
 $TIMEOUTCOMMAND lib/asassn_transients_list.sh > asassn_transients_list.txt &
 
 PREVIOUS_FIELD="none"
@@ -1593,8 +1594,18 @@ echo "Planet positions from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POS
 cat planets.txt
 echo "Planet positions from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
 cat planets.txt >> transient_factory_test31.txt
+#
+echo "Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
+cat comets.txt
+echo "Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
+cat comets.txt >> transient_factory_test31.txt
+#
+echo "List of recently discovered ASAS-SN transients:"
+cat asassn_transients_list.txt
+echo "List of recently discovered ASAS-SN transients:" >> transient_factory_test31.txt
+cat asassn_transients_list.txt >> transient_factory_test31.txt
 ###############################################################################################################
- 
+
 ## Finalize the HTML report
 echo "<H2>Processig complete!</H2>" >> transient_report/index.html
 
@@ -1613,9 +1624,11 @@ echo "</pre>" >> transient_report/index.html
 
 echo "</BODY></HTML>" >> transient_report/index.html
 
-if [ -f planets.txt ];then
- rm -f planets.txt
-fi
+for FILE_TO_REMOVE in planets.txt comets.txt asassn_transients_list.txt ;do
+ if [ -f "$FILE_TO_REMOVE" ];then
+  rm -f "$FILE_TO_REMOVE"
+ fi
+done
 
 # The uncleaned directory is needed for the test script!!!
 #util/clean_data.sh

@@ -6,6 +6,10 @@ vast-1.0rc87:
 	This is a wrapper around WCSTools + Patrick Glaschke's code described in https://arxiv.org/abs/1008.3966
 	* New script 'util/planets.sh' prints geocentric positions of major planets for a given JD(UT).
 	The positions are retrieved from JPL HORIZONS https://ssd.jpl.nasa.gov/horizons/
+	* Similarly to 'util/planets.sh', the new script 'util/comets.sh' prints geocentric positions of 
+	bright comets (listed at http://astro.vanbuitenen.nl/comets ) for a given JD(UT).
+	The specified JD(UT) should be near-current for the list of bright comets to be relevant!
+	The comet positions are retrieved from JPL HORIZONS https://ssd.jpl.nasa.gov/horizons/
 	* Multiple improvements in the NMW transient search script 'util/transients/transient_factory_test31.sh'
 	* Do not perform slow VizieR query for a photometric catalog when identifying a star using 
 	'util/identify.sh' or 'U' in the lightcurve viewer.
