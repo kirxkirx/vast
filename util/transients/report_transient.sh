@@ -140,17 +140,14 @@ echo "</table>"
 
 # We need to reformat util/colstat output to make it look like a small shell script
 util/colstat < ra$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
-###################
-#cp script$$.dat /tmp/
-###################
 if [ $? -ne 0 ];then
- echo "ERROR0001 in $0" 
+ echo "ERROR running util/colstat in $0" 
  clean_tmp_files
  exit 1
 fi
 . script$$.dat
 if [ $? -ne 0 ];then
- echo "ERROR0002 in $0" 
+ echo "ERROR running script$$.dat in $0" 
  clean_tmp_files
  exit 1
 fi

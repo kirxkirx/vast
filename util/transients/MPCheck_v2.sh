@@ -57,6 +57,8 @@ else
  DATABASE_NAME="<font color=\"teal\">astcheck</font>"
 fi
 
+ASTCHECK_OUTPUT=""
+
 #####
 # Check if the thing is (close to) a major planet
 THIS_A_PLANET_OR_COMET=0
@@ -65,7 +67,8 @@ if [ -s "$EXCLUSION_LIST_FILE" ];then
  PLANET_SEARCH_RESULTS=$(lib/put_two_sources_in_one_field "$RAHH:$RAMM:$RASS" "$DECDD:$DECMM:$DECSS" "$EXCLUSION_LIST_FILE" 400)
  echo "$PLANET_SEARCH_RESULTS" | grep --quiet "FOUND"
  if [ $? -eq 0 ];then
-  echo "$PLANET_SEARCH_RESULTS" | awk -F'FOUND' '{print $2}'
+  #echo "$PLANET_SEARCH_RESULTS" | awk -F'FOUND' '{print $2}'
+  ASTCHECK_OUTPUT=$(echo "$PLANET_SEARCH_RESULTS" | awk -F'FOUND' '{print $2}')
   THIS_A_PLANET_OR_COMET=1
  fi
 fi
@@ -77,23 +80,23 @@ if [ -s "$EXCLUSION_LIST_FILE" ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then
  PLANET_SEARCH_RESULTS=$(lib/put_two_sources_in_one_field "$RAHH:$RAMM:$RASS" "$DECDD:$DECMM:$DECSS" "$EXCLUSION_LIST_FILE" 100)
  echo "$PLANET_SEARCH_RESULTS" | grep --quiet "FOUND"
  if [ $? -eq 0 ];then
-  echo "$PLANET_SEARCH_RESULTS" | awk -F'FOUND' '{print $2}'
+  #echo "$PLANET_SEARCH_RESULTS" | awk -F'FOUND' '{print $2}'
+  ASTCHECK_OUTPUT=$(echo "$PLANET_SEARCH_RESULTS" | awk -F'FOUND' '{print $2}')
   THIS_A_PLANET_OR_COMET=1
  fi
 fi
 #####
 
 
-# This script should take care of updating astorb.dat
-lib/update_offline_catalogs.sh all
 
-if [ -x lib/astcheck ];then
+if [ -z "$ASTCHECK_OUTPUT" ];then
+ # This script should take care of updating astorb.dat
+ lib/update_offline_catalogs.sh all
+ 
  if [ ! -f astorb.dat ];then
   # astorb.dat needs to be downloaded
   echo "Downloading the asteroid database (astorb.dat)" 1>&2
   #wget -c ftp://ftp.lowell.edu/pub/elgb/astorb.dat.gz 1>&2
-  #wget -c http://scan.sai.msu.ru/~kirx/pub/astorb.dat.gz 1>&2
-  #wget -c https://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
   wget -c --no-check-certificate https://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
   if [ $? -ne 0 ];then
    # a desperate recovery attempt
@@ -113,27 +116,25 @@ if [ -x lib/astcheck ];then
    exit 1
   fi
  fi
-# echo "Using local copy of astcheck to identify asteroids! See http://home.gwi.net/~pluto/devel/astcheck.htm for details."
+ # Using local copy of astcheck to identify asteroids! See http://home.gwi.net/~pluto/devel/astcheck.htm for details
  echo "$YEAR $MONTH $DAYFRAC $RAHH $RAMM $RASS  $DECDD $DECMM $DECSS  $MAG_FOR_MPC_REPORT" |awk '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+02.0f %02.0f %05.2f         %4.1f R      500\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' > test.mpc
  # 400" is the search radius
- lib/astcheck test.mpc -r400 -m15 |grep -A 50 "TAU0008" |grep -v "TAU0008" |head -n 1 | grep -v ObsCodes.html
- if [ $? -ne 0 ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then
-  if [ $COLOR -eq 1 ];then
-   #echo -e "The object was \033[01;31mnot found\033[00m in $DATABASE_NAME."
-   echo -e "The object was \033[01;32mnot found\033[00m in $DATABASE_NAME."
-  else
-   #echo -e "The object was <font color=\"red\">not found</font> in $DATABASE_NAME."
-   echo -e "The object was <font color=\"green\">not found</font> in $DATABASE_NAME."
-  fi
-  exit 1 # return code will signal we have no ID
+ ASTCHECK_OUTPUT=$(lib/astcheck test.mpc -r400 -m15 |grep -A 50 "TAU0008" |grep -v "TAU0008" |head -n 1 | grep -v ObsCodes.html)
+fi 
+
+if [ -z "$ASTCHECK_OUTPUT" ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then
+ if [ $COLOR -eq 1 ];then
+  echo -e "The object was \033[01;32mnot found\033[00m in $DATABASE_NAME."
  else
-  if [ $COLOR -eq 1 ];then
-   #echo -e "The object was \033[01;32mfound\033[00m in $DATABASE_NAME.  "
-   echo -e "The object was \033[01;31mfound\033[00m in $DATABASE_NAME.  "
-  else
-   #echo -e "The object was <font color=\"green\">found</font> in $DATABASE_NAME.  "
-   echo -e "<b>The object was <font color=\"red\">found</font> in $DATABASE_NAME.</b>  "
-  fi 
-  exit 0 # return code will signal we have an ID
- fi # else lib/astcheck 
-fi # if [ -f lib/astcheck ];then
+  echo -e "The object was <font color=\"green\">not found</font> in $DATABASE_NAME."
+ fi
+ exit 1 # return code will signal we have no ID
+else
+ if [ $COLOR -eq 1 ];then
+  echo -e "The object was \033[01;31mfound\033[00m in $DATABASE_NAME.  "
+ else
+  echo -e "<b>The object was <font color=\"red\">found</font> in $DATABASE_NAME.</b>  "
+ fi 
+ echo "$ASTCHECK_OUTPUT"
+ exit 0 # return code will signal we have an ID
+fi # else lib/astcheck 
