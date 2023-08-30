@@ -1246,7 +1246,7 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
    "$VAST_PATH"util/search_databases_with_curl.sh `"$VAST_PATH"lib/deg2hms $RADEC` H
    UNCALIBRATED_IMAGE_NAME=`echo ${WCS_IMAGE_NAME//"wcs_"/}`
    DATEANDTIME=`grep "$UNCALIBRATED_IMAGE_NAME" "$VAST_PATH"vast_image_details.log | head -n1 |awk '{print $2" "$3}'`
-   "$VAST_PATH"util/transients/MPCheck.sh `"$VAST_PATH"lib/deg2hms $RADEC` $DATEANDTIME H
+   "$VAST_PATH"util/transients/MPCheck_v2.sh `"$VAST_PATH"lib/deg2hms $RADEC` $DATEANDTIME H
   elif [ "$START_NAME" = "identify_justname.sh" ];then
    # awk -F'|' '{print $1}' is in case this will be a GCVS name
    # sed 's/^[ \t]*//;s/[ \t]*$//' is to remove the leading and trailing white spaces https://unix.stackexchange.com/questions/102008/how-do-i-trim-leading-and-trailing-whitespace-from-each-line-of-some-output

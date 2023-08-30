@@ -333,7 +333,7 @@ if [ -s "$EXCLUSION_LIST_FILE" ];then
  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC | grep --quiet "FOUND"
  if [ $? -eq 0 ];then
   SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
-  STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<font color=\"maroon\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')
+  STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<bf><font color=\"maroon\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')"</bf>"
  fi
 fi
 # Check if the transient is a major planet
@@ -345,7 +345,7 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
   lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep --quiet "FOUND"
   if [ $? -eq 0 ];then
    SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
-   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<font color=\"maroon\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')
+   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<bf><font color=\"maroon\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')"</bf>"
   fi
  fi
 fi
@@ -359,7 +359,7 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
   lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep --quiet "FOUND"
   if [ $? -eq 0 ];then
    SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
-   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<font color=\"maroon\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')
+   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<bf><font color=\"maroon\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')"</bf>"
   fi
  fi
 fi
@@ -372,7 +372,7 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
   lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC | grep --quiet "FOUND"
   if [ $? -eq 0 ];then
    SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
-   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<font color=\"maroon\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')
+   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<bf><font color=\"maroon\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')"</bf>"
   fi
  fi
 fi
@@ -508,9 +508,8 @@ CONSTELLATION=$(util/constellation.sh $RADEC_MEAN_HMS)
 echo "$GALACTIC_COORDINATES  $CONSTELLATION  Second-epoch detections are separated by $ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING\" and $PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING pix   $STAR_IN_NEVEREXCLUDE_LIST_MESSAGE"
 
 # Check if this is a known source or if it looks like a hot pixel
-lib/catalogs/check_catalogs_offline $RA_MEAN $DEC_MEAN
+lib/catalogs/check_catalogs_offline $RA_MEAN $DEC_MEAN H
 VARIABLE_STAR_ID=$?
-#util/transients/MPCheck.sh $RADEC_MEAN_HMS $DATE $TIME H $MAG_MEAN
 util/transients/MPCheck_v2.sh $RADEC_MEAN_HMS $YEAR_MEAN $MONTH_MEAN $DAYFRAC_MEAN H $MAG_MEAN
 ASTEROID_ID=$?
 # If the candidate transient is not a known variable star or asteroid and doesn't seem to be a hot pixel - try online search

@@ -12,7 +12,7 @@
 #define MIN( a, b ) ( ( ( a ) < ( b ) ) ? ( a ) : ( b ) )
 
 
-int search_myMDV( double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found ) {
+int search_myMDV( double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found, int html_output ) {
     FILE *mymdvfile;
     char name[32];
     double RA_deg, Dec_deg, RA1_rad, RA2_rad, DEC1_rad, DEC2_rad;
@@ -63,8 +63,11 @@ int search_myMDV( double target_RA_deg, double target_Dec_deg, double search_rad
 
         if ( distance_deg < search_radius_deg ) {
             if ( is_found == 0 ) {
-                //fprintf( stdout, "The object was <font color=\"green\">found</font> in <font color=\"red\">MDV</font>\n" );
+             if ( 1 == html_output ) {
                 fprintf( stdout, "<b>The object was <font color=\"red\">found</font> in <font color=\"DarkCyan\">MDV</font></b>\n" );
+             } else { 
+                fprintf( stdout, "The object was found in MDV\n" );             
+             }
             }
             is_found= 1;
             if ( distance_deg < best_distance_deg ) {
@@ -75,8 +78,12 @@ int search_myMDV( double target_RA_deg, double target_Dec_deg, double search_rad
             }
         }
     }
-    if ( is_found ) {
-     fprintf( stdout, "%2.0lf\"  %s\nType: %s\n", best_distance_deg * 3600.0, best_name, best_type);
+    if ( 1 == is_found ) {
+     if ( 1 == html_output ) {
+      fprintf( stdout, "<b>%2.0lf\"  %s</b>\nType: %s\n", best_distance_deg * 3600.0, best_name, best_type);
+     } else {
+      fprintf( stdout, "%2.0lf\"  %s\nType: %s\n", best_distance_deg * 3600.0, best_name, best_type);
+     }
     } else if ( be_silent_if_not_found ) {
       fprintf( stdout, "The object was not found in MDV\n" );
     }
@@ -88,26 +95,7 @@ int search_myMDV( double target_RA_deg, double target_Dec_deg, double search_rad
 }
 
 
-/*
-void download_vsx() {
- FILE *f;
- f= fopen( "lib/catalogs/vsx.dat", "r" );
- if ( f == NULL ) {
-  fprintf( stderr, "Downloading VSX catalog!\n" );
-  // try to avoid double-downlaod
-  if ( 0 != system( "ps aux | grep wget | grep vsx.dat.gz && exit 1 || cd lib/catalogs/ ; rm -f vsx.dat.gz ; wget ftp://cdsarc.u-strasbg.fr/pub/cats/B/vsx/vsx.dat.gz ; gunzip vsx.dat.gz" ) ) {
-   fprintf( stderr, "ERROR downloading the VSX catalog!\n" );
-  }
- } else {
-  fclose( f );
-  return;
- }
-
- return;
-}
-*/
-
-int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found ) {
+int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found, int html_output ) {
  FILE *vsx_dat;
  char name[32];
  char RA_char[32];
@@ -186,10 +174,13 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
   distance_deg= acos( cos( DEC1_rad ) * cos( DEC2_rad ) * cos( MAX( RA1_rad, RA2_rad ) - MIN( RA1_rad, RA2_rad ) ) + sin( DEC1_rad ) * sin( DEC2_rad ) ) * 180.0 / M_PI;
 
   if ( distance_deg < search_radius_deg ) {
-   if ( is_found == 0 ) {
+   if ( 0 == is_found ) {
     // say it only once even if we'll have a better match later
-    //fprintf( stdout, "The object was <font color=\"green\">found</font> in <font color=\"blue\">VSX</font>\n" );
-    fprintf( stdout, "<b>The object was <font color=\"red\">found</font> in <font color=\"blue\">VSX</font></b>\n" );
+    if ( 1 == html_output ) {
+     fprintf( stdout, "<b>The object was <font color=\"red\">found</font> in <font color=\"blue\">VSX</font></b>\n" );
+    } else {
+     fprintf( stdout, "The object was found in VSX\n" );
+    }
    }
    is_found= 1;
    // fprintf(stdout,"%2.0lf\"  %s\nType: %s\n#   Max.           Min./Amp.       JD0           Period\n%s",distance_deg*3600.0,name,type,descr);
@@ -206,11 +197,18 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
  }
  if ( is_found == 0 ) {
   if ( be_silent_if_not_found == 0 ) {
-   //fprintf( stdout, "The object was <font color=\"red\">not found</font> in <font color=\"blue\">VSX</font>\n" );
-   fprintf( stdout, "The object was <font color=\"green\">not found</font> in <font color=\"blue\">VSX</font>\n" );
+   if ( 1 == html_output ) {
+    fprintf( stdout, "The object was <font color=\"green\">not found</font> in <font color=\"blue\">VSX</font>\n" );
+   } else {
+    fprintf( stdout, "The object was not found in VSX\n" );
+   }
   }
  } else {
-  fprintf( stdout, "%2.0lf\"  %s\nType: %s\n#   Max.           Min./Amp.       JD0           Period\n%s", best_distance_deg * 3600.0, best_name, best_type, best_descr );
+  if ( 1 == html_output ) {
+   fprintf( stdout, "<b>%2.0lf\"  %s</b>\nType: %s\n#   Max.           Min./Amp.       JD0           Period\n%s", best_distance_deg * 3600.0, best_name, best_type, best_descr );
+  } else {
+   fprintf( stdout, "%2.0lf\"  %s\nType: %s\n#   Max.           Min./Amp.       JD0           Period\n%s", best_distance_deg * 3600.0, best_name, best_type, best_descr );
+  }
  }
 
  fclose( vsx_dat );
@@ -218,25 +216,6 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
  return is_found;
 }
 
-/*
-void download_asassnv() {
- FILE *f;
- f= fopen( "lib/catalogs/asassnv.csv", "r" );
- if ( f == NULL ) {
-  fprintf( stderr, "Downloading ASASSN-V catalog!\n" );
-  // try to avoid double-download
-  // if( 0 != system("ps aux | grep wget | grep asassnv.csv && exit 1 || cd lib/catalogs/ ; rm -f  asassnv.csv ; wget -O 'asassnv.csv' 'https://asas-sn.osu.edu/variables/catalog.csv'") ) {
-  if ( 0 != system( "ps aux | grep wget | grep asassnv.csv && exit 1 || cd lib/catalogs/ ; rm -f  asassnv.csv ; wget -O 'asassnv.csv' --no-check-certificate 'https://asas-sn.osu.edu/variables.csv?action=index&controller=variables'" ) ) {
-   fprintf( stderr, "ERROR downloading the ASASSN-V catalog!\n" );
-  }
- } else {
-  fclose( f );
-  return;
- }
-
- return;
-}
-*/
 
 const char *getfield_from_csv_string( char *line, int num ) {
  static const char whitespace[32] = "                               "; // 31 white space
@@ -251,17 +230,14 @@ const char *getfield_from_csv_string( char *line, int num ) {
  return whitespace; // Return pointer to 31 white space on failure
 }
 
-int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found ) {
+int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found, int html_output ) {
  FILE *asassnv_csv;
  char name[32];
- // char RA_char[32];
- // char Dec_char[32];
  double RA_deg, Dec_deg, RA1_rad, RA2_rad, DEC1_rad, DEC2_rad;
  char type[32];
  char MeanMag[32];
  char Amplitude[32];
  char Period[32];
- // char Url[32];
  char string[4096];
  char string_noemptycells[4096];
  char string_to_be_ruined_by_strtok[4096];
@@ -277,10 +253,7 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
  int meanmag_token= 6;
  int amplitude_token= 7;
  int period_token= 8;
- // int url_token= 10;
- //
 
- //download_asassnv();
  asassnv_csv= fopen( "lib/catalogs/asassnv.csv", "r" );
  if ( NULL == asassnv_csv ) {
   fprintf( stderr, "ERROR: Cannot open asassnv.csv\n" );
@@ -441,17 +414,23 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
    ///////////////////////////////////////////////////////////////
 
    // if( is_found == 0 )
-   //fprintf( stdout, "The object was <font color=\"green\">found</font> in <font color=\"green\">ASASSN-V</font>\n");
-   fprintf( stdout, "<b>The object was <font color=\"red\">found</font> in <font color=\"green\">ASASSN-V</font></b>\n");
+   if ( 1 == html_output ) {   
+    fprintf( stdout, "<b>The object was <font color=\"red\">found</font> in <font color=\"green\">ASASSN-V</font></b>\n");
+    fprintf( stdout, "<b>%2.0lf\"  %s</b>\nType: %s\nMeanMag %s m  Amp. %s m  Period %s d\n", distance_deg * 3600.0, name, type, MeanMag, Amplitude, Period );
+   } else {
+    fprintf( stdout, "The object was found in ASASSN-V\n");
+    fprintf( stdout, "%2.0lf\"  %s\nType: %s\nMeanMag %s m  Amp. %s m  Period %s d\n", distance_deg * 3600.0, name, type, MeanMag, Amplitude, Period );
+   }
    is_found= 1;
-   // fprintf(stdout, "%2.0lf\"  %s\nType: %s\nMeanMag %s m  Amp. %s m  Period %s d\n<a href=\"https://asas-sn.osu.edu%s\">ASASSN lightcurve</a>\n", distance_deg * 3600.0, name, type, MeanMag, Amplitude, Period, Url);
-   fprintf( stdout, "%2.0lf\"  %s\nType: %s\nMeanMag %s m  Amp. %s m  Period %s d\n", distance_deg * 3600.0, name, type, MeanMag, Amplitude, Period );
    break; // find one and be happy
   }
  }
  if ( is_found == 0 && be_silent_if_not_found == 0 ) {
-  //fprintf( stdout, "The object was <font color=\"red\">not found</font> in <font color=\"green\">ASASSN-V</font>\n");
-  fprintf( stdout, "The object was <font color=\"green\">not found</font> in <font color=\"DarkSeaGreen\">ASASSN-V</font>\n");
+  if ( 1 == html_output ) {
+   fprintf( stdout, "The object was <font color=\"green\">not found</font> in <font color=\"DarkSeaGreen\">ASASSN-V</font>\n");
+  } else {
+   fprintf( stdout, "The object was not found in ASASSN-V\n");
+  }
  }
 
  fclose( asassnv_csv );
@@ -461,12 +440,14 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
 
 int main( int argc, char **argv ) {
 
+ int html_output= 0; // 0 - no, 1 - yes
+
  int is_found;
  double target_RA_deg;
  double target_Dec_deg;
 
  if ( argc < 3 ) {
-  fprintf( stderr, "Usage: %s 12.345 67.890\n", argv[0] );
+  fprintf( stderr, "Usage: %s 12.345 67.890\nor\n%s 12.345 67.890 H  # for HTML output", argv[0] );
   return 1;
  }
 
@@ -485,6 +466,12 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "ERROR: the input Dec (%s interpreted as %lf) is our of range!\n", argv[2], target_Dec_deg );
   return 2;
  }
+ 
+ if ( argc >= 4 ) {
+  if( argv[3][0] == 'H' ) {
+   html_output= 1;
+  }
+ }
 
  // This script should take care of updating the catalogs
  if ( 0 != system( "lib/update_offline_catalogs.sh" ) ) {
@@ -498,19 +485,19 @@ int main( int argc, char **argv ) {
 
 
  // First try small search radius
- is_found= search_vsx( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG / 3.0, 1 );
+ is_found= search_vsx( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG / 3.0, 1, html_output );
  if ( is_found != 1 ) {
-  is_found= search_asassnv( target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG / 3.0, 1 );
+  is_found= search_asassnv( target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG / 3.0, 1, html_output );
  }
  // If nothing found - try a larger search radius
  if ( is_found != 1 ) {
-  is_found= search_vsx( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG, 0 );
+  is_found= search_vsx( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG, 0, html_output );
  }
  if ( is_found != 1 ) {
-  is_found= search_asassnv( target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG, 0 );
+  is_found= search_asassnv( target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG, 0, html_output );
  }
  if ( is_found != 1 ) {
-  is_found= search_myMDV( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG, 0 );
+  is_found= search_myMDV( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG, 0, html_output );
  }
 
  // Return 0 if the source is found

@@ -1607,7 +1607,8 @@ cat comets.txt >> transient_factory_test31.txt
 echo "############################################################
 List of recent ASAS-SN transients:"
 cat asassn_transients_list.txt
-echo "List of recentl ASAS-SN transients:" >> transient_factory_test31.txt
+echo "############################################################
+List of recentl ASAS-SN transients:" >> transient_factory_test31.txt
 cat asassn_transients_list.txt >> transient_factory_test31.txt
 ###############################################################################################################
 
