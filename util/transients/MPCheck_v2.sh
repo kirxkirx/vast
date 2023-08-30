@@ -132,9 +132,37 @@ if [ -z "$ASTCHECK_OUTPUT" ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then
 else
  if [ $COLOR -eq 1 ];then
   echo -e "The object was \033[01;31mfound\033[00m in $DATABASE_NAME.  "
+  echo "$ASTCHECK_OUTPUT"
  else
   echo -e "<b>The object was <font color=\"red\">found</font> in $DATABASE_NAME.</b>  "
+  # Put <b> </b> around the first two words (four words if the string includes 'C/')
+  echo "$ASTCHECK_OUTPUT" | awk '{
+    if (NF == 0) { 
+        print; 
+    } else if (index($0, "C/") > 0) {
+        if (NF == 1) {
+            print "<b>" $1 "</b>";
+        } else if (NF == 2) {
+            bolded = "<b>" $1 " " $2 "</b>";
+            rest = substr($0, index($0, $2) + length($2));
+            print bolded, rest;
+        } else if (NF == 3) {
+            bolded = "<b>" $1 " " $2 " " $3 "</b>";
+            rest = substr($0, index($0, $3) + length($3));
+            print bolded, rest;
+        } else {
+            bolded = "<b>" $1 " " $2 " " $3 " " $4 "</b>";
+            rest = substr($0, index($0, $4) + length($4));
+            print bolded, rest;
+        }
+    } else if (NF == 1) { 
+        print "<b>" $1 "</b>"; 
+    } else { 
+        bolded = "<b>" $1 " " $2 "</b>";
+        rest = substr($0, index($0, $2) + length($2));
+        print bolded, rest;
+    }
+}'
  fi 
- echo "$ASTCHECK_OUTPUT"
  exit 0 # return code will signal we have an ID
 fi # else lib/astcheck 

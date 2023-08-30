@@ -19,7 +19,7 @@ int format_hms_or_deg( char *coordinatestring ) {
  return 0;
 }
 
-int compute_angular_distance_and_print_result( char *string_RA1, char *string_Dec1, char *string_RA2, char *string_Dec2, double search_radius_arcsec ) {
+int compute_angular_distance_and_print_result( char *string_RA1, char *string_Dec1, char *string_RA2, char *string_Dec2, double search_radius_arcsec, double *output_distance_arcsec ) {
  double hh, mm, ss;
  double RA1_deg, DEC1_deg, RA2_deg, DEC2_deg;
 
@@ -95,8 +95,9 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
   return 1;
  }
 
- if ( 0.0 == search_radius_arcsec )
+ if ( 0.0 == search_radius_arcsec ) {
   fprintf( stderr, "%lf %lf  %lf %lf\n", RA1_deg, DEC1_deg, RA2_deg, DEC2_deg );
+ }
 
  if ( MAX( RA1_deg, RA2_deg ) > 180 && MIN( RA1_deg, RA2_deg ) < 180 ) {
   if ( RA1_deg > 180 )
@@ -122,9 +123,10 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
   hh2+= 1;
   mm2= 0.0;
  }
- if ( 0.0 == search_radius_arcsec )
+ if ( 0.0 == search_radius_arcsec ) {
   fprintf( stdout, "Average position  %02d:%02d:%05.2lf ", hh2, mm2, ss2 );
-
+ }
+ 
  in= ( DEC1_deg + DEC2_deg ) / 2.0;
  hh2= (int)in;
  mm2= (int)( ( in - hh2 ) * 60 );
@@ -195,7 +197,9 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
   fprintf( stdout, "Angular distance  %02d:%02d:%05.2lf = ", hh2, mm2, ss2 );
   fprintf( stdout, "%lf degrees\n", distance * ARCSEC_IN_RAD / 3600 );
  } else {
+  // We are in the source list matching mode
   if ( distance * ARCSEC_IN_RAD < search_radius_arcsec ) {
+   (*output_distance_arcsec)= distance * ARCSEC_IN_RAD;
    return 0;
   } else {
    return 1;
@@ -217,6 +221,8 @@ int main( int argc, char **argv ) {
  int string_looks_ok;
  int string_contains_number;
  int string_dot_or_semicolon;
+ 
+ double output_distance_arcsec= 99.99;
 
  if ( argc < 5 ) {
   fprintf( stderr, "Usage:\n%s RA1 DEC1 RA2 DEC2\nor\n%s RA1 DEC1 radeclist.txt search_radius_arcsec\n", argv[0], argv[0] );
@@ -227,7 +233,7 @@ int main( int argc, char **argv ) {
  filelist_input_positions= fopen( argv[3], "r" );
  if ( NULL == filelist_input_positions ) {
   // it is not - compare just one pair of positions and exit
-  if ( 0 != compute_angular_distance_and_print_result( argv[1], argv[2], argv[3], argv[4], 0.0 ) ) {
+  if ( 0 != compute_angular_distance_and_print_result( argv[1], argv[2], argv[3], argv[4], 0.0, &output_distance_arcsec ) ) {
    return 1;
   } else {
    return 0;
@@ -292,8 +298,8 @@ int main( int argc, char **argv ) {
    str_comment[512 - 1]= '\0';
   }
   // fprintf(stderr, "str1='%s' str2='%s'\n",str1,str2);
-  if ( 0 == compute_angular_distance_and_print_result( argv[1], argv[2], str1, str2, search_radius_arcsec ) ) {
-   fprintf( stdout, "FOUND %s\n", str_comment);
+  if ( 0 == compute_angular_distance_and_print_result( argv[1], argv[2], str1, str2, search_radius_arcsec, &output_distance_arcsec ) ) {
+   fprintf( stdout, "FOUND  %4.1lf\"  %s\n", output_distance_arcsec, str_comment);
    break;
   }
  }

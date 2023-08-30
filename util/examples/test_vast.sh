@@ -20046,6 +20046,49 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 
+# astcheck test
+THIS_TEST_START_UNIXSEC=$(date +%s)
+TEST_PASSED=1
+echo "Performing the astcheck test " 1>&2
+echo -n "Performing the astcheck test: " >> vast_test_report.txt 
+
+echo "01:23:45.67 -01:23:45.6 My Test Planet" > planets.txt
+util/transients/MPCheck_v2.sh 01:23:45.67 -01:23:45.6 2023 08 20.8680 | grep --quiet '0.0"  My Test Planet'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES ASTCHECK_PLANET"
+fi
+rm -f planets.txt
+
+echo "01:23:45.67 -01:23:45.6 My Test Comet" > comets.txt
+util/transients/MPCheck_v2.sh  01:23:45.67 -01:24:45.6 2023 08 20.8680 | grep --quiet '60.0"  My Test Comet'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES ASTCHECK_COMET"
+fi
+rm -f comets.txt
+
+
+THIS_TEST_STOP_UNIXSEC=$(date +%s)
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+# Make an overall conclusion for this test
+if [ $TEST_PASSED -eq 1 ];then
+ echo -e "\n\033[01;34mastcheck test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+else
+ echo -e "\n\033[01;34mastcheck test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+fi 
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+
+
+
+
+
 #### TAI-UTC file updater
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
