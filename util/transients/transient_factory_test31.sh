@@ -469,6 +469,7 @@ echo "The reference JD(UT) for computing planet and comet positions: $JD_FIRSTIM
 $TIMEOUTCOMMAND util/planets.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > planets.txt &
 $TIMEOUTCOMMAND util/comets.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > comets.txt &
 $TIMEOUTCOMMAND lib/asassn_transients_list.sh > asassn_transients_list.txt &
+$TIMEOUTCOMMAND lib/tocp_transients_list.sh > tocp_transients_list.txt &
 
 PREVIOUS_FIELD="none"
 
@@ -1608,8 +1609,15 @@ echo "############################################################
 List of recent ASAS-SN transients:"
 cat asassn_transients_list.txt
 echo "############################################################
-List of recentl ASAS-SN transients:" >> transient_factory_test31.txt
+List of recent ASAS-SN transients:" >> transient_factory_test31.txt
 cat asassn_transients_list.txt >> transient_factory_test31.txt
+#
+echo "############################################################
+List of TOCP transients:"
+cat tocp_transients_list.txt
+echo "############################################################
+List of TOCP transients:" >> transient_factory_test31.txt
+cat tocp_transients_list.txt >> transient_factory_test31.txt
 ###############################################################################################################
 
 ## Finalize the HTML report
@@ -1630,7 +1638,7 @@ echo "</pre>" >> transient_report/index.html
 
 echo "</BODY></HTML>" >> transient_report/index.html
 
-for FILE_TO_REMOVE in planets.txt comets.txt asassn_transients_list.txt ;do
+for FILE_TO_REMOVE in planets.txt comets.txt asassn_transients_list.txt tocp_transients_list.txt ;do
  if [ -f "$FILE_TO_REMOVE" ];then
   rm -f "$FILE_TO_REMOVE"
  fi
