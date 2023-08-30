@@ -7,6 +7,9 @@ unset TELESCOP
 # for test runs with AddressSanitizer 
 export ASAN_OPTIONS=strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
 
+# set this variable to someting to signify this is a test run - may affect how the scripts behave
+export THIS_IS_VAST_TEST="vast_test"
+
 #################################
 # Set the safe locale that should be available on any POSIX system
 LC_ALL=C
