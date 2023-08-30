@@ -538,14 +538,11 @@ The script will try to download these catalogs now - it will take some time!
   # Mac doesn't allow '-m1 -A1' combination for grep (!!!)
   #LOCAL_NAME=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -m1 -A1 '>found<' | tail -n1 | awk '{print $2}' FS='"' | sed 's:MASTER OT:MASTER_OT:g'`  
   # | awk '{$1=$1;print}' Would trim leading and trailing space or tab characters and also squeeze sequences of tabs and spaces into a single space. https://unix.stackexchange.com/questions/102008/how-do-i-trim-leading-and-trailing-whitespace-from-each-line-of-some-output
-  #LOCAL_NAME=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -A 1 '>found<' | tail -n 1 | awk '{print $2}' FS='"' | sed 's:MASTER OT:MASTER_OT:g' | awk '{$1=$1;print}'`  
-  LOCAL_NAME=$(echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -A 1 '>found<' | tail -n 1 | awk -F '"' '{print $2}' | sed 's:MASTER OT:MASTER_OT:g' | awk '{$1=$1;print}')
-  #LOCAL_TYPE=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep 'Type:' | awk '{print $2}' FS='Type:' | awk '{$1=$1;print}'`
+  # Note that grep 'The object was found' assumes lib/catalogs/check_catalogs_offline was not run in the HTML output mode
+  LOCAL_NAME=$(echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -A 1 'The object was found' | tail -n 1 | awk -F '"' '{print $2}' | sed 's:MASTER OT:MASTER_OT:g' | awk '{$1=$1;print}')
   LOCAL_TYPE=$(echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep 'Type:' | awk -F 'Type:' '{print $2}' | awk '{$1=$1;print}')
-  #LOCAL_PERIOD=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -m1 -A1 '#   Max.' | tail -n1 | sed 's:)::g' | sed 's:(::g' | awk '{print $6}'`
   LOCAL_PERIOD=$(echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep -A 1 '#   Max.' | tail -n 1 | sed 's:)::g' | sed 's:(::g' | awk '{print $6}')
   if [ -z "$LOCAL_PERIOD" ];then
-   #LOCAL_PERIOD=`echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep 'Period' | awk '{print $2}' FS='Period' | awk '{print $1}'`
    LOCAL_PERIOD=$(echo "$LOCAL_CATALOG_SEARCH_RESULTS" | grep 'Period' | awk -F 'Period' '{print $2}' | awk '{print $1}')
   fi
   SUGGESTED_NAME_STRING="$LOCAL_NAME"
