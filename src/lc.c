@@ -812,7 +812,7 @@ int main( int argc, char **argv ) {
      change_limits_trigger= 2;
    }
    if ( xw_ps == 0 ) {
-    cpgscr( 0, 0.10, 0.31, 0.32 ); /* set default vast window background */
+    cpgscr( 0, 0.10, 0.31, 0.32 ); // set default vast window background 
     cpgpage();
    }
    if ( xw_ps == 2 ) {
@@ -823,7 +823,10 @@ int main( int argc, char **argv ) {
   }
 
   if ( xw_ps == 0 ) {
-   cpgscr( 0, 0.10, 0.31, 0.32 ); /* set default vast window background */
+   //
+   cpgscr( 1, 1.0, 1.0, 1.0 ); // set color of axes lables - white
+   //
+   cpgscr( 0, 0.10, 0.31, 0.32 ); // set default vast window background 
    cpgeras();
    cpgask( 0 ); // turn OFF this silly " Type <RETURN> for next page:" request
   }
@@ -848,8 +851,9 @@ int main( int argc, char **argv ) {
   }
 
   cpgswin( new_X1, new_X2, new_Y1, new_Y2 );
-  if ( xw_ps == 0 )
-   cpgscr( 0, 0.08, 0.08, 0.09 ); /* set background */
+  if ( xw_ps == 0 ) {
+   cpgscr( 0, 0.08, 0.08, 0.09 ); // set background 
+  }
   cpgsci( 0 );
   cpgrect( new_X1, new_X2, new_Y1, new_Y2 );
   cpgsci( 1 );

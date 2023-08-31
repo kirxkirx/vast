@@ -296,7 +296,8 @@ int main( int argc, char **argv ) {
 
   do {
 
-   cpgscr( 0, 0.10, 0.31, 0.32 ); /* set default vast window background */
+   cpgscr( 1, 1.0, 1.0, 1.0 ); // set color of axes lables - white
+   cpgscr( 0, 0.10, 0.31, 0.32 ); // set default vast window background
 
    if ( change_limits_trigger == 0 ) {
     cpgpage();

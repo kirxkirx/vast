@@ -1130,6 +1130,11 @@ int main( int argc, char **argv ) {
  double position_x_pix;
  double position_y_pix;
 
+
+ // variables to store cpgqvsz output
+ float cpgqvsz_x1, cpgqvsz_x2, cpgqvsz_y1, cpgqvsz_y2;
+ cpgqvsz_x1= cpgqvsz_x2= cpgqvsz_y1= cpgqvsz_y2= 0.0;
+
  // Options for getopt()
  char *cvalue= NULL;
 
@@ -2067,28 +2072,20 @@ int main( int argc, char **argv ) {
  // should correspond to fits2png settings
  // if( finder_chart_mode == 0 || (finder_chart_mode == 1 && use_north_east_marks == 0 && use_labels == 0) ) {
  if ( finder_chart_mode == 0 || fits2png_fullframe == 1 ) {
-  // fprintf(stderr,"DEBUG-3h\n");
-  cpgpap( 0.0, 1.0 / axis_ratio );
-  // cpgpap( 0.0, (float)naxes[1] / (float)( naxes[0] ) );
+  // Trying to circumvent giza bug that does not implement cpgpap( 0.0, 1.0 / axis_ratio );
+  // so we need to specify the width in inches explicitly, see
+  // https://sites.astro.caltech.edu/~tjp/pgplot/subroutines.html#PGPAP
+  // https://sites.astro.caltech.edu/~tjp/pgplot/subroutines.html#pgqvsz
+  //cpgpap( 0.0, 1.0 / axis_ratio ); // does not work with giza
+  cpgqvsz( 1, &cpgqvsz_x1, &cpgqvsz_x2, &cpgqvsz_y1, &cpgqvsz_y2);
+  cpgpap( cpgqvsz_y2, 1.0 / axis_ratio );
+  //
   cpgsvp( 0.05, 0.95, 0.035, 0.035 + 0.9 );
  } else {
-  // fprintf(stderr,"DEBUG-3hh\n");
-  cpgpap( 0.0, 1.0 ); /* Make square plot */
-                      /*
-    if( use_labels == 1 ) {
-     fprintf(stderr,"DEBUG-3hhh\n");
-     // leave some space for labels
-     cpgsvp( 0.05, 0.95, 0.05, 0.95 );
-    } else {
-     fprintf(stderr,"DEBUG-3hhhh\n");
-     // Use the full plot area leaving no space for labels
-     cpgsvp( 0.0, 1.0, 0.0, 1.0 );
-    }
-  */
+  cpgpap( 0.0, 1.0 ); // Make square plot 
  }
 
  if ( use_labels == 1 ) {
-  // fprintf(stderr,"DEBUG-3hhh\n");
   //  leave some space for labels
   cpgsvp( 0.05, 0.95, 0.05, 0.95 );
  } else {
@@ -2755,9 +2752,9 @@ int main( int argc, char **argv ) {
    // Determine cuts
    image_minmax3( naxes[0] * naxes[1], float_array, &max_val, &min_val, drawX1, drawX2, drawY1, drawY2, naxes );
 
-   /* Draw image */
+   // Draw image 
    if ( finder_chart_mode == 0 ) {
-    cpgscr( 0, 0.0, 0.0, 0.0 ); /* set black background */
+    cpgscr( 0, 0.0, 0.0, 0.0 ); // set black background 
     cpgimag( float_array, (int)naxes[0], (int)naxes[1], drawX1, drawX2, drawY1, drawY2, min_val, max_val, tr );
    } else {
     // fprintf(stderr,"curC=%c\n",curC);
