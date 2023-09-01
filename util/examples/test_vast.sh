@@ -13840,6 +13840,7 @@ $GREP_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE414"
+  fi
   grep --quiet -e "2023 07 19\.892.  2460145\.392.  11\...  23:41:..\... +03:01:3.\.." -e "2023 07 19\.892.  2460145\.392.  11\...  23:42:0.\... +03:01:3.\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -17042,10 +17043,10 @@ $CAT_RESULT"
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSpecial VB test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSpecial VB2 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSpecial VB test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSpecial VB2 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
  #
@@ -17106,8 +17107,8 @@ if [ "$HOSTNAME" = "vast" ];then
   echo -e "\n\033[01;34mSpecial V2466 Cyg SAI600 test \033[01;31mFAILED\033[00m" 1>&2
   echo -n "Special Special V2466 Cyg SAI600 test: " >> vast_test_report.txt
   echo "FAILED" >> vast_test_report.txt
- fi
-fi
+ fi # if [ $? -ne 0 ];then
+fi # if [ "$HOSTNAME" = "vast" ];then
 
 
 ############# NCas21 KGO RC600 #############
