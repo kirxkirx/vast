@@ -286,6 +286,59 @@ Don't forget to set the constellation name and the number of days since the last
    fi
    #
 
+   # Stub variable star reports
+   echo "<a href=\"javascript:toggleElement('varstarstub_$TRANSIENT_NAME')\">Stub variable star reports</a> " >> transient_report/index.tmp  
+   echo -n "<div id=\"varstarstub_$TRANSIENT_NAME\" style=\"display:none\">
+Don't forget to change the observer code for the AAVSO and VSNET format data!<br>
+<pre>" >> transient_report/index.tmp
+if [ -z "$AAVSO_OBSCODE" ];then
+ AAVSO_OBSCODE="SKA"
+fi
+if [ -z "$SOFTWARE_VERSION" ];then
+ if [ -s vast_summary.log ];then
+  SOFTWARE_VERSION=$(cat vast_summary.log | grep 'Software:' | awk '{print $2" "$3}')
+ fi
+ SOFTWARE_VERSION="$SOFTWARE_VERSION transient pipeline"
+fi
+echo   " **** AAVSO file format ****
+
+#TYPE=EXTENDED
+#OBSCODE=$AAVSO_OBSCODE
+#SOFTWARE=$SOFTWARE_VERSION
+#DELIM=,
+#DATE=JD
+#NAME,DATE,MAG,MERR,FILT,TRANS,MTYPE,CNAME,CMAG,KNAME,KMAG,AMASS,GROUP,CHART,NOTES"  >> transient_report/index.tmp
+grep -A1 'Mean magnitude and position on the discovery images: ' transient_report/index.tmp | tail -n1 | awk -v val="VARIABLE_NAME" '{printf "%s,%s,%s,0.05,CV,NO,STD,ENSEMBLE,na,na,na,na,1,na,na\n", val, $4, $5}' >> transient_report/index.tmp
+
+echo   "
+
+ **** VSNET file format ****
+
+# Here are some valid formatiing examples:
+#CETFZ 20230815.9829   <13.5CV NMW
+#CETFZ 20230818.9746    12.5CV NMW
+#CETFZ 20230819.9732    12.6CV NMW
+#TCPJ17453768-1756253 20230831.7290 12.7CV NMW"  >> transient_report/index.tmp
+grep -A1 'Mean magnitude and position on the discovery images: ' transient_report/index.tmp | tail -n1 | awk -v val="NAME_VARIABLE" '{printf "%s %d%02d%07.4f %sCV NMW\n", val, $1, $2, $3, $5}' >> transient_report/index.tmp
+
+echo "
+
+The AAVSO data should be submitted to https://www.aavso.org/webobs
+
+The VSNET data, depending on how interesting the target is, should be e-mailed to
+vsnet-alert@ooruri.kusastro.kyoto-u.ac.jp
+vsnet-outburst-wanted@ooruri.kusastro.kyoto-u.ac.jp
+vsnet-obs@ooruri.kusastro.kyoto-u.ac.jp
+
+" >> transient_report/index.tmp
+
+
+   echo "</pre>
+<br>
+</div>" >> transient_report/index.tmp
+
+
+
    #
    TARGET_MEAN_POSITION=`grep -A1 'Mean magnitude and position on the discovery images: ' transient_report/index.tmp | tail -n1 | awk '{print $6" "$7}'`
    #
