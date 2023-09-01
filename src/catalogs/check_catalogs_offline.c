@@ -447,7 +447,7 @@ int main( int argc, char **argv ) {
  double target_Dec_deg;
 
  if ( argc < 3 ) {
-  fprintf( stderr, "Usage: %s 12.345 67.890\nor\n%s 12.345 67.890 H  # for HTML output", argv[0] );
+  fprintf( stderr, "Usage: %s 12.345 67.890\nor\n%s 12.345 67.890 H  # for HTML output", argv[0], argv[0] );
   return 1;
  }
 
