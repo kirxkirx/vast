@@ -13840,13 +13840,12 @@ $GREP_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE414"
-  fi
-  grep --quiet "2023 07 19\.892.  2460145\.392.  11\...  23:41:..\... +03:01:3.\.." transient_report/index.html
+  grep --quiet -e "2023 07 19\.892.  2460145\.392.  11\...  23:41:..\... +03:01:3.\.." -e "2023 07 19\.892.  2460145\.392.  11\...  23:42:0.\... +03:01:3.\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE414a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2023 07 19\.892.  2460145\.392.  11\...  23:41:..\... +03:01:3.\.." transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep -e "2023 07 19\.892.  2460145\.392.  11\...  23:41:..\... +03:01:3.\.." -e "2023 07 19\.892.  2460145\.392.  11\...  23:42:0.\... +03:01:3.\.." transient_report/index.html | awk '{print $6" "$7}'`
   # JPL HORIZONS position of Nemausa
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:41:58.91 +03:01:35.3  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
