@@ -17097,15 +17097,17 @@ $GREP_RESULT"
 fi
 
 ####### Special test V2466 Cyg SAI600 #######
-# Should run anywhere there is the data dir. 
-# The test script will return 0 if there is no data or if everything is fine
-util/examples/test_V2466CygSAI600.sh
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_V2466CygSAI600_001"
- echo -e "\n\033[01;34mSpecial V2466 Cyg SAI600 test \033[01;31mFAILED\033[00m" 1>&2
- echo -n "Special 61 Cyg test: " >> vast_test_report.txt
- echo "FAILED" >> vast_test_report.txt
+# Run it only on vast, otherwise if /dataX is mounted over sshfs the test will be super slow
+if [ "$HOSTNAME" = "vast" ];then
+ # The test script will return 0 if there is no data or if everything is fine
+ util/examples/test_V2466CygSAI600.sh
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_V2466CygSAI600_001"
+  echo -e "\n\033[01;34mSpecial V2466 Cyg SAI600 test \033[01;31mFAILED\033[00m" 1>&2
+  echo -n "Special Special V2466 Cyg SAI600 test: " >> vast_test_report.txt
+  echo "FAILED" >> vast_test_report.txt
+ fi
 fi
 
 
