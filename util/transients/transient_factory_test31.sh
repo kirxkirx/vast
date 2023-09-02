@@ -57,11 +57,13 @@ MAX_NUMBER_OF_CANDIDATES_PER_FIELD=40
 NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=800
 NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=1000
 
-
-# One or more Source Extractor configuration files to run the analysis with
-# Typically, the first run is optimized to detect bright targets while the second one is optimized for faint targets
-SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4"
-#SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 default.sex.telephoto_lens_v5"
+# allow SEXTRACTOR_CONFIG_FILES to be set externally
+if [ -z "$SEXTRACTOR_CONFIG_FILES" ];then
+ # One or more Source Extractor configuration files to run the analysis with
+ # Typically, the first run is optimized to detect bright targets while the second one is optimized for faint targets
+ SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4"
+ #SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 default.sex.telephoto_lens_v5"
+fi
 # The first SExtractor config file in the list should be optimized for detecting bright stars
 SEXTRACTOR_CONFIG_BRIGHTSTARPASS=$(echo $SEXTRACTOR_CONFIG_FILES | awk '{print $1}')
 
@@ -86,8 +88,10 @@ if [ -n "$CAMERA_SETTINGS" ];then
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=1500
   FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="13.5"
   FILTER_MAX_APERTURE_STAR_SIZE_PIX=12.5
-  # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
-  SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
+  if [ -z "$SEXTRACTOR_CONFIG_FILES" ];then
+   # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
+   SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
+  fi
   # REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES rejects candidates with exactly the same pixel coordinates on two new images
   # as these are likely to be hot pixels sneaking into the list of candidates if no shift has been applied between the two second-epoch images.
   export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="yes"
@@ -105,8 +109,10 @@ if [ -n "$CAMERA_SETTINGS" ];then
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=1000
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=1500
   FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="15.0"
-  # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
-  SEXTRACTOR_CONFIG_FILES="default.sex.TICA_TESS"
+  if [ -z "$SEXTRACTOR_CONFIG_FILES" ];then
+   # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
+   SEXTRACTOR_CONFIG_FILES="default.sex.TICA_TESS"
+  fi
   # REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES rejects candidates with exactly the same pixel coordinates on two new images
   # as these are likely to be hot pixels sneaking into the list of candidates if no shift has been applied between the two second-epoch images.
   export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="no"
