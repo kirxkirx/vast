@@ -1568,7 +1568,7 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
   return 0;
  } else {
   fprintf( stderr, "The scan UCAC5 search failed. Trying remote search with vizquery\n" );
-  exit( EXIT_FAILURE ); 
+  //exit( EXIT_FAILURE ); 
  }
 
 
