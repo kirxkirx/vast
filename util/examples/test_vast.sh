@@ -14450,6 +14450,13 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE004"
   fi
+  #
+  grep --quiet "Estimated ref. image limiting mag.:  14.24" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_REF_IMG_LIMIT"
+  fi
+  #
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -14516,6 +14523,8 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_MEDIANCATDIST_NO_ASTROMETRIC_RESIDUALS_FILES"
   fi 
   ####
+  
+  
   
   test_if_test31_tmp_files_are_present
   if [ $? -ne 0 ];then

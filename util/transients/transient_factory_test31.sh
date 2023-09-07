@@ -116,7 +116,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   # REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES rejects candidates with exactly the same pixel coordinates on two new images
   # as these are likely to be hot pixels sneaking into the list of candidates if no shift has been applied between the two second-epoch images.
   export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="no"
-  #BAD_REGION_FILE="../STL_bad_region.lst"
+  BAD_REGION_FILE="../TICA_TESS_bad_region.lst"
   EXCLUSION_LIST="../exclusion_list_TICATESS.txt"
   SYSREM_ITERATIONS=0
   UCAC5_PLATESOLVE_ITERATIONS=1
