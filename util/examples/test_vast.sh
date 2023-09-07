@@ -14347,6 +14347,233 @@ if [ $? -ne 0 ];then
 fi
 
 
+##### TICA TESS magnitude calibration failure test #####
+# Download the test dataset if needed
+if [ ! -d ../TICA_TESS_mag_calibration_failure_test ];then
+ cd ..
+ curl -O "http://scan.sai.msu.ru/~kirx/pub/TICA_TESS_mag_calibration_failure_test.tar.bz2" && tar -xvjf TICA_TESS_mag_calibration_failure_test.tar.bz2 && rm -f TICA_TESS_mag_calibration_failure_test.tar.bz2
+ cd $WORKDIR
+fi
+# If the test data are found
+if [ -d ../TICA_TESS_mag_calibration_failure_test ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ #
+ remove_test31_tmp_files_if_present
+ # Run the test
+ echo " TICA TESS magnitude calibration failure test " 1>&2
+ echo -n " TICA TESS magnitude calibration failure test: " >> vast_test_report.txt 
+ #
+ cp -v bad_region.lst_default bad_region.lst
+ #
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ #################################################################
+ # We need a special astorb.dat for the asteroids
+ if [ -f astorb.dat ];then
+  mv astorb.dat astorb.dat_backup
+ fi
+ if [ ! -f astorb_2023.dat ];then
+  curl -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 1>&2
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_error_downloading_custom_astorb_2023.dat"
+  fi
+  gunzip astorb_2023.dat.gz
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_error_unpacking_custom_astorb_2023.dat"
+  fi
+ fi
+ cp astorb_2023.dat astorb.dat
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_error_copying_astorb_2023.dat_to_astorb.dat"
+ fi
+ #################################################################
+ ## Set TESS camera bad regions file
+ cp bad_region.lst_default bad_region.lst
+ #if [ ! -f ../STL_bad_region.lst ];then
+ # cp -v ../TICA_TESS_mag_calibration_failure_test/STL_bad_region.lst ../STL_bad_region.lst
+ #fi
+ # Test the production NMW script
+ REFERENCE_IMAGES=../TICA_TESS_mag_calibration_failure_test/reference_images/ util/transients/transient_factory_test31.sh ../TICA_TESS_mag_calibration_failure_test/second_epoch_images
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE000_EXIT_CODE"
+ fi
+ #
+ if [ -f astorb.dat_backup ];then
+  mv astorb.dat_backup astorb.dat
+ else
+  # remove the custom astorb.dat
+  rm -f astorb.dat
+ fi
+ #
+ if [ -f transient_report/index.html ];then
+  grep --quiet 'ERROR' 'transient_report/index.html'
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_ERROR_MESSAGE_IN_index_html"
+   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
+   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### TICATESSMAGCALIBFAILURE_ERROR_MESSAGE_IN_index_html ######
+$GREP_RESULT
+-----------------
+$CAT_RESULT"
+  fi
+  # The copy of the log file should be in the HTML report
+  grep --quiet "Images processed 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE001"
+  fi
+  grep --quiet "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE002"
+  fi
+  grep --quiet "First image: 2460175.19308" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE003"
+  fi
+  grep --quiet "Last  image: 2460176.20465" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE004"
+  fi
+  # Hunting the mysterious non-zero reference frame rotation cases
+  if [ -f vast_image_details.log ];then
+   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE0_nonzero_ref_frame_rotation"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### TICATESSMAGCALIBFAILURE0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### TICATESSMAGCALIBFAILURE0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE0_NO_vast_image_details_log"
+  fi
+  #
+  # Test for degraded plate solution 
+  RADECPOSITION_TO_TEST=$(lib/bin/xy2sky wcs_s0068-o2-cam3-ccd2__hlsp_tica_tess_ffi_s0068-o2-00841857-cam3-ccd2_tess_v01_img.fits 3581.7809 269.8186 | awk '{print $1" "$2}' )
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 20:43:14.666 -74:25:44.16  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW-STL scale is 20"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 20 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_TESTPOINT1_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_TESTPOINT1_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  # 
+  #
+  if [ -s wcs_s0068-o2-cam3-ccd2__hlsp_tica_tess_ffi_s0068-o2-00841857-cam3-ccd2_tess_v01_img.fits.cat.astrometric_residuals ] ;then 
+   #
+   MEDIAN_DISTANCE_TO_CATALOG_ARCSEC=$(cat wcs_s0068-o2-cam3-ccd2__hlsp_tica_tess_ffi_s0068-o2-00841857-cam3-ccd2_tess_v01_img.fits.cat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}')
+   TEST=`echo "$MEDIAN_DISTANCE_TO_CATALOG_ARCSEC" | awk '{if ( $1 > 0.0 && $1 < 20/3 ) print 1 ;else print 0 }'`
+   re='^[0-9]+$'
+   if ! [[ $TEST =~ $re ]] ; then
+    echo "TEST ERROR"
+    TEST_PASSED=0
+    TEST=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_MEDIANCATDIST_IMG1_TOO_FAR_TEST_ERROR"
+   else
+    if [ $TEST -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_MEDIANCATDIST_IMG1_TOO_FAR_$DISTANCE_ARCSEC"
+    fi
+   fi
+   # 
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_MEDIANCATDIST_NO_ASTROMETRIC_RESIDUALS_FILES"
+  fi 
+  ####
+  
+  test_if_test31_tmp_files_are_present
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_TMP_FILE_PRESENT"
+  fi
+
+ else
+  echo "ERROR running the transient search script" 1>&2
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_ALL"
+ fi
+
+
+ ###### restore default bad regions file
+ if [ -f bad_region.lst_default ];then
+  cp -v bad_region.lst_default bad_region.lst
+ fi
+ #
+
+ ###### restore default exclusion list if any
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
+
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34m TICA TESS magnitude calibration failure test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34m TICA TESS magnitude calibration failure test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+remove_test_data_to_save_space
+
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ exit 1
+fi
+
+
 
 
 

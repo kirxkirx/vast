@@ -123,6 +123,7 @@ struct detected_star {
  double observing_epoch_jd;
 };
 
+
 static inline double compute_distance_on_sphere( double RA1_deg, double DEC1_deg, double RA2_deg, double DEC2_deg ) {
  double distance;
  double deg2rad_conversion= M_PI / 180.0;
@@ -242,20 +243,21 @@ void set_catalog_search_parameters( double approximate_field_of_view_arcmin, str
  catalog_search_parameters->brightest_mag= 1.0;
  //catalog_search_parameters->faintest_mag= 9.0;
  // We need fainter stars for UCAC5!
- catalog_search_parameters->faintest_mag= 13.0;
+ catalog_search_parameters->faintest_mag= 13.5;
  //if ( approximate_field_of_view_arcmin < 500.0 ) {
  if ( approximate_field_of_view_arcmin < 600.0 ) {
   catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP * 0.5 * approximate_field_of_view_arcmin / 60.0;
   catalog_search_parameters->brightest_mag= 2.0;
-  catalog_search_parameters->faintest_mag= 13.0;
+  catalog_search_parameters->faintest_mag= 13.5;
  }
  // NMW scale
  // change as the input approximate_field_of_view_arcmin is now the actual major side of the frame rather than a crude estiamte
  //if ( approximate_field_of_view_arcmin < 400.0 ) {
  if ( approximate_field_of_view_arcmin < 500.0 ) {
   catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP * 0.5 * approximate_field_of_view_arcmin / 60.0;
-  catalog_search_parameters->brightest_mag= 5.0;
-  catalog_search_parameters->faintest_mag= 13.0;
+  //catalog_search_parameters->brightest_mag= 5.0;
+  catalog_search_parameters->brightest_mag= 2.0;
+  catalog_search_parameters->faintest_mag= 13.5;
  }
  if ( approximate_field_of_view_arcmin < 240.0 ) {
   catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP * 0.5 * approximate_field_of_view_arcmin / 60.0;
@@ -289,6 +291,17 @@ void set_catalog_search_parameters( double approximate_field_of_view_arcmin, str
   catalog_search_parameters->faintest_mag= 22.0;
  }
  catalog_search_parameters->search_radius_second_step_deg= 0.8 * catalog_search_parameters->search_radius_deg;
+ 
+ fprintf( stderr, "UCAC5 catalog search parameters:\n \
+                   catalog_search_parameters->search_radius_deg= %lf (%.1lf arcsec)\n \
+                   catalog_search_parameters->brightest_mag= %.2lf\n \
+                   catalog_search_parameters->faintest_mag= %.2lf\n \
+                   catalog_search_parameters->search_radius_second_step_deg %lf (%.1lf arcsec)\n", \
+                   catalog_search_parameters->search_radius_deg, catalog_search_parameters->search_radius_deg*3600, \
+                   catalog_search_parameters->brightest_mag, \
+                   catalog_search_parameters->faintest_mag, \
+                   catalog_search_parameters->search_radius_second_step_deg, catalog_search_parameters->search_radius_second_step_deg*3600 );
+ 
  return;
 }
 
@@ -478,6 +491,8 @@ int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, in
  int blend_counter;
 
  char sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT]; // this is for debug only!!!
+ 
+ int max_acceptable_SE_flag= 1;
 
  timesys= 0; // for gettime()
  // gettime( fits_image_filename, &double_garbage, &timesys, 0, &X_im_size, &Y_im_size, char_garbage, char_garbage, 0, 0); // This is just an overkill way to get X_im_size Y_im_size
@@ -489,6 +504,7 @@ int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, in
  if ( f == NULL ) {
   return 1;
  }
+ // count the proportion of blended sources
  i= 0;
  nodrop_counter= drop_zero_flux_counter= drop_no_flux_err_counter= drop_mag_99_counter= drop_mag_err_99_counter= drop_low_SNR_counter= blend_counter= 0;
  while ( -1 < fscanf( f, "%d %lf %lf %lf %lf  %lf %lf %lf %lf %d", &stars[i].n_current_frame, &stars[i].ra_deg_measured, &stars[i].dec_deg_measured, &stars[i].x_pix, &stars[i].y_pix, &stars[i].flux, &stars[i].flux_err, &stars[i].mag, &stars[i].mag_err, &stars[i].flag ) ) {
@@ -515,7 +531,47 @@ int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, in
   }
   ///
   // if( stars[i].flag==0 )
-  if ( stars[i].flag < 2 ) {
+  if ( stars[i].flag <= max_acceptable_SE_flag ) {
+   stars[i].good_star= 1;
+  } else {
+   stars[i].good_star= 0;
+   blend_counter++;
+  }
+ }
+ if ( (double)blend_counter/(double)i > 0.33333 ) {
+  fprintf( stderr, "The fraction of blended stars is high!\n" );
+  //max_acceptable_SE_flag= 3;
+  //fprintf( stderr, "The fraction of blended stars is high - will accept them for catalog matching!\nThe maximum acceptable Source Extractor flag is %d\n", max_acceptable_SE_flag);
+ }
+ fseek( f, 0, SEEK_SET ); // go back to the beginning of the log file 
+ // do the actual thing
+ i= 0;
+ nodrop_counter= drop_zero_flux_counter= drop_no_flux_err_counter= drop_mag_99_counter= drop_mag_err_99_counter= drop_low_SNR_counter= blend_counter= 0;
+ while ( -1 < fscanf( f, "%d %lf %lf %lf %lf  %lf %lf %lf %lf %d", &stars[i].n_current_frame, &stars[i].ra_deg_measured, &stars[i].dec_deg_measured, &stars[i].x_pix, &stars[i].y_pix, &stars[i].flux, &stars[i].flux_err, &stars[i].mag, &stars[i].mag_err, &stars[i].flag ) ) {
+  ///
+  if ( stars[i].flux == 0 ) {
+   drop_zero_flux_counter++;
+   continue;
+  }
+  if ( stars[i].flux_err == 999999 ) {
+   drop_no_flux_err_counter++;
+   continue;
+  }
+  if ( stars[i].mag == 99.0000 ) {
+   drop_mag_99_counter++;
+   continue;
+  }
+  if ( stars[i].mag_err == 99.0000 ) {
+   drop_mag_err_99_counter++;
+   continue;
+  }
+  if ( stars[i].flux < MIN_SNR * stars[i].flux_err ) {
+   drop_low_SNR_counter++;
+   continue;
+  }
+  ///
+  // if( stars[i].flag==0 )
+  if ( stars[i].flag <= max_acceptable_SE_flag ) {
    stars[i].good_star= 1;
   } else {
    stars[i].good_star= 0;
@@ -1346,9 +1402,22 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  char path_to_vast_string[VAST_PATH_MAX];
  get_path_to_vast( path_to_vast_string );
 
+#ifdef DEBUGFILES
+ FILE *scan_ucac5_debug_ds9_region;
+ scan_ucac5_debug_ds9_region= fopen( "scan_ucac5_input_debug_ds9.reg", "w" );
+ fprintf( scan_ucac5_debug_ds9_region, "# Region file format: DS9 version 4.0\n" );
+ fprintf( scan_ucac5_debug_ds9_region, "# Filename:\n" );
+ fprintf( scan_ucac5_debug_ds9_region, "global color=green font=\"sans 10 normal\" select=1 highlite=1 edit=1 move=1 delete=1 include=1 fixed=0 source\n" );
+ fprintf( scan_ucac5_debug_ds9_region, "fk5\n" );
+#endif
+
  sprintf( vizquery_input_filename, "scan_ucac5_%d.input", pid );
  sprintf( vizquery_output_filename, "scan_ucac5_%d.output", pid );
  vizquery_input= fopen( vizquery_input_filename, "w" );
+ if ( NULL == vizquery_input ) {
+  fprintf( stderr, "ERROR in search_UCAC5_at_scan(): cannot open file %s for writing!\n", vizquery_input_filename);
+  return 1;
+ }
  search_stars_counter= 0;
  zero_radec_counter= 0;
  for ( i= 0; i < N; i++ ) {
@@ -1363,6 +1432,9 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
    }
    //
    fprintf( vizquery_input, "%lf %lf\n", stars[i].ra_deg_measured, stars[i].dec_deg_measured );
+#ifdef DEBUGFILES
+   fprintf( scan_ucac5_debug_ds9_region, "circle(%f,%f,%lf)\n", stars[i].ra_deg_measured, stars[i].dec_deg_measured, 5.0*21/3600 );
+#endif
    search_stars_counter++;
    if ( search_stars_counter == MAX_STARS_IN_VIZQUERY ) {
     break;
@@ -1370,6 +1442,11 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
   }
  }
  fclose( vizquery_input );
+
+#ifdef DEBUGFILES
+ fclose( scan_ucac5_debug_ds9_region );
+#endif
+
 
  if ( search_stars_counter < MIN_NUMBER_OF_STARS_ON_FRAME ) {
   fprintf( stderr, "ERROR in search_UCAC5_at_scan(): only %d stars are in the vizquery input list - that's too few!\n", search_stars_counter );
@@ -1404,6 +1481,14 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
   stars[i].matched_with_astrometric_catalog= 0;
  }
 */
+
+#ifdef DEBUGFILES
+ scan_ucac5_debug_ds9_region= fopen( "scan_ucac5_output_debug_ds9.reg", "w" );
+ fprintf( scan_ucac5_debug_ds9_region, "# Region file format: DS9 version 4.0\n" );
+ fprintf( scan_ucac5_debug_ds9_region, "# Filename:\n" );
+ fprintf( scan_ucac5_debug_ds9_region, "global color=red font=\"sans 10 normal\" select=1 highlite=1 edit=1 move=1 delete=1 include=1 fixed=0 source\n" );
+ fprintf( scan_ucac5_debug_ds9_region, "fk5\n" );
+#endif
 
  f= fopen( vizquery_output_filename, "r" );
  while ( NULL != fgets( string, 1024, f ) ) {
@@ -1458,6 +1543,11 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
       continue;
      }
 
+
+#ifdef DEBUGFILES
+     fprintf( scan_ucac5_debug_ds9_region, "circle(%f,%f,%lf)\n", measured_ra, measured_dec, 10.0*21/3600 );
+#endif
+
      // if we are here - this is a match
      stars[i].matched_with_astrometric_catalog= 1;
      stars[i].d_ra= catalog_ra - measured_ra;
@@ -1507,6 +1597,11 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
   fprintf( stderr, "ERROR: too few stars matched!\n" );
   return 1;
  }
+
+#ifdef DEBUGFILES
+ fclose( scan_ucac5_debug_ds9_region );
+#endif
+
  
  /*
  //
@@ -2359,6 +2454,14 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "%s got %d stars from the SExtractor catalog\n", argv[0], number_of_stars_in_wcs_catalog );
  }
  qsort( stars, number_of_stars_in_wcs_catalog, sizeof( struct detected_star ), compare_star_on_mag_solve );
+ 
+ // TEST //
+ //for(i=0;i<number_of_stars_in_wcs_catalog;i++){
+ // if( i==1000 )break;
+ // fprintf(stderr, "%04d  %8.4lf %d\n", i, stars[i].mag, stars[i].flag );
+ //}
+ //////////
+ 
 
  // Make sure all stars have a flag that they are not matched with a catalog yet
  // for(i=0;i<number_of_stars_in_wcs_catalog;i++)stars[i].matched_with_catalog=0;
