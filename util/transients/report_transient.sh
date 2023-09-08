@@ -552,6 +552,13 @@ if [ $VARIABLE_STAR_ID -ne 0 ] && [ $ASTEROID_ID -ne 0 ] ;then
  fi
 fi
 
+# Determine limiting magnitude for manual asteroid search
+ASTEROID_SEARCH_MAG_LIMIT=16
+if [ -n "$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" ];then
+ ASTEROID_SEARCH_MAG_LIMIT=$(echo "$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" | awk '{printf "%.1f", 2.5+$1}')
+fi
+
+
 echo -n "<a href=\"https://wis-tns.weizmann.ac.il/search?ra=${RA_MEAN_HMS//:/%3A}&decl=${DEC_MEAN_HMS//:/%3A}&radius=15&coords_unit=arcsec\" target=\"_blank\">Check this position in <font color=\"DarkSalmon\">TNS</font>.</a>                         <a href='http://www.astronomy.ohio-state.edu/asassn/transients.html' target='_blank'>Manually check the ASAS-SN list of transients!</a>
 <a href=\"http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=$RA_MEAN%20$DEC_MEAN&CooDefinedFrames=J2000&Radius=1.0&Radius.unit=arcmin\" target=\"_blank\">Search this object in <font color=\"maroon\">SIMBAD</font>.</a>
 <a href=\"http://vizier.u-strasbg.fr/viz-bin/VizieR?-source=&-out.add=_r&-out.add=_RAJ%2C_DEJ&-sort=_r&-to=&-out.max=20&-meta.ucd=2&-meta.foot=1&-c=$RA_MEAN+$DEC_MEAN&-c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC\" target=\"_blank\">Search this object in <font color=\"FF9900\">VizieR</font> catalogs.</a>  <a href=\"http://irsa.ipac.caltech.edu/applications/wise/#id=Hydra_wise_wise_1&RequestClass=ServerRequest&DoSearch=true&schema=allsky-4band&intersect=CENTER&subsize=0.16666666800000002&mcenter=mcen&band=1,2,3,4&dpLevel=3a&UserTargetWorldPt=$RA_MEAN;$DEC_MEAN;EQ_J2000&SimpleTargetPanel.field.resolvedBy=nedthensimbad&preliminary_data=no&coaddId=&projectId=wise&searchName=wise_1&shortDesc=Position&isBookmarkAble=true&isDrillDownRoot=true&isSearchResult=true\" target=\"_blank\"><font color=\"green\">WISE</font> atlas</a>  <a href=\"https://aladin.u-strasbg.fr/AladinLite/?target=$RA_MEAN+$DEC_MEAN\">Aladin Lite</a>  <a href=\"https://ztf.snad.space/dr17/search/$RA_MEAN%20$DEC_MEAN/4\">SNAD ZTF viewer</a>
@@ -568,8 +575,8 @@ Online MPChecker may fail to identify bright comets! Please manually check the <
 <input type='radio' name='which' VALUE='obs' style='display:none;'>
 <textarea name='TextArea' cols=81 rows=10 style='display:none;'></textarea>
 <input type='hidden' name='radius' maxlength=3 size=3 VALUE='15'>
-<input type='hidden' name='limit' maxlength=4 size=4 VALUE='16.0'>
-<input type='hidden' name='oc' maxlength=3 size=3 VALUE='500'>
+<input type='hidden' name='limit' maxlength=4 size=4 VALUE='$ASTEROID_SEARCH_MAG_LIMIT'>
+<input type='hidden' name='oc' maxlength=3 size=3 VALUE='400'>
 <input type='radio' name='sort' VALUE='d' CHECKED style='display:none;'>
 <input type='radio' name='sort' VALUE='r' style='display:none;'>
 <input type='radio' name='mot' VALUE='m' style='display:none;'>
