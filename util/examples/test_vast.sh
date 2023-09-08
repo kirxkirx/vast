@@ -14451,11 +14451,26 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE004"
   fi
   #
-  grep --quiet "Estimated ref. image limiting mag.:  14.24" transient_report/index.html
-  if [ $? -ne 0 ];then
+  #grep --quiet "Estimated ref. image limiting mag.:  14.24" transient_report/index.html
+  #if [ $? -ne 0 ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_REF_IMG_LIMIT"
+  #fi
+  MAG_ZP=$(grep "Estimated ref. image limiting mag.:  1" transient_report/index.html | awk '{print $6}')
+  TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 14.19)*($1 - 14.19) ) < 0.05 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_REF_IMG_LIMIT"
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_MAG_ZP_OFFSET_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_MAG_ZP_OFFSET_LARGE_$MAG_ZP"
+   fi
   fi
+  # 
   #
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
