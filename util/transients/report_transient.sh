@@ -576,7 +576,7 @@ Online MPChecker may fail to identify bright comets! Please manually check the <
 <textarea name='TextArea' cols=81 rows=10 style='display:none;'></textarea>
 <input type='hidden' name='radius' maxlength=3 size=3 VALUE='15'>
 <input type='hidden' name='limit' maxlength=4 size=4 VALUE='$ASTEROID_SEARCH_MAG_LIMIT'>
-<input type='hidden' name='oc' maxlength=3 size=3 VALUE='400'>
+<input type='hidden' name='oc' maxlength=3 size=3 VALUE='500'>
 <input type='radio' name='sort' VALUE='d' CHECKED style='display:none;'>
 <input type='radio' name='sort' VALUE='r' style='display:none;'>
 <input type='radio' name='mot' VALUE='m' style='display:none;'>

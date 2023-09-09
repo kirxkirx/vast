@@ -124,7 +124,7 @@ if [ -z "$ASTCHECK_OUTPUT" ];then
  if [ -n "$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" ];then
   ASTEROID_SEARCH_MAG_LIMIT=$(echo "$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" | awk '{printf "%.1f", 2+$1}')
  fi
- ASTCHECK_OUTPUT=$(lib/astcheck test.mpc -r400 -m"$ASTEROID_SEARCH_MAG_LIMIT" |grep -A 50 "TAU0008" |grep -v "TAU0008" |head -n 1 | grep -v ObsCodes.html)
+ ASTCHECK_OUTPUT=$(lib/astcheck test.mpc -r500 -m"$ASTEROID_SEARCH_MAG_LIMIT" |grep -A 50 "TAU0008" |grep -v "TAU0008" |head -n 1 | grep -v ObsCodes.html)
 fi 
 
 if [ -z "$ASTCHECK_OUTPUT" ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then
