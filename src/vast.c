@@ -6677,7 +6677,7 @@ the comparison stars and the variable star you want to measure.\n\n\n\n",
 
  /* Search for variability candidates */
  if ( param_nofind == 0 ) {
-  strcpy( stderr_output, "./find_candidates a" ); // no need to recompute lightcurve stats!
+  strcpy( stderr_output, "./find_candidates a " ); // no need to recompute lightcurve stats!
   if ( period_search_switch == 1 ) {
    strcat( stderr_output, "--tsearch " );
   }

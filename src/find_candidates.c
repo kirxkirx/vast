@@ -272,7 +272,6 @@ int main( int argc, char **argv ) {
  // setenv("MALLOC_CHECK_", "0", 1);
 
  int use_old_files= 0;
- // int t_option_set= 0;
  int use_ds9_instead_of_pgfv= 0;
 
  int display_mode= 1; // 1 - mag-sigma plot

@@ -1691,10 +1691,9 @@ int main( int argc, char **argv ) {
       fprintf( stderr, "Cannot open FITS image %s\n", filename[closest_num] );
      } else {
       if ( use_ds9_instead_of_pgfv == 1 ) {
-       sprintf( strmusor, "%s/util/draw_stars_with_ds9.sh %s %.1f %.1f %.1f %s >/dev/null", path_to_vast_string, filename[closest_num], X[closest_num], Y[closest_num], APER[closest_num], lightcurvefilename );
+       sprintf( strmusor, "%s/util/draw_stars_with_ds9.sh %s %.6f %.6f %.1f %s >/dev/null", path_to_vast_string, filename[closest_num], X[closest_num], Y[closest_num], APER[closest_num], lightcurvefilename );
       } else {
        // %.6f for the case when the input coordinates are RA/Dec, not pixel coordinates
-       // sprintf(strmusor,"./pgfv -- %s %.6f %.6f %.1f",filename[closest_num],X[closest_num],Y[closest_num],APER[closest_num]);
        sprintf( strmusor, "%s/pgfv -- %s %.6f %.6f %.1f", path_to_vast_string, filename[closest_num], X[closest_num], Y[closest_num], APER[closest_num] );
       }
       fprintf( stderr, " Starting FITS image viewer:\n%s\n", strmusor );

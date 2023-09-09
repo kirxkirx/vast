@@ -31,19 +31,24 @@ echo "SCRIPT_NAME= $SCRIPT_NAME   WCS_OPERATION_MODE= $WCS_OPERATION_MODE"
 echo "Working..."
 
 # If we whant to draw only one star
-if [ ! -z "$3" ];then
+if [ -n "$3" ];then
 
  FITSFILE=$1
  if [ $WCS_OPERATION_MODE -eq 0 ];then
   # pixel position mode
   X=$2
   Y=$3
-  if [ ! -z $4 ];then
+  if [ ! -z "$4" ];then
    AP=`echo "$4/2"|bc -ql`
-   FILENAME=$5
-   head -n 1 $FILENAME > /tmp/read"$$""$USER".tmp
-   FILENAME=`basename $FILENAME .dat`
-   StringW=`echo $FILENAME | awk -F out '{print $2}'`
+   #FILENAME=$5
+   #head -n 1 $FILENAME > /tmp/read"$$""$USER".tmp
+   #FILENAME=`basename $FILENAME .dat`
+   if [ ! -z "$5" ];then
+    StringW=$(echo $5 | awk -F'out' '{print $2}' | awk -F'.dat' '{print $1}') 
+   else
+    StringW="OBJECT"
+   fi
+   #StringW=`echo $FILENAME | awk -F out '{print $2}'`
   else
    AP=5
    StringW="OBJECT"
@@ -97,7 +102,9 @@ if [ ! -z "$3" ];then
   #Y=`echo $Y+2.0*$AP| bc -ql` 
   Y=`echo "$Y $AP" | awk '{print $1+2.0*$2}'` 
  fi
- echo "# text($X,$Y) text={$StringW}" >> /tmp/reg"$$""$USER".reg
+ echo "# text($X,$Y) text={$StringW}
+circle($X,$Y,$AP)" >> /tmp/reg"$$""$USER".reg
+ 
 
 else
  # Else - draw all stars from data.m_sigma
