@@ -101,7 +101,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   SYSREM_ITERATIONS=0
   UCAC5_PLATESOLVE_ITERATIONS=2
   # The funny ghost image seems to be no more than 80pix away from frame edge
-  FRAME_EDGE_OFFSET_PIX=80
+  FRAME_EDGE_OFFSET_PIX=100
  fi
  if [ "$CAMERA_SETTINGS" = "TICA_TESS_FFI" ];then
   # TICA TESS FFIs downloaded from https://archive.stsci.edu/hlsp/tica#section-c34b9669-b0be-40b2-853e-a59997d1b7c5
