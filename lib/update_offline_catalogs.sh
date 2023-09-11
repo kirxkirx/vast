@@ -66,6 +66,8 @@ export LOCAL_SERVER
 # Get current date from the system clock
 CURRENT_DATE_UNIXSEC=`date +%s`
 
+cd "$VASTDIR"
+
 for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;do
 #for FILE_TO_UPDATE in astorb.dat ;do
  NEED_TO_UPDATE_THE_FILE=0
