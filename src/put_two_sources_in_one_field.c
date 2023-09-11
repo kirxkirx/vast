@@ -143,9 +143,10 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
   hh2+= 1;
   mm2= 0.0;
  }
- if ( ( hh2 == 0 && in < 0 ) || ( hh2 == 0 && mm2 == 0 && in < 0 ) ) {
+ //if ( ( hh2 == 0 && in < 0 ) || ( hh2 == 0 && mm2 == 0 && in < 0 ) ) {
+ if ( in < 0 ) {
   if ( 0.0 == search_radius_arcsec )
-   fprintf( stdout, "-%02d:%02d:%04.1lf\n", hh2, mm2, fabs( ss2 ) );
+   fprintf( stdout, "-%02d:%02d:%04.1lf\n", abs(hh2), mm2, fabs( ss2 ) );
  } else {
   if ( 0.0 == search_radius_arcsec )
    fprintf( stdout, "+%02d:%02d:%04.1lf\n", hh2, mm2, ss2 );
