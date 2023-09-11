@@ -39,12 +39,12 @@ int main( int argc, char *argv[] ) {
  int keys_left;
  int ii;
  long bzero= 0;
- char bzero_comment[80];
+ char bzero_comment[FLEN_CARD];
  int bzero_key_found= 0;
 
  FILE *filedescriptor_for_opening_test;
 
- fprintf( stderr, "Median combiner v2.2\n\n" );
+ fprintf( stderr, "Median combiner v2.3\n\n" );
  fprintf( stderr, "Combining %d files\n", argc - 1 );
  if ( argc < 3 ) {
   fprintf( stderr, "Not enough arguments...\n  Usage: %s flat01.fit flat02.fit flat03.fit ...\n", argv[0] );
@@ -67,7 +67,6 @@ int main( int argc, char *argv[] ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for key[ii]\n" );
    exit( EXIT_FAILURE );
   }
-  // fprintf( stderr, "DEBUG: ii=%d No_of_keys=%d FLEN_CARD=%d\n", ii, No_of_keys, FLEN_CARD );
   fits_read_record( fptr, ii, key[ii], &status );
  }
  fits_read_key( fptr, TLONG, "BZERO", &bzero, bzero_comment, &status );
@@ -116,7 +115,6 @@ int main( int argc, char *argv[] ) {
   }
 
   // Reading FITS header keywords from the first image we'll need to remember
-
   fits_get_img_type( fptr, &bitpix2, &status );
   fprintf( stderr, "Reading %s %ld %ld  %d bitpix\n", argv[file_counter], naxes[0], naxes[1], bitpix2 );
   if ( bitpix2 != SHORT_IMG ) {
@@ -129,7 +127,6 @@ int main( int argc, char *argv[] ) {
   if ( status != 0 ) {
    exit( EXIT_FAILURE );
   }
-  // fprintf(stderr,"DEBUUG: file_counter=%d\n",file_counter);
  }
 
  yy= malloc( img_size * sizeof( double ) );
@@ -137,24 +134,7 @@ int main( int argc, char *argv[] ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for yy array\n" );
   exit( EXIT_FAILURE );
  };
- /*
- // Scale everyting to the first image
- for ( i= 0; i < img_size; i++ ) {
-  yy[i]= (double)image_array[1][i];
-  //  fprintf(stderr,"%lf %d\n",yy[i],i);
- }
-*/
 
- /*
-  // Scale everyting to the LAST image
-  for( i= 0; i < img_size; i++ ) {
-   yy[i]= (double)image_array[file_counter - 1][i];
-   //  fprintf(stderr,"%lf %d\n",yy[i],i);
-  }
-  gsl_sort(yy, 1, img_size);
-  ref_index= gsl_stats_median_from_sorted_data(yy, 1, img_size);
-  fprintf(stderr, "ref_index=%lf\n", ref_index);
- */
  good_file_counter= 0;
  for ( file_counter= 1; file_counter < argc; file_counter++ ) {
   for ( i= 0; i < img_size; i++ ) {
@@ -195,19 +175,12 @@ int main( int argc, char *argv[] ) {
 
  //
  for ( i= 0; i < img_size; i++ ) {
-  // for( file_counter= 1; file_counter < argc; file_counter++ ) {
   for ( file_counter= 0; file_counter < good_file_counter; file_counter++ ) {
    y[file_counter]= image_array[file_counter][i];
-   // fprintf(stderr,"%d %lf\n", file_counter, y[file_counter]);
   }
-  // gsl_sort(y, 1, argc - 1);
   gsl_sort( y, 1, good_file_counter );
-  // val= gsl_stats_median_from_sorted_data(y, 1, argc - 1);
   val= gsl_stats_median_from_sorted_data( y, 1, good_file_counter );
-  //  fprintf(stderr,"median %lf\n",val);
   combined_array[i]= (unsigned short)( val + 0.5 );
-  // fprintf(stderr, "median = %lf _ %d\n ", val, combined_array[i]);
-  // exit( EXIT_FAILURE );
  }
 
  // Write the output FITS file
