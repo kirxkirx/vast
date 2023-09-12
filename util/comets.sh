@@ -37,6 +37,15 @@ fi
 DATA=$(curl --silent http://astro.vanbuitenen.nl/comets)
 
 LIST_OF_COMET_FULL_NAMES=$(echo "$DATA" | grep '</tr>' | grep -e 'C/' -e 'P/' -e 'I/' | sed 's:</tr>:\n:g' | awk -F'>' '{print $3}' | awk -F'<' '{print $1}')
+# If none found at Gideon van Buitenen's pages - try Seiichi Yoshida's page
+if [ -z "$LIST_OF_COMET_FULL_NAMES" ];then
+ LIST_OF_COMET_FULL_NAMES=$(curl --silent http://aerith.net/comet/weekly/current.html | grep 'A HREF' | awk -F'>' '{print $2}' | awk -F '<' '{print $1}' | awk -F'(' '{print $1}' | grep '/' | sed 's/[[:space:]]*$//') 
+fi
+# If there are still none -something is wrong so we stop
+if [ -z "$LIST_OF_COMET_FULL_NAMES" ];then
+ echo "ERROR in $0 getting a list of bright comets"
+ exit 1
+fi
 #echo "$LIST_OF_COMET_FULL_NAMES"
 
 # interstellar objects are not implemented yet
