@@ -13,6 +13,9 @@
 #include <sys/stat.h>
 #include <unistd.h> /// sleep() and something else...
 
+#include <time.h>
+
+
 // all these are for wait3()
 #include <sys/wait.h>
 #include <sys/time.h>
@@ -520,6 +523,10 @@ int main( int argc, char **argv ) {
  new_Y1= 0.0;
  new_Y2= 0.0;
  //
+
+ double UnixTime;
+ time_t UnixTime_time_t;
+ struct tm *structureTIME;
 
  int debug_mode= 0; // 1 - print debug messages
 
@@ -1683,7 +1690,33 @@ int main( int argc, char **argv ) {
    markY= mag[closest_num];
    //    cpgsci(2);cpgpt1( markX, markY, 4);cpgsci(5);
    // print out the point info
-   fprintf( stderr, "%13.5lf  %.5lf %.5lf\n", JD[closest_num], mag[closest_num], mag_err[closest_num] ); // Print the selected data point
+   //fprintf( stderr, "%13.5lf  %.5lf %.5lf\n", JD[closest_num], mag[closest_num], mag_err[closest_num] ); 
+   // Print the selected data point
+   fprintf( stderr, "%13.5lf  %.5lf %.5lf  ", JD[closest_num], mag[closest_num], mag_err[closest_num] );
+   //
+   // Convert JD to calendar time
+   UnixTime= ( JD[closest_num] - 2440587.5 ) * 86400.0;
+   if ( UnixTime < 0.0 ) {
+    UnixTime_time_t= (time_t)( UnixTime - 0.5 );
+   } else {
+    // UnixTime is double, so we add 0.5 for the proper type conversion
+    UnixTime_time_t= (time_t)( UnixTime + 0.5 );
+   }
+   // Use thread-safe gmtime_r() instead of gmtime() if possible
+   // will need to free( structureTIME ) below
+#if defined( _POSIX_C_SOURCE ) || defined( _BSD_SOURCE ) || defined( _SVID_SOURCE )
+   structureTIME= malloc( sizeof( struct tm ) );
+   gmtime_r( &UnixTime_time_t, structureTIME );
+#else
+   structureTIME= gmtime( &UnixTime_time_t );
+#endif
+   // Warning! I'm loosing the last digit while convering!
+   //fprintf( stderr, "%04d-%02d-%08.5lf\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, (double)structureTIME->tm_mday + (double)structureTIME->tm_hour / 24.0 + (double)structureTIME->tm_min / ( 24.0 * 60 ) + (double)structureTIME->tm_sec / ( 24.0 * 60 * 60 ) );
+   fprintf( stderr, "%04d-%02d-%08.4lf\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, (double)structureTIME->tm_mday + (double)structureTIME->tm_hour / 24.0 + (double)structureTIME->tm_min / ( 24.0 * 60 ) + (double)structureTIME->tm_sec / ( 24.0 * 60 * 60 ) );
+#if defined( _POSIX_C_SOURCE ) || defined( _BSD_SOURCE ) || defined( _SVID_SOURCE )
+   free( structureTIME );
+#endif
+   //
    // start a FITS viewer
    if ( lightcurve_format == 0 ) {
     if ( NULL != filename[closest_num] ) {
