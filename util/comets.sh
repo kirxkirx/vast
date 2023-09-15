@@ -36,19 +36,26 @@ fi
 
 DATA=$(curl --silent http://astro.vanbuitenen.nl/comets)
 
-LIST_OF_COMET_FULL_NAMES=$(echo "$DATA" | grep '</tr>' | grep -e 'C/' -e 'P/' -e 'I/' | sed 's:</tr>:\n:g' | awk -F'>' '{print $3}' | awk -F'<' '{print $1}')
-# If none found at Gideon van Buitenen's pages - try Seiichi Yoshida's page
-if [ -z "$LIST_OF_COMET_FULL_NAMES" ];then
- LIST_OF_COMET_FULL_NAMES=$(curl --silent http://aerith.net/comet/weekly/current.html | grep 'A HREF' | awk -F'>' '{print $2}' | awk -F '<' '{print $1}' | awk -F'(' '{print $1}' | grep '/' | sed 's/[[:space:]]*$//') 
-fi
-# If there are still none -something is wrong so we stop
+# Get a list of comets from Gideon van Buitenen's page
+LIST_OF_COMET_FULL_NAMES_vanBuitenen=$(echo "$DATA" | grep '</tr>' | grep -e 'C/' -e 'P/' -e 'I/' | sed 's:</tr>:\n:g' | awk -F'>' '{print $3}' | awk -F'<' '{print $1}')
+
+# Get a list of comets from Seiichi Yoshida's page
+LIST_OF_COMET_FULL_NAMES_Yoshida=$(curl --silent http://aerith.net/comet/weekly/current.html | grep 'A HREF' | awk -F'>' '{print $2}' | awk -F '<' '{print $1}' | grep '/' | sed 's/(\s*/(/g; s/\s*)/)/g' | sed 's/[[:space:]]*$//' ) 
+
+# Combine the two lists
+LIST_OF_COMET_FULL_NAMES_from_vanBuitenen_and_Yoshida=$(echo "$LIST_OF_COMET_FULL_NAMES_vanBuitenen
+$LIST_OF_COMET_FULL_NAMES_Yoshida" | sort | uniq)
+# The names may have different capitalizations in van Buitenen's and sYoshida's page - we'll keep only one version
+LIST_OF_COMET_FULL_NAMES="$(echo "$LIST_OF_COMET_FULL_NAMES_from_vanBuitenen_and_Yoshida" | while read NAME1 NAME2 REST ;do echo "$LIST_OF_COMET_FULL_NAMES_from_vanBuitenen_and_Yoshida" | grep -m 1 "$NAME1 $NAME2" && continue ; echo "$LIST_OF_COMET_FULL_NAMES_from_vanBuitenen_and_Yoshida" | grep -m 1 "$NAME1" ;done | sort | uniq)"
+
+# If the list is empty - something is wrong so we stop
 if [ -z "$LIST_OF_COMET_FULL_NAMES" ];then
  echo "ERROR in $0 getting a list of bright comets"
  exit 1
 fi
-#echo "$LIST_OF_COMET_FULL_NAMES"
 
-# interstellar objects are not implemented yet
+# Interstellar objects are not implemented yet!
+# Below we treat the periodic and regular comets separately as the periodic comets often have many orbits in HORIZONS system
 
 # periodic comets have multiple records in JPL HORIZONS
 PERIODIC_COMETS=$(echo "$LIST_OF_COMET_FULL_NAMES" | grep 'P/')
@@ -70,28 +77,35 @@ echo "$PERIODIC_COMETS" | while read PERIODIC_COMET_DESIGNATION_AND_NAME ;do
   fi
   HORIZONS_REPLY=$(curl --insecure --silent "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='$JD'&QUANTITIES='1,9'")
  fi
- PLANET_RA_DEC_MAG_STRING=$(echo "$HORIZONS_REPLY" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
+ # Make sure to ptint empty string if $3, $4, $5, $6, $7, $8 are undefined
+ PLANET_RA_DEC_MAG_STRING=$(echo "$HORIZONS_REPLY" | grep -A1 '$$SOE' | tail -n1 | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
  if [ -z "$PLANET_RA_DEC_MAG_STRING" ];then
-  # something is wrong - let's try to reconnect via the reverse proxy
-  PLANET_RA_DEC_MAG_STRING=$(curl --insecure --silent "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='$JD'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
+  # Something is wrong - let's try to reconnect via the reverse proxy
+  # Make sure to ptint empty string if $3, $4, $5, $6, $7, $8 are undefined
+  PLANET_RA_DEC_MAG_STRING=$(curl --insecure --silent "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='$JD'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
  fi
  if [ -n "$PLANET_RA_DEC_MAG_STRING" ];then
   echo "$PLANET_RA_DEC_MAG_STRING $PERIODIC_COMET_DESIGNATION_AND_NAME"
- fi
- 
+ fi 
 done
 
-# !!!!!!
-#exit 0
-
-# non-periodic comets
+# Non-periodic comets
 NON_PERIODIC_COMETS=$(echo "$LIST_OF_COMET_FULL_NAMES" | grep 'C/')
 echo "$NON_PERIODIC_COMETS" | while read NON_PERIODIC_COMET_DESIGNATION_AND_NAME ;do
  NON_PERIODIC_COMET_DESIGNATION_URLENCODE=$(echo "$NON_PERIODIC_COMET_DESIGNATION_AND_NAME" | awk '{print $1"%20"$2}')
- PLANET_RA_DEC_MAG_STRING=$(curl --insecure --silent "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$NON_PERIODIC_COMET_DESIGNATION_URLENCODE'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='$JD'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
+ # Make sure to ptint empty string if $3, $4, $5, $6, $7, $8 are undefined
+ PLANET_RA_DEC_MAG_STRING=$(curl --insecure --silent "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='$NON_PERIODIC_COMET_DESIGNATION_URLENCODE'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='$JD'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
  if [ -z "$PLANET_RA_DEC_MAG_STRING" ];then
-  # something is wrong - let's try to reconnect via the reverse proxy
-  PLANET_RA_DEC_MAG_STRING=$(curl --insecure --silent "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$NON_PERIODIC_COMET_DESIGNATION_URLENCODE'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='$JD'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
+  # Something is wrong - let's try to reconnect via the reverse proxy
+  # Make sure to ptint empty string if $3, $4, $5, $6, $7, $8 are undefined
+  PLANET_RA_DEC_MAG_STRING=$(curl --insecure --silent "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$NON_PERIODIC_COMET_DESIGNATION_URLENCODE'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='$JD'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
+ fi
+ if [ -z "$PLANET_RA_DEC_MAG_STRING" ];then
+  # Sleep and retry!
+  sleep 1
+  # Something is wrong - let's try to reconnect via the reverse proxy
+  # Make sure to ptint empty string if $3, $4, $5, $6, $7, $8 are undefined
+  PLANET_RA_DEC_MAG_STRING=$(curl --insecure --silent "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='$NON_PERIODIC_COMET_DESIGNATION_URLENCODE'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='$JD'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{if ($3=="" || $4=="" || $5=="" || $6=="" || $7=="" || $8=="") print ""; else printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
  fi
  echo "$PLANET_RA_DEC_MAG_STRING $NON_PERIODIC_COMET_DESIGNATION_AND_NAME"
 done
