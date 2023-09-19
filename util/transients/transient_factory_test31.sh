@@ -336,7 +336,7 @@ TIMEOUTCOMMAND=$("$VAST_PATH"lib/find_timeout_command.sh)
 if [ $? -ne 0 ];then
  echo "WARNING: cannot find timeout command"
 else
- TIMEOUTCOMMAND="$TIMEOUTCOMMAND 40 "
+ TIMEOUTCOMMAND="$TIMEOUTCOMMAND 100 "
 fi
 export TIMEOUTCOMMAND
 
