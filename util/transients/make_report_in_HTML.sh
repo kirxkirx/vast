@@ -42,9 +42,11 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
   continue
  fi
  
- TRANSIENT_NAME=`basename $LIGHTCURVE_FILE_OUTDAT .dat`
+ TRANSIENT_NAME=$(basename $LIGHTCURVE_FILE_OUTDAT .dat)
  TRANSIENT_NAME=${TRANSIENT_NAME/out/}
- TRANSIENT_NAME="$TRANSIENT_NAME"_`basename $C .fts`
+ TRANSIENT_NAME="$TRANSIENT_NAME"_$(basename $C .fts)
+ TRANSIENT_NAME=$(basename "$TRANSIENT_NAME" .fits)
+ TRANSIENT_NAME=$(basename "$TRANSIENT_NAME" .fit)
  
  # Moved the final check here
  util/transients/report_transient.sh $LIGHTCURVE_FILE_OUTDAT  > transient_report/index.tmp2
