@@ -152,15 +152,15 @@ void print_TT_reminder( int show_timer_or_quit_instantly ) {
  fprintf( stderr, "\n" );
  fprintf( stderr, "\n" );
 
- fprintf( stderr, "              #########   \E[34;47mATTENTION!\E[33;00m   #########              \n" );
+ fprintf( stderr, "              #########   \x1B[34;47mATTENTION!\x1B[33;00m   #########              \n" );
  fprintf( stderr, "According to the IAU recommendation (Resolution B1 XXIII IAU GA,\n" );
  fprintf( stderr, "see http://www.iers.org/IERS/EN/Science/Recommendations/resolutionB1.html )  \n" );
  fprintf( stderr, "Julian Dates (JDs) computed by VaST will be expressed by default    \n" );
- fprintf( stderr, "in \E[34;47mTerrestrial Time (TT)\E[33;00m! " );
+ fprintf( stderr, "in \x1B[34;47mTerrestrial Time (TT)\x1B[33;00m! " );
  fprintf( stderr, "Starting from January 1, 2017:\n  TT = UTC + 69.184 sec  \n" );
  fprintf( stderr, "If you want JDs to be expressed in UTC, use '-u' or '--UTC' key: './vast -u'\n" );
  fprintf( stderr, "You may find which time system was used in vast_summary.log\n\n" );
- fprintf( stderr, "Please \E[01;31mmake sure you know the difference between Terrestrial Time and UTC\033[00m,\n" );
+ fprintf( stderr, "Please \x1B[01;31mmake sure you know the difference between Terrestrial Time and UTC\033[00m,\n" );
  fprintf( stderr, "before deriving the time of minimum of an eclipsing binary or maximum of\n" );
  fprintf( stderr, "a pulsating star, sending a VaST lightcurve to your collaborators, AAVSO,\n" );
  fprintf( stderr, "B.R.N.O. database etc. Often people and databases expect JDs in UTC, not TT.\n" );
@@ -1471,11 +1471,11 @@ int check_and_print_memory_statistics() {
   if ( 0 == strcasecmp( VmSize_units, RAM_size_units ) && 0 != VmSize && 0 != RAM_size ) {
    // Check that the data are reasonable
    if ( VmSize > 100 * RAM_size ) {
-    fprintf( stderr, "\E[01;31mWARNING! There seems to be a problem parsing the memory usage statistic.\E[33;00m\n" );
+    fprintf( stderr, "\x1B[01;31mWARNING! There seems to be a problem parsing the memory usage statistic.\x1B[33;00m\n" );
    } else {
     // Check aren't we using too much memory?
     if ( VmSize > MAX_RAM_USAGE * RAM_size ) {
-     fprintf( stderr, "\E[01;31mWARNING! VaST is using more than %d%% of RAM! Trying to free some memory...\E[33;00m\n", (int)( MAX_RAM_USAGE * 100 ) );
+     fprintf( stderr, "\x1B[01;31mWARNING! VaST is using more than %d%% of RAM! Trying to free some memory...\x1B[33;00m\n", (int)( MAX_RAM_USAGE * 100 ) );
      return 1; // return value 1 means that we need to free some momory
     }
    }
@@ -3914,7 +3914,7 @@ int main( int argc, char **argv ) {
  fprintf( stderr, "You may change some of the filtering parameters by editing src/vast_limits.h and re-running 'make'.\n" );
  // Check the stats and issue warnings if needed
  if ( (double)counter_rejected_too_small / (double)NUMBER1 > 0.3 && counter_rejected_too_small > 3 ) {
-  fprintf( stderr, "\E[01;31m WARNING: \E[33;00m suspiciously many stars are rejected as being too small. Please check FWHM_MIN in src/vast_limits.h and re-run 'make' if you change it.\n" );
+  fprintf( stderr, "\x1B[01;31m WARNING: \x1B[33;00m suspiciously many stars are rejected as being too small. Please check FWHM_MIN in src/vast_limits.h and re-run 'make' if you change it.\n" );
  }
 
  /* Check if enough stars were detected on the reference frame */
@@ -4403,7 +4403,7 @@ int main( int argc, char **argv ) {
          if ( 0.0 < moving_object__user_array_y[n] && moving_object__user_array_y[n] < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
           if ( ( position_x_pix - moving_object__user_array_x[n] ) * ( position_x_pix - moving_object__user_array_x[n] ) + ( position_y_pix - moving_object__user_array_y[n] ) * ( position_y_pix - moving_object__user_array_y[n] ) < 1.0 ) {
            STAR2[NUMBER2 - 1].moving_object= 1;
-           // fprintf(stderr,"\E[01;31mDEBUG: here is the moving object on %s !!!\E[33;00m\n", input_images[n]);
+           // fprintf(stderr,"\x1B[01;31mDEBUG: here is the moving object on %s !!!\x1B[33;00m\n", input_images[n]);
           }
          } // if( 0.0 < moving_object__user_array_y[n]  &&  moving_object__user_array_y[n] < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
         }  // if( 0.0 < moving_object__user_array_x[n]  &&  moving_object__user_array_x[n] < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
@@ -4535,7 +4535,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
     fprintf( stderr, "You may change some of the filtering parameters by editing src/vast_limits.h and re-running 'make'.\n" );
     // Check the stats and issue warnings if needed
     if ( (double)counter_rejected_too_small / (double)NUMBER1 > 0.3 )
-     fprintf( stderr, "\E[01;31m WARNING: \E[33;00m suspiciously many stars are rejected as being too small. Please check FWHM_MIN in src/vast_limits.h and re-run 'make' if you change it.\n" );
+     fprintf( stderr, "\x1B[01;31m WARNING: \x1B[33;00m suspiciously many stars are rejected as being too small. Please check FWHM_MIN in src/vast_limits.h and re-run 'make' if you change it.\n" );
 
     if ( debug != 0 )
      fprintf( stderr, "DEBUG MSG: NUMBER2=%d OK\n", NUMBER2 );
@@ -5540,7 +5540,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
     } else {
      sprintf( log_output, "status=ERROR  %s\n", input_images[n] );
      write_string_to_log_file( log_output, sextractor_catalog );
-     fprintf( stderr, "\E[01;31m ERROR!!! Magnitude calibration failure. Dropping image. \E[33;00m\n" ); // and print to the terminal that there was a problem
+     fprintf( stderr, "\x1B[01;31m ERROR!!! Magnitude calibration failure. Dropping image. \x1B[33;00m\n" ); // and print to the terminal that there was a problem
     }
 
     // ADD NEW STARS ONLY IF THE MAGNITUDE SCALE COULD BE SUCCESSFULY CALIBRATED
@@ -6657,7 +6657,7 @@ the comparison stars and the variable star you want to measure.\n\n\n\n",
   sprintf( stderr_output, "if [ -s vast_list_of_previously_known_variables.log ];then while read A ;do ./lc $A & done < vast_list_of_previously_known_variables.log ;fi" );
   if ( !system( stderr_output ) ) {
    // fprintf(stderr, "ERROR running the command:\n %s\n", stderr_output);
-   fprintf( stderr, "\n\n \E[34;47mClick on a star which lightcurve you want to display.\E[33;00m \n\n" );
+   fprintf( stderr, "\n\n \x1B[34;47mClick on a star which lightcurve you want to display.\x1B[33;00m \n\n" );
    sprintf( stderr_output, "./select_star_on_reference_image" );
    if ( !system( stderr_output ) ) {
     fprintf( stderr, "ERROR running the command:\n %s\n", stderr_output );

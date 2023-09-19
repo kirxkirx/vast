@@ -58,7 +58,7 @@ OPTFLAGS = -w -O2 -fomit-frame-pointer $(GOOD_MARCH_OPTIONS) $(LTO_OPTIONS) $(US
 ## flags to measure test coverage with GCC/gcov
 #OPTFLAGS = -fprofile-arcs -ftest-coverage
 ## Static Analysis
-#OPTFLAGS := -g -Wall -Wno-comment  -fanalyzer
+#OPTFLAGS := -g -Wall -Wpedantic -Wno-comment  -fanalyzer
 
 ##############################################################################
 ########################### Make targets are below ###########################

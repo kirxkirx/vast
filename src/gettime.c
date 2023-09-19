@@ -1287,7 +1287,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 #endif
     date_parsed= 0; // if Kourovka_SBG_date_hack() failed...
     // fprintf(stderr, "No, it's not.\nWARNING: cannot determine date/time associated with this image!\n");
-    fprintf( stderr, "No, it's not a Kourovka SBG camera image.\n \E[01;31m WARNING: cannot determine date/time associated with this image! \E[33;00m \n" );
+    fprintf( stderr, "No, it's not a Kourovka SBG camera image.\n \x1B[01;31m WARNING: cannot determine date/time associated with this image! \x1B[33;00m \n" );
     // Special case - no date information in the image file
     inJD= 0.0;
     status= 0;
