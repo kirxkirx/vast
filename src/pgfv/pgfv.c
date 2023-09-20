@@ -1444,9 +1444,9 @@ int main( int argc, char **argv ) {
   }
   if ( markX > 0.0 && markY > 0.0 ) {
    mark_trigger= 1;
-   fprintf( stderr, "Putting mark on pixel position \x1B[01;35m %lf %lf \x1B[33;00m \n", markX, markY );
+   fprintf( stderr, "Putting mark on pixel position \x1B[01;35m %.3lf %.3lf \x1B[33;00m \n", markX, markY );
   } else {
-   fprintf( stderr, "The pixel position \x1B[01;31m %lf %lf is outside the image! \x1B[33;00m\n", markX, markY );
+   fprintf( stderr, "The pixel position \x1B[01;31m %.3lf %.3lf is outside the image! \x1B[33;00m\n", markX, markY );
   }
  }
 
@@ -2790,7 +2790,7 @@ int main( int argc, char **argv ) {
    /* Put a mark */
    if ( mark_trigger == 1 && use_labels == 1 ) {
     cpgsci( 2 );
-    fprintf( stderr, "Putting marker 001: %f %f\n", markX, markY );
+    fprintf( stderr, "Putting marker 001: %.3f %.3f\n", markX, markY );
     cpgpt1( markX, markY, 2 );
     cpgsci( 1 );
     ///// New code to enable aperture to be ploted on the finding chart
@@ -2811,7 +2811,7 @@ int main( int argc, char **argv ) {
      cpgsci( 2 );
      cpgsch( 3.0 );
      cpgslw( 2 ); // increase line width
-     fprintf( stderr, "Putting marker 002: %f %f\n", markX, markY );
+     fprintf( stderr, "Putting marker 002: %.3f %.3f\n", markX, markY );
      cpgpt1( markX, markY, 2 );
      cpgslw( 1 ); // set default line width
      cpgsch( 1.0 );
@@ -2822,7 +2822,7 @@ int main( int argc, char **argv ) {
    // Markers from manymarkers file
    for ( marker_counter= 0; marker_counter < manymrkerscounter; marker_counter++ ) {
     cpgsci( 5 );
-    fprintf( stderr, "Putting marker 003: %f %f\n", manymarkersX[marker_counter], manymarkersY[marker_counter] );
+    fprintf( stderr, "Putting marker 003: %.3f %.3f\n", manymarkersX[marker_counter], manymarkersY[marker_counter] );
     cpgpt1( manymarkersX[marker_counter], manymarkersY[marker_counter], 2 );
     cpgsci( 1 );
    }
