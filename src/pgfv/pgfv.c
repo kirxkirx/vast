@@ -306,7 +306,7 @@ void write_list_of_all_stars_with_calibrated_magnitudes_to_file( float *sextract
   fprintf( outputfile, "%8.4lf %.4lf  %10.5f %10.5f  %6d  %3d %1d\n", sextractor_catalog__MAG[i], sextractor_catalog__MAG_ERR[i], sextractor_catalog__X[i], sextractor_catalog__Y[i], sextractor_catalog__star_number[i], sextractor_catalog__se_FLAG[i], sextractor_catalog__ext_FLAG[i] );
  }
  fclose( outputfile );
- fprintf( stderr, "The list of stars with calibrated magnitudes is written to \E[01;31m %s \E[33;00m\n", outputfilename );
+ fprintf( stderr, "The list of stars with calibrated magnitudes is written to \x1B[01;31m %s \x1B[33;00m\n", outputfilename );
  return;
 }
 
@@ -321,7 +321,7 @@ void print_pgfv_help() {
  fprintf( stderr, "press 'V' to invert Y axis.\n" );
  fprintf( stderr, "move mouse and press 'F' to adjust image brightness/contrast. If an image apears too bright, move the pointer to the lower left and press 'F'. Repeat it many times to achive the desired result.\n" );
  fprintf( stderr, "press 'M' to turn star markers on/off.\n" );
- fprintf( stderr, "press 'X' or right click to exit!\nclick on image to get coordinates and value of the current pixel.\n" );
+ fprintf( stderr, "press 'X' or right click to exit! ('Q' if you want to exit and return a non-zero exit code)\nclick on image to get coordinates and value of the current pixel.\n" );
  fprintf( stderr, "\n" );
  fprintf( stderr, "press '2' to perform manual single-image magnitude calibration.\n" );
  fprintf( stderr, "press '4' to perform automated single-image magnitude calibration.\n" );
@@ -1134,6 +1134,10 @@ int main( int argc, char **argv ) {
  // variables to store cpgqvsz output
  float cpgqvsz_x1, cpgqvsz_x2, cpgqvsz_y1, cpgqvsz_y2;
  cpgqvsz_x1= cpgqvsz_x2= cpgqvsz_y1= cpgqvsz_y2= 0.0;
+ 
+ //
+ int user_request_to_exit_with_nonzero_exit_code= 0;
+ 
 
  // Options for getopt()
  char *cvalue= NULL;
@@ -1440,9 +1444,9 @@ int main( int argc, char **argv ) {
   }
   if ( markX > 0.0 && markY > 0.0 ) {
    mark_trigger= 1;
-   fprintf( stderr, "Putting mark on pixel position \E[01;35m %lf %lf \E[33;00m \n", markX, markY );
+   fprintf( stderr, "Putting mark on pixel position \x1B[01;35m %lf %lf \x1B[33;00m \n", markX, markY );
   } else {
-   fprintf( stderr, "The pixel position \E[01;31m %lf %lf is outside the image! \E[33;00m\n", markX, markY );
+   fprintf( stderr, "The pixel position \x1B[01;31m %lf %lf is outside the image! \x1B[33;00m\n", markX, markY );
   }
  }
 
@@ -1551,7 +1555,7 @@ int main( int argc, char **argv ) {
    return 1;
   }
   fprintf( stderr, "Use '+' or '-' to increase or decrease aperture size.\n" );
-  fprintf( stderr, "\E[34;47mTo calibrate magnitude scale press '2'\E[33;00m (manual calibration) or \E[34;47m'4'\E[33;00m (automatic calibration)\n" );
+  fprintf( stderr, "\x1B[34;47mTo calibrate magnitude scale press '2'\x1B[33;00m (manual calibration) or \x1B[34;47m'4'\x1B[33;00m (automatic calibration)\n" );
 
   // Remove old calib.txt in case we'll want a magnitude calibration
   // system("rm -f calib.txt");
@@ -1891,7 +1895,7 @@ int main( int argc, char **argv ) {
  fits_get_img_type( fptr, &bitpix, &status );
  fits_read_key( fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status );
  fits_read_key( fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status );
- fprintf( stderr, "Image %s: %ldx%ld pixels, BITPIX data type code: %d\n", fits_image_name, naxes[0], naxes[1], bitpix );
+ fprintf( stderr, "Image \x1B[01;34m %s \x1B[33;00m : %ldx%ld pixels, BITPIX data type code: %d\n", fits_image_name, naxes[0], naxes[1], bitpix );
  if ( naxes[0] * naxes[1] <= 0 ) {
   fprintf( stderr, "ERROR: Trying allocate zero or negative sized array\n" );
   exit( EXIT_FAILURE );
@@ -2159,7 +2163,7 @@ int main( int argc, char **argv ) {
    fprintf( stderr, "Click on a comparison star and enter its magnitude in the terminal window.\nRight-click after entering all the comparison stars.\n" );
   }
   if ( match_mode == 4 ) {
-   fprintf( stderr, "\E[01;35mSelect one or multiple comparison stars\E[33;00m with know magnitudes.\nClick on the star then enter its magnitude in the terminal.\nYou may mark the variable star by clicking on it and typing 'v' instead of the magnitude.\nUse +/- keys on the keyboard to increase/decrease the aperture size\n\n" );
+   fprintf( stderr, "\x1B[01;35mSelect one or multiple comparison stars\x1B[33;00m with know magnitudes.\nClick on the star then enter its magnitude in the terminal.\nYou may mark the variable star by clicking on it and typing 'v' instead of the magnitude.\nUse +/- keys on the keyboard to increase/decrease the aperture size\n\n" );
   }
  } // if ( finder_chart_mode == 0 ) {
 
@@ -2173,8 +2177,9 @@ int main( int argc, char **argv ) {
  curC= 'R';
  do {
 
+
   // Check if the click is inside the plot
-  // (we'll just redraw the plot if it is)
+  // (we'll just redraw the plot if it is not)
   if ( curC == 'A' || curC == 'a' ) {
    if ( curX < drawX1 || curX > drawX2 || curY < drawY1 || curY > drawY2 ) {
     curC= 'R';
@@ -2256,8 +2261,8 @@ int main( int argc, char **argv ) {
    // Switch to magnitude calibration mode
    if ( curC == '2' && match_mode == 3 && magnitude_calibration_already_performed_flag == 0 ) {
     fprintf( stderr, "Entering megnitude calibration mode!\n" );
-    fprintf( stderr, "\E[01;31mPlease click on comparison stars and enter their magnitudes...\E[33;00m\n" );
-    fprintf( stderr, "\E[01;31mPress '3' when done!\E[33;00m\n" );
+    fprintf( stderr, "\x1B[01;31mPlease click on comparison stars and enter their magnitudes...\x1B[33;00m\n" );
+    fprintf( stderr, "\x1B[01;31mPress '3' when done!\x1B[33;00m\n" );
     // system("rm -f calib.txt");
     unlink( "calib.txt" );
     match_mode= 2;
@@ -2266,7 +2271,7 @@ int main( int argc, char **argv ) {
    // Switch to AUTOMATIC magnitude calibration mode
    if ( curC == '4' && match_mode == 3 && magnitude_calibration_already_performed_flag == 0 ) {
     fprintf( stderr, "Entering AUTOMATIC megnitude calibration mode!\n" );
-    fprintf( stderr, "\E[01;31mPlease enter the filter name (one of BVRIgri):\E[33;00m\n" );
+    fprintf( stderr, "\x1B[01;31mPlease enter the filter name (one of BVRIgri):\x1B[33;00m\n" );
     // The %511s format specifier reads at most 511 characters from stdin into the filter_name_for_automatic_magnitude_calibration_local string, leaving space for a null terminator at the end of the string.
     // Let's limit ourselves to 2 characters
     while ( -1 < fscanf( stdin, "%2s", filter_name_for_automatic_magnitude_calibration_local ) ) {
@@ -2467,15 +2472,15 @@ int main( int argc, char **argv ) {
         fprintf( stderr, "Star %6d\n", sextractor_catalog__star_number[marker_counter] );
 
         if ( 0 == is_point_close_or_off_the_frame_edge( (double)sextractor_catalog__X[marker_counter], (double)sextractor_catalog__Y[marker_counter], (double)naxes[0], (double)naxes[1], FRAME_EDGE_INDENT_PIXELS ) ) {
-         fprintf( stderr, "Star coordinates \E[01;32m%6.1lf %6.1lf\E[33;00m (pix)\n", sextractor_catalog__X[marker_counter], sextractor_catalog__Y[marker_counter] );
+         fprintf( stderr, "Star coordinates \x1B[01;32m%6.1lf %6.1lf\x1B[33;00m (pix)\n", sextractor_catalog__X[marker_counter], sextractor_catalog__Y[marker_counter] );
         } else {
-         fprintf( stderr, "Star coordinates \E[01;31m%6.1lf %6.1lf\E[33;00m (pix)\n", sextractor_catalog__X[marker_counter], sextractor_catalog__Y[marker_counter] );
+         fprintf( stderr, "Star coordinates \x1B[01;31m%6.1lf %6.1lf\x1B[33;00m (pix)\n", sextractor_catalog__X[marker_counter], sextractor_catalog__Y[marker_counter] );
         }
 
         if ( 0 == exclude_region( X1, Y1, X2, Y2, N_bad_regions, (double)sextractor_catalog__X[marker_counter], (double)sextractor_catalog__Y[marker_counter], APER ) ) {
          fprintf( stderr, "The star is not situated in a bad CCD region according to bad_region.lst\n" );
         } else {
-         fprintf( stderr, "The star is situated in a \E[01;31mbad CCD region\E[33;00m according to bad_region.lst\n" );
+         fprintf( stderr, "The star is situated in a \x1B[01;31mbad CCD region\x1B[33;00m according to bad_region.lst\n" );
         }
 
         if ( use_xy2sky > 0 ) {
@@ -2483,31 +2488,31 @@ int main( int argc, char **argv ) {
         }
 
         if ( sextractor_catalog__FLUX[marker_counter] > MIN_SNR * sextractor_catalog__FLUX_ERR[marker_counter] ) {
-         fprintf( stderr, "SNR \E[01;32m%.1lf\E[33;00m\n", sextractor_catalog__FLUX[marker_counter] / sextractor_catalog__FLUX_ERR[marker_counter] );
+         fprintf( stderr, "SNR \x1B[01;32m%.1lf\x1B[33;00m\n", sextractor_catalog__FLUX[marker_counter] / sextractor_catalog__FLUX_ERR[marker_counter] );
         } else {
-         fprintf( stderr, "SNR \E[01;31m%.1lf\E[33;00m\n", sextractor_catalog__FLUX[marker_counter] / sextractor_catalog__FLUX_ERR[marker_counter] );
+         fprintf( stderr, "SNR \x1B[01;31m%.1lf\x1B[33;00m\n", sextractor_catalog__FLUX[marker_counter] / sextractor_catalog__FLUX_ERR[marker_counter] );
         }
 
         if ( sextractor_catalog__MAG[marker_counter] != 99.0000 ) {
-         fprintf( stderr, "Magnitude \E[01;34m%7.4lf  %6.4lf\E[33;00m\n", sextractor_catalog__MAG[marker_counter], sextractor_catalog__MAG_ERR[marker_counter] );
+         fprintf( stderr, "Magnitude \x1B[01;34m%7.4lf  %6.4lf\x1B[33;00m\n", sextractor_catalog__MAG[marker_counter], sextractor_catalog__MAG_ERR[marker_counter] );
         } else {
-         fprintf( stderr, "Magnitude \E[01;31m%7.4lf  %6.4lf\E[33;00m\n", sextractor_catalog__MAG[marker_counter], sextractor_catalog__MAG_ERR[marker_counter] );
+         fprintf( stderr, "Magnitude \x1B[01;31m%7.4lf  %6.4lf\x1B[33;00m\n", sextractor_catalog__MAG[marker_counter], sextractor_catalog__MAG_ERR[marker_counter] );
         }
 
         if ( sextractor_catalog__se_FLAG[marker_counter] < 2 ) {
-         fprintf( stderr, "SExtractor flag \E[01;32m%d\E[33;00m\n", sextractor_catalog__se_FLAG[marker_counter] );
+         fprintf( stderr, "SExtractor flag \x1B[01;32m%d\x1B[33;00m\n", sextractor_catalog__se_FLAG[marker_counter] );
         } else {
-         fprintf( stderr, "SExtractor flag \E[01;31m%d\E[33;00m\n", sextractor_catalog__se_FLAG[marker_counter] );
+         fprintf( stderr, "SExtractor flag \x1B[01;31m%d\x1B[33;00m\n", sextractor_catalog__se_FLAG[marker_counter] );
         }
 
         if ( sextractor_catalog__ext_FLAG[marker_counter] == 0 ) {
-         fprintf( stderr, "External flag \E[01;32m%d\E[33;00m\n", sextractor_catalog__ext_FLAG[marker_counter] );
+         fprintf( stderr, "External flag \x1B[01;32m%d\x1B[33;00m\n", sextractor_catalog__ext_FLAG[marker_counter] );
         } else {
-         fprintf( stderr, "External flag \E[01;31m%d\E[33;00m\n", sextractor_catalog__ext_FLAG[marker_counter] );
+         fprintf( stderr, "External flag \x1B[01;31m%d\x1B[33;00m\n", sextractor_catalog__ext_FLAG[marker_counter] );
         }
 
         // Print anyway
-        fprintf( stderr, "Reduced chi2 from PSF-fitting: \E[01;32m%lg\E[33;00m (Objects with large values will be mising from the list of detections! If no PSF fitting was performed, this value is set to 1.0)\n", sextractor_catalog__psfCHI2[marker_counter] );
+        fprintf( stderr, "Reduced chi2 from PSF-fitting: \x1B[01;32m%lg\x1B[33;00m (Objects with large values will be mising from the list of detections! If no PSF fitting was performed, this value is set to 1.0)\n", sextractor_catalog__psfCHI2[marker_counter] );
 
         bad_size= 0;
         if ( CONST * ( sextractor_catalog__A_IMAGE[marker_counter] + sextractor_catalog__ERRA_IMAGE[marker_counter] ) < MIN_SOURCE_SIZE_APERTURE_FRACTION * APER ) {
@@ -2530,9 +2535,9 @@ int main( int argc, char **argv ) {
         }
         
         if ( bad_size == 0 ) {
-         fprintf( stderr, "A= \E[01;32m%lf +/- %lf\E[33;00m  B= \E[01;32m%lf +/- %lf\E[33;00m\nFWHM(A)= \E[01;32m%lf +/- %lf\E[33;00m  FWHM(B)= \E[01;32m%lf +/- %lf\E[33;00m\nFWHM= \E[01;32m%lf\E[33;00m\n", sextractor_catalog__A_IMAGE[marker_counter], sextractor_catalog__ERRA_IMAGE[marker_counter], sextractor_catalog__B_IMAGE[marker_counter], sextractor_catalog__ERRB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__A_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__B_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRB_IMAGE[marker_counter], sextractor_catalog__FWHM_float_parameters0[marker_counter] );
+         fprintf( stderr, "A= \x1B[01;32m%lf +/- %lf\x1B[33;00m  B= \x1B[01;32m%lf +/- %lf\x1B[33;00m\nFWHM(A)= \x1B[01;32m%lf +/- %lf\x1B[33;00m  FWHM(B)= \x1B[01;32m%lf +/- %lf\x1B[33;00m\nFWHM= \x1B[01;32m%lf\x1B[33;00m\n", sextractor_catalog__A_IMAGE[marker_counter], sextractor_catalog__ERRA_IMAGE[marker_counter], sextractor_catalog__B_IMAGE[marker_counter], sextractor_catalog__ERRB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__A_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__B_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRB_IMAGE[marker_counter], sextractor_catalog__FWHM_float_parameters0[marker_counter] );
         } else {
-         fprintf( stderr, "A= \E[01;31m%lf +/- %lf\E[33;00m  B= \E[01;31m%lf +/- %lf\E[33;00m\nFWHM(A)= \E[01;31m%lf +/- %lf\E[33;00m  FWHM(B)= \E[01;31m%lf +/- %lf\E[33;00m\nFWHM= \E[01;31m%lf\E[33;00m\n", sextractor_catalog__A_IMAGE[marker_counter], sextractor_catalog__ERRA_IMAGE[marker_counter], sextractor_catalog__B_IMAGE[marker_counter], sextractor_catalog__ERRB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__A_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__B_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRB_IMAGE[marker_counter], sextractor_catalog__FWHM_float_parameters0[marker_counter] );
+         fprintf( stderr, "A= \x1B[01;31m%lf +/- %lf\x1B[33;00m  B= \x1B[01;31m%lf +/- %lf\x1B[33;00m\nFWHM(A)= \x1B[01;31m%lf +/- %lf\x1B[33;00m  FWHM(B)= \x1B[01;31m%lf +/- %lf\x1B[33;00m\nFWHM= \x1B[01;31m%lf\x1B[33;00m\n", sextractor_catalog__A_IMAGE[marker_counter], sextractor_catalog__ERRA_IMAGE[marker_counter], sextractor_catalog__B_IMAGE[marker_counter], sextractor_catalog__ERRB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__A_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__B_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRB_IMAGE[marker_counter], sextractor_catalog__FWHM_float_parameters0[marker_counter] );
         }
         // It's nice to ptint the aperture size here for comparison
         fprintf( stderr, "Aperture diameter = %.1lf pixels\n", APER );
@@ -3031,6 +3036,12 @@ int main( int argc, char **argv ) {
   }
 
   cpgcurs( &curX, &curY, &curC );
+  // Check for user request to exit with non-zero exit code
+  if ( curC == 'Q' || curC == 'q' ) {
+   fprintf( stderr, "User request to exit wit non-zero exit code!\n");
+   user_request_to_exit_with_nonzero_exit_code= 1;
+   curC= 'X';
+  }
  } while ( curC != 'X' && curC != 'x' );
 
  free( X1 );
@@ -3091,6 +3102,11 @@ int main( int argc, char **argv ) {
  free( real_float_array );
 
  cpgclos();
+
+ if ( user_request_to_exit_with_nonzero_exit_code == 1 ) {
+  fprintf( stderr, "%s fits viewer exit code 150 (at user's request)\n", argv[0] );
+  return 150;
+ } 
 
  fprintf( stderr, "%s fits viewer exit code 0 (all fine)\n", argv[0] );
 
