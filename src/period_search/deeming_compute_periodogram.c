@@ -403,7 +403,7 @@ double compute_LK_reciprocal_theta( double *jd, double *m, unsigned long N_obs, 
 
 int main( int argc, char **argv ) {
 
- if ( argc < 4 ) {
+ if ( argc < 5 ) {
   fprintf( stderr, "Usage:\n Search for the best period\n  %s lightcurve.dat Pmax Pmin Step\n or search for the best period AND estimeate it's significance through lightcurve shuffling\n  %s lightcurve.dat Pmax Pmin Step Niterations\n", argv[0], argv[0] );
   return 1;
  }
