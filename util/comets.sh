@@ -89,6 +89,8 @@ echo "$PERIODIC_COMETS" | while read PERIODIC_COMET_DESIGNATION_AND_NAME ;do
   # Manually set designations for some comets with articularly annoying horizons output
   if [ "$PERIODIC_COMET_DESIGNATION" = "103P" ];then
    PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER="90000950"
+  elif [ "$PERIODIC_COMET_DESIGNATION" = "471P" ];then
+   PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER="90004055"
   else
    # If this is not some special comet
    # assume this is a list of horizons records, not the ephemerides table
