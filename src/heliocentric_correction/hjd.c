@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
  }
 
  if( argc < 3 ) {
-  fprintf(stderr, "Usage: %s outNNNNN.dat RA_DEG DEC_deg # to process full VaST lightcurve file\nor\n%s JD RA_DEG DEC_deg   # to convert individual date\n\nfor example:\n%s out01234.dat 123.4567 +89.0123 \nor\n%s 2455123.456 123.4567 +89.0123\n", argv[0], argv[0], argv[0], argv[0]);
+  fprintf(stderr, "Usage: %s outNNNNN.dat RA_DEG DEC_deg # to process full VaST lightcurve file\nor\n%s JD RA_DEG DEC_deg   # to convert individual date\n\nfor example:\n%s out01234.dat 123.4567 +89.0123 \nor\n%s 2455123.456 123.4567 +89.0123\n\n The output JD will *always* be in Terrestrial Time (TT), no matter the input time system!\n", argv[0], argv[0], argv[0], argv[0]);
   return 1;
  }
 

@@ -117,7 +117,7 @@ if [ -z "$ASTCHECK_OUTPUT" ];then
   fi
  fi
  # Using local copy of astcheck to identify asteroids! See http://home.gwi.net/~pluto/devel/astcheck.htm for details
- echo "$YEAR $MONTH $DAYFRAC $RAHH $RAMM $RASS  $DECDD $DECMM $DECSS  $MAG_FOR_MPC_REPORT" |awk '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+02.0f %02.0f %05.2f         %4.1f R      500\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' > test.mpc
+ echo "$YEAR $MONTH $DAYFRAC $RAHH $RAMM $RASS  $DECDD $DECMM $DECSS  $MAG_FOR_MPC_REPORT" |awk '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+03.0f %02.0f %05.2f         %4.1f R      500\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' > test.mpc
  # 400" is the search radius
  #ASTCHECK_OUTPUT=$(lib/astcheck test.mpc -r400 -m15 |grep -A 50 "TAU0008" |grep -v "TAU0008" |head -n 1 | grep -v ObsCodes.html)
  ASTEROID_SEARCH_MAG_LIMIT=16
@@ -125,7 +125,7 @@ if [ -z "$ASTCHECK_OUTPUT" ];then
   ASTEROID_SEARCH_MAG_LIMIT=$(echo "$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" | awk '{printf "%.1f", 2+$1}')
  fi
  # I want a larger search radius because TESS
- ASTCHECK_OUTPUT=$(lib/astcheck test.mpc -r600 -m"$ASTEROID_SEARCH_MAG_LIMIT" |grep -A 50 "TAU0008" |grep -v "TAU0008" |head -n 1 | grep -v ObsCodes.html)
+ ASTCHECK_OUTPUT=$(lib/astcheck test.mpc -r600 -m"$ASTEROID_SEARCH_MAG_LIMIT" | grep -A 50 "TAU0008" | grep -v "TAU0008" | head -n 1 | grep -v ObsCodes.html)
 fi 
 
 if [ -z "$ASTCHECK_OUTPUT" ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then
