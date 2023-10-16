@@ -109,6 +109,12 @@ function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image
   return 1
  fi
  
+ ### !!! Blindly trust ATLAS astrometry !!! ###
+ echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -B500 -A500 "ATLAS camera ID" |  grep --quiet "CTYPE2  = 'DEC--TPV'"
+ if [ $? -eq 0 ];then
+  return 1
+ fi
+ 
  return 0
 }
 
