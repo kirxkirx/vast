@@ -466,7 +466,7 @@ fi
 echo "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" >> transient_factory_test31.txt
 
 # Make sure there are no pleantes/comets/transients files
-for FILE_TO_REMOVE in planets.txt comets.txt asassn_transients_list.txt tocp_transients_list.txt ;do
+for FILE_TO_REMOVE in planets.txt comets.txt moons.txt asassn_transients_list.txt tocp_transients_list.txt ;do
  if [ -f "$FILE_TO_REMOVE" ];then
   rm -f "$FILE_TO_REMOVE"
  fi
@@ -912,6 +912,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "The reference JD(UT) for computing planet and comet positions: $JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" >> transient_factory_test31.txt
    $TIMEOUTCOMMAND util/planets.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > planets.txt &
    $TIMEOUTCOMMAND util/comets.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > comets.txt &
+   $TIMEOUTCOMMAND util/moons.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > moons.txt &
    $TIMEOUTCOMMAND lib/asassn_transients_list.sh > asassn_transients_list.txt &
    $TIMEOUTCOMMAND lib/tocp_transients_list.sh > tocp_transients_list.txt &
   fi
@@ -1593,6 +1594,13 @@ Planet positions from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS
 cat planets.txt >> transient_factory_test31.txt
 #
 echo "############################################################
+Positions of slected moons from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
+cat moons.txt
+echo "############################################################
+Positions of slected moons from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
+cat moons.txt >> transient_factory_test31.txt
+#
+echo "############################################################
 Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets and http://aerith.net/comet/weekly/current.html ) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
 cat comets.txt
 echo "############################################################
@@ -1632,7 +1640,7 @@ echo "</pre>" >> transient_report/index.html
 
 echo "</BODY></HTML>" >> transient_report/index.html
 
-for FILE_TO_REMOVE in planets.txt comets.txt asassn_transients_list.txt tocp_transients_list.txt ;do
+for FILE_TO_REMOVE in planets.txt comets.txt moons.txt asassn_transients_list.txt tocp_transients_list.txt ;do
  if [ -f "$FILE_TO_REMOVE" ];then
   rm -f "$FILE_TO_REMOVE"
  fi

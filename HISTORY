@@ -6,6 +6,8 @@ vast-1.0rc87:
 	This is a wrapper around WCSTools + Patrick Glaschke's code described in https://arxiv.org/abs/1008.3966
 	* New script 'util/planets.sh' prints geocentric positions of major planets for a given JD(UT).
 	The positions are retrieved from JPL HORIZONS https://ssd.jpl.nasa.gov/horizons/
+	* Similarly to 'util/planets.sh', the new script 'util/moons.sh' prints geocentric positions of
+	selected (bright and distant) planetary moons.
 	* Similarly to 'util/planets.sh', the new script 'util/comets.sh' prints geocentric positions of 
 	bright comets (listed at http://astro.vanbuitenen.nl/comets ) for a given JD(UT).
 	The specified JD(UT) should be near-current for the list of bright comets to be relevant!

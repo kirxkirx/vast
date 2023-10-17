@@ -74,6 +74,19 @@ if [ -s "$EXCLUSION_LIST_FILE" ];then
 fi
 #####
 #####
+# Check if the thing is a planetary moon
+EXCLUSION_LIST_FILE="moons.txt"
+if [ -s "$EXCLUSION_LIST_FILE" ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then
+ PLANET_SEARCH_RESULTS=$(lib/put_two_sources_in_one_field "$RAHH:$RAMM:$RASS" "$DECDD:$DECMM:$DECSS" "$EXCLUSION_LIST_FILE" 180)
+ echo "$PLANET_SEARCH_RESULTS" | grep --quiet "FOUND"
+ if [ $? -eq 0 ];then
+  #echo "$PLANET_SEARCH_RESULTS" | awk -F'FOUND' '{print $2}'
+  ASTCHECK_OUTPUT=$(echo "$PLANET_SEARCH_RESULTS" | awk -F'FOUND' '{print $2}')
+  THIS_A_PLANET_OR_COMET=1
+ fi
+fi
+#####
+#####
 # Check if the thing is a bright comet
 EXCLUSION_LIST_FILE="comets.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then
