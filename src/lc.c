@@ -1712,7 +1712,7 @@ int main( int argc, char **argv ) {
 #endif
    // Warning! I'm loosing the last digit while convering!
    //fprintf( stderr, "%04d-%02d-%08.5lf\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, (double)structureTIME->tm_mday + (double)structureTIME->tm_hour / 24.0 + (double)structureTIME->tm_min / ( 24.0 * 60 ) + (double)structureTIME->tm_sec / ( 24.0 * 60 * 60 ) );
-   fprintf( stderr, "%04d-%02d-%08.4lf\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, (double)structureTIME->tm_mday + (double)structureTIME->tm_hour / 24.0 + (double)structureTIME->tm_min / ( 24.0 * 60 ) + (double)structureTIME->tm_sec / ( 24.0 * 60 * 60 ) );
+   fprintf( stderr, "%04d-%02d-%07.4lf\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, (double)structureTIME->tm_mday + (double)structureTIME->tm_hour / 24.0 + (double)structureTIME->tm_min / ( 24.0 * 60 ) + (double)structureTIME->tm_sec / ( 24.0 * 60 * 60 ) );
 #if defined( _POSIX_C_SOURCE ) || defined( _BSD_SOURCE ) || defined( _SVID_SOURCE )
    free( structureTIME );
 #endif
