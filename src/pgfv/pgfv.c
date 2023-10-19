@@ -321,7 +321,7 @@ void print_pgfv_help() {
  fprintf( stderr, "press 'V' to invert Y axis.\n" );
  fprintf( stderr, "move mouse and press 'F' to adjust image brightness/contrast. If an image apears too bright, move the pointer to the lower left and press 'F'. Repeat it many times to achive the desired result.\n" );
  fprintf( stderr, "press 'M' to turn star markers on/off.\n" );
- fprintf( stderr, "press 'X' or right click to exit! ('Q' if you want to exit and return a non-zero exit code)\nclick on image to get coordinates and value of the current pixel.\n" );
+ fprintf( stderr, "press 'X' or right click to exit! ('Q' if you want a non-zero exit code)\nclick on image to get coordinates and value of the current pixel.\n" );
  fprintf( stderr, "\n" );
  fprintf( stderr, "press '2' to perform manual single-image magnitude calibration.\n" );
  fprintf( stderr, "press '4' to perform automated single-image magnitude calibration.\n" );
