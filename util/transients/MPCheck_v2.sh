@@ -59,12 +59,12 @@ fi
 
 ASTCHECK_OUTPUT=""
 
-#####
-# Check if the thing is (close to) a major planet
 THIS_A_PLANET_OR_COMET=0
-EXCLUSION_LIST_FILE="planets.txt"
-if [ -s "$EXCLUSION_LIST_FILE" ];then
- PLANET_SEARCH_RESULTS=$(lib/put_two_sources_in_one_field "$RAHH:$RAMM:$RASS" "$DECDD:$DECMM:$DECSS" "$EXCLUSION_LIST_FILE" 400)
+#####
+# Check if the thing is a planetary moon
+EXCLUSION_LIST_FILE="moons.txt"
+if [ -s "$EXCLUSION_LIST_FILE" ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then
+ PLANET_SEARCH_RESULTS=$(lib/put_two_sources_in_one_field "$RAHH:$RAMM:$RASS" "$DECDD:$DECMM:$DECSS" "$EXCLUSION_LIST_FILE" 180)
  echo "$PLANET_SEARCH_RESULTS" | grep --quiet "FOUND"
  if [ $? -eq 0 ];then
   #echo "$PLANET_SEARCH_RESULTS" | awk -F'FOUND' '{print $2}'
@@ -74,10 +74,11 @@ if [ -s "$EXCLUSION_LIST_FILE" ];then
 fi
 #####
 #####
-# Check if the thing is a planetary moon
-EXCLUSION_LIST_FILE="moons.txt"
+# Check if the thing is (close to) a major planet
+THIS_A_PLANET_OR_COMET=0
+EXCLUSION_LIST_FILE="planets.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then
- PLANET_SEARCH_RESULTS=$(lib/put_two_sources_in_one_field "$RAHH:$RAMM:$RASS" "$DECDD:$DECMM:$DECSS" "$EXCLUSION_LIST_FILE" 180)
+ PLANET_SEARCH_RESULTS=$(lib/put_two_sources_in_one_field "$RAHH:$RAMM:$RASS" "$DECDD:$DECMM:$DECSS" "$EXCLUSION_LIST_FILE" 400)
  echo "$PLANET_SEARCH_RESULTS" | grep --quiet "FOUND"
  if [ $? -eq 0 ];then
   #echo "$PLANET_SEARCH_RESULTS" | awk -F'FOUND' '{print $2}'

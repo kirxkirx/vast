@@ -336,21 +336,6 @@ if [ -s "$EXCLUSION_LIST_FILE" ];then
   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<b><font color=\"maroon\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')"</b>"
  fi
 fi
-# Check if the transient is a major planet
-# The difference with the never_exclude list is the search radius
-if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
- EXCLUSION_LIST_FILE="planets.txt"
- if [ -s "$EXCLUSION_LIST_FILE" ];then
-  EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC=900
-  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep --quiet "FOUND"
-  if [ $? -eq 0 ];then
-   if [ -z "$THIS_IS_VAST_TEST" ];then
-    SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
-   fi
-   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<b><font color=\"maroon\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')"</b>"
-  fi
- fi
-fi
 #
 # Check if the transient is a planetary moon
 # The difference with the never_exclude list is the search radius
@@ -367,6 +352,23 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
   fi
  fi
 fi
+#
+# Check if the transient is a major planet
+# The difference with the never_exclude list is the search radius
+if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
+ EXCLUSION_LIST_FILE="planets.txt"
+ if [ -s "$EXCLUSION_LIST_FILE" ];then
+  EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC=900
+  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep --quiet "FOUND"
+  if [ $? -eq 0 ];then
+   if [ -z "$THIS_IS_VAST_TEST" ];then
+    SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
+   fi
+   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<b><font color=\"maroon\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')"</b>"
+  fi
+ fi
+fi
+#
 #
 # Check if the transient is a bright comet
 # The difference with the never_exclude list is the search radius
