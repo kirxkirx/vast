@@ -93,7 +93,7 @@ int main(){return 0;}" > test$$.c
 
 ######################################################################################
 
-SCRIPT_NAME=`basename $0`
+SCRIPT_NAME=$(basename $0)
 
 command -v uname &> /dev/null
 if [ $? -eq 0 ];then
@@ -112,41 +112,41 @@ if [ "$OS_TYPE" != "Linux" ];then
  # some Macs have macports istalled under /usr while others under /opt
  for USR_OR_OPT in usr opt ;do
   # Special FreeBSD case
-  LOCAL_GCC=`ls /"$USR_OR_OPT"/local/bin/gcc?? 2>/dev/null | tail -n1`
+  LOCAL_GCC=$(ls /"$USR_OR_OPT"/local/bin/gcc?? 2>/dev/null | tail -n1)
   check_if_the_input_file_is_a_working_C_compiler "$LOCAL_GCC"
   if [ $? -ne 0 ];then
    LOCAL_GCC=""
   fi
   if [ "$LOCAL_GCC" = "" ];then
-   LOCAL_GCC=`ls /"$USR_OR_OPT"/local/bin/gcc-mp-* 2>/dev/null | tail -n1`
+   LOCAL_GCC=$(ls /"$USR_OR_OPT"/local/bin/gcc-mp-* 2>/dev/null | tail -n1)
    check_if_the_input_file_is_a_working_C_compiler "$LOCAL_GCC"
    if [ $? -ne 0 ];then
     LOCAL_GCC=""
    fi
   fi
   if [ "$LOCAL_GCC" = "" ];then
-   LOCAL_GCC=`ls /"$USR_OR_OPT"/local/bin/gcc1[0-9] 2>/dev/null | tail -n1`
+   LOCAL_GCC=$(ls /"$USR_OR_OPT"/local/bin/gcc1[0-9] 2>/dev/null | tail -n1)
    check_if_the_input_file_is_a_working_C_compiler "$LOCAL_GCC"
    if [ $? -ne 0 ];then
     LOCAL_GCC=""
    fi
   fi
   if [ "$LOCAL_GCC" = "" ];then
-   LOCAL_GCC=`ls /"$USR_OR_OPT"/local/bin/gcc[4-9] 2>/dev/null | tail -n1`
+   LOCAL_GCC=$(ls /"$USR_OR_OPT"/local/bin/gcc[4-9] 2>/dev/null | tail -n1)
    check_if_the_input_file_is_a_working_C_compiler "$LOCAL_GCC"
    if [ $? -ne 0 ];then
     LOCAL_GCC=""
    fi
   fi
   if [ "$LOCAL_GCC" = "" ];then
-   LOCAL_GCC=`ls /"$USR_OR_OPT"/local/bin/gcc-1[0-9] 2>/dev/null | tail -n1`
+   LOCAL_GCC=$(ls /"$USR_OR_OPT"/local/bin/gcc-1[0-9] 2>/dev/null | tail -n1)
    check_if_the_input_file_is_a_working_C_compiler "$LOCAL_GCC"
    if [ $? -ne 0 ];then
     LOCAL_GCC=""
    fi
   fi
   if [ "$LOCAL_GCC" = "" ];then
-   LOCAL_GCC=`ls /"$USR_OR_OPT"/local/bin/gcc-[4-9] 2>/dev/null | tail -n1`
+   LOCAL_GCC=$(ls /"$USR_OR_OPT"/local/bin/gcc-[4-9] 2>/dev/null | tail -n1)
    check_if_the_input_file_is_a_working_C_compiler "$LOCAL_GCC"
    if [ $? -ne 0 ];then
     LOCAL_GCC=""
@@ -165,32 +165,32 @@ if [ "$OS_TYPE" != "Linux" ];then
   if [ "$LOCAL_GCC" != "" ];then
    if [ -x "$LOCAL_GCC" ];then
     CC="$LOCAL_GCC"
-    LOCAL_GFORTRAN=`ls /"$USR_OR_OPT"/local/bin/gfortran?? 2>/dev/null | tail -n1`
-    RPATH_OPTION=`ls -d /"$USR_OR_OPT"/local/lib/gcc?? 2>/dev/null | tail -n1`
+    LOCAL_GFORTRAN=$(ls /"$USR_OR_OPT"/local/bin/gfortran?? 2>/dev/null | tail -n1)
+    RPATH_OPTION=$(ls -d /"$USR_OR_OPT"/local/lib/gcc?? 2>/dev/null | tail -n1)
     if [ "$LOCAL_GFORTRAN" = "" ];then
-     LOCAL_GFORTRAN=`ls /"$USR_OR_OPT"/local/bin/gfortran-mp-* 2>/dev/null | tail -n1`
-     RPATH_OPTION=`ls -d /"$USR_OR_OPT"/local/lib/gcc-mp-* 2>/dev/null | tail -n1`
+     LOCAL_GFORTRAN=$(ls /"$USR_OR_OPT"/local/bin/gfortran-mp-* 2>/dev/null | tail -n1)
+     RPATH_OPTION=$(ls -d /"$USR_OR_OPT"/local/lib/gcc-mp-* 2>/dev/null | tail -n1)
     fi
     if [ "$LOCAL_GFORTRAN" = "" ];then
-     LOCAL_GFORTRAN=`ls /"$USR_OR_OPT"/local/bin/gfortran1[0-9] 2>/dev/null | tail -n1`
-     RPATH_OPTION=`ls -d /"$USR_OR_OPT"/local/lib/gcc1[0-9] 2>/dev/null | tail -n1`
+     LOCAL_GFORTRAN=$(ls /"$USR_OR_OPT"/local/bin/gfortran1[0-9] 2>/dev/null | tail -n1)
+     RPATH_OPTION=$(ls -d /"$USR_OR_OPT"/local/lib/gcc1[0-9] 2>/dev/null | tail -n1)
     fi
     if [ "$LOCAL_GFORTRAN" = "" ];then
-     LOCAL_GFORTRAN=`ls /"$USR_OR_OPT"/local/bin/gfortran[4-9] 2>/dev/null | tail -n1`
-     RPATH_OPTION=`ls -d /"$USR_OR_OPT"/local/lib/gcc[4-9] 2>/dev/null | tail -n1`
+     LOCAL_GFORTRAN=$(ls /"$USR_OR_OPT"/local/bin/gfortran[4-9] 2>/dev/null | tail -n1)
+     RPATH_OPTION=$(ls -d /"$USR_OR_OPT"/local/lib/gcc[4-9] 2>/dev/null | tail -n1)
     fi
     if [ "$LOCAL_GFORTRAN" = "" ];then
-     LOCAL_GFORTRAN=`ls /"$USR_OR_OPT"/local/bin/gfortran-1[0-9] 2>/dev/null | tail -n1`
-     RPATH_OPTION=`ls -d /"$USR_OR_OPT"/local/lib/gcc-1[0-9] 2>/dev/null | tail -n1`
+     LOCAL_GFORTRAN=$(ls /"$USR_OR_OPT"/local/bin/gfortran-1[0-9] 2>/dev/null | tail -n1)
+     RPATH_OPTION=$9ls -d /"$USR_OR_OPT"/local/lib/gcc-1[0-9] 2>/dev/null | tail -n1)
     fi
     if [ "$LOCAL_GFORTRAN" = "" ];then
-     LOCAL_GFORTRAN=`ls /"$USR_OR_OPT"/local/bin/gfortran-[4-9] 2>/dev/null | tail -n1`
-     RPATH_OPTION=`ls -d /"$USR_OR_OPT"/local/lib/gcc-[4-9] 2>/dev/null | tail -n1`
+     LOCAL_GFORTRAN=$(ls /"$USR_OR_OPT"/local/bin/gfortran-[4-9] 2>/dev/null | tail -n1)
+     RPATH_OPTION=$(ls -d /"$USR_OR_OPT"/local/lib/gcc-[4-9] 2>/dev/null | tail -n1)
     fi
     if [ "$LOCAL_GFORTRAN" = "" ];then
      if [ -x /"$USR_OR_OPT"/local/bin/gfortran ];then
       LOCAL_GFORTRAN="/$USR_OR_OPT/local/bin/gfortran"
-      RPATH_OPTION=`ls -d /"$USR_OR_OPT"/local/lib/gcc* 2>/dev/null | tail -n1`
+      RPATH_OPTION=$(ls -d /"$USR_OR_OPT"/local/lib/gcc* 2>/dev/null | tail -n1)
      fi
     fi
     if [ -x "$LOCAL_GFORTRAN" ];then
@@ -207,21 +207,21 @@ if [ "$OS_TYPE" != "Linux" ];then
        fi
       fi
      elif [ "$SCRIPT_NAME" = "find_cpp_compiler.sh" ];then
-      LOCAL_CXX=`ls /"$USR_OR_OPT"/local/bin/g++?? 2>/dev/null | tail -n1`
+      LOCAL_CXX=$(ls /"$USR_OR_OPT"/local/bin/g++?? 2>/dev/null | tail -n1)
       if [ "$LOCAL_CXX" = "" ];then
-       LOCAL_CXX=`ls /"$USR_OR_OPT"/local/bin/g++-mp-* 2>/dev/null | tail -n1`
+       LOCAL_CXX=$(ls /"$USR_OR_OPT"/local/bin/g++-mp-* 2>/dev/null | tail -n1)
       fi
       if [ "$LOCAL_CXX" = "" ];then
-       LOCAL_CXX=`ls /"$USR_OR_OPT"/local/bin/g++1[0-9] 2>/dev/null | tail -n1`
+       LOCAL_CXX=$(ls /"$USR_OR_OPT"/local/bin/g++1[0-9] 2>/dev/null | tail -n1)
       fi
       if [ "$LOCAL_CXX" = "" ];then
-       LOCAL_CXX=`ls /"$USR_OR_OPT"/local/bin/g++[4-9] 2>/dev/null | tail -n1`
+       LOCAL_CXX=$(ls /"$USR_OR_OPT"/local/bin/g++[4-9] 2>/dev/null | tail -n1)
       fi
       if [ "$LOCAL_CXX" = "" ];then
-       LOCAL_CXX=`ls /"$USR_OR_OPT"/local/bin/g++-1[0-9] 2>/dev/null | tail -n1`
+       LOCAL_CXX=$(ls /"$USR_OR_OPT"/local/bin/g++-1[0-9] 2>/dev/null | tail -n1)
       fi
       if [ "$LOCAL_CXX" = "" ];then
-       LOCAL_CXX=`ls /"$USR_OR_OPT"/local/bin/g++-[4-9] 2>/dev/null | tail -n1`
+       LOCAL_CXX=$(ls /"$USR_OR_OPT"/local/bin/g++-[4-9] 2>/dev/null | tail -n1)
       fi
       if [ -x "$LOCAL_CXX" ];then
        CXX="$LOCAL_CXX"
@@ -244,7 +244,7 @@ fi # if [ "$OS_TYPE" != "Linux" ];then
 
 # General case
 FC="gfortran"
-GCC_MAJOR_VERSION=`$CC -dumpversion | cut -f1 -d.`
+GCC_MAJOR_VERSION=$($CC -dumpversion | cut -f1 -d.)
 if [ $? -ne 0 ];then
  echo "ERROR in $0 -- failed to get the GCC version: non-zero exit code for '$CC -dumpversion | cut -f1 -d.'" 1>&2
 fi
@@ -259,15 +259,27 @@ else
  echo "ERROR in $0 -- failed to get the GCC version: empty version string" 1>&2
 fi
 
+# Consistency check along the way:
+if [ -z "$FC" ];then
+ echo "ERROR in $0 script: FC is not set"
+ exit 1
+fi
+
 # Check if there is a C compiler in the same dir as Fortran compiler
 # - if there is - their versions most likely match
-FORTRANBINDIR=`command -v $FC`
-FORTRANBINDIR=`dirname $FORTRANBINDIR`
+FORTRANBINDIR=$(command -v $FC)
+
+if [ -z "$FORTRANBINDIR" ];then
+ echo "ERROR in $0 script: cannot find FORTRAN compiler - empty string returned by 'command -v $FC'"
+ exit 1
+fi
+
+FORTRANBINDIR=$(dirname $FORTRANBINDIR)
 if [ -x $FORTRANBINDIR/gcc ];then
  CC="$FORTRANBINDIR/gcc"
 else
  # Don't get distracted by the gcc-ar gcc-ranlib gcc-nm executable that often accompany gcc
- LOCAL_GCC=`ls $FORTRANBINDIR/gcc* 2>/dev/null | grep -v -e '-ar' -e '-ranlib' -e '-nm' | tail -n1`
+ LOCAL_GCC=$(ls $FORTRANBINDIR/gcc* 2>/dev/null | grep -v -e '-ar' -e '-ranlib' -e '-nm' | tail -n1)
  if [ "$LOCAL_GCC" != "" ];then
   CC="$LOCAL_GCC"
  fi
