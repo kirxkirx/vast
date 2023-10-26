@@ -269,9 +269,7 @@ fi
 # Check if there is a C compiler in the same dir as Fortran compiler
 # - if there is - their versions most likely match
 FORTRANBINDIR=$(command -v $FC)
-if [ -z "$FORTRANBINDIR" ];then
- echo "ERROR in $0 script: cannot find FORTRAN compiler - empty string returned by 'command -v $FC'" 1>&2
-else
+if [ -n "$FORTRANBINDIR" ];then
  FORTRANBINDIR=$(dirname $FORTRANBINDIR)
  if [ -x $FORTRANBINDIR/gcc ];then
   CC="$FORTRANBINDIR/gcc"
@@ -282,7 +280,7 @@ else
    CC="$LOCAL_GCC"
   fi
  fi
-fi # if [ -z "$FORTRANBINDIR" ];then
+fi # if [ -n "$FORTRANBINDIR" ];then
 
 # Report result
 if [ "$SCRIPT_NAME" = "find_gcc_compiler.sh" ];then
