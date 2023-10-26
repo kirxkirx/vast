@@ -181,7 +181,7 @@ if [ "$OS_TYPE" != "Linux" ];then
     fi
     if [ "$LOCAL_GFORTRAN" = "" ];then
      LOCAL_GFORTRAN=$(ls /"$USR_OR_OPT"/local/bin/gfortran-1[0-9] 2>/dev/null | tail -n1)
-     RPATH_OPTION=$9ls -d /"$USR_OR_OPT"/local/lib/gcc-1[0-9] 2>/dev/null | tail -n1)
+     RPATH_OPTION=$(ls -d /"$USR_OR_OPT"/local/lib/gcc-1[0-9] 2>/dev/null | tail -n1)
     fi
     if [ "$LOCAL_GFORTRAN" = "" ];then
      LOCAL_GFORTRAN=$(ls /"$USR_OR_OPT"/local/bin/gfortran-[4-9] 2>/dev/null | tail -n1)
