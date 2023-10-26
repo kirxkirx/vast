@@ -108,8 +108,35 @@ int main(){return 0;}" > test.c
   SYSTEM_TYPE=$(uname)
   if [ "$SYSTEM_TYPE" = "Linux" ];then   
    # RedHat-style distributions tend to split headers into spearate -dev packages
-   # Hope the users of normal Linux distributions will figure out the proper package name
+   # Hope the users of normal Linux distributions will figure out the proper package name,
+   # but we'll try to guess.
+   # default - Ubuntu, Debian: libx11-dev
    X11_DEVELOPEMENT_PACKAGE="libx11-dev"
+   # Mageia: libx11-devel
+   command -v urpmi &> /dev/null
+   if [ $? -eq 0 ];then
+    X11_DEVELOPEMENT_PACKAGE="libx11-devel"
+   fi
+   # Arch Linux, Manjaro: libx11
+   command -v pacman &> /dev/null
+   if [ $? -eq 0 ];then
+    X11_DEVELOPEMENT_PACKAGE="libx11"
+   fi
+   # openSUSE: libX11-devel
+   command -v zypper &> /dev/null
+   if [ $? -eq 0 ];then
+    X11_DEVELOPEMENT_PACKAGE="libX11-devel"
+   fi
+   # Gentoo: x11-libs/libX11
+   command -v emerge &> /dev/null
+   if [ $? -eq 0 ];then
+    X11_DEVELOPEMENT_PACKAGE="x11-libs/libX11"
+   fi
+   # AlmaLinux, CentOS, RHEL, Fedora: libX11-devel
+   command -v dnf &> /dev/null
+   if [ $? -eq 0 ];then
+    X11_DEVELOPEMENT_PACKAGE="libX11-devel"
+   fi
   else
    # If we are not even on Linux, do not confuse user with -dev in the suggested package name
    X11_DEVELOPEMENT_PACKAGE="libx11"
