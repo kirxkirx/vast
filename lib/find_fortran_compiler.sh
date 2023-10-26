@@ -261,29 +261,28 @@ fi
 
 # Consistency check along the way:
 if [ -z "$FC" ];then
- echo "ERROR in $0 script: FC is not set"
- exit 1
+ # This should not be happening
+ echo "ERROR in $0 script: FC is not set" 1>&2
+ FC="gfortran"
 fi
 
 # Check if there is a C compiler in the same dir as Fortran compiler
 # - if there is - their versions most likely match
 FORTRANBINDIR=$(command -v $FC)
-
 if [ -z "$FORTRANBINDIR" ];then
- echo "ERROR in $0 script: cannot find FORTRAN compiler - empty string returned by 'command -v $FC'"
- exit 1
-fi
-
-FORTRANBINDIR=$(dirname $FORTRANBINDIR)
-if [ -x $FORTRANBINDIR/gcc ];then
- CC="$FORTRANBINDIR/gcc"
+ echo "ERROR in $0 script: cannot find FORTRAN compiler - empty string returned by 'command -v $FC'" 1>&2
 else
- # Don't get distracted by the gcc-ar gcc-ranlib gcc-nm executable that often accompany gcc
- LOCAL_GCC=$(ls $FORTRANBINDIR/gcc* 2>/dev/null | grep -v -e '-ar' -e '-ranlib' -e '-nm' | tail -n1)
- if [ "$LOCAL_GCC" != "" ];then
-  CC="$LOCAL_GCC"
+ FORTRANBINDIR=$(dirname $FORTRANBINDIR)
+ if [ -x $FORTRANBINDIR/gcc ];then
+  CC="$FORTRANBINDIR/gcc"
+ else
+  # Don't get distracted by the gcc-ar gcc-ranlib gcc-nm executable that often accompany gcc
+  LOCAL_GCC=$(ls $FORTRANBINDIR/gcc* 2>/dev/null | grep -v -e '-ar' -e '-ranlib' -e '-nm' | tail -n1)
+  if [ "$LOCAL_GCC" != "" ];then
+   CC="$LOCAL_GCC"
+  fi
  fi
-fi
+fi # if [ -z "$FORTRANBINDIR" ];then
 
 # Report result
 if [ "$SCRIPT_NAME" = "find_gcc_compiler.sh" ];then
