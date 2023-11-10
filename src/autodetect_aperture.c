@@ -246,10 +246,18 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
   fputs( "\n", stderr );
   write_string_to_individual_image_log( output_sextractor_catalog, "autodetect_aperture(): command for the preliminary SExtractor run:\n", command, "" );
   if ( 0 != system( command ) ) {
-   // fprintf(stderr,"An ERROR occured while executing the following command:\n%s\n",command);
    sprintf( error_message_string, "An ERROR occured while executing the following command:\n%s\n", command );
    fputs( error_message_string, stderr );
    write_string_to_individual_image_log( output_sextractor_catalog, "autodetect_aperture(): ", error_message_string, "" );
+   
+   // Execute file command to maybe help user debug the problem if something is wrong with the input file.
+   // One particular problem is that the input file might be a gzip'ed ZTF image.
+   fprintf( stderr, "Trying to run 'file' command in an attempt to check if the input file is OK\n");
+   sprintf( command, "file %s", fitsfilename );
+   if ( 0 != system( command ) ) {
+    fprintf( stderr, "A non-zero exit status returned by the command: %s \n", command );   
+   }
+   //
 
    free( A );
 
