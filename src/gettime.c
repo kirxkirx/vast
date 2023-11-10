@@ -723,8 +723,9 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  memset( DATEOBS_COMMENT, 0, 2048 );
  memset( EXPOSURE_COMMENT, 0, 2048 );
 
- if ( param_verbose >= 1 )
+ if ( param_verbose >= 1 ) {
   fprintf( stderr, "Processing  %s\n", fitsfilename );
+ }
 
  // See if the input image is listed in the time corrections file vast_list_of_input_images_with_time_corrections.txt
  vast_list_of_input_images_with_time_corrections= fopen( "vast_list_of_input_images_with_time_corrections.txt", "r" );
@@ -781,6 +782,11 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   fprintf( stderr, "ERROR: gettime() - can't get image dimensions from NAXIS2 keyword!\n" );
   return status;
  }
+ 
+ if ( param_verbose >= 1 ) {
+  fprintf( stderr, "%dx%d FITS image %s\n", naxes[0], naxes[1] , fitsfilename );
+ }
+ 
 
  // Get the telescope name - we may recognize some and modify the behaviour
  fits_read_key( fptr, TSTRING, "TELESCOP", telescop, NULL, &status );
