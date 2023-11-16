@@ -2,7 +2,7 @@
 
 # Specify how many pixels around the target you want to display
 # (how big the standard finding chart should be)
-PIXELS_AROUND_TARGET=64
+PIXELS_AROUND_TARGET=32
 
 # Tweak the util/make_finding_chart command line options below
 # to switch on/off the display of observing date and image size
@@ -218,5 +218,11 @@ for PIXELS_AROUND_TARGET in 32 64 128 256 512 1024 ;do
  PIXEL_POSITION_TO_MARK_FOR_PNG=${PIXEL_POSITION_TO_MARK//" "/_}
  FITSFILE_NAME_FOR_PNG=${FITSFILE//./_}
  mv -v "pgplot.png" finder_"$PIXELS_AROUND_TARGET"pix_resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix.png
+ # and now make the _nofov version
+ COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --targetmark --datestringinsideimg resample_$FITSFILE $PIXEL_POSITION_TO_MARK "
+ echo $COMMAND
+ PIXEL_POSITION_TO_MARK_FOR_PNG=${PIXEL_POSITION_TO_MARK//" "/_}
+ FITSFILE_NAME_FOR_PNG=${FITSFILE//./_}
+ mv -v "pgplot.png" finder_"$PIXELS_AROUND_TARGET"pix_resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov.png
 
 done
