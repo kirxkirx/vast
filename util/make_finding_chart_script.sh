@@ -195,7 +195,7 @@ mv -v "pgplot.png" resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_F
 ###################################################################
 # Make a set of finding charts with different scales
 
-for PIXELS_AROUND_TARGET in 32 64 128 256 512 ;do
+for PIXELS_AROUND_TARGET in 20 32 64 128 256 512 ;do
 
  STR_PIXELS_AROUND_TARGET=$(echo "$PIXELS_AROUND_TARGET" | awk '{printf "%04d", $1}')
 
