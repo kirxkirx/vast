@@ -195,7 +195,7 @@ mv -v "pgplot.png" resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_F
 ###################################################################
 # Make a set of finding charts with different scales
 
-for PIXELS_AROUND_TARGET in 32 64 128 256 512 1024 ;do
+for PIXELS_AROUND_TARGET in 32 64 128 256 512 ;do
 
  STR_PIXELS_AROUND_TARGET=$(echo "$PIXELS_AROUND_TARGET" | awk '{printf "%04d", $1}')
 
@@ -220,15 +220,20 @@ for PIXELS_AROUND_TARGET in 32 64 128 256 512 1024 ;do
  PIXEL_POSITION_TO_MARK_FOR_PNG=${PIXEL_POSITION_TO_MARK//" "/_}
  FITSFILE_NAME_FOR_PNG=${FITSFILE//./_}
  mv -v "pgplot.png" finder_"$STR_PIXELS_AROUND_TARGET"pix_resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix.png
- # and now make the _nofov version
+ # make the _nofov version
  COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --targetmark --datestringinsideimg resample_$FITSFILE $PIXEL_POSITION_TO_MARK "
  echo $COMMAND
  $COMMAND
  mv -v "pgplot.png" finder_"$STR_PIXELS_AROUND_TARGET"pix_resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov.png
- # and now make the _nofov_notargetmark version
+ # make the _nofov_notargetmark version
  COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --datestringinsideimg resample_$FITSFILE $PIXEL_POSITION_TO_MARK "
  echo $COMMAND
  $COMMAND
  mv -v "pgplot.png" finder_"$STR_PIXELS_AROUND_TARGET"pix_resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov_notargetmark.png
+ # make the _notargetmark version
+ COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --datestringinsideimg --imgsizestringinsideimg resample_$FITSFILE $PIXEL_POSITION_TO_MARK "
+ echo $COMMAND
+ $COMMAND
+ mv -v "pgplot.png" finder_"$STR_PIXELS_AROUND_TARGET"pix_resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_notargetmark.png
 
 done
