@@ -221,8 +221,9 @@ for PIXELS_AROUND_TARGET in 32 64 128 256 512 1024 ;do
  # and now make the _nofov version
  COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --targetmark --datestringinsideimg resample_$FITSFILE $PIXEL_POSITION_TO_MARK "
  echo $COMMAND
- PIXEL_POSITION_TO_MARK_FOR_PNG=${PIXEL_POSITION_TO_MARK//" "/_}
- FITSFILE_NAME_FOR_PNG=${FITSFILE//./_}
+ $COMMAND
+ #PIXEL_POSITION_TO_MARK_FOR_PNG=${PIXEL_POSITION_TO_MARK//" "/_}
+ #FITSFILE_NAME_FOR_PNG=${FITSFILE//./_}
  mv -v "pgplot.png" finder_"$PIXELS_AROUND_TARGET"pix_resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov.png
 
 done
