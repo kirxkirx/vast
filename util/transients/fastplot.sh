@@ -160,9 +160,11 @@ mkdir "$OUTUT_DIR"
 check_directory_created "$OUTUT_DIR"
 mkdir "$OUTUT_DIR"/reference_platesolved_FITS
 mkdir "$OUTUT_DIR"/new_platesolved_FITS
-mkdir "$OUTUT_DIR"/additional_plots
 mkdir "$OUTUT_DIR"/resampled_FITS
+mkdir "$OUTUT_DIR"/finder_charts_PNG
+mkdir "$OUTUT_DIR"/animation_GIF
 
+# write a ds9 region file, handy to find the transient in FITS images
 echo "# Region file format: DS9 version 4.1
 global color=green dashlist=8 3 width=1 font=\"helvetica 10 normal roman\" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1
 fk5
@@ -170,6 +172,47 @@ circle($TARET_RA,$TARET_DEC,60\")
 circle($TARET_RA,$TARET_DEC,300\")
 " > "$OUTUT_DIR"/ds9.reg
 
+# write summary
+TRANSIENT_SUMMARY=$(echo "$CURL_REPLY" | grep -A2 'Mean magnitude and position on the discovery images:' | sed 's/<[^>]*>//g' | sed 's/galactic/galactic coordinates.  Constellation:/g')
+echo "*** Transient detection summary ***
+
+$TRANSIENT_SUMMARY
+
+Both reference and new epochs have two images each. 
+The images are shifted with respect to each other to aid in distinguishing stars from image artifacts.
+The transient position and magnitude listed above are the average of the values measured on the two second-epoch images.
+
+
+*** Directory structure *** 
+ * reference_platesolved_FITS/ - plate solved (WCS-calibrated) FITS images for the reference epoch, when the transient was weak or invisible.
+ * new_platesolved_FITS/ - plate solved (WCS-calibrated) FITS images for the new epoch, when the transient was bright.
+ * resampled_FITS/ - reference and new-epoch FITS images resampled to the standard 'North is Up, East is Left' orientation.
+ * finder_charts_PNG/ - PNG finder charts generated from the reference and new-epoch images cantered on the transient.
+ * animation_GIF/ - GIF animation of the reference and new-epoch images centered on the transient's location.
+ * ds9.reg - DS9 region file marking the transient's position.
+ * readme.txt - this file
+
+
+*** Examples ***
+
+1. Blink the images in DS9 marking the transient position:
+
+ds9 reference_platesolved_FITS/* new_platesolved_FITS/* -region ds9.reg -frame lock wcs
+
+After starting the ds9 zoom out, locate and center the transient marked with the green circles defined in the region file,
+then compare the four images by clicking frame->blink
+
+
+2. Re-run transient search with VaST:
+
+cd vast
+REFERENCE_IMAGES=/tmp/$OUTUT_DIR/reference_platesolved_FITS util/transients/transient_factory_test31.sh /tmp/$OUTUT_DIR/new_platesolved_FITS
+
+The above example assumes that VaST is installed in vast/ folder and this directory $OUTUT_DIR is located at /tmp/
+More information about VaST may be found at http://scan.sai.msu.ru/vast/
+" > "$OUTUT_DIR"/readme.txt
+
+# make plate solved and resampled FITS images and finder charts
 INPUTFILE=$(echo "$THE_FOUR_IMAGE_FILES" | awk '{print $1}')
 check_file_exists "$INPUTFILE"
 INPUTFILE_BASENAME=$(basename "$INPUTFILE")
@@ -306,7 +349,8 @@ convert -delay 50 -loop 0   finder_0128pix_resample_wcs_"$CHARTS_REF2_BASENAME"_
 convert -delay 50 -loop 0   finder_0128pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0128pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0128pix_v22.gif
 
 # save visual inspection plots
-mv -v *.png *.gif "$OUTUT_DIR"/additional_plots
+mv -v *.png "$OUTUT_DIR"/finder_charts_PNG
+mv -v *.gif "$OUTUT_DIR"/animation_GIF
 
 #
 echo "###############################
