@@ -50,7 +50,7 @@ fi
 
 
 # Try to get the country code
-COUNTRY_CODE=$(curl --silent --connect-timeout 10 https://ipinfo.io/ | grep '"country":' | awk -F'"country":' '{print $2}' | awk -F'"' '{print $2}')
+COUNTRY_CODE=$(curl --silent --connect-timeout 10 --insecure https://ipinfo.io/ | grep '"country":' | awk -F'"country":' '{print $2}' | awk -F'"' '{print $2}')
 if [ -z "$COUNTRY_CODE" ];then
  # Set UN code for UNknown
  COUNTRY_CODE="UN"
