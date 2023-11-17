@@ -2884,6 +2884,11 @@ int main( int argc, char **argv ) {
        } else {
         marker_scaling= 1.0;
        }
+       // special case - very small fov
+       if ( finder_char_pix_around_the_target < 32 ) {
+        marker_scaling=0.3;
+       }
+       //
        // up
        lineX[0]= markX;
        lineY[0]= markY + 9.0 * marker_scaling;
