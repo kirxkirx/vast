@@ -696,6 +696,7 @@ fi
       exit 1
      fi
     fi
+    ls -lh out$$.wcs "$BASENAME_FITSFILE"
     "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
     if [ $? -ne 0 ];then
      # This is a bad one, just exit
@@ -970,8 +971,9 @@ Retrying..."
     else
      echo "done"
     fi
+    ls -lh out$$.wcs
     if [ -s out$$.wcs ];then
-     cp $FITSFILE "$BASENAME_FITSFILE"
+     cp -v $FITSFILE "$BASENAME_FITSFILE"
      echo -n "Inserting WCS header in $BASENAME_FITSFILE ...  "
      "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
      if [ $? -ne 0 ];then
