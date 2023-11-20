@@ -702,14 +702,9 @@ fi
      echo "ERROR: running lib/astrometry/strip_wcs_keywords $BASENAME_FITSFILE"
      exit 1
     fi
-    # Insert the new WCS header from out$$.wcs
+    # Double0check that the new WCS header is still here
     ls -lh out$$.wcs "$BASENAME_FITSFILE"
-
-
-
-
-
-
+    # Insert the new WCS header from out$$.wcs
     "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
     if [ $? -ne 0 ];then
      # This is a bad one, just exit
@@ -721,12 +716,14 @@ fi
       if [ -s "$WCS_IMAGE_TO_CHECK" ];then
        echo "#### Header of the existing image $WCS_IMAGE_TO_CHECK ####"
        util/listhead $WCS_IMAGE_TO_CHECK
+       echo "#### end of header of the existing image $WCS_IMAGE_TO_CHECK ####"
       else
        echo "The output file $WCS_IMAGE_TO_CHECK is empty!"
       fi
      fi
      echo "#### Header we wanted to insert ####"
      util/listhead out$$.wcs
+     echo "#### end of header we wanted to insert ####"
      exit 1
     else   
      ERROR_STATUS=0
@@ -795,14 +792,16 @@ fi
      if [ -f "$WCS_IMAGE_TO_CHECK" ];then
       echo "The output file $WCS_IMAGE_TO_CHECK exist"
       if [ -s "$WCS_IMAGE_TO_CHECK" ];then
-       echo "#### Header of the existing image $WCS_IMAGE_TO_CHECK ####"
+       echo "#### Header of the existing image $WCS_IMAGE_TO_CHECK (2nd iteration) ####"
        util/listhead $WCS_IMAGE_TO_CHECK
+       echo "#### end of eader of the existing image $WCS_IMAGE_TO_CHECK (2nd iteration) ####"
       else
        echo "The output file $WCS_IMAGE_TO_CHECK is empty!"
       fi
      fi
-     echo "#### Header we wanted to insert ####"
+     echo "#### Header we wanted to insert (2nd iteration) ####"
      util/listhead out$$.wcs
+     echo "#### end of header we wanted to insert (2nd iteration) ####"
      exit 1
     else   
      ERROR_STATUS=0

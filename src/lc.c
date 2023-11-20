@@ -157,7 +157,7 @@ void remove_linear_trend( float *fit_jd, float *mag, int N, double A, double B, 
  }
 
  fclose( vast_lc_remove_linear_trend_logfile );
- fprintf( stderr, "The detrending log is added to \E[34;47m vast_lc_remove_linear_trend.log \E[33;00m\n\n");
+ fprintf( stderr, "The detrending log is added to \x1B[34;47m vast_lc_remove_linear_trend.log \x1B[33;00m\n\n");
 
  free( corrected_mag );
  free( plot_y );
@@ -592,7 +592,7 @@ int main( int argc, char **argv ) {
   safely_encode_user_input_string( lightcurvefilename, argv[n], FILENAME_LENGTH - 1 );
  }
 
- fprintf( stderr, "Opening \E[34;47m %s \E[33;00m ...  ", lightcurvefilename );
+ fprintf( stderr, "Opening \x1B[34;47m %s \x1B[33;00m ...  ", lightcurvefilename );
  lightcurvefile= fopen( lightcurvefilename, "r" );
  if ( NULL == lightcurvefile ) {
   sprintf( tmp_lightcurvefilename, "out%s.dat", lightcurvefilename );
@@ -698,7 +698,7 @@ int main( int argc, char **argv ) {
   };
  }
 
- // fprintf(stderr,"reading \E[34;47m %s \E[33;00m ... ",lightcurvefilename);
+ // fprintf(stderr,"reading \x1B[34;47m %s \x1B[33;00m ... ",lightcurvefilename);
 
  Nobs= 0; // reset it here just in case
  dmag= dmerr= dx= dy= dap= 0.0;
@@ -1212,7 +1212,7 @@ int main( int argc, char **argv ) {
   if ( curC == '-' ) {
    //
    if( 0 == unlink( "vast_lc_remove_linear_trend.log" ) ){
-    fprintf( stderr, "Rewriting the trend-subtraction log file \E[34;47m vast_lc_remove_linear_trend.log \E[33;00m\n\n" );
+    fprintf( stderr, "Rewriting the trend-subtraction log file \x1B[34;47m vast_lc_remove_linear_trend.log \x1B[33;00m\n\n" );
    }
    //
 
@@ -1340,7 +1340,7 @@ int main( int argc, char **argv ) {
     remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, breaks[n_breaks - 1], maxJD, m_mean, JD );
    }
 
-   fprintf( stderr, "Completed writing the trend-subtraction log file \E[34;47m vast_lc_remove_linear_trend.log \E[33;00m\n\n" );
+   fprintf( stderr, "Completed writing the trend-subtraction log file \x1B[34;47m vast_lc_remove_linear_trend.log \x1B[33;00m\n\n" );
 
    was_lightcurve_changed= 1; // note, that lightcurve was changed
 
@@ -1772,10 +1772,10 @@ int main( int argc, char **argv ) {
    }
 
    if ( xw_ps == 1 ) {
-    fprintf( stderr, "Lightcurve plot should be saved to \E[34;47m %s.ps \E[33;00m \n", star_name );
+    fprintf( stderr, "Lightcurve plot should be saved to \x1B[34;47m %s.ps \x1B[33;00m \n", star_name );
    }
    if ( xw_ps == 2 ) {
-    fprintf( stderr, "Lightcurve plot should be saved to \E[34;47m %s.png \E[33;00m \n", star_name );
+    fprintf( stderr, "Lightcurve plot should be saved to \x1B[34;47m %s.png \x1B[33;00m \n", star_name );
    }
 
    xw_ps= -1;

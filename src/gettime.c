@@ -784,7 +784,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  }
  
  if ( param_verbose >= 1 ) {
-  fprintf( stderr, "%dx%d FITS image %s\n", naxes[0], naxes[1] , fitsfilename );
+  fprintf( stderr, "%ldx%ld FITS image %s\n", naxes[0], naxes[1] , fitsfilename );
  }
  
 
@@ -1359,7 +1359,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    if ( param_verbose >= 1 ) {
     fprintf( stderr, "TIMESYS keyword found: %s\n", TIMESYS );
    }
-   if ( TIMESYS[0] == 'T' && TIMESYS[1] == 'D' && TIMESYS[1] == 'B' ) {
+   if ( TIMESYS[0] == 'T' && TIMESYS[1] == 'D' && TIMESYS[2] == 'B' ) {
     ( *timesys )= 3; // TDB
    } else if ( TIMESYS[0] == 'T' && TIMESYS[1] == 'T' ) {
     ( *timesys )= 2; // TT
