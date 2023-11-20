@@ -26,6 +26,10 @@ if [ -z "$1" ]; then
  exit 1
 fi
 INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING="$1"
+if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"Stas"* ]] ; then
+ echo "The input indicates the images are from Stas ST-8300M camera"
+ export CAMERA_SETTINGS="Stas"
+fi
 if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"STL-11000M"* ]] || [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"NMW-STL"* ]] ; then
  echo "The input indicates the images are from STL-11000M camera"
  export CAMERA_SETTINGS="STL-11000M"
@@ -79,6 +83,14 @@ UCAC5_PLATESOLVE_ITERATIONS=1
 
 # CAMERA_SETTINGS environment vairable may be set to override the default settings with the ones needed for a different camera
 if [ -n "$CAMERA_SETTINGS" ];then
+ if [ "$CAMERA_SETTINGS" = "Stas" ];then
+  # Canon 135 mm f/2.0 telephoto lens + SBIG ST-8300M CCD, 20 sec exposures
+  TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
+  BAD_REGION_FILE="../Stas_bad_region.lst"
+  EXCLUSION_LIST="../exclusion_list.txt"
+  export DARK_FRAMES_DIR=/dataX/cgi-bin/unmw/darks
+  export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/flats/mff_0013_tail1_notbad.fit
+ fi
  if [ "$CAMERA_SETTINGS" = "STL-11000M" ];then
   # Canon 135 mm f/2.0 telephoto lens + SBIG STL-11000 CCD, 20 sec exposures
   echo "### Using search settings for $CAMERA_SETTINGS camera ###"
@@ -111,6 +123,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   # The funny ghost image seems to be no more than 80pix away from frame edge
   FRAME_EDGE_OFFSET_PIX=100
  fi
+ #
  if [ "$CAMERA_SETTINGS" = "TICA_TESS_FFI" ];then
   # TICA TESS FFIs downloaded from https://archive.stsci.edu/hlsp/tica#section-c34b9669-b0be-40b2-853e-a59997d1b7c5
   echo "### Using search settings for $CAMERA_SETTINGS camera ###"
