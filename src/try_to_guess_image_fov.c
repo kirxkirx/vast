@@ -512,8 +512,15 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
  }
 
  // NMW camera
- if ( strlen( telescop ) >= 10 ) { // 01234567890
+ if ( strlen( telescop ) >= 10 ) {                                      // 01234567890
   pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "NMW_camera", 10 );
+  if ( pointer_to_the_key_start != NULL ) {
+   ( *estimated_fov_arcmin )= 350.0;
+   return 0;
+  }
+ }
+ if ( strlen( telescop ) >= 4 ) {                                      // 01234567890
+  pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "STAS", 4 );
   if ( pointer_to_the_key_start != NULL ) {
    ( *estimated_fov_arcmin )= 350.0;
    return 0;

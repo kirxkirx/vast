@@ -3,6 +3,32 @@
 #include "../fitsio.h"
 #include "../vast_limits.h"
 
+// Function to delete TR WCS keywords inserted by PinPoint
+void delete_tr_keywords(fitsfile *fptr, int *status) {
+    char card[FLEN_CARD];
+    char tr_keyword[FLEN_KEYWORD];
+    int i, j; // counters
+
+    // Loop over axes 1 and 2
+    for (i = 1; i <= 2; i++) {
+        // Loop over possible keyword indices
+        for (j = 0; j <= 14; j++) { // Assuming the range of j is 0-14 as per your data
+            // Construct the keyword for the current TR coefficient.
+            snprintf(tr_keyword, sizeof(tr_keyword), "TR%d_%d", i, j);
+            // Check if the keyword exists before attempting to delete
+            if (fits_read_card(fptr, tr_keyword, card, status) == KEY_NO_EXIST) {
+                *status = 0; // Reset status if the keyword is not found
+            } else {
+                fits_delete_key(fptr, tr_keyword, status);
+                if (*status) {
+                    fits_report_error(stderr, *status); // Report the error if one occurred
+                    *status = 0; // Reset status after reporting
+                }
+            }
+        }
+    }
+}
+
 // Function to delete TPV WCS keywords
 void delete_tpv_keywords(fitsfile *fptr, int *status) {
     char card[FLEN_CARD];
@@ -70,7 +96,7 @@ void strip_wcs_sip_keywords(fitsfile *fptr, int *status) {
         "LONPOLE", "LATPOLE", "RESTFRQ", "RESTWAV",
         "CD1_1", "CD1_2", "CD2_1", "CD2_2",
         "PC1_1", "PC1_2", "PC2_1", "PC2_2",
-        "RADESYS", "WCSVERS", "WCSNAME", 
+        "RADESYS", "WCSVERS", "WCSNAME", "PLTSOLVD", "EPOCH", "PA", 
         NULL
     };
     
@@ -151,6 +177,15 @@ int main(int argc, char **argv) {
     
     // Call the function to strip TPV keywords
     delete_tpv_keywords(fptr, &status);
+    if (status) {
+        fits_report_error(stderr, status); // Report any error on processing
+        // Close file if there was an error
+        fits_close_file(fptr, &status);
+        return status;
+    }
+
+    // Call the function to strip TR keywords
+    delete_tr_keywords(fptr, &status);
     if (status) {
         fits_report_error(stderr, status); // Report any error on processing
         // Close file if there was an error

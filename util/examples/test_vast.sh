@@ -16889,12 +16889,13 @@ if [ -d ../individual_images_test ];then
    IMAGE=`basename $IMAGE`
    FAILED_TEST_CODES="$FAILED_TEST_CODES STRIPWCS01_$IMAGE"
   fi
-  util/listhead test.fits | awk -F'=' '{print $1}' | grep --quiet -e 'CTYPE' -e 'PV' -e 'AP_' -e 'BP_'
+  util/listhead test.fits | awk -F'=' '{print $1}' | grep --quiet -e 'CTYPE' -e 'PV[0-9]\{1,2\}_[0-9]\{1,2\}' -e 'TR[0-9]\{1,2\}_[0-9]\{1,2\}' -e 'AP_' -e 'BP_'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    IMAGE=`basename $IMAGE`
    FAILED_TEST_CODES="$FAILED_TEST_CODES STRIPWCS02_$IMAGE"
   fi  
+  rm -f test.fits
  done
 
 
