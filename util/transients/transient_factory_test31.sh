@@ -88,8 +88,8 @@ if [ -n "$CAMERA_SETTINGS" ];then
   TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
   BAD_REGION_FILE="../Stas_bad_region.lst"
   EXCLUSION_LIST="../exclusion_list.txt"
-  export DARK_FRAMES_DIR=/dataX/cgi-bin/unmw/darks
-  export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/flats/mff_0013_tail1_notbad.fit
+  export DARK_FRAMES_DIR=/dataX/cgi-bin/unmw/uploads/darks
+  export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_0013_tail1_notbad.fit
  fi
  if [ "$CAMERA_SETTINGS" = "STL-11000M" ];then
   # Canon 135 mm f/2.0 telephoto lens + SBIG STL-11000 CCD, 20 sec exposures
@@ -187,7 +187,7 @@ function try_to_calibrate_the_input_frame {
   echo "try_to_calibrate_the_input_frame(): DARK_FRAMES_DIR is not set - not attempting to dark-subtract the input frames" 1>&2
   return 1
  fi
- if [ -d "$DARK_FRAMES_DIR" ];then
+ if [ ! -d "$DARK_FRAMES_DIR" ];then
   echo "try_to_calibrate_the_input_frame(): DARK_FRAMES_DIR=$DARK_FRAMES_DIR is not not a directory" 1>&2
   return 1
  fi
@@ -195,9 +195,11 @@ function try_to_calibrate_the_input_frame {
  # check the input image
  INPUT_FRAME_PATH="$1"
  if [ -z "$INPUT_FRAME_PATH" ];then
+  echo "try_to_calibrate_the_input_frame(): INPUT_FRAME_PATH is not set" 1>&2
   return 1
  fi
  if [ ! -s "$INPUT_FRAME_PATH" ];then
+  echo "try_to_calibrate_the_input_frame(): INPUT_FRAME_PATH=$INPUT_FRAME_PATH is empty or does not exist" 1>&2
   return 1
  fi
  # util/ccd/ms will write HISTORY Dark frame subtraction in the dark-frame-subtracted file
@@ -229,11 +231,11 @@ function try_to_calibrate_the_input_frame {
   return 1
  fi
  if [ ! -f "$DARK_FRAME" ];then
-  echo "dark frame file does not exist: DARK_FRAME=$DARK_FRAME" 1>&2
+  echo "try_to_calibrate_the_input_frame(): dark frame file does not exist: DARK_FRAME=$DARK_FRAME" 1>&2
   return 1
  fi
  if [ ! -s "$DARK_FRAME" ];then
-  echo "dark frame file is empty: DARK_FRAME=$DARK_FRAME" 1>&2
+  echo "try_to_calibrate_the_input_frame(): dark frame file is empty: DARK_FRAME=$DARK_FRAME" 1>&2
   return 1
  fi
  
