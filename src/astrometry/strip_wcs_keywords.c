@@ -5,13 +5,14 @@
 
 // Function to delete TPV WCS keywords
 void delete_tpv_keywords(fitsfile *fptr, int *status) {
+    char card[FLEN_CARD];
     char tpv_keyword[FLEN_KEYWORD];
-    for (int i = 1; i <= 2; i++) { // Loop over axes 1 and 2
-        for (int j = 0; j <= 39; j++) { // Loop over possible keyword indices
+    int i, j; // counters
+    for (i = 1; i <= 2; i++) { // Loop over axes 1 and 2
+        for (j = 0; j <= 39; j++) { // Loop over possible keyword indices
             // Construct the keyword for the current TPV coefficient.
             snprintf(tpv_keyword, sizeof(tpv_keyword), "PV%d_%d", i, j);
             // Check if the keyword exists before attempting to delete
-            char card[FLEN_CARD];
             if (fits_read_card(fptr, tpv_keyword, card, status) == KEY_NO_EXIST) {
                 *status = 0; // Reset status if the keyword is not found
             } else {
@@ -27,13 +28,14 @@ void delete_tpv_keywords(fitsfile *fptr, int *status) {
 
 // Function to delete a range of polynomial coefficient keywords
 void delete_poly_coeff(const char *key_base, int max_order, fitsfile *fptr, int *status) {
+    char card[FLEN_CARD];
     char coeff_keyword[FLEN_KEYWORD];
-    for (int i = 0; i <= max_order; i++) {
-        for (int j = 0; j <= max_order; j++) {
+    int i, j; // counters
+    for (i = 0; i <= max_order; i++) {
+        for (j = 0; j <= max_order; j++) {
             // Construct the keyword for the current coefficient.
             snprintf(coeff_keyword, sizeof(coeff_keyword), "%s_%d_%d", key_base, i, j);
             // Check if the keyword exists before attempting to delete
-            char card[FLEN_CARD];
             if (fits_read_card(fptr, coeff_keyword, card, status) == KEY_NO_EXIST) {
                 *status = 0; // Reset status if the keyword is not found
             } else {
@@ -49,6 +51,15 @@ void delete_poly_coeff(const char *key_base, int max_order, fitsfile *fptr, int 
 
 void strip_wcs_sip_keywords(fitsfile *fptr, int *status) {
     const int assumed_max_order = 10; // Assumed max order for SIP polynomials
+    
+    char card[FLEN_CARD];
+
+    long order = 0;
+
+    char key_base[3] = {'\0'};
+
+    // SIP-specific 'ORDER' keywords
+    const char *sip_order_keywords[] = {"A_ORDER", "B_ORDER", "AP_ORDER", "BP_ORDER", "A_DMAX", "B_DMAX", NULL};
 
     // List of standard WCS keywords to be deleted
     const char *wcs_keywords[] = {
@@ -64,7 +75,6 @@ void strip_wcs_sip_keywords(fitsfile *fptr, int *status) {
     };
 
     for (const char **keyword = wcs_keywords; *keyword != NULL; keyword++) {
-        char card[FLEN_CARD];
         if (fits_read_card(fptr, *keyword, card, status) != KEY_NO_EXIST) {
             fits_delete_key(fptr, *keyword, status);
             if (*status) {
@@ -76,12 +86,10 @@ void strip_wcs_sip_keywords(fitsfile *fptr, int *status) {
         }
     }
     
-    // SIP-specific 'ORDER' keywords
-    const char *sip_order_keywords[] = {"A_ORDER", "B_ORDER", "AP_ORDER", "BP_ORDER", "A_DMAX", "B_DMAX", NULL};
+
 
     // Deleting SIP-specific 'ORDER' keywords and coefficients
     for (const char **order_keyword = sip_order_keywords; *order_keyword != NULL; order_keyword++) {
-        long order = 0;
         // Check for ORDER keyword and determine the order
         if (fits_read_key(fptr, TLONG, *order_keyword, &order, NULL, status) != KEY_NO_EXIST) {
             // Delete the ORDER keyword
@@ -96,7 +104,6 @@ void strip_wcs_sip_keywords(fitsfile *fptr, int *status) {
         }
 
         // Determine the base keyword for coefficients (e.g., "A", "B", "AP", "BP")
-        char key_base[3] = {'\0'};
         if (strncmp(*order_keyword, "AP_", 3) == 0 || strncmp(*order_keyword, "BP_", 3) == 0) {
             strncpy(key_base, *order_keyword, 2); // "AP" or "BP"
         } else {
