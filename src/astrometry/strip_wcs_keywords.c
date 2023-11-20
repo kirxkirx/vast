@@ -73,8 +73,12 @@ void strip_wcs_sip_keywords(fitsfile *fptr, int *status) {
         "RADESYS", "WCSVERS", "WCSNAME", 
         NULL
     };
+    
+    char **keyword;
+    
+    char **order_keyword;
 
-    for (const char **keyword = wcs_keywords; *keyword != NULL; keyword++) {
+    for (keyword = wcs_keywords; *keyword != NULL; keyword++) {
         if (fits_read_card(fptr, *keyword, card, status) != KEY_NO_EXIST) {
             fits_delete_key(fptr, *keyword, status);
             if (*status) {
@@ -89,7 +93,7 @@ void strip_wcs_sip_keywords(fitsfile *fptr, int *status) {
 
 
     // Deleting SIP-specific 'ORDER' keywords and coefficients
-    for (const char **order_keyword = sip_order_keywords; *order_keyword != NULL; order_keyword++) {
+    for (order_keyword = sip_order_keywords; *order_keyword != NULL; order_keyword++) {
         // Check for ORDER keyword and determine the order
         if (fits_read_key(fptr, TLONG, *order_keyword, &order, NULL, status) != KEY_NO_EXIST) {
             // Delete the ORDER keyword
