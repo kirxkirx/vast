@@ -703,6 +703,13 @@ fi
      exit 1
     fi
     # Insert the new WCS header from out$$.wcs
+    ls -lh out$$.wcs "$BASENAME_FITSFILE"
+
+
+
+
+
+
     "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
     if [ $? -ne 0 ];then
      # This is a bad one, just exit

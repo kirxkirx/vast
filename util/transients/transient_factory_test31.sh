@@ -82,6 +82,14 @@ if [ -n "$CAMERA_SETTINGS" ];then
  if [ "$CAMERA_SETTINGS" = "STL-11000M" ];then
   # Canon 135 mm f/2.0 telephoto lens + SBIG STL-11000 CCD, 20 sec exposures
   echo "### Using search settings for $CAMERA_SETTINGS camera ###"
+  # The input images will be calibrated
+  # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
+  # the script will try to find the most appropriate one based on temperature and time
+  export DARK_FRAMES_DIR=/home/apache/darks
+  # we don't usually have a luxury of multiple flat field frames to chhose from
+  # FLAT_FIELD_FILE has to point to one specific file that will be used for flat-fielding
+  export FLAT_FIELD_FILE=/home/apache/flats/mff_2023-07-14.fit
+  #
   TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="STL-11000M"
   export TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=1000
@@ -158,6 +166,108 @@ fi
 
 # Are we on Linux or something else?
 SYSTEM_TYPE="$(uname)"
+
+function try_to_calibrate_the_input_frame {
+
+ # check if we have calibration data at all
+ if [ -z "$DARK_FRAMES_DIR" ];then
+  echo "try_to_calibrate_the_input_frame(): DARK_FRAMES_DIR is not set - not attempting to dark-subtract the input frames" 1>&2
+  return 1
+ fi
+ if [ -d "$DARK_FRAMES_DIR" ];then
+  echo "try_to_calibrate_the_input_frame(): DARK_FRAMES_DIR=$DARK_FRAMES_DIR is not not a directory" 1>&2
+  return 1
+ fi
+
+ # check the input image
+ INPUT_FRAME_PATH="$1"
+ if [ -z "$INPUT_FRAME_PATH" ];then
+  return 1
+ fi
+ if [ ! -s "$INPUT_FRAME_PATH" ];then
+  return 1
+ fi
+ # util/ccd/ms will write HISTORY Dark frame subtraction in the dark-frame-subtracted file
+ # We test this in order not to do the dark frame subtraction twice
+ util/listhead "$INPUT_FRAME_PATH" | grep --quiet 'Dark frame subtraction'
+ if [ $? -eq 0 ];then
+  echo "try_to_calibrate_the_input_frame(): the dark frame has already been subtracted from the input image" 1>&2
+  return 1
+ fi
+ 
+ # figure out the input and output file names
+ INPUT_FRAME_BASENAME=$(basename "$INPUT_FRAME_PATH")
+ INPUT_FRAME_DIRNAME=$(dirname "$INPUT_FRAME_PATH")
+ OUTPUT_DARK_SUBTRACTED_FRAME_BASENAME=d_"$INPUT_FRAME_BASENAME"
+ OUTPUT_DARK_SUBTRACTED_FRAME_PATH="$INPUT_FRAME_DIRNAME/$OUTPUT_DARK_SUBTRACTED_FRAME_BASENAME"
+ OUTPUT_FLATFIELDED_FRAME_BASENAME=fd_"$INPUT_FRAME_BASENAME"
+ OUTPUT_FLATFIELDED_FRAME_PATH="$INPUT_FRAME_DIRNAME/$OUTPUT_FLATFIELDED_FRAME_BASENAME"
+ 
+ # check if the input image directory is writable
+ if [ ! -w "$INPUT_FRAME_DIRNAME" ];then
+  echo "try_to_calibrate_the_input_frame(): the input directory $INPUT_FRAME_DIRNAME is not writable - cannot perform image calibration" 1>&2
+  return 1
+ fi
+ 
+ # find the best dark
+ DARK_FRAME=$(util/find_best_dark.sh "$INPUT_FRAME_PATH")
+ if [ $? -ne 0 ];then
+  echo "try_to_calibrate_the_input_frame(): cannot find a good dark frame" 1>&2
+  return 1
+ fi
+ if [ ! -f "$DARK_FRAME" ];then
+  echo "dark frame file does not exist: DARK_FRAME=$DARK_FRAME" 1>&2
+  return 1
+ fi
+ if [ ! -s "$DARK_FRAME" ];then
+  echo "dark frame file is empty: DARK_FRAME=$DARK_FRAME" 1>&2
+  return 1
+ fi
+ 
+ # clean-up if this is not the first run
+ if [ -f "$OUTPUT_DARK_SUBTRACTED_FRAME_PATH" ];then
+  rm -f "$OUTPUT_DARK_SUBTRACTED_FRAME_PATH" 1>&2
+ fi
+ 
+ # subtract dark frame from the input frame
+ util/ccd/ms "$INPUT_FRAME_PATH" "$DARK_FRAME" "$OUTPUT_DARK_SUBTRACTED_FRAME_PATH" 1>&2
+ if [ $? -ne 0 ];then
+  echo "try_to_calibrate_the_input_frame(): a problem occurred while running util/ccd/ms $INPUT_FRAME_PATH $DARK_FRAME $OUTPUT_DARK_SUBTRACTED_FRAME_PATH" 1>&2
+  return 1
+ fi
+ 
+ OUTPUT_CALIBRATED_FRAME_PATH="$OUTPUT_DARK_SUBTRACTED_FRAME_PATH"
+ 
+ # now attempt flat fielding
+ if [ -n "$FLAT_FIELD_FILE" ];then
+  if [ -s "$FLAT_FIELD_FILE" ];then
+   # clean-up if this is not the first run
+   if [ -f "$OUTPUT_FLATFIELDED_FRAME_PATH" ];then
+    rm -f "$OUTPUT_FLATFIELDED_FRAME_PATH" 1>&2
+   fi
+   # divide the dark-subtracted frame by the flat field
+   util/ccd/md "$OUTPUT_DARK_SUBTRACTED_FRAME_PATH" "$FLAT_FIELD_FILE" "$OUTPUT_FLATFIELDED_FRAME_PATH" 1>&2
+   if [ $? -ne 0 ];then
+    echo "try_to_calibrate_the_input_frame(): a problem occurred while running util/ccd/md $OUTPUT_DARK_SUBTRACTED_FRAME_PATH $FLAT_FIELD_FILE $OUTPUT_FLATFIELDED_FRAME_PATH" 1>&2
+    # do not return: if things are bad we'll got with dark-only corrected frame
+    #return 1
+   else
+    # remove the non-flat-fielded dark-subtracted image to save space
+    rm -f "$OUTPUT_DARK_SUBTRACTED_FRAME_PATH"
+    # use flat-fielded image
+    OUTPUT_CALIBRATED_FRAME_PATH="$OUTPUT_FLATFIELDED_FRAME_PATH"
+   fi
+  else
+   echo "try_to_calibrate_the_input_frame(): FLAT_FIELD_FILE=$FLAT_FIELD_FILE does not exist or is empty" 1>&2
+  fi
+ else 
+  echo "try_to_calibrate_the_input_frame(): FLAT_FIELD_FILE is not set" 1>&2
+ fi
+ 
+ echo "$OUTPUT_CALIBRATED_FRAME_PATH"
+ 
+ return 0
+}
 
 function print_image_date_for_logs_in_case_of_emergency_stop {
  # $hell4eck says $@ needs to be double-quotted
@@ -450,7 +560,7 @@ fi
 export FITS_FILE_EXT
 echo "FITS_FILE_EXT=$FITS_FILE_EXT"
 
-LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR=$(for IMGFILE in "$NEW_IMAGES"/*."$FITS_FILE_EXT" ;do if [ -f "$IMGFILE" ];then basename "$IMGFILE" ;fi ;done | awk '{print $1}' FS='_' | sort | uniq)
+LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR=$(for IMGFILE in "$NEW_IMAGES"/*."$FITS_FILE_EXT" ;do if [ -f "$IMGFILE" ];then basename "$IMGFILE" ;fi ;done | awk '{if (length($1) >= 3) print $1}' FS='_' | sort | uniq)
 
 echo "Fields in the data directory: 
 $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR"
@@ -768,6 +878,48 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  ################################
  
  # I guess we should be including the calibration attempt here resetting SECOND_EPOCH__FIRST_IMAGE and SECOND_EPOCH__SECOND_IMAGE
+ ################################
+ CALIBRATED_SECOND_EPOCH__FIRST_IMAGE=$(try_to_calibrate_the_input_frame "$SECOND_EPOCH__FIRST_IMAGE" 2>> transient_factory_test31.txt)
+ if [ $? -eq 0 ];then
+  if [ -n "$CALIBRATED_SECOND_EPOCH__FIRST_IMAGE" ];then
+   echo "Using calibrated image CALIBRATED_SECOND_EPOCH__FIRST_IMAGE=$CALIBRATED_SECOND_EPOCH__FIRST_IMAGE"
+   echo "Using calibrated image CALIBRATED_SECOND_EPOCH__FIRST_IMAGE=$CALIBRATED_SECOND_EPOCH__FIRST_IMAGE" >> transient_factory_test31.txt
+   SECOND_EPOCH__FIRST_IMAGE="$CALIBRATED_SECOND_EPOCH__FIRST_IMAGE"
+  fi
+ fi
+ CALIBRATED_SECOND_EPOCH__SECOND_IMAGE=$(try_to_calibrate_the_input_frame "$SECOND_EPOCH__SECOND_IMAGE" 2>> transient_factory_test31.txt)
+ if [ $? -eq 0 ];then
+  if [ -n "$CALIBRATED_SECOND_EPOCH__SECOND_IMAGE" ];then
+   echo "Using calibrated image CALIBRATED_SECOND_EPOCH__SECOND_IMAGE=$CALIBRATED_SECOND_EPOCH__SECOND_IMAGE"
+   echo "Using calibrated image CALIBRATED_SECOND_EPOCH__SECOND_IMAGE=$CALIBRATED_SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_test31.txt
+   SECOND_EPOCH__SECOND_IMAGE="$CALIBRATED_SECOND_EPOCH__SECOND_IMAGE"
+  fi
+ fi
+ echo "after the calibration attempt:
+SECOND_EPOCH__FIRST_IMAGE=$SECOND_EPOCH__FIRST_IMAGE
+SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_test31.txt
+ ################################
+
+ 
+
+ ################################
+ # triple-check the files as they may have been altered by calibration
+ for FILE_TO_CHECK in "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" ;do
+  ls "$FILE_TO_CHECK" 
+  if [ $? -ne 0 ];then
+   echo "ERROR opening file $FILE_TO_CHECK" 1>&2
+   echo "ERROR opening file $FILE_TO_CHECK"
+  fi
+ done | grep "ERROR opening file"
+ if [ $? -eq 0 ];then
+  # Save image date for it to be displayed in the summary file
+  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+  echo "ERROR processing the image series"
+  echo "ERROR processing the image series" >> transient_factory_test31.txt
+  continue
+ fi
+ ################################
+
  
  ###############################################
  # Update neverexclude_list.txt

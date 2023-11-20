@@ -45,8 +45,6 @@ if [ "$LAST_CHAR_OF_VAST_PATH" != "/" ];then
  VAST_PATH="$VAST_PATH/"
 fi
 export VAST_PATH
-OLDDDIR_TO_CHECK_INPUT_FILE="$PWD"
-cd "$VAST_PATH"
 
 
 
@@ -77,19 +75,14 @@ if [ ! -s "$FITSFILE" ];then
  exit 1
 fi
 ###############
-# On-the fly convert the input image if necessary
-FITSFILE=`"$VAST_PATH"lib/on_the_fly_symlink_or_convert "$FITSFILE"`
-###############
 # Verify that the input file is a valid FITS file
-"$VAST_PATH"lib/fitsverify -q -e "$FITSFILE"
+"$VAST_PATH"lib/fitsverify -q -e "$FITSFILE" &>/dev/null
 if [ $? -ne 0 ];then
- echo "WARNING: the input file $FITSFILE seems to be a FITS image that does not fully comply with the FITS standard.
-Checking if the filename extension and FITS header look reasonable..."
+# echo "WARNING: the input file $FITSFILE seems to be a FITS image that does not fully comply with the FITS standard.
+#Checking if the filename extension and FITS header look reasonable..."
  ## Exampt from the rule for files that have at least some correct keywords
  echo "$FITSFILE" | grep  -e ".fits"  -e ".FITS"  -e ".fts" -e ".FTS"  -e ".fit"  -e ".FIT" && "$VAST_PATH"util/listhead "$FITSFILE" | grep -e "SIMPLE  =                    T" -e "TELESCOP= 'Aristarchos'" && "$VAST_PATH"util/listhead "$FITSFILE" | grep -e "NAXIS   =                    2"  -e "NAXIS3  =                    1" -e "TELESCOP= 'Aristarchos'"
- if [ $? -eq 0 ];then
-  echo "OK, let's assume this is a valid FITS file"
- else
+ if [ $? -ne 0 ];then
   echo "ERROR: the input image file $FITSFILE did not pass verification as a valid FITS file"
   exit 1
  fi
@@ -132,15 +125,15 @@ if [ -z "$IMAGE_SETTEMP" ];then
  exit 1
 fi
 
-echo "################ $0 Input image ################"
-echo "$IMAGE_JD $IMAGE_EXPTIME  $IMAGE_NAXIS1 $IMAGE_NAXIS2  $IMAGE_SETTEMP  $FITSFILE"
+#echo "################ $0 Input image ################"
+#echo "$IMAGE_JD $IMAGE_EXPTIME  $IMAGE_NAXIS1 $IMAGE_NAXIS2  $IMAGE_SETTEMP  $FITSFILE"
 
 
 # Initialize a variable to hold the minimum JD difference and the corresponding dark image file name
 MIN_JD_DIFF=9999999999
 SELECTED_DARK_IMAGE=""
 
-echo "################ $0 Dark frames ################"
+#echo "################ $0 Dark frames ################"
 ############### Characterize dark frames ###############
 for DARK in "$DARK_FRAMES_DIR"/* ;do
  if [ ! -f "$DARK" ];then
@@ -155,15 +148,13 @@ for DARK in "$DARK_FRAMES_DIR"/* ;do
  DARK=`"$VAST_PATH"lib/on_the_fly_symlink_or_convert "$DARK"`
  ###############
  # Verify that the input file is a valid FITS file
- "$VAST_PATH"lib/fitsverify -q -e "$DARK"
+ "$VAST_PATH"lib/fitsverify -q -e "$DARK" &>/dev/null
  if [ $? -ne 0 ];then
-  echo "WARNING: the input file $DARK seems to be a FITS image that does not fully comply with the FITS standard.
-Checking if the filename extension and FITS header look reasonable..."
+#  echo "WARNING: the input file $DARK seems to be a FITS image that does not fully comply with the FITS standard.
+#Checking if the filename extension and FITS header look reasonable..."
   ## Exampt from the rule for files that have at least some correct keywords
   echo "$DARK" | grep  -e ".fits"  -e ".FITS"  -e ".fts" -e ".FTS"  -e ".fit"  -e ".FIT" && "$VAST_PATH"util/listhead "$DARK" | grep -e "SIMPLE  =                    T" -e "TELESCOP= 'Aristarchos'" && "$VAST_PATH"util/listhead "$DARK" | grep -e "NAXIS   =                    2"  -e "NAXIS3  =                    1" -e "TELESCOP= 'Aristarchos'"
-  if [ $? -eq 0 ];then
-   echo "OK, let's assume this is a valid FITS file"
-  else
+  if [ $? -ne 0 ];then
    echo "ERROR: the input image file $DARK did not pass verification as a valid FITS file"
    exit 1
   fi
@@ -206,7 +197,7 @@ Checking if the filename extension and FITS header look reasonable..."
   exit 1
  fi
 
- echo "$DARK_JD $DARK_EXPTIME  $DARK_NAXIS1 $DARK_NAXIS2  $DARK_SETTEMP  $DARK"
+ #echo "$DARK_JD $DARK_EXPTIME  $DARK_NAXIS1 $DARK_NAXIS2  $DARK_SETTEMP  $DARK"
 
  if [ "$IMAGE_NAXIS1" != "$DARK_NAXIS1" ];then
   continue
@@ -231,15 +222,16 @@ Checking if the filename extension and FITS header look reasonable..."
   SELECTED_DARK_IMAGE="$DARK"
  fi
 
- echo "This one might work: $DARK  JD_DIFF=$JD_DIFF MIN_JD_DIFF=$MIN_JD_DIFF"
+ #echo "This one might work: $DARK  JD_DIFF=$JD_DIFF MIN_JD_DIFF=$MIN_JD_DIFF"
 
 done
 
-echo "################ $0 Selected dark frame ################"
+#echo "################ $0 Selected dark frame ################"
 # Output the selected dark image
 if [ -n "$SELECTED_DARK_IMAGE" ];then
- echo "Best matching dark image: 
-$SELECTED_DARK_IMAGE"
+ #echo "Best matching dark image: 
+#$SELECTED_DARK_IMAGE"
+ echo "$SELECTED_DARK_IMAGE"
 else
  echo "No matching dark image found"
  exit 1

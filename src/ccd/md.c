@@ -311,6 +311,7 @@ int main( int argc, char *argv[] ) {
  fits_delete_key( fptr, "BZERO", &status );
  // fits_write_key(fptr,TDOUBLE,"BZERO",&bzero," ",&status);
  fits_delete_key( fptr, "BSCALE", &status );
+ fits_write_history( fptr, "Flat fielding:", &status );
  fits_write_history( fptr, argv[1], &status );
  fits_write_history( fptr, argv[2], &status );
  fits_report_error( stderr, status ); // print out any error messages
