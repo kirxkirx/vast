@@ -89,7 +89,7 @@ etc: stat_outfile util/calibrate_magnitude_scale lib/deg2hms lib/coord_v_dva_slo
 
 old: formater_out_wfk 
 
-astrometry: lib/astrometry/get_image_dimentions lib/astrometry/insert_wcs_header lib/make_outxyls_for_astrometric_calibration util/solve_plate_with_UCAC5 lib/autodetect_aperture_main lib/try_to_guess_image_fov cfitsio gsl
+astrometry: lib/astrometry/get_image_dimentions lib/astrometry/insert_wcs_header lib/astrometry/strip_wcs_keywords lib/make_outxyls_for_astrometric_calibration util/solve_plate_with_UCAC5 lib/autodetect_aperture_main lib/try_to_guess_image_fov cfitsio gsl
 
 pgplot_components: variability_indexes.o photocurve.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o replace_file_with_symlink_if_filename_contains_white_spaces.o wpolyfit.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o cfitsio gsl
 	lib/test_libpng.sh
@@ -430,6 +430,8 @@ lib/astrometry/get_image_dimentions: $(SRC_PATH)astrometry/get_image_dimentions.
 	$(CC) $(OPTFLAGS) -o lib/astrometry/get_image_dimentions $(SRC_PATH)astrometry/get_image_dimentions.c $(CFITSIO_LIB) -lm
 lib/astrometry/insert_wcs_header: insert_wcs_header.o gettime.o
 	$(CC) $(OPTFLAGS) -o lib/astrometry/insert_wcs_header insert_wcs_header.o gettime.o $(CFITSIO_LIB) -lm
+lib/astrometry/strip_wcs_keywords: $(SRC_PATH)astrometry/strip_wcs_keywords.c
+	$(CC) $(OPTFLAGS) -o lib/astrometry/strip_wcs_keywords $(SRC_PATH)astrometry/strip_wcs_keywords.c $(CFITSIO_LIB) -lm
 
 insert_wcs_header.o: $(SRC_PATH)astrometry/insert_wcs_header.c
 	$(CC) $(OPTFLAGS) -c -o insert_wcs_header.o $(SRC_PATH)astrometry/insert_wcs_header.c
@@ -535,7 +537,7 @@ clean: clean_libraries
 	rm -f util/colstat
 	rm -f util/imstat_vast imstat_vast_fast
 	rm -f src/*~
-	rm -f util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/astrometry/get_image_dimentions lib/astrometry/insert_wcs_header lib/astrometry/*~ lib/kwee-van-woerden  lib/find_star_in_wcs_catalog
+	rm -f util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/astrometry/get_image_dimentions lib/astrometry/insert_wcs_header lib/astrometry/strip_wcs_keywords lib/astrometry/*~ lib/kwee-van-woerden  lib/find_star_in_wcs_catalog
 	rm -f src/heliocentric_correction/*~ util/hjd_input_in_UTC util/hjd_input_in_TT util/UTC2TT util/make_finding_chart util/make_finder_chart util/fits2png lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search lib/catalogs/check_catalogs_offline util/get_image_date lib/make_outxyls_for_astrometric_calibration lib/fits2cat lib/create_data lib/fast_clean_data util/solve_plate_with_UCAC5 lib/autodetect_aperture_main lib/sextract_single_image_noninteractive
 	rm -f util/solve_plate_with_UCAC4
 	rm -f util/solve_plate_with_UCAC5

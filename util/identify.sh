@@ -696,6 +696,13 @@ fi
       exit 1
      fi
     fi
+    # Strip the input image from the old WCS header (if any)
+    lib/astrometry/strip_wcs_keywords "$BASENAME_FITSFILE" 2>&1
+    if [ $? -ne 0 ];then
+     echo "ERROR: running lib/astrometry/strip_wcs_keywords $BASENAME_FITSFILE"
+     exit 1
+    fi
+    # Insert the new WCS header from out$$.wcs
     "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
     if [ $? -ne 0 ];then
      # This is a bad one, just exit

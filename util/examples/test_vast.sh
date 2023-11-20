@@ -16872,6 +16872,62 @@ if [ $? -ne 0 ];then
 fi
 
 
+### Test the WCS keywords stripping code
+if [ -d ../individual_images_test ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ # Run the test
+ echo "Test the WCS keywords stripping code " 1>&2
+ echo -n "Test the WCS keywords stripping code: " >> vast_test_report.txt 
+
+ ### Specific test to make sure lib/try_to_guess_image_fov does not crash
+ for IMAGE in ../individual_images_test/* ;do
+  cp -v "$IMAGE" test.fits
+  lib/astrometry/strip_wcs_keywords test.fits
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   IMAGE=`basename $IMAGE`
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STRIPWCS01_$IMAGE"
+  fi
+  util/listhead test.fits | awk -F'=' '{print $1}' | grep --quiet -e 'CTYPE' -e 'PV' -e 'AP_' -e 'BP_'
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   IMAGE=`basename $IMAGE`
+   FAILED_TEST_CODES="$FAILED_TEST_CODES STRIPWCS02_$IMAGE"
+  fi  
+ done
+
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mWCS keywords stripping code test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mWCS keywords stripping code test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STRIPWCS_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+remove_test_data_to_save_space
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ exit 1
+fi
+
+
 ### Check the external plate solve servers
 ### Disable this test for GitHub Actions
 if [ "$GITHUB_ACTIONS" != "true" ];then
