@@ -24,6 +24,9 @@ vast-1.0rc87:
 	This may be helpful for manually weeding out bad images with a loop like this
 	for i in *fts ;do ~/current_work/vast/pgfv $i && continue ; mv $i bad/ ;done
 	pressing 'Q' for bad images and 'X' or right-click for good ones.
+	* The new script 'lib/astrometry/strip_wcs_keywords' will strip all WCS-related keywords from 
+	the header of an input FITS image. This may be useful to ensure that there is no mixup between 
+	an old WCS solution that may have been present in the image and a new one produced with Astrometry.net 
 07 Apr 2023: vast-1.0rc86:
 	* Experimental support for TESS Full-Frame Images (FFIs). In terms of photometric precision, 
 	VaST currently cannot compete with the analysis codes specifically designed for TESS. 

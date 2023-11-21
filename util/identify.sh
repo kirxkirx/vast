@@ -662,10 +662,6 @@ fi
   # exit 1
   #fi
   if [ $? -ne 0 ];then
-   #
-   #echo "EMERGENCY STOP"
-   #exit 1
-   #
    echo "ERROR running solve-field locally. Retrying with a remote plate-solve server."
    ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
    if [ "$PLATE_SOLVE_SERVER" = "" ];then
@@ -675,9 +671,6 @@ fi
    CURL="curl"
    # need the awk post-processing for curl request to work
    IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
-
-   #continue
-   ##exit 1
   else
    # solve-field didn't crash
    if [ ! -f out$$.solved ];then
@@ -702,9 +695,10 @@ fi
      echo "ERROR: running lib/astrometry/strip_wcs_keywords $BASENAME_FITSFILE"
      exit 1
     fi
-    # Double0check that the new WCS header is still here
+    # Double-check that the new WCS header is still here
     ls -lh out$$.wcs "$BASENAME_FITSFILE"
     # Insert the new WCS header from out$$.wcs
+    echo -n "Inserting WCS header (1st iteration local)...  "
     "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
     if [ $? -ne 0 ];then
      # This is a bad one, just exit
@@ -727,6 +721,7 @@ fi
      exit 1
     else   
      ERROR_STATUS=0
+     echo "done"
      echo "The WCS header appears to be added with no errors in $FITSFILE ($BASENAME_FITSFILE)"
      # Insert VaST headers for debugging
      if [ -z "$PLATE_SOLVE_SERVER" ];then
@@ -741,6 +736,7 @@ fi
     #
     # clean up
     #rm -f "$BASENAME_FITSFILE" out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$.xyls out$$-indx.xyls
+    # note that we will need "$BASENAME_FITSFILE" for the second iteration
     rm -f out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$-indx.xyls
     ############
     # Attempt the second iteration with restricted parameters
@@ -781,8 +777,19 @@ fi
      echo "The second iteration of solve-field produced an empty out$$.wcs for $BASENAME_FITSFILE"
      exit 1
     fi
+    # remove the plate-solved image produced by the 1st iteration
     rm -f wcs_"$BASENAME_FITSFILE"
-    echo -n "Inserting WCS header (2nd iteration)...  "
+    # We probably not need to strip_wcs_keywords again from $BASENAME_FITSFILE, but just in case
+    # Strip the input image from the old WCS header (if any)
+    lib/astrometry/strip_wcs_keywords "$BASENAME_FITSFILE" 2>&1
+    if [ $? -ne 0 ];then
+     echo "ERROR at 2nd iteration: running lib/astrometry/strip_wcs_keywords $BASENAME_FITSFILE"
+     exit 1
+    fi
+    # Double-check that the new WCS header is still here
+    ls -lh out$$.wcs "$BASENAME_FITSFILE"
+    # Insert the new WCS header from out$$.wcs
+    echo -n "Inserting WCS header (2nd iteration local)...  "
     "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
     if [ $? -ne 0 ];then
      # This is a bad one, just exit
@@ -984,8 +991,17 @@ Retrying..."
      echo "done"
     fi
     if [ -s out$$.wcs ];then
-     cp $FITSFILE "$BASENAME_FITSFILE"
-     echo -n "Inserting WCS header in $BASENAME_FITSFILE ...  "
+     cp -v $FITSFILE "$BASENAME_FITSFILE"
+     # Strip the input image from the old WCS header (if any)
+     lib/astrometry/strip_wcs_keywords "$BASENAME_FITSFILE" 2>&1
+     if [ $? -ne 0 ];then
+      echo "ERROR at 2nd iteration: running lib/astrometry/strip_wcs_keywords $BASENAME_FITSFILE"
+      exit 1
+     fi
+     # Double-check that the new WCS header is still here
+     ls -lh out$$.wcs "$BASENAME_FITSFILE"
+     # Insert the new WCS header from out$$.wcs
+     echo -n "Inserting WCS header in $BASENAME_FITSFILE (remote) ...  "
      "$VAST_PATH"lib/astrometry/insert_wcs_header out$$.wcs "$BASENAME_FITSFILE" 2>&1
      if [ $? -ne 0 ];then
       # This is a bad one, just exit
@@ -997,12 +1013,14 @@ Retrying..."
        if [ -s "$WCS_IMAGE_TO_CHECK" ];then
         echo "#### Header of the existing image $WCS_IMAGE_TO_CHECK ####"
         util/listhead $WCS_IMAGE_TO_CHECK
+        echo "#### end of header of the existing image $WCS_IMAGE_TO_CHECK ####"
        else
         echo "The output file $WCS_IMAGE_TO_CHECK is empty!"
        fi
       fi
       echo "#### Header we wanted to insert ####"
       util/listhead out$$.wcs
+      echo "#### end of header we wanted to insert ####"
       exit 1
      else
       ERROR_STATUS=0

@@ -83,6 +83,8 @@ void strip_wcs_sip_keywords(fitsfile *fptr, int *status) {
     long order = 0;
 
     char key_base[3] = {'\0'};
+    
+    char opus_keyword[FLEN_KEYWORD]; // for HST-sppecific OPUS keys
 
     // SIP-specific 'ORDER' keywords
     const char *sip_order_keywords[] = {"A_ORDER", "B_ORDER", "AP_ORDER", "BP_ORDER", "A_DMAX", "B_DMAX", NULL};
@@ -114,6 +116,20 @@ void strip_wcs_sip_keywords(fitsfile *fptr, int *status) {
         } else {
             *status = 0;
         }
+        // HST-specific OPUS WCS keywords
+        if( strlen(*keyword)<8 ){
+         snprintf(opus_keyword, sizeof(opus_keyword), "%sO", *keyword);
+         if (fits_read_card(fptr, opus_keyword, card, status) != KEY_NO_EXIST) {
+             fits_delete_key(fptr, opus_keyword, status);
+             if (*status) {
+                 fits_report_error(stderr, *status);
+                 *status = 0;
+             }
+         } else {
+             *status = 0;
+         }
+        }
+        //
     }
     
 
