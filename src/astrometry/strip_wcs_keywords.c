@@ -130,6 +130,20 @@ void strip_wcs_sip_keywords(fitsfile *fptr, int *status) {
          }
         }
         //
+        // TESS-specific physical WCS keywords
+        if( strlen(*keyword)<8 ){
+         snprintf(opus_keyword, sizeof(opus_keyword), "%sP", *keyword);
+         if (fits_read_card(fptr, opus_keyword, card, status) != KEY_NO_EXIST) {
+             fits_delete_key(fptr, opus_keyword, status);
+             if (*status) {
+                 fits_report_error(stderr, *status);
+                 *status = 0;
+             }
+         } else {
+             *status = 0;
+         }
+        }
+        //
     }
     
 
