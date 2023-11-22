@@ -20978,12 +20978,12 @@ fi
 if [ -f wwwtest.png ];then
  rm -f wwwtest.png
 fi
-curl --silent 'http://scan.sai.msu.ru/cgi-bin/nmw/sky_archive?ra=17%3A45%3A28.02&dec=-23%3A05%3A23.1&r=64&n=0' | grep -A500 'Sky image archive search results' | grep 'crop_wcs_fd_Sgr1_2011-11-3_001.fts.png' > wwwtest.tmp
+curl  --insecure --connect-timeout 10 --retry 1 --max-time 300  --silent 'http://scan.sai.msu.ru/cgi-bin/nmw/sky_archive?ra=17%3A45%3A28.02&dec=-23%3A05%3A23.1&r=64&n=0' | grep -A500 'Sky image archive search results' | grep 'crop_wcs_fd_Sgr1_2011-11-3_001.fts.png' > wwwtest.tmp
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMWSKYARCHIVE_001"
 fi
-curl --silent --output wwwtest.png `cat wwwtest.tmp | awk -F'"' '{print $2}'`
+curl  --insecure --connect-timeout 10 --retry 1 --max-time 30  --silent --output 'wwwtest.png' $(cat wwwtest.tmp | awk -F'"' '{print $2}')
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMWSKYARCHIVE_002"
@@ -21010,12 +21010,12 @@ fi
 if [ -f wwwtest.png ];then
  rm -f wwwtest.png
 fi
-curl --silent 'http://scan.sai.msu.ru/cgi-bin/pa/sky_archive?ra=02%3A34%3A18.77&dec=%2B63%3A12%3A43.0&r=256' | grep -A500 'Sky image archive search results' | grep 'crop_SCA255N__05_-1.fits.png' > wwwtest.tmp
+curl  --insecure --connect-timeout 10 --retry 1 --max-time 300  --silent 'http://scan.sai.msu.ru/cgi-bin/pa/sky_archive?ra=02%3A34%3A18.77&dec=%2B63%3A12%3A43.0&r=256' | grep -A500 'Sky image archive search results' | grep 'crop_SCA255N__05_-1.fits.png' > wwwtest.tmp
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_001"
 fi
-curl --silent --output wwwtest.png `cat wwwtest.tmp | awk -F'"' '{print $2}'`
+curl  --insecure --connect-timeout 10 --retry 1 --max-time 30  --silent --output wwwtest.png `cat wwwtest.tmp | awk -F'"' '{print $2}'`
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_002"
@@ -21035,7 +21035,7 @@ fi
 
 
 # EpCalc
-curl --silent 'http://scan.sai.msu.ru/cgi-bin/epcalc/ecalc?HJD0=2453810.90213&Period=10.55&JD1=2453903.90213&JD2=2453930.90213' | grep --quiet '2453937.502130'
+curl  --insecure --connect-timeout 10 --retry 1 --max-time 30  --silent 'http://scan.sai.msu.ru/cgi-bin/epcalc/ecalc?HJD0=2453810.90213&Period=10.55&JD1=2453903.90213&JD2=2453930.90213' | grep --quiet '2453937.502130'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_EPCALC_001"
