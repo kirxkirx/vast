@@ -16565,7 +16565,8 @@ if [ -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits ]
  echo "TESS FFI with no WCS test " 1>&2
  echo -n "TESS FFI with no WCS test: " >> vast_test_report.txt 
  #
- util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:38   = JD  2458955.79836 mid. exp.'
+ #util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:38   = JD  2458955.79836 mid. exp.'
+ util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:38 TDB = JD(TDB) 2458955.79836 mid. exp.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS001"
@@ -16889,7 +16890,7 @@ if [ -d ../individual_images_test ];then
    IMAGE=`basename $IMAGE`
    FAILED_TEST_CODES="$FAILED_TEST_CODES STRIPWCS01_$IMAGE"
   fi
-  util/listhead test.fits | awk -F'=' '{print $1}' | grep --quiet -e 'CTYPE' -e 'PV[0-9]\{1,2\}_[0-9]\{1,2\}' -e 'TR[0-9]\{1,2\}_[0-9]\{1,2\}' -e 'AP_' -e 'BP_'
+  util/listhead test.fits | awk -F'=' '{print $1}' | grep --quiet -e 'WCSAXES' -e 'CRPIX' -e 'CRVAL' -e 'CTYPE' -e 'CUNIT' -e 'CDELT' -e 'CROTA' -e 'CD[1-2]_[1-2]' -e 'PC[1-2]_[1-2]' -e 'PV[0-9]\{1,2\}_[0-9]\{1,2\}' -e 'TR[0-9]\{1,2\}_[0-9]\{1,2\}' -e 'AP_' -e 'BP_'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    IMAGE=`basename $IMAGE`

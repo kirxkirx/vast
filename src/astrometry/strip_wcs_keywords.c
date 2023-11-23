@@ -107,6 +107,7 @@ void strip_wcs_sip_keywords(fitsfile *fptr, int *status) {
     char **order_keyword;
 
     for (keyword = wcs_keywords; *keyword != NULL; keyword++) {
+        // delete key using its original name
         if (fits_read_card(fptr, *keyword, card, status) != KEY_NO_EXIST) {
             fits_delete_key(fptr, *keyword, status);
             if (*status) {
@@ -116,6 +117,7 @@ void strip_wcs_sip_keywords(fitsfile *fptr, int *status) {
         } else {
             *status = 0;
         }
+        // below we delete keys with some modifications to the original name
         // HST-specific OPUS WCS keywords
         if( strlen(*keyword)<8 ){
          snprintf(opus_keyword, sizeof(opus_keyword), "%sO", *keyword);
@@ -180,6 +182,62 @@ int main(int argc, char **argv) {
     fitsfile *fptr;   // FITS file pointer
     int status = 0;   // CFITSIO status
     char filename[FILENAME_LENGTH]; // FITS file name
+    int num_hdus, hdu_type, current_hdu;
+
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <fitsfile_to_strip_wcs_keywords_from.fits>\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    strncpy(filename, argv[1], FILENAME_LENGTH - 1);
+    filename[FILENAME_LENGTH - 1] = '\0'; // Ensure null termination
+
+    // Open the FITS file for editing (read-write mode)
+    fits_open_file(&fptr, filename, READWRITE, &status);
+    if (status) {
+        fits_report_error(stderr, status); // Report any error on opening
+        return status;
+    }
+
+    // Get the number of HDUs in the file
+    fits_get_num_hdus(fptr, &num_hdus, &status);
+
+    // Iterate over all HDUs
+    for (current_hdu = 1; current_hdu <= num_hdus; current_hdu++) {
+        // Move to the current HDU
+        fits_movabs_hdu(fptr, current_hdu, &hdu_type, &status);
+        if (status) {
+            fits_report_error(stderr, status); // Report any error on moving to HDU
+            continue; // Skip to next HDU on error
+        }
+
+        // Call the functions to strip WCS and SIP keywords for the current HDU
+        strip_wcs_sip_keywords(fptr, &status);
+        delete_tpv_keywords(fptr, &status);
+        delete_tr_keywords(fptr, &status);
+
+        if (status) {
+            fits_report_error(stderr, status); // Report any error on processing
+            status = 0; // Reset status for the next HDU
+        }
+    }
+
+    // Write any changes to the file and close it
+    fits_close_file(fptr, &status);
+    if (status) {
+        fits_report_error(stderr, status); // Report any error on closing
+        return status;
+    }
+
+    printf("WCS keywords have been successfully stripped from all HDUs in the file.\n");
+    return EXIT_SUCCESS;
+}
+
+/*
+int main(int argc, char **argv) {
+    fitsfile *fptr;   // FITS file pointer
+    int status = 0;   // CFITSIO status
+    char filename[FILENAME_LENGTH]; // FITS file name
 
     if (argc != 2) {
         fprintf(stderr, "Usage: %s <fitsfile_to_strip_wcs_keywords_from.fits>\n", argv[0]);
@@ -233,3 +291,4 @@ int main(int argc, char **argv) {
     printf("WCS keywords have been successfully stripped from the file.\n");
     return EXIT_SUCCESS;
 }
+*/
