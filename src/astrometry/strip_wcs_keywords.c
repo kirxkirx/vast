@@ -102,9 +102,9 @@ void strip_wcs_sip_keywords(fitsfile *fptr, int *status) {
         NULL
     };
     
-    char **keyword;
+    const char **keyword;
     
-    char **order_keyword;
+    const char **order_keyword;
 
     for (keyword = wcs_keywords; *keyword != NULL; keyword++) {
         // delete key using its original name
@@ -233,62 +233,3 @@ int main(int argc, char **argv) {
     return EXIT_SUCCESS;
 }
 
-/*
-int main(int argc, char **argv) {
-    fitsfile *fptr;   // FITS file pointer
-    int status = 0;   // CFITSIO status
-    char filename[FILENAME_LENGTH]; // FITS file name
-
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s <fitsfile_to_strip_wcs_keywords_from.fits>\n", argv[0]);
-        return EXIT_FAILURE;
-    }
-
-    strncpy(filename, argv[1], FILENAME_LENGTH - 1);
-    filename[FILENAME_LENGTH - 1] = '\0'; // Ensure null termination
-
-    // Open the FITS file for editing (read-write mode)
-    fits_open_file(&fptr, filename, READWRITE, &status);
-    if (status) {
-        fits_report_error(stderr, status); // Report any error on opening
-        return status;
-    }
-
-    // Call the function to strip WCS and SIP keywords
-    strip_wcs_sip_keywords(fptr, &status);
-    if (status) {
-        fits_report_error(stderr, status); // Report any error on processing
-        // Close file if there was an error
-        fits_close_file(fptr, &status);
-        return status;
-    }
-    
-    // Call the function to strip TPV keywords
-    delete_tpv_keywords(fptr, &status);
-    if (status) {
-        fits_report_error(stderr, status); // Report any error on processing
-        // Close file if there was an error
-        fits_close_file(fptr, &status);
-        return status;
-    }
-
-    // Call the function to strip TR keywords
-    delete_tr_keywords(fptr, &status);
-    if (status) {
-        fits_report_error(stderr, status); // Report any error on processing
-        // Close file if there was an error
-        fits_close_file(fptr, &status);
-        return status;
-    }
-
-    // Write any changes to the file and close it
-    fits_close_file(fptr, &status);
-    if (status) {
-        fits_report_error(stderr, status); // Report any error on closing
-        return status;
-    }
-
-    printf("WCS keywords have been successfully stripped from the file.\n");
-    return EXIT_SUCCESS;
-}
-*/
