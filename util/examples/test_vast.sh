@@ -20992,7 +20992,7 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMWSKYARCHIVE_001"
 fi
-curl  --insecure --connect-timeout 10 --retry 1 --max-time 30  --silent --output 'wwwtest.png' $(cat wwwtest.tmp | awk -F'"' '{print $2}')
+curl  --insecure --connect-timeout 10 --retry 1 --max-time 30  --silent --output 'wwwtest.png' $(cat wwwtest.tmp | awk -F'"' '{print $2}' | head -n1)
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMWSKYARCHIVE_002"
@@ -21024,7 +21024,7 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_001"
 fi
-curl  --insecure --connect-timeout 10 --retry 1 --max-time 30  --silent --output wwwtest.png `cat wwwtest.tmp | awk -F'"' '{print $2}'`
+curl  --insecure --connect-timeout 10 --retry 1 --max-time 30  --silent --output wwwtest.png `cat wwwtest.tmp | awk -F'"' '{print $2}' | head -n1`
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_002"
