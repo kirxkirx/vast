@@ -224,6 +224,9 @@ function try_to_calibrate_the_input_frame {
   return 1
  fi
  
+ # Print the temperature keywords SET-TEMP and CCD-TEMP
+ util/listhead "$INPUT_FRAME_PATH" | grep 'TEMP' 1>&2
+ 
  # find the best dark
  DARK_FRAME=$(util/find_best_dark.sh "$INPUT_FRAME_PATH")
  if [ $? -ne 0 ];then
