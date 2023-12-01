@@ -27,6 +27,7 @@ util/get_image_date 2020-08-05.271 != 2459066.770995
 
 * A NOVAS-based routine that would compute geocentric J2000 positions of major planets.
 (This is for quickly identifying bright transient candidates, so no need for high positional accuracy.)
+For now we have a HORIZONS-based script: util/planets.sh
 
 * On fresh install the VSX catalog update is slow and silent.
 Need to inform the user about what is going on!

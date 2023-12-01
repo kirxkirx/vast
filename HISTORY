@@ -22,7 +22,7 @@ vast-1.0rc87:
 	https://archive.stsci.edu/hlsp/tica#section-c34b9669-b0be-40b2-853e-a59997d1b7c5
 	* The 'pgfv' fits viewer will now exit with a non-zero exit code if 'Q' is pressed on the keyboard.
 	This may be helpful for manually weeding out bad images with a loop like this
-	for i in *fts ;do ~/current_work/vast/pgfv $i && continue ; mv $i bad/ ;done
+	'for i in *fts ;do ~/current_work/vast/pgfv $i && continue ; mv $i bad/ ;done'
 	pressing 'Q' for bad images and 'X' or right-click for good ones.
 	* The new script 'lib/astrometry/strip_wcs_keywords' will strip all WCS-related keywords from 
 	the header of an input FITS image. This may be useful to ensure that there is no mixup between 
