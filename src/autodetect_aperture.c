@@ -231,7 +231,7 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
 
   write_string_to_individual_image_log( output_sextractor_catalog, "autodetect_aperture(): ", "Calculating the aperture size", "" );
   //// Calculate best aperture size from seeing ///
-  fprintf( stderr, "autodetect_aperture() is making preliminary SExtractor run to determin an appropriate aperture size\n" );
+  fprintf( stderr, "autodetect_aperture() is making a preliminary SExtractor run to determine an appropriate aperture size\n" );
   // sprintf( sextractor_catalog_filename, "autodetect_aper_%d.cat", pid );
   sprintf( sextractor_catalog_filename, "autodetect_aper_%s", output_sextractor_catalog );
   // and yes, we are re-using the .sex_log files
