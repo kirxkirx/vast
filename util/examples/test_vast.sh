@@ -198,7 +198,7 @@ function remove_test_data_to_save_space {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." 1>&2
-    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__plate_solve_failure_test ;do
+    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__plate_solve_failure_test ../NMW_calibration_test ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -9765,6 +9765,262 @@ $GREP_RESULT"
  fi
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+remove_test_data_to_save_space
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ exit 1
+fi
+
+
+
+##### NMW calibration test #####
+# Download the test dataset if needed
+if [ ! -d ../NMW_calibration_test ];then
+ cd ..
+ curl -O "http://scan.sai.msu.ru/~kirx/pub/NMW_calibration_test.tar.bz2" && tar -xvjf NMW_calibration_test.tar.bz2 && rm -f NMW_calibration_test.tar.bz2
+ cd $WORKDIR
+fi
+# If the test data are found
+if [ -d ../NMW_calibration_test ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "NMW calibration test " 1>&2
+ echo -n "NMW calibration test: " >> vast_test_report.txt 
+ #
+ cp -v bad_region.lst_default bad_region.lst
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ #
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
+ #################################################################
+ # Instead of running the single-field search,
+ # we test the production NMW script
+ export DARK_FRAMES_DIR=../NMW_calibration_test/darks
+ export FLAT_FIELD_FILE=../NMW_calibration_test/flat/mff_0013_tail1_notbad.fit
+ REFERENCE_IMAGES=../NMW_calibration_test/calibrated_reference util/transients/transient_factory_test31.sh ../NMW_calibration_test/light
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB000_EXIT_CODE"
+ fi
+ #
+ if [ -f 'transient_report/index.html' ];then
+  grep --quiet 'ERROR' 'transient_report/index.html'
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_ERROR_MESSAGE_IN_index_html"
+   GREP_RESULT=`grep 'ERROR' 'transient_report/index.html'`
+   CAT_RESULT=`cat 'transient_report/index.html' | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWCALIB_ERROR_MESSAGE_IN_index_html ######
+$GREP_RESULT
+-----------------
+$CAT_RESULT"
+  fi
+  # The copy of the log file should be in the HTML report
+  grep --quiet "Images processed 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB001"
+  fi
+  grep --quiet "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB002"
+  fi
+  grep --quiet "First image: 2455961.58259 04.02.2012 01:58:46" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB003"
+  fi
+  grep --quiet "Last  image: 2460254.19181 05.11.2023 16:36:02" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB004"
+  fi
+  # Hunting the mysterious non-zero reference frame rotation cases
+  if [ -f vast_image_details.log ];then
+   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB0_nonzero_ref_frame_rotation"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWCALIB0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWCALIB0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB0_NO_vast_image_details_log"
+  fi
+  #
+  # No transients are expected to be found in this field
+  
+  grep 'Last  image:' vast_image_details.log | grep --quiet 'fd_'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB0_no_calibration_in_filename"
+  fi
+  
+
+ else
+  echo "ERROR running the transient search script" 1>&2
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_SCRIPT"
+ fi
+ 
+ # Check that util/find_best_dark.sh can find dark frames for all the uncalibrated images
+ for LIGHT_IMG in ../NMW_calibration_test/light/Cyg_*.fts ;do
+  util/find_best_dark.sh "$LIGHT_IMG"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_OK__"$(basename "$LIGHT_IMG")
+  fi
+ done
+
+ # Check that util/find_best_dark.sh refuses to find dark frames for all the calibrated images
+ for LIGHT_IMG in ../NMW_calibration_test/light/fd_Cyg_*.fts ;do
+  util/find_best_dark.sh "$LIGHT_IMG"
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_NO__"$(basename "$LIGHT_IMG")
+  fi
+ done
+ 
+ # The normal dark subtraction that should go well
+ if [ -f test.fit ];then
+  rm -f test.fit
+ fi
+ util/ccd/ms ../NMW_calibration_test/light/Cyg2_2023-11-5_16-35-31_001.fts $(util/find_best_dark.sh ../NMW_calibration_test/light/Cyg2_2023-11-5_16-35-31_001.fts) test.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_NONZERO_EXIT_CODE"
+ fi
+ if [ ! -f test.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_TESTFIT_DOES_NOT_EXIST"
+ elif [ ! -s test.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_TESTFIT_IS_EMPTY"
+ else
+  # If we are still here - try flatfielding
+  if [ -f f_test.fit ];then
+   rm -f f_test.fit
+  fi
+  util/ccd/md test.fit "$FLAT_FIELD_FILE" f_test.fit
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_NONZERO_EXIT_CODE"
+  fi
+  if [ ! -f f_test.fit ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_TESTFIT_DOES_NOT_EXIST"
+  elif [ ! -s f_test.fit ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_TESTFIT_IS_EMPTY"
+  fi
+  # make sure double-flatfielding is refused
+  if [ -f ff_test.fit ];then
+   rm -f ff_test.fit
+  fi
+  util/ccd/md f_test.fit "$FLAT_FIELD_FILE" ff_test.fit
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_DOUBLEFLATFIELDING_EXIT_CODE"
+  fi
+  if [ -f ff_test.fit ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_DOUBLEFLATFIELDING_FILE"
+   rm -f ff_test.fit
+  fi
+  # clean up
+  if [ -f f_test.fit ];then
+   rm -f f_test.fit
+  fi
+ fi
+ if [ -f test.fit ];then
+  rm -f test.fit
+ fi
+
+ # dark subtraction from an already-calibrated images that should be refused
+ if [ -f test.fit ];then
+  rm -f test.fit
+ fi
+ util/ccd/ms $(ls ../NMW_calibration_test/light/fd_*fts | head -n1) ../NMW_calibration_test/darks/mdark_ST-Stas_-20C_20s_2023-11-09.fit test.fit
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_DOUBLECCALIBRATED"
+ fi
+ if [ -f test.fit ];then
+  rm -f test.fit
+ fi
+
+
+
+ if [ -f test.fit ];then
+  rm -f test.fit
+ fi
+ 
+ # Double-check the temperature
+ SELECTED_DARK=$(util/find_best_dark.sh ../NMW_calibration_test/light/Cyg2_2023-11-5_16-35-31_001.fts)
+ if [ "$SELECTED_DARK" != "../NMW_calibration_test/darks/mdark_ST-Stas_-20C_20s_2023-11-09.fit" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_WRONG_DARK_SELECTED"
+ fi
+ LIGHT_FRAME_TEMP=$(util/listhead ../NMW_calibration_test/light/Cyg2_2023-11-5_16-35-31_001.fts | grep 'SET-TEMP' | awk '{printf "%.1f", $2}')
+ SELECTED_DARK_TEMP=$(util/listhead "$SELECTED_DARK" | grep 'SET-TEMP' | awk '{printf "%.1f", $2}')
+ if [ "$LIGHT_FRAME_TEMP" != "$SELECTED_DARK_TEMP" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_WRONG_TEMPERATURE"
+ fi
+
+ unset DARK_FRAMES_DIR
+ unset FLAT_FIELD_FILE
+ rm -f ../NMW_calibration_test/light/fd_*fts
+
+ ###### restore exclusion list after the test if needed
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mNMW calibration test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mNMW calibration test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_TEST_NOT_PERFORMED"
 fi
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt

@@ -54,19 +54,19 @@ int main( int argc, char *argv[] ) {
   exit( EXIT_FAILURE );
  }
 
- /* Читаем файлы */
+ // Reading files
  for ( counter= 1; counter < argc; counter++ ) {
   fits_open_file( &fptr, argv[counter], 0, &status );
   fits_read_key( fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status );
   fits_read_key( fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status );
-  /* Выделяем память под картинки */
+  // allocate memory for the images
   img_size= naxes[0] * naxes[1];
   if ( img_size <= 0 ) {
    fprintf( stderr, "ERROR: Trying allocate zero or negative bytes amount\n" );
    exit( EXIT_FAILURE );
   };
   image_array[counter]= malloc( img_size * sizeof( short ) );
-  if ( image_array == NULL ) {
+  if ( image_array[counter] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for image_array\n" );
    exit( EXIT_FAILURE );
   };
@@ -79,7 +79,7 @@ int main( int argc, char *argv[] ) {
    uje= 1;
   }
   /* ---- */
-  // Читаем из шапки то что стоит запомнить
+  // Reading FITS header keywords we need to remember
   fits_get_hdrspace( fptr, &No_of_keys, &keys_left, &status );
   for ( ii= 1; ii < No_of_keys; ii++ ) {
    key[ii]= malloc( FLEN_CARD * sizeof( char ) ); // FLEN_CARD length of a FITS header card defined in fitsio.h
@@ -95,7 +95,7 @@ int main( int argc, char *argv[] ) {
   fits_read_img( fptr, TUSHORT, 1, img_size, &nullval, image_array[counter], &anynul, &status );
   fprintf( stderr, "Reading %s %ld %ld  %d bitpix\n", argv[counter], naxes[0], naxes[1], bitpix2 );
   fits_close_file( fptr, &status );
-  fits_report_error( stderr, status ); /* print out any error messages */
+  fits_report_error( stderr, status ); // print out any error messages 
  }
 
  yy= malloc( img_size * sizeof( double ) );
@@ -103,7 +103,7 @@ int main( int argc, char *argv[] ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for yy\n" );
   exit( EXIT_FAILURE );
  };
- // Приводим всё к первому кадру
+ // Normalize everything to the first frame
  for ( i= 0; i < img_size; i++ ) {
   yy[i]= (double)image_array[1][i];
   //  fprintf(stderr,"%lf %d\n",yy[i],i);
@@ -122,7 +122,6 @@ int main( int argc, char *argv[] ) {
   for ( ii= 0; ii < img_size; ii++ ) {
    image_array[counter][ii]= image_array[counter][ii] * ref_index / cur_index;
   }
-  //  fprintf(stderr,"Привели картинку\n",cur_index);
  }
 
  //
@@ -132,7 +131,6 @@ int main( int argc, char *argv[] ) {
     y[nonzero_counts]= image_array[counter][i];
     nonzero_counts++;
    }
-   //   fprintf(stderr,"%lf\n",y[counter-1]);
   }
   gsl_sort( y, 1, argc - 1 );
   // !!! Sigma filter !!!
@@ -149,18 +147,18 @@ int main( int argc, char *argv[] ) {
   combined_array[i]= (unsigned short)( val + 0.5 );
  }
 
- // пишем в файл
+ // Writing output file
  // system("rm -f median.fit");
  file_read_test= fopen( "median.fit", "r" );
  if ( NULL != file_read_test ) {
   fclose( file_read_test );
   unlink( "median.fit" );
  }
- fits_create_file( &fptr, "median.fit", &status ); /* create new file */
+ fits_create_file( &fptr, "median.fit", &status ); // create new file 
  fits_create_img( fptr, USHORT_IMG, 2, naxes, &status );
  fits_write_img( fptr, TUSHORT, fpixel, img_size, combined_array, &status );
 
- /* -- Пишем шапку -- */
+ // -- Writing header -- 
  for ( ii= 1; ii < No_of_keys; ii++ ) {
   fits_write_record( fptr, key[ii], &status );
  }
@@ -180,12 +178,12 @@ int main( int argc, char *argv[] ) {
  for ( counter= 1; counter < argc; counter++ ) {
   fits_write_history( fptr, argv[counter], &status );
  }
- fits_report_error( stderr, status ); /* print out any error messages */
+ fits_report_error( stderr, status ); // print out any error messages 
  fits_close_file( fptr, &status );
  for ( counter= 1; counter < argc; counter++ ) {
   free( image_array[counter] );
  }
  fprintf( stderr, "Writing output to median.fit \n" );
- fits_report_error( stderr, status ); /* print out any error messages */
+ fits_report_error( stderr, status ); // print out any error messages 
  return status;
 }

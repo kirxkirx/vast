@@ -68,7 +68,8 @@ int main( int argc, char **argv ) {
  a= b= c= 0.0;
  FILE *lightcurvefile;
  FILE *outlightcurvefile;
- double jd, mag, merr, x, y, app, newmag;
+ double jd, mag, merr, x, y, app;
+ double newmag= 0.0; // initialize at declaration to silence the compiler warning
  char string[FILENAME_LENGTH];
  char comments_string[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
 

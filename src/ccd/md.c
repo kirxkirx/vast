@@ -12,53 +12,13 @@
 
 #define MIN_REAL_COUNT 5 // The minimum count assumed to be real. The default is 5
 
-/*
-unsigned short detect_overscan(float *image_array, long *naxes) {
- int i, j;
- int binsize= 15;
- double arr[1024];
- double median1= 65535;
- double median2= 0;
- double median;
- double sigma; // to detect if there are any overscan at all
- double sigma1= 0.0;
- unsigned short min_real_count_estimate;
- for( i= naxes[0] * naxes[1] / 2 + 0; i < naxes[0] * naxes[1] / 2 + naxes[0] - 2 * binsize; i++ ) {
-  for( j= i; j < i + binsize; j++ ) {
-   arr[j - i]= (double)image_array[j];
-  }
-  gsl_sort(arr, 1, binsize);
-  median= gsl_stats_median_from_sorted_data(arr, 1, binsize);
-  if( median < median1 )
-   median1= median;
-  sigma= gsl_stats_sd(arr, 1, binsize);
-  if( sigma > sigma1 )
-   sigma1= sigma;
-  for( j= i + binsize; j < i + 2 * binsize; j++ )
-   arr[j - i - binsize]= (double)image_array[j];
-  gsl_sort(arr, 1, binsize);
-  median= gsl_stats_median_from_sorted_data(arr, 1, binsize);
-  if( median > median2 )
-   median2= median;
- }
- fprintf(stderr, "median1=%lf median2=%lf fabs(median2-median1)=%lf>%lf=5*sigma1\n", median1, median2, fabs(median2 - median1), 5 * sigma1);
- min_real_count_estimate= (unsigned short)median1 + 10 * sqrt(median1);
- if( min_real_count_estimate < MIN_REAL_COUNT ) {
-  min_real_count_estimate= MIN_REAL_COUNT;
-  return min_real_count_estimate;
- }
-
- // sigma1 turns out to be a bad estimate of the background noise because of outliers
- if( fabs(median2 - median1) < 10 * sqrt(median1) ) {
-  fprintf(stderr, "No overscan found!\n");
-
-  min_real_count_estimate= MIN_REAL_COUNT; /// ZATYCHKA!!!!!!!!!!!!!!!!11
-  return min_real_count_estimate;
- }
- fprintf(stderr, "Overscan detected!\n");
- return min_real_count_estimate;
+// This function will check if a record indicates the image has already been calibrated
+int check_history_keywords(char *record) {
+    if( strstr(record, "HISTORY Flat fielding:") != NULL ) {
+        return 1; // Match found
+    }
+    return 0; // No match found
 }
-*/
 
 unsigned short detect_overscan2( float *image_array, long *naxes ) {
  // Two main ideas of this alghorithm:
@@ -183,13 +143,27 @@ int main( int argc, char *argv[] ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for FITS header\n" );
   exit( EXIT_FAILURE );
  }
- for ( ii= 1; ii < No_of_keys; ii++ ) {
+ //for ( ii= 1; ii < No_of_keys; ii++ ) {
+ for ( ii= 0; ii < No_of_keys; ii++ ) {
   key[ii]= malloc( FLEN_CARD * sizeof( char ) ); // FLEN_CARD length of a FITS header card defined in fitsio.h
   if ( key[ii] == NULL ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for key[ii]\n" );
    exit( EXIT_FAILURE );
   };
   fits_read_record( fptr, ii, key[ii], &status );
+
+  // Check if the FITS header record indicates the image has already been calibrated
+  if (check_history_keywords(key[ii])) {                                            
+   fprintf(stderr, "Prohibited HISTORY keyword found in header, exiting...\n");
+   fits_close_file(fptr, &status); // Close the FITS file
+   // Free allocated memory
+   for (int j = 0; j <= ii; j++) {
+    free(key[j]);
+   }
+   free(key);
+   exit(EXIT_FAILURE); // Exit the program
+  }
+
  }
  fits_get_img_type( fptr, &bitpix2, &status );
 
@@ -327,7 +301,8 @@ int main( int argc, char *argv[] ) {
 
  // fprintf(stdout,  "Overscan detection: %f seconds\n Total: %f seconds\n", spent_time, 1.0 * clock() / CLOCKS_PER_SEC);
 
- for ( ii= 1; ii < No_of_keys; ii++ ) {
+ //for ( ii= 1; ii < No_of_keys; ii++ ) {
+ for ( ii= 0; ii < No_of_keys; ii++ ) {
   free( key[ii] );
  }
  free( key );

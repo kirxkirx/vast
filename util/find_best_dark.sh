@@ -9,14 +9,14 @@ export LANGUAGE LC_ALL
 
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
-  REALPATH=`readlink -f "$1" 2>/dev/null`
+  REALPATH=$(readlink -f "$1" 2>/dev/null)
   if [ $? -ne 0 ];then
    # If we are on Mac OS X system, GNU readlink might be installed as 'greadlink'
-   REALPATH=`greadlink -f "$1" 2>/dev/null`
+   REALPATH=$(greadlink -f "$1" 2>/dev/null)
    if [ $? -ne 0 ];then
-    REALPATH=`realpath "$1" 2>/dev/null`
+    REALPATH=$(realpath "$1" 2>/dev/null)
     if [ $? -ne 0 ];then
-     REALPATH=`grealpath "$1" 2>/dev/null`
+     REALPATH=$(grealpath "$1" 2>/dev/null)
      if [ $? -ne 0 ];then
       # Something that should work well enough in practice
       OURPWD=$PWD
@@ -30,15 +30,15 @@ function vastrealpath {
   echo "$REALPATH"
 }
 
-VAST_PATH=`vastrealpath $0`
-VAST_PATH=`dirname "$VAST_PATH"`
+VAST_PATH=$(vastrealpath $0)
+VAST_PATH=$(dirname "$VAST_PATH")
 VAST_PATH="${VAST_PATH/util/}"
 VAST_PATH="${VAST_PATH/lib/}"
 VAST_PATH="${VAST_PATH/'//'/'/'}"
 # In case the above line didn't work
-VAST_PATH=`echo "$VAST_PATH" | sed "s:/'/:/:g"`
+VAST_PATH=$(echo "$VAST_PATH" | sed "s:/'/:/:g")
 # Make sure no quotation marks are left in VAST_PATH
-VAST_PATH=`echo "$VAST_PATH" | sed "s:'::g"`
+VAST_PATH=$(echo "$VAST_PATH" | sed "s:'::g")
 # Check that VAST_PATH ends with '/'
 LAST_CHAR_OF_VAST_PATH="${VAST_PATH: -1}"
 if [ "$LAST_CHAR_OF_VAST_PATH" != "/" ];then
@@ -88,8 +88,16 @@ if [ $? -ne 0 ];then
  fi
 fi
 
+# Check if there are header keywords that indicate that the image was already dark-subtracted
+# Dark frame
+"$VAST_PATH"util/listhead "$FITSFILE" | grep --quiet 'Dark frame'
+if [ $? -eq 0 ];then
+ echo "ERROR: the input image seems to be dark frame subtracted already (found 'Dark frame' in the header)"
+ exit 1
+fi
+
 ###
-BASENAME_FITSFILE=$(basename "$FITSFILE")
+#BASENAME_FITSFILE=$(basename "$FITSFILE")
 ###
 
 OUTPUT_OF_GET_IMAGE_DATE=$("$VAST_PATH"util/get_image_date "$FITSFILE" 2>&1)
@@ -145,7 +153,7 @@ for DARK in "$DARK_FRAMES_DIR"/* ;do
 
  ###############
  # On-the fly convert the input image if necessary
- DARK=`"$VAST_PATH"lib/on_the_fly_symlink_or_convert "$DARK"`
+ DARK=$("$VAST_PATH"lib/on_the_fly_symlink_or_convert "$DARK")
  ###############
  # Verify that the input file is a valid FITS file
  "$VAST_PATH"lib/fitsverify -q -e "$DARK" &>/dev/null
@@ -161,7 +169,7 @@ for DARK in "$DARK_FRAMES_DIR"/* ;do
  fi
 
  ###
- BASENAME_DARK=$(basename "$DARK")
+ #BASENAME_DARK=$(basename "$DARK")
  ###
 
  OUTPUT_OF_GET_DARK_DATE=$("$VAST_PATH"util/get_image_date "$DARK" 2>&1)
@@ -217,7 +225,8 @@ for DARK in "$DARK_FRAMES_DIR"/* ;do
  JD_DIFF=$(echo "$DARK_JD $IMAGE_JD" | awk '{print ($1 > $2) ? $1 - $2 : $2 - $1}')
 
  # Update the minimum JD difference and selected dark image if the current one is closer
- if [ $(echo "$JD_DIFF < $MIN_JD_DIFF" | bc) -ne 0 ];then
+ #if [ $(echo "$JD_DIFF < $MIN_JD_DIFF" | bc) -ne 0 ];then
+ if awk -v jd_diff="$JD_DIFF" -v min_jd_diff="$MIN_JD_DIFF" 'BEGIN {exit !(jd_diff < min_jd_diff)}'; then
   MIN_JD_DIFF=$JD_DIFF
   SELECTED_DARK_IMAGE="$DARK"
  fi
