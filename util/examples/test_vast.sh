@@ -9798,6 +9798,9 @@ if [ -d ../NMW_calibration_test ];then
  # Run the test
  echo "NMW calibration test " 1>&2
  echo -n "NMW calibration test: " >> vast_test_report.txt 
+ # Set calibration info
+ export DARK_FRAMES_DIR=../NMW_calibration_test/darks
+ export FLAT_FIELD_FILE=../NMW_calibration_test/flat/mff_0013_tail1_notbad.fit
  #
  cp -v bad_region.lst_default bad_region.lst
  #
@@ -9809,10 +9812,6 @@ if [ -d ../NMW_calibration_test ];then
   rm -f transient_report/index.html
  fi
  #################################################################
- # Instead of running the single-field search,
- # we test the production NMW script
- export DARK_FRAMES_DIR=../NMW_calibration_test/darks
- export FLAT_FIELD_FILE=../NMW_calibration_test/flat/mff_0013_tail1_notbad.fit
  REFERENCE_IMAGES=../NMW_calibration_test/calibrated_reference util/transients/transient_factory_test31.sh ../NMW_calibration_test/light
  if [ $? -ne 0 ];then
   TEST_PASSED=0
@@ -9880,8 +9879,8 @@ $GREP_RESULT"
   #
   # No transients are expected to be found in this field
   
-  grep 'Last  image:' vast_image_details.log | grep --quiet 'fd_'
-  if [ $? -ne 0 ];then
+  N=$(grep 'Last  image:' transient_report/index.html | grep -C 'fd_')
+  if [ $N -ne 2 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB0_no_calibration_in_filename"
   fi
@@ -9894,7 +9893,12 @@ $GREP_RESULT"
  fi
  
  # Check that util/find_best_dark.sh can find dark frames for all the uncalibrated images
- for LIGHT_IMG in ../NMW_calibration_test/light/Cyg_*.fts ;do
+ for LIGHT_IMG in ../NMW_calibration_test/light/Cyg2_*.fts ;do
+  if [ ! -f "$LIGHT_IMG" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_OK_NOTESTIMG__"$(basename "$LIGHT_IMG")
+   break
+  fi
   util/find_best_dark.sh "$LIGHT_IMG"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -9903,7 +9907,12 @@ $GREP_RESULT"
  done
 
  # Check that util/find_best_dark.sh refuses to find dark frames for all the calibrated images
- for LIGHT_IMG in ../NMW_calibration_test/light/fd_Cyg_*.fts ;do
+ for LIGHT_IMG in ../NMW_calibration_test/light/fd_Cyg2_*.fts ;do
+  if [ ! -f "$LIGHT_IMG" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_NO_NOTESTIMG__"$(basename "$LIGHT_IMG")
+   break
+  fi
   util/find_best_dark.sh "$LIGHT_IMG"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
