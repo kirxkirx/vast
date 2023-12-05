@@ -14627,8 +14627,8 @@ if [ -d ../TICA_TESS_mag_calibration_failure_test ];then
  #
  remove_test31_tmp_files_if_present
  # Run the test
- echo " TICA TESS magnitude calibration failure test " 1>&2
- echo -n " TICA TESS magnitude calibration failure test: " >> vast_test_report.txt 
+ echo "TICA TESS magnitude calibration failure test " 1>&2
+ echo -n "TICA TESS magnitude calibration failure test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
  #
