@@ -88,8 +88,13 @@ if [ -n "$CAMERA_SETTINGS" ];then
   TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
   BAD_REGION_FILE="../Stas_bad_region.lst"
   EXCLUSION_LIST="../exclusion_list.txt"
-  export DARK_FRAMES_DIR=/dataX/cgi-bin/unmw/uploads/darks
-  export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_0013_tail1_notbad.fit
+  # Calibration data
+  if [ -z "$DARK_FRAMES_DIR" ];then
+   export DARK_FRAMES_DIR=/dataX/cgi-bin/unmw/uploads/darks
+  fi
+  if [ -z "$FLAT_FIELD_FILE" ];then
+   export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_0013_tail1_notbad.fit
+  fi
  fi
  if [ "$CAMERA_SETTINGS" = "STL-11000M" ];then
   # Canon 135 mm f/2.0 telephoto lens + SBIG STL-11000 CCD, 20 sec exposures
@@ -97,10 +102,14 @@ if [ -n "$CAMERA_SETTINGS" ];then
   # The input images will be calibrated
   # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
   # the script will try to find the most appropriate one based on temperature and time
-  export DARK_FRAMES_DIR=/home/apache/darks
+  if [ -z "$DARK_FRAMES_DIR" ];then
+   export DARK_FRAMES_DIR=/home/apache/darks
+  fi
   # we don't usually have a luxury of multiple flat field frames to chhose from
   # FLAT_FIELD_FILE has to point to one specific file that will be used for flat-fielding
-  export FLAT_FIELD_FILE=/home/apache/flats/mff_2023-07-14.fit
+  if [ -z "$DARK_FRAMES_DIR" ];then
+   export FLAT_FIELD_FILE=/home/apache/flats/mff_2023-07-14.fit
+  fi
   #
   TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="STL-11000M"
   export TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
@@ -897,6 +906,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  
  # I guess we should be including the calibration attempt here resetting SECOND_EPOCH__FIRST_IMAGE and SECOND_EPOCH__SECOND_IMAGE
  ################################
+ echo "Calibration settings: DARK_FRAMES_DIR=$DARK_FRAMES_DIR FLAT_FIELD_FILE=$FLAT_FIELD_FILE"
+ echo "Calibration settings: DARK_FRAMES_DIR=$DARK_FRAMES_DIR FLAT_FIELD_FILE=$FLAT_FIELD_FILE" >> transient_factory_test31.txt
  CALIBRATED_SECOND_EPOCH__FIRST_IMAGE=$(try_to_calibrate_the_input_frame "$SECOND_EPOCH__FIRST_IMAGE" 2>> transient_factory_test31.txt)
  if [ $? -eq 0 ];then
   if [ -n "$CALIBRATED_SECOND_EPOCH__FIRST_IMAGE" ];then
