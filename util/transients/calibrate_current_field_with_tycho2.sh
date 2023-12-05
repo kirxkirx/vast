@@ -146,6 +146,8 @@ if [ ! -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
  lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search 9.1
 fi
 
+echo "Tycho-2 catalog and the derived bright star exclusion list are ready"
+
 # WCS-calibrate the reference image if it has not been done
 REFERENCE_IMAGE=$(cat vast_summary.log | grep "Ref.  image:" |awk '{print $6}')
 TEST_SUBSTRING=$(basename $REFERENCE_IMAGE)
@@ -157,14 +159,19 @@ else
  WCS_CALIBRATED_REFERENCE_IMAGE=wcs_$(basename $REFERENCE_IMAGE)
 fi
 SEXTRACTOR_CATALOG_NAME="$WCS_CALIBRATED_REFERENCE_IMAGE".cat
+echo "Checking for the presence of non-empty $WCS_CALIBRATED_REFERENCE_IMAGE and $SEXTRACTOR_CATALOG_NAME "
 if [ ! -s "$WCS_CALIBRATED_REFERENCE_IMAGE" ] || [ ! -s "$SEXTRACTOR_CATALOG_NAME" ] ;then
  util/wcs_image_calibration.sh $REFERENCE_IMAGE 
  if [ $? -ne 0 ];then
   echo "ERROR in $0 : cannot plate-solve the reference image $REFERENCE_IMAGE"
   exit 1
  fi
-fi # if [ ! -s "$WCS_CALIBRATED_REFERENCE_IMAGE" ];then
+else
+ echo "Found non-empty $WCS_CALIBRATED_REFERENCE_IMAGE and $SEXTRACTOR_CATALOG_NAME"
+fi # if [ ! -s "$WCS_CALIBRATED_REFERENCE_IMAGE" ] || [ ! -s "$SEXTRACTOR_CATALOG_NAME" ] ;then
 
+
+# Final check for $WCS_CALIBRATED_REFERENCE_IMAGE and $SEXTRACTOR_CATALOG_NAME
 if [ ! -s "$WCS_CALIBRATED_REFERENCE_IMAGE" ];then
  echo "ERROR in $0 : cannot find the WCS-calibrated image $WCS_CALIBRATED_REFERENCE_IMAGEE which was supposed to be created by util/wcs_image_calibration.sh"
  exit 1
@@ -173,6 +180,7 @@ if [ ! -s "$SEXTRACTOR_CATALOG_NAME" ];then
  echo "ERROR in $0 : cannot find the catalog file $SEXTRACTOR_CATALOG_NAME which was supposed to be created by util/wcs_image_calibration.sh"
  exit 1
 fi
+
 # If we are still here
 echo "The reference image ($WCS_CALIBRATED_REFERENCE_IMAGE) and catalog ($SEXTRACTOR_CATALOG_NAME) found"
 

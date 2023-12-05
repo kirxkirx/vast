@@ -1147,7 +1147,9 @@ fi
 
 
  # At this point, we should somehow have a WCS calibrated image named $WCS_IMAGE_NAME
- if [ ! -f "$SEXTRACTOR_CATALOG_NAME" ];then
+ echo "Checking if the catalog $SEXTRACTOR_CATALOG_NAME corresponding to the image $WCS_IMAGE_NAME alredy exist and is non-empty..."
+ if [ ! -s "$SEXTRACTOR_CATALOG_NAME" ];then
+  echo "Catalog $SEXTRACTOR_CATALOG_NAME corresponding to the image $WCS_IMAGE_NAME was not found."
   # Try to generate the catalog without re-running SExtractor
   "$VAST_PATH"lib/reformat_existing_sextractor_catalog_according_to_wcsparam.sh "$FITSFILE" "$WCS_IMAGE_NAME" "$SEXTRACTOR_CATALOG_NAME"
   if [ $? -ne 0 ];then

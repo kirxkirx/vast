@@ -1059,7 +1059,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
    echo "Checking WCS cache directory $WCSCACHEDIR" >> transient_factory_test31.txt
    if [ -d "$WCSCACHEDIR" ];then
     echo "Found WCS cache directory $WCSCACHEDIR" >> transient_factory_test31.txt
-    for i in "$WCSCACHEDIR"/wcs_"$FIELD"_*."$FITS_FILE_EXT" "$WCSCACHEDIR"/exclusion_list*; do
+    for i in "$WCSCACHEDIR"/wcs_"$FIELD"_*."$FITS_FILE_EXT" "$WCSCACHEDIR"/wcs_fd_"$FIELD"_*."$FITS_FILE_EXT" "$WCSCACHEDIR"/exclusion_list*; do
      if [ -s "$i" ];then
       # We need some quality check before trusting the solved reference images
       # It may be one of the NMW archive images with broken WCS
@@ -1323,24 +1323,30 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    echo "$WCS_IMAGE_NAME_FOR_CHECKS does not exist or is empty: waiting for solve_plate_with_UCAC5" >> transient_factory_test31.txt
    # Wait here hoping util/solve_plate_with_UCAC5 will plate-solve the reference image
    if [ "$SYSTEM_TYPE" = "Linux" ];then
+    echo "xxxxxxxxxx process tree ($WCS_IMAGE_NAME_FOR_CHECKS does not exist or is empty) xxxxxxxxxx" >> transient_factory_test31.txt
     # --forest will not fly if we are not on Linux
     ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+    echo "xxxxxxxxxx xxxxxxxxxx" >> transient_factory_test31.txt
    fi
    #####
    echo "wait"   >> transient_factory_test31.txt
    wait
    #####
    if [ "$SYSTEM_TYPE" = "Linux" ];then
+    echo "xxxxxxxxxx process tree (after wait) xxxxxxxxxx" >> transient_factory_test31.txt
     # --forest will not fly if we are not on Linux
     ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+    echo "xxxxxxxxxx xxxxxxxxxx" >> transient_factory_test31.txt
    fi
   else
    echo "Found non-empty $WCS_IMAGE_NAME_FOR_CHECKS" >> transient_factory_test31.txt
   fi
   # Print the process tree
   if [ "$SYSTEM_TYPE" = "Linux" ];then
+   echo "xxxxxxxxxx process tree (before magnitude calibration) xxxxxxxxxx" >> transient_factory_test31.txt
    # --forest will not fly if we are not on Linux 
    ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
+   echo "xxxxxxxxxx xxxxxxxxxx" >> transient_factory_test31.txt
   fi
   echo "____ Start of magnitude calibration ____" >> transient_factory_test31.txt
   # Decide which catalog to use for magnitude calibration depending on the image filed of view
@@ -1388,6 +1394,27 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     ;;
    "TYCHO2_V")
     echo "Calibrating the magnitude scale with Tycho-2 stars" >> transient_factory_test31.txt
+    #############
+    #
+    # Make sure the WCS-calibrated reference image and the corresponding catalog are here
+    # - they will be used by util/transients/calibrate_current_field_with_tycho2.sh
+    # (if not present calibrate_current_field_with_tycho2.sh may try to recreate them and collide with a plate solution launched by $0)
+    REFERENCE_IMAGE=$(cat vast_summary.log | grep "Ref.  image:" |awk '{print $6}')
+    TEST_SUBSTRING=$(basename $REFERENCE_IMAGE)
+    TEST_SUBSTRING="${TEST_SUBSTRING:0:4}"
+    if [ "$TEST_SUBSTRING" = "wcs_" ];then
+     WCS_CALIBRATED_REFERENCE_IMAGE=$(basename $REFERENCE_IMAGE)
+    else
+     WCS_CALIBRATED_REFERENCE_IMAGE=wcs_$(basename $REFERENCE_IMAGE)
+    fi
+    SEXTRACTOR_CATALOG_NAME="$WCS_CALIBRATED_REFERENCE_IMAGE".cat
+    echo "$0 is checking for the presence of non-empty $WCS_CALIBRATED_REFERENCE_IMAGE and $SEXTRACTOR_CATALOG_NAME " >> transient_factory_test31.txt
+    if [ ! -s "$WCS_CALIBRATED_REFERENCE_IMAGE" ] || [ ! -s "$SEXTRACTOR_CATALOG_NAME" ] ;then
+     echo "$0 has not found non-empty $WCS_CALIBRATED_REFERENCE_IMAGE and $SEXTRACTOR_CATALOG_NAME" >> transient_factory_test31.txt
+     echo "wait" >> transient_factory_test31.txt
+     wait
+    fi
+    #############
     echo "y" | util/transients/calibrate_current_field_with_tycho2.sh >> transient_factory_test31.txt 2>&1
     MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
     ;;
