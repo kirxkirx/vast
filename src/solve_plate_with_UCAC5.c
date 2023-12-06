@@ -34,6 +34,8 @@
 #include <unistd.h>    // also for getpid(), unlink(), sleep() ...
 #include <math.h>
 
+#include <time.h> // for seeding the random number generator with srand(time(NULL))
+
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_sort.h>
 
@@ -1451,13 +1453,48 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  }
 
  // Print search stat
- fprintf( stderr, "Searchig scan for %d good reference stars...\n", search_stars_counter );
+ fprintf( stderr, "Searchig scan/vast for %d good reference stars...\n", search_stars_counter );
 
  // Astrometric catalog search
  fprintf( stderr, "Searchig UCAC5...\n" );
- // yes, sorting in magnitude works
- // sprintf( command, "curl -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' > %s", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
+ // Randomly choose between the two servers
+ // Seed the random number generator
+ srand( time( NULL ) );
+ // Generate a random number (0 or 1)
+ int randChoice= rand() % 2;
+
+ if ( randChoice == 0 ) {
+  sprintf( command, "curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' > %s", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
+ } else {
+  sprintf( command, "curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' > %s", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
+ }
+
+ fprintf( stderr, "%s\n", command );
+ vizquery_run_success= system( command );
+
+ if ( vizquery_run_success != 0 || count_lines_in_ASCII_file( vizquery_output_filename ) < 5 ) {
+  fprintf( stderr, "First attempt failed, trying alternative command\n" );
+
+  if ( randChoice == 0 ) {
+   // This block will execute if the first executed command was the first option and it failed
+   sprintf( command, "curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' > %s", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
+  } else {
+   // This block will execute if the first executed command was the second option and it failed
+   sprintf( command, "curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' > %s", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
+  }
+
+  fprintf( stderr, "%s\n", command );
+  vizquery_run_success= system( command );
+  if ( vizquery_run_success != 0 || count_lines_in_ASCII_file( vizquery_output_filename ) < 5 ) {
+   fprintf( stderr, "ERROR: Both attempts failed\n" );
+   return 1;
+  }
+ }
+
+ /*
+ // original single-server code
  sprintf( command, "curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' > %s", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
+ sprintf( command, "curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' > %s", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
 
  fprintf( stderr, "%s\n", command );
  vizquery_run_success= system( command );
@@ -1470,6 +1507,7 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
   fprintf( stderr, "ERROR in search_UCAC5_at_scan(): the server response file contains too few lines!\n" );
   return 1;
  }
+ */
 
  /*
   // reset the catalog match flag if this wasn't the first iteration
