@@ -4,13 +4,13 @@ on: [push]
 
 jobs:
   test:
-    runs-on: macos-12
+    runs-on: ubuntu-latest
     env:
       # Example of how tokens are propagated to the VM
       MYTOKEN : ${{ secrets.MYTOKEN }}
       MYTOKEN2: "value2"
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Check commit message
       id: check_commit
       run: |
@@ -24,7 +24,7 @@ jobs:
     - name: Test in FreeBSD
       id: test
       if: env.SKIP != 'true'
-      uses: vmactions/freebsd-vm@v0
+      uses: vmactions/freebsd-vm@v1
       with:
         # Example of how tokens are propagated to the VM
         envs: 'MYTOKEN MYTOKEN2'

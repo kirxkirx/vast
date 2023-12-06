@@ -1,9 +1,38 @@
-name: macOS 11 MacPorts build
+name: macOS 11 Homebrew and MacPorts build
 
 on: [push]
 
 jobs:
-  build:
+  build_homebrew:
+
+    runs-on: macos-11
+
+    # Manually enable/disable this test
+    # Write an if statement that is always true/false
+    if: true
+    steps:
+    - uses: actions/checkout@v3
+    - name: brew update
+      run: brew update
+    # The following packages are already installed
+    # at a Github Actions VM.
+    # g++ and gfortran are part of the gcc package
+    #- name: Install gcc, g++, gfortran, and wget
+    #  run: brew install gcc wget
+    #- name: Install X11 header files
+    #  run: brew install libx11
+    #- name: Install libpng
+    #  run: brew install libpng
+    - name: make VaST (Homebrew)
+      run: make
+    # Disble the long data analysis test
+    #- name: prepare for the test
+    #  run: echo "1" > ../THIS_IS_HPCC 
+    #- name: test VaST
+    #  run: util/examples/test_vast.sh
+
+  build_macports:
+    needs: build_homebrew
     runs-on: macos-11
     steps:
     - uses: actions/checkout@v3
@@ -34,6 +63,6 @@ jobs:
     - name: Install libpng
       run: sudo port install libpng
       if: env.SKIP != 'true'
-    - name: make VaST
+    - name: make VaST (MacPorts)
       run: make
       if: env.SKIP != 'true'
