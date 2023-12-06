@@ -43,8 +43,6 @@ int main() {
 
  char str[2048];
 
- 
-
  dp= opendir( "./" );
  if ( dp != NULL ) {
   fprintf( stderr, "Computing lightcurve statistics... " );
@@ -70,7 +68,7 @@ int main() {
  } else {
   perror( "Couldn't open the directory\n" );
  }
- 
+
  if ( number_of_stars != 0 ) {
 
   mean= gsl_stats_mean( a, 1, number_of_stars );

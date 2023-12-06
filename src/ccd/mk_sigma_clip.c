@@ -95,7 +95,7 @@ int main( int argc, char *argv[] ) {
   fits_read_img( fptr, TUSHORT, 1, img_size, &nullval, image_array[counter], &anynul, &status );
   fprintf( stderr, "Reading %s %ld %ld  %d bitpix\n", argv[counter], naxes[0], naxes[1], bitpix2 );
   fits_close_file( fptr, &status );
-  fits_report_error( stderr, status ); // print out any error messages 
+  fits_report_error( stderr, status ); // print out any error messages
  }
 
  yy= malloc( img_size * sizeof( double ) );
@@ -154,11 +154,11 @@ int main( int argc, char *argv[] ) {
   fclose( file_read_test );
   unlink( "median.fit" );
  }
- fits_create_file( &fptr, "median.fit", &status ); // create new file 
+ fits_create_file( &fptr, "median.fit", &status ); // create new file
  fits_create_img( fptr, USHORT_IMG, 2, naxes, &status );
  fits_write_img( fptr, TUSHORT, fpixel, img_size, combined_array, &status );
 
- // -- Writing header -- 
+ // -- Writing header --
  for ( ii= 1; ii < No_of_keys; ii++ ) {
   fits_write_record( fptr, key[ii], &status );
  }
@@ -178,12 +178,12 @@ int main( int argc, char *argv[] ) {
  for ( counter= 1; counter < argc; counter++ ) {
   fits_write_history( fptr, argv[counter], &status );
  }
- fits_report_error( stderr, status ); // print out any error messages 
+ fits_report_error( stderr, status ); // print out any error messages
  fits_close_file( fptr, &status );
  for ( counter= 1; counter < argc; counter++ ) {
   free( image_array[counter] );
  }
  fprintf( stderr, "Writing output to median.fit \n" );
- fits_report_error( stderr, status ); // print out any error messages 
+ fits_report_error( stderr, status ); // print out any error messages
  return status;
 }

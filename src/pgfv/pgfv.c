@@ -68,7 +68,7 @@ int get_string_with_fov_of_wcs_calibrated_image( char *fitsfilename, char *outpu
  output_string[0]= '\0';            // reset output just in case
  ( *output_float_fov_arcmin )= 0.0; // reset output just in case
  //
- //fprintf(stderr,"DEBUG get_string_with_fov_of_wcs_calibrated_image(): finder_chart_mode=%d \n",finder_chart_mode);
+ // fprintf(stderr,"DEBUG get_string_with_fov_of_wcs_calibrated_image(): finder_chart_mode=%d \n",finder_chart_mode);
  //
  if ( finder_chart_mode == 1 ) {
   // This is a zoom-in image
@@ -894,7 +894,7 @@ void load_markers_for_autocandidate_variables( float *markX_known_variable, floa
 int main( int argc, char **argv ) {
 
  // For FITS file reading
- fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h 
+ fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h
  long naxes[2];
  int status= 0;
  int bitpix;
@@ -912,7 +912,7 @@ int main( int argc, char **argv ) {
  float *float_array;
  float *float_array2;
  int i;
- // PGPLOT vars 
+ // PGPLOT vars
  float curX, curY, curX2, curY2;
  char curC= 'R';
  float tr[6];
@@ -933,7 +933,7 @@ int main( int argc, char **argv ) {
  float markY= 0.0;
  float finder_char_pix_around_the_target= 20.0; // default thumbnail image size for transient search
 
- // new fatures 
+ // new fatures
  int buf;
  float axis_ratio;
  double razmer_x, razmer_y;
@@ -945,7 +945,7 @@ int main( int argc, char **argv ) {
 
  int bad_size;
 
- // Source Extractor Catalog 
+ // Source Extractor Catalog
  FILE *catfile;
  // double MUSOR;
  // int intMUSOR;
@@ -992,7 +992,7 @@ int main( int argc, char **argv ) {
  float marker_scaling;
  char namelabel[256];
  namelabel[0]= '\0';
- 
+
  float float_parameters[NUMBER_OF_FLOAT_PARAMETERS]; // new
 
  // Match File //
@@ -1050,10 +1050,8 @@ int main( int argc, char **argv ) {
  int use_xy2sky= 2; // 0 - no, 1 - yes, 2 - don't know
  int xy2sky_return_value;
 
-
  float polygondraw_x[5];
  float polygondraw_y[5];
-
 
  if ( 0 == strcmp( "make_finder_chart", basename( argv[0] ) ) ) {
   fprintf( stderr, "Plotting finder chart...\n" );
@@ -1075,7 +1073,7 @@ int main( int argc, char **argv ) {
   fits2png_fullframe= 1;
  }
 
- // Reading file which defines rectangular regions we want to exclude 
+ // Reading file which defines rectangular regions we want to exclude
  double *X1;
  double *Y1;
  double *X2;
@@ -1130,14 +1128,12 @@ int main( int argc, char **argv ) {
  double position_x_pix;
  double position_y_pix;
 
-
  // variables to store cpgqvsz output
  float cpgqvsz_x1, cpgqvsz_x2, cpgqvsz_y1, cpgqvsz_y2;
  cpgqvsz_x1= cpgqvsz_x2= cpgqvsz_y1= cpgqvsz_y2= 0.0;
- 
+
  //
  int user_request_to_exit_with_nonzero_exit_code= 0;
- 
 
  // Options for getopt()
  char *cvalue= NULL;
@@ -1798,7 +1794,7 @@ int main( int argc, char **argv ) {
    sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
    external_flag= 0;
    // external_flag_string[0]='\0';
-   //if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, NULL ) ) {
+   // if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, NULL ) ) {
    if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, float_parameters ) ) {
     fprintf( stderr, "WARNING: problem occurred while parsing SExtractor catalog %s  (1)\nThe offending line is:\n%s\n", sextractor_catalog_filename, sextractor_catalog_string );
     continue;
@@ -2080,13 +2076,13 @@ int main( int argc, char **argv ) {
   // so we need to specify the width in inches explicitly, see
   // https://sites.astro.caltech.edu/~tjp/pgplot/subroutines.html#PGPAP
   // https://sites.astro.caltech.edu/~tjp/pgplot/subroutines.html#pgqvsz
-  //cpgpap( 0.0, 1.0 / axis_ratio ); // does not work with giza
-  cpgqvsz( 1, &cpgqvsz_x1, &cpgqvsz_x2, &cpgqvsz_y1, &cpgqvsz_y2);
+  // cpgpap( 0.0, 1.0 / axis_ratio ); // does not work with giza
+  cpgqvsz( 1, &cpgqvsz_x1, &cpgqvsz_x2, &cpgqvsz_y1, &cpgqvsz_y2 );
   cpgpap( cpgqvsz_y2, 1.0 / axis_ratio );
   //
   cpgsvp( 0.05, 0.95, 0.035, 0.035 + 0.9 );
  } else {
-  cpgpap( 0.0, 1.0 ); // Make square plot 
+  cpgpap( 0.0, 1.0 ); // Make square plot
  }
 
  if ( use_labels == 1 ) {
@@ -2177,7 +2173,6 @@ int main( int argc, char **argv ) {
  curC= 'R';
  do {
 
-
   // Check if the click is inside the plot
   // (we'll just redraw the plot if it is not)
   if ( curC == 'A' || curC == 'a' ) {
@@ -2219,7 +2214,7 @@ int main( int argc, char **argv ) {
      while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, catfile ) ) {
       sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
       external_flag= 0;
-      //if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, NULL ) ) {
+      // if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, NULL ) ) {
       if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, float_parameters ) ) {
        fprintf( stderr, "WARNING: problem occurred while parsing SExtractor catalog %s  (2)\nThe offending line is:\n%s\n", sextractor_catalog_filename, sextractor_catalog_string );
        continue;
@@ -2520,8 +2515,8 @@ int main( int argc, char **argv ) {
         }
         // That has to match two filtering lines in vast.c
         if ( sextractor_catalog__A_IMAGE[marker_counter] > APER && sextractor_catalog__se_FLAG[marker_counter] < 4 ) {
-        // Allow for large unsaturrated stars: example - VX Sgr with low detection limit, test NMWNSGR20N40410
-        //if ( sextractor_catalog__A_IMAGE[marker_counter] > 2*APER && sextractor_catalog__se_FLAG[marker_counter] < 4 ) {
+         // Allow for large unsaturrated stars: example - VX Sgr with low detection limit, test NMWNSGR20N40410
+         // if ( sextractor_catalog__A_IMAGE[marker_counter] > 2*APER && sextractor_catalog__se_FLAG[marker_counter] < 4 ) {
          bad_size= 1;
         }
         if ( sextractor_catalog__A_IMAGE[marker_counter] + sextractor_catalog__ERRA_IMAGE[marker_counter] < FWHM_MIN ) {
@@ -2533,7 +2528,7 @@ int main( int argc, char **argv ) {
         if ( MAX( sextractor_catalog__FWHM_float_parameters0[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__A_IMAGE[marker_counter] ) < FWHM_MIN ) {
          bad_size= 1;
         }
-        
+
         if ( bad_size == 0 ) {
          fprintf( stderr, "A= \x1B[01;32m%lf +/- %lf\x1B[33;00m  B= \x1B[01;32m%lf +/- %lf\x1B[33;00m\nFWHM(A)= \x1B[01;32m%lf +/- %lf\x1B[33;00m  FWHM(B)= \x1B[01;32m%lf +/- %lf\x1B[33;00m\nFWHM= \x1B[01;32m%lf\x1B[33;00m\n", sextractor_catalog__A_IMAGE[marker_counter], sextractor_catalog__ERRA_IMAGE[marker_counter], sextractor_catalog__B_IMAGE[marker_counter], sextractor_catalog__ERRB_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__A_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRA_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__B_IMAGE[marker_counter], SIGMA_TO_FWHM_CONVERSION_FACTOR * sextractor_catalog__ERRB_IMAGE[marker_counter], sextractor_catalog__FWHM_float_parameters0[marker_counter] );
         } else {
@@ -2757,9 +2752,9 @@ int main( int argc, char **argv ) {
    // Determine cuts
    image_minmax3( naxes[0] * naxes[1], float_array, &max_val, &min_val, drawX1, drawX2, drawY1, drawY2, naxes );
 
-   // Draw image 
+   // Draw image
    if ( finder_chart_mode == 0 ) {
-    cpgscr( 0, 0.0, 0.0, 0.0 ); // set black background 
+    cpgscr( 0, 0.0, 0.0, 0.0 ); // set black background
     cpgimag( float_array, (int)naxes[0], (int)naxes[1], drawX1, drawX2, drawY1, drawY2, min_val, max_val, tr );
    } else {
     // fprintf(stderr,"curC=%c\n",curC);
@@ -2827,7 +2822,7 @@ int main( int argc, char **argv ) {
     cpgsci( 1 );
    }
 
-   //fprintf(stderr,"DEBUG main(): finder_chart_mode=%d use_north_east_marks=%d is_this_north_up_east_left_image=%d use_datestringinsideimg=%d use_target_mark=%d\n",finder_chart_mode,use_north_east_marks,is_this_north_up_east_left_image,use_datestringinsideimg,use_target_mark);
+   // fprintf(stderr,"DEBUG main(): finder_chart_mode=%d use_north_east_marks=%d is_this_north_up_east_left_image=%d use_datestringinsideimg=%d use_target_mark=%d\n",finder_chart_mode,use_north_east_marks,is_this_north_up_east_left_image,use_datestringinsideimg,use_target_mark);
 
    if ( finder_chart_mode == 1 ) {
 
@@ -2886,7 +2881,7 @@ int main( int argc, char **argv ) {
        }
        // special case - very small fov
        if ( finder_char_pix_around_the_target < 32 ) {
-        marker_scaling=0.3;
+        marker_scaling= 0.3;
        }
        //
        // up
@@ -2964,11 +2959,11 @@ int main( int argc, char **argv ) {
     }
     /* And draw bad regions */
     if ( 0 != N_bad_regions ) {
-     //fprintf(stderr, "YOIYOYOYOYOYOYOYOY count_lines_in_ASCII_file( \"bad_region.lst\" )=%d  N_bad_regions=%d\n", count_lines_in_ASCII_file( "bad_region.lst" ), N_bad_regions);
+     // fprintf(stderr, "YOIYOYOYOYOYOYOYOY count_lines_in_ASCII_file( \"bad_region.lst\" )=%d  N_bad_regions=%d\n", count_lines_in_ASCII_file( "bad_region.lst" ), N_bad_regions);
      cpgsci( 2 );
      for ( marker_counter= 0; marker_counter < N_bad_regions; marker_counter++ ) {
       // Set the fill style to solid
-      cpgsfs(1);
+      cpgsfs( 1 );
 
       // Define the X and Y points of the rectangle
       polygondraw_x[0]= (float)X1[marker_counter];
@@ -2976,41 +2971,41 @@ int main( int argc, char **argv ) {
       polygondraw_x[2]= (float)X2[marker_counter];
       polygondraw_x[3]= (float)X1[marker_counter];
       polygondraw_x[4]= (float)X1[marker_counter];
-      polygondraw_y[0]= (float)Y1[marker_counter]; 
+      polygondraw_y[0]= (float)Y1[marker_counter];
       polygondraw_y[1]= (float)Y1[marker_counter];
       polygondraw_y[2]= (float)Y2[marker_counter];
       polygondraw_y[3]= (float)Y2[marker_counter];
       polygondraw_y[4]= (float)Y1[marker_counter];
 
       // Draw the filled rectangle
-      cpgpoly(5, polygondraw_x, polygondraw_y);
+      cpgpoly( 5, polygondraw_x, polygondraw_y );
 
-//      cpgrect( (float)X1[marker_counter], (float)X2[marker_counter], (float)Y1[marker_counter], (float)Y2[marker_counter]);
-/*
-      cpgline_tmp_x[0]= (float)X1[marker_counter];
-      cpgline_tmp_y[0]= (float)Y1[marker_counter];
-      cpgline_tmp_x[1]= (float)X1[marker_counter];
-      cpgline_tmp_y[1]= (float)Y2[marker_counter];
-      cpgline( 2, cpgline_tmp_x, cpgline_tmp_y );
+      //      cpgrect( (float)X1[marker_counter], (float)X2[marker_counter], (float)Y1[marker_counter], (float)Y2[marker_counter]);
+      /*
+            cpgline_tmp_x[0]= (float)X1[marker_counter];
+            cpgline_tmp_y[0]= (float)Y1[marker_counter];
+            cpgline_tmp_x[1]= (float)X1[marker_counter];
+            cpgline_tmp_y[1]= (float)Y2[marker_counter];
+            cpgline( 2, cpgline_tmp_x, cpgline_tmp_y );
 
-      cpgline_tmp_x[0]= (float)X1[marker_counter];
-      cpgline_tmp_y[0]= (float)Y2[marker_counter];
-      cpgline_tmp_x[1]= (float)X2[marker_counter];
-      cpgline_tmp_y[1]= (float)Y2[marker_counter];
-      cpgline( 2, cpgline_tmp_x, cpgline_tmp_y );
+            cpgline_tmp_x[0]= (float)X1[marker_counter];
+            cpgline_tmp_y[0]= (float)Y2[marker_counter];
+            cpgline_tmp_x[1]= (float)X2[marker_counter];
+            cpgline_tmp_y[1]= (float)Y2[marker_counter];
+            cpgline( 2, cpgline_tmp_x, cpgline_tmp_y );
 
-      cpgline_tmp_x[0]= (float)X2[marker_counter];
-      cpgline_tmp_y[0]= (float)Y2[marker_counter];
-      cpgline_tmp_x[1]= (float)X2[marker_counter];
-      cpgline_tmp_y[1]= (float)Y1[marker_counter];
-      cpgline( 2, cpgline_tmp_x, cpgline_tmp_y );
+            cpgline_tmp_x[0]= (float)X2[marker_counter];
+            cpgline_tmp_y[0]= (float)Y2[marker_counter];
+            cpgline_tmp_x[1]= (float)X2[marker_counter];
+            cpgline_tmp_y[1]= (float)Y1[marker_counter];
+            cpgline( 2, cpgline_tmp_x, cpgline_tmp_y );
 
-      cpgline_tmp_x[0]= (float)X2[marker_counter];
-      cpgline_tmp_y[0]= (float)Y1[marker_counter];
-      cpgline_tmp_x[1]= (float)X1[marker_counter];
-      cpgline_tmp_y[1]= (float)Y1[marker_counter];
-      cpgline( 2, cpgline_tmp_x, cpgline_tmp_y );
-*/
+            cpgline_tmp_x[0]= (float)X2[marker_counter];
+            cpgline_tmp_y[0]= (float)Y1[marker_counter];
+            cpgline_tmp_x[1]= (float)X1[marker_counter];
+            cpgline_tmp_y[1]= (float)Y1[marker_counter];
+            cpgline( 2, cpgline_tmp_x, cpgline_tmp_y );
+      */
      }
     }
     cpgsci( 1 );
@@ -3043,7 +3038,7 @@ int main( int argc, char **argv ) {
   cpgcurs( &curX, &curY, &curC );
   // Check for user request to exit with non-zero exit code
   if ( curC == 'Q' || curC == 'q' ) {
-   fprintf( stderr, "User request to exit wit non-zero exit code!\n");
+   fprintf( stderr, "User request to exit wit non-zero exit code!\n" );
    user_request_to_exit_with_nonzero_exit_code= 1;
    curC= 'X';
   }
@@ -3111,7 +3106,7 @@ int main( int argc, char **argv ) {
  if ( user_request_to_exit_with_nonzero_exit_code == 1 ) {
   fprintf( stderr, "%s fits viewer exit code 150 (at user's request)\n", argv[0] );
   return 150;
- } 
+ }
 
  fprintf( stderr, "%s fits viewer exit code 0 (all fine)\n", argv[0] );
 

@@ -65,7 +65,7 @@ int main( int argc, char **argv ) {
  };
  //
  wcs_key[0]= (char *)malloc( FLEN_CARD * sizeof( char ) );
- if( wcs_key[0] == NULL ) {
+ if ( wcs_key[0] == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for wcs_key[0](try_to_guess_image_fov)\n" );
   exit( EXIT_FAILURE );
  };

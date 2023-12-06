@@ -2,8 +2,8 @@
 #define _GNU_SOURCE // for sincos()
 #endif
 
-//#define MAX_STARS_IN_VIZQUERY 500
-//#define MAX_STARS_IN_LOCAL_CAT_QUERY 2*MAX_STARS_IN_VIZQUERY
+// #define MAX_STARS_IN_VIZQUERY 500
+// #define MAX_STARS_IN_LOCAL_CAT_QUERY 2*MAX_STARS_IN_VIZQUERY
 #define MAX_STARS_IN_VIZQUERY 1000
 #define MAX_STARS_IN_LOCAL_CAT_QUERY MAX_STARS_IN_VIZQUERY
 
@@ -123,7 +123,6 @@ struct detected_star {
  double observing_epoch_jd;
 };
 
-
 static inline double compute_distance_on_sphere( double RA1_deg, double DEC1_deg, double RA2_deg, double DEC2_deg ) {
  double distance;
  double deg2rad_conversion= M_PI / 180.0;
@@ -153,44 +152,44 @@ static inline double compute_distance_on_sphere( double RA1_deg, double DEC1_deg
  return distance;
 }
 
-void debug_dump_star_struct( struct detected_star *stars, int N ){
+void debug_dump_star_struct( struct detected_star *stars, int N ) {
  int i;
  FILE *f;
- f= fopen("debug_dump_star_struct.txt","w");
- for ( i= 0; i < N ; i++ ) {
-  fprintf(f, "%lf %lf %lf %lf %lf %lf\n",
-                   stars[i].ra_deg_measured,
-                   stars[i].dec_deg_measured, 
-                   stars[i].match_distance_astrometric_catalog_arcsec,
-                   stars[i].catalog_ra,
-                   stars[i].catalog_dec,
-                   stars[i].catalog_mag);
+ f= fopen( "debug_dump_star_struct.txt", "w" );
+ for ( i= 0; i < N; i++ ) {
+  fprintf( f, "%lf %lf %lf %lf %lf %lf\n",
+           stars[i].ra_deg_measured,
+           stars[i].dec_deg_measured,
+           stars[i].match_distance_astrometric_catalog_arcsec,
+           stars[i].catalog_ra,
+           stars[i].catalog_dec,
+           stars[i].catalog_mag );
  }
- fclose(f);
+ fclose( f );
  return;
 }
 
-void wcs_basename(const char *filename, char *new_filename) {
-    // Duplicate the filename, as basename might modify the original string
-    char filename_copy[FILENAME_LENGTH];
-    char basename_str[FILENAME_LENGTH];
-    strncpy(filename_copy, filename, FILENAME_LENGTH - 1 );
-    filename_copy[FILENAME_LENGTH - 1]='\0'; // just in case
-    strncpy(basename_str, basename(filename_copy), FILENAME_LENGTH - 1);
-    basename_str[FILENAME_LENGTH - 1]='\0'; // just in case
+void wcs_basename( const char *filename, char *new_filename ) {
+ // Duplicate the filename, as basename might modify the original string
+ char filename_copy[FILENAME_LENGTH];
+ char basename_str[FILENAME_LENGTH];
+ strncpy( filename_copy, filename, FILENAME_LENGTH - 1 );
+ filename_copy[FILENAME_LENGTH - 1]= '\0'; // just in case
+ strncpy( basename_str, basename( filename_copy ), FILENAME_LENGTH - 1 );
+ basename_str[FILENAME_LENGTH - 1]= '\0'; // just in case
 
-    // Check if the basename already starts with "wcs_"
-    if (strncmp(basename_str, "wcs_", 4) == 0) {
-        // No need to add the prefix, return the duplicated name
-        strncpy(new_filename, filename, FILENAME_LENGTH - 1 );
-        return;
-    }
+ // Check if the basename already starts with "wcs_"
+ if ( strncmp( basename_str, "wcs_", 4 ) == 0 ) {
+  // No need to add the prefix, return the duplicated name
+  strncpy( new_filename, filename, FILENAME_LENGTH - 1 );
+  return;
+ }
 
-    // Copy the "wcs_" prefix and the basename to the new string
-    strcpy(new_filename, "wcs_");
-    strcat(new_filename, basename_str);
+ // Copy the "wcs_" prefix and the basename to the new string
+ strcpy( new_filename, "wcs_" );
+ strcat( new_filename, basename_str );
 
-    return;
+ return;
 }
 
 void remove_outliers_from_a_pair_of_arrays( double *a, double *b, int *N_good ) {
@@ -241,10 +240,10 @@ void remove_outliers_from_a_pair_of_arrays( double *a, double *b, int *N_good ) 
 void set_catalog_search_parameters( double approximate_field_of_view_arcmin, struct str_catalog_search_parameters *catalog_search_parameters ) {
  catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP * 0.5 * approximate_field_of_view_arcmin / 60.0;
  catalog_search_parameters->brightest_mag= 1.0;
- //catalog_search_parameters->faintest_mag= 9.0;
- // We need fainter stars for UCAC5!
+ // catalog_search_parameters->faintest_mag= 9.0;
+ //  We need fainter stars for UCAC5!
  catalog_search_parameters->faintest_mag= 13.5;
- //if ( approximate_field_of_view_arcmin < 500.0 ) {
+ // if ( approximate_field_of_view_arcmin < 500.0 ) {
  if ( approximate_field_of_view_arcmin < 600.0 ) {
   catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP * 0.5 * approximate_field_of_view_arcmin / 60.0;
   catalog_search_parameters->brightest_mag= 2.0;
@@ -252,10 +251,10 @@ void set_catalog_search_parameters( double approximate_field_of_view_arcmin, str
  }
  // NMW scale
  // change as the input approximate_field_of_view_arcmin is now the actual major side of the frame rather than a crude estiamte
- //if ( approximate_field_of_view_arcmin < 400.0 ) {
+ // if ( approximate_field_of_view_arcmin < 400.0 ) {
  if ( approximate_field_of_view_arcmin < 500.0 ) {
   catalog_search_parameters->search_radius_deg= MAX_DEVIATION_AT_FIRST_STEP * 0.5 * approximate_field_of_view_arcmin / 60.0;
-  //catalog_search_parameters->brightest_mag= 5.0;
+  // catalog_search_parameters->brightest_mag= 5.0;
   catalog_search_parameters->brightest_mag= 2.0;
   catalog_search_parameters->faintest_mag= 13.5;
  }
@@ -291,17 +290,17 @@ void set_catalog_search_parameters( double approximate_field_of_view_arcmin, str
   catalog_search_parameters->faintest_mag= 22.0;
  }
  catalog_search_parameters->search_radius_second_step_deg= 0.8 * catalog_search_parameters->search_radius_deg;
- 
+
  fprintf( stderr, "UCAC5 catalog search parameters:\n \
                    catalog_search_parameters->search_radius_deg= %lf (%.1lf arcsec)\n \
                    catalog_search_parameters->brightest_mag= %.2lf\n \
                    catalog_search_parameters->faintest_mag= %.2lf\n \
-                   catalog_search_parameters->search_radius_second_step_deg %lf (%.1lf arcsec)\n", \
-                   catalog_search_parameters->search_radius_deg, catalog_search_parameters->search_radius_deg*3600, \
-                   catalog_search_parameters->brightest_mag, \
-                   catalog_search_parameters->faintest_mag, \
-                   catalog_search_parameters->search_radius_second_step_deg, catalog_search_parameters->search_radius_second_step_deg*3600 );
- 
+                   catalog_search_parameters->search_radius_second_step_deg %lf (%.1lf arcsec)\n",
+          catalog_search_parameters->search_radius_deg, catalog_search_parameters->search_radius_deg * 3600,
+          catalog_search_parameters->brightest_mag,
+          catalog_search_parameters->faintest_mag,
+          catalog_search_parameters->search_radius_second_step_deg, catalog_search_parameters->search_radius_second_step_deg * 3600 );
+
  return;
 }
 
@@ -491,7 +490,7 @@ int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, in
  int blend_counter;
 
  char sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT]; // this is for debug only!!!
- 
+
  int max_acceptable_SE_flag= 1;
 
  timesys= 0; // for gettime()
@@ -538,12 +537,12 @@ int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, in
    blend_counter++;
   }
  }
- if ( (double)blend_counter/(double)i > 0.33333 ) {
+ if ( (double)blend_counter / (double)i > 0.33333 ) {
   fprintf( stderr, "The fraction of blended stars is high!\n" );
-  //max_acceptable_SE_flag= 3;
-  //fprintf( stderr, "The fraction of blended stars is high - will accept them for catalog matching!\nThe maximum acceptable Source Extractor flag is %d\n", max_acceptable_SE_flag);
+  // max_acceptable_SE_flag= 3;
+  // fprintf( stderr, "The fraction of blended stars is high - will accept them for catalog matching!\nThe maximum acceptable Source Extractor flag is %d\n", max_acceptable_SE_flag);
  }
- fseek( f, 0, SEEK_SET ); // go back to the beginning of the log file 
+ fseek( f, 0, SEEK_SET ); // go back to the beginning of the log file
  // do the actual thing
  i= 0;
  nodrop_counter= drop_zero_flux_counter= drop_no_flux_err_counter= drop_mag_99_counter= drop_mag_err_99_counter= drop_low_SNR_counter= blend_counter= 0;
@@ -648,7 +647,6 @@ int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, in
  fprintf( stderr, "Got %d stars (including %d good ones) from the SExtractor catalog %s \n", i, good_stars_counter, wcs_catalog_filename );
  return 0;
 }
-
 
 int read_UCAC5_from_vizquery( struct detected_star *stars, int N, char *vizquery_output_filename, struct str_catalog_search_parameters *catalog_search_parameters ) {
  FILE *f;
@@ -1415,7 +1413,7 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  sprintf( vizquery_output_filename, "scan_ucac5_%d.output", pid );
  vizquery_input= fopen( vizquery_input_filename, "w" );
  if ( NULL == vizquery_input ) {
-  fprintf( stderr, "ERROR in search_UCAC5_at_scan(): cannot open file %s for writing!\n", vizquery_input_filename);
+  fprintf( stderr, "ERROR in search_UCAC5_at_scan(): cannot open file %s for writing!\n", vizquery_input_filename );
   return 1;
  }
  search_stars_counter= 0;
@@ -1433,7 +1431,7 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
    //
    fprintf( vizquery_input, "%lf %lf\n", stars[i].ra_deg_measured, stars[i].dec_deg_measured );
 #ifdef DEBUGFILES
-   fprintf( scan_ucac5_debug_ds9_region, "circle(%f,%f,%lf)\n", stars[i].ra_deg_measured, stars[i].dec_deg_measured, 5.0*21/3600 );
+   fprintf( scan_ucac5_debug_ds9_region, "circle(%f,%f,%lf)\n", stars[i].ra_deg_measured, stars[i].dec_deg_measured, 5.0 * 21 / 3600 );
 #endif
    search_stars_counter++;
    if ( search_stars_counter == MAX_STARS_IN_VIZQUERY ) {
@@ -1447,7 +1445,6 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  fclose( scan_ucac5_debug_ds9_region );
 #endif
 
-
  if ( search_stars_counter < MIN_NUMBER_OF_STARS_ON_FRAME ) {
   fprintf( stderr, "ERROR in search_UCAC5_at_scan(): only %d stars are in the vizquery input list - that's too few!\n", search_stars_counter );
   return 1;
@@ -1459,7 +1456,7 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  // Astrometric catalog search
  fprintf( stderr, "Searchig UCAC5...\n" );
  // yes, sorting in magnitude works
- //sprintf( command, "curl -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' > %s", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
+ // sprintf( command, "curl -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' > %s", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
  sprintf( command, "curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' > %s", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
 
  fprintf( stderr, "%s\n", command );
@@ -1469,17 +1466,17 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
   return 1;
  }
 
- if( count_lines_in_ASCII_file(vizquery_output_filename) < 5 ) {
+ if ( count_lines_in_ASCII_file( vizquery_output_filename ) < 5 ) {
   fprintf( stderr, "ERROR in search_UCAC5_at_scan(): the server response file contains too few lines!\n" );
-  return 1; 
+  return 1;
  }
 
-/*
- // reset the catalog match flag if this wasn't the first iteration
- for ( i= 0; i < N; i++ ) {
-  stars[i].matched_with_astrometric_catalog= 0;
- }
-*/
+ /*
+  // reset the catalog match flag if this wasn't the first iteration
+  for ( i= 0; i < N; i++ ) {
+   stars[i].matched_with_astrometric_catalog= 0;
+  }
+ */
 
 #ifdef DEBUGFILES
  scan_ucac5_debug_ds9_region= fopen( "scan_ucac5_output_debug_ds9.reg", "w" );
@@ -1495,19 +1492,19 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
    continue;
   if ( string[0] == '\n' )
    continue;
-/*
-  if ( string[0] == '-' )
-   continue;
-  if ( string[0] == '_' )
-   continue;
-  if ( string[0] == ' ' )
-   continue;
-  if ( string[0] != ' ' && string[0] != '0' && string[0] != '1' && string[0] != '2' && string[0] != '3' && string[0] != '4' && string[0] != '5' && string[0] != '6' && string[0] != '7' && string[0] != '8' && string[0] != '9' )
-   continue;
-*/
+  /*
+    if ( string[0] == '-' )
+     continue;
+    if ( string[0] == '_' )
+     continue;
+    if ( string[0] == ' ' )
+     continue;
+    if ( string[0] != ' ' && string[0] != '0' && string[0] != '1' && string[0] != '2' && string[0] != '3' && string[0] != '4' && string[0] != '5' && string[0] != '6' && string[0] != '7' && string[0] != '8' && string[0] != '9' )
+     continue;
+  */
   epoch= pmRA= e_pmRA= pmDE= e_pmDE= 0.0;
-  int sscanf_return_code = sscanf( string, "%lf %lf %lf %lf %lf %lf %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &catalog_mag, &epoch, &pmRA, &pmDE );
-  if ( 6 > sscanf_return_code ) { 
+  int sscanf_return_code= sscanf( string, "%lf %lf %lf %lf %lf %lf %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &catalog_mag, &epoch, &pmRA, &pmDE );
+  if ( 6 > sscanf_return_code ) {
    continue;
   }
   if ( 9 > sscanf_return_code ) {
@@ -1531,8 +1528,8 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
 
   // Now find which input star that was
   for ( i= 0; i < N; i++ ) {
-  // nope, the for conditions below are wrong
-  //for ( i= 0; i < MIN( N, MAX_STARS_IN_VIZQUERY) ; i++ ) {
+   // nope, the for conditions below are wrong
+   // for ( i= 0; i < MIN( N, MAX_STARS_IN_VIZQUERY) ; i++ ) {
    if ( stars[i].matched_with_astrometric_catalog == 1 ) {
     continue;
    }
@@ -1542,9 +1539,8 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
       continue;
      }
 
-
 #ifdef DEBUGFILES
-     fprintf( scan_ucac5_debug_ds9_region, "circle(%f,%f,%lf)\n", measured_ra, measured_dec, 10.0*21/3600 );
+     fprintf( scan_ucac5_debug_ds9_region, "circle(%f,%f,%lf)\n", measured_ra, measured_dec, 10.0 * 21 / 3600 );
 #endif
 
      // if we are here - this is a match
@@ -1556,12 +1552,12 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
      stars[i].catalog_mag= catalog_mag;
      // stars[i].catalog_mag_err=catalog_mag_err;
      stars[i].catalog_mag_err= 0.0;
-     //stars[i].catalog_ra_original= catalog_ra_original;
+     // stars[i].catalog_ra_original= catalog_ra_original;
      stars[i].catalog_ra_original= catalog_ra_original;
-     //stars[i].catalog_dec_original= catalog_dec_original;
+     // stars[i].catalog_dec_original= catalog_dec_original;
      stars[i].catalog_dec_original= catalog_dec_original;
      // strncpy(stars[i].ucac4id,ucac4id,32);stars[i].ucac4id[32-1]='\0';
-     
+
      //
      stars[i].match_distance_astrometric_catalog_arcsec= distance / 3600;
 
@@ -1601,7 +1597,6 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  fclose( scan_ucac5_debug_ds9_region );
 #endif
 
- 
  /*
  //
  fprintf(stderr,"######################################\n");
@@ -1609,7 +1604,7 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
   if ( stars[i].matched_with_astrometric_catalog == 1 ) {
    fprintf(stderr, "%lf %lf %lf %lf %lf %lf\n",
                    stars[i].ra_deg_measured,
-                   stars[i].dec_deg_measured, 
+                   stars[i].dec_deg_measured,
                    stars[i].match_distance_astrometric_catalog_arcsec,
                    stars[i].catalog_ra,
                    stars[i].catalog_dec,
@@ -1631,7 +1626,6 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  return 0;
 }
 
-
 int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
  char command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
  FILE *vizquery_input;
@@ -1646,7 +1640,6 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
  char path_to_vast_string[VAST_PATH_MAX];
  get_path_to_vast( path_to_vast_string );
 
-
  // Try the local copy of UCAC5
  if ( 0 == search_UCAC5_localcopy( stars, N, catalog_search_parameters ) ) {
   fprintf( stderr, "The local UCAC5 search seems to be a success\n" );
@@ -1655,16 +1648,14 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
   fprintf( stderr, "The local UCAC5 search failed. Trying remote search at scan\n" );
  }
 
-
  // Try the copy of UCAC5 at scan
  if ( 0 == search_UCAC5_at_scan( stars, N, catalog_search_parameters ) ) {
   fprintf( stderr, "The scan UCAC5 search seems to be a success\n" );
   return 0;
  } else {
   fprintf( stderr, "The scan UCAC5 search failed. Trying remote search with vizquery\n" );
-  //exit( EXIT_FAILURE ); 
+  // exit( EXIT_FAILURE );
  }
-
 
  sprintf( vizquery_input_filename, "vizquery_%d.input", pid );
  sprintf( vizquery_output_filename, "vizquery_%d.output", pid );
@@ -1702,7 +1693,7 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
  // Astrometric catalog search
  fprintf( stderr, "Searchig UCAC5...\n" );
  // yes, sorting in magnitude works
- //sprintf( command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=%.1lf..%.1lf -sort=f.mag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
+ // sprintf( command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=%.1lf..%.1lf -sort=f.mag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
  sprintf( command, "export BEST_VIZIER_MIRROR=%s; echo $BEST_VIZIER_MIRROR; export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$BEST_VIZIER_MIRROR -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=%.1lf..%.1lf -sort=f.mag -c.rs=%.1lf -list=%s > %s", VIZIER_SITE, path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
 
  fprintf( stderr, "%s\n", command );
@@ -1715,9 +1706,9 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
   sleep( 10 );
   fprintf( stderr, "%s\n", command );
   vizquery_run_success= system( command );
-   if ( vizquery_run_success == 124 ) {
-    fprintf( stderr, "ERROR: the script lib/vizquery has timed out :(\n" );
-   }
+  if ( vizquery_run_success == 124 ) {
+   fprintf( stderr, "ERROR: the script lib/vizquery has timed out :(\n" );
+  }
   if ( vizquery_run_success != 0 ) {
    fprintf( stderr, "WARNING: some problem running lib/vizquery script. Is this an internet connection problem? Retrying...\n" );
    sleep( 10 );
@@ -1792,7 +1783,7 @@ int search_PANSTARRS1_with_vizquery( struct detected_star *stars, int N, struct 
 
  // Photometric catalog search
  fprintf( stderr, "Searchig PANSTARRS1...\n" );
- //sprintf( command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=PS1 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,gmag,e_gmag,rmag,e_rmag,imag,e_imag rmag=%.1lf..%.1lf -sort=rmag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
+ // sprintf( command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=PS1 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,gmag,e_gmag,rmag,e_rmag,imag,e_imag rmag=%.1lf..%.1lf -sort=rmag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
  sprintf( command, "export BEST_VIZIER_MIRROR=%s; echo $BEST_VIZIER_MIRROR; export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$BEST_VIZIER_MIRROR -mime=text -source=PS1 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,gmag,e_gmag,rmag,e_rmag,imag,e_imag rmag=%.1lf..%.1lf -sort=rmag -c.rs=%.1lf -list=%s > %s", VIZIER_SITE, path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
 
  fprintf( stderr, "%s\n", command );
@@ -1849,7 +1840,7 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
    //  The reference catalog epoch is expected to be closer to APASS epoch than some of the images we are going to process
    fprintf( vizquery_input, "%lf %lf\n", stars[i].catalog_ra_original, stars[i].catalog_dec_original );
    search_stars_counter++;
-   //if ( search_stars_counter == MAX_STARS_IN_VIZQUERY ) {
+   // if ( search_stars_counter == MAX_STARS_IN_VIZQUERY ) {
    if ( search_stars_counter == MAX_STARS_IN_LOCAL_CAT_QUERY ) {
     break;
    }
@@ -1867,27 +1858,27 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
 
  // Photometric catalog search
  fprintf( stderr, "Searchig APASS...\n" );
- //sprintf( command,
- //         "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=APASS -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
- //         path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
- //sprintf( command,
- //         "export BEST_VIZIER_MIRROR=%s; echo $BEST_VIZIER_MIRROR; export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$BEST_VIZIER_MIRROR -mime=text -source=APASS -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
- //         VIZIER_SITE, path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
- // We need only one APASS table, not the keyword search for multipel catalogs
- //sprintf( command,
- //         "export BEST_VIZIER_MIRROR=%s; echo $BEST_VIZIER_MIRROR; export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$BEST_VIZIER_MIRROR -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
- //         VIZIER_SITE, path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
- // vizier.u-strasbg.fr - seems to be the only mirror serving APASS
- // changing vizier.u-strasbg.fr to vizier.cds.unistra.fr 
+ // sprintf( command,
+ //          "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=APASS -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
+ //          path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
+ // sprintf( command,
+ //          "export BEST_VIZIER_MIRROR=%s; echo $BEST_VIZIER_MIRROR; export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$BEST_VIZIER_MIRROR -mime=text -source=APASS -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
+ //          VIZIER_SITE, path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
+ //  We need only one APASS table, not the keyword search for multipel catalogs
+ // sprintf( command,
+ //          "export BEST_VIZIER_MIRROR=%s; echo $BEST_VIZIER_MIRROR; export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$BEST_VIZIER_MIRROR -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
+ //          VIZIER_SITE, path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
+ //  vizier.u-strasbg.fr - seems to be the only mirror serving APASS
+ //  changing vizier.u-strasbg.fr to vizier.cds.unistra.fr
  sprintf( command,
           "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=vizier.cds.unistra.fr -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
-          path_to_vast_string, 
-          path_to_vast_string, 
-          (double)VIZIER_TIMEOUT_SEC, 
-          path_to_vast_string, 
-          catalog_search_parameters->brightest_mag, 
-          catalog_search_parameters->faintest_mag, 
-          catalog_search_parameters->search_radius_deg * 3600, 
+          path_to_vast_string,
+          path_to_vast_string,
+          (double)VIZIER_TIMEOUT_SEC,
+          path_to_vast_string,
+          catalog_search_parameters->brightest_mag,
+          catalog_search_parameters->faintest_mag,
+          catalog_search_parameters->search_radius_deg * 3600,
           vizquery_input_filename, vizquery_output_filename );
 
  fprintf( stderr, "%s\n", command );
@@ -1954,7 +1945,7 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
  struct detected_star *only_good_starsmatched_with_catalog;
  int N_only_good; // counter for the structures array above
 
- //debug_dump_star_struct( stars, N ); exit(1); // !!!!!!!!!!!!!!!!!!!!!!!!!!
+ // debug_dump_star_struct( stars, N ); exit(1); // !!!!!!!!!!!!!!!!!!!!!!!!!!
 
  x= malloc( N * sizeof( double ) );
  if ( x == NULL ) {
@@ -1991,8 +1982,8 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
   }
  }
 
- //for(i=0;i<N_good;i++)
- // fprintf(stderr,"%lf %lf %lf OGAOGA\n",x[i],y[i],z2[i]);
+ // for(i=0;i<N_good;i++)
+ //  fprintf(stderr,"%lf %lf %lf OGAOGA\n",x[i],y[i],z2[i]);
 
  fit_plane_lin( x, y, z1, (unsigned int)N_good, &A1, &B1, &C1 );
  fit_plane_lin( x, y, z2, (unsigned int)N_good, &A2, &B2, &C2 );
@@ -2388,7 +2379,7 @@ int main( int argc, char **argv ) {
  }
 
  if ( approximate_field_of_view_arcmin == DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN ) {
-  if ( NULL != strstr(fits_image_filename, "wcs_") ) {
+  if ( NULL != strstr( fits_image_filename, "wcs_" ) ) {
    // If the input is already a VaST plate-solved image, we want the exact field of view, not a guess
    sprintf( command_string, "%sutil/fov_of_wcs_calibrated_image.sh %s | grep 'Image size:' | awk -F\"[ 'x]\" '{if ($3 > $4) print $3; else print $4}'", path_to_vast_string, fits_image_filename );
    pipe_for_try_to_guess_image_fov= popen( command_string, "r" );
@@ -2406,7 +2397,7 @@ int main( int argc, char **argv ) {
    }
   }
  } // if ( approximate_field_of_view_arcmin == DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN ) {
- 
+
  if ( approximate_field_of_view_arcmin == DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN ) {
   // If the input image is not plate-solved or something whent wrong while extracting its Fov - we try to guess
   sprintf( command_string, "%slib/try_to_guess_image_fov %s", path_to_vast_string, fits_image_filename );
@@ -2424,7 +2415,6 @@ int main( int argc, char **argv ) {
    }
   }
  } // if ( approximate_field_of_view_arcmin == DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN ) {
-
 
  // **** Blind plate solution with Astrometry.net ****
  if ( 0 != blind_plate_solve_with_astrometry_net( fits_image_filename, approximate_field_of_view_arcmin ) ) {
@@ -2453,26 +2443,25 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "%s got %d stars from the SExtractor catalog\n", argv[0], number_of_stars_in_wcs_catalog );
  }
  qsort( stars, number_of_stars_in_wcs_catalog, sizeof( struct detected_star ), compare_star_on_mag_solve );
- 
+
  // TEST //
- //for(i=0;i<number_of_stars_in_wcs_catalog;i++){
+ // for(i=0;i<number_of_stars_in_wcs_catalog;i++){
  // if( i==1000 )break;
  // fprintf(stderr, "%04d  %8.4lf %d\n", i, stars[i].mag, stars[i].flag );
  //}
  //////////
- 
 
  // Make sure all stars have a flag that they are not matched with a catalog yet
  // for(i=0;i<number_of_stars_in_wcs_catalog;i++)stars[i].matched_with_catalog=0;
 
  // Update cataog search parameters base on FoV of the solved image
- wcs_basename( fits_image_filename, wcs_basename_fits_image_filename);
+ wcs_basename( fits_image_filename, wcs_basename_fits_image_filename );
  sprintf( command_string, "%sutil/fov_of_wcs_calibrated_image.sh %s | grep 'Image size:' | awk -F\"[ 'x]\" '{if ($3 > $4) print $3; else print $4}'", path_to_vast_string, wcs_basename_fits_image_filename );
- //sprintf( command_string, "%sutil/fov_of_wcs_calibrated_image.sh %s | grep 'Image size:' | awk -F\"[ 'x]\" '{if ($3 > $4) print $3; else print $4}'", path_to_vast_string, wcs_basename( fits_image_filename ) );
+ // sprintf( command_string, "%sutil/fov_of_wcs_calibrated_image.sh %s | grep 'Image size:' | awk -F\"[ 'x]\" '{if ($3 > $4) print $3; else print $4}'", path_to_vast_string, wcs_basename( fits_image_filename ) );
  pipe_for_try_to_guess_image_fov= popen( command_string, "r" );
  if ( NULL == pipe_for_try_to_guess_image_fov ) {
   fprintf( stderr, "WARNING: failed to run command: %s\n", command_string );
-  //approximate_field_of_view_arcmin= DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN;
+  // approximate_field_of_view_arcmin= DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN;
  } else {
   if ( 1 == fscanf( pipe_for_try_to_guess_image_fov, "%lf", &approximate_field_of_view_arcmin ) ) {
    pclose( pipe_for_try_to_guess_image_fov );
@@ -2481,7 +2470,7 @@ int main( int argc, char **argv ) {
    fprintf( stderr, "WARNING: error parsing the output of the command: %s\n", command_string );
    approximate_field_of_view_arcmin= DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN;
   }
-  fprintf( stderr, "Updated FoV from the plate-solved image: %.1lf'\n", approximate_field_of_view_arcmin);
+  fprintf( stderr, "Updated FoV from the plate-solved image: %.1lf'\n", approximate_field_of_view_arcmin );
  }
 
  fprintf( stderr, "Seting catalog search parameters based on the expected field of view %.1lf arcmin\n", approximate_field_of_view_arcmin );

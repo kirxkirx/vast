@@ -211,7 +211,7 @@ int guess_gain( char *fitsfilename, char *resulting_sextractor_cl_parameter_stri
   fits_read_key( fptr, TSTRING, "UNITS", str, NULL, &status );
   if ( status == 0 ) {
    if ( 0 == strncasecmp( str, "electrons", 9 ) ) {
-    gain_from_fits_header= 1.0; // TICA TESS FFI
+    gain_from_fits_header= 1.0;       // TICA TESS FFI
     fits_close_file( fptr, &status ); // close file
     guessed_gain= gain_from_fits_header;
     sprintf( resulting_sextractor_cl_parameter_string, " -GAIN %.3lf ", guessed_gain );
@@ -252,7 +252,7 @@ int guess_gain( char *fitsfilename, char *resulting_sextractor_cl_parameter_stri
    fprintf( stderr, "The gain value (EGAIN=%.3lf) is obtained from the FITS header of the image %s\n", guessed_gain, fitsfilename );
    return 0;
   }
-  
+
   // Normal GAIN keyword
   status= 0;
   fits_read_key( fptr, TDOUBLE, "GAIN", &gain_from_fits_header, comment_str, &status );
@@ -410,12 +410,12 @@ int try_to_recognize_TICA_TESS_FFI_for_flag_image_creation( char *fitsfilename )
  char telescop[1024];
  char telescop_comment[1024];
 
- double tjd_zero= 0.0; // for parsing TESS TICA FFIs                      
- double midtjd= 0.0; // for parsing TESS TICA FFIs
+ double tjd_zero= 0.0; // for parsing TESS TICA FFIs
+ double midtjd= 0.0;   // for parsing TESS TICA FFIs
 
  // fitsio
  long naxes[2];
- //int hdutype;
+ // int hdutype;
  int status= 0;
  fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
  // Extract data from fits header
@@ -447,7 +447,7 @@ int try_to_recognize_TICA_TESS_FFI_for_flag_image_creation( char *fitsfilename )
   fits_close_file( fptr, &status );
   return 1;
  }
- 
+
  fits_read_key( fptr, TDOUBLE, "TJD_ZERO", &tjd_zero, NULL, &status );
  if ( 0 != status ) {
   status= 0;

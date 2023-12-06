@@ -72,9 +72,9 @@ void bin_log_power_spectrum_points_and_write_to_file( double *x, double *y, doub
  double log_bin_width= ( log_max_x - log_min_x ) / num_bins;
 
  if ( NULL == bin_log10x_sums || NULL == bin_log10x_means || NULL == bin_log10y_sums || NULL == bin_log10y_means || NULL == bin_log10z_sums || NULL == bin_log10z_means || NULL == bin_counts ) {
-  fprintf(stderr, "ERROR allocating memory in bin_log_power_spectrum_points_and_write_to_file()\n");
+  fprintf( stderr, "ERROR allocating memory in bin_log_power_spectrum_points_and_write_to_file()\n" );
   exit( EXIT_FAILURE );
- } 
+ }
 
  // Bin the points
  for ( i= 0; i < num_points; i++ ) {
@@ -133,7 +133,7 @@ void bin_log_power_spectrum_points_and_write_to_file( double *x, double *y, doub
  free( bin_log10z_sums );
  free( bin_log10z_means );
  free( bin_counts );
- 
+
  return;
 }
 
@@ -307,7 +307,7 @@ void normalize_spectral_window_file( unsigned long N_freq, char *periodogramfile
  max_F_to_max_W= max_F / max_W;
  periodogramfile= fopen( periodogramfilename, "w" );
  if ( NULL == periodogramfile ) {
-  fprintf(stderr, "ERROR in normalize_spectral_window_file(): cannot open %s for writing\n", periodogramfilename);
+  fprintf( stderr, "ERROR in normalize_spectral_window_file(): cannot open %s for writing\n", periodogramfilename );
   exit( EXIT_FAILURE );
  }
  for ( i= 0; i < N_freq; i++ ) {
@@ -369,13 +369,13 @@ double compute_LK_reciprocal_theta( double *jd, double *m, unsigned long N_obs, 
  double jdi_over_period;
 
  if ( N_obs < MIN_OBS_PERIOD_SEARCH ) {
-  fprintf( stderr, "ERROR in compute_LK_reciprocal_theta(): N_obs < MIN_OBS_PERIOD_SEARCH\n");
+  fprintf( stderr, "ERROR in compute_LK_reciprocal_theta(): N_obs < MIN_OBS_PERIOD_SEARCH\n" );
   exit( EXIT_FAILURE );
  }
 
  obs= malloc( N_obs * sizeof( struct Obs ) );
  if ( NULL == obs ) {
-  fprintf( stderr, "ERROR in compute_LK_reciprocal_theta(): cannot allocate memory for obs\n");
+  fprintf( stderr, "ERROR in compute_LK_reciprocal_theta(): cannot allocate memory for obs\n" );
   exit( EXIT_FAILURE );
  }
 
@@ -572,8 +572,8 @@ int main( int argc, char **argv ) {
    return 1;
   } // just in case it is infinite length
  }
- if( N_obs < MIN_OBS_PERIOD_SEARCH ){
-  fclose(lcfile);
+ if ( N_obs < MIN_OBS_PERIOD_SEARCH ) {
+  fclose( lcfile );
   return 1;
  }
  fseek( lcfile, 0, SEEK_SET ); // go back to the beginning of the lightcurve file

@@ -11,89 +11,87 @@
 #define MAX( a, b ) ( ( ( a ) > ( b ) ) ? ( a ) : ( b ) )
 #define MIN( a, b ) ( ( ( a ) < ( b ) ) ? ( a ) : ( b ) )
 
-
 int search_myMDV( double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found, int html_output ) {
-    FILE *mymdvfile;
-    char name[32];
-    double RA_deg, Dec_deg, RA1_rad, RA2_rad, DEC1_rad, DEC2_rad;
-    char type[32];
-    char string[256];
-    int i;
+ FILE *mymdvfile;
+ char name[32];
+ double RA_deg, Dec_deg, RA1_rad, RA2_rad, DEC1_rad, DEC2_rad;
+ char type[32];
+ char string[256];
+ int i;
 
-    double RA_hour, RA_min, RA_sec, Dec_degrees, Dec_min, Dec_sec;
-    double distance_deg;
+ double RA_hour, RA_min, RA_sec, Dec_degrees, Dec_min, Dec_sec;
+ double distance_deg;
 
-    double best_distance_deg= 90.0;
-    char best_name[32];
-    char best_type[32];
+ double best_distance_deg= 90.0;
+ char best_name[32];
+ char best_type[32];
 
-    int is_found= 0;
+ int is_found= 0;
 
-    // Initialize memory
-    memset( name, '\0', 32 );
-    memset( type, '\0', 32 );
-    memset( string, '\0', 256 );
-    memset( best_name, '\0', 32 );
-    memset( best_type, '\0', 32 );
+ // Initialize memory
+ memset( name, '\0', 32 );
+ memset( type, '\0', 32 );
+ memset( string, '\0', 256 );
+ memset( best_name, '\0', 32 );
+ memset( best_type, '\0', 32 );
 
-    //mymdvfile= fopen( "lib/catalogs/myMDV.dat", "r" );
-    // I put it in lib as the catalog is so small it is easier to just bundle it with the source code
-    mymdvfile= fopen( "lib/myMDV.dat", "r" );
-    if ( NULL == mymdvfile ) {
-        fprintf( stderr, "ERROR: Cannot open myMDV.dat\n" );
-        return -1;
+ // mymdvfile= fopen( "lib/catalogs/myMDV.dat", "r" );
+ //  I put it in lib as the catalog is so small it is easier to just bundle it with the source code
+ mymdvfile= fopen( "lib/myMDV.dat", "r" );
+ if ( NULL == mymdvfile ) {
+  fprintf( stderr, "ERROR: Cannot open myMDV.dat\n" );
+  return -1;
+ }
+ while ( NULL != fgets( string, 256, mymdvfile ) ) {
+  sscanf( string, "%d %lf %lf %lf %lf %lf %lf %s", &i, &RA_hour, &RA_min, &RA_sec, &Dec_degrees, &Dec_min, &Dec_sec, type );
+
+  // Convert RA and Dec to degrees
+  RA_deg= ( RA_hour * 15.0 ) + ( RA_min / 4.0 ) + ( RA_sec / 240.0 );
+  Dec_deg= fabs( Dec_degrees ) + ( Dec_min / 60.0 ) + ( Dec_sec / 3600.0 );
+  if ( Dec_degrees < 0 )
+   Dec_deg*= -1;
+
+  if ( fabs( target_Dec_deg - Dec_deg ) > search_radius_deg )
+   continue;
+
+  RA1_rad= RA_deg * M_PI / 180.0;
+  RA2_rad= target_RA_deg * M_PI / 180.0;
+  DEC1_rad= Dec_deg * M_PI / 180.0;
+  DEC2_rad= target_Dec_deg * M_PI / 180.0;
+
+  distance_deg= acos( cos( DEC1_rad ) * cos( DEC2_rad ) * cos( MAX( RA1_rad, RA2_rad ) - MIN( RA1_rad, RA2_rad ) ) + sin( DEC1_rad ) * sin( DEC2_rad ) ) * 180.0 / M_PI;
+
+  if ( distance_deg < search_radius_deg ) {
+   if ( is_found == 0 ) {
+    if ( 1 == html_output ) {
+     fprintf( stdout, "<b>The object was <font color=\"red\">found</font> in <font color=\"DarkCyan\">MDV</font></b>\n" );
+    } else {
+     fprintf( stdout, "The object was found in MDV\n" );
     }
-    while ( NULL != fgets( string, 256, mymdvfile ) ) {
-        sscanf(string, "%d %lf %lf %lf %lf %lf %lf %s", &i, &RA_hour, &RA_min, &RA_sec, &Dec_degrees, &Dec_min, &Dec_sec, type);
+   }
+   is_found= 1;
+   if ( distance_deg < best_distance_deg ) {
+    best_distance_deg= distance_deg;
+    sprintf( best_name, "MDV %d", i ); // Star's name is its ID in this case
+    strncpy( best_type, type, 32 );
+    best_type[31 - 1]= '\0';
+   }
+  }
+ }
+ if ( 1 == is_found ) {
+  if ( 1 == html_output ) {
+   fprintf( stdout, "<b>%2.0lf\"  %s</b>\nType: %s\n", best_distance_deg * 3600.0, best_name, best_type );
+  } else {
+   fprintf( stdout, "%2.0lf\"  %s\nType: %s\n", best_distance_deg * 3600.0, best_name, best_type );
+  }
+ } else if ( be_silent_if_not_found ) {
+  fprintf( stdout, "The object was not found in MDV\n" );
+ }
 
-        // Convert RA and Dec to degrees
-        RA_deg = (RA_hour*15.0) + (RA_min/4.0) + (RA_sec/240.0);
-        Dec_deg = fabs(Dec_degrees) + (Dec_min/60.0) + (Dec_sec/3600.0);
-        if (Dec_degrees < 0) Dec_deg *= -1; 
+ fclose( mymdvfile );
 
-        if ( fabs( target_Dec_deg - Dec_deg ) > search_radius_deg )
-            continue;
-
-        RA1_rad= RA_deg * M_PI / 180.0;
-        RA2_rad= target_RA_deg * M_PI / 180.0;
-        DEC1_rad= Dec_deg * M_PI / 180.0;
-        DEC2_rad= target_Dec_deg * M_PI / 180.0;
-
-        distance_deg= acos( cos( DEC1_rad ) * cos( DEC2_rad ) * cos( MAX( RA1_rad, RA2_rad ) - MIN( RA1_rad, RA2_rad ) ) + sin( DEC1_rad ) * sin( DEC2_rad ) ) * 180.0 / M_PI;
-
-        if ( distance_deg < search_radius_deg ) {
-            if ( is_found == 0 ) {
-             if ( 1 == html_output ) {
-                fprintf( stdout, "<b>The object was <font color=\"red\">found</font> in <font color=\"DarkCyan\">MDV</font></b>\n" );
-             } else { 
-                fprintf( stdout, "The object was found in MDV\n" );             
-             }
-            }
-            is_found= 1;
-            if ( distance_deg < best_distance_deg ) {
-                best_distance_deg= distance_deg;
-                sprintf(best_name, "MDV %d", i); // Star's name is its ID in this case
-                strncpy( best_type, type, 32 );
-                best_type[31 - 1]= '\0';
-            }
-        }
-    }
-    if ( 1 == is_found ) {
-     if ( 1 == html_output ) {
-      fprintf( stdout, "<b>%2.0lf\"  %s</b>\nType: %s\n", best_distance_deg * 3600.0, best_name, best_type);
-     } else {
-      fprintf( stdout, "%2.0lf\"  %s\nType: %s\n", best_distance_deg * 3600.0, best_name, best_type);
-     }
-    } else if ( be_silent_if_not_found ) {
-      fprintf( stdout, "The object was not found in MDV\n" );
-    }
-
-
-    fclose( mymdvfile );
-
-    return is_found;
+ return is_found;
 }
-
 
 int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radius_deg, int be_silent_if_not_found, int html_output ) {
  FILE *vsx_dat;
@@ -216,9 +214,8 @@ int search_vsx( double target_RA_deg, double target_Dec_deg, double search_radiu
  return is_found;
 }
 
-
 const char *getfield_from_csv_string( char *line, int num ) {
- static const char whitespace[32] = "                               "; // 31 white space
+ static const char whitespace[32]= "                               "; // 31 white space
  const char *tok;
  for ( tok= strtok( line, "," );
        tok && *tok;
@@ -318,9 +315,9 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
   string_to_be_ruined_by_strtok[4096 - 1]= '\0'; // just in case
   Dec_deg= atof( getfield_from_csv_string( string_to_be_ruined_by_strtok, 5 ) );
   // atof() may return 0.0 if the input is just white spaces
-  if( Dec_deg < -90.0 || Dec_deg > +90.0 || Dec_deg == 0.0 ) {
+  if ( Dec_deg < -90.0 || Dec_deg > +90.0 || Dec_deg == 0.0 ) {
    continue;
-  } 
+  }
   if ( fabs( target_Dec_deg - Dec_deg ) > search_radius_deg ) {
    continue;
   }
@@ -331,15 +328,14 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
   string_to_be_ruined_by_strtok[4096 - 1]= '\0'; // just in case
   RA_deg= atof( getfield_from_csv_string( string_to_be_ruined_by_strtok, 4 ) );
   // atof() may return 0.0 if the input is just white spaces
-  if( RA_deg < 0.0 || RA_deg > 360.0 || RA_deg == 0.0 ) {
+  if ( RA_deg < 0.0 || RA_deg > 360.0 || RA_deg == 0.0 ) {
    continue;
-  } 
+  }
 
   RA1_rad= RA_deg * M_PI / 180.0;
   RA2_rad= target_RA_deg * M_PI / 180.0;
   DEC1_rad= Dec_deg * M_PI / 180.0;
   DEC2_rad= target_Dec_deg * M_PI / 180.0;
-
 
   // yes, it mathces the definition in src/put_two_sources_in_one_field.c
   distance_deg= acos( cos( DEC1_rad ) * cos( DEC2_rad ) * cos( MAX( RA1_rad, RA2_rad ) - MIN( RA1_rad, RA2_rad ) ) + sin( DEC1_rad ) * sin( DEC2_rad ) ) * 180.0 / M_PI;
@@ -414,11 +410,11 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
    ///////////////////////////////////////////////////////////////
 
    // if( is_found == 0 )
-   if ( 1 == html_output ) {   
-    fprintf( stdout, "<b>The object was <font color=\"red\">found</font> in <font color=\"green\">ASASSN-V</font></b>\n");
+   if ( 1 == html_output ) {
+    fprintf( stdout, "<b>The object was <font color=\"red\">found</font> in <font color=\"green\">ASASSN-V</font></b>\n" );
     fprintf( stdout, "<b>%2.0lf\"  %s</b>\nType: %s\nMeanMag %s m  Amp. %s m  Period %s d\n", distance_deg * 3600.0, name, type, MeanMag, Amplitude, Period );
    } else {
-    fprintf( stdout, "The object was found in ASASSN-V\n");
+    fprintf( stdout, "The object was found in ASASSN-V\n" );
     fprintf( stdout, "%2.0lf\"  %s\nType: %s\nMeanMag %s m  Amp. %s m  Period %s d\n", distance_deg * 3600.0, name, type, MeanMag, Amplitude, Period );
    }
    is_found= 1;
@@ -427,9 +423,9 @@ int search_asassnv( double target_RA_deg, double target_Dec_deg, double search_r
  }
  if ( is_found == 0 && be_silent_if_not_found == 0 ) {
   if ( 1 == html_output ) {
-   fprintf( stdout, "The object was <font color=\"green\">not found</font> in <font color=\"DarkSeaGreen\">ASASSN-V</font>\n");
+   fprintf( stdout, "The object was <font color=\"green\">not found</font> in <font color=\"DarkSeaGreen\">ASASSN-V</font>\n" );
   } else {
-   fprintf( stdout, "The object was not found in ASASSN-V\n");
+   fprintf( stdout, "The object was not found in ASASSN-V\n" );
   }
  }
 
@@ -451,8 +447,8 @@ int main( int argc, char **argv ) {
   return 1;
  }
 
- if ( strchr( argv[1], ':') != NULL || strchr( argv[2], ':') != NULL ) {
-  fprintf(stderr, "ERROR: The input RA contains a colon ':'.\nOnly decimal degrees are supported by this binary! Sorry!\n");
+ if ( strchr( argv[1], ':' ) != NULL || strchr( argv[2], ':' ) != NULL ) {
+  fprintf( stderr, "ERROR: The input RA contains a colon ':'.\nOnly decimal degrees are supported by this binary! Sorry!\n" );
   return 2;
  }
 
@@ -466,9 +462,9 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "ERROR: the input Dec (%s interpreted as %lf) is our of range!\n", argv[2], target_Dec_deg );
   return 2;
  }
- 
+
  if ( argc >= 4 ) {
-  if( argv[3][0] == 'H' ) {
+  if ( argv[3][0] == 'H' ) {
    html_output= 1;
   }
  }
@@ -482,7 +478,6 @@ int main( int argc, char **argv ) {
 
  // The use of the reduced search radius is a silly attempt to handle the situation where
  // multiple known variables are within the search radius and ideally we want the nearest one to the search position.
-
 
  // First try small search radius
  is_found= search_vsx( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG / 3.0, 1, html_output );

@@ -129,7 +129,7 @@ int main( int argc, char **argv ) {
      preflare_median_mag= gsl_stats_wmean( w, 1, mag_a, 1, i );
      preflare_mag_sigma= sqrt( mag_a_err[0] * mag_a_err[0] + mag_a_err[1] * mag_a_err[1] );
     }
-    // Compute flare mag & sigma 
+    // Compute flare mag & sigma
     i= 0;
     old_jd= 0.0; // so the compiler wouldn't complain about uninitialaized use
     while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, NULL ) ) {

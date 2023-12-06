@@ -10,15 +10,15 @@
 #include "photocurve.h"
 #include "lightcurve_io.h"
 
-void get_limiting_magnitude_from_log_file(double *old_mag_limit) {
+void get_limiting_magnitude_from_log_file( double *old_mag_limit ) {
  FILE *logfilein;
  char str[2048];
  logfilein= fopen( "vast_summary.log", "r" );
  if ( logfilein != NULL ) {
   while ( NULL != fgets( str, 2048, logfilein ) ) {
    if ( str[0] == 'E' && str[1] == 's' && str[2] == 't' && str[10] == 'r' && str[11] == 'e' && str[12] == 'f' ) {
-    if( 1==sscanf( str, "Estimated ref. image limiting mag.: %lf", old_mag_limit ) ){
-     fprintf(stderr, "From vast_summary.log: estimated ref. image limiting mag.: %6.2lf\n", (*old_mag_limit) );
+    if ( 1 == sscanf( str, "Estimated ref. image limiting mag.: %lf", old_mag_limit ) ) {
+     fprintf( stderr, "From vast_summary.log: estimated ref. image limiting mag.: %6.2lf\n", ( *old_mag_limit ) );
      break;
     }
    }
@@ -28,9 +28,7 @@ void get_limiting_magnitude_from_log_file(double *old_mag_limit) {
  return;
 }
 
-
-
-void update_limiting_magnitude_in_log_file(double new_mag_limit) {
+void update_limiting_magnitude_in_log_file( double new_mag_limit ) {
  FILE *logfilein;
  FILE *logfileout;
  double old_mag_limit= 0;
@@ -44,9 +42,9 @@ void update_limiting_magnitude_in_log_file(double new_mag_limit) {
   }
   while ( NULL != fgets( str, 2048, logfilein ) ) {
    if ( str[0] == 'E' && str[1] == 's' && str[2] == 't' && str[10] == 'r' && str[11] == 'e' && str[12] == 'f' ) {
-    if( 1==sscanf( str, "Estimated ref. image limiting mag.: %lf", &old_mag_limit ) ){
+    if ( 1 == sscanf( str, "Estimated ref. image limiting mag.: %lf", &old_mag_limit ) ) {
      sprintf( str, "Estimated ref. image limiting mag.: %6.2lf\n", new_mag_limit );
-     fprintf(stderr, "Updating vast_summary.log: %s", str );
+     fprintf( stderr, "Updating vast_summary.log: %s", str );
     }
    }
    fputs( str, logfileout );
@@ -59,7 +57,6 @@ void update_limiting_magnitude_in_log_file(double new_mag_limit) {
  }
  return;
 }
-
 
 int main( int argc, char **argv ) {
 
@@ -88,7 +85,7 @@ int main( int argc, char **argv ) {
  char **filenamelist;
  long filename_counter;
  long filenamelen;
- 
+
  double ref_frame_limiting_mag= 0.0;
 
  if ( argc != 4 && argc != 6 ) {
@@ -210,9 +207,9 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "ERROR in calibrate_magnitude_scale: incorrect operation_mode=%d\nAborting!\n", operation_mode );
   return 1;
  }
- 
+
  // Get reference frame limiting magnitude from log file
- get_limiting_magnitude_from_log_file(&ref_frame_limiting_mag);
+ get_limiting_magnitude_from_log_file( &ref_frame_limiting_mag );
  // Compute new reference frame limiting magnitude
  mag= ref_frame_limiting_mag;
  if ( operation_mode == 0 ) {
@@ -222,16 +219,16 @@ int main( int argc, char **argv ) {
   newmag= eval_photocurve( mag, a_, operation_mode );
  }
  // Write new reference frame limiting magnitude to log file
- update_limiting_magnitude_in_log_file(newmag);
+ update_limiting_magnitude_in_log_file( newmag );
 
  // Create a list of files
  filenamelist= (char **)malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );
- 
+
  if ( NULL == filenamelist ) {
   perror( "Silly memory error" );
   return 2;
  }
- 
+
  filename_counter= 0;
  dp= opendir( "./" );
  if ( dp != NULL ) {
@@ -246,7 +243,7 @@ int main( int argc, char **argv ) {
     if ( NULL == filenamelist[filename_counter] ) {
      perror( "Memory error" );
      return 2;
-    } 
+    }
     strncpy( filenamelist[filename_counter], ep->d_name, ( filenamelen + 1 ) );
     filename_counter++;
    }

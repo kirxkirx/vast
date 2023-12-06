@@ -15,12 +15,10 @@
 
 #include <time.h>
 
-
 // all these are for wait3()
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-
 
 #include "cpgplot.h"
 
@@ -157,7 +155,7 @@ void remove_linear_trend( float *fit_jd, float *mag, int N, double A, double B, 
  }
 
  fclose( vast_lc_remove_linear_trend_logfile );
- fprintf( stderr, "The detrending log is added to \x1B[34;47m vast_lc_remove_linear_trend.log \x1B[33;00m\n\n");
+ fprintf( stderr, "The detrending log is added to \x1B[34;47m vast_lc_remove_linear_trend.log \x1B[33;00m\n\n" );
 
  free( corrected_mag );
  free( plot_y );
@@ -743,7 +741,7 @@ int main( int argc, char **argv ) {
   exit( EXIT_FAILURE );
  };
 
- // Determine plot limits 
+ // Determine plot limits
  minmag= maxmag= mag[0];
  minJD= maxJD= (float)JD[0];
  for ( i= 1; i < Nobs; i++ ) {
@@ -819,7 +817,7 @@ int main( int argc, char **argv ) {
      change_limits_trigger= 2;
    }
    if ( xw_ps == 0 ) {
-    cpgscr( 0, 0.10, 0.31, 0.32 ); // set default vast window background 
+    cpgscr( 0, 0.10, 0.31, 0.32 ); // set default vast window background
     cpgpage();
    }
    if ( xw_ps == 2 ) {
@@ -833,7 +831,7 @@ int main( int argc, char **argv ) {
    //
    cpgscr( 1, 1.0, 1.0, 1.0 ); // set color of axes lables - white
    //
-   cpgscr( 0, 0.10, 0.31, 0.32 ); // set default vast window background 
+   cpgscr( 0, 0.10, 0.31, 0.32 ); // set default vast window background
    cpgeras();
    cpgask( 0 ); // turn OFF this silly " Type <RETURN> for next page:" request
   }
@@ -859,7 +857,7 @@ int main( int argc, char **argv ) {
 
   cpgswin( new_X1, new_X2, new_Y1, new_Y2 );
   if ( xw_ps == 0 ) {
-   cpgscr( 0, 0.08, 0.08, 0.09 ); // set background 
+   cpgscr( 0, 0.08, 0.08, 0.09 ); // set background
   }
   cpgsci( 0 );
   cpgrect( new_X1, new_X2, new_Y1, new_Y2 );
@@ -1211,7 +1209,7 @@ int main( int argc, char **argv ) {
   // subtract one or many linear trends (many trends may be defined in regions separated by breaks)
   if ( curC == '-' ) {
    //
-   if( 0 == unlink( "vast_lc_remove_linear_trend.log" ) ){
+   if ( 0 == unlink( "vast_lc_remove_linear_trend.log" ) ) {
     fprintf( stderr, "Rewriting the trend-subtraction log file \x1B[34;47m vast_lc_remove_linear_trend.log \x1B[33;00m\n\n" );
    }
    //
@@ -1690,7 +1688,7 @@ int main( int argc, char **argv ) {
    markY= mag[closest_num];
    //    cpgsci(2);cpgpt1( markX, markY, 4);cpgsci(5);
    // print out the point info
-   //fprintf( stderr, "%13.5lf  %.5lf %.5lf\n", JD[closest_num], mag[closest_num], mag_err[closest_num] ); 
+   // fprintf( stderr, "%13.5lf  %.5lf %.5lf\n", JD[closest_num], mag[closest_num], mag_err[closest_num] );
    // Print the selected data point
    fprintf( stderr, "%13.5lf  %.5lf %.5lf  ", JD[closest_num], mag[closest_num], mag_err[closest_num] );
    //
@@ -1711,7 +1709,7 @@ int main( int argc, char **argv ) {
    structureTIME= gmtime( &UnixTime_time_t );
 #endif
    // Warning! I'm loosing the last digit while convering!
-   //fprintf( stderr, "%04d-%02d-%08.5lf\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, (double)structureTIME->tm_mday + (double)structureTIME->tm_hour / 24.0 + (double)structureTIME->tm_min / ( 24.0 * 60 ) + (double)structureTIME->tm_sec / ( 24.0 * 60 * 60 ) );
+   // fprintf( stderr, "%04d-%02d-%08.5lf\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, (double)structureTIME->tm_mday + (double)structureTIME->tm_hour / 24.0 + (double)structureTIME->tm_min / ( 24.0 * 60 ) + (double)structureTIME->tm_sec / ( 24.0 * 60 * 60 ) );
    fprintf( stderr, "%04d-%02d-%07.4lf\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, (double)structureTIME->tm_mday + (double)structureTIME->tm_hour / 24.0 + (double)structureTIME->tm_min / ( 24.0 * 60 ) + (double)structureTIME->tm_sec / ( 24.0 * 60 * 60 ) );
 #if defined( _POSIX_C_SOURCE ) || defined( _BSD_SOURCE ) || defined( _SVID_SOURCE )
    free( structureTIME );

@@ -245,34 +245,34 @@ void help_msg( const char *progname, int exit_code ) {
 }
 
 // a comparison function to qsort the observations chached in memory
-int compare_star_num(const void *a, const void *b) {
-  const struct Observation *obs_a = (const struct Observation *)a;
-  const struct Observation *obs_b = (const struct Observation *)b;
+int compare_star_num( const void *a, const void *b ) {
+ const struct Observation *obs_a= (const struct Observation *)a;
+ const struct Observation *obs_b= (const struct Observation *)b;
 
-  return (obs_a->star_num - obs_b->star_num);
+ return ( obs_a->star_num - obs_b->star_num );
 }
 
-size_t binary_search_first(struct Observation *arr, size_t size, int target) {
-  size_t left = 0;
-  size_t right = size;
-  size_t mid;
+size_t binary_search_first( struct Observation *arr, size_t size, int target ) {
+ size_t left= 0;
+ size_t right= size;
+ size_t mid;
 
-  while (left < right) {
-    mid = left + (right - left) / 2;
-    if (arr[mid].star_num < target) {
-      left = mid + 1;
-    } else {
-      right = mid;
-    }
+ while ( left < right ) {
+  mid= left + ( right - left ) / 2;
+  if ( arr[mid].star_num < target ) {
+   left= mid + 1;
+  } else {
+   right= mid;
   }
+ }
 
-  return left;
+ return left;
 }
 
-void write_obs_to_file(FILE *file_out, struct Observation *obs) {
-  char string_with_float_parameters_and_saved_FITS_keywords[2048 + FITS_KEYWORDS_IN_LC_LENGTH];
+void write_obs_to_file( FILE *file_out, struct Observation *obs ) {
+ char string_with_float_parameters_and_saved_FITS_keywords[2048 + FITS_KEYWORDS_IN_LC_LENGTH];
 #ifdef WRITE_ADDITIONAL_APERTURES_TO_LIGHTCURVES
-  snprintf(string_with_float_parameters_and_saved_FITS_keywords, sizeof(string_with_float_parameters_and_saved_FITS_keywords),
+ snprintf( string_with_float_parameters_and_saved_FITS_keywords, sizeof( string_with_float_parameters_and_saved_FITS_keywords ),
            "  %+.4lf %.4lf  %+.4lf %.4lf  %+.4lf %.4lf  %+.4lf %.4lf  %+.4lf %.4lf  %s",
            obs->float_parameters[2],
            obs->float_parameters[3],
@@ -284,14 +284,14 @@ void write_obs_to_file(FILE *file_out, struct Observation *obs) {
            obs->float_parameters[9],
            obs->float_parameters[10],
            obs->float_parameters[11],
-           obs->fits_header_keywords_to_be_recorded_in_lightcurve);
+           obs->fits_header_keywords_to_be_recorded_in_lightcurve );
 #else
-  snprintf(string_with_float_parameters_and_saved_FITS_keywords, sizeof(string_with_float_parameters_and_saved_FITS_keywords),
-           "  %s", obs->fits_header_keywords_to_be_recorded_in_lightcurve);
+ snprintf( string_with_float_parameters_and_saved_FITS_keywords, sizeof( string_with_float_parameters_and_saved_FITS_keywords ),
+           "  %s", obs->fits_header_keywords_to_be_recorded_in_lightcurve );
 #endif
-  write_lightcurve_point(file_out, obs->JD, obs->mag, obs->mag_err, obs->X, obs->Y, obs->APER, obs->filename, string_with_float_parameters_and_saved_FITS_keywords);
-  obs->is_used = 1;
-  return;
+ write_lightcurve_point( file_out, obs->JD, obs->mag, obs->mag_err, obs->X, obs->Y, obs->APER, obs->filename, string_with_float_parameters_and_saved_FITS_keywords );
+ obs->is_used= 1;
+ return;
 }
 
 int read_onput_file_with_user_specified_moving_object_opsition( char **input_images, float *moving_object__user_array_x, float *moving_object__user_array_y, int Num ) {
@@ -581,12 +581,11 @@ void choose_best_reference_image( char **input_images, int *vast_bad_image_flag,
   fprintf( stderr, "ERROR in choose_best_reference_image() while allocating memory for A_IMAGE\n" );
   exit( EXIT_FAILURE );
  }
- 
+
  // Initialize values to make the compiler happy
- for( i= 0; i<NUMBER_OF_FLOAT_PARAMETERS; i++ ) {
+ for ( i= 0; i < NUMBER_OF_FLOAT_PARAMETERS; i++ ) {
   float_parameters[i]= 0.0;
  }
- 
 
  for ( i= 0; i < Num; i++ ) {
   // Get the star catalog name from the image name
@@ -678,7 +677,7 @@ void choose_best_reference_image( char **input_images, int *vast_bad_image_flag,
     continue;
    }
    // float_parameters[0] is the actual FWHM
-   //if ( float_parameters[0] < FWHM_MIN ) {
+   // if ( float_parameters[0] < FWHM_MIN ) {
    if ( MAX( float_parameters[0], SIGMA_TO_FWHM_CONVERSION_FACTOR * a_a ) < FWHM_MIN ) {
     continue;
    }
@@ -712,9 +711,9 @@ void choose_best_reference_image( char **input_images, int *vast_bad_image_flag,
  best_image= 0;
  copy_of_number_of_good_detected_stars= malloc( Num * sizeof( double ) );
  if ( NULL == copy_of_number_of_good_detected_stars ) {
-  fprintf( stderr, "ERROR allocating memory for copy_of_number_of_good_detected_stars in choose_best_reference_image()\n");
+  fprintf( stderr, "ERROR allocating memory for copy_of_number_of_good_detected_stars in choose_best_reference_image()\n" );
   exit( EXIT_FAILURE );
- } 
+ }
  for ( i= 0; i < Num; i++ ) {
   copy_of_number_of_good_detected_stars[i]= number_of_good_detected_stars[i];
  }
@@ -828,15 +827,14 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
  a_minus_b__image= malloc( Num * sizeof( double ) );
  a_minus_b__image__to_be_runied_by_sort= malloc( Num * sizeof( double ) );
  if ( NULL == a_minus_b__image || NULL == a_minus_b__image__to_be_runied_by_sort ) {
-  fprintf( stderr, "ERROR allocating memory in mark_images_with_elongated_stars_as_bad()\n");
+  fprintf( stderr, "ERROR allocating memory in mark_images_with_elongated_stars_as_bad()\n" );
   exit( EXIT_FAILURE );
  }
- 
+
  // Initialize the values to make the compier happy
- for( i= 0; i<NUMBER_OF_FLOAT_PARAMETERS; i++ ) {
+ for ( i= 0; i < NUMBER_OF_FLOAT_PARAMETERS; i++ ) {
   float_parameters[i]= 0.0;
  }
-
 
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
@@ -844,7 +842,6 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
 #endif
 #endif
  for ( i= 0; i < Num; i++ ) {
-
 
   // Get the star catalog name from the image name
   if ( 0 != find_catalog_in_vast_images_catalogs_log( input_images[i], sextractor_catalog ) ) {
@@ -862,8 +859,8 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
 
   a_minus_b= malloc( MAX_NUMBER_OF_STARS * sizeof( double ) );
   if ( a_minus_b == NULL ) {
-   fprintf( stderr, "MEMORY ERROR in mark_images_with_elongated_stars_as_bad()\n");
-    exit( EXIT_FAILURE );
+   fprintf( stderr, "MEMORY ERROR in mark_images_with_elongated_stars_as_bad()\n" );
+   exit( EXIT_FAILURE );
   }
   previous_star_number_in_sextractor_catalog= 0;
   number_of_good_detected_stars= 0;
@@ -877,7 +874,7 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
    // Read only stars detected at the first FITS image extension.
    // The start of the second image extension will be signified by a jump in star numbering
    if ( star_number_in_sextractor_catalog < previous_star_number_in_sextractor_catalog ) {
-    fprintf(stderr, "WARNING in mark_images_with_elongated_stars_as_bad(): this seems to be a multi-extension FITS\n");
+    fprintf( stderr, "WARNING in mark_images_with_elongated_stars_as_bad(): this seems to be a multi-extension FITS\n" );
     break;
    } else {
     previous_star_number_in_sextractor_catalog= star_number_in_sextractor_catalog;
@@ -939,7 +936,7 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
     continue;
    }
    // float_parameters[0] is the actual FWHM
-   //if ( float_parameters[0] < FWHM_MIN ) {
+   // if ( float_parameters[0] < FWHM_MIN ) {
    if ( MAX( float_parameters[0], SIGMA_TO_FWHM_CONVERSION_FACTOR * a_a ) < FWHM_MIN ) {
     continue;
    }
@@ -971,7 +968,6 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
   free( a_minus_b );
 
  } // for ( i= 0; i < Num; i++ ) { // cycle through the images
-
 
  // Determine median a_minus_b among all images
  gsl_sort( a_minus_b__image__to_be_runied_by_sort, 1, Num );
@@ -1018,7 +1014,7 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
  free( a_minus_b__image );
 
  fclose( file );
- 
+
  return;
 }
 
@@ -1031,7 +1027,7 @@ void write_Star_struct_to_ds9_region_file( struct Star *star, int N_start, int N
  FILE *f;
  f= fopen( filename, "w" );
  if ( NULL == f ) {
-  fprintf( stderr, "ERROR in write_Star_struct_to_ds9_region_file() while opening file %s for writing!\n", filename);
+  fprintf( stderr, "ERROR in write_Star_struct_to_ds9_region_file() while opening file %s for writing!\n", filename );
   return;
  }
  fprintf( f, "# Region file format: DS9 version 4.0\n" );
@@ -1050,7 +1046,7 @@ void write_single_Star_from_struct_to_ds9_region_file( struct Star *star, int N_
  FILE *f;
  // try to open the file
  f= fopen( filename, "r" );
- if ( f == NULL  ) {
+ if ( f == NULL ) {
   // write header
   f= fopen( filename, "w" );
   if ( NULL == f ) {
@@ -1719,10 +1715,10 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
   if ( y > search_area_boundaries[2] && y < search_area_boundaries[3] ) {
    // we check that the transient is brighter than the faint limit
    // don't care if it's fainter or brighter thant the bright search box limits
-   //if ( m + 1.0 * m_err < search_area_boundaries[5] ) {
+   // if ( m + 1.0 * m_err < search_area_boundaries[5] ) {
    if ( m + 0.0 * m_err < search_area_boundaries[5] ) {
     // The candidate is inside the search box - now make additional (slow) checks
-    //if ( 1 == is_point_close_or_off_the_frame_edge( star.x_frame, star.y_frame, X_im_size, Y_im_size, 3 * FRAME_EDGE_INDENT_PIXELS ) ) {
+    // if ( 1 == is_point_close_or_off_the_frame_edge( star.x_frame, star.y_frame, X_im_size, Y_im_size, 3 * FRAME_EDGE_INDENT_PIXELS ) ) {
     if ( 1 == is_point_close_or_off_the_frame_edge( star.x_frame, star.y_frame, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) ) {
      return;
     }
@@ -1751,21 +1747,24 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
  return;
 }
 
-int compare(const double *a, const double *b) {
-    if (*a < *b) return -1;
-    else if (*a > *b) return 1;
-    else return 0;
+int compare( const double *a, const double *b ) {
+ if ( *a < *b )
+  return -1;
+ else if ( *a > *b )
+  return 1;
+ else
+  return 0;
 }
 
 void set_transient_search_boundaries( double *search_area_boundaries, struct Star *star, int NUMBER, double X_im_size, double Y_im_size ) {
  int i;
  double *filtered_mag_values;
- int filtered_count = 0;
+ int filtered_count= 0;
 
  search_area_boundaries[0]= search_area_boundaries[1]= search_area_boundaries[2]= search_area_boundaries[3]= FRAME_EDGE_INDENT_PIXELS;
  search_area_boundaries[4]= search_area_boundaries[5]= (double)star[0].mag;
 
- filtered_mag_values = (double*)malloc(NUMBER * sizeof(double));
+ filtered_mag_values= (double *)malloc( NUMBER * sizeof( double ) );
  if ( NULL == filtered_mag_values ) {
   fprintf( stderr, "ERROR allocating memory for filtered_mag_values in set_transient_search_boundaries()\n" );
   exit( EXIT_FAILURE );
@@ -1792,12 +1791,12 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
    if ( (double)star[i].mag < search_area_boundaries[4] )
     search_area_boundaries[4]= (double)star[i].mag;
 
-   filtered_mag_values[filtered_count++] = (double)star[i].mag;
+   filtered_mag_values[filtered_count++]= (double)star[i].mag;
   }
  }
 
- if( filtered_count <= 0 ) {
-  fprintf(stderr, "ERROR determining the transient search bondaries - no stars pass the filtering!\n");
+ if ( filtered_count <= 0 ) {
+  fprintf( stderr, "ERROR determining the transient search bondaries - no stars pass the filtering!\n" );
   exit( EXIT_FAILURE );
  }
 
@@ -1805,9 +1804,9 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
  // https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/en/megapipe/docs/photo.html
  //
  // Sort the filtered_mag_values array and get the value that is 20% from the largest value
- qsort(filtered_mag_values, filtered_count, sizeof(double), (int (*)(const void *, const void *))compare);
- search_area_boundaries[5] = filtered_mag_values[(int)(0.80 * (double)filtered_count)]; // 20% from the end
- search_area_boundaries[5] = search_area_boundaries[5] - MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT;
+ qsort( filtered_mag_values, filtered_count, sizeof( double ), (int ( * )( const void *, const void * ))compare );
+ search_area_boundaries[5]= filtered_mag_values[(int)( 0.80 * (double)filtered_count )]; // 20% from the end
+ search_area_boundaries[5]= search_area_boundaries[5] - MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT;
 
  fprintf( stderr, "\nParameter box for transient search: %7.1lf<X<%7.1lf %7.1lf<Y<%7.1lf %5.2lf<m<%5.2lf\n \n",
           search_area_boundaries[0],
@@ -1817,11 +1816,10 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
           search_area_boundaries[4],
           search_area_boundaries[5] );
 
- free(filtered_mag_values);
+ free( filtered_mag_values );
 
  return;
 }
-
 
 /*
 void set_transient_search_boundaries( double *search_area_boundaries, struct Star *star, int NUMBER, double X_im_size, double Y_im_size ) {
@@ -1986,7 +1984,7 @@ int main( int argc, char **argv ) {
                                                        // STAR3 - structure with stars on the reference image (to mutch frames)
                                                        //         no new stars are added to STAR3
  char *file_or_dir_on_command_line, **input_images, **str_with_fits_keywords_to_capture_from_input_images;
- size_t start_index; 
+ size_t start_index;
  FILE *file_out;
  int n, Num= 0, i, j; // Counters. Num is number of files to operate
  int NUMBER1, NUMBER2, NUMBER3;
@@ -1994,7 +1992,7 @@ int main( int argc, char **argv ) {
  int *Pos1, *Pos2;
 
  double JD= 0;
- char tmpNAME[OUTFILENAME_LENGTH];             // Array to store generated lightcurve filenames 
+ char tmpNAME[OUTFILENAME_LENGTH];             // Array to store generated lightcurve filenames
  struct Observation *ptr_struct_Obs= NULL;     // Structure to store all observations
  long TOTAL_OBS= 0;                            // Total number of measurements
  long obs_in_RAM= 0;                           // Number of observations which were not written to disk
@@ -2084,8 +2082,8 @@ int main( int argc, char **argv ) {
 
  int previous_Number_of_main_star;
 
- // LOG-file 
- FILE *vast_image_details; // May refer to both vast_image_details.log and vast_summary.log when needed 
+ // LOG-file
+ FILE *vast_image_details; // May refer to both vast_image_details.log and vast_summary.log when needed
 
  char stderr_output[1024];
  char log_output[1024];
@@ -2096,7 +2094,7 @@ int main( int argc, char **argv ) {
  double abs_computed_predicted_mag_diff;
  double computed_mag;
 
- double fixed_aperture= 0.0; // If fixed_aperture!=0.0 - use fixed aperture for all images 
+ double fixed_aperture= 0.0; // If fixed_aperture!=0.0 - use fixed aperture for all images
 
  FILE *vast_list_of_all_stars_log;
  FILE *vast_list_of_all_stars_ds9;
@@ -2233,12 +2231,12 @@ int main( int argc, char **argv ) {
  /// end of definitions
  lin_mag_A= lin_mag_B= lin_mag_C= 0.0; // just in case
 
- // Protection against strange free() crashes 
+ // Protection against strange free() crashes
  // setenv("MALLOC_CHECK_", "0", 1);
 
  char sextractor_catalog_filtering_results_string[2048];
 
- //char string_with_float_parameters_and_saved_FITS_keywords[2048 + FITS_KEYWORDS_IN_LC_LENGTH];
+ // char string_with_float_parameters_and_saved_FITS_keywords[2048 + FITS_KEYWORDS_IN_LC_LENGTH];
 
  // Moving object hack
  int moving_object= 0;
@@ -2251,7 +2249,7 @@ int main( int argc, char **argv ) {
 
  print_vast_version();
 
- // argv[] parsing begins 
+ // argv[] parsing begins
  if ( argc == 1 ) {
   // no command line arguments! Is this is a mistake or should we read the input list of images from a file
   vast_list_of_input_images_with_time_corrections= fopen( "vast_list_of_input_images_with_time_corrections.txt", "r" );
@@ -2264,7 +2262,7 @@ int main( int argc, char **argv ) {
   //
  }
 
- // Options for getopt() 
+ // Options for getopt()
  char *cvalue= NULL;
 
  // const char *const shortopt= "vh9fdqmwpoPngGrlseucUijJkK12346785:a:b:x:y:t:";
@@ -2456,7 +2454,7 @@ int main( int argc, char **argv ) {
    // param_nodiscardell= 1; // incompatible with PSF photometry and I'm not sure why - probably a bug
    param_P= 1;
    fprintf( stderr, "opt 'P': PSF photometry mode!\n" );
-   // Check if the PSFEx executable (named "psfex") is present in $PATH 
+   // Check if the PSFEx executable (named "psfex") is present in $PATH
    if ( 0 != system( "lib/look_for_psfex.sh" ) ) {
     exit( EXIT_FAILURE );
    }
@@ -2595,7 +2593,7 @@ int main( int argc, char **argv ) {
    // param_filterout_magsize_outliers=0
    fprintf( stderr, "WARNING: mag-size filter is enabled while VaST is asked to accept blended stars marked by SExtractor (flag>=%d)!\nThe mag-size filter WILL REJECT BLENDED STARS.\n", maxsextractorflag );
    fprintf( stderr, "This warning message will disappear in...   " );
-   // sleep for 6 seconds to make sure user saw the message 
+   // sleep for 6 seconds to make sure user saw the message
    for ( n= 5; n > 0; n-- ) {
     sleep( 1 );
     fprintf( stderr, "%d ", n );
@@ -2618,9 +2616,9 @@ int main( int argc, char **argv ) {
  }
  input_images= NULL;
  Num= 0;
- 
+
  // just in case - assume all images are good by default
- memset(vast_bad_image_flag, 0, sizeof(vast_bad_image_flag));
+ memset( vast_bad_image_flag, 0, sizeof( vast_bad_image_flag ) );
 
  // Clean symlinks to images and on-the-fly converted images from a previous run
  if ( argc > 1 ) {
@@ -3061,7 +3059,7 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "WARNING: It is recommended to use VaST with more than %d images (much more is much better)!\nYou have supplied only %d images. :(\n", SOFT_MIN_NUMBER_OF_POINTS, Num );
   fprintf( stderr, "\n" );
   fprintf( stderr, "This warning message will disappear in...   " );
-  // sleep for 6 seconds to make sure user saw the above message 
+  // sleep for 6 seconds to make sure user saw the above message
   for ( n= 5; n > 0; n-- ) {
    sleep( 1 );
    fprintf( stderr, "%d ", n );
@@ -3082,7 +3080,7 @@ int main( int argc, char **argv ) {
   print_TT_reminder( 0 );
  }
 
- // The end of the beginning 
+ // The end of the beginning
 
  // Update PATH variable to make sure the local copy of SExtractor is there
  make_sure_libbin_is_in_path();
@@ -3266,7 +3264,7 @@ int main( int argc, char **argv ) {
  // for(i=0;i<Num;i++)
  // fprintf(stderr,"%s\n",input_images[i]);
 
- // Create vast_images_catalogs.log 
+ // Create vast_images_catalogs.log
  write_images_catalogs_logfile( input_images, Num );
 
  int n_fork;    //=get_number_of_cpu_cores(); // number of parallel threads
@@ -3357,7 +3355,7 @@ int main( int argc, char **argv ) {
      }
      //
      exit( EXIT_SUCCESS ); // exit only if this is actually a child
-    }           // if ( pid == 0 ) {
+    }                      // if ( pid == 0 ) {
     // the other possibility is that this is a parent that could not fork - no exit in this case
    } else {
     // child_pids[i_fork-1]=pid;
@@ -3714,10 +3712,10 @@ int main( int argc, char **argv ) {
    continue;
   }
   if ( 0 != exclude_region( X1, Y1, X2, Y2, N_bad_regions, position_x_pix, position_y_pix, aperture ) ) {
-   if( counter_rejected_bad_region < 10 ) {
+   if ( counter_rejected_bad_region < 10 ) {
     fprintf( stderr, "The reference image star %9.3lf %9.3lf is rejected, see bad_region.lst\n", position_x_pix, position_y_pix );
    }
-   if( counter_rejected_bad_region == 10 ) {
+   if ( counter_rejected_bad_region == 10 ) {
     fprintf( stderr, "Excluding more reference image stars falling at bad regions!.. (will not print them all)\n" );
    }
    counter_rejected_bad_region++;
@@ -3772,7 +3770,7 @@ int main( int argc, char **argv ) {
   STAR1[NUMBER1 - 1].n_rejected= 0; // init
                                     //
   // It is OK for a very bright saturated object to be big
-  //if ( a_a > 2*aperture && sextractor_flag < 4 ) {
+  // if ( a_a > 2*aperture && sextractor_flag < 4 ) {
   if ( a_a > aperture && sextractor_flag < 4 ) {
    counter_rejected_too_large++;
    STAR1[NUMBER1 - 1].vast_flag= 1;
@@ -3836,7 +3834,7 @@ int main( int argc, char **argv ) {
  fclose( file );
  if ( debug != 0 )
   fprintf( stderr, "DEBUG MSG: image00001.cat was closed...\n" );
- // end of Read_sex_cat2 
+ // end of Read_sex_cat2
 
  if ( param_P == 1 ) {
   fprintf( stderr, "Filtering-out stars with bad PSF fit... " );
@@ -4325,10 +4323,10 @@ int main( int argc, char **argv ) {
       continue;
      }
      if ( 0 != exclude_region( X1, Y1, X2, Y2, N_bad_regions, position_x_pix, position_y_pix, aperture ) ) {
-      if( counter_rejected_bad_region < 10 ) {
+      if ( counter_rejected_bad_region < 10 ) {
        fprintf( stderr, "The star %9.3lf %9.3lf is rejected, see bad_region.lst\n", position_x_pix, position_y_pix );
       }
-      if( counter_rejected_bad_region == 10 ) {
+      if ( counter_rejected_bad_region == 10 ) {
        fprintf( stderr, "Excluding more stars falling at bad regions!.. (will not print them all)\n" );
       }
       counter_rejected_bad_region++;
@@ -4352,7 +4350,7 @@ int main( int argc, char **argv ) {
       counter_rejected_too_small++;
       continue;
      }
-     //if ( float_parameters[0] < FWHM_MIN ) {
+     // if ( float_parameters[0] < FWHM_MIN ) {
      if ( MAX( float_parameters[0], SIGMA_TO_FWHM_CONVERSION_FACTOR * a_a ) < FWHM_MIN ) {
       counter_rejected_too_small++;
       continue;
@@ -4378,12 +4376,12 @@ int main( int argc, char **argv ) {
      NUMBER2++;
      STAR2[NUMBER2 - 1].vast_flag= 0;
      // It is OK for a very bright saturated object to be big
-     //if ( a_a > 2*aperture && sextractor_flag < 4 ) {
+     // if ( a_a > 2*aperture && sextractor_flag < 4 ) {
      if ( a_a > aperture && sextractor_flag < 4 ) {
       counter_rejected_too_large++;
       STAR2[NUMBER2 - 1].vast_flag= 1;
      }
-     
+
      STAR2[NUMBER2 - 1].n= star_number_in_sextractor_catalog;
      STAR2[NUMBER2 - 1].x= (float)position_x_pix;
      STAR2[NUMBER2 - 1].y= (float)position_y_pix;
@@ -4432,11 +4430,11 @@ int main( int argc, char **argv ) {
      //}
 
      /// !!! Debug !!!
-     float debug_x=2535.0;
-     float debug_y=1901.5;
-     float debug_d=sqrt((STAR2[NUMBER2-1].x_frame-debug_x)*(STAR2[NUMBER2-1].x_frame-debug_x)+(STAR2[NUMBER2-1].y_frame-debug_y)*(STAR2[NUMBER2-1].y_frame-debug_y));
-     if( debug_d<aperture ){
-      fprintf(stderr,"READING SEXTRACTOR CAT: %d  %.3f %.3f  (%f)  s=%d v=%6d\n",STAR2[NUMBER2-1].n,STAR2[NUMBER2-1].x_frame,STAR2[NUMBER2-1].y_frame,STAR2[NUMBER2-1].star_size,STAR2[NUMBER2-1].sextractor_flag,STAR2[NUMBER2-1].vast_flag);
+     float debug_x= 2535.0;
+     float debug_y= 1901.5;
+     float debug_d= sqrt( ( STAR2[NUMBER2 - 1].x_frame - debug_x ) * ( STAR2[NUMBER2 - 1].x_frame - debug_x ) + ( STAR2[NUMBER2 - 1].y_frame - debug_y ) * ( STAR2[NUMBER2 - 1].y_frame - debug_y ) );
+     if ( debug_d < aperture ) {
+      fprintf( stderr, "READING SEXTRACTOR CAT: %d  %.3f %.3f  (%f)  s=%d v=%6d\n", STAR2[NUMBER2 - 1].n, STAR2[NUMBER2 - 1].x_frame, STAR2[NUMBER2 - 1].y_frame, STAR2[NUMBER2 - 1].star_size, STAR2[NUMBER2 - 1].sextractor_flag, STAR2[NUMBER2 - 1].vast_flag );
      }
 
      if ( debug != 0 )
@@ -5698,7 +5696,6 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       }
       //
 
-
       // Coordinates averaging
       for ( coordinate_array_index= 0; coordinate_array_index < coordinate_array_counter; coordinate_array_index++ ) {
        // SLOW: 5.12%
@@ -5736,9 +5733,9 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       }  // for(coordinate_array_index=0;coordinate_array_index<NUMBER1;coordinate_array_index++){
       // Update coordinates in STAR3 (reference structure for image metching)
       if ( n > MIN_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ) { // this step make sence only if coordinates in STAR1 have (or could have) been updated, and that if checks it!
-       for( i_update_coordinates_STAR3=0; i_update_coordinates_STAR3<NUMBER3; i_update_coordinates_STAR3++ ){
-       //for ( i_update_coordinates_STAR3= NUMBER3; i_update_coordinates_STAR3--; ) {
-        // SLOW: 4.13%
+       for ( i_update_coordinates_STAR3= 0; i_update_coordinates_STAR3 < NUMBER3; i_update_coordinates_STAR3++ ) {
+        // for ( i_update_coordinates_STAR3= NUMBER3; i_update_coordinates_STAR3--; ) {
+        //  SLOW: 4.13%
         if ( STAR1[Pos1[i]].n == STAR3[i_update_coordinates_STAR3].n ) {
          // never update for a moving object
          if ( STAR1[Pos1[i]].moving_object != 1 && STAR3[i_update_coordinates_STAR3].moving_object != 1 ) {
@@ -5746,9 +5743,9 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
           STAR3[i_update_coordinates_STAR3].y= STAR1[Pos1[i]].y;
          }
          break; // there should be only one match, correct?!
-        } // if( STAR1[Pos1[i]].n==STAR3[i_update_coordinates_STAR3].n ){
-       }  // for( i_update_coordinates_STAR3=0; i_update_coordinates_STAR3<NUMBER3; i_update_coordinates_STAR3++ ){
-      }   // if( n>MIN_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ){
+        }       // if( STAR1[Pos1[i]].n==STAR3[i_update_coordinates_STAR3].n ){
+       }        // for( i_update_coordinates_STAR3=0; i_update_coordinates_STAR3<NUMBER3; i_update_coordinates_STAR3++ ){
+      }         // if( n>MIN_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ){
       // Done with avaraging the coordinates
       ////////////////////////////////////////////////////////////////////
 
@@ -5838,12 +5835,12 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
     if ( obs_in_RAM > Max_obs_in_RAM ) {
      fprintf( stderr, "Total number of measurements %ld (%ld measurements stored in RAM)\n", TOTAL_OBS, obs_in_RAM );
      fprintf( stderr, "sorting the measurements cached in memory,\n" );
-     qsort(ptr_struct_Obs, obs_in_RAM, sizeof(struct Observation), compare_star_num);
+     qsort( ptr_struct_Obs, obs_in_RAM, sizeof( struct Observation ), compare_star_num );
      fprintf( stderr, "writing lightcurve (outNNNNN.dat) files...\n" );
 /* Write observation to disk */
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
-//#pragma omp parallel for private( k, tmpNAME, file_out, j, string_with_float_parameters_and_saved_FITS_keywords )
+// #pragma omp parallel for private( k, tmpNAME, file_out, j, string_with_float_parameters_and_saved_FITS_keywords )
 #pragma omp parallel for private( start_index, k, tmpNAME, file_out, j )
 #endif
      // The new OpenMP-based lightcurve writer
@@ -5854,14 +5851,14 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       if ( file_out == NULL ) {
        continue;
       }
-      
-      start_index = binary_search_first(ptr_struct_Obs, obs_in_RAM, STAR1[k].n);
 
-      for (j = start_index; j < obs_in_RAM && ptr_struct_Obs[j].star_num == STAR1[k].n; j++) {
-       if (ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0) {
+      start_index= binary_search_first( ptr_struct_Obs, obs_in_RAM, STAR1[k].n );
+
+      for ( j= start_index; j < obs_in_RAM && ptr_struct_Obs[j].star_num == STAR1[k].n; j++ ) {
+       if ( ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0 ) {
         continue;
        }
-       write_obs_to_file(file_out, &ptr_struct_Obs[j]);
+       write_obs_to_file( file_out, &ptr_struct_Obs[j] );
       }
       fclose( file_out );
       // end of process one star
@@ -5887,13 +5884,13 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
          return 1;
         }
 
-        start_index = binary_search_first(ptr_struct_Obs, obs_in_RAM, STAR1[k].n);
+        start_index= binary_search_first( ptr_struct_Obs, obs_in_RAM, STAR1[k].n );
 
-        for (j = start_index; j < obs_in_RAM && ptr_struct_Obs[j].star_num == STAR1[k].n; j++) {
-         if (ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0) {
+        for ( j= start_index; j < obs_in_RAM && ptr_struct_Obs[j].star_num == STAR1[k].n; j++ ) {
+         if ( ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0 ) {
           continue;
          }
-         write_obs_to_file(file_out, &ptr_struct_Obs[j]);
+         write_obs_to_file( file_out, &ptr_struct_Obs[j] );
         }
 
         fclose( file_out );
@@ -6115,14 +6112,14 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 
  //
  fprintf( stderr, "Sorting the measurements cached in memory...\n" );
- qsort(ptr_struct_Obs, obs_in_RAM, sizeof(struct Observation), compare_star_num);
+ qsort( ptr_struct_Obs, obs_in_RAM, sizeof( struct Observation ), compare_star_num );
 
  fprintf( stderr, "Writing lightcurve (outNNNNN.dat) files...\n" );
 
 /* Write observation to disk */
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
-//#pragma omp parallel for private( k, tmpNAME, file_out, j, string_with_float_parameters_and_saved_FITS_keywords )
+// #pragma omp parallel for private( k, tmpNAME, file_out, j, string_with_float_parameters_and_saved_FITS_keywords )
 #pragma omp parallel for private( start_index, k, tmpNAME, file_out, j )
 #endif
  // The new OpenMP-based lightcurve writer
@@ -6134,13 +6131,13 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
    continue;
   }
 
-  start_index = binary_search_first(ptr_struct_Obs, obs_in_RAM, STAR1[k].n);
+  start_index= binary_search_first( ptr_struct_Obs, obs_in_RAM, STAR1[k].n );
 
-  for (j = start_index; j < obs_in_RAM && ptr_struct_Obs[j].star_num == STAR1[k].n; j++) {
-   if (ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0) {
+  for ( j= start_index; j < obs_in_RAM && ptr_struct_Obs[j].star_num == STAR1[k].n; j++ ) {
+   if ( ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0 ) {
     continue;
    }
-   write_obs_to_file(file_out, &ptr_struct_Obs[j]);
+   write_obs_to_file( file_out, &ptr_struct_Obs[j] );
   }
   fclose( file_out );
   // end of process one star
@@ -6166,13 +6163,13 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      return 1;
     }
 
-    start_index = binary_search_first(ptr_struct_Obs, obs_in_RAM, STAR1[k].n);
+    start_index= binary_search_first( ptr_struct_Obs, obs_in_RAM, STAR1[k].n );
 
-    for (j = start_index; j < obs_in_RAM && ptr_struct_Obs[j].star_num == STAR1[k].n; j++) {
-     if (ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0) {
+    for ( j= start_index; j < obs_in_RAM && ptr_struct_Obs[j].star_num == STAR1[k].n; j++ ) {
+     if ( ptr_struct_Obs[j].is_used == 1 || ptr_struct_Obs[j].star_num == 0 ) {
       continue;
      }
-     write_obs_to_file(file_out, &ptr_struct_Obs[j]);
+     write_obs_to_file( file_out, &ptr_struct_Obs[j] );
     }
     fclose( file_out );
     // end of process one star
@@ -6356,13 +6353,13 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
   fprintf( stderr, "ERROR running  lib/create_vast_image_details_log.sh\n" );
   return 1;
  }
- 
+
  // Sort all lightcurve files in JD
  if ( 0 != system( "lib/sort_all_lightcurve_files_in_jd" ) ) {
   fprintf( stderr, "ERROR running  lib/sort_all_lightcurve_files_in_jd\n" );
   return 1;
  }
- 
+
  // Generate summary log
  if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: vast.c is starting echo and lib/vast_image_details_log_parser.sh > vast_summary.log && echo OK\n" );
@@ -6435,7 +6432,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  fclose( vast_image_details );
 
  if ( param_select_best_aperture_for_each_source == 1 ) {
-  fprintf(stderr,"Selecting the best aperture for each source\n");
+  fprintf( stderr, "Selecting the best aperture for each source\n" );
   if ( 0 != system( "lib/select_aperture_with_smallest_scatter_for_each_object" ) ) {
    fprintf( stderr, "ERROR running  lib/select_aperture_with_smallest_scatter_for_each_object\n" );
    return 1;

@@ -13,11 +13,11 @@
 #define MIN_REAL_COUNT 5 // The minimum count assumed to be real. The default is 5
 
 // This function will check if a record indicates the image has already been calibrated
-int check_history_keywords(char *record) {
-    if( strstr(record, "HISTORY Flat fielding:") != NULL ) {
-        return 1; // Match found
-    }
-    return 0; // No match found
+int check_history_keywords( char *record ) {
+ if ( strstr( record, "HISTORY Flat fielding:" ) != NULL ) {
+  return 1; // Match found
+ }
+ return 0; // No match found
 }
 
 unsigned short detect_overscan2( float *image_array, long *naxes ) {
@@ -143,7 +143,7 @@ int main( int argc, char *argv[] ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for FITS header\n" );
   exit( EXIT_FAILURE );
  }
- //for ( ii= 1; ii < No_of_keys; ii++ ) {
+ // for ( ii= 1; ii < No_of_keys; ii++ ) {
  for ( ii= 0; ii < No_of_keys; ii++ ) {
   key[ii]= malloc( FLEN_CARD * sizeof( char ) ); // FLEN_CARD length of a FITS header card defined in fitsio.h
   if ( key[ii] == NULL ) {
@@ -153,17 +153,16 @@ int main( int argc, char *argv[] ) {
   fits_read_record( fptr, ii, key[ii], &status );
 
   // Check if the FITS header record indicates the image has already been calibrated
-  if (check_history_keywords(key[ii])) {                                            
-   fprintf(stderr, "Prohibited HISTORY keyword found in header, exiting...\n");
-   fits_close_file(fptr, &status); // Close the FITS file
+  if ( check_history_keywords( key[ii] ) ) {
+   fprintf( stderr, "Prohibited HISTORY keyword found in header, exiting...\n" );
+   fits_close_file( fptr, &status ); // Close the FITS file
    // Free allocated memory
-   for (int j = 0; j <= ii; j++) {
-    free(key[j]);
+   for ( int j= 0; j <= ii; j++ ) {
+    free( key[j] );
    }
-   free(key);
-   exit(EXIT_FAILURE); // Exit the program
+   free( key );
+   exit( EXIT_FAILURE ); // Exit the program
   }
-
  }
  fits_get_img_type( fptr, &bitpix2, &status );
 
@@ -301,7 +300,7 @@ int main( int argc, char *argv[] ) {
 
  // fprintf(stdout,  "Overscan detection: %f seconds\n Total: %f seconds\n", spent_time, 1.0 * clock() / CLOCKS_PER_SEC);
 
- //for ( ii= 1; ii < No_of_keys; ii++ ) {
+ // for ( ii= 1; ii < No_of_keys; ii++ ) {
  for ( ii= 0; ii < No_of_keys; ii++ ) {
   free( key[ii] );
  }

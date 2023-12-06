@@ -346,7 +346,7 @@ double convert_jdUT_to_jdTT( double jdUT, int *timesys ) {
 
  // fprintf(stderr,"DEBUG: TT-UTC=%.3lf \n",(32.184+tai_utc) );
 
- /// Set marker that time system was changed 
+ /// Set marker that time system was changed
  ( *timesys )= 2; // TT
 
  free( jd_leap_second );
@@ -508,7 +508,7 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
  memset( substring_year, 0, 32 );
 
  // ?????
- //for ( i= 0; i < (int)strlen( DATEOBS ); i++ )
+ // for ( i= 0; i < (int)strlen( DATEOBS ); i++ )
 
  // Parse '09-10-2017' style DATE-OBS
  j= 0;
@@ -629,7 +629,7 @@ int check_if_this_fits_image_is_north_up_east_left( char *fitsfilename ) {
  // WCS axes are paralloell to the image axes
  // if( CD1_2 == 0.0 && CD2_1 == 0.0 ) {
  // OK, let's allow for slight rotation
- //if ( fabs( CD1_2 ) / fabs( CD1_1 ) < 0.1 && fabs( CD2_1 ) / fabs( CD2_2 ) < 0.1 ) {
+ // if ( fabs( CD1_2 ) / fabs( CD1_1 ) < 0.1 && fabs( CD2_1 ) / fabs( CD2_2 ) < 0.1 ) {
  if ( fabs( CD1_2 ) / fabs( CD1_1 ) < 0.12 && fabs( CD2_1 ) / fabs( CD2_2 ) < 0.12 ) {
   // east left, north up
   if ( CD1_1 < 0.0 && CD2_2 > 0.0 ) {
@@ -654,16 +654,16 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  char Tm_h[10], Tm_m[10], Tm_s[FLEN_CARD]; // We want a lot of memeory for Tm_s for cases like '2020-11-21T18:10:43.4516245'
  char Da_y[10], Da_m[10], Da_d[FLEN_CARD]; // We want more memeory for Da_d for cases like '2020-11-21.1234567
 
- //char DATEOBS[32], TIMEOBS[32], TIMESYS[32];
+ // char DATEOBS[32], TIMEOBS[32], TIMESYS[32];
  char DATEOBS[FLEN_CARD], TIMEOBS[FLEN_CARD], TIMESYS[FLEN_CARD];
  char DATEOBS_COMMENT[2048];  // make it long, just in case
  char EXPOSURE_COMMENT[2048]; // make it long, just in case
  char tymesys_str_in[32];
  char tymesys_str_out[32];
  double inJD= 0.0;
- double endJD= 0.0; // for paring the Siril-style EXPSTART/EXPEND keywords
+ double endJD= 0.0;    // for paring the Siril-style EXPSTART/EXPEND keywords
  double tjd_zero= 0.0; // for parsing TESS TICA FFIs
- double midtjd= 0.0; // for parsing TESS TICA FFIs
+ double midtjd= 0.0;   // for parsing TESS TICA FFIs
 
  /* fitsio */
  fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
@@ -714,9 +714,9 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 
  // char DATEOBS[32], TIMEOBS[32], TIMESYS[32];
  // char DATEOBS_COMMENT[2048]; // make it long, just in case
- //memset( DATEOBS, 0, 32 );
- //memset( TIMEOBS, 0, 32 );
- //memset( TIMESYS, 0, 32 );
+ // memset( DATEOBS, 0, 32 );
+ // memset( TIMEOBS, 0, 32 );
+ // memset( TIMESYS, 0, 32 );
  memset( DATEOBS, 0, FLEN_CARD );
  memset( TIMEOBS, 0, FLEN_CARD );
  memset( TIMESYS, 0, FLEN_CARD );
@@ -782,11 +782,10 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   fprintf( stderr, "ERROR: gettime() - can't get image dimensions from NAXIS2 keyword!\n" );
   return status;
  }
- 
+
  if ( param_verbose >= 1 ) {
-  fprintf( stderr, "%ldx%ld FITS image %s\n", naxes[0], naxes[1] , fitsfilename );
+  fprintf( stderr, "%ldx%ld FITS image %s\n", naxes[0], naxes[1], fitsfilename );
  }
- 
 
  // Get the telescope name - we may recognize some and modify the behaviour
  fits_read_key( fptr, TSTRING, "TELESCOP", telescop, NULL, &status );
@@ -939,7 +938,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   exposure= 0.0;
  }
  // cleanup
- //memset( DATEOBS, 0, 32 );
+ // memset( DATEOBS, 0, 32 );
  memset( DATEOBS, 0, FLEN_CARD );
  memset( DATEOBS_COMMENT, 0, 2048 );
  fits_clear_errmsg(); // clear the CFITSIO error message stack
@@ -1193,7 +1192,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    if ( status != 202 ) {
     fprintf( stderr, "Found MIDTJD keyword: %.5lf\n", midtjd );
     inJD= tjd_zero + midtjd;
-    if ( EXPECTED_MIN_JD < inJD && inJD < EXPECTED_MAX_JD ) { 
+    if ( EXPECTED_MIN_JD < inJD && inJD < EXPECTED_MAX_JD ) {
      //
      fprintf( stderr, "Getting the observing time (middle of exposure) from TJD_ZERO + MIDTJD: %.5lf\n", inJD );
      ( *timesys )= 3; // TDB
@@ -1211,9 +1210,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    } else {
     fprintf( stderr, "Found no MIDTJD keyword!\n" );
    } // MIDTJD
-  } // TJD_ZERO
- } // if ( date_parsed == 0 && expstart_mjd_parsed == 0 ) { 
-
+  }  // TJD_ZERO
+ }   // if ( date_parsed == 0 && expstart_mjd_parsed == 0 ) {
 
  /////// Look for JD keyword (a convention used for Moscow photographic plate scans) ///////
  status= 0;
@@ -1270,7 +1268,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
       exit( EXIT_FAILURE );
      }
      inJD= inJD + 2400000.5; // convert MJD to JD
-     ( *timesys )= 0; // UNKNOWN
+     ( *timesys )= 0;        // UNKNOWN
      // Check that JD is within the reasonable range
      if ( inJD < EXPECTED_MIN_JD || inJD > EXPECTED_MAX_JD ) {
       fprintf( stderr, "ERROR: JD %lf is out of expected range (%.1lf, %.1lf)!\nYou may change EXPECTED_MIN_JD and EXPECTED_MAX_JD in src/vast_limits.h and recompile VaST if you are _really sure_ you know what you are doing...\n", inJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD );
@@ -1407,7 +1405,6 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     if ( param_verbose >= 1 )
      fprintf( stderr, "Time system is set to UNKNOWN\n" );
    }
-   
   }
 
   // Choose string to describe time system
@@ -1492,8 +1489,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     fprintf( stderr, "Setting observation time using %s keyword: %s\n", DATEOBS_KEY_NAME, DATEOBS );
    jj= 0;
    for ( j+= 1; j < 32; j++ ) {
-    //if ( DATEOBS[j] == '\0' ) {
-    // explicitly handle 2023-05-17T23:22:38.894T00:00:24.955
+    // if ( DATEOBS[j] == '\0' ) {
+    //  explicitly handle 2023-05-17T23:22:38.894T00:00:24.955
     if ( DATEOBS[j] == '\0' || DATEOBS[j] == 'T' ) {
      TIMEOBS[jj]= '\0';
      break;
@@ -1624,12 +1621,12 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    }
   }
 
-  // Convert JD(UT) to JD(TT) if needed 
+  // Convert JD(UT) to JD(TT) if needed
   if ( ( *timesys ) == 1 && convert_timesys_to_TT == 1 ) {
    ( *JD )= convert_jdUT_to_jdTT( ( *JD ), timesys );
   }
 
-  // Choose string to describe new time system 
+  // Choose string to describe new time system
   if ( ( *timesys ) == 3 ) {
    sprintf( tymesys_str_out, "(TDB)" );
   } else if ( ( *timesys ) == 2 ) {
@@ -1677,10 +1674,10 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 #ifdef DEBUGMESSAGES
   fprintf( stderr, "entering  else corresponding to if ( status == 202 && date_parsed != 0 && expstart_mjd_parsed == 0 )\n" );
 #endif
-  // Setting pre-calculated JD(UT) mid. exp. from the JD keyword 
+  // Setting pre-calculated JD(UT) mid. exp. from the JD keyword
   //( *timesys )= 1;
-  //sprintf( tymesys_str_out, "(UT)" );
-  // Choose string to describe new time system 
+  // sprintf( tymesys_str_out, "(UT)" );
+  // Choose string to describe new time system
   if ( ( *timesys ) == 3 ) {
    sprintf( tymesys_str_out, "(TDB)" );
   } else if ( ( *timesys ) == 2 ) {

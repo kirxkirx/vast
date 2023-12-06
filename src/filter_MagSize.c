@@ -464,8 +464,7 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
 // for each star
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
-#pragma omp parallel for private( i, distance_to_the_nearest_reference_point, j, float_mag_diff, index_of_the_nearest_reference_point, float_parameter_value_for_STAR ) reduction( + \
-                                                                                                                                                                                   : flagged_stars_counter )
+#pragma omp parallel for private( i, distance_to_the_nearest_reference_point, j, float_mag_diff, index_of_the_nearest_reference_point, float_parameter_value_for_STAR ) reduction( + : flagged_stars_counter )
 #endif
 #endif
   for ( i= 0; i < NUMBER; i++ ) {

@@ -8,7 +8,7 @@
 
 #define ARCSEC_IN_RAD 206264.806247096
 // LOL, can't use M_PI in define
-//#define ARCSEC_IN_RAD 3600.0 * 180.0 / M_PI
+// #define ARCSEC_IN_RAD 3600.0 * 180.0 / M_PI
 
 int format_hms_or_deg( char *coordinatestring ) {
  unsigned int i;
@@ -96,7 +96,8 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
  }
 
  if ( 0.0 == search_radius_arcsec ) {
-  fprintf( stderr, "%lf %lf  %lf %lf\n", RA1_deg, DEC1_deg, RA2_deg, DEC2_deg );
+  // fprintf( stderr, "%lf %lf  %lf %lf\n", RA1_deg, DEC1_deg, RA2_deg, DEC2_deg );
+  fprintf( stderr, "%.10lf %.10lf  %.10lf %.10lf\n", RA1_deg, DEC1_deg, RA2_deg, DEC2_deg );
  }
 
  if ( MAX( RA1_deg, RA2_deg ) > 180 && MIN( RA1_deg, RA2_deg ) < 180 ) {
@@ -108,25 +109,30 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
  in= RA1_deg + RA2_deg;
  in= in / 2.0;
 
- if ( in < 0.0 )
+ if ( in < 0.0 ) {
   in+= 360;
+ }
 
  in= in / 15.0;
  hh2= (int)in;
  mm2= (int)( ( in - hh2 ) * 60 );
  ss2= ( ( in - hh2 ) * 60 - mm2 ) * 60;
+ // fprintf( stderr, "DEBUG00: %lf %d %d %lf\n",in, hh2, mm2, ss2);
  if ( fabs( ss2 - 60.0 ) < 0.01 ) {
   mm2+= 1;
   ss2= 0.0;
+  // fprintf( stderr, "DEBUG01: %lf %d %d %lf\n",in, hh2, mm2, ss2);
  }
  if ( mm2 == 60 ) {
   hh2+= 1;
   mm2= 0.0;
+  // fprintf( stderr, "DEBUG02: %lf %d %d %lf\n",in, hh2, mm2, ss2);
  }
  if ( 0.0 == search_radius_arcsec ) {
+  fprintf( stderr, "DEBUG: %.10lf %d %d %lf\n", in, hh2, mm2, ss2 );
   fprintf( stdout, "Average position  %02d:%02d:%05.2lf ", hh2, mm2, ss2 );
  }
- 
+
  in= ( DEC1_deg + DEC2_deg ) / 2.0;
  hh2= (int)in;
  mm2= (int)( ( in - hh2 ) * 60 );
@@ -143,10 +149,10 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
   hh2+= 1;
   mm2= 0.0;
  }
- //if ( ( hh2 == 0 && in < 0 ) || ( hh2 == 0 && mm2 == 0 && in < 0 ) ) {
+ // if ( ( hh2 == 0 && in < 0 ) || ( hh2 == 0 && mm2 == 0 && in < 0 ) ) {
  if ( in < 0 ) {
   if ( 0.0 == search_radius_arcsec )
-   fprintf( stdout, "-%02d:%02d:%04.1lf\n", abs(hh2), mm2, fabs( ss2 ) );
+   fprintf( stdout, "-%02d:%02d:%04.1lf\n", abs( hh2 ), mm2, fabs( ss2 ) );
  } else {
   if ( 0.0 == search_radius_arcsec )
    fprintf( stdout, "+%02d:%02d:%04.1lf\n", hh2, mm2, ss2 );
@@ -200,7 +206,7 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
  } else {
   // We are in the source list matching mode
   if ( distance * ARCSEC_IN_RAD < search_radius_arcsec ) {
-   (*output_distance_arcsec)= distance * ARCSEC_IN_RAD;
+   ( *output_distance_arcsec )= distance * ARCSEC_IN_RAD;
    return 0;
   } else {
    return 1;
@@ -222,7 +228,7 @@ int main( int argc, char **argv ) {
  int string_looks_ok;
  int string_contains_number;
  int string_dot_or_semicolon;
- 
+
  double output_distance_arcsec= 99.99;
 
  if ( argc < 5 ) {
@@ -264,7 +270,7 @@ int main( int argc, char **argv ) {
   // check that the string contains a number
   string_contains_number= 0;
   for ( i= 0; i < strlen( input_buffer ) - 1; i++ ) {
-   if( 0 != isdigit(input_buffer[i]) ) {
+   if ( 0 != isdigit( input_buffer[i] ) ) {
     string_contains_number= 1;
    }
   }
@@ -274,18 +280,18 @@ int main( int argc, char **argv ) {
   // check that the string contains dot or semicolon
   string_dot_or_semicolon= 0;
   for ( i= 0; i < strlen( input_buffer ) - 1; i++ ) {
-   if( input_buffer[i] == '.' || input_buffer[i] == ':' ) {
+   if ( input_buffer[i] == '.' || input_buffer[i] == ':' ) {
     string_dot_or_semicolon= 1;
    }
   }
   if ( 0 == string_dot_or_semicolon ) {
    continue;
   }
-  
+
   // OK, this may be a "RA DEC" or "RA DEC COMMENTS" type string
   sscanf_return_value= sscanf( input_buffer, "%s %s %[^\n]", str1, str2, str_comment );
-  
-  if( sscanf_return_value < 2 ) {
+
+  if ( sscanf_return_value < 2 ) {
    str1[0]= '\0';
    str2[0]= '\0';
    str_comment[0]= '\0';
@@ -293,14 +299,14 @@ int main( int argc, char **argv ) {
   }
   str1[512 - 1]= '\0';
   str2[512 - 1]= '\0';
-  if( sscanf_return_value == 2 ){
+  if ( sscanf_return_value == 2 ) {
    str_comment[0]= '\0';
   } else {
    str_comment[512 - 1]= '\0';
   }
   // fprintf(stderr, "str1='%s' str2='%s'\n",str1,str2);
   if ( 0 == compute_angular_distance_and_print_result( argv[1], argv[2], str1, str2, search_radius_arcsec, &output_distance_arcsec ) ) {
-   fprintf( stdout, "FOUND  %4.1lf\"  %s\n", output_distance_arcsec, str_comment);
+   fprintf( stdout, "FOUND  %4.1lf\"  %s\n", output_distance_arcsec, str_comment );
    break;
   }
  }

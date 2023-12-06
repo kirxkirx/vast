@@ -44,8 +44,8 @@ int main( int argc, char **argv ) {
  total_number_of_points_to_drop= atoi( argv[1] );
 
  filenamelist= (char **)malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );
- if( NULL == filenamelist ) {
-  fprintf( stderr, "ERROR allocating memory for filenamelist\n");
+ if ( NULL == filenamelist ) {
+  fprintf( stderr, "ERROR allocating memory for filenamelist\n" );
   exit( EXIT_FAILURE );
  }
  filename_counter= 0;
@@ -60,8 +60,8 @@ int main( int argc, char **argv ) {
    }
    if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[filenamelen - 1] == 't' && ep->d_name[filenamelen - 2] == 'a' && ep->d_name[filenamelen - 3] == 'd' ) {
     filenamelist[filename_counter]= malloc( ( filenamelen + 1 ) * sizeof( char ) );
-    if( NULL == filenamelist[filename_counter] ) {
-     fprintf( stderr, "ERROR allocating memory for filenamelist[%ld]\n", filename_counter);
+    if ( NULL == filenamelist[filename_counter] ) {
+     fprintf( stderr, "ERROR allocating memory for filenamelist[%ld]\n", filename_counter );
      exit( EXIT_FAILURE );
     }
     strncpy( filenamelist[filename_counter], ep->d_name, ( filenamelen + 1 ) );

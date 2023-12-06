@@ -115,8 +115,8 @@ int main( int argc, char **argv ) {
 
  // Create a list of files
  filenamelist= (char **)malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );
- if( NULL == filenamelist ) {
-  fprintf( stderr, "ERROR allocating memory for filenamelist\n");
+ if ( NULL == filenamelist ) {
+  fprintf( stderr, "ERROR allocating memory for filenamelist\n" );
   exit( EXIT_FAILURE );
  }
  filename_counter= 0;
@@ -129,8 +129,8 @@ int main( int argc, char **argv ) {
    }
    if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[filenamelen - 1] == 't' && ep->d_name[filenamelen - 2] == 'a' && ep->d_name[filenamelen - 3] == 'd' ) {
     filenamelist[filename_counter]= malloc( ( filenamelen + 1 ) * sizeof( char ) );
-    if( NULL == filenamelist[filename_counter] ) {
-     fprintf( stderr, "ERROR allocating memory for filenamelist[%ld]\n", filename_counter);
+    if ( NULL == filenamelist[filename_counter] ) {
+     fprintf( stderr, "ERROR allocating memory for filenamelist[%ld]\n", filename_counter );
      exit( EXIT_FAILURE );
     }
     strncpy( filenamelist[filename_counter], ep->d_name, ( filenamelen + 1 ) );
@@ -152,7 +152,7 @@ int main( int argc, char **argv ) {
    fprintf( stderr, "ERROR: Can't open file %s\n", filenamelist[filename_counter] );
    exit( EXIT_FAILURE );
   }
-  // Compute median mag & sigma 
+  // Compute median mag & sigma
   i= 0;
   while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &magerr, &x, &y, &app, string, comments_string ) ) {
    if ( jd == 0.0 )
@@ -229,7 +229,7 @@ int main( int argc, char **argv ) {
    i++;
   }
   fclose( lightcurvefile );
-  
+
   bestap= 0;
   best_MAD= 99999999;
   for ( apcounter= 0; apcounter < 6; apcounter++ ) {
@@ -250,7 +250,6 @@ int main( int argc, char **argv ) {
 
   // Compute the aperture correction (we'll need it to make sure the avarage magnitude will not change)
   dm= compute_median_of_usorted_array_without_changing_it( mag_a[0], i ) - compute_median_of_usorted_array_without_changing_it( mag_a[bestap], i );
-  
 
   // Re-open the lightcurve file to apply the correction
   lightcurvefile= fopen( filenamelist[filename_counter], "r" );
@@ -267,20 +266,19 @@ int main( int argc, char **argv ) {
   while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &magerr, &x, &y, &app, string, comments_string ) ) {
    if ( jd == 0.0 )
     continue; // if this line could not be parsed, try the next one
-   sscanf_return_value = sscanf( comments_string, "%lf %lf  %lf %lf %lf %lf %lf %lf %lf %lf %[^\t\n]", 
-                      &mag_a[1][i], 
-                      &magerr_a[1][i], 
-                      &mag_a[2][i], 
-                      &magerr_a[2][i], 
-                      &mag_a[3][i], 
-                      &magerr_a[3][i], 
-                      &mag_a[4][i], 
-                      &magerr_a[4][i], 
-                      &mag_a[5][i], 
-                      &magerr_a[5][i], 
-                      comments_string_without_multiple_apertures );
-    
-   
+   sscanf_return_value= sscanf( comments_string, "%lf %lf  %lf %lf %lf %lf %lf %lf %lf %lf %[^\t\n]",
+                                &mag_a[1][i],
+                                &magerr_a[1][i],
+                                &mag_a[2][i],
+                                &magerr_a[2][i],
+                                &mag_a[3][i],
+                                &magerr_a[3][i],
+                                &mag_a[4][i],
+                                &magerr_a[4][i],
+                                &mag_a[5][i],
+                                &magerr_a[5][i],
+                                comments_string_without_multiple_apertures );
+
    // if no comments_string_without_multiple_apertures wass read
    if ( sscanf_return_value == 10 ) {
     // set comments_string_without_multiple_apertures to '\0'
@@ -288,10 +286,10 @@ int main( int argc, char **argv ) {
    }
 
    if ( sscanf_return_value >= 10 ) {
-    // Compute the corrected magnitude 
+    // Compute the corrected magnitude
     mag= mag + mag_a[bestap][i] + dm;
     magerr= magerr_a[bestap][i];
-    
+
     // Compute the corrected aperture size
     if ( bestap == 2 ) {
      app+= AP01 * app;
@@ -306,7 +304,7 @@ int main( int argc, char **argv ) {
      app+= AP04 * app;
     }
    } else {
-    fprintf( stderr, "ERROR parsing the comments string '%s' in %s while applying the corrected magnitude\n", comments_string, filenamelist[filename_counter] );   
+    fprintf( stderr, "ERROR parsing the comments string '%s' in %s while applying the corrected magnitude\n", comments_string, filenamelist[filename_counter] );
    }
 
    // Write the corrected (or uncorrected) data to the temporary output file
@@ -314,7 +312,7 @@ int main( int argc, char **argv ) {
   }
   fclose( outlightcurvefile );
   fclose( lightcurvefile );
-  
+
   unlink( filenamelist[filename_counter] );                          // delete old lightcurve file
   rename( lightcurve_tmp_filename, filenamelist[filename_counter] ); // move lightcurve.tmp to lightcurve file
   free( filenamelist[filename_counter] );                            // free-up memory

@@ -34,17 +34,17 @@ int main( int argc, char **argv ) {
  if ( argc == 2 ) {
   min_number_of_points= atoi( argv[1] );
  } else {
-  min_number_of_points= HARD_MIN_NUMBER_OF_POINTS; // Use default value from vast_limits.h 
+  min_number_of_points= HARD_MIN_NUMBER_OF_POINTS; // Use default value from vast_limits.h
  }
 
  // Create a list of files
  filenamelist= (char **)malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );
- 
+
  if ( NULL == filenamelist ) {
-  fprintf( stderr, "ERROR: allocating memory for filenamelist\n");
+  fprintf( stderr, "ERROR: allocating memory for filenamelist\n" );
   exit( EXIT_FAILURE );
  }
- 
+
  filename_counter= 0;
  dp= opendir( "./" );
  if ( dp != NULL ) {
@@ -55,7 +55,7 @@ int main( int argc, char **argv ) {
     continue; // make sure the filename is not too short for the following tests
    if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[filenamelen - 1] == 't' && ep->d_name[filenamelen - 2] == 'a' && ep->d_name[filenamelen - 3] == 'd' ) {
     filenamelist[filename_counter]= malloc( ( filenamelen + 1 ) * sizeof( char ) );
-    if( NULL == filenamelist[filename_counter] ) {
+    if ( NULL == filenamelist[filename_counter] ) {
      fprintf( stderr, "ERROR: allocating memory\n" );
      exit( EXIT_FAILURE );
     }

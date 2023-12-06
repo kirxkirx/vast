@@ -580,16 +580,16 @@ int main( int argc, char **argv ) {
 
  do {
 
-  cpgscr( 0, 0.10, 0.31, 0.32 ); // set default vast window background 
+  cpgscr( 0, 0.10, 0.31, 0.32 ); // set default vast window background
   cpgeras();
   cpgsvp( 0.08, 0.95, 0.1, 0.92 );
   cpgswin( draw_X_min_current, draw_X_max_current, draw_Y_min_current, draw_Y_max_current );
   cpgsci( 0 );
-  cpgscr( 0, 0.08, 0.08, 0.09 ); // set background 
+  cpgscr( 0, 0.08, 0.08, 0.09 ); // set background
   if ( draw_X_min_current != draw_X_max_current && draw_Y_min_current != draw_Y_max_current ) {
    cpgrect( draw_X_min_current, draw_X_max_current, draw_Y_min_current, draw_Y_max_current ); // draw background for plot
   } else {
-   cpgrect( draw_X_min, draw_X_max, draw_Y_min, draw_Y_max ); // draw background for plot 
+   cpgrect( draw_X_min, draw_X_max, draw_Y_min, draw_Y_max ); // draw background for plot
   }
 
   cpgscr( 1, 1.0, 1.0, 1.0 ); // set color of axes lables - white
@@ -601,16 +601,14 @@ int main( int argc, char **argv ) {
   // Comment this out for now because ALL plots have magnitude as X axis
   // if( display_mode==1 || display_mode==2 || display_mode==3 || display_mode==4 || display_mode==5 ){
 
-
-
-  cpgsch( 0.85 ); // make this labels with smaller characters 
+  cpgsch( 0.85 ); // make this labels with smaller characters
   cpgmtxt( "B", 2.5, 0.0, 0.0, "(bright stars)" );
   cpgmtxt( "B", 2.5, 1.0, 1.0, "(faint stars)" );
   //}
 
   cpgscf( 1 );
-  cpgsch( 1.1 );                 // make labels with larger characters 
-  cpgscr( 1, 0.62, 0.81, 0.38 ); // set color of lables 
+  cpgsch( 1.1 );                 // make labels with larger characters
+  cpgscr( 1, 0.62, 0.81, 0.38 ); // set color of lables
   sprintf( header_str, "Stars measured: %d", Nstar );
   if ( display_mode == 1 )
    cpglab( instrumental_magnitude_or_magnitude_string, "Standard deviation", header_str );

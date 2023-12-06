@@ -70,11 +70,11 @@ int main( int argc, char **argv ) {
  Y= malloc( n * sizeof( float ) );
  FLUX= malloc( n * sizeof( float ) );
  if ( NULL == X || NULL == Y || NULL == FLUX ) {
-  fprintf( stderr, "[%s] ERROR allocating memory for X, Y or FLUX\n", argv[0]);
-  fclose(ascii_catalog);
+  fprintf( stderr, "[%s] ERROR allocating memory for X, Y or FLUX\n", argv[0] );
+  fclose( ascii_catalog );
   return 1;
  }
- 
+
  // go back to the beginning of the file
  fseek( ascii_catalog, 0, SEEK_SET );
  previous_star_number_in_sextractor_catalog= 0;

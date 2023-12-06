@@ -9,16 +9,15 @@
 
 #include "variability_indexes.h" // for esimate_sigma_from_MAD_of_sorted_data() etc.
 
-int isOnlyWhitespace(const char *str) {
-  while (*str) {
-    if (!isspace((unsigned char)*str)) {
-      return 0; // Found a non-whitespace character
-    }
-    str++;
+int isOnlyWhitespace( const char *str ) {
+ while ( *str ) {
+  if ( !isspace( (unsigned char)*str ) ) {
+   return 0; // Found a non-whitespace character
   }
-  return 1; // All characters were whitespace
+  str++;
+ }
+ return 1; // All characters were whitespace
 }
-
 
 int main() {
  double *x= NULL;
@@ -42,7 +41,7 @@ int main() {
  x= malloc( sizeof( double ) );
 
  if ( NULL == x ) {
-  fprintf( stderr, "MEMORY ERROR\n");
+  fprintf( stderr, "MEMORY ERROR\n" );
   return 1;
  }
 
@@ -77,26 +76,25 @@ int main() {
     break;
    }
   }
-  
-  if ( 1 == isOnlyWhitespace(str) ) {
+
+  if ( 1 == isOnlyWhitespace( str ) ) {
    str_is_good= 0;
   }
-  
+
   if ( str_is_good != 1 ) {
    continue; // bad string
   }
   x[i]= atof( str );
   datasumm= datasumm + x[i];
   i+= 1;
-  //x= realloc( x, ( i + 1 ) * sizeof( double ) );
-  temp_pointer_for_realloc= realloc(x, (i + 1) * sizeof(double));
-  if (temp_pointer_for_realloc == NULL) {
-   fprintf(stderr, "MEMORY ERROR\n");
-   free(x); // free the original memory
+  // x= realloc( x, ( i + 1 ) * sizeof( double ) );
+  temp_pointer_for_realloc= realloc( x, ( i + 1 ) * sizeof( double ) );
+  if ( temp_pointer_for_realloc == NULL ) {
+   fprintf( stderr, "MEMORY ERROR\n" );
+   free( x ); // free the original memory
    return 1;
   }
-  x = temp_pointer_for_realloc; // assign the newly allocated memory to x
-
+  x= temp_pointer_for_realloc; // assign the newly allocated memory to x
  }
 
  fprintf( stderr, "-----------------------------------------------------\n" );
@@ -107,9 +105,9 @@ int main() {
 
  if ( i > 1 ) {
   if ( NULL == x ) {
-   fprintf( stderr, "Impossible error\n");
+   fprintf( stderr, "Impossible error\n" );
    return 1;
-  } 
+  }
   gsl_sort( x, 1, i );
   MIN= x[0];
   MAX= x[i - 1];
@@ -122,9 +120,9 @@ int main() {
  }
  if ( i == 1 ) {
   if ( NULL == x ) {
-   fprintf( stderr, "Impossible error 2\n");
+   fprintf( stderr, "Impossible error 2\n" );
    return 1;
-  } 
+  }
   MIN= MAX= MEDIAN= MEAN= x[0];
  }
 

@@ -61,8 +61,8 @@ int main( int argc, char **argv ) {
  }
 
  filenamelist= (char **)malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );
- if( NULL == filenamelist ) {
-  fprintf( stderr, "ERROR allocating memory for filenamelist\n");
+ if ( NULL == filenamelist ) {
+  fprintf( stderr, "ERROR allocating memory for filenamelist\n" );
   exit( EXIT_FAILURE );
  }
  filename_counter= 0;
@@ -70,8 +70,8 @@ int main( int argc, char **argv ) {
   // single-file mode
   filenamelen= strlen( argv[2] );
   filenamelist[filename_counter]= malloc( ( filenamelen + 1 ) * sizeof( char ) );
-  if( NULL == filenamelist[filename_counter] ) {
-   fprintf( stderr, "ERROR allocating memory for filenamelist[%ld]\n", filename_counter);
+  if ( NULL == filenamelist[filename_counter] ) {
+   fprintf( stderr, "ERROR allocating memory for filenamelist[%ld]\n", filename_counter );
    exit( EXIT_FAILURE );
   }
   strncpy( filenamelist[filename_counter], argv[2], ( filenamelen + 1 ) );
@@ -91,8 +91,8 @@ int main( int argc, char **argv ) {
     }
     if ( ep->d_name[0] == 'o' && ep->d_name[1] == 'u' && ep->d_name[2] == 't' && ep->d_name[filenamelen - 1] == 't' && ep->d_name[filenamelen - 2] == 'a' && ep->d_name[filenamelen - 3] == 'd' ) {
      filenamelist[filename_counter]= malloc( ( filenamelen + 1 ) * sizeof( char ) );
-     if( NULL == filenamelist[filename_counter] ) {
-      fprintf( stderr, "ERROR allocating memory for filenamelist[%ld]\n", filename_counter);
+     if ( NULL == filenamelist[filename_counter] ) {
+      fprintf( stderr, "ERROR allocating memory for filenamelist[%ld]\n", filename_counter );
       exit( EXIT_FAILURE );
      }
      strncpy( filenamelist[filename_counter], ep->d_name, ( filenamelen + 1 ) );
@@ -120,7 +120,7 @@ int main( int argc, char **argv ) {
     exit( EXIT_FAILURE );
    }
 
-   // Compute median mag & sigma 
+   // Compute median mag & sigma
    i= 0;
    // while(-1<fscanf(lightcurvefile,"%lf %lf %lf %lf %lf %lf %s",&jd,&mag,&merr,&x,&y,&app,string)){
    while ( -1 < read_lightcurve_point( lightcurvefile, &jd, &mag, &merr, &x, &y, &app, string, comments_string ) ) {

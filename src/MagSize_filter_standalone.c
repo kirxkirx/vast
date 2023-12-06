@@ -160,7 +160,7 @@ int main( int argc, char **argv ) {
     }
     // Compute median mag & sigma
     star_num= star_number_from_outfilename( ep->d_name );
-    
+
     // Initialize to make GCC static analyzer happy
     jd= mag= merr= x= y= app= 0.0;
 

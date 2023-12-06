@@ -42,7 +42,7 @@ int main() {
 
  double merr_not_used;
 
- // Read data 
+ // Read data
  /*
  do {
   jd= realloc( jd, n_points_lightcurve * sizeof( double ) );
@@ -60,11 +60,11 @@ int main() {
  n_points_lightcurve--;
  n_points_lightcurve--;
  */
- 
+
  jd= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  m= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( double ) );
  if ( NULL == jd || NULL == m ) {
-  fprintf( stderr, "ERROR: null pointer\n");
+  fprintf( stderr, "ERROR: null pointer\n" );
   exit( EXIT_FAILURE );
  }
  n_points_lightcurve= 0;
@@ -73,12 +73,12 @@ int main() {
    continue;
   }
   n_points_lightcurve++;
-  if( MAX_NUMBER_OF_OBSERVATIONS == n_points_lightcurve ) {
-   fprintf(stderr, "ERROR: too may points!\n");
+  if ( MAX_NUMBER_OF_OBSERVATIONS == n_points_lightcurve ) {
+   fprintf( stderr, "ERROR: too may points!\n" );
    exit( EXIT_FAILURE );
   }
  }
- 
+
  fprintf( stderr, "n_points=%d\n", n_points_lightcurve );
 
  if ( n_points_lightcurve < 6 ) {
@@ -89,7 +89,7 @@ int main() {
  Z= 0.25 * (double)n_points_lightcurve;
  fprintf( stderr, "Expecting number of independent pairs Z=%d\n", (int)( Z + 0.0 ) );
 
- // Sort data 
+ // Sort data
  gsl_sort2( jd, 1, m, 1, n_points_lightcurve );
  mean_jd= gsl_stats_mean( jd, 1, n_points_lightcurve );
  fprintf( stderr, "Mean JD = %lf\n", mean_jd );
@@ -97,11 +97,11 @@ int main() {
   jd[i]= jd[i] - mean_jd;
  }
 
- // dt is the typical distance between data points 
+ // dt is the typical distance between data points
  dt= ( jd[n_points_lightcurve - 1] - jd[0] ) / n_points_lightcurve;
  fprintf( stderr, "dt = %lf\n", dt );
 
- // Form 2n+1 magnitudes spaced by equal time intervals dt 
+ // Form 2n+1 magnitudes spaced by equal time intervals dt
  interp_m= malloc( ( 2 * n_points_lightcurve + 1 ) * sizeof( double ) );
  if ( interp_m == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for interp_m(kwee-van-woerden.c)\n" );
@@ -141,7 +141,7 @@ int main() {
   fprintf( stderr, "%+8.6lf %lf  %3d\n", interp_jd[i], interp_m[i], i );
  }
 
- // Find T1 (estimated minima time) 
+ // Find T1 (estimated minima time)
  mT1= -99.0;
  // for ( i= 0; i < n; i++ ) {
  //  1 to n - 1 as we have i + 1 and i - 1 array indexes
@@ -187,7 +187,7 @@ int main() {
  sT1= sT1 / ( n_delta_m - 1 );
  fprintf( stderr, "sT1 = %lg\n", sT1 );
 
- // sT2 
+ // sT2
  jdT1+= 1;
  for ( i= 0; i < n_delta_m; i++ ) {
   delta_m[i]= interp_m[jdT1 - i] - interp_m[jdT1 + i];
@@ -199,7 +199,7 @@ int main() {
  sT2= sT2 / ( n_delta_m - 1 );
  fprintf( stderr, "sT2 = %lg\n", sT2 );
 
- // sT3 
+ // sT3
  jdT1-= 2;
  for ( i= 0; i < n_delta_m; i++ ) {
   delta_m[i]= interp_m[jdT1 - i] - interp_m[jdT1 + i];

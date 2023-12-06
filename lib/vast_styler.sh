@@ -60,7 +60,7 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
-FORMAT_FILES="src/*c src/pgfv/*c src/period_search/*c src/catalogs/*c src/ccd/*c src/astrometry/*c"
+FORMAT_FILES="src/*.c src/pgfv/*.c src/period_search/*.c src/catalogs/*.c src/ccd/*.c src/astrometry/*.c"
 
 for FILE_TO_FORMAT in $FORMAT_FILES ;do
   clang-format -i "$FILE_TO_FORMAT" -style="{IndentWidth : 1, ColumnLimit: 0, SpaceBeforeAssignmentOperators: false, SpacesInParentheses: true, SortIncludes: false}"

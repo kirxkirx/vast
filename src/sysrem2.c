@@ -39,7 +39,7 @@
 int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_filenames, int *N_sysrem_input_star_list_lst ) {
 
  FILE *input_sysrem_input_star_list_lst;
- FILE *outputfile[SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS] = {NULL}; // I'm initializing it to NULL just to make the compiler happy
+ FILE *outputfile[SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS]= { NULL }; // I'm initializing it to NULL just to make the compiler happy
  unsigned int Nstars, Noutput_files, oputput_file_counter;
  char full_string[MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG];
 
@@ -94,7 +94,7 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
 
  while ( NULL != fgets( full_string, MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG, input_sysrem_input_star_list_lst ) ) {
   if ( NULL == outputfile[oputput_file_counter % Noutput_files] ) {
-   fprintf( stderr, "ERROR: NULL == outputfile[oputput_file_counter modulus Noutput_files] this shouldn't be happening!\n");
+   fprintf( stderr, "ERROR: NULL == outputfile[oputput_file_counter modulus Noutput_files] this shouldn't be happening!\n" );
    exit( EXIT_FAILURE );
   }
   fputs( full_string, outputfile[oputput_file_counter % Noutput_files] );
@@ -280,7 +280,6 @@ int main() {
    fprintf( stderr, "ERROR: Couldn't allocate memory for r\n" );
    exit( EXIT_FAILURE );
   }
-
 
   // for(i=0;i<Nstars;i++){
   for ( i= Nstars; i--; ) {

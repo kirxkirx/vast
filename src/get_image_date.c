@@ -376,7 +376,7 @@ int main( int argc, char **argv ) {
   exit( EXIT_FAILURE );
  };
 
- //fprintf( stderr, "DEBUG26\n");
+ // fprintf( stderr, "DEBUG26\n");
 
  // Get the date
  if ( 0 != gettime( input_fits_image, &JD, &timesys, convert_timesys_to_TT, &dimX, &dimY, stderr_output, log_output, param_nojdkeyword, param_verbose, NULL ) ) {
@@ -386,7 +386,7 @@ int main( int argc, char **argv ) {
   return 1;
  }
 
- //fprintf( stderr, "DEBUG27\n");
+ // fprintf( stderr, "DEBUG27\n");
 
  if ( fake_image_hack_return == 1 ) {
   unlink( input_fits_image );
@@ -411,7 +411,7 @@ int main( int argc, char **argv ) {
  structureTIME= gmtime( &UnixTime_time_t );
 #endif
 
- //fprintf( stderr, "DEBUG28\n");
+ // fprintf( stderr, "DEBUG28\n");
 
  // Print output
  fprintf( stdout, "%s\n", stderr_output );
@@ -431,8 +431,8 @@ int main( int argc, char **argv ) {
  fprintf( stdout, " (mid. exp) %04d-%02d-%02dT%02d:%02d:%02d\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, structureTIME->tm_mday, structureTIME->tm_hour, structureTIME->tm_min, structureTIME->tm_sec );
 
  //
- //fprintf( stderr, "DEBUG29\n");
- //fprintf( stderr, "DEBUG UnixTime_time_t=%ld UnixTime(double)=%lf\n",UnixTime_time_t,UnixTime);
+ // fprintf( stderr, "DEBUG29\n");
+ // fprintf( stderr, "DEBUG UnixTime_time_t=%ld UnixTime(double)=%lf\n",UnixTime_time_t,UnixTime);
 
  // Clean up
  free( log_output );

@@ -384,7 +384,7 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
  char *pointer_to_the_key_start;
  // fitsio
  int status= 0;
- fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h 
+ fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h
  //
  int env_var_good= 0;
  // Hack allowing to owerride the FITS TELESCOP keyword by setting the environment variable of the same name
@@ -392,10 +392,10 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
   strncpy( telescop, getenv( "TELESCOP" ), FLEN_VALUE );
   telescop[FLEN_VALUE - 1]= '\0';
   // make sure the variable is not empty!
-  if( strlen(telescop) > 1 ) {
-   env_var_good=1;
+  if ( strlen( telescop ) > 1 ) {
+   env_var_good= 1;
   }
- } 
+ }
  // The normal way - get the TELESCOP string from the FITS header rather than the environment variable
  if ( env_var_good == 0 ) {
   // Else extract data from FITS header
@@ -512,14 +512,14 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
  }
 
  // NMW camera
- if ( strlen( telescop ) >= 10 ) {                                      // 01234567890
+ if ( strlen( telescop ) >= 10 ) { // 01234567890
   pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "NMW_camera", 10 );
   if ( pointer_to_the_key_start != NULL ) {
    ( *estimated_fov_arcmin )= 350.0;
    return 0;
   }
  }
- if ( strlen( telescop ) >= 4 ) {                                      // 01234567890
+ if ( strlen( telescop ) >= 4 ) { // 01234567890
   pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "STAS", 4 );
   if ( pointer_to_the_key_start != NULL ) {
    ( *estimated_fov_arcmin )= 350.0;
@@ -542,7 +542,7 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
    return 0;
   }
  }
- 
+
  // NMW camera (new header)
  if ( strlen( telescop ) >= 12 ) { // 01234567890
   pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "F=135mm, 2.0", 12 );
@@ -559,7 +559,7 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
     // check if it's actually SBIG STL-11000
     fits_read_key( fptr, TSTRING, "INSTRUME", instrume, instrume_comment, &status );
     if ( 0 == status ) {
-     if ( strlen( instrume ) >= 13 ) {                                      // 012345678901234
+     if ( strlen( instrume ) >= 13 ) { // 012345678901234
       pointer_to_the_key_start= (char *)memmem( instrume, strlen( instrume ), "SBIG STL-11000", 13 );
       if ( pointer_to_the_key_start != NULL ) {
        ( *estimated_fov_arcmin )= 600.0;
@@ -661,15 +661,15 @@ int look_for_focallen_keyword( char *fitsfilename, double *estimated_fov_arcmin 
  fprintf( stderr, "Internal estimated FoV %.1lf'\n", internal_estimated_fov_arcmin );
 #endif
 
-/*
- // If focallen>1000mm the telescope is likely to have a focal reducer installed
- if ( focallen > 1000 ) {
-  internal_estimated_fov_arcmin= internal_estimated_fov_arcmin * 1.5;
-#ifdef FOV_DEBUG_MESSAGES
-  fprintf( stderr, "The focal length %lf > 1000mm - guessing the telescope has a focal reducer.\nInternal estimated FoV %.1lf'\n", focallen, internal_estimated_fov_arcmin );
-#endif
- }
-*/
+ /*
+  // If focallen>1000mm the telescope is likely to have a focal reducer installed
+  if ( focallen > 1000 ) {
+   internal_estimated_fov_arcmin= internal_estimated_fov_arcmin * 1.5;
+ #ifdef FOV_DEBUG_MESSAGES
+   fprintf( stderr, "The focal length %lf > 1000mm - guessing the telescope has a focal reducer.\nInternal estimated FoV %.1lf'\n", focallen, internal_estimated_fov_arcmin );
+ #endif
+  }
+ */
 
  // It actually works better if we don't reduce the field of view estimate
  // internal_estimated_fov_arcmin= internal_estimated_fov_arcmin - 0.1 * internal_estimated_fov_arcmin;
@@ -771,7 +771,7 @@ int look_for_existing_wcs_header( char *fitsfilename, double *estimated_fov_arcm
  };
  //
  wcs_key[0]= (char *)malloc( FLEN_CARD * sizeof( char ) );
- if( wcs_key[0] == NULL ) {
+ if ( wcs_key[0] == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for wcs_key[0](try_to_guess_image_fov)\n" );
   exit( EXIT_FAILURE );
  };
@@ -790,7 +790,7 @@ int look_for_existing_wcs_header( char *fitsfilename, double *estimated_fov_arcm
 
  // Look for the COMMENT that is inserted by the Astrometry.net software
  for ( i= 1; i < No_of_wcs_keys; i++ ) {
-  if( strlen(wcs_key[i])<7 ) {
+  if ( strlen( wcs_key[i] ) < 7 ) {
    continue;
   }
   if ( wcs_key[i][0] == 'C' && wcs_key[i][1] == 'O' && wcs_key[i][2] == 'M' && wcs_key[i][3] == 'M' && wcs_key[i][4] == 'E' && wcs_key[i][5] == 'N' && wcs_key[i][6] == 'T' ) {
@@ -891,7 +891,6 @@ int main( int argc, char **argv ) {
   return 0;
  }
 
-
  if ( 0 == try_to_recognize_telescop_keyword( fitsfile_name, &estimated_fov_arcmin ) ) {
   fprintf( stdout, "%4.0lf\n", estimated_fov_arcmin );
 #ifdef FOV_DEBUG_MESSAGES
@@ -983,7 +982,6 @@ int main( int argc, char **argv ) {
   }   // if( 10=fscanf(image_details_logfile,"exp_start=  ...
   fclose( image_details_logfile );
  }
-
 
  // print out the default value anyhow
  fprintf( stdout, "%4.0lf\n", estimated_fov_arcmin );

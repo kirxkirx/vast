@@ -7,12 +7,12 @@
 #include "../fitsio.h"
 
 // This function will check if a record indicates the image has already been calibrated
-int check_history_keywords(char *record) {
-    if (strstr(record, "HISTORY Dark frame subtraction:") != NULL ||
-        strstr(record, "HISTORY Flat fielding:") != NULL) {
-        return 1; // Match found
-    }
-    return 0; // No match found
+int check_history_keywords( char *record ) {
+ if ( strstr( record, "HISTORY Dark frame subtraction:" ) != NULL ||
+      strstr( record, "HISTORY Flat fielding:" ) != NULL ) {
+  return 1; // Match found
+ }
+ return 0; // No match found
 }
 
 int main( int argc, char *argv[] ) {
@@ -75,18 +75,18 @@ int main( int argc, char *argv[] ) {
   fits_report_error( stderr, status ); // print out any error messages
 
   // Check if the FITS header record indicates the image has already been calibrated
-  if (check_history_keywords(key[ii])) {
-   fprintf(stderr, "Prohibited HISTORY keyword found in header, exiting...\n");
-   fits_close_file(fptr, &status); // Close the FITS file
+  if ( check_history_keywords( key[ii] ) ) {
+   fprintf( stderr, "Prohibited HISTORY keyword found in header, exiting...\n" );
+   fits_close_file( fptr, &status ); // Close the FITS file
    // Free allocated memory
-   for (int j = 0; j <= ii; j++) {
-    free(key[j]);
+   for ( int j= 0; j <= ii; j++ ) {
+    free( key[j] );
    }
-   free(key);
-   exit(EXIT_FAILURE); // Exit the program
+   free( key );
+   exit( EXIT_FAILURE ); // Exit the program
   }
 
-  status= 0;                           // continue on any errors at this stage
+  status= 0; // continue on any errors at this stage
  }
  fits_get_img_type( fptr, &bitpix2, &status );
  fits_report_error( stderr, status ); // print out any error messages
