@@ -7883,7 +7883,8 @@ if [ ! -d ../test_exclude_ref_image ];then
  if [ -f test_exclude_ref_image.tar.bz2 ];then
   rm -f test_exclude_ref_image.tar.bz2
  fi
- $($WORKDIR/lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/data/vast_tests/test_exclude_ref_image.tar.bz2" && tar -xvjf test_exclude_ref_image.tar.bz2 && rm -f test_exclude_ref_image.tar.bz2
+ # The test data archive is 331M, so 300sec may not be enough time to download it
+ $($WORKDIR/lib/find_timeout_command.sh) 600 curl -O "http://scan.sai.msu.ru/~kirx/data/vast_tests/test_exclude_ref_image.tar.bz2" && tar -xvjf test_exclude_ref_image.tar.bz2 && rm -f test_exclude_ref_image.tar.bz2
  cd $WORKDIR
 fi
 # If the test data are found
