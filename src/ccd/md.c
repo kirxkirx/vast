@@ -89,8 +89,8 @@ unsigned short detect_overscan2( float *image_array, long *naxes ) {
 
 int main( int argc, char *argv[] ) {
  unsigned short min;
- /* Для чтения фитсов */
- fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
+ // For reading FITS files
+ fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h
  long fpixel= 1;
  long naxes[2];
  long testX, testY;
@@ -104,16 +104,13 @@ int main( int argc, char *argv[] ) {
  float *float_flat_array;
  unsigned short *result_image_array;
 
- /* ----- */
  long i;
  int bitpix2;
  double tmp, norm;
- /* -- Для хранения ключей из шапки -- */
- // char *key[10000];
  char **key;
  int No_of_keys;
  int keys_left;
- long ii;
+ long ii, j; // counters
 
  double bzero= 32768.0;
 
@@ -123,20 +120,20 @@ int main( int argc, char *argv[] ) {
  }
  fprintf( stderr, "MegaDivider v6\n" );
 
- /* Читаем файл */
+ // Reading file
  fits_open_file( &fptr, argv[1], 0, &status );
- fits_report_error( stderr, status ); /* print out any error messages */
+ fits_report_error( stderr, status ); // print out any error messages 
  if ( status != 0 )
   exit( status );
  fits_read_key( fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status );
- fits_report_error( stderr, status ); /* print out any error messages */
+ fits_report_error( stderr, status ); // print out any error messages
  if ( status != 0 )
   exit( status );
  fits_read_key( fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status );
- fits_report_error( stderr, status ); /* print out any error messages */
+ fits_report_error( stderr, status ); // print out any error messages
  if ( status != 0 )
   exit( status );
- // Читаем из шапки то что стоит запомнить
+ // Reading FITS header keywords that are worth keeping
  fits_get_hdrspace( fptr, &No_of_keys, &keys_left, &status );
  key= malloc( No_of_keys * sizeof( char * ) );
  if ( key == NULL ) {
@@ -157,7 +154,7 @@ int main( int argc, char *argv[] ) {
    fprintf( stderr, "Prohibited HISTORY keyword found in header, exiting...\n" );
    fits_close_file( fptr, &status ); // Close the FITS file
    // Free allocated memory
-   for ( int j= 0; j <= ii; j++ ) {
+   for ( j= 0; j <= ii; j++ ) {
     free( key[j] );
    }
    free( key );
@@ -166,7 +163,7 @@ int main( int argc, char *argv[] ) {
  }
  fits_get_img_type( fptr, &bitpix2, &status );
 
- /* Выделяем память */
+ // allocate memory
  int img_size= naxes[0] * naxes[1];
  if ( img_size <= 0 ) {
   fprintf( stderr, "ERROR: negative or zero image size\n" );
@@ -177,26 +174,29 @@ int main( int argc, char *argv[] ) {
  flat_array= malloc( img_size * sizeof( short ) );
  float_flat_array= malloc( img_size * sizeof( float ) );
  result_image_array= malloc( img_size * sizeof( short ) );
- /* И читаем картинку */
+ // and read the image
  fits_read_img( fptr, TUSHORT, 1, img_size, &nullval_ushort, image_array, &anynul, &status );
  fprintf( stderr, "Reading image %s %ld %ld  %d bitpix\n", argv[1], naxes[0], naxes[1], bitpix2 );
  fits_close_file( fptr, &status );
- fits_report_error( stderr, status ); /* print out any error messages */
+ fits_report_error( stderr, status ); // print out any error messages 
  status= 0;
 
- /* Читаем дарк */
+ // readf the dark frame
  fits_open_file( &fptr, argv[2], 0, &status );
- fits_report_error( stderr, status ); /* print out any error messages */
- if ( status != 0 )
+ fits_report_error( stderr, status ); // print out any error messages 
+ if ( status != 0 ) {
   exit( status );
+ }
  fits_read_key( fptr, TLONG, "NAXIS1", &testX, NULL, &status );
- fits_report_error( stderr, status ); /* print out any error messages */
- if ( status != 0 )
+ fits_report_error( stderr, status ); // print out any error messages
+ if ( status != 0 ) {
   exit( status );
+ }
  fits_read_key( fptr, TLONG, "NAXIS2", &testY, NULL, &status );
- fits_report_error( stderr, status ); /* print out any error messages */
- if ( status != 0 )
+ fits_report_error( stderr, status ); // print out any error messages
+ if ( status != 0 ) {
   exit( status );
+ }
  if ( testX != naxes[0] || testY != naxes[1] ) {
   fprintf( stderr, "Flat field and image must be the same size!\n" );
   exit( EXIT_FAILURE );
@@ -213,13 +213,14 @@ int main( int argc, char *argv[] ) {
   }
  }
  fits_close_file( fptr, &status );
- fits_report_error( stderr, status ); /* print out any error messages */
+ fits_report_error( stderr, status ); // print out any error messages
  status= 0;
 
- /* Считаем нормировочный коэффициент */
+ // Compute normalization coefficients
  norm= 0.0;
- for ( i= 0; i < img_size; i++ )
+ for ( i= 0; i < img_size; i++ ) {
   norm+= float_flat_array[i];
+ }
 
  norm= norm / img_size;
  fprintf( stderr, "Avarage count on flat field image: %lf\n", norm );
@@ -251,20 +252,20 @@ int main( int argc, char *argv[] ) {
  free( image_array );
  free( flat_array );
  free( float_flat_array );
- fits_create_file( &fptr, argv[3], &status ); /* create new file */
- fits_report_error( stderr, status );         /* print out any error messages */
+ fits_create_file( &fptr, argv[3], &status ); // create new file 
+ fits_report_error( stderr, status );         // print out any error messages
  if ( status != 0 ) {
   fprintf( stderr, "Cannot create FITS file %s\n", argv[3] );
   exit( EXIT_FAILURE );
  }
  fits_create_img( fptr, USHORT_IMG, 2, naxes, &status );
- fits_report_error( stderr, status ); /* print out any error messages */
+ fits_report_error( stderr, status ); // print out any error messages
  if ( status != 0 ) {
   fprintf( stderr, "Cannot create image\n" );
   exit( EXIT_FAILURE );
  }
  fits_write_img( fptr, TUSHORT, fpixel, naxes[0] * naxes[1], result_image_array, &status );
- fits_report_error( stderr, status ); /* print out any error messages */
+ fits_report_error( stderr, status ); // print out any error messages
  if ( status != 0 ) {
   fprintf( stderr, "Cannot write image\n" );
   exit( EXIT_FAILURE );

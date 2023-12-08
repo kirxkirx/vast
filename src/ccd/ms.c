@@ -34,7 +34,7 @@ int main( int argc, char *argv[] ) {
  char **key;
  int No_of_keys;
  int keys_left;
- int ii;
+ int ii, j; // counters
 
  double tmp;
 
@@ -79,7 +79,7 @@ int main( int argc, char *argv[] ) {
    fprintf( stderr, "Prohibited HISTORY keyword found in header, exiting...\n" );
    fits_close_file( fptr, &status ); // Close the FITS file
    // Free allocated memory
-   for ( int j= 0; j <= ii; j++ ) {
+   for ( j= 0; j <= ii; j++ ) {
     free( key[j] );
    }
    free( key );
