@@ -17126,8 +17126,8 @@ fi
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
-#
-remove_test_data_to_save_space
+# don't remove ../individual_images_test as the next test will need them
+#remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
@@ -17183,8 +17183,8 @@ fi
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
-#
-remove_test_data_to_save_space
+# don't remove test data as the next test may need them
+#remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
