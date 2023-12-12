@@ -69,9 +69,11 @@ for a detailed description of the code. The latest version of code is <a href="h
 </dd></dl>
 
 <div align="right">
+Current quasi-stable version: <a href="https://github.com/kirxkirx/vast/releases"><img border="0" src="https://img.shields.io/github/v/release/kirxkirx/vast.svg?sort=semver" alt="version badge"></img></a><br>
 Automated testing status: 
 <img border="0" src="https://github.com/kirxkirx/vast/actions/workflows/build_and_test_ubuntu.yml/badge.svg" alt="build and test ubuntu status"></img>
 <img border="0" src="https://github.com/kirxkirx/vast/actions/workflows/build_and_test_macos.yml/badge.svg" alt="build and test macOS status"></img>
+<img border="0" src="https://github.com/kirxkirx/vast/actions/workflows/build_only_freebsdvm.yml/badge.svg" alt="build FreeBSD status"></img>
 <img border="0" src="https://circleci.com/gh/kirxkirx/vast.svg?style=svg" alt="CircleCI build status"></img>
 </div>
 
@@ -222,7 +224,7 @@ The older versions of <tt>VaST</tt> are available via
 unpack the archive containing the program
 <div class="code">
  tar -xvjf vast-latest.tar.bz2<br/>
- cd vast-1.0rc86
+ cd vast-1.0rc87
 </div>
 and compile it by running
 <div class="code">
@@ -272,7 +274,7 @@ For <b>Red Hat</b> based Linux distributions
 </li>
 <li>Download from GitHub or this page, as <a href="#compil">described above</a>.</li>
 <li>Change directory to the one containing <tt>VaST</tt> source code <div class="code">cd vast</div>
-or <div class="code">cd vast-1.0rc86</div> (the directory name may differ for the GitHub
+or <div class="code">cd vast-1.0rc87</div> (the directory name may differ for the GitHub
 and quasi-stable version).</li>
 <li>Compile <tt>VaST</tt> by running <div class="code">make</div></li>
 </ul>
@@ -406,7 +408,7 @@ Brief usage instructions in Russian may be found
 </div>
 change to the <tt>VaST</tt> installation directory and run the program
 <div class="code">
- cd vast-1.0rc86<br/>
+ cd vast-1.0rc87<br/>
  ./vast ../sample_data/*fit
 </div>
 After a brief computation the variability search window will be opened. Click
@@ -599,7 +601,7 @@ in the "default.sex" file located in the <tt>VaST</tt> directory. Please use
 <p>Say, you have digitized photographic images in "photo_data" directory. To run <tt>VaST</tt>
 on them, change to the <tt>VaST</tt> directory and run the program
 <div class="code">
- cd vast-1.0rc86<br/>
+ cd vast-1.0rc87<br/>
  ./vast -o ../photo_data/*fit
 </div>
 The "-o" parameter tells <tt>VaST</tt> to use formulas (1) and (3) from 
@@ -871,7 +873,7 @@ please enter your e-mail address in the form below
 <input type="submit" name='submit' value="submit">
 </p>
 </form>
-or just drop a line to kirx[at]scan.sai.msu.ru
+This mailing list is really low-traffic.
 <br/>
 <br/>
 <br/>
@@ -879,6 +881,49 @@ or just drop a line to kirx[at]scan.sai.msu.ru
 <h2><a name="news"></a>Release notes</h2>
 
 <pre>
+12 Dec 2023: vast-1.0rc87:
+
+ * Changed the deprecated VizieR vizier.u-strasbg.fr domain to vizier.cds.unistra.fr
+VaST will now always use the CDS VizieR, and will not try to use mirrors as they fail often.
+
+ * When determining CCD gain in e-/ADU from a FITS header, prefer EGAIN over GAIN keyword.
+
+ * New script 'util/constellation.sh' prints the constellation name for a given J2000 position.
+This is a wrapper around WCSTools + Patrick Glaschke's code described in https://arxiv.org/abs/1008.3966
+
+ * New script 'util/planets.sh' prints geocentric positions of major planets for a given JD(UT).
+The positions are retrieved from JPL HORIZONS https://ssd.jpl.nasa.gov/horizons/
+
+ * Similarly to 'util/planets.sh', the new script 'util/moons.sh' prints geocentric positions of
+selected (bright and distant) planetary moons.
+
+ * Similarly to 'util/planets.sh', the new script 'util/comets.sh' prints geocentric positions of 
+bright comets (listed at http://astro.vanbuitenen.nl/comets ) for a given JD(UT).
+The specified JD(UT) should be near-current for the list of bright comets to be relevant!
+The comet positions are retrieved from JPL HORIZONS https://ssd.jpl.nasa.gov/horizons/
+
+ * Multiple improvements in the NMW transient search script 'util/transients/transient_factory_test31.sh'
+
+ * Do not perform slow VizieR query for a photometric catalog when identifying a star using 
+'util/identify.sh' or 'U' in the lightcurve viewer.
+
+ * 'vast_summary.log' now includes an estimate of the limiting magnitude of the reference frame.
+The magnitude is in the instrumental units (negative value) and gets updated to actual magnitudes 
+as soon as magnitude calibration is performed with 'util/magnitude_calibration.sh'.
+
+ * VaST can now handle TICA TESS Full-Frame Images that may be found at
+https://archive.stsci.edu/hlsp/tica#section-c34b9669-b0be-40b2-853e-a59997d1b7c5
+
+ * The 'pgfv' fits viewer will now exit with a non-zero exit code if 'Q' is pressed on the keyboard.
+This may be helpful for manually weeding out bad images with a loop like this
+'for i in *fts ;do ~/current_work/vast/pgfv $i && continue ; mv $i bad/ ;done'
+pressing 'Q' for bad images and 'X' or right-click for good ones.
+
+ * The new script 'lib/astrometry/strip_wcs_keywords' will strip all WCS-related keywords from 
+the header of an input FITS image. This may be useful to ensure that there is no mixup between 
+an old WCS solution that may have been present in the image and a new one produced with Astrometry.net 
+
+
 07 Apr 2023: vast-1.0rc86:
 
  * Experimental support for TESS Full-Frame Images (FFIs). In terms of photometric precision, 

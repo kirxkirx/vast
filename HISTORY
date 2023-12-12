@@ -1,4 +1,4 @@
-vast-1.0rc87:
+12 Dec 2023: vast-1.0rc87:
 	* Changed the deprecated VizieR vizier.u-strasbg.fr domain to vizier.cds.unistra.fr
 	VaST will now always use the CDS VizieR, and will not try to use mirrors as they fail often.
 	* When determining CCD gain in e-/ADU from a FITS header, prefer EGAIN over GAIN keyword.
