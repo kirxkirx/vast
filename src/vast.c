@@ -5,7 +5,7 @@
  This file is part of VaST -
  a SExtractor front-end for search of variable objects in a series of FITS images.
 
- Copyleft 2005-2023  Kirill Sokolovsky <kirx@kirx.net>,
+ Copyleft 2005-2024  Kirill Sokolovsky <kirx@kirx.net>,
                      Alexandr Lebedev  <lebastr@gmail.com>,
                      Dmitry Nasonov,
                      Sergey Nazarov,
@@ -120,7 +120,7 @@ or perhaps FLAGS = 8+16+32 = 56.
 */
 
 void version( char *version_string ) {
- strncpy( version_string, "VaST 1.0rc87", 32 );
+ strncpy( version_string, "VaST 1.0rc88", 32 );
  return;
 }
 
