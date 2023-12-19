@@ -107,7 +107,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   fi
   # we don't usually have a luxury of multiple flat field frames to chhose from
   # FLAT_FIELD_FILE has to point to one specific file that will be used for flat-fielding
-  if [ -z "$DARK_FRAMES_DIR" ];then
+  if [ -z "$FLAT_FIELD_FILE" ];then
    export FLAT_FIELD_FILE=/home/apache/flats/mff_2023-07-14.fit
   fi
   #
