@@ -27,7 +27,7 @@ function email_vast_test_report {
  HOST="@$HOST"
  NAME="$USER$HOST"
 # DATETIME=`LANG=C date --utc`
-# bsd dae doesn't know '--utc', but accepts '-u'
+# bsd date doesn't know '--utc', but accepts '-u'
  DATETIME=`LANG=C date -u`
  SCRIPTNAME=`basename $0`
  LOG=`cat vast_test_report.txt`
@@ -21156,7 +21156,9 @@ if [ -z "$RESULTSURL" ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII_002"
 else
- NLINES_IN_OUTPUT_ASCII_FILE=`curl --silent "$RESULTSURL"IOMC_4011000047.txt | wc -l | awk '{print $1}'`
+ # omc_converter behavior changed
+ #NLINES_IN_OUTPUT_ASCII_FILE=`curl --silent "$RESULTSURL"IOMC_4011000047.txt | wc -l | awk '{print $1}'`
+ NLINES_IN_OUTPUT_ASCII_FILE=`curl --silent "$RESULTSURL" | wc -l | awk '{print $1}'`
  if [ $NLINES_IN_OUTPUT_ASCII_FILE -ne 2110 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII_003"
@@ -21215,7 +21217,9 @@ if [ -z "$RESULTSURL" ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_SWASP_002"
 else
- NLINES_IN_OUTPUT_ASCII_FILE=`curl --silent "$RESULTSURL"out1SWASP_J013623.20+480028.4.dat | wc -l | awk '{print $1}'`
+ # swasp_converter changed behavior
+ #NLINES_IN_OUTPUT_ASCII_FILE=`curl --silent "$RESULTSURL"out1SWASP_J013623.20+480028.4.dat | wc -l | awk '{print $1}'`
+ NLINES_IN_OUTPUT_ASCII_FILE=`curl --silent "$RESULTSURL" | wc -l | awk '{print $1}'`
  if [ $NLINES_IN_OUTPUT_ASCII_FILE -ne 8358 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_SWASP_003"
