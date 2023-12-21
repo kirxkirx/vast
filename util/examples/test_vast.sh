@@ -21356,7 +21356,7 @@ fi
 # kirx.net Image and Document Fetch Test
 
 # Fetch and parse HTML to find the image URL
-IMAGE_URL=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/' | grep -o 'kirx_med.jpg' | head -1)
+IMAGE_URL=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/' | grep -o 'kirx_med.jpg' | head -n1)
 if [ -z "$IMAGE_URL" ]; then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_KIRXNET_IMAGE_URL_FETCH_FAILED"
@@ -21378,7 +21378,7 @@ else
 fi
 
 # Fetch and parse HTML to find the PDF URL
-PDF_URL=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/' | grep -o 'Kirill_Sokolovsky__standalone_CV.pdf' | head -1)
+PDF_URL=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/' | grep -o 'Kirill_Sokolovsky__standalone_CV.pdf' | head -n1)
 if [ -z "$PDF_URL" ]; then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_KIRXNET_PDF_URL_FETCH_FAILED"
@@ -21399,6 +21399,13 @@ else
   fi
 fi
 
+# Fetch scan.sai.msu.ru/vast/ HTML and find the year
+YEAR=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://scan.sai.msu.ru/vast/' | grep -o 'developers team, [0-9]\{4\}-[0-9]\{4\}' | tail -n1 | awk -F '-' '{print $2}')
+CURRENT_YEAR=$(date -u +%Y)
+if [ "$YEAR" != "$CURRENT_YEAR" ]; then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_VAST_YEAR_MISMATCH"
+fi
 
 
 # Scan SAI MSU vast-latest.tar.bz2 Fetch Test
@@ -21410,7 +21417,7 @@ if [ -z "$REDIRECT_URL" ]; then
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_SAI_REDIRECT_URL_FETCH_FAILED"
 else
   # Fetch the redirected URL and parse it to find the file URL
-  FILE_URL=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent "https://scan.sai.msu.ru/$REDIRECT_URL" | grep 'href' | grep 'vast-latest.tar.bz2' | awk -F'href' '{print $2}' | awk -F'"' '{print $2}' | head -1)
+  FILE_URL=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent "https://scan.sai.msu.ru/$REDIRECT_URL" | grep 'href' | grep 'vast-latest.tar.bz2' | awk -F'href' '{print $2}' | awk -F'"' '{print $2}' | head -n1)
   FILE_URL="https://scan.sai.msu.ru/$REDIRECT_URL$FILE_URL"
   if [ -z "$FILE_URL" ]; then
     TEST_PASSED=0
@@ -21439,6 +21446,36 @@ if [ -z "$REDIRECT_CHECK" ]; then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_VAST_REDIRECT_CHECK_FAILED"
 fi
+
+# Fetch HTML and find image URL
+IMAGE_URL=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://scan.sai.msu.ru/nmw/' | grep 'time_distribution.png' | head -n1 | awk -F'src=' '{print $2}' | awk -F'"' '{print $2}')
+if [ -z "$IMAGE_URL" ]; then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_IMAGE_URL_FETCH_FAILED"
+else
+  # Download the image and verify its type
+  curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent --output time_distribution.png "https://scan.sai.msu.ru/nmw/$IMAGE_URL"
+  if [ $? -ne 0 ] || [ ! -f time_distribution.png ]; then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_IMAGE_DOWNLOAD_FAILED"
+  else
+    file time_distribution.png | grep --quiet 'PNG image data'
+    if [ $? -ne 0 ]; then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_IMAGE_VERIFICATION_FAILED"
+    fi
+    # Remove the downloaded image
+    rm -f time_distribution.png
+  fi
+fi
+
+# Fetch HTML and find the year
+YEAR=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://scan.sai.msu.ru/nmw/' | grep -o 'NMW survey team, [0-9]\{4\}-[0-9]\{4\}' | tail -n1 | awk -F '-' '{print $2}')
+CURRENT_YEAR=$(date -u +%Y)
+if [ "$YEAR" != "$CURRENT_YEAR" ]; then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_YEAR_MISMATCH"
+f
 
 # Fetch HTML and check for "morning summary" or "evening summary"
 NMW_VAST_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://vast.sai.msu.ru/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
