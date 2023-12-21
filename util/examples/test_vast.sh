@@ -99,7 +99,8 @@ END {
 }
 
 function test_https_connection {
- curl --max-time 10 --silent https://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
+ #curl --max-time 10 --silent https://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
+ curl --max-time 10 --silent https://scan.sai.msu.ru/lk/ | grep --quiet '../cgi-bin/lk/process_lightcurve.py'
  if [ $? -ne 0 ];then
   # if the above didn't work, try to download the certificate
   # The old cert that has expired already, will keep it in case clocks on the test machine are really off
@@ -112,7 +113,8 @@ function test_https_connection {
   if [ $? -ne 0 ];then
    return 2
   fi
-  curl --max-time 10 --silent --cacert intermediate.pem https://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
+  #curl --max-time 10 --silent --cacert intermediate.pem https://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
+  curl --max-time 10 --silent --cacert intermediate.pem https://scan.sai.msu.ru/lk/ | grep --quiet '../cgi-bin/lk/process_lightcurve.py'
   if [ $? -ne 0 ];then
    # cleanup
    if [ -f intermediate.pem ];then
@@ -126,7 +128,8 @@ function test_https_connection {
  
  # note there is no https support at vast.sai.msu.ru yet
 
- curl --max-time 10 --silent https://kirx.net/astrometry_engine/files/ | grep --quiet 'Parent Directory'
+ #curl --max-time 10 --silent https://kirx.net/astrometry_engine/files/ | grep --quiet 'Parent Directory'
+ curl --max-time 10 --silent https://kirx.net/lk/ | grep --quiet '../cgi-bin/lk/process_lightcurve.py'
  if [ $? -ne 0 ];then
   if [ ! -f intermediate.pem ];then
    # if the above didn't work, try to download the certificate
@@ -142,9 +145,10 @@ function test_https_connection {
     return 2
    fi
   fi
-  curl --max-time 10 --silent --cacert intermediate.pem https://kirx.net/astrometry_engine/files/ | grep --quiet 'Parent Directory'
+  #curl --max-time 10 --silent --cacert intermediate.pem https://kirx.net/astrometry_engine/files/ | grep --quiet 'Parent Directory'
+  curl --max-time 10 --silent --cacert intermediate.pem https://kirx.net/lk/ | grep --quiet '../cgi-bin/lk/process_lightcurve.py'
   if [ $? -ne 0 ];then
-   echo "ERROR in test_https_connection(): cannot connect to vast.sai.msu.ru" 1>&2
+   echo "ERROR in test_https_connection(): cannot connect to https://kirx.net" 1>&2
    return 1
   fi
  fi
@@ -251,7 +255,9 @@ function check_if_enough_disk_space_for_tests {
 
 
 function test_internet_connection {
- curl --max-time 10 --silent http://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
+ # Directory listing disabled
+ #curl --max-time 10 --silent http://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
+ curl --max-time 10 --silent -I http://scan.sai.msu.ru 2>&1 | grep --quiet 'Content-Type:'
  if [ $? -ne 0 ];then
   echo "ERROR in test_internet_connection(): cannot connect to scan.sai.msu.ru" 1>&2
   return 1
@@ -262,7 +268,9 @@ function test_internet_connection {
   return 0
  fi
 
- curl --max-time 10 --silent http://vast.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
+ # Directory listing disabled
+ #curl --max-time 10 --silent http://vast.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
+ curl --max-time 10 --silent -I http://vast.sai.msu.ru 2>&1 | grep --quiet 'Content-Type:'
  if [ $? -ne 0 ];then
   echo "ERROR in test_internet_connection(): cannot connect to vast.sai.msu.ru" 1>&2
   return 1
