@@ -21475,7 +21475,7 @@ CURRENT_YEAR=$(date -u +%Y)
 if [ "$YEAR" != "$CURRENT_YEAR" ]; then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_YEAR_MISMATCH"
-f
+fi
 
 # Fetch HTML and check for "morning summary" or "evening summary"
 NMW_VAST_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://vast.sai.msu.ru/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
