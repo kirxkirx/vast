@@ -21499,6 +21499,37 @@ if [ -z "$NMW_KIRX_SUMMARY_CHECK" ]; then
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_SUMMARY_CHECK_FAILED"
 fi
 
+### Check directory listing where it's needed
+# Check if https://www.kirx.net/~kirx/ contains "Parent Directory"
+if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://www.kirx.net/~kirx/' | grep --quiet 'Parent Directory'; then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_INDEX_KIRX_PARENT_DIR_MISSING"
+fi
+
+# Check if http://scan.sai.msu.ru/~kirx/ contains "Parent Directory"
+if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://scan.sai.msu.ru/~kirx/' | grep --quiet 'Parent Directory'; then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_INDEX_SCAN_KIRX_PARENT_DIR_MISSING"
+fi
+
+# Check if http://scan.sai.msu.ru/~denis/ contains "Parent Directory"
+if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://scan.sai.msu.ru/~denis/' | grep --quiet 'Parent Directory'; then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_INDEX_SCAN_DENIS_PARENT_DIR_MISSING"
+fi
+
+# Check if https://scan.sai.msu.ru/lk/source/ contains "Parent Directory"
+if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://scan.sai.msu.ru/lk/source/' | grep --quiet 'Parent Directory'; then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_INDEX_LK_SOURCE_PARENT_DIR_MISSING"
+fi
+
+# Check if http://scan.sai.msu.ru/pub/software/vast/ contains "Parent Directory"
+if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://scan.sai.msu.ru/pub/software/vast/' | grep --quiet 'Parent Directory'; then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_INDEX_VAST_SOFTWARE_PARENT_DIR_MISSING"
+fi
+
 
 
 ####### scan/vast UCAC5 search (supposed to be faster than VizieR)
