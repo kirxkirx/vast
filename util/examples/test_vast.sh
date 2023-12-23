@@ -521,7 +521,15 @@ if [ ! -d ../DART_Didymos_moving_object_photometry_test ];then
   rm -f DART_Didymos_moving_object_photometry_test.tar.bz2
  fi
  $($WORKDIR/lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/pub/DART_Didymos_moving_object_photometry_test.tar.bz2" && tar -xjf DART_Didymos_moving_object_photometry_test.tar.bz2 && rm -f DART_Didymos_moving_object_photometry_test.tar.bz2
- cd $WORKDIR
+ # If the test data download fails - don't bother with the other tests - exit now
+ if [ $0 -ne 0 ];then
+  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" >> vast_test_report.txt
+  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+  exit 1
+ fi
+ cd $WORKDIR || exit 1
 fi
 
 if [ -d ../DART_Didymos_moving_object_photometry_test ];then
@@ -656,7 +664,15 @@ if [ ! -d ../NMW_And1_test_lightcurves_40 ];then
   rm -f NMW_And1_test_lightcurves_40.tar.bz2
  fi
  $($WORKDIR/lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/pub/NMW_And1_test_lightcurves_40.tar.bz2" && tar -xjf NMW_And1_test_lightcurves_40.tar.bz2 && rm -f NMW_And1_test_lightcurves_40.tar.bz2
- cd $WORKDIR
+ # If the test data download fails - don't bother with the other tests - exit now
+ if [ $0 -ne 0 ];then
+  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" >> vast_test_report.txt
+  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+  exit 1
+ fi
+ cd $WORKDIR || exit 1
 fi
 
 if [ -d ../NMW_And1_test_lightcurves_40 ];then
@@ -1866,7 +1882,15 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../sample_data ];then
  cd ..
  curl -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- cd $WORKDIR
+ # If the test data download fails - don't bother with the other tests - exit now
+ if [ $0 -ne 0 ];then
+  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" >> vast_test_report.txt
+  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+  exit 1
+ fi
+ cd $WORKDIR || exit 1
 fi
 # If the test data are found
 if [ -d ../sample_data ];then
@@ -6480,7 +6504,15 @@ if [ ! -d ../vast_test_bright_stars_failed_match ];then
   rm -f vast_test_bright_stars_failed_match.tar.bz2
  fi
  $($WORKDIR/lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
- cd $WORKDIR
+ # If the test data download fails - don't bother with the other tests - exit now
+ if [ $0 -ne 0 ];then
+  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" >> vast_test_report.txt
+  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+  exit 1
+ fi
+ cd $WORKDIR || exit 1
 fi
 # If the test data are found
 if [ -d ../vast_test_bright_stars_failed_match ];then
@@ -6621,7 +6653,15 @@ if [ ! -d ../vast_test_bright_stars_failed_match ];then
   rm -f vast_test_bright_stars_failed_match.tar.bz2
  fi
  $($WORKDIR/lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
- cd $WORKDIR
+ # If the test data download fails - don't bother with the other tests - exit now
+ if [ $0 -ne 0 ];then
+  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" >> vast_test_report.txt
+  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+  exit 1
+ fi
+ cd $WORKDIR || exit 1
 fi
 # If the test data are found
 if [ -d ../vast_test_bright_stars_failed_match ];then
@@ -6761,7 +6801,15 @@ if [ ! -d ../vast_test_bright_stars_failed_match ];then
   rm -f vast_test_bright_stars_failed_match.tar.bz2
  fi
  $($WORKDIR/lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
- cd $WORKDIR
+ # If the test data download fails - don't bother with the other tests - exit now
+ if [ $0 -ne 0 ];then
+  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" >> vast_test_report.txt
+  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+  exit 1
+ fi
+ cd $WORKDIR || exit 1
 fi
 # If the test data are found
 if [ -d ../vast_test_bright_stars_failed_match ];then
@@ -6874,7 +6922,15 @@ remove_test_data_to_save_space
 if [ ! -d ../vast_test_ASASSN-19cq ];then
  cd ..
  curl -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_ASASSN-19cq.tar.bz2" && tar -xvjf vast_test_ASASSN-19cq.tar.bz2 && rm -f vast_test_ASASSN-19cq.tar.bz2
- cd $WORKDIR
+ # If the test data download fails - don't bother with the other tests - exit now
+ if [ $0 -ne 0 ];then
+  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" >> vast_test_report.txt
+  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+  exit 1
+ fi
+ cd $WORKDIR || exit 1
 fi
 # If the test data are found
 if [ -d ../vast_test_ASASSN-19cq ];then
@@ -7113,7 +7169,15 @@ if [ ! -d ../MASTER_test ];then
   rm -f MASTER_test.tar.bz2
  fi
  $($WORKDIR/lib/find_timeout_command.sh) 300 curl -O "http://scan.sai.msu.ru/~kirx/pub/MASTER_test.tar.bz2" && tar -xvjf MASTER_test.tar.bz2 && rm -f MASTER_test.tar.bz2
- cd $WORKDIR
+ # If the test data download fails - don't bother with the other tests - exit now
+ if [ $0 -ne 0 ];then
+  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" >> vast_test_report.txt
+  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+  exit 1
+ fi
+ cd $WORKDIR || exit 1
 fi
 # If the test data are found
 if [ -d ../MASTER_test ];then
@@ -7251,7 +7315,15 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../M31_ISON_test ];then
  cd ..
  curl -O "http://scan.sai.msu.ru/~kirx/pub/M31_ISON_test.tar.bz2" && tar -xvjf M31_ISON_test.tar.bz2 && rm -f M31_ISON_test.tar.bz2
- cd $WORKDIR
+ # If the test data download fails - don't bother with the other tests - exit now
+ if [ $0 -ne 0 ];then
+  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" >> vast_test_report.txt
+  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+  exit 1
+ fi
+ cd $WORKDIR || exit 1
 fi
 # If the test data are found
 if [ -d ../M31_ISON_test ];then
@@ -7395,7 +7467,15 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../Gaia16aye_SN ];then
  cd ..
  curl -O "http://scan.sai.msu.ru/~kirx/pub/Gaia16aye_SN.tar.bz2" && tar -xvjf Gaia16aye_SN.tar.bz2 && rm -f Gaia16aye_SN.tar.bz2
- cd $WORKDIR
+ # If the test data download fails - don't bother with the other tests - exit now
+ if [ $0 -ne 0 ];then
+  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" >> vast_test_report.txt
+  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+  exit 1
+ fi
+ cd $WORKDIR || exit 1
 fi
 # If the test data are found
 if [ -d ../Gaia16aye_SN ];then
@@ -7526,7 +7606,15 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../only_few_stars ];then
  cd ..
  curl -O "http://scan.sai.msu.ru/~kirx/pub/only_few_stars.tar.bz2" && tar -xvjf only_few_stars.tar.bz2 && rm -f only_few_stars.tar.bz2
- cd $WORKDIR
+ # If the test data download fails - don't bother with the other tests - exit now
+ if [ $0 -ne 0 ];then
+  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" >> vast_test_report.txt
+  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+  exit 1
+ fi
+ cd $WORKDIR || exit 1
 fi
 # If the test data are found
 if [ -d ../only_few_stars ];then
@@ -7657,7 +7745,15 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 if [ ! -d ../only_few_stars ];then
  cd ..
  curl -O "http://scan.sai.msu.ru/~kirx/pub/only_few_stars.tar.bz2" && tar -xvjf only_few_stars.tar.bz2 && rm -f only_few_stars.tar.bz2
- cd $WORKDIR
+ # If the test data download fails - don't bother with the other tests - exit now
+ if [ $0 -ne 0 ];then
+  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" >> vast_test_report.txt
+  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+  exit 1
+ fi
+ cd $WORKDIR || exit 1
 fi
 # If the test data are found
 if [ -d ../only_few_stars ];then
@@ -7893,7 +7989,15 @@ if [ ! -d ../test_exclude_ref_image ];then
  fi
  # The test data archive is 331M, so 300sec may not be enough time to download it
  $($WORKDIR/lib/find_timeout_command.sh) 900 curl -O "http://scan.sai.msu.ru/~kirx/data/vast_tests/test_exclude_ref_image.tar.bz2" && tar -xvjf test_exclude_ref_image.tar.bz2 && rm -f test_exclude_ref_image.tar.bz2
- cd $WORKDIR
+ # If the test data download fails - don't bother with the other tests - exit now
+ if [ $0 -ne 0 ];then
+  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" >> vast_test_report.txt
+  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+  exit 1
+ fi
+ cd $WORKDIR || exit 1
 fi
 # If the test data are found
 if [ -d ../test_exclude_ref_image ];then
@@ -8132,7 +8236,15 @@ if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -d ../transient_detection_test_Ceres ];then
  cd ..
  curl -O "http://scan.sai.msu.ru/vast/transient_detection_test_Ceres.tar.bz2" && tar -xvjf transient_detection_test_Ceres.tar.bz2 && rm -f transient_detection_test_Ceres.tar.bz2
- cd $WORKDIR
+ # If the test data download fails - don't bother with the other tests - exit now
+ if [ $0 -ne 0 ];then
+  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" >> vast_test_report.txt
+  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+  exit 1
+ fi
+ cd $WORKDIR || exit 1
 fi
 # If the test data are found
 if [ -d ../transient_detection_test_Ceres ];then
@@ -8258,7 +8370,7 @@ $GREP_RESULT"
    if [ ! -d ../tycho2 ];then
     cd `dirname $VASTDIR`
     curl -O "http://scan.sai.msu.ru/~kirx/pub/tycho2.tar.bz2" && tar -xvjf tycho2.tar.bz2 && rm -f tycho2.tar.bz2
-    cd $VASTDIR
+    cd $VASTDIR || exit 1
    fi
    # Try again
    if [ -d ../tycho2 ];then
@@ -8662,7 +8774,15 @@ lib/update_offline_catalogs.sh force
 if [ ! -d ../NMW_Saturn_test ];then
  cd ..
  curl -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Saturn_test.tar.bz2" && tar -xvjf NMW_Saturn_test.tar.bz2 && rm -f NMW_Saturn_test.tar.bz2
- cd $WORKDIR
+ # If the test data download fails - don't bother with the other tests - exit now
+ if [ $0 -ne 0 ];then
+  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" >> vast_test_report.txt
+  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+  exit 1
+ fi
+ cd $WORKDIR || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW_Saturn_test ];then
@@ -9572,7 +9692,15 @@ fi
 if [ ! -d ../NMW_Venus_test ];then
  cd ..
  curl -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Venus_test.tar.bz2" && tar -xvjf NMW_Venus_test.tar.bz2 && rm -f NMW_Venus_test.tar.bz2
- cd $WORKDIR
+ # If the test data download fails - don't bother with the other tests - exit now
+ if [ $0 -ne 0 ];then
+  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" >> vast_test_report.txt
+  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+  exit 1
+ fi
+ cd $WORKDIR || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW_Venus_test ];then
