@@ -385,6 +385,18 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
+# Check the external programs needed to run the tests
+for TESTED_PROGRAM in awk sed bc wc cat cut sort touch head tail grep basename ping curl wget ;do
+ echo -n "Looking for $TESTED_PROGRAM - "
+ if ! command -v $TESTED_PROGRAM &>/dev/null ;then
+  echo -e "\033[01;31mNOT found\033[00m"
+  exit 1
+ else
+  echo -e "\033[01;32mFound\033[00m"
+ fi
+done
+
+
 OPENMP_STATUS="OpenMP_"$(cat .cc.openmp)
 
 
