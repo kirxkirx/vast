@@ -438,6 +438,25 @@ fi
 cat vast_test_report.txt 1>&2
 echo "---------- $VAST_VERSION_STRING test results ----------" >> vast_test_report.txt
 
+############################################ 
+# Early download of NMW Venus test data to make sure test data are accessible
+#
+# Download the test dataset if needed
+if [ ! -d ../NMW_Venus_test ];then
+ cd ..
+ curl -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Venus_test.tar.bz2" && tar -xvjf NMW_Venus_test.tar.bz2 && rm -f NMW_Venus_test.tar.bz2
+ # If the test data download fails - don't bother with the other tests - exit now
+ if [ $0 -ne 0 ];then
+  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" >> vast_test_report.txt
+  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+  exit 1
+ fi
+ cd $WORKDIR || exit 1
+fi
+############################################
+
 # Reset the increpmental list of failed test codes
 # (this list is useful if you cancel the test before it completes)
 cat vast_test_report.txt > vast_test_incremental_list_of_failed_test_codes.txt
@@ -21316,7 +21335,7 @@ if [ -z "$RESULTSURL" ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_002"
 else
- curl --silent "$RESULTSURL"IOMC_2677000065.txt > IOMC_2677000065.txt
+ curl --silent "$RESULTSURL" > IOMC_2677000065.txt
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_cannot_download_txt_lc"
