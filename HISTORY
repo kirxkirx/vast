@@ -1,3 +1,9 @@
+	:vast-1.0rc88
+	* Pressing 'F' keyboard key ("Fast ID") in the lightcurve viewer './lc' will start fast known variable star
+	identification script 'util/identify_justname.sh' that will return only the name of the known variable.
+	The script will print no name if it could not recognize the object as a known variable star.
+	This is useful for quickly checking if a variable is a known one, before running a full check with
+	'U' key that starts the slower 'util/identify.sh' script.
 12 Dec 2023: vast-1.0rc87:
 	* Changed the deprecated VizieR vizier.u-strasbg.fr domain to vizier.cds.unistra.fr
 	VaST will now always use the CDS VizieR, and will not try to use mirrors as they fail often.
