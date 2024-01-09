@@ -294,10 +294,18 @@ double convert_jdUT_to_jdTT( double jdUT, int *timesys ) {
  }
 
  /*
+ 
    Read the file with leap seconds lib/tai-utc.dat
    up-to-date version of this file is available at
    http://maia.usno.navy.mil/ser7/tai-utc.dat
+   
+   The server maia.usno.navy.mil is gone for good, 
+   no idea where to take new official tai-utc.dat
+   The good thing is that no leap seconds were 
+   introduced for the past few years.
+   
  */
+
  tai_utc_dat= fopen( "lib/tai-utc.dat", "r" );
  if ( NULL == tai_utc_dat ) {
   fprintf( stderr, "ERROR: can't open file lib/tai-utc.dat\n" );
@@ -357,7 +365,8 @@ double convert_jdUT_to_jdTT( double jdUT, int *timesys ) {
  return jdTT;
 }
 
-/* We can't accept all these date writing options. but we'll try to handle some
+/* 
+We can't accept all these date writing options. but we'll try to handle some
 1999-09-01 58
 1999-09-1  58
 1999-9-01  57

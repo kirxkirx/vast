@@ -219,14 +219,14 @@ INPUTFILE_BASENAME=$(basename "$INPUTFILE")
 WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
 util/wcs_image_calibration.sh "$INPUTFILE"
 if [ $? -ne 0 ];then
- echo "ERRROR running util/wcs_image_calibration.sh $INPUTFILE"
+ echo "ERROR running util/wcs_image_calibration.sh $INPUTFILE"
  exit 1
 fi
 check_file_created "$WCS_INPUTFILE"
 cp -v "$WCS_INPUTFILE" "$OUTUT_DIR"/reference_platesolved_FITS
 util/make_finding_chart_script.sh "$WCS_INPUTFILE" "$TARET_RA" "$TARET_DEC"
 if [ $? -ne 0 ];then
- echo "ERRROR running util/make_finding_chart_script.sh $WCS_INPUTFILE $TARET_RA $TARET_DEC"
+ echo "ERROR running util/make_finding_chart_script.sh $WCS_INPUTFILE $TARET_RA $TARET_DEC"
  exit 1
 fi
 check_file_created resample_"$WCS_INPUTFILE"
@@ -239,14 +239,14 @@ INPUTFILE_BASENAME=$(basename "$INPUTFILE")
 WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
 util/wcs_image_calibration.sh "$INPUTFILE"
 if [ $? -ne 0 ];then
- echo "ERRROR running util/wcs_image_calibration.sh $INPUTFILE"
+ echo "ERROR running util/wcs_image_calibration.sh $INPUTFILE"
  exit 1
 fi
 check_file_created "$WCS_INPUTFILE"
 cp -v "$WCS_INPUTFILE" "$OUTUT_DIR"/reference_platesolved_FITS
 util/make_finding_chart_script.sh "$WCS_INPUTFILE" "$TARET_RA" "$TARET_DEC"
 if [ $? -ne 0 ];then
- echo "ERRROR running util/make_finding_chart_script.sh $WCS_INPUTFILE $TARET_RA $TARET_DEC"
+ echo "ERROR running util/make_finding_chart_script.sh $WCS_INPUTFILE $TARET_RA $TARET_DEC"
  exit 1
 fi
 check_file_created resample_"$WCS_INPUTFILE"
@@ -259,14 +259,14 @@ INPUTFILE_BASENAME=$(basename "$INPUTFILE")
 WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
 util/wcs_image_calibration.sh "$INPUTFILE"
 if [ $? -ne 0 ];then
- echo "ERRROR running util/wcs_image_calibration.sh $INPUTFILE"
+ echo "ERROR running util/wcs_image_calibration.sh $INPUTFILE"
  exit 1
 fi
 check_file_created "$WCS_INPUTFILE"
 cp -v "$WCS_INPUTFILE" "$OUTUT_DIR"/new_platesolved_FITS
 util/make_finding_chart_script.sh "$WCS_INPUTFILE" "$TARET_RA" "$TARET_DEC"
 if [ $? -ne 0 ];then
- echo "ERRROR running util/make_finding_chart_script.sh $WCS_INPUTFILE $TARET_RA $TARET_DEC"
+ echo "ERROR running util/make_finding_chart_script.sh $WCS_INPUTFILE $TARET_RA $TARET_DEC"
  exit 1
 fi
 check_file_created resample_"$WCS_INPUTFILE"
@@ -279,14 +279,14 @@ INPUTFILE_BASENAME=$(basename "$INPUTFILE")
 WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
 util/wcs_image_calibration.sh "$INPUTFILE"
 if [ $? -ne 0 ];then
- echo "ERRROR running util/wcs_image_calibration.sh $INPUTFILE"
+ echo "ERROR running util/wcs_image_calibration.sh $INPUTFILE"
  exit 1
 fi
 check_file_created "$WCS_INPUTFILE"
 cp -v "$WCS_INPUTFILE" "$OUTUT_DIR"/new_platesolved_FITS
 util/make_finding_chart_script.sh "$WCS_INPUTFILE" "$TARET_RA" "$TARET_DEC"
 if [ $? -ne 0 ];then
- echo "ERRROR running util/make_finding_chart_script.sh $WCS_INPUTFILE $TARET_RA $TARET_DEC"
+ echo "ERROR running util/make_finding_chart_script.sh $WCS_INPUTFILE $TARET_RA $TARET_DEC"
  exit 1
 fi
 check_file_created resample_"$WCS_INPUTFILE"
