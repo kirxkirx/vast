@@ -1,4 +1,7 @@
 	:vast-1.0rc88
+	* Added 'util/TT2UTC' tool (alongside the existing 'util/UTC2TT') to convert JD(TT) back to JD(UTC).
+	The conversion tools work both with individual JDs supplied as a command line argument as well as 
+	lightcurve files. The new TT to UTC may not work perfectly around the time leap seconds are introduced.
 	* Pressing 'F' keyboard key ("Fast ID") in the lightcurve viewer './lc' will start fast known variable star
 	identification script 'util/identify_justname.sh' that will return only the name of the known variable.
 	The script will print no name if it could not recognize the object as a known variable star.

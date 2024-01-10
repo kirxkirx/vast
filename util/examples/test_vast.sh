@@ -21264,6 +21264,18 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_UTC2TT01"
 fi
+util/TT2UTC 2451545.00000 2>&1 | grep --quiet 'JD(UTC)= 2451544.99926'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_TT2UTC01"
+fi
+# Actually that is suposed to be 2000 January 1, 11:58:55.816 UTC, but we don't have better than one second accuracy
+util/get_image_date $(util/TT2UTC 2451545.00000 2>&1 | grep 'JD(UTC)=' | awk '{print $2}') 2>&1 | grep '2000-01-01 11:58:56 (UT)'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_TT2UTC01"
+fi
+
 
 #########
 
