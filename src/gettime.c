@@ -259,9 +259,10 @@ int Kourovka_SBG_date_hack( char *fitsfilename, char *DATEOBS, int *date_parsed,
  return 0;
 }
 
-double convert_jdUT_to_jdTT( double jdUT, int *timesys ) {
+double get_TTminusUTC_in_days( double jdUT, int *output_timesys ) {
  FILE *tai_utc_dat;
- double jdTT;
+ //double jdTT;
+ double TTminusUTC_days;
  double *jd_leap_second;
  jd_leap_second= malloc( MAX_NUMBER_OF_LEAP_SECONDS * sizeof( double ) );
  if ( jd_leap_second == NULL ) {
@@ -294,10 +295,17 @@ double convert_jdUT_to_jdTT( double jdUT, int *timesys ) {
  }
 
  /*
+ 
    Read the file with leap seconds lib/tai-utc.dat
    up-to-date version of this file is available at
-   http://maia.usno.navy.mil/ser7/tai-utc.dat
+   https://maia.usno.navy.mil/ser7/tai-utc.dat
+   
+   "Clearly, the JD where the discontinuity in UTC occurs is in UTC. 
+   (If it were in TAI instead, the JD epoch would not correspond to midnight exactly.)"
+   according to https://accserv.lepp.cornell.edu/svn/packages/plplot/lib/qsastime/README.tai-utc
+      
  */
+
  tai_utc_dat= fopen( "lib/tai-utc.dat", "r" );
  if ( NULL == tai_utc_dat ) {
   fprintf( stderr, "ERROR: can't open file lib/tai-utc.dat\n" );
@@ -341,23 +349,51 @@ double convert_jdUT_to_jdTT( double jdUT, int *timesys ) {
  }
 
  // Apply the leap seconds correction
- jdTT= jdUT + ( 32.184 + tai_utc ) / 86400; // TT = TAI + 32.184
-                                            // TAI = UTC + leap_seconds
+// jdTT= jdUT + ( 32.184 + tai_utc ) / 86400; // TT = TAI + 32.184
+//                                            // TAI = UTC + leap_seconds
+   TTminusUTC_days= ( 32.184 + tai_utc ) / 86400;
 
  // fprintf(stderr,"DEBUG: TT-UTC=%.3lf \n",(32.184+tai_utc) );
 
  /// Set marker that time system was changed
- ( *timesys )= 2; // TT
+ ( *output_timesys )= 2; // TT
 
  free( jd_leap_second );
  free( TAI_minus_UTC );
  free( MJD0 );
  free( leap_second_rate );
 
- return jdTT;
+ return TTminusUTC_days;
+// return jdTT;
 }
 
-/* We can't accept all these date writing options. but we'll try to handle some
+double convert_jdUT_to_jdTT( double jdUT, int *output_timesys ) {
+ return jdUT + get_TTminusUTC_in_days( jdUT, output_timesys );
+}
+
+double convert_jdTT_to_jdUT( double jdTT, int *output_timesys ) {
+ double jdUT;
+ double TTminusUTC_days;
+ int placeholder_int_timesys;
+ 
+ TTminusUTC_days= 69.184 / 86400; // initial guess
+ 
+ jdUT= jdTT - TTminusUTC_days ; // get approximate jdUT using guessed TTminusUTC_days
+ 
+ TTminusUTC_days= get_TTminusUTC_in_days( jdUT, &placeholder_int_timesys );
+ jdUT= jdTT - TTminusUTC_days ; // get a better value of TTminusUTC_days 
+ // the above will not work well around the time leap second occurs
+ // try to improve things with another iteration
+ TTminusUTC_days= get_TTminusUTC_in_days( jdUT, &placeholder_int_timesys );
+ jdUT= jdTT - TTminusUTC_days ; // get a better value of TTminusUTC_days 
+ 
+ (*output_timesys)= 1; // force-set time system to UT
+ return jdUT;
+}
+
+
+/* 
+We can't accept all these date writing options. but we'll try to handle some
 1999-09-01 58
 1999-09-1  58
 1999-9-01  57

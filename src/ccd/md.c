@@ -118,7 +118,7 @@ int main( int argc, char *argv[] ) {
   fprintf( stderr, "Wrong number of arguments... :(\n  Usage: %s image.fit flat.fit result.fit\n", argv[0] );
   return 1;
  }
- fprintf( stderr, "MegaDivider v6\n" );
+ fprintf( stderr, "MegaDivider v7\n" );
 
  // Reading file
  fits_open_file( &fptr, argv[1], 0, &status );
@@ -286,7 +286,11 @@ int main( int argc, char *argv[] ) {
  // fits_write_key(fptr,TDOUBLE,"BZERO",&bzero," ",&status);
  fits_delete_key( fptr, "BSCALE", &status );
  fits_write_history( fptr, "Flat fielding:", &status );
+ fits_report_error( stderr, status ); // print out any error messages
+ status= 0;                           // just in case
  fits_write_history( fptr, argv[1], &status );
+ fits_report_error( stderr, status ); // print out any error messages
+ status= 0;                           // just in case
  fits_write_history( fptr, argv[2], &status );
  fits_report_error( stderr, status ); // print out any error messages
  status= 0;                           // just in case

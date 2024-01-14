@@ -1503,7 +1503,8 @@ int main( int argc, char **argv ) {
    // TODO: make sure lightcurvefilename exist
    //
    start_pokaz_script= 0; // don't do it again unless 'P' will be pressed again
-   sprintf( pokaz_start, "%s/pokaz_winefk.sh %s ", path_to_vast_string, lightcurvefilename );
+   // path_to_vast_string always ends with '/'
+   sprintf( pokaz_start, "%spokaz_winefk.sh %s ", path_to_vast_string, lightcurvefilename );
    // fork before system() so the parent process is not blocked
    if ( 0 == fork() ) {
     if ( 0 != system( pokaz_start ) ) {
@@ -1520,7 +1521,8 @@ int main( int argc, char **argv ) {
    // TODO: make sure lightcurvefilename exist
    //
    start_pokaz_script= 0; // don't do it again unless 'L' will be pressed again
-   sprintf( pokaz_start, "%s/pokaz_laflerkinman.sh %s ", path_to_vast_string, lightcurvefilename );
+   // path_to_vast_string always ends with '/'
+   sprintf( pokaz_start, "%spokaz_laflerkinman.sh %s ", path_to_vast_string, lightcurvefilename );
    // fork before system() so the parent process is not blocked
    if ( 0 == fork() ) {
     if ( 0 != system( pokaz_start ) ) {
@@ -1535,7 +1537,8 @@ int main( int argc, char **argv ) {
   }
   if ( start_pokaz_script == 3 ) {
    start_pokaz_script= 0; // don't do it again unless 'C' will be pressed again
-   sprintf( pokaz_start, "%s/lib/test/experimental_web_classifier.sh %s ", path_to_vast_string, lightcurvefilename );
+   // path_to_vast_string always ends with '/'
+   sprintf( pokaz_start, "%slib/test/experimental_web_classifier.sh %s ", path_to_vast_string, lightcurvefilename );
    // fork before system() so the parent process is not blocked
    if ( 0 == fork() ) {
     if ( 0 != system( pokaz_start ) ) {
@@ -1659,12 +1662,31 @@ int main( int argc, char **argv ) {
    xw_ps= 2; // save picture to .png file
 
   if ( curC == 'U' || curC == 'u' ) { // start util/identify.sh
-   sprintf( strmusor, "%s/util/identify.sh %s", path_to_vast_string, lightcurvefilename );
+   // path_to_vast_string always ends with '/'
+   sprintf( strmusor, "%sutil/identify.sh %s", path_to_vast_string, lightcurvefilename );
    fprintf( stderr, "%s\n", strmusor );
    // fork before system() so the parent process is not blocked
    if ( 0 == fork() ) {
     if ( 0 != system( strmusor ) ) {
      fprintf( stderr, "ERROR in %s", strmusor );
+    }
+    exit( EXIT_SUCCESS );
+   } else {
+    waitpid( -1, &status, WNOHANG );
+   }
+  }
+
+
+  if ( curC == 'F' || curC == 'f' ) { // start identify_justname.sh
+   // path_to_vast_string always ends with '/'
+   sprintf( strmusor, "%sutil/identify_justname.sh %s", path_to_vast_string, lightcurvefilename );
+   fprintf( stderr, "%s\n", strmusor );
+   // fork before system() so the parent process is not blocked
+   if ( 0 == fork() ) {
+    if ( 0 != system( strmusor ) ) {
+     fprintf( stderr, "ERROR in %s\n", strmusor );
+    } else {
+     fprintf( stderr, "\nCOMPLETED %s\n", strmusor );
     }
     exit( EXIT_SUCCESS );
    } else {
@@ -1722,10 +1744,12 @@ int main( int argc, char **argv ) {
       fprintf( stderr, "Cannot open FITS image %s\n", filename[closest_num] );
      } else {
       if ( use_ds9_instead_of_pgfv == 1 ) {
-       sprintf( strmusor, "%s/util/draw_stars_with_ds9.sh %s %.6f %.6f %.1f %s >/dev/null", path_to_vast_string, filename[closest_num], X[closest_num], Y[closest_num], APER[closest_num], lightcurvefilename );
+       // path_to_vast_string always ends with '/'
+       sprintf( strmusor, "%sutil/draw_stars_with_ds9.sh %s %.6f %.6f %.1f %s >/dev/null", path_to_vast_string, filename[closest_num], X[closest_num], Y[closest_num], APER[closest_num], lightcurvefilename );
       } else {
        // %.6f for the case when the input coordinates are RA/Dec, not pixel coordinates
-       sprintf( strmusor, "%s/pgfv -- %s %.6f %.6f %.1f", path_to_vast_string, filename[closest_num], X[closest_num], Y[closest_num], APER[closest_num] );
+       // path_to_vast_string always ends with '/'
+       sprintf( strmusor, "%spgfv -- %s %.6f %.6f %.1f", path_to_vast_string, filename[closest_num], X[closest_num], Y[closest_num], APER[closest_num] );
       }
       fprintf( stderr, " Starting FITS image viewer:\n%s\n", strmusor );
       // fork before system() so the parent process is not blocked

@@ -28,9 +28,9 @@ function vastrealpath {
      if [ $? -ne 0 ];then
       # Something that should work well enough in practice
       OURPWD=$PWD
-      cd "$(dirname "$1")"
+      cd "$(dirname "$1")" || exit 1
       REALPATH="$PWD/$(basename "$1")"
-      cd "$OURPWD"
+      cd "$OURPWD" || exit 1
      fi # grealpath
     fi # realpath
    fi # greadlink -f
@@ -137,7 +137,7 @@ if [ "$LAST_CHAR_OF_VAST_PATH" != "/" ];then
 fi
 export VAST_PATH
 OLDDDIR_TO_CHECK_INPUT_FILE="$PWD"
-cd "$VAST_PATH"
+cd "$VAST_PATH" || exit 1
 
 # Set the correct path to 'timeout'
 TIMEOUT_COMMAND=`"$VAST_PATH"lib/find_timeout_command.sh`
@@ -905,10 +905,7 @@ fi
    
    echo "Plate solving parameters: -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py"
    
-   #`lib/find_timeout_command.sh` 300 $CURL -F file=@out$$.xyls -F submit="Upload Image" -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
-   #echo $CURL -F file=@out$$.xyls -F submit="Upload Image" -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd
    # Note that the timeout is also enforced at the server side
-   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 $CURL -F file=@out$$.xyls -F submit="Upload Image" -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
    $TIMEOUT_COMMAND 600 $CURL -F file=@out$$.xyls -F submit="Upload Image" -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
    CURL_EXIT_CODE=$?
    cp -v out$$.xyls test.xyls

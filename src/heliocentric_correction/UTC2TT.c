@@ -15,6 +15,7 @@
 #include "../lightcurve_io.h"
 
 double convert_jdUT_to_jdTT(double jdUT, int *timesys); // defined in src/gettime.c
+double convert_jdTT_to_jdUT(double jdUT, int *timesys); // defined in src/gettime.c
 
 int main(int argc, char **argv) {
 
@@ -29,7 +30,7 @@ int main(int argc, char **argv) {
 
  int input_in_UTC_flag= 0; // if input_in_UTC_flag = 1 - assume the input JD is JD(UTC), otherwise - assume JD(TT)
  int timesys= 0;           // for convert_jdUT_to_jdTT()
- double jdTT;
+ double jdTT, jdUTC;
 
  if( 0 == strcmp(basename(argv[0]), "UTC2TT") ) {
   input_in_UTC_flag= 1;
@@ -89,6 +90,9 @@ int main(int argc, char **argv) {
     if( input_in_UTC_flag == 1 ) {
      jdTT= convert_jdUT_to_jdTT(jd, &timesys);
      jd= jdTT;
+    } else {
+     jdUTC= convert_jdTT_to_jdUT(jd, &timesys);
+     jd= jdUTC;    
     }
     //fprintf(outlightcurvefile,"%.5lf %8.5lf %.5lf %8.3lf %8.3lf %4.1lf %s\n",jd,mag,merr,x,y,app,string);
     write_lightcurve_point(outlightcurvefile, jd, mag, merr, x, y, app, string, comments_string);
@@ -100,6 +104,9 @@ int main(int argc, char **argv) {
     if( input_in_UTC_flag == 1 ) {
      jdTT= convert_jdUT_to_jdTT(jd, &timesys);
      jd= jdTT;
+    } else {
+     jdUTC= convert_jdTT_to_jdUT(jd, &timesys);
+     jd= jdUTC;    
     }
     fprintf(outlightcurvefile, "%.5lf %8.5lf %.5lf\n", jd, mag, merr);
    }
@@ -110,6 +117,9 @@ int main(int argc, char **argv) {
     if( input_in_UTC_flag == 1 ) {
      jdTT= convert_jdUT_to_jdTT(jd, &timesys);
      jd= jdTT;
+    } else {
+     jdUTC= convert_jdTT_to_jdUT(jd, &timesys);
+     jd= jdUTC;    
     }
     fprintf(outlightcurvefile, "%.5lf %8.5lf\n", jd, mag);
    }
@@ -125,8 +135,13 @@ int main(int argc, char **argv) {
    fprintf(stderr, "\nJD(UTC)= %.5lf\n", jd);
    jdTT= convert_jdUT_to_jdTT(jd, &timesys);
    jd= jdTT;
+   fprintf(stderr, "JD(TT)= %.5lf\n", jd);
+  } else {
+   fprintf(stderr, "JD(TT)= %.5lf\n", jd);
+   jdUTC= convert_jdTT_to_jdUT(jd, &timesys);
+   jd= jdUTC;  
+   fprintf(stderr, "JD(UTC)= %.5lf\n", jd);
   }
-  fprintf(stderr, "JD(TT)= %.5lf\n", jd);
   if( jd < EXPECTED_MIN_JD || jd > EXPECTED_MAX_JD ) {
    fprintf(stderr, "ERROR: JD out of expected range!\nPlease change the source code in src/hjd.c and recompile if you are sure you know what you are doing...\n");
    return 1;
