@@ -135,6 +135,9 @@ int main( int argc, char *argv[] ) {
   exit( status );
  // Reading FITS header keywords that are worth keeping
  fits_get_hdrspace( fptr, &No_of_keys, &keys_left, &status );
+ // !!!!!!!!!!! Not sure why, but this is clearly needed in order not to loose the last key !!!!!!!!!!!
+ No_of_keys++;
+ // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  key= malloc( No_of_keys * sizeof( char * ) );
  if ( key == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for FITS header\n" );

@@ -10131,6 +10131,22 @@ $GREP_RESULT"
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_TESTFIT_IS_EMPTY"
  else
+  # Check that the HISTORY headers are set up properly by the dark frame subtractor
+  util/listhead test.fit | grep --quiet 'HISTORY Dark frame subtraction:'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_no_HISTORY01"
+  fi
+  util/listhead test.fit | grep 'HISTORY' | grep --quiet 'Cyg2_2023-11-5_16-35-31_001.fts'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_no_HISTORY02"
+  fi
+  util/listhead test.fit | grep 'HISTORY' | grep --quiet 'mdark_ST-Stas_-20C_20s_2023-11-09.fit'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_no_HISTORY03"
+  fi
   # If we are still here - try flatfielding
   if [ -f f_test.fit ];then
    rm -f f_test.fit
@@ -10146,21 +10162,56 @@ $GREP_RESULT"
   elif [ ! -s f_test.fit ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_TESTFIT_IS_EMPTY"
-  fi
-  # make sure double-flatfielding is refused
-  if [ -f ff_test.fit ];then
-   rm -f ff_test.fit
-  fi
-  util/ccd/md f_test.fit "$FLAT_FIELD_FILE" ff_test.fit
-  if [ $? -eq 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_DOUBLEFLATFIELDING_EXIT_CODE"
-  fi
-  if [ -f ff_test.fit ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_DOUBLEFLATFIELDING_FILE"
-   rm -f ff_test.fit
-  fi
+  else
+   # Check that the HISTORY headers are set correctly
+   # The are the keys inserted by ms and should all still be there
+   util/listhead f_test.fit | grep --quiet 'HISTORY Dark frame subtraction:'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_no_HISTORY01"
+   fi
+   util/listhead f_test.fit | grep 'HISTORY' | grep --quiet 'Cyg2_2023-11-5_16-35-31_001.fts'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_no_HISTORY02"
+   fi
+   util/listhead f_test.fit | grep 'HISTORY' | grep --quiet 'mdark_ST-Stas_-20C_20s_2023-11-09.fit'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_no_HISTORY03"
+   fi
+   # The keys inserted by md
+   util/listhead f_test.fit | grep --quiet 'HISTORY Flat fielding:'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_no_HISTORY01"
+   fi
+   util/listhead f_test.fit | grep 'HISTORY' | grep --quiet 'test.fit'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_no_HISTORY02"
+   fi
+   util/listhead f_test.fit | grep 'HISTORY' | grep --quiet 'mff_0013_tail1_notbad.fit'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_no_HISTORY03"
+   fi
+   #
+   # make sure double-flatfielding is refused
+   if [ -f ff_test.fit ];then
+    rm -f ff_test.fit
+   fi
+   util/ccd/md f_test.fit "$FLAT_FIELD_FILE" ff_test.fit
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_DOUBLEFLATFIELDING_EXIT_CODE"
+   fi
+   if [ -f ff_test.fit ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_DOUBLEFLATFIELDING_FILE"
+    rm -f ff_test.fit
+   fi
+  fi # else if [ ! -f f_test.fit ];then
   # clean up
   if [ -f f_test.fit ];then
    rm -f f_test.fit
