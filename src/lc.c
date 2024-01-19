@@ -1676,7 +1676,6 @@ int main( int argc, char **argv ) {
    }
   }
 
-
   if ( curC == 'F' || curC == 'f' ) { // start identify_justname.sh
    // path_to_vast_string always ends with '/'
    sprintf( strmusor, "%sutil/identify_justname.sh %s", path_to_vast_string, lightcurvefilename );

@@ -372,6 +372,7 @@ get_vast_path_ends_with_slash_from_this_script_name() {
  VAST_PATH=$(remove_last_occurrence "$VAST_PATH" "util")
  VAST_PATH=$(remove_last_occurrence "$VAST_PATH" "lib")
  VAST_PATH=$(remove_last_occurrence "$VAST_PATH" "examples")
+ VAST_PATH=$(remove_last_occurrence "$VAST_PATH" "transients")
 
  # Make sure no '//' are left in the path (they look ugly)
  VAST_PATH="${VAST_PATH/'//'/'/'}"
@@ -718,10 +719,12 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    ######
    if [ -n "$MAKE_PNG_PLOTS" ];then
     if [ "$MAKE_PNG_PLOTS" == "yes" ];then
-     # image size needs to match the one set in util/transients/make_report_in_HTML.sh
-     export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-     util/fits2png $FITS_IMAGE_TO_PREVIEW &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
-     unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
+     if [ ! -f transient_report/$PREVIEW_IMAGE ];then
+      # image size needs to match the one set in util/transients/make_report_in_HTML.sh
+      export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
+      util/fits2png $FITS_IMAGE_TO_PREVIEW &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
+      unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
+     fi # if [ ! -f transient_report/$PREVIEW_IMAGE ];then
     fi
    fi
    ######
@@ -980,6 +983,29 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
   continue
  fi
  ################################
+
+ if [ -n "$CALIBRATED_SECOND_EPOCH__FIRST_IMAGE" ] && [ -n "$CALIBRATED_SECOND_EPOCH__SECOND_IMAGE" ];then
+  # Make image previews
+  echo "Previews of the CALIBRATED second-epoch images:<br>" >> transient_factory_test31.txt
+  for FITS_IMAGE_TO_PREVIEW in "$CALIBRATED_SECOND_EPOCH__FIRST_IMAGE" "$CALIBRATED_SECOND_EPOCH__SECOND_IMAGE" ;do
+   BASENAME_FITS_IMAGE_TO_PREVIEW=$(basename $FITS_IMAGE_TO_PREVIEW)
+   PREVIEW_IMAGE="$BASENAME_FITS_IMAGE_TO_PREVIEW"_preview.png
+   ######
+   if [ -n "$MAKE_PNG_PLOTS" ];then
+    if [ "$MAKE_PNG_PLOTS" == "yes" ];then
+     if [ ! -f transient_report/$PREVIEW_IMAGE ];then
+      # image size needs to match the one set in util/transients/make_report_in_HTML.sh
+      export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
+      util/fits2png $FITS_IMAGE_TO_PREVIEW &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
+      unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
+     fi # if [ ! -f transient_report/$PREVIEW_IMAGE ];then
+    fi
+   fi
+   ######
+   echo "<br>$BASENAME_FITS_IMAGE_TO_PREVIEW<br><img src=\"$PREVIEW_IMAGE\"><br>" >> transient_factory_test31.txt
+  done
+  echo "<br>" >> transient_factory_test31.txt
+ fi
 
  
  ###############################################

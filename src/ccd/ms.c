@@ -217,7 +217,7 @@ int main( int argc, char *argv[] ) {
  }
  // Write the FITS header
  for ( ii= 1; ii < No_of_keys; ii++ ) {
- //for ( ii= 0; ii < No_of_keys; ii++ ) {
+  // for ( ii= 0; ii < No_of_keys; ii++ ) {
   fits_write_record( fptr, key[ii], &status );
  }
 

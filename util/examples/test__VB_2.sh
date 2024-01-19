@@ -64,6 +64,7 @@ get_vast_path_ends_with_slash_from_this_script_name() {
  VAST_PATH=$(remove_last_occurrence "$VAST_PATH" "util")
  VAST_PATH=$(remove_last_occurrence "$VAST_PATH" "lib")
  VAST_PATH=$(remove_last_occurrence "$VAST_PATH" "examples")
+ VAST_PATH=$(remove_last_occurrence "$VAST_PATH" "transients")
 
  # Make sure no '//' are left in the path (they look ugly)
  VAST_PATH="${VAST_PATH/'//'/'/'}"

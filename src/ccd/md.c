@@ -122,7 +122,7 @@ int main( int argc, char *argv[] ) {
 
  // Reading file
  fits_open_file( &fptr, argv[1], 0, &status );
- fits_report_error( stderr, status ); // print out any error messages 
+ fits_report_error( stderr, status ); // print out any error messages
  if ( status != 0 )
   exit( status );
  fits_read_key( fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status );
@@ -181,12 +181,12 @@ int main( int argc, char *argv[] ) {
  fits_read_img( fptr, TUSHORT, 1, img_size, &nullval_ushort, image_array, &anynul, &status );
  fprintf( stderr, "Reading image %s %ld %ld  %d bitpix\n", argv[1], naxes[0], naxes[1], bitpix2 );
  fits_close_file( fptr, &status );
- fits_report_error( stderr, status ); // print out any error messages 
+ fits_report_error( stderr, status ); // print out any error messages
  status= 0;
 
  // readf the dark frame
  fits_open_file( &fptr, argv[2], 0, &status );
- fits_report_error( stderr, status ); // print out any error messages 
+ fits_report_error( stderr, status ); // print out any error messages
  if ( status != 0 ) {
   exit( status );
  }
@@ -255,7 +255,7 @@ int main( int argc, char *argv[] ) {
  free( image_array );
  free( flat_array );
  free( float_flat_array );
- fits_create_file( &fptr, argv[3], &status ); // create new file 
+ fits_create_file( &fptr, argv[3], &status ); // create new file
  fits_report_error( stderr, status );         // print out any error messages
  if ( status != 0 ) {
   fprintf( stderr, "Cannot create FITS file %s\n", argv[3] );
