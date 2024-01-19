@@ -58,6 +58,9 @@ int main( int argc, char *argv[] ) {
   exit( status );
  fits_get_hdrspace( fptr, &No_of_keys, &keys_left, &status );
  fprintf( stderr, "Header: %d keys total, %d keys left\n", No_of_keys, keys_left );
+ // !!!!!!!!!!! Not sure why, but this is clearly needed in order not to loose the last key !!!!!!!!!!!
+ No_of_keys++;
+ // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  key= malloc( No_of_keys * sizeof( char * ) );
  if ( key == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for FITS header\n" );
@@ -214,6 +217,7 @@ int main( int argc, char *argv[] ) {
  }
  // Write the FITS header
  for ( ii= 1; ii < No_of_keys; ii++ ) {
+ //for ( ii= 0; ii < No_of_keys; ii++ ) {
   fits_write_record( fptr, key[ii], &status );
  }
 

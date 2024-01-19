@@ -16,20 +16,20 @@ PARAMETERS_NAME default.param   # name of the file containing catalog contents
 DETECT_TYPE     CCD             # "CCD" or "PHOTO"
 FLAG_IMAGE      flag.fits       # filename for an input FLAG-image
 
-# Usual (optimistic) setup
+# Optimistic setup (low star detection limit)
 DETECT_MINAREA  3.0             # minimum number of pixels above threshold
 DETECT_THRESH   3.0             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
-ANALYSIS_THRESH 3.0             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
+ANALYSIS_THRESH 6.0             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
 
-# More conservative
+# More conservative setup (higher star detection limit)
 #DETECT_MINAREA  3.0             # minimum number of pixels above threshold
-#DETECT_THRESH   4.0             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
-#ANALYSIS_THRESH 4.0             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
+#DETECT_THRESH   3.0             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
+#ANALYSIS_THRESH 3.0             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
 
-SATUR_LEVEL     57000.0         # level (in ADUs) at which arises saturation
+SATUR_LEVEL     60000.0         # level (in ADUs) at which arises saturation
 
-FILTER          Y               # apply filter for detection ("Y" or "N")?
-FILTER_NAME     default.conv.telephoto_lens    # name of the file containing the filter
+FILTER          N               # apply filter for detection ("Y" or "N")?
+FILTER_NAME     default.conv    # name of the file containing the filter
  
 DEBLEND_NTHRESH 32              # Number of deblending sub-thresholds
 DEBLEND_MINCONT 0.005           # Minimum contrast parameter for deblending
@@ -48,7 +48,7 @@ PHOT_AUTOPARAMS 2.5, 3.5        # MAG_AUTO parameters: <Kron_fact>,<min_radius>
  
 MAG_ZEROPOINT   0.0             # magnitude zero-point
 MAG_GAMMA       4.0             # gamma of emulsion (for photographic scans)
-GAIN            0.83            # detector gain in e-/ADU
+GAIN            5.0             # detector gain in e-/ADU
 PIXEL_SCALE     1.0             # size of pixel in arcsec (0=use FITS WCS info)
  
 #------------------------- Star/Galaxy Separation ----------------------------
@@ -58,8 +58,8 @@ STARNNW_NAME    default.nnw     # Neural-Network_Weight table filename
  
 #------------------------------ Background -----------------------------------
  
-BACK_SIZE       16              # Background mesh: <size> or <width>,<height>
-BACK_FILTERSIZE 5               # Background filter: <size> or <width>,<height>
+BACK_SIZE       32              # Background mesh: <size> or <width>,<height>
+BACK_FILTERSIZE 1               # Background filter: <size> or <width>,<height>
  
 BACKPHOTO_TYPE  LOCAL           # can be "GLOBAL" or "LOCAL"
  
@@ -75,11 +75,7 @@ CHECKIMAGE_NAME check.fits      # Filename for the check-image
  
 MEMORY_OBJSTACK 50000           # number of objects in stack
 MEMORY_PIXSTACK 3000000         # number of pixels in stack
-# MEMORY_BUFSIZE has to be increased as some OK stars get marked with flag
-# 16 	at least one photometric aperture is incomplete or corrupted (hitting buffer or memory limits)
-# Test case: V6463 Sgr in the dataset NMW_Sgr7_NovaSgr21N1_test
-#MEMORY_BUFSIZE  1024            # number of lines in buffer
-MEMORY_BUFSIZE  2048            # number of lines in buffer
+MEMORY_BUFSIZE  1024            # number of lines in buffer
  
 #----------------------------- Miscellaneous ---------------------------------
  
@@ -87,4 +83,4 @@ VERBOSE_TYPE    QUIET            # can be "QUIET", "NORMAL" or "FULL"
 
 #------------------------------ Experimental ---------------------------------
 
-WEIGHT_TYPE BACKGROUND
+#WEIGHT_TYPE BACKGROUND
