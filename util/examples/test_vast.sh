@@ -21561,7 +21561,8 @@ fi
 if [ -f wwwtest.png ];then
  rm -f wwwtest.png
 fi
-curl  --insecure --connect-timeout 10 --retry 1 --max-time 300  --silent 'http://scan.sai.msu.ru/cgi-bin/pa/sky_archive?ra=02%3A34%3A18.77&dec=%2B63%3A12%3A43.0&r=256' | grep -A500 'Sky image archive search results' | grep 'crop_SCA255N__05_-1.fits.png' > wwwtest.tmp
+# That's really slow now - timeouts in 300 sec
+curl  --insecure --connect-timeout 10 --retry 1 --max-time 900  --silent 'http://scan.sai.msu.ru/cgi-bin/pa/sky_archive?ra=02%3A34%3A18.77&dec=%2B63%3A12%3A43.0&r=256' | grep -A500 'Sky image archive search results' | grep 'crop_SCA255N__05_-1.fits.png' > wwwtest.tmp
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_001"
