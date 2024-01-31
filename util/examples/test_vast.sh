@@ -511,41 +511,27 @@ echo "Syntax-check VaST shell scripts " 1>&2
 echo -n "Syntax-check VaST shell scripts: " >> vast_test_report.txt 
 
 # First, use BASH itself to run the check
-for i in lib/*sh ;do /usr/bin/env bash -n $i ;done
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SYNTAX_CHECK_FAILED_LIB"  
-fi
-for i in util/*sh ;do /usr/bin/env bash -n $i ;done
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SYNTAX_CHECK_FAILED_UTIL"  
-fi
-for i in util/transients/*sh ;do /usr/bin/env bash -n $i ;done
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SYNTAX_CHECK_FAILED_UTIL_TRANSIENTS"  
-fi
+for BASH_SCRIPT_TO_CHECK in lib/*.sh util/*.sh util/transients/*.sh ;do 
+ /usr/bin/env bash -n $BASH_SCRIPT_TO_CHECK 
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SYNTAX_CHECK_FAILED_$BASH_SCRIPT_TO_CHECK"  
+ fi
+done
 
-# Second, if shellcheck is installed - use it
-command -v shellcheck &> /dev/null
-if [ $? -eq 0 ];then
-for i in lib/*sh ;do shellcheck --severity=error $i ;done
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SHELLCHECK_FAILED_LIB"  
- fi
- for i in util/*sh ;do shellcheck --severity=error $i ;done
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SHELLCHECK_FAILED_UTIL"  
- fi
- for i in util/transients/*sh ;do shellcheck --severity=error $i ;done
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SHELLCHECK_FAILED_UTIL_TRANSIENTS"  
- fi 
-fi
+if [ $TEST_PASSED -eq 1 ];then
+ # Second, if shellcheck is installed - use it
+ command -v shellcheck &> /dev/null
+ if [ $? -eq 0 ];then
+  for BASH_SCRIPT_TO_CHECK in lib/*.sh util/*.sh util/transients/*.sh ;do 
+   shellcheck --severity=error $BASH_SCRIPT_TO_CHECK
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SHELLCHECK_FAILED_$BASH_SCRIPT_TO_CHECK"  
+   fi
+  done
+ fi # if [ $? -eq 0 ];then -- if shellcheck is installed
+fi # if [ $TEST_PASSED -eq 1 ];then -- do shellcheck only if bash is fine with the syntax
 
 
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
