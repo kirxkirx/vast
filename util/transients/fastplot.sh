@@ -113,8 +113,10 @@ VAST_DIR="$VAST_PATH"
 # check if all the needed programs are installed
 for TESTED_PROGRAM in convert montage swarp ;do
  if ! command -v $TESTED_PROGRAM &>/dev/null ;then
-  echo "Cannot find $TESTED_PROGRAM
- Please install ImageMagick"
+  echo "Cannot find $TESTED_PROGRAM"
+  if [ "$TESTED_PROGRAM" = "convert" ] || [ "$TESTED_PROGRAM" = "montage" ] ;then
+   echo "Please install ImageMagick ($TESTED_PROGRAM is a part of it)"
+  fi
   exit 1
  fi
 done
