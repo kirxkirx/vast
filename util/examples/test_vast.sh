@@ -21671,20 +21671,20 @@ fi
 # Scan SAI MSU vast-latest.tar.bz2 Fetch Test
 
 # Fetch and parse HTML to find the redirect URL
-REDIRECT_URL=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://scan.sai.msu.ru/' | grep -o 'meta http-equiv="Refresh" content="0; url=[^"]*' | awk -F'url=' '{print $2}')
+REDIRECT_URL=$(curl --insecure --connect-timeout 10 --retry 2 --max-time 30 --silent 'https://scan.sai.msu.ru/' | grep -o 'meta http-equiv="Refresh" content="0; url=[^"]*' | awk -F'url=' '{print $2}')
 if [ -z "$REDIRECT_URL" ]; then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_SAI_REDIRECT_URL_FETCH_FAILED"
 else
   # Fetch the redirected URL and parse it to find the file URL
-  FILE_URL=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent "https://scan.sai.msu.ru/$REDIRECT_URL" | grep 'href' | grep 'vast-latest.tar.bz2' | awk -F'href' '{print $2}' | awk -F'"' '{print $2}' | head -n1)
+  FILE_URL=$(curl --insecure --connect-timeout 10 --retry 2 --max-time 30 --silent "https://scan.sai.msu.ru/$REDIRECT_URL" | grep 'href' | grep 'vast-latest.tar.bz2' | awk -F'href' '{print $2}' | awk -F'"' '{print $2}' | head -n1)
   FILE_URL="https://scan.sai.msu.ru/$REDIRECT_URL$FILE_URL"
   if [ -z "$FILE_URL" ]; then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_SAI_FILE_URL_FETCH_FAILED"
   else
     # Download the file and verify its type
-    curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent --output vast-latest.tar.bz2 "$FILE_URL"
+    curl --insecure --connect-timeout 10 --retry 2 --max-time 120 --silent --output vast-latest.tar.bz2 "$FILE_URL"
     if [ $? -ne 0 ] || [ ! -f vast-latest.tar.bz2 ]; then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_SAI_FILE_DOWNLOAD_FAILED"
