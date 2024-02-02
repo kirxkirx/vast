@@ -7,6 +7,13 @@
 	The script will print no name if it could not recognize the object as a known variable star.
 	This is useful for quickly checking if a variable is a known one, before running a full check with
 	'U' key that starts the slower 'util/identify.sh' script.
+	* The dark frame subtraction tool 'util/ccd/ms' will check if the temperatures of the light and dark frame
+	(as recorded in SET-TEMP and CCD-TEMP FITS header keywords) are close enough to each other. This should
+	prevent the mistake of subtracting a dark frame taken at different temperature than the light frame, 
+	which would typically result in an image that is worse than the uncalibrated one.
+	* Both the dark frame subtraction tool 'util/ccd/ms' and the median stacking tool 'util/ccd/mk' 
+	will refuse to work with images that have very different SET-TEMP and CCD-TEMP values (for the same image).
+	This is typically a sign of the image being taken before the camera had the time to cool down.
 12 Dec 2023: vast-1.0rc87:
 	* Changed the deprecated VizieR vizier.u-strasbg.fr domain to vizier.cds.unistra.fr
 	VaST will now always use the CDS VizieR, and will not try to use mirrors as they fail often.

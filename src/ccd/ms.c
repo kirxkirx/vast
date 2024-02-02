@@ -6,6 +6,10 @@
 
 #include "../fitsio.h"
 
+#define FALLBACK_CCD_TEMP_VALUE 100
+#define MAX_SET_TEMP_DIFF 0.5
+#define MAX_CCD_TEMP_DIFF 2.5 // let's be generous
+
 // This function will check if a record indicates the image has already been calibrated
 int check_history_keywords( char *record ) {
  if ( strstr( record, "HISTORY Dark frame subtraction:" ) != NULL ||
@@ -37,6 +41,9 @@ int main( int argc, char *argv[] ) {
  int ii, j; // counters
 
  double tmp;
+ 
+ double set_temp_image, set_temp_dark;
+ double ccd_temp_image, ccd_temp_dark;
 
  if ( argc != 4 ) {
   fprintf( stderr, "Wrong arguments amount... :(\n  Usage: %s image.fit dark.fit result.fit\n", argv[0] );
@@ -46,16 +53,44 @@ int main( int argc, char *argv[] ) {
  fprintf( stderr, "Exploring image header: %s \n", argv[1] );
  fits_open_file( &fptr, argv[1], 0, &status );
  fits_report_error( stderr, status ); // print out any error messages
- if ( status != 0 )
+ if ( status != 0 ) {
   exit( status );
+ }
  fits_read_key( fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status );
  fits_report_error( stderr, status ); // print out any error messages
- if ( status != 0 )
+ if ( status != 0 ) {
   exit( status );
+ }
  fits_read_key( fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status );
  fits_report_error( stderr, status ); // print out any error messages
- if ( status != 0 )
+ if ( status != 0 ) {
   exit( status );
+ }
+ // Note the set temperature of the camera 
+ fits_read_key( fptr, TDOUBLE, "SET-TEMP", &set_temp_image, NULL, &status );
+ if ( status != 0 ) {
+  set_temp_image= FALLBACK_CCD_TEMP_VALUE;
+  status=0;
+ }
+ // Note the CCD temperature of the camera 
+ fits_read_key( fptr, TDOUBLE, "CCD-TEMP", &ccd_temp_image, NULL, &status );
+ if ( status != 0 ) {
+  ccd_temp_image= FALLBACK_CCD_TEMP_VALUE;
+  status=0;
+ }
+ // Check for possible mismatch between CCD-TEMP and SET-TEMP
+ if ( ccd_temp_image != FALLBACK_CCD_TEMP_VALUE && set_temp_image != FALLBACK_CCD_TEMP_VALUE ) {
+  fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_image, argv[1] );
+  fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_image, argv[1] );
+  if ( fabs(ccd_temp_image-set_temp_image) > MAX_CCD_TEMP_DIFF ) {
+   // found set temperature mismatch
+   fprintf( stderr, "ERROR: mismatch between CCD-TEMP and SET-TEMP! Looks like the the camera didn't have time to cool down.\n" );
+   fits_close_file( fptr, &status );
+   exit( EXIT_FAILURE );
+  }
+ }
+ //
+ //
  fits_get_hdrspace( fptr, &No_of_keys, &keys_left, &status );
  fprintf( stderr, "Header: %d keys total, %d keys left\n", No_of_keys, keys_left );
  // !!!!!!!!!!! Not sure why, but this is clearly needed in order not to loose the last key !!!!!!!!!!!
@@ -91,10 +126,12 @@ int main( int argc, char *argv[] ) {
 
   status= 0; // continue on any errors at this stage
  }
+ 
  fits_get_img_type( fptr, &bitpix2, &status );
  fits_report_error( stderr, status ); // print out any error messages
- if ( status != 0 )
+ if ( status != 0 ) {
   exit( status );
+ }
 
  fprintf( stderr, "Allocating memory for image, dark and result arrays...\n" );
  long img_size= naxes[0] * naxes[1];
@@ -134,22 +171,83 @@ int main( int argc, char *argv[] ) {
  fits_open_file( &fptr, argv[2], 0, &status );
  fits_report_error( stderr, status ); // print out any error messages
  if ( status != 0 ) {
+  fprintf( stderr, "ERROR: opening dark frame\n" );
+  free( image_array );
+  free( dark_array );
+  free( result_image_array );
+  fits_close_file( fptr, &status );
   exit( status );
  }
  fits_read_key( fptr, TLONG, "NAXIS1", &testX, NULL, &status );
  fits_report_error( stderr, status ); // print out any error messages
  if ( status != 0 ) {
+  fprintf( stderr, "ERROR: getting NAXIS1\n" );
+  free( image_array );
+  free( dark_array );
+  free( result_image_array );
+  fits_close_file( fptr, &status );
   exit( status );
  }
  fits_read_key( fptr, TLONG, "NAXIS2", &testY, NULL, &status );
  fits_report_error( stderr, status ); // print out any error messages
  if ( status != 0 ) {
+  fprintf( stderr, "ERROR: getting NAXIS2\n" );
+  free( image_array );
+  free( dark_array );
+  free( result_image_array );
+  fits_close_file( fptr, &status );
   exit( status );
  }
  if ( testX != naxes[0] || testY != naxes[1] ) {
-  fprintf( stderr, "Image frame and dark frame must have same dimensions!\n" );
+  fprintf( stderr, "ERROR: Image frame and dark frame must have same dimensions!\n" );
+  free( image_array );
+  free( dark_array );
+  free( result_image_array );
+  fits_close_file( fptr, &status );
   exit( EXIT_FAILURE );
  }
+ // Note the set temperature of the camera 
+ fits_read_key( fptr, TDOUBLE, "SET-TEMP", &set_temp_dark, NULL, &status );
+ if ( status != 0 ) {
+  set_temp_dark= FALLBACK_CCD_TEMP_VALUE;
+  status=0;
+ }
+ // Check the temperature match between the light and dark frames
+ if ( set_temp_image != FALLBACK_CCD_TEMP_VALUE && set_temp_dark != FALLBACK_CCD_TEMP_VALUE ) {
+  fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_image, argv[1] );
+  fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_dark, argv[2] );
+  if ( fabs(set_temp_image-set_temp_dark) > MAX_SET_TEMP_DIFF ) {
+   // found set temperature mismatch
+   fprintf( stderr, "ERROR: temperature mismatch between the light and dark images!\n" );
+   free( image_array );
+   free( dark_array );
+   free( result_image_array );
+   fits_close_file( fptr, &status );
+   exit( EXIT_FAILURE );
+  }
+ }
+ //
+ // Note the ccd temperature of the camera 
+ fits_read_key( fptr, TDOUBLE, "CCD-TEMP", &ccd_temp_dark, NULL, &status );
+ if ( status != 0 ) {
+  ccd_temp_dark= FALLBACK_CCD_TEMP_VALUE;
+  status=0;
+ }
+ // Check the temperature match between the light and dark frames
+ if ( ccd_temp_image != FALLBACK_CCD_TEMP_VALUE && ccd_temp_dark != FALLBACK_CCD_TEMP_VALUE ) {
+  fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_image, argv[1] );
+  fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_dark, argv[2] );
+  if ( fabs(ccd_temp_image-ccd_temp_dark) > MAX_CCD_TEMP_DIFF ) {
+   // found set temperature mismatch
+   fprintf( stderr, "ERROR: temperature mismatch between the light and dark images!\n" );
+   free( image_array );
+   free( dark_array );
+   free( result_image_array );
+   fits_close_file( fptr, &status );
+   exit( EXIT_FAILURE );
+  }
+ }
+ //
  fits_get_img_type( fptr, &bitpix2, &status );
  fits_read_img( fptr, TUSHORT, 1, naxes[0] * naxes[1], &nullval, dark_array, &anynul, &status );
  fprintf( stderr, "Reading dark frame %s %ld %ld  %d bitpix\n", argv[2], testX, testY, bitpix2 );
@@ -157,20 +255,24 @@ int main( int argc, char *argv[] ) {
  fits_report_error( stderr, status ); // print out any error messages
  status= 0;
  for ( i= 0; i < naxes[0] * naxes[1]; i++ ) {
-  /* Try to avoid messing up overscan region */
+  // Try to avoid messing up overscan region
+  // but is it actually safe for the rest of the image?
   if ( dark_array[i] < image_array[i] ) {
    tmp= (double)image_array[i] - (double)dark_array[i];
   } else {
    tmp= (double)dark_array[i] - (double)image_array[i];
   }
   // the output image will be of 'unsigned short' type, so force the pixel values to be in that range
-  if ( tmp <= 0.0 )
+  if ( tmp <= 0.0 ) {
    tmp= 1.0; // we want to avoid 0 pixels in order not to confuse the VaST flag image creator
-  if ( tmp > 65534.0 )
+  }
+  if ( tmp > 65534.0 ) {
    tmp= 65534.5;
+  }
   // Preserve saturated pixels
-  if ( image_array[i] == 65535 )
+  if ( image_array[i] == 65535 ) {
    tmp= 65534.5;
+  }
   //
   result_image_array[i]= (unsigned short)( tmp + 0.5 );
   // if ( result_image_array[i]>65000 )

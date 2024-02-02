@@ -10,6 +10,9 @@
 
 #include "../vast_limits.h"
 
+#define FALLBACK_CCD_TEMP_VALUE 100
+#define MAX_CCD_TEMP_DIFF 2.5
+
 char *beztochki( char * );
 
 int main( int argc, char *argv[] ) {
@@ -33,6 +36,9 @@ int main( int argc, char *argv[] ) {
  int bitpix2;
  int file_counter;
  int good_file_counter;
+ 
+ double set_temp_image,ccd_temp_image;
+ 
  // These variables are needed to keep FITS header keys
  char **key;
  int No_of_keys;
@@ -41,10 +47,10 @@ int main( int argc, char *argv[] ) {
  long bzero= 0;
  char bzero_comment[FLEN_CARD];
  int bzero_key_found= 0;
-
+ 
  FILE *filedescriptor_for_opening_test;
 
- fprintf( stderr, "Median combiner v2.3\n\n" );
+ fprintf( stderr, "Median combiner v2.4\n\n" );
  fprintf( stderr, "Combining %d files\n", argc - 1 );
  if ( argc < 3 ) {
   fprintf( stderr, "Not enough arguments...\n  Usage: %s flat01.fit flat02.fit flat03.fit ...\n", argv[0] );
@@ -55,6 +61,30 @@ int main( int argc, char *argv[] ) {
  fits_open_file( &fptr, argv[1], 0, &status );
  fits_read_key( fptr, TLONG, "NAXIS1", &naxes_ref[0], NULL, &status );
  fits_read_key( fptr, TLONG, "NAXIS2", &naxes_ref[1], NULL, &status );
+ // Note the set temperature of the camera 
+ fits_read_key( fptr, TDOUBLE, "SET-TEMP", &set_temp_image, NULL, &status );
+ if ( status != 0 ) {
+  set_temp_image= FALLBACK_CCD_TEMP_VALUE;
+  status=0;
+ }
+ // Note the CCD temperature of the camera 
+ fits_read_key( fptr, TDOUBLE, "CCD-TEMP", &ccd_temp_image, NULL, &status );
+ if ( status != 0 ) {
+  ccd_temp_image= FALLBACK_CCD_TEMP_VALUE;
+  status=0;
+ }
+ // Check for possible mismatch between CCD-TEMP and SET-TEMP
+ if ( ccd_temp_image != FALLBACK_CCD_TEMP_VALUE && set_temp_image != FALLBACK_CCD_TEMP_VALUE ) {
+  fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_image, argv[1] );
+  fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_image, argv[1] );
+  if ( fabs(ccd_temp_image-set_temp_image) > MAX_CCD_TEMP_DIFF ) {
+   // found set temperature mismatch
+   fprintf( stderr, "ERROR: mismatch between CCD-TEMP and SET-TEMP! Looks like the the camera didn't have time to cool down.\n" );
+   fits_close_file( fptr, &status );
+   exit( EXIT_FAILURE );
+  }
+ }
+ //
  fits_get_hdrspace( fptr, &No_of_keys, &keys_left, &status );
  // !!!!!!!!!!! Not sure why, but this is clearly needed in order not to loose the last key !!!!!!!!!!!
  No_of_keys++;
@@ -109,6 +139,30 @@ int main( int argc, char *argv[] ) {
    fprintf( stderr, "ERROR: image size mismatch %ldx%ld for %s vs. %ldx%ld for %s\n", naxes[0], naxes[1], argv[file_counter], naxes_ref[0], naxes_ref[1], argv[1] );
    exit( EXIT_FAILURE );
   }
+  // Note the set temperature of the camera 
+  fits_read_key( fptr, TDOUBLE, "SET-TEMP", &set_temp_image, NULL, &status );
+  if ( status != 0 ) {
+   set_temp_image= FALLBACK_CCD_TEMP_VALUE;
+   status=0;
+  }
+  // Note the CCD temperature of the camera 
+  fits_read_key( fptr, TDOUBLE, "CCD-TEMP", &ccd_temp_image, NULL, &status );
+  if ( status != 0 ) {
+   ccd_temp_image= FALLBACK_CCD_TEMP_VALUE;
+   status=0;
+  }
+  // Check for possible mismatch between CCD-TEMP and SET-TEMP
+  if ( ccd_temp_image != FALLBACK_CCD_TEMP_VALUE && set_temp_image != FALLBACK_CCD_TEMP_VALUE ) {
+   fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_image, argv[file_counter] );
+   fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_image, argv[file_counter] );
+   if ( fabs(ccd_temp_image-set_temp_image) > MAX_CCD_TEMP_DIFF ) {
+    // found set temperature mismatch
+    fprintf( stderr, "ERROR: mismatch between CCD-TEMP and SET-TEMP! Looks like the the camera didn't have time to cool down.\n" );
+    fits_close_file( fptr, &status );
+    exit( EXIT_FAILURE );
+   }
+  }
+  //
   // Allocate memory for the input images
   image_array= realloc( image_array, file_counter * sizeof( unsigned short * ) );
   image_array[file_counter - 1]= malloc( img_size * sizeof( unsigned short ) );
