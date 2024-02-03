@@ -144,7 +144,9 @@ TRANSIENT_ID=$(echo "$INPUT_TRANSIENT_URL" | awk -F'#' '{print $2}')
 
 
 # Get transient info from the results web page
-CURL_REPLY=$(curl --insecure --silent "$INPUT_TRANSIENT_URL" | grep -A5000 "printCandidateNameWithAbsLink..$TRANSIENT_ID" | awk '/<HR>/{exit} {print}')
+# some web servers may want to conver all HTML tags to lowercase
+CURL_REPLY=$(curl --insecure --silent "$INPUT_TRANSIENT_URL" | grep -A5000 "printCandidateNameWithAbsLink..$TRANSIENT_ID" | awk 'tolower($0) ~ /<hr>/{exit} {print}')
+#CURL_REPLY=$(curl --insecure --silent "$INPUT_TRANSIENT_URL" | grep -A5000 "printCandidateNameWithAbsLink..$TRANSIENT_ID" | awk '/<HR>/{exit} {print}')
 if [ -z "$CURL_REPLY" ];then
  echo "ERROR: empty CURL_REPLY"
  exit 1
@@ -158,13 +160,15 @@ if [ -z "$TARET_DEC" ];then
  exit 1
 fi
 
-THE_FOUR_IMAGE_FILES=$(echo "$CURL_REPLY" | grep './vast ' | awk -F'&&' '{print $1}' | awk -F'--nojdkeyword' '{print $2}')
+# some web servers change '&&' to '&amp;&amp;' while others don't 
+THE_FOUR_IMAGE_FILES=$(echo "$CURL_REPLY" | grep './vast ' | awk -F'&&' '{print $1}' | awk -F'&amp;&amp;' '{print $1}' | awk -F'--nojdkeyword' '{print $2}')
 if [ -z "$THE_FOUR_IMAGE_FILES" ];then
  echo "ERROR: cannot get THE_FOUR_IMAGE_FILES"
  exit 1
 fi
 N_FILE=0
 for FILE_TO_CHECK in $THE_FOUR_IMAGE_FILES ;do
+ echo "Checking $FILE_TO_CHECK"
  check_file_exists "$FILE_TO_CHECK"
  N_FILE=$[$N_FILE + 1]
 done
@@ -395,5 +399,8 @@ fi
 tar -cjf "$OUTUT_DIR".tar.bz2 "$OUTUT_DIR"
 
 ls -lhdt "$OUTUT_DIR" "$OUTUT_DIR".tar.bz2
-
+echo "###############################
+Full path to the archive file: 
+$PWD/"$OUTUT_DIR".tar.bz2
+###############################"
 
