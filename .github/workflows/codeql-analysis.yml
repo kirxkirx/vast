@@ -20,7 +20,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Check commit message
       id: check_commit
@@ -35,15 +35,15 @@ jobs:
 
     - name: Initialize CodeQL
       if: ${{ env.SKIP != 'true' }}
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
         config-file: ./.github/codeql/codeql-config.yml
 
     - name: Autobuild
       if: ${{ env.SKIP != 'true' }}
-      uses: github/codeql-action/autobuild@v2
+      uses: github/codeql-action/autobuild@v3
 
     - name: Perform CodeQL Analysis
       if: ${{ env.SKIP != 'true' }}
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3
