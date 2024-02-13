@@ -129,7 +129,7 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
   // fprintf( stderr, "DEBUG02: %lf %d %d %lf\n",in, hh2, mm2, ss2);
  }
  if ( 0.0 == search_radius_arcsec ) {
-  fprintf( stderr, "DEBUG: %.10lf %d %d %lf\n", in, hh2, mm2, ss2 );
+  //fprintf( stderr, "DEBUG: %.10lf %d %d %lf\n", in, hh2, mm2, ss2 );
   fprintf( stdout, "Average position  %02d:%02d:%05.2lf ", hh2, mm2, ss2 );
  }
 
