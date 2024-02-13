@@ -1409,5 +1409,7 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
    "$VAST_PATH"pgfv $WCS_IMAGE_NAME $X $Y
   fi
  fi
-fi
+else 
+ echo "The plate-solved (WCS-calibrated) image is saved to $WCS_IMAGE_NAME"
+fi # if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
 
