@@ -645,15 +645,20 @@ int main( int argc, char **argv ) {
   // Mark known variable stars
   for ( i= 0; i < Nstar; i++ ) {
    // cpgsci( 3 ); // green which is low contrast
-   cpgsci( 8 ); // orange
+   //cpgsci( 8 ); // orange
+   cpgsci( 13 ); // Red + Magenta 
    if ( mark_as_known_variable[i] == 1 ) {
     cpgpt1( plot_x[i], plot_y[i], 23 );
    }
   }
 
   // Mark previously viewed stars
+  //cpgscr(ci, red, green, blue);
+  cpgscr( 16, 1.0, 0.5, 0.0); // trying to make orange
+  cpgsci( 16 );
   for ( i= 0; i < Nstar; i++ ) {
-   cpgsci( 3 ); // Green
+   //cpgsci( 3 ); // Green
+   //cpgsci( 12 ); // Blue + Magenta
    if ( mark_as_viewed[i] == 1 ) {
     cpgpt1( plot_x[i], plot_y[i], 18 );
    }
