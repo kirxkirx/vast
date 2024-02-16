@@ -644,8 +644,6 @@ int main( int argc, char **argv ) {
 
   // Mark known variable stars
   for ( i= 0; i < Nstar; i++ ) {
-   // cpgsci( 3 ); // green which is low contrast
-   //cpgsci( 8 ); // orange
    cpgsci( 13 ); // Red + Magenta 
    if ( mark_as_known_variable[i] == 1 ) {
     cpgpt1( plot_x[i], plot_y[i], 23 );
@@ -653,12 +651,10 @@ int main( int argc, char **argv ) {
   }
 
   // Mark previously viewed stars
-  //cpgscr(ci, red, green, blue);
+  // Define a new color index with cpgscr(ci, red, green, blue);
   cpgscr( 16, 1.0, 0.5, 0.0); // trying to make orange
-  cpgsci( 16 );
+  cpgsci( 16 ); // set the new color index
   for ( i= 0; i < Nstar; i++ ) {
-   //cpgsci( 3 ); // Green
-   //cpgsci( 12 ); // Blue + Magenta
    if ( mark_as_viewed[i] == 1 ) {
     cpgpt1( plot_x[i], plot_y[i], 18 );
    }
@@ -675,7 +671,7 @@ int main( int argc, char **argv ) {
    }
   }
 
-  // Mark the previous viewed star
+  // Mark the star that was viewed just now with a red circle
   for ( i= 0; i < Nstar; i++ ) {
    if ( mark_as_last_viewed[i] == 1 ) {
     markX= plot_x[i];
@@ -685,7 +681,8 @@ int main( int argc, char **argv ) {
     cpgsci( 5 );
    }
   }
-
+  
+  // Ask for user input
   cpgcurs( &curX, &curY, &curC );
   if ( curC == 'X' || curC == 'x' ) {
    fprintf( stderr, "\nAre you sure you want to exit?\nIf yes, please click the right mouse button again (or press 'X')!\nOtherwise, press any key.\n" );
