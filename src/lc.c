@@ -1663,7 +1663,8 @@ int main( int argc, char **argv ) {
 
   if ( curC == 'U' || curC == 'u' ) { // start util/identify.sh
    // path_to_vast_string always ends with '/'
-   sprintf( strmusor, "%sutil/identify.sh %s", path_to_vast_string, lightcurvefilename );
+   //sprintf( strmusor, "%sutil/identify.sh %s", path_to_vast_string, lightcurvefilename );
+   sprintf( strmusor, "%sutil/identify_noninteractive.sh %s", path_to_vast_string, lightcurvefilename );
    fprintf( stderr, "%s\n", strmusor );
    // fork before system() so the parent process is not blocked
    if ( 0 == fork() ) {
