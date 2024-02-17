@@ -1279,6 +1279,7 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
    exit 1
   fi
   echo " "
+  echo "####### Catalog search for the star #######"
   echo "#########################################################################"
   echo "Star:   RA(J2000)   Dec(J2000)    X(pix)   Y(pix)   WCS_calibrated_image"
   ##################################################################################
@@ -1322,7 +1323,7 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
    echo " "
    "$VAST_PATH"util/search_databases_with_vizquery.sh `"$VAST_PATH"lib/deg2hms $RADEC` ${STARNUM//out/" "} $FIELD_OF_VIEW_ARCMIN
    ###################################
-   # If USNO-B1 identification failed, try to find this star on another image
+   # If identification failed, try to find this star on another image
    if [ $? -ne 0 ];then
     ####
     #if [ $? -ne 100 ];then
@@ -1368,6 +1369,7 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
    fi 
    ###################################
   fi
+  echo " "
   echo "#########################################################################"
   #rm -f tmp$$.cat 
  if [ "$START_NAME" = "identify.sh" ];then

@@ -177,18 +177,21 @@ else
     echo "ERROR: the specified field of view ($4 arcmin) seems too large, using the default value instead"
     FOV=1.0
    else
-    echo "Setting the field of view ($4 arcmin) specified on the command line"
+    echo "Setting the field of view ($4 arcmin) specified on the command line."
     FOV=$4
    fi
   fi
  fi
 fi
+echo "(The script will be making wild assumptions about astrometic accuracy and image depth based on FoV size.)"
 
 ###### 2MASS #####
+# We are using a fixed search radius
 R_SEARCH_ARCSEC=2.5
+echo " "
 echo "Searching 2MASS $R_SEARCH_ARCSEC\" around $RA $DEC"
-#$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=2MASS  -out.max=1 -out.add=_r -out.form=mini  -sort=_r  -c="$RA $DEC" -c.rs=$R_SEARCH_ARCSEC -out=Jmag,e_Jmag,Kmag,e_Kmag  2>/dev/null |grep -v \# | grep -v "_" | grep -v "\---" |grep -v "sec"  | while read -r R J eJ K eK REST ;do
-$TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=2MASS  -out.max=1 -out.add=_r -out.form=mini  -sort=_r  -c="$RA $DEC" -c.rs=$R_SEARCH_ARCSEC -out=Jmag,e_Jmag,Kmag,e_Kmag  2>/dev/null | grep -v -e "#" -e "_" -e "\---" -e "sec" | while read -r R J eJ K eK REST ;do
+echo "$TIMEOUTCOMMAND lib/vizquery -site=$VIZIER_SITE -mime=text -source=2MASS  -out.max=1 -out.add=_r -out.form=mini  -sort=_r  -c='$RA $DEC' -c.rs=$R_SEARCH_ARCSEC -out=2MASS,Jmag,e_Jmag,Kmag,e_Kmag"
+$TIMEOUTCOMMAND "${VAST_PATH}"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=2MASS  -out.max=1 -out.add=_r -out.form=mini  -sort=_r  -c="$RA $DEC" -c.rs=$R_SEARCH_ARCSEC -out=2MASS,Jmag,e_Jmag,Kmag,e_Kmag 2>/dev/null | grep -v -e "#" -e "_" -e "\---" -e "sec" | while read -r R TWOMASS_ID J eJ K eK REST ;do
  if [ -n "$R" ];then
   if [ -z "$J" ];then
    continue
@@ -204,10 +207,8 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source
    continue
   fi
   # Compute J-K
-  #J_K=`echo "($J)-($K)" | bc -ql | awk '{printf "%.3f",$1}'`
   J_K=$(echo "$J $K" | awk '{printf "%.3f",$1-$2}')
   if [[ $eJ =~ $re ]] && [[ $eK =~ $re ]] ; then
-   #eJ_K=`echo "sqrt($eJ*$eJ+$eK*$eK)" | bc -ql | awk '{printf "%.3f",$1}'`  
    eJ_K=$(echo "$eJ $eK" | awk '{printf "%.3f", sqrt( $1*$1 + $2*$2 ) }')
   else
    eJ_K="     "
@@ -225,50 +226,34 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source
    # 
    SECTRAL_TYPE="unrealisitic color!"
    # Wild guess
-   #TEST=`echo "$J_K > -1.0"|bc -ql`
    TEST=$(echo "$J_K>-1.0" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="Very blue!"
    fi
-   #TEST=`echo "$J_K > -0.3"|bc -ql`
    TEST=$(echo "$J_K>-0.3" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="O"
    fi
-   #TEST=`echo "$J_K > -0.230"|bc -ql`
-   #TEST=`echo "$J_K > -0.228"|bc -ql`
    TEST=$(echo "$J_K>-0.228" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="B"
    fi
-   #TEST=`echo "$J_K > 0.0"|bc -ql`
-   #TEST=`echo "$J_K > -0.0135"|bc -ql`
    TEST=$(echo "$J_K>-0.0135" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="A"
    fi
-   #TEST=`echo "$J_K > 0.16"|bc -ql`
-   #TEST=`echo "$J_K > 0.132"|bc -ql`
-   #TEST=`echo "$J_K>0.132" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    TEST=$(echo "$J_K>0.1355" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="F"
    fi
-   #TEST=`echo "$J_K > 0.36"|bc -ql`
-   #TEST=`echo "$J_K > 0.3215"|bc -ql`
    TEST=$(echo "$J_K>0.3215" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="G"
    fi
-   #TEST=`echo "$J_K > 0.53"|bc -ql`
-   #TEST=`echo "$J_K > 0.465"|bc -ql`
-   #TEST=`echo "$J_K>0.465" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    TEST=$(echo "$J_K>0.46450" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="K"
    fi
-   #TEST=`echo "$J_K > 0.86"|bc -ql`
-   #TEST=`echo "$J_K > 0.814"|bc -ql`
    TEST=$(echo "$J_K>0.814" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="M"
@@ -277,13 +262,10 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="Very red! L if it's a dwarf"
    fi
-   #TEST=`echo "$J_K > 1.5"|bc -ql`
-   #TEST=`echo "$J_K>1.5" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
    TEST=$(echo "$J_K>1.77" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="Very red!"
    fi
-   #TEST=`echo "$J_K > 4.0"|bc -ql`
    TEST=$(echo "$J_K>4.0" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
    if [ $TEST -eq 1 ];then
     SECTRAL_TYPE="unrealisitic color!"
@@ -292,7 +274,7 @@ $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source
    SECTRAL_TYPE="Sorry, cannot get 2MASS color"
   fi # if [ -n $J_K ];then
   # Print results
-  echo "r=$R\" J = $J +/-$eJ  Ks = $K +/-$eK  J-Ks =  $J_K +/-$eJ_K  ($SECTRAL_TYPE)"
+  echo "r=$R\"  2MASS J$TWOMASS_ID  J = $J +/-$eJ  Ks = $K +/-$eK  J-Ks =  $J_K +/-$eJ_K  ($SECTRAL_TYPE)"
   #echo "Spectral type is according to Bessell & Brett (1988, PASP, 100, 1134) *assuming zero extinction*."
   echo "Spectral type is according to the table
 'A Modern Mean Dwarf Stellar Color and Effective Temperature Sequence'
@@ -310,76 +292,75 @@ if [ -f wget-log ];then
  rm -f wget-log
 fi
 
-echo "Image field of view: $FOV'  (making assumptions about astrometic accuracy and image depth based on FoV size)"
+#echo "Image field of view: $FOV'  (making assumptions about astrometic accuracy and image depth based on FoV size)"
 
 ###### USNO-B1 #####
-# by default we don't have an ID
-if [ -f search_databases_with_vizquery_USNOB_ID_OK.tmp ];then
- rm -f search_databases_with_vizquery_USNOB_ID_OK.tmp
-fi
-####
-R_SEARCH_ARCSEC=$(echo "$FOV" | awk '{printf "%.1f",3.0*($1/60)}')
-B2MAG_RANGE="B2mag=1.0..12.5"
-TEST=$(echo "$FOV<400.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
-if [ $TEST -eq 1 ];then
- B2MAG_RANGE="B2mag=1.0..15.5"
-fi
-TEST=$(echo "$FOV<240.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
-if [ $TEST -eq 1 ];then
- B2MAG_RANGE="B2mag=1.0..16.5"
-fi
-TEST=$(echo "$FOV<120.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
-if [ $TEST -eq 1 ];then
- R_SEARCH_ARCSEC=3.0
- B2MAG_RANGE="B2mag=1.0..17.5"
-fi
-TEST=$(echo "$FOV<60.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
-if [ $TEST -eq 1 ];then
- R_SEARCH_ARCSEC=3.0
- B2MAG_RANGE="B2mag=1.0..18.5"
-fi
-TEST=$(echo "$FOV<30.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
-if [ $TEST -eq 1 ];then
- R_SEARCH_ARCSEC=1.5
- B2MAG_RANGE="B2mag=1.0..20.5"
-fi
-####
-#echo "#### DEBUG R_SEARCH_ARCSEC=$R_SEARCH_ARCSEC FOV=$FOV" 1>&2
-####
-DOUBLE_R_SEARCH_ARCSEC=$(echo "$R_SEARCH_ARCSEC" | awk '{print 2*$1}')
-echo " "
-echo "Searching USNO-B1.0 for the brightest objects within $R_SEARCH_ARCSEC\" around $RA $DEC in the range of $B2MAG_RANGE"
-echo "$LONGTIMEOUTCOMMAND $VAST_PATH""lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/284 -out.max=10 -out.add=_r -out.form=mini -sort=B2mag  -c="$RA $DEC" $B2MAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=USNO-B1.0,RAJ2000,DEJ2000,B2mag,B1mag"
-$LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/284 -out.max=10 -out.add=_r -out.form=mini -sort=B2mag  -c="$RA $DEC" $B2MAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=USNO-B1.0,RAJ2000,DEJ2000,B2mag,B1mag  2>/dev/null | grep -v -e "#" -e "(" -e "_" -e "\---" -e "sec" -e "RAJ" -e "B" | while read -r R USNOB1 CATRA_DEG CATDEC_DEG B2 B1 REST ;do
- # skip stars with unknown B2mag
- if [ -z "$B2" ] ;then
-  continue
- fi
- # skip stars with unknown B1mag
- if [ -z "$B1" ] ;then
-  continue
- fi
- # skip empty lines if for whatever reason they were not caught before
- if [ -n "$R" ] ;then
-  # Skip too faint stars
-  #TEST=`echo "($B2+$B1)/2.0>18.0"|bc -ql`
-  TEST=$(echo "$B2 $B1"| awk '{if ( ($1+$2)/2.0 > 18.0 ) print 1 ;else print 0 }')
-  if [ $TEST -eq 1 ];then
-   continue
-  fi
-  GOOD_CATALOG_POSITION=$("$VAST_PATH"lib/deg2hms "$CATRA_DEG" "$CATDEC_DEG")
-  GOOD_CATALOG_POSITION_REF="(USNO-B1.0)"
-  #
-  GOOD_CATALOG_NAME_USNOB=$USNOB1
-  # mark that we have an ID
-  echo "$GOOD_CATALOG_POSITION 
-$GOOD_CATALOG_NAME_USNOB" > search_databases_with_vizquery_USNOB_ID_OK.tmp
-  echo "***************************************"
-  echo "r=$R\" $USNOB1 $GOOD_CATALOG_POSITION B2=$B2"
-  echo "***************************************"
-  break
- fi
-done
+## by default we don't have an ID
+#if [ -f search_databases_with_vizquery_USNOB_ID_OK.tmp ];then
+# rm -f search_databases_with_vizquery_USNOB_ID_OK.tmp
+#fi
+######
+#R_SEARCH_ARCSEC=$(echo "$FOV" | awk '{printf "%.1f",3.0*($1/60)}')
+#B2MAG_RANGE="B2mag=1.0..12.5"
+#TEST=$(echo "$FOV<400.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
+#if [ $TEST -eq 1 ];then
+# B2MAG_RANGE="B2mag=1.0..15.5"
+#fi
+#TEST=$(echo "$FOV<240.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
+#if [ $TEST -eq 1 ];then
+# B2MAG_RANGE="B2mag=1.0..16.5"
+#fi
+#TEST=$(echo "$FOV<120.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
+#if [ $TEST -eq 1 ];then
+# R_SEARCH_ARCSEC=3.0
+# B2MAG_RANGE="B2mag=1.0..17.5"
+#fi
+#TEST=$(echo "$FOV<60.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
+#if [ $TEST -eq 1 ];then
+# R_SEARCH_ARCSEC=3.0
+# B2MAG_RANGE="B2mag=1.0..18.5"
+#fi
+#TEST=$(echo "$FOV<30.0" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
+#if [ $TEST -eq 1 ];then
+# R_SEARCH_ARCSEC=1.5
+# B2MAG_RANGE="B2mag=1.0..20.5"
+#fi
+#####
+#####
+#DOUBLE_R_SEARCH_ARCSEC=$(echo "$R_SEARCH_ARCSEC" | awk '{print 2*$1}')
+#echo " "
+#echo "Searching USNO-B1.0 for the brightest objects within $R_SEARCH_ARCSEC\" around $RA $DEC in the range of $B2MAG_RANGE"
+#echo "$LONGTIMEOUTCOMMAND $VAST_PATH""lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/284 -out.max=10 -out.add=_r -out.form=mini -sort=B2mag  -c="$RA $DEC" $B2MAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=USNO-B1.0,RAJ2000,DEJ2000,B2mag,B1mag"
+#$LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/284 -out.max=10 -out.add=_r -out.form=mini -sort=B2mag  -c="$RA $DEC" $B2MAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=USNO-B1.0,RAJ2000,DEJ2000,B2mag,B1mag  2>/dev/null | grep -v -e "#" -e "(" -e "_" -e "\---" -e "sec" -e "RAJ" -e "B" | while read -r R USNOB1 CATRA_DEG CATDEC_DEG B2 B1 REST ;do
+# # skip stars with unknown B2mag
+# if [ -z "$B2" ] ;then
+#  continue
+# fi
+# # skip stars with unknown B1mag
+# if [ -z "$B1" ] ;then
+#  continue
+# fi
+# # skip empty lines if for whatever reason they were not caught before
+# if [ -n "$R" ] ;then
+#  # Skip too faint stars
+#  #TEST=`echo "($B2+$B1)/2.0>18.0"|bc -ql`
+#  TEST=$(echo "$B2 $B1"| awk '{if ( ($1+$2)/2.0 > 18.0 ) print 1 ;else print 0 }')
+#  if [ $TEST -eq 1 ];then
+#   continue
+#  fi
+#  GOOD_CATALOG_POSITION=$("$VAST_PATH"lib/deg2hms "$CATRA_DEG" "$CATDEC_DEG")
+#  GOOD_CATALOG_POSITION_REF="(USNO-B1.0)"
+#  #
+#  GOOD_CATALOG_NAME_USNOB=$USNOB1
+#  # mark that we have an ID
+#  echo "$GOOD_CATALOG_POSITION 
+#$GOOD_CATALOG_NAME_USNOB" > search_databases_with_vizquery_USNOB_ID_OK.tmp
+#  echo "***************************************"
+#  echo "r=$R\" $USNOB1 $GOOD_CATALOG_POSITION B2=$B2"
+#  echo "***************************************"
+#  break
+# fi
+#done
 
 
 ###### GAIA DR3 #####
@@ -417,7 +398,7 @@ fi
 DOUBLE_R_SEARCH_ARCSEC=$(echo "$R_SEARCH_ARCSEC" | awk '{print 2*$1}')
 echo " "
 echo "Searching Gaia DR3 for the brightest objects within $R_SEARCH_ARCSEC\" around $RA $DEC in the range of $GMAG_RANGE"
-echo "$LONGTIMEOUTCOMMAND $VAST_PATH""lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c='$RA $DEC' $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag"
+echo "$LONGTIMEOUTCOMMAND lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c='$RA $DEC' $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag"
 $LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c="$RA $DEC" $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag 2>/dev/null | grep -v -e "#" -e "(" -e "\---" -e "sec" -e "Gma" -e "RA_ICRS" | grep -e "NOT_AVAILABLE" -e "CONSTANT" -e "VARIABLE" | while read -r R GAIA_SOURCE GAIA_CATRA_DEG GAIA_CATDEC_DEG GMAG VARFLAG REST ;do
  # skip stars with unknown Gmag
  if [ -z "$GMAG" ] ;then
@@ -452,28 +433,28 @@ $LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -so
   echo "$GOOD_CATALOG_POSITION_GAIA 
 $GOOD_CATALOG_NAME_GAIA
 $VARFLAG" > search_databases_with_vizquery_GAIA_ID_OK.tmp
-  echo "***************************************"
+  #echo "***************************************"
   echo "r=$R\" $GAIA_SOURCE $GOOD_CATALOG_POSITION_GAIA G=$GMAG Variability_flag=$VARFLAG"
-  echo "***************************************"
+  #echo "***************************************"
   break
  fi
 done
 
 
-
-
+echo " "
+echo -n "Searching variable star catalogs... "
 
 
 # Check if we have the USNO-B1.0 ID
-if [ ! -f search_databases_with_vizquery_USNOB_ID_OK.tmp ];then
- echo "Could not match the source with USNO-B1.0 :("
-else
- GOOD_CATALOG_POSITION_USNOB=$(head -n1 search_databases_with_vizquery_USNOB_ID_OK.tmp)
- GOOD_CATALOG_POSITION="$GOOD_CATALOG_POSITION_USNOB"
- GOOD_CATALOG_NAME_USNOB=$(tail -n1 search_databases_with_vizquery_USNOB_ID_OK.tmp)
- GOOD_CATALOG_NAME="B1.0 $GOOD_CATALOG_NAME_USNOB"
- rm -f search_databases_with_vizquery_USNOB_ID_OK.tmp
-fi
+#if [ ! -f search_databases_with_vizquery_USNOB_ID_OK.tmp ];then
+# echo "Could not match the source with USNO-B1.0 :("
+#else
+# GOOD_CATALOG_POSITION_USNOB=$(head -n1 search_databases_with_vizquery_USNOB_ID_OK.tmp)
+# GOOD_CATALOG_POSITION="$GOOD_CATALOG_POSITION_USNOB"
+# GOOD_CATALOG_NAME_USNOB=$(tail -n1 search_databases_with_vizquery_USNOB_ID_OK.tmp)
+# GOOD_CATALOG_NAME="B1.0 $GOOD_CATALOG_NAME_USNOB"
+# rm -f search_databases_with_vizquery_USNOB_ID_OK.tmp
+#fi
 # Check if we have the Gaia ID
 if [ ! -f search_databases_with_vizquery_GAIA_ID_OK.tmp ];then
  echo "Could not match the source with Gaia DR3 :("
@@ -528,8 +509,8 @@ fi
 
 ###### ID with variability catalogs and write summary string #####
 KNOWN_VARIABLE=0
-echo "
-Summary string (old format):"
+#echo "
+#Summary string (old format):"
 
 # Local catalogs
 if [ $KNOWN_VARIABLE -eq 0 ];then
@@ -547,6 +528,7 @@ The script will try to download these catalogs now - it will take some time!
  fi
  ######
  ######
+ echo "local copies of VSX and ASAS-SN-V  "
  LOCAL_CATALOG_SEARCH_RESULTS=$("$VAST_PATH"lib/catalogs/check_catalogs_offline $GOOD_CATALOG_POSITION_DEG 2>/dev/null)
  if [ $? -eq 0 ];then
   # The object is found in local catalogs
@@ -570,6 +552,7 @@ fi
 
 # GCVS
 if [ $KNOWN_VARIABLE -eq 0 ];then 
+ echo "GCVS (VizieR)  "
  #GCVS_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/gcvs -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=GCVS,VarType,Period 2>/dev/null  | grep -v \# | grep -v '(' | grep -v "_" | grep -v "\---" | grep -v "GCVS" |head -n2 |tail -n 1)
  # sed -n '2p'  prints out only the second line of the filtered output.
  GCVS_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/gcvs -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=GCVS,VarType,Period 2>/dev/null  | grep -v -e "#" -e "(" -e "_" -e "\---" -e "GCVS" | sed -n '2p' )
@@ -588,6 +571,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
  fi
 fi
 if [ $KNOWN_VARIABLE -eq 0 ];then
+ echo "VSX (VizieR)  "
  #VSX_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Name,Type,Period 2>/dev/null | grep -v \# | grep -v '(' | grep -v "_" | grep -v "\---" | grep -A 1 Name | tail -n1 | sed 's:MASTER OT:MASTER_OT:g')
  VSX_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Name,Type,Period 2>/dev/null | grep -v -e "#" -e "(" -e "_" -e "\---" | sed 's:MASTER OT:MASTER_OT:g' | grep -A 1 'Name' | tail -n1)
  #echo "########$VSX_RESULT#########"
@@ -665,6 +649,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    ### Check other large variable star lists
    # OGLE Bulge LPV
    if [ $KNOWN_VARIABLE -eq 0 ];then
+    echo "OGLE Bulge LPV (VizieR)  "
     #OGLE_LPV_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AcA/63/21/catalog -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Star,Type,Per 2>/dev/null | grep -v \# | grep -v '(' | grep -v "_" | grep -v "\---" | grep -A 1 'Star' | tail -n1)
     OGLE_LPV_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AcA/63/21/catalog -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" -out=Star,Type,Per 2>/dev/null | grep -vE '(#|\(|_|---)' | grep -A 1 'Star' | tail -n1)
     if [ -n "$OGLE_LPV_RESULTS" ];then
@@ -679,6 +664,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    fi   
    # ATLAS
    if [ $KNOWN_VARIABLE -eq 0 ];then
+    echo "ATLAS (VizieR)  "
     #ATLAS_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AJ/156/241/table4 -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=ATOID,Class 2>/dev/null | grep -v \# | grep -v '(' | grep -v "_" | grep -v "\---" | grep J | tail -n1)
     ATLAS_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AJ/156/241/table4 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" -out=ATOID,Class 2>/dev/null | grep -vE '(#|\(|_|---)' | grep 'J' | tail -n1)
     if [ -n "$ATLAS_RESULTS" ];then
@@ -707,11 +693,11 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    #fi   
    # Gaia DR3 variable
    if [ $KNOWN_VARIABLE -eq 0 ];then
+    echo "Gaia DR3 variability info (VizieR)  "
     # Gaia goes deep and will surely find somethig variable within a search radius, if one goes to faint-enough magnitudes.
     # For this reason we go for a fixed small search radius.
-    #GAIA_DR3_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/358/varisum -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $1}' | grep -v \#)
-    #GAIA_DR3_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/358/varisum -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $1}' | grep -v \#)
-    GAIA_DR3_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/358/varisum -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs=3.0 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $1}' | grep -v \#)
+    #GAIA_DR3_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/358/varisum -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs=3.0 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $1}' | grep -v \#)
+    GAIA_DR3_VAR_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/358/varisum -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs=3.0 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $1}' | grep -v \#)
     if [ -n "$GAIA_DR3_VAR_RESULTS" ];then
      SUGGESTED_NAME_STRING="Gaia DR3 varaible $GAIA_DR3_VAR_RESULTS"
      SUGGESTED_TYPE_STRING=""
@@ -728,6 +714,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    #
    # Gaia DR2 large amplitude variable
    if [ $KNOWN_VARIABLE -eq 0 ];then
+    echo "Gaia DR2 large-amplitude variables (VizieR)  "
     #GAIA_DR2_LARGE_AMP_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/A+A/648/A44/tabled1 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $1}' | grep -v \#)
     #GAIA_DR2_LARGE_AMP_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/A+A/648/A44/tabled1 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $1}' | grep -v \#)
     GAIA_DR2_LARGE_AMP_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/A+A/648/A44/tabled1 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs=3.0 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $1}' | grep -v \#)
@@ -742,7 +729,8 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    #
    # Generic VizieR search for the word 'variable'
    if [ $KNOWN_VARIABLE -eq 0 ];then
-    GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -words='variable' -meta -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" 2>/dev/null | grep 'Title' | grep --ignore-case -e 'variable' -e 'variability' | grep -v 'Northern Sky Variability Survey' | sed 's:#Title\: ::g')
+    echo "Generic VizieR search for catalogs with the word 'variable' in their name (VizieR)"
+    GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -words='variable' -meta -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" 2>/dev/null | grep 'Title' | grep --ignore-case -e 'variable' -e 'variability' | grep -v -e 'Northern Sky Variability Survey' -e 'Stellar variability in Gaia DR3' | sed 's:#Title\: ::g')
     if [ -n "$GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS" ];then
      SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING may be a known variable - check VizieR  "
     fi
@@ -751,6 +739,9 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
   fi
  fi
 fi
+
+echo " " # new line for the list of searched catalogs
+
 if [ $KNOWN_VARIABLE -eq 0 ];then
  # NEW var
  #echo -n " $STAR_NAME | B1.0 $GOOD_CATALOG_NAME | $GOOD_CATALOG_POSITION | T | P | B2=$B2 "
@@ -761,6 +752,15 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
  #if [ -n "$B2" ];then
  # SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING B2=$B2 "
  #fi
+ echo -e "\033[01;31m This object is not listed in the common varaible star catalogs \033[00m"
+else
+ # Do not print 'known variable' message for dubious ATLAS variables
+ echo "$SUGGESTED_TYPE_STRING" | grep --quiet 'dubious'
+ if [ $? -ne 0 ];then
+  echo -e "\033[01;32m This is a known variable star \033[00m $SUGGESTED_NAME_STRING"
+ else
+  echo -e "\033[01;32m This is star is listed as dubious candidate variable in the ATLAS catalog \033[00m $SUGGESTED_NAME_STRING"
+ fi
 fi
 
 # Try to get a spectral type
@@ -782,15 +782,15 @@ fi
 
 
 # Print the summary string
-if [ -n "$GOOD_CATALOG_NAME_USNOB" ];then
- echo -n " $STAR_NAME | $SUGGESTED_NAME_STRING | $GOOD_CATALOG_POSITION_USNOB(USNO-B1.0) | $SUGGESTED_TYPE_STRING | $SUGGESTED_PERIOD_STRING | $SUGGESTED_COMMENT_STRING"
- # Add 2MASS color and spectral type guess as a final comment
- if [ -f 2mass.tmp ];then
-  cat 2mass.tmp
- else
-  echo " "
- fi
-fi
+#if [ -n "$GOOD_CATALOG_NAME_USNOB" ];then
+# echo -n " $STAR_NAME | $SUGGESTED_NAME_STRING | $GOOD_CATALOG_POSITION_USNOB(USNO-B1.0) | $SUGGESTED_TYPE_STRING | $SUGGESTED_PERIOD_STRING | $SUGGESTED_COMMENT_STRING"
+# # Add 2MASS color and spectral type guess as a final comment
+# if [ -f 2mass.tmp ];then
+#  cat 2mass.tmp
+# else
+#  echo " "
+# fi
+#fi
 if [ -n "$GOOD_CATALOG_NAME_GAIA" ];then
  ### Make the columns have an approximately same width ###
  while [ ${#STAR_NAME} -lt 16 ];do
@@ -812,6 +812,7 @@ if [ -n "$GOOD_CATALOG_NAME_GAIA" ];then
  
 
  #########################################################
+ echo " "
  echo "New summary string:"
  #echo -n " $STAR_NAME | $SUGGESTED_NAME_STRING | $GOOD_CATALOG_POSITION_GAIA(Gaia DR3)  | $SUGGESTED_TYPE_STRING | $SUGGESTED_PERIOD_STRING | $SUGGESTED_COMMENT_STRING"
  echo -n " $STAR_NAME | $SUGGESTED_NAME_STRING | $GOOD_CATALOG_POSITION_GAIA$GOOD_CATALOG_POSITION_REF  | $SUGGESTED_TYPE_STRING | $SUGGESTED_PERIOD_STRING | $SUGGESTED_COMMENT_STRING"
@@ -842,7 +843,8 @@ $GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS"
 #  "$VAST_PATH"util/get_gaia_lc.sh $GOOD_CATALOG_NAME_GAIA
 #  #
 # fi
-
+else
+ echo "Identification ERROR"
 fi
 
 
