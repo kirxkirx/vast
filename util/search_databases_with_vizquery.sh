@@ -528,7 +528,7 @@ The script will try to download these catalogs now - it will take some time!
  fi
  ######
  ######
- echo "local copies of VSX and ASAS-SN-V  "
+ echo -n "VSX (local copy) and ASAS-SN-V (local copy)  "
  LOCAL_CATALOG_SEARCH_RESULTS=$("$VAST_PATH"lib/catalogs/check_catalogs_offline $GOOD_CATALOG_POSITION_DEG 2>/dev/null)
  if [ $? -eq 0 ];then
   # The object is found in local catalogs
@@ -552,7 +552,7 @@ fi
 
 # GCVS
 if [ $KNOWN_VARIABLE -eq 0 ];then 
- echo "GCVS (VizieR)  "
+ echo -n "GCVS (VizieR)  "
  #GCVS_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/gcvs -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=GCVS,VarType,Period 2>/dev/null  | grep -v \# | grep -v '(' | grep -v "_" | grep -v "\---" | grep -v "GCVS" |head -n2 |tail -n 1)
  # sed -n '2p'  prints out only the second line of the filtered output.
  GCVS_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/gcvs -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=GCVS,VarType,Period 2>/dev/null  | grep -v -e "#" -e "(" -e "_" -e "\---" -e "GCVS" | sed -n '2p' )
@@ -571,7 +571,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
  fi
 fi
 if [ $KNOWN_VARIABLE -eq 0 ];then
- echo "VSX (VizieR)  "
+ echo -n "VSX (VizieR)  "
  #VSX_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Name,Type,Period 2>/dev/null | grep -v \# | grep -v '(' | grep -v "_" | grep -v "\---" | grep -A 1 Name | tail -n1 | sed 's:MASTER OT:MASTER_OT:g')
  VSX_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Name,Type,Period 2>/dev/null | grep -v -e "#" -e "(" -e "_" -e "\---" | sed 's:MASTER OT:MASTER_OT:g' | grep -A 1 'Name' | tail -n1)
  #echo "########$VSX_RESULT#########"
@@ -649,7 +649,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    ### Check other large variable star lists
    # OGLE Bulge LPV
    if [ $KNOWN_VARIABLE -eq 0 ];then
-    echo "OGLE Bulge LPV (VizieR)  "
+    echo -n "OGLE Bulge LPV (VizieR)  "
     #OGLE_LPV_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AcA/63/21/catalog -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Star,Type,Per 2>/dev/null | grep -v \# | grep -v '(' | grep -v "_" | grep -v "\---" | grep -A 1 'Star' | tail -n1)
     OGLE_LPV_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AcA/63/21/catalog -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" -out=Star,Type,Per 2>/dev/null | grep -vE '(#|\(|_|---)' | grep -A 1 'Star' | tail -n1)
     if [ -n "$OGLE_LPV_RESULTS" ];then
@@ -664,7 +664,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    fi   
    # ATLAS
    if [ $KNOWN_VARIABLE -eq 0 ];then
-    echo "ATLAS (VizieR)  "
+    echo -n "ATLAS (VizieR)  "
     #ATLAS_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AJ/156/241/table4 -out.max=10 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=ATOID,Class 2>/dev/null | grep -v \# | grep -v '(' | grep -v "_" | grep -v "\---" | grep J | tail -n1)
     ATLAS_RESULTS=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AJ/156/241/table4 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" -out=ATOID,Class 2>/dev/null | grep -vE '(#|\(|_|---)' | grep 'J' | tail -n1)
     if [ -n "$ATLAS_RESULTS" ];then
@@ -693,7 +693,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    #fi   
    # Gaia DR3 variable
    if [ $KNOWN_VARIABLE -eq 0 ];then
-    echo "Gaia DR3 variability info (VizieR)  "
+    echo -n "Gaia DR3 variability info (VizieR)  "
     # Gaia goes deep and will surely find somethig variable within a search radius, if one goes to faint-enough magnitudes.
     # For this reason we go for a fixed small search radius.
     #GAIA_DR3_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/358/varisum -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs=3.0 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $1}' | grep -v \#)
@@ -714,7 +714,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    #
    # Gaia DR2 large amplitude variable
    if [ $KNOWN_VARIABLE -eq 0 ];then
-    echo "Gaia DR2 large-amplitude variables (VizieR)  "
+    echo -n "Gaia DR2 large-amplitude variables (VizieR)  "
     #GAIA_DR2_LARGE_AMP_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/A+A/648/A44/tabled1 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | head -n1 | awk '{print $1}' | grep -v \#)
     #GAIA_DR2_LARGE_AMP_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/A+A/648/A44/tabled1 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $1}' | grep -v \#)
     GAIA_DR2_LARGE_AMP_VAR_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/A+A/648/A44/tabled1 -out.max=1 -out.form=mini  -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs=3.0 2>/dev/null | grep -B2 '#END#' | awk 'NR==1{print $1}' | grep -v \#)
@@ -729,7 +729,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
    #
    # Generic VizieR search for the word 'variable'
    if [ $KNOWN_VARIABLE -eq 0 ];then
-    echo "Generic VizieR search for catalogs with the word 'variable' in their name (VizieR)"
+    echo -n "Generic VizieR search for catalogs with the word 'variable' in their name (VizieR)"
     GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -words='variable' -meta -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" 2>/dev/null | grep 'Title' | grep --ignore-case -e 'variable' -e 'variability' | grep -v -e 'Northern Sky Variability Survey' -e 'Stellar variability in Gaia DR3' | sed 's:#Title\: ::g')
     if [ -n "$GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS" ];then
      SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING may be a known variable - check VizieR  "
@@ -755,11 +755,12 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
  echo -e "\033[01;31m This object is not listed in the common varaible star catalogs \033[00m"
 else
  # Do not print 'known variable' message for dubious ATLAS variables
- echo "$SUGGESTED_TYPE_STRING" | grep --quiet 'dubious'
- if [ $? -ne 0 ];then
-  echo -e "\033[01;32m This is a known variable star \033[00m $SUGGESTED_NAME_STRING"
- else
+ if echo "$SUGGESTED_TYPE_STRING" | grep --quiet 'dubious'; then
   echo -e "\033[01;32m This is star is listed as dubious candidate variable in the ATLAS catalog \033[00m $SUGGESTED_NAME_STRING"
+ elif echo "$SUGGESTED_NAME_STRING" | grep --quiet 'Large-amplitude variable Gaia DR2'; then
+  echo -e "\033[01;32m This is star is listed as a large-amplitude variable in Gaia DR2 catalog \033[00m $SUGGESTED_NAME_STRING"
+ else
+  echo -e "\033[01;32m This is a known variable star \033[00m $SUGGESTED_NAME_STRING"
  fi
 fi
 

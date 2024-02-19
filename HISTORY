@@ -1,4 +1,8 @@
 	:vast-1.0rc88
+	* Disable the USNO-B1.0 catalog search when identifying variable stars using the script 
+	'util/identify.sh', which can be launched from the lightcurve inspection window by 
+	pressing 'U' on the keyboard. The terminal output of the identification script 
+	has been revised to improve readability.
 	* Added 'util/TT2UTC' tool (alongside the existing 'util/UTC2TT') to convert JD(TT) back to JD(UTC).
 	The conversion tools work both with individual JDs supplied as a command line argument as well as 
 	lightcurve files. The new TT to UTC may not work perfectly around the time leap seconds are introduced.
