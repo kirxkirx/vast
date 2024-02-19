@@ -1321,7 +1321,7 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
    fi
    ###
    echo " "
-   "$VAST_PATH"util/search_databases_with_vizquery.sh `"$VAST_PATH"lib/deg2hms $RADEC` ${STARNUM//out/" "} $FIELD_OF_VIEW_ARCMIN
+   "$VAST_PATH"util/search_databases_with_vizquery.sh $("$VAST_PATH"lib/deg2hms $RADEC) ${STARNUM//out/" "} $FIELD_OF_VIEW_ARCMIN
    ###################################
    # If identification failed, try to find this star on another image
    if [ $? -ne 0 ];then
@@ -1381,7 +1381,9 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
   RADEC_HMS=`"$VAST_PATH"lib/deg2hms $RADEC`
   echo -n "rm all; get hips(CDS/P/DSS2/color) $RADEC_HMS ; load $WCS_IMAGE_NAME/; $RADEC_HMS ; zoom 5 arcmin ; get VizieR(USNO-B1) $RADEC_HMS 1'; get Simbad $RADEC_HMS 1'; get VizieR(2MASS) $RADEC_HMS 1' ; get hips(CDS/I/350/gaiaedr3) $RADEC_HMS ; get VizieR(J/AJ/156/241/table4) 18:46:37.16 -12:38:49.7 1'" > Aladin.script
   # If the star is matched with USNO-B1.0 - mark the USNO-B1.0 star in Aladin
-  if [ -f search_databases_with_vizquery_USNOB_ID_OK.tmp ];then
+  #if [ -f search_databases_with_vizquery_USNOB_ID_OK.tmp ];then
+  # search_databases_with_vizquery_USNOB_ID_OK.tmp is no longer produced by the new version of util/search_databases_with_vizquery.sh
+  if [ -f search_databases_with_vizquery_GAIA_ID_OK.tmp ];then
    echo -n " draw green circle("`cat search_databases_with_vizquery_USNOB_ID_OK.tmp`" 2.5arcsec) ;" >> Aladin.script
   fi
   echo "" >> Aladin.script

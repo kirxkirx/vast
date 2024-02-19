@@ -32,7 +32,7 @@ function vastrealpath {
 }
 
 # Function to remove the last occurrence of a directory from a path
-remove_last_occurrence() {
+function remove_last_occurrence() {
     echo "$1" | awk -F/ -v dir=$2 '{
         found = 0;
         for (i=NF; i>0; i--) {
@@ -47,7 +47,7 @@ remove_last_occurrence() {
 }
 
 # Function to get full path to vast main directory from the script name
-get_vast_path_ends_with_slash_from_this_script_name() {
+function get_vast_path_ends_with_slash_from_this_script_name() {
  VAST_PATH=$(vastrealpath $0)
  VAST_PATH=$(dirname "$VAST_PATH")
 
@@ -75,7 +75,7 @@ get_vast_path_ends_with_slash_from_this_script_name() {
 }
 
 
-function print_usage {
+function print_usage() {
  echo "
 Usage: $0 RA DEC [STAR_NAME] [FOV_arcmin]
 
@@ -83,6 +83,128 @@ Example: $0 18:38:06.47677 +39:40:05.9835
 
 "
 }
+
+# This function will search 2MASS catalog for the brightest source around the specified position
+function search_2mass_fixed_radius_reesults_to_2masstmp() {
+ ###### 2MASS #####
+ 
+ # clean up possible lefotovers from a previous run
+ if [ -f 2mass.tmp ];then
+  rm -f 2mass.tmp
+ fi
+ 
+ # check the input
+ RA=$1
+ DEC=$2
+ if [ -z "$RA" ] || [ -z "$DEC" ];then
+  echo "ERROR in $0: search coordinates are not given! :("
+  exit 1
+ fi
+ 
+ # We are using a fixed search radius based on 2MASS source density and just hope the input coordinates are good enough
+ R_SEARCH_ARCSEC=2.5
+ echo " "
+ echo "Searching 2MASS $R_SEARCH_ARCSEC\" around $RA $DEC"
+ echo "$TIMEOUTCOMMAND lib/vizquery -site=$VIZIER_SITE -mime=text -source=2MASS  -out.max=1 -out.add=_r -out.form=mini  -sort=_r  -c='$RA $DEC' -c.rs=$R_SEARCH_ARCSEC -out=2MASS,Jmag,e_Jmag,Kmag,e_Kmag"
+ $TIMEOUTCOMMAND "${VAST_PATH}"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=2MASS  -out.max=1 -out.add=_r -out.form=mini  -sort=_r  -c="$RA $DEC" -c.rs=$R_SEARCH_ARCSEC -out=2MASS,Jmag,e_Jmag,Kmag,e_Kmag 2>/dev/null | grep -v -e "#" -e "_" -e "\---" -e "sec" | while read -r R TWOMASS_ID J eJ K eK REST ;do
+  if [ -n "$R" ];then
+   if [ -z "$J" ];then
+    continue
+   fi
+   re='^[+-]?[0-9]+([.][0-9]+)?$'
+   if ! [[ $J =~ $re ]] ; then
+    continue
+   fi
+   if [ -z "$K" ];then
+    continue
+   fi
+   if ! [[ $K =~ $re ]] ; then
+    continue
+   fi
+   # Compute J-K
+   J_K=$(echo "$J $K" | awk '{printf "%.3f",$1-$2}')
+   if [[ $eJ =~ $re ]] && [[ $eK =~ $re ]] ; then
+    eJ_K=$(echo "$eJ $eK" | awk '{printf "%.3f", sqrt( $1*$1 + $2*$2 ) }')
+   else
+    eJ_K="     "
+   fi
+   if [ -n "$J_K" ];then
+    # Guess spectral type *assuming zero extinction*
+    #
+    # The old color boundaries between the spectral types were based on http://adsabs.harvard.edu/abs/1988PASP..100.1134B
+    #
+    # The new ones are from
+    # "A Modern Mean Dwarf Stellar Color and Effective Temperature Sequence"
+    # http://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt
+    # Eric Mamajek
+    # Version 2021.03.02
+    # 
+    SECTRAL_TYPE="unrealisitic color!"
+    # Wild guess
+    TEST=$(echo "$J_K>-1.0" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+    if [ $TEST -eq 1 ];then
+     SECTRAL_TYPE="Very blue!"
+    fi
+    TEST=$(echo "$J_K>-0.3" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+    if [ $TEST -eq 1 ];then
+     SECTRAL_TYPE="O"
+    fi
+    TEST=$(echo "$J_K>-0.228" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+    if [ $TEST -eq 1 ];then
+     SECTRAL_TYPE="B"
+    fi
+    TEST=$(echo "$J_K>-0.0135" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+    if [ $TEST -eq 1 ];then
+     SECTRAL_TYPE="A"
+    fi
+    TEST=$(echo "$J_K>0.1355" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+    if [ $TEST -eq 1 ];then
+     SECTRAL_TYPE="F"
+    fi
+    TEST=$(echo "$J_K>0.3215" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+    if [ $TEST -eq 1 ];then
+     SECTRAL_TYPE="G"
+    fi
+    TEST=$(echo "$J_K>0.46450" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+    if [ $TEST -eq 1 ];then
+     SECTRAL_TYPE="K"
+    fi
+    TEST=$(echo "$J_K>0.814" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+    if [ $TEST -eq 1 ];then
+     SECTRAL_TYPE="M"
+    fi
+    TEST=$(echo "$J_K>1.2575" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+    if [ $TEST -eq 1 ];then
+     SECTRAL_TYPE="Very red! L if it's a dwarf"
+    fi
+    TEST=$(echo "$J_K>1.77" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+    if [ $TEST -eq 1 ];then
+     SECTRAL_TYPE="Very red!"
+    fi
+    TEST=$(echo "$J_K>4.0" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+    if [ $TEST -eq 1 ];then
+     SECTRAL_TYPE="unrealisitic color!"
+    fi
+   else
+    SECTRAL_TYPE="Sorry, cannot get 2MASS color"
+   fi # if [ -n $J_K ];then
+   # Print results
+   echo "r=$R\"  2MASS J$TWOMASS_ID  J = $J +/-$eJ  Ks = $K +/-$eK  J-Ks =  $J_K +/-$eJ_K  ($SECTRAL_TYPE)"
+   #echo "Spectral type is according to Bessell & Brett (1988, PASP, 100, 1134) *assuming zero extinction*."
+   echo "Spectral type is according to the table
+'A Modern Mean Dwarf Stellar Color and Effective Temperature Sequence'
+http://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt
+Version 2021.03.02 by Eric Mamajek
+http://adsabs.harvard.edu/abs/2013ApJS..208....9P
+
+The guessed spectral type ($SECTRAL_TYPE) is assuming zero extinction!"
+   echo "J-Ks=$J_K+/-$eJ_K ($SECTRAL_TYPE)" > 2mass.tmp
+  fi # if [ -n "$R" ];then
+ done
+
+
+}
+
 
 if [ -z "$VAST_PATH" ];then
  VAST_PATH=$(get_vast_path_ends_with_slash_from_this_script_name "$0")
@@ -186,111 +308,12 @@ fi
 echo "(The script will be making wild assumptions about astrometic accuracy and image depth based on FoV size.)"
 
 ###### 2MASS #####
-# We are using a fixed search radius
-R_SEARCH_ARCSEC=2.5
-echo " "
-echo "Searching 2MASS $R_SEARCH_ARCSEC\" around $RA $DEC"
-echo "$TIMEOUTCOMMAND lib/vizquery -site=$VIZIER_SITE -mime=text -source=2MASS  -out.max=1 -out.add=_r -out.form=mini  -sort=_r  -c='$RA $DEC' -c.rs=$R_SEARCH_ARCSEC -out=2MASS,Jmag,e_Jmag,Kmag,e_Kmag"
-$TIMEOUTCOMMAND "${VAST_PATH}"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=2MASS  -out.max=1 -out.add=_r -out.form=mini  -sort=_r  -c="$RA $DEC" -c.rs=$R_SEARCH_ARCSEC -out=2MASS,Jmag,e_Jmag,Kmag,e_Kmag 2>/dev/null | grep -v -e "#" -e "_" -e "\---" -e "sec" | while read -r R TWOMASS_ID J eJ K eK REST ;do
- if [ -n "$R" ];then
-  if [ -z "$J" ];then
-   continue
-  fi
-  re='^[+-]?[0-9]+([.][0-9]+)?$'
-  if ! [[ $J =~ $re ]] ; then
-   continue
-  fi
-  if [ -z "$K" ];then
-   continue
-  fi
-  if ! [[ $K =~ $re ]] ; then
-   continue
-  fi
-  # Compute J-K
-  J_K=$(echo "$J $K" | awk '{printf "%.3f",$1-$2}')
-  if [[ $eJ =~ $re ]] && [[ $eK =~ $re ]] ; then
-   eJ_K=$(echo "$eJ $eK" | awk '{printf "%.3f", sqrt( $1*$1 + $2*$2 ) }')
-  else
-   eJ_K="     "
-  fi
-  if [ -n "$J_K" ];then
-   # Guess spectral type *assuming zero extinction*
-   #
-   # The old color boundaries between the spectral types were based on http://adsabs.harvard.edu/abs/1988PASP..100.1134B
-   #
-   # The new ones are from
-   # "A Modern Mean Dwarf Stellar Color and Effective Temperature Sequence"
-   # http://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt
-   # Eric Mamajek
-   # Version 2021.03.02
-   # 
-   SECTRAL_TYPE="unrealisitic color!"
-   # Wild guess
-   TEST=$(echo "$J_K>-1.0" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
-   if [ $TEST -eq 1 ];then
-    SECTRAL_TYPE="Very blue!"
-   fi
-   TEST=$(echo "$J_K>-0.3" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
-   if [ $TEST -eq 1 ];then
-    SECTRAL_TYPE="O"
-   fi
-   TEST=$(echo "$J_K>-0.228" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
-   if [ $TEST -eq 1 ];then
-    SECTRAL_TYPE="B"
-   fi
-   TEST=$(echo "$J_K>-0.0135" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
-   if [ $TEST -eq 1 ];then
-    SECTRAL_TYPE="A"
-   fi
-   TEST=$(echo "$J_K>0.1355" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
-   if [ $TEST -eq 1 ];then
-    SECTRAL_TYPE="F"
-   fi
-   TEST=$(echo "$J_K>0.3215" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
-   if [ $TEST -eq 1 ];then
-    SECTRAL_TYPE="G"
-   fi
-   TEST=$(echo "$J_K>0.46450" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
-   if [ $TEST -eq 1 ];then
-    SECTRAL_TYPE="K"
-   fi
-   TEST=$(echo "$J_K>0.814" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
-   if [ $TEST -eq 1 ];then
-    SECTRAL_TYPE="M"
-   fi
-   TEST=$(echo "$J_K>1.2575" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
-   if [ $TEST -eq 1 ];then
-    SECTRAL_TYPE="Very red! L if it's a dwarf"
-   fi
-   TEST=$(echo "$J_K>1.77" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
-   if [ $TEST -eq 1 ];then
-    SECTRAL_TYPE="Very red!"
-   fi
-   TEST=$(echo "$J_K>4.0" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
-   if [ $TEST -eq 1 ];then
-    SECTRAL_TYPE="unrealisitic color!"
-   fi
-  else
-   SECTRAL_TYPE="Sorry, cannot get 2MASS color"
-  fi # if [ -n $J_K ];then
-  # Print results
-  echo "r=$R\"  2MASS J$TWOMASS_ID  J = $J +/-$eJ  Ks = $K +/-$eK  J-Ks =  $J_K +/-$eJ_K  ($SECTRAL_TYPE)"
-  #echo "Spectral type is according to Bessell & Brett (1988, PASP, 100, 1134) *assuming zero extinction*."
-  echo "Spectral type is according to the table
-'A Modern Mean Dwarf Stellar Color and Effective Temperature Sequence'
-http://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt
-Version 2021.03.02 by Eric Mamajek
-http://adsabs.harvard.edu/abs/2013ApJS..208....9P
-
-This is the spectral type *assuming zero extinction*"
-  echo "J-Ks=$J_K+/-$eJ_K ($SECTRAL_TYPE)" > 2mass.tmp
- fi
-done
+search_2mass_fixed_radius_reesults_to_2masstmp "$RA" "$DEC" > 2mass_details.txt &
 
 # clean-up after vizquery
-if [ -f wget-log ];then
- rm -f wget-log
-fi
+#if [ -f wget-log ];then
+# rm -f wget-log
+#fi
 
 #echo "Image field of view: $FOV'  (making assumptions about astrometic accuracy and image depth based on FoV size)"
 
@@ -440,6 +463,12 @@ $VARFLAG" > search_databases_with_vizquery_GAIA_ID_OK.tmp
  fi
 done
 
+# make sure search_2mass_fixed_radius_reesults_to_2masstmp() is complete and produced 2mass.tmp and 2mass_details.txt on success
+wait
+
+if [ -s 2mass_details.txt ];then
+ cat 2mass_details.txt
+fi
 
 echo " "
 echo -n "Searching variable star catalogs... "
@@ -470,7 +499,9 @@ else
  done
 
  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING Gaia3var=$VARFLAG "
- rm -f search_databases_with_vizquery_GAIA_ID_OK.tmp
+ if [ -f search_databases_with_vizquery_GAIA_ID_OK.tmp ];then
+  rm -f search_databases_with_vizquery_GAIA_ID_OK.tmp
+ fi
  # Get additional variability info from Gaia
 # # Gaia short-time var
 # $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/shortts -out.max=10 -out.form=mini Source="$GOOD_CATALOG_NAME_GAIA" 2>/dev/null | grep -v \# | grep --quiet "$GOOD_CATALOG_NAME_GAIA"
@@ -818,7 +849,7 @@ if [ -n "$GOOD_CATALOG_NAME_GAIA" ];then
  #echo -n " $STAR_NAME | $SUGGESTED_NAME_STRING | $GOOD_CATALOG_POSITION_GAIA(Gaia DR3)  | $SUGGESTED_TYPE_STRING | $SUGGESTED_PERIOD_STRING | $SUGGESTED_COMMENT_STRING"
  echo -n " $STAR_NAME | $SUGGESTED_NAME_STRING | $GOOD_CATALOG_POSITION_GAIA$GOOD_CATALOG_POSITION_REF  | $SUGGESTED_TYPE_STRING | $SUGGESTED_PERIOD_STRING | $SUGGESTED_COMMENT_STRING"
  # Add 2MASS color and spectral type guess as a final comment
- if [ -f 2mass.tmp ];then
+ if [ -s 2mass.tmp ];then
   cat 2mass.tmp
  else
   echo "                      "
@@ -850,7 +881,8 @@ fi
 
 
 # clean-up after vizquery
-for TMP_FILE_TO_REMOVE in wget-log 2mass.tmp ;do
+#for TMP_FILE_TO_REMOVE in wget-log 2mass.tmp search_databases_with_vizquery_GAIA_ID_OK.tmp ;do
+for TMP_FILE_TO_REMOVE in 2mass_details.txt 2mass.tmp search_databases_with_vizquery_GAIA_ID_OK.tmp ;do
  if [ -f "$TMP_FILE_TO_REMOVE" ];then
   rm -f "$TMP_FILE_TO_REMOVE"
  fi
