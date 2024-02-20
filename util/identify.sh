@@ -1311,7 +1311,8 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
    # How did this work at all????
    DATEANDTIME=$(grep "$UNCALIBRATED_IMAGE_NAME" "$VAST_PATH"vast_image_details.log | head -n1 |awk '{print $2" "$3}')
    echo "$VAST_PATH"util/transients/MPCheck_v2.sh $("$VAST_PATH"lib/deg2hms $RADEC) $DATEANDTIME H
-   "$VAST_PATH"util/transients/MPCheck_v2.sh $("$VAST_PATH"lib/deg2hms $RADEC) $DATEANDTIME H > "$TEMP_FILE__MPCheck_OUTPUT" &
+   #"$VAST_PATH"util/transients/MPCheck_v2.sh $("$VAST_PATH"lib/deg2hms $RADEC) $DATEANDTIME H > "$TEMP_FILE__MPCheck_OUTPUT" &
+   "$VAST_PATH"util/transients/MPCheck_v2.sh $("$VAST_PATH"lib/deg2hms $RADEC) $(util/get_image_date $DATEANDTIME 2>&1 | grep 'MPC format ' | awk '{print $3" "$4" "$5}') H > "$TEMP_FILE__MPCheck_OUTPUT" &
    wait
    cat "$TEMP_FILE__SDWC_OUTPUT"
    cat "$TEMP_FILE__MPCheck_OUTPUT"

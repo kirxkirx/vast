@@ -487,7 +487,7 @@ void fix_DATEOBS_STRING( char *DATEOBS ) {
  year= atoi( substring_year );
  // try fix a two-digit year
  if ( year < 100 ) {
-  fprintf( stderr, "WARNING -- two-digit year in the input DATEOBS string: %d -> ", year );
+  fprintf( stderr, "fix_DATEOBS_STRING() WARNING -- two-digit year in the input DATEOBS string: %d -> ", year );
   if ( year < 50 ) {
    year= year + 2000;
   } else {
@@ -507,13 +507,21 @@ void fix_DATEOBS_STRING( char *DATEOBS ) {
  return;
 }
 
-// This function will handle '09-10-2017' style DATE-OBS
+// This function will handle '09-10-2017' and '09.10.2017' style DATE-OBS
 void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
  int i, j, date_part; // counters
  char substring_day[32];
  char substring_month[32];
  char substring_year[32];
  int day, month, year;
+ 
+ int ndash,ndot;
+ char dash_or_dot_character;
+
+ // the following is to handle 04.02.2012 02:48:30
+ //                            01234567890123456789
+ int ncolon;
+ char timestring[32];
 
  // fprintf(stderr,"\n0123456789\n%s \n", DATEOBS);
 
@@ -528,11 +536,42 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
   return;
  }
 
+ // count how many times dash and dots are found in the string
+ // we don't want t ostart with zero
+ ndash= ndot= ncolon= 0;
+ for( i=1; i<strlen( DATEOBS ); i++ ){
+  if ( DATEOBS[i] == '-' ) {
+   ndash++;
+   continue;
+  }
+  if ( DATEOBS[i] == '.' ) {
+   ndot++;
+   continue;
+  }
+  if ( DATEOBS[i] == ':' ) {
+   ncolon++;
+   continue;
+  }
+ }
+ //
+ if ( ndash >= 2 ) {
+  dash_or_dot_character= '-';
+ } else {
+  if ( ndot >= 2 ) {
+   dash_or_dot_character= '.';
+  } else {
+   // nothing to fix here
+   return;
+  }
+ }
+ 
+ //fprintf(stderr, "DEBUG: dash_or_dot_character=%c  DATEOBS=#%s#\n", dash_or_dot_character, DATEOBS);
+
  //                            0123456789
  // check if this is a normal '2004-07-05' style DATE-OBS
- if ( DATEOBS[4] == '-' ) {
+ if ( DATEOBS[4] == dash_or_dot_character ) {
   // special cases 1-09-99 and 01-9-1999
-  if ( DATEOBS[1] != '-' && DATEOBS[2] != '-' ) {
+  if ( DATEOBS[1] != dash_or_dot_character && DATEOBS[2] != dash_or_dot_character ) {
    return;
   }
  }
@@ -541,15 +580,23 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
  memset( substring_day, 0, 32 );
  memset( substring_month, 0, 32 );
  memset( substring_year, 0, 32 );
+ 
+ memset( timestring, 0, 32 );
+ 
+ // the following is to handle 04.02.2012 02:48:30
+ //                            01234567890123456789
+ if( strlen(DATEOBS) > 10 && ncolon >= 1 ) {
+  
+ }
 
  // ?????
  // for ( i= 0; i < (int)strlen( DATEOBS ); i++ )
 
- // Parse '09-10-2017' style DATE-OBS
+ // Parse '09-10-2017' or '09.10.2017' style DATE-OBS
  j= 0;
  date_part= 1;
  for ( i= 0; i < (int)strlen( DATEOBS ); i++ ) {
-  if ( DATEOBS[i] == '-' ) {
+  if ( DATEOBS[i] == dash_or_dot_character ) {
    if ( date_part == 1 )
     substring_day[j]= '\0';
    if ( date_part == 2 )
@@ -560,6 +607,19 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
    j= 0;
    continue;
   }
+  // check if this is start of the time part of 04.02.2012 02:48:30
+  //                                            01234567890123456789
+  //if ( i > 6 && DATEOBS[i] == ' ' && date_part == 3 ) {
+  // the white space is actually replaced earlier by '-'
+  if ( i > 6 && date_part == 3 ) {
+   if ( DATEOBS[i] == '-' || DATEOBS[i] == ' ' || DATEOBS[i] == 'T' ) {
+    substring_year[j]= '\0';
+    date_part++;
+    j= 0;
+    continue;
+   }
+  }
+  //
   if ( date_part == 1 ) {
    substring_day[j]= DATEOBS[i];
    j++;
@@ -572,8 +632,14 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
    substring_year[j]= DATEOBS[i];
    j++;
   }
+  if ( date_part == 4 ) {
+   timestring[j]= DATEOBS[i];
+   j++;
+  }
  }
  substring_year[4]= '\0';
+ substring_month[2]= '\0';
+ substring_day[2]= '\0';
 
  if ( date_part == 1 ) {
   fprintf( stderr, "ERROR: cannot parse DATE-OBS keyword!\n" );
@@ -582,24 +648,56 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
 
  // Print result
  // fprintf(stderr,"_%s_ _%s_ _%s_   _%s_\n",substring_day,substring_month,substring_year,DATEOBS);
+ // consistency check
+ if( 0 == strlen(substring_day) ) {
+  fprintf( stderr, "ERROR: cannot parse DATE-OBS keyword! Empty string substring_day\n" );
+  exit( EXIT_FAILURE );
+ }
+ if( 0 == strlen(substring_month) ) {
+  fprintf( stderr, "ERROR: cannot parse DATE-OBS keyword! Empty string substring_month\n" );
+  exit( EXIT_FAILURE );
+ }
+ if( 0 == strlen(substring_year) ) {
+  fprintf( stderr, "ERROR: cannot parse DATE-OBS keyword! Empty string substring_year\n" );
+  exit( EXIT_FAILURE );
+ }
+ //
  day= atoi( substring_day );
  month= atoi( substring_month );
  year= atoi( substring_year );
+ //
+ if( day < 1 || day > 31 ) {
+  fprintf( stderr, "ERROR: cannot parse DATE-OBS keyword! Wrong day\n" );
+  exit( EXIT_FAILURE );
+ }
+ if( month < 1 || month > 12 ) {
+  fprintf( stderr, "ERROR: cannot parse DATE-OBS keyword! Wrong month\n" );
+  exit( EXIT_FAILURE );
+ }
+ if( year < 0 || year > 3000 ) {
+  fprintf( stderr, "ERROR: cannot parse DATE-OBS keyword! Wrong year\n" );
+  exit( EXIT_FAILURE );
+ }
  // try fix a two-digit year
  if ( year < 100 ) {
-  fprintf( stderr, "WARNING -- two-digit year in the input DATEOBS string: %d -> ", year );
+  fprintf( stderr, "fix_DATEOBS_STRING__DD_MM_YYYY_format() WARNING -- two-digit year in the input DATEOBS string: %d -> ", year );
   if ( year < 50 ) {
    year= year + 2000;
   } else {
    year= year + 1900;
   }
-  fprintf( stderr, "%d\n", year );
+  //fprintf( stderr, "%d\n", year );
  }
  //
 
  fprintf( stderr, "WARNING -- fixing the input DATEOBS string: %s -> ", DATEOBS );
 
  sprintf( DATEOBS, "%d-%02d-%02d", year, month, day );
+ 
+ if( strlen(timestring) > 0 ) {
+  strncat( DATEOBS, "T", 1);
+  strncat( DATEOBS, timestring, 32-12);
+ }
 
  fprintf( stderr, "%s\n", DATEOBS );
 
@@ -1608,7 +1706,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   }
   structureTIME.tm_mday= atoi( Da_d );
   if ( structureTIME.tm_mday < 0 || structureTIME.tm_mday > 31 ) {
-   fprintf( stderr, "ERROR004 in gettime(): the month day is not between 0 and 31\n" );
+   fprintf( stderr, "ERROR004 in gettime(): the day of the month is not between 0 and 31\n" );
    fits_close_file( fptr, &status );
    return 1;
   }

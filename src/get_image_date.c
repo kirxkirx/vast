@@ -167,6 +167,9 @@ int fake_image_hack( char *input_string ) {
    if ( processed_input_string[strlen( processed_input_string ) - 1] == ' ' ) {
     processed_input_string[strlen( processed_input_string ) - 1]= '\0';
    }
+   // run this early to handle 04.02.2012 02:48:30 - style dates
+   fix_DATEOBS_STRING__DD_MM_YYYY_format( processed_input_string );
+   //
    // fprintf( stderr, "DEBUG10 #%s#\n", processed_input_string);
    if ( 3 == sscanf( processed_input_string, "%lf %lf %lf", &year, &month, &day ) ) {
     // fprintf( stderr, "DEBUG11 #%s#\n", processed_input_string);
@@ -224,7 +227,7 @@ int fake_image_hack( char *input_string ) {
     imin= (double)(int)( min );
     sec= ( min - imin ) * 60;
     sprintf( processed_input_string, "%4.0lf-%02.0lf-%02.0lfT%02.0lf:%02.0lf:%06.3lf", year, month, iday, ihour, imin, sec );
-    // fprintf( stderr, "DEBUG21 #%s#\n", processed_input_string);
+    //fprintf( stderr, "DEBUG21 #%s#\n", processed_input_string);
     // exit( EXIT_FAILURE );
    } // if ( is_T_found == 0 ) {
    //
