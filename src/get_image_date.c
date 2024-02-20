@@ -432,7 +432,10 @@ int main( int argc, char **argv ) {
  fprintf( stdout, " (mid. exp) %04d-%02d-%02d %02d:%02d:%02d\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, structureTIME->tm_mday, structureTIME->tm_hour, structureTIME->tm_min, structureTIME->tm_sec );
  // The problem is that the sub-second accuracy is lost in this output
  fprintf( stdout, " (mid. exp) %04d-%02d-%02dT%02d:%02d:%02d\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, structureTIME->tm_mday, structureTIME->tm_hour, structureTIME->tm_min, structureTIME->tm_sec );
-
+ // The problem is that the sub-second accuracy is lost in this output
+ fprintf( stdout, " DD.MM.YYYY %02d.%02d.%04d %02d:%02d:%02d\n", structureTIME->tm_mday, structureTIME->tm_mon + 1, structureTIME->tm_year - 100 + 2000, structureTIME->tm_hour, structureTIME->tm_min, structureTIME->tm_sec );
+ // The problem is that the sub-second accuracy is lost in this output
+ fprintf( stdout, " MM/DD/YYYY %02d/%02d/%04d %02d:%02d:%02d\n", structureTIME->tm_mon + 1, structureTIME->tm_mday, structureTIME->tm_year - 100 + 2000, structureTIME->tm_hour, structureTIME->tm_min, structureTIME->tm_sec );
  //
  // fprintf( stderr, "DEBUG29\n");
  // fprintf( stderr, "DEBUG UnixTime_time_t=%ld UnixTime(double)=%lf\n",UnixTime_time_t,UnixTime);

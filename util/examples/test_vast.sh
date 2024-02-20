@@ -71,7 +71,7 @@ function vastrealpath {
 }
 
 # Function to remove the last occurrence of a directory from a path
-remove_last_occurrence() {
+function remove_last_occurrence() {
     echo "$1" | awk -F/ -v dir=$2 '{
         found = 0;
         for (i=NF; i>0; i--) {
@@ -86,7 +86,7 @@ remove_last_occurrence() {
 }
 
 # Function to get full path to vast main directory from the script name
-get_vast_path_ends_with_slash_from_this_script_name() {
+function get_vast_path_ends_with_slash_from_this_script_name() {
  VAST_PATH=$(vastrealpath $0)
  VAST_PATH=$(dirname "$VAST_PATH")
 
@@ -330,6 +330,47 @@ function test_internet_connection {
  return 0
 }
 
+function check_dates_consistency_in_vast_image_details_log() {
+ if [ ! -f vast_image_details.log ];then
+  echo "ERROR in $0 - no vast_image_details.log"
+  return 1
+ fi
+ if [ ! -s vast_image_details.log ];then
+  echo "ERROR in $0 - empty vast_image_details.log"
+  return 1
+ fi
+ cat vast_image_details.log | while read exp_startkey DDMMYYYY HHMMSS exp_key EXPTIME JD_KEY JD_MID REST ;do
+  if [ -z "$DDMMYYYY" ];then
+   echo "ERROR in $0 - DDMMYYYY is not set"
+   break
+  fi
+  if [ -z "$HHMMSS" ];then
+   echo "ERROR in $0 - HHMMSS is not set"
+   break
+  fi
+  if [ -z "$EXPTIME" ];then
+   echo "ERROR in $0 - EXPTIME is not set"
+   break
+  fi
+  if [ -z "$JD_MID" ];then
+   echo "ERROR in $0 - JD_MID is not set"
+   break
+  fi
+  START_JD=$(util/get_image_date "$DDMMYYYY" "$HHMMSS" 2>&1 | grep ' JD ' | awk '{print $2}')
+  if [ -z "$START_JD" ];then
+   echo "ERROR in $0 - START_JD is not set"
+   break
+  fi
+  # Make sure the diference is less than one second
+  TEST=$(echo "$START_JD $JD_MID $EXPTIME" | awk '{if ( ($2 - $1)*86400 - $3/2 < 1 ) print 1 ;else print 0 }')
+  if [ $TEST -ne 1 ];then
+   echo "ERROR in $0 -  ($START_JD - $JD_MID)*86400 - $EXPTIME/2 > 1"
+   break
+  fi
+ done | grep 'ERROR' && return 1
+ # all good
+ return 0
+}
 
 
 
@@ -1147,6 +1188,7 @@ if [ -d ../test_data_photo ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE003"
    fi
+   #
    # Hunting the mysterious non-zero reference frame rotation cases
    if [ -f vast_image_details.log ];then
     grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -1985,6 +2027,12 @@ if [ -d ../sample_data ];then
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_check_dates_consistency_in_vast_image_details_log"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -6602,6 +6650,12 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS003c"
   fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS_check_dates_consistency_in_vast_image_details_log"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -7000,7 +7054,7 @@ if [ -d ../vast_test_ASASSN-19cq ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC001"
   fi
   # The possible reference image ../vast_test_ASASSN-19cq/2019_05_15/fd_img2_ASASSN_19cq_V_200s.fit
-  # is the wors and should be rejected under normal circumstances
+  # is the worst and should be rejected under normal circumstances
   grep --quiet -e "Images used for photometry 11" -e "Images used for photometry 10" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -7015,6 +7069,12 @@ if [ -d ../vast_test_ASASSN-19cq ];then
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC003b"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC_check_dates_consistency_in_vast_image_details_log"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -7263,6 +7323,12 @@ if [ -d ../MASTER_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCD004"
   fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCD_check_dates_consistency_in_vast_image_details_log"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -7406,6 +7472,12 @@ if [ -d ../M31_ISON_test ];then
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD_check_dates_consistency_in_vast_image_details_log"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -7559,6 +7631,12 @@ if [ -d ../Gaia16aye_SN ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES GAIA16AYESN004"
   fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES GAIA16AYESN_check_dates_consistency_in_vast_image_details_log"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -7697,6 +7775,12 @@ if [ -d ../only_few_stars ];then
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARS004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARS_check_dates_consistency_in_vast_image_details_log"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -7979,6 +8063,12 @@ $GREP_RESULT"
    #
   fi # DISABLE_MAGSIZE_FILTER_LOGS
   ################################################################################
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_check_dates_consistency_in_vast_image_details_log"
+  fi
   # Check vast_image_details.log format
   NLINES=`cat vast_image_details.log | awk '{print $18}' | sed '/^\s*$/d' | wc -l | awk '{print $1}'`
   if [ $NLINES -ne 0 ];then
@@ -8087,6 +8177,12 @@ if [ -d ../test_exclude_ref_image ];then
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE_check_dates_consistency_in_vast_image_details_log"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -8327,6 +8423,12 @@ if [ -d ../transient_detection_test_Ceres ];then
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES CERES_check_dates_consistency_in_vast_image_details_log"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -8866,6 +8968,12 @@ if [ -d ../NMW_Saturn_test ];then
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN_check_dates_consistency_in_vast_image_details_log"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -9428,6 +9536,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2004"
   fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_check_dates_consistency_in_vast_image_details_log"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -9838,6 +9952,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS004"
   fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_check_dates_consistency_in_vast_image_details_log"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -10034,6 +10154,12 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_check_dates_consistency_in_vast_image_details_log"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -10368,6 +10494,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31004"
   fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_check_dates_consistency_in_vast_image_details_log"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -10574,6 +10706,12 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET_check_dates_consistency_in_vast_image_details_log"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -10791,6 +10929,12 @@ $CAT_RESULT"
   if [ $NUMBER_OF_GOOD_SE_RUNS -lt 2 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA002a"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_check_dates_consistency_in_vast_image_details_log"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -11267,6 +11411,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4004"
   fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_check_dates_consistency_in_vast_image_details_log"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -11570,6 +11720,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21004"
   fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21_check_dates_consistency_in_vast_image_details_log"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -11804,6 +11960,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21004"
   fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_check_dates_consistency_in_vast_image_details_log"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -12037,6 +12199,12 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2_check_dates_consistency_in_vast_image_details_log"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -12329,6 +12497,12 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1_check_dates_consistency_in_vast_image_details_log"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -12686,6 +12860,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21004"
   fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21_check_dates_consistency_in_vast_image_details_log"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -12911,6 +13091,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS004"
   fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_check_dates_consistency_in_vast_image_details_log"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -13073,6 +13259,12 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_check_dates_consistency_in_vast_image_details_log"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -13304,6 +13496,12 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA_check_dates_consistency_in_vast_image_details_log"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -13568,6 +13766,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH004"
   fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_check_dates_consistency_in_vast_image_details_log"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -13822,6 +14026,12 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_check_dates_consistency_in_vast_image_details_log"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -14248,6 +14458,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE004"
   fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_check_dates_consistency_in_vast_image_details_log"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -14614,6 +14830,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE004"
   fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_check_dates_consistency_in_vast_image_details_log"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -14971,6 +15193,12 @@ $CAT_RESULT"
   fi
   # 
   #
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_check_dates_consistency_in_vast_image_details_log"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -15147,6 +15375,12 @@ if [ -d ../KZ_Her_DSLR_transient_search_test ];then
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER_check_dates_consistency_in_vast_image_details_log"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -21132,6 +21366,63 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV119"
 fi
+util/get_image_date 2012-02-04 02:48:30 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV120"
+fi
+util/get_image_date 2012-02-4 02:48:30 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV121"
+fi
+util/get_image_date 2012-2-4 02:48:30 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV122"
+fi
+util/get_image_date 2012-2-04 02:48:30 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV123"
+fi
+#
+util/get_image_date 2012-02-4 02:48 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:00 UT = JD(UT) 2455961.61667'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV125"
+fi
+util/get_image_date 2012-02-4 02:48:00 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:00 UT = JD(UT) 2455961.61667'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV126"
+fi
+#
+util/get_image_date 04.02.2012 02:48:30 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV127"
+fi
+util/get_image_date 4.02.2012 02:48:30 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV128"
+fi
+util/get_image_date 4.2.2012 02:48:30 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV129"
+fi
+util/get_image_date 04.2.2012 02:48:30 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV130"
+fi
+
+
+
+
+
 # Now make sure there are no residual files
 for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  if [ -f "$TMP_FITS_FILE" ];then

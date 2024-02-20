@@ -1,4 +1,9 @@
 	:vast-1.0rc88
+	* Pressing 'F' keyboard key ("Fast ID") in the lightcurve viewer './lc' will start fast known variable star
+	identification script 'util/identify_justname.sh' that will return only the name of the known variable.
+	The script will print no name if it could not recognize the object as a known variable star.
+	This is useful for quickly checking if a variable is a known one, before running a full check with
+	'U' key that starts the slower 'util/identify.sh' script.
 	* Disable the USNO-B1.0 catalog search when identifying variable stars using the script 
 	'util/identify.sh', which can be launched from the lightcurve inspection window by 
 	pressing 'U' on the keyboard. The terminal output of the identification script 
@@ -6,11 +11,10 @@
 	* Added 'util/TT2UTC' tool (alongside the existing 'util/UTC2TT') to convert JD(TT) back to JD(UTC).
 	The conversion tools work both with individual JDs supplied as a command line argument as well as 
 	lightcurve files. The new TT to UTC may not work perfectly around the time leap seconds are introduced.
-	* Pressing 'F' keyboard key ("Fast ID") in the lightcurve viewer './lc' will start fast known variable star
-	identification script 'util/identify_justname.sh' that will return only the name of the known variable.
-	The script will print no name if it could not recognize the object as a known variable star.
-	This is useful for quickly checking if a variable is a known one, before running a full check with
-	'U' key that starts the slower 'util/identify.sh' script.
+	* The date conversion program 'util/get_image_date' now understands input date in the DD.MM.YYYY format,
+	for example 'util/get_image_date 18.01.2024 03:09:49'. This date format has always been used in 
+	'vast_summary.log' and 'vast_image_details.log' files for historical reasons and the new feature should
+	simplify conversion to other date formats.
 	* The dark frame subtraction tool 'util/ccd/ms' will check if the temperatures of the light and dark frame
 	(as recorded in SET-TEMP and CCD-TEMP FITS header keywords) are close enough to each other. This should
 	prevent the mistake of subtracting a dark frame taken at different temperature than the light frame, 

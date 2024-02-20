@@ -778,16 +778,17 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 
  unsigned int counter_i;
 
- /* Variables for time */
+ // Variables for time
  int status= 0; // for cfitsio routines
  int j;
+ int j_end_of_year;
+ int j_end_of_month;
  int jj;
  time_t unix_time;
  struct tm structureTIME;
  char Tm_h[10], Tm_m[10], Tm_s[FLEN_CARD]; // We want a lot of memeory for Tm_s for cases like '2020-11-21T18:10:43.4516245'
  char Da_y[10], Da_m[10], Da_d[FLEN_CARD]; // We want more memeory for Da_d for cases like '2020-11-21.1234567
 
- // char DATEOBS[32], TIMEOBS[32], TIMESYS[32];
  char DATEOBS[FLEN_CARD], TIMEOBS[FLEN_CARD], TIMESYS[FLEN_CARD];
  char DATEOBS_COMMENT[2048];  // make it long, just in case
  char EXPOSURE_COMMENT[2048]; // make it long, just in case
@@ -1580,41 +1581,53 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    }
    Da_y[j]= DATEOBS[j];
   }
-  // for( j+= 1; j < 32; j++ ) {
+  j_end_of_year=j+1;
   for ( j+= 1; j < 8; j++ ) {
+   //fprintf(stderr,"DEBUGISHE %d %c  j_end_of_year=%d\n", j, DATEOBS[j], j_end_of_year);
    // if( DATEOBS[j] == 45 ) {
    if ( DATEOBS[j] == '-' ) {
-    if ( j - 5 < 0 ) {
+    //if ( j - 5 < 0 ) {
+    if ( j - j_end_of_year < 0 ) {
      fprintf( stderr, "ERROR100 in gettime()\n" );
      fits_close_file( fptr, &status ); // close file
      return 1;
     }
-    Da_m[j - 5]= '\0';
+    //Da_m[j - 5]= '\0';
+    Da_m[j - j_end_of_year]= '\0';
     break;
    }
-   if ( j - 5 < 0 ) {
+   //if ( j - 5 < 0 ) {
+   if ( j - j_end_of_year < 0 ) {
     fprintf( stderr, "ERROR101 in gettime()\n" );
     fits_close_file( fptr, &status ); // close file
     return 1;
    }
-   Da_m[j - 5]= DATEOBS[j];
+   //Da_m[j - 5]= DATEOBS[j];
+   Da_m[j - j_end_of_year]= DATEOBS[j];
   }
+  j_end_of_month=j+1;
   for ( j+= 1; j < 32; j++ ) {
    if ( DATEOBS[j] == '\0' || DATEOBS[j] == 'T' ) {
-    if ( j - 7 < 0 ) {
+    //if ( j - 7 < 0 ) {
+    if ( j - j_end_of_month < 0 ) {
      fprintf( stderr, "ERROR102 in gettime()\n" );
      fits_close_file( fptr, &status ); // close file
      return 1;
     }
-    Da_d[j - 7]= '\0';
+    //Da_d[j - 7]= '\0';
+    Da_d[j - j_end_of_month]= '\0';
     break;
    }
-   if ( j - 8 < 0 ) {
+   //if ( j - 8 < 0 ) {
+   // !!! why 8 ???
+   if ( j - j_end_of_month < 0 ) {
     fprintf( stderr, "ERROR103 in gettime()\n" );
     fits_close_file( fptr, &status ); // close file
     return 1;
    }
-   Da_d[j - 8]= DATEOBS[j];
+   //Da_d[j - 8]= DATEOBS[j];
+   // !!! why 8 ???
+   Da_d[j - j_end_of_month]= DATEOBS[j];
   }
   // Если время прописано в DATE-OBS после T
   if ( DATEOBS[j] == 'T' ) {
