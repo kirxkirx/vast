@@ -433,11 +433,6 @@ FITSFILE=${FITSFILE//" "/_}
 
   echo "<HR>" >> transient_report/index.tmp
   cat transient_report/index.tmp >> transient_report/index$1.html
- #else
- # tail -n1 transient_report/index.tmp
- # echo "The candidate $TRANSIENT_NAME did not pass the final checks"
- # rm -f transient_report/index.tmp
- #fi
 done < candidates-transients.lst
 if [ -f transient_report/index.tmp ];then
  rm -f transient_report/index.tmp

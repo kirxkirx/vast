@@ -99,7 +99,7 @@ for i in vast_src_* ;do
   rm -rf "$i"
  fi
 done
-for i in search_databases_with_vizquery_USNOB_ID_OK.tmp vizquerry_*.input vizquerry_*.output vizquery_*.input vizquery_*.output ;do
+for i in search_databases_with_vizquery_USNOB_ID_OK.tmp search_databases_with_vizquery_GAIA_ID_OK.tmp vizquerry_*.input vizquerry_*.output vizquery_*.input vizquery_*.output ;do
  if [ -f "$i" ];then
   rm -f "$i"
  fi
@@ -116,6 +116,13 @@ for i in out*_edit* ;do
   rm -f "$i"
  fi
 done
+# Remove possible leftovers from util/transients/report_transient.sh
+for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.dat jd$$.dat x$$.dat y$$.dat  tempilefallback_SDWC_OUTPUT_$$.tmp tempilefallback_MPCheck_OUTPUT_$$.tmp ;do
+ if [ -f "$TMP_FILE_TO_REMOVE" ];then
+  rm -f "$TMP_FILE_TO_REMOVE"
+ fi
+done
+
 # Remove magnitude calibration crash report
 if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
  rm -f 'lightcurve.tmp_emergency_stop_debug'

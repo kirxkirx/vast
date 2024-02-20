@@ -7,6 +7,15 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
+# Set temporary file names
+TEMP_FILE__2MASS_SHORT=$(mktemp 2>/dev/null || echo "tempilefallback_2MASS_SHORT_$$.tmp")
+TEMP_FILE__2MASS_LONG=$(mktemp 2>/dev/null || echo "tempilefallback_2MASS_LONG_$$.tmp")
+TEMP_FILE__GAIA_ID_OK=$(mktemp 2>/dev/null || echo "tempilefallback_search_databases_with_vizquery_GAIA_ID_OK_$$.tmp")
+export TEMP_FILE__2MASS_SHORT
+export TEMP_FILE__2MASS_LONG
+export TEMP_FILE__GAIA_ID_OK
+
+
 # A more portable realpath wrapper
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
@@ -89,8 +98,8 @@ function search_2mass_fixed_radius_reesults_to_2masstmp() {
  ###### 2MASS #####
  
  # clean up possible lefotovers from a previous run
- if [ -f 2mass.tmp ];then
-  rm -f 2mass.tmp
+ if [ -f "$TEMP_FILE__2MASS_SHORT" ];then
+  rm -f "$TEMP_FILE__2MASS_SHORT"
  fi
  
  # check the input
@@ -198,7 +207,7 @@ Version 2021.03.02 by Eric Mamajek
 http://adsabs.harvard.edu/abs/2013ApJS..208....9P
 
 The guessed spectral type ($SECTRAL_TYPE) is assuming zero extinction!"
-   echo "J-Ks=$J_K+/-$eJ_K ($SECTRAL_TYPE)" > 2mass.tmp
+   echo "J-Ks=$J_K+/-$eJ_K ($SECTRAL_TYPE)" > "$TEMP_FILE__2MASS_SHORT"
   fi # if [ -n "$R" ];then
  done
 
@@ -308,7 +317,7 @@ fi
 echo "(The script will be making wild assumptions about astrometic accuracy and image depth based on FoV size.)"
 
 ###### 2MASS #####
-search_2mass_fixed_radius_reesults_to_2masstmp "$RA" "$DEC" > 2mass_details.txt &
+search_2mass_fixed_radius_reesults_to_2masstmp "$RA" "$DEC" > "$TEMP_FILE__2MASS_LONG" &
 
 # clean-up after vizquery
 #if [ -f wget-log ];then
@@ -388,8 +397,8 @@ search_2mass_fixed_radius_reesults_to_2masstmp "$RA" "$DEC" > 2mass_details.txt 
 
 ###### GAIA DR3 #####
 # by default we don't have an ID
-if [ -f search_databases_with_vizquery_GAIA_ID_OK.tmp ];then
- rm -f search_databases_with_vizquery_GAIA_ID_OK.tmp
+if [ -f "$TEMP_FILE__GAIA_ID_OK" ];then
+ rm -f "$TEMP_FILE__GAIA_ID_OK"
 fi
 ####
 R_SEARCH_ARCSEC=$(echo "$FOV" | awk '{printf "%.1f",3.0*($1/60)}')
@@ -455,7 +464,7 @@ $LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -so
   # mark that we have an ID
   echo "$GOOD_CATALOG_POSITION_GAIA 
 $GOOD_CATALOG_NAME_GAIA
-$VARFLAG" > search_databases_with_vizquery_GAIA_ID_OK.tmp
+$VARFLAG" > "$TEMP_FILE__GAIA_ID_OK"
   #echo "***************************************"
   echo "r=$R\" $GAIA_SOURCE $GOOD_CATALOG_POSITION_GAIA G=$GMAG Variability_flag=$VARFLAG"
   #echo "***************************************"
@@ -463,11 +472,11 @@ $VARFLAG" > search_databases_with_vizquery_GAIA_ID_OK.tmp
  fi
 done
 
-# make sure search_2mass_fixed_radius_reesults_to_2masstmp() is complete and produced 2mass.tmp and 2mass_details.txt on success
+# make sure search_2mass_fixed_radius_reesults_to_2masstmp() is complete and produced "$TEMP_FILE__2MASS_SHORT" and "$TEMP_FILE__2MASS_LONG" on success
 wait
 
-if [ -s 2mass_details.txt ];then
- cat 2mass_details.txt
+if [ -s "$TEMP_FILE__2MASS_LONG" ];then
+ cat "$TEMP_FILE__2MASS_LONG"
 fi
 
 echo " "
@@ -485,22 +494,22 @@ echo -n "Searching variable star catalogs... "
 # rm -f search_databases_with_vizquery_USNOB_ID_OK.tmp
 #fi
 # Check if we have the Gaia ID
-if [ ! -f search_databases_with_vizquery_GAIA_ID_OK.tmp ];then
+if [ ! -f "$TEMP_FILE__GAIA_ID_OK" ];then
  echo "Could not match the source with Gaia DR3 :("
 else
- GOOD_CATALOG_POSITION_GAIA=$(head -n1 search_databases_with_vizquery_GAIA_ID_OK.tmp)
+ GOOD_CATALOG_POSITION_GAIA=$(head -n1 "$TEMP_FILE__GAIA_ID_OK")
  GOOD_CATALOG_POSITION="$GOOD_CATALOG_POSITION_GAIA"
  GOOD_CATALOG_POSITION_REF="(Gaia DR3)"
- GOOD_CATALOG_NAME_GAIA=$(head -n2 search_databases_with_vizquery_GAIA_ID_OK.tmp | tail -n1)
+ GOOD_CATALOG_NAME_GAIA=$(head -n2 "$TEMP_FILE__GAIA_ID_OK" | tail -n1)
  GOOD_CATALOG_NAME="Gaia DR3 $GOOD_CATALOG_NAME_GAIA"
- VARFLAG=$(tail -n1 search_databases_with_vizquery_GAIA_ID_OK.tmp)
+ VARFLAG=$(tail -n1 "$TEMP_FILE__GAIA_ID_OK")
  while [ ${#VARFLAG} -lt 13 ];do
   VARFLAG="$VARFLAG "
  done
 
  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING Gaia3var=$VARFLAG "
- if [ -f search_databases_with_vizquery_GAIA_ID_OK.tmp ];then
-  rm -f search_databases_with_vizquery_GAIA_ID_OK.tmp
+ if [ -f "$TEMP_FILE__GAIA_ID_OK" ];then
+  rm -f "$TEMP_FILE__GAIA_ID_OK"
  fi
  # Get additional variability info from Gaia
 # # Gaia short-time var
@@ -817,8 +826,8 @@ fi
 #if [ -n "$GOOD_CATALOG_NAME_USNOB" ];then
 # echo -n " $STAR_NAME | $SUGGESTED_NAME_STRING | $GOOD_CATALOG_POSITION_USNOB(USNO-B1.0) | $SUGGESTED_TYPE_STRING | $SUGGESTED_PERIOD_STRING | $SUGGESTED_COMMENT_STRING"
 # # Add 2MASS color and spectral type guess as a final comment
-# if [ -f 2mass.tmp ];then
-#  cat 2mass.tmp
+# if [ -f "$TEMP_FILE__2MASS_SHORT" ];then
+#  cat "$TEMP_FILE__2MASS_SHORT"
 # else
 #  echo " "
 # fi
@@ -849,8 +858,8 @@ if [ -n "$GOOD_CATALOG_NAME_GAIA" ];then
  #echo -n " $STAR_NAME | $SUGGESTED_NAME_STRING | $GOOD_CATALOG_POSITION_GAIA(Gaia DR3)  | $SUGGESTED_TYPE_STRING | $SUGGESTED_PERIOD_STRING | $SUGGESTED_COMMENT_STRING"
  echo -n " $STAR_NAME | $SUGGESTED_NAME_STRING | $GOOD_CATALOG_POSITION_GAIA$GOOD_CATALOG_POSITION_REF  | $SUGGESTED_TYPE_STRING | $SUGGESTED_PERIOD_STRING | $SUGGESTED_COMMENT_STRING"
  # Add 2MASS color and spectral type guess as a final comment
- if [ -s 2mass.tmp ];then
-  cat 2mass.tmp
+ if [ -s "$TEMP_FILE__2MASS_SHORT" ];then
+  cat "$TEMP_FILE__2MASS_SHORT"
  else
   echo "                      "
  fi
@@ -882,7 +891,7 @@ fi
 
 # clean-up after vizquery
 #for TMP_FILE_TO_REMOVE in wget-log 2mass.tmp search_databases_with_vizquery_GAIA_ID_OK.tmp ;do
-for TMP_FILE_TO_REMOVE in 2mass_details.txt 2mass.tmp search_databases_with_vizquery_GAIA_ID_OK.tmp ;do
+for TMP_FILE_TO_REMOVE in "$TEMP_FILE__2MASS_LONG" "$TEMP_FILE__2MASS_SHORT" "$TEMP_FILE__GAIA_ID_OK" ;do
  if [ -f "$TMP_FILE_TO_REMOVE" ];then
   rm -f "$TMP_FILE_TO_REMOVE"
  fi

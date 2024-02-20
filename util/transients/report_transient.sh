@@ -26,11 +26,8 @@ fi
 
 ######### function to clean-up the temporary files before exiting #########
 function clean_tmp_files {
- for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.dat jd$$.dat x$$.dat y$$.dat ;do
+ for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.dat jd$$.dat x$$.dat y$$.dat  tempilefallback_SDWC_OUTPUT_$$.tmp tempilefallback_MPCheck_OUTPUT_$$.tmp ;do
   if [ -f "$TMP_FILE_TO_REMOVE" ];then
-   #
-   #echo "DEBUG:  REMOVING  $TMP_FILE_TO_REMOVE" 1>&2
-   #
    rm -f "$TMP_FILE_TO_REMOVE"
   fi
  done
@@ -549,10 +546,24 @@ CONSTELLATION=$(util/constellation.sh $RADEC_MEAN_HMS)
 echo "$GALACTIC_COORDINATES  $CONSTELLATION  Second-epoch detections are separated by $ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING\" and $PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING pix   $STAR_IN_NEVEREXCLUDE_LIST_MESSAGE"
 
 # Check if this is a known source or if it looks like a hot pixel
-lib/catalogs/check_catalogs_offline $RA_MEAN $DEC_MEAN H
-VARIABLE_STAR_ID=$?
-util/transients/MPCheck_v2.sh $RADEC_MEAN_HMS $YEAR_MEAN $MONTH_MEAN $DAYFRAC_MEAN H $MAG_MEAN
-ASTEROID_ID=$?
+{
+ TEMP_FILE__SDWC_OUTPUT=$(mktemp 2>/dev/null || echo "tempilefallback_SDWC_OUTPUT_$$.tmp")
+ lib/catalogs/check_catalogs_offline $RA_MEAN $DEC_MEAN H > "$TEMP_FILE__SDWC_OUTPUT"
+ VARIABLE_STAR_ID=$?
+} &
+{
+ TEMP_FILE__MPCheck_OUTPUT=$(mktemp 2>/dev/null || echo "tempilefallback_MPCheck_OUTPUT_$$.tmp")
+ util/transients/MPCheck_v2.sh $RADEC_MEAN_HMS $YEAR_MEAN $MONTH_MEAN $DAYFRAC_MEAN H $MAG_MEAN > "$TEMP_FILE__MPCheck_OUTPUT"
+ ASTEROID_ID=$?
+} &
+wait
+cat "$TEMP_FILE__SDWC_OUTPUT"
+cat "$TEMP_FILE__MPCheck_OUTPUT"
+rm -f "$TEMP_FILE__SDWC_OUTPUT" "$TEMP_FILE__MPCheck_OUTPUT"
+if [ -z "$VARIABLE_STAR_ID" ] || [ -z "$ASTEROID_ID" ] ;then
+ echo "ERROR in $0  VARIABLE_STAR_ID or ASTEROID_ID are not set"
+ exit 1
+fi
 # If the candidate transient is not a known variable star or asteroid and doesn't seem to be a hot pixel - try online search
 if [ $VARIABLE_STAR_ID -ne 0 ] && [ $ASTEROID_ID -ne 0 ] ;then
 # if [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.0" ] && [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.1" ] && [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.2" ] ;then
