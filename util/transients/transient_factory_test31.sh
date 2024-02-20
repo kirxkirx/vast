@@ -1615,8 +1615,10 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    if [ -s "$EXCLUSION_LIST" ];then
     SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
     WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
-    lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @$EXCLUSION_LIST | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list.txt
-    cp -v exclusion_list.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+    {
+     lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @$EXCLUSION_LIST | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list.txt
+     cp -v exclusion_list.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+    } &
    fi
   fi
   # Exclude stars from the Bright Star Catalog with magnitudes < 3
@@ -1624,8 +1626,10 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    if [ -s lib/catalogs/brightbright_star_catalog_radeconly.txt ];then
     SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
     WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
-    lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/brightbright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bbsc.txt
-    cp -v exclusion_list_bbsc.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+    {
+     lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/brightbright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bbsc.txt
+     cp -v exclusion_list_bbsc.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+    } &
    fi
   fi
   # Exclude stars from the Bright Star Catalog with magnitudes < 7
@@ -1633,8 +1637,10 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    if [ -s lib/catalogs/bright_star_catalog_radeconly.txt ];then
     SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
     WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
-    lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/bright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bsc.txt
-    cp -v exclusion_list_bsc.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+    {
+     lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/bright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bsc.txt
+     cp -v exclusion_list_bsc.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+    } &
    fi
   fi
   # Exclude bright Tycho-2 stars, by default the magnitude limit is set to vt < 9
@@ -1642,8 +1648,10 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    if [ -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
     SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
     WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
-    lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | while read -r A ;do lib/deg2hms $A ;done > exclusion_list_tycho2.txt
-    cp -v exclusion_list_tycho2.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+    {
+     lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | while read -r A ;do lib/deg2hms $A ;done > exclusion_list_tycho2.txt
+     cp -v exclusion_list_tycho2.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+    } &
    fi
   fi
   ###
@@ -1678,7 +1686,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
 
    echo "Waiting for UCAC5 plate solver" >> transient_factory_test31.txt  
    echo "Waiting for UCAC5 plate solver"
-   # this is for UCAC5 plate solver
+   # this is for UCAC5 plate solver AND parallel exclusion list preparation
    echo "wait"   >> transient_factory_test31.txt
    wait
    echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
