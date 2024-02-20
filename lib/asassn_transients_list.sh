@@ -17,7 +17,8 @@ done)
 # Will consider only the 100 latest transients
 echo "$main_source_names" | head -n100 | while read -r MAIN_SOURCE_NAME; do
     # Narrow down the data search for performance
-    local_data=$(echo "$data" | grep -A10 "$MAIN_SOURCE_NAME")
+    # MAIN_SOURCE_NAME may appear multiple times on the page, just because
+    local_data=$(echo "$data" | grep -m1 -A10 "$MAIN_SOURCE_NAME")
     RA=$(echo "$local_data" | grep ':' | head -n1 | sed -e 's/<td>//g' -e 's/<\/td>//g' | awk -F ':' '{printf "%02d:%02d:%05.2f", $1, $2, $3}')
     DEC=$(echo "$local_data" | grep ':' | head -n2 | tail -n1 | sed -e 's/<td>//g' -e 's/<\/td>//g' | awk -F ':' '{printf "%+03d:%02d:%05.2f", $1, $2, $3}')
     DATE=$(echo "$local_data" | grep '<td>202.-' | sed -e 's/<td>//g' -e 's/<\/td>//g')

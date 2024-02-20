@@ -1385,13 +1385,20 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   echo "Running solve_plate_with_UCAC5" >> transient_factory_test31.txt
   
     
-  # We need photometric info for the referenc image 
+  # We need photometric info for the reference image, and we need it now, so solving in the foreground
   if [ "$PHOTOMETRIC_CALIBRATION" != "TYCHO2_V" ];then
    util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE_EPOCH__FIRST_IMAGE
   fi
+  
+  # Array to hold names of temporary files
+  declare -a tempFiles
   # Now solve all images in parallel with no photomeric calibration
   for i in $(cat vast_image_details.log | awk '{print $17}' | sort | uniq) ;do
-   util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &
+   # Create a temporary file for this iteration's output
+   tempFile=$(mktemp 2>/dev/null || echo "tempilefallback_solve_plate_with_UCAC5_OUTPUT_$$.tmp")
+   # Store the temporary file name for later use
+   tempFiles+=("$tempFile")
+   util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> "$tempFile"  &
   done
     
   # Calibrate magnitude scale with Tycho-2 or APASS stars in the field
@@ -1414,6 +1421,11 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    #####
    echo "wait"   >> transient_factory_test31.txt
    wait
+   # Print the output from each temporary file and then delete the file
+   for tempFile in "${tempFiles[@]}"; do
+    #cat "$tempFile"
+    rm -f "$tempFile"
+   done
    #####
    #if [ "$SYSTEM_TYPE" = "Linux" ];then
    # echo "xxxxxxxxxx process tree (after wait) xxxxxxxxxx" >> transient_factory_test31.txt
@@ -1522,6 +1534,11 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
    wait
+   # Print the output from each temporary file and then delete the file
+   for tempFile in "${tempFiles[@]}"; do
+    #cat "$tempFile"
+    rm -f "$tempFile"
+   done
    # Throw an error
    echo "ERROR calibrating magnitudes in the field $FIELD (mean mag outside of range)"
    echo "ERROR calibrating magnitudes in the field $FIELD (mean mag outside of range)" >> transient_factory_test31.txt
@@ -1534,6 +1551,11 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    # Wait for the solve_plate_with_UCAC5 stuff to finish
    echo "wait"   >> transient_factory_test31.txt
    wait
+   # Print the output from each temporary file and then delete the file
+   for tempFile in "${tempFiles[@]}"; do
+    #cat "$tempFile"
+    rm -f "$tempFile"
+   done
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
    # Throw an error
@@ -1548,6 +1570,11 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    # Wait for the solve_plate_with_UCAC5 stuff to finish
    echo "wait"   >> transient_factory_test31.txt
    wait
+   # Print the output from each temporary file and then delete the file
+   for tempFile in "${tempFiles[@]}"; do
+    #cat "$tempFile"
+    rm -f "$tempFile"
+   done
    # Throw an error
    echo "ERROR calibrating magnitudes in the field $FIELD (found lightcurve.tmp_emergency_stop_debug)"
    echo "ERROR calibrating magnitudes in the field $FIELD (found lightcurve.tmp_emergency_stop_debug)" >> transient_factory_test31.txt
@@ -1686,6 +1713,11 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    # this is for UCAC5 plate solver
    echo "wait"   >> transient_factory_test31.txt
    wait
+   # Print the output from each temporary file and then delete the file
+   for tempFile in "${tempFiles[@]}"; do
+    #cat "$tempFile"
+    rm -f "$tempFile"
+   done
    #
    #continue
    # The NUMBER_OF_DETECTED_TRANSIENTS limit may be reached at the first SE run,
@@ -1706,6 +1738,12 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    # this is for UCAC5 plate solver AND parallel exclusion list preparation AND planets.txt and friends
    echo "wait"   >> transient_factory_test31.txt
    wait
+   # Print the output from each temporary file and then delete the file
+   for tempFile in "${tempFiles[@]}"; do
+    cat "$tempFile"
+    rm -f "$tempFile"
+   done
+   #
    echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
    echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE"
    util/transients/make_report_in_HTML.sh >> transient_factory_test31.txt
@@ -1901,10 +1939,10 @@ Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets and htt
 cat comets.txt >> transient_factory_test31.txt
 #
 echo "############################################################
-List of recent ASAS-SN transients:"
+List of recent ASAS-SN transients from https://www.astronomy.ohio-state.edu/asassn/transients.html :"
 cat asassn_transients_list.txt
 echo "############################################################
-List of recent ASAS-SN transients:" >> transient_factory_test31.txt
+List of recent ASAS-SN transients from https://www.astronomy.ohio-state.edu/asassn/transients.html :" >> transient_factory_test31.txt
 cat asassn_transients_list.txt >> transient_factory_test31.txt
 #
 echo "############################################################

@@ -241,6 +241,7 @@ int main( int argc, char **argv ) {
  if ( NULL == filelist_input_positions ) {
   // it is not - compare just one pair of positions and exit
   if ( 0 != compute_angular_distance_and_print_result( argv[1], argv[2], argv[3], argv[4], 0.0, &output_distance_arcsec ) ) {
+   fprintf( stderr, "An ERROR occured in %s while running compute_angular_distance_and_print_result()\n", argv[0] );
    return 1;
   } else {
    return 0;
