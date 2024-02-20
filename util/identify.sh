@@ -1271,9 +1271,9 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
   echo "Found the UCAC5 plate solution file $UCAC5_SOLUTION_NAME"
  fi
 
- STARNUM=`basename $LIGHTCURVEFILE .dat`
+ STARNUM=$(basename $LIGHTCURVEFILE .dat)
  echo "Looking for a star near the position $X $Y (pix) in $UCAC5_SOLUTION_NAME ..."
-  RADEC=`"$VAST_PATH"lib/find_star_in_wcs_catalog $X $Y < $UCAC5_SOLUTION_NAME`
+  RADEC=$("$VAST_PATH"lib/find_star_in_wcs_catalog $X $Y < $UCAC5_SOLUTION_NAME)
   if [ $? -ne 0 ];then
    echo "ERROR searching for the target star in the WCS catalog $UCAC5_SOLUTION_NAME"
    exit 1
@@ -1296,25 +1296,33 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
    echo "ERROR parsing the coordinates string \"$RADEC\""
    exit 1
   fi
-  echo ${STARNUM//out/" "} `"$VAST_PATH"lib/deg2hms $RADEC` $X $Y $WCS_IMAGE_NAME |awk '{printf "%s  %s %s  %8.3f %8.3f %s\n",$1,$2,$3,$4,$5,$6}'
+  echo ${STARNUM//out/" "} $("$VAST_PATH"lib/deg2hms $RADEC) $X $Y $WCS_IMAGE_NAME |awk '{printf "%s  %s %s  %8.3f %8.3f %s\n",$1,$2,$3,$4,$5,$6}'
   if [ "$START_NAME" = "identify_for_catalog.sh" ];then
    #rm -f tmp$$.cat
    exit 0
   fi
   echo " "
   if [ "$START_NAME" = "identify_transient.sh" ];then
+   TEMP_FILE__SDWC_OUTPUT=$(mktemp 2>/dev/null || echo "tempilefallback_SDWC_OUTPUT_$$.tmp")
    # This will stop util/search_databases_with_curl.sh from using terminal colors
-   "$VAST_PATH"util/search_databases_with_curl.sh `"$VAST_PATH"lib/deg2hms $RADEC` H
-   UNCALIBRATED_IMAGE_NAME=`echo ${WCS_IMAGE_NAME//"wcs_"/}`
-   DATEANDTIME=`grep "$UNCALIBRATED_IMAGE_NAME" "$VAST_PATH"vast_image_details.log | head -n1 |awk '{print $2" "$3}'`
-   "$VAST_PATH"util/transients/MPCheck_v2.sh `"$VAST_PATH"lib/deg2hms $RADEC` $DATEANDTIME H
+   "$VAST_PATH"util/search_databases_with_curl.sh $("$VAST_PATH"lib/deg2hms $RADEC) H > "$TEMP_FILE__SDWC_OUTPUT" &
+   TEMP_FILE__MPCheck_OUTPUT=$(mktemp 2>/dev/null || echo "tempilefallback_MPCheck_OUTPUT_$$.tmp")
+   UNCALIBRATED_IMAGE_NAME=$(echo ${WCS_IMAGE_NAME//"wcs_"/})
+   # How did this work at all????
+   DATEANDTIME=$(grep "$UNCALIBRATED_IMAGE_NAME" "$VAST_PATH"vast_image_details.log | head -n1 |awk '{print $2" "$3}')
+   echo "$VAST_PATH"util/transients/MPCheck_v2.sh $("$VAST_PATH"lib/deg2hms $RADEC) $DATEANDTIME H
+   "$VAST_PATH"util/transients/MPCheck_v2.sh $("$VAST_PATH"lib/deg2hms $RADEC) $DATEANDTIME H > "$TEMP_FILE__MPCheck_OUTPUT" &
+   wait
+   cat "$TEMP_FILE__SDWC_OUTPUT"
+   cat "$TEMP_FILE__MPCheck_OUTPUT"
+   rm -f "$TEMP_FILE__SDWC_OUTPUT" "$TEMP_FILE__MPCheck_OUTPUT"
   elif [ "$START_NAME" = "identify_justname.sh" ];then
    # awk -F'|' '{print $1}' is in case this will be a GCVS name
    # sed 's/^[ \t]*//;s/[ \t]*$//' is to remove the leading and trailing white spaces https://unix.stackexchange.com/questions/102008/how-do-i-trim-leading-and-trailing-whitespace-from-each-line-of-some-output
-   "$VAST_PATH"util/search_databases_with_curl.sh `"$VAST_PATH"lib/deg2hms $RADEC` | grep -v -e 'not found' -e 'Starting' -e 'Searching' | grep -v 'found' | tail -n1 | awk -F'|' '{print $1}' | sed 's/^[ \t]*//;s/[ \t]*$//'
+   "$VAST_PATH"util/search_databases_with_curl.sh $("$VAST_PATH"lib/deg2hms $RADEC) | grep -v -e 'not found' -e 'Starting' -e 'Searching' | grep -v 'found' | tail -n1 | awk -F'|' '{print $1}' | sed 's/^[ \t]*//;s/[ \t]*$//'
    exit 0
   else
-   "$VAST_PATH"util/search_databases_with_curl.sh `"$VAST_PATH"lib/deg2hms $RADEC`
+   "$VAST_PATH"util/search_databases_with_curl.sh $("$VAST_PATH"lib/deg2hms $RADEC)
    ### Give user a chance to interrupt the script
    if [ $? -ne 0 ];then
     exit 1
@@ -1338,7 +1346,7 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
     TEST_SUBSTRING="${TEST_SUBSTRING:0:4}"
     #TEST_SUBSTRING=`expr substr $TEST_SUBSTRING  1 4`
     if [ "$TEST_SUBSTRING" = "wcs_" ];then
-     cp $FITSFILE .
+     cp -v $FITSFILE .
      WCS_IMAGE_NAME="$BASENAME_FITSFILE"
     else
      WCS_IMAGE_NAME=wcs_"$BASENAME_FITSFILE"
@@ -1357,15 +1365,15 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
     else
      echo "Found the UCAC5 plate solution file $UCAC5_SOLUTION_NAME"
     fi
-    RADEC=`"$VAST_PATH"lib/find_star_in_wcs_catalog $X $Y < $UCAC5_SOLUTION_NAME`
-    "$VAST_PATH"util/search_databases_with_curl.sh `"$VAST_PATH"lib/deg2hms $RADEC`
+    RADEC=$("$VAST_PATH"lib/find_star_in_wcs_catalog $X $Y < $UCAC5_SOLUTION_NAME)
+    "$VAST_PATH"util/search_databases_with_curl.sh $("$VAST_PATH"lib/deg2hms $RADEC)
     ### Give user a chance to interrupt the script
     if [ $? -ne 0 ];then
      exit 1
     fi
     ###
     echo " "
-    "$VAST_PATH"util/search_databases_with_vizquery.sh `"$VAST_PATH"lib/deg2hms $RADEC` ${STARNUM//out/" "}  $FIELD_OF_VIEW_ARCMIN
+    "$VAST_PATH"util/search_databases_with_vizquery.sh $("$VAST_PATH"lib/deg2hms $RADEC) ${STARNUM//out/" "}  $FIELD_OF_VIEW_ARCMIN
    fi 
    ###################################
   fi
@@ -1378,7 +1386,7 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
   # old syntax
   #echo -n "rm all; load $WCS_IMAGE_NAME/;" `"$VAST_PATH"lib/deg2hms $RADEC`" ; zoom 5 arcmin ; stick ; get Aladin(POSSII J,JPEG)" `"$VAST_PATH"lib/deg2hms $RADEC`" ; get VizieR(USNO-B1)" `"$VAST_PATH"lib/deg2hms $RADEC`" 1'; get Simbad " `"$VAST_PATH"lib/deg2hms $RADEC`" 1'; get VizieR(2MASS)" `"$VAST_PATH"lib/deg2hms $RADEC`" 1' ;" > Aladin.script
   # new syntax
-  RADEC_HMS=`"$VAST_PATH"lib/deg2hms $RADEC`
+  RADEC_HMS=$("$VAST_PATH"lib/deg2hms $RADEC)
   echo -n "rm all; get hips(CDS/P/DSS2/color) $RADEC_HMS ; load $WCS_IMAGE_NAME/; $RADEC_HMS ; zoom 5 arcmin ; get VizieR(USNO-B1) $RADEC_HMS 1'; get Simbad $RADEC_HMS 1'; get VizieR(2MASS) $RADEC_HMS 1' ; get hips(CDS/I/350/gaiaedr3) $RADEC_HMS ; get VizieR(J/AJ/156/241/table4) 18:46:37.16 -12:38:49.7 1'" > Aladin.script
   # If the star is matched with USNO-B1.0 - mark the USNO-B1.0 star in Aladin
   #if [ -f search_databases_with_vizquery_USNOB_ID_OK.tmp ];then
@@ -1388,7 +1396,7 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
   fi
   echo "" >> Aladin.script
   export PATH=$PATH:$HOME # Aladin is often saved in the home directory
-  echo "Here is the Aladin script for you (copy it to Aladin console):"
+  echo "Here is the Aladin script you may copy to Aladin console:"
   echo " "
   cat Aladin.script
   echo " "
