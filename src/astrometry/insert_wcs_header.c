@@ -59,13 +59,15 @@ int main( int argc, char **argv ) {
  }
  fits_get_hdrspace( fptr, &No_of_wcs_keys, &wcs_keys_left, &status );
  wcs_key= malloc( No_of_wcs_keys * sizeof( char * ) );
- if ( wcs_key == NULL ) {
+ if ( NULL == wcs_key ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for wcs_key\n" );
   exit( EXIT_FAILURE );
  };
+ // Initialize all elements to NULL
+ memset(wcs_key, 0, sizeof(char *) * No_of_wcs_keys);
  //
  wcs_key[0]= (char *)malloc( FLEN_CARD * sizeof( char ) );
- if ( wcs_key[0] == NULL ) {
+ if ( NULL == wcs_key[0] ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for wcs_key[0](try_to_guess_image_fov)\n" );
   exit( EXIT_FAILURE );
  };
@@ -74,7 +76,7 @@ int main( int argc, char **argv ) {
  // Why on earth we start from 1???
  for ( i= 1; i < No_of_wcs_keys; i++ ) {
   wcs_key[i]= (char *)malloc( FLEN_CARD * sizeof( char ) ); // FLEN_CARD length of a FITS header card defined in fitsio.h
-  if ( wcs_key[i] == NULL ) {
+  if ( NULL == wcs_key[i] ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for wcs_key[i]\n" );
    exit( EXIT_FAILURE );
   };
@@ -328,19 +330,6 @@ int main( int argc, char **argv ) {
   fits_delete_key( outputfptr, "TR?_*", &status );
   status= 0;
  }
-
- /*
-  fits_delete_key(outputfptr, "PV1_1", &status);status= 0;
-  fits_delete_key(outputfptr, "PV2_1", &status);status= 0;
-  fits_delete_key(outputfptr, "PV1_2", &status);status= 0;
-  fits_delete_key(outputfptr, "PV2_2", &status);status= 0;
-  fits_delete_key(outputfptr, "PV1_4", &status);status= 0;
-  fits_delete_key(outputfptr, "PV2_4", &status);status= 0;
-  fits_delete_key(outputfptr, "PV1_5", &status);status= 0;
-  fits_delete_key(outputfptr, "PV2_5", &status);status= 0;
-  fits_delete_key(outputfptr, "PV1_6", &status);status= 0;
-  fits_delete_key(outputfptr, "PV2_6", &status);status= 0;
- */
 
  // list all possible PV keywords
 

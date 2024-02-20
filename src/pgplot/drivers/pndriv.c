@@ -610,13 +610,13 @@ void PNDRIV( int *opcode, float *rbuf, int *nbuf, char *chr, int *lchr, int *mod
   /* return device capabilities */
  case 4:
   *lchr= strlen( DEVICE_CAPABILITIES );
-  strncpy( chr, DEVICE_CAPABILITIES, *lchr );
+  strncpy( chr, DEVICE_CAPABILITIES, *lchr + 1 );
   break;
 
   /* return default device filename */
  case 5:
   *lchr= strlen( DEFAULT_FILENAME );
-  strncpy( chr, DEFAULT_FILENAME, *lchr );
+  strncpy( chr, DEFAULT_FILENAME, *lchr + 1 );
   break;
 
   /* default edge coordinates of view surface */

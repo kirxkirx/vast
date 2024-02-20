@@ -695,7 +695,7 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
  sprintf( DATEOBS, "%d-%02d-%02d", year, month, day );
  
  if( strlen(timestring) > 0 ) {
-  strncat( DATEOBS, "T", 1);
+  strncat( DATEOBS, "T", 2);
   strncat( DATEOBS, timestring, 32-12);
  }
 

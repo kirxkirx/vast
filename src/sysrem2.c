@@ -39,7 +39,8 @@
 int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_filenames, int *N_sysrem_input_star_list_lst ) {
 
  FILE *input_sysrem_input_star_list_lst;
- FILE *outputfile[SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS]= { NULL }; // I'm initializing it to NULL just to make the compiler happy
+ //FILE *outputfile[SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS]= { NULL }; // I'm initializing it to NULL just to make the compiler happy
+ FILE **outputfile;
  unsigned int Nstars, Noutput_files, oputput_file_counter;
  char full_string[MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG];
 
@@ -72,6 +73,15 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
  //
  Noutput_files= MAX( Noutput_files, 2 );
  fprintf( stderr, "Will split sysrem_input_star_list.lst into %d processing blocks\n", Noutput_files );
+
+ outputfile=malloc(sizeof(FILE *) * SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS);
+ if ( NULL == outputfile ) {
+  fprintf( stderr, "ERROR! Can't allocate memory for outputfile array\n" );
+  exit( EXIT_FAILURE );
+ }
+ // Initialize all elements to NULL
+ memset(outputfile, 0, sizeof(FILE *) * SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS);
+
 
  // open the output files
  for ( oputput_file_counter= 0; oputput_file_counter < Noutput_files; oputput_file_counter++ ) {
@@ -112,6 +122,7 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
  for ( oputput_file_counter= 0; oputput_file_counter < Noutput_files; oputput_file_counter++ ) {
   fclose( outputfile[oputput_file_counter] );
  }
+ free(outputfile);
 
  ( *N_sysrem_input_star_list_lst )= Noutput_files;
 
