@@ -39,9 +39,9 @@
 int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_filenames, int *N_sysrem_input_star_list_lst ) {
 
  FILE *input_sysrem_input_star_list_lst;
- //FILE *outputfile[SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS]= { NULL }; // I'm initializing it to NULL just to make the compiler happy
- FILE **outputfile;
- unsigned int Nstars, Noutput_files, oputput_file_counter;
+ FILE *outputfile[SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS]; //= { NULL }; // I'm initializing it to NULL just to make the compiler happy
+ //FILE **outputfile;
+ unsigned int Nstars, Noutput_files, output_file_counter;
  char full_string[MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG];
 
  Nstars= 0;
@@ -68,30 +68,33 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
  }
 
  // Split the input sysrem_input_star_list.lst into Noutput_files
- Noutput_files= (int)( (double)Nstars / (double)SYSREM_N_STARS_IN_PROCESSING_BLOCK );
+ Noutput_files= (unsigned int)( (double)Nstars / (double)SYSREM_N_STARS_IN_PROCESSING_BLOCK );
  Noutput_files= MIN( Noutput_files, SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS );
  //
  Noutput_files= MAX( Noutput_files, 2 );
+ Noutput_files= (unsigned int)Noutput_files; // it's not floating point, for sure!
  fprintf( stderr, "Will split sysrem_input_star_list.lst into %d processing blocks\n", Noutput_files );
 
- outputfile=malloc(sizeof(FILE *) * SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS);
+ /*
+ outputfile=malloc(sizeof(FILE *) * Noutput_files);
  if ( NULL == outputfile ) {
   fprintf( stderr, "ERROR! Can't allocate memory for outputfile array\n" );
   exit( EXIT_FAILURE );
  }
  // Initialize all elements to NULL
+ //memset(outputfile, 0, sizeof(FILE *) * Noutput_files);
+ */
  memset(outputfile, 0, sizeof(FILE *) * SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS);
 
-
  // open the output files
- for ( oputput_file_counter= 0; oputput_file_counter < Noutput_files; oputput_file_counter++ ) {
-  sprintf( split_sysrem_input_star_list_lst_filenames[oputput_file_counter], "sysrem_input_star_list.lst_%02d", oputput_file_counter );
-  outputfile[oputput_file_counter]= fopen( split_sysrem_input_star_list_lst_filenames[oputput_file_counter], "w" );
-  if ( NULL == outputfile[oputput_file_counter] ) {
-   fprintf( stderr, "ERROR opening file %s for writing\n", split_sysrem_input_star_list_lst_filenames[oputput_file_counter] );
+ for ( output_file_counter= 0; output_file_counter < Noutput_files; output_file_counter++ ) {
+  sprintf( split_sysrem_input_star_list_lst_filenames[output_file_counter], "sysrem_input_star_list.lst_%02d", output_file_counter );
+  outputfile[output_file_counter]= fopen( split_sysrem_input_star_list_lst_filenames[output_file_counter], "w" );
+  if ( NULL == outputfile[output_file_counter] ) {
+   fprintf( stderr, "ERROR opening file %s for writing\n", split_sysrem_input_star_list_lst_filenames[output_file_counter] );
    exit( EXIT_FAILURE );
   }
-  fprintf( stderr, "Opening file %s for writing\n", split_sysrem_input_star_list_lst_filenames[oputput_file_counter] );
+  fprintf( stderr, "Opening file %s for writing\n", split_sysrem_input_star_list_lst_filenames[output_file_counter] );
  }
 
  // Re-open the input file and write its content in the output files
@@ -100,15 +103,15 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
   fprintf( stderr, "ERROR! Can't open file sysrem_input_star_list.lst (2)\n" );
   exit( EXIT_FAILURE );
  }
- oputput_file_counter= 0;
+ output_file_counter= 0;
 
  while ( NULL != fgets( full_string, MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG, input_sysrem_input_star_list_lst ) ) {
-  if ( NULL == outputfile[oputput_file_counter % Noutput_files] ) {
-   fprintf( stderr, "ERROR: NULL == outputfile[oputput_file_counter modulus Noutput_files] this shouldn't be happening!\n" );
+  if ( NULL == outputfile[output_file_counter % Noutput_files] ) {
+   fprintf( stderr, "ERROR: NULL == outputfile[output_file_counter modulus Noutput_files] this shouldn't be happening!\n" );
    exit( EXIT_FAILURE );
   }
-  fputs( full_string, outputfile[oputput_file_counter % Noutput_files] );
-  oputput_file_counter++;
+  fputs( full_string, outputfile[output_file_counter % Noutput_files] );
+  output_file_counter++;
  }
 
  fclose( input_sysrem_input_star_list_lst );
@@ -119,10 +122,14 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
  }
 
  // close the output files
- for ( oputput_file_counter= 0; oputput_file_counter < Noutput_files; oputput_file_counter++ ) {
-  fclose( outputfile[oputput_file_counter] );
+ for ( output_file_counter= 0; output_file_counter < Noutput_files; output_file_counter++ ) {
+  // why would outputfile[output_file_counter] be NULL?! I don't know. Trying to expect the unexpected.
+  //if ( NULL != outputfile[output_file_counter] ) { 
+   fprintf(stderr, "Closing the output file %d\n", output_file_counter);
+   fclose( outputfile[output_file_counter] );
+  //}
  }
- free(outputfile);
+ //free(outputfile);
 
  ( *N_sysrem_input_star_list_lst )= Noutput_files;
 

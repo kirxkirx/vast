@@ -1946,10 +1946,10 @@ List of recent ASAS-SN transients from https://www.astronomy.ohio-state.edu/asas
 cat asassn_transients_list.txt >> transient_factory_test31.txt
 #
 echo "############################################################
-List of TOCP transients:"
+List of TOCP transients from http://www.cbat.eps.harvard.edu/unconf/tocp.html :"
 cat tocp_transients_list.txt
 echo "############################################################
-List of TOCP transients:" >> transient_factory_test31.txt
+List of TOCP transients from http://www.cbat.eps.harvard.edu/unconf/tocp.html :" >> transient_factory_test31.txt
 cat tocp_transients_list.txt >> transient_factory_test31.txt
 ###############################################################################################################
 
