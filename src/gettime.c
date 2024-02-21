@@ -1817,6 +1817,11 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     sprintf( stderr_output, "Exposure %3.0lf sec, %02d.%02d.%4d %02d:%02d:%02d %s = JD%s %.5lf\n", exposure, structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, structureTIME.tm_sec, tymesys_str_in, tymesys_str_out, ( *JD ) );
   }
  } else {
+  // This else is for:
+  // status==202 here means the JD keyword is not found
+  // date_parsed==0 means DATE-OBS was not found and parsed
+  // if ( status == 202 && date_parsed != 0 && expstart_mjd_parsed == 0 ) {
+
 #ifdef DEBUGMESSAGES
   fprintf( stderr, "entering  else corresponding to if ( status == 202 && date_parsed != 0 && expstart_mjd_parsed == 0 )\n" );
 #endif
@@ -1869,7 +1874,15 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 #ifdef DEBUGMESSAGES
    fprintf( stderr, "entering if ( NULL != log_output )\n" );
 #endif
-   sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", 0, 0, 0, 0, 0, 0, exposure );
+   // So why don't we form calendar date of exposure start
+   if( 0 != ( *JD ) ) {
+    time_t unix_time_exposure_start_for_logs = unix_time - (time_t)(exposure/2.0);
+    struct tm * structureTIME_for_logs = gmtime(&unix_time_exposure_start_for_logs);
+    sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", structureTIME_for_logs->tm_mday, structureTIME_for_logs->tm_mon + 1, structureTIME_for_logs->tm_year - 100 + 2000, structureTIME_for_logs->tm_hour, structureTIME_for_logs->tm_min, structureTIME_for_logs->tm_sec, exposure );    
+   } else {
+    // somehting is messed up here - fallback to zeroes in the log file
+    sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", 0, 0, 0, 0, 0, 0, exposure );
+   }
   }
   //
  }

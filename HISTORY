@@ -15,6 +15,10 @@
 	for example 'util/get_image_date 18.01.2024 03:09:49'. This date format has always been used in 
 	'vast_summary.log' and 'vast_image_details.log' files for historical reasons and the new feature should
 	simplify conversion to other date formats.
+	* VaST will now record computed calendar date/time of exposure start (based JD and exposure time) 
+	for images where the observation time is specified by (any variation of) a JD keyword rather than DATE-OBS.
+	Previously, for such images only the JD was recorded correctly in the log files vast_image_details.log and 
+	vast_summary.log while the calendar date was set to 0.
 	* The dark frame subtraction tool 'util/ccd/ms' will check if the temperatures of the light and dark frame
 	(as recorded in SET-TEMP and CCD-TEMP FITS header keywords) are close enough to each other. This should
 	prevent the mistake of subtracting a dark frame taken at different temperature than the light frame, 
