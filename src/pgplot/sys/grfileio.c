@@ -73,6 +73,7 @@ int fname_len;
  */
  while ( slen > 0 && name[slen - 1] == ' ' )
   slen--;
+ if ( slen > 0 ) {
  /*
  * Dynamically allocate a buffer to copy the FORTRAN string into.
  */
@@ -98,6 +99,7 @@ int fname_len;
  } else {
   fprintf( stderr, "grofil: Insufficient memory\n" );
  };
+ } // if ( slen > 0 ) {
  return fd;
 }
 

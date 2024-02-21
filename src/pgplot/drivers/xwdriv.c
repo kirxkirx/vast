@@ -4218,7 +4218,8 @@ char *program;
     fprintf( stderr, "%s: Insufficient memory to locate program: %s\n",
              XW_IDENT, program );
     free( buf );
-    return buf;
+    return NULL;
+    //return buf;
    };
    buf= new_buf;
   };
