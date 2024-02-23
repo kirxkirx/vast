@@ -794,6 +794,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  char EXPOSURE_COMMENT[2048]; // make it long, just in case
  char tymesys_str_in[32];
  char tymesys_str_out[32];
+ char coma_or_whitespace_character_after_timesys;
  double inJD= 0.0;
  double endJD= 0.0;    // for paring the Siril-style EXPSTART/EXPEND keywords
  double tjd_zero= 0.0; // for parsing TESS TICA FFIs
@@ -1788,8 +1789,15 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   }
 
   if ( NULL != finder_chart_timestring_output ) {
+   // make sure a lonely coma is not hanging in the middle of the string if tymesys_str_in is a white space
+   coma_or_whitespace_character_after_timesys=',';
+   if( 0 == strcmp( tymesys_str_in, " ") ) {
+    coma_or_whitespace_character_after_timesys=' ';
+   }
    if ( exposure > 0.0 ) {
-    sprintf( finder_chart_timestring_output, "%4d-%02d-%02d %02d:%02d:%02d %s, %.0lf sec",
+    // Write exposure time if it's non-zero
+    //sprintf( finder_chart_timestring_output, "%4d-%02d-%02d %02d:%02d:%02d %s, %.0lf sec",
+    sprintf( finder_chart_timestring_output, "%4d-%02d-%02d %02d:%02d:%02d %s%c %.0lf sec",
              structureTIME.tm_year - 100 + 2000,
              structureTIME.tm_mon + 1,
              structureTIME.tm_mday,
@@ -1797,8 +1805,10 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
              structureTIME.tm_min,
              structureTIME.tm_sec,
              tymesys_str_in,
+             coma_or_whitespace_character_after_timesys,
              exposure );
    } else {
+    // Do not write exposure time if it's zero
     sprintf( finder_chart_timestring_output, "%4d-%02d-%02d %02d:%02d:%02d %s",
              structureTIME.tm_year - 100 + 2000,
              structureTIME.tm_mon + 1,

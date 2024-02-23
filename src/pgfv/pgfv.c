@@ -2777,6 +2777,7 @@ int main( int argc, char **argv ) {
      cpgsch( 1.0 );              /* Set normal font size */
      cpgscr( 1, 1.0, 1.0, 1.0 ); /* */
     } else {
+     // note, this is not used when generating finder charts
      cpgmtxt( "T", 1.0, 0.5, 0.5, stderr_output );
     }
    }
@@ -2835,13 +2836,12 @@ int main( int argc, char **argv ) {
       //
       cpgsch( 2.0 ); /* Set small font size */
       cpgslw( 4 );   // increase line width
-      // cpgslw(10);   // increase line width
+      // 
       cpgmtxt( "T", -1.0, 0.5, 0.5, "\\fR N" );
       cpgmtxt( "LV", -0.5, 0.5, 0.5, "\\fR E" );
       //
       if ( 1 == use_datestringinsideimg ) {
        // cpgsch(1.0);
-       // cpgmtxt("B", -1.0, 0.5, 0.5, stderr_output);
        sprintf( finder_chart_string_to_print, "\\fR %s", finder_chart_timestring_output );
        cpgmtxt( "B", -1.0, 0.05, 0.0, finder_chart_string_to_print );
        // cpgsch(2.0);
