@@ -160,22 +160,25 @@ done
 
 ########### End of checks - start the work ###########
 
+RESAMPLED_IMAGE_NAME="resample_$(basename $FITSFILE)"
+RESAMPLED_WEIGHTS_NAME="resample_weights_$(basename $FITSFILE)"
+
 # Resample the image to the new grid
-swarp -SUBTRACT_BACK N -IMAGEOUT_NAME resample_"$FITSFILE" -WEIGHTOUT_NAME resample_weights_"$FITSFILE" "$FITSFILE"
+swarp -SUBTRACT_BACK N -IMAGEOUT_NAME "$RESAMPLED_IMAGE_NAME" -WEIGHTOUT_NAME "$RESAMPLED_WEIGHTS_NAME" "$FITSFILE"
 if [ $? -ne 0 ];then
  echo "ERROR running swarp"
  exit 1
 fi
-#mv -v coadd.fits resample_"$FITSFILE"
+#mv -v coadd.fits "$RESAMPLED_IMAGE_NAME"
 
 # Solve the image again in attempt to mitigate this SIP vs TPV nonsesnse
-util/wcs_image_calibration.sh resample_"$FITSFILE"
-if [ -f wcs_resample_"$FITSFILE" ];then
- mv -vf wcs_resample_"$FITSFILE" resample_"$FITSFILE"
+util/wcs_image_calibration.sh "$RESAMPLED_IMAGE_NAME"
+if [ -f wcs_"$RESAMPLED_IMAGE_NAME" ];then
+ mv -vf wcs_"$RESAMPLED_IMAGE_NAME" "$RESAMPLED_IMAGE_NAME"
 fi
 
 # Get the pixel position we want to mark
-PIXEL_POSITION_TO_MARK=`lib/bin/sky2xy resample_"$FITSFILE" $TARGET_RA $TARGET_DEC | awk '{print $5" "$6}'`
+PIXEL_POSITION_TO_MARK=`lib/bin/sky2xy "$RESAMPLED_IMAGE_NAME" $TARGET_RA $TARGET_DEC | awk '{print $5" "$6}'`
 if [ $? -ne 0 ];then
  echo "ERROR converting RA, Dec to the pixel coordinates"
  exit 1
@@ -188,7 +191,7 @@ fi
 ############ Make plot without the FoV string ############
 echo "Plotting the finder chart without the field of view label"
 # Make the PNG finding chart
-COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --datestringinsideimg -- resample_$FITSFILE $PIXEL_POSITION_TO_MARK "
+COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --datestringinsideimg -- $RESAMPLED_IMAGE_NAME $PIXEL_POSITION_TO_MARK "
 echo $COMMAND
 $COMMAND
 if [ $? -ne 0 ];then
@@ -201,14 +204,15 @@ if [ ! -s pgplot.png ];then
 fi
 # Everything is fine
 PIXEL_POSITION_TO_MARK_FOR_PNG=${PIXEL_POSITION_TO_MARK//" "/_}
-FITSFILE_NAME_FOR_PNG=${FITSFILE//./_}
-mv -v "pgplot.png" resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov.png
+FITSFILE_NAME_FOR_PNG="resample_$(basename "$FITSFILE")"
+FITSFILE_NAME_FOR_PNG=${FITSFILE_NAME_FOR_PNG//./_}
+mv -v "pgplot.png" "$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov.png
 
 
 ############ Make plot with the FoV string ############
 echo "Plotting the finder chart with the field of view label"
 # Make the PNG finding chart
-COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --datestringinsideimg --imgsizestringinsideimg -- resample_$FITSFILE $PIXEL_POSITION_TO_MARK "
+COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --datestringinsideimg --imgsizestringinsideimg -- $RESAMPLED_IMAGE_NAME $PIXEL_POSITION_TO_MARK "
 echo $COMMAND
 $COMMAND
 if [ $? -ne 0 ];then
@@ -220,9 +224,9 @@ if [ ! -s pgplot.png ];then
  exit 1
 fi
 # Everything is fine
-PIXEL_POSITION_TO_MARK_FOR_PNG=${PIXEL_POSITION_TO_MARK//" "/_}
-FITSFILE_NAME_FOR_PNG=${FITSFILE//./_}
-mv -v "pgplot.png" resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix.png
+#PIXEL_POSITION_TO_MARK_FOR_PNG=${PIXEL_POSITION_TO_MARK//" "/_}
+#FITSFILE_NAME_FOR_PNG=${FITSFILE//./_}
+mv -v "pgplot.png" "$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix.png
 
 # Note that you may combine multiple images side-by-side using something like
 # montage resample_wcs_Sco3_20*png -tile 3x2 -geometry +0+0 out.png
@@ -237,7 +241,7 @@ for PIXELS_AROUND_TARGET in 20 32 64 128 256 512 ;do
 
  echo "Plotting the finder chart with the field of view label"
  # Make the PNG finding chart
- COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --targetmark --datestringinsideimg --imgsizestringinsideimg resample_$FITSFILE $PIXEL_POSITION_TO_MARK "
+ COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --targetmark --datestringinsideimg --imgsizestringinsideimg $RESAMPLED_IMAGE_NAME $PIXEL_POSITION_TO_MARK "
  echo $COMMAND
  if [ ! -z "$4" ];then
   $COMMAND --namelabel "$4"
@@ -253,23 +257,23 @@ for PIXELS_AROUND_TARGET in 20 32 64 128 256 512 ;do
   exit 1
  fi
  # Everything is fine
- PIXEL_POSITION_TO_MARK_FOR_PNG=${PIXEL_POSITION_TO_MARK//" "/_}
- FITSFILE_NAME_FOR_PNG=${FITSFILE//./_}
- mv -v "pgplot.png" finder_"$STR_PIXELS_AROUND_TARGET"pix_resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix.png
+ #PIXEL_POSITION_TO_MARK_FOR_PNG=${PIXEL_POSITION_TO_MARK//" "/_}
+ #FITSFILE_NAME_FOR_PNG=${FITSFILE//./_}
+ mv -v "pgplot.png" finder_"$STR_PIXELS_AROUND_TARGET"pix_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix.png
  # make the _nofov version
- COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --targetmark --datestringinsideimg resample_$FITSFILE $PIXEL_POSITION_TO_MARK "
+ COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --targetmark --datestringinsideimg $RESAMPLED_IMAGE_NAME $PIXEL_POSITION_TO_MARK "
  echo $COMMAND
  $COMMAND
- mv -v "pgplot.png" finder_"$STR_PIXELS_AROUND_TARGET"pix_resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov.png
+ mv -v "pgplot.png" finder_"$STR_PIXELS_AROUND_TARGET"pix_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov.png
  # make the _nofov_notargetmark version
- COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --datestringinsideimg resample_$FITSFILE $PIXEL_POSITION_TO_MARK "
+ COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --datestringinsideimg $RESAMPLED_IMAGE_NAME $PIXEL_POSITION_TO_MARK "
  echo $COMMAND
  $COMMAND
- mv -v "pgplot.png" finder_"$STR_PIXELS_AROUND_TARGET"pix_resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov_notargetmark.png
+ mv -v "pgplot.png" finder_"$STR_PIXELS_AROUND_TARGET"pix_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov_notargetmark.png
  # make the _notargetmark version
- COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --datestringinsideimg --imgsizestringinsideimg resample_$FITSFILE $PIXEL_POSITION_TO_MARK "
+ COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --datestringinsideimg --imgsizestringinsideimg $RESAMPLED_IMAGE_NAME $PIXEL_POSITION_TO_MARK "
  echo $COMMAND
  $COMMAND
- mv -v "pgplot.png" finder_"$STR_PIXELS_AROUND_TARGET"pix_resample_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_notargetmark.png
+ mv -v "pgplot.png" finder_"$STR_PIXELS_AROUND_TARGET"pix_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_notargetmark.png
 
 done
