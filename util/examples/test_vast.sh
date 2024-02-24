@@ -246,7 +246,7 @@ function remove_test_data_to_save_space {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." 1>&2
-    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__plate_solve_failure_test ../NMW_calibration_test ;do
+    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__plate_solve_failure_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -10446,18 +10446,18 @@ if [ -d ../NMW_find_NovaCas_august31_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_find_NovaCas_august31_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_find_NovaCas_august31_test/second_epoch_images &> test_ncas$$.tmp
+ REFERENCE_IMAGES=../NMW_find_NovaCas_august31_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_find_NovaCas_august31_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31000_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_ncas$$.tmp
+ grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31000_CANNOT_FIND_STAR_ERROR_MESSAGE"
  fi
- rm -f test_ncas$$.tmp
+ rm -f test_transient_search_script_terminal_output$$.tmp
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD be an error message about distance between reference and second-epoch image centers
@@ -10892,18 +10892,18 @@ if [ -d ../NMW_ATLAS_Mira_in_Ser1 ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_ATLAS_Mira_in_Ser1/reference_images/ util/transients/transient_factory_test31.sh ../NMW_ATLAS_Mira_in_Ser1/second_epoch_images &> test_ncas$$.tmp
+ REFERENCE_IMAGES=../NMW_ATLAS_Mira_in_Ser1/reference_images/ util/transients/transient_factory_test31.sh ../NMW_ATLAS_Mira_in_Ser1/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA000_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_ncas$$.tmp
+ grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA000_CANNOT_FIND_STAR_ERROR_MESSAGE"
  fi
- rm -f test_ncas$$.tmp
+ rm -f test_transient_search_script_terminal_output$$.tmp
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message about distance between reference and second-epoch image centers
@@ -11363,18 +11363,18 @@ if [ -d ../NMW_Sgr1_NovaSgr20N4_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_Sgr1_NovaSgr20N4_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Sgr1_NovaSgr20N4_test/second_epoch_images &> test_ncas$$.tmp
+ REFERENCE_IMAGES=../NMW_Sgr1_NovaSgr20N4_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Sgr1_NovaSgr20N4_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_ncas$$.tmp
+ grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_CANNOT_FIND_STAR_ERROR_MESSAGE"
  fi
- rm -f test_ncas$$.tmp
+ rm -f test_transient_search_script_terminal_output$$.tmp
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
@@ -11642,6 +11642,342 @@ fi
 fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
 
 
+##### Nova Sgr 2024 N1 test #####
+### Disable this test for GitHub Actions
+#if [ "$GITHUB_ACTIONS" != "true" ];then 
+# Download the test dataset if needed
+if [ ! -d ../NMW_Sco6_NovaSgr24N1_test ];then
+ cd ..
+ curl -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Sco6_NovaSgr24N1_test.tar.bz2" && tar -xvjf NMW_Sco6_NovaSgr24N1_test.tar.bz2 && rm -f NMW_Sco6_NovaSgr24N1_test.tar.bz2
+ cd $WORKDIR
+fi
+# If the test data are found
+if [ -d ../NMW_Sco6_NovaSgr24N1_test ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "NMW find Nova Sgr 2024 N1 test " 1>&2
+ echo -n "NMW find Nova Sgr 2024 N1 test: " >> vast_test_report.txt 
+ #
+ cp -v bad_region.lst_default bad_region.lst
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ #
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
+ # Instead of running the single-field search,
+ # we test the production NMW script
+ REFERENCE_IMAGES=../NMW_Sco6_NovaSgr24N1_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Sco6_NovaSgr24N1_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_EXIT_CODE"
+ fi
+ # Test for the specific error message
+ grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_CANNOT_FIND_STAR_ERROR_MESSAGE"
+ fi
+ rm -f test_transient_search_script_terminal_output$$.tmp
+ #
+ if [ -f transient_report/index.html ];then
+  # there SHOULD NOT be an error message 
+  grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_ERROR_MESSAGE_IN_index_html"
+   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
+   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNSGR24N1_NO_ERROR_MESSAGE_IN_index_html ######
+$GREP_RESULT
+-----------------
+$CAT_RESULT"
+  fi
+  # The copy of the log file should be in the HTML report
+  grep --quiet "Images processed 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1001"
+  fi
+  NUMBER_OF_GOOD_SE_RUNS=`grep -c "Images processed 4" transient_report/index.html`
+  if [ $NUMBER_OF_GOOD_SE_RUNS -lt 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1001a"
+  fi
+  grep --quiet "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1002"
+  fi
+  NUMBER_OF_GOOD_SE_RUNS=`grep -c "Images used for photometry 4" transient_report/index.html`
+  if [ $NUMBER_OF_GOOD_SE_RUNS -lt 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1002a"
+  fi
+  grep --quiet "First image: 2456031.51404 14.04.2012 00:19:58" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1003"
+  fi
+  grep --quiet "2460364.62567 24.02.2024 03:00:48" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_check_dates_consistency_in_vast_image_details_log"
+  fi
+  # Hunting the mysterious non-zero reference frame rotation cases
+  if [ -f vast_image_details.log ];then
+   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10_nonzero_ref_frame_rotation"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNSGR24N10_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNSGR24N10_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10_NO_vast_image_details_log"
+  fi
+  #
+  #
+  # Nova Sgr 2024 N1 has no automatic ID in the current VaST version,
+  # even worse, there seems to be a false ID with an OGLE LPV variable
+  #grep --quiet "N Sgr 2024 N1" transient_report/index.html
+  #if [ $? -ne 0 ];then
+  # TEST_PASSED=0
+  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10110"
+  #fi
+  grep --quiet "2024 02 24\.125.  2460364\.625.  11\.1.  18:02:53\... -29:14:17\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10110a"
+   GREP_RESULT=`grep "2024 02 24\.125.  2460364\.625.  11\.1.  18:02:53\... -29:14:17\.." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNSGR24N10110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2024 02 24\.125.  2460364\.625.  11\...  18:02:53\... -29:14:17\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 18:02:53.50 -29:14:14.9 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10110a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10110a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  # Test Stub MPC report line
+  grep --quiet "     TAU0008  C2024 02 24.125.. 18 02 53\... -29 14 17\..          11\.. R      C32" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10110b"
+  fi
+  # Test Stub TOCP report line
+  grep --quiet "TCP 2024 02 24.125.*  18 02 53\... -29 14 17\..  11\.. U             Sgr       9 0" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10110b"
+  fi
+
+  # V1770 Sgr
+  grep --quiet "V1770 Sgr" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10210"
+  fi
+  grep --quiet "2024 02 24\.125.  2460364\.625.  10\...  18:04:30\... -31:15:40\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10210a"
+   GREP_RESULT=`grep "2024 02 24\.125.  2460364\.625.  10\...  18:04:30\... -31:15:40\.." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNSGR24N10210a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2024 02 24\.125.  2460364\.625.  10\...  18:04:30\... -31:15:40\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 18:04:30.33 -31:15:38.1 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10210a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10210a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+
+
+  # Mis V0540
+  grep --quiet "Mis V0540" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10310"
+  fi
+  grep --quiet "2024 02 24\.125.  2460364\.625.  11\...  17:59:06\... -28:31:19\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10310a"
+   GREP_RESULT=`grep "2024 02 24\.125.  2460364\.625.  11\...  17:59:06\... -28:31:19\.." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNSGR24N10110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2024 02 24\.125.  2460364\.625.  11\...  17:59:06\... -28:31:19\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:59:05.91 -28:31:17.6 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10310a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10310a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+
+
+  # V1783 Sgr
+  grep --quiet "V1783 Sgr" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10410"
+  fi
+  grep --quiet "2024 02 24\.125.  2460364\.625.  10\...  18:04:49\... -32:43:13\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10410a"
+   GREP_RESULT=`grep "2024 02 24\.125.  2460364\.625.  10\...  18:04:49\... -32:43:13\.." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNSGR24N10110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2024 02 24\.125.  2460364\.625.  10\...  18:04:49\... -32:43:13\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 18:04:49.74 -32:43:13.6 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10410a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10410a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+
+  # SY Sco
+  grep --quiet "SY Sco" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10410"
+  fi
+  grep --quiet "2024 02 24.125.  2460364.625.  9\...  17:53:48\... -34:2.:..\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10410a"
+   GREP_RESULT=`grep "2024 02 24.125.  2460364.625.  9\...  17:53:48\... -34:2.:..\.." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNSGR24N10110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2024 02 24.125.  2460364.625.  9\...  17:53:48\... -34:2.:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:53:48.82 -34:24:02.9 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10410a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10410a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+
+ else
+  echo "ERROR running the transient search script" 1>&2
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_ALL"
+ fi
+
+ ###### restore exclusion list after the test if needed
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mNMW find Nova Sgr 2024 N1 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mNMW find Nova Sgr 2024 N1 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+remove_test_data_to_save_space
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ exit 1
+fi
+#fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
+
 
 ##### Nova Her 2021 test (three second-epoch images, all good) #####
 ### Disable this test for GitHub Actions
@@ -11672,18 +12008,18 @@ if [ -d ../NMW_Aql11_NovaHer21_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_Aql11_NovaHer21_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Aql11_NovaHer21_test/second_epoch_images &> test_ncas$$.tmp
+ REFERENCE_IMAGES=../NMW_Aql11_NovaHer21_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Aql11_NovaHer21_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_ncas$$.tmp
+ grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21_CANNOT_FIND_STAR_ERROR_MESSAGE"
  fi
- rm -f test_ncas$$.tmp
+ rm -f test_transient_search_script_terminal_output$$.tmp
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
@@ -11912,18 +12248,18 @@ if [ -d ../NMW_find_NovaCas21_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_find_NovaCas21_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_find_NovaCas21_test/second_epoch_images &> test_ncas$$.tmp
+ REFERENCE_IMAGES=../NMW_find_NovaCas21_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_find_NovaCas21_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_ncas$$.tmp
+ grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_CANNOT_FIND_STAR_ERROR_MESSAGE"
  fi
- rm -f test_ncas$$.tmp
+ rm -f test_transient_search_script_terminal_output$$.tmp
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
@@ -12152,18 +12488,18 @@ if [ -d ../NMW_Sco6_NovaSgr21N2_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_Sco6_NovaSgr21N2_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Sco6_NovaSgr21N2_test/second_epoch_images &> test_ncas$$.tmp
+ REFERENCE_IMAGES=../NMW_Sco6_NovaSgr21N2_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Sco6_NovaSgr21N2_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_ncas$$.tmp
+ grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2_CANNOT_FIND_STAR_ERROR_MESSAGE"
  fi
- rm -f test_ncas$$.tmp
+ rm -f test_transient_search_script_terminal_output$$.tmp
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
@@ -12450,18 +12786,18 @@ if [ -d ../NMW_Sgr7_NovaSgr21N1_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_Sgr7_NovaSgr21N1_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Sgr7_NovaSgr21N1_test/second_epoch_images &> test_ncas$$.tmp
+ REFERENCE_IMAGES=../NMW_Sgr7_NovaSgr21N1_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Sgr7_NovaSgr21N1_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_ncas$$.tmp
+ grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1_CANNOT_FIND_STAR_ERROR_MESSAGE"
  fi
- rm -f test_ncas$$.tmp
+ rm -f test_transient_search_script_terminal_output$$.tmp
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
@@ -12812,18 +13148,18 @@ if [ -d ../NMW_Vul7_NovaVul21_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_Vul7_NovaVul21_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Vul7_NovaVul21_test/second_epoch_images &> test_ncas$$.tmp
+ REFERENCE_IMAGES=../NMW_Vul7_NovaVul21_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_Vul7_NovaVul21_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_ncas$$.tmp
+ grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21_CANNOT_FIND_STAR_ERROR_MESSAGE"
  fi
- rm -f test_ncas$$.tmp
+ rm -f test_transient_search_script_terminal_output$$.tmp
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
@@ -13043,18 +13379,18 @@ if [ -d ../NMW_find_Mars_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_find_Mars_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_find_Mars_test/second_epoch_images &> test_ncas$$.tmp
+ REFERENCE_IMAGES=../NMW_find_Mars_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_find_Mars_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_ncas$$.tmp
+ grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_CANNOT_FIND_STAR_ERROR_MESSAGE"
  fi
- rm -f test_ncas$$.tmp
+ rm -f test_transient_search_script_terminal_output$$.tmp
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
@@ -13212,18 +13548,18 @@ $GREP_RESULT"
 
  #############################################################################
  cp -v bad_region.lst_default bad_region.lst
- REFERENCE_IMAGES=../NMW_find_Mars_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_find_Mars_test/third_epoch/
+ REFERENCE_IMAGES=../NMW_find_Mars_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_find_Mars_test/third_epoch/ &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_ncas$$.tmp
+ grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_CANNOT_FIND_STAR_ERROR_MESSAGE"
  fi
- rm -f test_ncas$$.tmp
+ rm -f test_transient_search_script_terminal_output$$.tmp
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
@@ -13449,18 +13785,18 @@ if [ -d ../NMW_find_Chandra_test ];then
  fi
  # Instead of running the single-field search,
  # we test the production NMW script
- REFERENCE_IMAGES=../NMW_find_Chandra_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_find_Chandra_test/second_epoch_images &> test_ncas$$.tmp
+ REFERENCE_IMAGES=../NMW_find_Chandra_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW_find_Chandra_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA000_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_ncas$$.tmp
+ grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA000_CANNOT_FIND_STAR_ERROR_MESSAGE"
  fi
- rm -f test_ncas$$.tmp
+ rm -f test_transient_search_script_terminal_output$$.tmp
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
