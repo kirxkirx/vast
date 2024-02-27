@@ -11644,7 +11644,7 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 ##### Nova Sgr 2024 N1 test #####
 ### Disable this test for GitHub Actions
-#if [ "$GITHUB_ACTIONS" != "true" ];then 
+if [ "$GITHUB_ACTIONS" != "true" ];then 
 # Download the test dataset if needed
 if [ ! -d ../NMW_Sco6_NovaSgr24N1_test ];then
  cd ..
@@ -11976,7 +11976,8 @@ if [ $? -ne 0 ];then
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
-#fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
+
 
 
 ##### Nova Her 2021 test (three second-epoch images, all good) #####
