@@ -48,7 +48,7 @@ fi
 CHECK_POINTING_ACCURACY="YES"
 
 FILTER_MIN_APERTURE_STAR_SIZE_PIX=2.0
-FILTER_MAX_APERTURE_STAR_SIZE_PIX=9.5
+FILTER_MAX_APERTURE_STAR_SIZE_PIX=9.6
 FILTER_MAX_ELONGATION_AminusB_PIX=0.55
 
 FILTER_BRIGHT_MAG_CUTOFF="-5"
@@ -831,10 +831,10 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   if [ $NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING -lt 2 ];then
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-   echo "ERROR: seeing on second-epoch images is out of range"
+   echo "ERROR: seeing on second-epoch images is out of range - ap. size outside ($FILTER_MIN_APERTURE_STAR_SIZE_PIX,$FILTER_MAX_APERTURE_STAR_SIZE_PIX) pix. range"
    echo "***** ERROR: seeing on second-epoch images is out of range *****" >> transient_factory.log
    echo "############################################################" >> transient_factory.log
-   echo "ERROR: seeing on second-epoch images is out of range" >> transient_factory_test31.txt
+   echo "ERROR: seeing on second-epoch images is out of range - ap. size outside ($FILTER_MIN_APERTURE_STAR_SIZE_PIX,$FILTER_MAX_APERTURE_STAR_SIZE_PIX) pix. range" >> transient_factory_test31.txt
    # We are throwing ERROR message anyway, so it's OK to print out vast_image_details.log content that may include the word 'ERROR'
    cat vast_image_details.log >> transient_factory_test31.txt
    continue
@@ -1732,6 +1732,16 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
      mv candidates-transients.tmp candidates-transients.lst
     done < candidates-flares.lst
    fi
+   
+   # Can do more stuff while waiting
+   #
+   # Print seeing statistics
+   echo "Median FWHM seeing for isolated stars:" >> transient_factory_test31.txt
+   for IMG_CATALOG_FOR_SEEING_STAT in image0000?.cat ;do
+    cat "$IMG_CATALOG_FOR_SEEING_STAT" | awk '{if( $22 < 2 && $23 > 0 ) print $23}' | util/colstat 2>&1 | grep ' MEDIAN= ' | awk '{printf "%4.1f pix  ",$2}'
+    basename $(grep "$IMG_CATALOG_FOR_SEEING_STAT" vast_images_catalogs.log  | awk '{print $2}')
+   done >> transient_factory_test31.txt
+   #
 
    echo "Waiting for UCAC5 plate solver" >> transient_factory_test31.txt  
    echo "Waiting for UCAC5 plate solver"
@@ -1743,6 +1753,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     cat "$tempFile"
     rm -f "$tempFile"
    done
+   #
    #
    echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
    echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE"
