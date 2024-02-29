@@ -9,6 +9,8 @@
 
 #include "variability_indexes.h" // for esimate_sigma_from_MAD_of_sorted_data() etc.
 
+#include "vast_limits.h" // for MIN(,)
+
 int isOnlyWhitespace( const char *str ) {
  while ( *str ) {
   if ( !isspace( (unsigned char)*str ) ) {
@@ -22,13 +24,14 @@ int isOnlyWhitespace( const char *str ) {
 int main() {
  double *x= NULL;
  double *temp_pointer_for_realloc= NULL;
- double MIN, MAX;
+ double vMIN, vMAX;
  double MEAN;
  double MEDIAN;
  double SD;
  double MEAN_ERR;
  double MAD;
  double IQR;
+ double percentile80;
  double datasumm;
  int N= 0, Ns= 0, N2s= 0, N3s= 0;
  int i= 0, j= 0;
@@ -101,7 +104,7 @@ int main() {
  fprintf( stdout, "N= %d\n", i );
 
  // initialize
- MIN= MAX= MEDIAN= MEAN= SD= MEAN_ERR= MAD= IQR= 0.0;
+ percentile80= vMIN= vMAX= MEDIAN= MEAN= SD= MEAN_ERR= MAD= IQR= 0.0;
 
  if ( i > 1 ) {
   if ( NULL == x ) {
@@ -109,8 +112,8 @@ int main() {
    return 1;
   }
   gsl_sort( x, 1, i );
-  MIN= x[0];
-  MAX= x[i - 1];
+  vMIN= x[0];
+  vMAX= x[i - 1];
   MEDIAN= gsl_stats_median_from_sorted_data( x, 1, i );
   MEAN= gsl_stats_mean( x, 1, i );
   SD= gsl_stats_sd_m( x, 1, i, MEAN );
@@ -123,12 +126,22 @@ int main() {
    fprintf( stderr, "Impossible error 2\n" );
    return 1;
   }
-  MIN= MAX= MEDIAN= MEAN= x[0];
+  vMIN= vMAX= MEDIAN= MEAN= x[0];
  }
+ if ( i == 0 ) {
+  fprintf( stderr, "No input data\n" );
+  return 1;
+ }
+ if ( i < 0 ) {
+  fprintf( stderr, "Impossible error 3\n" );
+  return 1;
+ }
+ 
+ percentile80= x[ MIN( (int)(0.8 * (double)i), i-1) ];
 
- fprintf( stdout, "     MIN= %.6lf\n", MIN );
- fprintf( stdout, "     MAX= %.6lf\n", MAX );
- fprintf( stdout, " MAX-MIN=  %.6lf\n", MAX - MIN );
+ fprintf( stdout, "     MIN= %.6lf\n", vMIN );
+ fprintf( stdout, "     MAX= %.6lf\n", vMAX );
+ fprintf( stdout, " MAX-MIN=  %.6lf\n", vMAX - vMIN );
  fprintf( stdout, "  MEDIAN= %.6lf\n", MEDIAN );
  fprintf( stdout, "    MEAN= %.6lf\n", MEAN );
  fprintf( stdout, "MEAN_ERR=  %.6lf\n", MEAN_ERR );
@@ -143,6 +156,7 @@ int main() {
  // IQR=IQR/( 2.0*gsl_cdf_ugaussian_Pinv(0.75) );
  // IQR=IQR/1.34897950039216;
  fprintf( stdout, "IQR/1.34=  %lf\n", IQR / 1.34897950039216 );
+ fprintf( stdout, "percen80=  %lf\n", percentile80 );
  fprintf( stdout, "    SUMM=  %lf\n", datasumm );
 
  N= Ns= N2s= N3s= 0;

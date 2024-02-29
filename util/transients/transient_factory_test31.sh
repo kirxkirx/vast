@@ -1661,7 +1661,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     #WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
     {
      lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @$EXCLUSION_LIST | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list.txt
-     cp -v exclusion_list.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+     cp exclusion_list.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
     } &
    fi
   fi
@@ -1672,7 +1672,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     #WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
     {
      lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/brightbright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bbsc.txt
-     cp -v exclusion_list_bbsc.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+     cp exclusion_list_bbsc.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
     } &
    fi
   fi
@@ -1683,7 +1683,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     #WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
     {
      lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/bright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bsc.txt
-     cp -v exclusion_list_bsc.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+     cp exclusion_list_bsc.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
     } &
    fi
   fi
@@ -1694,7 +1694,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     #WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
     {
      lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | while read -r A ;do lib/deg2hms $A ;done > exclusion_list_tycho2.txt
-     cp -v exclusion_list_tycho2.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+     cp exclusion_list_tycho2.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
     } &
    fi
   fi
@@ -1742,6 +1742,11 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     basename $(grep "$IMG_CATALOG_FOR_SEEING_STAT" vast_images_catalogs.log  | awk '{print $2}')
    done >> transient_factory_test31.txt
    #
+   #
+   lib/create_data
+   ALLIMG_MAG_LIM=$(grep '  4  ' vast_lightcurve_statistics.log | awk '{print $1}'  | util/colstat 2>&1 | grep 'percen80= ' | awk '{printf "%4.1f", $2}')
+   echo "All-image limiting magnitude estimate: $ALLIMG_MAG_LIM with $SEXTRACTOR_CONFIG_FILE
+(80th percentile of magnitude distribution of stars detected on all four images)" >> transient_factory_test31.txt
 
    echo "Waiting for UCAC5 plate solver" >> transient_factory_test31.txt  
    echo "Waiting for UCAC5 plate solver"
