@@ -80,6 +80,7 @@ TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
 EXCLUSION_LIST="../exclusion_list.txt"
 SYSREM_ITERATIONS=1
 UCAC5_PLATESOLVE_ITERATIONS=1
+STARMATCH_RADIUS_PIX=4
 
 # CAMERA_SETTINGS environment vairable may be set to override the default settings with the ones needed for a different camera
 if [ -n "$CAMERA_SETTINGS" ];then
@@ -129,6 +130,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   export OMP_NUM_THREADS=4
   SYSREM_ITERATIONS=0
   UCAC5_PLATESOLVE_ITERATIONS=2
+  STARMATCH_RADIUS_PIX=2
   # The funny ghost image seems to be no more than 80pix away from frame edge
   FRAME_EDGE_OFFSET_PIX=100
  fi
@@ -1094,9 +1096,9 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
   echo "Starting VaST with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
   # Run VaST
   echo "
-  ./vast --starmatchraius 4.0 --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE
+  ./vast --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE
   " >> transient_factory_test31.txt
-  ./vast --starmatchraius 4.0 --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
+  ./vast --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
   if [ $? -ne 0 ];then
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
@@ -1371,7 +1373,9 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
 
   # Here we need to know if we need photometic calibration for hte astrometic catalog - it's slow
   if [ -z "$PHOTOMETRIC_CALIBRATION" ];then
-   if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
+   #if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
+   TEST=$(echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 240 ) print 1 ;else print 0 }')
+   if [ $TEST -eq 1 ];then
     # APASS magnitude calibration for narrow-field images
     PHOTOMETRIC_CALIBRATION="APASS_V"
    else
@@ -1446,7 +1450,9 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   echo "____ Start of magnitude calibration ____" >> transient_factory_test31.txt
   # Decide which catalog to use for magnitude calibration depending on the image filed of view
   if [ -z "$PHOTOMETRIC_CALIBRATION" ];then
-   if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
+   #if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
+   TEST=$(echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 240 ) print 1 ;else print 0 }')
+   if [ $TEST -eq 1 ];then
     # APASS magnitude calibration for narrow-field images
     PHOTOMETRIC_CALIBRATION="APASS_V"
    else
