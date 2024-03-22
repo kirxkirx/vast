@@ -72,7 +72,7 @@ fi
 FILTER="X"
 # the default star name should be manually edited by the user!
 VARIABLE_STAR_NAME="XX Xxx"
-# but we can try to guess satre and filter name from the CBA file, if present
+# but we can try to guess star and filter name from the CBA file, if present
 if [ -s CBA_previously_used_header.txt ];then
  echo "Importing the variable star info from CBA_previously_used_header.txt" 1>&2
  VARIABLE_STAR_NAME=`cat CBA_previously_used_header.txt | grep '# Variable: ' | awk -F '# Variable: ' '{print $2}'`

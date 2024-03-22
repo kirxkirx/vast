@@ -9552,6 +9552,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_check_dates_consistency_in_vast_image_details_log"
   fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_TYCHO2_V"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -9968,6 +9974,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_check_dates_consistency_in_vast_image_details_log"
   fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_TYCHO2_V"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -10170,6 +10182,12 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_check_dates_consistency_in_vast_image_details_log"
+  fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_TYCHO2_V"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -10510,6 +10528,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_check_dates_consistency_in_vast_image_details_log"
   fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_TYCHO2_V"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -10722,6 +10746,12 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET_check_dates_consistency_in_vast_image_details_log"
+  fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET_TYCHO2_V"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -10945,6 +10975,12 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_check_dates_consistency_in_vast_image_details_log"
+  fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_TYCHO2_V"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -11427,6 +11463,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_check_dates_consistency_in_vast_image_details_log"
   fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_TYCHO2_V"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -11734,6 +11776,12 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_check_dates_consistency_in_vast_image_details_log"
+  fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_TYCHO2_V"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -12073,6 +12121,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21_check_dates_consistency_in_vast_image_details_log"
   fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21_TYCHO2_V"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -12313,6 +12367,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_check_dates_consistency_in_vast_image_details_log"
   fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_TYCHO2_V"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -12552,6 +12612,12 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2_check_dates_consistency_in_vast_image_details_log"
+  fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2_TYCHO2_V"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -12850,6 +12916,12 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1_check_dates_consistency_in_vast_image_details_log"
+  fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1_TYCHO2_V"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -13213,6 +13285,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21_check_dates_consistency_in_vast_image_details_log"
   fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21_TYCHO2_V"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -13444,6 +13522,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_check_dates_consistency_in_vast_image_details_log"
   fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_TYCHO2_V"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -13612,6 +13696,12 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_check_dates_consistency_in_vast_image_details_log"
+  fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_TYCHO2_V"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -13849,6 +13939,12 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA_check_dates_consistency_in_vast_image_details_log"
+  fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA_TYCHO2_V"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -14119,6 +14215,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_check_dates_consistency_in_vast_image_details_log"
   fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_TYCHO2_V"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -14379,6 +14481,12 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_check_dates_consistency_in_vast_image_details_log"
+  fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_TYCHO2_V"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -14811,6 +14919,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_check_dates_consistency_in_vast_image_details_log"
   fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_TYCHO2_V"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -15183,6 +15297,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_check_dates_consistency_in_vast_image_details_log"
   fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_TYCHO2_V"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -15525,6 +15645,12 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_check_dates_consistency_in_vast_image_details_log"
   fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_TYCHO2_V"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -15836,6 +15962,12 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESS_check_dates_consistency_in_vast_image_details_log"
+  fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=APASS_I' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESS_APASS_I"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -22679,6 +22811,12 @@ if [ -z "$NMW_KIRX_SUMMARY_CHECK" ]; then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_SUMMARY_CHECK_FAILED"
 fi
+# Fetch HTML from kirx.net and check for "morning summary" or "evening summary"
+NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/kadar/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
+if [ -z "$NMW_KIRX_SUMMARY_CHECK" ]; then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED"
+fi
 
 ### Check directory listing where it's needed
 # Check if https://www.kirx.net/~kirx/ contains "Parent Directory"
@@ -24091,6 +24229,10 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  # 'sort --random-sort --random-source=/dev/urandom' times out om Mac
  FAILED_TEST_CODES="${FAILED_TEST_CODES// LCPARSER002_TEST_NOT_PERFORMED/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// LCFILTER_TEST_NOT_PERFORMED/}"
+ # NMW infrastructure specific tests that should not fail the VaST code test
+ # That's most likely "no internet on the mountain" situation
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// AUXWEB_NMW_KIRX_SUMMARY_CHECK_FAILED/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED/}"
  #
  if [ ! -z "$FAILED_TEST_CODES" ];then
   echo "Exit code 1"

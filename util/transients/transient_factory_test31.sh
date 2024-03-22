@@ -1374,7 +1374,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   # Here we need to know if we need photometic calibration for hte astrometic catalog - it's slow
   if [ -z "$PHOTOMETRIC_CALIBRATION" ];then
    #if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
-   TEST=$(echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 240 ) print 1 ;else print 0 }')
+   TEST=$(echo "$IMAGE_FOV_ARCMIN" | awk '{if ( $1 < 240 ) print 1 ;else print 0 }')
    if [ $TEST -eq 1 ];then
     # APASS magnitude calibration for narrow-field images
     PHOTOMETRIC_CALIBRATION="APASS_V"
@@ -1451,7 +1451,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   # Decide which catalog to use for magnitude calibration depending on the image filed of view
   if [ -z "$PHOTOMETRIC_CALIBRATION" ];then
    #if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
-   TEST=$(echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 240 ) print 1 ;else print 0 }')
+   TEST=$(echo "$IMAGE_FOV_ARCMIN" | awk '{if ( $1 < 240 ) print 1 ;else print 0 }')
    if [ $TEST -eq 1 ];then
     # APASS magnitude calibration for narrow-field images
     PHOTOMETRIC_CALIBRATION="APASS_V"
