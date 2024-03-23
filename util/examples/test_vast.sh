@@ -15539,7 +15539,7 @@ fi
 
 ##### NMW-STL find Nova Oph 2024 test #####
 # Download the test dataset if needed
-if [ ! -d ../NMW-STL__plate_solve_failure_test ];then
+if [ ! -d ../NMW-STL__NovaOph24N1_test ];then
  cd ..
  curl -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__NovaOph24N1_test.tar.bz2" && tar -xvjf NMW-STL__NovaOph24N1_test.tar.bz2 && rm -f NMW-STL__NovaOph24N1_test.tar.bz2
  cd $WORKDIR
