@@ -944,6 +944,8 @@ fi
    if [ $CURL_EXIT_CODE -ne 0 ];then
     # something else went wrong
     echo "An ERROR has occured while uploading the star list to the server $PLATE_SOLVE_SERVER !"
+    echo "The failed command (see test.txt): "
+    cat test.txt
     ERROR_STATUS=2
     continue
    fi
