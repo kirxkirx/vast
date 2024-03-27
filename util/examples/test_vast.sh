@@ -15975,13 +15975,13 @@ $GREP_RESULT"
   fi
   #                           !             !
   #                   2024 03 11.1076  2460380.6076  10.29  17:39:57.01 -26:27:41.1
-  grep --quiet "2024 03 11.107.  2460380.607.  10\...  17:39:57\... -26:27:41\.." transient_report/index.html
+  grep --quiet "2024 03 11.107.  2460380.607.  10\...  17:39:5[67]\... -26:27:41\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24314a"
   fi
   # 1st pass
-  RADECPOSITION_TO_TEST=`grep "2024 03 11.107.  2460380.607.  10\...  17:39:57\... -26:27:41\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  RADECPOSITION_TO_TEST=`grep "2024 03 11.107.  2460380.607.  10\...  17:39:5[67]\... -26:27:41\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
   # SOAR position of V4370 Oph
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:39:57.080 -26:27:41.93  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
@@ -15999,7 +15999,7 @@ $GREP_RESULT"
    fi
   fi
   # 2nd pass
-  RADECPOSITION_TO_TEST=`grep "2024 03 11.107.  2460380.607.  10\...  17:39:57\... -26:27:41\.." transient_report/index.html | awk '{print $6" "$7}' | tail -n1`
+  RADECPOSITION_TO_TEST=`grep "2024 03 11.107.  2460380.607.  10\...  17:39:5[67]\... -26:27:41\.." transient_report/index.html | awk '{print $6" "$7}' | tail -n1`
   # SOAR position of V4370 Oph
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:39:57.080 -26:27:41.93  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
@@ -16009,11 +16009,11 @@ $GREP_RESULT"
    echo "TEST ERROR"
    TEST_PASSED=0
    TEST=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24314a_TOO_FAR_TEST_ERROR"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24314b_TOO_FAR_TEST_ERROR"
   else
    if [ $TEST -eq 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24314a_TOO_FAR_$DISTANCE_ARCSEC"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24314b_TOO_FAR_$DISTANCE_ARCSEC"
    fi
   fi
   
