@@ -737,7 +737,7 @@ int main( int argc, char **argv ) {
  }
 
  if ( Nobs <= 0 ) {
-  fprintf( stderr, "ERROR: Trying allocate zero or negative memory amount(Nobs<= 0, lc.c)\n" );
+  fprintf( stderr, "ERROR: Attempting to allocate a zero or negative amount of memory (Nobs<= 0, lc.c)\n" );
   exit( EXIT_FAILURE );
  };
 

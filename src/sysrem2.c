@@ -283,7 +283,7 @@ int main() {
   Nobs= 0; // initialize it here, just in case
   get_dates( jd, &Nobs );
   if ( Nobs <= 0 ) {
-   fprintf( stderr, "ERROR: Trying allocate zero or negative memory amount(Nobs <= 0)\n" );
+   fprintf( stderr, "ERROR: Attempting to allocate a zero or negative amount of memory (Nobs <= 0)\n" );
    exit( EXIT_FAILURE );
   };
 
