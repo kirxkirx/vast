@@ -187,7 +187,7 @@ if [ $? -ne 0 ];then
  clean_tmp_files
  exit 1
 fi
-MAG_MEAN=`echo $MEAN|awk '{printf "%.2f",$1}'`
+MAG_MEAN=$(echo "$MEAN" | awk '{printf "%5.2f",$1}')
 MAG_MEAN=${MAG_MEAN//"+"/}
 
 #util/colstat < dayfrac$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
