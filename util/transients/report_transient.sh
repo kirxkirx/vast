@@ -187,7 +187,7 @@ if [ $? -ne 0 ];then
  clean_tmp_files
  exit 1
 fi
-MAG_MEAN=`echo $MEAN|awk '{printf "%.2f",$1}'`
+MAG_MEAN=$(echo "$MEAN" | awk '{printf "%5.2f",$1}')
 MAG_MEAN=${MAG_MEAN//"+"/}
 
 #util/colstat < dayfrac$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
@@ -235,8 +235,11 @@ DAYFRAC_MEAN_SUPERSHORT=$(echo "$DAYFRAC_MEAN" | awk '{printf "%05.2f",$1}')
 
 #### Test for float numbers ####
 for STRING_TO_TEST in "$RA_MEAN" "$RA_MAX" "$RA_MIN" "$DEC_MEAN" "$DEC_MAX" "$DEC_MIN" "$MAG_MEAN" "$DAYFRAC_MEAN" "$DAYFRAC_MEAN_SHORT" "$DAYFRAC_MEAN_SUPERSHORT" "$JD_MEAN" "$JD_MEAN_SHORT" ;do
+ # remove leading and trailing white spaces from STRING_TO_TEST
+ STRING_TO_TEST_NO_WHITESPCAES=$(echo "$STRING_TO_TEST" | sed 's/^[ \t]*//;s/[ \t]*$//')
  re='^[+-]?[0-9]+([.][0-9]+)?$'
- if ! [[ $STRING_TO_TEST =~ $re ]] ; then
+ #if ! [[ $STRING_TO_TEST =~ $re ]] ; then
+ if ! [[ $STRING_TO_TEST_NO_WHITESPCAES =~ $re ]] ; then
   echo "ERROR in $0 : the string #$STRING_TO_TEST# is not a floating point number" 
   clean_tmp_files
   exit 1
