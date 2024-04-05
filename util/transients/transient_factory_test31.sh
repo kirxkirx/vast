@@ -1164,7 +1164,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
     cp -v ../asassn_transients_list.txt asassn_transients_list.txt
    fi
    if [ -z "$(find ../tocp_transients_list.txt -mmin +10 2>/dev/null)" ]; then
-    # the file was modified less than 30 min ago, or it isn't there at all or 'find' command didn't work
+    # the file was modified less than 10 min ago, or it isn't there at all or 'find' command didn't work
     { $TIMEOUTCOMMAND lib/tocp_transients_list.sh > tocp_transients_list.txt && cp tocp_transients_list.txt ../tocp_transients_list.txt || cp ../tocp_transients_list.txt tocp_transients_list.txt; } &
    else
     cp -v ../tocp_transients_list.txt tocp_transients_list.txt

@@ -9647,12 +9647,11 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2011a_TOO_FAR_$DISTANCE_ARCSEC"
    fi
   fi
-  # Saturn has no automatic ID in the current VaST version
-  #grep --quiet "AW Tau" transient_report/index.html
-  #if [ $? -ne 0 ];then
-  # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN20110"
-  #fi
+  grep --quiet "Saturn" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN20110"
+  fi
   grep --quiet -e "2019 11 03.6470  2458791.1470   6\...  19:06:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -9677,6 +9676,11 @@ $GREP_RESULT"
   fi
   #
   # Iapetus has no automatic ID in the current VaST version
+  grep --quiet "Iapetus" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN20110_Iapetus"
+  fi
   #grep --quiet -e "2019 11 03.6470  2458791.1470  12\.1.  19:06:" -e "2019 11 03.6470  2458791.1470  12.10  19:06:" transient_report/index.html
   grep --quiet -e "2019 11 03.6470  2458791.1470  12.0.  19:06:..... -22:25:...." -e "2019 11 03.6470  2458791.1470  12.1.  19:06:..... -22:25:...." transient_report/index.html
   if [ $? -ne 0 ];then
@@ -9812,6 +9816,18 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2314a_TOO_FAR_$DISTANCE_ARCSEC"
    fi
   fi
+  #
+  for FILE_TO_CHECK in planets.txt comets.txt moons.txt asassn_transients_list.txt tocp_transients_list.txt ;do
+   if [ -f "$FILE_TO_CHECK" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_no_$FILE_TO_CHECK"
+   fi
+   if [ -s "$FILE_TO_CHECK" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_empty_$FILE_TO_CHECK"
+   fi
+  done
+  #
   ###########################################################
   # Magnitude calibration error test
   if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
@@ -15770,6 +15786,18 @@ $GREP_RESULT"
    fi
   fi
   # 
+  #
+  for FILE_TO_CHECK in planets.txt comets.txt moons.txt asassn_transients_list.txt tocp_transients_list.txt ;do
+   if [ -f "$FILE_TO_CHECK" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_no_$FILE_TO_CHECK"
+   fi
+   if [ -s "$FILE_TO_CHECK" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_empty_$FILE_TO_CHECK"
+   fi
+  done
+  #
   
   test_if_test31_tmp_files_are_present
   if [ $? -ne 0 ];then
@@ -16019,6 +16047,19 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24314b_TOO_FAR_$DISTANCE_ARCSEC"
    fi
   fi
+  #
+  #
+  for FILE_TO_CHECK in planets.txt comets.txt moons.txt asassn_transients_list.txt tocp_transients_list.txt ;do
+   if [ -f "$FILE_TO_CHECK" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_no_$FILE_TO_CHECK"
+   fi
+   if [ -s "$FILE_TO_CHECK" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_empty_$FILE_TO_CHECK"
+   fi
+  done
+  #
   
   test_if_test31_tmp_files_are_present
   if [ $? -ne 0 ];then
