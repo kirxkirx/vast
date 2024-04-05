@@ -1157,12 +1157,14 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
    $TIMEOUTCOMMAND util/comets.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > comets.txt &
    $TIMEOUTCOMMAND util/moons.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > moons.txt &
    #$TIMEOUTCOMMAND lib/asassn_transients_list.sh > asassn_transients_list.txt &
-   if [ -n "$(find ../asassn_transients_list.txt -mmin +30 2>/dev/null)" ]; then
+   if [ -z "$(find ../asassn_transients_list.txt -mmin +30 2>/dev/null)" ]; then
+    # the file was modified less than 30 min ago, or it isn't there at all or 'find' command didn't work
     { $TIMEOUTCOMMAND lib/asassn_transients_list.sh > asassn_transients_list.txt && cp asassn_transients_list.txt ../asassn_transients_list.txt || cp ../asassn_transients_list.txt asassn_transients_list.txt; } &
    else
     cp -v ../asassn_transients_list.txt asassn_transients_list.txt
    fi
-   if [ -n "$(find ../tocp_transients_list.txt -mmin +10 2>/dev/null)" ]; then
+   if [ -z "$(find ../tocp_transients_list.txt -mmin +10 2>/dev/null)" ]; then
+    # the file was modified less than 30 min ago, or it isn't there at all or 'find' command didn't work
     { $TIMEOUTCOMMAND lib/tocp_transients_list.sh > tocp_transients_list.txt && cp tocp_transients_list.txt ../tocp_transients_list.txt || cp ../tocp_transients_list.txt tocp_transients_list.txt; } &
    else
     cp -v ../tocp_transients_list.txt tocp_transients_list.txt
