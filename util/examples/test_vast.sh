@@ -16002,6 +16002,10 @@ $GREP_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24314_AAVSOSTUB"
+   GREP_RESULT=`cat vast_summary.log transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNOPH24314_AAVSOSTUB ######
+$GREP_RESULT"
   fi
   #
   #
