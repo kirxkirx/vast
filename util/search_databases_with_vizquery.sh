@@ -787,6 +787,11 @@ fi
 
 echo " " # new line for the list of searched catalogs
 
+if [ -n "$SUGGESTED_NAME_STRING" ];then
+ # Make sure SUGGESTED_NAME_STRING has no leading or trailing tabs or anything
+ SUGGESTED_NAME_STRING=$(echo "$SUGGESTED_NAME_STRING" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//') 
+fi
+
 if [ $KNOWN_VARIABLE -eq 0 ];then
  # NEW var
  #echo -n " $STAR_NAME | B1.0 $GOOD_CATALOG_NAME | $GOOD_CATALOG_POSITION | T | P | B2=$B2 "
@@ -842,6 +847,9 @@ if [ -n "$GOOD_CATALOG_NAME_GAIA" ];then
  while [ ${#STAR_NAME} -lt 16 ];do
   STAR_NAME="$STAR_NAME "
  done
+ # Make sure SUGGESTED_NAME_STRING has no leading or trailing tabs or anything
+ SUGGESTED_NAME_STRING=$(echo "$SUGGESTED_NAME_STRING" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//') 
+ # than pad SUGGESTED_NAME_STRING with simple white spaces at the end
  while [ ${#SUGGESTED_NAME_STRING} -lt 28 ];do
   SUGGESTED_NAME_STRING="$SUGGESTED_NAME_STRING "
  done

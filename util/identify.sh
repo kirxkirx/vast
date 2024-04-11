@@ -1322,7 +1322,9 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
   elif [ "$START_NAME" = "identify_justname.sh" ];then
    # awk -F'|' '{print $1}' is in case this will be a GCVS name
    # sed 's/^[ \t]*//;s/[ \t]*$//' is to remove the leading and trailing white spaces https://unix.stackexchange.com/questions/102008/how-do-i-trim-leading-and-trailing-whitespace-from-each-line-of-some-output
-   "$VAST_PATH"util/search_databases_with_curl.sh $("$VAST_PATH"lib/deg2hms $RADEC) | grep -v -e 'not found' -e 'Starting' -e 'Searching' | grep -v 'found' | tail -n1 | awk -F'|' '{print $1}' | sed 's/^[ \t]*//;s/[ \t]*$//'
+   # 's/^[[:space:]]*//;s/[[:space:]]*$//' is supposed to serve the same function
+   #"$VAST_PATH"util/search_databases_with_curl.sh $("$VAST_PATH"lib/deg2hms $RADEC) | grep -v -e 'not found' -e 'Starting' -e 'Searching' | grep -v 'found' | tail -n1 | awk -F'|' '{print $1}' | sed 's/^[ \t]*//;s/[ \t]*$//'
+   "$VAST_PATH"util/search_databases_with_curl.sh $("$VAST_PATH"lib/deg2hms $RADEC) | grep -v -e 'not found' -e 'Starting' -e 'Searching' | grep -v 'found' | tail -n1 | awk -F'|' '{print $1}' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
    exit 0
   else
    "$VAST_PATH"util/search_databases_with_curl.sh $("$VAST_PATH"lib/deg2hms $RADEC)
