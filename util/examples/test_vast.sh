@@ -15997,6 +15997,14 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH240_NO_vast_image_details_log"
   fi
   #
+  # AAVSO stub format test
+  grep --quiet "V4370 Oph,2460380.607" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24314_AAVSOSTUB"
+  fi
+  #
+  #
   # V4370 Oph
   grep --quiet "V4370 Oph" transient_report/index.html
   if [ $? -ne 0 ];then

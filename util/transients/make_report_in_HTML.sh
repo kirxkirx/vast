@@ -303,16 +303,29 @@ if [ -z "$SOFTWARE_VERSION" ];then
  SOFTWARE_VERSION="$SOFTWARE_VERSION transient pipeline"
 fi
 
-VARIABLE_NAME="VARIABLE_NAME"
 grep --quiet 'The object was <font color="red">found</font> in <font color="blue">VSX</font>' transient_report/index.tmp2
 if [ $? -eq 0 ];then
  VARIABLE_NAME=$(grep -A1 'The object was <font color="red">found</font> in <font color="blue">VSX</font>' transient_report/index.tmp2 | tail -n1 | awk -F'"' '{print $2}')
- # remove leading and trailing white spaces from STRING_TO_TEST
- VARIABLE_NAME_NO_WHITESPCAES=$(echo "$VARIABLE_NAME" | sed 's/^[ \t]*//;s/[ \t]*$//')
- VARIABLE_NAME="$VARIABLE_NAME"
- if [ -z "$VARIABLE_NAME" ];then
-  VARIABLE_NAME="VARIABLE_NAME"
+ # remove leading and trailing white spaces from string
+ VARIABLE_NAME_NO_WHITESPACES=$(echo "$VARIABLE_NAME" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+ VARIABLE_NAME="$VARIABLE_NAME_NO_WHITESPACES"
+fi
+
+if [ -z "$VARIABLE_NAME" ];then
+ grep --quiet ' online_id ' transient_report/index.tmp2
+ if [ $? -eq 0 ];then
+  VARIABLE_NAME=$(grep ' online_id ' transient_report/index.tmp2 | awk -F'|' '{print $2}')
+  # remove leading and trailing white spaces from string
+  VARIABLE_NAME_NO_WHITESPACES=$(echo "$VARIABLE_NAME" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+  VARIABLE_NAME="$VARIABLE_NAME_NO_WHITESPACES" 
  fi
+fi
+
+# debug
+#cp -v transient_report/index.tmp2 /tmp/"$TRANSIENT_NAME"__index.tmp2
+
+if [ -z "$VARIABLE_NAME" ];then
+ VARIABLE_NAME="VARIABLE_NAME"
 fi
 
 echo   " **** AAVSO file format ****
@@ -334,7 +347,7 @@ echo   "
 #CETFZ 20230818.9746    12.5CV NMW
 #CETFZ 20230819.9732    12.6CV NMW
 #TCPJ17453768-1756253 20230831.7290 12.7CV NMW"  >> transient_report/index.tmp
-grep -A1 'Mean magnitude and position on the discovery images: ' transient_report/index.tmp | tail -n1 | awk -v val="$NAME_VARIABLE" '{printf "%s %d%02d%07.4f %sCV NMW\n", val, $1, $2, $3, $5}' >> transient_report/index.tmp
+grep -A1 'Mean magnitude and position on the discovery images: ' transient_report/index.tmp | tail -n1 | awk -v val="$VARIABLE_NAME" '{printf "%s %d%02d%07.4f %sCV NMW\n", val, $1, $2, $3, $5}' >> transient_report/index.tmp
 
 echo "
 
