@@ -5698,6 +5698,11 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 
       // Coordinates averaging
       for ( coordinate_array_index= 0; coordinate_array_index < coordinate_array_counter; coordinate_array_index++ ) {
+       // attempt to speed-up
+       if ( number_of_coordinate_measurements_for_star[coordinate_array_index] >= MAX_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ) {
+        continue;
+       }
+       //
        // SLOW: 5.12%
        if ( STAR1[Pos1[i]].n == star_numbers_for_coordinate_arrays[coordinate_array_index] ) {
         // maybe we don't want to do it if number_of_coordinate_measurements_for_star[coordinate_array_index] > something ?
