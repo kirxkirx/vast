@@ -1238,6 +1238,32 @@ static inline int isNumberInIntArray(int *array, int n_elements, int number_to_c
 }
 */
 
+static inline int isNumberInIntArray(int *array, int n_elements, int number_to_check){
+    int return_value = -1;
+    int i;
+
+    #pragma omp parallel for private(i) shared(return_value)
+    for(i = 0; i < n_elements; i++) {
+        #pragma omp flush(return_value)
+        if(return_value != -1) {
+            continue; // skip iteration if another thread has found the number
+        }
+
+        if(array[i] == number_to_check) {
+            #pragma omp critical
+            {
+                // Update return_value if not already set
+                if(return_value == -1) {
+                    return_value = i;
+                }
+            }
+            #pragma omp flush(return_value)
+        }
+    }
+    return return_value;
+}
+
+/*
 // The reference version that works fine
 static inline int isNumberInIntArray( int *array, int n_elements, int number_to_check ) {
  int i;
@@ -1250,6 +1276,7 @@ static inline int isNumberInIntArray( int *array, int n_elements, int number_to_
  }
  return -1;
 }
+*/
 
 /*
 
