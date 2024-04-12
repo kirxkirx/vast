@@ -789,8 +789,12 @@ echo " " # new line for the list of searched catalogs
 
 if [ -n "$SUGGESTED_NAME_STRING" ];then
  # Make sure SUGGESTED_NAME_STRING has no leading or trailing tabs or anything
- SUGGESTED_NAME_STRING=$(echo "$SUGGESTED_NAME_STRING" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//') 
+ SUGGESTED_NAME_STRING=$(echo "$SUGGESTED_NAME_STRING" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+ # Silly fix for the strange Mac bug where 'a"/     /a' is added to the star name
+ SUGGESTED_NAME_STRING=$(echo "$SUGGESTED_NAME_STRING" | awk -F'a"/' '{print $1}') 
 fi
+
+
 
 if [ $KNOWN_VARIABLE -eq 0 ];then
  # NEW var
