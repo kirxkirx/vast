@@ -417,7 +417,7 @@ We can't accept all these date writing options. but we'll try to handle some
 
 // This function will handle '25/12/2011' style DATE-OBS
 void fix_DATEOBS_STRING( char *DATEOBS ) {
- int i, j, date_part; // counters
+ unsigned int i, j, date_part; // counters
  char substring_day[32];
  char substring_month[32];
  char substring_year[32];
@@ -435,7 +435,7 @@ void fix_DATEOBS_STRING( char *DATEOBS ) {
  }
 
  // check if this is a normal '2004-07-05' style DATE-OBS
- for ( i= 0; i < (int)strlen( DATEOBS ); i++ ) {
+ for ( i= 0; i < strlen( DATEOBS ); i++ ) {
   // if yes - do nothing
   if ( DATEOBS[i] == '-' ) {
    return;
@@ -448,7 +448,7 @@ void fix_DATEOBS_STRING( char *DATEOBS ) {
  memset( substring_year, 0, 32 );
 
  // Parse '25/12/2011' style DATE-OBS
- for ( i= 0, j= 0, date_part= 1; i < (int)strlen( DATEOBS ); i++ ) {
+ for ( i= 0, j= 0, date_part= 1; i < strlen( DATEOBS ); i++ ) {
   if ( DATEOBS[i] == '/' ) {
    if ( date_part == 1 )
     substring_day[j]= '\0';
@@ -509,7 +509,8 @@ void fix_DATEOBS_STRING( char *DATEOBS ) {
 
 // This function will handle '09-10-2017' and '09.10.2017' style DATE-OBS
 void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
- int i, j, date_part; // counters
+ // should the counters be 'size_t'?
+ unsigned int i, j, date_part; // counters
  char substring_day[32];
  char substring_month[32];
  char substring_year[32];
@@ -537,7 +538,7 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
  }
 
  // count how many times dash and dots are found in the string
- // we don't want t ostart with zero
+ // we don't want to start with zero
  ndash= ndot= ncolon= 0;
  for( i=1; i<strlen( DATEOBS ); i++ ){
   if ( DATEOBS[i] == '-' ) {
@@ -595,7 +596,7 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
  // Parse '09-10-2017' or '09.10.2017' style DATE-OBS
  j= 0;
  date_part= 1;
- for ( i= 0; i < (int)strlen( DATEOBS ); i++ ) {
+ for ( i= 0; i < strlen( DATEOBS ); i++ ) {
   if ( DATEOBS[i] == dash_or_dot_character ) {
    if ( date_part == 1 )
     substring_day[j]= '\0';
