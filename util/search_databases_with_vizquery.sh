@@ -538,7 +538,7 @@ fi
 # Handle the case where there is no good catalog match
 if [ -z "$GOOD_CATALOG_POSITION" ];then
  GOOD_CATALOG_POSITION="$RA $DEC"
- echo "Will use the input corrdicates as the target position (as there is no deep catalog match)
+ echo "Will use the input corrdinates as the target position (as there is no deep catalog match)
 $GOOD_CATALOG_POSITION"
  GOOD_CATALOG_POSITION_GAIA="$GOOD_CATALOG_POSITION"
  GOOD_CATALOG_POSITION_REF=" (user input)"
@@ -613,7 +613,14 @@ fi
 if [ $KNOWN_VARIABLE -eq 0 ];then
  echo -n "VSX (VizieR)  "
  #VSX_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Name,Type,Period 2>/dev/null | grep -v \# | grep -v '(' | grep -v "_" | grep -v "\---" | grep -A 1 Name | tail -n1 | sed 's:MASTER OT:MASTER_OT:g')
- VSX_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Name,Type,Period 2>/dev/null | grep -v -e "#" -e "(" -e "_" -e "\---" | sed 's:MASTER OT:MASTER_OT:g' | grep -A 1 'Name' | tail -n1)
+ #echo "
+ ##### DEBUG ####
+ #lib/vizquery -site=$VIZIER_SITE -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c='$GOOD_CATALOG_POSITION' -c.rs=$DOUBLE_R_SEARCH_ARCSEC -out=Name,Type,Period
+ #"
+ # No more Name in VizieR output
+ #VSX_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Name,Type,Period 2>/dev/null | grep -v -e "#" -e "(" -e "_" -e "\---" | sed 's:MASTER OT:MASTER_OT:g' | grep -A 1 'Name' | tail -n1)
+ # awk 'NF > 0' is to remove the empty lines
+ VSX_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Name,Type,Period 2>/dev/null | grep -v -e "#" -e "(" -e "_" -e "\---" | sed 's:MASTER OT:MASTER_OT:g' | awk 'NF > 0' | tail -n1)
  #echo "########$VSX_RESULT#########"
  VSX_V=$(echo "$VSX_RESULT" | awk '{print $1}')
  if [ "$VSX_V" != "" ] ;then
