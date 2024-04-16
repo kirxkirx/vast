@@ -94,7 +94,8 @@ if [ -n "$CAMERA_SETTINGS" ];then
    export DARK_FRAMES_DIR=/dataX/cgi-bin/unmw/uploads/darks
   fi
   if [ -z "$FLAT_FIELD_FILE" ];then
-   export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_0013_tail1_notbad.fit
+   #export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_0013_tail1_notbad.fit
+   export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_2024febmar_full_moon.fit
   fi
  fi
  if [ "$CAMERA_SETTINGS" = "STL-11000M" ];then
@@ -106,10 +107,11 @@ if [ -n "$CAMERA_SETTINGS" ];then
   if [ -z "$DARK_FRAMES_DIR" ];then
    export DARK_FRAMES_DIR=/home/apache/darks
   fi
-  # we don't usually have a luxury of multiple flat field frames to chhose from
+  # we don't usually have a luxury of multiple flat field frames to choose from
   # FLAT_FIELD_FILE has to point to one specific file that will be used for flat-fielding
   if [ -z "$FLAT_FIELD_FILE" ];then
-   export FLAT_FIELD_FILE=/home/apache/flats/mff_2023-07-14.fit
+   #export FLAT_FIELD_FILE=/home/apache/flats/mff_2023-07-14.fit
+   export FLAT_FIELD_FILE=/home/apache/flats/STL__mff_2024_febmar_full_moon.fit
   fi
   #
   TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="STL-11000M"
