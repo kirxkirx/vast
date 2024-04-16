@@ -363,6 +363,13 @@
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
+// Check GCC version and define a macro to use __builtin_expect if available
+#if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 0))
+    #define IF_UNLIKELY(cond) if (__builtin_expect((cond), 0))
+#else
+    #define IF_UNLIKELY(cond) if (cond)
+#endif
+
 // 2*sqrt(2*log(2)) see https://en.wikipedia.org/wiki/Full_width_at_half_maximum
 #define SIGMA_TO_FWHM_CONVERSION_FACTOR 2.35482004503095
 

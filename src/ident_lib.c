@@ -1237,7 +1237,7 @@ static inline int isNumberInIntArray(int *array, int n_elements, int number_to_c
  return return_value;
 }
 */
-
+/*
 static inline int isNumberInIntArray(int *array, int n_elements, int number_to_check){
     int return_value = -1;
     int i;
@@ -1262,8 +1262,8 @@ static inline int isNumberInIntArray(int *array, int n_elements, int number_to_c
     }
     return return_value;
 }
+*/
 
-/*
 // The reference version that works fine
 static inline int isNumberInIntArray( int *array, int n_elements, int number_to_check ) {
  int i;
@@ -1276,7 +1276,7 @@ static inline int isNumberInIntArray( int *array, int n_elements, int number_to_
  }
  return -1;
 }
-*/
+
 
 /*
 

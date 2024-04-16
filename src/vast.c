@@ -5698,13 +5698,18 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 
       // Coordinates averaging
       for ( coordinate_array_index= 0; coordinate_array_index < coordinate_array_counter; coordinate_array_index++ ) {
+       // sadly, no measurable speed-up
        // attempt to speed-up
-       if ( number_of_coordinate_measurements_for_star[coordinate_array_index] >= MAX_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ) {
-        continue;
+       if ( n >= MAX_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ) {
+        if ( number_of_coordinate_measurements_for_star[coordinate_array_index] >= MAX_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ) {
+         continue;
+        }
        }
        //
        // SLOW: 5.12%
-       if ( STAR1[Pos1[i]].n == star_numbers_for_coordinate_arrays[coordinate_array_index] ) {
+       //if ( STAR1[Pos1[i]].n == star_numbers_for_coordinate_arrays[coordinate_array_index] ) {
+       // Using the IF_UNLIKELY macro to handle branch prediction
+       IF_UNLIKELY( STAR1[Pos1[i]].n == star_numbers_for_coordinate_arrays[coordinate_array_index] ) {
         // maybe we don't want to do it if number_of_coordinate_measurements_for_star[coordinate_array_index] > something ?
         if ( number_of_coordinate_measurements_for_star[coordinate_array_index] < MAX_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ) {
          number_of_coordinate_measurements_for_star[coordinate_array_index]++;
@@ -5741,7 +5746,9 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
        for ( i_update_coordinates_STAR3= 0; i_update_coordinates_STAR3 < NUMBER3; i_update_coordinates_STAR3++ ) {
         // for ( i_update_coordinates_STAR3= NUMBER3; i_update_coordinates_STAR3--; ) {
         //  SLOW: 4.13%
-        if ( STAR1[Pos1[i]].n == STAR3[i_update_coordinates_STAR3].n ) {
+        //if ( STAR1[Pos1[i]].n == STAR3[i_update_coordinates_STAR3].n ) {
+        // Using the IF_UNLIKELY macro to handle branch prediction
+        IF_UNLIKELY( STAR1[Pos1[i]].n == STAR3[i_update_coordinates_STAR3].n ) {
          // never update for a moving object
          if ( STAR1[Pos1[i]].moving_object != 1 && STAR3[i_update_coordinates_STAR3].moving_object != 1 ) {
           STAR3[i_update_coordinates_STAR3].x= STAR1[Pos1[i]].x;
