@@ -272,7 +272,10 @@ define max_period(jd_range) {
 }
 max_period(jd_range)
 "|bc -ql`
-
+# if this didn't work
+if [ -z "$PMAX" ];then
+ PMAX=100
+fi
 
 # That's funny, what's so special about 0.3 ???
 if [ "$PMAX" = ".3" ];then
