@@ -194,10 +194,14 @@ lib/guess_saturation_limit_main: guess_saturation_limit_main.o guess_saturation_
 
 variability_indexes.o: $(SRC_PATH)variability_indexes.c $(SRC_PATH)vast_limits.h $(SRC_PATH)variability_indexes.h
 	# Older GCC versions complain about isnormal() unless -std=c99 is given explicitly
-	$(CC) $(OPTFLAGS) -c -o variability_indexes.o $(SRC_PATH)variability_indexes.c -std=c99 -I$(GSL_INCLUDE)
+	#$(CC) $(OPTFLAGS) -c -o variability_indexes.o $(SRC_PATH)variability_indexes.c -std=c99 -I$(GSL_INCLUDE)
+	# MacOS header files are incompatible with -std=c99
+	$(CC) $(OPTFLAGS) -c -o variability_indexes.o $(SRC_PATH)variability_indexes.c -I$(GSL_INCLUDE)
 create_data.o: $(SRC_PATH)create_data.c $(SRC_PATH)vast_limits.h $(SRC_PATH)variability_indexes.h $(SRC_PATH)get_number_of_measured_images_from_vast_summary_log.h $(SRC_PATH)detailed_error_messages.h $(SRC_PATH)lightcurve_io.h
 	# Older GCC versions complain about isnormal() unless -std=c99 is given explicitly
-	$(CC) $(OPTFLAGS) -c -o create_data.o $(SRC_PATH)create_data.c -std=c99 -I$(GSL_INCLUDE)
+	#$(CC) $(OPTFLAGS) -c -o create_data.o $(SRC_PATH)create_data.c -std=c99 -I$(GSL_INCLUDE)
+	# MacOS header files are incompatible with -std=c99
+	$(CC) $(OPTFLAGS) -c -o create_data.o $(SRC_PATH)create_data.c -I$(GSL_INCLUDE)
 write_vast_lightcurve_statistics_format_log.o: $(SRC_PATH)write_vast_lightcurve_statistics_format_log.c
 	$(CC) $(OPTFLAGS) -c -o write_vast_lightcurve_statistics_format_log.o $(SRC_PATH)write_vast_lightcurve_statistics_format_log.c
 lib/create_data: create_data.o get_number_of_measured_images_from_vast_summary_log.o variability_indexes.o write_vast_lightcurve_statistics_format_log.o
@@ -235,7 +239,9 @@ m_sigma_bin.o: $(SRC_PATH)m_sigma_bin.c
 	$(CC) $(OPTFLAGS) -c $(SRC_PATH)m_sigma_bin.c -I$(GSL_INCLUDE)
 
 index_vs_mag.o: $(SRC_PATH)index_vs_mag.c
-	$(CC) $(OPTFLAGS) -c $(SRC_PATH)index_vs_mag.c -std=c99 -I$(GSL_INCLUDE)
+	#$(CC) $(OPTFLAGS) -c $(SRC_PATH)index_vs_mag.c -std=c99 -I$(GSL_INCLUDE)
+	# MacOS header files are incompatible with -std=c99
+	$(CC) $(OPTFLAGS) -c $(SRC_PATH)index_vs_mag.c -I$(GSL_INCLUDE)
 
 m_sigma_bin: m_sigma_bin.o variability_indexes.o
 	$(CC) $(OPTFLAGS) -o $(LIB_DIR)m_sigma_bin m_sigma_bin.o variability_indexes.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm

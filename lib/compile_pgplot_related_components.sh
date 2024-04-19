@@ -193,10 +193,14 @@ for FILE_TO_REMOVE in lc find_candidates pgfv lib/fit_mag_calib lib/fit_linear l
 done
 
 # Older GCC versions complain about isnormal() unless -std=c99 is given explicitly
-"$CC" `cat optflags_for_scripts.tmp` -c src/lc.c -std=c99 -I$GSL_INCLUDE
+#"$CC" `cat optflags_for_scripts.tmp` -c src/lc.c -std=c99 -I$GSL_INCLUDE
+# MacOS header files are incompatible with -std=c99
+"$CC" `cat optflags_for_scripts.tmp` -c src/lc.c -I$GSL_INCLUDE
 "$CC" `cat optflags_for_scripts.tmp` -o lc setenv_local_pgplot.o lc.o variability_indexes.o get_path_to_vast.o wpolyfit.o -lm $CFITSIO_LIB $GSL_LIB $PGPLOT_LIBS  -Wall
 # Older GCC versions complain about isnormal() unless -std=c99 is given explicitly
-"$CC" `cat optflags_for_scripts.tmp` `lib/check_builtin_functions.sh` -c src/find_candidates.c -std=c99 -D_POSIX_C_SOURCE=199309L -I$GSL_INCLUDE
+#"$CC" `cat optflags_for_scripts.tmp` `lib/check_builtin_functions.sh` -c src/find_candidates.c -std=c99 -D_POSIX_C_SOURCE=199309L -I$GSL_INCLUDE
+# MacOS header files are incompatible with -std=c99
+"$CC" `cat optflags_for_scripts.tmp` `lib/check_builtin_functions.sh` -c src/find_candidates.c -D_POSIX_C_SOURCE=199309L -I$GSL_INCLUDE
 "$CC" `cat optflags_for_scripts.tmp` -o find_candidates setenv_local_pgplot.o find_candidates.o $PGPLOT_LIBS $CFITSIO_LIB -lm
 "$CC" `cat optflags_for_scripts.tmp` -c -o photocurve.o src/photocurve.c -I$GSL_INCLUDE -Wall
 "$CC" `cat optflags_for_scripts.tmp` -c src/pgfv/pgfv.c -I$GSL_INCLUDE

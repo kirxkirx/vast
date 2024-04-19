@@ -226,7 +226,7 @@ int main() {
   for ( j= 1; j < MAX_NUMBER_OF_INDEXES_TO_STORE; j++ ) {
    index[i][j]= get_index_by_column_number( substring_to_parse, j );
    // ?????????????????
-   if ( 0 == isnormal( index[i][j] ) )
+   if ( 0 == vast_isnormal( index[i][j] ) )
     index[i][j]= INVALID_INDEX_VALUE;
    //
    index_filtered[i][j]= 0.0;        // We need to initialize this one for the median-subtraction procedure that follows
@@ -358,7 +358,7 @@ int main() {
       data_for_stat[k]= index[j][varindex_counter];
       if ( INVALID_INDEX_VALUE == data_for_stat[k] )
        continue;
-      if ( 0 == isnormal( data_for_stat[k] ) )
+      if ( 0 == vast_isnormal( data_for_stat[k] ) )
        continue; // redundant, done this check before when assigning the INVALID_INDEX_VALUE value
       if ( 0.0 == data_for_stat[k] )
        continue; // THIS IS NEW, forbid 0 index falues
@@ -385,9 +385,9 @@ int main() {
       //      index_spread[i][varindex_counter]=gsl_stats_sd( data_for_stat_median_subtracted, 1, k);
       //     }
       // If k>1 but there is no expected value or variance
-      if ( 0 == isnormal( index_expected[i][varindex_counter] ) )
+      if ( 0 == vast_isnormal( index_expected[i][varindex_counter] ) )
        index_expected[i][varindex_counter]= 0.0;
-      if ( 0 == isnormal( index_spread[i][varindex_counter] ) )
+      if ( 0 == vast_isnormal( index_spread[i][varindex_counter] ) )
        index_spread[i][varindex_counter]= 0.0;
      } else {
       // If we don't have enough points to estimate the index

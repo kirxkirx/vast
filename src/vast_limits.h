@@ -370,6 +370,31 @@
     #define IF_UNLIKELY(cond) if (cond)
 #endif
 
+
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+ #include <math.h>
+ #ifdef VAST_USE_BUILTIN_FUNCTIONS
+    // We use __builtin_isnormal() as we know it is working if VAST_USE_BUILTIN_FUNCTIONS is defined
+    static inline int vast_isnormal(double x) {
+        return __builtin_isnormal(x);
+    }
+ #else
+    // C99 or later
+    static inline int vast_isnormal(double x) {
+        return isnormal(x);
+    }
+ #endif
+#else
+    // Manually define VAST_DBL_MIN and VAST_DBL_MAX based on IEEE 754 double precision
+    #define VAST_DBL_MIN 2.2250738585072014e-308  // Smallest positive normal value
+    #define VAST_DBL_MAX 1.7976931348623157e+308  // Largest positive normal value
+
+    // Define our own isnormal()
+    static inline int vast_isnormal(double x) {
+        return x != 0 && (x > VAST_DBL_MIN || x < -VAST_DBL_MIN);
+    }
+#endif
+
 // 2*sqrt(2*log(2)) see https://en.wikipedia.org/wiki/Full_width_at_half_maximum
 #define SIGMA_TO_FWHM_CONVERSION_FACTOR 2.35482004503095
 

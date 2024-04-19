@@ -460,7 +460,7 @@ int main( int argc, char **argv ) {
    // dvarindex_tmp=0.0; // just to make valgrind happy
    dvarindex_tmp= get_index_by_column_number( substring_to_parse, j );
 #ifndef VAST_USE_BUILTIN_FUNCTIONS
-   if ( 0 == isnormal( dvarindex_tmp ) )
+   if ( 0 == vast_isnormal( dvarindex_tmp ) )
     dvarindex_tmp= 0.0; // SET INDEX to 0.0 if it's undefined!!! Setting it to a funny extreme value will ruin the plots!
 #endif
 #ifdef VAST_USE_BUILTIN_FUNCTIONS

@@ -274,7 +274,7 @@ int main() {
       x_ref= x;
       y_ref= y;
      }
-     if ( 1 == isnormal( mag ) && 1 == isnormal( magerr ) ) {
+     if ( 1 == vast_isnormal( mag ) && 1 == vast_isnormal( magerr ) ) {
       if ( mag != 0.0 && magerr != 0.0 ) {
        m[i]= mag;
        merr[i]= magerr;
@@ -413,7 +413,7 @@ int main() {
 
     ///// Filter-out bad stars - if even the simple statistics canot be computed - we don't want this star to be written in the stat. files
     // This is the replacement of the old external filter
-    if ( 0 == isnormal( m_median ) )
+    if ( 0 == vast_isnormal( m_median ) )
      continue;
     // Changec check here
     if ( m_median < BRIGHTEST_STARS )
@@ -424,7 +424,7 @@ int main() {
     // if( sigma_series>MAX_MAG_ERROR )continue;
     // No upper limit on the mag scatter - some objects may be vary by *a lot*!
     //
-    if ( sigma_series == 0.0 || 0 == isnormal( sigma_series ) )
+    if ( sigma_series == 0.0 || 0 == vast_isnormal( sigma_series ) )
      continue;
 
     ///// Done with computations, now write-out the results

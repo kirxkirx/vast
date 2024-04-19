@@ -1429,7 +1429,7 @@ double Normalized_excess_variance( double *m, double *merr, int N ) {
  result= result / ( (double)N * mean * mean );
 
  // just in case...
- if ( 0 == isnormal( result ) )
+ if ( 0 == vast_isnormal( result ) )
   result= 0.0;
 
  // PREVENT negative values of NXS
