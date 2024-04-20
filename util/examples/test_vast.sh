@@ -20333,7 +20333,7 @@ PERIOD_SEARCH_SERVERS="none scan.sai.msu.ru vast.sai.msu.ru"
 
 ## out00095_edit_edit.dat
 # Local period search
-LOCAL_FREQUENCY_CD=`lib/lk_compute_periodogram ../vast_test_lightcurves/out00095_edit_edit.dat 2 0.1 0.1 | grep 'LK' | awk '{printf "%.2f",$1}'`
+LOCAL_FREQUENCY_CD=`lib/lk_compute_periodogram ../vast_test_lightcurves/out00095_edit_edit.dat 2 0.1 0.1 | grep 'LK' | awk '{printf "%.4f",$1}'`
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH001"
@@ -20360,7 +20360,7 @@ unset PERIOD_SEARCH_SERVER
 
 ## ZTF1901_2-5_KGO_JDmid.dat
 # Local period search
-LOCAL_FREQUENCY_CD=`lib/lk_compute_periodogram ../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat 0.05 0.005 0.05 | grep 'LK' | awk '{printf "%.4f",$1}'`
+LOCAL_FREQUENCY_CD=`lib/lk_compute_periodogram ../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat 0.05 0.005 0.05 | grep 'LK' | awk '{printf "%.2f",$1}'`
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH004"
