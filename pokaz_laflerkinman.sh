@@ -122,7 +122,7 @@ fi
 CURL="$CURL -H 'Expect:'"
 ###################################################
 echo -n "Checking if we can reach any period search servers... "
-if [ -z "$PERIOD_SEARCH_SERVER" ];then
+if [ -z "$PERIOD_SEARCH_SERVER" ] || [ "$PERIOD_SEARCH_SERVER" = "none" ];then
  # Decide on which period search server to use
  # first - set the initial list of servers
  #PERIOD_SEARCH_SERVERS="scan.sai.msu.ru polaris.kirx.net vast.sai.msu.ru"
@@ -194,7 +194,7 @@ if [ ! -z "$FORCE_PERIOD_SEARCH_SERVER" ];then
  fi
 fi
    
-if [ "$PERIOD_SEARCH_SERVER" = "" ];then
+if [ -z "$PERIOD_SEARCH_SERVER" ];then
  echo "Error choosing the period search server"
  exit 1
 fi
@@ -343,23 +343,11 @@ The period search script $0 is terminated."
  exit 1
 fi
 
-
-
 # Remove temporary files
-#rm -f lightcurve$$.tmp
 rm -f server_reply$$.html
 
-# Start web browser
-#echo "# Starting $WEBBROWSER web browser..."
-#echo "$WEBBROWSER $RESULTURL"
-#if [ "$WEBBROWSER" != "curl" ];then
-# $WEBBROWSER $RESULTURL &>/dev/null &
-#else
-# $WEBBROWSER $RESULTURL
-#fi
-
-
-"$VAST_PATH"lib/start_web_browser.sh $RESULTURL
+# Start web browser to view the results
+"$VAST_PATH"lib/start_web_browser.sh "$RESULTURL"
 if [ $? -ne 0 ];then
- echo "ERROR in the script ${VAST_PATH}lib/start_web_browser.sh"
+ echo "ERROR in the script ${VAST_PATH}lib/start_web_browser.sh $RESULTURL"
 fi
