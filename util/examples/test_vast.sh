@@ -20360,12 +20360,12 @@ unset PERIOD_SEARCH_SERVER
 
 ## ZTF1901_2-5_KGO_JDmid.dat
 # Local period search
-LOCAL_FREQUENCY_CD=`lib/lk_compute_periodogram ../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat 0.05 0.005 0.05 | grep 'LK' | awk '{printf "%.2f",$1}'`
+LOCAL_FREQUENCY_CD=`lib/lk_compute_periodogram ../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat 0.05 0.005 0.05 | grep 'LK' | awk '{printf "%.4f",$1}'`
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH004"
 else
- if [ "$LOCAL_FREQUENCY_CD" != "35.37" ];then
+ if [ "$LOCAL_FREQUENCY_CD" != "35.3798" ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH005"
  fi
@@ -20386,14 +20386,111 @@ for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
  fi
  # Get the results page
  # no 'head' at the end to test compatibility with the old code
- REMOTE_FREQUENCY_CD=$(WEBBROWSER=curl lib/start_web_browser.sh "$RESULTURL" | grep 'L&K peak 1' | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.2f",$1}')
+ REMOTE_FREQUENCY_CD=$(WEBBROWSER=curl lib/start_web_browser.sh "$RESULTURL" | grep 'L&K peak 1' | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.4f",$1}')
  if [ "$REMOTE_FREQUENCY_CD" != "$LOCAL_FREQUENCY_CD" ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH006_$PERIOD_SEARCH_SERVER"
  fi
- # TBA - heliocentric correction test
 done
 unset PERIOD_SEARCH_SERVER
+
+# Heliocentric correction
+if [ -f ZTF1901_2-5_KGO_JDmid.dat_hjdTT ];then
+ rm -f ZTF1901_2-5_KGO_JDmid.dat_hjdTT
+fi
+util/hjd_input_in_UTC ../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat $(lib/hms2deg 19:01:25.42 +53:09:29.5)
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH007_FAILED_hjd_input_in_UTC"
+elif [ ! -f ZTF1901_2-5_KGO_JDmid.dat_hjdTT ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH007_nohjdTT"
+elif [ ! -s ZTF1901_2-5_KGO_JDmid.dat_hjdTT ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH007_emptyhjdTT"
+fi
+# Local period search
+LOCAL_FREQUENCY_CD=`lib/lk_compute_periodogram ZTF1901_2-5_KGO_JDmid.dat_hjdTT 0.05 0.005 0.05 | grep 'LK' | awk '{printf "%.4f",$1}'`
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH008"
+else
+ if [ "$LOCAL_FREQUENCY_CD" != "35.3803" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH009"
+ fi
+fi # if [ $? -ne 0 ];then
+
+# Remote period search
+for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
+ export PERIOD_SEARCH_SERVER
+ # Upload the lightcurve
+ # -H 'Expect:' is specifically useful to suppress the default behavior of curl when sending large POST requests. By default, for POST requests larger than 1024 bytes, curl will add an Expect: 100-continue header automatically.
+ RESULTURL=$(curl -H 'Expect:' -F file=@../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat -F submit="Compute" -F pmax=0.05 -F pmin=0.005 -F phaseshift=0.05 -F fileupload="True" -F applyhelcor="Yes" -F timesys="UTC" -F position="19:01:25.42 +53:09:29.5" "http://$PERIOD_SEARCH_SERVER/cgi-bin/lk/process_lightcurve.py" --user vast48:khyzbaojMhztNkWd 2>/dev/null | grep "The output will be written to" | awk -F"<a" '{print $2}' |awk -F">" '{print $1}')
+ RESULTURL=${RESULTURL//\"/ }
+ RESULTURL=`echo $RESULTURL | awk '{print $2}'`
+ if [ -z "$RESULTURL" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH010_emptyRESULTURL_$PERIOD_SEARCH_SERVER"
+  continue
+ fi
+ # Get the results page
+ # no 'head' at the end to test compatibility with the old code
+ REMOTE_FREQUENCY_CD=$(WEBBROWSER=curl lib/start_web_browser.sh "$RESULTURL" | grep 'L&K peak 1' | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.4f",$1}')
+ if [ "$REMOTE_FREQUENCY_CD" != "$LOCAL_FREQUENCY_CD" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH011_$PERIOD_SEARCH_SERVER"
+ fi
+ # Get the corrected lightcurve
+ if [ -f edited_lightcurve_data.txt ];then
+  rm -f edited_lightcurve_data.txt
+ fi
+ curl -O "${RESULTURL/index.html/edited_lightcurve_data.txt}"
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH012_$PERIOD_SEARCH_SERVER" 
+ elif [ ! -f edited_lightcurve_data.txt ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH013_$PERIOD_SEARCH_SERVER"
+ elif [ ! -s edited_lightcurve_data.txt ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH014_$PERIOD_SEARCH_SERVER"
+ else
+  # 0.00002*86400 = 1.7280
+  awk -v tol=0.00002 '
+    BEGIN {
+        status=0
+    }
+    NR==FNR {
+        a[FNR]=$1
+        next
+    }
+    {
+        if (FNR in a) {
+            diff=a[FNR]-$1
+            if (diff < -tol || diff > tol) {
+                printf("Line %d: %.6f != %.6f\n", FNR, a[FNR], $1)
+                status=1
+            }
+        }
+    }
+    END {
+        exit status
+    }
+' ZTF1901_2-5_KGO_JDmid.dat_hjdTT edited_lightcurve_data.txt
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH015_LocalRemoteCorrectedLCcomparisonFailed_$PERIOD_SEARCH_SERVER"
+ fi
+done
+unset PERIOD_SEARCH_SERVER
+
+# cleanup
+for FILE_TO_REMOVE in ZTF1901_2-5_KGO_JDmid.dat_hjdTT edited_lightcurve_data.txt ;do
+ if [ -f "$FILE_TO_REMOVE" ];then
+  rm -f "$FILE_TO_REMOVE"
+ fi
+done
 
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
 THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
