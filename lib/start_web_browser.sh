@@ -76,6 +76,13 @@ if [ -z "$WEBBROWSER" ];then
   echo "Please edit the script $0 to specify a browser manually!"
   exit 1
  fi
+else
+ # Check if the externally-provided web browser command is correct
+ if ! command -v "$WEBBROWSER" &>/dev/null ;then
+  echo "ERROR in $0"
+  echo "Cannot find $WEBBROWSER in the PATH"
+  exit 1
+ fi
 fi
 #################################
 
@@ -85,7 +92,6 @@ echo "# Starting $WEBBROWSER web browser..."
 echo "$WEBBROWSER $URL_TO_OPEN"
 if [ "$WEBBROWSER" != "curl" ];then
  "$WEBBROWSER" "$URL_TO_OPEN" &>/dev/null &
- exit $?
 else
  "$WEBBROWSER" "$URL_TO_OPEN"
 fi

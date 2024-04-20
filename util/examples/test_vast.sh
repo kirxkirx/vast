@@ -20323,10 +20323,17 @@ if [ ! -f ../vast_test_lightcurves/out00095_edit_edit.dat ];then
  curl -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/out00095_edit_edit.dat.bz2" && bunzip2 out00095_edit_edit.dat.bz2
  cd $WORKDIR
 fi
+if [ ! -f ../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat ];then
+ cd ../vast_test_lightcurves
+ curl -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat.bz2" && bunzip2 ZTF1901_2-5_KGO_JDmid.dat.bz2
+ cd $WORKDIR
+fi
 
 PERIOD_SEARCH_SERVERS="none scan.sai.msu.ru vast.sai.msu.ru"
+
+## out00095_edit_edit.dat
 # Local period search
-LOCAL_FREQUENCY_CD=`lib/lk_compute_periodogram ../vast_test_lightcurves/out00095_edit_edit.dat 2 0.1 0.1 | grep 'LK' | awk '{printf "%.4f",$1}'`
+LOCAL_FREQUENCY_CD=`lib/lk_compute_periodogram ../vast_test_lightcurves/out00095_edit_edit.dat 2 0.1 0.1 | grep 'LK' | awk '{printf "%.2f",$1}'`
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH001"
@@ -20339,6 +20346,7 @@ fi # if [ $? -ne 0 ];then
 
 # Remote period search
 for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
+ export PERIOD_SEARCH_SERVER
  #REMOTE_FREQUENCY_CD=`WEBBROWSER=curl ./pokaz_laflerkinman.sh ../vast_test_lightcurves/out00095_edit_edit.dat 2>/dev/null | grep 'L&K peak 2' | awk '{print $2}' FS='&nu; ='  | awk '{printf "%.4f",$1}'`
  #REMOTE_FREQUENCY_CD=`WEBBROWSER=curl ./pokaz_laflerkinman.sh ../vast_test_lightcurves/out00095_edit_edit.dat 2>/dev/null | grep 'L&K peak 2' | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.4f",$1}'`
  # the number of LK peak changed due to changes on the server side
@@ -20348,7 +20356,44 @@ for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
   FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH003_$PERIOD_SEARCH_SERVER"
  fi
 done
+unset PERIOD_SEARCH_SERVER
 
+## ZTF1901_2-5_KGO_JDmid.dat
+# Local period search
+LOCAL_FREQUENCY_CD=`lib/lk_compute_periodogram ../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat 0.05 0.005 0.05 | grep 'LK' | awk '{printf "%.4f",$1}'`
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH004"
+else
+ if [ "$LOCAL_FREQUENCY_CD" != "35.37" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH005"
+ fi
+fi # if [ $? -ne 0 ];then
+
+# Remote period search
+for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
+ export PERIOD_SEARCH_SERVER
+ # Upload the lightcurve
+ # -H 'Expect:' is specifically useful to suppress the default behavior of curl when sending large POST requests. By default, for POST requests larger than 1024 bytes, curl will add an Expect: 100-continue header automatically.
+ RESULTURL=$(curl -H 'Expect:' -F file=@../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat -F submit="Compute" -F pmax=0.05 -F pmin=0.005 -F phaseshift=0.05 -F fileupload="True" -F applyhelcor="No" -F timesys="UTC" -F position="00:00:00.00 +00:00:00.0" "http://$PERIOD_SEARCH_SERVER/cgi-bin/lk/process_lightcurve.py" --user vast48:khyzbaojMhztNkWd 2>/dev/null | grep "The output will be written to" | awk -F"<a" '{print $2}' |awk -F">" '{print $1}')
+ RESULTURL=${RESULTURL//\"/ }
+ RESULTURL=`echo $RESULTURL | awk '{print $2}'`
+ if [ -z "$RESULTURL" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH006_emptyRESULTURL_$PERIOD_SEARCH_SERVER"
+  continue
+ fi
+ # Get the results page
+ # no 'head' at the end to test compatibility with the old code
+ REMOTE_FREQUENCY_CD=$(WEBBROWSER=curl lib/start_web_browser.sh "$RESULTURL" | grep 'L&K peak 1' | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.2f",$1}')
+ if [ "$REMOTE_FREQUENCY_CD" != "$LOCAL_FREQUENCY_CD" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH006_$PERIOD_SEARCH_SERVER"
+ fi
+ # TBA - heliocentric correction test
+done
+unset PERIOD_SEARCH_SERVER
 
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
 THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')

@@ -118,6 +118,7 @@ if [ $? -ne 0 ];then
  echo " "
  exit 1
 fi
+# -H 'Expect:' is specifically useful to suppress the default behavior of curl when sending large POST requests. By default, for POST requests larger than 1024 bytes, curl will add an Expect: 100-continue header automatically.
 CURL="$CURL -H 'Expect:'"
 ###################################################
 echo -n "Checking if we can reach any period search servers... "
@@ -326,7 +327,7 @@ fi
 #cat server_reply$$.html
 
 # Parse the server reply
-RESULTURL=`grep "The output will be written to" server_reply$$.html | awk -F"<a" '{print $2}' |awk -F">" '{print $1}'`
+RESULTURL=`grep "The output will be written to" server_reply$$.html | awk -F"<a" '{print $2}' |awk -F">" '{print $1}' | head -n 1`
 RESULTURL=${RESULTURL//\"/ }
 RESULTURL=`echo $RESULTURL | awk '{print $2}'`
 
