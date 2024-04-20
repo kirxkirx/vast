@@ -85,6 +85,7 @@ echo "# Starting $WEBBROWSER web browser..."
 echo "$WEBBROWSER $URL_TO_OPEN"
 if [ "$WEBBROWSER" != "curl" ];then
  "$WEBBROWSER" "$URL_TO_OPEN" &>/dev/null &
+ exit $?
 else
  "$WEBBROWSER" "$URL_TO_OPEN"
 fi

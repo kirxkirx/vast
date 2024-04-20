@@ -359,4 +359,6 @@ rm -f server_reply$$.html
 
 
 "$VAST_PATH"lib/start_web_browser.sh $RESULTURL
-
+if [ $? -ne 0 ];then
+ echo "ERROR in the script ${VAST_PATH}lib/start_web_browser.sh"
+fi
