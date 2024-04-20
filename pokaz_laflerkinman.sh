@@ -121,12 +121,17 @@ fi
 CURL="$CURL -H 'Expect:'"
 ###################################################
 echo -n "Checking if we can reach any period search servers... "
-# Decide on which period search server to use
-# first - set the initial list of servers
-#PERIOD_SEARCH_SERVERS="scan.sai.msu.ru polaris.kirx.net vast.sai.msu.ru"
-# polaris.kirx.net is actually pretty slow...
-# vast.sai.msu.ru disabled until the software is updated there
-PERIOD_SEARCH_SERVERS="scan.sai.msu.ru"
+if [ -z "$PERIOD_SEARCH_SERVER" ];then
+ # Decide on which period search server to use
+ # first - set the initial list of servers
+ #PERIOD_SEARCH_SERVERS="scan.sai.msu.ru polaris.kirx.net vast.sai.msu.ru"
+ # polaris.kirx.net is actually pretty slow...
+ # vast.sai.msu.ru disabled until the software is updated there
+ PERIOD_SEARCH_SERVERS="scan.sai.msu.ru"
+else
+ # PERIOD_SEARCH_SERVER is externally set, but we still want to check if it's rachable
+ PERIOD_SEARCH_SERVERS="$PERIOD_SEARCH_SERVER"
+fi
 rm -f server_*.ping_ok
 for i in $PERIOD_SEARCH_SERVERS ;do
  ping -c1 -n "$i" &>/dev/null && echo "$i" > server_"$i".ping_ok &
@@ -272,6 +277,8 @@ define max_period(jd_range) {
 }
 max_period(jd_range)
 "|bc -ql`
+# The above does not work on Mac
+
 # if this didn't work
 if [ -z "$PMAX" ];then
  PMAX=100
