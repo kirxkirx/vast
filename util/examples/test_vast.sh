@@ -20484,9 +20484,10 @@ for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
         exit status
     }
 ' ZTF1901_2-5_KGO_JDmid.dat_hjdTT edited_lightcurve_data.txt
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH015_LocalRemoteCorrectedLCcomparisonFailed_$PERIOD_SEARCH_SERVER"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH015_LocalRemoteCorrectedLCcomparisonFailed_$PERIOD_SEARCH_SERVER"
+  fi
  fi
 done
 unset PERIOD_SEARCH_SERVER
