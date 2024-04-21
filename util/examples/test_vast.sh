@@ -20389,7 +20389,7 @@ for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
  fi
  # Get the results page
  # no 'head' at the end to test compatibility with the old code
- REMOTE_FREQUENCY_CD=$(WEBBROWSER=curl lib/start_web_browser.sh "$RESULTURL" | grep 'L&K peak 1' | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.4f",$1}')
+ REMOTE_FREQUENCY_CD=$(WEBBROWSER=curl lib/start_web_browser.sh "$RESULTURL" | grep 'L&K peak 1' | head -n1 | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.4f",$1}')
  if [ "$REMOTE_FREQUENCY_CD" != "$LOCAL_FREQUENCY_CD" ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH006_$PERIOD_SEARCH_SERVER"
@@ -20442,7 +20442,7 @@ for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
  fi
  # Get the results page
  # no 'head' at the end to test compatibility with the old code
- REMOTE_FREQUENCY_CD=$(WEBBROWSER=curl lib/start_web_browser.sh "$RESULTURL" | grep 'L&K peak 1' | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.4f",$1}')
+ REMOTE_FREQUENCY_CD=$(WEBBROWSER=curl lib/start_web_browser.sh "$RESULTURL" | grep 'L&K peak 1' | head -n1 | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.4f",$1}')
  if [ "$REMOTE_FREQUENCY_CD" != "$LOCAL_FREQUENCY_CD" ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH011_$PERIOD_SEARCH_SERVER"
