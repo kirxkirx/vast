@@ -20373,6 +20373,9 @@ fi # if [ $? -ne 0 ];then
 
 # Remote period search
 for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
+ if [ "$PERIOD_SEARCH_SERVER" = "none" ];then
+  continue
+ fi
  export PERIOD_SEARCH_SERVER
  # Upload the lightcurve
  # -H 'Expect:' is specifically useful to suppress the default behavior of curl when sending large POST requests. By default, for POST requests larger than 1024 bytes, curl will add an Expect: 100-continue header automatically.
@@ -20423,6 +20426,9 @@ fi # if [ $? -ne 0 ];then
 
 # Remote period search
 for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
+ if [ "$PERIOD_SEARCH_SERVER" = "none" ];then
+  continue
+ fi
  export PERIOD_SEARCH_SERVER
  # Upload the lightcurve
  # -H 'Expect:' is specifically useful to suppress the default behavior of curl when sending large POST requests. By default, for POST requests larger than 1024 bytes, curl will add an Expect: 100-continue header automatically.
