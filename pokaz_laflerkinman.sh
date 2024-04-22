@@ -31,6 +31,14 @@ if [ ! -s "$1" ];then
  exit
 fi
 #################################
+
+is_positive_float() {
+    case "$1" in
+        ''|*[!0-9.]*) return 1 ;;
+        *) awk -v num="$1" 'BEGIN { if (num > 0 && num == num+0) exit 0; exit 1 }' ;;
+    esac
+}
+
 #################################
 # A more portable realpath wrapper
 function vastrealpath {
@@ -204,7 +212,7 @@ fi
 # Do the actual work
 
 # Make up a good name for the converted file
-NEWFILENAME=`basename "$1"`
+NEWFILENAME=$(basename "$1")
 NEWFILENAME=${NEWFILENAME// /_}
 
 # Make sure we have a directory to save the converted file
@@ -327,10 +335,28 @@ fi
 
 echo "# PMAX = $PMAX d   PMIN = $PMIN d"
 
+# final check of the search parameters
+if ! is_positive_float "$PMAX"; then
+ echo "ERROR in $0: expecting positive floating point number as PMAX"
+ exit 1
+fi
+if ! is_positive_float "$PMIN"; then
+ echo "ERROR in $0: expecting positive floating point number as PMIN"
+ exit 1
+fi
+if [ ! -f "${VAST_PATH}saved_period_search_lightcurves/$NEWFILENAME" ];then
+ echo "ERROR in $0: cannot find the input lightcurve file ${VAST_PATH}saved_period_search_lightcurves/$NEWFILENAME"
+ exit 1
+fi
+if [ ! -s "${VAST_PATH}saved_period_search_lightcurves/$NEWFILENAME" ];then
+ echo "ERROR in $0: empty input lightcurve file ${VAST_PATH}saved_period_search_lightcurves/$NEWFILENAME"
+ exit 1
+fi
+
 echo "# Uploading the lightcurve to $PERIOD_SEARCH_SERVER"
 
 # Upload the converted lightcurve file to the server
-$CURL -F file=@$VAST_PATH"saved_period_search_lightcurves/$NEWFILENAME" -F submit="Compute" -F pmax=$PMAX -F pmin=$PMIN -F phaseshift=0.1 -F fileupload="True" -F applyhelcor="No" -F timesys="$TIMESYSTEM" -F position="00:00:00.00 +00:00:00.0" "http://$PERIOD_SEARCH_SERVER/cgi-bin/lk/process_lightcurve.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
+$CURL -F file=@"${VAST_PATH}saved_period_search_lightcurves/$NEWFILENAME" -F submit="Compute" -F pmax=$PMAX -F pmin=$PMIN -F phaseshift=0.1 -F fileupload="True" -F applyhelcor="No" -F timesys="$TIMESYSTEM" -F position="00:00:00.00 +00:00:00.0" "http://$PERIOD_SEARCH_SERVER/cgi-bin/lk/process_lightcurve.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
 if [ $? -ne 0 ];then
  echo "WARNING: curl returned a non-zero exit status - something is wrong!"
 else
