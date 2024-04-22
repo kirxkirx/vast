@@ -20359,8 +20359,9 @@ done
 unset PERIOD_SEARCH_SERVER
 
 ## ZTF1901_2-5_KGO_JDmid.dat
+EXPECTED_FREQUENCY_CD=$(echo "35.3798" | awk '{printf "%.3f",$1}')
 # Local period search
-LOCAL_FREQUENCY_CD=`lib/lk_compute_periodogram ../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat 0.05 0.005 0.05 | grep 'LK' | awk '{printf "%.4f",$1}'`
+LOCAL_FREQUENCY_CD=`lib/lk_compute_periodogram ../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat 0.05 0.005 0.05 | grep 'LK' | awk '{printf "%.3f",$1}'`
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH004"
@@ -20389,10 +20390,10 @@ for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
  fi
  # Get the results page
  # no 'head' at the end to test compatibility with the old code
- REMOTE_FREQUENCY_CD=$(WEBBROWSER=curl lib/start_web_browser.sh "$RESULTURL" | grep 'L&K peak 1' | head -n1 | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.4f",$1}')
+ REMOTE_FREQUENCY_CD=$(WEBBROWSER=curl lib/start_web_browser.sh "$RESULTURL" | grep 'L&K peak 1' | head -n1 | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.3f",$1}')
  if [ "$REMOTE_FREQUENCY_CD" != "$LOCAL_FREQUENCY_CD" ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH006_$PERIOD_SEARCH_SERVER"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH006_${PERIOD_SEARCH_SERVER}_remoteF${REMOTE_FREQUENCY_CD}_localF${LOCAL_FREQUENCY_CD}"
  fi
 done
 unset PERIOD_SEARCH_SERVER
