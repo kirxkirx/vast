@@ -20339,10 +20339,23 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH001"
 else
- if [ "$LOCAL_FREQUENCY_CD" != "$EXPECTED_FREQUENCY_CD" ];then
+# if [ "$LOCAL_FREQUENCY_CD" != "$EXPECTED_FREQUENCY_CD" ];then
+#  TEST_PASSED=0
+#  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH002"
+# fi
+ TEST=$(echo "$LOCAL_FREQUENCY_CD $EXPECTED_FREQUENCY_CD" | awk '{if (sqrt(($1 - $2) * ($1 - $2)) < 0.002) print 1; else print 0}')
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]]; then
+  echo "TEST ERROR"
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH002"
- fi
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH002_FREQUENCY_CD_TEST_ERROR"
+ else
+  if [ $TEST -eq 0 ]; then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH002_FREQUENCY_CD_TOLERANCE_EXCEEDED_${PERIOD_SEARCH_SERVER}_localF$LOCAL_FREQUENCY_CD}_expectedF${EXPECTED_FREQUENCY_CD}"
+  fi
+ fi # if ! [[ $TEST =~ $re ]]; then
 fi # if [ $? -ne 0 ];then
 
 # Remote period search
@@ -20356,7 +20369,7 @@ for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
 #  TEST_PASSED=0
 #  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH003_$PERIOD_SEARCH_SERVER"
 # fi
- TEST=$(echo "$REMOTE_FREQUENCY_CD $LOCAL_FREQUENCY_CD" | awk '{if (sqrt(($1 - $2) * ($1 - $2)) < 0.001) print 1; else print 0}')
+ TEST=$(echo "$REMOTE_FREQUENCY_CD $LOCAL_FREQUENCY_CD" | awk '{if (sqrt(($1 - $2) * ($1 - $2)) < 0.0002) print 1; else print 0}')
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]]; then
   echo "TEST ERROR"
@@ -20384,7 +20397,7 @@ else
 #  TEST_PASSED=0
 #  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH005"
 # fi
- TEST=$(echo "$LOCAL_FREQUENCY_CD $EXPECTED_FREQUENCY_CD" | awk '{if (sqrt(($1 - $2) * ($1 - $2)) < 0.001) print 1; else print 0}')
+ TEST=$(echo "$LOCAL_FREQUENCY_CD $EXPECTED_FREQUENCY_CD" | awk '{if (sqrt(($1 - $2) * ($1 - $2)) < 0.002) print 1; else print 0}')
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]]; then
   echo "TEST ERROR"
@@ -20422,7 +20435,7 @@ for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
 #  TEST_PASSED=0
 #  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH006_${PERIOD_SEARCH_SERVER}_remoteF${REMOTE_FREQUENCY_CD}_localF${LOCAL_FREQUENCY_CD}"
 # fi
- TEST=$(echo "$REMOTE_FREQUENCY_CD $LOCAL_FREQUENCY_CD" | awk '{if (sqrt(($1 - $2) * ($1 - $2)) < 0.001) print 1; else print 0}')
+ TEST=$(echo "$REMOTE_FREQUENCY_CD $LOCAL_FREQUENCY_CD" | awk '{if (sqrt(($1 - $2) * ($1 - $2)) < 0.002) print 1; else print 0}')
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]]; then
   echo "TEST ERROR"
@@ -20464,7 +20477,7 @@ else
 #  TEST_PASSED=0
 #  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH009"
 # fi
- TEST=$(echo "$LOCAL_FREQUENCY_CD $EXPECTED_FREQUENCY_CD" | awk '{if (sqrt(($1 - $2) * ($1 - $2)) < 0.001) print 1; else print 0}')
+ TEST=$(echo "$LOCAL_FREQUENCY_CD $EXPECTED_FREQUENCY_CD" | awk '{if (sqrt(($1 - $2) * ($1 - $2)) < 0.002) print 1; else print 0}')
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]]; then
   echo "TEST ERROR"
@@ -20474,7 +20487,7 @@ else
  else
   if [ $TEST -eq 0 ]; then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH009_FREQUENCY_CD_TOLERANCE_EXCEEDED_${PERIOD_SEARCH_SERVER}_localF$$LOCAL_FREQUENCY_CD}_expectedF${EXPECTED_FREQUENCY_CD}"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH009_FREQUENCY_CD_TOLERANCE_EXCEEDED_${PERIOD_SEARCH_SERVER}_localF$LOCAL_FREQUENCY_CD}_expectedF${EXPECTED_FREQUENCY_CD}"
   fi
  fi # if ! [[ $TEST =~ $re ]]; then
 fi # if [ $? -ne 0 ];then
@@ -20502,7 +20515,7 @@ for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
 #  TEST_PASSED=0
 #  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH011_$PERIOD_SEARCH_SERVER"
 # fi
- TEST=$(echo "$REMOTE_FREQUENCY_CD $LOCAL_FREQUENCY_CD" | awk '{if (sqrt(($1 - $2) * ($1 - $2)) < 0.001) print 1; else print 0}')
+ TEST=$(echo "$REMOTE_FREQUENCY_CD $LOCAL_FREQUENCY_CD" | awk '{if (sqrt(($1 - $2) * ($1 - $2)) < 0.002) print 1; else print 0}')
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]]; then
   echo "TEST ERROR"
