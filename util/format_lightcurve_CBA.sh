@@ -60,14 +60,39 @@ DATE_FOR_CBA_MESSAGE_SUBJECT_FIRST_OBS=`LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"
 
 # Get the exposure time for the header
 if [ -s vast_image_details.log ];then
- #MEDIAN_EXPOSURE_TIME_SEC=`cat vast_image_details.log | awk '{print $2}' FS='exp=' | awk '{print $1}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.0f\n", $2}'`
  MEDIAN_EXPOSURE_TIME_SEC=`cat vast_image_details.log | awk -F 'exp=' '{print $2}' | awk '{print $1}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.0f\n", $2}'`
 else
  echo "WARNING: cannot get the exposure time from vast_image_details.log"
 fi
 
+VARIABLE_STAR_NAME="XX Xxx"
+# if automated magnitude calibration was performed,
+# there should be a plate-solved FITS corresonding to the reference image
+# note that we checked above that vast_summary.log exist
+REFERENCE_IMAGE=$(grep 'Ref.  image:' vast_summary.log | awk '{print $6}')
+PLATE_SOLVED_REFERENCE_IMAGE=wcs_$(basename $REFERENCE_IMAGE)
+PLATE_SOLVED_REFERENCE_IMAGE="${PLATE_SOLVED_REFERENCE_IMAGE/wcs_wcs_/wcs_}"
+if [ -f "$PLATE_SOLVED_REFERENCE_IMAGE" ];then
+ echo "Found a plate-solved reference image $PLATE_SOLVED_REFERENCE_IMAGE
+Trying to automatically ID the star $INPUT_VAST_LIGHTCURVE"
+ STAR_NUMBER=$(echo "${INPUT_VAST_LIGHTCURVE/out/}")
+ STAR_NUMBER=$(echo "${STAR_NUMBER/.dat/}")
+ # '| while read A ;do echo $A ;done' is to remove the trailing white space if the variable name is from GCVS
+ AUTOMATIC_VARIABLE_STAR_NAME=$(util/identify_justname.sh $INPUT_VAST_LIGHTCURVE | grep -A100 'Star:' | grep -v "$STAR_NUMBER  " | tail -n1 | while read A ;do echo $A ;done)
+ # Handle 'V* BT Mon -- Nova' this kind of names appear when Simbad (if GCVS is down)
+ AUTOMATIC_VARIABLE_STAR_NAME="${AUTOMATIC_VARIABLE_STAR_NAME/"V* "}"
+ AUTOMATIC_VARIABLE_STAR_NAME=$(echo "$AUTOMATIC_VARIABLE_STAR_NAME" | awk -F' --' '{print $1}')
+ #
+ if [ ! -z "$AUTOMATIC_VARIABLE_STAR_NAME" ];then
+  echo "Automatically setting the variable star name $AUTOMATIC_VARIABLE_STAR_NAME"
+  VARIABLE_STAR_NAME="$AUTOMATIC_VARIABLE_STAR_NAME"
+ else
+  echo "Something went wrong while trying to ID the star, keeping the name $VARIABLE_STAR_NAME"
+ fi
+fi
+
 if [ ! -s CBA_previously_used_header.txt ];then
- echo "# Variable: AM CVn
+ echo "# Variable: $VARIABLE_STAR_NAME
 # Date: $DATE_FOR_CBA_HEADER_FIRST_OBS
 # Comp star: 144_AAVSO_(V= 14.357 )
 # Check star: 157_AAVSO_(V= 15.663 )
@@ -116,7 +141,6 @@ if [ ! -z "$EDITOR" ];then
  $EDITOR CBA_report.txt
 fi
 
-#VARIABLE_STAR_NAME=`head CBA_report.txt | grep 'Variable: ' | awk '{print $2}' FS='Variable: '`
 VARIABLE_STAR_NAME=`head CBA_report.txt | grep 'Variable: ' | awk -F 'Variable: ' '{print $2}'`
 if [ -z "$VARIABLE_STAR_NAME" ];then
  echo "ERROR in CBA_report.txt : cannot find the variable star name"
@@ -124,14 +148,12 @@ if [ -z "$VARIABLE_STAR_NAME" ];then
 fi
 VARIABLE_STAR_NAME_NO_WHITESPACES="${VARIABLE_STAR_NAME// /_}"
 
-#OBSERVATORY_NAME=`head CBA_report.txt | grep 'Observatory: ' | awk '{print $2}' FS='Observatory: '`
 OBSERVATORY_NAME=`head CBA_report.txt | grep 'Observatory: ' | awk -F 'Observatory: ' '{print $2}'`
 if [ -z "$OBSERVATORY_NAME" ];then
  echo "ERROR in CBA_report.txt : cannot find the observatory name"
  exit 1
 fi
 
-#OBSERVER_NAMES=`head CBA_report.txt | grep 'Observers: ' | awk '{print $2}' FS='Observers: '`
 OBSERVER_NAMES=`head CBA_report.txt | grep 'Observers: ' | awk -F 'Observers: ' '{print $2}'`
 if [ -z "$OBSERVER_NAMES" ];then
  echo "ERROR in CBA_report.txt : cannot find the observer name"

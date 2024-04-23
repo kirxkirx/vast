@@ -43,27 +43,26 @@ fi
 # Check that the time system is UTC
 if [ ! -s vast_summary.log ];then
  echo "ERROR: cannot find vast_summary.log to determine the JD time system, assuming UTC"
- SOFTWARE_VERSION=`./vast --version 2>/dev/null`
+ SOFTWARE_VERSION=$(./vast --version 2>/dev/null)
 else
  grep --quiet 'JD time system (TT/UTC/UNKNOWN): UTC' vast_summary.log
  if [ $? -ne 0 ];then
   echo "ERROR: cannot confirm that the JD time system is UTC from vast_summary.log"
   exit 1
  fi
- SOFTWARE_VERSION=`grep 'Software: ' vast_summary.log  | awk '{print $2" "$3}'`
+ SOFTWARE_VERSION=$(grep 'Software: ' vast_summary.log  | awk '{print $2" "$3}')
 fi
 
 # Get the observing date for the header
-JD_FIRST_OBS=`util/cute_lc "$INPUT_VAST_LIGHTCURVE" | head -n1 | awk '{print $1}'`
-JD_LAST_OBS=`util/cute_lc "$INPUT_VAST_LIGHTCURVE" | tail -n1 | awk '{print $1}'`
-UNIXTIME_FIRST_OBS=`util/get_image_date "$JD_FIRST_OBS" 2>/dev/null | grep 'Unix Time' | awk '{print $3}'`
-DATE_FOR_AAVSO_HEADER_FIRST_OBS=`LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d%b%Y"`
-DATE_FOR_AAVSO_MESSAGE_SUBJECT_FIRST_OBS=`LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d %B %Y"`
+JD_FIRST_OBS=$(util/cute_lc "$INPUT_VAST_LIGHTCURVE" | head -n1 | awk '{print $1}')
+JD_LAST_OBS=$(util/cute_lc "$INPUT_VAST_LIGHTCURVE" | tail -n1 | awk '{print $1}')
+UNIXTIME_FIRST_OBS=$(util/get_image_date "$JD_FIRST_OBS" 2>/dev/null | grep 'Unix Time' | awk '{print $3}')
+DATE_FOR_AAVSO_HEADER_FIRST_OBS=$(LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d%b%Y")
+DATE_FOR_AAVSO_MESSAGE_SUBJECT_FIRST_OBS=$(LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d %B %Y")
 
 # Get the exposure time for the header
 if [ -s vast_image_details.log ];then
- #MEDIAN_EXPOSURE_TIME_SEC=`cat vast_image_details.log | awk '{print $2}' FS='exp=' | awk '{print $1}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.0f\n", $2}'`
- MEDIAN_EXPOSURE_TIME_SEC=`cat vast_image_details.log | awk -F 'exp=' '{print $2}' | awk '{print $1}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.0f\n", $2}'`
+ MEDIAN_EXPOSURE_TIME_SEC=$(cat vast_image_details.log | awk -F 'exp=' '{print $2}' | awk '{print $1}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.0f\n", $2}')
 else
  echo "WARNING: cannot get the exposure time from vast_image_details.log"
 fi
@@ -82,24 +81,25 @@ fi
 # if automated magnitude calibration was performed,
 # there should be a plate-solved FITS corresonding to the reference image
 # note that we checked above that vast_summary.log exist
-REFERENCE_IMAGE=`grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
-PLATE_SOLVED_REFERENCE_IMAGE=wcs_`basename $REFERENCE_IMAGE`
+REFERENCE_IMAGE=$(grep 'Ref.  image:' vast_summary.log | awk '{print $6}')
+PLATE_SOLVED_REFERENCE_IMAGE=wcs_$(basename $REFERENCE_IMAGE)
+PLATE_SOLVED_REFERENCE_IMAGE="${PLATE_SOLVED_REFERENCE_IMAGE/wcs_wcs_/wcs_}"
 if [ -f "$PLATE_SOLVED_REFERENCE_IMAGE" ];then
  echo "Found a plate-solved reference image $PLATE_SOLVED_REFERENCE_IMAGE
 Trying to automatically ID the star $INPUT_VAST_LIGHTCURVE"
- STAR_NUMBER=`echo "${INPUT_VAST_LIGHTCURVE/out/}"`
- STAR_NUMBER=`echo "${STAR_NUMBER/.dat/}"`
+ STAR_NUMBER=$(echo "${INPUT_VAST_LIGHTCURVE/out/}")
+ STAR_NUMBER=$(echo "${STAR_NUMBER/.dat/}")
  # '| while read A ;do echo $A ;done' is to remove the trailing white space if the variable name is from GCVS
- AUTOMATIC_VARIABLE_STAR_NAME=`util/identify_justname.sh $INPUT_VAST_LIGHTCURVE | grep -A100 'Star:' | grep -v "$STAR_NUMBER  " | tail -n1 | while read A ;do echo $A ;done` 
- # Handle 'V* BT Mon -- Nova' this kin of names appear when Simbad (if GCVS is down)
- AUTOMATIC_VARIABLE_STAR_NAME=${AUTOMATIC_VARIABLE_STAR_NAME/"V* "}
- AUTOMATIC_VARIABLE_STAR_NAME=`echo "$AUTOMATIC_VARIABLE_STAR_NAME" | awk -F' --' '{print $1}'`
+ AUTOMATIC_VARIABLE_STAR_NAME=$(util/identify_justname.sh $INPUT_VAST_LIGHTCURVE | grep -A100 'Star:' | grep -v "$STAR_NUMBER  " | tail -n1 | while read A ;do echo $A ;done)
+ # Handle 'V* BT Mon -- Nova' this kind of names appear when Simbad (if GCVS is down)
+ AUTOMATIC_VARIABLE_STAR_NAME="${AUTOMATIC_VARIABLE_STAR_NAME/"V* "}"
+ AUTOMATIC_VARIABLE_STAR_NAME=$(echo "$AUTOMATIC_VARIABLE_STAR_NAME" | awk -F' --' '{print $1}')
  #
  if [ ! -z "$AUTOMATIC_VARIABLE_STAR_NAME" ];then
   echo "Automatically setting the variable star name $AUTOMATIC_VARIABLE_STAR_NAME"
   VARIABLE_STAR_NAME="$AUTOMATIC_VARIABLE_STAR_NAME"
  else
-  echo "Something wen wrong while trying to ID the star, keeping the name $VARIABLE_STAR_NAME"
+  echo "Something went wrong while trying to ID the star, keeping the name $VARIABLE_STAR_NAME"
  fi
 fi
 
