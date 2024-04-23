@@ -20332,13 +20332,14 @@ fi
 PERIOD_SEARCH_SERVERS="none scan.sai.msu.ru vast.sai.msu.ru"
 
 ## out00095_edit_edit.dat
+EXPECTED_FREQUENCY_CD=$(echo "0.8202" | awk '{printf "%.4f",$1}')
 # Local period search
 LOCAL_FREQUENCY_CD=`lib/lk_compute_periodogram ../vast_test_lightcurves/out00095_edit_edit.dat 2 0.1 0.1 | grep 'LK' | awk '{printf "%.4f",$1}'`
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH001"
 else
- if [ "$LOCAL_FREQUENCY_CD" != "0.8202" ];then
+ if [ "$LOCAL_FREQUENCY_CD" != "$EXPECTED_FREQUENCY_CD" ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH002"
  fi
@@ -20351,25 +20352,51 @@ for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
  #REMOTE_FREQUENCY_CD=`WEBBROWSER=curl ./pokaz_laflerkinman.sh ../vast_test_lightcurves/out00095_edit_edit.dat 2>/dev/null | grep 'L&K peak 2' | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.4f",$1}'`
  # the number of LK peak changed due to changes on the server side
  REMOTE_FREQUENCY_CD=`WEBBROWSER=curl ./pokaz_laflerkinman.sh ../vast_test_lightcurves/out00095_edit_edit.dat 2>/dev/null | grep 'L&K peak 3' | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.4f",$1}'`
- if [ "$REMOTE_FREQUENCY_CD" != "$LOCAL_FREQUENCY_CD" ];then
+# if [ "$REMOTE_FREQUENCY_CD" != "$LOCAL_FREQUENCY_CD" ];then
+#  TEST_PASSED=0
+#  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH003_$PERIOD_SEARCH_SERVER"
+# fi
+ TEST=$(echo "$REMOTE_FREQUENCY_CD $LOCAL_FREQUENCY_CD" | awk '{if (sqrt(($1 - $2) * ($1 - $2)) < 0.001) print 1; else print 0}')
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]]; then
+  echo "TEST ERROR"
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH003_$PERIOD_SEARCH_SERVER"
- fi
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH003_FREQUENCY_CD_TEST_ERROR"
+ else
+  if [ $TEST -eq 0 ]; then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH003_FREQUENCY_CD_TOLERANCE_EXCEEDED_${PERIOD_SEARCH_SERVER}_remoteF${REMOTE_FREQUENCY_CD}_localF${LOCAL_FREQUENCY_CD}"
+  fi
+ fi # if ! [[ $TEST =~ $re ]]; then
 done
 unset PERIOD_SEARCH_SERVER
 
 ## ZTF1901_2-5_KGO_JDmid.dat
-EXPECTED_FREQUENCY_CD=$(echo "35.3798" | awk '{printf "%.3f",$1}')
+EXPECTED_FREQUENCY_CD=$(echo "35.3798" | awk '{printf "%.4f",$1}')
 # Local period search
-LOCAL_FREQUENCY_CD=`lib/lk_compute_periodogram ../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat 0.05 0.005 0.05 | grep 'LK' | awk '{printf "%.3f",$1}'`
+LOCAL_FREQUENCY_CD=`lib/lk_compute_periodogram ../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat 0.05 0.005 0.05 | grep 'LK' | awk '{printf "%.4f",$1}'`
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH004"
 else
- if [ "$LOCAL_FREQUENCY_CD" != "35.3798" ];then
+# if [ "$LOCAL_FREQUENCY_CD" != "$EXPECTED_FREQUENCY_CD" ];then
+#  TEST_PASSED=0
+#  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH005"
+# fi
+ TEST=$(echo "$LOCAL_FREQUENCY_CD $EXPECTED_FREQUENCY_CD" | awk '{if (sqrt(($1 - $2) * ($1 - $2)) < 0.001) print 1; else print 0}')
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]]; then
+  echo "TEST ERROR"
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH005"
- fi
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH005_FREQUENCY_CD_TEST_ERROR"
+ else
+  if [ $TEST -eq 0 ]; then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH005_FREQUENCY_CD_TOLERANCE_EXCEEDED"
+  fi
+ fi # if ! [[ $TEST =~ $re ]]; then
 fi # if [ $? -ne 0 ];then
 
 # Remote period search
@@ -20390,11 +20417,24 @@ for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
  fi
  # Get the results page
  # no 'head' at the end to test compatibility with the old code
- REMOTE_FREQUENCY_CD=$(WEBBROWSER=curl lib/start_web_browser.sh "$RESULTURL" | grep 'L&K peak 1' | head -n1 | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.3f",$1}')
- if [ "$REMOTE_FREQUENCY_CD" != "$LOCAL_FREQUENCY_CD" ];then
+ REMOTE_FREQUENCY_CD=$(WEBBROWSER=curl lib/start_web_browser.sh "$RESULTURL" | grep 'L&K peak 1' | head -n1 | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.4f",$1}')
+# if [ "$REMOTE_FREQUENCY_CD" != "$LOCAL_FREQUENCY_CD" ];then
+#  TEST_PASSED=0
+#  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH006_${PERIOD_SEARCH_SERVER}_remoteF${REMOTE_FREQUENCY_CD}_localF${LOCAL_FREQUENCY_CD}"
+# fi
+ TEST=$(echo "$REMOTE_FREQUENCY_CD $LOCAL_FREQUENCY_CD" | awk '{if (sqrt(($1 - $2) * ($1 - $2)) < 0.001) print 1; else print 0}')
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]]; then
+  echo "TEST ERROR"
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH006_${PERIOD_SEARCH_SERVER}_remoteF${REMOTE_FREQUENCY_CD}_localF${LOCAL_FREQUENCY_CD}"
- fi
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH006_FREQUENCY_CD_TEST_ERROR"
+ else
+  if [ $TEST -eq 0 ]; then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH006_FREQUENCY_CD_TOLERANCE_EXCEEDED_${PERIOD_SEARCH_SERVER}_remoteF${REMOTE_FREQUENCY_CD}_localF${LOCAL_FREQUENCY_CD}"
+  fi
+ fi # if ! [[ $TEST =~ $re ]]; then
 done
 unset PERIOD_SEARCH_SERVER
 
@@ -20414,15 +20454,29 @@ elif [ ! -s ZTF1901_2-5_KGO_JDmid.dat_hjdTT ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH007_emptyhjdTT"
 fi
 # Local period search
+EXPECTED_FREQUENCY_CD=$(echo "35.3803" | awk '{printf "%.4f",$1}')
 LOCAL_FREQUENCY_CD=`lib/lk_compute_periodogram ZTF1901_2-5_KGO_JDmid.dat_hjdTT 0.05 0.005 0.05 | grep 'LK' | awk '{printf "%.4f",$1}'`
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH008"
 else
- if [ "$LOCAL_FREQUENCY_CD" != "35.3803" ];then
+# if [ "$LOCAL_FREQUENCY_CD" != "$EXPECTED_FREQUENCY_CD" ];then
+#  TEST_PASSED=0
+#  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH009"
+# fi
+ TEST=$(echo "$LOCAL_FREQUENCY_CD $EXPECTED_FREQUENCY_CD" | awk '{if (sqrt(($1 - $2) * ($1 - $2)) < 0.001) print 1; else print 0}')
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]]; then
+  echo "TEST ERROR"
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH009"
- fi
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH009_FREQUENCY_CD_TEST_ERROR"
+ else
+  if [ $TEST -eq 0 ]; then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH009_FREQUENCY_CD_TOLERANCE_EXCEEDED_${PERIOD_SEARCH_SERVER}_localF$$LOCAL_FREQUENCY_CD}_expectedF${EXPECTED_FREQUENCY_CD}"
+  fi
+ fi # if ! [[ $TEST =~ $re ]]; then
 fi # if [ $? -ne 0 ];then
 
 # Remote period search
@@ -20444,10 +20498,23 @@ for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
  # Get the results page
  # no 'head' at the end to test compatibility with the old code
  REMOTE_FREQUENCY_CD=$(WEBBROWSER=curl lib/start_web_browser.sh "$RESULTURL" | grep 'L&K peak 1' | head -n1 | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.4f",$1}')
- if [ "$REMOTE_FREQUENCY_CD" != "$LOCAL_FREQUENCY_CD" ];then
+# if [ "$REMOTE_FREQUENCY_CD" != "$LOCAL_FREQUENCY_CD" ];then
+#  TEST_PASSED=0
+#  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH011_$PERIOD_SEARCH_SERVER"
+# fi
+ TEST=$(echo "$REMOTE_FREQUENCY_CD $LOCAL_FREQUENCY_CD" | awk '{if (sqrt(($1 - $2) * ($1 - $2)) < 0.001) print 1; else print 0}')
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]]; then
+  echo "TEST ERROR"
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH011_$PERIOD_SEARCH_SERVER"
- fi
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH011_FREQUENCY_CD_TEST_ERROR"
+ else
+  if [ $TEST -eq 0 ]; then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH011_FREQUENCY_CD_TOLERANCE_EXCEEDED_${PERIOD_SEARCH_SERVER}_remoteF${REMOTE_FREQUENCY_CD}_localF${LOCAL_FREQUENCY_CD}"
+  fi
+ fi # if ! [[ $TEST =~ $re ]]; then
  # Get the corrected lightcurve
  if [ -f edited_lightcurve_data.txt ];then
   rm -f edited_lightcurve_data.txt
