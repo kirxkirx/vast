@@ -20365,6 +20365,11 @@ for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
  #REMOTE_FREQUENCY_CD=`WEBBROWSER=curl ./pokaz_laflerkinman.sh ../vast_test_lightcurves/out00095_edit_edit.dat 2>/dev/null | grep 'L&K peak 2' | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.4f",$1}'`
  # the number of LK peak changed due to changes on the server side
  REMOTE_FREQUENCY_CD=`WEBBROWSER=curl ./pokaz_laflerkinman.sh ../vast_test_lightcurves/out00095_edit_edit.dat 2>/dev/null | grep 'L&K peak 3' | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.4f",$1}'`
+ if [ -z "$REMOTE_FREQUENCY_CD" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH003_EMPTY_REMOTE_FREQUENCY_CD"
+  continue
+ fi
 # if [ "$REMOTE_FREQUENCY_CD" != "$LOCAL_FREQUENCY_CD" ];then
 #  TEST_PASSED=0
 #  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH003_$PERIOD_SEARCH_SERVER"
