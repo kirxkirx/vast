@@ -127,7 +127,7 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 # -H 'Expect:' is specifically useful to suppress the default behavior of curl when sending large POST requests. By default, for POST requests larger than 1024 bytes, curl will add an Expect: 100-continue header automatically.
-CURL="$CURL -H 'Expect:'"
+CURL="$CURL -H 'Expect:' --connect-timeout 10 --retry 1 --max-time 900"
 ###################################################
 echo -n "Checking if we can reach any period search servers... "
 if [ -z "$PERIOD_SEARCH_SERVER" ] || [ "$PERIOD_SEARCH_SERVER" = "none" ];then

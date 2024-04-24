@@ -20367,7 +20367,7 @@ for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
  REMOTE_FREQUENCY_CD=`WEBBROWSER=curl ./pokaz_laflerkinman.sh ../vast_test_lightcurves/out00095_edit_edit.dat 2>/dev/null | grep 'L&K peak 3' | awk -F '&nu; =' '{print $2}'  | awk '{printf "%.4f",$1}'`
  if [ -z "$REMOTE_FREQUENCY_CD" ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH003_EMPTY_REMOTE_FREQUENCY_CD"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PERIODSEARCH003_EMPTY_REMOTE_FREQUENCY_CD_$PERIOD_SEARCH_SERVER"
   continue
  fi
 # if [ "$REMOTE_FREQUENCY_CD" != "$LOCAL_FREQUENCY_CD" ];then
@@ -20425,7 +20425,7 @@ for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
  export PERIOD_SEARCH_SERVER
  # Upload the lightcurve
  # -H 'Expect:' is specifically useful to suppress the default behavior of curl when sending large POST requests. By default, for POST requests larger than 1024 bytes, curl will add an Expect: 100-continue header automatically.
- RESULTURL=$(curl -H 'Expect:' -F file=@../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat -F submit="Compute" -F pmax=0.05 -F pmin=0.005 -F phaseshift=0.05 -F fileupload="True" -F applyhelcor="No" -F timesys="UTC" -F position="00:00:00.00 +00:00:00.0" "http://$PERIOD_SEARCH_SERVER/cgi-bin/lk/process_lightcurve.py" --user vast48:khyzbaojMhztNkWd 2>/dev/null | grep "The output will be written to" | awk -F"<a" '{print $2}' |awk -F">" '{print $1}')
+ RESULTURL=$(curl --connect-timeout 10 --retry 1 --max-time 900 -H 'Expect:' -F file=@../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat -F submit="Compute" -F pmax=0.05 -F pmin=0.005 -F phaseshift=0.05 -F fileupload="True" -F applyhelcor="No" -F timesys="UTC" -F position="00:00:00.00 +00:00:00.0" "http://$PERIOD_SEARCH_SERVER/cgi-bin/lk/process_lightcurve.py" --user vast48:khyzbaojMhztNkWd 2>/dev/null | grep "The output will be written to" | awk -F"<a" '{print $2}' |awk -F">" '{print $1}')
  RESULTURL=${RESULTURL//\"/ }
  RESULTURL=`echo $RESULTURL | awk '{print $2}'`
  if [ -z "$RESULTURL" ];then
@@ -20505,7 +20505,7 @@ for PERIOD_SEARCH_SERVER in $PERIOD_SEARCH_SERVERS ;do
  export PERIOD_SEARCH_SERVER
  # Upload the lightcurve
  # -H 'Expect:' is specifically useful to suppress the default behavior of curl when sending large POST requests. By default, for POST requests larger than 1024 bytes, curl will add an Expect: 100-continue header automatically.
- RESULTURL=$(curl -H 'Expect:' -F file=@../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat -F submit="Compute" -F pmax=0.05 -F pmin=0.005 -F phaseshift=0.05 -F fileupload="True" -F applyhelcor="Yes" -F timesys="UTC" -F position="19:01:25.42 +53:09:29.5" "http://$PERIOD_SEARCH_SERVER/cgi-bin/lk/process_lightcurve.py" --user vast48:khyzbaojMhztNkWd 2>/dev/null | grep "The output will be written to" | awk -F"<a" '{print $2}' |awk -F">" '{print $1}')
+ RESULTURL=$(curl --connect-timeout 10 --retry 1 --max-time 900 -H 'Expect:' -F file=@../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat -F submit="Compute" -F pmax=0.05 -F pmin=0.005 -F phaseshift=0.05 -F fileupload="True" -F applyhelcor="Yes" -F timesys="UTC" -F position="19:01:25.42 +53:09:29.5" "http://$PERIOD_SEARCH_SERVER/cgi-bin/lk/process_lightcurve.py" --user vast48:khyzbaojMhztNkWd 2>/dev/null | grep "The output will be written to" | awk -F"<a" '{print $2}' |awk -F">" '{print $1}')
  RESULTURL=${RESULTURL//\"/ }
  RESULTURL=`echo $RESULTURL | awk '{print $2}'`
  if [ -z "$RESULTURL" ];then
