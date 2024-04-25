@@ -60,6 +60,88 @@ void print_help() {
  return;
 }
 
+void replace_last_dot_with_null(char *original_filename) {
+    if (original_filename == NULL) {
+        return;
+    }
+
+    int len = strlen(original_filename);
+    // Traverse from the end of the string
+    for (int i = len - 1; i >= 0; i--) {
+        if (original_filename[i] == '.') {
+            original_filename[i] = '\0';  // Replace the last '.' with '\0'
+            break;  // Exit after the first (last from end) dot is replaced
+        }
+    }
+}
+
+int convert_aavso_format(char *lightcurvefilename, char *path_to_vast_string) {
+    FILE *lightcurvefile, *convertedfile;
+    char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+    char original_filename[FILENAME_LENGTH];
+    char converted_filename[FILENAME_LENGTH];
+    char converted_directory[VAST_PATH_MAX];
+    double jd, mag, mag_err;
+
+    lightcurvefile = fopen(lightcurvefilename, "r");
+    if (NULL == lightcurvefile) {
+        fprintf(stderr, "ERROR: cannot open file %s\n", lightcurvefilename);
+        return 1;
+    }
+
+    // Check if the file starts with #TYPE=EXTENDED
+    if (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
+        if (strncmp(line, "#TYPE=EXTENDED", 14) != 0) {
+            fclose(lightcurvefile);
+            return 0; // Not an AAVSO format file, do nothing
+        }
+    } else {
+        fclose(lightcurvefile);
+        return 1; // Error reading the file
+    }
+    
+
+    // Create the converted_lightcurves directory if it doesn't exist
+    snprintf(converted_directory, VAST_PATH_MAX, "%sconverted_lightcurves", path_to_vast_string);
+    mkdir(converted_directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+ 
+    strncpy(original_filename, basename(lightcurvefilename), FILENAME_LENGTH);
+    replace_last_dot_with_null(original_filename);  
+
+    // Generate the converted filename
+    //snprintf(converted_filename, FILENAME_LENGTH, "%s/%s_converted.dat", converted_directory, basename(lightcurvefilename));
+    snprintf(converted_filename, FILENAME_LENGTH, "%s/%s_converted.dat", converted_directory, original_filename);
+
+    fprintf(stderr, "AAVSO data format detected! Converting %s to %s \n", basename(lightcurvefilename), converted_filename );
+
+    convertedfile = fopen(converted_filename, "w");
+    if (NULL == convertedfile) {
+        fprintf(stderr, "ERROR: cannot create converted file %s\n", converted_filename);
+        fclose(lightcurvefile);
+        return 1;
+    }
+
+    // Skip the header lines until the data starts
+    while (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
+        if (strncmp(line, "#", 1) != 0) {
+            break;
+        }
+    }
+
+    // Process the lightcurve data
+    do {
+        if (sscanf(line, "%*[^,],%lf,%lf,%lf", &jd, &mag, &mag_err) == 3) {
+            fprintf(convertedfile, "%.6lf %.5f %.5f\n", jd, mag, mag_err);
+        }
+    } while (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL);
+
+    fclose(lightcurvefile);
+    fclose(convertedfile);
+
+    strcpy(lightcurvefilename, converted_filename);
+    return 0;
+}
+
 void minumum_kwee_van_woerden( float *fit_jd, float *fit_mag, int fit_n, double double_JD2float_JD ) {
  FILE *tmp_lc_file;
  int i;
@@ -590,6 +672,12 @@ int main( int argc, char **argv ) {
   safely_encode_user_input_string( lightcurvefilename, argv[n], FILENAME_LENGTH - 1 );
  }
 
+ get_path_to_vast( path_to_vast_string );
+
+ if (convert_aavso_format(lightcurvefilename, path_to_vast_string) != 0) {
+    exit(EXIT_FAILURE);
+ }
+
  fprintf( stderr, "Opening \x1B[34;47m %s \x1B[33;00m ...  ", lightcurvefilename );
  lightcurvefile= fopen( lightcurvefilename, "r" );
  if ( NULL == lightcurvefile ) {
@@ -723,8 +811,8 @@ int main( int argc, char **argv ) {
 
  print_help();
 
- ///
- get_path_to_vast( path_to_vast_string );
+ /// moved up as needed for lightcurve conversion
+ //
  ///
 
  // Searching min max for double (for stats only) //

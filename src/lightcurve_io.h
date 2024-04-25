@@ -75,7 +75,7 @@ static inline int read_lightcurve_point(FILE *lc_file_descriptor, double *jd, do
  }
  (*mag) = 99.999; // initialize mag to an obviously wrong value
 
- // Actually we kid of want mag also
+ // and mag_err
  if ( NULL == mag_err ) {
   fprintf( stderr, "ERROR in read_lightcurve_point() the output mag_err is a NULL pointer!\n");
   return 1;
