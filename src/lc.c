@@ -54,6 +54,7 @@ void print_help() {
  fprintf( stderr, "  'W' - write edited lightcurve to a data file (will be in the same format as input file)\n" );
  fprintf( stderr, "  'K' - time of minimum determination using KvW method. You'll need to specify the eclipse duration with two clicks.\n" );
  fprintf( stderr, "  \033[0;36m'U'\033[00m - Try to \033[0;36midentify the star\033[00m with USNO-B1.0 and search GCVS, Simbad, VSX\n" );
+ fprintf( stderr, "  'F' - fast identification that outputs just the variable star name with no further details.\n" );
  fprintf( stderr, "  \033[0;36m'L'\033[00m - Start web-based \033[0;36mperiod search tool\033[00m\n" );
  fprintf( stderr, "  'Q' - Start online lighcurve classifier (http://scan.sai.msu.ru/wwwupsilon/)\n" );
  fprintf( stderr, "\n" );
@@ -73,6 +74,98 @@ void replace_last_dot_with_null(char *original_filename) {
             break;  // Exit after the first (last from end) dot is replaced
         }
     }
+}
+
+int convert_ztf_snad_format(char *lightcurvefilename, char *path_to_vast_string) {
+    FILE *lightcurvefile, *convertedfile;
+    char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+    char original_filename[FILENAME_LENGTH];
+    char converted_filename[FILENAME_LENGTH];
+    char converted_directory[VAST_PATH_MAX];
+    double mjd, mag, mag_err;
+    char filter[10];
+    int zg_count = 0, zr_count = 0, zi_count = 0;
+
+    lightcurvefile = fopen(lightcurvefilename, "r");
+    if (NULL == lightcurvefile) {
+        fprintf(stderr, "ERROR: cannot open file %s\n", lightcurvefilename);
+        return 1;
+    }
+
+    // Check if the file starts with the ZTF SNAD format header
+    if (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
+        if (strncmp(line, "oid,filter,mjd,mag,magerr,clrcoeff", 34) != 0) {
+            fclose(lightcurvefile);
+            return 0; // Not a ZTF SNAD format file, do nothing
+        }
+    } else {
+        fclose(lightcurvefile);
+        return 1; // Error reading the file
+    }
+    
+    // Create the converted_lightcurves directory if it doesn't exist
+    snprintf(converted_directory, VAST_PATH_MAX, "%sconverted_lightcurves", path_to_vast_string);
+    mkdir(converted_directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+ 
+    strncpy(original_filename, basename(lightcurvefilename), FILENAME_LENGTH);
+    replace_last_dot_with_null(original_filename);  
+
+    // Generate the converted filename
+    snprintf(converted_filename, FILENAME_LENGTH, "%s/%s_converted.dat", converted_directory, original_filename);
+
+    fprintf(stderr, "ZTF SNAD data format detected! Converting %s to %s \n", basename(lightcurvefilename), converted_filename);
+
+    convertedfile = fopen(converted_filename, "w");
+    if (NULL == convertedfile) {
+        fprintf(stderr, "ERROR: cannot create converted file %s\n", converted_filename);
+        fclose(lightcurvefile);
+        return 1;
+    }
+
+    // Process the lightcurve data
+    while (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
+        if (sscanf(line, "%*[^,],%[^,],%lf,%lf,%lf", filter, &mjd, &mag, &mag_err) == 4) {
+            if (strcmp(filter, "zg") == 0) {
+                zg_count++;
+            } else if (strcmp(filter, "zr") == 0) {
+                zr_count++;
+            } else if (strcmp(filter, "zi") == 0) {
+                zi_count++;
+            }
+        }
+    }
+
+    // Determine the filter with the most measurements
+    char selected_filter[10];
+    if (zg_count >= zr_count && zg_count >= zi_count) {
+        strcpy(selected_filter, "zg");
+    } else if (zr_count >= zg_count && zr_count >= zi_count) {
+        strcpy(selected_filter, "zr");
+    } else {
+        strcpy(selected_filter, "zi");
+    }
+    fprintf(stderr, "Displaying %s filter data!\n", selected_filter);
+
+    // Reset file pointer to the beginning of the file
+    fseek(lightcurvefile, 0, SEEK_SET);
+    
+    // Skip the header line
+    fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile);
+
+    // Write selected filter data to the converted file
+    while (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
+        if (sscanf(line, "%*[^,],%[^,],%lf,%lf,%lf", filter, &mjd, &mag, &mag_err) == 4) {
+            if (strcmp(filter, selected_filter) == 0) {
+                fprintf(convertedfile, "%.6lf %.5f %.5f\n", mjd + 2400000.5, mag, mag_err);
+            }
+        }
+    }
+
+    fclose(lightcurvefile);
+    fclose(convertedfile);
+
+    strcpy(lightcurvefilename, converted_filename);
+    return 0;
 }
 
 int convert_aavso_format(char *lightcurvefilename, char *path_to_vast_string) {
@@ -675,6 +768,10 @@ int main( int argc, char **argv ) {
  get_path_to_vast( path_to_vast_string );
 
  if (convert_aavso_format(lightcurvefilename, path_to_vast_string) != 0) {
+    exit(EXIT_FAILURE);
+ }
+
+ if (convert_ztf_snad_format(lightcurvefilename, path_to_vast_string) != 0) {
     exit(EXIT_FAILURE);
  }
 
