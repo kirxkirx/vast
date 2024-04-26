@@ -136,7 +136,9 @@ if [ -z "$PERIOD_SEARCH_SERVER" ] || [ "$PERIOD_SEARCH_SERVER" = "none" ];then
  #PERIOD_SEARCH_SERVERS="scan.sai.msu.ru polaris.kirx.net vast.sai.msu.ru"
  # polaris.kirx.net is actually pretty slow...
  # vast.sai.msu.ru disabled until the software is updated there
- PERIOD_SEARCH_SERVERS="scan.sai.msu.ru"
+ #PERIOD_SEARCH_SERVERS="scan.sai.msu.ru"
+ # re-enabling vast.sai.msu.ru as it now runs the current code
+ PERIOD_SEARCH_SERVERS="scan.sai.msu.ru vast.sai.msu.ru"
 else
  # PERIOD_SEARCH_SERVER is externally set, but we still want to check if it's rachable
  PERIOD_SEARCH_SERVERS="$PERIOD_SEARCH_SERVER"
