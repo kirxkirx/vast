@@ -839,7 +839,7 @@ double compute_MAD_of_sorted_data( double *sorted_data, long n ) {
 
  AD= malloc( n * sizeof( double ) );
  if ( AD == NULL ) {
-  fprintf( stderr, "ERROR allocating memory for AD in esimate_sigma_from_MAD_of_sorted_data()\n" );
+  fprintf( stderr, "ERROR allocating memory for AD in compute_MAD_of_sorted_data()\n" );
   exit( EXIT_FAILURE );
  }
 
@@ -861,6 +861,7 @@ double compute_MAD_of_sorted_data( double *sorted_data, long n ) {
  // sigma= 1.48260221850560 * MAD;
  // return sigma;
 }
+
 double esimate_sigma_from_MAD_of_sorted_data( double *sorted_data, long n ) {
  double sigma, MAD;
  MAD= compute_MAD_of_sorted_data( sorted_data, n );
