@@ -62,13 +62,15 @@ void print_help() {
 }
 
 void replace_last_dot_with_null(char *original_filename) {
+    int i;
+
     if (original_filename == NULL) {
         return;
     }
 
     int len = strlen(original_filename);
     // Traverse from the end of the string
-    for (int i = len - 1; i >= 0; i--) {
+    for (i = len - 1; i >= 0; i--) {
         if (original_filename[i] == '.') {
             original_filename[i] = '\0';  // Replace the last '.' with '\0'
             break;  // Exit after the first (last from end) dot is replaced
