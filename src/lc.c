@@ -78,6 +78,191 @@ void replace_last_dot_with_null(char *original_filename) {
     }
 }
 
+int convert_asassn_v1_format(char *lightcurvefilename, char *path_to_vast_string) {
+    FILE *lightcurvefile, *convertedfile;
+    char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+    char original_filename[FILENAME_LENGTH];
+    char converted_filename[FILENAME_LENGTH];
+    char converted_directory[VAST_PATH_MAX];
+    double hjd, mag, mag_err;
+    char filter[10];
+    int v_count = 0, g_count = 0;
+
+    lightcurvefile = fopen(lightcurvefilename, "r");
+    if (NULL == lightcurvefile) {
+        fprintf(stderr, "ERROR: cannot open file %s\n", lightcurvefilename);
+        return 1;
+    }
+
+    // Check if the file starts with the ASAS-SN v1 format header
+    if (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
+        if (strncmp(line, "HJD,UT Date,Camera,FWHM,Limit,mag,mag_err,flux(mJy),flux_err,Filter", 65) != 0) {
+            fclose(lightcurvefile);
+            return 0; // Not an ASAS-SN v1 format file, do nothing
+        }
+    } else {
+        fclose(lightcurvefile);
+        return 1; // Error reading the file
+    }
+    
+    // Count the number of observations in each filter
+    while (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
+        if (sscanf(line, "%*f,%*[^,],%*[^,],%*f,%*f,%*f,%*f,%*f,%*f,%[^,\n]", filter) == 1) {
+            if (strcmp(filter, "V") == 0) {
+                v_count++;
+            } else if (strcmp(filter, "g") == 0) {
+                g_count++;
+            }
+        }
+    }
+
+    // Determine the filter with the most measurements
+    char selected_filter[10];
+    if (v_count >= g_count) {
+        strcpy(selected_filter, "V");
+    } else {
+        strcpy(selected_filter, "g");
+    }
+    fprintf(stderr, "Displaying %s filter data!\n", selected_filter);
+
+    // Reset file pointer to the beginning of the file
+    fseek(lightcurvefile, 0, SEEK_SET);
+    
+    // Skip the header line
+    fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile);
+
+    // Create the converted_lightcurves directory if it doesn't exist
+    snprintf(converted_directory, VAST_PATH_MAX, "%sconverted_lightcurves", path_to_vast_string);
+    mkdir(converted_directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+    strncpy(original_filename, basename(lightcurvefilename), FILENAME_LENGTH);
+    replace_last_dot_with_null(original_filename);
+
+    // Generate the converted filename
+    snprintf(converted_filename, FILENAME_LENGTH, "%s/%s_converted.dat", converted_directory, original_filename);
+
+    fprintf(stderr, "ASAS-SN v1 data format detected! Converting %s to %s\n", basename(lightcurvefilename), converted_filename);
+
+    convertedfile = fopen(converted_filename, "w");
+    if (NULL == convertedfile) {
+        fprintf(stderr, "ERROR: cannot create converted file %s\n", converted_filename);
+        fclose(lightcurvefile);
+        return 1;
+    }
+
+    // Process the lightcurve data
+    while (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
+        if (sscanf(line, "%lf,%*[^,],%*[^,],%*f,%*f,%lf,%lf,%*f,%*f,%[^,\n]", &hjd, &mag, &mag_err, filter) == 4) {
+            if (strcmp(filter, selected_filter) == 0) {
+                fprintf(convertedfile, "%.6lf %.5f %.5f\n", hjd, mag, mag_err);
+            }
+        }
+    }
+
+    fclose(lightcurvefile);
+    fclose(convertedfile);
+
+    strcpy(lightcurvefilename, converted_filename);
+    return 0;
+}
+
+int convert_asassn_v2_format(char *lightcurvefilename, char *path_to_vast_string) {
+    FILE *lightcurvefile, *convertedfile;
+    char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+    char original_filename[FILENAME_LENGTH];
+    char converted_filename[FILENAME_LENGTH];
+    char converted_directory[VAST_PATH_MAX];
+    double jd, mag, mag_err;
+    char filter[10];
+    int v_count = 0, g_count = 0;
+    int header_found = 0;
+
+    lightcurvefile = fopen(lightcurvefilename, "r");
+    if (NULL == lightcurvefile) {
+        fprintf(stderr, "ERROR: cannot open file %s\n", lightcurvefilename);
+        return 1;
+    }
+
+    // Find the header line while ignoring lines starting with #
+    while (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
+        if (line[0] != '#') {
+            if (strncmp(line, "asas_sn_id,jd,flux,flux_err,mag,mag_err,limit,fwhm,image_id,camera,quality,phot_filter", 86) == 0) {
+                header_found = 1;
+                break;
+            }
+        }
+    }
+
+    if (!header_found) {
+        fclose(lightcurvefile);
+        return 0; // Not an ASAS-SN v2 format file, do nothing
+    }
+
+    // Count the number of observations in each filter
+    while (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
+        if (sscanf(line, "%*[^,],%*f,%*f,%*f,%*f,%*f,%*f,%*f,%*[^,],%*[^,],%*[^,],%[^,\n]", filter) == 1) {
+            if (strcmp(filter, "V") == 0) {
+                v_count++;
+            } else if (strcmp(filter, "g") == 0) {
+                g_count++;
+            }
+        }
+    }
+
+    // Determine the filter with the most measurements
+    char selected_filter[10];
+    if (v_count >= g_count) {
+        strcpy(selected_filter, "V");
+    } else {
+        strcpy(selected_filter, "g");
+    }
+    fprintf(stderr, "Displaying %s filter data!\n", selected_filter);
+
+    // Reset file pointer to the beginning of the file
+    fseek(lightcurvefile, 0, SEEK_SET);
+
+    // Skip the header line and lines starting with #
+    while (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
+        if (line[0] != '#' && strncmp(line, "asas_sn_id,jd,flux,flux_err,mag,mag_err,limit,fwhm,image_id,camera,quality,phot_filter", 86) != 0) {
+            break;
+        }
+    }
+
+    // Create the converted_lightcurves directory if it doesn't exist
+    snprintf(converted_directory, VAST_PATH_MAX, "%sconverted_lightcurves", path_to_vast_string);
+    mkdir(converted_directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+    strncpy(original_filename, basename(lightcurvefilename), FILENAME_LENGTH);
+    replace_last_dot_with_null(original_filename);
+
+    // Generate the converted filename
+    snprintf(converted_filename, FILENAME_LENGTH, "%s/%s_converted.dat", converted_directory, original_filename);
+
+    fprintf(stderr, "ASAS-SN v2 data format detected! Converting %s to %s\n", basename(lightcurvefilename), converted_filename);
+
+    convertedfile = fopen(converted_filename, "w");
+    if (NULL == convertedfile) {
+        fprintf(stderr, "ERROR: cannot create converted file %s\n", converted_filename);
+        fclose(lightcurvefile);
+        return 1;
+    }
+
+    // Process the lightcurve data
+    do {
+        if (sscanf(line, "%*[^,],%lf,%*f,%*f,%lf,%lf,%*f,%*f,%*[^,],%*[^,],%*[^,],%[^,\n]", &jd, &mag, &mag_err, filter) == 4) {
+            if (strcmp(filter, selected_filter) == 0) {
+                fprintf(convertedfile, "%.6lf %.5f %.5f\n", jd, mag, mag_err);
+            }
+        }
+    } while (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL);
+
+    fclose(lightcurvefile);
+    fclose(convertedfile);
+
+    strcpy(lightcurvefilename, converted_filename);
+    return 0;
+}
+
 int convert_ztf_snad_format(char *lightcurvefilename, char *path_to_vast_string) {
     FILE *lightcurvefile, *convertedfile;
     char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
@@ -774,6 +959,14 @@ int main( int argc, char **argv ) {
  }
 
  if (convert_ztf_snad_format(lightcurvefilename, path_to_vast_string) != 0) {
+    exit(EXIT_FAILURE);
+ }
+
+ if (convert_asassn_v1_format(lightcurvefilename, path_to_vast_string) != 0) {
+    exit(EXIT_FAILURE);
+ }
+
+ if (convert_asassn_v2_format(lightcurvefilename, path_to_vast_string) != 0) {
     exit(EXIT_FAILURE);
  }
 
