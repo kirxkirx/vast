@@ -78,6 +78,67 @@ void replace_last_dot_with_null(char *original_filename) {
     }
 }
 
+int convert_atlas_format(char *lightcurvefilename, char *path_to_vast_string) {
+    FILE *lightcurvefile, *convertedfile;
+    char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+    char original_filename[FILENAME_LENGTH];
+    char converted_filename[FILENAME_LENGTH];
+    char converted_directory[VAST_PATH_MAX];
+    double mjd, mag, mag_err;
+    char filter[10];
+
+    lightcurvefile = fopen(lightcurvefilename, "r");
+    if (NULL == lightcurvefile) {
+        fprintf(stderr, "ERROR: cannot open file %s\n", lightcurvefilename);
+        return 1;
+    }
+
+    // Check if the file starts with the ATLAS format header
+    if (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
+        if (strncmp(line, "###MJD          m      dm   uJy   duJy F err chi/N     RA       Dec        x        y     maj  min   phi  apfit mag5sig Sky   Obs", 79) != 0) {
+            fclose(lightcurvefile);
+            return 0; // Not an ATLAS format file, do nothing
+        }
+    } else {
+        fclose(lightcurvefile);
+        return 1; // Error reading the file
+    }
+
+    // Create the converted_lightcurves directory if it doesn't exist
+    snprintf(converted_directory, VAST_PATH_MAX, "%sconverted_lightcurves", path_to_vast_string);
+    mkdir(converted_directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+    strncpy(original_filename, basename(lightcurvefilename), FILENAME_LENGTH);
+    replace_last_dot_with_null(original_filename);
+
+    // Generate the converted filename
+    snprintf(converted_filename, FILENAME_LENGTH, "%s/%s_converted.dat", converted_directory, original_filename);
+
+    fprintf(stderr, "ATLAS data format detected! Converting %s to %s\n", basename(lightcurvefilename), converted_filename);
+
+    convertedfile = fopen(converted_filename, "w");
+    if (NULL == convertedfile) {
+        fprintf(stderr, "ERROR: cannot create converted file %s\n", converted_filename);
+        fclose(lightcurvefile);
+        return 1;
+    }
+
+    // Process the lightcurve data
+    while (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
+        if (sscanf(line, "%lf %lf %lf %*f %*f %c", &mjd, &mag, &mag_err, filter) == 4) {
+            if (strcmp(filter, "o") == 0 && mag > 0.0 && mag_err < 0.2) {
+                fprintf(convertedfile, "%.6lf %.5f %.5f\n", mjd + 2400000.5, mag, mag_err);
+            }
+        }
+    }
+
+    fclose(lightcurvefile);
+    fclose(convertedfile);
+
+    strcpy(lightcurvefilename, converted_filename);
+    return 0;
+}
+
 int convert_asassn_v1_format(char *lightcurvefilename, char *path_to_vast_string) {
     FILE *lightcurvefile, *convertedfile;
     char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
@@ -967,6 +1028,10 @@ int main( int argc, char **argv ) {
  }
 
  if (convert_asassn_v2_format(lightcurvefilename, path_to_vast_string) != 0) {
+    exit(EXIT_FAILURE);
+ }
+
+ if (convert_atlas_format(lightcurvefilename, path_to_vast_string) != 0) {
     exit(EXIT_FAILURE);
  }
 

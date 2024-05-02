@@ -26,11 +26,15 @@
 	* Both the dark frame subtraction tool 'util/ccd/ms' and the median stacking tool 'util/ccd/mk' 
 	will refuse to work with images that have very different SET-TEMP and CCD-TEMP values (for the same image).
 	This is typically a sign of the image being taken before the camera had the time to cool down.
-	* The lightcurve viewer './lc' now supports on-the-fly conversions of ASAS-SN v1 and v2, ZTF SNAD, 
+	* The lightcurve viewer './lc' now supports on-the-fly conversions of ASAS-SN v1 and v2, ZTF SNAD, ATLAS, 
 	and AAVSO-formatted lightcurve files, so they can be specified directly as command line arguments like this 
 	'./lc /tmp/updated_AAVSO_files/AAVSO_KO_Oph__CV_measurements.txt'
 	or
 	'./lc /tmp/695115200007194.csv'
+	The lightcurve viewer selects only one filter from multi-filter lightcurves. The intended use is quickly 
+	answering "I wonder what this star is doing in ZTF" type of question: download the data file, plug it in 
+	the lightcurve viewer, zoom-inspect-edit the lightcurve and maybe send it to the online period search service 
+	by pressing 'L' on the keyboard.
 12 Dec 2023: vast-1.0rc87:
 	* Changed the deprecated VizieR vizier.u-strasbg.fr domain to vizier.cds.unistra.fr
 	VaST will now always use the CDS VizieR, and will not try to use mirrors as they fail often.
