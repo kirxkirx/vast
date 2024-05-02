@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-#
-# This script will interface with MPChecker: Minor Planet Checker
-# http://scully.harvard.edu/~cgi/CheckMP
-#
 
 #################################
 # Set the safe locale that should be available on any POSIX system
@@ -111,10 +107,12 @@ if [ -z "$ASTCHECK_OUTPUT" ];then
   # astorb.dat needs to be downloaded
   echo "Downloading the asteroid database (astorb.dat)" 1>&2
   #wget -c ftp://ftp.lowell.edu/pub/elgb/astorb.dat.gz 1>&2
-  wget -c --no-check-certificate https://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
+  #wget -c --no-check-certificate https://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
+  curl $VAST_CURL_PROXY --continue-at - --insecure --output astorb.dat.gz https://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
   if [ $? -ne 0 ];then
    # a desperate recovery attempt
-   wget -c http://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
+   #wget -c http://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
+   curl $VAST_CURL_PROXY --continue-at - --output astorb.dat.gz http://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
    if [ $? -ne 0 ];then
     echo "ERROR: cannot download astorb.dat.gz"
     exit 1

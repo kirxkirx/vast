@@ -118,7 +118,7 @@ if [ "$LAST_CHAR_OF_VAST_PATH" != "/" ];then
 fi
 #################################
 # Thest if curl is installed
-CURL=`command -v curl`
+CURL=$(command -v curl)
 if [ $? -ne 0 ];then
  echo " "
  echo "ERROR: curl not found. :("
@@ -127,7 +127,7 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 # -H 'Expect:' is specifically useful to suppress the default behavior of curl when sending large POST requests. By default, for POST requests larger than 1024 bytes, curl will add an Expect: 100-continue header automatically.
-CURL="$CURL -H 'Expect:' --connect-timeout 10 --retry 1 --max-time 900"
+CURL="$CURL $VAST_CURL_PROXY -H 'Expect:' --connect-timeout 10 --retry 1 --max-time 900"
 ###################################################
 echo -n "Checking if we can reach any period search servers... "
 if [ -z "$PERIOD_SEARCH_SERVER" ] || [ "$PERIOD_SEARCH_SERVER" = "none" ];then
@@ -259,37 +259,6 @@ fi
 
 echo "# JD range: $JD_MIN -- $JD_MAX"
 
-#PMAX=`echo "
-#define i(x) {
-#    auto s
-#    s = scale
-#    scale = 0
-#    x /= 1   /* round x down */
-#    scale = s
-#    return (x)
-#}
-#define abs(i) {
-# if (i < 0) return (-i)
-# return (i)
-#}
-#define min(a, b) {
-# if (a < b) {
-#  return (a);
-# }
-# return (b);
-#}
-#jd_range=abs(($JD_MAX)-($JD_MIN))
-#define max_period(jd_range) {
-# max_period_frcation_of_jd_range = i(jd_range/5.0-0.5)
-# max_period_hardcoded = 100
-# max_period_suggested = min( max_period_frcation_of_jd_range , max_period_hardcoded )
-# if( max_period_suggested < 1.0 ) return ( 1.0 )
-# return ( max_period_suggested )
-#}
-#max_period(jd_range)
-#"|bc -ql`
-#echo "DEBUG PMAX=$PMAX"
-# The above does not work on Mac
 PMAX=$(awk -v JD_MIN="$JD_MIN" -v JD_MAX="$JD_MAX" '
 function abs(i) {
     return (i < 0) ? -i : i
@@ -311,8 +280,6 @@ BEGIN {
     print max_period(jd_range)
 }
 ')
-#echo "DEBUG PMAX=$PMAX"
-# This should be more portable
 
 # if this didn't work
 if [ -z "$PMAX" ];then

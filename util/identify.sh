@@ -440,7 +440,7 @@ if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
    fi
    #
    #curl --max-time 10 --silent http://"$i"/astrometry_engine/files/ | grep --quiet 'Parent Directory' && echo "$i" > server$$_"$i".ping_ok &
-   curl --max-time 10 --silent http://"$i"/lk/ --max-time 10 --silent | grep --quiet '../cgi-bin/lk/process_lightcurve.py' && echo "$i" > server$$_"$i".ping_ok &
+   curl $VAST_CURL_PROXY --max-time 10 --silent http://"$i"/lk/ --max-time 10 --silent | grep --quiet '../cgi-bin/lk/process_lightcurve.py' && echo "$i" > server$$_"$i".ping_ok &
    echo -n "$i "
   done
   wait
@@ -498,7 +498,7 @@ The reachable servers are:"
  ###################################################
 
  # Find curl
- CURL=`command -v curl`
+ CURL=$(command -v curl)
  if [ $? -ne 0 ];then
   echo "ERROR: cannot find curl in PATH"
   exit 1
@@ -508,7 +508,7 @@ The reachable servers are:"
   # AND at the server side
   #CURL="$CURL --max-time 299 "
   # Needed for POST queries to work with cURL
-  CURL="$CURL --max-time 299 -H 'Expect:'"
+  CURL="$CURL $VAST_CURL_PROXY --max-time 299 -H 'Expect:'"
  fi 
 
 fi # if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
@@ -690,7 +690,7 @@ fi
     # Not checking, just assuming this server is reachable
     PLATE_SOLVE_SERVER="scan.sai.msu.ru"
    fi
-   CURL="curl"
+   CURL="curl $VAST_CURL_PROXY"
    # need the awk post-processing for curl request to work
    IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
   else
