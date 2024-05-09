@@ -315,7 +315,7 @@ clean_tmp_files
 #done
 
 
-RADEC_MEAN_HMS=`lib/deg2hms $RA_MEAN $DEC_MEAN`
+RADEC_MEAN_HMS="$(lib/deg2hms $RA_MEAN $DEC_MEAN)"
 RADEC_MEAN_HMS=${RADEC_MEAN_HMS//'\n'/}
 RA_MEAN_HMS=`echo "$RADEC_MEAN_HMS" | awk '{print $1}'`
 DEC_MEAN_HMS=`echo "$RADEC_MEAN_HMS" | awk '{print $2}'`
@@ -691,7 +691,11 @@ if ! [[ $TEST =~ $re ]] ; then
  exit 1
 else
  if [ $TEST -eq 1 ];then
-  echo -n "<form style='display: inline;' NAME=\"$$FORMASAS$1\" ACTION='http://www.astrouw.edu.pl/cgi-asas/asas_cat_input' METHOD=POST TARGET=\"data_list\"><input type='radio' name='source' value='asas3' CHECKED style=\"display:none;\"><TEXTAREA NAME='coo' ROWS=1 COLS=30 WRAP=virtual style=\"display:none;\">$RADEC_MEAN_HMS</TEXTAREA><INPUT NAME=equinox VALUE=2000 SIZE=4 style=\"display:none;\"><INPUT NAME=nmin VALUE=4 SIZE=4 style=\"display:none;\"><INPUT NAME=box VALUE=15 SIZE=4 style=\"display:none;\"><INPUT TYPE=submit NAME=submit VALUE=\"ASAS-3 lightcurve\" ></form>"
+  #echo -n "<form style='display: inline;' NAME=\"$$FORMASAS$1\" ACTION='http://www.astrouw.edu.pl/cgi-asas/asas_cat_input' METHOD=POST TARGET=\"data_list\"><input type='radio' name='source' value='asas3' CHECKED style=\"display:none;\"><TEXTAREA NAME='coo' ROWS=1 COLS=30 WRAP=virtual style=\"display:none;\">$RADEC_MEAN_HMS</TEXTAREA><INPUT NAME=equinox VALUE=2000 SIZE=4 style=\"display:none;\"><INPUT NAME=nmin VALUE=4 SIZE=4 style=\"display:none;\"><INPUT NAME=box VALUE=15 SIZE=4 style=\"display:none;\"><INPUT TYPE=submit NAME=submit VALUE=\"ASAS-3 lightcurve\" ></form>"
+  #RADEC_MEAN_HMS_URLENCODE=${RADEC_MEAN_HMS//":"/"%3A"}
+  #RADEC_MEAN_HMS_URLENCODE=${RADEC_MEAN_HMS//" "/"+"}
+  #echo -n "<form style='display: inline;' NAME=\"$$FORMASAS$1\" ACTION='http://www.astrouw.edu.pl/cgi-asas/asas_cat_input' METHOD=POST TARGET=\"data_list\"><input type='radio' name='source' value='asas3' CHECKED style=\"display:none;\"><TEXTAREA NAME='coo' ROWS=1 COLS=30 WRAP=virtual style=\"display:none;\">$RADEC_MEAN_HMS_URLENCODE</TEXTAREA><INPUT NAME=equinox VALUE=2000 SIZE=4 style=\"display:none;\"><INPUT NAME=nmin VALUE=4 SIZE=4 style=\"display:none;\"><INPUT NAME=box VALUE=15 SIZE=4 style=\"display:none;\"><INPUT TYPE=submit NAME=submit VALUE=\"ASAS-3 lightcurve\" ></form>"
+  echo -n "<form style='display: inline;' action='https://www.astrouw.edu.pl/cgi-asas/asas_cat_input' method='post' target='_blank'><input type='hidden' name='source' value='asas3'><input type='hidden' name='coo' value='$RADEC_MEAN_HMS'><input type='hidden' name='equinox' value='2000'><input type='hidden' name='nmin' value='4'><input type='hidden' name='box' value='15'><input type='submit' name='submit' value='ASAS-3 lightcurve'></form>"
  fi
 fi
 
