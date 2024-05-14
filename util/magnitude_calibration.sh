@@ -438,6 +438,16 @@ if [ -z "$FIT_MAG_CALIB_RESULTING_PARARMETERS" ];then
  echo "ERROR in the output parameters of the magnitude scale fit! :("
  exit 1
 fi
+
+# save input to the log file
+echo "# The magnitude calibration script was started as
+$0 $1 $2
+# The scrip altered the lightcurves with the command
+util/calibrate_magnitude_scale $FIT_MAG_CALIB_RESULTING_PARARMETERS
+# Here are the 'Istrumental_mag Catalog_mag mag_err' data saved in calib.txt" > vast_magnitude_calibration.log
+cat calib.txt >> vast_magnitude_calibration.log
+
+# update lightcurve files
 echo "Proceeding with the calibration..."
 util/calibrate_magnitude_scale $FIT_MAG_CALIB_RESULTING_PARARMETERS
 if [ $? -ne 0 ];then
