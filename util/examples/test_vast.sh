@@ -9821,10 +9821,16 @@ $GREP_RESULT"
    if [ -f "$FILE_TO_CHECK" ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_no_$FILE_TO_CHECK"
-   fi
+    continue
    if [ -s "$FILE_TO_CHECK" ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_empty_$FILE_TO_CHECK"
+    continue
+   fi
+   grep --quiet '00:00:00.00' "$FILE_TO_CHECK"
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_00:00:00.00_in_$FILE_TO_CHECK"
    fi
   done
   #
@@ -15790,11 +15796,18 @@ $GREP_RESULT"
   for FILE_TO_CHECK in planets.txt comets.txt moons.txt asassn_transients_list.txt tocp_transients_list.txt ;do
    if [ -f "$FILE_TO_CHECK" ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_no_$FILE_TO_CHECK"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_no_$FILE_TO_CHECK"
+    continue
    fi
    if [ -s "$FILE_TO_CHECK" ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_empty_$FILE_TO_CHECK"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_empty_$FILE_TO_CHECK"
+    continue
+   fi
+   grep --quiet '00:00:00.00' "$FILE_TO_CHECK"
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_00:00:00.00_in_$FILE_TO_CHECK"
    fi
   done
   #
@@ -16065,10 +16078,17 @@ $GREP_RESULT"
    if [ -f "$FILE_TO_CHECK" ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_no_$FILE_TO_CHECK"
+    continue
    fi
    if [ -s "$FILE_TO_CHECK" ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_empty_$FILE_TO_CHECK"
+    continue
+   fi
+   grep --quiet '00:00:00.00' "$FILE_TO_CHECK"
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_00:00:00.00_in_$FILE_TO_CHECK"
    fi
   done
   #

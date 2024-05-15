@@ -1258,7 +1258,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
   export MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1}')
   export MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1*1.5}')
   export MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1*2.0}')
-  echo "The image scale is $IMAGE_SCALE_ARCSECPIX_STRING, setting the soft and hard astrometric limits for filtering second-epoch detections: $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT pix and $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT pix" >> transient_factory_test31.txt
+  echo "The image scale is $IMAGE_SCALE_ARCSECPIX_STRING, setting the soft and hard astrometric limits for filtering second-epoch detections: $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT\" and $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT\"" >> transient_factory_test31.txt
 
   ##### Set pointing accuracy limits
   ## 1 deg hard limit for the NMW camera
@@ -1959,6 +1959,7 @@ cat planets.txt
 echo "############################################################
 Planet positions from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
 cat planets.txt >> transient_factory_test31.txt
+ls -lh planets.txt >> transient_factory_test31.txt
 #
 echo "############################################################
 Positions of slected moons from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
@@ -1966,6 +1967,7 @@ cat moons.txt
 echo "############################################################
 Positions of slected moons from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
 cat moons.txt >> transient_factory_test31.txt
+ls -lh moons.txt >> transient_factory_test31.txt
 #
 echo "############################################################
 Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets and http://aerith.net/comet/weekly/current.html ) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
@@ -1973,6 +1975,7 @@ cat comets.txt
 echo "############################################################
 Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets and http://aerith.net/comet/weekly/current.html ) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
 cat comets.txt >> transient_factory_test31.txt
+ls -lh comets.txt >> transient_factory_test31.txt
 #
 echo "############################################################
 List of recent ASAS-SN transients from https://www.astronomy.ohio-state.edu/asassn/transients.html :"
@@ -1980,6 +1983,7 @@ cat asassn_transients_list.txt
 echo "############################################################
 List of recent ASAS-SN transients from https://www.astronomy.ohio-state.edu/asassn/transients.html :" >> transient_factory_test31.txt
 cat asassn_transients_list.txt >> transient_factory_test31.txt
+ls -lh asassn_transients_list.txt >> transient_factory_test31.txt
 #
 echo "############################################################
 List of TOCP transients from http://www.cbat.eps.harvard.edu/unconf/tocp.html :"
@@ -1987,6 +1991,7 @@ cat tocp_transients_list.txt
 echo "############################################################
 List of TOCP transients from http://www.cbat.eps.harvard.edu/unconf/tocp.html :" >> transient_factory_test31.txt
 cat tocp_transients_list.txt >> transient_factory_test31.txt
+ls -lh tocp_transients_list.txt >> transient_factory_test31.txt
 ###############################################################################################################
 
 ## Finalize the HTML report

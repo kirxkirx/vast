@@ -26,8 +26,8 @@ echo "$main_source_names" | head -n100 | while read -r MAIN_SOURCE_NAME; do
     # Narrow down the data search for performance
     # MAIN_SOURCE_NAME may appear multiple times on the page, just because
     local_data=$(echo "$data" | grep -m1 -A10 "$MAIN_SOURCE_NAME")
-    RA=$(echo "$local_data" | grep ':' | head -n1 | sed -e 's/<td>//g' -e 's/<\/td>//g' | awk -F ':' '{printf "%02d:%02d:%05.2f", $1, $2, $3}')
-    DEC=$(echo "$local_data" | grep ':' | head -n2 | tail -n1 | sed -e 's/<td>//g' -e 's/<\/td>//g' | awk -F ':' '{printf "%+03d:%02d:%05.2f", $1, $2, $3}')
+    RA=$(echo "$local_data" | grep -v '://' | grep ':' | head -n1 | sed -e 's/<td>//g' -e 's/<\/td>//g' | awk -F ':' '{printf "%02d:%02d:%05.2f", $1, $2, $3}')
+    DEC=$(echo "$local_data" | grep -v '://' | grep ':' | head -n2 | tail -n1 | sed -e 's/<td>//g' -e 's/<\/td>//g' | awk -F ':' '{printf "%+03d:%02d:%05.2f", $1, $2, $3}')
     DATE=$(echo "$local_data" | grep '<td>202.-' | sed -e 's/<td>//g' -e 's/<\/td>//g')
     MAG=$(echo "$local_data" | grep -A1 "$DATE" | tail -n1 | sed -e 's/<td>//g' -e 's/<\/td>//g')
     echo "$RA $DEC  $MAIN_SOURCE_NAME  $DATE $MAG"
