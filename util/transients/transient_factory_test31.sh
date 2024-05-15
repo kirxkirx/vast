@@ -1158,20 +1158,25 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
    $TIMEOUTCOMMAND util/planets.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > planets.txt &
    $TIMEOUTCOMMAND util/comets.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > comets.txt &
    $TIMEOUTCOMMAND util/moons.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > moons.txt &
-   #$TIMEOUTCOMMAND lib/asassn_transients_list.sh > asassn_transients_list.txt &
-   if [ -z "$(find ../asassn_transients_list.txt -mmin +30 2>/dev/null)" ]; then
+   #
+   if [ -n "$(find ../asassn_transients_list.txt -mmin -30 2>/dev/null)" ]; then
+    # there is a fresh file - let's reuse it
+    echo "Re-using ../asassn_transients_list.txt" >> transient_factory_test31.txt
+    cp -v ../asassn_transients_list.txt asassn_transients_list.txt 2>&1 >> transient_factory_test31.txt
+   else
     # the file was modified less than 30 min ago, or it isn't there at all or 'find' command didn't work
-    { $TIMEOUTCOMMAND lib/asassn_transients_list.sh > asassn_transients_list.txt && cp asassn_transients_list.txt ../asassn_transients_list.txt || cp ../asassn_transients_list.txt asassn_transients_list.txt; } &
-   else
-    cp -v ../asassn_transients_list.txt asassn_transients_list.txt
+    { $TIMEOUTCOMMAND lib/asassn_transients_list.sh > asassn_transients_list.txt && cp -v asassn_transients_list.txt ../asassn_transients_list.txt >> transient_factory_test31.txt || cp -v ../asassn_transients_list.txt asassn_transients_list.txt 2>&1 >> transient_factory_test31.txt; } &
    fi
-   if [ -z "$(find ../tocp_transients_list.txt -mmin +10 2>/dev/null)" ]; then
+   #
+   if [ -n "$(find ../tocp_transients_list.txt -mmin -10 2>/dev/null)" ]; then
+    # there is a fresh file - let's reuse it
+    echo "Re-using ../tocp_transients_list.txt" >> transient_factory_test31.txt
+    cp -v ../tocp_transients_list.txt tocp_transients_list.txt 2>&1 >> transient_factory_test31.txt
+   else
     # the file was modified less than 10 min ago, or it isn't there at all or 'find' command didn't work
-    { $TIMEOUTCOMMAND lib/tocp_transients_list.sh > tocp_transients_list.txt && cp tocp_transients_list.txt ../tocp_transients_list.txt || cp ../tocp_transients_list.txt tocp_transients_list.txt; } &
-   else
-    cp -v ../tocp_transients_list.txt tocp_transients_list.txt
+    { $TIMEOUTCOMMAND lib/tocp_transients_list.sh > tocp_transients_list.txt && cp -v tocp_transients_list.txt ../tocp_transients_list.txt >> transient_factory_test31.txt || cp -v ../tocp_transients_list.txt tocp_transients_list.txt 2>&1 >> transient_factory_test31.txt; } &
    fi
-   #$TIMEOUTCOMMAND lib/tocp_transients_list.sh > tocp_transients_list.txt &
+   #   
   fi
   
   echo "Plate-solving the images" >> transient_factory_test31.txt
