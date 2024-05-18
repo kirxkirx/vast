@@ -78,6 +78,67 @@ void replace_last_dot_with_null(char *original_filename) {
     }
 }
 
+int convert_tess_format(char *lightcurvefilename, char *path_to_vast_string) {
+    FILE *lightcurvefile, *convertedfile;
+    char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+    char original_filename[FILENAME_LENGTH];
+    char converted_filename[FILENAME_LENGTH];
+    char converted_directory[VAST_PATH_MAX];
+    double tess_jd, flux, flux_err;
+    char centroid_col[20], centroid_row[20], cadenceno[20], quality[20];
+
+    lightcurvefile = fopen(lightcurvefilename, "r");
+    if (NULL == lightcurvefile) {
+        fprintf(stderr, "ERROR: cannot open file %s\n", lightcurvefilename);
+        return 1;
+    }
+
+    // Check if the file starts with the TESS LightKurve format header
+    if (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
+        if (strncmp(line, "time,flux,flux_err,centroid_col,centroid_row,cadenceno,quality", 61) != 0) {
+            fclose(lightcurvefile);
+            return 0; // Not a TESS LightKurve format file, do nothing
+        }
+    } else {
+        fclose(lightcurvefile);
+        return 1; // Error reading the file
+    }
+
+    // Create the converted_lightcurves directory if it doesn't exist
+    snprintf(converted_directory, VAST_PATH_MAX, "%sconverted_lightcurves", path_to_vast_string);
+    mkdir(converted_directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+    strncpy(original_filename, basename(lightcurvefilename), FILENAME_LENGTH);
+    replace_last_dot_with_null(original_filename);
+
+    // Generate the converted filename
+    snprintf(converted_filename, FILENAME_LENGTH, "%s/%s_converted.dat", converted_directory, original_filename);
+
+    fprintf(stderr, "TESS LightKurve format detected! Converting %s to %s\n", basename(lightcurvefilename), converted_filename);
+
+    convertedfile = fopen(converted_filename, "w");
+    if (NULL == convertedfile) {
+        fprintf(stderr, "ERROR: cannot create converted file %s\n", converted_filename);
+        fclose(lightcurvefile);
+        return 1;
+    }
+
+    // Process the lightcurve data
+    while (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
+        if (sscanf(line, "%lf,%lf,%lf,%[^,],%[^,],%[^,],%[^,\n]", &tess_jd, &flux, &flux_err, centroid_col, centroid_row, cadenceno, quality) == 7) {
+            //fprintf(convertedfile, "%.6lf %.8f %.8f\n", tess_jd + 2457000.0, flux, flux_err);
+            // convert flux in e/s to mag: -2.5log10(cts_per_s) + 20.44 https://tess.mit.edu/public/tesstransients/pages/readme.html
+            fprintf(convertedfile, "%.6lf %.8f %.8f\n", tess_jd + 2457000.0, -2.5 * log10(flux) + 20.44, ( -2.5 * log10(flux - flux_err) + 2.5 * log10(flux + flux_err) )/2.0  );
+        }
+    }
+
+    fclose(lightcurvefile);
+    fclose(convertedfile);
+
+    strcpy(lightcurvefilename, converted_filename);
+    return 0;
+}
+
 int convert_atlas_format(char *lightcurvefilename, char *path_to_vast_string) {
     FILE *lightcurvefile, *convertedfile;
     char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
@@ -1032,6 +1093,10 @@ int main( int argc, char **argv ) {
  }
 
  if (convert_atlas_format(lightcurvefilename, path_to_vast_string) != 0) {
+    exit(EXIT_FAILURE);
+ }
+ 
+ if (convert_tess_format(lightcurvefilename, path_to_vast_string) != 0) {
     exit(EXIT_FAILURE);
  }
 
