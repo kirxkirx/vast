@@ -42,7 +42,7 @@ RESAMPLE               Y               # Resample input images (Y/N)?
 RESAMPLE_DIR           .               # Directory path for resampled images
 RESAMPLE_SUFFIX        .resamp.fits    # filename extension for resampled images
  
-RESAMPLING_TYPE        LANCZOS3        # NEAREST,BILINEAR,LANCZOS2,LANCZOS3
+RESAMPLING_TYPE        BILINEAR        # NEAREST,BILINEAR,LANCZOS2,LANCZOS3
                                        # or LANCZOS4 (1 per axis)
 OVERSAMPLING           0               # Oversampling in each dimension
                                        # (0 = automatic)
