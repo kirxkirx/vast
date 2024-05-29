@@ -307,7 +307,9 @@ grep --quiet 'The object was <font color="red">found</font> in <font color="blue
 if [ $? -eq 0 ];then
  VARIABLE_NAME=$(grep -A1 'The object was <font color="red">found</font> in <font color="blue">VSX</font>' transient_report/index.tmp2 | tail -n1 | awk -F'"' '{print $2}')
  # remove leading and trailing white spaces from string
- VARIABLE_NAME_NO_WHITESPACES=$(echo "$VARIABLE_NAME" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+ # VARIABLE_NAME will be somehting like:
+ # #KR Sco                        </b>#
+ VARIABLE_NAME_NO_WHITESPACES=$(echo "$VARIABLE_NAME" | awk -F'<' '{print $1}' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
  VARIABLE_NAME="$VARIABLE_NAME_NO_WHITESPACES"
 fi
 
