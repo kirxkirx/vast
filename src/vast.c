@@ -1710,6 +1710,7 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
   return;
  }
  // if( star.n==4511 )fprintf(stderr,"##### %lf %lf\n",star.JD,reference_image_JD);
+ //if( star.n==21841 )fprintf(stderr,"##### %lf %lf\n",star.JD,reference_image_JD);
 
  if ( x > search_area_boundaries[0] && x < search_area_boundaries[1] ) {
   if ( y > search_area_boundaries[2] && y < search_area_boundaries[3] ) {
@@ -1722,18 +1723,22 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
     if ( 1 == is_point_close_or_off_the_frame_edge( star.x_frame, star.y_frame, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) ) {
      return;
     }
+    //if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- passed is_point_close_or_off_the_frame_edge()\n");
     // double-check that it's not in a bad region
     if ( 0 != exclude_region( X1, Y1, X2, Y2, N_bad_regions, star.x_frame, star.y_frame, aperture ) ) {
      fprintf( stderr, "The transient candidate %9.3lf %9.3lf is rejected, see bad_region.lst\n", star.x_frame, star.y_frame );
      return;
     }
+    //if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- passed exclude_region() new frame\n");
     // Check that it's not in a bad region on the reference frame - there will be no reference object!
     // increase the bad region, just in case
     if ( 0 != exclude_region( X1, Y1, X2, Y2, N_bad_regions, x, y, 1.5 * aperture ) ) {
-     fprintf( stderr, "The transient candidate %9.3lf %9.3lf is rejected as at the reference frame it would land at a bad region listed in bad_region.lst\n", x, y );
+     fprintf( stderr, "The transient candidate (new frame position %9.3lf %9.3lf ; ref frame position: %9.3lf %9.3lf) is rejected as at the reference frame it would land at a bad region listed in bad_region.lst\n", star.x_frame, star.y_frame, x, y );
      return;
     }
+    //if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- passed exclude_region() ref frame\n");
     // OK, we like this candidate
+    //if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- we like it\n");
     transientfile= fopen( "candidates-transients.lst", "a" );
     if ( NULL == transientfile ) {
      fprintf( stderr, "ERROR writing to candidates-transients.lst\n" );
@@ -3003,7 +3008,7 @@ int main( int argc, char **argv ) {
   convert_timesys_to_TT= 0;
   fprintf( stderr, "diffphot mode: disable photometric error rescaling!!!\n" );
   param_rescale_photometric_errors= 0;
-  fprintf( stderr, "diffphot mode: will not try to gues image saturation limit\n" );
+  fprintf( stderr, "diffphot mode: will not try to guess image saturation limit\n" );
   guess_saturation_limit_operation_mode= 0;
   maxsextractorflag= 3;
   fprintf( stderr, "diffphot mode: setting the maximum acceptable SExtractor flag to 3\n" );

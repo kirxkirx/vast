@@ -1336,6 +1336,9 @@ int main( int argc, char **argv ) {
 
  if ( 0 == strcmp( "select_comparison_stars", basename( argv[0] ) ) && match_mode == 0 ) {
   match_mode= 4;
+  
+  // 
+  fprintf(stderr, "DEBUG: match_mode= %d\n", match_mode);
 
   // Remove old calib.txt
   matchfile= fopen( "calib.txt", "r" );
@@ -1361,6 +1364,7 @@ int main( int argc, char **argv ) {
  // A reminder to myself:
  // match_mode == 0   - the normal image display
  // match_mode == 3   - sextract single image - not necessary the reference one
+ // match_mode == 4   - diffphot
 
  if ( image_specified_on_command_line__0_is_yes == 1 ) {
   // no image specified on the comamnd line
@@ -1376,7 +1380,8 @@ int main( int argc, char **argv ) {
   }
  } else {
   // an image is specified on the command line
-  if ( match_mode == 0 || match_mode == 3 ) {
+  //if ( match_mode == 0 || match_mode == 3 ) {
+  if ( match_mode == 0 || match_mode == 3 || match_mode == 4 ) {
    safely_encode_user_input_string( fits_image_name, argv[optind + 1], FILENAME_LENGTH );
   } else {
    fprintf( stderr, "\n\nWARNING: an image is specified on the command line while running %s!\nWill display the reference image instead.\n\n", basename( argv[0] ) );

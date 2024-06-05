@@ -35,6 +35,7 @@
 	answering "I wonder what this star is doing in ZTF" type of question: download the data file, plug it in 
 	the lightcurve viewer, zoom-inspect-edit the lightcurve and maybe send it to the online period search service 
 	by pressing 'L' on the keyboard.
+	* Fix broken './diffphot' manual comparison star selection mode.
 12 Dec 2023: vast-1.0rc87:
 	* Changed the deprecated VizieR vizier.u-strasbg.fr domain to vizier.cds.unistra.fr
 	VaST will now always use the CDS VizieR, and will not try to use mirrors as they fail often.
