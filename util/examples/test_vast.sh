@@ -22453,6 +22453,80 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 
+
+# Large exclusion file test
+# Download the test dataset if needed
+if [ ! -f ../vast_test_lightcurves/exclusion_list_STL.txt ];then
+ if [ ! -d ../vast_test_lightcurves ];then
+  mkdir ../vast_test_lightcurves || exit 1
+ fi
+ cd ../vast_test_lightcurves || exit 1
+ curl -O "http://scan.sai.msu.ru/~kirx/pub/exclusion_list_STL.txt.bz2" && bunzip2 exclusion_list_STL.txt.bz2
+ # If the test data download fails - don't bother with the other tests - exit now
+ if [ $? -ne 0 ];then
+  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" >> vast_test_report.txt
+  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+  exit 1
+ fi
+ cd $WORKDIR || exit 1
+fi
+# run the large exclusion file test
+if [ -s ../vast_test_lightcurves/exclusion_list_STL.txt ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ echo "Performing the large exclusion file test " 1>&2
+ echo -n "Performing the large exclusion file test: " >> vast_test_report.txt 
+
+ # this one should be found
+ lib/put_two_sources_in_one_field 01:23:45.67 +89:01:23.4 ../vast_test_lightcurves/exclusion_list_STL.txt 1.0 | grep --quiet 'FOUND'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES LARGE_EXCLUSION_FILE__01"
+ fi
+ 
+ # this one should be found
+ lib/put_two_sources_in_one_field 01:23:45.67 -01:01:23.4 ../vast_test_lightcurves/exclusion_list_STL.txt 1.0 | grep --quiet 'FOUND'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES LARGE_EXCLUSION_FILE__02"
+ fi
+
+ # this one should not be found
+ lib/put_two_sources_in_one_field 01:23:45.67 -02:01:23.4 ../vast_test_lightcurves/exclusion_list_STL.txt 1.0 | grep --quiet 'FOUND'
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES LARGE_EXCLUSION_FILE__03"
+ fi
+
+ # make sure it throws error if the file does nto exist
+ lib/put_two_sources_in_one_field 01:23:45.67 -01:01:23.4 nonexisting_file_exclusion_list_STL.txt 1.0 2>&1 | grep --quiet 'ERROR'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES LARGE_EXCLUSION_FILE__04"
+ fi
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mlarge exclusion file test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mlarge exclusion file test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi 
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES LARGE_EXCLUSION_FILE__NO_TEST_DATA"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+
+
 # astcheck test
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
