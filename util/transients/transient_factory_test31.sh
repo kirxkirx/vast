@@ -153,6 +153,8 @@ if [ -n "$CAMERA_SETTINGS" ];then
   UCAC5_PLATESOLVE_ITERATIONS=1
   PHOTOMETRIC_CALIBRATION="APASS_I"
   export GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK="RPmag"
+  # Set a limit on how much higher background on the second epoch images can be compared to the reference
+  MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=10
  fi
 fi
 
@@ -924,6 +926,20 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   fi
   ###
  fi # above was the procedure for handling more than two second-epoch images
+ 
+ ################################
+ # check mean image value ratio, if asked to do so
+ if [ -n "$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO" ];then
+  REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE=$(util/imstat_vast_fast "$REFERENCE_EPOCH__FIRST_IMAGE" | grep ' MEAN= ' | awk '{print $2}')
+  SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE=$(util/imstat_vast_fast "$SECOND_EPOCH__FIRST_IMAGE" | grep ' MEAN= ' | awk '{print $2}')
+  if [ -n "$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" ] && [ -n "$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" ];then
+   if awk -v maxratio="$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO" -v ref="$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" -v second="$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" 'BEGIN {if (second > maxratio * ref) exit 0; exit 1}'; then
+    echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO * $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" 1>&2
+    echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO * $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE"
+    continue
+   fi # awk ...
+  fi # if [ -n "$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" ] && [ -n "$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" ];then
+ fi # if [ -n "$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO" ];then
  
  ################################
  # double-check the files
