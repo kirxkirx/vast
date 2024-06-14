@@ -129,7 +129,7 @@ fi
 # -H 'Expect:' is specifically useful to suppress the default behavior of curl when sending large POST requests. By default, for POST requests larger than 1024 bytes, curl will add an Expect: 100-continue header automatically.
 CURL="$CURL $VAST_CURL_PROXY -H 'Expect:' --connect-timeout 10 --retry 1 --max-time 900"
 ###################################################
-echo -n "Checking if we can reach any period search servers... "
+#echo -n "Checking if we can reach any period search servers... "
 if [ -z "$PERIOD_SEARCH_SERVER" ] || [ "$PERIOD_SEARCH_SERVER" = "none" ];then
  # Decide on which period search server to use
  # first - set the initial list of servers
@@ -143,35 +143,48 @@ else
  # PERIOD_SEARCH_SERVER is externally set, but we still want to check if it's rachable
  PERIOD_SEARCH_SERVERS="$PERIOD_SEARCH_SERVER"
 fi
-rm -f server_*.ping_ok
-for i in $PERIOD_SEARCH_SERVERS ;do
- ping -c1 -n "$i" &>/dev/null && echo "$i" > server_"$i".ping_ok &
- echo -n "$i "
-done
-
-wait
+#rm -f server_*.ping_ok
+#for i in $PERIOD_SEARCH_SERVERS ;do
+# ping -c1 -n "$i" &>/dev/null && echo "$i" > server_"$i".ping_ok &
+# echo -n "$i "
+#done
+#
+#wait
 
 ### The ping test will not work if we are behind a firewall that doesn't let ping out
 # If no servers could be reached, try to test for this possibility
 ########################################
-for SERVER_PING_OK_FILE in server_*.ping_ok ;do
- if [ -f "$SERVER_PING_OK_FILE" ];then
-  # OK we could ping at least one server
-  break
- fi
- # If we are still here, that means we are either offline or behind a firewall that doesn't let ping out
+#for SERVER_PING_OK_FILE in server_*.ping_ok ;do
+# if [ -f "$SERVER_PING_OK_FILE" ];then
+#  # OK we could ping at least one server
+#  break
+# fi
+# # If we are still here, that means we are either offline or behind a firewall that doesn't let ping out
+# for i in $PERIOD_SEARCH_SERVERS ;do
+#  echo -n "$i "
+#  curl --max-time 10 --silent http://"$i"/lk/files/ | grep --quiet -e 'Parent Directory' -e 'Directory listing' && echo "$i" > server_"${i//"/"/"_"}".ping_ok &
+# done
+# wait
+#done
+# try https if http didn't work
+########################################
+echo "List of period search servers: $PERIOD_SEARCH_SERVERS"
+for PROTOCOL_HTTP_OR_HTTPS in https http ;do
  for i in $PERIOD_SEARCH_SERVERS ;do
-  curl --max-time 10 --silent http://"$i"/astrometry_engine/files/ | grep --quiet 'Parent Directory' && echo "$i" > server_"$i".ping_ok &
-  echo -n "$i "
+  curl --max-time 10 --silent "$PROTOCOL_HTTP_OR_HTTPS://$i/lk/files/" | grep --quiet -e 'Parent Directory' -e 'Directory listing' -e 'Forbidden' && echo "$i" > server_"${i//"/"/"_"}".ping_ok & 
  done
  wait
-done
-########################################
+ # check if PROTOCOL is good
+ for i in $PERIOD_SEARCH_SERVERS ;do
+  if [ -s server_"${i//"/"/"_"}".ping_ok ];then
+   echo OK
+  fi
+ done | grep --quiet "OK" && break
+done # PROTOCOL_HTTP_OR_HTTPS
 
 cat server_*.ping_ok > servers.ping_ok
 
-echo "
-The reachable servers are:"
+echo "The reachable $PROTOCOL_HTTP_OR_HTTPS servers are:"
 cat servers.ping_ok
 
 if [ ! -s servers.ping_ok ];then
@@ -179,7 +192,7 @@ if [ ! -s servers.ping_ok ];then
 Please check your internet connection..."
  exit 1
 fi
-   
+
 # Choose a random server among the available ones
 PERIOD_SEARCH_SERVER=`$("$VAST_PATH"lib/find_timeout_command.sh) 10 sort --random-sort --random-source=/dev/urandom servers.ping_ok | head -n1`
 # If the above fails because sort doesn't understand the '--random-sort' option
@@ -187,12 +200,12 @@ if [ "$PERIOD_SEARCH_SERVER" = "" ];then
  PERIOD_SEARCH_SERVER=`head -n1 servers.ping_ok`
 fi
    
-# Update the list of available servers
-PERIOD_SEARCH_SERVERS=""
-while read SERVER ;do
- PERIOD_SEARCH_SERVERS="$PERIOD_SEARCH_SERVERS $SERVER"
-done < servers.ping_ok
-echo "Updated list of available servers: $PERIOD_SEARCH_SERVERS"
+## Update the list of available servers
+#PERIOD_SEARCH_SERVERS=""
+#while read SERVER ;do
+# PERIOD_SEARCH_SERVERS="$PERIOD_SEARCH_SERVERS $SERVER"
+#done < servers.ping_ok
+#echo "Updated list of available servers: $PERIOD_SEARCH_SERVERS"
 rm -f server_*.ping_ok servers.ping_ok
 
 # Check if we are requested to use a specific server
@@ -323,9 +336,10 @@ if [ ! -s "${VAST_PATH}saved_period_search_lightcurves/$NEWFILENAME" ];then
 fi
 
 echo "# Uploading the lightcurve to $PERIOD_SEARCH_SERVER"
+echo "$PROTOCOL_HTTP_OR_HTTPS://$PERIOD_SEARCH_SERVER/cgi-bin/lk/process_lightcurve.py"
 
 # Upload the converted lightcurve file to the server
-$CURL -F file=@"${VAST_PATH}saved_period_search_lightcurves/$NEWFILENAME" -F submit="Compute" -F pmax=$PMAX -F pmin=$PMIN -F phaseshift=0.1 -F fileupload="True" -F applyhelcor="No" -F timesys="$TIMESYSTEM" -F position="00:00:00.00 +00:00:00.0" "http://$PERIOD_SEARCH_SERVER/cgi-bin/lk/process_lightcurve.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
+$CURL -F file=@"${VAST_PATH}saved_period_search_lightcurves/$NEWFILENAME" -F submit="Compute" -F pmax=$PMAX -F pmin=$PMIN -F phaseshift=0.1 -F fileupload="True" -F applyhelcor="No" -F timesys="$TIMESYSTEM" -F position="00:00:00.00 +00:00:00.0" "$PROTOCOL_HTTP_OR_HTTPS://$PERIOD_SEARCH_SERVER/cgi-bin/lk/process_lightcurve.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
 if [ $? -ne 0 ];then
  echo "WARNING: curl returned a non-zero exit status - something is wrong!"
 else
