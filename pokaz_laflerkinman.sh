@@ -172,12 +172,16 @@ fi
 echo "List of period search servers: $PERIOD_SEARCH_SERVERS"
 for PROTOCOL_HTTP_OR_HTTPS in https http ;do
  for i in $PERIOD_SEARCH_SERVERS ;do
-  curl --max-time 5 --retry 2 --silent "$PROTOCOL_HTTP_OR_HTTPS://$i/lk/files/" | grep --quiet -e 'Parent Directory' -e 'Directory listing' -e 'Forbidden' && echo "$i" > server_"${i//"/"/"_"}".ping_ok & 
+  # using sed instead of BASH string replacement as it fails on Mac
+  #SERVER_NAME_FOR_TMP_FILE="${i//"/"/"_"}"
+  SERVER_NAME_FOR_TMP_FILE=$(echo "$i" | sed 's/\//_/g')
+  curl --max-time 5 --retry 2 --silent "$PROTOCOL_HTTP_OR_HTTPS://$i/lk/files/" | grep --quiet -e 'Parent Directory' -e 'Directory listing' -e 'Forbidden' && echo "$i" > "server_${SERVER_NAME_FOR_TMP_FILE}.ping_ok" & 
  done
  wait
  # check if PROTOCOL is good
  for i in $PERIOD_SEARCH_SERVERS ;do
-  if [ -s server_"${i//"/"/"_"}".ping_ok ];then
+  SERVER_NAME_FOR_TMP_FILE=$(echo "$i" | sed 's/\//_/g')
+  if [ -s "server_${SERVER_NAME_FOR_TMP_FILE}.ping_ok" ];then
    echo OK
   fi
  done | grep --quiet "OK" && break
