@@ -194,19 +194,19 @@ Please check your internet connection..."
  exit 1
 fi
 
-# Choose a random server among the available ones
-PERIOD_SEARCH_SERVER=`$("$VAST_PATH"lib/find_timeout_command.sh) 10 sort --random-sort --random-source=/dev/urandom servers.ping_ok | head -n1`
-# If the above fails because sort doesn't understand the '--random-sort' option
-if [ "$PERIOD_SEARCH_SERVER" = "" ];then
- PERIOD_SEARCH_SERVER=`head -n1 servers.ping_ok`
-fi
+# Choose the perio dearch server
+if grep --quiet 'kirx.net/ticaariel' servers.ping_ok ;then
+ # Choose the preferred server if it's up
+ PERIOD_SEARCH_SERVER="kirx.net/ticaariel"
+else
+ # Choose a random server among the available ones
+ PERIOD_SEARCH_SERVER=$($("$VAST_PATH"lib/find_timeout_command.sh) 10 sort --random-sort --random-source=/dev/urandom servers.ping_ok | head -n1)
+ # If the above fails because sort doesn't understand the '--random-sort' option
+ if [ "$PERIOD_SEARCH_SERVER" = "" ];then
+  PERIOD_SEARCH_SERVER=$(head -n1 servers.ping_ok)
+ fi # if [ "$PERIOD_SEARCH_SERVER" = "" ];then
+fi # if grep --quiet 'kirx.net/ticaariel' servers.ping_ok ;then
    
-## Update the list of available servers
-#PERIOD_SEARCH_SERVERS=""
-#while read SERVER ;do
-# PERIOD_SEARCH_SERVERS="$PERIOD_SEARCH_SERVERS $SERVER"
-#done < servers.ping_ok
-#echo "Updated list of available servers: $PERIOD_SEARCH_SERVERS"
 rm -f server_*.ping_ok servers.ping_ok
 
 # Check if we are requested to use a specific server
