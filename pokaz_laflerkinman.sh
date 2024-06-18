@@ -172,7 +172,7 @@ fi
 echo "List of period search servers: $PERIOD_SEARCH_SERVERS"
 for PROTOCOL_HTTP_OR_HTTPS in https http ;do
  for i in $PERIOD_SEARCH_SERVERS ;do
-  curl --max-time 10 --silent "$PROTOCOL_HTTP_OR_HTTPS://$i/lk/files/" | grep --quiet -e 'Parent Directory' -e 'Directory listing' -e 'Forbidden' && echo "$i" > server_"${i//"/"/"_"}".ping_ok & 
+  curl --max-time 5 --retry 2 --silent "$PROTOCOL_HTTP_OR_HTTPS://$i/lk/files/" | grep --quiet -e 'Parent Directory' -e 'Directory listing' -e 'Forbidden' && echo "$i" > server_"${i//"/"/"_"}".ping_ok & 
  done
  wait
  # check if PROTOCOL is good
