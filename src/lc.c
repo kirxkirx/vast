@@ -78,6 +78,116 @@ void replace_last_dot_with_null(char *original_filename) {
     }
 }
 
+void append_edit_suffix_to_lightcurve_filename(char *lightcurvefilename) {
+    int is_lightcurvefilename_modified = 0;
+
+    if (strlen(lightcurvefilename) > 5) {
+        // we don't do the fancy renaming if the input lightcurve file name is too short
+        if (NULL != strstr(lightcurvefilename, ".dat")) {
+            lightcurvefilename[strlen(lightcurvefilename) - 4] = '\0'; // remove ".dat"
+            strcat(lightcurvefilename, "_edit.dat");
+            is_lightcurvefilename_modified = 1;
+        }
+        else if (NULL != strstr(lightcurvefilename, ".txt")) {
+            lightcurvefilename[strlen(lightcurvefilename) - 4] = '\0'; // remove ".txt"
+            strcat(lightcurvefilename, "_edit.txt");
+            is_lightcurvefilename_modified = 1;
+        }
+        else if (NULL != strstr(lightcurvefilename, ".csv")) {
+            lightcurvefilename[strlen(lightcurvefilename) - 4] = '\0'; // remove ".csv"
+            strcat(lightcurvefilename, "_edit.csv");
+            is_lightcurvefilename_modified = 1;
+        }
+        else if (NULL != strstr(lightcurvefilename, ".lc")) {
+            lightcurvefilename[strlen(lightcurvefilename) - 3] = '\0'; // remove ".lc"
+            strcat(lightcurvefilename, "_edit.lc");
+            is_lightcurvefilename_modified = 1;
+        }
+    }
+
+    if (is_lightcurvefilename_modified == 0) {
+        // we did not recognize the file name extension, so we'll make it ugly
+        replace_last_dot_with_null(lightcurvefilename);
+        strcat(lightcurvefilename, "_edit.dat");
+    }
+    
+    return;
+}
+
+#include <string.h>
+
+void create_badpoints_filename(const char* input_filename, char* output_filename) {
+    // Copy the input filename to the output buffer
+    strcpy(output_filename, input_filename);
+
+    // Remove the extension
+    replace_last_dot_with_null(output_filename);
+
+    // Append "_badpoints.txt"
+    strcat(output_filename, "_badpoints.txt");
+    
+    return;
+}
+
+int convert_nova_helper_format(char *lightcurvefilename, char *path_to_vast_string) {
+    FILE *lightcurvefile, *convertedfile;
+    char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+    char original_filename[FILENAME_LENGTH];
+    char converted_filename[FILENAME_LENGTH];
+    char converted_directory[VAST_PATH_MAX];
+    double jd, mag, mag_err;
+    char observer[20];
+
+    lightcurvefile = fopen(lightcurvefilename, "r");
+    if (NULL == lightcurvefile) {
+        fprintf(stderr, "ERROR: cannot open file %s\n", lightcurvefilename);
+        return 1;
+    }
+
+    // Check if the file starts with the nova_helper format header
+    if (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
+        if (strncmp(line, "JD,Magnitude,Uncertainty,Observer", 33) != 0) {
+            fclose(lightcurvefile);
+            return 0; // Not a nova_helper format file, do nothing
+        }
+    } else {
+        fclose(lightcurvefile);
+        return 1; // Error reading the file
+    }
+
+    // Create the converted_lightcurves directory if it doesn't exist
+    snprintf(converted_directory, VAST_PATH_MAX, "%sconverted_lightcurves", path_to_vast_string);
+    mkdir(converted_directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+    strncpy(original_filename, basename(lightcurvefilename), FILENAME_LENGTH);
+    replace_last_dot_with_null(original_filename);
+
+    // Generate the converted filename
+    snprintf(converted_filename, FILENAME_LENGTH, "%s/%s_converted.dat", converted_directory, original_filename);
+
+    fprintf(stderr, "nova_helper data format detected! Converting %s to %s\n", basename(lightcurvefilename), converted_filename);
+
+    convertedfile = fopen(converted_filename, "w");
+    if (NULL == convertedfile) {
+        fprintf(stderr, "ERROR: cannot create converted file %s\n", converted_filename);
+        fclose(lightcurvefile);
+        return 1;
+    }
+
+    // Process the lightcurve data
+    while (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
+        if (sscanf(line, "%lf,%lf,%lf,%[^,\n]", &jd, &mag, &mag_err, observer) == 4) {
+            fprintf(convertedfile, "%.6lf %.5f %.5f\n", jd, mag, mag_err);
+        }
+    }
+
+    fclose(lightcurvefile);
+    fclose(convertedfile);
+
+    strcpy(lightcurvefilename, converted_filename);
+    return 0;
+}
+
 int convert_tess_format(char *lightcurvefilename, char *path_to_vast_string) {
     FILE *lightcurvefile, *convertedfile;
     char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
@@ -933,10 +1043,14 @@ int main( int argc, char **argv ) {
  //
  char path_to_vast_string[VAST_PATH_MAX];
  char strmusor[VAST_PATH_MAX + 2 * FILENAME_LENGTH];
- int is_lightcurvefilename_modified= 0; // flag for apeending _edit to the edited lightcurve file names
+ //int is_lightcurvefilename_modified= 0; // flag for apeending _edit to the edited lightcurve file names
  char lightcurvefilename[FILENAME_LENGTH];
  char tmp_lightcurvefilename[2 * FILENAME_LENGTH];
  FILE *lightcurvefile;
+ 
+ char removed_points_logfilename[2 * FILENAME_LENGTH];
+ FILE *removed_points_log;
+ 
  double *JD= NULL;
  float *mag= NULL;
  float *mag_err= NULL;
@@ -1097,6 +1211,10 @@ int main( int argc, char **argv ) {
  }
  
  if (convert_tess_format(lightcurvefilename, path_to_vast_string) != 0) {
+    exit(EXIT_FAILURE);
+ }
+
+ if (convert_nova_helper_format(lightcurvefilename, path_to_vast_string) != 0) {
     exit(EXIT_FAILURE);
  }
 
@@ -1889,12 +2007,21 @@ int main( int argc, char **argv ) {
    cpgband( 2, 0, curX, curY, &curX2, &curY2, &curC );
    // last chance to cancel!
    if ( curC != 'X' && curC != 'x' ) {
+    fprintf( stderr, "Removing data points\n" );
+    create_badpoints_filename( lightcurvefilename, removed_points_logfilename );
+    removed_points_log = fopen(removed_points_logfilename, "a");
+    if ( NULL == removed_points_log ) {
+     fprintf( stderr, "WARNING: cannot open the removed points log file %s for writing\n", removed_points_logfilename );
+    }
     removed_points_counter_this_run= 0;
     for ( closest_num= 0; closest_num < Nobs; closest_num++ ) {
      // fprintf(stderr,"%f %f  %f %f\n",MIN(curX,curX2),MAX(curX,curX2),MIN(curY,curY2),MAX(curY,curY2));
      if ( float_JD[closest_num] > MIN( curX, curX2 ) && float_JD[closest_num] < MAX( curX, curX2 ) && mag[closest_num] > MIN( curY, curY2 ) && mag[closest_num] < MAX( curY, curY2 ) ) {
       // fprintf(stderr,"Nobs= %d\n",Nobs); // DEBUG!!
       fprintf( stderr, "Removing data point %5d %.5lf %8.4f\n", closest_num, JD[closest_num], mag[closest_num] );
+      if ( NULL != removed_points_log ) {
+       fprintf( removed_points_log, "%.5lf %8.4f\n", JD[closest_num], mag[closest_num] );
+      }
       // kill it
       Nobs--;
       for ( i= closest_num; i < Nobs; i++ ) {
@@ -1922,7 +2049,14 @@ int main( int argc, char **argv ) {
       removed_points_counter_this_run++;
      } // if inside the rectangle
     }  // for(closest_num=0;i<Nobs;i++)
+    // close the removed points log file (if it was open in hte first place)
     fprintf( stderr, "Removed %5d data points (%5d removed data points in total)\n", removed_points_counter_this_run, removed_points_counter_total );
+    if ( NULL != removed_points_log ) {
+     fclose( removed_points_log );
+     if ( 0 != removed_points_counter_total ) {
+      fprintf( stderr, "The list of removed points is written to %s\n", removed_points_logfilename );
+     } // if ( 0 != removed_points_counter_total ) {
+    } // if ( NULL != removed_points_log ) {
    } // if( curC!='X' && curC!='x' )
    curC= ' ';
   } // if( curC=='C' || curC=='c' )
@@ -1967,6 +2101,11 @@ int main( int argc, char **argv ) {
   if ( write_edited_lightcurve_to_file == 1 ) {
    was_lightcurve_changed= 0;
    write_edited_lightcurve_to_file= 0; // don't do it again unless 'W' or 'P' will be pressed again
+   //
+   append_edit_suffix_to_lightcurve_filename( lightcurvefilename );
+   /*
+   // Moved to a separate function
+   //
    // fprintf(stderr,"\n\n\nDEBUUUUGGG #%s#\n&(lightcurvefilename[strlen(lightcurvefilename) - 4]=#%s#\n&(lightcurvefilename[strlen(lightcurvefilename) - 3])=#%s#\n",lightcurvefilename,&(lightcurvefilename[strlen(lightcurvefilename) - 4]),&(lightcurvefilename[strlen(lightcurvefilename) - 3]));
    //  make sure the lightcurve file name is long enough
    if ( strlen( lightcurvefilename ) > 5 ) {
@@ -1997,6 +2136,7 @@ int main( int argc, char **argv ) {
     strcat( lightcurvefilename, "_edit.dat" );
    }
    is_lightcurvefilename_modified= 0; // reset flag
+   */
    lightcurvefile= fopen( lightcurvefilename, "w" );
    for ( i= 0; i < Nobs; i++ ) {
     fprintf( lightcurvefile, "%.5lf %9.5f", JD[i], mag[i] );
