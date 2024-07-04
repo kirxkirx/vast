@@ -154,7 +154,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   PHOTOMETRIC_CALIBRATION="APASS_I"
   export GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK="RPmag"
   # Set a limit on how much higher background on the second epoch images can be compared to the reference
-  MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=10
+  MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=5
  fi
 fi
 
@@ -933,6 +933,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE=$(util/imstat_vast_fast "$REFERENCE_EPOCH__FIRST_IMAGE" | grep ' MEAN= ' | awk '{print $2}')
   SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE=$(util/imstat_vast_fast "$SECOND_EPOCH__FIRST_IMAGE" | grep ' MEAN= ' | awk '{print $2}')
   if [ -n "$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" ] && [ -n "$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" ];then
+   echo "INFO:    SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE= $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE"  >> transient_factory_test31.txt
+   echo "INFO: REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE= $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE"  >> transient_factory_test31.txt
    if awk -v maxratio="$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO" -v ref="$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" -v second="$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" 'BEGIN {if (second > maxratio * ref) exit 0; exit 1}'; then
     echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO * $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" 
     echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO * $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" >> transient_factory_test31.txt
