@@ -200,7 +200,7 @@ Please check your internet connection..."
  exit 1
 fi
 
-# Choose the perio dearch server
+# Choose the period search server
 if grep --quiet 'kirx.net/ticaariel' servers.ping_ok ;then
  # Choose the preferred server if it's up
  PERIOD_SEARCH_SERVER="kirx.net/ticaariel"
