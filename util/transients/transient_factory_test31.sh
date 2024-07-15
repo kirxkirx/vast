@@ -95,7 +95,8 @@ if [ -n "$CAMERA_SETTINGS" ];then
   fi
   if [ -z "$FLAT_FIELD_FILE" ];then
    #export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_0013_tail1_notbad.fit
-   export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_2024febmar_full_moon.fit
+   #export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_2024febmar_full_moon.fit
+   export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_2024jun_full_moon.fit
   fi
  fi
  if [ "$CAMERA_SETTINGS" = "STL-11000M" ];then
