@@ -331,7 +331,7 @@ if [ -z "$VARIABLE_NAME" ];then
 fi
 
 if [ -z "$AAVSO_COMMENT_STRING" ];then
- AAVSO_COMMENT_STRING="NA"
+ AAVSO_COMMENT_STRING="na"
 fi
 
 
