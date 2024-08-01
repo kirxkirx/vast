@@ -86,6 +86,7 @@ STARMATCH_RADIUS_PIX=4
 if [ -n "$CAMERA_SETTINGS" ];then
  if [ "$CAMERA_SETTINGS" = "Stas" ];then
   # Canon 135 mm f/2.0 telephoto lens + SBIG ST-8300M CCD, 20 sec exposures
+  export AAVSO_COMMENT_STRING="NMW Camera-1 Canon 135mm f/2.0 telephoto lens + SBIG ST-8300M CCD"
   TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
   BAD_REGION_FILE="../Stas_bad_region.lst"
   EXCLUSION_LIST="../exclusion_list.txt"
@@ -103,6 +104,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
  if [ "$CAMERA_SETTINGS" = "STL-11000M" ];then
   # Canon 135 mm f/2.0 telephoto lens + SBIG STL-11000 CCD, 20 sec exposures
   echo "### Using search settings for $CAMERA_SETTINGS camera ###"
+  export AAVSO_COMMENT_STRING="NMW Camera-2 Canon 135mm f/2.0 telephoto lens + SBIG STL-11000 CCD"
   # The input images will be calibrated
   # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
   # the script will try to find the most appropriate one based on temperature and time

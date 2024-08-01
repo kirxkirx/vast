@@ -330,6 +330,11 @@ if [ -z "$VARIABLE_NAME" ];then
  VARIABLE_NAME="VARIABLE_NAME"
 fi
 
+if [ -z "$AAVSO_COMMENT_STRING" ];then
+ AAVSO_COMMENT_STRING="NA"
+fi
+
+
 echo   " **** AAVSO file format ****
 
 #TYPE=EXTENDED
@@ -338,7 +343,7 @@ echo   " **** AAVSO file format ****
 #DELIM=,
 #DATE=JD
 #NAME,DATE,MAG,MERR,FILT,TRANS,MTYPE,CNAME,CMAG,KNAME,KMAG,AMASS,GROUP,CHART,NOTES"  >> transient_report/index.tmp
-grep -A1 'Mean magnitude and position on the discovery images: ' transient_report/index.tmp | tail -n1 | awk -v val="$VARIABLE_NAME" '{printf "%s,%s,%s,0.05,CV,NO,STD,ENSEMBLE,na,na,na,na,1,na,na\n", val, $4, $5}' >> transient_report/index.tmp
+grep -A1 'Mean magnitude and position on the discovery images: ' transient_report/index.tmp | tail -n1 | awk -v val="$VARIABLE_NAME" -v aavsocomment="$AAVSO_COMMENT_STRING" '{printf "%s,%s,%s,0.05,CV,NO,STD,ENSEMBLE,na,na,na,na,1,na,%s\n", val, $4, $5, aavsocomment}' >> transient_report/index.tmp
 
 echo   "
 
