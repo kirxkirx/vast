@@ -19,8 +19,87 @@ int compare_julian_date( const void *a, const void *b ) {
  return ( date_a > date_b ) - ( date_a < date_b );
 }
 
+// Function to sort the content of a file after checking if the file is already sorted (if it is - do nothing)
+void sort_file(const char *file_name) {
+    Data data_arr[MAX_NUMBER_OF_OBSERVATIONS];
+    size_t data_count;
+    char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+    double julian_date;
+    size_t i;
+    int is_sorted = 1; // Assume sorted initially
+
+    FILE *file = fopen(file_name, "r");
+    if (!file) {
+        sprintf(line, "sort_file() ERROR opening file %s", file_name);
+        perror(line);
+        return;
+    }
+
+    data_count = 0;
+    while (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, file)) {
+        sscanf(line, "%lf", &julian_date);
+
+        data_arr[data_count].julian_date = julian_date;
+        data_arr[data_count].line = malloc(MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE * sizeof(char));
+        if (NULL == data_arr[data_count].line) {
+            fprintf(stderr, "ERROR: NULL == data_arr[data_count].line \n");
+            fclose(file);
+            return;
+        }
+        strncpy(data_arr[data_count].line, line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE);
+
+        // Check if the current entry is out of order
+        if (data_count > 0 && julian_date < data_arr[data_count - 1].julian_date) {
+            is_sorted = 0;
+        }
+
+        data_count++;
+    }
+    fclose(file);
+
+    // If the data is already sorted, free memory and return
+    if (is_sorted) {
+        for (i = 0; i < data_count; i++) {
+            free(data_arr[i].line);
+        }
+        return;
+    }
+
+    // If not sorted, continue with the existing sorting and file operations
+    qsort(data_arr, data_count, sizeof(Data), compare_julian_date);
+
+    // Write sorted data to the output file
+    char output_file_name[OUTFILENAME_LENGTH];
+    snprintf(output_file_name, sizeof(output_file_name), "%s.sorted", file_name);
+    FILE *output_file = fopen(output_file_name, "w");
+
+    if (!output_file) {
+        fprintf(stderr, "ERROR opening output file %s\n", output_file_name);
+        return;
+    }
+
+    for (i = 0; i < data_count; i++) {
+        fprintf(output_file, "%s", data_arr[i].line);
+        free(data_arr[i].line);
+    }
+
+    fclose(output_file);
+
+    // Replace the original file with the sorted file
+    if (remove(file_name) != 0) {
+        perror("sort_file() ERROR deleting original file");
+        return;
+    }
+    if (rename(output_file_name, file_name) != 0) {
+        perror("sort_file() ERROR renaming sorted file");
+        return;
+    }
+
+    return;
+}
+
 // Function to sort the content of a file
-void sort_file( const char *file_name ) {
+void sort_file_old( const char *file_name ) {
 
  Data data_arr[MAX_NUMBER_OF_OBSERVATIONS]; // Assuming max MAX_NUMBER_OF_OBSERVATIONS rows per file
  size_t data_count;
