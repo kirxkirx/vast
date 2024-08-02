@@ -12051,6 +12051,206 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 
+##### Nova Vul 2024 ST test #####
+### Disable this test for GitHub Actions
+#if [ "$GITHUB_ACTIONS" != "true" ];then 
+# Download the test dataset if needed
+if [ ! -d ../NMW__NovaVul24_Stas_test ];then
+ cd ..
+ curl -O "http://scan.sai.msu.ru/~kirx/pub/NMW__NovaVul24_Stas_test.tar.bz2" && tar -xvjf NMW__NovaVul24_Stas_test.tar.bz2 && rm -f NMW__NovaVul24_Stas_test.tar.bz2
+ cd $WORKDIR
+fi
+# If the test data are found
+if [ -d ../NMW__NovaVul24_Stas_test ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "NMW find Nova Vul 2024 ST test " 1>&2
+ echo -n "NMW find Nova Vul 2024 ST test: " >> vast_test_report.txt 
+ #
+ cp -v bad_region.lst_default bad_region.lst
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ #
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
+ # Instead of running the single-field search,
+ # we test the production NMW script
+ REFERENCE_IMAGES=../NMW__NovaVul24_Stas_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW__NovaVul24_Stas_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_EXIT_CODE"
+ fi
+ # Test for the specific error message
+ grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CANNOT_FIND_STAR_ERROR_MESSAGE"
+ fi
+ rm -f test_transient_search_script_terminal_output$$.tmp
+ #
+ if [ -f transient_report/index.html ];then
+  # there SHOULD NOT be an error message 
+  grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_ERROR_MESSAGE_IN_index_html"
+   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
+   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNVUL24ST_NO_ERROR_MESSAGE_IN_index_html ######
+$GREP_RESULT
+-----------------
+$CAT_RESULT"
+  fi
+  # The copy of the log file should be in the HTML report
+  grep --quiet "Images processed 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST001"
+  fi
+  NUMBER_OF_GOOD_SE_RUNS=`grep -c "Images processed 4" transient_report/index.html`
+  if [ $NUMBER_OF_GOOD_SE_RUNS -lt 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST001a"
+  fi
+  grep --quiet "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST002"
+  fi
+  NUMBER_OF_GOOD_SE_RUNS=`grep -c "Images used for photometry 4" transient_report/index.html`
+  if [ $NUMBER_OF_GOOD_SE_RUNS -lt 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST002a"
+  fi
+  grep --quiet "First image: 2460520.33991 28.07.2024 20:09:18" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST003"
+  fi
+  grep --quiet "Last  image: 2460521.33198 29.07.2024 19:57:53" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_check_dates_consistency_in_vast_image_details_log"
+  fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_TYCHO2_V"
+  fi
+  # Hunting the mysterious non-zero reference frame rotation cases
+  if [ -f vast_image_details.log ];then
+   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0_nonzero_ref_frame_rotation"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNVUL24ST0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNVUL24ST0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0_NO_vast_image_details_log"
+  fi
+  #
+  #
+  grep --quiet "V0615 Vul" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0110"
+  fi
+  grep galactic transient_report/index.html | grep --quiet "PNV J19430751+2100204"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0110"
+  fi
+  grep --quiet "2024 07 29\.831.  2460521\.331.  11\...  19:43:0.\... +21:00:..\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0110a"
+   GREP_RESULT=`grep "2024 07 29\.831.  2460521\.331.  11\...  19:43:0.\... +21:00:..\.." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNVUL24ST0110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2024 07 29\.831.  2460521\.331.  11\...  19:43:0.\... +21:00:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  # Position of Nova Vul 2024 from Henryk Sielewicz via astronomy.ru/Stanislav Korotkij 19:43:07.49 +21:00:21.6
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 19:43:07.49 +21:00:21.6 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0110a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0110a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+
+ ###### restore exclusion list after the test if needed
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mNMW find Nova Vul 2024 ST test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mNMW find Nova Vul 2024 ST test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+remove_test_data_to_save_space
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ exit 1
+fi
+#fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
+
+
+
 ##### Nova Her 2021 test (three second-epoch images, all good) #####
 ### Disable this test for GitHub Actions
 if [ "$GITHUB_ACTIONS" != "true" ];then 
