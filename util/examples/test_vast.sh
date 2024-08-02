@@ -12212,7 +12212,9 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0110a_TOO_FAR_$DISTANCE_ARCSEC"
    fi
   fi
-
+ 
+ fi # if [ -f transient_report/index.html ];then
+ 
  ###### restore exclusion list after the test if needed
  if [ -f ../exclusion_list.txt_backup ];then
   mv ../exclusion_list.txt_backup ../exclusion_list.txt
