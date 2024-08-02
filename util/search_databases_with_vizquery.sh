@@ -427,7 +427,10 @@ if [ $TEST -eq 1 ];then
  GMAG_RANGE="Gmag=1.0..20.5"
 fi
 ####
-DOUBLE_R_SEARCH_ARCSEC=$(echo "$R_SEARCH_ARCSEC" | awk '{print 2*$1}')
+#DOUBLE_R_SEARCH_ARCSEC=$(echo "$R_SEARCH_ARCSEC" | awk '{print 2*$1}')
+# That does not fly well when DOUBLE_R_SEARCH_ARCSEC is large for a wide FoV
+# Let's not double the search radius if it's larger than 30"
+DOUBLE_R_SEARCH_ARCSEC=$(echo "$R_SEARCH_ARCSEC" | awk '{print ($1 > 30) ? $1 : 2*$1}')
 echo " "
 echo "Searching Gaia DR3 for the brightest objects within $R_SEARCH_ARCSEC\" around $RA $DEC in the range of $GMAG_RANGE"
 echo "$LONGTIMEOUTCOMMAND lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c='$RA $DEC' $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag"
