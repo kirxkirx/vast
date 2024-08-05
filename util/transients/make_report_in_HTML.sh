@@ -334,6 +334,8 @@ if [ -z "$AAVSO_COMMENT_STRING" ];then
  AAVSO_COMMENT_STRING="na"
 fi
 
+# make sure there is no coma in the AAVSO notes string
+AAVSO_COMMENT_STRING="${AAVSO_COMMENT_STRING//,/}"
 
 echo   " **** AAVSO file format ****
 
