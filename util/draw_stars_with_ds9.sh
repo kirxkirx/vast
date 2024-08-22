@@ -33,6 +33,8 @@ echo "Working..."
 # If we whant to draw only one star
 if [ -n "$3" ];then
 
+ echo "Marking position of a single star."
+
  FITSFILE=$1
  if [ $WCS_OPERATION_MODE -eq 0 ];then
   # pixel position mode
@@ -87,19 +89,14 @@ if [ -n "$3" ];then
     X2=`lib/hms2deg $BEST_RA $BEST_DEC |head -n1`
     Y2=`lib/hms2deg $BEST_RA $BEST_DEC |tail -n1 |awk '{print $1+0.0}'` # get rid of '+' sign if it's there
     echo "circle($X2,$Y2,$AP)" >> /tmp/reg"$$""$USER".reg
-    #X2=`echo $X2+2.0*$AP| bc -ql`
     X2=`echo "$X2 $AP" | awk '{print $1+2.0*$2}'`
-    #Y2=`echo $Y2+2.0*$AP| bc -ql`
     Y2=`echo "$Y2 $AP" | awk '{print $1+2.0*$2}'`
     echo "# text($X2,$Y2) text={$CLOSEST_STAR_NUMBER}" >> /tmp/reg"$$""$USER".reg
-    #echo "point($X2,$Y2) # point=x" >> /tmp/reg"$$""$USER".reg
    fi
   fi
  fi
  if [ $WCS_OPERATION_MODE -eq 1 ];then
-  #X=`echo $X+2.0*$AP| bc -ql`
   X=`echo "$X $AP" | awk '{print $1+2.0*$2}'`
-  #Y=`echo $Y+2.0*$AP| bc -ql` 
   Y=`echo "$Y $AP" | awk '{print $1+2.0*$2}'` 
  fi
  echo "# text($X,$Y) text={$StringW}
@@ -107,26 +104,41 @@ circle($X,$Y,$AP)" >> /tmp/reg"$$""$USER".reg
  
 
 else
- # Else - draw all stars from data.m_sigma
+ # Else - draw all stars from vast_lightcurve_statistics.log
+ echo "Marking positions of all stars for which lightcurves were computed (stars listed in 'vast_lightcurve_statistics.log')."
  WCS_OPERATION_MODE=0 # only works in pixel position mode
- if [ ! -f data.m_sigma ];then
+ if [ ! -f vast_lightcurve_statistics.log ];then
   # if there is no file - make it now!
-  #./find_candidates  
+  echo "No lightcurve statistics file 'vast_lightcurve_statistics.log' let's recompute it!"
   util/nopgplot.sh
+  if [ $? -ne 0 ];then
+   echo "ERROR running 'util/nopgplot.sh'"
+   exit 1
+  fi
  fi
- # read the file data.m_sigma
- while read TMP TMP2 TMP3 TMP4 FILENAME ;do
+ # Get the reference image name
+ export REFERENCE_IMAGE=$(cat vast_summary.log | grep 'Ref.  image:' | awk '{print $6}')
+ if [ -z "$REFERENCE_IMAGE" ];then
+  echo "ERROR in $0 : cannot get reference image from 'vast_summary.log'"
+  exit 1
+ else
+  echo "Got the reference image name from 'vast_summary.log': $REFERENCE_IMAGE"
+ fi 
+ echo "Reading pixel positions of stars from 'vast_lightcurve_statistics.log' (accepting only the ones that were detected at the reference image)..."
+ # read the file vast_lightcurve_statistics.log
+ export TOTAL_STAR_COUNTER=0
+ export GOOD_STAR_COUNTER=0
+ while read TMP TMP2 TMP3 TMP4 FILENAME REST ;do
   head -n 1 $FILENAME > /tmp/read"$$""$USER".tmp
   read JD MAG MERR X Y AP FITSFILE REST < /tmp/read"$$""$USER".tmp
   # Check if this star was actually detected on the reference image or not
-  grep "Ref.  image:" vast_summary.log > /tmp/read"$$""$USER".grp
-  read A B C D E F < /tmp/read"$$""$USER".grp
-  rm -f /tmp/read"$$""$USER".grp
-  if [ "$F" = "$FITSFILE" ];then
+  #grep "Ref.  image:" vast_summary.log > /tmp/read"$$""$USER".grp
+  #read A B C D E F OTHERCOLUMNSJUSTINCASE < /tmp/read"$$""$USER".grp
+  #rm -f /tmp/read"$$""$USER".grp
+  if [ "$REFERENCE_IMAGE" = "$FITSFILE" ];then
   
    AP=`echo "$AP/2"|bc -ql`
    echo "circle($X,$Y,$AP)" >> /tmp/reg"$$""$USER".reg
-   #Y=`echo $Y+1.8*$AP| bc -ql`
    Y=`echo "$Y $AP" | awk '{print $1+1.8*$2}'`
    FILENAME=`basename $FILENAME .dat`
  
@@ -147,10 +159,13 @@ else
     StringW=`echo $FILENAME | awk -F out '{print $2}'` ;;
    esac  
    echo "# text($X,$Y) text={$StringW}" >> /tmp/reg"$$""$USER".reg
+   GOOD_STAR_COUNTER=$[$GOOD_STAR_COUNTER + 1 ]
   fi
- done < data.m_sigma
+  TOTAL_STAR_COUNTER=$[$TOTAL_STAR_COUNTER + 1 ]
+ done < vast_lightcurve_statistics.log
+ echo "Processed $TOTAL_STAR_COUNTER stars, $GOOD_STAR_COUNTER of them were detected on the reference image (so they are added to the DS9 region file for display)"
  # Make sure that we'll display the reference image, not the last one
- FITSFILE=$F
+ FITSFILE=$REFERENCE_IMAGE
 fi
 
 # Check if WCS-solved image is available
@@ -172,11 +187,12 @@ else
 fi
 cat /tmp/reg"$$""$USER".reg >> /tmp/reg2"$$""$USER".reg
 rm -f /tmp/reg"$$""$USER".reg /tmp/read"$$""$USER".tmp
-#echo "#### DS9 region file ####"
-#echo "####################################################"
-#cat /tmp/reg2"$$""$USER".reg
-#echo "####################################################"
+echo "#### head of the DS9 region file /tmp/reg2"$$""$USER".reg ####"
+echo "####################################################"
+head /tmp/reg2"$$""$USER".reg
+echo "####################################################"
 echo "Starting DS9 on image $FITSFILE with region file" /tmp/reg2"$$""$USER".reg
 ds9 $FITSFILE -region /tmp/reg2"$$""$USER".reg -xpa no 
-rm -f /tmp/reg2"$$""$USER".reg /tmp/reg"$$""$USER".reg /tmp/read"$$""$USER".tmp
+echo "Removing temporary files"
+rm -fv /tmp/reg2"$$""$USER".reg /tmp/reg"$$""$USER".reg /tmp/read"$$""$USER".tmp
 echo "All done =)"
