@@ -6249,7 +6249,8 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  } else {
   fprintf( vast_list_of_all_stars_ds9, "# Region file format: DS9 version 4.0\n# Filename: vast_list_of_all_stars.ds9.reg\nglobal color=green font=\"sans 10 normal\" select=1 highlite=1 edit=1 move=1 delete=1 include=1 fixed=0 source\nimage\n" );
   for ( i= 0; i < NUMBER1; i++ ) {
-   fprintf( vast_list_of_all_stars_ds9, "circle(%8.3lf,%8.3lf,%8.3lf)\n# text(%8.3lf,%8.3lf) text={%05d}\n", STAR1[i].x, STAR1[i].y, STAR1[i].star_size, STAR1[i].x, STAR1[i].y, STAR1[i].n );
+   //fprintf( vast_list_of_all_stars_ds9, "circle(%8.3lf,%8.3lf,%8.3lf)\n# text(%8.3lf,%8.3lf) text={%05d}\n", STAR1[i].x, STAR1[i].y, STAR1[i].star_size, STAR1[i].x, STAR1[i].y, STAR1[i].n );
+   fprintf( vast_list_of_all_stars_ds9, "circle(%8.3lf,%8.3lf,%8.3lf)\n# text(%8.3lf,%8.3lf) text={%05d}\n", STAR1[i].x, STAR1[i].y, CONST * STAR1[i].star_size / 2.0 , STAR1[i].x, STAR1[i].y +1.8 * CONST * STAR1[i].star_size / 2.0, STAR1[i].n );
   }
   fclose( vast_list_of_all_stars_ds9 );
  }

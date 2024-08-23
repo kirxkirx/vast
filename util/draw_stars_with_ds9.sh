@@ -116,6 +116,14 @@ else
    exit 1
   fi
  fi
+ if [ ! -s vast_lightcurve_statistics.log ];then
+  echo "ERROR in $0 : cannot read 'vast_lightcurve_statistics.log'"
+  exit 1
+ fi
+ if [ ! -s vast_summary.log ];then
+  echo "ERROR in $0 : cannot read 'vast_summary.log'"
+  exit 1
+ fi
  # Get the reference image name
  export REFERENCE_IMAGE=$(cat vast_summary.log | grep 'Ref.  image:' | awk '{print $6}')
  if [ -z "$REFERENCE_IMAGE" ];then
@@ -123,11 +131,16 @@ else
   exit 1
  else
   echo "Got the reference image name from 'vast_summary.log': $REFERENCE_IMAGE"
- fi 
+ fi
+ # Check if the reference image exist
+ if [ ! -s "$REFERENCE_IMAGE" ];then
+  echo "ERROR in $0 : cannot display reference image $REFERENCE_IMAGE"
+  exit 1
+ fi
  echo "Reading pixel positions of stars from 'vast_lightcurve_statistics.log' (accepting only the ones that were detected at the reference image)..."
  # read the file vast_lightcurve_statistics.log
- export TOTAL_STAR_COUNTER=0
- export GOOD_STAR_COUNTER=0
+ TOTAL_STAR_COUNTER=0
+ GOOD_STAR_COUNTER=0
  while read TMP TMP2 TMP3 TMP4 FILENAME REST ;do
   head -n 1 $FILENAME > /tmp/read"$$""$USER".tmp
   read JD MAG MERR X Y AP FITSFILE REST < /tmp/read"$$""$USER".tmp
@@ -137,7 +150,8 @@ else
   #rm -f /tmp/read"$$""$USER".grp
   if [ "$REFERENCE_IMAGE" = "$FITSFILE" ];then
   
-   AP=`echo "$AP/2"|bc -ql`
+   #AP=`echo "$AP/2"|bc -ql`
+   AP=`echo "$AP" | awk '{print $1/2}'`
    echo "circle($X,$Y,$AP)" >> /tmp/reg"$$""$USER".reg
    Y=`echo "$Y $AP" | awk '{print $1+1.8*$2}'`
    FILENAME=`basename $FILENAME .dat`
@@ -164,6 +178,14 @@ else
   TOTAL_STAR_COUNTER=$[$TOTAL_STAR_COUNTER + 1 ]
  done < vast_lightcurve_statistics.log
  echo "Processed $TOTAL_STAR_COUNTER stars, $GOOD_STAR_COUNTER of them were detected on the reference image (so they are added to the DS9 region file for display)"
+ if [ $GOOD_STAR_COUNTER -eq 0 ];then
+  echo "ERROR: no good stars written to the region file"
+  exit 1
+ fi
+ if [ ! -s /tmp/reg"$$""$USER".reg ];then
+  echo "ERROR: cannot read the region file /tmp/reg"$$""$USER".reg"
+  exit 1
+ fi
  # Make sure that we'll display the reference image, not the last one
  FITSFILE=$REFERENCE_IMAGE
 fi
@@ -190,6 +212,12 @@ rm -f /tmp/reg"$$""$USER".reg /tmp/read"$$""$USER".tmp
 echo "#### head of the DS9 region file /tmp/reg2"$$""$USER".reg ####"
 echo "####################################################"
 head /tmp/reg2"$$""$USER".reg
+# Print " ..... " if the region file is long (as expected)
+if [ -n "$GOOD_STAR_COUNTER" ];then
+ if [ $GOOD_STAR_COUNTER -gt 3 ];then
+  echo " ..... ($GOOD_STAR_COUNTER objects in the region file)"
+ fi
+fi
 echo "####################################################"
 echo "Starting DS9 on image $FITSFILE with region file" /tmp/reg2"$$""$USER".reg
 ds9 $FITSFILE -region /tmp/reg2"$$""$USER".reg -xpa no 
