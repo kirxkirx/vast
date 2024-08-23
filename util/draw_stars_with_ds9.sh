@@ -25,7 +25,7 @@ else
  WCS_OPERATION_MODE=0
 fi
 
-RANDOM_TMPFILE_SUFFIX=truncated_string="${$}${USER:0:8}"
+RANDOM_TMPFILE_SUFFIX="${$}${USER:0:8}"
 
 echo "SCRIPT_NAME= $SCRIPT_NAME   WCS_OPERATION_MODE= $WCS_OPERATION_MODE   RANDOM_TMPFILE_SUFFIX= $RANDOM_TMPFILE_SUFFIX"
 
@@ -152,8 +152,10 @@ else
   #head -n 1 $FILENAME > /tmp/read"$RANDOM_TMPFILE_SUFFIX".tmp
   #read JD MAG MERR X Y AP FITSFILE REST < /tmp/read"$RANDOM_TMPFILE_SUFFIX".tmp
   # The <<< operator was introduced in Bash version 2.05b, released in 2002.
-  read JD MAG MERR X Y AP FITSFILE REST <<< $(head -n 1 $FILENAME)
+  #read JD MAG MERR X Y AP FITSFILE REST <<< $(head -n 1 $FILENAME)
+  read JD MAG MERR X Y AP FITSFILE REST <<< $(grep "$REFERENCE_IMAGE" "$FILENAME" | head -n1)
   # Check if this star was actually detected on the reference image or not
+  # This is an ugly way to check it with grep feeding read now, but it works
   if [ "$REFERENCE_IMAGE" = "$FITSFILE" ];then
   
    #AP=`echo "$AP/2"|bc -ql`
@@ -231,6 +233,6 @@ fi
 echo "####################################################"
 echo "Starting DS9 on image $FITSFILE with region file" /tmp/reg2"$RANDOM_TMPFILE_SUFFIX".reg
 ds9 $FITSFILE -region /tmp/reg2"$RANDOM_TMPFILE_SUFFIX".reg -xpa no 
-echo "Removing temporary files"
+echo -n "Removing temporary files... "
 rm -fv /tmp/reg2"$RANDOM_TMPFILE_SUFFIX".reg /tmp/reg"$RANDOM_TMPFILE_SUFFIX".reg /tmp/read"$RANDOM_TMPFILE_SUFFIX".tmp
 echo "All done =)"
