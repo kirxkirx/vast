@@ -1277,7 +1277,6 @@ static inline int isNumberInIntArray( int *array, int n_elements, int number_to_
  return -1;
 }
 
-
 /*
 
  This function will match stars in two strctures (star1 and star2) based on their positional coincidence.

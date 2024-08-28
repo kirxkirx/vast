@@ -40,7 +40,7 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
 
  FILE *input_sysrem_input_star_list_lst;
  FILE *outputfile[SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS]; //= { NULL }; // I'm initializing it to NULL just to make the compiler happy
- //FILE **outputfile;
+ // FILE **outputfile;
  unsigned int Nstars, Noutput_files, output_file_counter;
  char full_string[MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG];
 
@@ -84,7 +84,7 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
  // Initialize all elements to NULL
  //memset(outputfile, 0, sizeof(FILE *) * Noutput_files);
  */
- memset(outputfile, 0, sizeof(FILE *) * SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS);
+ memset( outputfile, 0, sizeof( FILE * ) * SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS );
 
  // open the output files
  for ( output_file_counter= 0; output_file_counter < Noutput_files; output_file_counter++ ) {
@@ -124,12 +124,12 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
  // close the output files
  for ( output_file_counter= 0; output_file_counter < Noutput_files; output_file_counter++ ) {
   // why would outputfile[output_file_counter] be NULL?! I don't know. Trying to expect the unexpected.
-  //if ( NULL != outputfile[output_file_counter] ) { 
-   fprintf(stderr, "Closing the output file %d\n", output_file_counter);
-   fclose( outputfile[output_file_counter] );
+  // if ( NULL != outputfile[output_file_counter] ) {
+  fprintf( stderr, "Closing the output file %d\n", output_file_counter );
+  fclose( outputfile[output_file_counter] );
   //}
  }
- //free(outputfile);
+ // free(outputfile);
 
  ( *N_sysrem_input_star_list_lst )= Noutput_files;
 

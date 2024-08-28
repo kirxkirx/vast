@@ -1336,9 +1336,9 @@ int main( int argc, char **argv ) {
 
  if ( 0 == strcmp( "select_comparison_stars", basename( argv[0] ) ) && match_mode == 0 ) {
   match_mode= 4;
-  
-  // 
-  fprintf(stderr, "DEBUG: match_mode= %d\n", match_mode);
+
+  //
+  fprintf( stderr, "DEBUG: match_mode= %d\n", match_mode );
 
   // Remove old calib.txt
   matchfile= fopen( "calib.txt", "r" );
@@ -1380,7 +1380,7 @@ int main( int argc, char **argv ) {
   }
  } else {
   // an image is specified on the command line
-  //if ( match_mode == 0 || match_mode == 3 ) {
+  // if ( match_mode == 0 || match_mode == 3 ) {
   if ( match_mode == 0 || match_mode == 3 || match_mode == 4 ) {
    safely_encode_user_input_string( fits_image_name, argv[optind + 1], FILENAME_LENGTH );
   } else {
@@ -2841,7 +2841,7 @@ int main( int argc, char **argv ) {
       //
       cpgsch( 2.0 ); /* Set small font size */
       cpgslw( 4 );   // increase line width
-      // 
+      //
       cpgmtxt( "T", -1.0, 0.5, 0.5, "\\fR N" );
       cpgmtxt( "LV", -0.5, 0.5, 0.5, "\\fR E" );
       //

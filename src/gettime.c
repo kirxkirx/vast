@@ -515,8 +515,8 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
  char substring_month[32];
  char substring_year[32];
  int day, month, year;
- 
- int ndash,ndot;
+
+ int ndash, ndot;
  char dash_or_dot_character;
 
  // the following is to handle 04.02.2012 02:48:30
@@ -540,7 +540,7 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
  // count how many times dash and dots are found in the string
  // we don't want to start with zero
  ndash= ndot= ncolon= 0;
- for( i=1; i<strlen( DATEOBS ); i++ ){
+ for ( i= 1; i < strlen( DATEOBS ); i++ ) {
   if ( DATEOBS[i] == '-' ) {
    ndash++;
    continue;
@@ -565,8 +565,8 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
    return;
   }
  }
- 
- //fprintf(stderr, "DEBUG: dash_or_dot_character=%c  DATEOBS=#%s#\n", dash_or_dot_character, DATEOBS);
+
+ // fprintf(stderr, "DEBUG: dash_or_dot_character=%c  DATEOBS=#%s#\n", dash_or_dot_character, DATEOBS);
 
  //                            0123456789
  // check if this is a normal '2004-07-05' style DATE-OBS
@@ -581,13 +581,12 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
  memset( substring_day, 0, 32 );
  memset( substring_month, 0, 32 );
  memset( substring_year, 0, 32 );
- 
+
  memset( timestring, 0, 32 );
- 
+
  // the following is to handle 04.02.2012 02:48:30
  //                            01234567890123456789
- if( strlen(DATEOBS) > 10 && ncolon >= 1 ) {
-  
+ if ( strlen( DATEOBS ) > 10 && ncolon >= 1 ) {
  }
 
  // ?????
@@ -610,7 +609,7 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
   }
   // check if this is start of the time part of 04.02.2012 02:48:30
   //                                            01234567890123456789
-  //if ( i > 6 && DATEOBS[i] == ' ' && date_part == 3 ) {
+  // if ( i > 6 && DATEOBS[i] == ' ' && date_part == 3 ) {
   // the white space is actually replaced earlier by '-'
   if ( i > 6 && date_part == 3 ) {
    if ( DATEOBS[i] == '-' || DATEOBS[i] == ' ' || DATEOBS[i] == 'T' ) {
@@ -650,15 +649,15 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
  // Print result
  // fprintf(stderr,"_%s_ _%s_ _%s_   _%s_\n",substring_day,substring_month,substring_year,DATEOBS);
  // consistency check
- if( 0 == strlen(substring_day) ) {
+ if ( 0 == strlen( substring_day ) ) {
   fprintf( stderr, "ERROR: cannot parse DATE-OBS keyword! Empty string substring_day\n" );
   exit( EXIT_FAILURE );
  }
- if( 0 == strlen(substring_month) ) {
+ if ( 0 == strlen( substring_month ) ) {
   fprintf( stderr, "ERROR: cannot parse DATE-OBS keyword! Empty string substring_month\n" );
   exit( EXIT_FAILURE );
  }
- if( 0 == strlen(substring_year) ) {
+ if ( 0 == strlen( substring_year ) ) {
   fprintf( stderr, "ERROR: cannot parse DATE-OBS keyword! Empty string substring_year\n" );
   exit( EXIT_FAILURE );
  }
@@ -667,15 +666,15 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
  month= atoi( substring_month );
  year= atoi( substring_year );
  //
- if( day < 1 || day > 31 ) {
+ if ( day < 1 || day > 31 ) {
   fprintf( stderr, "ERROR: cannot parse DATE-OBS keyword! Wrong day\n" );
   exit( EXIT_FAILURE );
  }
- if( month < 1 || month > 12 ) {
+ if ( month < 1 || month > 12 ) {
   fprintf( stderr, "ERROR: cannot parse DATE-OBS keyword! Wrong month\n" );
   exit( EXIT_FAILURE );
  }
- if( year < 0 || year > 3000 ) {
+ if ( year < 0 || year > 3000 ) {
   fprintf( stderr, "ERROR: cannot parse DATE-OBS keyword! Wrong year\n" );
   exit( EXIT_FAILURE );
  }
@@ -687,17 +686,17 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
   } else {
    year= year + 1900;
   }
-  //fprintf( stderr, "%d\n", year );
+  // fprintf( stderr, "%d\n", year );
  }
  //
 
  fprintf( stderr, "WARNING -- fixing the input DATEOBS string: %s -> ", DATEOBS );
 
  sprintf( DATEOBS, "%d-%02d-%02d", year, month, day );
- 
- if( strlen(timestring) > 0 ) {
-  strncat( DATEOBS, "T", 2);
-  strncat( DATEOBS, timestring, 32-12);
+
+ if ( strlen( timestring ) > 0 ) {
+  strncat( DATEOBS, "T", 2 );
+  strncat( DATEOBS, timestring, 32 - 12 );
  }
 
  fprintf( stderr, "%s\n", DATEOBS );
@@ -1583,52 +1582,52 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    }
    Da_y[j]= DATEOBS[j];
   }
-  j_end_of_year=j+1;
+  j_end_of_year= j + 1;
   for ( j+= 1; j < 8; j++ ) {
-   //fprintf(stderr,"DEBUGISHE %d %c  j_end_of_year=%d\n", j, DATEOBS[j], j_end_of_year);
-   // if( DATEOBS[j] == 45 ) {
+   // fprintf(stderr,"DEBUGISHE %d %c  j_end_of_year=%d\n", j, DATEOBS[j], j_end_of_year);
+   //  if( DATEOBS[j] == 45 ) {
    if ( DATEOBS[j] == '-' ) {
-    //if ( j - 5 < 0 ) {
+    // if ( j - 5 < 0 ) {
     if ( j - j_end_of_year < 0 ) {
      fprintf( stderr, "ERROR100 in gettime()\n" );
      fits_close_file( fptr, &status ); // close file
      return 1;
     }
-    //Da_m[j - 5]= '\0';
+    // Da_m[j - 5]= '\0';
     Da_m[j - j_end_of_year]= '\0';
     break;
    }
-   //if ( j - 5 < 0 ) {
+   // if ( j - 5 < 0 ) {
    if ( j - j_end_of_year < 0 ) {
     fprintf( stderr, "ERROR101 in gettime()\n" );
     fits_close_file( fptr, &status ); // close file
     return 1;
    }
-   //Da_m[j - 5]= DATEOBS[j];
+   // Da_m[j - 5]= DATEOBS[j];
    Da_m[j - j_end_of_year]= DATEOBS[j];
   }
-  j_end_of_month=j+1;
+  j_end_of_month= j + 1;
   for ( j+= 1; j < 32; j++ ) {
    if ( DATEOBS[j] == '\0' || DATEOBS[j] == 'T' ) {
-    //if ( j - 7 < 0 ) {
+    // if ( j - 7 < 0 ) {
     if ( j - j_end_of_month < 0 ) {
      fprintf( stderr, "ERROR102 in gettime()\n" );
      fits_close_file( fptr, &status ); // close file
      return 1;
     }
-    //Da_d[j - 7]= '\0';
+    // Da_d[j - 7]= '\0';
     Da_d[j - j_end_of_month]= '\0';
     break;
    }
-   //if ( j - 8 < 0 ) {
-   // !!! why 8 ???
+   // if ( j - 8 < 0 ) {
+   //  !!! why 8 ???
    if ( j - j_end_of_month < 0 ) {
     fprintf( stderr, "ERROR103 in gettime()\n" );
     fits_close_file( fptr, &status ); // close file
     return 1;
    }
-   //Da_d[j - 8]= DATEOBS[j];
-   // !!! why 8 ???
+   // Da_d[j - 8]= DATEOBS[j];
+   //  !!! why 8 ???
    Da_d[j - j_end_of_month]= DATEOBS[j];
   }
   // Если время прописано в DATE-OBS после T
@@ -1791,13 +1790,13 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 
   if ( NULL != finder_chart_timestring_output ) {
    // make sure a lonely coma is not hanging in the middle of the string if tymesys_str_in is a white space
-   coma_or_whitespace_character_after_timesys=',';
-   if( 0 == strcmp( tymesys_str_in, " ") ) {
-    coma_or_whitespace_character_after_timesys=' ';
+   coma_or_whitespace_character_after_timesys= ',';
+   if ( 0 == strcmp( tymesys_str_in, " " ) ) {
+    coma_or_whitespace_character_after_timesys= ' ';
    }
    if ( exposure > 0.0 ) {
     // Write exposure time if it's non-zero
-    //sprintf( finder_chart_timestring_output, "%4d-%02d-%02d %02d:%02d:%02d %s, %.0lf sec",
+    // sprintf( finder_chart_timestring_output, "%4d-%02d-%02d %02d:%02d:%02d %s, %.0lf sec",
     sprintf( finder_chart_timestring_output, "%4d-%02d-%02d %02d:%02d:%02d %s%c %.0lf sec",
              structureTIME.tm_year - 100 + 2000,
              structureTIME.tm_mon + 1,
@@ -1886,10 +1885,10 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    fprintf( stderr, "entering if ( NULL != log_output )\n" );
 #endif
    // So why don't we form calendar date of exposure start
-   if( 0 != ( *JD ) ) {
-    time_t unix_time_exposure_start_for_logs = unix_time - (time_t)(exposure/2.0);
-    struct tm * structureTIME_for_logs = gmtime(&unix_time_exposure_start_for_logs);
-    sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", structureTIME_for_logs->tm_mday, structureTIME_for_logs->tm_mon + 1, structureTIME_for_logs->tm_year - 100 + 2000, structureTIME_for_logs->tm_hour, structureTIME_for_logs->tm_min, structureTIME_for_logs->tm_sec, exposure );    
+   if ( 0 != ( *JD ) ) {
+    time_t unix_time_exposure_start_for_logs= unix_time - (time_t)( exposure / 2.0 );
+    struct tm *structureTIME_for_logs= gmtime( &unix_time_exposure_start_for_logs );
+    sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", structureTIME_for_logs->tm_mday, structureTIME_for_logs->tm_mon + 1, structureTIME_for_logs->tm_year - 100 + 2000, structureTIME_for_logs->tm_hour, structureTIME_for_logs->tm_min, structureTIME_for_logs->tm_sec, exposure );
    } else {
     // somehting is messed up here - fallback to zeroes in the log file
     sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", 0, 0, 0, 0, 0, 0, exposure );

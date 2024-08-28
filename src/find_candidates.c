@@ -644,7 +644,7 @@ int main( int argc, char **argv ) {
 
   // Mark known variable stars
   for ( i= 0; i < Nstar; i++ ) {
-   cpgsci( 13 ); // Red + Magenta 
+   cpgsci( 13 ); // Red + Magenta
    if ( mark_as_known_variable[i] == 1 ) {
     cpgpt1( plot_x[i], plot_y[i], 23 );
    }
@@ -652,8 +652,8 @@ int main( int argc, char **argv ) {
 
   // Mark previously viewed stars
   // Define a new color index with cpgscr(ci, red, green, blue);
-  cpgscr( 16, 1.0, 0.5, 0.0); // trying to make orange
-  cpgsci( 16 ); // set the new color index
+  cpgscr( 16, 1.0, 0.5, 0.0 ); // trying to make orange
+  cpgsci( 16 );                // set the new color index
   for ( i= 0; i < Nstar; i++ ) {
    if ( mark_as_viewed[i] == 1 ) {
     cpgpt1( plot_x[i], plot_y[i], 18 );
@@ -681,7 +681,7 @@ int main( int argc, char **argv ) {
     cpgsci( 5 );
    }
   }
-  
+
   // Ask for user input
   cpgcurs( &curX, &curY, &curC );
   if ( curC == 'X' || curC == 'x' ) {

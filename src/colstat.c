@@ -136,8 +136,8 @@ int main() {
   fprintf( stderr, "Impossible error 3\n" );
   return 1;
  }
- 
- percentile80= x[ MIN( (int)(0.8 * (double)i), i-1) ];
+
+ percentile80= x[MIN( (int)( 0.8 * (double)i ), i - 1 )];
 
  fprintf( stdout, "     MIN= %.6lf\n", vMIN );
  fprintf( stdout, "     MAX= %.6lf\n", vMAX );

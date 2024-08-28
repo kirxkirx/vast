@@ -64,7 +64,7 @@ int main( int argc, char **argv ) {
   exit( EXIT_FAILURE );
  };
  // Initialize all elements to NULL
- memset(wcs_key, 0, sizeof(char *) * No_of_wcs_keys);
+ memset( wcs_key, 0, sizeof( char * ) * No_of_wcs_keys );
  //
  wcs_key[0]= (char *)malloc( FLEN_CARD * sizeof( char ) );
  if ( NULL == wcs_key[0] ) {

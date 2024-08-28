@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <unistd.h>
+#include <getopt.h>
 
 #include "../fitsio.h"
 
@@ -19,7 +21,42 @@ int check_history_keywords( char *record ) {
  return 0; // No match found
 }
 
+void print_usage( char *program_name ) {
+ fprintf( stderr, "Usage: %s [-h] [-f] image.fit dark.fit result.fit\n", program_name );
+ fprintf( stderr, "Options:\n" );
+ fprintf( stderr, "  -h  Print this help message\n" );
+ fprintf( stderr, "  -f  Force processing (disable history keyword check)\n" );
+}
+
 int main( int argc, char *argv[] ) {
+ int opt;
+ int force_processing= 0;
+
+ while ( ( opt= getopt( argc, argv, "hf" ) ) != -1 ) {
+  switch ( opt ) {
+  case 'h':
+   print_usage( argv[0] );
+   exit( EXIT_SUCCESS );
+  case 'f':
+   force_processing= 1;
+   break;
+  default:
+   fprintf( stderr, "Unknown option: %c\n", opt );
+   print_usage( argv[0] );
+   exit( EXIT_FAILURE );
+  }
+ }
+
+ if ( argc - optind != 3 ) {
+  fprintf( stderr, "Wrong arguments amount... :(\n" );
+  print_usage( argv[0] );
+  exit( EXIT_FAILURE );
+ }
+
+ char *input_file= argv[optind];
+ char *dark_file= argv[optind + 1];
+ char *output_file= argv[optind + 2];
+
  fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h
  long fpixel= 1;
  long naxes[2];
@@ -41,17 +78,12 @@ int main( int argc, char *argv[] ) {
  int ii, j; // counters
 
  double tmp;
- 
+
  double set_temp_image, set_temp_dark;
  double ccd_temp_image, ccd_temp_dark;
 
- if ( argc != 4 ) {
-  fprintf( stderr, "Wrong arguments amount... :(\n  Usage: %s image.fit dark.fit result.fit\n", argv[0] );
-  exit( EXIT_FAILURE );
- }
-
- fprintf( stderr, "Exploring image header: %s \n", argv[1] );
- fits_open_file( &fptr, argv[1], 0, &status );
+ fprintf( stderr, "Exploring image header: %s \n", input_file );
+ fits_open_file( &fptr, input_file, 0, &status );
  fits_report_error( stderr, status ); // print out any error messages
  if ( status != 0 ) {
   exit( status );
@@ -66,23 +98,23 @@ int main( int argc, char *argv[] ) {
  if ( status != 0 ) {
   exit( status );
  }
- // Note the set temperature of the camera 
+ // Note the set temperature of the camera
  fits_read_key( fptr, TDOUBLE, "SET-TEMP", &set_temp_image, NULL, &status );
  if ( status != 0 ) {
   set_temp_image= FALLBACK_CCD_TEMP_VALUE;
-  status=0;
+  status= 0;
  }
- // Note the CCD temperature of the camera 
+ // Note the CCD temperature of the camera
  fits_read_key( fptr, TDOUBLE, "CCD-TEMP", &ccd_temp_image, NULL, &status );
  if ( status != 0 ) {
   ccd_temp_image= FALLBACK_CCD_TEMP_VALUE;
-  status=0;
+  status= 0;
  }
  // Check for possible mismatch between CCD-TEMP and SET-TEMP
  if ( ccd_temp_image != FALLBACK_CCD_TEMP_VALUE && set_temp_image != FALLBACK_CCD_TEMP_VALUE ) {
-  fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_image, argv[1] );
-  fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_image, argv[1] );
-  if ( fabs(ccd_temp_image-set_temp_image) > MAX_CCD_TEMP_DIFF ) {
+  fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_image, input_file );
+  fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_image, input_file );
+  if ( fabs( ccd_temp_image - set_temp_image ) > MAX_CCD_TEMP_DIFF ) {
    // found set temperature mismatch
    fprintf( stderr, "ERROR: mismatch between CCD-TEMP and SET-TEMP! Looks like the the camera didn't have time to cool down.\n" );
    fits_close_file( fptr, &status );
@@ -101,7 +133,6 @@ int main( int argc, char *argv[] ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for FITS header\n" );
   exit( EXIT_FAILURE );
  }
- // for( ii= 1; ii < No_of_keys; ii++ ) {
  for ( ii= 0; ii < No_of_keys; ii++ ) {
   key[ii]= malloc( FLEN_CARD * sizeof( char ) ); // FLEN_CARD length of a FITS header card defined in fitsio.h
   if ( key[ii] == NULL ) {
@@ -113,8 +144,9 @@ int main( int argc, char *argv[] ) {
   fits_report_error( stderr, status ); // print out any error messages
 
   // Check if the FITS header record indicates the image has already been calibrated
-  if ( check_history_keywords( key[ii] ) ) {
+  if ( !force_processing && check_history_keywords( key[ii] ) ) {
    fprintf( stderr, "Prohibited HISTORY keyword found in header, exiting...\n" );
+   fprintf( stderr, "Use -f option to force processing if you want to proceed anyway.\n" );
    fits_close_file( fptr, &status ); // Close the FITS file
    // Free allocated memory
    for ( j= 0; j <= ii; j++ ) {
@@ -126,7 +158,7 @@ int main( int argc, char *argv[] ) {
 
   status= 0; // continue on any errors at this stage
  }
- 
+
  fits_get_img_type( fptr, &bitpix2, &status );
  fits_report_error( stderr, status ); // print out any error messages
  if ( status != 0 ) {
@@ -163,12 +195,12 @@ int main( int argc, char *argv[] ) {
  };
 
  fits_read_img( fptr, TUSHORT, 1, img_size, &nullval, image_array, &anynul, &status );
- fprintf( stderr, "Reading image %s %ld %ld  %d bitpix\n", argv[1], naxes[0], naxes[1], bitpix2 );
+ fprintf( stderr, "Reading image %s %ld %ld  %d bitpix\n", input_file, naxes[0], naxes[1], bitpix2 );
  fits_close_file( fptr, &status );
  fits_report_error( stderr, status ); // print out any error messages
  status= 0;
 
- fits_open_file( &fptr, argv[2], 0, &status );
+ fits_open_file( &fptr, dark_file, 0, &status );
  fits_report_error( stderr, status ); // print out any error messages
  if ( status != 0 ) {
   fprintf( stderr, "ERROR: opening dark frame\n" );
@@ -206,17 +238,17 @@ int main( int argc, char *argv[] ) {
   fits_close_file( fptr, &status );
   exit( EXIT_FAILURE );
  }
- // Note the set temperature of the camera 
+ // Note the set temperature of the camera
  fits_read_key( fptr, TDOUBLE, "SET-TEMP", &set_temp_dark, NULL, &status );
  if ( status != 0 ) {
   set_temp_dark= FALLBACK_CCD_TEMP_VALUE;
-  status=0;
+  status= 0;
  }
  // Check the temperature match between the light and dark frames
  if ( set_temp_image != FALLBACK_CCD_TEMP_VALUE && set_temp_dark != FALLBACK_CCD_TEMP_VALUE ) {
-  fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_image, argv[1] );
-  fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_dark, argv[2] );
-  if ( fabs(set_temp_image-set_temp_dark) > MAX_SET_TEMP_DIFF ) {
+  fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_image, input_file );
+  fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_dark, dark_file );
+  if ( fabs( set_temp_image - set_temp_dark ) > MAX_SET_TEMP_DIFF ) {
    // found set temperature mismatch
    fprintf( stderr, "ERROR: temperature mismatch between the light and dark images!\n" );
    free( image_array );
@@ -227,17 +259,17 @@ int main( int argc, char *argv[] ) {
   }
  }
  //
- // Note the ccd temperature of the camera 
+ // Note the ccd temperature of the camera
  fits_read_key( fptr, TDOUBLE, "CCD-TEMP", &ccd_temp_dark, NULL, &status );
  if ( status != 0 ) {
   ccd_temp_dark= FALLBACK_CCD_TEMP_VALUE;
-  status=0;
+  status= 0;
  }
  // Check the temperature match between the light and dark frames
  if ( ccd_temp_image != FALLBACK_CCD_TEMP_VALUE && ccd_temp_dark != FALLBACK_CCD_TEMP_VALUE ) {
-  fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_image, argv[1] );
-  fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_dark, argv[2] );
-  if ( fabs(ccd_temp_image-ccd_temp_dark) > MAX_CCD_TEMP_DIFF ) {
+  fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_image, input_file );
+  fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_dark, dark_file );
+  if ( fabs( ccd_temp_image - ccd_temp_dark ) > MAX_CCD_TEMP_DIFF ) {
    // found set temperature mismatch
    fprintf( stderr, "ERROR: temperature mismatch between the light and dark images!\n" );
    free( image_array );
@@ -250,7 +282,7 @@ int main( int argc, char *argv[] ) {
  //
  fits_get_img_type( fptr, &bitpix2, &status );
  fits_read_img( fptr, TUSHORT, 1, naxes[0] * naxes[1], &nullval, dark_array, &anynul, &status );
- fprintf( stderr, "Reading dark frame %s %ld %ld  %d bitpix\n", argv[2], testX, testY, bitpix2 );
+ fprintf( stderr, "Reading dark frame %s %ld %ld  %d bitpix\n", dark_file, testX, testY, bitpix2 );
  fits_close_file( fptr, &status );
  fits_report_error( stderr, status ); // print out any error messages
  status= 0;
@@ -281,8 +313,8 @@ int main( int argc, char *argv[] ) {
  free( image_array );
  free( dark_array );
 
- fits_create_file( &fptr, argv[3], &status ); // create new file
- fits_report_error( stderr, status );         // print out any error messages
+ fits_create_file( &fptr, output_file, &status ); // create new file
+ fits_report_error( stderr, status );             // print out any error messages
  if ( status != 0 ) {
   // free-up memory before exiting
   free( result_image_array );
@@ -337,10 +369,10 @@ int main( int argc, char *argv[] ) {
  fits_write_history( fptr, "Dark frame subtraction:", &status );
  fits_report_error( stderr, status ); // print out any error messages
  status= 0;
- fits_write_history( fptr, argv[1], &status );
+ fits_write_history( fptr, input_file, &status );
  fits_report_error( stderr, status ); // print out any error messages
  status= 0;
- fits_write_history( fptr, argv[2], &status );
+ fits_write_history( fptr, dark_file, &status );
  fits_report_error( stderr, status ); // print out any error messages
  status= 0;                           // just in case
  fits_close_file( fptr, &status );
@@ -356,7 +388,7 @@ int main( int argc, char *argv[] ) {
   return 1;
  }
 
- fprintf( stderr, "Dark frame is subtracted, output is written to %s :)\n\n", argv[3] );
+ fprintf( stderr, "Dark frame is subtracted, output is written to %s :)\n\n", output_file );
  fprintf( stdout, "Spent %f seconds \n", 1.0 * clock() / CLOCKS_PER_SEC );
 
  free( result_image_array );
@@ -368,7 +400,7 @@ int main( int argc, char *argv[] ) {
 
  fits_report_error( stderr, status ); // print out any error messages
  if ( status != 0 ) {
-  fprintf( stderr, "ERROR modyfying the file %s\n", argv[3] );
+  fprintf( stderr, "ERROR modifying the file %s\n", output_file );
   return 1;
  }
 

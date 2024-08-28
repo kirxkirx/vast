@@ -10,34 +10,34 @@
 // LOL, can't use M_PI in define
 // #define ARCSEC_IN_RAD 3600.0 * 180.0 / M_PI
 
-int is_ra_or_dec_string(const char *str) {
-    int i;
-    int colon_count = 0;
-    int dot_count = 0;
-    int digit_count = 0;
-    int sign_count = 0;
+int is_ra_or_dec_string( const char *str ) {
+ int i;
+ int colon_count= 0;
+ int dot_count= 0;
+ int digit_count= 0;
+ int sign_count= 0;
 
-    for (i = 0; str[i] != '\0'; i++) {
-        if (str[i] == ':') {
-            colon_count++;
-        } else if (str[i] == '.') {
-            dot_count++;
-        } else if (str[i] == '+' || str[i] == '-') {
-            sign_count++;
-        } else if (isdigit(str[i])) {
-            digit_count++;
-        } else if (!isspace(str[i])) {
-            return 0;  // Invalid character found
-        }
-    }
+ for ( i= 0; str[i] != '\0'; i++ ) {
+  if ( str[i] == ':' ) {
+   colon_count++;
+  } else if ( str[i] == '.' ) {
+   dot_count++;
+  } else if ( str[i] == '+' || str[i] == '-' ) {
+   sign_count++;
+  } else if ( isdigit( str[i] ) ) {
+   digit_count++;
+  } else if ( !isspace( str[i] ) ) {
+   return 0; // Invalid character found
+  }
+ }
 
-    // Check if the string matches the expected format
-    if ((colon_count == 2 && dot_count <= 1 && sign_count <= 1) ||  // HH:MM:SS[.sss] or HH:MM:SS[.sss][+-]
-        (colon_count == 0 && dot_count <= 1 && sign_count <= 1)) {  // [+-]DDD.ddd or [+-]DDD
-        return digit_count > 0;  // At least one digit is required
-    }
+ // Check if the string matches the expected format
+ if ( ( colon_count == 2 && dot_count <= 1 && sign_count <= 1 ) ||  // HH:MM:SS[.sss] or HH:MM:SS[.sss][+-]
+      ( colon_count == 0 && dot_count <= 1 && sign_count <= 1 ) ) { // [+-]DDD.ddd or [+-]DDD
+  return digit_count > 0;                                           // At least one digit is required
+ }
 
-    return 0;  // Invalid format
+ return 0; // Invalid format
 }
 
 int format_hms_or_deg( char *coordinatestring ) {
@@ -159,7 +159,7 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
   // fprintf( stderr, "DEBUG02: %lf %d %d %lf\n",in, hh2, mm2, ss2);
  }
  if ( 0.0 == search_radius_arcsec ) {
-  //fprintf( stderr, "DEBUG: %.10lf %d %d %lf\n", in, hh2, mm2, ss2 );
+  // fprintf( stderr, "DEBUG: %.10lf %d %d %lf\n", in, hh2, mm2, ss2 );
   fprintf( stdout, "Average position  %02d:%02d:%05.2lf ", hh2, mm2, ss2 );
  }
 
@@ -265,20 +265,20 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "Usage:\n%s RA1 DEC1 RA2 DEC2\nor\n%s RA1 DEC1 radeclist.txt search_radius_arcsec\n", argv[0], argv[0] );
   return 1;
  }
- 
+
  // Arguments 1 and 2 should be RA and Dec
- if( 0==is_ra_or_dec_string(argv[1]) ) {
-  fprintf( stderr, "An ERROR occured in %s the first command line option does not look like an RA string.\n",  argv[0], argv[1] );
+ if ( 0 == is_ra_or_dec_string( argv[1] ) ) {
+  fprintf( stderr, "An ERROR occured in %s the first command line option does not look like an RA string.\n", argv[0], argv[1] );
   return 1;
  }
- if( 0==is_ra_or_dec_string(argv[2]) ) {
-  fprintf( stderr, "An ERROR occured in %s the second command line option does not look like a Dec string.\n",  argv[0], argv[2] );
+ if ( 0 == is_ra_or_dec_string( argv[2] ) ) {
+  fprintf( stderr, "An ERROR occured in %s the second command line option does not look like a Dec string.\n", argv[0], argv[2] );
   return 1;
  }
  // Argument 3 may be RA string or a file name, we'll check that in a moment
  // Argument 4 is either Dec or search radius in arcsec
- if( 0==is_ra_or_dec_string(argv[4]) ) {
-  fprintf( stderr, "An ERROR occured in %s the fourth command line option does not look like a Dec string or search radius in arcsec.\n",  argv[0], argv[4] );
+ if ( 0 == is_ra_or_dec_string( argv[4] ) ) {
+  fprintf( stderr, "An ERROR occured in %s the fourth command line option does not look like a Dec string or search radius in arcsec.\n", argv[0], argv[4] );
   return 1;
  }
 
@@ -286,8 +286,8 @@ int main( int argc, char **argv ) {
  filelist_input_positions= fopen( argv[3], "r" );
  if ( NULL == filelist_input_positions ) {
   //
-  if( 0==is_ra_or_dec_string(argv[3]) ) {
-   fprintf( stderr, "An ERROR occured in %s the third command line option is not a valid file name and does not look like an RA string.\n",  argv[0], argv[3] );
+  if ( 0 == is_ra_or_dec_string( argv[3] ) ) {
+   fprintf( stderr, "An ERROR occured in %s the third command line option is not a valid file name and does not look like an RA string.\n", argv[0], argv[3] );
    return 1;
   }
   //

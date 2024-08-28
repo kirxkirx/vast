@@ -227,8 +227,8 @@ int fake_image_hack( char *input_string ) {
     imin= (double)(int)( min );
     sec= ( min - imin ) * 60;
     sprintf( processed_input_string, "%4.0lf-%02.0lf-%02.0lfT%02.0lf:%02.0lf:%06.3lf", year, month, iday, ihour, imin, sec );
-    //fprintf( stderr, "DEBUG21 #%s#\n", processed_input_string);
-    // exit( EXIT_FAILURE );
+    // fprintf( stderr, "DEBUG21 #%s#\n", processed_input_string);
+    //  exit( EXIT_FAILURE );
    } // if ( is_T_found == 0 ) {
    //
    // fprintf( stderr, "DEBUG22 #%s#\n", processed_input_string);

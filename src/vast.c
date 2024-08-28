@@ -1710,7 +1710,7 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
   return;
  }
  // if( star.n==4511 )fprintf(stderr,"##### %lf %lf\n",star.JD,reference_image_JD);
- //if( star.n==21841 )fprintf(stderr,"##### %lf %lf\n",star.JD,reference_image_JD);
+ // if( star.n==21841 )fprintf(stderr,"##### %lf %lf\n",star.JD,reference_image_JD);
 
  if ( x > search_area_boundaries[0] && x < search_area_boundaries[1] ) {
   if ( y > search_area_boundaries[2] && y < search_area_boundaries[3] ) {
@@ -1723,22 +1723,22 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
     if ( 1 == is_point_close_or_off_the_frame_edge( star.x_frame, star.y_frame, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) ) {
      return;
     }
-    //if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- passed is_point_close_or_off_the_frame_edge()\n");
-    // double-check that it's not in a bad region
+    // if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- passed is_point_close_or_off_the_frame_edge()\n");
+    //  double-check that it's not in a bad region
     if ( 0 != exclude_region( X1, Y1, X2, Y2, N_bad_regions, star.x_frame, star.y_frame, aperture ) ) {
      fprintf( stderr, "The transient candidate %9.3lf %9.3lf is rejected, see bad_region.lst\n", star.x_frame, star.y_frame );
      return;
     }
-    //if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- passed exclude_region() new frame\n");
-    // Check that it's not in a bad region on the reference frame - there will be no reference object!
-    // increase the bad region, just in case
+    // if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- passed exclude_region() new frame\n");
+    //  Check that it's not in a bad region on the reference frame - there will be no reference object!
+    //  increase the bad region, just in case
     if ( 0 != exclude_region( X1, Y1, X2, Y2, N_bad_regions, x, y, 1.5 * aperture ) ) {
      fprintf( stderr, "The transient candidate (new frame position %9.3lf %9.3lf ; ref frame position: %9.3lf %9.3lf) is rejected as at the reference frame it would land at a bad region listed in bad_region.lst\n", star.x_frame, star.y_frame, x, y );
      return;
     }
-    //if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- passed exclude_region() ref frame\n");
-    // OK, we like this candidate
-    //if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- we like it\n");
+    // if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- passed exclude_region() ref frame\n");
+    //  OK, we like this candidate
+    // if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- we like it\n");
     transientfile= fopen( "candidates-transients.lst", "a" );
     if ( NULL == transientfile ) {
      fprintf( stderr, "ERROR writing to candidates-transients.lst\n" );
@@ -5712,7 +5712,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
        }
        //
        // SLOW: 5.12%
-       //if ( STAR1[Pos1[i]].n == star_numbers_for_coordinate_arrays[coordinate_array_index] ) {
+       // if ( STAR1[Pos1[i]].n == star_numbers_for_coordinate_arrays[coordinate_array_index] ) {
        // Using the IF_UNLIKELY macro to handle branch prediction
        IF_UNLIKELY( STAR1[Pos1[i]].n == star_numbers_for_coordinate_arrays[coordinate_array_index] ) {
         // maybe we don't want to do it if number_of_coordinate_measurements_for_star[coordinate_array_index] > something ?
@@ -5751,7 +5751,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
        for ( i_update_coordinates_STAR3= 0; i_update_coordinates_STAR3 < NUMBER3; i_update_coordinates_STAR3++ ) {
         // for ( i_update_coordinates_STAR3= NUMBER3; i_update_coordinates_STAR3--; ) {
         //  SLOW: 4.13%
-        //if ( STAR1[Pos1[i]].n == STAR3[i_update_coordinates_STAR3].n ) {
+        // if ( STAR1[Pos1[i]].n == STAR3[i_update_coordinates_STAR3].n ) {
         // Using the IF_UNLIKELY macro to handle branch prediction
         IF_UNLIKELY( STAR1[Pos1[i]].n == STAR3[i_update_coordinates_STAR3].n ) {
          // never update for a moving object
@@ -6249,8 +6249,8 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  } else {
   fprintf( vast_list_of_all_stars_ds9, "# Region file format: DS9 version 4.0\n# Filename: vast_list_of_all_stars.ds9.reg\nglobal color=green font=\"sans 10 normal\" select=1 highlite=1 edit=1 move=1 delete=1 include=1 fixed=0 source\nimage\n" );
   for ( i= 0; i < NUMBER1; i++ ) {
-   //fprintf( vast_list_of_all_stars_ds9, "circle(%8.3lf,%8.3lf,%8.3lf)\n# text(%8.3lf,%8.3lf) text={%05d}\n", STAR1[i].x, STAR1[i].y, STAR1[i].star_size, STAR1[i].x, STAR1[i].y, STAR1[i].n );
-   fprintf( vast_list_of_all_stars_ds9, "circle(%8.3lf,%8.3lf,%8.3lf)\n# text(%8.3lf,%8.3lf) text={%05d}\n", STAR1[i].x, STAR1[i].y, CONST * STAR1[i].star_size / 2.0 , STAR1[i].x, STAR1[i].y +1.8 * CONST * STAR1[i].star_size / 2.0, STAR1[i].n );
+   // fprintf( vast_list_of_all_stars_ds9, "circle(%8.3lf,%8.3lf,%8.3lf)\n# text(%8.3lf,%8.3lf) text={%05d}\n", STAR1[i].x, STAR1[i].y, STAR1[i].star_size, STAR1[i].x, STAR1[i].y, STAR1[i].n );
+   fprintf( vast_list_of_all_stars_ds9, "circle(%8.3lf,%8.3lf,%8.3lf)\n# text(%8.3lf,%8.3lf) text={%05d}\n", STAR1[i].x, STAR1[i].y, CONST * STAR1[i].star_size / 2.0, STAR1[i].x, STAR1[i].y + 1.8 * CONST * STAR1[i].star_size / 2.0, STAR1[i].n );
   }
   fclose( vast_list_of_all_stars_ds9 );
  }
