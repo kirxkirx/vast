@@ -5,7 +5,7 @@ on: [push]
 jobs:
   build_homebrew:
 
-    runs-on: macos-11
+    runs-on: macos-latest
 
     # Manually enable/disable this test
     # Write an if statement that is always true/false
@@ -33,7 +33,7 @@ jobs:
 
   build_macports:
     needs: build_homebrew
-    runs-on: macos-11
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v3
     - name: Check commit message
