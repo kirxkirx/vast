@@ -273,11 +273,13 @@ int main( int argc, char *argv[] ) {
   fits_write_key( fptr, TLONG, "BZERO", &bzero, bzero_comment, &status );
  }
 
+ fits_write_history( fptr, "Median frame stacking:", &status );
  for ( file_counter= 1; file_counter < argc; file_counter++ ) {
   fits_write_history( fptr, argv[file_counter], &status );
  }
  fits_report_error( stderr, status ); /* print out any error messages */
  fits_close_file( fptr, &status );
+ 
  for ( file_counter= 1; file_counter < argc; file_counter++ ) {
   free( image_array[file_counter - 1] );
  }
