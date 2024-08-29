@@ -14,26 +14,47 @@
 #define MAX_CCD_TEMP_DIFF 2.5 // let's be generous
 
 // This function will try to guess if the opened file is a dark frame or bias frame based on its header
-int is_bias_frame(fitsfile *fptr) {
-    char imagetyp[FLEN_VALUE];
-    int status = 0;
-    
-    fits_read_key(fptr, TSTRING, "IMAGETYP", imagetyp, NULL, &status);
-    if (status) {
-        return 0; // If there's an error reading the key, assume it's not a bias frame
-    }
-    
-    // Trim leading and trailing whitespace
-    char *start = imagetyp;
-    char *end = imagetyp + strlen(imagetyp) - 1;
-    
-    while (*start == ' ' || *start == '\t') start++;
-    while (end > start && (*end == ' ' || *end == '\t')) end--;
-    
-    *(end + 1) = '\0';
-    
-    // Case-insensitive comparison
-    return (strcasecmp(start, "Bias Frame") == 0);
+int is_bias_frame( fitsfile *fptr ) {
+ char imagetyp[FLEN_VALUE];
+ int status= 0;
+ double exposure= 0.0;
+
+ // First, try to read IMAGETYP
+ fits_read_key( fptr, TSTRING, "IMAGETYP", imagetyp, NULL, &status );
+ if ( status == 0 ) {
+  // Trim leading and trailing whitespace
+  char *start= imagetyp;
+  char *end= imagetyp + strlen( imagetyp ) - 1;
+
+  while ( *start == ' ' || *start == '\t' )
+   start++;
+  while ( end > start && ( *end == ' ' || *end == '\t' ) )
+   end--;
+
+  *( end + 1 )= '\0';
+
+  // Case-insensitive comparison
+  if ( strcasecmp( start, "Bias Frame" ) == 0 ) {
+   return 1;
+  }
+ }
+
+ // Reset status
+ status= 0;
+
+ // If IMAGETYP is not found or not "Bias Frame", check exposure time
+ fits_read_key( fptr, TDOUBLE, "EXPTIME", &exposure, NULL, &status );
+ if ( status == KEY_NO_EXIST ) {
+  status= 0;
+  fits_read_key( fptr, TDOUBLE, "EXPOSURE", &exposure, NULL, &status );
+ }
+
+ if ( status == 0 && exposure == 0.0 ) {
+  return 1; // This is a bias frame (exposure time is 0)
+ }
+
+ status= 0; // Reset status if EXPOSURE key was not found
+ return 0;  // Not a bias frame
 }
 
 // This function will check if a record indicates the image has already been calibrated
@@ -104,7 +125,7 @@ int main( int argc, char *argv[] ) {
 
  double set_temp_image, set_temp_dark;
  double ccd_temp_image, ccd_temp_dark;
- 
+
  int is_bias= 0; // 1 - if it's a bias rather than dark frame (needed just to name it properly)
 
  fprintf( stderr, "Exploring image header: %s \n", input_file );
@@ -305,7 +326,7 @@ int main( int argc, char *argv[] ) {
   }
  }
  //
- is_bias = is_bias_frame(fptr);
+ is_bias= is_bias_frame( fptr );
  //
  fits_get_img_type( fptr, &bitpix2, &status );
  fits_read_img( fptr, TUSHORT, 1, naxes[0] * naxes[1], &nullval, dark_array, &anynul, &status );
@@ -393,11 +414,11 @@ int main( int argc, char *argv[] ) {
  fits_delete_key( fptr, "COMMENT", &status );
  fits_delete_key( fptr, "BZERO", &status );
  fits_delete_key( fptr, "BSCALE", &status );
- //fits_write_history( fptr, "Dark frame subtraction:", &status );
+ // fits_write_history( fptr, "Dark frame subtraction:", &status );
  if ( 1 == is_bias ) {
-    fits_write_history(fptr, "Bias frame subtraction:", &status);
+  fits_write_history( fptr, "Bias frame subtraction:", &status );
  } else {
-    fits_write_history(fptr, "Dark frame subtraction:", &status);
+  fits_write_history( fptr, "Dark frame subtraction:", &status );
  }
  fits_report_error( stderr, status ); // print out any error messages
  status= 0;
@@ -420,11 +441,11 @@ int main( int argc, char *argv[] ) {
   return 1;
  }
 
- //fprintf( stderr, "Dark frame is subtracted, output is written to %s :)\n\n", output_file );
- if (is_bias) {
-    fprintf(stderr, "Bias frame is subtracted, output is written to %s :)\n\n", output_file);
+ // fprintf( stderr, "Dark frame is subtracted, output is written to %s :)\n\n", output_file );
+ if ( is_bias ) {
+  fprintf( stderr, "Bias frame is subtracted, output is written to %s :)\n\n", output_file );
  } else {
-    fprintf(stderr, "Dark frame is subtracted, output is written to %s :)\n\n", output_file);
+  fprintf( stderr, "Dark frame is subtracted, output is written to %s :)\n\n", output_file );
  }
  fprintf( stdout, "Spent %f seconds \n", 1.0 * clock() / CLOCKS_PER_SEC );
 
