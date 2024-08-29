@@ -26,7 +26,7 @@ jobs:
     - name: Install gfortran
       run: brew install gfortran
     - name: Install libx11 xorg
-      run: brew install libx11 xorg
+      run: brew install libx11 xorg-server
     - name: make VaST (Homebrew)
       run: make
     # Disble the long data analysis test
