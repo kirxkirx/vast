@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <strings.h> // for strcasecmp()
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
@@ -11,6 +12,29 @@
 #define FALLBACK_CCD_TEMP_VALUE 100
 #define MAX_SET_TEMP_DIFF 0.5
 #define MAX_CCD_TEMP_DIFF 2.5 // let's be generous
+
+// This function will try to guess if the opened file is a dark frame or bias frame based on its header
+int is_bias_frame(fitsfile *fptr) {
+    char imagetyp[FLEN_VALUE];
+    int status = 0;
+    
+    fits_read_key(fptr, TSTRING, "IMAGETYP", imagetyp, NULL, &status);
+    if (status) {
+        return 0; // If there's an error reading the key, assume it's not a bias frame
+    }
+    
+    // Trim leading and trailing whitespace
+    char *start = imagetyp;
+    char *end = imagetyp + strlen(imagetyp) - 1;
+    
+    while (*start == ' ' || *start == '\t') start++;
+    while (end > start && (*end == ' ' || *end == '\t')) end--;
+    
+    *(end + 1) = '\0';
+    
+    // Case-insensitive comparison
+    return (strcasecmp(start, "Bias Frame") == 0);
+}
 
 // This function will check if a record indicates the image has already been calibrated
 int check_history_keywords( char *record ) {
@@ -69,7 +93,6 @@ int main( int argc, char *argv[] ) {
  unsigned short *dark_array;
  unsigned short *result_image_array;
 
- // -----
  int i;
  int bitpix2;
  char **key;
@@ -81,6 +104,8 @@ int main( int argc, char *argv[] ) {
 
  double set_temp_image, set_temp_dark;
  double ccd_temp_image, ccd_temp_dark;
+ 
+ int is_bias= 0; // 1 - if it's a bias rather than dark frame (needed just to name it properly)
 
  fprintf( stderr, "Exploring image header: %s \n", input_file );
  fits_open_file( &fptr, input_file, 0, &status );
@@ -280,6 +305,8 @@ int main( int argc, char *argv[] ) {
   }
  }
  //
+ is_bias = is_bias_frame(fptr);
+ //
  fits_get_img_type( fptr, &bitpix2, &status );
  fits_read_img( fptr, TUSHORT, 1, naxes[0] * naxes[1], &nullval, dark_array, &anynul, &status );
  fprintf( stderr, "Reading dark frame %s %ld %ld  %d bitpix\n", dark_file, testX, testY, bitpix2 );
@@ -366,7 +393,12 @@ int main( int argc, char *argv[] ) {
  fits_delete_key( fptr, "COMMENT", &status );
  fits_delete_key( fptr, "BZERO", &status );
  fits_delete_key( fptr, "BSCALE", &status );
- fits_write_history( fptr, "Dark frame subtraction:", &status );
+ //fits_write_history( fptr, "Dark frame subtraction:", &status );
+ if ( 1 == is_bias ) {
+    fits_write_history(fptr, "Bias frame subtraction:", &status);
+ } else {
+    fits_write_history(fptr, "Dark frame subtraction:", &status);
+ }
  fits_report_error( stderr, status ); // print out any error messages
  status= 0;
  fits_write_history( fptr, input_file, &status );
@@ -388,7 +420,12 @@ int main( int argc, char *argv[] ) {
   return 1;
  }
 
- fprintf( stderr, "Dark frame is subtracted, output is written to %s :)\n\n", output_file );
+ //fprintf( stderr, "Dark frame is subtracted, output is written to %s :)\n\n", output_file );
+ if (is_bias) {
+    fprintf(stderr, "Bias frame is subtracted, output is written to %s :)\n\n", output_file);
+ } else {
+    fprintf(stderr, "Dark frame is subtracted, output is written to %s :)\n\n", output_file);
+ }
  fprintf( stdout, "Spent %f seconds \n", 1.0 * clock() / CLOCKS_PER_SEC );
 
  free( result_image_array );
