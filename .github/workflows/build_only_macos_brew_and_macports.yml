@@ -17,12 +17,16 @@ jobs:
     # The following packages are were pre-installed
     # at a Github Actions VM, but not anymore
     # g++ and gfortran are part of the gcc package
-    - name: Install gcc, g++, gfortran, and wget
-      run: brew install gcc wget
-    - name: Install X11 header files
-      run: brew install libx11
-    - name: Install libpng
-      run: brew install libpng
+    #- name: Install gcc, g++, gfortran, and wget
+    #  run: brew install gcc wget
+    #- name: Install X11 header files
+    #  run: brew install libx11
+    #- name: Install libpng
+    #  run: brew install libpng
+    - name: Install gfortran
+      run: brew install gfortran
+    -name: Install libx11 xorg
+      run: brew install libx11 xorg
     - name: make VaST (Homebrew)
       run: make
     # Disble the long data analysis test
