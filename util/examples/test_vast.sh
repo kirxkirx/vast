@@ -6650,7 +6650,9 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS003a"
   #fi
-  grep --quiet "First image: 2458689.62122 25.07.2019 02:54:30" vast_summary.log
+  # 2458689.6211690 according to https://ssd.jpl.nasa.gov/tools/jdc/#/cd
+  #grep --quiet "First image: 2458689.62122 25.07.2019 02:54:30" vast_summary.log
+  grep --quiet "First image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS003b"
@@ -6799,12 +6801,12 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2002"
   fi
-  grep --quiet "Ref.  image: 2458689.62122 25.07.2019 02:54:30" vast_summary.log
+  grep --quiet "Ref.  image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2003a"
   fi
-  grep --quiet "First image: 2458689.62122 25.07.2019 02:54:30" vast_summary.log
+  grep --quiet "First image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2003b"
@@ -6953,13 +6955,13 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
     FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3002"
     break
    fi
-   grep --quiet "Ref.  image: 2458689.62122 25.07.2019 02:54:30" vast_summary.log
+   grep --quiet "Ref.  image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3003a"
     break
    fi
-   grep --quiet "First image: 2458689.62122 25.07.2019 02:54:30" vast_summary.log
+   grep --quiet "First image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3003b"
@@ -17659,7 +17661,8 @@ if [ -f ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit 
    FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600002a_$TEST"
   fi
  fi 
- util/get_image_date ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit | grep --quiet "Exposure  45 sec, 11.06.2019 00:10:29 UT = JD(UT) 2458645.50755 mid. exp."
+ #util/get_image_date ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit | grep --quiet "Exposure  45 sec, 11.06.2019 00:10:29 UT = JD(UT) 2458645.50755 mid. exp."
+ util/get_image_date ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit | grep --quiet "Exposure  45 sec, 11.06.2019 00:10:29 UT = JD(UT) 2458645.50754 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600003"
@@ -17971,7 +17974,8 @@ if [ -f ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits ];th
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ_FIT_ROBUST_LINEAR_COEFFB"
  fi
- util/get_image_date ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits | grep --quiet "Exposure 300 sec, 01.04.2021 18:06:22 UT = JD(UT) 2459306.25616 mid. exp."
+ #util/get_image_date ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits | grep --quiet "Exposure 300 sec, 01.04.2021 18:06:22 UT = JD(UT) 2459306.25616 mid. exp."
+ util/get_image_date ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits | grep --quiet "Exposure 300 sec, 01.04.2021 18:06:21.738 UT = JD(UT) 2459306.25615 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ003"
@@ -18326,7 +18330,8 @@ if [ -f ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Lum
   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED_FLAG_IMG_CREATED"
  fi
  #
- util/get_image_date ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit | grep 'Exposure   0 sec, 21.04.2023 18:28:30 UT = JD(UT) 2460056.26979 mid. exp.'
+ #util/get_image_date ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit | grep 'Exposure   0 sec, 21.04.2023 18:28:30 UT = JD(UT) 2460056.26979 mid. exp.'
+ util/get_image_date ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit | grep 'Exposure   0 sec, 21.04.2023 18:28:29.940 UT = JD(UT) 2460056.26979 mid. exp.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED003"
