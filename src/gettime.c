@@ -1889,10 +1889,20 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   }
 
   if ( NULL != stderr_output ) {
-   if ( exposure != 0 )
-    sprintf( stderr_output, "Exposure %3.0lf sec, %02d.%02d.%4d %02d:%02d:%02d %s = JD%s %.5lf mid. exp.\n", exposure, structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, structureTIME.tm_sec, tymesys_str_in, tymesys_str_out, ( *JD ) );
-   if ( exposure == 0 )
-    sprintf( stderr_output, "Exposure %3.0lf sec, %02d.%02d.%4d %02d:%02d:%02d %s = JD%s %.5lf\n", exposure, structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, structureTIME.tm_sec, tymesys_str_in, tymesys_str_out, ( *JD ) );
+   if ( exposure != 0 ) {
+    if ( 0 == double_fractional_seconds_only ) {
+     sprintf( stderr_output, "Exposure %3.0lf sec, %02d.%02d.%4d %02d:%02d:%02d %s = JD%s %.5lf mid. exp.\n", exposure, structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, structureTIME.tm_sec, tymesys_str_in, tymesys_str_out, ( *JD ) );
+    } else {
+     sprintf( stderr_output, "Exposure %3.0lf sec, %02d.%02d.%4d %02d:%02d:%06.3lf %s = JD%s %.5lf mid. exp.\n", exposure, structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, (double)structureTIME.tm_sec + double_fractional_seconds_only, tymesys_str_in, tymesys_str_out, ( *JD ) );
+    }
+   }
+   if ( exposure == 0 ) {
+    if ( 0 == double_fractional_seconds_only ) {
+     sprintf( stderr_output, "Exposure %3.0lf sec, %02d.%02d.%4d %02d:%02d:%02d %s = JD%s %.5lf\n", exposure, structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, structureTIME.tm_sec, tymesys_str_in, tymesys_str_out, ( *JD ) );
+    } else {
+     sprintf( stderr_output, "Exposure %3.0lf sec, %02d.%02d.%4d %02d:%02d:%06.3lf %s = JD%s %.5lf\n", exposure, structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, (double)structureTIME.tm_sec + double_fractional_seconds_only, tymesys_str_in, tymesys_str_out, ( *JD ) );
+    }
+   }
   }
  } else {
   // This else is for:

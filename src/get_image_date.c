@@ -398,6 +398,7 @@ int main( int argc, char **argv ) {
  // Convert the date to other formats
  MJD= JD - 2400000.5;
  UnixTime= ( JD - 2440587.5 ) * 86400.0;
+ // https://en.wikipedia.org/wiki/Julian_year_(astronomy)
  Julian_year= 2000.0 + ( JD - 2451545.0 ) / 365.25;
  if ( UnixTime < 0.0 ) {
   UnixTime_time_t= (time_t)( UnixTime - 0.5 );

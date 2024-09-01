@@ -23643,7 +23643,8 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  fi
 done
 # Make sure the rounding is done correctly
-util/get_image_date '1969-12-31T23:59:58.1' 2>&1 | grep --quiet 'JD 2440587.499977'
+# I'm comparing to https://ssd.jpl.nasa.gov/tools/jdc/#/cd
+util/get_image_date '1969-12-31T23:59:58.1' 2>&1 | grep --quiet 'JD 2440587.499978'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV009"
@@ -23656,7 +23657,8 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
   break
  fi
 done
-util/get_image_date '1969-12-31T23:59:58.9' 2>&1 | grep --quiet 'JD 2440587.499988'
+# 2440587.4999873
+util/get_image_date '1969-12-31T23:59:58.9' 2>&1 | grep --quiet 'JD 2440587.499987'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV010"
@@ -23691,7 +23693,9 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV014"
 fi
-util/get_image_date '1969-12-31T23:59:58.4' 2>&1 | grep --quiet 'Julian year 1969.999999937'
+# 2440587.4999815 1969.999999949
+util/get_image_date '1969-12-31T23:59:58.4' 2>&1 | grep --quiet 'Julian year 1969.999999949'
+#| grep --quiet 'Julian year 1969.999999937'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV015"
@@ -23706,7 +23710,8 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV017"
 fi
-util/get_image_date '1969-12-31T23:59:57.6' 2>&1 | grep --quiet 'Julian year 1969.999999937'
+util/get_image_date '1969-12-31T23:59:57.6' 2>&1 | grep --quiet 'Julian year 1969.999999924'
+#| grep --quiet 'Julian year 1969.999999937'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV018"
@@ -23750,7 +23755,9 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV023a"
 fi
-util/get_image_date '2020-11-21T18:10:43.4516245' 2>&1 | grep --quiet 'JD 2459175.257442'
+# 2459175.2574474 - I'm comparing to https://ssd.jpl.nasa.gov/tools/jdc/#/cd
+util/get_image_date '2020-11-21T18:10:43.4516245' 2>&1 | grep --quiet 'JD 2459175.257447'
+#| grep --quiet 'JD 2459175.257442'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV023b"
@@ -23811,15 +23818,18 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
 done
 
 # Check funny input
-util/get_image_date 2023-05-17T23:22:38.894T00:00:24.955 | grep --quiet 'Exposure   0 sec, 17.05.2023 23:22:39   = JD  2460082.47406'
+# 2460082.4740613
+#util/get_image_date 2023-05-17T23:22:38.894T00:00:24.955 | grep --quiet 'Exposure   0 sec, 17.05.2023 23:22:39   = JD  2460082.47406'
+util/get_image_date 2023-05-17T23:22:38.894T00:00:24.955 | grep --quiet 'Exposure   0 sec, 17.05.2023 23:22:38.894   = JD  2460082.47406'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV027"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV028"
 fi
-util/get_image_date 2023-05-17T23:22:38.894T99:00:24.955 | grep --quiet 'Exposure   0 sec, 17.05.2023 23:22:39   = JD  2460082.47406'
+#util/get_image_date 2023-05-17T23:22:38.894T99:00:24.955 | grep --quiet 'Exposure   0 sec, 17.05.2023 23:22:39   = JD  2460082.47406'
+util/get_image_date 2023-05-17T23:22:38.894T99:00:24.955 | grep --quiet 'Exposure   0 sec, 17.05.2023 23:22:38.894   = JD  2460082.47406'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV027"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV029"
 fi
 
 ######### UTC-TT conversion tests
