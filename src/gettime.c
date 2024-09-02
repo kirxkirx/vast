@@ -106,7 +106,75 @@ void write_DATEOBS_and_EXPTIME_to_FITS_header( char *fitsfilename, char *formed_
  return;
 }
 
-void form_DATEOBS_and_EXPTIME_from_UNIXSEC( time_t middle_of_exposure_unixsec, double exposure_sec, char *formed_str_DATEOBS, char *formed_str_EXPTIME ) {
+void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, char *formed_str_DATEOBS, char *formed_str_EXPTIME, char *log_output ) {
+ double double_fractional_seconds_only;
+ 
+ double exposure_start_time_JD;
+
+ time_t exposure_start_time_unixsec;
+ struct tm *struct_tm_pointer;
+
+ int year, month, day, hour, minute;
+ double second;
+
+ char output_str_DATEOBS[FLEN_CARD];
+ char output_str_EXPTIME[FLEN_CARD];
+
+ exposure_start_time_JD= JD - exposure_sec / ( 2.0 * 86400.0 );
+
+ exposure_start_time_unixsec= (time_t)( ( exposure_start_time_JD - 2440587.5 ) * 86400.0 );
+ double_fractional_seconds_only= ( exposure_start_time_JD - 2440587.5 ) * 86400.0 - (double)exposure_start_time_unixsec;
+ 
+ fprintf(stderr,"DEBUUUGGGG:  double_fractional_seconds_only= %.3lf\n", double_fractional_seconds_only);
+
+ //exposure_start_time_unixsec= middle_of_exposure_unixsec - (time_t)( exposure_sec / 2.0 + 0.5 );
+ 
+#if defined( _POSIX_C_SOURCE ) || defined( _BSD_SOURCE ) || defined( _SVID_SOURCE )
+ struct_tm_pointer= malloc( sizeof( struct tm ) );
+ gmtime_r( &exposure_start_time_unixsec, struct_tm_pointer );
+#else
+ struct_tm_pointer= gmtime( &exposure_start_time_unixsec );
+#endif
+
+ year= struct_tm_pointer->tm_year + 1900;
+ month= struct_tm_pointer->tm_mon + 1;
+ day= struct_tm_pointer->tm_mday;
+ hour= struct_tm_pointer->tm_hour;
+ minute= struct_tm_pointer->tm_min;
+ second= (double)( struct_tm_pointer->tm_sec ) + double_fractional_seconds_only;
+
+#if defined( _POSIX_C_SOURCE ) || defined( _BSD_SOURCE ) || defined( _SVID_SOURCE )
+ free( struct_tm_pointer );
+#endif
+
+ // Note that we are not printing out fractions of the second! (but we should)
+ if ( NULL != output_str_DATEOBS ) {
+  sprintf( output_str_DATEOBS, "%04d-%02d-%02dT%02d:%02d:%02.0lf", year, month, day, hour, minute, second );
+ }
+ if ( NULL != output_str_EXPTIME ) {
+  sprintf( output_str_EXPTIME, "%.0lf", exposure_sec );
+ }
+
+ fprintf( stderr, "\nObserving time converted to the \"standard\" FITS header format:\nDATE-OBS= %s\nEXPTIME = %s\n\n", output_str_DATEOBS, output_str_EXPTIME );
+
+ if ( NULL != output_str_DATEOBS ) {
+  strncpy( formed_str_DATEOBS, output_str_DATEOBS, FLEN_CARD - 1 );
+ }
+ if ( NULL != output_str_EXPTIME ) {
+  strncpy( formed_str_EXPTIME, output_str_EXPTIME, FLEN_CARD - 1 );
+ }
+ if ( NULL != log_output ) {
+  sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02.0lf  exp= %4.0lf  ", day, month, year, hour, minute, second, exposure_sec );
+ }
+ ///////////////
+
+ return;
+
+ 
+}
+
+
+void old_form_DATEOBS_and_EXPTIME_from_UNIXSEC( time_t middle_of_exposure_unixsec, double double_fractional_seconds_only, double exposure_sec, char *formed_str_DATEOBS, char *formed_str_EXPTIME ) {
  time_t exposure_start_time_unixsec;
  struct tm *struct_tm_pointer;
 
@@ -117,7 +185,7 @@ void form_DATEOBS_and_EXPTIME_from_UNIXSEC( time_t middle_of_exposure_unixsec, d
  char output_str_EXPTIME[FLEN_CARD];
 
  exposure_start_time_unixsec= middle_of_exposure_unixsec - (time_t)( exposure_sec / 2.0 + 0.5 );
-
+ 
 #if defined( _POSIX_C_SOURCE ) || defined( _BSD_SOURCE ) || defined( _SVID_SOURCE )
  struct_tm_pointer= malloc( sizeof( struct tm ) );
  gmtime_r( &exposure_start_time_unixsec, struct_tm_pointer );
@@ -1852,9 +1920,12 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   }
 
   if ( NULL != log_output ) {
+   // If we use the JD->logstring converison function here, the start date might be TT (if it was converted)
+   // What we actually want is to keep this date UTC (or whatever timesystem of the original FITS header was).
    sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, structureTIME.tm_sec, exposure );
   }
 
+  // Produce finder_chart_timestring_output
   if ( NULL != finder_chart_timestring_output ) {
    // make sure a lonely coma is not hanging in the middle of the string if tymesys_str_in is a white space
    coma_or_whitespace_character_after_timesys= ',';
@@ -1944,8 +2015,9 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    fprintf( stderr, "entering  if ( NULL != stderr_output )\n" );
 #endif
    fprintf( stderr, "JD (mid. exp.) %.5lf\n", ( *JD ) );
-   unix_time= (time_t)( ( ( *JD ) - 2440587.5 ) * 3600.0 * 24.0 + 0.5 );
-   form_DATEOBS_and_EXPTIME_from_UNIXSEC( unix_time, 0.0, formed_str_DATEOBS, formed_str_EXPTIME );
+   //unix_time= (time_t)( ( ( *JD ) - 2440587.5 ) * 3600.0 * 24.0 + 0.5 );
+   //form_DATEOBS_and_EXPTIME_from_UNIXSEC( unix_time, 0.0, formed_str_DATEOBS, formed_str_EXPTIME );
+   form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), 0.0, formed_str_DATEOBS, formed_str_EXPTIME, log_output );
    for ( counter_i= 0; counter_i < strlen( formed_str_DATEOBS ); counter_i++ ) {
     if ( formed_str_DATEOBS[counter_i] == 'T' ) {
      formed_str_DATEOBS[counter_i]= ' ';
@@ -1963,9 +2035,10 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 #endif
    // So why don't we form calendar date of exposure start
    if ( 0 != ( *JD ) ) {
-    time_t unix_time_exposure_start_for_logs= unix_time - (time_t)( exposure / 2.0 );
-    struct tm *structureTIME_for_logs= gmtime( &unix_time_exposure_start_for_logs );
-    sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", structureTIME_for_logs->tm_mday, structureTIME_for_logs->tm_mon + 1, structureTIME_for_logs->tm_year - 100 + 2000, structureTIME_for_logs->tm_hour, structureTIME_for_logs->tm_min, structureTIME_for_logs->tm_sec, exposure );
+    //time_t unix_time_exposure_start_for_logs= unix_time - (time_t)( exposure / 2.0 );
+    //struct tm *structureTIME_for_logs= gmtime( &unix_time_exposure_start_for_logs );
+    //sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", structureTIME_for_logs->tm_mday, structureTIME_for_logs->tm_mon + 1, structureTIME_for_logs->tm_year - 100 + 2000, structureTIME_for_logs->tm_hour, structureTIME_for_logs->tm_min, structureTIME_for_logs->tm_sec, exposure );
+    form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), exposure, NULL, NULL, log_output );
    } else {
     // somehting is messed up here - fallback to zeroes in the log file
     sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", 0, 0, 0, 0, 0, 0, exposure );
@@ -1991,12 +2064,13 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 #endif
    // Compute unix_time so we can convert the JD back to the broken-down time
    //(*JD) = (double)unix_time/3600.0/24.0+2440587.5+apply_JD_correction_in_days;
-   unix_time= (time_t)( ( ( *JD ) - 2440587.5 ) * 3600.0 * 24.0 + 0.5 );
+   //unix_time= (time_t)( ( ( *JD ) - 2440587.5 ) * 3600.0 * 24.0 + 0.5 );
    exposure= fabs( exposure );
-   form_DATEOBS_and_EXPTIME_from_UNIXSEC( unix_time, exposure, formed_str_DATEOBS, formed_str_EXPTIME );
-#ifdef DEBUGMESSAGES
-   fprintf( stderr, "\n\n\n\nunix_time=%ld\nexposure=%lf\nformed_str_DATEOBS=%s\nformed_str_EXPTIME=%s\n\n\n", unix_time, exposure, formed_str_DATEOBS, formed_str_EXPTIME );
-#endif
+   //form_DATEOBS_and_EXPTIME_from_UNIXSEC( unix_time, exposure, formed_str_DATEOBS, formed_str_EXPTIME );
+   form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), 0.0, formed_str_DATEOBS, formed_str_EXPTIME, NULL );
+//#ifdef DEBUGMESSAGES
+//   fprintf( stderr, "\n\n\n\nunix_time=%ld\nexposure=%lf\nformed_str_DATEOBS=%s\nformed_str_EXPTIME=%s\n\n\n", unix_time, exposure, formed_str_DATEOBS, formed_str_EXPTIME );
+//#endif
    //
    if ( param_verbose == 2 ) {
 #ifdef DEBUGMESSAGES
