@@ -774,50 +774,49 @@ int check_if_this_fits_image_is_north_up_east_left( char *fitsfilename ) {
  return 0; // assume - no
 }
 
-void sanitize_positive_float_string(char* str) {
-    int len = strlen(str);
-    int write_index = 0;
-    int decimal_point_found = 0;  // Using int instead of bool
-    
-    for (int read_index = 0; read_index < len; read_index++) {
-        if (str[read_index] >= '0' && str[read_index] <= '9') {
-            // Keep digits
-            str[write_index++] = str[read_index];
-        } else if (str[read_index] == '.' && !decimal_point_found) {
-            // Keep the first decimal point encountered
-            str[write_index++] = str[read_index];
-            decimal_point_found = 1;  // Set flag to 1 instead of true
-        }
-        // Ignore all other characters
-    }
-    
-    // Null-terminate the sanitized string
-    str[write_index] = '\0';
+void sanitize_positive_float_string( char *str ) {
+ int len= strlen( str );
+ int write_index= 0;
+ int decimal_point_found= 0; // Using int instead of bool
+
+ for ( int read_index= 0; read_index < len; read_index++ ) {
+  if ( str[read_index] >= '0' && str[read_index] <= '9' ) {
+   // Keep digits
+   str[write_index++]= str[read_index];
+  } else if ( str[read_index] == '.' && !decimal_point_found ) {
+   // Keep the first decimal point encountered
+   str[write_index++]= str[read_index];
+   decimal_point_found= 1; // Set flag to 1 instead of true
+  }
+  // Ignore all other characters
+ }
+
+ // Null-terminate the sanitized string
+ str[write_index]= '\0';
 }
 
+void parse_seconds_and_fraction( const char *Tm_s, char *Tm_s_full_seconds_only, char *Tm_s_fractional_seconds_only ) {
+ char *decimal_point= strchr( Tm_s, '.' );
 
-void parse_seconds_and_fraction(const char* Tm_s, char* Tm_s_full_seconds_only, char* Tm_s_fractional_seconds_only) {
-    char* decimal_point = strchr(Tm_s, '.');
-    
-    if (decimal_point == NULL) {
-        // No decimal point found, treat as integer
-        strcpy(Tm_s_full_seconds_only, Tm_s);
-        strcpy(Tm_s_fractional_seconds_only, "0.0");
-    } else {
-        // Copy full seconds
-        size_t full_seconds_length = decimal_point - Tm_s;
-        strncpy(Tm_s_full_seconds_only, Tm_s, full_seconds_length);
-        Tm_s_full_seconds_only[full_seconds_length] = '\0';
-        
-        // Copy fractional seconds
-        strcpy(Tm_s_fractional_seconds_only, "0");
-        strcat(Tm_s_fractional_seconds_only, decimal_point);
-        
-        // If there's nothing after the decimal point, add a "0"
-        if (strlen(Tm_s_fractional_seconds_only) == 2) {
-            strcat(Tm_s_fractional_seconds_only, "0");
-        }
-    }
+ if ( decimal_point == NULL ) {
+  // No decimal point found, treat as integer
+  strcpy( Tm_s_full_seconds_only, Tm_s );
+  strcpy( Tm_s_fractional_seconds_only, "0.0" );
+ } else {
+  // Copy full seconds
+  size_t full_seconds_length= decimal_point - Tm_s;
+  strncpy( Tm_s_full_seconds_only, Tm_s, full_seconds_length );
+  Tm_s_full_seconds_only[full_seconds_length]= '\0';
+
+  // Copy fractional seconds
+  strcpy( Tm_s_fractional_seconds_only, "0" );
+  strcat( Tm_s_fractional_seconds_only, decimal_point );
+
+  // If there's nothing after the decimal point, add a "0"
+  if ( strlen( Tm_s_fractional_seconds_only ) == 2 ) {
+   strcat( Tm_s_fractional_seconds_only, "0" );
+  }
+ }
 }
 
 int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_to_TT, double *dimX, double *dimY, char *stderr_output, char *log_output, int param_nojdkeyword, int param_verbose, char *finder_chart_timestring_output ) {
@@ -832,11 +831,11 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  int jj;
  time_t unix_time;
  struct tm structureTIME;
- char Tm_s_full_seconds_only[FLEN_CARD]; // For sub-second timing - this string will store full number of seconds
+ char Tm_s_full_seconds_only[FLEN_CARD];       // For sub-second timing - this string will store full number of seconds
  char Tm_s_fractional_seconds_only[FLEN_CARD]; // For sub-second timing - this string will store fractions of a second
- double double_fractional_seconds_only= 0.0; // Tm_s_fractional_seconds_only converted to double
- char Tm_h[10], Tm_m[10], Tm_s[FLEN_CARD]; // We want a lot of memeory for Tm_s for cases like '2020-11-21T18:10:43.4516245'
- char Da_y[10], Da_m[10], Da_d[FLEN_CARD]; // We want more memeory for Da_d for cases like '2020-11-21.1234567
+ double double_fractional_seconds_only= 0.0;   // Tm_s_fractional_seconds_only converted to double
+ char Tm_h[10], Tm_m[10], Tm_s[FLEN_CARD];     // We want a lot of memeory for Tm_s for cases like '2020-11-21T18:10:43.4516245'
+ char Da_y[10], Da_m[10], Da_d[FLEN_CARD];     // We want more memeory for Da_d for cases like '2020-11-21.1234567
 
  char DATEOBS[FLEN_CARD], TIMEOBS[FLEN_CARD], TIMESYS[FLEN_CARD];
  char DATEOBS_COMMENT[2048];  // make it long, just in case
@@ -1735,7 +1734,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    }
    Tm_s[6]= '\0';
    //
-   sanitize_positive_float_string(Tm_s);
+   sanitize_positive_float_string( Tm_s );
    //
   } else {
    // no seconds
@@ -1755,12 +1754,12 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    return 1;
   }
   //
-  parse_seconds_and_fraction(Tm_s, Tm_s_full_seconds_only, Tm_s_fractional_seconds_only);
+  parse_seconds_and_fraction( Tm_s, Tm_s_full_seconds_only, Tm_s_fractional_seconds_only );
   double_fractional_seconds_only= atof( Tm_s_fractional_seconds_only );
-  //fprintf(stderr, "Tm_s=#%s# Tm_s_full_seconds_only=#%s# Tm_s_fractional_seconds_only=#%s# double_fractional_seconds_only=%lf\n",Tm_s,Tm_s_full_seconds_only,Tm_s_fractional_seconds_only,double_fractional_seconds_only);
-  // someday I'll need to get rid of this gross simplification
-  //structureTIME.tm_sec= (int)( atof( Tm_s ) + 0.5 );
-  // what better place than here, what better time than now?
+  // fprintf(stderr, "Tm_s=#%s# Tm_s_full_seconds_only=#%s# Tm_s_fractional_seconds_only=#%s# double_fractional_seconds_only=%lf\n",Tm_s,Tm_s_full_seconds_only,Tm_s_fractional_seconds_only,double_fractional_seconds_only);
+  //  someday I'll need to get rid of this gross simplification
+  // structureTIME.tm_sec= (int)( atof( Tm_s ) + 0.5 );
+  //  what better place than here, what better time than now?
   structureTIME.tm_sec= atoi( Tm_s_full_seconds_only );
   if ( structureTIME.tm_sec < 0 || structureTIME.tm_sec > 60 ) {
    fprintf( stderr, "ERROR001 in gettime(): the derived time is seconds is out of the expected [0:60] range\n" );
@@ -1811,9 +1810,9 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    }
   }
   ///////////////////////////////////
-  /* 
+  /*
   // Need to rewrite this for sub-second accuracy in reference time and exposure
-  
+
   // Oh, this is a funny one: cf. date -d '1969-12-31T23:59:59' +%s  and  date -d '1970-01-01T00:00:00' +%s
   if ( (double)unix_time + exposure / 2.0 < 0.0 ) {
    unix_time= (time_t)( (double)unix_time + exposure / 2.0 - 0.5 );
@@ -1823,9 +1822,9 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 
   ( *JD )= (double)unix_time / 3600.0 / 24.0 + 2440587.5 + apply_JD_correction_in_days; // note that the time correction is not reflected in the broken down time!
   */
-  
-  ( *JD )= exposure/(2.0 * 86400.0) + (double)unix_time/86400.0 + double_fractional_seconds_only/86400.0 + 2440587.5 + apply_JD_correction_in_days; // note that the time correction is not reflected in the broken down time!
-  
+
+  ( *JD )= exposure / ( 2.0 * 86400.0 ) + (double)unix_time / 86400.0 + double_fractional_seconds_only / 86400.0 + 2440587.5 + apply_JD_correction_in_days; // note that the time correction is not reflected in the broken down time!
+
   if ( overridingJD_from_input_image_list != 0.0 ) {
    // Override the computed JD!
    ( *JD )= overridingJD_from_input_image_list;
