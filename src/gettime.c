@@ -148,19 +148,16 @@ void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, ch
 #endif
 
  // Note that we are not printing out fractions of the second! (but we should)
- if ( NULL != output_str_DATEOBS ) {
-  sprintf( output_str_DATEOBS, "%04d-%02d-%02dT%02d:%02d:%02.0lf", year, month, day, hour, minute, second );
- }
- if ( NULL != output_str_EXPTIME ) {
-  sprintf( output_str_EXPTIME, "%.0lf", exposure_sec );
- }
+ 
+ sprintf( output_str_DATEOBS, "%04d-%02d-%02dT%02d:%02d:%02.0lf", year, month, day, hour, minute, second );
+ sprintf( output_str_EXPTIME, "%.0lf", exposure_sec );
 
  fprintf( stderr, "\nObserving time converted to the \"standard\" FITS header format:\nDATE-OBS= %s\nEXPTIME = %s\n\n", output_str_DATEOBS, output_str_EXPTIME );
 
- if ( NULL != output_str_DATEOBS ) {
+ if ( NULL != formed_str_DATEOBS ) {
   strncpy( formed_str_DATEOBS, output_str_DATEOBS, FLEN_CARD - 1 );
  }
- if ( NULL != output_str_EXPTIME ) {
+ if ( NULL != formed_str_EXPTIME ) {
   strncpy( formed_str_EXPTIME, output_str_EXPTIME, FLEN_CARD - 1 );
  }
  if ( NULL != log_output ) {
@@ -593,6 +590,11 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
  char timestring[32];
 
  // fprintf(stderr,"\n0123456789\n%s \n", DATEOBS);
+ 
+ // check if the input is a NULL pointer (not sure why, but what if)
+ if ( NULL == DATEOBS ) {
+  return;
+ }
 
  // check if this is an empty string (and assume that the date will be provided as 'JD' keyword)
  if ( 0 == strlen( DATEOBS ) ) {
