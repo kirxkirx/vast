@@ -2017,6 +2017,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    fprintf( stderr, "JD (mid. exp.) %.5lf\n", ( *JD ) );
    //unix_time= (time_t)( ( ( *JD ) - 2440587.5 ) * 3600.0 * 24.0 + 0.5 );
    //form_DATEOBS_and_EXPTIME_from_UNIXSEC( unix_time, 0.0, formed_str_DATEOBS, formed_str_EXPTIME );
+   fprintf(stderr, "DEBUG01 form_DATEOBS_EXPTIME_log_output_from_JD()\n");
    form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), 0.0, formed_str_DATEOBS, formed_str_EXPTIME, log_output );
    for ( counter_i= 0; counter_i < strlen( formed_str_DATEOBS ); counter_i++ ) {
     if ( formed_str_DATEOBS[counter_i] == 'T' ) {
@@ -2038,6 +2039,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     //time_t unix_time_exposure_start_for_logs= unix_time - (time_t)( exposure / 2.0 );
     //struct tm *structureTIME_for_logs= gmtime( &unix_time_exposure_start_for_logs );
     //sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", structureTIME_for_logs->tm_mday, structureTIME_for_logs->tm_mon + 1, structureTIME_for_logs->tm_year - 100 + 2000, structureTIME_for_logs->tm_hour, structureTIME_for_logs->tm_min, structureTIME_for_logs->tm_sec, exposure );
+    fprintf(stderr, "DEBUG02 form_DATEOBS_EXPTIME_log_output_from_JD()\n");
     form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), exposure, NULL, NULL, log_output );
    } else {
     // somehting is messed up here - fallback to zeroes in the log file
@@ -2067,7 +2069,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    //unix_time= (time_t)( ( ( *JD ) - 2440587.5 ) * 3600.0 * 24.0 + 0.5 );
    exposure= fabs( exposure );
    //form_DATEOBS_and_EXPTIME_from_UNIXSEC( unix_time, exposure, formed_str_DATEOBS, formed_str_EXPTIME );
-   form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), 0.0, formed_str_DATEOBS, formed_str_EXPTIME, NULL );
+   fprintf(stderr, "DEBUG03 form_DATEOBS_EXPTIME_log_output_from_JD()\n");
+   form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), exposure, formed_str_DATEOBS, formed_str_EXPTIME, NULL );
 //#ifdef DEBUGMESSAGES
 //   fprintf( stderr, "\n\n\n\nunix_time=%ld\nexposure=%lf\nformed_str_DATEOBS=%s\nformed_str_EXPTIME=%s\n\n\n", unix_time, exposure, formed_str_DATEOBS, formed_str_EXPTIME );
 //#endif
