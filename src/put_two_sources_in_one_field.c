@@ -268,17 +268,17 @@ int main( int argc, char **argv ) {
 
  // Arguments 1 and 2 should be RA and Dec
  if ( 0 == is_ra_or_dec_string( argv[1] ) ) {
-  fprintf( stderr, "An ERROR occured in %s the first command line option does not look like an RA string.\n", argv[0], argv[1] );
+  fprintf( stderr, "An ERROR occured in %s the first command line option (%s) does not look like an RA string.\n", argv[0], argv[1] );
   return 1;
  }
  if ( 0 == is_ra_or_dec_string( argv[2] ) ) {
-  fprintf( stderr, "An ERROR occured in %s the second command line option does not look like a Dec string.\n", argv[0], argv[2] );
+  fprintf( stderr, "An ERROR occured in %s the second command line option (%s) does not look like a Dec string.\n", argv[0], argv[2] );
   return 1;
  }
  // Argument 3 may be RA string or a file name, we'll check that in a moment
  // Argument 4 is either Dec or search radius in arcsec
  if ( 0 == is_ra_or_dec_string( argv[4] ) ) {
-  fprintf( stderr, "An ERROR occured in %s the fourth command line option does not look like a Dec string or search radius in arcsec.\n", argv[0], argv[4] );
+  fprintf( stderr, "An ERROR occured in %s the fourth command line option (%s) does not look like a Dec string or search radius in arcsec.\n", argv[0], argv[4] );
   return 1;
  }
 
@@ -287,7 +287,7 @@ int main( int argc, char **argv ) {
  if ( NULL == filelist_input_positions ) {
   //
   if ( 0 == is_ra_or_dec_string( argv[3] ) ) {
-   fprintf( stderr, "An ERROR occured in %s the third command line option is not a valid file name and does not look like an RA string.\n", argv[0], argv[3] );
+   fprintf( stderr, "An ERROR occured in %s the third command line option (%s) is not a valid file name and does not look like an RA string.\n", argv[0], argv[3] );
    return 1;
   }
   //

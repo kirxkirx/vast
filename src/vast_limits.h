@@ -30,6 +30,8 @@
 #define OUTFILENAME_LENGTH 128 // Max. lightcurve (out*.dat) filename length
 #define VAST_PATH_MAX 4096     // Max path length to the vast executable
 
+#define MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER FILENAME_LENGTH + FILENAME_LENGTH + VAST_PATH_MAX + 37
+
 #define MAX_NUMBER_OF_FITS_KEYWORDS_TO_CAPTURE_IN_LC 10                              // Max number of keywords to capture with each lightcurve point
 #define FITS_KEYWORDS_IN_LC_LENGTH 81 * MAX_NUMBER_OF_FITS_KEYWORDS_TO_CAPTURE_IN_LC // Max length of FITS keywords string to be recorded with each lightcurve point
 // Warning! Max comment string length is hardcoded in src/lightcurve_io.h
