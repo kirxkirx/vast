@@ -1142,9 +1142,11 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  // Special case: we want to always use SHUTOPEN instead of DATE-OBS for ZTF images, even if DATE-OBS is present
  fits_read_key( fptr, TSTRING, "SHUTOPEN", DATEOBS, DATEOBS_COMMENT, &status );
  if ( status == 0 ) {
+  // This is what exactly ???
   if ( param_nojdkeyword == 1 ) {
    fprintf( stderr, "WARNING: cannot ignore both 'JD' and 'DATE-OBS' keywords! Will allow use of 'JD' keyword. \n" );
   }
+  // ???
   fprintf( stderr, "WARNING: ignoring 'DATE-OBS' keyword as 'SHUTOPEN' is present.\n" );
   param_nojdkeyword= 2;
  }
