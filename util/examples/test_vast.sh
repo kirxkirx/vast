@@ -23875,6 +23875,13 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_TT2UTC02"
 fi
 
+# check consistency of "manual" and "function" DATEOBS strings
+MANUAL_DATEOBS_STRING=$(util/get_image_date 2000-01-01 11:58:55.816 2>&1 | grep '(mid. exp)' | head -n1 | awk '{print $3"T"$4}')
+FUNCTION_DATEOBS_STRING=$(util/get_image_date 2000-01-01 11:58:55.816 2>&1 | grep '(mid. exp)' | head -n2 | tail -n1 | awk '{print $3}')
+if [ "$MANUAL_DATEOBS_STRING" != "$FUNCTION_DATEOBS_STRING" ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_funcstring01"
+fi
 
 #########
 

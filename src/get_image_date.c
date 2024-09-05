@@ -20,6 +20,7 @@
 
 void fix_DATEOBS_STRING( char *DATEOBS );                    // defined in gettime.c
 void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ); // defined in gettime.c
+void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, char *formed_str_DATEOBS, char *formed_str_EXPTIME, char *log_output ); // defined in gettime.c
 
 void remove_multiple_white_spaces_from_string( char *string ) {
  unsigned int i, j;
@@ -324,9 +325,16 @@ int main( int argc, char **argv ) {
  int argument_counter;
 
  double MJD, UnixTime, Julian_year;
+ 
+ double double_fractional_seconds_only;
 
- time_t UnixTime_time_t;
- struct tm *structureTIME;
+ time_t UnixTime_time_t__rounded;
+ struct tm *structureTIME__rounded;
+
+ time_t UnixTime_time_t__truncated;
+ struct tm *structureTIME__truncated;
+
+ char formed_str_DATEOBS[FLEN_CARD];
 
  char input_fits_image[FILENAME_LENGTH];
 
@@ -397,23 +405,38 @@ int main( int argc, char **argv ) {
  }
 
  // Convert the date to other formats
+
+ // We want to for DATEOBS string using this function rather than manually, so it can be tested
+ form_DATEOBS_EXPTIME_log_output_from_JD( JD, 0.0, formed_str_DATEOBS, NULL, NULL );
+ 
  MJD= JD - 2400000.5;
- UnixTime= ( JD - 2440587.5 ) * 86400.0;
+
  // https://en.wikipedia.org/wiki/Julian_year_(astronomy)
  Julian_year= 2000.0 + ( JD - 2451545.0 ) / 365.25;
+
+ UnixTime= ( JD - 2440587.5 ) * 86400.0;
+ 
+ double_fractional_seconds_only= UnixTime - (double)( (time_t)UnixTime );
+ UnixTime_time_t__truncated= (time_t)( UnixTime );
+ 
+ // round it up
  if ( UnixTime < 0.0 ) {
-  UnixTime_time_t= (time_t)( UnixTime - 0.5 );
+  UnixTime_time_t__rounded= (time_t)( UnixTime - 0.5 );
  } else {
   // UnixTime is double, so we add 0.5 for the proper type conversion
-  UnixTime_time_t= (time_t)( UnixTime + 0.5 );
+  UnixTime_time_t__rounded= (time_t)( UnixTime + 0.5 );
  }
+
  // Use thread-safe gmtime_r() instead of gmtime() if possible
- // will need to free( structureTIME ) below
+ // will need to free( structureTIME__rounded ) and free( structureTIME__truncated ) below
 #if defined( _POSIX_C_SOURCE ) || defined( _BSD_SOURCE ) || defined( _SVID_SOURCE )
- structureTIME= malloc( sizeof( struct tm ) );
- gmtime_r( &UnixTime_time_t, structureTIME );
+ structureTIME__rounded= malloc( sizeof( struct tm ) );
+ gmtime_r( &UnixTime_time_t__rounded, structureTIME__rounded );
+ structureTIME__truncated= malloc( sizeof( struct tm ) );
+ gmtime_r( &UnixTime_time_t__truncated, structureTIME__truncated );
 #else
- structureTIME= gmtime( &UnixTime_time_t );
+ structureTIME__rounded= gmtime( &UnixTime_time_t__rounded );
+ structureTIME__truncated= gmtime( &UnixTime_time_t__truncated );
 #endif
 
  // fprintf( stderr, "DEBUG28\n");
@@ -423,33 +446,35 @@ int main( int argc, char **argv ) {
  fprintf( stdout, "\n --== Observation date in various formats ==--\n" );
 // fprintf( stdout, "         JD %14.6lf\n", JD );
  fprintf( stdout, "         JD %16.8lf\n", JD );
+ fprintf( stdout, "        _JD %13.5lf        (rounded to 1 sec)\n", JD );
 // fprintf( stdout, "        MJD %14.6lf\n", MJD );
  fprintf( stdout, "        MJD %16.8lf\n", MJD );
- fprintf( stdout, "  Unix Time %.0lf\n", UnixTime );
- fprintf( stdout, "Julian year %14.9lf\n", Julian_year );
+ fprintf( stdout, "       _MJD %13.5lf        (rounded to 1 sec)\n", MJD );
+ fprintf( stdout, "  Unix Time %.0lf            (seconds)\n", UnixTime );
+// fprintf( stdout, "Julian year %14.9lf\n", Julian_year );
+ fprintf( stdout, "Julian year %16.11lf\n", Julian_year );
  // The problem is that the sub-second accuracy is lost in this output
- fprintf( stdout, " MPC format %04d %02d %8.5lf\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, (double)structureTIME->tm_mday + (double)structureTIME->tm_hour / 24.0 + (double)structureTIME->tm_min / ( 24.0 * 60 ) + (double)structureTIME->tm_sec / ( 24.0 * 60 * 60 ) );
- // fprintf( stdout, " MPC format %04d %02d %8.6lf\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, (double)structureTIME->tm_mday + (double)structureTIME->tm_hour / 24.0 + (double)structureTIME->tm_min / ( 24.0 * 60 ) + (double)structureTIME->tm_sec / ( 24.0 * 60 * 60 ) );
+ fprintf( stdout, " MPC format %04d %02d %8.5lf\n", structureTIME__rounded->tm_year - 100 + 2000, structureTIME__rounded->tm_mon + 1, (double)structureTIME__rounded->tm_mday + (double)structureTIME__rounded->tm_hour / 24.0 + (double)structureTIME__rounded->tm_min / ( 24.0 * 60 ) + (double)structureTIME__rounded->tm_sec / ( 24.0 * 60 * 60 ) );
+ // fprintf( stdout, " MPC format %04d %02d %8.6lf\n", structureTIME__rounded->tm_year - 100 + 2000, structureTIME__rounded->tm_mon + 1, (double)structureTIME__rounded->tm_mday + (double)structureTIME__rounded->tm_hour / 24.0 + (double)structureTIME__rounded->tm_min / ( 24.0 * 60 ) + (double)structureTIME__rounded->tm_sec / ( 24.0 * 60 * 60 ) );
  // The problem is that the sub-second accuracy is lost in this output
- fprintf( stdout, " ATel style %04d-%02d-%08.5lf\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, (double)structureTIME->tm_mday + (double)structureTIME->tm_hour / 24.0 + (double)structureTIME->tm_min / ( 24.0 * 60 ) + (double)structureTIME->tm_sec / ( 24.0 * 60 * 60 ) );
+ fprintf( stdout, " ATel style %04d-%02d-%08.5lf\n", structureTIME__rounded->tm_year - 100 + 2000, structureTIME__rounded->tm_mon + 1, (double)structureTIME__rounded->tm_mday + (double)structureTIME__rounded->tm_hour / 24.0 + (double)structureTIME__rounded->tm_min / ( 24.0 * 60 ) + (double)structureTIME__rounded->tm_sec / ( 24.0 * 60 * 60 ) );
+ fprintf( stdout, " (mid. exp) %04d-%02d-%02d %02d:%02d:%06.3lf\n", structureTIME__truncated->tm_year - 100 + 2000, structureTIME__truncated->tm_mon + 1, structureTIME__truncated->tm_mday, structureTIME__truncated->tm_hour, structureTIME__truncated->tm_min, (double)( structureTIME__truncated->tm_sec ) + double_fractional_seconds_only );
+ fprintf( stdout, " (mid. exp) %s\n", formed_str_DATEOBS );
  // The problem is that the sub-second accuracy is lost in this output
- fprintf( stdout, " (mid. exp) %04d-%02d-%02d %02d:%02d:%02d\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, structureTIME->tm_mday, structureTIME->tm_hour, structureTIME->tm_min, structureTIME->tm_sec );
+ fprintf( stdout, " (mid. exp) %04d-%02d-%02d %02d:%02d:%02d  (rounded to 1 sec)\n", structureTIME__rounded->tm_year - 100 + 2000, structureTIME__rounded->tm_mon + 1, structureTIME__rounded->tm_mday, structureTIME__rounded->tm_hour, structureTIME__rounded->tm_min, structureTIME__rounded->tm_sec );
  // The problem is that the sub-second accuracy is lost in this output
- fprintf( stdout, " (mid. exp) %04d-%02d-%02dT%02d:%02d:%02d\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, structureTIME->tm_mday, structureTIME->tm_hour, structureTIME->tm_min, structureTIME->tm_sec );
+ fprintf( stdout, " DD.MM.YYYY %02d.%02d.%04d %02d:%02d:%02d  (rounded to 1 sec)\n", structureTIME__rounded->tm_mday, structureTIME__rounded->tm_mon + 1, structureTIME__rounded->tm_year - 100 + 2000, structureTIME__rounded->tm_hour, structureTIME__rounded->tm_min, structureTIME__rounded->tm_sec );
  // The problem is that the sub-second accuracy is lost in this output
- fprintf( stdout, " DD.MM.YYYY %02d.%02d.%04d %02d:%02d:%02d\n", structureTIME->tm_mday, structureTIME->tm_mon + 1, structureTIME->tm_year - 100 + 2000, structureTIME->tm_hour, structureTIME->tm_min, structureTIME->tm_sec );
- // The problem is that the sub-second accuracy is lost in this output
- fprintf( stdout, " MM/DD/YYYY %02d/%02d/%04d %02d:%02d:%02d\n", structureTIME->tm_mon + 1, structureTIME->tm_mday, structureTIME->tm_year - 100 + 2000, structureTIME->tm_hour, structureTIME->tm_min, structureTIME->tm_sec );
+ fprintf( stdout, " MM/DD/YYYY %02d/%02d/%04d %02d:%02d:%02d  (rounded to 1 sec)\n", structureTIME__rounded->tm_mon + 1, structureTIME__rounded->tm_mday, structureTIME__rounded->tm_year - 100 + 2000, structureTIME__rounded->tm_hour, structureTIME__rounded->tm_min, structureTIME__rounded->tm_sec );
  //
- // fprintf( stderr, "DEBUG29\n");
- // fprintf( stderr, "DEBUG UnixTime_time_t=%ld UnixTime(double)=%lf\n",UnixTime_time_t,UnixTime);
 
  // Clean up
  free( log_output );
  free( stderr_output );
 
 #if defined( _POSIX_C_SOURCE ) || defined( _BSD_SOURCE ) || defined( _SVID_SOURCE )
- free( structureTIME );
+ free( structureTIME__rounded );
+ free( structureTIME__truncated );
 #endif
 
 // Check if the output was actually reasonable

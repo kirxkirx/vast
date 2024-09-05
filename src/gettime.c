@@ -126,7 +126,7 @@ void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, ch
  exposure_start_time_unixsec= (time_t)( ( exposure_start_time_JD - 2440587.5 ) * 86400.0 );
  double_fractional_seconds_only= ( exposure_start_time_JD - 2440587.5 ) * 86400.0 - (double)exposure_start_time_unixsec;
  
- fprintf(stderr,"DEBUUUGGGG:  double_fractional_seconds_only= %.3lf\n", double_fractional_seconds_only);
+ //fprintf(stderr,"DEBUUUGGGG:  double_fractional_seconds_only= %.3lf\n", double_fractional_seconds_only);
 
  //exposure_start_time_unixsec= middle_of_exposure_unixsec - (time_t)( exposure_sec / 2.0 + 0.5 );
  
@@ -985,13 +985,13 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
      // Assume this is the time correction in seconds we need to apply to this image
      apply_JD_correction_in_days= image_date_correction_from_input_list / 86400.0;
      if ( param_verbose >= 1 )
-      fprintf( stderr, "JD correction of %.6lf days (%.2lf seconds) will be applied!\n", apply_JD_correction_in_days, image_date_correction_from_input_list );
+      fprintf( stderr, "JD correction of %.8lf days (%.3lf seconds) will be applied!\n", apply_JD_correction_in_days, image_date_correction_from_input_list );
     } else {
      // Assume this is the full JD in days
      if ( fabs( image_date_correction_from_input_list ) < EXPECTED_MAX_JD ) {
       overridingJD_from_input_image_list= image_date_correction_from_input_list;
       if ( param_verbose >= 1 )
-       fprintf( stderr, "WARNING: overriding the time deterrmined from FITS header with JD%.5lf as specified in vast_list_of_input_images_with_time_corrections.txt !\n", overridingJD_from_input_image_list );
+       fprintf( stderr, "WARNING: overriding the time deterrmined from FITS header with JD%.8lf as specified in vast_list_of_input_images_with_time_corrections.txt !\n", overridingJD_from_input_image_list );
      }
     }
     break; // don't process the remaining images, we have the right one
@@ -1389,11 +1389,11 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   fprintf( stderr, "Trying to get observing start MJD from EXPSTART keyword...\n" );
   fits_read_key( fptr, TDOUBLE, "EXPSTART", &inJD, NULL, &status );
   if ( status != 202 ) {
-   fprintf( stderr, "Getting the observing time of the exposure start from EXPSTART keyword: %.5lf\n", inJD );
+   fprintf( stderr, "Getting the observing time of the exposure start from EXPSTART keyword: %.8lf\n", inJD );
    if ( EXPECTED_MIN_MJD < inJD && inJD < EXPECTED_MAX_MJD ) {
     fprintf( stderr, "Based on the numerical value, we think EXPSTART contains MJD\nUsing EXPSTART+EXPTIME/2 as the middle of exposure\n" );
     inJD= inJD + 2400000.5;
-    fprintf( stderr, "Got observation time parameters: JD_start= %.5lf  exptime= %.1lf sec\n", inJD, exposure );
+    fprintf( stderr, "Got observation time parameters: JD_start= %.8lf  exptime= %.3lf sec\n", inJD, exposure );
     inJD= inJD + exposure / 86400.0 / 2.0;
     ( *timesys )= 0; // UNKNOWN
     // date_parsed=1;
@@ -1405,13 +1405,13 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
      if ( status != 202 ) {
       if ( EXPECTED_MIN_JD < endJD && endJD < EXPECTED_MAX_JD ) {
        fprintf( stderr, "Setting the middle of exposure time based on EXPSTART and EXPEND keywords.\n" );
-       fprintf( stderr, "Got observation time parameters: JD_start= %.5lf  JD_end= %.5lf  exptime= %.1lf sec\n", inJD, endJD, exposure );
+       fprintf( stderr, "Got observation time parameters: JD_start= %.8lf  JD_end= %.8lf  exptime= %.3lf sec\n", inJD, endJD, exposure );
        inJD= ( inJD + endJD ) / 2.0;
        ( *timesys )= 1; // UT
        expstart_mjd_parsed= 1;
       } else {
-       fprintf( stderr, "JD derived from EXPEND keyword %.5lf is out of the expected range (%.5lf,%.5lf)!\n", endJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD );
-       fprintf( stderr, "Got observation time parameters: JD_start= %.5lf  exptime= %.1lf sec\n", inJD, exposure );
+       fprintf( stderr, "JD derived from EXPEND keyword %.8lf is out of the expected range (%.8lf,%.8lf)!\n", endJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD );
+       fprintf( stderr, "Got observation time parameters: JD_start= %.8lf  exptime= %.3lf sec\n", inJD, exposure );
        inJD= inJD + exposure / 86400.0 / 2.0;
        ( *timesys )= 0; // UNKNOWN
        expstart_mjd_parsed= 1;
@@ -1419,7 +1419,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
      } else {
       // no EXPEND keyword
       fprintf( stderr, "No EXPEND keyword\n" );
-      fprintf( stderr, "Got observation time parameters: JD_start= %.5lf  exptime= %.1lf sec\n", inJD, exposure );
+      fprintf( stderr, "Got observation time parameters: JD_start= %.8lf  exptime= %.3lf sec\n", inJD, exposure );
       inJD= inJD + exposure / 86400.0 / 2.0;
       ( *timesys )= 0; // UNKNOWN
       expstart_mjd_parsed= 1;
@@ -1438,14 +1438,14 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   fprintf( stderr, "Trying to see if this is a TICA TESS FFI by looking for TJD_ZERO keyword...\n" );
   fits_read_key( fptr, TDOUBLE, "TJD_ZERO", &tjd_zero, NULL, &status );
   if ( status != 202 ) {
-   fprintf( stderr, "Found TJD_ZERO keyword: %.5lf\nNow looking for MIDTJD keyword...\n", tjd_zero );
+   fprintf( stderr, "Found TJD_ZERO keyword: %.8lf\nNow looking for MIDTJD keyword...\n", tjd_zero );
    fits_read_key( fptr, TDOUBLE, "MIDTJD", &midtjd, NULL, &status );
    if ( status != 202 ) {
-    fprintf( stderr, "Found MIDTJD keyword: %.5lf\n", midtjd );
+    fprintf( stderr, "Found MIDTJD keyword: %.8lf\n", midtjd );
     inJD= tjd_zero + midtjd;
     if ( EXPECTED_MIN_JD < inJD && inJD < EXPECTED_MAX_JD ) {
      //
-     fprintf( stderr, "Getting the observing time (middle of exposure) from TJD_ZERO + MIDTJD: %.5lf\n", inJD );
+     fprintf( stderr, "Getting the observing time (middle of exposure) from TJD_ZERO + MIDTJD: %.8lf\n", inJD );
      ( *timesys )= 3; // TDB
      expstart_mjd_parsed= 1;
      //
@@ -1455,7 +1455,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
      }
      //
     } else {
-     fprintf( stderr, "WARNING: the value %.5lf infered from TJD_ZERO + MIDTJD is outside the expected JD range (%.0lf,%.0lf).\n\n", inJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD );
+     fprintf( stderr, "WARNING: the value %.8lf infered from TJD_ZERO + MIDTJD is outside the expected JD range (%.0lf,%.0lf).\n\n", inJD, EXPECTED_MIN_JD, EXPECTED_MAX_JD );
      inJD= 0.0;
     }
    } else {
@@ -1500,7 +1500,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 #ifdef DEBUGMESSAGES
     fprintf( stderr, "entering  if ( status == 0 )\n" );
 #endif
-    fprintf( stderr, "Getting JD of the middle of exposure from JDMID keyword: %.5lf\n", inJD );
+    fprintf( stderr, "Getting JD of the middle of exposure from JDMID keyword: %.8lf\n", inJD );
     ( *timesys )= 1; // UT
     // Check that JD is within the reasonable range
     if ( inJD < EXPECTED_MIN_JD || inJD > EXPECTED_MAX_JD ) {
@@ -1513,7 +1513,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     fprintf( stderr, "Trying to get observing date from MJD-OBS keyword...\n" );
     fits_read_key( fptr, TDOUBLE, "MJD-OBS", &inJD, NULL, &status );
     if ( status == 0 ) {
-     fprintf( stderr, "Getting MJD of the middle of exposure from MJD-OBS keyword: %.5lf\n", inJD );
+     fprintf( stderr, "Getting MJD of the middle of exposure from MJD-OBS keyword: %.8lf\n", inJD );
      // Check that MJD is within the reasonable range
      if ( inJD < EXPECTED_MIN_MJD || inJD > EXPECTED_MAX_MJD ) {
       fprintf( stderr, "ERROR: MJD %lf is out of expected range (%.1lf, %.1lf)!\nYou may change EXPECTED_MIN_MJD and EXPECTED_MAX_MJD in src/vast_limits.h and recompile VaST if you are _really sure_ you know what you are doing...\n", inJD, EXPECTED_MIN_MJD, EXPECTED_MAX_MJD );
@@ -1964,14 +1964,14 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     if ( 0 == double_fractional_seconds_only ) {
      sprintf( stderr_output, "Exposure %3.0lf sec, %02d.%02d.%4d %02d:%02d:%02d %s = JD%s %.5lf mid. exp.\n", exposure, structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, structureTIME.tm_sec, tymesys_str_in, tymesys_str_out, ( *JD ) );
     } else {
-     sprintf( stderr_output, "Exposure %3.0lf sec, %02d.%02d.%4d %02d:%02d:%06.3lf %s = JD%s %.5lf mid. exp.\n", exposure, structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, (double)structureTIME.tm_sec + double_fractional_seconds_only, tymesys_str_in, tymesys_str_out, ( *JD ) );
+     sprintf( stderr_output, "Exposure %3.0lf sec, %02d.%02d.%4d %02d:%02d:%06.3lf %s = JD%s %.8lf mid. exp.\n", exposure, structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, (double)structureTIME.tm_sec + double_fractional_seconds_only, tymesys_str_in, tymesys_str_out, ( *JD ) );
     }
    }
    if ( exposure == 0 ) {
     if ( 0 == double_fractional_seconds_only ) {
      sprintf( stderr_output, "Exposure %3.0lf sec, %02d.%02d.%4d %02d:%02d:%02d %s = JD%s %.5lf\n", exposure, structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, structureTIME.tm_sec, tymesys_str_in, tymesys_str_out, ( *JD ) );
     } else {
-     sprintf( stderr_output, "Exposure %3.0lf sec, %02d.%02d.%4d %02d:%02d:%06.3lf %s = JD%s %.5lf\n", exposure, structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, (double)structureTIME.tm_sec + double_fractional_seconds_only, tymesys_str_in, tymesys_str_out, ( *JD ) );
+     sprintf( stderr_output, "Exposure %3.0lf sec, %02d.%02d.%4d %02d:%02d:%06.3lf %s = JD%s %.8lf\n", exposure, structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, (double)structureTIME.tm_sec + double_fractional_seconds_only, tymesys_str_in, tymesys_str_out, ( *JD ) );
     }
    }
   }
@@ -2015,7 +2015,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 #ifdef DEBUGMESSAGES
    fprintf( stderr, "entering  if ( NULL != stderr_output )\n" );
 #endif
-   fprintf( stderr, "JD (mid. exp.) %.5lf\n", ( *JD ) );
+   //fprintf( stderr, "JD (mid. exp.) %.5lf\n", ( *JD ) );
+   fprintf( stderr, "JD (mid. exp.) %.8lf\n", ( *JD ) );
    //unix_time= (time_t)( ( ( *JD ) - 2440587.5 ) * 3600.0 * 24.0 + 0.5 );
    //form_DATEOBS_and_EXPTIME_from_UNIXSEC( unix_time, 0.0, formed_str_DATEOBS, formed_str_EXPTIME );
    fprintf(stderr, "DEBUG01 form_DATEOBS_EXPTIME_log_output_from_JD()\n");
@@ -2026,7 +2027,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
      break;
     }
    } // for( counter_i=0; counter_i<strlen(formed_str_DATEOBS); counter_i++ ){
-   sprintf( stderr_output, "JD (mid. exp.) %.5lf = %s %s\n", ( *JD ), formed_str_DATEOBS, tymesys_str_out );
+   //sprintf( stderr_output, "JD (mid. exp.) %.5lf = %s %s\n", ( *JD ), formed_str_DATEOBS, tymesys_str_out );
+   sprintf( stderr_output, "JD (mid. exp.) %.8lf = %s %s\n", ( *JD ), formed_str_DATEOBS, tymesys_str_out );
   }
 #ifdef DEBUGMESSAGES
   fprintf( stderr, "debug checkpoint a03\n" );
