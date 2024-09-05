@@ -23854,7 +23854,9 @@ fi
 # according to https://aa.usno.navy.mil/faq/TT
 # The epoch designated "J2000.0" is specified as Julian date 2451545.0 TT, or 2000 January 1, 12h TT.
 # This epoch can also be expressed as 2000 January 1, 11:59:27.816 TAI or 2000 January 1, 11:58:55.816 UTC.
-util/UTC2TT $(util/get_image_date 2000-01-01 11:58:55.816 | grep ' JD 2' | awk '{print $2}') 2>&1 | grep --quiet 'JD(TT)= 2451545.00000'
+#util/UTC2TT $(util/get_image_date 2000-01-01 11:58:55.816 | grep ' JD 2' | awk '{print $2}') 2>&1 | grep --quiet 'JD(TT)= 2451545.00000'
+# more zeroes because we can
+util/UTC2TT $(util/get_image_date 2000-01-01 11:58:55.816 | grep ' JD 2' | awk '{print $2}') 2>&1 | grep --quiet 'JD(TT)= 2451545.00000000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_UTC2TT01"
@@ -23867,7 +23869,7 @@ fi
 # Actually that is suposed to be 2000 January 1, 11:58:55.816 UTC, but we don't have better than one second accuracy
 # No, actually now we do have sub-second accuracy, so this should work
 #util/get_image_date $(util/TT2UTC 2451545.00000 2>&1 | grep 'JD(UTC)=' | awk '{print $2}') 2>&1 | grep '2000-01-01 11:58:56 (UT)'
-util/get_image_date $(util/TT2UTC 2451545.00000 2>&1 | grep 'JD(UTC)=' | awk '{print $2}') 2>&1 | grep '2000-01-01 11:58:55.816 (UT)'
+util/get_image_date $(util/TT2UTC 2451545.00000 2>&1 | grep 'JD(UTC)=' | awk '{print $2}') 2>&1 | grep --quiet '2000-01-01 11:58:55.816 (UT)'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_TT2UTC02"

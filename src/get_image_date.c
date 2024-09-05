@@ -421,8 +421,10 @@ int main( int argc, char **argv ) {
  // Print output
  fprintf( stdout, "%s\n", stderr_output );
  fprintf( stdout, "\n --== Observation date in various formats ==--\n" );
- fprintf( stdout, "         JD %14.6lf\n", JD );
- fprintf( stdout, "        MJD %14.6lf\n", MJD );
+// fprintf( stdout, "         JD %14.6lf\n", JD );
+ fprintf( stdout, "         JD %16.8lf\n", JD );
+// fprintf( stdout, "        MJD %14.6lf\n", MJD );
+ fprintf( stdout, "        MJD %16.8lf\n", MJD );
  fprintf( stdout, "  Unix Time %.0lf\n", UnixTime );
  fprintf( stdout, "Julian year %14.9lf\n", Julian_year );
  // The problem is that the sub-second accuracy is lost in this output
