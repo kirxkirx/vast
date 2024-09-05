@@ -252,7 +252,8 @@ int fake_image_hack( char *input_string ) {
 
  if ( input_calendar_date_or_jd == 1 ) {
   // Writing this into JD keyword
-  sprintf( newcard, "JD = %.5lf / JD (UTC)", jd_from_string );
+  //sprintf( newcard, "JD = %.5lf / JD (UTC)", jd_from_string );
+  sprintf( newcard, "JD = %.8lf / JD (UTC)", jd_from_string );
   // reformat the keyword string to conform to FITS rules
   fits_parse_template( newcard, card, &keytype, &status );
   // overwrite the keyword with the new value

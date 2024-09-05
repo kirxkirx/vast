@@ -960,16 +960,9 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 
  memset( telescop, 0, FLEN_CARD );
 
- // DATEOBS_KEY_NAME[0]='\0';
- // TIMEOBS_KEY_NAME[0]='\0';
  memset( DATEOBS_KEY_NAME, 0, 32 );
  memset( TIMEOBS_KEY_NAME, 0, 32 );
 
- // char DATEOBS[32], TIMEOBS[32], TIMESYS[32];
- // char DATEOBS_COMMENT[2048]; // make it long, just in case
- // memset( DATEOBS, 0, 32 );
- // memset( TIMEOBS, 0, 32 );
- // memset( TIMESYS, 0, 32 );
  memset( DATEOBS, 0, FLEN_CARD );
  memset( TIMEOBS, 0, FLEN_CARD );
  memset( TIMESYS, 0, FLEN_CARD );
@@ -1124,11 +1117,11 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    // Trying to simplify
    if ( strcasecmp(EXPOSURE_COMMENT, "seconds") != 0 ) {
     if ( strcasecmp(EXPOSURE_COMMENT, "minutes") == 0 ) {
-        exposure *= 60.0;
+        exposure = exposure * 60.0;
     } else if ( strcasecmp(EXPOSURE_COMMENT, "hours") == 0 ) {
-        exposure *= 3600.0;
+        exposure = exposure * 3600.0;
     } else if ( strstr(EXPOSURE_COMMENT, "[d] time on source") != NULL ) {
-        exposure *= 86400.0;
+        exposure = exposure * 86400.0;
     }
    } // if ( strcasecmp(EXPOSURE_COMMENT, "seconds") != 0 ) {
   } // if ( strlen( EXPOSURE_COMMENT ) > 8 ) {
@@ -1389,15 +1382,6 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   status= 0;
  } // if( strlen(DATEOBS)<11 && strlen(DATEOBS)>1 && date_parsed==1 ){
 
- // EXPOSURE STUFF WAS HERE
-
- /*
-        if( param_get_start_time_instead_of_midexp==1 ){
-         if(param_verbose==1)fprintf(stderr,"WARNING: setting exposure time to 0 as the exposure start time is requested instead of middle of exposure time!\n");
-         exposure=0.0;
-        }
-        */
-
  /////// Look for EXPSTART keyword containing MJD (a convention used for HST images in the HLA) ///////
  /////// The other possibility we test for here is EXPSTART/EXPEND keywords containing JD (a convention used by Siril) ///////
  status= 0;
@@ -1497,7 +1481,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 #ifdef DEBUGMESSAGES
    fprintf( stderr, "entering   if ( status == 0 )\n" );
 #endif
-   fprintf( stderr, "Getting JD of the middle of exposure from JD keyword: %.5lf\n", inJD );
+   //fprintf( stderr, "Getting JD of the middle of exposure from JD keyword: %.5lf\n", inJD );
+   fprintf( stderr, "Getting JD of the middle of exposure from JD keyword: %.8lf\n", inJD );
    ( *timesys )= 1; // UT -- the convention for digitized Moscow collection plates
    // Check that JD is within the reasonable range
    if ( inJD < EXPECTED_MIN_JD || inJD > EXPECTED_MAX_JD ) {

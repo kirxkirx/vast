@@ -132,15 +132,19 @@ int main(int argc, char **argv) {
   // If not, then user probably wants us to convert just a single date
   jd= atof(argv[1]);
   if( input_in_UTC_flag == 1 ) {
-   fprintf(stderr, "\nJD(UTC)= %.5lf\n", jd);
+   //fprintf(stderr, "\nJD(UTC)= %.5lf\n", jd);
+   fprintf(stderr, "\nJD(UTC)= %.8lf\n", jd);
    jdTT= convert_jdUT_to_jdTT(jd, &timesys);
    jd= jdTT;
-   fprintf(stderr, "JD(TT)= %.5lf\n", jd);
+   //fprintf(stderr, "JD(TT)= %.5lf\n", jd);
+   fprintf(stderr, "JD(TT)= %.8lf\n", jd);
   } else {
-   fprintf(stderr, "JD(TT)= %.5lf\n", jd);
+   //fprintf(stderr, "JD(TT)= %.5lf\n", jd);
+   fprintf(stderr, "JD(TT)= %.8lf\n", jd);
    jdUTC= convert_jdTT_to_jdUT(jd, &timesys);
    jd= jdUTC;  
-   fprintf(stderr, "JD(UTC)= %.5lf\n", jd);
+   //fprintf(stderr, "JD(UTC)= %.5lf\n", jd);
+   fprintf(stderr, "JD(UTC)= %.8lf\n", jd);
   }
   if( jd < EXPECTED_MIN_JD || jd > EXPECTED_MAX_JD ) {
    fprintf(stderr, "ERROR: JD out of expected range!\nPlease change the source code in src/hjd.c and recompile if you are sure you know what you are doing...\n");
