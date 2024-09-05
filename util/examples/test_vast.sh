@@ -23438,7 +23438,8 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
   break
  fi
 done
-util/get_image_date '2456909.72911' 2>&1 |grep --quiet '2014-09-09 05:29:55 (UT)'
+#util/get_image_date '2456909.72911' 2>&1 |grep --quiet '2014-09-09 05:29:55 (UT)'
+util/get_image_date '2456909.72911' 2>&1 |grep --quiet '2014-09-09 05:29:55.104 (UT)'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV003"
@@ -23465,7 +23466,8 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
   break
  fi
 done
-util/get_image_date '2458563.500000' 2>&1 |grep --quiet '2019-03-21 00:00:00 (UT)'
+#util/get_image_date '2458563.500000' 2>&1 |grep --quiet '2019-03-21 00:00:00 (UT)'
+util/get_image_date '2458563.500000' 2>&1 |grep --quiet '2019-03-21 00:00:00.000 (UT)'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV005"
@@ -23863,10 +23865,12 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_TT2UTC01"
 fi
 # Actually that is suposed to be 2000 January 1, 11:58:55.816 UTC, but we don't have better than one second accuracy
-util/get_image_date $(util/TT2UTC 2451545.00000 2>&1 | grep 'JD(UTC)=' | awk '{print $2}') 2>&1 | grep '2000-01-01 11:58:56 (UT)'
+# No, actually now we do have sub-second accuracy, so this should work
+#util/get_image_date $(util/TT2UTC 2451545.00000 2>&1 | grep 'JD(UTC)=' | awk '{print $2}') 2>&1 | grep '2000-01-01 11:58:56 (UT)'
+util/get_image_date $(util/TT2UTC 2451545.00000 2>&1 | grep 'JD(UTC)=' | awk '{print $2}') 2>&1 | grep '2000-01-01 11:58:55.816 (UT)'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_TT2UTC01"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_TT2UTC02"
 fi
 
 
