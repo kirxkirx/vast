@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
+#include <strings.h>  // for strcasecmp()
 #include <stdlib.h>
 #include <math.h>
 
@@ -147,10 +148,9 @@ void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, ch
  free( struct_tm_pointer );
 #endif
 
- // Note that we are not printing out fractions of the second! (but we should)
- 
- sprintf( output_str_DATEOBS, "%04d-%02d-%02dT%02d:%02d:%02.0lf", year, month, day, hour, minute, second );
- sprintf( output_str_EXPTIME, "%.0lf", exposure_sec );
+ // Note that we are now printing out fractions of the second
+ sprintf( output_str_DATEOBS, "%04d-%02d-%02dT%02d:%02d:%06.3lf", year, month, day, hour, minute, second );
+ sprintf( output_str_EXPTIME, "%.3lf", exposure_sec );
 
  fprintf( stderr, "\nObserving time converted to the \"standard\" FITS header format:\nDATE-OBS= %s\nEXPTIME = %s\n\n", output_str_DATEOBS, output_str_EXPTIME );
 
@@ -1100,6 +1100,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   //
   EXPOSURE_COMMENT[2048 - 1]= '\0'; // just in case
   if ( strlen( EXPOSURE_COMMENT ) > 8 ) {
+   /*
    if ( NULL == strstr( EXPOSURE_COMMENT, "Seconds" ) && NULL == strstr( EXPOSURE_COMMENT, "seconds" ) ) {
     // here we should use case rather than multiple ifs?
     if ( NULL != strstr( EXPOSURE_COMMENT, "Minutes" ) ) {
@@ -1119,13 +1120,24 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
      exposure= 86400.0 * exposure;
     }
    }
-  }
+   */
+   // Trying to simplify
+   if ( strcasecmp(EXPOSURE_COMMENT, "seconds") != 0 ) {
+    if ( strcasecmp(EXPOSURE_COMMENT, "minutes") == 0 ) {
+        exposure *= 60.0;
+    } else if ( strcasecmp(EXPOSURE_COMMENT, "hours") == 0 ) {
+        exposure *= 3600.0;
+    } else if ( strstr(EXPOSURE_COMMENT, "[d] time on source") != NULL ) {
+        exposure *= 86400.0;
+    }
+   } // if ( strcasecmp(EXPOSURE_COMMENT, "seconds") != 0 ) {
+  } // if ( strlen( EXPOSURE_COMMENT ) > 8 ) {
   //
   // Search for the deadtime correction keyword like in TESS
   fits_read_key( fptr, TDOUBLE, "DEADC", &TESS_style_deadtime_correction, NULL, &status );
   if ( status == 0 ) {
    if ( param_verbose >= 1 ) {
-    fprintf( stderr, "WARNING: applying dead time correction %lf from 'DEADC'\n", TESS_style_deadtime_correction );
+    fprintf( stderr, "WARNING: applying dead time correction %lf from 'DEADC' to exposure %.3lf\n", TESS_style_deadtime_correction, exposure );
    }
    exposure= exposure / TESS_style_deadtime_correction;
   }
