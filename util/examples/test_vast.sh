@@ -24198,7 +24198,38 @@ if [ $? -eq 0 ];then
    done
   done
   #
-  # TBA - test conversion the other way: date string to JD
+  # Test conversion the other way: date string to JD
+  #
+  # fixed date test
+  TEST_DATE="2010-01-04T00:00:00.000"
+  ASTROPY_JD=$(util/date2jd.py "$TEST_DATE")
+  VAST_JD=$(util/get_image_date "$TEST_DATE" 2>&1 | grep ' (mid. exp) ' | head -n1 | awk '{print $3" "$4}')
+  if [ "$ASTROPY_JD" != "$VAST_JD" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH2_${TEST_DATE}_${ASTROPY_JD// /T}_${VAST_JD// /T}"
+  fi
+  #
+  for ITERATION in $(seq 1 10) ;do
+   # Generate random values for each component
+   YEAR=$((RANDOM % 60 + 1970))  # Random year between 1970 and 2029
+   MONTH=$(printf "%02d" $((RANDOM % 12 + 1)))  # Random month between 1 and 12, zero-padded
+   DAY=$(printf "%02d" $((RANDOM % 28 + 1)))  # Random day between 1 and 28, zero-padded
+   HOUR=$(printf "%02d" $((RANDOM % 24)))  # Random hour between 0 and 23, zero-padded
+   MINUTE=$(printf "%02d" $((RANDOM % 60)))  # Random minute between 0 and 59, zero-padded
+   SECOND=$(printf "%02d" $((RANDOM % 60)))  # Random second between 0 and 59, zero-padded
+   MILLISECOND=$(printf "%03d" $((RANDOM % 1000)))  # Random millisecond between 0 and 999, zero-padded
+  
+   # Combine into the desired format
+   TEST_DATE="${YEAR}-${MONTH}-${DAY}T${HOUR}:${MINUTE}:${SECOND}.${MILLISECOND}"
+
+   #echo "TEST_DATE=\"$TEST_DATE\""
+   ASTROPY_JD=$(util/date2jd.py "$TEST_DATE")
+   VAST_JD=$(util/get_image_date "$TEST_DATE" 2>&1 | grep ' (mid. exp) ' | head -n1 | awk '{print $3" "$4}')
+   if [ "$ASTROPY_JD" != "$VAST_JD" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH2_${TEST_DATE}_${ASTROPY_JD// /T}_${VAST_JD// /T}"
+   fi
+  done
   #
  else
   FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_DATE2JDCONV_ASTROPY_noastropy"
