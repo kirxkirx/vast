@@ -18236,7 +18236,8 @@ if [ -f ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits ];th
   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ_FIT_ROBUST_LINEAR_COEFFB"
  fi
  #util/get_image_date ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits | grep --quiet "Exposure 300 sec, 01.04.2021 18:06:22 UT = JD(UT) 2459306.25616 mid. exp."
- util/get_image_date ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits | grep --quiet "Exposure 300 sec, 01.04.2021 18:06:21.738 UT = JD(UT) 2459306.25615 mid. exp."
+ #util/get_image_date ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits | grep --quiet "Exposure 300 sec, 01.04.2021 18:06:21.738 UT = JD(UT) 2459306.25615 mid. exp."
+ util/get_image_date ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits | grep --quiet "Exposure 300 sec, 01.04.2021 18:06:21.738 UT = JD(UT) 2459306.25615438 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ003"
@@ -18328,7 +18329,8 @@ if [ -f ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits ];the
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2_FIT_ROBUST_LINEAR_COEFFB"
  fi
- util/get_image_date ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits | grep --quiet "Exposure  60 sec, 31.03.2021 18:22:58 UT = JD(UT) 2459305.26630 mid. exp."
+ #util/get_image_date ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits | grep --quiet "Exposure  60 sec, 31.03.2021 18:22:58 UT = JD(UT) 2459305.26630 mid. exp."
+ util/get_image_date ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits | grep --quiet "Exposure 60 sec, 31.03.2021 18:22:58.281 UT = JD(UT) 2459305.26629955 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2003"
@@ -18448,7 +18450,8 @@ if [ -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWARCHIVEIMG002a_$TEST"
   fi
  fi 
- util/get_image_date ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts | grep --quiet "Exposure  40 sec, 30.10.2011 23:02:28 UT = JD(UT) 2455865.46028 mid. exp."
+ #util/get_image_date ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts | grep --quiet "Exposure  40 sec, 30.10.2011 23:02:28 UT = JD(UT) 2455865.46028 mid. exp."
+ util/get_image_date ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts | grep --quiet "Exposure 40 sec, 30.10.2011 23:02:28 UT = JD(UT) 2455865.46028 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWARCHIVEIMG003"
@@ -18517,7 +18520,8 @@ if [ -f ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLSKYMARK_FLAG_IMG_CREATED"
  fi
  #
- util/get_image_date ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit | grep 'Exposure   5 sec, 09.03.2015 13:46:48 UT = JD(UT) 2457091.07420 mid. exp.'
+ #util/get_image_date ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit | grep 'Exposure   5 sec, 09.03.2015 13:46:48 UT = JD(UT) 2457091.07420 mid. exp.'
+ util/get_image_date ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit | grep 'Exposure 5 sec, 09.03.2015 13:46:48 UT = JD(UT) 2457091.07420 mid. exp.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLSKYMARK003"
@@ -18592,7 +18596,8 @@ if [ -f ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Lum
  fi
  #
  #util/get_image_date ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit | grep 'Exposure   0 sec, 21.04.2023 18:28:30 UT = JD(UT) 2460056.26979 mid. exp.'
- util/get_image_date ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit | grep 'Exposure   0 sec, 21.04.2023 18:28:29.940 UT = JD(UT) 2460056.26979 mid. exp.'
+ #util/get_image_date ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit | grep 'Exposure   0 sec, 21.04.2023 18:28:29.940 UT = JD(UT) 2460056.26979 mid. exp.'
+ util/get_image_date ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit | grep 'Exposure 0 sec, 21.04.2023 18:28:29.940 UT = JD(UT) 2460056.26979387 mid. exp.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED003"
@@ -18822,7 +18827,8 @@ if [ -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.f
  echo -n "ZTF image header test: " >> vast_test_report.txt 
  #
  #util/get_image_date ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits | grep --quiet 'Exposure  30 sec, 27.03.2018 12:43:50   = JD  2458205.03061 mid. exp.'
- util/get_image_date ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits | grep --quiet 'Exposure  30 sec, 27.03.2018 12:43:50.209   = JD  2458205.03062 mid. exp.'
+ #util/get_image_date ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits | grep --quiet 'Exposure  30 sec, 27.03.2018 12:43:50.209   = JD  2458205.03062 mid. exp.'
+ util/get_image_date ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits | grep --quiet 'Exposure 30 sec, 27.03.2018 12:43:50.209 = JD 2458205.03061584 mid. exp.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER000"
@@ -18957,7 +18963,8 @@ if [ -f ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.f
  #
  #util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit | grep --quiet 'Exposure  30 sec, 09.12.2018 10:25:07   = JD  2458461.93428 mid. exp.'
  #util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit | grep --quiet 'Exposure  30 sec, 09.12.2018 10:25:10   = JD  2458461.93432 mid. exp.'
- util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit | grep --quiet 'Exposure  30 sec, 09.12.2018 10:25:09.789   = JD  2458461.93431 mid. exp.'
+ #util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit | grep --quiet 'Exposure  30 sec, 09.12.2018 10:25:09.789   = JD  2458461.93431 mid. exp.'
+ util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit | grep --quiet 'Exposure 30 sec, 09.12.2018 10:25:09.789 = JD 2458461.93431469 mid. exp.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2000"
@@ -19089,6 +19096,7 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit ];then
  echo "Stacked DSLR image (BITPIX=16) created with Siril test " 1>&2
  echo -n "Stacked DSLR image (BITPIX=16) created with Siril test: " >> vast_test_report.txt 
  #
+ #util/get_image_date ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit | grep --quiet 'Exposure 750 sec, 20.08.2020 07:45:37 UT = JD(UT) 2459081.82769 mid. exp.'
  util/get_image_date ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit | grep --quiet 'Exposure 750 sec, 20.08.2020 07:45:37 UT = JD(UT) 2459081.82769 mid. exp.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
@@ -19207,6 +19215,7 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit ];then
  echo "Stacked DSLR image (BITPIX=-32) created with Siril test " 1>&2
  echo -n "Stacked DSLR image (BITPIX=-32) created with Siril test: " >> vast_test_report.txt 
  #
+ #util/get_image_date ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit | grep --quiet 'Exposure 750 sec, 20.08.2020 07:45:37 UT = JD(UT) 2459081.82769 mid. exp.'
  util/get_image_date ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit | grep --quiet 'Exposure 750 sec, 20.08.2020 07:45:37 UT = JD(UT) 2459081.82769 mid. exp.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
@@ -19451,7 +19460,8 @@ if [ -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits ]
  #
  #util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:38   = JD  2458955.79836 mid. exp.'
  #util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:38 TDB = JD(TDB) 2458955.79836 mid. exp.'
- util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:37.885 TDB = JD(TDB) 2458955.79836 mid. exp.'
+ #util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:37.885 TDB = JD(TDB) 2458955.79836 mid. exp.'
+ util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:37.885 TDB = JD(TDB) 2458955.79835515 mid. exp.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS001"
@@ -23074,7 +23084,8 @@ $GREP_RESULT"
 #   fi
   fi
   # Time test
-  util/get_image_date ../test_exclude_ref_image/lm01306trr8a1338.fits 2>&1 | grep -A 10 'DATE-OBS= 1998-01-14T06:47:48' | grep -A 10 'EXPTIME = 0' | grep -A 10 'Exposure   0 sec, 14.01.1998 06:47:48   = JD  2450827.78319' | grep --quiet 'JD 2450827.783194'
+  #util/get_image_date ../test_exclude_ref_image/lm01306trr8a1338.fits 2>&1 | grep -A 10 'DATE-OBS= 1998-01-14T06:47:48' | grep -A 10 'EXPTIME = 0' | grep -A 10 'Exposure   0 sec, 14.01.1998 06:47:48   = JD  2450827.78319' | grep --quiet 'JD 2450827.783194'
+  util/get_image_date ../test_exclude_ref_image/lm01306trr8a1338.fits 2>&1 | grep -A 10 'DATE-OBS= 1998-01-14T06:47:48.480' | grep -A 10 'EXPTIME = 0' | grep -A 10 'Exposure 0 sec, 14.01.1998 06:47:48.480 = JD 2450827.78320000' | grep --quiet '  JD 2450827.78320000'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF_OBSERVING_TIME001"

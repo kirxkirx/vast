@@ -20,7 +20,7 @@
 
 void fix_DATEOBS_STRING( char *DATEOBS );                    // defined in gettime.c
 void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ); // defined in gettime.c
-void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, char *formed_str_DATEOBS, char *formed_str_EXPTIME, char *log_output ); // defined in gettime.c
+void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, char *formed_str_DATEOBS, char *formed_str_EXPTIME, char *log_output, int stderr_silent ); // defined in gettime.c
 
 void remove_multiple_white_spaces_from_string( char *string ) {
  unsigned int i, j;
@@ -407,7 +407,7 @@ int main( int argc, char **argv ) {
  // Convert the date to other formats
 
  // We want to for DATEOBS string using this function rather than manually, so it can be tested
- form_DATEOBS_EXPTIME_log_output_from_JD( JD, 0.0, formed_str_DATEOBS, NULL, NULL );
+ form_DATEOBS_EXPTIME_log_output_from_JD( JD, 0.0, formed_str_DATEOBS, NULL, NULL, 1 );
  
  MJD= JD - 2400000.5;
 

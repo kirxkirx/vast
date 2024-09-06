@@ -130,7 +130,7 @@ void write_DATEOBS_and_EXPTIME_to_FITS_header( char *fitsfilename, char *formed_
  return;
 }
 
-void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, char *formed_str_DATEOBS, char *formed_str_EXPTIME, char *log_output ) {
+void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, char *formed_str_DATEOBS, char *formed_str_EXPTIME, char *log_output, int stderr_silent ) {
  double double_fractional_seconds_only;
  
  double exposure_start_time_JD;
@@ -175,7 +175,10 @@ void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, ch
  sprintf( output_str_DATEOBS, "%04d-%02d-%02dT%02d:%02d:%06.3lf", year, month, day, hour, minute, second );
  sprintf( output_str_EXPTIME, "%.3lf", exposure_sec );
 
- fprintf( stderr, "\nObserving time converted to the \"standard\" FITS header format:\nDATE-OBS= %s\nEXPTIME = %s\n\n", output_str_DATEOBS, output_str_EXPTIME );
+ if ( 1 != stderr_silent ) {
+  // Print out stderr message only if this is a normal call
+  fprintf( stderr, "\nObserving time converted to the \"standard\" FITS header format:\nDATE-OBS= %s\nEXPTIME = %s\n\n", output_str_DATEOBS, output_str_EXPTIME );
+ }
 
  if ( NULL != formed_str_DATEOBS ) {
   strncpy( formed_str_DATEOBS, output_str_DATEOBS, FLEN_CARD - 1 );
@@ -2046,8 +2049,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    fprintf( stderr, "JD (mid. exp.) %.8lf\n", ( *JD ) );
    //unix_time= (time_t)( ( ( *JD ) - 2440587.5 ) * 3600.0 * 24.0 + 0.5 );
    //form_DATEOBS_and_EXPTIME_from_UNIXSEC( unix_time, 0.0, formed_str_DATEOBS, formed_str_EXPTIME );
-   fprintf(stderr, "DEBUG01 form_DATEOBS_EXPTIME_log_output_from_JD()\n");
-   form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), 0.0, formed_str_DATEOBS, formed_str_EXPTIME, log_output );
+   //fprintf(stderr, "DEBUG01 form_DATEOBS_EXPTIME_log_output_from_JD()\n");
+   form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), 0.0, formed_str_DATEOBS, formed_str_EXPTIME, log_output, 0 );
    for ( counter_i= 0; counter_i < strlen( formed_str_DATEOBS ); counter_i++ ) {
     if ( formed_str_DATEOBS[counter_i] == 'T' ) {
      formed_str_DATEOBS[counter_i]= ' ';
@@ -2069,8 +2072,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     //time_t unix_time_exposure_start_for_logs= unix_time - (time_t)( exposure / 2.0 );
     //struct tm *structureTIME_for_logs= gmtime( &unix_time_exposure_start_for_logs );
     //sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", structureTIME_for_logs->tm_mday, structureTIME_for_logs->tm_mon + 1, structureTIME_for_logs->tm_year - 100 + 2000, structureTIME_for_logs->tm_hour, structureTIME_for_logs->tm_min, structureTIME_for_logs->tm_sec, exposure );
-    fprintf(stderr, "DEBUG02 form_DATEOBS_EXPTIME_log_output_from_JD()\n");
-    form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), exposure, NULL, NULL, log_output );
+    //fprintf(stderr, "DEBUG02 form_DATEOBS_EXPTIME_log_output_from_JD()\n");
+    form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), exposure, NULL, NULL, log_output, 0 );
    } else {
     // somehting is messed up here - fallback to zeroes in the log file
     //sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", 0, 0, 0, 0, 0, 0, exposure );
@@ -2100,8 +2103,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    //unix_time= (time_t)( ( ( *JD ) - 2440587.5 ) * 3600.0 * 24.0 + 0.5 );
    exposure= fabs( exposure );
    //form_DATEOBS_and_EXPTIME_from_UNIXSEC( unix_time, exposure, formed_str_DATEOBS, formed_str_EXPTIME );
-   fprintf(stderr, "DEBUG03 form_DATEOBS_EXPTIME_log_output_from_JD()\n");
-   form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), exposure, formed_str_DATEOBS, formed_str_EXPTIME, NULL );
+   //fprintf(stderr, "DEBUG03 form_DATEOBS_EXPTIME_log_output_from_JD()\n");
+   form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), exposure, formed_str_DATEOBS, formed_str_EXPTIME, NULL, 0 );
 //#ifdef DEBUGMESSAGES
 //   fprintf( stderr, "\n\n\n\nunix_time=%ld\nexposure=%lf\nformed_str_DATEOBS=%s\nformed_str_EXPTIME=%s\n\n\n", unix_time, exposure, formed_str_DATEOBS, formed_str_EXPTIME );
 //#endif
