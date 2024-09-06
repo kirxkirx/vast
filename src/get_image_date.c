@@ -427,7 +427,7 @@ int main( int argc, char **argv ) {
   }
  }
  
- fprintf(stderr,"DEBUGISHE double_fractional_seconds_only=%lf UnixTime=%lf UnixTime_time_t__truncated=%ld\n",double_fractional_seconds_only,UnixTime,UnixTime_time_t__truncated);
+ //fprintf(stderr,"DEBUGISHE double_fractional_seconds_only=%lf UnixTime=%lf UnixTime_time_t__truncated=%ld\n",double_fractional_seconds_only,UnixTime,UnixTime_time_t__truncated);
  
  // round it up
  if ( UnixTime < 0.0 ) {

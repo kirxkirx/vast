@@ -23795,124 +23795,124 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
   break
  fi
 done
-util/get_image_date '1969-12-31T23:59:59.0' 2>&1 | grep --quiet 'JD 2440587.499988'
+util/get_image_date '1969-12-31T23:59:59.0' 2>&1 | grep --quiet '  JD 2440587.499988'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV007"
 fi
-util/get_image_date 21/09/99 2>&1 | grep --quiet 'Exposure   0 sec, 21.09.1999 00:00:00 UT = JD(UT) 2451442.50000'
+util/get_image_date 21/09/99 2>&1 | grep --quiet 'Exposure 0 sec, 21.09.1999 00:00:00 UT = JD(UT) 2451442.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV107"
 fi
-util/get_image_date 21-09-99 2>&1 | grep --quiet 'Exposure   0 sec, 21.09.1999 00:00:00 UT = JD(UT) 2451442.50000'
+util/get_image_date 21-09-99 2>&1 | grep --quiet 'Exposure 0 sec, 21.09.1999 00:00:00 UT = JD(UT) 2451442.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV108"
 fi
-util/get_image_date 21-09-1999 2>&1 | grep --quiet 'Exposure   0 sec, 21.09.1999 00:00:00 UT = JD(UT) 2451442.50000'
+util/get_image_date 21-09-1999 2>&1 | grep --quiet 'Exposure 0 sec, 21.09.1999 00:00:00 UT = JD(UT) 2451442.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV109"
 fi
-util/get_image_date 1-09-99 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+util/get_image_date 1-09-99 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV110"
 fi
-util/get_image_date 1-09-1999 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+util/get_image_date 1-09-1999 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV111"
 fi
-util/get_image_date 1-9-1999 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+util/get_image_date 1-9-1999 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV112"
 fi
-util/get_image_date 01-09-1999 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+util/get_image_date 01-09-1999 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV113"
 fi
-util/get_image_date 01-9-1999 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+util/get_image_date 01-9-1999 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV114"
 fi
-util/get_image_date 01-9-99 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+util/get_image_date 01-9-99 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV115"
 fi
-util/get_image_date 1-9-99 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+util/get_image_date 1-9-99 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV116"
 fi
-util/get_image_date 1999-9-1 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+util/get_image_date 1999-9-1 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV117"
 fi
-util/get_image_date 1999-09-1 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+util/get_image_date 1999-09-1 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV118"
 fi
-util/get_image_date 1999-09-01 2>&1 | grep --quiet 'Exposure   0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
+util/get_image_date 1999-09-01 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UT = JD(UT) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV119"
 fi
-util/get_image_date 2012-02-04 02:48:30 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
+util/get_image_date 2012-02-04 02:48:30 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV120"
 fi
-util/get_image_date 2012-02-4 02:48:30 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
+util/get_image_date 2012-02-4 02:48:30 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV121"
 fi
-util/get_image_date 2012-2-4 02:48:30 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
+util/get_image_date 2012-2-4 02:48:30 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV122"
 fi
-util/get_image_date 2012-2-04 02:48:30 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
+util/get_image_date 2012-2-04 02:48:30 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV123"
 fi
 #
-util/get_image_date 2012-02-4 02:48 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:00 UT = JD(UT) 2455961.61667'
+util/get_image_date 2012-02-4 02:48 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:00 UT = JD(UT) 2455961.61667'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV125"
 fi
-util/get_image_date 2012-02-4 02:48:00 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:00 UT = JD(UT) 2455961.61667'
+util/get_image_date 2012-02-4 02:48:00 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:00 UT = JD(UT) 2455961.61667'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV126"
 fi
 #
-util/get_image_date 04.02.2012 02:48:30 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
+util/get_image_date 04.02.2012 02:48:30 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV127"
 fi
-util/get_image_date 4.02.2012 02:48:30 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
+util/get_image_date 4.02.2012 02:48:30 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV128"
 fi
-util/get_image_date 4.2.2012 02:48:30 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
+util/get_image_date 4.2.2012 02:48:30 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV129"
 fi
-util/get_image_date 04.2.2012 02:48:30 2>&1 | grep --quiet 'Exposure   0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
+util/get_image_date 04.2.2012 02:48:30 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:30 UT = JD(UT) 2455961.61701'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV130"
@@ -23930,7 +23930,7 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
   break
  fi
 done
-util/get_image_date '1970-01-01T00:00:00' 2>&1 | grep --quiet 'JD 2440587.500000'
+util/get_image_date '1970-01-01T00:00:00' 2>&1 | grep --quiet ' JD 2440587.500000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV008"
@@ -23945,7 +23945,7 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
 done
 # Make sure the rounding is done correctly
 # I'm comparing to https://ssd.jpl.nasa.gov/tools/jdc/#/cd
-util/get_image_date '1969-12-31T23:59:58.1' 2>&1 | grep --quiet 'JD 2440587.499978'
+util/get_image_date '1969-12-31T23:59:58.1' 2>&1 | grep --quiet ' JD 2440587.499978'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV009"
@@ -23959,7 +23959,7 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  fi
 done
 # 2440587.4999873
-util/get_image_date '1969-12-31T23:59:58.9' 2>&1 | grep --quiet 'JD 2440587.499987'
+util/get_image_date '1969-12-31T23:59:58.9' 2>&1 | grep --quiet ' JD 2440587.499987'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV010"
@@ -23978,7 +23978,7 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV011"
 fi
-util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep --quiet 'Julian year 1969.999999937'
+util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep --quiet 'Julian year 1969.9999999366'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV012"
@@ -23995,7 +23995,7 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV014"
 fi
 # 2440587.4999815 1969.999999949
-util/get_image_date '1969-12-31T23:59:58.4' 2>&1 | grep --quiet 'Julian year 1969.999999949'
+util/get_image_date '1969-12-31T23:59:58.4' 2>&1 | grep --quiet 'Julian year 1969.9999999493'
 #| grep --quiet 'Julian year 1969.999999937'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
@@ -24011,7 +24011,7 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV017"
 fi
-util/get_image_date '1969-12-31T23:59:57.6' 2>&1 | grep --quiet 'Julian year 1969.999999924'
+util/get_image_date '1969-12-31T23:59:57.6' 2>&1 | grep --quiet 'Julian year 1969.9999999239'
 #| grep --quiet 'Julian year 1969.999999937'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
@@ -24031,33 +24031,33 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  fi
 done
 # And a few more checks for the format of the input date string
-util/get_image_date '2014-09-09T05:29' 2>&1 | grep --quiet 'JD 2456909.728472'
+util/get_image_date '2014-09-09T05:29' 2>&1 | grep --quiet ' JD 2456909.728472'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV020"
 fi
-util/get_image_date '2014-09-09 05:29' 2>&1 | grep --quiet 'JD 2456909.728472'
+util/get_image_date '2014-09-09 05:29' 2>&1 | grep --quiet ' JD 2456909.728472'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV021"
 fi
-util/get_image_date '2014-09-09 05:29:' 2>&1 | grep --quiet 'JD 2456909.728472'
+util/get_image_date '2014-09-09 05:29:' 2>&1 | grep --quiet ' JD 2456909.728472'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV022"
 fi
-util/get_image_date '2014-09-09 05:29: ' 2>&1 | grep --quiet 'JD 2456909.728472'
+util/get_image_date '2014-09-09 05:29: ' 2>&1 | grep --quiet ' JD 2456909.728472'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV023"
 fi
-util/get_image_date '2015-08-21T22:18:25.000000' 2>&1 | grep --quiet 'JD 2457256.429456'
+util/get_image_date '2015-08-21T22:18:25.000000' 2>&1 | grep --quiet ' JD 2457256.429456'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV023a"
 fi
 # 2459175.2574474 - I'm comparing to https://ssd.jpl.nasa.gov/tools/jdc/#/cd
-util/get_image_date '2020-11-21T18:10:43.4516245' 2>&1 | grep --quiet 'JD 2459175.257447'
+util/get_image_date '2020-11-21T18:10:43.4516245' 2>&1 | grep --quiet ' JD 2459175.257447'
 #| grep --quiet 'JD 2459175.257442'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
@@ -24073,7 +24073,7 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
 done
 
 # Check input as MJD
-util/get_image_date '58020.39' 2>&1 | grep --quiet 'JD 2458020.89'
+util/get_image_date '58020.39' 2>&1 | grep --quiet ' JD 2458020.89'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV024"
@@ -24121,13 +24121,13 @@ done
 # Check funny input
 # 2460082.4740613
 #util/get_image_date 2023-05-17T23:22:38.894T00:00:24.955 | grep --quiet 'Exposure   0 sec, 17.05.2023 23:22:39   = JD  2460082.47406'
-util/get_image_date 2023-05-17T23:22:38.894T00:00:24.955 | grep --quiet 'Exposure   0 sec, 17.05.2023 23:22:38.894   = JD  2460082.47406'
+#util/get_image_date 2023-05-17T23:22:38.894T00:00:24.955 | grep --quiet 'xposure 0 sec, 17.05.2023 23:22:38.894 = JD 2460082.47406127'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV028"
 fi
 #util/get_image_date 2023-05-17T23:22:38.894T99:00:24.955 | grep --quiet 'Exposure   0 sec, 17.05.2023 23:22:39   = JD  2460082.47406'
-util/get_image_date 2023-05-17T23:22:38.894T99:00:24.955 | grep --quiet 'Exposure   0 sec, 17.05.2023 23:22:38.894   = JD  2460082.47406'
+util/get_image_date 2023-05-17T23:22:38.894T99:00:24.955 | grep --quiet 'Exposure 0 sec, 17.05.2023 23:22:38.894 = JD 2460082.47406127'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV029"
@@ -24165,6 +24165,47 @@ if [ "$MANUAL_DATEOBS_STRING" != "$FUNCTION_DATEOBS_STRING" ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_funcstring01"
 fi
+
+# Astropy date conversion comparison
+command -v python3 &> /dev/null
+if [ $? -eq 0 ];then
+ # test if astropy script is working
+ util/jd2date.py 2460560.17929398 | grep --quiet '2024-09-06 16:18:11.000'
+ if [ $? -eq 0 ];then
+  # Ready to test
+  #
+  # fixed date test
+  TEST_JD="2460560.17929398"
+  ASTROPY_DATE=$(util/jd2date.py "$TEST_JD")
+  VAST_DATE=$(util/get_image_date "$TEST_JD" 2>&1 | grep ' (mid. exp) ' | head -n1 | awk '{print $3" "$4}')
+  if [ "$ASTROPY_DATE" != "$VAST_DATE" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH_${TEST_JD}_${ASTROPY_DATE// /T}_${VAST_DATE// /T}"
+  fi
+  #
+  # UnixTime_0 J2000 today
+  for START_JD in 2440587.5 2451545.0 2460560.17929398 ;do
+   for ITERATION in $(seq 1 10) ;do
+    TEST_JD=$(echo "$START_JD" "$RANDOM" "$RANDOM" | awk '{printf "%f", $1+$2/100+$3/100000}')
+    ASTROPY_DATE=$(util/jd2date.py "$TEST_JD")
+    VAST_DATE=$(util/get_image_date "$TEST_JD" 2>&1 | grep ' (mid. exp) ' | head -n1 | awk '{print $3" "$4}')
+    #echo "${TEST_JD}  ${ASTROPY_DATE// /T}  ${VAST_DATE// /T}  "
+    if [ "$ASTROPY_DATE" != "$VAST_DATE" ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH_${TEST_JD}_${ASTROPY_DATE// /T}_${VAST_DATE// /T}"
+     break
+    fi
+   done
+  done
+  #
+  # TBA - test conversion the other way: date string to JD
+  #
+ else
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_DATE2JDCONV_ASTROPY_noastropy"
+ fi # util/jd2date.py works
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_DATE2JDCONV_ASTROPY_nopython3"
+fi 
 
 #########
 
@@ -25983,6 +26024,9 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  # That's most likely "no internet on the mountain" situation
  FAILED_TEST_CODES="${FAILED_TEST_CODES// AUXWEB_NMW_KIRX_SUMMARY_CHECK_FAILED/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED/}"
+ # Astropy comparison results (many target machines will not have astropy)
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_DATE2JDCONV_ASTROPY_noastropy/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_DATE2JDCONV_ASTROPY_nopython3/}"
  #
  if [ ! -z "$FAILED_TEST_CODES" ];then
   echo "Exit code 1"
