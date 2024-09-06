@@ -17265,12 +17265,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE002"
   fi
-  grep --quiet "First image: 2460175.19308" transient_report/index.html
+  #grep --quiet "First image: 2460175.19308" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2460175.19307695 18.08.2023 16:36:42.648' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE003"
   fi
-  grep --quiet "Last  image: 2460176.20465" transient_report/index.html
+  #grep --quiet "Last  image: 2460176.20465" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460176.20465055 19.08.2023 16:53:22.608' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE004"
@@ -17891,7 +17893,7 @@ if [ -f ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit 
   fi
  fi 
  #util/get_image_date ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit | grep --quiet "Exposure  45 sec, 11.06.2019 00:10:29 UT = JD(UT) 2458645.50755 mid. exp."
- util/get_image_date ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit | grep --quiet "Exposure  45 sec, 11.06.2019 00:10:29 UT = JD(UT) 2458645.50754 mid. exp."
+ util/get_image_date ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit | grep --quiet "Exposure 45 sec, 11.06.2019 00:10:29 UT = JD(UT) 2458645.50754 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600003"
@@ -18748,7 +18750,8 @@ $GREP_RESULT"
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES FLAGHST001"
  fi 
- util/get_image_date ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits | grep --quiet "JD (mid. exp.) 2456311.52320"
+ #util/get_image_date ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits | grep --quiet "JD (mid. exp.) 2456311.52320"
+ util/get_image_date ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits | grep --quiet "JD (mid. exp.) 2456311.523195"
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES FLAGHST002"
@@ -23745,7 +23748,9 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
   break
  fi
 done
-util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep --quiet 'JD 2440587.499977'
+#util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep --quiet 'JD 2440587.499977'
+# https://ssd.jpl.nasa.gov/tools/jdc/#/cd                            2440587.4999769
+util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep --quiet ' JD 2440587.49997685'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV006"
@@ -24113,7 +24118,8 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_UTC2TT01"
 fi
-util/TT2UTC 2451545.00000 2>&1 | grep --quiet 'JD(UTC)= 2451544.99926'
+#util/TT2UTC 2451545.00000 2>&1 | grep --quiet 'JD(UTC)= 2451544.99926'
+util/TT2UTC 2451545.00000 2>&1 | grep --quiet 'JD(UTC)= 2451544.99925713'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_TT2UTC01"
