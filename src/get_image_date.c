@@ -419,6 +419,16 @@ int main( int argc, char **argv ) {
  double_fractional_seconds_only= UnixTime - (double)( (time_t)UnixTime );
  UnixTime_time_t__truncated= (time_t)( UnixTime );
  
+ // Special 1969-12-31T23:59:59.0
+ if ( 0 == UnixTime_time_t__truncated ) {
+  if ( double_fractional_seconds_only < 0.0 ) {
+   UnixTime_time_t__truncated= UnixTime_time_t__truncated - 1;
+   double_fractional_seconds_only= 1.0 + double_fractional_seconds_only;
+  }
+ }
+ 
+ fprintf(stderr,"DEBUGISHE double_fractional_seconds_only=%lf UnixTime=%lf UnixTime_time_t__truncated=%ld\n",double_fractional_seconds_only,UnixTime,UnixTime_time_t__truncated);
+ 
  // round it up
  if ( UnixTime < 0.0 ) {
   UnixTime_time_t__rounded= (time_t)( UnixTime - 0.5 );

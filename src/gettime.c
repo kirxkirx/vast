@@ -149,6 +149,15 @@ void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, ch
  exposure_start_time_unixsec= (time_t)( ( exposure_start_time_JD - 2440587.5 ) * 86400.0 );
  double_fractional_seconds_only= ( exposure_start_time_JD - 2440587.5 ) * 86400.0 - (double)exposure_start_time_unixsec;
  
+ // Special 1969-12-31T23:59:59.0
+ if ( 0 == exposure_start_time_unixsec ) {
+  if ( double_fractional_seconds_only < 0.0 ) {
+   exposure_start_time_unixsec= exposure_start_time_unixsec - 1;
+   double_fractional_seconds_only= 1.0 + double_fractional_seconds_only;
+  }
+ }
+
+ 
  //fprintf(stderr,"DEBUUUGGGG:  double_fractional_seconds_only= %.3lf\n", double_fractional_seconds_only);
 
  //exposure_start_time_unixsec= middle_of_exposure_unixsec - (time_t)( exposure_sec / 2.0 + 0.5 );
