@@ -149,7 +149,7 @@ function compare_date_strings_in_vastsummarylog_with_tolerance() {
     # Find the matching line in the log file
     local log_line=$(grep "$search_prefix" "$log_file")
     
-    if [ ! -f "$log_line" ]; then
+    if [ -z "$log_line" ]; then
         echo "No matching line found in $log_file"
         return 1
     fi
@@ -215,38 +215,7 @@ function compare_date_strings_in_vastsummarylog_with_tolerance() {
         return 1
     fi
     
-    # Check jd and calendar date consistency
-    local computed_jd=$(util/get_image_date $log_date $log_time 2>&1 | grep ' JD ' | awk '{print $2}')
-    local jd_diff=$(awk -v jd1="$computed_jd" -v jd2="$log_jd" -v tol="$tolerance_seconds" '
-        BEGIN {
-            diff = (jd1 - jd2) * 86400
-            if (diff < -tol || diff > tol) {
-                print 1
-            } else {
-                print 0
-            }
-        }
-    ')
-    if [ "$jd_diff" -eq 1 ]; then
-        echo "Julian Date/Calendar Time mismatch in logfile: $computed_jd vs $log_jd"
-        return 1
-    fi
-    local computed_jd=$(util/get_image_date $input_date $input_time 2>&1 | grep ' JD ' | awk '{print $2}')
-    local jd_diff=$(awk -v jd1="$computed_jd" -v jd2="$input_jd" -v tol="$tolerance_seconds" '
-        BEGIN {
-            diff = (jd1 - jd2) * 86400
-            if (diff < -tol || diff > tol) {
-                print 1
-            } else {
-                print 0
-            }
-        }
-    ')
-    if [ "$jd_diff" -eq 1 ]; then
-        echo "Julian Date/Calendar Time mismatch in test input: $computed_jd vs $input_jd"
-        return 1
-    fi
-
+    # Can't check jd and calendar date consistency without exposure time info that is not in this line
     
     return 0
 }
@@ -24203,7 +24172,7 @@ if [ $? -eq 0 ];then
   # fixed date test
   TEST_DATE="2010-01-04T00:00:00.000"
   ASTROPY_JD=$(util/date2jd.py "$TEST_DATE")
-  VAST_JD=$(util/get_image_date "$TEST_DATE" 2>&1 | grep ' (mid. exp) ' | head -n1 | awk '{print $3" "$4}')
+  VAST_JD=$(util/get_image_date "$TEST_DATE" 2>&1 | grep ' JD ' | head -n1 | awk '{print $2}')
   if [ "$ASTROPY_JD" != "$VAST_JD" ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH2_${TEST_DATE}_${ASTROPY_JD// /T}_${VAST_JD// /T}"
