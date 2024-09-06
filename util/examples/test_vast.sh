@@ -22,7 +22,7 @@ export LANGUAGE LC_ALL
 
 ##### Auxiliary functions #####
 
-function email_vast_test_report {
+function email_vast_test_report() {
  HOST=`hostname`
  HOST="@$HOST"
  NAME="$USER$HOST"
@@ -47,7 +47,7 @@ $DEBUG_OUTPUT
 }
 
 # A more portable realpath wrapper
-function vastrealpath {
+function vastrealpath() {
   # On Linux, just go for the fastest option which is 'readlink -f'
   REALPATH=`readlink -f "$1" 2>/dev/null`
   if [ $? -ne 0 ];then
@@ -115,7 +115,143 @@ function get_vast_path_ends_with_slash_from_this_script_name() {
 }
 
 
-function find_source_by_X_Y_in_vast_lightcurve_statistics_log {
+function compare_date_strings_in_vastsummarylog_with_tolerance() {
+
+    if [ -z "$1" ];then
+     echo "ERROR in $0 - no function argument provided"
+     return 1
+    fi
+
+    local search_string="$1"
+    
+    if [ -n "$2" ];then
+     local tolerance_seconds="$2"
+    else
+     # Default tolerance is 1 second if not specified
+     local tolerance_seconds="1"
+    fi
+    
+    if [ -n "$3" ];then
+     local log_file="$3"
+    else
+     local log_file="vast_summary.log"
+    fi
+    
+    if [ ! -f "$log_file" ];then
+     echo "ERROR in $0 - no logfile to parse: $log_file"
+     return 1
+    fi
+    
+    # Extract the first two words to search for in the log file
+    #local search_prefix=$(echo "$search_string" | awk '{print $1, $2}')
+    local search_prefix="${search_string:0:12}"
+    
+    # Find the matching line in the log file
+    local log_line=$(grep "$search_prefix" "$log_file")
+    
+    if [ ! -f "$log_line" ]; then
+        echo "No matching line found in $log_file"
+        return 1
+    fi
+    
+    # Extract Julian Date, date, and time from both strings
+    local input_jd=$(echo "$search_string" | awk '{print $3}')
+    local input_date=$(echo "$search_string" | awk '{print $4}')
+    local input_time=$(echo "$search_string" | awk '{print $5}')
+    
+    local log_jd=$(echo "$log_line" | awk '{print $3}')
+    local log_date=$(echo "$log_line" | awk '{print $4}')
+    local log_time=$(echo "$log_line" | awk '{print $5}')
+    
+    # Compare Julian Dates
+    local jd_diff=$(awk -v jd1="$input_jd" -v jd2="$log_jd" -v tol="$tolerance_seconds" '
+        BEGIN {
+            diff = (jd1 - jd2) * 86400
+            if (diff < -tol || diff > tol) {
+                print 1
+            } else {
+                print 0
+            }
+        }
+    ')
+    if [ "$jd_diff" -eq 1 ]; then
+        echo "Julian Date mismatch: $input_jd vs $log_jd"
+        return 1
+    fi
+    
+    # Compare dates
+    if [ "$input_date" != "$log_date" ]; then
+        echo "Date mismatch: $input_date vs $log_date"
+        return 1
+    fi
+    
+    # Compare times
+    local input_hour=$(echo "$input_time" | awk -F':' '{print $1}')
+    local input_minute=$(echo "$input_time" | awk -F':' '{print $2}')
+    local input_second=$(echo "$input_time" | awk -F':' '{print $3}')
+    
+    local log_hour=$(echo "$log_time" | awk -F':' '{print $1}')
+    local log_minute=$(echo "$log_time" | awk -F':' '{print $2}')
+    local log_second=$(echo "$log_time" | awk -F':' '{print $3}')
+    
+    if [ "$input_hour" != "$log_hour" ] || [ "$input_minute" != "$log_minute" ]; then
+        echo "Time mismatch: $input_time vs $log_time"
+        return 1
+    fi
+    
+    # Compare seconds as floating point numbers
+    local time_diff=$(awk -v s1="$input_second" -v s2="$log_second" -v tol="$tolerance_seconds" '
+        BEGIN {
+            diff = s1 - s2
+            if (diff < -tol || diff > tol) {
+                print 1
+            } else {
+                print 0
+            }
+        }
+    ')
+    if [ "$time_diff" -eq 1 ]; then
+        echo "Time mismatch: $input_time vs $log_time"
+        return 1
+    fi
+    
+    # Check jd and calendar date consistency
+    local computed_jd=$(util/get_image_date $log_date $log_time 2>&1 | grep ' JD ' | awk '{print $2}')
+    local jd_diff=$(awk -v jd1="$computed_jd" -v jd2="$log_jd" -v tol="$tolerance_seconds" '
+        BEGIN {
+            diff = (jd1 - jd2) * 86400
+            if (diff < -tol || diff > tol) {
+                print 1
+            } else {
+                print 0
+            }
+        }
+    ')
+    if [ "$jd_diff" -eq 1 ]; then
+        echo "Julian Date/Calendar Time mismatch in logfile: $computed_jd vs $log_jd"
+        return 1
+    fi
+    local computed_jd=$(util/get_image_date $input_date $input_time 2>&1 | grep ' JD ' | awk '{print $2}')
+    local jd_diff=$(awk -v jd1="$computed_jd" -v jd2="$input_jd" -v tol="$tolerance_seconds" '
+        BEGIN {
+            diff = (jd1 - jd2) * 86400
+            if (diff < -tol || diff > tol) {
+                print 1
+            } else {
+                print 0
+            }
+        }
+    ')
+    if [ "$jd_diff" -eq 1 ]; then
+        echo "Julian Date/Calendar Time mismatch in test input: $computed_jd vs $input_jd"
+        return 1
+    fi
+
+    
+    return 0
+}
+
+function find_source_by_X_Y_in_vast_lightcurve_statistics_log() {
  if [ ! -s vast_lightcurve_statistics.log ];then
   echo "ERROR: no vast_lightcurve_statistics.log" 1>&2
   return 1
@@ -142,7 +278,7 @@ END {
  return 0
 }
 
-function test_https_connection {
+function test_https_connection() {
  #curl --max-time 10 --silent https://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
  curl --max-time 10 --silent https://scan.sai.msu.ru/lk/ | grep --quiet '../cgi-bin/lk/process_lightcurve.py'
  if [ $? -ne 0 ];then
@@ -205,7 +341,7 @@ function test_https_connection {
 }
 
 
-function check_if_vast_install_looks_reasonably_healthy {
+function check_if_vast_install_looks_reasonably_healthy() {
  for FILE_TO_CHECK in ./vast GNUmakefile makefile lib/autodetect_aperture_main lib/bin/xy2sky lib/catalogs/check_catalogs_offline lib/choose_vizier_mirror.sh lib/deeming_compute_periodogram lib/deg2hms_uas lib/drop_bright_points lib/drop_faint_points lib/fit_robust_linear lib/guess_saturation_limit_main lib/hms2deg lib/lk_compute_periodogram lib/new_lightcurve_sigma_filter lib/put_two_sources_in_one_field lib/remove_bad_images lib/remove_lightcurves_with_small_number_of_points lib/select_only_n_random_points_from_set_of_lightcurves lib/sextract_single_image_noninteractive lib/try_to_guess_image_fov lib/update_offline_catalogs.sh lib/update_tai-utc.sh lib/vizquery util/calibrate_magnitude_scale util/calibrate_single_image.sh util/ccd/md util/ccd/mk util/ccd/ms util/clean_data.sh util/examples/test_coordinate_converter.sh util/examples/test__dark_flat_flag.sh util/examples/test_heliocentric_correction.sh util/fov_of_wcs_calibrated_image.sh util/get_image_date util/hjd_input_in_UTC util/load.sh util/magnitude_calibration.sh util/make_finding_chart util/nopgplot.sh util/rescale_photometric_errors util/save.sh util/search_databases_with_curl.sh util/search_databases_with_vizquery.sh util/solve_plate_with_UCAC5 util/stat_outfile util/sysrem2 util/transients/transient_factory_test31.sh util/wcs_image_calibration.sh ;do
   if [ ! -s "$FILE_TO_CHECK" ];then
    echo "
@@ -221,7 +357,7 @@ CANCEL TEST"
 }
 
 
-function remove_test_data_to_save_space {
+function remove_test_data_to_save_space() {
  #########################################
  # Remove test data from the previous tests if we are out of disk space
  #########################################
@@ -266,7 +402,7 @@ function remove_test_data_to_save_space {
 }
 
 
-function check_if_enough_disk_space_for_tests {
+function check_if_enough_disk_space_for_tests() {
  ### Disable this for GitHub Actions
  if [ "$GITHUB_ACTIONS" != "true" ];then 
   return 0
@@ -298,7 +434,7 @@ function check_if_enough_disk_space_for_tests {
 }
 
 
-function test_internet_connection {
+function test_internet_connection() {
  # Directory listing disabled
  #curl --max-time 10 --silent http://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
  curl --max-time 10 --silent -I http://scan.sai.msu.ru 2>&1 | grep --quiet 'Content-Type:'
@@ -406,7 +542,7 @@ fi
 
 
 ## These two functions are needed to check that no leftover files are produced by util/transients/report_transient.sh
-function test_if_test31_tmp_files_are_present {
+function test_if_test31_tmp_files_are_present() {
  for TMP_FILE_TO_REMOVE in ra*.dat dec*.dat mag*.dat script*.dat dayfrac*.dat jd*.dat x*.dat y*.dat ;do
   if [ -f "$TMP_FILE_TO_REMOVE" ];then
    return 1
@@ -416,7 +552,7 @@ function test_if_test31_tmp_files_are_present {
 }
 
 
-function remove_test31_tmp_files_if_present {
+function remove_test31_tmp_files_if_present() {
  for TMP_FILE_TO_REMOVE in ra*.dat dec*.dat mag*.dat script*.dat dayfrac*.dat jd*.dat x*.dat y*.dat ;do
   if [ -f "$TMP_FILE_TO_REMOVE" ];then
    rm -f "$TMP_FILE_TO_REMOVE"
@@ -661,17 +797,20 @@ if [ -d ../DART_Didymos_moving_object_photometry_test ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES DART_IMG_MEA"
    fi
-   grep --quiet 'Ref.  image: 2459852.89419 30.09.2022 09:27:08' vast_summary.log
+   #grep --quiet 'Ref.  image: 2459852.89419 30.09.2022 09:27:08' vast_summary.log
+   compare_date_strings_in_vastsummarylog_with_tolerance 'Ref.  image: 2459852.89419 30.09.2022 09:27:08' 1
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES DART_REF_IMG_DATE"
    fi
-   grep --quiet 'First image: 2459852.89419 30.09.2022 09:27:08' vast_summary.log
+   #grep --quiet 'First image: 2459852.89419 30.09.2022 09:27:08' vast_summary.log
+   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2459852.89419 30.09.2022 09:27:08' 1
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES DART_FIRST_IMG_DATE"
    fi
-   grep --quiet 'Last  image: 2459852.91936 30.09.2022 10:03:23' vast_summary.log
+   #grep --quiet 'Last  image: 2459852.91936 30.09.2022 10:03:23' vast_summary.log
+   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459852.91936 30.09.2022 10:03:23' 1
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES DART_LAST_IMG_DATE"
@@ -2023,17 +2162,20 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD002"
   fi
-  grep --quiet "Ref.  image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "Ref.  image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Ref.  image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_REFIMAGE"
   fi
-  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD003"
   fi
-  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD004"
@@ -2651,17 +2793,20 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX002_$OPENMP_STATUS"
   fi
-  grep --quiet "Ref.  image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "Ref.  image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Ref.  image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX_REFIMAGE"
   fi
-  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX003"
   fi
-  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX004"
@@ -3099,17 +3244,20 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST002"
   fi
-  grep --quiet "Ref.  image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "Ref.  image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Ref.  image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST_REFIMAGE"
   fi
-  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST003"
   fi
-  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST004"
@@ -3569,12 +3717,14 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF002"
   fi
-  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF003"
   fi
-  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF004"
@@ -3816,12 +3966,14 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD002"
   fi
-  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD003"
   fi
-  grep --quiet "Last  image: 2453202.33394 15.07.2004 19:59:22" vast_summary.log
+  #grep --quiet "Last  image: 2453202.33394 15.07.2004 19:59:22" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453202.33394 15.07.2004 19:59:22' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD004"
@@ -4009,12 +4161,14 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE002"
   fi
-  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE003"
   fi
-  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE004"
@@ -4456,12 +4610,14 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD002"
   fi
-  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD003"
   fi
-  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD004"
@@ -4615,12 +4771,14 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES OMP_NUM_THREADS_SMALLCCD002"
   fi
-  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES OMP_NUM_THREADS_SMALLCCD003a"
   fi
-  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES OMP_NUM_THREADS_SMALLCCD003b"
@@ -4746,12 +4904,14 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD002"
   fi
-  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD003a"
   fi
-  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD003b"
@@ -4877,12 +5037,14 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD002"
   fi
-  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD003a"
   fi
-  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD003b"
@@ -5015,12 +5177,14 @@ if [ -d '../sample space' ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD002"
   fi
-  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD003a"
   fi
-  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD003b"
@@ -5178,12 +5342,14 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES AUTOSELECT_REF_IMG_SMALLCCD003a"
   fi
-  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES AUTOSELECT_REF_IMG_SMALLCCD003b"
   fi
-  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES AUTOSELECT_REF_IMG_SMALLCCD003c"
@@ -5318,12 +5484,14 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD002"
   fi
-  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD003a"
   fi
-  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD003b"
@@ -5482,12 +5650,14 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NO_KEYWORD_RECORDING_SMALLCCD002"
   fi
-  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NO_KEYWORD_RECORDING_SMALLCCD003a"
   fi
-  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NO_KEYWORD_RECORDING_SMALLCCD003b"
@@ -5638,12 +5808,14 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD002"
   fi
-  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD003"
   fi
-  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD004"
@@ -6135,12 +6307,14 @@ if [ -d '../sample space' ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD002"
   fi
-  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD003"
   fi
-  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD004"
@@ -6652,12 +6826,14 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
   #fi
   # 2458689.6211690 according to https://ssd.jpl.nasa.gov/tools/jdc/#/cd
   #grep --quiet "First image: 2458689.62122 25.07.2019 02:54:30" vast_summary.log
-  grep --quiet "First image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
+  #grep --quiet "First image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2458689.62121 25.07.2019 02:54:30' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS003b"
   fi
-  grep --quiet "Last  image: 2458689.63980 25.07.2019 03:21:16" vast_summary.log
+  #grep --quiet "Last  image: 2458689.63980 25.07.2019 03:21:16" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2458689.63980 25.07.2019 03:21:16' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS003c"
@@ -6801,17 +6977,20 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2002"
   fi
-  grep --quiet "Ref.  image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
+  #grep --quiet "Ref.  image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Ref.  image: 2458689.62121 25.07.2019 02:54:30' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2003a"
   fi
-  grep --quiet "First image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
+  #grep --quiet "First image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2458689.62121 25.07.2019 02:54:30' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2003b"
   fi
-  grep --quiet "Last  image: 2458689.63980 25.07.2019 03:21:16" vast_summary.log
+  #grep --quiet "Last  image: 2458689.63980 25.07.2019 03:21:16" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2458689.63980 25.07.2019 03:21:16' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2003c"
@@ -6955,19 +7134,22 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
     FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3002"
     break
    fi
-   grep --quiet "Ref.  image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
+   #grep --quiet "Ref.  image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
+   compare_date_strings_in_vastsummarylog_with_tolerance 'Ref.  image: 2458689.62121 25.07.2019 02:54:30' 1
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3003a"
     break
    fi
-   grep --quiet "First image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
+   #grep --quiet "First image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
+   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2458689.62121 25.07.2019 02:54:30' 1
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3003b"
     break
    fi
-   grep --quiet "Last  image: 2458689.63980 25.07.2019 03:21:16" vast_summary.log
+   #grep --quiet "Last  image: 2458689.63980 25.07.2019 03:21:16" vast_summary.log
+   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2458689.63980 25.07.2019 03:21:16' 1
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3003c"
@@ -7072,12 +7254,14 @@ if [ -d ../vast_test_ASASSN-19cq ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC002"
   fi
-  grep --quiet "First image: 2458619.73071 16.05.2019 05:30:33" vast_summary.log
+  #grep --quiet "First image: 2458619.73071 16.05.2019 05:30:33" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2458619.73071 16.05.2019 05:30:33' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC003a"
   fi
-  grep --quiet "Last  image: 2458659.73438 25.06.2019 05:35:00" vast_summary.log
+  #grep --quiet "Last  image: 2458659.73438 25.06.2019 05:35:00" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2458659.73438 25.06.2019 05:35:00' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC003b"
@@ -7178,12 +7362,14 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC102"
   fi
-  grep --quiet "First image: 2458619.73071 16.05.2019 05:30:33" vast_summary.log
+  #grep --quiet "First image: 2458619.73071 16.05.2019 05:30:33" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2458619.73071 16.05.2019 05:30:33' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC103a"
   fi
-  grep --quiet "Last  image: 2458659.73438 25.06.2019 05:35:00" vast_summary.log
+  #grep --quiet "Last  image: 2458659.73438 25.06.2019 05:35:00" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2458659.73438 25.06.2019 05:35:00' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC103b"
@@ -7325,13 +7511,15 @@ if [ -d ../MASTER_test ];then
   fi
   #grep --quiet "First image: 2457154.31907 11.05.2015 19:39:26" vast_summary.log
   #grep --quiet "First image: 2457154.31910 11.05.2015 19:39:27" vast_summary.log
-  grep --quiet "First image: 2457154.31909 11.05.2015 19:39:26" vast_summary.log
+  #grep --quiet "First image: 2457154.31909 11.05.2015 19:39:26" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2457154.31909 11.05.2015 19:39:26' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCD003"
   fi
   #grep --quiet "Last  image: 2457154.32075 11.05.2015 19:41:51" vast_summary.log
-  grep --quiet "Last  image: 2457154.32076 11.05.2015 19:41:51" vast_summary.log
+  #grep --quiet "Last  image: 2457154.32076 11.05.2015 19:41:51" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2457154.32076 11.05.2015 19:41:51' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCD004"
@@ -7476,12 +7664,14 @@ if [ -d ../M31_ISON_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD002"
   fi
-  grep --quiet "First image: 2455863.88499 29.10.2011 09:13:23" vast_summary.log
+  #grep --quiet "First image: 2455863.88499 29.10.2011 09:13:23" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2455863.88499 29.10.2011 09:13:23' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD003"
   fi
-  grep --quiet "Last  image: 2455867.61163 02.11.2011 02:39:45" vast_summary.log
+  #grep --quiet "Last  image: 2455867.61163 02.11.2011 02:39:45" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2455867.61163 02.11.2011 02:39:45' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD004"
@@ -7634,12 +7824,14 @@ if [ -d ../Gaia16aye_SN ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES GAIA16AYESN002"
   fi
-  grep --quiet "First image: 2457714.13557 21.11.2016 15:13:43" vast_summary.log
+  #grep --quiet "First image: 2457714.13557 21.11.2016 15:13:43" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2457714.13557 21.11.2016 15:13:43' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES GAIA16AYESN003"
   fi
-  grep --quiet "Last  image: 2457714.14230 21.11.2016 15:23:25" vast_summary.log
+  #grep --quiet "Last  image: 2457714.14230 21.11.2016 15:23:25" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2457714.14230 21.11.2016 15:23:25' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES GAIA16AYESN004"
@@ -7779,12 +7971,14 @@ if [ -d ../only_few_stars ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARS002"
   fi
-  grep --quiet "First image: 2452270.63266 27.12.2001 03:10:32" vast_summary.log
+  #grep --quiet "First image: 2452270.63266 27.12.2001 03:10:32" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2452270.63266 27.12.2001 03:10:32' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARS003"
   fi
-  grep --quiet "Last  image: 2452298.60258 24.01.2002 02:27:23" vast_summary.log
+  #grep --quiet "Last  image: 2452298.60258 24.01.2002 02:27:23" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2452298.60258 24.01.2002 02:27:23' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARS004"
@@ -7924,12 +8118,14 @@ if [ -d ../only_few_stars ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE002"
   fi
-  grep --quiet "First image: 2452270.63266 27.12.2001 03:10:32" vast_summary.log
+  #grep --quiet "First image: 2452270.63266 27.12.2001 03:10:32" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2452270.63266 27.12.2001 03:10:32' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE003"
   fi
-  grep --quiet "Last  image: 2452298.60258 24.01.2002 02:27:23" vast_summary.log
+  #grep --quiet "Last  image: 2452298.60258 24.01.2002 02:27:23" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2452298.60258 24.01.2002 02:27:23' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE004"
@@ -8182,12 +8378,14 @@ if [ -d ../test_exclude_ref_image ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE_REFIMAGE"
   fi
   #grep --quiet "First image: 2450486.59230 07.02.1997 02:12:55" vast_summary.log
-  grep --quiet "First image: 2450486.59230 07.02.1997 02:12:54" vast_summary.log
+  #grep --quiet "First image: 2450486.59230 07.02.1997 02:12:54" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2450486.59230 07.02.1997 02:12:54' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE003"
   fi
-  grep --quiet "Last  image: 2452578.55380 31.10.2002 01:17:28" vast_summary.log
+  #grep --quiet "Last  image: 2452578.55380 31.10.2002 01:17:28" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2452578.55380 31.10.2002 01:17:28' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE004"
@@ -8429,12 +8627,14 @@ if [ -d ../transient_detection_test_Ceres ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES002"
   fi
-  grep --quiet "First image: 2456005.28101 18.03.2012 18:44:24" vast_summary.log
+  #grep --quiet "First image: 2456005.28101 18.03.2012 18:44:24" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456005.28101 18.03.2012 18:44:24' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES003"
   fi
-  grep --quiet "Last  image: 2456377.34852 25.03.2013 20:21:37" vast_summary.log
+  #grep --quiet "Last  image: 2456377.34852 25.03.2013 20:21:37" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2456377.34852 25.03.2013 20:21:37' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES004"
@@ -8488,12 +8688,14 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES102"
   fi
-  grep --quiet "First image: 2456005.28101 18.03.2012 18:44:24" vast_summary.log
+  #grep --quiet "First image: 2456005.28101 18.03.2012 18:44:24" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456005.28101 18.03.2012 18:44:24' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES103"
   fi
-  grep --quiet "Last  image: 2456377.34852 25.03.2013 20:21:37" vast_summary.log
+  #grep --quiet "Last  image: 2456377.34852 25.03.2013 20:21:37" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2456377.34852 25.03.2013 20:21:37' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES104"
@@ -8974,12 +9176,14 @@ if [ -d ../NMW_Saturn_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN002"
   fi
-  grep --quiet "First image: 2456021.56453 04.04.2012 01:32:40" vast_summary.log
+  #grep --quiet "First image: 2456021.56453 04.04.2012 01:32:40" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456021.56453 04.04.2012 01:32:40' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN003"
   fi
-  grep --quiet "Last  image: 2458791.14727 03.11.2019 15:31:54" vast_summary.log
+  #grep --quiet "Last  image: 2458791.14727 03.11.2019 15:31:54" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2458791.14727 03.11.2019 15:31:54' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN004"
@@ -9541,12 +9745,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2002"
   fi
-  grep --quiet "First image: 2456021.56453 04.04.2012 01:32:40" transient_report/index.html
+  #grep --quiet "First image: 2456021.56453 04.04.2012 01:32:40" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456021.56453 04.04.2012 01:32:40' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2003"
   fi
-  grep --quiet "Last  image: 2458791.14727 03.11.2019 15:31:54" transient_report/index.html
+  #grep --quiet "Last  image: 2458791.14727 03.11.2019 15:31:54" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2458791.14727 03.11.2019 15:31:54' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2004"
@@ -9986,12 +10192,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS002"
   fi
-  grep --quiet "First image: 2458956.27441 16.04.2020 18:34:59" transient_report/index.html
+  #grep --quiet "First image: 2458956.27441 16.04.2020 18:34:59" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2458956.27441 16.04.2020 18:34:59' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS003"
   fi
-  grep --quiet "Last  image: 2458959.26847 19.04.2020 18:26:26" transient_report/index.html
+  #grep --quiet "Last  image: 2458959.26847 19.04.2020 18:26:26" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2458959.26847 19.04.2020 18:26:26' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS004"
@@ -10195,12 +10403,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB002"
   fi
-  grep --quiet "First image: 2455961.58259 04.02.2012 01:58:46" transient_report/index.html
+  #grep --quiet "First image: 2455961.58259 04.02.2012 01:58:46" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2455961.58259 04.02.2012 01:58:46' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB003"
   fi
-  grep --quiet "Last  image: 2460254.19181 05.11.2023 16:36:02" transient_report/index.html
+  #grep --quiet "Last  image: 2460254.19181 05.11.2023 16:36:02" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460254.19181 05.11.2023 16:36:02' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB004"
@@ -10540,12 +10750,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31002a"
   fi
-  grep --quiet "First image: 2456005.22259 18.03.2012 17:20:17" transient_report/index.html
+  #grep --quiet "First image: 2456005.22259 18.03.2012 17:20:17" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456005.22259 18.03.2012 17:20:17' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31003"
   fi
-  grep --quiet "Last  image: 2459093.21130 31.08.2020 17:04:06" transient_report/index.html
+  #grep --quiet "Last  image: 2459093.21130 31.08.2020 17:04:06" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459093.21130 31.08.2020 17:04:06' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31004"
@@ -10759,12 +10971,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET002a"
   fi
-  grep --quiet "First image: 2456006.25111 19.03.2012 18:01:21" transient_report/index.html
+  #grep --quiet "First image: 2456006.25111 19.03.2012 18:01:21" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456006.25111 19.03.2012 18:01:21' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET003"
   fi
-  grep --quiet "Last  image: 2459962.42100 17.01.2023 22:06:04" transient_report/index.html
+  #grep --quiet "Last  image: 2459962.42100 17.01.2023 22:06:04" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459962.42100 17.01.2023 22:06:04' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET004"
@@ -11475,12 +11689,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4002a"
   fi
-  grep --quiet "First image: 2456005.59475 19.03.2012 02:16:06" transient_report/index.html
+  #grep --quiet "First image: 2456005.59475 19.03.2012 02:16:06" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456005.59475 19.03.2012 02:16:06' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4003"
   fi
-  grep --quiet -e "Last  image: 2459128.21054 05.10.2020 17:03:01" -e "Last  image: 2459128.21093 05.10.2020 17:03:34" transient_report/index.html
+  #grep --quiet -e "Last  image: 2459128.21054 05.10.2020 17:03:01" -e "Last  image: 2459128.21093 05.10.2020 17:03:34" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459128.21054 05.10.2020 17:03:01' 1 transient_report/index.html || compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459128.21093 05.10.2020 17:03:34' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4004"
@@ -11789,7 +12005,8 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1002a"
   fi
-  grep --quiet "First image: 2456031.51404 14.04.2012 00:19:58" transient_report/index.html
+  #grep --quiet "First image: 2456031.51404 14.04.2012 00:19:58" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456031.51404 14.04.2012 00:19:58' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1003"
@@ -12133,12 +12350,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST002a"
   fi
-  grep --quiet "First image: 2460520.33991 28.07.2024 20:09:18" transient_report/index.html
+  #grep --quiet "First image: 2460520.33991 28.07.2024 20:09:18" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2460520.33991 28.07.2024 20:09:18' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST003"
   fi
-  grep --quiet "Last  image: 2460521.33198 29.07.2024 19:57:53" transient_report/index.html
+  #grep --quiet "Last  image: 2460521.33198 29.07.2024 19:57:53" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460521.33198 29.07.2024 19:57:53' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST004"
@@ -12335,12 +12554,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21002a"
   fi
-  grep --quiet "First image: 2456005.49760 18.03.2012 23:56:13" transient_report/index.html
+  #grep --quiet "First image: 2456005.49760 18.03.2012 23:56:13" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456005.49760 18.03.2012 23:56:13' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21003"
   fi
-  grep --quiet -e "Last  image: 2459378.42235 12.06.2021 22:08:01" -e "Last  image: 2459378.42271 12.06.2021 22:08:32" transient_report/index.html
+  #grep --quiet -e "Last  image: 2459378.42235 12.06.2021 22:08:01" -e "Last  image: 2459378.42271 12.06.2021 22:08:32" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459378.42235 12.06.2021 22:08:01' 1 transient_report/index.html || compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459378.42271 12.06.2021 22:08:32' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21004"
@@ -12581,12 +12802,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21002a"
   fi
-  grep --quiet "First image: 2455961.21211 03.02.2012 17:05:11" transient_report/index.html
+  #grep --quiet "First image: 2455961.21211 03.02.2012 17:05:11" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2455961.21211 03.02.2012 17:05:11' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21003"
   fi
-  grep --quiet -e "Last  image: 2459292.20861 18.03.2021 17:00:14" -e 'Last  image: 2459292.20897 18.03.2021 17:00:45' transient_report/index.html
+  #grep --quiet -e "Last  image: 2459292.20861 18.03.2021 17:00:14" -e 'Last  image: 2459292.20897 18.03.2021 17:00:45' transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459292.20861 18.03.2021 17:00:14' 1 transient_report/index.html || compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459292.20897 18.03.2021 17:00:45' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21004"
@@ -12827,12 +13050,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2002a"
   fi
-  grep --quiet "First image: 2456031.51354 14.04.2012 00:19:15" transient_report/index.html
+  #grep --quiet "First image: 2456031.51354 14.04.2012 00:19:15" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456031.51354 14.04.2012 00:19:15' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2003"
   fi
-  grep --quiet -e "Last  image: 2459312.50961 08.04.2021 00:13:40" transient_report/index.html
+  #grep --quiet -e "Last  image: 2459312.50961 08.04.2021 00:13:40" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459312.50961 08.04.2021 00:13:40' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2004"
@@ -13131,12 +13356,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1002a"
   fi
-  grep --quiet "First image: 2456006.57071 20.03.2012 01:41:29" transient_report/index.html
+  #grep --quiet "First image: 2456006.57071 20.03.2012 01:41:29" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456006.57071 20.03.2012 01:41:29' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1003"
   fi
-  grep --quiet -e "Last  image: 2459312.49796 07.04.2021 23:56:54" -e "Last  image: 2459312.49834 07.04.2021 23:57:27" transient_report/index.html
+  #grep --quiet -e "Last  image: 2459312.49796 07.04.2021 23:56:54" -e "Last  image: 2459312.49834 07.04.2021 23:57:27" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459312.49796 07.04.2021 23:56:54' 1 transient_report/index.html || compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459312.49834 07.04.2021 23:57:27' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1004"
@@ -13499,12 +13726,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21002a"
   fi
-  grep --quiet "First image: 2456031.42797 13.04.2012 22:16:02" transient_report/index.html
+  #grep --quiet "First image: 2456031.42797 13.04.2012 22:16:02" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456031.42797 13.04.2012 22:16:02' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21003"
   fi
-  grep --quiet -e "Last  image: 2459413.36175 17.07.2021 20:40:45" transient_report/index.html
+  #grep --quiet -e "Last  image: 2459413.36175 17.07.2021 20:40:45" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459413.36175 17.07.2021 20:40:45' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21004"
@@ -13736,12 +13965,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS002a"
   fi
-  grep --quiet "First image: 2455929.28115 02.01.2012 18:44:31" transient_report/index.html
+  #grep --quiet "First image: 2455929.28115 02.01.2012 18:44:31" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2455929.28115 02.01.2012 18:44:31' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS003"
   fi
-  grep --quiet -e "Last  image: 2459334.28175 29.04.2021 18:45:33" -e "Last  image: 2459334.28212 29.04.2021 18:46:05" transient_report/index.html
+  #grep --quiet -e "Last  image: 2459334.28175 29.04.2021 18:45:33" -e "Last  image: 2459334.28212 29.04.2021 18:46:05" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459334.28175 29.04.2021 18:45:33' 1 transient_report/index.html || compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459334.28212 29.04.2021 18:46:05' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS004"
@@ -13911,12 +14142,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3002a"
   fi
-  grep --quiet "First image: 2455929.28115 02.01.2012 18:44:31" transient_report/index.html
+  #grep --quiet "First image: 2455929.28115 02.01.2012 18:44:31" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2455929.28115 02.01.2012 18:44:31' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3003"
   fi
-  grep --quiet -e "Last  image: 2459337.27924 02.05.2021 18:41:56" -e "Last  image: 2459334.28212 29.04.2021 18:46:05" transient_report/index.html
+  #grep --quiet -e "Last  image: 2459337.27924 02.05.2021 18:41:56" -e "Last  image: 2459334.28212 29.04.2021 18:46:05" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459337.27924 02.05.2021 18:41:56' 1 transient_report/index.html || compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459334.28212 29.04.2021 18:46:05' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3004"
@@ -14154,12 +14387,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA002a"
   fi
-  grep --quiet "First image: 2455961.58044 04.02.2012 01:55:40" transient_report/index.html
+  #grep --quiet "First image: 2455961.58044 04.02.2012 01:55:40" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2455961.58044 04.02.2012 01:55:40' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA003"
   fi
-  grep --quiet "Last  image: 2459087.44020 25.08.2020 22:33:43" transient_report/index.html
+  #grep --quiet "Last  image: 2459087.44020 25.08.2020 22:33:43" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459087.44020 25.08.2020 22:33:43' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA004"
@@ -14429,12 +14664,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH002"
   fi
-  grep --quiet "First image: 2456030.54275 13.04.2012 01:01:19" transient_report/index.html
+  #grep --quiet "First image: 2456030.54275 13.04.2012 01:01:19" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456030.54275 13.04.2012 01:01:19' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH003"
   fi
-  grep --quiet "Last  image: 2459094.23281 01.09.2020 17:35:05" transient_report/index.html
+  #grep --quiet "Last  image: 2459094.23281 01.09.2020 17:35:05" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459094.23281 01.09.2020 17:35:05' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH004"
@@ -14696,12 +14933,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN002"
   fi
-  grep --quiet "First image: 2456030.54275 13.04.2012 01:01:19" transient_report/index.html
+  #grep --quiet "First image: 2456030.54275 13.04.2012 01:01:19" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456030.54275 13.04.2012 01:01:19' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN003"
   fi
-  grep --quiet "Last  image: 2459094.23281 01.09.2020 17:35:05" transient_report/index.html
+  #grep --quiet "Last  image: 2459094.23281 01.09.2020 17:35:05" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459094.23281 01.09.2020 17:35:05' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN004"
@@ -15133,12 +15372,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE002"
   fi
-  grep --quiet "First image: 2459821.46208 29.08.2022 23:05:14" transient_report/index.html
+  #grep --quiet "First image: 2459821.46208 29.08.2022 23:05:14" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2459821.46208 29.08.2022 23:05:14' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE003"
   fi
-  grep --quiet "Last  image: 2460145.39289 19.07.2023 21:25:36" transient_report/index.html
+  #grep --quiet "Last  image: 2460145.39289 19.07.2023 21:25:36" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460145.39289 19.07.2023 21:25:36' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE004"
@@ -15511,12 +15752,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24002"
   fi
-  grep --quiet "First image: 2460232.25743 14.10.2023 18:10:32" transient_report/index.html
+  #grep --quiet "First image: 2460232.25743 14.10.2023 18:10:32" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance '2460232.25743 14.10.2023 18:10:32' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24003"
   fi
-  grep --quiet "Last  image: 2460521.39237 29.07.2024 21:24:51" transient_report/index.html
+  #grep --quiet "Last  image: 2460521.39237 29.07.2024 21:24:51" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460521.39237 29.07.2024 21:24:51' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24004"
@@ -15861,13 +16104,15 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24002"
   fi
   #grep --quiet "First image: 2460521.04571 29.07.2024 13:04:31" transient_report/index.html
-  grep --quiet "First image: 2460521.04571 29.07.2024 13:04:30" transient_report/index.html
+  #grep --quiet "First image: 2460521.04571 29.07.2024 13:04:30" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2460521.04571 29.07.2024 13:04:30' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24003"
   fi
   #grep --quiet "Last  image: 2460521.30034 29.07.2024 19:11:11" transient_report/index.html
-  grep --quiet "Last  image: 2460521.30034 29.07.2024 19:11:10" transient_report/index.html
+  #grep --quiet "Last  image: 2460521.30034 29.07.2024 19:11:10" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460521.30034 29.07.2024 19:11:10' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24004"
@@ -16099,12 +16344,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE002"
   fi
-  grep --quiet "First image: 2459819.35199 27.08.2022 20:26:42" transient_report/index.html
+  #grep --quiet "First image: 2459819.35199 27.08.2022 20:26:42" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2459819.35199 27.08.2022 20:26:42' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE003"
   fi
-  grep --quiet "Last  image: 2460177.36831 20.08.2023 20:50:12" transient_report/index.html
+  #grep --quiet "Last  image: 2460177.36831 20.08.2023 20:50:12" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460177.36831 20.08.2023 20:50:12' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE004"
@@ -16447,12 +16694,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24002"
   fi
-  grep --quiet "First image: 2459821.27843 29.08.2022 18:40:46" transient_report/index.html
+  #grep --quiet "First image: 2459821.27843 29.08.2022 18:40:46" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2459821.27843 29.08.2022 18:40:46' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24003"
   fi
-  grep --quiet "Last  image: 2460380.60719 11.03.2024 02:34:11" transient_report/index.html
+  #grep --quiet "Last  image: 2460380.60719 11.03.2024 02:34:11" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460380.60719 11.03.2024 02:34:11' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24004"
@@ -16759,12 +17008,14 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24002"
   fi
-  grep --quiet "First image: 2456005.58950 19.03.2012 02:08:33" transient_report/index.html
+  #grep --quiet "First image: 2456005.58950 19.03.2012 02:08:33" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456005.58950 19.03.2012 02:08:33' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24003"
   fi
-  grep --quiet "Last  image: 2460380.60800 11.03.2024 02:35:21" transient_report/index.html
+  #grep --quiet "Last  image: 2460380.60800 11.03.2024 02:35:21" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460380.60800 11.03.2024 02:35:21' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24004"
@@ -17256,12 +17507,14 @@ if [ -d ../KZ_Her_DSLR_transient_search_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER002"
   fi
-  grep --quiet "First image: 2456897.40709 27.08.2014 21:45:57" vast_summary.log
+  #grep --quiet "First image: 2456897.40709 27.08.2014 21:45:57" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456897.40709 27.08.2014 21:45:57' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER003"
   fi
-  grep --quiet "Last  image: 2456982.24706 20.11.2014 17:55:30" vast_summary.log
+  #grep --quiet "Last  image: 2456982.24706 20.11.2014 17:55:30" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2456982.24706 20.11.2014 17:55:30' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER004"
@@ -19861,12 +20114,14 @@ if [ -d /mnt/usb/M4_F775W_images_Level2_few_links_for_tests ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIALM4HST002"
   fi
   # Calendar time will be set to 00.00.0000 00:00:00 if JD is taken from EXPSTART instead of DATE-OBS
-  grep --quiet -e "First image: 2456311.38443 18.01.2013 21:13:25" -e "First image: 2456311.38443 00.00.0000 00:00:00" vast_summary.log
+  #grep --quiet -e "First image: 2456311.38443 18.01.2013 21:13:25" -e "First image: 2456311.38443 00.00.0000 00:00:00" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456311.38443 18.01.2013 21:13:25' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIALM4HST003"
   fi
-  grep --quiet -e "Last  image: 2456312.04468 19.01.2013 13:04:10" -e "Last  image: 2456312.04468 00.00.0000 00:00:00" vast_summary.log
+  #grep --quiet -e "Last  image: 2456312.04468 19.01.2013 13:04:10" -e "Last  image: 2456312.04468 00.00.0000 00:00:00" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2456312.04468 19.01.2013 13:04:10' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIALM4HST004"
@@ -20082,17 +20337,20 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600002"
   fi
-  grep --quiet "Ref.  image: 2459292.18307 18.03.2021 16:23:32" vast_summary.log
+  #grep --quiet "Ref.  image: 2459292.18307 18.03.2021 16:23:32" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Ref.  image: 2459292.18307 18.03.2021 16:23:32' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_REFIMAGE"
   fi
-  grep --quiet "First image: 2459292.18307 18.03.2021 16:23:32" vast_summary.log
+  #grep --quiet "First image: 2459292.18307 18.03.2021 16:23:32" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2459292.18307 18.03.2021 16:23:32' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600003"
   fi
-  grep --quiet "Last  image: 2459292.18455 18.03.2021 16:25:40" vast_summary.log
+  #grep --quiet "Last  image: 2459292.18455 18.03.2021 16:25:40" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459292.18455 18.03.2021 16:25:40' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600004"
@@ -20181,17 +20439,20 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B002"
   fi
-  grep --quiet "Ref.  image: 2459292.18279 18.03.2021 16:23:03" vast_summary.log
+  #grep --quiet "Ref.  image: 2459292.18279 18.03.2021 16:23:03" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Ref.  image: 2459292.18279 18.03.2021 16:23:03' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_REFIMAGE"
   fi
-  grep --quiet "First image: 2459292.18279 18.03.2021 16:23:03" vast_summary.log
+  #grep --quiet "First image: 2459292.18279 18.03.2021 16:23:03" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2459292.18279 18.03.2021 16:23:03' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B003"
   fi
-  grep --quiet "Last  image: 2459292.18427 18.03.2021 16:25:11" vast_summary.log
+  #grep --quiet "Last  image: 2459292.18427 18.03.2021 16:25:11" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459292.18427 18.03.2021 16:25:11' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B004"
@@ -20280,17 +20541,20 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc002"
   fi
-  grep --quiet "Ref.  image: 2459292.18326 18.03.2021 16:23:51" vast_summary.log
+  #grep --quiet "Ref.  image: 2459292.18326 18.03.2021 16:23:51" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Ref.  image: 2459292.18326 18.03.2021 16:23:51' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_REFIMAGE"
   fi
-  grep --quiet "First image: 2459292.18326 18.03.2021 16:23:51" vast_summary.log
+  #grep --quiet "First image: 2459292.18326 18.03.2021 16:23:51" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2459292.18326 18.03.2021 16:23:51' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc003"
   fi
-  grep --quiet "Last  image: 2459292.18475 18.03.2021 16:25:59" vast_summary.log
+  #grep --quiet "Last  image: 2459292.18475 18.03.2021 16:25:59" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459292.18475 18.03.2021 16:25:59' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc004"
@@ -22047,12 +22311,14 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF002"
   fi
-  grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF003"
   fi
-  grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF004"
@@ -22466,13 +22732,15 @@ if [ -d ../MASTER_test ];then
   fi
   ##grep --quiet "First image: 2457154.31907 11.05.2015 19:39:26" vast_summary.log
   #grep --quiet "First image: 2457154.31909 11.05.2015 19:39:27" vast_summary.log
-  grep --quiet "First image: 2457154.31910 11.05.2015 19:39:27" vast_summary.log
+  #grep --quiet "First image: 2457154.31910 11.05.2015 19:39:27" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2457154.31910 11.05.2015 19:39:27' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCDPSF003"
   fi
   #grep --quiet "Last  image: 2457154.32075 11.05.2015 19:41:51" vast_summary.log
-  grep --quiet "Last  image: 2457154.32076 11.05.2015 19:41:51" vast_summary.log
+  #grep --quiet "Last  image: 2457154.32076 11.05.2015 19:41:51" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2457154.32076 11.05.2015 19:41:51' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCDPSF003a"
@@ -22621,12 +22889,14 @@ if [ -d ../M31_ISON_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF002"
   fi
-  grep --quiet "First image: 2455863.88499 29.10.2011 09:13:23" vast_summary.log
+  #grep --quiet "First image: 2455863.88499 29.10.2011 09:13:23" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2455863.88499 29.10.2011 09:13:23' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF003"
   fi
-  grep --quiet "Last  image: 2455867.61163 02.11.2011 02:39:45" vast_summary.log
+  #grep --quiet "Last  image: 2455867.61163 02.11.2011 02:39:45" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2455867.61163 02.11.2011 02:39:45' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF003"
@@ -22749,12 +23019,14 @@ if [ -d ../test_exclude_ref_image ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF_REFIMAGE"
   fi
-  grep --quiet "First image: 2450486.59230 07.02.1997 02:12:55" vast_summary.log
+  #grep --quiet "First image: 2450486.59230 07.02.1997 02:12:55" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2450486.59230 07.02.1997 02:12:55' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF003"
   fi
-  grep --quiet "Last  image: 2452578.55380 31.10.2002 01:17:28" vast_summary.log
+  #grep --quiet "Last  image: 2452578.55380 31.10.2002 01:17:28" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2452578.55380 31.10.2002 01:17:28' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF004"

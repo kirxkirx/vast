@@ -12,6 +12,29 @@
 #include "fitsio.h"
 #include "vast_limits.h"
 
+// helper function removing multiple white spaces from a string
+void remove_multiple_spaces(char *str) {
+    int i, j;
+    int space_flag = 0;
+
+    if (str == NULL) return;
+
+    for (i = 0, j = 0; str[i] != '\0'; i++) {
+        if (str[i] == ' ') {
+            if (space_flag == 0) {
+                str[j++] = ' ';
+                space_flag = 1;
+            }
+        } else {
+            str[j++] = str[i];
+            space_flag = 0;
+        }
+    }
+    str[j] = '\0';
+    
+    return;
+}
+
 void write_DATEOBS_and_EXPTIME_to_FITS_header( char *fitsfilename, char *formed_str_DATEOBS, char *formed_str_EXPTIME ) {
  fitsfile *fptr; /* FITS file pointer, defined in fitsio.h */
  char card[FLEN_CARD], newcard[FLEN_CARD];
@@ -161,7 +184,8 @@ void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, ch
   strncpy( formed_str_EXPTIME, output_str_EXPTIME, FLEN_CARD - 1 );
  }
  if ( NULL != log_output ) {
-  sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02.0lf  exp= %4.0lf  ", day, month, year, hour, minute, second, exposure_sec );
+  //sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02.0lf  exp= %4.0lf  ", day, month, year, hour, minute, second, exposure_sec );
+  sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%06.3lf  exp= %8.3lf  ", day, month, year, hour, minute, second, exposure_sec );
  }
  ///////////////
 
@@ -1923,7 +1947,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   if ( NULL != log_output ) {
    // If we use the JD->logstring converison function here, the start date might be TT (if it was converted)
    // What we actually want is to keep this date UTC (or whatever timesystem of the original FITS header was).
-   sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, structureTIME.tm_sec, exposure );
+   //sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, structureTIME.tm_sec, exposure );
+   sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%06.3lf  exp= %8.3lf  ", structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, (double)( structureTIME.tm_sec ) + double_fractional_seconds_only, exposure );
   }
 
   // Produce finder_chart_timestring_output
@@ -1974,7 +1999,9 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
      sprintf( stderr_output, "Exposure %3.0lf sec, %02d.%02d.%4d %02d:%02d:%06.3lf %s = JD%s %.8lf\n", exposure, structureTIME.tm_mday, structureTIME.tm_mon + 1, structureTIME.tm_year - 100 + 2000, structureTIME.tm_hour, structureTIME.tm_min, (double)structureTIME.tm_sec + double_fractional_seconds_only, tymesys_str_in, tymesys_str_out, ( *JD ) );
     }
    }
-  }
+   // make a better-looking stderr_output
+   remove_multiple_spaces(stderr_output);
+  } // if ( NULL != stderr_output ) {
  } else {
   // This else is for:
   // status==202 here means the JD keyword is not found
@@ -2046,7 +2073,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), exposure, NULL, NULL, log_output );
    } else {
     // somehting is messed up here - fallback to zeroes in the log file
-    sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", 0, 0, 0, 0, 0, 0, exposure );
+    //sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", 0, 0, 0, 0, 0, 0, exposure );
+    sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%06.3lf  exp= %4.0lf  ", 0, 0, 0, 0, 0, 0, exposure );
    }
   }
   //
