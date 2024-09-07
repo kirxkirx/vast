@@ -147,7 +147,7 @@ function compare_date_strings_in_vastsummarylog_with_tolerance() {
     local search_prefix="${search_string:0:12}"
     
     # Find the matching line in the log file
-    local log_line=$(grep "$search_prefix" "$log_file")
+    local log_line=$(grep "$search_prefix" "$log_file" | head -n1)
     
     if [ -z "$log_line" ]; then
         echo "No matching line found in $log_file"
@@ -23950,7 +23950,7 @@ done
 util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep --quiet 'MPC format 1969 12 31.99998'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV011"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV011_$(util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep 'MPC format ')"
 fi
 util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep --quiet 'Julian year 1969.9999999366'
 if [ $? -ne 0 ];then
@@ -23966,7 +23966,7 @@ fi
 util/get_image_date '1969-12-31T23:59:58.4' 2>&1 | grep --quiet 'MPC format 1969 12 31.99998'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV014"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV014_$(util/get_image_date '1969-12-31T23:59:58.4' 2>&1 | grep 'MPC format ')"
 fi
 # 2440587.4999815 1969.999999949
 util/get_image_date '1969-12-31T23:59:58.4' 2>&1 | grep --quiet 'Julian year 1969.9999999493'
@@ -24181,7 +24181,7 @@ if [ $? -eq 0 ];then
   VAST_JD=$(util/get_image_date "$TEST_DATE" 2>&1 | grep ' JD ' | head -n1 | awk '{print $2}')
   if [ "$ASTROPY_JD" != "$VAST_JD" ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH2_${TEST_DATE}_${ASTROPY_JD// /T}_${VAST_JD// /T}"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH2_${TEST_DATE}_${ASTROPY_JD}_${VAST_JD}"
   fi
   #
   for ITERATION in $(seq 1 10) ;do
@@ -24199,10 +24199,10 @@ if [ $? -eq 0 ];then
 
    #echo "TEST_DATE=\"$TEST_DATE\""
    ASTROPY_JD=$(util/date2jd.py "$TEST_DATE")
-   VAST_JD=$(util/get_image_date "$TEST_DATE" 2>&1 | grep ' (mid. exp) ' | head -n1 | awk '{print $3" "$4}')
+   VAST_JD=$(util/get_image_date "$TEST_DATE" 2>&1 | grep ' JD ' | head -n1 | awk '{print $2}')
    if [ "$ASTROPY_JD" != "$VAST_JD" ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH2_${TEST_DATE}_${ASTROPY_JD// /T}_${VAST_JD// /T}"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH2_${TEST_DATE}_${ASTROPY_JD}_${VAST_JD}"
    fi
   done
   #
