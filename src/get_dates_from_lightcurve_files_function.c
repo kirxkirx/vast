@@ -1,17 +1,3 @@
-/*
-#include <stdio.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <math.h>
-
-
-#include "vast_limits.h"
-#include "lightcurve_io.h"
-*/
-
 #include "get_dates_from_lightcurve_files_function.h"
 
 void write_fake_log_file( double *jd, int *Nobs ) {
@@ -23,8 +9,10 @@ void write_fake_log_file( double *jd, int *Nobs ) {
   fprintf( stderr, "ERROR: Couldn't create file vast_image_details.log\n" );
   exit( EXIT_FAILURE );
  };
- for ( i= 0; i < ( *Nobs ); i++ )
-  fprintf( logfile, "JD= %.5lf\n", jd[i] );
+ for ( i= 0; i < ( *Nobs ); i++ ) {
+  //fprintf( logfile, "JD= %.5lf\n", jd[i] );
+  fprintf( logfile, "JD= %.8lf\n", jd[i] );
+ }
  fclose( logfile );
  fprintf( stderr, "done\n" );
  return;
@@ -133,11 +121,13 @@ void get_dates( double *jd, int *Nobs ) {
 
      // Check the input date, note that wedon't know if it's JD or MJD
      if ( jd[( *Nobs )] < EXPECTED_MIN_MJD ) {
-      fprintf( stderr, "ERROR in get_dates(): JD%.5lf<%.5lf #%s#\n", jd[( *Nobs )], EXPECTED_MIN_MJD, jd_str );
+      //fprintf( stderr, "ERROR in get_dates(): JD%.5lf<%.5lf #%s#\n", jd[( *Nobs )], EXPECTED_MIN_MJD, jd_str );
+      fprintf( stderr, "ERROR in get_dates(): JD%.8lf<%.8lf #%s#\n", jd[( *Nobs )], EXPECTED_MIN_MJD, jd_str );
       exit( EXIT_FAILURE );
      }
      if ( jd[( *Nobs )] > EXPECTED_MAX_JD ) {
-      fprintf( stderr, "ERROR in get_dates(): JD%.5lf>%.5lf #%s#\n", jd[( *Nobs )], EXPECTED_MAX_JD, jd_str );
+      //fprintf( stderr, "ERROR in get_dates(): JD%.5lf>%.5lf #%s#\n", jd[( *Nobs )], EXPECTED_MAX_JD, jd_str );
+      fprintf( stderr, "ERROR in get_dates(): JD%.8lf>%.8lf #%s#\n", jd[( *Nobs )], EXPECTED_MAX_JD, jd_str );
       exit( EXIT_FAILURE );
      }
 #endif

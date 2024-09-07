@@ -8425,7 +8425,7 @@ $GREP_RESULT"
   fi
   # Time test
   #util/get_image_date ../test_exclude_ref_image/lm01306trr8a1338.fits 2>&1 | grep -A 10 'DATE-OBS= 1998-01-14T06:47:48' | grep -A 10 'EXPTIME = 0' | grep -A 10 'Exposure   0 sec, 14.01.1998 06:47:48   = JD  2450827.78319' | grep --quiet 'JD 2450827.783194'
-  util/get_image_date ../test_exclude_ref_image/lm01306trr8a1338.fits 2>&1 | grep -A 10 'DATE-OBS= 1998-01-14T06:47:48' | grep -A 10 'EXPTIME = 0' | grep -A 10 'Exposure   0 sec, 14.01.1998 06:47:48.480   = JD  2450827.78320' | grep --quiet '         JD 2450827.783200'
+  util/get_image_date ../test_exclude_ref_image/lm01306trr8a1338.fits 2>&1 | grep -A 10 'DATE-OBS= 1998-01-14T06:47:48' | grep -A 10 'EXPTIME = 0' | grep -A 10 'Exposure 0 sec, 14.01.1998 06:47:48.480 = JD 2450827.78320' | grep --quiet '         JD 2450827.783200'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE_OBSERVING_TIME001"
@@ -11996,7 +11996,8 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1003"
   fi
-  grep --quiet "2460364.62567 24.02.2024 03:00:48" transient_report/index.html
+  #grep --quiet "Last  image: 2460364.62567 24.02.2024 03:00:48" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460364.62567 24.02.2024 03:00:48' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1004"
@@ -15738,7 +15739,7 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24002"
   fi
   #grep --quiet "First image: 2460232.25743 14.10.2023 18:10:32" transient_report/index.html
-  compare_date_strings_in_vastsummarylog_with_tolerance '2460232.25743 14.10.2023 18:10:32' 1 transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2460232.25743 14.10.2023 18:10:32' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24003"
@@ -17680,7 +17681,7 @@ if [ -f ../individual_images_test/1630+3250.20150511T215921000.fit ];then
  #
  #util/get_image_date ../individual_images_test/1630+3250.20150511T215921000.fit | grep --quiet "Exposure  20 sec, 11.05.2015 21:59:20   = JD  2457154.41632 mid. exp."
  #util/get_image_date ../individual_images_test/1630+3250.20150511T215921000.fit | grep --quiet "Exposure  20 sec, 11.05.2015 21:59:21   = JD  2457154.41633 mid. exp."
- util/get_image_date ../individual_images_test/1630+3250.20150511T215921000.fit | grep --quiet "Exposure  20 sec, 11.05.2015 21:59:20.999   = JD  2457154.41633 mid. exp."
+ util/get_image_date ../individual_images_test/1630+3250.20150511T215921000.fit | grep --quiet "Exposure 20 sec, 11.05.2015 21:59:20.999 = JD 2457154.41633 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ULTRAWIDEFIELD004"
@@ -17770,7 +17771,7 @@ if [ -f ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit
  fi
  #
  #util/get_image_date ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit | grep --quiet "Exposure 400 sec, 18.05.2023 20:29:41 UT = JD(UT) 2460083.35626 mid. exp."
- util/get_image_date ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit | grep --quiet "Exposure 400 sec, 18.05.2023 20:29:41.010 UT = JD(UT) 2460083.35626 mid. exp."
+ util/get_image_date ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit | grep --quiet "Exposure 400 sec, 18.05.2023 20:29:41.010 UT = JD(UT) 2460083.35626169 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130004"
@@ -18015,7 +18016,7 @@ if [ -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fi
   fi # else if [ ! -f wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit ];then
  fi # check if util/solve_plate_with_UCAC5 returned 0 exit code
  #util/get_image_date ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit | grep --quiet "Exposure  60 sec, 16.07.2021 18:02:27 UT = JD(UT) 2459412.25205 mid. exp."
- util/get_image_date ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit | grep --quiet "Exposure  60 sec, 16.07.2021 18:02:26.680 UT = JD(UT) 2459412.25204 mid. exp."
+ util/get_image_date ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit | grep --quiet "Exposure 60 sec, 16.07.2021 18:02:26.680 UT = JD(UT) 2459412.25204491 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B003"

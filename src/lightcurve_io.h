@@ -29,9 +29,11 @@ static inline int write_lightcurve_point(FILE *lc_file_descriptor, double jd, do
  }
  //
  if( NULL == comments_string ) {
-  fprintf(lc_file_descriptor, "%.5lf %8.4lf %.4lf  %10.5lf %10.5lf %4.1lf %s\n", jd, mag, nonzero_mag_err, x, y, app, string);
+  //fprintf(lc_file_descriptor, "%.5lf %8.4lf %.4lf  %10.5lf %10.5lf %4.1lf %s\n", jd, mag, nonzero_mag_err, x, y, app, string);
+  fprintf(lc_file_descriptor, "%.8lf %8.4lf %.4lf  %10.5lf %10.5lf %4.1lf %s\n", jd, mag, nonzero_mag_err, x, y, app, string);
  } else {
-  fprintf(lc_file_descriptor, "%.5lf %8.4lf %.4lf  %10.5lf %10.5lf %4.1lf %s  %s\n", jd, mag, nonzero_mag_err, x, y, app, string, comments_string);
+  //fprintf(lc_file_descriptor, "%.5lf %8.4lf %.4lf  %10.5lf %10.5lf %4.1lf %s  %s\n", jd, mag, nonzero_mag_err, x, y, app, string, comments_string);
+  fprintf(lc_file_descriptor, "%.8lf %8.4lf %.4lf  %10.5lf %10.5lf %4.1lf %s  %s\n", jd, mag, nonzero_mag_err, x, y, app, string, comments_string);
  }
  return 0;
 }

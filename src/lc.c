@@ -815,7 +815,8 @@ void remove_linear_trend( float *fit_jd, float *mag, int N, double A, double B, 
    E1= powf( 10.0f, -0.4f * plot_y[i] );
    E3= powf( 10.0f, -0.4f * (float)mean_mag );
    //
-   fprintf( vast_lc_remove_linear_trend_logfile, "%.5lf  %9.5f  %9.5f  %9.5f \n", JD_double_array_for_log[i], corrected_mag[i], plot_y[i] + (float)mean_mag + (float)mag_zeropoint_for_log, mag[i] );
+   //fprintf( vast_lc_remove_linear_trend_logfile, "%.5lf  %9.5f  %9.5f  %9.5f \n", JD_double_array_for_log[i], corrected_mag[i], plot_y[i] + (float)mean_mag + (float)mag_zeropoint_for_log, mag[i] );
+   fprintf( vast_lc_remove_linear_trend_logfile, "%.8lf  %9.5f  %9.5f  %9.5f \n", JD_double_array_for_log[i], corrected_mag[i], plot_y[i] + (float)mean_mag + (float)mag_zeropoint_for_log, mag[i] );
    mag[i]= corrected_mag[i];
   } // if( fit_jd[i]>jd_min && fit_jd[i]<jd_max )
  }
@@ -2090,9 +2091,11 @@ int main( int argc, char **argv ) {
      // fprintf(stderr,"%f %f  %f %f\n",MIN(curX,curX2),MAX(curX,curX2),MIN(curY,curY2),MAX(curY,curY2));
      if ( float_JD[closest_num] > MIN( curX, curX2 ) && float_JD[closest_num] < MAX( curX, curX2 ) && mag[closest_num] > MIN( curY, curY2 ) && mag[closest_num] < MAX( curY, curY2 ) ) {
       // fprintf(stderr,"Nobs= %d\n",Nobs); // DEBUG!!
-      fprintf( stderr, "Removing data point %5d %.5lf %8.4f\n", closest_num, JD[closest_num], mag[closest_num] );
+      //fprintf( stderr, "Removing data point %5d %.5lf %8.4f\n", closest_num, JD[closest_num], mag[closest_num] );
+      fprintf( stderr, "Removing data point %5d %.8lf %8.4f\n", closest_num, JD[closest_num], mag[closest_num] );
       if ( NULL != removed_points_log ) {
-       fprintf( removed_points_log, "%.5lf %8.4f\n", JD[closest_num], mag[closest_num] );
+       //fprintf( removed_points_log, "%.5lf %8.4f\n", JD[closest_num], mag[closest_num] );
+       fprintf( removed_points_log, "%.8lf %8.4f\n", JD[closest_num], mag[closest_num] );
       }
       // kill it
       Nobs--;
@@ -2211,7 +2214,8 @@ int main( int argc, char **argv ) {
    */
    lightcurvefile= fopen( lightcurvefilename, "w" );
    for ( i= 0; i < Nobs; i++ ) {
-    fprintf( lightcurvefile, "%.5lf %9.5f", JD[i], mag[i] );
+    //fprintf( lightcurvefile, "%.5lf %9.5f", JD[i], mag[i] );
+    fprintf( lightcurvefile, "%.8lf %9.5f", JD[i], mag[i] );
     if ( lightcurve_format != 2 )
      fprintf( lightcurvefile, " %.5f", mag_err[i] );
     if ( lightcurve_format == 0 )
@@ -2434,7 +2438,8 @@ int main( int argc, char **argv ) {
    // print out the point info
    // fprintf( stderr, "%13.5lf  %.5lf %.5lf\n", JD[closest_num], mag[closest_num], mag_err[closest_num] );
    // Print the selected data point
-   fprintf( stderr, "%13.5lf  %.5lf %.5lf  ", JD[closest_num], mag[closest_num], mag_err[closest_num] );
+   //fprintf( stderr, "%13.5lf  %.5lf %.5lf  ", JD[closest_num], mag[closest_num], mag_err[closest_num] );
+   fprintf( stderr, "%16.8lf  %.5lf %.5lf  ", JD[closest_num], mag[closest_num], mag_err[closest_num] );
    //
    // Convert JD to calendar time
    UnixTime= ( JD[closest_num] - 2440587.5 ) * 86400.0;
@@ -2452,7 +2457,7 @@ int main( int argc, char **argv ) {
 #else
    structureTIME= gmtime( &UnixTime_time_t );
 #endif
-   // Warning! I'm loosing the last digit while convering!
+   // Warning! I'm loosing the last digit while convering! Why?????
    // fprintf( stderr, "%04d-%02d-%08.5lf\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, (double)structureTIME->tm_mday + (double)structureTIME->tm_hour / 24.0 + (double)structureTIME->tm_min / ( 24.0 * 60 ) + (double)structureTIME->tm_sec / ( 24.0 * 60 * 60 ) );
    fprintf( stderr, "%04d-%02d-%07.4lf\n", structureTIME->tm_year - 100 + 2000, structureTIME->tm_mon + 1, (double)structureTIME->tm_mday + (double)structureTIME->tm_hour / 24.0 + (double)structureTIME->tm_min / ( 24.0 * 60 ) + (double)structureTIME->tm_sec / ( 24.0 * 60 * 60 ) );
 #if defined( _POSIX_C_SOURCE ) || defined( _BSD_SOURCE ) || defined( _SVID_SOURCE )

@@ -108,7 +108,8 @@ int main(int argc, char **argv) {
      jdUTC= convert_jdTT_to_jdUT(jd, &timesys);
      jd= jdUTC;    
     }
-    fprintf(outlightcurvefile, "%.5lf %8.5lf %.5lf\n", jd, mag, merr);
+    //fprintf(outlightcurvefile, "%.5lf %8.5lf %.5lf\n", jd, mag, merr);
+    fprintf(outlightcurvefile, "%.8lf %8.5lf %.5lf\n", jd, mag, merr);
    }
   }
 
@@ -121,7 +122,8 @@ int main(int argc, char **argv) {
      jdUTC= convert_jdTT_to_jdUT(jd, &timesys);
      jd= jdUTC;    
     }
-    fprintf(outlightcurvefile, "%.5lf %8.5lf\n", jd, mag);
+    //fprintf(outlightcurvefile, "%.5lf %8.5lf\n", jd, mag);
+    fprintf(outlightcurvefile, "%.8lf %8.5lf\n", jd, mag);
    }
   }
 

@@ -30,8 +30,10 @@ void write_fake_log_file( double *jd, size_t *Nobs ) {
   fprintf( stderr, "ERROR: Cam't open vast_image_details.log\n" );
   exit( EXIT_FAILURE );
  };
- for ( i= 0; i < ( *Nobs ); i++ )
-  fprintf( logfile, "JD= %.5lf\n", jd[i] );
+ for ( i= 0; i < ( *Nobs ); i++ ) {
+  //fprintf( logfile, "JD= %.5lf\n", jd[i] );
+  fprintf( logfile, "JD= %.8lf\n", jd[i] );
+ }
  fclose( logfile );
  fprintf( stderr, "done\n" );
  return;
