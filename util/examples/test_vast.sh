@@ -2598,6 +2598,22 @@ $GREP_RESULT"
     fi
    fi
   fi
+  
+  
+  # Astropy image date matching test
+  command -v python3 &> /dev/null     
+  if [ $? -eq 0 ];then
+   python3 -c "import astropy; print(astropy.__version__)"
+   if [ $? -eq 0 ];then
+    lib/astropy_test_get_image_date.py ../sample_data/*.fit
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_ASTROPY_DATE_MISMATCH"
+    fi
+   fi
+  fi
+
+  
   ###############################################
   ### Flag image test should always be the last one
   for IMAGE in ../sample_data/*.fit ;do
@@ -17760,6 +17776,19 @@ if [ -f ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit
   FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130004"
  fi
 
+ # Astropy image date matching test
+ command -v python3 &> /dev/null     
+ if [ $? -eq 0 ];then
+  python3 -c "import astropy; print(astropy.__version__)"
+  if [ $? -eq 0 ];then
+   lib/astropy_test_get_image_date.py ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130_ASTROPY_DATE_MISMATCH"
+   fi
+  fi
+ fi
+
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
@@ -17907,6 +17936,19 @@ if [ -f ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit 
   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600004"
  fi
 
+ # Astropy image date matching test
+ command -v python3 &> /dev/null     
+ if [ $? -eq 0 ];then
+  python3 -c "import astropy; print(astropy.__version__)"
+  if [ $? -eq 0 ];then
+   lib/astropy_test_get_image_date.py ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600_ASTROPY_DATE_MISMATCH"
+   fi
+  fi
+ fi
+
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
@@ -18005,6 +18047,19 @@ if [ -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fi
  if [ $TEST -ne 1 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_FIT_ROBUST_LINEAR_COEFFB"
+ fi
+ 
+ # Astropy image date matching test
+ command -v python3 &> /dev/null     
+ if [ $? -eq 0 ];then
+  python3 -c "import astropy; print(astropy.__version__)"
+  if [ $? -eq 0 ];then
+   lib/astropy_test_get_image_date.py ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_ASTROPY_DATE_MISMATCH"
+   fi
+  fi
  fi
 
 
@@ -18125,6 +18180,19 @@ $GREP_RESULT"
   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED004"
  fi
 
+ # Astropy image date matching test
+ command -v python3 &> /dev/null     
+ if [ $? -eq 0 ];then
+  python3 -c "import astropy; print(astropy.__version__)"
+  if [ $? -eq 0 ];then
+   lib/astropy_test_get_image_date.py ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED_ASTROPY_DATE_MISMATCH"
+   fi
+  fi
+ fi
+
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
@@ -18220,6 +18288,19 @@ if [ -f ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits ];th
   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ004"
  fi
 
+ # Astropy image date matching test
+ command -v python3 &> /dev/null     
+ if [ $? -eq 0 ];then
+  python3 -c "import astropy; print(astropy.__version__)"
+  if [ $? -eq 0 ];then
+   lib/astropy_test_get_image_date.py ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ004_ASTROPY_DATE_MISMATCH"
+   fi
+  fi
+ fi
+
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
@@ -18311,6 +18392,19 @@ if [ -f ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits ];the
  if [ "$FOV" != "26" ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2004"
+ fi
+
+ # Astropy image date matching test
+ command -v python3 &> /dev/null     
+ if [ $? -eq 0 ];then
+  python3 -c "import astropy; print(astropy.__version__)"
+  if [ $? -eq 0 ];then
+   lib/astropy_test_get_image_date.py ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2004_ASTROPY_DATE_MISMATCH"
+   fi
+  fi
  fi
 
 
@@ -18572,6 +18666,19 @@ if [ -f ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Lum
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED003"
+ fi
+
+ # Astropy image date matching test
+ command -v python3 &> /dev/null     
+ if [ $? -eq 0 ];then
+  python3 -c "import astropy; print(astropy.__version__)"
+  if [ $? -eq 0 ];then
+   lib/astropy_test_get_image_date.py ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED_ASTROPY_DATE_MISMATCH"
+   fi
+  fi
  fi
 
 
