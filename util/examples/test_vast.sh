@@ -114,6 +114,36 @@ function get_vast_path_ends_with_slash_from_this_script_name() {
  echo "$VAST_PATH"
 }
 
+function compare_MPC_and_ATel_dates_in_get_image_date() {
+    local input_date="$1"
+
+    # Capture the output of the command
+    output=$(util/get_image_date "$input_date")
+
+    # Extract MPC format and ATel style lines
+    mpc_line=$(echo "$output" | grep "MPC format")
+    atel_line=$(echo "$output" | grep "ATel style")
+
+    # Extract the date values
+    mpc_date=$(echo "$mpc_line" | awk '{print $3, $4, $5}')
+    atel_date=$(echo "$atel_line" | awk '{print $3}')
+
+    # Replace spaces with dashes in MPC date
+    mpc_date_dashes=$(echo "$mpc_date" | tr ' ' '-')
+
+    # Compare the dates
+    if [ "$mpc_date_dashes" == "$atel_date" ]; then
+        echo "The dates match:"
+        echo "MPC format (with dashes): $mpc_date_dashes"
+        echo "ATel style: $atel_date"
+        return 0
+    else
+        echo "The dates do not match:"
+        echo "MPC format (with dashes): $mpc_date_dashes"
+        echo "ATel style: $atel_date"
+        return 1
+    fi
+}
 
 function compare_date_strings_in_vastsummarylog_with_tolerance() {
 
@@ -10821,7 +10851,7 @@ $GREP_RESULT"
   grep --quiet "     TAU0008  C2020 08 31.71081 00 11 4.\... +66 11 2.\...         1.\.. R      C32" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110b"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110b_$(grep 'TAU0008  C2020 08 31.7108. 00 11 4.\... +66 11 2.' | head -n1)"
   fi
   
   # Check the total number of candidates (should be exactly 1 in this test)
@@ -24060,6 +24090,11 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV011_$(util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep 'MPC format ')"
 fi
+compare_MPC_and_ATel_dates_in_get_image_date '1969-12-31T23:59:58.0'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV011_MPCATel"
+fi
 util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep --quiet 'Julian year 1969.9999999366'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
@@ -24075,6 +24110,11 @@ util/get_image_date '1969-12-31T23:59:58.4' 2>&1 | grep --quiet 'MPC format 1969
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV014_$(util/get_image_date '1969-12-31T23:59:58.4' 2>&1 | grep 'MPC format ')"
+fi
+compare_MPC_and_ATel_dates_in_get_image_date '1969-12-31T23:59:58.4'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV014_MPCATel"
 fi
 # 2440587.4999815 1969.999999949
 util/get_image_date '1969-12-31T23:59:58.4' 2>&1 | grep --quiet 'Julian year 1969.9999999493'

@@ -151,6 +151,14 @@ fi
 # exit 1
 #fi
 
+if [ -f make.log ];then
+ rm -f make.log
+fi
+
+if [ -f vast_test_email_message.log ];then
+ rm -f vast_test_email_message.log
+fi
+
 # compile VaST
 make &> make.log
 if [ $? -ne 0 ];then

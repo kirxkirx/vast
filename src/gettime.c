@@ -884,8 +884,9 @@ void sanitize_positive_float_string( char *str ) {
  int len= strlen( str );
  int write_index= 0;
  int decimal_point_found= 0; // Using int instead of bool
+ int read_index= 0;
 
- for ( int read_index= 0; read_index < len; read_index++ ) {
+ for ( read_index= 0; read_index < len; read_index++ ) {
   if ( str[read_index] >= '0' && str[read_index] <= '9' ) {
    // Keep digits
    str[write_index++]= str[read_index];
@@ -954,11 +955,10 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  double tjd_zero= 0.0; // for parsing TESS TICA FFIs
  double midtjd= 0.0;   // for parsing TESS TICA FFIs
 
- /* fitsio */
+ // fitsio 
  fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
- // long  fpixel = 1, naxis = 2, nelements;//, exposure;
  double exposure= 0.0; // if exposure != 0.0 -- assuming we have correctly read it
- /*End of time variables */
+ // End of time variables
  long naxes[2];
 
  // LOG-files
@@ -1129,27 +1129,6 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   //
   EXPOSURE_COMMENT[2048 - 1]= '\0'; // just in case
   if ( strlen( EXPOSURE_COMMENT ) > 8 ) {
-   /*
-   if ( NULL == strstr( EXPOSURE_COMMENT, "Seconds" ) && NULL == strstr( EXPOSURE_COMMENT, "seconds" ) ) {
-    // here we should use case rather than multiple ifs?
-    if ( NULL != strstr( EXPOSURE_COMMENT, "Minutes" ) ) {
-     exposure= 60.0 * exposure;
-    }
-    if ( NULL != strstr( EXPOSURE_COMMENT, "minutes" ) ) {
-     exposure= 60.0 * exposure;
-    }
-    if ( NULL != strstr( EXPOSURE_COMMENT, "Hours" ) ) {
-     exposure= 3600.0 * exposure;
-    }
-    if ( NULL != strstr( EXPOSURE_COMMENT, "hours" ) ) {
-     exposure= 3600.0 * exposure;
-    }
-    // TESS
-    if ( NULL != strstr( EXPOSURE_COMMENT, "[d] time on source" ) ) {
-     exposure= 86400.0 * exposure;
-    }
-   }
-   */
    // Trying to simplify
    if ( strcasecmp(EXPOSURE_COMMENT, "seconds") != 0 ) {
     if ( strcasecmp(EXPOSURE_COMMENT, "minutes") == 0 ) {
@@ -2086,7 +2065,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    } else {
     // somehting is messed up here - fallback to zeroes in the log file
     //sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", 0, 0, 0, 0, 0, 0, exposure );
-    sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%06.3lf  exp= %4.0lf  ", 0, 0, 0, 0, 0, 0, exposure );
+    sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%06.3lf  exp= %4.0lf  ", 0, 0, 0, 0, 0, 0.0, exposure );
    }
   }
   //

@@ -6,10 +6,13 @@
 void rebinImage( float *input, float *output, int width, int height ) {
  int new_width= width / 2;
  int new_height= height / 2;
+ int i= 0;
+ int j= 0;
+ float sum= 0;
 
- for ( int i= 0; i < new_height; i++ ) {
-  for ( int j= 0; j < new_width; j++ ) {
-   float sum= 0;
+ for ( i= 0; i < new_height; i++ ) {
+  for ( j= 0; j < new_width; j++ ) {
+   sum= 0;
    sum+= input[2 * i * width + 2 * j];
    sum+= input[2 * i * width + 2 * j + 1];
    sum+= input[( 2 * i + 1 ) * width + 2 * j];
@@ -39,6 +42,9 @@ int main( int argc, char **argv ) {
  long new_width;
  long new_height;
  float *output_data;
+ 
+ long new_naxes[2];
+ short *int_data;
 
  if ( 2 != argc ) {
   fprintf( stderr, "Usage: %s unbinned.fits\n", argv[0] );
@@ -90,7 +96,7 @@ int main( int argc, char **argv ) {
  rebinImage( input_data, output_data, naxes[0], naxes[1] );
 
  // Convert float data to 16-bit integer
- short *int_data= (short *)malloc( new_width * new_height * sizeof( short ) );
+ int_data= (short *)malloc( new_width * new_height * sizeof( short ) );
  if ( int_data == NULL ) {
   printf( "Memory allocation error\n" );
   return 1;
@@ -102,7 +108,7 @@ int main( int argc, char **argv ) {
  if ( fits_create_file( &fptr, "binned_image.fits", &status ) )
   fits_report_error( stderr, status );
 
- long new_naxes[2]= { new_width, new_height };
+ new_naxes= { new_width, new_height };
  if ( fits_create_img( fptr, SHORT_IMG, 2, new_naxes, &status ) )
   fits_report_error( stderr, status );
 
