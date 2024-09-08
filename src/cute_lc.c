@@ -78,9 +78,9 @@ int main( int argc, char **argv ) {
   if ( mag_err[observation_index[observation_counter]] < 0.001 ) {
    mag_err[observation_index[observation_counter]]= 0.001;
   }
-  //
-  //fprintf( stdout, "%.5lf  %6.3lf %5.3lf\n", jd[observation_index[observation_counter]], mag[observation_index[observation_counter]], mag_err[observation_index[observation_counter]] );
-  fprintf( stdout, "%.8lf  %6.3lf %5.3lf\n", jd[observation_index[observation_counter]], mag[observation_index[observation_counter]], mag_err[observation_index[observation_counter]] );
+  // well, I actually want JD rounded to 1 sec for the cute output
+  fprintf( stdout, "%.5lf  %6.3lf %5.3lf\n", jd[observation_index[observation_counter]], mag[observation_index[observation_counter]], mag_err[observation_index[observation_counter]] );
+  //fprintf( stdout, "%.8lf  %6.3lf %5.3lf\n", jd[observation_index[observation_counter]], mag[observation_index[observation_counter]], mag_err[observation_index[observation_counter]] );
  }
 
  if ( argc == 2 )

@@ -34,12 +34,6 @@ jobs:
     - name: Install libpng
       run: sudo port install libpng
       if: env.SKIP != 'true'
-    - name: Install astropy
-      run: |
-        sudo port install py-astropy 
-        sudo port select --set python python3
-        python3 -c "import astropy; print(astropy.__version__)"
-      if: env.SKIP != 'true'
     - name: Install shellcheck
       run: sudo port install shellcheck
       if: env.SKIP != 'true'
