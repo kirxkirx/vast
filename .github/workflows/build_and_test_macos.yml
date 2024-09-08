@@ -37,7 +37,8 @@ jobs:
     - name: Install astropy
       run: |
         sudo port install py-astropy 
-        python -c "import astropy; print(astropy.__version__)"
+        sudo port select --set python python3
+        python3 -c "import astropy; print(astropy.__version__)"
       if: env.SKIP != 'true'
     - name: Install shellcheck
       run: sudo port install shellcheck
