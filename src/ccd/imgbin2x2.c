@@ -108,7 +108,8 @@ int main( int argc, char **argv ) {
  if ( fits_create_file( &fptr, "binned_image.fits", &status ) )
   fits_report_error( stderr, status );
 
- new_naxes= { new_width, new_height };
+ new_naxes[0]= new_width;
+ new_naxes[1]= new_height;
  if ( fits_create_img( fptr, SHORT_IMG, 2, new_naxes, &status ) )
   fits_report_error( stderr, status );
 

@@ -464,7 +464,7 @@ int main( int argc, char **argv ) {
 // fprintf( stdout, "Julian year %14.9lf\n", Julian_year );
  fprintf( stdout, "Julian year %16.11lf\n", Julian_year );
  // The problem is that the sub-second accuracy is lost in this output
- fprintf( stdout, " MPC format %04d %02d %8.5lf\n", structureTIME__rounded->tm_year - 100 + 2000, structureTIME__rounded->tm_mon + 1, (double)structureTIME__rounded->tm_mday + (double)structureTIME__rounded->tm_hour / 24.0 + (double)structureTIME__rounded->tm_min / ( 24.0 * 60 ) + ( (double)structureTIME__rounded->tm_sec double_fractional_seconds_only ) / ( 24.0 * 60 * 60 ) );
+ fprintf( stdout, " MPC format %04d %02d %8.5lf\n", structureTIME__rounded->tm_year - 100 + 2000, structureTIME__rounded->tm_mon + 1, (double)structureTIME__rounded->tm_mday + (double)structureTIME__rounded->tm_hour / 24.0 + (double)structureTIME__rounded->tm_min / ( 24.0 * 60 ) + ( (double)structureTIME__rounded->tm_sec + double_fractional_seconds_only ) / ( 24.0 * 60 * 60 ) );
  //fprintf( stdout, " MPC format %04d %02d %8.5lf\n", structureTIME__rounded->tm_year - 100 + 2000, structureTIME__rounded->tm_mon + 1, (double)structureTIME__rounded->tm_mday + (double)structureTIME__rounded->tm_hour / 24.0 + (double)structureTIME__rounded->tm_min / ( 24.0 * 60 ) + (double)structureTIME__rounded->tm_sec / ( 24.0 * 60 * 60 ) );
  // fprintf( stdout, " MPC format %04d %02d %8.6lf\n", structureTIME__rounded->tm_year - 100 + 2000, structureTIME__rounded->tm_mon + 1, (double)structureTIME__rounded->tm_mday + (double)structureTIME__rounded->tm_hour / 24.0 + (double)structureTIME__rounded->tm_min / ( 24.0 * 60 ) + (double)structureTIME__rounded->tm_sec / ( 24.0 * 60 * 60 ) );
  // The problem is that the sub-second accuracy is lost in this output
