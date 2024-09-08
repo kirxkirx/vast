@@ -17711,7 +17711,8 @@ if [ -f ../individual_images_test/1630+3250.20150511T215921000.fit ];then
  #
  #util/get_image_date ../individual_images_test/1630+3250.20150511T215921000.fit | grep --quiet "Exposure  20 sec, 11.05.2015 21:59:20   = JD  2457154.41632 mid. exp."
  #util/get_image_date ../individual_images_test/1630+3250.20150511T215921000.fit | grep --quiet "Exposure  20 sec, 11.05.2015 21:59:21   = JD  2457154.41633 mid. exp."
- util/get_image_date ../individual_images_test/1630+3250.20150511T215921000.fit | grep --quiet "Exposure 20 sec, 11.05.2015 21:59:20.999 = JD 2457154.41633 mid. exp."
+ #util/get_image_date ../individual_images_test/1630+3250.20150511T215921000.fit | grep --quiet "Exposure 20 sec, 11.05.2015 21:59:20.999 = JD 2457154.41633 mid. exp."
+ util/get_image_date ../individual_images_test/1630+3250.20150511T215921000.fit | grep --quiet "Exposure 20 sec, 11.05.2015 21:59:20.999 = JD 2457154.41633101 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ULTRAWIDEFIELD004"
@@ -18477,7 +18478,8 @@ if [ -f ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits ];t
  # Run the test
  echo "Blank image with MJD-OBS test " 1>&2
  echo -n "Blank image with MJD-OBS test: " >> vast_test_report.txt 
- util/get_image_date ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits | grep --quiet 'JD (mid. exp.) 2450862.85250 = 1998-02-18 08:27:36'
+ #util/get_image_date ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits | grep --quiet 'JD (mid. exp.) 2450862.85250 = 1998-02-18 08:27:36'
+ util/get_image_date ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits | grep --quiet 'JD (mid. exp.) 2450862.85250000 = 1998-02-18 08:27:36.000'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES BLANKMJDOBS001"
@@ -19081,7 +19083,8 @@ if [ -f ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.f
  fi
  #
  #util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit 2>&1 | grep --quiet 'DATE-OBS= 2018-12-09T10:25:07'
- util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit 2>&1 | grep --quiet 'DATE-OBS= 2018-12-09T10:25:10'
+ #util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit 2>&1 | grep --quiet 'DATE-OBS= 2018-12-09T10:25:10'
+ util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit 2>&1 | grep --quiet 'DATE-OBS= 2018-12-09T10:25:09.789'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2000a"
@@ -19450,7 +19453,8 @@ if [ -f ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g
  echo "Stacked DSLR image (BITPIX=-32, EXPSTART, EXPEND) created with Siril test " 1>&2
  echo -n "Stacked DSLR image (BITPIX=-32, EXPSTART, EXPEND) created with Siril test: " >> vast_test_report.txt 
  #
- util/get_image_date ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit | grep --quiet 'JD (mid. exp.) 2459177.84869 = 2020-11-24 08:22:06 (UT)'
+ #util/get_image_date ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit | grep --quiet 'JD (mid. exp.) 2459177.84869 = 2020-11-24 08:22:06 (UT)'
+ util/get_image_date ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit | grep --quiet 'JD (mid. exp.) 2459177.84868634 = 2020-11-24 08:22:06.500 (UT)'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND001"
@@ -19683,7 +19687,8 @@ if [ -f ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4
  echo "TICA TESS FFI individual image test " 1>&2
  echo -n "TICA TESS FFI individual image test: " >> vast_test_report.txt 
  #
- util/get_image_date ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep --quiet 'JD (mid. exp.) 2460168.93614 = 2023-08-12 10:28:03 (TDB)'
+ #util/get_image_date ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep --quiet 'JD (mid. exp.) 2460168.93614 = 2023-08-12 10:28:03 (TDB)'
+ util/get_image_date ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep --quiet 'JD (mid. exp.) 2460168.93614120 = 2023-08-12 10:28:02.599 (TDB)'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG001"
