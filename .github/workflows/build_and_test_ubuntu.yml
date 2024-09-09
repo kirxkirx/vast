@@ -8,7 +8,7 @@ jobs:
   ubuntu2204build:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Update apt-get
         run: sudo apt-get update
       - name: Fix
@@ -31,7 +31,7 @@ jobs:
     needs: ubuntu2204build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Update apt-get
         run: sudo apt-get update
       - name: Install gfortran

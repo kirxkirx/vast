@@ -11,7 +11,7 @@ jobs:
     # Write an if statement that is always true/false
     if: true
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: brew update
       run: brew update
     # The following packages are were pre-installed
@@ -50,7 +50,7 @@ jobs:
     needs: build_homebrew
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Check commit message
       id: check_commit
       run: |
