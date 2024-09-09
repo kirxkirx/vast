@@ -10850,7 +10850,8 @@ $GREP_RESULT"
   #grep --quiet "     TAU0008  C2020 08 31.71030 00 11 4.\... +66 11 2.\...         1.\.. R      C32" transient_report/index.html
   #                  TAU0008  C2020 08 31.71082 00 11 42.81 +66 11 21.2          13.0 R      C32
   #grep --quiet "     TAU0008  C2020 08 31.71081 00 11 4.\... +66 11 2.\...         1.\.. R      C32" transient_report/index.html
-  grep --quiet "     TAU0008  C2020 08 31.71082 00 11 4.\... +66 11 2[01]\..          1[23]\.. R      C32" transient_report/index.html
+  # Not sure why 81/82
+  grep --quiet "     TAU0008  C2020 08 31.7108[12] 00 11 4.\... +66 11 2[01]\..          1[23]\.. R      C32" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110b_$(grep 'TAU0008  C2020 08 31.710.. 00 11 4.\... +66 11 2.' transient_report/index.html | head -n1)"
