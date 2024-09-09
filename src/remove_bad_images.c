@@ -71,7 +71,7 @@ void get_image_filename_from_vast_image_details_log_using_JD( double JD ) {
   if ( 2 != sscanf( str, "exp_start= %*s %*s  exp=   %*s  JD= %lf  ap= %*s  rotation=   %*s  *detected=  %*s  *matched=  %*s  %*s  %s", &logJD, filename ) )
    continue;
   if ( fabs( JD - logJD ) < 0.00001 ) {
-   //fprintf( stderr, "%.5lf %s\n", JD, filename );
+   // fprintf( stderr, "%.5lf %s\n", JD, filename );
    fprintf( stderr, "%.8lf %s\n", JD, filename );
    image_found_in_logfile= 1;
    break;
@@ -83,10 +83,10 @@ void get_image_filename_from_vast_image_details_log_using_JD( double JD ) {
  vast_list_of_bad_images_file= fopen( "vast_list_of_bad_images.log", "a" );
  if ( vast_list_of_bad_images_file != NULL ) {
   if ( image_found_in_logfile == 1 ) {
-   //fprintf( vast_list_of_bad_images_file, "%.5lf %s\n", JD, filename );
+   // fprintf( vast_list_of_bad_images_file, "%.5lf %s\n", JD, filename );
    fprintf( vast_list_of_bad_images_file, "%.8lf %s\n", JD, filename );
   } else {
-   //fprintf( vast_list_of_bad_images_file, "%.5lf \n", JD );
+   // fprintf( vast_list_of_bad_images_file, "%.5lf \n", JD );
    fprintf( vast_list_of_bad_images_file, "%.8lf \n", JD );
   }
   fclose( vast_list_of_bad_images_file );

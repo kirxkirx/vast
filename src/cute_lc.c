@@ -80,7 +80,7 @@ int main( int argc, char **argv ) {
   }
   // well, I actually want JD rounded to 1 sec for the cute output
   fprintf( stdout, "%.5lf  %6.3lf %5.3lf\n", jd[observation_index[observation_counter]], mag[observation_index[observation_counter]], mag_err[observation_index[observation_counter]] );
-  //fprintf( stdout, "%.8lf  %6.3lf %5.3lf\n", jd[observation_index[observation_counter]], mag[observation_index[observation_counter]], mag_err[observation_index[observation_counter]] );
+  // fprintf( stdout, "%.8lf  %6.3lf %5.3lf\n", jd[observation_index[observation_counter]], mag[observation_index[observation_counter]], mag_err[observation_index[observation_counter]] );
  }
 
  if ( argc == 2 )

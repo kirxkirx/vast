@@ -32,7 +32,7 @@ void write_fake_log_file( double *jd, size_t *Nobs ) {
   exit( EXIT_FAILURE );
  };
  for ( i= 0; i < ( *Nobs ); i++ ) {
-  //fprintf( logfile, "JD= %.5lf\n", jd[i] );
+  // fprintf( logfile, "JD= %.5lf\n", jd[i] );
   fprintf( logfile, "JD= %.8lf\n", jd[i] );
  }
  fclose( logfile );

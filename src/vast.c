@@ -4171,7 +4171,7 @@ int main( int argc, char **argv ) {
  progress( 1, Num );
 
  // log first observation
- //sprintf( log_output, "JD= %13.5lf  ap= %4.1lf  rotation= %7.3lf  *detected= %5d  *matched= %5d  status=OK     %s\n", JD, aperture, 0.0, NUMBER1, NUMBER1, input_images[0] );
+ // sprintf( log_output, "JD= %13.5lf  ap= %4.1lf  rotation= %7.3lf  *detected= %5d  *matched= %5d  status=OK     %s\n", JD, aperture, 0.0, NUMBER1, NUMBER1, input_images[0] );
  sprintf( log_output, "JD= %16.8lf  ap= %4.1lf  rotation= %7.3lf  *detected= %5d  *matched= %5d  status=OK     %s\n", JD, aperture, 0.0, NUMBER1, NUMBER1, input_images[0] );
  write_string_to_log_file( log_output, sextractor_catalog );
 
@@ -4211,7 +4211,7 @@ int main( int argc, char **argv ) {
     aperture= 99.9; // Do not corrupt the log file with bad apertures
    }
    write_string_to_log_file( log_output, sextractor_catalog );
-   //sprintf( log_output, "JD= %13.5lf  ap= %4.1lf  ", JD, aperture );
+   // sprintf( log_output, "JD= %13.5lf  ap= %4.1lf  ", JD, aperture );
    sprintf( log_output, "JD= %16.8lf  ap= %4.1lf  ", JD, aperture );
    write_string_to_log_file( log_output, sextractor_catalog );
 
@@ -6027,8 +6027,8 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
    }
   } else {
    fprintf( stderr, "Error reading file %s\n", input_images[n] );
-   // Write error to the logfile 
-   //sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4d  JD= %13.5lf  ap= %4.1lf  rotation= %7.3lf  *detected= %5d  *matched= %5d  status=ERROR  %s\n", 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0, 0, input_images[n] );
+   // Write error to the logfile
+   // sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4d  JD= %13.5lf  ap= %4.1lf  rotation= %7.3lf  *detected= %5d  *matched= %5d  status=ERROR  %s\n", 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0, 0, input_images[n] );
    sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d.000  exp= %4d.000  JD= %16.8lf  ap= %4.1lf  rotation= %7.3lf  *detected= %5d  *matched= %5d  status=ERROR  %s\n", 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0, 0, input_images[n] );
    write_string_to_log_file( log_output, sextractor_catalog );
 

@@ -25,7 +25,7 @@ void rebinImage( float *input, float *output, int width, int height ) {
 void convertFloatToShort( float *input, short *output, int size, float scale ) {
  int i;
  int temp;
- 
+
  for ( i= 0; i < size; i++ ) {
   temp= (int)( input[i] * scale );
   if ( temp > 32767 )
@@ -45,7 +45,7 @@ int main( int argc, char **argv ) {
  long new_width;
  long new_height;
  float *output_data;
- 
+
  long new_naxes[2];
  short *int_data;
 

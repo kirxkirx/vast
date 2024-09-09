@@ -287,7 +287,7 @@ int main( int argc, char **argv ) {
  make_fake_phases( jd, phase, m, N_obs, &N_obs_fake, phaserangetype );
 
  for ( i= 0; i < N_obs_fake; i++ ) {
-  //fprintf( stdout, "%+10.7lf %8.4lf %.5lf\n", phase[i], m[i], jd[i] );
+  // fprintf( stdout, "%+10.7lf %8.4lf %.5lf\n", phase[i], m[i], jd[i] );
   fprintf( stdout, "%+10.7lf %8.4lf %.8lf\n", phase[i], m[i], jd[i] );
  }
 

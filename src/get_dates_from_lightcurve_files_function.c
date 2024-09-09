@@ -10,7 +10,7 @@ void write_fake_log_file( double *jd, int *Nobs ) {
   exit( EXIT_FAILURE );
  };
  for ( i= 0; i < ( *Nobs ); i++ ) {
-  //fprintf( logfile, "JD= %.5lf\n", jd[i] );
+  // fprintf( logfile, "JD= %.5lf\n", jd[i] );
   fprintf( logfile, "JD= %.8lf\n", jd[i] );
  }
  fclose( logfile );
@@ -121,12 +121,12 @@ void get_dates( double *jd, int *Nobs ) {
 
      // Check the input date, note that wedon't know if it's JD or MJD
      if ( jd[( *Nobs )] < EXPECTED_MIN_MJD ) {
-      //fprintf( stderr, "ERROR in get_dates(): JD%.5lf<%.5lf #%s#\n", jd[( *Nobs )], EXPECTED_MIN_MJD, jd_str );
+      // fprintf( stderr, "ERROR in get_dates(): JD%.5lf<%.5lf #%s#\n", jd[( *Nobs )], EXPECTED_MIN_MJD, jd_str );
       fprintf( stderr, "ERROR in get_dates(): JD%.8lf<%.8lf #%s#\n", jd[( *Nobs )], EXPECTED_MIN_MJD, jd_str );
       exit( EXIT_FAILURE );
      }
      if ( jd[( *Nobs )] > EXPECTED_MAX_JD ) {
-      //fprintf( stderr, "ERROR in get_dates(): JD%.5lf>%.5lf #%s#\n", jd[( *Nobs )], EXPECTED_MAX_JD, jd_str );
+      // fprintf( stderr, "ERROR in get_dates(): JD%.5lf>%.5lf #%s#\n", jd[( *Nobs )], EXPECTED_MAX_JD, jd_str );
       fprintf( stderr, "ERROR in get_dates(): JD%.8lf>%.8lf #%s#\n", jd[( *Nobs )], EXPECTED_MAX_JD, jd_str );
       exit( EXIT_FAILURE );
      }

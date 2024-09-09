@@ -162,13 +162,13 @@ int convert_nova_helper_format( char *lightcurvefilename, char *path_to_vast_str
  // Generate the converted filename
  snprintf( converted_filename, MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER, "%s/%s_converted.dat", converted_directory, original_filename );
  // Ensure null-termination
- lightcurvefilename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1] = '\0';
+ lightcurvefilename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1]= '\0';
 
  fprintf( stderr, "nova_helper data format detected! Converting %s to %s\n", basename( lightcurvefilename ), converted_filename );
 
  // Check the length of converted_filename before writing the output
  if ( strlen( converted_filename ) > FILENAME_LENGTH ) {
-  fprintf(stderr, "ERROR in on-the-fly lightcurv format conversion - the output filename is too long!");
+  fprintf( stderr, "ERROR in on-the-fly lightcurv format conversion - the output filename is too long!" );
   return 1;
  }
 
@@ -191,7 +191,7 @@ int convert_nova_helper_format( char *lightcurvefilename, char *path_to_vast_str
 
  strncpy( lightcurvefilename, converted_filename, FILENAME_LENGTH );
  // Ensure null-termination
- lightcurvefilename[FILENAME_LENGTH - 1] = '\0';
+ lightcurvefilename[FILENAME_LENGTH - 1]= '\0';
 
  return 0;
 }
@@ -232,13 +232,13 @@ int convert_tess_format( char *lightcurvefilename, char *path_to_vast_string ) {
  // Generate the converted filename
  snprintf( converted_filename, MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER, "%s/%s_converted.dat", converted_directory, original_filename );
  // Ensure null-termination
- lightcurvefilename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1] = '\0';
+ lightcurvefilename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1]= '\0';
 
  fprintf( stderr, "TESS LightKurve format detected! Converting %s to %s\n", basename( lightcurvefilename ), converted_filename );
 
  // Check the length of converted_filename before writing the output
  if ( strlen( converted_filename ) > FILENAME_LENGTH ) {
-  fprintf(stderr, "ERROR in on-the-fly lightcurv format conversion - the output filename is too long!");
+  fprintf( stderr, "ERROR in on-the-fly lightcurv format conversion - the output filename is too long!" );
   return 1;
  }
 
@@ -263,7 +263,7 @@ int convert_tess_format( char *lightcurvefilename, char *path_to_vast_string ) {
 
  strncpy( lightcurvefilename, converted_filename, FILENAME_LENGTH );
  // Ensure null-termination
- lightcurvefilename[FILENAME_LENGTH - 1] = '\0';
+ lightcurvefilename[FILENAME_LENGTH - 1]= '\0';
 
  return 0;
 }
@@ -304,13 +304,13 @@ int convert_atlas_format( char *lightcurvefilename, char *path_to_vast_string ) 
  // Generate the converted filename
  snprintf( converted_filename, MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER, "%s/%s_converted.dat", converted_directory, original_filename );
  // Ensure null-termination
- lightcurvefilename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1] = '\0';
+ lightcurvefilename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1]= '\0';
 
  fprintf( stderr, "ATLAS data format detected! Converting %s to %s\n", basename( lightcurvefilename ), converted_filename );
 
  // Check the length of converted_filename before writing the output
  if ( strlen( converted_filename ) > FILENAME_LENGTH ) {
-  fprintf(stderr, "ERROR in on-the-fly lightcurv format conversion - the output filename is too long!");
+  fprintf( stderr, "ERROR in on-the-fly lightcurv format conversion - the output filename is too long!" );
   return 1;
  }
 
@@ -335,7 +335,7 @@ int convert_atlas_format( char *lightcurvefilename, char *path_to_vast_string ) 
 
  strncpy( lightcurvefilename, converted_filename, FILENAME_LENGTH );
  // Ensure null-termination
- lightcurvefilename[FILENAME_LENGTH - 1] = '\0';
+ lightcurvefilename[FILENAME_LENGTH - 1]= '\0';
 
  return 0;
 }
@@ -403,13 +403,13 @@ int convert_asassn_v1_format( char *lightcurvefilename, char *path_to_vast_strin
  // Generate the converted filename
  snprintf( converted_filename, MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER, "%s/%s_converted.dat", converted_directory, original_filename );
  // Ensure null-termination
- lightcurvefilename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1] = '\0';
+ lightcurvefilename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1]= '\0';
 
  fprintf( stderr, "ASAS-SN v1 data format detected! Converting %s to %s\n", basename( lightcurvefilename ), converted_filename );
 
  // Check the length of converted_filename before writing the output
  if ( strlen( converted_filename ) > FILENAME_LENGTH ) {
-  fprintf(stderr, "ERROR in on-the-fly lightcurv format conversion - the output filename is too long!");
+  fprintf( stderr, "ERROR in on-the-fly lightcurv format conversion - the output filename is too long!" );
   return 1;
  }
 
@@ -434,7 +434,7 @@ int convert_asassn_v1_format( char *lightcurvefilename, char *path_to_vast_strin
 
  strncpy( lightcurvefilename, converted_filename, FILENAME_LENGTH );
  // Ensure null-termination
- lightcurvefilename[FILENAME_LENGTH - 1] = '\0';
+ lightcurvefilename[FILENAME_LENGTH - 1]= '\0';
 
  return 0;
 }
@@ -511,13 +511,13 @@ int convert_asassn_v2_format( char *lightcurvefilename, char *path_to_vast_strin
  // Generate the converted filename
  snprintf( converted_filename, MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER, "%s/%s_converted.dat", converted_directory, original_filename );
  // Ensure null-termination
- lightcurvefilename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1] = '\0';
+ lightcurvefilename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1]= '\0';
 
  fprintf( stderr, "ASAS-SN v2 data format detected! Converting %s to %s\n", basename( lightcurvefilename ), converted_filename );
 
  // Check the length of converted_filename before writing the output
  if ( strlen( converted_filename ) > FILENAME_LENGTH ) {
-  fprintf(stderr, "ERROR in on-the-fly lightcurv format conversion - the output filename is too long!");
+  fprintf( stderr, "ERROR in on-the-fly lightcurv format conversion - the output filename is too long!" );
   return 1;
  }
 
@@ -542,7 +542,7 @@ int convert_asassn_v2_format( char *lightcurvefilename, char *path_to_vast_strin
 
  strncpy( lightcurvefilename, converted_filename, FILENAME_LENGTH );
  // Ensure null-termination
- lightcurvefilename[FILENAME_LENGTH - 1] = '\0';
+ lightcurvefilename[FILENAME_LENGTH - 1]= '\0';
 
  return 0;
 }
@@ -584,13 +584,13 @@ int convert_ztf_snad_format( char *lightcurvefilename, char *path_to_vast_string
  // Generate the converted filename
  snprintf( converted_filename, MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER, "%s/%s_converted.dat", converted_directory, original_filename );
  // Ensure null-termination
- lightcurvefilename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1] = '\0';
+ lightcurvefilename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1]= '\0';
 
  fprintf( stderr, "ZTF SNAD data format detected! Converting %s to %s \n", basename( lightcurvefilename ), converted_filename );
 
  // Check the length of converted_filename before writing the output
  if ( strlen( converted_filename ) > FILENAME_LENGTH ) {
-  fprintf(stderr, "ERROR in on-the-fly lightcurv format conversion - the output filename is too long!");
+  fprintf( stderr, "ERROR in on-the-fly lightcurv format conversion - the output filename is too long!" );
   return 1;
  }
 
@@ -645,7 +645,7 @@ int convert_ztf_snad_format( char *lightcurvefilename, char *path_to_vast_string
 
  strncpy( lightcurvefilename, converted_filename, FILENAME_LENGTH );
  // Ensure null-termination
- lightcurvefilename[FILENAME_LENGTH - 1] = '\0';
+ lightcurvefilename[FILENAME_LENGTH - 1]= '\0';
 
  return 0;
 }
@@ -685,13 +685,13 @@ int convert_aavso_format( char *lightcurvefilename, char *path_to_vast_string ) 
  // Generate the converted filename
  snprintf( converted_filename, MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER, "%s/%s_converted.dat", converted_directory, original_filename );
  // Ensure null-termination
- lightcurvefilename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1] = '\0';
+ lightcurvefilename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1]= '\0';
 
  fprintf( stderr, "AAVSO data format detected! Converting %s to %s \n", basename( lightcurvefilename ), converted_filename );
 
  // Check the length of converted_filename before writing the output
  if ( strlen( converted_filename ) > FILENAME_LENGTH ) {
-  fprintf(stderr, "ERROR in on-the-fly lightcurv format conversion - the output filename is too long!");
+  fprintf( stderr, "ERROR in on-the-fly lightcurv format conversion - the output filename is too long!" );
   return 1;
  }
 
@@ -721,7 +721,7 @@ int convert_aavso_format( char *lightcurvefilename, char *path_to_vast_string ) 
 
  strncpy( lightcurvefilename, converted_filename, FILENAME_LENGTH );
  // Ensure null-termination
- lightcurvefilename[FILENAME_LENGTH - 1] = '\0';
+ lightcurvefilename[FILENAME_LENGTH - 1]= '\0';
 
  return 0;
 }
@@ -815,7 +815,7 @@ void remove_linear_trend( float *fit_jd, float *mag, int N, double A, double B, 
    E1= powf( 10.0f, -0.4f * plot_y[i] );
    E3= powf( 10.0f, -0.4f * (float)mean_mag );
    //
-   //fprintf( vast_lc_remove_linear_trend_logfile, "%.5lf  %9.5f  %9.5f  %9.5f \n", JD_double_array_for_log[i], corrected_mag[i], plot_y[i] + (float)mean_mag + (float)mag_zeropoint_for_log, mag[i] );
+   // fprintf( vast_lc_remove_linear_trend_logfile, "%.5lf  %9.5f  %9.5f  %9.5f \n", JD_double_array_for_log[i], corrected_mag[i], plot_y[i] + (float)mean_mag + (float)mag_zeropoint_for_log, mag[i] );
    fprintf( vast_lc_remove_linear_trend_logfile, "%.8lf  %9.5f  %9.5f  %9.5f \n", JD_double_array_for_log[i], corrected_mag[i], plot_y[i] + (float)mean_mag + (float)mag_zeropoint_for_log, mag[i] );
    mag[i]= corrected_mag[i];
   } // if( fit_jd[i]>jd_min && fit_jd[i]<jd_max )
@@ -2091,10 +2091,10 @@ int main( int argc, char **argv ) {
      // fprintf(stderr,"%f %f  %f %f\n",MIN(curX,curX2),MAX(curX,curX2),MIN(curY,curY2),MAX(curY,curY2));
      if ( float_JD[closest_num] > MIN( curX, curX2 ) && float_JD[closest_num] < MAX( curX, curX2 ) && mag[closest_num] > MIN( curY, curY2 ) && mag[closest_num] < MAX( curY, curY2 ) ) {
       // fprintf(stderr,"Nobs= %d\n",Nobs); // DEBUG!!
-      //fprintf( stderr, "Removing data point %5d %.5lf %8.4f\n", closest_num, JD[closest_num], mag[closest_num] );
+      // fprintf( stderr, "Removing data point %5d %.5lf %8.4f\n", closest_num, JD[closest_num], mag[closest_num] );
       fprintf( stderr, "Removing data point %5d %.8lf %8.4f\n", closest_num, JD[closest_num], mag[closest_num] );
       if ( NULL != removed_points_log ) {
-       //fprintf( removed_points_log, "%.5lf %8.4f\n", JD[closest_num], mag[closest_num] );
+       // fprintf( removed_points_log, "%.5lf %8.4f\n", JD[closest_num], mag[closest_num] );
        fprintf( removed_points_log, "%.8lf %8.4f\n", JD[closest_num], mag[closest_num] );
       }
       // kill it
@@ -2214,7 +2214,7 @@ int main( int argc, char **argv ) {
    */
    lightcurvefile= fopen( lightcurvefilename, "w" );
    for ( i= 0; i < Nobs; i++ ) {
-    //fprintf( lightcurvefile, "%.5lf %9.5f", JD[i], mag[i] );
+    // fprintf( lightcurvefile, "%.5lf %9.5f", JD[i], mag[i] );
     fprintf( lightcurvefile, "%.8lf %9.5f", JD[i], mag[i] );
     if ( lightcurve_format != 2 )
      fprintf( lightcurvefile, " %.5f", mag_err[i] );
@@ -2438,7 +2438,7 @@ int main( int argc, char **argv ) {
    // print out the point info
    // fprintf( stderr, "%13.5lf  %.5lf %.5lf\n", JD[closest_num], mag[closest_num], mag_err[closest_num] );
    // Print the selected data point
-   //fprintf( stderr, "%13.5lf  %.5lf %.5lf  ", JD[closest_num], mag[closest_num], mag_err[closest_num] );
+   // fprintf( stderr, "%13.5lf  %.5lf %.5lf  ", JD[closest_num], mag[closest_num], mag_err[closest_num] );
    fprintf( stderr, "%16.8lf  %.5lf %.5lf  ", JD[closest_num], mag[closest_num], mag_err[closest_num] );
    //
    // Convert JD to calendar time
