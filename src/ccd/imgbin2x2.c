@@ -23,8 +23,11 @@ void rebinImage( float *input, float *output, int width, int height ) {
 }
 
 void convertFloatToShort( float *input, short *output, int size, float scale ) {
- for ( int i= 0; i < size; i++ ) {
-  int temp= (int)( input[i] * scale );
+ int i;
+ int temp;
+ 
+ for ( i= 0; i < size; i++ ) {
+  temp= (int)( input[i] * scale );
   if ( temp > 32767 )
    temp= 32767;
   else if ( temp < -32768 )
