@@ -10857,6 +10857,20 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110b_$(grep 'TAU0008  C2020 08 31.710.. 00 11 4.\... +66 11 2.' transient_report/index.html | head -n1)"
   fi
   
+  # Test Stub variable star reports
+  grep --quiet 'V1391 Cas,2459093.2108,1[23]\...,0.05,CV' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110c"
+  fi
+  
+  # Test TOCP ID
+  grep 'TCP J00114297+6611190' transient_report/index.html | grep --quiet 'This object is listed in'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110_TOCPID"
+  fi
+  
   # Check the total number of candidates (should be exactly 1 in this test)
   NUMBER_OF_CANDIDATE_TRANSIENTS=`grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink'`
   #if [ $NUMBER_OF_CANDIDATE_TRANSIENTS -ne 1 ];then
