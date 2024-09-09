@@ -67,6 +67,7 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  JD_FROM_IMAGE_HEADER=$(echo "$DATE_INFO" | grep -v '= JD' | grep '        JD ' | awk '{print $2}')
  YEAR=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $3}')
  MONTH=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $4}')
+ # Currently util/get_image_date prints 'MPC format' with five decimal places
  DAYFRAC=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{printf "%.6f", $5}')
  #DATETIMEJD=`grep $FITSFILE vast_image_details.log |awk '{print $2" "$3"  "$5"  "$7}'`
  #DATE=`echo $DATETIMEJD|awk '{print $1}'`
@@ -127,8 +128,10 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  else
   echo -n "<tr><td>Reference image     &nbsp;&nbsp;</td>"
  fi # if [ "$FITSFILE" != "$REFERENCE_IMAGE" ] ;then
- DAYFRAC_SHORT=`echo "$DAYFRAC" | awk '{printf "%07.4f\n",$1}'` # purely for visualisation purposes
- JD_SHORT=`echo "$JD_FROM_IMAGE_HEADER" | awk '{printf "%.4f",$1}'` # purely for visualisation purposes
+ #DAYFRAC_SHORT=`echo "$DAYFRAC" | awk '{printf "%07.4f\n",$1}'` # purely for visualisation purposes
+ DAYFRAC_SHORT=`echo "$DAYFRAC" | awk '{printf "%08.5f\n",$1}'` # for visualisation purposes and will be used for MPC stub by make_report_in_HTML.sh
+ #JD_SHORT=`echo "$JD_FROM_IMAGE_HEADER" | awk '{printf "%.4f",$1}'` # purely for visualisation purposes
+ JD_SHORT=`echo "$JD_FROM_IMAGE_HEADER" | awk '{printf "%.5f",$1}'` # purely for visualisation purposes
  X=`echo "$X" | awk '{printf "%04.0f",$1}'` # purely for visualisation purposes
  Y=`echo "$Y" | awk '{printf "%04.0f",$1}'` # purely for visualisation purposes
  echo "<td>$YEAR $MONTH $DAYFRAC_SHORT &nbsp;&nbsp;</td><td> $JD_SHORT &nbsp;&nbsp;</td><td> $MAG &nbsp;&nbsp;</td><td>" $(lib/deg2hms $RADEC) "&nbsp;&nbsp;</td><td>$X $Y &nbsp;&nbsp;</td><td>$FITSFILE</td></tr>"
@@ -228,7 +231,8 @@ JD_MEAN_SHORT=$(echo $JD_MEAN |awk '{printf "%.4f",$1}')
 DATE_INFO=$(util/get_image_date "$JD_MEAN" 2>&1)
 YEAR_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $3}')
 MONTH_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $4}')
-DAYFRAC_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $5}' | awk '{printf "%08.5f",$1}')
+#DAYFRAC_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $5}' | awk '{printf "%08.5f",$1}')
+DAYFRAC_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{printf "%08.5f",$5}')
 DAYFRAC_MEAN_SHORT=$(echo "$DAYFRAC_MEAN" | awk '{printf "%07.4f",$1}')
 DAYFRAC_MEAN_SUPERSHORT=$(echo "$DAYFRAC_MEAN" | awk '{printf "%05.2f",$1}')
 
@@ -531,7 +535,7 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
  ############
 fi # if [ SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
 
-### Print it only of the source passes the final check in order not to confuse the test script
+### Print it only if the source passes the final check in order not to confuse the test script
 #     Reference image    2010 12 10.0833  2455540.5834  13.61  06:29:12.25 +26:24:19.4
 echo "<pre style='font-family:monospace;font-size:12px;'>
 Mean magnitude and position on the discovery images: 

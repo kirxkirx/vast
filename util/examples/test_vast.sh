@@ -10848,10 +10848,12 @@ $GREP_RESULT"
   # Test Stub MPC report line
   #                  TAU0008  C2020 08 31.71081 00 11 42.18 +66 11 20.30         13.0 R      C32
   #grep --quiet "     TAU0008  C2020 08 31.71030 00 11 4.\... +66 11 2.\...         1.\.. R      C32" transient_report/index.html
-  grep --quiet "     TAU0008  C2020 08 31.71081 00 11 4.\... +66 11 2.\...         1.\.. R      C32" transient_report/index.html
+  #                  TAU0008  C2020 08 31.71082 00 11 42.81 +66 11 21.2          13.0 R      C32
+  #grep --quiet "     TAU0008  C2020 08 31.71081 00 11 4.\... +66 11 2.\...         1.\.. R      C32" transient_report/index.html
+  grep --quiet "     TAU0008  C2020 08 31.71082 00 11 4.\... +66 11 2[01]\..          1[23]\.. R      C32" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110b_$(grep 'TAU0008  C2020 08 31.7108. 00 11 4.\... +66 11 2.' | head -n1)"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110b_$(grep 'TAU0008  C2020 08 31.710.. 00 11 4.\... +66 11 2.' transient_report/index.html | head -n1)"
   fi
   
   # Check the total number of candidates (should be exactly 1 in this test)
@@ -24133,7 +24135,8 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV016"
 fi
-util/get_image_date '1969-12-31T23:59:57.6' 2>&1 | grep --quiet 'MPC format 1969 12 31.99998'
+#util/get_image_date '1969-12-31T23:59:57.6' 2>&1 | grep --quiet 'MPC format 1969 12 31.99998'
+util/get_image_date '1969-12-31T23:59:57.6' 2>&1 | grep --quiet 'MPC format 1969 12 31.99997'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV017"
