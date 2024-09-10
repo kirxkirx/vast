@@ -1,4 +1,9 @@
 	:vast-1.0rc88
+	* VaST now properly understands fractions of a second in the observation time string. 
+	The lightcurve files produced by VaST now display JD with 8 decimal places corresponding 
+	to 0.00000001*86400 = 8.6400e-04 sec in order to avoid any rounding errors in timestamping 
+	short exposures. Of course, the JDs are only as accurate as the observing time information 
+	written to FITS image header by the computer that is controlling the camera.
 	* Pressing 'F' keyboard key ("Fast ID") in the lightcurve viewer './lc' will start fast known variable star
 	identification script 'util/identify_justname.sh' that will return only the name of the known variable.
 	The script will print no name if it could not recognize the object as a known variable star.
