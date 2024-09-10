@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 isFloat() {
     local num

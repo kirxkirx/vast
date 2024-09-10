@@ -138,7 +138,6 @@ exit 0
 fastest_vizier_mirror=''
 fastest_time=30000000000
 
-#!/bin/bash
 temp_file=choose_vizier_mirror$$.tmp
 if [ -f $temp_file ];then
  rm -f $temp_file

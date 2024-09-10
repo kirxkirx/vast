@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [ -d mypodtest_results ];then
  rm -rf mypodtest_results/
