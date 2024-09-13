@@ -759,7 +759,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -gt 2 ];then
   # There are more than two second-epoch images - do a preliminary VaST run to choose the two images with best seeing
   #cp -v default.sex.telephoto_lens_onlybrightstars_v1 default.sex >> transient_factory_test31.txt
-  cp -v $SEXTRACTOR_CONFIG_BRIGHTSTARPASS default.sex >> transient_factory_test31.txt
+  cp -v $SEXTRACTOR_CONFIG_BRIGHTSTARPASS default.sex >> transient_factory_test31.txt 2>&1
   echo "Preliminary VaST run on the second-epoch images only" >> transient_factory_test31.txt
   echo "./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit"  "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
   ./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit  "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" > prelim_vast_run.log 2>&1  
@@ -1051,39 +1051,39 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
  if [ $? -eq 0 ];then
   KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE=1
   if [ -f ../Nazar_bad_region.lst ];then
-   cp -v ../Nazar_bad_region.lst bad_region.lst >> transient_factory_test31.txt
+   cp -v ../Nazar_bad_region.lst bad_region.lst >> transient_factory_test31.txt 2>&1
   fi
  fi
  echo "$SECOND_EPOCH__FIRST_IMAGE" | grep --quiet -e "Planeta" -e "planeta" -e "PLANETA"
  if [ $? -eq 0 ];then
   KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE=1
   if [ -f ../Planeta_bad_region.lst ];then
-   cp -v ../Planeta_bad_region.lst bad_region.lst >> transient_factory_test31.txt
+   cp -v ../Planeta_bad_region.lst bad_region.lst >> transient_factory_test31.txt 2>&1
   fi
  fi
  echo "$SECOND_EPOCH__FIRST_IMAGE" | grep --quiet -e "Stas" -e "stas" -e "STAS"
  if [ $? -eq 0 ];then
   KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE=1
   if [ -f ../Stas_bad_region.lst ];then
-   cp -v ../Stas_bad_region.lst bad_region.lst >> transient_factory_test31.txt
+   cp -v ../Stas_bad_region.lst bad_region.lst >> transient_factory_test31.txt 2>&1
   fi
  fi
  echo "$SECOND_EPOCH__FIRST_IMAGE" | grep --quiet -e "STL-11000M" -e "NMW-STL"
  if [ $? -eq 0 ];then
   KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE=1
   if [ -f ../STL_bad_region.lst ];then
-   cp -v ../STL_bad_region.lst bad_region.lst >> transient_factory_test31.txt
+   cp -v ../STL_bad_region.lst bad_region.lst >> transient_factory_test31.txt 2>&1
   fi
  fi
  if [ -n "$BAD_REGION_FILE" ];then
   if [ -f "$BAD_REGION_FILE" ];then
    KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE=1
-   cp -v "$BAD_REGION_FILE" bad_region.lst >> transient_factory_test31.txt
+   cp -v "$BAD_REGION_FILE" bad_region.lst >> transient_factory_test31.txt 2>&1
   fi
  fi
  if [ $KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE -eq 0 ];then
   if [ -f ../bad_region.lst ];then
-   cp -v ../bad_region.lst . >> transient_factory_test31.txt
+   cp -v ../bad_region.lst . >> transient_factory_test31.txt 2>&1
   else
    echo "No bad regions file found ../bad_region.lst" >> transient_factory_test31.txt
   fi
@@ -1115,7 +1115,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
    echo "ERROR finding $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
    continue
   fi
-  cp -v "$SEXTRACTOR_CONFIG_FILE" default.sex >> transient_factory_test31.txt
+  cp -v "$SEXTRACTOR_CONFIG_FILE" default.sex >> transient_factory_test31.txt 2>&1
 
   echo "Starting VaST with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
   # Run VaST
@@ -1184,19 +1184,19 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
    if [ -n "$(find ../asassn_transients_list.txt -mmin -30 2>/dev/null)" ]; then
     # there is a fresh file - let's reuse it
     echo "Re-using ../asassn_transients_list.txt" >> transient_factory_test31.txt
-    cp -v ../asassn_transients_list.txt asassn_transients_list.txt 2>&1 >> transient_factory_test31.txt
+    cp -v ../asassn_transients_list.txt asassn_transients_list.txt >> transient_factory_test31.txt 2>&1
    else
     # the file was modified less than 30 min ago, or it isn't there at all or 'find' command didn't work
-    { $TIMEOUTCOMMAND lib/asassn_transients_list.sh > asassn_transients_list.txt && cp -v asassn_transients_list.txt ../asassn_transients_list.txt >> transient_factory_test31.txt || cp -v ../asassn_transients_list.txt asassn_transients_list.txt 2>&1 >> transient_factory_test31.txt; } &
+    { $TIMEOUTCOMMAND lib/asassn_transients_list.sh > asassn_transients_list.txt && cp -v asassn_transients_list.txt ../asassn_transients_list.txt >> transient_factory_test31.txt 2>&1 || cp -v ../asassn_transients_list.txt asassn_transients_list.txt >> transient_factory_test31.txt 2>&1; } &
    fi
    #
    if [ -n "$(find ../tocp_transients_list.txt -mmin -10 2>/dev/null)" ]; then
     # there is a fresh file - let's reuse it
     echo "Re-using ../tocp_transients_list.txt" >> transient_factory_test31.txt
-    cp -v ../tocp_transients_list.txt tocp_transients_list.txt 2>&1 >> transient_factory_test31.txt
+    cp -v ../tocp_transients_list.txt tocp_transients_list.txt >> transient_factory_test31.txt 2>&1
    else
     # the file was modified less than 10 min ago, or it isn't there at all or 'find' command didn't work
-    { $TIMEOUTCOMMAND lib/tocp_transients_list.sh > tocp_transients_list.txt && cp -v tocp_transients_list.txt ../tocp_transients_list.txt >> transient_factory_test31.txt || cp -v ../tocp_transients_list.txt tocp_transients_list.txt 2>&1 >> transient_factory_test31.txt; } &
+    { $TIMEOUTCOMMAND lib/tocp_transients_list.sh > tocp_transients_list.txt && cp -v tocp_transients_list.txt ../tocp_transients_list.txt >> transient_factory_test31.txt 2>&1 || cp -v ../tocp_transients_list.txt tocp_transients_list.txt >> transient_factory_test31.txt 2>&1 ; } &
    fi
    #   
   fi
@@ -1432,7 +1432,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     
   # We need photometric info for the reference image, and we need it now, so solving in the foreground
   if [ "$PHOTOMETRIC_CALIBRATION" != "TYCHO2_V" ];then
-   util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE_EPOCH__FIRST_IMAGE
+   util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE_EPOCH__FIRST_IMAGE >> transient_factory_test31.txt 2>&1
   fi
   
   # Array to hold names of temporary files
@@ -1506,32 +1506,32 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   case $PHOTOMETRIC_CALIBRATION in
    "APASS_B")
     echo "Calibrating the magnitude scale with APASS B stars" >> transient_factory_test31.txt
-    util/magnitude_calibration.sh B zero_point >> transient_factory_test31.txt
+    util/magnitude_calibration.sh B zero_point >> transient_factory_test31.txt 2>&1
     MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
     ;;
    "APASS_g")
     echo "Calibrating the magnitude scale with APASS g stars" >> transient_factory_test31.txt
-    util/magnitude_calibration.sh g zero_point >> transient_factory_test31.txt
+    util/magnitude_calibration.sh g zero_point >> transient_factory_test31.txt 2>&1
     MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
     ;;
    "APASS_V")
     echo "Calibrating the magnitude scale with APASS V stars" >> transient_factory_test31.txt
-    util/magnitude_calibration.sh V zero_point >> transient_factory_test31.txt
+    util/magnitude_calibration.sh V zero_point >> transient_factory_test31.txt 2>&1
     MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
     ;;
    "APASS_r")
     echo "Calibrating the magnitude scale with APASS r stars" >> transient_factory_test31.txt
-    util/magnitude_calibration.sh r zero_point >> transient_factory_test31.txt
+    util/magnitude_calibration.sh r zero_point >> transient_factory_test31.txt 2>&1
     MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
     ;;
    "APASS_R")
     echo "Calibrating the magnitude scale with APASS R stars" >> transient_factory_test31.txt
-    util/magnitude_calibration.sh R zero_point >> transient_factory_test31.txt
+    util/magnitude_calibration.sh R zero_point >> transient_factory_test31.txt 2>&1
     MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
     ;;
    "APASS_I")
     echo "Calibrating the magnitude scale with APASS I stars" >> transient_factory_test31.txt
-    util/magnitude_calibration.sh I zero_point >> transient_factory_test31.txt
+    util/magnitude_calibration.sh I zero_point >> transient_factory_test31.txt 2>&1
     MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$?
     ;;
    "TYCHO2_V")
@@ -1565,7 +1565,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=1
     ;;
   esac
-  grep 'Estimated ref. image limiting mag.:' vast_summary.log >> transient_factory_test31.txt
+  grep 'Estimated ref. image limiting mag.:' vast_summary.log >> transient_factory_test31.txt 2>&1
   echo "____ End of magnitude calibration ____" >> transient_factory_test31.txt
   # Check that the magnitude calibration actually worked
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
@@ -1787,7 +1787,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    for IMG_CATALOG_FOR_SEEING_STAT in image0000?.cat ;do
     cat "$IMG_CATALOG_FOR_SEEING_STAT" | awk '{if( $22 < 2 && $23 > 0 ) print $23}' | util/colstat 2>&1 | grep ' MEDIAN= ' | awk '{printf "%4.1f pix  ",$2}'
     basename $(grep "$IMG_CATALOG_FOR_SEEING_STAT" vast_images_catalogs.log  | awk '{print $2}')
-   done >> transient_factory_test31.txt
+   done >> transient_factory_test31.txt 
    #
    #
    lib/create_data
@@ -1809,7 +1809,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    #
    echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
    echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE"
-   util/transients/make_report_in_HTML.sh >> transient_factory_test31.txt
+   util/transients/make_report_in_HTML.sh >> transient_factory_test31.txt 2>&1
    echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
    echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE"
   fi # else if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 500 ];then
@@ -1890,7 +1890,7 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
      echo "$RADECSTR  -- asteroid (will NOT add it to exclusion list)" >> transient_factory_test31.txt
     fi
    done < exclusion_list_index_html.txt > exclusion_list_index_html.txt_noasteroids
-   mv -v exclusion_list_index_html.txt_noasteroids exclusion_list_index_html.txt >> transient_factory_test31.txt
+   mv -v exclusion_list_index_html.txt_noasteroids exclusion_list_index_html.txt >> transient_factory_test31.txt 2>&1
    #
    while read -r RADECSTR ;do
     grep -A8 "$RADECSTR" transient_report/index.html | grep 'galactic' | grep --quiet -e '<font color="red">0.0</font></b> pix' -e '<font color="red">0.1</font></b> pix' -e '<font color="red">0.2</font></b> pix'
@@ -1903,7 +1903,7 @@ echo "The analysis was running at $HOST" >> transient_factory_test31.txt
      echo "$RADECSTR  -- seems to be a hot pixel (will NOT add it to exclusion list)" >> transient_factory_test31.txt
     fi
    done < exclusion_list_index_html.txt > exclusion_list_index_html.txt_nohotpixels
-   mv -v exclusion_list_index_html.txt_nohotpixels exclusion_list_index_html.txt >> transient_factory_test31.txt
+   mv -v exclusion_list_index_html.txt_nohotpixels exclusion_list_index_html.txt >> transient_factory_test31.txt 2>&1
    #
    echo "###################################################################################" >> transient_factory_test31.txt
    ALLOW_EXCLUSION_LIST_UPDATE="YES"
@@ -1986,7 +1986,7 @@ cat planets.txt
 echo "############################################################
 Planet positions from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
 cat planets.txt >> transient_factory_test31.txt
-ls -lh planets.txt >> transient_factory_test31.txt
+ls -lh planets.txt >> transient_factory_test31.txt 2>&1
 #
 echo "############################################################
 Positions of slected moons from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
@@ -1994,7 +1994,7 @@ cat moons.txt
 echo "############################################################
 Positions of slected moons from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
 cat moons.txt >> transient_factory_test31.txt
-ls -lh moons.txt >> transient_factory_test31.txt
+ls -lh moons.txt >> transient_factory_test31.txt 2>&1
 #
 echo "############################################################
 Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets and http://aerith.net/comet/weekly/current.html ) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
@@ -2002,7 +2002,7 @@ cat comets.txt
 echo "############################################################
 Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets and http://aerith.net/comet/weekly/current.html ) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
 cat comets.txt >> transient_factory_test31.txt
-ls -lh comets.txt >> transient_factory_test31.txt
+ls -lh comets.txt >> transient_factory_test31.txt 2>&1
 #
 echo "############################################################
 List of recent ASAS-SN transients from https://www.astronomy.ohio-state.edu/asassn/transients.html :"
@@ -2010,7 +2010,7 @@ cat asassn_transients_list.txt
 echo "############################################################
 List of recent ASAS-SN transients from https://www.astronomy.ohio-state.edu/asassn/transients.html :" >> transient_factory_test31.txt
 cat asassn_transients_list.txt >> transient_factory_test31.txt
-ls -lh asassn_transients_list.txt >> transient_factory_test31.txt
+ls -lh asassn_transients_list.txt >> transient_factory_test31.txt 2>&1
 #
 echo "############################################################
 List of TOCP transients from http://www.cbat.eps.harvard.edu/unconf/tocp.html :"
@@ -2018,7 +2018,7 @@ cat tocp_transients_list.txt
 echo "############################################################
 List of TOCP transients from http://www.cbat.eps.harvard.edu/unconf/tocp.html :" >> transient_factory_test31.txt
 cat tocp_transients_list.txt >> transient_factory_test31.txt
-ls -lh tocp_transients_list.txt >> transient_factory_test31.txt
+ls -lh tocp_transients_list.txt >> transient_factory_test31.txt 2>&1
 ###############################################################################################################
 
 ## Finalize the HTML report

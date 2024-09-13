@@ -79,7 +79,9 @@ else
  fi
  # if the output catalog file is present and is not empty
  if [ ! -s "$UCAC5_REFERENCE_IMAGE_MATCH_FILE" ];then
+  # The following may fail both because the image canot be solved and becasue the phtometric/astrometric catalogs cannot be accessed
   if ! util/solve_plate_with_UCAC5 $REFERENCE_IMAGE ;then
+   echo "EXIT CODE $? for 'util/solve_plate_with_UCAC5 $REFERENCE_IMAGE'"
    echo "Sorry, the reference image could not be solved... :("
    exit 1
   fi

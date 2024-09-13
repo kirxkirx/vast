@@ -9752,7 +9752,7 @@ if [ -d ../NMW_Saturn_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### SATURN2_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   grep --quiet "Images used for photometry 4" transient_report/index.html
@@ -10193,7 +10193,7 @@ if [ -d ../NMW_Venus_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### VENUS_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -10404,7 +10404,7 @@ if [ -d ../NMW_calibration_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWCALIB_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -10741,7 +10741,7 @@ if [ -d ../NMW_find_NovaCas_august31_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNCASAUG31_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -10979,7 +10979,7 @@ if [ -d ../NMW_nomatch_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWLARGEOFFSET_DIST_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -11220,7 +11220,7 @@ if [ -d ../NMW_ATLAS_Mira_in_Ser1 ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWATLASMIRA_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -11697,7 +11697,7 @@ if [ -d ../NMW_Sgr1_NovaSgr20N4_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNSGR20N4_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -12013,7 +12013,7 @@ if [ -d ../NMW_Sco6_NovaSgr24N1_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNSGR24N1_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -12359,7 +12359,7 @@ if [ -d ../NMW__NovaVul24_Stas_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNVUL24ST_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -12563,7 +12563,7 @@ if [ -d ../NMW_Aql11_NovaHer21_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNHER21_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -12811,7 +12811,7 @@ if [ -d ../NMW_find_NovaCas21_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNCAS21_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -13059,7 +13059,7 @@ if [ -d ../NMW_Sco6_NovaSgr21N2_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNSGR21N2_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -13365,7 +13365,7 @@ if [ -d ../NMW_Sgr7_NovaSgr21N1_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNSGR21N1_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -13735,7 +13735,7 @@ if [ -d ../NMW_Vul7_NovaVul21_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNVUL21_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -13974,7 +13974,7 @@ if [ -d ../NMW_find_Mars_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWMARS_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -14151,7 +14151,7 @@ $GREP_RESULT"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWMARS3_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -14396,7 +14396,7 @@ if [ -d ../NMW_find_Chandra_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNFINDCHANDRA_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -14683,7 +14683,7 @@ if [ -d ../NMW_Sgr9_crash_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWSGR9CRASH_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -14952,7 +14952,7 @@ $GREP_RESULT"
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWSGR9CRASH_RERUN_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -15391,7 +15391,7 @@ if [ -d ../NMW-STL__find_Neptune_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWSTLFINDNEPTUNE_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -15771,7 +15771,7 @@ if [ -d ../NMW-STL__find_NovaVul24_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWSTLFINDNVUL24_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -16122,7 +16122,7 @@ if [ -d ../TICA_TESS__find_NovaVul24_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### TICATESSFINDNVUL24_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -16363,7 +16363,7 @@ if [ -d ../NMW-STL__plate_solve_failure_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWSTLPLATESOLVEFAILURE_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -16713,7 +16713,7 @@ if [ -d ../NMW-STL__NovaOph24N1_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWSTLNOPH24_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -17027,7 +17027,7 @@ if [ -d ../NMW__NovaOph24N1_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNOPH24_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -17315,7 +17315,7 @@ if [ -d ../TICA_TESS_mag_calibration_failure_test ];then
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### TICATESSMAGCALIBFAILURE_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
------------------
+----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
@@ -25472,11 +25472,13 @@ echo "75.328635 26.534227
 71.888726 23.515380
 69.380895 30.769591
 69.772106 30.890582" > scan_ucac5_test.input
+# UCAC5 test vast.sai.msu.ru
 N_REPLY_LINES=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@scan_ucac5_test.input -F submit="Upload Image" -F brightmag=2.000000 -F faintmag=13.500000 -F searcharcsec=23.350000 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' | wc -l)
 if [ $N_REPLY_LINES -lt 600 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_UCAC5_vast"
 fi
+# UCAC5 test scan.sai.msu.ru
 N_REPLY_LINES=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@scan_ucac5_test.input -F submit="Upload Image" -F brightmag=2.000000 -F faintmag=13.500000 -F searcharcsec=23.350000 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' | wc -l)
 if [ $N_REPLY_LINES -lt 600 ];then
  TEST_PASSED=0

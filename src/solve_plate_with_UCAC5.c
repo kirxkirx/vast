@@ -962,14 +962,17 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
  double APASS_g;
  double APASS_g_err;
 
- f= fopen( vizquery_output_filename, "r" );
- while ( NULL != fgets( string, 1024, f ) ) {
-  // moved down
-  // string[1024-1]='\0'; // just in case
+ int found_end_marker = 0; // Variable to track if "#END#   " is present
+                           // The presence of this marker will signify the VizieR output was not cut-off by a network error
 
-  // check the first character of the input string
-  if ( string[0] == '#' )
-   continue;
+
+ f= fopen( vizquery_output_filename, "r" );
+ if ( NULL == f ) {
+  return 1;
+ }
+ while ( NULL != fgets( string, 1024, f ) ) {
+
+  // quickly check the first character of the input string
   if ( string[0] == '\n' )
    continue;
   if ( string[0] == '-' )
@@ -977,6 +980,17 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
   if ( string[0] == '_' )
    continue;
   if ( string[0] == ' ' )
+   continue;
+
+
+  // Check for "#END#   " at the start of the line
+  if ( strncmp( string, "#END#   ", 7 ) == 0 ) {
+   found_end_marker = 1;
+   break; // we are already at the end of input
+  }
+
+  // sadly, the following can only be checked after searching for "#END#   "
+  if ( string[0] == '#' )
    continue;
   if ( string[0] != ' ' && string[0] != '0' && string[0] != '1' && string[0] != '2' && string[0] != '3' && string[0] != '4' && string[0] != '5' && string[0] != '6' && string[0] != '7' && string[0] != '8' && string[0] != '9' )
    continue;
@@ -1079,8 +1093,22 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
  fprintf( stderr, "Matched %d stars with APASS.\n", N_stars_matched_with_photometric_catalog );
  // if( N_stars_matched_with_photometric_catalog < 5 ) {
  if ( N_stars_matched_with_photometric_catalog < 4 ) {
-  fprintf( stderr, "ERROR: too few stars matched!\n" );
-  return 1;
+  // remove matched with photometric catalog marker from all stars
+  for ( i= 0; i < N; i++ ) {
+   stars[i].matched_with_photometric_catalog= 0;
+  }
+  // this way after APASS search failure and success of another phtoometric catalog search we hopefully wouldn't end up with a mixture of two photometric catalogs in the output
+  //
+  // Check if VizieR interaction was a success or was there a network error (if we didn't get the #END# marker)
+  if ( 0 != found_end_marker ) {
+   fprintf( stderr, "ERROR: Too few stars matched and #END# marker found!\n" );
+   return 2;
+  } else {
+   fprintf( stderr, "ERROR: Too few stars matched!\n" );
+   return 1;
+  }
+//  fprintf( stderr, "ERROR: too few stars matched!\n" );
+//  return 1;
  }
  return 0;
 }
@@ -1475,12 +1503,13 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  if ( vizquery_run_success != 0 || count_lines_in_ASCII_file( vizquery_output_filename ) < 5 ) {
   fprintf( stderr, "First attempt failed, trying alternative command\n" );
 
+  // Note the reverse order with repect to randChoice
   if ( randChoice == 0 ) {
    // This block will execute if the first executed command was the first option and it failed
-   sprintf( command, "curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' > %s", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
+   sprintf( command, "curl --insecure --connect-timeout 10 --retry 2 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' > %s", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
   } else {
    // This block will execute if the first executed command was the second option and it failed
-   sprintf( command, "curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' > %s", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
+   sprintf( command, "curl --insecure --connect-timeout 10 --retry 2 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' > %s", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
   }
 
   fprintf( stderr, "%s\n", command );
@@ -1490,31 +1519,6 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
    return 1;
   }
  }
-
- /*
- // original single-server code
- sprintf( command, "curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' > %s", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
- sprintf( command, "curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' > %s", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
-
- fprintf( stderr, "%s\n", command );
- vizquery_run_success= system( command );
- if ( vizquery_run_success != 0 ) {
-  fprintf( stderr, "ERROR: accessing UCAC5 at scan\n" );
-  return 1;
- }
-
- if ( count_lines_in_ASCII_file( vizquery_output_filename ) < 5 ) {
-  fprintf( stderr, "ERROR in search_UCAC5_at_scan(): the server response file contains too few lines!\n" );
-  return 1;
- }
- */
-
- /*
-  // reset the catalog match flag if this wasn't the first iteration
-  for ( i= 0; i < N; i++ ) {
-   stars[i].matched_with_astrometric_catalog= 0;
-  }
- */
 
 #ifdef DEBUGFILES
  scan_ucac5_debug_ds9_region= fopen( "scan_ucac5_output_debug_ds9.reg", "w" );
@@ -1526,20 +1530,13 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
 
  f= fopen( vizquery_output_filename, "r" );
  while ( NULL != fgets( string, 1024, f ) ) {
+
   if ( string[0] == '#' )
    continue;
+
   if ( string[0] == '\n' )
    continue;
-  /*
-    if ( string[0] == '-' )
-     continue;
-    if ( string[0] == '_' )
-     continue;
-    if ( string[0] == ' ' )
-     continue;
-    if ( string[0] != ' ' && string[0] != '0' && string[0] != '1' && string[0] != '2' && string[0] != '3' && string[0] != '4' && string[0] != '5' && string[0] != '6' && string[0] != '7' && string[0] != '8' && string[0] != '9' )
-     continue;
-  */
+
   epoch= pmRA= e_pmRA= pmDE= e_pmDE= 0.0;
   int sscanf_return_code= sscanf( string, "%lf %lf %lf %lf %lf %lf %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &catalog_mag, &epoch, &pmRA, &pmDE );
   if ( 6 > sscanf_return_code ) {
@@ -1857,6 +1854,10 @@ int search_PANSTARRS1_with_vizquery( struct detected_star *stars, int N, struct 
 }
 
 int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
+
+ int backoff_retry_count = 0;
+ int backoff_wait_time_sec = 1;
+
  char command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
  FILE *vizquery_input;
  int i;
@@ -1872,6 +1873,10 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
  sprintf( vizquery_input_filename, "vizquery_%d.input", pid );
  sprintf( vizquery_output_filename, "vizquery_%d.output", pid );
  vizquery_input= fopen( vizquery_input_filename, "w" );
+ if (vizquery_input == NULL) {
+  fprintf(stderr, "ERROR in search_APASS_with_vizquery(): Cannot open file %s for writing.\n", vizquery_input_filename);
+  return 1;
+ }
  search_stars_counter= 0;
  for ( i= 0; i < N; i++ ) {
   if ( stars[i].good_star == 1 && stars[i].matched_with_astrometric_catalog == 1 ) {
@@ -1896,18 +1901,6 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
 
  // Photometric catalog search
  fprintf( stderr, "Searchig APASS...\n" );
- // sprintf( command,
- //          "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=APASS -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
- //          path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
- // sprintf( command,
- //          "export BEST_VIZIER_MIRROR=%s; echo $BEST_VIZIER_MIRROR; export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$BEST_VIZIER_MIRROR -mime=text -source=APASS -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
- //          VIZIER_SITE, path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
- //  We need only one APASS table, not the keyword search for multipel catalogs
- // sprintf( command,
- //          "export BEST_VIZIER_MIRROR=%s; echo $BEST_VIZIER_MIRROR; export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$BEST_VIZIER_MIRROR -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
- //          VIZIER_SITE, path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
- //  vizier.u-strasbg.fr - seems to be the only mirror serving APASS
- //  changing vizier.u-strasbg.fr to vizier.cds.unistra.fr
  sprintf( command,
           "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=vizier.cds.unistra.fr -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
           path_to_vast_string,
@@ -1921,6 +1914,11 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
 
  fprintf( stderr, "%s\n", command );
  vizquery_run_success= system( command );
+ // Actually vizquery may return 0 on failure, it's the timeout that may return non-zero (while we may still have planty of good data lines)
+ if ( vizquery_run_success != 0 ) {
+  fprintf( stderr, "WARNING: it looks like there was a timeout while running lib/vizquery script.\n" );
+ }
+ /*
  if ( vizquery_run_success != 0 ) {
   fprintf( stderr, "WARNING: some problem running lib/vizquery script. Is this an internet connection problem? Retrying...\n" );
   sleep( 10 );
@@ -1930,16 +1928,36 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
    fprintf( stderr, "ERROR: problem running lib/vizquery script :(\n" );
   }
  }
+ */
 
  vizquery_run_success= read_APASS_from_vizquery( stars, N, vizquery_output_filename, catalog_search_parameters );
+ // If the output of vizquery looks bad or empty or whatever - this is when we retry
+ // read_APASS_from_vizquery returns 2 if the VizieR interaction was a success, but there are just too few stars
+ while ( 0 != vizquery_run_success && 2 != vizquery_run_success && backoff_retry_count < 5 ) {
+  backoff_retry_count= backoff_retry_count + 1;
+  backoff_wait_time_sec= backoff_wait_time_sec * 2;
+  fprintf( stderr, "WARNING: some problem reading the vizquery output. Is this an internet connection problem? Retrying in %d sec...\n", backoff_wait_time_sec );
+  sleep( backoff_retry_count );
+  fprintf( stderr, "%s\n", command );
+  vizquery_run_success= system( command );
+  if ( vizquery_run_success != 0 ) {
+   fprintf( stderr, "WARNING: it looks like there was a timeout while running lib/vizquery script. (retry %d)\n", backoff_retry_count );
+  }
+  vizquery_run_success= read_APASS_from_vizquery( stars, N, vizquery_output_filename, catalog_search_parameters );
+  if ( vizquery_run_success != 0 ) {
+   fprintf( stderr, "WARNING: failed to get APASS data with lib/vizquery script :(\n" );
+   //return 1; // we don't want to quit, the function will later return vizquery_run_success
+  }
+ }
+
 
  // delete temporary files only on success
- if ( vizquery_run_success == 0 ) {
+ //if ( vizquery_run_success == 0 ) {
   if ( 0 != unlink( vizquery_input_filename ) )
    fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_input_filename );
   if ( 0 != unlink( vizquery_output_filename ) )
    fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_output_filename );
- }
+ //}
 
  return vizquery_run_success;
 }
