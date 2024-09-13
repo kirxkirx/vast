@@ -204,48 +204,6 @@ void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, ch
  return;
 }
 
-void old_form_DATEOBS_and_EXPTIME_from_UNIXSEC( time_t middle_of_exposure_unixsec, double double_fractional_seconds_only, double exposure_sec, char *formed_str_DATEOBS, char *formed_str_EXPTIME ) {
- time_t exposure_start_time_unixsec;
- struct tm *struct_tm_pointer;
-
- int year, month, day, hour, minute;
- double second;
-
- char output_str_DATEOBS[FLEN_CARD];
- char output_str_EXPTIME[FLEN_CARD];
-
- exposure_start_time_unixsec= middle_of_exposure_unixsec - (time_t)( exposure_sec / 2.0 + 0.5 );
-
-#if defined( _POSIX_C_SOURCE ) || defined( _BSD_SOURCE ) || defined( _SVID_SOURCE )
- struct_tm_pointer= malloc( sizeof( struct tm ) );
- gmtime_r( &exposure_start_time_unixsec, struct_tm_pointer );
-#else
- struct_tm_pointer= gmtime( &exposure_start_time_unixsec );
-#endif
-
- year= struct_tm_pointer->tm_year + 1900;
- month= struct_tm_pointer->tm_mon + 1;
- day= struct_tm_pointer->tm_mday;
- hour= struct_tm_pointer->tm_hour;
- minute= struct_tm_pointer->tm_min;
- second= (double)( struct_tm_pointer->tm_sec );
-
-#if defined( _POSIX_C_SOURCE ) || defined( _BSD_SOURCE ) || defined( _SVID_SOURCE )
- free( struct_tm_pointer );
-#endif
-
- // Note that we are not printing out fractions of the second!
- sprintf( output_str_DATEOBS, "%04d-%02d-%02dT%02d:%02d:%02.0lf", year, month, day, hour, minute, second );
- sprintf( output_str_EXPTIME, "%.0lf", exposure_sec );
-
- fprintf( stderr, "\nObserving time converted to the \"standard\" FITS header format:\nDATE-OBS= %s\nEXPTIME = %s\n\n", output_str_DATEOBS, output_str_EXPTIME );
-
- strncpy( formed_str_DATEOBS, output_str_DATEOBS, 80 );
- strncpy( formed_str_EXPTIME, output_str_EXPTIME, 80 );
- ///////////////
-
- return;
-}
 
 int Kourovka_SBG_date_hack( char *fitsfilename, char *DATEOBS, int *date_parsed, double *exposure ) {
  // Kourovka-SBG camera images have a very unusual header.
