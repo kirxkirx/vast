@@ -117,7 +117,7 @@ int compute_image_stratistics( char *fitsfilename, int no_sorting_fast_computati
   ( *iqr )= compute_IQR_of_sorted_data( pix, totpix );
   // 2*norminv(0.75) = 1.34897950039216
   ( *iqr_scaled_to_sigma )= ( *iqr ) / 1.34897950039216;
-  ( *mad )= compute_MAD_of_sorted_data( pix, totpix );
+  ( *mad )= compute_MAD_of_sorted_data_and_ruin_input_array( pix, totpix ); //compute_MAD_of_sorted_data( pix, totpix );
   // 1.48260221850560 = 1/norminv(3/4)
   ( *mad_scaled_to_sigma )= 1.48260221850560 * ( *mad );
  }

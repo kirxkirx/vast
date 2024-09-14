@@ -119,7 +119,7 @@ int main() {
   SD= gsl_stats_sd_m( x, 1, i, MEAN );
   MEAN_ERR= SD / sqrt( (double)i );
   MAD= compute_MAD_of_sorted_data( x, i ); // esimate_sigma_from_MAD_of_sorted_data(x, i);
-  IQR= compute_IQR_of_unsorted_data( x, i );
+  IQR= compute_IQR_of_sorted_data( x, i ); // compute_IQR_of_unsorted_data( x, i );
  }
  if ( i == 1 ) {
   if ( NULL == x ) {
@@ -158,6 +158,7 @@ int main() {
  fprintf( stdout, "IQR/1.34=  %lf\n", IQR / 1.34897950039216 );
  fprintf( stdout, "percen80=  %lf\n", percentile80 );
  fprintf( stdout, "    SUMM=  %lf\n", datasumm );
+
 
  N= Ns= N2s= N3s= 0;
  for ( j= 0; j < i; j++ ) {

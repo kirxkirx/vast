@@ -682,6 +682,7 @@ double compute_IQR_of_sorted_data( double *sorted_data, int n ) {
  // return result
  return IQR;
 }
+
 double compute_IQR_of_unsorted_data( double *unsorted_data, int n ) {
 #ifdef DISABLE_INDEX_IQR
  return 0.0;
@@ -927,6 +928,7 @@ double compute_MAD_of_sorted_data_and_ruin_input_array( double *sorted_data, lon
  // sigma= 1.48260221850560 * MAD;
  // return sigma;
 }
+
 double esimate_sigma_from_MAD_of_sorted_data_and_ruin_input_array( double *sorted_data, long n ) {
  double MAD, sigma;
  MAD= compute_MAD_of_sorted_data_and_ruin_input_array( sorted_data, n );

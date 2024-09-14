@@ -1088,6 +1088,11 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
   } // for(i=0;i<N;i++)
  }
  fclose( f );
+ if ( 0 != found_end_marker ) {
+  fprintf( stderr, "#END# marker found - VizieR output is complete!\n" );
+ } else {
+  fprintf( stderr, "#END# marker NOT found - VizieR output is truncated by network timeout!\n" );
+ }
  fprintf( stderr, "Parsed %d APASS catalog lines.\n", N_catalog_lines_parsed );
  fprintf( stderr, "%d stars rejected on distance.\n", N_rejected_on_distance );
  fprintf( stderr, "Matched %d stars with APASS.\n", N_stars_matched_with_photometric_catalog );
