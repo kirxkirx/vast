@@ -20168,17 +20168,23 @@ if [ -d ../individual_images_test ];then
 
  ### Specific test to make sure lib/try_to_guess_image_fov does not crash
  for IMAGE in ../individual_images_test/* ;do
+  if [ ! -f "$IMAGE" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES IMSTAT00_no_test_image__"$(basename $IMAGE)
+  fi
+  if [ ! -s "$IMAGE" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES IMSTAT00_empty_test_image__"$(basename $IMAGE)
+  fi
   util/imstat_vast $IMAGE
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   IMAGE=`basename $IMAGE`
-   FAILED_TEST_CODES="$FAILED_TEST_CODES IMSTAT01_$IMAGE"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES IMSTAT01_"$(basename $IMAGE)
   fi
   util/imstat_vast_fast $IMAGE
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   IMAGE=`basename $IMAGE`
-   FAILED_TEST_CODES="$FAILED_TEST_CODES IMSTAT02_$IMAGE"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES IMSTAT02_"$(basename $IMAGE)
   fi
  done
 
@@ -21025,6 +21031,25 @@ if [ $? -eq 0 ];then
     cp default.sex.ccd_example default.sex
     valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
     lib/autodetect_aperture_main ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits &> valgrind_test.out
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND017"
+    fi
+    grep 'ERROR SUMMARY:' valgrind_test.out | awk -F ':' '{print $2}' | awk '{print $1}' | while read ERRORS ;do
+     if [ $ERRORS -ne 0 ];then
+      echo "ERROR"
+      break
+     fi
+    done | grep --quiet 'ERROR'
+    if [ $? -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND018"
+    fi
+    #
+    #
+    cp default.sex.ccd_example default.sex
+    valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite \
+    util/imstat_vast ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits &> valgrind_test.out
     if [ $? -ne 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND017"
