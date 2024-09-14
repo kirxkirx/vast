@@ -44,7 +44,7 @@ void update_limiting_magnitude_in_log_file( double new_mag_limit ) {
    if ( str[0] == 'E' && str[1] == 's' && str[2] == 't' && str[10] == 'r' && str[11] == 'e' && str[12] == 'f' ) {
     if ( 1 == sscanf( str, "Estimated ref. image limiting mag.: %lf", &old_mag_limit ) ) {
      sprintf( str, "Estimated ref. image limiting mag.: %6.2lf\n", new_mag_limit );
-     fprintf( stderr, "Updating vast_summary.log: %s", str );
+     fprintf( stderr, "Updating vast_summary.log: %s\n", str );
     }
    }
    fputs( str, logfileout );
