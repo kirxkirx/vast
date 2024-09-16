@@ -17347,7 +17347,9 @@ $CAT_RESULT"
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_REF_IMG_LIMIT"
   #fi
-  MAG_ZP=$(grep "Estimated ref. image limiting mag.:  1" transient_report/index.html | awk '{print $6}')
+  #
+  #
+  MAG_ZP=$(grep "Estimated ref. image limiting mag.:  1" transient_report/index.html | tail -n1 | awk '{print $6}')
   TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 14.19)*($1 - 14.19) ) < 0.05 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
