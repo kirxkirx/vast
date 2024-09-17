@@ -1381,27 +1381,27 @@ int check_and_print_memory_statistics() {
   // fprintf(stderr,"can't read %s   no memory statistics available\n",string2);
   return 0;
  } else {
-  /* Get ammount of used memory from /proc/PID/status */
-  sprintf( string1, "grep -B1 VmSize %s |grep -v Groups > vast_memory_usage.log", string2 );
+  // Get ammount of used memory from /proc/PID/status 
+  sprintf( string1, "grep -B1 VmSize %s | grep -v Groups | sed 's/\\t/ /g' > vast_memory_usage.log", string2 );
   if ( 0 != system( string1 ) ) {
    fprintf( stderr, "ERROR running  %s\n", string1 );
    return 0;
   }
 
-  /* Check if memory information is available in /proc */
+  // Check if memory information is available in /proc 
   if ( 0 == is_file( "/proc/meminfo" ) ) {
    fprintf( stderr, "can't read /proc/meminfo   no memory statistics available\n" );
    return 0;
   }
 
-  /* Get RAM size */
-  sprintf( string1, "grep MemTotal /proc/meminfo >> vast_memory_usage.log" );
+  // Get RAM size 
+  sprintf( string1, "grep MemTotal /proc/meminfo | sed 's/\\t/ /g' >> vast_memory_usage.log" );
   if ( 0 != system( string1 ) ) {
    fprintf( stderr, "ERROR running  %s\n", string1 );
    return 0;
   }
 
-  /* Load memory information from the log file */
+  // Load memory information from the log file 
   meminfofile= fopen( "vast_memory_usage.log", "r" );
   if ( meminfofile == NULL ) {
    fprintf( stderr, "can't open vast_memory_usage.log, no memory statistics available\n" );
