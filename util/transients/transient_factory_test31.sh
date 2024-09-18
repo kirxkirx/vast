@@ -18,7 +18,29 @@
 # The results will be presented as an HTML page transient_report/index.html
 #
 #################################
+# helper functions
 
+function get_file_size() {
+    local file="$1"
+    if [ -f "$file" ]; then
+        if stat -c %s /dev/null >/dev/null 2>&1; then
+            # GNU stat (Linux)
+            stat -c %s "$file"
+        elif stat -f %z /dev/null >/dev/null 2>&1; then
+            # BSD stat (macOS, FreeBSD)
+            stat -f %z "$file"
+        else
+            # Fallback to 'wc -c' (less efficient for large files)
+            wc -c < "$file" | tr -d ' '
+        fi
+    else
+        echo "0"
+    fi
+}
+
+
+
+#################################
 # We need to check the input early as we may need to set camera settings based on the input path
 if [ -z "$1" ]; then
  echo "Usage: $0 PATH_TO_DIRECTORY_WITH_IMAGE_PAIRS"
@@ -499,6 +521,10 @@ fi
 #####################################################################################################
 # This script should take care of updating astorb.dat and other catalogs
 lib/update_offline_catalogs.sh all
+if [ $? -ne 0 ];then
+ echo "ERROR updating catalogs (including astorb.dat)"
+ exit 1
+fi
 
 echo "Reference image directory is set to $REFERENCE_IMAGES"
 echo "Reference image directory is set to $REFERENCE_IMAGES" >> transient_factory_test31.txt
@@ -2029,12 +2055,27 @@ echo "Total number of candidates identified: $TOTAL_NUMBER_OF_CANDIDATES" >> tra
 
 echo "<H3>Processing log:</H3>
 <pre>" >> transient_report/index.html
-cat transient_factory.log >> transient_report/index.html
+FILENAME="transient_factory.log"
+THRESHOLD=$((10 * 1024 * 1024))  # 10 MB in bytes
+FILESIZE=$(get_file_size "$FILENAME")
+if [ "$FILESIZE" -gt "$THRESHOLD" ]; then
+ echo "ERROR: '$FILENAME' is larger than 10MB!"
+else
+ cat transient_factory.log >> transient_report/index.html
+fi
 echo "</pre>" >> transient_report/index.html
 
 echo "<H3>Filtering log:</H3>
 <pre>" >> transient_report/index.html
-cat transient_factory_test31.txt >> transient_report/index.html
+FILENAME="transient_factory_test31.txt"
+THRESHOLD=$((10 * 1024 * 1024))  # 10 MB in bytes
+FILESIZE=$(get_file_size "$FILENAME")
+
+if [ "$FILESIZE" -gt "$THRESHOLD" ]; then
+ echo "ERROR: '$FILENAME' is larger than 10MB!"
+else
+ cat transient_factory_test31.txt >> transient_report/index.html
+fi
 echo "</pre>" >> transient_report/index.html
 
 echo "</BODY></HTML>" >> transient_report/index.html

@@ -13,7 +13,22 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
-function vastrealpath {
+function check_if_curl_is_too_old_to_attempt_HTTPS() {
+    # Get the curl version
+    curl_version=$(curl --version | head -n 1 | awk '{print $2}')
+
+    # Minimum required version: 7.34.0
+    required_version="7.34.0"
+
+    # Compare versions
+    if [[ $(printf '%s\n' "$required_version" "$curl_version" | sort -V | head -n 1) == "$required_version" ]]; then
+        echo true
+    else
+        echo false
+    fi
+}
+
+function vastrealpath() {
   # On Linux, just go for the fastest option which is 'readlink -f'
   REALPATH=$(readlink -f "$1" 2>/dev/null)
   if [ $? -ne 0 ];then
@@ -48,19 +63,29 @@ if [ ! -d lib/catalogs ];then
  exit 1
 fi
 
+# The older version of curl use a version of TLS protocol that may not be supported by modern web servers,
+# so the connection may fail even before the certificate exchange when the --insecure option will take effect.
+# Use plain HTTP if curl is old.
+if [[ $(check_if_curl_is_too_old_to_attempt_HTTPS) == true ]]; then
+ # curl is new enough to attempt HTTPS
 
-# Try to get the country code
-COUNTRY_CODE=$(curl --silent --connect-timeout 10 --insecure https://ipinfo.io/ | grep '"country":' | awk -F'"country":' '{print $2}' | awk -F'"' '{print $2}')
-if [ -z "$COUNTRY_CODE" ];then
- # Set UN code for UNknown
- COUNTRY_CODE="UN"
-fi
-
-if [ "$COUNTRY_CODE" == "RU" ];then
- LOCAL_SERVER="http://scan.sai.msu.ru/~kirx/vast_catalogs"
+ # Try to get the country code
+ COUNTRY_CODE=$(curl --silent --connect-timeout 10 --insecure https://ipinfo.io/ | grep '"country":' | awk -F'"country":' '{print $2}' | awk -F'"' '{print $2}')
+ if [ -z "$COUNTRY_CODE" ];then
+  # Set UN code for UNknown
+  COUNTRY_CODE="UN"
+ fi
+ 
+ if [ "$COUNTRY_CODE" == "RU" ];then
+  LOCAL_SERVER="http://scan.sai.msu.ru/~kirx/vast_catalogs"
+ else
+  LOCAL_SERVER="https://kirx.net/~kirx/vast_catalogs"
+ fi
 else
- LOCAL_SERVER="https://kirx.net/~kirx/vast_catalogs"
+ # curl is too old to attempt HTTPS, we'll do plain HTTP instead
+ LOCAL_SERVER="http://scan.sai.msu.ru/~kirx/vast_catalogs"
 fi
+
 export LOCAL_SERVER
 
 # Get current date from the system clock
@@ -109,9 +134,6 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
   fi
  fi
  
- # TEST !!!
- #NEED_TO_UPDATE_THE_FILE=1
-
  if [ "$1" == "force" ];then
   echo "Forcing the catalog update per user request"  
   NEED_TO_UPDATE_THE_FILE=1
@@ -120,40 +142,34 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
  # Update the file if needed
  if [ $NEED_TO_UPDATE_THE_FILE -eq 1 ];then
   echo "######### Updating $FILE_TO_UPDATE #########" 
-  WGET_COMMAND=""
-  WGET_LOCAL_COMMAND=""
+  CURL_COMMAND=""
+  CURL_LOCAL_COMMAND=""
   UNPACK_COMMAND=""
   TMP_OUTPUT=""
   if [ "$FILE_TO_UPDATE" == "astorb.dat" ];then
    TMP_OUTPUT="astorb_dat_new"
-#   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 --no-check-certificate https://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
-   WGET_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure -o $TMP_OUTPUT.gz https://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
-#   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 --no-check-certificate $LOCAL_SERVER/astorb.dat.gz"
-   WGET_LOCAL_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure -o $TMP_OUTPUT.gz $LOCAL_SERVER/astorb.dat.gz"
+   CURL_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT.gz https://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
+   CURL_LOCAL_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT.gz $LOCAL_SERVER/astorb.dat.gz"
    UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz"
   fi
   if [ "$FILE_TO_UPDATE" == "lib/catalogs/vsx.dat" ];then
    TMP_OUTPUT="vsx.dat"
-#   WGET_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 ftp://cdsarc.u-strasbg.fr/pub/cats/B/vsx/vsx.dat.gz"
-   WGET_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure -o $TMP_OUTPUT.gz  $TMP_OUTPUT.gz ftp://cdsarc.u-strasbg.fr/pub/cats/B/vsx/vsx.dat.gz"
-#   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT.gz --timeout=120 --tries=2 --no-check-certificate $LOCAL_SERVER/vsx.dat.gz"
-   WGET_LOCAL_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure -o $TMP_OUTPUT.gz $LOCAL_SERVER/vsx.dat.gz"
+   CURL_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT.gz  $TMP_OUTPUT.gz ftp://cdsarc.u-strasbg.fr/pub/cats/B/vsx/vsx.dat.gz"
+   CURL_LOCAL_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT.gz $LOCAL_SERVER/vsx.dat.gz"
    UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz"
   fi
   if [ "$FILE_TO_UPDATE" == "lib/catalogs/asassnv.csv" ];then
    TMP_OUTPUT="asassnv.csv"
-#   WGET_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 --no-check-certificate 'https://asas-sn.osu.edu/variables.csv?action=index&controller=variables'"
-   WGET_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure -o $TMP_OUTPUT \"https://asas-sn.osu.edu/variables.csv?action=index&controller=variables\""
-#   WGET_LOCAL_COMMAND="wget -O $TMP_OUTPUT --timeout=120 --tries=2 --no-check-certificate $LOCAL_SERVER/asassnv.csv"
-   WGET_LOCAL_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure -o $TMP_OUTPUT $LOCAL_SERVER/asassnv.csv"
+   CURL_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT \"https://asas-sn.osu.edu/variables.csv?action=index&controller=variables\""
+   CURL_LOCAL_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT $LOCAL_SERVER/asassnv.csv"
    UNPACK_COMMAND=""
   fi
-  if [ -z "$WGET_COMMAND" ];then
-   echo "ERROR WGET_COMMAND is not set" 
+  if [ -z "$CURL_COMMAND" ];then
+   echo "ERROR CURL_COMMAND is not set" 
    exit 1
   fi
-  if [ -z "$WGET_LOCAL_COMMAND" ];then
-   echo "ERROR WGET_LOCAL_COMMAND is not set" 
+  if [ -z "$CURL_LOCAL_COMMAND" ];then
+   echo "ERROR CURL_LOCAL_COMMAND is not set" 
    exit 1
   fi
   if [ -z "$TMP_OUTPUT" ];then
@@ -170,15 +186,14 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
   fi
 
   # First try to download a catalog from the mirror
-  echo "### WGET_LOCAL_COMMAND ###
+  echo "### CURL_LOCAL_COMMAND ###
 $PWD" 
-  echo "$WGET_LOCAL_COMMAND" 
-  $WGET_LOCAL_COMMAND
+  echo "$CURL_LOCAL_COMMAND" 
+  $CURL_LOCAL_COMMAND
   if [ $? -ne 0 ];then
    # if that failed, try to download the catalog from the original link
-   echo "We are currently at $WGET_COMMAND" 
-   $WGET_COMMAND
-   #ls -lh $TMP_OUTPUT   
+   echo "We are currently at $CURL_COMMAND" 
+   $CURL_COMMAND
    if [ $? -ne 0 ];then
     echo "ERROR running the download command" 
     if [ -f "$TMP_OUTPUT" ];then
@@ -196,13 +211,9 @@ $PWD"
 We are currently at $PWD
 Will run the unpack command: $UNPACK_COMMAND" 
    # The output of this ls run makes me nervous as on of the files does not exist
-   #ls -lh $TMP_OUTPUT $TMP_OUTPUT.gz 
    $UNPACK_COMMAND
    if [ $? -ne 0 ];then
     echo "ERROR running $UNPACK_COMMAND" 
-    #if [ -f "$TMP_OUTPUT" ];then
-    # rm -f "$TMP_OUTPUT"
-    #fi
     exit 1
    else
     echo "Unpack complete" 
@@ -215,13 +226,8 @@ Will run the unpack command: $UNPACK_COMMAND"
    fi
    exit 1
   fi
-  #if [ "$TMP_OUTPUT" = "astorb_dat_new" ];then
-  # mv -v "astorb_dat_new" "astorb.dat" 
-  #fi
   mv -v "$TMP_OUTPUT" "$FILE_TO_UPDATE"  && touch "$FILE_TO_UPDATE"
   echo "Successfully updated $FILE_TO_UPDATE"
- #else
- # echo "No need to update $FILE_TO_UPDATE" 
  fi
 
 done
@@ -234,7 +240,7 @@ if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ ! -s "lib/catal
  # Changed to local copy
  #curl --silent http://scan.sai.msu.ru/~kirx/data/bright_star_catalog_original.txt.gz | gunzip > lib/catalogs/bright_star_catalog_original.txt
  #curl --silent "$LOCAL_SERVER/bright_star_catalog_original.txt.gz" | gunzip > lib/catalogs/bright_star_catalog_original.txt
- curl --connect-timeout 10 --insecure --silent "$LOCAL_SERVER/bright_star_catalog_original.txt" > lib/catalogs/bright_star_catalog_original.txt
+ curl --connect-timeout 10 --insecure --silent --output lib/catalogs/bright_star_catalog_original.txt "$LOCAL_SERVER/bright_star_catalog_original.txt"
  if [ $? -eq 0 ];then
   echo "Extracting the R.A. Dec. list (all BSC)"
   cat lib/catalogs/bright_star_catalog_original.txt | grep -v -e 'NOVA' -e '47    Tuc' -e 'M 31' -e 'NGC 2281' -e 'M 67' -e 'NGC 2808' | while IFS= read -r STR ;do 
@@ -294,7 +300,7 @@ if [ ! -f $TYCHO_PATH/tyc2.dat.00 ];then
    fi
   done
   #
-  #wget -nH --cut-dirs=4 --no-parent -r -l0 -c -R 'guide.*,*.gif' "ftp://cdsarc.u-strasbg.fr/pub/cats/I/259/"
+  # wget instead of curl !!!
   wget -nH --cut-dirs=4 --no-parent -r -l0 -c -A 'ReadMe,*.gz,robots.txt' "http://scan.sai.msu.ru/~kirx/data/tycho2/"
   echo "Download complete. Unpacking..."
   for i in tyc2.dat.*gz ;do

@@ -252,7 +252,7 @@ function compare_date_strings_in_vastsummarylog_with_tolerance() {
 
 function find_source_by_X_Y_in_vast_lightcurve_statistics_log() {
  if [ ! -s vast_lightcurve_statistics.log ];then
-  echo "ERROR: no vast_lightcurve_statistics.log" 1>&2
+  echo "ERROR: no vast_lightcurve_statistics.log"
   return 1
  fi
  if [ -z $2 ];then
@@ -300,7 +300,7 @@ function test_https_connection() {
     rm -f intermediate.pem
    fi
    #
-   echo "ERROR in test_https_connection(): cannot connect to scan.sai.msu.ru" 1>&2
+   echo "ERROR in test_https_connection(): cannot connect to scan.sai.msu.ru"
    return 1
   fi
  fi
@@ -327,7 +327,7 @@ function test_https_connection() {
   #curl --max-time 10 --silent --cacert intermediate.pem https://kirx.net/astrometry_engine/files/ | grep --quiet 'Parent Directory'
   curl --max-time 10 --silent --cacert intermediate.pem https://kirx.net/lk/ | grep --quiet '../cgi-bin/lk/process_lightcurve.py'
   if [ $? -ne 0 ];then
-   echo "ERROR in test_https_connection(): cannot connect to https://kirx.net" 1>&2
+   echo "ERROR in test_https_connection(): cannot connect to https://kirx.net"
    return 1
   fi
  fi
@@ -380,7 +380,7 @@ function remove_test_data_to_save_space() {
     FAILED_TEST_CODES="$FAILED_TEST_CODES DISKSPACE_TEST_ERROR"
    fi
    if [ $TEST -eq 1 ];then
-    echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining." 1>&2
+    echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining."
     for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test/ ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
@@ -422,7 +422,7 @@ function check_if_enough_disk_space_for_tests() {
     return 0
    fi
    if [ $TEST -eq 1 ];then
-    echo "ERROR: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining - CANCEL TEST" 1>&2
+    echo "ERROR: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining - CANCEL TEST" 
     return 1
    fi # if [ $FREE_DISK_SPACE_MB -lt 1024 ];then
   fi # if [ $? -eq 0 ];then
@@ -438,7 +438,7 @@ function test_internet_connection() {
  #curl --max-time 10 --silent http://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
  curl --max-time 10 --silent --show-error -I http://scan.sai.msu.ru 2>&1 | grep --quiet 'Content-Type:'
  if [ $? -ne 0 ];then
-  echo "ERROR in test_internet_connection(): cannot connect to scan.sai.msu.ru" 1>&2
+  echo "ERROR in test_internet_connection(): cannot connect to scan.sai.msu.ru" 
   return 1
  fi
  
@@ -451,14 +451,14 @@ function test_internet_connection() {
  #curl --max-time 10 --silent http://vast.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
  curl --max-time 10 --silent --show-error -I http://vast.sai.msu.ru 2>&1 | grep --quiet 'Content-Type:'
  if [ $? -ne 0 ];then
-  echo "ERROR in test_internet_connection(): cannot connect to vast.sai.msu.ru" 1>&2
+  echo "ERROR in test_internet_connection(): cannot connect to vast.sai.msu.ru" 
   return 1
  fi
  
  # lib/choose_vizier_mirror.sh will return non-zero exit code if it could not actually reach a VizieR mirror
  lib/choose_vizier_mirror.sh 2>&1
  if [ $? -ne 0 ];then
-  echo "ERROR in test_internet_connection(): cannot connect to VizieR" 1>&2
+  echo "ERROR in test_internet_connection(): cannot connect to VizieR" 
   return 1
  fi
 
@@ -606,7 +606,7 @@ OPENMP_STATUS="OpenMP_"$(cat .cc.openmp)
 
 
 ##### Report that we are starting the work #####
-echo "---------- Starting $0 ----------" 1>&2
+echo "---------- Starting $0 ----------" 
 echo "---------- $0 ----------" > vast_test_report.txt
 
 ##### Set initial values for the variables #####
@@ -619,11 +619,11 @@ STARTTIME_UNIXSEC=$(date +%s)
 # BSD date will not understand `date -d @$STARTTIME_UNIXSEC`
 #STARTTIME_HUMAN_RADABLE=`date -d @$STARTTIME_UNIXSEC`
 STARTTIME_HUMAN_RADABLE=`date`
-echo "Started on $STARTTIME_HUMAN_RADABLE" 1>&2
+echo "Started on $STARTTIME_HUMAN_RADABLE" 
 echo "Started on $STARTTIME_HUMAN_RADABLE" >> vast_test_report.txt
 
 ##### Gather system information #####
-echo "Gathering basic system information for summary report" 1>&2
+echo "Gathering basic system information for summary report" 
 echo "---------- System information ----------" >> vast_test_report.txt
 SYSTEM_TYPE=`uname`
 if [ "$SYSTEM_TYPE" = "Linux" ];then
@@ -652,7 +652,7 @@ else
  echo "PSFEx is not installed" >> vast_test_report.txt
 fi
 
-cat vast_test_report.txt 1>&2
+cat vast_test_report.txt 
 echo "---------- $VAST_VERSION_STRING test results ----------" >> vast_test_report.txt
 
 ############################################ 
@@ -664,9 +664,9 @@ if [ ! -d ../NMW_Venus_test ];then
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Venus_test.tar.bz2" && tar -xvjf NMW_Venus_test.tar.bz2 && rm -f NMW_Venus_test.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" 
   echo "ERROR downloading test data!" >> vast_test_report.txt
-  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" 
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
@@ -683,7 +683,7 @@ THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
 
 # Run the test
-echo "Syntax-check VaST shell scripts " 1>&2
+echo "Syntax-check VaST shell scripts " 
 echo -n "Syntax-check VaST shell scripts: " >> vast_test_report.txt 
 
 # First, use BASH itself to run the check
@@ -724,17 +724,17 @@ THIS_TEST_STOP_UNIXSEC=$(date +%s)
 THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mSyntax-check VaST shell scripts \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mSyntax-check VaST shell scripts \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mSyntax-check VaST shell scripts \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mSyntax-check VaST shell scripts \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi
 # If the syntax-check fails - don't bother with the other tests - exit now
 if [ $TEST_PASSED -eq 0 ];then
- echo "Script syntax check failed!" 1>&2
+ echo "Script syntax check failed!" 
  echo "Script syntax check failed!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -755,9 +755,9 @@ if [ ! -d ../DART_Didymos_moving_object_photometry_test ];then
  $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/DART_Didymos_moving_object_photometry_test.tar.bz2" && tar -xjf DART_Didymos_moving_object_photometry_test.tar.bz2 && rm -f DART_Didymos_moving_object_photometry_test.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" 
   echo "ERROR downloading test data!" >> vast_test_report.txt
-  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" 
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
@@ -769,7 +769,7 @@ if [ -d ../DART_Didymos_moving_object_photometry_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "DART Didymos moving object photometry test " 1>&2
+ echo "DART Didymos moving object photometry test " 
  echo -n "DART Didymos moving object photometry test: " >> vast_test_report.txt 
  cp -v default.sex.MSU_DART default.sex
  if [ -f vast_input_user_specified_moving_object_position.txt ];then
@@ -858,7 +858,7 @@ if [ -d ../DART_Didymos_moving_object_photometry_test ];then
    fi # check MOVING_OBJECT_LIGHTCURVE file exist
 
   else
-   echo "ERROR: cannot find vast_summary.log" 1>&2
+   echo "ERROR: cannot find vast_summary.log" 
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DART_ALL"
   fi # if [ -f vast_summary.log ];then
@@ -873,10 +873,10 @@ if [ -d ../DART_Didymos_moving_object_photometry_test ];then
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mDART Didymos moving object photometry test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mDART Didymos moving object photometry test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mDART Didymos moving object photometry test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mDART Didymos moving object photometry test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 
@@ -901,9 +901,9 @@ if [ ! -d ../NMW_And1_test_lightcurves_40 ];then
  $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_And1_test_lightcurves_40.tar.bz2" && tar -xjf NMW_And1_test_lightcurves_40.tar.bz2 && rm -f NMW_And1_test_lightcurves_40.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" 
   echo "ERROR downloading test data!" >> vast_test_report.txt
-  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" 
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
@@ -915,7 +915,7 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "SysRem test " 1>&2
+ echo "SysRem test " 
  echo -n "SysRem test: " >> vast_test_report.txt 
  # Save VaST config files that may be overwritten when loading a data set
  for FILE_TO_SAVE in bad_region.lst default.psfex default.sex ;do
@@ -1240,10 +1240,10 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSysRem test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSysRem test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSysRem test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSysRem test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -1272,7 +1272,7 @@ if [ -d ../test_data_photo ];then
  if [ $NUMBER_OF_IMAGES_IN_TEST_FOLDER -lt 150 ];then
   # If the number of files is smaller than it should be 
   # - just remove the directory, the following lines will download the data again.
-  echo "WARNING: corrupted test data found in ../test_data_photo" 1>&2
+  echo "WARNING: corrupted test data found in ../test_data_photo" 
   rm -rf ../test_data_photo
  fi
 fi
@@ -1281,12 +1281,12 @@ if [ ! -d ../test_data_photo ];then
  cd ..
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/test_data_photo.tar.bz2"
  if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" 
   exit 1
  fi
  tar -xvjf test_data_photo.tar.bz2
  if [ $? -ne 0 ];then
-  echo "ERROR unpacking test data! Are we out of disk space?" 1>&2
+  echo "ERROR unpacking test data! Are we out of disk space?" 
   df -h .
   if [ -d ../test_data_photo ];then
    # Remove partially complete test data directory if it has been created
@@ -1311,7 +1311,7 @@ if [ -d ../test_data_photo ];then
   ##
   util/clean_data.sh
   # Run the test
-  echo "Photographic plates test " 1>&2
+  echo "Photographic plates test " 
   echo -n "Photographic plates test: " >> vast_test_report.txt 
   cp default.sex.beta_Cas_photoplates default.sex
   ./vast -u -o -j -f --nomagsizefilter ../test_data_photo/SCA*
@@ -1675,7 +1675,7 @@ $GREP_RESULT"
    ## Check if we get the same results with mag-size filtering
    util/clean_data.sh
    # Run the test
-   #echo "Photographic plates test " 1>&2
+   #echo "Photographic plates test " 
    #echo -n "Photographic plates test: " >> vast_test_report.txt 
    cp default.sex.beta_Cas_photoplates default.sex
    ./vast --magsizefilter -u -o -j -f ../test_data_photo/SCA*
@@ -1866,7 +1866,7 @@ $GREP_RESULT"
    ## Check if we get the same results with automated reference image selection
    util/clean_data.sh
    # Run the test
-   #echo "Photographic plates test " 1>&2
+   #echo "Photographic plates test " 
    #echo -n "Photographic plates test: " >> vast_test_report.txt 
    cp default.sex.beta_Cas_photoplates default.sex
    ./vast --autoselectrefimage --magsizefilter -u -o -j -f ../test_data_photo/SCA*
@@ -2074,7 +2074,7 @@ $GREP_RESULT"
     fi
    done
   else
-   echo "ERROR: cannot find vast_summary.log" 1>&2
+   echo "ERROR: cannot find vast_summary.log" 
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_ALL"
   fi
@@ -2084,10 +2084,10 @@ $GREP_RESULT"
 
   # Make an overall conclusion for this test
   if [ $TEST_PASSED -eq 1 ];then
-   echo -e "\n\033[01;34mPhotographic plates test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+   echo -e "\n\033[01;34mPhotographic plates test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
    echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
   else
-   echo -e "\n\033[01;34mPhotographic plates test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+   echo -e "\n\033[01;34mPhotographic plates test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
    echo "FAILED" >> vast_test_report.txt
   fi
  else
@@ -2120,9 +2120,9 @@ if [ ! -d ../sample_data ];then
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" 
   echo "ERROR downloading test data!" >> vast_test_report.txt
-  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" 
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
@@ -2134,7 +2134,7 @@ if [ -d ../sample_data ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Small CCD images test " 1>&2 
+ echo "Small CCD images test "  
  echo -n "Small CCD images test: " >> vast_test_report.txt 
  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
   mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP
@@ -2657,7 +2657,7 @@ $GREP_RESULT"
   done
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_ALL"
  fi
@@ -2743,10 +2743,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSmall CCD images test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSmall CCD images test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -2771,7 +2771,7 @@ if [ -d ../sample_data ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Small CCD images star exclusion test " 1>&2 
+ echo "Small CCD images star exclusion test "  
  echo -n "Small CCD images star exclusion test: " >> vast_test_report.txt 
  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
   mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP
@@ -3190,7 +3190,7 @@ $GREP_RESULT"
   ###############################################
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX_ALL"
  fi
@@ -3200,10 +3200,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSmall CCD images star exclusion test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images star exclusion test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSmall CCD images star exclusion test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images star exclusion test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -3228,7 +3228,7 @@ if [ -d ../sample_data ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Small CCD images with file list input test " 1>&2
+ echo "Small CCD images with file list input test " 
  echo -n "Small CCD images with file list input test: " >> vast_test_report.txt 
  if [ -f vast_list_of_input_images_with_time_corrections.txt_test ];then
   if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
@@ -3663,7 +3663,7 @@ $GREP_RESULT"
   done
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST_ALL"
  fi
@@ -3673,10 +3673,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSmall CCD images with file list input test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with file list input test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSmall CCD images with file list input test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with file list input test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -3701,7 +3701,7 @@ if [ -d ../sample_data ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Small CCD images with file list input and --autoselectrefimage test " 1>&2
+ echo "Small CCD images with file list input and --autoselectrefimage test " 
  echo -n "Small CCD images with file list input and --autoselectrefimage test: " >> vast_test_report.txt 
  if [ -f vast_list_of_input_images_with_time_corrections.txt_test ];then
   if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
@@ -3840,7 +3840,7 @@ if [ -d ../sample_data ];then
   ################################################################################
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF_ALL"
  fi
@@ -3850,10 +3850,10 @@ if [ -d ../sample_data ];then
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSmall CCD images with file list input and --autoselectrefimage test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with file list input and --autoselectrefimage test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSmall CCD images with file list input and --autoselectrefimage test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with file list input and --autoselectrefimage test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -3879,7 +3879,7 @@ if [ -d ../sample_data ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Small CCD images random options test " 1>&2
+ echo "Small CCD images random options test " 
  echo -n "Small CCD images random options test: " >> vast_test_report.txt 
  OPTIONS=""
  for OPTION in "-u" "--UTC" "-l" "--nodiscardell" "-e" "--failsafe" "-k" "--nojdkeyword" "-x3" "--maxsextractorflag 3" "-j" "--position_dependent_correction" "-7" "--autoselectrefimage" "-3" "--selectbestaperture" "-1" "--magsizefilter" ;do
@@ -3915,7 +3915,7 @@ if [ -d ../sample_data ];then
   ###############################################
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDRANDOMOPTIONS_ALL($OPTIONS)"
  fi
@@ -3925,10 +3925,10 @@ if [ -d ../sample_data ];then
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSmall CCD images random options test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images random options test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSmall CCD images random options test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images random options test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -3954,7 +3954,7 @@ if [ -d ../sample_data ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Few small CCD images test " 1>&2
+ echo "Few small CCD images test " 
  echo -n "Few small CCD images test: " >> vast_test_report.txt 
  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
   mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP
@@ -4111,7 +4111,7 @@ $GREP_RESULT"
   done
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD_ALL"
  fi
@@ -4122,10 +4122,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mFew small CCD images test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mFew small CCD images test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mFew small CCD images test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mFew small CCD images test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -4149,7 +4149,7 @@ if [ -d ../sample_data ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Small CCD images test with no errors rescaling " 1>&2
+ echo "Small CCD images test with no errors rescaling " 
  echo -n "Small CCD images test with no errors rescaling: " >> vast_test_report.txt 
  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
   mv vast_list_of_FITS_keywords_to_record_in_lightcurves.txt vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_TEST_BACKUP
@@ -4557,7 +4557,7 @@ $GREP_RESULT"
   done
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE_ALL"
  fi
@@ -4567,10 +4567,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSmall CCD images test with no errors rescaling \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images test with no errors rescaling \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSmall CCD images test with no errors rescaling \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images test with no errors rescaling \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -4595,7 +4595,7 @@ if [ -d ../sample_data ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Small CCD images with non-zero MAG_ZEROPOINT test " 1>&2
+ echo "Small CCD images with non-zero MAG_ZEROPOINT test " 
  echo -n "Small CCD images with non-zero MAG_ZEROPOINT test: " >> vast_test_report.txt
  # Here is the main feature of this test: we set MAG_ZEROPOINT  25.0 instead of 0.0 
  cat default.sex.ccd_example | sed 's:MAG_ZEROPOINT   0.0:MAG_ZEROPOINT  25.0:g' > default.sex
@@ -4724,7 +4724,7 @@ $GREP_RESULT"
   #done
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD_ALL"
  fi
@@ -4735,10 +4735,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSmall CCD images with non-zero MAG_ZEROPOINT test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with non-zero MAG_ZEROPOINT test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSmall CCD images with non-zero MAG_ZEROPOINT test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with non-zero MAG_ZEROPOINT test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -4763,7 +4763,7 @@ if [ -d ../sample_data ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Small CCD images with OMP_NUM_THREADS=2 test " 1>&2
+ echo "Small CCD images with OMP_NUM_THREADS=2 test " 
  echo -n "Small CCD images with OMP_NUM_THREADS=2 test: " >> vast_test_report.txt
  # Here is the main feature of this test: we limit the number of processin threads to only 2
  export OMP_NUM_THREADS=2
@@ -4861,7 +4861,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES OMP_NUM_THREADS_SMALLCCD_ALL"
  fi
@@ -4871,10 +4871,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSmall CCD images with OMP_NUM_THREADS=2 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with OMP_NUM_THREADS=2 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSmall CCD images with OMP_NUM_THREADS=2 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with OMP_NUM_THREADS=2 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -4898,7 +4898,7 @@ if [ -d ../sample_data ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Small CCD images with directory name instead of file list test " 1>&2
+ echo "Small CCD images with directory name instead of file list test " 
  echo -n "Small CCD images with directory name instead of file list test: " >> vast_test_report.txt
  # Here is the main feature of this test: we limit the number of processin threads to only 2
  cp default.sex.ccd_example default.sex
@@ -4994,7 +4994,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD_ALL"
  fi
@@ -5004,10 +5004,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSmall CCD images with directory name instead of file list test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with directory name instead of file list test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSmall CCD images with directory name instead of file list test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with directory name instead of file list test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -5031,7 +5031,7 @@ if [ -d ../sample_data ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Small CCD images with directory name instead of file list test " 1>&2
+ echo "Small CCD images with directory name instead of file list test " 
  echo -n "Small CCD images with directory name instead of file list test: " >> vast_test_report.txt
  # Here is the main feature of this test: we limit the number of processin threads to only 2
  cp default.sex.ccd_example default.sex
@@ -5127,7 +5127,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD_ALL"
  fi
@@ -5137,10 +5137,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSmall CCD images with directory name instead of file list test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with directory name instead of file list test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSmall CCD images with directory name instead of file list test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with directory name instead of file list test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -5171,7 +5171,7 @@ if [ -d '../sample space' ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "White space name test " 1>&2
+ echo "White space name test " 
  echo -n "White space name test: " >> vast_test_report.txt
  # Here is the main feature of this test: we limit the number of processin threads to only 2
  cp default.sex.ccd_example default.sex
@@ -5267,7 +5267,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD_ALL"
  fi
@@ -5298,10 +5298,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mWhite space name test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mWhite space name test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mWhite space name test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mWhite space name test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -5326,7 +5326,7 @@ if [ -d ../sample_data ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Small CCD images with automated reference image selection test " 1>&2
+ echo "Small CCD images with automated reference image selection test " 
  echo -n "Small CCD images with automated reference image selection test: " >> vast_test_report.txt
  cp default.sex.ccd_example default.sex
  ./vast --autoselectrefimage -u -f ../sample_data/*.fit
@@ -5432,7 +5432,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUTOSELECT_REF_IMG_SMALLCCD_ALL"
  fi
@@ -5442,10 +5442,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSmall CCD images with automated reference image selection test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with automated reference image selection test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSmall CCD images with automated reference image selection test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with automated reference image selection test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -5472,7 +5472,7 @@ if [ -d ../sample_data ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Small CCD images with FITS keyword recording test " 1>&2
+ echo "Small CCD images with FITS keyword recording test " 
  echo -n "Small CCD images with FITS keyword recording test: " >> vast_test_report.txt
  # Here is the main feature of this test
  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
@@ -5597,7 +5597,7 @@ $GREP_RESULT"
   done
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD_ALL"
  fi
@@ -5607,10 +5607,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSmall CCD images with FITS keyword recording test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with FITS keyword recording test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSmall CCD images with FITS keyword recording test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with FITS keyword recording test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -5639,7 +5639,7 @@ if [ -d ../sample_data ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Small CCD images with NO FITS keyword recording test " 1>&2
+ echo "Small CCD images with NO FITS keyword recording test " 
  echo -n "Small CCD images with NO FITS keyword recording test: " >> vast_test_report.txt
  # Here is the main feature of this test
  if [ -f vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
@@ -5763,7 +5763,7 @@ $GREP_RESULT"
   done
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NO_KEYWORD_RECORDING_SMALLCCD_ALL"
  fi
@@ -5773,10 +5773,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSmall CCD images with NO FITS keyword recording test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with NO FITS keyword recording test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSmall CCD images with NO FITS keyword recording test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with NO FITS keyword recording test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -5803,7 +5803,7 @@ if [ -d ../sample_data ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Small CCD images with mag-size filter test " 1>&2
+ echo "Small CCD images with mag-size filter test " 
  echo -n "Small CCD images with mag-size filter test: " >> vast_test_report.txt
  cp default.sex.ccd_example default.sex
  ./vast --magsizefilter -u -f ../sample_data/*.fit
@@ -6257,7 +6257,7 @@ $GREP_RESULT"
   ###############################################
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD_ALL"
  fi
@@ -6267,10 +6267,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSmall CCD images with mag-size filter test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with mag-size filter test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSmall CCD images with mag-size filter test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD images with mag-size filter test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -6302,7 +6302,7 @@ if [ -d '../sample space' ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Space mall CCD images with mag-size filter test " 1>&2
+ echo "Space mall CCD images with mag-size filter test " 
  echo -n "Space small CCD images with mag-size filter test: " >> vast_test_report.txt
  cp default.sex.ccd_example default.sex
  ./vast --magsizefilter -u -f '../sample space/'*.fit
@@ -6759,7 +6759,7 @@ $GREP_RESULT"
   ###############################################
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD_ALL"
  fi
@@ -6769,10 +6769,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSpace small CCD images with mag-size filter test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSpace small CCD images with mag-size filter test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSpace small CCD images with mag-size filter test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSpace small CCD images with mag-size filter test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -6799,9 +6799,9 @@ if [ ! -d ../vast_test_bright_stars_failed_match ];then
  $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" 
   echo "ERROR downloading test data!" >> vast_test_report.txt
-  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" 
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
@@ -6813,7 +6813,7 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Reference image with very few stars test " 1>&2
+ echo "Reference image with very few stars test " 
  echo -n "Reference image with very few stars test: " >> vast_test_report.txt
  cp default.sex.ccd_bright_star default.sex
  ./vast -u -t2 -f ../vast_test_bright_stars_failed_match
@@ -6922,7 +6922,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS_ALL"
  fi
@@ -6932,10 +6932,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mReference image with very few stars test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mReference image with very few stars test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mReference image with very few stars test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mReference image with very few stars test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -6958,9 +6958,9 @@ if [ ! -d ../vast_test_bright_stars_failed_match ];then
  $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" 
   echo "ERROR downloading test data!" >> vast_test_report.txt
-  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" 
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
@@ -6972,7 +6972,7 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Reference image with very few stars test 2 " 1>&2
+ echo "Reference image with very few stars test 2 " 
  echo -n "Reference image with very few stars test 2: " >> vast_test_report.txt
  cp default.sex.ccd_bright_star default.sex
  ./vast -u -t2 -f ../vast_test_bright_stars_failed_match/*
@@ -7073,7 +7073,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2_ALL"
  fi
@@ -7083,10 +7083,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mReference image with very few stars test 2 \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mReference image with very few stars test 2 \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mReference image with very few stars test 2 \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mReference image with very few stars test 2 \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -7109,9 +7109,9 @@ if [ ! -d ../vast_test_bright_stars_failed_match ];then
  $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" 
   echo "ERROR downloading test data!" >> vast_test_report.txt
-  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" 
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
@@ -7123,7 +7123,7 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Reference image with very few stars test 3 " 1>&2
+ echo "Reference image with very few stars test 3 " 
  echo -n "Reference image with very few stars test 3: " >> vast_test_report.txt
  cp default.sex.ccd_bright_star default.sex
  # Run VaST multiple times to catch a rarely occurring problem
@@ -7199,7 +7199,7 @@ $GREP_RESULT"
    fi
   #
   else
-   echo "ERROR: cannot find vast_summary.log" 1>&2
+   echo "ERROR: cannot find vast_summary.log" 
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3_ALL"
   fi
@@ -7210,10 +7210,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mReference image with very few stars test 3 \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mReference image with very few stars test 3 \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mReference image with very few stars test 3 \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mReference image with very few stars test 3 \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -7233,9 +7233,9 @@ if [ ! -d ../vast_test_ASASSN-19cq ];then
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_ASASSN-19cq.tar.bz2" && tar -xvjf vast_test_ASASSN-19cq.tar.bz2 && rm -f vast_test_ASASSN-19cq.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" 
   echo "ERROR downloading test data!" >> vast_test_report.txt
-  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" 
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
@@ -7247,7 +7247,7 @@ if [ -d ../vast_test_ASASSN-19cq ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Two-level directory recursion test " 1>&2
+ echo "Two-level directory recursion test " 
  echo -n "Two-level directory recursion test: " >> vast_test_report.txt
  cp default.sex.ccd_example default.sex
  ./vast -u -f ../vast_test_ASASSN-19cq/
@@ -7350,7 +7350,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC_ALL1"
  fi
@@ -7452,7 +7452,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC_ALL2"
  fi
@@ -7462,10 +7462,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mTwo-level directory recursion test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mTwo-level directory recursion test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mTwo-level directory recursion test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mTwo-level directory recursion test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -7490,9 +7490,9 @@ if [ ! -d ../MASTER_test ];then
  $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/MASTER_test.tar.bz2" && tar -xvjf MASTER_test.tar.bz2 && rm -f MASTER_test.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" 
   echo "ERROR downloading test data!" >> vast_test_report.txt
-  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" 
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
@@ -7504,7 +7504,7 @@ if [ -d ../MASTER_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "MASTER CCD images test " 1>&2
+ echo "MASTER CCD images test " 
  echo -n "MASTER CCD images test: " >> vast_test_report.txt 
  cp default.sex.ccd_example default.sex
  ./vast -u -f ../MASTER_test/*.fit
@@ -7607,7 +7607,7 @@ $GREP_RESULT"
   done 
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCD_ALL"
  fi
@@ -7617,10 +7617,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mMASTER CCD images test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mMASTER CCD images test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mMASTER CCD images test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mMASTER CCD images test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -7645,9 +7645,9 @@ if [ ! -d ../M31_ISON_test ];then
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/M31_ISON_test.tar.bz2" && tar -xvjf M31_ISON_test.tar.bz2 && rm -f M31_ISON_test.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" 
   echo "ERROR downloading test data!" >> vast_test_report.txt
-  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" 
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
@@ -7659,7 +7659,7 @@ if [ -d ../M31_ISON_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "ISON M31 CCD images test " 1>&2
+ echo "ISON M31 CCD images test " 
  echo -n "ISON M31 CCD images test: " >> vast_test_report.txt 
  cp default.sex.ison_m31_test default.sex
  ./vast -u -f ../M31_ISON_test/*.fts
@@ -7769,7 +7769,7 @@ $GREP_RESULT"
   done
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD_ALL"
  fi
@@ -7779,10 +7779,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mISON M31 CCD images test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mISON M31 CCD images test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mISON M31 CCD images test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mISON M31 CCD images test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -7805,9 +7805,9 @@ if [ ! -d ../Gaia16aye_SN ];then
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/Gaia16aye_SN.tar.bz2" && tar -xvjf Gaia16aye_SN.tar.bz2 && rm -f Gaia16aye_SN.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" 
   echo "ERROR downloading test data!" >> vast_test_report.txt
-  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" 
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
@@ -7819,7 +7819,7 @@ if [ -d ../Gaia16aye_SN ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Gaia16aye_SN CCD images test " 1>&2
+ echo "Gaia16aye_SN CCD images test " 
  echo -n "Gaia16aye_SN CCD images test: " >> vast_test_report.txt 
  cp default.sex.ccd_example default.sex
  ./vast -u -f -x3 ../Gaia16aye_SN/*.fit
@@ -7917,7 +7917,7 @@ $GREP_RESULT"
   done
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES GAIA16AYESN_ALL"
  fi
@@ -7927,10 +7927,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mGaia16aye_SN CCD images test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mGaia16aye_SN CCD images test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mGaia16aye_SN CCD images test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mGaia16aye_SN CCD images test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -7952,9 +7952,9 @@ if [ ! -d ../only_few_stars ];then
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/only_few_stars.tar.bz2" && tar -xvjf only_few_stars.tar.bz2 && rm -f only_few_stars.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" 
   echo "ERROR downloading test data!" >> vast_test_report.txt
-  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" 
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
@@ -7966,7 +7966,7 @@ if [ -d ../only_few_stars ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "CCD images with few stars test " 1>&2
+ echo "CCD images with few stars test " 
  echo -n "CCD images with few stars test: " >> vast_test_report.txt 
  cp default.sex.ccd_example default.sex
  ./vast -u -f -p ../only_few_stars/*
@@ -8067,7 +8067,7 @@ $GREP_RESULT"
   done
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARS_ALL"
  fi
@@ -8077,10 +8077,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mCCD images with few stars test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mCCD images with few stars test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mCCD images with few stars test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mCCD images with few stars test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -8099,9 +8099,9 @@ if [ ! -d ../only_few_stars ];then
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/only_few_stars.tar.bz2" && tar -xvjf only_few_stars.tar.bz2 && rm -f only_few_stars.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" 
   echo "ERROR downloading test data!" >> vast_test_report.txt
-  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" 
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
@@ -8113,7 +8113,7 @@ if [ -d ../only_few_stars ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "CCD images with few stars and brigh galaxy magsizefilter test " 1>&2
+ echo "CCD images with few stars and brigh galaxy magsizefilter test " 
  echo -n "CCD images with few stars and brigh galaxy magsizefilter test: " >> vast_test_report.txt 
  cp default.sex.ccd_example default.sex
  ./vast -u -f -p --magsizefilter ../only_few_stars/*
@@ -8312,7 +8312,7 @@ $GREP_RESULT"
   done
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_ALL"
  fi
@@ -8322,10 +8322,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mCCD images with few stars and brigh galaxy magsizefilter test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mCCD images with few stars and brigh galaxy magsizefilter test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mCCD images with few stars and brigh galaxy magsizefilter test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mCCD images with few stars and brigh galaxy magsizefilter test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -8351,9 +8351,9 @@ if [ ! -d ../test_exclude_ref_image ];then
  $($WORKDIR/lib/find_timeout_command.sh) 900 curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/data/vast_tests/test_exclude_ref_image.tar.bz2" && tar -xvjf test_exclude_ref_image.tar.bz2 && rm -f test_exclude_ref_image.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" 
   echo "ERROR downloading test data!" >> vast_test_report.txt
-  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" 
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
@@ -8365,7 +8365,7 @@ if [ -d ../test_exclude_ref_image ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Exclude reference image test " 1>&2
+ echo "Exclude reference image test " 
  echo -n "Exclude reference image test: " >> vast_test_report.txt 
  #cp default.sex.excluderefimgtest default.sex
  # The default file actually is better
@@ -8559,7 +8559,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE_GAIN_KEY"
   fi
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE_ALL"
  fi
@@ -8570,10 +8570,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mExclude reference image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mExclude reference image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mExclude reference image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mExclude reference image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -8592,9 +8592,9 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -8608,9 +8608,9 @@ if [ ! -d ../transient_detection_test_Ceres ];then
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/transient_detection_test_Ceres.tar.bz2" && tar -xvjf transient_detection_test_Ceres.tar.bz2 && rm -f transient_detection_test_Ceres.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" 
   echo "ERROR downloading test data!" >> vast_test_report.txt
-  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" 
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
@@ -8622,7 +8622,7 @@ if [ -d ../transient_detection_test_Ceres ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW find Ceres test " 1>&2
+ echo "NMW find Ceres test " 
  echo -n "NMW find Ceres test: " >> vast_test_report.txt 
  cp default.sex.telephoto_lens default.sex
  ./vast -x99 -ukf ../transient_detection_test_Ceres/reference_images/* ../transient_detection_test_Ceres/second_epoch_images/*
@@ -8774,7 +8774,7 @@ $GREP_RESULT"
    mv astorb.dat astorb.dat_backup
   fi
   if [ ! -f astorb_ceres.dat ];then
-   curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_ceres.dat.gz" 1>&2
+   curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_ceres.dat.gz" 
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES CERES_error_downloading_custom_astorb_ceres.dat"
@@ -9104,7 +9104,7 @@ $GREP_RESULT"
   done 
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES CERES_ALL"
  fi
@@ -9115,10 +9115,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW find Ceres test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Ceres test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW find Ceres test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Ceres test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -9133,9 +9133,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -9156,9 +9156,9 @@ if [ ! -d ../NMW_Saturn_test ];then
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Saturn_test.tar.bz2" && tar -xvjf NMW_Saturn_test.tar.bz2 && rm -f NMW_Saturn_test.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" 
   echo "ERROR downloading test data!" >> vast_test_report.txt
-  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" 
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
@@ -9170,7 +9170,7 @@ if [ -d ../NMW_Saturn_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW find Saturn/Iapetus test " 1>&2
+ echo "NMW find Saturn/Iapetus test " 
  echo -n "NMW find Saturn/Iapetus test: " >> vast_test_report.txt 
  #cp default.sex.telephoto_lens_v4 default.sex
  cp default.sex.telephoto_lens_v3 default.sex
@@ -9670,7 +9670,7 @@ $GREP_RESULT"
   done 
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN_ALL"
  fi
@@ -9680,10 +9680,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW find Saturn/Iapetus test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Saturn/Iapetus test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW find Saturn/Iapetus test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Saturn/Iapetus test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -9697,9 +9697,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -9719,7 +9719,7 @@ if [ -d ../NMW_Saturn_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW find Saturn/Iapetus test 2 " 1>&2
+ echo "NMW find Saturn/Iapetus test 2 " 
  echo -n "NMW find Saturn/Iapetus test 2: " >> vast_test_report.txt 
  #
  if [ -f ../exclusion_list.txt ];then
@@ -10071,7 +10071,7 @@ $GREP_RESULT"
   ###########################################################
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_ALL"
  fi
@@ -10087,10 +10087,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW find Saturn/Iapetus test 2 \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Saturn/Iapetus test 2 \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW find Saturn/Iapetus test 2 \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Saturn/Iapetus test 2 \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -10104,9 +10104,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -10119,9 +10119,9 @@ if [ ! -d ../NMW_Venus_test ];then
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Venus_test.tar.bz2" && tar -xvjf NMW_Venus_test.tar.bz2 && rm -f NMW_Venus_test.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" 
   echo "ERROR downloading test data!" >> vast_test_report.txt
-  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" 
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
@@ -10133,7 +10133,7 @@ if [ -d ../NMW_Venus_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW find Venus test " 1>&2
+ echo "NMW find Venus test " 
  echo -n "NMW find Venus test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -10151,7 +10151,7 @@ if [ -d ../NMW_Venus_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2020.dat ];then
-  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2020.dat.gz" 1>&2
+  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2020.dat.gz" 
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_error_downloading_custom_astorb_2020.dat"
@@ -10317,7 +10317,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_ALL"
  fi
@@ -10333,10 +10333,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW find Venus test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Venus test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW find Venus test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Venus test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -10350,9 +10350,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -10372,7 +10372,7 @@ if [ -d ../NMW_calibration_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW calibration test " 1>&2
+ echo "NMW calibration test " 
  echo -n "NMW calibration test: " >> vast_test_report.txt 
  # Set calibration info
  export DARK_FRAMES_DIR=../NMW_calibration_test/darks
@@ -10477,7 +10477,7 @@ $GREP_RESULT"
   
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_SCRIPT"
  fi
@@ -10663,10 +10663,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW calibration test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW calibration test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW calibration test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW calibration test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -10680,9 +10680,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -10702,7 +10702,7 @@ if [ -d ../NMW_find_NovaCas_august31_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW find Nova Cas August 31 test " 1>&2
+ echo "NMW find Nova Cas August 31 test " 
  echo -n "NMW find Nova Cas August 31 test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -10884,7 +10884,7 @@ $GREP_RESULT"
   fi
   
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_ALL"
  fi
@@ -10900,10 +10900,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW find Nova Cas August 31 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Cas August 31 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW find Nova Cas August 31 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Cas August 31 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -10917,9 +10917,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -10940,7 +10940,7 @@ if [ -d ../NMW_nomatch_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW large offset in one of three images test " 1>&2
+ echo "NMW large offset in one of three images test " 
  echo -n "NMW large offset in one of three images test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -11123,7 +11123,7 @@ $GREP_RESULT"
   fi
   
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET_ALL"
  fi
@@ -11139,10 +11139,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW large offset in one of three images test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW large offset in one of three images test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW large offset in one of three images test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW large offset in one of three images test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -11156,9 +11156,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -11182,7 +11182,7 @@ if [ -d ../NMW_ATLAS_Mira_in_Ser1 ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW ATLAS Mira not in VSX ID test " 1>&2
+ echo "NMW ATLAS Mira not in VSX ID test " 
  echo -n "NMW ATLAS Mira not in VSX ID test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -11600,7 +11600,7 @@ $GREP_RESULT"
   fi
   
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_ALL"
  fi
@@ -11616,10 +11616,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW ATLAS Mira not in VSX ID test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW ATLAS Mira not in VSX ID test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW ATLAS Mira not in VSX ID test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW ATLAS Mira not in VSX ID test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -11633,9 +11633,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -11659,7 +11659,7 @@ if [ -d ../NMW_Sgr1_NovaSgr20N4_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW find Nova Sgr 2020 N4 test " 1>&2
+ echo "NMW find Nova Sgr 2020 N4 test " 
  echo -n "NMW find Nova Sgr 2020 N4 test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -11918,7 +11918,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_ALL"
  fi
@@ -11934,10 +11934,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW find Nova Sgr 2020 N4 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Sgr 2020 N4 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW find Nova Sgr 2020 N4 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Sgr 2020 N4 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -11951,9 +11951,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -11975,7 +11975,7 @@ if [ -d ../NMW_Sco6_NovaSgr24N1_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW find Nova Sgr 2024 N1 test " 1>&2
+ echo "NMW find Nova Sgr 2024 N1 test " 
  echo -n "NMW find Nova Sgr 2024 N1 test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -12263,7 +12263,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_ALL"
  fi
@@ -12279,10 +12279,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW find Nova Sgr 2024 N1 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Sgr 2024 N1 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW find Nova Sgr 2024 N1 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Sgr 2024 N1 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -12296,9 +12296,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -12321,7 +12321,7 @@ if [ -d ../NMW__NovaVul24_Stas_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW find Nova Vul 2024 ST test " 1>&2
+ echo "NMW find Nova Vul 2024 ST test " 
  echo -n "NMW find Nova Vul 2024 ST test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -12483,10 +12483,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW find Nova Vul 2024 ST test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Vul 2024 ST test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW find Nova Vul 2024 ST test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Vul 2024 ST test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -12500,9 +12500,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -12525,7 +12525,7 @@ if [ -d ../NMW_Aql11_NovaHer21_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW find Nova Her 2021 test " 1>&2
+ echo "NMW find Nova Her 2021 test " 
  echo -n "NMW find Nova Her 2021 test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -12718,7 +12718,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21_ALL"
  fi
@@ -12734,10 +12734,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW find Nova Her 2021 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Her 2021 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW find Nova Her 2021 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Her 2021 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -12751,9 +12751,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -12773,7 +12773,7 @@ if [ -d ../NMW_find_NovaCas21_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW find Nova Cas 2021 test " 1>&2
+ echo "NMW find Nova Cas 2021 test " 
  echo -n "NMW find Nova Cas 2021 test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -12966,7 +12966,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_ALL"
  fi
@@ -12982,10 +12982,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW find Nova Cas 2021 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Cas 2021 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW find Nova Cas 2021 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Cas 2021 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 # No else HERE AS THIS IS A SPECIAL TEST PERFORMED ONLY ON SELECTED MACHINES
@@ -13000,9 +13000,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -13021,7 +13021,7 @@ if [ -d ../NMW_Sco6_NovaSgr21N2_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW find Nova Sgr 2021 N2 test " 1>&2
+ echo "NMW find Nova Sgr 2021 N2 test " 
  echo -n "NMW find Nova Sgr 2021 N2 test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -13271,7 +13271,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2_ALL"
  fi
@@ -13288,10 +13288,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW find Nova Sgr 2021 N2 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Sgr 2021 N2 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW find Nova Sgr 2021 N2 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Sgr 2021 N2 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 # No else HERE AS THIS IS A SPECIAL TEST PERFORMED ONLY ON SELECTED MACHINES
@@ -13306,9 +13306,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -13327,7 +13327,7 @@ if [ -d ../NMW_Sgr7_NovaSgr21N1_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW find Nova Sgr 2021 N1 test " 1>&2
+ echo "NMW find Nova Sgr 2021 N1 test " 
  echo -n "NMW find Nova Sgr 2021 N1 test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -13642,7 +13642,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1_ALL"
  fi
@@ -13658,10 +13658,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW find Nova Sgr 2021 N1 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Sgr 2021 N1 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW find Nova Sgr 2021 N1 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Sgr 2021 N1 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 # No else HERE AS THIS IS A SPECIAL TEST PERFORMED ONLY ON SELECTED MACHINES
@@ -13676,9 +13676,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -13697,7 +13697,7 @@ if [ -d ../NMW_Vul7_NovaVul21_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW find Nova Vul 2021 test " 1>&2
+ echo "NMW find Nova Vul 2021 test " 
  echo -n "NMW find Nova Vul 2021 test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -13881,7 +13881,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21_ALL"
  fi
@@ -13897,10 +13897,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW find Nova Vul 2021 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Vul 2021 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW find Nova Vul 2021 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Vul 2021 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 # No else HERE AS THIS IS A SPECIAL TEST PERFORMED ONLY ON SELECTED MACHINES
@@ -13915,9 +13915,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -13936,7 +13936,7 @@ if [ -d ../NMW_find_Mars_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW find Mars test " 1>&2
+ echo "NMW find Mars test " 
  echo -n "NMW find Mars test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -14120,7 +14120,7 @@ $GREP_RESULT"
   
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_ALL"
  fi
@@ -14299,7 +14299,7 @@ $GREP_RESULT"
   
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_ALL"
  fi
@@ -14317,10 +14317,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW find Mars test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Mars test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW find Mars test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Mars test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 # No else HERE AS THIS IS A SPECIAL TEST PERFORMED ONLY ON SELECTED MACHINES
@@ -14335,9 +14335,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -14358,7 +14358,7 @@ if [ -d ../NMW_find_Chandra_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW find Chandra test " 1>&2
+ echo "NMW find Chandra test " 
  echo -n "NMW find Chandra test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -14582,7 +14582,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA_ALL"
  fi
@@ -14598,10 +14598,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW find Chandra test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Chandra test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW find Chandra test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Chandra test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -14615,9 +14615,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -14652,7 +14652,7 @@ if [ -d ../NMW_Sgr9_crash_test ];then
 06:49:07.80 +01:00:22.0
 07:07:43.22 +00:02:18.7" > ../exclusion_list.txt
  # Run the test
- echo "NMW Sgr9 crash test " 1>&2
+ echo "NMW Sgr9 crash test " 
  echo -n "NMW Sgr9 crash test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -14929,7 +14929,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_ALL"
  fi
@@ -15107,7 +15107,7 @@ $GREP_RESULT2"
   fi
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_ALL"
  fi
@@ -15124,10 +15124,10 @@ $GREP_RESULT2"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW Sgr9 crash test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW Sgr9 crash test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW Sgr9 crash test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW Sgr9 crash test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -15144,9 +15144,9 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -15166,7 +15166,7 @@ if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW Vul2 exclusion list test " 1>&2
+ echo "NMW Vul2 exclusion list test " 
  echo -n "NMW Vul2 exclusion list test: " >> vast_test_report.txt
  if [ -f ../exclusion_list.txt ];then
   mv ../exclusion_list.txt ../exclusion_list.txt_backup
@@ -15183,7 +15183,7 @@ if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_pallas.dat ];then
-  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_pallas.dat.gz" 1>&2
+  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_pallas.dat.gz" 
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_error_downloading_custom_astorb_pallas.dat"
@@ -15287,10 +15287,10 @@ if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW Vul2 exclusion list test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW Vul2 exclusion list test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW Vul2 exclusion list test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW Vul2 exclusion list test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -15304,9 +15304,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -15328,7 +15328,7 @@ if [ -d ../NMW-STL__find_Neptune_test ];then
  #
  remove_test31_tmp_files_if_present
  # Run the test
- echo "NMW-STL find Neptune test " 1>&2
+ echo "NMW-STL find Neptune test " 
  echo -n "NMW-STL find Neptune test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -15346,7 +15346,7 @@ if [ -d ../NMW-STL__find_Neptune_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 1>&2
+  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_error_downloading_custom_astorb_2023.dat"
@@ -15641,7 +15641,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_ALL"
  fi
@@ -15665,10 +15665,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW-STL find Neptune test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW-STL find Neptune test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW-STL find Neptune test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW-STL find Neptune test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -15683,9 +15683,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -15708,7 +15708,7 @@ if [ -d ../NMW-STL__find_NovaVul24_test ];then
  #
  remove_test31_tmp_files_if_present
  # Run the test
- echo "NMW-STL find Nova Vul 2024 test " 1>&2
+ echo "NMW-STL find Nova Vul 2024 test " 
  echo -n "NMW-STL find Nova Vul 2024 test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -15726,7 +15726,7 @@ if [ -d ../NMW-STL__find_NovaVul24_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 1>&2
+  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_error_downloading_custom_astorb_2023.dat"
@@ -15997,7 +15997,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_ALL"
  fi
@@ -16021,10 +16021,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW-STL find Nova Vul 2024 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW-STL find Nova Vul 2024 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW-STL find Nova Vul 2024 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW-STL find Nova Vul 2024 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -16039,9 +16039,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -16063,7 +16063,7 @@ if [ -d ../TICA_TESS__find_NovaVul24_test ];then
  #
  remove_test31_tmp_files_if_present
  # Run the test
- echo "TICA TESS find Nova Vul 2024 test " 1>&2
+ echo "TICA TESS find Nova Vul 2024 test " 
  echo -n "TICA TESS find Nova Vul 2024 test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -16081,7 +16081,7 @@ if [ -d ../TICA_TESS__find_NovaVul24_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 1>&2
+  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24_error_downloading_custom_astorb_2023.dat"
@@ -16233,7 +16233,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24_ALL"
  fi
@@ -16257,10 +16257,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mTICA TESS find Nova Vul 2024 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mTICA TESS find Nova Vul 2024 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mTICA TESS find Nova Vul 2024 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mTICA TESS find Nova Vul 2024 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -16275,9 +16275,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -16300,7 +16300,7 @@ if [ -d ../NMW-STL__plate_solve_failure_test ];then
  #
  remove_test31_tmp_files_if_present
  # Run the test
- echo "NMW-STL plate solve failure test " 1>&2
+ echo "NMW-STL plate solve failure test " 
  echo -n "NMW-STL plate solve failure test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -16318,7 +16318,7 @@ if [ -d ../NMW-STL__plate_solve_failure_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 1>&2
+  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_error_downloading_custom_astorb_2023.dat"
@@ -16583,7 +16583,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_ALL"
  fi
@@ -16607,10 +16607,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW-STL plate solve failure test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW-STL plate solve failure test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW-STL plate solve failure test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW-STL plate solve failure test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -16625,9 +16625,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -16650,7 +16650,7 @@ if [ -d ../NMW-STL__NovaOph24N1_test ];then
  #
  remove_test31_tmp_files_if_present
  # Run the test
- echo "NMW-STL find Nova Oph 2024 test " 1>&2
+ echo "NMW-STL find Nova Oph 2024 test " 
  echo -n "NMW-STL find Nova Oph 2024 test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -16668,7 +16668,7 @@ if [ -d ../NMW-STL__NovaOph24N1_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 1>&2
+  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_error_downloading_custom_astorb_2023.dat"
@@ -16897,7 +16897,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_ALL"
  fi
@@ -16921,10 +16921,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW-STL find Nova Oph 2024 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW-STL find Nova Oph 2024 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW-STL find Nova Oph 2024 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW-STL find Nova Oph 2024 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -16939,9 +16939,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -16964,7 +16964,7 @@ if [ -d ../NMW__NovaOph24N1_test ];then
  #
  remove_test31_tmp_files_if_present
  # Run the test
- echo "NMW find Nova Oph 2024 test " 1>&2
+ echo "NMW find Nova Oph 2024 test " 
  echo -n "NMW find Nova Oph 2024 test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -16982,7 +16982,7 @@ if [ -d ../NMW__NovaOph24N1_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 1>&2
+  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_error_downloading_custom_astorb_2023.dat"
@@ -17180,7 +17180,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_ALL"
  fi
@@ -17204,10 +17204,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW find Nova Oph 2024 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Oph 2024 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW find Nova Oph 2024 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW find Nova Oph 2024 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -17222,9 +17222,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -17251,7 +17251,7 @@ if [ -d ../TICA_TESS_mag_calibration_failure_test ];then
  #
  remove_test31_tmp_files_if_present
  # Run the test
- echo "TICA TESS magnitude calibration failure test " 1>&2
+ echo "TICA TESS magnitude calibration failure test " 
  echo -n "TICA TESS magnitude calibration failure test: " >> vast_test_report.txt 
  #
  cp -v bad_region.lst_default bad_region.lst
@@ -17269,7 +17269,7 @@ if [ -d ../TICA_TESS_mag_calibration_failure_test ];then
   mv astorb.dat astorb.dat_backup
  fi
  if [ ! -f astorb_2023.dat ];then
-  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 1>&2
+  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_error_downloading_custom_astorb_2023.dat"
@@ -17453,7 +17453,7 @@ $GREP_RESULT"
   fi
 
  else
-  echo "ERROR running the transient search script" 1>&2
+  echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_ALL"
  fi
@@ -17477,10 +17477,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34m TICA TESS magnitude calibration failure test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34m TICA TESS magnitude calibration failure test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34m TICA TESS magnitude calibration failure test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34m TICA TESS magnitude calibration failure test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -17495,9 +17495,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -17519,7 +17519,7 @@ if [ -d ../KZ_Her_DSLR_transient_search_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "DSLR transient search test " 1>&2
+ echo "DSLR transient search test " 
  echo -n "DSLR transient search test: " >> vast_test_report.txt 
  cp -v bad_region.lst_default bad_region.lst
  cp default.sex.DSLR_test default.sex
@@ -17636,7 +17636,7 @@ $GREP_RESULT"
   done
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER_ALL"
  fi
@@ -17647,10 +17647,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mDSLR transient search test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mDSLR transient search test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mDSLR transient search test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mDSLR transient search test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -17664,9 +17664,9 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -17687,7 +17687,7 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Nova Cas 2021 RC600 test " 1>&2
+ echo "Nova Cas 2021 RC600 test " 
  echo -n "Nova Cas 2021 RC600 test: " >> vast_test_report.txt 
  #
  cp default.sex.ccd_example default.sex
@@ -18006,10 +18006,10 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNova Cas 2021 RC600 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNova Cas 2021 RC600 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNova Cas 2021 RC600 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNova Cas 2021 RC600 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
  #
@@ -18045,7 +18045,7 @@ if [ -f ../individual_images_test/1630+3250.20150511T215921000.fit ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Ultra-wide-field image test " 1>&2
+ echo "Ultra-wide-field image test " 
  echo -n "Ultra-wide-field image test: " >> vast_test_report.txt 
  cp default.sex.ccd_example default.sex
  util/solve_plate_with_UCAC5 ../individual_images_test/1630+3250.20150511T215921000.fit
@@ -18093,10 +18093,10 @@ if [ -f ../individual_images_test/1630+3250.20150511T215921000.fit ];then
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mUltra-wide-field image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mUltra-wide-field image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mUltra-wide-field image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mUltra-wide-field image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -18124,7 +18124,7 @@ if [ -f ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "SN2023ixf N130 image test " 1>&2
+ echo "SN2023ixf N130 image test " 
  echo -n "SN2023ixf N130 image test: " >> vast_test_report.txt 
  cp default.sex.ccd_example default.sex
  lib/autodetect_aperture_main ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit 2>&1 | grep --quiet -- '-GAIN 1.001'
@@ -18196,10 +18196,10 @@ if [ -f ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSN2023ixf N130 image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSN2023ixf N130 image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSN2023ixf N130 image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSN2023ixf N130 image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -18225,7 +18225,7 @@ if [ -f ../individual_images_test/c176.fits ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Image with many hot pixels test " 1>&2
+ echo "Image with many hot pixels test " 
  echo -n "Image with many hot pixels test: " >> vast_test_report.txt 
  cp default.sex.many_hot_pixels default.sex
  util/solve_plate_with_UCAC5 ../individual_images_test/c176.fits
@@ -18268,10 +18268,10 @@ if [ -f ../individual_images_test/c176.fits ];then
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mImage with many hot pixels test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mImage with many hot pixels test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mImage with many hot pixels test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mImage with many hot pixels test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -18293,7 +18293,7 @@ if [ -f ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit 
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "SAI RC600 image test " 1>&2
+ echo "SAI RC600 image test " 
  echo -n "SAI RC600 test: " >> vast_test_report.txt 
  cp default.sex.ccd_example default.sex
  util/solve_plate_with_UCAC5 ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit
@@ -18356,10 +18356,10 @@ if [ -f ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit 
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSAI RC600 image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSAI RC600 image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSAI RC600 image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSAI RC600 image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -18384,7 +18384,7 @@ if [ -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fi
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "SAI RC600 B image test " 1>&2
+ echo "SAI RC600 B image test " 
  echo -n "SAI RC600 B image test: " >> vast_test_report.txt 
  cp default.sex.ccd_example default.sex
  util/solve_plate_with_UCAC5 ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit
@@ -18469,10 +18469,10 @@ if [ -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fi
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSAI RC600 B image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSAI RC600 B image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSAI RC600 B image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSAI RC600 B image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -18500,7 +18500,7 @@ if [ -f ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "SAI RC600 many bleeding stars image test " 1>&2
+ echo "SAI RC600 many bleeding stars image test " 
  echo -n "SAI RC600 many bleeding stars image test: " >> vast_test_report.txt 
  cp default.sex.ccd_example default.sex
  util/wcs_image_calibration.sh ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit
@@ -18600,10 +18600,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSAI RC600 many bleeding stars image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSAI RC600 many bleeding stars image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSAI RC600 many bleeding stars image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSAI RC600 many bleeding stars image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -18628,7 +18628,7 @@ if [ -f ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits ];th
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Sintez 380mm image test " 1>&2
+ echo "Sintez 380mm image test " 
  echo -n "Sintez 380mm image test: " >> vast_test_report.txt 
  cp default.sex.ccd_example default.sex
  util/solve_plate_with_UCAC5 ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits
@@ -18708,10 +18708,10 @@ if [ -f ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits ];th
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSintez 380mm image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSintez 380mm image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSintez 380mm image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSintez 380mm image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -18736,7 +18736,7 @@ if [ -f ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits ];the
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Sintez 380mm image 2 test " 1>&2
+ echo "Sintez 380mm image 2 test " 
  echo -n "Sintez 380mm image 2 test: " >> vast_test_report.txt 
  cp default.sex.ccd_example default.sex
  util/solve_plate_with_UCAC5 ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits
@@ -18814,10 +18814,10 @@ if [ -f ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits ];the
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSintez 380mm image 2 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSintez 380mm image 2 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSintez 380mm image 2 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSintez 380mm image 2 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -18845,7 +18845,7 @@ if [ -f ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits ];t
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Blank image with MJD-OBS test " 1>&2
+ echo "Blank image with MJD-OBS test " 
  echo -n "Blank image with MJD-OBS test: " >> vast_test_report.txt 
  #util/get_image_date ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits | grep --quiet 'JD (mid. exp.) 2450862.85250 = 1998-02-18 08:27:36'
  util/get_image_date ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits | grep --quiet 'JD (mid. exp.) 2450862.85250000 = 1998-02-18 08:27:36.000'
@@ -18860,10 +18860,10 @@ if [ -f ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits ];t
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mBlank image with MJD-OBS test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mBlank image with MJD-OBS test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mBlank image with MJD-OBS test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mBlank image with MJD-OBS test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -18892,7 +18892,7 @@ if [ -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "NMW archive image test " 1>&2
+ echo "NMW archive image test " 
  echo -n "NMW archive image test: " >> vast_test_report.txt 
  cp default.sex.NMW_mass_processing default.sex
  util/solve_plate_with_UCAC5 ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts
@@ -18930,10 +18930,10 @@ if [ -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNMW archive image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW archive image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNMW archive image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNMW archive image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -18957,7 +18957,7 @@ if [ -f ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Large image, small skymark test " 1>&2
+ echo "Large image, small skymark test " 
  echo -n "Large image, small skymark test: " >> vast_test_report.txt 
  cp default.sex.ccd_example default.sex
  util/solve_plate_with_UCAC5 ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit
@@ -19000,10 +19000,10 @@ if [ -f ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mLarge image, small skymark test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mLarge image, small skymark test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mLarge image, small skymark test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mLarge image, small skymark test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -19031,7 +19031,7 @@ if [ -f ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Lum
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "T33 test " 1>&2
+ echo "T33 test " 
  echo -n "T33 test: " >> vast_test_report.txt 
  cp default.sex.ccd_example default.sex
  util/solve_plate_with_UCAC5 ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit
@@ -19089,10 +19089,10 @@ if [ -f ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Lum
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mT33 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mT33 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mT33 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mT33 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -19121,7 +19121,7 @@ if [ -f ../individual_images_test/SCA13320__00_00.fits ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "104 Her test " 1>&2
+ echo "104 Her test " 
  echo -n "104 Her test: " >> vast_test_report.txt 
  cp default.sex.beta_Cas_photoplates default.sex
  util/solve_plate_with_UCAC5 ../individual_images_test/SCA13320__00_00.fits
@@ -19158,10 +19158,10 @@ if [ -f ../individual_images_test/SCA13320__00_00.fits ];then
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34m104 Her test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34m104 Her test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34m104 Her test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34m104 Her test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -19195,7 +19195,7 @@ if [ -f ../individual_images_test/SCA13320__00_00__date_in_JDMID_keyword.fits ] 
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "JDMID test " 1>&2
+ echo "JDMID test " 
  echo -n "JDMID test: " >> vast_test_report.txt 
  cp default.sex.beta_Cas_photoplates default.sex
  JDMID_KEY_JD=`util/get_image_date ../individual_images_test/SCA13320__00_00__date_in_JDMID_keyword.fits | grep 'JD (mid. exp.)'`
@@ -19211,10 +19211,10 @@ if [ -f ../individual_images_test/SCA13320__00_00__date_in_JDMID_keyword.fits ] 
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mJDMID test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mJDMID test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mJDMID test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mJDMID test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -19241,7 +19241,7 @@ if [ -f ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits ];the
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Flag image creation for HST test " 1>&2
+ echo "Flag image creation for HST test " 
  echo -n "Flag image creation for HST test: " >> vast_test_report.txt 
  # first run without grep "FLAG_IMAGE image00000.flag" to see the crash log if any
  cp default.sex.ccd_example default.sex
@@ -19272,10 +19272,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mFlag image creation for HST test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mFlag image creation for HST test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mFlag image creation for HST test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mFlag image creation for HST test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -19304,7 +19304,7 @@ if [ -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.f
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "ZTF image header test " 1>&2
+ echo "ZTF image header test " 
  echo -n "ZTF image header test: " >> vast_test_report.txt 
  #
  #util/get_image_date ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits | grep --quiet 'Exposure  30 sec, 27.03.2018 12:43:50   = JD  2458205.03061 mid. exp.'
@@ -19410,10 +19410,10 @@ if [ -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.f
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mZTF image header test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mZTF image header test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mZTF image header test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mZTF image header test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -19439,7 +19439,7 @@ if [ -f ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.f
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "ZTF image header test 2 " 1>&2
+ echo "ZTF image header test 2 " 
  echo -n "ZTF image header test 2: " >> vast_test_report.txt 
  #
  #util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit | grep --quiet 'Exposure  30 sec, 09.12.2018 10:25:07   = JD  2458461.93428 mid. exp.'
@@ -19544,10 +19544,10 @@ if [ -f ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.f
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mZTF image header test 2 \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mZTF image header test 2 \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mZTF image header test 2 \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mZTF image header test 2 \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -19575,7 +19575,7 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Stacked DSLR image (BITPIX=16) created with Siril test " 1>&2
+ echo "Stacked DSLR image (BITPIX=16) created with Siril test " 
  echo -n "Stacked DSLR image (BITPIX=16) created with Siril test: " >> vast_test_report.txt 
  #
  #util/get_image_date ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit | grep --quiet 'Exposure 750 sec, 20.08.2020 07:45:37 UT = JD(UT) 2459081.82769 mid. exp.'
@@ -19663,10 +19663,10 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit ];then
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mStacked DSLR image (BITPIX=16) created with Siril test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mStacked DSLR image (BITPIX=16) created with Siril test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mStacked DSLR image (BITPIX=16) created with Siril test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mStacked DSLR image (BITPIX=16) created with Siril test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -19694,7 +19694,7 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Stacked DSLR image (BITPIX=-32) created with Siril test " 1>&2
+ echo "Stacked DSLR image (BITPIX=-32) created with Siril test " 
  echo -n "Stacked DSLR image (BITPIX=-32) created with Siril test: " >> vast_test_report.txt 
  #
  #util/get_image_date ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit | grep --quiet 'Exposure 750 sec, 20.08.2020 07:45:37 UT = JD(UT) 2459081.82769 mid. exp.'
@@ -19788,10 +19788,10 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit ];then
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mStacked DSLR image (BITPIX=-32) created with Siril test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mStacked DSLR image (BITPIX=-32) created with Siril test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mStacked DSLR image (BITPIX=-32) created with Siril test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mStacked DSLR image (BITPIX=-32) created with Siril test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -19819,7 +19819,7 @@ if [ -f ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Stacked DSLR image (BITPIX=-32, EXPSTART, EXPEND) created with Siril test " 1>&2
+ echo "Stacked DSLR image (BITPIX=-32, EXPSTART, EXPEND) created with Siril test " 
  echo -n "Stacked DSLR image (BITPIX=-32, EXPSTART, EXPEND) created with Siril test: " >> vast_test_report.txt 
  #
  #util/get_image_date ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit | grep --quiet 'JD (mid. exp.) 2459177.84869 = 2020-11-24 08:22:06 (UT)'
@@ -19907,10 +19907,10 @@ if [ -f ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mStacked DSLR image (BITPIX=-32, EXPSTART, EXPEND) created with Siril test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mStacked DSLR image (BITPIX=-32, EXPSTART, EXPEND) created with Siril test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mStacked DSLR image (BITPIX=-32, EXPSTART, EXPEND) created with Siril test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mStacked DSLR image (BITPIX=-32, EXPSTART, EXPEND) created with Siril test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -19938,7 +19938,7 @@ if [ -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits ]
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "TESS FFI with no WCS test " 1>&2
+ echo "TESS FFI with no WCS test " 
  echo -n "TESS FFI with no WCS test: " >> vast_test_report.txt 
  #
  #util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:38   = JD  2458955.79836 mid. exp.'
@@ -20022,10 +20022,10 @@ if [ -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits ]
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mTESS FFI with no WCS test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mTESS FFI with no WCS test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mTESS FFI with no WCS test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mTESS FFI with no WCS test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -20053,7 +20053,7 @@ if [ -f ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "TICA TESS FFI individual image test " 1>&2
+ echo "TICA TESS FFI individual image test " 
  echo -n "TICA TESS FFI individual image test: " >> vast_test_report.txt 
  #
  #util/get_image_date ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep --quiet 'JD (mid. exp.) 2460168.93614 = 2023-08-12 10:28:03 (TDB)'
@@ -20144,10 +20144,10 @@ if [ -f ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mTICA TESS FFI individual image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mTICA TESS FFI individual image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mTICA TESS FFI individual image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mTICA TESS FFI individual image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -20165,7 +20165,7 @@ if [ -d ../individual_images_test ];then
  THIS_TEST_START_UNIXSEC=$(date +%s)
  TEST_PASSED=1
  # Run the test
- echo "Test imstat code " 1>&2
+ echo "Test imstat code " 
  echo -n "Test imstat code: " >> vast_test_report.txt 
 
  ### Specific test to make sure lib/try_to_guess_image_fov does not crash
@@ -20196,10 +20196,10 @@ if [ -d ../individual_images_test ];then
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mimstat code test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mimstat code test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mimstat code test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mimstat code test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -20216,7 +20216,7 @@ if [ -d ../individual_images_test ];then
  THIS_TEST_START_UNIXSEC=$(date +%s)
  TEST_PASSED=1
  # Run the test
- echo "Test the field-of-view guess code " 1>&2
+ echo "Test the field-of-view guess code " 
  echo -n "Test the field-of-view guess code: " >> vast_test_report.txt 
 
  ### Specific test to make sure lib/try_to_guess_image_fov does not crash
@@ -20235,10 +20235,10 @@ if [ -d ../individual_images_test ];then
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mField-of-view guess code test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mField-of-view guess code test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mField-of-view guess code test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mField-of-view guess code test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -20252,9 +20252,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -20265,7 +20265,7 @@ if [ -d ../individual_images_test ];then
  THIS_TEST_START_UNIXSEC=$(date +%s)
  TEST_PASSED=1
  # Run the test
- echo "Test the WCS keywords stripping code " 1>&2
+ echo "Test the WCS keywords stripping code " 
  echo -n "Test the WCS keywords stripping code: " >> vast_test_report.txt 
 
  ### Specific test to make sure lib/try_to_guess_image_fov does not crash
@@ -20292,10 +20292,10 @@ if [ -d ../individual_images_test ];then
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mWCS keywords stripping code test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mWCS keywords stripping code test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mWCS keywords stripping code test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mWCS keywords stripping code test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -20309,9 +20309,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -20354,7 +20354,7 @@ if [ -d ../individual_images_test ];then
  THIS_TEST_START_UNIXSEC=$(date +%s)
  TEST_PASSED=1
  # Run the test
- echo "Test plate solving with remote servers " 1>&2
+ echo "Test plate solving with remote servers " 
  echo -n "Plate solving with remote servers: " >> vast_test_report.txt 
  #for FORCE_PLATE_SOLVE_SERVER in scan.sai.msu.ru vast.sai.msu.ru polaris.kirx.net none ;do
  for FORCE_PLATE_SOLVE_SERVER in scan.sai.msu.ru vast.sai.msu.ru polaris.kirx.net ;do
@@ -20464,10 +20464,10 @@ if [ -d ../individual_images_test ];then
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mTest for plate solving with remote servers \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mTest for plate solving with remote servers \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mTest for plate solving with remote servers \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mTest for plate solving with remote servers \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 
@@ -20481,9 +20481,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -20508,7 +20508,7 @@ if [ -f ../individual_images_test/SCA13320__00_00.fits ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "No flag images for photoplates 2 test " 1>&2
+ echo "No flag images for photoplates 2 test " 
  echo -n "No flag images for photoplates 2 test: " >> vast_test_report.txt 
  cp default.sex.beta_Cas_photoplates default.sex
  lib/autodetect_aperture_main ../individual_images_test/SCA13320__00_00.fits 2>&1 | grep "FLAG_IMAGE image00000.flag"
@@ -20528,10 +20528,10 @@ if [ -f ../individual_images_test/SCA13320__00_00.fits ];then
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mNo flag images for photoplates 2 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNo flag images for photoplates 2 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mNo flag images for photoplates 2 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mNo flag images for photoplates 2 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -20558,7 +20558,7 @@ if [ -d ../vast_test__dark_flat_flag ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Dark Flat Flag test " 1>&2
+ echo "Dark Flat Flag test " 
  echo -n "Dark Flat Flag test: " >> vast_test_report.txt 
  util/examples/test__dark_flat_flag.sh
  if [ $? -ne 0 ];then
@@ -20571,10 +20571,10 @@ if [ -d ../vast_test__dark_flat_flag ];then
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mDark Flat Flag test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mDark Flat Flag test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mDark Flat Flag test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mDark Flat Flag test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -20593,7 +20593,7 @@ if [ -d /mnt/usb/M4_F775W_images_Level2_few_links_for_tests ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Special HST M4 test " 1>&2
+ echo "Special HST M4 test " 
  echo -n "Special HST M4 test: " >> vast_test_report.txt 
  cp default.sex_HST_test default.sex
  ./vast -u -f /mnt/usb/M4_F775W_images_Level2_few_links_for_tests/*
@@ -20662,7 +20662,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIALM4HST006"
   fi
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIALM4HST_ALL"
  fi
@@ -20672,10 +20672,10 @@ $GREP_RESULT"
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSpecial HST M4 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSpecial HST M4 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSpecial HST M4 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSpecial HST M4 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
  #
@@ -20691,7 +20691,7 @@ if [ "$HOSTNAME" = "eridan" ] ;then
   TEST_PASSED=1
   util/clean_data.sh
   # Run the test
-  echo "Special VB test " 1>&2
+  echo "Special VB test " 
   echo -n "Special VB test: " >> vast_test_report.txt 
   CAT_RESULT=`util/examples/test__VB.sh 2>&1 | grep 'FAILED_TEST_CODES= '`
   if [ $? -ne 0 ];then
@@ -20706,10 +20706,10 @@ $CAT_RESULT"
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
   if [ $TEST_PASSED -eq 1 ];then
-   echo -e "\n\033[01;34mSpecial VB test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+   echo -e "\n\033[01;34mSpecial VB test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
    echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
   else
-   echo -e "\n\033[01;34mSpecial VB test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+   echo -e "\n\033[01;34mSpecial VB test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
    echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
   fi
   #
@@ -20726,7 +20726,7 @@ if [ -d /mnt/usb/VaST_test_VladimirB_2/GoodFrames/vast_test_VB ] || [ -d ../VaST
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Special VB2 test " 1>&2
+ echo "Special VB2 test " 
  echo -n "Special VB2 test: " >> vast_test_report.txt 
  CAT_RESULT=`util/examples/test__VB_2.sh 2>&1 | grep -e 'FAILED_TEST_CODES= ' -e 'ERROR'`
  if [ $? -ne 0 ];then
@@ -20742,10 +20742,10 @@ $CAT_RESULT"
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSpecial VB2 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSpecial VB2 test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSpecial VB2 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSpecial VB2 test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
  #
@@ -20767,7 +20767,7 @@ if [ -d /mnt/usb/61Cyg_photoplates_test ] || [ -d ../61Cyg_photoplates_test ] ||
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Special 61 Cyg test " 1>&2
+ echo "Special 61 Cyg test " 
  echo -n "Special 61 Cyg test: " >> vast_test_report.txt 
  GREP_RESULT=`util/examples/test_61Cyg.sh | grep -e 'FAILED_TEST_CODES' -e 'Test failed' -e 'Test passed'`
  if [ $? -ne 0 ];then
@@ -20783,10 +20783,10 @@ $GREP_RESULT"
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSpecial 61 Cyg test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSpecial 61 Cyg test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSpecial 61 Cyg test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSpecial 61 Cyg test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
  #
@@ -20803,7 +20803,7 @@ if [ "$HOSTNAME" = "vast" ];then
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_V2466CygSAI600_001"
-  echo -e "\n\033[01;34mSpecial V2466 Cyg SAI600 test \033[01;31mFAILED\033[00m" 1>&2
+  echo -e "\n\033[01;34mSpecial V2466 Cyg SAI600 test \033[01;31mFAILED\033[00m" 
   echo -n "Special Special V2466 Cyg SAI600 test: " >> vast_test_report.txt
   echo "FAILED" >> vast_test_report.txt
  fi # if [ $? -ne 0 ];then
@@ -20817,7 +20817,7 @@ if [ "$HOSTNAME" = "eridan" ] ;then
   TEST_PASSED=1
   util/clean_data.sh
   # Run the test
-  echo "Special NMW test " 1>&2
+  echo "Special NMW test " 
   echo -n "Special NMW test: " >> vast_test_report.txt 
   GREP_RESULT=`util/examples/test_NMW.sh 2>&1 | grep -e 'FAILED_TEST_CODES' -e 'Test failed' -e 'Test passed'`
   if [ $? -ne 0 ];then
@@ -20841,10 +20841,10 @@ $GREP_RESULT"
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
   if [ $TEST_PASSED -eq 1 ];then
-   echo -e "\n\033[01;34mSpecial NMW test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+   echo -e "\n\033[01;34mSpecial NMW test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
    echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
   else
-   echo -e "\n\033[01;34mSpecial NMW test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+   echo -e "\n\033[01;34mSpecial NMW test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
    echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
   fi
   #
@@ -20868,7 +20868,7 @@ if [ $? -eq 0 ];then
    TEST_PASSED=1
    util/clean_data.sh
    # Run the test
-   echo "Special Valgrind test " 1>&2
+   echo "Special Valgrind test " 
    echo -n "Special Valgrind test: " >> vast_test_report.txt 
    #
    # Run the test only if VaST was compiled wthout AddressSanitizer
@@ -21272,10 +21272,10 @@ if [ $? -eq 0 ];then
 
     # conclude
     if [ $TEST_PASSED -eq 1 ];then
-     echo -e "\n\033[01;34mSpecial Valgrind test \033[01;32mPASSED\033[00m" 1>&2
+     echo -e "\n\033[01;34mSpecial Valgrind test \033[01;32mPASSED\033[00m" 
      echo "PASSED" >> vast_test_report.txt
     else
-     echo -e "\n\033[01;34mSpecial Valgrind test \033[01;31mFAILED\033[00m" 1>&2
+     echo -e "\n\033[01;34mSpecial Valgrind test \033[01;31mFAILED\033[00m" 
      echo "FAILED" >> vast_test_report.txt
     fi
    else
@@ -21317,7 +21317,7 @@ if [ -d ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails 
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Photometric error rescaling test " 1>&2
+ echo "Photometric error rescaling test " 
  echo -n "Photometric error rescaling test: " >> vast_test_report.txt 
  util/load.sh ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails
  if [ $? -ne 0 ];then
@@ -21354,10 +21354,10 @@ if [ -d ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails 
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mPhotometric error rescaling test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mPhotometric error rescaling test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mPhotometric error rescaling test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mPhotometric error rescaling test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -21392,7 +21392,7 @@ if [ "$MD5COMMAND" != "none" ];then
  THIS_TEST_START_UNIXSEC=$(date +%s)
  TEST_PASSED=1
  # Run the test
- echo "Testing the lightcurve parsing function " 1>&2
+ echo "Testing the lightcurve parsing function " 
  echo -n "Testing the lightcurve parsing function: " >> vast_test_report.txt 
  TEST_LIGHTCURVE="# bjdtdb m 0.1 0.1 1.0 none
 2456210.367045 -9.18500 0.02459 0.1 0.1 1.0 none
@@ -21459,10 +21459,10 @@ C" | $(lib/find_timeout_command.sh) 10 sort --random-sort --random-source=/dev/u
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mTest of the lightcurve parsing function \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mTest of the lightcurve parsing function \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mTest of the lightcurve parsing function \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mTest of the lightcurve parsing function \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi 
 
@@ -21479,7 +21479,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
 # Run the test
-echo "Testing lightcurve filters " 1>&2
+echo "Testing lightcurve filters " 
 echo -n "Testing lightcurve filters: " >> vast_test_report.txt 
 
 # Test if 'sort' understands the '--random-sort' argument, perform the following tests only if it does
@@ -21571,10 +21571,10 @@ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSE
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mTest of the lightcurve filters \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mTest of the lightcurve filters \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mTest of the lightcurve filters \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mTest of the lightcurve filters \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi 
 #
@@ -21588,7 +21588,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
 # Run the test
-echo "Performing a period search test " 1>&2
+echo "Performing a period search test " 
 echo -n "Period search test: " >> vast_test_report.txt 
 
 if [ ! -d ../vast_test_lightcurves ];then
@@ -21869,10 +21869,10 @@ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSE
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mPeriod search test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mPeriod search test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mPeriod search test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mPeriod search test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi 
 #
@@ -21887,7 +21887,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
 # Run the test
-echo "Performing a lightcurve viewer test " 1>&2
+echo "Performing a lightcurve viewer test " 
 echo -n "Lightcurve viewer test: " >> vast_test_report.txt 
 
 if [ ! -d ../vast_test_lightcurves ];then
@@ -21945,10 +21945,10 @@ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSE
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mLightcurve viewer test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mLightcurve viewer test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mLightcurve viewer test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mLightcurve viewer test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi 
 #
@@ -21961,7 +21961,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
 # Run the test
-echo "Performing a vizquery test " 1>&2
+echo "Performing a vizquery test " 
 echo -n "vizquery test: " >> vast_test_report.txt 
 
 if [ ! -d ../vast_test_lightcurves ];then
@@ -22043,10 +22043,10 @@ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSE
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mvizquery test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mvizquery test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mvizquery test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mvizquery test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi 
 #
@@ -22060,7 +22060,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
 # Run the test
-echo "Performing a standalone test for database querry scripts " 1>&2
+echo "Performing a standalone test for database querry scripts " 
 echo -n "Testing database querry scripts: " >> vast_test_report.txt 
 
 lib/update_offline_catalogs.sh all &> update_offline_catalogs.out
@@ -22451,10 +22451,10 @@ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSE
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mTest of the database querry scripts \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mTest of the database querry scripts \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mTest of the database querry scripts \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mTest of the database querry scripts \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi 
 #
@@ -22474,7 +22474,7 @@ if [ -d ../sample_data ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Small CCD PSF-fitting test " 1>&2
+ echo "Small CCD PSF-fitting test " 
  echo -n "Small CCD PSF-fitting test: " >> vast_test_report.txt 
  cp default.sex.ccd_example default.sex
  cp default.psfex.small_FoV default.psfex
@@ -22853,7 +22853,7 @@ $GREP_RESULT"
   fi # DISABLE_MAGSIZE_FILTER_LOGS
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF_ALL"
  fi
@@ -22864,10 +22864,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSmall CCD PSF-fitting test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD PSF-fitting test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mSmall CCD PSF-fitting test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mSmall CCD PSF-fitting test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -22894,7 +22894,7 @@ if [ -d ../MASTER_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "MASTER CCD PSF-fitting test " 1>&2
+ echo "MASTER CCD PSF-fitting test " 
  echo -n "MASTER CCD PSF-fitting test: " >> vast_test_report.txt 
  cp default.sex.ccd_example default.sex
  ./vast -P -u -f ../MASTER_test/*.fit
@@ -23011,7 +23011,7 @@ $GREP_RESULT"
   fi # DISABLE_MAGSIZE_FILTER_LOGS
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCDPSF_ALL"
  fi
@@ -23022,10 +23022,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mMASTER CCD PSF-fitting test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mMASTER CCD PSF-fitting test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mMASTER CCD PSF-fitting test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mMASTER CCD PSF-fitting test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -23055,7 +23055,7 @@ if [ -d ../M31_ISON_test ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "ISON M31 PSF-fitting test " 1>&2
+ echo "ISON M31 PSF-fitting test " 
  echo -n "ISON M31 PSF-fitting test: " >> vast_test_report.txt 
  cp default.sex.ison_m31_test default.sex
  ./vast -P -u -f ../M31_ISON_test/*.fts
@@ -23137,7 +23137,7 @@ $GREP_RESULT"
   done
 
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF_ALL"
  fi
@@ -23148,10 +23148,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mISON M31 PSF-fitting test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mISON M31 PSF-fitting test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mISON M31 PSF-fitting test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mISON M31 PSF-fitting test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -23175,7 +23175,7 @@ if [ -d ../test_exclude_ref_image ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Exclude reference image test (PSF) " 1>&2
+ echo "Exclude reference image test (PSF) " 
  echo -n "Exclude reference image test (PSF): " >> vast_test_report.txt 
  cp default.sex.excluderefimgtest default.sex
  cp default.psfex.excluderefimgtest default.psfex
@@ -23313,7 +23313,7 @@ $GREP_RESULT"
   # FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF_GAIN_KEY"
   #fi
  else
-  echo "ERROR: cannot find vast_summary.log" 1>&2
+  echo "ERROR: cannot find vast_summary.log" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF_ALL"
  fi
@@ -23324,10 +23324,10 @@ $GREP_RESULT"
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mExclude reference image test (PSF) \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mExclude reference image test (PSF) \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mExclude reference image test (PSF) \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mExclude reference image test (PSF) \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
@@ -23356,9 +23356,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 1>&2
+ echo "Internet connection error!" 
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+ echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
@@ -23368,7 +23368,7 @@ fi
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
 # Run the test
-echo "Performing the second period search test " 1>&2
+echo "Performing the second period search test " 
 echo -n "Performing the second period search test: " >> vast_test_report.txt 
 
 lib/ls_compute_periodogram lib/test/hads_p0.060.dat 0.20 0.05 0.1 | grep 'LS' | grep "16.661" &>/dev/null
@@ -23408,10 +23408,10 @@ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSE
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mThe second period search test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mThe second period search test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mThe second period search test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mThe second period search test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi 
 #
@@ -23433,7 +23433,7 @@ if [ $? -eq 0 ];then
  THIS_TEST_START_UNIXSEC=$(date +%s)
  TEST_PASSED=1
  # Run the test
- echo "Performing coordinate conversion test " 1>&2
+ echo "Performing coordinate conversion test " 
  echo -n "Performing coordinate conversion test: " >> vast_test_report.txt 
 
  util/examples/test_coordinate_converter.sh &>/dev/null
@@ -23708,10 +23708,10 @@ if [ $? -eq 0 ];then
  
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mCoordinate conversion test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mCoordinate conversion test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mCoordinate conversion test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mCoordinate conversion test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi 
 else
@@ -23733,9 +23733,9 @@ if [ ! -f ../vast_test_lightcurves/exclusion_list_STL.txt ];then
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/exclusion_list_STL.txt.bz2" && bunzip2 exclusion_list_STL.txt.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 1>&2
+  echo "ERROR downloading test data!" 
   echo "ERROR downloading test data!" >> vast_test_report.txt
-  echo "Failed test codes: $FAILED_TEST_CODES" 1>&2
+  echo "Failed test codes: $FAILED_TEST_CODES" 
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
@@ -23745,7 +23745,7 @@ fi
 if [ -s ../vast_test_lightcurves/exclusion_list_STL.txt ];then
  THIS_TEST_START_UNIXSEC=$(date +%s)
  TEST_PASSED=1
- echo "Performing the large exclusion file test " 1>&2
+ echo "Performing the large exclusion file test " 
  echo -n "Performing the large exclusion file test: " >> vast_test_report.txt 
 
  # this one should be found
@@ -23781,10 +23781,10 @@ if [ -s ../vast_test_lightcurves/exclusion_list_STL.txt ];then
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mlarge exclusion file test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mlarge exclusion file test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mlarge exclusion file test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mlarge exclusion file test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi 
 else
@@ -23799,7 +23799,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # astcheck test
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
-echo "Performing the astcheck test " 1>&2
+echo "Performing the astcheck test " 
 echo -n "Performing the astcheck test: " >> vast_test_report.txt 
 
 echo "01:23:45.67 -01:23:45.6 My Test Planet" > planets.txt
@@ -23824,10 +23824,10 @@ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSE
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mastcheck test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mastcheck test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mastcheck test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mastcheck test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi 
 #
@@ -23843,7 +23843,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
 # Run the test
-echo "Performing TAI-UTC file updater test " 1>&2
+echo "Performing TAI-UTC file updater test " 
 echo -n "Performing TAI-UTC file updater test: " >> vast_test_report.txt 
 # just test that the updater runs with no errors
 lib/update_tai-utc.sh
@@ -23858,10 +23858,10 @@ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSE
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mTAI-UTC file updater test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mTAI-UTC file updater test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mTAI-UTC file updater test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mTAI-UTC file updater test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi 
 #
@@ -23882,7 +23882,7 @@ done
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
 # Run the test
-echo "Calendar date to JD conversion test " 1>&2
+echo "Calendar date to JD conversion test " 
 echo -n "Calendar date to JD conversion test: " >> vast_test_report.txt 
 util/get_image_date '2014-09-09T05:29:55' | grep --quiet 'JD(UT) 2456909.72911'
 if [ $? -ne 0 ];then
@@ -24446,10 +24446,10 @@ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSE
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mCalendar date to JD conversion test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mCalendar date to JD conversion test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mCalendar date to JD conversion test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mCalendar date to JD conversion test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi 
 #
@@ -24469,7 +24469,7 @@ if [ ! -d ../vast_test_lightcurves ];then
 fi
 
 # Run the test
-echo "Performing auxiliary web services test " 1>&2
+echo "Performing auxiliary web services test " 
 echo -n "Performing auxiliary web services test: " >> vast_test_report.txt 
 
 # OMC2ASCII converter test 1
@@ -24627,7 +24627,7 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_001"
 fi
-curl  --insecure --connect-timeout 10 --retry 1 --max-time 30  --silent --output wwwtest.png `cat wwwtest.tmp | awk -F'"' '{print $2}' | head -n1`
+curl  --insecure --connect-timeout 10 --retry 1 --max-time 30  --silent --output wwwtest.png $(cat wwwtest.tmp | awk -F'"' '{print $2}' | head -n1)
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_002"
@@ -25534,10 +25534,10 @@ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSE
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mAuxiliary web services test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mAuxiliary web services test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mAuxiliary web services test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mAuxiliary web services test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi 
 #
@@ -25550,7 +25550,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # util/fov_of_wcs_calibrated_image.sh
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
-echo "Performing the image field of view script test " 1>&2
+echo "Performing the image field of view script test " 
 echo -n "Performing the image field of view script test: " >> vast_test_report.txt 
 
 if [ ! -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
@@ -25605,10 +25605,10 @@ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSE
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mImage field of view script test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mImage field of view script test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mImage field of view script test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mImage field of view script test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi 
 #
@@ -25621,7 +25621,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # flatfielding test
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
-echo "Performing NMW flatfielding test " 1>&2
+echo "Performing NMW flatfielding test " 
 echo -n "Performing NMW flatfielding test: " >> vast_test_report.txt 
 
 if [ ! -d ../NMW_corrupt_calibration_test ];then
@@ -25660,10 +25660,10 @@ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSE
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mNMW flatfielding test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mNMW flatfielding test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mNMW flatfielding test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mNMW flatfielding test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi 
 #
@@ -25677,7 +25677,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # best aperture selection test
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
-echo "Performing best aperture selection test " 1>&2
+echo "Performing best aperture selection test " 
 echo -n "Performing best aperture selection test: " >> vast_test_report.txt 
 
 ### run with no extra comments
@@ -25751,10 +25751,10 @@ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSE
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mBest aperture selection test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mBest aperture selection test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mBest aperture selection test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mBest aperture selection test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi 
 #
@@ -25767,7 +25767,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # KvW test
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
-echo "Performing KvW test " 1>&2
+echo "Performing KvW test " 
 echo -n "Performing KvW test: " >> vast_test_report.txt 
 
 echo "2459424.93743 -10.88910 0.00230
@@ -25869,10 +25869,10 @@ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSE
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mKvW test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mKvW test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mKvW test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mKvW test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi 
 #
@@ -25886,7 +25886,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # colstat test
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
-echo "Performing colstat test " 1>&2
+echo "Performing colstat test " 
 echo -n "Performing colstat test: " >> vast_test_report.txt 
 
 echo "1
@@ -25942,10 +25942,10 @@ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSE
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mcolstat test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mcolstat test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mcolstat test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mcolstat test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi 
 #
@@ -25958,7 +25958,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 # Solar system information test
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
-echo "Solar System info test " 1>&2
+echo "Solar System info test " 
 echo -n "Solar System info test: " >> vast_test_report.txt 
 
 util/moons.sh 2460240.3947 > moons.txt
@@ -25982,10 +25982,10 @@ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSE
 
 # Make an overall conclusion for this test
 if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mSolar System info test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mSolar System info test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 else
- echo -e "\n\033[01;34mSolar System info test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+ echo -e "\n\033[01;34mSolar System info test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
 fi 
 #
@@ -26017,7 +26017,7 @@ if [ $? -eq 0 ];then
  done
 
  # Run the test
- echo "Performing HJD correction test " 1>&2
+ echo "Performing HJD correction test " 
  echo -n "Performing HJD correction test: " >> vast_test_report.txt 
 
  # .tmp files are the new ones, .dat files are the old ones that suppose to match the new ones
@@ -26134,10 +26134,10 @@ if [ $? -eq 0 ];then
 
  # Make an overall conclusion for this test
  if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mHJD correction test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mHJD correction test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  else
-  echo -e "\n\033[01;34mHJD correction test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 1>&2
+  echo -e "\n\033[01;34mHJD correction test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi 
 else
