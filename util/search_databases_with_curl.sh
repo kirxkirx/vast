@@ -228,8 +228,15 @@ fi
 wait
 if [ -s vsx_page_content$$.error ];then
  # There was en error connecting to VSX
+ rm -f vsx_page_content$$.error
  # Retry connecting via the reverse proxy
- $TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --insecure --silent --max-time 30 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "https://kirx.net/vsx/index.php?view=results.submit1" > vsx_page_content$$.html
+ $TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --insecure --silent --max-time 30 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "https://kirx.net/vsx/index.php?view=results.submit1" 2> vsx_page_content$$.error > vsx_page_content$$.html
+ if [ -s vsx_page_content$$.error ];then
+  # There was en error connecting to VSX
+  rm -f vsx_page_content$$.error
+  # Retry connecting via HTTP reverse proxy
+  $TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --insecure --silent --max-time 30 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "http://kirx.net/vsx/index.php?view=results.submit1" 2> vsx_page_content$$.error > vsx_page_content$$.html
+ fi
 fi
 ##
 #cat vsx_page_content$$.html
@@ -250,5 +257,11 @@ else
   echo -e "The object was <font color=\"red\">not found</font> in $DATABASE_NAME."
  fi
 fi
-rm -f vsx_page_content$$.html vsx_page_content$$.error
+# clean up
+for FILE_TO_REMOVE in vsx_page_content$$.html vsx_page_content$$.error ;do
+ if [ -f "$FILE_TO_REMOVE" ];then
+  rm -f "$FILE_TO_REMOVE"
+ fi
+done
+
 

@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 
 # We download only the first 100K and read only the top 2000 lines ~ 100 latest transients, as downloading parsing this page takes a lot of time
-data=$(curl --connect-timeout 10 --retry 1 --range 0-102399 --silent --insecure https://www.astronomy.ohio-state.edu/asassn/transients.html | grep -A2000 '<th>ASAS-SN</th>' | grep -A2000 '<th>data</th>' | grep -v -e '<th>ASAS-SN</th>' -e '<th>data</th>' -e '<td></td>')
+data=$(curl --connect-timeout 10 --retry 1 --range 0-102399 --silent --show-error --insecure https://www.astronomy.ohio-state.edu/asassn/transients.html | grep -A2000 '<th>ASAS-SN</th>' | grep -A2000 '<th>data</th>' | grep -v -e '<th>ASAS-SN</th>' -e '<th>data</th>' -e '<td></td>')
 if [ -z "$data" ];then
- exit 1
+ # retry with HTTP proxy 
+ data=$(curl --connect-timeout 10 --retry 1 --range 0-102399 --silent --show-error --insecure http://kirx.net/asassn/transients.html | grep -A2000 '<th>ASAS-SN</th>' | grep -A2000 '<th>data</th>' | grep -v -e '<th>ASAS-SN</th>' -e '<th>data</th>' -e '<td></td>')
+ if [ -z "$data" ];then
+  exit 1
+ fi
 fi
 
 source_names=$(echo "$data" | grep -A2 '<tr>' | grep -v '<tr>' | sed ':a;N;$!ba;s/<\/td>\n/ /g' | sed -e 's/<td>//g' -e 's/<\/td>//g' -e 's/--\+//g' -e 's/  \+/ /g')
