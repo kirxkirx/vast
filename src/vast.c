@@ -2732,7 +2732,7 @@ int main( int argc, char **argv ) {
       if ( ( sb.st_mode & S_IFMT ) == S_IFREG ) {
        // Handle a regular file in a first-level directory
        if ( 0 != fitsfile_read_check( dir_string2 ) ) {
-        fprintf( stderr, "The input does not appear to be a FITS image: %s\n", dir_string2 );
+        fprintf( stderr, "The input does not appear to be a FITS image (1): %s\n", dir_string2 );
         continue;
        } else {
         // allocate memory for the list of input images
@@ -2781,7 +2781,7 @@ int main( int argc, char **argv ) {
     if ( ( sb.st_mode & S_IFMT ) == S_IFREG ) {
      // Handle a regular file in a first-level directory
      if ( 0 != fitsfile_read_check( dir_string ) ) {
-      fprintf( stderr, "The input does not appear to be a FITS image: %s\n", dir_string );
+      fprintf( stderr, "The input does not appear to be a FITS image (2): %s\n", dir_string );
       continue;
      } else {
 
@@ -2831,7 +2831,7 @@ int main( int argc, char **argv ) {
   if ( ( sb.st_mode & S_IFMT ) == S_IFREG ) {
    // Handle a regular file specified on the command line
    if ( 0 != fitsfile_read_check( file_or_dir_on_command_line ) ) {
-    fprintf( stderr, "The input does not appear to be a FITS image: %s\n", file_or_dir_on_command_line );
+    fprintf( stderr, "The input does not appear to be a FITS image (3): %s\n", file_or_dir_on_command_line );
     continue;
    }
    input_images= (char **)realloc( input_images, sizeof( char * ) * ( Num + 1 ) );
@@ -2911,7 +2911,7 @@ int main( int argc, char **argv ) {
    if ( ( sb.st_mode & S_IFMT ) == S_IFREG ) {
     // Handle a regular file
     if ( 0 != fitsfile_read_check( image_filename_from_input_list ) ) {
-     fprintf( stderr, "The input does not appear to be a FITS image: %s\n", image_filename_from_input_list );
+     fprintf( stderr, "The input does not appear to be a FITS image (4): %s\n", image_filename_from_input_list );
      continue;
     }
     input_images= (char **)realloc( input_images, sizeof( char * ) * ( Num + 1 ) );
@@ -2970,7 +2970,7 @@ int main( int argc, char **argv ) {
 
  if ( Num < HARD_MIN_NUMBER_OF_POINTS && Num != 3 ) {
   fprintf( stderr, "ERROR: At least %d images are needed for correct processing (much more is much better)!\nYou have supplied only %d images. :(\n", HARD_MIN_NUMBER_OF_POINTS, Num );
-  fprintf( stderr, "\nThis error message often appears if there is a TYPO IN THE COMMAND LINE argument(s) specifying path to the images.\nPlease check the input carefully.\n\n" );
+  fprintf( stderr, "\nThis error message often appears if there is a TYPO IN THE COMMAND LINE argument(s) specifying path to the images.\nPlease double-check the command you type in the terminal.\n\n" );
   // moved up
   // free(file_or_dir_on_command_line);
   return 1; // disable the cheating mode
