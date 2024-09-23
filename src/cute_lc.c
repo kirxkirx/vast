@@ -1,6 +1,6 @@
-// This small program will read a lightcurve file from stdin or an ASCII file and will reformat it to look cute.
-
 #include <stdio.h>
+#include <string.h>
+#include <libgen.h>
 
 #include <gsl/gsl_sort.h>
 
@@ -19,6 +19,14 @@ int main( int argc, char **argv ) {
 
  int observation_counter, number_of_observations;
  size_t *observation_index; // for index sorting
+
+ int use_full_jd = 0;  // Flag to determine JD precision
+
+ // Check if the program is called with the name "cute_lc_fullJD"
+ char *program_name = basename(argv[0]);
+ if (strcmp(program_name, "cute_lc_fullJD") == 0) {
+  use_full_jd = 1;
+ }
 
  if ( argc > 2 ) {
   fprintf( stderr, "This script will round--off all measurements to 0.001 mag and produce a lightcurve in format\nJD MAG MAG_ERR\n\n" );
@@ -62,14 +70,12 @@ int main( int argc, char **argv ) {
  while ( -1 < read_lightcurve_point( inputfile, &jd[observation_counter], &mag[observation_counter], &mag_err[observation_counter], &x, &y, &app, string, NULL ) ) {
   if ( jd[observation_counter] == 0.0 )
    continue; // if this line could not be parsed, try the next one
-  // fprintf(stdout,"%.5lf  %6.3lf %5.3lf\n",jd,mag,mag_err);
   observation_counter++;
  }
  number_of_observations= observation_counter;
 
  // Sort the lightcurve in jd
- gsl_sort_index( observation_index, jd, 1, number_of_observations ); // The elements of p give the index of the array element which would have been stored in that position if the array had been sorted in place.
-                                                                     // The array data is not changed.
+ gsl_sort_index( observation_index, jd, 1, number_of_observations );
 
  // Print results
  for ( observation_counter= 0; observation_counter < number_of_observations; observation_counter++ ) {
@@ -78,9 +84,12 @@ int main( int argc, char **argv ) {
   if ( mag_err[observation_index[observation_counter]] < 0.001 ) {
    mag_err[observation_index[observation_counter]]= 0.001;
   }
-  // well, I actually want JD rounded to 1 sec for the cute output
-  fprintf( stdout, "%.5lf  %6.3lf %5.3lf\n", jd[observation_index[observation_counter]], mag[observation_index[observation_counter]], mag_err[observation_index[observation_counter]] );
-  // fprintf( stdout, "%.8lf  %6.3lf %5.3lf\n", jd[observation_index[observation_counter]], mag[observation_index[observation_counter]], mag_err[observation_index[observation_counter]] );
+  // Choose between full JD precision and standard precision
+  if (use_full_jd) {
+   fprintf( stdout, "%.8lf  %9.6lf %8.6lf\n", jd[observation_index[observation_counter]], mag[observation_index[observation_counter]], mag_err[observation_index[observation_counter]] );
+  } else {
+   fprintf( stdout, "%.5lf  %6.3lf %5.3lf\n", jd[observation_index[observation_counter]], mag[observation_index[observation_counter]], mag_err[observation_index[observation_counter]] );
+  }
  }
 
  if ( argc == 2 )

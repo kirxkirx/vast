@@ -12,6 +12,14 @@ if [ -z "$1" ];then
  exit 1
 fi
 
+TEST_MODE_WITH_NO_INTERACTIVE_EDITOR=0
+if [ -n "$2" ];then
+ if [ "$2" = "test" ];then
+  TEST_MODE_WITH_NO_INTERACTIVE_EDITOR=1
+ fi
+fi
+
+
 INPUT_VAST_LIGHTCURVE="$1"
 
 if [ ! -f "$INPUT_VAST_LIGHTCURVE" ];then
@@ -55,8 +63,13 @@ fi
 JD_FIRST_OBS=`util/cute_lc "$INPUT_VAST_LIGHTCURVE" | head -n1 | awk '{printf "%.3lf", $1}'`
 JD_LAST_OBS=`util/cute_lc "$INPUT_VAST_LIGHTCURVE" | tail -n1 | awk '{printf "%.3lf", $1}'`
 UNIXTIME_FIRST_OBS=`util/get_image_date "$JD_FIRST_OBS" 2>/dev/null | grep 'Unix Time' | awk '{print $3}'`
-DATE_FOR_CBA_HEADER_FIRST_OBS=`LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d%b%Y"`
-DATE_FOR_CBA_MESSAGE_SUBJECT_FIRST_OBS=`LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d %B %Y"`
+DATE_FOR_CBA_HEADER_FIRST_OBS=$(LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d%b%Y")
+DATE_FOR_CBA_MESSAGE_SUBJECT_FIRST_OBS=$(LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d %B %Y")
+if [ -z "$DATE_FOR_CBA_HEADER_FIRST_OBS" ] || [ -z "$DATE_FOR_CBA_MESSAGE_SUBJECT_FIRST_OBS" ];then
+ # if that didn't work - try BSD date
+ DATE_FOR_CBA_HEADER_FIRST_OBS=$(LANG=C date -r "$UNIXTIME_FIRST_OBS" +"%d%b%Y")
+ DATE_FOR_CBA_MESSAGE_SUBJECT_FIRST_OBS=$(date -r "$UNIXTIME_FIRST_OBS" +"%d %B %Y")
+fi
 
 # Get the exposure time for the header
 if [ -s vast_image_details.log ];then
@@ -102,10 +115,14 @@ if [ ! -s CBA_previously_used_header.txt ];then
 # East Lansing, MI, USA
 # Observers: Kirill Sokolovsky
 # Comments: Clear most of the night.
-# JD              Var_Mag     Var_eMag" > CBA_previously_used_header.txt
+#    JD              Var_Mag        Var_eMag" > CBA_previously_used_header.txt
 fi
 #cp CBA_previously_used_header.txt CBA_report.txt
-grep '# Variable: ' CBA_previously_used_header.txt > CBA_report.txt
+if [ "$VARIABLE_STAR_NAME" = "XX Xxx" ];then
+ grep '# Variable: ' CBA_previously_used_header.txt > CBA_report.txt
+else
+ echo "# Variable: $VARIABLE_STAR_NAME" > CBA_report.txt
+fi
 echo "# Date: $DATE_FOR_CBA_HEADER_FIRST_OBS" >> CBA_report.txt
 grep '# Comp star: ' CBA_previously_used_header.txt >> CBA_report.txt
 grep '# Check star: ' CBA_previously_used_header.txt >> CBA_report.txt
@@ -114,7 +131,8 @@ grep '# Filter: ' CBA_previously_used_header.txt >> CBA_report.txt
 grep -A4 '# Observatory: ' CBA_previously_used_header.txt | grep '#' >> CBA_report.txt
 
 #
-util/cute_lc "$INPUT_VAST_LIGHTCURVE" | while read JD MAG ERR ;do
+#util/cute_lc "$INPUT_VAST_LIGHTCURVE" | while read JD MAG ERR ;do
+util/cute_lc_fullJD "$INPUT_VAST_LIGHTCURVE" | while read JD MAG ERR ;do
  echo "$JD     $MAG      $ERR"
 done >> CBA_report.txt
 if [ $? -ne 0 ];then
@@ -138,7 +156,11 @@ fi
 
 # Manually edit the report
 if [ ! -z "$EDITOR" ];then
- $EDITOR CBA_report.txt
+ if [ $TEST_MODE_WITH_NO_INTERACTIVE_EDITOR -ne 1 ];then
+  $EDITOR CBA_report.txt
+ else
+  echo "Running in the test mode - not starting an interactive text editor!"
+ fi
 fi
 
 VARIABLE_STAR_NAME=`head CBA_report.txt | grep 'Variable: ' | awk -F 'Variable: ' '{print $2}'`

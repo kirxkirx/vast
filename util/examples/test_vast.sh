@@ -12469,6 +12469,73 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0110a_TOO_FAR_$DISTANCE_ARCSEC"
    fi
   fi
+  
+  ### Additional tests just using V615 Vul as an example
+  grep --quiet "V0615 Vul" transient_report/index.html
+  if [ $? -eq 0 ];then
+   V615VUL_STAR_NUMBER=$(grep -B20 'V0615 Vul' transient_report/index.html | grep '<a name=' | tail -n1 | awk -F"'" '{print $2}' | awk -F"_" '{print $1}')
+   if [ -f out"$V615VUL_STAR_NUMBER".dat ];then
+    #
+    TEST_CBA_REPORT_TEXT=$(util/format_lightcurve_CBA.sh out"$V615VUL_STAR_NUMBER".dat test)
+    echo "$TEST_CBA_REPORT_TEXT" | grep --quiet '# Date: 29Jul2024'
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_DATE"
+    fi
+    echo "$TEST_CBA_REPORT_TEXT" | grep --quiet '29 July 2024'
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_HUMAN_READABLE_DATE"
+    fi
+    echo "$TEST_CBA_REPORT_TEXT" | grep --quiet 'Automatically setting the variable star name V0615 Vul'
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_AUTOMATICALLY_ASSIGNED_VARSTARNAME"
+    fi
+    echo "$TEST_CBA_REPORT_TEXT" | grep --quiet '# Variable: V0615 Vul'
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_INCORRECT_VARSTARNAME"
+    fi
+    echo "$TEST_CBA_REPORT_TEXT" | grep --quiet '# Exp time (s): 20'
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_EXPTIME"
+    fi
+    echo "$TEST_CBA_REPORT_TEXT" | grep '2460521.3315' | grep --quiet ' 11.2'
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_MEASUREMENT1"
+    fi
+    echo "$TEST_CBA_REPORT_TEXT" | grep '2460521.3319' | grep --quiet ' 11.2'
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_MEASUREMENT2"
+    fi
+    #
+    TEST_AAVSO_REPORT_TEXT=$(util/format_lightcurve_AAVSO.sh out"$V615VUL_STAR_NUMBER".dat test)
+    echo "$TEST_AAVSO_REPORT_TEXT" | grep '2460521.3315' | grep --quiet ',11.2'
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_MEASUREMENT1"
+    fi
+    echo "$TEST_AAVSO_REPORT_TEXT" | grep '2460521.3319' | grep --quiet ',11.2'
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_MEASUREMENT2"
+    fi
+    echo "$TEST_AAVSO_REPORT_TEXT" | grep --quiet -e 'V0615 Vul,' -e 'V615 Vul,'
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_INCORRECT_VARSTARNAME"
+    fi
+    #
+   else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0110a_ADDTESTS_OTFILE_NOT_FOUND"
+   fi
+  fi
+  ###
  
  fi # if [ -f transient_report/index.html ];then
  

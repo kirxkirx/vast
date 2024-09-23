@@ -9,6 +9,8 @@
 	The script will print no name if it could not recognize the object as a known variable star.
 	This is useful for quickly checking if a variable is a known one, before running a full check with
 	'U' key that starts the slower 'util/identify.sh' script.
+	* 'util/cute_lc_fullJD outNNNNN.dat' will output a nicely formatted "JD mag err" lightcurve file
+	with more decimal places than the old 'util/cute_lc outNNNNN.dat'
 	* Disable the USNO-B1.0 catalog search when identifying variable stars using the script 
 	'util/identify.sh', which can be launched from the lightcurve inspection window by 
 	pressing 'U' on the keyboard. The terminal output of the identification script 

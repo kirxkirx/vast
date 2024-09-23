@@ -29,6 +29,14 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
+TEST_MODE_WITH_NO_INTERACTIVE_EDITOR=0
+if [ -n "$2" ];then
+ if [ "$2" = "test" ];then
+  TEST_MODE_WITH_NO_INTERACTIVE_EDITOR=1
+ fi
+fi
+
+
 # Check that the magnitudes are reasonable
 if [ 1 -ne `util/cute_lc "$INPUT_VAST_LIGHTCURVE" | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEAN=' | awk '{if ( $2 > 1.0 ) print 1 ;else print 0 }'` ];then
  echo "The magnitudes seem too small! Are you forgetting to convert the instrumental magnitudes to the absolute scale?"
@@ -59,6 +67,13 @@ JD_LAST_OBS=$(util/cute_lc "$INPUT_VAST_LIGHTCURVE" | tail -n1 | awk '{print $1}
 UNIXTIME_FIRST_OBS=$(util/get_image_date "$JD_FIRST_OBS" 2>/dev/null | grep 'Unix Time' | awk '{print $3}')
 DATE_FOR_AAVSO_HEADER_FIRST_OBS=$(LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d%b%Y")
 DATE_FOR_AAVSO_MESSAGE_SUBJECT_FIRST_OBS=$(LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d %B %Y")
+
+if [ -z "$DATE_FOR_AAVSO_HEADER_FIRST_OBS" ] || [ -z "$DATE_FOR_AAVSO_MESSAGE_SUBJECT_FIRST_OBS" ];then
+ # try BSD date
+ DATE_FOR_AAVSO_HEADER_FIRST_OBS=$(date -r "$UNIXTIME_FIRST_OBS" +"%d%b%Y")
+ DATE_FOR_AAVSO_MESSAGE_SUBJECT_FIRST_OBS=$(date -r "$UNIXTIME_FIRST_OBS" +"%d %B %Y")
+fi
+
 
 # Get the exposure time for the header
 if [ -s vast_image_details.log ];then
@@ -148,7 +163,11 @@ fi
 
 # Manually edit the report
 if [ ! -z "$EDITOR" ];then
- $EDITOR AAVSO_report.txt
+ if [ $TEST_MODE_WITH_NO_INTERACTIVE_EDITOR -ne 0 ];then
+  $EDITOR AAVSO_report.txt
+ else
+  echo "Running in the test mode - not starting an interactive text editor!"
+ fi
  # Check that the edit looks reasonable
  # variable star name 
  grep --quiet 'XX Xxx' AAVSO_report.txt
