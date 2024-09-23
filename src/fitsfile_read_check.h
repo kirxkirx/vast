@@ -9,9 +9,9 @@
 
 #include <stdio.h>
 
-//#define _GNU_SOURCE // doesn't seem to work!
 #include <string.h> // for memmem() and strlen()
-//#include <stddef.h> // for size_t, but stddef.h is included in string.h
+
+#include <stdlib.h> // for system()
 
 void *memmem(const void *haystack, size_t haystacklen, const void *needle, size_t needlelen);
 
@@ -25,6 +25,9 @@ static int check_if_the_input_is_FPack_compressed_FITS(char *fitsfilename) {
  char keystring[FLEN_CARD];
  char keycomment[FLEN_CARD];
  int number_of_hdus;
+ 
+ char system_command[FILENAME_LENGTH+128];
+ 
  // Check if the file exist at all
  FILE *testfile;
  testfile=fopen(fitsfilename, "r");
@@ -39,9 +42,15 @@ static int check_if_the_input_is_FPack_compressed_FITS(char *fitsfilename) {
  if( 0 != status ) {
   fits_report_error(stderr, status);
   fits_clear_errmsg(); // clear the CFITSIO error message stack
+  if( 252 == status ) {
+   fprintf(stderr, "'FITSIO status = 252' means the input %s is NOT A FITS FILE!\n", fitsfilename);
+   sprintf(system_command, "file %s", fitsfilename );
+   if ( 0 != system( system_command ) ) {                                
+    fprintf( stderr, "There was a problem running '%s'\n", system_command );
+   }
+  } // if( 252 == status ) {
   return status;
  }
- //fprintf(stderr,"DEBUG01\n");
  fits_get_num_hdus(fptr, &number_of_hdus, &status);
  if( number_of_hdus == 1 ) {
   fits_close_file(fptr, &status);
@@ -56,12 +65,10 @@ static int check_if_the_input_is_FPack_compressed_FITS(char *fitsfilename) {
   fits_close_file(fptr, &status);
   return 1;
  }
- //fprintf(stderr,"DEBUG02\n");
  if( 0 != strncmp(keystring, "BINTABLE", 8) ) {
   fits_close_file(fptr, &status);
   return 1;
  }
- //fprintf(stderr,"DEBUG03\n");
  fits_read_key(fptr, TSTRING, "TTYPE1", keystring, keycomment, &status);
  if( 0 != status ) {
   fits_report_error(stderr, status);
@@ -69,7 +76,6 @@ static int check_if_the_input_is_FPack_compressed_FITS(char *fitsfilename) {
   fits_close_file(fptr, &status);
   return 1;
  }
- //fprintf(stderr,"DEBUG04\n");
  if( 0 != strncmp(keystring, "COMPRESSED_DATA", 15) ) {
   fits_close_file(fptr, &status);
   return 1;
@@ -129,6 +135,8 @@ static inline int fitsfile_read_check(char *fitsfilename) {
  long naxes3;
  long naxes4;
  //
+ char system_command[FILENAME_LENGTH+128];
+ //
  unsigned int i,cfitsio_image_cutout;
  //
  if( (int)strlen(fitsfilename)>FILENAME_LENGTH ) {
@@ -164,6 +172,13 @@ static inline int fitsfile_read_check(char *fitsfilename) {
  if( 0 != status ) {
   fits_report_error(stderr, status);
   fits_clear_errmsg(); // clear the CFITSIO error message stack
+  if( 252 == status ) {
+   fprintf(stderr, "'FITSIO status = 252' means the input %s is NOT A FITS FILE!\n", fitsfilename);
+   sprintf(system_command, "file %s", fitsfilename );
+   if ( 0 != system( system_command ) ) {                                
+    fprintf( stderr, "There was a problem running '%s'\n", system_command );
+   }
+  } // if( 252 == status ) {
   check_if_the_input_is_MaxIM_compressed_FITS(fitsfilename);
   return status;
  }

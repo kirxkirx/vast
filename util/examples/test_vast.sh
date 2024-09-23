@@ -2600,6 +2600,23 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_MAKE_FINDER_CHART_001"
   fi
+  #
+  lib/test_libpng.sh 2>&1 | grep --quiet 'libpng found and is working'
+  if [ $? -eq 0 ];then
+   if [ -f pgplot.png ];then
+    file pgplot.png | grep --quiet 'PNG image data'
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_MAKE_FINDER_CHART_LIBPNG_ENABLED_BUT_OUTPUT_FILE_NOT_PNG"
+    fi # file pgplot.png
+   else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_MAKE_FINDER_CHART_LIBPNG_ENABLED_BUT_NO_OUTPUT_FILE"
+   fi # if [ -f pgplot.png ];then
+  else
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LIBPNG_DISABLED"
+  fi # lib/test_libpng.sh
+  # Check that an output image file was created, then delete it
   if [ -f pgplot.png ] || [ -f pgplot.ps ] ;then
    if [ -f pgplot.png ];then
     rm -f pgplot.png
@@ -26317,6 +26334,8 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  # Astropy comparison results (many target machines will not have astropy)
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_DATE2JDCONV_ASTROPY_noastropy/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_DATE2JDCONV_ASTROPY_nopython3/}"
+ # libpng
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// LIBPNG_DISABLED/}"
  #
  if [ ! -z "$FAILED_TEST_CODES" ];then
   echo "Exit code 1"
