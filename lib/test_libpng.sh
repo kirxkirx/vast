@@ -15,6 +15,8 @@ LPNG_GCC_COMMAND_LINE_OPTION="-lpng"
 # If we are on mac - assume libpng is not installed properly
 if [ -d /opt/local/include/ ];then
  LPNG_GCC_COMMAND_LINE_OPTION="-I/opt/local/include/ -L/opt/local/lib/ -lpng"
+elif [ -d /opt/homebrew/opt/ ]; then
+ LPNG_GCC_COMMAND_LINE_OPTION="-I/opt/homebrew/opt/libpng/include/ -L/opt/homebrew/opt/libpng/lib/ -lpng"
 fi
 
 # Write a simple program using libpng
