@@ -2601,7 +2601,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_MAKE_FINDER_CHART_001"
   fi
   #
-  lib/test_libpng.sh 2>&1 | grep --quiet 'libpng found and is working'
+  lib/test_libpng_justtest_nomovepgplot.sh 2>&1 | grep --quiet 'libpng found and is working'
   if [ $? -eq 0 ];then
    if [ -f pgplot.png ];then
     file pgplot.png | grep --quiet 'PNG image data'
@@ -2615,7 +2615,7 @@ $GREP_RESULT"
    fi # if [ -f pgplot.png ];then
   else
    FAILED_TEST_CODES="$FAILED_TEST_CODES LIBPNG_DISABLED"
-  fi # lib/test_libpng.sh
+  fi # lib/test_libpng_justtest_nomovepgplot.sh
   # Check that an output image file was created, then delete it
   if [ -f pgplot.png ] || [ -f pgplot.ps ] ;then
    if [ -f pgplot.png ];then
