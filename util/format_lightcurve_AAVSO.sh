@@ -162,8 +162,8 @@ if [ -z "$EDITOR" ];then
 fi
 
 # Manually edit the report
-if [ ! -z "$EDITOR" ];then
- if [ $TEST_MODE_WITH_NO_INTERACTIVE_EDITOR -ne 0 ];then
+if [ -n "$EDITOR" ];then
+ if [ $TEST_MODE_WITH_NO_INTERACTIVE_EDITOR -ne 1 ];then
   $EDITOR AAVSO_report.txt
  else
   echo "Running in the test mode - not starting an interactive text editor!"
