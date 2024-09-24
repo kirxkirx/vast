@@ -110,9 +110,14 @@ Trying to automatically ID the star $INPUT_VAST_LIGHTCURVE"
  AUTOMATIC_VARIABLE_STAR_NAME="${AUTOMATIC_VARIABLE_STAR_NAME/"V* "}"
  AUTOMATIC_VARIABLE_STAR_NAME=$(echo "$AUTOMATIC_VARIABLE_STAR_NAME" | awk -F' --' '{print $1}')
  #
- if [ ! -z "$AUTOMATIC_VARIABLE_STAR_NAME" ];then
-  echo "Automatically setting the variable star name $AUTOMATIC_VARIABLE_STAR_NAME"
-  VARIABLE_STAR_NAME="$AUTOMATIC_VARIABLE_STAR_NAME"
+ if [ -n "$AUTOMATIC_VARIABLE_STAR_NAME" ];then
+  echo "$AUTOMATIC_VARIABLE_STAR_NAME" | grep --silent -e 'Network error:' -e 'cannot connect'
+  if [ $? -ne 0 ];then
+   echo "Automatically setting the variable star name $AUTOMATIC_VARIABLE_STAR_NAME"
+   VARIABLE_STAR_NAME="$AUTOMATIC_VARIABLE_STAR_NAME"
+  else
+   echo "A network error has occurred while trying to ID the star, keeping the name $VARIABLE_STAR_NAME"
+  fi
  else
   echo "Something went wrong while trying to ID the star, keeping the name $VARIABLE_STAR_NAME"
  fi
