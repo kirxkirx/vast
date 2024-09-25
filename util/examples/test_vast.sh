@@ -12501,6 +12501,11 @@ $GREP_RESULT"
      if [ $? -ne 0 ];then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_AUTOMATICALLY_ASSIGNED_VARSTARNAME"
+      DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNVUL24ST_CBASCRIPTTEST_NO_AUTOMATICALLY_ASSIGNED_VARSTARNAME ######
+$TEST_CBA_REPORT_TERMINAL
+----------------------------------------------------------------
+"
      fi
      echo "$TEST_CBA_REPORT_TERMINAL" | grep --quiet '29 July 2024'
      if [ $? -ne 0 ];then
@@ -12548,6 +12553,11 @@ $GREP_RESULT"
      if [ $? -ne 0 ];then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_NO_AUTOMATICALLY_ASSIGNED_VARSTARNAME"
+      DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNVUL24ST_AAVSOSCRIPTTEST_NO_AUTOMATICALLY_ASSIGNED_VARSTARNAME ######
+$TEST_AAVSO_REPORT_TERMINAL
+----------------------------------------------------------------
+"
      fi
      if [ -s AAVSO_V0615_Vul_29Jul2024_CV_measurements.txt ];then
       cat AAVSO_V0615_Vul_29Jul2024_CV_measurements.txt | grep '2460521.3315' | grep --quiet ',11.2'
