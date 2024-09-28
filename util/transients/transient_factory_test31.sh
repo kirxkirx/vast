@@ -1441,7 +1441,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     #
     DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.5f", $5}')
     echo "###################################
-# Check the image center offset between the first and the second second-epoch image (ahift should be applied between the second-epoch images)
+# Check the image center offset between the first and the second second-epoch image (shift should be applied between the second-epoch images)
 Second-epoch first image center  $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE
 Second-epoch second image center $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE
 Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
