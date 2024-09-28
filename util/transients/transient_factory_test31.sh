@@ -778,6 +778,19 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   echo "ERROR processing the image series - only $NUMBER_OF_SECOND_EPOCH_IMAGES second-epoch images found" >> transient_factory_test31.txt
   continue
  fi
+ # Test if the images look like FITS images
+ echo -n "Read-check the input FITS images... "
+ echo -n "Read-check the input FITS images... " >> transient_factory_test31.txt
+ for FITS_FILE_TO_CHECK in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" ;do
+  # We assume that if util/listhead can read it - chances are the input is a readable FITS file
+  util/listhead "$FITS_FILE_TO_CHECK" > /dev/null
+  if [ $? -ne 0 ];then
+   else "ERROR reading the FITS file $FITS_FILE_TO_CHECK"
+  fi  
+ done | grep 'ERROR reading the FITS file' >> transient_factory_test31.txt && continue
+ #
+ echo "read-check OK"
+ echo "read-check OK" >> transient_factory_test31.txt
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -eq 2 ];then
   SECOND_EPOCH__FIRST_IMAGE=$(ls "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" | head -n1)
   SECOND_EPOCH__SECOND_IMAGE=$(ls "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" | tail -n1)
