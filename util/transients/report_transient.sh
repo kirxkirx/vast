@@ -422,6 +422,23 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
  fi
 fi
 #
+#
+# Check if the transient is a spacecraft
+# The difference with the never_exclude list is the search radius
+if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
+ EXCLUSION_LIST_FILE="spacecraft.txt"
+ if [ -s "$EXCLUSION_LIST_FILE" ];then
+  EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC=3600
+  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep --quiet "FOUND"
+  if [ $? -eq 0 ];then
+   if [ -z "$THIS_IS_VAST_TEST" ];then
+    SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
+   fi
+   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<b><font color=\"red\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')"</b>"
+  fi
+ fi
+fi
+#
 if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
  ### Apply the exclusion list. It may be generated from the previous-day(s) report file(s) 
  #

@@ -112,6 +112,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
   BAD_REGION_FILE="../Stas_bad_region.lst"
   EXCLUSION_LIST="../exclusion_list.txt"
+  MPC_CODE=C32
   # Calibration data
   if [ -z "$DARK_FRAMES_DIR" ];then
    export DARK_FRAMES_DIR=/dataX/cgi-bin/unmw/uploads/darks
@@ -127,6 +128,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   # Canon 135 mm f/2.0 telephoto lens + SBIG STL-11000 CCD, 20 sec exposures
   echo "### Using search settings for $CAMERA_SETTINGS camera ###"
   export AAVSO_COMMENT_STRING="NMW Camera-2 Canon 135mm f/2.0 telephoto lens + SBIG STL-11000M CCD"
+  MPC_CODE=C32
   # The input images will be calibrated
   # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
   # the script will try to find the most appropriate one based on temperature and time
@@ -166,6 +168,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
  if [ "$CAMERA_SETTINGS" = "TICA_TESS_FFI" ];then
   # TICA TESS FFIs downloaded from https://archive.stsci.edu/hlsp/tica#section-c34b9669-b0be-40b2-853e-a59997d1b7c5
   echo "### Using search settings for $CAMERA_SETTINGS camera ###"
+  MPC_CODE="500@-95"
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=1000
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=1500
   export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="15.0"
@@ -672,7 +675,7 @@ fi
 echo "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" >> transient_factory_test31.txt
 
 # Make sure there are no pleantes/comets/transients files
-for FILE_TO_REMOVE in planets.txt comets.txt moons.txt asassn_transients_list.txt tocp_transients_list.txt ;do
+for FILE_TO_REMOVE in planets.txt comets.txt moons.txt spacecraft.txt asassn_transients_list.txt tocp_transients_list.txt ;do
  if [ -f "$FILE_TO_REMOVE" ];then
   rm -f "$FILE_TO_REMOVE"
  fi
@@ -1219,6 +1222,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
    $TIMEOUTCOMMAND util/planets.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > planets.txt &
    $TIMEOUTCOMMAND util/comets.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > comets.txt &
    $TIMEOUTCOMMAND util/moons.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > moons.txt &
+   $TIMEOUTCOMMAND util/spacecraft.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > spacecraft.txt &
    #
    if [ -n "$(find ../asassn_transients_list.txt -mmin -30 2>/dev/null)" ]; then
     # there is a fresh file - let's reuse it
@@ -2036,6 +2040,14 @@ cat moons.txt >> transient_factory_test31.txt
 ls -lh moons.txt >> transient_factory_test31.txt 2>&1
 #
 echo "############################################################
+Positions of slected spacecraft from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
+cat spacecraft.txt
+echo "############################################################
+Positions of slected spacecraft from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
+cat spacecraft.txt >> transient_factory_test31.txt
+ls -lh spacecraft.txt >> transient_factory_test31.txt 2>&1
+#
+echo "############################################################
 Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets and http://aerith.net/comet/weekly/current.html ) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
 cat comets.txt
 echo "############################################################
@@ -2093,7 +2105,7 @@ echo "</pre>" >> transient_report/index.html
 
 echo "</BODY></HTML>" >> transient_report/index.html
 
-for FILE_TO_REMOVE in planets.txt comets.txt moons.txt asassn_transients_list.txt tocp_transients_list.txt ;do
+for FILE_TO_REMOVE in planets.txt comets.txt moons.txt spacecraft.txt asassn_transients_list.txt tocp_transients_list.txt ;do
  if [ -f "$FILE_TO_REMOVE" ];then
   rm -f "$FILE_TO_REMOVE"
  fi
