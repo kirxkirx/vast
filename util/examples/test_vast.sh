@@ -12493,7 +12493,7 @@ $GREP_RESULT"
   grep --quiet "V0615 Vul" transient_report/index.html
   if [ $? -eq 0 ];then
    #V615VUL_STAR_NUMBER=$(grep -B20 'V0615 Vul' transient_report/index.html | grep '<a name=' | tail -n1 | awk -F"'" '{print $2}' | awk -F"_" '{print $1}')
-   V615VUL_STAR_NUMBER=$(grep -B20 "2024 07 29\.831.  2460521\.331.  11\...  19:43:0.\... +21:00:..\.." transient_report/index.html | grep '<a name=' | tail -n1 | awk -F"'" '{print $2}' | awk -F"_" '{print $1}')
+   V615VUL_STAR_NUMBER=$(grep -B13 "2024 07 29\.831.  2460521\.331.  11\...  19:43:0.\... +21:00:..\.." transient_report/index.html | grep '<a name=' | tail -n1 | awk -F"'" '{print $2}' | awk -F"_" '{print $1}')
    if [ -f out"$V615VUL_STAR_NUMBER".dat ];then
     #
     TEST_CBA_REPORT_TERMINAL=$(util/format_lightcurve_CBA.sh out"$V615VUL_STAR_NUMBER".dat test)
@@ -12506,6 +12506,11 @@ $GREP_RESULT"
 ###### NMWNVUL24ST_CBASCRIPTTEST_NO_AUTOMATICALLY_ASSIGNED_VARSTARNAME ######
 $TEST_CBA_REPORT_TERMINAL
 ----------------------------------------------------------------
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxx      transient_report/index.html     xxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+$(cat transient_report/index.html)
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 "
      fi
      echo "$TEST_CBA_REPORT_TERMINAL" | grep --quiet '29 July 2024'
@@ -24955,7 +24960,13 @@ fi
 NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/kadar/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
 if [ -z "$NMW_KIRX_SUMMARY_CHECK" ]; then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED_kadar"
+fi
+# Fetch HTML from kirx.net and check for "morning summary" or "evening summary"
+NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/kadar2/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
+if [ -z "$NMW_KIRX_SUMMARY_CHECK" ]; then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED_kadar2"
 fi
 
 ### Check directory listing where it's needed

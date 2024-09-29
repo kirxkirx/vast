@@ -91,7 +91,7 @@ if [ -z "$SEXTRACTOR_CONFIG_FILES" ];then
  #SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_v4 default.sex.telephoto_lens_v5"
 fi
 # The first SExtractor config file in the list should be optimized for detecting bright stars
-SEXTRACTOR_CONFIG_BRIGHTSTARPASS=$(echo $SEXTRACTOR_CONFIG_FILES | awk '{print $1}')
+SEXTRACTOR_CONFIG_BRIGHTSTARPASS=$(echo "$SEXTRACTOR_CONFIG_FILES" | awk '{print $1}')
 
 # Note that this is an additional (normally more strict) filter to the FRAME_EDGE_INDENT_PIXELS parameter defined in src/vast_limits.h
 FRAME_EDGE_OFFSET_PIX=30
@@ -112,6 +112,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
   BAD_REGION_FILE="../Stas_bad_region.lst"
   EXCLUSION_LIST="../exclusion_list.txt"
+  export MPC_CODE=C32
   # Calibration data
   if [ -z "$DARK_FRAMES_DIR" ];then
    export DARK_FRAMES_DIR=/dataX/cgi-bin/unmw/uploads/darks
@@ -127,6 +128,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   # Canon 135 mm f/2.0 telephoto lens + SBIG STL-11000 CCD, 20 sec exposures
   echo "### Using search settings for $CAMERA_SETTINGS camera ###"
   export AAVSO_COMMENT_STRING="NMW Camera-2 Canon 135mm f/2.0 telephoto lens + SBIG STL-11000M CCD"
+  export MPC_CODE=C32
   # The input images will be calibrated
   # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
   # the script will try to find the most appropriate one based on temperature and time
@@ -166,6 +168,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
  if [ "$CAMERA_SETTINGS" = "TICA_TESS_FFI" ];then
   # TICA TESS FFIs downloaded from https://archive.stsci.edu/hlsp/tica#section-c34b9669-b0be-40b2-853e-a59997d1b7c5
   echo "### Using search settings for $CAMERA_SETTINGS camera ###"
+  export MPC_CODE="500@-95"
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=1000
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=1500
   export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="15.0"
@@ -218,8 +221,9 @@ if [ -n "$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" ];then
  export TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION"
 fi
 
+# Commented-out as the parts using it are commented out
 # Are we on Linux or something else?
-SYSTEM_TYPE="$(uname)"
+#SYSTEM_TYPE="$(uname)"
 
 function try_to_calibrate_the_input_frame {
 
@@ -359,14 +363,14 @@ CANCEL TEST"
 # A more portable realpath wrapper
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
-  REALPATH=`readlink -f "$1" 2>/dev/null`
+  REALPATH=$(readlink -f "$1" 2>/dev/null)
   if [ $? -ne 0 ];then
    # If we are on Mac OS X system, GNU readlink might be installed as 'greadlink'
-   REALPATH=`greadlink -f "$1" 2>/dev/null`
+   REALPATH=$(greadlink -f "$1" 2>/dev/null)
    if [ $? -ne 0 ];then
-    REALPATH=`realpath "$1" 2>/dev/null`
+    REALPATH=$(realpath "$1" 2>/dev/null)
     if [ $? -ne 0 ];then
-     REALPATH=`grealpath "$1" 2>/dev/null`
+     REALPATH=$(grealpath "$1" 2>/dev/null)
      if [ $? -ne 0 ];then
       # Something that should work well enough in practice
       OURPWD=$PWD
@@ -382,7 +386,7 @@ function vastrealpath {
 
 # Function to remove the last occurrence of a directory from a path
 remove_last_occurrence() {
-    echo "$1" | awk -F/ -v dir=$2 '{
+    echo "$1" | awk -F'/' -v dir="$2" '{
         found = 0;
         for (i=NF; i>0; i--) {
             if ($i == dir && found == 0) {
@@ -397,7 +401,7 @@ remove_last_occurrence() {
 
 # Function to get full path to vast main directory from the script name
 get_vast_path_ends_with_slash_from_this_script_name() {
- VAST_PATH=$(vastrealpath $0)
+ VAST_PATH=$(vastrealpath "$0")
  VAST_PATH=$(dirname "$VAST_PATH")
 
  # Remove last occurrences of util, lib, examples
@@ -497,8 +501,8 @@ fi
 # (this is specific to our in-house setup)
 if [ ! -d lib/catalogs/ucac5 ];then
  for TEST_THIS_DIR in /mnt/usb/UCAC5 /dataX/kirx/UCAC5 /data/kirx/UCAC5 /home/kirx/UCAC5 /home/apache/ucac5 $HOME/UCAC5 $HOME/ucac5 ../UCAC5 ../ucac5 ;do
-  if [ -d $TEST_THIS_DIR ];then
-   ln -s $TEST_THIS_DIR lib/catalogs/ucac5
+  if [ -d "$TEST_THIS_DIR" ];then
+   ln -s "$TEST_THIS_DIR" lib/catalogs/ucac5
    echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR"
    echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR" >> transient_factory_test31.txt
    break
@@ -672,7 +676,7 @@ fi
 echo "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" >> transient_factory_test31.txt
 
 # Make sure there are no pleantes/comets/transients files
-for FILE_TO_REMOVE in planets.txt comets.txt moons.txt asassn_transients_list.txt tocp_transients_list.txt ;do
+for FILE_TO_REMOVE in planets.txt comets.txt moons.txt spacecraft.txt asassn_transients_list.txt tocp_transients_list.txt ;do
  if [ -f "$FILE_TO_REMOVE" ];then
   rm -f "$FILE_TO_REMOVE"
  fi
@@ -750,15 +754,15 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   # Make image previews
   echo "Previews of the second-epoch images:<br>" >> transient_factory_test31.txt
   for FITS_IMAGE_TO_PREVIEW in "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" ;do
-   BASENAME_FITS_IMAGE_TO_PREVIEW=$(basename $FITS_IMAGE_TO_PREVIEW)
+   BASENAME_FITS_IMAGE_TO_PREVIEW=$(basename "$FITS_IMAGE_TO_PREVIEW")
    PREVIEW_IMAGE="$BASENAME_FITS_IMAGE_TO_PREVIEW"_preview.png
    ######
    if [ -n "$MAKE_PNG_PLOTS" ];then
     if [ "$MAKE_PNG_PLOTS" == "yes" ];then
-     if [ ! -f transient_report/$PREVIEW_IMAGE ];then
+     if [ ! -f transient_report/"$PREVIEW_IMAGE" ];then
       # image size needs to match the one set in util/transients/make_report_in_HTML.sh
       export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-      util/fits2png $FITS_IMAGE_TO_PREVIEW &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
+      util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null && mv pgplot.png transient_report/"$PREVIEW_IMAGE"
       unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
      fi # if [ ! -f transient_report/$PREVIEW_IMAGE ];then
     fi
@@ -778,6 +782,19 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   echo "ERROR processing the image series - only $NUMBER_OF_SECOND_EPOCH_IMAGES second-epoch images found" >> transient_factory_test31.txt
   continue
  fi
+ # Test if the images look like FITS images
+ echo -n "Read-check the input FITS images... "
+ echo -n "Read-check the input FITS images... " >> transient_factory_test31.txt
+ for FITS_FILE_TO_CHECK in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" ;do
+  # We assume that if util/listhead can read it - chances are the input is a readable FITS file
+  util/listhead "$FITS_FILE_TO_CHECK" > /dev/null
+  if [ $? -ne 0 ];then
+   echo "ERROR reading the FITS file $FITS_FILE_TO_CHECK"
+  fi  
+ done | grep 'ERROR reading the FITS file' >> transient_factory_test31.txt && continue
+ #
+ echo "read-check OK"
+ echo "read-check OK" >> transient_factory_test31.txt
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -eq 2 ];then
   SECOND_EPOCH__FIRST_IMAGE=$(ls "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" | head -n1)
   SECOND_EPOCH__SECOND_IMAGE=$(ls "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" | tail -n1)
@@ -785,7 +802,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -gt 2 ];then
   # There are more than two second-epoch images - do a preliminary VaST run to choose the two images with best seeing
   #cp -v default.sex.telephoto_lens_onlybrightstars_v1 default.sex >> transient_factory_test31.txt
-  cp -v $SEXTRACTOR_CONFIG_BRIGHTSTARPASS default.sex >> transient_factory_test31.txt 2>&1
+  cp -v "$SEXTRACTOR_CONFIG_BRIGHTSTARPASS" default.sex >> transient_factory_test31.txt 2>&1
   echo "Preliminary VaST run on the second-epoch images only" >> transient_factory_test31.txt
   echo "./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit"  "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
   ./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit  "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" > prelim_vast_run.log 2>&1  
@@ -806,7 +823,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
     continue
    fi
   fi
-  cat prelim_vast_run.log | grep 'Bad reference image...' >> transient_factory.log
+  grep 'Bad reference image...' prelim_vast_run.log >> transient_factory.log
   if [ $? -eq 0 ];then
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
@@ -827,7 +844,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "ERROR: vast_summary.log is not created during the preliminary VaST run" >> transient_factory_test31.txt
    continue
   fi
-  N_PROCESSED_IMAGES_PRELIM_RUN=$(cat vast_summary.log | grep 'Images processed' | awk '{print $3}')
+  N_PROCESSED_IMAGES_PRELIM_RUN=$(grep 'Images processed' vast_summary.log | awk '{print $3}')
   if [ $N_PROCESSED_IMAGES_PRELIM_RUN -lt 2 ];then
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
@@ -837,7 +854,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "ERROR processing second-epoch images (preliminary VaST run 01)!" >> transient_factory_test31.txt
    continue   
   fi
-  N_PROCESSED_IMAGES_PRELIM_RUN=$(cat vast_summary.log | grep 'Images used for photometry' | awk '{print $5}')
+  N_PROCESSED_IMAGES_PRELIM_RUN=$(grep 'Images used for photometry' vast_summary.log | awk '{print $5}')
   if [ $N_PROCESSED_IMAGES_PRELIM_RUN -lt 2 ];then
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
@@ -879,8 +896,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   # Bad tracking will result in elongated stars and degraded "seeing"
   ###### All that sounds reasonable but doesn't do any good to pass NMW_find_NovaCas21_test
   # Check if the seeing (reflected in the aperture size) is the same for the three images
-  SEEING_AP_FIRST_IMG=$(cat vast_image_details.log | grep 'status=OK' | awk '{if ( $9 > 2 ) print $9}' | head -n1)
-  N_IMAGES_WITH_EXACTLY_THIS_SEEING_AP=$(cat vast_image_details.log | grep 'status=OK' | awk '{if ( $9 > 2 ) print $9}' | grep -c "$SEEING_AP_FIRST_IMG")
+  SEEING_AP_FIRST_IMG=$(grep 'status=OK' vast_image_details.log | awk '{if ( $9 > 2 ) print $9}' | head -n1)
+  N_IMAGES_WITH_EXACTLY_THIS_SEEING_AP=$(grep 'status=OK' vast_image_details.log | awk '{if ( $9 > 2 ) print $9}' | grep -c "$SEEING_AP_FIRST_IMG")
   if [ $N_IMAGES_WITH_EXACTLY_THIS_SEEING_AP -eq $NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING ];then
    # Consider a special case where the seeing is the same to within 0.1pix on all three images
    # Sort the images on JD and take the two latest ones assuming it's the first image that is most likely affected by bad pointing
@@ -927,7 +944,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   ###
   # Check for elliptical star images (tracking error)
   SE_CATALOG_FOR_SECOND_EPOCH__FIRST_IMAGE=$(grep "$SECOND_EPOCH__FIRST_IMAGE" vast_images_catalogs.log | awk '{print $1}')
-  MEDIAN_DIFFERENCE_AminusB_PIX=$(cat $SE_CATALOG_FOR_SECOND_EPOCH__FIRST_IMAGE | awk '{print $18-$20}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.2f", $2}')
+  MEDIAN_DIFFERENCE_AminusB_PIX=$(cat "$SE_CATALOG_FOR_SECOND_EPOCH__FIRST_IMAGE" | awk '{print $18-$20}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.2f", $2}')
   ### ===> APERTURE LIMITS HARDCODED HERE <=== (this is median difference in pixels between semi-major and semi-minor axes of the source)
   #TEST=`echo "$MEDIAN_DIFFERENCE_AminusB_PIX < 0.45" | bc -ql`
   #TEST=`echo "$MEDIAN_DIFFERENCE_AminusB_PIX<0.45" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
@@ -942,7 +959,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "The star elongation is within the allowed range: median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  $(basename $SECOND_EPOCH__FIRST_IMAGE)" >> transient_factory_test31.txt
   fi
   SE_CATALOG_FOR_SECOND_EPOCH__SECOND_IMAGE=$(grep "$SECOND_EPOCH__SECOND_IMAGE" vast_images_catalogs.log | awk '{print $1}')
-  MEDIAN_DIFFERENCE_AminusB_PIX=$(cat $SE_CATALOG_FOR_SECOND_EPOCH__SECOND_IMAGE | awk '{print $18-$20}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.2f", $2}')
+  MEDIAN_DIFFERENCE_AminusB_PIX=$(cat "$SE_CATALOG_FOR_SECOND_EPOCH__SECOND_IMAGE" | awk '{print $18-$20}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.2f", $2}')
   ### ===> APERTURE LIMITS HARDCODED HERE <=== (this is median difference in pixels between semi-major and semi-minor axes of the source)
   #TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<0.30" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
   TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<$FILTER_MAX_ELONGATION_AminusB_PIX" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
@@ -1045,10 +1062,10 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
    ######
    if [ -n "$MAKE_PNG_PLOTS" ];then
     if [ "$MAKE_PNG_PLOTS" == "yes" ];then
-     if [ ! -f transient_report/$PREVIEW_IMAGE ];then
+     if [ ! -f transient_report/"$PREVIEW_IMAGE" ];then
       # image size needs to match the one set in util/transients/make_report_in_HTML.sh
       export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-      util/fits2png $FITS_IMAGE_TO_PREVIEW &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
+      util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null && mv pgplot.png transient_report/"$PREVIEW_IMAGE"
       unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
      fi # if [ ! -f transient_report/$PREVIEW_IMAGE ];then
     fi
@@ -1192,7 +1209,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
       else
        #
        echo "Creating symlink $i" >> transient_factory_test31.txt
-       ln -s $i
+       ln -s "$i"
       fi
      fi # if [ -s "$i" ];then
     done # for i in "$WCSCACHEDIR"/wcs_"$FIELD"_*."$FITS_FILE_EXT" "$WCSCACHEDIR"/exclusion_list*; do
@@ -1206,6 +1223,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
    $TIMEOUTCOMMAND util/planets.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > planets.txt &
    $TIMEOUTCOMMAND util/comets.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > comets.txt &
    $TIMEOUTCOMMAND util/moons.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > moons.txt &
+   $TIMEOUTCOMMAND util/spacecraft.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > spacecraft.txt &
    #
    if [ -n "$(find ../asassn_transients_list.txt -mmin -30 2>/dev/null)" ]; then
     # there is a fresh file - let's reuse it
@@ -1301,16 +1319,22 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
   # Determine image FoV to compute limits on the pointing accuracy
   WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $REFERENCE_EPOCH__FIRST_IMAGE)"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
-  IMAGE_FOV_ARCMIN=$(util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image size:' | awk '{print $3}' | awk -F"'" '{print $1}')
+  FOV_OF_WCS_CALIBRATED_IMAGE_RESULTS=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS")
+  #IMAGE_FOV_ARCMIN=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS" | grep 'Image size:' | awk '{print $3}' | awk -F"'" '{print $1}')
+  IMAGE_FOV_ARCMIN=$(echo "$FOV_OF_WCS_CALIBRATED_IMAGE_RESULTS" | grep 'Image size:' | awk '{print $3}' | awk -F"'" '{print $1}')
 
   ##### Set astrometric match limits
-  IMAGE_SCALE_ARCSECPIX_STRING=$(util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image scale:' | awk '{print $3}')
+  #IMAGE_SCALE_ARCSECPIX_STRING=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS" | grep 'Image scale:' | awk '{print $3}')
+  IMAGE_SCALE_ARCSECPIX_STRING=$(echo "$FOV_OF_WCS_CALIBRATED_IMAGE_RESULTS" | grep 'Image scale:' | awk '{print $3}')
   IMAGE_SCALE_ARCSECPIX=$(echo "$IMAGE_SCALE_ARCSECPIX_STRING" | awk -F'"' '{print $1}')
   # MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT and MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_OFTLIMIT
   # are used for filtering candidates in util/transients/report_transient.sh
-  export MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1}')
-  export MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1*1.5}')
-  export MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1*2.0}')
+  MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1}')
+  export MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT
+  MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1*1.5}')
+  export MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT
+  MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%.1f",$1*2.0}')
+  export MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC
   echo "The image scale is $IMAGE_SCALE_ARCSECPIX_STRING, setting the soft and hard astrometric limits for filtering second-epoch detections: $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT\" and $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT\"" >> transient_factory_test31.txt
 
   ##### Set pointing accuracy limits
@@ -1325,14 +1349,15 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
   FOV_DEG_LIMIT_SOFT=$(echo "$IMAGE_FOV_ARCMIN" | awk '{val = $1/466.5*0.5; if (val < 0.1) val = 0.1; else if (val > 0.5) val = 0.5; printf "%.3f", val}')
 
   # Compare image centers of the reference and second-epoch image
-  WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $REFERENCE_EPOCH__FIRST_IMAGE)"
-  WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
-  IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE=$(util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}')
+  #WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $REFERENCE_EPOCH__FIRST_IMAGE)"
+  #WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
+  #IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE=$(util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}')
+  IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE=$(echo "$FOV_OF_WCS_CALIBRATED_IMAGE_RESULTS" | grep 'Image center:' | awk '{print $3" "$4}')
 
   #### Do the pointing check for the first image of the second epoch
   WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $SECOND_EPOCH__FIRST_IMAGE)"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
-  IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE=$(util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}')
+  IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS" | grep 'Image center:' | awk '{print $3" "$4}')
   DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}')
   echo "###################################
 # Check the image center offset between the reference and the first second-epoch image (pointing accuracy)
@@ -1371,7 +1396,7 @@ Soft limit: $FOV_DEG_LIMIT_SOFT deg.  Hard limit: $FOV_DEG_LIMIT_HARD deg.
   #### Do the pointing check for the second image of the second epoch
   WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $SECOND_EPOCH__SECOND_IMAGE)"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
-  IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE=$(util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}')
+  IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS" | grep 'Image center:' | awk '{print $3" "$4}')
   DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}')
   echo "###################################
 # Check the image center offset between the reference and the second second-epoch image (pointing accuracy)
@@ -1416,7 +1441,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     #
     DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.5f", $5}')
     echo "###################################
-# Check the image center offset between the first and the second second-epoch image (ahift should be applied between the second-epoch images)
+# Check the image center offset between the first and the second second-epoch image (shift should be applied between the second-epoch images)
 Second-epoch first image center  $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE
 Second-epoch second image center $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE
 Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
@@ -1733,7 +1758,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     #SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
     #WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
     {
-     lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @$EXCLUSION_LIST | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list.txt
+     lib/bin/sky2xy "$WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE" "@$EXCLUSION_LIST" | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list.txt
      cp exclusion_list.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
     } &
    fi
@@ -1744,7 +1769,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     #SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
     #WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
     {
-     lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/brightbright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bbsc.txt
+     lib/bin/sky2xy "$WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE" @lib/catalogs/brightbright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bbsc.txt
      cp exclusion_list_bbsc.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
     } &
    fi
@@ -1755,7 +1780,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     #SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
     #WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
     {
-     lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/bright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bsc.txt
+     lib/bin/sky2xy "$WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE" @lib/catalogs/bright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bsc.txt
      cp exclusion_list_bsc.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
     } &
    fi
@@ -1766,7 +1791,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     #SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
     #WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
     {
-     lib/bin/sky2xy $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | while read -r A ;do lib/deg2hms $A ;done > exclusion_list_tycho2.txt
+     lib/bin/sky2xy "$WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE" @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | while read -r A ;do lib/deg2hms $A ;done > exclusion_list_tycho2.txt
      cp exclusion_list_tycho2.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
     } &
    fi
@@ -2023,6 +2048,14 @@ cat moons.txt >> transient_factory_test31.txt
 ls -lh moons.txt >> transient_factory_test31.txt 2>&1
 #
 echo "############################################################
+Positions of slected spacecraft from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
+cat spacecraft.txt
+echo "############################################################
+Positions of slected spacecraft from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
+cat spacecraft.txt >> transient_factory_test31.txt
+ls -lh spacecraft.txt >> transient_factory_test31.txt 2>&1
+#
+echo "############################################################
 Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets and http://aerith.net/comet/weekly/current.html ) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
 cat comets.txt
 echo "############################################################
@@ -2080,7 +2113,7 @@ echo "</pre>" >> transient_report/index.html
 
 echo "</BODY></HTML>" >> transient_report/index.html
 
-for FILE_TO_REMOVE in planets.txt comets.txt moons.txt asassn_transients_list.txt tocp_transients_list.txt ;do
+for FILE_TO_REMOVE in planets.txt comets.txt moons.txt spacecraft.txt asassn_transients_list.txt tocp_transients_list.txt ;do
  if [ -f "$FILE_TO_REMOVE" ];then
   rm -f "$FILE_TO_REMOVE"
  fi

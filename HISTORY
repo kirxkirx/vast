@@ -43,6 +43,11 @@
 	the lightcurve viewer, zoom-inspect-edit the lightcurve and maybe send it to the online period search service 
 	by pressing 'L' on the keyboard.
 	* Fix broken './diffphot' manual comparison star selection mode.
+	* New script 'util/spacecraft.sh' prints geocentric positions of selected (bright and distant) spacecraft 
+	for a given JD(UT). The positions are retrieved from JPL HORIZONS https://ssd.jpl.nasa.gov/horizons/
+	* The scripts 'util/spacecraft.sh', 'util/planets.sh', 'util/moons.sh' and 'util/comets.sh' now look for
+	variable MPC_CODE. If it is set, the scripts will compute the apparent positions for the observatory with 
+	the specified MPC code instead of the geocenter.
 12 Dec 2023: vast-1.0rc87:
 	* Changed the deprecated VizieR vizier.u-strasbg.fr domain to vizier.cds.unistra.fr
 	VaST will now always use the CDS VizieR, and will not try to use mirrors as they fail often.

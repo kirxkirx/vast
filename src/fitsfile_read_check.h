@@ -27,6 +27,8 @@ static int check_if_the_input_is_FPack_compressed_FITS(char *fitsfilename) {
  int number_of_hdus;
  
  char system_command[FILENAME_LENGTH+128];
+ char safe_filename[FILENAME_LENGTH];
+ 
  
  // Check if the file exist at all
  FILE *testfile;
@@ -44,10 +46,12 @@ static int check_if_the_input_is_FPack_compressed_FITS(char *fitsfilename) {
   fits_clear_errmsg(); // clear the CFITSIO error message stack
   if( 252 == status ) {
    fprintf(stderr, "'FITSIO status = 252' means the input %s is NOT A FITS FILE!\n", fitsfilename);
-   sprintf(system_command, "file %s", fitsfilename );
-   if ( 0 != system( system_command ) ) {                                
-    fprintf( stderr, "There was a problem running '%s'\n", system_command );
-   }
+   if( 0 == safely_encode_user_input_string(safe_filename, fitsfilename, FILENAME_LENGTH) ) {
+    sprintf(system_command, "file %s", fitsfilename );
+    if ( 0 != system( system_command ) ) {                                
+     fprintf( stderr, "There was a problem running '%s'\n", system_command );
+    } // if ( 0 != system( system_command ) ) {
+   } // if( 0 == safely_encode_user_input_string(safe_filename, fitsfilename, FILENAME_LENGTH) ) {
   } // if( 252 == status ) {
   return status;
  }
@@ -136,6 +140,7 @@ static inline int fitsfile_read_check(char *fitsfilename) {
  long naxes4;
  //
  char system_command[FILENAME_LENGTH+128];
+ char safe_filename[FILENAME_LENGTH];
  //
  unsigned int i,cfitsio_image_cutout;
  //
@@ -174,10 +179,12 @@ static inline int fitsfile_read_check(char *fitsfilename) {
   fits_clear_errmsg(); // clear the CFITSIO error message stack
   if( 252 == status ) {
    fprintf(stderr, "'FITSIO status = 252' means the input %s is NOT A FITS FILE!\n", fitsfilename);
-   sprintf(system_command, "file %s", fitsfilename );
-   if ( 0 != system( system_command ) ) {                                
-    fprintf( stderr, "There was a problem running '%s'\n", system_command );
-   }
+   if( 0 == safely_encode_user_input_string(safe_filename, fitsfilename, FILENAME_LENGTH) ) {
+    sprintf(system_command, "file %s", fitsfilename );
+    if ( 0 != system( system_command ) ) {                                
+     fprintf( stderr, "There was a problem running '%s'\n", system_command );
+    } // if ( 0 != system( system_command ) ) {
+   } // if( 0 == safely_encode_user_input_string(safe_filename, fitsfilename, FILENAME_LENGTH) ) {
   } // if( 252 == status ) {
   check_if_the_input_is_MaxIM_compressed_FITS(fitsfilename);
   return status;
