@@ -47,7 +47,7 @@ static int check_if_the_input_is_FPack_compressed_FITS(char *fitsfilename) {
   if( 252 == status ) {
    fprintf(stderr, "'FITSIO status = 252' means the input %s is NOT A FITS FILE!\n", fitsfilename);
    if( 0 == safely_encode_user_input_string(safe_filename, fitsfilename, FILENAME_LENGTH) ) {
-    sprintf(system_command, "file %s", fitsfilename );
+    sprintf(system_command, "file %s", safe_filename );
     if ( 0 != system( system_command ) ) {                                
      fprintf( stderr, "There was a problem running '%s'\n", system_command );
     } // if ( 0 != system( system_command ) ) {
@@ -180,7 +180,7 @@ static inline int fitsfile_read_check(char *fitsfilename) {
   if( 252 == status ) {
    fprintf(stderr, "'FITSIO status = 252' means the input %s is NOT A FITS FILE!\n", fitsfilename);
    if( 0 == safely_encode_user_input_string(safe_filename, fitsfilename, FILENAME_LENGTH) ) {
-    sprintf(system_command, "file %s", fitsfilename );
+    sprintf(system_command, "file %s", safe_filename );
     if ( 0 != system( system_command ) ) {                                
      fprintf( stderr, "There was a problem running '%s'\n", system_command );
     } // if ( 0 != system( system_command ) ) {
