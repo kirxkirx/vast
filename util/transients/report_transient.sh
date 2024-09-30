@@ -12,9 +12,13 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
+
+
+
 # Parse the command line arguments
 if [ -z $1 ]; then
  echo "Usage: $0 outNUMBER.dat"
+ exit 1
 fi
 LIGHTCURVEFILE=$1
 
@@ -24,9 +28,32 @@ if [ "" = "$SEXTRACTOR" ];then
  SEXTRACTOR=lib/bin/sex
 fi
 
+#################################
+
+REPORT_TRANSIENT_TMPFILE_JD=$(mktemp 2>/dev/null || echo "jd$$.dat")
+export REPORT_TRANSIENT_TMPFILE_JD
+REPORT_TRANSIENT_TMPFILE_RA=$(mktemp 2>/dev/null || echo "ra$$.dat")
+export REPORT_TRANSIENT_TMPFILE_RA
+REPORT_TRANSIENT_TMPFILE_DEC=$(mktemp 2>/dev/null || echo "dec$$.dat")
+export REPORT_TRANSIENT_TMPFILE_DEC
+REPORT_TRANSIENT_TMPFILE_MAG=$(mktemp 2>/dev/null || echo "mag$$.dat")
+export REPORT_TRANSIENT_TMPFILE_MAG
+REPORT_TRANSIENT_TMPFILE_X=$(mktemp 2>/dev/null || echo "x$$.dat")
+export REPORT_TRANSIENT_TMPFILE_X
+REPORT_TRANSIENT_TMPFILE_Y=$(mktemp 2>/dev/null || echo "y$$.dat")
+export REPORT_TRANSIENT_TMPFILE_Y
+REPORT_TRANSIENT_TMPFILE_SCRIPT=$(mktemp 2>/dev/null || echo "script$$.dat")
+export REPORT_TRANSIENT_TMPFILE_SCRIPT
+
+#################################
+
+
 ######### function to clean-up the temporary files before exiting #########
 function clean_tmp_files {
- for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.dat jd$$.dat x$$.dat y$$.dat  tempilefallback_SDWC_OUTPUT_$$.tmp tempilefallback_MPCheck_OUTPUT_$$.tmp ;do
+ for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.dat jd$$.dat x$$.dat y$$.dat  tempilefallback_SDWC_OUTPUT_$$.tmp tempilefallback_MPCheck_OUTPUT_$$.tmp  "$REPORT_TRANSIENT_TMPFILE_JD" "$REPORT_TRANSIENT_TMPFILE_RA" "$REPORT_TRANSIENT_TMPFILE_MAG" "$REPORT_TRANSIENT_TMPFILE_X" "$REPORT_TRANSIENT_TMPFILE_Y" "$REPORT_TRANSIENT_TMPFILE_SCRIPT" ;do
+  if [ -z "$TMP_FILE_TO_REMOVE" ];then
+   continue
+  fi
   if [ -f "$TMP_FILE_TO_REMOVE" ];then
    rm -f "$TMP_FILE_TO_REMOVE"
   fi
@@ -37,10 +64,10 @@ function clean_tmp_files {
 
 # TRAP!! If we whant to identify a flare, there will be no sense to search for an asteroid on the reference image.
 # Use the first discovery image instead!
-REFERENCE_IMAGE=`cat vast_summary.log |grep "Ref.  image:" | awk '{print $6}'`
+REFERENCE_IMAGE=$(cat vast_summary.log |grep "Ref.  image:" | awk '{print $6}')
 
 # Assume that the second first-epoch image is always supplied as the second image on the command line
-SECOND_REFERENCE_IMAGE=`cat vast_image_details.log | head -n2 | tail -n1 | awk '{print $17}'`
+SECOND_REFERENCE_IMAGE=$(cat vast_image_details.log | head -n2 | tail -n1 | awk '{print $17}')
 
 #     Reference image    2010 12 10.0833  2455540.5834  13.61  06:29:12.25 +26:24:19.4
 echo "<table style='font-family:monospace;font-size:12px;'>
@@ -53,7 +80,7 @@ clean_tmp_files
 
 while read JD MAG MERR X Y APP FITSFILE REST ;do
  # At this point, we should somehow have a WCS calibrated image named $WCS_IMAGE_NAME
- WCS_IMAGE_NAME=wcs_`basename $FITSFILE`
+ WCS_IMAGE_NAME=wcs_$(basename "$FITSFILE")
  WCS_IMAGE_NAME=${WCS_IMAGE_NAME/wcs_wcs_/wcs_}
  if [ ! -f $WCS_IMAGE_NAME ];then
   echo "ERROR: cannot find plate-solved image $WCS_IMAGE_NAME" 
@@ -111,15 +138,12 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
 
  # Do not use the first-epoch images for computing average values (positions, dates, magnitdes)
  if [ "$FITSFILE" != "$REFERENCE_IMAGE" ] && [ "$FITSFILE" != "$SECOND_REFERENCE_IMAGE" ] ;then
-  echo "$JD_FROM_IMAGE_HEADER" >> jd$$.dat
-  #echo "$DAYFRAC" >> dayfrac$$.dat
-  echo "$RA" >> ra$$.dat
-  echo "$DEC" >> dec$$.dat
-  echo "$MAG" >> mag$$.dat
-  #
-  echo "$X" >> x$$.dat
-  echo "$Y" >> y$$.dat
-  #
+  echo "$JD_FROM_IMAGE_HEADER" >> "$REPORT_TRANSIENT_TMPFILE_JD"
+  echo "$RA" >> "$REPORT_TRANSIENT_TMPFILE_RA"
+  echo "$DEC" >> "$REPORT_TRANSIENT_TMPFILE_DEC"
+  echo "$MAG" >> "$REPORT_TRANSIENT_TMPFILE_MAG"
+  echo "$X" >> "$REPORT_TRANSIENT_TMPFILE_X"
+  echo "$Y" >> "$REPORT_TRANSIENT_TMPFILE_Y"
  fi
  
  if [ "$FITSFILE" != "$REFERENCE_IMAGE" ] ;then
@@ -139,15 +163,15 @@ done < $LIGHTCURVEFILE
 echo "</table>"
 
 # We need to reformat util/colstat output to make it look like a small shell script
-util/colstat < ra$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
+util/colstat < "$REPORT_TRANSIENT_TMPFILE_RA" 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > "$REPORT_TRANSIENT_TMPFILE_SCRIPT"
 if [ $? -ne 0 ];then
  echo "ERROR running util/colstat in $0" 
  clean_tmp_files
  exit 1
 fi
-. script$$.dat
+. "$REPORT_TRANSIENT_TMPFILE_SCRIPT"
 if [ $? -ne 0 ];then
- echo "ERROR running script$$.dat in $0" 
+ echo "ERROR running $REPORT_TRANSIENT_TMPFILE_SCRIPT in $0" 
  clean_tmp_files
  exit 1
 fi
@@ -159,13 +183,13 @@ RA_MAX=${RA_MAX//"+"/}
 RA_MIN=$MIN
 RA_MIN=${RA_MIN//"+"/}
 
-util/colstat < dec$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
+util/colstat < "$REPORT_TRANSIENT_TMPFILE_DEC" 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > "$REPORT_TRANSIENT_TMPFILE_SCRIPT"
 if [ $? -ne 0 ];then
  echo "ERROR0003 in $0" 
  clean_tmp_files
  exit 1
 fi
-. script$$.dat
+. "$REPORT_TRANSIENT_TMPFILE_SCRIPT"
 if [ $? -ne 0 ];then
  echo "ERROR0004 in $0" 
  clean_tmp_files
@@ -178,13 +202,13 @@ DEC_MAX=${DEC_MAX//"+"/}
 DEC_MIN=$MIN
 DEC_MIN=${DEC_MIN//"+"/}
 
-util/colstat < mag$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
+util/colstat < "$REPORT_TRANSIENT_TMPFILE_MAG" 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > "$REPORT_TRANSIENT_TMPFILE_SCRIPT"
 if [ $? -ne 0 ];then
  echo "ERROR0005 in $0" 
  clean_tmp_files
  exit 1
 fi
-. script$$.dat
+. "$REPORT_TRANSIENT_TMPFILE_SCRIPT"
 if [ $? -ne 0 ];then
  echo "ERROR0006 in $0" 
  clean_tmp_files
@@ -193,23 +217,8 @@ fi
 MAG_MEAN=$(echo "$MEAN" | awk '{printf "%5.2f",$1}')
 MAG_MEAN=${MAG_MEAN//"+"/}
 
-#util/colstat < dayfrac$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
-#if [ $? -ne 0 ];then
-# echo "ERROR0007 in $0" 
-# clean_tmp_files
-# exit 1
-#fi
-#. script$$.dat
-#if [ $? -ne 0 ];then
-# echo "ERROR0008 in $0" 
-# clean_tmp_files
-# exit 1
-#fi
-#DAYFRAC_MEAN=`echo "$MEAN" | awk '{printf "%07.4f",$1}'`
-#DAYFRAC_MEAN_SHORT=`echo "$MEAN" | awk '{printf "%05.2f",$1}'`
 
-
-util/colstat < jd$$.dat 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > script$$.dat
+util/colstat < "$REPORT_TRANSIENT_TMPFILE_JD" 2>/dev/null | sed 's: ::g' | sed 's:MAX-MIN:MAXtoMIN:g' | sed 's:MAD\*1.48:MADx148:g' | sed 's:IQR/1.34:IQRd134:g' > "$REPORT_TRANSIENT_TMPFILE_SCRIPT"
 if [ $? -ne 0 ];then
  echo "ERROR0009 in $0" 
  clean_tmp_files
@@ -217,10 +226,10 @@ if [ $? -ne 0 ];then
 fi
 ##########################
 # debug
-#cp script$$.dat /tmp/script_test.tmp
-#cp jd$$.dat /tmp/jd_test.tmp
+#cp "$REPORT_TRANSIENT_TMPFILE_SCRIPT" /tmp/script_test.tmp
+#cp "$REPORT_TRANSIENT_TMPFILE_JD" /tmp/jd_test.tmp
 ##########################
-. script$$.dat
+. "$REPORT_TRANSIENT_TMPFILE_SCRIPT"
 if [ $? -ne 0 ];then
  echo "ERROR0010 in $0" 
  clean_tmp_files
@@ -231,7 +240,6 @@ JD_MEAN_SHORT=$(echo $JD_MEAN |awk '{printf "%.4f",$1}')
 DATE_INFO=$(util/get_image_date "$JD_MEAN" 2>&1)
 YEAR_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $3}')
 MONTH_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $4}')
-#DAYFRAC_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $5}' | awk '{printf "%08.5f",$1}')
 DAYFRAC_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{printf "%08.5f",$5}')
 DAYFRAC_MEAN_SHORT=$(echo "$DAYFRAC_MEAN" | awk '{printf "%07.4f",$1}')
 DAYFRAC_MEAN_SUPERSHORT=$(echo "$DAYFRAC_MEAN" | awk '{printf "%05.2f",$1}')
@@ -250,10 +258,10 @@ for STRING_TO_TEST in "$RA_MEAN" "$RA_MAX" "$RA_MIN" "$DEC_MEAN" "$DEC_MAX" "$DE
  fi
 done
 ################################
-RA_SECOND_EPOCH_1=`cat ra$$.dat | head -n1`
-DEC_SECOND_EPOCH_1=`cat dec$$.dat | head -n1`
-RA_SECOND_EPOCH_2=`cat ra$$.dat | tail -n1`
-DEC_SECOND_EPOCH_2=`cat dec$$.dat | tail -n1`
+RA_SECOND_EPOCH_1=`cat "$REPORT_TRANSIENT_TMPFILE_RA" | head -n1`
+DEC_SECOND_EPOCH_1=`cat "$REPORT_TRANSIENT_TMPFILE_DEC" | head -n1`
+RA_SECOND_EPOCH_2=`cat "$REPORT_TRANSIENT_TMPFILE_RA" | tail -n1`
+DEC_SECOND_EPOCH_2=`cat "$REPORT_TRANSIENT_TMPFILE_DEC" | tail -n1`
 
 ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING=$(lib/put_two_sources_in_one_field "$RA_SECOND_EPOCH_1" "$DEC_SECOND_EPOCH_1"  "$RA_SECOND_EPOCH_2" "$DEC_SECOND_EPOCH_2" 2>&1 | grep 'Angular distance')
 ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING="${ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING/Angular/angular}"
@@ -290,10 +298,10 @@ else
  ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING="<font color=\"green\">$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC</font>"
 fi
 
-PIX_X_SECOND_EPOCH_1=`cat x$$.dat | head -n1`
-PIX_Y_SECOND_EPOCH_1=`cat y$$.dat | head -n1`
-PIX_X_SECOND_EPOCH_2=`cat x$$.dat | tail -n1`
-PIX_Y_SECOND_EPOCH_2=`cat y$$.dat | tail -n1`
+PIX_X_SECOND_EPOCH_1=`cat "$REPORT_TRANSIENT_TMPFILE_X" | head -n1`
+PIX_Y_SECOND_EPOCH_1=`cat "$REPORT_TRANSIENT_TMPFILE_Y" | head -n1`
+PIX_X_SECOND_EPOCH_2=`cat "$REPORT_TRANSIENT_TMPFILE_X" | tail -n1`
+PIX_Y_SECOND_EPOCH_2=`cat "$REPORT_TRANSIENT_TMPFILE_Y" | tail -n1`
 PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS=`echo "$PIX_X_SECOND_EPOCH_1 $PIX_X_SECOND_EPOCH_2 $PIX_Y_SECOND_EPOCH_1 $PIX_Y_SECOND_EPOCH_2" | awk '{printf "%.1f", sqrt( ($1-$2)*($1-$2) + ($3-$4)*($3-$4) )}'`
 PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING="$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS"
 ### ==> Assumptio about shift between secon-spoch images hardcoded here <===
@@ -312,11 +320,6 @@ fi
 
 # Remove temporary files in case the script will exit after the final check
 clean_tmp_files
-#for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.dat jd$$.dat x$$.dat y$$.dat ;do
-# if [ -f "$TMP_FILE_TO_REMOVE" ];then
-#  rm -f "$TMP_FILE_TO_REMOVE"
-# fi
-#done
 
 
 RADEC_MEAN_HMS="$(lib/deg2hms $RA_MEAN $DEC_MEAN)"
@@ -719,10 +722,6 @@ if ! [[ $TEST =~ $re ]] ; then
  exit 1
 else
  if [ $TEST -eq 1 ];then
-  #echo -n "<form style='display: inline;' NAME=\"$$FORMASAS$1\" ACTION='http://www.astrouw.edu.pl/cgi-asas/asas_cat_input' METHOD=POST TARGET=\"data_list\"><input type='radio' name='source' value='asas3' CHECKED style=\"display:none;\"><TEXTAREA NAME='coo' ROWS=1 COLS=30 WRAP=virtual style=\"display:none;\">$RADEC_MEAN_HMS</TEXTAREA><INPUT NAME=equinox VALUE=2000 SIZE=4 style=\"display:none;\"><INPUT NAME=nmin VALUE=4 SIZE=4 style=\"display:none;\"><INPUT NAME=box VALUE=15 SIZE=4 style=\"display:none;\"><INPUT TYPE=submit NAME=submit VALUE=\"ASAS-3 lightcurve\" ></form>"
-  #RADEC_MEAN_HMS_URLENCODE=${RADEC_MEAN_HMS//":"/"%3A"}
-  #RADEC_MEAN_HMS_URLENCODE=${RADEC_MEAN_HMS//" "/"+"}
-  #echo -n "<form style='display: inline;' NAME=\"$$FORMASAS$1\" ACTION='http://www.astrouw.edu.pl/cgi-asas/asas_cat_input' METHOD=POST TARGET=\"data_list\"><input type='radio' name='source' value='asas3' CHECKED style=\"display:none;\"><TEXTAREA NAME='coo' ROWS=1 COLS=30 WRAP=virtual style=\"display:none;\">$RADEC_MEAN_HMS_URLENCODE</TEXTAREA><INPUT NAME=equinox VALUE=2000 SIZE=4 style=\"display:none;\"><INPUT NAME=nmin VALUE=4 SIZE=4 style=\"display:none;\"><INPUT NAME=box VALUE=15 SIZE=4 style=\"display:none;\"><INPUT TYPE=submit NAME=submit VALUE=\"ASAS-3 lightcurve\" ></form>"
   echo -n "<form style='display: inline;' action='https://www.astrouw.edu.pl/cgi-asas/asas_cat_input' method='post' target='_blank'><input type='hidden' name='source' value='asas3'><input type='hidden' name='coo' value='$RADEC_MEAN_HMS'><input type='hidden' name='equinox' value='2000'><input type='hidden' name='nmin' value='4'><input type='hidden' name='box' value='15'><input type='submit' name='submit' value='ASAS-3 lightcurve'></form>"
  fi
 fi
