@@ -24954,7 +24954,7 @@ fi
 NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://kirx.net:8888/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
 if [ -z "$NMW_KIRX_SUMMARY_CHECK" ]; then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_SUMMARY_CHECK_FAILED"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_SUMMARY_CHECK_FAILED_kadar"
 fi
 # Fetch HTML from kirx.net and check for "morning summary" or "evening summary"
 NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/kadar/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')

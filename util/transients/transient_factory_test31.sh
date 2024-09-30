@@ -791,10 +791,25 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   if [ $? -ne 0 ];then
    echo "ERROR reading the FITS file $FITS_FILE_TO_CHECK"
   fi  
- done | grep 'ERROR reading the FITS file' >> transient_factory_test31.txt && continue
+ done | grep 'ERROR reading the FITS file' >> transient_factory_test31.txt && continue # continue to the next field
  #
  echo "read-check OK"
  echo "read-check OK" >> transient_factory_test31.txt
+ #
+ # Test if we can get the observing date from FITS images
+ echo -n "Read date check the input FITS images... "
+ echo -n "Read date check the input FITS images... " >> transient_factory_test31.txt
+ for FITS_FILE_TO_CHECK in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" ;do
+  # We assume that if util/listhead can read it - chances are the input is a readable FITS file
+  util/get_image_date "$FITS_FILE_TO_CHECK" > /dev/null
+  if [ $? -ne 0 ];then
+   echo "ERROR getting the observing date from the FITS file $FITS_FILE_TO_CHECK"
+  fi  
+ done | grep '"ERROR getting the observing date from the FITS file' >> transient_factory_test31.txt && continue # continue to the next field
+ #
+ echo "read-date-check OK"
+ echo "read-date-check OK" >> transient_factory_test31.txt
+ #
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -eq 2 ];then
   SECOND_EPOCH__FIRST_IMAGE=$(ls "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" | head -n1)
   SECOND_EPOCH__SECOND_IMAGE=$(ls "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" | tail -n1)
