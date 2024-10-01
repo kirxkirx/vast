@@ -311,6 +311,10 @@ if [ -z "$SOFTWARE_VERSION" ];then
  SOFTWARE_VERSION="$SOFTWARE_VERSION transient pipeline"
 fi
 
+# Reset VARIABLE_NAME 
+VARIABLE_NAME=""
+VARIABLE_NAME_NO_WHITESPACES=""
+
 grep --quiet 'The object was <font color="red">found</font> in <font color="blue">VSX</font>' transient_report/index.tmp2
 if [ $? -eq 0 ];then
  VARIABLE_NAME=$(grep -A1 'The object was <font color="red">found</font> in <font color="blue">VSX</font>' transient_report/index.tmp2 | tail -n1 | awk -F'"' '{print $2}')

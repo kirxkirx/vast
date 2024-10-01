@@ -64,19 +64,30 @@ fi
 
 ########### Default settings describing the old NMW camera:
 # Canon 135 mm f/2.0 telephoto lens + SBIG ST-8300M CCD, 20 sec exposures
+#
+# !!! You probably want to override these default parameters below to match your camera !!!
 
 # Normally should be YES,
 # if set to NO '===> POINTING ACCURACY LIMITS HARDCODED HERE <===' will be ignored.
 CHECK_POINTING_ACCURACY="YES"
 
-FILTER_MIN_APERTURE_STAR_SIZE_PIX=2.0
-FILTER_MAX_APERTURE_STAR_SIZE_PIX=9.6
-FILTER_MAX_ELONGATION_AminusB_PIX=0.55
+# Limits on the size of stars in pixels
+# (star size is implied by the size of the automatically chosen aperture that is listed for each image in vast_image_details.log)
+# Images with very large or very small stars must have some problem.
+FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX=2.0
+FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=9.6
+FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX=0.55
 
-FILTER_BRIGHT_MAG_CUTOFF="-5"
-export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="14.0"
-#export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="13.5"
+# Magnitude limits for transient search.
+# If a candidate is too bright - something is very wrong with it.
+# If the candidate is too faint - it's likely to be a false positive from noise.
+# !!! Obviously, the faint magnitude cut-off needs to be customized for your cmera below !!!
+FILTER_BRIGHT_MAG_CUTOFF_TRANSIENT_SEARCH="-5"
+FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="14.0"
+export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH
 
+# If there are too many candidate transients in the field - something is wrong
+# and we probably don't want to clog the output with many false candidates.
 MAX_NUMBER_OF_CANDIDATES_PER_FIELD=40
 
 # Default values
@@ -147,7 +158,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=1000
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=1500
   export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="13.5"
-  FILTER_MAX_APERTURE_STAR_SIZE_PIX=12.5
+  FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=12.5
   if [ -z "$SEXTRACTOR_CONFIG_FILES" ];then
    # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
    SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
@@ -894,15 +905,15 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   #### In the following the exclusion of ' ap=  0.0 ' ' ap= 99.0 ' ' status=ERROR ' is needed to handle the case where one new image is bad while the other two are good.
   ### ===> APERTURE LIMITS HARDCODED HERE <===
   #NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | wc -l)
-  #NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk -v var="$FILTER_MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 < var ) print }' | wc -l)
-  NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | wc -l)
+  #NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk -v var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 < var ) print }' | wc -l)
+  NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | wc -l)
   if [ $NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING -lt 2 ];then
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-   echo "ERROR: seeing on second-epoch images is out of range - ap. size outside ($FILTER_MIN_APERTURE_STAR_SIZE_PIX,$FILTER_MAX_APERTURE_STAR_SIZE_PIX) pix. range"
+   echo "ERROR: seeing on second-epoch images is out of range - ap. size outside ($FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX,$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX) pix. range"
    echo "***** ERROR: seeing on second-epoch images is out of range *****" >> transient_factory.log
    echo "############################################################" >> transient_factory.log
-   echo "ERROR: seeing on second-epoch images is out of range - ap. size outside ($FILTER_MIN_APERTURE_STAR_SIZE_PIX,$FILTER_MAX_APERTURE_STAR_SIZE_PIX) pix. range" >> transient_factory_test31.txt
+   echo "ERROR: seeing on second-epoch images is out of range - ap. size outside ($FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX,$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX) pix. range" >> transient_factory_test31.txt
    # We are throwing ERROR message anyway, so it's OK to print out vast_image_details.log content that may include the word 'ERROR'
    cat vast_image_details.log >> transient_factory_test31.txt
    continue
@@ -920,12 +931,12 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    # Take the second-to-last image as SECOND_EPOCH__FIRST_IMAGE
    ### ===> APERTURE LIMITS HARDCODED HERE <===
    #SECOND_EPOCH__FIRST_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk7 | tail -n2 | head -n1 | awk '{print $17}')
-   SECOND_EPOCH__FIRST_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk7 | tail -n2 | head -n1 | awk '{print $17}')
+   SECOND_EPOCH__FIRST_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk7 | tail -n2 | head -n1 | awk '{print $17}')
    echo "SECOND_EPOCH__FIRST_IMAGE= $SECOND_EPOCH__FIRST_IMAGE" >> transient_factory_test31.txt
    # Take the last image as SECOND_EPOCH__SECOND_IMAGE
    ### ===> APERTURE LIMITS HARDCODED HERE <===
    #SECOND_EPOCH__SECOND_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk7 | tail -n1 | awk '{print $17}')
-   SECOND_EPOCH__SECOND_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk7 | tail -n1 | awk '{print $17}')
+   SECOND_EPOCH__SECOND_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk7 | tail -n1 | awk '{print $17}')
    echo "SECOND_EPOCH__SECOND_IMAGE= $SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_test31.txt
   else
    # Consider the usual case where the seeing is somewhat different - pick the two images with the best seeing
@@ -933,11 +944,11 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    #### In the following the exclusion of ' ap=  0.0 ' ' ap= 99.0 ' ' status=ERROR ' is needed to handle the case where one new image is bad while the other two are good.
    ### ===> APERTURE LIMITS HARDCODED HERE <===
    #SECOND_EPOCH__FIRST_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk9 | head -n1 | awk '{print $17}')
-   SECOND_EPOCH__FIRST_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk9 | head -n1 | awk '{print $17}')
+   SECOND_EPOCH__FIRST_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk9 | head -n1 | awk '{print $17}')
    echo "SECOND_EPOCH__FIRST_IMAGE= $SECOND_EPOCH__FIRST_IMAGE" >> transient_factory_test31.txt
    ### ===> APERTURE LIMITS HARDCODED HERE <===
    #SECOND_EPOCH__SECOND_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}')
-   SECOND_EPOCH__SECOND_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}')
+   SECOND_EPOCH__SECOND_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk9 | head -n2 | tail -n1 | awk '{print $17}')
    echo "SECOND_EPOCH__SECOND_IMAGE= $SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_test31.txt
   fi
   # Make sure SECOND_EPOCH__FIRST_IMAGE and SECOND_EPOCH__SECOND_IMAGE are set
@@ -964,7 +975,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   #TEST=`echo "$MEDIAN_DIFFERENCE_AminusB_PIX < 0.45" | bc -ql`
   #TEST=`echo "$MEDIAN_DIFFERENCE_AminusB_PIX<0.45" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
   #TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<0.30" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
-  TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<$FILTER_MAX_ELONGATION_AminusB_PIX" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
+  TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<$FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
   if [ $TEST -eq 0 ];then
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
@@ -977,7 +988,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   MEDIAN_DIFFERENCE_AminusB_PIX=$(cat "$SE_CATALOG_FOR_SECOND_EPOCH__SECOND_IMAGE" | awk '{print $18-$20}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.2f", $2}')
   ### ===> APERTURE LIMITS HARDCODED HERE <=== (this is median difference in pixels between semi-major and semi-minor axes of the source)
   #TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<0.30" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
-  TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<$FILTER_MAX_ELONGATION_AminusB_PIX" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
+  TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<$FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
   if [ $TEST -eq 0 ];then
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
@@ -1638,7 +1649,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
    #cat "$i" | awk '{print $2}' | util/colstat 2>&1 | grep 'MEAN=' | awk '{if ( $2 < -5 && $2 >18 ) print "ERROR"}' | grep 'ERROR' && break
    # The reference frame might be a few magnitudes deeper than the new frames
-   cat "$i" | awk '{print $2}' | util/colstat 2>&1 | grep 'MEAN=' | awk -v var="$FILTER_BRIGHT_MAG_CUTOFF" -v var2="$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" '{if ( $2 < var && $2 > var2+5.0 ) print "ERROR"}' | grep 'ERROR' && break
+   cat "$i" | awk '{print $2}' | util/colstat 2>&1 | grep 'MEAN=' | awk -v var="$FILTER_BRIGHT_MAG_CUTOFF_TRANSIENT_SEARCH" -v var2="$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" '{if ( $2 < var && $2 > var2+5.0 ) print "ERROR"}' | grep 'ERROR' && break
   done | grep --quiet 'ERROR'
   #
   if [ $? -eq 0 ];then
@@ -1714,7 +1725,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   # Filter-out suspiciously bright candidates
   ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
   #for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2"<-5.0"}'|bc -ql) ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
-  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk -v var="$FILTER_BRIGHT_MAG_CUTOFF" '{print ((($1+$2)/2<var)?1:0)}' ) ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk -v var="$FILTER_BRIGHT_MAG_CUTOFF_TRANSIENT_SEARCH" '{print ((($1+$2)/2<var)?1:0)}' ) ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
   echo "Filter-out candidates with large difference between measured mags in one epoch..." >> transient_factory_test31.txt
   echo "Filter-out candidates with large difference between measured mags in one epoch..."
