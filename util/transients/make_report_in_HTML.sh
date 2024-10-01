@@ -21,12 +21,16 @@ fi
 
 # Make sure there is a directory to put the report in
 if [ ! -d transient_report/ ];then
- mkdir transient_report
+# mkdir transient_report
+ if ! mkdir transient_report; then
+  echo "ERROR in $0: Failed to create directory transient_report/"
+  exit 1
+ fi
 fi
 
-if [ ! -f candidates-transients.lst ];then
+if [ ! -s candidates-transients.lst ];then
  echo "No candidates found here"
- exit
+ exit 0
 fi
 
 USE_JAVASCRIPT=0
@@ -36,31 +40,47 @@ if [ $? -eq 0 ];then
 fi
 
 while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
- if [ -f transient_report/index.tmp ];then
-  rm -f transient_report/index.tmp
+# if [ -f transient_report/index.tmp ];then
+#  rm -f transient_report/index.tmp
+# fi
+ if ! rm -f transient_report/index.tmp; then
+  echo "ERROR in $0: Failed to remove transient_report/index.tmp"
+  exit 1
  fi
- if [ -f transient_report/index.tmp2 ];then
-  rm -f transient_report/index.tmp2
+# if [ -f transient_report/index.tmp2__report_transient_output ];then
+#  rm -f transient_report/index.tmp2__report_transient_output
+# fi
+ if ! rm -f transient_report/index.tmp2__report_transient_output; then
+  echo "ERROR in $0: Failed to remove transient_report/index.tmp2__report_transient_output"
+  exit 1
  fi
  
- if [ ! -s $LIGHTCURVE_FILE_OUTDAT ];then
+ if [ ! -s "$LIGHTCURVE_FILE_OUTDAT" ];then
   echo "WARNING: $LIGHTCURVE_FILE_OUTDAT lightcurve file does not exist!!!"
   continue
  fi
  
- TRANSIENT_NAME=$(basename $LIGHTCURVE_FILE_OUTDAT .dat)
- TRANSIENT_NAME=${TRANSIENT_NAME/out/}
- TRANSIENT_NAME="$TRANSIENT_NAME"_$(basename $C .fts)
+ TRANSIENT_NAME=$(basename "$LIGHTCURVE_FILE_OUTDAT" .dat)
+ TRANSIENT_NAME="${TRANSIENT_NAME/out/}"
+ if [ -z "$TRANSIENT_NAME" ];then
+  echo "ERROR in $0: failed to determine the transient name (1)"
+  continue
+ fi
+ TRANSIENT_NAME="$TRANSIENT_NAME"_$(basename "$C" .fts)
  TRANSIENT_NAME=$(basename "$TRANSIENT_NAME" .fits)
  TRANSIENT_NAME=$(basename "$TRANSIENT_NAME" .fit)
+ if [ -z "$TRANSIENT_NAME" ];then
+  echo "ERROR in $0: failed to determine the transient name (2)"
+  continue
+ fi
  
  # Moved the final check here
- util/transients/report_transient.sh $LIGHTCURVE_FILE_OUTDAT  > transient_report/index.tmp2
+ util/transients/report_transient.sh "$LIGHTCURVE_FILE_OUTDAT"  > transient_report/index.tmp2__report_transient_output
  if [ $? -ne 0 ];then
   echo "The candidate $TRANSIENT_NAME did not pass the final checks"
-  if [ -f transient_report/index.tmp2 ];then
-   tail -n3 transient_report/index.tmp2
-   rm -f transient_report/index.tmp2
+  if [ -f transient_report/index.tmp2__report_transient_output ];then
+   tail -n3 transient_report/index.tmp2__report_transient_output
+   rm -f transient_report/index.tmp2__report_transient_output
   fi
   continue
  fi
@@ -79,7 +99,19 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    # plot reference image
    # Set PNG finding chart dimensions
    export PGPLOT_PNG_HEIGHT=400 ; export PGPLOT_PNG_WIDTH=400
-   util/make_finding_chart $REFERENCE_IMAGE $G $H &>/dev/null && mv pgplot.png transient_report/"$TRANSIENT_NAME"_reference.png
+   #util/make_finding_chart $REFERENCE_IMAGE $G $H &>/dev/null && mv pgplot.png transient_report/"$TRANSIENT_NAME"_reference.png
+   if util/make_finding_chart "$REFERENCE_IMAGE" "$G" "$H" &>/dev/null; then
+    if ! mv pgplot.png "transient_report/${TRANSIENT_NAME}_reference.png"; then
+     echo "ERROR in $0: Failed to move pgplot.png to transient_report/${TRANSIENT_NAME}_reference.png"
+     #exit 1
+     #continue
+    fi
+   else
+    echo "ERROR in $0: make_finding_chart failed for $REFERENCE_IMAGE"
+    #exit 1
+    #continue
+   fi
+   #
    unset PGPLOT_PNG_HEIGHT ; unset PGPLOT_PNG_WIDTH
   fi
  fi
@@ -99,8 +131,8 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  fi
  #####                       
 
- DATE=`grep $REFERENCE_IMAGE vast_image_details.log |awk '{print $2" "$3"  "$7}'`
- rm -f tmp.description
+ #DATE=$(grep $REFERENCE_IMAGE vast_image_details.log |awk '{print $2" "$3"  "$7}')
+ #rm -f tmp.description
 
  #echo "Reference image: $DATE  $REFERENCE_IMAGE  $G $H (pix)" >> tmp.description 
  # read the lightcurve file, plot discovery images
@@ -112,19 +144,40 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    # Plot the discovery image
    #N=`echo $N+1|bc -q`
    N=$[$N+1]
-   DATE=`grep $IMAGE vast_image_details.log |awk '{print $2" "$3"  "$7}'`
+   #DATE=$(grep $IMAGE vast_image_details.log |awk '{print $2" "$3"  "$7}')
    #####
    if [ -n "$MAKE_PNG_PLOTS" ];then
     if [ "$MAKE_PNG_PLOTS" == "yes" ];then
      # Set PNG finding chart dimensions
      export PGPLOT_PNG_HEIGHT=400 ; export PGPLOT_PNG_WIDTH=400
-     util/make_finding_chart $IMAGE $X $Y &>/dev/null && mv pgplot.png transient_report/"$TRANSIENT_NAME"_discovery"$N".png
-     if [ ! -f transient_report/"$TRANSIENT_NAME"_discovery"$N".png ];then
-      # something whent wrong while creating the plot!
-      # wait and retry
+     #util/make_finding_chart $IMAGE $X $Y &>/dev/null && mv pgplot.png transient_report/"$TRANSIENT_NAME"_discovery"$N".png
+     #if [ ! -f transient_report/"$TRANSIENT_NAME"_discovery"$N".png ];then
+     # # something whent wrong while creating the plot!
+     # # wait and retry
+     # sleep 1
+     # util/make_finding_chart $IMAGE $X $Y &>/dev/null && sleep 1 && mv pgplot.png transient_report/"$TRANSIENT_NAME"_discovery"$N".png
+     #fi
+     #
+     output_file="transient_report/${TRANSIENT_NAME}_discovery${N}.png"
+     if util/make_finding_chart "$IMAGE" "$X" "$Y" &>/dev/null; then
+      if ! mv pgplot.png "$output_file"; then
+       echo "ERROR in $0: Failed to move pgplot.png to $output_file"
+       #exit 1
+      fi
+     else
+      echo "Warning: make_finding_chart failed for $IMAGE, retrying..."
       sleep 1
-      util/make_finding_chart $IMAGE $X $Y &>/dev/null && sleep 1 && mv pgplot.png transient_report/"$TRANSIENT_NAME"_discovery"$N".png
-     fi
+      if util/make_finding_chart "$IMAGE" "$X" "$Y" &>/dev/null; then
+       if ! mv pgplot.png "$output_file"; then
+        echo "ERROR (2) in $0: Failed to move pgplot.png to $output_file on retry"
+        #exit 1
+       fi
+      else
+       echo "ERROR in $0: make_finding_chart failed again for $IMAGE"
+       exit 1
+      fi # 2nd attempt if util/make_finding_chart "$IMAGE" "$X" "$Y" &>/dev/null; then
+     fi # else if util/make_finding_chart "$IMAGE" "$X" "$Y" &>/dev/null; then
+     #
      unset PGPLOT_PNG_HEIGHT ; unset PGPLOT_PNG_WIDTH
     fi
    fi
@@ -139,7 +192,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  # if the final check passed well
  #if [ $? -eq 0 ];then
 
-  cat transient_report/index.tmp2 >> transient_report/index.tmp
+  cat transient_report/index.tmp2__report_transient_output >> transient_report/index.tmp
 
   #echo "</pre>" >> transient_report/index.tmp
   
@@ -172,7 +225,19 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
         #unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
         # image size needs to match the one set in util/transients/transient_factory_test31.sh and above
         export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-        util/fits2png $IMAGE &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
+        #util/fits2png $IMAGE &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
+        if [ ! -f transient_report/$PREVIEW_IMAGE ]; then
+         if util/fits2png "$IMAGE" &> /dev/null; then
+          if ! mv pgplot.png "transient_report/$PREVIEW_IMAGE"; then
+           echo "ERROR in $0: Failed to move pgplot.png to transient_report/$PREVIEW_IMAGE"
+           #exit 1
+          fi # if ! mv pgplot.png "transient_report/$PREVIEW_IMAGE"; then
+         else
+          echo "ERROR in $0: fits2png failed for $IMAGE"
+          #exit 1
+         fi # else if util/fits2png "$IMAGE" &> /dev/null; then
+        fi # if [ ! -f transient_report/$PREVIEW_IMAGE ]; then
+        #
         unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
        fi
       fi
@@ -315,9 +380,9 @@ fi
 VARIABLE_NAME=""
 VARIABLE_NAME_NO_WHITESPACES=""
 
-grep --quiet 'The object was <font color="red">found</font> in <font color="blue">VSX</font>' transient_report/index.tmp2
+grep --quiet 'The object was <font color="red">found</font> in <font color="blue">VSX</font>' transient_report/index.tmp2__report_transient_output
 if [ $? -eq 0 ];then
- VARIABLE_NAME=$(grep -A1 'The object was <font color="red">found</font> in <font color="blue">VSX</font>' transient_report/index.tmp2 | tail -n1 | awk -F'"' '{print $2}')
+ VARIABLE_NAME=$(grep -A1 'The object was <font color="red">found</font> in <font color="blue">VSX</font>' transient_report/index.tmp2__report_transient_output | tail -n1 | awk -F'"' '{print $2}')
  # remove leading and trailing white spaces from string
  # VARIABLE_NAME will be somehting like:
  # #KR Sco                        </b>#
@@ -326,9 +391,9 @@ if [ $? -eq 0 ];then
 fi
 
 if [ -z "$VARIABLE_NAME" ];then
- grep --quiet ' online_id ' transient_report/index.tmp2
+ grep --quiet ' online_id ' transient_report/index.tmp2__report_transient_output
  if [ $? -eq 0 ];then
-  VARIABLE_NAME=$(grep ' online_id ' transient_report/index.tmp2 | awk -F'|' '{print $2}')
+  VARIABLE_NAME=$(grep ' online_id ' transient_report/index.tmp2__report_transient_output | awk -F'|' '{print $2}')
   # remove leading and trailing white spaces from string
   VARIABLE_NAME_NO_WHITESPACES=$(echo "$VARIABLE_NAME" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
   VARIABLE_NAME="$VARIABLE_NAME_NO_WHITESPACES" 
@@ -336,7 +401,7 @@ if [ -z "$VARIABLE_NAME" ];then
 fi
 
 # debug
-#cp -v transient_report/index.tmp2 /tmp/"$TRANSIENT_NAME"__index.tmp2
+#cp -v transient_report/index.tmp2__report_transient_output /tmp/"$TRANSIENT_NAME"__index.tmp2__report_transient_output
 
 if [ -z "$VARIABLE_NAME" ];then
  VARIABLE_NAME="VARIABLE_NAME"
@@ -484,7 +549,10 @@ done < candidates-transients.lst
 if [ -f transient_report/index.tmp ];then
  rm -f transient_report/index.tmp
 fi
-if [ -f transient_report/index.tmp2 ];then
- rm -f transient_report/index.tmp2
+if [ -f transient_report/index.tmp2__report_transient_output ];then
+ rm -f transient_report/index.tmp2__report_transient_output
 fi
-rm -f *_preview.png
+
+# These files are not supposed to be created in vast directory
+#rm -f *_preview.png
+
