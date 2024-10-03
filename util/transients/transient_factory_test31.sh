@@ -1160,6 +1160,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
  ###############################################
 
  # We need a local exclusion list not to find the same things in multiple SExtractor runs
+ # But is this actually the desired behavior? (Some SE runs may or may not have better photometry than others)
  if [ -f exclusion_list_local.txt ];then
   rm -f exclusion_list_local.txt
  fi 
@@ -1895,9 +1896,10 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   echo "*------ done with $SEXTRACTOR_CONFIG_FILE ------*"
 
   # Update the local exclusion list (but actually util/transients/report_transient.sh is supposed to take care of that already)
-  echo "Updating exclusion_list_local.txt" >> transient_factory_test31.txt
-  echo "Updating exclusion_list_local.txt"
-  grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' >> exclusion_list_local.txt
+  # DON'T DO THAT - util/transients/report_transient.sh is doing it properly
+  #echo "Updating exclusion_list_local.txt" >> transient_factory_test31.txt
+  #echo "Updating exclusion_list_local.txt"
+  #grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' | sort | uniq >> exclusion_list_local.txt
   echo "#### The local exclusion list is exclusion_list_local.txt ####" >> transient_factory_test31.txt
   cat exclusion_list_local.txt >> transient_factory_test31.txt
   #
