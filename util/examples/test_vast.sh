@@ -12500,6 +12500,14 @@ $GREP_RESULT"
     if [ $? -ne 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_NONINTERACTIVE_ID_FAILED"
+       DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNVUL24ST_NONINTERACTIVE_ID_FAILED ######
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxx      transient_report/index.html     xxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+$(cat transient_report/index.html)
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+"
     else
      #
      TEST_CBA_REPORT_TERMINAL=$(util/format_lightcurve_CBA.sh out"$V615VUL_STAR_NUMBER".dat test)
