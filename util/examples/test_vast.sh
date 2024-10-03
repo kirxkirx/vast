@@ -12495,14 +12495,20 @@ $GREP_RESULT"
    #V615VUL_STAR_NUMBER=$(grep -B20 'V0615 Vul' transient_report/index.html | grep '<a name=' | tail -n1 | awk -F"'" '{print $2}' | awk -F"_" '{print $1}')
    V615VUL_STAR_NUMBER=$(grep -B13 "2024 07 29\.831.  2460521\.331.  11\...  19:43:0.\... +21:00:..\.." transient_report/index.html | grep '<a name=' | tail -n1 | awk -F"'" '{print $2}' | awk -F"_" '{print $1}')
    if [ -f out"$V615VUL_STAR_NUMBER".dat ];then
-    #
-    TEST_CBA_REPORT_TERMINAL=$(util/format_lightcurve_CBA.sh out"$V615VUL_STAR_NUMBER".dat test)
-    if [ -n "$TEST_CBA_REPORT_TERMINAL" ];then
-     echo "$TEST_CBA_REPORT_TERMINAL" | grep --quiet 'Automatically setting the variable star name V0615 Vul'
-     if [ $? -ne 0 ];then
-      TEST_PASSED=0
-      FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_AUTOMATICALLY_ASSIGNED_VARSTARNAME"
-      DEBUG_OUTPUT="$DEBUG_OUTPUT
+    # The formatter scripts rely on util/identify_noninteractive.sh, so let's test it
+    util/identify_noninteractive.sh out"$V615VUL_STAR_NUMBER".dat | grep -A1 'New summary string' | grep --quiet -e 'V0615 Vul' -e 'V615 Vul'
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_NONINTERACTIVE_ID_FAILED"
+    else
+     #
+     TEST_CBA_REPORT_TERMINAL=$(util/format_lightcurve_CBA.sh out"$V615VUL_STAR_NUMBER".dat test)
+     if [ -n "$TEST_CBA_REPORT_TERMINAL" ];then
+      echo "$TEST_CBA_REPORT_TERMINAL" | grep --quiet -e 'Automatically setting the variable star name V0615 Vul' -e 'Automatically setting the variable star name V615 Vul'
+      if [ $? -ne 0 ];then
+       TEST_PASSED=0
+       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_AUTOMATICALLY_ASSIGNED_VARSTARNAME"
+       DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNVUL24ST_CBASCRIPTTEST_NO_AUTOMATICALLY_ASSIGNED_VARSTARNAME ######
 $TEST_CBA_REPORT_TERMINAL
 ----------------------------------------------------------------
@@ -12512,90 +12518,91 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 $(cat transient_report/index.html)
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 "
-     fi
-     echo "$TEST_CBA_REPORT_TERMINAL" | grep --quiet '29 July 2024'
-     if [ $? -ne 0 ];then
-      TEST_PASSED=0
-      FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_HUMAN_READABLE_DATE"
-     fi
-     if [ -s CBA_V0615_Vul_29Jul2024_measurements.txt ];then
-      cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep --quiet '# Date: 29Jul2024'
+       fi
+      echo "$TEST_CBA_REPORT_TERMINAL" | grep --quiet '29 July 2024'
       if [ $? -ne 0 ];then
        TEST_PASSED=0
-       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_DATE"
+       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_HUMAN_READABLE_DATE"
       fi
-      cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep --quiet '# Variable: V0615 Vul'
-      if [ $? -ne 0 ];then
+      if [ -s CBA_V0615_Vul_29Jul2024_measurements.txt ];then
+       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep --quiet '# Date: 29Jul2024'
+       if [ $? -ne 0 ];then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_DATE"
+       fi
+       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep --quiet '# Variable: V0615 Vul'
+       if [ $? -ne 0 ];then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_INCORRECT_VARSTARNAME"
+       fi
+       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep --quiet '# Exp time (s): 20'
+       if [ $? -ne 0 ];then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_EXPTIME"
+       fi
+       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep '2460521.3315' | grep --quiet ' 11.2'
+       if [ $? -ne 0 ];then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_MEASUREMENT1"
+       fi
+       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep '2460521.3319' | grep --quiet ' 11.2'
+       if [ $? -ne 0 ];then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_MEASUREMENT2"
+       fi
+      else
        TEST_PASSED=0
-       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_INCORRECT_VARSTARNAME"
-      fi
-      cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep --quiet '# Exp time (s): 20'
-      if [ $? -ne 0 ];then
-       TEST_PASSED=0
-       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_EXPTIME"
-      fi
-      cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep '2460521.3315' | grep --quiet ' 11.2'
-      if [ $? -ne 0 ];then
-       TEST_PASSED=0
-       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_MEASUREMENT1"
-      fi
-      cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep '2460521.3319' | grep --quiet ' 11.2'
-      if [ $? -ne 0 ];then
-       TEST_PASSED=0
-       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_MEASUREMENT2"
-      fi
+       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NOOUTPUTFILE"
+      fi # if [ -s CBA_V0615_Vul_29Jul2024_measurements.txt ];then
      else
       TEST_PASSED=0
-      FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NOOUTPUTFILE"
-     fi # if [ -s CBA_V0615_Vul_29Jul2024_measurements.txt ];then
-    else
-     TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_EMPTY_TEST_CBA_REPORT_TERMINAL"
-    fi # if [ -n "$TEST_CBA_REPORT_TERMINAL" ];then
-    #
-    TEST_AAVSO_REPORT_TERMINAL=$(util/format_lightcurve_AAVSO.sh out"$V615VUL_STAR_NUMBER".dat test)
-    if [ -n "$TEST_AAVSO_REPORT_TERMINAL" ];then
-     echo "$TEST_AAVSO_REPORT_TERMINAL" | grep --quiet 'Automatically setting the variable star name V0615 Vul'
-     if [ $? -ne 0 ];then
-      TEST_PASSED=0
-      FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_NO_AUTOMATICALLY_ASSIGNED_VARSTARNAME"
-      DEBUG_OUTPUT="$DEBUG_OUTPUT
+      FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_EMPTY_TEST_CBA_REPORT_TERMINAL"
+     fi # if [ -n "$TEST_CBA_REPORT_TERMINAL" ];then
+     #
+     TEST_AAVSO_REPORT_TERMINAL=$(util/format_lightcurve_AAVSO.sh out"$V615VUL_STAR_NUMBER".dat test)
+     if [ -n "$TEST_AAVSO_REPORT_TERMINAL" ];then
+      echo "$TEST_AAVSO_REPORT_TERMINAL" | grep --quiet 'Automatically setting the variable star name V0615 Vul'
+      if [ $? -ne 0 ];then
+       TEST_PASSED=0
+       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_NO_AUTOMATICALLY_ASSIGNED_VARSTARNAME"
+       DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNVUL24ST_AAVSOSCRIPTTEST_NO_AUTOMATICALLY_ASSIGNED_VARSTARNAME ######
 $TEST_AAVSO_REPORT_TERMINAL
 ----------------------------------------------------------------
 "
-     fi
-     if [ -s AAVSO_V0615_Vul_29Jul2024_CV_measurements.txt ];then
-      cat AAVSO_V0615_Vul_29Jul2024_CV_measurements.txt | grep '2460521.3315' | grep --quiet ',11.2'
-      if [ $? -ne 0 ];then
-       TEST_PASSED=0
-       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_MEASUREMENT1"
       fi
-      cat AAVSO_V0615_Vul_29Jul2024_CV_measurements.txt | grep '2460521.3319' | grep --quiet ',11.2'
-      if [ $? -ne 0 ];then
+      if [ -s AAVSO_V0615_Vul_29Jul2024_CV_measurements.txt ];then
+       cat AAVSO_V0615_Vul_29Jul2024_CV_measurements.txt | grep '2460521.3315' | grep --quiet ',11.2'
+       if [ $? -ne 0 ];then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_MEASUREMENT1"
+       fi
+       cat AAVSO_V0615_Vul_29Jul2024_CV_measurements.txt | grep '2460521.3319' | grep --quiet ',11.2'
+       if [ $? -ne 0 ];then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_MEASUREMENT2"
+       fi
+       cat AAVSO_V0615_Vul_29Jul2024_CV_measurements.txt | grep --quiet -e 'V0615 Vul,' -e 'V615 Vul,'
+       if [ $? -ne 0 ];then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_INCORRECT_VARSTARNAME"
+       fi
+      else
        TEST_PASSED=0
-       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_MEASUREMENT2"
-      fi
-      cat AAVSO_V0615_Vul_29Jul2024_CV_measurements.txt | grep --quiet -e 'V0615 Vul,' -e 'V615 Vul,'
-      if [ $? -ne 0 ];then
-       TEST_PASSED=0
-       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_INCORRECT_VARSTARNAME"
+       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_NOOUTPUTFILE"
       fi
      else
       TEST_PASSED=0
-      FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_NOOUTPUTFILE"
-     fi
-    else
-     TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_EMPTY_TEST_AAVSO_REPORT_TERMINAL"
-    fi # if [ -n "$TEST_AAVSO_REPORT_TERMINAL" ];then
-    #
-    for TEST_FILE_TO_REMOVE in CBA_report.txt CBA_V0615_Vul_29Jul2024_measurements.txt AAVSO_report.txt AAVSO_V0615_Vul_29Jul2024_CV_measurements.txt ;do
-     if [ -f "$TEST_FILE_TO_REMOVE" ];then
-      rm -f "$TEST_FILE_TO_REMOVE"
-     fi
-    done
-    #
+      FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_EMPTY_TEST_AAVSO_REPORT_TERMINAL"
+     fi # if [ -n "$TEST_AAVSO_REPORT_TERMINAL" ];then
+     #
+     for TEST_FILE_TO_REMOVE in CBA_report.txt CBA_V0615_Vul_29Jul2024_measurements.txt AAVSO_report.txt AAVSO_V0615_Vul_29Jul2024_CV_measurements.txt ;do
+      if [ -f "$TEST_FILE_TO_REMOVE" ];then
+       rm -f "$TEST_FILE_TO_REMOVE"
+      fi
+     done
+     #
+    fi # util/identify_noninteractive.sh worked or not
    else
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0110a_ADDTESTS_OTFILE_NOT_FOUND"
@@ -24954,7 +24961,7 @@ fi
 NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://kirx.net:8888/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
 if [ -z "$NMW_KIRX_SUMMARY_CHECK" ]; then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_SUMMARY_CHECK_FAILED"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_SUMMARY_CHECK_FAILED_kadar"
 fi
 # Fetch HTML from kirx.net and check for "morning summary" or "evening summary"
 NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/kadar/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
@@ -26384,8 +26391,9 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  FAILED_TEST_CODES="${FAILED_TEST_CODES// LCFILTER_TEST_NOT_PERFORMED/}"
  # NMW infrastructure specific tests that should not fail the VaST code test
  # That's most likely "no internet on the mountain" situation
- FAILED_TEST_CODES="${FAILED_TEST_CODES// AUXWEB_NMW_KIRX_SUMMARY_CHECK_FAILED/}"
- FAILED_TEST_CODES="${FAILED_TEST_CODES// AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// AUXWEB_NMW_KIRX_SUMMARY_CHECK_FAILED_kadar/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED_kadar/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED_kadar2/}"
  # Astropy comparison results (many target machines will not have astropy)
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_DATE2JDCONV_ASTROPY_noastropy/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_DATE2JDCONV_ASTROPY_nopython3/}"
