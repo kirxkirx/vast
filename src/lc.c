@@ -33,6 +33,8 @@
 
 #include "fitsfile_read_check.h" // for fitsfile_read_check()
 
+#include "vast_filename_manipulation.h"
+
 void print_help() {
  fprintf( stderr, "\n" );
  fprintf( stderr, "  --*** HOW TO USE THE LIGHTCURVE PLOTTER ***--\n" );
@@ -61,6 +63,7 @@ void print_help() {
  return;
 }
 
+/*
 void replace_last_dot_with_null( char *original_filename ) {
  int i;
 
@@ -110,8 +113,9 @@ void append_edit_suffix_to_lightcurve_filename( char *lightcurvefilename ) {
 
  return;
 }
+*/
 
-#include <string.h>
+//#include <string.h>
 
 void create_badpoints_filename( const char *input_filename, char *output_filename ) {
  // Copy the input filename to the output buffer

@@ -42,6 +42,8 @@
 
 #include "../is_point_close_or_off_the_frame_edge.h" // for is_point_close_or_off_the_frame_edge()
 
+#include "../vast_filename_manipulation.h"
+
 int Kourovka_SBG_date_hack( char *fitsfilename, char *DATEOBS, int *date_parsed, double *exposure ); // defined in gettime.c
 
 void save_star_to_vast_list_of_previously_known_variables_and_exclude_lst( int sextractor_catalog__star_number, float sextractor_catalog__X, float sextractor_catalog__Y ) {
@@ -937,6 +939,9 @@ int main( int argc, char **argv ) {
  int buf;
  float axis_ratio;
  double razmer_x, razmer_y;
+
+ char output_png_filename[FILENAME_LENGTH];
+ char output_ps_filename[FILENAME_LENGTH];
 
  char fits_image_name[FILENAME_LENGTH];
  char fits_image_name_string_for_display[FILENAME_LENGTH];
@@ -2053,10 +2058,22 @@ int main( int argc, char **argv ) {
   //
   inverted_Y_axis= 0; // do not invert Y axis for finding charts!
   //
+  
+  // no idea if PGPLOT can handle such a long filename
+  strncpy(output_png_filename, basename(fits_image_name), FILENAME_LENGTH);
+  output_png_filename[FILENAME_LENGTH-1]='\0';
+  replace_last_dot_with_null( output_png_filename );
+  strncat( output_png_filename, ".png/PNG", FILENAME_LENGTH);
+  strncpy( output_ps_filename, output_png_filename, FILENAME_LENGTH);
+  replace_last_dot_with_null( output_ps_filename );
+  strncat( output_ps_filename, ".ps/PS", FILENAME_LENGTH);
 
-  if ( cpgbeg( 0, "/PNG", 1, 1 ) != 1 ) {
+  fprintf(stderr, "Opening output to %s\n", output_png_filename);
+  if ( cpgbeg( 0, output_png_filename, 1, 1 ) != 1 ) {
+   fprintf(stderr, "WARNING: cannot cpgbeg() on %s\n", output_png_filename);
    // fallback to PS
-   if ( cpgbeg( 0, "/PS", 1, 1 ) != 1 ) {
+   if ( cpgbeg( 0, output_ps_filename, 1, 1 ) != 1 ) {
+    fprintf(stderr, "ERROR: cannot cpgbeg() on %s\n", output_ps_filename);
     return EXIT_FAILURE;
    }
   }
@@ -2912,7 +2929,9 @@ int main( int argc, char **argv ) {
 
     // exit now
     cpgclos();
-    fprintf( stderr, "Writing the output image file pgplot.png (or .ps)\n" );
+    replace_last_slash_with_null(output_png_filename);
+    fprintf( stderr, "Writing the output image file %s (or .ps)\n", output_png_filename);
+    //fprintf( stderr, "Writing the output image file pgplot.png (or .ps)\n" );
 
     free( X1 );
     free( X2 );
@@ -3028,8 +3047,10 @@ int main( int argc, char **argv ) {
    if ( finder_chart_mode == 0 )
     cpgebuf();
    else {
-    fprintf( stderr, "Writing the output image file pgplot.png (or.ps)\n" );
+    //fprintf( stderr, "Writing the output image file pgplot.png (or.ps)\n" );
     cpgclos();
+    replace_last_slash_with_null(output_png_filename);
+    fprintf( stderr, "Writing the output image file %s (or .ps)\n", output_png_filename);
 
     free( X1 );
     free( X2 );

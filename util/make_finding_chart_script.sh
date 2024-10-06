@@ -198,7 +198,10 @@ if [ $? -ne 0 ];then
  echo "ERROR running util/make_finding_chart"
  exit 1
 fi
-if [ ! -s pgplot.png ];then
+# multiple make_finding_chart scripts cannot work in parallell !!!
+MAKE_FINDING_CHART_OUTPUT_PNG="$(basename ${RESAMPLED_IMAGE_NAME%.*}).png"
+if [ ! -s "$MAKE_FINDING_CHART_OUTPUT_PNG" ];then
+#if [ ! -s pgplot.png ];then
  echo "ERROR: the output image pgplot.png does not exist or is empty"
  exit 1
 fi
@@ -206,7 +209,8 @@ fi
 PIXEL_POSITION_TO_MARK_FOR_PNG=${PIXEL_POSITION_TO_MARK//" "/_}
 FITSFILE_NAME_FOR_PNG="resample_$(basename "$FITSFILE")"
 FITSFILE_NAME_FOR_PNG=${FITSFILE_NAME_FOR_PNG//./_}
-mv -v "pgplot.png" "$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov.png
+#mv -v "pgplot.png" "$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov.png
+mv -v "$MAKE_FINDING_CHART_OUTPUT_PNG" "$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov.png
 
 
 ############ Make plot with the FoV string ############
@@ -219,14 +223,15 @@ if [ $? -ne 0 ];then
  echo "ERROR running util/make_finding_chart"
  exit 1
 fi
-if [ ! -s pgplot.png ];then
+if [ ! -s "$MAKE_FINDING_CHART_OUTPUT_PNG" ];then
+#if [ ! -s pgplot.png ];then
  echo "ERROR: the output image pgplot.png does not exist or is empty"
  exit 1
 fi
 # Everything is fine
 #PIXEL_POSITION_TO_MARK_FOR_PNG=${PIXEL_POSITION_TO_MARK//" "/_}
 #FITSFILE_NAME_FOR_PNG=${FITSFILE//./_}
-mv -v "pgplot.png" "$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix.png
+mv -v "$MAKE_FINDING_CHART_OUTPUT_PNG" "$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix.png
 
 # Note that you may combine multiple images side-by-side using something like
 # montage resample_wcs_Sco3_20*png -tile 3x2 -geometry +0+0 out.png
@@ -252,28 +257,29 @@ for PIXELS_AROUND_TARGET in 20 32 64 128 256 512 ;do
   echo "ERROR running util/make_finding_chart"
   exit 1
  fi
- if [ ! -s pgplot.png ];then
+ if [ ! -s "$MAKE_FINDING_CHART_OUTPUT_PNG" ];then
+# if [ ! -s pgplot.png ];then
   echo "ERROR: the output image pgplot.png does not exist or is empty"
   exit 1
  fi
  # Everything is fine
  #PIXEL_POSITION_TO_MARK_FOR_PNG=${PIXEL_POSITION_TO_MARK//" "/_}
  #FITSFILE_NAME_FOR_PNG=${FITSFILE//./_}
- mv -v "pgplot.png" finder_"$STR_PIXELS_AROUND_TARGET"pix_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix.png
+ mv -v "$MAKE_FINDING_CHART_OUTPUT_PNG" finder_"$STR_PIXELS_AROUND_TARGET"pix_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix.png
  # make the _nofov version
  COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --targetmark --datestringinsideimg $RESAMPLED_IMAGE_NAME $PIXEL_POSITION_TO_MARK "
  echo $COMMAND
  $COMMAND
- mv -v "pgplot.png" finder_"$STR_PIXELS_AROUND_TARGET"pix_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov.png
+ mv -v "$MAKE_FINDING_CHART_OUTPUT_PNG" finder_"$STR_PIXELS_AROUND_TARGET"pix_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov.png
  # make the _nofov_notargetmark version
  COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --datestringinsideimg $RESAMPLED_IMAGE_NAME $PIXEL_POSITION_TO_MARK "
  echo $COMMAND
  $COMMAND
- mv -v "pgplot.png" finder_"$STR_PIXELS_AROUND_TARGET"pix_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov_notargetmark.png
+ mv -v "$MAKE_FINDING_CHART_OUTPUT_PNG" finder_"$STR_PIXELS_AROUND_TARGET"pix_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov_notargetmark.png
  # make the _notargetmark version
  COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --datestringinsideimg --imgsizestringinsideimg $RESAMPLED_IMAGE_NAME $PIXEL_POSITION_TO_MARK "
  echo $COMMAND
  $COMMAND
- mv -v "pgplot.png" finder_"$STR_PIXELS_AROUND_TARGET"pix_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_notargetmark.png
+ mv -v "$MAKE_FINDING_CHART_OUTPUT_PNG" finder_"$STR_PIXELS_AROUND_TARGET"pix_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_notargetmark.png
 
 done

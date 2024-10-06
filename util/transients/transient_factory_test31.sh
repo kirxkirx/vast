@@ -773,7 +773,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
      if [ ! -f transient_report/"$PREVIEW_IMAGE" ];then
       # image size needs to match the one set in util/transients/make_report_in_HTML.sh
       export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-      util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null && mv pgplot.png transient_report/"$PREVIEW_IMAGE"
+      #util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null && mv pgplot.png transient_report/"$PREVIEW_IMAGE"
+      util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null && mv "$(basename ${FITS_IMAGE_TO_PREVIEW%.*}).png" transient_report/"$PREVIEW_IMAGE"
       unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
      fi # if [ ! -f transient_report/$PREVIEW_IMAGE ];then
     fi
@@ -1091,7 +1092,8 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
      if [ ! -f transient_report/"$PREVIEW_IMAGE" ];then
       # image size needs to match the one set in util/transients/make_report_in_HTML.sh
       export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-      util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null && mv pgplot.png transient_report/"$PREVIEW_IMAGE"
+      #util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null && mv pgplot.png transient_report/"$PREVIEW_IMAGE"
+      util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null && mv "$(basename ${FITS_IMAGE_TO_PREVIEW%.*}).png" transient_report/"$PREVIEW_IMAGE"
       unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
      fi # if [ ! -f transient_report/$PREVIEW_IMAGE ];then
     fi
