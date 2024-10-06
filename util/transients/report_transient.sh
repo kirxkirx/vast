@@ -401,6 +401,8 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
   EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC=10
   lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep --quiet "FOUND"
   if [ $? -eq 0 ];then
+   # note that this might cause different behavior between the test and manual runs
+   # by affecting the content of exclusion_list_local.txt
    if [ -z "$THIS_IS_VAST_TEST" ];then
     SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
    fi
@@ -728,7 +730,8 @@ fi
 
 echo "<br>"
 
-if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
+# no local exclusions speed-up for the tests
+if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ] && [ -z "$THIS_IS_VAST_TEST" ];then
  # Write this transient to local exclusion list
  echo "$RADEC_MEAN_HMS" >> exclusion_list_local.txt
 fi

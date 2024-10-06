@@ -12493,6 +12493,10 @@ $GREP_RESULT"
   grep --quiet "V0615 Vul" transient_report/index.html
   if [ $? -eq 0 ];then
    #V615VUL_STAR_NUMBER=$(grep -B20 'V0615 Vul' transient_report/index.html | grep '<a name=' | tail -n1 | awk -F"'" '{print $2}' | awk -F"_" '{print $1}')
+   #V615VUL_STAR_NUMBER=$(grep -B13 "2024 07 29\.831.  2460521\.331.  11\...  19:43:0.\... +21:00:..\.." transient_report/index.html | grep '<a name=' | tail -n1 | awk -F"'" '{print $2}' | awk -F"_" '{print $1}')
+   # The two lines above will work for a manual run, but not the automated run where THIS_IS_VAST_TEST is set
+   # affecting the content of exclusion_list_local.txt
+   # OK, this may actually work with the modified util/transients/report_transient.sh
    V615VUL_STAR_NUMBER=$(grep -B13 "2024 07 29\.831.  2460521\.331.  11\...  19:43:0.\... +21:00:..\.." transient_report/index.html | grep '<a name=' | tail -n1 | awk -F"'" '{print $2}' | awk -F"_" '{print $1}')
    if [ -f out"$V615VUL_STAR_NUMBER".dat ];then
     # The formatter scripts rely on util/identify_noninteractive.sh, so let's test it
