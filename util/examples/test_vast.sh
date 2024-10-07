@@ -2605,8 +2605,10 @@ $GREP_RESULT"
   # test_libpng_justtest_nomovepgplot.sh prints nothing, just sets the exit code
   lib/test_libpng_justtest_nomovepgplot.sh
   if [ $? -eq 0 ];then
-   if [ -f pgplot.png ];then
-    file pgplot.png | grep --quiet 'PNG image data'
+   #if [ -f pgplot.png ];then
+   if [ -f f_72-001r.png ];then
+    #file pgplot.png | grep --quiet 'PNG image data'
+    file f_72-001r.png | grep --quiet 'PNG image data'
     if [ $? -ne 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_MAKE_FINDER_CHART_LIBPNG_ENABLED_BUT_OUTPUT_FILE_NOT_PNG"
@@ -2619,13 +2621,19 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES LIBPNG_DISABLED"
   fi # lib/test_libpng_justtest_nomovepgplot.sh
   # Check that an output image file was created, then delete it
-  if [ -f pgplot.png ] || [ -f pgplot.ps ] ;then
-   if [ -f pgplot.png ];then
-    rm -f pgplot.png
-   fi
-   if [ -f pgplot.ps ];then
-    rm -f pgplot.ps
-   fi
+  #if [ -f pgplot.png ] || [ -f pgplot.ps ] ;then
+  if [ -f f_72-001r.png ] || [ -f f_72-001r.ps ] ;then
+   for TEST_FILE_TO_REMOVE in f_72-001r.png f_72-001r.ps pgplot.png pgplot.ps ;do
+    if [ -f "$TEST_FILE_TO_REMOVE" ];then
+     rm -f "$TEST_FILE_TO_REMOVE"
+    fi
+   done
+   #if [ -f pgplot.png ];then
+   # rm -f pgplot.png
+   #fi
+   #if [ -f pgplot.ps ];then
+   # rm -f pgplot.ps
+   #fi
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_MAKE_FINDER_CHART_002"
@@ -12556,11 +12564,31 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
        if [ $? -ne 0 ];then
         TEST_PASSED=0
         FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_MEASUREMENT1"
+        DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNVUL24ST_CBASCRIPTTEST_MEASUREMENT1 ######
+$TEST_CBA_REPORT_TERMINAL
+----------------------------------------------------------------
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxx      CBA_V0615_Vul_29Jul2024_measurements.txt     xxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+$(cat CBA_V0615_Vul_29Jul2024_measurements.txt)
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+"
        fi
        cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep '2460521.3319' | grep --quiet ' 11.2'
        if [ $? -ne 0 ];then
         TEST_PASSED=0
         FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_MEASUREMENT2"
+        DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWNVUL24ST_CBASCRIPTTEST_MEASUREMENT2 ######
+$TEST_CBA_REPORT_TERMINAL
+----------------------------------------------------------------
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxx      CBA_V0615_Vul_29Jul2024_measurements.txt     xxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+$(cat CBA_V0615_Vul_29Jul2024_measurements.txt)
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+"
        fi
       else
        TEST_PASSED=0

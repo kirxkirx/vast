@@ -101,9 +101,10 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    export PGPLOT_PNG_HEIGHT=400 ; export PGPLOT_PNG_WIDTH=400
    #util/make_finding_chart $REFERENCE_IMAGE $G $H &>/dev/null && mv pgplot.png transient_report/"$TRANSIENT_NAME"_reference.png
    if util/make_finding_chart "$REFERENCE_IMAGE" "$G" "$H" &>/dev/null; then
+    wait # test
     #if ! mv pgplot.png "transient_report/${TRANSIENT_NAME}_reference.png"; then
     if ! mv "$(basename ${REFERENCE_IMAGE%.*}).png" "transient_report/${TRANSIENT_NAME}_reference.png"; then
-     echo "ERROR in $0: Failed to move pgplot.png to transient_report/${TRANSIENT_NAME}_reference.png"
+     echo "ERROR in $0: Failed to move $(basename ${REFERENCE_IMAGE%.*}).png to transient_report/${TRANSIENT_NAME}_reference.png"
      #exit 1
      #continue
     fi
@@ -127,7 +128,13 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    # image size needs to match the one set in util/transients/transient_factory_test31.sh and below
    export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
    #util/fits2png $REFERENCE_IMAGE &> /dev/null && mv pgplot.png transient_report/$REFERENCE_IMAGE_PREVIEW
-   util/fits2png $REFERENCE_IMAGE &> /dev/null && mv "$(basename ${REFERENCE_IMAGE%.*}).png" transient_report/$REFERENCE_IMAGE_PREVIEW
+   util/fits2png $REFERENCE_IMAGE &> /dev/null 
+   if [ $? -eq 0 ];then
+    wait
+    if ! mv "$(basename ${REFERENCE_IMAGE%.*}).png" "transient_report/$REFERENCE_IMAGE_PREVIEW"; then
+     echo "ERROR in $0: Failed to move $(basename ${REFERENCE_IMAGE%.*}).png to transient_report/$REFERENCE_IMAGE_PREVIEW"
+    fi
+   fi
    unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
   fi
  fi
@@ -162,6 +169,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
      #
      output_file="transient_report/${TRANSIENT_NAME}_discovery${N}.png"
      if util/make_finding_chart "$IMAGE" "$X" "$Y" &>/dev/null; then
+      wait # test
       #if ! mv pgplot.png "$output_file"; then
       if ! mv "$(basename ${IMAGE%.*}).png" "$output_file"; then
        echo "ERROR in $0: Failed to move pgplot.png to $output_file"
@@ -171,9 +179,10 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
       echo "Warning: make_finding_chart failed for $IMAGE, retrying..."
       sleep 1
       if util/make_finding_chart "$IMAGE" "$X" "$Y" &>/dev/null; then
+       wait # test
        #if ! mv pgplot.png "$output_file"; then
        if ! mv "$(basename ${IMAGE%.*}).png" "$output_file"; then
-        echo "ERROR (2) in $0: Failed to move pgplot.png to $output_file on retry"
+        echo "ERROR (2) in $0: Failed to move $(basename ${IMAGE%.*}).png to $output_file on retry"
         #exit 1
        fi
       else
@@ -232,9 +241,10 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
         #util/fits2png $IMAGE &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
         if [ ! -f transient_report/$PREVIEW_IMAGE ]; then
          if util/fits2png "$IMAGE" &> /dev/null; then
+          wait # test
           #if ! mv pgplot.png "transient_report/$PREVIEW_IMAGE"; then
           if ! mv "$(basename ${IMAGE%.*}).png" "transient_report/$PREVIEW_IMAGE"; then
-           echo "ERROR in $0: Failed to move pgplot.png to transient_report/$PREVIEW_IMAGE"
+           echo "ERROR in $0: Failed to move $(basename ${IMAGE%.*}).png to transient_report/$PREVIEW_IMAGE"
            #exit 1
           fi # if ! mv pgplot.png "transient_report/$PREVIEW_IMAGE"; then
          else
@@ -258,7 +268,9 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
      fi
     fi
    done < $LIGHTCURVE_FILE_OUTDAT
-   wait # just to speed-up the convert thing a bit
+   # we are not using convert for some time now...
+   # not sure if wait here is of any use now...
+   #wait
    echo "</div>" >> transient_report/index.tmp
 
    if [ ! -z "$URL_OF_DATA_PROCESSING_ROOT" ];then
