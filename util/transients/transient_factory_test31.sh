@@ -1090,10 +1090,46 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
    if [ -n "$MAKE_PNG_PLOTS" ];then
     if [ "$MAKE_PNG_PLOTS" == "yes" ];then
      if [ ! -f transient_report/"$PREVIEW_IMAGE" ];then
-      # image size needs to match the one set in util/transients/make_report_in_HTML.sh
+      # Generate full-frame image previews
+      # !!! image size needs to match the one set in util/transients/make_report_in_HTML.sh !!!
       export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-      #util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null && mv pgplot.png transient_report/"$PREVIEW_IMAGE"
-      util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null && mv "$(basename ${FITS_IMAGE_TO_PREVIEW%.*}).png" transient_report/"$PREVIEW_IMAGE"
+      #util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null && mv "$(basename ${FITS_IMAGE_TO_PREVIEW%.*}).png" transient_report/"$PREVIEW_IMAGE"
+      max_attempts=3
+      attempt=1
+      success=false
+      while [ $attempt -le $max_attempts ]; do
+       if util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null; then
+        # Wait for a short time to allow for I/O completion
+        sleep 1
+        
+        source_file="$(basename ${FITS_IMAGE_TO_PREVIEW%.*}).png"
+        dest_file="transient_report/$PREVIEW_IMAGE"
+        
+        # Check if the source file exists
+        if [ -f "$source_file" ]; then
+         if mv "$source_file" "$dest_file"; then
+          echo "Successfully moved $source_file to $dest_file"
+          success=true
+          break
+         else
+          echo "WARNING from $0: Move failed. Source $source_file exists: Yes. Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
+         fi
+        else
+         echo "WARNING from $0: $source_file was not created. Retrying..."
+        fi
+       else
+        echo "WARNING from $0: fits2png failed for $FITS_IMAGE_TO_PREVIEW"
+       fi
+       # Increment attempt counter and sleep before retry
+       attempt=$((attempt + 1))
+       if [ $attempt -le $max_attempts ]; then
+        echo "Retrying (attempt $attempt of $max_attempts)..."
+        sleep 5
+       fi
+      done
+      if [ "$success" = false ]; then
+       echo "ERROR in $0: Failed to create or move PNG file after $max_attempts attempts"
+      fi
       unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
      fi # if [ ! -f transient_report/$PREVIEW_IMAGE ];then
     fi

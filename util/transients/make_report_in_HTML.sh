@@ -99,34 +99,33 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    # plot reference image - a zoomed-in view centered on the transient object.
    # Set PNG finding chart dimensions
    export PGPLOT_PNG_HEIGHT=400 ; export PGPLOT_PNG_WIDTH=400
-   #if util/make_finding_chart "$REFERENCE_IMAGE" "$G" "$H" &>/dev/null; then
-   # if ! mv "$(basename ${REFERENCE_IMAGE%.*}).png" "transient_report/${TRANSIENT_NAME}_reference.png"; then
-   #  echo "ERROR in $0: Move failed. Source $(basename ${REFERENCE_IMAGE%.*}).png exists: $([ -f $(basename ${REFERENCE_IMAGE%.*}).png ] && echo 'Yes' || echo 'No'). Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
-   # fi
-   #else
-   # echo "ERROR in $0: make_finding_chart failed for $REFERENCE_IMAGE"
-   #fi
    output_file="transient_report/${TRANSIENT_NAME}_reference.png"
    source_file="$(basename ${REFERENCE_IMAGE%.*}).png"
    max_attempts=3
    attempt=1
    success=false
    while [ $attempt -le $max_attempts ]; do
+    # check if the file already exists somehow
+    if [ -s "$output_file" ];then
+     echo "The output file $output_file already exist"
+     break
+    fi
+    #
     if util/make_finding_chart "$REFERENCE_IMAGE" "$G" "$H" &>/dev/null; then
-     sleep 2
+     sleep 1
      if [ -f "$source_file" ]; then
       if mv "$source_file" "$output_file"; then
        echo "Successfully moved $source_file to $output_file"
        success=true
        break
       else
-       echo "ERROR in $0 (attempt $attempt): Move failed. Source $source_file exists: Yes. Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
+       echo "WARNING from $0 (attempt $attempt): Move failed. Source $source_file exists: Yes. Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
       fi
      else
-      echo "ERROR in $0 (attempt $attempt): $source_file was not created. Retrying..."
+      echo "WARNING from $0 (attempt $attempt): $source_file was not created. Retrying..."
      fi
     else
-     echo "ERROR in $0 (attempt $attempt): make_finding_chart failed for $REFERENCE_IMAGE"
+     echo "WARNING from $0 (attempt $attempt): make_finding_chart failed for $REFERENCE_IMAGE"
     fi
     attempt=$((attempt + 1))
     [ $attempt -le $max_attempts ] && echo "Retrying (attempt $attempt of $max_attempts)..." && sleep 5
@@ -148,35 +147,33 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
   if [ "$MAKE_PNG_PLOTS" == "yes" ];then
    # image size needs to match the one set in util/transients/transient_factory_test31.sh and below
    export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-   #util/fits2png $REFERENCE_IMAGE &> /dev/null 
-   #if [ $? -eq 0 ];then
-   # wait
-   # if ! mv "$(basename ${REFERENCE_IMAGE%.*}).png" "transient_report/$REFERENCE_IMAGE_PREVIEW"; then
-   #  echo "ERROR in $0: Move failed. Source $(basename ${REFERENCE_IMAGE%.*}).png exists: $([ -f $(basename ${REFERENCE_IMAGE%.*}).png ] && echo 'Yes' || echo 'No'). Destination dir exists: $([ -d 'transient_report' ] && echo 'Yes' || echo 'No')."
-   # fi
-   #fi
-   #
    output_file="transient_report/$REFERENCE_IMAGE_PREVIEW"
    source_file="$(basename ${REFERENCE_IMAGE%.*}).png"
    max_attempts=3
    attempt=1
    success=false
    while [ $attempt -le $max_attempts ]; do
+    # check if the file already exists somehow
+    if [ -s "$output_file" ];then
+     echo "The output file $output_file already exist"
+     break
+    fi
+    #
     if util/fits2png "$REFERENCE_IMAGE" &> /dev/null; then
-     sleep 2
+     sleep 1
      if [ -f "$source_file" ]; then
       if mv "$source_file" "$output_file"; then
        echo "Successfully moved $source_file to $output_file"
        success=true
        break
       else
-       echo "ERROR in $0 (attempt $attempt): Move failed. Source $source_file exists: Yes. Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
+       echo "WARNING from $0 (attempt $attempt): Move failed. Source $source_file exists: Yes. Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
       fi
      else
-      echo "ERROR in $0 (attempt $attempt): $source_file was not created. Retrying..."
+      echo "WARNING from $0 (attempt $attempt): $source_file was not created. Retrying..."
      fi
     else
-     echo "ERROR in $0 (attempt $attempt): fits2png failed for $REFERENCE_IMAGE"
+     echo "WARNING from $0 (attempt $attempt): fits2png failed for $REFERENCE_IMAGE"
     fi
     attempt=$((attempt + 1))
     [ $attempt -le $max_attempts ] && echo "Retrying (attempt $attempt of $max_attempts)..." && sleep 5
@@ -210,49 +207,21 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
     if [ "$MAKE_PNG_PLOTS" == "yes" ];then
      # Set PNG finding chart dimensions
      export PGPLOT_PNG_HEIGHT=400 ; export PGPLOT_PNG_WIDTH=400
-     #util/make_finding_chart $IMAGE $X $Y &>/dev/null && mv pgplot.png transient_report/"$TRANSIENT_NAME"_discovery"$N".png
-     #if [ ! -f transient_report/"$TRANSIENT_NAME"_discovery"$N".png ];then
-     # # something whent wrong while creating the plot!
-     # # wait and retry
-     # sleep 1
-     # util/make_finding_chart $IMAGE $X $Y &>/dev/null && sleep 1 && mv pgplot.png transient_report/"$TRANSIENT_NAME"_discovery"$N".png
-     #fi
-     # NEED TO UPDATE THIS
-     #output_file="transient_report/${TRANSIENT_NAME}_discovery${N}.png"
-     #if util/make_finding_chart "$IMAGE" "$X" "$Y" &>/dev/null; then
-     # wait # test
-     # #if ! mv pgplot.png "$output_file"; then
-     # if ! mv "$(basename ${IMAGE%.*}).png" "$output_file"; then
-     #  #echo "ERROR in $0: Failed to move $(basename ${IMAGE%.*}).png to $output_file"
-     #  echo "ERROR in $0: Move failed. Source exists: $([ -f $(basename ${IMAGE%.*}).png ] && echo 'Yes' || echo 'No'). Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
-     #  #exit 1
-     # fi
-     #else
-     # echo "Warning: make_finding_chart failed for $IMAGE, retrying..."
-     # sleep 1
-     # if util/make_finding_chart "$IMAGE" "$X" "$Y" &>/dev/null; then
-     #  wait # test
-     #  #if ! mv pgplot.png "$output_file"; then
-     #  if ! mv "$(basename ${IMAGE%.*}).png" "$output_file"; then
-     #   #echo "ERROR (2) in $0: Failed to move $(basename ${IMAGE%.*}).png to $output_file on retry"
-     #   echo "ERROR (2) in $0: Move failed. Source exists: $([ -f $(basename ${IMAGE%.*}).png ] && echo 'Yes' || echo 'No'). Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
-     #   #exit 1
-     #  fi
-     # else
-     #  echo "ERROR in $0: make_finding_chart failed again for $IMAGE"
-     #  exit 1
-     # fi # 2nd attempt if util/make_finding_chart "$IMAGE" "$X" "$Y" &>/dev/null; then
-     #fi # else if util/make_finding_chart "$IMAGE" "$X" "$Y" &>/dev/null; then
-     #
      output_file="transient_report/${TRANSIENT_NAME}_discovery${N}.png"
      source_file="$(basename ${IMAGE%.*}).png"
      max_attempts=3
      attempt=1
      success=false
      while [ $attempt -le $max_attempts ]; do
+      # check if the file already exists somehow
+      if [ -s "$output_file" ];then
+       echo "The output file $output_file already exist"
+       break
+      fi
+      #
       if util/make_finding_chart "$IMAGE" "$X" "$Y" &>/dev/null; then
        # Wait for a short time to allow for I/O completion
-       sleep 2
+       sleep 1
     
        # Check if the source file exists
        if [ -f "$source_file" ]; then
@@ -261,13 +230,13 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
          success=true
          break
         else
-         echo "ERROR in $0 (attempt $attempt): Move failed. Source $source_file exists: Yes. Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
+         echo "WARNING from $0 (attempt $attempt): Move failed. Source $source_file exists: Yes. Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
         fi
        else
-        echo "ERROR in $0 (attempt $attempt): $source_file was not created. Retrying..."
+        echo "WARNING from $0 (attempt $attempt): $source_file was not created. Retrying..."
        fi
       else
-       echo "ERROR in $0 (attempt $attempt): make_finding_chart failed for $IMAGE"
+       echo "WARNING from $0 (attempt $attempt): make_finding_chart failed for $IMAGE"
       fi
       # Increment attempt counter and sleep before retry
       attempt=$((attempt + 1))

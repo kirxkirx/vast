@@ -12,7 +12,7 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
-
+trap 'clean_tmp_files' EXIT HUP INT QUIT TERM
 
 
 # Parse the command line arguments
@@ -50,6 +50,28 @@ export REPORT_TRANSIENT_TMPFILE_SCRIPT
 
 ######### function to clean-up the temporary files before exiting #########
 function clean_tmp_files {
+ for TMP_FILE_TO_REMOVE in \
+   "$REPORT_TRANSIENT_TMPFILE_JD" \
+   "$REPORT_TRANSIENT_TMPFILE_RA" \
+   "$REPORT_TRANSIENT_TMPFILE_DEC" \
+   "$REPORT_TRANSIENT_TMPFILE_MAG" \
+   "$REPORT_TRANSIENT_TMPFILE_X" \
+   "$REPORT_TRANSIENT_TMPFILE_Y" \
+   "$REPORT_TRANSIENT_TMPFILE_SCRIPT" \
+   "${TEMP_FILE__SDWC_OUTPUT}" \
+   "${TEMP_FILE__SDWC_OUTPUT}_exit_status.tmp" \
+   "${TEMP_FILE__MPCheck_OUTPUT}" \
+   "${TEMP_FILE__MPCheck_OUTPUT}_exit_status.tmp" \
+   ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.dat jd$$.dat x$$.dat y$$.dat \
+   tempilefallback_SDWC_OUTPUT_$$.tmp tempilefallback_MPCheck_OUTPUT_$$.tmp
+ do
+  if [ -n "$TMP_FILE_TO_REMOVE" ] && [ -f "$TMP_FILE_TO_REMOVE" ]; then
+   rm -f "$TMP_FILE_TO_REMOVE"
+  fi
+ done
+}
+
+function clean_tmp_files__old {
  for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.dat jd$$.dat x$$.dat y$$.dat  tempilefallback_SDWC_OUTPUT_$$.tmp tempilefallback_MPCheck_OUTPUT_$$.tmp  "$REPORT_TRANSIENT_TMPFILE_JD" "$REPORT_TRANSIENT_TMPFILE_RA" "$REPORT_TRANSIENT_TMPFILE_MAG" "$REPORT_TRANSIENT_TMPFILE_X" "$REPORT_TRANSIENT_TMPFILE_Y" "$REPORT_TRANSIENT_TMPFILE_SCRIPT" ;do
   if [ -z "$TMP_FILE_TO_REMOVE" ];then
    continue
@@ -593,6 +615,7 @@ cat "$TEMP_FILE__MPCheck_OUTPUT"
 rm -f "$TEMP_FILE__SDWC_OUTPUT" "$TEMP_FILE__MPCheck_OUTPUT" "${TEMP_FILE__SDWC_OUTPUT}_exit_status.tmp" "${TEMP_FILE__MPCheck_OUTPUT}_exit_status.tmp"
 if [ -z "$VARIABLE_STAR_ID" ] || [ -z "$ASTEROID_ID" ] ;then
  echo "ERROR in $0  VARIABLE_STAR_ID or ASTEROID_ID are not set"
+ clean_tmp_files
  exit 1
 fi
 # If the candidate transient is not a known variable star or asteroid and doesn't seem to be a hot pixel - try online search
