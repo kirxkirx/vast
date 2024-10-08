@@ -96,23 +96,43 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  #####
  if [ -n "$MAKE_PNG_PLOTS" ];then
   if [ "$MAKE_PNG_PLOTS" == "yes" ];then
-   # plot reference image
+   # plot reference image - a zoomed-in view centered on the transient object.
    # Set PNG finding chart dimensions
    export PGPLOT_PNG_HEIGHT=400 ; export PGPLOT_PNG_WIDTH=400
-   #util/make_finding_chart $REFERENCE_IMAGE $G $H &>/dev/null && mv pgplot.png transient_report/"$TRANSIENT_NAME"_reference.png
-   if util/make_finding_chart "$REFERENCE_IMAGE" "$G" "$H" &>/dev/null; then
-    wait # test
-    #if ! mv pgplot.png "transient_report/${TRANSIENT_NAME}_reference.png"; then
-    if ! mv "$(basename ${REFERENCE_IMAGE%.*}).png" "transient_report/${TRANSIENT_NAME}_reference.png"; then
-     #echo "ERROR in $0: Failed to move $(basename ${REFERENCE_IMAGE%.*}).png to transient_report/${TRANSIENT_NAME}_reference.png"
-     echo "ERROR in $0: Move failed. Source exists: $([ -f $(basename ${REFERENCE_IMAGE%.*}).png ] && echo 'Yes' || echo 'No'). Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
-     #exit 1
-     #continue
+   #if util/make_finding_chart "$REFERENCE_IMAGE" "$G" "$H" &>/dev/null; then
+   # if ! mv "$(basename ${REFERENCE_IMAGE%.*}).png" "transient_report/${TRANSIENT_NAME}_reference.png"; then
+   #  echo "ERROR in $0: Move failed. Source $(basename ${REFERENCE_IMAGE%.*}).png exists: $([ -f $(basename ${REFERENCE_IMAGE%.*}).png ] && echo 'Yes' || echo 'No'). Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
+   # fi
+   #else
+   # echo "ERROR in $0: make_finding_chart failed for $REFERENCE_IMAGE"
+   #fi
+   output_file="transient_report/${TRANSIENT_NAME}_reference.png"
+   source_file="$(basename ${REFERENCE_IMAGE%.*}).png"
+   max_attempts=3
+   attempt=1
+   success=false
+   while [ $attempt -le $max_attempts ]; do
+    if util/make_finding_chart "$REFERENCE_IMAGE" "$G" "$H" &>/dev/null; then
+     sleep 2
+     if [ -f "$source_file" ]; then
+      if mv "$source_file" "$output_file"; then
+       echo "Successfully moved $source_file to $output_file"
+       success=true
+       break
+      else
+       echo "ERROR in $0 (attempt $attempt): Move failed. Source $source_file exists: Yes. Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
+      fi
+     else
+      echo "ERROR in $0 (attempt $attempt): $source_file was not created. Retrying..."
+     fi
+    else
+     echo "ERROR in $0 (attempt $attempt): make_finding_chart failed for $REFERENCE_IMAGE"
     fi
-   else
-    echo "ERROR in $0: make_finding_chart failed for $REFERENCE_IMAGE"
-    #exit 1
-    #continue
+    attempt=$((attempt + 1))
+    [ $attempt -le $max_attempts ] && echo "Retrying (attempt $attempt of $max_attempts)..." && sleep 5
+   done
+   if [ "$success" = false ]; then
+    echo "ERROR in $0: Failed to create or move $source_file to $output_file after $max_attempts attempts"
    fi
    #
    unset PGPLOT_PNG_HEIGHT ; unset PGPLOT_PNG_WIDTH
@@ -120,7 +140,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  fi
  #####
  echo "<img src=\""$TRANSIENT_NAME"_reference.png\">" >> transient_report/index.tmp
- # plot reference image preview
+ # plot reference image preview - full frame image to check for clouds, scattered light, etc
  BASENAME_REFERENCE_IMAGE=`basename $REFERENCE_IMAGE`
  REFERENCE_IMAGE_PREVIEW="$BASENAME_REFERENCE_IMAGE"_preview.png
  #####
@@ -128,15 +148,43 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
   if [ "$MAKE_PNG_PLOTS" == "yes" ];then
    # image size needs to match the one set in util/transients/transient_factory_test31.sh and below
    export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-   #util/fits2png $REFERENCE_IMAGE &> /dev/null && mv pgplot.png transient_report/$REFERENCE_IMAGE_PREVIEW
-   util/fits2png $REFERENCE_IMAGE &> /dev/null 
-   if [ $? -eq 0 ];then
-    wait
-    if ! mv "$(basename ${REFERENCE_IMAGE%.*}).png" "transient_report/$REFERENCE_IMAGE_PREVIEW"; then
-     #echo "ERROR in $0: Failed to move $(basename ${REFERENCE_IMAGE%.*}).png to transient_report/$REFERENCE_IMAGE_PREVIEW"
-     echo "ERROR in $0: Move failed. Source exists: $([ -f $(basename ${REFERENCE_IMAGE%.*}).png ] && echo 'Yes' || echo 'No'). Destination dir exists: $([ -d 'transient_report' ] && echo 'Yes' || echo 'No')."
+   #util/fits2png $REFERENCE_IMAGE &> /dev/null 
+   #if [ $? -eq 0 ];then
+   # wait
+   # if ! mv "$(basename ${REFERENCE_IMAGE%.*}).png" "transient_report/$REFERENCE_IMAGE_PREVIEW"; then
+   #  echo "ERROR in $0: Move failed. Source $(basename ${REFERENCE_IMAGE%.*}).png exists: $([ -f $(basename ${REFERENCE_IMAGE%.*}).png ] && echo 'Yes' || echo 'No'). Destination dir exists: $([ -d 'transient_report' ] && echo 'Yes' || echo 'No')."
+   # fi
+   #fi
+   #
+   output_file="transient_report/$REFERENCE_IMAGE_PREVIEW"
+   source_file="$(basename ${REFERENCE_IMAGE%.*}).png"
+   max_attempts=3
+   attempt=1
+   success=false
+   while [ $attempt -le $max_attempts ]; do
+    if util/fits2png "$REFERENCE_IMAGE" &> /dev/null; then
+     sleep 2
+     if [ -f "$source_file" ]; then
+      if mv "$source_file" "$output_file"; then
+       echo "Successfully moved $source_file to $output_file"
+       success=true
+       break
+      else
+       echo "ERROR in $0 (attempt $attempt): Move failed. Source $source_file exists: Yes. Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
+      fi
+     else
+      echo "ERROR in $0 (attempt $attempt): $source_file was not created. Retrying..."
+     fi
+    else
+     echo "ERROR in $0 (attempt $attempt): fits2png failed for $REFERENCE_IMAGE"
     fi
+    attempt=$((attempt + 1))
+    [ $attempt -le $max_attempts ] && echo "Retrying (attempt $attempt of $max_attempts)..." && sleep 5
+   done
+   if [ "$success" = false ]; then
+     echo "ERROR in $0: Failed to create or move $source_file to $output_file after $max_attempts attempts"
    fi
+   #
    unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
   fi
  fi
@@ -144,6 +192,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
 
  #DATE=$(grep $REFERENCE_IMAGE vast_image_details.log |awk '{print $2" "$3"  "$7}')
  #rm -f tmp.description
+
 
  #echo "Reference image: $DATE  $REFERENCE_IMAGE  $G $H (pix)" >> tmp.description 
  # read the lightcurve file, plot discovery images
@@ -212,7 +261,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
          success=true
          break
         else
-         echo "ERROR in $0 (attempt $attempt): Move failed. Source exists: Yes. Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
+         echo "ERROR in $0 (attempt $attempt): Move failed. Source $source_file exists: Yes. Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
         fi
        else
         echo "ERROR in $0 (attempt $attempt): $source_file was not created. Retrying..."
