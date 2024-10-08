@@ -2929,9 +2929,6 @@ int main( int argc, char **argv ) {
 
     // exit now
     cpgclos();
-    replace_last_slash_with_null(output_png_filename);
-    fprintf( stderr, "Writing the output image file %s (or .ps)\n", output_png_filename);
-    //fprintf( stderr, "Writing the output image file pgplot.png (or .ps)\n" );
 
     free( X1 );
     free( X2 );
@@ -2940,6 +2937,17 @@ int main( int argc, char **argv ) {
 
     free( float_array );
     free( real_float_array );
+
+    replace_last_slash_with_null(output_png_filename);
+    fprintf( stderr, "Writing the output image file %s (or .ps) (1)\n", output_png_filename);
+    if( 1==is_file(output_png_filename) ){
+     fprintf(stderr, "The file is created successfully.\n");
+     return 0;
+    } else {
+     fprintf(stderr, "ERROR writing the output file!\n");
+     return 1;
+    }
+
     return 0;
    }
 
@@ -3047,15 +3055,24 @@ int main( int argc, char **argv ) {
    if ( finder_chart_mode == 0 )
     cpgebuf();
    else {
-    //fprintf( stderr, "Writing the output image file pgplot.png (or.ps)\n" );
     cpgclos();
-    replace_last_slash_with_null(output_png_filename);
-    fprintf( stderr, "Writing the output image file %s (or .ps)\n", output_png_filename);
+    //replace_last_slash_with_null(output_png_filename);
+    //fprintf( stderr, "Writing the output image file %s (or .ps) (2)\n", output_png_filename);
 
     free( X1 );
     free( X2 );
     free( Y1 );
     free( Y2 );
+
+    replace_last_slash_with_null(output_png_filename);
+    fprintf( stderr, "Writing the output image file %s (or .ps) (2)\n", output_png_filename);
+    if( 1==is_file(output_png_filename) ){
+     fprintf(stderr, "The file is created successfully.\n");
+     return 0;
+    } else {
+     fprintf(stderr, "ERROR writing the output file!\n");
+     return 1;
+    }
 
     return 0;
    }
