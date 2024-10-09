@@ -96,11 +96,15 @@ echo "$PERIODIC_COMETS" | while read PERIODIC_COMET_DESIGNATION_AND_NAME ;do
  # Check if the reply contains ephemerides or the list of records
  echo "$HORIZONS_REPLY" | grep --quiet '$$SOE'
  if [ $? -ne 0 ];then
-  # Manually set designations for some comets with articularly annoying horizons output
+  # Manually set designations for some comets with particularly annoying horizons output
   if [ "$PERIODIC_COMET_DESIGNATION" = "103P" ];then
    PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER="90000950"
   elif [ "$PERIODIC_COMET_DESIGNATION" = "471P" ];then
    PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER="90004055"
+  elif [ "$PERIODIC_COMET_DESIGNATION" = "487P" ];then
+   PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER="90004169"
+  elif [ "$PERIODIC_COMET_DESIGNATION" = "492P" ];then
+   PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER="90004084"
   else
    # If this is not some special comet
    # assume this is a list of horizons records, not the ephemerides table
@@ -117,7 +121,7 @@ echo "$PERIODIC_COMETS" | while read PERIODIC_COMET_DESIGNATION_AND_NAME ;do
     fi
    fi
    if [ -z "$PERIODIC_COMET_JPLHORIZONS_LATEST_RECORD_NUMBER" ];then
-    echo "00:00:00.00 +00:00:00.0 cannot get JPL HORIZONS designation for periodic comet $PERIODIC_COMET_DESIGNATION_AND_NAME"
+    echo "00:00:00.00 +00:00:00.0 cannot get JPL HORIZONS designation for periodic comet $PERIODIC_COMET_DESIGNATION_AND_NAME  -- you may manually insert its ID in $0"
     continue
    fi
   fi
