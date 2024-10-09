@@ -609,24 +609,6 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
   exit( EXIT_FAILURE );
  }
 
- /*
- // Do not allow sub-pixel zoom
- number_of_pixels_in_zoomed_image=0;
- for ( i= 0; i < NUM_OF_PIXELS; i++ ) {
-  if ( im[i] > 0 && 65535/10.0*im[i] < 65535 ) {
-   // Cool it works!!! (Transformation from i to XY)
-   Y= 1 + (int)( (float)i / (float)naxes[0] );
-   X= i + 1 - ( Y - 1 ) * naxes[0];
-   if ( X > MIN( drawX1, drawX2 ) && X < MAX( drawX1, drawX2 ) && Y > MIN( drawY1, drawY2 ) && Y < MAX( drawY1, drawY2 ) ) {
-    number_of_pixels_in_zoomed_image++;
-   }
-  }
- }
- if ( number_of_pixels_in_zoomed_image<16 ) {
-  return;
- }
- //////////////////
-*/
  // set all histogram values to 0
  for ( i= 0; i < 65536; i++ )
   HIST[i]= 0;
@@ -699,6 +681,14 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
    }
   }
 
+  //
+  if( ( *max_i ) == ( *min_i ) ) {
+   fprintf(stderr, "WARNING (1) in image_minmax3(): max=min=%f\n", ( *max_i ));
+   ( *min_i ) = ( *min_i ) / 2;
+   ( *max_i ) = ( *max_i ) * 2 + 1;
+  }
+  //
+
   // fprintf( stderr, "DEBUG: image_minmax3() %f %f\n", ( *min_i ), ( *max_i ) );
   return;
  }
@@ -735,6 +725,14 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
  ( *max_i )= MAX( ( *max_i ), ( *min_i ) + 1 ); // for the countrate images (like the HST ones)
 
  // fprintf(stderr,"DEBUG: %lf  %lf\n",(*min_i),(*max_i));
+ 
+ //
+ if( ( *max_i ) == ( *min_i ) ) {
+  fprintf(stderr, "WARNING (2) in image_minmax3(): max=min=%f\n", ( *max_i ));
+  ( *min_i ) = ( *min_i ) / 2;
+  ( *max_i ) = ( *max_i ) * 2 + 1;
+ }
+ //
 
  return;
 }
