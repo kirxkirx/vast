@@ -74,6 +74,11 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
   continue
  fi
  
+ # Make nice-looking output
+ echo "  "
+ echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+ echo "Considering the candidate $TRANSIENT_NAME"
+ 
  # Moved the final check here
  util/transients/report_transient.sh "$LIGHTCURVE_FILE_OUTDAT"  > transient_report/index.tmp2__report_transient_output
  if [ $? -ne 0 ];then
