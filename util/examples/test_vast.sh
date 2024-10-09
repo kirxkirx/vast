@@ -9774,8 +9774,8 @@ if [ -d ../NMW_Saturn_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### SATURN2_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -10215,7 +10215,7 @@ if [ -d ../NMW_Venus_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' 'transient_report/index.html'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
    CAT_RESULT=`cat 'transient_report/index.html' | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### VENUS_ERROR_MESSAGE_IN_index_html ######
@@ -10426,7 +10426,7 @@ if [ -d ../NMW_calibration_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' 'transient_report/index.html'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
    CAT_RESULT=`cat 'transient_report/index.html' | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWCALIB_ERROR_MESSAGE_IN_index_html ######
@@ -10763,8 +10763,8 @@ if [ -d ../NMW_find_NovaCas_august31_test ];then
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_NO_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNCASAUG31_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -11001,8 +11001,8 @@ if [ -d ../NMW_nomatch_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET_DIST_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWLARGEOFFSET_DIST_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -11242,8 +11242,8 @@ if [ -d ../NMW_ATLAS_Mira_in_Ser1 ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWATLASMIRA_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -11719,8 +11719,8 @@ if [ -d ../NMW_Sgr1_NovaSgr20N4_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNSGR20N4_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -12035,8 +12035,8 @@ if [ -d ../NMW_Sco6_NovaSgr24N1_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNSGR24N1_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -12381,8 +12381,8 @@ if [ -d ../NMW__NovaVul24_Stas_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNVUL24ST_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -12738,8 +12738,8 @@ if [ -d ../NMW_Aql11_NovaHer21_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNHER21_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -12986,8 +12986,8 @@ if [ -d ../NMW_find_NovaCas21_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNCAS21_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -13234,8 +13234,8 @@ if [ -d ../NMW_Sco6_NovaSgr21N2_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNSGR21N2_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -13540,8 +13540,8 @@ if [ -d ../NMW_Sgr7_NovaSgr21N1_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNSGR21N1_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -13910,8 +13910,8 @@ if [ -d ../NMW_Vul7_NovaVul21_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNVUL21_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -14149,8 +14149,8 @@ if [ -d ../NMW_find_Mars_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWMARS_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -14326,8 +14326,8 @@ $GREP_RESULT"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWMARS3_NO_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -14571,8 +14571,8 @@ if [ -d ../NMW_find_Chandra_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNFINDCHANDRA_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -14858,8 +14858,8 @@ if [ -d ../NMW_Sgr9_crash_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWSGR9CRASH_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -15127,8 +15127,8 @@ $GREP_RESULT"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWSGR9CRASH_RERUN_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -15566,8 +15566,8 @@ if [ -d ../NMW-STL__find_Neptune_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWSTLFINDNEPTUNE_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -15946,8 +15946,8 @@ if [ -d ../NMW-STL__find_NovaVul24_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWSTLFINDNVUL24_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -16297,8 +16297,8 @@ if [ -d ../TICA_TESS__find_NovaVul24_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### TICATESSFINDNVUL24_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -16538,8 +16538,8 @@ if [ -d ../NMW-STL__plate_solve_failure_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWSTLPLATESOLVEFAILURE_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -16888,8 +16888,8 @@ if [ -d ../NMW-STL__NovaOph24N1_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWSTLNOPH24_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -17202,8 +17202,8 @@ if [ -d ../NMW__NovaOph24N1_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNOPH24_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
@@ -17490,8 +17490,8 @@ if [ -d ../TICA_TESS_mag_calibration_failure_test ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_ERROR_MESSAGE_IN_index_html"
-   GREP_RESULT=`grep 'ERROR' "transient_report/index.html"`
-   CAT_RESULT=`cat transient_report/index.html | grep -v -e 'BODY' -e 'HTML' | grep -A10000 'Filtering log:'`
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### TICATESSMAGCALIBFAILURE_ERROR_MESSAGE_IN_index_html ######
 $GREP_RESULT
