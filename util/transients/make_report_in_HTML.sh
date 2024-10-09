@@ -108,6 +108,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
     # check if the file already exists somehow
     if [ -s "$output_file" ];then
      echo "The output file $output_file already exist"
+     success=true
      break
     fi
     #
@@ -131,7 +132,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
     [ $attempt -le $max_attempts ] && echo "Retrying (attempt $attempt of $max_attempts)..." && sleep 5
    done
    if [ "$success" = false ]; then
-    echo "ERROR in $0: Failed to create or move $source_file to $output_file after $max_attempts attempts"
+    echo "ERROR in $0: (1) Failed to create or move $source_file to $output_file after $max_attempts attempts  util/make_finding_chart $REFERENCE_IMAGE $G $H"
    fi
    #
    unset PGPLOT_PNG_HEIGHT ; unset PGPLOT_PNG_WIDTH
@@ -156,6 +157,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
     # check if the file already exists somehow
     if [ -s "$output_file" ];then
      echo "The output file $output_file already exist"
+     success=true
      break
     fi
     #
@@ -179,7 +181,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
     [ $attempt -le $max_attempts ] && echo "Retrying (attempt $attempt of $max_attempts)..." && sleep 5
    done
    if [ "$success" = false ]; then
-     echo "ERROR in $0: Failed to create or move $source_file to $output_file after $max_attempts attempts"
+     echo "ERROR in $0: (2) Failed to create or move $source_file to $output_file after $max_attempts attempts   util/fits2png $REFERENCE_IMAGE"
    fi
    #
    unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
@@ -216,6 +218,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
       # check if the file already exists somehow
       if [ -s "$output_file" ];then
        echo "The output file $output_file already exist"
+       success=true
        break
       fi
       #
@@ -246,7 +249,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
       fi
      done
      if [ "$success" = false ]; then
-      echo "ERROR in $0: Failed to create or move $source_file to $output_file after $max_attempts attempts"
+      echo "ERROR in $0: (3) Failed to create or move $source_file to $output_file after $max_attempts attempts   util/make_finding_chart $IMAGE $X $Y"
       exit 1
      fi
      #

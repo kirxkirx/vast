@@ -1098,6 +1098,11 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
       attempt=1
       success=false
       while [ $attempt -le $max_attempts ]; do
+       if [ -s "transient_report/$PREVIEW_IMAGE" ];then
+        echo "The output file transient_report/$PREVIEW_IMAGE already exist!"
+        success=true
+        break
+       fi
        if util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null; then
         # Wait for a short time to allow for I/O completion
         sleep 1
