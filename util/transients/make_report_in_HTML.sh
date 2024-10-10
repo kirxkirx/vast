@@ -25,6 +25,15 @@ if [ -z "$MPC_CODE" ];then
  # Default MPC code is C32 for tests
  MPC_CODE=C32
 fi
+# Check if MPC_CODE contains '@' symbol like 500@399
+if [[ "$MPC_CODE" = *@* ]];then
+ # No HORIZONS codes for astcheck - just the plain MPC codes please
+ MPC_CODE=500
+fi
+# Check if the length of MPC_CODE is not equal to 3 characters
+if [ ${#MPC_CODE} -ne 3 ];then
+ MPC_CODE=500
+fi
 
 
 # Make sure there is a directory to put the report in
@@ -467,15 +476,15 @@ Mean position:
 <pre style='font-family:monospace;font-size:12px;'>
 " >> transient_report/index.tmp
     #cat test.mpc | sed 's: 500: C32:g' >> transient_report/index.tmp
-    cat test.mpc__"$LIGHTCURVE_FILE_OUTDAT" | sed 's: 500: C32:g' >> transient_report/index.tmp
+    #cat test.mpc__"$LIGHTCURVE_FILE_OUTDAT" | sed 's: 500: C32:g' >> transient_report/index.tmp
+    # Maybe we don't need that as test.mpc__"$LIGHTCURVE_FILE_OUTDAT" should already include a correct MPC_CODE
+    cat test.mpc__"$LIGHTCURVE_FILE_OUTDAT" | sed "s: 500: $MPC_CODE:g" >> transient_report/index.tmp
     echo "</pre>
 Position measured on individual images:
 <pre style='font-family:monospace;font-size:12px;'>" >> transient_report/index.tmp
     # We are getting DAYFRAC with fewer significant digits as we are getting it from the visual output
-    #grep 'Discovery image' transient_report/index.tmp | tail -n 2 | head -n1 | awk -F'>' '{print $5" "$11" "$9}' | sed 's:&nbsp;::g' | sed 's:</td::g' | sed 's:\:: :g' | awk '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+03.0f %02.0f %04.1f          %4.1f R      C32\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' >> transient_report/index.tmp
-    grep 'Discovery image' transient_report/index.tmp | tail -n 2 | head -n1 | awk -F'>' '{print $5" "$11" "$9}' | sed 's:&nbsp;::g' | sed 's:</td::g' | sed 's:\:: :g' | awk '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+03.0f %02.0f %04.1f          %4.1f R      $MPC_CODE\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' >> transient_report/index.tmp
-    #grep 'Discovery image' transient_report/index.tmp | tail -n 1 | awk -F'>' '{print $5" "$11" "$9}' | sed 's:&nbsp;::g' | sed 's:</td::g' | sed 's:\:: :g' | awk '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+03.0f %02.0f %04.1f          %4.1f R      C32\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' >> transient_report/index.tmp
-    grep 'Discovery image' transient_report/index.tmp | tail -n 1 | awk -F'>' '{print $5" "$11" "$9}' | sed 's:&nbsp;::g' | sed 's:</td::g' | sed 's:\:: :g' | awk '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+03.0f %02.0f %04.1f          %4.1f R      $MPC_CODE\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' >> transient_report/index.tmp
+    grep 'Discovery image' transient_report/index.tmp | tail -n 2 | head -n1 | awk -F'>' '{print $5" "$11" "$9}' | sed 's:&nbsp;::g' | sed 's:</td::g' | sed 's:\:: :g' | awk -v mpccode="$MPC_CODE" '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+03.0f %02.0f %04.1f          %4.1f R      %s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,mpccode}' >> transient_report/index.tmp
+    grep 'Discovery image' transient_report/index.tmp | tail -n 1 | awk -F'>' '{print $5" "$11" "$9}' | sed 's:&nbsp;::g' | sed 's:</td::g' | sed 's:\:: :g' | awk -v mpccode="$MPC_CODE" '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+03.0f %02.0f %04.1f          %4.1f R      %s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,mpccode}' >> transient_report/index.tmp
     echo "</pre>" >> transient_report/index.tmp
     echo "You may copy/paste the above measurements to the following online services:<br>
 <a href='https://minorplanetcenter.net/cgi-bin/checkmp.cgi'>MPChecker</a> (in case the button does not work)<br>
