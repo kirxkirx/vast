@@ -60,6 +60,12 @@ else
  MAG_FOR_MPC_REPORT="$7"
 fi
 
+if [ -z "$8" ];then
+ TEST_MPC_FILE="test.mpc"
+else
+ TEST_MPC_FILE="$8"
+fi
+
          
 # Querry local copy of astcheck
 if [ $COLOR -eq 1 ];then
@@ -116,36 +122,36 @@ fi
 
 if [ -z "$ASTCHECK_OUTPUT" ];then
  # This script should take care of updating astorb.dat
- lib/update_offline_catalogs.sh all
- 
- if [ ! -f astorb.dat ];then
-  # astorb.dat needs to be downloaded
-  echo "Downloading the asteroid database (astorb.dat)" 1>&2
-  #wget -c ftp://ftp.lowell.edu/pub/elgb/astorb.dat.gz 1>&2
-  #wget -c --no-check-certificate https://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
-  curl $VAST_CURL_PROXY --continue-at - --insecure --output astorb.dat.gz https://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
-  if [ $? -ne 0 ];then
-   # a desperate recovery attempt
-   #wget -c http://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
-   curl $VAST_CURL_PROXY --continue-at - --output astorb.dat.gz http://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
-   if [ $? -ne 0 ];then
-    echo "ERROR: cannot download astorb.dat.gz"
-    exit 1
-   fi
-  fi
-  gunzip astorb.dat.gz
-  if [ $? -ne 0 ];then
-   echo "ERROR: cannot gunzip astorb.dat.gz"
-   exit 1
-  fi
-  if [ ! -f astorb.dat ];then
-   echo "ERROR: cannot find astorb.dat"
-   exit 1
-  fi
- fi
+ #lib/update_offline_catalogs.sh all
+ #
+ #if [ ! -f astorb.dat ];then
+ # # astorb.dat needs to be downloaded
+ # echo "Downloading the asteroid database (astorb.dat)" 1>&2
+ # #wget -c ftp://ftp.lowell.edu/pub/elgb/astorb.dat.gz 1>&2
+ # #wget -c --no-check-certificate https://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
+ # curl $VAST_CURL_PROXY --continue-at - --insecure --output astorb.dat.gz https://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
+ # if [ $? -ne 0 ];then
+ #  # a desperate recovery attempt
+ #  #wget -c http://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
+ #  curl $VAST_CURL_PROXY --continue-at - --output astorb.dat.gz http://kirx.net/~kirx/vast_catalogs/astorb.dat.gz 1>&2
+ #  if [ $? -ne 0 ];then
+ #   echo "ERROR: cannot download astorb.dat.gz"
+ #   exit 1
+ #  fi
+ # fi
+ # gunzip astorb.dat.gz
+ # if [ $? -ne 0 ];then
+ #  echo "ERROR: cannot gunzip astorb.dat.gz"
+ #  exit 1
+ # fi
+ # if [ ! -f astorb.dat ];then
+ #  echo "ERROR: cannot find astorb.dat"
+ #  exit 1
+ # fi
+ #fi
  # Using local copy of astcheck to identify asteroids! See http://home.gwi.net/~pluto/devel/astcheck.htm for details
  #echo "$YEAR $MONTH $DAYFRAC $RAHH $RAMM $RASS  $DECDD $DECMM $DECSS  $MAG_FOR_MPC_REPORT" |awk '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+03.0f %02.0f %04.1f          %4.1f R      500\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' > test.mpc
- echo "$YEAR $MONTH $DAYFRAC $RAHH $RAMM $RASS  $DECDD $DECMM $DECSS  $MAG_FOR_MPC_REPORT" | awk -v mpccode=$MPC_CODE '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+03.0f %02.0f %04.1f          %4.1f R      %s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,mpccode}' > test.mpc
+ echo "$YEAR $MONTH $DAYFRAC $RAHH $RAMM $RASS  $DECDD $DECMM $DECSS  $MAG_FOR_MPC_REPORT" | awk -v mpccode=$MPC_CODE '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+03.0f %02.0f %04.1f          %4.1f R      %s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,mpccode}' > "$TEST_MPC_FILE"
  # 400" is the search radius
  #ASTCHECK_OUTPUT=$(lib/astcheck test.mpc -r400 -m15 |grep -A 50 "TAU0008" |grep -v "TAU0008" |head -n 1 | grep -v ObsCodes.html)
  ASTEROID_SEARCH_MAG_LIMIT=16
@@ -153,7 +159,7 @@ if [ -z "$ASTCHECK_OUTPUT" ];then
   ASTEROID_SEARCH_MAG_LIMIT=$(echo "$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" | awk '{printf "%.1f", 2+$1}')
  fi
  # I want a larger search radius because TESS
- ASTCHECK_OUTPUT=$(lib/astcheck test.mpc -r600 -m"$ASTEROID_SEARCH_MAG_LIMIT" | grep -A 50 "TAU0008" | grep -v "TAU0008" | head -n 1 | grep -v ObsCodes.html)
+ ASTCHECK_OUTPUT=$(lib/astcheck "$TEST_MPC_FILE" -r600 -m"$ASTEROID_SEARCH_MAG_LIMIT" | grep -A 50 "TAU0008" | grep -v "TAU0008" | head -n 1 | grep -v ObsCodes.html)
 fi 
 
 if [ -z "$ASTCHECK_OUTPUT" ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then

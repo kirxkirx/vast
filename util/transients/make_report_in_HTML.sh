@@ -7,6 +7,14 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
+function remove_all_report_transient_output_files() {
+ for FILE_TO_REMOVE in transient_report/index.tmp2__report_transient_output__* exclusion_list_gaiadr2.txt__* exclusion_list_apass.txt__* exclusion_list_local.txt__* test.mpc__* ;do
+  if [ -f "$FILE_TO_REMOVE" ];then
+   rm -f "$FILE_TO_REMOVE"
+  fi
+ done
+}
+
 # MAKE_PNG_PLOTS should always be "yes" for producing finder chart images
 if [ -z "$MAKE_PNG_PLOTS" ];then
  MAKE_PNG_PLOTS="yes"
@@ -39,21 +47,52 @@ if [ $? -eq 0 ];then
  USE_JAVASCRIPT=1
 fi
 
+# individual files cleanup
+remove_all_report_transient_output_files
+
+# Parallel run - ckeck candidates and create result files
 while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
-# if [ -f transient_report/index.tmp ];then
-#  rm -f transient_report/index.tmp
-# fi
+ 
+ if [ ! -s "$LIGHTCURVE_FILE_OUTDAT" ];then
+  echo "WARNING: $LIGHTCURVE_FILE_OUTDAT lightcurve file does not exist!!!"
+  continue
+ fi
+ 
+ {
+ util/transients/report_transient.sh "$LIGHTCURVE_FILE_OUTDAT"  > transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT"
+ if [ $? -eq 0 ];then
+  touch transient_report/index.tmp2__report_transient_output__GOOD__"$LIGHTCURVE_FILE_OUTDAT"
+ fi
+ } &
+  
+done < candidates-transients.lst
+
+# Wait for all report_transient.sh processes to finish
+wait
+
+# combine all exclusion list entries from individual files created by report_transient.sh
+for LISTFILE_COMBINED in exclusion_list_gaiadr2.txt exclusion_list_apass.txt exclusion_list_local.txt ;do
+ for LISTFILE_INDIVIDUAL in ${LISTFILE_COMBINED}__* ;do
+  if [ -f "$LISTFILE_INDIVIDUAL" ];then
+   echo "Adding $LISTFILE_INDIVIDUAL to $LISTFILE_COMBINED"
+   cat "$LISTFILE_INDIVIDUAL" >> "$LISTFILE_COMBINED"
+   rm -f "$LISTFILE_INDIVIDUAL"
+  fi
+ done
+done
+
+
+
+# Searial run - read the results files and produce HTML output
+while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  if ! rm -f transient_report/index.tmp; then
   echo "ERROR in $0: Failed to remove transient_report/index.tmp"
   exit 1
  fi
-# if [ -f transient_report/index.tmp2__report_transient_output ];then
-#  rm -f transient_report/index.tmp2__report_transient_output
-# fi
- if ! rm -f transient_report/index.tmp2__report_transient_output; then
-  echo "ERROR in $0: Failed to remove transient_report/index.tmp2__report_transient_output"
-  exit 1
- fi
+ #if ! rm -f transient_report/index.tmp2__report_transient_output; then
+ # echo "ERROR in $0: Failed to remove transient_report/index.tmp2__report_transient_output"
+ # exit 1
+ #fi
  
  if [ ! -s "$LIGHTCURVE_FILE_OUTDAT" ];then
   echo "WARNING: $LIGHTCURVE_FILE_OUTDAT lightcurve file does not exist!!!"
@@ -80,12 +119,13 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  echo "Considering the candidate $TRANSIENT_NAME"
  
  # Moved the final check here
- util/transients/report_transient.sh "$LIGHTCURVE_FILE_OUTDAT"  > transient_report/index.tmp2__report_transient_output
- if [ $? -ne 0 ];then
+ #util/transients/report_transient.sh "$LIGHTCURVE_FILE_OUTDAT"  > transient_report/index.tmp2__report_transient_output
+ #if [ $? -ne 0 ];then
+ if [ ! -f transient_report/index.tmp2__report_transient_output__GOOD__"$LIGHTCURVE_FILE_OUTDAT" ];then
   echo "The candidate $TRANSIENT_NAME did not pass the final checks"
-  if [ -f transient_report/index.tmp2__report_transient_output ];then
-   tail -n3 transient_report/index.tmp2__report_transient_output
-   rm -f transient_report/index.tmp2__report_transient_output
+  if [ -f transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT" ];then
+   tail -n3 transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT"
+   rm -f transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT"
   fi
   continue
  fi
@@ -118,7 +158,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
     fi
     #
     if util/make_finding_chart "$REFERENCE_IMAGE" "$G" "$H" &>/dev/null; then
-     sleep 1
+     #sleep 1
      if [ -f "$source_file" ]; then
       if mv "$source_file" "$output_file"; then
        echo "Successfully moved $source_file to $output_file"
@@ -167,7 +207,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
     fi
     #
     if util/fits2png "$REFERENCE_IMAGE" &> /dev/null; then
-     sleep 1
+     #sleep 1
      if [ -f "$source_file" ]; then
       if mv "$source_file" "$output_file"; then
        echo "Successfully moved $source_file to $output_file"
@@ -229,7 +269,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
       #
       if util/make_finding_chart "$IMAGE" "$X" "$Y" &>/dev/null; then
        # Wait for a short time to allow for I/O completion
-       sleep 1
+       #sleep 1
     
        # Check if the source file exists
        if [ -f "$source_file" ]; then
@@ -272,7 +312,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  # if the final check passed well
  #if [ $? -eq 0 ];then
 
-  cat transient_report/index.tmp2__report_transient_output >> transient_report/index.tmp
+  cat transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT" >> transient_report/index.tmp
 
   #echo "</pre>" >> transient_report/index.tmp
   
@@ -403,7 +443,8 @@ REFERENCE_IMAGES="`dirname $REFERENCE_IMAGE` >> transient_report/index.tmp
 
 
    #
-   if [ -f test.mpc ];then
+   #if [ -f test.mpc ];then
+   if [ -f test.mpc__"$LIGHTCURVE_FILE_OUTDAT" ];then
     # Stub MPC report
     echo "<a href=\"javascript:toggleElement('mpcstub_$TRANSIENT_NAME')\">Stub MPC report</a> (for online MPChecker) " >> transient_report/index.tmp  
     echo -n "<div id=\"mpcstub_$TRANSIENT_NAME\" style=\"display:none\">
@@ -414,7 +455,8 @@ The string should be exactly 80 characters long to conform to the MPC format.<br
 Mean position:
 <pre style='font-family:monospace;font-size:12px;'>
 " >> transient_report/index.tmp
-    cat test.mpc | sed 's: 500: C32:g' >> transient_report/index.tmp
+    #cat test.mpc | sed 's: 500: C32:g' >> transient_report/index.tmp
+    cat test.mpc__"$LIGHTCURVE_FILE_OUTDAT" | sed 's: 500: C32:g' >> transient_report/index.tmp
     echo "</pre>
 Position measured on individual images:
 <pre style='font-family:monospace;font-size:12px;'>" >> transient_report/index.tmp
@@ -438,10 +480,13 @@ Here is a stub line for <a href='http://www.cbat.eps.harvard.edu/tocp_report'>re
 Don't forget to set the constellation name and the number of days since the last non-detection!
 <pre style='font-family:monospace;font-size:12px;'>
 " >> transient_report/index.tmp
-    cat test.mpc | sed 's: C2: 2:g' | awk -v val="$CONSTELLATION" '{printf "TCP %d %02d %07.4f*  %02d %02d %05.2f %+03d %02d %04.1f  %4.1f U             %s       9 0\n", $2, $3, $4,  $5, $6, $7,  $8, $9, $10,  $11,  val}' >> transient_report/index.tmp
+    #cat test.mpc | sed 's: C2: 2:g' | awk -v val="$CONSTELLATION" '{printf "TCP %d %02d %07.4f*  %02d %02d %05.2f %+03d %02d %04.1f  %4.1f U             %s       9 0\n", $2, $3, $4,  $5, $6, $7,  $8, $9, $10,  $11,  val}' >> transient_report/index.tmp
+    cat test.mpc__"$LIGHTCURVE_FILE_OUTDAT" | sed 's: C2: 2:g' | awk -v val="$CONSTELLATION" '{printf "TCP %d %02d %07.4f*  %02d %02d %05.2f %+03d %02d %04.1f  %4.1f U             %s       9 0\n", $2, $3, $4,  $5, $6, $7,  $8, $9, $10,  $11,  val}' >> transient_report/index.tmp
     echo "</pre>
 <br>
 </div>" >> transient_report/index.tmp
+   else
+    echo " ERROR: cannot find test.mpc__$LIGHTCURVE_FILE_OUTDAT <br>"
    fi
    #
 
@@ -464,9 +509,9 @@ fi
 VARIABLE_NAME=""
 VARIABLE_NAME_NO_WHITESPACES=""
 
-grep --quiet 'The object was <font color="red">found</font> in <font color="blue">VSX</font>' transient_report/index.tmp2__report_transient_output
+grep --quiet 'The object was <font color="red">found</font> in <font color="blue">VSX</font>' transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT"
 if [ $? -eq 0 ];then
- VARIABLE_NAME=$(grep -A1 'The object was <font color="red">found</font> in <font color="blue">VSX</font>' transient_report/index.tmp2__report_transient_output | tail -n1 | awk -F'"' '{print $2}')
+ VARIABLE_NAME=$(grep -A1 'The object was <font color="red">found</font> in <font color="blue">VSX</font>' transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT" | tail -n1 | awk -F'"' '{print $2}')
  # remove leading and trailing white spaces from string
  # VARIABLE_NAME will be somehting like:
  # #KR Sco                        </b>#
@@ -475,9 +520,9 @@ if [ $? -eq 0 ];then
 fi
 
 if [ -z "$VARIABLE_NAME" ];then
- grep --quiet ' online_id ' transient_report/index.tmp2__report_transient_output
+ grep --quiet ' online_id ' transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT"
  if [ $? -eq 0 ];then
-  VARIABLE_NAME=$(grep ' online_id ' transient_report/index.tmp2__report_transient_output | awk -F'|' '{print $2}')
+  VARIABLE_NAME=$(grep ' online_id ' transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT" | awk -F'|' '{print $2}')
   # remove leading and trailing white spaces from string
   VARIABLE_NAME_NO_WHITESPACES=$(echo "$VARIABLE_NAME" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
   VARIABLE_NAME="$VARIABLE_NAME_NO_WHITESPACES" 
@@ -485,7 +530,7 @@ if [ -z "$VARIABLE_NAME" ];then
 fi
 
 # debug
-#cp -v transient_report/index.tmp2__report_transient_output /tmp/"$TRANSIENT_NAME"__index.tmp2__report_transient_output
+#cp -v transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT" /tmp/"$TRANSIENT_NAME"__index.tmp2__report_transient_output
 
 if [ -z "$VARIABLE_NAME" ];then
  VARIABLE_NAME="VARIABLE_NAME"
@@ -629,14 +674,22 @@ FITSFILE=${FITSFILE//" "/_}
 
   echo "<HR>" >> transient_report/index.tmp
   cat transient_report/index.tmp >> transient_report/index$1.html
+
+ 
+ # remove_all_report_transient_output_files should take care of them
+ #if [ -f transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT" ];then
+ # rm -f transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT"
+ #fi
+
+
 done < candidates-transients.lst
 if [ -f transient_report/index.tmp ];then
  rm -f transient_report/index.tmp
 fi
-if [ -f transient_report/index.tmp2__report_transient_output ];then
- rm -f transient_report/index.tmp2__report_transient_output
-fi
+#if [ -f transient_report/index.tmp2__report_transient_output ];then
+# rm -f transient_report/index.tmp2__report_transient_output
+#fi
 
-# These files are not supposed to be created in vast directory
-#rm -f *_preview.png
+# individual files cleanup
+remove_all_report_transient_output_files
 
