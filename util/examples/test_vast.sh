@@ -26432,8 +26432,9 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  # NMW infrastructure specific tests that should not fail the VaST code test
  # That's most likely "no internet on the mountain" situation
  FAILED_TEST_CODES="${FAILED_TEST_CODES// AUXWEB_NMW_KIRX_SUMMARY_CHECK_FAILED_kadar/}"
- FAILED_TEST_CODES="${FAILED_TEST_CODES// AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED_kadar/}"
+ # This has to go before kadar in order not to leave the lonely "2" in FAILED_TEST_CODES
  FAILED_TEST_CODES="${FAILED_TEST_CODES// AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED_kadar2/}"
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED_kadar/}"
  # Astropy comparison results (many target machines will not have astropy)
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_DATE2JDCONV_ASTROPY_noastropy/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_DATE2JDCONV_ASTROPY_nopython3/}"
