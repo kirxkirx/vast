@@ -94,7 +94,7 @@ Example: $0 18:38:06.47677 +39:40:05.9835
 }
 
 # This function will search 2MASS catalog for the brightest source around the specified position
-function search_2mass_fixed_radius_reesults_to_2masstmp() {
+function search_2mass_fixed_radius_results_to_2masstmp() {
  ###### 2MASS #####
  
  # clean up possible lefotovers from a previous run
@@ -317,7 +317,7 @@ fi
 echo "(The script will be making wild assumptions about astrometic accuracy and image depth based on FoV size.)"
 
 ###### 2MASS #####
-search_2mass_fixed_radius_reesults_to_2masstmp "$RA" "$DEC" > "$TEMP_FILE__2MASS_LONG" &
+search_2mass_fixed_radius_results_to_2masstmp "$RA" "$DEC" > "$TEMP_FILE__2MASS_LONG" &
 
 # clean-up after vizquery
 #if [ -f wget-log ];then
@@ -475,7 +475,7 @@ $VARFLAG" > "$TEMP_FILE__GAIA_ID_OK"
  fi
 done
 
-# make sure search_2mass_fixed_radius_reesults_to_2masstmp() is complete and produced "$TEMP_FILE__2MASS_SHORT" and "$TEMP_FILE__2MASS_LONG" on success
+# make sure search_2mass_fixed_radius_results_to_2masstmp() is complete and produced "$TEMP_FILE__2MASS_SHORT" and "$TEMP_FILE__2MASS_LONG" on success
 wait
 
 if [ -s "$TEMP_FILE__2MASS_LONG" ];then

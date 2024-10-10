@@ -51,6 +51,9 @@ fi
 remove_all_report_transient_output_files
 
 # Parallel run - ckeck candidates and create result files
+# Limit the numbe of threads running in parallel
+max_threads=20
+thread_count=0
 while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  
  if [ ! -s "$LIGHTCURVE_FILE_OUTDAT" ];then
@@ -59,12 +62,20 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  fi
  
  {
- util/transients/report_transient.sh "$LIGHTCURVE_FILE_OUTDAT"  > transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT"
- if [ $? -eq 0 ];then
-  touch transient_report/index.tmp2__report_transient_output__GOOD__"$LIGHTCURVE_FILE_OUTDAT"
- fi
+  util/transients/report_transient.sh "$LIGHTCURVE_FILE_OUTDAT"  > transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT"
+  if [ $? -eq 0 ];then
+   touch transient_report/index.tmp2__report_transient_output__GOOD__"$LIGHTCURVE_FILE_OUTDAT"
+  fi
  } &
-  
+
+ # Increment thread count and check if limit is reached
+ thread_count=$[$thread_count+1]
+ if [ "$thread_count" -ge "$max_threads" ]; then
+  # Wait for all background jobs to finish before continuing
+  wait
+  thread_count=0
+ fi
+   
 done < candidates-transients.lst
 
 # Wait for all report_transient.sh processes to finish
