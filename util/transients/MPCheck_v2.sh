@@ -156,10 +156,13 @@ if [ -z "$ASTCHECK_OUTPUT" ];then
  #echo "$YEAR $MONTH $DAYFRAC $RAHH $RAMM $RASS  $DECDD $DECMM $DECSS  $MAG_FOR_MPC_REPORT" | awk -v mpccode=$MPC_CODE '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+03.0f %02.0f %04.1f          %4.1f R      %s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,mpccode}' > "$TEST_MPC_FILE"
  # 400" is the search radius
  #ASTCHECK_OUTPUT=$(lib/astcheck test.mpc -r400 -m15 |grep -A 50 "TAU0008" |grep -v "TAU0008" |head -n 1 | grep -v ObsCodes.html)
- ASTEROID_SEARCH_MAG_LIMIT=16
- if [ -n "$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" ];then
-  ASTEROID_SEARCH_MAG_LIMIT=$(echo "$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" | awk '{printf "%.1f", 2+$1}')
- fi
+ if [ -z "$ASTEROID_SEARCH_MAG_LIMIT" ];then
+  ASTEROID_SEARCH_MAG_LIMIT=16
+  if [ -n "$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" ];then
+   ASTEROID_SEARCH_MAG_LIMIT=$(echo "$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" | awk '{printf "%.1f", 2+$1}')
+  fi
+ fi # if [ -z "$ASTEROID_SEARCH_MAG_LIMIT" ];then
+ #cat $TEST_MPC_FILE
  # I want a larger search radius because TESS
  ASTCHECK_OUTPUT=$(lib/astcheck "$TEST_MPC_FILE" -r600 -m"$ASTEROID_SEARCH_MAG_LIMIT" | grep -A 50 "TAU0008" | grep -v "TAU0008" | head -n 1 | grep -v ObsCodes.html)
 fi 

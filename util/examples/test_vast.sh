@@ -26157,11 +26157,99 @@ else
   TEST_PASSED=0                          
   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_Ganymede"
  fi
+ # check format of moons.txt
+ while read RA DEC REST ;do 
+  if ! lib/hms2deg "$RA" "$DEC" &> /dev/null ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_MOONS_FORMAT_${RA}_${DEC}"
+  fi
+ done < moons.txt
+ echo "$TEST_PASSED and $FAILED_TEST_CODES"
 fi
 
-if [ -f moons.txt ];then
- rm -f moons.txt
+# JD 2460595.28063657 is a time when the moon is up at C32, affecting the HORIZONS output format
+export MPC_CODE="C32"
+#
+util/planets.sh 2460595.28063657 > planets.txt
+if [ $? -ne 0 ];then                    
+ TEST_PASSED=0                          
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_PLANETS_MPCCODE"
+elif [ ! -s planets.txt ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_PLANETS_MPCCODE_EMPTY"
+else
+ # check format of planets.txt
+ while read RA DEC REST ;do 
+  if ! lib/hms2deg "$RA" "$DEC" &> /dev/null ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_PLANETS_MPCCODE_FORMAT_${RA}_${DEC}"
+   break
+  fi
+ done < planets.txt
+ echo "$TEST_PASSED and $FAILED_TEST_CODES"
 fi
+util/moons.sh 2460595.28063657 > moons.txt
+if [ $? -ne 0 ];then                    
+ TEST_PASSED=0                          
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_MOONS_MPCCODE"
+elif [ ! -s moons.txt ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_MOONS_MPCCODE_EMPTY"
+else
+ # check format of moons.txt
+ while read RA DEC REST ;do 
+  if ! lib/hms2deg "$RA" "$DEC" &> /dev/null ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_MOONS_MPCCODE_FORMAT_${RA}_${DEC}"
+   break
+  fi
+ done < moons.txt
+ echo "$TEST_PASSED and $FAILED_TEST_CODES"
+fi
+util/spacecraft.sh 2460595.28063657 > spacecraft.txt
+if [ $? -ne 0 ];then                    
+ TEST_PASSED=0                          
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_SPACECRAFT_MPCCODE"
+elif [ ! -s spacecraft.txt ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_SPACECRAFT_MPCCODE_EMPTY"
+else
+ # check format of spacecraft.txt
+ while read RA DEC REST ;do 
+  if ! lib/hms2deg "$RA" "$DEC" &> /dev/null ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_SPACECRAFT_MPCCODE_FORMAT_${RA}_${DEC}"
+   break
+  fi
+ done < spacecraft.txt
+ echo "$TEST_PASSED and $FAILED_TEST_CODES"
+fi
+util/comets.sh 2460595.28063657 > comets.txt
+if [ $? -ne 0 ];then                    
+ TEST_PASSED=0                          
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_COMETS_MPCCODE"
+elif [ ! -s comets.txt ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_COMETS_MPCCODE_EMPTY"
+else
+ # check format of comets.txt
+ while read RA DEC REST ;do 
+  if ! lib/hms2deg "$RA" "$DEC" &> /dev/null ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_COMETS_MPCCODE_FORMAT_${RA}_${DEC}"
+   break
+  fi
+ done < comets.txt
+ echo "$TEST_PASSED and $FAILED_TEST_CODES"
+fi
+#
+unset MPC_CODE
+
+for SOLAR_SYSTEM_INFO_FILE_TO_REMOVE in planets.txt moons.txt spacecraft.txt comets.txt ;do
+ if [ -f "$SOLAR_SYSTEM_INFO_FILE_TO_REMOVE" ];then
+  rm -f "$SOLAR_SYSTEM_INFO_FILE_TO_REMOVE"
+ fi
+done
 
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
 THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
