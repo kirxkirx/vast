@@ -10070,7 +10070,7 @@ $GREP_RESULT"
    fi
   fi
   #
-  for FILE_TO_CHECK in planets.txt comets.txt moons.txt asassn_transients_list.txt tocp_transients_list.txt ;do
+  for FILE_TO_CHECK in planets.txt comets.txt moons.txt spacecraft.txt asassn_transients_list.txt tocp_transients_list.txt ;do
    if [ -f "$FILE_TO_CHECK" ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_no_$FILE_TO_CHECK"
@@ -10085,7 +10085,18 @@ $GREP_RESULT"
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_00:00:00.00_in_$FILE_TO_CHECK"
+    continue
    fi
+   #
+   # check format of $FILE_TO_CHECK
+   while read RA DEC REST ;do 
+    if ! lib/hms2deg "$RA" "$DEC" &> /dev/null ;then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_${FILE_TO_CHECK}_FORMAT_${RA}_${DEC}"
+     break
+    fi
+   done < "$FILE_TO_CHECK"
+   #
   done
   #
   ###########################################################
@@ -26162,6 +26173,7 @@ else
   if ! lib/hms2deg "$RA" "$DEC" &> /dev/null ;then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_MOONS_FORMAT_${RA}_${DEC}"
+   break
   fi
  done < moons.txt
  echo "$TEST_PASSED and $FAILED_TEST_CODES"
