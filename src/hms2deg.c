@@ -40,7 +40,22 @@ int main( int argc, char **argv ) {
  //
  if ( 3 != sscanf( argv[1], "%lf:%lf:%lf", &hh, &mm, &ss ) ) {
   fprintf( stderr, "ERROR parsing the input position %s\n", argv[1] );
+  return 1;
  }
+ // Check the values
+ if ( hh < 0 || hh > 23 ) {
+  fprintf( stderr, "ERROR parsing input coordinates: '%s' hh understood as '%lf'\n", argv[1], hh );
+  return 1;
+ }
+ if ( mm < 0 || mm > 59 ) {
+  fprintf( stderr, "ERROR parsing input coordinates: '%s' mm understood as '%lf'\n", argv[1], mm );
+  return 1;
+ }
+ if ( ss < 0 || ss > 60 ) {
+  fprintf( stderr, "ERROR parsing input coordinates: '%s' ss understood as '%lf'\n", argv[1], ss );
+  return 1;
+ }
+ //
  hh+= mm / 60 + ss / 3600;
  hh*= 15;
  if ( hh < 0 || hh > 360 ) {
@@ -81,7 +96,22 @@ int main( int argc, char **argv ) {
  //
  if ( 3 != sscanf( argv[2], "%lf:%lf:%lf", &hh, &mm, &ss ) ) {
   fprintf( stderr, "ERROR parsing the input position %s\n", argv[2] );
+  return 1;
  }
+ // Check the values
+ if ( hh < -89 || hh > 89 ) {
+  fprintf( stderr, "ERROR parsing input coordinates: '%s' hh understood as '%lf'\n", argv[2], hh );
+  return 1;
+ }
+ if ( mm < 0 || mm > 59 ) {
+  fprintf( stderr, "ERROR parsing input coordinates: '%s' mm understood as '%lf'\n", argv[2], mm );
+  return 1;
+ }
+ if ( ss < 0 || ss > 60 ) {
+  fprintf( stderr, "ERROR parsing input coordinates: '%s' ss understood as '%lf'\n", argv[2], ss );
+  return 1;
+ }
+ //
  if ( hh >= 0 && argv[2][0] != '-' )
   hh+= mm / 60 + ss / 3600;
  if ( hh <= 0 && argv[2][0] == '-' )

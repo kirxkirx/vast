@@ -74,7 +74,10 @@ for SPACECRAFT_NAME in JWST Chandra XMM-Newton ;do
  fi
  # print results only if communication with Horizons worked
  if [ -n "$SPACECRAFT_RA_DEC_MAG_STRING" ];then
-  echo "$SPACECRAFT_RA_DEC_MAG_STRING $SPACECRAFT_NAME" | awk '{print $1" "$2" "$4}'
+  # Verify the format of $PLANET_RA_DEC_MAG_STRING - lib/hms2deg will return non-zero exit code if something is wrong with the coordinates
+  if lib/hms2deg $PLANET_RA_DEC_MAG_STRING &> /dev/null ;then
+   echo "$SPACECRAFT_RA_DEC_MAG_STRING $SPACECRAFT_NAME" | awk '{print $1" "$2" "$4}'
+  fi
  fi
 done
 

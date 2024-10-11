@@ -72,7 +72,7 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
    fprintf( stderr, "ERROR parsing input coordinates: '%s' mm understood as '%lf'\n", string_RA1, mm );
    return 1;
   }
-  if ( ss < 0 || ss > 59 ) {
+  if ( ss < 0 || ss > 60 ) {
    fprintf( stderr, "ERROR parsing input coordinates: '%s' ss understood as '%lf'\n", string_RA1, ss );
    return 1;
   }
@@ -97,7 +97,7 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
    fprintf( stderr, "ERROR parsing input coordinates: '%s' mm understood as '%lf'\n", string_Dec1, mm );
    return 1;
   }
-  if ( ss < 0 || ss > 59 ) {
+  if ( ss < 0 || ss > 60 ) {
    fprintf( stderr, "ERROR parsing input coordinates: '%s' ss understood as '%lf'\n", string_Dec1, ss );
    return 1;
   }
@@ -133,7 +133,7 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
    fprintf( stderr, "ERROR parsing input coordinates: '%s' mm understood as '%lf'\n", string_RA2, mm );
    return 1;
   }
-  if ( ss < 0 || ss > 59 ) {
+  if ( ss < 0 || ss > 60 ) {
    fprintf( stderr, "ERROR parsing input coordinates: '%s' ss understood as '%lf'\n", string_RA2, ss );
    return 1;
   }
@@ -158,7 +158,7 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
    fprintf( stderr, "ERROR parsing input coordinates: '%s' mm understood as '%lf'\n", string_Dec2, mm );
    return 1;
   }
-  if ( ss < 0 || ss > 59 ) {
+  if ( ss < 0 || ss > 60 ) {
    fprintf( stderr, "ERROR parsing input coordinates: '%s' ss understood as '%lf'\n", string_Dec2, ss );
    return 1;
   }

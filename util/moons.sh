@@ -87,7 +87,10 @@ for PLANET_NAME in Io Europa Ganymede Callisto Himalia Thebe Elara Pasiphae Carm
  fi
  # print results only if communication with Horizons worked
  if [ -n "$PLANET_RA_DEC_MAG_STRING" ];then
-  echo "$PLANET_RA_DEC_MAG_STRING $PLANET_NAME" | awk '{print $1" "$2" "$4" ("$3")"}'
+  # Verify the format of $PLANET_RA_DEC_MAG_STRING - lib/hms2deg will return non-zero exit code if something is wrong with the coordinates
+  if lib/hms2deg $PLANET_RA_DEC_MAG_STRING &> /dev/null ;then
+   echo "$PLANET_RA_DEC_MAG_STRING $PLANET_NAME" | awk '{print $1" "$2" "$4" ("$3")"}'
+  fi
  fi
 done
 

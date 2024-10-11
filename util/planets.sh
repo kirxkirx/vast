@@ -77,7 +77,10 @@ for PLANET_NAME in Mercury Venus Mars Jupiter Saturn Uranus Neptune Pluto Moon ;
  fi
  # Print the results string only if we got the planet position from Horizons
  if [ -n "$PLANET_RA_DEC_MAG_STRING" ];then
-  echo "$PLANET_RA_DEC_MAG_STRING $PLANET_NAME" | awk '{print $1" "$2" "$4" ("$3")"}'
+  # Verify the format of $PLANET_RA_DEC_MAG_STRING - lib/hms2deg will return non-zero exit code if something is wrong with the coordinates
+  if lib/hms2deg $PLANET_RA_DEC_MAG_STRING &> /dev/null ;then
+   echo "$PLANET_RA_DEC_MAG_STRING $PLANET_NAME" | awk '{print $1" "$2" "$4" ("$3")"}'
+  fi
  fi
 done
 
