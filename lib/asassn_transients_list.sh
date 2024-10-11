@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 # We download only the first 100K and read only the top 2000 lines ~ 100 latest transients, as downloading parsing this page takes a lot of time
 data=$(curl --connect-timeout 10 --retry 1 --range 0-102399 --silent --show-error --insecure https://www.astronomy.ohio-state.edu/asassn/transients.html | grep -A2000 '<th>ASAS-SN</th>' | grep -A2000 '<th>data</th>' | grep -v -e '<th>ASAS-SN</th>' -e '<th>data</th>' -e '<td></td>')
 if [ -z "$data" ];then

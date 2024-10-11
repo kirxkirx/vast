@@ -3,6 +3,13 @@
 # This script will query JPL HORIZONS for position of
 # a few selected (bright and distant) planetary moons.
 
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LANGUAGE LC_ALL
+#################################
+
 if [ -z "$MPC_CODE" ];then
  # Default MPC code is 500 - geocenter
  MPC_CODE=500
