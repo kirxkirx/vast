@@ -22107,7 +22107,7 @@ fi
 # Make sure this is a valid one-page PS file by counting pages with Ghostscript
 command -v gs &>/dev/null
 if [ $? -eq 0 ];then
- TEST=`gs -q -dNOPAUSE -dBATCH -sDEVICE=bbox 00095_edit_edit.ps 2>&1 | grep -c HiResBoundingBox`
+ TEST=$(gs -q -dNOPAUSE -dBATCH -sDEVICE=bbox 00095_edit_edit.ps 2>&1 | grep -c HiResBoundingBox)
  re='^[0-9]+$'
  if ! [[ $TEST =~ $re ]] ; then
   echo "TEST ERROR"
@@ -24924,11 +24924,16 @@ else
 fi
 
 # Fetch scan.sai.msu.ru/vast/ HTML and find the year
-YEAR=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://scan.sai.msu.ru/vast/' | grep -o 'developers team, [0-9]\{4\}-[0-9]\{4\}' | tail -n1 | awk -F '-' '{print $2}')
+YEAR=$(curl --insecure --connect-timeout 10 --retry 2 --max-time 30 --silent 'https://scan.sai.msu.ru/vast/' | grep -o 'developers team, [0-9]\{4\}-[0-9]\{4\}' | tail -n1 | awk -F '-' '{print $2}')
 CURRENT_YEAR=$(date -u +%Y)
-if [ "$YEAR" != "$CURRENT_YEAR" ]; then
+if [ -n "$YEAR" ] && [ -n "$CURRENT_YEAR" ]; then
+ if [ "$YEAR" != "$CURRENT_YEAR" ]; then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_VAST_YEAR_MISMATCH"
+ fi
+else
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_VAST_YEAR_TEST_FAILED"
 fi
 
 
