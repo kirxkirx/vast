@@ -362,22 +362,40 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
       #####
       if [ -n "$MAKE_PNG_PLOTS" ];then
        if [ "$MAKE_PNG_PLOTS" == "yes" ];then
-        #unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
         # image size needs to match the one set in util/transients/transient_factory_test31.sh and above
         export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-        #util/fits2png $IMAGE &> /dev/null && mv pgplot.png transient_report/$PREVIEW_IMAGE
-        if [ ! -f transient_report/$PREVIEW_IMAGE ]; then
-         if util/fits2png "$IMAGE" &> /dev/null; then
-          wait # test
-          #if ! mv pgplot.png "transient_report/$PREVIEW_IMAGE"; then
-          if ! mv "$(basename ${IMAGE%.*}).png" "transient_report/$PREVIEW_IMAGE"; then
-           echo "ERROR in $0: Failed to move $(basename ${IMAGE%.*}).png to transient_report/$PREVIEW_IMAGE"
-           #exit 1
-          fi # if ! mv pgplot.png "transient_report/$PREVIEW_IMAGE"; then
-         else
-          echo "ERROR in $0: fits2png failed for $IMAGE"
-          #exit 1
-         fi # else if util/fits2png "$IMAGE" &> /dev/null; then
+        #
+        #if [ ! -f transient_report/$PREVIEW_IMAGE ]; then
+        # if util/fits2png "$IMAGE" &> /dev/null; then
+        #  if ! mv "$(basename ${IMAGE%.*}).png" "transient_report/$PREVIEW_IMAGE"; then
+        #   echo "ERROR in $0: Failed to move $(basename ${IMAGE%.*}).png to transient_report/$PREVIEW_IMAGE"
+        #  fi # if ! mv pgplot.png "transient_report/$PREVIEW_IMAGE"; then
+        # else
+        #  echo "ERROR in $0: fits2png failed for $IMAGE"
+        # fi # else if util/fits2png "$IMAGE" &> /dev/null; then
+        #fi # if [ ! -f transient_report/$PREVIEW_IMAGE ]; then
+        if [ ! -f "transient_report/$PREVIEW_IMAGE" ]; then
+         max_attempts=3
+         attempt=1
+         success=false
+         while [ $attempt -le $max_attempts ]; do
+          if util/fits2png "$IMAGE" &> /dev/null; then
+           if mv "$(basename ${IMAGE%.*}).png" "transient_report/$PREVIEW_IMAGE"; then
+            echo "Successfully moved $(basename ${IMAGE%.*}).png to transient_report/$PREVIEW_IMAGE"
+            success=true
+            break
+           else
+            echo "WARNING from $0 (attempt $attempt): Move failed. Source $(basename ${IMAGE%.*}).png exists: $([ -f "$(basename ${IMAGE%.*}).png" ] && echo 'Yes' || echo 'No'). Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
+           fi
+          else
+           echo "WARNING from $0 (attempt $attempt): fits2png failed for $IMAGE"
+          fi
+          attempt=$((attempt + 1))
+          [ $attempt -le $max_attempts ] && echo "Retrying (attempt $attempt of $max_attempts)..." && sleep 5
+         done
+         if [ "$success" = false ]; then
+          echo "ERROR in $0: Failed to create or move $(basename ${IMAGE%.*}).png to transient_report/$PREVIEW_IMAGE after $max_attempts attempts"
+         fi
         fi # if [ ! -f transient_report/$PREVIEW_IMAGE ]; then
         #
         unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
