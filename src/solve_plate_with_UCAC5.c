@@ -1657,12 +1657,12 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  */
 
  // delete temporary files only on success
- if ( vizquery_run_success == 0 ) {
+ //if ( vizquery_run_success == 0 ) {
   if ( 0 != unlink( vizquery_input_filename ) )
    fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_input_filename );
   if ( 0 != unlink( vizquery_output_filename ) )
    fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_output_filename );
- }
+ //}
 
  return 0;
 }
@@ -1772,12 +1772,12 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
  }
 
  // delete temporary files only on success
- if ( vizquery_run_success == 0 ) {
+ //if ( vizquery_run_success == 0 ) {
   if ( 0 != unlink( vizquery_input_filename ) )
    fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_input_filename );
   if ( 0 != unlink( vizquery_output_filename ) )
    fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_output_filename );
- }
+ //}
 
  return 0;
 }
@@ -1849,12 +1849,12 @@ int search_PANSTARRS1_with_vizquery( struct detected_star *stars, int N, struct 
  vizquery_run_success= read_PANSTARRS1_from_vizquery( stars, N, vizquery_output_filename, catalog_search_parameters );
 
  // delete temporary files only on success
- if ( vizquery_run_success == 0 ) {
+ //if ( vizquery_run_success == 0 ) {
   if ( 0 != unlink( vizquery_input_filename ) )
    fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_input_filename );
   if ( 0 != unlink( vizquery_output_filename ) )
    fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_output_filename );
- }
+ //}
 
  return vizquery_run_success;
 }
