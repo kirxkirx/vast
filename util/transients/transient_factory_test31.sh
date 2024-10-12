@@ -115,24 +115,37 @@ SYSREM_ITERATIONS=1
 UCAC5_PLATESOLVE_ITERATIONS=1
 STARMATCH_RADIUS_PIX=4
 
+NMW_CALIBRATION="$HOME/nmw_calibration"
+if [ ! -d "$NMW_CALIBRATION" ];then
+ # vast
+ NMW_CALIBRATION="/dataX/cgi-bin/unmw/uploads/nmw_calibration"
+ if [ ! -d "$NMW_CALIBRATION" ];then
+  # kadar and kadar2
+  NMW_CALIBRATION="/home/apache/nmw_calibration"
+ fi
+fi
+
 # CAMERA_SETTINGS environment vairable may be set to override the default settings with the ones needed for a different camera
 if [ -n "$CAMERA_SETTINGS" ];then
  if [ "$CAMERA_SETTINGS" = "Stas" ];then
   # Canon 135 mm f/2.0 telephoto lens + SBIG ST-8300M CCD, 20 sec exposures
   export AAVSO_COMMENT_STRING="NMW Camera-1 Canon 135mm f/2.0 telephoto lens + SBIG ST-8300M CCD"
   TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
-  BAD_REGION_FILE="../Stas_bad_region.lst"
+  #BAD_REGION_FILE="../Stas_bad_region.lst"
+  BAD_REGION_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/Stas_bad_region.lst"
   EXCLUSION_LIST="../exclusion_list.txt"
   export MPC_CODE=C32
   # Calibration data
   if [ -z "$DARK_FRAMES_DIR" ];then
-   export DARK_FRAMES_DIR=/dataX/cgi-bin/unmw/uploads/darks
+   #export DARK_FRAMES_DIR=/dataX/cgi-bin/unmw/uploads/darks
+   export DARK_FRAMES_DIR="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
   fi
   if [ -z "$FLAT_FIELD_FILE" ];then
    #export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_0013_tail1_notbad.fit
    #export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_2024febmar_full_moon.fit
    #export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_2024jun_full_moon.fit
-   export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_2024jul17_flatbox.fit
+   #export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_2024jul17_flatbox.fit
+   export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_2024jul17_flatbox.fit"
   fi
  fi
  if [ "$CAMERA_SETTINGS" = "STL-11000M" ];then
@@ -144,13 +157,15 @@ if [ -n "$CAMERA_SETTINGS" ];then
   # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
   # the script will try to find the most appropriate one based on temperature and time
   if [ -z "$DARK_FRAMES_DIR" ];then
-   export DARK_FRAMES_DIR=/home/apache/darks
+   #export DARK_FRAMES_DIR=/home/apache/darks
+   export DARK_FRAMES_DIR="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
   fi
   # we don't usually have a luxury of multiple flat field frames to choose from
   # FLAT_FIELD_FILE has to point to one specific file that will be used for flat-fielding
   if [ -z "$FLAT_FIELD_FILE" ];then
    #export FLAT_FIELD_FILE=/home/apache/flats/mff_2023-07-14.fit
-   export FLAT_FIELD_FILE=/home/apache/flats/STL__mff_2024_febmar_full_moon.fit
+   #export FLAT_FIELD_FILE=/home/apache/flats/STL__mff_2024_febmar_full_moon.fit
+   export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/STL__mff_2024_febmar_full_moon.fit"
   fi
   #
   TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="STL-11000M"
@@ -166,7 +181,8 @@ if [ -n "$CAMERA_SETTINGS" ];then
   # REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES rejects candidates with exactly the same pixel coordinates on two new images
   # as these are likely to be hot pixels sneaking into the list of candidates if no shift has been applied between the two second-epoch images.
   export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="yes"
-  BAD_REGION_FILE="../STL_bad_region.lst"
+  #BAD_REGION_FILE="../STL_bad_region.lst"
+  BAD_REGION_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/STL_bad_region.lst"
   EXCLUSION_LIST="../exclusion_list_STL.txt"
   export OMP_NUM_THREADS=4
   SYSREM_ITERATIONS=0
