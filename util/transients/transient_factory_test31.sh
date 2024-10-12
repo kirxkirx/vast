@@ -2118,6 +2118,9 @@ exclusion_list_index_html.txt NOT FOUND" >> transient_factory_test31.txt
 
 ###############################################################################################################
 # Moved here as we run HORIZONS script in parallel to the main script
+if [ -n "$MPC_CODE" ];then
+ echo "The observatory MPC code is $MPC_CODE"
+fi
 echo "############################################################
 Planet positions from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
 cat planets.txt
