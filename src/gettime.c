@@ -1244,6 +1244,23 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   }
  }
  status= status_before_EXPSTART_EXPEND_test;
+/*
+ // TICA TESS
+ status_before_EXPSTART_EXPEND_test= status;
+ status= 0;
+ fits_read_key( fptr, TDOUBLE, "TJD_ZERO", &inJD, NULL, &status );
+ if ( status == 0 ) {
+  fits_read_key( fptr, TDOUBLE, "MIDTJD", &inJD, NULL, &status );
+  if ( status == 0 ) {
+   fprintf( stderr, "Both TJD_ZERO and MIDTJD keywords are present - will use them instead of DATE-OBS\n" );
+   DATEOBS[0]= '\0';
+   date_parsed= 0; // we will get the date later
+   // status= 202; // seems unnecessary
+  }
+ }
+ status= status_before_EXPSTART_EXPEND_test;
+*/
+
 
  // if DATE-OBS, DATE-BEG, DATE-EXP and SHUTOPEN do not exist at all, try DATE
  if ( status == 202 ) {
@@ -1265,12 +1282,22 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     DATEOBS[0]= '\0';
     date_parsed= 0; // we will get the date later
    }
+   status=0;
    fits_read_key( fptr, TDOUBLE, "JDMID", &inJD, NULL, &status );
    if ( status == 0 ) {
     // strncpy(DATEOBS,"",2);
     DATEOBS[0]= '\0';
     date_parsed= 0; // we will get the date later
    }
+   status=0;
+   fits_read_key( fptr, TDOUBLE, "MIDTJD", &inJD, NULL, &status );
+   if ( status == 0 ) {
+    // strncpy(DATEOBS,"",2);
+    DATEOBS[0]= '\0';
+    date_parsed= 0; // we will get the date later
+    //fprintf(stderr, "DEBUG MIDTJD\n");
+   }
+   status=0;
    fits_read_key( fptr, TDOUBLE, "MJD-OBS", &inJD, NULL, &status );
    if ( status == 0 ) {
     // strncpy(DATEOBS,"",2);
