@@ -953,7 +953,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  char EXPOSURE_COMMENT[2048]; // make it long, just in case
  char tymesys_str_in[32];
  char tymesys_str_out[32];
- char coma_or_whitespace_character_after_timesys;
+ //char coma_or_whitespace_character_after_timesys;
  double inJD= 0.0;
  double endJD= 0.0;    // for paring the Siril-style EXPSTART/EXPEND keywords
  double tjd_zero= 0.0; // for parsing TESS TICA FFIs

@@ -938,8 +938,9 @@ int main( int argc, char **argv ) {
  float axis_ratio;
  double razmer_x, razmer_y;
 
- char output_png_filename[FILENAME_LENGTH];
- char output_ps_filename[FILENAME_LENGTH];
+ // add 32 bytes for device specification like /PNG /PS
+ char output_png_filename[FILENAME_LENGTH + 32];
+ char output_ps_filename[FILENAME_LENGTH + 32];
 
  char fits_image_name[FILENAME_LENGTH];
  char fits_image_name_string_for_display[FILENAME_LENGTH];

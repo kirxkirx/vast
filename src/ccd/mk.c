@@ -280,8 +280,13 @@ int main( int argc, char *argv[] ) {
  fits_report_error( stderr, status ); /* print out any error messages */
  fits_close_file( fptr, &status );
 
+/*
  for ( file_counter= 1; file_counter < argc; file_counter++ ) {
   free( image_array[file_counter - 1] );
+ }
+*/
+ for ( file_counter= 0; file_counter < argc; file_counter++ ) {
+  free( image_array[file_counter] );
  }
  free( image_array );
  fprintf( stderr, "Writing output to median.fit \n" );
