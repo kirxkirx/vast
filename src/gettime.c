@@ -36,6 +36,45 @@ void remove_multiple_spaces( char *str ) {
  return;
 }
 
+void generate_finder_chart_timestring(char *finder_chart_timestring_output, 
+                                      const struct tm *structureTIME, 
+                                      double double_fractional_seconds_only,
+                                      const char *tymesys_str_in, 
+                                      double exposure) {
+    if (finder_chart_timestring_output == NULL) {
+        return;
+    }
+
+    char coma_or_whitespace_character_after_timesys = ',';
+    if (strcmp(tymesys_str_in, " ") == 0) {
+     coma_or_whitespace_character_after_timesys = ' ';
+    }
+
+    if (exposure > 0.0) {
+        sprintf(finder_chart_timestring_output, 
+                "%4d-%02d-%02d %02d:%02d:%02.0lf %s%c %.0lf sec",
+                structureTIME->tm_year - 100 + 2000,
+                structureTIME->tm_mon + 1,
+                structureTIME->tm_mday,
+                structureTIME->tm_hour,
+                structureTIME->tm_min,
+                (double)structureTIME->tm_sec + double_fractional_seconds_only,
+                tymesys_str_in,
+                coma_or_whitespace_character_after_timesys,
+                exposure);
+    } else {
+        sprintf(finder_chart_timestring_output, 
+                "%4d-%02d-%02d %02d:%02d:%02.0lf %s",
+                structureTIME->tm_year - 100 + 2000,
+                structureTIME->tm_mon + 1,
+                structureTIME->tm_mday,
+                structureTIME->tm_hour,
+                structureTIME->tm_min,
+                (double)structureTIME->tm_sec + double_fractional_seconds_only,
+                tymesys_str_in);
+    }
+}
+
 void write_DATEOBS_and_EXPTIME_to_FITS_header( char *fitsfilename, char *formed_str_DATEOBS, char *formed_str_EXPTIME ) {
  fitsfile *fptr; /* FITS file pointer, defined in fitsio.h */
  char card[FLEN_CARD], newcard[FLEN_CARD];
@@ -131,7 +170,7 @@ void write_DATEOBS_and_EXPTIME_to_FITS_header( char *fitsfilename, char *formed_
  return;
 }
 
-void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, char *formed_str_DATEOBS, char *formed_str_EXPTIME, char *log_output, int stderr_silent ) {
+void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, char *formed_str_DATEOBS, char *formed_str_EXPTIME, char *log_output, char *finder_chart_timestring_output, int stderr_silent ) {
  double double_fractional_seconds_only;
 
  double exposure_start_time_JD;
@@ -168,6 +207,16 @@ void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, ch
 #else
  struct_tm_pointer= gmtime( &exposure_start_time_unixsec );
 #endif
+
+ // Produce finder_chart_timestring_output
+ if ( NULL != finder_chart_timestring_output ) {
+  generate_finder_chart_timestring( finder_chart_timestring_output, 
+                                      struct_tm_pointer, 
+                                      double_fractional_seconds_only, 
+                                      " ", 
+                                      exposure_sec);
+ }
+ //
 
  year= struct_tm_pointer->tm_year + 1900;
  month= struct_tm_pointer->tm_mon + 1;
@@ -1926,6 +1975,17 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 
   // Produce finder_chart_timestring_output
   if ( NULL != finder_chart_timestring_output ) {
+   generate_finder_chart_timestring( finder_chart_timestring_output, 
+                                      &structureTIME, 
+                                      double_fractional_seconds_only, 
+                                      tymesys_str_in, 
+                                      exposure);
+  }
+
+/*
+  // Produce finder_chart_timestring_output
+  if ( NULL != finder_chart_timestring_output ) {
+  
    // make sure a lonely coma is not hanging in the middle of the string if tymesys_str_in is a white space
    coma_or_whitespace_character_after_timesys= ',';
    if ( 0 == strcmp( tymesys_str_in, " " ) ) {
@@ -1956,6 +2016,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
              tymesys_str_in );
    }
   }
+*/
 
   if ( NULL != stderr_output ) {
    if ( exposure != 0 ) {
@@ -2020,7 +2081,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    // unix_time= (time_t)( ( ( *JD ) - 2440587.5 ) * 3600.0 * 24.0 + 0.5 );
    // form_DATEOBS_and_EXPTIME_from_UNIXSEC( unix_time, 0.0, formed_str_DATEOBS, formed_str_EXPTIME );
    // fprintf(stderr, "DEBUG01 form_DATEOBS_EXPTIME_log_output_from_JD()\n");
-   form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), 0.0, formed_str_DATEOBS, formed_str_EXPTIME, log_output, 0 );
+   form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), 0.0, formed_str_DATEOBS, formed_str_EXPTIME, log_output, finder_chart_timestring_output, 0 );
    for ( counter_i= 0; counter_i < strlen( formed_str_DATEOBS ); counter_i++ ) {
     if ( formed_str_DATEOBS[counter_i] == 'T' ) {
      formed_str_DATEOBS[counter_i]= ' ';
@@ -2043,7 +2104,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     // struct tm *structureTIME_for_logs= gmtime( &unix_time_exposure_start_for_logs );
     // sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", structureTIME_for_logs->tm_mday, structureTIME_for_logs->tm_mon + 1, structureTIME_for_logs->tm_year - 100 + 2000, structureTIME_for_logs->tm_hour, structureTIME_for_logs->tm_min, structureTIME_for_logs->tm_sec, exposure );
     // fprintf(stderr, "DEBUG02 form_DATEOBS_EXPTIME_log_output_from_JD()\n");
-    form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), exposure, NULL, NULL, log_output, 0 );
+    form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), exposure, NULL, NULL, log_output, finder_chart_timestring_output, 0 );
    } else {
     // somehting is messed up here - fallback to zeroes in the log file
     // sprintf( log_output, "exp_start= %02d.%02d.%4d %02d:%02d:%02d  exp= %4.0lf  ", 0, 0, 0, 0, 0, 0, exposure );
@@ -2074,7 +2135,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    exposure= fabs( exposure );
    // form_DATEOBS_and_EXPTIME_from_UNIXSEC( unix_time, exposure, formed_str_DATEOBS, formed_str_EXPTIME );
    // fprintf(stderr, "DEBUG03 form_DATEOBS_EXPTIME_log_output_from_JD()\n");
-   form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), exposure, formed_str_DATEOBS, formed_str_EXPTIME, NULL, 0 );
+   form_DATEOBS_EXPTIME_log_output_from_JD( ( *JD ), exposure, formed_str_DATEOBS, formed_str_EXPTIME, NULL, NULL, 0 );
    // #ifdef DEBUGMESSAGES
    //    fprintf( stderr, "\n\n\n\nunix_time=%ld\nexposure=%lf\nformed_str_DATEOBS=%s\nformed_str_EXPTIME=%s\n\n\n", unix_time, exposure, formed_str_DATEOBS, formed_str_EXPTIME );
    // #endif

@@ -15,6 +15,21 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
+#
+function print_usage_and_exit {
+ echo "This script will make a good looking finder chart from the input image.
+ 
+Usage: 
+$0 wcs_calibrated_image.fits RA DEC
+or
+$0 wcs_calibrated_image.fits RA DEC 'Target Name'
+Examples: 
+$0 wcs_calibrated_image.fits 12:34:56.78 -01:23:45.6
+or 
+$0 wcs_sds163_2022-6-6_22-14-49_001.fts 16:22:30.78 -17:52:42.8 'U Sco'"
+ exit 1
+}
+
 # A more portable realpath wrapper
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
@@ -97,21 +112,8 @@ fi
 
 # Check the command line arguments
 if [ -z "$3" ];then
- echo "This script will make a good looking finder chart from the input image.
- 
-Usage: 
-$0 wcs_calibrated_image.fits RA DEC
-or
-$0 wcs_calibrated_image.fits RA DEC 'Target Name'
-Examples: 
-$0 wcs_calibrated_image.fits 12:34:56.78 -01:23:45.6
-or 
-$0 wcs_sds163_2022-6-6_22-14-49_001.fts 16:22:30.78 -17:52:42.8 'U Sco'"
-
+ print_usage_and_exit
 fi
-
-TARGET_RA="$2"
-TARGET_DEC="$3"
 
 # Check if Swarp is installed
 command -v swarp &>/dev/null
@@ -121,7 +123,7 @@ if [ $? -ne 0 ];then
 fi
 
 # Check if the input image
-FITSFILE=$1
+FITSFILE="$1"
 # Check if the image actually exists
 if [ ! -f "$FITSFILE" ];then
  echo "ERROR: cannot find the image file $FITSFILE"
@@ -148,15 +150,40 @@ Checking if the filename extension and FITS header look reasonable..."
 fi
 
 # Check if the input image is WCS-calibrated
-FITSFILE_HEADER=`"$VAST_PATH"util/listhead "$FITSFILE"`
+FITSFILE_HEADER=$("$VAST_PATH"util/listhead "$FITSFILE")
 # Check if it has WCS keywords
 for TYPICAL_WCS_KEYWORD in CTYPE1 CTYPE2 CRVAL1 CRVAL2 CRPIX1 CRPIX2 CD1_1 CD1_2 CD2_1 CD2_2 ;do
  echo "$FITSFILE_HEADER" | grep --quiet "$TYPICAL_WCS_KEYWORD"
  if [ $? -ne 0 ];then
-  echo "Some of the expected WCS keywords are misssing. Please make sure the input image is plate-solved!"
+  echo "ERROR: some of the expected WCS keywords are misssing. Please make sure the input image is plate-solved!"
   exit 1
  fi
 done
+
+TARGET_RA="$2"
+TARGET_DEC="$3"
+
+if [ -z "$TARGET_RA" ];then
+ echo "ERROR: TARGET_RA is not set"
+ print_usage_and_exit
+fi
+if [ -z "$TARGET_DEC" ];then
+ echo "ERROR: TARGET_DEC is not set"
+ print_usage_and_exit
+fi
+
+# Use this trick to check the format of TARGET_RA and TARGET_DEC
+IMAGE_CENTER_STRING_FOR_COORDINATES_FORMAT_TEST=$(util/fov_of_wcs_calibrated_image.sh "$FITSFILE" | grep 'Image center:' | awk '{print $3" "$4}')
+if [ -z "$IMAGE_CENTER_STRING_FOR_COORDINATES_FORMAT_TEST" ];then
+ echo "ERROR: cannot determine the image ceter coordinateds for $FITSFILE"
+ exit 1
+fi
+lib/put_two_sources_in_one_field $IMAGE_CENTER_STRING_FOR_COORDINATES_FORMAT_TEST "$TARGET_RA" "$TARGET_DEC" > /dev/null
+if [ $? -ne 0 ];then
+ echo "ERROR interpreting the equatorial coordinates of the target: $TARGET_RA $TARGET_DEC"
+ exit 1
+fi
+
 
 ########### End of checks - start the work ###########
 
@@ -178,7 +205,7 @@ if [ -f wcs_"$RESAMPLED_IMAGE_NAME" ];then
 fi
 
 # Get the pixel position we want to mark
-PIXEL_POSITION_TO_MARK=`lib/bin/sky2xy "$RESAMPLED_IMAGE_NAME" $TARGET_RA $TARGET_DEC | awk '{print $5" "$6}'`
+PIXEL_POSITION_TO_MARK=$(lib/bin/sky2xy "$RESAMPLED_IMAGE_NAME" $TARGET_RA $TARGET_DEC | awk '{print $5" "$6}')
 if [ $? -ne 0 ];then
  echo "ERROR converting RA, Dec to the pixel coordinates"
  exit 1

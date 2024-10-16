@@ -2868,6 +2868,7 @@ int main( int argc, char **argv ) {
        // cpgsch(1.0);
        sprintf( finder_chart_string_to_print, "\\fR %s", finder_chart_timestring_output );
        cpgmtxt( "B", -1.0, 0.05, 0.0, finder_chart_string_to_print );
+       //fprintf(stderr,"\n\n\n HAHAHA \n %s \n %s \n\n\n", finder_chart_timestring_output, finder_chart_string_to_print);
        // cpgsch(2.0);
       }
       //
