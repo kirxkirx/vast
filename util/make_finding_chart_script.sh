@@ -160,8 +160,8 @@ done
 
 ########### End of checks - start the work ###########
 
-RESAMPLED_IMAGE_NAME="resample_$(basename $FITSFILE)"
-RESAMPLED_WEIGHTS_NAME="resample_weights_$(basename $FITSFILE)"
+RESAMPLED_IMAGE_NAME="r_$(basename $FITSFILE)"
+RESAMPLED_WEIGHTS_NAME="r_weights_$(basename $FITSFILE)"
 
 # Resample the image to the new grid
 swarp -SUBTRACT_BACK N -IMAGEOUT_NAME "$RESAMPLED_IMAGE_NAME" -WEIGHTOUT_NAME "$RESAMPLED_WEIGHTS_NAME" "$FITSFILE"
@@ -207,7 +207,7 @@ if [ ! -s "$MAKE_FINDING_CHART_OUTPUT_PNG" ];then
 fi
 # Everything is fine
 PIXEL_POSITION_TO_MARK_FOR_PNG=${PIXEL_POSITION_TO_MARK//" "/_}
-FITSFILE_NAME_FOR_PNG="resample_$(basename "$FITSFILE")"
+FITSFILE_NAME_FOR_PNG="r_$(basename "$FITSFILE")"
 FITSFILE_NAME_FOR_PNG=${FITSFILE_NAME_FOR_PNG//./_}
 #mv -v "pgplot.png" "$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov.png
 mv -v "$MAKE_FINDING_CHART_OUTPUT_PNG" "$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov.png
@@ -234,7 +234,7 @@ fi
 mv -v "$MAKE_FINDING_CHART_OUTPUT_PNG" "$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix.png
 
 # Note that you may combine multiple images side-by-side using something like
-# montage resample_wcs_Sco3_20*png -tile 3x2 -geometry +0+0 out.png
+# montage r_wcs_Sco3_20*png -tile 3x2 -geometry +0+0 out.png
 
 
 ###################################################################

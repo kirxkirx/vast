@@ -281,9 +281,9 @@ if [ $? -ne 0 ];then
  echo "ERROR running util/make_finding_chart_script.sh $WCS_INPUTFILE $TARET_RA $TARET_DEC"
  exit 1
 fi
-check_file_created resample_"$WCS_INPUTFILE"
+check_file_created r_"$WCS_INPUTFILE"
 CHARTS_REF1_BASENAME="${INPUTFILE_BASENAME//./_}"
-cp -v resample_"$WCS_INPUTFILE" "$OUTPUT_DIR"/resampled_FITS
+cp -v r_"$WCS_INPUTFILE" "$OUTPUT_DIR"/resampled_FITS
 
 INPUTFILE=$(echo "$THE_FOUR_IMAGE_FILES" | awk '{print $2}')
 check_file_exists "$INPUTFILE"
@@ -301,9 +301,9 @@ if [ $? -ne 0 ];then
  echo "ERROR running util/make_finding_chart_script.sh $WCS_INPUTFILE $TARET_RA $TARET_DEC"
  exit 1
 fi
-check_file_created resample_"$WCS_INPUTFILE"
+check_file_created r_"$WCS_INPUTFILE"
 CHARTS_REF2_BASENAME="${INPUTFILE_BASENAME//./_}"
-cp -v resample_"$WCS_INPUTFILE" "$OUTPUT_DIR"/resampled_FITS
+cp -v r_"$WCS_INPUTFILE" "$OUTPUT_DIR"/resampled_FITS
 
 INPUTFILE=$(echo "$THE_FOUR_IMAGE_FILES" | awk '{print $3}')
 check_file_exists "$INPUTFILE"
@@ -321,9 +321,9 @@ if [ $? -ne 0 ];then
  echo "ERROR running util/make_finding_chart_script.sh $WCS_INPUTFILE $TARET_RA $TARET_DEC"
  exit 1
 fi
-check_file_created resample_"$WCS_INPUTFILE"
+check_file_created r_"$WCS_INPUTFILE"
 CHARTS_NEW1_BASENAME="${INPUTFILE_BASENAME//./_}"
-cp -v resample_"$WCS_INPUTFILE" "$OUTPUT_DIR"/resampled_FITS
+cp -v r_"$WCS_INPUTFILE" "$OUTPUT_DIR"/resampled_FITS
 
 INPUTFILE=$(echo "$THE_FOUR_IMAGE_FILES" | awk '{print $4}')
 check_file_exists "$INPUTFILE"
@@ -341,64 +341,64 @@ if [ $? -ne 0 ];then
  echo "ERROR running util/make_finding_chart_script.sh $WCS_INPUTFILE $TARET_RA $TARET_DEC"
  exit 1
 fi
-check_file_created resample_"$WCS_INPUTFILE"
+check_file_created r_"$WCS_INPUTFILE"
 CHARTS_NEW2_BASENAME="${INPUTFILE_BASENAME//./_}"
-cp -v resample_"$WCS_INPUTFILE" "$OUTPUT_DIR"/resampled_FITS
+cp -v r_"$WCS_INPUTFILE" "$OUTPUT_DIR"/resampled_FITS
 
 # Combine the finder charts into one image (note the '*' symbols meaning the command will work only if you have a single transient in that field)
 #
-montage finder_0032pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix.png finder_0032pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_targetmark_v11.png
-montage finder_0032pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix.png finder_0032pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_targetmark_v12.png
-montage finder_0064pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix.png finder_0064pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_targetmark_v11.png
-montage finder_0064pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix.png finder_0064pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_targetmark_v12.png
-montage finder_0128pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix.png finder_0128pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_targetmark_v11.png
-montage finder_0128pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix.png finder_0128pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_targetmark_v12.png
+montage finder_0032pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix.png finder_0032pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_targetmark_v11.png
+montage finder_0032pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix.png finder_0032pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_targetmark_v12.png
+montage finder_0064pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix.png finder_0064pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_targetmark_v11.png
+montage finder_0064pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix.png finder_0064pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_targetmark_v12.png
+montage finder_0128pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix.png finder_0128pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_targetmark_v11.png
+montage finder_0128pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix.png finder_0128pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_targetmark_v12.png
 #
-montage finder_0020pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0020pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0020pix_v11.png
-montage finder_0020pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0020pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0020pix_v12.png
-montage finder_0032pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0032pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_v11.png
-montage finder_0032pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0032pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_v12.png
-montage finder_0064pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0064pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_v11.png
-montage finder_0064pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0064pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_v12.png
-montage finder_0128pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0128pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_v11.png
-montage finder_0128pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0128pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_v12.png
+montage finder_0020pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0020pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0020pix_v11.png
+montage finder_0020pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0020pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0020pix_v12.png
+montage finder_0032pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0032pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_v11.png
+montage finder_0032pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0032pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_v12.png
+montage finder_0064pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0064pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_v11.png
+montage finder_0064pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0064pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_v12.png
+montage finder_0128pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0128pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_v11.png
+montage finder_0128pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0128pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_v12.png
 #
 #
-montage finder_0032pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix.png finder_0032pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_targetmark_v21.png
-montage finder_0032pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix.png finder_0032pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_targetmark_v22.png
-montage finder_0064pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix.png finder_0064pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_targetmark_v21.png
-montage finder_0064pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix.png finder_0064pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_targetmark_v22.png
-montage finder_0128pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix.png finder_0128pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_targetmark_v21.png
-montage finder_0128pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix.png finder_0128pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_targetmark_v22.png
+montage finder_0032pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix.png finder_0032pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_targetmark_v21.png
+montage finder_0032pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix.png finder_0032pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_targetmark_v22.png
+montage finder_0064pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix.png finder_0064pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_targetmark_v21.png
+montage finder_0064pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix.png finder_0064pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_targetmark_v22.png
+montage finder_0128pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix.png finder_0128pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_targetmark_v21.png
+montage finder_0128pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix.png finder_0128pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_targetmark_v22.png
 #
-montage finder_0020pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0020pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0020pix_v21.png
-montage finder_0020pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0020pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0020pix_v22.png
-montage finder_0032pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0032pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_v21.png
-montage finder_0032pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0032pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_v22.png
-montage finder_0064pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0064pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_v21.png
-montage finder_0064pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0064pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_v22.png
-montage finder_0128pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0128pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_v21.png
-montage finder_0128pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0128pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_v22.png
+montage finder_0020pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0020pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0020pix_v21.png
+montage finder_0020pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0020pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0020pix_v22.png
+montage finder_0032pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0032pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_v21.png
+montage finder_0032pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0032pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_v22.png
+montage finder_0064pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0064pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_v21.png
+montage finder_0064pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0064pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_v22.png
+montage finder_0128pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0128pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_v21.png
+montage finder_0128pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0128pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_v22.png
 
 # Create GIF animation
 #
-convert -delay 50 -loop 0   finder_0020pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0020pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0020pix_v11.gif
-convert -delay 50 -loop 0   finder_0020pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0020pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0020pix_v12.gif
-convert -delay 50 -loop 0   finder_0032pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0032pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0032pix_v11.gif
-convert -delay 50 -loop 0   finder_0032pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0032pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0032pix_v12.gif
-convert -delay 50 -loop 0   finder_0064pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0064pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0064pix_v11.gif
-convert -delay 50 -loop 0   finder_0064pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0064pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0064pix_v12.gif
-convert -delay 50 -loop 0   finder_0128pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0128pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0128pix_v11.gif
-convert -delay 50 -loop 0   finder_0128pix_resample_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0128pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0128pix_v12.gif
+convert -delay 50 -loop 0   finder_0020pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0020pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0020pix_v11.gif
+convert -delay 50 -loop 0   finder_0020pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0020pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0020pix_v12.gif
+convert -delay 50 -loop 0   finder_0032pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0032pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0032pix_v11.gif
+convert -delay 50 -loop 0   finder_0032pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0032pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0032pix_v12.gif
+convert -delay 50 -loop 0   finder_0064pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0064pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0064pix_v11.gif
+convert -delay 50 -loop 0   finder_0064pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0064pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0064pix_v12.gif
+convert -delay 50 -loop 0   finder_0128pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0128pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0128pix_v11.gif
+convert -delay 50 -loop 0   finder_0128pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0128pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0128pix_v12.gif
 #
-convert -delay 50 -loop 0   finder_0020pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0020pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0020pix_v21.gif
-convert -delay 50 -loop 0   finder_0020pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0020pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0020pix_v22.gif
-convert -delay 50 -loop 0   finder_0032pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0032pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0032pix_v21.gif
-convert -delay 50 -loop 0   finder_0032pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0032pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0032pix_v22.gif
-convert -delay 50 -loop 0   finder_0064pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0064pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0064pix_v21.gif
-convert -delay 50 -loop 0   finder_0064pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0064pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0064pix_v22.gif
-convert -delay 50 -loop 0   finder_0128pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0128pix_resample_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0128pix_v21.gif
-convert -delay 50 -loop 0   finder_0128pix_resample_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0128pix_resample_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0128pix_v22.gif
+convert -delay 50 -loop 0   finder_0020pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0020pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0020pix_v21.gif
+convert -delay 50 -loop 0   finder_0020pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0020pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0020pix_v22.gif
+convert -delay 50 -loop 0   finder_0032pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0032pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0032pix_v21.gif
+convert -delay 50 -loop 0   finder_0032pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0032pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0032pix_v22.gif
+convert -delay 50 -loop 0   finder_0064pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0064pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0064pix_v21.gif
+convert -delay 50 -loop 0   finder_0064pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0064pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0064pix_v22.gif
+convert -delay 50 -loop 0   finder_0128pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0128pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0128pix_v21.gif
+convert -delay 50 -loop 0   finder_0128pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0128pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0128pix_v22.gif
 
 # save visual inspection plots
 mv -v *.png "$OUTPUT_DIR"/finder_charts_PNG

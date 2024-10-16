@@ -2065,6 +2065,10 @@ int main( int argc, char **argv ) {
   strncpy( output_ps_filename, output_png_filename, FILENAME_LENGTH);
   replace_last_dot_with_null( output_ps_filename );
   strncat( output_ps_filename, ".ps/PS", FILENAME_LENGTH);
+  
+  if ( strlen(output_png_filename) > 100  ) {
+   fprintf(stderr, "WARNING: the output filename is too long and PGPLOT may truncate it!\n");
+  }
 
   fprintf(stderr, "Opening output to %s\n", output_png_filename);
   if ( cpgbeg( 0, output_png_filename, 1, 1 ) != 1 ) {
