@@ -617,6 +617,11 @@ if [ $VARIABLE_STAR_ID -ne 0 ] && [ $ASTEROID_ID -ne 0 ] ;then
  fi
 fi
 
+# Is the Online MPChecker search radius is not set - use the default one
+if [ -z "$ONLINE_MPCHECKER_BUTTON_ASTEROID_SEARCH_RADIUS_ARCMIN" ];then
+ ONLINE_MPCHECKER_BUTTON_ASTEROID_SEARCH_RADIUS_ARCMIN=20
+fi
+
 # Determine limiting magnitude for manual asteroid search
 ASTEROID_SEARCH_MAG_LIMIT=16
 if [ -n "$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" ];then
@@ -646,7 +651,7 @@ Online MPChecker may fail to identify bright comets! Please manually check the <
 <input type='hidden' name='decl' value='$DEC_MEAN_SPACES' maxlength=12 size=12>
 <input type='radio' name='which' VALUE='obs' style='display:none;'>
 <textarea name='TextArea' cols=81 rows=10 style='display:none;'></textarea>
-<input type='hidden' name='radius' maxlength=3 size=3 VALUE='20'>
+<input type='hidden' name='radius' maxlength=3 size=3 VALUE='$ONLINE_MPCHECKER_BUTTON_ASTEROID_SEARCH_RADIUS_ARCMIN'>
 <input type='hidden' name='limit' maxlength=4 size=4 VALUE='$ASTEROID_SEARCH_MAG_LIMIT'>
 <input type='hidden' name='oc' maxlength=3 size=3 VALUE='500'>
 <input type='radio' name='sort' VALUE='d' CHECKED style='display:none;'>

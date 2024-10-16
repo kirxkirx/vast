@@ -163,8 +163,12 @@ if [ -z "$ASTCHECK_OUTPUT" ];then
   fi
  fi # if [ -z "$ASTEROID_SEARCH_MAG_LIMIT" ];then
  #cat $TEST_MPC_FILE
+ if [ -z "$ASTCHECK_ASTEROID_SEARCH_RADIUS_ARCSEC" ];then
+  ASTCHECK_ASTEROID_SEARCH_RADIUS_ARCSEC=600
+ fi
  # I want a larger search radius because TESS
- ASTCHECK_OUTPUT=$(lib/astcheck "$TEST_MPC_FILE" -r600 -m"$ASTEROID_SEARCH_MAG_LIMIT" | grep -A 50 "TAU0008" | grep -v "TAU0008" | head -n 1 | grep -v ObsCodes.html)
+ #ASTCHECK_OUTPUT=$(lib/astcheck "$TEST_MPC_FILE" -r600 -m"$ASTEROID_SEARCH_MAG_LIMIT" | grep -A 50 "TAU0008" | grep -v "TAU0008" | head -n 1 | grep -v ObsCodes.html)
+ ASTCHECK_OUTPUT=$(lib/astcheck "$TEST_MPC_FILE" -r"$ASTCHECK_ASTEROID_SEARCH_RADIUS_ARCSEC" -m"$ASTEROID_SEARCH_MAG_LIMIT" | grep -A 50 "TAU0008" | grep -v "TAU0008" | head -n 1 | grep -v ObsCodes.html)
 fi 
 
 if [ -z "$ASTCHECK_OUTPUT" ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then
