@@ -123,12 +123,16 @@ int main( int argc, char *argv[] ) {
   exit( EXIT_FAILURE );
  }
  //
+ 
+ image_array= NULL;
 
+/*
  image_array= malloc( sizeof( unsigned short * ) ); // this will be realloc'ed before use anyhow
  if ( image_array == NULL ) {
   fprintf( stderr, "ERROR in mk: Couldn't allocate memory for image array (0)\n" );
   exit( EXIT_FAILURE );
  }
+*/
 
  // Reading the input files
  for ( file_counter= 1; file_counter < argc; file_counter++ ) {
@@ -274,8 +278,8 @@ int main( int argc, char *argv[] ) {
  }
 
  fits_write_history( fptr, "Median frame stacking:", &status );
- for ( file_counter= 1; file_counter < argc; file_counter++ ) {
-  fits_write_history( fptr, argv[file_counter], &status );
+ for ( ii= 1; ii < argc; ii++ ) {
+  fits_write_history( fptr, argv[ii], &status );
  }
  fits_report_error( stderr, status ); /* print out any error messages */
  fits_close_file( fptr, &status );
@@ -285,8 +289,8 @@ int main( int argc, char *argv[] ) {
   free( image_array[file_counter - 1] );
  }
 */
- for ( file_counter= 0; file_counter < argc; file_counter++ ) {
-  free( image_array[file_counter] );
+ for ( ii= 0; ii < file_counter; ii++ ) {
+  free( image_array[ii] );
  }
  free( image_array );
  fprintf( stderr, "Writing output to median.fit \n" );
