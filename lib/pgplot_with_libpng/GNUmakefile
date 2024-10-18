@@ -44,7 +44,9 @@ RV_INCL=
 #CCOMPL:=`../find_gcc_compiler.sh`
 CCOMPL:=$(shell ../find_gcc_compiler.sh)
 #CCOMPL != ../find_gcc_compiler.sh
-CFLAGC=-Wall -Wno-error -fPIC -DPG_PPU -O -I.
+# -fPIC: Stands for "Position Independent Code" Generates position-independent code suitable for use in a shared library This is necessary when creating shared libraries (.so files on Unix-like systems)
+#CFLAGC=-Wall -Wno-error -fPIC -DPG_PPU -O -I.
+CFLAGC=-Wall -fPIC -DPG_PPU -O0 -I.
 CFLAGD=-Wall -O
 MCOMPL=
 MFLAGC=
