@@ -12,8 +12,17 @@
 
 #define FALLBACK_CCD_TEMP_VALUE 100
 #define MAX_CCD_TEMP_DIFF 2.5
+#define MIN_FLAT_FIELD_COUNT 5000
+#define MAX_FLAT_FIELD_COUNT 20000
+#define MAX_BRIGHTNESS 50000
 
 char *beztochki( char * );
+
+void handle_error(const char *message, int status) {
+    fprintf(stderr, "ERROR: %s\n", message);
+    fits_report_error(stderr, status);
+    exit(EXIT_FAILURE);
+}
 
 int main( int argc, char *argv[] ) {
  // Varaibles for FITS file reading
@@ -91,14 +100,16 @@ int main( int argc, char *argv[] ) {
  // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  key= malloc( No_of_keys * sizeof( char * ) );
  if ( key == NULL ) {
-  fprintf( stderr, "ERROR: Couldn't allocate memory for FITS header\n" );
-  exit( EXIT_FAILURE );
+  handle_error("Couldn't allocate memory for FITS header", status);
  }
  for ( ii= 1; ii < No_of_keys; ii++ ) {
   key[ii]= malloc( FLEN_CARD * sizeof( char ) ); // FLEN_CARD length of a FITS header card defined in fitsio.h
   if ( key[ii] == NULL ) {
-   fprintf( stderr, "ERROR: Couldn't allocate memory for key[ii]\n" );
-   exit( EXIT_FAILURE );
+   handle_error("Couldn't allocate memory for key[ii]", status);
+   for (int j = 1; j < ii; j++) {
+       free(key[j]);
+   }
+   free(key);
   }
   fits_read_record( fptr, ii, key[ii], &status );
  }
@@ -208,11 +219,11 @@ int main( int argc, char *argv[] ) {
   // Reject obviously bad images from the flat-field stack
   // (but how do we know it's a flat stack?)
   // assume if the value is below 5000 counts it's a dark/bias staks and not flat
-  if ( 5000 < cur_index && cur_index < 20000 ) {
+  if ( MIN_FLAT_FIELD_COUNT < cur_index && cur_index < MAX_FLAT_FIELD_COUNT ) {
    fprintf( stderr, "REJECT (too faint for a flat field)\n" );
    continue; // continue here so good_file_counter does not increase
   }
-  if ( cur_index > 50000 ) {
+  if ( cur_index > MAX_BRIGHTNESS ) {
    fprintf( stderr, "REJECT (too bright)\n" );
    continue; // continue here so good_file_counter does not increase
   }
