@@ -15,6 +15,10 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
+#VALGRIND_COMMAND="valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes --errors-for-leak-kinds=definite  "
+#VALGRIND_COMMAND="strace"
+VALGRIND_COMMAND=""
+
 #
 function print_usage_and_exit {
  echo "This script will make a good looking finder chart from the input image.
@@ -220,7 +224,7 @@ echo "Plotting the finder chart without the field of view label"
 # Make the PNG finding chart
 COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --datestringinsideimg -- $RESAMPLED_IMAGE_NAME $PIXEL_POSITION_TO_MARK "
 echo $COMMAND
-$COMMAND
+$VALGRIND_COMMAND $COMMAND
 if [ $? -ne 0 ];then
  echo "ERROR running util/make_finding_chart"
  exit 1
@@ -245,7 +249,7 @@ echo "Plotting the finder chart with the field of view label"
 # Make the PNG finding chart
 COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --datestringinsideimg --imgsizestringinsideimg -- $RESAMPLED_IMAGE_NAME $PIXEL_POSITION_TO_MARK "
 echo $COMMAND
-$COMMAND
+$VALGRIND_COMMAND $COMMAND
 if [ $? -ne 0 ];then
  echo "ERROR running util/make_finding_chart"
  exit 1
@@ -276,9 +280,9 @@ for PIXELS_AROUND_TARGET in 20 32 64 128 256 512 ;do
  COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --targetmark --datestringinsideimg --imgsizestringinsideimg $RESAMPLED_IMAGE_NAME $PIXEL_POSITION_TO_MARK "
  echo $COMMAND
  if [ ! -z "$4" ];then
-  $COMMAND --namelabel "$4"
+  $VALGRIND_COMMAND $COMMAND --namelabel "$4"
  else
-  $COMMAND
+  $VALGRIND_COMMAND $COMMAND
  fi
  if [ $? -ne 0 ];then
   echo "ERROR running util/make_finding_chart"
@@ -296,17 +300,17 @@ for PIXELS_AROUND_TARGET in 20 32 64 128 256 512 ;do
  # make the _nofov version
  COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --targetmark --datestringinsideimg $RESAMPLED_IMAGE_NAME $PIXEL_POSITION_TO_MARK "
  echo $COMMAND
- $COMMAND
+ $VALGRIND_COMMAND $COMMAND
  mv -v "$MAKE_FINDING_CHART_OUTPUT_PNG" finder_"$STR_PIXELS_AROUND_TARGET"pix_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov.png
  # make the _nofov_notargetmark version
  COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --datestringinsideimg $RESAMPLED_IMAGE_NAME $PIXEL_POSITION_TO_MARK "
  echo $COMMAND
- $COMMAND
+ $VALGRIND_COMMAND $COMMAND
  mv -v "$MAKE_FINDING_CHART_OUTPUT_PNG" finder_"$STR_PIXELS_AROUND_TARGET"pix_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov_notargetmark.png
  # make the _notargetmark version
  COMMAND="util/make_finding_chart  --width $PIXELS_AROUND_TARGET --nolabels --datestringinsideimg --imgsizestringinsideimg $RESAMPLED_IMAGE_NAME $PIXEL_POSITION_TO_MARK "
  echo $COMMAND
- $COMMAND
+ $VALGRIND_COMMAND $COMMAND
  mv -v "$MAKE_FINDING_CHART_OUTPUT_PNG" finder_"$STR_PIXELS_AROUND_TARGET"pix_"$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_notargetmark.png
 
 done

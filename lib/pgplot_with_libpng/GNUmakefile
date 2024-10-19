@@ -45,8 +45,11 @@ RV_INCL=
 CCOMPL:=$(shell ../find_gcc_compiler.sh)
 #CCOMPL != ../find_gcc_compiler.sh
 # -fPIC: Stands for "Position Independent Code" Generates position-independent code suitable for use in a shared library This is necessary when creating shared libraries (.so files on Unix-like systems)
-#CFLAGC=-Wall -Wno-error -fPIC -DPG_PPU -O -I.
-CFLAGC=-Wall -fPIC -DPG_PPU -O0 -I.
+CFLAGC=-Wall -Wno-error -fPIC -DPG_PPU -O -I.
+# nope, setting -O0 has no effect on the PNG writing problem
+#CFLAGC=-Wall -fPIC -DPG_PPU -O0 -I.
+# good flags for debugging with Valgrind
+#CFLAGC=-Wall -fPIC -DPG_PPU -O0 -I. -g -Wno-comment -Wno-error -Warray-bounds -Wextra -fno-omit-frame-pointer 
 CFLAGD=-Wall -O
 MCOMPL=
 MFLAGC=

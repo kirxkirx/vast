@@ -42,7 +42,8 @@ GSL_INCLUDE = lib/include
 
 
 
-
+## test
+#OPTFLAGS = -g -O0
 ## production
 OPTFLAGS = -w -O2 -fomit-frame-pointer $(GOOD_MARCH_OPTIONS) $(LTO_OPTIONS) $(USE_OMP_OPTIONS) $(USE_BUILTIN_FUNCTIONS)
 ## production with warnings

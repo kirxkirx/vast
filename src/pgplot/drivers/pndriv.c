@@ -516,6 +516,8 @@ static void open_new_device( char *file, int length, float *id, float *err, int 
   all_devices.devices[devnum]= NULL;
   return;
  }
+ 
+ all_devices.devices[devnum]->error= false; /* intialize the device error flag */
 
  make_device_active( devnum );
 
@@ -546,6 +548,25 @@ static void close_device( DeviceData *dev ) {
  all_devices.devices[devnum]= NULL;
  if ( all_devices.active == devnum )
   all_devices.active= -1;
+}
+
+/* The new function to deallocate all the devices including all_devices.devices array itself */
+static void cleanup_all_devices() {
+ int i; /* a counter */
+ if (all_devices.devices) {
+  for (i = 0; i < all_devices.nallocated; i++) {
+   if (all_devices.devices[i]) {
+    if (all_devices.devices[i]->filename) {
+     free(all_devices.devices[i]->filename);
+    }
+    free(all_devices.devices[i]);
+   }
+  }
+  free(all_devices.devices);
+  all_devices.devices = NULL;
+ }
+ all_devices.nallocated = 0;
+ all_devices.active = -1;
 }
 
 #ifdef VMS
@@ -652,6 +673,10 @@ void PNDRIV( int *opcode, float *rbuf, int *nbuf, char *chr, int *lchr, int *mod
   /* close device */
  case 10:
   close_device( ACTIVE_DEVICE );
+  if (all_devices.active == -1) {
+   /* If this was the last active device, clean up everything */
+   cleanup_all_devices();
+  }
   break;
 
   /* begin picture */
