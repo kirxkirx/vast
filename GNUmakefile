@@ -92,7 +92,7 @@ old: formater_out_wfk
 
 astrometry: lib/astrometry/get_image_dimentions lib/astrometry/insert_wcs_header lib/astrometry/strip_wcs_keywords lib/make_outxyls_for_astrometric_calibration util/solve_plate_with_UCAC5 lib/autodetect_aperture_main lib/try_to_guess_image_fov cfitsio gsl
 
-pgplot_components: variability_indexes.o photocurve.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o replace_file_with_symlink_if_filename_contains_white_spaces.o wpolyfit.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o cfitsio gsl
+pgplot_components: variability_indexes.o photocurve.o gettime.o kourovka_sbg_date.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o replace_file_with_symlink_if_filename_contains_white_spaces.o wpolyfit.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o cfitsio gsl
 	lib/test_libpng.sh
 	echo $(OPTFLAGS) > optflags_for_scripts.tmp
 	$(CC) $(OPTFLAGS) -c src/setenv_local_pgplot.c
@@ -153,13 +153,15 @@ stetson_test.o: $(SRC_PATH)test/stetson_test.c
 
 
 
-vast: vast.o gettime.o vast_report_memory_error.o libident.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o erfinv.o is_point_close_or_off_the_frame_edge.o get_path_to_vast.o cfitsio gsl
-	$(CC) $(OPTFLAGS) -o vast vast.o gettime.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o vast_report_memory_error.o libident.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o erfinv.o is_point_close_or_off_the_frame_edge.o get_path_to_vast.o $(CFITSIO_LIB) $(GSL_LIB) -Wl,-rpath,$(LIB_IDENT_PATH) -lm
+vast: vast.o gettime.o kourovka_sbg_date.o vast_report_memory_error.o libident.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o erfinv.o is_point_close_or_off_the_frame_edge.o get_path_to_vast.o cfitsio gsl
+	$(CC) $(OPTFLAGS) -o vast vast.o gettime.o kourovka_sbg_date.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o vast_report_memory_error.o libident.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o erfinv.o is_point_close_or_off_the_frame_edge.o get_path_to_vast.o $(CFITSIO_LIB) $(GSL_LIB) -Wl,-rpath,$(LIB_IDENT_PATH) -lm
 
 vast.o: $(SRC_PATH)vast.c $(SOURCE_IDENT_PATH)ident.h $(SRC_PATH)vast_limits.h $(SRC_PATH)vast_report_memory_error.h $(SRC_PATH)detailed_error_messages.h $(SRC_PATH)photocurve.h $(SRC_PATH)get_number_of_cpu_cores.h $(SRC_PATH)fit_plane_lin.h $(SRC_PATH)fitsfile_read_check.h $(SRC_PATH)wpolyfit.h $(SRC_PATH)replace_file_with_symlink_if_filename_contains_white_spaces.h $(SRC_PATH)lightcurve_io.h
 	$(CC) $(OPTFLAGS) -c -o vast.o $(SRC_PATH)vast.c -I$(GSL_INCLUDE) -Wall
 gettime.o: $(SRC_PATH)gettime.c
 	$(CC) $(OPTFLAGS) -c -o gettime.o $(SRC_PATH)gettime.c
+kourovka_sbg_date.o: $(SRC_PATH)kourovka_sbg_date.c
+	$(CC) $(OPTFLAGS) -c -o kourovka_sbg_date.o $(SRC_PATH)kourovka_sbg_date.c
 autodetect_aperture.o: $(SRC_PATH)autodetect_aperture.c
 	$(CC) $(OPTFLAGS) -c  -o autodetect_aperture.o $(SRC_PATH)autodetect_aperture.c -I$(GSL_INCLUDE) -I$(SOURCE_IDENT_PATH)
 exclude_region.o: $(SRC_PATH)exclude_region.c
@@ -321,13 +323,13 @@ lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search
 
 lib/catalogs/check_catalogs_offline: $(SRC_PATH)catalogs/check_catalogs_offline.c
 	$(CC) $(OPTFLAGS) -o lib/catalogs/check_catalogs_offline $(SRC_PATH)catalogs/check_catalogs_offline.c -lm
-util/get_image_date: get_image_date.o gettime.o
-	$(CC) $(OPTFLAGS) -o util/get_image_date get_image_date.o gettime.o $(CFITSIO_LIB) -lm
+util/get_image_date: get_image_date.o gettime.o kourovka_sbg_date.o
+	$(CC) $(OPTFLAGS) -o util/get_image_date get_image_date.o gettime.o kourovka_sbg_date.o $(CFITSIO_LIB) -lm
 	cd util/ ; ln -s get_image_date fix_image_date ; cd -
 lib/find_flares: $(SRC_PATH)find_flares.c
 	$(CC) $(OPTFLAGS) -o lib/find_flares $(SRC_PATH)find_flares.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
-lib/autodetect_aperture_main: autodetect_aperture_main.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o gettime.o get_number_of_cpu_cores.o get_path_to_vast.o variability_indexes.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o
-	$(CC) $(OPTFLAGS) -o lib/autodetect_aperture_main autodetect_aperture_main.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o gettime.o get_number_of_cpu_cores.o get_path_to_vast.o variability_indexes.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE)  -lm
+lib/autodetect_aperture_main: autodetect_aperture_main.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o gettime.o kourovka_sbg_date.o get_number_of_cpu_cores.o get_path_to_vast.o variability_indexes.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o
+	$(CC) $(OPTFLAGS) -o lib/autodetect_aperture_main autodetect_aperture_main.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o gettime.o kourovka_sbg_date.o get_number_of_cpu_cores.o get_path_to_vast.o variability_indexes.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE)  -lm
 	cd lib ; ln -s autodetect_aperture_main sextract_single_image_noninteractive ; cd ..
 autodetect_aperture_main.o: $(SRC_PATH)autodetect_aperture_main.c
 	$(CC) $(OPTFLAGS) -c $(SRC_PATH)autodetect_aperture_main.c
@@ -408,15 +410,15 @@ util/phase_lc: $(SRC_PATH)phase_lc.c
 	$(CC) $(OPTFLAGS) -o util/phase_lc $(SRC_PATH)phase_lc.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 	cd util/ ; ln -s phase_lc phase_and_bin_lc ; cd ..
 
-util/UTC2TT: UTC2TT.o gettime.o
-	$(CC) $(OPTFLAGS) -o util/UTC2TT UTC2TT.o gettime.o $(CFITSIO_LIB) -lm
+util/UTC2TT: UTC2TT.o gettime.o kourovka_sbg_date.o
+	$(CC) $(OPTFLAGS) -o util/UTC2TT UTC2TT.o gettime.o kourovka_sbg_date.o $(CFITSIO_LIB) -lm
 	ln -s UTC2TT util/TT2UTC
 	
 UTC2TT.o: $(SRC_PATH)heliocentric_correction/UTC2TT.c
 	$(CC) $(OPTFLAGS) -c -o UTC2TT.o $(SRC_PATH)heliocentric_correction/UTC2TT.c 
 
-util/hjd: eph_manager.o hjd.o hjd_N.o novas.o novascon.o nutation.o readeph0.o solsys3.o gettime.o
-	$(CC) $(OPTFLAGS) -o util/hjd hjd.o eph_manager.o hjd_N.o novas.o novascon.o nutation.o readeph0.o solsys3.o gettime.o $(CFITSIO_LIB) -lm
+util/hjd: eph_manager.o hjd.o hjd_N.o novas.o novascon.o nutation.o readeph0.o solsys3.o gettime.o kourovka_sbg_date.o
+	$(CC) $(OPTFLAGS) -o util/hjd hjd.o eph_manager.o hjd_N.o novas.o novascon.o nutation.o readeph0.o solsys3.o gettime.o kourovka_sbg_date.o $(CFITSIO_LIB) -lm
 	ln -s hjd util/hjd_input_in_UTC
 	ln -s hjd util/hjd_input_in_TT
 eph_manager.o: $(SRC_PATH)heliocentric_correction/eph_manager.c
@@ -438,8 +440,8 @@ solsys3.o: $(SRC_PATH)heliocentric_correction/solsys3.c
 
 lib/astrometry/get_image_dimentions: $(SRC_PATH)astrometry/get_image_dimentions.c
 	$(CC) $(OPTFLAGS) -o lib/astrometry/get_image_dimentions $(SRC_PATH)astrometry/get_image_dimentions.c $(CFITSIO_LIB) -lm
-lib/astrometry/insert_wcs_header: insert_wcs_header.o gettime.o
-	$(CC) $(OPTFLAGS) -o lib/astrometry/insert_wcs_header insert_wcs_header.o gettime.o $(CFITSIO_LIB) -lm
+lib/astrometry/insert_wcs_header: insert_wcs_header.o gettime.o kourovka_sbg_date.o
+	$(CC) $(OPTFLAGS) -o lib/astrometry/insert_wcs_header insert_wcs_header.o gettime.o kourovka_sbg_date.o $(CFITSIO_LIB) -lm
 lib/astrometry/strip_wcs_keywords: $(SRC_PATH)astrometry/strip_wcs_keywords.c
 	$(CC) $(OPTFLAGS) -o lib/astrometry/strip_wcs_keywords $(SRC_PATH)astrometry/strip_wcs_keywords.c $(CFITSIO_LIB) -lm
 
@@ -454,12 +456,8 @@ make_outxyls_for_astrometric_calibration.o: $(SRC_PATH)make_outxyls_for_astromet
 lib/make_outxyls_for_astrometric_calibration: make_outxyls_for_astrometric_calibration.o is_point_close_or_off_the_frame_edge.o
 	$(CC) $(OPTFLAGS) -o lib/make_outxyls_for_astrometric_calibration make_outxyls_for_astrometric_calibration.o is_point_close_or_off_the_frame_edge.o $(GSL_LIB) -I$(GSL_INCLUDE) $(CFITSIO_LIB) -lm
 
-#lib/fits2cat: fits2cat.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o
-#	$(CC) $(OPTFLAGS) -o lib/fits2cat fits2cat.o gettime.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
-#fits2cat.o: $(SRC_PATH)fits2cat.c
-#	$(CC) $(OPTFLAGS) -c -o fits2cat.o $(SRC_PATH)fits2cat.c
-util/solve_plate_with_UCAC5: solve_plate_with_UCAC5.o gettime.o wpolyfit.o variability_indexes.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o
-	$(CC) $(OPTFLAGS) -o util/solve_plate_with_UCAC5 solve_plate_with_UCAC5.o gettime.o fit_plane_lin.o wpolyfit.o variability_indexes.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+util/solve_plate_with_UCAC5: solve_plate_with_UCAC5.o gettime.o kourovka_sbg_date.o wpolyfit.o variability_indexes.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o
+	$(CC) $(OPTFLAGS) -o util/solve_plate_with_UCAC5 solve_plate_with_UCAC5.o gettime.o kourovka_sbg_date.o fit_plane_lin.o wpolyfit.o variability_indexes.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 	cd util/ ; ln -s solve_plate_with_UCAC5 solve_plate_with_UCAC4 ; cd ..
 solve_plate_with_UCAC5.o:
 	$(CC) $(OPTFLAGS) -c  $(SRC_PATH)solve_plate_with_UCAC5.c -I$(GSL_INCLUDE)

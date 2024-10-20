@@ -44,7 +44,8 @@
 
 #include "../vast_filename_manipulation.h"
 
-int Kourovka_SBG_date_hack( char *fitsfilename, char *DATEOBS, int *date_parsed, double *exposure ); // defined in gettime.c
+#include "../kourovka_sbg_date.h"
+//int Kourovka_SBG_date_hack( char *fitsfilename, char *DATEOBS, int *date_parsed, double *exposure ); // defined in gettime.c
 
 void save_star_to_vast_list_of_previously_known_variables_and_exclude_lst( int sextractor_catalog__star_number, float sextractor_catalog__X, float sextractor_catalog__Y ) {
  FILE *filepointer;
@@ -66,12 +67,10 @@ int get_string_with_fov_of_wcs_calibrated_image( char *fitsfilename, char *outpu
  FILE *fp;
  get_path_to_vast( path_to_vast_string );
  path_to_vast_string[VAST_PATH_MAX - 1]= '\0'; // just in case
- //
+ 
  output_string[0]= '\0';            // reset output just in case
  ( *output_float_fov_arcmin )= 0.0; // reset output just in case
- //
- // fprintf(stderr,"DEBUG get_string_with_fov_of_wcs_calibrated_image(): finder_chart_mode=%d \n",finder_chart_mode);
- //
+ 
  if ( finder_chart_mode == 1 ) {
   // This is a zoom-in image
   sprintf( systemcommand, "%sutil/fov_of_wcs_calibrated_image.sh %s | grep 'Image scale:' | awk '{print $3}' | awk -F'\"' '{print $1}'", path_to_vast_string, fitsfilename );
@@ -114,20 +113,6 @@ int get_string_with_fov_of_wcs_calibrated_image( char *fitsfilename, char *outpu
   }
   pclose( fp );
  }
- /*
- // On success, these functions return the number of input items successfully matched and assigned
- if( 1!=fscanf(fp,"%s",output_string) ){
-  fprintf(stderr,"ERROR in get_string_with_fov_of_wcs_calibrated_image() Cannot read the command output\n");
-  output_string[0]='\0'; // reset output just in case
-  return 1;
- }
- pclose(fp);
- if( pclose(fp) )  {
-  fprintf(stderr,"ERROR in get_string_with_fov_of_wcs_calibrated_image() Command not found or exited with error status\n");
-  output_string[0]='\0'; // reset output just in case
-  return 1;
- }
- */
  return 0;
 }
 
@@ -137,7 +122,6 @@ int xy2sky( char *fitsfilename, float X, float Y ) {
  int systemcommand_return_value;
  get_path_to_vast( path_to_vast_string );
  path_to_vast_string[VAST_PATH_MAX - 1]= '\0'; // just in case
- // fprintf(stderr,"DEBUG xy2sky(): path_to_vast_string = %s\n",path_to_vast_string);
  sprintf( systemcommand, "%slib/bin/xy2sky %s %lf %lf >> /dev/stderr", path_to_vast_string, fitsfilename, X, Y );
  systemcommand[2 * VAST_PATH_MAX - 1]= '\0'; // just in case
  systemcommand_return_value= system( systemcommand );
@@ -379,7 +363,7 @@ int download_hla_image_if_this_is_it_and_modify_imagename( char *fits_image_name
  return 1;
 }
 
-/* Magnitude calibration for single image mode */
+// Magnitude calibration for single image mode 
 void magnitude_calibration_using_calib_txt( double *mag, int N ) {
  int i;
  double a, b, c;
@@ -412,7 +396,6 @@ void magnitude_calibration_using_calib_txt( double *mag, int N ) {
    mag[i]= a * mag[i] * mag[i] + b * mag[i] + c;
  }
  fclose( f );
- // system("rm -f calib.tmp");
  unlink( "calib.tmp" );
  return;
 }
@@ -491,6 +474,7 @@ void fix_array_with_negative_values( long NUM_OF_PIXELS, float *im ) {
  return;
 }
 
+/*
 void image_minmax2( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i ) {
  int i;
  int HIST[65536];
@@ -558,7 +542,6 @@ void image_minmax2( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i ) 
    }
   }
 
-  // fprintf( stderr, "DEBUG: image_minmax2() %f %f\n", ( *min_i ), ( *max_i ) );
   return;
  }
  //////////////////////
@@ -588,6 +571,7 @@ void image_minmax2( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i ) 
 
  return;
 }
+*/
 
 void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, float drawX1, float drawX2, float drawY1, float drawY2, long *naxes ) {
  long i;
@@ -689,7 +673,6 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
   }
   //
 
-  // fprintf( stderr, "DEBUG: image_minmax3() %f %f\n", ( *min_i ), ( *max_i ) );
   return;
  }
  //////////////////////
@@ -701,7 +684,6 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
  for ( i= 0, test_i= 0; i < 65535; i++ ) {
   summa+= HIST[i];
   if ( summa >= (int)( PGFV_CUTS_PERCENT / 100.0 * (float)hist_summa ) ) {
-   //(*max_i)=(float)i;
    ( *max_i )= (float)test_i;
    break;
   }
@@ -724,8 +706,6 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
 
  ( *max_i )= MAX( ( *max_i ), ( *min_i ) + 1 ); // for the countrate images (like the HST ones)
 
- // fprintf(stderr,"DEBUG: %lf  %lf\n",(*min_i),(*max_i));
- 
  //
  if( ( *max_i ) == ( *min_i ) ) {
   fprintf(stderr, "WARNING (2) in image_minmax3(): max=min=%f\n", ( *max_i ));
@@ -770,16 +750,9 @@ void histeq( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i ) {
  return;
 }
 
+/*
 int myimax( int A, int B ) {
  if ( A > B )
-  return A;
- else
-  return B;
-}
-
-/*
-int myimin( int A, int B ) {
- if ( A < B )
   return A;
  else
   return B;
@@ -810,9 +783,7 @@ int return_one_if_the_input_image_is_among_the_recently_processed_onses_listed_i
  }
  //                                            1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16  17
  while ( -1 < fscanf( file_vast_image_details_log, "%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %s", image_filename_from_the_file ) ) {
-  // fprintf(stderr,"DEBUG: %s\n",image_filename_from_the_file);
   if ( 0 == strncmp( image_filename_from_the_file, fits_image_name, MIN( strlen( fits_image_name ), strlen( image_filename_from_the_file ) ) ) ) {
-   // fprintf(stderr,"DEBUG: %s       ---- YESS\n",image_filename_from_the_file);
    fclose( file_vast_image_details_log );
    return 1;
   }
@@ -936,7 +907,7 @@ int main( int argc, char **argv ) {
  // new fatures
  int buf;
  float axis_ratio;
- double razmer_x, razmer_y;
+ double view_image_size_x, view_image_size_y;
 
  // add 32 bytes for device specification like /PNG /PS
  char output_png_filename[FILENAME_LENGTH + 32];
@@ -951,9 +922,6 @@ int main( int argc, char **argv ) {
 
  // Source Extractor Catalog
  FILE *catfile;
- // double MUSOR;
- // int intMUSOR;
- // int iMUSOR;
  float *sextractor_catalog__X= NULL;
  float *sextractor_catalog__Y= NULL;
  double *sextractor_catalog__FLUX= NULL;
@@ -1244,11 +1212,7 @@ int main( int argc, char **argv ) {
     // An image is specified on the command line
     image_specified_on_command_line__0_is_yes= 0;
    } else {
-    // no image is specified on the comamnd line - try to get it from vast_summary.log
-    //    if( 0 != get_ref_image_name(fits_image_name) ) {
-    //     fprintf(stderr, "Usage:\n%s FITSIMAGE.fit\nor\n%s FITSIMAGE.fit X Y\nor\n%s FITSIMAGE.fit RA DEC\n\n", argv[0], argv[0], argv[0]);
-    //     exit( EXIT_FAILURE );
-    //    }
+    // no image is specified on the comamnd line
     image_specified_on_command_line__0_is_yes= 1;
    }
   }
@@ -1256,78 +1220,11 @@ int main( int argc, char **argv ) {
   image_specified_on_command_line__0_is_yes= 1; // no image on the command line as there is nothing there at all
  }                                              // else if( argc > 1 ) {
 
- /*
-  if( 0 != strcmp("select_star_on_reference_image", basename(argv[0])) ) {
-   if( argc == 1 ) {
-    fprintf(stderr, "Usage:\n%s FITSIMAGE.fit\nor\n%s FITSIMAGE.fit X Y\nor\n%s FITSIMAGE.fit RA DEC\n\n", argv[0], argv[0], argv[0]);
-   }
-   // the normal way
-  } else {
-   // This is star selection on reference image mode
-   match_mode= 1;
-   // handle the special case where the image is specified on the command line when running select_star_on_reference_image
-   if( 0 == fitsfile_read_check_silent(argv[optind + 1]) ) {
-    image_specified_on_command_line__0_is_yes= 0;
-    fprintf(stderr,"\n\nWARNING: an image is specified on the command line whne rinning %s!\nWill display the reference image instead.\n\n", basename(argv[0]) );
-   } else {
-    // the normal way when no image is specified on the command line when using select_star_on_reference_image
-    image_specified_on_command_line__0_is_yes= 1;
-   }
-   if( 0 != get_ref_image_name(fits_image_name) ) {
-    fprintf(stderr, "ERROR getting the reference image name from the log file\n");
-    exit( EXIT_FAILURE );
-   }
-  }
-
-  //if( match_mode != 1 && argc != 1 ) {
-  // Somehow we handle match_mode==1 case separately above
-  if( match_mode != 1 ) {
-   //strcpy(fits_image_name, argv[optind + 1]);
-   safely_encode_user_input_string(fits_image_name, argv[optind + 1], FILENAME_LENGTH);
-  } else {
-   fprintf(stderr, "DEBUUUUUUUGAAAAA");
-   // handle the special case where the image is specified on the command line when running select_star_on_reference_image/other
-   if( 0 == fitsfile_read_check_silent(argv[optind + 1]) ) {
-    image_specified_on_command_line__0_is_yes= 0;
-    fprintf(stderr,"\n\nWARNING: an image is specified on the command line while running %s!\nWill display the reference image instead.\n\n", basename(argv[0]) );
-   } else {
-    // the normal way when no image is specified on the command line when using select_star_on_reference_image/other
-    image_specified_on_command_line__0_is_yes= 1;
-   }
-   // Get reference file name from log
-   //get_ref_image_name(fits_image_name);
-   if( 0 != get_ref_image_name(fits_image_name) ) {
-    fprintf(stderr, "ERROR getting the reference image name from the log file\n");
-    exit( EXIT_FAILURE );
-   }
-  }
- */
 
  if ( image_specified_on_command_line__0_is_yes != 0 && image_specified_on_command_line__0_is_yes != 1 ) {
   fprintf( stderr, "ERROR in %s: image_specified_on_command_line__0_is_yes = %d \n", argv[0], image_specified_on_command_line__0_is_yes );
   exit( EXIT_FAILURE );
  }
-
- // if( argc - optind == 5 ) {
- //  APER= atof(argv[optind + 4]);
- // }
- /*
-  if( argc - optind + image_specified_on_command_line__0_is_yes == 5 ) {
-   APER= atof(argv[optind - image_specified_on_command_line__0_is_yes + 4]);
-   fprintf(stderr, "Aperture size specified on the command line: %.1lf (%s)\n", APER, argv[optind - image_specified_on_command_line__0_is_yes + 4] );
-  }
- */
-
- // moved up
- // if( 0 == strcasecmp(fits_image_name, "calib") ) {
- //  // Magnitude calibration mode
- //  match_mode= 2;
- // }
-
- // if( 0 == strcasecmp(fits_image_name, "match") ) {
- //  fprintf(stderr, "The manual star-matching mode is no longer supported, sorry!\n");
- //  return 1;
- // }
 
  // moved here from above
  if ( 0 == strcmp( "select_star_on_reference_image", basename( argv[0] ) ) && match_mode == 0 ) {
@@ -1384,7 +1281,6 @@ int main( int argc, char **argv ) {
   }
  } else {
   // an image is specified on the command line
-  // if ( match_mode == 0 || match_mode == 3 ) {
   if ( match_mode == 0 || match_mode == 3 || match_mode == 4 ) {
    safely_encode_user_input_string( fits_image_name, argv[optind + 1], FILENAME_LENGTH );
   } else {
@@ -1411,24 +1307,6 @@ int main( int argc, char **argv ) {
  replace_file_with_symlink_if_filename_contains_white_spaces( fits_image_name );
  cutout_green_channel_out_of_RGB_DSLR_image( fits_image_name );
 
- // fprintf(stderr,"\n\n\nDEBUUUUUUUG argc=%d  optind=%d  image_specified_on_command_line__0_is_yes=%d argv[optind - image_specified_on_command_line__0_is_yes + 2]=%s \n\n\n", argc, optind, image_specified_on_command_line__0_is_yes, argv[optind - image_specified_on_command_line__0_is_yes + 2]);
-
- // if( argc - optind >= 4 ) {
- //  // Now we need to figure out if the input values are pixel or celestial coordinates
- //  // Don't do this check if this is fits2png
- //  if( finder_chart_mode != 1 && use_labels != 0 ) {
- //   sky2xy(fits_image_name, argv[optind + 2], argv[optind + 3], &markX, &markY);
- //  } else {
- //   markX= (float)atof(argv[optind + 2]);
- //   markY= (float)atof(argv[optind + 3]);
- //  }
- //  if( markX > 0.0 && markY > 0.0 ) {
- //   mark_trigger= 1;
- //   fprintf(stderr, "Putting mark on pixel position %lf %lf\n", markX, markY);
- //  } else {
- //   fprintf(stderr, "The pixel position %lf %lf is outside the image!\n", markX, markY);
- //  }
- // }
  if ( argc - optind + image_specified_on_command_line__0_is_yes >= 4 ) {
   //
 
@@ -1464,8 +1342,6 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "vast_manymarkersfile.log - %d markers\n", manymrkerscounter );
  }
 
- // fprintf(stderr,"DEBUG-5\n");
-
  if ( match_mode == 2 ) {
   // Magnitude calibration mode
 
@@ -1473,7 +1349,6 @@ int main( int argc, char **argv ) {
   matchfile= fopen( "calib.txt", "r" );
   if ( NULL != matchfile ) {
    fclose( matchfile );
-   // system("rm -f calib.txt");
    unlink( "calib.txt" );
   }
 
@@ -1506,7 +1381,6 @@ int main( int argc, char **argv ) {
   marker_counter= 0;
 
   // Get reference file name from log
-  // get_ref_image_name(fits_image_name);
   if ( 0 != get_ref_image_name( fits_image_name ) ) {
    fprintf( stderr, "ERROR getting the reference image name from the log file\n" );
    exit( EXIT_FAILURE );
@@ -1517,7 +1391,6 @@ int main( int argc, char **argv ) {
   while ( -1 < fscanf( matchfile, "%lf %lf %f %f %s", &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &sextractor_catalog__X[sextractor_catalog__counter], &sextractor_catalog__Y[sextractor_catalog__counter], RADEC ) ) {
    calibfile= fopen( RADEC, "r" );
    if ( calibfile != NULL ) {
-    // fscanf(calibfile,"%lf %lf %lf %lf %lf %lf %s",&MUSOR,&MUSOR,&MUSOR,&MUSOR,&MUSOR,&tmp_APER,imagefilename);
     if ( 2 > fscanf( calibfile, "%*f %*f %*f %*f %*f %lf %s", &tmp_APER, imagefilename ) ) {
      fprintf( stderr, "ERROR parsing %s\n", RADEC );
     }
@@ -1539,19 +1412,6 @@ int main( int argc, char **argv ) {
   sextractor_catalog__counter--; // We can't be sure that the last star is visible on the reference frame so we just drop it
  }
 
- /*
-  // WTF is this????
-  if( 0 == strcasecmp(fits_image_name, "detect") ) {
-   if( argc - optind < 3 ) {
-    fprintf(stderr, "Usage: ./pgfv detect image.fit\n");
-    exit( EXIT_FAILURE );
-   }
-   //strcpy(fits_image_name, argv[optind + 2]);
-   //safely_encode_user_input_string(fits_image_name, argv[optind + 2], FILENAME_LENGTH);
-   safely_encode_user_input_string(fits_image_name, argv[optind + 2], FILENAME_LENGTH);
-   match_mode= 3;
-  }
- */
  if ( match_mode == 3 ) {
   fprintf( stderr, "Entering single image reduction mode.\nProcessing image %s\n", fits_image_name );
   // We want to have this check early in order not to distract user with the following messages if the file is unreadable
@@ -1563,15 +1423,12 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "\x1B[34;47mTo calibrate magnitude scale press '2'\x1B[33;00m (manual calibration) or \x1B[34;47m'4'\x1B[33;00m (automatic calibration)\n" );
 
   // Remove old calib.txt in case we'll want a magnitude calibration
-  // system("rm -f calib.txt");
   calibfile= fopen( "calib.txt", "r" );
   if ( NULL != calibfile ) {
    fclose( calibfile );
    unlink( "calib.txt" );
   }
  }
-
- // fprintf(stderr,"DEBUG-4\n");
 
  /// handling HLA images
  if ( mark_trigger == 1 ) {
@@ -1605,8 +1462,6 @@ int main( int argc, char **argv ) {
  if ( finder_chart_mode == 1 ) {
   is_this_north_up_east_left_image= check_if_this_fits_image_is_north_up_east_left( fits_image_name );
  }
-
- // fprintf(stderr,"DEBUG-3\n");
 
  if ( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
   // load markers only if the image was recently processed
@@ -1657,8 +1512,6 @@ int main( int argc, char **argv ) {
   }
  }
 
- // fprintf(stderr,"DEBUG-3a\n");
-
  if ( match_mode == 1 || match_mode == 3 || match_mode == 4 ) {
   // Check if the SExtractor executable (named "sex") is present in $PATH
   // Update PATH variable to make sure the local copy of SExtractor is there
@@ -1678,8 +1531,6 @@ int main( int argc, char **argv ) {
   if ( fixed_aperture != 0.0 ) {
    APER= fixed_aperture;
   }
-
-  // fprintf(stderr,"DEBUG-1\n");
 
   sextractor_catalog__X_viewed= (float *)malloc( MAX_NUMBER_OF_STARS * sizeof( float ) );
   if ( sextractor_catalog__X_viewed == NULL ) {
@@ -1796,14 +1647,9 @@ int main( int argc, char **argv ) {
    fprintf( stderr, "ERROR! Cannot open sextractor catalog file %s for reading!\n", sextractor_catalog_filename );
    exit( EXIT_FAILURE );
   }
-  // while( -1<fscanf(catfile, "%d %lf %lf %lf %lf %f %f %lf %lf %lf %lf %d\n", &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &sextractor_catalog__X[sextractor_catalog__counter], &sextractor_catalog__Y[sextractor_catalog__counter], &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter]) ){
-  // fprintf(stderr,"DEBUG01\n");
   while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, catfile ) ) {
-   // fprintf(stderr,"DEBUG02 sextractor_catalog__counter=%d\n",sextractor_catalog__counter);
    sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
    external_flag= 0;
-   // external_flag_string[0]='\0';
-   // if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, NULL ) ) {
    if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, float_parameters ) ) {
     fprintf( stderr, "WARNING: problem occurred while parsing SExtractor catalog %s  (1)\nThe offending line is:\n%s\n", sextractor_catalog_filename, sextractor_catalog_string );
     continue;
@@ -1871,8 +1717,6 @@ int main( int argc, char **argv ) {
   }
  }
 
- // fprintf(stderr,"DEBUG-3b\n");
-
  // Check if we are asked to start ds9 instead of the normal PGPLOT interface
  if ( use_ds9 == 1 ) {
   // execute the system command to run ds9
@@ -1885,13 +1729,10 @@ int main( int argc, char **argv ) {
   return 0;
  }
 
- // fprintf(stderr,"DEBUG-3c\n");
-
  if ( 0 != fitsfile_read_check( fits_image_name ) ) {
   return 1;
  }
- // fprintf(stderr,"DEBUG-3d\n");
- // fits_open_file(&fptr, fits_image_name, 0 , &status);
+
  fits_open_image( &fptr, fits_image_name, 0, &status );
  if ( status != 0 ) {
   fprintf( stderr, "ERROR opening %s\n", fits_image_name );
@@ -1936,27 +1777,22 @@ int main( int argc, char **argv ) {
    fprintf( stderr, "ERROR: Couldn't allocate memory for image_array_ushort\n" );
    exit( EXIT_FAILURE );
   };
-  // fprintf(stderr,"Trying to read the image as TUSHORT\n");
   fits_read_img( fptr, TUSHORT, 1, naxes[0] * naxes[1], &nullval_ushort, image_array_ushort, &anynul, &status );
-  // fits_read_img(fptr, TSHORT, 1, naxes[0]*naxes[1],&nullval,image_array_ushort, &anynul, &status);
   if ( status == 412 ) {
    // is this actually a signed-integer image?
-   // fprintf(stderr,"Trying to read the image as TSHORT\n");
    status= 0;
-   // fits_read_img(fptr, TSHORT, 1, naxes[0]*naxes[1],&nullval,image_array_ushort, &anynul, &status);
    fits_read_img( fptr, TUSHORT, 1, naxes[0] * naxes[1], &nullval_ushort, image_array_ushort, &anynul, &status );
    // ??
   }
   if ( status == 412 ) {
    // is this actually a float-image with a wrong header?
-   fits_report_error( stderr, status ); /* print out any error messages */
+   fits_report_error( stderr, status ); // print out any error messages
    fprintf( stderr, "Image read problem! Is it actually a Kourovka SBG cameraimage? Let's try...\n" );
    if ( 0 == Kourovka_SBG_date_hack( fits_image_name, stderr_output, &N, &median_class_star ) ) {
     fprintf( stderr, "Yes, it is! Will have to re-open the image...\n" );
     status= 0;
     bitpix= 16;
     fits_close_file( fptr, &status );
-    // fits_open_file(&fptr, fits_image_name, 0 , &status);
     fits_open_image( &fptr, fits_image_name, 0, &status );
     fits_get_img_type( fptr, &bitpix, &status );
    } else {
@@ -2005,13 +1841,10 @@ int main( int argc, char **argv ) {
   fits_read_img( fptr, TFLOAT, 1, naxes[0] * naxes[1], &nullval, float_array, &anynul, &status );
  }
  fits_close_file( fptr, &status );
- fits_report_error( stderr, status ); /* print out any error messages */
+ fits_report_error( stderr, status ); // print out any error messages
  if ( status != 0 ) {
   exit( status );
  }
- // fprintf(stderr,"OK\n");
-
- // fprintf(stderr,"DEBUG-3e\n");
 
  // Don't do this check if this is fits2png
  if ( finder_chart_mode != 1 && use_labels != 0 ) {
@@ -2029,7 +1862,6 @@ int main( int argc, char **argv ) {
  }
 
  axis_ratio= (float)naxes[0] / (float)naxes[1];
- // fprintf(stderr,"DEBUG-3f axis_ratio=%f\n",axis_ratio);
 
  // filter out bad pixels from float_array
  for ( i= 0; i < naxes[0] * naxes[1]; i++ ) {
@@ -2043,14 +1875,10 @@ int main( int argc, char **argv ) {
   real_float_array[i]= float_array[i];
  }
  fix_array_with_negative_values( naxes[0] * naxes[1], float_array );
- image_minmax2( naxes[0] * naxes[1], float_array, &max_val, &min_val );
+ //image_minmax2( naxes[0] * naxes[1], float_array, &max_val, &min_val );
+ image_minmax3(naxes[0] * naxes[1], float_array, &max_val, &min_val, 1, naxes[0], 1, naxes[1], naxes);
 
- /* GUI */
- // fprintf(stderr,"Opening display ... ");
-
- // fprintf(stderr,"DEBUG-3g\n");
-
- // setenv("PGPLOT_DIR","lib/pgplot/",1);
+ // GUI 
  setenv_localpgplot( argv[0] );
  if ( finder_chart_mode == 1 ) {
 
@@ -2087,15 +1915,9 @@ int main( int argc, char **argv ) {
  }
  cpgask( 0 ); // turn OFF this silly " Type <RETURN> for next page:" request
 
- // cpgpap( 0.0, 1.0); /* Make square plot */
-
  // if( finder_chart_mode==0 ){
  cpgscr( 0, 0.10, 0.31, 0.32 ); /* set default vast window background */
  cpgpage();
- //}
- // (finder_chart_mode == 1 && use_north_east_marks == 0 && use_labels == 0)
- // should correspond to fits2png settings
- // if( finder_chart_mode == 0 || (finder_chart_mode == 1 && use_north_east_marks == 0 && use_labels == 0) ) {
  if ( finder_chart_mode == 0 || fits2png_fullframe == 1 ) {
   // Trying to circumvent giza bug that does not implement cpgpap( 0.0, 1.0 / axis_ratio );
   // so we need to specify the width in inches explicitly, see
@@ -2114,7 +1936,6 @@ int main( int argc, char **argv ) {
   //  leave some space for labels
   cpgsvp( 0.05, 0.95, 0.05, 0.95 );
  } else {
-  // fprintf(stderr,"DEBUG-3hhhh\n");
   //  Use the full plot area leaving no space for labels
   cpgsvp( 0.0, 1.0, 0.0, 1.0 );
  }
@@ -2138,20 +1959,18 @@ int main( int argc, char **argv ) {
   drawY1= markY - MIN( 100.0, markY );
   drawX2= drawX1 + MIN( 200.0, (float)naxes[0] );
   drawY2= drawY1 + MIN( 200.0, (float)naxes[1] );
-  // fprintf(stderr,"DEBUG01: drawX1=%d drawX2=%d drawY1=%d drawY2=%d  markX=%f markY=%f \n",drawX1,drawX2,drawY1,drawY2,markX,markY);
   ///////
   drawX0= (int)( ( drawX1 + drawX2 ) / 2 + 0.5 );
   drawY0= (int)( ( drawY1 + drawY2 ) / 2 + 0.5 );
-  razmer_y= myimax( drawX2 - drawX1, drawY2 - drawY1 );
+  view_image_size_y= MAX( drawX2 - drawX1, drawY2 - drawY1);
   //
-  razmer_y= MAX( razmer_y, 3 ); // do not allow zoom smaller than 3 pix
+  view_image_size_y= MAX( view_image_size_y, 3 ); // do not allow zoom smaller than 3 pix
   //
-  razmer_x= axis_ratio * razmer_y;
-  drawX1= drawX0 - (int)( razmer_x / 2 + 0.5 );
-  drawY1= drawY0 - (int)( razmer_y / 2 + 0.5 );
-  drawX2= drawX1 + (int)razmer_x;
-  drawY2= drawY1 + (int)razmer_y;
-  // fprintf(stderr,"DEBUG02: drawX1=%d drawX2=%d drawY1=%d drawY2=%d\n",drawX1,drawX2,drawY1,drawY2);
+  view_image_size_x= axis_ratio * view_image_size_y;
+  drawX1= drawX0 - (int)( view_image_size_x / 2 + 0.5 );
+  drawY1= drawY0 - (int)( view_image_size_y / 2 + 0.5 );
+  drawX2= drawX1 + (int)view_image_size_x;
+  drawY2= drawY1 + (int)view_image_size_y;
   if ( drawX2 > naxes[0] ) {
    drawX1-= drawX2 - naxes[0];
    drawX2= naxes[0];
@@ -2172,7 +1991,6 @@ int main( int argc, char **argv ) {
    drawX2= naxes[0];
   if ( drawY2 > naxes[1] )
    drawY2= naxes[1];
-  // fprintf(stderr,"DEBUG03: drawX1=%d drawX2=%d drawY1=%d drawY2=%d\n",drawX1,drawX2,drawY1,drawY2);
   ///////
   fprintf( stderr, "\n Press 'D' or 'Z''Z' to view the full image.\n\n" );
  }
@@ -2225,7 +2043,7 @@ int main( int argc, char **argv ) {
     aperture_change= 1;
    }
 
-   /* If aperture was changed - repeat measurements with new aperture */
+   // If aperture was changed - repeat measurements with new aperture 
    if ( match_mode == 3 || match_mode == 4 ) {
     if ( aperture_change == 1 ) {
      fprintf( stderr, "%s is re-starting autodetect_aperture(%s, %s, 1, 0, %.2lf, %lf, %lf, 2);\n", argv[0], fits_image_name, sextractor_catalog_filename, fixed_aperture, dimX, dimY );
@@ -2239,7 +2057,6 @@ int main( int argc, char **argv ) {
      while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, catfile ) ) {
       sextractor_catalog_string[MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT - 1]= '\0'; // just in case
       external_flag= 0;
-      // if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, NULL ) ) {
       if ( 0 != parse_sextractor_catalog_string( sextractor_catalog_string, &sextractor_catalog__star_number[sextractor_catalog__counter], &sextractor_catalog__FLUX[sextractor_catalog__counter], &sextractor_catalog__FLUX_ERR[sextractor_catalog__counter], &sextractor_catalog__MAG[sextractor_catalog__counter], &sextractor_catalog__MAG_ERR[sextractor_catalog__counter], &position_x_pix, &position_y_pix, &sextractor_catalog__A_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRA_IMAGE[sextractor_catalog__counter], &sextractor_catalog__B_IMAGE[sextractor_catalog__counter], &sextractor_catalog__ERRB_IMAGE[sextractor_catalog__counter], &sextractor_catalog__se_FLAG[sextractor_catalog__counter], &external_flag, &psf_chi2, float_parameters ) ) {
        fprintf( stderr, "WARNING: problem occurred while parsing SExtractor catalog %s  (2)\nThe offending line is:\n%s\n", sextractor_catalog_filename, sextractor_catalog_string );
        continue;
@@ -2283,7 +2100,6 @@ int main( int argc, char **argv ) {
     fprintf( stderr, "Entering megnitude calibration mode!\n" );
     fprintf( stderr, "\x1B[01;31mPlease click on comparison stars and enter their magnitudes...\x1B[33;00m\n" );
     fprintf( stderr, "\x1B[01;31mPress '3' when done!\x1B[33;00m\n" );
-    // system("rm -f calib.txt");
     unlink( "calib.txt" );
     match_mode= 2;
    }
@@ -2331,12 +2147,12 @@ int main( int argc, char **argv ) {
     match_mode= 3;
    }
 
-   /* I - print info (help) */
+   // I - print info (help) 
    if ( curC == 'I' || curC == 'i' ) {
     print_pgfv_help();
    }
 
-   /* M - star markers on/off */
+   // M - star markers on/off 
    if ( curC == 'M' || curC == 'm' ) {
     if ( draw_star_markers == 1 )
      draw_star_markers= 0;
@@ -2345,7 +2161,7 @@ int main( int argc, char **argv ) {
     curC= 'R';
    }
 
-   /* Process left mouse button click */
+   // Process left mouse button click 
    if ( curC == 'A' ) {
     fprintf( stderr, "\nPixel: %7.1f %7.1f %9.3f\n", curX, curY, real_float_array[(int)( curX - 0.5 ) + (int)( curY - 0.5 ) * naxes[0]] );
     ///
@@ -2354,7 +2170,7 @@ int main( int argc, char **argv ) {
     }
     //
 
-    /* Magnitude calibration mode or Single image mode */
+    // Magnitude calibration mode or Single image mode 
     if ( match_mode == 1 || match_mode == 2 || match_mode == 3 || match_mode == 4 ) {
      for ( marker_counter= 0; marker_counter < sextractor_catalog__counter; marker_counter++ ) {
       if ( ( curX - sextractor_catalog__X[marker_counter] ) * ( curX - sextractor_catalog__X[marker_counter] ) + ( curY - sextractor_catalog__Y[marker_counter] ) * ( curY - sextractor_catalog__Y[marker_counter] ) < (float)( APER * APER / 4.0 ) ) {
@@ -2364,13 +2180,8 @@ int main( int argc, char **argv ) {
        cpgsci( 1 );
        //
 
-       /* Magnitude calibration mode */
+       // Magnitude calibration mode 
        if ( match_mode == 2 || match_mode == 4 ) {
-        // mark the star
-        // cpgsci( 2 );
-        // cpgcirc( sextractor_catalog__X[marker_counter], sextractor_catalog__Y[marker_counter], (float)APER / 2.0 );
-        // cpgsci( 1 );
-        //
         fprintf( stderr, "Star %d. Instrumental magnitude: %.4lf %.4lf\n(In order to cancel the input - type '99' instead of an actual magnitude.)\n Please, enter its catalog magnitude or 'v' to mark it as the target variable:\nComp. star mag: ", sextractor_catalog__star_number[marker_counter], sextractor_catalog__MAG[marker_counter], sextractor_catalog__MAG_ERR[marker_counter] );
         if ( NULL == fgets( RADEC, 1024, stdin ) ) {
          fprintf( stderr, "Incorrect input!\n" );
@@ -2629,30 +2440,28 @@ int main( int argc, char **argv ) {
      }
      drawX0= (int)( ( drawX1 + drawX2 ) / 2 + 0.5 );
      drawY0= (int)( ( drawY1 + drawY2 ) / 2 + 0.5 );
-     razmer_y= myimax( drawX2 - drawX1, drawY2 - drawY1 );
-     razmer_y= MAX( razmer_y, 3 ); // do not allow zoom smaller than 3 pix
-     razmer_y= MIN( razmer_y, naxes[1] );
-     // if razmer_y is so big that the whole image is to be displayed again...
-     if ( razmer_y == naxes[1] ) {
-      razmer_y= (double)MIN( drawX2 - drawX1, naxes[0] ) / (double)naxes[0] * razmer_y;
+     //view_image_size_y= myimax( drawX2 - drawX1, drawY2 - drawY1 );
+     view_image_size_y= MAX( drawX2 - drawX1, drawY2 - drawY1 );
+     view_image_size_y= MAX( view_image_size_y, 3 ); // do not allow zoom smaller than 3 pix
+     view_image_size_y= MIN( view_image_size_y, naxes[1] );
+     // if view_image_size_y is so big that the whole image is to be displayed again...
+     if ( view_image_size_y == naxes[1] ) {
+      view_image_size_y= (double)MIN( drawX2 - drawX1, naxes[0] ) / (double)naxes[0] * view_image_size_y;
      }
      // finder_chart_mode=1 use_north_east_marks= 0; use_labels= 0;
      // corresponds to fits2png settings where we presumably whant the whole image
-     // if ( finder_chart_mode == 1 && ( use_north_east_marks!= 0 && use_labels!= 0 ) ) {
-     // if( finder_chart_mode == 1 && (use_north_east_marks != 0 && use_labels != 0) ) {
-     // if( finder_chart_mode == 1 && (use_north_east_marks != 0 || use_labels != 0) ) {
      if ( finder_chart_mode == 1 && fits2png_fullframe == 0 ) {
       // we want a square finding chart !
-      razmer_x= razmer_y;
+      view_image_size_x= view_image_size_y;
       fprintf( stderr, "Making a square plot\n" );
      } else {
-      razmer_x= axis_ratio * razmer_y;
+      view_image_size_x= axis_ratio * view_image_size_y;
       fprintf( stderr, "Making a plot with the axes ratio of %lf\n", axis_ratio );
      }
-     drawX1= drawX0 - (int)( razmer_x / 2 + 0.5 );
-     drawY1= drawY0 - (int)( razmer_y / 2 + 0.5 );
-     drawX2= drawX1 + (int)razmer_x;
-     drawY2= drawY1 + (int)razmer_y;
+     drawX1= drawX0 - (int)( view_image_size_x / 2 + 0.5 );
+     drawY1= drawY0 - (int)( view_image_size_y / 2 + 0.5 );
+     drawX2= drawX1 + (int)view_image_size_x;
+     drawY2= drawY1 + (int)view_image_size_y;
      if ( drawX2 > naxes[0] ) {
       drawX1-= drawX2 - naxes[0];
       drawX2= naxes[0];
@@ -2692,17 +2501,14 @@ int main( int argc, char **argv ) {
     for ( i= 0; i < naxes[0] * naxes[1]; i++ ) {
      float_array2[i]= float_array[i];
     }
-    // fprintf(stderr,"histeq... ");
     histeq( naxes[0] * naxes[1], float_array, &max_val, &min_val );
     image_minmax3( naxes[0] * naxes[1], float_array, &max_val, &min_val, drawX1, drawX2, drawY1, drawY2, naxes ); // TEST
-    // fprintf(stderr,"OK\n ");
    } else {
     hist_trigger= 0;
     for ( i= 0; i < naxes[0] * naxes[1]; i++ ) {
      float_array[i]= float_array2[i];
     }
     free( float_array2 );
-    // image_minmax2( (int)(naxes[0]*naxes[1]), float_array, &max_val, &min_val);
     image_minmax3( naxes[0] * naxes[1], float_array, &max_val, &min_val, drawX1, drawX2, drawY1, drawY2, naxes );
    }
    curC= 'R';

@@ -10,8 +10,9 @@
 #include "../safely_encode_user_input_string.h" // needed by fitsfile_read_check.h
 #include "../fitsfile_read_check.h"
 
+#include "../kourovka_sbg_date.h"
 // function defined in gettime.c
-int Kourovka_SBG_date_hack( char *fitsfilename, char *DATEOBS, int *date_parsed, double *exposure );
+//int Kourovka_SBG_date_hack( char *fitsfilename, char *DATEOBS, int *date_parsed, double *exposure );
 
 int main( int argc, char **argv ) {
  int this_is_a_good_image_hdu= 0;
