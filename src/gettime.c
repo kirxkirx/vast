@@ -1,6 +1,6 @@
-#define _GNU_SOURCE // for memmem() in Kourovka_SBG_date_hack()
+//#define _GNU_SOURCE // for memmem() in Kourovka_SBG_date_hack()
 
-#define WARN_IF_TAImUTC_DAT_IS_OLDER_THAN_DAYS 8.0 * 365.242
+#define WARN_IF_TAImUTC_DAT_IS_OLDER_THAN_DAYS 10.0 * 365.242
 
 #include <stdio.h>
 #include <time.h>
@@ -253,7 +253,7 @@ void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, ch
  return;
 }
 
-
+/*
 int Kourovka_SBG_date_hack( char *fitsfilename, char *DATEOBS, int *date_parsed, double *exposure ) {
  // Kourovka-SBG camera images have a very unusual header.
  // This function is supposed to handle it.
@@ -261,7 +261,6 @@ int Kourovka_SBG_date_hack( char *fitsfilename, char *DATEOBS, int *date_parsed,
  FILE *f;      // FITS file
  char *buffer; // buffer for a part of the header
  char *pointer_to_the_key_start;
- // char *pointer_to_the_key_end;
  int i; // counter
  char output_string[512];
  int day, month, year;
@@ -302,7 +301,6 @@ int Kourovka_SBG_date_hack( char *fitsfilename, char *DATEOBS, int *date_parsed,
  sscanf( pointer_to_the_key_start, "Date                %d.%d.%d", &day, &month, &year );
  fprintf( stderr, "%s\n", pointer_to_the_key_start );
  // exposure
- // pointer_to_the_key_start=(char *)memmem( buffer, 65535-80, "ExpTime, . = ", 13);
  pointer_to_the_key_start= (char *)memmem( buffer, 65535 - 80, "ExpTime", 7 );
  if ( pointer_to_the_key_start == NULL ) {
   fprintf( stderr, "ERROR in Kourovka_SBG_date_hack(): cannot find exposure time\n" );
@@ -363,6 +361,7 @@ int Kourovka_SBG_date_hack( char *fitsfilename, char *DATEOBS, int *date_parsed,
 
  return 0;
 }
+*/
 
 double get_TTminusUTC_in_days( double jdUT, int *output_timesys ) {
  FILE *tai_utc_dat;
