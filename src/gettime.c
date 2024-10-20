@@ -12,6 +12,8 @@
 #include "fitsio.h"
 #include "vast_limits.h"
 
+#include "kourovka_sbg_date.h"
+
 // helper function removing multiple white spaces from a string
 void remove_multiple_spaces( char *str ) {
  int i, j;
