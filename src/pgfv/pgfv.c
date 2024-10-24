@@ -31,21 +31,14 @@
 #include "../safely_encode_user_input_string.h" // for safely_encode_user_input_string() and also needed by fitsfile_read_check.h
 #include "../fitsfile_read_check.h"
 #include "../replace_file_with_symlink_if_filename_contains_white_spaces.h"
-
 #include "../parse_sextractor_catalog.h"
-
 #include "../get_path_to_vast.h"
-
 #include "../count_lines_in_ASCII_file.h"
-
 #include "../lightcurve_io.h" // for read_lightcurve_point()
-
 #include "../is_point_close_or_off_the_frame_edge.h" // for is_point_close_or_off_the_frame_edge()
-
 #include "../vast_filename_manipulation.h"
+#include "../kourovka_sbg_date.h" // for Kourovka_SBG_date_hack()
 
-#include "../kourovka_sbg_date.h"
-//int Kourovka_SBG_date_hack( char *fitsfilename, char *DATEOBS, int *date_parsed, double *exposure ); // defined in gettime.c
 
 void save_star_to_vast_list_of_previously_known_variables_and_exclude_lst( int sextractor_catalog__star_number, float sextractor_catalog__X, float sextractor_catalog__Y ) {
  FILE *filepointer;

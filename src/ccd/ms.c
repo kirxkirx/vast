@@ -77,6 +77,40 @@ int main( int argc, char *argv[] ) {
  int opt;
  int force_processing= 0;
 
+
+ char *input_file= argv[optind];
+ char *dark_file= argv[optind + 1];
+ char *output_file= argv[optind + 2];
+
+ fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h
+ long fpixel= 1;
+ long naxes[2];
+ long testX, testY;
+ long img_size;
+ 
+ int status= 0;
+ int anynul= 0;
+ unsigned short nullval= 0;
+ unsigned short *image_array;
+ unsigned short *dark_array;
+ unsigned short *result_image_array;
+
+ int i;
+ int bitpix2;
+ char **key;
+ int No_of_keys;
+ int keys_left;
+ int ii, j; // counters
+
+ double tmp;
+
+ double set_temp_image, set_temp_dark;
+ double ccd_temp_image, ccd_temp_dark;
+ 
+ double image_mean, dark_mean;
+
+ int is_bias= 0; // 1 - if it's a bias rather than dark frame (needed just to name it properly)
+
  while ( ( opt= getopt( argc, argv, "hf" ) ) != -1 ) {
   switch ( opt ) {
   case 'h':
@@ -98,35 +132,6 @@ int main( int argc, char *argv[] ) {
   exit( EXIT_FAILURE );
  }
 
- char *input_file= argv[optind];
- char *dark_file= argv[optind + 1];
- char *output_file= argv[optind + 2];
-
- fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h
- long fpixel= 1;
- long naxes[2];
- long testX, testY;
-
- int status= 0;
- int anynul= 0;
- unsigned short nullval= 0;
- unsigned short *image_array;
- unsigned short *dark_array;
- unsigned short *result_image_array;
-
- int i;
- int bitpix2;
- char **key;
- int No_of_keys;
- int keys_left;
- int ii, j; // counters
-
- double tmp;
-
- double set_temp_image, set_temp_dark;
- double ccd_temp_image, ccd_temp_dark;
-
- int is_bias= 0; // 1 - if it's a bias rather than dark frame (needed just to name it properly)
 
  fprintf( stderr, "Exploring image header: %s \n", input_file );
  fits_open_file( &fptr, input_file, 0, &status );
@@ -212,7 +217,7 @@ int main( int argc, char *argv[] ) {
  }
 
  fprintf( stderr, "Allocating memory for image, dark and result arrays...\n" );
- long img_size= naxes[0] * naxes[1];
+ img_size= naxes[0] * naxes[1];
  if ( img_size <= 0 ) {
   fprintf( stderr, "ERROR: Trying allocate negative or zero bytes of memory\n" );
   fits_close_file( fptr, &status );
@@ -329,12 +334,37 @@ int main( int argc, char *argv[] ) {
  is_bias= is_bias_frame( fptr );
  //
  fits_get_img_type( fptr, &bitpix2, &status );
- fits_read_img( fptr, TUSHORT, 1, naxes[0] * naxes[1], &nullval, dark_array, &anynul, &status );
+ fits_read_img( fptr, TUSHORT, 1, img_size, &nullval, dark_array, &anynul, &status );
  fprintf( stderr, "Reading dark frame %s %ld %ld  %d bitpix\n", dark_file, testX, testY, bitpix2 );
  fits_close_file( fptr, &status );
  fits_report_error( stderr, status ); // print out any error messages
  status= 0;
- for ( i= 0; i < naxes[0] * naxes[1]; i++ ) {
+
+ // Calculate means while we have both arrays in memory
+ image_mean = 0.0;
+ dark_mean = 0.0;
+ for (i = 0; i < img_size; i++) {
+  image_mean += (double)image_array[i];
+  dark_mean += (double)dark_array[i];
+ }
+ image_mean /= (double)img_size;
+ dark_mean /= (double)img_size;
+
+ // Check if dark frame mean is greater than image mean
+ if (dark_mean >= image_mean) {
+  fprintf(stderr, "ERROR: Dark frame mean (%.2f) is greater than or equal to image mean (%.2f)\n", dark_mean, image_mean);
+  free(image_array);
+  free(dark_array);
+  free(result_image_array);
+  for (ii = 0; ii < No_of_keys; ii++) {
+   free(key[ii]);
+  }
+  free(key);
+  exit(EXIT_FAILURE);
+ }
+ 
+ // Perform dark subtraction
+ for ( i= 0; i < img_size; i++ ) {
   // Try to avoid messing up overscan region
   // but is it actually safe for the rest of the image?
   if ( dark_array[i] < image_array[i] ) {
@@ -385,7 +415,7 @@ int main( int argc, char *argv[] ) {
   //
   return 1;
  }
- fits_write_img( fptr, TUSHORT, fpixel, naxes[0] * naxes[1], result_image_array, &status );
+ fits_write_img( fptr, TUSHORT, fpixel, img_size, result_image_array, &status );
  fits_report_error( stderr, status ); // print out any error messages
  if ( status != 0 ) {
   // free-up memory before exiting
