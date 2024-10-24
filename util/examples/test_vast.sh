@@ -2724,6 +2724,31 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_imstat_vast_03"
   fi
+  N_KEYWORD_OCCURS=$(util/listhead median.fit | grep -c "BZERO   =")
+  if [ $N_KEYWORD_OCCURS -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk__BZERO_$N_KEYWORD_OCCURS"
+  fi
+  N_KEYWORD_OCCURS=$(util/listhead median.fit | grep -c "BSCALE  =")
+  if [ $N_KEYWORD_OCCURS -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk__BSCALE_$N_KEYWORD_OCCURS"
+  fi
+  util/listhead median.fit | grep --quiet "EXPTIME"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk__EXPTIME"
+  fi
+  util/listhead median.fit | grep --quiet "SET-TEMP"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk__SET-TEMP"
+  fi
+  util/listhead median.fit | grep --quiet "CCD-TEMP"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk__CCD-TEMP"
+  fi
   rm -f median.fit
  fi
  util/ccd/mk two.fit one.fit nul.fit

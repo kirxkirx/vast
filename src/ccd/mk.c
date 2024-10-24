@@ -16,7 +16,83 @@
 #define MAX_FLAT_FIELD_COUNT 20000
 #define MAX_BRIGHTNESS 50000
 
-char *beztochki( char * );
+//char *beztochki( char * );
+
+void check_and_remove_duplicate_keywords(const char *filename) {
+    fitsfile *fptr;       // FITS file pointer
+    int status = 0;       // CFITSIO status
+    int nkeys; //, keypos;
+    char card[FLEN_CARD]; // Buffer to hold each header card
+
+    //int first_occurrence;
+    int keyword_found;
+    int keyword_length;
+
+    // Keywords to check
+    const char *keywords[] = {"SIMPLE", "BITPIX", "NAXIS", "NAXIS1", "NAXIS2", "EXTEND", "BZERO", "BSCALE"};
+    int num_keywords = sizeof(keywords) / sizeof(keywords[0]);
+
+    // Open the FITS file
+    if (fits_open_file(&fptr, filename, READWRITE, &status)) {
+        fits_report_error(stderr, status);
+        return;
+    }
+
+    // Move to the primary HDU (assumed to be the first HDU)
+    if (fits_movabs_hdu(fptr, 1, NULL, &status)) {
+        fits_report_error(stderr, status);
+        fits_close_file(fptr, &status);
+        return;
+    }
+
+    // Get the number of header records (cards)
+    if (fits_get_hdrspace(fptr, &nkeys, NULL, &status)) {
+        fits_report_error(stderr, status);
+        fits_close_file(fptr, &status);
+        return;
+    }
+
+    // Iterate over each keyword
+    for (int i = 0; i < num_keywords; i++) {
+        //first_occurrence = 0;
+        keyword_found = 0;
+        keyword_length = strlen(keywords[i]);
+
+        // Iterate through the header cards to find occurrences of the keyword
+        for (int j = 1; j <= nkeys; j++) {
+            if (fits_read_record(fptr, j, card, &status)) {
+                fits_report_error(stderr, status);
+                break;
+            }
+
+            // Strict comparison: check if the card starts with the exact keyword
+            if (strncmp(card, keywords[i], keyword_length) == 0 &&
+                (card[keyword_length] == ' ' || card[keyword_length] == '=')) {
+
+                if (keyword_found == 0) {
+                    // Mark the position of the first occurrence
+                    //first_occurrence = j;
+                    keyword_found = 1;
+                } else {
+                    // Remove this duplicate occurrence
+                    if (fits_delete_record(fptr, j, &status)) {
+                        fits_report_error(stderr, status);
+                        break;
+                    }
+
+                    // Adjust the number of keys and the index, as we've removed one
+                    nkeys--;
+                    j--;
+                }
+            }
+        }
+    }
+
+    // Close the FITS file
+    if (fits_close_file(fptr, &status)) {
+        fits_report_error(stderr, status);
+    }
+}
 
 void handle_error(const char *message, int status) {
     fprintf(stderr, "ERROR: %s\n", message);
@@ -53,9 +129,9 @@ int main( int argc, char *argv[] ) {
  int No_of_keys;
  int keys_left;
  int ii;
- long bzero= 0;
- char bzero_comment[FLEN_CARD];
- int bzero_key_found= 0;
+ //long bzero= 0;
+ //char bzero_comment[FLEN_CARD];
+ //int bzero_key_found= 0;
 
  FILE *filedescriptor_for_opening_test;
 
@@ -113,6 +189,7 @@ int main( int argc, char *argv[] ) {
   }
   fits_read_record( fptr, ii, key[ii], &status );
  }
+ /*
  fits_read_key( fptr, TLONG, "BZERO", &bzero, bzero_comment, &status );
  if ( status != 0 ) {
   status= 0;
@@ -120,6 +197,7 @@ int main( int argc, char *argv[] ) {
  } else {
   bzero_key_found= 1;
  }
+ */
  fits_close_file( fptr, &status );
  fits_report_error( stderr, status ); // print out any error messages
 
@@ -272,6 +350,7 @@ int main( int argc, char *argv[] ) {
  for ( ii= 1; ii < No_of_keys; ii++ ) {
   fits_write_record( fptr, key[ii], &status );
  }
+/*
  // Delete the following keywords to avoid duplication
  fits_delete_key( fptr, "SIMPLE", &status );
  fits_delete_key( fptr, "BITPIX", &status );
@@ -287,6 +366,7 @@ int main( int argc, char *argv[] ) {
  if ( bzero_key_found == 1 ) {
   fits_write_key( fptr, TLONG, "BZERO", &bzero, bzero_comment, &status );
  }
+*/
 
  fits_write_history( fptr, "Median frame stacking:", &status );
  for ( ii= 1; ii < argc; ii++ ) {
@@ -307,6 +387,9 @@ int main( int argc, char *argv[] ) {
   free( key[ii] );
  }
  free( key );
+
+ fprintf(stderr, "Check and remove duplicate keywords from median.fit header \n");
+ check_and_remove_duplicate_keywords("median.fit");
 
  return status;
 }
