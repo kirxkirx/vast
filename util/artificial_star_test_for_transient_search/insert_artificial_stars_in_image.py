@@ -2,14 +2,11 @@
 
 import os
 import numpy as np
-import matplotlib.pyplot as plt
 from astropy.io import fits
-from astropy.table import Table
 import argparse
 from astropy.wcs import WCS
-from astropy.stats import sigma_clipped_stats, mad_std
+from astropy.stats import mad_std
 import glob
-from scipy.ndimage import gaussian_filter
 import shutil  # Added for directory removal
 
 def fwhm_to_sigma(fwhm):

@@ -1630,7 +1630,7 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  fclose( f );
  fprintf( stderr, "Matched %d stars with UCAC5 at scan.\n", N_stars_matched_with_astrometric_catalog );
  if ( N_stars_matched_with_astrometric_catalog < 5 ) {
-  fprintf( stderr, "ERROR: too few stars matched!\n" );
+  fprintf( stderr, "WARNING: too few stars matched!\n" );
   return 1;
  }
 

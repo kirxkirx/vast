@@ -22,6 +22,9 @@ if [ -z "$1" ];then
  print_usage_and_exit
 fi
 INPUT_IMAGE_DIR="$1"
+# Remove the trailing shash from the input directory path if present
+INPUT_IMAGE_DIR=${INPUT_IMAGE_DIR%/}
+#
 if [ ! -d "$INPUT_IMAGE_DIR" ];then
  echo "ERROR in $0: $INPUT_IMAGE_DIR is not a directory"
  print_usage_and_exit
@@ -32,6 +35,9 @@ util/clean_data.sh
 
 # Create the new input directory where the input images will surely be platesolved
 PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR="$INPUT_IMAGE_DIR"__wcs
+if [ -d "$PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR" ];then
+ rm -rf "$PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR"
+fi
 mkdir "$PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR" || exit 1
 
 # Plate-solve the images
@@ -42,7 +48,7 @@ for FITS_IMAGE_TO_PLATESOLVE in "$INPUT_IMAGE_DIR"/*.fits "$INPUT_IMAGE_DIR"/*.f
  util/wcs_image_calibration.sh "$FITS_IMAGE_TO_PLATESOLVE" 
 done
 for FITS_IMAGE_TO_PLATESOLVE in wcs_*.fits wcs_*.fit wcs_*.fts ;do
- mv -v "$FITS_IMAGE_TO_PLATESOLVE" "$PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR"
+ mv -v "$FITS_IMAGE_TO_PLATESOLVE" "$PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR/${FITS_IMAGE_TO_PLATESOLVE/wcs_/}"
 done
 
 #PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR=../NMW__NovaVul24_Stas_test/second_epoch_images_wcs
@@ -113,7 +119,7 @@ for FLUX in $TRIAL_FLUXES ;do
   util/artificial_star_test_for_transient_search/insert_artificial_stars_in_image.py "$PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR"/ $FLUX $N_ARTSTARS_PER_ITER --fwhm "$FWHM"
   if [ $? -ne 0 ];then
    echo "ERROR running insert_artificial_stars_in_image.py"
-   continue
+   exit 1
   fi
 
   # Run the transient search
@@ -121,7 +127,13 @@ for FLUX in $TRIAL_FLUXES ;do
   util/transients/transient_factory_test31.sh "$PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR"__artificialstars/
   if [ $? -ne 0 ];then
    echo "ERROR running util/transients/transient_factory_test31.sh"
+   exit 1
+  fi
+  cat transient_factory_test31.txt | grep 'ERROR'
+  if [ $? -eq 0 ];then
+   echo "ERROR reported in transient_factory_test31.txt"
    continue
+   #exit 1
   fi
 
   # Create the list of candidate transients and their magnitudes

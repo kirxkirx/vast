@@ -24,7 +24,7 @@ void check_and_remove_duplicate_keywords(const char *filename) {
     int nkeys; //, keypos;
     char card[FLEN_CARD]; // Buffer to hold each header card
 
-    //int first_occurrence;
+    int i,j; // counters
     int keyword_found;
     int keyword_length;
 
@@ -53,13 +53,13 @@ void check_and_remove_duplicate_keywords(const char *filename) {
     }
 
     // Iterate over each keyword
-    for (int i = 0; i < num_keywords; i++) {
+    for (i = 0; i < num_keywords; i++) {
         //first_occurrence = 0;
         keyword_found = 0;
         keyword_length = strlen(keywords[i]);
 
         // Iterate through the header cards to find occurrences of the keyword
-        for (int j = 1; j <= nkeys; j++) {
+        for (j = 1; j <= nkeys; j++) {
             if (fits_read_record(fptr, j, card, &status)) {
                 fits_report_error(stderr, status);
                 break;
@@ -117,7 +117,7 @@ int main( int argc, char *argv[] ) {
  double val;
  double ref_index= 1.0; // just to make the compiler happy
  double cur_index= 1.0; // just to make the compiler happy
- int i;
+ int i,j;
  int bitpix2;
  int file_counter;
  int good_file_counter;
@@ -182,7 +182,7 @@ int main( int argc, char *argv[] ) {
   key[ii]= malloc( FLEN_CARD * sizeof( char ) ); // FLEN_CARD length of a FITS header card defined in fitsio.h
   if ( key[ii] == NULL ) {
    handle_error("Couldn't allocate memory for key[ii]", status);
-   for (int j = 1; j < ii; j++) {
+   for (j = 1; j < ii; j++) {
        free(key[j]);
    }
    free(key);

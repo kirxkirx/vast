@@ -604,6 +604,8 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
    }
   }
  }
+ 
+ //fprintf(stderr, "DEBUG096 image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
 
  //////////////////////
  // Try the percantage cuts only if the image range is not much smaller than 0 to 65535
@@ -669,6 +671,7 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
   return;
  }
  //////////////////////
+ //fprintf(stderr, "DEBUG097 image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
 
  for ( i= 0; i < 65535; i++ )
   hist_summa+= HIST[i];
@@ -692,12 +695,29 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
    break;
   }
  }
+ 
+ //fprintf(stderr, "DEBUG098 image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
+ fprintf(stderr, "Original %.1lf%% image scale: min= %f max= %f \n", PGFV_CUTS_PERCENT, (*min_i), (*max_i) );
 
- ( *max_i )= MIN( ( *max_i ), 65535 ); // just in case...
+ //( *max_i )= MIN( ( *max_i ), 65535 ); // just in case...
+ ( *max_i )= MIN( ( *max_i ), 32767 );
+ 
+ //fprintf(stderr, "DEBUG_A image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
 
  ( *min_i )= MAX( ( *min_i ), 0 ); // do not go for very negatve values - they are likely wrong
+ 
+ //fprintf(stderr, "DEBUG_B image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
+
+ if( ( *min_i ) != 0.0 ) { 
+  ( *max_i )= MIN( ( *max_i ), 10*( *min_i ) ); // bright star in the field case
+ }
+ 
+ //fprintf(stderr, "DEBUG_C image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
 
  ( *max_i )= MAX( ( *max_i ), ( *min_i ) + 1 ); // for the countrate images (like the HST ones)
+ 
+ //fprintf(stderr, "DEBUG099 image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
+ fprintf(stderr, "Restricted image scale: min= %f max= %f \n", (*min_i), (*max_i) );
 
  //
  if( ( *max_i ) == ( *min_i ) ) {
