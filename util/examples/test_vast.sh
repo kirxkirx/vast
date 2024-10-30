@@ -9838,6 +9838,11 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_TYCHO2_V"
   fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_SESETTINGSFILE"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -10296,6 +10301,11 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_TYCHO2_V"
   fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_SESETTINGSFILE"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -10506,6 +10516,11 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_TYCHO2_V"
+  fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -10854,6 +10869,11 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_TYCHO2_V"
   fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_SESETTINGSFILE"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -11092,6 +11112,11 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET_TYCHO2_V"
   fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET_SESETTINGSFILE"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -11320,6 +11345,11 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_TYCHO2_V"
+  fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -11810,6 +11840,11 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_TYCHO2_V"
   fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_SESETTINGSFILE"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -12125,6 +12160,11 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_TYCHO2_V"
+  fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -12471,6 +12511,11 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_TYCHO2_V"
+  fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -12829,6 +12874,11 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21_TYCHO2_V"
   fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21_SESETTINGSFILE"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -13077,6 +13127,11 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_TYCHO2_V"
   fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_SESETTINGSFILE"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -13324,6 +13379,11 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2_TYCHO2_V"
+  fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -13630,6 +13690,11 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1_TYCHO2_V"
+  fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -14001,6 +14066,11 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21_TYCHO2_V"
   fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21_SESETTINGSFILE"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -14240,6 +14310,11 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_TYCHO2_V"
   fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_SESETTINGSFILE"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -14416,6 +14491,11 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_TYCHO2_V"
+  fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -14661,6 +14741,11 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA_TYCHO2_V"
+  fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -14939,6 +15024,11 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_TYCHO2_V"
   fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_SESETTINGSFILE"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -15207,6 +15297,11 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_TYCHO2_V"
+  fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -15647,6 +15742,11 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_TYCHO2_V"
   fi
+  grep --quiet 'default.sex.telephoto_lens_vSTL' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_SESETTINGSFILE"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -16027,6 +16127,11 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_TYCHO2_V"
   fi
+  grep --quiet 'default.sex.telephoto_lens_vSTL' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_SESETTINGSFILE"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -16380,6 +16485,11 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24_TYCHO2_V"
   fi
+  grep --quiet 'default.sex.TICA_TESS' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_SESETTINGSFILE"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -16429,7 +16539,7 @@ $GREP_RESULT"
   RADECPOSITION_TO_TEST=`grep "2024 07 29\.799.  2460521\.299.   9\.[89].  19:43:07\... +21:00:20\.."  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   # Position of Nova Vul 2024 from Henryk Sielewicz via astronomy.ru/Stanislav Korotkij 19:43:07.49 +21:00:21.6
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 19:43:07.49 +21:00:21.6  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
-  # NMW-STL scale is 20"/pix
+  # TESS image scale is 20"/pix
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 2*20 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
@@ -16618,6 +16728,11 @@ $CAT_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_TYCHO2_V"
+  fi
+  grep --quiet 'default.sex.telephoto_lens_vSTL' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -16969,6 +17084,11 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_TYCHO2_V"
   fi
+  grep --quiet 'default.sex.telephoto_lens_vSTL' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_SESETTINGSFILE"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -17283,6 +17403,11 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_TYCHO2_V"
   fi
+  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_SESETTINGSFILE"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -17595,6 +17720,11 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESS_APASS_I"
   fi
+  grep --quiet 'default.sex.TICA_TESS' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_SESETTINGSFILE"
+  fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
@@ -17623,7 +17753,7 @@ $GREP_RESULT"
   # Test for degraded plate solution 
   RADECPOSITION_TO_TEST=$(lib/bin/xy2sky wcs_s0068-o2-cam3-ccd2__hlsp_tica_tess_ffi_s0068-o2-00841857-cam3-ccd2_tess_v01_img.fits 3581.7809 269.8186 | awk '{print $1" "$2}' )
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 20:43:14.666 -74:25:44.16  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
-  # NMW-STL scale is 20"/pix
+  # TESS image scale is 20"/pix
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 20 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then

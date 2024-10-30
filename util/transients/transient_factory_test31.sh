@@ -44,7 +44,7 @@ function get_file_size() {
 # We need to check the input early as we may need to set camera settings based on the input path
 if [ -z "$1" ]; then
  echo "Usage: $0 PATH_TO_DIRECTORY_WITH_IMAGE_PAIRS"
- echo "Usage: $0 PATH_TO_DIRECTORY_WITH_IMAGE_PAIRS" >> transient_factory_test31.txt
+ echo "Usage: $0 PATH_TO_DIRECTORY_WITH_IMAGE_PAIRS" > transient_factory_test31.txt
  exit 1
 fi
 INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING="$1"
@@ -174,10 +174,8 @@ if [ -n "$CAMERA_SETTINGS" ];then
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=1500
   export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="13.5"
   FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=12.5
-  if [ -z "$SEXTRACTOR_CONFIG_FILES" ];then
-   # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
-   SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
-  fi
+  # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
+  SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
   # REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES rejects candidates with exactly the same pixel coordinates on two new images
   # as these are likely to be hot pixels sneaking into the list of candidates if no shift has been applied between the two second-epoch images.
   export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="yes"
@@ -250,9 +248,7 @@ if [ -n "$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" ];then
  export TELESCOP="$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION"
 fi
 
-# Commented-out as the parts using it are commented out
-# Are we on Linux or something else?
-#SYSTEM_TYPE="$(uname)"
+#################################
 
 function try_to_calibrate_the_input_frame {
 
@@ -506,6 +502,43 @@ for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.tx
   rm -f "$FILE_TO_REMOVE"
  fi
 done
+
+#### Start writing the new log file transient_factory_test31.txt ####
+# Print the processing parameters for diagnostic purposes:
+echo "######## Processing parameters ########
+AAVSO_COMMENT_STRING= $AAVSO_COMMENT_STRING
+ASTCHECK_ASTEROID_SEARCH_RADIUS_ARCSEC= $ASTCHECK_ASTEROID_SEARCH_RADIUS_ARCSEC
+BAD_REGION_FILE= $BAD_REGION_FILE
+CAMERA_SETTINGS= $CAMERA_SETTINGS
+CHECK_POINTING_ACCURACY= $CHECK_POINTING_ACCURACY
+DARK_FRAMES_DIR= $DARK_FRAMES_DIR
+EXCLUSION_LIST= $EXCLUSION_LIST
+FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX= $FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX
+FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX= $FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX
+FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX= $FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX
+FILTER_BRIGHT_MAG_CUTOFF_TRANSIENT_SEARCH= $FILTER_BRIGHT_MAG_CUTOFF_TRANSIENT_SEARCH
+FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH= $FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH
+FLAT_FIELD_FILE= $FLAT_FIELD_FILE
+FRAME_EDGE_OFFSET_PIX= $FRAME_EDGE_OFFSET_PIX
+GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK= $GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK
+MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO= $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO
+MPC_CODE= $MPC_CODE
+NMW_CALIBRATION= $NMW_CALIBRATION
+NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT= $NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT
+NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT= $NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT
+OMP_NUM_THREADS= $OMP_NUM_THREADS
+ONLINE_MPCHECKER_BUTTON_ASTEROID_SEARCH_RADIUS_ARCMIN= $ONLINE_MPCHECKER_BUTTON_ASTEROID_SEARCH_RADIUS_ARCMIN
+PHOTOMETRIC_CALIBRATION= $PHOTOMETRIC_CALIBRATION
+REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES= $REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES
+SEXTRACTOR_CONFIG_BRIGHTSTARPASS= $SEXTRACTOR_CONFIG_BRIGHTSTARPASS
+SEXTRACTOR_CONFIG_FILES= $SEXTRACTOR_CONFIG_FILES
+STARMATCH_RADIUS_PIX= $STARMATCH_RADIUS_PIX
+SYSREM_ITERATIONS= $SYSREM_ITERATIONS
+TELESCOP= $TELESCOP
+TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION= $TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
+UCAC5_PLATESOLVE_ITERATIONS= $UCAC5_PLATESOLVE_ITERATIONS
+#######################################" > transient_factory_test31.txt
+#################################
 
 # Check the reference images
 if [ ! -d "$REFERENCE_IMAGES" ];then
@@ -1348,24 +1381,6 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
    wait "$pid"
   done
   #
-#  # WCS-calibration (plate-solving)
-#  for i in $(cat vast_image_details.log | awk '{print $17}' | sort | uniq) ;do
-#   util/wcs_image_calibration.sh $i &
-#  done
-#
-#  # Wait for all children to end processing
-#  #if [ "$SYSTEM_TYPE" = "Linux" ];then
-#  # # --forest will not fly if we are not on Linux
-#  # ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
-#  #fi
-#  #####
-#  echo "wait"   >> transient_factory_test31.txt
-#  wait
-#  #####
-  #if [ "$SYSTEM_TYPE" = "Linux" ];then
-  # # --forest will not fly if we are not on Linux
-  # ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
-  #fi
   
   # Check that the plates were actually solved
   for i in $(cat vast_image_details.log |awk '{print $17}') ;do 
@@ -1596,13 +1611,6 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   if [ ! -s "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
    echo "$WCS_IMAGE_NAME_FOR_CHECKS does not exist or is empty: waiting for solve_plate_with_UCAC5" >> transient_factory_test31.txt
    # Wait here hoping util/solve_plate_with_UCAC5 will plate-solve the reference image
-   #if [ "$SYSTEM_TYPE" = "Linux" ];then
-   # echo "xxxxxxxxxx process tree ($WCS_IMAGE_NAME_FOR_CHECKS does not exist or is empty) xxxxxxxxxx" >> transient_factory_test31.txt
-   # # --forest will not fly if we are not on Linux
-   # ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
-   # echo "xxxxxxxxxx xxxxxxxxxx" >> transient_factory_test31.txt
-   #fi
-   #####
    echo "wait"   >> transient_factory_test31.txt
    wait
    # Print the output from each temporary file and then delete the file
@@ -1610,23 +1618,9 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     #cat "$tempFile"
     rm -f "$tempFile"
    done
-   #####
-   #if [ "$SYSTEM_TYPE" = "Linux" ];then
-   # echo "xxxxxxxxxx process tree (after wait) xxxxxxxxxx" >> transient_factory_test31.txt
-   # # --forest will not fly if we are not on Linux
-   # ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
-   # echo "xxxxxxxxxx xxxxxxxxxx" >> transient_factory_test31.txt
-   #fi
   else
    echo "Found non-empty $WCS_IMAGE_NAME_FOR_CHECKS" >> transient_factory_test31.txt
   fi
-  # Print the process tree
-  #if [ "$SYSTEM_TYPE" = "Linux" ];then
-  # echo "xxxxxxxxxx process tree (before magnitude calibration) xxxxxxxxxx" >> transient_factory_test31.txt
-  # # --forest will not fly if we are not on Linux 
-  # ps --forest $(ps -e --no-header -o pid,ppid|awk -vp=$$ 'function r(s){print s;s=a[s];while(s){sub(",","",s);t=s;sub(",.*","",t);sub("[0-9]+","",s);r(t)}}{a[$2]=a[$2]","$1}END{r(p)}')  >> transient_factory_test31.txt
-  # echo "xxxxxxxxxx xxxxxxxxxx" >> transient_factory_test31.txt
-  #fi
   echo "____ Start of magnitude calibration ____" >> transient_factory_test31.txt
   # Decide which catalog to use for magnitude calibration depending on the image filed of view
   if [ -z "$PHOTOMETRIC_CALIBRATION" ];then
