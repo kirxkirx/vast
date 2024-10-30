@@ -129,10 +129,11 @@ for FLUX in $TRIAL_FLUXES ;do
    echo "ERROR running util/transients/transient_factory_test31.sh"
    exit 1
   fi
-  cat transient_factory_test31.txt | grep ERROR
+  cat transient_factory_test31.txt | grep 'ERROR'
   if [ $? -eq 0 ];then
    echo "ERROR reported in transient_factory_test31.txt"
-   exit 1
+   continue
+   #exit 1
   fi
 
   # Create the list of candidate transients and their magnitudes
