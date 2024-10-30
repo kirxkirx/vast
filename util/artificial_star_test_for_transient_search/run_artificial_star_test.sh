@@ -2,7 +2,7 @@
 
 # general settings
 N_ARTSTARS_PER_ITER=100
-N_ITERATIONS=1
+N_ITERATIONS=10
 
 function print_usage_and_exit() {
  echo "Usage: 
@@ -98,7 +98,7 @@ fi
 # FLUX is assumed to be the flux corresponding to the limiting magnitude:
 # the one at which we reliably detect sources (and appparently transients),
 # so we would like to try both higher and lower fluxes
-TRIAL_FLUXES="$(echo $FLUX | awk '{print 8*$1" "4*$1" "2*$1" "$1" "$1/2" "$1/4" "$1/8}')"
+TRIAL_FLUXES="$(echo $FLUX | awk '{print 16*$1" "12*$1" "8*$1" "6*$1" "4*$1" "3*$1" "2*$1" "$1" "$1/2" "$1/3" "$1/4" "$1/6" "$1/8" "$1/12" "$1/16}')"
 
 echo "Trial fluxes:
 $TRIAL_FLUXES"
