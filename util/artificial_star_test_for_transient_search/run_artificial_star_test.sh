@@ -18,6 +18,9 @@ if [ -z "$REFERENCE_IMAGES" ];then
 fi
 export REFERENCE_IMAGES
 
+THIS_IS_ARTIFICIAL_STAR_TEST_DO_NO_ONLINE_SEARCH=1
+export THIS_IS_ARTIFICIAL_STAR_TEST_DO_NO_ONLINE_VSX_SEARCH
+
 if [ -z "$1" ];then
  print_usage_and_exit
 fi

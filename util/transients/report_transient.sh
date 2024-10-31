@@ -350,7 +350,7 @@ fi
 #
 # Check if the transient is a planetary moon
 # The difference with the never_exclude list is the search radius
-if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
+if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ] && [ -z "$THIS_IS_ARTIFICIAL_STAR_TEST_DO_NO_ONLINE_VSX_SEARCH" ];then
  EXCLUSION_LIST_FILE="moons.txt"
  if [ -s "$EXCLUSION_LIST_FILE" ];then
   EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC=180
@@ -366,7 +366,7 @@ fi
 #
 # Check if the transient is a major planet
 # The difference with the never_exclude list is the search radius
-if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
+if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ] && [ -z "$THIS_IS_ARTIFICIAL_STAR_TEST_DO_NO_ONLINE_VSX_SEARCH" ];then
  EXCLUSION_LIST_FILE="planets.txt"
  if [ -s "$EXCLUSION_LIST_FILE" ];then
   EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC=900
@@ -383,7 +383,7 @@ fi
 #
 # Check if the transient is a bright comet
 # The difference with the never_exclude list is the search radius
-if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
+if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ] && [ -z "$THIS_IS_ARTIFICIAL_STAR_TEST_DO_NO_ONLINE_VSX_SEARCH" ];then
  EXCLUSION_LIST_FILE="comets.txt"
  if [ -s "$EXCLUSION_LIST_FILE" ];then
   EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC=180
@@ -399,7 +399,7 @@ fi
 #
 # Check if the transient was reported at TOCP
 # The difference with the never_exclude list is the search radius
-if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
+if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ] && [ -z "$THIS_IS_ARTIFICIAL_STAR_TEST_DO_NO_ONLINE_VSX_SEARCH" ];then
  EXCLUSION_LIST_FILE="tocp_transients_list.txt"
  if [ -s "$EXCLUSION_LIST_FILE" ];then
   EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC=10
@@ -418,7 +418,7 @@ fi
 #
 # Check if the transient was recently seen by ASAS-SN
 # The difference with the never_exclude list is the search radius
-if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
+if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ] && [ -z "$THIS_IS_ARTIFICIAL_STAR_TEST_DO_NO_ONLINE_VSX_SEARCH" ];then
  EXCLUSION_LIST_FILE="asassn_transients_list.txt"
  if [ -s "$EXCLUSION_LIST_FILE" ];then
   lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC | grep --quiet "FOUND"
@@ -434,7 +434,7 @@ fi
 #
 # Check if the transient is a spacecraft
 # The difference with the never_exclude list is the search radius
-if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
+if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ] && [ -z "$THIS_IS_ARTIFICIAL_STAR_TEST_DO_NO_ONLINE_VSX_SEARCH" ];then
  EXCLUSION_LIST_FILE="spacecraft.txt"
  if [ -s "$EXCLUSION_LIST_FILE" ];then
   EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC=1800
@@ -601,7 +601,7 @@ if [ -z "$VARIABLE_STAR_ID" ] || [ -z "$ASTEROID_ID" ] ;then
  exit 1
 fi
 # If the candidate transient is not a known variable star or asteroid and doesn't seem to be a hot pixel - try online search
-if [ $VARIABLE_STAR_ID -ne 0 ] && [ $ASTEROID_ID -ne 0 ] ;then
+if [ $VARIABLE_STAR_ID -ne 0 ] && [ $ASTEROID_ID -ne 0 ] && [ -z "$THIS_IS_ARTIFICIAL_STAR_TEST_DO_NO_ONLINE_VSX_SEARCH" ] ;then
 # if [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.0" ] && [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.1" ] && [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.2" ] ;then
  if [[ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.0" ]] &&
     [[ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.1" ]] &&

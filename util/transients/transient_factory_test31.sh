@@ -744,20 +744,6 @@ for FILE_TO_REMOVE in planets.txt comets.txt moons.txt spacecraft.txt asassn_tra
  fi
 done
 
-# Moved down
-## Update planet and bright comet positions taking the date of the first input image
-#JD_FIRSTIMAGE_FOR_PLANET_POSITIONS=$(for IMGFILE in "$NEW_IMAGES"/*."$FITS_FILE_EXT" ;do if [ -f "$IMGFILE" ];then util/get_image_date "$IMGFILE" 2>&1 | grep ' JD ' | awk '{print $2}' ; break ;fi ;done)
-#if [ -z "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" ];then
-# echo "ERROR getting reference JD(UT) for computing planet and comet positions"
-# continue
-#fi
-#echo "The reference JD(UT) for computing planet and comet positions: $JD_FIRSTIMAGE_FOR_PLANET_POSITIONS"
-#echo "The reference JD(UT) for computing planet and comet positions: $JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" >> transient_factory_test31.txt
-#$TIMEOUTCOMMAND util/planets.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > planets.txt &
-#$TIMEOUTCOMMAND util/comets.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > comets.txt &
-#$TIMEOUTCOMMAND lib/asassn_transients_list.sh > asassn_transients_list.txt &
-#$TIMEOUTCOMMAND lib/tocp_transients_list.sh > tocp_transients_list.txt &
-
 PREVIOUS_FIELD="none"
 
 for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
@@ -1337,7 +1323,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
    fi # if [ -d "$WCSCACHEDIR" ];then
   done # for WCSCACHEDIR in 
 
-  if [ ! -f planets.txt ];then
+  if [ ! -f planets.txt ] && [ -z "$THIS_IS_ARTIFICIAL_STAR_TEST_DO_NO_ONLINE_VSX_SEARCH" ];then
    JD_FIRSTIMAGE_FOR_PLANET_POSITIONS=$(util/get_image_date "$SECOND_EPOCH__FIRST_IMAGE" 2>&1 | grep ' JD ' | tail -n1 | awk '{print $2}')
    echo "The reference JD(UT) for computing planet and comet positions: $JD_FIRSTIMAGE_FOR_PLANET_POSITIONS"
    echo "The reference JD(UT) for computing planet and comet positions: $JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" >> transient_factory_test31.txt
