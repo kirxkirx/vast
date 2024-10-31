@@ -16370,6 +16370,265 @@ if [ $? -ne 0 ];then
 fi
 
 
+##### NMW-STL find huge comet test #####
+# Download the test dataset if needed
+if [ ! -d ../NMW-STL__STL-11000M__find_huge_comet_test ];then
+ cd ..
+ curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2" && tar -xvjf NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2 && rm -f NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2
+ cd $WORKDIR
+fi
+# If the test data are found
+if [ -d ../NMW-STL__STL-11000M__find_huge_comet_test ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ #
+ remove_test31_tmp_files_if_present
+ # Run the test
+ echo "NMW-STL find huge comet test " 
+ echo -n "NMW-STL find huge comet test: " >> vast_test_report.txt 
+ #
+ cp -v bad_region.lst_default bad_region.lst
+ #
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ # Set STL camera bad regions file
+ #if [ ! -f ../STL_bad_region.lst ];then
+ # cp -v ../NMW-STL__STL-11000M__find_huge_comet_test/STL_bad_region.lst ../STL_bad_region.lst
+ #fi
+ # Test the production NMW script
+ REFERENCE_IMAGES=../NMW-STL__STL-11000M__find_huge_comet_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW-STL__STL-11000M__find_huge_comet_test/second_epoch_images
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET000_EXIT_CODE"
+ fi
+ #
+ if [ -f transient_report/index.html ];then
+  grep --quiet 'ERROR' "transient_report/index.html"
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET_ERROR_MESSAGE_IN_index_html"
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWSTLFINDCOMET_ERROR_MESSAGE_IN_index_html ######
+$GREP_RESULT
+----------------- transient_factory_test31.txt -----------------
+$CAT_RESULT"
+  fi
+  # The copy of the log file should be in the HTML report
+  grep --quiet "Images processed 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET001"
+  fi
+  grep --quiet "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET002"
+  fi
+  #grep --quiet "First image: 2460232.25743 14.10.2023 18:10:32" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2459821.29554398 29.08.2022 19:05:25.000' 1 transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET003"
+  fi
+  #grep --quiet "Last  image: 2460521.39237 29.07.2024 21:24:51" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460614.18384259 30.10.2024 16:24:34.000' 1 transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET_check_dates_consistency_in_vast_image_details_log"
+  fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET_TYCHO2_V"
+  fi
+  grep --quiet 'default.sex.telephoto_lens_vSTL' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET_SESETTINGSFILE"
+  fi
+  # Hunting the mysterious non-zero reference frame rotation cases
+  if [ -f vast_image_details.log ];then
+   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET0_nonzero_ref_frame_rotation"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWSTLFINDCOMET0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWSTLFINDCOMET0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET0_NO_vast_image_details_log"
+  fi
+  #
+  #
+  # The comet C/2023 A3 (Tsuchinshan-ATLAS)
+  grep --quiet "2024 10 30\.683.  2460614\.183.  ..\...  17:53:..\... +03:40:..\.."  transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET0110a"
+   GREP_RESULT=`grep "2024 10 30\.683.  2460614\.183.  ..\...  17:53:..\... +03:40:..\.." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWSTLFINDCOMET0110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2024 10 30\.683.  2460614\.183.  ..\...  17:53:..\... +03:40:..\.."  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  # 
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:53:32.43 +03:40:41.8  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW-STL scale is 13.80"/pix, but the comet is huge so need more tolerance for the position match
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 5*13.8 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET0110a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET0110a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  # 
+  grep --quiet "SV Oph" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET314"
+  fi
+  grep --quiet "2024 10 30\.683.  2460614\.183.   9.9.  17:56:24\... +03:22:3[78]\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET314a"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2024 10 30\.683.  2460614\.183.   9.9.  17:56:24\... +03:22:3[78]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  # position from VSX
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:56:24.76 +03:22:38.2  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW-STL scale is 13.80"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 1.0*13.8 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET314a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET314a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  # 
+  grep --quiet "ASAS J173712-0043.7" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET414"
+  fi
+  grep --quiet "2024 10 30\.683.  2460614\.183.  11\...  17:37:12\... -00:43:[34].\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET414a"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2024 10 30\.683.  2460614\.183.  11\...  17:37:12\... -00:43:[34].\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  # position from VSX
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:37:12.55 -00:43:42.9  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW-STL scale is 13.80"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 1.0*13.8 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET414a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET414a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  # 
+  
+  test_if_test31_tmp_files_are_present
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET_TMP_FILE_PRESENT"
+  fi
+
+ else
+  echo "ERROR running the transient search script" 
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET_ALL"
+ fi
+
+
+ ###### restore default bad regions file
+ if [ -f bad_region.lst_default ];then
+  cp -v bad_region.lst_default bad_region.lst
+ fi
+ #
+
+ ###### restore default exclusion list if any
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
+
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mNMW-STL find huge comet test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mNMW-STL find huge comet test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+remove_test_data_to_save_space
+
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!" 
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES" 
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ exit 1
+fi
+
+
 
 ##### TICA TESS find Nova Vul 2024 test #####
 # Download the test dataset if needed

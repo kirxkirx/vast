@@ -2034,6 +2034,7 @@ int main( int argc, char **argv ) {
  int param_nofind= 0;                // do not run find_candidates
  int param_nofilter= 1;              // do not run filtering
  int param_nodiscardell= 0;          // do not discard images with elliptical stars
+ int param_nodiscardlargesrc= 0;     // do not discard large sources
  int no_rotation= 0;                 // count as error rotation larger than 3 degrees
  int debug= 0;                       // be more verbose
  int period_search_switch= 0;        // do not use period search algorithms
@@ -2991,6 +2992,8 @@ int main( int argc, char **argv ) {
   maxsextractorflag= 99; // 3 + 4; // we want to accept all sorts of blended and saturated sources
   fprintf( stderr, "transient search mode: disabling rejectin of images with elliptical stars\n" );
   param_nodiscardell= 1;
+  fprintf( stderr, "transient search mode: not discarding large sources\n" );
+  param_nodiscardlargesrc= 1;
   fprintf( stderr, "################\n" );
  }
 
@@ -3775,8 +3778,8 @@ int main( int argc, char **argv ) {
   STAR1[NUMBER1 - 1].n_rejected= 0; // init
                                     //
   // It is OK for a very bright saturated object to be big
-  // if ( a_a > 2*aperture && sextractor_flag < 4 ) {
-  if ( a_a > aperture && sextractor_flag < 4 ) {
+  //if ( a_a > 5*aperture && sextractor_flag < 4 ) {
+  if ( a_a > aperture && sextractor_flag < 4 && 0 == param_nodiscardlargesrc ) {
    counter_rejected_too_large++;
    STAR1[NUMBER1 - 1].vast_flag= 1;
   }
@@ -4383,8 +4386,8 @@ int main( int argc, char **argv ) {
      NUMBER2++;
      STAR2[NUMBER2 - 1].vast_flag= 0;
      // It is OK for a very bright saturated object to be big
-     // if ( a_a > 2*aperture && sextractor_flag < 4 ) {
-     if ( a_a > aperture && sextractor_flag < 4 ) {
+     //if ( a_a > 5*aperture && sextractor_flag < 4 ) {
+     if ( a_a > aperture && sextractor_flag < 4 && 0 == param_nodiscardlargesrc ) {
       counter_rejected_too_large++;
       STAR2[NUMBER2 - 1].vast_flag= 1;
      }

@@ -231,7 +231,7 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
 
   write_string_to_individual_image_log( output_sextractor_catalog, "autodetect_aperture(): ", "Calculating the aperture size", "" );
   //// Calculate best aperture size from seeing ///
-  fprintf( stderr, "autodetect_aperture() is making a preliminary SExtractor run to determine an appropriate aperture size\n" );
+  fprintf( stderr, "autodetect_aperture() is doing a preliminary SExtractor run to determine an appropriate aperture size\n" );
   // sprintf( sextractor_catalog_filename, "autodetect_aper_%d.cat", pid );
   sprintf( sextractor_catalog_filename, "autodetect_aper_%s", output_sextractor_catalog );
   // and yes, we are re-using the .sex_log files
@@ -386,7 +386,7 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
  // ap[3]
 
  if ( do_PSF_fitting == 0 ) {
-  fprintf( stderr, "autodetect_aperture() is making the main SExtractor run\n" );
+  fprintf( stderr, "autodetect_aperture() is doing the main SExtractor run\n" );
   if ( is_flag_image_used == 1 ) {
    sprintf( command, "sex %s%s%s -PARAMETERS_NAME default_flag.param -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf,%.1lf -VERBOSE_TYPE NORMAL -CATALOG_NAME %s %s > %s 2>&1", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, flag_image_sextractor_cl_parameter_string, APERTURE, APERTURE, ap[0], ap[1], ap[2], ap[3], output_sextractor_catalog, fitsfilename, sextractor_messages_filename );
   } else {
@@ -419,7 +419,7 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
 
   sprintf( sextractor_catalog_filename, "%s.psfex_input_cat", output_sextractor_catalog );
   sprintf( psf_filename, "%s.psf", output_sextractor_catalog );
-  fprintf( stderr, "autodetect_aperture() is making preliminary SExtractor run for PSF shape extraction\n" );
+  fprintf( stderr, "autodetect_aperture() is doing a preliminary SExtractor run for PSF shape extraction\n" );
   // sprintf( command, "sex -c bright_star_blend_check_3.0.sex %s%s -PARAMETERS_NAME %s -CATALOG_TYPE FITS_LDAC -CATALOG_NAME %s -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf %s", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, psfex_param_filename, sextractor_catalog_filename, APERTURE, ap[0], ap[1], ap[2], ap[3], fitsfilename );
   sprintf( command, "sex -c default.sex %s%s -PARAMETERS_NAME %s -CATALOG_TYPE FITS_LDAC -CATALOG_NAME %s -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf %s", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, psfex_param_filename, sextractor_catalog_filename, APERTURE, ap[0], ap[1], ap[2], ap[3], fitsfilename );
   fprintf( stderr, "%s\n", command );
@@ -438,7 +438,7 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
    fprintf( stderr, "ERROR: the command returned a non-zero exit code!\n" );
   }
 
-  fprintf( stderr, "autodetect_aperture() is making the main SExtractor run to perform PSF-fitting photometry\n" );
+  fprintf( stderr, "autodetect_aperture() is doing the main SExtractor run to perform PSF-fitting photometry\n" );
   if ( is_flag_image_used == 1 ) {
    sprintf( command, "sex -c default.sex %s%s%s -PARAMETERS_NAME psfex_sextractor_2nd_pass_flag.param -PSF_NMAX 1 -PSF_NAME %s -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf -VERBOSE_TYPE NORMAL -CATALOG_NAME %s %s > %s 2>&1", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, flag_image_sextractor_cl_parameter_string, psf_filename, APERTURE, ap[0], ap[1], ap[2], ap[3], output_sextractor_catalog, fitsfilename, sextractor_messages_filename );
   } else {
@@ -454,7 +454,7 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
   // The thing is that SExtractor will not PSF-fit saturated stars,
   // but we need to have a catalog containing all the stars (including the brightest ones)
   // in order to be able to perform blind astrometric solution with the Astrometry.net code
-  fprintf( stderr, "autodetect_aperture() is making an additional SExtractor run to perform aperture photometry\n" );
+  fprintf( stderr, "autodetect_aperture() is doing an additional SExtractor run to perform aperture photometry\n" );
   if ( is_flag_image_used == 1 ) {
    sprintf( command, "sex %s%s%s -PARAMETERS_NAME default_flag.param -PHOT_APERTURES %.1lf,%.1lf,%.1lf,%.1lf,%.1lf,%.1lf -CATALOG_NAME %s.apphot %s", gain_sextractor_cl_parameter_string, saturation_limitsextractor_cl_parameter_string, flag_image_sextractor_cl_parameter_string, APERTURE, APERTURE, ap[0], ap[1], ap[2], ap[3], output_sextractor_catalog, fitsfilename );
   } else {
