@@ -13,6 +13,25 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
+# Function to download Tycho2 dataset files
+get_tycho2_from_scan_with_curl() {
+ local url="http://scan.sai.msu.ru/~kirx/data/tycho2/"
+ 
+ # Get the directory listing
+ listing=$(curl $VAST_CURL_PROXY -s "$url" | grep -o 'href="[^"]*"' | cut -d'"' -f2)
+ 
+ for item in $listing; do
+  # Skip directory links
+  [[ "$item" == */ ]] && continue
+  # Check if file matches our patterns
+  if [[ "$item" == "ReadMe" || "$item" == *.gz || "$item" == "robots.txt" ]]; then
+   # Download file with continuation
+   echo "Downloading: $item"
+   curl $VAST_CURL_PROXY -C - -s --create-dirs -o "$item" "${url}${item}"
+  fi
+ done
+}
+
 function check_if_curl_is_too_old_to_attempt_HTTPS() {
     # Get the curl version
     curl_version=$(curl --version | head -n 1 | awk '{print $2}')
@@ -117,7 +136,7 @@ if [[ $(check_if_curl_is_too_old_to_attempt_HTTPS) == true ]]; then
  # curl is new enough to attempt HTTPS
 
  # Try to get the country code
- COUNTRY_CODE=$(curl --silent --connect-timeout 10 --insecure https://ipinfo.io/ | grep '"country":' | awk -F'"country":' '{print $2}' | awk -F'"' '{print $2}')
+ COUNTRY_CODE=$(curl $VAST_CURL_PROXY --silent --connect-timeout 10 --insecure https://ipinfo.io/ | grep '"country":' | awk -F'"country":' '{print $2}' | awk -F'"' '{print $2}')
  if [ -z "$COUNTRY_CODE" ];then
   # Set UN code for UNknown
   COUNTRY_CODE="UN"
@@ -195,20 +214,20 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
   TMP_OUTPUT=""
   if [ "$FILE_TO_UPDATE" == "astorb.dat" ];then
    TMP_OUTPUT="astorb_dat_new"
-   CURL_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT.gz https://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
-   CURL_LOCAL_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT.gz $LOCAL_SERVER/astorb.dat.gz"
+   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT.gz https://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
+   CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT.gz $LOCAL_SERVER/astorb.dat.gz"
    UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz"
   fi
   if [ "$FILE_TO_UPDATE" == "lib/catalogs/vsx.dat" ];then
    TMP_OUTPUT="vsx.dat"
-   CURL_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT.gz  $TMP_OUTPUT.gz ftp://cdsarc.u-strasbg.fr/pub/cats/B/vsx/vsx.dat.gz"
-   CURL_LOCAL_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT.gz $LOCAL_SERVER/vsx.dat.gz"
+   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT.gz  $TMP_OUTPUT.gz ftp://cdsarc.u-strasbg.fr/pub/cats/B/vsx/vsx.dat.gz"
+   CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT.gz $LOCAL_SERVER/vsx.dat.gz"
    UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz"
   fi
   if [ "$FILE_TO_UPDATE" == "lib/catalogs/asassnv.csv" ];then
    TMP_OUTPUT="asassnv.csv"
-   CURL_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT \"https://asas-sn.osu.edu/variables.csv?action=index&controller=variables\""
-   CURL_LOCAL_COMMAND="curl --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT $LOCAL_SERVER/asassnv.csv"
+   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT \"https://asas-sn.osu.edu/variables.csv?action=index&controller=variables\""
+   CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT $LOCAL_SERVER/asassnv.csv"
    UNPACK_COMMAND=""
   fi
   if [ -z "$CURL_COMMAND" ];then
@@ -287,7 +306,7 @@ if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ ! -s "lib/catal
  # Changed to local copy
  #curl --silent http://scan.sai.msu.ru/~kirx/data/bright_star_catalog_original.txt.gz | gunzip > lib/catalogs/bright_star_catalog_original.txt
  #curl --silent "$LOCAL_SERVER/bright_star_catalog_original.txt.gz" | gunzip > lib/catalogs/bright_star_catalog_original.txt
- curl --connect-timeout 10 --insecure --silent --output lib/catalogs/bright_star_catalog_original.txt "$LOCAL_SERVER/bright_star_catalog_original.txt"
+ curl $VAST_CURL_PROXY --connect-timeout 10 --insecure --silent --output lib/catalogs/bright_star_catalog_original.txt "$LOCAL_SERVER/bright_star_catalog_original.txt"
  if [ $? -eq 0 ];then
   echo "Extracting the R.A. Dec. list (all BSC)"
   cat lib/catalogs/bright_star_catalog_original.txt | grep -v -e 'NOVA' -e '47    Tuc' -e 'M 31' -e 'NGC 2281' -e 'M 67' -e 'NGC 2808' | while IFS= read -r STR ;do 
@@ -348,7 +367,9 @@ if [ ! -f $TYCHO_PATH/tyc2.dat.00 ];then
   done
   #
   # wget instead of curl !!!
-  wget -nH --cut-dirs=4 --no-parent -r -l0 -c -A 'ReadMe,*.gz,robots.txt' "http://scan.sai.msu.ru/~kirx/data/tycho2/"
+  # No $VAST_CURL_PROXY support here!
+  #wget -nH --cut-dirs=4 --no-parent -r -l0 -c -A 'ReadMe,*.gz,robots.txt' "http://scan.sai.msu.ru/~kirx/data/tycho2/"
+  get_tycho2_from_scan_with_curl
   echo "Download complete. Unpacking..."
   for i in tyc2.dat.*gz ;do
    # handle a very special case: `basename $i .gz` is a broken symlink

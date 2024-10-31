@@ -30,6 +30,45 @@ else
  COLOR=0
 fi
 
+function check_if_the_vsx_page_looks_legit_and_we_might_be_having_parsing_issues {
+ if [ -z "$1" ];then
+  echo "ERROR using check_if_the_vsx_page_looks_legit_and_we_might_be_having_parsing_issues() function - it needs an argument"
+  return 1
+ fi
+ VSX_PAGE_CONTENT_FILE="$1"
+ if [ ! -f "$VSX_PAGE_CONTENT_FILE" ];then
+  # no file 
+  return 1
+ fi
+ if [ ! -s "$VSX_PAGE_CONTENT_FILE" ];then
+  # empty file 
+  return 1
+ fi
+ grep --quiet --ignore-case '</html>' "$VSX_PAGE_CONTENT_FILE"
+ if [ $? -ne 0 ];then
+  # no closing html tag - possibly incomplete file?
+  return 1
+ fi
+ grep --quiet --ignore-case 'Variable Star Index' "$VSX_PAGE_CONTENT_FILE"
+ if [ $? -ne 0 ];then
+  # expect to find words 'Variable Star Index' on the page
+  return 1
+ fi
+ grep --quiet --ignore-case 'New Search' "$VSX_PAGE_CONTENT_FILE"
+ if [ $? -ne 0 ];then
+  # expect to find words 'New Search' on the page
+  return 1
+ fi
+ grep --quiet --ignore-case 'AUID' "$VSX_PAGE_CONTENT_FILE"
+ if [ $? -ne 0 ];then
+  # expect to find word 'AUID' on the page
+  return 1
+ fi
+ 
+ # if we are still here - the input looks like a legit VSX HTML page
+ return 0
+}
+
 
 # A more portable realpath wrapper
 function vastrealpath {
@@ -159,7 +198,7 @@ fi
 #$CURL --silent --max-time 30 \"http://www.sai.msu.su/gcvs/cgi-bin/co-h.cgi?coor=${RA//:/+}+${DEC_STUPID_PLUS_GCVS//:/+}&radius=60\"
 #
 #" 1>&2
-DATABASE_RESULTS=$($TIMEOUTCOMMAND $CURL --silent --max-time 45 "http://www.sai.msu.su/gcvs/cgi-bin/co-h.cgi?coor=${RA//:/+}+${DEC_STUPID_PLUS_GCVS//:/+}&radius=60" | grep \| )
+DATABASE_RESULTS=$($TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --silent --max-time 45 "http://www.sai.msu.su/gcvs/cgi-bin/co-h.cgi?coor=${RA//:/+}+${DEC_STUPID_PLUS_GCVS//:/+}&radius=60" | grep \| )
 if [ "$DATABASE_RESULTS" != "" ];then
  if [ $COLOR -eq 1 ];then
   echo -e "The object was \033[01;32mfound\033[00m in $DATABASE_NAME:  "
@@ -182,10 +221,23 @@ else
  fi
 fi
 
+# clean up any rmains of a previous VSX interaction with the same PID - just in case
+for FILE_TO_REMOVE in vsx_page_content$$.html vsx_page_content$$.error ;do
+ if [ -f "$FILE_TO_REMOVE" ];then
+  rm -f "$FILE_TO_REMOVE"
+ fi
+done
+
 # Querry VSX now, but parse later, so this querry is parallel to SIMBAD
-# cannot use --silent here as it will print no error message if there is an error
+# --silent --show-error will suppress the progress bar but not error messages
 #echo $CURL --insecure --max-time 60 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "https://www.aavso.org/vsx/index.php?view=results.submit1" > /tmp/t
-$TIMEOUTCOMMAND $CURL --insecure --connect-timeout 10 --max-time 120 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "https://www.aavso.org/vsx/index.php?view=results.submit1" 2> vsx_page_content$$.error > vsx_page_content$$.html &
+#echo "
+#
+#DEBUG - first try
+#$CURL $VAST_CURL_PROXY --silent --show-error --insecure --connect-timeout 10 --max-time 120 --data \"targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2\" \"https://www.aavso.org/vsx/index.php?view=results.submit1\"
+#
+#"
+$TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --silent --show-error --insecure --connect-timeout 10 --max-time 120 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "https://www.aavso.org/vsx/index.php?view=results.submit1" 2> vsx_page_content$$.error > vsx_page_content$$.html &
 # a working example as of 2023-05-12:
 #curl 'https://www.aavso.org/vsx/index.php?view=results.submit1' -X POST -H 'Content-Type: application/x-www-form-urlencoded' -H 'DNT: 1' -H 'Connection: keep-alive' -H 'Upgrade-Insecure-Requests: 1' -H 'Sec-Fetch-Dest: document' -H 'Sec-Fetch-Mode: navigate' -H 'Sec-Fetch-Site: same-origin' -H 'Sec-Fetch-User: ?1' --data-raw 'ql=1&getCoordinates=0&plotType=Search&special=index.php%3Fview%3Dresults.special%26sid%3D2&ident=&constid=0&targetcenter=07%3A29%3A19.69+-13%3A23%3A06.6&format=s&fieldsize=1&fieldunit=3&geometry=r&filter%5B%5D=0&filter%5B%5D=1&filter%5B%5D=2&filter%5B%5D=3&order=1' > vsx_page_content$$.html &
 
@@ -199,7 +251,7 @@ fi
 # Try to querry SIMBAD multiple times with different search radius 
 # since the simple parser will recognize object if this is the single SIMBAD object in the field.
 for SIMBAD_SEARCH_RADIUS in 0.05 1 0.02 0.5 ;do
- DATABASE_RESULTS=$($TIMEOUTCOMMAND $CURL --silent --max-time 30 --data "Coord=$RA%20$DEC&CooDefinedFrames=J2000&Radius=$SIMBAD_SEARCH_RADIUS&Radius.unit=arcmin" "http://simbad.u-strasbg.fr/simbad/sim-coo" |grep -v \< |grep -A3 "Basic" |tail -n3)
+ DATABASE_RESULTS=$($TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --silent --max-time 30 --data "Coord=$RA%20$DEC&CooDefinedFrames=J2000&Radius=$SIMBAD_SEARCH_RADIUS&Radius.unit=arcmin" "http://simbad.u-strasbg.fr/simbad/sim-coo" |grep -v \< |grep -A3 "Basic" |tail -n3)
  if [ "$DATABASE_RESULTS" != "" ];then
   if [ $COLOR -eq 1 ];then
    echo -e "The object was \033[01;32mfound\033[00m in $DATABASE_NAME:  "
@@ -227,16 +279,45 @@ fi
 # move up to speed up
 #$TIMEOUTCOMMAND $CURL  --silent --max-time 30 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "http://www.aavso.org/vsx/index.php?view=results.submit1" > vsx_page_content$$.html
 wait
-if [ -s vsx_page_content$$.error ];then
+# vsx_page_content$$.error - will not be enpty if we are not using --silent !
+if [ -s vsx_page_content$$.error ] || ! check_if_the_vsx_page_looks_legit_and_we_might_be_having_parsing_issues vsx_page_content$$.html ;then
+ echo "
+ 
+ YOHOHO, an error, see below the content of vsx_page_content$$.error
+ 
+ "
+ cat vsx_page_content$$.error
+ echo "
+ 
+ YOHOHO, an error, see above the content of vsx_page_content$$.error
+ 
+ "
  # There was en error connecting to VSX
  rm -f vsx_page_content$$.error
  # Retry connecting via the reverse proxy
- $TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --insecure --silent --connect-timeout 10 --max-time 30 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "https://kirx.net/vsx/index.php?view=results.submit1" 2> vsx_page_content$$.error > vsx_page_content$$.html
- if [ -s vsx_page_content$$.error ];then
+ #$TIMEOUTCOMMAND $CURL                 --insecure --connect-timeout 10 --max-time 120         --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "https://www.aavso.org/vsx/index.php?view=results.submit1" 2> vsx_page_content$$.error > vsx_page_content$$.html &
+# echo "
+# 
+# DEBUG -- second try
+# 
+# $CURL $VAST_CURL_PROXY --silent --show-error --insecure --connect-timeout 10 --max-time 30 --data \"targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2\" \"https://kirx.net/vsx/index.php?view=results.submit1\" 
+#
+# "
+ $TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --silent --show-error --insecure --connect-timeout 10 --max-time 30 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "https://kirx.net/vsx/index.php?view=results.submit1" 2> vsx_page_content$$.error > vsx_page_content$$.html
+ # There will be no vsx_page_content$$.error content if the request is timing out after --max-time becasue the request is outright blocked - thanks AAVSO
+ if [ -s vsx_page_content$$.error ] || ! check_if_the_vsx_page_looks_legit_and_we_might_be_having_parsing_issues vsx_page_content$$.html ;then
+  cat vsx_page_content$$.error
   # There was en error connecting to VSX
   rm -f vsx_page_content$$.error
   # Retry connecting via HTTP reverse proxy
-  $TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --insecure --silent --connect-timeout 20 --max-time 60 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "http://kirx.net/vsx/index.php?view=results.submit1" 2> vsx_page_content$$.error > vsx_page_content$$.html
+  $TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --silent --show-error --insecure --connect-timeout 20 --max-time 60 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "http://kirx.net/vsx/index.php?view=results.submit1" 2> vsx_page_content$$.error > vsx_page_content$$.html
+#  echo "
+# 
+# DEBUG -- third try
+#
+# $CURL $VAST_CURL_PROXY --silent --show-error --insecure --connect-timeout 20 --max-time 60 --data \"targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2\" \"http://kirx.net/vsx/index.php?view=results.submit1\" 
+#
+# "
  fi
 fi
 ##

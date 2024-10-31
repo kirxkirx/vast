@@ -124,6 +124,8 @@ if [ ! -s CBA_previously_used_header.txt ];then
 fi
 #cp CBA_previously_used_header.txt CBA_report.txt
 if [ "$VARIABLE_STAR_NAME" = "XX Xxx" ];then
+ echo "Trying to get variable star name from CBA_previously_used_header.txt"
+ grep '# Variable: ' CBA_previously_used_header.txt
  grep '# Variable: ' CBA_previously_used_header.txt > CBA_report.txt
 else
  echo "# Variable: $VARIABLE_STAR_NAME" > CBA_report.txt
