@@ -111,6 +111,7 @@ fi
 for FLUX in $TRIAL_FLUXES ;do
 
  # run the test inserting N_ARTSTARS_PER_ITER artificial stars each run
+ N_CANDIDATES_FOUND_TOTAL=0
  N_ARTSTARS_INSERTED_TOTAL=0
  IDENTIFIED_ARTSTARS_FOR_THIS_ITERATION_TMPFILE=$(mktemp)
  for ITERATION in $(seq 1 $N_ITERATIONS) ;do
@@ -138,6 +139,7 @@ for FLUX in $TRIAL_FLUXES ;do
 
   # Create the list of candidate transients and their magnitudes
   grep 'Discovery image 1' transient_report/index.html | awk -F'<td>' '{print $5" "$7}' | awk '{print $3" "$4" "$1}' > "$PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR"__artificialstars/candidate_coordinates_and_magnitudes.txt
+  N_CANDIDATES_FOUND_TOTAL=$[$N_CANDIDATES_FOUND_TOTAL + $(cat "$PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR"__artificialstars/candidate_coordinates_and_magnitudes.txt | wc -l)]
  
   # Loop over each point in coordinates.txt
   while read -r x1 y1; do
@@ -163,10 +165,16 @@ for FLUX in $TRIAL_FLUXES ;do
 
  RECOVERED_FRACTION=$(echo "$N_FOUND $N_ARTSTARS_INSERTED_TOTAL" | awk '{printf "%.4f",$1/$2}')
 
+ # The C P F1 F10 are computed assuming there are no real transients in the input data!
+ C="$RECOVERED_FRACTION"
+ P=$(echo "$N_FOUND $N_CANDIDATES_FOUND_TOTAL" | awk '{printf "%.4f",$1/$2}')
+ F1=$(echo "$C $P" | awk '{printf "%.4f",2*$1*$2/($1+$2)}')
+ F10=$(echo "$C $P" | awk -v beta=10 '{printf "%.4f",(1+beta*beta)*$1*$2/($1+beta*beta*$2)}')
+
  # Print the results only if some of the inserted stars were recovered
  if [ $N_FOUND -gt 0 ] && [ "$MEADIAN_MAG" != "0.0000" ] ;then
   echo $MEADIAN_MAG $RECOVERED_FRACTION $N_FOUND / $N_ARTSTARS_INSERTED_TOTAL
-  echo $MEADIAN_MAG $RECOVERED_FRACTION $N_FOUND $N_ARTSTARS_INSERTED_TOTAL >> artificial_star_test_results.txt
+  echo $MEADIAN_MAG $RECOVERED_FRACTION $N_FOUND $N_ARTSTARS_INSERTED_TOTAL  $P $F1 $F10 >> artificial_star_test_results.txt
  fi
  
  rm -f "$IDENTIFIED_ARTSTARS_FOR_THIS_ITERATION_TMPFILE"
