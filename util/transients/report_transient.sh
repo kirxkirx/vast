@@ -244,11 +244,16 @@ fi
 JD_MEAN="$MEAN"
 JD_MEAN_SHORT=$(echo $JD_MEAN |awk '{printf "%.4f",$1}')
 DATE_INFO=$(util/get_image_date "$JD_MEAN" 2>&1)
-YEAR_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $3}')
-MONTH_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $4}')
-DAYFRAC_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{printf "%08.5f",$5}')
-DAYFRAC_MEAN_SHORT=$(echo "$DAYFRAC_MEAN" | awk '{printf "%07.4f",$1}')
-DAYFRAC_MEAN_SUPERSHORT=$(echo "$DAYFRAC_MEAN" | awk '{printf "%05.2f",$1}')
+#YEAR_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $3}')
+#MONTH_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $4}')
+#DAYFRAC_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{printf "%08.5f",$5}')
+#DAYFRAC_MEAN_SHORT=$(echo "$DAYFRAC_MEAN" | awk '{printf "%07.4f",$1}')
+#DAYFRAC_MEAN_SUPERSHORT=$(echo "$DAYFRAC_MEAN" | awk '{printf "%05.2f",$1}')
+YEAR_MEAN=$(echo "$DATE_INFO" | grep 'Dayfraction' | awk '{print $2}')
+MONTH_MEAN=$(echo "$DATE_INFO" | grep 'Dayfraction' | awk '{print $3}')
+DAYFRAC_MEAN=$(echo "$DATE_INFO" | grep 'Dayfraction' | awk '{printf "%08.5f",$4}')
+DAYFRAC_MEAN_SHORT=$(echo "$DATE_INFO" | grep 'Dayfraction' | awk '{printf "%07.4f",$4}')
+DAYFRAC_MEAN_SUPERSHORT=$(echo "$DATE_INFO" | grep 'Dayfraction' | awk '{printf "%05.2f",$4}')
 
 
 #### Test for float numbers ####
