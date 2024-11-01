@@ -17382,12 +17382,12 @@ $GREP_RESULT"
   fi
   #                           !             !
   #             2024 03 11.1068  2460380.6069  10.28  17:39:57.13 -26:27:42.4
-  grep --quiet "2024 03 11.106.  2460380.606.  10\...  17:39:5[67]\... -26:27:42\.." transient_report/index.html
+  grep --quiet "2024 03 11.106.  2460380.606.  10\...  17:39:5[67]\... -26:27:4[123]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24314a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2024 03 11.106.  2460380.606.  10\...  17:39:5[67]\... -26:27:42\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  RADECPOSITION_TO_TEST=`grep "2024 03 11.106.  2460380.606.  10\...  17:39:5[67]\... -26:27:4[123]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
   # SOAR position of V4370 Oph
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:39:57.080 -26:27:41.93  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
@@ -17413,12 +17413,13 @@ $GREP_RESULT"
   #                           !             !
   #             2024 03 11.1068  2460380.6069  11.40  18:21:40.17 -34:11:21.6
   # vSTL        2024 03 11.1068  2460380.6069  11.37  18:21:39.99 -34:11:22.7
-  grep --quiet "2024 03 11\.106.  2460380\.606.  11\...  18:21:[34].\... -34:11:2[12]\.." transient_report/index.html
+  # vSTL@epsilon2024 03 11.1068  2460380.6069  11.37  18:21:39.99 -34:11:23.1
+  grep --quiet "2024 03 11\.106.  2460380\.606.  11\...  18:21:[34].\... -34:11:2[123]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24414a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2024 03 11\.106.  2460380\.606.  11\...  18:21:[34].\... -34:11:2[12]\.." transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2024 03 11\.106.  2460380\.606.  11\...  18:21:[34].\... -34:11:2[123]\.." transient_report/index.html | awk '{print $6" "$7}'`
   # VSX position of V1858 Sgr
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 18:21:40.07 -34:11:23.3  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
