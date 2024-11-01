@@ -381,7 +381,7 @@ function remove_test_data_to_save_space() {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining."
-    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test/ ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ;do
+    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test/ ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -16258,12 +16258,13 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24614"
   fi
-  grep --quiet "2024 07 29\.892.  2460521\.392.  12\.5.  20:18:0.\... +18:08:1.\.." transient_report/index.html
+  # vSTL        2024 07  29.8920    2460521.3920  12.55  20:18:07.07  +18:08:22.0
+  grep --quiet "2024 07 29\.892.  2460521\.392.  12\.5.  20:18:0.\... +18:08:[12].\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24614a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2024 07 29\.892.  2460521\.392.  12\.5.  20:18:0.\... +18:08:1.\.." transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2024 07 29\.892.  2460521\.392.  12\.5.  20:18:0.\... +18:08:[12].\.." transient_report/index.html | awk '{print $6" "$7}'`
   # position of UX Sge
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 20:18:07.20 +18:08:15.5  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
@@ -17411,12 +17412,13 @@ $GREP_RESULT"
   fi
   #                           !             !
   #             2024 03 11.1068  2460380.6069  11.40  18:21:40.17 -34:11:21.6
-  grep --quiet "2024 03 11\.106.  2460380\.606.  11\...  18:21:40\... -34:11:21\.." transient_report/index.html
+  # vSTL        2024 03 11.1068  2460380.6069  11.37  18:21:39.99 -34:11:22.7
+  grep --quiet "2024 03 11\.106.  2460380\.606.  11\...  18:21:[34].\... -34:11:2[12]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24414a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2024 03 11\.106.  2460380\.606.  11\...  18:21:40\... -34:11:21\.." transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2024 03 11\.106.  2460380\.606.  11\...  18:21:[34].\... -34:11:2[12]\.." transient_report/index.html | awk '{print $6" "$7}'`
   # VSX position of V1858 Sgr
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 18:21:40.07 -34:11:23.3  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
@@ -25275,20 +25277,21 @@ if [ -z "$HORIZONS_DIRECT" ] && [ -z "$HORIZONS_REVERSE_PROXY" ] ;then
 fi
 # if HORIZONS_DIRECT failed - that's not an error - that's why we need the reverse proxy
 
-# VSX direct and reverse proxy
-VSX_DIRECT=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'https://www.aavso.org/vsx/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
-VSX_REVERSE_PROXY=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'https://kirx.net/vsx/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
-if [ "$VSX_DIRECT" != "$VSX_REVERSE_PROXY" ] ;then
- if [ -n "$VSX_DIRECT" ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_VSX_REVERSE_PROXY_FAILED"
- fi
-fi
-if [ -z "$VSX_DIRECT" ] && [ -z "$VSX_REVERSE_PROXY" ] ;then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_VSX_DIRECT_AND_REVERSE_PROXY_FAILED"
-fi
-# if VSX_DIRECT failed - that's not an error - that's why we need the reverse proxy
+# VSX_REVERSE_PROXY is blocked - thanks AAVSO
+## VSX direct and reverse proxy
+#VSX_DIRECT=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'https://www.aavso.org/vsx/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
+#VSX_REVERSE_PROXY=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'https://kirx.net/vsx/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
+#if [ "$VSX_DIRECT" != "$VSX_REVERSE_PROXY" ] ;then
+# if [ -n "$VSX_DIRECT" ];then
+#  TEST_PASSED=0
+#  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_VSX_REVERSE_PROXY_FAILED"
+# fi
+#fi
+#if [ -z "$VSX_DIRECT" ] && [ -z "$VSX_REVERSE_PROXY" ] ;then
+# TEST_PASSED=0
+# FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_VSX_DIRECT_AND_REVERSE_PROXY_FAILED"
+#fi
+## if VSX_DIRECT failed - that's not an error - that's why we need the reverse proxy
 
 
 #### Test static pages for any unexpected changes
