@@ -86,10 +86,12 @@ function get_vast_path_ends_with_slash_from_this_script_name() {
 
 function print_usage() {
  echo "
-Usage: $0 RA DEC [STAR_NAME] [FOV_arcmin]
+Usage: 
+ $0 RA DEC [STAR_NAME] [FOV_arcmin] [no_online_vsx]
 
-Example: $0 18:38:06.47677 +39:40:05.9835
-
+Examples: 
+ $0 18:38:06.47677 +39:40:05.9835
+ $0 18:38:06.47677 +39:40:05.9835 online_id 240 no_online_vsx
 "
 }
 
@@ -315,6 +317,14 @@ else
  fi
 fi
 echo "(The script will be making wild assumptions about astrometic accuracy and image depth based on FoV size.)"
+
+# Disable online VSX search (local and VizieR copies of VSX are still being checked)
+NO_ONLINE_VSX=0
+if [ -z "$5" ];then
+ if [ "$5" == "no_online_vsx" ];then
+  NO_ONLINE_VSX=1
+ fi
+fi
 
 ###### 2MASS #####
 search_2mass_fixed_radius_results_to_2masstmp "$RA" "$DEC" > "$TEMP_FILE__2MASS_LONG" &
@@ -647,55 +657,19 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
   SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING "
   KNOWN_VARIABLE=1
  else
-  # Handle the special case: the stars is in the VSX database but not in the VSX copy at CDS
-  VSX_ONLINE_NAME=$("$VAST_PATH"util/search_databases_with_curl.sh "$RA" "$DEC" 2>/dev/null | grep -v "not found" | grep -A 1 "The object was" | grep -A 1 "found" | grep -A 1 "VSX" | tail -n1)
+  # Access VSX online only if we are allowed to
+  if [ $NO_ONLINE_VSX -eq 0 ];then
+   # Handle the special case: the star is in the VSX database but not in the VSX copy at CDS
+   VSX_ONLINE_NAME=$("$VAST_PATH"util/search_databases_with_curl.sh "$RA" "$DEC" 2>/dev/null | grep -v "not found" | grep -A 1 "The object was" | grep -A 1 "found" | grep -A 1 "VSX" | tail -n1)
+  else
+   VSX_ONLINE_NAME=""
+  fi
   if [ "$VSX_ONLINE_NAME" != "" ] ;then
-   #echo -n " $STAR_NAME | $VSX_ONLINE_NAME | $GOOD_CATALOG_POSITION | T | P | "
    SUGGESTED_NAME_STRING="$VSX_ONLINE_NAME"
    SUGGESTED_TYPE_STRING="T (VSX)"
    SUGGESTED_PERIOD_STRING="P (VSX)"
    KNOWN_VARIABLE=1
-   # seems to have no effect
-   #if [ -n "$B2" ];then
-   # SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING B2=$B2 "
-   #fi
   else
-   ###### MOVED to built-in offline catalog ######
-   # The least likely, but possible case:
-   # check if this is a previously-published MDV star?
-   #MDV_NAME=""
-   ## SA9
-   #MDV_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AZh/91/382 -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=MDV,Type,Per 2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" | grep -A 1 MDV | tail -n1)
-   #if [ "$MDV_RESULT" != "" ] ;then
-   # MDV_NAME=$(echo "$MDV_RESULT" | awk '{print $1}')
-   # MDV_TYPE=$(echo "$MDV_RESULT" | awk '{print $2}')
-   # MDV_PERIOD=$(echo "$MDV_RESULT" | awk '{print $3}')
-   #fi
-   #if [ "$MDV_NAME" == "" ];then
-   # MDV_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AZh/87/1087/table2 -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=MDV,Type,Per 2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" | grep -A 1 MDV | tail -n1)
-   # if [ "$MDV_RESULT" != "" ] ;then
-   #  MDV_NAME=$(echo "$MDV_RESULT" | awk '{print $1}')
-   #  MDV_TYPE=$(echo "$MDV_RESULT" | awk '{print $2}')
-   #  MDV_PERIOD=$(echo "$MDV_RESULT" | awk '{print $3}')
-   # fi
-   #fi
-   #if [ "$MDV_NAME" == "" ];then
-   # MDV_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=J/AZh/87/1087/table1 -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=MDV,Type 2>/dev/null | grep -v \# | grep -v "_" | grep -v "\---" | grep -A 1 MDV | tail -n1)
-   # if [ "$MDV_RESULT" != "" ] ;then
-   #  MDV_NAME=$(echo "$MDV_RESULT" | awk '{print $1}')
-   #  MDV_TYPE=$(echo "$MDV_RESULT" | awk '{print $2}')
-   #  MDV_PERIOD="0.0"
-   # fi
-   #fi
-   #if [ "$MDV_NAME" != "" ];then
-   # # MDV var
-   # #echo -n " $STAR_NAME | MDV $MDV_NAME | $GOOD_CATALOG_POSITION | $MDV_TYPE (MDV) | $MDV_PERIOD (MDV) | "
-   # SUGGESTED_NAME_STRING="MDV $MDV_NAME"
-   # SUGGESTED_TYPE_STRING="$MDV_TYPE (MDV)"
-   # SUGGESTED_PERIOD_STRING="$MDV_PERIOD (MDV)"
-   # SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING "
-   # KNOWN_VARIABLE=1
-   #fi # if [ "$MDV_NAME" != "" ];then
    ### Check other large variable star lists
    # OGLE Bulge LPV
    if [ $KNOWN_VARIABLE -eq 0 ];then

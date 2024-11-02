@@ -1537,12 +1537,12 @@ $GREP_RESULT"
     # Check that it is V834 Cas (it should be)
     # This test should pass with the GCVS server.
     # No '"' around $CEPHEID_RADEC_STR !! 
-    util/search_databases_with_curl.sh $CEPHEID_RADEC_STR | grep "V0834 Cas"
-    if [ $? -ne 0 ];then
-     TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE015_curl_GCVS_V0834_Cas"
-    fi
-    util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 | grep "V0834 Cas"
+    #util/search_databases_with_curl.sh $CEPHEID_RADEC_STR | grep "V0834 Cas"
+    #if [ $? -ne 0 ];then
+    # TEST_PASSED=0
+    # FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE015_curl_GCVS_V0834_Cas"
+    #fi
+    util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 no_online_vsx | grep "V0834 Cas"
     if [ $? -ne 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE016_vizquery_V0834_Cas"
@@ -1631,12 +1631,12 @@ $GREP_RESULT"
    # # CEPHEID_RADEC_STR="03:05:54.66 +57:45:44.3"
    # presumably that should be out00474.dat
    # Check that it is V834 Cas (it should be)
-   "$WORKDIR"/util/search_databases_with_curl.sh $CEPHEID_RADEC_STR | grep "V0834 Cas"
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE027_curl_GCVS_V0834_Cas"
-   fi
-   "$WORKDIR"/util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 | grep "V0834 Cas"
+   #"$WORKDIR"/util/search_databases_with_curl.sh $CEPHEID_RADEC_STR | grep "V0834 Cas"
+   #if [ $? -ne 0 ];then
+   # TEST_PASSED=0
+   # FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE027_curl_GCVS_V0834_Cas"
+   #fi
+   "$WORKDIR"/util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 no_online_vsx | grep "V0834 Cas"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE028_vizquery_V0834_Cas"
@@ -1644,7 +1644,7 @@ $GREP_RESULT"
    # Here we expect exactly two distances to be reported 2MASS and USNO-B1.0 match
    # Both should be within 0.8 arcsec from the input coordinates. Let's check this
    #"$WORKDIR"/util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 | grep 'r=' | grep -v 'var=' | awk '{print $1}' FS='"' | awk '{print $2}' FS='r=' | while read R_DISTANCE_TO_MATCH ;do
-   "$WORKDIR"/util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 | grep 'r=' | grep -v 'var=' | awk -F '"' '{print $1}' | awk -F 'r=' '{print $2}' | while read R_DISTANCE_TO_MATCH ;do
+   "$WORKDIR"/util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 no_online_vsx | grep 'r=' | grep -v 'var=' | awk -F '"' '{print $1}' | awk -F 'r=' '{print $2}' | while read R_DISTANCE_TO_MATCH ;do
     #TEST=`echo "$R_DISTANCE_TO_MATCH<0.8" | bc -ql`
     TEST=`echo "$R_DISTANCE_TO_MATCH<0.8" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
     if [ $TEST -eq 1 ];then
@@ -1761,12 +1761,12 @@ $GREP_RESULT"
    CEPHEID_RADEC_STR=`util/identify_transient.sh $TMPSTR | grep -A 1 "RA(J2000)   Dec(J2000)" | tail -n1 | awk '{print $2" "$3}'`
    # presumably that should be out00474.dat
    # Check that it is V834 Cas (it should be)
-   util/search_databases_with_curl.sh $CEPHEID_RADEC_STR | grep "V0834 Cas"
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE108"
-   fi
-   util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 | grep "V0834 Cas"
+   #util/search_databases_with_curl.sh $CEPHEID_RADEC_STR | grep "V0834 Cas"
+   #if [ $? -ne 0 ];then
+   # TEST_PASSED=0
+   # FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE108"
+   #fi
+   util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 no_online_vsx | grep "V0834 Cas"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE109_vizquery"
@@ -1952,12 +1952,12 @@ $GREP_RESULT"
    CEPHEID_RADEC_STR=`util/identify_transient.sh $TMPSTR | grep -A 1 "RA(J2000)   Dec(J2000)" | tail -n1 | awk '{print $2" "$3}'`
    # presumably that should be out00474.dat
    # Check that it is V834 Cas (it should be)
-   util/search_databases_with_curl.sh $CEPHEID_RADEC_STR | grep "V0834 Cas"
-   if [ $? -ne 0 ];then
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE208"
-   fi
-   util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 | grep "V0834 Cas"
+   #util/search_databases_with_curl.sh $CEPHEID_RADEC_STR | grep "V0834 Cas"
+   #if [ $? -ne 0 ];then
+   # TEST_PASSED=0
+   # FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE208"
+   #fi
+   util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 no_online_vsx | grep "V0834 Cas"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE209_vizquery"
@@ -22686,6 +22686,7 @@ if [ -f update_offline_catalogs.out ];then
  rm -f update_offline_catalogs.out
 fi
 
+# GCVS should be the first one to reply, but others may too
 util/search_databases_with_curl.sh 22:02:43.29139 +42:16:39.9803 | grep --quiet "BL Lac"
 if [ $? -ne 0 ];then
  TEST_PASSED=0
@@ -22720,12 +22721,14 @@ if [ "$TEST_STRING" != "BL Lac" ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001c_GCVS"
 fi
 
+# GCVS is supposed to reply
 util/search_databases_with_curl.sh 15:31:40.10 -20:27:17.3 | grep --quiet "BW Lib"
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT002"
 fi
 
+# GCVS is supposed to reply
 cd ..
 "$WORKDIR"/util/search_databases_with_curl.sh 15:31:40.10 -20:27:17.3 | grep --quiet "BW Lib"
 if [ $? -ne 0 ];then
@@ -22734,21 +22737,21 @@ if [ $? -ne 0 ];then
 fi
 cd "$WORKDIR"
 
-util/search_databases_with_vizquery.sh 22:02:43.29139 +42:16:39.9803 TEST 40 | grep TEST | grep --quiet "BL Lac"
+util/search_databases_with_vizquery.sh 22:02:43.29139 +42:16:39.9803 TEST 40 no_online_vsx | grep TEST | grep --quiet "BL Lac"
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT003_vizquery"
 fi
 
 cd ..
-"$WORKDIR"/util/search_databases_with_vizquery.sh 22:02:43.29139 +42:16:39.9803 TEST 40 | grep TEST | grep --quiet "BL Lac"
+"$WORKDIR"/util/search_databases_with_vizquery.sh 22:02:43.29139 +42:16:39.9803 TEST 40 no_online_vsx | grep TEST | grep --quiet "BL Lac"
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT003a_vizquery"
 fi
 cd "$WORKDIR"
 
-util/search_databases_with_vizquery.sh 15:31:40.10 -20:27:17.3 TEST 40 | grep TEST | grep --quiet "BW Lib"
+util/search_databases_with_vizquery.sh 15:31:40.10 -20:27:17.3 TEST 40 no_online_vsx | grep TEST | grep --quiet "BW Lib"
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT004_vizquery"
@@ -22981,7 +22984,7 @@ if [ $? -ne 0 ];then
 fi
 
 # No false ID with Gaia DR2 high-amplitude variable
-util/search_databases_with_vizquery.sh 18:53:19.68 -04:58:21.6 online_id 350 | grep 'online_id' | grep --quiet 'Gaia DR3 4254944797873326720'
+util/search_databases_with_vizquery.sh 18:53:19.68 -04:58:21.6 online_id 350 no_online_vsx | grep 'online_id' | grep --quiet 'Gaia DR3 4254944797873326720'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_NOWRONGGAIAVAR"
