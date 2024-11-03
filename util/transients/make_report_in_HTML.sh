@@ -61,7 +61,7 @@ remove_all_report_transient_output_files
 
 # Parallel run - ckeck candidates and create result files
 # Limit the numbe of threads running in parallel
-max_threads=20
+max_threads=5
 thread_count=0
 while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  
