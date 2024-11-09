@@ -12,6 +12,7 @@
 
 #define MIN_REAL_COUNT 5 // The minimum count assumed to be real. The default is 5
 
+
 // This function will check if a record indicates the image has already been calibrated
 int check_history_keywords( char *record ) {
  if ( strstr( record, "HISTORY Flat fielding:" ) != NULL ) {

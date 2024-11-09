@@ -6,12 +6,28 @@
 #include <time.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <libgen.h> // for basename()
 
 #include "../fitsio.h"
 
 #define FALLBACK_CCD_TEMP_VALUE 100
 #define MAX_SET_TEMP_DIFF 0.5
 #define MAX_CCD_TEMP_DIFF 2.5 // let's be generous
+
+void check_and_remove_file( const char *filename ) {
+ // Check if file exists by trying to access it
+ if ( access( filename, F_OK ) == 0 ) {
+  // File exists, try to remove it
+  if ( unlink( filename ) == 0 ) {
+   fprintf( stderr, "WARNING: existing file %s was deleted\n", filename );
+   return; // Success
+  } else {
+   fprintf( stderr, "ERROR: could not delete existing file %s\n", filename );
+   return; // Deletion failed
+  }
+ }
+ return; // File didn't exist, no action needed
+}
 
 // This function will try to guess if the opened file is a dark frame or bias frame based on its header
 int is_bias_frame( fitsfile *fptr ) {
@@ -77,7 +93,6 @@ int main( int argc, char *argv[] ) {
  int opt;
  int force_processing= 0;
 
-
  char *input_file= argv[optind];
  char *dark_file= argv[optind + 1];
  char *output_file= argv[optind + 2];
@@ -87,7 +102,7 @@ int main( int argc, char *argv[] ) {
  long naxes[2];
  long testX, testY;
  long img_size;
- 
+
  int status= 0;
  int anynul= 0;
  unsigned short nullval= 0;
@@ -106,7 +121,7 @@ int main( int argc, char *argv[] ) {
 
  double set_temp_image, set_temp_dark;
  double ccd_temp_image, ccd_temp_dark;
- 
+
  double image_mean, dark_mean;
 
  int is_bias= 0; // 1 - if it's a bias rather than dark frame (needed just to name it properly)
@@ -131,7 +146,6 @@ int main( int argc, char *argv[] ) {
   print_usage( argv[0] );
   exit( EXIT_FAILURE );
  }
-
 
  fprintf( stderr, "Exploring image header: %s \n", input_file );
  fits_open_file( &fptr, input_file, 0, &status );
@@ -167,7 +181,8 @@ int main( int argc, char *argv[] ) {
   fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_image, input_file );
   if ( fabs( ccd_temp_image - set_temp_image ) > MAX_CCD_TEMP_DIFF ) {
    // found set temperature mismatch
-   fprintf( stderr, "ERROR: mismatch between CCD-TEMP and SET-TEMP! Looks like the the camera didn't have time to cool down.\n" );
+   // basename() may mess the input string - use it just befor exit
+   fprintf( stderr, "ERROR: mismatch between CCD-TEMP and SET-TEMP in %s! Looks like the the camera didn't have time to cool down.\n", basename(input_file );
    fits_close_file( fptr, &status );
    exit( EXIT_FAILURE );
   }
@@ -181,13 +196,13 @@ int main( int argc, char *argv[] ) {
  // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  key= malloc( No_of_keys * sizeof( char * ) );
  if ( key == NULL ) {
-  fprintf( stderr, "ERROR: Couldn't allocate memory for FITS header\n" );
+  fprintf( stderr, "ERROR in %s: Couldn't allocate memory for FITS header\n", argv[0] );
   exit( EXIT_FAILURE );
  }
  for ( ii= 0; ii < No_of_keys; ii++ ) {
   key[ii]= malloc( FLEN_CARD * sizeof( char ) ); // FLEN_CARD length of a FITS header card defined in fitsio.h
   if ( key[ii] == NULL ) {
-   fprintf( stderr, "ERROR: Couldn't allocate memory for FITS header\n" );
+   fprintf( stderr, "ERROR in %s: Couldn't allocate memory for FITS header\n", argv[0] );
    exit( EXIT_FAILURE );
   }
   fits_read_record( fptr, ii, key[ii], &status );
@@ -219,26 +234,26 @@ int main( int argc, char *argv[] ) {
  fprintf( stderr, "Allocating memory for image, dark and result arrays...\n" );
  img_size= naxes[0] * naxes[1];
  if ( img_size <= 0 ) {
-  fprintf( stderr, "ERROR: Trying allocate negative or zero bytes of memory\n" );
+  fprintf( stderr, "ERROR in %s: Trying allocate negative or zero bytes of memory\n", argv[0] );
   fits_close_file( fptr, &status );
   exit( EXIT_FAILURE );
  };
  image_array= malloc( img_size * sizeof( short ) );
  if ( image_array == NULL ) {
-  fprintf( stderr, "ERROR: Couldn't allocate memory for image_array\n" );
+  fprintf( stderr, "ERROR in %s: Can't allocate memory for image_array\n", argv[0] );
   fits_close_file( fptr, &status );
   exit( EXIT_FAILURE );
  };
  dark_array= malloc( img_size * sizeof( short ) );
  if ( dark_array == NULL ) {
-  fprintf( stderr, "ERROR: Couldn't allocate memory for dark_array\n" );
+  fprintf( stderr, "ERROR in %s: Can't allocate memory for dark_array\n", argv[0] );
   free( image_array );
   fits_close_file( fptr, &status );
   exit( EXIT_FAILURE );
  };
  result_image_array= malloc( img_size * sizeof( short ) );
  if ( result_image_array == NULL ) {
-  fprintf( stderr, "ERROR: Couldn't allocate memory for result_image_array\n" );
+  fprintf( stderr, "ERROR in %s: Can't allocate memory for result_image_array()\n", argv[0] );
   free( image_array );
   free( dark_array );
   fits_close_file( fptr, &status );
@@ -254,7 +269,7 @@ int main( int argc, char *argv[] ) {
  fits_open_file( &fptr, dark_file, 0, &status );
  fits_report_error( stderr, status ); // print out any error messages
  if ( status != 0 ) {
-  fprintf( stderr, "ERROR: opening dark frame\n" );
+  fprintf( stderr, "ERROR: opening dark frame %s\n", basename( dark_file ) );
   free( image_array );
   free( dark_array );
   free( result_image_array );
@@ -264,7 +279,7 @@ int main( int argc, char *argv[] ) {
  fits_read_key( fptr, TLONG, "NAXIS1", &testX, NULL, &status );
  fits_report_error( stderr, status ); // print out any error messages
  if ( status != 0 ) {
-  fprintf( stderr, "ERROR: getting NAXIS1\n" );
+  fprintf( stderr, "ERROR: getting NAXIS1 from dark frame %s\n", basename( dark_file ) );
   free( image_array );
   free( dark_array );
   free( result_image_array );
@@ -274,7 +289,7 @@ int main( int argc, char *argv[] ) {
  fits_read_key( fptr, TLONG, "NAXIS2", &testY, NULL, &status );
  fits_report_error( stderr, status ); // print out any error messages
  if ( status != 0 ) {
-  fprintf( stderr, "ERROR: getting NAXIS2\n" );
+  fprintf( stderr, "ERROR: getting NAXIS2 from dark frame %s\n", basename( dark_file ) );
   free( image_array );
   free( dark_array );
   free( result_image_array );
@@ -282,7 +297,8 @@ int main( int argc, char *argv[] ) {
   exit( status );
  }
  if ( testX != naxes[0] || testY != naxes[1] ) {
-  fprintf( stderr, "ERROR: Image frame and dark frame must have same dimensions!\n" );
+  // basename() may mess the input string - use it just befor exit
+  fprintf( stderr, "ERROR: Image frame (%s) and dark frame (%s) must have the same dimensions!\n", basename( input_file ), basename( dark_file ) );
   free( image_array );
   free( dark_array );
   free( result_image_array );
@@ -301,7 +317,8 @@ int main( int argc, char *argv[] ) {
   fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_dark, dark_file );
   if ( fabs( set_temp_image - set_temp_dark ) > MAX_SET_TEMP_DIFF ) {
    // found set temperature mismatch
-   fprintf( stderr, "ERROR: temperature mismatch between the light and dark images!\n" );
+   // basename() may mess the input string - use it just befor exit
+   fprintf( stderr, "ERROR: temperature mismatch between the light (%s) and dark (%s) images!\n", basename( input_file ), basename( dark_file ) );
    free( image_array );
    free( dark_array );
    free( result_image_array );
@@ -322,7 +339,8 @@ int main( int argc, char *argv[] ) {
   fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_dark, dark_file );
   if ( fabs( ccd_temp_image - ccd_temp_dark ) > MAX_CCD_TEMP_DIFF ) {
    // found set temperature mismatch
-   fprintf( stderr, "ERROR: temperature mismatch between the light and dark images!\n" );
+   // basename() may mess the input string - use it just befor exit
+   fprintf( stderr, "ERROR: temperature mismatch between the light (%s) and dark (%s) images!\n", basename( input_file ), basename( dark_file ) );
    free( image_array );
    free( dark_array );
    free( result_image_array );
@@ -341,28 +359,29 @@ int main( int argc, char *argv[] ) {
  status= 0;
 
  // Calculate means while we have both arrays in memory
- image_mean = 0.0;
- dark_mean = 0.0;
- for (i = 0; i < img_size; i++) {
-  image_mean += (double)image_array[i];
-  dark_mean += (double)dark_array[i];
+ image_mean= 0.0;
+ dark_mean= 0.0;
+ for ( i= 0; i < img_size; i++ ) {
+  image_mean+= (double)image_array[i];
+  dark_mean+= (double)dark_array[i];
  }
- image_mean /= (double)img_size;
- dark_mean /= (double)img_size;
+ image_mean/= (double)img_size;
+ dark_mean/= (double)img_size;
 
  // Check if dark frame mean is greater than image mean
- if (dark_mean >= image_mean) {
-  fprintf(stderr, "ERROR: Dark frame mean (%.2f) is greater than or equal to image mean (%.2f)\n", dark_mean, image_mean);
-  free(image_array);
-  free(dark_array);
-  free(result_image_array);
-  for (ii = 0; ii < No_of_keys; ii++) {
-   free(key[ii]);
+ if ( dark_mean >= image_mean ) {
+  // basename may mess the input string - use it just befor exit
+  fprintf( stderr, "ERROR: The mean value of the dark frame %s (%.2f) is greater than or equal to image %s mean (%.2f)\n", basename( dark_file ), dark_mean, image_mean, basename( input_file ) );
+  free( image_array );
+  free( dark_array );
+  free( result_image_array );
+  for ( ii= 0; ii < No_of_keys; ii++ ) {
+   free( key[ii] );
   }
-  free(key);
-  exit(EXIT_FAILURE);
+  free( key );
+  exit( EXIT_FAILURE );
  }
- 
+
  // Perform dark subtraction
  for ( i= 0; i < img_size; i++ ) {
   // Try to avoid messing up overscan region
@@ -391,6 +410,7 @@ int main( int argc, char *argv[] ) {
  free( image_array );
  free( dark_array );
 
+ check_and_remove_file( output_file );
  fits_create_file( &fptr, output_file, &status ); // create new file
  fits_report_error( stderr, status );             // print out any error messages
  if ( status != 0 ) {
