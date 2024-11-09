@@ -1225,17 +1225,18 @@ fi
 if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
  # Check if ucac5 plate solution is available
  UCAC5_SOLUTION_NAME="$SEXTRACTOR_CATALOG_NAME".ucac5
- if [ ! -f $UCAC5_SOLUTION_NAME ];then
+ if [ ! -f "$UCAC5_SOLUTION_NAME" ];then
   ############################################################################
   # Check for a local copy of UCAC5
   # (this is specific to our in-house setup)
   #
   # Reminder to kirx: /mnt/usb/UCAC5 -- local, /dataN/kirx/UCAC5 -- scan, /dataX/kirx/UCAC5 -- vast
+  # /data/cgi-bin/unmw/uploads/UCAC5 -- kadar2
   #
   if [ ! -d lib/catalogs/ucac5 ];then
-   for TEST_THIS_DIR in /mnt/usb/UCAC5 /dataN/kirx/UCAC5 /dataX/kirx/UCAC5 /home/kirx/UCAC5 $HOME/UCAC5 ../UCAC5 ;do
-    if [ -d $TEST_THIS_DIR ];then
-     ln -s $TEST_THIS_DIR lib/catalogs/ucac5
+   for TEST_THIS_DIR in /mnt/usb/UCAC5 /dataN/kirx/UCAC5 /dataX/kirx/UCAC5 /home/kirx/UCAC5 "$HOME"/UCAC5 ../UCAC5 /data/cgi-bin/unmw/uploads/UCAC5 ;do
+    if [ -d "$TEST_THIS_DIR" ];then
+     ln -s "$TEST_THIS_DIR" lib/catalogs/ucac5
      echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR"
      echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR" >> transient_factory_test31.txt
      break
