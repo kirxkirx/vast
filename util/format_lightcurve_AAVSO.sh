@@ -160,7 +160,7 @@ if [ -z "$EDITOR" ];then
  for EDITOR_TO_TRY in joe nano vim emacs ;do
   command -v $EDITOR_TO_TRY &>/dev/null
   if [ $? -eq 0 ];then
-   EDITOR=joe
+   EDITOR="$EDITOR_TO_TRY"
    break
   fi
  done
@@ -179,24 +179,28 @@ if [ -n "$EDITOR" ];then
  if [ $? -eq 0 ];then
   echo "
   
-It seems you forgot to set the correct variable star name! Please search and replace the default 'XX Xxx' !
-Press 'Q' to quit or any other key to re-start the text editor"
-  read -n 1 KEY
-  if [ "$KEY" != "q" ] && [ "$KEY" != "Q" ];then
-   $EDITOR AAVSO_report.txt
-  fi
+It seems you forgot to set the correct variable star name! Please search and replace the default 'XX Xxx' !"
+  if [ $TEST_MODE_WITH_NO_INTERACTIVE_EDITOR -ne 1 ];then
+   echo "Press 'Q' to quit or any other key to re-start the text editor"
+   read -n 1 KEY
+   if [ "$KEY" != "q" ] && [ "$KEY" != "Q" ];then
+    $EDITOR AAVSO_report.txt
+   fi
+  fi # if [ $TEST_MODE_WITH_NO_INTERACTIVE_EDITOR -ne 1 ];then
  fi
  # filter name
  grep --quiet ',X,' AAVSO_report.txt
  if [ $? -eq 0 ];then
   echo "
   
-It seems you forgot to set the correct filter name! Please search and replace the default ',X,' !
-Press 'Q' to quit or any other key to re-start the text editor"
-  read -n 1 KEY
-  if [ "$KEY" != "q" ] && [ "$KEY" != "Q" ];then
-   $EDITOR AAVSO_report.txt
-  fi
+It seems you forgot to set the correct filter name! Please search and replace the default ',X,' !"
+  if [ $TEST_MODE_WITH_NO_INTERACTIVE_EDITOR -ne 1 ];then
+   echo "Press 'Q' to quit or any other key to re-start the text editor"
+   read -n 1 KEY
+   if [ "$KEY" != "q" ] && [ "$KEY" != "Q" ];then
+    $EDITOR AAVSO_report.txt
+   fi
+  fi # if [ $TEST_MODE_WITH_NO_INTERACTIVE_EDITOR -ne 1 ];then
  fi
  # AAVSO observer code
  grep --quiet 'XXX' AAVSO_report.txt

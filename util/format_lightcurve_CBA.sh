@@ -155,7 +155,7 @@ if [ -z "$EDITOR" ];then
  for EDITOR_TO_TRY in joe nano vim emacs ;do
   command -v $EDITOR_TO_TRY &>/dev/null
   if [ $? -eq 0 ];then
-   EDITOR=joe
+   EDITOR="$EDITOR_TO_TRY"
    break
   fi
  done
