@@ -100,9 +100,15 @@ fi
 
 # FLUX is assumed to be the flux corresponding to the limiting magnitude:
 # the one at which we reliably detect sources (and appparently transients),
-# so we would like to try both higher and lower fluxes
-#TRIAL_FLUXES="$(echo $FLUX | awk '{print 16*$1" "12*$1" "8*$1" "6*$1" "4*$1" "3*$1" "2*$1" "$1" "$1/2" "$1/3" "$1/4" "$1/6" "$1/8" "$1/12" "$1/16}')"
-TRIAL_FLUXES="$(echo $FLUX | awk '{print 8*$1" "6*$1" "4*$1" "3*$1" "2*$1" "$1" "$1/2" "$1/3" "$1/4" "$1/6" "$1/8}')"
+echo $0 | grep --quiet 'run_artificial_star_test_oneflux.sh'
+if [ $? -eq 0 ];then
+ # try only one flux value
+ TRIAL_FLUXES="$FLUX"
+else
+ # try both higher and lower fluxes
+ #TRIAL_FLUXES="$(echo $FLUX | awk '{print 16*$1" "12*$1" "8*$1" "6*$1" "4*$1" "3*$1" "2*$1" "$1" "$1/2" "$1/3" "$1/4" "$1/6" "$1/8" "$1/12" "$1/16}')"
+ TRIAL_FLUXES="$(echo $FLUX | awk '{print 8*$1" "6*$1" "4*$1" "3*$1" "2*$1" "$1" "$1/2" "$1/3" "$1/4" "$1/6" "$1/8}')"
+fi
 
 echo "Trial fluxes:
 $TRIAL_FLUXES"

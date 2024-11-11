@@ -486,6 +486,8 @@ shell_commands: pgplot_components lib/lightcurve_simulator vast
 	#
 	cd lib && ln -s test_libpng.sh test_libpng_justtest_nomovepgplot.sh && cd -
 	#
+	cd util/artificial_star_test_for_transient_search && ln -s run_artificial_star_test.sh run_artificial_star_test_oneflux.sh && cd -
+	#
 	# This is to remove docs
 	rm -f `find src/ -name '*.pdf'` `find src/ -name '*.ps'`
 	#
@@ -575,6 +577,8 @@ clean: clean_libraries
 	# symlink to cpgplot.h should be re-created by lib/compile_pgplot_related_components.sh
 	rm -f src/cpgplot.h src/pgfv/cpgplot.h
 	rm -f lib/test_libpng_justtest_nomovepgplot.sh
+	#
+	rm -f util/artificial_star_test_for_transient_search/run_artificial_star_test_oneflux.sh
 	
 
 clean_objects: vast statistics etc pgplot_components old shell_commands period_filter ccd astrometry astcheck cdsclient
