@@ -207,12 +207,14 @@ It seems you forgot to set the correct filter name! Please search and replace th
  if [ $? -eq 0 ];then
   echo "
   
-It seems you forgot to set the correct AAVSO observer code! Please search and replace the default 'XXX' !
-Press 'Q' to quit or any other key to re-start the text editor"
-  read -n 1 KEY
-  if [ "$KEY" != "q" ] && [ "$KEY" != "Q" ];then
-   $EDITOR AAVSO_report.txt
-  fi
+It seems you forgot to set the correct AAVSO observer code! Please search and replace the default 'XXX' !"
+  if [ $TEST_MODE_WITH_NO_INTERACTIVE_EDITOR -ne 1 ];then
+   echo "Press 'Q' to quit or any other key to re-start the text editor"
+   read -n 1 KEY
+   if [ "$KEY" != "q" ] && [ "$KEY" != "Q" ];then
+    $EDITOR AAVSO_report.txt
+   fi
+  fi # if [ $TEST_MODE_WITH_NO_INTERACTIVE_EDITOR -ne 1 ];then
  fi
 fi
 
