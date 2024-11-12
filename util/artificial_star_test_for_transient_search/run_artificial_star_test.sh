@@ -150,7 +150,9 @@ for FLUX in $TRIAL_FLUXES ;do
   # Create the list of candidate transients and their magnitudes
   # WARNING: cannot use 'Discovery image 1' as this will be first-epoch image for the transients detected via the flare channel
   # 'Discovery image 2' should be one of the second-epoch images for both 'transients' and 'flares'
-  grep 'Discovery image 2' transient_report/index.html | awk -F'<td>' '{print $5" "$7}' | awk '{print $3" "$4" "$1}' > "$PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR"__artificialstars/candidate_coordinates_and_magnitudes.txt
+  # WARNING: 'Discovery image 2' appears in the processing log, not only in the candidates list!
+  # in awk, the NF condition checks if there are any fields in the line (NF = Number of Fields).
+  grep -B100000 'Processig complete' transient_report/index.html | grep 'Discovery image 2' transient_report/index.html | awk -F'<td>' '{print $5" "$7}' | awk 'NF {print $3" "$4" "$1}' | sort | uniq > "$PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR"__artificialstars/candidate_coordinates_and_magnitudes.txt
   N_CANDIDATES_FOUND_TOTAL=$[$N_CANDIDATES_FOUND_TOTAL + $(cat "$PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR"__artificialstars/candidate_coordinates_and_magnitudes.txt | wc -l)]
  
   # Loop over each point in coordinates.txt
