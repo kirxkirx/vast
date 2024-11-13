@@ -78,6 +78,10 @@ FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX=2.0
 FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=9.6
 FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX=0.55
 
+# Set the default MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO to a high value will make sure it is computed and reported
+# (not computed of MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO is not set)
+MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=100
+
 # Magnitude limits for transient search.
 # If a candidate is too bright - something is very wrong with it.
 # If the candidate is too faint - it's likely to be a false positive from noise.
