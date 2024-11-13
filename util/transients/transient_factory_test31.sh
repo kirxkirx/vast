@@ -1043,13 +1043,28 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  fi # above was the procedure for handling more than two second-epoch images
  
  ################################
- # check mean image value ratio, if asked to do so
+ # check mean image value ratio, if asked to do so by setting $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO
  if [ -n "$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO" ];then
-  REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE=$(util/imstat_vast_fast "$REFERENCE_EPOCH__FIRST_IMAGE" | grep ' MEAN= ' | awk '{print $2}')
-  SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE=$(util/imstat_vast_fast "$SECOND_EPOCH__FIRST_IMAGE" | grep ' MEAN= ' | awk '{print $2}')
+  #
+  REFERENCE_EPOCH__FIRST_IMAGE_STATS=$(util/imstat_vast_fast "$REFERENCE_EPOCH__FIRST_IMAGE" 2> /dev/null)
+  REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE=$(echo "$REFERENCE_EPOCH__FIRST_IMAGE_STATS" | grep ' MEAN= ' | awk '{print $2}')
+  REFERENCE_EPOCH__FIRST_IMAGE_SD=$(echo "$REFERENCE_EPOCH__FIRST_IMAGE_STATS" | grep ' SD= ' | awk '{print $2}')
+  #
+  SECOND_EPOCH__FIRST_IMAGE_STATS=$(util/imstat_vast_fast "$SECOND_EPOCH__FIRST_IMAGE" 2> /dev/null)
+  SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE=$(echo "$SECOND_EPOCH__FIRST_IMAGE_STATS" | grep ' MEAN= ' | awk '{print $2}')
+  SECOND_EPOCH__FIRST_IMAGE_SD=$(echo "$SECOND_EPOCH__FIRST_IMAGE_STATS" | grep ' SD= ' | awk '{print $2}')
+  #
+  SECOND_EPOCH__SECOND_IMAGE_STATS=$(util/imstat_vast_fast "$SECOND_EPOCH__SECOND_IMAGE" 2> /dev/null)
+  SECOND_EPOCH__SECOND_IMAGE_MEAN_VALUE=$(echo "$SECOND_EPOCH__SECOND_IMAGE_STATS" | grep ' MEAN= ' | awk '{print $2}')
+  SECOND_EPOCH__SECOND_IMAGE_SD=$(echo "$SECOND_EPOCH__SECOND_IMAGE_STATS" | grep ' SD= ' | awk '{print $2}')
+  #
   if [ -n "$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" ] && [ -n "$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" ];then
-   echo "INFO:    SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE= $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE"  >> transient_factory_test31.txt
    echo "INFO: REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE= $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE"  >> transient_factory_test31.txt
+   echo "INFO:         REFERENCE_EPOCH__FIRST_IMAGE_SD= $REFERENCE_EPOCH__FIRST_IMAGE_SD"  >> transient_factory_test31.txt
+   echo "INFO:    SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE= $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE"  >> transient_factory_test31.txt
+   echo "INFO:            SECOND_EPOCH__FIRST_IMAGE_SD= $SECOND_EPOCH__FIRST_IMAGE_SD"  >> transient_factory_test31.txt   
+   echo "INFO:   SECOND_EPOCH__SECOND_IMAGE_MEAN_VALUE= $SECOND_EPOCH__SECOND_IMAGE_MEAN_VALUE"  >> transient_factory_test31.txt
+   echo "INFO:           SECOND_EPOCH__SECOND_IMAGE_SD= $SECOND_EPOCH__SECOND_IMAGE_SD"  >> transient_factory_test31.txt   
    if awk -v maxratio="$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO" -v ref="$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" -v second="$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" 'BEGIN {if (second > maxratio * ref) exit 0; exit 1}'; then
     echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO * $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" 
     echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO * $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" >> transient_factory_test31.txt
