@@ -1545,13 +1545,15 @@ $GREP_RESULT"
     util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 no_online_vsx | grep "V0834 Cas"
     if [ $? -ne 0 ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE016_vizquery_V0834_Cas"
-    fi
-    # same thing but different input format
-    util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR | grep "V0834 Cas"
-    if [ $? -ne 0 ];then
-     TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE017_vizquery_V0834_Cas"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE016_vizquery_V0834_Cas_${CEPHEID_RADEC_STR// /_}"
+    else
+     # do this test only if the previous one passed
+     # same thing but different input format
+     util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR | grep "V0834 Cas"
+     if [ $? -ne 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE017_vizquery_V0834_Cas_${CEPHEID_RADEC_STR// /_}"
+     fi
     fi
     # Check number of points in the Cepheid's lightcurve
     #CEPHEIDOUTFILE="$TMPSTR"
@@ -1960,7 +1962,7 @@ $GREP_RESULT"
    util/search_databases_with_vizquery.sh $CEPHEID_RADEC_STR star 40 no_online_vsx | grep "V0834 Cas"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE209_vizquery"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE209_vizquery_${CEPHEID_RADEC_STR// /_}"
    fi
    # Check number of points in the Cepheid's lightcurve
    CEPHEIDOUTFILE="$TMPSTR"
