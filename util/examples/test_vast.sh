@@ -16333,6 +16333,38 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24714a_IMGSCALE_$i"
    fi
   done
+  
+  ### Test SIP->PV conversion if python, astropy and sympy are available
+  command -v python &>/dev/null && python -c "import astropy; print(astropy.__version__)" &>/dev/null && python -c "import sympy; print(sympy.__version__)" &>/dev/null 
+  if [ $? -eq 0 ];then
+   for FITSFILE in wcs_*.fts ;do
+    util/sip_tpv/sip_to_pv.py "$FITSFILE" "pv$$.fits" 
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_SIP2PV_exitcode_$FITSFILE"
+     break
+    fi
+    FITS_HEADER=$(util/listhead)
+    echo "$FITS_HEADER" | grep --quiet 'RA---TPV' && echo "$FITS_HEADER" | grep --quiet 'DEC--TPV'
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_SIP2PV_header1_$FITSFILE"
+     break
+    fi
+    echo "$FITS_HEADER" | grep --quiet 'PV1_1' && echo "$FITS_HEADER" | grep --quiet 'PV2_1'
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_SIP2PV_header2_$FITSFILE"
+     break
+    fi
+    rm -f "pv$$.fits"
+   done
+   # cleanup needed if we break early in the test loop
+   if [ -f "pv$$.fits" ];then
+    rm -f "pv$$.fits"
+   fi
+  fi
+
 
   
   test_if_test31_tmp_files_are_present

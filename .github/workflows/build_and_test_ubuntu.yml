@@ -47,6 +47,10 @@ jobs:
           sudo apt-get install python3-pip
           pip3 install astropy
           python3 -c "import astropy; print(astropy.__version__)"
+      - name: Install sympy for SIP-PV conversion test
+        run: |
+          pip3 install sympy
+          python -c "import sympy; print(sympy.__version__)"
       - name: Install shellcheck
         run: sudo apt-get install shellcheck
       - name: make VaST
