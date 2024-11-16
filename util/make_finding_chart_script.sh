@@ -220,21 +220,24 @@ if [ $? -ne 0 ];then
 fi
 #mv -v coadd.fits "$RESAMPLED_IMAGE_NAME"
 
-# Do the PV->SIP converion as SIP is more widely used
-# Check if python tools are installed
-command -v python &>/dev/null && python -c "import astropy; print(astropy.__version__)" &>/dev/null && python -c "import sympy; print(sympy.__version__)" &>/dev/null && util/sip_tpv/pv_to_sip.py "$RESAMPLED_IMAGE_NAME" "sip$$.fits" && mv -v "sip$$.fits" "$RESAMPLED_IMAGE_NAME"
-if [ $? -eq 0 ];then
- echo "INFO from $0: performed PV->SIP converion of $RESAMPLED_IMAGE_NAME"
-else
- # Solve the image with Astrometry.net code again in attempt to mitigate this SIP vs TPV nonsesnse
- util/wcs_image_calibration.sh "$RESAMPLED_IMAGE_NAME"
- if [ -f wcs_"$RESAMPLED_IMAGE_NAME" ];then
-  mv -vf wcs_"$RESAMPLED_IMAGE_NAME" "$RESAMPLED_IMAGE_NAME"
- fi
-fi
+# swarp produces an undistorted image!
+
+## Do the PV->SIP converion as SIP is more widely used
+## Check if python tools are installed
+#command -v python &>/dev/null && python -c "import astropy; print(astropy.__version__)" &>/dev/null && python -c "import sympy; print(sympy.__version__)" &>/dev/null && util/sip_tpv/pv_to_sip.py "$RESAMPLED_IMAGE_NAME" "sip$$.fits" && mv -v "sip$$.fits" "$RESAMPLED_IMAGE_NAME"
+#if [ $? -eq 0 ];then
+# echo "INFO from $0: performed PV->SIP converion of $RESAMPLED_IMAGE_NAME"
+#else
+# # Solve the image with Astrometry.net code again in attempt to mitigate this SIP vs TPV nonsesnse
+# util/wcs_image_calibration.sh "$RESAMPLED_IMAGE_NAME"
+# if [ -f wcs_"$RESAMPLED_IMAGE_NAME" ];then
+#  mv -vf wcs_"$RESAMPLED_IMAGE_NAME" "$RESAMPLED_IMAGE_NAME"
+# fi
+#fi
 
 # Cleanup
-for FILE_TO_REMOVE in "pv$$.fits" "sip$$.fits" ;do
+#for FILE_TO_REMOVE in "pv$$.fits" "sip$$.fits" ;do
+for FILE_TO_REMOVE in "pv$$.fits" ;do
  if [ -f "$FILE_TO_REMOVE" ];then
   rm -f "$FILE_TO_REMOVE"
  fi
