@@ -236,8 +236,9 @@ fi
 #fi
 
 # Cleanup
-#for FILE_TO_REMOVE in "pv$$.fits" "sip$$.fits" ;do
-for FILE_TO_REMOVE in "pv$$.fits" ;do
+# "sip$$.fits" should not be there - it's a placeholder for futute cleanup needs
+for FILE_TO_REMOVE in "pv$$.fits" "sip$$.fits" ;do
+#for FILE_TO_REMOVE in "pv$$.fits" ;do
  if [ -f "$FILE_TO_REMOVE" ];then
   rm -f "$FILE_TO_REMOVE"
  fi
