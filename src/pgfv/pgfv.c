@@ -906,7 +906,8 @@ int main( int argc, char **argv ) {
  tr[3]= 0;
  tr[4]= 0;
  tr[5]= 1;
- int drawX1, drawX2, drawY1, drawY2, drawX0, drawY0;
+ //int drawX1, drawX2, drawY1, drawY2, drawX0, drawY0;
+ float drawX1, drawX2, drawY1, drawY2, drawX0, drawY0;
  float min_val;
  float max_val;
 
@@ -918,7 +919,8 @@ int main( int argc, char **argv ) {
  float finder_char_pix_around_the_target= 20.0; // default thumbnail image size for transient search
 
  // new fatures
- int buf;
+ //int buf;
+ float float_buf;
  float axis_ratio;
  double view_image_size_x, view_image_size_y;
 
@@ -1954,10 +1956,14 @@ int main( int argc, char **argv ) {
  }
 
  // set default plotting limits
- drawX1= 1;
- drawY1= 1;
- drawX2= (int)naxes[0];
- drawY2= (int)naxes[1];
+ //drawX1= 1;
+ //drawY1= 1;
+ //drawX2= (int)naxes[0];
+ //drawY2= (int)naxes[1];
+ drawX1= 1.0;
+ drawY1= 1.0;
+ drawX2= (float)naxes[0];
+ drawY2= (float)naxes[1];
 
  // Check marker position
  if ( markX < 0.0 || markX > (float)naxes[0] || markY < 0.0 || markY > (float)naxes[1] ) {
@@ -1973,17 +1979,21 @@ int main( int argc, char **argv ) {
   drawX2= drawX1 + MIN( 200.0, (float)naxes[0] );
   drawY2= drawY1 + MIN( 200.0, (float)naxes[1] );
   ///////
-  drawX0= (int)( ( drawX1 + drawX2 ) / 2 + 0.5 );
-  drawY0= (int)( ( drawY1 + drawY2 ) / 2 + 0.5 );
+  drawX0= ( drawX1 + drawX2 ) / 2.0;
+  drawY0= ( drawY1 + drawY2 ) / 2.0;
   view_image_size_y= MAX( drawX2 - drawX1, drawY2 - drawY1);
   //
   view_image_size_y= MAX( view_image_size_y, 3 ); // do not allow zoom smaller than 3 pix
   //
   view_image_size_x= axis_ratio * view_image_size_y;
-  drawX1= drawX0 - (int)( view_image_size_x / 2 + 0.5 );
-  drawY1= drawY0 - (int)( view_image_size_y / 2 + 0.5 );
-  drawX2= drawX1 + (int)view_image_size_x;
-  drawY2= drawY1 + (int)view_image_size_y;
+  //drawX1= drawX0 - (int)( view_image_size_x / 2 + 0.5 );
+  //drawY1= drawY0 - (int)( view_image_size_y / 2 + 0.5 );
+  drawX1= drawX0 - view_image_size_x / 2.0;
+  drawY1= drawY0 - view_image_size_y / 2.0;
+  //drawX2= drawX1 + (int)view_image_size_x;
+  //drawY2= drawY1 + (int)view_image_size_y;
+  drawX2= drawX1 + view_image_size_x;
+  drawY2= drawY1 + view_image_size_y;
   if ( drawX2 > naxes[0] ) {
    drawX1-= drawX2 - naxes[0];
    drawX2= naxes[0];
@@ -2451,8 +2461,12 @@ int main( int argc, char **argv ) {
       drawY1= mymin( curY, curY2 );
       drawY2= mymax( curY, curY2 );
      }
-     drawX0= (int)( ( drawX1 + drawX2 ) / 2 + 0.5 );
-     drawY0= (int)( ( drawY1 + drawY2 ) / 2 + 0.5 );
+     //
+     //drawX0= (int)( ( drawX1 + drawX2 ) / 2 + 0.5 );
+     //drawY0= (int)( ( drawY1 + drawY2 ) / 2 + 0.5 );
+     drawX0= ( drawX1 + drawX2 ) / 2.0;
+     drawY0= ( drawY1 + drawY2 ) / 2.0;
+     //
      //view_image_size_y= myimax( drawX2 - drawX1, drawY2 - drawY1 );
      view_image_size_y= MAX( drawX2 - drawX1, drawY2 - drawY1 );
      view_image_size_y= MAX( view_image_size_y, 3 ); // do not allow zoom smaller than 3 pix
@@ -2471,10 +2485,14 @@ int main( int argc, char **argv ) {
       view_image_size_x= axis_ratio * view_image_size_y;
       fprintf( stderr, "Making a plot with the axes ratio of %lf\n", axis_ratio );
      }
-     drawX1= drawX0 - (int)( view_image_size_x / 2 + 0.5 );
-     drawY1= drawY0 - (int)( view_image_size_y / 2 + 0.5 );
-     drawX2= drawX1 + (int)view_image_size_x;
-     drawY2= drawY1 + (int)view_image_size_y;
+     //drawX1= drawX0 - (int)( view_image_size_x / 2 + 0.5 );
+     //drawY1= drawY0 - (int)( view_image_size_y / 2 + 0.5 );
+     //drawX2= drawX1 + (int)view_image_size_x;
+     //drawY2= drawY1 + (int)view_image_size_y;
+     drawX1= drawX0 - view_image_size_x / 2.0;
+     drawY1= drawY0 - view_image_size_y / 2.0;
+     drawX2= drawX1 + view_image_size_x;
+     drawY2= drawY1 + view_image_size_y;
      if ( drawX2 > naxes[0] ) {
       drawX1-= drawX2 - naxes[0];
       drawX2= naxes[0];
@@ -2562,14 +2580,14 @@ int main( int argc, char **argv ) {
    // fprintf(stderr,"Redrawing image: inverted_X_axis=%d inverted_Y_axis=%d  drawX1=%d drawX2=%d drawY1=%d drawY2=%d\n",inverted_X_axis,inverted_Y_axis,drawX1,drawX2,drawY1,drawY2);
 
    if ( inverted_Y_axis == 1 ) {
-    buf= drawY1;
+    float_buf= drawY1;
     drawY1= drawY2;
-    drawY2= buf;
+    drawY2= float_buf;
    }
    if ( inverted_X_axis == 1 ) {
-    buf= drawX1;
+    float_buf= drawX1;
     drawX1= drawX2;
-    drawX2= buf;
+    drawX2= float_buf;
    }
 
    if ( finder_chart_mode == 0 ) {
@@ -2577,20 +2595,21 @@ int main( int argc, char **argv ) {
     cpgscr( 0, 0.10, 0.31, 0.32 ); /* set default vast window background */
     cpgeras();
    }
-   cpgswin( (float)drawX1, (float)drawX2, (float)drawY1, (float)drawY2 );
+   //cpgswin( (float)drawX1, (float)drawX2, (float)drawY1, (float)drawY2 );
+   cpgswin( drawX1, drawX2, drawY1, drawY2 );
    if ( use_labels == 1 ) {
     cpgbox( "BCN1", 0.0, 0, "BCN1", 0.0, 0 );
    }
 
    if ( drawY1 > drawY2 ) {
-    buf= drawY1;
+    float_buf= drawY1;
     drawY1= drawY2;
-    drawY2= buf;
+    drawY2= float_buf;
    }
    if ( drawX1 > drawX2 ) {
-    buf= drawX1;
+    float_buf= drawX1;
     drawX1= drawX2;
-    drawX2= buf;
+    drawX2= float_buf;
    }
 
    // Determine cuts
