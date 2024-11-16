@@ -122,9 +122,16 @@ fi
 # Check if Swarp is installed
 command -v swarp &>/dev/null
 if [ $? -ne 0 ];then
- echo "Please install Swarp"
+ echo "ERROR in $0: please install Swarp"
  exit 1
 fi
+
+# Check if python tools are installed
+command -v python &>/dev/null && python -c "import astropy; print(astropy.__version__)" &>/dev/null && python -c "import sympy; print(sympy.__version__)" &>/dev/null
+if [ $? -ne 0 ];then
+ echo "WARNING from $0: install astropy and sympy to use PV<->SIP WCS header keyword conversion"
+fi
+
 
 # Check if the input image
 FITSFILE="$1"
@@ -193,6 +200,17 @@ fi
 
 RESAMPLED_IMAGE_NAME="r_$(basename $FITSFILE)"
 RESAMPLED_WEIGHTS_NAME="r_weights_$(basename $FITSFILE)"
+FITSFILE_NAME_FOR_PNG="r_$(basename "$FITSFILE")"
+FITSFILE_NAME_FOR_PNG=${FITSFILE_NAME_FOR_PNG//./_}
+
+
+# Do the SIP->PV converion as swarp understands only PV
+# Check if python tools are installed
+command -v python &>/dev/null && python -c "import astropy; print(astropy.__version__)" &>/dev/null && python -c "import sympy; print(sympy.__version__)" &>/dev/null && util/sip_tpv/sip_to_pv.py "$FITSFILE" "pv$$.fits" 
+if [ $? -eq 0 ];then
+ echo "INFO from $0: performed SIP->PV converion $FITSFILE -> pv$$.fits"
+ FITSFILE="pv$$.fits"
+fi
 
 # Resample the image to the new grid
 swarp -SUBTRACT_BACK N -IMAGEOUT_NAME "$RESAMPLED_IMAGE_NAME" -WEIGHTOUT_NAME "$RESAMPLED_WEIGHTS_NAME" "$FITSFILE"
@@ -202,11 +220,26 @@ if [ $? -ne 0 ];then
 fi
 #mv -v coadd.fits "$RESAMPLED_IMAGE_NAME"
 
-# Solve the image again in attempt to mitigate this SIP vs TPV nonsesnse
-util/wcs_image_calibration.sh "$RESAMPLED_IMAGE_NAME"
-if [ -f wcs_"$RESAMPLED_IMAGE_NAME" ];then
- mv -vf wcs_"$RESAMPLED_IMAGE_NAME" "$RESAMPLED_IMAGE_NAME"
+# Do the PV->SIP converion as SIP is more widely used
+# Check if python tools are installed
+command -v python &>/dev/null && python -c "import astropy; print(astropy.__version__)" &>/dev/null && python -c "import sympy; print(sympy.__version__)" &>/dev/null && util/sip_tpv/pv_to_sip.py "$RESAMPLED_IMAGE_NAME" "sip$$.fits" && mv -v "sip$$.fits" "$RESAMPLED_IMAGE_NAME"
+if [ $? -eq 0 ];then
+ echo "INFO from $0: performed PV->SIP converion of $RESAMPLED_IMAGE_NAME"
+else
+ # Solve the image with Astrometry.net code again in attempt to mitigate this SIP vs TPV nonsesnse
+ util/wcs_image_calibration.sh "$RESAMPLED_IMAGE_NAME"
+ if [ -f wcs_"$RESAMPLED_IMAGE_NAME" ];then
+  mv -vf wcs_"$RESAMPLED_IMAGE_NAME" "$RESAMPLED_IMAGE_NAME"
+ fi
 fi
+
+# Cleanup
+for FILE_TO_REMOVE in "pv$$.fits" "sip$$.fits" ;do
+ if [ -f "$FILE_TO_REMOVE" ];then
+  rm -f "$FILE_TO_REMOVE"
+ fi
+done
+
 
 # Get the pixel position we want to mark
 PIXEL_POSITION_TO_MARK=$(lib/bin/sky2xy "$RESAMPLED_IMAGE_NAME" $TARGET_RA $TARGET_DEC | awk '{print $5" "$6}')
@@ -238,8 +271,6 @@ if [ ! -s "$MAKE_FINDING_CHART_OUTPUT_PNG" ];then
 fi
 # Everything is fine
 PIXEL_POSITION_TO_MARK_FOR_PNG=${PIXEL_POSITION_TO_MARK//" "/_}
-FITSFILE_NAME_FOR_PNG="r_$(basename "$FITSFILE")"
-FITSFILE_NAME_FOR_PNG=${FITSFILE_NAME_FOR_PNG//./_}
 #mv -v "pgplot.png" "$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov.png
 mv -v "$MAKE_FINDING_CHART_OUTPUT_PNG" "$FITSFILE_NAME_FOR_PNG"__"$PIXEL_POSITION_TO_MARK_FOR_PNG"pix_nofov.png
 
