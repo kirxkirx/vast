@@ -12582,6 +12582,15 @@ $GREP_RESULT"
    fi
   fi
   
+  ### Pixel scale test (make sure WCS is not corrupted) ###
+  for i in wcs_*.fts ;do 
+   util/fov_of_wcs_calibrated_image.sh $i | grep --quiet '8.3[45]"/pix' 
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0110a_IMGSCALE_$i"
+   fi
+  done
+  
   ### Additional tests just using V615 Vul as an example
   grep --quiet "V0615 Vul" transient_report/index.html
   if [ $? -eq 0 ];then
@@ -16315,6 +16324,16 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24714a_TOO_FAR_$DISTANCE_ARCSEC"
    fi
   fi
+  
+  ### Pixel scale test (make sure WCS is not corrupted) ###
+  for i in wcs_*.fts ;do 
+   util/fov_of_wcs_calibrated_image.sh $i | grep --quiet '13.[78][89012]"/pix' 
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24714a_IMGSCALE_$i"
+   fi
+  done
+
   
   test_if_test31_tmp_files_are_present
   if [ $? -ne 0 ];then
