@@ -16344,20 +16344,26 @@ $GREP_RESULT"
      FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_SIP2PV_exitcode_$FITSFILE"
      break
     fi
-    FITS_HEADER=$(util/listhead)
-    echo "$FITS_HEADER" | grep --quiet 'RA---TPV' && echo "$FITS_HEADER" | grep --quiet 'DEC--TPV'
-    if [ $? -ne 0 ];then
+    if [ -f "pv$$.fits" ];then
+     FITS_HEADER=$(util/listhead "pv$$.fits")
+     echo "$FITS_HEADER" | grep --quiet 'RA---TPV' && echo "$FITS_HEADER" | grep --quiet 'DEC--TPV'
+     if [ $? -ne 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_SIP2PV_header1_$FITSFILE"
+      break
+     fi
+     echo "$FITS_HEADER" | grep --quiet 'PV1_1' && echo "$FITS_HEADER" | grep --quiet 'PV2_1'
+     if [ $? -ne 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_SIP2PV_header2_$FITSFILE"
+      break
+     fi
+     rm -f "pv$$.fits"
+    else
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_SIP2PV_header1_$FITSFILE"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_SIP2PV_header0_$FITSFILE"
      break
     fi
-    echo "$FITS_HEADER" | grep --quiet 'PV1_1' && echo "$FITS_HEADER" | grep --quiet 'PV2_1'
-    if [ $? -ne 0 ];then
-     TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_SIP2PV_header2_$FITSFILE"
-     break
-    fi
-    rm -f "pv$$.fits"
    done
    # cleanup needed if we break early in the test loop
    if [ -f "pv$$.fits" ];then
