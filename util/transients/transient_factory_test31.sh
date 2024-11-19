@@ -1292,17 +1292,27 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
   echo "
   ./vast --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE
   " >> transient_factory_test31.txt
-  ./vast --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
+  ./vast --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" &> vast_output_$$.tmp
   if [ $? -ne 0 ];then
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-   echo "ERROR running VaST on the field $FIELD"
-   echo "ERROR running VaST on the field $FIELD" >> transient_factory_test31.txt
-   echo "ERROR running VaST on the field $FIELD" >> transient_factory.log
+   echo "ERROR running VaST on the field $FIELD (stdout)"
+   echo "ERROR running VaST on the field $FIELD (transient_factory_test31.txt)" >> transient_factory_test31.txt
+   echo "ERROR running VaST on the field $FIELD (transient_factory.log)" >> transient_factory.log
+   # Save VaST output to the log file is the run failed
+   echo "____ VaST output ____" >> transient_factory_test31.txt
+   cat vast_output_$$.tmp  >> transient_factory_test31.txt
+   echo "_____________________" >> transient_factory_test31.txt
+   rm -f vast_output_$$.tmp
    # drop this field and continue to the next one
    # We want to break from the SExtractor settings files loop here
    break
   fi
+  #
+  if [ -f vast_output_$$.tmp ];then
+   rm -f vast_output_$$.tmp
+  fi
+  #
   echo "VaST run complete with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
   echo "The four input images were $REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"  >> transient_factory_test31.txt
   cat vast_summary.log >> transient_factory.log
