@@ -371,7 +371,7 @@ int main( int argc, char *argv[] ) {
  // Check if dark frame mean is greater than image mean
  if ( dark_mean >= image_mean ) {
   // basename may mess the input string - use it just befor exit
-  fprintf( stderr, "ERROR: The mean value of the dark frame %s (%.2f) is greater than or equal to image %s mean (%.2f)\n", basename( dark_file ), dark_mean, image_mean, basename( input_file ) );
+  fprintf( stderr, "ERROR: The mean value of the dark frame %s (%.2f) is greater than or equal to image mean (%.2f) for %s\n", basename( dark_file ), dark_mean, image_mean, basename( input_file ) );
   free( image_array );
   free( dark_array );
   free( result_image_array );

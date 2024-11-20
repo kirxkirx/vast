@@ -1299,9 +1299,12 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
    echo "ERROR running VaST on the field $FIELD (stdout)"
    echo "ERROR running VaST on the field $FIELD (transient_factory_test31.txt)" >> transient_factory_test31.txt
    echo "ERROR running VaST on the field $FIELD (transient_factory.log)" >> transient_factory.log
-   # Save VaST output to the log file is the run failed
+   # Display and save VaST output to the log file if the run failed
+   echo "____ VaST output ____"
    echo "____ VaST output ____" >> transient_factory_test31.txt
+   cat vast_output_$$.tmp
    cat vast_output_$$.tmp  >> transient_factory_test31.txt
+   echo "_____________________"
    echo "_____________________" >> transient_factory_test31.txt
    rm -f vast_output_$$.tmp
    # drop this field and continue to the next one
