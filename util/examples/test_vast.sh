@@ -23916,7 +23916,9 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF0_NO_vast_image_details_log"
   fi
   #
-  grep --quiet "JD time system (TT/UTC/UNKNOWN): UTC" vast_summary.log
+  #grep --quiet "JD time system (TT/UTC/UNKNOWN): UTC" vast_summary.log
+  # UNKNOWN is actually the correct answer when getting the observing time from MJD-OBS in coadd.red.fits
+  grep --quiet "JD time system (TT/UTC/UNKNOWN): UNKNOWN" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF005"
