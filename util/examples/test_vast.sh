@@ -2662,7 +2662,7 @@ $GREP_RESULT"
   # Astropy image date matching test
   command -v python3 &> /dev/null     
   if [ $? -eq 0 ];then
-   python3 -c "import astropy; print(astropy.__version__)"
+   python3 -c "import astropy; print(astropy.__version__)" && python3 -c "import sys,subprocess; sys.exit(0 if subprocess.run(['echo','test'],capture_output=True).returncode == 0 else 1)" 2>/dev/null
    if [ $? -eq 0 ];then
     lib/astropy_test_get_image_date.py ../sample_data/*.fit
     if [ $? -ne 0 ];then
@@ -18851,7 +18851,7 @@ if [ -f ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit
  # Astropy image date matching test
  command -v python3 &> /dev/null     
  if [ $? -eq 0 ];then
-  python3 -c "import astropy; print(astropy.__version__)"
+  python3 -c "import astropy; print(astropy.__version__)" && python3 -c "import sys,subprocess; sys.exit(0 if subprocess.run(['echo','test'],capture_output=True).returncode == 0 else 1)" 2>/dev/null
   if [ $? -eq 0 ];then
    lib/astropy_test_get_image_date.py ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit
    if [ $? -ne 0 ];then
@@ -19011,7 +19011,7 @@ if [ -f ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit 
  # Astropy image date matching test
  command -v python3 &> /dev/null     
  if [ $? -eq 0 ];then
-  python3 -c "import astropy; print(astropy.__version__)"
+  python3 -c "import astropy; print(astropy.__version__)" && python3 -c "import sys,subprocess; sys.exit(0 if subprocess.run(['echo','test'],capture_output=True).returncode == 0 else 1)" 2>/dev/null
   if [ $? -eq 0 ];then
    lib/astropy_test_get_image_date.py ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit
    if [ $? -ne 0 ];then
@@ -19124,7 +19124,7 @@ if [ -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fi
  # Astropy image date matching test
  command -v python3 &> /dev/null     
  if [ $? -eq 0 ];then
-  python3 -c "import astropy; print(astropy.__version__)"
+  python3 -c "import astropy; print(astropy.__version__)" && python3 -c "import sys,subprocess; sys.exit(0 if subprocess.run(['echo','test'],capture_output=True).returncode == 0 else 1)" 2>/dev/null
   if [ $? -eq 0 ];then
    lib/astropy_test_get_image_date.py ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit
    if [ $? -ne 0 ];then
@@ -19255,7 +19255,7 @@ $GREP_RESULT"
  # Astropy image date matching test
  command -v python3 &> /dev/null     
  if [ $? -eq 0 ];then
-  python3 -c "import astropy; print(astropy.__version__)"
+  python3 -c "import astropy; print(astropy.__version__)" && python3 -c "import sys,subprocess; sys.exit(0 if subprocess.run(['echo','test'],capture_output=True).returncode == 0 else 1)" 2>/dev/null
   if [ $? -eq 0 ];then
    lib/astropy_test_get_image_date.py ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit
    if [ $? -ne 0 ];then
@@ -19363,7 +19363,7 @@ if [ -f ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits ];th
  # Astropy image date matching test
  command -v python3 &> /dev/null     
  if [ $? -eq 0 ];then
-  python3 -c "import astropy; print(astropy.__version__)"
+  python3 -c "import astropy; print(astropy.__version__)" && python3 -c "import sys,subprocess; sys.exit(0 if subprocess.run(['echo','test'],capture_output=True).returncode == 0 else 1)" 2>/dev/null
   if [ $? -eq 0 ];then
    lib/astropy_test_get_image_date.py ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits
    if [ $? -ne 0 ];then
@@ -19469,7 +19469,7 @@ if [ -f ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits ];the
  # Astropy image date matching test
  command -v python3 &> /dev/null     
  if [ $? -eq 0 ];then
-  python3 -c "import astropy; print(astropy.__version__)"
+  python3 -c "import astropy; print(astropy.__version__)" && python3 -c "import sys,subprocess; sys.exit(0 if subprocess.run(['echo','test'],capture_output=True).returncode == 0 else 1)" 2>/dev/null
   if [ $? -eq 0 ];then
    lib/astropy_test_get_image_date.py ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits
    if [ $? -ne 0 ];then
@@ -19744,7 +19744,7 @@ if [ -f ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Lum
  # Astropy image date matching test
  command -v python3 &> /dev/null     
  if [ $? -eq 0 ];then
-  python3 -c "import astropy; print(astropy.__version__)"
+  python3 -c "import astropy; print(astropy.__version__)" && python3 -c "import sys,subprocess; sys.exit(0 if subprocess.run(['echo','test'],capture_output=True).returncode == 0 else 1)" 2>/dev/null
   if [ $? -eq 0 ];then
    lib/astropy_test_get_image_date.py ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit
    if [ $? -ne 0 ];then
