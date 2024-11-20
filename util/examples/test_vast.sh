@@ -16242,12 +16242,12 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24414"
   fi
-  grep --quiet "2024 07 29\.892.  2460521\.392.  11\.[89]." transient_report/index.html
+  grep --quiet "2024 07 29\.892.  2460521\.392.  11\.[89].  20:14:2.\... +20:14:[45].\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24414a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2024 07 29\.892.  2460521\.392.  11\.[89]." transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2024 07 29\.892.  2460521\.392.  11\.[89].  20:14:2.\... +20:14:[45].\.." transient_report/index.html | awk '{print $6" "$7}'`
   # position of CX Sge from VSX
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 20:14:25.31 +20:14:48.4  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
