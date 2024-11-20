@@ -20844,10 +20844,17 @@ if [ -d ../individual_images_test ];then
   if [ ! -f "$IMAGE" ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES IMSTAT00_no_test_image__"$(basename $IMAGE)
+   continue
   fi
   if [ ! -s "$IMAGE" ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES IMSTAT00_empty_test_image__"$(basename $IMAGE)
+   continue
+  fi
+  # Check if the image is packed - probably it was not downlaoded fully
+  if [[ $IMAGE == *.bz2 ]]; then
+   FAILED_TEST_CODES="$FAILED_TEST_CODES IMSTAT00_compressed_test_image__"$(basename $IMAGE)
+   continue
   fi
   util/imstat_vast $IMAGE
   if [ $? -ne 0 ];then
