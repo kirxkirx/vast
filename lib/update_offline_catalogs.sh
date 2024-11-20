@@ -166,12 +166,19 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
  # check if the file is there at all
  if [ ! -s "$FILE_TO_UPDATE" ];then
   echo "There is no file $FILE_TO_UPDATE or it is empty" 
-  # Always update only lib/catalogs/asassnv.csv
-  if [ "$FILE_TO_UPDATE" == "lib/catalogs/asassnv.csv" ] || [ $DOWNLOAD_EVERYTHING -eq 1 ] ;then
+  # I don't want any special treatment for asassnv
+  ## Always update only lib/catalogs/asassnv.csv if it does not exist
+  #if [ "$FILE_TO_UPDATE" == "lib/catalogs/asassnv.csv" ] || [ $DOWNLOAD_EVERYTHING -eq 1 ] ;then
+  # NEED_TO_UPDATE_THE_FILE=1
+  #else
+  # continue
+  #fi
+  if [ $DOWNLOAD_EVERYTHING -eq 1 ] ;then
    NEED_TO_UPDATE_THE_FILE=1
   else
    continue
-  fi
+  fi 
+  #
  else
   # First try Linux-style stat
   FILE_MODIFICATION_DATE=`stat -c "%Y" "$FILE_TO_UPDATE" 2>/dev/null`

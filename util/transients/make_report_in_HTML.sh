@@ -59,6 +59,9 @@ fi
 # individual files cleanup
 remove_all_report_transient_output_files
 
+# do not start the parallel run befor making sure the offline catalogs (that will be used by report_transient.sh) are up to date
+lib/update_offline_catalogs.sh all
+
 # Parallel run - ckeck candidates and create result files
 # Limit the numbe of threads running in parallel
 max_threads=5

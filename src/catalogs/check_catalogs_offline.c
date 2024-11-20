@@ -470,7 +470,7 @@ int main( int argc, char **argv ) {
  }
 
  // This script should take care of updating the catalogs
- if ( 0 != system( "lib/update_offline_catalogs.sh" ) ) {
+ if ( 0 != system( "lib/update_offline_catalogs.sh all" ) ) {
   fprintf( stderr, "WARNING: an error occured while updating the catalogs with lib/update_offline_catalogs.sh\n" );
  }
 
