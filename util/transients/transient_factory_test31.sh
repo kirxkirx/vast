@@ -1205,7 +1205,10 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
  
  ###############################################
  # Update neverexclude_list.txt
- if [ -f ../neverexclude_list.txt ];then
+ if [ -f "$NMW_CALIBRATION/neverexclude_list.txt" ];then
+  echo "Updating neverexclude_list.txt"
+  cp -v "$NMW_CALIBRATION/neverexclude_list.txt" .
+ elif [ -f ../neverexclude_list.txt ];then
   echo "Updating neverexclude_list.txt"
   cp -v ../neverexclude_list.txt .
  fi
