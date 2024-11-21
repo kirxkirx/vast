@@ -81,7 +81,7 @@ FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX=0.55
 
 # Set the default MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO to a high value will make sure it is computed and reported
 # (not computed of MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO is not set)
-MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=100
+MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=10
 
 # Magnitude limits for transient search.
 # If a candidate is too bright - something is very wrong with it.
@@ -139,6 +139,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   #BAD_REGION_FILE="../Stas_bad_region.lst"
   BAD_REGION_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/Stas_bad_region.lst"
   EXCLUSION_LIST="../exclusion_list.txt"
+  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.1
   export MPC_CODE=C32
   # Calibration data
   if [ -z "$DARK_FRAMES_DIR" ];then
@@ -158,6 +159,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   echo "### Using search settings for $CAMERA_SETTINGS camera ###"
   export AAVSO_COMMENT_STRING="NMW Camera-2 Canon 135mm f/2.0 telephoto lens + SBIG STL-11000M CCD"
   export MPC_CODE=C32
+  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.1
   # The input images will be calibrated
   # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
   # the script will try to find the most appropriate one based on temperature and time
@@ -527,6 +529,7 @@ FLAT_FIELD_FILE= $FLAT_FIELD_FILE
 FRAME_EDGE_OFFSET_PIX= $FRAME_EDGE_OFFSET_PIX
 GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK= $GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK
 MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO= $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO
+MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS= $MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS
 MPC_CODE= $MPC_CODE
 NMW_CALIBRATION= $NMW_CALIBRATION
 NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT= $NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT
@@ -1060,17 +1063,30 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   SECOND_EPOCH__SECOND_IMAGE_SD=$(echo "$SECOND_EPOCH__SECOND_IMAGE_STATS" | grep ' SD= ' | awk '{print $2}')
   #
   if [ -n "$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" ] && [ -n "$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" ];then
+   echo "----------------------------------------------"  >> transient_factory_test31.txt
    echo "INFO: REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE= $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE"  >> transient_factory_test31.txt
    echo "INFO:         REFERENCE_EPOCH__FIRST_IMAGE_SD= $REFERENCE_EPOCH__FIRST_IMAGE_SD"  >> transient_factory_test31.txt
    echo "INFO:    SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE= $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE"  >> transient_factory_test31.txt
    echo "INFO:            SECOND_EPOCH__FIRST_IMAGE_SD= $SECOND_EPOCH__FIRST_IMAGE_SD"  >> transient_factory_test31.txt   
    echo "INFO:   SECOND_EPOCH__SECOND_IMAGE_MEAN_VALUE= $SECOND_EPOCH__SECOND_IMAGE_MEAN_VALUE"  >> transient_factory_test31.txt
    echo "INFO:           SECOND_EPOCH__SECOND_IMAGE_SD= $SECOND_EPOCH__SECOND_IMAGE_SD"  >> transient_factory_test31.txt   
+   echo "----------------------------------------------"  >> transient_factory_test31.txt
+   echo "INFO:      ref_to_second_epoch_img_mean_ratio= "$(echo $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE | awk '{print $2/$1}')
+   echo "INFO:                  SECOND_EPOCH__SD_ratio= "$(echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD" | awk '{A=$1; B=$2; result=(A > B ? (A - B) : (B - A)) / B; print result}')  >> transient_factory_test31.txt
+   # Check ratio of the mean image values against the user-specified threshold
    if awk -v maxratio="$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO" -v ref="$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" -v second="$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" 'BEGIN {if (second > maxratio * ref) exit 0; exit 1}'; then
     echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO * $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" 
     echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO * $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" >> transient_factory_test31.txt
     continue
    fi # awk ...
+   # Check the ratio of standard deviations of the second-epoch images (a large change may indicate passing clouds)
+   if [ -n "$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" ] && [ -n "$SECOND_EPOCH__FIRST_IMAGE_SD"] && [ -n "$SECOND_EPOCH__SECOND_IMAGE_SD" ] ;then
+    echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD $MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" | awk '{A=$1; B=$2; C=$3; result=(A > B ? (A - B) : (B - A)) / B; exit (result < C ? 0 : 1)}'
+    echo "ERROR: passing clouds (SD ratio)  std(img1)=$SECOND_EPOCH__FIRST_IMAGE_SD std(img2)=$SECOND_EPOCH__SECOND_IMAGE_SD  abs( std(img1) -std(img2) ) / std(img2) threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" 
+    echo "ERROR: passing clouds (SD ratio)  std(img1)=$SECOND_EPOCH__FIRST_IMAGE_SD std(img2)=$SECOND_EPOCH__SECOND_IMAGE_SD  abs( std(img1) -std(img2) ) / std(img2) threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" >> transient_factory_test31.txt
+    continue    
+   fi
+   echo "----------------------------------------------"  >> transient_factory_test31.txt
   fi # if [ -n "$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" ] && [ -n "$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" ];then
  fi # if [ -n "$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO" ];then
  
