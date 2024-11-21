@@ -27,6 +27,8 @@ jobs:
       run: brew reinstall gcc
     - name: Install xquartz
       run: brew install --cask xquartz
+    - name: Install shellcheck
+      run: brew install shellcheck
     - name: Collect debug info
       run: |
         which gfortran
@@ -40,6 +42,11 @@ jobs:
 #      run: brew install xorg-server
     - name: make VaST (Homebrew)
       run: make
+    - name: Shellcheck VaST BASH scripts
+      run: |
+        for i in lib/*sh util/*sh util/transients/*sh util/examples/*sh; do
+          shellcheck --severity=error $i
+        done
     # Disble the long data analysis test
     #- name: prepare for the test
     #  run: echo "1" > ../THIS_IS_HPCC 
