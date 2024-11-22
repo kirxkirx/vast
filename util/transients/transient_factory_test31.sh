@@ -1071,7 +1071,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "INFO:   SECOND_EPOCH__SECOND_IMAGE_MEAN_VALUE= $SECOND_EPOCH__SECOND_IMAGE_MEAN_VALUE"  >> transient_factory_test31.txt
    echo "INFO:           SECOND_EPOCH__SECOND_IMAGE_SD= $SECOND_EPOCH__SECOND_IMAGE_SD"  >> transient_factory_test31.txt   
    echo "----------------------------------------------"  >> transient_factory_test31.txt
-   echo "INFO:      ref_to_second_epoch_img_mean_ratio= "$(echo $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE | awk '{print $2/$1}')
+   echo "INFO:      ref_to_second_epoch_img_mean_ratio= "$(echo $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE | awk '{print $2/$1}')  >> transient_factory_test31.txt
    echo "INFO:                  SECOND_EPOCH__SD_ratio= "$(echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD" | awk '{A=$1; B=$2; result=(A > B ? (A - B) : (B - A)) / B; print result}')  >> transient_factory_test31.txt
    # Check ratio of the mean image values against the user-specified threshold
    if awk -v maxratio="$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO" -v ref="$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" -v second="$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" 'BEGIN {if (second > maxratio * ref) exit 0; exit 1}'; then
