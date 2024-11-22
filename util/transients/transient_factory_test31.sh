@@ -1082,9 +1082,11 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    # Check the ratio of standard deviations of the second-epoch images (a large change may indicate passing clouds)
    if [ -n "$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" ] && [ -n "$SECOND_EPOCH__FIRST_IMAGE_SD" ] && [ -n "$SECOND_EPOCH__SECOND_IMAGE_SD" ]; then
     echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD $MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" | awk '{A=$1; B=$2; C=$3; result=(A > B ? (A - B) : (B - A)) / B; exit (result < C ? 0 : 1)}'
-    echo "ERROR: passing clouds (SD ratio)  std(img1)=$SECOND_EPOCH__FIRST_IMAGE_SD std(img2)=$SECOND_EPOCH__SECOND_IMAGE_SD  abs( std(img1) -std(img2) ) / std(img2) threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" 
-    echo "ERROR: passing clouds (SD ratio)  std(img1)=$SECOND_EPOCH__FIRST_IMAGE_SD std(img2)=$SECOND_EPOCH__SECOND_IMAGE_SD  abs( std(img1) -std(img2) ) / std(img2) threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" >> transient_factory_test31.txt
-    continue    
+    if [ $? -ne 0 ];then
+     echo "ERROR: passing clouds (SD ratio)  std(img1)=$SECOND_EPOCH__FIRST_IMAGE_SD std(img2)=$SECOND_EPOCH__SECOND_IMAGE_SD  abs( std(img1) - std(img2) ) / std(img2) threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" 
+     echo "ERROR: passing clouds (SD ratio)  std(img1)=$SECOND_EPOCH__FIRST_IMAGE_SD std(img2)=$SECOND_EPOCH__SECOND_IMAGE_SD  abs( std(img1) - std(img2) ) / std(img2) threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" >> transient_factory_test31.txt
+     continue
+    fi
    fi
    echo "----------------------------------------------"  >> transient_factory_test31.txt
   fi # if [ -n "$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" ] && [ -n "$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" ];then
