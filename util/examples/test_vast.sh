@@ -381,7 +381,7 @@ function remove_test_data_to_save_space() {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining."
-    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test/ ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ;do
+    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -16414,6 +16414,566 @@ $GREP_RESULT"
  fi
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+remove_test_data_to_save_space
+
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!" 
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES" 
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ exit 1
+fi
+
+
+##### NMW-STL ref. frame match fail test #####
+# Download the test dataset if needed
+if [ ! -d ../NMW-STL__RefFrameMatchFail_test ];then
+ cd ..
+ curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__RefFrameMatchFail_test.tar.bz2" && tar -xvjf NMW-STL__RefFrameMatchFail_test.tar.bz2 && rm -f NMW-STL__RefFrameMatchFail_test.tar.bz2
+ cd $WORKDIR
+fi
+# If the test data are found
+if [ -d ../NMW-STL__RefFrameMatchFail_test ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ #
+ remove_test31_tmp_files_if_present
+ # Run the test
+ echo "NMW-STL ref. frame match fail test " 
+ echo -n "NMW-STL ref. frame match fail test: " >> vast_test_report.txt 
+ #
+ cp -v bad_region.lst_default bad_region.lst
+ #
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+# #################################################################
+# # We need a special astorb.dat for the asteroids
+# if [ -f astorb.dat ];then
+#  mv astorb.dat astorb.dat_backup
+# fi
+# if [ ! -f astorb_2023.dat ];then
+#  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz" 
+#  if [ $? -ne 0 ];then
+#   TEST_PASSED=0
+#   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_error_downloading_custom_astorb_2023.dat"
+#  fi
+#  gunzip astorb_2023.dat.gz
+#  if [ $? -ne 0 ];then
+#   TEST_PASSED=0
+#   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_error_unpacking_custom_astorb_2023.dat"
+#  fi
+# fi
+# cp astorb_2023.dat astorb.dat
+# if [ $? -ne 0 ];then
+#  TEST_PASSED=0
+#  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_error_copying_astorb_2023.dat_to_astorb.dat"
+# fi
+# #################################################################
+ # Set STL camera bad regions file
+ if [ ! -f ../STL_bad_region.lst ];then
+  cp -v ../NMW-STL__RefFrameMatchFail_test/STL_bad_region.lst ../STL_bad_region.lst
+ fi
+ # Set calibration files
+ export DARK_FRAMES_DIR=../NMW-STL__RefFrameMatchFail_test/darks
+ export FLAT_FIELD_FILE=../NMW-STL__RefFrameMatchFail_test/flats/STL__mff_2024_febmar_full_moon.fit
+ # Test the production NMW script
+ REFERENCE_IMAGES=../NMW-STL__RefFrameMatchFail_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW-STL__RefFrameMatchFail_test/second_epoch_images
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH000_EXIT_CODE"
+ fi
+ #
+ unset DARK_FRAMES_DIR
+ unset FLAT_FIELD_FILE
+ #
+ #if [ -f astorb.dat_backup ];then
+ # mv astorb.dat_backup astorb.dat
+ #else
+ # # remove the custom astorb.dat
+ # rm -f astorb.dat
+ #fi
+ #
+ if [ -f transient_report/index.html ];then
+  grep --quiet 'ERROR' "transient_report/index.html"
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_ERROR_MESSAGE_IN_index_html"
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT=$(cat transient_factory_test31.txt)
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWSTLREFFRAMEMATCH_ERROR_MESSAGE_IN_index_html ######
+$GREP_RESULT
+----------------- transient_factory_test31.txt -----------------
+$CAT_RESULT"
+  fi
+  # The copy of the log file should be in the HTML report
+  grep --quiet "Images processed 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH001"
+  fi
+  grep --quiet "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH002"
+  fi
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2460145.40765046 19.07.2023 21:46:51' 1 transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH003"
+  fi
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460637.15502315 22.11.2024 15:43:04' 1 transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_check_dates_consistency_in_vast_image_details_log"
+  fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_TYCHO2_V"
+  fi
+  grep --quiet 'default.sex.telephoto_lens_vSTL' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_SESETTINGSFILE"
+  fi
+  #
+  grep --quiet 'Reading dark frame ../NMW-STL__RefFrameMatchFail_test/darks/mdark_STL_-25C_20s_2024-01-12.fit 4008 2672  16 bitpix' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_CORRECTDARK"
+  fi
+  grep --quiet 'Dark frame is subtracted' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_DARKSUBMSG"
+  fi
+  grep --quiet 'MegaDivider' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_FLAT"
+  fi
+  grep --quiet 'SECOND_EPOCH__FIRST_IMAGE=../NMW-STL__RefFrameMatchFail_test/second_epoch_images/fd_044_2024-11-22_15-43-4_001.fts' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_SECOND_EPOCH__FIRST_IMAGE"
+  fi
+  grep --quiet 'SECOND_EPOCH__SECOND_IMAGE=../NMW-STL__RefFrameMatchFail_test/second_epoch_images/fd_044_2024-11-22_15-43-57_002.fts' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_SECOND_EPOCH__SECOND_IMAGE"
+  fi
+  #
+  # Hunting the mysterious non-zero reference frame rotation cases
+  if [ -f vast_image_details.log ];then
+   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH0_nonzero_ref_frame_rotation"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWSTLREFFRAMEMATCH0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWSTLREFFRAMEMATCH0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH0_NO_vast_image_details_log"
+  fi
+  #
+  # 
+  grep --quiet "V0456 Aql" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH314"
+  fi
+  grep --quiet "2024 11 22\.6546  2460637\.1546  1[01]\.[89012].  19:41:1.\... +07:24:5.\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH314a"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2024 11 22\.6546  2460637\.1546  1[01]\.[89012].  19:41:1.\... +07:24:5.\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  # position of V0456 Aql from VSX
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 19:41:13.49 +07:25:01.4  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW-STL scale is 13.80"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 1.5*13.8 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH314a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH314a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  # 
+  grep --quiet "R Del" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH414"
+  fi
+  grep --quiet "2024 11 22\.6546  2460637\.1546   7\.[67].  20:14:5.\... +09:05:2[01]\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH414a"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2024 11 22\.6546  2460637\.1546   7\.[67].  20:14:5.\... +09:05:2[01]\.." transient_report/index.html | awk '{print $6" "$7}'`
+  # position of R Del from VSX
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 20:14:55.14 +09:05:21.0  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW-STL scale is 13.80"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH414a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH414a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  # 
+  # 
+  grep --quiet "V0727 Aql" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH614"
+  fi
+  grep --quiet "2024 11 22\.6546  2460637\.1546  12\.[34].  19:56:5.\... +07:58:[45].\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH614a"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2024 11 22\.6546  2460637\.1546  12\.[34].  19:56:5.\... +07:58:[45].\.." transient_report/index.html | awk '{print $6" "$7}'`
+  # VSX position
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 19:56:53.56 +07:58:53.0  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW-STL scale is 13.80"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH614a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH614a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+  grep --quiet "V0633 Aql" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH714"
+  fi
+  grep --quiet "2024 11 22\.6546  2460637\.1546  12\.5.  19:36:[23][90]\... +09:48:0.\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH714a"
+   GREP_RESULT=$(cat transient_report/index.html)
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWSTLREFFRAMEMATCH714a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2024 11 22\.6546  2460637\.1546  12\.5.  19:36:[23][90]\... +09:48:0.\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  # position from VSX
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 19:36:29.21 +09:48:11.8  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW-STL scale is 13.80"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH714a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH714a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+  grep --quiet "HI Aql" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH814"
+  fi
+  grep --quiet "2024 11 22\.6546  2460637\.1546  10\.[89].  20:07:2.\... +09:33:3.\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH814a"
+   GREP_RESULT=$(cat transient_report/index.html)
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWSTLREFFRAMEMATCH814a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2024 11 22\.6546  2460637\.1546  10\.[89].  20:07:2.\... +09:33:3.\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  # position from VSX
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 20:07:25.91 +09:33:32.7  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW-STL scale is 13.80"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH814a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH814a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+  grep --quiet "V0757 Aql" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH914"
+  fi
+  grep --quiet "2024 11 22\.6546  2460637\.1546  12\.5.  20:00:[12].\... +09:54:2.\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH914a"
+   GREP_RESULT=$(cat transient_report/index.html)
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWSTLREFFRAMEMATCH914a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2024 11 22\.6546  2460637\.1546  12\.5.  20:00:[12].\... +09:54:2.\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  # position from VSX
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 20:00:19.63 +09:54:25.0  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW-STL scale is 13.80"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH914a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH914a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+  grep --quiet "RU Aql" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1014"
+  fi
+  grep --quiet "2024 11 22\.6546  2460637\.1546  [ 1][90].[90].  20:12:4.\... +12:59:3.\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1014a"
+   GREP_RESULT=$(cat transient_report/index.html)
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWSTLREFFRAMEMATCH1014a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2024 11 22\.6546  2460637\.1546  12\.5.  20:00:[12].\... +09:54:2.\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  # position from VSX
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 20:12:44.82 +12:59:41.2  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW-STL scale is 13.80"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1014a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1014a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+  grep --quiet "RT Aql" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1114"
+  fi
+  grep --quiet "2024 11 22\.6546  2460637\.1546   9.[123].  19:38:0.... +11:43:1.\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1114a"
+   GREP_RESULT=$(cat transient_report/index.html)
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWSTLREFFRAMEMATCH1114a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2024 11 22\.6546  2460637\.1546   9.[123].  19:38:0.... +11:43:1.\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  # position from VSX
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 19:38:01.60 +11:43:18.2  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW-STL scale is 13.80"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1114a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1114a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+  grep --quiet "V0436 Aql" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1214"
+  fi
+  grep --quiet "2024 11 22\.6546  2460637\.1546  11\.3.  20:04:[34].\... +11:45:1.\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1214a"
+   GREP_RESULT=$(cat transient_report/index.html)
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### NMWSTLREFFRAMEMATCH1214a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2024 11 22\.6546  2460637\.1546  11\.3.  20:04:[34].\... +11:45:1.\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  # position from VSX
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 20:04:40.81 +11:45:18.4  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW-STL scale is 13.80"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 13.8 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1214a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1214a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  
+  ### Pixel scale test (make sure WCS is not corrupted) ###
+  for i in wcs_*.fts ;do 
+   util/fov_of_wcs_calibrated_image.sh $i | grep --quiet '13.[78][89012]"/pix' 
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_IMGSCALE_$i"
+   fi
+  done
+  
+  ### Test SIP->PV conversion if python, astropy and sympy are available
+  command -v python &>/dev/null && python -c "import astropy; print(astropy.__version__)" &>/dev/null && python -c "import sympy; print(sympy.__version__)" &>/dev/null 
+  if [ $? -eq 0 ];then
+   for FITSFILE in wcs_*.fts ;do
+    util/sip_tpv/sip_to_pv.py "$FITSFILE" "pv$$.fits" 
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_SIP2PV_exitcode_$FITSFILE"
+     break
+    fi
+    if [ -f "pv$$.fits" ];then
+     FITS_HEADER=$(util/listhead "pv$$.fits")
+     echo "$FITS_HEADER" | grep --quiet 'RA---TPV' && echo "$FITS_HEADER" | grep --quiet 'DEC--TPV'
+     if [ $? -ne 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_SIP2PV_header1_$FITSFILE"
+      break
+     fi
+     echo "$FITS_HEADER" | grep --quiet 'PV1_1' && echo "$FITS_HEADER" | grep --quiet 'PV2_1'
+     if [ $? -ne 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_SIP2PV_header2_$FITSFILE"
+      break
+     fi
+     rm -f "pv$$.fits"
+    else
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_SIP2PV_header0_$FITSFILE"
+     break
+    fi
+   done
+   # cleanup needed if we break early in the test loop
+   if [ -f "pv$$.fits" ];then
+    rm -f "pv$$.fits"
+   fi
+  fi
+
+
+  
+  test_if_test31_tmp_files_are_present
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_TMP_FILE_PRESENT"
+  fi
+
+ else
+  echo "ERROR running the transient search script" 
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_ALL"
+ fi
+
+
+ ###### restore default bad regions file
+ if [ -f bad_region.lst_default ];then
+  cp -v bad_region.lst_default bad_region.lst
+ fi
+ #
+
+ ###### restore default exclusion list if any
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
+
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mNMW-STL ref. frame match fail test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mNMW-STL ref. frame match fail test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_TEST_NOT_PERFORMED"
 fi
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
