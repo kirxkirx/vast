@@ -1330,7 +1330,11 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
    # sed 's/^[ \t]*//;s/[ \t]*$//' is to remove the leading and trailing white spaces https://unix.stackexchange.com/questions/102008/how-do-i-trim-leading-and-trailing-whitespace-from-each-line-of-some-output
    # 's/^[[:space:]]*//;s/[[:space:]]*$//' is supposed to serve the same function
    #"$VAST_PATH"util/search_databases_with_curl.sh $("$VAST_PATH"lib/deg2hms $RADEC) | grep -v -e 'not found' -e 'Starting' -e 'Searching' | grep -v 'found' | tail -n1 | awk -F'|' '{print $1}' | sed 's/^[ \t]*//;s/[ \t]*$//'
-   "$VAST_PATH"util/search_databases_with_curl.sh $("$VAST_PATH"lib/deg2hms $RADEC) | grep -v -e 'not found' -e 'Starting' -e 'Searching' | grep -v 'found' | tail -n1 | awk -F'|' '{print $1}' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
+   OUTPUTNAME=$("$VAST_PATH"util/search_databases_with_curl.sh $("$VAST_PATH"lib/deg2hms $RADEC) | grep -v -e 'not found' -e 'Starting' -e 'Searching' | grep -v 'found' | tail -n1 | awk -F'|' '{print $1}' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+   if [ -z "$OUTPUTNAME" ];then
+    OUTPUTNAME=$(util/search_databases_with_vizquery.sh $("$VAST_PATH"lib/deg2hms $RADEC) object 1 no_online_vsx 2>/dev/null | grep '\|' | grep 'object' | awk -F'|' '{print $2}')
+   fi
+   echo $OUTPUTNAME
    exit 0
   else
    "$VAST_PATH"util/search_databases_with_curl.sh $("$VAST_PATH"lib/deg2hms $RADEC)

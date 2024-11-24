@@ -12708,9 +12708,13 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
       if [ $? -ne 0 ];then
        TEST_PASSED=0
        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_NO_AUTOMATICALLY_ASSIGNED_VARSTARNAME"
+#       DEBUG_OUTPUT="$DEBUG_OUTPUT
+####### NMWNVUL24ST_AAVSOSCRIPTTEST_NO_AUTOMATICALLY_ASSIGNED_VARSTARNAME ######
+#$TEST_AAVSO_REPORT_TERMINAL
+#----------------------------------------------------------------
+#"
        DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNVUL24ST_AAVSOSCRIPTTEST_NO_AUTOMATICALLY_ASSIGNED_VARSTARNAME ######
-$TEST_AAVSO_REPORT_TERMINAL
 ----------------------------------------------------------------
 "
       fi
