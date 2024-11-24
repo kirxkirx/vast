@@ -11016,7 +11016,7 @@ fi
 
 ##### Pyx2 test (involves three second-epoch images including a bad one) #####
 ### Disable this test for GitHub Actions
-if [ "$GITHUB_ACTIONS" != "true" ];then
+#if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../NMW_nomatch_test ];then
  cd ..
@@ -11258,12 +11258,12 @@ if [ $? -ne 0 ];then
 fi
 
 ### Disable the above test for GitHub Actions
-fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+#fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ##### ATLAS Mira not in VSX ID test #####
 ### Disable this test for GitHub Actions
-if [ "$GITHUB_ACTIONS" != "true" ];then
+#if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../NMW_ATLAS_Mira_in_Ser1 ];then
  cd ..
@@ -11740,12 +11740,12 @@ if [ $? -ne 0 ];then
 fi
 
 ### Disable the above test for GitHub Actions
-fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+#fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ##### Nova Sgr 2020 N4 test (three second-epoch images, all good) #####
 ### Disable this test for GitHub Actions
-if [ "$GITHUB_ACTIONS" != "true" ];then 
+#if [ "$GITHUB_ACTIONS" != "true" ];then 
 # Download the test dataset if needed
 if [ ! -d ../NMW_Sgr1_NovaSgr20N4_test ];then
  cd ..
@@ -12061,12 +12061,12 @@ if [ $? -ne 0 ];then
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
-fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
+#fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
 
 
 ##### Nova Sgr 2024 N1 test #####
 ### Disable this test for GitHub Actions
-if [ "$GITHUB_ACTIONS" != "true" ];then 
+#if [ "$GITHUB_ACTIONS" != "true" ];then 
 # Download the test dataset if needed
 if [ ! -d ../NMW_Sco6_NovaSgr24N1_test ];then
  cd ..
@@ -12411,7 +12411,7 @@ if [ $? -ne 0 ];then
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
-fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
+#fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
 
 
 
@@ -12788,7 +12788,7 @@ fi
 
 ##### Nova Her 2021 test (three second-epoch images, all good) #####
 ### Disable this test for GitHub Actions
-if [ "$GITHUB_ACTIONS" != "true" ];then 
+#if [ "$GITHUB_ACTIONS" != "true" ];then 
 # Download the test dataset if needed
 if [ ! -d ../NMW_Aql11_NovaHer21_test ];then
  cd ..
@@ -13038,7 +13038,7 @@ if [ $? -ne 0 ];then
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
-fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+#fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ##### Nova Cas 2021 test (three second-epoch images, all good) #####
@@ -14656,7 +14656,7 @@ fi
 
 ##### find Chandra #####
 ### Disable this test for GitHub Actions
-if [ "$GITHUB_ACTIONS" != "true" ];then 
+#if [ "$GITHUB_ACTIONS" != "true" ];then 
 # Download the test dataset if needed
 if [ ! -d ../NMW_find_Chandra_test ];then
  cd ..
@@ -14937,13 +14937,13 @@ if [ $? -ne 0 ];then
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
-fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
+#fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
 
 
 
 ##### Sgr9 crash and no shift test #####
 ### Disable this test for GitHub Actions
-if [ "$GITHUB_ACTIONS" != "true" ];then
+#if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../NMW_Sgr9_crash_test ];then
  cd ..
@@ -15465,7 +15465,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 #
 remove_test_data_to_save_space
 ### Disable the above test for GitHub Actions
-fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+#fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 # Test that the Internet conncation has not failed
 test_internet_connection

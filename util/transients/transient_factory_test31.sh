@@ -81,7 +81,7 @@ FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX=0.55
 
 # Set the default MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO to a high value will make sure it is computed and reported
 # (not computed of MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO is not set)
-MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=10
+MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=12
 
 # Magnitude limits for transient search.
 # If a candidate is too bright - something is very wrong with it.
