@@ -17781,16 +17781,19 @@ $GREP_RESULT"
   # The following files are created by solve_plate_with_UCAC5 and should be present when things are alright
   #
   # The trick is the files may be wcs_fd_* or just wcs_* - depending on presence or absence of calibration frames on the test machine
-  if [ ! -s wcs_*025_2023-8-20_20-50-10_002.fts.cat.ucac5 ] || [ -s wcs_*025_2023-8-20_20-51-4_003.fts.cat.ucac5 ];then 
+  # shellcheck disable=SC2144  # We know there's exactly one matching file, either with or without 'fd'
+  if [ ! -s wcs_*025_2023-8-20_20-50-10_002.fts.cat.ucac5 ] || [ ! -s wcs_*025_2023-8-20_20-51-4_003.fts.cat.ucac5 ];then 
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_MEDIANCATDIST_NO_UCAC5_FILES"
+  fi
+  #
+  # shellcheck disable=SC2144  # We know there's exactly one matching file, either with or without 'fd'
+  if [ ! -s wcs_*025_2023-8-20_20-50-10_002.fts.cat.ds9.reg ] || [ ! -s wcs_*025_2023-8-20_20-51-4_003.fts.cat.ds9.reg ];then 
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_MEDIANCATDIST_NO_DS9_REGION_FILES"
   fi
   #
-  if [ ! -s wcs_*025_2023-8-20_20-50-10_002.fts.cat.ds9.reg ] || [ -s wcs_*025_2023-8-20_20-51-4_003.fts.cat.ds9.reg ];then 
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_MEDIANCATDIST_NO_DS9_REGION_FILES"
-  fi
-  #
+  # shellcheck disable=SC2144  # We know there's exactly one matching file, either with or without 'fd'
   if [ -s wcs_*025_2023-8-20_20-50-10_002.fts.cat.astrometric_residuals ] && [ -s wcs_*025_2023-8-20_20-51-4_003.fts.cat.astrometric_residuals ];then 
    #
    MEDIAN_DISTANCE_TO_CATALOG_ARCSEC=$(cat wcs_*025_2023-8-20_20-50-10_002.fts.cat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}')
