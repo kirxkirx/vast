@@ -17778,9 +17778,22 @@ $GREP_RESULT"
    fi
   fi
   #
-  if [ -s wcs_025_2023-8-20_20-50-10_002.fts.cat.astrometric_residuals ] && [ -s wcs_025_2023-8-20_20-51-4_003.fts.cat.astrometric_residuals ];then 
+  # The following files are created by solve_plate_with_UCAC5 and should be present when things are alright
+  #
+  # The trick is the files may be wcs_fd_* or just wcs_* - depending on presence or absence of calibration frames on the test machine
+  if [ ! -s wcs_*025_2023-8-20_20-50-10_002.fts.cat.ucac5 ] || [ -s wcs_*025_2023-8-20_20-51-4_003.fts.cat.ucac5 ];then 
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_MEDIANCATDIST_NO_DS9_REGION_FILES"
+  fi
+  #
+  if [ ! -s wcs_*025_2023-8-20_20-50-10_002.fts.cat.ds9.reg ] || [ -s wcs_*025_2023-8-20_20-51-4_003.fts.cat.ds9.reg ];then 
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_MEDIANCATDIST_NO_DS9_REGION_FILES"
+  fi
+  #
+  if [ -s wcs_*025_2023-8-20_20-50-10_002.fts.cat.astrometric_residuals ] && [ -s wcs_*025_2023-8-20_20-51-4_003.fts.cat.astrometric_residuals ];then 
    #
-   MEDIAN_DISTANCE_TO_CATALOG_ARCSEC=$(cat wcs_025_2023-8-20_20-50-10_002.fts.cat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}')
+   MEDIAN_DISTANCE_TO_CATALOG_ARCSEC=$(cat wcs_*025_2023-8-20_20-50-10_002.fts.cat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}')
    TEST=`echo "$MEDIAN_DISTANCE_TO_CATALOG_ARCSEC" | awk '{if ( $1 > 0.0 && $1 < 13.8/3 ) print 1 ;else print 0 }'`
    re='^[0-9]+$'
    if ! [[ $TEST =~ $re ]] ; then
@@ -17796,7 +17809,7 @@ $GREP_RESULT"
    fi
    # 
    #
-   MEDIAN_DISTANCE_TO_CATALOG_ARCSEC=$(cat wcs_025_2023-8-20_20-51-4_003.fts.cat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}')
+   MEDIAN_DISTANCE_TO_CATALOG_ARCSEC=$(cat wcs_*025_2023-8-20_20-51-4_003.fts.cat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}')
    TEST=`echo "$MEDIAN_DISTANCE_TO_CATALOG_ARCSEC" | awk '{if ( $1 > 0.0 && $1 < 13.8/3 ) print 1 ;else print 0 }'`
    re='^[0-9]+$'
    if ! [[ $TEST =~ $re ]] ; then
@@ -19488,6 +19501,7 @@ if [ -f ../individual_images_test/c176.fits ];then
  # Run the test
  echo "Image with many hot pixels test " 
  echo -n "Image with many hot pixels test: " >> vast_test_report.txt 
+ # Plate solution will fail if Astrometry.net code is run locally and the needed index files are not present
  cp default.sex.many_hot_pixels default.sex
  util/solve_plate_with_UCAC5 ../individual_images_test/c176.fits
  if [ $? -ne 0 ];then
