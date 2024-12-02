@@ -551,6 +551,30 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
     clean_tmp_files
     exit 1
    fi # if Gaia DR2 match found
+   # Special treatment for blends
+   BLEND_MAG_FAINT_SEARCH_LIMIT=$(echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.1}')
+   BLEND_SEARCH_RADIUS_ARCSEC=$(echo "$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC" | awk '{printf "%.2f", $1*2.0}')
+   VIZIER_COMMAND=("lib/vizquery"
+                "-site=$VIZIER_SITE"
+                "-mime=text"
+                "-source=I/345/gaia2"
+                "-out.max=1"
+                "-out.add=_r"
+                "-out.form=mini"
+                "-sort=$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK"
+                "$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK=$MAG_BRIGHT_SEARCH_LIMIT..$BLEND_MAG_FAINT_SEARCH_LIMIT"
+                "-c=$RA_MEAN_HMS_DEC_MEAN_HMS_ONSESTRING"
+                "-c.rs=$BLEND_SEARCH_RADIUS_ARCSEC"
+                "-out=Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var")
+   N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS=$($TIMEOUTCOMMAND "${VIZIER_COMMAND[@]}" 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE" | wc -l)
+   if [ $N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS -ge 2 ];then
+    # Using the [*] instead of [@] treats the entire array as a single string, using the first character of the Internal Field Separator (IFS) variable as a delimiter (which is a space by default).
+    echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2 blend search  (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#, MAG_MEAN=$MAG_MEAN, BLEND_MAG_FAINT_SEARCH_LIMIT=$BLEND_MAG_FAINT_SEARCH_LIMIT, VIZIER_COMMAND=#${VIZIER_COMMAND[*]}#)"
+    echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt__"$LIGHTCURVEFILE"
+    clean_tmp_files
+    exit 1
+   fi # if Gaia DR2 match found
+   #
    # The trouble is... Gaia catalog is missing many obvious bright stars
    # So if the Gaia search didn't work well - let's try APASS (chosen because it has good magnitudes and is deep enough for NMW)
    # The awk 'NF > 0' command is equivalent to sed '/^[[:space:]]*$/d', but is generally faster and more efficient. It checks if the number of fields (NF) is greater than 0, which means the line is not empty.
