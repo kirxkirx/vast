@@ -160,7 +160,8 @@ if [ -n "$CAMERA_SETTINGS" ];then
   echo "### Using search settings for $CAMERA_SETTINGS camera ###"
   export AAVSO_COMMENT_STRING="NMW Camera-2 Canon 135mm f/2.0 telephoto lens + SBIG STL-11000M CCD"
   export MPC_CODE=C32
-  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.15
+  MAX_NEW_IMG_MEAN_VALUE=10000
+  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
   # The input images will be calibrated
   # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
   # the script will try to find the most appropriate one based on temperature and time
@@ -530,6 +531,7 @@ FLAT_FIELD_FILE= $FLAT_FIELD_FILE
 FRAME_EDGE_OFFSET_PIX= $FRAME_EDGE_OFFSET_PIX
 GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK= $GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK
 MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO= $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO
+MAX_NEW_IMG_MEAN_VALUE= $MAX_NEW_IMG_MEAN_VALUE
 MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS= $MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS
 MPC_CODE= $MPC_CODE
 NMW_CALIBRATION= $NMW_CALIBRATION
@@ -1080,6 +1082,14 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
     echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO * $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" >> transient_factory_test31.txt
     continue
    fi # awk ...
+   # Check the mean value itself (if this filter is defined)
+   if [ -n "$MAX_NEW_IMG_MEAN_VALUE" ];then
+    if awk -v max="$MAX_NEW_IMG_MEAN_VALUE" -v second="$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" 'BEGIN {if (second > max) exit 0; exit 1}'; then
+     echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_IMG_MEAN_VALUE" 
+     echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_IMG_MEAN_VALUE" >> transient_factory_test31.txt
+     continue
+    fi # awk ... 
+   fi
    # Check the ratio of standard deviations of the second-epoch images (a large change may indicate passing clouds)
    if [ -n "$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" ] && [ -n "$SECOND_EPOCH__FIRST_IMAGE_SD" ] && [ -n "$SECOND_EPOCH__SECOND_IMAGE_SD" ]; then
     echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD $MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" | awk '{A=$1; B=$2; C=$3; result=(A > B ? (A - B) : (B - A)) / B; exit (result < C ? 0 : 1)}'
