@@ -552,7 +552,7 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
     exit 1
    fi # if Gaia DR2 match found
    # Special treatment for blends
-   BLEND_MAG_FAINT_SEARCH_LIMIT=$(echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.1}')
+   BLEND_MAG_FAINT_SEARCH_LIMIT=$(echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.75}')
    BLEND_SEARCH_RADIUS_ARCSEC=$(echo "$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC" | awk '{printf "%.2f", $1*2.0}')
    VIZIER_COMMAND=("lib/vizquery"
                 "-site=$VIZIER_SITE"
