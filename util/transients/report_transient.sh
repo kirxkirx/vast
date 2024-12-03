@@ -558,7 +558,7 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
                 "-site=$VIZIER_SITE"
                 "-mime=text"
                 "-source=I/345/gaia2"
-                "-out.max=1"
+                "-out.max=3"
                 "-out.add=_r"
                 "-out.form=mini"
                 "-sort=$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK"
