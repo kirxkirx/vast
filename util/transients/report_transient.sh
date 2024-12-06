@@ -527,32 +527,32 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
    # V1858 Sgr from NMW_Sgr9_crash_test is the borderline case
    MAG_FAINT_SEARCH_LIMIT=$(echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.98}')
    RA_MEAN_HMS_DEC_MEAN_HMS_ONSESTRING="$RA_MEAN_HMS $DEC_MEAN_HMS"
-   VIZIER_COMMAND=("lib/vizquery"
-                "-site=$VIZIER_SITE"
-                "-mime=text"
-                "-source=I/345/gaia2"
-                "-out.max=1"
-                "-out.add=_r"
-                "-out.form=mini"
-                "-sort=$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK"
-                "$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT"
-                "-c=$RA_MEAN_HMS_DEC_MEAN_HMS_ONSESTRING"
-                "-c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC"
-                "-out=Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var")
-   $TIMEOUTCOMMAND "${VIZIER_COMMAND[@]}" 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE" --quiet
-   #$TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/345/gaia2  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE" --quiet
-   # Switch to Gaia DR3
-   #$TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/355/gaiadr3  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=17  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -v \# | grep -v "\---" | grep -v "sec" | grep -v 'Gma' | grep -v "RA_ICRS" | grep --quiet -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE'
-   if [ $? -eq 0 ];then
-    # Using the [*] instead of [@] treats the entire array as a single string, using the first character of the Internal Field Separator (IFS) variable as a delimiter (which is a space by default).
-    echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2   (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT, VIZIER_COMMAND=#${VIZIER_COMMAND[*]}#)"
-    #echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt
-    echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt__"$LIGHTCURVEFILE"
-    clean_tmp_files
-    exit 1
-   fi # if Gaia DR2 match found
+   #VIZIER_COMMAND=("lib/vizquery"
+   #             "-site=$VIZIER_SITE"
+   #             "-mime=text"
+   #             "-source=I/345/gaia2"
+   #             "-out.max=1"
+   #             "-out.add=_r"
+   #             "-out.form=mini"
+   #             "-sort=$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK"
+   #             "$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT"
+   #             "-c=$RA_MEAN_HMS_DEC_MEAN_HMS_ONSESTRING"
+   #             "-c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC"
+   #             "-out=Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var")
+   #$TIMEOUTCOMMAND "${VIZIER_COMMAND[@]}" 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE" --quiet
+   ##$TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/345/gaia2  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE" --quiet
+   ## Switch to Gaia DR3
+   ##$TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/355/gaiadr3  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=17  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -v \# | grep -v "\---" | grep -v "sec" | grep -v 'Gma' | grep -v "RA_ICRS" | grep --quiet -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE'
+   #if [ $? -eq 0 ];then
+   # # Using the [*] instead of [@] treats the entire array as a single string, using the first character of the Internal Field Separator (IFS) variable as a delimiter (which is a space by default).
+   # echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2   (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT, VIZIER_COMMAND=#${VIZIER_COMMAND[*]}#)"
+   # #echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt
+   # echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt__"$LIGHTCURVEFILE"
+   # clean_tmp_files
+   # exit 1
+   #fi # if Gaia DR2 match found
    # Special treatment for blends
-   BLEND_MAG_FAINT_SEARCH_LIMIT=$(echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.75}')
+   #BLEND_MAG_FAINT_SEARCH_LIMIT=$(echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.98}')
    BLEND_SEARCH_RADIUS_ARCSEC=$(echo "$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC" | awk '{printf "%.2f", $1*2.0}')
    VIZIER_COMMAND=("lib/vizquery"
                 "-site=$VIZIER_SITE"
@@ -562,14 +562,26 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
                 "-out.add=_r"
                 "-out.form=mini"
                 "-sort=$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK"
-                "$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK=$MAG_BRIGHT_SEARCH_LIMIT..$BLEND_MAG_FAINT_SEARCH_LIMIT"
+                "$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT"
                 "-c=$RA_MEAN_HMS_DEC_MEAN_HMS_ONSESTRING"
                 "-c.rs=$BLEND_SEARCH_RADIUS_ARCSEC"
                 "-out=Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var")
-   N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS=$($TIMEOUTCOMMAND "${VIZIER_COMMAND[@]}" 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE" | wc -l)
+   VIZIER_GAIADR2_OUTPUT=$($TIMEOUTCOMMAND "${VIZIER_COMMAND[@]}" 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE")
+   N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS=$(echo "$VIZIER_GAIADR2_OUTPUT" | wc -l)
+   if [ $N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS -eq 1 ];then
+    # If there is only one star - check how far is it from the candidate position
+    DISTANCE_ARCSEC=$(echo "$VIZIER_GAIADR2_OUTPUT" | head -n1 | awk '{print $1}')
+    if awk -v max="$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC" -v dist="$DISTANCE_ARCSEC" 'BEGIN {if (dist < max) exit 0; exit 1}' ;then
+     # Using the [*] instead of [@] treats the entire array as a single string, using the first character of the Internal Field Separator (IFS) variable as a delimiter (which is a space by default).
+     echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2 single (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT, VIZIER_COMMAND=#${VIZIER_COMMAND[*]}#)"
+     echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt__"$LIGHTCURVEFILE"
+     clean_tmp_files
+     exit 1
+    fi
+   fi # if Gaia DR2 match found
    if [ $N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS -ge 2 ];then
     # Using the [*] instead of [@] treats the entire array as a single string, using the first character of the Internal Field Separator (IFS) variable as a delimiter (which is a space by default).
-    echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2 blend search  (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#, MAG_MEAN=$MAG_MEAN, BLEND_MAG_FAINT_SEARCH_LIMIT=$BLEND_MAG_FAINT_SEARCH_LIMIT, VIZIER_COMMAND=#${VIZIER_COMMAND[*]}#)"
+    echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2 blend (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#, MAG_MEAN=$MAG_MEAN, BLEND_MAG_FAINT_SEARCH_LIMIT=$BLEND_MAG_FAINT_SEARCH_LIMIT, VIZIER_COMMAND=#${VIZIER_COMMAND[*]}#)"
     echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt__"$LIGHTCURVEFILE"
     clean_tmp_files
     exit 1
