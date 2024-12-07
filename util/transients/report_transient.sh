@@ -567,25 +567,28 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
                 "-c.rs=$BLEND_SEARCH_RADIUS_ARCSEC"
                 "-out=Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var")
    VIZIER_GAIADR2_OUTPUT=$($TIMEOUTCOMMAND "${VIZIER_COMMAND[@]}" 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE")
-   N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS=$(echo "$VIZIER_GAIADR2_OUTPUT" | wc -l)
-   if [ $N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS -eq 1 ];then
-    # If there is only one star - check how far is it from the candidate position
-    DISTANCE_ARCSEC=$(echo "$VIZIER_GAIADR2_OUTPUT" | head -n1 | awk '{print $1}')
-    if awk -v max="$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC" -v dist="$DISTANCE_ARCSEC" 'BEGIN {if (dist < max) exit 0; exit 1}' ;then
+   if [ -n "$VIZIER_GAIADR2_OUTPUT" ];then
+    # | awk 'NF > 0' is needed to exclude empty lines as echo "$VIZIER_GAIADR2_OUTPUT" will produce an empty line even when $VIZIER_GAIADR2_OUTPUT contains nothing
+    # let's do echo -n as the second line of defense against the empty lines
+    N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS=$(echo -n "$VIZIER_GAIADR2_OUTPUT" | awk 'NF > 0' | wc -l)
+    if [ $N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS -eq 1 ];then
+     # If there is only one star - check how far is it from the candidate position
+     DISTANCE_ARCSEC=$(echo "$VIZIER_GAIADR2_OUTPUT" | head -n1 | awk '{print $1}')
+     if awk -v max="$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC" -v dist="$DISTANCE_ARCSEC" 'BEGIN {if (dist < max) exit 0; exit 1}' ;then
+      # Using the [*] instead of [@] treats the entire array as a single string, using the first character of the Internal Field Separator (IFS) variable as a delimiter (which is a space by default).
+      echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2 single (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT, VIZIER_COMMAND=#${VIZIER_COMMAND[*]}#)"
+      echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt__"$LIGHTCURVEFILE"
+      clean_tmp_files
+      exit 1
+     fi
+    elif [ $N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS -ge 2 ];then
      # Using the [*] instead of [@] treats the entire array as a single string, using the first character of the Internal Field Separator (IFS) variable as a delimiter (which is a space by default).
-     echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2 single (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT, VIZIER_COMMAND=#${VIZIER_COMMAND[*]}#)"
+     echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2 blend (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#, MAG_MEAN=$MAG_MEAN, BLEND_MAG_FAINT_SEARCH_LIMIT=$BLEND_MAG_FAINT_SEARCH_LIMIT, VIZIER_COMMAND=#${VIZIER_COMMAND[*]}#)"
      echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt__"$LIGHTCURVEFILE"
      clean_tmp_files
      exit 1
-    fi
-   fi # if Gaia DR2 match found
-   if [ $N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS -ge 2 ];then
-    # Using the [*] instead of [@] treats the entire array as a single string, using the first character of the Internal Field Separator (IFS) variable as a delimiter (which is a space by default).
-    echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2 blend (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#, MAG_MEAN=$MAG_MEAN, BLEND_MAG_FAINT_SEARCH_LIMIT=$BLEND_MAG_FAINT_SEARCH_LIMIT, VIZIER_COMMAND=#${VIZIER_COMMAND[*]}#)"
-    echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt__"$LIGHTCURVEFILE"
-    clean_tmp_files
-    exit 1
-   fi # if Gaia DR2 match found
+    fi # if Gaia DR2 match found (single star or blend)
+   fi # non-empty $VIZIER_GAIADR2_OUTPUT
    #
    # The trouble is... Gaia catalog is missing many obvious bright stars
    # So if the Gaia search didn't work well - let's try APASS (chosen because it has good magnitudes and is deep enough for NMW)
