@@ -318,7 +318,7 @@
 #define STAT_MIN_NUMBER_OF_POINTS_FOR_NDROP SOFT_MIN_NUMBER_OF_POINTS
 
 // src/pgfv/pgfv.c
-#define PGFV_CUTS_PERCENT 99.5 //99.75 //95.0 //99.5  // this determines how bright is the displayed image
+#define PGFV_CUTS_PERCENT 99.0 // 99.5 //99.75 //95.0 //99.5  // this determines how bright is the displayed image
 
 // src/match_eater.c SOME CRAZY OLD OBSOLETE STUFF
 //#define MIN_MATCH_DISTANCE_PIX 600

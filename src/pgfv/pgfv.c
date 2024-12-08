@@ -697,7 +697,7 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
  }
  
  //fprintf(stderr, "DEBUG098 image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
- fprintf(stderr, "Original %.1lf%% image scale: min= %f max= %f \n", PGFV_CUTS_PERCENT, (*min_i), (*max_i) );
+ fprintf(stderr, "Original %.1f%% image scale: min= %f max= %f \n", PGFV_CUTS_PERCENT, (*min_i), (*max_i) );
 
  //( *max_i )= MIN( ( *max_i ), 65535 ); // just in case...
  ( *max_i )= MIN( ( *max_i ), 32767 );

@@ -1,4 +1,6 @@
 	:vast-1.0rc88
+	* Changed the default histogram cut from 99.5% to 99.0% to make 
+	all './pgfv' fits viewer images slightly brighter.
 	* VaST now properly understands fractions of a second in the observation time string. 
 	The lightcurve files produced by VaST now display JD with 8 decimal places corresponding 
 	to 0.00000001*86400 = 8.6400e-04 sec in order to avoid any rounding errors in timestamping 
