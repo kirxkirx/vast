@@ -159,7 +159,7 @@ CURRENT_DATE_UNIXSEC=`date +%s`
 
 cd "$VASTDIR"
 
-for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;do
+for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;do
 #for FILE_TO_UPDATE in astorb.dat ;do
  NEED_TO_UPDATE_THE_FILE=0
 
@@ -219,6 +219,13 @@ for FILE_TO_UPDATE in astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;
   CURL_LOCAL_COMMAND=""
   UNPACK_COMMAND=""
   TMP_OUTPUT=""
+  if [ "$FILE_TO_UPDATE" == "ObsCodes.html" ];then
+   TMP_OUTPUT="ObsCodes.html_new"
+   # curl https://www.minorplanetcenter.net/iau/lists/ObsCodes.html > ObsCodes.html
+   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT https://www.minorplanetcenter.net/iau/lists/ObsCodes.html"
+   CURL_LOCAL_COMMAND="$CURL_COMMAND"
+   UNPACK_COMMAND="ls $TMP_OUTPUT"
+  fi
   if [ "$FILE_TO_UPDATE" == "astorb.dat" ];then
    TMP_OUTPUT="astorb_dat_new"
    CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT.gz https://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
