@@ -2,7 +2,7 @@
 
 # general settings
 N_ARTSTARS_PER_ITER=100
-N_ITERATIONS=10
+N_ITERATIONS=1
 
 function print_usage_and_exit() {
  echo "Usage: 
@@ -103,7 +103,11 @@ fi
 echo $0 | grep --quiet 'run_artificial_star_test_oneflux.sh'
 if [ $? -eq 0 ];then
  # try only one flux value
+ #
+ # faint transients
  TRIAL_FLUXES="$FLUX"
+ # bright hard-to-miss transients
+ #TRIAL_FLUXES="$(echo $FLUX | awk '{print 8*$1}')"
 else
  # try both higher and lower fluxes
  #TRIAL_FLUXES="$(echo $FLUX | awk '{print 16*$1" "12*$1" "8*$1" "6*$1" "4*$1" "3*$1" "2*$1" "$1" "$1/2" "$1/3" "$1/4" "$1/6" "$1/8" "$1/12" "$1/16}')"
@@ -152,7 +156,7 @@ for FLUX in $TRIAL_FLUXES ;do
   # 'Discovery image 2' should be one of the second-epoch images for both 'transients' and 'flares'
   # WARNING: 'Discovery image 2' appears in the processing log, not only in the candidates list!
   # in awk, the NF condition checks if there are any fields in the line (NF = Number of Fields).
-  grep -B100000 'Processig complete' transient_report/index.html | grep 'Discovery image 2' transient_report/index.html | awk -F'<td>' '{print $5" "$7}' | awk 'NF {print $3" "$4" "$1}' | sort | uniq > "$PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR"__artificialstars/candidate_coordinates_and_magnitudes.txt
+  grep -B100000 'Processig complete' transient_report/index.html | grep 'Discovery image 2' | awk -F'<td>' '{print $5" "$7}' | awk 'NF {print $3" "$4" "$1}' | sort | uniq > "$PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR"__artificialstars/candidate_coordinates_and_magnitudes.txt
   N_CANDIDATES_FOUND_TOTAL=$[$N_CANDIDATES_FOUND_TOTAL + $(cat "$PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR"__artificialstars/candidate_coordinates_and_magnitudes.txt | wc -l)]
  
   # Loop over each point in coordinates.txt
