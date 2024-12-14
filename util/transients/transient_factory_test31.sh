@@ -160,7 +160,8 @@ if [ -n "$CAMERA_SETTINGS" ];then
   echo "### Using search settings for $CAMERA_SETTINGS camera ###"
   export AAVSO_COMMENT_STRING="NMW Camera-2 Canon 135mm f/2.0 telephoto lens + SBIG STL-11000M CCD"
   export MPC_CODE=C32
-  MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=25
+  # The reference frames are very dark, but we want to process very bright frames
+  MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=35
   MAX_NEW_IMG_MEAN_VALUE=10000
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
   # The input images will be calibrated
