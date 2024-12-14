@@ -12,7 +12,7 @@
 
 #define FALLBACK_CCD_TEMP_VALUE 100
 #define MAX_SET_TEMP_DIFF 0.5
-#define MAX_CCD_TEMP_DIFF 2.5 // let's be generous
+#define MAX_CCD_TEMP_DIFF 3.0 // let's be generous
 
 void check_and_remove_file( const char *filename ) {
  // Check if file exists by trying to access it
@@ -318,7 +318,7 @@ int main( int argc, char *argv[] ) {
   if ( fabs( set_temp_image - set_temp_dark ) > MAX_SET_TEMP_DIFF ) {
    // found set temperature mismatch
    // basename() may mess the input string - use it just befor exit
-   fprintf( stderr, "ERROR: temperature mismatch between the light (%s) and dark (%s) images!\n", basename( input_file ), basename( dark_file ) );
+   fprintf( stderr, "ERROR: SET-TEMP temperature mismatch between the light (%s) and dark (%s) images!\n", basename( input_file ), basename( dark_file ) );
    free( image_array );
    free( dark_array );
    free( result_image_array );
@@ -340,7 +340,7 @@ int main( int argc, char *argv[] ) {
   if ( fabs( ccd_temp_image - ccd_temp_dark ) > MAX_CCD_TEMP_DIFF ) {
    // found set temperature mismatch
    // basename() may mess the input string - use it just befor exit
-   fprintf( stderr, "ERROR: temperature mismatch between the light (%s) and dark (%s) images!\n", basename( input_file ), basename( dark_file ) );
+   fprintf( stderr, "ERROR: CCD-TEMP temperature mismatch between the light (%s) and dark (%s) images!\n", basename( input_file ), basename( dark_file ) );
    free( image_array );
    free( dark_array );
    free( result_image_array );
