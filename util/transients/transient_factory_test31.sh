@@ -1508,8 +1508,8 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_tes
   echo "The image scale is $IMAGE_SCALE_ARCSECPIX_STRING, setting the soft and hard astrometric limits for filtering second-epoch detections: $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT\" and $MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT\"" >> transient_factory_test31.txt
 
   ##### Set pointing accuracy limits
-  FOV_DEG_LIMIT_HARD=$(echo "$IMAGE_FOV_ARCMIN" | awk '{val = $1/466.5*1.0; if (val < 0.2) val = 0.2; else if (val > 1.0) val = 1.0; printf "%.3f", val}')
-  FOV_DEG_LIMIT_SOFT=$(echo "$IMAGE_FOV_ARCMIN" | awk '{val = $1/466.5*0.5; if (val < 0.1) val = 0.1; else if (val > 0.5) val = 0.5; printf "%.3f", val}')
+  FOV_DEG_LIMIT_HARD=$(echo "$IMAGE_FOV_ARCMIN" | awk '{val = $1/466.5*1.0; if (val < 0.2) val = 0.2; else if (val > 1.0) val = 1.0; printf "%.2f", val}')
+  FOV_DEG_LIMIT_SOFT=$(echo "$IMAGE_FOV_ARCMIN" | awk '{val = $1/466.5*0.5; if (val < 0.1) val = 0.1; else if (val > 0.5) val = 0.5; printf "%.2f", val}')
 
   # Compare image centers of the reference and second-epoch image
   IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE=$(echo "$FOV_OF_WCS_CALIBRATED_IMAGE_RESULTS" | grep 'Image center:' | awk '{print $3" "$4}')
@@ -1533,8 +1533,8 @@ Soft limit: $FOV_DEG_LIMIT_SOFT deg.  Hard limit: $FOV_DEG_LIMIT_HARD deg.
    if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
     # Save image date for it to be displayed in the summary file
     print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-    echo "ERROR: (NO CANDIDATES LISTED) distance between 1st reference and 1st second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)"
-    echo "ERROR: (NO CANDIDATES LISTED) distance between 1st reference and 1st second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" >> transient_factory_test31.txt
+    echo "ERROR: distance between 1st reference and 1st new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)"
+    echo "ERROR: distance between 1st reference and 1st new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" >> transient_factory_test31.txt
     break
     # This should break us form the SEXTRACTOR_CONFIG_FILE cycle
    fi
@@ -1571,8 +1571,8 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
     # Save image date for it to be displayed in the summary file
     print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-    echo "ERROR: (NO CANDIDATES LISTED) distance between 1st reference and 2nd second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)"
-    echo "ERROR: (NO CANDIDATES LISTED) distance between 1st reference and 2nd second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" >> transient_factory_test31.txt
+    echo "ERROR: distance between 1st reference and 2nd new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)"
+    echo "ERROR: distance between 1st reference and 2nd new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" >> transient_factory_test31.txt
     break
     # This should break us form the SEXTRACTOR_CONFIG_FILE cycle
    fi
