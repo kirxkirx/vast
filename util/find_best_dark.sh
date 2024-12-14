@@ -82,12 +82,12 @@ export VAST_PATH
 if [ -z "$1" ];then
  echo "Usage: 
  export DARK_FRAMES_DIR=/path/to/dark/frames/for/this/camera
- $0 uncorrected_image.fits"
+ $0 uncorrected_image.fits" >&2
  exit 1
 fi
 
 if [ -z "$DARK_FRAMES_DIR" ];then
- echo "DARK_FRAMES_DIR is not set"
+ echo "DARK_FRAMES_DIR is not set" >&2
  exit 1
 fi
 
@@ -97,12 +97,12 @@ FITSFILE="$1"
 
 # Check if the image actually exists
 if [ ! -f "$FITSFILE" ];then
- echo "ERROR: cannot find the image file $FITSFILE"
+ echo "ERROR: cannot find the image file $FITSFILE" >&2
  exit 1
 fi
 # Check if the image file is not empty
 if [ ! -s "$FITSFILE" ];then
- echo "ERROR: the input image file $FITSFILE is empty"
+ echo "ERROR: the input image file $FITSFILE is empty" >&2
  exit 1
 fi
 ###############
@@ -112,9 +112,9 @@ if [ $? -ne 0 ];then
 # echo "WARNING: the input file $FITSFILE seems to be a FITS image that does not fully comply with the FITS standard.
 #Checking if the filename extension and FITS header look reasonable..."
  ## Exampt from the rule for files that have at least some correct keywords
- echo "$FITSFILE" | grep  -e ".fits"  -e ".FITS"  -e ".fts" -e ".FTS"  -e ".fit"  -e ".FIT" && "$VAST_PATH"util/listhead "$FITSFILE" | grep -e "SIMPLE  =                    T" -e "TELESCOP= 'Aristarchos'" && "$VAST_PATH"util/listhead "$FITSFILE" | grep -e "NAXIS   =                    2"  -e "NAXIS3  =                    1" -e "TELESCOP= 'Aristarchos'"
+ echo "$FITSFILE" | grep  -e ".fits"  -e ".FITS"  -e ".fts" -e ".FTS"  -e ".fit"  -e ".FIT" && "$VAST_PATH"util/listhead "$FITSFILE" | grep --quiet -e "SIMPLE  =                    T" -e "TELESCOP= 'Aristarchos'" && "$VAST_PATH"util/listhead "$FITSFILE" | grep --quiet -e "NAXIS   =                    2"  -e "NAXIS3  =                    1" -e "TELESCOP= 'Aristarchos'"
  if [ $? -ne 0 ];then
-  echo "ERROR: the input image file $FITSFILE did not pass verification as a valid FITS file"
+  echo "ERROR: the input image file $FITSFILE did not pass verification as a valid FITS file"  >&2
   exit 1
  fi
 fi
@@ -123,7 +123,7 @@ fi
 # Dark frame
 "$VAST_PATH"util/listhead "$FITSFILE" | grep --quiet 'Dark frame'
 if [ $? -eq 0 ];then
- echo "ERROR: the input image seems to be dark frame subtracted already (found 'Dark frame' in the header)"
+ echo "ERROR: the input image seems to be dark frame subtracted already (found 'Dark frame' in the header)" >&2
  exit 1
 fi
 
@@ -133,34 +133,34 @@ fi
 
 OUTPUT_OF_GET_IMAGE_DATE=$("$VAST_PATH"util/get_image_date "$FITSFILE" 2>&1)
 if [ -z "$OUTPUT_OF_GET_IMAGE_DATE" ];then
- echo "ERROR: empty OUTPUT_OF_GET_IMAGE_DATE"
+ echo "ERROR: empty OUTPUT_OF_GET_IMAGE_DATE" >&2
  exit 1
 fi
 
 IMAGE_JD=$(echo "$OUTPUT_OF_GET_IMAGE_DATE" | grep '  JD ' | awk '{print $2}' | head -n1)
 if [ -z "$IMAGE_JD" ];then
- echo "ERROR: empty IMAGE_JD"
+ echo "ERROR: empty IMAGE_JD" >&2
  exit 1
 fi
 IMAGE_EXPTIME=$(echo "$OUTPUT_OF_GET_IMAGE_DATE" | grep 'EXPTIME = ' | awk '{print $3}' | head -n1)
 if [ -z "$IMAGE_EXPTIME" ];then
- echo "ERROR: empty IMAGE_EXPTIME"
+ echo "ERROR: empty IMAGE_EXPTIME" >&2
  exit 1
 fi
 IMAGE_NAXIS1=$(echo "$OUTPUT_OF_GET_IMAGE_DATE" | grep ' FITS image ' | grep 'x' | awk '{print $1}' | awk -F'x' '{print $1}' | head -n1)
 if [ -z "$IMAGE_NAXIS1" ];then
- echo "ERROR: empty IMAGE_NAXIS1"
+ echo "ERROR: empty IMAGE_NAXIS1" >&2
  exit 1
 fi
 IMAGE_NAXIS2=$(echo "$OUTPUT_OF_GET_IMAGE_DATE" | grep ' FITS image ' | grep 'x' | awk '{print $1}' | awk -F'x' '{print $2}' | head -n1)
 if [ -z "$IMAGE_NAXIS2" ];then
- echo "ERROR: empty IMAGE_NAXIS2"
+ echo "ERROR: empty IMAGE_NAXIS2" >&2
  exit 1
 fi
 
 IMAGE_SETTEMP=$("$VAST_PATH"util/listhead "$FITSFILE" | grep 'SET-TEMP=' | head -n1 | awk '{printf "%.1f",$2}')
 if [ -z "$IMAGE_SETTEMP" ];then
- echo "ERROR: empty IMAGE_SETTEMP"
+ echo "ERROR: empty IMAGE_SETTEMP" >&2
  exit 1
 fi
 
@@ -192,9 +192,9 @@ for DARK in "$DARK_FRAMES_DIR"/* ;do
 #  echo "WARNING: the input file $DARK seems to be a FITS image that does not fully comply with the FITS standard.
 #Checking if the filename extension and FITS header look reasonable..."
   ## Exampt from the rule for files that have at least some correct keywords
-  echo "$DARK" | grep  -e ".fits"  -e ".FITS"  -e ".fts" -e ".FTS"  -e ".fit"  -e ".FIT" && "$VAST_PATH"util/listhead "$DARK" | grep -e "SIMPLE  =                    T" -e "TELESCOP= 'Aristarchos'" && "$VAST_PATH"util/listhead "$DARK" | grep -e "NAXIS   =                    2"  -e "NAXIS3  =                    1" -e "TELESCOP= 'Aristarchos'"
+  echo "$DARK" | grep --quiet  -e ".fits"  -e ".FITS"  -e ".fts" -e ".FTS"  -e ".fit"  -e ".FIT" && "$VAST_PATH"util/listhead "$DARK" | grep --quiet -e "SIMPLE  =                    T" -e "TELESCOP= 'Aristarchos'" && "$VAST_PATH"util/listhead "$DARK" | grep --quiet -e "NAXIS   =                    2"  -e "NAXIS3  =                    1" -e "TELESCOP= 'Aristarchos'"
   if [ $? -ne 0 ];then
-   echo "ERROR: the input image file $DARK did not pass verification as a valid FITS file"
+   echo "ERROR: the input image file $DARK did not pass verification as a valid FITS file" >&2
    exit 1
   fi
  fi
@@ -205,34 +205,39 @@ for DARK in "$DARK_FRAMES_DIR"/* ;do
 
  OUTPUT_OF_GET_DARK_DATE=$("$VAST_PATH"util/get_image_date "$DARK" 2>&1)
  if [ -z "$OUTPUT_OF_GET_DARK_DATE" ];then
-  echo "ERROR: empty OUTPUT_OF_GET_DARK_DATE"
+  echo "ERROR: empty OUTPUT_OF_GET_DARK_DATE" >&2
   exit 1
  fi
 
  DARK_JD=$(echo "$OUTPUT_OF_GET_DARK_DATE" | grep '  JD ' | awk '{print $2}' | head -n1)
  if [ -z "$DARK_JD" ];then
-  echo "ERROR: empty DARK_JD"
+  echo "ERROR: empty DARK_JD" >&2
   exit 1
  fi
  DARK_EXPTIME=$(echo "$OUTPUT_OF_GET_DARK_DATE" | grep 'EXPTIME = ' | awk '{print $3}' | head -n1)
  if [ -z "$DARK_EXPTIME" ];then
-  echo "ERROR: empty DARK_EXPTIME"
+  echo "ERROR: empty DARK_EXPTIME" >&2
   exit 1
  fi
  DARK_NAXIS1=$(echo "$OUTPUT_OF_GET_DARK_DATE" | grep ' FITS image ' | grep 'x' | awk '{print $1}' | awk -F'x' '{print $1}' | head -n1)
  if [ -z "$DARK_NAXIS1" ];then
-  echo "ERROR: empty DARK_NAXIS1"
+  echo "ERROR: empty DARK_NAXIS1" >&2
   exit 1
  fi
  DARK_NAXIS2=$(echo "$OUTPUT_OF_GET_DARK_DATE" | grep ' FITS image ' | grep 'x' | awk '{print $1}' | awk -F'x' '{print $2}' | head -n1)
  if [ -z "$DARK_NAXIS2" ];then
-  echo "ERROR: empty DARK_NAXIS2"
+  echo "ERROR: empty DARK_NAXIS2" >&2
   exit 1
  fi
 
  DARK_SETTEMP=$("$VAST_PATH"util/listhead "$DARK" | grep 'SET-TEMP=' | head -n1 | awk '{printf "%.1f",$2}')
  if [ -z "$DARK_SETTEMP" ];then
-  echo "ERROR: empty DARK_SETTEMP"
+  # CCDOPS does not set SET-TEMP, try CCD-TEMP instead
+  #echo "WARNING: empty DARK_SETTEMP"
+  DARK_SETTEMP=$("$VAST_PATH"util/listhead "$DARK" | grep 'CCD-TEMP=' | head -n1 |  awk '{printf "%.0f",$2}' | awk '{printf "%.1f",$1}')
+ fi
+ if [ -z "$DARK_SETTEMP" ];then
+  echo "ERROR: empty DARK_SETTEMP" >&2
   exit 1
  fi
 
@@ -273,7 +278,7 @@ if [ -n "$SELECTED_DARK_IMAGE" ];then
 #$SELECTED_DARK_IMAGE"
  echo "$SELECTED_DARK_IMAGE"
 else
- echo "No matching dark image found"
+ echo "No matching dark image found" >&2
  exit 1
 fi
 
