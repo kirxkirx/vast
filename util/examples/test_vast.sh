@@ -27361,6 +27361,27 @@ else
 fi
 #
 unset MPC_CODE
+# second test
+POSITION_AT_C32=$(MPC_CODE=C32 util/planets.sh 2460658.64631944 | grep Mars | awk '{print $1" "$2}')
+POSITION_AT_500=$(util/planets.sh 2460658.64631944 | grep Mars | awk '{print $1" "$2}')
+if ! lib/put_two_sources_in_one_field $POSITION_AT_C32 $POSITION_AT_500 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.005 ? 0 : 1)}' ;then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_PLANETS_C32_500_MISMATCH"
+fi
+# 
+POSITION_AT_C32=$(MPC_CODE=C32 util/moons.sh 2460658.64631944 | grep Europa | awk '{print $1" "$2}')
+POSITION_AT_500=$(util/moons.sh 2460658.64631944 | grep Europa | awk '{print $1" "$2}')
+if ! lib/put_two_sources_in_one_field $POSITION_AT_C32 $POSITION_AT_500 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.005 ? 0 : 1)}' ;then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_PLANETS_C32_500_MISMATCH"
+fi
+# 
+POSITION_AT_C32=$(MPC_CODE=C32 util/spacecraft.sh 2460658.64631944 | grep JWST | awk '{print $1" "$2}')
+POSITION_AT_500=$(util/spacecraft.sh 2460658.64631944 | grep JWST | awk '{print $1" "$2}')
+if ! lib/put_two_sources_in_one_field $POSITION_AT_C32 $POSITION_AT_500 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.3 ? 0 : 1)}' ;then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_PLANETS_C32_500_MISMATCH"
+fi
 
 for SOLAR_SYSTEM_INFO_FILE_TO_REMOVE in planets.txt moons.txt spacecraft.txt comets.txt ;do
  if [ -f "$SOLAR_SYSTEM_INFO_FILE_TO_REMOVE" ];then
