@@ -162,7 +162,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   export MPC_CODE=C32
   # The reference frames are very dark, but we want to process very bright frames
   MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=35
-  MAX_NEW_IMG_MEAN_VALUE=10000
+  MAX_NEW_IMG_MEAN_VALUE=15000
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
   # The input images will be calibrated
   # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
