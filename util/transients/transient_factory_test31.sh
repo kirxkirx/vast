@@ -81,7 +81,7 @@ FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX=0.55
 
 # Set the default MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO to a high value will make sure it is computed and reported
 # (not computed if MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO is not set)
-MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=30
+MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=50
 
 # Magnitude limits for transient search.
 # If a candidate is too bright - something is very wrong with it.
@@ -141,6 +141,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   BAD_REGION_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/Stas_bad_region.lst"
   EXCLUSION_LIST="../exclusion_list.txt"
   MAX_NEW_IMG_MEAN_VALUE=20000
+  MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=50
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
   export MPC_CODE=C32
   # Calibration data
@@ -162,8 +163,8 @@ if [ -n "$CAMERA_SETTINGS" ];then
   export AAVSO_COMMENT_STRING="NMW Camera-2 Canon 135mm f/2.0 telephoto lens + SBIG STL-11000M CCD"
   export MPC_CODE=C32
   # The reference frames are very dark, but we want to process very bright frames
-  MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=50
   MAX_NEW_IMG_MEAN_VALUE=20000
+  MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=50
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
   # The input images will be calibrated
   # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
