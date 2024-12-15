@@ -1030,28 +1030,50 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   #TEST=`echo "$MEDIAN_DIFFERENCE_AminusB_PIX < 0.45" | bc -ql`
   #TEST=`echo "$MEDIAN_DIFFERENCE_AminusB_PIX<0.45" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
   #TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<0.30" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
-  TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<$FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
-  if [ $TEST -eq 0 ];then
+  #TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<$FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
+  #if [ $TEST -eq 0 ];then
+  # # Save image date for it to be displayed in the summary file
+  # print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+  # echo "ERROR: tracking error (elongated stars), median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  $(basename $SECOND_EPOCH__FIRST_IMAGE)" >> transient_factory_test31.txt
+  # continue
+  #else
+  # echo "The star elongation is within the allowed range: median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  $(basename $SECOND_EPOCH__FIRST_IMAGE)" >> transient_factory_test31.txt
+  #fi
+  if awk -v x="$MEDIAN_DIFFERENCE_AminusB_PIX" -v y="$FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX" 'BEGIN {exit !(x<y)}'; then
+   # x>=y
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
    echo "ERROR: tracking error (elongated stars), median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  $(basename $SECOND_EPOCH__FIRST_IMAGE)" >> transient_factory_test31.txt
    continue
   else
+   # x<y
    echo "The star elongation is within the allowed range: median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  $(basename $SECOND_EPOCH__FIRST_IMAGE)" >> transient_factory_test31.txt
   fi
+  #
   SE_CATALOG_FOR_SECOND_EPOCH__SECOND_IMAGE=$(grep "$SECOND_EPOCH__SECOND_IMAGE" vast_images_catalogs.log | awk '{print $1}')
   MEDIAN_DIFFERENCE_AminusB_PIX=$(cat "$SE_CATALOG_FOR_SECOND_EPOCH__SECOND_IMAGE" | awk '{print $18-$20}' | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{printf "%.2f", $2}')
   ### ===> APERTURE LIMITS HARDCODED HERE <=== (this is median difference in pixels between semi-major and semi-minor axes of the source)
   #TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<0.30" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
-  TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<$FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
-  if [ $TEST -eq 0 ];then
+  #TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<$FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
+  #if [ $TEST -eq 0 ];then
+  # # Save image date for it to be displayed in the summary file
+  # print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+  # echo "ERROR: tracking error (elongated stars) median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  $(basename $SECOND_EPOCH__SECOND_IMAGE)" >> transient_factory_test31.txt
+  # continue
+  #else
+  # echo "The star elongation is within the allowed range: median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  $(basename $SECOND_EPOCH__SECOND_IMAGE)" >> transient_factory_test31.txt
+  #fi
+  if awk -v x="$MEDIAN_DIFFERENCE_AminusB_PIX" -v y="$FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX" 'BEGIN {exit !(x<y)}'; then
+   # x>=y
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
    echo "ERROR: tracking error (elongated stars) median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  $(basename $SECOND_EPOCH__SECOND_IMAGE)" >> transient_factory_test31.txt
    continue
   else
+   # x<y
    echo "The star elongation is within the allowed range: median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  $(basename $SECOND_EPOCH__SECOND_IMAGE)" >> transient_factory_test31.txt
   fi
+
   ###
  fi # above was the procedure for handling more than two second-epoch images
  
@@ -1664,9 +1686,17 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
 
   # Here we need to know if we need photometic calibration for hte astrometic catalog - it's slow
   if [ -z "$PHOTOMETRIC_CALIBRATION" ];then
-   #if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
-   TEST=$(echo "$IMAGE_FOV_ARCMIN" | awk '{if ( $1 < 240 ) print 1 ;else print 0 }')
-   if [ $TEST -eq 1 ];then
+   ##if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
+   #TEST=$(echo "$IMAGE_FOV_ARCMIN" | awk '{if ( $1 < 240 ) print 1 ;else print 0 }')
+   #if [ $TEST -eq 1 ];then
+   # # APASS magnitude calibration for narrow-field images
+   # PHOTOMETRIC_CALIBRATION="APASS_V"
+   #else
+   # # Tycho-2 magnitude calibration for wide-field images
+   # # (Tycho-2 is relatively small, so it's convenient to have a local copy of the catalog)
+   # PHOTOMETRIC_CALIBRATION="TYCHO2_V"
+   #fi
+   if awk -v x="$IMAGE_FOV_ARCMIN" 'BEGIN {exit !(x<240)}'; then
     # APASS magnitude calibration for narrow-field images
     PHOTOMETRIC_CALIBRATION="APASS_V"
    else
@@ -1674,7 +1704,8 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     # (Tycho-2 is relatively small, so it's convenient to have a local copy of the catalog)
     PHOTOMETRIC_CALIBRATION="TYCHO2_V"
    fi
-  fi
+   #
+  fi # if [ -z "$PHOTOMETRIC_CALIBRATION" ];then
 
   
   echo "Running solve_plate_with_UCAC5" >> transient_factory_test31.txt
@@ -1718,19 +1749,23 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    echo "Found non-empty $WCS_IMAGE_NAME_FOR_CHECKS" >> transient_factory_test31.txt
   fi
   echo "____ Start of magnitude calibration ____" >> transient_factory_test31.txt
+  #
   # Decide which catalog to use for magnitude calibration depending on the image filed of view
   if [ -z "$PHOTOMETRIC_CALIBRATION" ];then
-   #if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
-   TEST=$(echo "$IMAGE_FOV_ARCMIN" | awk '{if ( $1 < 240 ) print 1 ;else print 0 }')
-   if [ $TEST -eq 1 ];then
-    # APASS magnitude calibration for narrow-field images
-    PHOTOMETRIC_CALIBRATION="APASS_V"
-   else
-    # Tycho-2 magnitude calibration for wide-field images
-    # (Tycho-2 is relatively small, so it's convenient to have a local copy of the catalog)
-    PHOTOMETRIC_CALIBRATION="TYCHO2_V"
-   fi
+   echo "ERROR: how did we get in here?! PHOTOMETRIC_CALIBRATION is supposed to be set earlier"
+   exit 1
+   ##if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
+   #TEST=$(echo "$IMAGE_FOV_ARCMIN" | awk '{if ( $1 < 240 ) print 1 ;else print 0 }')
+   #if [ $TEST -eq 1 ];then
+   # # APASS magnitude calibration for narrow-field images
+   # PHOTOMETRIC_CALIBRATION="APASS_V"
+   #else
+   # # Tycho-2 magnitude calibration for wide-field images
+   # # (Tycho-2 is relatively small, so it's convenient to have a local copy of the catalog)
+   # PHOTOMETRIC_CALIBRATION="TYCHO2_V"
+   #fi
   fi
+  #
   echo "PHOTOMETRIC_CALIBRATION=$PHOTOMETRIC_CALIBRATION" >> transient_factory_test31.txt
   case $PHOTOMETRIC_CALIBRATION in
    "APASS_B")
