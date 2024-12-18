@@ -160,10 +160,14 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  else
   echo -n "<tr><td>Reference image     &nbsp;&nbsp;</td>"
  fi # if [ "$FITSFILE" != "$REFERENCE_IMAGE" ] ;then
- DAYFRAC_SHORT=$(echo "$DAYFRAC" | awk '{printf "%08.5f\n",$1}') # for visualisation purposes and will be used for MPC stub by make_report_in_HTML.sh
- JD_SHORT=$(echo "$JD_FROM_IMAGE_HEADER" | awk '{printf "%.5f",$1}') # purely for visualisation purposes
- X=$(echo "$X" | awk '{printf "%04.0f",$1}') # purely for visualisation purposes
- Y=$(echo "$Y" | awk '{printf "%04.0f",$1}') # purely for visualisation purposes
+ #DAYFRAC_SHORT=$(echo "$DAYFRAC" | awk '{printf "%08.5f\n",$1}') # for visualisation purposes and will be used for MPC stub by make_report_in_HTML.sh
+ #JD_SHORT=$(echo "$JD_FROM_IMAGE_HEADER" | awk '{printf "%.5f",$1}') # purely for visualisation purposes
+ #X=$(echo "$X" | awk '{printf "%04.0f",$1}') # purely for visualisation purposes
+ #Y=$(echo "$Y" | awk '{printf "%04.0f",$1}') # purely for visualisation purposes
+ DAYFRAC_SHORT=$(printf "%08.5f" "$DAYFRAC") # for visualisation purposes and will be used for MPC stub by make_report_in_HTML.sh
+ JD_SHORT=$(printf "%.5f" "$JD_FROM_IMAGE_HEADER") # purely for visualisation purposes
+ X=$(printf "%04.0f" "$X") # purely for visualisation purposes
+ Y=$(printf "%04.0f" "$Y") # purely for visualisation purposes
  echo "<td>$YEAR $MONTH $DAYFRAC_SHORT &nbsp;&nbsp;</td><td> $JD_SHORT &nbsp;&nbsp;</td><td> $MAG &nbsp;&nbsp;</td><td>" $(lib/deg2hms $RADEC) "&nbsp;&nbsp;</td><td>$X $Y &nbsp;&nbsp;</td><td>$FITSFILE</td></tr>"
 done < $LIGHTCURVEFILE
 echo "</table>"
