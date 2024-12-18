@@ -398,7 +398,13 @@ int convert_asassn_v1_format( char *lightcurvefilename, char *path_to_vast_strin
  fseek( lightcurvefile, 0, SEEK_SET );
 
  // Skip the header line
- fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile );
+ //fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile );
+ // This should never happen, but let's check to make the compiler happy
+ if (NULL == fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile)) {
+  fprintf(stderr, "ERROR in convert_asassn_v1_format(): Failed to read header line\n");
+  fclose(lightcurvefile);
+  return 1;
+ }
 
  // Create the converted_lightcurves directory if it doesn't exist
  snprintf( converted_directory, VAST_PATH_MAX, "%sconverted_lightcurves", path_to_vast_string );
@@ -519,7 +525,7 @@ int convert_asassn_v2_format( char *lightcurvefilename, char *path_to_vast_strin
  // Generate the converted filename
  snprintf( converted_filename, MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER, "%s/%s_converted.dat", converted_directory, original_filename );
  // Ensure null-termination
- lightcurvefilename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1]= '\0';
+ converted_filename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1]= '\0';
 
  fprintf( stderr, "ASAS-SN v2 data format detected! Converting %s to %s\n", basename( lightcurvefilename ), converted_filename );
 
@@ -639,7 +645,12 @@ int convert_ztf_snad_format( char *lightcurvefilename, char *path_to_vast_string
  fseek( lightcurvefile, 0, SEEK_SET );
 
  // Skip the header line
- fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile );
+ //fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile );
+ if (NULL == fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile)) {
+  fprintf(stderr, "ERROR in convert_ztf_snad_format(): Failed to read header line\n");
+  fclose(lightcurvefile);
+  return 1;
+ }
 
  // Write selected filter data to the converted file
  while ( fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) != NULL ) {
