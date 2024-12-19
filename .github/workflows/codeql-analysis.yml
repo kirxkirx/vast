@@ -33,6 +33,9 @@ jobs:
           echo "SKIP=false" >> $GITHUB_ENV
         fi
 
+    - name: Install X11 dev package
+      run: sudo apt-get install libx11-dev
+
     - name: Initialize CodeQL
       if: ${{ env.SKIP != 'true' }}
       uses: github/codeql-action/init@v3
