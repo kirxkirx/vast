@@ -38,6 +38,8 @@ jobs:
         run: sudo apt-get update
       - name: Install gfortran
         run: sudo apt-get install gfortran
+      - name: Install X11 dev package
+        run: sudo apt-get install libx11-dev
       - name: Install libpng
         run: sudo apt-get install libpng-dev
       - name: Install ghostscript

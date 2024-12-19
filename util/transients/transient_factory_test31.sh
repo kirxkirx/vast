@@ -1169,8 +1169,6 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    # Check ratio of the mean image values against the user-specified threshold
    if awk -v maxratio="$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO" -v ref="$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" -v second="$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" 'BEGIN {if (second > maxratio * ref) exit 0; exit 1}'; then
     print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-    #echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO * $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" 
-    #echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO * $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" >> transient_factory_test31.txt
     echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO * $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" | tee -a transient_factory_test31.txt
     continue
    fi # awk ...
@@ -1178,8 +1176,6 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    if [ -n "$MAX_NEW_IMG_MEAN_VALUE" ];then
     if awk -v max="$MAX_NEW_IMG_MEAN_VALUE" -v second="$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" 'BEGIN {if (second > max) exit 0; exit 1}'; then
      print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-     #echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_IMG_MEAN_VALUE" 
-     #echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_IMG_MEAN_VALUE" >> transient_factory_test31.txt
      echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_IMG_MEAN_VALUE" | tee -a transient_factory_test31.txt
      continue
     fi # awk ... 
@@ -1189,8 +1185,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
     echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD $MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" | awk '{A=$1; B=$2; C=$3; result=(A > B ? (A - B) : (B - A)) / B; exit (result < C ? 0 : 1)}'
     if [ $? -ne 0 ];then
      print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-     echo "ERROR: passing clouds (SD ratio)  std(img1)=$SECOND_EPOCH__FIRST_IMAGE_SD std(img2)=$SECOND_EPOCH__SECOND_IMAGE_SD  abs( std(img1) - std(img2) ) / std(img2) threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" 
-     echo "ERROR: passing clouds (SD ratio)  std(img1)=$SECOND_EPOCH__FIRST_IMAGE_SD std(img2)=$SECOND_EPOCH__SECOND_IMAGE_SD  abs( std(img1) - std(img2) ) / std(img2) threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" >> transient_factory_test31.txt
+     echo "ERROR: passing clouds (SD ratio threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS)" | tee -a transient_factory_test31.txt
      continue
     fi
    fi
