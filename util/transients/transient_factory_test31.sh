@@ -40,22 +40,40 @@ function get_file_size() {
 }
 
 check_free_space() {
+    if [ -n "$1" ];then
+     dir_to_check="$1"
+    else
+     dir_to_check="."
+    fi
+    
+    if [ ! -d "$dir_to_check" ];then
+     echo "WARNING from check_free_space(): $dir_to_check is not a directory"
+     return 0
+    fi
+
+
     # Check free space in the current directory
     local free_space_kb
 
     # Use 'df -k .' for portability across Linux, macOS, and FreeBSD
-    free_space_kb=$(df -k . | awk 'NR==2 {print $4}')
+    free_space_kb=$(df -k "$dir_to_check" | awk 'NR==2 {print $4}')
+
+    # soft limit for minimum required space in KB (1024MB = 1024 * 1024 KB)
+    local required_space_kb_softlimit=1048576
 
     # Minimum required space in KB (300MB = 300 * 1024 KB)
-    local required_space_kb=307200
+    local required_space_kb_hardlimit=307200
 
-    if [ "$free_space_kb" -ge "$required_space_kb" ]; then
-        #echo "Sufficient free space available: $((free_space_kb / 1024)) MB"
+    
+    if [ "$free_space_kb" -ge "$required_space_kb_softlimit" ]; then
+        echo "Sufficient free disk space available: $((free_space_kb / 1024)) MB at $dir_to_check"
+        return 0
+    elif [ "$free_space_kb" -ge "$required_space_kb_hardlimit" ]; then
+        echo "WARNING: we are low on disk space, only $((free_space_kb / 1024)) MB free at $dir_to_check"
         return 0
     else
-        echo "ERROR: out of disk space, only $((free_space_kb / 1024)) MB free at $PWD"
-        #return 1
-        exit 1
+        echo "ERROR: out of disk space, only $((free_space_kb / 1024)) MB free at $dir_to_check"
+        return 1
     fi
 }
 
@@ -814,8 +832,18 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  done
  
  ############## Check the available disk space ##############
- # This function will terminate the script if there is not enough disk space
- check_free_space
+ # Check free disk space at the current directory
+ check_free_space | tee -a transient_factory_test31.txt
+ if [ $? -ne 0 ];then
+  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+  exit 1
+ fi
+ # Check free disk space at the input image directory, as presumably more images are coming
+ check_free_space "$NEW_IMAGES" | tee -a transient_factory_test31.txt
+ if [ $? -ne 0 ];then
+  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+  exit 1
+ fi
 
  ############## Two reference images and two second-epoch images # check if all images are actually there
  # check if all images are actually there
@@ -1595,45 +1623,17 @@ Second-epoch image center $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE
 Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
 Soft limit: $FOV_DEG_LIMIT_SOFT deg.  Hard limit: $FOV_DEG_LIMIT_HARD deg.
 ###################################" | tee -a transient_factory_test31.txt
-  ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
-  #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>1.0" | bc -ql`
-  #TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_HARD" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
-  #if [ $TEST -eq 1 ];then
-  # if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
-  #  # Save image date for it to be displayed in the summary file
-  #  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-  #  echo "ERROR: distance between 1st reference and 1st new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)"
-  #  echo "ERROR: distance between 1st reference and 1st new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" >> transient_factory_test31.txt
-  #  break
-  #  # This should break us form the SEXTRACTOR_CONFIG_FILE cycle
-  # fi
-  #fi
+  #  Pointing accuracy - check hard limit
   if awk -v x="$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG" -v y="$FOV_DEG_LIMIT_HARD" 'BEGIN {exit !(x>y)}'; then
    if [ "$CHECK_POINTING_ACCURACY" = "yes" ]; then
     print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-    #echo "ERROR: distance between 1st reference and 1st new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)"
-    #echo "ERROR: distance between 1st reference and 1st new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" >> transient_factory_test31.txt
     echo "ERROR: distance between 1st reference and 1st new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" | tee -a transient_factory_test31.txt
     break
    fi
   fi
-
-  ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
-  # Note that the sister parameter is also set below
-  # Relax the reference-new image pointing difference threshold for raising the error
-  #TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_SOFT" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
-  #if [ $TEST -eq 1 ];then
-  # if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
-  #  echo "WARNING: distance between 1st reference and 1st second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)"
-  #  echo "WARNING: distance between 1st reference and 1st second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" >> transient_factory_test31.txt
-  #  #break
-  #  # Not break'ing here, the offset is not hopelessly large and we want to keep candidates from this field
-  # fi
-  #fi
+  # Pointing accuracy - check soft limit
   if awk -v x="$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG" -v y="$FOV_DEG_LIMIT_SOFT" 'BEGIN {exit !(x>y)}'; then
    if [ "$CHECK_POINTING_ACCURACY" = "yes" ]; then
-    #echo "WARNING: distance between 1st reference and 1st second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)"
-    #echo "WARNING: distance between 1st reference and 1st second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" >> transient_factory_test31.txt
     echo "WARNING: distance between 1st reference and 1st second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" | tee -a transient_factory_test31.txt
     # Not breaking here. The offset is not hopelessly large and we want to keep candidates from this field
    fi
@@ -1652,45 +1652,17 @@ Reference image center $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE
 Second-epoch image center $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE
 Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
 ###################################" | tee -a transient_factory_test31.txt
-  ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
-  #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>1.0" | bc -ql`
-  #TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_HARD" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
-  #if [ $TEST -eq 1 ];then
-  # if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
-  #  # Save image date for it to be displayed in the summary file
-  #  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-  #  echo "ERROR: distance between 1st reference and 2nd new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)"
-  #  echo "ERROR: distance between 1st reference and 2nd new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" >> transient_factory_test31.txt
-  #  break
-  #  # This should break us form the SEXTRACTOR_CONFIG_FILE cycle
-  # fi
-  #fi
+  # Pointing accuracy - check hard limit
   if awk -v x="$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG" -v y="$FOV_DEG_LIMIT_HARD" 'BEGIN {exit !(x>y)}'; then
    if [ "$CHECK_POINTING_ACCURACY" = "yes" ]; then
     print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-    #echo "ERROR: distance between 1st reference and 2nd new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)"
-    #echo "ERROR: distance between 1st reference and 2nd new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" >> transient_factory_test31.txt
     echo "ERROR: distance between 1st reference and 2nd new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $FOV_DEG_LIMIT_HARD deg.)" | tee -a transient_factory_test31.txt
     break
    fi
   fi
-  ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
-  #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | bc -ql`
-  #TEST=`echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>0.2" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
-  ## Note that this is also set above!
-  #TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG>$FOV_DEG_LIMIT_SOFT" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
-  #if [ $TEST -eq 1 ];then
-  # if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
-  #  echo "WARNING: distance between 1st reference and 2nd second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)"
-  #  echo "WARNING: distance between 1st reference and 2nd second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" >> transient_factory_test31.txt
-  #  #break
-  #  # Not break'ing here, the offset is not hopelessly large and we want to keep candidates from this field
-  # fi
-  #fi
+  # Pointing accuracy - check soft limit
   if awk -v x="$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG" -v y="$FOV_DEG_LIMIT_SOFT" 'BEGIN {exit !(x>y)}'; then
    if [ "$CHECK_POINTING_ACCURACY" = "yes" ]; then
-    #echo "WARNING: distance between 1st reference and 2nd second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)"
-    #echo "WARNING: distance between 1st reference and 2nd second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" >> transient_factory_test31.txt
     echo "WARNING: distance between 1st reference and 2nd second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" | tee -a transient_factory_test31.txt
     # Not breaking here, as the offset isn't hopelessly large.
    fi
