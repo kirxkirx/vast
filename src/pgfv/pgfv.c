@@ -977,6 +977,8 @@ int main( int argc, char **argv ) {
  float lineX[2];
  float lineY[2];
  float marker_scaling;
+ float marker_offset_pix;
+ float marker_length_pix;
  char namelabel[256];
  namelabel[0]= '\0';
 
@@ -2738,26 +2740,40 @@ int main( int argc, char **argv ) {
       if ( use_target_mark == 1 ) {
        // cpgsci(2);   // red
        cpgslw( 4 ); // increase line width
+       // set marker size and offset for a 512x512 chart
+       marker_length_pix= 15.0;
+       marker_offset_pix= 6.0;
+       // scale them according to the chart size
        if ( finder_char_pix_around_the_target > 256 ) {
         marker_scaling= (float)finder_char_pix_around_the_target / 512.0;
        } else {
         marker_scaling= 1.0;
        }
+       // for smaller field of view we don't want to scale
+       // we want to explicitly set the marker offset and sie in pix 
+       //
        // special case - very small fov
        if ( finder_char_pix_around_the_target < 32 ) {
-        marker_scaling= 0.3;
+        marker_scaling= 1.0;
+        marker_offset_pix=1.5;
+        marker_length_pix=3.0;
+       }
+       if ( finder_char_pix_around_the_target < 64 ) {
+        marker_scaling= 1.0;
+        marker_offset_pix=3.0;
+        marker_length_pix=6.0;
        }
        //
        // up
        lineX[0]= markX;
-       lineY[0]= markY + 9.0 * marker_scaling;
+       lineY[0]= markY + marker_offset_pix * marker_scaling;
        lineX[1]= markX;
-       lineY[1]= markY + 9.0 * marker_scaling + 15.0 * marker_scaling;
+       lineY[1]= markY + marker_offset_pix * marker_scaling + marker_length_pix * marker_scaling;
        cpgline( 2, lineX, lineY );
        // right
-       lineX[0]= markX + 9.0 * marker_scaling;
+       lineX[0]= markX - marker_offset_pix * marker_scaling;
        lineY[0]= markY;
-       lineX[1]= markX + 9.0 * marker_scaling + 15.0 * marker_scaling;
+       lineX[1]= markX - marker_offset_pix * marker_scaling - marker_length_pix * marker_scaling;
        lineY[1]= markY;
        cpgline( 2, lineX, lineY );
        //
