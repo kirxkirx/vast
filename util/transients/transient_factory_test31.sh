@@ -66,13 +66,13 @@ check_free_space() {
 
     
     if [ "$free_space_kb" -ge "$required_space_kb_softlimit" ]; then
-        echo "Sufficient free disk space available: $((free_space_kb / 1024)) MB at $dir_to_check"
+        echo "server $HOSTNAME has sufficient free disk space available: $((free_space_kb / 1024)) MB at $dir_to_check"
         return 0
     elif [ "$free_space_kb" -ge "$required_space_kb_hardlimit" ]; then
-        echo "WARNING: we are low on disk space, only $((free_space_kb / 1024)) MB free at $dir_to_check"
+        echo "WARNING: server $HOSTNAME is low on disk space, only $((free_space_kb / 1024)) MB free at $dir_to_check"
         return 0
     else
-        echo "ERROR: out of disk space, only $((free_space_kb / 1024)) MB free at $dir_to_check"
+        echo "ERROR: server $HOSTNAME is out of disk space, only $((free_space_kb / 1024)) MB free at $dir_to_check"
         return 1
     fi
 }
