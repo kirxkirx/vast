@@ -39,6 +39,25 @@ function get_file_size() {
     fi
 }
 
+check_free_space() {
+    # Check free space in the current directory
+    local free_space_kb
+
+    # Use 'df -k .' for portability across Linux, macOS, and FreeBSD
+    free_space_kb=$(df -k . | awk 'NR==2 {print $4}')
+
+    # Minimum required space in KB (300MB = 300 * 1024 KB)
+    local required_space_kb=307200
+
+    if [ "$free_space_kb" -ge "$required_space_kb" ]; then
+        #echo "Sufficient free space available: $((free_space_kb / 1024)) MB"
+        return 0
+    else
+        echo "ERROR: out of disk space, only $((free_space_kb / 1024)) MB free at $PWD"
+        #return 1
+        exit 1
+    fi
+}
 
 
 #################################
@@ -793,6 +812,10 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "Removing $FILE_TO_REMOVE" | tee -a transient_factory_test31.txt
   fi
  done
+ 
+ ############## Check the available disk space ##############
+ # This function will terminate the script if there is not enough disk space
+ check_free_space
 
  ############## Two reference images and two second-epoch images # check if all images are actually there
  # check if all images are actually there
