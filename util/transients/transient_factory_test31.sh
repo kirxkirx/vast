@@ -58,11 +58,11 @@ check_free_space() {
     # Use 'df -k .' for portability across Linux, macOS, and FreeBSD
     free_space_kb=$(df -k "$dir_to_check" | awk 'NR==2 {print $4}')
 
-    # soft limit for minimum required space in KB (1024MB = 1024 * 1024 KB)
-    local required_space_kb_softlimit=1048576
+    # soft limit for minimum required space in KB (2GB = 2 * 1024 * 1024 KB)
+    local required_space_kb_softlimit=2097152
 
-    # Minimum required space in KB (300MB = 300 * 1024 KB)
-    local required_space_kb_hardlimit=307200
+    # Minimum required space in KB (500MB = 500 * 1024 KB)
+    local required_space_kb_hardlimit=512000
 
     
     if [ "$free_space_kb" -ge "$required_space_kb_softlimit" ]; then
@@ -832,14 +832,14 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  done
  
  ############## Check the available disk space ##############
- # Check free disk space at the current directory
- check_free_space | tee -a transient_factory_test31.txt
+ # Check free disk space at the input image directory, as presumably more images are coming
+ check_free_space "$NEW_IMAGES" | tee -a transient_factory_test31.txt
  if [ $? -ne 0 ];then
   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
   exit 1
  fi
- # Check free disk space at the input image directory, as presumably more images are coming
- check_free_space "$NEW_IMAGES" | tee -a transient_factory_test31.txt
+ # Check free disk space at the current directory
+ check_free_space | tee -a transient_factory_test31.txt
  if [ $? -ne 0 ];then
   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
   exit 1
@@ -851,8 +851,6 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  if [ $N -lt 2 ];then
   # Save image date for it to be displayed in the summary file
   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-  #echo "ERROR: too few refereence images for the field $FIELD"
-  #echo "ERROR: too few refereence images for the field $FIELD" >> transient_factory_test31.txt
   echo "ERROR: too few refereence images for the field $FIELD" | tee -a transient_factory_test31.txt
   continue
  fi
@@ -860,8 +858,6 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  if [ $N -lt 2 ];then
   # Save image date for it to be displayed in the summary file
   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-  #echo "ERROR: too few new images for the field $FIELD"
-  #echo "ERROR: too few new images for the field $FIELD" >> transient_factory_test31.txt
   echo "ERROR: too few new images for the field $FIELD" | tee -a transient_factory_test31.txt
   continue
  fi
@@ -907,8 +903,6 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -lt 2 ];then
   # Save image date for it to be displayed in the summary file
   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-  #echo "ERROR processing the image series - only $NUMBER_OF_SECOND_EPOCH_IMAGES second-epoch images found"
-  #echo "ERROR processing the image series - only $NUMBER_OF_SECOND_EPOCH_IMAGES second-epoch images found" >> transient_factory_test31.txt
   echo "ERROR processing the image series - only $NUMBER_OF_SECOND_EPOCH_IMAGES second-epoch images found" | tee -a transient_factory_test31.txt
   continue
  fi
@@ -923,8 +917,6 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   fi  
  done | grep 'ERROR reading the FITS file' >> transient_factory_test31.txt && continue # continue to the next field
  #
- #echo "read-check OK"
- #echo "read-check OK" >> transient_factory_test31.txt
  echo "read-check OK" | tee -a transient_factory_test31.txt
  #
  # Test if we can get the observing date from FITS images
@@ -938,8 +930,6 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   fi  
  done | grep '"ERROR getting the observing date from the FITS file' >> transient_factory_test31.txt && continue # continue to the next field
  #
- #echo "read-date-check OK"
- #echo "read-date-check OK" >> transient_factory_test31.txt
  echo "read-date-check OK" | tee -a transient_factory_test31.txt
  #
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -eq 2 ];then
@@ -1205,8 +1195,6 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  if [ $? -eq 0 ];then
   # Save image date for it to be displayed in the summary file
   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-  #echo "ERROR processing the image series"
-  #echo "ERROR processing the image series" >> transient_factory_test31.txt
   echo "ERROR processing the image series" | tee -a transient_factory_test31.txt
   continue
  fi
@@ -1214,14 +1202,10 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  
  # I guess we should be including the calibration attempt here resetting SECOND_EPOCH__FIRST_IMAGE and SECOND_EPOCH__SECOND_IMAGE
  ################################
- #echo "Calibration settings: DARK_FRAMES_DIR=$DARK_FRAMES_DIR FLAT_FIELD_FILE=$FLAT_FIELD_FILE"
- #echo "Calibration settings: DARK_FRAMES_DIR=$DARK_FRAMES_DIR FLAT_FIELD_FILE=$FLAT_FIELD_FILE" >> transient_factory_test31.txt
  echo "Calibration settings: DARK_FRAMES_DIR=$DARK_FRAMES_DIR FLAT_FIELD_FILE=$FLAT_FIELD_FILE" | tee -a transient_factory_test31.txt
  CALIBRATED_SECOND_EPOCH__FIRST_IMAGE=$(try_to_calibrate_the_input_frame "$SECOND_EPOCH__FIRST_IMAGE" 2>> transient_factory_test31.txt)
  if [ $? -eq 0 ];then
   if [ -n "$CALIBRATED_SECOND_EPOCH__FIRST_IMAGE" ];then
-   #echo "Using calibrated image CALIBRATED_SECOND_EPOCH__FIRST_IMAGE=$CALIBRATED_SECOND_EPOCH__FIRST_IMAGE"
-   #echo "Using calibrated image CALIBRATED_SECOND_EPOCH__FIRST_IMAGE=$CALIBRATED_SECOND_EPOCH__FIRST_IMAGE" >> transient_factory_test31.txt
    echo "Using calibrated image CALIBRATED_SECOND_EPOCH__FIRST_IMAGE=$CALIBRATED_SECOND_EPOCH__FIRST_IMAGE" | tee -a transient_factory_test31.txt
    SECOND_EPOCH__FIRST_IMAGE="$CALIBRATED_SECOND_EPOCH__FIRST_IMAGE"
   fi
@@ -1229,8 +1213,6 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  CALIBRATED_SECOND_EPOCH__SECOND_IMAGE=$(try_to_calibrate_the_input_frame "$SECOND_EPOCH__SECOND_IMAGE" 2>> transient_factory_test31.txt)
  if [ $? -eq 0 ];then
   if [ -n "$CALIBRATED_SECOND_EPOCH__SECOND_IMAGE" ];then
-   #echo "Using calibrated image CALIBRATED_SECOND_EPOCH__SECOND_IMAGE=$CALIBRATED_SECOND_EPOCH__SECOND_IMAGE"
-   #echo "Using calibrated image CALIBRATED_SECOND_EPOCH__SECOND_IMAGE=$CALIBRATED_SECOND_EPOCH__SECOND_IMAGE" >> transient_factory_test31.txt
    echo "Using calibrated image CALIBRATED_SECOND_EPOCH__SECOND_IMAGE=$CALIBRATED_SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_factory_test31.txt
    SECOND_EPOCH__SECOND_IMAGE="$CALIBRATED_SECOND_EPOCH__SECOND_IMAGE"
   fi
@@ -1254,8 +1236,6 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
  if [ $? -eq 0 ];then
   # Save image date for it to be displayed in the summary file
   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-  #echo "ERROR processing the image series"
-  #echo "ERROR processing the image series" >> transient_factory_test31.txt
   echo "ERROR processing the image series" | tee -a transient_factory_test31.txt
   continue
  fi
