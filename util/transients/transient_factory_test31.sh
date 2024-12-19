@@ -815,8 +815,6 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 
  echo "Processing $FIELD" | tee -a transient_factory_test31.txt
  if [ "$FIELD" == "$PREVIOUS_FIELD" ];then
-  #echo "Script ERROR! This field has been processed just before!"
-  #echo "Script ERROR! This field has been processed just before!" >> transient_factory_test31.txt
   echo "Script ERROR! This field has been processed just before!" | tee -a transient_factory_test31.txt
   continue
  fi
@@ -839,7 +837,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   exit 1
  fi
  # Check free disk space at the input image directory, as presumably more images are coming
- check_free_space "$NEW_IMAGES" | tee -a transient_factory_test31.txt
+ check_free_space $(dirname "$NEW_IMAGES") | tee -a transient_factory_test31.txt
  if [ $? -ne 0 ];then
   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
   exit 1
@@ -851,8 +849,6 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  if [ $N -lt 2 ];then
   # Save image date for it to be displayed in the summary file
   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-  #echo "ERROR: too few refereence images for the field $FIELD"
-  #echo "ERROR: too few refereence images for the field $FIELD" >> transient_factory_test31.txt
   echo "ERROR: too few refereence images for the field $FIELD" | tee -a transient_factory_test31.txt
   continue
  fi
@@ -860,8 +856,6 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  if [ $N -lt 2 ];then
   # Save image date for it to be displayed in the summary file
   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-  #echo "ERROR: too few new images for the field $FIELD"
-  #echo "ERROR: too few new images for the field $FIELD" >> transient_factory_test31.txt
   echo "ERROR: too few new images for the field $FIELD" | tee -a transient_factory_test31.txt
   continue
  fi
