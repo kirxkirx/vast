@@ -1613,7 +1613,7 @@ Soft limit: $FOV_DEG_LIMIT_SOFT deg.  Hard limit: $FOV_DEG_LIMIT_HARD deg.
   # Pointing accuracy - check soft limit
   if awk -v x="$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG" -v y="$FOV_DEG_LIMIT_SOFT" 'BEGIN {exit !(x>y)}'; then
    if [ "$CHECK_POINTING_ACCURACY" = "yes" ]; then
-    echo "WARNING: distance between 1st reference and 1st second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" | tee -a transient_factory_test31.txt
+    echo "WARNING: distance between 1st reference and 1st new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" | tee -a transient_factory_test31.txt
     # Not breaking here. The offset is not hopelessly large and we want to keep candidates from this field
    fi
   fi
@@ -1642,7 +1642,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   # Pointing accuracy - check soft limit
   if awk -v x="$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG" -v y="$FOV_DEG_LIMIT_SOFT" 'BEGIN {exit !(x>y)}'; then
    if [ "$CHECK_POINTING_ACCURACY" = "yes" ]; then
-    echo "WARNING: distance between 1st reference and 2nd second-epoch image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" | tee -a transient_factory_test31.txt
+    echo "WARNING: distance between 1st reference and 2nd new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" | tee -a transient_factory_test31.txt
     # Not breaking here, as the offset isn't hopelessly large.
    fi
   fi
@@ -1663,20 +1663,8 @@ Second-epoch first image center  $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE
 Second-epoch second image center $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE
 Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg.
 ###################################" | tee -a transient_factory_test31.txt
-    #TEST=$(echo "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG<$MIN_IMAGE_SHIFT_DEG" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
-    #if [ $TEST -eq 1 ];then
-    # if [ "$CHECK_POINTING_ACCURACY" = "yes" ] ;then  
-    #  echo "ERROR: no shift applied between second-epoch images! The distance between image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (min. required shift: $MIN_IMAGE_SHIFT_DEG deg.)"
-    #  echo "ERROR: no shift applied between second-epoch images! The distance between image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (min. required shift: $MIN_IMAGE_SHIFT_DEG deg.)" >> transient_factory_test31.txt
-    #  #break
-    #  # Not break'ing here
-    # fi # if [ "$CHECK_POINTING_ACCURACY" = "YES"
-    #fi
-    #
     if awk -v x="$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG" -v y="$MIN_IMAGE_SHIFT_DEG" 'BEGIN {exit !(x<y)}'; then
      if [ "$CHECK_POINTING_ACCURACY" = "yes" ]; then
-      #echo "ERROR: no shift applied between second-epoch images! The distance between image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (min. required shift: $MIN_IMAGE_SHIFT_DEG deg.)"
-      #echo "ERROR: no shift applied between second-epoch images! The distance between image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (min. required shift: $MIN_IMAGE_SHIFT_DEG deg.)" >> transi
       echo "ERROR: no shift applied between second-epoch images! The distance between image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (min. required shift: $MIN_IMAGE_SHIFT_DEG deg.)" | tee -a transient_factory_test31.txt
       # Not break'ing here
      fi
@@ -1688,16 +1676,6 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
 
   # Here we need to know if we need photometic calibration for hte astrometic catalog - it's slow
   if [ -z "$PHOTOMETRIC_CALIBRATION" ];then
-   ##if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
-   #TEST=$(echo "$IMAGE_FOV_ARCMIN" | awk '{if ( $1 < 240 ) print 1 ;else print 0 }')
-   #if [ $TEST -eq 1 ];then
-   # # APASS magnitude calibration for narrow-field images
-   # PHOTOMETRIC_CALIBRATION="APASS_V"
-   #else
-   # # Tycho-2 magnitude calibration for wide-field images
-   # # (Tycho-2 is relatively small, so it's convenient to have a local copy of the catalog)
-   # PHOTOMETRIC_CALIBRATION="TYCHO2_V"
-   #fi
    if awk -v x="$IMAGE_FOV_ARCMIN" 'BEGIN {exit !(x<240)}'; then
     # APASS magnitude calibration for narrow-field images
     PHOTOMETRIC_CALIBRATION="APASS_V"
@@ -1752,20 +1730,10 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   fi
   echo "____ Start of magnitude calibration ____" | tee -a transient_factory_test31.txt
   #
-  # Decide which catalog to use for magnitude calibration depending on the image filed of view
+  # Double-check that PHOTOMETRIC_CALIBRATION is set earlier
   if [ -z "$PHOTOMETRIC_CALIBRATION" ];then
    echo "ERROR: how did we get in here?! PHOTOMETRIC_CALIBRATION is supposed to be set earlier" | tee -a transient_factory_test31.txt
    exit 1
-   ##if [ $IMAGE_FOV_ARCMIN -lt 240 ];then
-   #TEST=$(echo "$IMAGE_FOV_ARCMIN" | awk '{if ( $1 < 240 ) print 1 ;else print 0 }')
-   #if [ $TEST -eq 1 ];then
-   # # APASS magnitude calibration for narrow-field images
-   # PHOTOMETRIC_CALIBRATION="APASS_V"
-   #else
-   # # Tycho-2 magnitude calibration for wide-field images
-   # # (Tycho-2 is relatively small, so it's convenient to have a local copy of the catalog)
-   # PHOTOMETRIC_CALIBRATION="TYCHO2_V"
-   #fi
   fi
   #
   echo "PHOTOMETRIC_CALIBRATION=$PHOTOMETRIC_CALIBRATION" | tee -a transient_factory_test31.txt
@@ -1913,16 +1881,12 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   #for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">13.5"}'|bc -ql) ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk -v var="$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" '{print ((($1+$2)/2>var)?1:0)}' ) ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
-  #echo "Filter-out suspiciously bright candidates..." >> transient_factory_test31.txt
-  #echo "Filter-out suspiciously bright candidates..."
   echo "Filter-out suspiciously bright candidates..." | tee -a transient_factory_test31.txt
   # Filter-out suspiciously bright candidates
   ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
   #for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2"<-5.0"}'|bc -ql) ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk -v var="$FILTER_BRIGHT_MAG_CUTOFF_TRANSIENT_SEARCH" '{print ((($1+$2)/2<var)?1:0)}' ) ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
-  #echo "Filter-out candidates with large difference between measured mags in one epoch..." >> transient_factory_test31.txt
-  #echo "Filter-out candidates with large difference between measured mags in one epoch..."
   echo "Filter-out candidates with large difference between measured mags in one epoch..." | tee -a transient_factory_test31.txt
   # 2nd epoch
   # Filter-out candidates with large difference between measured mags
@@ -1950,8 +1914,6 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
   ############################################
 
-  #echo "Filter-out small-amplitude flares..." >> transient_factory_test31.txt
-  #echo "Filter-out small-amplitude flares..."
   echo "Filter-out small-amplitude flares..." | tee -a transient_factory_test31.txt
   # Filter-out small-amplitude flares
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do if [ $(cat $i | wc -l) -eq 2 ];then grep $i candidates-transients.lst | head -n1 ;continue ;fi ; A=$(head -n1 $i | awk '{print $2}') ; B=$(tail -n2 $i | awk '{print $2}') ; MEANMAGSECONDEPOCH=$(echo ${B//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2}') ; TEST=$(echo $A $MEANMAGSECONDEPOCH | awk '{if ( ($1-$2)<0.5 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
@@ -2019,8 +1981,6 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    fi
   fi
   ###
-  #echo "Done with filtering" >> transient_factory_test31.txt
-  #echo "Done with filtering! =)"
   echo "Done with filtering" | tee -a transient_factory_test31.txt
   ###############################################################################################################
 
@@ -2029,8 +1989,6 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   NUMBER_OF_DETECTED_TRANSIENTS=$(cat candidates-transients.lst | wc -l)
   echo "Found $NUMBER_OF_DETECTED_TRANSIENTS candidate transients before the final filtering." | tee -a transient_factory_test31.txt
   if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt $NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT ];then
-   #echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping SE run ($SEXTRACTOR_CONFIG_FILE)"
-   #echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping SE run ($SEXTRACTOR_CONFIG_FILE)" >> transient_factory_test31.txt
    echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping SE run ($SEXTRACTOR_CONFIG_FILE)" | tee -a transient_factory_test31.txt
    # this is for UCAC5 plate solver
    echo "wait" | tee -a transient_factory_test31.txt
@@ -2046,8 +2004,6 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    # In that case, we want to drop this run and continue with the second run hoping it will be better
   else
    if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt $NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT ];then
-    #echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..."
-    #echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..." >> transient_factory_test31.txt
     echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..." | tee -a transient_factory_test31.txt
     # if yes, remove flares, keep only new objects
     while read -r FLAREOUTFILE A B ;do
@@ -2071,8 +2027,6 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    echo "All-image limiting magnitude estimate: $ALLIMG_MAG_LIM with $SEXTRACTOR_CONFIG_FILE
 (80th percentile of magnitude distribution of stars detected on all four images)" | tee -a transient_factory_test31.txt
 
-   #echo "Waiting for UCAC5 plate solver" >> transient_factory_test31.txt  
-   #echo "Waiting for UCAC5 plate solver"
    echo "Waiting for UCAC5 plate solver" | tee -a transient_factory_test31.txt
    # this is for UCAC5 plate solver AND parallel exclusion list preparation AND planets.txt and friends
    echo "wait" | tee -a transient_factory_test31.txt
@@ -2085,22 +2039,12 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    #
    #
    echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
-   #echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE"
    util/transients/make_report_in_HTML.sh >> transient_factory_test31.txt 2>&1
-   #echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" >> transient_factory_test31.txt
-   #echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE"
    echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
   fi # else if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 500 ];then
   
-  #echo "*------ done with $SEXTRACTOR_CONFIG_FILE ------*" >> transient_factory_test31.txt
-  #echo "*------ done with $SEXTRACTOR_CONFIG_FILE ------*"
   echo "*------ done with $SEXTRACTOR_CONFIG_FILE ------*" | tee -a transient_factory_test31.txt
 
-  # Update the local exclusion list (but actually util/transients/report_transient.sh is supposed to take care of that already)
-  # DON'T DO THAT - util/transients/report_transient.sh is doing it properly
-  #echo "Updating exclusion_list_local.txt" >> transient_factory_test31.txt
-  #echo "Updating exclusion_list_local.txt"
-  #grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' | sort | uniq >> exclusion_list_local.txt
   echo "#### The local exclusion list is exclusion_list_local.txt ####" | tee -a transient_factory_test31.txt
   cat exclusion_list_local.txt | tee -a transient_factory_test31.txt
   #
@@ -2132,15 +2076,11 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
  echo "$PWD" "$@" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
  if [ $? -eq 0 ] ;then
   IS_THIS_TEST_RUN="YES"
-  #echo "The names $PWD $string_command_line_argumants suggest this is a test run"
-  #echo "The names $PWD $string_command_line_argumants suggest this is a test run" >> transient_factory_test31.txt
   echo "The names $PWD $string_command_line_argumants suggest this is a test run" | tee -a transient_factory_test31.txt
  fi
  echo "$1" | grep --quiet -e 'NMW_Vul2_magnitude_calibration_exit_code_test' -e 'NMW_Sgr9_crash_test'
  if [ $? -eq 0 ] ;then
   IS_THIS_TEST_RUN="NO"
-  #echo "Allowing the exclusion list update for $1"
-  #echo "Allowing the exclusion list update for $1" >> transient_factory_test31.txt
   echo "Allowing the exclusion list update for $1" | tee -a transient_factory_test31.txt
  fi
  ALLOW_EXCLUSION_LIST_UPDATE="YES"
@@ -2199,8 +2139,6 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
     # drop the limit no the number of candidates for the all-important Galactic Center field
     #if [ $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS -gt 20 ] && [ "$FIELD" != "Sco6" ] ;then
     if [ $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS -gt $MAX_NUMBER_OF_CANDIDATES_PER_FIELD ] && [ "$FIELD" != "Sco6" ] ;then
-     #echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding asteroids and hot pixels), not updating the exclusion list!"
-     #echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding asteroids and hot pixels), not updating the exclusion list!" >> transient_factory_test31.txt
      echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding asteroids and hot pixels), not updating the exclusion list!" | tee -a transient_factory_test31.txt
      ALLOW_EXCLUSION_LIST_UPDATE="NO"
     fi
@@ -2267,71 +2205,30 @@ exclusion_list_index_html.txt NOT FOUND" | tee -a transient_factory_test31.txt
 if [ -n "$MPC_CODE" ];then
  echo "The observatory MPC code is $MPC_CODE" | tee -a transient_factory_test31.txt
 fi
-#echo "############################################################
-#Planet positions from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
-#cat planets.txt
-#echo "############################################################
-#Planet positions from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
-#cat planets.txt >> transient_factory_test31.txt
 echo "############################################################
 Planet positions from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" | tee -a transient_factory_test31.txt
 cat planets.txt | tee -a transient_factory_test31.txt
-ls -lh planets.txt >> transient_factory_test31.txt 2>&1
-#
-#echo "############################################################
-#Positions of slected moons from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
-#cat moons.txt
-#echo "############################################################
-#Positions of slected moons from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
-#cat moons.txt >> transient_factory_test31.txt
+ls -lh planets.txt 2>&1 | tee -a transient_factory_test31.txt
 echo "############################################################
 Positions of slected moons from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" | tee -a transient_factory_test31.txt
 cat moons.txt | tee -a transient_factory_test31.txt
-ls -lh moons.txt >> transient_factory_test31.txt 2>&1
-#
-#echo "############################################################
-#Positions of slected spacecraft from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
-#cat spacecraft.txt
-#echo "############################################################
-#Positions of slected spacecraft from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
-#cat spacecraft.txt >> transient_factory_test31.txt
+ls -lh moons.txt 2>&1 | tee -a transient_factory_test31.txt
 echo "############################################################
 Positions of slected spacecraft from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" | tee -a transient_factory_test31.txt
 cat spacecraft.txt | tee -a transient_factory_test31.txt
-ls -lh spacecraft.txt >> transient_factory_test31.txt 2>&1
-#
-#echo "############################################################
-#Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets and http://aerith.net/comet/weekly/current.html ) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:"
-#cat comets.txt
-#echo "############################################################
-#Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets and http://aerith.net/comet/weekly/current.html ) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" >> transient_factory_test31.txt
-#cat comets.txt >> transient_factory_test31.txt
+ls -lh spacecraft.txt 2>&1 | tee -a transient_factory_test31.txt
 echo "############################################################
 Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets and http://aerith.net/comet/weekly/current.html ) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" | tee -a transient_factory_test31.txt
 cat comets.txt | tee -a transient_factory_test31.txt
-ls -lh comets.txt >> transient_factory_test31.txt 2>&1
-#
-#echo "############################################################
-#List of recent ASAS-SN transients from https://www.astronomy.ohio-state.edu/asassn/transients.html :"
-#cat asassn_transients_list.txt
-#echo "############################################################
-#List of recent ASAS-SN transients from https://www.astronomy.ohio-state.edu/asassn/transients.html :" >> transient_factory_test31.txt
-#cat asassn_transients_list.txt >> transient_factory_test31.txt
+ls -lh comets.txt 2>&1 | tee -a transient_factory_test31.txt
 echo "############################################################
 List of recent ASAS-SN transients from https://www.astronomy.ohio-state.edu/asassn/transients.html :" | tee -a transient_factory_test31.txt
 cat asassn_transients_list.txt | tee -a transient_factory_test31.txt
-ls -lh asassn_transients_list.txt >> transient_factory_test31.txt 2>&1
-#
-#echo "############################################################
-#List of TOCP transients from http://www.cbat.eps.harvard.edu/unconf/tocp.html :"
-#cat tocp_transients_list.txt
-#echo "############################################################
-#List of TOCP transients from http://www.cbat.eps.harvard.edu/unconf/tocp.html :" >> transient_factory_test31.txt
-#cat tocp_transients_list.txt >> transient_factory_test31.txt
+ls -lh asassn_transients_list.txt 2>&1 | tee -a transient_factory_test31.txt
 echo "############################################################
 List of TOCP transients from http://www.cbat.eps.harvard.edu/unconf/tocp.html :" | tee -a transient_factory_test31.txt
 cat tocp_transients_list.txt | tee -a transient_factory_test31.txt
-ls -lh tocp_transients_list.txt >> transient_factory_test31.txt 2>&1
+ls -lh tocp_transients_list.txt 2>&1 | tee -a transient_factory_test31.txt
 ###############################################################################################################
 
 ## Finalize the HTML report
