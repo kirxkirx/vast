@@ -19,76 +19,10 @@
 # The results will be presented as an HTML page transient_report/index.html
 #
 #################################
-# helper functions
-
-function get_file_size() {
-    local file="$1"
-    if [ -f "$file" ]; then
-        if stat -c %s /dev/null >/dev/null 2>&1; then
-            # GNU stat (Linux)
-            stat -c %s "$file"
-        elif stat -f %z /dev/null >/dev/null 2>&1; then
-            # BSD stat (macOS, FreeBSD)
-            stat -f %z "$file"
-        else
-            # Fallback to 'wc -c' (less efficient for large files)
-            wc -c < "$file" | tr -d ' '
-        fi
-    else
-        echo "0"
-    fi
-}
-
-check_free_space() {
-    if [ -n "$1" ];then
-     dir_to_check="$1"
-    else
-     dir_to_check="."
-    fi
-    
-    if [ ! -d "$dir_to_check" ];then
-     echo "WARNING from check_free_space(): $dir_to_check is not a directory"
-     return 0
-    fi
-
-
-    # Check free space in the current directory
-    local free_space_kb
-
-    # Use 'df -k .' for portability across Linux, macOS, and FreeBSD
-    free_space_kb=$(df -k "$dir_to_check" | awk 'NR==2 {print $4}')
-
-    # Minimum required space in KB (600MB = 600 * 1024 KB)
-    local required_space_kb_hardlimit=614400
-
-    # soft limit for minimum required space in KB (2 GB = 2 * 1024 * 1024 KB)
-    local required_space_kb_softlimit=2097152
-    # Or change it to an externally set value if $WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB is set
-    if [ -n "$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB" ];then
-     if [[ "$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB" =~ ^[0-9]+$ ]] && [ "$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB" -gt "$required_space_kb_hardlimit" ]; then
-      required_space_kb_softlimit="$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB"
-     fi
-    fi
-
-    
-    if [ "$free_space_kb" -ge "$required_space_kb_softlimit" ]; then
-        echo "server $HOSTNAME has sufficient free disk space available: $((free_space_kb / 1024)) MB at $dir_to_check"
-        return 0
-    elif [ "$free_space_kb" -ge "$required_space_kb_hardlimit" ]; then
-        echo "WARNING: server $HOSTNAME is low on disk space, only $((free_space_kb / 1024)) MB free at $dir_to_check"
-        return 0
-    else
-        echo "ERROR: server $HOSTNAME is out of disk space, only $((free_space_kb / 1024)) MB free at $dir_to_check"
-        return 1
-    fi
-}
-
 
 #################################
-# We need to check the input early as we may need to set camera settings based on the input path
+# We need to check the input early - we may need to set camera settings based on the input path
 if [ -z "$1" ]; then
- #echo "Usage: $0 PATH_TO_DIRECTORY_WITH_IMAGE_PAIRS"
- #echo "Usage: $0 PATH_TO_DIRECTORY_WITH_IMAGE_PAIRS" > transient_factory_test31.txt
  echo "Usage: $0 PATH_TO_DIRECTORY_WITH_IMAGE_PAIRS" | tee transient_factory_test31.txt
  exit 1
 fi
@@ -107,7 +41,7 @@ if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"TICA_TESS"* ]] ; then
 fi
 
 
-########### Default settings describing the old NMW camera:
+########### Default settings based on the old NMW camera (aka ST-8300 aka Stas):
 # Canon 135 mm f/2.0 telephoto lens + SBIG ST-8300M CCD, 20 sec exposures
 #
 # !!! You probably want to override these default parameters below to match your camera !!!
@@ -178,6 +112,7 @@ fi
 # CAMERA_SETTINGS environment vairable may be set to override the default settings with the ones needed for a different camera
 if [ -n "$CAMERA_SETTINGS" ];then
  if [ "$CAMERA_SETTINGS" = "Stas" ];then
+  # The old NMW camera (aka ST-8300 aka Stas):
   # Canon 135 mm f/2.0 telephoto lens + SBIG ST-8300M CCD, 20 sec exposures
   export AAVSO_COMMENT_STRING="NMW Camera-1 Canon 135mm f/2.0 telephoto lens + SBIG ST-8300M CCD"
   TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
@@ -308,6 +243,70 @@ if [ -n "$TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION" ];then
 fi
 
 #################################
+# helper functions
+
+function get_file_size() {
+    local file="$1"
+    if [ -f "$file" ]; then
+        if stat -c %s /dev/null >/dev/null 2>&1; then
+            # GNU stat (Linux)
+            stat -c %s "$file"
+        elif stat -f %z /dev/null >/dev/null 2>&1; then
+            # BSD stat (macOS, FreeBSD)
+            stat -f %z "$file"
+        else
+            # Fallback to 'wc -c' (less efficient for large files)
+            wc -c < "$file" | tr -d ' '
+        fi
+    else
+        echo "0"
+    fi
+}
+
+check_free_space() {
+    if [ -n "$1" ];then
+     dir_to_check="$1"
+    else
+     dir_to_check="."
+    fi
+    
+    if [ ! -d "$dir_to_check" ];then
+     echo "WARNING from check_free_space(): $dir_to_check is not a directory"
+     return 0
+    fi
+
+
+    # Check free space in the current directory
+    local free_space_kb
+
+    # Use 'df -k .' for portability across Linux, macOS, and FreeBSD
+    free_space_kb=$(df -k "$dir_to_check" | awk 'NR==2 {print $4}')
+
+    # Minimum required space in KB (600MB = 600 * 1024 KB)
+    local required_space_kb_hardlimit=614400
+
+    # soft limit for minimum required space in KB (2 GB = 2 * 1024 * 1024 KB)
+    local required_space_kb_softlimit=2097152
+    # Or change it to an externally set value if $WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB is set
+    if [ -n "$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB" ];then
+     if [[ "$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB" =~ ^[0-9]+$ ]] && [ "$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB" -gt "$required_space_kb_hardlimit" ]; then
+      required_space_kb_softlimit="$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB"
+     fi
+    fi
+
+    
+    if [ "$free_space_kb" -ge "$required_space_kb_softlimit" ]; then
+        echo "server $HOSTNAME has sufficient free disk space available: $((free_space_kb / 1024)) MB at $dir_to_check"
+        return 0
+    elif [ "$free_space_kb" -ge "$required_space_kb_hardlimit" ]; then
+        echo "WARNING: server $HOSTNAME is low on disk space, only $((free_space_kb / 1024)) MB free at $dir_to_check"
+        return 0
+    else
+        echo "ERROR: server $HOSTNAME is out of disk space, only $((free_space_kb / 1024)) MB free at $dir_to_check"
+        return 1
+    fi
+}
+
 
 function try_to_calibrate_the_input_frame {
 
@@ -511,6 +510,10 @@ get_vast_path_ends_with_slash_from_this_script_name() {
  echo "$VAST_PATH"
 }
 
+#################################
+
+
+
 if [ -z "$VAST_PATH" ];then
  VAST_PATH=$(get_vast_path_ends_with_slash_from_this_script_name "$0")
 fi
@@ -603,8 +606,6 @@ UCAC5_PLATESOLVE_ITERATIONS= $UCAC5_PLATESOLVE_ITERATIONS
 
 # Check the reference images
 if [ ! -d "$REFERENCE_IMAGES" ];then
- #echo "ERROR: cannot find the reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES"
- #echo "ERROR: cannot find the reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES" >> transient_factory_test31.txt
  echo "ERROR: cannot find the reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES" | tee -a transient_factory_test31.txt
  exit 1
 else
@@ -612,8 +613,6 @@ else
  for FILE_TO_TEST in "$REFERENCE_IMAGES"/* ;do
   # If the content of the direcotry is no a regular file and is not a symlink
   if [ ! -f "$FILE_TO_TEST" ] && [ ! -L "$FILE_TO_TEST" ];then
-   #echo "ERROR: empty reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES"
-   #echo "ERROR: empty reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES" >> transient_factory_test31.txt
    echo "ERROR: empty reference image directory REFERENCE_IMAGES=$REFERENCE_IMAGES" | tee -a transient_factory_test31.txt
    exit 1
   else
@@ -628,8 +627,6 @@ if [ ! -d lib/catalogs/ucac5 ];then
  for TEST_THIS_DIR in /mnt/usb/UCAC5 /dataX/kirx/UCAC5 /data/kirx/UCAC5 /home/kirx/UCAC5 /home/apache/ucac5 $HOME/UCAC5 $HOME/ucac5 ../UCAC5 ../ucac5 ;do
   if [ -d "$TEST_THIS_DIR" ];then
    ln -s "$TEST_THIS_DIR" lib/catalogs/ucac5
-   #echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR"
-   #echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR" >> transient_factory_test31.txt
    echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR" | tee -a transient_factory_test31.txt
    break
   fi
@@ -656,12 +653,8 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
-#echo "Reference image directory is set to $REFERENCE_IMAGES"
-#echo "Reference image directory is set to $REFERENCE_IMAGES" >> transient_factory_test31.txt
 echo "Reference image directory is set to $REFERENCE_IMAGES" | tee -a transient_factory_test31.txt
 if [ -z "$1" ]; then
- #echo "Usage: $0 PATH_TO_DIRECTORY_WITH_IMAGE_PAIRS"
- #echo "Usage: $0 PATH_TO_DIRECTORY_WITH_IMAGE_PAIRS" >> transient_factory_test31.txt
  echo "Usage: $0 PATH_TO_DIRECTORY_WITH_IMAGE_PAIRS" | tee -a transient_factory_test31.txt
  exit 1
 fi
@@ -932,15 +925,44 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   if [ $? -ne 0 ];then
    echo "ERROR getting the observing date from the FITS file $FITS_FILE_TO_CHECK"
   fi  
- done | grep '"ERROR getting the observing date from the FITS file' >> transient_factory_test31.txt && continue # continue to the next field
+ done | grep 'ERROR getting the observing date from the FITS file' >> transient_factory_test31.txt && continue # continue to the next field
  #
  echo "read-date-check OK" | tee -a transient_factory_test31.txt
  #
+ # Early check of image mean values (if this filter is defined)
+ if [ -n "$MAX_NEW_IMG_MEAN_VALUE" ]; then
+  echo -n "Mean value check the input FITS images... "
+  echo -n "Mean value check the input FITS images... " >> transient_factory_test31.txt
+
+  BELOW_THRESHOLD_COUNT=0
+
+  for FITS_FILE_TO_CHECK in "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT"; do
+   util/imstat_vast_fast "$FITS_FILE_TO_CHECK" | awk -v max="$MAX_NEW_IMG_MEAN_VALUE" '/ MEAN= / {
+     if ($2 < max) {
+       exit 0
+     } else {
+       exit 1
+     }
+   }' && BELOW_THRESHOLD_COUNT=$((BELOW_THRESHOLD_COUNT + 1))
+   # terminate the loop early if there are at least two good images
+   if (( BELOW_THRESHOLD_COUNT >= 2 )); then
+    break
+   fi
+  done
+
+  # Check that at least two images have below-threshold mean values
+  if (( BELOW_THRESHOLD_COUNT >= 2 )); then
+   echo "OK, at least two new images have mean values below the threshold." | tee -a transient_factory_test31.txt
+  else
+   echo "ERROR: the images are too bright (mean value > $MAX_NEW_IMG_MEAN_VALUE)" | tee -a transient_factory_test31.txt
+  fi
+ fi # if [ -n "$MAX_NEW_IMG_MEAN_VALUE" ]; then
+ #
+ # $NUMBER_OF_SECOND_EPOCH_IMAGES -lt 2 is handled above
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -eq 2 ];then
   SECOND_EPOCH__FIRST_IMAGE=$(ls "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" | head -n1)
   SECOND_EPOCH__SECOND_IMAGE=$(ls "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" | tail -n1)
- fi
- if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -gt 2 ];then
+ elif [ $NUMBER_OF_SECOND_EPOCH_IMAGES -gt 2 ];then
   # There are more than two second-epoch images - do a preliminary VaST run to choose the two images with best seeing
   #cp -v default.sex.telephoto_lens_onlybrightstars_v1 default.sex >> transient_factory_test31.txt
   cp -v "$SEXTRACTOR_CONFIG_BRIGHTSTARPASS" default.sex >> transient_factory_test31.txt 2>&1
