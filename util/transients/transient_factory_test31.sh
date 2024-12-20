@@ -58,11 +58,17 @@ check_free_space() {
     # Use 'df -k .' for portability across Linux, macOS, and FreeBSD
     free_space_kb=$(df -k "$dir_to_check" | awk 'NR==2 {print $4}')
 
-    # soft limit for minimum required space in KB (2GB = 2 * 1024 * 1024 KB)
-    local required_space_kb_softlimit=2097152
+    # Minimum required space in KB (300MB = 300 * 1024 KB)
+    local required_space_kb_hardlimit=307200
 
-    # Minimum required space in KB (500MB = 500 * 1024 KB)
-    local required_space_kb_hardlimit=512000
+    # soft limit for minimum required space in KB (1024MB = 1024 * 1024 KB)
+    local required_space_kb_softlimit=1048576
+    # Or change it to an externally set value if $WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB is set
+    if [ -n "$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB" ];then
+     if [[ "$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB" =~ ^[0-9]+$ ]] && [ "$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB" -gt "$required_space_kb_hardlimit" ]; then
+      required_space_kb_softlimit="$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB"
+     fi
+    fi
 
     
     if [ "$free_space_kb" -ge "$required_space_kb_softlimit" ]; then
@@ -815,8 +821,6 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 
  echo "Processing $FIELD" | tee -a transient_factory_test31.txt
  if [ "$FIELD" == "$PREVIOUS_FIELD" ];then
-  #echo "Script ERROR! This field has been processed just before!"
-  #echo "Script ERROR! This field has been processed just before!" >> transient_factory_test31.txt
   echo "Script ERROR! This field has been processed just before!" | tee -a transient_factory_test31.txt
   continue
  fi
@@ -833,7 +837,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  
  ############## Check the available disk space ##############
  # Check free disk space at the input image directory, as presumably more images are coming
- check_free_space "$NEW_IMAGES" | tee -a transient_factory_test31.txt
+ check_free_space $(dirname "$NEW_IMAGES") | tee -a transient_factory_test31.txt
  if [ $? -ne 0 ];then
   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
   exit 1
