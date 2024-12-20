@@ -58,11 +58,11 @@ check_free_space() {
     # Use 'df -k .' for portability across Linux, macOS, and FreeBSD
     free_space_kb=$(df -k "$dir_to_check" | awk 'NR==2 {print $4}')
 
-    # Minimum required space in KB (500MB = 500 * 1024 KB)
-    local required_space_kb_hardlimit=512000
+    # Minimum required space in KB (600MB = 600 * 1024 KB)
+    local required_space_kb_hardlimit=614400
 
-    # soft limit for minimum required space in KB (1024MB = 1024 * 1024 KB)
-    local required_space_kb_softlimit=1048576
+    # soft limit for minimum required space in KB (2 GB = 2 * 1024 * 1024 KB)
+    local required_space_kb_softlimit=2097152
     # Or change it to an externally set value if $WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB is set
     if [ -n "$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB" ];then
      if [[ "$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB" =~ ^[0-9]+$ ]] && [ "$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB" -gt "$required_space_kb_hardlimit" ]; then
