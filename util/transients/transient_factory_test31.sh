@@ -830,17 +830,40 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  
  ############## Check the available disk space ##############
  # Check free disk space at the input image directory, as presumably more images are coming
- check_free_space $(dirname "$NEW_IMAGES") | tee -a transient_factory_test31.txt
- if [ $? -ne 0 ];then
+ output=$(check_free_space "$(dirname "$NEW_IMAGES")")
+ exit_code=$?
+ echo "$output" | tee -a transient_factory_test31.txt
+ if [ $exit_code -ne 0 ]; then
   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
   exit 1
  fi
+ unset exit_code
+ unset output
+ #
  # Check free disk space at the current directory
- check_free_space | tee -a transient_factory_test31.txt
- if [ $? -ne 0 ];then
+ output=$(check_free_space)
+ exit_code=$?
+ echo "$output" | tee -a transient_factory_test31.txt
+ if [ $exit_code -ne 0 ]; then
   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
   exit 1
  fi
+ unset exit_code
+ unset output
+ #
+ # old and bad version that didn't stop processing on disk space ERROR
+ ## Check free disk space at the input image directory, as presumably more images are coming
+ #check_free_space $(dirname "$NEW_IMAGES") | tee -a transient_factory_test31.txt
+ #if [ $? -ne 0 ];then
+ # print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+ # exit 1
+ #fi
+ ## Check free disk space at the current directory
+ #check_free_space | tee -a transient_factory_test31.txt
+ #if [ $? -ne 0 ];then
+ # print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+ # exit 1
+ #fi
 
  ############## Two reference images and two second-epoch images # check if all images are actually there
  # check if all images are actually there
