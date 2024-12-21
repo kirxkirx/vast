@@ -581,7 +581,9 @@ fi
   # Yes, works fine with 1.2*$TRIAL_FIELD_OF_VIEW_ARCMIN but does not work with 1.0*$TRIAL_FIELD_OF_VIEW_ARCMIN
   #SCALE_HIGH=`echo "1.2*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql`
   #SCALE_HIGH=`echo "1.6*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'`
-  SCALE_HIGH=`echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",1.6*$1}'`
+  # this value fails with some STL images
+  #SCALE_HIGH=`echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",1.6*$1}'`
+  SCALE_HIGH=`echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",5.0*$1}'`
   #
   #
   echo "Using solve-field binary"
@@ -590,7 +592,9 @@ fi
   # Blind solve
   # old parameters - they work
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  $TIMEOUT_COMMAND 900 solve-field  --objs 1000 --depth 10,20,30-50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  $TIMEOUT_COMMAND 900 solve-field  --crpix-center --uniformize 0  --objs 1000 --depth 10,20,30-50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  # the command below sometimes fails on STL images, so we try the above version that works at scab and also set SCALE_HIGH
+  #$TIMEOUT_COMMAND 900 solve-field  --objs 1000 --depth 10,20,30-50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # the above 30-50 parameter is to handle the situation when there are many saturated stars that bleed out so their position cannot be determined well
   #$TIMEOUT_COMMAND 900 solve-field  --objs 1000 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # has to be 900, otherwise cannot solve ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit resulting in test error SAIRC600B000
