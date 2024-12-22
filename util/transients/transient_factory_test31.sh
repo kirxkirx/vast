@@ -714,11 +714,20 @@ string_command_line_argumants="$*"
 echo "<HTML>
 
 <HEAD>
+
+<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+
 <style>
  body {
        font-family:monospace;
-       font-size:12px;'
-      }
+       font-size:12px;
+ }
+ .inverted {
+       filter: invert(100%);
+ }
+ .rotated {
+       transform: rotate(180deg);
+ } 
 </style>
 
 <script type='text/javascript'>
@@ -753,6 +762,29 @@ function printCandidateNameWithAbsLink( transientname) {
  document.write(outputString); 
 
 }
+
+// Functionality for toggling image inversion
+function toggleInvert() {
+    const images = document.querySelectorAll('img');
+    images.forEach(img => {
+        img.classList.toggle('inverted');
+    });
+}
+
+// Functionality for rotating an image 180 degrees on right-click
+function rotateImage(event) {
+    event.preventDefault(); // Prevent the default context menu
+    this.classList.toggle('rotated');
+}
+
+// Add event listeners to images after the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    const images = document.querySelectorAll('img');
+    images.forEach(img => {
+        img.addEventListener('click', toggleInvert); // Left-click for inversion
+        img.addEventListener('contextmenu', rotateImage); // Right-click for rotation
+    });
+});
 
 </script>
 
