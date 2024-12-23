@@ -796,10 +796,10 @@ function rotateImage(event) {
 document.addEventListener('DOMContentLoaded', () => {
     const images = document.querySelectorAll('img');
     images.forEach(img => {
-        // Invert all images on left-click
+        // Rotate the specific image on click
         img.addEventListener('click', rotateImage);
 
-        // Rotate the specific image on right-click
+        // Invert all images on righe-click
         img.addEventListener('contextmenu', invertAllImages);
     });
 });
