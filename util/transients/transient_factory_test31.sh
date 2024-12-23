@@ -759,7 +759,7 @@ echo "<HTML>
 
 </style>
 
-<script type=\"text/javascript\">
+<script type='text/javascript'>
 function toggleElement(id)
 {
     if (document.getElementById(id).style.display == 'none') {
