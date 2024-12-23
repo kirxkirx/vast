@@ -799,7 +799,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Rotate the specific image on click
         img.addEventListener('click', rotateImage);
 
-        // Invert all images on righe-click
+        // Invert all images on right-click
         img.addEventListener('contextmenu', invertAllImages);
     });
 });
