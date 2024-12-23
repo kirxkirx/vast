@@ -520,7 +520,7 @@ export VAST_PATH
 if [ "$VAST_PATH" != "$PWD/" ];then
  echo "WARNING: we are currently at the wrong directory: $PWD while we should be at $VAST_PATH
 Changing directory"
- cd "$VAST_PATH"
+ cd "$VAST_PATH" || exit 1
 fi
 
 
@@ -660,7 +660,7 @@ echo "---------- $VAST_VERSION_STRING test results ----------" >> vast_test_repo
 #
 # Download the test dataset if needed
 if [ ! -d ../NMW_Venus_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Venus_test.tar.bz2" && tar -xvjf NMW_Venus_test.tar.bz2 && rm -f NMW_Venus_test.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
@@ -670,7 +670,7 @@ if [ ! -d ../NMW_Venus_test ];then
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
- cd $WORKDIR || exit 1
+ cd "$WORKDIR" || exit 1
 fi
 ############################################
 
@@ -748,7 +748,7 @@ cp -v bad_region.lst_default bad_region.lst
 
 ##### DART Didymos moving object photometry test #####
 if [ ! -d ../DART_Didymos_moving_object_photometry_test ];then
- cd ..
+ cd .. || exit 1
  if [ -f DART_Didymos_moving_object_photometry_test.tar.bz2 ] ;then
   rm -f DART_Didymos_moving_object_photometry_test.tar.bz2
  fi
@@ -761,7 +761,7 @@ if [ ! -d ../DART_Didymos_moving_object_photometry_test ];then
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
- cd $WORKDIR || exit 1
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -d ../DART_Didymos_moving_object_photometry_test ];then
@@ -894,7 +894,7 @@ remove_test_data_to_save_space
 
 ##### Check SysRem #####
 if [ ! -d ../NMW_And1_test_lightcurves_40 ];then
- cd ..
+ cd .. || exit 1
  if [ -f NMW_And1_test_lightcurves_40.tar.bz2 ];then
   rm -f NMW_And1_test_lightcurves_40.tar.bz2
  fi
@@ -907,7 +907,7 @@ if [ ! -d ../NMW_And1_test_lightcurves_40 ];then
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
- cd $WORKDIR || exit 1
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -d ../NMW_And1_test_lightcurves_40 ];then
@@ -1278,7 +1278,7 @@ if [ -d ../test_data_photo ];then
 fi
 # Download the test dataset if needed
 if [ ! -d ../test_data_photo ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/test_data_photo.tar.bz2"
  if [ $? -ne 0 ];then
   echo "ERROR downloading test data!" 
@@ -1297,7 +1297,7 @@ if [ ! -d ../test_data_photo ];then
  if [ -f test_data_photo.tar.bz2 ];then
   rm -f test_data_photo.tar.bz2
  fi
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../test_data_photo ];then
@@ -1628,7 +1628,7 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE026"
    fi
    # Test the ID scripts running NOT from the main VaST directory
-   cd ../test_data_photo/
+   cd ../test_data_photo/ || exit 1
    CEPHEID_RADEC_STR=`"$WORKDIR"/util/identify_transient.sh "$WORKDIR"/"$CEPHEIDOUTFILE" | grep -A 1 "RA(J2000)   Dec(J2000)" | tail -n1 | awk '{print $2" "$3}'`
    # # CEPHEID_RADEC_STR="03:05:54.66 +57:45:44.3"
    # presumably that should be out00474.dat
@@ -1657,7 +1657,7 @@ $GREP_RESULT"
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE029"
    fi
-   cd $WORKDIR 
+   cd "$WORKDIR" || exit 1
    #
    #####################
    # Magnitude calibration test
@@ -2118,7 +2118,7 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 ##### Small CCD images test #####
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
@@ -2128,7 +2128,7 @@ if [ ! -d ../sample_data ];then
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
- cd $WORKDIR || exit 1
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../sample_data ];then
@@ -2815,9 +2815,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 ##### Small CCD images star exclusion test #####
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../sample_data ];then
@@ -3272,9 +3272,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 ##### Small CCD images with file list input test #####
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../sample_data ];then
@@ -3745,9 +3745,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 ##### Small CCD images with file list input and --autoselectrefimage test #####
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../sample_data ];then
@@ -3923,9 +3923,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 ##### Small CCD images random options test #####
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../sample_data ];then
@@ -3998,9 +3998,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 ##### Few small CCD images test #####
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../sample_data ];then
@@ -4193,9 +4193,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 ##### Small CCD images with no photometric errors rescaling test #####
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../sample_data ];then
@@ -4639,9 +4639,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 ##### Small CCD images test with non-zero MAG_ZEROPOINT #####
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../sample_data ];then
@@ -4807,9 +4807,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 ##### Small CCD images test with 'export OMP_NUM_THREADS=2' #####
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../sample_data ];then
@@ -4942,9 +4942,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 ##### Small CCD images test with the directory name being specified istead of the file list #####
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../sample_data ];then
@@ -5075,9 +5075,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 ##### Small CCD images test with the directory name with / being specified istead of the file list #####
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../sample_data ];then
@@ -5211,9 +5211,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 ##### White space name #####
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 if [ ! -d '../sample space' ];then
  cp -r '../sample_data' '../sample space'
@@ -5370,9 +5370,9 @@ remove_test_data_to_save_space
 ##### Small CCD images test with automated reference image selection #####
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../sample_data ];then
@@ -5516,9 +5516,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 if [ "$GITHUB_ACTIONS" != "true" ];then 
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../sample_data ];then
@@ -5683,9 +5683,9 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ "$GITHUB_ACTIONS" != "true" ];then 
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../sample_data ];then
@@ -5847,9 +5847,9 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 ##### Small CCD images test with size-mag filter enabled #####
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../sample_data ];then
@@ -6342,9 +6342,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 ##### Space small CCD images test with size-mag filter enabled #####
 # Download the test dataset if needed
 if [ ! -d ../sample_data ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 if [ ! -d '../sample space' ];then
  cp -r '../sample_data' '../sample space'
@@ -6846,7 +6846,7 @@ fi
 ##### Very few stars on the reference frame #####
 # Download the test dataset if needed
 if [ ! -d ../vast_test_bright_stars_failed_match ];then
- cd ..
+ cd .. || exit 1
  if [ -f vast_test_bright_stars_failed_match.tar.bz2 ];then
   rm -f vast_test_bright_stars_failed_match.tar.bz2
  fi
@@ -6859,7 +6859,7 @@ if [ ! -d ../vast_test_bright_stars_failed_match ];then
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
- cd $WORKDIR || exit 1
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../vast_test_bright_stars_failed_match ];then
@@ -7005,7 +7005,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 ##### Very few stars on the reference frame #####
 # Download the test dataset if needed
 if [ ! -d ../vast_test_bright_stars_failed_match ];then
- cd ..
+ cd .. || exit 1
  if [ -f vast_test_bright_stars_failed_match.tar.bz2 ];then
   rm -f vast_test_bright_stars_failed_match.tar.bz2
  fi
@@ -7018,7 +7018,7 @@ if [ ! -d ../vast_test_bright_stars_failed_match ];then
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
- cd $WORKDIR || exit 1
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../vast_test_bright_stars_failed_match ];then
@@ -7156,7 +7156,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 ##### (Multiple VaST runs) Very few stars on the reference frame #####
 # Download the test dataset if needed
 if [ ! -d ../vast_test_bright_stars_failed_match ];then
- cd ..
+ cd .. || exit 1
  if [ -f vast_test_bright_stars_failed_match.tar.bz2 ];then
   rm -f vast_test_bright_stars_failed_match.tar.bz2
  fi
@@ -7169,7 +7169,7 @@ if [ ! -d ../vast_test_bright_stars_failed_match ];then
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
- cd $WORKDIR || exit 1
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../vast_test_bright_stars_failed_match ];then
@@ -7283,7 +7283,7 @@ remove_test_data_to_save_space
 ##### Test the two levels of directory recursion #####
 # Download the test dataset if needed
 if [ ! -d ../vast_test_ASASSN-19cq ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_ASASSN-19cq.tar.bz2" && tar -xvjf vast_test_ASASSN-19cq.tar.bz2 && rm -f vast_test_ASASSN-19cq.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
@@ -7293,7 +7293,7 @@ if [ ! -d ../vast_test_ASASSN-19cq ];then
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
- cd $WORKDIR || exit 1
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../vast_test_ASASSN-19cq ];then
@@ -7537,7 +7537,7 @@ remove_test_data_to_save_space
 if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../MASTER_test ];then
- cd ..
+ cd .. || exit 1
  if [ -f MASTER_test.tar.bz2 ];then
   rm -f MASTER_test.tar.bz2
  fi
@@ -7550,7 +7550,7 @@ if [ ! -d ../MASTER_test ];then
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
- cd $WORKDIR || exit 1
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../MASTER_test ];then
@@ -7695,7 +7695,7 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../M31_ISON_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/M31_ISON_test.tar.bz2" && tar -xvjf M31_ISON_test.tar.bz2 && rm -f M31_ISON_test.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
@@ -7705,7 +7705,7 @@ if [ ! -d ../M31_ISON_test ];then
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
- cd $WORKDIR || exit 1
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../M31_ISON_test ];then
@@ -7855,7 +7855,7 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../Gaia16aye_SN ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/Gaia16aye_SN.tar.bz2" && tar -xvjf Gaia16aye_SN.tar.bz2 && rm -f Gaia16aye_SN.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
@@ -7865,7 +7865,7 @@ if [ ! -d ../Gaia16aye_SN ];then
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
- cd $WORKDIR || exit 1
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../Gaia16aye_SN ];then
@@ -8002,7 +8002,7 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 ##### Images with only few stars by S. Nazarov test #####
 # Download the test dataset if needed
 if [ ! -d ../only_few_stars ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/only_few_stars.tar.bz2" && tar -xvjf only_few_stars.tar.bz2 && rm -f only_few_stars.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
@@ -8012,7 +8012,7 @@ if [ ! -d ../only_few_stars ];then
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
- cd $WORKDIR || exit 1
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../only_few_stars ];then
@@ -8149,7 +8149,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 ##### Images with only few stars and a brigh galaxy by S. Nazarov test #####
 # Download the test dataset if needed
 if [ ! -d ../only_few_stars ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/only_few_stars.tar.bz2" && tar -xvjf only_few_stars.tar.bz2 && rm -f only_few_stars.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
@@ -8159,7 +8159,7 @@ if [ ! -d ../only_few_stars ];then
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
- cd $WORKDIR || exit 1
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../only_few_stars ];then
@@ -8397,7 +8397,7 @@ remove_test_data_to_save_space
 if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../test_exclude_ref_image ];then
- cd ..
+ cd .. || exit 1
  if [ -f test_exclude_ref_image.tar.bz2 ];then
   rm -f test_exclude_ref_image.tar.bz2
  fi
@@ -8411,7 +8411,7 @@ if [ ! -d ../test_exclude_ref_image ];then
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
- cd $WORKDIR || exit 1
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../test_exclude_ref_image ];then
@@ -8660,7 +8660,7 @@ fi
 if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../transient_detection_test_Ceres ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/vast/transient_detection_test_Ceres.tar.bz2" && tar -xvjf transient_detection_test_Ceres.tar.bz2 && rm -f transient_detection_test_Ceres.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
@@ -8670,7 +8670,7 @@ if [ ! -d ../transient_detection_test_Ceres ];then
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
- cd $WORKDIR || exit 1
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../transient_detection_test_Ceres ];then
@@ -8804,7 +8804,7 @@ $GREP_RESULT"
   if [ ! -f "$TYCHO_PATH"/tyc2.dat.00 ];then
    # Download the Tycho-2 catalog from our own server
    if [ ! -d ../tycho2 ];then
-    cd `dirname $VASTDIR`
+    cd $(dirname $VASTDIR) || exit 1
     curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/tycho2.tar.bz2" && tar -xvjf tycho2.tar.bz2 && rm -f tycho2.tar.bz2
     cd $VASTDIR || exit 1
    fi
@@ -8815,9 +8815,9 @@ $GREP_RESULT"
      # -p  no error if existing, make parent directories as needed
      mkdir -p "$TYCHO_PATH"
     fi
-    cd $TYCHO_PATH
+    cd $TYCHO_PATH || exit 1
     for TYCHOFILE in `dirname $VASTDIR`/tycho2/* ;do ln -s $TYCHOFILE ;done
-    cd $VASTDIR
+    cd $VASTDIR || exit 1
    fi
   fi
   #
@@ -9208,7 +9208,7 @@ lib/update_offline_catalogs.sh force
 ##### Saturn/Iapetus test #####
 # Download the test dataset if needed
 if [ ! -d ../NMW_Saturn_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Saturn_test.tar.bz2" && tar -xvjf NMW_Saturn_test.tar.bz2 && rm -f NMW_Saturn_test.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
@@ -9218,7 +9218,7 @@ if [ ! -d ../NMW_Saturn_test ];then
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
- cd $WORKDIR || exit 1
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW_Saturn_test ];then
@@ -9298,9 +9298,9 @@ $GREP_RESULT"
   if [ ! -f "$TYCHO_PATH"/tyc2.dat.00 ];then
    # Download the Tycho-2 catalog from our own server
    if [ ! -d ../tycho2 ];then
-    cd `dirname $VASTDIR`
+    cd $(dirname $VASTDIR) || exit 1
     curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/tycho2.tar.bz2" && tar -xvjf tycho2.tar.bz2 && rm -f tycho2.tar.bz2
-    cd $VASTDIR
+    cd $VASTDIR || exit 1
    fi
    # Try again
    if [ -d ../tycho2 ];then
@@ -9309,9 +9309,9 @@ $GREP_RESULT"
      # -p  no error if existing, make parent directories as needed
      mkdir -p "$TYCHO_PATH"
     fi
-    cd $TYCHO_PATH
-    for TYCHOFILE in `dirname $VASTDIR`/tycho2/* ;do ln -s $TYCHOFILE ;done
-    cd $VASTDIR
+    cd $TYCHO_PATH || exit 1
+    for TYCHOFILE in $(dirname $VASTDIR)/tycho2/* ;do ln -s $TYCHOFILE ;done
+    cd $VASTDIR || exit 1
    fi
   fi
   #
@@ -9765,9 +9765,9 @@ fi
 ##### Saturn/Iapetus test 2 #####
 # Download the test dataset if needed
 if [ ! -d ../NMW_Saturn_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Saturn_test.tar.bz2" && tar -xvjf NMW_Saturn_test.tar.bz2 && rm -f NMW_Saturn_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW_Saturn_test ];then
@@ -10187,7 +10187,7 @@ fi
 ##### Venus test #####
 # Download the test dataset if needed
 if [ ! -d ../NMW_Venus_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Venus_test.tar.bz2" && tar -xvjf NMW_Venus_test.tar.bz2 && rm -f NMW_Venus_test.tar.bz2
  # If the test data download fails - don't bother with the other tests - exit now
  if [ $? -ne 0 ];then
@@ -10197,7 +10197,7 @@ if [ ! -d ../NMW_Venus_test ];then
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
- cd $WORKDIR || exit 1
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW_Venus_test ];then
@@ -10439,9 +10439,9 @@ fi
 ##### NMW calibration test #####
 # Download the test dataset if needed
 if [ ! -d ../NMW_calibration_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_calibration_test.tar.bz2" && tar -xvjf NMW_calibration_test.tar.bz2 && rm -f NMW_calibration_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW_calibration_test ];then
@@ -10777,9 +10777,9 @@ fi
 ##### Nova Cas test (involves three second-epoch images including a bad one) #####
 # Download the test dataset if needed
 if [ ! -d ../NMW_find_NovaCas_august31_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_find_NovaCas_august31_test.tar.bz2" && tar -xvjf NMW_find_NovaCas_august31_test.tar.bz2 && rm -f NMW_find_NovaCas_august31_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW_find_NovaCas_august31_test ];then
@@ -10907,6 +10907,12 @@ $GREP_RESULT"
   fi
   #
   #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310_HTML_LIST_FORMAT"
+  fi
+  #
+  #
   grep --quiet "V1391 Cas" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -11022,9 +11028,9 @@ fi
 #if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../NMW_nomatch_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_nomatch_test.tar.bz2" && tar -xvjf NMW_nomatch_test.tar.bz2 && rm -f NMW_nomatch_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW_nomatch_test ];then
@@ -11151,6 +11157,12 @@ $GREP_RESULT"
   fi
   #
   #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0_HTML_LIST_FORMAT"
+  fi
+  #
+  #
   grep --quiet "DP Pyx" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -11270,9 +11282,9 @@ fi
 #if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../NMW_ATLAS_Mira_in_Ser1 ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_ATLAS_Mira_in_Ser1.tar.bz2" && tar -xvjf NMW_ATLAS_Mira_in_Ser1.tar.bz2 && rm -f NMW_ATLAS_Mira_in_Ser1.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW_ATLAS_Mira_in_Ser1 ];then
@@ -11383,6 +11395,12 @@ $GREP_RESULT"
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0_NO_vast_image_details_log"
+  fi
+  #
+  #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0_HTML_LIST_FORMAT"
   fi
   #
   #
@@ -11753,9 +11771,9 @@ fi
 #if [ "$GITHUB_ACTIONS" != "true" ];then 
 # Download the test dataset if needed
 if [ ! -d ../NMW_Sgr1_NovaSgr20N4_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Sgr1_NovaSgr20N4_test.tar.bz2" && tar -xvjf NMW_Sgr1_NovaSgr20N4_test.tar.bz2 && rm -f NMW_Sgr1_NovaSgr20N4_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW_Sgr1_NovaSgr20N4_test ];then
@@ -11878,6 +11896,12 @@ $GREP_RESULT"
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40_NO_vast_image_details_log"
+  fi
+  #
+  #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40_HTML_LIST_FORMAT"
   fi
   #
   #
@@ -12075,9 +12099,9 @@ fi
 #if [ "$GITHUB_ACTIONS" != "true" ];then 
 # Download the test dataset if needed
 if [ ! -d ../NMW_Sco6_NovaSgr24N1_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Sco6_NovaSgr24N1_test.tar.bz2" && tar -xvjf NMW_Sco6_NovaSgr24N1_test.tar.bz2 && rm -f NMW_Sco6_NovaSgr24N1_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW_Sco6_NovaSgr24N1_test ];then
@@ -12200,6 +12224,12 @@ $GREP_RESULT"
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10_NO_vast_image_details_log"
+  fi
+  #
+  #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10_HTML_LIST_FORMAT"
   fi
   #
   #
@@ -12427,9 +12457,9 @@ fi
 #if [ "$GITHUB_ACTIONS" != "true" ];then 
 # Download the test dataset if needed
 if [ ! -d ../NMW__NovaVul24_Stas_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW__NovaVul24_Stas_test.tar.bz2" && tar -xvjf NMW__NovaVul24_Stas_test.tar.bz2 && rm -f NMW__NovaVul24_Stas_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW__NovaVul24_Stas_test ];then
@@ -12552,6 +12582,12 @@ $GREP_RESULT"
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0_NO_vast_image_details_log"
+  fi
+  #
+  #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0_HTML_LIST_FORMAT"
   fi
   #
   #
@@ -12803,9 +12839,9 @@ fi
 #if [ "$GITHUB_ACTIONS" != "true" ];then 
 # Download the test dataset if needed
 if [ ! -d ../NMW_Aql11_NovaHer21_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Aql11_NovaHer21_test.tar.bz2" && tar -xvjf NMW_Aql11_NovaHer21_test.tar.bz2 && rm -f NMW_Aql11_NovaHer21_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW_Aql11_NovaHer21_test ];then
@@ -12928,6 +12964,12 @@ $GREP_RESULT"
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER210_NO_vast_image_details_log"
+  fi
+  #
+  #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER210_HTML_LIST_FORMAT"
   fi
   #
   #
@@ -13059,7 +13101,7 @@ fi
 #if [ ! -d ../NMW_find_NovaCas21_test ];then
 # cd ..
 # curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_find_NovaCas21_test.tar.bz2" && tar -xvjf NMW_find_NovaCas21_test.tar.bz2 && rm -f NMW_find_NovaCas21_test.tar.bz2
-# cd $WORKDIR
+# cd "$WORKDIR"
 #fi
 # If the test data are found
 if [ -d ../NMW_find_NovaCas21_test ];then
@@ -13182,6 +13224,12 @@ $GREP_RESULT"
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS210_NO_vast_image_details_log"
+  fi
+  #
+  #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS210_HTML_LIST_FORMAT"
   fi
   #
   #
@@ -13313,7 +13361,7 @@ fi
 #if [ ! -d ../NMW_Sco6_NovaSgr21N2_test ];then
 # cd ..
 # curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Sco6_NovaSgr21N2_test.tar.bz2" && tar -xvjf NMW_Sco6_NovaSgr21N2_test.tar.bz2 && rm -f NMW_Sco6_NovaSgr21N2_test.tar.bz2
-# cd $WORKDIR
+# cd "$WORKDIR"
 #fi
 # If the test data are found
 if [ -d ../NMW_Sco6_NovaSgr21N2_test ];then
@@ -13436,6 +13484,12 @@ $GREP_RESULT"
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N20_NO_vast_image_details_log"
+  fi
+  #
+  #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N20_HTML_LIST_FORMAT"
   fi
   #
   #
@@ -13625,7 +13679,7 @@ fi
 #if [ ! -d ../NMW_Sgr7_NovaSgr21N1_test ];then
 # cd ..
 # curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Sgr7_NovaSgr21N1_test.tar.bz2" && tar -xvjf NMW_Sgr7_NovaSgr21N1_test.tar.bz2 && rm -f NMW_Sgr7_NovaSgr21N1_test.tar.bz2
-# cd $WORKDIR
+# cd "$WORKDIR"
 #fi
 # If the test data are found
 if [ -d ../NMW_Sgr7_NovaSgr21N1_test ];then
@@ -13748,6 +13802,12 @@ $GREP_RESULT"
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10_NO_vast_image_details_log"
+  fi
+  #
+  #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10_HTML_LIST_FORMAT"
   fi
   #
   #
@@ -14001,7 +14061,7 @@ fi
 #if [ ! -d ../NMW_Vul7_NovaVul21_test ];then
 # cd ..
 # curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Vul7_NovaVul21_test.tar.bz2" && tar -xvjf NMW_Vul7_NovaVul21_test.tar.bz2 && rm -f NMW_Vul7_NovaVul21_test.tar.bz2
-# cd $WORKDIR
+# cd "$WORKDIR"
 #fi
 # If the test data are found
 if [ -d ../NMW_Vul7_NovaVul21_test ];then
@@ -14127,6 +14187,12 @@ $GREP_RESULT"
   fi
   #
   #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL210_HTML_LIST_FORMAT"
+  fi
+  #
+  #
   # Nova Vul 2021 has no automatic ID in the current VaST version,
   #grep --quiet "N Cas 2021" transient_report/index.html
   #if [ $? -ne 0 ];then
@@ -14246,7 +14312,7 @@ fi
 #if [ ! -d ../NMW_find_Mars_test ];then
 # cd ..
 # curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_find_Mars_test.tar.bz2" && tar -xvjf NMW_find_Mars_test.tar.bz2 && rm -f NMW_find_Mars_test.tar.bz2
-# cd $WORKDIR
+# cd "$WORKDIR"
 #fi
 # If the test data are found
 if [ -d ../NMW_find_Mars_test ];then
@@ -14403,6 +14469,13 @@ $GREP_RESULT"
    fi
   fi
 
+  #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS0110a_HTML_LIST_FORMAT"
+  fi
+  #
+
   # V0349 Gem
   grep --quiet "V0349 Gem" transient_report/index.html
   if [ $? -ne 0 ];then
@@ -14555,6 +14628,12 @@ $GREP_RESULT"
   fi
   #
   #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS30_HTML_LIST_FORMAT"
+  fi
+  #
+  #
   # Mars has no automatic ID in the current VaST version,
   #grep --quiet "N Cas 2021" transient_report/index.html
   #if [ $? -ne 0 ];then
@@ -14678,9 +14757,9 @@ fi
 #if [ "$GITHUB_ACTIONS" != "true" ];then 
 # Download the test dataset if needed
 if [ ! -d ../NMW_find_Chandra_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_find_Chandra_test.tar.bz2" && tar -xvjf NMW_find_Chandra_test.tar.bz2 && rm -f NMW_find_Chandra_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW_find_Chandra_test ];then
@@ -14804,6 +14883,14 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0_NO_vast_image_details_log"
   fi
+  
+  #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0_HTML_LIST_FORMAT"
+  fi
+  #
+ 
   #
 #### Disableing the Chandra test due to the new 10" restriction on the difference 
 #### in position of second-epoch detections.
@@ -14966,9 +15053,9 @@ fi
 #if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../NMW_Sgr9_crash_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Sgr9_crash_test.tar.bz2" && tar -xvjf NMW_Sgr9_crash_test.tar.bz2 && rm -f NMW_Sgr9_crash_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW_Sgr9_crash_test ];then
@@ -15088,6 +15175,15 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH0_NO_vast_image_details_log"
   fi
   #
+
+  #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH0_HTML_LIST_FORMAT"
+  fi
+  #
+
+
   #
   #for HOT_PIXEL_XY in "0683 2080" "1201 0959" "1389 1252" "2855 2429" "1350 1569" "1806 1556" "3166 1895" "2416 0477" "2864 2496" "1158 1418" "0618 1681" "2577 0584" "2384 0291" "1034 1921" "2298 1573" "2508 1110" "1098 0166" "3181 0438" "0071 1242" "0782 1150" ;do
   # "1201 0959" "1389 1252" etc. - do not get found on all test systems
@@ -15363,6 +15459,15 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN0_NO_vast_image_details_log"
   fi
   #
+
+  #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN0_HTML_LIST_FORMAT"
+  fi
+  #
+
+
   #for HOT_PIXEL_XY in "0683 2080" "1201 0959" "1389 1252" "2855 2429" "1350 1569" "1806 1556" "3166 1895" "2416 0477" "2864 2496" "1158 1418" "0618 1681" "2577 0584" "2384 0291" "1034 1921" "2298 1573" "2508 1110" "1098 0166" "3181 0438" "0071 1242" "0782 1150" ;do
   # "1201 0959" "1389 1252" etc - do not get found on all test systems
   #for HOT_PIXEL_XY in "0683 2080" "3166 1895" "2508 1110" "1098 0166" ;do
@@ -15504,9 +15609,9 @@ fi
 ############# NMW exclusion list #############
 # Download the test dataset if needed
 if [ ! -d ../NMW_Vul2_magnitude_calibration_exit_code_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_Vul2_magnitude_calibration_exit_code_test.tar.bz2" && tar -xvjf NMW_Vul2_magnitude_calibration_exit_code_test.tar.bz2 && rm -f NMW_Vul2_magnitude_calibration_exit_code_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
@@ -15664,9 +15769,9 @@ fi
 ##### NMW-STL find Neptune test #####
 # Download the test dataset if needed
 if [ ! -d ../NMW-STL__find_Neptune_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__find_Neptune_test.tar.bz2" && tar -xvjf NMW-STL__find_Neptune_test.tar.bz2 && rm -f NMW-STL__find_Neptune_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW-STL__find_Neptune_test ];then
@@ -15806,6 +15911,12 @@ $GREP_RESULT"
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE0_NO_vast_image_details_log"
+  fi
+  #
+  #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE0_HTML_LIST_FORMAT"
   fi
   #
   #
@@ -16050,9 +16161,9 @@ fi
 ##### NMW-STL find Nova Vul 2024 test #####
 # Download the test dataset if needed
 if [ ! -d ../NMW-STL__find_NovaVul24_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__find_NovaVul24_test.tar.bz2" && tar -xvjf NMW-STL__find_NovaVul24_test.tar.bz2 && rm -f NMW-STL__find_NovaVul24_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW-STL__find_NovaVul24_test ];then
@@ -16194,6 +16305,11 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL240_NO_vast_image_details_log"
   fi
   #
+  #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL240_HTML_LIST_FORMAT"
+  fi
   #
   # Nova Vul 2024 = V615 Vul = PNV J19430751+2100204
   grep --quiet "V0615 Vul" transient_report/index.html
@@ -16459,9 +16575,9 @@ fi
 ##### NMW-STL ref. frame match fail test #####
 # Download the test dataset if needed
 if [ ! -d ../NMW-STL__RefFrameMatchFail_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__RefFrameMatchFail_test.tar.bz2" && tar -xvjf NMW-STL__RefFrameMatchFail_test.tar.bz2 && rm -f NMW-STL__RefFrameMatchFail_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW-STL__RefFrameMatchFail_test ];then
@@ -16632,6 +16748,12 @@ $GREP_RESULT"
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH0_NO_vast_image_details_log"
+  fi
+  #
+  #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH0_HTML_LIST_FORMAT"
   fi
   #
   # 
@@ -17020,9 +17142,9 @@ fi
 ##### NMW-STL find huge comet test #####
 # Download the test dataset if needed
 if [ ! -d ../NMW-STL__STL-11000M__find_huge_comet_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2" && tar -xvjf NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2 && rm -f NMW-STL__STL-11000M__find_huge_comet_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW-STL__STL-11000M__find_huge_comet_test ];then
@@ -17132,6 +17254,12 @@ $GREP_RESULT"
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET0_NO_vast_image_details_log"
+  fi
+  #
+  #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET0_HTML_LIST_FORMAT"
   fi
   #
   #
@@ -17281,9 +17409,9 @@ fi
 ##### TICA TESS find Nova Vul 2024 test #####
 # Download the test dataset if needed
 if [ ! -d ../TICA_TESS__find_NovaVul24_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/TICA_TESS__find_NovaVul24_test.tar.bz2" && tar -xvjf TICA_TESS__find_NovaVul24_test.tar.bz2 && rm -f TICA_TESS__find_NovaVul24_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../TICA_TESS__find_NovaVul24_test ];then
@@ -17424,6 +17552,12 @@ $GREP_RESULT"
   fi
   #
   #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL240_HTML_LIST_FORMAT"
+  fi
+  #
+  #
   # Nova Vul 2024 = V615 Vul = PNV J19430751+2100204
   grep --quiet "V0615 Vul" transient_report/index.html
   if [ $? -ne 0 ];then
@@ -17524,9 +17658,9 @@ fi
 ##### NMW-STL plate solve failure test #####
 # Download the test dataset if needed
 if [ ! -d ../NMW-STL__plate_solve_failure_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__plate_solve_failure_test.tar.bz2" && tar -xvjf NMW-STL__plate_solve_failure_test.tar.bz2 && rm -f NMW-STL__plate_solve_failure_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW-STL__plate_solve_failure_test ];then
@@ -17666,6 +17800,12 @@ $GREP_RESULT"
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE0_NO_vast_image_details_log"
+  fi
+  #
+  #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE0_HTML_LIST_FORMAT"
   fi
   #
   # Amphitrite
@@ -17896,9 +18036,9 @@ fi
 ##### NMW-STL find Nova Oph 2024 test #####
 # Download the test dataset if needed
 if [ ! -d ../NMW-STL__NovaOph24N1_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW-STL__NovaOph24N1_test.tar.bz2" && tar -xvjf NMW-STL__NovaOph24N1_test.tar.bz2 && rm -f NMW-STL__NovaOph24N1_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW-STL__NovaOph24N1_test ];then
@@ -18038,6 +18178,12 @@ $GREP_RESULT"
   else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH240_NO_vast_image_details_log"
+  fi
+  #
+  #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH240_HTML_LIST_FORMAT"
   fi
   #
   # V4370 Oph
@@ -18218,9 +18364,9 @@ fi
 ##### NMW find Nova Oph 2024 test #####
 # Download the test dataset if needed
 if [ ! -d ../NMW__NovaOph24N1_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW__NovaOph24N1_test.tar.bz2" && tar -xvjf NMW__NovaOph24N1_test.tar.bz2 && rm -f NMW__NovaOph24N1_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../NMW__NovaOph24N1_test ];then
@@ -18511,9 +18657,9 @@ fi
 ##### TICA TESS magnitude calibration failure test #####
 # Download the test dataset if needed
 if [ ! -d ../TICA_TESS_mag_calibration_failure_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/TICA_TESS_mag_calibration_failure_test.tar.bz2" && tar -xvjf TICA_TESS_mag_calibration_failure_test.tar.bz2 && rm -f TICA_TESS_mag_calibration_failure_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../TICA_TESS_mag_calibration_failure_test ];then
@@ -18787,9 +18933,9 @@ fi
 ##### DSLR transient search test #####
 # Download the test dataset if needed
 if [ ! -d ../KZ_Her_DSLR_transient_search_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/KZ_Her_DSLR_transient_search_test.tar.bz2" && tar -xvjf KZ_Her_DSLR_transient_search_test.tar.bz2 && rm -f KZ_Her_DSLR_transient_search_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../KZ_Her_DSLR_transient_search_test ];then
@@ -18954,9 +19100,9 @@ fi
 
 # Download the test dataset if needed
 if [ ! -d ../NMW_Venus_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/KGO_RC600_NCas2021_test.tar.bz2" && tar -xvjf KGO_RC600_NCas2021_test.tar.bz2 && rm -f KGO_RC600_NCas2021_test.tar.bz2
- cd $WORKDIR || exit 1
+ cd "$WORKDIR" || exit 1
 fi
 ############################################
 
@@ -19313,9 +19459,9 @@ if [ ! -f ../individual_images_test/1630+3250.20150511T215921000.fit ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/1630+3250.20150511T215921000.fit.bz2" && bunzip2 1630+3250.20150511T215921000.fit.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -f ../individual_images_test/1630+3250.20150511T215921000.fit ];then
@@ -19392,9 +19538,9 @@ if [ ! -f ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.f
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit.bz2" && bunzip2 2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -f ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit ];then
@@ -19493,9 +19639,9 @@ if [ ! -f ../individual_images_test/c176.fits ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/c176.fits.bz2" && bunzip2 c176.fits.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -f ../individual_images_test/c176.fits ];then
@@ -19562,9 +19708,9 @@ if [ ! -f ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fi
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit.bz2" && bunzip2 SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -f ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit ];then
@@ -19653,9 +19799,9 @@ if [ ! -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit.bz2" && bunzip2 J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit ];then
@@ -19769,9 +19915,9 @@ if [ ! -f ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit ];th
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit.bz2" && bunzip2 V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -f ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit ];then
@@ -19897,9 +20043,9 @@ if [ ! -f ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits ];
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits.bz2" && bunzip2 LIGHT_21-06-21_V_-39.82_300.00s_0001.fits.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -f ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits ];then
@@ -20005,9 +20151,9 @@ if [ ! -f ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits ];t
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits.bz2" && bunzip2 LIGHT_21-22-58_B_-42.00_60.00s_0001.fits.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -f ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits ];then
@@ -20114,9 +20260,9 @@ if [ ! -f ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits ]
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/blank_image_with_only_MJD-OBS_keyword.fits.bz2" && bunzip2 blank_image_with_only_MJD-OBS_keyword.fits.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -f ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits ];then
@@ -20161,9 +20307,9 @@ if [ ! -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/wcs_fd_Per3_2011-10-31_001.fts.bz2" && bunzip2 wcs_fd_Per3_2011-10-31_001.fts.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 #
 if [ -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
@@ -20226,9 +20372,9 @@ if [ ! -f ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-00464
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit.bz2" && bunzip2 Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -f ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit ];then
@@ -20300,9 +20446,9 @@ if [ ! -f ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-L
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit.bz2" && bunzip2 raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -f ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit ];then
@@ -20390,9 +20536,9 @@ if [ ! -f ../individual_images_test/SCA13320__00_00.fits ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/SCA13320__00_00.fits.bz2" && bunzip2 SCA13320__00_00.fits.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -f ../individual_images_test/SCA13320__00_00.fits ];then
@@ -20457,17 +20603,17 @@ if [ ! -f ../individual_images_test/SCA13320__00_00__date_in_JDMID_keyword.fits 
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/SCA13320__00_00__date_in_JDMID_keyword.fits.bz2" && bunzip2 SCA13320__00_00__date_in_JDMID_keyword.fits.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 if [ ! -f ../individual_images_test/SCA13320__00_00.fits ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/SCA13320__00_00.fits.bz2" && bunzip2 SCA13320__00_00.fits.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 if [ -f ../individual_images_test/SCA13320__00_00__date_in_JDMID_keyword.fits ] && [ -f ../individual_images_test/SCA13320__00_00.fits ] ;then
  THIS_TEST_START_UNIXSEC=$(date +%s)
@@ -20510,9 +20656,9 @@ if [ ! -f ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits ];t
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/hst_12911_01_wfc3_uvis_f775w_01_drz.fits.bz2" && bunzip2 hst_12911_01_wfc3_uvis_f775w_01_drz.fits.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -f ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits ];then
@@ -20573,9 +20719,9 @@ if [ ! -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits.bz2" && bunzip2 ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits ];then
@@ -20708,9 +20854,9 @@ if [ ! -f ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit.bz2" && bunzip2 ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -f ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit ];then
@@ -20844,9 +20990,9 @@ if [ ! -f ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/r_ncas20200820_stacked_16bit_g2.fit.bz2" && bunzip2 r_ncas20200820_stacked_16bit_g2.fit.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 #
 if [ -f ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit ];then
@@ -20963,9 +21109,9 @@ if [ ! -f ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/r_ncas20200820_stacked_32bit_g2.fit.bz2" && bunzip2 r_ncas20200820_stacked_32bit_g2.fit.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 #
 if [ -f ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit ];then
@@ -21088,9 +21234,9 @@ if [ ! -f ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit.bz2" && bunzip2 r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -f ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit ];then
@@ -21207,9 +21353,9 @@ if [ ! -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/tess2020107065919-s0024-4-4-0180-s_ffic.fits.bz2" && bunzip2 tess2020107065919-s0024-4-4-0180-s_ffic.fits.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits ];then
@@ -21322,9 +21468,9 @@ if [ ! -f ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-cc
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.bz2" && bunzip2 hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -f ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits ];then
@@ -21610,30 +21756,30 @@ if [ ! -f ../individual_images_test/1630+3250.20150511T215921000.fit ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/1630+3250.20150511T215921000.fit.bz2" && bunzip2 1630+3250.20150511T215921000.fit.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 if [ ! -f ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit.bz2" && bunzip2 Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 if [ ! -f ../individual_images_test/SCA13320__00_00.fits ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/SCA13320__00_00.fits.bz2" && bunzip2 SCA13320__00_00.fits.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 if [ ! -d ../M31_ISON_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/M31_ISON_test.tar.bz2" && tar -xvjf M31_ISON_test.tar.bz2 && rm -f M31_ISON_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 #
 if [ -d ../individual_images_test ];then
@@ -21785,9 +21931,9 @@ if [ ! -f ../individual_images_test/SCA13320__00_00.fits ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/SCA13320__00_00.fits.bz2" && bunzip2 SCA13320__00_00.fits.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 if [ -f ../individual_images_test/SCA13320__00_00.fits ];then
  THIS_TEST_START_UNIXSEC=$(date +%s)
@@ -21835,9 +21981,9 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 ############# Dark Flat Flag #############
 if [ ! -d ../vast_test__dark_flat_flag ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test__dark_flat_flag.tar.bz2" && tar -xvjf vast_test__dark_flat_flag.tar.bz2 && rm -f vast_test__dark_flat_flag.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 if [ -d ../vast_test__dark_flat_flag ];then
  THIS_TEST_START_UNIXSEC=$(date +%s)
@@ -22521,9 +22667,9 @@ if [ $? -eq 0 ];then
     fi
     #
     if [ ! -d ../vast_test_bright_stars_failed_match ];then
-     cd ..
+     cd .. || exit 1
      curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_bright_stars_failed_match.tar.bz2" && tar -xvjf vast_test_bright_stars_failed_match.tar.bz2 && rm -f vast_test_bright_stars_failed_match.tar.bz2
-     cd $WORKDIR
+     cd "$WORKDIR" || exit 1
     fi
     # If the test data are found
     if [ -d ../vast_test_bright_stars_failed_match ];then
@@ -22593,9 +22739,9 @@ fi # if [ $? -eq 0 ];then
 if [ "$GITHUB_ACTIONS" != "true" ];then 
 
 if [ ! -d ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails.tar.bz2" && tar -xjf M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails.tar.bz2 && rm -f M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 if [ -d ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ];then
@@ -22881,14 +23027,14 @@ if [ ! -d ../vast_test_lightcurves ];then
  mkdir ../vast_test_lightcurves
 fi
 if [ ! -f ../vast_test_lightcurves/out00095_edit_edit.dat ];then
- cd ../vast_test_lightcurves
+ cd ../vast_test_lightcurves || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/out00095_edit_edit.dat.bz2" && bunzip2 out00095_edit_edit.dat.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 if [ ! -f ../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat ];then
- cd ../vast_test_lightcurves
+ cd ../vast_test_lightcurves || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat.bz2" && bunzip2 ZTF1901_2-5_KGO_JDmid.dat.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 #PERIOD_SEARCH_SERVERS="none scan.sai.msu.ru vast.sai.msu.ru"
@@ -23180,9 +23326,9 @@ if [ ! -d ../vast_test_lightcurves ];then
  mkdir ../vast_test_lightcurves
 fi
 if [ ! -f ../vast_test_lightcurves/out00095_edit_edit.dat ];then
- cd ../vast_test_lightcurves
+ cd ../vast_test_lightcurves || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/out00095_edit_edit.dat.bz2" && bunzip2 out00095_edit_edit.dat.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 # Run the test
@@ -23254,9 +23400,9 @@ if [ ! -d ../vast_test_lightcurves ];then
  mkdir ../vast_test_lightcurves
 fi
 if [ ! -f ../vast_test_lightcurves/test_vizquery_M31.input ];then
- cd ../vast_test_lightcurves
+ cd ../vast_test_lightcurves || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/test_vizquery_M31.input.bz2" && bunzip2 test_vizquery_M31.input.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 
 # Run the test
@@ -23405,13 +23551,13 @@ if [ $? -ne 0 ];then
 fi
 
 # GCVS is supposed to reply
-cd ..
+cd .. || exit 1
 "$WORKDIR"/util/search_databases_with_curl.sh 15:31:40.10 -20:27:17.3 | grep --quiet "BW Lib"
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT002a"
 fi
-cd "$WORKDIR"
+cd "$WORKDIR" || exit 1
 
 util/search_databases_with_vizquery.sh 22:02:43.29139 +42:16:39.9803 TEST 40 no_online_vsx | grep TEST | grep --quiet "BL Lac"
 if [ $? -ne 0 ];then
@@ -23419,13 +23565,13 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT003_vizquery"
 fi
 
-cd ..
+cd .. || exit 1
 "$WORKDIR"/util/search_databases_with_vizquery.sh 22:02:43.29139 +42:16:39.9803 TEST 40 no_online_vsx | grep TEST | grep --quiet "BL Lac"
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT003a_vizquery"
 fi
-cd "$WORKDIR"
+cd "$WORKDIR" || exit 1
 
 util/search_databases_with_vizquery.sh 15:31:40.10 -20:27:17.3 TEST 40 no_online_vsx | grep TEST | grep --quiet "BW Lib"
 if [ $? -ne 0 ];then
@@ -24173,9 +24319,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../MASTER_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/MASTER_test.tar.bz2" && tar -xvjf MASTER_test.tar.bz2 && rm -f MASTER_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../MASTER_test ];then
@@ -24334,9 +24480,9 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 # Download the test dataset if needed
 if [ ! -d ../M31_ISON_test ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/M31_ISON_test.tar.bz2" && tar -xvjf M31_ISON_test.tar.bz2 && rm -f M31_ISON_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../M31_ISON_test ];then
@@ -24454,9 +24600,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 ##### test images by JB PSF #####
 # Download the test dataset if needed
 if [ ! -d ../test_exclude_ref_image ];then
- cd ..
+ cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/data/vast_tests/test_exclude_ref_image.tar.bz2" && tar -xvjf test_exclude_ref_image.tar.bz2 && rm -f test_exclude_ref_image.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 # If the test data are found
 if [ -d ../test_exclude_ref_image ];then
@@ -24717,8 +24863,6 @@ echo "$PATH" | grep --quiet ':lib/bin'
 if [ $? -ne 0 ];then
  export PATH=$PATH:lib/bin
 fi
-# needs WCSTools to run
-#command -v skycoor &>/dev/null
 command -v lib/bin/skycoor &>/dev/null
 if [ $? -eq 0 ];then
  THIS_TEST_START_UNIXSEC=$(date +%s)
@@ -25030,7 +25174,7 @@ if [ ! -f ../vast_test_lightcurves/exclusion_list_STL.txt ];then
   echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
   exit 1
  fi
- cd $WORKDIR || exit 1
+ cd "$WORKDIR" || exit 1
 fi
 # run the large exclusion file test
 if [ -s ../vast_test_lightcurves/exclusion_list_STL.txt ];then
@@ -25765,9 +25909,9 @@ echo -n "Performing auxiliary web services test: " >> vast_test_report.txt
 
 # OMC2ASCII converter test 1
 if [ ! -f ../vast_test_lightcurves/IOMC_4011000047.fits ];then
- cd ../vast_test_lightcurves
+ cd ../vast_test_lightcurves || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/IOMC_4011000047.fits.bz2" && bunzip2 IOMC_4011000047.fits.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/IOMC_4011000047.fits" 'http://scan.sai.msu.ru/cgi-bin/omc_converter/process_omc.py' | grep 'Refresh' | awk -F 'url=' '{print $2}' | sed 's:"::g' | awk -F '>' '{print $1}'`
 if [ $? -ne 0 ];then
@@ -25789,9 +25933,9 @@ fi
 
 # OMC2ASCII converter test 2
 if [ ! -f ../vast_test_lightcurves/IOMC_2677000065.fits ];then
- cd ../vast_test_lightcurves
+ cd ../vast_test_lightcurves || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/IOMC_2677000065.fits.bz2" && bunzip2 IOMC_2677000065.fits.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/IOMC_2677000065.fits" 'http://scan.sai.msu.ru/cgi-bin/omc_converter/process_omc.py' | grep 'Refresh' | awk -F 'url=' '{print $2}' | sed 's:"::g' | awk -F '>' '{print $1}'`
 if [ $? -ne 0 ];then
@@ -25826,9 +25970,9 @@ fi
 
 # SuperWASP converter
 if [ ! -f ../vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits ];then
- cd ../vast_test_lightcurves
+ cd ../vast_test_lightcurves || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits.bz2" && bunzip2 1SWASP_J013623.20+480028.4.fits.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 RESULTSURL=`curl --silent -F submit="Convert" -F file=@"../vast_test_lightcurves/1SWASP_J013623.20+480028.4.fits" 'http://scan.sai.msu.ru/cgi-bin/swasp_converter/process_swasp.py' | grep 'Refresh' | awk -F 'url=' '{print $2}' | sed 's:"::g' | awk -F '>' '{print $1}'`
 if [ $? -ne 0 ];then
@@ -25850,9 +25994,9 @@ fi
 
 # WWWUPSILON
 if [ ! -f ../vast_test_lightcurves/nsv14523hjd.dat ];then
- cd ../vast_test_lightcurves
+ cd ../vast_test_lightcurves || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/nsv14523hjd.dat.bz2" && bunzip2 nsv14523hjd.dat.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 RESULTSURL=`curl --silent -F submit="Classify" -F file=@"../vast_test_lightcurves/nsv14523hjd.dat" 'http://scan.sai.msu.ru/cgi-bin/wwwupsilon/process_lightcurve.py' | grep 'Refresh' | awk -F 'url=' '{print $2}' | sed 's:"::g' | awk -F '>' '{print $1}'`
 if [ $? -ne 0 ];then
@@ -26860,9 +27004,9 @@ if [ ! -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
- cd ../individual_images_test
+ cd ../individual_images_test || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/wcs_fd_Per3_2011-10-31_001.fts.bz2" && bunzip2 wcs_fd_Per3_2011-10-31_001.fts.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 if [ -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
  util/fov_of_wcs_calibrated_image.sh ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts | grep 'Image size: 467.' | grep --quiet '352.'
@@ -26928,9 +27072,9 @@ echo "Performing NMW flatfielding test "
 echo -n "Performing NMW flatfielding test: " >> vast_test_report.txt 
 
 if [ ! -d ../NMW_corrupt_calibration_test ];then
- cd ../
+ cd ../ || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_corrupt_calibration_test.tar.bz2" && tar -xf NMW_corrupt_calibration_test.tar.bz2 && rm -f NMW_corrupt_calibration_test.tar.bz2
- cd $WORKDIR
+ cd "$WORKDIR" || exit 1
 fi
 if [ -f ../NMW_corrupt_calibration_test/d_test.fit ] && [ -f ../NMW_corrupt_calibration_test/mff_Stas_2021-08-28.fit ];then
  util/ccd/md ../NMW_corrupt_calibration_test/d_test.fit ../NMW_corrupt_calibration_test/mff_Stas_2021-08-28.fit fd_test.fit
@@ -27422,10 +27566,10 @@ if [ $? -eq 0 ];then
  fi
  for INPUTDATAFILE in naif0012.tls out_Cepheid_TDB_HJD_VARTOOLS.dat out_Cepheid_TT_HJD_VaST.dat out_Cepheid_UTC_raw.dat ;do
   if [ ! -f ../vast_test_lightcurves/"$INPUTDATAFILE" ];then
-   cd ../vast_test_lightcurves
+   cd ../vast_test_lightcurves || exit 1
    curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/$INPUTDATAFILE.bz2"
    bunzip2 "$INPUTDATAFILE".bz2
-   cd $WORKDIR
+   cd "$WORKDIR" || exit 1
   fi
  done
 
