@@ -614,7 +614,7 @@ fi # if [ SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
 
 ### Print it only if the source passes the final check in order not to confuse the test script
 #     Reference image    2010 12 10.0833  2455540.5834  13.61  06:29:12.25 +26:24:19.4
-echo "<pre style='font-family:monospace;font-size:12px;'>
+echo "<pre class='folding-pre'>
 Mean magnitude and position on the discovery images: 
                    $YEAR_MEAN $MONTH_MEAN $DAYFRAC_MEAN_SHORT  $JD_MEAN_SHORT  $MAG_MEAN  $RADEC_MEAN_HMS"
 

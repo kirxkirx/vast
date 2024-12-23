@@ -205,7 +205,7 @@ if [ "$DATABASE_RESULTS" != "" ];then
  else
   echo -e "The object was <font color=\"green\">found</font> in $DATABASE_NAME:  "
  fi
- DATABASE_RESULTS=$(echo $DATABASE_RESULTS |awk -F"<pre>" '{print $6}')
+ DATABASE_RESULTS=$(echo $DATABASE_RESULTS | awk -F"<pre>" '{print $6}')
  DATABASE_RESULTS=$(echo ${DATABASE_RESULTS//"</pre>"/""})
  DATABASE_RESULTS=$(echo "$DATABASE_RESULTS" | sed 's/>[^<]*<//g' | sed 's/<[^>]*>//g')
  # Cut out the first word which is the distance from the specified position

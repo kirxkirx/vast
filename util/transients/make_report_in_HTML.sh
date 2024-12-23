@@ -430,7 +430,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    #
    echo "<a href=\"javascript:toggleElement('manualvast_$TRANSIENT_NAME')\">Example VaST+ds9 commands for visual image inspection</a> (blink images in ds9). " >> transient_report/index.tmp  
    echo -n "<div id=\"manualvast_$TRANSIENT_NAME\" style=\"display:none\">
-<pre style='font-family:monospace;font-size:12px;'>
+<pre class='folding-pre'>
 # Set SExtractor parameters file
 cp default.sex.telephoto_lens_onlybrightstars_v1 default.sex
 # Plate-solve the FITS images
@@ -460,7 +460,7 @@ ds9 -frame lock wcs  " >> transient_report/index.tmp
    #
    echo "<a href=\"javascript:toggleElement('vastcommandline_$TRANSIENT_NAME')\">VaST command line</a> (re-run VaST)</br>" >> transient_report/index.tmp  
    echo -n "<div id=\"vastcommandline_$TRANSIENT_NAME\" style=\"display:none\">
-<pre style='font-family:monospace;font-size:12px;'>
+<pre class='folding-pre'>
 " >> transient_report/index.tmp
    cat vast_command_line.log >> transient_report/index.tmp
    echo " && util/transients/search_for_transients_single_field.sh
@@ -473,7 +473,7 @@ ds9 -frame lock wcs  " >> transient_report/index.tmp
    if [ $? -eq 0 ];then
     echo "<a href=\"javascript:toggleElement('analysisscript_$TRANSIENT_NAME')\">The analysis script</a> (re-run the full search)" >> transient_report/index.tmp  
     echo -n "<div id=\"analysisscript_$TRANSIENT_NAME\" style=\"display:none\">
-<pre style='font-family:monospace;font-size:12px;'>
+<pre class='folding-pre'>
 REFERENCE_IMAGES="`dirname $REFERENCE_IMAGE` >> transient_report/index.tmp
     echo -n "  " >> transient_report/index.tmp
     grep --max-count=1 'done by the script' transient_report/index.html | awk -F'<code>' '{print $2}' | awk -F'</code>' '{print $1}' >> transient_report/index.tmp
@@ -494,7 +494,7 @@ The code 'C32' is 'Ka-Dar Observatory, TAU Station, Nizhny Arkhyz', the code '50
 Make sure there are no trailing white spaces after the observatory code. 
 The string should be exactly 80 characters long to conform to the MPC format.<br>
 Mean position:
-<pre style='font-family:monospace;font-size:12px;'>
+<pre class='folding-pre'>
 " >> transient_report/index.tmp
     #cat test.mpc | sed 's: 500: C32:g' >> transient_report/index.tmp
     #cat test.mpc__"$LIGHTCURVE_FILE_OUTDAT" | sed 's: 500: C32:g' >> transient_report/index.tmp
@@ -502,7 +502,7 @@ Mean position:
     cat test.mpc__"$LIGHTCURVE_FILE_OUTDAT" | sed "s: 500: $MPC_CODE:g" >> transient_report/index.tmp
     echo "</pre>
 Position measured on individual images:
-<pre style='font-family:monospace;font-size:12px;'>" >> transient_report/index.tmp
+<pre class='folding-pre'" >> transient_report/index.tmp
     # We are getting DAYFRAC with fewer significant digits as we are getting it from the visual output
     grep 'Discovery image' transient_report/index.tmp | tail -n 2 | head -n1 | awk -F'>' '{print $5" "$11" "$9}' | sed 's:&nbsp;::g' | sed 's:</td::g' | sed 's:\:: :g' | awk -v mpccode="$MPC_CODE" '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+03.0f %02.0f %04.1f          %4.1f R      %s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,mpccode}' >> transient_report/index.tmp
     grep 'Discovery image' transient_report/index.tmp | tail -n 1 | awk -F'>' '{print $5" "$11" "$9}' | sed 's:&nbsp;::g' | sed 's:</td::g' | sed 's:\:: :g' | awk -v mpccode="$MPC_CODE" '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+03.0f %02.0f %04.1f          %4.1f R      %s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,mpccode}' >> transient_report/index.tmp
@@ -519,7 +519,7 @@ Position measured on individual images:
     echo -n "<div id=\"tocpstub_$TRANSIENT_NAME\" style=\"display:none\">
 Here is a stub line for <a href='http://www.cbat.eps.harvard.edu/tocp_report'>reporting a new transient to the TOCP</a>. 
 Don't forget to set the constellation name and the number of days since the last non-detection!
-<pre style='font-family:monospace;font-size:12px;'>
+<pre class='folding-pre'>
 " >> transient_report/index.tmp
     #cat test.mpc | sed 's: C2: 2:g' | awk -v val="$CONSTELLATION" '{printf "TCP %d %02d %07.4f*  %02d %02d %05.2f %+03d %02d %04.1f  %4.1f U             %s       9 0\n", $2, $3, $4,  $5, $6, $7,  $8, $9, $10,  $11,  val}' >> transient_report/index.tmp
     cat test.mpc__"$LIGHTCURVE_FILE_OUTDAT" | sed 's: C2: 2:g' | awk -v val="$CONSTELLATION" '{printf "TCP %d %02d %07.4f*  %02d %02d %05.2f %+03d %02d %04.1f  %4.1f U             %s       9 0\n", $2, $3, $4,  $5, $6, $7,  $8, $9, $10,  $11,  val}' >> transient_report/index.tmp
@@ -535,7 +535,7 @@ Don't forget to set the constellation name and the number of days since the last
    echo "<a href=\"javascript:toggleElement('varstarstub_$TRANSIENT_NAME')\">Stub variable star reports</a> " >> transient_report/index.tmp  
    echo -n "<div id=\"varstarstub_$TRANSIENT_NAME\" style=\"display:none\">
 Don't forget to change the observer code for the AAVSO and VSNET format data!<br>
-<pre>" >> transient_report/index.tmp
+<pre class='folding-pre'>" >> transient_report/index.tmp
 if [ -z "$AAVSO_OBSCODE" ];then
  AAVSO_OBSCODE="SKA"
 fi
@@ -628,7 +628,7 @@ vsnet-obs@ooruri.kusastro.kyoto-u.ac.jp
    #
    echo "<a href=\"javascript:toggleElement('findercharts_$TRANSIENT_NAME')\">Make finder charts with VaST</a>" >> transient_report/index.tmp  
    echo -n "<div id=\"findercharts_$TRANSIENT_NAME\" style=\"display:none\">
-<pre style='font-family:monospace;font-size:12px;'>
+<pre class='folding-pre'>
 # Set SExtractor parameters file
 cp default.sex.telephoto_lens_onlybrightstars_v1 default.sex
 # Plate-solve the FITS images and produce the finder charts

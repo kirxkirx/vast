@@ -719,78 +719,111 @@ echo "<HTML>
 
 <style>
  body {
-       font-family:monospace;
-       font-size:12px;
+       font-family: monospace;
+       font-size: 12px;
  }
  .inverted {
        filter: invert(100%);
  }
  .rotated {
        transform: rotate(180deg);
- } 
+ }
+ /* Floating button styling */
+ .floating-btn {
+       position: fixed;          /* Fixed position on the screen */
+       top: 5vh;                 /* 5% of the viewport height from the top */
+       left: calc(max(420px, 85vw)); /* Position at 85vw but no less than 420px */
+       background-color: #007bff; /* Button background color */
+       color: white;             /* Text color */
+       border: none;             /* Remove default border */
+       border-radius: 5px;       /* Rounded corners */
+       padding: 10px 20px;       /* Button size */
+       font-size: 16px;          /* Font size */
+       cursor: pointer;          /* Pointer cursor on hover */
+       z-index: 1000;            /* Ensure it's on top of other elements */
+       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow for emphasis */
+ }
+
+ .floating-btn:hover {
+       background-color: #0056b3; /* Darker blue on hover */
+ }
+
+
+/* Style for the <pre> element */
+.folding-pre {
+    max-width: 100vw;          /* Limit width to 90% of the viewport width */
+    overflow-x: auto;         /* Add horizontal scrollbar if content overflows */
+    white-space: pre-wrap;    /* Allow wrapping if desired, but keep preformatted style */
+    word-wrap: break-word;    /* Break long words if needed */
+}
+
 </style>
 
-<script type='text/javascript'>
+<script type=\"text/javascript\">
 function toggleElement(id)
 {
-    if(document.getElementById(id).style.display == 'none')
-    {
+    if (document.getElementById(id).style.display == 'none') {
         document.getElementById(id).style.display = '';
-    }
-    else
-    {   
+    } else {
         document.getElementById(id).style.display = 'none';
     }
 }
 
-function printCandidateNameWithAbsLink( transientname) {
+function printCandidateNameWithAbsLink(transientname) {
 
- var currentLocation = window.location.href;
- 
- var n = currentLocation.indexOf('#');
- currentLocation = currentLocation.substring(0, n != -1 ? n : currentLocation.length);
- var transientLink = \"#\";
- transientLink = transientLink.concat(transientname);
- var targetURL = currentLocation.concat(transientLink);
- 
- var outputString = \"<h3><a href='\";
- outputString = outputString.concat(targetURL);
- outputString = outputString.concat(\"'>\");
- outputString = outputString.concat(transientname);
- outputString = outputString.concat(\"</a></h3>\");
+    var currentLocation = window.location.href;
+    var n = currentLocation.indexOf('#');
+    currentLocation = currentLocation.substring(0, n != -1 ? n : currentLocation.length);
+    var transientLink = \"#\";
+    transientLink = transientLink.concat(transientname);
+    var targetURL = currentLocation.concat(transientLink);
 
- document.write(outputString); 
+    var outputString = \"<h3><a href='\";
+    outputString = outputString.concat(targetURL);
+    outputString = outputString.concat(\"'>\");
+    outputString = outputString.concat(transientname);
+    outputString = outputString.concat(\"</a></h3>\");
 
+    document.write(outputString); 
 }
 
-// Functionality for toggling image inversion
-function toggleInvert() {
+// Functionality to toggle inversion for all images
+function invertAllImages() {
     const images = document.querySelectorAll('img');
     images.forEach(img => {
         img.classList.toggle('inverted');
     });
 }
 
-// Functionality for rotating an image 180 degrees on right-click
+// Functionality for rotating an individual image
 function rotateImage(event) {
-    event.preventDefault(); // Prevent the default context menu
     this.classList.toggle('rotated');
+}
+
+// Prevent default context menu and invert images on right-click
+function invertImagesOnRightClick(event) {
+    event.preventDefault(); // Prevent the default context menu
+    invertAllImages(); // Invert all images
 }
 
 // Add event listeners to images after the page loads
 document.addEventListener('DOMContentLoaded', () => {
     const images = document.querySelectorAll('img');
     images.forEach(img => {
-        img.addEventListener('click', toggleInvert); // Left-click for inversion
-        img.addEventListener('contextmenu', rotateImage); // Right-click for rotation
+        // Rotate image on left-click
+        img.addEventListener('click', rotateImage);
     });
-});
 
+    // Enable image inversion on right-click anywhere on the page
+    document.addEventListener('contextmenu', invertImagesOnRightClick);
+});
 </script>
 
 </HEAD>
 
 <BODY>
+<button class=\"floating-btn\" onclick=\"invertAllImages()\">Invert</button>
+
 <h2>NMW transient search results</h2>
 This analysis is done by the script  <code>$0 $string_command_line_argumants</code><br><br>
 The list of candidates will appear below. Please <b>manually reload the page</b> every few minutes untill the 'Processing complete' message appears.
@@ -2315,7 +2348,7 @@ TOTAL_NUMBER_OF_CANDIDATES=$(grep 'script' transient_report/index.html | grep -c
 echo "Total number of candidates identified: $TOTAL_NUMBER_OF_CANDIDATES" >> transient_report/index.html
 
 echo "<H3>Processing log:</H3>
-<pre>" >> transient_report/index.html
+<pre class='folding-pre'>" >> transient_report/index.html
 FILENAME="transient_factory.log"
 THRESHOLD=$((10 * 1024 * 1024))  # 10 MB in bytes
 FILESIZE=$(get_file_size "$FILENAME")
@@ -2327,7 +2360,7 @@ fi
 echo "</pre>" >> transient_report/index.html
 
 echo "<H3>Filtering log:</H3>
-<pre>" >> transient_report/index.html
+<pre class='folding-pre'>" >> transient_report/index.html
 FILENAME="transient_factory_test31.txt"
 THRESHOLD=$((10 * 1024 * 1024))  # 10 MB in bytes
 FILESIZE=$(get_file_size "$FILENAME")
