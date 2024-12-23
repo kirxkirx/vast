@@ -748,15 +748,6 @@ echo "<HTML>
        background-color: #0056b3; /* Darker blue on hover */
  }
 
-
-/* Style for the <pre> element */
-.folding-pre {
-    max-width: 100vw;          /* Limit width to 90% of the viewport width */
-    overflow-x: auto;         /* Add horizontal scrollbar if content overflows */
-    white-space: pre-wrap;    /* Allow wrapping if desired, but keep preformatted style */
-    word-wrap: break-word;    /* Break long words if needed */
-}
-
 </style>
 
 <script type='text/javascript'>
@@ -795,27 +786,22 @@ function invertAllImages() {
     });
 }
 
-// Functionality for rotating an individual image
+// Functionality to rotate an individual image
 function rotateImage(event) {
-    this.classList.toggle('rotated');
-}
-
-// Prevent default context menu and invert images on right-click
-function invertImagesOnRightClick(event) {
     event.preventDefault(); // Prevent the default context menu
-    invertAllImages(); // Invert all images
+    this.classList.toggle('rotated');
 }
 
 // Add event listeners to images after the page loads
 document.addEventListener('DOMContentLoaded', () => {
     const images = document.querySelectorAll('img');
     images.forEach(img => {
-        // Rotate image on left-click
+        // Invert all images on left-click
         img.addEventListener('click', rotateImage);
-    });
 
-    // Enable image inversion on right-click anywhere on the page
-    document.addEventListener('contextmenu', invertImagesOnRightClick);
+        // Rotate the specific image on right-click
+        img.addEventListener('contextmenu', invertAllImages);
+    });
 });
 </script>
 
