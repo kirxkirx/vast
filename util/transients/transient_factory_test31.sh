@@ -721,6 +721,7 @@ echo "<HTML>
  body {
        font-family: monospace;
        font-size: 12px;
+       min-width: 1650px;  /* Enforce a minimum width */
  }
  .inverted {
        filter: invert(100%);
