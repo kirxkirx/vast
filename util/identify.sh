@@ -129,6 +129,12 @@ function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image
   return 1
  fi
  
+ ### !!! Blindly trust WCS if it was created by SWarp image stacking code !!! ###
+ echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet "SOFTNAME= 'SWarp"
+ if [ $? -eq 0 ];then
+  return 1
+ fi
+ 
  ### !!! Blindly trust ZTF image astrometry !!! ###
  # (actually it will have the above SCAMP keyword too)
  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -B500 -A500 "ORIGIN  = 'Zwicky Transient Facility'" | grep -B500 -A500 "INSTRUME= 'ZTF/MOSAIC'" |  grep --quiet "CTYPE1  = 'RA---TPV'"
