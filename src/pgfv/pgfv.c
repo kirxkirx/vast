@@ -578,6 +578,11 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
  int test_i;
 
  int limit;
+ 
+ long number_of_negative_pixels= 0;
+ long number_of_nonnegative_pixels= 0;
+ 
+ double fraction_of_negative_pixels= 0;
 
  // int number_of_pixels_in_zoomed_image;
 
@@ -591,18 +596,39 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
   HIST[i]= 0;
 
  for ( i= 0; i < NUM_OF_PIXELS; i++ ) {
-  if ( im[i] > 0 && im[i] < 65535 ) {
+  //if ( im[i] > 0 && im[i] < 65535 ) {
    // Cool it works!!! (Transformation from i to XY)
    Y= 1 + (int)( (float)i / (float)naxes[0] );
    X= i + 1 - ( Y - 1 ) * naxes[0];
    if ( X > MIN( drawX1, drawX2 ) && X < MAX( drawX1, drawX2 ) && Y > MIN( drawY1, drawY2 ) && Y < MAX( drawY1, drawY2 ) ) {
-    HIST[(long)( im[i] + 0.5 )]+= 1;
-    if ( im[i] > ( *max_i ) )
-     ( *max_i )= im[i];
-    if ( im[i] < ( *min_i ) )
-     ( *min_i )= im[i];
+    //
+    if ( im[i] < 0.0 ) {
+     number_of_negative_pixels++;
+    } else {
+     number_of_nonnegative_pixels++;
+    }
+    //
+    if ( im[i] > 0 && im[i] < 65535 ) {
+     HIST[(long)( im[i] + 0.5 )]+= 1;
+     if ( im[i] > ( *max_i ) )
+      ( *max_i )= im[i];
+     if ( im[i] < ( *min_i ) )
+      ( *min_i )= im[i];
+    }
+    //
    }
-  }
+  //} // 
+ }
+ 
+ //
+ fraction_of_negative_pixels= (double)number_of_negative_pixels / (double)( number_of_nonnegative_pixels + number_of_negative_pixels );
+ fprintf( stderr, "Fraction of negative pixels in the image region: %.3lf\n",fraction_of_negative_pixels);
+ // special case of mean-subtracted image
+ if ( fraction_of_negative_pixels > 0.3 ) {
+  ( *min_i )= -50.0;
+  ( *max_i )= +150.0;
+  fprintf( stderr, "Setting special image range: min= %.1f max=%.1f\n", ( *min_i ), ( *max_i ) );
+  return;
  }
  
  //fprintf(stderr, "DEBUG096 image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
@@ -630,6 +656,10 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
     }
    }
   }
+  
+  //
+  
+  
 
   // find histogram peak
   summa= 0;
