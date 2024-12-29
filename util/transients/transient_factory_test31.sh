@@ -2213,6 +2213,8 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
     else
      echo "$RADECSTR  -- asteroid (will NOT add it to exclusion list)" >> transient_factory_test31.txt
     fi
+    # TBA: do not add 0.0 pix shift candidates??
+    #
    done < exclusion_list_index_html.txt > exclusion_list_index_html.txt_noasteroids
    mv -v exclusion_list_index_html.txt_noasteroids exclusion_list_index_html.txt >> transient_factory_test31.txt 2>&1
    #

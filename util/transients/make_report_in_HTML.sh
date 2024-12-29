@@ -502,7 +502,7 @@ Mean position:
     cat test.mpc__"$LIGHTCURVE_FILE_OUTDAT" | sed "s: 500: $MPC_CODE:g" >> transient_report/index.tmp
     echo "</pre>
 Position measured on individual images:
-<pre class='folding-pre'" >> transient_report/index.tmp
+<pre class='folding-pre'>" >> transient_report/index.tmp
     # We are getting DAYFRAC with fewer significant digits as we are getting it from the visual output
     grep 'Discovery image' transient_report/index.tmp | tail -n 2 | head -n1 | awk -F'>' '{print $5" "$11" "$9}' | sed 's:&nbsp;::g' | sed 's:</td::g' | sed 's:\:: :g' | awk -v mpccode="$MPC_CODE" '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+03.0f %02.0f %04.1f          %4.1f R      %s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,mpccode}' >> transient_report/index.tmp
     grep 'Discovery image' transient_report/index.tmp | tail -n 1 | awk -F'>' '{print $5" "$11" "$9}' | sed 's:&nbsp;::g' | sed 's:</td::g' | sed 's:\:: :g' | awk -v mpccode="$MPC_CODE" '{printf "     TAU0008  C%s %02.0f %08.5f %02.0f %02.0f %05.2f %+03.0f %02.0f %04.1f          %4.1f R      %s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,mpccode}' >> transient_report/index.tmp
