@@ -203,6 +203,9 @@
 //#define CONST 10
 #define MAX_DIFF_POLY_MAG_CALIBRATION 0.3                                         // Stars that deviate more than MAX_DIFF_POLY_MAG_CALIBRATION from the fit will 
                                                                                   // be discarded from the magnitude calibration procedure.
+
+#define MIN_NUMBER_STARS_ZEROPOINT_MAG_CALIB 30                                   // Minimum number of automatically matched stars for zeropoint-only magnitude calibration
+                                                                                  
 #define MIN_NUMBER_STARS_POLY_MAG_CALIBR 40                                       // Magnitude calibration with parabola will not be performed 
                                                                                   // if there are less than MIN_NUMBER_STARS_POLY_MAG_CALIBR stars.
 #define MAX_INSTR_MAG_DIFF 99.0                                                   // Do not use stars with instrumental mag difference >MAX_INSTR_MAG_DIFF for magnitude calibration 

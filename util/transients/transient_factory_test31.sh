@@ -1520,7 +1520,11 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
    rm -f vast_output_$$.tmp
    # drop this field and continue to the next one
    # We want to break from the SExtractor settings files loop here
-   break
+   #break
+   # We want to continue SExtractor settings files loop here as
+   # there are examples where the bright star run fails, but faint star run works fine:
+   # NMW_Sirius_magnitude_calibration_failure_test
+   continue
   fi
   #
   if [ -f vast_output_$$.tmp ];then

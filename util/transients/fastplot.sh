@@ -269,6 +269,7 @@ INPUTFILE=$(echo "$THE_FOUR_IMAGE_FILES" | awk '{print $1}')
 check_file_exists "$INPUTFILE"
 INPUTFILE_BASENAME=$(basename "$INPUTFILE")
 WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
+WCS_INPUTFILE="${WCS_INPUTFILE/wcs_wcs_/wcs_}"
 util/wcs_image_calibration.sh "$INPUTFILE"
 if [ $? -ne 0 ];then
  echo "ERROR running util/wcs_image_calibration.sh $INPUTFILE"
@@ -289,6 +290,7 @@ INPUTFILE=$(echo "$THE_FOUR_IMAGE_FILES" | awk '{print $2}')
 check_file_exists "$INPUTFILE"
 INPUTFILE_BASENAME=$(basename "$INPUTFILE")
 WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
+WCS_INPUTFILE="${WCS_INPUTFILE/wcs_wcs_/wcs_}"
 util/wcs_image_calibration.sh "$INPUTFILE"
 if [ $? -ne 0 ];then
  echo "ERROR running util/wcs_image_calibration.sh $INPUTFILE"
@@ -309,6 +311,7 @@ INPUTFILE=$(echo "$THE_FOUR_IMAGE_FILES" | awk '{print $3}')
 check_file_exists "$INPUTFILE"
 INPUTFILE_BASENAME=$(basename "$INPUTFILE")
 WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
+WCS_INPUTFILE="${WCS_INPUTFILE/wcs_wcs_/wcs_}"
 util/wcs_image_calibration.sh "$INPUTFILE"
 if [ $? -ne 0 ];then
  echo "ERROR running util/wcs_image_calibration.sh $INPUTFILE"
@@ -329,6 +332,7 @@ INPUTFILE=$(echo "$THE_FOUR_IMAGE_FILES" | awk '{print $4}')
 check_file_exists "$INPUTFILE"
 INPUTFILE_BASENAME=$(basename "$INPUTFILE")
 WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
+WCS_INPUTFILE="${WCS_INPUTFILE/wcs_wcs_/wcs_}"
 util/wcs_image_calibration.sh "$INPUTFILE"
 if [ $? -ne 0 ];then
  echo "ERROR running util/wcs_image_calibration.sh $INPUTFILE"
@@ -344,6 +348,13 @@ fi
 check_file_created r_"$WCS_INPUTFILE"
 CHARTS_NEW2_BASENAME="${INPUTFILE_BASENAME//./_}"
 cp -v r_"$WCS_INPUTFILE" "$OUTPUT_DIR"/resampled_FITS
+
+## Handle the case of the input image having wcs_ in their name
+CHARTS_REF1_BASENAME="${CHARTS_REF1_BASENAME/wcs_/}"
+CHARTS_REF2_BASENAME="${CHARTS_REF2_BASENAME/wcs_/}"
+CHARTS_NEW1_BASENAME="${CHARTS_NEW1_BASENAME/wcs_/}"
+CHARTS_NEW2_BASENAME="${CHARTS_NEW2_BASENAME/wcs_/}"
+##
 
 # Combine the finder charts into one image (note the '*' symbols meaning the command will work only if you have a single transient in that field)
 #

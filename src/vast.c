@@ -5154,9 +5154,14 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
     //////
     // Decide how many stars we need for magnitude calibration
     min_number_of_stars_for_magnitude_calibration= MIN( (int)( (double)MIN( NUMBER2, NUMBER3 ) / 3.0 ), MIN_NUMBER_STARS_POLY_MAG_CALIBR );
+    // Relax min_number_of_stars_for_magnitude_calibration if we do zero-point only calibration (NMW good reference vs bad new image)
+    if ( photometric_calibration_type == 2 ) {
+     min_number_of_stars_for_magnitude_calibration= MIN( min_number_of_stars_for_magnitude_calibration, MIN_NUMBER_STARS_ZEROPOINT_MAG_CALIB );
+    }
     min_number_of_stars_for_magnitude_calibration= MAX( min_number_of_stars_for_magnitude_calibration, 1 ); // we need at least one comparison star, that's for sure
 
     fprintf( stderr, "Expecting to find at least %d * for magnitude calibration\n", min_number_of_stars_for_magnitude_calibration );
+    fprintf( stderr, "We have N_good_stars = %d, N_manually_selected_comparison_stars = %d\n", N_good_stars, N_manually_selected_comparison_stars );
     //////
 
     // If we don't have enough stars to perform a reliable magnitude calibration
@@ -5165,7 +5170,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      write_string_to_individual_image_log( sextractor_catalog, "main(): ", "ERROR: to few stars to perform magnitude calibration ", "" );
     } else {
 
-     /* Write data to log */
+     // Write data to log 
      sprintf( filename_for_magnitude_calibration_log, "image%05d__%s", n, basename( input_images[n] ) );
      // write_magnitude_calibration_log( poly_x, poly_y, poly_err, N_good_stars, input_images[n] );
      write_magnitude_calibration_log( poly_x, poly_y, poly_err, N_good_stars, filename_for_magnitude_calibration_log );

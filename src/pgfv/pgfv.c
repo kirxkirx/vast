@@ -2790,8 +2790,8 @@ int main( int argc, char **argv ) {
        }
        if ( finder_char_pix_around_the_target < 64 ) {
         marker_scaling= 1.0;
-        marker_offset_pix=3.0;
-        marker_length_pix=6.0;
+        marker_offset_pix=2.5;
+        marker_length_pix=5.0;
        }
        //
        // up
