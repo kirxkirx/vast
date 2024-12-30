@@ -1504,18 +1504,12 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   if [ $? -ne 0 ];then
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-   echo "ERROR running VaST on the field $FIELD (stdout)"
-   echo "ERROR running VaST on the field $FIELD (transient_factory_test31.txt)" >> transient_factory_test31.txt
-   echo "ERROR running VaST on the field $FIELD (transient_factory.log)" >> transient_factory.log
+   echo "ERROR running VaST on the field $FIELD (wrong fied? clouds? --stdout)"
+   echo "ERROR running VaST on the field $FIELD (wrong fied? clouds? -- transient_factory_test31.txt)" >> transient_factory_test31.txt
+   echo "ERROR running VaST on the field $FIELD (wrong fied? clouds?)" >> transient_factory.log
    # Display and save VaST output to the log file if the run failed
-   #echo "____ VaST output ____"
-   #echo "____ VaST output ____" >> transient_factory_test31.txt
    echo "____ VaST output ____" | tee -a transient_factory_test31.txt
-   #cat vast_output_$$.tmp
-   #cat vast_output_$$.tmp  >> transient_factory_test31.txt
    cat vast_output_$$.tmp | tee -a transient_factory_test31.txt
-   #echo "_____________________"
-   #echo "_____________________" >> transient_factory_test31.txt
    echo "_____________________" | tee -a transient_factory_test31.txt
    rm -f vast_output_$$.tmp
    # drop this field and continue to the next one
