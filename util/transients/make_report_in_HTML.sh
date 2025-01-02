@@ -349,7 +349,8 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    fi
 
    #echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Preview of the reference image(s) and two 2nd epoch images</a> (are there clouds/trees in the view?)</br>" >> transient_report/index.tmp  
-   echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Preview of the reference image(s) and two 2nd epoch images</a> (are there clouds/trees in the view?)" >> transient_report/index.tmp  
+   #echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Preview of the reference image(s) and two 2nd epoch images</a> (are there clouds/trees in the view?)" >> transient_report/index.tmp  
+   echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Full images</a> (clouds? trees? ice on chip?)" >> transient_report/index.tmp  
    if [ ! -z "$URL_OF_DATA_PROCESSING_ROOT" ];then
     DIRNAME_2ND_EPOCH_IMAGES=`dirname $REFERENCE_IMAGE`
     DIRNAME_2ND_EPOCH_IMAGES=`basename $DIRNAME_2ND_EPOCH_IMAGES`
@@ -428,7 +429,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    echo "</br>" >> transient_report/index.tmp 
    
    #
-   echo "<a href=\"javascript:toggleElement('manualvast_$TRANSIENT_NAME')\">Example VaST+ds9 commands for visual image inspection</a> (blink images in ds9). " >> transient_report/index.tmp  
+   echo "<a href=\"javascript:toggleElement('manualvast_$TRANSIENT_NAME')\">Platesolve and blink FITS with VaST+ds9</a> " >> transient_report/index.tmp  
    echo -n "<div id=\"manualvast_$TRANSIENT_NAME\" style=\"display:none\">
 <pre class='folding-pre'>
 # Set SExtractor parameters file
@@ -457,21 +458,23 @@ ds9 -frame lock wcs  " >> transient_report/index.tmp
 </div>" >> transient_report/index.tmp
    #
 
-   #
-   echo "<a href=\"javascript:toggleElement('vastcommandline_$TRANSIENT_NAME')\">VaST command line</a> (re-run VaST)</br>" >> transient_report/index.tmp  
-   echo -n "<div id=\"vastcommandline_$TRANSIENT_NAME\" style=\"display:none\">
-<pre class='folding-pre'>
-" >> transient_report/index.tmp
-   cat vast_command_line.log >> transient_report/index.tmp
-   echo " && util/transients/search_for_transients_single_field.sh
-</pre>
-</div>" >> transient_report/index.tmp
-   #
+# util/transients/search_for_transients_single_field.sh is oboslete, we are now using util/transients/transient_factory_test31.sh for the search
+#
+#   #
+#   echo "<a href=\"javascript:toggleElement('vastcommandline_$TRANSIENT_NAME')\">VaST command line</a> (re-run VaST)</br>" >> transient_report/index.tmp  
+#   echo -n "<div id=\"vastcommandline_$TRANSIENT_NAME\" style=\"display:none\">
+#<pre class='folding-pre'>
+#" >> transient_report/index.tmp
+#   cat vast_command_line.log >> transient_report/index.tmp
+#   echo " && util/transients/search_for_transients_single_field.sh
+#</pre>
+#</div>" >> transient_report/index.tmp
+#   #
 
    #
    grep --max-count=1 --quiet 'done by the script' transient_report/index.html
    if [ $? -eq 0 ];then
-    echo "<a href=\"javascript:toggleElement('analysisscript_$TRANSIENT_NAME')\">The analysis script</a> (re-run the full search)" >> transient_report/index.tmp  
+    echo "<a href=\"javascript:toggleElement('analysisscript_$TRANSIENT_NAME')\">Re-run transient search script</a>" >> transient_report/index.tmp  
     echo -n "<div id=\"analysisscript_$TRANSIENT_NAME\" style=\"display:none\">
 <pre class='folding-pre'>
 REFERENCE_IMAGES="`dirname $REFERENCE_IMAGE` >> transient_report/index.tmp
