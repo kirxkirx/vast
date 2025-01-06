@@ -42,11 +42,22 @@ function validate_index_html() {
 }
 
 index_file="transient_report/index.html"
+if [ -n "$1" ];then
+ echo "Specified index file location $1"
+ if [ -f "$1" ];then
+  echo "$1 is a regular file"
+  index_file="$1"
+ elif [ -f "$1/index.html" ];then
+  echo "$1 is a directory containing index.html file"
+  index_file="$1/index.html"
+ fi
+fi
 
 validate_index_html "$index_file"
 if [ $? -ne 0 ]; then
     echo "Validation failed for $index_file."
-    return 1
+    exit 1
 else
     echo "Validation passed for $index_file."
+    exit
 fi
