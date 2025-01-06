@@ -1498,9 +1498,9 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
 
  if ( randChoice == 0 ) {
   //sprintf( command, "curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' > %s", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
-  sprintf( command, "curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
+  sprintf( command, "curl --silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
  } else {
-  sprintf( command, "curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
+  sprintf( command, "curl --silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
  }
 
  fprintf( stderr, "%s\n", command );
@@ -1512,10 +1512,10 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
   // Note the reverse order with repect to randChoice
   if ( randChoice == 0 ) {
    // This block will execute if the first executed command was the first option and it failed
-   sprintf( command, "curl --insecure --connect-timeout 10 --retry 2 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
+   sprintf( command, "curl --silent --show-error --insecure --connect-timeout 10 --retry 2 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
   } else {
    // This block will execute if the first executed command was the second option and it failed
-   sprintf( command, "curl --insecure --connect-timeout 10 --retry 2 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
+   sprintf( command, "curl --silent --show-error --insecure --connect-timeout 10 --retry 2 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
   }
 
   fprintf( stderr, "%s\n", command );
