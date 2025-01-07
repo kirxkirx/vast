@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2012,SC2002,SC2086,SC2181,SC2013,SC2015,SC2001,SC2046
+
 # When adapting this script for a new dataset, watch for the signs
 ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
 ### ===> APERTURE LIMITS HARDCODED HERE <===
@@ -1255,7 +1257,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "INFO:   SECOND_EPOCH__SECOND_IMAGE_MEAN_VALUE= $SECOND_EPOCH__SECOND_IMAGE_MEAN_VALUE" | tee -a transient_factory_test31.txt
    echo "INFO:           SECOND_EPOCH__SECOND_IMAGE_SD= $SECOND_EPOCH__SECOND_IMAGE_SD" | tee -a transient_factory_test31.txt
    echo "----------------------------------------------" | tee -a transient_factory_test31.txt
-   echo "INFO:      ref_to_second_epoch_img_mean_ratio= "$(echo $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE | awk '{print $2/$1}') | tee -a transient_factory_test31.txt
+   echo "INFO:      ref_to_second_epoch_img_mean_ratio= "$(echo "$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" | awk '{print $2/$1}') | tee -a transient_factory_test31.txt
    echo "INFO:                  SECOND_EPOCH__SD_ratio= "$(echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD" | awk '{A=$1; B=$2; result=(A > B ? (A - B) : (B - A)) / B; print result}') | tee -a transient_factory_test31.txt
    # Check ratio of the mean image values against the user-specified threshold
    if awk -v maxratio="$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO" -v ref="$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" -v second="$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" 'BEGIN {if (second > maxratio * ref) exit 0; exit 1}'; then
@@ -1558,7 +1560,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
       else
        #
        echo "Creating symlink $i" | tee -a transient_factory_test31.txt
-       ln -s "$i"
+       ln -s "$i" "$(basename "$i")"
       fi
      fi # if [ -s "$i" ];then
     done # for i in "$WCSCACHEDIR"/wcs_"$FIELD"_*."$FITS_FILE_EXT" "$WCSCACHEDIR"/exclusion_list*; do
@@ -1618,9 +1620,9 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
    WCS_IMAGE_NAME_FOR_CHECKS=${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}
    #
    if [ ! -s "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
-    echo "***** PLATE SOLVE PROCESSING ERROR *****" >> transient_factory.log
-    echo "***** cannot find $WCS_IMAGE_NAME_FOR_CHECKS  *****" >> transient_factory.log
-    echo "############################################################" >> transient_factory.log
+    echo "***** PLATE SOLVE PROCESSING ERROR *****
+***** cannot find $WCS_IMAGE_NAME_FOR_CHECKS  *****
+############################################################" >> transient_factory.log
     echo 'UNSOLVED_PLATE'
    else
     echo "$WCS_IMAGE_NAME_FOR_CHECKS exists and is non-empty" | tee -a transient_factory_test31.txt
@@ -1968,31 +1970,27 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
 
   ################## Quality cuts applied to calibrated magnitudes of the candidate transients ##################
   cp -v candidates-transients.lst DEBUG_BACKUP_candidates-transients.lst
-  #echo "Filter-out faint candidates..." >> transient_factory_test31.txt
-  #echo "Filter-out faint candidates..."
   echo "Filter-out faint candidates..." | tee -a transient_factory_test31.txt
   # Filter-out faint candidates
   ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
-  #for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2">13.5"}'|bc -ql) ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
-  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk -v var="$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" '{print ((($1+$2)/2>var)?1:0)}' ) ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 "$i" | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk -v var="$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" '{print ((($1+$2)/2>var)?1:0)}' ) ; if [ $TEST -eq 0 ];then grep "$i" candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
   echo "Filter-out suspiciously bright candidates..." | tee -a transient_factory_test31.txt
   # Filter-out suspiciously bright candidates
   ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
-  #for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2"<-5.0"}'|bc -ql) ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
-  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk -v var="$FILTER_BRIGHT_MAG_CUTOFF_TRANSIENT_SEARCH" '{print ((($1+$2)/2<var)?1:0)}' ) ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 "$i" | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk -v var="$FILTER_BRIGHT_MAG_CUTOFF_TRANSIENT_SEARCH" '{print ((($1+$2)/2<var)?1:0)}' ) ; if [ $TEST -eq 0 ];then grep "$i" candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
   echo "Filter-out candidates with large difference between measured mags in one epoch..." | tee -a transient_factory_test31.txt
   # 2nd epoch
   # Filter-out candidates with large difference between measured mags
-  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($1-$2)>0.4 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 "$i" | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($1-$2)>0.4 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep "$i" candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
   # Filter-out candidates with large difference between measured mags
-  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($2-$1)>0.4 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 "$i" | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($2-$1)>0.4 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep "$i" candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
   # 1st epoch (only for sources detected on two reference images)
   # Filter-out candidates with large difference between measured mags
-  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do if [ $(cat $i | wc -l) -lt 4 ];then grep $i candidates-transients.lst | head -n1 ;continue ;fi ; A=$(head -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($1-$2)>1.0 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do if [ $(wc -l < "$i") -lt 4 ];then grep "$i" candidates-transients.lst | head -n1 ;continue ;fi ; A=$(head -n2 "$i" | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($1-$2)>1.0 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep "$i" candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
   # Filter-out candidates with large difference between measured mags
-  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do if [ $(cat $i | wc -l) -lt 4 ];then grep $i candidates-transients.lst | head -n1 ;continue ;fi ; A=$(head -n2 $i | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($2-$1)>1.0 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do if [ $(wc -l < "$i") -lt 4 ];then grep "$i" candidates-transients.lst | head -n1 ;continue ;fi ; A=$(head -n2 "$i" | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($2-$1)>1.0 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep "$i" candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
   ############################################
   # Remove candidates close to frame edge
@@ -2001,17 +1999,17 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   DIMY=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS2 | awk '{print $3}' | head -n1)
   ### ===> IMAGE EDGE OFFSET HARDCODED HERE <===
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
-   cat $i | awk "{if ( \$4>$FRAME_EDGE_OFFSET_PIX && \$4<$DIMX-$FRAME_EDGE_OFFSET_PIX && \$5>$FRAME_EDGE_OFFSET_PIX && \$5<$DIMY-$FRAME_EDGE_OFFSET_PIX ) print \"YES\"; else print \"NO\" }" | grep --quiet 'NO'
+   cat "$i" | awk "{if ( \$4>$FRAME_EDGE_OFFSET_PIX && \$4<$DIMX-$FRAME_EDGE_OFFSET_PIX && \$5>$FRAME_EDGE_OFFSET_PIX && \$5<$DIMY-$FRAME_EDGE_OFFSET_PIX ) print \"YES\"; else print \"NO\" }" | grep --quiet 'NO'
    if [ $? -ne 0 ];then
     # If there was no "NO" answer for any of the lines
-    grep $i candidates-transients.lst | head -n1 
+    grep "$i" candidates-transients.lst | head -n1 
    fi
   done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
   ############################################
 
   echo "Filter-out small-amplitude flares..." | tee -a transient_factory_test31.txt
   # Filter-out small-amplitude flares
-  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do if [ $(cat $i | wc -l) -eq 2 ];then grep $i candidates-transients.lst | head -n1 ;continue ;fi ; A=$(head -n1 $i | awk '{print $2}') ; B=$(tail -n2 $i | awk '{print $2}') ; MEANMAGSECONDEPOCH=$(echo ${B//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2}') ; TEST=$(echo $A $MEANMAGSECONDEPOCH | awk '{if ( ($1-$2)<0.5 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep $i candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do if [ $(wc -l < "$i") -eq 2 ];then grep "$i" candidates-transients.lst | head -n1 ;continue ;fi ; A=$(head -n1 "$i" | awk '{print $2}') ; B=$(tail -n2 "$i" | awk '{print $2}') ; MEANMAGSECONDEPOCH=$(echo ${B//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2}') ; TEST=$(echo $A $MEANMAGSECONDEPOCH | awk '{if ( ($1-$2)<0.5 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep "$i" candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
   # Make sure each candidate is detected on the two second-epoch images, not any other combination
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
@@ -2023,14 +2021,14 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    if [ $? -ne 0 ];then
     continue
    fi
-   grep $i candidates-transients.lst | head -n1 
+   grep "$i" candidates-transients.lst | head -n1 
   done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
 
   ### Prepare the exclusion lists for this field
   echo "Preparing the exclusion lists for this field" | tee -a transient_factory_test31.txt
   # move it here to do it once
   SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
-  WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
+  WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE="wcs_$(basename "$SECOND_EPOCH_IMAGE_ONE")"
   # Exclude the previously considered candidates
   if [ ! -s exclusion_list.txt ];then
    if [ -s "$EXCLUSION_LIST" ];then
@@ -2081,7 +2079,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
 
   ###############################################################################################################
   # Check if the number of detected transients is suspiciously large
-  NUMBER_OF_DETECTED_TRANSIENTS=$(cat candidates-transients.lst | wc -l)
+  NUMBER_OF_DETECTED_TRANSIENTS=$(wc -l < candidates-transients.lst)
   echo "Found $NUMBER_OF_DETECTED_TRANSIENTS candidate transients before the final filtering." | tee -a transient_factory_test31.txt
   if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt $NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT ];then
    echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping SE run ($SEXTRACTOR_CONFIG_FILE)" | tee -a transient_factory_test31.txt
@@ -2102,7 +2100,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Dropping flares..." | tee -a transient_factory_test31.txt
     # if yes, remove flares, keep only new objects
     while read -r FLAREOUTFILE A B ;do
-     grep -v $FLAREOUTFILE candidates-transients.lst > candidates-transients.tmp
+     grep -v "$FLAREOUTFILE" candidates-transients.lst > candidates-transients.tmp
      mv candidates-transients.tmp candidates-transients.lst
     done < candidates-flares.lst
    fi
@@ -2207,15 +2205,15 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
     else
      echo "$RADECSTR  -- asteroid (will NOT add it to exclusion list)" >> transient_factory_test31.txt
     fi
-    # TBA: do not add 0.0 pix shift candidates??
-    #
    done < exclusion_list_index_html.txt > exclusion_list_index_html.txt_noasteroids
    mv -v exclusion_list_index_html.txt_noasteroids exclusion_list_index_html.txt >> transient_factory_test31.txt 2>&1
    #
    while read -r RADECSTR ;do
     grep -A8 "$RADECSTR" transient_report/index.html | grep 'galactic' | grep --quiet -e '<font color="red">0.0</font></b> pix' -e '<font color="red">0.1</font></b> pix' -e '<font color="red">0.2</font></b> pix'
-    if [ $? -ne 0 ] || ( [[ ! -z "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ]] &&
-     [[ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" == "no" ]] ); then
+    #if [ $? -ne 0 ] || ( [[ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ]] &&
+    # [[ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" == "no" ]] ); then
+    if [ $? -ne 0 ] || { [[ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ]] &&
+                         [[ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" == "no" ]]; }; then
      # assume there are no hot pixels in TICA TESS images
      echo "$RADECSTR"
      echo "$RADECSTR  -- does not seem to be a hot pixel (will add it to exclusion list)" >> transient_factory_test31.txt
@@ -2224,17 +2222,36 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
     fi
    done < exclusion_list_index_html.txt > exclusion_list_index_html.txt_nohotpixels
    mv -v exclusion_list_index_html.txt_nohotpixels exclusion_list_index_html.txt >> transient_factory_test31.txt 2>&1
+   # Count known variable stars. We want them in the exclusion list,
+   # but we also want to see how many completely "new" candidates we have - for logging and quality control.
+   echo "# Count candidates with no identification (that also don't look like hot pix)"
+   NUMBER_OF_UNIDENTIFIED_CANDIDATES=0
+   while read -r RADECSTR ;do
+    grep -A8 "$RADECSTR" transient_report/index.html | grep 'VSX' | grep --quiet 'not found' && grep -A8 "$RADECSTR" transient_report/index.html | grep 'ASASSN-V' | grep --quiet 'not found' 
+    if [ $? -eq 0 ];then
+     grep --quiet -A8 "$RADECSTR" 'This object is listed in' transient_report/index.html
+     if [ $? -ne 0 ];then
+      ((NUMBER_OF_UNIDENTIFIED_CANDIDATES = NUMBER_OF_UNIDENTIFIED_CANDIDATES + 1))
+      echo "$RADECSTR  -- not a known variable star" >> transient_factory_test31.txt
+     else
+      echo "$RADECSTR  -- a known object" >> transient_factory_test31.txt
+     fi
+    else
+     echo "$RADECSTR  -- a known variable star" >> transient_factory_test31.txt
+    fi
+   done < exclusion_list_index_html.txt
+   #
+   echo "Found $NUMBER_OF_UNIDENTIFIED_CANDIDATES unidentified candidates."
    #
    echo "###################################################################################" | tee -a transient_factory_test31.txt
    ALLOW_EXCLUSION_LIST_UPDATE="YES"
-   N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS=$(cat exclusion_list_index_html.txt | wc -l)
+   N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS=$(wc -l < exclusion_list_index_html.txt)
    echo "$N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS candidates found (excluding asteroids and hot pixels)" | tee -a transient_factory_test31.txt
    # Do this check only if we are processing a single field
    if [ -z "$2" ];then
     ### ===> ASSUMED MAX NUMBER OF CANDIDATES <===
     ### ===> FIELD NAME HARDCODED HERE <===
     # drop the limit no the number of candidates for the all-important Galactic Center field
-    #if [ $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS -gt 20 ] && [ "$FIELD" != "Sco6" ] ;then
     if [ $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS -gt $MAX_NUMBER_OF_CANDIDATES_PER_FIELD ] && [ "$FIELD" != "Sco6" ] ;then
      echo "ERROR: too many candidates -- $N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS (excluding asteroids and hot pixels), not updating the exclusion list!" | tee -a transient_factory_test31.txt
      ALLOW_EXCLUSION_LIST_UPDATE="NO"
