@@ -13,23 +13,103 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
-# Function to download Tycho2 dataset files
+## Function to download Tycho2 dataset files
+#get_tycho2_from_scan_with_curl() {
+# local url="http://scan.sai.msu.ru/~kirx/data/tycho2/"
+# 
+# # Get the directory listing
+# listing=$(curl $VAST_CURL_PROXY -s "$url" | grep -o 'href="[^"]*"' | cut -d'"' -f2)
+# 
+# for item in $listing; do
+#  # Skip directory links
+#  [[ "$item" == */ ]] && continue
+#  # Check if file matches our patterns
+#  if [[ "$item" == "ReadMe" || "$item" == *.gz || "$item" == "robots.txt" ]]; then
+#   # Download file with continuation
+#   echo "Downloading: $item"
+#   curl $VAST_CURL_PROXY -C - -s --create-dirs -o "$item" "${url}${item}"
+#  fi
+# done
+#}
 get_tycho2_from_scan_with_curl() {
- local url="http://scan.sai.msu.ru/~kirx/data/tycho2/"
- 
- # Get the directory listing
- listing=$(curl $VAST_CURL_PROXY -s "$url" | grep -o 'href="[^"]*"' | cut -d'"' -f2)
- 
- for item in $listing; do
-  # Skip directory links
-  [[ "$item" == */ ]] && continue
-  # Check if file matches our patterns
-  if [[ "$item" == "ReadMe" || "$item" == *.gz || "$item" == "robots.txt" ]]; then
-   # Download file with continuation
-   echo "Downloading: $item"
-   curl $VAST_CURL_PROXY -C - -s --create-dirs -o "$item" "${url}${item}"
-  fi
- done
+    local url="http://scan.sai.msu.ru/~kirx/data/tycho2/"
+    local max_retries=3
+    local failed_downloads=()
+    
+    # Get the directory listing with file sizes
+    listing=$(curl $VAST_CURL_PROXY -s "$url" | grep -o 'href="[^"]*".*[0-9]\{1,\}' | sed 's/.*>\s*\([0-9]\+\)$/\t\1/')
+    
+    if [[ -z "$listing" ]]; then
+        echo "Error: Could not retrieve directory listing"
+        return 1
+    fi
+    
+    while IFS=$'\t' read -r item expected_size; do
+        # Skip directory links
+        [[ "$item" == */ ]] && continue
+        
+        # Check if file matches our patterns
+        if [[ "$item" == "ReadMe" || "$item" == *.gz || "$item" == "robots.txt" ]]; then
+            local retry_count=0
+            local download_success=false
+            local remote_size=$(curl $VAST_CURL_PROXY -sI "${url}${item}" | grep -i 'Content-Length' | awk '{print $2}' | tr -d '\r')
+            
+            while [[ $retry_count -lt $max_retries && $download_success == false ]]; do
+                echo "Downloading: $item (Attempt $((retry_count + 1))/$max_retries)"
+                
+                # Check if file exists and is partially downloaded
+                if [[ -f "$item" ]]; then
+                    local local_size=$(stat -f %z "$item" 2>/dev/null || stat -c %s "$item" 2>/dev/null)
+                    echo "Existing partial download found: $local_size bytes of $remote_size bytes"
+                fi
+                
+                if curl $VAST_CURL_PROXY -C - -s --create-dirs -o "$item" "${url}${item}"; then
+                    # Verify file size matches expected size
+                    local final_size=$(stat -f %z "$item" 2>/dev/null || stat -c %s "$item" 2>/dev/null)
+                    
+                    if [[ "$final_size" == "$remote_size" ]]; then
+                        # For gzipped files, also check if the file is valid
+                        if [[ "$item" == *.gz ]]; then
+                            if gzip -t "$item" 2>/dev/null; then
+                                download_success=true
+                                echo "Successfully downloaded and verified: $item"
+                            else
+                                echo "File $item is corrupted (gzip test failed)"
+                                rm -f "$item"
+                                ((retry_count++))
+                            fi
+                        else
+                            download_success=true
+                            echo "Successfully downloaded and verified: $item"
+                        fi
+                    else
+                        echo "Size mismatch for $item (expected: $remote_size, got: $final_size)"
+                        rm -f "$item"  # Remove potentially corrupted file
+                        ((retry_count++))
+                    fi
+                else
+                    ((retry_count++))
+                    echo "Download failed, retrying..."
+                    sleep 2  # Brief pause before retry
+                fi
+            done
+            
+            if [[ $download_success == false ]]; then
+                failed_downloads+=("$item")
+                echo "Failed to download $item after $max_retries attempts"
+            fi
+        fi
+    done <<< "$listing"
+    
+    # Report final status
+    if [[ ${#failed_downloads[@]} -eq 0 ]]; then
+        echo "All files downloaded successfully"
+        return 0
+    else
+        echo "The following files failed to download:"
+        printf '%s\n' "${failed_downloads[@]}"
+        return 1
+    fi
 }
 
 function check_if_curl_is_too_old_to_attempt_HTTPS() {
