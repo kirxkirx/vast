@@ -1783,14 +1783,14 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   fi
   
   # Array to hold names of temporary files
-  declare -a tempFiles
+  declare -a solve_plate_with_UCAC5_tempFiles
   # Now solve all images in parallel with no photomeric calibration
   for i in $(cat vast_image_details.log | awk '{print $17}' | sort | uniq) ;do
    # Create a temporary file for this iteration's output
-   tempFile=$(mktemp 2>/dev/null || echo "tempilefallback_solve_plate_with_UCAC5_OUTPUT_$$.tmp")
+   solve_plate_with_UCAC5_tempFile=$(mktemp 2>/dev/null || echo "tempilefallback_solve_plate_with_UCAC5_OUTPUT_$$.tmp")
    # Store the temporary file name for later use
-   tempFiles+=("$tempFile")
-   util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> "$tempFile"  &
+   solve_plate_with_UCAC5_tempFiles+=("$solve_plate_with_UCAC5_tempFile")
+   util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> "$solve_plate_with_UCAC5_tempFile"  &
   done
     
   # Calibrate magnitude scale with Tycho-2 or APASS stars in the field
@@ -1807,9 +1807,11 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    echo "wait" | tee -a transient_factory_test31.txt
    wait
    # Print the output from each temporary file and then delete the file
-   for tempFile in "${tempFiles[@]}"; do
-    #cat "$tempFile"
-    rm -f "$tempFile"
+   for solve_plate_with_UCAC5_tempFile in "${solve_plate_with_UCAC5_tempFiles[@]}"; do
+    if [ -f "$solve_plate_with_UCAC5_tempFile" ];then
+     #cat "$solve_plate_with_UCAC5_tempFile"
+     rm -f "$solve_plate_with_UCAC5_tempFile"
+    fi
    done
   else
    echo "Found non-empty $WCS_IMAGE_NAME_FOR_CHECKS" | tee -a transient_factory_test31.txt
@@ -1902,9 +1904,11 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
    wait
    # Print the output from each temporary file and then delete the file
-   for tempFile in "${tempFiles[@]}"; do
-    #cat "$tempFile"
-    rm -f "$tempFile"
+   for solve_plate_with_UCAC5_tempFile in "${solve_plate_with_UCAC5_tempFiles[@]}"; do
+    if [ -f "$solve_plate_with_UCAC5_tempFile" ];then
+     #cat "$solve_plate_with_UCAC5_tempFile"
+     rm -f "$solve_plate_with_UCAC5_tempFile"
+    fi
    done
    # Throw an error
    #echo "ERROR calibrating magnitudes in the field $FIELD (mean mag outside of range)"
@@ -1920,9 +1924,11 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    echo "wait" | tee -a transient_factory_test31.txt
    wait
    # Print the output from each temporary file and then delete the file
-   for tempFile in "${tempFiles[@]}"; do
-    #cat "$tempFile"
-    rm -f "$tempFile"
+   for solve_plate_with_UCAC5_tempFile in "${solve_plate_with_UCAC5_tempFiles[@]}"; do
+    if [ -f "$solve_plate_with_UCAC5_tempFile" ];then
+     #cat "$solve_plate_with_UCAC5_tempFile"
+     rm -f "$solve_plate_with_UCAC5_tempFile"
+    fi
    done
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
@@ -1940,9 +1946,11 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    echo "wait" | tee -a transient_factory_test31.txt
    wait
    # Print the output from each temporary file and then delete the file
-   for tempFile in "${tempFiles[@]}"; do
-    #cat "$tempFile"
-    rm -f "$tempFile"
+   for solve_plate_with_UCAC5_tempFile in "${solve_plate_with_UCAC5_tempFiles[@]}"; do
+    if [ -f "$solve_plate_with_UCAC5_tempFile" ];then
+     #cat "$solve_plate_with_UCAC5_tempFile"
+     rm -f "$solve_plate_with_UCAC5_tempFile"
+    fi
    done
    # Throw an error
    #echo "ERROR calibrating magnitudes in the field $FIELD (found lightcurve.tmp_emergency_stop_debug)"
@@ -2076,9 +2084,11 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    echo "wait" | tee -a transient_factory_test31.txt
    wait
    # Print the output from each temporary file and then delete the file
-   for tempFile in "${tempFiles[@]}"; do
-    #cat "$tempFile"
-    rm -f "$tempFile"
+   for solve_plate_with_UCAC5_tempFile in "${solve_plate_with_UCAC5_tempFiles[@]}"; do
+    if [ -f "$solve_plate_with_UCAC5_tempFile" ];then
+     #cat "$solve_plate_with_UCAC5_tempFile"
+     rm -f "$solve_plate_with_UCAC5_tempFile"
+    fi
    done
    #
    #continue
@@ -2114,9 +2124,11 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    echo "wait" | tee -a transient_factory_test31.txt
    wait
    # Print the output from each temporary file and then delete the file
-   for tempFile in "${tempFiles[@]}"; do
-    cat "$tempFile"
-    rm -f "$tempFile"
+   for solve_plate_with_UCAC5_tempFile in "${solve_plate_with_UCAC5_tempFiles[@]}"; do
+    if [ -f "$solve_plate_with_UCAC5_tempFile" ];then
+     #cat "$solve_plate_with_UCAC5_tempFile"
+     rm -f "$solve_plate_with_UCAC5_tempFile"
+    fi
    done
    #
    #
