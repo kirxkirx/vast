@@ -51,7 +51,8 @@ get_tycho2_from_scan_with_curl() {
         # Check if file matches the desired patterns
         if [[ "$item" == "ReadMe" || "$item" == *.gz || "$item" == "robots.txt" ]]; then
             echo "Downloading: $item"
-            curl $VAST_CURL_PROXY -C - --retry $max_retries --retry-delay $retry_delay \
+            curl --silent --show-error --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC \
+                $VAST_CURL_PROXY -C - --retry $max_retries --retry-delay $retry_delay \
                 --create-dirs -o "$item" "${url}${item}"
             if [[ $? -ne 0 ]]; then
                 echo "Failed to download: $item after $max_retries attempts"
