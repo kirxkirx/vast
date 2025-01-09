@@ -178,7 +178,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   #BAD_REGION_FILE="../STL_bad_region.lst"
   BAD_REGION_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/STL_bad_region.lst"
   EXCLUSION_LIST="../exclusion_list_STL.txt"
-  export OMP_NUM_THREADS=4
+  #export OMP_NUM_THREADS=4
   SYSREM_ITERATIONS=0
   UCAC5_PLATESOLVE_ITERATIONS=2
   #STARMATCH_RADIUS_PIX=4 # testing new values
