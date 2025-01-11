@@ -1021,6 +1021,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "OK, at least two new images have mean values below the threshold." | tee -a transient_factory_test31.txt
   else
    echo "ERROR: the images are too bright (mean value > $MAX_NEW_IMG_MEAN_VALUE)" | tee -a transient_factory_test31.txt
+   # Whatever. Proceed with the analysis.
   fi
  fi # if [ -n "$MAX_NEW_IMG_MEAN_VALUE" ]; then
  #
@@ -1033,8 +1034,9 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   #cp -v default.sex.telephoto_lens_onlybrightstars_v1 default.sex >> transient_factory_test31.txt
   cp -v "$SEXTRACTOR_CONFIG_BRIGHTSTARPASS" default.sex >> transient_factory_test31.txt 2>&1
   echo "Preliminary VaST run on the second-epoch images only" | tee -a transient_factory_test31.txt
-  echo "./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit"  "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" | tee -a transient_factory_test31.txt
-  ./vast --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit  "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" > prelim_vast_run.log 2>&1  
+  # --type 2 zero-point-only magnitude calibration requires fewer matched stars - useful for oblybrigthstars SE settings on very bright twilight images
+  echo "./vast --type 2 --norotation --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit"  "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" | tee -a transient_factory_test31.txt
+  ./vast --type 2 --norotation --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit  "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" > prelim_vast_run.log 2>&1  
   echo "wait" | tee -a transient_factory_test31.txt
   wait
   ## Special test for stuck camera ##
