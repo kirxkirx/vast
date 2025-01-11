@@ -173,6 +173,7 @@
                                                         // (should always be <0.5 !!!) discard image if <MIN_FRACTION_OF_MATCHED_STARS*number_stars_on_reference_image were matched 
 #define MIN_FRACTION_OF_MATCHED_STARS_STOP_ATTEMPTS 0.1 // Do not attempt to match images if less than MIN_FRACTION_OF_MATCHED_STARS_STOP_ATTEMPTS were matched after a few iterations 
                                                         // because something is evidently wrong with that image. */
+#define MAX_NOROTATION_ANGLE_RAD M_PI * 6.0 / 180.0     // Maximum image rotation allowed by --norotation option
 #define MATCH_MIN_NUMBER_OF_REFERENCE_STARS 100
 #define MATCH_MIN_NUMBER_OF_TRIANGLES 20 * MATCH_MIN_NUMBER_OF_REFERENCE_STARS
 #define MATCH_REFERENCE_STARS_NUMBER_STEP 500                                                 // Search for an optimal number of reference stars between MATCH_MIN_NUMBER_OF_REFERENCE_STARS and 
@@ -322,10 +323,6 @@
 
 // src/pgfv/pgfv.c
 #define PGFV_CUTS_PERCENT 99.0 // 99.5 //99.75 //95.0 //99.5  // this determines how bright is the displayed image
-
-// src/match_eater.c SOME CRAZY OLD OBSOLETE STUFF
-//#define MIN_MATCH_DISTANCE_PIX 600
-//#define MAX_MATCH_DISTANCE_PIX 10*MIN_MATCH_DISTANCE_PIX
 
 // src/fix_photo_log.c and many others
 #define MAX_LOG_STR_LENGTH 1024 + FILENAME_LENGTH

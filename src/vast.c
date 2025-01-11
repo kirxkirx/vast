@@ -5,7 +5,7 @@
  This file is part of VaST -
  a SExtractor front-end for search of variable objects in a series of FITS images.
 
- Copyleft 2005-2024  Kirill Sokolovsky <kirx@kirx.net>,
+ Copyleft 2005-2025  Kirill Sokolovsky <kirx@kirx.net>,
                      Alexandr Lebedev  <lebastr@gmail.com>,
                      Dmitry Nasonov,
                      Sergey Nazarov,
@@ -1827,51 +1827,6 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
  return;
 }
 
-/*
-void set_transient_search_boundaries( double *search_area_boundaries, struct Star *star, int NUMBER, double X_im_size, double Y_im_size ) {
- int i;
- search_area_boundaries[0]= search_area_boundaries[1]= search_area_boundaries[2]= search_area_boundaries[3]= 3 * FRAME_EDGE_INDENT_PIXELS;
- search_area_boundaries[4]= search_area_boundaries[5]= (double)star[0].mag;
-
- // for(i=0;i<NUMBER;i++){
- for ( i= NUMBER; i--; ) {
-  if ( star[i].sextractor_flag > 7 )
-   continue;
-  if ( star[i].vast_flag != 0 )
-   continue;
-  if ( star[i].mag != 0.0 ) { // just in case
-   // Make sure a star defining the search area is not too close to image edge
-   if ( 1 == is_point_close_or_off_the_frame_edge( (double)star[i].x, (double)star[i].y, X_im_size, Y_im_size, 3 * FRAME_EDGE_INDENT_PIXELS ) )
-    continue;
-   //
-   if ( (double)star[i].x < search_area_boundaries[0] )
-    search_area_boundaries[0]= (double)star[i].x;
-   if ( (double)star[i].x > search_area_boundaries[1] )
-    search_area_boundaries[1]= (double)star[i].x;
-   if ( (double)star[i].y < search_area_boundaries[2] )
-    search_area_boundaries[2]= (double)star[i].y;
-   if ( (double)star[i].y > search_area_boundaries[3] )
-    search_area_boundaries[3]= (double)star[i].y;
-   if ( (double)star[i].mag < search_area_boundaries[4] )
-    search_area_boundaries[4]= (double)star[i].mag;
-   if ( (double)star[i].mag > search_area_boundaries[5] )
-    search_area_boundaries[5]= (double)star[i].mag;
-  }
- }
-
- search_area_boundaries[5]= search_area_boundaries[5] - MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT;
-
- fprintf( stderr, "\nParameter box for transient search: %7.1lf<X<%7.1lf %7.1lf<Y<%7.1lf %5.2lf<m<%5.2lf\n \n",
-          search_area_boundaries[0],
-          search_area_boundaries[1],
-          search_area_boundaries[2],
-          search_area_boundaries[3],
-          search_area_boundaries[4],
-          search_area_boundaries[5] );
-
- return;
-}
-*/
 
 void record_specified_fits_keywords( char *input_image, char *output_str_with_fits_keywords_to_capture_from_input_images ) {
  //
@@ -4972,6 +4927,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 
     /* If not enough stars were matched...*/
     if ( Number_of_ecv_star < (int)( MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ) ) { // We should compare with the number of stars on the reference frame, not with the total number of stars!
+     
      fprintf( stderr, "ERROR! Too few stars matched (%d < %d) . Wrong match? Skipping file...\n", Number_of_ecv_star, (int)( MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ) );
      write_string_to_individual_image_log( sextractor_catalog, "main(): ", "ERROR! Too few stars matched. Wrong match? Skipping file...", "" );
      Number_of_ecv_star= 0;
