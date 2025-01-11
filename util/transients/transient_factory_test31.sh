@@ -2349,7 +2349,7 @@ ls -lh tocp_transients_list.txt 2>&1 | tee -a transient_factory_test31.txt
 ###############################################################################################################
 
 ## Finalize the HTML report
-echo "<H2>Processig complete!</H2>" >> transient_report/index.html
+echo "<H2>Processing complete!</H2>" >> transient_report/index.html
 
 TOTAL_NUMBER_OF_CANDIDATES=$(grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink')
 echo "Total number of candidates identified: $TOTAL_NUMBER_OF_CANDIDATES" >> transient_report/index.html
