@@ -2208,7 +2208,8 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
     else
      echo "$RADECSTR  -- asteroid (will NOT add it to exclusion list)" >> transient_factory_test31.txt
     fi
-   done < exclusion_list_index_html.txt > exclusion_list_index_html.txt_noasteroids
+   done < exclusion_list_index_html.txt | sort | uniq > exclusion_list_index_html.txt_noasteroids
+   # adding sort | uniq above just in case
    mv -v exclusion_list_index_html.txt_noasteroids exclusion_list_index_html.txt >> transient_factory_test31.txt 2>&1
    #
    while read -r RADECSTR ;do
@@ -2227,12 +2228,12 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
    mv -v exclusion_list_index_html.txt_nohotpixels exclusion_list_index_html.txt >> transient_factory_test31.txt 2>&1
    # Count known variable stars. We want them in the exclusion list,
    # but we also want to see how many completely "new" candidates we have - for logging and quality control.
-   echo "# Count candidates with no identification (that also don't look like hot pix)"
+   echo "# Count candidates with no identification (that also don't look like hot pix)" | tee -a transient_factory_test31.txt
    NUMBER_OF_UNIDENTIFIED_CANDIDATES=0
    while read -r RADECSTR ;do
     grep -A8 "$RADECSTR" transient_report/index.html | grep 'VSX' | grep --quiet 'not found' && grep -A8 "$RADECSTR" transient_report/index.html | grep 'ASASSN-V' | grep --quiet 'not found' 
     if [ $? -eq 0 ];then
-     grep --quiet -A8 "$RADECSTR" 'This object is listed in' transient_report/index.html
+     grep -A8 "$RADECSTR" transient_report/index.html | grep --quiet 'This object is listed in'
      if [ $? -ne 0 ];then
       ((NUMBER_OF_UNIDENTIFIED_CANDIDATES = NUMBER_OF_UNIDENTIFIED_CANDIDATES + 1))
       echo "$RADECSTR  -- not a known variable star" >> transient_factory_test31.txt
@@ -2244,7 +2245,7 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
     fi
    done < exclusion_list_index_html.txt
    #
-   echo "Found $NUMBER_OF_UNIDENTIFIED_CANDIDATES unidentified candidates."
+   echo "Found $NUMBER_OF_UNIDENTIFIED_CANDIDATES unidentified candidates (excluding asteroids, hot pixels and known varible stars)." | tee -a transient_factory_test31.txt
    #
    echo "###################################################################################" | tee -a transient_factory_test31.txt
    ALLOW_EXCLUSION_LIST_UPDATE="YES"
