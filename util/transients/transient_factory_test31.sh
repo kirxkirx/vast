@@ -2245,7 +2245,7 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
     fi
    done < exclusion_list_index_html.txt
    #
-   echo "Found $NUMBER_OF_UNIDENTIFIED_CANDIDATES unidentified candidates (excluding asteroids, hot pixels and known varible stars)." | tee -a transient_factory_test31.txt
+   echo "Found $NUMBER_OF_UNIDENTIFIED_CANDIDATES unidentified candidates (excluding asteroids, hot pixels and known variable stars)." | tee -a transient_factory_test31.txt
    #
    echo "###################################################################################" | tee -a transient_factory_test31.txt
    ALLOW_EXCLUSION_LIST_UPDATE="YES"
