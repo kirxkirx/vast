@@ -2180,77 +2180,79 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
   echo "Allowing the exclusion list update for $1" | tee -a transient_factory_test31.txt
  fi
  ALLOW_EXCLUSION_LIST_UPDATE="YES"
+ # We want 'Found $NUMBER_OF_UNIDENTIFIED_CANDIDATES unidentified candidates' in the log output even for test runs and stuff
+ echo "Found $EXCLUSION_LIST" | tee -a transient_factory_test31.txt
+ grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' > exclusion_list_index_html.txt
+ # Filter-out asteroids
+ echo "#### The exclusion list before filtering-out asteroids, bad pixels and adding Gaia sources ####" | tee -a transient_factory_test31.txt
+ cat exclusion_list_index_html.txt | tee -a transient_factory_test31.txt
+ echo "###################################################################################" | tee -a transient_factory_test31.txt
+ while read -r RADECSTR ;do
+  # The following line should match that in util/transients/report_transient.sh
+  grep -A8 "$RADECSTR" transient_report/index.html | grep 'neverexclude_list.txt' | grep --quiet 'This object is listed in'
+  if [ $? -eq 0 ];then
+   echo "$RADECSTR  -- listed in neverexclude_list.txt (will NOT add it to exclusion list)" | tee -a transient_factory_test31.txt
+   continue
+  fi
+  # Mac OS X grep does not handle well the combination --max-count=1 -A8
+  #grep --max-count=1 -A8 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep --quiet 'not found'
+  grep -A8 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep --quiet 'not found'
+  if [ $? -eq 0 ];then
+   echo "$RADECSTR"
+   echo "$RADECSTR  -- not an asteroid (will add it to exclusion list)" >> transient_factory_test31.txt
+  else
+   echo "$RADECSTR  -- asteroid (will NOT add it to exclusion list)" >> transient_factory_test31.txt
+  fi
+ done < exclusion_list_index_html.txt | sort | uniq > exclusion_list_index_html.txt_noasteroids
+ # adding sort | uniq above just in case
+ mv -v exclusion_list_index_html.txt_noasteroids exclusion_list_index_html.txt >> transient_factory_test31.txt 2>&1
+ #
+ while read -r RADECSTR ;do
+  grep -A8 "$RADECSTR" transient_report/index.html | grep 'galactic' | grep --quiet -e '<font color="red">0.0</font></b> pix' -e '<font color="red">0.1</font></b> pix' -e '<font color="red">0.2</font></b> pix'
+  #if [ $? -ne 0 ] || ( [[ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ]] &&
+  # [[ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" == "no" ]] ); then
+  if [ $? -ne 0 ] || { [[ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ]] &&
+                       [[ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" == "no" ]]; }; then
+   # assume there are no hot pixels in TICA TESS images
+   echo "$RADECSTR"
+   echo "$RADECSTR  -- does not seem to be a hot pixel (will add it to exclusion list)" >> transient_factory_test31.txt
+  else
+   echo "$RADECSTR  -- seems to be a hot pixel (will NOT add it to exclusion list)" >> transient_factory_test31.txt
+  fi
+ done < exclusion_list_index_html.txt > exclusion_list_index_html.txt_nohotpixels
+ mv -v exclusion_list_index_html.txt_nohotpixels exclusion_list_index_html.txt >> transient_factory_test31.txt 2>&1
+ # Count known variable stars. We want them in the exclusion list,
+ # but we also want to see how many completely "new" candidates we have - for logging and quality control.
+ echo "# Count candidates with no identification (that also don't look like hot pix)" | tee -a transient_factory_test31.txt
+ NUMBER_OF_UNIDENTIFIED_CANDIDATES=0
+ while read -r RADECSTR ;do
+  grep -A8 "$RADECSTR" transient_report/index.html | grep 'VSX' | grep --quiet 'not found' && grep -A8 "$RADECSTR" transient_report/index.html | grep 'ASASSN-V' | grep --quiet 'not found' 
+  if [ $? -eq 0 ];then
+   grep -A8 "$RADECSTR" transient_report/index.html | grep --quiet 'This object is listed in'
+   if [ $? -ne 0 ];then
+    ((NUMBER_OF_UNIDENTIFIED_CANDIDATES = NUMBER_OF_UNIDENTIFIED_CANDIDATES + 1))
+    echo "$RADECSTR  -- not a known variable star" >> transient_factory_test31.txt
+   else
+    echo "$RADECSTR  -- a known object" >> transient_factory_test31.txt
+   fi
+  else
+   echo "$RADECSTR  -- a known variable star" >> transient_factory_test31.txt
+  fi
+ done < exclusion_list_index_html.txt
+ #
+ echo "Found $NUMBER_OF_UNIDENTIFIED_CANDIDATES unidentified candidates (excluding asteroids, hot pixels and known variable stars)." | tee -a transient_factory_test31.txt
+ #
+ echo "###################################################################################" | tee -a transient_factory_test31.txt
+ ALLOW_EXCLUSION_LIST_UPDATE="YES"
+ N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS=$(wc -l < exclusion_list_index_html.txt)
+ echo "$N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS candidates found (excluding asteroids and hot pixels)" | tee -a transient_factory_test31.txt
+ #
  if [ "$IS_THIS_TEST_RUN" != "YES" ];then
   # the NMW_Vul2_magnitude_calibration_exit_code_test tests for exclusion listupdate
   # and ../NMW_Sgr9_crash_test/second_epoch_images is for that purpose too
-  #echo "This does not look like a test run" >> transient_factory_test31.txt
   echo "This does not look like a test run" | tee -a transient_factory_test31.txt
   if [ -f "$EXCLUSION_LIST" ];then
-   echo "Found $EXCLUSION_LIST" | tee -a transient_factory_test31.txt
-   grep -A1 'Mean magnitude and position on the discovery images:' transient_report/index.html | grep -v 'Mean magnitude and position on the discovery images:' | awk '{print $6" "$7}' | sed '/^\s*$/d' > exclusion_list_index_html.txt
-   # Filter-out asteroids
-   echo "#### The exclusion list before filtering-out asteroids, bad pixels and adding Gaia sources ####" | tee -a transient_factory_test31.txt
-   cat exclusion_list_index_html.txt | tee -a transient_factory_test31.txt
-   echo "###################################################################################" | tee -a transient_factory_test31.txt
-   while read -r RADECSTR ;do
-    # The following line should match that in util/transients/report_transient.sh
-    grep -A8 "$RADECSTR" transient_report/index.html | grep 'neverexclude_list.txt' | grep --quiet 'This object is listed in'
-    if [ $? -eq 0 ];then
-     echo "$RADECSTR  -- listed in neverexclude_list.txt (will NOT add it to exclusion list)" | tee -a transient_factory_test31.txt
-     continue
-    fi
-    # Mac OS X grep does not handle well the combination --max-count=1 -A8
-    #grep --max-count=1 -A8 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep --quiet 'not found'
-    grep -A8 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep --quiet 'not found'
-    if [ $? -eq 0 ];then
-     echo "$RADECSTR"
-     echo "$RADECSTR  -- not an asteroid (will add it to exclusion list)" >> transient_factory_test31.txt
-    else
-     echo "$RADECSTR  -- asteroid (will NOT add it to exclusion list)" >> transient_factory_test31.txt
-    fi
-   done < exclusion_list_index_html.txt | sort | uniq > exclusion_list_index_html.txt_noasteroids
-   # adding sort | uniq above just in case
-   mv -v exclusion_list_index_html.txt_noasteroids exclusion_list_index_html.txt >> transient_factory_test31.txt 2>&1
    #
-   while read -r RADECSTR ;do
-    grep -A8 "$RADECSTR" transient_report/index.html | grep 'galactic' | grep --quiet -e '<font color="red">0.0</font></b> pix' -e '<font color="red">0.1</font></b> pix' -e '<font color="red">0.2</font></b> pix'
-    #if [ $? -ne 0 ] || ( [[ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ]] &&
-    # [[ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" == "no" ]] ); then
-    if [ $? -ne 0 ] || { [[ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ]] &&
-                         [[ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" == "no" ]]; }; then
-     # assume there are no hot pixels in TICA TESS images
-     echo "$RADECSTR"
-     echo "$RADECSTR  -- does not seem to be a hot pixel (will add it to exclusion list)" >> transient_factory_test31.txt
-    else
-     echo "$RADECSTR  -- seems to be a hot pixel (will NOT add it to exclusion list)" >> transient_factory_test31.txt
-    fi
-   done < exclusion_list_index_html.txt > exclusion_list_index_html.txt_nohotpixels
-   mv -v exclusion_list_index_html.txt_nohotpixels exclusion_list_index_html.txt >> transient_factory_test31.txt 2>&1
-   # Count known variable stars. We want them in the exclusion list,
-   # but we also want to see how many completely "new" candidates we have - for logging and quality control.
-   echo "# Count candidates with no identification (that also don't look like hot pix)" | tee -a transient_factory_test31.txt
-   NUMBER_OF_UNIDENTIFIED_CANDIDATES=0
-   while read -r RADECSTR ;do
-    grep -A8 "$RADECSTR" transient_report/index.html | grep 'VSX' | grep --quiet 'not found' && grep -A8 "$RADECSTR" transient_report/index.html | grep 'ASASSN-V' | grep --quiet 'not found' 
-    if [ $? -eq 0 ];then
-     grep -A8 "$RADECSTR" transient_report/index.html | grep --quiet 'This object is listed in'
-     if [ $? -ne 0 ];then
-      ((NUMBER_OF_UNIDENTIFIED_CANDIDATES = NUMBER_OF_UNIDENTIFIED_CANDIDATES + 1))
-      echo "$RADECSTR  -- not a known variable star" >> transient_factory_test31.txt
-     else
-      echo "$RADECSTR  -- a known object" >> transient_factory_test31.txt
-     fi
-    else
-     echo "$RADECSTR  -- a known variable star" >> transient_factory_test31.txt
-    fi
-   done < exclusion_list_index_html.txt
-   #
-   echo "Found $NUMBER_OF_UNIDENTIFIED_CANDIDATES unidentified candidates (excluding asteroids, hot pixels and known variable stars)." | tee -a transient_factory_test31.txt
-   #
-   echo "###################################################################################" | tee -a transient_factory_test31.txt
-   ALLOW_EXCLUSION_LIST_UPDATE="YES"
-   N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS=$(wc -l < exclusion_list_index_html.txt)
-   echo "$N_CANDIDATES_EXCLUDING_ASTEROIDS_AND_HOT_PIXELS candidates found (excluding asteroids and hot pixels)" | tee -a transient_factory_test31.txt
    # Do this check only if we are processing a single field
    if [ -z "$2" ];then
     ### ===> ASSUMED MAX NUMBER OF CANDIDATES <===
