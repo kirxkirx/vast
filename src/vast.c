@@ -1808,6 +1808,8 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
 
  // Here is a short discussion on how the normal people estimate limiting magnitude of an image
  // https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/en/megapipe/docs/photo.html
+ // 
+ // I also like the approach of Sergey Karpov: https://ui.adsabs.harvard.edu/abs/2024arXiv241116470K/abstract
  //
  // Sort the filtered_mag_values array and get the value that is 20% from the largest value
  qsort( filtered_mag_values, filtered_count, sizeof( double ), (int ( * )( const void *, const void * ))compare );
