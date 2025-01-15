@@ -2800,11 +2800,16 @@ int main( int argc, char **argv ) {
        lineX[1]= markX;
        lineY[1]= markY + marker_offset_pix * marker_scaling + marker_length_pix * marker_scaling;
        cpgline( 2, lineX, lineY );
-       // right
+       // left
        lineX[0]= markX - marker_offset_pix * marker_scaling;
        lineY[0]= markY;
        lineX[1]= markX - marker_offset_pix * marker_scaling - marker_length_pix * marker_scaling;
        lineY[1]= markY;
+       // right
+       //lineX[0]= markX + marker_offset_pix * marker_scaling;
+       //lineY[0]= markY;
+       //lineX[1]= markX + marker_offset_pix * marker_scaling + marker_length_pix * marker_scaling;
+       //lineY[1]= markY;
        cpgline( 2, lineX, lineY );
        //
       }

@@ -458,18 +458,18 @@ ds9 -frame lock wcs  " >> transient_report/index.tmp
 </div>" >> transient_report/index.tmp
    #
 
-# util/transients/search_for_transients_single_field.sh is oboslete, we are now using util/transients/transient_factory_test31.sh for the search
-#
-#   #
-#   echo "<a href=\"javascript:toggleElement('vastcommandline_$TRANSIENT_NAME')\">VaST command line</a> (re-run VaST)</br>" >> transient_report/index.tmp  
-#   echo -n "<div id=\"vastcommandline_$TRANSIENT_NAME\" style=\"display:none\">
-#<pre class='folding-pre'>
-#" >> transient_report/index.tmp
-#   cat vast_command_line.log >> transient_report/index.tmp
-#   echo " && util/transients/search_for_transients_single_field.sh
-#</pre>
-#</div>" >> transient_report/index.tmp
-#   #
+   # util/transients/search_for_transients_single_field.sh is oboslete, we are now using util/transients/transient_factory_test31.sh for the search
+   # HOWEVER, util/transients/fastplot.sh relies on the vast command line logged here!!
+   #
+   echo "<a href=\"javascript:toggleElement('vastcommandline_$TRANSIENT_NAME')\">VaST command line</a>" >> transient_report/index.tmp  
+   echo -n "<div id=\"vastcommandline_$TRANSIENT_NAME\" style=\"display:none\">
+<pre class='folding-pre'>
+" >> transient_report/index.tmp
+   cat vast_command_line.log >> transient_report/index.tmp
+   echo " && util/transients/search_for_transients_single_field.sh
+</pre>
+</div>" >> transient_report/index.tmp
+   #
 
    #
    grep --max-count=1 --quiet 'done by the script' transient_report/index.html

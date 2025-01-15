@@ -19793,7 +19793,7 @@ fi
 
 ######### SAI RC600 B image
 ### Disable this test for GitHub Actions
-if [ "$GITHUB_ACTIONS" != "true" ];then
+#if [ "$GITHUB_ACTIONS" != "true" ];then
 # this image requires index-204-03.fits to get solved
 if [ ! -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit ];then
  if [ ! -d ../individual_images_test ];then
@@ -19811,6 +19811,20 @@ if [ -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fi
  # Run the test
  echo "SAI RC600 B image test " 
  echo -n "SAI RC600 B image test: " >> vast_test_report.txt 
+ #
+ util/get_image_date ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit | grep --quiet "Exposure 60 sec, 16.07.2021 18:02:26.680 UT = JD(UT) 2459412.25204491 mid. exp."
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B003"
+ fi
+ #
+ FOV=$(lib/try_to_guess_image_fov ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit | awk '{print $1}')
+ # Changed to the fake value that might work better than the real one
+ if [ "$FOV" != "20" ] && [ "$FOV" != "23" ] ;then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B004"
+ fi
+ #
  cp default.sex.ccd_example default.sex
  util/solve_plate_with_UCAC5 ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit
  if [ $? -ne 0 ];then
@@ -19838,42 +19852,29 @@ if [ -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fi
      FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B002a_$TEST"
     fi
    fi 
+   # Do these tests only if plate-solved the image
+   util/calibrate_single_image.sh ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit B
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_CALIBRATE_SINGLE_IMAGE"
+   fi
+   lib/fit_robust_linear
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_FIT_ROBUST_LINEAR"
+   fi
+   TEST=`cat calib.txt_param | awk '{if ( sqrt( ($4-1.018597)*($4-1.018597) ) < 0.05 ) print 1 ;else print 0 }'`
+   if [ $TEST -ne 1 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_FIT_ROBUST_LINEAR_COEFFA"
+   fi
+   TEST=`cat calib.txt_param | awk '{if ( sqrt( ($5-26.007315)*($5-26.007315) ) < 0.05 ) print 1 ;else print 0 }'`
+   if [ $TEST -ne 1 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_FIT_ROBUST_LINEAR_COEFFB"
+   fi
   fi # else if [ ! -f wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit ];then
  fi # check if util/solve_plate_with_UCAC5 returned 0 exit code
- #util/get_image_date ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit | grep --quiet "Exposure  60 sec, 16.07.2021 18:02:27 UT = JD(UT) 2459412.25205 mid. exp."
- util/get_image_date ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit | grep --quiet "Exposure 60 sec, 16.07.2021 18:02:26.680 UT = JD(UT) 2459412.25204491 mid. exp."
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B003"
- fi
- #
- FOV=`lib/try_to_guess_image_fov ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit | awk '{print $1}'`
- # Changed to the fake value that might work better than the real one
- if [ "$FOV" != "20" ] && [ "$FOV" != "23" ] ;then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B004"
- fi
- #
- util/calibrate_single_image.sh ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit B
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_CALIBRATE_SINGLE_IMAGE"
- fi
- lib/fit_robust_linear
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_FIT_ROBUST_LINEAR"
- fi
- TEST=`cat calib.txt_param | awk '{if ( sqrt( ($4-1.018597)*($4-1.018597) ) < 0.05 ) print 1 ;else print 0 }'`
- if [ $TEST -ne 1 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_FIT_ROBUST_LINEAR_COEFFA"
- fi
- TEST=`cat calib.txt_param | awk '{if ( sqrt( ($5-26.007315)*($5-26.007315) ) < 0.05 ) print 1 ;else print 0 }'`
- if [ $TEST -ne 1 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_FIT_ROBUST_LINEAR_COEFFB"
- fi
  
  # Astropy image date matching test
  command -v python3 &> /dev/null     
@@ -19887,7 +19888,6 @@ if [ -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fi
    fi
   fi
  fi
-
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
@@ -19904,7 +19904,7 @@ else
  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_TEST_NOT_PERFORMED"
 fi
 ### Disable the above test for GitHub Actions
-fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+#fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ######### SAI RC600 many bleeding stars image
