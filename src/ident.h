@@ -81,6 +81,7 @@ struct Star {
  float x;                    // X coordinate in pixels. WILL BE TRANSFORMED TO THE REFERENCE IMAGE COORDINATE FRAME
  float y;                    // Y coordinate in pixels. WILL BE TRANSFORMED TO THE REFERENCE IMAGE COORDINATE FRAME
  double flux;                // Brightness in counts
+ double flux_err;            // Error of brightness in counts -- NEW
  float mag;                  // Brightness in magnitudes
  float sigma_mag;            // Error of brightness estimation (mag.)
  double JD;                  // Julian Date of observation

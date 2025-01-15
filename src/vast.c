@@ -57,7 +57,7 @@
 // GSL header files
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_sort.h>
-#include <gsl/gsl_errno.h>
+#include <gsl/gsl_errno.h> // for GSL_SUCCESS, GSL_NAN
 
 // CFITSIO
 #include "fitsio.h" // we use a local copy of this file because we use a local copy of cfitsio
@@ -84,6 +84,8 @@
 #include "count_lines_in_ASCII_file.h" // for count_lines_in_ASCII_file()
 //
 #include "is_point_close_or_off_the_frame_edge.h" // for is_point_close_or_off_the_frame_edge()
+//
+#include "detection_limit.h" // for get_detection_limit_sn()
 
 /****************** Auxiliary functions ******************/
 
@@ -243,6 +245,14 @@ void help_msg( const char *progname, int exit_code ) {
  print_TT_reminder( 1 );
 
  exit( exit_code );
+}
+
+// a helper function for the magnitude limit calculator
+void extract_mag_and_snr_from_structStar(const struct Star *stars, size_t n_stars, double *mag_array, double *snr_array) {
+    for (size_t i = 0; i < n_stars; i++) {
+        mag_array[i] = (double)stars[i].mag;
+        snr_array[i] = stars[i].flux / stars[i].flux_err;
+    }
 }
 
 // a comparison function to qsort the observations chached in memory
@@ -1763,6 +1773,11 @@ int compare( const double *a, const double *b ) {
 }
 
 void set_transient_search_boundaries( double *search_area_boundaries, struct Star *star, int NUMBER, double X_im_size, double Y_im_size ) {
+
+ double *detection_limit_from_snr__mag_array;
+ double *detection_limit_from_snr__snr_array;
+ int detection_limit_from_snr__success;
+
  int i;
  double *filtered_mag_values;
  int filtered_count= 0;
@@ -1810,11 +1825,44 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
  // https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/en/megapipe/docs/photo.html
  // 
  // I also like the approach of Sergey Karpov: https://ui.adsabs.harvard.edu/abs/2024arXiv241116470K/abstract
+ // see src/detection_limit.c
  //
- // Sort the filtered_mag_values array and get the value that is 20% from the largest value
- qsort( filtered_mag_values, filtered_count, sizeof( double ), (int ( * )( const void *, const void * ))compare );
- search_area_boundaries[5]= filtered_mag_values[(int)( 0.80 * (double)filtered_count )]; // 20% from the end
+ 
+ 
+ // The new way following Karpov'24
+ //
+ //
+ detection_limit_from_snr__mag_array=malloc( NUMBER*sizeof(double) );
+ if( NULL == detection_limit_from_snr__mag_array ) {
+  fprintf(stderr, "ERROR: allocating memory for detection_limit_from_snr__mag_array\n");
+  exit( EXIT_FAILURE );
+ }
+
+ detection_limit_from_snr__snr_array=malloc( NUMBER*sizeof(double) );
+ if( NULL == detection_limit_from_snr__snr_array ) {
+  fprintf(stderr, "ERROR: allocating memory for detection_limit_from_snr__snr_array\n");
+  exit( EXIT_FAILURE );
+ }
+
+ extract_mag_and_snr_from_structStar( star, (size_t)NUMBER, detection_limit_from_snr__mag_array, detection_limit_from_snr__snr_array);
+ search_area_boundaries[5]= get_detection_limit_sn(detection_limit_from_snr__mag_array, detection_limit_from_snr__snr_array, (size_t)NUMBER, MIN_SNR, &detection_limit_from_snr__success);
+ fprintf(stderr,"DEBUG: detection_limit_from_snr__success= %d  GSL_SUCCESS= %d\n", detection_limit_from_snr__success,GSL_SUCCESS);
+
+ free(detection_limit_from_snr__mag_array);
+ free(detection_limit_from_snr__snr_array);
+ 
+ if( GSL_SUCCESS != detection_limit_from_snr__success ) {
+  fprintf(stderr, "WARNING: failed to determine magnitude limit from the mag-SNR relation! Falling back to the 80 percent brighter stars limit.\n");
+  // The old way: mag limit above which are 80% of the stars
+  //
+  // Sort the filtered_mag_values array and get the value that is 20% from the largest value
+  qsort( filtered_mag_values, filtered_count, sizeof( double ), (int ( * )( const void *, const void * ))compare );
+  search_area_boundaries[5]= filtered_mag_values[(int)( 0.80 * (double)filtered_count )]; // 20% from the end
+ }
+
+
  search_area_boundaries[5]= search_area_boundaries[5] - MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT;
+
 
  fprintf( stderr, "\nParameter box for transient search: %7.1lf<X<%7.1lf %7.1lf<Y<%7.1lf %5.2lf<m<%5.2lf\n \n",
           search_area_boundaries[0],
@@ -3764,6 +3812,7 @@ int main( int argc, char **argv ) {
   }
   //
   STAR1[NUMBER1 - 1].flux= flux_adu;
+  STAR1[NUMBER1 - 1].flux_err= flux_adu_err;
   STAR1[NUMBER1 - 1].mag= (float)mag;
   STAR1[NUMBER1 - 1].sigma_mag= (float)sigma_mag;
   STAR1[NUMBER1 - 1].JD= JD;
@@ -4354,6 +4403,7 @@ int main( int argc, char **argv ) {
      STAR2[NUMBER2 - 1].x= (float)position_x_pix;
      STAR2[NUMBER2 - 1].y= (float)position_y_pix;
      STAR2[NUMBER2 - 1].flux= flux_adu;
+     STAR2[NUMBER2 - 1].flux_err= flux_adu_err;
      // Теперь считаем ошибки правильно, а не как трактор ;)
      STAR2[NUMBER2 - 1].mag= (float)mag;
      STAR2[NUMBER2 - 1].sigma_mag= (float)sigma_mag;

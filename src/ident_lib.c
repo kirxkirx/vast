@@ -96,6 +96,7 @@ void Star_Copy( struct Star *copy, struct Star *star ) {
  copy->x= star->x;
  copy->y= star->y;
  copy->flux= star->flux;
+ copy->flux_err= star->flux_err; 
  copy->n= star->n;
  copy->mag= star->mag;
  copy->sigma_mag= star->sigma_mag;
