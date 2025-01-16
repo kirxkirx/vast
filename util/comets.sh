@@ -51,6 +51,12 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
+python3 comet_finder/main.py calc -qd $JD
+if [ $? -eq 0 ]
+then
+  exit 0
+fi
+
 # Get a list of comets from Gideon van Buitenen's page
 DATA=$(curl $VAST_CURL_PROXY --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 1 --silent --show-error --insecure 'https://astro.vanbuitenen.nl/comets')
 LIST_OF_COMET_FULL_NAMES_vanBuitenen=$(echo "$DATA" | grep '</tr>' | grep -e 'C/' -e 'P/' -e 'I/' | sed 's:</tr>:\n:g' | awk -F'>' '{print $3}' | awk -F'<' '{print $1}')
