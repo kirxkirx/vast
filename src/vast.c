@@ -4959,7 +4959,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      sprintf( log_output, "rotation= %7.3lf  ", 180 * preobr->fi / M_PI );
      write_string_to_log_file( log_output, sextractor_catalog );
      fprintf( stderr, "  rotation [degrees] = %7.3lf\n", 180 * preobr->fi / M_PI );
-     if ( no_rotation == 1 && fabs( preobr->fi ) > 0.052353 && fabs( preobr->fi - M_PI ) > 0.052353 ) {
+     if ( no_rotation == 1 && fabs( preobr->fi ) > MAX_NOROTATION_ANGLE_RAD && fabs( preobr->fi - M_PI ) > MAX_NOROTATION_ANGLE_RAD ) {
       fprintf( stderr, " rotation is large! Dropping image!  %lf\n", 180 * preobr->fi / M_PI );
       Number_of_ecv_star= 0;
      }
