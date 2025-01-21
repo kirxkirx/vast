@@ -710,7 +710,7 @@ int main() {
   fprintf( stderr, "done\n" );
 
   // Apply corrections to lightcurves
-  fprintf( stderr, "Applying corrections... \n" );
+  fprintf( stderr, "Applying corrections... " );
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
 // #pragma omp parallel for private( i, lightcurvefilename, lightcurvefile, djd, ddmag, ddmerr, x, y, app, string, comments_string, dmag, dmerr, j, k, outlightcurvefilename, outlightcurvefile, corrected_magnitude, correction_mag )

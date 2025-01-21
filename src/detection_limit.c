@@ -109,9 +109,9 @@ static void make_sn_model(double *mag, double *sn, size_t n, double *params) {
     params[1] = gsl_vector_get(solver->x, 1);
 
     // Print model parameters
-    fprintf(stderr,"make_sn_model(): Fitted model parameters: p[0]=%e, p[1]=%e\n", params[0], params[1]);
-    fprintf(stderr,"make_sn_model(): Gnuplot command:\n");
-    fprintf(stderr,"make_sn_model(): set logscale y ; plot 'image00001.cat' u 4:($2)/($3), 1.0 / sqrt(%e * 10**(0.8 * x) + %e * 10**(0.4 * x))\n", params[0], params[1]);
+    //fprintf(stderr,"make_sn_model(): Fitted model parameters: p[0]=%e, p[1]=%e\n", params[0], params[1]);
+    //fprintf(stderr,"make_sn_model(): Gnuplot command:\n");
+    //fprintf(stderr,"make_sn_model(): set logscale y ; plot 'image00001.cat' u 4:($2)/($3), 1.0 / sqrt(%e * 10**(0.8 * x) + %e * 10**(0.4 * x))\n", params[0], params[1]);
     
     // Cleanup
     gsl_multifit_fdfsolver_free(solver);
