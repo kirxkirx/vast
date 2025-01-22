@@ -29,18 +29,18 @@ def main():
         date = ts.now()  
         
     start_time = datetime.datetime.now()
+
     try:
-        match args.command:
-            case 'calc':
-                calc(date, args.mag, args.lat, args.long, args.file, args.force)
-            case 'prepare':
-                prepare(date, args.mag, args.lat, args.long)       
-            case _:
-                print("→ Unknown command:", args.command, file=sys.stderr)        
-                sys.exit(1) 
-        
+        if args.command == 'calc':
+            calc(date, args.mag, args.lat, args.long, args.file, args.force)
+        elif args.command == 'prepare':
+            prepare(date, args.mag, args.lat, args.long)
+        else:
+            print("-> Unknown command:", args.command, file=sys.stderr)
+            sys.exit(1)
+                
         end_time = datetime.datetime.now()
-        echo(f"→ Execution time: {end_time - start_time}.")
+        echo(f"-> Execution time: {end_time - start_time}.")
     except Exception as e:
         echo(f"-> Error: {e}")
         exit(1)
@@ -50,30 +50,30 @@ def calc(date: Time, min_mag: float, lat: float, long: float, result_file_name: 
     if not os.path.exists(FILTERED_COMETS_FILE) or force: 
         filtered_comets = prepare(date, min_mag, lat, long)
     else:
-        echo("→ Loading list of filtered comets.")
+        echo("-> Loading list of filtered comets.")
         filtered_comets = load_filtered_comets(FILTERED_COMETS_FILE)
-        echo(f"→ Loaded filtered: '{len(filtered_comets)}' comets.")
+        echo(f"-> Loaded filtered: '{len(filtered_comets)}' comets.")
 
-    echo("→ Calculating of RA/Dec/Mag.")
+    echo("-> Calculating of RA/Dec/Mag.")
     results = calc_ra_dec(filtered_comets, date, lat, long)
 
     if (result_file_name != None):
-        echo(f"→ Save filtered comets to the file '{result_file_name}'.")
+        echo(f"-> Save filtered comets to the file '{result_file_name}'.")
         save_results_to_file(results, result_file_name)
     else:
         print_results_to_stdout(results)
 
 
 def prepare(date: Time, min_mag: float, lat: float, long: float):
-    echo("→ Downloading comet data.")
+    echo("-> Downloading comet data.")
     comets = fetch_cometas_data(COMETS_DATA_URL, True)
-    echo(f"→ Loaded: '{len(comets)}' comets.")
+    echo(f"-> Loaded: '{len(comets)}' comets.")
 
-    echo("→ Filter by magnitude.")
+    echo("-> Filter by magnitude.")
     filtered_comets = filter(comets, date, min_mag, lat, long)
-    echo(f"→ Filtered '{len(filtered_comets)}' comets.")
+    echo(f"-> Filtered '{len(filtered_comets)}' comets.")
 
-    echo("→ Save filtered comets.")
+    echo("-> Save filtered comets.")
     save_filtered_comets(filtered_comets, FILTERED_COMETS_FILE)
 
     return filtered_comets
@@ -113,7 +113,7 @@ def filter(comets, date: Time, min_mag: float, lat: float, long: float):
                 comets.drop(idx, axis=0, inplace=True)
 
         except Exception as e:
-            echo(f"→ Error processing object {row.designation}: {e}")
+            echo(f"-> Error processing object {row.designation}: {e}")
 
     return comets
 
@@ -150,7 +150,7 @@ def calc_ra_dec(filtered_comets, date: Time, lat: float, long: float):
             })
 
         except Exception as e:
-            echo(f"→ Error processing object {row.designation}: {e}")
+            echo(f"-> Error processing object {row.designation}: {e}")
 
     return results
 
