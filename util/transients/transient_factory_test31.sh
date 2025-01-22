@@ -265,7 +265,8 @@ function get_file_size() {
     fi
 }
 
-check_free_space() {
+# Note that the same function is found in autoprocess.sh
+function check_free_space() {
     if [ -n "$1" ];then
      dir_to_check="$1"
     else
