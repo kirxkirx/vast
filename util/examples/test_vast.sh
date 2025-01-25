@@ -26070,6 +26070,7 @@ fi
 file wwwtest.png | grep --quiet 'PNG image data'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
+ # most likely Kirill needs to do sshfs at scan
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_003"
 fi
 # clean-up
