@@ -51,6 +51,19 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
+# Run the comet search locally
+command -v python3 &>/dev/null && \
+python3 -c "import skyfield; print(skyfield.__version__)" &>/dev/null && \
+python3 -c "import numpy; print(numpy.__version__)" &>/dev/null && \
+python3 -c "import pandas; print(pandas.__version__)" &>/dev/null && \
+python3 util/comet_finder/main.py calc -qd $JD
+if [ $? -eq 0 ]
+then
+  echo "Positions of bright comets computed with util/comet_finder/main.py for JD(UT)$JD" > comets_header.txt
+  exit 0
+fi
+echo "Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets and http://aerith.net/comet/weekly/current.html ) from JPL HORIZONS for JD(UT)$JD" > comets_header.txt
+
 # Get a list of comets from Gideon van Buitenen's page
 DATA=$(curl $VAST_CURL_PROXY --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 1 --silent --show-error --insecure 'https://astro.vanbuitenen.nl/comets')
 LIST_OF_COMET_FULL_NAMES_vanBuitenen=$(echo "$DATA" | grep '</tr>' | grep -e 'C/' -e 'P/' -e 'I/' | sed 's:</tr>:\n:g' | awk -F'>' '{print $3}' | awk -F'<' '{print $1}')

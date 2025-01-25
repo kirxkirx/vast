@@ -177,7 +177,9 @@ if [[ $(check_if_curl_is_too_old_to_attempt_HTTPS) == true ]]; then
  fi
  
  if [ "$COUNTRY_CODE" == "RU" ];then
-  LOCAL_SERVER="http://scan.sai.msu.ru/~kirx/vast_catalogs"
+  #LOCAL_SERVER="http://scan.sai.msu.ru/~kirx/vast_catalogs"
+  # scan.sai.msu.ru is temporary down
+  LOCAL_SERVER="https://kirx.net/~kirx/vast_catalogs"
  else
   LOCAL_SERVER="https://kirx.net/~kirx/vast_catalogs"
  fi

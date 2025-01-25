@@ -265,7 +265,8 @@ function get_file_size() {
     fi
 }
 
-check_free_space() {
+# Note that the same function is found in autoprocess.sh
+function check_free_space() {
     if [ -n "$1" ];then
      dir_to_check="$1"
     else
@@ -2337,8 +2338,12 @@ echo "############################################################
 Positions of slected spacecraft from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" | tee -a transient_factory_test31.txt
 cat spacecraft.txt | tee -a transient_factory_test31.txt
 ls -lh spacecraft.txt 2>&1 | tee -a transient_factory_test31.txt
-echo "############################################################
-Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets and http://aerith.net/comet/weekly/current.html ) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" | tee -a transient_factory_test31.txt
+#echo "############################################################
+#Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets and http://aerith.net/comet/weekly/current.html ) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" | tee -a transient_factory_test31.txt
+echo "############################################################" | tee -a transient_factory_test31.txt
+if [ -s comets_header.txt ];then
+ cat comets_header.txt | tee -a transient_factory_test31.txt
+fi
 cat comets.txt | tee -a transient_factory_test31.txt
 ls -lh comets.txt 2>&1 | tee -a transient_factory_test31.txt
 echo "############################################################
