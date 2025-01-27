@@ -2080,7 +2080,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   ###############################################################################################################
   # Check if the number of detected transients is suspiciously large
   NUMBER_OF_DETECTED_TRANSIENTS=$(wc -l < candidates-transients.lst)
-  echo "Found $NUMBER_OF_DETECTED_TRANSIENTS candidate transients before the final filtering." | tee -a transient_factory_test31.txt
+  echo "Found $NUMBER_OF_DETECTED_TRANSIENTS candidate transients before the final filtering.  (Hard limit: $NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT)" | tee -a transient_factory_test31.txt
   if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt $NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT ];then
    echo "ERROR Too many candidates before filtering ($NUMBER_OF_DETECTED_TRANSIENTS)... Skipping SE run ($SEXTRACTOR_CONFIG_FILE)" | tee -a transient_factory_test31.txt
    # this is for UCAC5 plate solver
