@@ -320,7 +320,7 @@ echo "(The script will be making wild assumptions about astrometic accuracy and 
 
 # Disable online VSX search (local and VizieR copies of VSX are still being checked)
 NO_ONLINE_VSX=0
-if [ -z "$5" ];then
+if [ -n "$5" ];then
  if [ "$5" == "no_online_vsx" ];then
   NO_ONLINE_VSX=1
  fi
@@ -440,7 +440,9 @@ fi
 #DOUBLE_R_SEARCH_ARCSEC=$(echo "$R_SEARCH_ARCSEC" | awk '{print 2*$1}')
 # That does not fly well when DOUBLE_R_SEARCH_ARCSEC is large for a wide FoV
 # Let's not double the search radius if it's larger than 30"
-DOUBLE_R_SEARCH_ARCSEC=$(echo "$R_SEARCH_ARCSEC" | awk '{print ($1 > 30) ? $1 : 2*$1}')
+#DOUBLE_R_SEARCH_ARCSEC=$(echo "$R_SEARCH_ARCSEC" | awk '{print ($1 > 30) ? $1 : 2*$1}')
+# Make sure DOUBLE_R_SEARCH_ARCSEC is not more than 25"
+DOUBLE_R_SEARCH_ARCSEC=$(echo "$R_SEARCH_ARCSEC" | awk '{print ($1 > 12.5) ? 25 : 2*$1}')
 echo " "
 echo "Searching Gaia DR3 for the brightest objects within $R_SEARCH_ARCSEC\" around $RA $DEC in the range of $GMAG_RANGE"
 echo "$LONGTIMEOUTCOMMAND lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/355/gaiadr3 -out.max=10 -out.add=_r -out.form=mini -sort=Gmag  -c='$RA $DEC' $GMAG_RANGE -c.rs=$R_SEARCH_ARCSEC -out=Source,RA_ICRS,DE_ICRS,Gmag,VarFlag"
@@ -633,6 +635,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
  # No more Name in VizieR output
  #VSX_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Name,Type,Period 2>/dev/null | grep -v -e "#" -e "(" -e "_" -e "\---" | sed 's:MASTER OT:MASTER_OT:g' | grep -A 1 'Name' | tail -n1)
  # awk 'NF > 0' is to remove the empty lines
+ #echo "lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Name,Type,Period"
  VSX_RESULT=$($TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -mime=text -source=B/vsx -out.max=1 -out.form=mini   -sort=_r -c="$GOOD_CATALOG_POSITION" -c.rs="$DOUBLE_R_SEARCH_ARCSEC" -out=Name,Type,Period 2>/dev/null | grep -v -e "#" -e "(" -e "_" -e "\---" | sed 's:MASTER OT:MASTER_OT:g' | awk 'NF > 0' | tail -n1)
  #echo "########$VSX_RESULT#########"
  VSX_V=$(echo "$VSX_RESULT" | awk '{print $1}')
@@ -652,11 +655,12 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
   #
   #echo -n " $STAR_NAME | $VSX_V $VSX_NAME | $GOOD_CATALOG_POSITION | $VSX_TYPE (VSX) | $VSX_PERIOD (VSX) | "
   SUGGESTED_NAME_STRING="$VSX_V $VSX_NAME"
-  SUGGESTED_TYPE_STRING="$VSX_TYPE (VSX)"
-  SUGGESTED_PERIOD_STRING="$VSX_PERIOD (VSX)"
+  SUGGESTED_TYPE_STRING="$VSX_TYPE (VSX @ VizieR)"
+  SUGGESTED_PERIOD_STRING="$VSX_PERIOD (VSX @ VizieR)"
   SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING "
   KNOWN_VARIABLE=1
  else
+  #echo "DEBUG NO_ONLINE_VSX=$NO_ONLINE_VSX"
   # Access VSX online only if we are allowed to
   if [ $NO_ONLINE_VSX -eq 0 ];then
    # Handle the special case: the star is in the VSX database but not in the VSX copy at CDS
@@ -664,10 +668,10 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
   else
    VSX_ONLINE_NAME=""
   fi
-  if [ "$VSX_ONLINE_NAME" != "" ] ;then
+  if [ -n "$VSX_ONLINE_NAME" ] ;then
    SUGGESTED_NAME_STRING="$VSX_ONLINE_NAME"
-   SUGGESTED_TYPE_STRING="T (VSX)"
-   SUGGESTED_PERIOD_STRING="P (VSX)"
+   SUGGESTED_TYPE_STRING="T (VSX @ aavso.org)"
+   SUGGESTED_PERIOD_STRING="P (VSX @ aavso.org)"
    KNOWN_VARIABLE=1
   else
    ### Check other large variable star lists
@@ -755,7 +759,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
     # Generic VizieR search for the word 'variable'
     if [ $KNOWN_VARIABLE -eq 0 ];then
      echo -n "Generic VizieR search for catalogs with the word 'variable' in their name (VizieR)"
-     GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -words='variable' -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" 2>/dev/null | grep 'Title' | grep --ignore-case -e 'variable' -e 'variability' | grep -v -e 'Northern Sky Variability Survey' -e 'Stellar variability in Gaia DR3' | sed 's:#Title\: ::g')
+     GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -words='variable' -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" 2>/dev/null | grep 'Title' | grep --ignore-case -e 'variable' -e 'variability' | grep -v -e 'Northern Sky Variability Survey' -e 'Stellar variability in Gaia DR3' -e 'Variability properties of TIC sources with KELT' -e 'Variability Upper Limits' | sed 's:#Title\: ::g')
      if [ -n "$GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS" ];then
       SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING may be a known variable - check VizieR  "
      fi
