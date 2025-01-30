@@ -136,6 +136,7 @@ int dofit( const gsl_multifit_robust_type *T,
 
  gsl_multifit_robust_workspace *work= gsl_multifit_robust_alloc( T, X->size1, X->size2 );
 
+ // Actually, the program segfaults here under some conditions
  s= gsl_multifit_robust( X, y, c, cov, work );
  gsl_multifit_robust_free( work );
 
