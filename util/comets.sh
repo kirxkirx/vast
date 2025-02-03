@@ -57,8 +57,7 @@ python3 -c "import skyfield; print(skyfield.__version__)" &>/dev/null && \
 python3 -c "import numpy; print(numpy.__version__)" &>/dev/null && \
 python3 -c "import pandas; print(pandas.__version__)" &>/dev/null && \
 python3 util/comet_finder/main.py calc -qd $JD
-if [ $? -eq 0 ]
-then
+if [ $? -eq 0 ]; then
   echo "Positions of bright comets computed with util/comet_finder/main.py for JD(UT)$JD" > comets_header.txt
   exit 0
 fi

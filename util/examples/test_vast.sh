@@ -26008,6 +26008,21 @@ elif [ -z "$RESULTSURL" ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_WWWU_002"
 else
+ # Manual test http://scan.sai.msu.ru/wwwupsilon/
+ #
+ # The installation goes as folows:
+ #
+ # cd /var/www/scan.sai.msu.ru/venv_wwwupsilon
+ # source /var/www/scan.sai.msu.ru/venv_wwwupsilon/bin/activate
+ # pip install numpy==1.19.5
+ # pip install --only-binary :all: scipy==1.5.4
+ # pip install setuptools==57.5.0
+ # pip install Cython==0.29.24
+ # pip install Tempita
+ # pip install scikit-learn==0.24.2
+ # pip install upsilon
+ #
+ #
  # The new upsilon incorrectly classifies the test lightcurve as a cepheid, because it cannot correctly derive its period
  # but whatever, here we just want to check that the web service is working
  curl --silent "$RESULTSURL" | grep --quiet -e 'class =  RRL_ab' -e 'class = RRL_ab' -e 'class = CEPH_F'
@@ -27492,7 +27507,7 @@ fi
 util/comets.sh 2460595.28063657 > comets.txt
 if [ $? -ne 0 ];then                    
  TEST_PASSED=0                          
- FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_COMETS_MPCCODE"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_COMETS_MPCCODE__$(cat comets_header.txt)"
 elif [ ! -s comets.txt ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_COMETS_MPCCODE_EMPTY"

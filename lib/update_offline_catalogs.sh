@@ -4,7 +4,7 @@
 
 # Max total time for catalog download
 # Assume the connection is fast enough for the catalog to be downlaoded in less than 
-CATALOG_DOWNLOAD_TIMEOUT_SEC=900
+CATALOG_DOWNLOAD_TIMEOUT_SEC=1800
 
 #################################
 # Set the safe locale that should be available on any POSIX system
