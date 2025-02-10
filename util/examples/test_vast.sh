@@ -23807,7 +23807,7 @@ fi
 
 # No false ID with Gaia DR2 high-amplitude variable
 # Now it's Gaia DR3 high-amplitude variable
-# The correct target is Gaia DR3 4254944797873326720
+# The correct target is Gaia DR3 4254944797873326720. Now 25.71" from it there is a Gaia DR3 4254944870964356992 variable
 util/search_databases_with_vizquery.sh 18:53:19.68 -04:58:21.6 online_id 350 no_online_vsx | grep 'online_id' | grep --quiet 'Gaia DR3 4254944797873326720'
 if [ $? -ne 0 ];then
  TEST_PASSED=0

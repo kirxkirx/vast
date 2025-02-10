@@ -383,6 +383,11 @@ function try_to_calibrate_the_input_frame {
  if [ $? -ne 0 ];then
   echo "try_to_calibrate_the_input_frame(): a problem occurred while running util/ccd/ms $INPUT_FRAME_PATH $DARK_FRAME $OUTPUT_DARK_SUBTRACTED_FRAME_PATH" 1>&2
   return 1
+ else
+  # Plot the dark frame for log display
+  export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
+  util/fits2png "$DARK_FRAME" &> /dev/null && mv "$(basename ${DARK_FRAME%.*}).png" transient_report/dark.png
+  unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
  fi
  
  OUTPUT_CALIBRATED_FRAME_PATH="$OUTPUT_DARK_SUBTRACTED_FRAME_PATH"
@@ -405,6 +410,10 @@ function try_to_calibrate_the_input_frame {
     rm -f "$OUTPUT_DARK_SUBTRACTED_FRAME_PATH"
     # use flat-fielded image
     OUTPUT_CALIBRATED_FRAME_PATH="$OUTPUT_FLATFIELDED_FRAME_PATH"
+    # Plot the flat field for log display
+    export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
+    util/fits2png "$FLAT_FIELD_FILE" &> /dev/null && mv "$(basename ${FLAT_FIELD_FILE%.*}).png" transient_report/flat.png
+    unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
    fi
   else
    echo "try_to_calibrate_the_input_frame(): FLAT_FIELD_FILE=$FLAT_FIELD_FILE does not exist or is empty" 1>&2
@@ -1310,6 +1319,14 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   if [ -n "$CALIBRATED_SECOND_EPOCH__SECOND_IMAGE" ];then
    echo "Using calibrated image CALIBRATED_SECOND_EPOCH__SECOND_IMAGE=$CALIBRATED_SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_factory_test31.txt
    SECOND_EPOCH__SECOND_IMAGE="$CALIBRATED_SECOND_EPOCH__SECOND_IMAGE"
+   
+   # Display the dark and falt frames in the log
+   echo "Dark frame used to calibrate the second-epoch images:<br>" >> transient_factory_test31.txt
+   echo "<img src=\"dark.png\"><br>" >> transient_factory_test31.txt
+   echo "Flat field used to calibrate the second-epoch images:<br>" >> transient_factory_test31.txt
+   echo "<img src=\"flat.png\"><br>" >> transient_factory_test31.txt
+   #
+   
   fi
  fi
  echo "after the calibration attempt:
