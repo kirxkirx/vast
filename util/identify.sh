@@ -41,7 +41,7 @@ function vastrealpath {
 
 # Function to remove the last occurrence of a directory from a path
 remove_last_occurrence() {
-    echo "$1" | awk -F/ -v dir=$2 '{
+    echo "$1" | awk -F/ -v dir="$2" '{
         found = 0;
         for (i=NF; i>0; i--) {
             if ($i == dir && found == 0) {
@@ -312,23 +312,41 @@ fi
 
 
 # Parse the command line arguments
-if [ -z $2 ];then 
+if [ -z "$2" ];then 
  #FIELD_OF_VIEW_ARCMIN=40
  #FIELD_OF_VIEW_ARCMIN=62
  #echo "Field of view was not set. Retreating to a default value $FIELD_OF_VIEW_ARCMIN'..."
  echo "Field of view for the image $FITSFILE was not set. Trying to guess..."
- FIELD_OF_VIEW_ARCMIN=`"$VAST_PATH"lib/try_to_guess_image_fov $FITSFILE 2>/dev/null`
- if [ -z "$FIELD_OF_VIEW_ARCMIN" ];then
-  echo "ERROR guessing the field of view, assuming the default value"
-  FIELD_OF_VIEW_ARCMIN=40
- else
+ FIELD_OF_VIEW_ARCMIN=$("$VAST_PATH"lib/try_to_guess_image_fov "$FITSFILE" 2>/dev/null)
+ if [ -n "$FIELD_OF_VIEW_ARCMIN" ];then
   echo "The guess is $FIELD_OF_VIEW_ARCMIN arcmin."
  fi
- #TEST=`echo "$FIELD_OF_VIEW_ARCMIN<15.0"|bc -ql`
- #TEST=`echo "$FIELD_OF_VIEW_ARCMIN<3.0"|bc -ql`
- #TEST=`echo "$FIELD_OF_VIEW_ARCMIN<1.0"|bc -ql`
- TEST=`echo "$FIELD_OF_VIEW_ARCMIN<1.0"| awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
- if [ $TEST -eq 1 ];then
+  
+else
+ #FIELD_OF_VIEW_ARCMIN="$2"
+ # Take maximum of 5 characters
+ FIELD_OF_VIEW_ARCMIN="${2:0:5}"
+fi
+
+#### Check if FIELD_OF_VIEW_ARCMIN is reasonable ####
+if [ -n "$FIELD_OF_VIEW_ARCMIN" ];then
+
+ if echo "$FIELD_OF_VIEW_ARCMIN" | awk '/^[0-9]*\.?[0-9]+$/ {exit !($1 > 0)}; {exit 1}'; then
+  echo "ERROR in $0: FIELD_OF_VIEW_ARCMIN must be a positive number" >&2
+  exit 1
+ fi
+
+ echo "$FIELD_OF_VIEW_ARCMIN" | awk '{exit !($1 > 0.0 && $1 < 21600)}'
+ if [ $? -ne 0 ]; then
+  echo "ERROR in $0: the supplied field-of-view guess ($FIELD_OF_VIEW_ARCMIN arcmin) seems totally unreasonable!"
+  exit 1
+ fi
+
+ # Check if it's hopelessly small
+ #TEST=`echo "$FIELD_OF_VIEW_ARCMIN<1.0"| awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }'`
+ #if [ $TEST -eq 1 ];then
+ echo "$FIELD_OF_VIEW_ARCMIN<1.0" | awk -F'<' '{exit !($1 < $2)}'
+ if [ $? -eq 0 ]; then
   # If we know FIELD_OF_VIEW_ARCMIN is so small we have no hope to blindly solve it 
   # - try to rely on WCS information that may be already inserted in the image
   if [ ! -f $WCS_IMAGE_NAME ];then
@@ -337,12 +355,16 @@ if [ -z $2 ];then
    $SEXTRACTOR -c "$VAST_PATH"`grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $FITSFILE 2>/dev/null` `"$VAST_PATH"lib/guess_saturation_limit_main $FITSFILE 2>/dev/null`  $FITSFILE && echo "Using WCS information from the original image" 1>&2 && cp $FITSFILE $WCS_IMAGE_NAME
    "$VAST_PATH"lib/correct_sextractor_wcs_catalog_using_xy2sky.sh "$WCS_IMAGE_NAME" "$SEXTRACTOR_CATALOG_NAME"
   fi
-  
  fi # if [ $TEST -eq 1 ];then
-else
- FIELD_OF_VIEW_ARCMIN=$2
 fi
 
+# Set the default filed-of-view guess value if it was not set
+if [ -z "$FIELD_OF_VIEW_ARCMIN" ];then
+ echo "ERROR guessing the field of view, assuming the default value"
+ FIELD_OF_VIEW_ARCMIN=40
+fi
+
+#### ####
 
 ########### Decide how to reach local or remote installation of Astrometry.net code ###########
 #

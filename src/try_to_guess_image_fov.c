@@ -888,6 +888,9 @@ int main( int argc, char **argv ) {
  // First test: see if there is a WCS header in the image itself?
  if ( 0 == look_for_existing_wcs_header( fitsfile_name, &estimated_fov_arcmin ) ) {
   fprintf( stdout, "%4.0lf\n", estimated_fov_arcmin );
+#ifdef FOV_DEBUG_MESSAGES 
+  fprintf( stderr, "The guess is based on the existing WCS header.\n" );
+#endif
   return 0;
  }
 
