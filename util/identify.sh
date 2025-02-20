@@ -331,8 +331,9 @@ fi
 #### Check if FIELD_OF_VIEW_ARCMIN is reasonable ####
 if [ -n "$FIELD_OF_VIEW_ARCMIN" ];then
 
- if echo "$FIELD_OF_VIEW_ARCMIN" | awk '/^[0-9]*\.?[0-9]+$/ {exit !($1 > 0)}; {exit 1}'; then
-  echo "ERROR in $0: FIELD_OF_VIEW_ARCMIN must be a positive number" >&2
+ echo "$FIELD_OF_VIEW_ARCMIN" | awk '/^[0-9]*\.?[0-9]+$/ {exit !($1 > 0)}; {exit 1}'
+ if [ $? -ne 0 ]; then
+  echo "ERROR in $0: FIELD_OF_VIEW_ARCMIN=#$FIELD_OF_VIEW_ARCMIN# must be a positive number" >&2
   exit 1
  fi
 
