@@ -3,7 +3,7 @@
 #include <string.h>
 #include <math.h>
 
-//#define VSX_SEARCH_RADIUS_DEG 35.0 / 3600.0
+// #define VSX_SEARCH_RADIUS_DEG 35.0 / 3600.0
 #define VSX_SEARCH_RADIUS_DEG 25.0 / 3600.0
 
 #define ASASSN_SEARCH_RADIUS_DEG 20.0 / 3600.0

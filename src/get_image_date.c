@@ -18,8 +18,8 @@
 
 #include "vast_limits.h"
 
-void fix_DATEOBS_STRING( char *DATEOBS );                                                                                                                                // defined in gettime.c
-void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS );                                                                                                             // defined in gettime.c
+void fix_DATEOBS_STRING( char *DATEOBS );                                                                                                                                                                      // defined in gettime.c
+void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS );                                                                                                                                                   // defined in gettime.c
 void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, char *formed_str_DATEOBS, char *formed_str_EXPTIME, char *log_output, char *finder_chart_timestring_output, int stderr_silent ); // defined in gettime.c
 
 void remove_multiple_white_spaces_from_string( char *string ) {

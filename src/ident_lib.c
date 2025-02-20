@@ -96,7 +96,7 @@ void Star_Copy( struct Star *copy, struct Star *star ) {
  copy->x= star->x;
  copy->y= star->y;
  copy->flux= star->flux;
- copy->flux_err= star->flux_err; 
+ copy->flux_err= star->flux_err;
  copy->n= star->n;
  copy->mag= star->mag;
  copy->sigma_mag= star->sigma_mag;
@@ -870,7 +870,7 @@ int Very_Well_triangle( struct Star *star1, int Number1, struct Star *star2, int
   Star2_to_star1_on_main_triangle( preobr, copy_star1, Number1, copy_star2, Number2, ecv_tr, n );
 
   // Do not select triangles which imply large rotation if the user told us the frames are not rotated with respect to each other
-  //if ( control1 == 1 && fabs( preobr->fi ) > 0.052353 && fabs( preobr->fi - M_PI ) > 0.052353 )
+  // if ( control1 == 1 && fabs( preobr->fi ) > 0.052353 && fabs( preobr->fi - M_PI ) > 0.052353 )
   if ( control1 == 1 && fabs( preobr->fi ) > MAX_NOROTATION_ANGLE_RAD && fabs( preobr->fi - M_PI ) > MAX_NOROTATION_ANGLE_RAD )
    continue;
 
@@ -1703,7 +1703,7 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
  // User may inicate that the frames are not rotated with trespect to each other. Here is the bad place to check it.
  // For the good check, control1 parameter is transmitted to the function Very_Well_triangle()
  // 0.052353*180/pi = 3 deg, that was a reasoonable value for digitized photographic plates of the Moscow collection
- //if ( control1 == 1 && fabs( preobr->fi ) > 0.052353 && fabs( preobr->fi - M_PI ) > 0.052353 ) {
+ // if ( control1 == 1 && fabs( preobr->fi ) > 0.052353 && fabs( preobr->fi - M_PI ) > 0.052353 ) {
  // 0.104719755119660 - 6 deg, may be reasonable value for NMW
  if ( control1 == 1 && fabs( preobr->fi ) > MAX_NOROTATION_ANGLE_RAD && fabs( preobr->fi - M_PI ) > MAX_NOROTATION_ANGLE_RAD ) {
   fprintf( stderr, " rotation is large! Retrying...  %lf\n", 180 * preobr->fi / M_PI );

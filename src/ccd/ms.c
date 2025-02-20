@@ -182,7 +182,7 @@ int main( int argc, char *argv[] ) {
   if ( fabs( ccd_temp_image - set_temp_image ) > MAX_CCD_TEMP_DIFF ) {
    // found set temperature mismatch
    // basename() may mess the input string - use it just befor exit
-   fprintf( stderr, "ERROR: mismatch between CCD-TEMP and SET-TEMP in %s! Looks like the the camera didn't have time to cool down.\n", basename(input_file) );
+   fprintf( stderr, "ERROR: mismatch between CCD-TEMP and SET-TEMP in %s! Looks like the the camera didn't have time to cool down.\n", basename( input_file ) );
    fits_close_file( fptr, &status );
    exit( EXIT_FAILURE );
   }

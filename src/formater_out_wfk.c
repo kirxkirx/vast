@@ -82,7 +82,7 @@ int main( int argc, char *argv[] ) {
   while ( NULL != fgets( STR, 1000, inputfile ) ) {
    sscanf( STR, "%lf %lf %lf %lf %lf %lf %s", &JD, &MAG, &MAGERR, &X, &Y, &AP, STR );
    // if( JD>2450000.0 )JD-=2450000.0; // to comfort the new version of WinEfk
-   //fprintf( stdout, "%lf %.6lf %.6lf\r\n", JD, MAG, MAGERR );
+   // fprintf( stdout, "%lf %.6lf %.6lf\r\n", JD, MAG, MAGERR );
    fprintf( stdout, "%.8lf %.6lf %.6lf\r\n", JD, MAG, MAGERR );
   }
  }
@@ -94,7 +94,7 @@ int main( int argc, char *argv[] ) {
    }
    sscanf( STR, "%lf %lf %lf", &JD, &MAG, &MAGERR );
    // if( JD>2450000.0 )JD-=2450000.0; // to comfort the new version of WinEfk
-   //fprintf( stdout, "%lf %.6lf %.6lf\r\n", JD, MAG, MAGERR );
+   // fprintf( stdout, "%lf %.6lf %.6lf\r\n", JD, MAG, MAGERR );
    fprintf( stdout, "%.8lf %.6lf %.6lf\r\n", JD, MAG, MAGERR );
   }
  }
@@ -105,7 +105,7 @@ int main( int argc, char *argv[] ) {
     continue;
    sscanf( STR, "%lf %lf", &JD, &MAG );
    // if( JD>2450000.0 )JD-=2450000.0; // to comfort the new version of WinEfk
-   //fprintf( stdout, "%lf %.6lf\r\n", JD, MAG );
+   // fprintf( stdout, "%lf %.6lf\r\n", JD, MAG );
    fprintf( stdout, "%.8lf %.6lf\r\n", JD, MAG );
   }
  }

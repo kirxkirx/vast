@@ -248,11 +248,13 @@ void help_msg( const char *progname, int exit_code ) {
 }
 
 // a helper function for the magnitude limit calculator
-void extract_mag_and_snr_from_structStar(const struct Star *stars, size_t n_stars, double *mag_array, double *snr_array) {
-    for (size_t i = 0; i < n_stars; i++) {
-        mag_array[i] = (double)stars[i].mag;
-        snr_array[i] = stars[i].flux / stars[i].flux_err;
-    }
+void extract_mag_and_snr_from_structStar( const struct Star *stars, size_t n_stars, double *mag_array, double *snr_array ) {
+ size_t i;
+ for ( i= 0; i < n_stars; i++ ) {
+  mag_array[i]= (double)stars[i].mag;
+  snr_array[i]= stars[i].flux / stars[i].flux_err;
+ }
+ return;
 }
 
 // a comparison function to qsort the observations chached in memory
@@ -1392,27 +1394,27 @@ int check_and_print_memory_statistics() {
   // fprintf(stderr,"can't read %s   no memory statistics available\n",string2);
   return 0;
  } else {
-  // Get ammount of used memory from /proc/PID/status 
+  // Get ammount of used memory from /proc/PID/status
   sprintf( string1, "grep -B1 VmSize %s | grep -v Groups | sed 's/\\t/ /g' > vast_memory_usage.log", string2 );
   if ( 0 != system( string1 ) ) {
    fprintf( stderr, "ERROR running  %s\n", string1 );
    return 0;
   }
 
-  // Check if memory information is available in /proc 
+  // Check if memory information is available in /proc
   if ( 0 == is_file( "/proc/meminfo" ) ) {
    fprintf( stderr, "can't read /proc/meminfo   no memory statistics available\n" );
    return 0;
   }
 
-  // Get RAM size 
+  // Get RAM size
   sprintf( string1, "grep MemTotal /proc/meminfo | sed 's/\\t/ /g' >> vast_memory_usage.log" );
   if ( 0 != system( string1 ) ) {
    fprintf( stderr, "ERROR running  %s\n", string1 );
    return 0;
   }
 
-  // Load memory information from the log file 
+  // Load memory information from the log file
   meminfofile= fopen( "vast_memory_usage.log", "r" );
   if ( meminfofile == NULL ) {
    fprintf( stderr, "can't open vast_memory_usage.log, no memory statistics available\n" );
@@ -1777,10 +1779,9 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
  double *detection_limit_from_snr__mag_array;
  double *detection_limit_from_snr__snr_array;
  int detection_limit_from_snr__success;
- 
+
  double detection_limit_derived_from_snr= 99.9;
  double detection_limit_80percent_of_stars= 99.9;
- 
 
  int i;
  double *filtered_mag_values;
@@ -1827,55 +1828,52 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
 
  // Here is a short discussion on how the normal people estimate limiting magnitude of an image
  // https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/en/megapipe/docs/photo.html
- // 
+ //
  // I also like the approach of Sergey Karpov: https://ui.adsabs.harvard.edu/abs/2024arXiv241116470K/abstract
  // see src/detection_limit.c
  //
- 
- 
+
  // Mag limit from SNR-magnitude relation following Karpov'24
  //
  //
- detection_limit_from_snr__mag_array=malloc( NUMBER*sizeof(double) );
- if( NULL == detection_limit_from_snr__mag_array ) {
-  fprintf(stderr, "ERROR: allocating memory for detection_limit_from_snr__mag_array\n");
+ detection_limit_from_snr__mag_array= malloc( NUMBER * sizeof( double ) );
+ if ( NULL == detection_limit_from_snr__mag_array ) {
+  fprintf( stderr, "ERROR: allocating memory for detection_limit_from_snr__mag_array\n" );
   exit( EXIT_FAILURE );
  }
 
- detection_limit_from_snr__snr_array=malloc( NUMBER*sizeof(double) );
- if( NULL == detection_limit_from_snr__snr_array ) {
-  fprintf(stderr, "ERROR: allocating memory for detection_limit_from_snr__snr_array\n");
+ detection_limit_from_snr__snr_array= malloc( NUMBER * sizeof( double ) );
+ if ( NULL == detection_limit_from_snr__snr_array ) {
+  fprintf( stderr, "ERROR: allocating memory for detection_limit_from_snr__snr_array\n" );
   exit( EXIT_FAILURE );
  }
 
- extract_mag_and_snr_from_structStar( star, (size_t)NUMBER, detection_limit_from_snr__mag_array, detection_limit_from_snr__snr_array);
- detection_limit_derived_from_snr= get_detection_limit_sn(detection_limit_from_snr__mag_array, detection_limit_from_snr__snr_array, (size_t)NUMBER, MIN_SNR, &detection_limit_from_snr__success);
- //fprintf(stderr,"DEBUG: detection_limit_from_snr__success= %d  GSL_SUCCESS= %d\n", detection_limit_from_snr__success,GSL_SUCCESS);
+ extract_mag_and_snr_from_structStar( star, (size_t)NUMBER, detection_limit_from_snr__mag_array, detection_limit_from_snr__snr_array );
+ detection_limit_derived_from_snr= get_detection_limit_sn( detection_limit_from_snr__mag_array, detection_limit_from_snr__snr_array, (size_t)NUMBER, MIN_SNR, &detection_limit_from_snr__success );
+ // fprintf(stderr,"DEBUG: detection_limit_from_snr__success= %d  GSL_SUCCESS= %d\n", detection_limit_from_snr__success,GSL_SUCCESS);
 
- free(detection_limit_from_snr__mag_array);
- free(detection_limit_from_snr__snr_array);
- 
- 
- if( GSL_SUCCESS != detection_limit_from_snr__success ) {
-  fprintf(stderr, "WARNING: failed to determine magnitude limit from the magnitude-SNR relation! Falling back to the 80 percent brighter stars limit.\n");
+ free( detection_limit_from_snr__mag_array );
+ free( detection_limit_from_snr__snr_array );
+
+ if ( GSL_SUCCESS != detection_limit_from_snr__success ) {
+  fprintf( stderr, "WARNING: failed to determine magnitude limit from the magnitude-SNR relation! Falling back to the 80 percent brighter stars limit.\n" );
  } else {
-  fprintf(stderr,"Detection limit from the magnitude-SNR relation= %.1lf  (%.1lf sigma detection)\n", detection_limit_derived_from_snr, MIN_SNR);
+  fprintf( stderr, "Detection limit from the magnitude-SNR relation= %.1lf  (%.1lf sigma detection)\n", detection_limit_derived_from_snr, MIN_SNR );
  }
 
  // Mag limit above which are 80% of the detected stars
  // Sort the filtered_mag_values array and get the value that is 20% from the largest value
  qsort( filtered_mag_values, filtered_count, sizeof( double ), (int ( * )( const void *, const void * ))compare );
  detection_limit_80percent_of_stars= filtered_mag_values[(int)( 0.80 * (double)filtered_count )]; // 20% from the end
- fprintf(stderr,"The simple faintest star detection limit= %.1lf\n", filtered_mag_values[filtered_count-1]);
- fprintf(stderr,"80 percent brightest stars detection limit= %.1lf\n", detection_limit_80percent_of_stars);
+ fprintf( stderr, "The simple faintest star detection limit= %.1lf\n", filtered_mag_values[filtered_count - 1] );
+ fprintf( stderr, "80 percent brightest stars detection limit= %.1lf\n", detection_limit_80percent_of_stars );
 
- // Under normal circumstances detection_limit_80percent_of_stars << detection_limit_derived_from_snr 
- search_area_boundaries[5]=MIN(detection_limit_derived_from_snr, detection_limit_80percent_of_stars);
- fprintf(stderr,"Selected detection limit= %.1lf\n", search_area_boundaries[5]);
+ // Under normal circumstances detection_limit_80percent_of_stars << detection_limit_derived_from_snr
+ search_area_boundaries[5]= MIN( detection_limit_derived_from_snr, detection_limit_80percent_of_stars );
+ fprintf( stderr, "Selected detection limit= %.1lf\n", search_area_boundaries[5] );
 
  search_area_boundaries[5]= search_area_boundaries[5] - MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT;
- fprintf(stderr,"Final detection limit= %.1lf (after subtracting MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT=%.1lf)\n", search_area_boundaries[5], MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT);
-
+ fprintf( stderr, "Final detection limit= %.1lf (after subtracting MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT=%.1lf)\n", search_area_boundaries[5], MAG_TRANSIENT_ABOVE_THE_REFERENCE_FRAME_LIMIT );
 
  fprintf( stderr, "\nParameter box for transient search: %7.1lf<X<%7.1lf %7.1lf<Y<%7.1lf %5.2lf<m<%5.2lf\n \n",
           search_area_boundaries[0],
@@ -1889,7 +1887,6 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
 
  return;
 }
-
 
 void record_specified_fits_keywords( char *input_image, char *output_str_with_fits_keywords_to_capture_from_input_images ) {
  //
@@ -3797,7 +3794,7 @@ int main( int argc, char **argv ) {
   STAR1[NUMBER1 - 1].n_rejected= 0; // init
                                     //
   // It is OK for a very bright saturated object to be big
-  //if ( a_a > 5*aperture && sextractor_flag < 4 ) {
+  // if ( a_a > 5*aperture && sextractor_flag < 4 ) {
   if ( a_a > aperture && sextractor_flag < 4 && 0 == param_nodiscardlargesrc ) {
    counter_rejected_too_large++;
    STAR1[NUMBER1 - 1].vast_flag= 1;
@@ -4406,7 +4403,7 @@ int main( int argc, char **argv ) {
      NUMBER2++;
      STAR2[NUMBER2 - 1].vast_flag= 0;
      // It is OK for a very bright saturated object to be big
-     //if ( a_a > 5*aperture && sextractor_flag < 4 ) {
+     // if ( a_a > 5*aperture && sextractor_flag < 4 ) {
      if ( a_a > aperture && sextractor_flag < 4 && 0 == param_nodiscardlargesrc ) {
       counter_rejected_too_large++;
       STAR2[NUMBER2 - 1].vast_flag= 1;
@@ -4992,7 +4989,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 
     /* If not enough stars were matched...*/
     if ( Number_of_ecv_star < (int)( MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ) ) { // We should compare with the number of stars on the reference frame, not with the total number of stars!
-     
+
      fprintf( stderr, "ERROR! Too few stars matched (%d < %d) . Wrong match? Skipping file...\n", Number_of_ecv_star, (int)( MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ) );
      write_string_to_individual_image_log( sextractor_catalog, "main(): ", "ERROR! Too few stars matched. Wrong match? Skipping file...", "" );
      Number_of_ecv_star= 0;
@@ -5191,7 +5188,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      write_string_to_individual_image_log( sextractor_catalog, "main(): ", "ERROR: to few stars to perform magnitude calibration ", "" );
     } else {
 
-     // Write data to log 
+     // Write data to log
      sprintf( filename_for_magnitude_calibration_log, "image%05d__%s", n, basename( input_images[n] ) );
      // write_magnitude_calibration_log( poly_x, poly_y, poly_err, N_good_stars, input_images[n] );
      write_magnitude_calibration_log( poly_x, poly_y, poly_err, N_good_stars, filename_for_magnitude_calibration_log );

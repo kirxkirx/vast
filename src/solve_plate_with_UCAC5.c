@@ -962,9 +962,8 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
  double APASS_g;
  double APASS_g_err;
 
- int found_end_marker = 0; // Variable to track if "#END#   " is present
-                           // The presence of this marker will signify the VizieR output was not cut-off by a network error
-
+ int found_end_marker= 0; // Variable to track if "#END#   " is present
+                          // The presence of this marker will signify the VizieR output was not cut-off by a network error
 
  f= fopen( vizquery_output_filename, "r" );
  if ( NULL == f ) {
@@ -982,10 +981,9 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
   if ( string[0] == ' ' )
    continue;
 
-
   // Check for "#END#   " at the start of the line
   if ( strncmp( string, "#END#   ", 7 ) == 0 ) {
-   found_end_marker = 1;
+   found_end_marker= 1;
    break; // we are already at the end of input
   }
 
@@ -1112,8 +1110,8 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
    fprintf( stderr, "ERROR: Too few stars matched!\n" );
    return 1;
   }
-//  fprintf( stderr, "ERROR: too few stars matched!\n" );
-//  return 1;
+  //  fprintf( stderr, "ERROR: too few stars matched!\n" );
+  //  return 1;
  }
  return 0;
 }
@@ -1497,7 +1495,7 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  int randChoice= rand() % 2;
 
  if ( randChoice == 0 ) {
-  //sprintf( command, "curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' > %s", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
+  // sprintf( command, "curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py' > %s", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
   sprintf( command, "curl --silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
  } else {
   sprintf( command, "curl --silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'", vizquery_input_filename, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_output_filename );
@@ -1657,11 +1655,11 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  */
 
  // delete temporary files only on success
- //if ( vizquery_run_success == 0 ) {
-  if ( 0 != unlink( vizquery_input_filename ) )
-   fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_input_filename );
-  if ( 0 != unlink( vizquery_output_filename ) )
-   fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_output_filename );
+ // if ( vizquery_run_success == 0 ) {
+ if ( 0 != unlink( vizquery_input_filename ) )
+  fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_input_filename );
+ if ( 0 != unlink( vizquery_output_filename ) )
+  fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_output_filename );
  //}
 
  return 0;
@@ -1772,11 +1770,11 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
  }
 
  // delete temporary files only on success
- //if ( vizquery_run_success == 0 ) {
-  if ( 0 != unlink( vizquery_input_filename ) )
-   fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_input_filename );
-  if ( 0 != unlink( vizquery_output_filename ) )
-   fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_output_filename );
+ // if ( vizquery_run_success == 0 ) {
+ if ( 0 != unlink( vizquery_input_filename ) )
+  fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_input_filename );
+ if ( 0 != unlink( vizquery_output_filename ) )
+  fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_output_filename );
  //}
 
  return 0;
@@ -1849,11 +1847,11 @@ int search_PANSTARRS1_with_vizquery( struct detected_star *stars, int N, struct 
  vizquery_run_success= read_PANSTARRS1_from_vizquery( stars, N, vizquery_output_filename, catalog_search_parameters );
 
  // delete temporary files only on success
- //if ( vizquery_run_success == 0 ) {
-  if ( 0 != unlink( vizquery_input_filename ) )
-   fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_input_filename );
-  if ( 0 != unlink( vizquery_output_filename ) )
-   fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_output_filename );
+ // if ( vizquery_run_success == 0 ) {
+ if ( 0 != unlink( vizquery_input_filename ) )
+  fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_input_filename );
+ if ( 0 != unlink( vizquery_output_filename ) )
+  fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_output_filename );
  //}
 
  return vizquery_run_success;
@@ -1861,8 +1859,8 @@ int search_PANSTARRS1_with_vizquery( struct detected_star *stars, int N, struct 
 
 int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
 
- int backoff_retry_count = 0;
- int backoff_wait_time_sec = 1;
+ int backoff_retry_count= 0;
+ int backoff_wait_time_sec= 1;
 
  char command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
  FILE *vizquery_input;
@@ -1879,8 +1877,8 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
  sprintf( vizquery_input_filename, "vizquery_%d.input", pid );
  sprintf( vizquery_output_filename, "vizquery_%d.output", pid );
  vizquery_input= fopen( vizquery_input_filename, "w" );
- if (vizquery_input == NULL) {
-  fprintf(stderr, "ERROR in search_APASS_with_vizquery(): Cannot open file %s for writing.\n", vizquery_input_filename);
+ if ( vizquery_input == NULL ) {
+  fprintf( stderr, "ERROR in search_APASS_with_vizquery(): Cannot open file %s for writing.\n", vizquery_input_filename );
   return 1;
  }
  search_stars_counter= 0;
@@ -1952,17 +1950,16 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
   vizquery_run_success= read_APASS_from_vizquery( stars, N, vizquery_output_filename, catalog_search_parameters );
   if ( vizquery_run_success != 0 ) {
    fprintf( stderr, "WARNING: failed to get APASS data with lib/vizquery script :(\n" );
-   //return 1; // we don't want to quit, the function will later return vizquery_run_success
+   // return 1; // we don't want to quit, the function will later return vizquery_run_success
   }
  }
 
-
  // delete temporary files only on success
- //if ( vizquery_run_success == 0 ) {
-  if ( 0 != unlink( vizquery_input_filename ) )
-   fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_input_filename );
-  if ( 0 != unlink( vizquery_output_filename ) )
-   fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_output_filename );
+ // if ( vizquery_run_success == 0 ) {
+ if ( 0 != unlink( vizquery_input_filename ) )
+  fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_input_filename );
+ if ( 0 != unlink( vizquery_output_filename ) )
+  fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_output_filename );
  //}
 
  return vizquery_run_success;

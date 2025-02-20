@@ -115,7 +115,7 @@ void append_edit_suffix_to_lightcurve_filename( char *lightcurvefilename ) {
 }
 */
 
-//#include <string.h>
+// #include <string.h>
 
 void create_badpoints_filename( const char *input_filename, char *output_filename ) {
  // Copy the input filename to the output buffer
@@ -398,11 +398,11 @@ int convert_asassn_v1_format( char *lightcurvefilename, char *path_to_vast_strin
  fseek( lightcurvefile, 0, SEEK_SET );
 
  // Skip the header line
- //fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile );
+ // fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile );
  // This should never happen, but let's check to make the compiler happy
- if (NULL == fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile)) {
-  fprintf(stderr, "ERROR in convert_asassn_v1_format(): Failed to read header line\n");
-  fclose(lightcurvefile);
+ if ( NULL == fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) ) {
+  fprintf( stderr, "ERROR in convert_asassn_v1_format(): Failed to read header line\n" );
+  fclose( lightcurvefile );
   return 1;
  }
 
@@ -645,10 +645,10 @@ int convert_ztf_snad_format( char *lightcurvefilename, char *path_to_vast_string
  fseek( lightcurvefile, 0, SEEK_SET );
 
  // Skip the header line
- //fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile );
- if (NULL == fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile)) {
-  fprintf(stderr, "ERROR in convert_ztf_snad_format(): Failed to read header line\n");
-  fclose(lightcurvefile);
+ // fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile );
+ if ( NULL == fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) ) {
+  fprintf( stderr, "ERROR in convert_ztf_snad_format(): Failed to read header line\n" );
+  fclose( lightcurvefile );
   return 1;
  }
 
@@ -903,12 +903,13 @@ void fit_linear_trend( float *input_JD, float *input_mag, float *mag_err, int N,
  if ( N == 0 ) {
   return;
  }
- // The linear fitting function will crash if provided with only a single data point 
+ // The linear fitting function will crash if provided with only a single data point
  if ( N == 1 ) {
-  (*A)=0.0;
-  (*B)=(double)input_mag[0];
+  ( *A )= 0.0;
+  //(*B)=(double)input_mag[0];
+  ( *B )= 0.0;
   return;
- } 
+ }
 
  if ( N <= 0 ) {
   fprintf( stderr, "ERROR3: Trying allocate zero or negative number of bytes(lc.c)\n" );
@@ -955,17 +956,17 @@ void fit_linear_trend( float *input_JD, float *input_mag, float *mag_err, int N,
   fprintf( stderr, "Weighted linear trend fit:   %lf mag/day, corresponding to t_2mag= %lf, t_3mag= %lf\n", ( *A ), 2.0 / ( *A ), 3.0 / ( *A ) );
  }
 
- //fprintf(stderr, "DEBUG01 N=%d\n",N);
+ // fprintf(stderr, "DEBUG01 N=%d\n",N);
  robustlinefit( fit_jd, fit_mag, N, poly_coeff );
- //fprintf(stderr, "DEBUG02\n");
+ // fprintf(stderr, "DEBUG02\n");
  ( *B )= poly_coeff[0];
  ( *A )= poly_coeff[1];
- //fprintf(stderr, "DEBUG03\n");
- // Suppress output if it's flat
+ // fprintf(stderr, "DEBUG03\n");
+ //  Suppress output if it's flat
  if ( ( *A ) < 1e-6 || 1e-6 < ( *A ) ) {
   fprintf( stderr, "Robust linear trend fit:   %lf mag/day, corresponding to t_2mag= %lf, t_3mag= %lf\n", ( *A ), 2.0 / ( *A ), 3.0 / ( *A ) );
  }
- //fprintf(stderr, "DEBUG04\n");
+ // fprintf(stderr, "DEBUG04\n");
 
  free( difference );
  free( fit_w );

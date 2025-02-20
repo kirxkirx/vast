@@ -20,12 +20,12 @@ int main( int argc, char **argv ) {
  int observation_counter, number_of_observations;
  size_t *observation_index; // for index sorting
 
- int use_full_jd = 0;  // Flag to determine JD precision
+ int use_full_jd= 0; // Flag to determine JD precision
 
  // Check if the program is called with the name "cute_lc_fullJD"
- char *program_name = basename(argv[0]);
- if (strcmp(program_name, "cute_lc_fullJD") == 0) {
-  use_full_jd = 1;
+ char *program_name= basename( argv[0] );
+ if ( strcmp( program_name, "cute_lc_fullJD" ) == 0 ) {
+  use_full_jd= 1;
  }
 
  if ( argc > 2 ) {
@@ -85,7 +85,7 @@ int main( int argc, char **argv ) {
    mag_err[observation_index[observation_counter]]= 0.001;
   }
   // Choose between full JD precision and standard precision
-  if (use_full_jd) {
+  if ( use_full_jd ) {
    fprintf( stdout, "%.8lf  %9.6lf %8.6lf\n", jd[observation_index[observation_counter]], mag[observation_index[observation_counter]], mag_err[observation_index[observation_counter]] );
   } else {
    fprintf( stdout, "%.5lf  %6.3lf %5.3lf\n", jd[observation_index[observation_counter]], mag[observation_index[observation_counter]], mag_err[observation_index[observation_counter]] );

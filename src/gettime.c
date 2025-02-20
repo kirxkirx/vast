@@ -1,4 +1,4 @@
-//#define _GNU_SOURCE // for memmem() in Kourovka_SBG_date_hack()
+// #define _GNU_SOURCE // for memmem() in Kourovka_SBG_date_hack()
 
 #define WARN_IF_TAImUTC_DAT_IS_OLDER_THAN_DAYS 10.0 * 365.242
 
@@ -38,43 +38,43 @@ void remove_multiple_spaces( char *str ) {
  return;
 }
 
-void generate_finder_chart_timestring(char *finder_chart_timestring_output, 
-                                      const struct tm *structureTIME, 
-                                      double double_fractional_seconds_only,
-                                      const char *tymesys_str_in, 
-                                      double exposure) {
-    if (finder_chart_timestring_output == NULL) {
-        return;
-    }
+void generate_finder_chart_timestring( char *finder_chart_timestring_output,
+                                       const struct tm *structureTIME,
+                                       double double_fractional_seconds_only,
+                                       const char *tymesys_str_in,
+                                       double exposure ) {
+ if ( finder_chart_timestring_output == NULL ) {
+  return;
+ }
 
-    char coma_or_whitespace_character_after_timesys = ',';
-    if (strcmp(tymesys_str_in, " ") == 0) {
-     coma_or_whitespace_character_after_timesys = ' ';
-    }
+ char coma_or_whitespace_character_after_timesys= ',';
+ if ( strcmp( tymesys_str_in, " " ) == 0 ) {
+  coma_or_whitespace_character_after_timesys= ' ';
+ }
 
-    if (exposure > 0.0) {
-        sprintf(finder_chart_timestring_output, 
-                "%4d-%02d-%02d %02d:%02d:%02.0lf %s%c %.0lf sec",
-                structureTIME->tm_year - 100 + 2000,
-                structureTIME->tm_mon + 1,
-                structureTIME->tm_mday,
-                structureTIME->tm_hour,
-                structureTIME->tm_min,
-                (double)structureTIME->tm_sec + double_fractional_seconds_only,
-                tymesys_str_in,
-                coma_or_whitespace_character_after_timesys,
-                exposure);
-    } else {
-        sprintf(finder_chart_timestring_output, 
-                "%4d-%02d-%02d %02d:%02d:%02.0lf %s",
-                structureTIME->tm_year - 100 + 2000,
-                structureTIME->tm_mon + 1,
-                structureTIME->tm_mday,
-                structureTIME->tm_hour,
-                structureTIME->tm_min,
-                (double)structureTIME->tm_sec + double_fractional_seconds_only,
-                tymesys_str_in);
-    }
+ if ( exposure > 0.0 ) {
+  sprintf( finder_chart_timestring_output,
+           "%4d-%02d-%02d %02d:%02d:%02.0lf %s%c %.0lf sec",
+           structureTIME->tm_year - 100 + 2000,
+           structureTIME->tm_mon + 1,
+           structureTIME->tm_mday,
+           structureTIME->tm_hour,
+           structureTIME->tm_min,
+           (double)structureTIME->tm_sec + double_fractional_seconds_only,
+           tymesys_str_in,
+           coma_or_whitespace_character_after_timesys,
+           exposure );
+ } else {
+  sprintf( finder_chart_timestring_output,
+           "%4d-%02d-%02d %02d:%02d:%02.0lf %s",
+           structureTIME->tm_year - 100 + 2000,
+           structureTIME->tm_mon + 1,
+           structureTIME->tm_mday,
+           structureTIME->tm_hour,
+           structureTIME->tm_min,
+           (double)structureTIME->tm_sec + double_fractional_seconds_only,
+           tymesys_str_in );
+ }
 }
 
 void write_DATEOBS_and_EXPTIME_to_FITS_header( char *fitsfilename, char *formed_str_DATEOBS, char *formed_str_EXPTIME ) {
@@ -212,11 +212,11 @@ void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, ch
 
  // Produce finder_chart_timestring_output
  if ( NULL != finder_chart_timestring_output ) {
-  generate_finder_chart_timestring( finder_chart_timestring_output, 
-                                      struct_tm_pointer, 
-                                      double_fractional_seconds_only, 
-                                      " ", 
-                                      exposure_sec);
+  generate_finder_chart_timestring( finder_chart_timestring_output,
+                                    struct_tm_pointer,
+                                    double_fractional_seconds_only,
+                                    " ",
+                                    exposure_sec );
  }
  //
 
@@ -254,7 +254,6 @@ void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, ch
 
  return;
 }
-
 
 double get_TTminusUTC_in_days( double jdUT, int *output_timesys ) {
  FILE *tai_utc_dat;
@@ -561,7 +560,6 @@ void fix_DATEOBS_STRING__DD_MM_YYYY_format( char *DATEOBS ) {
   }
  }
 
-
  //                            0123456789
  // check if this is a normal '2004-07-05' style DATE-OBS
  if ( DATEOBS[4] == dash_or_dot_character ) {
@@ -832,7 +830,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  char EXPOSURE_COMMENT[2048]; // make it long, just in case
  char tymesys_str_in[32];
  char tymesys_str_out[32];
- //char coma_or_whitespace_character_after_timesys;
+ // char coma_or_whitespace_character_after_timesys;
  double inJD= 0.0;
  double endJD= 0.0;    // for paring the Siril-style EXPSTART/EXPEND keywords
  double tjd_zero= 0.0; // for parsing TESS TICA FFIs
@@ -1172,23 +1170,22 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   }
  }
  status= status_before_EXPSTART_EXPEND_test;
-/*
- // TICA TESS
- status_before_EXPSTART_EXPEND_test= status;
- status= 0;
- fits_read_key( fptr, TDOUBLE, "TJD_ZERO", &inJD, NULL, &status );
- if ( status == 0 ) {
-  fits_read_key( fptr, TDOUBLE, "MIDTJD", &inJD, NULL, &status );
+ /*
+  // TICA TESS
+  status_before_EXPSTART_EXPEND_test= status;
+  status= 0;
+  fits_read_key( fptr, TDOUBLE, "TJD_ZERO", &inJD, NULL, &status );
   if ( status == 0 ) {
-   fprintf( stderr, "Both TJD_ZERO and MIDTJD keywords are present - will use them instead of DATE-OBS\n" );
-   DATEOBS[0]= '\0';
-   date_parsed= 0; // we will get the date later
-   // status= 202; // seems unnecessary
+   fits_read_key( fptr, TDOUBLE, "MIDTJD", &inJD, NULL, &status );
+   if ( status == 0 ) {
+    fprintf( stderr, "Both TJD_ZERO and MIDTJD keywords are present - will use them instead of DATE-OBS\n" );
+    DATEOBS[0]= '\0';
+    date_parsed= 0; // we will get the date later
+    // status= 202; // seems unnecessary
+   }
   }
- }
- status= status_before_EXPSTART_EXPEND_test;
-*/
-
+  status= status_before_EXPSTART_EXPEND_test;
+ */
 
  // if DATE-OBS, DATE-BEG, DATE-EXP and SHUTOPEN do not exist at all, try DATE
  if ( status == 202 ) {
@@ -1210,22 +1207,22 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     DATEOBS[0]= '\0';
     date_parsed= 0; // we will get the date later
    }
-   status=0;
+   status= 0;
    fits_read_key( fptr, TDOUBLE, "JDMID", &inJD, NULL, &status );
    if ( status == 0 ) {
     // strncpy(DATEOBS,"",2);
     DATEOBS[0]= '\0';
     date_parsed= 0; // we will get the date later
    }
-   status=0;
+   status= 0;
    fits_read_key( fptr, TDOUBLE, "MIDTJD", &inJD, NULL, &status );
    if ( status == 0 ) {
     // strncpy(DATEOBS,"",2);
     DATEOBS[0]= '\0';
     date_parsed= 0; // we will get the date later
-    //fprintf(stderr, "DEBUG MIDTJD\n");
+    // fprintf(stderr, "DEBUG MIDTJD\n");
    }
-   status=0;
+   status= 0;
    fits_read_key( fptr, TDOUBLE, "MJD-OBS", &inJD, NULL, &status );
    if ( status == 0 ) {
     // strncpy(DATEOBS,"",2);
@@ -1372,6 +1369,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
      //
      fprintf( stderr, "Getting the observing time (middle of exposure) from TJD_ZERO + MIDTJD: %.8lf\n", inJD );
      ( *timesys )= 3; // TDB
+     // The time system is TDB, but at the position of the TESS spacecraft (and therefore differs from geocentric TDB by a small light travel time).
+     // https://tess.mit.edu/public/tesstransients/pages/readme.html
      expstart_mjd_parsed= 1;
      //
      if ( param_nojdkeyword == 1 ) {
@@ -1854,48 +1853,48 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
 
   // Produce finder_chart_timestring_output
   if ( NULL != finder_chart_timestring_output ) {
-   generate_finder_chart_timestring( finder_chart_timestring_output, 
-                                      &structureTIME, 
-                                      double_fractional_seconds_only, 
-                                      tymesys_str_in, 
-                                      exposure);
+   generate_finder_chart_timestring( finder_chart_timestring_output,
+                                     &structureTIME,
+                                     double_fractional_seconds_only,
+                                     tymesys_str_in,
+                                     exposure );
   }
 
-/*
-  // Produce finder_chart_timestring_output
-  if ( NULL != finder_chart_timestring_output ) {
-  
-   // make sure a lonely coma is not hanging in the middle of the string if tymesys_str_in is a white space
-   coma_or_whitespace_character_after_timesys= ',';
-   if ( 0 == strcmp( tymesys_str_in, " " ) ) {
-    coma_or_whitespace_character_after_timesys= ' ';
-   }
-   if ( exposure > 0.0 ) {
-    // Write exposure time if it's non-zero
-    // sprintf( finder_chart_timestring_output, "%4d-%02d-%02d %02d:%02d:%02d %s, %.0lf sec",
-    sprintf( finder_chart_timestring_output, "%4d-%02d-%02d %02d:%02d:%02d %s%c %.0lf sec",
-             structureTIME.tm_year - 100 + 2000,
-             structureTIME.tm_mon + 1,
-             structureTIME.tm_mday,
-             structureTIME.tm_hour,
-             structureTIME.tm_min,
-             structureTIME.tm_sec,
-             tymesys_str_in,
-             coma_or_whitespace_character_after_timesys,
-             exposure );
-   } else {
-    // Do not write exposure time if it's zero
-    sprintf( finder_chart_timestring_output, "%4d-%02d-%02d %02d:%02d:%02d %s",
-             structureTIME.tm_year - 100 + 2000,
-             structureTIME.tm_mon + 1,
-             structureTIME.tm_mday,
-             structureTIME.tm_hour,
-             structureTIME.tm_min,
-             structureTIME.tm_sec,
-             tymesys_str_in );
-   }
-  }
-*/
+  /*
+    // Produce finder_chart_timestring_output
+    if ( NULL != finder_chart_timestring_output ) {
+
+     // make sure a lonely coma is not hanging in the middle of the string if tymesys_str_in is a white space
+     coma_or_whitespace_character_after_timesys= ',';
+     if ( 0 == strcmp( tymesys_str_in, " " ) ) {
+      coma_or_whitespace_character_after_timesys= ' ';
+     }
+     if ( exposure > 0.0 ) {
+      // Write exposure time if it's non-zero
+      // sprintf( finder_chart_timestring_output, "%4d-%02d-%02d %02d:%02d:%02d %s, %.0lf sec",
+      sprintf( finder_chart_timestring_output, "%4d-%02d-%02d %02d:%02d:%02d %s%c %.0lf sec",
+               structureTIME.tm_year - 100 + 2000,
+               structureTIME.tm_mon + 1,
+               structureTIME.tm_mday,
+               structureTIME.tm_hour,
+               structureTIME.tm_min,
+               structureTIME.tm_sec,
+               tymesys_str_in,
+               coma_or_whitespace_character_after_timesys,
+               exposure );
+     } else {
+      // Do not write exposure time if it's zero
+      sprintf( finder_chart_timestring_output, "%4d-%02d-%02d %02d:%02d:%02d %s",
+               structureTIME.tm_year - 100 + 2000,
+               structureTIME.tm_mon + 1,
+               structureTIME.tm_mday,
+               structureTIME.tm_hour,
+               structureTIME.tm_min,
+               structureTIME.tm_sec,
+               tymesys_str_in );
+     }
+    }
+  */
 
   if ( NULL != stderr_output ) {
    if ( exposure != 0 ) {

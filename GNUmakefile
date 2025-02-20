@@ -70,14 +70,14 @@ OPTFLAGS = -w -O2 -fomit-frame-pointer $(GOOD_MARCH_OPTIONS) $(LTO_OPTIONS) $(US
 
 
 
-all: print_check_start_message check print_compile_start_message clean shell_commands_record_compiler_version cfitsio gsl sextractor wcstools set_vast_limits vast.o vast statistics etc pgplot_components old shell_commands period_filter ccd astrometry astcheck cdsclient test  clean_objects print_compile_success_message
+all: print_check_start_message check print_compile_start_message clean check_no_for_loop_initial_declaration shell_commands_record_compiler_version cfitsio gsl sextractor wcstools set_vast_limits vast.o vast statistics etc pgplot_components old shell_commands period_filter ccd astrometry astcheck cdsclient test  clean_objects print_compile_success_message
 
 ifneq ($(RECOMPILE_VAST_ONLY),yes)
 check:
 	lib/check_external_programs.sh $(CC)
 else
 check:
-	# do notheing
+	# do nothing
 endif
 
 q: vast statistics etc pgplot_components old period_filter ccd
@@ -470,6 +470,16 @@ util/bin_lightcurve_in_time: $(SRC_PATH)bin_lightcurve_in_time.c
 lib/ConstellationBoundaries:  $(SRC_PATH)catalogs/ConstellationBoundaries.c
 	$(CC) $(OPTFLAGS) -o lib/ConstellationBoundaries $(SRC_PATH)catalogs/ConstellationBoundaries.c
 
+#check_no_for_loop_initial_declaration:
+#	(find . -type f -name "*.c" -exec grep -H -E "for[[:space:]]*\([[:space:]]*(int|size_t)" {} \; && echo "I don't like 'for' loop initial declarations! Please declare variables at the start of the function." && exit 1)
+check_no_for_loop_initial_declaration:
+	@if find . -type f -name "*.c" -exec grep -q -E "for[[:space:]]*\([[:space:]]*(int|size_t)" {} \+; then \
+		find . -type f -name "*.c" -exec grep -H -E "for[[:space:]]*\([[:space:]]*(int|size_t)" {} \+; \
+		echo "I don't like 'for' loop initial declarations! Please declare variables at the start of the function."; \
+		exit 1; \
+	fi
+	
+	
 shell_commands: pgplot_components lib/lightcurve_simulator vast
 	ln -s vast diffphot
 	ln -s pgfv sextract_single_image

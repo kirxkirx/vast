@@ -51,12 +51,12 @@ int main( int argc, char **argv ) {
 
  // this might be more stable against corrupted input
  i= 0;
- //while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, stdin ) ) {
- // if ( 5 != sscanf( sextractor_catalog_string, "%d %lf %lf %lf %lf ", &NUMBER[i], &ALPHA_SKY[i], &DELTA_SKY[i], &X_IMAGE[i], &Y_IMAGE[i] ) ) {
- //  continue;
+ // while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, stdin ) ) {
+ //  if ( 5 != sscanf( sextractor_catalog_string, "%d %lf %lf %lf %lf ", &NUMBER[i], &ALPHA_SKY[i], &DELTA_SKY[i], &X_IMAGE[i], &Y_IMAGE[i] ) ) {
+ //   continue;
+ //  }
+ //  i++;
  // }
- // i++;
- //}
  //
  while ( NULL != fgets( sextractor_catalog_string, MAX_STRING_LENGTH_IN_SEXTARCTOR_CAT, stdin ) ) {
   if ( 5 != sscanf( sextractor_catalog_string, "%d %lf %lf %lf %lf",
@@ -69,24 +69,24 @@ int main( int argc, char **argv ) {
    continue;
   }
 
-  // ALPHA_SKY[i] should be between -360 and 720 
+  // ALPHA_SKY[i] should be between -360 and 720
   if ( ALPHA_SKY[i] < -360.0 || ALPHA_SKY[i] > 720.0 ) {
    continue;
   }
 
-  // Adjust ALPHA_SKY[i] if needed 
+  // Adjust ALPHA_SKY[i] if needed
   if ( ALPHA_SKY[i] < 0.0 ) {
-   ALPHA_SKY[i] += 360.0;
+   ALPHA_SKY[i]+= 360.0;
   } else if ( ALPHA_SKY[i] >= 360.0 ) {
-   ALPHA_SKY[i] -= 360.0;
+   ALPHA_SKY[i]-= 360.0;
   }
 
-  // DELTA_SKY[i] should be between -90 and 90 
+  // DELTA_SKY[i] should be between -90 and 90
   if ( DELTA_SKY[i] < -90.0 || DELTA_SKY[i] > 90.0 ) {
    continue;
   }
 
-  // X_IMAGE[i] and Y_IMAGE[i] should be between -MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK and MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK 
+  // X_IMAGE[i] and Y_IMAGE[i] should be between -MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK and MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK
   if ( X_IMAGE[i] < -1.0 * MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK || X_IMAGE[i] > MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ||
        Y_IMAGE[i] < -1.0 * MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK || Y_IMAGE[i] > MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
    continue;

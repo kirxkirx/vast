@@ -34,11 +34,10 @@
 #include "../parse_sextractor_catalog.h"
 #include "../get_path_to_vast.h"
 #include "../count_lines_in_ASCII_file.h"
-#include "../lightcurve_io.h" // for read_lightcurve_point()
+#include "../lightcurve_io.h"                        // for read_lightcurve_point()
 #include "../is_point_close_or_off_the_frame_edge.h" // for is_point_close_or_off_the_frame_edge()
 #include "../vast_filename_manipulation.h"
 #include "../kourovka_sbg_date.h" // for Kourovka_SBG_date_hack()
-
 
 void save_star_to_vast_list_of_previously_known_variables_and_exclude_lst( int sextractor_catalog__star_number, float sextractor_catalog__X, float sextractor_catalog__Y ) {
  FILE *filepointer;
@@ -60,10 +59,10 @@ int get_string_with_fov_of_wcs_calibrated_image( char *fitsfilename, char *outpu
  FILE *fp;
  get_path_to_vast( path_to_vast_string );
  path_to_vast_string[VAST_PATH_MAX - 1]= '\0'; // just in case
- 
+
  output_string[0]= '\0';            // reset output just in case
  ( *output_float_fov_arcmin )= 0.0; // reset output just in case
- 
+
  if ( finder_chart_mode == 1 ) {
   // This is a zoom-in image
   sprintf( systemcommand, "%sutil/fov_of_wcs_calibrated_image.sh %s | grep 'Image scale:' | awk '{print $3}' | awk -F'\"' '{print $1}'", path_to_vast_string, fitsfilename );
@@ -356,7 +355,7 @@ int download_hla_image_if_this_is_it_and_modify_imagename( char *fits_image_name
  return 1;
 }
 
-// Magnitude calibration for single image mode 
+// Magnitude calibration for single image mode
 void magnitude_calibration_using_calib_txt( double *mag, int N ) {
  int i;
  double a, b, c;
@@ -578,10 +577,10 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
  int test_i;
 
  int limit;
- 
+
  long number_of_negative_pixels= 0;
  long number_of_nonnegative_pixels= 0;
- 
+
  double fraction_of_negative_pixels= 0;
 
  // int number_of_pixels_in_zoomed_image;
@@ -596,33 +595,33 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
   HIST[i]= 0;
 
  for ( i= 0; i < NUM_OF_PIXELS; i++ ) {
-  //if ( im[i] > 0 && im[i] < 65535 ) {
-   // Cool it works!!! (Transformation from i to XY)
-   Y= 1 + (int)( (float)i / (float)naxes[0] );
-   X= i + 1 - ( Y - 1 ) * naxes[0];
-   if ( X > MIN( drawX1, drawX2 ) && X < MAX( drawX1, drawX2 ) && Y > MIN( drawY1, drawY2 ) && Y < MAX( drawY1, drawY2 ) ) {
-    //
-    if ( im[i] < 0.0 ) {
-     number_of_negative_pixels++;
-    } else {
-     number_of_nonnegative_pixels++;
-    }
-    //
-    if ( im[i] > 0 && im[i] < 65535 ) {
-     HIST[(long)( im[i] + 0.5 )]+= 1;
-     if ( im[i] > ( *max_i ) )
-      ( *max_i )= im[i];
-     if ( im[i] < ( *min_i ) )
-      ( *min_i )= im[i];
-    }
-    //
+  // if ( im[i] > 0 && im[i] < 65535 ) {
+  //  Cool it works!!! (Transformation from i to XY)
+  Y= 1 + (int)( (float)i / (float)naxes[0] );
+  X= i + 1 - ( Y - 1 ) * naxes[0];
+  if ( X > MIN( drawX1, drawX2 ) && X < MAX( drawX1, drawX2 ) && Y > MIN( drawY1, drawY2 ) && Y < MAX( drawY1, drawY2 ) ) {
+   //
+   if ( im[i] < 0.0 ) {
+    number_of_negative_pixels++;
+   } else {
+    number_of_nonnegative_pixels++;
    }
-  //} // 
+   //
+   if ( im[i] > 0 && im[i] < 65535 ) {
+    HIST[(long)( im[i] + 0.5 )]+= 1;
+    if ( im[i] > ( *max_i ) )
+     ( *max_i )= im[i];
+    if ( im[i] < ( *min_i ) )
+     ( *min_i )= im[i];
+   }
+   //
+  }
+  //} //
  }
- 
+
  //
  fraction_of_negative_pixels= (double)number_of_negative_pixels / (double)( number_of_nonnegative_pixels + number_of_negative_pixels );
- fprintf( stderr, "Fraction of negative pixels in the image region: %.3lf\n",fraction_of_negative_pixels);
+ fprintf( stderr, "Fraction of negative pixels in the image region: %.3lf\n", fraction_of_negative_pixels );
  // special case of mean-subtracted image
  if ( fraction_of_negative_pixels > 0.3 ) {
   ( *min_i )= -50.0;
@@ -630,8 +629,8 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
   fprintf( stderr, "Setting special image range: min= %.1f max=%.1f\n", ( *min_i ), ( *max_i ) );
   return;
  }
- 
- //fprintf(stderr, "DEBUG096 image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
+
+ // fprintf(stderr, "DEBUG096 image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
 
  //////////////////////
  // Try the percantage cuts only if the image range is not much smaller than 0 to 65535
@@ -656,10 +655,8 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
     }
    }
   }
-  
+
   //
-  
-  
 
   // find histogram peak
   summa= 0;
@@ -691,17 +688,17 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
   }
 
   //
-  if( ( *max_i ) == ( *min_i ) ) {
-   fprintf(stderr, "WARNING (1) in image_minmax3(): max=min=%f\n", ( *max_i ));
-   ( *min_i ) = ( *min_i ) / 2;
-   ( *max_i ) = ( *max_i ) * 2 + 1;
+  if ( ( *max_i ) == ( *min_i ) ) {
+   fprintf( stderr, "WARNING (1) in image_minmax3(): max=min=%f\n", ( *max_i ) );
+   ( *min_i )= ( *min_i ) / 2;
+   ( *max_i )= ( *max_i ) * 2 + 1;
   }
   //
 
   return;
  }
  //////////////////////
- //fprintf(stderr, "DEBUG097 image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
+ // fprintf(stderr, "DEBUG097 image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
 
  for ( i= 0; i < 65535; i++ )
   hist_summa+= HIST[i];
@@ -725,35 +722,35 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
    break;
   }
  }
- 
- //fprintf(stderr, "DEBUG098 image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
- fprintf(stderr, "Original %.1f%% image scale: min= %f max= %f \n", PGFV_CUTS_PERCENT, (*min_i), (*max_i) );
+
+ // fprintf(stderr, "DEBUG098 image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
+ fprintf( stderr, "Original %.1f%% image scale: min= %f max= %f \n", PGFV_CUTS_PERCENT, ( *min_i ), ( *max_i ) );
 
  //( *max_i )= MIN( ( *max_i ), 65535 ); // just in case...
  ( *max_i )= MIN( ( *max_i ), 32767 );
- 
- //fprintf(stderr, "DEBUG_A image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
+
+ // fprintf(stderr, "DEBUG_A image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
 
  ( *min_i )= MAX( ( *min_i ), 0 ); // do not go for very negatve values - they are likely wrong
- 
- //fprintf(stderr, "DEBUG_B image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
 
- if( ( *min_i ) != 0.0 ) { 
-  ( *max_i )= MIN( ( *max_i ), 10*( *min_i ) ); // bright star in the field case
+ // fprintf(stderr, "DEBUG_B image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
+
+ if ( ( *min_i ) != 0.0 ) {
+  ( *max_i )= MIN( ( *max_i ), 10 * ( *min_i ) ); // bright star in the field case
  }
- 
- //fprintf(stderr, "DEBUG_C image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
+
+ // fprintf(stderr, "DEBUG_C image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
 
  ( *max_i )= MAX( ( *max_i ), ( *min_i ) + 1 ); // for the countrate images (like the HST ones)
- 
- //fprintf(stderr, "DEBUG099 image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
- fprintf(stderr, "Restricted image scale: min= %f max= %f \n", (*min_i), (*max_i) );
+
+ // fprintf(stderr, "DEBUG099 image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
+ fprintf( stderr, "Restricted image scale: min= %f max= %f \n", ( *min_i ), ( *max_i ) );
 
  //
- if( ( *max_i ) == ( *min_i ) ) {
-  fprintf(stderr, "WARNING (2) in image_minmax3(): max=min=%f\n", ( *max_i ));
-  ( *min_i ) = ( *min_i ) / 2;
-  ( *max_i ) = ( *max_i ) * 2 + 1;
+ if ( ( *max_i ) == ( *min_i ) ) {
+  fprintf( stderr, "WARNING (2) in image_minmax3(): max=min=%f\n", ( *max_i ) );
+  ( *min_i )= ( *min_i ) / 2;
+  ( *max_i )= ( *max_i ) * 2 + 1;
  }
  //
 
@@ -936,7 +933,7 @@ int main( int argc, char **argv ) {
  tr[3]= 0;
  tr[4]= 0;
  tr[5]= 1;
- //int drawX1, drawX2, drawY1, drawY2, drawX0, drawY0;
+ // int drawX1, drawX2, drawY1, drawY2, drawX0, drawY0;
  float drawX1, drawX2, drawY1, drawY2, drawX0, drawY0;
  float min_val;
  float max_val;
@@ -949,7 +946,7 @@ int main( int argc, char **argv ) {
  float finder_char_pix_around_the_target= 20.0; // default thumbnail image size for transient search
 
  // new fatures
- //int buf;
+ // int buf;
  float float_buf;
  float axis_ratio;
  double view_image_size_x, view_image_size_y;
@@ -1266,7 +1263,6 @@ int main( int argc, char **argv ) {
  } else {
   image_specified_on_command_line__0_is_yes= 1; // no image on the command line as there is nothing there at all
  }                                              // else if( argc > 1 ) {
-
 
  if ( image_specified_on_command_line__0_is_yes != 0 && image_specified_on_command_line__0_is_yes != 1 ) {
   fprintf( stderr, "ERROR in %s: image_specified_on_command_line__0_is_yes = %d \n", argv[0], image_specified_on_command_line__0_is_yes );
@@ -1922,36 +1918,36 @@ int main( int argc, char **argv ) {
   real_float_array[i]= float_array[i];
  }
  fix_array_with_negative_values( naxes[0] * naxes[1], float_array );
- //image_minmax2( naxes[0] * naxes[1], float_array, &max_val, &min_val );
- image_minmax3(naxes[0] * naxes[1], float_array, &max_val, &min_val, 1, naxes[0], 1, naxes[1], naxes);
+ // image_minmax2( naxes[0] * naxes[1], float_array, &max_val, &min_val );
+ image_minmax3( naxes[0] * naxes[1], float_array, &max_val, &min_val, 1, naxes[0], 1, naxes[1], naxes );
 
- // GUI 
+ // GUI
  setenv_localpgplot( argv[0] );
  if ( finder_chart_mode == 1 ) {
 
   //
   inverted_Y_axis= 0; // do not invert Y axis for finding charts!
   //
-  
+
   // no idea if PGPLOT can handle such a long filename
-  strncpy(output_png_filename, basename(fits_image_name), FILENAME_LENGTH);
-  output_png_filename[FILENAME_LENGTH-1]='\0';
+  strncpy( output_png_filename, basename( fits_image_name ), FILENAME_LENGTH );
+  output_png_filename[FILENAME_LENGTH - 1]= '\0';
   replace_last_dot_with_null( output_png_filename );
-  strncat( output_png_filename, ".png/PNG", FILENAME_LENGTH);
-  strncpy( output_ps_filename, output_png_filename, FILENAME_LENGTH);
+  strncat( output_png_filename, ".png/PNG", FILENAME_LENGTH );
+  strncpy( output_ps_filename, output_png_filename, FILENAME_LENGTH );
   replace_last_dot_with_null( output_ps_filename );
-  strncat( output_ps_filename, ".ps/PS", FILENAME_LENGTH);
-  
-  if ( strlen(output_png_filename) > 100  ) {
-   fprintf(stderr, "WARNING: the output filename is too long and PGPLOT may truncate it!\n");
+  strncat( output_ps_filename, ".ps/PS", FILENAME_LENGTH );
+
+  if ( strlen( output_png_filename ) > 100 ) {
+   fprintf( stderr, "WARNING: the output filename is too long and PGPLOT may truncate it!\n" );
   }
 
-  fprintf(stderr, "Opening output to %s\n", output_png_filename);
+  fprintf( stderr, "Opening output to %s\n", output_png_filename );
   if ( cpgbeg( 0, output_png_filename, 1, 1 ) != 1 ) {
-   fprintf(stderr, "WARNING: cannot cpgbeg() on %s\n", output_png_filename);
+   fprintf( stderr, "WARNING: cannot cpgbeg() on %s\n", output_png_filename );
    // fallback to PS
    if ( cpgbeg( 0, output_ps_filename, 1, 1 ) != 1 ) {
-    fprintf(stderr, "ERROR: cannot cpgbeg() on %s\n", output_ps_filename);
+    fprintf( stderr, "ERROR: cannot cpgbeg() on %s\n", output_ps_filename );
     return EXIT_FAILURE;
    }
   }
@@ -1988,10 +1984,10 @@ int main( int argc, char **argv ) {
  }
 
  // set default plotting limits
- //drawX1= 1;
- //drawY1= 1;
- //drawX2= (int)naxes[0];
- //drawY2= (int)naxes[1];
+ // drawX1= 1;
+ // drawY1= 1;
+ // drawX2= (int)naxes[0];
+ // drawY2= (int)naxes[1];
  drawX1= 1.0;
  drawY1= 1.0;
  drawX2= (float)naxes[0];
@@ -2013,17 +2009,17 @@ int main( int argc, char **argv ) {
   ///////
   drawX0= ( drawX1 + drawX2 ) / 2.0;
   drawY0= ( drawY1 + drawY2 ) / 2.0;
-  view_image_size_y= MAX( drawX2 - drawX1, drawY2 - drawY1);
+  view_image_size_y= MAX( drawX2 - drawX1, drawY2 - drawY1 );
   //
   view_image_size_y= MAX( view_image_size_y, 3 ); // do not allow zoom smaller than 3 pix
   //
   view_image_size_x= axis_ratio * view_image_size_y;
-  //drawX1= drawX0 - (int)( view_image_size_x / 2 + 0.5 );
-  //drawY1= drawY0 - (int)( view_image_size_y / 2 + 0.5 );
+  // drawX1= drawX0 - (int)( view_image_size_x / 2 + 0.5 );
+  // drawY1= drawY0 - (int)( view_image_size_y / 2 + 0.5 );
   drawX1= drawX0 - view_image_size_x / 2.0;
   drawY1= drawY0 - view_image_size_y / 2.0;
-  //drawX2= drawX1 + (int)view_image_size_x;
-  //drawY2= drawY1 + (int)view_image_size_y;
+  // drawX2= drawX1 + (int)view_image_size_x;
+  // drawY2= drawY1 + (int)view_image_size_y;
   drawX2= drawX1 + view_image_size_x;
   drawY2= drawY1 + view_image_size_y;
   if ( drawX2 > naxes[0] ) {
@@ -2098,7 +2094,7 @@ int main( int argc, char **argv ) {
     aperture_change= 1;
    }
 
-   // If aperture was changed - repeat measurements with new aperture 
+   // If aperture was changed - repeat measurements with new aperture
    if ( match_mode == 3 || match_mode == 4 ) {
     if ( aperture_change == 1 ) {
      fprintf( stderr, "%s is re-starting autodetect_aperture(%s, %s, 1, 0, %.2lf, %lf, %lf, 2);\n", argv[0], fits_image_name, sextractor_catalog_filename, fixed_aperture, dimX, dimY );
@@ -2202,12 +2198,12 @@ int main( int argc, char **argv ) {
     match_mode= 3;
    }
 
-   // I - print info (help) 
+   // I - print info (help)
    if ( curC == 'I' || curC == 'i' ) {
     print_pgfv_help();
    }
 
-   // M - star markers on/off 
+   // M - star markers on/off
    if ( curC == 'M' || curC == 'm' ) {
     if ( draw_star_markers == 1 )
      draw_star_markers= 0;
@@ -2216,7 +2212,7 @@ int main( int argc, char **argv ) {
     curC= 'R';
    }
 
-   // Process left mouse button click 
+   // Process left mouse button click
    if ( curC == 'A' ) {
     fprintf( stderr, "\nPixel: %7.1f %7.1f %9.3f\n", curX, curY, real_float_array[(int)( curX - 0.5 ) + (int)( curY - 0.5 ) * naxes[0]] );
     ///
@@ -2225,7 +2221,7 @@ int main( int argc, char **argv ) {
     }
     //
 
-    // Magnitude calibration mode or Single image mode 
+    // Magnitude calibration mode or Single image mode
     if ( match_mode == 1 || match_mode == 2 || match_mode == 3 || match_mode == 4 ) {
      for ( marker_counter= 0; marker_counter < sextractor_catalog__counter; marker_counter++ ) {
       if ( ( curX - sextractor_catalog__X[marker_counter] ) * ( curX - sextractor_catalog__X[marker_counter] ) + ( curY - sextractor_catalog__Y[marker_counter] ) * ( curY - sextractor_catalog__Y[marker_counter] ) < (float)( APER * APER / 4.0 ) ) {
@@ -2235,7 +2231,7 @@ int main( int argc, char **argv ) {
        cpgsci( 1 );
        //
 
-       // Magnitude calibration mode 
+       // Magnitude calibration mode
        if ( match_mode == 2 || match_mode == 4 ) {
         fprintf( stderr, "Star %d. Instrumental magnitude: %.4lf %.4lf\n(In order to cancel the input - type '99' instead of an actual magnitude.)\n Please, enter its catalog magnitude or 'v' to mark it as the target variable:\nComp. star mag: ", sextractor_catalog__star_number[marker_counter], sextractor_catalog__MAG[marker_counter], sextractor_catalog__MAG_ERR[marker_counter] );
         if ( NULL == fgets( RADEC, 1024, stdin ) ) {
@@ -2494,12 +2490,12 @@ int main( int argc, char **argv ) {
       drawY2= mymax( curY, curY2 );
      }
      //
-     //drawX0= (int)( ( drawX1 + drawX2 ) / 2 + 0.5 );
-     //drawY0= (int)( ( drawY1 + drawY2 ) / 2 + 0.5 );
+     // drawX0= (int)( ( drawX1 + drawX2 ) / 2 + 0.5 );
+     // drawY0= (int)( ( drawY1 + drawY2 ) / 2 + 0.5 );
      drawX0= ( drawX1 + drawX2 ) / 2.0;
      drawY0= ( drawY1 + drawY2 ) / 2.0;
      //
-     //view_image_size_y= myimax( drawX2 - drawX1, drawY2 - drawY1 );
+     // view_image_size_y= myimax( drawX2 - drawX1, drawY2 - drawY1 );
      view_image_size_y= MAX( drawX2 - drawX1, drawY2 - drawY1 );
      view_image_size_y= MAX( view_image_size_y, 3 ); // do not allow zoom smaller than 3 pix
      view_image_size_y= MIN( view_image_size_y, naxes[1] );
@@ -2517,10 +2513,10 @@ int main( int argc, char **argv ) {
       view_image_size_x= axis_ratio * view_image_size_y;
       fprintf( stderr, "Making a plot with the axes ratio of %lf\n", axis_ratio );
      }
-     //drawX1= drawX0 - (int)( view_image_size_x / 2 + 0.5 );
-     //drawY1= drawY0 - (int)( view_image_size_y / 2 + 0.5 );
-     //drawX2= drawX1 + (int)view_image_size_x;
-     //drawY2= drawY1 + (int)view_image_size_y;
+     // drawX1= drawX0 - (int)( view_image_size_x / 2 + 0.5 );
+     // drawY1= drawY0 - (int)( view_image_size_y / 2 + 0.5 );
+     // drawX2= drawX1 + (int)view_image_size_x;
+     // drawY2= drawY1 + (int)view_image_size_y;
      drawX1= drawX0 - view_image_size_x / 2.0;
      drawY1= drawY0 - view_image_size_y / 2.0;
      drawX2= drawX1 + view_image_size_x;
@@ -2627,7 +2623,7 @@ int main( int argc, char **argv ) {
     cpgscr( 0, 0.10, 0.31, 0.32 ); /* set default vast window background */
     cpgeras();
    }
-   //cpgswin( (float)drawX1, (float)drawX2, (float)drawY1, (float)drawY2 );
+   // cpgswin( (float)drawX1, (float)drawX2, (float)drawY1, (float)drawY2 );
    cpgswin( drawX1, drawX2, drawY1, drawY2 );
    if ( use_labels == 1 ) {
     cpgbox( "BCN1", 0.0, 0, "BCN1", 0.0, 0 );
@@ -2739,8 +2735,8 @@ int main( int argc, char **argv ) {
        // cpgsch(1.0);
        sprintf( finder_chart_string_to_print, "\\fR %s", finder_chart_timestring_output );
        cpgmtxt( "B", -1.0, 0.05, 0.0, finder_chart_string_to_print );
-       //fprintf(stderr,"\n\n\n HAHAHA \n %s \n %s \n\n\n", finder_chart_timestring_output, finder_chart_string_to_print);
-       // cpgsch(2.0);
+       // fprintf(stderr,"\n\n\n HAHAHA \n %s \n %s \n\n\n", finder_chart_timestring_output, finder_chart_string_to_print);
+       //  cpgsch(2.0);
       }
       //
       if ( 1 == use_imagesizestringinsideimg ) {
@@ -2780,18 +2776,18 @@ int main( int argc, char **argv ) {
         marker_scaling= 1.0;
        }
        // for smaller field of view we don't want to scale
-       // we want to explicitly set the marker offset and sie in pix 
+       // we want to explicitly set the marker offset and sie in pix
        //
        // special case - very small fov
        if ( finder_char_pix_around_the_target < 32 ) {
         marker_scaling= 1.0;
-        marker_offset_pix=1.5;
-        marker_length_pix=3.0;
+        marker_offset_pix= 1.5;
+        marker_length_pix= 3.0;
        }
        if ( finder_char_pix_around_the_target < 64 ) {
         marker_scaling= 1.0;
-        marker_offset_pix=2.5;
-        marker_length_pix=5.0;
+        marker_offset_pix= 2.5;
+        marker_length_pix= 5.0;
        }
        //
        // up
@@ -2806,10 +2802,10 @@ int main( int argc, char **argv ) {
        lineX[1]= markX - marker_offset_pix * marker_scaling - marker_length_pix * marker_scaling;
        lineY[1]= markY;
        // right
-       //lineX[0]= markX + marker_offset_pix * marker_scaling;
-       //lineY[0]= markY;
-       //lineX[1]= markX + marker_offset_pix * marker_scaling + marker_length_pix * marker_scaling;
-       //lineY[1]= markY;
+       // lineX[0]= markX + marker_offset_pix * marker_scaling;
+       // lineY[0]= markY;
+       // lineX[1]= markX + marker_offset_pix * marker_scaling + marker_length_pix * marker_scaling;
+       // lineY[1]= markY;
        cpgline( 2, lineX, lineY );
        //
       }
@@ -2831,13 +2827,13 @@ int main( int argc, char **argv ) {
     free( float_array );
     free( real_float_array );
 
-    replace_last_slash_with_null(output_png_filename);
-    fprintf( stderr, "Writing the output image file %s (or .ps) (1)\n", output_png_filename);
-    if( 1==is_file(output_png_filename) ){
-     fprintf(stderr, "The file is created successfully.\n");
+    replace_last_slash_with_null( output_png_filename );
+    fprintf( stderr, "Writing the output image file %s (or .ps) (1)\n", output_png_filename );
+    if ( 1 == is_file( output_png_filename ) ) {
+     fprintf( stderr, "The file is created successfully.\n" );
      return 0;
     } else {
-     fprintf(stderr, "ERROR writing the output file!\n");
+     fprintf( stderr, "ERROR writing the output file!\n" );
      return 1;
     }
 
@@ -2949,21 +2945,21 @@ int main( int argc, char **argv ) {
     cpgebuf();
    else {
     cpgclos();
-    //replace_last_slash_with_null(output_png_filename);
-    //fprintf( stderr, "Writing the output image file %s (or .ps) (2)\n", output_png_filename);
+    // replace_last_slash_with_null(output_png_filename);
+    // fprintf( stderr, "Writing the output image file %s (or .ps) (2)\n", output_png_filename);
 
     free( X1 );
     free( X2 );
     free( Y1 );
     free( Y2 );
 
-    replace_last_slash_with_null(output_png_filename);
-    fprintf( stderr, "Writing the output image file %s (or .ps) (2)\n", output_png_filename);
-    if( 1==is_file(output_png_filename) ){
-     fprintf(stderr, "The file is created successfully.\n");
+    replace_last_slash_with_null( output_png_filename );
+    fprintf( stderr, "Writing the output image file %s (or .ps) (2)\n", output_png_filename );
+    if ( 1 == is_file( output_png_filename ) ) {
+     fprintf( stderr, "The file is created successfully.\n" );
      return 0;
     } else {
-     fprintf(stderr, "ERROR writing the output file!\n");
+     fprintf( stderr, "ERROR writing the output file!\n" );
      return 1;
     }
 

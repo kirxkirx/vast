@@ -159,7 +159,6 @@ int main() {
  fprintf( stdout, "percen80=  %lf\n", percentile80 );
  fprintf( stdout, "    SUMM=  %lf\n", datasumm );
 
-
  N= Ns= N2s= N3s= 0;
  for ( j= 0; j < i; j++ ) {
   if ( fabs( MEAN - x[j] ) > 3 * SD ) {
