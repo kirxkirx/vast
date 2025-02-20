@@ -139,7 +139,7 @@ fi
 # exit 0
 #fi
 
-LANG=C git pull 2>&1 | grep --quiet 'Updating'
+LANG=C git pull --depth 1 2>&1 | grep --quiet 'Updating'
 if [ $? -ne 0 ];then
 # echo "ERROR: 'git pull' reports 'Already up to date.'"
  exit 0
