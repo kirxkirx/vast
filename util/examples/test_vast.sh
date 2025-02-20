@@ -23,14 +23,14 @@ export LANGUAGE LC_ALL
 ##### Auxiliary functions #####
 
 function email_vast_test_report() {
- HOST=`hostname`
+ HOST=$(hostname)
  HOST="@$HOST"
  NAME="$USER$HOST"
 # DATETIME=`LANG=C date --utc`
 # bsd date doesn't know '--utc', but accepts '-u'
- DATETIME=`LANG=C date -u`
- SCRIPTNAME=`basename $0`
- LOG=`cat vast_test_report.txt`
+ DATETIME=$(LANG=C date -u)
+ SCRIPTNAME=$(basename $0)
+ LOG=$(cat vast_test_report.txt)
  MSG="The script $0 has finished on $DATETIME at $PWD $LOG $DEBUG_OUTPUT"
 echo "
 $MSG
@@ -44,6 +44,25 @@ $DEBUG_OUTPUT
  else
   echo "There was a problem sending the test report"
  fi
+}
+
+function fail_early() {
+ if [ -z "$1" ];then
+  DEBUG_OUTPUT="fail_early(): $1
+-------------------
+FAILED_TEST_CODES=$FAILED_TEST_CODES
+___________________
+$DEBUG_OUTPUT"
+ fi
+ if [ "$MAIL_TEST_REPORT_TO_KIRX" = "YES" ] || [ -f ../THIS_IS_HPCC ];then
+  email_vast_test_report
+ fi
+ echo "fail_early(): $1
+-------------------
+FAILED_TEST_CODES=$FAILED_TEST_CODES
+___________________
+"
+ exit 1
 }
 
 # A more portable realpath wrapper
@@ -536,7 +555,7 @@ fi
 # Check if the main VaST sub-programs exist
 check_if_vast_install_looks_reasonably_healthy
 if [ $? -ne 0 ];then
- exit 1
+ fail_early
 fi
 
 
@@ -1381,16 +1400,18 @@ $GREP_RESULT"
    util/wcs_image_calibration.sh ../test_data_photo/SCA1017S_17061_09773__00_00.fit
    if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE004_platesolve"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE004_platesolve_exit_code"
+    fail_early
    else
     if [ ! -f wcs_SCA1017S_17061_09773__00_00.fit ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE005"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE005_platesolve_no_solved_img"
+     fail_early
     fi
     lib/bin/xy2sky wcs_SCA1017S_17061_09773__00_00.fit 200 200 &>/dev/null
     if [ $? -ne 0 ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE005a"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE005a_platesolve_xy2sky_fail"
     fi
    fi
    util/solve_plate_with_UCAC5 ../test_data_photo/SCA1017S_17061_09773__00_00.fit
@@ -1730,6 +1751,7 @@ $GREP_RESULT"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE104"
+    fail_early
    fi
    if [ ! -f wcs_SCA1017S_17061_09773__00_00.fit ];then
     TEST_PASSED=0
@@ -2108,7 +2130,7 @@ remove_test_data_to_save_space
 # Test the connection
 test_internet_connection fast
 if [ $? -ne 0 ];then
- exit 1
+ fail_early
 fi
 
 ### Disable the above test for GitHub Actions
@@ -9234,6 +9256,7 @@ if [ -d ../NMW_Saturn_test ];then
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN000"
+  fail_early
  fi
  # Check results
  if [ -f vast_summary.log ];then
@@ -9241,11 +9264,13 @@ if [ -d ../NMW_Saturn_test ];then
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN001"
+   fail_early
   fi
   grep --quiet "Images used for photometry 4" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN002"
+   fail_early
   fi
   #grep --quiet "First image: 2456021.56453 04.04.2012 01:32:40" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456021.56453 04.04.2012 01:32:40' 1
@@ -9337,16 +9362,19 @@ $GREP_RESULT"
   ##
   if [ ! -f wcs_Sgr4_2012-4-4_1-33-21_002.fts ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN005"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN005_no_platesolved_img"
+   fail_early
   fi 
   lib/bin/xy2sky wcs_Sgr4_2012-4-4_1-33-21_002.fts 200 200 &>/dev/null
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN005a"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN005a_xy2sky_fail"
+   fail_early
   fi
   if [ ! -f wcs_Sgr4_2019-11-3_15-31-54_001.fts ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN006"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN006_no_platesolved_img"
+   fail_early
   fi 
   lib/bin/xy2sky wcs_Sgr4_2019-11-3_15-31-54_001.fts 200 200 &>/dev/null
   if [ $? -ne 0 ];then
@@ -9355,7 +9383,8 @@ $GREP_RESULT"
   fi
   if [ ! -f wcs_Sgr4_2019-11-3_15-32-23_002.fts ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN007"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN007_no_platesolved_img"
+   fail_early
   fi 
   lib/bin/xy2sky wcs_Sgr4_2019-11-3_15-32-23_002.fts 200 200 &>/dev/null
   if [ $? -ne 0 ];then
@@ -9364,7 +9393,8 @@ $GREP_RESULT"
   fi
   if [ ! -f wcs_Sgr4_201_ref_rename_001.fts ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN008"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN008_no_platesolved_img"
+   fail_early
   fi 
   lib/bin/xy2sky wcs_Sgr4_201_ref_rename_001.fts 200 200 &>/dev/null
   if [ $? -ne 0 ];then
@@ -9791,6 +9821,7 @@ if [ -d ../NMW_Saturn_test ];then
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2000_EXIT_CODE"
+  fail_early
  fi
  if [ -f transient_report/index.html ];then
   # The copy of the log file should be in the HTML report
@@ -9798,6 +9829,7 @@ if [ -d ../NMW_Saturn_test ];then
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2001"
+   fail_early
   fi
   grep --quiet 'ERROR' "transient_report/index.html"
   if [ $? -eq 0 ];then
@@ -9810,11 +9842,13 @@ if [ -d ../NMW_Saturn_test ];then
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
+   fail_early
   fi
   grep --quiet "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2002"
+   fail_early
   fi
   #grep --quiet "First image: 2456021.56453 04.04.2012 01:32:40" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456021.56453 04.04.2012 01:32:40' 1 transient_report/index.html
@@ -19157,23 +19191,29 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_wcs_image_calibration_FAILED"
+   fail_early
   elif [ ! -f wcs_"$BASENAME_REF_IMAGE" ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_no_wcs_image"
+   fail_early
   elif [ ! -s wcs_"$BASENAME_REF_IMAGE" ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_empty_wcs_image"
+   fail_early
   else
    util/solve_plate_with_UCAC5 "$REF_IMAGE"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_solve_plate_with_UCAC5_FAILED"
+    fail_early
    elif [ ! -f wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_no_fit.cat.ucac5_file"
+    fail_early
    elif [ ! -s wcs_"$BASENAME_REF_IMAGE".cat.ucac5 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_empty_fit.cat.ucac5_file"
+    fail_early
    else
     util/magnitude_calibration.sh V robust_linear
     if [ $? -ne 0 ];then
@@ -27784,6 +27824,7 @@ else
   MAIL_TEST_REPORT_TO_KIRX="NO"
  fi
 fi
+export MAIL_TEST_REPORT_TO_KIRX
 
 # see below
 if [ -f ../THIS_IS_HPCC__email_only_on_failure ];then
