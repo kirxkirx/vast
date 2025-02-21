@@ -472,13 +472,14 @@ lib/ConstellationBoundaries:  $(SRC_PATH)catalogs/ConstellationBoundaries.c
 
 #check_no_for_loop_initial_declaration:
 #	(find . -type f -name "*.c" -exec grep -H -E "for[[:space:]]*\([[:space:]]*(int|size_t)" {} \; && echo "I don't like 'for' loop initial declarations! Please declare variables at the start of the function." && exit 1)
+#check_no_for_loop_initial_declaration:
+#	@if find . -type f -name "*.c" -exec grep -q -E "for[[:space:]]*\([[:space:]]*(int|size_t)" {} \+; then \
+#		find . -type f -name "*.c" -exec grep -H -E "for[[:space:]]*\([[:space:]]*(int|size_t)" {} \+; \
+#		echo "I don't like 'for' loop initial declarations! Please declare variables at the start of the function."; \
+#		exit 1; \
+#	fi
 check_no_for_loop_initial_declaration:
-	@if find . -type f -name "*.c" -exec grep -q -E "for[[:space:]]*\([[:space:]]*(int|size_t)" {} \+; then \
-		find . -type f -name "*.c" -exec grep -H -E "for[[:space:]]*\([[:space:]]*(int|size_t)" {} \+; \
-		echo "I don't like 'for' loop initial declarations! Please declare variables at the start of the function."; \
-		exit 1; \
-	fi
-	
+	lib/check_no_for_loop_initial_declaration.sh	
 	
 shell_commands: pgplot_components lib/lightcurve_simulator vast
 	ln -s vast diffphot
