@@ -555,7 +555,7 @@ fi
 # Check if the main VaST sub-programs exist
 check_if_vast_install_looks_reasonably_healthy
 if [ $? -ne 0 ];then
- fail_early
+ fail_early "check_if_vast_install_looks_reasonably_healthy - check failed"
 fi
 
 
@@ -2130,7 +2130,7 @@ remove_test_data_to_save_space
 # Test the connection
 test_internet_connection fast
 if [ $? -ne 0 ];then
- fail_early
+ fail_early "test_internet_connection fast - check failed"
 fi
 
 ### Disable the above test for GitHub Actions

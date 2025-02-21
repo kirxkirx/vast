@@ -313,9 +313,6 @@ fi
 
 # Parse the command line arguments
 if [ -z "$2" ];then 
- #FIELD_OF_VIEW_ARCMIN=40
- #FIELD_OF_VIEW_ARCMIN=62
- #echo "Field of view was not set. Retreating to a default value $FIELD_OF_VIEW_ARCMIN'..."
  echo "Field of view for the image $FITSFILE was not set. Trying to guess..."
  FIELD_OF_VIEW_ARCMIN=$("$VAST_PATH"lib/try_to_guess_image_fov "$FITSFILE" 2>/dev/null)
  if [ -n "$FIELD_OF_VIEW_ARCMIN" ];then
@@ -324,12 +321,15 @@ if [ -z "$2" ];then
   
 else
  #FIELD_OF_VIEW_ARCMIN="$2"
- # Take maximum of 5 characters
+ # Take maximum of 5 characters, just to be safe
  FIELD_OF_VIEW_ARCMIN="${2:0:5}"
 fi
 
 #### Check if FIELD_OF_VIEW_ARCMIN is reasonable ####
 if [ -n "$FIELD_OF_VIEW_ARCMIN" ];then
+
+ # Make sure there are no white spaces in FIELD_OF_VIEW_ARCMIN
+ FIELD_OF_VIEW_ARCMIN="${FIELD_OF_VIEW_ARCMIN// /}"
 
  echo "$FIELD_OF_VIEW_ARCMIN" | awk '/^[0-9]*\.?[0-9]+$/ {exit !($1 > 0)}; {exit 1}'
  if [ $? -ne 0 ]; then
