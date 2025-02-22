@@ -78,9 +78,9 @@ LIST_OF_COMET_FULL_NAMES_Yoshida=$(curl $VAST_CURL_PROXY --connect-timeout $CONN
 #$LIST_OF_COMET_FULL_NAMES_Yoshida"
 
 
-# Combine the two lists
+# Combine the two lists (and fix a problematic comet name)
 LIST_OF_COMET_FULL_NAMES_from_vanBuitenen_and_Yoshida=$(echo "$LIST_OF_COMET_FULL_NAMES_vanBuitenen
-$LIST_OF_COMET_FULL_NAMES_Yoshida" | sort | uniq)
+$LIST_OF_COMET_FULL_NAMES_Yoshida" | sort | uniq | sed 's/323P-C\/SOHO/323P/g')
 # The names may have different capitalizations in van Buitenen's and sYoshida's page - we'll keep only one version
 LIST_OF_COMET_FULL_NAMES="$(echo "$LIST_OF_COMET_FULL_NAMES_from_vanBuitenen_and_Yoshida" | while read NAME1 NAME2 REST ;do echo "$LIST_OF_COMET_FULL_NAMES_from_vanBuitenen_and_Yoshida" | grep -m 1 "$NAME1 $NAME2" && continue ; echo "$LIST_OF_COMET_FULL_NAMES_from_vanBuitenen_and_Yoshida" | grep -m 1 "$NAME1" ;done | sort | uniq)"
 
@@ -242,7 +242,7 @@ echo "$NON_PERIODIC_COMETS" | while read NON_PERIODIC_COMET_DESIGNATION_AND_NAME
    echo "00:00:00.00 +00:00:00.0 cannot parse JPL HORIZONS ephemerides #$COMET_RA_DEC_MAG_STRING# for non-periodic comet $PERIODIC_COMET_DESIGNATION_AND_NAME"
   fi
  else
-  echo "00:00:00.00 +00:00:00.0 cannot get JPL HORIZONS ephemerides for non-periodic comet $PERIODIC_COMET_DESIGNATION_AND_NAME"
+  echo "00:00:00.00 +00:00:00.0 cannot get JPL HORIZONS ephemerides for non-periodic comet $NON_PERIODIC_COMET_DESIGNATION_AND_NAME"
   #
   if [ $SUCCESSFULLY_CONECTED_TO_JPL_HORIZONS_COUNTER -eq 0 ];then
    exit 1
