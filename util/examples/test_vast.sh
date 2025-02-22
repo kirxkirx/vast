@@ -27547,7 +27547,7 @@ fi
 util/comets.sh 2460595.28063657 > comets.txt
 if [ $? -ne 0 ];then                    
  TEST_PASSED=0                          
- FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_COMETS_MPCCODE__$(cat comets_header.txt)"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_COMETS_MPCCODE_exit_code_cometssh__$(cat comets_header.txt)"
 elif [ ! -s comets.txt ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_COMETS_MPCCODE_EMPTY"
