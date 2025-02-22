@@ -679,9 +679,11 @@ TIMEOUTCOMMAND=$("$VAST_PATH"lib/find_timeout_command.sh)
 if [ $? -ne 0 ];then
  echo "WARNING: cannot find timeout command" | tee -a transient_factory_test31.txt
 else
+ TIMEOUTCOMMAND_GAIA_VIZIER="$TIMEOUTCOMMAND 40 "
+ export TIMEOUTCOMMAND_GAIA_VIZIER
  TIMEOUTCOMMAND="$TIMEOUTCOMMAND 200 "
+ export TIMEOUTCOMMAND
 fi
-export TIMEOUTCOMMAND
 
 # Remove filenames that will confuse vast command line parser
 for SUSPICIOUS_FILE in 1 2 3 4 5 6 7 8 9 10 11 12 ;do
