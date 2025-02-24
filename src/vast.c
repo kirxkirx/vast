@@ -1998,7 +1998,7 @@ int main( int argc, char **argv ) {
  int star_number_in_sextractor_catalog, sextractor_flag;
  double flux_adu, flux_adu_err, position_x_pix, position_y_pix, mag, sigma_mag;
 
- struct Preobr_Sk *preobr= NULL;
+ struct Preobr_Sk *struct_pixel_coordinate_transformation= NULL;
  struct Star *STAR1= NULL, *STAR2= NULL, *STAR3= NULL; // STAR1 - structure with all stars we can match
                                                        //         new stars are added to STAR1
                                                        // STAR2 - structure with stars on a current image
@@ -2402,7 +2402,7 @@ int main( int argc, char **argv ) {
   /// Should be replaces with the new option 'starmatchraius'
   case 's': // small comparison window - 1 pix.
    param_w= 3;
-   preobr= New_Preobr_Sk();
+   struct_pixel_coordinate_transformation= New_Preobr_Sk();
    fprintf( stderr, "opt 's': Using small match radius (comparison window)\n" );
    break;
   case '5':
@@ -3265,21 +3265,21 @@ int main( int argc, char **argv ) {
 
  // Set up coordinate system transofrmation structure
  if ( param_w == 0 || param_w == 4 ) {
-  preobr= New_Preobr_Sk();
+  struct_pixel_coordinate_transformation= New_Preobr_Sk();
   if ( param_w == 4 ) {
-   preobr->sigma_popadaniya= fixed_star_matching_radius_pix;
+   struct_pixel_coordinate_transformation->sigma_popadaniya= fixed_star_matching_radius_pix;
    fprintf( stderr, "Setting the fixed star match radius of %.2lf pix\n", fixed_star_matching_radius_pix );
   }
  }
 
  if ( param_set_manually_Number_of_main_star == 0 ) {
-  // Remamber default preobr parameters
-  default_Number_of_ecv_triangle= preobr->Number_of_ecv_triangle;
-  default_Number_of_main_star= preobr->Number_of_main_star;
+  // Remamber default struct_pixel_coordinate_transformation parameters
+  default_Number_of_ecv_triangle= struct_pixel_coordinate_transformation->Number_of_ecv_triangle;
+  default_Number_of_main_star= struct_pixel_coordinate_transformation->Number_of_main_star;
  } else {
   // Or set parameters supplied by user
-  preobr->Number_of_ecv_triangle= default_Number_of_ecv_triangle;
-  preobr->Number_of_main_star= default_Number_of_main_star;
+  struct_pixel_coordinate_transformation->Number_of_ecv_triangle= default_Number_of_ecv_triangle;
+  struct_pixel_coordinate_transformation->Number_of_main_star= default_Number_of_main_star;
  }
 
  fprintf( stderr, "We have %d images to process.\n", Num );
@@ -3371,9 +3371,9 @@ int main( int argc, char **argv ) {
      }
      free( str_with_fits_keywords_to_capture_from_input_images );
      if ( debug != 0 ) {
-      fprintf( stderr, "DEBUG MSG %d: Delete_Preobr_Sk(preobr);\n", getpid() );
+      fprintf( stderr, "DEBUG MSG %d: Delete_Preobr_Sk(struct_pixel_coordinate_transformation);\n", getpid() );
      }
-     Delete_Preobr_Sk( preobr );
+     Delete_Preobr_Sk( struct_pixel_coordinate_transformation );
      if ( debug != 0 ) {
       fprintf( stderr, "DEBUG MSG %d: CHILD free() -- still alive\n", getpid() );
      }
@@ -3605,8 +3605,8 @@ int main( int argc, char **argv ) {
  }
  reference_image_aperture= aperture;
  if ( param_w == 0 ) {
-  preobr->sigma_popadaniya= AUTO_SIGMA_POPADANIYA_COEF * aperture;
-  fprintf( stderr, "Setting the star matching radius to %.2lf pix\n", preobr->sigma_popadaniya );
+  struct_pixel_coordinate_transformation->sigma_popadaniya= AUTO_SIGMA_POPADANIYA_COEF * aperture;
+  fprintf( stderr, "Setting the star matching radius to %.2lf pix\n", struct_pixel_coordinate_transformation->sigma_popadaniya );
  }
 
  fprintf( stderr, "%s", stderr_output );
@@ -4246,8 +4246,8 @@ int main( int argc, char **argv ) {
      max_Y_im_size= Y_im_size;
     //
     if ( param_w == 0 ) {
-     preobr->sigma_popadaniya= AUTO_SIGMA_POPADANIYA_COEF * MAX( aperture, reference_image_aperture );
-     fprintf( stderr, "Setting the star matching radius to %.2lf pix\n", preobr->sigma_popadaniya );
+     struct_pixel_coordinate_transformation->sigma_popadaniya= AUTO_SIGMA_POPADANIYA_COEF * MAX( aperture, reference_image_aperture );
+     fprintf( stderr, "Setting the star matching radius to %.2lf pix\n", struct_pixel_coordinate_transformation->sigma_popadaniya );
     }
     if ( debug != 0 )
      fprintf( stderr, "DEBUG MSG: Read_sex_cat() - " );
@@ -4583,7 +4583,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       return 1;
      }
      if ( debug != 0 ) {
-      fprintf( stderr, "DEBUG MSG: Ident(preobr etc) - " );
+      fprintf( stderr, "DEBUG MSG: Ident(struct_pixel_coordinate_transformation etc) - " );
      }
 
      // Experimental fix - resize Pos1 right here. Yes, that seems to work well!
@@ -4596,12 +4596,12 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      Sort_in_mag_of_stars( STAR2, NUMBER2 );
      best_number_of_matched_stars= 0;
      best_number_of_matched_stars= 0;
-     preobr->Number_of_ecv_triangle= default_Number_of_ecv_triangle;
-     preobr->Number_of_main_star= default_Number_of_main_star;
+     struct_pixel_coordinate_transformation->Number_of_ecv_triangle= default_Number_of_ecv_triangle;
+     struct_pixel_coordinate_transformation->Number_of_main_star= default_Number_of_main_star;
      previous_Number_of_main_star= 0;
      // Special case: relax scale criterea for images with very few stars
      if ( NUMBER2 < 10 && NUMBER3 < 10 ) {
-      preobr->sigma_podobia= 0.02; // cf. the default value in ident_lib.c
+      struct_pixel_coordinate_transformation->sigma_podobia= 0.02; // cf. the default value in ident_lib.c
      }
      //
      for ( match_try= 0; match_try < MAX_MATCH_TRIALS; match_try++ ) {
@@ -4609,9 +4609,9 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 
       /* Identify stars */
       if ( param_set_manually_Number_of_main_star == 0 ) {
-       Number_of_ecv_star= Ident( preobr, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( 2 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
+       Number_of_ecv_star= Ident( struct_pixel_coordinate_transformation, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( 2 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
       } else {
-       Number_of_ecv_star= Ident( preobr, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
+       Number_of_ecv_star= Ident( struct_pixel_coordinate_transformation, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
        if ( match_retry == 1 )
         match_retry= 0;
       }
@@ -4622,28 +4622,28 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       if ( Number_of_ecv_star > best_number_of_matched_stars ) {
        fprintf( stderr, "the best number of matched * so far: %d\n", Number_of_ecv_star );
        best_number_of_matched_stars= Number_of_ecv_star;
-       best_number_of_reference_stars= preobr->Number_of_main_star;
+       best_number_of_reference_stars= struct_pixel_coordinate_transformation->Number_of_main_star;
       }
-      if ( preobr->Number_of_main_star >= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES ) {
+      if ( struct_pixel_coordinate_transformation->Number_of_main_star >= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || struct_pixel_coordinate_transformation->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES ) {
        break;
       }
       /* Try to play with parameters */
-      preobr->Number_of_main_star= preobr->Number_of_main_star * 2;
-      preobr->Number_of_ecv_triangle= preobr->Number_of_ecv_triangle * 2;
-      if ( preobr->Number_of_main_star == 2 * MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) )
+      struct_pixel_coordinate_transformation->Number_of_main_star= struct_pixel_coordinate_transformation->Number_of_main_star * 2;
+      struct_pixel_coordinate_transformation->Number_of_ecv_triangle= struct_pixel_coordinate_transformation->Number_of_ecv_triangle * 2;
+      if ( struct_pixel_coordinate_transformation->Number_of_main_star == 2 * MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) )
        break; // So we do not repeat many times attempt with the maximum number of reference stars
-      if ( preobr->Number_of_main_star > MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle > MATCH_MAX_NUMBER_OF_TRIANGLES ) {
-       preobr->Number_of_main_star= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) );
-       preobr->Number_of_ecv_triangle= MATCH_MAX_NUMBER_OF_TRIANGLES;
+      if ( struct_pixel_coordinate_transformation->Number_of_main_star > MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || struct_pixel_coordinate_transformation->Number_of_ecv_triangle > MATCH_MAX_NUMBER_OF_TRIANGLES ) {
+       struct_pixel_coordinate_transformation->Number_of_main_star= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) );
+       struct_pixel_coordinate_transformation->Number_of_ecv_triangle= MATCH_MAX_NUMBER_OF_TRIANGLES;
       }
 
       // this is new!
       fprintf( stderr, "[1] previous_Number_of_main_star = %d\n", previous_Number_of_main_star );
-      if ( preobr->Number_of_main_star == previous_Number_of_main_star ) {
+      if ( struct_pixel_coordinate_transformation->Number_of_main_star == previous_Number_of_main_star ) {
        fprintf( stderr, "[1] break!\n" );
        break;
       }
-      previous_Number_of_main_star= preobr->Number_of_main_star;
+      previous_Number_of_main_star= struct_pixel_coordinate_transformation->Number_of_main_star;
      } // for ( match_try= 0; match_try < MAX_MATCH_TRIALS; match_try++ ) {
 
      /* Special test for the case if one image is much better focused than the other and
@@ -4652,18 +4652,18 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       fprintf( stderr, "Performing special test for the case of a sudden focus change (exclude brightest stars from the match)...\n" );
      }
      // current image
-     if ( match_retry == 1 && NUMBER2 > 2 * preobr->Number_of_main_star ) {
+     if ( match_retry == 1 && NUMBER2 > 2 * struct_pixel_coordinate_transformation->Number_of_main_star ) {
       match_retry= 0;
-      Number_of_ecv_star= Ident( preobr, STAR1, NUMBER1, STAR2, NUMBER2, preobr->Number_of_main_star, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( 1.5 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
+      Number_of_ecv_star= Ident( struct_pixel_coordinate_transformation, STAR1, NUMBER1, STAR2, NUMBER2, struct_pixel_coordinate_transformation->Number_of_main_star, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( 1.5 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
      } else {
       if ( match_retry == 1 )
        fprintf( stderr, "Ups, not enough stars on the current image for the test! Whatever...\n" );
      }
 
      // reference image
-     if ( match_retry == 1 && NUMBER3 > 2 * preobr->Number_of_main_star ) {
+     if ( match_retry == 1 && NUMBER3 > 2 * struct_pixel_coordinate_transformation->Number_of_main_star ) {
       match_retry= 0;
-      Number_of_ecv_star= Ident( preobr, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, preobr->Number_of_main_star, &match_retry, (int)( 1.5 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
+      Number_of_ecv_star= Ident( struct_pixel_coordinate_transformation, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, struct_pixel_coordinate_transformation->Number_of_main_star, &match_retry, (int)( 1.5 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
      } else {
       if ( match_retry == 1 )
        fprintf( stderr, "Ups, not enough stars on the reference image for the test! Whatever...\n" );
@@ -4677,39 +4677,39 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       for ( match_try= 1; match_try < MAX_MATCH_TRIALS + 1; match_try++ ) {
 
        /* Try to play with parameters */
-       preobr->Number_of_main_star= preobr->Number_of_main_star / 2;
-       preobr->Number_of_ecv_triangle= preobr->Number_of_ecv_triangle / 2;
+       struct_pixel_coordinate_transformation->Number_of_main_star= struct_pixel_coordinate_transformation->Number_of_main_star / 2;
+       struct_pixel_coordinate_transformation->Number_of_ecv_triangle= struct_pixel_coordinate_transformation->Number_of_ecv_triangle / 2;
 
-       if ( preobr->Number_of_main_star < MATCH_MIN_NUMBER_OF_REFERENCE_STARS || preobr->Number_of_ecv_triangle < MATCH_MIN_NUMBER_OF_TRIANGLES ) {
-        preobr->Number_of_main_star= MATCH_MIN_NUMBER_OF_REFERENCE_STARS;
-        preobr->Number_of_ecv_triangle= MATCH_MIN_NUMBER_OF_TRIANGLES;
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star < MATCH_MIN_NUMBER_OF_REFERENCE_STARS || struct_pixel_coordinate_transformation->Number_of_ecv_triangle < MATCH_MIN_NUMBER_OF_TRIANGLES ) {
+        struct_pixel_coordinate_transformation->Number_of_main_star= MATCH_MIN_NUMBER_OF_REFERENCE_STARS;
+        struct_pixel_coordinate_transformation->Number_of_ecv_triangle= MATCH_MIN_NUMBER_OF_TRIANGLES;
        }
 
        match_retry= 0;
-       // Number_of_ecv_star = Ident(preobr, STAR1, NUMBER1, STAR2, NUMBER2, 0, frame, frame, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)(2*MIN_FRACTION_OF_MATCHED_STARS*MIN(NUMBER3,NUMBER2)), X_im_size, Y_im_size);
-       Number_of_ecv_star= Ident( preobr, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( 2 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
+       // Number_of_ecv_star = Ident(struct_pixel_coordinate_transformation, STAR1, NUMBER1, STAR2, NUMBER2, 0, frame, frame, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)(2*MIN_FRACTION_OF_MATCHED_STARS*MIN(NUMBER3,NUMBER2)), X_im_size, Y_im_size);
+       Number_of_ecv_star= Ident( struct_pixel_coordinate_transformation, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( 2 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
        /* Test if match attemt was a success */
        if ( match_retry == 0 )
         break;
        if ( Number_of_ecv_star > best_number_of_matched_stars ) {
         fprintf( stderr, "the best number of matched * so far: %d\n", Number_of_ecv_star );
         best_number_of_matched_stars= Number_of_ecv_star;
-        best_number_of_reference_stars= preobr->Number_of_main_star;
+        best_number_of_reference_stars= struct_pixel_coordinate_transformation->Number_of_main_star;
        }
-       if ( preobr->Number_of_main_star <= MATCH_MIN_NUMBER_OF_REFERENCE_STARS || preobr->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES )
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star <= MATCH_MIN_NUMBER_OF_REFERENCE_STARS || struct_pixel_coordinate_transformation->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES )
         break;
 
-       if ( preobr->Number_of_main_star <= MIN( MATCH_MIN_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES ) {
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star <= MIN( MATCH_MIN_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || struct_pixel_coordinate_transformation->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES ) {
         break;
        }
 
        // this is new!
        fprintf( stderr, "[2] previous_Number_of_main_star = %d\n", previous_Number_of_main_star );
-       if ( preobr->Number_of_main_star == previous_Number_of_main_star ) {
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star == previous_Number_of_main_star ) {
         fprintf( stderr, "[2] break!\n" );
         break;
        }
-       previous_Number_of_main_star= preobr->Number_of_main_star;
+       previous_Number_of_main_star= struct_pixel_coordinate_transformation->Number_of_main_star;
 
       } // for ( match_try= 1; match_try < MAX_MATCH_TRIALS + 1; match_try++ ) {
      }
@@ -4717,11 +4717,11 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      /* If it still doesn't work - try to decrease an accpetable number of matched stars */
      if ( match_retry == 1 ) {
       if ( best_number_of_reference_stars > 0 ) {
-       preobr->Number_of_main_star= best_number_of_reference_stars;
+       struct_pixel_coordinate_transformation->Number_of_main_star= best_number_of_reference_stars;
        // is this correct?
-       preobr->Number_of_ecv_triangle= MATCH_MAX_NUMBER_OF_TRIANGLES; // best_number_of_reference_stars;
+       struct_pixel_coordinate_transformation->Number_of_ecv_triangle= MATCH_MAX_NUMBER_OF_TRIANGLES; // best_number_of_reference_stars;
        fprintf( stderr, "Trying again the best match with %d reference stars\n", best_number_of_reference_stars );
-       Number_of_ecv_star= Ident( preobr, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( 1.5 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
+       Number_of_ecv_star= Ident( struct_pixel_coordinate_transformation, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( 1.5 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
       } else {
        fprintf( stderr, "ERROR: we ended up with only %d reference stars\n", best_number_of_reference_stars );
        Number_of_ecv_star= 0;
@@ -4730,42 +4730,42 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      }
      /*----------------------------------------------------------------------------------*/
      if ( match_retry == 1 ) {
-      preobr->Number_of_ecv_triangle= default_Number_of_ecv_triangle;
-      preobr->Number_of_main_star= default_Number_of_main_star;
+      struct_pixel_coordinate_transformation->Number_of_ecv_triangle= default_Number_of_ecv_triangle;
+      struct_pixel_coordinate_transformation->Number_of_main_star= default_Number_of_main_star;
       for ( match_try= 0; match_try < MAX_MATCH_TRIALS; match_try++ ) {
        match_retry= 0;
-       Number_of_ecv_star= Ident( preobr, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( 1.5 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER2, NUMBER3 ) ), max_X_im_size, max_Y_im_size );
+       Number_of_ecv_star= Ident( struct_pixel_coordinate_transformation, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( 1.5 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER2, NUMBER3 ) ), max_X_im_size, max_Y_im_size );
        /* Test if match attemt was a success */
        if ( match_retry == 0 )
         break;
        if ( Number_of_ecv_star > best_number_of_matched_stars ) {
         fprintf( stderr, "the best number of matched * so far: %d\n", Number_of_ecv_star );
         best_number_of_matched_stars= Number_of_ecv_star;
-        best_number_of_reference_stars= preobr->Number_of_main_star;
+        best_number_of_reference_stars= struct_pixel_coordinate_transformation->Number_of_main_star;
        }
-       if ( preobr->Number_of_main_star >= MATCH_MAX_NUMBER_OF_REFERENCE_STARS || preobr->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES )
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star >= MATCH_MAX_NUMBER_OF_REFERENCE_STARS || struct_pixel_coordinate_transformation->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES )
         break;
        /* If not, try to play with parameters */
-       preobr->Number_of_main_star= preobr->Number_of_main_star * 2;
-       preobr->Number_of_ecv_triangle= preobr->Number_of_ecv_triangle * 2;
-       if ( preobr->Number_of_main_star == 2 * MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) )
+       struct_pixel_coordinate_transformation->Number_of_main_star= struct_pixel_coordinate_transformation->Number_of_main_star * 2;
+       struct_pixel_coordinate_transformation->Number_of_ecv_triangle= struct_pixel_coordinate_transformation->Number_of_ecv_triangle * 2;
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star == 2 * MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) )
         break; // So we do not repeat many times attempt with the maximum number of reference stars
-       if ( preobr->Number_of_main_star > MATCH_MAX_NUMBER_OF_REFERENCE_STARS || preobr->Number_of_ecv_triangle > MATCH_MAX_NUMBER_OF_TRIANGLES ) {
-        preobr->Number_of_main_star= MATCH_MAX_NUMBER_OF_REFERENCE_STARS;
-        preobr->Number_of_ecv_triangle= MATCH_MAX_NUMBER_OF_TRIANGLES;
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star > MATCH_MAX_NUMBER_OF_REFERENCE_STARS || struct_pixel_coordinate_transformation->Number_of_ecv_triangle > MATCH_MAX_NUMBER_OF_TRIANGLES ) {
+        struct_pixel_coordinate_transformation->Number_of_main_star= MATCH_MAX_NUMBER_OF_REFERENCE_STARS;
+        struct_pixel_coordinate_transformation->Number_of_ecv_triangle= MATCH_MAX_NUMBER_OF_TRIANGLES;
        }
 
-       if ( preobr->Number_of_main_star >= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES ) {
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star >= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || struct_pixel_coordinate_transformation->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES ) {
         break;
        }
 
        // this is new!
        fprintf( stderr, "[3] previous_Number_of_main_star = %d\n", previous_Number_of_main_star );
-       if ( preobr->Number_of_main_star == previous_Number_of_main_star ) {
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star == previous_Number_of_main_star ) {
         fprintf( stderr, "[3] break!\n" );
         break;
        }
-       previous_Number_of_main_star= preobr->Number_of_main_star;
+       previous_Number_of_main_star= struct_pixel_coordinate_transformation->Number_of_main_star;
 
       } // for ( match_try= 0; match_try < MAX_MATCH_TRIALS; match_try++ ) {
      }
@@ -4775,28 +4775,28 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       // start with 1 so test match_try!=0 will work later
       for ( match_try= 1; match_try < MAX_MATCH_TRIALS + 1; match_try++ ) {
        match_retry= 0;
-       Number_of_ecv_star= Ident( preobr, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( 1.5 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
+       Number_of_ecv_star= Ident( struct_pixel_coordinate_transformation, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( 1.5 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
        /* Test if match attemt was a success */
        if ( match_retry == 0 )
         break;
        if ( Number_of_ecv_star > best_number_of_matched_stars ) {
         fprintf( stderr, "the best number of matched * so far: %d\n", Number_of_ecv_star );
         best_number_of_matched_stars= Number_of_ecv_star;
-        best_number_of_reference_stars= preobr->Number_of_main_star;
+        best_number_of_reference_stars= struct_pixel_coordinate_transformation->Number_of_main_star;
        }
-       if ( preobr->Number_of_main_star <= MATCH_MIN_NUMBER_OF_REFERENCE_STARS || preobr->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES )
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star <= MATCH_MIN_NUMBER_OF_REFERENCE_STARS || struct_pixel_coordinate_transformation->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES )
         break;
 
-       if ( preobr->Number_of_main_star <= MIN( MATCH_MIN_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES ) {
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star <= MIN( MATCH_MIN_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || struct_pixel_coordinate_transformation->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES ) {
         break;
        }
 
        /* If not, try to play with parameters */
-       preobr->Number_of_main_star= preobr->Number_of_main_star / 2;
-       preobr->Number_of_ecv_triangle= preobr->Number_of_ecv_triangle / 2;
-       if ( preobr->Number_of_main_star < MATCH_MIN_NUMBER_OF_REFERENCE_STARS || preobr->Number_of_ecv_triangle < MATCH_MIN_NUMBER_OF_TRIANGLES ) {
-        preobr->Number_of_main_star= MATCH_MIN_NUMBER_OF_REFERENCE_STARS;
-        preobr->Number_of_ecv_triangle= MATCH_MIN_NUMBER_OF_TRIANGLES;
+       struct_pixel_coordinate_transformation->Number_of_main_star= struct_pixel_coordinate_transformation->Number_of_main_star / 2;
+       struct_pixel_coordinate_transformation->Number_of_ecv_triangle= struct_pixel_coordinate_transformation->Number_of_ecv_triangle / 2;
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star < MATCH_MIN_NUMBER_OF_REFERENCE_STARS || struct_pixel_coordinate_transformation->Number_of_ecv_triangle < MATCH_MIN_NUMBER_OF_TRIANGLES ) {
+        struct_pixel_coordinate_transformation->Number_of_main_star= MATCH_MIN_NUMBER_OF_REFERENCE_STARS;
+        struct_pixel_coordinate_transformation->Number_of_ecv_triangle= MATCH_MIN_NUMBER_OF_TRIANGLES;
        }
       }
      }
@@ -4805,24 +4805,24 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      if ( match_retry == 1 ) {
       // start with 1 so test match_try!=0 will work later
       // is the follwing line correct?
-      preobr->Number_of_ecv_triangle= MATCH_MAX_NUMBER_OF_TRIANGLES;
-      for ( preobr->Number_of_main_star= MATCH_MIN_NUMBER_OF_REFERENCE_STARS, preobr->Number_of_ecv_triangle= MATCH_MIN_NUMBER_OF_TRIANGLES; preobr->Number_of_main_star < MATCH_MAX_NUMBER_OF_REFERENCE_STARS; preobr->Number_of_main_star+= MATCH_REFERENCE_STARS_NUMBER_STEP ) {
+      struct_pixel_coordinate_transformation->Number_of_ecv_triangle= MATCH_MAX_NUMBER_OF_TRIANGLES;
+      for ( struct_pixel_coordinate_transformation->Number_of_main_star= MATCH_MIN_NUMBER_OF_REFERENCE_STARS, struct_pixel_coordinate_transformation->Number_of_ecv_triangle= MATCH_MIN_NUMBER_OF_TRIANGLES; struct_pixel_coordinate_transformation->Number_of_main_star < MATCH_MAX_NUMBER_OF_REFERENCE_STARS; struct_pixel_coordinate_transformation->Number_of_main_star+= MATCH_REFERENCE_STARS_NUMBER_STEP ) {
        match_retry= 0;
-       Number_of_ecv_star= Ident( preobr, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( 1.5 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
+       Number_of_ecv_star= Ident( struct_pixel_coordinate_transformation, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( 1.5 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
        /* Test if match attemt was a success */
        if ( match_retry == 0 )
         break;
        if ( Number_of_ecv_star > best_number_of_matched_stars ) {
         fprintf( stderr, "the best number of matched * so far: %d\n", Number_of_ecv_star );
         best_number_of_matched_stars= Number_of_ecv_star;
-        best_number_of_reference_stars= preobr->Number_of_main_star;
+        best_number_of_reference_stars= struct_pixel_coordinate_transformation->Number_of_main_star;
        }
-       if ( preobr->Number_of_main_star < MATCH_MIN_NUMBER_OF_REFERENCE_STARS || preobr->Number_of_ecv_triangle < MATCH_MIN_NUMBER_OF_TRIANGLES ) {
-        preobr->Number_of_main_star= MATCH_MIN_NUMBER_OF_REFERENCE_STARS;
-        preobr->Number_of_ecv_triangle= MATCH_MIN_NUMBER_OF_TRIANGLES;
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star < MATCH_MIN_NUMBER_OF_REFERENCE_STARS || struct_pixel_coordinate_transformation->Number_of_ecv_triangle < MATCH_MIN_NUMBER_OF_TRIANGLES ) {
+        struct_pixel_coordinate_transformation->Number_of_main_star= MATCH_MIN_NUMBER_OF_REFERENCE_STARS;
+        struct_pixel_coordinate_transformation->Number_of_ecv_triangle= MATCH_MIN_NUMBER_OF_TRIANGLES;
        }
 
-       if ( preobr->Number_of_main_star >= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES ) {
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star >= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || struct_pixel_coordinate_transformation->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES ) {
         break;
        }
       }
@@ -4830,11 +4830,11 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 
      /*----------------------------------------------------------------------------------*/
      if ( match_retry == 1 ) {
-      preobr->Number_of_main_star= best_number_of_reference_stars;
+      struct_pixel_coordinate_transformation->Number_of_main_star= best_number_of_reference_stars;
       // is this correct??
-      preobr->Number_of_ecv_triangle= MATCH_MAX_NUMBER_OF_TRIANGLES; // best_number_of_reference_stars;
+      struct_pixel_coordinate_transformation->Number_of_ecv_triangle= MATCH_MAX_NUMBER_OF_TRIANGLES; // best_number_of_reference_stars;
       fprintf( stderr, "Trying again the best match with %d reference stars\n", best_number_of_reference_stars );
-      Number_of_ecv_star= Ident( preobr, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( 1.0 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
+      Number_of_ecv_star= Ident( struct_pixel_coordinate_transformation, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( 1.0 * MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
      }
      /*----------------------------------------------------------------------------------*/
 
@@ -4848,30 +4848,30 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      }
 
      if ( match_retry == 1 ) {
-      preobr->Number_of_ecv_triangle= default_Number_of_ecv_triangle;
-      preobr->Number_of_main_star= default_Number_of_main_star;
+      struct_pixel_coordinate_transformation->Number_of_ecv_triangle= default_Number_of_ecv_triangle;
+      struct_pixel_coordinate_transformation->Number_of_main_star= default_Number_of_main_star;
       for ( match_try= 0; match_try < MAX_MATCH_TRIALS; match_try++ ) {
        match_retry= 0;
-       Number_of_ecv_star= Ident( preobr, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER2, NUMBER3 ) ), max_X_im_size, max_Y_im_size );
+       Number_of_ecv_star= Ident( struct_pixel_coordinate_transformation, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER2, NUMBER3 ) ), max_X_im_size, max_Y_im_size );
        /* Test if match attemt was a success */
        if ( match_retry == 0 )
         break;
-       if ( preobr->Number_of_main_star >= MATCH_MAX_NUMBER_OF_REFERENCE_STARS || preobr->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES )
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star >= MATCH_MAX_NUMBER_OF_REFERENCE_STARS || struct_pixel_coordinate_transformation->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES )
         break;
 
-       if ( preobr->Number_of_main_star >= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES ) {
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star >= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || struct_pixel_coordinate_transformation->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES ) {
         break;
        }
-       if ( preobr->Number_of_main_star <= MIN( MATCH_MIN_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES ) {
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star <= MIN( MATCH_MIN_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || struct_pixel_coordinate_transformation->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES ) {
         break;
        }
 
        /* If not, try to play with parameters */
-       preobr->Number_of_main_star= preobr->Number_of_main_star * 2;
-       preobr->Number_of_ecv_triangle= preobr->Number_of_ecv_triangle * 2;
-       if ( preobr->Number_of_main_star > MATCH_MAX_NUMBER_OF_REFERENCE_STARS || preobr->Number_of_ecv_triangle > MATCH_MAX_NUMBER_OF_TRIANGLES ) {
-        preobr->Number_of_main_star= MATCH_MAX_NUMBER_OF_REFERENCE_STARS;
-        preobr->Number_of_ecv_triangle= MATCH_MAX_NUMBER_OF_TRIANGLES;
+       struct_pixel_coordinate_transformation->Number_of_main_star= struct_pixel_coordinate_transformation->Number_of_main_star * 2;
+       struct_pixel_coordinate_transformation->Number_of_ecv_triangle= struct_pixel_coordinate_transformation->Number_of_ecv_triangle * 2;
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star > MATCH_MAX_NUMBER_OF_REFERENCE_STARS || struct_pixel_coordinate_transformation->Number_of_ecv_triangle > MATCH_MAX_NUMBER_OF_TRIANGLES ) {
+        struct_pixel_coordinate_transformation->Number_of_main_star= MATCH_MAX_NUMBER_OF_REFERENCE_STARS;
+        struct_pixel_coordinate_transformation->Number_of_ecv_triangle= MATCH_MAX_NUMBER_OF_TRIANGLES;
        }
       }
      }
@@ -4881,26 +4881,26 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       // start with 1 so test match_try!=0 will work later
       for ( match_try= 1; match_try < MAX_MATCH_TRIALS + 1; match_try++ ) {
        match_retry= 0;
-       Number_of_ecv_star= Ident( preobr, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
+       Number_of_ecv_star= Ident( struct_pixel_coordinate_transformation, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
        /* Test if match attemt was a success */
        if ( match_retry == 0 )
         break;
-       if ( preobr->Number_of_main_star <= MATCH_MIN_NUMBER_OF_REFERENCE_STARS || preobr->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES )
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star <= MATCH_MIN_NUMBER_OF_REFERENCE_STARS || struct_pixel_coordinate_transformation->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES )
         break;
 
-       if ( preobr->Number_of_main_star >= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES ) {
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star >= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || struct_pixel_coordinate_transformation->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES ) {
         break;
        }
-       if ( preobr->Number_of_main_star <= MIN( MATCH_MIN_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES ) {
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star <= MIN( MATCH_MIN_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || struct_pixel_coordinate_transformation->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES ) {
         break;
        }
 
        /* If not, try to play with parameters */
-       preobr->Number_of_main_star= preobr->Number_of_main_star / 2;
-       preobr->Number_of_ecv_triangle= preobr->Number_of_ecv_triangle / 2;
-       if ( preobr->Number_of_main_star < MATCH_MIN_NUMBER_OF_REFERENCE_STARS || preobr->Number_of_ecv_triangle < MATCH_MIN_NUMBER_OF_TRIANGLES ) {
-        preobr->Number_of_main_star= MATCH_MIN_NUMBER_OF_REFERENCE_STARS;
-        preobr->Number_of_ecv_triangle= MATCH_MIN_NUMBER_OF_TRIANGLES;
+       struct_pixel_coordinate_transformation->Number_of_main_star= struct_pixel_coordinate_transformation->Number_of_main_star / 2;
+       struct_pixel_coordinate_transformation->Number_of_ecv_triangle= struct_pixel_coordinate_transformation->Number_of_ecv_triangle / 2;
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star < MATCH_MIN_NUMBER_OF_REFERENCE_STARS || struct_pixel_coordinate_transformation->Number_of_ecv_triangle < MATCH_MIN_NUMBER_OF_TRIANGLES ) {
+        struct_pixel_coordinate_transformation->Number_of_main_star= MATCH_MIN_NUMBER_OF_REFERENCE_STARS;
+        struct_pixel_coordinate_transformation->Number_of_ecv_triangle= MATCH_MIN_NUMBER_OF_TRIANGLES;
        }
       }
      }
@@ -4909,24 +4909,24 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      if ( match_retry == 1 ) {
       // start with 1 so test match_try!=0 will work later
       // is the follwing line correct ?
-      preobr->Number_of_ecv_triangle= MATCH_MAX_NUMBER_OF_TRIANGLES;
-      for ( preobr->Number_of_main_star= MATCH_MIN_NUMBER_OF_REFERENCE_STARS, preobr->Number_of_ecv_triangle= MATCH_MIN_NUMBER_OF_TRIANGLES; preobr->Number_of_main_star < MATCH_MAX_NUMBER_OF_REFERENCE_STARS; preobr->Number_of_main_star+= MATCH_REFERENCE_STARS_NUMBER_STEP ) {
+      struct_pixel_coordinate_transformation->Number_of_ecv_triangle= MATCH_MAX_NUMBER_OF_TRIANGLES;
+      for ( struct_pixel_coordinate_transformation->Number_of_main_star= MATCH_MIN_NUMBER_OF_REFERENCE_STARS, struct_pixel_coordinate_transformation->Number_of_ecv_triangle= MATCH_MIN_NUMBER_OF_TRIANGLES; struct_pixel_coordinate_transformation->Number_of_main_star < MATCH_MAX_NUMBER_OF_REFERENCE_STARS; struct_pixel_coordinate_transformation->Number_of_main_star+= MATCH_REFERENCE_STARS_NUMBER_STEP ) {
        match_retry= 0;
-       Number_of_ecv_star= Ident( preobr, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
+       Number_of_ecv_star= Ident( struct_pixel_coordinate_transformation, STAR1, NUMBER1, STAR2, NUMBER2, 0, Pos1, Pos2, no_rotation, STAR3, NUMBER3, 0, &match_retry, (int)( MIN_FRACTION_OF_MATCHED_STARS * MIN( NUMBER3, NUMBER2 ) ), max_X_im_size, max_Y_im_size );
        /* Test if match attemt was a success */
        if ( match_retry == 0 )
         break;
 
-       if ( preobr->Number_of_main_star >= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES ) {
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star >= MIN( MATCH_MAX_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || struct_pixel_coordinate_transformation->Number_of_ecv_triangle >= MATCH_MAX_NUMBER_OF_TRIANGLES ) {
         break;
        }
-       if ( preobr->Number_of_main_star <= MIN( MATCH_MIN_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || preobr->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES ) {
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star <= MIN( MATCH_MIN_NUMBER_OF_REFERENCE_STARS, MIN( NUMBER2, NUMBER3 ) ) || struct_pixel_coordinate_transformation->Number_of_ecv_triangle <= MATCH_MIN_NUMBER_OF_TRIANGLES ) {
         break;
        }
 
-       if ( preobr->Number_of_main_star < MATCH_MIN_NUMBER_OF_REFERENCE_STARS || preobr->Number_of_ecv_triangle < MATCH_MIN_NUMBER_OF_TRIANGLES ) {
-        preobr->Number_of_main_star= MATCH_MIN_NUMBER_OF_REFERENCE_STARS;
-        preobr->Number_of_ecv_triangle= MATCH_MIN_NUMBER_OF_TRIANGLES;
+       if ( struct_pixel_coordinate_transformation->Number_of_main_star < MATCH_MIN_NUMBER_OF_REFERENCE_STARS || struct_pixel_coordinate_transformation->Number_of_ecv_triangle < MATCH_MIN_NUMBER_OF_TRIANGLES ) {
+        struct_pixel_coordinate_transformation->Number_of_main_star= MATCH_MIN_NUMBER_OF_REFERENCE_STARS;
+        struct_pixel_coordinate_transformation->Number_of_ecv_triangle= MATCH_MIN_NUMBER_OF_TRIANGLES;
        }
       }
      }
@@ -4943,11 +4943,11 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      if ( 0 == strcmp( input_images[0], input_images[n] ) ) { //&& increment_mode!=1 ){
       if ( debug != 0 )
        fprintf( stderr, "It is the reference frame again! File name match!\n" );
-      preobr->fi= M_PI;
+      struct_pixel_coordinate_transformation->fi= M_PI;
      }
-     if ( fabs( 180 * preobr->fi / M_PI - 180.0 ) < 0.0001 ) {
-      preobr->fi= M_PI; // set 180 even if it is not (but file name matches)!
-      fprintf( stderr, " rotation is exactly 180 degrees! Is this the reference image again? Dropping image!  %lf\n", 180 * preobr->fi / M_PI );
+     if ( fabs( 180 * struct_pixel_coordinate_transformation->fi / M_PI - 180.0 ) < 0.0001 ) {
+      struct_pixel_coordinate_transformation->fi= M_PI; // set 180 even if it is not (but file name matches)!
+      fprintf( stderr, " rotation is exactly 180 degrees! Is this the reference image again? Dropping image!  %lf\n", 180 * struct_pixel_coordinate_transformation->fi / M_PI );
       Number_of_ecv_star= 0;
      }
 
@@ -4966,11 +4966,11 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      // ...
 
      /* log */
-     sprintf( log_output, "rotation= %7.3lf  ", 180 * preobr->fi / M_PI );
+     sprintf( log_output, "rotation= %7.3lf  ", 180 * struct_pixel_coordinate_transformation->fi / M_PI );
      write_string_to_log_file( log_output, sextractor_catalog );
-     fprintf( stderr, "  rotation [degrees] = %7.3lf\n", 180 * preobr->fi / M_PI );
-     if ( no_rotation == 1 && fabs( preobr->fi ) > MAX_NOROTATION_ANGLE_RAD && fabs( preobr->fi - M_PI ) > MAX_NOROTATION_ANGLE_RAD ) {
-      fprintf( stderr, " rotation is large! Dropping image!  %lf\n", 180 * preobr->fi / M_PI );
+     fprintf( stderr, "  rotation [degrees] = %7.3lf\n", 180 * struct_pixel_coordinate_transformation->fi / M_PI );
+     if ( no_rotation == 1 && fabs( struct_pixel_coordinate_transformation->fi ) > MAX_NOROTATION_ANGLE_RAD && fabs( struct_pixel_coordinate_transformation->fi - M_PI ) > MAX_NOROTATION_ANGLE_RAD ) {
+      fprintf( stderr, " rotation is large! Dropping image!  %lf\n", 180 * struct_pixel_coordinate_transformation->fi / M_PI );
       Number_of_ecv_star= 0;
      }
 
@@ -5843,8 +5843,8 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
     if ( param_set_manually_Number_of_main_star == 0 ) {
      if ( success_match_on_increase > MIN_SUCCESS_MATCH_ON_RETRY ) {
       success_match_on_increase= 0;
-      default_Number_of_ecv_triangle= preobr->Number_of_ecv_triangle;
-      default_Number_of_main_star= preobr->Number_of_main_star;
+      default_Number_of_ecv_triangle= struct_pixel_coordinate_transformation->Number_of_ecv_triangle;
+      default_Number_of_main_star= struct_pixel_coordinate_transformation->Number_of_main_star;
       fprintf( stderr, "WARNING: changing the number of reference stars for image matching to %d\n", default_Number_of_main_star );
      }
     }
@@ -5993,9 +5993,9 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
         }
         free( str_with_fits_keywords_to_capture_from_input_images );
         if ( debug != 0 ) {
-         fprintf( stderr, "DEBUG MSG: Delete_Preobr_Sk(preobr);\n" );
+         fprintf( stderr, "DEBUG MSG: Delete_Preobr_Sk(struct_pixel_coordinate_transformation);\n" );
         }
-        Delete_Preobr_Sk( preobr );
+        Delete_Preobr_Sk( struct_pixel_coordinate_transformation );
 
         if ( debug != 0 ) {
          fprintf( stderr, "DEBUG MSG: CHILD free() -- still alive\n" );
@@ -6150,10 +6150,10 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  fprintf( stderr, "18 " );
  free( str_with_fits_keywords_to_capture_from_input_images );
  if ( debug != 0 ) {
-  fprintf( stderr, "DEBUG MSG: Delete_Preobr_Sk(preobr);\n" );
+  fprintf( stderr, "DEBUG MSG: Delete_Preobr_Sk(struct_pixel_coordinate_transformation);\n" );
  }
  fprintf( stderr, "19 " );
- Delete_Preobr_Sk( preobr );
+ Delete_Preobr_Sk( struct_pixel_coordinate_transformation );
  fprintf( stderr, "20\n" );
  ////
 
@@ -6326,8 +6326,8 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  /*
  // moved up
  if ( debug != 0 )
-  fprintf( stderr, "DEBUG MSG: Delete_Preobr_Sk(preobr);\n" );
- Delete_Preobr_Sk( preobr );
+  fprintf( stderr, "DEBUG MSG: Delete_Preobr_Sk(struct_pixel_coordinate_transformation);\n" );
+ Delete_Preobr_Sk( struct_pixel_coordinate_transformation );
 */
 
  // if ( debug != 0 )

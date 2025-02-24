@@ -60,36 +60,36 @@ static inline int compare_two_floats_to_absolute_accuracy( float x1, float x2, f
 //}
 
 struct Preobr_Sk *New_Preobr_Sk() {
- struct Preobr_Sk *preobr;
- preobr= malloc( sizeof( struct Preobr_Sk ) );
- if ( preobr == NULL ) {
-  fprintf( stderr, "ERROR in New_Preobr_Sk():\n preobr = malloc(sizeof(struct Preobr_Sk)); - failed\n" );
+ struct Preobr_Sk *struct_pixel_coordinate_transformation;
+ struct_pixel_coordinate_transformation= malloc( sizeof( struct Preobr_Sk ) );
+ if ( struct_pixel_coordinate_transformation == NULL ) {
+  fprintf( stderr, "ERROR in New_Preobr_Sk():\n struct_pixel_coordinate_transformation = malloc(sizeof(struct Preobr_Sk)); - failed\n" );
   vast_report_memory_error();
   exit( EXIT_FAILURE );
  }
- // preobr->podobie = 1;
- preobr->translate1[0]= 0;
- preobr->translate1[1]= 0;
- preobr->translate2[0]= 0;
- preobr->translate2[1]= 0;
- preobr->line[0]= 1;
- preobr->line[1]= 0;
- preobr->line[2]= 0;
- preobr->line[3]= 1;
- preobr->fi= 0;
+ // struct_pixel_coordinate_transformation->podobie = 1;
+ struct_pixel_coordinate_transformation->translate1[0]= 0;
+ struct_pixel_coordinate_transformation->translate1[1]= 0;
+ struct_pixel_coordinate_transformation->translate2[0]= 0;
+ struct_pixel_coordinate_transformation->translate2[1]= 0;
+ struct_pixel_coordinate_transformation->line[0]= 1;
+ struct_pixel_coordinate_transformation->line[1]= 0;
+ struct_pixel_coordinate_transformation->line[2]= 0;
+ struct_pixel_coordinate_transformation->line[3]= 1;
+ struct_pixel_coordinate_transformation->fi= 0;
 
- preobr->sigma_podobia= 0.01;
- preobr->Number_of_ecv_triangle= 100;
- preobr->sigma_popadaniya= 1.0;
- preobr->sigma_popadaniya_multiple= 3.0;
- preobr->persent_popadaniy_of_ecv_triangle= 0.6;
- preobr->method= MAXIMUM_POPADANIY;
- preobr->Number_of_main_star= 100;
- return ( preobr );
+ struct_pixel_coordinate_transformation->sigma_podobia= 0.01;
+ struct_pixel_coordinate_transformation->Number_of_ecv_triangle= 100;
+ struct_pixel_coordinate_transformation->sigma_popadaniya= 1.0;
+ struct_pixel_coordinate_transformation->sigma_popadaniya_multiple= 3.0;
+ struct_pixel_coordinate_transformation->persent_popadaniy_of_ecv_triangle= 0.6;
+ struct_pixel_coordinate_transformation->method= MAXIMUM_POPADANIY;
+ struct_pixel_coordinate_transformation->Number_of_main_star= 100;
+ return ( struct_pixel_coordinate_transformation );
 }
 
-void Delete_Preobr_Sk( struct Preobr_Sk *preobr ) {
- free( preobr );
+void Delete_Preobr_Sk( struct Preobr_Sk *struct_pixel_coordinate_transformation ) {
+ free( struct_pixel_coordinate_transformation );
 }
 
 void Star_Copy( struct Star *copy, struct Star *star ) {
@@ -562,13 +562,13 @@ struct Triangle *Separate_to_triangles( struct Star *star, int Number, int *Ntri
  return ( triangles );
 }
 
-int Podobie( struct Preobr_Sk *preobr, struct Ecv_triangles *ecv_tr,
+int Podobie( struct Preobr_Sk *struct_pixel_coordinate_transformation, struct Ecv_triangles *ecv_tr,
              struct Triangle *tr1, int Nt1,
              struct Triangle *tr2, int Nt2 ) {
  int n1, n2;
  float sigma, podobie, podobie1, ab1, bc1, ab2, bc2, ac2;
 
- sigma= preobr->sigma_podobia;
+ sigma= struct_pixel_coordinate_transformation->sigma_podobia;
  for ( n1= 0; n1 < Nt1; n1++ ) {
   ab1= tr1[n1].ab;
   bc1= tr1[n1].bc;
@@ -807,7 +807,7 @@ static inline int Popadanie_star1_to_star2(struct Star *star1, int Number1, stru
  */
 int Very_Well_triangle( struct Star *star1, int Number1, struct Star *star2, int Number2,
                         struct Ecv_triangles *ecv_tr,
-                        struct Preobr_Sk *preobr, int *nm, int control1 ) {
+                        struct Preobr_Sk *struct_pixel_coordinate_transformation, int *nm, int control1 ) {
  int n, Popadanie, Popadanie_max, m;
  double xmin, xmax, ymin, ymax, Ploshad, Ploshad1, sigma2;
  struct Star *copy_star1, *copy_star2;
@@ -824,7 +824,7 @@ int Very_Well_triangle( struct Star *star1, int Number1, struct Star *star2, int
   exit( EXIT_FAILURE );
  }
 
- N_ecv= preobr->Number_of_ecv_triangle;
+ N_ecv= struct_pixel_coordinate_transformation->Number_of_ecv_triangle;
  if ( N_ecv > ecv_tr->Number )
   N_ecv= ecv_tr->Number;
 
@@ -860,37 +860,37 @@ int Very_Well_triangle( struct Star *star1, int Number1, struct Star *star2, int
  Ploshad= ( xmax - xmin ) * ( ymax - ymin );
  ( *nm )= 0;
  Popadanie_max= 0;
- sigma2= preobr->sigma_popadaniya_multiple * preobr->sigma_popadaniya_multiple * preobr->sigma_popadaniya * preobr->sigma_popadaniya;
+ sigma2= struct_pixel_coordinate_transformation->sigma_popadaniya_multiple * struct_pixel_coordinate_transformation->sigma_popadaniya_multiple * struct_pixel_coordinate_transformation->sigma_popadaniya * struct_pixel_coordinate_transformation->sigma_popadaniya;
  mean_distance_best= 1e9; // to silance the gcc warning. Popadanie_max= 0; is what protects us from using mean_distance_best uninitialized
 
  // Cycle through triangles to identify the best one
  for ( n= 0; n < N_ecv; n++ ) {
 
   // Compute a linear transformation using a pair of ecvivalent triangles
-  Star2_to_star1_on_main_triangle( preobr, copy_star1, Number1, copy_star2, Number2, ecv_tr, n );
+  Star2_to_star1_on_main_triangle( struct_pixel_coordinate_transformation, copy_star1, Number1, copy_star2, Number2, ecv_tr, n );
 
   // Do not select triangles which imply large rotation if the user told us the frames are not rotated with respect to each other
-  // if ( control1 == 1 && fabs( preobr->fi ) > 0.052353 && fabs( preobr->fi - M_PI ) > 0.052353 )
-  if ( control1 == 1 && fabs( preobr->fi ) > MAX_NOROTATION_ANGLE_RAD && fabs( preobr->fi - M_PI ) > MAX_NOROTATION_ANGLE_RAD )
+  // if ( control1 == 1 && fabs( struct_pixel_coordinate_transformation->fi ) > 0.052353 && fabs( struct_pixel_coordinate_transformation->fi - M_PI ) > 0.052353 )
+  if ( control1 == 1 && fabs( struct_pixel_coordinate_transformation->fi ) > MAX_NOROTATION_ANGLE_RAD && fabs( struct_pixel_coordinate_transformation->fi - M_PI ) > MAX_NOROTATION_ANGLE_RAD )
    continue;
 
-  // Scale(copy_star2, Number2, preobr->podobie);
-  Translate( copy_star2, Number2, preobr->translate1[0], preobr->translate1[1] );
-  Line_Preobr( copy_star2, Number2, preobr->line );
-  Translate( copy_star2, Number2, preobr->translate2[0], preobr->translate2[1] );
+  // Scale(copy_star2, Number2, struct_pixel_coordinate_transformation->podobie);
+  Translate( copy_star2, Number2, struct_pixel_coordinate_transformation->translate1[0], struct_pixel_coordinate_transformation->translate1[1] );
+  Line_Preobr( copy_star2, Number2, struct_pixel_coordinate_transformation->line );
+  Translate( copy_star2, Number2, struct_pixel_coordinate_transformation->translate2[0], struct_pixel_coordinate_transformation->translate2[1] );
 
-  // Ploshad1 = Ploshad * preobr->podobie * fabs(preobr->line[0] * preobr->line[3] - preobr->line[1] * preobr->line[2]);
-  Ploshad1= Ploshad * fabs( preobr->line[0] * preobr->line[3] - preobr->line[1] * preobr->line[2] );
+  // Ploshad1 = Ploshad * struct_pixel_coordinate_transformation->podobie * fabs(struct_pixel_coordinate_transformation->line[0] * struct_pixel_coordinate_transformation->line[3] - struct_pixel_coordinate_transformation->line[1] * struct_pixel_coordinate_transformation->line[2]);
+  Ploshad1= Ploshad * fabs( struct_pixel_coordinate_transformation->line[0] * struct_pixel_coordinate_transformation->line[3] - struct_pixel_coordinate_transformation->line[1] * struct_pixel_coordinate_transformation->line[2] );
 
   if ( Ploshad1 / (double)Number2 < sigma2 )
    continue;
 
   // Compute how many reference stars are successfully matched using the current triangle as the reference one
-  // Popadanie= Popadanie_star1_to_star2( copy_star1, Number1, copy_star2, Number2, preobr->sigma_popadaniya );
-  Popadanie= Popadanie_star1_to_star2__with_mean_distance( copy_star1, Number1, copy_star2, Number2, preobr->sigma_popadaniya, &mean_distance );
+  // Popadanie= Popadanie_star1_to_star2( copy_star1, Number1, copy_star2, Number2, struct_pixel_coordinate_transformation->sigma_popadaniya );
+  Popadanie= Popadanie_star1_to_star2__with_mean_distance( copy_star1, Number1, copy_star2, Number2, struct_pixel_coordinate_transformation->sigma_popadaniya, &mean_distance );
   // If we match the same number of stars, check if this is a better match (smaller position deviations)
   if ( Popadanie == Popadanie_max ) {
-   // mean_distance= mean_distance__Popadanie_star1_to_star2( copy_star1, Number1, copy_star2, Number2, preobr->sigma_popadaniya );
+   // mean_distance= mean_distance__Popadanie_star1_to_star2( copy_star1, Number1, copy_star2, Number2, struct_pixel_coordinate_transformation->sigma_popadaniya );
    if ( mean_distance < mean_distance_best ) {
     Popadanie_max= Popadanie;
     ( *nm )= n;
@@ -901,7 +901,7 @@ int Very_Well_triangle( struct Star *star1, int Number1, struct Star *star2, int
   if ( Popadanie > Popadanie_max ) {
    Popadanie_max= Popadanie;
    ( *nm )= n;
-   // mean_distance_best= mean_distance__Popadanie_star1_to_star2( copy_star1, Number1, copy_star2, Number2, preobr->sigma_popadaniya );
+   // mean_distance_best= mean_distance__Popadanie_star1_to_star2( copy_star1, Number1, copy_star2, Number2, struct_pixel_coordinate_transformation->sigma_popadaniya );
    mean_distance_best= mean_distance;
   }
   // for (m = 0; m < Number2; m++)
@@ -910,14 +910,14 @@ int Very_Well_triangle( struct Star *star1, int Number1, struct Star *star2, int
  }
 
  if ( Popadanie_max != 0 ) {
-  Star2_to_star1_on_main_triangle( preobr, star1, Number1, star2, Number2, ecv_tr, *nm );
+  Star2_to_star1_on_main_triangle( struct_pixel_coordinate_transformation, star1, Number1, star2, Number2, ecv_tr, *nm );
  }
  free( copy_star1 );
  free( copy_star2 );
  return ( Popadanie_max );
 }
 
-int Star2_to_star1_on_main_triangle( struct Preobr_Sk *preobr, struct Star *star1, int Number1, struct Star *star2,
+int Star2_to_star1_on_main_triangle( struct Preobr_Sk *struct_pixel_coordinate_transformation, struct Star *star1, int Number1, struct Star *star2,
                                      int Number2, struct Ecv_triangles *ecv_tr, int nm ) {
  struct Star *star_copy;
  double X, Y, x, y, x1[2], y1[2], x2[2], y2[2];
@@ -935,8 +935,8 @@ int Star2_to_star1_on_main_triangle( struct Preobr_Sk *preobr, struct Star *star
 
  x= -star_copy[ecv_tr->tr[nm].tr2.a[0]].x;
  y= -star_copy[ecv_tr->tr[nm].tr2.a[0]].y;
- preobr->translate1[0]= x;
- preobr->translate1[1]= y;
+ struct_pixel_coordinate_transformation->translate1[0]= x;
+ struct_pixel_coordinate_transformation->translate1[1]= y;
  Translate( star_copy, Number2, x, y );
 
  X= -star1[ecv_tr->tr[nm].tr1.a[0]].x;
@@ -954,19 +954,19 @@ int Star2_to_star1_on_main_triangle( struct Preobr_Sk *preobr, struct Star *star
  y2[0]= star_copy[ecv_tr->tr[nm].tr2.a[2]].y;
 
  d= x1[0] * y2[0] - x2[0] * y1[0];
- preobr->line[0]= ( x1[1] * y2[0] - x2[1] * y1[0] ) / d;
- preobr->line[1]= -( x1[1] * x2[0] - x2[1] * x1[0] ) / d;
- preobr->line[2]= ( y1[1] * y2[0] - y2[1] * y1[0] ) / d;
- preobr->line[3]= -( y1[1] * x2[0] - y2[1] * x1[0] ) / d;
+ struct_pixel_coordinate_transformation->line[0]= ( x1[1] * y2[0] - x2[1] * y1[0] ) / d;
+ struct_pixel_coordinate_transformation->line[1]= -( x1[1] * x2[0] - x2[1] * x1[0] ) / d;
+ struct_pixel_coordinate_transformation->line[2]= ( y1[1] * y2[0] - y2[1] * y1[0] ) / d;
+ struct_pixel_coordinate_transformation->line[3]= -( y1[1] * x2[0] - y2[1] * x1[0] ) / d;
 
- preobr->fi= -atan( preobr->line[1] / preobr->line[0] );
- if ( ( preobr->fi >= 0 ) && ( preobr->line[1] >= 0 ) )
-  preobr->fi+= M_PI;
- else if ( ( preobr->fi < 0 ) && ( preobr->line[1] < 0 ) )
-  preobr->fi+= M_PI;
+ struct_pixel_coordinate_transformation->fi= -atan( struct_pixel_coordinate_transformation->line[1] / struct_pixel_coordinate_transformation->line[0] );
+ if ( ( struct_pixel_coordinate_transformation->fi >= 0 ) && ( struct_pixel_coordinate_transformation->line[1] >= 0 ) )
+  struct_pixel_coordinate_transformation->fi+= M_PI;
+ else if ( ( struct_pixel_coordinate_transformation->fi < 0 ) && ( struct_pixel_coordinate_transformation->line[1] < 0 ) )
+  struct_pixel_coordinate_transformation->fi+= M_PI;
 
- preobr->translate2[0]= -X;
- preobr->translate2[1]= -Y;
+ struct_pixel_coordinate_transformation->translate2[0]= -X;
+ struct_pixel_coordinate_transformation->translate2[1]= -Y;
 
  Translate( star1, Number1, -X, -Y );
  free( star_copy );
@@ -1459,47 +1459,6 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
 }
 
 /*
-void set_distance_to_neighbor_in_struct_Star(struct Star *star, int NUMBER, double aperture, double image_size_X, double image_size_Y){
- float R_best, R, epsilon;
- frame fr;
- grid gr;
- list points1, points2, points_2, ps, ps_1;
- point p1, p2;//, p_best;
-
- epsilon = 4.0*(float)aperture*(float)aperture;
-
- points1 = loadPoint (star, NUMBER);
- points2 = loadPoint (star, NUMBER);
-
- fr = createFrame(0, 0, image_size_X, image_size_Y, points1);
- gr = createGrid(fr);
-
- points_2 = points2;
-
- while(isEmpty (points_2) == 0){
-  R_best = epsilon;
-  p2 = disjoinList(&points_2);
-  ps = getListFromGrid(gr, p2.x, p2.y);
-  ps_1 = ps;
-  while (isEmpty (ps_1) == 0) {
-   p1 = disjoinList(&ps_1);
-   R = (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y);
-   if (R < R_best && p1.i!=p2.i ) {
-    star[p1.i].distance_to_neighbor_squared = R_best = R;
-   }
-  }
-  freeList (ps);
- }
-
- freeGrid (gr);
- freeList (points2);
- freeList (points1);
-
- return;
-}
-*/
-
-/*
 
  This function will match stars in two strctures (star1 and star2) based on their positional coincidence.
  The coordinate transformation needs to be applied to sthe structure star2 before running this function, so coordinates in
@@ -1604,9 +1563,9 @@ int Ident_on_sigma(struct Star *star1, int Number1, struct Star *star2, int Numb
  After the initial coordinate transformation has been established, the stars are matched against the full list of considered stars (STAR1).
 
  */
-// int Ident(struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Star *STAR2, int NUMBER2, int START_NUMBER2,
+// int Ident(struct Preobr_Sk *struct_pixel_coordinate_transformation, struct Star *STAR1, int NUMBER1, struct Star *STAR2, int NUMBER2, int START_NUMBER2,
 //         struct Frame frame1, struct Frame frame2, int *Pos1, int *Pos2, int control1, struct Star *STAR3, int NUMBER3, int START_NUMBER3, int *match_retry, int min_number_of_matched_stars, double image_size_X, double image_size_Y ) {
-int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Star *STAR2, int NUMBER2, int START_NUMBER2,
+int Ident( struct Preobr_Sk *struct_pixel_coordinate_transformation, struct Star *STAR1, int NUMBER1, struct Star *STAR2, int NUMBER2, int START_NUMBER2,
            int *Pos1, int *Pos2, int control1, struct Star *STAR3, int NUMBER3, int START_NUMBER3, int *match_retry, int min_number_of_matched_stars, double image_size_X, double image_size_Y ) {
 
  struct Star *star1= NULL, *star2= NULL;
@@ -1614,12 +1573,12 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
  struct Ecv_triangles *ecv_tr;
  int Number1, Number2, key, n, Nt1, Nt2, nm;
 
- // Set the number of reference stars based on the requested nuber supplied to his function as preobr->Number_of_main_star .
- Number1= (int)( (double)( preobr->Number_of_main_star ) * (double)NUMBER2 / (double)NUMBER3 ); // if we have more stars on one frame than on the other - it is likely that this frame is just taken with a longer exposure...
+ // Set the number of reference stars based on the requested nuber supplied to his function as struct_pixel_coordinate_transformation->Number_of_main_star .
+ Number1= (int)( (double)( struct_pixel_coordinate_transformation->Number_of_main_star ) * (double)NUMBER2 / (double)NUMBER3 ); // if we have more stars on one frame than on the other - it is likely that this frame is just taken with a longer exposure...
  if ( Number1 < MATCH_MIN_NUMBER_OF_REFERENCE_STARS ) {
   Number1= MATCH_MIN_NUMBER_OF_REFERENCE_STARS;
  }
- Number2= preobr->Number_of_main_star;
+ Number2= struct_pixel_coordinate_transformation->Number_of_main_star;
  // New test for very few star images
  if ( Number2 == 0 ) {
   ( *match_retry )= 0;
@@ -1668,14 +1627,14 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
  // write_Star_struct_to_ds9_region_file(star2, 0, Number2, "star2.reg", 6.6);
 
  // Search for similar triangles
- key= Podobie( preobr, ecv_tr, tr1, Nt1, tr2, Nt2 );
+ key= Podobie( struct_pixel_coordinate_transformation, ecv_tr, tr1, Nt1, tr2, Nt2 );
  // fprintf(stderr,"DEBUUUG Podobie()=%d", key);
  fprintf( stderr, "    %5d * detected, using %4d/%4d * for reference/current image matching, ", NUMBER2, Number1, Number2 );
 
  // Select the best trianle which allows to match the largest number of reference stars and determine the corrdinate transormation
- // using this best triangle. This coordinate tresformation is returned as the structure preobr .
+ // using this best triangle. This coordinate tresformation is returned as the structure struct_pixel_coordinate_transformation .
  if ( key != 0 ) {
-  key= Very_Well_triangle( star1, Number1, star2, Number2, ecv_tr, preobr, &nm, control1 );
+  key= Very_Well_triangle( star1, Number1, star2, Number2, ecv_tr, struct_pixel_coordinate_transformation, &nm, control1 );
  }
 
  // Free-up memory related to the triangles.
@@ -1696,17 +1655,17 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
  }
 
  // Apply the coordinate transformation to the list of stars detected on the current frame.
- Translate( star2, NUMBER2, preobr->translate1[0], preobr->translate1[1] );
- Line_Preobr( star2, NUMBER2, preobr->line );
- Translate( star2, NUMBER2, preobr->translate2[0], preobr->translate2[1] );
+ Translate( star2, NUMBER2, struct_pixel_coordinate_transformation->translate1[0], struct_pixel_coordinate_transformation->translate1[1] );
+ Line_Preobr( star2, NUMBER2, struct_pixel_coordinate_transformation->line );
+ Translate( star2, NUMBER2, struct_pixel_coordinate_transformation->translate2[0], struct_pixel_coordinate_transformation->translate2[1] );
 
  // User may inicate that the frames are not rotated with trespect to each other. Here is the bad place to check it.
  // For the good check, control1 parameter is transmitted to the function Very_Well_triangle()
  // 0.052353*180/pi = 3 deg, that was a reasoonable value for digitized photographic plates of the Moscow collection
- // if ( control1 == 1 && fabs( preobr->fi ) > 0.052353 && fabs( preobr->fi - M_PI ) > 0.052353 ) {
+ // if ( control1 == 1 && fabs( struct_pixel_coordinate_transformation->fi ) > 0.052353 && fabs( struct_pixel_coordinate_transformation->fi - M_PI ) > 0.052353 ) {
  // 0.104719755119660 - 6 deg, may be reasonable value for NMW
- if ( control1 == 1 && fabs( preobr->fi ) > MAX_NOROTATION_ANGLE_RAD && fabs( preobr->fi - M_PI ) > MAX_NOROTATION_ANGLE_RAD ) {
-  fprintf( stderr, " rotation is large! Retrying...  %lf\n", 180 * preobr->fi / M_PI );
+ if ( control1 == 1 && fabs( struct_pixel_coordinate_transformation->fi ) > MAX_NOROTATION_ANGLE_RAD && fabs( struct_pixel_coordinate_transformation->fi - M_PI ) > MAX_NOROTATION_ANGLE_RAD ) {
+  fprintf( stderr, " rotation is large! Retrying...  %lf\n", 180 * struct_pixel_coordinate_transformation->fi / M_PI );
 
   // We don't want to exit without freeing the memory allocated for the sturctures
   free( star1 );
@@ -1717,8 +1676,8 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
  }
 
  // Check if the current frame is the same as the reference frame. This will be apparent by the rotation probr->fi=180.0 degrees.
- if ( fabs( 180 * preobr->fi / M_PI - 180.0 ) < 0.0001 ) {
-  fprintf( stderr, " rotation is exactly 180 degrees! Is this a reference image again? Dropping image!  %lf\n", 180 * preobr->fi / M_PI );
+ if ( fabs( 180 * struct_pixel_coordinate_transformation->fi / M_PI - 180.0 ) < 0.0001 ) {
+  fprintf( stderr, " rotation is exactly 180 degrees! Is this a reference image again? Dropping image!  %lf\n", 180 * struct_pixel_coordinate_transformation->fi / M_PI );
 
   // We don't want to exit without freeing the memory allocated for te sturctures
   free( star1 );
@@ -1733,7 +1692,7 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
   // Note, at this point we assume we have a reasonably good coordinate transofrmation
   // based on the best similar triangle constructed from the reference stars. The following
   // function will apply the transformation to match stars in structures STAR2 and STAR1.
-  nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, preobr->sigma_popadaniya, image_size_X, image_size_Y );
+  nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, struct_pixel_coordinate_transformation->sigma_popadaniya, image_size_X, image_size_Y );
 
   // If the match is bad - exit and retry.
   if ( nm < min_number_of_matched_stars ) {
@@ -1807,7 +1766,7 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
    star2[Pos2[ii]].y-= dy;
   }
   // And now match stars again
-  nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, preobr->sigma_popadaniya, image_size_X, image_size_Y );
+  nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, struct_pixel_coordinate_transformation->sigma_popadaniya, image_size_X, image_size_Y );
   // fprintf(stderr,"%d * matched after the coordinate correction. ",nm);
   fprintf( stderr, "%d * matched, ", nm );
   // Check the match sucess, otherwise VaST wil crash when reaching fit_plane_lin()
@@ -1856,7 +1815,7 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
    star2[Pos2[ii]].y-= dy;
   }
   // And now match stars again
-  nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, preobr->sigma_popadaniya, image_size_X, image_size_Y );
+  nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, struct_pixel_coordinate_transformation->sigma_popadaniya, image_size_X, image_size_Y );
   // fprintf(stderr,"%d * matched after the coordinate correction. ",nm);
   fprintf( stderr, "%d * matched (2nd iteration). ", nm );
 
@@ -1905,7 +1864,7 @@ int Ident( struct Preobr_Sk *preobr, struct Star *STAR1, int NUMBER1, struct Sta
    star2[Pos2[ii]].y-= dy;
   }
   // And now match stars again
-  nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, preobr->sigma_popadaniya, image_size_X, image_size_Y );
+  nm= Ident_on_sigma( STAR1, NUMBER1, star2, NUMBER2, Pos1, Pos2, struct_pixel_coordinate_transformation->sigma_popadaniya, image_size_X, image_size_Y );
   // fprintf(stderr,"%d * matched after the coordinate correction. ",nm);
   fprintf( stderr, "%d * matched (3rd iteration). ", nm );
 
