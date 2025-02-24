@@ -909,371 +909,521 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 remove_test_data_to_save_space
 #
 
+#### vizquery test
+THIS_TEST_START_UNIXSEC=$(date +%s)
+TEST_PASSED=1
+# Run the test
+echo "Performing a vizquery test " 
+echo -n "vizquery test: " >> vast_test_report.txt 
 
-
-##### Check SysRem #####
-if [ ! -d ../NMW_And1_test_lightcurves_40 ];then
- cd .. || exit 1
- if [ -f NMW_And1_test_lightcurves_40.tar.bz2 ];then
-  rm -f NMW_And1_test_lightcurves_40.tar.bz2
- fi
- $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_And1_test_lightcurves_40.tar.bz2" && tar -xjf NMW_And1_test_lightcurves_40.tar.bz2 && rm -f NMW_And1_test_lightcurves_40.tar.bz2
- # If the test data download fails - don't bother with the other tests - exit now
- if [ $? -ne 0 ];then
-  echo "ERROR downloading test data!" 
-  echo "ERROR downloading test data!" >> vast_test_report.txt
-  echo "Failed test codes: $FAILED_TEST_CODES" 
-  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
-  exit 1
- fi
+if [ ! -d ../vast_test_lightcurves ];then
+ mkdir ../vast_test_lightcurves
+fi
+if [ ! -f ../vast_test_lightcurves/test_vizquery_M31.input ];then
+ cd ../vast_test_lightcurves || exit 1
+ curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/test_vizquery_M31.input.bz2" && bunzip2 test_vizquery_M31.input.bz2
  cd "$WORKDIR" || exit 1
 fi
 
-if [ -d ../NMW_And1_test_lightcurves_40 ];then
- THIS_TEST_START_UNIXSEC=$(date +%s)
- TEST_PASSED=1
- util/clean_data.sh
- # Run the test
- echo "SysRem test " 
- echo -n "SysRem test: " >> vast_test_report.txt 
- # Save VaST config files that may be overwritten when loading a data set
- for FILE_TO_SAVE in bad_region.lst default.psfex default.sex ;do
-  if [ -f "$FILE_TO_SAVE" ];then
-   mv "$FILE_TO_SAVE" "$FILE_TO_SAVE"_vastautobackup
-  fi
- done 
- util/load.sh ../NMW_And1_test_lightcurves_40
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM001"
- fi 
- # Restore the previously-saved VaST config files
- for FILE_TO_RESTORE in *_vastautobackup ;do
-  if [ -f "$FILE_TO_RESTORE" ];then
-   mv -f "$FILE_TO_RESTORE" `basename "$FILE_TO_RESTORE" _vastautobackup`
-  fi
- done
- SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM=`util/estimate_systematic_noise_level 2> /dev/null`
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM002"
- fi
- #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM)-(0.0304);sqrt(a*a)<0.005" | bc -ql`
- TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM" | awk '{if ( sqrt( ($1-0.0304)*($1-0.0304) ) < 0.005 ) print 1 ;else print 0 }'`
- re='^[0-9]+$'
- if ! [[ $TEST =~ $re ]] ; then
-  echo "TEST ERROR"
-  TEST_PASSED=0
-  TEST=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM003_TEST_ERROR"
- fi
- if [ $TEST -ne 1 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM003"
- fi
- if [ ! -s vast_lightcurve_statistics.log ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM004"
- fi
- MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM005"
- fi
- #TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM)-(0.026058);sqrt(a*a)<0.005" | bc -ql`
- TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM" | awk '{if ( sqrt( ($1-0.026058)*($1-0.026058) ) < 0.005 ) print 1 ;else print 0 }'`
- re='^[0-9]+$'
- if ! [[ $TEST =~ $re ]] ; then
-  echo "TEST ERROR"
-  TEST_PASSED=0
-  TEST=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM006_TEST_ERROR"
- fi
- if [ $TEST -ne 1 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM006"
- fi
- util/sysrem2
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM007"
- fi
- SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM=`util/estimate_systematic_noise_level 2> /dev/null`
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM102"
- fi
- #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM)-(0.0270);sqrt(a*a)<0.005" | bc -ql`
- TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.0270)*($1-0.0270) ) < 0.005 ) print 1 ;else print 0 }'`
- re='^[0-9]+$'
- if ! [[ $TEST =~ $re ]] ; then
-  echo "TEST ERROR"
-  TEST_PASSED=0
-  TEST=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM103_TEST_ERROR"
- fi
- if [ $TEST -ne 1 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM103"
- fi
- if [ ! -s vast_lightcurve_statistics.log ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM104"
- fi
- MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM105"
- fi
- #TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM)-(0.021055);sqrt(a*a)<0.005" | bc -ql`
- TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.021055)*($1-0.021055) ) < 0.005 ) print 1 ;else print 0 }'`
- re='^[0-9]+$'
- if ! [[ $TEST =~ $re ]] ; then
-  echo "TEST ERROR"
-  TEST_PASSED=0
-  TEST=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM106_TEST_ERROR"
- fi
- if [ $TEST -ne 1 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM106"
- fi
- #TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | bc -ql`
- TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
- re='^[0-9]+$'
- if ! [[ $TEST =~ $re ]] ; then
-  echo "TEST ERROR"
-  TEST_PASSED=0
-  TEST=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM0_SYSNOISEDECREASE_TEST_ERROR"
- fi
- if [ $TEST -ne 1 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM0_SYSNOISEDECREASE"
- fi
- #TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM > $MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | bc -ql`
- TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM>$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
- re='^[0-9]+$'
- if ! [[ $TEST =~ $re ]] ; then
-  echo "TEST ERROR"
-  TEST_PASSED=0
-  TEST=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM0_MSIGMACLIPDECREASE_TEST_ERROR"
- fi
- if [ $TEST -ne 1 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM0_MSIGMACLIPDECREASE"
- fi
- util/sysrem2
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM007"
- fi
- SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM=`util/estimate_systematic_noise_level 2> /dev/null`
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM102"
- fi
- #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM)-(0.0254);sqrt(a*a)<0.005" | bc -ql`
- TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.0254)*($1-0.0254) ) < 0.005 ) print 1 ;else print 0 }'`
- re='^[0-9]+$'
- if ! [[ $TEST =~ $re ]] ; then
-  echo "TEST ERROR"
-  TEST_PASSED=0
-  TEST=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM103_TEST_ERROR"
- fi
- if [ $TEST -ne 1 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM103"
- fi
- if [ ! -s vast_lightcurve_statistics.log ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM104"
- fi
- MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM105"
- fi
- #TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM)-(0.020588);sqrt(a*a)<0.005" | bc -ql`
- TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.020588)*($1-0.020588) ) < 0.005 ) print 1 ;else print 0 }'`
- re='^[0-9]+$'
- if ! [[ $TEST =~ $re ]] ; then
-  echo "TEST ERROR"
-  TEST_PASSED=0
-  TEST=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM106_TEST_ERROR"
- fi
- if [ $TEST -ne 1 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM106"
- fi
- #TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | bc -ql`
- TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM>$SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
- re='^[0-9]+$'
- if ! [[ $TEST =~ $re ]] ; then
-  echo "TEST ERROR"
-  TEST_PASSED=0
-  TEST=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM1_SYSNOISEDECREASE_TEST_ERROR"
- fi
- if [ $TEST -ne 1 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM1_SYSNOISEDECREASE"
- fi
- #TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM > $MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | bc -ql`
- TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM>$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
- re='^[0-9]+$'
- if ! [[ $TEST =~ $re ]] ; then
-  echo "TEST ERROR"
-  TEST_PASSED=0
-  TEST=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM1_MSIGMACLIPDECREASE_TEST_ERROR"
- fi
- if [ $TEST -ne 1 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM1_MSIGMACLIPDECREASE"
- fi
- util/sysrem2
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM207"
- fi
- util/sysrem2
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM307"
- fi
- util/sysrem2
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM407"
- fi
- SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM=`util/estimate_systematic_noise_level 2> /dev/null`
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM502"
- fi
- #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM)-(0.0245);sqrt(a*a)<0.005" | bc -ql`
- TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.0245)*($1-0.0245) ) < 0.005 ) print 1 ;else print 0 }'`
- re='^[0-9]+$'
- if ! [[ $TEST =~ $re ]] ; then
-  echo "TEST ERROR"
-  TEST_PASSED=0
-  TEST=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM503_TEST_ERROR"
- fi
- if [ $TEST -ne 1 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM503"
- fi
- if [ ! -s vast_lightcurve_statistics.log ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM504"
- fi
- MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM505"
- fi
- TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.018628)*($1-0.018628) ) < 0.005 ) print 1 ;else print 0 }'`
- re='^[0-9]+$'
- if ! [[ $TEST =~ $re ]] ; then
-  echo "TEST ERROR"
-  TEST_PASSED=0
-  TEST=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM506_TEST_ERROR"
- fi
- if [ $TEST -ne 1 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM506"
- fi
- #TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | bc -ql`
- TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM>$SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
- re='^[0-9]+$'
- if ! [[ $TEST =~ $re ]] ; then
-  echo "TEST ERROR"
-  TEST_PASSED=0
-  TEST=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM5_SYSNOISEDECREASE_TEST_ERROR"
- fi
- if [ $TEST -ne 1 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM5_SYSNOISEDECREASE"
- fi
- #TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM > $MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | bc -ql`
- TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM>$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
- re='^[0-9]+$'
- if ! [[ $TEST =~ $re ]] ; then
-  echo "TEST ERROR"
-  TEST_PASSED=0
-  TEST=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM5_MSIGMACLIPDECREASE_TEST_ERROR"
- fi
- if [ $TEST -ne 1 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM5_MSIGMACLIPDECREASE"
- fi
- ################################################################################
- # Check individual variables in the test data set
- ################################################################################
- # True variables
- for XY in "849.6359900 156.5065000" "1688.0546900 399.5051000" "3181.1794400 2421.1013200" "867.0582900  78.9714000" "45.6917000 2405.7465800" "2843.8242200 2465.0180700" ;do
-  LIGHTCURVEFILE=$(find_source_by_X_Y_in_vast_lightcurve_statistics_log $XY)
-  if [ "$LIGHTCURVEFILE" == "none" ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES  NMWSYSREM5_VARIABLE_NOT_DETECTED__${XY// /_}"
-  else
-   if [ "$XY" = "849.6359900 156.5065000" ];then
-    SIGMACLIP=`grep "$LIGHTCURVEFILE" vast_lightcurve_statistics.log | awk '{print $2}'`
-    #TEST=`echo "a=($SIGMACLIP)-(0.058346);sqrt(a*a)<0.005" | bc -ql`
-    TEST=`echo "$SIGMACLIP" | awk '{if ( sqrt( ($1-0.058346)*($1-0.058346) ) < 0.005 ) print 1 ;else print 0 }'`
-    re='^[0-9]+$'
-    if ! [[ $TEST =~ $re ]] ; then
-     echo "TEST ERROR"
-     TEST_PASSED=0
-     TEST=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM_GDOR_TEST_ERROR"
-    fi
-    if [ $TEST -ne 1 ];then
-     TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM_GDOR"
-    fi
-   fi
-  fi
-  grep --quiet "$LIGHTCURVEFILE" vast_autocandidates.log
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES  NMWSYSREM5_VARIABLE_NOT_SELECTED__$LIGHTCURVEFILE"
-  fi
-  grep --quiet "$LIGHTCURVEFILE" vast_list_of_likely_constant_stars.log
-  if [ $? -eq 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES  NMWSYSREM5_VARIABLE_MISTAKEN_FOR_CONSTANT__$LIGHTCURVEFILE"
-  fi
- done
-
-
- THIS_TEST_STOP_UNIXSEC=$(date +%s)
- THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
- # Make an overall conclusion for this test
- if [ $TEST_PASSED -eq 1 ];then
-  echo -e "\n\033[01;34mSysRem test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
-  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
- else
-  echo -e "\n\033[01;34mSysRem test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
-  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
- fi
-else
- FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM_TEST_NOT_PERFORMED"
+# Run the test
+lib/vizquery -site=$("$VAST_PATH"lib/choose_vizier_mirror.sh) -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini \
+-out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=9.0..16.5 -sort=f.mag -c.rs=6.0 \
+-list=../vast_test_lightcurves/test_vizquery_M31.input > test_vizquery_M31.output
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST001"
+ fail_early
 fi
+if [ ! -f test_vizquery_M31.output ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST002"
+ fail_early
+fi
+if [ ! -s test_vizquery_M31.output ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST003"
+ fail_early
+fi
+# check that the whole output was received, if not - retry
+cat test_vizquery_M31.output | grep --quiet '#END#'
+if [ $? -ne 0 ];then
+ FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST_RETRY"
+ # maybe this was a random network glitch? sleep 30 sec and retry
+ sleep 30 
+ lib/vizquery -site=$("$VAST_PATH"lib/choose_vizier_mirror.sh) -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini \
+-out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=9.0..16.5 -sort=f.mag -c.rs=6.0 \
+-list=../vast_test_lightcurves/test_vizquery_M31.input > test_vizquery_M31.output
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST001a"
+ fi
+ if [ ! -f test_vizquery_M31.output ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST002a"
+ fi
+ if [ ! -s test_vizquery_M31.output ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST003a"
+ fi
+ #
+fi
+# count lines in vizquery output
+TEST=`cat test_vizquery_M31.output | wc -l | awk '{print $1}'`
+re='^[0-9]+$'
+if ! [[ $TEST =~ $re ]] ; then
+ echo "TEST ERROR"
+ TEST_PASSED=0
+ TEST=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST004_TEST_ERROR"
+else
+ if [ $TEST -lt 1200 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST004_$TEST"
+ fi
+fi
+cat test_vizquery_M31.output | grep --quiet '#END#'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST005"
+fi
+
+# cleanup
+if [ -f test_vizquery_M31.output ];then
+ rm -f test_vizquery_M31.output
+fi
+
+
+THIS_TEST_STOP_UNIXSEC=$(date +%s)
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+# Make an overall conclusion for this test
+if [ $TEST_PASSED -eq 1 ];then
+ echo -e "\n\033[01;34mvizquery test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+ echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+else
+ echo -e "\n\033[01;34mvizquery test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+ echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+fi 
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
-remove_test_data_to_save_space
+
+
+
+#### Standalone test for database querry scripts
+THIS_TEST_START_UNIXSEC=$(date +%s)
+TEST_PASSED=1
+# Run the test
+echo "Performing a standalone test for database querry scripts " 
+echo -n "Testing database querry scripts: " >> vast_test_report.txt 
+
+lib/update_offline_catalogs.sh all &> update_offline_catalogs.out
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT__LOCAL_CAT_UPDATE"
+ GREP_RESULT=`cat update_offline_catalogs.out`
+ DEBUG_OUTPUT="$DEBUG_OUTPUT                              
+###### STANDALONEDBSCRIPT__LOCAL_CAT_UPDATE ######
+$GREP_RESULT"
+fi
+if [ -f update_offline_catalogs.out ];then
+ rm -f update_offline_catalogs.out
+fi
+
+# GCVS should be the first one to reply, but others may too
+util/search_databases_with_curl.sh 22:02:43.29139 +42:16:39.9803 | grep --quiet "BL Lac"
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001"
+fi
+
+### This should specifically test GCVS
+util/search_databases_with_curl.sh 22:02:43.29139 +42:16:39.9803 | grep --quiet "BLLAC"
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001a_GCVS"
+fi
+
+# A more precise way to test the GCVS online search
+util/search_databases_with_curl.sh 22:02:43.29139 +42:16:39.9803 | grep 'not found' | grep --quiet 'GCVS'
+if [ $? -eq 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001b_GCVS"
+fi
+
+# This should specifically test VSX search with util/search_databases_with_curl.sh
+util/search_databases_with_curl.sh 07:29:19.69 -13:23:06.6 | grep --quiet 'ZTF J072919.68-132306.5'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001c_VSX"
+fi
+
+# Make sure that the following string returns only the correct name of the target
+TEST_STRING=`util/search_databases_with_curl.sh 22:02:43.29 +42:16:39.9 | tail -n1 | awk -F'|' '{print $1}' | while read A ;do echo $A ;done`
+if [ "$TEST_STRING" != "BL Lac" ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001c_GCVS"
+fi
+
+# GCVS is supposed to reply
+util/search_databases_with_curl.sh 15:31:40.10 -20:27:17.3 | grep --quiet "BW Lib"
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT002"
+fi
+
+# GCVS is supposed to reply
+cd .. || exit 1
+"$WORKDIR"/util/search_databases_with_curl.sh 15:31:40.10 -20:27:17.3 | grep --quiet "BW Lib"
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT002a"
+fi
+cd "$WORKDIR" || exit 1
+
+util/search_databases_with_vizquery.sh 22:02:43.29139 +42:16:39.9803 TEST 40 no_online_vsx | grep TEST | grep --quiet "BL Lac"
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT003_vizquery"
+ fail_early
+fi
+
+cd .. || exit 1
+"$WORKDIR"/util/search_databases_with_vizquery.sh 22:02:43.29139 +42:16:39.9803 TEST 40 no_online_vsx | grep TEST | grep --quiet "BL Lac"
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT003a_vizquery"
+fi
+cd "$WORKDIR" || exit 1
+
+util/search_databases_with_vizquery.sh 15:31:40.10 -20:27:17.3 TEST 40 no_online_vsx | grep TEST | grep --quiet "BW Lib"
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT004_vizquery"
+fi
+
+# Coordinates in the deg fromat
+util/search_databases_with_vizquery.sh 34.8366337 -2.9776377 | grep 'omi Cet' | grep --quiet -e 'J-Ks=1.481+/-0.262 (M)' -e 'J-Ks=1.481+/-0.262 (Very red! L if it'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT005_vizquery"
+fi
+# on-the-fly conversion
+util/search_databases_with_vizquery.sh `lib/hms2deg 02:19:20.79 -02:58:39.5` | grep 'omi Cet' | grep --quiet -e 'J-Ks=1.481+/-0.262 (M)' -e 'J-Ks=1.481+/-0.262 (Very red! L if it'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT005a_vizquery"
+fi
+
+# Coordinates in the HMS fromat
+util/search_databases_with_vizquery.sh 02:19:20.79 -02:58:39.5 | grep 'omi Cet' | grep --quiet -e 'J-Ks=1.481+/-0.262 (M)' -e 'J-Ks=1.481+/-0.262 (Very red! L if it'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT006_vizquery"
+fi
+
+util/search_databases_with_vizquery.sh 19:50:33.92439 +32:54:50.6097 | grep 'khi Cyg' | grep --quiet -e 'J-Ks=1.863+/-0.240 (Very red!)'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT007_vizquery"
+fi
+
+
+# Make sure the damn thing doesn't crash, especially with AddressSanitizer
+lib/catalogs/check_catalogs_offline $(lib/hms2deg 19:50:33.92439 +32:54:50.6097) &>/dev/null
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT007_check_catalogs_offline"
+fi
+
+# Recover MDV test target
+lib/catalogs/check_catalogs_offline $(lib/hms2deg 01:23:45.67 +89:10:11.1) | grep --quiet 'TEST'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT007_check_MDVtest_offline"
+fi
+
+util/search_databases_with_vizquery.sh 01:23:45.67 +89:10:11.1 | grep --quiet 'TEST'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT007_MDVtestINTEGRATION"
+fi
+
+
+# XY Lyr is listed as SRC in VSX following the Hipparcos periodic variables paper
+util/search_databases_with_vizquery.sh 18:38:06.47677 +39:40:05.9835 | grep 'XY Lyr' | grep -e 'LC' -e 'SRC' | grep --quiet 'J-Ks=1.098+/-0.291 (M)'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT008"
+fi
+
+util/search_databases_with_vizquery.sh 18:38:06.47677 +39:40:05.9835 mystar | grep 'XY Lyr' | grep -e 'LC' -e 'SRC' | grep 'J-Ks=1.098+/-0.291 (M)' | grep --quiet mystar
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT009"
+fi
+
+# MDV via VizieR
+util/search_databases_with_vizquery.sh 02:38:54.34 +63:37:40.4 | grep --quiet -e 'MDV 521' -e 'V1340 Cas'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT010"
+fi
+
+# this is MDV 41 already included in GCVS
+util/search_databases_with_vizquery.sh 17:40:35.50 +06:17:00.4 | grep 'RRAB' | grep --quiet 'V3042 Oph'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT011"
+fi
+
+# this is MDV 9 already included in GCVS
+util/search_databases_with_vizquery.sh 13:21:18.38 +18:08:22.2 | grep 'SXPHE' | grep 'VARIABLE' | grep --quiet -e 'OU Com' -e 'ASASSN-V J132118.28+180821.9'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012"
+fi
+
+# ATLAS via VizieR test 
+util/search_databases_with_vizquery.sh 101.23204 -13.33439 | grep 'dubious (ATLAS)' | grep --quiet 'ATO J101.2320-13.3343'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012atlas"
+fi
+
+# ATLAS via VizieR test - doesn't work anymore - the star got into VSX under its ZTF name
+util/search_databases_with_vizquery.sh 07:29:19.69 -13:23:06.6 | grep -e 'CBF (ATLAS)' -e '(VSX)' -e '(local)' | grep --quiet -e 'ATO J112.3320-13.3851' -e 'ZTF J072919.68-132306.5'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012vsx01"
+fi
+
+# This one was added to VSX
+util/search_databases_with_vizquery.sh 18:31:04.64 -16:58:22.3 | grep 'M' | grep 'VARIABLE' | grep --quiet 'ATO J277.7693-16.9729'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012vsx02"
+fi
+
+# MASTER_OT J132104.04+560957.8 - AM CVn star, Gaia short timescale variable
+util/search_databases_with_vizquery.sh 200.26675923087 +56.16607967965 | grep -e 'V0496 UMa' -e 'MASTER_OT J132104.04+560957.8' | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_SHORTTS'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT013"
+fi
+
+# Gaia Cepheid, first in the list
+util/search_databases_with_vizquery.sh 237.17375455558 -42.26556630747 | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_CEPHEID'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT014"
+fi
+
+# Gaia RR Lyr, first in the list
+util/search_databases_with_vizquery.sh 272.04211425638 -25.91123076425 | grep 'RRAB' | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_RRLYR'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT015"
+fi
+
+# Gaia LPV, first in the list. Do not mix it up with OGLE-BLG-RRLYR-01707 that is 36" away!
+util/search_databases_with_vizquery.sh 265.86100820754 -34.10333534797 | grep -v 'OGLE-BLG-RRLYR-01707' | grep 'OGLE-BLG-LPV-022489' | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_LPV'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT016"
+fi
+
+# Check that we are correctly formatting the OGLE variable name
+util/search_databases_with_vizquery.sh 17:05:07.49 -32:37:57.2 | grep 'OGLE-BLG-RRLYR-00001' | grep --quiet 'VARIABLE' # | grep --quiet 'Gaia2_RRLYR'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT017"
+fi
+util/search_databases_with_vizquery.sh `lib/hms2deg 17:05:07.49 -32:37:57.2` | grep 'OGLE-BLG-RRLYR-00001' | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_RRLYR'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT018"
+fi
+
+util/search_databases_with_vizquery.sh 17.25656 47.30456 | grep --quiet -e 'ATO J017.2565+47.3045' -e 'ASASSN-V J010901.57+471816.4'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT019"
+fi
+
+# Make sure the script doesn't drop faint Gaia stars if the position match is perfect
+util/search_databases_with_vizquery.sh 14:08:10.55777 -45:26:50.7000 | grep --quiet '|'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT019a"
+fi
+
+# Coma as RA,Dec separator
+util/search_databases_with_vizquery.sh 18:49:05.97,-19:02:03.2 | grep --quiet 'V6594 Sgr'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT019b"
+fi
+
+# Check good formatting of Skiff's spectral type
+util/search_databases_with_vizquery.sh 20:07:36.82 +44:06:55.1 | grep --quiet 'SpType: G5/K1IV 2016A&A...594A..39F'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_SKIFFSPTYPEFORMAT"
+fi
+
+# Check correct parsing of ATLAS dubious candidate + LAMOST
+util/search_databases_with_vizquery.sh 23:44:51.23 +27:21:33.1 target 600 | grep 'ATO J356.2104+27.3581' | grep 'dubious' | grep --quiet 'F5 (LAMOST DR5)'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_ATLASLAMOSTFARAWAY"
+fi
+
+# ATLAS multiple candidates within the search radius
+util/search_databases_with_vizquery.sh 17:03:58.52 -19:33:32.5 object 350 | grep 'ATO J255.9939-19.5591' | grep --quiet 'LPV (ATLAS)'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_ATLASMULTICAND"
+fi
+
+### Test the local catalog search thing
+grep --quiet 'ASASSN-V J010901.57+471816.4' lib/catalogs/asassnv.csv
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT020csv"
+fi
+# Now find this variable using check_catalogs_offline
+lib/catalogs/check_catalogs_offline 17.25656 47.30456 | grep --quiet 'ASASSN-V J010901.57+471816.4'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT020"
+fi
+
+# laststar in the current asassnv.csv, but it's already in VSX
+lib/catalogs/check_catalogs_offline 225.53308 -45.05244 | grep --quiet 'ASASSN-V J150207.95-450307.5'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT020"
+fi
+
+
+lib/catalogs/check_catalogs_offline 34.8366337 -2.9776377 | grep --quiet 'omi Cet'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT021"
+fi
+
+# Multiple known variables within the search radius - unrelated OGLE one from VSX and the correct ASASSN-V
+# This test relies on the local catalog search!
+util/search_databases_with_vizquery.sh 17:54:41.41077 -30:21:59.3417 | grep --quiet 'ASASSN-V J175441.41-302159.3'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_MULTCLOSEVAR"
+fi
+
+# Make sure the script gives 'may be a known variable' suggestion from parsing VizieR catalog names
+util/search_databases_with_vizquery.sh 00:39:16.81 +60:36:57.1 | grep --quiet 'may be a known variable'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_VIZKNOWNVAR"
+fi
+
+# No false ID with Gaia DR2 high-amplitude variable
+# Now it's Gaia DR3 high-amplitude variable
+# The correct target is Gaia DR3 4254944797873326720. Now 25.71" from it there is a Gaia DR3 4254944870964356992 variable
+util/search_databases_with_vizquery.sh 18:53:19.68 -04:58:21.6 online_id 350 no_online_vsx | grep 'online_id' | grep --quiet 'Gaia DR3 4254944797873326720'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_NOWRONGGAIAVAR"
+fi
+
+# Constellations
+util/constellation.sh 0.0 0.0 | grep --quiet 'Psc'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION001"
+fi
+
+util/constellation.sh 00:00:00.00 00:00:00.0 | grep --quiet 'Psc'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION002"
+fi
+
+util/constellation.sh 22:57:00 +35:20:00 | grep --quiet 'Lac'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION003"
+fi
+
+util/constellation.sh 17:44:17 -30:00:00 | grep --quiet 'Sgr'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION004"
+fi
+
+util/constellation.sh 17:43:52 -30:02:30 | grep --quiet 'Oph'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION005"
+fi
+
+util/constellation.sh 17:44:00 -30:05:00 | grep --quiet 'Sco'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION006"
+fi
+
+
+
+# V0437 Peg
+util/constellation.sh 21:30:03.96 +12:04:59.4 | grep --quiet 'Peg'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION007"
+fi
+
+# V0581 Aur
+util/constellation.sh 05:12:06.91 +45:46:42.8 | grep --quiet 'Aur'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION008"
+fi
+
+# LW Ara
+util/constellation.sh 17:28:09.26 -46:38:14.4 | grep --quiet 'Ara'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION009"
+fi
+
+# V0443 Sge
+util/constellation.sh 19:53:20.02 +18:59:33.9 | grep --quiet 'Sge'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION010"
+fi
+
+
+
+THIS_TEST_STOP_UNIXSEC=$(date +%s)
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+# Make an overall conclusion for this test
+if [ $TEST_PASSED -eq 1 ];then
+ echo -e "\n\033[01;34mTest of the database querry scripts \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+ echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+else
+ echo -e "\n\033[01;34mTest of the database querry scripts \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+ echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+fi 
 #
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+
+
 
 # Test the connection
 test_internet_connection fast
@@ -1567,6 +1717,7 @@ $GREP_RESULT"
     if [ $? -ne 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE016_vizquery_V0834_Cas_${CEPHEID_RADEC_STR// /_}"
+     fail_early "VizieR is not accessible??"
     else
      # do this test only if the previous one passed
      # same thing but different input format
@@ -8666,7 +8817,6 @@ remove_test_data_to_save_space
 fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 ##########################################
 
-
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
@@ -8676,6 +8826,376 @@ if [ $? -ne 0 ];then
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
+
+
+##### Check SysRem #####
+if [ ! -d ../NMW_And1_test_lightcurves_40 ];then
+ cd .. || exit 1
+ if [ -f NMW_And1_test_lightcurves_40.tar.bz2 ];then
+  rm -f NMW_And1_test_lightcurves_40.tar.bz2
+ fi
+ $($WORKDIR/lib/find_timeout_command.sh) 300 curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW_And1_test_lightcurves_40.tar.bz2" && tar -xjf NMW_And1_test_lightcurves_40.tar.bz2 && rm -f NMW_And1_test_lightcurves_40.tar.bz2
+ # If the test data download fails - don't bother with the other tests - exit now
+ if [ $? -ne 0 ];then
+  echo "ERROR downloading test data!" 
+  echo "ERROR downloading test data!" >> vast_test_report.txt
+  echo "Failed test codes: $FAILED_TEST_CODES" 
+  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+  exit 1
+ fi
+ cd "$WORKDIR" || exit 1
+fi
+
+if [ -d ../NMW_And1_test_lightcurves_40 ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "SysRem test " 
+ echo -n "SysRem test: " >> vast_test_report.txt 
+ # Save VaST config files that may be overwritten when loading a data set
+ for FILE_TO_SAVE in bad_region.lst default.psfex default.sex ;do
+  if [ -f "$FILE_TO_SAVE" ];then
+   mv "$FILE_TO_SAVE" "$FILE_TO_SAVE"_vastautobackup
+  fi
+ done 
+ util/load.sh ../NMW_And1_test_lightcurves_40
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM001"
+ fi 
+ # Restore the previously-saved VaST config files
+ for FILE_TO_RESTORE in *_vastautobackup ;do
+  if [ -f "$FILE_TO_RESTORE" ];then
+   mv -f "$FILE_TO_RESTORE" `basename "$FILE_TO_RESTORE" _vastautobackup`
+  fi
+ done
+ SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM=`util/estimate_systematic_noise_level 2> /dev/null`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM002"
+ fi
+ #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM)-(0.0304);sqrt(a*a)<0.005" | bc -ql`
+ TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM" | awk '{if ( sqrt( ($1-0.0304)*($1-0.0304) ) < 0.005 ) print 1 ;else print 0 }'`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM003_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM003"
+ fi
+ if [ ! -s vast_lightcurve_statistics.log ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM004"
+ fi
+ MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM005"
+ fi
+ #TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM)-(0.026058);sqrt(a*a)<0.005" | bc -ql`
+ TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM" | awk '{if ( sqrt( ($1-0.026058)*($1-0.026058) ) < 0.005 ) print 1 ;else print 0 }'`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM006_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM006"
+ fi
+ util/sysrem2
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM007"
+ fi
+ SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM=`util/estimate_systematic_noise_level 2> /dev/null`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM102"
+ fi
+ #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM)-(0.0270);sqrt(a*a)<0.005" | bc -ql`
+ TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.0270)*($1-0.0270) ) < 0.005 ) print 1 ;else print 0 }'`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM103_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM103"
+ fi
+ if [ ! -s vast_lightcurve_statistics.log ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM104"
+ fi
+ MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM105"
+ fi
+ #TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM)-(0.021055);sqrt(a*a)<0.005" | bc -ql`
+ TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.021055)*($1-0.021055) ) < 0.005 ) print 1 ;else print 0 }'`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM106_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM106"
+ fi
+ #TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | bc -ql`
+ TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM0_SYSNOISEDECREASE_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM0_SYSNOISEDECREASE"
+ fi
+ #TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM > $MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | bc -ql`
+ TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM>$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM0_MSIGMACLIPDECREASE_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM0_MSIGMACLIPDECREASE"
+ fi
+ util/sysrem2
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM007"
+ fi
+ SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM=`util/estimate_systematic_noise_level 2> /dev/null`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM102"
+ fi
+ #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM)-(0.0254);sqrt(a*a)<0.005" | bc -ql`
+ TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.0254)*($1-0.0254) ) < 0.005 ) print 1 ;else print 0 }'`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM103_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM103"
+ fi
+ if [ ! -s vast_lightcurve_statistics.log ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM104"
+ fi
+ MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM105"
+ fi
+ #TEST=`echo "a=($MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM)-(0.020588);sqrt(a*a)<0.005" | bc -ql`
+ TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.020588)*($1-0.020588) ) < 0.005 ) print 1 ;else print 0 }'`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM106_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM106"
+ fi
+ #TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | bc -ql`
+ TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM>$SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM1_SYSNOISEDECREASE_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM1_SYSNOISEDECREASE"
+ fi
+ #TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM > $MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | bc -ql`
+ TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM>$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM1_MSIGMACLIPDECREASE_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM1_MSIGMACLIPDECREASE"
+ fi
+ util/sysrem2
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM207"
+ fi
+ util/sysrem2
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM307"
+ fi
+ util/sysrem2
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM407"
+ fi
+ SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM=`util/estimate_systematic_noise_level 2> /dev/null`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM502"
+ fi
+ #TEST=`echo "a=($SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM)-(0.0245);sqrt(a*a)<0.005" | bc -ql`
+ TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.0245)*($1-0.0245) ) < 0.005 ) print 1 ;else print 0 }'`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM503_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM503"
+ fi
+ if [ ! -s vast_lightcurve_statistics.log ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM504"
+ fi
+ MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM=`cat vast_lightcurve_statistics.log | head -n1000 | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEDIAN' | awk '{print $2}'`
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM505"
+ fi
+ TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk '{if ( sqrt( ($1-0.018628)*($1-0.018628) ) < 0.005 ) print 1 ;else print 0 }'`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM506_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM506"
+ fi
+ #TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM > $SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | bc -ql`
+ TEST=`echo "$SYSTEMATIC_NOISE_LEVEL_BEFORE_SYSREM>$SYSTEMATIC_NOISE_LEVEL_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM5_SYSNOISEDECREASE_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM5_SYSNOISEDECREASE"
+ fi
+ #TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM > $MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | bc -ql`
+ TEST=`echo "$MEDIAN_SIGMACLIP_BRIGHTSTARS_BEFORE_SYSREM>$MEDIAN_SIGMACLIP_BRIGHTSTARS_AFTER_SYSREM" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`
+ re='^[0-9]+$'
+ if ! [[ $TEST =~ $re ]] ; then
+  echo "TEST ERROR"
+  TEST_PASSED=0
+  TEST=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM5_MSIGMACLIPDECREASE_TEST_ERROR"
+ fi
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM5_MSIGMACLIPDECREASE"
+ fi
+ ################################################################################
+ # Check individual variables in the test data set
+ ################################################################################
+ # True variables
+ for XY in "849.6359900 156.5065000" "1688.0546900 399.5051000" "3181.1794400 2421.1013200" "867.0582900  78.9714000" "45.6917000 2405.7465800" "2843.8242200 2465.0180700" ;do
+  LIGHTCURVEFILE=$(find_source_by_X_Y_in_vast_lightcurve_statistics_log $XY)
+  if [ "$LIGHTCURVEFILE" == "none" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES  NMWSYSREM5_VARIABLE_NOT_DETECTED__${XY// /_}"
+  else
+   if [ "$XY" = "849.6359900 156.5065000" ];then
+    SIGMACLIP=`grep "$LIGHTCURVEFILE" vast_lightcurve_statistics.log | awk '{print $2}'`
+    #TEST=`echo "a=($SIGMACLIP)-(0.058346);sqrt(a*a)<0.005" | bc -ql`
+    TEST=`echo "$SIGMACLIP" | awk '{if ( sqrt( ($1-0.058346)*($1-0.058346) ) < 0.005 ) print 1 ;else print 0 }'`
+    re='^[0-9]+$'
+    if ! [[ $TEST =~ $re ]] ; then
+     echo "TEST ERROR"
+     TEST_PASSED=0
+     TEST=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM_GDOR_TEST_ERROR"
+    fi
+    if [ $TEST -ne 1 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM_GDOR"
+    fi
+   fi
+  fi
+  grep --quiet "$LIGHTCURVEFILE" vast_autocandidates.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES  NMWSYSREM5_VARIABLE_NOT_SELECTED__$LIGHTCURVEFILE"
+  fi
+  grep --quiet "$LIGHTCURVEFILE" vast_list_of_likely_constant_stars.log
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES  NMWSYSREM5_VARIABLE_MISTAKEN_FOR_CONSTANT__$LIGHTCURVEFILE"
+  fi
+ done
+
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mSysRem test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mSysRem test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSYSREM_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+remove_test_data_to_save_space
+#
+
+
+
+
+
 
 ##### Ceres test #####
 ### Disable this test for GitHub Actions
@@ -23429,515 +23949,6 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 #
 
 
-#### vizquery test
-THIS_TEST_START_UNIXSEC=$(date +%s)
-TEST_PASSED=1
-# Run the test
-echo "Performing a vizquery test " 
-echo -n "vizquery test: " >> vast_test_report.txt 
-
-if [ ! -d ../vast_test_lightcurves ];then
- mkdir ../vast_test_lightcurves
-fi
-if [ ! -f ../vast_test_lightcurves/test_vizquery_M31.input ];then
- cd ../vast_test_lightcurves || exit 1
- curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/vast_test_lightcurves/test_vizquery_M31.input.bz2" && bunzip2 test_vizquery_M31.input.bz2
- cd "$WORKDIR" || exit 1
-fi
-
-# Run the test
-lib/vizquery -site=$("$VAST_PATH"lib/choose_vizier_mirror.sh) -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini \
--out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=9.0..16.5 -sort=f.mag -c.rs=6.0 \
--list=../vast_test_lightcurves/test_vizquery_M31.input > test_vizquery_M31.output
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST001"
-fi
-if [ ! -f test_vizquery_M31.output ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST002"
-fi
-if [ ! -s test_vizquery_M31.output ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST003"
-fi
-# check that the whole output was received, if not - retry
-cat test_vizquery_M31.output | grep --quiet '#END#'
-if [ $? -ne 0 ];then
- FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST_RETRY"
- # maybe this was a random network glitch? sleep 30 sec and retry
- sleep 30 
- lib/vizquery -site=$("$VAST_PATH"lib/choose_vizier_mirror.sh) -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini \
--out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=9.0..16.5 -sort=f.mag -c.rs=6.0 \
--list=../vast_test_lightcurves/test_vizquery_M31.input > test_vizquery_M31.output
- if [ $? -ne 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST001a"
- fi
- if [ ! -f test_vizquery_M31.output ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST002a"
- fi
- if [ ! -s test_vizquery_M31.output ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST003a"
- fi
- #
-fi
-# count lines in vizquery output
-TEST=`cat test_vizquery_M31.output | wc -l | awk '{print $1}'`
-re='^[0-9]+$'
-if ! [[ $TEST =~ $re ]] ; then
- echo "TEST ERROR"
- TEST_PASSED=0
- TEST=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST004_TEST_ERROR"
-else
- if [ $TEST -lt 1200 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST004_$TEST"
- fi
-fi
-cat test_vizquery_M31.output | grep --quiet '#END#'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST005"
-fi
-
-# cleanup
-if [ -f test_vizquery_M31.output ];then
- rm -f test_vizquery_M31.output
-fi
-
-
-THIS_TEST_STOP_UNIXSEC=$(date +%s)
-THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
-
-# Make an overall conclusion for this test
-if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mvizquery test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
- echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
-else
- echo -e "\n\033[01;34mvizquery test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
- echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
-fi 
-#
-echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
-df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
-#
-
-
-
-#### Standalone test for database querry scripts
-THIS_TEST_START_UNIXSEC=$(date +%s)
-TEST_PASSED=1
-# Run the test
-echo "Performing a standalone test for database querry scripts " 
-echo -n "Testing database querry scripts: " >> vast_test_report.txt 
-
-lib/update_offline_catalogs.sh all &> update_offline_catalogs.out
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT__LOCAL_CAT_UPDATE"
- GREP_RESULT=`cat update_offline_catalogs.out`
- DEBUG_OUTPUT="$DEBUG_OUTPUT                              
-###### STANDALONEDBSCRIPT__LOCAL_CAT_UPDATE ######
-$GREP_RESULT"
-fi
-if [ -f update_offline_catalogs.out ];then
- rm -f update_offline_catalogs.out
-fi
-
-# GCVS should be the first one to reply, but others may too
-util/search_databases_with_curl.sh 22:02:43.29139 +42:16:39.9803 | grep --quiet "BL Lac"
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001"
-fi
-
-### This should specifically test GCVS
-util/search_databases_with_curl.sh 22:02:43.29139 +42:16:39.9803 | grep --quiet "BLLAC"
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001a_GCVS"
-fi
-
-# A more precise way to test the GCVS online search
-util/search_databases_with_curl.sh 22:02:43.29139 +42:16:39.9803 | grep 'not found' | grep --quiet 'GCVS'
-if [ $? -eq 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001b_GCVS"
-fi
-
-# This should specifically test VSX search with util/search_databases_with_curl.sh
-util/search_databases_with_curl.sh 07:29:19.69 -13:23:06.6 | grep --quiet 'ZTF J072919.68-132306.5'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001c_VSX"
-fi
-
-# Make sure that the following string returns only the correct name of the target
-TEST_STRING=`util/search_databases_with_curl.sh 22:02:43.29 +42:16:39.9 | tail -n1 | awk -F'|' '{print $1}' | while read A ;do echo $A ;done`
-if [ "$TEST_STRING" != "BL Lac" ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001c_GCVS"
-fi
-
-# GCVS is supposed to reply
-util/search_databases_with_curl.sh 15:31:40.10 -20:27:17.3 | grep --quiet "BW Lib"
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT002"
-fi
-
-# GCVS is supposed to reply
-cd .. || exit 1
-"$WORKDIR"/util/search_databases_with_curl.sh 15:31:40.10 -20:27:17.3 | grep --quiet "BW Lib"
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT002a"
-fi
-cd "$WORKDIR" || exit 1
-
-util/search_databases_with_vizquery.sh 22:02:43.29139 +42:16:39.9803 TEST 40 no_online_vsx | grep TEST | grep --quiet "BL Lac"
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT003_vizquery"
-fi
-
-cd .. || exit 1
-"$WORKDIR"/util/search_databases_with_vizquery.sh 22:02:43.29139 +42:16:39.9803 TEST 40 no_online_vsx | grep TEST | grep --quiet "BL Lac"
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT003a_vizquery"
-fi
-cd "$WORKDIR" || exit 1
-
-util/search_databases_with_vizquery.sh 15:31:40.10 -20:27:17.3 TEST 40 no_online_vsx | grep TEST | grep --quiet "BW Lib"
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT004_vizquery"
-fi
-
-# Coordinates in the deg fromat
-util/search_databases_with_vizquery.sh 34.8366337 -2.9776377 | grep 'omi Cet' | grep --quiet -e 'J-Ks=1.481+/-0.262 (M)' -e 'J-Ks=1.481+/-0.262 (Very red! L if it'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT005_vizquery"
-fi
-# on-the-fly conversion
-util/search_databases_with_vizquery.sh `lib/hms2deg 02:19:20.79 -02:58:39.5` | grep 'omi Cet' | grep --quiet -e 'J-Ks=1.481+/-0.262 (M)' -e 'J-Ks=1.481+/-0.262 (Very red! L if it'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT005a_vizquery"
-fi
-
-# Coordinates in the HMS fromat
-util/search_databases_with_vizquery.sh 02:19:20.79 -02:58:39.5 | grep 'omi Cet' | grep --quiet -e 'J-Ks=1.481+/-0.262 (M)' -e 'J-Ks=1.481+/-0.262 (Very red! L if it'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT006_vizquery"
-fi
-
-util/search_databases_with_vizquery.sh 19:50:33.92439 +32:54:50.6097 | grep 'khi Cyg' | grep --quiet -e 'J-Ks=1.863+/-0.240 (Very red!)'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT007_vizquery"
-fi
-
-
-# Make sure the damn thing doesn't crash, especially with AddressSanitizer
-lib/catalogs/check_catalogs_offline $(lib/hms2deg 19:50:33.92439 +32:54:50.6097) &>/dev/null
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT007_check_catalogs_offline"
-fi
-
-# Recover MDV test target
-lib/catalogs/check_catalogs_offline $(lib/hms2deg 01:23:45.67 +89:10:11.1) | grep --quiet 'TEST'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT007_check_MDVtest_offline"
-fi
-
-util/search_databases_with_vizquery.sh 01:23:45.67 +89:10:11.1 | grep --quiet 'TEST'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT007_MDVtestINTEGRATION"
-fi
-
-
-# XY Lyr is listed as SRC in VSX following the Hipparcos periodic variables paper
-util/search_databases_with_vizquery.sh 18:38:06.47677 +39:40:05.9835 | grep 'XY Lyr' | grep -e 'LC' -e 'SRC' | grep --quiet 'J-Ks=1.098+/-0.291 (M)'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT008"
-fi
-
-util/search_databases_with_vizquery.sh 18:38:06.47677 +39:40:05.9835 mystar | grep 'XY Lyr' | grep -e 'LC' -e 'SRC' | grep 'J-Ks=1.098+/-0.291 (M)' | grep --quiet mystar
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT009"
-fi
-
-# MDV via VizieR
-util/search_databases_with_vizquery.sh 02:38:54.34 +63:37:40.4 | grep --quiet -e 'MDV 521' -e 'V1340 Cas'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT010"
-fi
-
-# this is MDV 41 already included in GCVS
-util/search_databases_with_vizquery.sh 17:40:35.50 +06:17:00.4 | grep 'RRAB' | grep --quiet 'V3042 Oph'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT011"
-fi
-
-# this is MDV 9 already included in GCVS
-util/search_databases_with_vizquery.sh 13:21:18.38 +18:08:22.2 | grep 'SXPHE' | grep 'VARIABLE' | grep --quiet -e 'OU Com' -e 'ASASSN-V J132118.28+180821.9'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012"
-fi
-
-# ATLAS via VizieR test 
-util/search_databases_with_vizquery.sh 101.23204 -13.33439 | grep 'dubious (ATLAS)' | grep --quiet 'ATO J101.2320-13.3343'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012atlas"
-fi
-
-# ATLAS via VizieR test - doesn't work anymore - the star got into VSX under its ZTF name
-util/search_databases_with_vizquery.sh 07:29:19.69 -13:23:06.6 | grep -e 'CBF (ATLAS)' -e '(VSX)' -e '(local)' | grep --quiet -e 'ATO J112.3320-13.3851' -e 'ZTF J072919.68-132306.5'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012vsx01"
-fi
-
-# This one was added to VSX
-util/search_databases_with_vizquery.sh 18:31:04.64 -16:58:22.3 | grep 'M' | grep 'VARIABLE' | grep --quiet 'ATO J277.7693-16.9729'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012vsx02"
-fi
-
-# MASTER_OT J132104.04+560957.8 - AM CVn star, Gaia short timescale variable
-util/search_databases_with_vizquery.sh 200.26675923087 +56.16607967965 | grep -e 'V0496 UMa' -e 'MASTER_OT J132104.04+560957.8' | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_SHORTTS'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT013"
-fi
-
-# Gaia Cepheid, first in the list
-util/search_databases_with_vizquery.sh 237.17375455558 -42.26556630747 | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_CEPHEID'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT014"
-fi
-
-# Gaia RR Lyr, first in the list
-util/search_databases_with_vizquery.sh 272.04211425638 -25.91123076425 | grep 'RRAB' | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_RRLYR'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT015"
-fi
-
-# Gaia LPV, first in the list. Do not mix it up with OGLE-BLG-RRLYR-01707 that is 36" away!
-util/search_databases_with_vizquery.sh 265.86100820754 -34.10333534797 | grep -v 'OGLE-BLG-RRLYR-01707' | grep 'OGLE-BLG-LPV-022489' | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_LPV'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT016"
-fi
-
-# Check that we are correctly formatting the OGLE variable name
-util/search_databases_with_vizquery.sh 17:05:07.49 -32:37:57.2 | grep 'OGLE-BLG-RRLYR-00001' | grep --quiet 'VARIABLE' # | grep --quiet 'Gaia2_RRLYR'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT017"
-fi
-util/search_databases_with_vizquery.sh `lib/hms2deg 17:05:07.49 -32:37:57.2` | grep 'OGLE-BLG-RRLYR-00001' | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_RRLYR'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT018"
-fi
-
-util/search_databases_with_vizquery.sh 17.25656 47.30456 | grep --quiet -e 'ATO J017.2565+47.3045' -e 'ASASSN-V J010901.57+471816.4'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT019"
-fi
-
-# Make sure the script doesn't drop faint Gaia stars if the position match is perfect
-util/search_databases_with_vizquery.sh 14:08:10.55777 -45:26:50.7000 | grep --quiet '|'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT019a"
-fi
-
-# Coma as RA,Dec separator
-util/search_databases_with_vizquery.sh 18:49:05.97,-19:02:03.2 | grep --quiet 'V6594 Sgr'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT019b"
-fi
-
-# Check good formatting of Skiff's spectral type
-util/search_databases_with_vizquery.sh 20:07:36.82 +44:06:55.1 | grep --quiet 'SpType: G5/K1IV 2016A&A...594A..39F'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_SKIFFSPTYPEFORMAT"
-fi
-
-# Check correct parsing of ATLAS dubious candidate + LAMOST
-util/search_databases_with_vizquery.sh 23:44:51.23 +27:21:33.1 target 600 | grep 'ATO J356.2104+27.3581' | grep 'dubious' | grep --quiet 'F5 (LAMOST DR5)'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_ATLASLAMOSTFARAWAY"
-fi
-
-# ATLAS multiple candidates within the search radius
-util/search_databases_with_vizquery.sh 17:03:58.52 -19:33:32.5 object 350 | grep 'ATO J255.9939-19.5591' | grep --quiet 'LPV (ATLAS)'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_ATLASMULTICAND"
-fi
-
-### Test the local catalog search thing
-grep --quiet 'ASASSN-V J010901.57+471816.4' lib/catalogs/asassnv.csv
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT020csv"
-fi
-# Now find this variable using check_catalogs_offline
-lib/catalogs/check_catalogs_offline 17.25656 47.30456 | grep --quiet 'ASASSN-V J010901.57+471816.4'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT020"
-fi
-
-# laststar in the current asassnv.csv, but it's already in VSX
-lib/catalogs/check_catalogs_offline 225.53308 -45.05244 | grep --quiet 'ASASSN-V J150207.95-450307.5'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT020"
-fi
-
-
-lib/catalogs/check_catalogs_offline 34.8366337 -2.9776377 | grep --quiet 'omi Cet'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT021"
-fi
-
-# Multiple known variables within the search radius - unrelated OGLE one from VSX and the correct ASASSN-V
-# This test relies on the local catalog search!
-util/search_databases_with_vizquery.sh 17:54:41.41077 -30:21:59.3417 | grep --quiet 'ASASSN-V J175441.41-302159.3'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_MULTCLOSEVAR"
-fi
-
-# Make sure the script gives 'may be a known variable' suggestion from parsing VizieR catalog names
-util/search_databases_with_vizquery.sh 00:39:16.81 +60:36:57.1 | grep --quiet 'may be a known variable'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_VIZKNOWNVAR"
-fi
-
-# No false ID with Gaia DR2 high-amplitude variable
-# Now it's Gaia DR3 high-amplitude variable
-# The correct target is Gaia DR3 4254944797873326720. Now 25.71" from it there is a Gaia DR3 4254944870964356992 variable
-util/search_databases_with_vizquery.sh 18:53:19.68 -04:58:21.6 online_id 350 no_online_vsx | grep 'online_id' | grep --quiet 'Gaia DR3 4254944797873326720'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_NOWRONGGAIAVAR"
-fi
-
-# Constellations
-util/constellation.sh 0.0 0.0 | grep --quiet 'Psc'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION001"
-fi
-
-util/constellation.sh 00:00:00.00 00:00:00.0 | grep --quiet 'Psc'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION002"
-fi
-
-util/constellation.sh 22:57:00 +35:20:00 | grep --quiet 'Lac'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION003"
-fi
-
-util/constellation.sh 17:44:17 -30:00:00 | grep --quiet 'Sgr'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION004"
-fi
-
-util/constellation.sh 17:43:52 -30:02:30 | grep --quiet 'Oph'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION005"
-fi
-
-util/constellation.sh 17:44:00 -30:05:00 | grep --quiet 'Sco'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION006"
-fi
-
-
-
-# V0437 Peg
-util/constellation.sh 21:30:03.96 +12:04:59.4 | grep --quiet 'Peg'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION007"
-fi
-
-# V0581 Aur
-util/constellation.sh 05:12:06.91 +45:46:42.8 | grep --quiet 'Aur'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION008"
-fi
-
-# LW Ara
-util/constellation.sh 17:28:09.26 -46:38:14.4 | grep --quiet 'Ara'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION009"
-fi
-
-# V0443 Sge
-util/constellation.sh 19:53:20.02 +18:59:33.9 | grep --quiet 'Sge'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION010"
-fi
-
-
-
-THIS_TEST_STOP_UNIXSEC=$(date +%s)
-THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
-
-# Make an overall conclusion for this test
-if [ $TEST_PASSED -eq 1 ];then
- echo -e "\n\033[01;34mTest of the database querry scripts \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
- echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
-else
- echo -e "\n\033[01;34mTest of the database querry scripts \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
- echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
-fi 
-#
-echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
-df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
-#
           
 
 
