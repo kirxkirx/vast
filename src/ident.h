@@ -48,8 +48,8 @@ struct Frame {
 };
 
 /*
-  Структура описывает порядок вершин 
-  треугольника из множества начальных точек star[n]
+  Structure describes the order of vertices
+  of a triangle from the set of initial points star[n]
 */
 struct Triangle {
  int a[3];
@@ -64,11 +64,11 @@ struct Ecv_Triangle {
  struct Triangle tr2;
 };
 /*
-  Описание последовательности подобных треугольников
+  Description of a sequence of similar triangles
 */
 struct Ecv_triangles {
  struct Ecv_Triangle *tr;
- int Number; //число пар
+ int Number; // Number of pairs
 };
 
 /*
@@ -110,85 +110,83 @@ struct Star {
 #define PERSENT_POPADANIY 0
 
 /*
- Преобразование второго кадра к первому
- Сначала подобие
- Затем translate
- Затем линейное преобразование Line_Preobr
- Затем translate
+ Transformation of the second frame to the first
+ First similarity
+ Then translate
+ Then linear transformation Line_Preobr
+ Then translate
 */
-struct Preobr_Sk {
- //double podobie;       //Коэффициент подобия первого кадра ко второму
- double translate1[2];       //translate по осям xy
- double line[4];             //Матрица линейного преобразования
- double translate2[2];       //translate по осям xy
- double fi;                  //Угол, на который надо было довернуть кадр 2 до кадра 1 по часовой стрелке
- double sigma_podobia;       //Критерий отбора подобных треугольников
- int Number_of_ecv_triangle; //Количество подобных треугольников, которые подвергаются обработке
- double sigma_popadaniya;    //Расстояние, на котором две звезды с двух кадров воспринимаются как одна
+struct PixCoordinateTransformation {
+ //double podobie;       // Similarity coefficient of the first frame to the second
+ double translate1[2];       // translate along xy axes
+ double line[4];             // Linear transformation matrix
+ double translate2[2];       // translate along xy axes
+ double fi;                  // Angle by which frame 2 had to be rotated to frame 1 clockwise
+ double sigma_podobia;       // Selection criterion for similar triangles
+ int Number_of_ecv_triangle; // Number of similar triangles to be processed
+ double sigma_popadaniya;    // Distance at which two stars from two frames are perceived as one
  double sigma_popadaniya_multiple;
  double persent_popadaniy_of_ecv_triangle;
  int method;
- int Number_of_main_star; //Количество опорных звезд
+ int Number_of_main_star; // Number of reference stars
 };
 
 // This function is also used in vast.c so cannot be inlined
 void Star_Copy(struct Star *copy, struct Star *star);
 
-struct Preobr_Sk *New_Preobr_Sk();               //Создание нового преобразования (как malloc)
-void Delete_Preobr_Sk(struct Preobr_Sk *struct_pixel_coordinate_transformation); //Удаление преобразования
+struct PixCoordinateTransformation *New_PixCoordinateTransformation();               // Creating a new transformation (like malloc)
+void Delete_PixCoordinateTransformation(struct PixCoordinateTransformation *struct_pixel_coordinate_transformation); // Removing the transformation
 
-struct Ecv_triangles *Init_ecv_triangles(); //Инициализация массива подобных треугольников
+struct Ecv_triangles *Init_ecv_triangles(); // Initialization of an array of similar triangles
 
 /*
-  Удаление всего Ecv_triangles
+  Removal of all Ecv_triangles
 */
 void Delete_Ecv_triangles(struct Ecv_triangles *ecv_tr);
 
 void Sort_in_mag_of_stars(struct Star *star, int Number);
 
 /*
-  Нахождение треугольника из наиболее близких звезд к данной звезде
-  возвращвет треугольник
+  Finding a triangle from the stars closest to a given star
+  returns a triangle
 */
 struct Triangle Separate(struct Star *star, int Number, int a0);
 
 /*
-  Разбиение звездного поля на треугольники
+  Dividing the star field into triangles
 */
 struct Triangle *Separate_to_triangles(struct Star *star, int Number, int *Ntriangles);
 /*
-  Нахождения пар подобных треугольников на двух кадрах
+  Finding pairs of similar triangles in two frames
 */
-int Podobie(struct Preobr_Sk *struct_pixel_coordinate_transformation, struct Ecv_triangles *ecv_tr,
-            //struct Star *star1, int Number1,
-            //struct Star *star2, int Number2,
+int Podobie(struct PixCoordinateTransformation *struct_pixel_coordinate_transformation, struct Ecv_triangles *ecv_tr,
             struct Triangle *tr1, int Nt1,
             struct Triangle *tr2, int Nt2);
 
 /*
-  Выбор лучшего опорного треугольника из массива подобных
-  nm - индекс этого треугольника в массиве
+  Selecting the best reference triangle from the array of similar ones
+  nm - index of this triangle in the array
 */
 int Very_Well_triangle(struct Star *star1, int Number1, struct Star *star2, int Number2,
                        struct Ecv_triangles *ecv_tr,
-                       struct Preobr_Sk *struct_pixel_coordinate_transformation, int *nm, int control1);
+                       struct PixCoordinateTransformation *struct_pixel_coordinate_transformation, int *nm, int control1);
 
 /*
-  Нахождение линейного преобразования второго кадра к первому
+  Finding a linear transformation of the second frame to the first
 */
-int Star2_to_star1_on_main_triangle(struct Preobr_Sk *struct_pixel_coordinate_transformation, struct Star *star1, int Number1, struct Star *star2,
+int Star2_to_star1_on_main_triangle(struct PixCoordinateTransformation *struct_pixel_coordinate_transformation, struct Star *star1, int Number1, struct Star *star2,
                                     int Number2, struct Ecv_triangles *ecv_tr, int nm);
 
 /*
-  Отождествление звезд на двух полях
+  Identification of stars in two fields
 */
 int Ident_on_sigma(struct Star *star1, int Number1, struct Star *star2, int Number2, int *St1, int *St2, double sigma_popadaniya, double image_size_X, double image_size_Y);
 
 /*
-  Функция отождествления двух кадров возвращает количество отождествленных оъектов
-  Pos1 и Pos2 - это массивы индексов эквивалентных звезд
+  Function for identifying two frames returns the number of identified objects
+  Pos1 and Pos2 are arrays of indices of equivalent stars
 */
-int Ident(struct Preobr_Sk *struct_pixel_coordinate_transformation, struct Star *STAR1, int NUMBER1, struct Star *STAR2, int NUMBER2, int START_NUMBER2,
+int Ident(struct PixCoordinateTransformation *struct_pixel_coordinate_transformation, struct Star *STAR1, int NUMBER1, struct Star *STAR2, int NUMBER2, int START_NUMBER2,
           int *Pos1, int *Pos2, int control1, struct Star *STAR3, int NUMBER3, int START_NUMBER3, int *match_retry, int min_number_of_matched_stars, double image_size_X, double image_size_Y);
 
 double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, int force_recompute, int param_P, double fixed_aperture, double X_im_size, double Y_im_size, int guess_saturation_limit_operation_mode);

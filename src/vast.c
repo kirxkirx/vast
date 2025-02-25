@@ -1998,7 +1998,7 @@ int main( int argc, char **argv ) {
  int star_number_in_sextractor_catalog, sextractor_flag;
  double flux_adu, flux_adu_err, position_x_pix, position_y_pix, mag, sigma_mag;
 
- struct Preobr_Sk *struct_pixel_coordinate_transformation= NULL;
+ struct PixCoordinateTransformation *struct_pixel_coordinate_transformation= NULL;
  struct Star *STAR1= NULL, *STAR2= NULL, *STAR3= NULL; // STAR1 - structure with all stars we can match
                                                        //         new stars are added to STAR1
                                                        // STAR2 - structure with stars on a current image
@@ -2402,7 +2402,7 @@ int main( int argc, char **argv ) {
   /// Should be replaces with the new option 'starmatchraius'
   case 's': // small comparison window - 1 pix.
    param_w= 3;
-   struct_pixel_coordinate_transformation= New_Preobr_Sk();
+   struct_pixel_coordinate_transformation= New_PixCoordinateTransformation();
    fprintf( stderr, "opt 's': Using small match radius (comparison window)\n" );
    break;
   case '5':
@@ -3265,7 +3265,7 @@ int main( int argc, char **argv ) {
 
  // Set up coordinate system transofrmation structure
  if ( param_w == 0 || param_w == 4 ) {
-  struct_pixel_coordinate_transformation= New_Preobr_Sk();
+  struct_pixel_coordinate_transformation= New_PixCoordinateTransformation();
   if ( param_w == 4 ) {
    struct_pixel_coordinate_transformation->sigma_popadaniya= fixed_star_matching_radius_pix;
    fprintf( stderr, "Setting the fixed star match radius of %.2lf pix\n", fixed_star_matching_radius_pix );
@@ -3371,9 +3371,9 @@ int main( int argc, char **argv ) {
      }
      free( str_with_fits_keywords_to_capture_from_input_images );
      if ( debug != 0 ) {
-      fprintf( stderr, "DEBUG MSG %d: Delete_Preobr_Sk(struct_pixel_coordinate_transformation);\n", getpid() );
+      fprintf( stderr, "DEBUG MSG %d: Delete_PixCoordinateTransformation(struct_pixel_coordinate_transformation);\n", getpid() );
      }
-     Delete_Preobr_Sk( struct_pixel_coordinate_transformation );
+     Delete_PixCoordinateTransformation( struct_pixel_coordinate_transformation );
      if ( debug != 0 ) {
       fprintf( stderr, "DEBUG MSG %d: CHILD free() -- still alive\n", getpid() );
      }
@@ -5993,9 +5993,9 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
         }
         free( str_with_fits_keywords_to_capture_from_input_images );
         if ( debug != 0 ) {
-         fprintf( stderr, "DEBUG MSG: Delete_Preobr_Sk(struct_pixel_coordinate_transformation);\n" );
+         fprintf( stderr, "DEBUG MSG: Delete_PixCoordinateTransformation(struct_pixel_coordinate_transformation);\n" );
         }
-        Delete_Preobr_Sk( struct_pixel_coordinate_transformation );
+        Delete_PixCoordinateTransformation( struct_pixel_coordinate_transformation );
 
         if ( debug != 0 ) {
          fprintf( stderr, "DEBUG MSG: CHILD free() -- still alive\n" );
@@ -6150,10 +6150,10 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  fprintf( stderr, "18 " );
  free( str_with_fits_keywords_to_capture_from_input_images );
  if ( debug != 0 ) {
-  fprintf( stderr, "DEBUG MSG: Delete_Preobr_Sk(struct_pixel_coordinate_transformation);\n" );
+  fprintf( stderr, "DEBUG MSG: Delete_PixCoordinateTransformation(struct_pixel_coordinate_transformation);\n" );
  }
  fprintf( stderr, "19 " );
- Delete_Preobr_Sk( struct_pixel_coordinate_transformation );
+ Delete_PixCoordinateTransformation( struct_pixel_coordinate_transformation );
  fprintf( stderr, "20\n" );
  ////
 
@@ -6326,8 +6326,8 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  /*
  // moved up
  if ( debug != 0 )
-  fprintf( stderr, "DEBUG MSG: Delete_Preobr_Sk(struct_pixel_coordinate_transformation);\n" );
- Delete_Preobr_Sk( struct_pixel_coordinate_transformation );
+  fprintf( stderr, "DEBUG MSG: Delete_PixCoordinateTransformation(struct_pixel_coordinate_transformation);\n" );
+ Delete_PixCoordinateTransformation( struct_pixel_coordinate_transformation );
 */
 
  // if ( debug != 0 )

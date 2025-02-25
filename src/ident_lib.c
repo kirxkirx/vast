@@ -59,11 +59,11 @@ static inline int compare_two_floats_to_absolute_accuracy( float x1, float x2, f
 //  return 0;  /* x1 == x2 */
 //}
 
-struct Preobr_Sk *New_Preobr_Sk() {
- struct Preobr_Sk *struct_pixel_coordinate_transformation;
- struct_pixel_coordinate_transformation= malloc( sizeof( struct Preobr_Sk ) );
+struct PixCoordinateTransformation *New_PixCoordinateTransformation() {
+ struct PixCoordinateTransformation *struct_pixel_coordinate_transformation;
+ struct_pixel_coordinate_transformation= malloc( sizeof( struct PixCoordinateTransformation ) );
  if ( struct_pixel_coordinate_transformation == NULL ) {
-  fprintf( stderr, "ERROR in New_Preobr_Sk():\n struct_pixel_coordinate_transformation = malloc(sizeof(struct Preobr_Sk)); - failed\n" );
+  fprintf( stderr, "ERROR in New_PixCoordinateTransformation():\n struct_pixel_coordinate_transformation = malloc(sizeof(struct PixCoordinateTransformation)); - failed\n" );
   vast_report_memory_error();
   exit( EXIT_FAILURE );
  }
@@ -88,7 +88,7 @@ struct Preobr_Sk *New_Preobr_Sk() {
  return ( struct_pixel_coordinate_transformation );
 }
 
-void Delete_Preobr_Sk( struct Preobr_Sk *struct_pixel_coordinate_transformation ) {
+void Delete_PixCoordinateTransformation( struct PixCoordinateTransformation *struct_pixel_coordinate_transformation ) {
  free( struct_pixel_coordinate_transformation );
 }
 
@@ -562,7 +562,7 @@ struct Triangle *Separate_to_triangles( struct Star *star, int Number, int *Ntri
  return ( triangles );
 }
 
-int Podobie( struct Preobr_Sk *struct_pixel_coordinate_transformation, struct Ecv_triangles *ecv_tr,
+int Podobie( struct PixCoordinateTransformation *struct_pixel_coordinate_transformation, struct Ecv_triangles *ecv_tr,
              struct Triangle *tr1, int Nt1,
              struct Triangle *tr2, int Nt2 ) {
  int n1, n2;
@@ -807,7 +807,7 @@ static inline int Popadanie_star1_to_star2(struct Star *star1, int Number1, stru
  */
 int Very_Well_triangle( struct Star *star1, int Number1, struct Star *star2, int Number2,
                         struct Ecv_triangles *ecv_tr,
-                        struct Preobr_Sk *struct_pixel_coordinate_transformation, int *nm, int control1 ) {
+                        struct PixCoordinateTransformation *struct_pixel_coordinate_transformation, int *nm, int control1 ) {
  int n, Popadanie, Popadanie_max, m;
  double xmin, xmax, ymin, ymax, Ploshad, Ploshad1, sigma2;
  struct Star *copy_star1, *copy_star2;
@@ -917,7 +917,7 @@ int Very_Well_triangle( struct Star *star1, int Number1, struct Star *star2, int
  return ( Popadanie_max );
 }
 
-int Star2_to_star1_on_main_triangle( struct Preobr_Sk *struct_pixel_coordinate_transformation, struct Star *star1, int Number1, struct Star *star2,
+int Star2_to_star1_on_main_triangle( struct PixCoordinateTransformation *struct_pixel_coordinate_transformation, struct Star *star1, int Number1, struct Star *star2,
                                      int Number2, struct Ecv_triangles *ecv_tr, int nm ) {
  struct Star *star_copy;
  double X, Y, x, y, x1[2], y1[2], x2[2], y2[2];
@@ -1563,9 +1563,9 @@ int Ident_on_sigma(struct Star *star1, int Number1, struct Star *star2, int Numb
  After the initial coordinate transformation has been established, the stars are matched against the full list of considered stars (STAR1).
 
  */
-// int Ident(struct Preobr_Sk *struct_pixel_coordinate_transformation, struct Star *STAR1, int NUMBER1, struct Star *STAR2, int NUMBER2, int START_NUMBER2,
+// int Ident(struct PixCoordinateTransformation *struct_pixel_coordinate_transformation, struct Star *STAR1, int NUMBER1, struct Star *STAR2, int NUMBER2, int START_NUMBER2,
 //         struct Frame frame1, struct Frame frame2, int *Pos1, int *Pos2, int control1, struct Star *STAR3, int NUMBER3, int START_NUMBER3, int *match_retry, int min_number_of_matched_stars, double image_size_X, double image_size_Y ) {
-int Ident( struct Preobr_Sk *struct_pixel_coordinate_transformation, struct Star *STAR1, int NUMBER1, struct Star *STAR2, int NUMBER2, int START_NUMBER2,
+int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transformation, struct Star *STAR1, int NUMBER1, struct Star *STAR2, int NUMBER2, int START_NUMBER2,
            int *Pos1, int *Pos2, int control1, struct Star *STAR3, int NUMBER3, int START_NUMBER3, int *match_retry, int min_number_of_matched_stars, double image_size_X, double image_size_Y ) {
 
  struct Star *star1= NULL, *star2= NULL;
