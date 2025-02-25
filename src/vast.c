@@ -432,7 +432,7 @@ int remove_directory( const char *path ) {
    fprintf( stderr, "Dealing with the directory entry %s\n", p->d_name );
 #endif
 
-   // Skip the names "." and ".." as we don't want to recurse on them. 
+   // Skip the names "." and ".." as we don't want to recurse on them.
    if ( !strcmp( p->d_name, "." ) || !strcmp( p->d_name, ".." ) ) {
 #ifdef DEBUGMESSAGES
     fprintf( stderr, "Ups, skipping the dangerouse name %s\n", p->d_name );
@@ -534,146 +534,145 @@ int remove_directory( const char *path ) {
 }
 */
 
-int remove_directory(const char *path) {
-    int error = 0;
-    
-    // Safety checks for critical directories
-    if (path == NULL || path[0] == '\0') {
-        fprintf(stderr, "ERROR: Invalid empty path provided\n");
-        return 1;
-    }
-    
-    // Check for root directory
-    if (strcmp(path, "/") == 0) {
-        fprintf(stderr, "ERROR: Refusing to remove root directory '/'\n");
-        return 1;
-    }
-    
-    // Check for current or parent directory
-    if (strcmp(path, ".") == 0 || strcmp(path, "..") == 0) {
-        fprintf(stderr, "ERROR: Refusing to remove '%s' directory\n", path);
-        return 1;
-    }
-    
-    // Simple path checks (without realpath)
-    // Check if path contains only / characters
-    int slashes_only = 1;
-    size_t i;
-    for (i = 0; path[i] != '\0'; i++) {
-        if (path[i] != '/') {
-            slashes_only = 0;
-            break;
-        }
-    }
-    if (slashes_only && i > 0) {
-        fprintf(stderr, "ERROR: Refusing to remove path containing only slashes\n");
-        return 1;
-    }
-    
-    // Replace recursive approach with iterative one using a stack
-    #define MAX_DIR_DEPTH 3
-    char **dir_stack = malloc(MAX_DIR_DEPTH * sizeof(char*));
-    int stack_ptr = 0;
-    
-    if (dir_stack == NULL) {
-        fprintf(stderr, "ERROR: Memory allocation failed for directory traversal stack\n");
-        return 1;
-    }
-    
-    // Add initial path to stack
-    dir_stack[stack_ptr] = strdup(path);
-    if (dir_stack[stack_ptr] == NULL) {
-        free(dir_stack);
-        return 1;
-    }
-    stack_ptr++;
-    
-    while (stack_ptr > 0) {
-        // Pop directory from stack
-        stack_ptr--;
-        char *curr_path = dir_stack[stack_ptr];
-        
-        DIR *d = opendir(curr_path);
-        if (d) {
-            struct dirent *p;
-            while ((p = readdir(d))) {
-                // Skip "." and ".."
-                if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
-                    continue;
-                
-                // Construct full path
-                size_t curr_len = strlen(curr_path);
-                size_t name_len = strlen(p->d_name);
-                size_t path_len = curr_len + name_len + 2; // +2 for '/' and '\0'
-                
-                char *full_path = malloc(path_len);
-                if (full_path == NULL) {
-                    fprintf(stderr, "ERROR: Memory allocation failed\n");
-                    error = 1;
-                    break;
-                }
-                
-                /* Handle trailing slash in curr_path */
-                if (curr_len > 0 && curr_path[curr_len-1] == '/') {
-                    sprintf(full_path, "%s%s", curr_path, p->d_name);
-                } else {
-                    sprintf(full_path, "%s/%s", curr_path, p->d_name);
-                }
-                
-                struct stat statbuf;
-                if (!stat(full_path, &statbuf)) {
-                    if (S_ISDIR(statbuf.st_mode)) {
-                        // If directory, add to stack if we haven't reached max depth
-                        if (stack_ptr < MAX_DIR_DEPTH) {
-                            dir_stack[stack_ptr++] = full_path; // Will process later
-                        } else {
-                            fprintf(stderr, "ERROR: Maximum directory depth exceeded\n");
-                            free(full_path);
-                            error = 1;
-                            break;
-                        }
-                    } else {
-                        // If regular file, remove it
-                        if (unlink(full_path) != 0) {
-                            fprintf(stderr, "ERROR removing file: %s\n", full_path);
-                            error = 1;
-                        }
-                        free(full_path);
-                    }
-                } else {
-                    // Handle broken symlink case
-                    if (!lstat(full_path, &statbuf)) {
-                        unlink(full_path);
-                    } else {
-                        fprintf(stderr, "ERROR: Could not stat: %s\n", full_path);
-                        error = 1;
-                    }
-                    free(full_path);
-                }
-            }
-            closedir(d);
-            
-            // Now remove the directory itself
-            if (!error) {
-                if (rmdir(curr_path) != 0) {
-                    fprintf(stderr, "ERROR: Failed to remove directory: %s\n", curr_path);
-                    error = 1;
-                }
-            }
-        } else {
-            fprintf(stderr, "ERROR: Could not open directory: %s\n", curr_path);
-            error = 1;
-        }
-        
-        free(curr_path);
-    }
-    
-    // Free the stack
-    free(dir_stack);
-    
-    return error;
-}
+int remove_directory( const char *path ) {
+ int error= 0;
 
+ // Safety checks for critical directories
+ if ( path == NULL || path[0] == '\0' ) {
+  fprintf( stderr, "ERROR: Invalid empty path provided\n" );
+  return 1;
+ }
+
+ // Check for root directory
+ if ( strcmp( path, "/" ) == 0 ) {
+  fprintf( stderr, "ERROR: Refusing to remove root directory '/'\n" );
+  return 1;
+ }
+
+ // Check for current or parent directory
+ if ( strcmp( path, "." ) == 0 || strcmp( path, ".." ) == 0 ) {
+  fprintf( stderr, "ERROR: Refusing to remove '%s' directory\n", path );
+  return 1;
+ }
+
+ // Simple path checks (without realpath)
+ // Check if path contains only / characters
+ int slashes_only= 1;
+ size_t i;
+ for ( i= 0; path[i] != '\0'; i++ ) {
+  if ( path[i] != '/' ) {
+   slashes_only= 0;
+   break;
+  }
+ }
+ if ( slashes_only && i > 0 ) {
+  fprintf( stderr, "ERROR: Refusing to remove path containing only slashes\n" );
+  return 1;
+ }
+
+// Replace recursive approach with iterative one using a stack
+#define MAX_DIR_DEPTH 3
+ char **dir_stack= malloc( MAX_DIR_DEPTH * sizeof( char * ) );
+ int stack_ptr= 0;
+
+ if ( dir_stack == NULL ) {
+  fprintf( stderr, "ERROR: Memory allocation failed for directory traversal stack\n" );
+  return 1;
+ }
+
+ // Add initial path to stack
+ dir_stack[stack_ptr]= strdup( path );
+ if ( dir_stack[stack_ptr] == NULL ) {
+  free( dir_stack );
+  return 1;
+ }
+ stack_ptr++;
+
+ while ( stack_ptr > 0 ) {
+  // Pop directory from stack
+  stack_ptr--;
+  char *curr_path= dir_stack[stack_ptr];
+
+  DIR *d= opendir( curr_path );
+  if ( d ) {
+   struct dirent *p;
+   while ( ( p= readdir( d ) ) ) {
+    // Skip "." and ".."
+    if ( !strcmp( p->d_name, "." ) || !strcmp( p->d_name, ".." ) )
+     continue;
+
+    // Construct full path
+    size_t curr_len= strlen( curr_path );
+    size_t name_len= strlen( p->d_name );
+    size_t path_len= curr_len + name_len + 2; // +2 for '/' and '\0'
+
+    char *full_path= malloc( path_len );
+    if ( full_path == NULL ) {
+     fprintf( stderr, "ERROR: Memory allocation failed\n" );
+     error= 1;
+     break;
+    }
+
+    /* Handle trailing slash in curr_path */
+    if ( curr_len > 0 && curr_path[curr_len - 1] == '/' ) {
+     sprintf( full_path, "%s%s", curr_path, p->d_name );
+    } else {
+     sprintf( full_path, "%s/%s", curr_path, p->d_name );
+    }
+
+    struct stat statbuf;
+    if ( !stat( full_path, &statbuf ) ) {
+     if ( S_ISDIR( statbuf.st_mode ) ) {
+      // If directory, add to stack if we haven't reached max depth
+      if ( stack_ptr < MAX_DIR_DEPTH ) {
+       dir_stack[stack_ptr++]= full_path; // Will process later
+      } else {
+       fprintf( stderr, "ERROR: Maximum directory depth exceeded\n" );
+       free( full_path );
+       error= 1;
+       break;
+      }
+     } else {
+      // If regular file, remove it
+      if ( unlink( full_path ) != 0 ) {
+       fprintf( stderr, "ERROR removing file: %s\n", full_path );
+       error= 1;
+      }
+      free( full_path );
+     }
+    } else {
+     // Handle broken symlink case
+     if ( !lstat( full_path, &statbuf ) ) {
+      unlink( full_path );
+     } else {
+      fprintf( stderr, "ERROR: Could not stat: %s\n", full_path );
+      error= 1;
+     }
+     free( full_path );
+    }
+   }
+   closedir( d );
+
+   // Now remove the directory itself
+   if ( !error ) {
+    if ( rmdir( curr_path ) != 0 ) {
+     fprintf( stderr, "ERROR: Failed to remove directory: %s\n", curr_path );
+     error= 1;
+    }
+   }
+  } else {
+   fprintf( stderr, "ERROR: Could not open directory: %s\n", curr_path );
+   error= 1;
+  }
+
+  free( curr_path );
+ }
+
+ // Free the stack
+ free( dir_stack );
+
+ return error;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 

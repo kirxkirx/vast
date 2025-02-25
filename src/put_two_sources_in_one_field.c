@@ -318,7 +318,14 @@ int main( int argc, char **argv ) {
  double output_distance_arcsec= 99.99;
 
  if ( argc < 5 ) {
-  fprintf( stderr, "Usage:\n%s RA1 DEC1 RA2 DEC2\nor\n%s RA1 DEC1 radeclist.txt search_radius_arcsec\n", argv[0], argv[0] );
+  fprintf( stderr, "Usage of %s:\n%s RA1 DEC1 RA2 DEC2\nor\n%s RA1 DEC1 radeclist.txt search_radius_arcsec\n", argv[0], argv[0], argv[0] );
+  //
+  fprintf( stderr, "Actual command line was: " );
+  for ( i= 0; i < argc; i++ ) {
+   fprintf( stderr, "%s ", argv[i] );
+  }
+  fprintf( stderr, "\n" );
+  //
   return 1;
  }
 

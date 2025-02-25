@@ -36,7 +36,9 @@ done)
 echo "$main_source_names" | head -n100 | while read -r MAIN_SOURCE_NAME; do
     # Narrow down the data search for performance
     # MAIN_SOURCE_NAME may appear multiple times on the page, just because
-    local_data=$(echo "$data" | grep -m1 -A10 "$MAIN_SOURCE_NAME")
+    # send errors to /dev/null in order not to pollute the logs with
+    # lib/asassn_transients_list.sh: line 39: echo: write error: Broken pipe
+    local_data=$(echo "$data" 2>/dev/null | grep -m1 -A10 "$MAIN_SOURCE_NAME")
     RA=$(echo "$local_data" | grep -v '://' | grep ':' | head -n1 | sed -e 's/<td>//g' -e 's/<\/td>//g' | awk -F ':' '{printf "%02d:%02d:%05.2f", $1, $2, $3}')
     DEC=$(echo "$local_data" | grep -v '://' | grep ':' | head -n2 | tail -n1 | sed -e 's/<td>//g' -e 's/<\/td>//g' | awk -F ':' '{printf "%+03d:%02d:%05.2f", $1, $2, $3}')
     DATE=$(echo "$local_data" | grep '<td>202.-' | sed -e 's/<td>//g' -e 's/<\/td>//g')
