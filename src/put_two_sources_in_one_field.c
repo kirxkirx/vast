@@ -311,6 +311,7 @@ int main( int argc, char **argv ) {
  char input_buffer[4096];
  double search_radius_arcsec;
  unsigned int i;
+ int argument_counter; // I'm comparing it to argc and argc is signed int type
  int string_looks_ok;
  int string_contains_number;
  int string_dot_or_semicolon;
@@ -321,8 +322,8 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "Usage of %s:\n%s RA1 DEC1 RA2 DEC2\nor\n%s RA1 DEC1 radeclist.txt search_radius_arcsec\n", argv[0], argv[0], argv[0] );
   //
   fprintf( stderr, "Actual command line was: " );
-  for ( i= 0; i < argc; i++ ) {
-   fprintf( stderr, "%s ", argv[i] );
+  for ( argument_counter= 0; argument_counter < argc; argument_counter++ ) {
+   fprintf( stderr, "%s ", argv[argument_counter] );
   }
   fprintf( stderr, "\n" );
   //
