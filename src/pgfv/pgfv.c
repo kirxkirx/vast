@@ -2597,8 +2597,8 @@ int main( int argc, char **argv ) {
   }
   /* F - Fiddle the color table contrast and brightness */
   if ( curC == 'F' || curC == 'f' ) {
-   fprintf( stderr, "brightness=%lf  contrast=%lf\n", ( curX - drawX1 ) / ( drawX2 - drawX1 ), 5.0 * curY / abs( drawY2 - drawY1 ) );
-   cpgctab( bw_l, bw_r, bw_g, bw_b, 83, 5.0 * curY / abs( drawY2 - drawY1 ), ( curX - drawX1 ) / ( drawX2 - drawX1 ) );
+   fprintf( stderr, "brightness=%lf  contrast=%lf\n", ( curX - drawX1 ) / ( drawX2 - drawX1 ), 5.0 * curY / fabsf( drawY2 - drawY1 ) );
+   cpgctab( bw_l, bw_r, bw_g, bw_b, 83, 5.0 * curY / fabsf( drawY2 - drawY1 ), ( curX - drawX1 ) / ( drawX2 - drawX1 ) );
    curC= 'R';
   }
 
