@@ -849,6 +849,7 @@ if [ -d ../DART_Didymos_moving_object_photometry_test ];then
      if [ $? -ne 0 ];then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES DART_MAGNITUDE_CALIBRATION_FAILED"  
+      fail_early "Maybe plate-solve server is not working?"
      else
       #
       N_LINES=`cat "$MOVING_OBJECT_LIGHTCURVE" | wc -l`
