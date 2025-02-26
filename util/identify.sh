@@ -995,7 +995,7 @@ fi
    fi
    EXPECTED_WCS_HEAD_URL=`grep WCS_HEADER_FILE= server_reply$$.html |awk '{print $2}'`
    if [ "$EXPECTED_WCS_HEAD_URL" = "" ];then
-    echo "ERROR: cannot parse the server reply!"
+    echo "ERROR in $0: cannot parse the plate-solve server reply to get 'WCS_HEADER_FILE=' line!"
     echo "#### Server reply listing ####"
     cat server_reply$$.html
     echo "##############################"

@@ -294,7 +294,8 @@ if [ $use_www -gt 0 ]; then	# wwwget does not need a temporary file, better!
 else
     test $verbop -eq 0 && q="-q"
     #call="wget -q -O - $q --post-file=$tt http://$site/$cgidir/$script$path_info"
-    call="wget -o /dev/null -q -O - $q --post-file=$tt http://$site/$cgidir/$script$path_info"
+    #call="wget -o /dev/null -q -O - $q --post-file=$tt http://$site/$cgidir/$script$path_info"
+    call="curl $VAST_CURL_PROXY -s -X POST --data-binary @$tt http://$site/$cgidir/$script$path_info"
 fi
 #echo "#call=$call"
 

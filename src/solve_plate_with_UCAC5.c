@@ -2048,6 +2048,9 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
 
  char path_to_vast_string[VAST_PATH_MAX];
  get_path_to_vast( path_to_vast_string );
+ 
+ // try disabling scan UCAC5 access - this should trigger VizieR UCAC5 access
+ //return 1;
 
 #ifdef DEBUGFILES
  FILE *scan_ucac5_debug_ds9_region;
@@ -2957,6 +2960,11 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
   fprintf( stderr, "ERROR: the estimated accuracy of the plate solution seems unrealistically large!\nSomething is very wrong!\nDoes the image have *many* hot pixels that are incorrectly identified as stats?\n" );
   return 1;
  }
+ // Check if the estimated accuracy is unreallistically small
+ if ( estimated_output_accuracy_of_the_plate_solution_arcsec <=0.0 ) {
+  fprintf( stderr, "ERROR: the estimated accuracy of the plate solution seems unrealistically small!\nSomething is very wrong!\n" );
+  return 1;
+ }
 
  return 0;
 }
@@ -3288,7 +3296,7 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "Excluding outliers - %d stars left (next iteration limit %d)\n", stars_matched_at_this_iteration, stars_matched_at_previous_iteration + (int)( 0.1 * stars_matched_at_previous_iteration ) );
 
   // check if there was a noticable improvement in the solution
-  if ( stars_matched_at_this_iteration < stars_matched_at_previous_iteration + (int)( 0.1 * (double)stars_matched_at_previous_iteration + 0.5 ) ) {
+  if ( stars_matched_at_this_iteration < stars_matched_at_previous_iteration + (int)( 0.1 * (double)stars_matched_at_previous_iteration + 0.5 ) || stars_matched_at_this_iteration == 0 ) {
    fprintf( stderr, "Stop iterations.\n" );
    if ( stars_matched_at_this_iteration < MIN_NUMBER_OF_STARS_FOR_UCAC5_MATCH ) {
     fprintf( stderr, "\n\n The number of stars matched with the catalog is suspiciously low!\n Something is not right here... :(\n\n" );
