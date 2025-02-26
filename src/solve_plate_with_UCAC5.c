@@ -1736,6 +1736,7 @@ char *get_sanitized_curl_proxy() {
  return proxy_str;
 }
 
+/*
 int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
  double epoch, pmRA, e_pmRA, pmDE, e_pmDE, dt, observing_epoch_jy, catalog_ra_original, catalog_dec_original;
  int N_stars_matched_with_astrometric_catalog= 0;
@@ -1973,6 +1974,308 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
 
      N_stars_matched_with_astrometric_catalog++;
      // fprintf(stderr,"DEBUG MATCHED: stars[i].x_pix= %8.3lf\n",stars[i].x_pix);
+     break; // like if we assume there will be only one match within distance - why not?
+    }
+   }
+  } // for(i=0;i<N;i++)
+ }
+ fclose( f );
+ fprintf( stderr, "Matched %d stars with UCAC5 at scan.\n", N_stars_matched_with_astrometric_catalog );
+ if ( N_stars_matched_with_astrometric_catalog < 5 ) {
+  fprintf( stderr, "WARNING: too few stars matched!\n" );
+  return 1;
+ }
+
+#ifdef DEBUGFILES
+ fclose( scan_ucac5_debug_ds9_region );
+#endif
+
+ // delete temporary files only on success
+ if ( 0 != unlink( vizquery_input_filename ) )
+  fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_input_filename );
+ if ( 0 != unlink( vizquery_output_filename ) )
+  fprintf( stderr, "WARNING! Cannot delete temporary file %s\n", vizquery_output_filename );
+
+ return 0;
+}
+*/
+
+/**
+ * Safely constructs a curl command with proxy settings if available.
+ * Returns a dynamically allocated string that must be freed by the caller.
+ */
+char *construct_safe_curl_command( const char *base_command, const char *proxy_settings ) {
+ // Allocate memory for the full command
+ // Size estimation: base command + proxy settings (if any) + null terminator
+ size_t command_size= strlen( base_command ) + ( proxy_settings ? strlen( proxy_settings ) + 1 : 0 ) + 1;
+ char *safe_command= malloc( command_size );
+
+ if ( safe_command == NULL ) {
+  fprintf( stderr, "ERROR: Memory allocation failed for curl command\n" );
+  return NULL;
+ }
+
+ // Construct command with proxy settings if available
+ if ( proxy_settings != NULL ) {
+  sprintf( safe_command, "curl %s %s", proxy_settings, base_command );
+ } else {
+  sprintf( safe_command, "curl %s", base_command );
+ }
+
+ return safe_command;
+}
+
+/**
+ * Modified search_UCAC5_at_scan function that uses safer command construction.
+ */
+int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
+ double epoch, pmRA, e_pmRA, pmDE, e_pmDE, dt, observing_epoch_jy, catalog_ra_original, catalog_dec_original;
+ int N_stars_matched_with_astrometric_catalog= 0;
+ double measured_ra, measured_dec, distance, catalog_ra, catalog_dec, catalog_mag;
+ double cos_delta;
+ char string[1024];
+ char base_command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
+ char *command= NULL;
+ FILE *vizquery_input;
+ FILE *f;
+ int i;
+ int pid= getpid();
+ char vizquery_input_filename[FILENAME_LENGTH];
+ char vizquery_output_filename[FILENAME_LENGTH];
+ int vizquery_run_success;
+ int search_stars_counter;
+ int zero_radec_counter;
+
+ char path_to_vast_string[VAST_PATH_MAX];
+ get_path_to_vast( path_to_vast_string );
+
+#ifdef DEBUGFILES
+ FILE *scan_ucac5_debug_ds9_region;
+ scan_ucac5_debug_ds9_region= fopen( "scan_ucac5_input_debug_ds9.reg", "w" );
+ fprintf( scan_ucac5_debug_ds9_region, "# Region file format: DS9 version 4.0\n" );
+ fprintf( scan_ucac5_debug_ds9_region, "# Filename:\n" );
+ fprintf( scan_ucac5_debug_ds9_region, "global color=green font=\"sans 10 normal\" select=1 highlite=1 edit=1 move=1 delete=1 include=1 fixed=0 source\n" );
+ fprintf( scan_ucac5_debug_ds9_region, "fk5\n" );
+#endif
+
+ sprintf( vizquery_input_filename, "scan_ucac5_%d.input", pid );
+ sprintf( vizquery_output_filename, "scan_ucac5_%d.output", pid );
+ vizquery_input= fopen( vizquery_input_filename, "w" );
+ if ( NULL == vizquery_input ) {
+  fprintf( stderr, "ERROR in search_UCAC5_at_scan(): cannot open file %s for writing!\n", vizquery_input_filename );
+  return 1;
+ }
+ search_stars_counter= 0;
+ zero_radec_counter= 0;
+ for ( i= 0; i < N; i++ ) {
+  if ( stars[i].good_star == 1 ) {
+   // check for a specific problem
+   if ( stars[i].ra_deg_measured == 0.0 && stars[i].dec_deg_measured == 0.0 ) {
+    zero_radec_counter++;
+    if ( zero_radec_counter > 10 ) {
+     fprintf( stderr, "ERROR in search_UCAC5_at_scan(): too many input positions are '0.000000 0.000000'\nWe cannot go to VizieR with that!\n" );
+     exit( EXIT_FAILURE ); // terminate everything
+    }
+   }
+   //
+   fprintf( vizquery_input, "%lf %lf\n", stars[i].ra_deg_measured, stars[i].dec_deg_measured );
+#ifdef DEBUGFILES
+   fprintf( scan_ucac5_debug_ds9_region, "circle(%f,%f,%lf)\n", stars[i].ra_deg_measured, stars[i].dec_deg_measured, 5.0 * 21 / 3600 );
+#endif
+   search_stars_counter++;
+   if ( search_stars_counter == MAX_STARS_IN_VIZQUERY ) {
+    break;
+   }
+  }
+ }
+ fclose( vizquery_input );
+
+#ifdef DEBUGFILES
+ fclose( scan_ucac5_debug_ds9_region );
+#endif
+
+ if ( search_stars_counter < MIN_NUMBER_OF_STARS_ON_FRAME ) {
+  fprintf( stderr, "ERROR in search_UCAC5_at_scan(): only %d stars are in the vizquery input list - that's too few!\n", search_stars_counter );
+  return 1;
+ }
+
+ // Print search stat
+ fprintf( stderr, "Searchig scan/vast for %d good reference stars...\n", search_stars_counter );
+
+ // Get proxy settings if available
+ char *proxy_settings= get_sanitized_curl_proxy();
+
+ // Astrometric catalog search
+ fprintf( stderr, "Searchig UCAC5...\n" );
+ // Randomly choose between the two servers
+ // Seed the random number generator
+ srand( time( NULL ) );
+ // Generate a random number (0 or 1)
+ int randChoice= rand() % 2;
+
+ // Construct base command
+ if ( randChoice == 0 ) {
+  sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
+           vizquery_input_filename, catalog_search_parameters->brightest_mag,
+           catalog_search_parameters->faintest_mag,
+           catalog_search_parameters->search_radius_deg * 3600,
+           vizquery_output_filename );
+ } else {
+  sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
+           vizquery_input_filename, catalog_search_parameters->brightest_mag,
+           catalog_search_parameters->faintest_mag,
+           catalog_search_parameters->search_radius_deg * 3600,
+           vizquery_output_filename );
+ }
+
+ // Construct safe command
+ command= construct_safe_curl_command( base_command, proxy_settings );
+ if ( command == NULL ) {
+  if ( proxy_settings != NULL ) {
+   free( proxy_settings );
+  }
+  return 1;
+ }
+
+ fprintf( stderr, "%s\n", command );
+ vizquery_run_success= system( command );
+ free( command ); // Free the allocated command string
+
+ if ( vizquery_run_success != 0 || count_lines_in_ASCII_file( vizquery_output_filename ) < 5 ) {
+  fprintf( stderr, "First attempt failed, trying alternative command\n" );
+
+  // Note the reverse order with respect to randChoice
+  if ( randChoice == 0 ) {
+   // This block will execute if the first executed command was the first option and it failed
+   sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 2 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
+            vizquery_input_filename, catalog_search_parameters->brightest_mag,
+            catalog_search_parameters->faintest_mag,
+            catalog_search_parameters->search_radius_deg * 3600,
+            vizquery_output_filename );
+  } else {
+   // This block will execute if the first executed command was the second option and it failed
+   sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 2 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
+            vizquery_input_filename, catalog_search_parameters->brightest_mag,
+            catalog_search_parameters->faintest_mag,
+            catalog_search_parameters->search_radius_deg * 3600,
+            vizquery_output_filename );
+  }
+
+  // Construct safe command for retry
+  command= construct_safe_curl_command( base_command, proxy_settings );
+  if ( command == NULL ) {
+   if ( proxy_settings != NULL ) {
+    free( proxy_settings );
+   }
+   return 1;
+  }
+
+  fprintf( stderr, "%s\n", command );
+  vizquery_run_success= system( command );
+  free( command ); // Free the allocated command string
+
+  if ( vizquery_run_success != 0 || count_lines_in_ASCII_file( vizquery_output_filename ) < 5 ) {
+   fprintf( stderr, "ERROR: Both attempts failed\n" );
+   // Free proxy settings if allocated
+   if ( proxy_settings != NULL ) {
+    free( proxy_settings );
+   }
+   return 1;
+  }
+ }
+
+ // Free proxy settings if allocated
+ if ( proxy_settings != NULL ) {
+  free( proxy_settings );
+ }
+
+#ifdef DEBUGFILES
+ scan_ucac5_debug_ds9_region= fopen( "scan_ucac5_output_debug_ds9.reg", "w" );
+ fprintf( scan_ucac5_debug_ds9_region, "# Region file format: DS9 version 4.0\n" );
+ fprintf( scan_ucac5_debug_ds9_region, "# Filename:\n" );
+ fprintf( scan_ucac5_debug_ds9_region, "global color=red font=\"sans 10 normal\" select=1 highlite=1 edit=1 move=1 delete=1 include=1 fixed=0 source\n" );
+ fprintf( scan_ucac5_debug_ds9_region, "fk5\n" );
+#endif
+
+ f= fopen( vizquery_output_filename, "r" );
+ while ( NULL != fgets( string, 1024, f ) ) {
+  if ( string[0] == '#' )
+   continue;
+
+  if ( string[0] == '\n' )
+   continue;
+
+  epoch= pmRA= e_pmRA= pmDE= e_pmDE= 0.0;
+  int sscanf_return_code= sscanf( string, "%lf %lf %lf %lf %lf %lf %lf %lf %lf", &measured_ra, &measured_dec, &distance, &catalog_ra, &catalog_dec, &catalog_mag, &epoch, &pmRA, &pmDE );
+  if ( 6 > sscanf_return_code ) {
+   continue;
+  }
+  if ( 9 > sscanf_return_code ) {
+   epoch= pmRA= e_pmRA= pmDE= e_pmDE= 0.0;
+  }
+
+  cos_delta= cos( catalog_dec * M_PI / 180.0 );
+
+  ///////////////// Account for proper motion /////////////////
+  catalog_ra_original= catalog_ra;
+  catalog_dec_original= catalog_dec;
+  // assuming the epoch is a Julian Year https://en.wikipedia.org/wiki/Epoch_(astronomy)#Julian_years_and_J2000
+  // assuming observing_epoch_jd is the same for all stars!
+  observing_epoch_jy= 2000.0 + ( stars[0].observing_epoch_jd - 2451545.0 ) / 365.25;
+  dt= observing_epoch_jy - epoch;
+  // https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/340
+  // pmRA is UCAC/Gaia proper motion in RA*cosDE
+  catalog_ra= catalog_ra + pmRA / ( 3600000 * cos_delta ) * dt;
+  catalog_dec= catalog_dec + pmDE / 3600000 * dt;
+  /////////////////////////////////////////////////////////////
+
+  // Now find which input star that was
+  for ( i= 0; i < N; i++ ) {
+   if ( stars[i].matched_with_astrometric_catalog == 1 ) {
+    continue;
+   }
+   if ( fabs( stars[i].dec_deg_measured - measured_dec ) < catalog_search_parameters->search_radius_deg ) {
+    if ( fabs( stars[i].ra_deg_measured - measured_ra ) * cos_delta < catalog_search_parameters->search_radius_deg ) {
+     if ( distance > catalog_search_parameters->search_radius_deg * 3600 ) {
+      continue;
+     }
+
+#ifdef DEBUGFILES
+     fprintf( scan_ucac5_debug_ds9_region, "circle(%f,%f,%lf)\n", measured_ra, measured_dec, 10.0 * 21 / 3600 );
+#endif
+
+     // if we are here - this is a match
+     stars[i].matched_with_astrometric_catalog= 1;
+     stars[i].d_ra= catalog_ra - measured_ra;
+     stars[i].d_dec= catalog_dec - measured_dec;
+     stars[i].catalog_ra= catalog_ra;
+     stars[i].catalog_dec= catalog_dec;
+     stars[i].catalog_mag= catalog_mag;
+     stars[i].catalog_mag_err= 0.0;
+     stars[i].catalog_ra_original= catalog_ra_original;
+     stars[i].catalog_dec_original= catalog_dec_original;
+
+     //
+     stars[i].match_distance_astrometric_catalog_arcsec= distance / 3600;
+
+     // reset photometric info
+     stars[i].APASS_B= 0.0;
+     stars[i].APASS_B_err= 0.0;
+     stars[i].APASS_V= 0.0;
+     stars[i].APASS_V_err= 0.0;
+     stars[i].APASS_r= 0.0;
+     stars[i].APASS_r_err= 0.0;
+     stars[i].APASS_i= 0.0;
+     stars[i].APASS_i_err= 0.0;
+     stars[i].Rc_computed_from_APASS_ri= 0.0;
+     stars[i].Rc_computed_from_APASS_ri_err= 0.0;
+     stars[i].Rc_computed_from_APASS_ri_err= 0.0;
+     stars[i].Ic_computed_from_APASS_ri= 0.0;
+     stars[i].Ic_computed_from_APASS_ri_err= 0.0;
+     stars[i].APASS_g= 0.0;
+     stars[i].APASS_g_err= 0.0;
+
+     N_stars_matched_with_astrometric_catalog++;
      break; // like if we assume there will be only one match within distance - why not?
     }
    }
