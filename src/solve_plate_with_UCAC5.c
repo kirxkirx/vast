@@ -2,8 +2,6 @@
 #define _GNU_SOURCE // for sincos()
 #endif
 
-// #define MAX_STARS_IN_VIZQUERY 500
-// #define MAX_STARS_IN_LOCAL_CAT_QUERY 2*MAX_STARS_IN_VIZQUERY
 #define MAX_STARS_IN_VIZQUERY 1000
 #define MAX_STARS_IN_LOCAL_CAT_QUERY MAX_STARS_IN_VIZQUERY
 
@@ -56,6 +54,8 @@
 #include "replace_file_with_symlink_if_filename_contains_white_spaces.h"
 
 #include "count_lines_in_ASCII_file.h" // for count_lines_in_ASCII_file()
+
+#define BASE_COMMAND_LENGTH 1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH
 
 struct str_catalog_search_parameters {
  double search_radius_deg;
@@ -2004,20 +2004,24 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
 char *construct_safe_curl_command( const char *base_command, const char *proxy_settings ) {
  // Allocate memory for the full command
  // Size estimation: base command + proxy settings (if any) + null terminator
- size_t command_size= strlen( base_command ) + ( proxy_settings ? strlen( proxy_settings ) + 1 : 0 ) + 1;
+ size_t command_size= strlen( base_command ) + ( proxy_settings ? strlen( proxy_settings ) + 1 : 0 ) + 7; // "curl" + space + space + null terminator
  char *safe_command= malloc( command_size );
 
  if ( safe_command == NULL ) {
   fprintf( stderr, "ERROR: Memory allocation failed for curl command\n" );
   return NULL;
  }
+ 
+ // Initialize the allocated memory to null characters
+ memset(safe_command, '\0', command_size);
 
  // Construct command with proxy settings if available
  if ( proxy_settings != NULL ) {
-  sprintf( safe_command, "curl %s %s", proxy_settings, base_command );
+  snprintf( safe_command, command_size, "curl %s %s", proxy_settings, base_command );
  } else {
-  sprintf( safe_command, "curl %s", base_command );
+  snprintf( safe_command, command_size, "curl %s", base_command );
  }
+ safe_command[command_size-1]='\0'; // just in case snprintf() messed up the last byte
 
  return safe_command;
 }
@@ -2031,7 +2035,8 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  double measured_ra, measured_dec, distance, catalog_ra, catalog_dec, catalog_mag;
  double cos_delta;
  char string[1024];
- char base_command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
+ //char base_command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
+ char base_command[BASE_COMMAND_LENGTH];
  char *command= NULL;
  FILE *vizquery_input;
  FILE *f;
@@ -2058,8 +2063,11 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  fprintf( scan_ucac5_debug_ds9_region, "fk5\n" );
 #endif
 
- sprintf( vizquery_input_filename, "scan_ucac5_%d.input", pid );
- sprintf( vizquery_output_filename, "scan_ucac5_%d.output", pid );
+ // Initialize the allocated memory to null characters
+ memset(vizquery_input_filename, '\0', FILENAME_LENGTH);
+ memset(vizquery_output_filename, '\0', FILENAME_LENGTH);
+ snprintf( vizquery_input_filename, FILENAME_LENGTH-1, "scan_ucac5_%d.input", pid );
+ snprintf( vizquery_output_filename, FILENAME_LENGTH-1, "scan_ucac5_%d.output", pid );
  vizquery_input= fopen( vizquery_input_filename, "w" );
  if ( NULL == vizquery_input ) {
   fprintf( stderr, "ERROR in search_UCAC5_at_scan(): cannot open file %s for writing!\n", vizquery_input_filename );
@@ -2114,19 +2122,22 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  int randChoice= rand() % 2;
 
  // Construct base command
+ // Initialize the allocated memory to null characters
+ memset(base_command, '\0', BASE_COMMAND_LENGTH);
  if ( randChoice == 0 ) {
-  sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
+  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
            vizquery_input_filename, catalog_search_parameters->brightest_mag,
            catalog_search_parameters->faintest_mag,
            catalog_search_parameters->search_radius_deg * 3600,
            vizquery_output_filename );
  } else {
-  sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
+  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
            vizquery_input_filename, catalog_search_parameters->brightest_mag,
            catalog_search_parameters->faintest_mag,
            catalog_search_parameters->search_radius_deg * 3600,
            vizquery_output_filename );
  }
+ base_command[BASE_COMMAND_LENGTH-1]='\0'; // just in case snprintf() messed up the last byte
 
  // Construct safe command
  command= construct_safe_curl_command( base_command, proxy_settings );
