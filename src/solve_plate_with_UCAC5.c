@@ -1167,6 +1167,7 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
  } else {
   fprintf( stderr, "Found a local copy of UCAC5\n" );
  }
+ fclose(ptr);
 
  // set zone search parameters
  search_ra_min_deg= 360.0;
@@ -1204,11 +1205,7 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
   ptr= fopen( zonefilename, "rb" ); // r for read, b for binary
   if ( NULL == ptr ) {
    fprintf( stderr, "ERROR opening zone file %s\n", zonefilename );
-   // if this is the first file - assume there is no catalog
-   // if( zone_counter==1 ){
-   // return 1;
-   //}
-   // otherwise assume this is just one missing file
+   // assume this is just one missing file, but do we want crash on it?
    continue;
   }
 
