@@ -203,6 +203,79 @@ double get_detection_limit_sn( double *mag, double *mag_sn, size_t n, double tar
  double x_lo, x_hi;
  int bracket_status= find_bracket( &F, max_mag, &x_lo, &x_hi );
  if ( bracket_status != GSL_SUCCESS ) {
+  if ( success != NULL ) {
+   *success= 0;
+  }
+  return GSL_NAN;
+ }
+
+ // Initialize root finder
+ const gsl_root_fsolver_type *T= gsl_root_fsolver_brent;
+ gsl_root_fsolver *solver= gsl_root_fsolver_alloc( T );
+
+ // Setup solver with found bracket
+ gsl_root_fsolver_set( solver, &F, x_lo, x_hi );
+
+ // Iterate to find root
+ int status;
+ size_t iter= 0;
+ double root= GSL_NAN;
+
+ do {
+  iter++;
+  status= gsl_root_fsolver_iterate( solver );
+  if ( status )
+   break;
+
+  root= gsl_root_fsolver_root( solver );
+  x_lo= gsl_root_fsolver_x_lower( solver );
+  x_hi= gsl_root_fsolver_x_upper( solver );
+
+  status= gsl_root_test_interval( x_lo, x_hi, 0, 1e-6 );
+ } while ( status == GSL_CONTINUE && iter < 100 );
+
+ // Cleanup
+ gsl_root_fsolver_free( solver );
+
+ // Check if success pointer is NULL before dereferencing
+ if ( success != NULL ) {
+  *success= status; // should be GSL_SUCCESS if we are good
+
+  if ( status == GSL_SUCCESS ) {
+   fprintf( stderr, "get_detection_limit_sn(): Detection limit: %.2f\n", root );
+  } else {
+   fprintf( stderr, "get_detection_limit_sn(): Failed to find detection limit\n" );
+  }
+ }
+
+ return root;
+}
+
+/*
+double get_detection_limit_sn( double *mag, double *mag_sn, size_t n, double target_sn,
+                               int *success ) {
+ size_t i;
+ // Fit the model first
+ double params[2];
+ make_sn_model( mag, mag_sn, n, params );
+
+ // Setup root finding
+ struct root_params rp= { params, target_sn };
+ gsl_function F;
+ F.function= &root_f;
+ F.params= &rp;
+
+ // Find maximum magnitude as starting point
+ double max_mag= mag[0];
+ for ( i= 1; i < n; i++ ) {
+  if ( mag[i] > max_mag )
+   max_mag= mag[i];
+ }
+
+ // Find bracket for root
+ double x_lo, x_hi;
+ int bracket_status= find_bracket( &F, max_mag, &x_lo, &x_hi );
+ if ( bracket_status != GSL_SUCCESS ) {
   *success= 0;
   return GSL_NAN;
  }
@@ -245,7 +318,7 @@ double get_detection_limit_sn( double *mag, double *mag_sn, size_t n, double tar
 
  return root;
 }
-
+*/
 /*
 // The main() function for standalone test of this code
 int main(){

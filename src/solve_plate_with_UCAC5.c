@@ -1167,7 +1167,7 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
  } else {
   fprintf( stderr, "Found a local copy of UCAC5\n" );
  }
- fclose(ptr);
+ fclose( ptr );
 
  // set zone search parameters
  search_ra_min_deg= 360.0;
@@ -1497,9 +1497,9 @@ char *construct_safe_curl_command( const char *base_command, const char *proxy_s
   fprintf( stderr, "ERROR: Memory allocation failed for curl command\n" );
   return NULL;
  }
- 
+
  // Initialize the allocated memory to null characters
- memset(safe_command, '\0', command_size);
+ memset( safe_command, '\0', command_size );
 
  // Construct command with proxy settings if available
  if ( proxy_settings != NULL ) {
@@ -1507,7 +1507,7 @@ char *construct_safe_curl_command( const char *base_command, const char *proxy_s
  } else {
   snprintf( safe_command, command_size, "curl %s", base_command );
  }
- safe_command[command_size-1]='\0'; // just in case snprintf() messed up the last byte
+ safe_command[command_size - 1]= '\0'; // just in case snprintf() messed up the last byte
 
  return safe_command;
 }
@@ -1518,54 +1518,54 @@ char *construct_safe_curl_command( const char *base_command, const char *proxy_s
  * and replaces it with "user:password" padded with spaces to the original length.
  *
  * str: The input string to process (will be modified in-place)
- * 
+ *
  * Returns 1 if replacement was made, 0 if pattern not found
  */
-int obscure_proxy_credentials(char *str) {
-    if (str == NULL) {
-        return 0;
-    }
-    
-    const char *prefix = "--proxy-user ";
-    size_t prefix_len = strlen(prefix);
-    
-    /* Find prefix in string */
-    char *start = strstr(str, prefix);
-    if (start == NULL) {
-        return 0;
-    }
-    
-    /* Skip to the beginning of credentials */
-    start += prefix_len;
-    
-    /* Find the end of credentials (space or end of string) */
-    char *end = start;
-    while (*end != '\0' && *end != ' ') {
-        end++;
-    }
-    
-    /* Get original credential length */
-    size_t cred_len = end - start;
-    if (cred_len == 0) {
-        return 0;  /* No credentials found after prefix */
-    }
-    
-    /* Create replacement with "user:password" */
-    const char *replacement = "user:password";
-    size_t replace_len = strlen(replacement);
-    
-    /* Replace credentials with replacement */
-    size_t i;
-    for (i = 0; i < replace_len && i < cred_len; i++) {
-        start[i] = replacement[i];
-    }
-    
-    /* Pad the remaining space with spaces */
-    for (; i < cred_len; i++) {
-        start[i] = ' ';
-    }
-    
-    return 1;
+int obscure_proxy_credentials( char *str ) {
+ if ( str == NULL ) {
+  return 0;
+ }
+
+ const char *prefix= "--proxy-user ";
+ size_t prefix_len= strlen( prefix );
+
+ /* Find prefix in string */
+ char *start= strstr( str, prefix );
+ if ( start == NULL ) {
+  return 0;
+ }
+
+ /* Skip to the beginning of credentials */
+ start+= prefix_len;
+
+ /* Find the end of credentials (space or end of string) */
+ char *end= start;
+ while ( *end != '\0' && *end != ' ' ) {
+  end++;
+ }
+
+ /* Get original credential length */
+ size_t cred_len= end - start;
+ if ( cred_len == 0 ) {
+  return 0; /* No credentials found after prefix */
+ }
+
+ /* Create replacement with "user:password" */
+ const char *replacement= "user:password";
+ size_t replace_len= strlen( replacement );
+
+ /* Replace credentials with replacement */
+ size_t i;
+ for ( i= 0; i < replace_len && i < cred_len; i++ ) {
+  start[i]= replacement[i];
+ }
+
+ /* Pad the remaining space with spaces */
+ for ( ; i < cred_len; i++ ) {
+  start[i]= ' ';
+ }
+
+ return 1;
 }
 
 /**
@@ -1577,7 +1577,7 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  double measured_ra, measured_dec, distance, catalog_ra, catalog_dec, catalog_mag;
  double cos_delta;
  char string[1024];
- //char base_command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
+ // char base_command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
  char base_command[BASE_COMMAND_LENGTH];
  char *command= NULL;
  FILE *vizquery_input;
@@ -1592,9 +1592,9 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
 
  char path_to_vast_string[VAST_PATH_MAX];
  get_path_to_vast( path_to_vast_string );
- 
+
  // try disabling scan UCAC5 access - this should trigger VizieR UCAC5 access
- //return 1;
+ // return 1;
 
 #ifdef DEBUGFILES
  FILE *scan_ucac5_debug_ds9_region;
@@ -1606,10 +1606,10 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
 #endif
 
  // Initialize the allocated memory to null characters
- memset(vizquery_input_filename, '\0', FILENAME_LENGTH);
- memset(vizquery_output_filename, '\0', FILENAME_LENGTH);
- snprintf( vizquery_input_filename, FILENAME_LENGTH-1, "scan_ucac5_%d.input", pid );
- snprintf( vizquery_output_filename, FILENAME_LENGTH-1, "scan_ucac5_%d.output", pid );
+ memset( vizquery_input_filename, '\0', FILENAME_LENGTH );
+ memset( vizquery_output_filename, '\0', FILENAME_LENGTH );
+ snprintf( vizquery_input_filename, FILENAME_LENGTH - 1, "scan_ucac5_%d.input", pid );
+ snprintf( vizquery_output_filename, FILENAME_LENGTH - 1, "scan_ucac5_%d.output", pid );
  vizquery_input= fopen( vizquery_input_filename, "w" );
  if ( NULL == vizquery_input ) {
   fprintf( stderr, "ERROR in search_UCAC5_at_scan(): cannot open file %s for writing!\n", vizquery_input_filename );
@@ -1665,21 +1665,21 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
 
  // Construct base command
  // Initialize the allocated memory to null characters
- memset(base_command, '\0', BASE_COMMAND_LENGTH);
+ memset( base_command, '\0', BASE_COMMAND_LENGTH );
  if ( randChoice == 0 ) {
   snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
-           vizquery_input_filename, catalog_search_parameters->brightest_mag,
-           catalog_search_parameters->faintest_mag,
-           catalog_search_parameters->search_radius_deg * 3600,
-           vizquery_output_filename );
+            vizquery_input_filename, catalog_search_parameters->brightest_mag,
+            catalog_search_parameters->faintest_mag,
+            catalog_search_parameters->search_radius_deg * 3600,
+            vizquery_output_filename );
  } else {
   snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
-           vizquery_input_filename, catalog_search_parameters->brightest_mag,
-           catalog_search_parameters->faintest_mag,
-           catalog_search_parameters->search_radius_deg * 3600,
-           vizquery_output_filename );
+            vizquery_input_filename, catalog_search_parameters->brightest_mag,
+            catalog_search_parameters->faintest_mag,
+            catalog_search_parameters->search_radius_deg * 3600,
+            vizquery_output_filename );
  }
- base_command[BASE_COMMAND_LENGTH-1]='\0'; // just in case snprintf() messed up the last byte
+ base_command[BASE_COMMAND_LENGTH - 1]= '\0'; // just in case snprintf() messed up the last byte
 
  // Construct safe command
  command= construct_safe_curl_command( base_command, proxy_settings );
@@ -1689,10 +1689,10 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
   }
   return 1;
  }
- 
+
  fprintf( stderr, "Running curl...\n" );
  vizquery_run_success= system( command );
- obscure_proxy_credentials(command);
+ obscure_proxy_credentials( command );
  fprintf( stderr, "%s\n", command );
  free( command ); // Free the allocated command string
 
@@ -1727,7 +1727,7 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
 
   fprintf( stderr, "Running curl...\n" );
   vizquery_run_success= system( command );
-  obscure_proxy_credentials(command);
+  obscure_proxy_credentials( command );
   fprintf( stderr, "%s\n", command );
   free( command ); // Free the allocated command string
 
@@ -1890,10 +1890,10 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
  }
 
  // Initialize the allocated memory to null characters
- memset(vizquery_input_filename, '\0', FILENAME_LENGTH);
- memset(vizquery_output_filename, '\0', FILENAME_LENGTH);
- snprintf( vizquery_input_filename, FILENAME_LENGTH-1, "vizquery_%d.input", pid );
- snprintf( vizquery_output_filename, FILENAME_LENGTH-1, "vizquery_%d.output", pid );
+ memset( vizquery_input_filename, '\0', FILENAME_LENGTH );
+ memset( vizquery_output_filename, '\0', FILENAME_LENGTH );
+ snprintf( vizquery_input_filename, FILENAME_LENGTH - 1, "vizquery_%d.input", pid );
+ snprintf( vizquery_output_filename, FILENAME_LENGTH - 1, "vizquery_%d.output", pid );
  vizquery_input= fopen( vizquery_input_filename, "w" );
  search_stars_counter= 0;
  zero_radec_counter= 0;
@@ -1990,10 +1990,10 @@ int search_PANSTARRS1_with_vizquery( struct detected_star *stars, int N, struct 
  get_path_to_vast( path_to_vast_string );
 
  // Initialize the allocated memory to null characters
- memset(vizquery_input_filename, '\0', FILENAME_LENGTH);
- memset(vizquery_output_filename, '\0', FILENAME_LENGTH);
- snprintf( vizquery_input_filename, FILENAME_LENGTH-1, "vizquery_%d.input", pid );
- snprintf( vizquery_output_filename, FILENAME_LENGTH-1, "vizquery_%d.output", pid );
+ memset( vizquery_input_filename, '\0', FILENAME_LENGTH );
+ memset( vizquery_output_filename, '\0', FILENAME_LENGTH );
+ snprintf( vizquery_input_filename, FILENAME_LENGTH - 1, "vizquery_%d.input", pid );
+ snprintf( vizquery_output_filename, FILENAME_LENGTH - 1, "vizquery_%d.output", pid );
  vizquery_input= fopen( vizquery_input_filename, "w" );
  search_stars_counter= 0;
  for ( i= 0; i < N; i++ ) {
@@ -2074,10 +2074,10 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
  get_path_to_vast( path_to_vast_string );
 
  // Initialize the allocated memory to null characters
- memset(vizquery_input_filename, '\0', FILENAME_LENGTH);
- memset(vizquery_output_filename, '\0', FILENAME_LENGTH);
- snprintf( vizquery_input_filename, FILENAME_LENGTH-1, "vizquery_%d.input", pid );
- snprintf( vizquery_output_filename, FILENAME_LENGTH-1, "vizquery_%d.output", pid );
+ memset( vizquery_input_filename, '\0', FILENAME_LENGTH );
+ memset( vizquery_output_filename, '\0', FILENAME_LENGTH );
+ snprintf( vizquery_input_filename, FILENAME_LENGTH - 1, "vizquery_%d.input", pid );
+ snprintf( vizquery_output_filename, FILENAME_LENGTH - 1, "vizquery_%d.output", pid );
  vizquery_input= fopen( vizquery_input_filename, "w" );
  if ( vizquery_input == NULL ) {
   fprintf( stderr, "ERROR in search_APASS_with_vizquery(): Cannot open file %s for writing.\n", vizquery_input_filename );
@@ -2524,7 +2524,7 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
   return 1;
  }
  // Check if the estimated accuracy is unreallistically small
- if ( estimated_output_accuracy_of_the_plate_solution_arcsec <=0.0 ) {
+ if ( estimated_output_accuracy_of_the_plate_solution_arcsec <= 0.0 ) {
   fprintf( stderr, "ERROR: the estimated accuracy of the plate solution seems unrealistically small!\nSomething is very wrong!\n" );
   return 1;
  }

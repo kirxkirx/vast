@@ -562,6 +562,7 @@ int convert_asassn_v2_format( char *lightcurvefilename, char *path_to_vast_strin
  return 0;
 }
 
+/*
 int convert_ztf_snad_format( char *lightcurvefilename, char *path_to_vast_string ) {
  FILE *lightcurvefile, *convertedfile;
  char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
@@ -649,6 +650,120 @@ int convert_ztf_snad_format( char *lightcurvefilename, char *path_to_vast_string
  if ( NULL == fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) ) {
   fprintf( stderr, "ERROR in convert_ztf_snad_format(): Failed to read header line\n" );
   fclose( lightcurvefile );
+  return 1;
+ }
+
+ // Write selected filter data to the converted file
+ while ( fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) != NULL ) {
+  if ( sscanf( line, "%*[^,],%[^,],%lf,%lf,%lf", filter, &mjd, &mag, &mag_err ) == 4 ) {
+   if ( strcmp( filter, selected_filter ) == 0 ) {
+    fprintf( convertedfile, "%.6lf %.5f %.5f\n", mjd + 2400000.5, mag, mag_err );
+   }
+  }
+ }
+
+ fclose( lightcurvefile );
+ fclose( convertedfile );
+
+ strncpy( lightcurvefilename, converted_filename, FILENAME_LENGTH );
+ // Ensure null-termination
+ lightcurvefilename[FILENAME_LENGTH - 1]= '\0';
+
+ return 0;
+}
+*/
+// The issue is in the convert_ztf_snad_format function at line 652
+// We need to add fclose(convertedfile) before returning when an error occurs
+
+int convert_ztf_snad_format( char *lightcurvefilename, char *path_to_vast_string ) {
+ FILE *lightcurvefile, *convertedfile;
+ char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+ char original_filename[FILENAME_LENGTH];
+ char converted_filename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER];
+ char converted_directory[VAST_PATH_MAX];
+ double mjd, mag, mag_err;
+ char filter[10];
+ int zg_count= 0, zr_count= 0, zi_count= 0;
+
+ lightcurvefile= fopen( lightcurvefilename, "r" );
+ if ( NULL == lightcurvefile ) {
+  fprintf( stderr, "ERROR: cannot open file %s\n", lightcurvefilename );
+  return 1;
+ }
+
+ // Check if the file starts with the ZTF SNAD format header
+ if ( fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) != NULL ) {
+  if ( strncmp( line, "oid,filter,mjd,mag,magerr,clrcoeff", 34 ) != 0 ) {
+   fclose( lightcurvefile );
+   return 0; // Not a ZTF SNAD format file, do nothing
+  }
+ } else {
+  fclose( lightcurvefile );
+  return 1; // Error reading the file
+ }
+
+ // Create the converted_lightcurves directory if it doesn't exist
+ snprintf( converted_directory, VAST_PATH_MAX, "%sconverted_lightcurves", path_to_vast_string );
+ mkdir( converted_directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+
+ strncpy( original_filename, basename( lightcurvefilename ), FILENAME_LENGTH );
+ replace_last_dot_with_null( original_filename );
+
+ // Generate the converted filename
+ snprintf( converted_filename, MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER, "%s/%s_converted.dat", converted_directory, original_filename );
+ // Ensure null-termination
+ converted_filename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1]= '\0';
+
+ fprintf( stderr, "ZTF SNAD data format detected! Converting %s to %s \n", basename( lightcurvefilename ), converted_filename );
+
+ // Check the length of converted_filename before writing the output
+ if ( strlen( converted_filename ) > FILENAME_LENGTH ) {
+  fprintf( stderr, "ERROR in on-the-fly lightcurve format conversion - the output filename is too long!" );
+  fclose( lightcurvefile );
+  return 1;
+ }
+
+ convertedfile= fopen( converted_filename, "w" );
+ if ( NULL == convertedfile ) {
+  fprintf( stderr, "ERROR: cannot create converted file %s\n", converted_filename );
+  fclose( lightcurvefile );
+  return 1;
+ }
+
+ // Process the lightcurve data
+ while ( fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) != NULL ) {
+  if ( sscanf( line, "%*[^,],%[^,],%lf,%lf,%lf", filter, &mjd, &mag, &mag_err ) == 4 ) {
+   if ( strcmp( filter, "zg" ) == 0 ) {
+    zg_count++;
+   } else if ( strcmp( filter, "zr" ) == 0 ) {
+    zr_count++;
+   } else if ( strcmp( filter, "zi" ) == 0 ) {
+    zi_count++;
+   }
+  }
+ }
+
+ // Determine the filter with the most measurements
+ char selected_filter[10];
+ if ( zg_count >= zr_count && zg_count >= zi_count ) {
+  strcpy( selected_filter, "zg" );
+ } else if ( zr_count >= zg_count && zr_count >= zi_count ) {
+  strcpy( selected_filter, "zr" );
+ } else {
+  strcpy( selected_filter, "zi" );
+ }
+ fprintf( stderr, "Displaying %s filter data!\n", selected_filter );
+
+ // Reset file pointer to the beginning of the file
+ fseek( lightcurvefile, 0, SEEK_SET );
+
+ // Skip the header line
+ // fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile );
+ if ( NULL == fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) ) {
+  fprintf( stderr, "ERROR in convert_ztf_snad_format(): Failed to read header line\n" );
+  fclose( lightcurvefile );
+  // FIX: Close the convertedfile before returning to prevent resource leak
+  fclose( convertedfile );
   return 1;
  }
 
