@@ -35,12 +35,28 @@ struct Observation {
  double X;
  double Y;
  double APER;
+ char *filename;                                    // Pointer instead of array
+ char *fits_header_keywords_to_be_recorded_in_lightcurve; // Pointer instead of array
+ char is_used; 
+ float float_parameters[NUMBER_OF_FLOAT_PARAMETERS];
+};
+
+/*
+struct Observation {
+ int star_num;
+ double JD;
+ double mag;
+ double mag_err;
+ double X;
+ double Y;
+ double APER;
  char filename[FILENAME_LENGTH];
  char fits_header_keywords_to_be_recorded_in_lightcurve[FITS_KEYWORDS_IN_LC_LENGTH];
  char is_used; // Check if this observation was alredy written to disk
  //
  float float_parameters[NUMBER_OF_FLOAT_PARAMETERS]; // Array of additional star parameters
 };
+*/
 
 struct Frame {
  double X_centre;

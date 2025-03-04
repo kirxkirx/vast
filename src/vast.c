@@ -4310,10 +4310,13 @@ int main( int argc, char **argv ) {
   ptr_struct_Obs[obs_in_RAM - 1].Y= (double)STAR1[i].y_frame;
   ptr_struct_Obs[obs_in_RAM - 1].APER= aperture;
 
-  strncpy( ptr_struct_Obs[obs_in_RAM - 1].filename, input_images[0], FILENAME_LENGTH );
-  ptr_struct_Obs[obs_in_RAM - 1].filename[FILENAME_LENGTH - 1]= '\0'; // just in case
-  strncpy( ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve, str_with_fits_keywords_to_capture_from_input_images[0], FITS_KEYWORDS_IN_LC_LENGTH );
-  ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve[FITS_KEYWORDS_IN_LC_LENGTH - 1]= '\0'; // just in case
+  //strncpy( ptr_struct_Obs[obs_in_RAM - 1].filename, input_images[0], FILENAME_LENGTH );
+  //ptr_struct_Obs[obs_in_RAM - 1].filename[FILENAME_LENGTH - 1]= '\0'; // just in case
+  //strncpy( ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve, str_with_fits_keywords_to_capture_from_input_images[0], FITS_KEYWORDS_IN_LC_LENGTH );
+  //ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve[FITS_KEYWORDS_IN_LC_LENGTH - 1]= '\0'; // just in case
+  // Just store pointers to the existing strings
+  ptr_struct_Obs[obs_in_RAM - 1].filename= input_images[0];
+  ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve= str_with_fits_keywords_to_capture_from_input_images[0];
 
   ptr_struct_Obs[obs_in_RAM - 1].is_used= 0;
 
@@ -5961,10 +5964,13 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
        exit( EXIT_FAILURE );
       }
 
-      strncpy( ptr_struct_Obs[obs_in_RAM - 1].filename, input_images[n], FILENAME_LENGTH );
-      ptr_struct_Obs[obs_in_RAM - 1].filename[FILENAME_LENGTH - 1]= '\0'; // just in case
-      strncpy( ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve, str_with_fits_keywords_to_capture_from_input_images[n], FITS_KEYWORDS_IN_LC_LENGTH );
-      ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve[FITS_KEYWORDS_IN_LC_LENGTH - 1]= '\0'; // just in case
+      //strncpy( ptr_struct_Obs[obs_in_RAM - 1].filename, input_images[n], FILENAME_LENGTH );
+      //ptr_struct_Obs[obs_in_RAM - 1].filename[FILENAME_LENGTH - 1]= '\0'; // just in case
+      //strncpy( ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve, str_with_fits_keywords_to_capture_from_input_images[n], FITS_KEYWORDS_IN_LC_LENGTH );
+      //ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve[FITS_KEYWORDS_IN_LC_LENGTH - 1]= '\0'; // just in case
+      // Just store pointers to the existing strings
+      ptr_struct_Obs[obs_in_RAM - 1].filename= input_images[n];
+      ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve= str_with_fits_keywords_to_capture_from_input_images[n];
 
       ptr_struct_Obs[obs_in_RAM - 1].is_used= 0;
 
@@ -6220,25 +6226,25 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  //
 
  free( X1 );
- fprintf( stderr, "1 " );
+ //fprintf( stderr, "1 " );
  free( Y1 );
- fprintf( stderr, "2 " );
+ //fprintf( stderr, "2 " );
  free( X2 );
- fprintf( stderr, "3 " );
+ //fprintf( stderr, "3 " );
  free( Y2 );
- fprintf( stderr, "4 " );
+ //fprintf( stderr, "4 " );
 
  free( bad_stars_X );
- fprintf( stderr, "5 " );
+ //fprintf( stderr, "5 " );
  free( bad_stars_Y );
- fprintf( stderr, "6 " );
+ //fprintf( stderr, "6 " );
 
  free( manually_selected_comparison_stars_X );
- fprintf( stderr, "7 " );
+ //fprintf( stderr, "7 " );
  free( manually_selected_comparison_stars_Y );
- fprintf( stderr, "8 " );
+ //fprintf( stderr, "8 " );
  free( manually_selected_comparison_stars_catalog_mag );
- fprintf( stderr, "9 " );
+ //fprintf( stderr, "9 " );
 
  //// Moved up here
  if ( debug != 0 ) {
@@ -6248,7 +6254,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: freeing coordinate arrays\n" );
  }
- fprintf( stderr, "10 " );
+ //fprintf( stderr, "10 " );
  for ( coordinate_array_index= coordinate_array_counter; coordinate_array_index--; ) {
   free( coordinate_array_x[coordinate_array_index] );
   free( coordinate_array_y[coordinate_array_index] );
@@ -6256,27 +6262,29 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: free(coordinate_array_x);\n" );
  }
- fprintf( stderr, "11 " );
+ //fprintf( stderr, "11 " );
  free( coordinate_array_x );
  if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: free(coordinate_array_y);\n" );
  }
- fprintf( stderr, "12 " );
+ //fprintf( stderr, "12 " );
  free( coordinate_array_y );
  if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: free(star_numbers_for_coordinate_arrays);\n" );
  }
- fprintf( stderr, "13 " );
+ //fprintf( stderr, "13 " );
  free( star_numbers_for_coordinate_arrays );
  if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: free(number_of_coordinate_measurements_for_star);\n" );
  }
- fprintf( stderr, "14 " );
+ //fprintf( stderr, "14 " );
  free( number_of_coordinate_measurements_for_star );
  if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: for(n = 0; n < Num; n++)free(input_images[n]);\n" );
  }
- fprintf( stderr, "15 " );
+ //fprintf( stderr, "15 " );
+ /*
+ // moved down so Observations can point to these arrays
  for ( n= Num; n--; ) {
   free( input_images[n] );
  }
@@ -6286,18 +6294,18 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  fprintf( stderr, "16 " );
  free( input_images );
  fprintf( stderr, "17 " );
- //
  for ( n= Num; n--; ) {
   free( str_with_fits_keywords_to_capture_from_input_images[n] );
  }
  fprintf( stderr, "18 " );
  free( str_with_fits_keywords_to_capture_from_input_images );
+ */
  if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: Delete_PixCoordinateTransformation(struct_pixel_coordinate_transformation);\n" );
  }
- fprintf( stderr, "19 " );
+ //fprintf( stderr, "19 " );
  Delete_PixCoordinateTransformation( struct_pixel_coordinate_transformation );
- fprintf( stderr, "20\n" );
+ //fprintf( stderr, "20\n" );
  ////
 
  //
@@ -6404,6 +6412,23 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 #endif
 
  free( child_pids );
+
+ // Now we can free the arrays (no longer needed for Observations to point to)
+ for ( n= Num; n--; ) {
+  free( input_images[n] );
+ }
+ if ( debug != 0 ) {
+  fprintf( stderr, "DEBUG MSG: free(input_images);\n" );
+ }
+ //fprintf( stderr, "16 " );
+ free( input_images );
+ //fprintf( stderr, "17 " );
+ for ( n= Num; n--; ) {
+  free( str_with_fits_keywords_to_capture_from_input_images[n] );
+ }
+ //fprintf( stderr, "18 " );
+ free( str_with_fits_keywords_to_capture_from_input_images );
+
 
  // Dump STAR1 structure to a log file
  vast_list_of_all_stars_log= fopen( "vast_list_of_all_stars.log", "w" );
