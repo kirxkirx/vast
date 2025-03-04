@@ -307,7 +307,7 @@ void write_obs_to_file( FILE *file_out, struct Observation *obs ) {
  return;
 }
 
-int read_onput_file_with_user_specified_moving_object_opsition( char **input_images, float *moving_object__user_array_x, float *moving_object__user_array_y, int Num ) {
+int read_input_file_with_user_specified_moving_object_position( char **input_images, float *moving_object__user_array_x, float *moving_object__user_array_y, int Num ) {
  FILE *file_user_specified_moving_object_position;
  int i;
 
@@ -328,7 +328,7 @@ int read_onput_file_with_user_specified_moving_object_opsition( char **input_ima
  while ( -1 < fscanf( file_user_specified_moving_object_position, "%s %f %f", imagefilename_from_input_file, &moving_object_x_from_input_file, &moving_object_y_from_input_file ) ) {
   // Coarse input check
   if ( moving_object_x_from_input_file < 0.0 || moving_object_x_from_input_file > MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK || moving_object_y_from_input_file < 0.0 || moving_object_y_from_input_file > MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
-   fprintf( stderr, "WARNING from read_onput_file_with_user_specified_moving_object_opsition(): a problem encountered while parsing vast_input_user_specified_moving_object_position.txt\n" );
+   fprintf( stderr, "WARNING from read_input_file_with_user_specified_moving_object_position(): a problem encountered while parsing vast_input_user_specified_moving_object_position.txt\n" );
    continue;
   }
   //
@@ -3607,7 +3607,7 @@ int main( int argc, char **argv ) {
 
   if ( moving_object == 1 ) {
    // Try to read the input file with moving object positions
-   if ( 0 != read_onput_file_with_user_specified_moving_object_opsition( input_images, moving_object__user_array_x, moving_object__user_array_y, Num ) ) {
+   if ( 0 != read_input_file_with_user_specified_moving_object_position( input_images, moving_object__user_array_x, moving_object__user_array_y, Num ) ) {
     // if no input file - ask user to specify the moving object position interactively
     ask_user_to_click_on_moving_object( input_images, moving_object__user_array_x, moving_object__user_array_y, Num );
    }
