@@ -76,7 +76,7 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
 
  float threshold_sigma;
 
- int vast_flag_to_set= 9999; // default crazy value
+ short vast_flag_to_set= 9999; // default crazy value
 
  int min_number_of_points_in_mag_bin;
 

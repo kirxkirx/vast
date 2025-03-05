@@ -977,7 +977,7 @@ typedef struct Point {
  int i;
  float x;
  float y;
- int moving_object;
+ char moving_object;
 } point;
 
 typedef struct List {

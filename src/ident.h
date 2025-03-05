@@ -29,12 +29,12 @@
 
 struct Observation {
  int star_num;
- double JD;
+ double JD; // on a 64-bit system, both a double and a double* take 8 bytes each
  double mag;
  double mag_err;
  double X;
  double Y;
- double APER;
+ float APER;
  char *filename;                                    // Pointer instead of array
  char *fits_header_keywords_to_be_recorded_in_lightcurve; // Pointer instead of array
  char is_used; 
@@ -98,12 +98,12 @@ struct Star {
  double flux_err;            // Error of brightness in counts -- NEW
  float mag;                  // Brightness in magnitudes
  float sigma_mag;            // Error of brightness estimation (mag.)
- double JD;                  // Julian Date of observation
+ double JD;                  // Julian Date of observation // on a 64-bit system, both a double and a double* take 8 bytes each
  float x_frame;              // X coordinate in pixels. WILL NOT BE TRANSFORMED TO THE REFERENCE IMAGE COORDINATE FRAME
  float y_frame;              // Y coordinate in pixels. WILL NOT BE TRANSFORMED TO THE REFERENCE IMAGE COORDINATE FRAME
  char detected_on_ref_frame; // 1 - detected, 0 - not detected
  short sextractor_flag;      // Sextractor flag
- int vast_flag;              // VaST's own flag which is a sum of
+ short vast_flag;            // VaST's own flag which is a sum of
                              //  1 - semimajor axis of the object (A) is larger than the aperture size
                              //  2 - the object is an outlier in mag-chi2 plot (defined only in PSF-fitting mode)
                              //  4 - the object is an outlier in mag-A plot
@@ -119,7 +119,7 @@ struct Star {
                                                      // ... and many more!
  int n_detected;                                     // how many times this star was detected
  int n_rejected;                                     // how many times this star was detected, but rejected according to the quality flags (mag-size, etc)
- int moving_object;    // manually match a moving object
+ char moving_object;    // manually match a moving object
 };
 
 #define MAXIMUM_POPADANIY 1
