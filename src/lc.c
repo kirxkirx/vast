@@ -50,6 +50,7 @@ void print_help() {
  fprintf( stderr, "  'T' - terminate a single point\n" );
  fprintf( stderr, "  'C' + draw a rectangle - remove many point\n" );
  fprintf( stderr, "  '1' - display linear trend fit to the lightcurve (on/off)\n" );
+ fprintf( stderr, "  '2' - display parabolic trend fit to the lightcurve (on/off)\n" );
  fprintf( stderr, "  '0' - fix linear trend inclination to 0 (on/off). Useful for correcting jumps in a lightcurve.\n" );
  fprintf( stderr, "  'B' - set a break point for a trend\n" );
  fprintf( stderr, "  '-' - subtract trend from the lightcurve\n" );
@@ -62,6 +63,36 @@ void print_help() {
  fprintf( stderr, "\n" );
  return;
 }
+
+/*
+void print_help() {
+ fprintf( stderr, "\n" );
+ fprintf( stderr, "  --*** HOW TO USE THE LIGHTCURVE PLOTTER ***--\n" );
+ fprintf( stderr, "\n" );
+ fprintf( stderr, "  'H' - display this help message\n" );
+ fprintf( stderr, "  right mouse click - exit\n" );
+ fprintf( stderr, "  left mouse click - display image corresponding to the data point closest to the cursor (only works if the lightcurve is in VaST format)\n" );
+ fprintf( stderr, "  'Z' + draw a rectangle to zoom in\n" );
+ fprintf( stderr, "  'D' or 'Z'+'Z' - default zoom\n" );
+ fprintf( stderr, "  'E' - display error bars (on/off)\n" );
+ fprintf( stderr, "  'S' - save lightcurve to .ps file\n" );
+ fprintf( stderr, "  'N' - save lightcurve to .png file (if compiled with libpng support)\n" );
+ fprintf( stderr, "  'T' - terminate a single point\n" );
+ fprintf( stderr, "  'C' + draw a rectangle - remove many point\n" );
+ fprintf( stderr, "  '1' - display linear trend fit to the lightcurve (on/off)\n" );
+ fprintf( stderr, "  '0' - fix linear trend inclination to 0 (on/off). Useful for correcting jumps in a lightcurve.\n" );
+ fprintf( stderr, "  'B' - set a break point for a trend\n" );
+ fprintf( stderr, "  '-' - subtract trend from the lightcurve\n" );
+ fprintf( stderr, "  'W' - write edited lightcurve to a data file (will be in the same format as input file)\n" );
+ fprintf( stderr, "  'K' - time of minimum determination using KvW method. You'll need to specify the eclipse duration with two clicks.\n" );
+ fprintf( stderr, "  \033[0;36m'U'\033[00m - Try to \033[0;36midentify the star\033[00m with USNO-B1.0 and search GCVS, Simbad, VSX\n" );
+ fprintf( stderr, "  'F' - fast identification that outputs just the variable star name with no further details.\n" );
+ fprintf( stderr, "  \033[0;36m'L'\033[00m - Start web-based \033[0;36mperiod search tool\033[00m\n" );
+ fprintf( stderr, "  'Q' - Start online lighcurve classifier (http://scan.sai.msu.ru/wwwupsilon/)\n" );
+ fprintf( stderr, "\n" );
+ return;
+}
+*/
 
 /*
 void replace_last_dot_with_null( char *original_filename ) {
@@ -889,6 +920,245 @@ void minumum_kwee_van_woerden( float *fit_jd, float *fit_mag, int fit_n, double 
  return;
 }
 
+/*
+ * New function to fit a parabolic trend:
+ * - Input: JD, magnitudes, errors, number of points
+ * - Output: coefficients for trend (A*x^2 + B*x + C)
+ */
+void fit_parabolic_trend( float *input_JD, float *input_mag, float *mag_err, int N,
+                          double *A, double *B, double *C, double *mean_jd, double *mean_mag ) {
+ double cov00, cov01, cov11, chisq;
+ double *fit_jd;
+ double *fit_mag;
+ double *fit_w;
+ double *difference;
+ int i;
+
+ double poly_coeff[8]; // for wpolyfit()
+
+ if ( N == 0 ) {
+  return;
+ }
+
+ // The polynomial fitting function will crash if provided with too few data points
+ if ( N < 3 ) {
+  ( *A )= 0.0;
+  ( *B )= 0.0;
+  ( *C )= 0.0;
+  return;
+ }
+
+ if ( N <= 0 ) {
+  fprintf( stderr, "ERROR: Trying allocate zero or negative number of bytes (fit_parabolic_trend)\n" );
+  exit( EXIT_FAILURE );
+ };
+
+ fit_jd= malloc( N * sizeof( double ) );
+ if ( fit_jd == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for fit_jd (fit_parabolic_trend)\n" );
+  exit( EXIT_FAILURE );
+ };
+
+ fit_mag= malloc( N * sizeof( double ) );
+ if ( fit_mag == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for fit_mag (fit_parabolic_trend)\n" );
+  exit( EXIT_FAILURE );
+ };
+
+ fit_w= malloc( N * sizeof( double ) );
+ if ( fit_w == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for fit_w (fit_parabolic_trend)\n" );
+  exit( EXIT_FAILURE );
+ };
+
+ difference= malloc( N * sizeof( double ) );
+ if ( difference == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for difference (fit_parabolic_trend)\n" );
+  exit( EXIT_FAILURE );
+ };
+
+ for ( i= 0; i < N; i++ ) {
+  fit_jd[i]= (double)input_JD[i];
+  fit_mag[i]= (double)input_mag[i];
+  fit_w[i]= 1.0 / (double)( mag_err[i] * mag_err[i] );
+ }
+
+ ( *mean_jd )= gsl_stats_mean( fit_jd, 1, N );
+ ( *mean_mag )= gsl_stats_mean( fit_mag, 1, N );
+
+ for ( i= 0; i < N; i++ ) {
+  fit_jd[i]= fit_jd[i] - ( *mean_jd );
+  fit_mag[i]= fit_mag[i] - ( *mean_mag );
+ }
+
+ // Use wpolyfit for parabolic fit
+ if ( 0 != wpolyfit( fit_jd, fit_mag, fit_w, N, poly_coeff, &chisq ) ) {
+  fprintf( stderr, "WARNING: wpolyfit failed in fit_parabolic_trend - falling back to linear fit\n" );
+  gsl_fit_wlinear( fit_jd, 1, fit_w, 1, fit_mag, 1, N, C, B, &cov00, &cov01, &cov11, &chisq );
+  ( *A )= 0.0;
+ } else {
+  ( *C )= poly_coeff[0]; // constant term
+  ( *B )= poly_coeff[1]; // linear term  (x)
+  ( *A )= poly_coeff[2]; // quadratic term (x^2)
+ }
+
+ // Suppress output if it's nearly flat
+ if ( fabs( *A ) > 1e-6 || fabs( *B ) > 1e-6 ) {
+  fprintf( stderr, "Weighted parabolic trend fit: %lf mag/day^2, %lf mag/day\n", ( *A ), ( *B ) );
+ }
+
+ free( difference );
+ free( fit_w );
+ free( fit_mag );
+ free( fit_jd );
+
+ return;
+}
+
+/*
+ * Updated function to plot both linear and parabolic trends
+ * - type: 1 for linear, 2 for parabolic
+ */
+void plot_trend( float *fit_jd, int N, int type, double A, double B, double C, double mean_jd, double mean_mag ) {
+ int i;
+ float *plot_jd;
+ float *plot_y;
+
+ if ( N == 0 ) {
+  return;
+ }
+
+ if ( N <= 0 ) {
+  fprintf( stderr, "ERROR: Trying allocate zero or negative number of bytes (plot_trend)\n" );
+  exit( EXIT_FAILURE );
+ };
+
+ plot_jd= malloc( N * sizeof( float ) );
+ if ( plot_jd == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for plot_jd (plot_trend)\n" );
+  exit( EXIT_FAILURE );
+ };
+
+ plot_y= malloc( N * sizeof( float ) );
+ if ( plot_y == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for plot_y (plot_trend)\n" );
+  exit( EXIT_FAILURE );
+ };
+
+ for ( i= 0; i < N; i++ ) {
+  plot_jd[i]= fit_jd[i] - (float)( mean_jd );
+
+  if ( type == 1 ) {
+   // Linear trend: y = B*x + C
+   plot_y[i]= (float)(B)*plot_jd[i] + (float)( C );
+  } else {
+   // Parabolic trend: y = A*x^2 + B*x + C
+   plot_y[i]= (float)(A)*plot_jd[i] * plot_jd[i] + (float)(B)*plot_jd[i] + (float)( C );
+  }
+
+  plot_jd[i]= plot_jd[i] + (float)mean_jd;
+  plot_y[i]= plot_y[i] + (float)mean_mag;
+ }
+
+ cpgsci( 3 ); // Green color
+ cpgline( N, plot_jd, plot_y );
+
+ free( plot_y );
+ free( plot_jd );
+
+ return;
+}
+
+/*
+ * Function to remove parabolic trend from lightcurve data
+ */
+void remove_parabolic_trend( float *fit_jd, float *mag, int N, double A, double B, double C,
+                             double mean_jd, double mean_mag, float jd_min, float jd_max,
+                             double mag_zeropoint_for_log, double *JD_double_array_for_log ) {
+
+ FILE *vast_lc_remove_trend_logfile;
+
+ int i;
+ float *plot_jd;
+ float *plot_y;
+ float E1, E2;
+
+ float E3, E4;
+ float *corrected_mag;
+
+ if ( N == 0 ) {
+  return;
+ }
+
+ if ( N <= 0 ) {
+  fprintf( stderr, "ERROR: Trying allocate zero or negative number of bytes (remove_parabolic_trend)\n" );
+  exit( EXIT_FAILURE );
+ }
+
+ plot_jd= malloc( N * sizeof( float ) );
+ if ( plot_jd == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for plot_jd (remove_parabolic_trend)\n" );
+  exit( EXIT_FAILURE );
+ }
+
+ plot_y= malloc( N * sizeof( float ) );
+ if ( plot_y == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for plot_y (remove_parabolic_trend)\n" );
+  exit( EXIT_FAILURE );
+ }
+
+ corrected_mag= malloc( N * sizeof( float ) );
+ if ( corrected_mag == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for corrected_mag (remove_parabolic_trend)\n" );
+  exit( EXIT_FAILURE );
+ }
+
+ vast_lc_remove_trend_logfile= fopen( "vast_lc_remove_trend.log", "a" );
+ if ( vast_lc_remove_trend_logfile == NULL ) {
+  fprintf( stderr, "ERROR: Cannot open file vast_lc_remove_trend.log\n" );
+  exit( EXIT_FAILURE );
+ }
+
+ for ( i= 0; i < N; i++ ) {
+  if ( fit_jd[i] >= jd_min && fit_jd[i] <= jd_max ) {
+   plot_jd[i]= fit_jd[i] - (float)( mean_jd );
+   // Parabolic trend: y = A*x^2 + B*x + C
+   plot_y[i]= (float)(A)*plot_jd[i] * plot_jd[i] + (float)(B)*plot_jd[i] + (float)( C );
+   plot_jd[i]= plot_jd[i] + (float)mean_jd;
+
+   if ( mag[i] > 100.0 ) {
+    corrected_mag[i]= mag[i] - plot_y[i];                 // assume it's not magnitude but something linear
+    corrected_mag[i]= corrected_mag[i] - (float)mean_mag; // assume it's not magnitude but something linear
+   } else {
+    // subtract magnitudes
+    E1= powf( 10.0f, -0.4f * plot_y[i] );
+    E2= powf( 10.0f, -0.4f * mag[i] );
+    E3= powf( 10.0f, -0.4f * (float)mean_mag );
+    E4= powf( 10.0f, -0.4f * ( 2.5f * log10f( E1 / E2 ) ) );
+    corrected_mag[i]= 2.5f * log10f( E3 / E4 );
+   }
+
+   E1= powf( 10.0f, -0.4f * plot_y[i] );
+   E3= powf( 10.0f, -0.4f * (float)mean_mag );
+
+   fprintf( vast_lc_remove_trend_logfile, "%.8lf  %9.5f  %9.5f  %9.5f \n",
+            JD_double_array_for_log[i], corrected_mag[i],
+            plot_y[i] + (float)mean_mag + (float)mag_zeropoint_for_log, mag[i] );
+
+   mag[i]= corrected_mag[i];
+  }
+ }
+
+ fclose( vast_lc_remove_trend_logfile );
+ fprintf( stderr, "The detrending log is added to \x1B[34;47m vast_lc_remove_trend.log \x1B[33;00m\n\n" );
+
+ free( corrected_mag );
+ free( plot_y );
+ free( plot_jd );
+
+ return;
+}
+
 void remove_linear_trend( float *fit_jd, float *mag, int N, double A, double B, double mean_jd, double mean_mag, float jd_min, float jd_max, double mag_zeropoint_for_log, double *JD_double_array_for_log ) {
 
  FILE *vast_lc_remove_linear_trend_logfile;
@@ -968,6 +1238,7 @@ void remove_linear_trend( float *fit_jd, float *mag, int N, double A, double B, 
  return;
 }
 
+/*
 void plot_linear_trend( float *fit_jd, int N, double A, double B, double mean_jd, double mean_mag ) {
  int i;
  float *plot_jd;
@@ -1003,6 +1274,7 @@ void plot_linear_trend( float *fit_jd, int N, double A, double B, double mean_jd
  free( plot_jd );
  return;
 }
+*/
 
 void fit_linear_trend( float *input_JD, float *input_mag, float *mag_err, int N, double *A, double *B, double *mean_jd, double *mean_mag ) {
  // double cov00,cov01; // needed if we want to use gsl_fit_wlinear() instead of gsl_fit_wmul()
@@ -1305,6 +1577,11 @@ int main( int argc, char **argv ) {
  int write_edited_lightcurve_to_file= 0; // 1 - do it now, 'W' or 'P' was pressed!
  int start_pokaz_script= 0;              // 1 - start script, 'P' was pressed!
  int plot_linear_trend_switch= 0;
+ //
+ // Add these alongside the existing trend variables
+ int plot_trend_type= 1;                       // 1 - linear trend, 2 - parabolic trend
+ double A_parabolic, B_parabolic, C_parabolic; // for parabolic trend fitting
+ //
  double A, B, mean_jd, mean_mag; // for trend fitting
  float breaks[512];              // breaks - trends on different sides of a break may be different
  int n_breaks= 0;                // number of breaks
@@ -1872,6 +2149,7 @@ int main( int argc, char **argv ) {
     fit_n= Nobs;
    }
 
+   /*
    if ( n_breaks == 0 ) {
     if ( jump_instead_of_break == 0 )
      fit_linear_trend( float_JD, mag, mag_err, Nobs, &A, &B, &mean_jd, &mean_mag );
@@ -1879,7 +2157,25 @@ int main( int argc, char **argv ) {
      fit_median_for_jumps( float_JD, mag, mag_err, Nobs, &A, &B, &mean_jd, &mean_mag );
     plot_linear_trend( float_JD, Nobs, A, B, mean_jd, mean_mag );
    }
+   */
+   if ( n_breaks == 0 ) {
+    if ( jump_instead_of_break == 0 ) {
+     if ( plot_trend_type == 1 ) {
+      // Linear trend (existing code)
+      fit_linear_trend( float_JD, mag, mag_err, Nobs, &A, &B, &mean_jd, &mean_mag );
+      plot_trend( float_JD, Nobs, 1, 0.0, A, B, mean_jd, mean_mag );
+     } else {
+      // Parabolic trend (new code)
+      fit_parabolic_trend( float_JD, mag, mag_err, Nobs, &A_parabolic, &B_parabolic, &C_parabolic, &mean_jd, &mean_mag );
+      plot_trend( float_JD, Nobs, 2, A_parabolic, B_parabolic, C_parabolic, mean_jd, mean_mag );
+     }
+    } else {
+     fit_median_for_jumps( float_JD, mag, mag_err, Nobs, &A, &B, &mean_jd, &mean_mag );
+     plot_trend( float_JD, Nobs, 1, 0.0, A, B, mean_jd, mean_mag );
+    }
+   }
 
+   /*
    if ( n_breaks == 1 ) {
     //
     fit_n= 0;
@@ -1914,7 +2210,64 @@ int main( int argc, char **argv ) {
     plot_linear_trend( fit_jd, fit_n, A, B, mean_jd, mean_mag );
     //
    }
+   */
 
+   if ( n_breaks == 1 ) {
+    //
+    fit_n= 0;
+    for ( i= 0; i < Nobs; i++ ) {
+     if ( float_JD[i] <= breaks[0] ) {
+      fit_jd[fit_n]= float_JD[i];
+      fit_mag[fit_n]= mag[i];
+      fit_mag_err[fit_n]= mag_err[i];
+      fit_n++;
+     }
+    }
+    if ( jump_instead_of_break == 0 ) {
+     if ( plot_trend_type == 1 ) {
+      // Linear trend
+      fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+      plot_trend( fit_jd, fit_n, 1, 0.0, A, B, mean_jd, mean_mag );
+     } else {
+      // Parabolic trend
+      fit_parabolic_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A_parabolic, &B_parabolic,
+                           &C_parabolic, &mean_jd, &mean_mag );
+      plot_trend( fit_jd, fit_n, 2, A_parabolic, B_parabolic, C_parabolic, mean_jd, mean_mag );
+     }
+    } else {
+     fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+     plot_trend( fit_jd, fit_n, 1, 0.0, A, B, mean_jd, mean_mag );
+    }
+    //
+    //
+    fit_n= 0;
+    for ( i= 0; i < Nobs; i++ ) {
+     if ( float_JD[i] > breaks[0] ) {
+      fit_jd[fit_n]= float_JD[i];
+      fit_mag[fit_n]= mag[i];
+      fit_mag_err[fit_n]= mag_err[i];
+      fit_n++;
+     }
+    }
+    if ( jump_instead_of_break == 0 ) {
+     if ( plot_trend_type == 1 ) {
+      // Linear trend
+      fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+      plot_trend( fit_jd, fit_n, 1, 0.0, A, B, mean_jd, mean_mag );
+     } else {
+      // Parabolic trend
+      fit_parabolic_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A_parabolic, &B_parabolic,
+                           &C_parabolic, &mean_jd, &mean_mag );
+      plot_trend( fit_jd, fit_n, 2, A_parabolic, B_parabolic, C_parabolic, mean_jd, mean_mag );
+     }
+    } else {
+     fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+     plot_trend( fit_jd, fit_n, 1, 0.0, A, B, mean_jd, mean_mag );
+    }
+    //
+   }
+
+   /*
    if ( n_breaks > 1 ) {
     //
     fit_n= 0;
@@ -1968,6 +2321,92 @@ int main( int argc, char **argv ) {
     else
      fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
     plot_linear_trend( fit_jd, fit_n, A, B, mean_jd, mean_mag );
+    //
+   }
+   */
+   if ( n_breaks > 1 ) {
+    //
+    fit_n= 0;
+    for ( i= 0; i < Nobs; i++ ) {
+     if ( float_JD[i] <= breaks[0] ) {
+      //
+      // fprintf(stderr, "fit_n=%d i=%d breaks[0]=%f\n", fit_n, i, breaks[0]);
+      //
+      fit_jd[fit_n]= float_JD[i];
+      fit_mag[fit_n]= mag[i];
+      fit_mag_err[fit_n]= mag_err[i];
+      fit_n++;
+     }
+    }
+    if ( jump_instead_of_break == 0 ) {
+     if ( plot_trend_type == 1 ) {
+      // Linear trend
+      fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+      plot_trend( fit_jd, fit_n, 1, 0.0, A, B, mean_jd, mean_mag );
+     } else {
+      // Parabolic trend
+      fit_parabolic_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A_parabolic, &B_parabolic,
+                           &C_parabolic, &mean_jd, &mean_mag );
+      plot_trend( fit_jd, fit_n, 2, A_parabolic, B_parabolic, C_parabolic, mean_jd, mean_mag );
+     }
+    } else {
+     fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+     plot_trend( fit_jd, fit_n, 1, 0.0, A, B, mean_jd, mean_mag );
+    }
+    //
+    //
+    for ( j= 1; j < n_breaks; j++ ) {
+     fit_n= 0;
+     for ( i= 0; i < Nobs; i++ ) {
+      if ( float_JD[i] > breaks[j - 1] && float_JD[i] < breaks[j] ) {
+       fit_jd[fit_n]= float_JD[i];
+       fit_mag[fit_n]= mag[i];
+       fit_mag_err[fit_n]= mag_err[i];
+       fit_n++;
+      }
+     }
+     if ( jump_instead_of_break == 0 ) {
+      if ( plot_trend_type == 1 ) {
+       // Linear trend
+       fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+       plot_trend( fit_jd, fit_n, 1, 0.0, A, B, mean_jd, mean_mag );
+      } else {
+       // Parabolic trend
+       fit_parabolic_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A_parabolic, &B_parabolic,
+                            &C_parabolic, &mean_jd, &mean_mag );
+       plot_trend( fit_jd, fit_n, 2, A_parabolic, B_parabolic, C_parabolic, mean_jd, mean_mag );
+      }
+     } else {
+      fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+      plot_trend( fit_jd, fit_n, 1, 0.0, A, B, mean_jd, mean_mag );
+     }
+    }
+    //
+    //
+    fit_n= 0;
+    for ( i= 0; i < Nobs; i++ ) {
+     if ( float_JD[i] > breaks[n_breaks - 1] ) {
+      fit_jd[fit_n]= float_JD[i];
+      fit_mag[fit_n]= mag[i];
+      fit_mag_err[fit_n]= mag_err[i];
+      fit_n++;
+     }
+    }
+    if ( jump_instead_of_break == 0 ) {
+     if ( plot_trend_type == 1 ) {
+      // Linear trend
+      fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+      plot_trend( fit_jd, fit_n, 1, 0.0, A, B, mean_jd, mean_mag );
+     } else {
+      // Parabolic trend
+      fit_parabolic_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A_parabolic, &B_parabolic,
+                           &C_parabolic, &mean_jd, &mean_mag );
+      plot_trend( fit_jd, fit_n, 2, A_parabolic, B_parabolic, C_parabolic, mean_jd, mean_mag );
+     }
+    } else {
+     fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+     plot_trend( fit_jd, fit_n, 1, 0.0, A, B, mean_jd, mean_mag );
+    }
     //
    }
 
@@ -2053,6 +2492,16 @@ int main( int argc, char **argv ) {
    else
     plot_linear_trend_switch= 0;
   }
+  if ( curC == '2' ) {
+   if ( plot_linear_trend_switch == 0 ) {
+    plot_linear_trend_switch= 1;
+    plot_trend_type= 2; // Set to parabolic trend
+   } else if ( plot_trend_type == 1 ) {
+    plot_trend_type= 2; // Change to parabolic trend
+   } else {
+    plot_linear_trend_switch= 0; // Turn off trend display
+   }
+  }
 
   // subtract one or many linear trends (many trends may be defined in regions separated by breaks)
   if ( curC == '-' ) {
@@ -2082,6 +2531,7 @@ int main( int argc, char **argv ) {
     fit_n= Nobs;
    }
 
+   /*
    // if there are no breaks, just one trend
    if ( n_breaks == 0 ) {
     if ( jump_instead_of_break == 0 ) {
@@ -2184,6 +2634,158 @@ int main( int argc, char **argv ) {
      fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
     }
     remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, breaks[n_breaks - 1], maxJD, m_mean, JD );
+   }
+   */
+   // if there are no breaks, just one trend
+   if ( n_breaks == 0 ) {
+    if ( jump_instead_of_break == 0 ) {
+     if ( plot_trend_type == 1 ) {
+      // Linear trend
+      fit_linear_trend( float_JD, mag, mag_err, Nobs, &A, &B, &mean_jd, &mean_mag );
+      remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, minJD, maxJD, m_mean, JD );
+     } else {
+      // Parabolic trend
+      fit_parabolic_trend( float_JD, mag, mag_err, Nobs, &A_parabolic, &B_parabolic, &C_parabolic, &mean_jd, &mean_mag );
+      remove_parabolic_trend( float_JD, mag, Nobs, A_parabolic, B_parabolic, C_parabolic, mean_jd, mean_mag - m_mean, minJD, maxJD, m_mean, JD );
+     }
+    } else {
+     fit_median_for_jumps( float_JD, mag, mag_err, Nobs, &A, &B, &mean_jd, &mean_mag );
+     remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, minJD, maxJD, m_mean, JD );
+    }
+   }
+
+   // if there is only one break
+   if ( n_breaks == 1 ) {
+    //
+    fit_n= 0;
+    for ( i= 0; i < Nobs; i++ ) {
+     if ( float_JD[i] <= breaks[0] ) {
+      fit_jd[fit_n]= float_JD[i];
+      fit_mag[fit_n]= mag[i];
+      fit_mag_err[fit_n]= mag_err[i];
+      fit_n++;
+     }
+    }
+    if ( jump_instead_of_break == 0 ) {
+     if ( plot_trend_type == 1 ) {
+      // Linear trend
+      fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+      remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, minJD, breaks[0], m_mean, JD );
+     } else {
+      // Parabolic trend
+      fit_parabolic_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A_parabolic, &B_parabolic, &C_parabolic, &mean_jd, &mean_mag );
+      remove_parabolic_trend( float_JD, mag, Nobs, A_parabolic, B_parabolic, C_parabolic, mean_jd, mean_mag - m_mean, minJD, breaks[0], m_mean, JD );
+     }
+    } else {
+     fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+     remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, minJD, breaks[0], m_mean, JD );
+    }
+    //
+    //
+    fit_n= 0;
+    for ( i= 0; i < Nobs; i++ ) {
+     if ( float_JD[i] > breaks[0] ) {
+      fit_jd[fit_n]= float_JD[i];
+      fit_mag[fit_n]= mag[i];
+      fit_mag_err[fit_n]= mag_err[i];
+      fit_n++;
+     }
+    }
+    if ( jump_instead_of_break == 0 ) {
+     if ( plot_trend_type == 1 ) {
+      // Linear trend
+      fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+      remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, breaks[0], maxJD, m_mean, JD );
+     } else {
+      // Parabolic trend
+      fit_parabolic_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A_parabolic, &B_parabolic, &C_parabolic, &mean_jd, &mean_mag );
+      remove_parabolic_trend( float_JD, mag, Nobs, A_parabolic, B_parabolic, C_parabolic, mean_jd, mean_mag - m_mean, breaks[0], maxJD, m_mean, JD );
+     }
+    } else {
+     fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+     remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, breaks[0], maxJD, m_mean, JD );
+    }
+    //
+   }
+
+   // if there are many breaks
+   if ( n_breaks > 1 ) {
+    //
+    fit_n= 0;
+    for ( i= 0; i < Nobs; i++ ) {
+     if ( float_JD[i] <= breaks[0] ) {
+      fit_jd[fit_n]= float_JD[i];
+      fit_mag[fit_n]= mag[i];
+      fit_mag_err[fit_n]= mag_err[i];
+      fit_n++;
+     }
+    }
+    if ( jump_instead_of_break == 0 ) {
+     if ( plot_trend_type == 1 ) {
+      // Linear trend
+      fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+      remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, minJD, breaks[0], m_mean, JD );
+     } else {
+      // Parabolic trend
+      fit_parabolic_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A_parabolic, &B_parabolic, &C_parabolic, &mean_jd, &mean_mag );
+      remove_parabolic_trend( float_JD, mag, Nobs, A_parabolic, B_parabolic, C_parabolic, mean_jd, mean_mag - m_mean, minJD, breaks[0], m_mean, JD );
+     }
+    } else {
+     fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+     remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, minJD, breaks[0], m_mean, JD );
+    }
+    //
+    //
+    for ( j= 1; j < n_breaks; j++ ) {
+     fit_n= 0;
+     for ( i= 0; i < Nobs; i++ ) {
+      if ( float_JD[i] > breaks[j - 1] && float_JD[i] < breaks[j] ) {
+       fit_jd[fit_n]= float_JD[i];
+       fit_mag[fit_n]= mag[i];
+       fit_mag_err[fit_n]= mag_err[i];
+       fit_n++;
+      }
+     }
+     if ( jump_instead_of_break == 0 ) {
+      if ( plot_trend_type == 1 ) {
+       // Linear trend
+       fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+       remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, breaks[j - 1], breaks[j], m_mean, JD );
+      } else {
+       // Parabolic trend
+       fit_parabolic_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A_parabolic, &B_parabolic, &C_parabolic, &mean_jd, &mean_mag );
+       remove_parabolic_trend( float_JD, mag, Nobs, A_parabolic, B_parabolic, C_parabolic, mean_jd, mean_mag - m_mean, breaks[j - 1], breaks[j], m_mean, JD );
+      }
+     } else {
+      fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+      remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, breaks[j - 1], breaks[j], m_mean, JD );
+     }
+    }
+    //
+    //
+    fit_n= 0;
+    for ( i= 0; i < Nobs; i++ ) {
+     if ( float_JD[i] > breaks[n_breaks - 1] ) {
+      fit_jd[fit_n]= float_JD[i];
+      fit_mag[fit_n]= mag[i];
+      fit_mag_err[fit_n]= mag_err[i];
+      fit_n++;
+     }
+    }
+    if ( jump_instead_of_break == 0 ) {
+     if ( plot_trend_type == 1 ) {
+      // Linear trend
+      fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+      remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, breaks[n_breaks - 1], maxJD, m_mean, JD );
+     } else {
+      // Parabolic trend
+      fit_parabolic_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A_parabolic, &B_parabolic, &C_parabolic, &mean_jd, &mean_mag );
+      remove_parabolic_trend( float_JD, mag, Nobs, A_parabolic, B_parabolic, C_parabolic, mean_jd, mean_mag - m_mean, breaks[n_breaks - 1], maxJD, m_mean, JD );
+     }
+    } else {
+     fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
+     remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, breaks[n_breaks - 1], maxJD, m_mean, JD );
+    }
    }
 
    fprintf( stderr, "Completed writing the trend-subtraction log file \x1B[34;47m vast_lc_remove_linear_trend.log \x1B[33;00m\n\n" );

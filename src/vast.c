@@ -2142,9 +2142,9 @@ int main( int argc, char **argv ) {
  double flux_adu, flux_adu_err, position_x_pix, position_y_pix, mag, sigma_mag;
 
  struct PixCoordinateTransformation *struct_pixel_coordinate_transformation= NULL;
- 
+
  int number_of_lines_reference_image_cat, number_of_lines_current_image_cat;
- 
+
  struct Star *STAR1= NULL, *STAR2= NULL, *STAR3= NULL; // STAR1 - structure with all stars we can match
                                                        //         new stars are added to STAR1
                                                        // STAR2 - structure with stars on a current image
@@ -3767,7 +3767,7 @@ int main( int argc, char **argv ) {
 
  counter_rejected_bad_psf_fit= 0; // just in case
  // if( param_P==1 )filter_out_bad_psf_fits_from_catalog(sextractor_catalog,&counter_rejected_bad_psf_fit);
- 
+
  // Count lines in the reference image catalog, so we know how much memory to allocate
  number_of_lines_reference_image_cat= count_lines_in_ASCII_file( sextractor_catalog );
  if ( 0 == number_of_lines_reference_image_cat ) {
@@ -3775,7 +3775,7 @@ int main( int argc, char **argv ) {
   return EXIT_FAILURE;
  }
  //
-  
+
  file= fopen( sextractor_catalog, "r" );
  if ( file == NULL ) {
   fprintf( stderr, "Can't open file %s\n", sextractor_catalog );
@@ -3795,7 +3795,7 @@ int main( int argc, char **argv ) {
   vast_report_memory_error();
   return EXIT_FAILURE;
  }
- //malloc_size= MAX_NUMBER_OF_STARS * sizeof( struct Star );
+ // malloc_size= MAX_NUMBER_OF_STARS * sizeof( struct Star );
  malloc_size= number_of_lines_reference_image_cat * sizeof( struct Star );
  if ( malloc_size <= 0 ) {
   fprintf( stderr, "ERROR013 - trying to allocate zero or negative number of bytes!\n" );
@@ -4324,11 +4324,11 @@ int main( int argc, char **argv ) {
   ptr_struct_Obs[obs_in_RAM - 1].Y= (double)STAR1[i].y_frame;
   ptr_struct_Obs[obs_in_RAM - 1].APER= (float)aperture;
 
-  //strncpy( ptr_struct_Obs[obs_in_RAM - 1].filename, input_images[0], FILENAME_LENGTH );
-  //ptr_struct_Obs[obs_in_RAM - 1].filename[FILENAME_LENGTH - 1]= '\0'; // just in case
-  //strncpy( ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve, str_with_fits_keywords_to_capture_from_input_images[0], FITS_KEYWORDS_IN_LC_LENGTH );
-  //ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve[FITS_KEYWORDS_IN_LC_LENGTH - 1]= '\0'; // just in case
-  // Just store pointers to the existing strings
+  // strncpy( ptr_struct_Obs[obs_in_RAM - 1].filename, input_images[0], FILENAME_LENGTH );
+  // ptr_struct_Obs[obs_in_RAM - 1].filename[FILENAME_LENGTH - 1]= '\0'; // just in case
+  // strncpy( ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve, str_with_fits_keywords_to_capture_from_input_images[0], FITS_KEYWORDS_IN_LC_LENGTH );
+  // ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve[FITS_KEYWORDS_IN_LC_LENGTH - 1]= '\0'; // just in case
+  //  Just store pointers to the existing strings
   ptr_struct_Obs[obs_in_RAM - 1].filename= input_images[0];
   ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve= str_with_fits_keywords_to_capture_from_input_images[0];
 
@@ -4398,7 +4398,7 @@ int main( int argc, char **argv ) {
    // WARNING!!! Hardcoded aperture limits here!
    if ( aperture < BELIEVABLE_APERTURE_MAX_PIX && aperture > BELIEVABLE_APERTURE_MIN_PIX ) {
     // STAR2 gets allocated in this block...
-    
+
     //
     // Make sure we record the largest image size
     //
@@ -4415,11 +4415,11 @@ int main( int argc, char **argv ) {
      fprintf( stderr, "DEBUG MSG: Read_sex_cat() - " );
     /* Read_sex_cat2 */
     number_of_lines_current_image_cat= count_lines_in_ASCII_file( sextractor_catalog );
-    if ( number_of_lines_current_image_cat<= 0 ) {
+    if ( number_of_lines_current_image_cat <= 0 ) {
      fprintf( stderr, "ERROR: %d lines in the file %s\n", number_of_lines_current_image_cat, sextractor_catalog );
      return EXIT_FAILURE;
     }
-    //malloc_size= MAX_NUMBER_OF_STARS * sizeof( struct Star );
+    // malloc_size= MAX_NUMBER_OF_STARS * sizeof( struct Star );
     malloc_size= number_of_lines_current_image_cat * sizeof( struct Star );
     if ( malloc_size <= 0 ) {
      fprintf( stderr, "ERROR017 - trying to allocate zero or negative number of bytes!\n" );
@@ -5986,11 +5986,11 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
        return EXIT_FAILURE;
       }
 
-      //strncpy( ptr_struct_Obs[obs_in_RAM - 1].filename, input_images[n], FILENAME_LENGTH );
-      //ptr_struct_Obs[obs_in_RAM - 1].filename[FILENAME_LENGTH - 1]= '\0'; // just in case
-      //strncpy( ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve, str_with_fits_keywords_to_capture_from_input_images[n], FITS_KEYWORDS_IN_LC_LENGTH );
-      //ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve[FITS_KEYWORDS_IN_LC_LENGTH - 1]= '\0'; // just in case
-      // Just store pointers to the existing strings
+      // strncpy( ptr_struct_Obs[obs_in_RAM - 1].filename, input_images[n], FILENAME_LENGTH );
+      // ptr_struct_Obs[obs_in_RAM - 1].filename[FILENAME_LENGTH - 1]= '\0'; // just in case
+      // strncpy( ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve, str_with_fits_keywords_to_capture_from_input_images[n], FITS_KEYWORDS_IN_LC_LENGTH );
+      // ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve[FITS_KEYWORDS_IN_LC_LENGTH - 1]= '\0'; // just in case
+      //  Just store pointers to the existing strings
       ptr_struct_Obs[obs_in_RAM - 1].filename= input_images[n];
       ptr_struct_Obs[obs_in_RAM - 1].fits_header_keywords_to_be_recorded_in_lightcurve= str_with_fits_keywords_to_capture_from_input_images[n];
 
@@ -6251,25 +6251,25 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  //
 
  free( X1 );
- //fprintf( stderr, "1 " );
+ // fprintf( stderr, "1 " );
  free( Y1 );
- //fprintf( stderr, "2 " );
+ // fprintf( stderr, "2 " );
  free( X2 );
- //fprintf( stderr, "3 " );
+ // fprintf( stderr, "3 " );
  free( Y2 );
- //fprintf( stderr, "4 " );
+ // fprintf( stderr, "4 " );
 
  free( bad_stars_X );
- //fprintf( stderr, "5 " );
+ // fprintf( stderr, "5 " );
  free( bad_stars_Y );
- //fprintf( stderr, "6 " );
+ // fprintf( stderr, "6 " );
 
  free( manually_selected_comparison_stars_X );
- //fprintf( stderr, "7 " );
+ // fprintf( stderr, "7 " );
  free( manually_selected_comparison_stars_Y );
- //fprintf( stderr, "8 " );
+ // fprintf( stderr, "8 " );
  free( manually_selected_comparison_stars_catalog_mag );
- //fprintf( stderr, "9 " );
+ // fprintf( stderr, "9 " );
 
  //// Moved up here
  if ( debug != 0 ) {
@@ -6279,7 +6279,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: freeing coordinate arrays\n" );
  }
- //fprintf( stderr, "10 " );
+ // fprintf( stderr, "10 " );
  for ( coordinate_array_index= coordinate_array_counter; coordinate_array_index--; ) {
   free( coordinate_array_x[coordinate_array_index] );
   free( coordinate_array_y[coordinate_array_index] );
@@ -6287,27 +6287,27 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: free(coordinate_array_x);\n" );
  }
- //fprintf( stderr, "11 " );
+ // fprintf( stderr, "11 " );
  free( coordinate_array_x );
  if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: free(coordinate_array_y);\n" );
  }
- //fprintf( stderr, "12 " );
+ // fprintf( stderr, "12 " );
  free( coordinate_array_y );
  if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: free(star_numbers_for_coordinate_arrays);\n" );
  }
- //fprintf( stderr, "13 " );
+ // fprintf( stderr, "13 " );
  free( star_numbers_for_coordinate_arrays );
  if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: free(number_of_coordinate_measurements_for_star);\n" );
  }
- //fprintf( stderr, "14 " );
+ // fprintf( stderr, "14 " );
  free( number_of_coordinate_measurements_for_star );
  if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: for(n = 0; n < Num; n++)free(input_images[n]);\n" );
  }
- //fprintf( stderr, "15 " );
+ // fprintf( stderr, "15 " );
  /*
  // moved down so Observations can point to these arrays
  for ( n= Num; n--; ) {
@@ -6328,9 +6328,9 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: Delete_PixCoordinateTransformation(struct_pixel_coordinate_transformation);\n" );
  }
- //fprintf( stderr, "19 " );
+ // fprintf( stderr, "19 " );
  Delete_PixCoordinateTransformation( struct_pixel_coordinate_transformation );
- //fprintf( stderr, "20\n" );
+ // fprintf( stderr, "20\n" );
  ////
 
  //
@@ -6445,15 +6445,14 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: free(input_images);\n" );
  }
- //fprintf( stderr, "16 " );
+ // fprintf( stderr, "16 " );
  free( input_images );
- //fprintf( stderr, "17 " );
+ // fprintf( stderr, "17 " );
  for ( n= Num; n--; ) {
   free( str_with_fits_keywords_to_capture_from_input_images[n] );
  }
- //fprintf( stderr, "18 " );
+ // fprintf( stderr, "18 " );
  free( str_with_fits_keywords_to_capture_from_input_images );
-
 
  // Dump STAR1 structure to a log file
  vast_list_of_all_stars_log= fopen( "vast_list_of_all_stars.log", "w" );

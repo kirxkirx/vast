@@ -51,6 +51,9 @@
 	variable MPC_CODE. If it is set, the scripts will compute the apparent positions for the observatory with 
 	the specified MPC code instead of the geocenter.
 	* Reduced the memory footprint of './vast'.
+	* The lightcurve viewer './lc' can now subtract a parabolic (2nd order polynomial) fit from a lightcurve:
+	use '2' keyboard key. As with the linear ('1' key) and median-value ('0' key) subtraction, you may use 'B' key
+	to set break points between the lightcurve segments that should be fit separately.
 12 Dec 2023: vast-1.0rc87:
 	* Changed the deprecated VizieR vizier.u-strasbg.fr domain to vizier.cds.unistra.fr
 	VaST will now always use the CDS VizieR, and will not try to use mirrors as they fail often.
