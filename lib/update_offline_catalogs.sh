@@ -226,13 +226,6 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
  # check if the file is there at all
  if [ ! -s "$FILE_TO_UPDATE" ];then
   echo "There is no file $FILE_TO_UPDATE or it is empty" 
-  # I don't want any special treatment for asassnv
-  ## Always update only lib/catalogs/asassnv.csv if it does not exist
-  #if [ "$FILE_TO_UPDATE" == "lib/catalogs/asassnv.csv" ] || [ $DOWNLOAD_EVERYTHING -eq 1 ] ;then
-  # NEED_TO_UPDATE_THE_FILE=1
-  #else
-  # continue
-  #fi
   if [ $DOWNLOAD_EVERYTHING -eq 1 ] ;then
    NEED_TO_UPDATE_THE_FILE=1
   else
@@ -282,7 +275,7 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
   if [ "$FILE_TO_UPDATE" == "ObsCodes.html" ];then
    TMP_OUTPUT="ObsCodes.html_new"
    # curl https://www.minorplanetcenter.net/iau/lists/ObsCodes.html > ObsCodes.html
-   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT https://www.minorplanetcenter.net/iau/lists/ObsCodes.html"
+   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT https://www.minorplanetcenter.net/iau/lists/ObsCodes.html || curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT http://scan.sai.msu.ru/~kirx/vast_catalogs/ObsCodes.html"
    CURL_LOCAL_COMMAND="$CURL_COMMAND"
    UNPACK_COMMAND="ls $TMP_OUTPUT"
   fi

@@ -38,12 +38,19 @@ $MSG
 $DEBUG_OUTPUT
 
 " > vast_test_email_message.log
- curl --silent --show-error 'http://scan.sai.msu.ru/vast/vasttestreport.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode message@vast_test_email_message.log --data-urlencode 'submit=submit'
- if [ $? -eq 0 ];then
+ CURL_OUTPUT=$(curl --silent --show-error 'http://scan.sai.msu.ru/vast/vasttestreport.php' --data-urlencode "name=$NAME running $SCRIPTNAME" --data-urlencode message@vast_test_email_message.log --data-urlencode 'submit=submit' 2>&1)
+ if [ $? -ne 0 ];then
+  echo "There was a problem sending the test report: non-zero curl exit code"
+ elif [ -z "$CURL_OUTPUT" ];then
+  echo "There was a problem sending the test report: empty curl output"
+ elif echo "$CURL_OUTPUT" | grep 'Thanks for the submission!' ;then
   echo "The test report was sent successfully"
  else
-  echo "There was a problem sending the test report"
+  echo "There was a problem sending the test report: unexpected reply from the server"
  fi
+ 
+ echo "Anyway, here is the report:"
+ cat vast_test_email_message.log
 }
 
 function fail_early() {
@@ -1027,7 +1034,7 @@ if [ $? -ne 0 ];then
  DEBUG_OUTPUT="$DEBUG_OUTPUT                              
 ###### STANDALONEDBSCRIPT__LOCAL_CAT_UPDATE ######
 $GREP_RESULT"
- fail_early "offline catalog update failed"
+ fail_early "offline catalog update failed: $GREP_RESULT"
 fi
 if [ -f update_offline_catalogs.out ];then
  rm -f update_offline_catalogs.out
