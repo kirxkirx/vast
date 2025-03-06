@@ -190,7 +190,7 @@ fi
 # The older version of curl use a version of TLS protocol that may not be supported by modern web servers,
 # so the connection may fail even before the certificate exchange when the --insecure option will take effect.
 # Use plain HTTP if curl is old.
-if [[ $(check_if_curl_is_too_old_to_attempt_HTTPS) == true ]]; then
+if [[ $(check_if_curl_is_too_old_to_attempt_HTTPS) == false ]]; then
  # curl is new enough to attempt HTTPS
 
  # Try to get the country code
@@ -202,8 +202,8 @@ if [[ $(check_if_curl_is_too_old_to_attempt_HTTPS) == true ]]; then
  
  if [ "$COUNTRY_CODE" == "RU" ];then
   #LOCAL_SERVER="http://scan.sai.msu.ru/~kirx/vast_catalogs"
-  # scan.sai.msu.ru is temporary down
-  LOCAL_SERVER="https://kirx.net/~kirx/vast_catalogs"
+  LOCAL_SERVER="https://scan.sai.msu.ru/~kirx/vast_catalogs"
+  #LOCAL_SERVER="https://kirx.net/~kirx/vast_catalogs"
  else
   LOCAL_SERVER="https://kirx.net/~kirx/vast_catalogs"
  fi
