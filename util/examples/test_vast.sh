@@ -1023,10 +1023,11 @@ lib/update_offline_catalogs.sh all &> update_offline_catalogs.out
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT__LOCAL_CAT_UPDATE"
- GREP_RESULT=`cat update_offline_catalogs.out`
+ GREP_RESULT=$(cat update_offline_catalogs.out)
  DEBUG_OUTPUT="$DEBUG_OUTPUT                              
 ###### STANDALONEDBSCRIPT__LOCAL_CAT_UPDATE ######
 $GREP_RESULT"
+ fail_early "offline catalog update failed"
 fi
 if [ -f update_offline_catalogs.out ];then
  rm -f update_offline_catalogs.out

@@ -213,7 +213,7 @@ void help_msg( const char *progname, int exit_code ) {
  printf( "  -o or --photocurve equivalent to '-t 3' [OPTION ONLY FOR BACKWARD COMPATIBILITY] use formulas (1) and (3) from Bacher et al. (2005, MNRAS, 362, 542) for \n" );
  printf( "                     magnitude calibration. Useful for photographic data\n" );
  printf( "  -P or --PSF        PSF photometry mode with SExtractor and PSFEx\n" );
- printf( "  -r or --norotation assume the input images are not rotated by more than 3 deg. w.r.t. the first (reference) one\n" );
+ printf( "  -r or --norotation assume the input images are not rotated by more than %.1lf deg. w.r.t. the first (reference) one\n", MAX_NOROTATION_ANGLE_RAD * 180.0 / M_PI );
  printf( "  -l or --nodiscardell     do NOT discard images with elliptical stars (bad tracking)\n" );
  printf( "  -e or --failsafe   FAILSAFE mode. Only stars detected on the reference frame will be processed\n" );
  printf( "  -u or --UTC        always assume UTC time system, do not perform conversion to TT\n" );

@@ -66,20 +66,44 @@ get_tycho2_from_scan_with_curl() {
 }
 
 
+## sort -V is not portable
+#function check_if_curl_is_too_old_to_attempt_HTTPS() {
+#    # Get the curl version
+#    curl_version=$(curl --version | head -n 1 | awk '{print $2}')
+#
+#    # Minimum required version: 7.34.0
+#    required_version="7.34.0"
+#
+#    # Compare versions
+#    if [[ $(printf '%s\n' "$required_version" "$curl_version" | sort -V | head -n 1) == "$required_version" ]]; then
+#        echo true
+#    else
+#        echo false
+#    fi
+#}
+
 function check_if_curl_is_too_old_to_attempt_HTTPS() {
     # Get the curl version
     curl_version=$(curl --version | head -n 1 | awk '{print $2}')
-
-    # Minimum required version: 7.34.0
-    required_version="7.34.0"
-
-    # Compare versions
-    if [[ $(printf '%s\n' "$required_version" "$curl_version" | sort -V | head -n 1) == "$required_version" ]]; then
-        echo true
-    else
-        echo false
-    fi
+    
+    # Use awk to compare versions without relying on sort -V
+    curl_too_old=$(echo "$curl_version" | awk -F. '
+        BEGIN { min_maj=7; min_min=34; min_patch=0; result="false" }
+        {
+            maj = $1 + 0;
+            min = $2 + 0;
+            patch = $3 + 0;
+            
+            if (maj < min_maj) { result="true" }
+            else if (maj == min_maj && min < min_min) { result="true" }
+            else if (maj == min_maj && min == min_min && patch < min_patch) { result="true" }
+        }
+        END { print result }
+    ')
+    
+    echo $curl_too_old
 }
+
 
 function vastrealpath() {
   # On Linux, just go for the fastest option which is 'readlink -f'
