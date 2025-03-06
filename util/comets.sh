@@ -13,10 +13,6 @@ if [ -z "$MPC_CODE" ];then
  # Default MPC code is 500 - geocenter
  MPC_CODE=500
 fi
-# Check if MPC_CODE contains '@'
-if [[ "$MPC_CODE" != *@* ]]; then
- MPC_CODE="${MPC_CODE}@399"
-fi
 
 isFloat() {
     local num
@@ -56,12 +52,17 @@ command -v python3 &>/dev/null && \
 python3 -c "import skyfield; print(skyfield.__version__)" &>/dev/null && \
 python3 -c "import numpy; print(numpy.__version__)" &>/dev/null && \
 python3 -c "import pandas; print(pandas.__version__)" &>/dev/null && \
-python3 util/comet_finder/main.py calc -qd $JD
+if [ -n "$MPC_CODE" ] && grep --quiet "$MPC_CODE " ObsCodes.html ;then
+ COMET_FINDER_OBSERVATORY_CODE_ARGUMENT="-observatory $MPC_CODE"
+else
+ COMET_FINDER_OBSERVATORY_CODE_ARGUMENT=""
+fi
+python3 util/comet_finder/main.py calc -qd $JD $COMET_FINDER_OBSERVATORY_CODE_ARGUMENT
 if [ $? -eq 0 ]; then
-  echo "Positions of bright comets computed with util/comet_finder/main.py for JD(UT)$JD" > comets_header.txt
+  echo "Positions of bright comets computed with util/comet_finder/main.py for JD(UT)$JD $COMET_FINDER_OBSERVATORY_CODE_ARGUMENT" > comets_header.txt
   exit 0
 fi
-echo "Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets and http://aerith.net/comet/weekly/current.html ) from JPL HORIZONS for JD(UT)$JD" > comets_header.txt
+echo "Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets and http://aerith.net/comet/weekly/current.html ) from JPL HORIZONS for JD(UT)$JD at $MPC_CODE" > comets_header.txt
 
 # Get a list of comets from Gideon van Buitenen's page
 DATA=$(curl $VAST_CURL_PROXY --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 1 --silent --show-error --insecure 'https://astro.vanbuitenen.nl/comets')
@@ -92,6 +93,11 @@ LIST_OF_COMET_FULL_NAMES="$(echo "$LIST_OF_COMET_FULL_NAMES_from_vanBuitenen_and
 if [ -z "$LIST_OF_COMET_FULL_NAMES" ];then
  echo "ERROR in $0 getting a list of bright comets"
  exit 1
+fi
+
+# Check if MPC_CODE contains '@' as needed for JPL HORIZONS
+if [[ "$MPC_CODE" != *@* ]]; then
+ MPC_CODE="${MPC_CODE}@399"
 fi
 
 SUCCESSFULLY_CONECTED_TO_JPL_HORIZONS_COUNTER=0
