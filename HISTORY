@@ -54,6 +54,18 @@
 	* The lightcurve viewer './lc' can now subtract a parabolic (2nd order polynomial) fit from a lightcurve:
 	use '2' keyboard key. As with the linear ('1' key) and median-value ('0' key) subtraction, you may use 'B' key
 	to set break points between the lightcurve segments that should be fit separately.
+	* The lightcurve viewer './lc' can now subtract a median magnitude from the lightcurve ('O' key) making 
+	the lightcurve zero-centered. This may be useful for preparing heterogeneous time-series photometry (obtained 
+	in various filters by various observers) to be combined for a joint period analysis. The workflow may look 
+	something like: 
+	1) load a lightcurve from observer A by running './lc observerA.txt';
+	2) add breaks ('B' key) and fit trends ('1' or '2') subtracting them ('-' key) if necessary;
+	3) remove the median magnitude from the detrended lightcurve ('O' key);
+	4) save the lightcurve file ('W key');
+	5) repeat the procedure with observers B and C;
+	6) combined the detrended median-subtracted lightcurves into a single file sorting it
+	'cat observerA_edit.txt observerB_edit.txt observerC_edit.txt | sort -n > combined_lightcurve.txt'
+	7) load 'combined_lightcurve.txt' to your favorite period search tool, for example https://scan.sai.msu.ru/lk/
 12 Dec 2023: vast-1.0rc87:
 	* Changed the deprecated VizieR vizier.u-strasbg.fr domain to vizier.cds.unistra.fr
 	VaST will now always use the CDS VizieR, and will not try to use mirrors as they fail often.

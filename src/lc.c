@@ -54,6 +54,7 @@ void print_help() {
  fprintf( stderr, "  '0' - fix linear trend inclination to 0 (on/off). Useful for correcting jumps in a lightcurve.\n" );
  fprintf( stderr, "  'B' - set a break point for a trend\n" );
  fprintf( stderr, "  '-' - subtract trend from the lightcurve\n" );
+ fprintf( stderr, "  'O' - remove median magnitude to zero-center the lightcurve\n" );
  fprintf( stderr, "  'W' - write edited lightcurve to a data file (will be in the same format as input file)\n" );
  fprintf( stderr, "  'K' - time of minimum determination using KvW method. You'll need to specify the eclipse duration with two clicks.\n" );
  fprintf( stderr, "  \033[0;36m'U'\033[00m - Try to \033[0;36midentify the star\033[00m with USNO-B1.0 and search GCVS, Simbad, VSX\n" );
@@ -63,6 +64,37 @@ void print_help() {
  fprintf( stderr, "\n" );
  return;
 }
+
+/*
+void print_help() {
+ fprintf( stderr, "\n" );
+ fprintf( stderr, "  --*** HOW TO USE THE LIGHTCURVE PLOTTER ***--\n" );
+ fprintf( stderr, "\n" );
+ fprintf( stderr, "  'H' - display this help message\n" );
+ fprintf( stderr, "  right mouse click - exit\n" );
+ fprintf( stderr, "  left mouse click - display image corresponding to the data point closest to the cursor (only works if the lightcurve is in VaST format)\n" );
+ fprintf( stderr, "  'Z' + draw a rectangle to zoom in\n" );
+ fprintf( stderr, "  'D' or 'Z'+'Z' - default zoom\n" );
+ fprintf( stderr, "  'E' - display error bars (on/off)\n" );
+ fprintf( stderr, "  'S' - save lightcurve to .ps file\n" );
+ fprintf( stderr, "  'N' - save lightcurve to .png file (if compiled with libpng support)\n" );
+ fprintf( stderr, "  'T' - terminate a single point\n" );
+ fprintf( stderr, "  'C' + draw a rectangle - remove many point\n" );
+ fprintf( stderr, "  '1' - display linear trend fit to the lightcurve (on/off)\n" );
+ fprintf( stderr, "  '2' - display parabolic trend fit to the lightcurve (on/off)\n" );
+ fprintf( stderr, "  '0' - fix linear trend inclination to 0 (on/off). Useful for correcting jumps in a lightcurve.\n" );
+ fprintf( stderr, "  'B' - set a break point for a trend\n" );
+ fprintf( stderr, "  '-' - subtract trend from the lightcurve\n" );
+ fprintf( stderr, "  'W' - write edited lightcurve to a data file (will be in the same format as input file)\n" );
+ fprintf( stderr, "  'K' - time of minimum determination using KvW method. You'll need to specify the eclipse duration with two clicks.\n" );
+ fprintf( stderr, "  \033[0;36m'U'\033[00m - Try to \033[0;36midentify the star\033[00m with USNO-B1.0 and search GCVS, Simbad, VSX\n" );
+ fprintf( stderr, "  'F' - fast identification that outputs just the variable star name with no further details.\n" );
+ fprintf( stderr, "  \033[0;36m'L'\033[00m - Start web-based \033[0;36mperiod search tool\033[00m\n" );
+ fprintf( stderr, "  'Q' - Start online lighcurve classifier (http://scan.sai.msu.ru/wwwupsilon/)\n" );
+ fprintf( stderr, "\n" );
+ return;
+}
+*/
 
 /*
 void print_help() {
@@ -145,8 +177,6 @@ void append_edit_suffix_to_lightcurve_filename( char *lightcurvefilename ) {
  return;
 }
 */
-
-// #include <string.h>
 
 void create_badpoints_filename( const char *input_filename, char *output_filename ) {
  // Copy the input filename to the output buffer
@@ -1486,6 +1516,93 @@ int get_star_number_from_name( char *output_str, char *input_str ) {
  return output_star_number;
 }
 
+void remove_median_magnitude( float *mag, int N, double mag_zeropoint_for_log, double *JD_double_array_for_log ) {
+ FILE *vast_lc_remove_median_magnitude_logfile;
+ int i;
+ float *sorted_mag;
+ float median_mag;
+ float *corrected_mag;
+ float E1, E2, E3, E4;
+
+ if ( N == 0 ) {
+  return;
+ }
+
+ if ( N <= 0 ) {
+  fprintf( stderr, "ERROR: Trying allocate zero or negative number of bytes (remove_median_magnitude)\n" );
+  exit( EXIT_FAILURE );
+ }
+
+ sorted_mag= malloc( N * sizeof( float ) );
+ if ( sorted_mag == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for sorted_mag\n" );
+  exit( EXIT_FAILURE );
+ }
+
+ corrected_mag= malloc( N * sizeof( float ) );
+ if ( corrected_mag == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for corrected_mag\n" );
+  free( sorted_mag );
+  exit( EXIT_FAILURE );
+ }
+
+ // Copy magnitudes for sorting
+ for ( i= 0; i < N; i++ ) {
+  sorted_mag[i]= mag[i];
+ }
+
+ // Sort magnitudes and calculate median
+ gsl_sort_float( sorted_mag, 1, N );
+ median_mag= gsl_stats_float_median_from_sorted_data( sorted_mag, 1, N );
+
+ fprintf( stderr, "Median magnitude: %.5f\n", median_mag );
+
+ // Check if log file exists, if yes, remove it
+ if ( 0 == unlink( "vast_lc_remove_median_magnitude.log" ) ) {
+  fprintf( stderr, "Rewriting the median-removal log file \x1B[34;47m vast_lc_remove_median_magnitude.log \x1B[33;00m\n\n" );
+ }
+
+ // Open log file
+ vast_lc_remove_median_magnitude_logfile= fopen( "vast_lc_remove_median_magnitude.log", "a" );
+ if ( vast_lc_remove_median_magnitude_logfile == NULL ) {
+  fprintf( stderr, "ERROR: Cannot open file vast_lc_remove_median_magnitude.log\n" );
+  free( sorted_mag );
+  free( corrected_mag );
+  exit( EXIT_FAILURE );
+ }
+
+ // Process magnitudes using similar approach as remove_linear_trend
+ for ( i= 0; i < N; i++ ) {
+  if ( mag[i] > 100.0 ) {
+   // If not magnitude but something linear
+   corrected_mag[i]= mag[i] - median_mag;
+  } else {
+   // Convert to flux, remove median, convert back
+   // This follows the same pattern as in remove_linear_trend
+   E1= powf( 10.0f, -0.4f * median_mag );
+   E2= powf( 10.0f, -0.4f * mag[i] );
+   E3= powf( 10.0f, -0.4f * 0.0f ); // Zero-centered
+   E4= powf( 10.0f, -0.4f * ( 2.5f * log10f( E1 / E2 ) ) );
+   corrected_mag[i]= 2.5f * log10f( E3 / E4 );
+  }
+
+  // Write to log
+  fprintf( vast_lc_remove_median_magnitude_logfile, "%.8lf %9.5f %9.5f %9.5f\n",
+           JD_double_array_for_log[i], corrected_mag[i], median_mag, mag[i] );
+
+  // Update the magnitude array
+  mag[i]= corrected_mag[i];
+ }
+
+ fclose( vast_lc_remove_median_magnitude_logfile );
+ fprintf( stderr, "The median magnitude removal log is added to \x1B[34;47m vast_lc_remove_median_magnitude.log \x1B[33;00m\n\n" );
+
+ free( sorted_mag );
+ free( corrected_mag );
+
+ return;
+}
+
 int find_closest( float x, float y, float *X, float *Y, int N, float new_X1, float new_X2, float new_Y1, float new_Y2 ) {
  float y_to_x_scaling_factor= fabsf( new_X2 - new_X1 ) / fabsf( new_Y2 - new_Y1 );
  int i;
@@ -2801,6 +2918,31 @@ int main( int argc, char **argv ) {
 
    n_breaks= 0; // reset the breaks counter
    fit_n= 0;    // reset this one too, just in case
+  }
+
+  // Inside the key handler for 'O' in the main loop
+  if ( curC == 'O' || curC == 'o' ) {
+   // Check if log file exists, if yes, remove it
+   if ( 0 == unlink( "vast_lc_remove_median_magnitude.log" ) ) {
+    fprintf( stderr, "Rewriting the median-removal log file \x1B[34;47m vast_lc_remove_median_magnitude.log \x1B[33;00m\n\n" );
+   }
+
+   remove_median_magnitude( mag, Nobs, m_mean, JD );
+   was_lightcurve_changed= 1; // note that lightcurve was changed
+
+   // Recalculate min and max magnitude after median subtraction
+   minmag= maxmag= mag[0];
+   for ( i= 1; i < Nobs; i++ ) {
+    minmag= MIN( minmag, mag[i] );
+    maxmag= MAX( maxmag, mag[i] );
+   }
+
+   // Reset plotting limits
+   new_Y1= maxmag + ( maxmag - minmag ) / 10;
+   new_Y2= minmag - ( maxmag - minmag ) / 10;
+
+   // Force redraw with new limits
+   change_limits_trigger= 1;
   }
 
   // terminate single data point
