@@ -27606,6 +27606,62 @@ if ! lib/put_two_sources_in_one_field $POSITION_AT_C32 $POSITION_AT_500 2>&1 | g
  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_PLANETS_C32_500_MISMATCH"
 fi
 
+# Test comets local and remote (if we can compute locally)
+if command -v python3 &>/dev/null && \
+ python3 -c "import skyfield" &>/dev/null && \
+ python3 -c "import numpy" &>/dev/null && \
+ python3 -c "import pandas" &>/dev/null; then
+ 
+ export MPC_CODE="C32"
+ export COMET_SH_LOCAL_OR_REMOTE="local"
+ POSITION_LOCAL_COMET_FINEDER=$(util/comets.sh 2460595.28063657 | grep '29P/Schwassmann-Wachmann' | head -n1 | awk '{print $1" "$2}')
+ if [ $? -ne 0 ] || [ -z "$POSITION_LOCAL_COMET_FINEDER" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_local_comets_computation_failed"
+ fi
+ 
+ EXPECTED_C32_POSITION_FROM_HORIZONS="09:54:29.38 +11:34:37.1"
+ if [ -n "$POSITION_LOCAL_COMET_FINEDER" ];then
+  # 0.0014 deg is 5 arcsec
+  if ! lib/put_two_sources_in_one_field $POSITION_LOCAL_COMET_FINEDER $EXPECTED_C32_POSITION_FROM_HORIZONS 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.0014 ? 0 : 1)}' ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_COMET_LOCAL_POSITION_MISMATCH_${POSITION_LOCAL_COMET_FINEDER// /_}_${EXPECTED_C32_POSITION_FROM_HORIZONS// /_}"
+  fi 
+ fi
+ 
+ 
+ export COMET_SH_LOCAL_OR_REMOTE="remote"
+ POSITION_REMOTE_JPL_HORIZONS=$(util/comets.sh 2460595.28063657 | grep '29P/Schwassmann-Wachmann' | head -n1 | awk '{print $1" "$2}')
+ if [ $? -ne 0 ] || [ -z "$POSITION_REMOTE_JPL_HORIZONS" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_remote_comets_computation_failed"
+ fi
+ 
+ if [ -n "$POSITION_REMOTE_JPL_HORIZONS" ];then
+  # 0.0014 deg is 5 arcsec
+  if ! lib/put_two_sources_in_one_field $POSITION_REMOTE_JPL_HORIZONS $EXPECTED_C32_POSITION_FROM_HORIZONS 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.0014 ? 0 : 1)}' ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_COMET_REMOTE_POSITION_MISMATCH_${POSITION_REMOTE_JPL_HORIZONS// /_}_${EXPECTED_C32_POSITION_FROM_HORIZONS// /_}"
+  fi 
+ fi
+
+
+ if [ -n "$POSITION_LOCAL_COMET_FINEDER" ] && [ -n "$POSITION_REMOTE_JPL_HORIZONS" ];then
+  # If both positions are there - try to compare them
+  # 0.0014 deg is 5 arcsec
+  if ! lib/put_two_sources_in_one_field $POSITION_LOCAL_COMET_FINEDER $POSITION_REMOTE_JPL_HORIZONS 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.0014 ? 0 : 1)}' ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_COMET_LOCAL_REMOTE_POSITION_MISMATCH_${POSITION_LOCAL_COMET_FINEDER// /_}_${POSITION_REMOTE_JPL_HORIZONS// /_}"
+  fi
+ fi # if [ -n "$POSITION_LOCAL_COMET_FINEDER" ] && [ -n "$POSITION_REMOTE_JPL_HORIZONS" ];then
+ 
+ unset COMET_SH_LOCAL_OR_REMOTE
+ unset MPC_CODE
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_SOLAR_SYSTEM_INFO_COMET_LOCAL_REMOTE_POSITION_noskyfield"
+fi
+
+
 for SOLAR_SYSTEM_INFO_FILE_TO_REMOVE in planets.txt moons.txt spacecraft.txt comets.txt ;do
  if [ -f "$SOLAR_SYSTEM_INFO_FILE_TO_REMOVE" ];then
   rm -f "$SOLAR_SYSTEM_INFO_FILE_TO_REMOVE"
@@ -27888,6 +27944,8 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  # Astropy comparison results (many target machines will not have astropy)
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_DATE2JDCONV_ASTROPY_noastropy/}"
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_DATE2JDCONV_ASTROPY_nopython3/}"
+ # local comet_finder needs skyfield and other python stuff
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_SOLAR_SYSTEM_INFO_COMET_LOCAL_REMOTE_POSITION_noskyfield/}"
  # libpng
  FAILED_TEST_CODES="${FAILED_TEST_CODES// LIBPNG_DISABLED/}"
  #

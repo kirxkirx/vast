@@ -47,22 +47,60 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
-# Run the comet search locally
-command -v python3 &>/dev/null && \
-python3 -c "import skyfield; print(skyfield.__version__)" &>/dev/null && \
-python3 -c "import numpy; print(numpy.__version__)" &>/dev/null && \
-python3 -c "import pandas; print(pandas.__version__)" &>/dev/null && \
-if [ -n "$MPC_CODE" ] && grep --quiet "$MPC_CODE " ObsCodes.html ;then
- COMET_FINDER_OBSERVATORY_CODE_ARGUMENT="-observatory $MPC_CODE"
-else
- COMET_FINDER_OBSERVATORY_CODE_ARGUMENT=""
+#if [ -z "$COMET_SH_LOCAL_OR_REMOTE" ] || [ "$COMET_SH_LOCAL_OR_REMOTE" != "remote" ];then
+# # Run the comet search locally
+# command -v python3 &>/dev/null && \
+# python3 -c "import skyfield; print(skyfield.__version__)" &>/dev/null && \
+# python3 -c "import numpy; print(numpy.__version__)" &>/dev/null && \
+# python3 -c "import pandas; print(pandas.__version__)" &>/dev/null && \
+# if [ -n "$MPC_CODE" ] && grep --quiet "$MPC_CODE " ObsCodes.html ;then
+#  COMET_FINDER_OBSERVATORY_CODE_ARGUMENT="-observatory $MPC_CODE"
+# else
+#  COMET_FINDER_OBSERVATORY_CODE_ARGUMENT=""
+# fi
+# python3 util/comet_finder/main.py calc -qd $JD $COMET_FINDER_OBSERVATORY_CODE_ARGUMENT
+# if [ $? -eq 0 ]; then
+#   echo "Positions of bright comets computed with util/comet_finder/main.py for JD(UT)$JD $COMET_FINDER_OBSERVATORY_CODE_ARGUMENT" > comets_header.txt
+#   cat comets_header.txt >&2
+#   exit 0
+# fi
+#fi
+#
+#if [ -n "$COMET_SH_LOCAL_OR_REMOTE" ] && [ "$COMET_SH_LOCAL_OR_REMOTE" = "local" ];then
+# echo "Local comet search failed!"
+# exit 1
+#fi
+
+# Run comet search locally unless explicitly set to "remote"
+if [ "$COMET_SH_LOCAL_OR_REMOTE" != "remote" ]; then
+ if command -v python3 &>/dev/null && \
+  python3 -c "import skyfield" &>/dev/null && \
+  python3 -c "import numpy" &>/dev/null && \
+  python3 -c "import pandas" &>/dev/null; then
+
+  if [ -n "$MPC_CODE" ] && grep -q "$MPC_CODE " ObsCodes.html; then
+   COMET_FINDER_OBSERVATORY_CODE_ARGUMENT="-observatory $MPC_CODE"
+  else
+   COMET_FINDER_OBSERVATORY_CODE_ARGUMENT=""
+  fi
+
+  python3 util/comet_finder/main.py calc -qd "$JD" $COMET_FINDER_OBSERVATORY_CODE_ARGUMENT
+  if [ $? -eq 0 ]; then
+   echo "Positions of bright comets computed with util/comet_finder/main.py for JD(UT)$JD $COMET_FINDER_OBSERVATORY_CODE_ARGUMENT" > comets_header.txt
+   cat comets_header.txt >&2
+   exit 0
+  fi
+ fi
 fi
-python3 util/comet_finder/main.py calc -qd $JD $COMET_FINDER_OBSERVATORY_CODE_ARGUMENT
-if [ $? -eq 0 ]; then
-  echo "Positions of bright comets computed with util/comet_finder/main.py for JD(UT)$JD $COMET_FINDER_OBSERVATORY_CODE_ARGUMENT" > comets_header.txt
-  exit 0
+
+# Explicitly fail if local comet search was required but unsuccessful
+if [ "$COMET_SH_LOCAL_OR_REMOTE" = "local" ]; then
+ echo "Local comet search failed!"
+ exit 1
 fi
+
 echo "Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets and http://aerith.net/comet/weekly/current.html ) from JPL HORIZONS for JD(UT)$JD at $MPC_CODE" > comets_header.txt
+cat comets_header.txt >&2
 
 # Get a list of comets from Gideon van Buitenen's page
 DATA=$(curl $VAST_CURL_PROXY --connect-timeout $CONNECTION_TIMEOUT_SEC --retry 1 --silent --show-error --insecure 'https://astro.vanbuitenen.nl/comets')
