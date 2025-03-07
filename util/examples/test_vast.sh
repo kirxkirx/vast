@@ -1255,7 +1255,10 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT018"
 fi
 
-util/search_databases_with_vizquery.sh 17.25656 47.30456 | grep --quiet -e 'ATO J017.2565+47.3045' -e 'ASASSN-V J010901.57+471816.4'
+# ATO J017.2565+47.3045 is the ATLAS catalog name
+# ASASSN-V J010901.57+471816.4 is the ASAS-SN catalog name
+# Gaia DR3 401287624918055680 is the VSX name
+util/search_databases_with_vizquery.sh 17.25656 47.30456 | grep --quiet -e 'ATO J017.2565+47.3045' -e 'ASASSN-V J010901.57+471816.4' -e 'Gaia DR3 401287624918055680'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT019"
@@ -1296,14 +1299,14 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_ATLASMULTICAND"
 fi
 
-### Test the local catalog search thing
+### Check this star is in the local copy of the ASASSN-V catalog (it should be)
 grep --quiet 'ASASSN-V J010901.57+471816.4' lib/catalogs/asassnv.csv
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT020csv"
 fi
-# Now find this variable using check_catalogs_offline
-lib/catalogs/check_catalogs_offline 17.25656 47.30456 | grep --quiet 'ASASSN-V J010901.57+471816.4'
+# Now find this variable using check_catalogs_offline (already in VSX, so the VSX name will come put instead of ASASSN-V)
+lib/catalogs/check_catalogs_offline 17.25656 47.30456 | grep --quiet -e 'ASASSN-V J010901.57+471816.4' -e 'Gaia DR3 401287624918055680'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT020"
@@ -1325,10 +1328,18 @@ fi
 
 # Multiple known variables within the search radius - unrelated OGLE one from VSX and the correct ASASSN-V
 # This test relies on the local catalog search!
+# Gaia DR3 4056173647026510464 is the WRONG answer
 util/search_databases_with_vizquery.sh 17:54:41.41077 -30:21:59.3417 | grep --quiet 'ASASSN-V J175441.41-302159.3'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_MULTCLOSEVAR"
+fi
+
+# Let's repeat the test above to make sure wear not getting the WRONG answer Gaia DR3 4056173647026510464
+util/search_databases_with_vizquery.sh 17:54:41.41077 -30:21:59.3417 | grep --quiet 'Gaia DR3 4056173647026510464'
+if [ $? -eq 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_MULTCLOSEVAR_THE_WRONG_ANSWER"
 fi
 
 # Make sure the script gives 'may be a known variable' suggestion from parsing VizieR catalog names
