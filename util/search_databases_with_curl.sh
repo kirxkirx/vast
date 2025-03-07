@@ -327,6 +327,12 @@ wait
 ###
 #cat vsx_page_content$$.html
 ##
+if [ ! -s vsx_page_content$$.html ] ;then 
+ # We didn't get VSX data, something is very wrong!
+ # Try connecting to vsx via the backup reverse proxy
+ $TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --silent --show-error --insecure --connect-timeout 10 --max-time 120 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=25&fieldunit=3&geometry=r&order=9&ql=1&filter[]=0,1,2" "http://kirx.net/vsx/index.php?view=results.submit1" 2> vsx_page_content$$.error > vsx_page_content$$.html 
+fi
+##
 if [ ! -s vsx_page_content$$.html ] ;then echo "!!! Network error: cannot connect to VSX !!!" ;fi
 DATABASE_RESULTS=$(grep '\<desig' vsx_page_content$$.html |awk -F\> '{print $3}')
 if [ "$DATABASE_RESULTS" != "" ];then
