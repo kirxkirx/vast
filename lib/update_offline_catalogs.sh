@@ -13,24 +13,7 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
-## Function to download Tycho2 dataset files
-#get_tycho2_from_scan_with_curl() {
-# local url="http://scan.sai.msu.ru/~kirx/data/tycho2/"
-# 
-# # Get the directory listing
-# listing=$(curl $VAST_CURL_PROXY -s "$url" | grep -o 'href="[^"]*"' | cut -d'"' -f2)
-# 
-# for item in $listing; do
-#  # Skip directory links
-#  [[ "$item" == */ ]] && continue
-#  # Check if file matches our patterns
-#  if [[ "$item" == "ReadMe" || "$item" == *.gz || "$item" == "robots.txt" ]]; then
-#   # Download file with continuation
-#   echo "Downloading: $item"
-#   curl $VAST_CURL_PROXY -C - -s --create-dirs -o "$item" "${url}${item}"
-#  fi
-# done
-#}
+# Function to download Tycho2 dataset files
 get_tycho2_from_scan_with_curl() {
     local url="http://scan.sai.msu.ru/~kirx/data/tycho2/"
     local max_retries=5
@@ -65,22 +48,6 @@ get_tycho2_from_scan_with_curl() {
     return 0
 }
 
-
-## sort -V is not portable
-#function check_if_curl_is_too_old_to_attempt_HTTPS() {
-#    # Get the curl version
-#    curl_version=$(curl --version | head -n 1 | awk '{print $2}')
-#
-#    # Minimum required version: 7.34.0
-#    required_version="7.34.0"
-#
-#    # Compare versions
-#    if [[ $(printf '%s\n' "$required_version" "$curl_version" | sort -V | head -n 1) == "$required_version" ]]; then
-#        echo true
-#    else
-#        echo false
-#    fi
-#}
 
 function check_if_curl_is_too_old_to_attempt_HTTPS() {
     # Get the curl version
@@ -275,8 +242,8 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
   if [ "$FILE_TO_UPDATE" == "ObsCodes.html" ];then
    TMP_OUTPUT="ObsCodes.html_new"
    # curl https://www.minorplanetcenter.net/iau/lists/ObsCodes.html > ObsCodes.html
-   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT https://www.minorplanetcenter.net/iau/lists/ObsCodes.html || curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT http://scan.sai.msu.ru/~kirx/vast_catalogs/ObsCodes.html"
-   CURL_LOCAL_COMMAND="$CURL_COMMAND"
+   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT https://www.minorplanetcenter.net/iau/lists/ObsCodes.html"
+   CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT http://scan.sai.msu.ru/~kirx/vast_catalogs/ObsCodes.html"
    UNPACK_COMMAND="ls $TMP_OUTPUT"
   fi
   if [ "$FILE_TO_UPDATE" == "astorb.dat" ];then
@@ -336,6 +303,7 @@ $PWD"
    fi
    #
   fi # if that failed
+  echo "TMP_OUTPUT=$TMP_OUTPUT"
   # The output of this ls run makes me nervous as on of the files does not exist
   #ls -lh $TMP_OUTPUT $TMP_OUTPUT.gz 
   # If we are still here, we downloaded the catalog, one way or the other
