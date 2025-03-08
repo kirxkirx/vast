@@ -410,12 +410,12 @@ if [ ! -f "$TYCHO_PATH/tyc2.dat.00" ];then
   ln -s $(vastrealpath ../tycho2) "$TYCHO_PATH"
  else
   #
-  echo "Tycho-2 catalog was not found at $TYCHO_PATH"
+  echo "Tycho-2 catalog was not found at $TYCHO_PATH -- will try to download it"
   if [ ! -d "$TYCHO_PATH" ];then
    mkdir "$TYCHO_PATH" || exit 1
   fi
   # Test if a path is a writable directory
-  if [ ! -d "$TYCHO_PATH" ] || [ -w "$TYCHO_PATH" ];then
+  if [ ! -d "$TYCHO_PATH" ] || [ ! -w "$TYCHO_PATH" ];then
    echo "ERROR in $0: $TYCHO_PATH is not a writable directory!"
    exit 1
   fi
