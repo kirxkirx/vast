@@ -188,7 +188,8 @@ cd "$VASTDIR" || exit 1
 
 for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;do
 
- echo "$0 is checking $FILE_TO_UPDATE"
+ #can't have output here as it goes straight to the transient candidates list
+ #echo "$0 is checking $FILE_TO_UPDATE"
 
  NEED_TO_UPDATE_THE_FILE=0
 
@@ -378,8 +379,9 @@ if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ ! -s "lib/catal
   echo "ERROR in $0 while downloading/unpacking the Bright Star Catalogue"
   exit 1
  fi
-else
- echo "The Bright Star Catalogue copy looks good"
+#can't have output here as it goes straight to the transient candidates list
+#else
+# echo "The Bright Star Catalogue copy looks good"
 fi
 
 # Check if there is a copy of Tycho-2
@@ -464,7 +466,8 @@ for i in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19; do
   exit 1
  fi
 done
-echo "Tycho-2 copy looks healthy"
+#can't have output here as it goes straight to the transient candidates list
+#echo "Tycho-2 copy looks healthy"
 # Just to be sure we are at the top level dir
 cd "$VASTDIR" || exit 1
 if [ ! -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
@@ -480,4 +483,5 @@ if [ ! -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
   exit 1
  fi
 fi
-echo "The Tycho-2 list of bright stars looks good"
+#can't have output here as it goes straight to the transient candidates list
+#echo "The Tycho-2 list of bright stars looks good"
