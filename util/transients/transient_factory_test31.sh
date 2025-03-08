@@ -283,7 +283,23 @@ function check_free_space() {
     local free_space_kb
 
     # Use 'df -k .' for portability across Linux, macOS, and FreeBSD
-    free_space_kb=$(df -k "$dir_to_check" | awk 'NR==2 {print $4}')
+    # May not work because if the volume name is long df will move the stats to the next line
+    #free_space_kb=$(df -k "$dir_to_check" | awk 'NR==2 {print $4}')
+    # Trying a workaround
+    free_space_kb=$(df -k "$dir_to_check" | awk '
+  NR==2 {if (NF >= 4) print $4; else line2=1}
+  NR==3 && line2==1 {print $4}
+')
+
+    if [ -z "$free_space_kb" ] ;then
+     echo "A problem in function check_free_space(): free_space_kb is empty!"
+     return 0
+    fi
+    
+    if [[ ! "$free_space_kb" =~ ^[0-9]+$ ]]; then
+     echo "A problem in function check_free_space(): $free_space_kb is not a valid integer!"
+     return 0
+    fi
 
     # Minimum required space in KB (600MB = 600 * 1024 KB)
     local required_space_kb_hardlimit=614400
@@ -295,6 +311,17 @@ function check_free_space() {
      if [[ "$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB" =~ ^[0-9]+$ ]] && [ "$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB" -gt "$required_space_kb_hardlimit" ]; then
       required_space_kb_softlimit="$WARN_ON_LOW_DISK_SPACE_SOFTLIMIT_KB"
      fi
+    fi
+    
+    if [ -z "$required_space_kb_softlimit" ] ;then
+     echo "A problem in function check_free_space(): required_space_kb_softlimit is empty!"
+     return 0
+    fi
+
+
+    if [ -z "$required_space_kb_hardlimit" ] ;then
+     echo "A problem in function check_free_space(): required_space_kb_hardlimit is empty!"
+     return 0
     fi
 
     
