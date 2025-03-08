@@ -184,10 +184,12 @@ export LOCAL_SERVER
 # Get current date from the system clock
 CURRENT_DATE_UNIXSEC=`date +%s`
 
-cd "$VASTDIR"
+cd "$VASTDIR" || exit 1
 
 for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs/asassnv.csv ;do
-#for FILE_TO_UPDATE in astorb.dat ;do
+
+ echo "$0 is checking $FILE_TO_UPDATE"
+
  NEED_TO_UPDATE_THE_FILE=0
 
  # check if the file is there at all
@@ -196,6 +198,7 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
   if [ $DOWNLOAD_EVERYTHING -eq 1 ] ;then
    NEED_TO_UPDATE_THE_FILE=1
   else
+   echo "No need to update $FILE_TO_UPDATE"
    continue
   fi 
   #
@@ -365,7 +368,6 @@ if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ ! -s "lib/catal
    fi
    # Make sure we have the proper format
    MAG=`echo "$MAG" | awk '{printf "%.2f", $1}'`
-   #TEST=`echo "$MAG > 4.0" | bc -ql`
    TEST=`echo "$MAG>4.0" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }'`   
    if [ $TEST -eq 1 ];then
     continue
@@ -373,27 +375,52 @@ if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ ! -s "lib/catal
    echo "${STR:75:2}:${STR:77:2}:${STR:79:4} ${STR:83:3}:${STR:86:2}:${STR:88:2}" 
   done > lib/catalogs/brightbright_star_catalog_radeconly.txt
  else
-  echo "ERROR downloading/unpacking the Bright Star Catalogue"
+  echo "ERROR in $0 while downloading/unpacking the Bright Star Catalogue"
+  exit 1
  fi
+else
+ echo "The Bright Star Catalogue copy looks good"
 fi
 
 # Check if there is a copy of Tycho-2
 TYCHO_PATH=lib/catalogs/tycho2
-if [ ! -f $TYCHO_PATH/tyc2.dat.00 ];then
+# Test for exotic Tycho-2 corruption scenarios
+# (I use the hardcoded path instead of TYCHO_PATH on purpose)
+#
+# Test if a path is a broken symbolic link
+if [ -L "lib/catalogs/tycho2" ] && [ ! -e "lib/catalogs/tycho2" ] ;then
+ rm -f "lib/catalogs/tycho2"
+fi
+# Test if a path is a file
+if [ -f "lib/catalogs/tycho2" ] ;then
+ rm -f "lib/catalogs/tycho2"
+fi
+# Test if a path is an empty directory
+if [ -d "lib/catalogs/tycho2" ] && [ -z "$(ls -A "lib/catalogs/tycho2")" ] ;then
+ rm -rf "lib/catalogs/tycho2"
+fi
+#
+if [ ! -f "$TYCHO_PATH/tyc2.dat.00" ];then
  echo "No local copy of Tycho-2 found (no $TYCHO_PATH/tyc2.dat.00)"
  # Check if there is a local copy of Tycho-2 in the top directory
  if [ -s ../tycho2/tyc2.dat.19 ];then
   echo "Found nonempty ../tycho2/tyc2.dat.19
   ln -s ../tycho2 $TYCHO_PATH"
   #ln -s `readlink -f ../tycho2` $TYCHO_PATH
-  ln -s `vastrealpath ../tycho2` $TYCHO_PATH
+  ln -s $(vastrealpath ../tycho2) "$TYCHO_PATH"
  else
   #
   echo "Tycho-2 catalog was not found at $TYCHO_PATH"
-  if [ ! -d $TYCHO_PATH ];then
-   mkdir $TYCHO_PATH
+  if [ ! -d "$TYCHO_PATH" ];then
+   mkdir "$TYCHO_PATH" || exit 1
   fi
-  cd $TYCHO_PATH 
+  # Test if a path is a writable directory
+  if [ ! -d "$TYCHO_PATH" ] || [ -w "$TYCHO_PATH" ];then
+   echo "ERROR in $0: $TYCHO_PATH is not a writable directory!"
+   exit 1
+  fi
+  #
+  cd "$TYCHO_PATH" || exit 1
   # remove any incomplete copy of Tycho-2
   for i in tyc2.dat.* ;do
    if [ -f "$i" ];then
@@ -417,15 +444,40 @@ if [ ! -f $TYCHO_PATH/tyc2.dat.00 ];then
     fi
    fi
    #
-   gunzip $i
+   gunzip "$i"
   done
-  cd $VASTDIR
+  cd "$VASTDIR" || exit 1
  fi # if [ -s ../tycho2/tyc2.dat.19 ];then 
 fi
-cd $VASTDIR
+# Check if Tycho-2 copy looks healthy
+for i in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19; do
+ if [ ! -f "$TYCHO_PATH"/tyc2.dat."$i" ];then
+  echo "ERROR in $0 while checking Tycho-2 copy: file $TYCHO_PATH/tyc2.dat.$i is not found"
+  exit 1
+ fi
+ if [ ! -s "$TYCHO_PATH"/tyc2.dat."$i" ];then
+  echo "ERROR in $0 while checking Tycho-2 copy: file $TYCHO_PATH/tyc2.dat.$i is empty"
+  exit 1
+ fi
+ if ! file "$TYCHO_PATH"/tyc2.dat."$i" | grep --quiet 'ASCII text' ;then
+  echo "ERROR in $0 while checking Tycho-2 copy: file $TYCHO_PATH/tyc2.dat.$i type is not 'ASCII text'"
+  exit 1
+ fi
+done
+echo "Tycho-2 copy looks healthy"
+# Just to be sure we are at the top level dir
+cd "$VASTDIR" || exit 1
 if [ ! -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
  # Create a list of stars brighter than mag 9.1 for filtering transient candidates
  # also in 
  lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search 9.1
+ if [ $? -ne 0 ];then
+  echo "ERROR in $0: non-zero exit code from running 'lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search 9.1'"
+  exit 1
+ fi
+ if [ ! -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
+  echo "ERROR in $0: lib/catalogs/list_of_bright_stars_from_tycho2.txt is empty"
+  exit 1
+ fi
 fi
-
+echo "The Tycho-2 list of bright stars looks good"
