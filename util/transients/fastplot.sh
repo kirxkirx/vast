@@ -255,7 +255,7 @@ More information about VaST may be found at http://scan.sai.msu.ru/vast/
 # copy raw images
 echo "Saving raw images from $RAW_SECOND_EPOCH_IMG_DIR to $OUTPUT_DIR/raw_new_FITS"
 check_directory_exists "$RAW_SECOND_EPOCH_IMG_DIR"
-RAW_FILES_TO_PLATESOLVE=$(ls "$RAW_SECOND_EPOCH_IMG_DIR" | grep -v '/fd_')
+RAW_FILES_TO_PLATESOLVE=$(ls "$RAW_SECOND_EPOCH_IMG_DIR" | grep -v '^fd_')
 N_RAW_FILES=$(echo "$RAW_FILES_TO_PLATESOLVE" | wc -l)
 if [ $N_RAW_FILES -gt 1 ];then
  mkdir "$OUTPUT_DIR"/raw_new_FITS
