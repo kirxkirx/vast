@@ -2278,7 +2278,7 @@ int main( int argc, char **argv ) {
    if ( n_breaks == 0 ) {
     if ( jump_instead_of_break == 0 ) {
      if ( plot_trend_type == 1 ) {
-      // Linear trend (existing code)
+      // Linear trend (old code)
       fit_linear_trend( float_JD, mag, mag_err, Nobs, &A, &B, &mean_jd, &mean_mag );
       plot_trend( float_JD, Nobs, 1, 0.0, A, B, mean_jd, mean_mag );
      } else {
@@ -2603,11 +2603,35 @@ int main( int argc, char **argv ) {
    curC= 'X'; // in case small 'x' was pressed - that still means exit!
 
   // Mark that user wants to fit and plot linear trend
+  if (curC == '1') {
+   if ( plot_trend_type == 1 ) { 
+    plot_linear_trend_switch = !plot_linear_trend_switch;
+   }
+   plot_trend_type = 1;              // Set to linear trend
+  }
+  if (curC == '2') {
+   if ( plot_trend_type == 2 ) { 
+    plot_linear_trend_switch = !plot_linear_trend_switch;
+   }
+   plot_trend_type = 2;          // Set to parabolic trend
+/*
+   // If the parabolic trend is already active, turn off the display.
+   if (plot_linear_trend_switch && plot_trend_type == 2)
+    plot_linear_trend_switch = 0;
+   else {
+    plot_linear_trend_switch = 1;
+    plot_trend_type = 2;          // Set to parabolic trend
+   }
+*/   
+  }
+  /*
   if ( curC == '1' ) {
-   if ( plot_linear_trend_switch == 0 )
+   plot_trend_type= 1; // Set to linear trend
+   if ( plot_linear_trend_switch == 0 ) {
     plot_linear_trend_switch= 1;
-   else
+   } else {
     plot_linear_trend_switch= 0;
+   }
   }
   if ( curC == '2' ) {
    if ( plot_linear_trend_switch == 0 ) {
@@ -2619,6 +2643,7 @@ int main( int argc, char **argv ) {
     plot_linear_trend_switch= 0; // Turn off trend display
    }
   }
+  */
 
   // subtract one or many linear trends (many trends may be defined in regions separated by breaks)
   if ( curC == '-' ) {
