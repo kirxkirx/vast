@@ -1549,17 +1549,20 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    // TIMESYS = 'TDB     '           / time system is Barycentric Dynamical Time (TDB)
    // but we don't support it yet. When we do - check times derived from TESS image headers
    // as currently we take the UTC ones from DATE-OBS + EXPOSURE + DEADC
-  } else {
-#ifdef DEBUGMESSAGES
-   fprintf( stderr, "entering  else corresponding to if ( status != 202 )\n" );
-#endif
+  }// else {
+  status= 0;
+  // Try to parse DATEOBS_COMMENT even if TIMESYS was set
+  // TESS SPOC images are the example where TIMESYS is TDB... but not for the DATE-OBS field
+//#ifdef DEBUGMESSAGES
+//   fprintf( stderr, "entering  else corresponding to if ( status != 202 )\n" );
+//#endif
    // Here we assume that TT system can be only set from TIMESYS keyword.
    // If it's not there - the only timing options are UTC or UNKNOWN
 
-   // TIMESYS keyword not found, try to parse DATE-OBS comment string
-   if ( param_verbose >= 1 ) {
-    fprintf( stderr, "TIMESYS keyword is not in the FITS header.\n" );
-   }
+   //// TIMESYS keyword not found, try to parse DATE-OBS comment string
+   //if ( param_verbose >= 1 ) {
+   // fprintf( stderr, "TIMESYS keyword is not in the FITS header.\n" );
+   //}
    // Make sure the string is not empty
    if ( strlen( DATEOBS_COMMENT ) > 1 ) {
     if ( param_verbose >= 1 )
@@ -1584,7 +1587,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     if ( param_verbose >= 1 )
      fprintf( stderr, "Time system is set to UNKNOWN\n" );
    }
-  }
+  //}
 
   // Choose string to describe time system
   if ( ( *timesys ) == 3 ) {
@@ -1592,7 +1595,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   } else if ( ( *timesys ) == 2 ) {
    sprintf( tymesys_str_in, "TT" );
   } else if ( ( *timesys ) == 1 ) {
-   sprintf( tymesys_str_in, "UT" );
+   sprintf( tymesys_str_in, "UTC" );
   } else {
    sprintf( tymesys_str_in, " " );
   }
@@ -1823,12 +1826,12 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    ( *JD )= overridingJD_from_input_image_list;
    if ( ( *timesys ) == 1 && convert_timesys_to_TT == 1 ) {
     if ( param_verbose >= 1 ) {
-     fprintf( stderr, "Note that JD(UT) to JD(TT) conversion will still be applied to the overriding JD.\n" );
+     fprintf( stderr, "Note that JD(UTC) to JD(TT) conversion will still be applied to the overriding JD.\n" );
     }
    }
   }
 
-  // Convert JD(UT) to JD(TT) if needed
+  // Convert JD(UTC) to JD(TT) if needed
   if ( ( *timesys ) == 1 && convert_timesys_to_TT == 1 ) {
    ( *JD )= convert_jdUT_to_jdTT( ( *JD ), timesys );
   }
@@ -1839,7 +1842,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   } else if ( ( *timesys ) == 2 ) {
    sprintf( tymesys_str_out, "(TT)" );
   } else if ( ( *timesys ) == 1 ) {
-   sprintf( tymesys_str_out, "(UT)" );
+   sprintf( tymesys_str_out, "(UTC)" );
   } else {
    sprintf( tymesys_str_out, " " );
   }
@@ -1932,7 +1935,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   } else if ( ( *timesys ) == 2 ) {
    sprintf( tymesys_str_out, "(TT)" );
   } else if ( ( *timesys ) == 1 ) {
-   sprintf( tymesys_str_out, "(UT)" );
+   sprintf( tymesys_str_out, "(UTC)" );
   } else {
    sprintf( tymesys_str_out, " " );
   }
