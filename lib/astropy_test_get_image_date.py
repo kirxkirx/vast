@@ -74,12 +74,12 @@ def process_fits_with_astropy(filename):
             date_obs_comment = header.comments['DATE-OBS'] if 'DATE-OBS' in header else ''
             time_obs_comment = header.comments['TIME-OBS'] if 'TIME-OBS' in header else ''
             if 'UT' in date_obs_comment or 'UT' in time_obs_comment:
-                timesys = 'UT'
+                timesys = 'UTC'
             else:
                 timesys = 'UNKNOWN'
         
         if 'UT' in timesys:
-            timesys = 'UT'
+            timesys = 'UTC'
         elif 'TT' in timesys:
             timesys = 'TT'
         elif 'TDB' in timesys:
@@ -92,6 +92,12 @@ def process_fits_with_astropy(filename):
                 
         
 def main():
+    # Check if any FITS files are provided as arguments
+    if len(sys.argv) < 2:
+        print("Usage: lib/astropy_test_get_image_date.py <fits_file1> [<fits_file2> ...]")
+        print("Error: No FITS files provided.")
+        sys.exit(1)
+        
     c_program = "util/get_image_date"
     error_found = False
     
