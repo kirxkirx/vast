@@ -482,8 +482,8 @@ int main( int argc, char **argv ) {
 
  // First try small search radius
  // was 3.0 an caused problems with the STANDALONEDBSCRIPT_MULTCLOSEVAR test, 5 is not cutting it
- //is_found= search_vsx( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG / 5.0, 1, html_output );
- is_found= search_vsx( target_RA_deg, target_Dec_deg, 6.0 / 3600 , 1, html_output );
+ // is_found= search_vsx( target_RA_deg, target_Dec_deg, VSX_SEARCH_RADIUS_DEG / 5.0, 1, html_output );
+ is_found= search_vsx( target_RA_deg, target_Dec_deg, 6.0 / 3600, 1, html_output );
  if ( is_found != 1 ) {
   is_found= search_asassnv( target_RA_deg, target_Dec_deg, ASASSN_SEARCH_RADIUS_DEG / 5.0, 1, html_output );
  }

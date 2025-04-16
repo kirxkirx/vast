@@ -404,7 +404,7 @@ int main() {
 
    free( data_for_stat );                   /// !!!
    free( data_for_stat_median_subtracted ); /// !!!
-  }                                         // #pragma omp parallel
+  } // #pragma omp parallel
 
   fprintf( stderr, "\n" ); // to terminate the \r output
 
@@ -865,7 +865,7 @@ int main() {
        // OK this is a silly way to write this with all the continue and if( is_this_star_constant==1 ) checks, but should work
       }
      } // if( is_this_star_variable==0 ){
-    }  // // Loop through all the stars
+    } // // Loop through all the stars
     fclose( vast_list_of_likely_constant_stars );
    } // if( NULL != vast_list_of_likely_constant_stars ){
    else {
@@ -931,11 +931,11 @@ int main() {
        if ( 0 == strncmp( known_variable_lightcurvefilename[k], lightcurvefilename[i], OUTFILENAME_LENGTH ) ) {
         number_of_selected_variables[j]++;
         break; // there should be only one match anyway
-       }       // if( 0==strncmp(known_variable_lightcurvefilename[k],lightcurvefilename[i],OUTFILENAME_LENGTH) ){
-      }        // for( k=0;k<n_known_variables;k++){
-     }         // if( fabs(index[i][j])>index_filtered[i][j]+threshold*index_spread_filtered[i][j] ){
-    }          // for(j=0;j<MAX_NUMBER_OF_INDEXES_TO_STORE;j++){
-   }           // for(i=0;i<n_stars_in_lightcurve_statistics_file;i++){
+       } // if( 0==strncmp(known_variable_lightcurvefilename[k],lightcurvefilename[i],OUTFILENAME_LENGTH) ){
+      } // for( k=0;k<n_known_variables;k++){
+     } // if( fabs(index[i][j])>index_filtered[i][j]+threshold*index_spread_filtered[i][j] ){
+    } // for(j=0;j<MAX_NUMBER_OF_INDEXES_TO_STORE;j++){
+   } // for(i=0;i<n_stars_in_lightcurve_statistics_file;i++){
 
    // Print the resulting statistic for each index
    for ( j= 0; j < MAX_NUMBER_OF_INDEXES_TO_STORE; j++ ) {
@@ -985,7 +985,7 @@ int main() {
 
    l++; // so we don't change Cmax[j] after the first iteration
 
-  }                        // for( threshold=0.1; threshold<5.0; threshold+=1.0 ){
+  } // for( threshold=0.1; threshold<5.0; threshold+=1.0 ){
   fprintf( stderr, "\n" ); // to terminate the \r output
 
   fclose( list_of_known_vars_file ); // close the file with known variables

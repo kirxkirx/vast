@@ -214,8 +214,11 @@ lib/create_data: create_data.o get_number_of_measured_images_from_vast_summary_l
 lib/fast_clean_data: $(SRC_PATH)fast_clean_data.c
 	$(CC) $(OPTFLAGS) -o lib/fast_clean_data $(SRC_PATH)fast_clean_data.c
 
-util/split_multiextension_fits: $(SRC_PATH)split_multiextension_fits.c
-	$(CC) $(OPTFLAGS) -o util/split_multiextension_fits $(SRC_PATH)split_multiextension_fits.c $(CFITSIO_LIB) -lm
+split_multiextension_fits.o: $(SRC_PATH)split_multiextension_fits.c
+	$(CC) $(OPTFLAGS) -c -o split_multiextension_fits.o $(SRC_PATH)split_multiextension_fits.c
+
+util/split_multiextension_fits: split_multiextension_fits.o gettime.o kourovka_sbg_date.o
+	$(CC) $(OPTFLAGS) -o util/split_multiextension_fits split_multiextension_fits.o gettime.o kourovka_sbg_date.o $(CFITSIO_LIB) -lm
 
 formater_out_wfk: $(SRC_PATH)formater_out_wfk.c
 	$(CC) $(OPTFLAGS) -o $(LIB_DIR)formater_out_wfk $(SRC_PATH)formater_out_wfk.c

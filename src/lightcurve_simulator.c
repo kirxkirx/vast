@@ -267,7 +267,7 @@ int main( int argc, char **argv ) {
   }
  } else {
   phase= gsl_ran_flat( r, 0.0, 2 * M_PI ); // randomize just phase
- }                                         // if( sine_wave_mode_instead_of_psd!=1 ){
+ } // if( sine_wave_mode_instead_of_psd!=1 ){
 
  /*
   // Generate random sampling pattern

@@ -3341,7 +3341,7 @@ int main( int argc, char **argv ) {
       fixed_aperture= manually_selected_aperture;
       fprintf( stderr, "Using %lf pix diameter aperture for the whole image series \n", fixed_aperture );
      } // else if( manually_selected_aperture< 1.0 ) {
-    }  // else if( 1 != fscanf(manually_selected_aperture_txt_file,"%lf",&manually_selected_aperture) ) {
+    } // else if( 1 != fscanf(manually_selected_aperture_txt_file,"%lf",&manually_selected_aperture) ) {
     fclose( manually_selected_aperture_txt_file );
    } // if( NULL != manually_selected_aperture_txt_file ) {
    //
@@ -3526,7 +3526,7 @@ int main( int argc, char **argv ) {
      }
      //
      exit( EXIT_SUCCESS ); // exit only if this is actually a child
-    }                      // if ( pid == 0 ) {
+    } // if ( pid == 0 ) {
     // the other possibility is that this is a parent that could not fork - no exit in this case
    } else {
     // child_pids[i_fork-1]=pid;
@@ -3563,7 +3563,7 @@ int main( int argc, char **argv ) {
    } // else // if( pid==0 || pid==-1 ){
    //////////////////////////////////////////////////////////////
   } // else // if (fitsfile_read_error != 0 && i==0 ) {
- }  // for(i=0;i<Num;i++){
+ } // for(i=0;i<Num;i++){
 
  fprintf( stderr, "Parent process says: we are done fork()ing.\n" );
 
@@ -4600,9 +4600,9 @@ int main( int argc, char **argv ) {
            // fprintf(stderr,"\x1B[01;31mDEBUG: here is the moving object on %s !!!\x1B[33;00m\n", input_images[n]);
           }
          } // if( 0.0 < moving_object__user_array_y[n]  &&  moving_object__user_array_y[n] < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
-        }  // if( 0.0 < moving_object__user_array_x[n]  &&  moving_object__user_array_x[n] < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
-       }   // if( 0.0 < position_y_pix  &&  position_y_pix < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
-      }    // if( 0.0 < position_x_pix  && position_x_pix < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+        } // if( 0.0 < moving_object__user_array_x[n]  &&  moving_object__user_array_x[n] < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+       } // if( 0.0 < position_y_pix  &&  position_y_pix < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
+      } // if( 0.0 < position_x_pix  && position_x_pix < MAX_IMAGE_SIDE_PIX_FOR_SANITY_CHECK ) {
      }
      //
      STAR2[NUMBER2 - 1].detected_on_ref_frame= 0;               // Mark the star that it is not on the reference frame
@@ -5269,7 +5269,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       //} else {
       // fprintf(stderr, "Excluding star %.3f %.3f from magnitude calibration - it's close to the pixel position specified in exclude.lst\n", STAR1[Pos1[i]].x, STAR1[Pos1[i]].y );
      } // if ( 0 == exclude_test( STAR1[Pos1[i]].x, STAR1[Pos1[i]].y, bad_stars_X, bad_stars_Y, N_bad_stars ) && fabs( STAR1[Pos1[i]].mag - STAR2[Pos2[i]].mag ) ...
-    }  // for ( i= 0; i < MIN( Number_of_ecv_star, NUMBER3 ); i++ ) {
+    } // for ( i= 0; i < MIN( Number_of_ecv_star, NUMBER3 ); i++ ) {
     // Handle the case where the majority of stars have the 'blended' flag
     // Don't do that if the manually selected comparison stars were provided
     if ( N_good_stars < (double)( MIN( Number_of_ecv_star, NUMBER3 ) ) / 2.0 && N_manually_selected_comparison_stars == 0 ) {
@@ -5294,8 +5294,8 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 
        N_good_stars+= 1;
       } // if( 0==exclude_test ...
-     }  // for (i = 0; i < MIN( Number_of_ecv_star, NUMBER3) ; i++) {
-    }   // if( N_good_stars<(double)(MIN( Number_of_ecv_star, NUMBER3))/2.0 ){
+     } // for (i = 0; i < MIN( Number_of_ecv_star, NUMBER3) ; i++) {
+    } // if( N_good_stars<(double)(MIN( Number_of_ecv_star, NUMBER3))/2.0 ){
 
     if ( N_manually_selected_comparison_stars > 0 ) {
      fprintf( stderr, "Performing magnitude calibration using manually selected comparison stars\n" );
@@ -5583,7 +5583,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
         fprintf( stderr, "ERROR02 - too few stars for magnitude calibration: %d\n", N_good_stars );
        }
       } // if( wpolyfit_exit_code==0 ){
-     }  // if( apply_position_dependent_correction==1 && wpolyfit_exit_code==0 ){
+     } // if( apply_position_dependent_correction==1 && wpolyfit_exit_code==0 ){
 
      // Second pass - remove the remaining outlier using weighted approximation
      if ( wpolyfit_exit_code == 0 && photometric_calibration_type != 2 ) {
@@ -5932,17 +5932,17 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
           // STAR1[Pos1[i]].x= clipped_mean_of_unsorted_data_float( coordinate_array_x[coordinate_array_index], number_of_coordinate_measurements_for_star[coordinate_array_index] );
           // STAR1[Pos1[i]].y= clipped_mean_of_unsorted_data_float( coordinate_array_y[coordinate_array_index], number_of_coordinate_measurements_for_star[coordinate_array_index] );
           //
-         }     // update coordinates ONLY if we already have many measurements
-        }      // if( number_of_coordinate_measurements_for_star[coordinate_array_index]<MAX_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ){
-               /////////////////
-               // coordinate_array_index=coordinate_array_counter; // break the loop
-               //  cannot use the usual break here if OpenMP is active
-               //                                            #ifndef VAST_ENABLE_OPENMP
+         } // update coordinates ONLY if we already have many measurements
+        } // if( number_of_coordinate_measurements_for_star[coordinate_array_index]<MAX_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ){
+          /////////////////
+          // coordinate_array_index=coordinate_array_counter; // break the loop
+          //  cannot use the usual break here if OpenMP is active
+          //                                            #ifndef VAST_ENABLE_OPENMP
         break; // there should be only one match STAR1[Pos1[i]].n==star_numbers_for_coordinate_arrays[coordinate_array_index] , right?
                //                                           #endif
         /////////////////
        } // if( STAR1[Pos1[i]].n==star_numbers_for_coordinate_arrays[coordinate_array_index] ){
-      }  // for(coordinate_array_index=0;coordinate_array_index<NUMBER1;coordinate_array_index++){
+      } // for(coordinate_array_index=0;coordinate_array_index<NUMBER1;coordinate_array_index++){
       // Update coordinates in STAR3 (reference structure for image metching)
       if ( n > MIN_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ) { // this step make sence only if coordinates in STAR1 have (or could have) been updated, and that if checks it!
        for ( i_update_coordinates_STAR3= 0; i_update_coordinates_STAR3 < NUMBER3; i_update_coordinates_STAR3++ ) {
@@ -5957,9 +5957,9 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
           STAR3[i_update_coordinates_STAR3].y= STAR1[Pos1[i]].y;
          }
          break; // there should be only one match, correct?!
-        }       // if( STAR1[Pos1[i]].n==STAR3[i_update_coordinates_STAR3].n ){
-       }        // for( i_update_coordinates_STAR3=0; i_update_coordinates_STAR3<NUMBER3; i_update_coordinates_STAR3++ ){
-      }         // if( n>MIN_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ){
+        } // if( STAR1[Pos1[i]].n==STAR3[i_update_coordinates_STAR3].n ){
+       } // for( i_update_coordinates_STAR3=0; i_update_coordinates_STAR3<NUMBER3; i_update_coordinates_STAR3++ ){
+      } // if( n>MIN_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ){
       // Done with avaraging the coordinates
       ////////////////////////////////////////////////////////////////////
 

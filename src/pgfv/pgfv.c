@@ -1262,7 +1262,7 @@ int main( int argc, char **argv ) {
   }
  } else {
   image_specified_on_command_line__0_is_yes= 1; // no image on the command line as there is nothing there at all
- }                                              // else if( argc > 1 ) {
+ } // else if( argc > 1 ) {
 
  if ( image_specified_on_command_line__0_is_yes != 0 && image_specified_on_command_line__0_is_yes != 1 ) {
   fprintf( stderr, "ERROR in %s: image_specified_on_command_line__0_is_yes = %d \n", argv[0], image_specified_on_command_line__0_is_yes );
@@ -2144,8 +2144,8 @@ int main( int argc, char **argv ) {
      //
      aperture_change= 0;
      curC= 'R'; // Redraw screen
-    }           // if ( aperture_change == 1 ) {
-   }            // if( match_mode == 3 || match_mode == 4 ) {
+    } // if ( aperture_change == 1 ) {
+   } // if( match_mode == 3 || match_mode == 4 ) {
    // Switch to magnitude calibration mode
    if ( curC == '2' && match_mode == 3 && magnitude_calibration_already_performed_flag == 0 ) {
     fprintf( stderr, "Entering megnitude calibration mode!\n" );
@@ -2761,7 +2761,7 @@ int main( int argc, char **argv ) {
          cpgmtxt( "B", -1.0, 0.05, 0.0, fov_string );
         }
        } // if ( 0 == get_string_with_fov_of_wcs_calibrated_image( fits_image_name, fov_string ) ) {
-      }  //  if ( 1 == use_imagesizestringinsideimg ) {
+      } //  if ( 1 == use_imagesizestringinsideimg ) {
       //
       if ( use_target_mark == 1 ) {
        // cpgsci(2);   // red

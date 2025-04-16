@@ -2536,7 +2536,7 @@ int main( int argc, char **argv ) {
    fit_mag_err= NULL;
 
    fit_n= 0; // or we'll not reallocate the memory for fit_jd and stuff when we'll get back here
-  }          // if( plot_linear_trend_switch==1 ){
+  } // if( plot_linear_trend_switch==1 ){
 
   //   fprintf(stderr,"##### DEBUG06 #####\n");
 
@@ -2603,26 +2603,26 @@ int main( int argc, char **argv ) {
    curC= 'X'; // in case small 'x' was pressed - that still means exit!
 
   // Mark that user wants to fit and plot linear trend
-  if (curC == '1') {
-   if ( plot_trend_type == 1 ) { 
-    plot_linear_trend_switch = !plot_linear_trend_switch;
+  if ( curC == '1' ) {
+   if ( plot_trend_type == 1 ) {
+    plot_linear_trend_switch= !plot_linear_trend_switch;
    }
-   plot_trend_type = 1;              // Set to linear trend
+   plot_trend_type= 1; // Set to linear trend
   }
-  if (curC == '2') {
-   if ( plot_trend_type == 2 ) { 
-    plot_linear_trend_switch = !plot_linear_trend_switch;
+  if ( curC == '2' ) {
+   if ( plot_trend_type == 2 ) {
+    plot_linear_trend_switch= !plot_linear_trend_switch;
    }
-   plot_trend_type = 2;          // Set to parabolic trend
-/*
-   // If the parabolic trend is already active, turn off the display.
-   if (plot_linear_trend_switch && plot_trend_type == 2)
-    plot_linear_trend_switch = 0;
-   else {
-    plot_linear_trend_switch = 1;
-    plot_trend_type = 2;          // Set to parabolic trend
-   }
-*/   
+   plot_trend_type= 2; // Set to parabolic trend
+                       /*
+                          // If the parabolic trend is already active, turn off the display.
+                          if (plot_linear_trend_switch && plot_trend_type == 2)
+                           plot_linear_trend_switch = 0;
+                          else {
+                           plot_linear_trend_switch = 1;
+                           plot_trend_type = 2;          // Set to parabolic trend
+                          }
+                       */
   }
   /*
   if ( curC == '1' ) {
@@ -3034,12 +3034,12 @@ int main( int argc, char **argv ) {
        // the following works, I don't know why...
        if ( closest_num != -1 )
         closest_num--; /// ! TEST !
-      }                // for(i=closest_num;i<Nobs;i++)
+      } // for(i=closest_num;i<Nobs;i++)
       was_lightcurve_changed= 1;
       removed_points_counter_total++;
       removed_points_counter_this_run++;
      } // if inside the rectangle
-    }  // for(closest_num=0;i<Nobs;i++)
+    } // for(closest_num=0;i<Nobs;i++)
     // close the removed points log file (if it was open in hte first place)
     fprintf( stderr, "Removed %5d data points (%5d removed data points in total)\n", removed_points_counter_this_run, removed_points_counter_total );
     if ( NULL != removed_points_log ) {
@@ -3047,8 +3047,8 @@ int main( int argc, char **argv ) {
      if ( 0 != removed_points_counter_total ) {
       fprintf( stderr, "The list of removed points is written to %s\n", removed_points_logfilename );
      } // if ( 0 != removed_points_counter_total ) {
-    }  // if ( NULL != removed_points_log ) {
-   }   // if( curC!='X' && curC!='x' )
+    } // if ( NULL != removed_points_log ) {
+   } // if( curC!='X' && curC!='x' )
    curC= ' ';
   } // if( curC=='C' || curC=='c' )
 

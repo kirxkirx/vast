@@ -912,8 +912,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
      }
     }
     break; // don't process the remaining images, we have the right one
-   }       // if same image
-  }        // while()
+   } // if same image
+  } // while()
   fclose( vast_list_of_input_images_with_time_corrections );
  }
 
@@ -1020,7 +1020,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
      exposure= exposure * 86400.0;
     }
    } // if ( strcasecmp(EXPOSURE_COMMENT, "seconds") != 0 ) {
-  }  // if ( strlen( EXPOSURE_COMMENT ) > 8 ) {
+  } // if ( strlen( EXPOSURE_COMMENT ) > 8 ) {
   //
   // Search for the deadtime correction keyword like in TESS
   fits_read_key( fptr, TDOUBLE, "DEADC", &TESS_style_deadtime_correction, NULL, &status );
@@ -1073,7 +1073,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    if ( status == 0 ) {
     is_this_an_EROS_image= 1;
    } // TU-END
-  }  // TU-START
+  } // TU-START
   if ( is_this_an_EROS_image == 0 ) {
    // The second type of images
    fits_clear_errmsg(); // clear the CFITSIO error message stack
@@ -1084,9 +1084,9 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     if ( status == 0 ) {
      is_this_an_EROS_image= 1;
     } // FILTREF
-   }  // TM-EXPOS
-  }   // if( is_this_an_EROS_image==0 ){
- }    // DATE-OBS
+   } // TM-EXPOS
+  } // if( is_this_an_EROS_image==0 ){
+ } // DATE-OBS
  // conclusion
  if ( is_this_an_EROS_image == 1 ) {
   if ( param_verbose >= 1 )
@@ -1350,9 +1350,9 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     } else {
      fprintf( stderr, "WARNING: the value %lf infered from EXPSTART keyword is outside the expected MJD range (%.0lf,%.0lf).\n", inJD, EXPECTED_MIN_MJD, EXPECTED_MAX_MJD );
     } // else if ( EXPECTED_MIN_JD < inJD && inJD < EXPECTED_MAX_JD ) {
-   }  // else if ( EXPECTED_MIN_MJD < inJD && inJD < EXPECTED_MAX_MJD ) {
-  }   // if ( status != 202 ) {
- }    // if ( date_parsed == 0 ) {
+   } // else if ( EXPECTED_MIN_MJD < inJD && inJD < EXPECTED_MAX_MJD ) {
+  } // if ( status != 202 ) {
+ } // if ( date_parsed == 0 ) {
 
  // Check if this is a TICA TESS FFI https://archive.stsci.edu/hlsp/tica#section-c34b9669-b0be-40b2-853e-a59997d1b7c5
  status= 0;
@@ -1385,8 +1385,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    } else {
     fprintf( stderr, "Found no MIDTJD keyword!\n" );
    } // MIDTJD
-  }  // TJD_ZERO
- }   // if ( date_parsed == 0 && expstart_mjd_parsed == 0 ) {
+  } // TJD_ZERO
+ } // if ( date_parsed == 0 && expstart_mjd_parsed == 0 ) {
 
  /////// Look for JD keyword (a convention used for Moscow photographic plate scans) ///////
  status= 0;
@@ -1451,8 +1451,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
       exit( EXIT_FAILURE );
      }
     } // if( status == 0 ) { for MJD-OBS
-   }  // else for JDMID keyword
-  }   // else for JD keyword
+   } // else for JDMID keyword
+  } // else for JD keyword
   if ( status != 0 ) {
 #ifdef DEBUGMESSAGES
    fprintf( stderr, "entering  if ( status != 0 )\n" );
@@ -1549,44 +1549,44 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    // TIMESYS = 'TDB     '           / time system is Barycentric Dynamical Time (TDB)
    // but we don't support it yet. When we do - check times derived from TESS image headers
    // as currently we take the UTC ones from DATE-OBS + EXPOSURE + DEADC
-  }// else {
+  } // else {
   status= 0;
   // Try to parse DATEOBS_COMMENT even if TIMESYS was set
   // TESS SPOC images are the example where TIMESYS is TDB... but not for the DATE-OBS field
-//#ifdef DEBUGMESSAGES
-//   fprintf( stderr, "entering  else corresponding to if ( status != 202 )\n" );
-//#endif
-   // Here we assume that TT system can be only set from TIMESYS keyword.
-   // If it's not there - the only timing options are UTC or UNKNOWN
+  // #ifdef DEBUGMESSAGES
+  //    fprintf( stderr, "entering  else corresponding to if ( status != 202 )\n" );
+  // #endif
+  //  Here we assume that TT system can be only set from TIMESYS keyword.
+  //  If it's not there - the only timing options are UTC or UNKNOWN
 
-   //// TIMESYS keyword not found, try to parse DATE-OBS comment string
-   //if ( param_verbose >= 1 ) {
-   // fprintf( stderr, "TIMESYS keyword is not in the FITS header.\n" );
-   //}
-   // Make sure the string is not empty
-   if ( strlen( DATEOBS_COMMENT ) > 1 ) {
-    if ( param_verbose >= 1 )
-     fprintf( stderr, "Trying to guess the time system by parsing the comment string '%s'\n", DATEOBS_COMMENT );
-    // don't start from 0 - if there is no comment, the string will contain 0 characters before \0 !
-    for ( j= 1; j < (int)strlen( DATEOBS_COMMENT ) - 1; j++ ) {
-     if ( DATEOBS_COMMENT[j] == 'U' && DATEOBS_COMMENT[j + 1] == 'T' ) {
-      ( *timesys )= 1; // UT
-      if ( param_verbose >= 1 )
-       fprintf( stderr, "Time system set from the comment to DATE-OBS keyword: '%s'\n", DATEOBS_COMMENT );
-      break;
-     }
+  //// TIMESYS keyword not found, try to parse DATE-OBS comment string
+  // if ( param_verbose >= 1 ) {
+  //  fprintf( stderr, "TIMESYS keyword is not in the FITS header.\n" );
+  // }
+  //  Make sure the string is not empty
+  if ( strlen( DATEOBS_COMMENT ) > 1 ) {
+   if ( param_verbose >= 1 )
+    fprintf( stderr, "Trying to guess the time system by parsing the comment string '%s'\n", DATEOBS_COMMENT );
+   // don't start from 0 - if there is no comment, the string will contain 0 characters before \0 !
+   for ( j= 1; j < (int)strlen( DATEOBS_COMMENT ) - 1; j++ ) {
+    if ( DATEOBS_COMMENT[j] == 'U' && DATEOBS_COMMENT[j + 1] == 'T' ) {
+     ( *timesys )= 1; // UT
+     if ( param_verbose >= 1 )
+      fprintf( stderr, "Time system set from the comment to DATE-OBS keyword: '%s'\n", DATEOBS_COMMENT );
+     break;
     }
-   } else {
-    if ( param_verbose >= 1 )
-     fprintf( stderr, "No suitable comment string found\n" );
-   } // if( strlen(DATEOBS_COMMENT)>1 ){
-
-   // make sure we have one of the expected timesys values
-   if ( ( *timesys ) != 1 && ( *timesys ) != 2 && ( *timesys ) != 3 ) {
-    ( *timesys )= 0; // UNKNOWN
-    if ( param_verbose >= 1 )
-     fprintf( stderr, "Time system is set to UNKNOWN\n" );
    }
+  } else {
+   if ( param_verbose >= 1 )
+    fprintf( stderr, "No suitable comment string found\n" );
+  } // if( strlen(DATEOBS_COMMENT)>1 ){
+
+  // make sure we have one of the expected timesys values
+  if ( ( *timesys ) != 1 && ( *timesys ) != 2 && ( *timesys ) != 3 ) {
+   ( *timesys )= 0; // UNKNOWN
+   if ( param_verbose >= 1 )
+    fprintf( stderr, "Time system is set to UNKNOWN\n" );
+  }
   //}
 
   // Choose string to describe time system
