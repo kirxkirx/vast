@@ -1068,6 +1068,9 @@ grid createGrid( frame f ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for gr(ident_lib.c)\n" );
   exit( EXIT_FAILURE );
  };
+ // Do we want to make sure cellSize never gets too small. e.g. sqrt(4008*2672/72962)=12.115
+ //cellSize= MAX( sqrtf( f.sizeX * f.sizeY / ( (float)f.count ) ), 20);
+ // nope, the above has no effect as we are searchin +/-1 cells anyway
  cellSize= sqrtf( f.sizeX * f.sizeY / ( (float)f.count ) );
 
  minX= f.minX - f.sizeX;
@@ -1457,6 +1460,660 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
 
  return number_of_matched_stars;
 }
+
+// The above version works well
+
+// Experimental version below
+
+/*--------------------------------------------------------------------
+  Ident_on_sigma()  -  positional match with
+    * mutual nearest neighbour (MNN) check
+    * second‑chance retry to avoid “star1 leak”
+  ------------------------------------------------------------------*/
+/*
+#define MAX_RETRY_PASSES 1          // one extra attempt at most
+
+int Ident_on_sigma( struct Star *star1,  int Number1,
+                    struct Star *star2,  int Number2,
+                    int *Pos1,           int *Pos2,
+                    double sigma_popadaniya,
+                    double image_size_X,
+                    double image_size_Y )
+{
+    //----------------------------------------------------------------
+    // declarations
+    //----------------------------------------------------------------
+    float   R_best, R, epsilon;             // squared radii
+    double  r2_best_rev, r2_rev;
+
+    int     find_flag;
+    int     number_of_matched_stars = 0;
+    int     number_of_ambiguous_matches = 0;
+    int     previous_number_in_array;
+    int     q, retry_pass = 0;
+    int     ic, jc;                         // grid indices
+    int     j_best;                         // index of nearest star2 to p_best
+
+    frame   fr1, fr2;
+    grid    gr1, gr2;
+
+    list    points1, points2, points_2, retry_points2;
+    list    xs_matched, ys_matched, ys_unmatched;
+    list    xs_matched_, ys_matched_, ys_unmatched_;
+    list    ps, ps_1, ps_rev;
+
+    point   p1, p2, p_best, p2_test;
+
+    //----------------------------------------------------------------
+    // initialisation
+    //----------------------------------------------------------------
+    epsilon = (float)(sigma_popadaniya * sigma_popadaniya);
+
+    points1 = loadPoint( star1, Number1 );
+    points2 = loadPoint( star2, Number2 );
+
+    fr1 = createFrame( 0, 0, image_size_X, image_size_Y, points1 );
+    fr2 = createFrame( 0, 0, image_size_X, image_size_Y, points2 );
+    gr1 = createGrid ( fr1 );          // reference stars
+    gr2 = createGrid ( fr2 );          // current‑frame stars
+
+    points_2      = points2;           // work queue
+    retry_points2 = emptyList();
+
+    xs_matched   = emptyList();
+    ys_matched   = emptyList();
+    ys_unmatched = emptyList();
+
+    //----------------------------------------------------------------
+    // MAIN MATCH LOOP (first pass + optional retry)
+    //----------------------------------------------------------------
+    while ( 1 )
+    {
+        while ( isEmpty( points_2 ) == 0 )
+        {
+            //---------------- step 1: pop next star2 -----------------
+            find_flag = 0;
+            R_best    = epsilon;
+            p2        = disjoinList( &points_2 );
+
+            //---------------- step 2: candidates for star1 -----------
+            if ( p2.moving_object )
+            {
+                ps = getListFromGrid__getAllStarsNevermindGrid( gr1 );
+                ps_1 = ps;
+            }
+            else
+            {
+                ps = getListFromGrid( gr1, p2.x, p2.y );
+                ps_1 = ps;
+            }
+
+            while ( isEmpty( ps_1 ) == 0 )
+            {
+                p1 = disjoinList( &ps_1 );
+                if ( p1.moving_object ) continue;
+
+                R = ( p2.x - p1.x ) * ( p2.x - p1.x )
+                  + ( p2.y - p1.y ) * ( p2.y - p1.y );
+
+                if ( R < R_best )
+                {
+                    R_best    = R;
+                    p_best    = p1;
+                    find_flag = 1;
+                }
+            }
+
+            //---------------- step 3: mutual nearest neighbour -------
+            if ( find_flag )
+            {
+                r2_best_rev = epsilon;
+                j_best      = -1;
+
+                ps_rev = getListFromGrid( gr2, p_best.x, p_best.y );
+
+                while ( isEmpty( ps_rev ) == 0 )
+                {
+                    p2_test = disjoinList( &ps_rev );
+                    if ( p2_test.i == p2.i ) continue;
+
+                    r2_rev = ( p2_test.x - p_best.x ) * ( p2_test.x - p_best.x )
+                           + ( p2_test.y - p_best.y ) * ( p2_test.y - p_best.y );
+
+                    if ( r2_rev < r2_best_rev )
+                    {
+                        r2_best_rev = r2_rev;
+                        j_best      = p2_test.i;      // nearer star2 found
+                    }
+                }
+
+                // Accept if p2 is the nearest or no star2 inside sigma
+                if ( j_best == -1 || j_best == p2.i )
+                {
+                    xs_matched = addToList( p_best, xs_matched );
+                    ys_matched = addToList( p2,     ys_matched );
+                }
+                else
+                {
+                    // Put star1 back into grid
+                    pointToCell( gr1, p_best.x, p_best.y, &ic, &jc );
+                    gr1->array[ic][jc] = addToList( p_best, gr1->array[ic][jc] );
+                    // Queue star2 for retry
+                    retry_points2 = addToList( p2, retry_points2 );
+                }
+            }
+            else
+            {
+                ys_unmatched = addToList( p2, ys_unmatched );
+            }
+        } // while points_2 not empty
+
+        //---------------- second pass for retry list -----------------
+        if ( !isEmpty( retry_points2 ) && ( retry_pass < MAX_RETRY_PASSES ) )
+        {
+            points_2      = retry_points2;
+            retry_points2 = emptyList();
+            retry_pass++;
+            continue;                   // back to main while(1)
+        }
+        break;                          // exit loop
+    }
+
+    // unrecoverable MNN failures are ambiguous
+    while ( isEmpty( retry_points2 ) == 0 )
+    {
+        p2 = disjoinList( &retry_points2 );
+        ys_unmatched = addToList( p2, ys_unmatched );
+        number_of_ambiguous_matches++;
+    }
+
+    //----------------------------------------------------------------
+    // commit unique matches
+    //----------------------------------------------------------------
+    xs_matched_ = xs_matched;
+    ys_matched_ = ys_matched;
+
+    while ( isEmpty( xs_matched_ ) == 0 )
+    {
+        p1 = disjoinList( &xs_matched_ );
+        p2 = disjoinList( &ys_matched_ );
+
+        previous_number_in_array =
+            isNumberInIntArray( Pos1, number_of_matched_stars, p1.i );
+
+        if ( previous_number_in_array == -1 )
+        {
+            Pos1[number_of_matched_stars] = p1.i;
+            Pos2[number_of_matched_stars] = p2.i;
+            number_of_matched_stars++;
+        }
+        else
+        {
+            ys_unmatched = addToList( p2, ys_unmatched );
+            number_of_ambiguous_matches++;
+        }
+    }
+
+    //----------------------------------------------------------------
+    // save unmatched star2 indices
+    //----------------------------------------------------------------
+    ys_unmatched_ = ys_unmatched;
+    q             = number_of_matched_stars;
+
+    while ( isEmpty( ys_unmatched_ ) == 0 )
+    {
+        p2      = disjoinList( &ys_unmatched_ );
+        Pos1[q] = -1;
+        Pos2[q] = p2.i;
+        q++;
+    }
+
+    //----------------------------------------------------------------
+    // clean‑up
+    //----------------------------------------------------------------
+    freeList( xs_matched   );
+    freeList( ys_matched   );
+    freeList( ys_unmatched );
+    freeGrid( gr1 );
+    freeGrid( gr2 );
+    freeList( points2 );
+    freeList( points1 );
+
+    return number_of_matched_stars;
+}
+*/
+
+
+/*--------------------------------------------------------------------
+  Ident_on_sigma()  -  mutual nearest neighbour + retry pass
+  ------------------------------------------------------------------*/
+/*
+#define MAX_RETRY_PASSES 1          // one extra attempt at most
+
+int Ident_on_sigma( struct Star *star1,  int Number1,
+                    struct Star *star2,  int Number2,
+                    int *Pos1,           int *Pos2,
+                    double  sigma_popadaniya,
+                    double  image_size_X,
+                    double  image_size_Y )
+{
+    // -------- declarations --------------------------------------------------
+    float   R_best, R, epsilon;             // squared radii
+    double  r2_best_rev, r2_rev;            // reverse-search distances
+
+    int     find_flag;
+    int     number_of_matched_stars = 0;
+    int     number_of_ambiguous_matches = 0;
+    int     previous_number_in_array;
+    int     q, retry_pass = 0;
+    int     ic, jc;                         // grid indices
+
+    frame   fr1, fr2;
+    grid    gr1, gr2;
+
+    list    points1, points2, points_2, retry_points2;
+    list    xs_matched, ys_matched, ys_unmatched;
+    list    xs_matched_, ys_matched_, ys_unmatched_;
+    list    ps, ps_1, ps_rev;
+
+    point   p1, p2, p_best, p2_test;
+
+    // -------- initialisation ------------------------------------------------
+    epsilon = (float)(sigma_popadaniya * sigma_popadaniya);
+
+    points1 = loadPoint( star1, Number1 );
+    points2 = loadPoint( star2, Number2 );
+
+    fr1 = createFrame( 0, 0, image_size_X, image_size_Y, points1 );
+    fr2 = createFrame( 0, 0, image_size_X, image_size_Y, points2 );
+    gr1 = createGrid ( fr1 );          // reference stars
+    gr2 = createGrid ( fr2 );          // current-frame stars
+
+    points_2      = points2;           // work queue
+    retry_points2 = emptyList();
+
+    xs_matched   = emptyList();
+    ys_matched   = emptyList();
+    ys_unmatched = emptyList();
+
+    // ========================================================================
+    // MAIN MATCH LOOP  (first pass + optional retry)
+    // ========================================================================
+    while ( 1 )
+    {
+        while ( isEmpty( points_2 ) == 0 )
+        {
+            // -------- step 1: pop next star2 --------------------------------
+            find_flag = 0;
+            R_best    = epsilon;
+            p2        = disjoinList( &points_2 );
+
+            // -------- step 2: gather candidate star1 points -----------------
+            if ( p2.moving_object )
+            {
+                ps   = getListFromGrid__getAllStarsNevermindGrid( gr1 );
+                ps_1 = ps;
+            }
+            else
+            {
+                ps   = getListFromGrid( gr1, p2.x, p2.y );
+                ps_1 = ps;
+            }
+
+            while ( isEmpty( ps_1 ) == 0 )
+            {
+                p1 = disjoinList( &ps_1 );
+                if ( p1.moving_object ) continue;
+
+                R = ( p2.x - p1.x ) * ( p2.x - p1.x )
+                  + ( p2.y - p1.y ) * ( p2.y - p1.y );
+
+                if ( R < R_best )
+                {
+                    R_best    = R;
+                    p_best    = p1;
+                    find_flag = 1;
+                }
+            }
+
+            // -------- step 3: mutual nearest neighbour check ----------------
+            if ( find_flag )
+            {
+                r2_best_rev = epsilon;
+                ps_rev = getListFromGrid( gr2, p_best.x, p_best.y );
+
+                while ( isEmpty( ps_rev ) == 0 )
+                {
+                    p2_test = disjoinList( &ps_rev );
+                    if ( p2_test.i == p2.i ) continue;
+
+                    r2_rev = ( p2_test.x - p_best.x ) * ( p2_test.x - p_best.x )
+                           + ( p2_test.y - p_best.y ) * ( p2_test.y - p_best.y );
+
+                    if ( r2_rev < r2_best_rev ) r2_best_rev = r2_rev;
+                }
+
+                if ( r2_best_rev == epsilon )       // success
+                {
+                    xs_matched = addToList( p_best, xs_matched );
+                    ys_matched = addToList( p2,     ys_matched );
+                }
+                else                                // MNN failed
+                {
+                    // 1) put star1 back into grid
+                    pointToCell( gr1, p_best.x, p_best.y, &ic, &jc );
+                    gr1->array[ic][jc] =
+                        addToList( p_best, gr1->array[ic][jc] );
+
+                    // 2) queue star2 for retry
+                    retry_points2 = addToList( p2, retry_points2 );
+                }
+            }
+            else    // nothing inside sigma
+            {
+                ys_unmatched = addToList( p2, ys_unmatched );
+            }
+        } // while points_2 not empty
+
+        // -------- second pass for retry list --------------------------------
+        if ( !isEmpty( retry_points2 ) && ( retry_pass < MAX_RETRY_PASSES ) )
+        {
+            points_2      = retry_points2;
+            retry_points2 = emptyList();
+            retry_pass++;
+            continue;       // back to while(1)
+        }
+        break;              // all done
+    }
+
+    // unrecoverable MNN failures are ambiguous
+    while ( isEmpty( retry_points2 ) == 0 )
+    {
+        p2 = disjoinList( &retry_points2 );
+        ys_unmatched = addToList( p2, ys_unmatched );
+        number_of_ambiguous_matches++;
+    }
+
+    // -------- commit unique matches ----------------------------------------
+    xs_matched_ = xs_matched;
+    ys_matched_ = ys_matched;
+
+    while ( isEmpty( xs_matched_ ) == 0 )
+    {
+        p1 = disjoinList( &xs_matched_ );
+        p2 = disjoinList( &ys_matched_ );
+
+        previous_number_in_array =
+            isNumberInIntArray( Pos1, number_of_matched_stars, p1.i );
+
+        if ( previous_number_in_array == -1 )
+        {
+            Pos1[number_of_matched_stars] = p1.i;
+            Pos2[number_of_matched_stars] = p2.i;
+            number_of_matched_stars++;
+        }
+        else
+        {
+            ys_unmatched = addToList( p2, ys_unmatched );
+            number_of_ambiguous_matches++;
+        }
+    }
+
+    // -------- save unmatched star2 indices ---------------------------------
+    ys_unmatched_ = ys_unmatched;
+    q             = number_of_matched_stars;
+
+    while ( isEmpty( ys_unmatched_ ) == 0 )
+    {
+        p2      = disjoinList( &ys_unmatched_ );
+        Pos1[q] = -1;
+        Pos2[q] = p2.i;
+        q++;
+    }
+
+    // -------- clean-up ------------------------------------------------------
+    freeList( xs_matched   );
+    freeList( ys_matched   );
+    freeList( ys_unmatched );
+    freeGrid( gr1 );
+    freeGrid( gr2 );
+    freeList( points2 );
+    freeList( points1 );
+
+    return number_of_matched_stars;
+}
+
+*/
+
+// Funny experimental version
+
+/*--------------------------------------------------------------------
+   Match star lists star1 (reference) and star2 (current frame)
+   using positional coincidence.  The two lists **must** already be
+   in the same coordinate system.  A match is accepted only if the
+   stars are **mutual nearest neighbours** within the radius σ
+   (sigma_popadaniya).
+
+   Kirill Sokolovsky / 2025‑04‑17, GitHub “vast” project
+  -------------------------------------------------------------------*/
+/*
+int Ident_on_sigma( struct Star *star1,  int Number1,
+                    struct Star *star2,  int Number2,
+                    int *Pos1,           int *Pos2,
+                    double  sigma_popadaniya,
+                    double  image_size_X,
+                    double  image_size_Y )
+{
+*/
+    /*--------------------------------------------------------------
+       Variable block – all declarations at the beginning
+      --------------------------------------------------------------*/
+/*
+    // geometry 
+    float   R_best, R, epsilon;
+    double  r2_best_rev, r2_rev;
+
+    // counters and flags 
+    int     find_flag;
+    int     number_of_matched_stars;
+    int     number_of_ambiguous_matches;
+    int     previous_number_in_array;
+    int     q;
+
+    // loop indices 
+    int     i, j;
+
+    // spatial indexing 
+    frame   fr1, fr2;
+    grid    gr1, gr2;
+
+    // dynamic lists 
+    list    points1, points2, points_2;
+    list    xs_matched, ys_matched, ys_unmatched;
+    list    xs_matched_, ys_matched_, ys_unmatched_;
+    list    ps, ps_1, ps_rev;
+
+    // point structures 
+    point   p1, p2, p_best, p2_test;
+*/
+    /*------------------------------------------------------------------
+      Initialisation
+      ------------------------------------------------------------------*/
+/*
+    epsilon                       = sigma_popadaniya * sigma_popadaniya;
+    number_of_matched_stars       = 0;
+    number_of_ambiguous_matches   = 0;
+
+    points1 = loadPoint( star1, Number1 );
+    points2 = loadPoint( star2, Number2 );
+*/
+//    /* build two frames & grids – one for each list */
+//    fr1 = createFrame( 0, 0, image_size_X, image_size_Y, points1 );
+//    fr2 = createFrame( 0, 0, image_size_X, image_size_Y, points2 );
+//    gr1 = createGrid ( fr1 );              /* reference stars        */
+//    gr2 = createGrid ( fr2 );              /* current‑frame stars     */
+//
+//    points_2     = points2;                /* working copy           */
+//    xs_matched   = emptyList();
+//    ys_matched   = emptyList();
+//    ys_unmatched = emptyList();
+//
+//    /*------------------------------------------------------------------
+//      MAIN LOOP – for every star2 object pick the closest star1 inside σ
+//      ------------------------------------------------------------------*/
+//    while ( isEmpty( points_2 ) == 0 )
+//    {
+//        R_best   = epsilon;                /* reset best distance    */
+//        find_flag = 0;                     /* 0 = no candidate yet   */
+//
+//        p2 = disjoinList( &points_2 );     /* next star2 to match    */
+//
+//        /* --- choose search strategy for moving objects ------------- */
+//        if ( p2.moving_object == 1 )
+//        {
+//            ps   = getListFromGrid__getAllStarsNevermindGrid( gr1 );
+//            ps_1 = ps;
+//        }
+//        else
+//        {
+//            ps   = getListFromGrid( gr1, p2.x, p2.y );
+//            ps_1 = ps;
+//        }
+//
+//        /* --- scan all candidate star1 points in the grid list ------- */
+//        while ( isEmpty( ps_1 ) == 0 )
+//        {
+//            p1 = disjoinList( &ps_1 );
+//
+//            if ( p1.moving_object == 1 )           /* moving object never
+//                                                      participates in normal
+//                                                      positional match        */
+//                continue;
+//
+//            R = ( p2.x - p1.x ) * ( p2.x - p1.x )
+//              + ( p2.y - p1.y ) * ( p2.y - p1.y );
+//
+//            if ( R < R_best )
+//            {
+//                find_flag = 1;
+//                p_best    = p1;
+//                R_best    = R;
+//            }
+//        } /* while candidates */
+//
+//        /*--------------------------------------------------------------
+//          If a candidate was found within σ, apply mutual‑nearest test
+//          --------------------------------------------------------------*/
+//        if ( find_flag == 1 )
+//        {
+//            /* --- reverse search: nearest star2 to p_best ------------ */
+//            r2_best_rev = epsilon;          /* squared search radius σ² */
+//            r2_rev      = 0.0;
+//
+//            ps_rev = getListFromGrid( gr2, p_best.x, p_best.y );
+//
+//            while ( isEmpty( ps_rev ) == 0 )
+//            {
+//                p2_test = disjoinList( &ps_rev );
+//
+//                /* skip the candidate itself */
+//                if ( p2_test.i == p2.i )
+//                    continue;
+//
+//                r2_rev = ( p2_test.x - p_best.x ) * ( p2_test.x - p_best.x )
+//                       + ( p2_test.y - p_best.y ) * ( p2_test.y - p_best.y );
+//
+//                if ( r2_rev < r2_best_rev )
+//                {
+//                    r2_best_rev = r2_rev;
+//                }
+//            }
+//
+//            /* Mutual nearest neighbour condition:
+//               either p2 is the closest, or there is no other star2 closer
+//               than σ.  If not satisfied, mark ambiguous.                */
+//            if ( r2_best_rev == epsilon )        /* no star2 inside σ */
+//            {
+//                xs_matched = addToList( p_best, xs_matched );
+//                ys_matched = addToList( p2,     ys_matched );
+//            }
+//            else
+//            {
+//                /* some *other* star2 is closer to p_best – ambiguous */
+//                ys_unmatched = addToList( p2, ys_unmatched );
+//                number_of_ambiguous_matches++;
+//            }
+//        }
+//        else
+//        {
+//            /* nothing within σ – unmatched */
+//            ys_unmatched = addToList( p2, ys_unmatched );
+//        }
+//    } /* while star2 list not empty */
+//
+//    /*------------------------------------------------------------------
+//      COMMIT MATCHES: copy unique pairs into Pos1 / Pos2
+//      (first list is xs_matched (star1); second is ys_matched (star2))
+//      ------------------------------------------------------------------*/
+//    xs_matched_ = xs_matched;
+//    ys_matched_ = ys_matched;
+//
+//    while ( isEmpty( xs_matched_ ) == 0 )
+//    {
+//        p1 = disjoinList( &xs_matched_ );
+//        p2 = disjoinList( &ys_matched_ );
+//
+//        previous_number_in_array = isNumberInIntArray( Pos1,
+//                                     number_of_matched_stars, p1.i );
+//
+//        if ( previous_number_in_array == -1 )
+//        {
+//            Pos1[number_of_matched_stars] = p1.i;
+//            Pos2[number_of_matched_stars] = p2.i;
+//            number_of_matched_stars++;
+//        }
+//        else
+//        {
+//            /* another star already matched to the same star1 – ambiguous */
+//            ys_unmatched = addToList( p2, ys_unmatched );
+//            number_of_ambiguous_matches++;
+//        }
+//    }
+//
+//    /*------------------------------------------------------------------
+//      Append indices of unmatched star2 objects to Pos2[] (caller may want
+//      to analyse them later).  Pos1 for those entries is set to –1.
+//      ------------------------------------------------------------------*/
+//    ys_unmatched_ = ys_unmatched;
+//    q             = number_of_matched_stars;
+//
+//    while ( isEmpty( ys_unmatched_ ) == 0 )
+//    {
+//        p2          = disjoinList( &ys_unmatched_ );
+//        Pos1[q]     = -1;
+//        Pos2[q]     = p2.i;
+//        q++;
+//    }
+//
+//    /*------------------------------------------------------------------
+//      Clean‑up
+//      ------------------------------------------------------------------*/
+//    freeList( xs_matched   );
+//    freeList( ys_matched   );
+//    freeList( ys_unmatched );
+//    freeGrid( gr1 );
+//    freeGrid( gr2 );
+//    freeList( points2 );
+//    freeList( points1 );
+//
+//    /*------------------------------------------------------------------
+//      Return the number of **reliable matched pairs**
+//      (ambiguous ones are excluded)
+//      ------------------------------------------------------------------*/
+//    return number_of_matched_stars;
+//}
+
+
 
 /*
 
