@@ -847,6 +847,101 @@ int convert_ztf_snad_format( char *lightcurvefilename, char *path_to_vast_string
  return 0;
 }
 
+int convert_ztf_lasair_format(char *lightcurvefilename, char *path_to_vast_string) {
+ FILE *lightcurvefile, *convertedfile;
+ char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+ char original_filename[FILENAME_LENGTH];
+ char converted_filename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER];
+ char converted_directory[VAST_PATH_MAX];
+ double mjd;
+ float mag, mag_err;
+ char filter[10];
+ char status[20];
+ int is_lasair_format = 0;
+
+ lightcurvefile = fopen(lightcurvefilename, "r");
+ if (NULL == lightcurvefile) {
+  fprintf(stderr, "ERROR: cannot open file %s\n", lightcurvefilename);
+  return 1;
+ }
+
+ // Check if the file starts with the ZTF Lasair format header
+ if (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
+  if (strncmp(line, "MJD,filter,", 11) == 0) {
+   // Look for specific column names like "unforced_mag" and "unforced_mag_status"
+   if (strstr(line, "unforced_mag") != NULL && strstr(line, "unforced_mag_status") != NULL) {
+    is_lasair_format = 1;
+   }
+  }
+ }
+
+ if (!is_lasair_format) {
+  fclose(lightcurvefile);
+  return 0; // Not a ZTF Lasair format file, do nothing
+ }
+
+ // Create the converted_lightcurves directory if it doesn't exist
+ snprintf(converted_directory, VAST_PATH_MAX, "%sconverted_lightcurves", path_to_vast_string);
+ mkdir(converted_directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+ strncpy(original_filename, basename(lightcurvefilename), FILENAME_LENGTH);
+ replace_last_dot_with_null(original_filename);
+
+ // Generate the converted filename
+ snprintf(converted_filename, MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER, 
+          "%s/%s_converted.dat", converted_directory, original_filename);
+ // Ensure null-termination
+ converted_filename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1] = '\0';
+
+ fprintf(stderr, "ZTF Lasair broker format detected! Converting %s to %s\n", 
+         basename(lightcurvefilename), converted_filename);
+
+ // Check the length of converted_filename before writing the output
+ if (strlen(converted_filename) > FILENAME_LENGTH) {
+  fprintf(stderr, "ERROR in on-the-fly lightcurve format conversion - the output filename is too long!");
+  fclose(lightcurvefile);
+  return 1;
+ }
+
+ convertedfile = fopen(converted_filename, "w");
+ if (NULL == convertedfile) {
+  fprintf(stderr, "ERROR: cannot create converted file %s\n", converted_filename);
+  fclose(lightcurvefile);
+  return 1;
+ }
+
+ // Reset file pointer to the beginning of the file
+ fseek(lightcurvefile, 0, SEEK_SET);
+ 
+ // Skip the header line
+ if (NULL == fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile)) {
+  fprintf(stderr, "ERROR in convert_ztf_lasair_format(): Failed to read header line\n");
+  fclose(lightcurvefile);
+  fclose(convertedfile);
+  return 1;
+ }
+
+ // Process the lightcurve data
+ while (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
+  if (sscanf(line, "%lf,%[^,],%f,%f,%[^,]", &mjd, filter, &mag, &mag_err, status) == 5) {
+   // Only use r filter data and positive detections
+   if (strcmp(filter, "r") == 0 && strcmp(status, "positive") == 0) {
+    // Convert MJD to JD by adding 2400000.5
+    fprintf(convertedfile, "%.6lf %.5f %.5f\n", mjd + 2400000.5, mag, mag_err);
+   }
+  }
+ }
+
+ fclose(lightcurvefile);
+ fclose(convertedfile);
+
+ strncpy(lightcurvefilename, converted_filename, FILENAME_LENGTH);
+ // Ensure null-termination
+ lightcurvefilename[FILENAME_LENGTH - 1] = '\0';
+
+ return 0;
+}
+
 int convert_aavso_format( char *lightcurvefilename, char *path_to_vast_string ) {
  FILE *lightcurvefile, *convertedfile;
  char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
@@ -1810,6 +1905,10 @@ int main( int argc, char **argv ) {
 
  if ( convert_ztf_snad_format( lightcurvefilename, path_to_vast_string ) != 0 ) {
   exit( EXIT_FAILURE );
+ }
+
+ if (convert_ztf_lasair_format(lightcurvefilename, path_to_vast_string) != 0) {
+  exit(EXIT_FAILURE);
  }
 
  if ( convert_asassn_v1_format( lightcurvefilename, path_to_vast_string ) != 0 ) {
