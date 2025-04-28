@@ -205,7 +205,8 @@ Best wishes,
 $OBSERVER_NAMES
 "
 echo " ### Suggested message subject and text 
-To: cba-data@cbastro.org
+#To: cba-data@cbastro.org # Old address
+To: cbastro-data@googlegroups.com
 
 Subject: $SUBJECT
 
