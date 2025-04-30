@@ -118,7 +118,7 @@ int xy2sky( char *fitsfilename, float X, float Y ) {
  systemcommand[2 * VAST_PATH_MAX - 1]= '\0'; // just in case
  systemcommand_return_value= system( systemcommand );
  if ( systemcommand_return_value == 0 ) {
-  fprintf( stderr, "The pixel to celestal coordinates transforamtion is performed using 'xy2sky' from WCSTools.\n" );
+  fprintf( stderr, "The pixel to celestial coordinates transforamtion is performed using 'xy2sky' from WCSTools.\n" );
  }
  return systemcommand_return_value;
 }
