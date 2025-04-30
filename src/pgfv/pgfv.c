@@ -2394,7 +2394,7 @@ int main( int argc, char **argv ) {
         }
 
         // Print anyway
-        fprintf( stderr, "Reduced chi2 from PSF-fitting: \x1B[01;32m%lg\x1B[33;00m (Objects with large values will be mising from the list of detections! If no PSF fitting was performed, this value is set to 1.0)\n", sextractor_catalog__psfCHI2[marker_counter] );
+        fprintf( stderr, "Reduced chi2 from PSF-fitting: \x1B[01;32m%lg\x1B[33;00m (Objects with large values will be missing from the list of detections! If no PSF fitting was performed, this value is set to 1.0)\n", sextractor_catalog__psfCHI2[marker_counter] );
 
         bad_size= 0;
         if ( CONST * ( sextractor_catalog__A_IMAGE[marker_counter] + sextractor_catalog__ERRA_IMAGE[marker_counter] ) < MIN_SOURCE_SIZE_APERTURE_FRACTION * APER ) {
