@@ -2690,21 +2690,24 @@ int main( int argc, char **argv ) {
     /////
    } // if ( mark_trigger == 1 ) {
 
+/*
+   // Confusing and unnecessary
    if ( use_labels == 1 ) {
-    // Always put mark in te center of the finding chart
+    // Always put mark in the center of the finding chart
     if ( finder_chart_mode == 1 ) {
      markX= ( (float)naxes[0] / 2.0 );
      markY= ( (float)naxes[1] / 2.0 );
      cpgsci( 2 );
      cpgsch( 3.0 );
      cpgslw( 2 ); // increase line width
-     fprintf( stderr, "Putting marker 002: %.3f %.3f\n", markX, markY );
+     fprintf( stderr, "Putting image center marker 002: %.3f %.3f\n", markX, markY );
      cpgpt1( markX, markY, 2 );
      cpgslw( 1 ); // set default line width
      cpgsch( 1.0 );
      cpgsci( 1 );
     }
    }
+*/
 
    // Markers from manymarkers file
    for ( marker_counter= 0; marker_counter < manymrkerscounter; marker_counter++ ) {
