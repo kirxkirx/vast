@@ -39,6 +39,8 @@
 #include "../vast_filename_manipulation.h"
 #include "../kourovka_sbg_date.h" // for Kourovka_SBG_date_hack()
 
+#define DEFAULT_APERTURE_FOR_CATALOG_DISPLAY 3.0
+
 void save_star_to_vast_list_of_previously_known_variables_and_exclude_lst( int sextractor_catalog__star_number, float sextractor_catalog__X, float sextractor_catalog__Y ) {
  FILE *filepointer;
  fprintf( stderr, "Marking out%05d.dat as a variable star and excluding it from magnitude calibration\n", sextractor_catalog__star_number );
@@ -1150,6 +1152,24 @@ int main( int argc, char **argv ) {
 
  //
  int user_request_to_exit_with_nonzero_exit_code= 0;
+ 
+ //// New ./pgfv calib
+ // For reading the lightcurve statistics file
+ FILE *lightcurve_statistics_file;
+ FILE *lightcurve_file;
+ double jd, x_pix, y_pix, app;
+ char lightcurve_filename[FILENAME_LENGTH];
+ char image_name_in_lightcurve[FILENAME_LENGTH];
+ float irrelevant_x, irrelevant_y;  // To hold the X,Y values from stats file that we'll ignore
+ int found_ref_image;
+ double tmp_double;
+ char line_remainder[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+ 
+ // For aperture storage and median calculation
+ float *sextractor_catalog__APP;  // New array for aperture values
+ float *apertures_sorted;         // For calculating median aperture
+ ////
+ 
 
  // Options for getopt()
  char *cvalue= NULL;
@@ -1307,6 +1327,7 @@ int main( int argc, char **argv ) {
 
  // A reminder to myself:
  // match_mode == 0   - the normal image display
+ // match_mode == 2   - ./pgfv calib # manual magnitude calibration
  // match_mode == 3   - sextract single image - not necessary the reference one
  // match_mode == 4   - diffphot
 
@@ -1385,6 +1406,7 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "vast_manymarkersfile.log - %d markers\n", manymrkerscounter );
  }
 
+/* // Need to redo the whole thing as it doesnt work
  if ( match_mode == 2 ) {
   // Magnitude calibration mode
 
@@ -1445,7 +1467,7 @@ int main( int argc, char **argv ) {
      // done with errors
      // Note the star name
      sscanf( RADEC, "out%d.dat", &sextractor_catalog__star_number[sextractor_catalog__counter] );
-     // remember aperture size, increase counter */
+     // remember aperture size, increase counter 
      APER= tmp_APER;
      sextractor_catalog__counter++;
     }
@@ -1454,6 +1476,166 @@ int main( int argc, char **argv ) {
   fclose( matchfile );
   sextractor_catalog__counter--; // We can't be sure that the last star is visible on the reference frame so we just drop it
  }
+*/
+if (match_mode == 2) {
+  // Magnitude calibration mode
+  
+  // For reading lightcurve files
+  FILE *lightcurve_statistics_file;
+  FILE *lightcurve_file;
+  double jd, x_pix, y_pix, app;
+  char lightcurve_filename[FILENAME_LENGTH];
+  char image_name_in_lightcurve[FILENAME_LENGTH];
+  float irrelevant_x, irrelevant_y;  // To hold the X,Y values from the stats file that we'll ignore
+  int found_ref_image;
+  double tmp_double;
+  char line_remainder[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+  
+  // For aperture array and median calculation
+  float *sextractor_catalog__APP; // New array for aperture values
+  float *apertures_sorted;        // For calculating median aperture
+  
+  // Remove old calib.txt
+  lightcurve_statistics_file = fopen("calib.txt", "r");
+  if (NULL != lightcurve_statistics_file) {
+    fclose(lightcurve_statistics_file);
+    unlink("calib.txt");
+  }
+  
+  // Allocate memory for the arrays
+  sextractor_catalog__X = (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
+  if (sextractor_catalog__X == NULL) {
+    fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__X\n");
+    exit(EXIT_FAILURE);
+  };
+  
+  sextractor_catalog__Y = (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
+  if (sextractor_catalog__Y == NULL) {
+    fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__Y\n");
+    exit(EXIT_FAILURE);
+  };
+  
+  // New array for aperture values
+  sextractor_catalog__APP = (float *)malloc(MAX_NUMBER_OF_STARS * sizeof(float));
+  if (sextractor_catalog__APP == NULL) {
+    fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__APP\n");
+    exit(EXIT_FAILURE);
+  };
+  
+  sextractor_catalog__MAG = (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
+  if (sextractor_catalog__MAG == NULL) {
+    fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__MAG\n");
+    exit(EXIT_FAILURE);
+  };
+  
+  sextractor_catalog__MAG_ERR = (double *)malloc(MAX_NUMBER_OF_STARS * sizeof(double));
+  if (sextractor_catalog__MAG_ERR == NULL) {
+    fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__MAG_ERR\n");
+    exit(EXIT_FAILURE);
+  };
+  
+  sextractor_catalog__star_number = (int *)malloc(MAX_NUMBER_OF_STARS * sizeof(int));
+  if (sextractor_catalog__star_number == NULL) {
+    fprintf(stderr, "ERROR: Couldn't allocate memory for sextractor_catalog__star_number\n");
+    exit(EXIT_FAILURE);
+  };
+  
+  marker_counter = 0;
+  sextractor_catalog__counter = 0;
+  
+  // Get reference file name from log
+  if (0 != get_ref_image_name(fits_image_name)) {
+    fprintf(stderr, "ERROR getting the reference image name from the log file\n");
+    exit(EXIT_FAILURE);
+  }
+  
+  // Read vast_lightcurve_statistics.log 
+  lightcurve_statistics_file = fopen("vast_lightcurve_statistics.log", "r");
+  if (lightcurve_statistics_file == NULL) {
+    fprintf(stderr, "ERROR: Cannot open vast_lightcurve_statistics.log\n");
+    exit(EXIT_FAILURE);
+  }
+  
+  while (fscanf(lightcurve_statistics_file, "%lf %lf %f %f %s", 
+                &sextractor_catalog__MAG[sextractor_catalog__counter],
+                &sextractor_catalog__MAG_ERR[sextractor_catalog__counter],
+                &irrelevant_x, &irrelevant_y,
+                lightcurve_filename) == 5) {
+    
+    // Skip rest of the line - all the remaining columns are irrelevant
+    if (fgets(line_remainder, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurve_statistics_file) == NULL) {
+      break; // End of file reached
+    }
+    
+    // Try to open the lightcurve file
+    lightcurve_file = fopen(lightcurve_filename, "r");
+    if (lightcurve_file != NULL) {
+      found_ref_image = 0;
+      
+      // Search for reference image in lightcurve file
+      while (-1 < read_lightcurve_point(lightcurve_file, &jd, &tmp_double, &tmp_double, 
+                                        &x_pix, &y_pix, &app, image_name_in_lightcurve, NULL)) {
+        if (jd == 0.0)
+          continue; // Invalid line or comment - skip
+          
+        // Check if this is the reference image
+        if (0 == strcmp(image_name_in_lightcurve, fits_image_name)) {
+          // Store X, Y and aperture from this lightcurve point
+          sextractor_catalog__X[sextractor_catalog__counter] = (float)x_pix;
+          sextractor_catalog__Y[sextractor_catalog__counter] = (float)y_pix;
+          sextractor_catalog__APP[sextractor_catalog__counter] = (float)app;
+          
+          // Get number of observations for error calculation
+          N = count_lines_in_ASCII_file(lightcurve_filename);
+          sextractor_catalog__MAG_ERR[sextractor_catalog__counter] = 
+              sextractor_catalog__MAG_ERR[sextractor_catalog__counter] / sqrt(N - 1);
+          
+          // Parse star number from filename
+          sscanf(lightcurve_filename, "out%d.dat", &sextractor_catalog__star_number[sextractor_catalog__counter]);
+          
+          found_ref_image = 1;
+          sextractor_catalog__counter++;
+          break;
+        }
+      }
+      
+      fclose(lightcurve_file);
+      
+      if (!found_ref_image) {
+        fprintf(stderr, "Warning: Reference image not found in %s\n", lightcurve_filename);
+      }
+    }
+  }
+  
+  fclose(lightcurve_statistics_file);
+  
+  // Calculate median aperture size if we have valid stars
+  if (sextractor_catalog__counter > 0) {
+    apertures_sorted = (float *)malloc(sextractor_catalog__counter * sizeof(float));
+    if (apertures_sorted == NULL) {
+      fprintf(stderr, "ERROR: Couldn't allocate memory for apertures_sorted\n");
+      exit(EXIT_FAILURE);
+    }
+    
+    // Copy aperture values for sorting
+    for (i = 0; i < sextractor_catalog__counter; i++) {
+      apertures_sorted[i] = sextractor_catalog__APP[i];
+    }
+    
+    // Sort apertures and find median
+    gsl_sort_float(apertures_sorted, 1, sextractor_catalog__counter);
+    APER = gsl_stats_float_median_from_sorted_data(apertures_sorted, 1, sextractor_catalog__counter);
+    
+    free(apertures_sorted);
+    
+    fprintf(stderr, "Using median aperture size: %.1f pixels\n", APER);
+  } else {
+    APER = DEFAULT_APERTURE_FOR_CATALOG_DISPLAY; // Assuming there's a default value defined
+    fprintf(stderr, "Warning: No valid stars found with reference image measurements\n");
+  }
+}
+
+
 
  if ( match_mode == 3 ) {
   fprintf( stderr, "Entering single image reduction mode.\nProcessing image %s\n", fits_image_name );
