@@ -162,7 +162,7 @@ int main( int argc, char **argv ) {
    rename( lightcurve_tmp_filename, filenamelist[filename_counter] ); /* move lightcurve.tmp to lightcurve file */
    if ( clipped_points == 0 )
     break; // stop if we have no more points to clip
-  } // iteration
+  }        // iteration
 
   free( filenamelist[filename_counter] );
 

@@ -362,7 +362,7 @@ int main() {
    mag_err[i][j]= 0.0;
    corr[i][j]= 0.0;
   } // for(j=Nobs;j--;){
- } // for(i=Nstars;i--;){
+ }  // for(i=Nstars;i--;){
 
  c= malloc( Nstars * sizeof( float ) );
  if ( c == NULL ) {
@@ -515,7 +515,7 @@ int main() {
        }
       }
      } // if( r[l][j]!=0.0 && i!=l ){
-    } // for(k=0;k<Nstars;k++){
+    }  // for(k=0;k<Nstars;k++){
     // Now determine the mean local correction
     gsl_sort_float( data, 1, k );
     corr[i][j]= gsl_stats_float_median_from_sorted_data( data, 1, k );
@@ -524,7 +524,7 @@ int main() {
     fprintf( stderr, "%7.3f %7.3f %6.4f\n", x[i][j], y[i][j], corr[i][j] );
 #endif
    } // if( r[i][j]!=0.0 ){
-  } // for(i=Nstars;i--;){
+  }  // for(i=Nstars;i--;){
   fprintf( stderr, "***********************************************\n" );
  } // for(j=Nobs;j--;){
 

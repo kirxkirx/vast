@@ -847,7 +847,7 @@ int convert_ztf_snad_format( char *lightcurvefilename, char *path_to_vast_string
  return 0;
 }
 
-int convert_ztf_lasair_format(char *lightcurvefilename, char *path_to_vast_string) {
+int convert_ztf_lasair_format( char *lightcurvefilename, char *path_to_vast_string ) {
  FILE *lightcurvefile, *convertedfile;
  char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
  char original_filename[FILENAME_LENGTH];
@@ -857,87 +857,87 @@ int convert_ztf_lasair_format(char *lightcurvefilename, char *path_to_vast_strin
  float mag, mag_err;
  char filter[10];
  char status[20];
- int is_lasair_format = 0;
+ int is_lasair_format= 0;
 
- lightcurvefile = fopen(lightcurvefilename, "r");
- if (NULL == lightcurvefile) {
-  fprintf(stderr, "ERROR: cannot open file %s\n", lightcurvefilename);
+ lightcurvefile= fopen( lightcurvefilename, "r" );
+ if ( NULL == lightcurvefile ) {
+  fprintf( stderr, "ERROR: cannot open file %s\n", lightcurvefilename );
   return 1;
  }
 
  // Check if the file starts with the ZTF Lasair format header
- if (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
-  if (strncmp(line, "MJD,filter,", 11) == 0) {
+ if ( fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) != NULL ) {
+  if ( strncmp( line, "MJD,filter,", 11 ) == 0 ) {
    // Look for specific column names like "unforced_mag" and "unforced_mag_status"
-   if (strstr(line, "unforced_mag") != NULL && strstr(line, "unforced_mag_status") != NULL) {
-    is_lasair_format = 1;
+   if ( strstr( line, "unforced_mag" ) != NULL && strstr( line, "unforced_mag_status" ) != NULL ) {
+    is_lasair_format= 1;
    }
   }
  }
 
- if (!is_lasair_format) {
-  fclose(lightcurvefile);
+ if ( !is_lasair_format ) {
+  fclose( lightcurvefile );
   return 0; // Not a ZTF Lasair format file, do nothing
  }
 
  // Create the converted_lightcurves directory if it doesn't exist
- snprintf(converted_directory, VAST_PATH_MAX, "%sconverted_lightcurves", path_to_vast_string);
- mkdir(converted_directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+ snprintf( converted_directory, VAST_PATH_MAX, "%sconverted_lightcurves", path_to_vast_string );
+ mkdir( converted_directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
 
- strncpy(original_filename, basename(lightcurvefilename), FILENAME_LENGTH);
- replace_last_dot_with_null(original_filename);
+ strncpy( original_filename, basename( lightcurvefilename ), FILENAME_LENGTH );
+ replace_last_dot_with_null( original_filename );
 
  // Generate the converted filename
- snprintf(converted_filename, MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER, 
-          "%s/%s_converted.dat", converted_directory, original_filename);
+ snprintf( converted_filename, MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER,
+           "%s/%s_converted.dat", converted_directory, original_filename );
  // Ensure null-termination
- converted_filename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1] = '\0';
+ converted_filename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1]= '\0';
 
- fprintf(stderr, "ZTF Lasair broker format detected! Converting %s to %s\n", 
-         basename(lightcurvefilename), converted_filename);
+ fprintf( stderr, "ZTF Lasair broker format detected! Converting %s to %s\n",
+          basename( lightcurvefilename ), converted_filename );
 
  // Check the length of converted_filename before writing the output
- if (strlen(converted_filename) > FILENAME_LENGTH) {
-  fprintf(stderr, "ERROR in on-the-fly lightcurve format conversion - the output filename is too long!");
-  fclose(lightcurvefile);
+ if ( strlen( converted_filename ) > FILENAME_LENGTH ) {
+  fprintf( stderr, "ERROR in on-the-fly lightcurve format conversion - the output filename is too long!" );
+  fclose( lightcurvefile );
   return 1;
  }
 
- convertedfile = fopen(converted_filename, "w");
- if (NULL == convertedfile) {
-  fprintf(stderr, "ERROR: cannot create converted file %s\n", converted_filename);
-  fclose(lightcurvefile);
+ convertedfile= fopen( converted_filename, "w" );
+ if ( NULL == convertedfile ) {
+  fprintf( stderr, "ERROR: cannot create converted file %s\n", converted_filename );
+  fclose( lightcurvefile );
   return 1;
  }
 
  // Reset file pointer to the beginning of the file
- fseek(lightcurvefile, 0, SEEK_SET);
- 
+ fseek( lightcurvefile, 0, SEEK_SET );
+
  // Skip the header line
- if (NULL == fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile)) {
-  fprintf(stderr, "ERROR in convert_ztf_lasair_format(): Failed to read header line\n");
-  fclose(lightcurvefile);
-  fclose(convertedfile);
+ if ( NULL == fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) ) {
+  fprintf( stderr, "ERROR in convert_ztf_lasair_format(): Failed to read header line\n" );
+  fclose( lightcurvefile );
+  fclose( convertedfile );
   return 1;
  }
 
  // Process the lightcurve data
- while (fgets(line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile) != NULL) {
-  if (sscanf(line, "%lf,%[^,],%f,%f,%[^,]", &mjd, filter, &mag, &mag_err, status) == 5) {
+ while ( fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) != NULL ) {
+  if ( sscanf( line, "%lf,%[^,],%f,%f,%[^,]", &mjd, filter, &mag, &mag_err, status ) == 5 ) {
    // Only use r filter data and positive detections
-   if (strcmp(filter, "r") == 0 && strcmp(status, "positive") == 0) {
+   if ( strcmp( filter, "r" ) == 0 && strcmp( status, "positive" ) == 0 ) {
     // Convert MJD to JD by adding 2400000.5
-    fprintf(convertedfile, "%.6lf %.5f %.5f\n", mjd + 2400000.5, mag, mag_err);
+    fprintf( convertedfile, "%.6lf %.5f %.5f\n", mjd + 2400000.5, mag, mag_err );
    }
   }
  }
 
- fclose(lightcurvefile);
- fclose(convertedfile);
+ fclose( lightcurvefile );
+ fclose( convertedfile );
 
- strncpy(lightcurvefilename, converted_filename, FILENAME_LENGTH);
+ strncpy( lightcurvefilename, converted_filename, FILENAME_LENGTH );
  // Ensure null-termination
- lightcurvefilename[FILENAME_LENGTH - 1] = '\0';
+ lightcurvefilename[FILENAME_LENGTH - 1]= '\0';
 
  return 0;
 }
@@ -1907,8 +1907,8 @@ int main( int argc, char **argv ) {
   exit( EXIT_FAILURE );
  }
 
- if (convert_ztf_lasair_format(lightcurvefilename, path_to_vast_string) != 0) {
-  exit(EXIT_FAILURE);
+ if ( convert_ztf_lasair_format( lightcurvefilename, path_to_vast_string ) != 0 ) {
+  exit( EXIT_FAILURE );
  }
 
  if ( convert_asassn_v1_format( lightcurvefilename, path_to_vast_string ) != 0 ) {
@@ -2635,7 +2635,7 @@ int main( int argc, char **argv ) {
    fit_mag_err= NULL;
 
    fit_n= 0; // or we'll not reallocate the memory for fit_jd and stuff when we'll get back here
-  } // if( plot_linear_trend_switch==1 ){
+  }          // if( plot_linear_trend_switch==1 ){
 
   //   fprintf(stderr,"##### DEBUG06 #####\n");
 
@@ -3133,12 +3133,12 @@ int main( int argc, char **argv ) {
        // the following works, I don't know why...
        if ( closest_num != -1 )
         closest_num--; /// ! TEST !
-      } // for(i=closest_num;i<Nobs;i++)
+      }                // for(i=closest_num;i<Nobs;i++)
       was_lightcurve_changed= 1;
       removed_points_counter_total++;
       removed_points_counter_this_run++;
      } // if inside the rectangle
-    } // for(closest_num=0;i<Nobs;i++)
+    }  // for(closest_num=0;i<Nobs;i++)
     // close the removed points log file (if it was open in hte first place)
     fprintf( stderr, "Removed %5d data points (%5d removed data points in total)\n", removed_points_counter_this_run, removed_points_counter_total );
     if ( NULL != removed_points_log ) {
@@ -3146,8 +3146,8 @@ int main( int argc, char **argv ) {
      if ( 0 != removed_points_counter_total ) {
       fprintf( stderr, "The list of removed points is written to %s\n", removed_points_logfilename );
      } // if ( 0 != removed_points_counter_total ) {
-    } // if ( NULL != removed_points_log ) {
-   } // if( curC!='X' && curC!='x' )
+    }  // if ( NULL != removed_points_log ) {
+   }   // if( curC!='X' && curC!='x' )
    curC= ' ';
   } // if( curC=='C' || curC=='c' )
 

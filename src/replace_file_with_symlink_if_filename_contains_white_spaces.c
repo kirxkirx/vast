@@ -218,7 +218,7 @@ void cutout_green_channel_out_of_RGB_DSLR_image( char *filename ) {
     }
    }
   }
- } // if( 0 == status ) after fits_read_key(fptr, TDOUBLE, "ISOSPEED"
+ }                                 // if( 0 == status ) after fits_read_key(fptr, TDOUBLE, "ISOSPEED"
  fits_close_file( fptr, &status ); // if we are here, the FITS file is still open
  fits_clear_errmsg();              // clear the CFITSIO error message stack
  status= 0;                        // just in case

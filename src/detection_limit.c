@@ -41,7 +41,7 @@ static int residuals_f( const gsl_vector *x, void *params, gsl_vector *f ) {
  size_t i;
 
  for ( i= 0; i < data->n; i++ ) {
-  double model_sn= sn_model( data->mag[i], (double[]){ p0, p1 } );
+  double model_sn= sn_model( data->mag[i], ( double[] ){ p0, p1 } );
   // Minimize residuals in logarithms for better stability
   gsl_vector_set( f, i, log10( data->sn[i] ) - log10( model_sn ) );
  }

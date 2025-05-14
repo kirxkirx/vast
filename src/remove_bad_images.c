@@ -353,7 +353,7 @@ int main( int argc, char **argv ) {
    free( filenamelist[filename_counter] );
   }
   update_number_of_bad_images_in_log_file( images_Nbad ); // Update vast_summary.log
- } // if( images_Nbad>0 ){
+ }                                                        // if( images_Nbad>0 ){
 
  free( filenamelist );
 

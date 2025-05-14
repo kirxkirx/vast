@@ -1069,7 +1069,7 @@ grid createGrid( frame f ) {
   exit( EXIT_FAILURE );
  };
  // Do we want to make sure cellSize never gets too small. e.g. sqrt(4008*2672/72962)=12.115
- //cellSize= MAX( sqrtf( f.sizeX * f.sizeY / ( (float)f.count ) ), 20);
+ // cellSize= MAX( sqrtf( f.sizeX * f.sizeY / ( (float)f.count ) ), 20);
  // nope, the above has no effect as we are searchin +/-1 cells anyway
  cellSize= sqrtf( f.sizeX * f.sizeY / ( (float)f.count ) );
 
@@ -1683,7 +1683,6 @@ int Ident_on_sigma( struct Star *star1,  int Number1,
 }
 */
 
-
 /*--------------------------------------------------------------------
   Ident_on_sigma()  -  mutual nearest neighbour + retry pass
   ------------------------------------------------------------------*/
@@ -1905,40 +1904,40 @@ int Ident_on_sigma( struct Star *star1,  int Number1,
                     double  image_size_Y )
 {
 */
-    /*--------------------------------------------------------------
-       Variable block – all declarations at the beginning
-      --------------------------------------------------------------*/
+/*--------------------------------------------------------------
+   Variable block – all declarations at the beginning
+  --------------------------------------------------------------*/
 /*
-    // geometry 
+    // geometry
     float   R_best, R, epsilon;
     double  r2_best_rev, r2_rev;
 
-    // counters and flags 
+    // counters and flags
     int     find_flag;
     int     number_of_matched_stars;
     int     number_of_ambiguous_matches;
     int     previous_number_in_array;
     int     q;
 
-    // loop indices 
+    // loop indices
     int     i, j;
 
-    // spatial indexing 
+    // spatial indexing
     frame   fr1, fr2;
     grid    gr1, gr2;
 
-    // dynamic lists 
+    // dynamic lists
     list    points1, points2, points_2;
     list    xs_matched, ys_matched, ys_unmatched;
     list    xs_matched_, ys_matched_, ys_unmatched_;
     list    ps, ps_1, ps_rev;
 
-    // point structures 
+    // point structures
     point   p1, p2, p_best, p2_test;
 */
-    /*------------------------------------------------------------------
-      Initialisation
-      ------------------------------------------------------------------*/
+/*------------------------------------------------------------------
+  Initialisation
+  ------------------------------------------------------------------*/
 /*
     epsilon                       = sigma_popadaniya * sigma_popadaniya;
     number_of_matched_stars       = 0;
@@ -2112,8 +2111,6 @@ int Ident_on_sigma( struct Star *star1,  int Number1,
 //      ------------------------------------------------------------------*/
 //    return number_of_matched_stars;
 //}
-
-
 
 /*
 

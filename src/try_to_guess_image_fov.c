@@ -977,12 +977,12 @@ int main( int argc, char **argv ) {
        }
        break;
       }
-     } // while(0<fscanf(image_details_logfile...
+     }       // while(0<fscanf(image_details_logfile...
     } else { // if(0==fitsfile_read_check(name_of_wcs_solved_reference_image)){
      fprintf( stderr, "This was an attempt to see if there is a plate-solved reference image from the same image series. Never mind.\n" );
     } // else if(0==fitsfile_read_check(name_of_wcs_solved_reference_image)){
-   } // if( 0!=strncmp(fitsfile_name,full_path_to_fits_image,FILENAME_LENGTH) ){
-  } // if( 10=fscanf(image_details_logfile,"exp_start=  ...
+   }  // if( 0!=strncmp(fitsfile_name,full_path_to_fits_image,FILENAME_LENGTH) ){
+  }   // if( 10=fscanf(image_details_logfile,"exp_start=  ...
   fclose( image_details_logfile );
  }
 
