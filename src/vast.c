@@ -823,6 +823,10 @@ void choose_best_reference_image( char **input_images, int *vast_bad_image_flag,
    if ( flux_adu < MIN_SNR * flux_adu_err ) {
     continue;
    }
+   // Experimental: ount only high-SNR stars
+   if ( flux_adu < 20.0 * flux_adu_err ) {
+    continue;
+   }
    //
    // https://en.wikipedia.org/wiki/Full_width_at_half_maximum
    // ok, I'm not sure if A is the sigma or sigma/2
@@ -832,8 +836,12 @@ void choose_best_reference_image( char **input_images, int *vast_bad_image_flag,
    if ( SIGMA_TO_FWHM_CONVERSION_FACTOR * ( a_b + a_b_err ) < FWHM_MIN ) {
     continue;
    }
+   // !!! That doesn't seem to solve the problem
    // float_parameters[0] is the actual FWHM
-   // if ( float_parameters[0] < FWHM_MIN ) {
+   if ( float_parameters[0] < 0.0 ) {
+    // Faint stars and especially hot pixels tend to have negative FWHM estimate
+    continue;
+   }
    if ( MAX( float_parameters[0], SIGMA_TO_FWHM_CONVERSION_FACTOR * a_a ) < FWHM_MIN ) {
     continue;
    }
@@ -965,6 +973,8 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
  double median_a_minus_b;
  double sigma_from_MAD_a_minus_b;
  //
+ 
+ double a_minus_b_cutoff_threshold= 0;
 
  FILE *file;
 
@@ -1133,13 +1143,23 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
  // !!! We should consider the possibility that sigma_from_MAD_a_minus_b= 0.0
  // !!! and median_a_minus_b= -0.001
 
- // Write-down the name of the new reference image
- file= fopen( "vast_automatically_rejected_images_with_elongated_stars.log", "w" );
+ // 
+ file= fopen( "vast_accepted_or_rejected_images_based_on_stars_elongation.log", "w" );
  if ( file == NULL ) {
   fprintf( stderr, "ERROR in mark_images_with_elongated_stars_as_bad(): cannot open vast_automatically_selected_reference_image.log for writing!\n" );
   free( a_minus_b__image );
   return;
  }
+ 
+ // Determine the cut-off threshold
+ a_minus_b_cutoff_threshold= 5.0 * MAX( sigma_from_MAD_a_minus_b, 0.05 );
+ fprintf( file, "# (A-B) cut-off threshold: %.3lf pix\n", a_minus_b_cutoff_threshold );
+ fprintf( stderr, "# (A-B) cut-off threshold: %.3lf pix\n", a_minus_b_cutoff_threshold );
+
+ fprintf( file, "# 0 in the first column means 'below threshold - image accepted'\n" );
+ fprintf( stderr, "# 0 in the first column means 'below threshold - image accepted'\n" );
+ fprintf( file, "# 1 in the first column means 'above threshold - image rejected'\n" );
+ fprintf( stderr, "# 1 in the first column means 'below threshold - image rejected'\n" );
 
  fprintf( file, "# median(A-B) among all images %.3lf +/-%.3lf pix\n", median_a_minus_b, sigma_from_MAD_a_minus_b );
  fprintf( stderr, "# median(A-B) among all images %.3lf +/-%.3lf pix\n", median_a_minus_b, sigma_from_MAD_a_minus_b );
@@ -1155,7 +1175,7 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
    continue;
   }
   // check if image A-B is too large
-  if ( fabs( a_minus_b__image[i] - median_a_minus_b ) > 5.0 * MAX( sigma_from_MAD_a_minus_b, 0.05 ) ) {
+  if ( fabs( a_minus_b__image[i] - median_a_minus_b ) > a_minus_b_cutoff_threshold ) {
    vast_bad_image_flag[i]= 2;
    fprintf( file, "%d  %.3lf  %s\n", vast_bad_image_flag[i], a_minus_b__image[i], input_images[i] );
    fprintf( stderr, "%d  %.3lf  %s\n", vast_bad_image_flag[i], a_minus_b__image[i], input_images[i] );
