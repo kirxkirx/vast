@@ -2835,18 +2835,18 @@ $GREP_RESULT"
   fi
   ###############################################
   ### Check elongated stars log
-  if [ ! -f vast_automatically_rejected_images_with_elongated_stars.log ];then
+  if [ ! -f vast_accepted_or_rejected_images_based_on_stars_elongation.log ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_NO_vast_automatically_rejected_images_with_elongated_stars.log"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_NO_vast_accepted_or_rejected_images_based_on_stars_elongation.log"
   else
-   if [ ! -s vast_automatically_rejected_images_with_elongated_stars.log ];then
+   if [ ! -s vast_accepted_or_rejected_images_based_on_stars_elongation.log ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_EMPTY_vast_automatically_rejected_images_with_elongated_stars.log"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_EMPTY_vast_accepted_or_rejected_images_based_on_stars_elongation.log"
    else
-    grep --quiet 'median(A-B) among all images 0.14' vast_automatically_rejected_images_with_elongated_stars.log
+    grep --quiet 'median(A-B) among all images 0.14' vast_accepted_or_rejected_images_based_on_stars_elongation.log
     if [ $? -ne 0 ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_MEDIAN_AmB_CHANGE_vast_automatically_rejected_images_with_elongated_stars.log"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_MEDIAN_AmB_CHANGE_vast_accepted_or_rejected_images_based_on_stars_elongation.log"
     fi
    fi
   fi
