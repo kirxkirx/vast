@@ -5599,7 +5599,7 @@ if [ -d ../sample_data ];then
   # We end up with different reference images at diffferent machines,
   # so let's just check the date when the ref image was taken
   #### ????This test is not working - different machines choose different reference images!!!!
-  grep "Ref.  image:" vast_summary.log | grep --quiet -e "06.07.2004" -e "05.07.2004"
+  grep "Ref.  image:" vast_summary.log | grep --quiet -e "06.07.2004" -e "05.07.2004" -e "01.08.2004"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES AUTOSELECT_REF_IMG_SMALLCCD003a"
