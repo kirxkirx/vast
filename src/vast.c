@@ -1737,6 +1737,12 @@ void drop_one_point_that_changes_fit_the_most( double *poly_x_external, double *
  double *poly_x;
  double *poly_y;
  double *poly_err;
+ 
+ // do nothing if we have too few points
+ if( ( *N_good_stars_external ) < 4 ) {
+  fprintf( stderr, "Error: too few points for drop_one_point_that_changes_fit_the_most()\n" );
+  return;
+ }
 
  // for(i_drop=0;i_drop<(*N_good_stars_external);i_drop++){
  for ( i_drop= -1; i_drop < 10; i_drop++ ) {
@@ -1744,7 +1750,7 @@ void drop_one_point_that_changes_fit_the_most( double *poly_x_external, double *
   N_good_stars= ( *N_good_stars_external );
   if ( N_good_stars <= 0 ) {
    fprintf( stderr, "Error: no good stars for magnitude calibration\n" );
-   exit( EXIT_FAILURE );
+   //exit( EXIT_FAILURE ); // I don't want to crash here
   }
   poly_x= (double *)malloc( N_good_stars * sizeof( double ) );
   if ( poly_x == NULL ) {
@@ -5650,7 +5656,9 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 
       // Drop one of the 10 brightest stars that changes fit the most,
       // this is to handle the case when one of the brightest stars is actually variable
-      drop_one_point_that_changes_fit_the_most( poly_x, poly_y, poly_err, &N_good_stars, photometric_calibration_type, param_use_photocurve );
+      if ( N_good_stars >= 10 ) { 
+       drop_one_point_that_changes_fit_the_most( poly_x, poly_y, poly_err, &N_good_stars, photometric_calibration_type, param_use_photocurve );
+      }
 
       /* Check that we haven't dropped too many stars so the parabolic fit still make sense */
       if ( N_good_stars < min_number_of_stars_for_magnitude_calibration ) {
