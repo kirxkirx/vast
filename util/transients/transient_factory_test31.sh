@@ -2379,11 +2379,11 @@ Planet positions from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS
 cat planets.txt | tee -a transient_factory_test31.txt
 ls -lh planets.txt 2>&1 | tee -a transient_factory_test31.txt
 echo "############################################################
-Positions of slected moons from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" | tee -a transient_factory_test31.txt
+Positions of selected moons from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" | tee -a transient_factory_test31.txt
 cat moons.txt | tee -a transient_factory_test31.txt
 ls -lh moons.txt 2>&1 | tee -a transient_factory_test31.txt
 echo "############################################################
-Positions of slected spacecraft from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" | tee -a transient_factory_test31.txt
+Positions of selected spacecraft from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" | tee -a transient_factory_test31.txt
 cat spacecraft.txt | tee -a transient_factory_test31.txt
 ls -lh spacecraft.txt 2>&1 | tee -a transient_factory_test31.txt
 #echo "############################################################
