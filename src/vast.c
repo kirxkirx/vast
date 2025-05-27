@@ -400,140 +400,6 @@ void ask_user_to_click_on_moving_object( char **input_images, float *moving_obje
  return;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////
-/*
-// https://stackoverflow.com/questions/2256945/removing-a-non-empty-directory-programmatically-in-c-or-c
-int remove_directory( const char *path ) {
- DIR *d= opendir( path );
- size_t path_len= strlen( path );
- int r= -1;
-
- int error= 0;
-
-#ifdef DEBUGMESSAGES
- fprintf( stderr, "Checking the directory %s\n", path );
-#endif
-
- if ( d ) {
-  struct dirent *p;
-
-#ifdef DEBUGMESSAGES
-  fprintf( stderr, "Opening directory %s\n", path );
-#endif
-
-  r= 0;
-
-  while ( !r && ( p= readdir( d ) ) ) {
-   int r2= -1;
-   char *buf;
-   size_t len;
-
-#ifdef DEBUGMESSAGES
-   fprintf( stderr, "Dealing with the directory entry %s\n", p->d_name );
-#endif
-
-   // Skip the names "." and ".." as we don't want to recurse on them.
-   if ( !strcmp( p->d_name, "." ) || !strcmp( p->d_name, ".." ) ) {
-#ifdef DEBUGMESSAGES
-    fprintf( stderr, "Ups, skipping the dangerouse name %s\n", p->d_name );
-#endif
-    continue;
-   }
-
-#ifdef DEBUGMESSAGES
-   fprintf( stderr, "Still here with the entry %s\n", p->d_name );
-#endif
-
-   len= path_len + strlen( p->d_name ) + 2;
-   if ( len <= 0 ) {
-    fprintf( stderr, "ERROR: wrong path len\n" );
-    exit( EXIT_FAILURE );
-   }
-   buf= malloc( len );
-   if ( buf == NULL ) {
-    fprintf( stderr, "ERROR: Couldn't allocate buf\n" );
-    vast_report_memory_error();
-    exit( EXIT_FAILURE );
-   }
-   if ( buf ) {
-    struct stat statbuf;
-
-#ifdef DEBUGMESSAGES
-    fprintf( stderr, "if ( %s )\n", buf );
-#endif
-
-    snprintf( buf, len, "%s/%s", path, p->d_name );
-
-#ifdef DEBUGMESSAGES
-    fprintf( stderr, "buf = %s\n", buf );
-#endif
-
-    if ( !stat( buf, &statbuf ) ) {
-#ifdef DEBUGMESSAGES
-     fprintf( stderr, "stat() went fine for buf = %s\n", buf );
-#endif
-
-     if ( S_ISDIR( statbuf.st_mode ) ) {
-#ifdef DEBUGMESSAGES
-      fprintf( stderr, "Recursively calling remove_directory( %s )\n", buf );
-#endif
-      r2= remove_directory( buf );
-     } else {
-#ifdef DEBUGMESSAGES
-      fprintf( stderr, "Removing %s\n", buf );
-#endif
-      if ( !stat( buf, &statbuf ) ) { //
-       r2= unlink( buf );
-      } //
-     }
-    } else {
-#ifdef DEBUGMESSAGES
-     fprintf( stderr, "stat() is not fine for buf = %s\n", buf );
-#endif
-
-     // Assume this is a broken
-     if ( !lstat( buf, &statbuf ) ) {
-      r2= unlink( buf );
-     } else {
-      fprintf( stderr, "ERROR removing %s\n", buf );
-      // Don't stop if you can't delete one entry.
-      // But this means we'll not be able to delete the directory anyhow.
-      error= 1;
-      continue;
-     }
-    }
-
-    free( buf );
-   } else {
-#ifdef DEBUGMESSAGES
-    fprintf( stderr, "ELSE if ( %s )\n", buf );
-#endif
-   }
-
-   r= r2;
-  }
-
-#ifdef DEBUGMESSAGES
-  fprintf( stderr, "Closing the directory\n" );
-#endif
-
-  closedir( d );
- }
-
- if ( !r ) {
-#ifdef DEBUGMESSAGES
-  fprintf( stderr, "Removing directory %s\n", path );
-#endif
-  r= rmdir( path );
-  error= r;
- } else {
-  error= 1;
- }
-
- return error;
-}
-*/
-
 int remove_directory( const char *path ) {
  int error= 0;
 
@@ -645,7 +511,7 @@ int remove_directory( const char *path ) {
      if ( !lstat( full_path, &statbuf ) ) {
       unlink( full_path );
      } else {
-      fprintf( stderr, "ERROR: Could not stat: %s\n", full_path );
+      fprintf( stderr, "ERROR in remove_directory(): Could not stat: %s\n", full_path );
       error= 1;
      }
      free( full_path );
@@ -656,12 +522,12 @@ int remove_directory( const char *path ) {
    // Now remove the directory itself
    if ( !error ) {
     if ( rmdir( curr_path ) != 0 ) {
-     fprintf( stderr, "ERROR: Failed to remove directory: %s\n", curr_path );
+     fprintf( stderr, "ERROR in remove_directory(): Failed to remove directory: %s\n", curr_path );
      error= 1;
     }
    }
   } else {
-   fprintf( stderr, "ERROR: Could not open directory: %s\n", curr_path );
+   fprintf( stderr, "INFO from remove_directory(): Could not open directory: %s\n", curr_path );
    error= 1;
   }
 
@@ -674,11 +540,11 @@ int remove_directory( const char *path ) {
  return error;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////
 
 int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogfilename ); // actually it is declared in src/autodetect_aperture.c
 
 void make_sure_libbin_is_in_path(); // actually it is declared in src/autodetect_aperture.c
+
 
 // This function will try to find the deepest image and set it as the reference one
 // by altering the image order in input_images array
