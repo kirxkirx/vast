@@ -2240,7 +2240,9 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
   # The following line should match that in util/transients/report_transient.sh
   grep -A8 "$RADECSTR" transient_report/index.html | grep 'neverexclude_list.txt' | grep --quiet 'This object is listed in'
   if [ $? -eq 0 ];then
-   echo "$RADECSTR  -- listed in neverexclude_list.txt (will NOT add it to exclusion list)" | tee -a transient_factory_test31.txt
+   #echo "$RADECSTR  -- listed in neverexclude_list.txt (will NOT add it to exclusion list)" | tee -a transient_factory_test31.txt
+   # stdout goes to exclusion_list_index_html.txt_noasteroids in this loop, so this line ended up in exclusion list - very silly
+   echo "$RADECSTR  -- listed in neverexclude_list.txt (will NOT add it to exclusion list)" >> transient_factory_test31.txt
    continue
   fi
   # Mac OS X grep does not handle well the combination --max-count=1 -A8

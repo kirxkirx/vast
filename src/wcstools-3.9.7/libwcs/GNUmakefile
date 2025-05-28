@@ -1,4 +1,4 @@
-CFLAGS= -g -D_FILE_OFFSET_BITS=64
+CFLAGS= -g -D_FILE_OFFSET_BITS=64 -std=gnu99 -Wno-error
 #CC= cc
 CC := $(shell ../find_gcc_compiler.sh)
 

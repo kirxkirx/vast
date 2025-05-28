@@ -59,7 +59,45 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
  double distance;
 
  double cosine_value;
+ 
+ // Check the input is not empty
+ if ( NULL == string_RA1 ) {
+  fprintf( stderr, "ERROR string_RA1 is NULL\n" );
+  return 1;
+ }
+ if ( NULL == string_Dec1 ) {
+  fprintf( stderr, "ERROR string_Dec1 is NULL\n" );
+  return 1;
+ }
 
+ if ( NULL == string_RA2 ) {
+  fprintf( stderr, "ERROR string_RA2 is NULL\n" );
+  return 1;
+ }
+ if ( NULL == string_Dec2 ) {
+  fprintf( stderr, "ERROR string_Dec2 is NULL\n" );
+  return 1;
+ }
+ 
+ if ( strlen(string_RA1) < 1 ) {
+  fprintf( stderr, "ERROR string_RA1 is too short\n" );
+  return 1;
+ }
+ if ( strlen(string_Dec1) < 1 ) {
+  fprintf( stderr, "ERROR string_Dec1 is too short\n" );
+  return 1;
+ }
+
+ if ( strlen(string_RA2) < 1 ) {
+  fprintf( stderr, "ERROR string_RA2 is too short\n" );
+  return 1;
+ }
+ if ( strlen(string_Dec2) < 1 ) {
+  fprintf( stderr, "ERROR string_Dec2 is too short\n" );
+  return 1;
+ }
+
+ // Parse the first set of coordinates
  if ( format_hms_or_deg( string_RA1 ) ) {
   // Format HH:MM:SS.SS
   sscanf( string_RA1, "%lf:%lf:%lf", &hh, &mm, &ss );
@@ -111,6 +149,7 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
   // Format DD.DDDD
   DEC1_deg= atof( string_Dec1 );
  }
+ 
  // Check the resulting values
  if ( RA1_deg < 0.0 || RA1_deg > 360.0 ) {
   fprintf( stderr, "ERROR parsing input coordinates: '%s' understood as '%lf'\n", string_RA1, RA1_deg );
@@ -121,6 +160,8 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
   return 1;
  }
 
+
+ // Parse the second set of coordinates
  if ( format_hms_or_deg( string_RA2 ) ) {
   // Format HH:MM:SS.SS
   sscanf( string_RA2, "%lf:%lf:%lf", &hh, &mm, &ss );
@@ -172,6 +213,8 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
   // Format DD.DDDD
   DEC2_deg= atof( string_Dec2 );
  }
+
+ // Check the resulting values 
  if ( RA2_deg < 0.0 || RA2_deg > 360.0 ) {
   fprintf( stderr, "ERROR parsing input coordinates: '%s' understood as '%lf'\n", string_RA2, RA2_deg );
   return 1;
@@ -180,6 +223,7 @@ int compute_angular_distance_and_print_result( char *string_RA1, char *string_De
   fprintf( stderr, "ERROR parsing input coordinates: '%s' understood as '%lf'\n", string_Dec2, DEC2_deg );
   return 1;
  }
+
 
  if ( 0.0 == search_radius_arcsec ) {
   // fprintf( stderr, "%lf %lf  %lf %lf\n", RA1_deg, DEC1_deg, RA2_deg, DEC2_deg );
@@ -364,13 +408,12 @@ int main( int argc, char **argv ) {
   }
  }
  // if we are still here, the third argment is a file name
- // the file is expected to contain alist of positions
+ // the file is expected to contain a list of positions
  search_radius_arcsec= atof( argv[4] );
  if ( search_radius_arcsec <= 0.0 || search_radius_arcsec > 3600.0 ) {
   fprintf( stderr, "ERROR in %s -- invalid search radius in arcsec: %s\n", argv[0], argv[4] );
   return 1;
  }
- // while( -1<fscanf(filelist_input_positions, "%s %s", str1, str2) ) {
  while ( NULL != fgets( input_buffer, 4096, filelist_input_positions ) ) {
   // check that the string contains white space and then something
   input_buffer[4096 - 1]= '\0';
@@ -406,7 +449,8 @@ int main( int argc, char **argv ) {
   }
 
   // OK, this may be a "RA DEC" or "RA DEC COMMENTS" type string
-  sscanf_return_value= sscanf( input_buffer, "%s %s %[^\n]", str1, str2, str_comment );
+  //sscanf_return_value= sscanf( input_buffer, "%s %s %[^\n]", str1, str2, str_comment );
+  sscanf_return_value= sscanf( input_buffer, "%511s %511s %511[^\n]", str1, str2, str_comment );
 
   if ( sscanf_return_value < 2 ) {
    str1[0]= '\0';
@@ -421,7 +465,6 @@ int main( int argc, char **argv ) {
   } else {
    str_comment[512 - 1]= '\0';
   }
-  // fprintf(stderr, "str1='%s' str2='%s'\n",str1,str2);
   if ( 0 == compute_angular_distance_and_print_result( argv[1], argv[2], str1, str2, search_radius_arcsec, &output_distance_arcsec ) ) {
    fprintf( stdout, "FOUND  %4.1lf\"  %s\n", output_distance_arcsec, str_comment );
    break;
