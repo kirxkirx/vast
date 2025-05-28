@@ -1,4 +1,6 @@
-CFLAGS= -g -D_FILE_OFFSET_BITS=64
+# adding '-std=c89 -Wno-error' to avoid compile problem with gcc-15
+CFLAGS= -g -D_FILE_OFFSET_BITS=64 -std=c89 -Wno-error
+#CFLAGS= -g -D_FILE_OFFSET_BITS=64
 #CC= cc
 CC := $(shell ./find_gcc_compiler.sh)
 LIBWCS = libwcs/libwcs.a
