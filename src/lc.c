@@ -942,6 +942,297 @@ int convert_ztf_lasair_format( char *lightcurvefilename, char *path_to_vast_stri
  return 0;
 }
 
+// Rename the existing function to be more specific
+int convert_aavso_data_upload_format( char *lightcurvefilename, char *path_to_vast_string ) {
+ FILE *lightcurvefile, *convertedfile;
+ char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+ char original_filename[FILENAME_LENGTH];
+ char converted_filename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER];
+ char converted_directory[VAST_PATH_MAX];
+ double jd, mag, mag_err;
+
+ lightcurvefile= fopen( lightcurvefilename, "r" );
+ if ( NULL == lightcurvefile ) {
+  fprintf( stderr, "ERROR: cannot open file %s\n", lightcurvefilename );
+  return 1;
+ }
+
+ // Check if the file starts with #TYPE=EXTENDED
+ if ( fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) != NULL ) {
+  if ( strncmp( line, "#TYPE=EXTENDED", 14 ) != 0 ) {
+   fclose( lightcurvefile );
+   return 0; // Not an AAVSO upload format file, do nothing
+  }
+ } else {
+  fclose( lightcurvefile );
+  return 1; // Error reading the file
+ }
+
+ // Create the converted_lightcurves directory if it doesn't exist
+ snprintf( converted_directory, VAST_PATH_MAX, "%sconverted_lightcurves", path_to_vast_string );
+ mkdir( converted_directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+
+ strncpy( original_filename, basename( lightcurvefilename ), FILENAME_LENGTH );
+ replace_last_dot_with_null( original_filename );
+
+ // Generate the converted filename
+ snprintf( converted_filename, MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER, "%s/%s_converted.dat", converted_directory, original_filename );
+ // Ensure null-termination
+ converted_filename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1]= '\0';
+
+ fprintf( stderr, "AAVSO data upload format detected! Converting %s to %s \n", basename( lightcurvefilename ), converted_filename );
+
+ // Check the length of converted_filename before writing the output
+ if ( strlen( converted_filename ) > FILENAME_LENGTH ) {
+  fprintf( stderr, "ERROR in on-the-fly lightcurve format conversion - the output filename is too long!" );
+  fclose( lightcurvefile );
+  return 1;
+ }
+
+ convertedfile= fopen( converted_filename, "w" );
+ if ( NULL == convertedfile ) {
+  fprintf( stderr, "ERROR: cannot create converted file %s\n", converted_filename );
+  fclose( lightcurvefile );
+  return 1;
+ }
+
+ // Skip the header lines until the data starts
+ while ( fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) != NULL ) {
+  if ( strncmp( line, "#", 1 ) != 0 ) {
+   break;
+  }
+ }
+
+ // Process the lightcurve data
+ do {
+  if ( sscanf( line, "%*[^,],%lf,%lf,%lf", &jd, &mag, &mag_err ) == 3 ) {
+   fprintf( convertedfile, "%.6lf %.5f %.5f\n", jd, mag, mag_err );
+  }
+ } while ( fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) != NULL );
+
+ fclose( lightcurvefile );
+ fclose( convertedfile );
+
+ strncpy( lightcurvefilename, converted_filename, FILENAME_LENGTH );
+ // Ensure null-termination
+ lightcurvefilename[FILENAME_LENGTH - 1]= '\0';
+
+ return 0;
+}
+
+// New function for AAVSO data download format
+int convert_aavso_data_download_format( char *lightcurvefilename, char *path_to_vast_string ) {
+ FILE *lightcurvefile, *convertedfile;
+ char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+ char original_filename[FILENAME_LENGTH];
+ char converted_filename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER];
+ char converted_directory[VAST_PATH_MAX];
+ double jd, mag, mag_err;
+ char band[10];
+ 
+ // Band counters - add more bands as needed
+ int v_count= 0, b_count= 0, r_count= 0, i_count= 0;
+ int vis_count= 0, cv_count= 0, tg_count= 0, tb_count= 0;
+ int other_count= 0;
+
+ lightcurvefile= fopen( lightcurvefilename, "r" );
+ if ( NULL == lightcurvefile ) {
+  fprintf( stderr, "ERROR: cannot open file %s\n", lightcurvefilename );
+  return 1;
+ }
+
+ // Check if the file starts with the AAVSO data download format header
+ if ( fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) != NULL ) {
+  if ( strncmp( line, "JD,Magnitude,Uncertainty,HQuncertainty,Band,Observer Code", 57 ) != 0 ) {
+   fclose( lightcurvefile );
+   return 0; // Not an AAVSO data download format file, do nothing
+  }
+ } else {
+  fclose( lightcurvefile );
+  return 1; // Error reading the file
+ }
+
+ // Count the number of observations in each band
+ while ( fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) != NULL ) {
+  // Parse: JD,Magnitude,Uncertainty,HQuncertainty,Band,...
+  // Use a more robust approach - find the 5th comma-separated field
+  char *token;
+  char line_copy[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+  int field_count = 0;
+  
+  strncpy( line_copy, line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1 );
+  line_copy[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1] = '\0';
+  
+  token = strtok( line_copy, "," );
+  while ( token != NULL && field_count < 5 ) {
+   field_count++;
+   if ( field_count == 5 ) {
+    // This is the Band field
+    strncpy( band, token, sizeof(band) - 1 );
+    band[sizeof(band) - 1] = '\0';
+    
+    if ( strcmp( band, "CV" ) == 0 ) {
+     cv_count++;
+    } else if ( strcmp( band, "B" ) == 0 ) {
+     b_count++;
+    } else if ( strcmp( band, "R" ) == 0 ) {
+     r_count++;
+    } else if ( strcmp( band, "I" ) == 0 ) {
+     i_count++;
+    } else if ( strcmp( band, "Vis." ) == 0 ) {
+     vis_count++;
+    } else if ( strcmp( band, "V" ) == 0 ) {
+     v_count++;
+    } else if ( strcmp( band, "TG" ) == 0 ) {
+     tg_count++;
+    } else if ( strcmp( band, "TB" ) == 0 ) {
+     tb_count++;
+    } else {
+     other_count++;
+    }
+    break;
+   }
+   token = strtok( NULL, "," );
+  }
+ }
+
+ // Determine the band with the most measurements
+ char selected_band[10];
+ int max_count= 0;
+ 
+ if ( v_count > max_count ) {
+  max_count= v_count;
+  strcpy( selected_band, "V" );
+ }
+ if ( b_count > max_count ) {
+  max_count= b_count;
+  strcpy( selected_band, "B" );
+ }
+ if ( r_count > max_count ) {
+  max_count= r_count;
+  strcpy( selected_band, "R" );
+ }
+ if ( i_count > max_count ) {
+  max_count= i_count;
+  strcpy( selected_band, "I" );
+ }
+ if ( vis_count > max_count ) {
+  max_count= vis_count;
+  strcpy( selected_band, "Vis." );
+ }
+ if ( cv_count > max_count ) {
+  max_count= cv_count;
+  strcpy( selected_band, "CV" );
+ }
+ if ( tg_count > max_count ) {
+  max_count= tg_count;
+  strcpy( selected_band, "TG" );
+ }
+ if ( tb_count > max_count ) {
+  max_count= tb_count;
+  strcpy( selected_band, "TB" );
+ }
+ 
+ // If no recognized band has the most data, we'll use all data
+ if ( max_count == 0 ) {
+  strcpy( selected_band, "" ); // Empty string means use all data
+  fprintf( stderr, "No recognized photometric band found, using all data points!\n" );
+ } else {
+  fprintf( stderr, "Displaying %s band data (%d observations)!\n", selected_band, max_count );
+ }
+
+ // Reset file pointer to the beginning of the file
+ fseek( lightcurvefile, 0, SEEK_SET );
+
+ // Skip the header line
+ if ( NULL == fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) ) {
+  fprintf( stderr, "ERROR in convert_aavso_data_download_format(): Failed to read header line\n" );
+  fclose( lightcurvefile );
+  return 1;
+ }
+
+ // Create the converted_lightcurves directory if it doesn't exist
+ snprintf( converted_directory, VAST_PATH_MAX, "%sconverted_lightcurves", path_to_vast_string );
+ mkdir( converted_directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+
+ strncpy( original_filename, basename( lightcurvefilename ), FILENAME_LENGTH );
+ replace_last_dot_with_null( original_filename );
+
+ // Generate the converted filename
+ snprintf( converted_filename, MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER, "%s/%s_converted.dat", converted_directory, original_filename );
+ // Ensure null-termination
+ converted_filename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1]= '\0';
+
+ fprintf( stderr, "AAVSO data download format detected! Converting %s to %s\n", basename( lightcurvefilename ), converted_filename );
+
+ // Check the length of converted_filename before writing the output
+ if ( strlen( converted_filename ) > FILENAME_LENGTH ) {
+  fprintf( stderr, "ERROR in on-the-fly lightcurve format conversion - the output filename is too long!" );
+  fclose( lightcurvefile );
+  return 1;
+ }
+
+ convertedfile= fopen( converted_filename, "w" );
+ if ( NULL == convertedfile ) {
+  fprintf( stderr, "ERROR: cannot create converted file %s\n", converted_filename );
+  fclose( lightcurvefile );
+  return 1;
+ }
+
+ // Process the lightcurve data
+ while ( fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) != NULL ) {
+  // Parse: JD,Magnitude,Uncertainty,HQuncertainty,Band,...
+  // Use a more robust approach - parse the comma-separated fields
+  char *token;
+  char line_copy[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+  int field_count = 0;
+  double temp_jd = 0.0, temp_mag = 0.0, temp_mag_err = 0.0;
+  char temp_band[10] = "";
+  
+  strncpy( line_copy, line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1 );
+  line_copy[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1] = '\0';
+  
+  token = strtok( line_copy, "," );
+  while ( token != NULL && field_count < 5 ) {
+   field_count++;
+   if ( field_count == 1 ) {
+    // JD
+    temp_jd = atof( token );
+   } else if ( field_count == 2 ) {
+    // Magnitude
+    temp_mag = atof( token );
+   } else if ( field_count == 3 ) {
+    // Uncertainty
+    temp_mag_err = atof( token );
+   } else if ( field_count == 5 ) {
+    // Band
+    strncpy( temp_band, token, sizeof(temp_band) - 1 );
+    temp_band[sizeof(temp_band) - 1] = '\0';
+   }
+   token = strtok( NULL, "," );
+  }
+  
+  // If we have all the required data and the band matches our selection
+  if ( field_count >= 5 && temp_jd > 0.0 ) {
+   // If we have a selected band, only output data from that band
+   // If selected_band is empty, output all data
+   if ( strlen( selected_band ) == 0 || strcmp( temp_band, selected_band ) == 0 ) {
+    fprintf( convertedfile, "%.6lf %.5f %.5f\n", temp_jd, temp_mag, temp_mag_err );
+   }
+  }
+ }
+
+ fclose( lightcurvefile );
+ fclose( convertedfile );
+
+ strncpy( lightcurvefilename, converted_filename, FILENAME_LENGTH );
+ // Ensure null-termination
+ lightcurvefilename[FILENAME_LENGTH - 1]= '\0';
+
+ return 0;
+}
+
+/*
 int convert_aavso_format( char *lightcurvefilename, char *path_to_vast_string ) {
  FILE *lightcurvefile, *convertedfile;
  char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
@@ -1018,6 +1309,7 @@ int convert_aavso_format( char *lightcurvefilename, char *path_to_vast_string ) 
 
  return 0;
 }
+*/
 
 void minumum_kwee_van_woerden( float *fit_jd, float *fit_mag, int fit_n, double double_JD2float_JD ) {
  FILE *tmp_lc_file;
@@ -1899,7 +2191,11 @@ int main( int argc, char **argv ) {
 
  get_path_to_vast( path_to_vast_string );
 
- if ( convert_aavso_format( lightcurvefilename, path_to_vast_string ) != 0 ) {
+ if ( convert_aavso_data_upload_format( lightcurvefilename, path_to_vast_string ) != 0 ) {
+  exit( EXIT_FAILURE );
+ }
+
+ if ( convert_aavso_data_download_format( lightcurvefilename, path_to_vast_string ) != 0 ) {
   exit( EXIT_FAILURE );
  }
 
