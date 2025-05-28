@@ -13,6 +13,12 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
+# Color definitions
+RED='\033[01;31m'
+GREEN='\033[01;32m'
+BLUE='\033[01;34m'
+RESET='\033[00m'
+
 # For compatibility with BSD Make:
 # if the script is called by GNU Make MFLAGS="-w" will be set that confuses BSD Make.
 export MAKEFLAGS=""
@@ -23,7 +29,7 @@ export MFLAGS=""
 if [ ! -z $1 ];then
  CC=$1
 else
- CC=`lib/find_gcc_compiler.sh`
+ CC=$(lib/find_gcc_compiler.sh)
 fi
 # Check if location of CFITSIO lib was specified
 if [ ! -z $2 ];then
@@ -60,7 +66,7 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
-FC=`lib/find_fortran_compiler.sh`
+FC=$(lib/find_fortran_compiler.sh)
 
 # Check if gcc and gfortan versions match (only if using gcc version >=4)
 lib/check_if_gcc_and_gfortran_versions_match.sh
@@ -69,35 +75,13 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
-## MOVED TO lib/check_if_gcc_and_gfortran_versions_match.sh
-## Check if gcc and gfortan versions match (only if using gcc version >=4)
-#GCC_MAJOR_VERSION=`$CC -dumpversion | cut -f1 -d.`
-#if [ $GCC_MAJOR_VERSION -ge 4 ];then
-# # Check if gcc and gfortan versions match
-# FORTRAN_VERSION=`$FC -dumpversion`
-# GCC_VERSION=`$CC -dumpversion`
-# # Check if we can actually perform this check
-# # (some versions of gfortran do not react properly on gfortran -dumpversion)
-# if [ ${#FORTRAN_VERSION} -lt 10 ];then
-#  if [ "$FORTRAN_VERSION" != "$GCC_VERSION" ];then                                              
-#   echo "ERROR: version mismatch between the C ($CC) and FORTRAN (gfortran) compilers!
-#$CC version $GCC_VERSION
-#gfortran version $FORTRAN_VERSION
-#Please re-install both gcc and gfortran to make sure they have the same version."
-#   exit 1
-#  fi
-# else
-#  echo "WARNING: cannot compare gcc and gfortran versions. Will continue assuming everything is fine." 
-# fi # if [ ${#FORTRAN_VERSION} -lt 10 ];then
-#fi
-
 ########### Try to guess a non-standard X11 libray path ###########
 # First test if the above-specified path actually exist
-LX11=`lib/find_x11lib_include.sh`
+LX11=$(lib/find_x11lib_include.sh)
 if [ -d "$X11_LIB" ];then
  LX11="$LX11 -L$X11_LIB"
- X11INCLUDEPATH=`dirname $X11_LIB`/include
- if [ -d `dirname $X11_LIB`/include ];then
+ X11INCLUDEPATH=$(dirname $X11_LIB)/include
+ if [ -d $(dirname $X11_LIB)/include ];then
   LX11="$LX11 -I$X11INCLUDEPATH"
  else
   X11INCLUDEPATH=""
@@ -132,13 +116,14 @@ ln -s ../../lib/pgplot/cpgplot.h cpgplot.h
 cd -
 
 ########### Get info about libpng ###########
-LIBPNG=`lib/test_libpng.sh`
+LIBPNG=$(lib/test_libpng.sh)
 
 ########### Compile PGPLOT library ###########
 cd lib/pgplot/
 #make -j9
 make
-make cpg CFLAGS='-O2 -Wno-error'
+#make cpg CFLAGS='-O2 -Wno-error'
+make cpg CFLAGS='-O2 -std=gnu99 -Wno-error'
 make clean
 cd -
 
@@ -151,33 +136,33 @@ for TEST_FILE in lib/pgplot/libpgplot.a lib/pgplot/libcpgplot.a lib/pgplot/grfon
  echo -n "$TEST_FILE - "
  if [ ! -f $TEST_FILE ];then
   COMPILATION_ERROR=1
-  echo -ne "\033[01;31mERROR\033[00m,   "
+  echo -ne "${RED}ERROR${RESET},   "
  else
-  echo -ne "\033[01;32mOK\033[00m,   "
+  echo -ne "${GREEN}OK${RESET},   "
  fi
 done
 echo "done!"
 
 if [ $COMPILATION_ERROR -eq 1 ];then
  # Fallback to system-wide PGPLOT installation
- echo -e "\033[01;31mPGPLOT COMPILATION ERROR\033[00m"
+ echo -e "${RED}PGPLOT COMPILATION ERROR${RESET}"
  echo "
  
 Trying to fall-back to a system-wide PGPLOT installation!..
 
 "
- PGPLOT_LIBS="-lcpgplot -lpgplot $LX11 $OPT_LOCAL_LIB -lX11 -lgcc `lib/find_fortran_library.sh` $LIBPNG"
+ PGPLOT_LIBS="-lcpgplot -lpgplot $LX11 $OPT_LOCAL_LIB -lX11 -lgcc $(lib/find_fortran_library.sh) $LIBPNG"
 else
  # Use the local copy of PGPLOT
- PGPLOT_LIBS="lib/pgplot/libcpgplot.a lib/pgplot/libpgplot.a $LX11 -lX11 -lgcc `lib/find_fortran_library.sh` $LIBPNG"
+ PGPLOT_LIBS="lib/pgplot/libcpgplot.a lib/pgplot/libpgplot.a $LX11 -lX11 -lgcc $(lib/find_fortran_library.sh) $LIBPNG"
 fi
 
 GSL_LIB="lib/lib/libgsl.a lib/lib/libgslcblas.a"
 GSL_INCLUDE="lib/include"
 
 echo " "
-echo -e "Starting script \033[01;32m$0\033[00m"
-echo -e "\033[01;34mCompiling PGPLOT-related components\033[00m"
+echo -e "Starting script ${GREEN}$0${RESET}"
+echo -e "${BLUE}Compiling PGPLOT-related components${RESET}"
 echo "Using C compiler: $CC" 
 echo "Assuming X11 libraries can be linked with $LX11"
 echo "Libraries needed to compile C PGPLOT programs: $PGPLOT_LIBS"
@@ -200,7 +185,7 @@ done
 # Older GCC versions complain about isnormal() unless -std=c99 is given explicitly
 #"$CC" $(cat optflags_for_scripts.tmp) `lib/check_builtin_functions.sh` -c src/find_candidates.c -std=c99 -D_POSIX_C_SOURCE=199309L -I$GSL_INCLUDE
 # MacOS header files are incompatible with -std=c99
-"$CC" $(cat optflags_for_scripts.tmp) `lib/check_builtin_functions.sh` -c src/find_candidates.c -D_POSIX_C_SOURCE=199309L -I$GSL_INCLUDE
+"$CC" $(cat optflags_for_scripts.tmp) $(lib/check_builtin_functions.sh) -c src/find_candidates.c -D_POSIX_C_SOURCE=199309L -I$GSL_INCLUDE
 "$CC" $(cat optflags_for_scripts.tmp) -o find_candidates setenv_local_pgplot.o find_candidates.o $PGPLOT_LIBS $CFITSIO_LIB -lm
 "$CC" $(cat optflags_for_scripts.tmp) -c -o photocurve.o src/photocurve.c -I$GSL_INCLUDE -Wall
 "$CC" $(cat optflags_for_scripts.tmp) -c src/pgfv/pgfv.c -I$GSL_INCLUDE
@@ -217,17 +202,17 @@ for TEST_FILE in lc find_candidates pgfv lib/fit_mag_calib lib/fit_linear lib/fi
  echo -n "$TEST_FILE - "
  if [ ! -f $TEST_FILE ];then
   COMPILATION_ERROR=1
-  echo -ne "\033[01;31mERROR\033[00m,   "
+  echo -ne "${RED}ERROR${RESET},   "
  else
-  echo -ne "\033[01;32mOK\033[00m,   "
+  echo -ne "${GREEN}OK${RESET},   "
  fi
 done
 echo "done!"
 
 if [ $COMPILATION_ERROR -eq 1 ];then
- echo -e "\033[01;31mCOMPILATION ERROR\033[00m"
+ echo -e "${RED}COMPILATION ERROR${RESET}"
  exit 1
 fi
 
-echo -e "\033[01;34mFinished compiling PGPLOT-related components\033[00m"
+echo -e "${BLUE}Finished compiling PGPLOT-related components${RESET}"
 echo " "
