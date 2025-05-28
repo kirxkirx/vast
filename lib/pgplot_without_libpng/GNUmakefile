@@ -39,10 +39,10 @@ MOTIF_INCL=-I/usr/X11R6/include $(MYXINCLLIB)
 ATHENA_INCL=-I/usr/X11R6/include $(MYXINCLLIB)
 TK_INCL=-I/usr/include -I/usr/X11R6/include $(MYXINCLLIB)
 RV_INCL=
-#CCOMPL=`../find_gcc_compiler.sh`
 CCOMPL:=$(shell ../find_gcc_compiler.sh)
-#CCOMPL != ../find_gcc_compiler.sh
-CFLAGC=-Wall -Wno-error -fPIC -DPG_PPU -O -I.
+# Specify -std=gnu99 to make this thing compile with gcc-15
+CFLAGC=-Wall -std=gnu99 -Wno-error -fPIC -DPG_PPU -O -I.
+#CFLAGC=-Wall -Wno-error -fPIC -DPG_PPU -O -I.
 CFLAGD=-Wall -O
 MCOMPL=
 MFLAGC=
