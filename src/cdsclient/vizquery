@@ -295,7 +295,8 @@ else
     test $verbop -eq 0 && q="-q"
     #call="wget -q -O - $q --post-file=$tt http://$site/$cgidir/$script$path_info"
     #call="wget -o /dev/null -q -O - $q --post-file=$tt http://$site/$cgidir/$script$path_info"
-    call="curl $VAST_CURL_PROXY -s -X POST --data-binary @$tt http://$site/$cgidir/$script$path_info"
+    #call="curl $VAST_CURL_PROXY -s -X POST --data-binary @$tt http://$site/$cgidir/$script$path_info"
+    call="curl $VAST_CURL_PROXY -s -X POST --data-binary @$tt   --retry 1 --retry-delay 5   --connect-timeout 10   --speed-limit 100 --speed-time 15  http://$site/$cgidir/$script$path_info"
 fi
 #echo "#call=$call"
 
