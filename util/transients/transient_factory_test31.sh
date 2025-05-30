@@ -416,6 +416,9 @@ function try_to_calibrate_the_input_frame {
   # Plot the dark frame for log display
   export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
   util/fits2png "$DARK_FRAME" &> /dev/null && mv "$(basename ${DARK_FRAME%.*}).png" transient_report/dark.png
+  if [ $? -ne 0 ] || [ ! -s transient_report/dark.png ] ;then
+   echo "try_to_calibrate_the_input_frame(): something went wrong while producing the dark image PNG plot" 1>&2
+  fi
   unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
  fi
  
@@ -442,6 +445,9 @@ function try_to_calibrate_the_input_frame {
     # Plot the flat field for log display
     export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
     util/fits2png "$FLAT_FIELD_FILE" &> /dev/null && mv "$(basename ${FLAT_FIELD_FILE%.*}).png" transient_report/flat.png
+    if [ $? -ne 0 ] || [ ! -s transient_report/flat.png ] ;then
+     echo "try_to_calibrate_the_input_frame(): something went wrong while producing the flat field image PNG plot" 1>&2
+    fi
     unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
    fi
   else
@@ -988,10 +994,16 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    if [ -n "$MAKE_PNG_PLOTS" ];then
     if [ "$MAKE_PNG_PLOTS" == "yes" ];then
      if [ ! -f transient_report/"$PREVIEW_IMAGE" ];then
+      # Check if the FITS image is still there (if not - report a warning and let the thing crash later)
+      if [ -f "$FITS_IMAGE_TO_PREVIEW" ];then
+       echo "WARNING from $0: missing FITS file for PNG preview generation $FITS_IMAGE_TO_PREVIEW" | tee -a transient_factory_test31.txt
+      fi
       # image size needs to match the one set in util/transients/make_report_in_HTML.sh
       export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-      #util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null && mv pgplot.png transient_report/"$PREVIEW_IMAGE"
       util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null && mv "$(basename ${FITS_IMAGE_TO_PREVIEW%.*}).png" transient_report/"$PREVIEW_IMAGE"
+      if [ $? -ne 0 ] || [ ! -s transient_report/"$PREVIEW_IMAGE" ] ;then
+       echo "WARNING: something went wrong while producing the image PNG plot for $FITS_IMAGE_TO_PREVIEW" 1>&2
+      fi
       unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
      fi # if [ ! -f transient_report/$PREVIEW_IMAGE ];then
     fi
@@ -1394,10 +1406,13 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
    if [ -n "$MAKE_PNG_PLOTS" ];then
     if [ "$MAKE_PNG_PLOTS" == "yes" ];then
      if [ ! -f transient_report/"$PREVIEW_IMAGE" ];then
+      # Check if the FITS image is still there (if not - report a warning and let the thing crash later)
+      if [ -f "$FITS_IMAGE_TO_PREVIEW" ];then
+       echo "WARNING from $0: missing FITS file for PNG preview generation $FITS_IMAGE_TO_PREVIEW" | tee -a transient_factory_test31.txt
+      fi
       # Generate full-frame image previews
       # !!! image size needs to match the one set in util/transients/make_report_in_HTML.sh !!!
       export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-      #util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null && mv "$(basename ${FITS_IMAGE_TO_PREVIEW%.*}).png" transient_report/"$PREVIEW_IMAGE"
       max_attempts=3
       attempt=1
       success=false
@@ -1421,23 +1436,23 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
           success=true
           break
          else
-          echo "WARNING from $0: Move failed. Source $source_file exists: Yes. Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
+          echo "WARNING from $0: Move failed. Source $source_file exists: Yes. Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')." | tee -a transient_factory_test31.txt
          fi
         else
-         echo "WARNING from $0: $source_file was not created. Retrying..."
+         echo "WARNING from $0: $source_file was not created. Retrying..." | tee -a transient_factory_test31.txt
         fi
        else
-        echo "WARNING from $0: fits2png failed for $FITS_IMAGE_TO_PREVIEW"
+        echo "WARNING from $0: fits2png failed for $FITS_IMAGE_TO_PREVIEW" | tee -a transient_factory_test31.txt
        fi
        # Increment attempt counter and sleep before retry
        attempt=$((attempt + 1))
        if [ $attempt -le $max_attempts ]; then
-        echo "Retrying (attempt $attempt of $max_attempts)..."
+        echo "Retrying (attempt $attempt of $max_attempts)..." | tee -a transient_factory_test31.txt
         sleep 5
        fi
       done
       if [ "$success" = false ]; then
-       echo "ERROR in $0: Failed to create or move PNG file after $max_attempts attempts"
+       echo "ERROR in $0: Failed to create or move PNG file after $max_attempts attempts" | tee -a transient_factory_test31.txt
       fi
       unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
      fi # if [ ! -f transient_report/$PREVIEW_IMAGE ];then
