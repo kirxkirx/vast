@@ -415,7 +415,7 @@ function try_to_calibrate_the_input_frame {
  else
   # Plot the dark frame for log display
   export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-  util/fits2png "$DARK_FRAME" &> /dev/null && mv "$(basename ${DARK_FRAME%.*}).png" transient_report/dark.png
+  util/fits2png "$DARK_FRAME" &> /dev/null && mv -v "$(basename ${DARK_FRAME%.*}).png" transient_report/dark.png
   if [ $? -ne 0 ] || [ ! -s transient_report/dark.png ] ;then
    echo "try_to_calibrate_the_input_frame(): something went wrong while producing the dark image PNG plot" 1>&2
   fi
@@ -444,7 +444,7 @@ function try_to_calibrate_the_input_frame {
     OUTPUT_CALIBRATED_FRAME_PATH="$OUTPUT_FLATFIELDED_FRAME_PATH"
     # Plot the flat field for log display
     export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-    util/fits2png "$FLAT_FIELD_FILE" &> /dev/null && mv "$(basename ${FLAT_FIELD_FILE%.*}).png" transient_report/flat.png
+    util/fits2png "$FLAT_FIELD_FILE" &> /dev/null && mv -v "$(basename ${FLAT_FIELD_FILE%.*}).png" transient_report/flat.png
     if [ $? -ne 0 ] || [ ! -s transient_report/flat.png ] ;then
      echo "try_to_calibrate_the_input_frame(): something went wrong while producing the flat field image PNG plot" 1>&2
     fi
@@ -886,19 +886,15 @@ echo "FITS_FILE_EXT=$FITS_FILE_EXT" | tee -a transient_factory_test31.txt
 LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR=$(for IMGFILE in "$NEW_IMAGES"/*."$FITS_FILE_EXT" ;do if [ -f "$IMGFILE" ];then basename "$IMGFILE" ;fi ;done | awk '{if (length($1) >= 3) print $1}' FS='_' | sort | uniq)
 
 echo "Fields in the data directory: 
-$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" | tee -a transient_factory_test31.txt
+$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR
+#######################################" | tee -a transient_factory_test31.txt
 
 echo "Processing fields $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR <br>" >> transient_report/index.html
 
 if [ -z "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" ];then
- #echo "ERROR: cannot find image files obeying the assumed naming convention in $string_command_line_argumants"
- #echo "ERROR: cannot find image files obeying the assumed naming convention in $string_command_line_argumants" >> transient_factory_test31.txt
  echo "ERROR: cannot find image files obeying the assumed naming convention in $string_command_line_argumants" | tee -a transient_factory_test31.txt | tee -a transient_report/index.html
  continue
 fi
-
-#echo "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" >> transient_factory_test31.txt
-echo "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" | tee -a transient_factory_test31.txt
 
 # Make sure there are no pleantes/comets/transients files
 for FILE_TO_REMOVE in planets.txt comets.txt moons.txt spacecraft.txt asassn_transients_list.txt tocp_transients_list.txt ;do
@@ -995,12 +991,15 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
     if [ "$MAKE_PNG_PLOTS" == "yes" ];then
      if [ ! -f transient_report/"$PREVIEW_IMAGE" ];then
       # Check if the FITS image is still there (if not - report a warning and let the thing crash later)
-      if [ -f "$FITS_IMAGE_TO_PREVIEW" ];then
+      if [ ! -f "$FITS_IMAGE_TO_PREVIEW" ];then
        echo "WARNING from $0: missing FITS file for PNG preview generation $FITS_IMAGE_TO_PREVIEW" | tee -a transient_factory_test31.txt
+      fi
+      if [ ! -s "$FITS_IMAGE_TO_PREVIEW" ];then
+       echo "WARNING from $0: empty FITS file for PNG preview generation $FITS_IMAGE_TO_PREVIEW" | tee -a transient_factory_test31.txt
       fi
       # image size needs to match the one set in util/transients/make_report_in_HTML.sh
       export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-      util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null && mv "$(basename ${FITS_IMAGE_TO_PREVIEW%.*}).png" transient_report/"$PREVIEW_IMAGE"
+      util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null && mv -v "$(basename ${FITS_IMAGE_TO_PREVIEW%.*}).png" transient_report/"$PREVIEW_IMAGE"
       if [ $? -ne 0 ] || [ ! -s transient_report/"$PREVIEW_IMAGE" ] ;then
        echo "WARNING: something went wrong while producing the image PNG plot for $FITS_IMAGE_TO_PREVIEW" 1>&2
       fi
@@ -1407,8 +1406,11 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
     if [ "$MAKE_PNG_PLOTS" == "yes" ];then
      if [ ! -f transient_report/"$PREVIEW_IMAGE" ];then
       # Check if the FITS image is still there (if not - report a warning and let the thing crash later)
-      if [ -f "$FITS_IMAGE_TO_PREVIEW" ];then
+      if [ ! -f "$FITS_IMAGE_TO_PREVIEW" ];then
        echo "WARNING from $0: missing FITS file for PNG preview generation $FITS_IMAGE_TO_PREVIEW" | tee -a transient_factory_test31.txt
+      fi
+      if [ ! -s "$FITS_IMAGE_TO_PREVIEW" ];then
+       echo "WARNING from $0: empty FITS file for PNG preview generation $FITS_IMAGE_TO_PREVIEW" | tee -a transient_factory_test31.txt
       fi
       # Generate full-frame image previews
       # !!! image size needs to match the one set in util/transients/make_report_in_HTML.sh !!!
@@ -1431,7 +1433,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
         
         # Check if the source file exists
         if [ -f "$source_file" ]; then
-         if mv "$source_file" "$dest_file"; then
+         if mv -v "$source_file" "$dest_file"; then
           echo "Successfully moved $source_file to $dest_file"
           success=true
           break
