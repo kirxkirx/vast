@@ -733,7 +733,7 @@ done
 # Check if we are expected to produce PNG images or just text
 MAKE_PNG_PLOTS="yes"
 if [ -x lib/test_libpng_justtest_nomovepgplot.sh ];then
- lib/test_libpng_justtest_nomovepgplot.sh
+ lib/test_libpng_justtest_nomovepgplot.sh 2>&1 | tee -a transient_factory_test31.txt
  if [ $? -ne 0 ];then
   MAKE_PNG_PLOTS="no"
  fi
