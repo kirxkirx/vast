@@ -733,10 +733,14 @@ done
 # Check if we are expected to produce PNG images or just text
 MAKE_PNG_PLOTS="yes"
 if [ -x lib/test_libpng_justtest_nomovepgplot.sh ];then
- lib/test_libpng_justtest_nomovepgplot.sh 2>&1 | tee -a transient_factory_test31.txt
+ lib/test_libpng_justtest_nomovepgplot.sh 
  if [ $? -ne 0 ];then
   MAKE_PNG_PLOTS="no"
+  echo "INFO: lib/test_libpng_justtest_nomovepgplot.sh failed, so we are setting MAKE_PNG_PLOTS to $MAKE_PNG_PLOTS" | tee -a transient_factory_test31.txt
+  echo "INFO: make sure cgi scripts can write to /tmp - that is needed by lib/test_libpng_justtest_nomovepgplot.sh" | tee -a transient_factory_test31.txt
  fi
+else
+ echo "INFO: lib/test_libpng_justtest_nomovepgplot.sh is not an executable file" | tee -a transient_factory_test31.txt
 fi
 export MAKE_PNG_PLOTS
 echo "INFO: MAKE_PNG_PLOTS is set to $MAKE_PNG_PLOTS" | tee -a transient_factory_test31.txt
