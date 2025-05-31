@@ -82,6 +82,6 @@ jobs:
         if: env.SKIP != 'true' 
       - name: Test VaST
         env:
-          VAST_CURL_PROXY: ${{ secrets.VAST_CURL_PROXY }}
+          TEST_VAST_CURL_PROXY: ${{ secrets.TEST_VAST_CURL_PROXY }}
         run: util/examples/test_vast.sh
         if: env.SKIP != 'true'
