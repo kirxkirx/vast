@@ -342,6 +342,9 @@ function check_free_space() {
 
 function try_to_calibrate_the_input_frame {
 
+ # this function is expected to print the calibrated image name on stdout,
+ # so all other output should go to stderr!
+
  # check if we have calibration data at all
  if [ -z "$DARK_FRAMES_DIR" ];then
   echo "try_to_calibrate_the_input_frame(): DARK_FRAMES_DIR is not set - not attempting to dark-subtract the input frames" 1>&2
@@ -415,7 +418,7 @@ function try_to_calibrate_the_input_frame {
  else
   # Plot the dark frame for log display
   export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-  util/fits2png "$DARK_FRAME" &> /dev/null && mv -v "$(basename ${DARK_FRAME%.*}).png" transient_report/dark.png
+  util/fits2png "$DARK_FRAME" &> /dev/null && mv -v "$(basename ${DARK_FRAME%.*}).png" transient_report/dark.png 1>&2
   if [ $? -ne 0 ] || [ ! -s transient_report/dark.png ] ;then
    echo "try_to_calibrate_the_input_frame(): something went wrong while producing the dark image PNG plot" 1>&2
   fi
@@ -444,7 +447,7 @@ function try_to_calibrate_the_input_frame {
     OUTPUT_CALIBRATED_FRAME_PATH="$OUTPUT_FLATFIELDED_FRAME_PATH"
     # Plot the flat field for log display
     export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-    util/fits2png "$FLAT_FIELD_FILE" &> /dev/null && mv -v "$(basename ${FLAT_FIELD_FILE%.*}).png" transient_report/flat.png
+    util/fits2png "$FLAT_FIELD_FILE" &> /dev/null && mv -v "$(basename ${FLAT_FIELD_FILE%.*}).png" transient_report/flat.png 1>&2
     if [ $? -ne 0 ] || [ ! -s transient_report/flat.png ] ;then
      echo "try_to_calibrate_the_input_frame(): something went wrong while producing the flat field image PNG plot" 1>&2
     fi
@@ -1341,7 +1344,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  if [ $? -eq 0 ];then
   # Save image date for it to be displayed in the summary file
   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-  echo "ERROR processing the image series" | tee -a transient_factory_test31.txt
+  echo "ERROR processing the image series: ls failed on one of the input images" | tee -a transient_factory_test31.txt
   continue
  fi
  ################################
@@ -1390,7 +1393,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
  if [ $? -eq 0 ];then
   # Save image date for it to be displayed in the summary file
   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-  echo "ERROR processing the image series" | tee -a transient_factory_test31.txt
+  echo "ERROR processing the image series: ls failed on one of the second-epoch images" | tee -a transient_factory_test31.txt
   continue
  fi
  ################################
