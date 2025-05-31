@@ -739,6 +739,7 @@ if [ -x lib/test_libpng_justtest_nomovepgplot.sh ];then
  fi
 fi
 export MAKE_PNG_PLOTS
+echo "INFO: MAKE_PNG_PLOTS is set to $MAKE_PNG_PLOTS" | tee -a transient_factory_test31.txt
 
 # do this only if transient_report is not a symlink
 if [ ! -L transient_report ];then
@@ -986,6 +987,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -gt 1 ];then
   # Make image previews
   echo "Previews of the second-epoch images:<br>" >> transient_factory_test31.txt
+  echo "MAKE_PNG_PLOTS=$MAKE_PNG_PLOTS<br>" >> transient_factory_test31.txt
   for FITS_IMAGE_TO_PREVIEW in "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" ;do
    BASENAME_FITS_IMAGE_TO_PREVIEW=$(basename "$FITS_IMAGE_TO_PREVIEW")
    PREVIEW_IMAGE="$BASENAME_FITS_IMAGE_TO_PREVIEW"_preview.png
@@ -1002,13 +1004,17 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
       fi
       # image size needs to match the one set in util/transients/make_report_in_HTML.sh
       export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
-      util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null && mv -v "$(basename ${FITS_IMAGE_TO_PREVIEW%.*}).png" transient_report/"$PREVIEW_IMAGE"
+      util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null && mv -v "$(basename ${FITS_IMAGE_TO_PREVIEW%.*}).png" transient_report/"$PREVIEW_IMAGE" | tee -a transient_factory_test31.txt
       if [ $? -ne 0 ] || [ ! -s transient_report/"$PREVIEW_IMAGE" ] ;then
-       echo "WARNING: something went wrong while producing the image PNG plot for $FITS_IMAGE_TO_PREVIEW" 1>&2
+       echo "WARNING: something went wrong while producing the image PNG plot for $FITS_IMAGE_TO_PREVIEW" | tee -a transient_factory_test31.txt
       fi
       unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
      fi # if [ ! -f transient_report/$PREVIEW_IMAGE ];then
+    else
+     echo "INFO: MAKE_PNG_PLOTS is not set to 'yes', so not making full-frame PNG preview for $FITS_IMAGE_TO_PREVIEW  " | tee -a transient_factory_test31.txt
     fi
+   else
+    echo "INFO: MAKE_PNG_PLOTS is not set, not making full-frame PNG preview for $FITS_IMAGE_TO_PREVIEW  " | tee -a transient_factory_test31.txt
    fi
    ######
    echo "<br>$BASENAME_FITS_IMAGE_TO_PREVIEW<br><img src=\"$PREVIEW_IMAGE\"><br>" >> transient_factory_test31.txt
