@@ -21130,22 +21130,22 @@ if [ -f ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Lum
  util/solve_plate_with_UCAC5 ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit
  if [ ! -f wcs_raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED001"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PROXYSOLVET33NOFOCRED001"
  fi 
  lib/bin/xy2sky wcs_raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit 200 200 &>/dev/null
  if [ $? -ne 0 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED001a"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PROXYSOLVET33NOFOCRED001a"
  fi
  if [ ! -f wcs_raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit.cat.ucac5 ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED002"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES PROXYSOLVET33NOFOCRED002"
  else
   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit.cat.ucac5 | wc -l | awk '{print $1}'`
   # expect 93
   if [ $TEST -lt 50 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED002a_$TEST"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES PROXYSOLVET33NOFOCRED002a_$TEST"
   fi
  fi
 
@@ -21161,7 +21161,7 @@ if [ -f ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Lum
   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
  fi
 else
- FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED_TEST_NOT_PERFORMED"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES PROXYSOLVET33NOFOCRED_TEST_NOT_PERFORMED"
 fi
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
