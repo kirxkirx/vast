@@ -253,9 +253,9 @@ int main( int argc, char **argv ) {
          // }
          break;
         } // if( star_num==star[image_counter][i].n ){
-       }  // for(i=0;i<NUMBER1[image_counter];i++){
-      }   // if( jd==image_jd[image_counter] ){
-     }    // for(image_counter=0;image_counter<image_Number;image_counter++){
+       } // for(i=0;i<NUMBER1[image_counter];i++){
+      } // if( jd==image_jd[image_counter] ){
+     } // for(image_counter=0;image_counter<image_Number;image_counter++){
     }
     fclose( outlightcurvefile );
     fclose( lightcurvefile );

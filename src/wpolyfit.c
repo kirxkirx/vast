@@ -65,7 +65,7 @@ int wpolyfit( double *datax, double *datay, double *dataerr, int n, double *poly
   ( *chi2_not_reduced )= chisq;
  }
 
- // free GSL stuff 
+ // free GSL stuff
  gsl_matrix_free( X );
  gsl_vector_free( y );
  gsl_vector_free( w );
@@ -135,7 +135,7 @@ int wlinearfit( double *datax, double *datay, double *dataerr, int n, double *po
   ( *chi2_not_reduced )= chisq;
  }
 
- // Free GSL stuff 
+ // Free GSL stuff
  gsl_matrix_free( X );
  gsl_vector_free( y );
  gsl_vector_free( w );
@@ -173,37 +173,37 @@ int robustlinefit( double *datax, double *datay, int n, double *poly_coeff ) {
  gsl_matrix *X, *cov;
  gsl_vector *x, *y, *c;
  double xi;
- 
+
  // Add check for minimum number of points needed for robust fitting
- if (n < 3) {  // Robust fitting needs at least 3 points for meaningful results
-  fprintf(stderr, "Warning: Too few points (%d) for robust line fitting. Using simple linear fit instead.\n", n);
-  
+ if ( n < 3 ) { // Robust fitting needs at least 3 points for meaningful results
+  fprintf( stderr, "Warning: Too few points (%d) for robust line fitting. Using simple linear fit instead.\n", n );
+
   // For extremely small n, just set reasonable defaults
-  if (n == 1) {
-      poly_coeff[0] = datay[0];
-      poly_coeff[1] = 0.0;  // No slope with just one point
-      poly_coeff[2] = 0.0;
-      poly_coeff[5] = 0.0;
-      poly_coeff[6] = 0.0;
-      poly_coeff[7] = 0.0;
-      return 0;
+  if ( n == 1 ) {
+   poly_coeff[0]= datay[0];
+   poly_coeff[1]= 0.0; // No slope with just one point
+   poly_coeff[2]= 0.0;
+   poly_coeff[5]= 0.0;
+   poly_coeff[6]= 0.0;
+   poly_coeff[7]= 0.0;
+   return 0;
   }
-  
+
   // For n=2, use simple linear fit connecting the two points
-  if (n == 2) {
-      poly_coeff[1] = (datay[1] - datay[0]) / (datax[1] - datax[0]);
-      poly_coeff[0] = datay[0] - poly_coeff[1] * datax[0];
-      poly_coeff[2] = 0.0;
-      // Set reasonable error values
-      poly_coeff[5] = 0.0;
-      poly_coeff[6] = 0.0;
-      poly_coeff[7] = 0.0;
-      return 0;
+  if ( n == 2 ) {
+   poly_coeff[1]= ( datay[1] - datay[0] ) / ( datax[1] - datax[0] );
+   poly_coeff[0]= datay[0] - poly_coeff[1] * datax[0];
+   poly_coeff[2]= 0.0;
+   // Set reasonable error values
+   poly_coeff[5]= 0.0;
+   poly_coeff[6]= 0.0;
+   poly_coeff[7]= 0.0;
+   return 0;
   }
  }
- 
+
  // normal processing with many input points
- 
+
  X= gsl_matrix_alloc( n, p );
  x= gsl_vector_alloc( n );
  y= gsl_vector_alloc( n );
@@ -259,16 +259,16 @@ int robustzeropointfit( double *datax, double *datay, double *dataerr, int n, do
  double median_mag_diff;
  double *mag_diff;
  double *w;
- 
+
  // special case for n=1
  if ( n == 1 ) {
-  poly_coeff[7] = poly_coeff[6] = poly_coeff[5] = poly_coeff[4] = poly_coeff[3] = poly_coeff[2] = 0.0;
-  poly_coeff[1] = 1.0;
-  poly_coeff[0] = datay[0] - datax[0];
-  fprintf(stderr, "Warning: Only one star available for magnitude calibration. Using simple difference %.4lf\n", poly_coeff[0]);
+  poly_coeff[7]= poly_coeff[6]= poly_coeff[5]= poly_coeff[4]= poly_coeff[3]= poly_coeff[2]= 0.0;
+  poly_coeff[1]= 1.0;
+  poly_coeff[0]= datay[0] - datax[0];
+  fprintf( stderr, "Warning: Only one star available for magnitude calibration. Using simple difference %.4lf\n", poly_coeff[0] );
   return 0;
  }
- 
+
  mag_diff= malloc( n * sizeof( double ) );
  if ( NULL == mag_diff ) {
   fprintf( stderr, "Memory allocation ERROR in robustzeropointfit()\n" );

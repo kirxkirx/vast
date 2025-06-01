@@ -117,10 +117,20 @@ fi
 #
 
 ################# !!!!!!!!!!!!!!!!!! #################
-#echo "vizier.u-strasbg.fr"
-echo "vizier.cds.unistra.fr"
-exit 0
+#echo "vizier.cds.unistra.fr"
+#exit 0
 ################# !!!!!!!!!!!!!!!!!! #################
+
+# New code: choose VizieR mirror that serves Gaia DR2
+for vizier_mirror in vizier.cds.unistra.fr vizier.china-vo.org vizier.nao.ac.jp ;do
+ "${VAST_PATH}"lib/vizquery -site="$vizier_mirror" -mime=text -source=I/345/gaia2 -out.max=3 -out.add=_r -out.form=mini -sort=Gmag Gmag=0.0..13.52 -c="18:02:32.82 -29:50:13.9" -c.rs=34.50 -out="Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var" | grep --quiet ' 4050254215686154112 '
+ if [ $? -eq 0 ];then
+  echo "$vizier_mirror"
+  exit 0
+ fi
+done
+# echo nothing if nothing works
+exit 1
 
 
 # The old code that returned the first responsive VizieR mirror

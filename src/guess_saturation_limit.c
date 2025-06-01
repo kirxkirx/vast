@@ -266,8 +266,8 @@ int guess_gain( char *fitsfilename, char *resulting_sextractor_cl_parameter_stri
      fprintf( stderr, "The gain value (GAIN=%.3lf) is obtained from the FITS header of the image %s\n", guessed_gain, fitsfilename );
      return 0;
     } // if( gain_from_fits_header >= 0.0 ) {
-   }  // if( 0 == check_if_gain_keyword_comment_looks_suspicious(comment_str) ) {
-  }   // if( status == 0 ) { // after fits_read_key()
+   } // if( 0 == check_if_gain_keyword_comment_looks_suspicious(comment_str) ) {
+  } // if( status == 0 ) { // after fits_read_key()
 
   // CCDSENS keyword
   status= 0;
@@ -770,7 +770,7 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
     fprintf( stderr, "flag_subthreshould_pixels_but_not_zeroes= 1\n" );
    }
   } // else if ( (double)number_of_subthreshold_pix / (double)totpix < FRACTION_OF_ZERO_PIXEL_TO_USE_FLAG_IMG ) {
- }  // if( 1!=is_flag_image_used ){
+ } // if( 1!=is_flag_image_used ){
 
  fprintf( stderr, "Flag and weight images will be created for %s\n", fitsfilename );
 
@@ -835,7 +835,7 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
       continue;
      }
     } // if ( flag_subthreshould_pixels_but_not_zeroes == 0 ) {
-   }  // if ( median == 0.0 && sigma_estimated_from_MAD == 0.0 ) {
+   } // if ( median == 0.0 && sigma_estimated_from_MAD == 0.0 ) {
    ///
    /// indent
    {
@@ -888,7 +888,7 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
   } else {
    fprintf( stderr, " ( *is_flag_image_used ) = %d   -- not checking the number of zero neighbors\n", ( *is_flag_image_used ) );
   } // if( 1!=is_flag_image_used ){
- }  // if ( 0 == fits_open_image( &fptr, fitsfilename, READONLY, &status ) ) {
+ } // if ( 0 == fits_open_image( &fptr, fitsfilename, READONLY, &status ) ) {
 
  if ( status != 0 ) {
   fprintf( stderr, "WARNING! Cannot open FITS image %s\n", fitsfilename );
@@ -1025,7 +1025,7 @@ int check_if_we_need_flag_image( char *fitsfilename, char *resulting_sextractor_
        continue;
       }
      } // if ( flag_subthreshould_pixels_but_not_zeroes == 0 ) {
-    }  // if ( median == 0.0 && sigma_estimated_from_MAD == 0.0 ) {
+    } // if ( median == 0.0 && sigma_estimated_from_MAD == 0.0 ) {
     ///
     //  Mark as suspicious also FLAG_N_PIXELS_AROUND_BAD_ONE pixels around the bad one
     Y0= 1 + (long)( (float)ii / (float)naxes[0] );

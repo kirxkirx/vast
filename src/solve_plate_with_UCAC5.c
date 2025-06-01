@@ -1491,186 +1491,185 @@ char *get_sanitized_curl_proxy() {
  * The caller must free the returned string.
  */
 char *get_sanitized_curl_proxy() {
-    const char *proxy_env = getenv("VAST_CURL_PROXY");
+ int i;
 
-    // If not set, return NULL
-    if (proxy_env == NULL || strlen(proxy_env) == 0) {
-        return NULL;
+ const char *proxy_env= getenv( "VAST_CURL_PROXY" );
+
+ // If not set, return NULL
+ if ( proxy_env == NULL || strlen( proxy_env ) == 0 ) {
+  return NULL;
+ }
+
+ // Check for reasonable length (arbitrary limit of 512 chars)
+ size_t len= strlen( proxy_env );
+ if ( len > 512 ) {
+  fprintf( stderr, "WARNING: VAST_CURL_PROXY environment variable is too long (max 512 chars)\n" );
+  return NULL;
+ }
+
+ // Copy the string so we can safely work with it
+ char *proxy_str= strdup( proxy_env );
+ if ( proxy_str == NULL ) {
+  fprintf( stderr, "ERROR: Memory allocation failed for proxy string\n" );
+  return NULL;
+ }
+
+ // STRICT VALIDATION: Check for shell command separators and dangerous characters
+ const char *dangerous_chars[]= {
+     ";", "&&", "||", "|", ">", "<", "`", "$", "(", ")", "{", "}",
+     "\\", "\n", "\r", "\t", "\"", "'", "*", "?", "[", "]", "~", "#" };
+
+ for ( i= 0; i < sizeof( dangerous_chars ) / sizeof( dangerous_chars[0] ); i++ ) {
+  if ( strstr( proxy_str, dangerous_chars[i] ) != NULL ) {
+   fprintf( stderr, "WARNING: VAST_CURL_PROXY contains forbidden character sequence: %s\n", dangerous_chars[i] );
+   free( proxy_str );
+   return NULL;
+  }
+ }
+
+ // Validate that all space-separated tokens are allowed curl proxy options
+ const char *allowed_options[]= {
+     "--proxy", "--proxy-user", "--proxy-pass", "--proxy-insecure",
+     "--proxy-header", "--proxy-basic", "--proxy-digest", "--proxy-negotiate",
+     "--proxy-ntlm", "--proxy-anyauth", "--proxy-cacert", "--proxy-capath",
+     "--proxy-cert", "--proxy-cert-type", "--proxy-ciphers", "--proxy-crlfile",
+     "--proxy-key", "--proxy-key-type", "--proxy-pinnedpubkey",
+     "--proxy-service-name", "--proxy-ssl-allow-beast", "--proxy-tls13-ciphers",
+     "--proxy-tlsuser", "--proxy-tlspassword", "--proxy-tlsauthtype",
+     "-L", "--location", NULL };
+
+ // Parse and validate each token
+ char *proxy_copy= strdup( proxy_str );
+ if ( proxy_copy == NULL ) {
+  fprintf( stderr, "ERROR: Memory allocation failed\n" );
+  free( proxy_str );
+  return NULL;
+ }
+
+ char *token= strtok( proxy_copy, " " );
+ int has_valid_proxy_option= 0;
+
+ while ( token != NULL ) {
+  // Check if this token is a curl option (starts with -)
+  if ( token[0] == '-' ) {
+   int is_allowed= 0;
+   for ( i= 0; allowed_options[i] != NULL; i++ ) {
+    if ( strcmp( token, allowed_options[i] ) == 0 ) {
+     is_allowed= 1;
+     if ( strstr( token, "proxy" ) != NULL ) {
+      has_valid_proxy_option= 1;
+     }
+     break;
     }
+   }
 
-    // Check for reasonable length (arbitrary limit of 512 chars)
-    size_t len = strlen(proxy_env);
-    if (len > 512) {
-        fprintf(stderr, "WARNING: VAST_CURL_PROXY environment variable is too long (max 512 chars)\n");
-        return NULL;
-    }
+   if ( !is_allowed ) {
+    fprintf( stderr, "WARNING: VAST_CURL_PROXY contains disallowed option: %s\n", token );
+    free( proxy_copy );
+    free( proxy_str );
+    return NULL;
+   }
+  } else {
+   // This is a value/argument, not an option - validate it's reasonable
+   if ( strlen( token ) > 255 ) {
+    fprintf( stderr, "WARNING: VAST_CURL_PROXY contains overly long argument: %s\n", token );
+    free( proxy_copy );
+    free( proxy_str );
+    return NULL;
+   }
+  }
 
-    // Copy the string so we can safely work with it
-    char *proxy_str = strdup(proxy_env);
-    if (proxy_str == NULL) {
-        fprintf(stderr, "ERROR: Memory allocation failed for proxy string\n");
-        return NULL;
-    }
+  token= strtok( NULL, " " );
+ }
 
-    // STRICT VALIDATION: Check for shell command separators and dangerous characters
-    const char *dangerous_chars[] = {
-        ";", "&&", "||", "|", ">", "<", "`", "$", "(", ")", "{", "}", 
-        "\\", "\n", "\r", "\t", "\"", "'", "*", "?", "[", "]", "~", "#"
-    };
-    
-    for (int i = 0; i < sizeof(dangerous_chars) / sizeof(dangerous_chars[0]); i++) {
-        if (strstr(proxy_str, dangerous_chars[i]) != NULL) {
-            fprintf(stderr, "WARNING: VAST_CURL_PROXY contains forbidden character sequence: %s\n", dangerous_chars[i]);
-            free(proxy_str);
-            return NULL;
-        }
-    }
+ free( proxy_copy );
 
-    // Validate that all space-separated tokens are allowed curl proxy options
-    const char *allowed_options[] = {
-        "--proxy", "--proxy-user", "--proxy-pass", "--proxy-insecure",
-        "--proxy-header", "--proxy-basic", "--proxy-digest", "--proxy-negotiate",
-        "--proxy-ntlm", "--proxy-anyauth", "--proxy-cacert", "--proxy-capath",
-        "--proxy-cert", "--proxy-cert-type", "--proxy-ciphers", "--proxy-crlfile",
-        "--proxy-key", "--proxy-key-type", "--proxy-pinnedpubkey",
-        "--proxy-service-name", "--proxy-ssl-allow-beast", "--proxy-tls13-ciphers",
-        "--proxy-tlsuser", "--proxy-tlspassword", "--proxy-tlsauthtype",
-        "-L", "--location", NULL
-    };
+ if ( !has_valid_proxy_option ) {
+  fprintf( stderr, "WARNING: VAST_CURL_PROXY must contain at least one proxy-related option\n" );
+  free( proxy_str );
+  return NULL;
+ }
 
-    // Parse and validate each token
-    char *proxy_copy = strdup(proxy_str);
-    if (proxy_copy == NULL) {
-        fprintf(stderr, "ERROR: Memory allocation failed\n");
-        free(proxy_str);
-        return NULL;
-    }
+ // Additional validation: if it contains --proxy, validate the URL format
+ char *proxy_option= strstr( proxy_str, "--proxy " );
+ if ( proxy_option != NULL ) {
+  char *url_start= proxy_option + 8; // Skip "--proxy "
+  char *url_end= strchr( url_start, ' ' );
 
-    char *token = strtok(proxy_copy, " ");
-    int has_valid_proxy_option = 0;
-    
-    while (token != NULL) {
-        // Check if this token is a curl option (starts with -)
-        if (token[0] == '-') {
-            int is_allowed = 0;
-            for (int i = 0; allowed_options[i] != NULL; i++) {
-                if (strcmp(token, allowed_options[i]) == 0) {
-                    is_allowed = 1;
-                    if (strstr(token, "proxy") != NULL) {
-                        has_valid_proxy_option = 1;
-                    }
-                    break;
-                }
-            }
-            
-            if (!is_allowed) {
-                fprintf(stderr, "WARNING: VAST_CURL_PROXY contains disallowed option: %s\n", token);
-                free(proxy_copy);
-                free(proxy_str);
-                return NULL;
-            }
-        } else {
-            // This is a value/argument, not an option - validate it's reasonable
-            if (strlen(token) > 255) {
-                fprintf(stderr, "WARNING: VAST_CURL_PROXY contains overly long argument: %s\n", token);
-                free(proxy_copy);
-                free(proxy_str);
-                return NULL;
-            }
-        }
-        
-        token = strtok(NULL, " ");
-    }
-    
-    free(proxy_copy);
+  // Extract just the URL part
+  char url_buf[256];
+  size_t url_len;
+  if ( url_end != NULL ) {
+   url_len= url_end - url_start;
+  } else {
+   url_len= strlen( url_start );
+  }
 
-    if (!has_valid_proxy_option) {
-        fprintf(stderr, "WARNING: VAST_CURL_PROXY must contain at least one proxy-related option\n");
-        free(proxy_str);
-        return NULL;
-    }
+  if ( url_len >= sizeof( url_buf ) ) {
+   fprintf( stderr, "WARNING: Proxy URL too long\n" );
+   free( proxy_str );
+   return NULL;
+  }
 
-    // Additional validation: if it contains --proxy, validate the URL format
-    char *proxy_option = strstr(proxy_str, "--proxy ");
-    if (proxy_option != NULL) {
-        char *url_start = proxy_option + 8; // Skip "--proxy "
-        char *url_end = strchr(url_start, ' ');
-        
-        // Extract just the URL part
-        char url_buf[256];
-        size_t url_len;
-        if (url_end != NULL) {
-            url_len = url_end - url_start;
-        } else {
-            url_len = strlen(url_start);
-        }
-        
-        if (url_len >= sizeof(url_buf)) {
-            fprintf(stderr, "WARNING: Proxy URL too long\n");
-            free(proxy_str);
-            return NULL;
-        }
-        
-        strncpy(url_buf, url_start, url_len);
-        url_buf[url_len] = '\0';
-        
-        // Validate URL format
-        if (!(strncmp(url_buf, "http://", 7) == 0 || 
-              strncmp(url_buf, "https://", 8) == 0 ||
-              strncmp(url_buf, "socks4://", 9) == 0 ||
-              strncmp(url_buf, "socks5://", 9) == 0)) {
-            fprintf(stderr, "WARNING: Invalid proxy URL format. Must start with http://, https://, socks4://, or socks5://\n");
-            free(proxy_str);
-            return NULL;
-        }
-    }
+  strncpy( url_buf, url_start, url_len );
+  url_buf[url_len]= '\0';
 
-    // Additional validation: if it contains --proxy-user, validate the format
-    char *user_option = strstr(proxy_str, "--proxy-user ");
-    if (user_option != NULL) {
-        char *user_start = user_option + 13; // Skip "--proxy-user "
-        char *user_end = strchr(user_start, ' ');
-        
-        // Extract just the user:pass part
-        char user_buf[256];
-        size_t user_len;
-        if (user_end != NULL) {
-            user_len = user_end - user_start;
-        } else {
-            user_len = strlen(user_start);
-        }
-        
-        if (user_len >= sizeof(user_buf) || user_len < 3) {
-            fprintf(stderr, "WARNING: Invalid proxy user credentials format\n");
-            free(proxy_str);
-            return NULL;
-        }
-        
-        strncpy(user_buf, user_start, user_len);
-        user_buf[user_len] = '\0';
-        
-        // Must contain a colon for user:pass format
-        if (strchr(user_buf, ':') == NULL) {
-            fprintf(stderr, "WARNING: Proxy user credentials must be in user:password format\n");
-            free(proxy_str);
-            return NULL;
-        }
-    }
+  // Validate URL format
+  if ( !( strncmp( url_buf, "http://", 7 ) == 0 ||
+          strncmp( url_buf, "https://", 8 ) == 0 ||
+          strncmp( url_buf, "socks4://", 9 ) == 0 ||
+          strncmp( url_buf, "socks5://", 9 ) == 0 ) ) {
+   fprintf( stderr, "WARNING: Invalid proxy URL format. Must start with http://, https://, socks4://, or socks5://\n" );
+   free( proxy_str );
+   return NULL;
+  }
+ }
 
-    // Final safety check: ensure only alphanumeric, dash, dot, colon, slash, and space characters
-    for (size_t i = 0; i < strlen(proxy_str); i++) {
-        char c = proxy_str[i];
-        if (!(isalnum(c) || c == '-' || c == '.' || c == ':' || c == '/' || c == ' ' || c == '_')) {
-            fprintf(stderr, "WARNING: VAST_CURL_PROXY contains invalid character: %c\n", c);
-            free(proxy_str);
-            return NULL;
-        }
-    }
+ // Additional validation: if it contains --proxy-user, validate the format
+ char *user_option= strstr( proxy_str, "--proxy-user " );
+ if ( user_option != NULL ) {
+  char *user_start= user_option + 13; // Skip "--proxy-user "
+  char *user_end= strchr( user_start, ' ' );
 
-    fprintf(stderr, "solve_plate_with_UCAC5 is using curl proxy settings from VAST_CURL_PROXY\n");
-    return proxy_str;
+  // Extract just the user:pass part
+  char user_buf[256];
+  size_t user_len;
+  if ( user_end != NULL ) {
+   user_len= user_end - user_start;
+  } else {
+   user_len= strlen( user_start );
+  }
+
+  if ( user_len >= sizeof( user_buf ) || user_len < 3 ) {
+   fprintf( stderr, "WARNING: Invalid proxy user credentials format\n" );
+   free( proxy_str );
+   return NULL;
+  }
+
+  strncpy( user_buf, user_start, user_len );
+  user_buf[user_len]= '\0';
+
+  // Must contain a colon for user:pass format
+  if ( strchr( user_buf, ':' ) == NULL ) {
+   fprintf( stderr, "WARNING: Proxy user credentials must be in user:password format\n" );
+   free( proxy_str );
+   return NULL;
+  }
+ }
+
+ // Final safety check: ensure only alphanumeric, dash, dot, colon, slash, and space characters
+ for ( i= 0; i < strlen( proxy_str ); i++ ) {
+  char c= proxy_str[i];
+  if ( !( isalnum( c ) || c == '-' || c == '.' || c == ':' || c == '/' || c == ' ' || c == '_' ) ) {
+   fprintf( stderr, "WARNING: VAST_CURL_PROXY contains invalid character: %c\n", c );
+   free( proxy_str );
+   return NULL;
+  }
+ }
+
+ fprintf( stderr, "solve_plate_with_UCAC5 is using curl proxy settings from VAST_CURL_PROXY\n" );
+ return proxy_str;
 }
-
 
 /**
  * Safely constructs a curl command with proxy settings if available.

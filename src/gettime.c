@@ -912,8 +912,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
      }
     }
     break; // don't process the remaining images, we have the right one
-   }       // if same image
-  }        // while()
+   } // if same image
+  } // while()
   fclose( vast_list_of_input_images_with_time_corrections );
  }
 
@@ -1020,7 +1020,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
      exposure= exposure * 86400.0;
     }
    } // if ( strcasecmp(EXPOSURE_COMMENT, "seconds") != 0 ) {
-  }  // if ( strlen( EXPOSURE_COMMENT ) > 8 ) {
+  } // if ( strlen( EXPOSURE_COMMENT ) > 8 ) {
   //
   // Search for the deadtime correction keyword like in TESS
   fits_read_key( fptr, TDOUBLE, "DEADC", &TESS_style_deadtime_correction, NULL, &status );
@@ -1073,7 +1073,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    if ( status == 0 ) {
     is_this_an_EROS_image= 1;
    } // TU-END
-  }  // TU-START
+  } // TU-START
   if ( is_this_an_EROS_image == 0 ) {
    // The second type of images
    fits_clear_errmsg(); // clear the CFITSIO error message stack
@@ -1084,9 +1084,9 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     if ( status == 0 ) {
      is_this_an_EROS_image= 1;
     } // FILTREF
-   }  // TM-EXPOS
-  }   // if( is_this_an_EROS_image==0 ){
- }    // DATE-OBS
+   } // TM-EXPOS
+  } // if( is_this_an_EROS_image==0 ){
+ } // DATE-OBS
  // conclusion
  if ( is_this_an_EROS_image == 1 ) {
   if ( param_verbose >= 1 )
@@ -1350,9 +1350,9 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
     } else {
      fprintf( stderr, "WARNING: the value %lf infered from EXPSTART keyword is outside the expected MJD range (%.0lf,%.0lf).\n", inJD, EXPECTED_MIN_MJD, EXPECTED_MAX_MJD );
     } // else if ( EXPECTED_MIN_JD < inJD && inJD < EXPECTED_MAX_JD ) {
-   }  // else if ( EXPECTED_MIN_MJD < inJD && inJD < EXPECTED_MAX_MJD ) {
-  }   // if ( status != 202 ) {
- }    // if ( date_parsed == 0 ) {
+   } // else if ( EXPECTED_MIN_MJD < inJD && inJD < EXPECTED_MAX_MJD ) {
+  } // if ( status != 202 ) {
+ } // if ( date_parsed == 0 ) {
 
  // Check if this is a TICA TESS FFI https://archive.stsci.edu/hlsp/tica#section-c34b9669-b0be-40b2-853e-a59997d1b7c5
  status= 0;
@@ -1385,8 +1385,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    } else {
     fprintf( stderr, "Found no MIDTJD keyword!\n" );
    } // MIDTJD
-  }  // TJD_ZERO
- }   // if ( date_parsed == 0 && expstart_mjd_parsed == 0 ) {
+  } // TJD_ZERO
+ } // if ( date_parsed == 0 && expstart_mjd_parsed == 0 ) {
 
  /////// Look for JD keyword (a convention used for Moscow photographic plate scans) ///////
  status= 0;
@@ -1451,8 +1451,8 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
       exit( EXIT_FAILURE );
      }
     } // if( status == 0 ) { for MJD-OBS
-   }  // else for JDMID keyword
-  }   // else for JD keyword
+   } // else for JDMID keyword
+  } // else for JD keyword
   if ( status != 0 ) {
 #ifdef DEBUGMESSAGES
    fprintf( stderr, "entering  if ( status != 0 )\n" );

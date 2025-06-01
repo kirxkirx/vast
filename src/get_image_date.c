@@ -140,8 +140,8 @@ int fake_image_hack( char *input_string ) {
    } else { // if ( jd_from_string<EXPECTED_MAX_MJD ) {
     fprintf( stderr, "Assuming the input is JD\n" );
    } // else if ( jd_from_string<EXPECTED_MAX_MJD ) {
-  }  // if ( jd_from_string>EXPECTED_MIN_MJD && jd_from_string<EXPECTED_MAX_JD ) {
- }   // if( j==1 ){ // OK, there is only one '.' in the string, that looks promising
+  } // if ( jd_from_string>EXPECTED_MIN_MJD && jd_from_string<EXPECTED_MAX_JD ) {
+ } // if( j==1 ){ // OK, there is only one '.' in the string, that looks promising
  //
  // fprintf( stderr, "DEBUG03\n");
  // handle the white space between the input date and time instead of T

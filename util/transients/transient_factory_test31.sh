@@ -709,9 +709,10 @@ if [ -z "$1" ]; then
  exit 1
 fi
 
-# We may need it for the new transients check in util/transients/report_transient.sh
+# We need it for the new transients check in util/transients/report_transient.sh
 VIZIER_SITE=$(lib/choose_vizier_mirror.sh)
 export VIZIER_SITE
+echo "VIZIER_SITE=$VIZIER_SITE" | tee -a transient_factory_test31.txt
 ### 
 TIMEOUTCOMMAND=$("$VAST_PATH"lib/find_timeout_command.sh)
 if [ $? -ne 0 ];then

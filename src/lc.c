@@ -1029,7 +1029,7 @@ int convert_aavso_data_download_format( char *lightcurvefilename, char *path_to_
  char converted_directory[VAST_PATH_MAX];
  double jd, mag, mag_err;
  char band[10];
- 
+
  // Band counters - add more bands as needed
  int v_count= 0, b_count= 0, r_count= 0, i_count= 0;
  int vis_count= 0, cv_count= 0, tg_count= 0, tb_count= 0;
@@ -1058,19 +1058,19 @@ int convert_aavso_data_download_format( char *lightcurvefilename, char *path_to_
   // Use a more robust approach - find the 5th comma-separated field
   char *token;
   char line_copy[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
-  int field_count = 0;
-  
+  int field_count= 0;
+
   strncpy( line_copy, line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1 );
-  line_copy[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1] = '\0';
-  
-  token = strtok( line_copy, "," );
+  line_copy[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1]= '\0';
+
+  token= strtok( line_copy, "," );
   while ( token != NULL && field_count < 5 ) {
    field_count++;
    if ( field_count == 5 ) {
     // This is the Band field
-    strncpy( band, token, sizeof(band) - 1 );
-    band[sizeof(band) - 1] = '\0';
-    
+    strncpy( band, token, sizeof( band ) - 1 );
+    band[sizeof( band ) - 1]= '\0';
+
     if ( strcmp( band, "CV" ) == 0 ) {
      cv_count++;
     } else if ( strcmp( band, "B" ) == 0 ) {
@@ -1092,14 +1092,14 @@ int convert_aavso_data_download_format( char *lightcurvefilename, char *path_to_
     }
     break;
    }
-   token = strtok( NULL, "," );
+   token= strtok( NULL, "," );
   }
  }
 
  // Determine the band with the most measurements
  char selected_band[10];
  int max_count= 0;
- 
+
  if ( v_count > max_count ) {
   max_count= v_count;
   strcpy( selected_band, "V" );
@@ -1132,7 +1132,7 @@ int convert_aavso_data_download_format( char *lightcurvefilename, char *path_to_
   max_count= tb_count;
   strcpy( selected_band, "TB" );
  }
- 
+
  // If no recognized band has the most data, we'll use all data
  if ( max_count == 0 ) {
   strcpy( selected_band, "" ); // Empty string means use all data
@@ -1185,33 +1185,33 @@ int convert_aavso_data_download_format( char *lightcurvefilename, char *path_to_
   // Use a more robust approach - parse the comma-separated fields
   char *token;
   char line_copy[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
-  int field_count = 0;
-  double temp_jd = 0.0, temp_mag = 0.0, temp_mag_err = 0.0;
-  char temp_band[10] = "";
-  
+  int field_count= 0;
+  double temp_jd= 0.0, temp_mag= 0.0, temp_mag_err= 0.0;
+  char temp_band[10]= "";
+
   strncpy( line_copy, line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1 );
-  line_copy[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1] = '\0';
-  
-  token = strtok( line_copy, "," );
+  line_copy[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1]= '\0';
+
+  token= strtok( line_copy, "," );
   while ( token != NULL && field_count < 5 ) {
    field_count++;
    if ( field_count == 1 ) {
     // JD
-    temp_jd = atof( token );
+    temp_jd= atof( token );
    } else if ( field_count == 2 ) {
     // Magnitude
-    temp_mag = atof( token );
+    temp_mag= atof( token );
    } else if ( field_count == 3 ) {
     // Uncertainty
-    temp_mag_err = atof( token );
+    temp_mag_err= atof( token );
    } else if ( field_count == 5 ) {
     // Band
-    strncpy( temp_band, token, sizeof(temp_band) - 1 );
-    temp_band[sizeof(temp_band) - 1] = '\0';
+    strncpy( temp_band, token, sizeof( temp_band ) - 1 );
+    temp_band[sizeof( temp_band ) - 1]= '\0';
    }
-   token = strtok( NULL, "," );
+   token= strtok( NULL, "," );
   }
-  
+
   // If we have all the required data and the band matches our selection
   if ( field_count >= 5 && temp_jd > 0.0 ) {
    // If we have a selected band, only output data from that band
@@ -2931,7 +2931,7 @@ int main( int argc, char **argv ) {
    fit_mag_err= NULL;
 
    fit_n= 0; // or we'll not reallocate the memory for fit_jd and stuff when we'll get back here
-  }          // if( plot_linear_trend_switch==1 ){
+  } // if( plot_linear_trend_switch==1 ){
 
   //   fprintf(stderr,"##### DEBUG06 #####\n");
 
@@ -3429,12 +3429,12 @@ int main( int argc, char **argv ) {
        // the following works, I don't know why...
        if ( closest_num != -1 )
         closest_num--; /// ! TEST !
-      }                // for(i=closest_num;i<Nobs;i++)
+      } // for(i=closest_num;i<Nobs;i++)
       was_lightcurve_changed= 1;
       removed_points_counter_total++;
       removed_points_counter_this_run++;
      } // if inside the rectangle
-    }  // for(closest_num=0;i<Nobs;i++)
+    } // for(closest_num=0;i<Nobs;i++)
     // close the removed points log file (if it was open in hte first place)
     fprintf( stderr, "Removed %5d data points (%5d removed data points in total)\n", removed_points_counter_this_run, removed_points_counter_total );
     if ( NULL != removed_points_log ) {
@@ -3442,8 +3442,8 @@ int main( int argc, char **argv ) {
      if ( 0 != removed_points_counter_total ) {
       fprintf( stderr, "The list of removed points is written to %s\n", removed_points_logfilename );
      } // if ( 0 != removed_points_counter_total ) {
-    }  // if ( NULL != removed_points_log ) {
-   }   // if( curC!='X' && curC!='x' )
+    } // if ( NULL != removed_points_log ) {
+   } // if( curC!='X' && curC!='x' )
    curC= ' ';
   } // if( curC=='C' || curC=='c' )
 

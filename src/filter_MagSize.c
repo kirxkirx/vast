@@ -222,7 +222,7 @@ int filter_on_float_parameters( struct Star *STAR, int NUMBER, char *sextractor_
   for ( i= 1; i < number_of_reference_points; i++ ) {
    reference_point_mag[i]= reference_point_mag[i - 1] + reference_point_mag_step;
   } // for(i=0;i<number_of_reference_points;i++){
- }  // if( NUMBER<NUMBER_OF_REFERENCE_POINTS ){
+ } // if( NUMBER<NUMBER_OF_REFERENCE_POINTS ){
 
 #ifndef DISABLE_MAGSIZE_FILTER_LOGS
  // Set the log file names
