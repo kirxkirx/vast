@@ -1027,7 +1027,6 @@ int convert_aavso_data_download_format( char *lightcurvefilename, char *path_to_
  char original_filename[FILENAME_LENGTH];
  char converted_filename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER];
  char converted_directory[VAST_PATH_MAX];
- double jd, mag, mag_err;
  char band[10];
 
  // Band counters - add more bands as needed
@@ -2364,6 +2363,7 @@ int main( int argc, char **argv ) {
  //
  ///
 
+/*
  // Searching min max for double (for stats only) //
  JD_first= JD_last= JD[0];
  for ( i= 0; i < Nobs; i++ ) {
@@ -2372,6 +2372,7 @@ int main( int argc, char **argv ) {
   if ( JD[i] < JD_first )
    JD_first= JD[i];
  }
+*/
 
  if ( Nobs <= 0 ) {
   fprintf( stderr, "ERROR: Attempting to allocate a zero or negative amount of memory (Nobs<= 0, lc.c)\n" );
@@ -2427,6 +2428,7 @@ int main( int argc, char **argv ) {
    strcpy( PGPLOT_CONTROL, "/PNG" );
   if ( xw_ps == 0 || xw_ps == -1 )
    strcpy( PGPLOT_CONTROL, "/XW" );
+
 
   if ( change_limits_trigger == 0 || xw_ps != 0 ) {
    pgplot_status= cpgopen( PGPLOT_CONTROL );
@@ -2504,7 +2506,7 @@ int main( int argc, char **argv ) {
 
   //   fprintf(stderr,"DEBUG: new_X1=%.5f new_X2=%.5f\n",new_X1,new_X2);
 
-  /* Generate some lightcurve stats */
+  // Generate some lightcurve stats
   m_mean= gsl_stats_float_mean( mag, 1, Nobs ); /* Mean magnitude */
   // if we have information about measurement errors...
   if ( lightcurve_format != 2 )
@@ -2513,6 +2515,15 @@ int main( int argc, char **argv ) {
    mean_sigma= -99.9;
   sigma= gsl_stats_float_sd( mag, 1, Nobs ); /* the standard deviation of the distribution */
   error_mean= sigma / sqrtf( (float)Nobs );  /* the standard deviation of the mean */
+
+  // Searching min max for double (for stats only) //
+  JD_first= JD_last= JD[0];
+  for ( i= 0; i < Nobs; i++ ) {
+   if ( JD[i] > JD_last )
+    JD_last= JD[i];
+   if ( JD[i] < JD_first )
+    JD_first= JD[i];
+  }
 
   //   fprintf(stderr,"##### DEBUG02 #####\n");
 
@@ -2545,26 +2556,6 @@ int main( int argc, char **argv ) {
     sprintf( header_str, "Object %s, %d observations over %.0lf minutes", star_name, Nobs, ( JD_last - JD_first ) * 24 * 60 );
    }
   }
-  /*
-    if( JD_last-JD_first < 1.0 ) {
-     if( JD_last-JD_first < 2.0/24.0 ) {
-      sprintf(header_str, "Object %s, %d observations over %.0lf minutes starting on JD %.4lf", star_name, Nobs, (JD_last-JD_first)*24*60, JD_first);
-      if( strlen(header_str) > 78 ) {
-       sprintf(header_str, "Object %s, %d observations over %.0lf minutes", star_name, Nobs, (JD_last-JD_first)*24*60);
-      }
-     } else {
-      sprintf(header_str, "Object %s, %d observations over %.2lf hours starting on JD %.4lf", star_name, Nobs, (JD_last-JD_first)*24, JD_first);
-      if( strlen(header_str) > 78 ) {
-       sprintf(header_str, "Object %s, %d observations over %.2lf hours", star_name, Nobs, (JD_last-JD_first)*24);
-      }
-     }
-    } else {
-     sprintf(header_str, "Object %s, %d observations over %.2lf days starting on JD %.4lf", star_name, Nobs, JD_last-JD_first, JD_first);
-     if( strlen(header_str) > 78 ) {
-      sprintf(header_str, "Object %s, %d observations over %.2lf days", star_name, Nobs, JD_last-JD_first);
-     }
-    }
-   */
   ////
 
   if ( strlen( header_str ) > 78 ) {
@@ -2687,43 +2678,6 @@ int main( int argc, char **argv ) {
     }
    }
 
-   /*
-   if ( n_breaks == 1 ) {
-    //
-    fit_n= 0;
-    for ( i= 0; i < Nobs; i++ ) {
-     if ( float_JD[i] <= breaks[0] ) {
-      fit_jd[fit_n]= float_JD[i];
-      fit_mag[fit_n]= mag[i];
-      fit_mag_err[fit_n]= mag_err[i];
-      fit_n++;
-     }
-    }
-    if ( jump_instead_of_break == 0 )
-     fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-    else
-     fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-    plot_linear_trend( fit_jd, fit_n, A, B, mean_jd, mean_mag );
-    //
-    //
-    fit_n= 0;
-    for ( i= 0; i < Nobs; i++ ) {
-     if ( float_JD[i] > breaks[0] ) {
-      fit_jd[fit_n]= float_JD[i];
-      fit_mag[fit_n]= mag[i];
-      fit_mag_err[fit_n]= mag_err[i];
-      fit_n++;
-     }
-    }
-    if ( jump_instead_of_break == 0 )
-     fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-    else
-     fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-    plot_linear_trend( fit_jd, fit_n, A, B, mean_jd, mean_mag );
-    //
-   }
-   */
-
    if ( n_breaks == 1 ) {
     //
     fit_n= 0;
@@ -2779,63 +2733,6 @@ int main( int argc, char **argv ) {
     //
    }
 
-   /*
-   if ( n_breaks > 1 ) {
-    //
-    fit_n= 0;
-    for ( i= 0; i < Nobs; i++ ) {
-     if ( float_JD[i] <= breaks[0] ) {
-      //
-      // fprintf(stderr, "fit_n=%d i=%d breaks[0]=%f\n", fit_n, i, breaks[0]);
-      //
-      fit_jd[fit_n]= float_JD[i];
-      fit_mag[fit_n]= mag[i];
-      fit_mag_err[fit_n]= mag_err[i];
-      fit_n++;
-     }
-    }
-    if ( jump_instead_of_break == 0 )
-     fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-    else
-     fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-    plot_linear_trend( fit_jd, fit_n, A, B, mean_jd, mean_mag );
-    //
-    //
-    for ( j= 1; j < n_breaks; j++ ) {
-     fit_n= 0;
-     for ( i= 0; i < Nobs; i++ ) {
-      if ( float_JD[i] > breaks[j - 1] && float_JD[i] < breaks[j] ) {
-       fit_jd[fit_n]= float_JD[i];
-       fit_mag[fit_n]= mag[i];
-       fit_mag_err[fit_n]= mag_err[i];
-       fit_n++;
-      }
-     }
-     if ( jump_instead_of_break == 0 )
-      fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-     else
-      fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-     plot_linear_trend( fit_jd, fit_n, A, B, mean_jd, mean_mag );
-    }
-    //
-    //
-    fit_n= 0;
-    for ( i= 0; i < Nobs; i++ ) {
-     if ( float_JD[i] > breaks[n_breaks - 1] ) {
-      fit_jd[fit_n]= float_JD[i];
-      fit_mag[fit_n]= mag[i];
-      fit_mag_err[fit_n]= mag_err[i];
-      fit_n++;
-     }
-    }
-    if ( jump_instead_of_break == 0 )
-     fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-    else
-     fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-    plot_linear_trend( fit_jd, fit_n, A, B, mean_jd, mean_mag );
-    //
-   }
-   */
    if ( n_breaks > 1 ) {
     //
     fit_n= 0;
@@ -3019,26 +2916,6 @@ int main( int argc, char **argv ) {
                           }
                        */
   }
-  /*
-  if ( curC == '1' ) {
-   plot_trend_type= 1; // Set to linear trend
-   if ( plot_linear_trend_switch == 0 ) {
-    plot_linear_trend_switch= 1;
-   } else {
-    plot_linear_trend_switch= 0;
-   }
-  }
-  if ( curC == '2' ) {
-   if ( plot_linear_trend_switch == 0 ) {
-    plot_linear_trend_switch= 1;
-    plot_trend_type= 2; // Set to parabolic trend
-   } else if ( plot_trend_type == 1 ) {
-    plot_trend_type= 2; // Change to parabolic trend
-   } else {
-    plot_linear_trend_switch= 0; // Turn off trend display
-   }
-  }
-  */
 
   // subtract one or many linear trends (many trends may be defined in regions separated by breaks)
   if ( curC == '-' ) {
@@ -3068,111 +2945,6 @@ int main( int argc, char **argv ) {
     fit_n= Nobs;
    }
 
-   /*
-   // if there are no breaks, just one trend
-   if ( n_breaks == 0 ) {
-    if ( jump_instead_of_break == 0 ) {
-     fit_linear_trend( float_JD, mag, mag_err, Nobs, &A, &B, &mean_jd, &mean_mag );
-    } else {
-     fit_median_for_jumps( float_JD, mag, mag_err, Nobs, &A, &B, &mean_jd, &mean_mag );
-    }
-    remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, minJD, maxJD, m_mean, JD );
-   }
-
-   // if there is only one break
-   if ( n_breaks == 1 ) {
-    //
-    fit_n= 0;
-    for ( i= 0; i < Nobs; i++ ) {
-     if ( float_JD[i] <= breaks[0] ) {
-      fit_jd[fit_n]= float_JD[i];
-      fit_mag[fit_n]= mag[i];
-      fit_mag_err[fit_n]= mag_err[i];
-      fit_n++;
-     }
-    }
-    if ( jump_instead_of_break == 0 ) {
-     fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-    } else {
-     fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-    }
-    remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, minJD, breaks[0], m_mean, JD );
-    //
-    //
-    fit_n= 0;
-    for ( i= 0; i < Nobs; i++ ) {
-     if ( float_JD[i] > breaks[0] ) {
-      fit_jd[fit_n]= float_JD[i];
-      fit_mag[fit_n]= mag[i];
-      fit_mag_err[fit_n]= mag_err[i];
-      fit_n++;
-     }
-    }
-    if ( jump_instead_of_break == 0 ) {
-     fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-    } else {
-     fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-    }
-    remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, breaks[0], maxJD, m_mean, JD );
-    //
-   }
-
-   // if there are many breaks
-   if ( n_breaks > 1 ) {
-    //
-    fit_n= 0;
-    for ( i= 0; i < Nobs; i++ ) {
-     if ( float_JD[i] <= breaks[0] ) {
-      fit_jd[fit_n]= float_JD[i];
-      fit_mag[fit_n]= mag[i];
-      fit_mag_err[fit_n]= mag_err[i];
-      fit_n++;
-     }
-    }
-    if ( jump_instead_of_break == 0 ) {
-     fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-    } else {
-     fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-    }
-    remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, minJD, breaks[0], m_mean, JD );
-    //
-    //
-    for ( j= 1; j < n_breaks; j++ ) {
-     fit_n= 0;
-     for ( i= 0; i < Nobs; i++ ) {
-      if ( float_JD[i] > breaks[j - 1] && float_JD[i] < breaks[j] ) {
-       fit_jd[fit_n]= float_JD[i];
-       fit_mag[fit_n]= mag[i];
-       fit_mag_err[fit_n]= mag_err[i];
-       fit_n++;
-      }
-     }
-     if ( jump_instead_of_break == 0 ) {
-      fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-     } else {
-      fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-     }
-     remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, breaks[j - 1], breaks[j], m_mean, JD );
-    }
-    //
-    //
-    fit_n= 0;
-    for ( i= 0; i < Nobs; i++ ) {
-     if ( float_JD[i] > breaks[n_breaks - 1] ) {
-      fit_jd[fit_n]= float_JD[i];
-      fit_mag[fit_n]= mag[i];
-      fit_mag_err[fit_n]= mag_err[i];
-      fit_n++;
-     }
-    }
-    if ( jump_instead_of_break == 0 ) {
-     fit_linear_trend( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-    } else {
-     fit_median_for_jumps( fit_jd, fit_mag, fit_mag_err, fit_n, &A, &B, &mean_jd, &mean_mag );
-    }
-    remove_linear_trend( float_JD, mag, Nobs, A, B, mean_jd, mean_mag - m_mean, breaks[n_breaks - 1], maxJD, m_mean, JD );
-   }
-   */
    // if there are no breaks, just one trend
    if ( n_breaks == 0 ) {
     if ( jump_instead_of_break == 0 ) {
@@ -3401,9 +3173,8 @@ int main( int argc, char **argv ) {
     for ( closest_num= 0; closest_num < Nobs; closest_num++ ) {
      // fprintf(stderr,"%f %f  %f %f\n",MIN(curX,curX2),MAX(curX,curX2),MIN(curY,curY2),MAX(curY,curY2));
      if ( float_JD[closest_num] > MIN( curX, curX2 ) && float_JD[closest_num] < MAX( curX, curX2 ) && mag[closest_num] > MIN( curY, curY2 ) && mag[closest_num] < MAX( curY, curY2 ) ) {
-      // fprintf(stderr,"Nobs= %d\n",Nobs); // DEBUG!!
-      // fprintf( stderr, "Removing data point %5d %.5lf %8.4f\n", closest_num, JD[closest_num], mag[closest_num] );
-      fprintf( stderr, "Removing data point %5d %.8lf %8.4f\n", closest_num, JD[closest_num], mag[closest_num] );
+      // closest_num is the array index starting from 0, closest_num + 1 is the dat apoint number starting from 1      
+      fprintf( stderr, "Removing data point %5d %.8lf %8.4f\n", closest_num + 1, JD[closest_num], mag[closest_num] );
       if ( NULL != removed_points_log ) {
        // fprintf( removed_points_log, "%.5lf %8.4f\n", JD[closest_num], mag[closest_num] );
        fprintf( removed_points_log, "%.8lf %8.4f\n", JD[closest_num], mag[closest_num] );
@@ -3411,10 +3182,10 @@ int main( int argc, char **argv ) {
       // kill it
       Nobs--;
       for ( i= closest_num; i < Nobs; i++ ) {
-       // fprintf(stderr,"DEBUG: closest_num=%d    i=%d     Nobs=%d\n",closest_num,i,Nobs);
-       // fprintf(stderr,"lightcurve_format=%d JD[%d+1]= %lf\n",lightcurve_format,i,JD[i+1]); // DEBUG!!
-       // fprintf(stderr,"                    float_JD[%d+1]= %lf\n",i,float_JD[i+1]); // DEBUG!!
-       // fprintf(stderr,"                    mag[%d+1]= %lf\n",i,mag[i+1]); // DEBUG!!
+       //fprintf(stderr,"DEBUG: closest_num=%d    i=%d     Nobs=%d\n",closest_num,i,Nobs);
+       //fprintf(stderr,"lightcurve_format=%d JD[%d+1]= %lf\n",lightcurve_format,i,JD[i+1]); // DEBUG!!
+       //fprintf(stderr,"                    float_JD[%d+1]= %lf\n",i,float_JD[i+1]); // DEBUG!!
+       //fprintf(stderr,"                    mag[%d+1]= %lf\n",i,mag[i+1]); // DEBUG!!
        JD[i]= JD[i + 1];
        float_JD[i]= float_JD[i + 1];
        mag[i]= mag[i + 1];

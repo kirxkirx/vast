@@ -1043,8 +1043,8 @@ int main( int argc, char **argv ) {
 
  // Calib mode //
  FILE *calibfile;
- double tmp_APER= 0.0;
- char imagefilename[1024 + FILENAME_LENGTH];
+ //double tmp_APER= 0.0;
+ //char imagefilename[1024 + FILENAME_LENGTH];
  char system_command[1024 + FILENAME_LENGTH];
  int N;
  double catalog_mag;
@@ -1178,19 +1178,19 @@ int main( int argc, char **argv ) {
 
  //// New ./pgfv calib
  // For reading the lightcurve statistics file
- FILE *lightcurve_statistics_file;
- FILE *lightcurve_file;
- double jd, x_pix, y_pix, app;
- char lightcurve_filename[FILENAME_LENGTH];
- char image_name_in_lightcurve[FILENAME_LENGTH];
- float irrelevant_x, irrelevant_y; // To hold the X,Y values from stats file that we'll ignore
- int found_ref_image;
- double tmp_double;
- char line_remainder[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
+ //FILE *lightcurve_statistics_file;
+ //FILE *lightcurve_file;
+ //double jd, x_pix, y_pix, app;
+ //char lightcurve_filename[FILENAME_LENGTH];
+ //char image_name_in_lightcurve[FILENAME_LENGTH];
+ //float irrelevant_x, irrelevant_y; // To hold the X,Y values from stats file that we'll ignore
+ //int found_ref_image;
+ //double tmp_double;
+ //char line_remainder[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
 
  // For aperture storage and median calculation
- float *sextractor_catalog__APP; // New array for aperture values
- float *apertures_sorted;        // For calculating median aperture
+ //float *sextractor_catalog__APP; // New array for aperture values
+ //float *apertures_sorted;        // For calculating median aperture
  ////
 
  // Options for getopt()
@@ -1502,6 +1502,7 @@ int main( int argc, char **argv ) {
  if ( match_mode == 2 ) {
   // Magnitude calibration mode
 
+  // We probably should move this up
   // For reading lightcurve files
   FILE *lightcurve_statistics_file;
   FILE *lightcurve_file;
