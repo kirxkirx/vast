@@ -19362,18 +19362,18 @@ $CAT_RESULT"
   check_dates_consistency_in_vast_image_details_log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESS_check_dates_consistency_in_vast_image_details_log"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_check_dates_consistency_in_vast_image_details_log"
   fi
   #
   grep --quiet 'PHOTOMETRIC_CALIBRATION=APASS_I' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESS_APASS_I"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_APASS_I"
   fi
   grep --quiet 'default.sex.TICA_TESS' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_SESETTINGSFILE"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
@@ -19499,6 +19499,485 @@ if [ $? -ne 0 ];then
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
 fi
+
+
+
+
+
+##### TICA TESS zero RA test #####
+# Download the test dataset if needed
+if [ ! -d ../TICA_TESS__zeroRA_test ];then
+ cd .. || exit 1
+ curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/TICA_TESS__zeroRA_test.tar.bz2" && tar -xvjf TICA_TESS__zeroRA_test.tar.bz2 && rm -f TICA_TESS__zeroRA_test.tar.bz2
+ cd "$WORKDIR" || exit 1
+fi
+# If the test data are found
+if [ -d ../TICA_TESS__zeroRA_test ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ #
+ remove_test31_tmp_files_if_present
+ # Run the test
+ echo "TICA TESS zero RA test " 
+ echo -n "TICA TESS zero RA test: " >> vast_test_report.txt 
+ #
+ cp -v bad_region.lst_default bad_region.lst
+ #
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ #################################################################
+ # We need a special astorb.dat for the asteroids
+ if [ -f astorb.dat ];then
+  mv astorb.dat astorb.dat_backup
+ fi
+ cp ../TICA_TESS__zeroRA_test/astorb_2025.dat astorb.dat
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_error_copying_astorb_2025.dat_to_astorb.dat"
+ fi
+ #################################################################
+ ## Set TESS camera bad regions file
+ cp bad_region.lst_default bad_region.lst
+ # Test the production NMW script
+ REFERENCE_IMAGES=../TICA_TESS__zeroRA_test/reference_images/ util/transients/transient_factory_test31.sh ../TICA_TESS__zeroRA_test/second_epoch_images
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA000_EXIT_CODE"
+ fi
+ #
+ if [ -f astorb.dat_backup ];then
+  mv astorb.dat_backup astorb.dat
+ else
+  # remove the custom astorb.dat
+  rm -f astorb.dat
+ fi
+ #
+ if [ -f transient_report/index.html ];then
+  grep --quiet 'ERROR' 'transient_report/index.html'
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_ERROR_MESSAGE_IN_index_html"
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   #CAT_RESULT=$(cat transient_factory_test31.txt)
+   CAT_RESULT="silenced"
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### TICATESSZERORA_ERROR_MESSAGE_IN_index_html ######
+$GREP_RESULT
+----------------- transient_factory_test31.txt -----------------
+$CAT_RESULT"
+  fi
+  # The copy of the log file should be in the HTML report
+  grep --quiet "Images processed 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA001"
+  fi
+  grep --quiet "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA002"
+  fi
+  #grep --quiet "First image: 2460175.19308" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2460820.72612382 25.05.2025 05:24:17.898' 1 transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA003"
+  fi
+  #grep --quiet "Last  image: 2460176.20465" transient_report/index.html
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460820.98075333 25.05.2025 11:30:57.888' 1 transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA004"
+  fi
+  #
+  MAG_ZP=$(grep "Estimated ref. image limiting mag.:  1" transient_report/index.html | tail -n1 | awk '{print $6}')
+  TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 14.92)*($1 - 14.92) ) < 0.05 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_MAG_ZP_OFFSET_TEST_ERROR_$MAG_ZP"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_MAG_ZP_OFFSET_LARGE_$MAG_ZP"
+   fi
+  fi
+  # 
+  #
+  grep --quiet "Klio" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Klio_name"
+  fi
+  #                           !             !
+  #             2025 05 25.4796  2460820.9796  13.04  23:49:57.18 -01:15:22.0
+  grep --quiet "2025 05 25\.479.  2460820\.979.  13\.0.  23:49:5[67]\... -01:15:2[12]\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Klio_position"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  13\.0.  23:49:5[67]\... -01:15:2[12]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  # Klio position as viewed from TESS via JPL Horizons
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:49:57.15 -01:15:22.4  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # TESS scale is 20"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 20 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Klio_position_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Klio_position_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+  #
+  grep --quiet "Stereoskopia" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Stereoskopia_name"
+  fi
+  #                           !             !
+  #             2025 05 25.4796  2460820.9796  13.58  23:52:16.53 -05:41:15.1
+  grep --quiet "2025 05 25\.479.  2460820\.979.  13\.5.  23:52:16\... -05:41:1[45]\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Stereoskopia_position"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  13\.5.  23:52:16\... -05:41:1[45]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  # Stereoskopia position as viewed from TESS via JPL Horizons
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:52:16.51 -05:41:15.4  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # TESS scale is 20"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 20 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Stereoskopia_position_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Stereoskopia_position_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+  #
+  grep --quiet "Italia" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Italia_name"
+  fi
+  #                           !             !
+  #             2025 05 25.4796  2460820.9796  13.97  23:22:05.14 -08:42:02.2
+  grep --quiet "2025 05 25\.479.  2460820\.979.  1[34]\.[09].  23:22:0[45]\... -08:42:0[12]\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Italia_position"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  1[34]\.[09].  23:22:0[45]\... -08:42:0[12]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  # Italia position as viewed from TESS via JPL Horizons
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:22:05.09 -08:42:02.8  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # TESS scale is 20"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 20 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Italia_position_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Italia_position_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+  #
+  grep --quiet "Whittemora" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Whittemora_name"
+  fi
+  #                           !             !
+  #             2025 05 25.4796  2460820.9796  14.51  00:00:00.08 -08:32:14.2
+  grep --quiet "2025 05 25\.479.  2460820\.979.  14\.[45].  00:00:00\... -08:32:1[34]\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Whittemora_position"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  14\.[45].  00:00:00\... -08:32:1[34]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  # Whittemora position as viewed from TESS via JPL Horizons
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 00:00:00.14 -08:32:13.2  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # TESS scale is 20"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 20 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Whittemora_position_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Whittemora_position_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+  #
+  grep --quiet "Otthild" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Otthild_name"
+  fi
+  #                           !             !
+  #             2025 05 25.4796  2460820.9796  14.53  23:29:58.96 -14:27:56.1
+  grep --quiet "2025 05 25\.479.  2460820\.979.  14\.[45].  23:29:5[89]\... -14:27:5[56]\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Otthild_position"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  14\.[45].  23:29:5[89]\... -14:27:5[56]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  # Otthild position as viewed from TESS via JPL Horizons
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:29:58.85 -14:27:56.1  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # TESS scale is 20"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 20 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Otthild_position_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Otthild_position_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+  #
+  grep --quiet "Laurentia" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Laurentia_name"
+  fi
+  #                           !             !
+  #             2025 05 25.4796  2460820.9796  14.71  23:37:16.76 -07:54:39.2
+  grep --quiet "2025 05 25\.479.  2460820\.979.  14\.[67].  23:37:1[67]\... -07:54:3[89]\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Laurentia_position"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  14\.[67].  23:37:1[67]\... -07:54:3[89]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  # Laurentia position as viewed from TESS via JPL Horizons
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:37:16.51 -07:54:45.0  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # TESS scale is 20"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 20 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Laurentia_position_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Laurentia_position_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+  # Melusina - blended with previously detected star so should be flound as "flare"
+  grep --quiet "Melusina" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Melusina_name"
+  fi
+  #                           !             !
+  #             2025 05 25.4796  2460820.9796  13.84  23:39:27.54 -11:23:21.7
+  grep --quiet "2025 05 25\.479.  2460820\.979.  13\.[789].  23:39:2[678]\... -11:23:2[12]\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Melusina_position"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2025 05 25\.479.  2460820\.979.  13\.[789].  23:39:2[678]\... -11:23:2[12]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  # Melusina position as viewed from TESS via JPL Horizons
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:39:27.10 -11:23:18.1  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # TESS scale is 20"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 20 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Melusina_position_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Melusina_position_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+  #
+  # Check the total number of candidates (should be 7 real and 2 bogus)
+  NUMBER_OF_CANDIDATE_TRANSIENTS=`grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink'`
+  if [ $NUMBER_OF_CANDIDATE_TRANSIENTS -gt 14 ] || [ $NUMBER_OF_CANDIDATE_TRANSIENTS -lt 7 ] ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_NCANDIDATES_$NUMBER_OF_CANDIDATE_TRANSIENTS"
+  fi
+  #
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_check_dates_consistency_in_vast_image_details_log"
+  fi
+  #
+  grep --quiet 'PHOTOMETRIC_CALIBRATION=APASS_I' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_APASS_I"
+  fi
+  grep --quiet 'default.sex.TICA_TESS' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_SESETTINGSFILE"
+  fi
+  # Hunting the mysterious non-zero reference frame rotation cases
+  if [ -f vast_image_details.log ];then
+   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA0_nonzero_ref_frame_rotation"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### TICATESSZERORA0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### TICATESSZERORA0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA0_NO_vast_image_details_log"
+  fi
+  #
+  # Test for degraded plate solution 
+  RADECPOSITION_TO_TEST=$(lib/bin/xy2sky wcs_s0092-o2a-cam4-ccd3__hlsp_tica_tess_ffi_s0092-o2-01120400-cam4-ccd3_tess_v01_img.fits 678.27679  201.87050 | awk '{print $1" "$2}' )
+  DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 00:00:00.00 -08:32:14.2  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
+  # TESS image scale is 20"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 20 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_TESTPOINT1_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_TESTPOINT1_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  # 
+  #
+  if [ -s wcs_s0092-o2a-cam4-ccd3__hlsp_tica_tess_ffi_s0092-o2-01120400-cam4-ccd3_tess_v01_img.fits.cat.astrometric_residuals ] ;then 
+   #
+   MEDIAN_DISTANCE_TO_CATALOG_ARCSEC=$(cat wcs_s0092-o2a-cam4-ccd3__hlsp_tica_tess_ffi_s0092-o2-01120400-cam4-ccd3_tess_v01_img.fits.cat.astrometric_residuals | awk '{print $5}' | util/colstat 2>&1 | grep 'MEDIAN= ' | awk '{print $2}')
+   TEST=`echo "$MEDIAN_DISTANCE_TO_CATALOG_ARCSEC" | awk '{if ( $1 > 0.0 && $1 < 20/3 ) print 1 ;else print 0 }'`
+   re='^[0-9]+$'
+   if ! [[ $TEST =~ $re ]] ; then
+    echo "TEST ERROR"
+    TEST_PASSED=0
+    TEST=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_MEDIANCATDIST_IMG1_TOO_FAR_TEST_ERROR"
+   else
+    if [ $TEST -eq 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_MEDIANCATDIST_IMG1_TOO_FAR_$DISTANCE_ARCSEC"
+    fi
+   fi
+   # 
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_MEDIANCATDIST_NO_ASTROMETRIC_RESIDUALS_FILES"
+  fi 
+  ####
+  
+  
+  
+  test_if_test31_tmp_files_are_present
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_TMP_FILE_PRESENT"
+  fi
+
+ else
+  echo "ERROR running the transient search script" 
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_ALL"
+ fi
+
+
+ ###### restore default bad regions file
+ if [ -f bad_region.lst_default ];then
+  cp -v bad_region.lst_default bad_region.lst
+ fi
+ #
+
+ ###### restore default exclusion list if any
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
+
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34m TICA TESS zero RA test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34m TICA TESS zero RA test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+remove_test_data_to_save_space
+
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!" 
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES" 
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ exit 1
+fi
+
 
 
 
@@ -21991,8 +22470,6 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ######### A bad TESS FFI with no WCS
-### Disable this test for GitHub Actions
-if [ "$GITHUB_ACTIONS" != "true" ];then
 if [ ! -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
@@ -22013,7 +22490,8 @@ if [ -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits ]
  #util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:38   = JD  2458955.79836 mid. exp.'
  #util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:38 TDB = JD(TDB) 2458955.79836 mid. exp.'
  #util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:37.885 TDB = JD(TDB) 2458955.79836 mid. exp.'
- util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:37.885 TDB = JD(TDB) 2458955.79835515 mid. exp.'
+ #util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:37.885 TDB = JD(TDB) 2458955.79835515 mid. exp.'
+ util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:37.885 UTC = JD(UTC) 2458955.79835515 mid. exp.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS001"
@@ -22101,8 +22579,6 @@ else
  FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS_TEST_NOT_PERFORMED"
 fi
 
-### Disable the above test for GitHub Actions
-fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ######### TICA TESS FFI 
