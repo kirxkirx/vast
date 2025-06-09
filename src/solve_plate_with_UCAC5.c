@@ -965,6 +965,8 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
  int found_end_marker= 0; // Variable to track if "#END#   " is present
                           // The presence of this marker will signify the VizieR output was not cut-off by a network error
 
+ int found_vizier_error_marker= 0; // Set to 1 if VizieR internal error is found
+
  f= fopen( vizquery_output_filename, "r" );
  if ( NULL == f ) {
   return 1;
@@ -982,9 +984,16 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
    continue;
 
   // Check for "#END#   " at the start of the line
-  if ( strncmp( string, "#END#   ", 7 ) == 0 ) {
+  if ( strncmp( string, "#END#   ", 8 ) == 0 ) {
    found_end_marker= 1;
    break; // we are already at the end of input
+  }
+  
+  // Check for "#INFO QUERY_STATUS=ERROR" - a sign of VizieR internal error
+  if ( strncmp( string, "#INFO QUERY_STATUS=ERROR", 24 ) == 0 ) {
+   found_vizier_error_marker= 1;
+   fprintf( stderr, "WARNING: found an error message in VizieR response!\n");
+   break; // VizieR problem
   }
 
   // sadly, the following can only be checked after searching for "#END#   "
@@ -1005,10 +1014,6 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
    continue;
   }
   N_catalog_lines_parsed++;
-  // fprintf(stderr,"\n\n DEBUG \n#%s#%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf\n",
-  // string,
-  // measured_ra,measured_dec,distance,catalog_ra,catalog_dec,   APASS_B, APASS_B_err, APASS_V, APASS_V_err, APASS_r, APASS_r_err, APASS_i, APASS_i_err
-  //);
 
   cos_delta= cos( measured_dec * M_PI / 180.0 );
   for ( i= 0; i < N; i++ ) {
@@ -1089,7 +1094,11 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
  if ( 0 != found_end_marker ) {
   fprintf( stderr, "#END# marker found - VizieR output is complete!\n" );
  } else {
-  fprintf( stderr, "#END# marker NOT found - VizieR output is truncated by network timeout!\n" );
+  // We do not wait for the #END# marker if there was a VizieR error
+  // If there is a VizieR error, do not confuse user with the 'no END maker' message
+  if ( 0 == found_vizier_error_marker ) { 
+   fprintf( stderr, "#END# marker NOT found - VizieR output is truncated by network timeout!\n" );
+  }
  }
  fprintf( stderr, "Parsed %d APASS catalog lines.\n", N_catalog_lines_parsed );
  fprintf( stderr, "%d stars rejected on distance.\n", N_rejected_on_distance );
@@ -1102,18 +1111,21 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
   }
   // this way after APASS search failure and success of another phtoometric catalog search we hopefully wouldn't end up with a mixture of two photometric catalogs in the output
   //
+  // Check for an internal VizieR error that will be maked by non-zero value of found_vizier_error_marker
+  if ( 0 != found_vizier_error_marker ) {
+   fprintf( stderr, "ERROR: VizieR internal error marker found!\n" );
+   return 2; // return code 2 means 'do not retry'
+  }
   // Check if VizieR interaction was a success or was there a network error (if we didn't get the #END# marker)
   if ( 0 != found_end_marker ) {
    fprintf( stderr, "ERROR: Too few stars matched and #END# marker found!\n" );
-   return 2;
+   return 2; // return code 2 means 'do not retry'
   } else {
    fprintf( stderr, "ERROR: Too few stars matched!\n" );
-   return 1;
+   return 1; // return code 1 means 'may retry'
   }
-  //  fprintf( stderr, "ERROR: too few stars matched!\n" );
-  //  return 1;
  }
- return 0;
+ return 0; // return code 0 means everything is fine - match success
 }
 
 int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
@@ -2296,10 +2308,12 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
  // Photometric catalog search
  fprintf( stderr, "Searchig APASS...\n" );
  sprintf( command,
-          "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=vizier.cds.unistra.fr -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
+          //"export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=vizier.cds.unistra.fr -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
+          "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$(%slib/choose_vizier_mirror.sh APASS) -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
           path_to_vast_string,
           path_to_vast_string,
           (double)VIZIER_TIMEOUT_SEC,
+          path_to_vast_string,
           path_to_vast_string,
           catalog_search_parameters->brightest_mag,
           catalog_search_parameters->faintest_mag,
@@ -2312,22 +2326,12 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
  if ( vizquery_run_success != 0 ) {
   fprintf( stderr, "WARNING: it looks like there was a timeout while running lib/vizquery script.\n" );
  }
- /*
- if ( vizquery_run_success != 0 ) {
-  fprintf( stderr, "WARNING: some problem running lib/vizquery script. Is this an internet connection problem? Retrying...\n" );
-  sleep( 10 );
-  fprintf( stderr, "%s\n", command );
-  vizquery_run_success= system( command );
-  if ( vizquery_run_success != 0 ) {
-   fprintf( stderr, "ERROR: problem running lib/vizquery script :(\n" );
-  }
- }
- */
 
  vizquery_run_success= read_APASS_from_vizquery( stars, N, vizquery_output_filename, catalog_search_parameters );
  // If the output of vizquery looks bad or empty or whatever - this is when we retry
  // read_APASS_from_vizquery returns 2 if the VizieR interaction was a success, but there are just too few stars
- while ( 0 != vizquery_run_success && 2 != vizquery_run_success && backoff_retry_count < 5 ) {
+ //while ( 0 != vizquery_run_success && 2 != vizquery_run_success && backoff_retry_count < 5 ) {
+ while ( 0 != vizquery_run_success && 2 != vizquery_run_success && backoff_retry_count < 3 ) {
   backoff_retry_count= backoff_retry_count + 1;
   backoff_wait_time_sec= backoff_wait_time_sec * 2;
   fprintf( stderr, "WARNING: some problem reading the vizquery output. Is this an internet connection problem? Retrying in %d sec...\n", backoff_wait_time_sec );
@@ -3085,15 +3089,20 @@ int main( int argc, char **argv ) {
   // Photometric calibration
   if ( 0 != search_APASS_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
    fprintf( stderr, "ERROR running search_APASS_with_vizquery()\n" );
-   fprintf( stderr, "Maybe this sky area is not covered by APASS yet?\nTrying the Pan-STARRS1 catalog as the fallback option...\n\nWARNING: using Pan-STARRS1 instead of APASS for magnitude calibration!!!!\n\n" );
+   fprintf( stderr, "Maybe this sky area is not covered by APASS yet?\nMaybe the image is too deep and narrow-field that there are not unaturated APASS stars in it?\n\nTrying the Pan-STARRS1 catalog as the fallback option...\n\nWARNING: using Pan-STARRS1 instead of APASS for magnitude calibration!!!!\n\n" );
    // We need to reset matched_with_astrometric_catalog flags before re-running the search!
    for ( i= 0; i < number_of_stars_in_wcs_catalog; i++ ) {
     stars[i].matched_with_photometric_catalog= 0;
    }
    if ( 0 != search_PANSTARRS1_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
     fprintf( stderr, "ERROR running search_PANSTARRS1_with_vizquery()\n" );
-    free( stars );
-    return 1;
+    // Fail if no photometric catalogs could be reached
+    //free( stars );
+    //return 1;
+    // Real use case: VizieR down so photoemtric catalogs cannot be reached.
+    // That's bad but what's even worse is that we also can't determine coordinates.
+    // Let's print a big error and continue.
+    fprintf( stderr, "\n\n !!!! Photometric calibration ERROR !!!!\nCannot reach photometric catalogs! Only astrometry will be calibrated.\nYou may measure coordinates of stars, but automated magnitude scale calibration will not work!\n\n");
    }
   }
  } // if ( use_photometric_catalog == 1 ) {

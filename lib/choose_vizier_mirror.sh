@@ -121,13 +121,31 @@ fi
 #exit 0
 ################# !!!!!!!!!!!!!!!!!! #################
 
+# VizieR mirrors are incomplete: some catatlogs are available on some mirrors but not the others
+# The user may specify which catalog to use for the test
+CATALOG_TO_TEST="GAIADR2"
+if [ -n "$1" ];then
+ if [ "$1" = "APASS" ];then
+  CATALOG_TO_TEST="APASS"
+ fi
+fi
+
+
 # New code: choose VizieR mirror that serves Gaia DR2
 for vizier_mirror in vizier.cds.unistra.fr vizier.china-vo.org vizier.nao.ac.jp ;do
- "${VAST_PATH}"lib/vizquery -site="$vizier_mirror" -mime=text -source=I/345/gaia2 -out.max=3 -out.add=_r -out.form=mini -sort=Gmag Gmag=0.0..13.52 -c="18:02:32.82 -29:50:13.9" -c.rs=34.50 -out="Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var" | grep --quiet ' 4050254215686154112 '
- if [ $? -eq 0 ];then
-  echo "$vizier_mirror"
-  exit 0
- fi
+ if [ "$CATALOG_TO_TEST" = "APASS" ];then
+  "${VAST_PATH}"lib/vizquery -site="$vizier_mirror" -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\'mag,e_r\'mag,i\'mag,e_i\'mag,g\'mag,e_g\'mag Vmag=7.0..16.5 -sort=Vmag -c="23:24:47.70 +61:11:14.3" -c.rs=1.0 | grep ' 15.7' | grep ' 15.2' | grep --quiet ' 15.0'
+  if [ $? -eq 0 ];then
+   echo "$vizier_mirror"
+   exit 0
+  fi
+ else
+  "${VAST_PATH}"lib/vizquery -site="$vizier_mirror" -mime=text -source=I/345/gaia2 -out.max=3 -out.add=_r -out.form=mini -sort=Gmag Gmag=0.0..13.52 -c="18:02:32.82 -29:50:13.9" -c.rs=34.50 -out="Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var" | grep --quiet ' 4050254215686154112 '
+  if [ $? -eq 0 ];then
+   echo "$vizier_mirror"
+   exit 0
+  fi
+ fi # catalog
 done
 # echo nothing if nothing works
 exit 1
