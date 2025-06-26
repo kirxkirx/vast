@@ -556,8 +556,6 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
    # exit 1
    #fi # if Gaia DR2 match found
    # Special treatment for blends
-   #BLEND_MAG_FAINT_SEARCH_LIMIT=$(echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.98}')
-   #BLEND_SEARCH_RADIUS_ARCSEC=$(echo "$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC" | awk '{printf "%.2f", $1*2.0}')
    # 2pix blend rejection works well. Let's try 2.5 pix
    BLEND_SEARCH_RADIUS_ARCSEC=$(echo "$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC" | awk '{printf "%.2f", $1*2.5}')
    VIZIER_COMMAND=("lib/vizquery"
@@ -572,7 +570,6 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
                 "-c=$RA_MEAN_HMS_DEC_MEAN_HMS_ONSESTRING"
                 "-c.rs=$BLEND_SEARCH_RADIUS_ARCSEC"
                 "-out=Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var")
-   #VIZIER_GAIADR2_OUTPUT=$($TIMEOUTCOMMAND "${VIZIER_COMMAND[@]}" 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE")
    VIZIER_GAIADR2_OUTPUT=$($TIMEOUTCOMMAND_GAIA_VIZIER "${VIZIER_COMMAND[@]}" 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE")
    if [ -n "$VIZIER_GAIADR2_OUTPUT" ];then
     # | awk 'NF > 0' is needed to exclude empty lines as echo "$VIZIER_GAIADR2_OUTPUT" will produce an empty line even when $VIZIER_GAIADR2_OUTPUT contains nothing
@@ -725,31 +722,19 @@ Online MPChecker may fail to identify bright comets! Please manually check the <
 <input type='radio' name='type' VALUE='p' CHECKED style='display:none;'>
 <input type='radio' name='type' VALUE='m' style='display:none;'>
 </form>
-<form style='display: inline;' NAME='$$FORMVSX$1' method='post' TARGET='_blank' action='https://www.aavso.org/vsx/index.php?view=results.submit1' enctype='multipart/form-data'>
-<input type='Hidden' name='ql' value='1'>
-<input type='Hidden' name='getCoordinates' value='0'>
-<input type='Hidden' name='plotType' value='Search'>
-<select style='display:none;' class='formselect' style='width: 160px' name='special' size='1'>
-<option value='index.php?view=results.special&sid=2'>Changes in last week...</option>
-</select>
-<input  type='hidden' class='forminput' type='Text' name='ident' style='width: 205px' value=''>
-<select style='display:none;' class='formselect' name='constid' size='1'>
-<option value='0' selected>--</option>
-</select>
-<input type='hidden' class='forminput' type='Text' name='targetcenter' style='width: 140px' value='$RADEC_MEAN_HMS'>
-<input type='hidden' class='formbutton' type='Radio' name='format' value='s' checked>
-<input type='hidden' class='forminput' type='Text' name='fieldsize' size='3' value='60'>
-<select style='display:none;' class='formselect' name='fieldunit' size='1'>
-<option value='3' selected>arc seconds</option>
-</select>
-<input style='display:none;' class='formbutton' type='Radio' name='geometry' value='r' checked>
-<input type='hidden' name='filter[]' value='0' checked>
-<input type='hidden' name='filter[]' value='1' checked>
-<input type='hidden' name='filter[]' value='2' checked>
-<input type='hidden' name='filter[]' value='3' checked>
-<select style='display:none;' class='formselect' name='order' size='1' style='width: 140px'>
-<option value='9' selected>Angular sep.</option>
-</select>
+<form style='display: inline;' NAME='$$FORMVSX$1' method='post' TARGET='_blank' action='https://vsx.aavso.org/index.php?view=results.submit1' enctype='application/x-www-form-urlencoded'>
+<input type='hidden' name='ql' value='1'>
+<input type='hidden' name='getCoordinates' value='0'>
+<input type='hidden' name='plotType' value='Search'>
+<input type='hidden' name='special' value='index.php?view=results.special&sid=2'>
+<input type='hidden' name='ident' value=''>
+<input type='hidden' name='constid' value='0'>
+<input type='hidden' name='targetcenter' value='$RADEC_MEAN_HMS'>
+<input type='hidden' name='format' value='s'>
+<input type='hidden' name='fieldsize' value='60'>
+<input type='hidden' name='fieldunit' value='3'>
+<input type='hidden' name='geometry' value='r'>
+<input type='hidden' name='order' value='9'>
 <input class='formbutton' type='Submit' value='Search VSX online'>
 </form>
 <form style='display: inline;' NAME=\"$$FORMCATALINA$1\" method=\"post\" TARGET=\"_blank\" action=\"http://nunuku.caltech.edu/cgi-bin/getcssconedb_release_img.cgi\" enctype=\"multipart/form-data\">

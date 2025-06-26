@@ -230,16 +230,9 @@ done
 
 # Querry VSX now, but parse later, so this querry is parallel to SIMBAD
 # --silent --show-error will suppress the progress bar but not error messages
-#echo $CURL --insecure --max-time 60 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "https://www.aavso.org/vsx/index.php?view=results.submit1" > /tmp/t
-#echo "
-#
-#DEBUG - first try
-#$CURL $VAST_CURL_PROXY --silent --show-error --insecure --connect-timeout 10 --max-time 120 --data \"targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2\" \"https://www.aavso.org/vsx/index.php?view=results.submit1\"
-#
-#"
-#$TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --silent --show-error --insecure --connect-timeout 10 --max-time 120 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "https://www.aavso.org/vsx/index.php?view=results.submit1" 2> vsx_page_content$$.error > vsx_page_content$$.html &
-$TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --silent --show-error --insecure --connect-timeout 10 --max-time 120 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=25&fieldunit=3&geometry=r&order=9&ql=1&filter[]=0,1,2" "https://www.aavso.org/vsx/index.php?view=results.submit1" 2> vsx_page_content$$.error > vsx_page_content$$.html &
-# a working example as of 2023-05-12:
+#$TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --silent --show-error --insecure --connect-timeout 10 --max-time 120 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=25&fieldunit=3&geometry=r&order=9&ql=1&filter[]=0,1,2" "https://www.aavso.org/vsx/index.php?view=results.submit1" 2> vsx_page_content$$.error > vsx_page_content$$.html &
+$TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --silent --show-error --insecure --connect-timeout 10 --max-time 120 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=25&fieldunit=3&geometry=r&order=9&ql=1&filter[]=0,1,2" "https://vsx.aavso.org/index.php?view=results.submit1" 2> vsx_page_content$$.error > vsx_page_content$$.html &
+# PROBABLY NOT WORKING ANYMORE working example as of 2023-05-12:
 #curl 'https://www.aavso.org/vsx/index.php?view=results.submit1' -X POST -H 'Content-Type: application/x-www-form-urlencoded' -H 'DNT: 1' -H 'Connection: keep-alive' -H 'Upgrade-Insecure-Requests: 1' -H 'Sec-Fetch-Dest: document' -H 'Sec-Fetch-Mode: navigate' -H 'Sec-Fetch-Site: same-origin' -H 'Sec-Fetch-User: ?1' --data-raw 'ql=1&getCoordinates=0&plotType=Search&special=index.php%3Fview%3Dresults.special%26sid%3D2&ident=&constid=0&targetcenter=07%3A29%3A19.69+-13%3A23%3A06.6&format=s&fieldsize=1&fieldunit=3&geometry=r&filter%5B%5D=0&filter%5B%5D=1&filter%5B%5D=2&filter%5B%5D=3&order=1' > vsx_page_content$$.html &
 
  
@@ -277,53 +270,9 @@ if [ $COLOR -eq 1 ];then
 else
  DATABASE_NAME="<font color=\"blue\">VSX</font>"
 fi
-# move up to speed up
-#$TIMEOUTCOMMAND $CURL  --silent --max-time 30 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "http://www.aavso.org/vsx/index.php?view=results.submit1" > vsx_page_content$$.html
+#
 wait
 #
-# disabled as kirx.net proxy is banned at VSX, thanks AAVSO
-#
-# vsx_page_content$$.error - will not be enpty if we are not using --silent !
-#if [ -s vsx_page_content$$.error ] || ! check_if_the_vsx_page_looks_legit_and_we_might_be_having_parsing_issues vsx_page_content$$.html ;then
-# echo "
-# 
-# YOHOHO, an error, see below the content of vsx_page_content$$.error
-# 
-# "
-# cat vsx_page_content$$.error
-# echo "
-# 
-# YOHOHO, an error, see above the content of vsx_page_content$$.error
-# 
-# "
-# # There was en error connecting to VSX
-# rm -f vsx_page_content$$.error
-# # Retry connecting via the reverse proxy
-# #$TIMEOUTCOMMAND $CURL                 --insecure --connect-timeout 10 --max-time 120         --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "https://www.aavso.org/vsx/index.php?view=results.submit1" 2> vsx_page_content$$.error > vsx_page_content$$.html &
-## echo "
-## 
-## DEBUG -- second try
-## 
-## $CURL $VAST_CURL_PROXY --silent --show-error --insecure --connect-timeout 10 --max-time 30 --data \"targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2\" \"https://kirx.net/vsx/index.php?view=results.submit1\" 
-##
-## "
-# $TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --silent --show-error --insecure --connect-timeout 10 --max-time 30 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "https://kirx.net/vsx/index.php?view=results.submit1" 2> vsx_page_content$$.error > vsx_page_content$$.html
-# # There will be no vsx_page_content$$.error content if the request is timing out after --max-time becasue the request is outright blocked - thanks AAVSO
-# if [ -s vsx_page_content$$.error ] || ! check_if_the_vsx_page_looks_legit_and_we_might_be_having_parsing_issues vsx_page_content$$.html ;then
-#  cat vsx_page_content$$.error
-#  # There was en error connecting to VSX
-#  rm -f vsx_page_content$$.error
-#  # Retry connecting via HTTP reverse proxy
-#  $TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --silent --show-error --insecure --connect-timeout 20 --max-time 60 --data "targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2" "http://kirx.net/vsx/index.php?view=results.submit1" 2> vsx_page_content$$.error > vsx_page_content$$.html
-##  echo "
-## 
-## DEBUG -- third try
-##
-## $CURL $VAST_CURL_PROXY --silent --show-error --insecure --connect-timeout 20 --max-time 60 --data \"targetcenter=$RA%20$DEC&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2\" \"http://kirx.net/vsx/index.php?view=results.submit1\" 
-##
-## "
-# fi
-#fi
 ###
 #cat vsx_page_content$$.html
 ##
