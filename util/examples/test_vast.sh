@@ -19612,10 +19612,30 @@ $CAT_RESULT"
   fi
   # 
   #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_HTML_LIST_FORMAT"
+  fi
+  #
+  #
   grep --quiet "Klio" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Klio_name"
+  else
+   # Consider epic Selenium test of the transient candidates page
+   command -v python &> /dev/null     
+   if [ $? -eq 0 ];then
+    python -c "import unittest; import logging; import re; import pathlib; import selenium; print(selenium.__version__)" 2>/dev/null
+    if [ $? -eq 0 ];then
+     python -m unittest -v util/examples/selenium_TICA_TESS__zeroRA_test.py
+     if [ $? -ne 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Klio_SELENIUM_TEST"
+     fi
+    fi
+   fi
+   #
   fi
   #                           !             !
   #             2025 05 25.4796  2460820.9796  13.04  23:49:57.18 -01:15:22.0
