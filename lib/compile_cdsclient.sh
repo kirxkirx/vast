@@ -23,9 +23,10 @@ LIBRARY_SOURCE=$VAST_DIR/src/cdsclient
 echo " "
 echo -e "Starting script \033[01;32m$0 $1\033[00m"
 
+cd "$TARGET_DIR" || exit 1
 
 if [ "$1" = "clean" ];then
- echo -e "\033[01;34mRemoving the local copy of cdsclient\033[00m"
+ echo -e "\033[01;34mRemoving vizquery\033[00m"
  cd $LIBRARY_SOURCE
  make clean
  echo "Script $0 is done."
@@ -34,23 +35,13 @@ if [ "$1" = "clean" ];then
 fi
 
 
-echo -e "\033[01;34mCompiling cdsclient library\033[00m"
-echo "Using C compiler: $C_COMPILER" 
+ln -s my_vizquery.sh vizquery
 
-
-cd $LIBRARY_SOURCE
-make clean
-./configure --prefix=$TARGET_DIR
-make
-make install
-make clean
-cd $VAST_DIR
 
 # Test if executable files were actually created?
 COMPILATION_ERROR=0
 echo -n "Checking library files:   "
-#for TEST_FILE in $TARGET_DIR/bin/wwwget $TARGET_DIR/bin/vizquery ;do
-for TEST_FILE in $TARGET_DIR/bin/vizquery ;do
+for TEST_FILE in $TARGET_DIR/vizquery ;do
  echo -n "$TEST_FILE - "
  if [ ! -f $TEST_FILE ];then
   COMPILATION_ERROR=1
@@ -65,10 +56,6 @@ if [ $COMPILATION_ERROR -eq 1 ];then
  echo -e "\033[01;31mCOMPILATION ERROR\033[00m"
  exit 1
 fi
-
-cd lib/
-ln -s bin/vizquery
-cd -
 
 echo -e "\033[01;34mFinished compiling cdsclient library\033[00m"
 echo " "

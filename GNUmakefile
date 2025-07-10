@@ -36,11 +36,12 @@ GOOD_MARCH_OPTIONS := $(shell lib/set_good_march.sh)
 USE_SINCOS_OPITION := $(shell lib/check_sincos.sh)
 USE_BUILTIN_FUNCTIONS := $(shell lib/check_builtin_functions.sh)
 
-CFITSIO_LIB = lib/libcfitsio.a
+# Check which zlib library to use
+ZLIB_LIB := $(shell lib/check_zlib.sh 2>/dev/null || echo "")
+
+CFITSIO_LIB = lib/libcfitsio.a $(ZLIB_LIB)
 GSL_LIB = lib/lib/libgsl.a lib/lib/libgslcblas.a
 GSL_INCLUDE = lib/include
-
-
 
 ## production
 OPTFLAGS = -w -O2 -fomit-frame-pointer $(GOOD_MARCH_OPTIONS) $(LTO_OPTIONS) $(USE_OMP_OPTIONS) $(USE_BUILTIN_FUNCTIONS)
@@ -70,7 +71,7 @@ OPTFLAGS = -w -O2 -fomit-frame-pointer $(GOOD_MARCH_OPTIONS) $(LTO_OPTIONS) $(US
 
 
 
-all: print_check_start_message check print_compile_start_message clean check_no_for_loop_initial_declaration shell_commands_record_compiler_version cfitsio gsl sextractor wcstools set_vast_limits vast.o vast statistics etc pgplot_components old shell_commands period_filter ccd astrometry astcheck cdsclient test  clean_objects print_compile_success_message
+all: print_check_start_message check print_compile_start_message clean check_no_for_loop_initial_declaration shell_commands_record_compiler_version zlib cfitsio gsl sextractor wcstools set_vast_limits vast.o vast statistics etc pgplot_components old shell_commands period_filter ccd astrometry astcheck cdsclient test  clean_objects print_compile_success_message
 
 ifneq ($(RECOMPILE_VAST_ONLY),yes)
 check:
@@ -104,7 +105,9 @@ set_vast_limits: lib/set_MAX_MEASUREMENTS_IN_RAM_in_vast_limits.sh
 	lib/set_MAX_MEASUREMENTS_IN_RAM_in_vast_limits.sh
 
 ifneq ($(RECOMPILE_VAST_ONLY),yes)
-cfitsio: shell_commands_record_compiler_version
+zlib: shell_commands_record_compiler_version
+	lib/compile_zlib.sh
+cfitsio: zlib shell_commands_record_compiler_version
 	lib/compile_cfitsio.sh
 gsl: shell_commands_record_compiler_version
 	lib/compile_gsl.sh
@@ -122,6 +125,8 @@ test: vast
 	@echo -e "\033[01;34mVaST installation test passed\033[00m"
 	@echo " "
 else
+zlib:
+	# do nothing
 cfitsio:
 	# do nothing
 gsl:
@@ -142,7 +147,7 @@ cdsclient:
 
 period_filter: lib/period_search/periodFilter/periodS2 lib/periodFilter/periodFilter lib/BLS/bls lib/lk_compute_periodogram lib/deeming_compute_periodogram
 
-nopgplot: print_check_start_message check print_compile_start_message clean cfitsio gsl sextractor vast.o vast statistics etc old shell_commands period_filter ccd astrometry astcheck clean_objects print_compile_success_message 
+nopgplot: print_check_start_message check print_compile_start_message clean zlib cfitsio gsl sextractor vast.o vast statistics etc old shell_commands period_filter ccd astrometry astcheck clean_objects print_compile_success_message 
 
 
 stetson_test: stetson_test.o variability_indexes.o lib/create_data
@@ -535,9 +540,10 @@ ifneq ($(RECOMPILE_VAST_ONLY),yes)
 clean_libraries:
 	util/clean_data.sh all # remove all data (lightcurves, etc) from the previous VaST run
 	rm -f vast libident.so libident.o $(LIB_DIR)stat $(LIB_DIR)formater_out_wfk stat_outfile $(LIB_DIR)simulate_2_colors combine_obs_median $(SRC_PATH)*.o $(SRC_PATH)*.so lc find_candidates pgfv $(SRC_PATH)pgfv/*.o $(SRC_PATH)diferential/*.o vast poisk util/stat_outfile util/combine_obs_median $(LIB_DIR)m_sigma_bin $(LIB_DIR)select_sysrem_input_star_list lib/periodFilter/periodS2 lib/periodFilter/periodFilter lib/BLS/bls util/ccd/*
-	rm -f lib/libcfitsio.a
+	rm -f lib/libcfitsio.a lib/libz.a
 	rm -f util/fitscopy util/funpack src/cfitsio/fitscopy src/fitsio.h src/longnam.h
 	rm -f lib/fitsverify
+	lib/compile_zlib.sh clean
 	lib/compile_cfitsio.sh clean
 	lib/compile_gsl.sh clean
 	lib/compile_sextractor.sh clean
@@ -614,4 +620,3 @@ print_compile_success_message: clean_objects sextractor astcheck cdsclient
 	@echo " "
 	@echo -e "\033[01;34mVaST seems to be compiled successfully! =)\033[00m"
 	@echo " "
-	

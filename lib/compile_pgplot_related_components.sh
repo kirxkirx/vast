@@ -33,14 +33,25 @@ else
 fi
 # Check if location of CFITSIO lib was specified
 if [ ! -z $2 ];then
- CFITSIO_LIB=$2 
+ CFITSIO_LIB_BASE=$2 
 else
  if [ ! -f lib/libcfitsio.a ];then
   echo "ERROR in $0  -- cannot find lib/libcfitsio.a" 1>&2
   exit 1
  fi
- CFITSIO_LIB=lib/libcfitsio.a
+ CFITSIO_LIB_BASE=lib/libcfitsio.a
 fi
+
+# Determine zlib dependency
+ZLIB_LIB=$(lib/check_zlib.sh 2>/dev/null || echo "")
+if [ ! -z "$ZLIB_LIB" ]; then
+ CFITSIO_LIB="$CFITSIO_LIB_BASE $ZLIB_LIB"
+ echo "Using CFITSIO with zlib: $CFITSIO_LIB"
+else
+ CFITSIO_LIB="$CFITSIO_LIB_BASE"
+ echo "Using CFITSIO without zlib: $CFITSIO_LIB"
+fi
+
 # Check if location of X11 libs were specified
 if [ ! -z $3 ];then
  X11_LIB=$3 
@@ -166,6 +177,7 @@ echo -e "${BLUE}Compiling PGPLOT-related components${RESET}"
 echo "Using C compiler: $CC" 
 echo "Assuming X11 libraries can be linked with $LX11"
 echo "Libraries needed to compile C PGPLOT programs: $PGPLOT_LIBS"
+echo "CFITSIO library with dependencies: $CFITSIO_LIB"
 echo "Compiler flags: " $(cat optflags_for_scripts.tmp)
 
 ## -g -Wall -Warray-bounds -Wextra -fno-omit-frame-pointer -fstack-protector-all -O0 
