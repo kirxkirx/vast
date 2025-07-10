@@ -120,7 +120,7 @@ if [ $ZLIB_TEST_RESULT -eq 0 ];then
 
  # moved down to make sure fitscopy is statically linked
  if [ $COMPILATION_ERROR -eq 0 ];then
-  $C_COMPILER -o ../../util/fitscopy utilities/fitscopy.c "$TARGET_DIR"/libcfitsio.a $ZLIB_LIBS -lm
+  $C_COMPILER -o ../../util/fitscopy utilities/fitscopy.c -I$LIBRARY_SOURCE "$TARGET_DIR"/libcfitsio.a $ZLIB_LIBS -lm
   if [ $? -ne 0 ];then
    echo "ERROR compiling fitscopy" 1>&2
    COMPILATION_ERROR=1
@@ -131,12 +131,12 @@ if [ $ZLIB_TEST_RESULT -eq 0 ];then
 
  # Compile funpack.c
  if [ $COMPILATION_ERROR -eq 0 ];then
-  $C_COMPILER -c -o fpackutil.o utilities/fpackutil.c
+  $C_COMPILER -c -o fpackutil.o utilities/fpackutil.c -I$LIBRARY_SOURCE
   if [ $? -ne 0 ];then
    echo "ERROR compiling fpackutil.o" 1>&2
    COMPILATION_ERROR=1
   fi
-  $C_COMPILER -c -o funpack.o utilities/funpack.c
+  $C_COMPILER -c -o funpack.o utilities/funpack.c -I$LIBRARY_SOURCE
   if [ $? -ne 0 ];then
    echo "ERROR compiling funpack.o" 1>&2
    COMPILATION_ERROR=1
