@@ -651,6 +651,10 @@ SYSREM_ITERATIONS= $SYSREM_ITERATIONS
 TELESCOP= $TELESCOP
 TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION= $TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
 UCAC5_PLATESOLVE_ITERATIONS= $UCAC5_PLATESOLVE_ITERATIONS
+#######################################
+HOSTNAME= $HOSTNAME
+USER= $USER
+HOME= $HOME
 #######################################" | tee -a transient_factory_test31.txt
 #################################
 
@@ -674,7 +678,7 @@ fi
 # Check for a local copy of UCAC5
 # (this is specific to our in-house setup)
 if [ ! -d lib/catalogs/ucac5 ];then
- for TEST_THIS_DIR in /mnt/usb/UCAC5 /dataX/kirx/UCAC5 /data/kirx/UCAC5 /home/kirx/UCAC5 /home/apache/ucac5 $HOME/UCAC5 $HOME/ucac5 ../UCAC5 ../ucac5 ;do
+ for TEST_THIS_DIR in /mnt/usb/UCAC5 /dataX/kirx/UCAC5 /data/kirx/UCAC5 /home/kirx/UCAC5 /home/apache/ucac5 "$HOME"/UCAC5 "$HOME"/ucac5 ../UCAC5 ../ucac5 ;do
   if [ -d "$TEST_THIS_DIR" ];then
    ln -s "$TEST_THIS_DIR" lib/catalogs/ucac5
    echo "Linking the local copy of UCAC5 from $TEST_THIS_DIR" | tee -a transient_factory_test31.txt
