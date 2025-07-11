@@ -895,6 +895,9 @@ if [ -d ../DART_Didymos_moving_object_photometry_test ];then
  if [ -f vast_input_user_specified_moving_object_position.txt ];then
   rm -f vast_input_user_specified_moving_object_position.txt
  fi
+ 
+ # clean up
+ util/clean_data.sh
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
@@ -1011,6 +1014,7 @@ if [ $TEST_PASSED -eq 1 ];then
 else
  echo -e "\n\033[01;34mvizquery test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fail_early "early exit after failed vizquery test"
 fi 
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
