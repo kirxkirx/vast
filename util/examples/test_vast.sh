@@ -21,6 +21,60 @@ export LANGUAGE LC_ALL
 
 
 ##### Auxiliary functions #####
+# save_test_artifact file_to_save TEST_NAME
+function save_test_artifact {
+ if [ -z "$1" ];then
+  echo "ERROR in save_test_artifact() no argument provided"
+  return 1
+ fi
+ 
+ FILE_OR_DIR_TO_SAVE="$1"
+ if [ ! -f "$FILE_OR_DIR_TO_SAVE" ] && [ ! -d "$FILE_OR_DIR_TO_SAVE" ];then
+  echo "ERROR in save_test_artifact() '$FILE_OR_DIR_TO_SAVE' is not a file or directory"
+  return 1
+ fi
+ 
+ TEST_NAME="test"
+ if [ -n "$2" ];then
+  TEST_NAME="$2"
+ fi
+
+ if [ ! -d test_artifacts ];then
+  mkdir test_artifacts || return 1
+ fi
+ if [ ! -d test_artifacts/"$TEST_NAME" ];then
+  mkdir test_artifacts/"$TEST_NAME" || return 1
+ fi
+ echo "save_test_artifact() is saving $FILE_OR_DIR_TO_SAVE"
+ cp -rv "$FILE_OR_DIR_TO_SAVE" test_artifacts/"$TEST_NAME"/ || return 1
+
+ return 0
+}
+
+function make_sure_test_artifacts_is_not_empty {
+ 
+ if [ ! -d test_artifacts ];then
+  mkdir test_artifacts || return 1
+  echo "All good." > test_artifacts/notes.txt
+ fi
+ 
+ cp -v vast_test_incremental_list_of_failed_test_codes.txt test_artifacts/
+ 
+ cp -v vast_test_report.txt test_artifacts/
+ 
+ return 0
+}
+
+function remove_test_artifacts {
+ 
+ if [ ! -d test_artifacts ];then
+  rm -rf test_artifacts/
+ fi
+ 
+ return 0
+}
+
+
 
 function email_vast_test_report() {
  HOST=$(hostname)
@@ -69,6 +123,7 @@ $DEBUG_OUTPUT"
 FAILED_TEST_CODES=$FAILED_TEST_CODES
 ___________________
 "
+ make_sure_test_artifacts_is_not_empty
  exit 1
 }
 
@@ -630,6 +685,8 @@ done
 
 OPENMP_STATUS="OpenMP_"$(cat .cc.openmp)
 
+# Remove old test artifacts, if any
+remove_test_artifacts
 
 ##### Report that we are starting the work #####
 echo "---------- Starting $0 ----------" 
@@ -10726,6 +10783,18 @@ $GREP_RESULT"
   FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_ALL"
  fi
 
+ 
+ # Save failed test artifacts before clean up
+ if [ $TEST_PASSED -ne 1 ];then
+  TEST_NAME_FOR_ARTIFACTS="SATURN2"
+  save_test_artifact transient_report/ "$TEST_NAME_FOR_ARTIFACTS"
+  save_test_artifact vast_test_incremental_list_of_failed_test_codes.txt "$TEST_NAME_FOR_ARTIFACTS"
+  util/save.sh "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data
+  save_test_artifact "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data/ "$TEST_NAME_FOR_ARTIFACTS"
+  rm -rf "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data/
+ fi
+
+
  ###### restore exclusion list after the test if needed
  if [ -f ../exclusion_list.txt_backup ];then
   mv ../exclusion_list.txt_backup ../exclusion_list.txt
@@ -10976,6 +11045,18 @@ $GREP_RESULT"
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_ALL"
  fi
+
+ 
+ # Save failed test artifacts before clean up
+ if [ $TEST_PASSED -ne 1 ];then
+  TEST_NAME_FOR_ARTIFACTS="VENUS"
+  save_test_artifact transient_report/ "$TEST_NAME_FOR_ARTIFACTS"
+  save_test_artifact vast_test_incremental_list_of_failed_test_codes.txt "$TEST_NAME_FOR_ARTIFACTS"
+  util/save.sh "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data
+  save_test_artifact "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data/ "$TEST_NAME_FOR_ARTIFACTS"
+  rm -rf "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data/
+ fi
+
 
  ###### restore exclusion list after the test if needed
  if [ -f ../exclusion_list.txt_backup ];then
@@ -11494,12 +11575,12 @@ $GREP_RESULT"
   grep --quiet "V1391 Cas" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110_NAME"
   fi
   grep --quiet -e "2020 08 31.7108  2459093.2108  12\.9.  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0.  00:11:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110a"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110a_POSITION"
    GREP_RESULT=`grep -e "2020 08 31.7108  2459093.2108  12\.9.  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0.  00:11:" transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWNCASAUG310110a ######
@@ -11564,6 +11645,17 @@ $GREP_RESULT"
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_ALL"
  fi
+ 
+ # Save failed test artifacts before clean up
+ if [ $TEST_PASSED -ne 1 ];then
+  TEST_NAME_FOR_ARTIFACTS="NMWNCASAUG31"
+  save_test_artifact transient_report/ "$TEST_NAME_FOR_ARTIFACTS"
+  save_test_artifact vast_test_incremental_list_of_failed_test_codes.txt "$TEST_NAME_FOR_ARTIFACTS"
+  util/save.sh "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data
+  save_test_artifact "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data/ "$TEST_NAME_FOR_ARTIFACTS"
+  rm -rf "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data/
+ fi
+ 
 
  ###### restore exclusion list after the test if needed
  if [ -f ../exclusion_list.txt_backup ];then
@@ -12991,6 +13083,18 @@ $GREP_RESULT"
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_ALL"
  fi
+
+ 
+ # Save failed test artifacts before clean up
+ if [ $TEST_PASSED -ne 1 ];then
+  TEST_NAME_FOR_ARTIFACTS="NMWNSGR24N1"
+  save_test_artifact transient_report/ "$TEST_NAME_FOR_ARTIFACTS"
+  save_test_artifact vast_test_incremental_list_of_failed_test_codes.txt "$TEST_NAME_FOR_ARTIFACTS"
+  util/save.sh "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data
+  save_test_artifact "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data/ "$TEST_NAME_FOR_ARTIFACTS"
+  rm -rf "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data/
+ fi
+
 
  ###### restore exclusion list after the test if needed
  if [ -f ../exclusion_list.txt_backup ];then
@@ -16306,6 +16410,17 @@ if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_RERUN_TMP_FILE_PRESENT"
  fi
+  
+ # Save failed test artifacts before clean up
+ if [ $TEST_PASSED -ne 1 ];then
+  TEST_NAME_FOR_ARTIFACTS="NMWEXCLU"
+  save_test_artifact transient_report/ "$TEST_NAME_FOR_ARTIFACTS"
+  save_test_artifact vast_test_incremental_list_of_failed_test_codes.txt "$TEST_NAME_FOR_ARTIFACTS"
+  util/save.sh "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data
+  save_test_artifact "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data/ "$TEST_NAME_FOR_ARTIFACTS"
+  rm -rf "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data/
+ fi
+
  rm -f ../exclusion_list.txt
  ###### restore exclusion list after the test if needed
  if [ -f ../exclusion_list.txt_backup ];then
@@ -16687,6 +16802,17 @@ $GREP_RESULT"
   echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_ALL"
+ fi
+
+ 
+ # Save failed test artifacts before clean up
+ if [ $TEST_PASSED -ne 1 ];then
+  TEST_NAME_FOR_ARTIFACTS="NMWSTLFINDNEPTUNE"
+  save_test_artifact transient_report/ "$TEST_NAME_FOR_ARTIFACTS"
+  save_test_artifact vast_test_incremental_list_of_failed_test_codes.txt "$TEST_NAME_FOR_ARTIFACTS"
+  util/save.sh "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data
+  save_test_artifact "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data/ "$TEST_NAME_FOR_ARTIFACTS"
+  rm -rf "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data/
  fi
 
 
@@ -17103,6 +17229,17 @@ $GREP_RESULT"
   echo "ERROR running the transient search script" 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_ALL"
+ fi
+
+ 
+ # Save failed test artifacts before clean up
+ if [ $TEST_PASSED -ne 1 ];then
+  TEST_NAME_FOR_ARTIFACTS="NMWSTLFINDNVUL24"
+  save_test_artifact transient_report/ "$TEST_NAME_FOR_ARTIFACTS"
+  save_test_artifact vast_test_incremental_list_of_failed_test_codes.txt "$TEST_NAME_FOR_ARTIFACTS"
+  util/save.sh "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data
+  save_test_artifact "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data/ "$TEST_NAME_FOR_ARTIFACTS"
+  rm -rf "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data/
  fi
 
 
@@ -28422,6 +28559,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 remove_test_data_to_save_space
 #
 
+# Create stub test artifact if empty
+make_sure_test_artifacts_is_not_empty
 
 ####################################################
 # List all the error codes at the end of the report:
@@ -28431,7 +28570,6 @@ fi
 echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
 
 STOPTIME_UNIXSEC=$(date +%s)
-#RUNTIME_MIN=`echo "($STOPTIME_UNIXSEC-$STARTTIME_UNIXSEC)/60" | bc -ql | awk '{printf "%.2f",$1}'`
 RUNTIME_MIN=`echo "$STOPTIME_UNIXSEC $STARTTIME_UNIXSEC" | awk '{printf "%.1f",($1-$2)/60}'`
 
 echo "Test run time: $RUNTIME_MIN minutes" >> vast_test_report.txt

@@ -176,6 +176,10 @@ for SUSPICIOUS_FILE in .cc.build  .cc.date  .cc.openmp  .cc.version ;do
 done
 
 
+if [ -d test_artifacts ];then
+ rm -rf test_artifacts/
+fi
+
 ####################################
 #### Update VaST documentation file ####
 VASTDIR="$PWD"

@@ -90,3 +90,9 @@ jobs:
           TEST_VAST_CURL_PROXY: ${{ secrets.TEST_VAST_CURL_PROXY }}
         run: util/examples/test_vast.sh
         if: env.SKIP != 'true'
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts
+          path: test_artifacts/
+        if: env.SKIP != 'true'
