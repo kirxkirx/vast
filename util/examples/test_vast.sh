@@ -995,7 +995,7 @@ fi
 cat test_vizquery_M31.output | grep --quiet '#END#'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST005"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST005_NOEND"
 fi
 
 # cleanup

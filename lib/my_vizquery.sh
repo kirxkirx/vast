@@ -131,7 +131,8 @@ test -z "$site"   && site="vizier.u-strasbg.fr"
 test -z "$script" && script="asu-tsv"
 
 # Build curl command
-call="curl $VAST_CURL_PROXY -s -X POST --data-binary @$tt --retry 1 --retry-delay 5 --connect-timeout 10 --speed-limit 100 --speed-time 15 http://$site/$cgidir/$script"
+# Note for me: vizquery test fails on boinc with --speed-limit 100 --speed-time 20
+call="curl $VAST_CURL_PROXY -s -X POST --data-binary @$tt --retry 1 --retry-delay 5 --connect-timeout 10 --speed-limit 100 --speed-time 30 http://$site/$cgidir/$script"
 
 # Handle input
 if [ $input_file -gt 0 ]; then	# Input in a file:
