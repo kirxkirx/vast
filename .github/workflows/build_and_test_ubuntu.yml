@@ -95,4 +95,5 @@ jobs:
         with:
           name: test-artifacts
           path: test_artifacts/
+          retention-days: 7
         if: env.SKIP != 'true'
