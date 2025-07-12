@@ -518,8 +518,7 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
  if [ -n "$VIZIER_SITE" ];then
   # if this is a new source
   NUBER_OF_LIGHTCURVE_POINTS=$(cat "$LIGHTCURVEFILE" | wc -l)
-  #if [ $(cat "$LIGHTCURVEFILE" | wc -l) -eq 2 ];then
-  # Assume that two-reference images detectios is a good match
+  # Assume that two-reference-images detections are good match, check only new sources and one-reference-images detections to speed things up
   # If it's a flare with only one reference-image detection - check Gaia anyway as the first detection migth be a mismatch
   if [ $NUBER_OF_LIGHTCURVE_POINTS -eq 2 ] || [ $NUBER_OF_LIGHTCURVE_POINTS -eq 3 ] ;then
    # New last-ditch effort, search Gaia DR2 for a known star of approximately the same brightenss
@@ -531,31 +530,7 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
    # V1858 Sgr from NMW_Sgr9_crash_test is the borderline case
    MAG_FAINT_SEARCH_LIMIT=$(echo "$MAG_MEAN" | awk '{printf "%.2f", $1+0.98}')
    RA_MEAN_HMS_DEC_MEAN_HMS_ONSESTRING="$RA_MEAN_HMS $DEC_MEAN_HMS"
-   #VIZIER_COMMAND=("lib/vizquery"
-   #             "-site=$VIZIER_SITE"
-   #             "-mime=text"
-   #             "-source=I/345/gaia2"
-   #             "-out.max=1"
-   #             "-out.add=_r"
-   #             "-out.form=mini"
-   #             "-sort=$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK"
-   #             "$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT"
-   #             "-c=$RA_MEAN_HMS_DEC_MEAN_HMS_ONSESTRING"
-   #             "-c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC"
-   #             "-out=Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var")
-   #$TIMEOUTCOMMAND "${VIZIER_COMMAND[@]}" 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE" --quiet
-   ##$TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/345/gaia2  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE" --quiet
-   ## Switch to Gaia DR3
-   ##$TIMEOUTCOMMAND lib/vizquery -site="$VIZIER_SITE" -mime=text -source=I/355/gaiadr3  -out.max=1 -out.add=_r -out.form=mini  -sort=Gmag Gmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=17  -out=Source,RA_ICRS,DE_ICRS,Gmag,Var 2>/dev/null | grep -v \# | grep -v "\---" | grep -v "sec" | grep -v 'Gma' | grep -v "RA_ICRS" | grep --quiet -e 'NOT_AVAILABLE' -e 'CONSTANT' -e 'VARIABLE'
-   #if [ $? -eq 0 ];then
-   # # Using the [*] instead of [@] treats the entire array as a single string, using the first character of the Internal Field Separator (IFS) variable as a delimiter (which is a space by default).
-   # echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2   (TIMEOUTCOMMAND=#$TIMEOUTCOMMAND#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT, VIZIER_COMMAND=#${VIZIER_COMMAND[*]}#)"
-   # #echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt
-   # echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt__"$LIGHTCURVEFILE"
-   # clean_tmp_files
-   # exit 1
-   #fi # if Gaia DR2 match found
-   # Special treatment for blends
+   # Special treatment for blends and individual Gaia DR2 source matches
    # 2pix blend rejection works well. Let's try 2.5 pix
    BLEND_SEARCH_RADIUS_ARCSEC=$(echo "$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC" | awk '{printf "%.2f", $1*2.5}')
    VIZIER_COMMAND=("lib/vizquery"
@@ -570,17 +545,21 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
                 "-c=$RA_MEAN_HMS_DEC_MEAN_HMS_ONSESTRING"
                 "-c.rs=$BLEND_SEARCH_RADIUS_ARCSEC"
                 "-out=Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var")
-   VIZIER_GAIADR2_OUTPUT=$($TIMEOUTCOMMAND_GAIA_VIZIER "${VIZIER_COMMAND[@]}" 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE")
+   #VIZIER_GAIADR2_OUTPUT=$($TIMEOUTCOMMAND_GAIA_VIZIER "${VIZIER_COMMAND[@]}" 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE")
+   # let's be paranoid about $VIZIER_GAIADR2_OUTPUT containing only source records and no garbage
+   VIZIER_GAIADR2_OUTPUT=$($TIMEOUTCOMMAND_GAIA_VIZIER "${VIZIER_COMMAND[@]}" 2>/dev/null | grep -B10 '#END#' | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE" | awk 'NF > 5' | awk '{if (NF >= 3 && length($1) > 0 && ($1 + 0) == $1 && $1 >= 0 && length($3) > 0 && ($3 + 0) == $3 && $3 > 0 && $3 < 360) print}')
    if [ -n "$VIZIER_GAIADR2_OUTPUT" ];then
     # | awk 'NF > 0' is needed to exclude empty lines as echo "$VIZIER_GAIADR2_OUTPUT" will produce an empty line even when $VIZIER_GAIADR2_OUTPUT contains nothing
     # let's do echo -n as the second line of defense against the empty lines
     N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS=$(echo -n "$VIZIER_GAIADR2_OUTPUT" | awk 'NF > 0' | wc -l)
     if [ $N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS -eq 1 ];then
      # If there is only one star - check how far is it from the candidate position
-     DISTANCE_ARCSEC=$(echo "$VIZIER_GAIADR2_OUTPUT" | head -n1 | awk '{print $1}')
+     #DISTANCE_ARCSEC=$(echo "$VIZIER_GAIADR2_OUTPUT" | head -n1 | awk '{print $1}')
+     # Try to be robust against $VIZIER_GAIADR2_OUTPUT containing garbage - set DISTANCE_ARCSEC to 999.99 is unsure
+     DISTANCE_ARCSEC=$(echo "$VIZIER_GAIADR2_OUTPUT" | head -n1 | awk '{print (NF > 0 && length($1) > 0 && ($1 + 0) == $1 && $1 >= 0) ? $1 : "999.99"}')
      if awk -v max="$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC" -v dist="$DISTANCE_ARCSEC" 'BEGIN {if (dist < max) exit 0; exit 1}' ;then
       # Using the [*] instead of [@] treats the entire array as a single string, using the first character of the Internal Field Separator (IFS) variable as a delimiter (which is a space by default).
-      echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2 single (TIMEOUTCOMMAND_GAIA_VIZIER=#$TIMEOUTCOMMAND_GAIA_VIZIER#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT, VIZIER_COMMAND=#${VIZIER_COMMAND[*]}#)"
+      echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2 single (TIMEOUTCOMMAND_GAIA_VIZIER=#$TIMEOUTCOMMAND_GAIA_VIZIER#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT, VIZIER_COMMAND=#${VIZIER_COMMAND[*]}#)VIZIER_GAIADR2_OUTPUT=#$VIZIER_GAIADR2_OUTPUT#N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS=#$N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS#DISTANCE_ARCSEC=#$DISTANCE_ARCSEC#MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC=#$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC#"
       echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt__"$LIGHTCURVEFILE"
       clean_tmp_files
       exit 1
@@ -597,7 +576,8 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
    # The trouble is... Gaia catalog is missing many obvious bright stars
    # So if the Gaia search didn't work well - let's try APASS (chosen because it has good magnitudes and is deep enough for NMW)
    # The awk 'NF > 0' command is equivalent to sed '/^[[:space:]]*$/d', but is generally faster and more efficient. It checks if the number of fields (NF) is greater than 0, which means the line is not empty.
-   NUMBER_OF_NONEMPTY_LINES=$($TIMEOUTCOMMAND_GAIA_VIZIER lib/vizquery -site="$VIZIER_SITE" -mime=text -source=II/336  -out.max=1 -out.add=_r -out.form=mini  -sort=Vmag Vmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC  -out=recno,RAJ2000,DEJ2000,Vmag 2>/dev/null | grep -vE "#|---|sec|Vma|RAJ" | awk 'NF > 0' | wc -l)
+   #NUMBER_OF_NONEMPTY_LINES=$($TIMEOUTCOMMAND_GAIA_VIZIER lib/vizquery -site="$VIZIER_SITE" -mime=text -source=II/336  -out.max=1 -out.add=_r -out.form=mini  -sort=Vmag Vmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC  -out=RAJ2000,DEJ2000,Vmag 2>/dev/null | grep -B10 '#END#' | grep -vE "#|---|sec|Vma|RAJ" | awk 'NF > 3' | wc -l)
+   NUMBER_OF_NONEMPTY_LINES=$($TIMEOUTCOMMAND_GAIA_VIZIER lib/vizquery -site="$VIZIER_SITE" -mime=text -source=II/336  -out.max=1 -out.add=_r -out.form=mini  -sort=Vmag Vmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC  -out=RAJ2000,DEJ2000,Vmag 2>/dev/null | grep -B10 '#END#' | grep -vE "#|---|sec|Vma|RAJ" | awk 'NF > 3' | awk '{if (NF >= 2 && length($1) > 0 && ($1 + 0) == $1 && $1 >= 0 && length($2) > 0 && ($2 + 0) == $2 && $2 >= 0 && $2 < 360) print}' | wc -l)
    if [ $NUMBER_OF_NONEMPTY_LINES -gt 0 ];then
     echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in APASS   (TIMEOUTCOMMAND_GAIA_VIZIER=#$TIMEOUTCOMMAND_GAIA_VIZIER#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT)"
     #echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_apass.txt
