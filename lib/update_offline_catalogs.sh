@@ -295,21 +295,30 @@ $PWD"
   echo "$CURL_LOCAL_COMMAND" 
   $CURL_LOCAL_COMMAND
   if [ $? -ne 0 ];then
+   # Clean up the possible incompele downlaod - we can't be sure if $CURL_LOCAL_COMMAND and $CURL_LOCAL_COMMAND point to exact same version of the file
+   if [ -f "$TMP_OUTPUT" ];then
+    rm -f "$TMP_OUTPUT"
+   fi
+   if [ -f "$TMP_OUTPUT".gz ];then
+    rm -f "$TMP_OUTPUT".gz
+   fi
+   #
    # if that failed, try to download the catalog from the original link
-   echo "We are currently at $CURL_COMMAND" 
+   echo "Failed to download from the local link, fallig back to $CURL_COMMAND" 
    $CURL_COMMAND
    if [ $? -ne 0 ];then
     echo "ERROR running the download command" 
     if [ -f "$TMP_OUTPUT" ];then
      rm -f "$TMP_OUTPUT"
     fi
+    if [ -f "$TMP_OUTPUT".gz ];then
+     rm -f "$TMP_OUTPUT".gz
+    fi
     exit 1
    fi
    #
   fi # if that failed
   echo "TMP_OUTPUT=$TMP_OUTPUT"
-  # The output of this ls run makes me nervous as on of the files does not exist
-  #ls -lh $TMP_OUTPUT $TMP_OUTPUT.gz 
   # If we are still here, we downloaded the catalog, one way or the other
   if [ ! -z "$UNPACK_COMMAND" ];then
    echo "### UNPACK_COMMAND ###
