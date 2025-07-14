@@ -4,7 +4,7 @@
 
 # Max total time for catalog download
 # Assume the connection is fast enough for the catalog to be downlaoded in less than 
-CATALOG_DOWNLOAD_TIMEOUT_SEC=1800
+CATALOG_DOWNLOAD_TIMEOUT_SEC=3600
 
 #################################
 # Set the safe locale that should be available on any POSIX system
@@ -35,7 +35,7 @@ get_tycho2_from_scan_with_curl() {
         if [[ "$item" == "ReadMe" || "$item" == *.gz || "$item" == "robots.txt" ]]; then
             echo "Downloading: $item"
             curl --silent --show-error --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC \
-                $VAST_CURL_PROXY -C - --retry $max_retries --retry-delay $retry_delay \
+                $VAST_CURL_PROXY --continue-at - --retry $max_retries --retry-delay $retry_delay \
                 --create-dirs -o "$item" "${url}${item}"
             if [[ $? -ne 0 ]]; then
                 echo "Failed to download: $item after $max_retries attempts"
@@ -246,26 +246,26 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
   if [ "$FILE_TO_UPDATE" == "ObsCodes.html" ];then
    TMP_OUTPUT="ObsCodes.html_new"
    # curl https://www.minorplanetcenter.net/iau/lists/ObsCodes.html > ObsCodes.html
-   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT https://www.minorplanetcenter.net/iau/lists/ObsCodes.html"
-   CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT http://scan.sai.msu.ru/~kirx/vast_catalogs/ObsCodes.html"
+   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT https://www.minorplanetcenter.net/iau/lists/ObsCodes.html"
+   CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT http://scan.sai.msu.ru/~kirx/vast_catalogs/ObsCodes.html"
    UNPACK_COMMAND="ls $TMP_OUTPUT"
   fi
   if [ "$FILE_TO_UPDATE" == "astorb.dat" ];then
    TMP_OUTPUT="astorb_dat_new"
-   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT.gz https://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
-   CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT.gz $LOCAL_SERVER/astorb.dat.gz"
+   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT.gz https://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
+   CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT.gz $LOCAL_SERVER/astorb.dat.gz"
    UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz"
   fi
   if [ "$FILE_TO_UPDATE" == "lib/catalogs/vsx.dat" ];then
    TMP_OUTPUT="vsx.dat"
-   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT.gz  $TMP_OUTPUT.gz ftp://cdsarc.u-strasbg.fr/pub/cats/B/vsx/vsx.dat.gz"
-   CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT.gz $LOCAL_SERVER/vsx.dat.gz"
+   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT.gz ftp://cdsarc.u-strasbg.fr/pub/cats/B/vsx/vsx.dat.gz"
+   CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT.gz $LOCAL_SERVER/vsx.dat.gz"
    UNPACK_COMMAND="gunzip $TMP_OUTPUT.gz"
   fi
   if [ "$FILE_TO_UPDATE" == "lib/catalogs/asassnv.csv" ];then
    TMP_OUTPUT="asassnv.csv"
-   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT \"https://asas-sn.osu.edu/variables.csv?action=index&controller=variables\""
-   CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --output $TMP_OUTPUT $LOCAL_SERVER/asassnv.csv"
+   CURL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT \"https://asas-sn.osu.edu/variables.csv?action=index&controller=variables\""
+   CURL_LOCAL_COMMAND="curl $VAST_CURL_PROXY --connect-timeout 10 --retry 1 --retry-delay 30 --speed-limit 100 --speed-time 30 --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC --insecure --continue-at - --output $TMP_OUTPUT $LOCAL_SERVER/asassnv.csv"
    UNPACK_COMMAND=""
   fi
   if [ -z "$CURL_COMMAND" ];then
