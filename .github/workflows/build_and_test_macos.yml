@@ -55,3 +55,10 @@ jobs:
     - name: test VaST
       run: util/examples/test_vast.sh
       if: env.SKIP != 'true'
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-artifacts
+        path: test_artifacts/
+        retention-days: 7
+      if: env.SKIP != 'true'

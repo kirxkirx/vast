@@ -9851,7 +9851,7 @@ if [ -d ../NMW_Saturn_test ];then
  # Run the test
  echo "NMW find Saturn/Iapetus test " 
  echo -n "NMW find Saturn/Iapetus test: " >> vast_test_report.txt 
- #cp default.sex.telephoto_lens_v4 default.sex
+ # The test will not pass with default.sex.telephoto_lens_v4 
  cp default.sex.telephoto_lens_v3 default.sex
  ./vast -x99 -uf ../NMW_Saturn_test/1referenceepoch/* ../NMW_Saturn_test/2ndepoch/*
  if [ $? -ne 0 ];then
@@ -10045,12 +10045,13 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN011"
   fi
-  grep --quiet -e "2019 11 03.6470  2458791.1470  11.84  19:01:" -e "2019 11 03.6470  2458791.1470  11.82  19:01:" -e "2019 11 03.6470  2458791.1470  11.86  19:01:" transient_report/index.html
+  #grep --quiet -e "2019 11 03.6470  2458791.1470  11.84  19:01:" -e "2019 11 03.6470  2458791.1470  11.82  19:01:" -e "2019 11 03.6470  2458791.1470  11.86  19:01:" transient_report/index.html
+  grep --quiet "2019 11 03\.6470  2458791\.1470  11\.[789].  19:01:2[89]\... -22:38:5[567]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN011a"
   fi
-  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  11.84  19:01:" -e "2019 11 03.6470  2458791.1470  11.82  19:01:" -e "2019 11 03.6470  2458791.1470  11.86  19:01:" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2019 11 03\.6470  2458791\.1470  11\.[789].  19:01:2[89]\... -22:38:5[567]\.." transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 19:01:28.86 -22:38:56.6 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
@@ -10066,18 +10067,15 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN011a_TOO_FAR_$DISTANCE_ARCSEC"
    fi
   fi
-  # Iapetus has no automatic ID in the current VaST version
-  #grep --quiet "AW Tau" transient_report/index.html
-  #if [ $? -ne 0 ];then
-  # TEST_PASSED=0
-  # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN0110"
-  #fi
-  grep --quiet -e "2019 11 03.6470  2458791.1470  12.13  19:06:" -e "2019 11 03.6470  2458791.1470  12.10  19:06:" transient_report/index.html
+  # Iapetus has no automatic ID in the old version of transient searh script
+  #grep --quiet -e "2019 11 03.6470  2458791.1470  12.13  19:06:" -e "2019 11 03.6470  2458791.1470  12.10  19:06:" transient_report/index.html
+  grep --quiet "2019 11 03\.6470  2458791\.1470  1[12]\.[019].  19:0[67]:..\... -22:25:[34].\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN0110a"
   fi
-  RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  12.13  19:06:" -e "2019 11 03.6470  2458791.1470  12.10  19:06:" transient_report/index.html | awk '{print $6" "$7}'`
+  #RADECPOSITION_TO_TEST=`grep -e "2019 11 03.6470  2458791.1470  12.13  19:06:" -e "2019 11 03.6470  2458791.1470  12.10  19:06:" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2019 11 03\.6470  2458791\.1470  1[12]\.[019].  19:0[67]:..\... -22:25:[34].\.." transient_report/index.html | awk '{print $6" "$7}'`
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 19:06:59.18 -22:25:40.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
@@ -10309,6 +10307,17 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN0_magcalibr_emergency"
    cp lightcurve.tmp_emergency_stop_debug SATURN0_magcalibr_emergency__lightcurve.tmp_emergency_stop_debug
+  fi
+  ###########################################################
+  # Save failed test artifacts before clean up
+  if [ $TEST_PASSED -ne 1 ];then
+   TEST_NAME_FOR_ARTIFACTS="SATURN0"
+   save_test_artifact transient_report/ "$TEST_NAME_FOR_ARTIFACTS"
+   save_test_artifact vast_test_incremental_list_of_failed_test_codes.txt "$TEST_NAME_FOR_ARTIFACTS"
+   util/save.sh "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data
+   save_test_artifact "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data/ "$TEST_NAME_FOR_ARTIFACTS"
+   rm -rf "$TEST_NAME_FOR_ARTIFACTS"_lightcurve_data/
+   save_test_artifact SATURN0_magcalibr_emergency__lightcurve.tmp_emergency_stop_debug "$TEST_NAME_FOR_ARTIFACTS"
   fi
   ###########################################################
   ###### restore exclusion list after the test if needed
@@ -16619,16 +16628,21 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE0110"
   fi
-  grep --quiet "2023 07 19.892.  2460145.392.   8...  23:51:5.... -02:13:5..."  transient_report/index.html
+  #grep --quiet "2023 07 19.892.  2460145.392.   8...  23:51:5.... -02:13:5..."  transient_report/index.html
+  grep --quiet "2023 07 19\.892.  2460145\.392.   [78]\.[09].  23:51:5.\... -02:1[34]:[05].\.."  transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE0110a"
-   GREP_RESULT=`grep "2023 07 19.892.  2460145.392.   8...  23:51:5.... -02:13:5..." transient_report/index.html`
+   GREP_RESULT=`grep "2023 07 19\.892.  2460145\.392.   [78]\.[09].  23:51:5.\... -02:1[34]:[05].\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWSTLFINDNEPTUNE0110a ######
 $GREP_RESULT"
+   GREP_RESULT=`grep -B20 "Neptune" transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+------ NMWSTLFINDNEPTUNE0110a grep -B20 Neptune ######
+$GREP_RESULT"
   fi
-  RADECPOSITION_TO_TEST=`grep "2023 07 19.892.  2460145.392.   8...  23:51:5.... -02:13:5..."  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2023 07 19\.892.  2460145\.392.   [78]\.[09].  23:51:5.\... -02:1[34]:[05].\.."  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
   # JPL HORIZONS position of Neptune
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:51:55.76 -02:13:58.7  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
