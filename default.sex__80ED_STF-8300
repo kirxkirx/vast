@@ -83,4 +83,4 @@ VERBOSE_TYPE    QUIET            # can be "QUIET", "NORMAL" or "FULL"
 
 #------------------------------ Experimental ---------------------------------
 
-#WEIGHT_TYPE BACKGROUND
+WEIGHT_TYPE BACKGROUND

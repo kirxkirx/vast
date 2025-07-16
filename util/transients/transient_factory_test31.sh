@@ -41,6 +41,10 @@ if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"TICA_TESS"* ]] ; then
  echo "The input indicates the images are TICA TESS FFIs" | tee -a transient_factory_test31.txt
  export CAMERA_SETTINGS="TICA_TESS_FFI"
 fi
+if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"ED80__Black"* ]] ; then
+ echo "The input indicates the images are from ED80 Black Mazan" | tee -a transient_factory_test31.txt
+ export CAMERA_SETTINGS="ED80__Black"
+fi
 
 
 ########### Default settings based on the old NMW camera (aka ST-8300 aka Stas):
@@ -138,6 +142,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
    export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_2024jul17_flatbox.fit"
   fi
  fi
+ #
  if [ "$CAMERA_SETTINGS" = "STL-11000M" ];then
   # Canon 135 mm f/2.0 telephoto lens + SBIG STL-11000 CCD, 20 sec exposures
   echo "### Using search settings for $CAMERA_SETTINGS camera ###" | tee -a transient_factory_test31.txt
@@ -210,6 +215,33 @@ if [ -n "$CAMERA_SETTINGS" ];then
   # Set a limit on how much higher background on the second epoch images can be compared to the reference
   MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=5
  fi
+ #
+ if [ "$CAMERA_SETTINGS" = "ED80__Black" ];then
+  export AAVSO_COMMENT_STRING="NMW ED80 80mm telescope + SBIG ST-8300M CCD"
+  #TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
+  unset TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
+  #NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=2000
+  #NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=2500
+  export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="17.5"
+  #FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=12.5
+  # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
+  SEXTRACTOR_CONFIG_FILES="default.sex__80ED_STF-8300"
+  BAD_REGION_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/bad_region_ED80__Black.lst"
+  EXCLUSION_LIST="../exclusion_list_ED80__Black.txt"
+  MAX_NEW_IMG_MEAN_VALUE=25000
+  MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=100
+  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
+  export MPC_CODE=C32
+  # Calibration data
+  #if [ -z "$DARK_FRAMES_DIR" ];then
+  # export DARK_FRAMES_DIR="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
+  #fi
+  #if [ -z "$FLAT_FIELD_FILE" ];then
+  # export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_2024jul17_flatbox.fit"
+  #fi
+ fi
+ #
+
 fi
 
 # You probably don't need to change anything below this line
