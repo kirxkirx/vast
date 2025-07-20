@@ -128,6 +128,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   MAX_NEW_IMG_MEAN_VALUE=25000
   MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=100
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
+  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.10
   export MPC_CODE=C32
   # Calibration data
   if [ -z "$DARK_FRAMES_DIR" ];then
@@ -152,6 +153,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   MAX_NEW_IMG_MEAN_VALUE=25000
   MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=100
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
+  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.10
   # The input images will be calibrated
   # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
   # the script will try to find the most appropriate one based on temperature and time
@@ -231,6 +233,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   MAX_NEW_IMG_MEAN_VALUE=25000
   MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=100
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
+  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.10
   export MPC_CODE=C32
   # Calibration data
   #if [ -z "$DARK_FRAMES_DIR" ];then
@@ -683,6 +686,7 @@ GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK= $GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK
 MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO= $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO
 MAX_NEW_IMG_MEAN_VALUE= $MAX_NEW_IMG_MEAN_VALUE
 MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS= $MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS
+MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT= $MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT
 MPC_CODE= $MPC_CODE
 NMW_CALIBRATION= $NMW_CALIBRATION
 NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT= $NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT
@@ -1372,7 +1376,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "INFO:           SECOND_EPOCH__SECOND_IMAGE_SD= $SECOND_EPOCH__SECOND_IMAGE_SD" | tee -a transient_factory_test31.txt
    echo "----------------------------------------------" | tee -a transient_factory_test31.txt
    echo "INFO:      ref_to_second_epoch_img_mean_ratio= "$(echo "$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" | awk '{print $2/$1}') | tee -a transient_factory_test31.txt
-   echo "INFO:                  SECOND_EPOCH__SD_ratio= "$(echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD" | awk '{A=$1; B=$2; result=(A > B ? (A - B) : (B - A)) / B; print result}') | tee -a transient_factory_test31.txt
+   SECOND_EPOCH__SD_ratio=$(echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD" | awk '{A=$1; B=$2; result=(A > B ? (A - B) : (B - A)) / B; printf "%.3f", result}')
+   echo "INFO:                  SECOND_EPOCH__SD_ratio= $SECOND_EPOCH__SD_ratio" | tee -a transient_factory_test31.txt
    # Check ratio of the mean image values against the user-specified threshold
    if awk -v maxratio="$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO" -v ref="$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" -v second="$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" 'BEGIN {if (second > maxratio * ref) exit 0; exit 1}'; then
     print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
@@ -1392,8 +1397,18 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
     echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD $MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" | awk '{A=$1; B=$2; C=$3; result=(A > B ? (A - B) : (B - A)) / B; exit (result < C ? 0 : 1)}'
     if [ $? -ne 0 ];then
      print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-     echo "ERROR: passing clouds (SD ratio threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS)" | tee -a transient_factory_test31.txt
+     echo "ERROR: passing clouds (SD ratio=$SECOND_EPOCH__SD_ratio hard threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS)" | tee -a transient_factory_test31.txt
      continue
+    fi
+   fi
+   # Same as above, but soft limit (throw error but don't stop)
+   if [ -n "$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT" ] && [ -n "$SECOND_EPOCH__FIRST_IMAGE_SD" ] && [ -n "$SECOND_EPOCH__SECOND_IMAGE_SD" ]; then
+    echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD $MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT" | awk '{A=$1; B=$2; C=$3; result=(A > B ? (A - B) : (B - A)) / B; exit (result < C ? 0 : 1)}'
+    if [ $? -ne 0 ];then
+     #print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+     echo "ERROR: passing clouds (SD ratio=$SECOND_EPOCH__SD_ratio soft threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT)" | tee -a transient_factory_test31.txt
+     # Don't stop on soft limit
+     #continue
     fi
    fi
    echo "----------------------------------------------" | tee -a transient_factory_test31.txt
