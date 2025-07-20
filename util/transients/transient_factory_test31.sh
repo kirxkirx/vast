@@ -1049,6 +1049,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   echo "Small preview (one of the new images): <img src=\"small_field_preview.png\"><br>" >> transient_factory_test31.txt
   echo "Large previews of the second-epoch (new) images:<br>" >> transient_factory_test31.txt
   echo "MAKE_PNG_PLOTS=$MAKE_PNG_PLOTS<br>" >> transient_factory_test31.txt
+  echo "<a name='small_field_preview_log_section'></a>" >> transient_factory_test31.txt
   for FITS_IMAGE_TO_PREVIEW in "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" ;do
    BASENAME_FITS_IMAGE_TO_PREVIEW=$(basename "$FITS_IMAGE_TO_PREVIEW")
    PREVIEW_IMAGE="$BASENAME_FITS_IMAGE_TO_PREVIEW"_preview.png
