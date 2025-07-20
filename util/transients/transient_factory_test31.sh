@@ -497,6 +497,21 @@ function try_to_calibrate_the_input_frame {
  return 0
 }
 
+function make_small_field_preview_png {
+
+  FRAME="$1"
+
+  # Plot the dark frame for log display
+  export PGPLOT_PNG_WIDTH=128 ; export PGPLOT_PNG_HEIGHT=128
+  util/fits2png "$FRAME" &> /dev/null && mv -v "$(basename ${FRAME%.*}).png" transient_report/small_field_preview.png 1>&2
+  if [ $? -ne 0 ] || [ ! -s transient_report/dark.png ] ;then
+   echo "make_small_field_preview_png(): something went wrong while producing the small field preview PNG plot" 1>&2
+  fi
+  unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
+
+ return 0
+}
+
 function print_image_date_for_logs_in_case_of_emergency_stop {
  # $hell4eck says $@ needs to be double-quotted
  for INTPUT_IMAGE in "$@" ;do
@@ -1027,7 +1042,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -gt 1 ];then
   # Make image previews
-  echo "Previews of the second-epoch images:<br>" >> transient_factory_test31.txt
+  echo "Small preview (one of the new images): <img src=\"small_field_preview.png\"><br>" >> transient_factory_test31.txt
+  echo "Large previews of the second-epoch (new) images:<br>" >> transient_factory_test31.txt
   echo "MAKE_PNG_PLOTS=$MAKE_PNG_PLOTS<br>" >> transient_factory_test31.txt
   for FITS_IMAGE_TO_PREVIEW in "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" ;do
    BASENAME_FITS_IMAGE_TO_PREVIEW=$(basename "$FITS_IMAGE_TO_PREVIEW")
@@ -1050,6 +1066,11 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
        echo "WARNING: something went wrong while producing the image PNG plot for $FITS_IMAGE_TO_PREVIEW" | tee -a transient_factory_test31.txt
       fi
       unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
+      #
+      if [ ! -f transient_report/small_field_preview.png ];then
+       make_small_field_preview_png "$FITS_IMAGE_TO_PREVIEW"
+      fi
+      #
      fi # if [ ! -f transient_report/$PREVIEW_IMAGE ];then
     else
      echo "INFO: MAKE_PNG_PLOTS is not set to 'yes', so not making full-frame PNG preview for $FITS_IMAGE_TO_PREVIEW  " | tee -a transient_factory_test31.txt
