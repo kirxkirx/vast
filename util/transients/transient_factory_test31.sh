@@ -1817,7 +1817,9 @@ Soft limit: $FOV_DEG_LIMIT_SOFT deg.  Hard limit: $FOV_DEG_LIMIT_HARD deg.
   # Pointing accuracy - check soft limit
   if awk -v x="$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG" -v y="$FOV_DEG_LIMIT_SOFT" 'BEGIN {exit !(x>y)}'; then
    if [ "$CHECK_POINTING_ACCURACY" = "yes" ]; then
-    echo "WARNING: distance between 1st reference and 1st new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" | tee -a transient_factory_test31.txt
+    #echo "WARNING: distance between 1st reference and 1st new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" | tee -a transient_factory_test31.txt
+    # We want this to be ERROR for clear indication that this field should be reobserved
+    echo "ERROR: distance between 1st reference and 1st new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" | tee -a transient_factory_test31.txt
     # Not breaking here. The offset is not hopelessly large and we want to keep candidates from this field
    fi
   fi
@@ -1846,7 +1848,9 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   # Pointing accuracy - check soft limit
   if awk -v x="$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG" -v y="$FOV_DEG_LIMIT_SOFT" 'BEGIN {exit !(x>y)}'; then
    if [ "$CHECK_POINTING_ACCURACY" = "yes" ]; then
-    echo "WARNING: distance between 1st reference and 2nd new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" | tee -a transient_factory_test31.txt
+    #echo "WARNING: distance between 1st reference and 2nd new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" | tee -a transient_factory_test31.txt
+    # We want this to be ERROR for clear indication that this field should be reobserved
+    echo "ERROR: distance between 1st reference and 2nd new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Soft limit: $FOV_DEG_LIMIT_SOFT deg.)" | tee -a transient_factory_test31.txt
     # Not breaking here, as the offset isn't hopelessly large.
    fi
   fi
