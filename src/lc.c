@@ -2363,16 +2363,16 @@ int main( int argc, char **argv ) {
  //
  ///
 
-/*
- // Searching min max for double (for stats only) //
- JD_first= JD_last= JD[0];
- for ( i= 0; i < Nobs; i++ ) {
-  if ( JD[i] > JD_last )
-   JD_last= JD[i];
-  if ( JD[i] < JD_first )
-   JD_first= JD[i];
- }
-*/
+ /*
+  // Searching min max for double (for stats only) //
+  JD_first= JD_last= JD[0];
+  for ( i= 0; i < Nobs; i++ ) {
+   if ( JD[i] > JD_last )
+    JD_last= JD[i];
+   if ( JD[i] < JD_first )
+    JD_first= JD[i];
+  }
+ */
 
  if ( Nobs <= 0 ) {
   fprintf( stderr, "ERROR: Attempting to allocate a zero or negative amount of memory (Nobs<= 0, lc.c)\n" );
@@ -2428,7 +2428,6 @@ int main( int argc, char **argv ) {
    strcpy( PGPLOT_CONTROL, "/PNG" );
   if ( xw_ps == 0 || xw_ps == -1 )
    strcpy( PGPLOT_CONTROL, "/XW" );
-
 
   if ( change_limits_trigger == 0 || xw_ps != 0 ) {
    pgplot_status= cpgopen( PGPLOT_CONTROL );
@@ -3173,7 +3172,7 @@ int main( int argc, char **argv ) {
     for ( closest_num= 0; closest_num < Nobs; closest_num++ ) {
      // fprintf(stderr,"%f %f  %f %f\n",MIN(curX,curX2),MAX(curX,curX2),MIN(curY,curY2),MAX(curY,curY2));
      if ( float_JD[closest_num] > MIN( curX, curX2 ) && float_JD[closest_num] < MAX( curX, curX2 ) && mag[closest_num] > MIN( curY, curY2 ) && mag[closest_num] < MAX( curY, curY2 ) ) {
-      // closest_num is the array index starting from 0, closest_num + 1 is the dat apoint number starting from 1      
+      // closest_num is the array index starting from 0, closest_num + 1 is the dat apoint number starting from 1
       fprintf( stderr, "Removing data point %5d %.8lf %8.4f\n", closest_num + 1, JD[closest_num], mag[closest_num] );
       if ( NULL != removed_points_log ) {
        // fprintf( removed_points_log, "%.5lf %8.4f\n", JD[closest_num], mag[closest_num] );
@@ -3182,10 +3181,10 @@ int main( int argc, char **argv ) {
       // kill it
       Nobs--;
       for ( i= closest_num; i < Nobs; i++ ) {
-       //fprintf(stderr,"DEBUG: closest_num=%d    i=%d     Nobs=%d\n",closest_num,i,Nobs);
-       //fprintf(stderr,"lightcurve_format=%d JD[%d+1]= %lf\n",lightcurve_format,i,JD[i+1]); // DEBUG!!
-       //fprintf(stderr,"                    float_JD[%d+1]= %lf\n",i,float_JD[i+1]); // DEBUG!!
-       //fprintf(stderr,"                    mag[%d+1]= %lf\n",i,mag[i+1]); // DEBUG!!
+       // fprintf(stderr,"DEBUG: closest_num=%d    i=%d     Nobs=%d\n",closest_num,i,Nobs);
+       // fprintf(stderr,"lightcurve_format=%d JD[%d+1]= %lf\n",lightcurve_format,i,JD[i+1]); // DEBUG!!
+       // fprintf(stderr,"                    float_JD[%d+1]= %lf\n",i,float_JD[i+1]); // DEBUG!!
+       // fprintf(stderr,"                    mag[%d+1]= %lf\n",i,mag[i+1]); // DEBUG!!
        JD[i]= JD[i + 1];
        float_JD[i]= float_JD[i + 1];
        mag[i]= mag[i + 1];

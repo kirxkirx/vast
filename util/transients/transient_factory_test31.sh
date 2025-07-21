@@ -1612,6 +1612,17 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   fi
  fi
  ###############################################
+ # Bad region file for shutterless camera
+ if [ "$CAMERA_SETTINGS" = "ED80__Black" ];then
+  echo "Writing a special bad_region.lst for shutterless camera $CAMERA_SETTINGS" | tee -a transient_factory_test31.txt
+  cp -v bad_region.lst_default bad_region.lst >> transient_factory_test31.txt 2>&1
+  lib/shutterless_bad_regions_hack "$REFERENCE_EPOCH__FIRST_IMAGE" >> bad_region.lst
+  lib/shutterless_bad_regions_hack "$REFERENCE_EPOCH__SECOND_IMAGE" >> bad_region.lst
+  lib/shutterless_bad_regions_hack "$SECOND_EPOCH__FIRST_IMAGE" >> bad_region.lst
+  lib/shutterless_bad_regions_hack "$SECOND_EPOCH__SECOND_IMAGE" >> bad_region.lst
+  cat bad_region.lst | tee -a transient_factory_test31.txt
+ fi
+ ###############################################
 
  # We need a local exclusion list not to find the same things in multiple SExtractor runs
  # But is this actually the desired behavior? (Some SE runs may or may not have better photometry than others)

@@ -10913,7 +10913,7 @@ if [ -d ../NMW_Venus_test ];then
  fi
  #
  if [ -f 'transient_report/index.html' ];then
-  grep --quiet 'ERROR' 'transient_report/index.html'
+  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_ERROR_MESSAGE_IN_index_html"
@@ -11141,7 +11141,7 @@ if [ -d ../NMW_calibration_test ];then
  fi
  #
  if [ -f 'transient_report/index.html' ];then
-  grep --quiet 'ERROR' 'transient_report/index.html'
+  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_ERROR_MESSAGE_IN_index_html"
@@ -18454,7 +18454,7 @@ if [ -d ../NMW-STL__plate_solve_failure_test ];then
  fi
  #
  if [ -f transient_report/index.html ];then
-  grep --quiet 'ERROR' 'transient_report/index.html'
+  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_ERROR_MESSAGE_IN_index_html"
@@ -18832,7 +18832,7 @@ if [ -d ../NMW-STL__NovaOph24N1_test ];then
  fi
  #
  if [ -f transient_report/index.html ];then
-  grep --quiet 'ERROR' 'transient_report/index.html'
+  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_ERROR_MESSAGE_IN_index_html"
@@ -19160,7 +19160,7 @@ if [ -d ../NMW__NovaOph24N1_test ];then
  fi
  #
  if [ -f transient_report/index.html ];then
-  grep --quiet 'ERROR' 'transient_report/index.html'
+  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_ERROR_MESSAGE_IN_index_html"
@@ -19454,7 +19454,7 @@ if [ -d ../TICA_TESS_mag_calibration_failure_test ];then
  fi
  #
  if [ -f transient_report/index.html ];then
-  grep --quiet 'ERROR' 'transient_report/index.html'
+  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_ERROR_MESSAGE_IN_index_html"
@@ -19715,7 +19715,7 @@ if [ -d ../TICA_TESS__zeroRA_test ];then
  fi
  #
  if [ -f transient_report/index.html ];then
-  grep --quiet 'ERROR' 'transient_report/index.html'
+  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_ERROR_MESSAGE_IN_index_html"

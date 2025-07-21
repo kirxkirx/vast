@@ -87,7 +87,7 @@ main: vast.o vast statistics stetson_test lib/create_data
 
 statistics: m_sigma_bin index_vs_mag select_sysrem_input_star_list drop lib/select_only_n_random_points_from_set_of_lightcurves lib/new_lightcurve_sigma_filter lib/select_aperture_with_smallest_scatter_for_each_object lib/create_data rescale_photometric_errors util/colstat util/imstat_vast
 
-etc: stat_outfile util/calibrate_magnitude_scale lib/deg2hms lib/coord_v_dva_slova lib/hms2deg lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/remove_bad_images lib/sort_all_lightcurve_files_in_jd lib/put_two_sources_in_one_field lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list util/hjd util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/kwee-van-woerden lib/find_star_in_wcs_catalog util/UTC2TT lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search lib/catalogs/check_catalogs_offline util/get_image_date lib/fast_clean_data stetson_test util/split_multiextension_fits lib/guess_saturation_limit_main lib/MagSize_filter_standalone util/phase_lc lib/on_the_fly_symlink_or_convert util/bin_lightcurve_in_time lib/ConstellationBoundaries
+etc: stat_outfile util/calibrate_magnitude_scale lib/deg2hms lib/coord_v_dva_slova lib/hms2deg lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/remove_bad_images lib/sort_all_lightcurve_files_in_jd lib/put_two_sources_in_one_field lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list util/hjd util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/kwee-van-woerden lib/find_star_in_wcs_catalog util/UTC2TT lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search lib/catalogs/check_catalogs_offline util/get_image_date lib/fast_clean_data stetson_test util/split_multiextension_fits lib/guess_saturation_limit_main lib/shutterless_bad_regions_hack lib/MagSize_filter_standalone util/phase_lc lib/on_the_fly_symlink_or_convert util/bin_lightcurve_in_time lib/ConstellationBoundaries
 
 old: formater_out_wfk 
 
@@ -201,6 +201,9 @@ guess_saturation_limit_main.o: $(SRC_PATH)guess_saturation_limit_main.c
 	$(CC) $(OPTFLAGS) -c $(SRC_PATH)guess_saturation_limit_main.c
 lib/guess_saturation_limit_main: guess_saturation_limit_main.o guess_saturation_limit.o autodetect_aperture.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o
 	$(CC) $(OPTFLAGS) -o lib/guess_saturation_limit_main  guess_saturation_limit_main.o guess_saturation_limit.o autodetect_aperture.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o $(GSL_LIB) $(CFITSIO_LIB) -lm
+
+lib/shutterless_bad_regions_hack: $(SRC_PATH)shutterless_bad_regions_hack.c
+	$(CC) $(OPTFLAGS) -o lib/shutterless_bad_regions_hack $(SRC_PATH)shutterless_bad_regions_hack.c $(CFITSIO_LIB) -lm
 
 variability_indexes.o: $(SRC_PATH)variability_indexes.c $(SRC_PATH)vast_limits.h $(SRC_PATH)variability_indexes.h
 	# Older GCC versions complain about isnormal() unless -std=c99 is given explicitly
@@ -588,6 +591,7 @@ clean: clean_libraries
 	rm -f util/split_multiextension_fits
 	rm -f lib/ls_compute_periodogram lib/lk_compute_periodogram lib/deeming_compute_periodogram lib/compute_periodogram_allmethods
 	rm -f lib/guess_saturation_limit_main
+	rm -f lib/shutterless_bad_regions_hack
 	rm -f lib/remove_bad_images lib/sort_all_lightcurve_files_in_jd lib/MagSize_filter_standalone
 	rm -f lib/select_only_n_random_points_from_set_of_lightcurves
 	rm -f lib/index_vs_mag

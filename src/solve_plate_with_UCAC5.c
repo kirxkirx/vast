@@ -988,11 +988,11 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
    found_end_marker= 1;
    break; // we are already at the end of input
   }
-  
+
   // Check for "#INFO QUERY_STATUS=ERROR" - a sign of VizieR internal error
   if ( strncmp( string, "#INFO QUERY_STATUS=ERROR", 24 ) == 0 ) {
    found_vizier_error_marker= 1;
-   fprintf( stderr, "WARNING: found an error message in VizieR response!\n");
+   fprintf( stderr, "WARNING: found an error message in VizieR response!\n" );
    break; // VizieR problem
   }
 
@@ -1096,7 +1096,7 @@ int read_APASS_from_vizquery( struct detected_star *stars, int N, char *vizquery
  } else {
   // We do not wait for the #END# marker if there was a VizieR error
   // If there is a VizieR error, do not confuse user with the 'no END maker' message
-  if ( 0 == found_vizier_error_marker ) { 
+  if ( 0 == found_vizier_error_marker ) {
    fprintf( stderr, "#END# marker NOT found - VizieR output is truncated by network timeout!\n" );
   }
  }
@@ -2330,7 +2330,7 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
  vizquery_run_success= read_APASS_from_vizquery( stars, N, vizquery_output_filename, catalog_search_parameters );
  // If the output of vizquery looks bad or empty or whatever - this is when we retry
  // read_APASS_from_vizquery returns 2 if the VizieR interaction was a success, but there are just too few stars
- //while ( 0 != vizquery_run_success && 2 != vizquery_run_success && backoff_retry_count < 5 ) {
+ // while ( 0 != vizquery_run_success && 2 != vizquery_run_success && backoff_retry_count < 5 ) {
  while ( 0 != vizquery_run_success && 2 != vizquery_run_success && backoff_retry_count < 3 ) {
   backoff_retry_count= backoff_retry_count + 1;
   backoff_wait_time_sec= backoff_wait_time_sec * 2;
@@ -3097,12 +3097,12 @@ int main( int argc, char **argv ) {
    if ( 0 != search_PANSTARRS1_with_vizquery( stars, number_of_stars_in_wcs_catalog, &catalog_search_parameters ) ) {
     fprintf( stderr, "ERROR running search_PANSTARRS1_with_vizquery()\n" );
     // Fail if no photometric catalogs could be reached
-    //free( stars );
-    //return 1;
+    // free( stars );
+    // return 1;
     // Real use case: VizieR down so photoemtric catalogs cannot be reached.
     // That's bad but what's even worse is that we also can't determine coordinates.
     // Let's print a big error and continue.
-    fprintf( stderr, "\n\n !!!! Photometric calibration ERROR !!!!\nCannot reach photometric catalogs! Only astrometry will be calibrated.\nYou may measure coordinates of stars, but automated magnitude scale calibration will not work!\n\n");
+    fprintf( stderr, "\n\n !!!! Photometric calibration ERROR !!!!\nCannot reach photometric catalogs! Only astrometry will be calibrated.\nYou may measure coordinates of stars, but automated magnitude scale calibration will not work!\n\n" );
    }
   }
  } // if ( use_photometric_catalog == 1 ) {
