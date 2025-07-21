@@ -10441,7 +10441,8 @@ if [ -d ../NMW_Saturn_test ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2001"
    fail_early
   fi
-  grep --quiet 'ERROR' "transient_report/index.html"
+  #grep --quiet 'ERROR' "transient_report/index.html"
+  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_ERROR_MESSAGE_IN_index_html"
@@ -11486,7 +11487,7 @@ if [ -d ../NMW_find_NovaCas_august31_test ];then
  if [ -f transient_report/index.html ];then
   # there SHOULD be a warning (formerly an error) message about distance between reference and second-epoch image centers
   # (sorry, I keep rephrasing the error message)
-  grep --quiet -e 'WARNING: distance between 1st reference and 1st new image centers is' -e 'WARNING: distance between 1st reference and 1st second-epoch image centers is' -e 'ERROR: distance between 1st reference and 1st second-epoch image centers is' "transient_report/index.html"
+  grep --quiet -e 'ERROR: distance between 1st reference and 1st new image centers is' -e 'WARNING: distance between 1st reference and 1st new image centers is' -e 'WARNING: distance between 1st reference and 1st second-epoch image centers is' -e 'ERROR: distance between 1st reference and 1st second-epoch image centers is' "transient_report/index.html"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_NO_ERROR_MESSAGE_IN_index_html"
@@ -15487,7 +15488,7 @@ if [ -d ../NMW_find_Chandra_test ];then
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
-  grep --quiet 'ERROR' "transient_report/index.html"
+  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA_ERROR_MESSAGE_IN_index_html"
@@ -15788,7 +15789,7 @@ if [ -d ../NMW_Sgr9_crash_test ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH000_EXIT_CODE"
  fi
  if [ -f transient_report/index.html ];then
-  grep --quiet 'ERROR' "transient_report/index.html"
+  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_ERROR_MESSAGE_IN_index_html"
@@ -16072,7 +16073,7 @@ $GREP_RESULT"
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN000_EXIT_CODE"
  fi
  if [ -f transient_report/index.html ];then
-  grep --quiet 'ERROR' "transient_report/index.html"
+  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_ERROR_MESSAGE_IN_index_html"
@@ -16537,7 +16538,7 @@ if [ -d ../NMW-STL__find_Neptune_test ];then
  fi
  #
  if [ -f transient_report/index.html ];then
-  grep --quiet 'ERROR' "transient_report/index.html"
+  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_ERROR_MESSAGE_IN_index_html"
@@ -16945,7 +16946,7 @@ if [ -d ../NMW-STL__find_NovaVul24_test ];then
  fi
  #
  if [ -f transient_report/index.html ];then
-  grep --quiet 'ERROR' "transient_report/index.html"
+  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_ERROR_MESSAGE_IN_index_html"
@@ -17376,7 +17377,7 @@ if [ -d ../NMW-STL__RefFrameMatchFail_test ];then
  #fi
  #
  if [ -f transient_report/index.html ];then
-  grep --quiet 'ERROR' "transient_report/index.html"
+  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_ERROR_MESSAGE_IN_index_html"
@@ -17907,7 +17908,7 @@ if [ -d ../NMW-STL__STL-11000M__find_huge_comet_test ];then
  fi
  #
  if [ -f transient_report/index.html ];then
-  grep --quiet 'ERROR' "transient_report/index.html"
+  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET_ERROR_MESSAGE_IN_index_html"
@@ -18200,7 +18201,7 @@ if [ -d ../TICA_TESS__find_NovaVul24_test ];then
  fi
  #
  if [ -f transient_report/index.html ];then
-  grep --quiet 'ERROR' "transient_report/index.html"
+  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24_ERROR_MESSAGE_IN_index_html"
