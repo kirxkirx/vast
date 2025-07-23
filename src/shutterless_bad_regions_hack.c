@@ -13,7 +13,7 @@ int main( int argc, char *argv[] ) {
  long x_ll, x_ur;
 
  status= 0;
- threshold= 62000;
+ threshold= 55000;
 
  if ( argc != 2 ) {
   fprintf( stderr, "Usage: %s <fits_file>\n", argv[0] );

@@ -346,6 +346,11 @@ int main( int argc, char **argv ) {
     }
     if ( poly_coeff[4] == 4.0 || poly_coeff[4] == 5.0 ) {
      fit_function= (int)poly_coeff[4];
+    } else if ( poly_coeff[4] == 6.0 ) {
+     fit_function= 6; // robust linear fit
+     A= poly_coeff[2];
+     B= poly_coeff[1];
+     C= poly_coeff[0];
     } else {
      A= poly_coeff[2];
      B= poly_coeff[1];

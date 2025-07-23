@@ -209,6 +209,7 @@ void help_msg( const char *progname, int exit_code ) {
  printf( "                     1 - magnitude calibration with parabola (default)\n" );
  printf( "                     2 - zero-point only magnitude calibration (linear with the fixed slope)\n" );
  printf( "                     3 - \"photocurve\" magnitude calibration (for photographic plates)\n" );
+ printf( "                     4 - robust linear magnitude calibration (vary zero-point and slope, automated outlier rejection, no weights)\n" );
  printf( "  -p or --poly       equivalent to '-t 0' [OPTION ONLY FOR BACKWARD COMPATIBILITY] DO NOT use polynomial magnitude calibration (useful for good quality CCD images)\n" );
  printf( "  -o or --photocurve equivalent to '-t 3' [OPTION ONLY FOR BACKWARD COMPATIBILITY] use formulas (1) and (3) from Bacher et al. (2005, MNRAS, 362, 542) for \n" );
  printf( "                     magnitude calibration. Useful for photographic data\n" );
@@ -2400,7 +2401,7 @@ int main( int argc, char **argv ) {
     return EXIT_FAILURE;
    }
    photometric_calibration_type= atoi( cvalue );
-   if ( photometric_calibration_type < 0 || photometric_calibration_type > 3 ) {
+   if ( photometric_calibration_type < 0 || photometric_calibration_type > 4 ) {
     fprintf( stderr, "The argument is out of range: -%c %s \n", optopt, cvalue );
     return EXIT_FAILURE;
    }
@@ -2421,6 +2422,9 @@ int main( int argc, char **argv ) {
     param_use_photocurve= 1;
     photometric_calibration_type= 1; // force parabolic magnitude fit (it should be reasonably good). It is needed to remove outliers.
     fprintf( stderr, "opt 't 3': \"photocurve\" will be used for magnitude calibration!\n" );
+   }
+   if ( photometric_calibration_type == 4 ) {
+    fprintf( stderr, "opt 't 4': robust linear magnitude calibration (vary zero-point and slope)\n" );
    }
 
    break;
@@ -5534,15 +5538,29 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
        }
       }
 
+      //// Redo the final fit here, just in case
+      //if ( photometric_calibration_type == 0 ) {
+      // wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
+      //} else {
+      // wpolyfit_exit_code= wpolyfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
+      //}
       // Redo the final fit here, just in case
       if ( photometric_calibration_type == 0 ) {
+       fprintf( stderr, "Computing weighted linear magnitude calibration.\n" );
        wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
+      } else if ( photometric_calibration_type == 4 ) {
+       fprintf( stderr, "Computing robust linear magnitude calibration.\n" );
+       wpolyfit_exit_code= robustlinefit( poly_x, poly_y, N_good_stars, poly_coeff );
+       // !!! poly_coeff[4] is not supposed to be used as an actual polynomial coefficient - we use it as a flag instead
+       poly_coeff[4]= 6.0; // Set fit function type for fit_mag_calib.c
       } else {
+       fprintf( stderr, "Computing polynomial magnitude calibration.\n" );
        wpolyfit_exit_code= wpolyfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
       }
       /* Above we assume that parabola was a reasonable approximation.
                                                            Now we use photocurve for magnitude calibration if param_use_photocurve is set. */
       if ( param_use_photocurve != 0 && wpolyfit_exit_code == 0 ) {
+       fprintf( stderr, "Computing 'photocurve' magnitude calibration.\n" );
        wpolyfit_exit_code= fit_photocurve( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, &param_use_photocurve, NULL );
        poly_coeff[4]= (double)param_use_photocurve;
       }
@@ -5554,6 +5572,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      } // if( wpolyfit_exit_code==0 ){
      else {
       if ( photometric_calibration_type == 2 ) {
+       fprintf( stderr, "Computing zero-point only magnitude calibration.\n" );
        // wpolyfit_exit_code= robustzeropointfit( poly_x, poly_y, MAX( (int)(0.1*N_good_stars), 3), poly_coeff );
        // wpolyfit_exit_code= robustzeropointfit( poly_x + 1, poly_y + 1, MAX( (int)(0.1*N_good_stars), 3), poly_coeff );
        //  filtering moved above
@@ -5612,10 +5631,13 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
        // If we use a linear or parabolic calibration curve
        if ( apply_position_dependent_correction == 1 ) {
         // Aplly CCD position dependent correction
-        STAR2[Pos2[i]].mag= STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[4] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[3] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[2] + STAR2[Pos2[i]].mag * (float)poly_coeff[1] + (float)poly_coeff[0] - ( lin_mag_A * STAR2[Pos2[i]].x_frame + lin_mag_B * STAR2[Pos2[i]].y_frame + lin_mag_C );
+        //STAR2[Pos2[i]].mag= STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[4] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[3] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[2] + STAR2[Pos2[i]].mag * (float)poly_coeff[1] + (float)poly_coeff[0] - ( lin_mag_A * STAR2[Pos2[i]].x_frame + lin_mag_B * STAR2[Pos2[i]].y_frame + lin_mag_C );
+        STAR2[Pos2[i]].mag= STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[2] + STAR2[Pos2[i]].mag * (float)poly_coeff[1] + (float)poly_coeff[0] - ( lin_mag_A * STAR2[Pos2[i]].x_frame + lin_mag_B * STAR2[Pos2[i]].y_frame + lin_mag_C );
        } else {
         // Do not Aplly CCD position dependent correction
-        STAR2[Pos2[i]].mag= STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[4] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[3] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[2] + STAR2[Pos2[i]].mag * (float)poly_coeff[1] + (float)poly_coeff[0];
+        //STAR2[Pos2[i]].mag= STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[4] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[3] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[2] + STAR2[Pos2[i]].mag * (float)poly_coeff[1] + (float)poly_coeff[0];
+        // 2nd order polynomial (parabola) is already a massive overkill in most situations - let's not support higher order polynomials
+        STAR2[Pos2[i]].mag= STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[2] + STAR2[Pos2[i]].mag * (float)poly_coeff[1] + (float)poly_coeff[0];
        }
       }
      }

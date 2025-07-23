@@ -219,12 +219,12 @@ if [ -n "$CAMERA_SETTINGS" ];then
  fi
  #
  if [ "$CAMERA_SETTINGS" = "ED80__Black" ];then
-  export AAVSO_COMMENT_STRING="NMW ED80 80mm telescope + SBIG ST-8300M CCD"
+  export AAVSO_COMMENT_STRING="NMW ED80 Black 80mm telescope + SBIG STF-8300M CCD"
   #TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="NMW_camera"
   unset TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
   #NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=2000
   #NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=2500
-  export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="17.5"
+  export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="18.0"
   #FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=12.5
   # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
   SEXTRACTOR_CONFIG_FILES="default.sex__80ED_STF-8300"
@@ -1654,10 +1654,14 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
 
   echo "Starting VaST with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
   # Run VaST
+#  echo "
+#  ./vast --norotation --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE
+#  " | tee -a transient_factory_test31.txt
+#  ./vast --norotation --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" &> vast_output_$$.tmp
   echo "
-  ./vast --norotation --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE
+  ./vast --norotation --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --type 4 --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE
   " | tee -a transient_factory_test31.txt
-  ./vast --norotation --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" &> vast_output_$$.tmp
+  ./vast --norotation --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --type 4 --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" &> vast_output_$$.tmp
   if [ $? -ne 0 ];then
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
