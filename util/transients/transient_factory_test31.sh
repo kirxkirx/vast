@@ -236,9 +236,10 @@ if [ -n "$CAMERA_SETTINGS" ];then
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.12
   export MPC_CODE=C32
   # Calibration data
-  #if [ -z "$DARK_FRAMES_DIR" ];then
-  # export DARK_FRAMES_DIR="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
-  #fi
+  if [ -z "$DARK_FRAMES_DIR" ];then
+   export DARK_FRAMES_DIR="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
+  fi
+  # no flats without a shutter
   #if [ -z "$FLAT_FIELD_FILE" ];then
   # export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_2024jul17_flatbox.fit"
   #fi
