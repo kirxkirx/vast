@@ -1000,21 +1000,22 @@ lib/vizquery -site=$("$VAST_PATH"lib/choose_vizier_mirror.sh) -mime=text -source
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST001"
- fail_early
+ #fail_early
 fi
 if [ ! -f test_vizquery_M31.output ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST002"
- fail_early
+ #fail_early
 fi
 if [ ! -s test_vizquery_M31.output ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST003"
- fail_early
+ #fail_early
 fi
 # check that the whole output was received, if not - retry
 cat test_vizquery_M31.output | grep --quiet '#END#'
 if [ $? -ne 0 ];then
+ TEST_PASSED=1
  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST_RETRY"
  # maybe this was a random network glitch? sleep 30 sec and retry
  sleep 30 
@@ -1024,14 +1025,24 @@ if [ $? -ne 0 ];then
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST001a"
+  fail_early
  fi
  if [ ! -f test_vizquery_M31.output ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST002a"
+  fail_early
  fi
  if [ ! -s test_vizquery_M31.output ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST003a"
+  fail_early
+ fi
+ #
+ cat test_vizquery_M31.output | grep --quiet '#END#'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST004a_NO_END"
+  fail_early
  fi
  #
 fi
