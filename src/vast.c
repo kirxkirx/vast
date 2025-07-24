@@ -1654,7 +1654,6 @@ void drop_one_point_that_changes_fit_the_most( double *poly_x_external, double *
   // Fit thr function and get chi2
   if ( param_use_photocurve != 0 ) {
    wpolyfit_exit_code= fit_photocurve( poly_x, poly_y, poly_err, N_good_stars, poly_coeff_local_copy, &param_use_photocurve_local_copy, &chi2 );
-   // poly_coeff_local_copy[4]=(double)param_use_photocurve;
   } else {
    if ( photometric_calibration_type == 0 ) {
     wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff_local_copy, &chi2 );
@@ -5223,11 +5222,18 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
     if ( debug != 0 ) {
      fprintf( stderr, "DEBUG MSG: flush poly_coeff - " );
     }
-    poly_coeff[0]= 0;
-    poly_coeff[1]= 0;
-    poly_coeff[2]= 0;
-    poly_coeff[3]= 0;
-    poly_coeff[4]= 0;
+    poly_coeff[0]= 0.0;
+    poly_coeff[1]= 0.0;
+    poly_coeff[2]= 0.0;
+    poly_coeff[3]= 0.0;
+    poly_coeff[4]= 0.0;
+    //
+    poly_coeff[5]= 0.0;
+    poly_coeff[6]= 0.0;
+    poly_coeff[7]= 0.0;
+    poly_coeff[8]= 0.0;
+    poly_coeff[9]= 0.0;
+    //
     if ( debug != 0 ) {
      fprintf( stderr, "OK\n" );
     }

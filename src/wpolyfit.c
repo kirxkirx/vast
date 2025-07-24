@@ -84,6 +84,9 @@ int wlinearfit( double *datax, double *datay, double *dataerr, int n, double *po
  gsl_matrix *X, *cov;
  gsl_vector *y, *w, *c;
 
+ // reset poly_coeff[]
+ poly_coeff[0]= poly_coeff[1]= poly_coeff[2]= poly_coeff[3]= 0.0;
+
  X= gsl_matrix_alloc( n, 2 );
  y= gsl_vector_alloc( n );
  w= gsl_vector_alloc( n );
@@ -173,6 +176,9 @@ int robustlinefit( double *datax, double *datay, int n, double *poly_coeff ) {
  gsl_matrix *X, *cov;
  gsl_vector *x, *y, *c;
  double xi;
+ 
+ // reset poly_coeff[]
+ poly_coeff[0]= poly_coeff[1]= poly_coeff[2]= poly_coeff[3]= 0.0;
 
  // Add check for minimum number of points needed for robust fitting
  if ( n < 3 ) { // Robust fitting needs at least 3 points for meaningful results
