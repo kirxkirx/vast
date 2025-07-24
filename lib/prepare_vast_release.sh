@@ -70,6 +70,8 @@ rm -f *lightcurve.tmp_emergency_stop_debug
 rm -f DEBUG_BACKUP_candidates-transients.lst
 rm -f prelim_vast_run.log
 #
+rm -f selenium_TICA_TESS__zeroRA_test.txt
+#
 rm -f scan_ucac5_*_debug_ds9.reg
 # remove symlink to cpgplot.h that should be re-created by lib/compile_pgplot_related_components.sh
 rm -f src/cpgplot.h src/pgfv/cpgplot.h

@@ -19798,10 +19798,21 @@ $CAT_RESULT"
    if [ $? -eq 0 ];then
     python -c "import unittest; import logging; import re; import pathlib; import selenium; print(selenium.__version__)" 2>/dev/null
     if [ $? -eq 0 ];then
-     python -m unittest -v util/examples/selenium_TICA_TESS__zeroRA_test.py
+     python -m unittest -v util/examples/selenium_TICA_TESS__zeroRA_test.py &> selenium_TICA_TESS__zeroRA_test.txt
      if [ $? -ne 0 ];then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Klio_SELENIUM_TEST"
+      #
+      GREP_RESULT=$(cat selenium_TICA_TESS__zeroRA_test.txt)
+      CAT_RESULT="silenced"
+      DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### TICATESSZERORA_ERROR_MESSAGE_IN_index_html ######
+$GREP_RESULT
+----------------- transient_factory_test31.txt -----------------
+$CAT_RESULT"
+      #
+     else
+      rm -f selenium_TICA_TESS__zeroRA_test.
      fi
     else
      FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_TICATESSZERORA_Klio_SELENIUM_TEST"
