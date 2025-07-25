@@ -34,8 +34,8 @@ SKIP_LINK_PATTERNS = (
 
 REQUEST_TIMEOUT   = 30   # seconds for each HTTP HEAD
 CHECK_EXTERNAL    = True # set False for offline / quick run
-MPC_PAGE_TIMEOUT  = 60   # seconds to wait for MPC page
-VSX_PAGE_TIMEOUT  = 60   # seconds to wait for VSX page
+MPC_PAGE_TIMEOUT  = 120  # seconds to wait for MPC page
+VSX_PAGE_TIMEOUT  = 120  # seconds to wait for VSX page
 
 
 class SecondSectionLinkButtonTest(unittest.TestCase):
