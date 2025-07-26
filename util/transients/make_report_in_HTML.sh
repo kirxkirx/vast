@@ -556,7 +556,7 @@ VARIABLE_NAME_NO_WHITESPACES=""
 
 grep --quiet 'The object was <font color="red">found</font> in <font color="blue">VSX</font>' transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT"
 if [ $? -eq 0 ];then
- VARIABLE_NAME=$(grep -A1 'The object was <font color="red">found</font> in <font color="blue">VSX</font>' transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT" | tail -n1 | awk -F'"' '{print $2}')
+ VARIABLE_NAME=$(grep -A1 'The object was <font color="red">found</font> in <font color="blue">VSX</font>' transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT" | tail -n1 | awk -F'"' '{print $2}' | grep -i -v '</body></html>')
  # remove leading and trailing white spaces from string
  # VARIABLE_NAME will be somehting like:
  # #KR Sco                        </b>#
@@ -567,7 +567,7 @@ fi
 if [ -z "$VARIABLE_NAME" ];then
  grep --quiet ' online_id ' transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT"
  if [ $? -eq 0 ];then
-  VARIABLE_NAME=$(grep ' online_id ' transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT" | awk -F'|' '{print $2}')
+  VARIABLE_NAME=$(grep ' online_id ' transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT" | awk -F'|' '{print $2}'  | grep -i -v '</body></html>')
   # remove leading and trailing white spaces from string
   VARIABLE_NAME_NO_WHITESPACES=$(echo "$VARIABLE_NAME" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
   VARIABLE_NAME="$VARIABLE_NAME_NO_WHITESPACES" 
@@ -718,7 +718,9 @@ FITSFILE=${FITSFILE//" "/_}
   fi # if [ $USE_JAVASCRIPT -eq 1 ];then
 
   echo "<HR>" >> transient_report/index.tmp
-  cat transient_report/index.tmp >> transient_report/index$1.html
+  # ??? why $1 ???
+  #cat transient_report/index.tmp >> transient_report/index$1.html
+  cat transient_report/index.tmp >> transient_report/index.html
 
  
  # remove_all_report_transient_output_files should take care of them
