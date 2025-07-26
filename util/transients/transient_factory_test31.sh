@@ -1706,6 +1706,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   fi
   echo "############################################################" >> transient_factory.log
   
+  # DO WE STILL WANT THIS???
   # Use cache if possible to speed-up WCS calibration
   for WCSCACHEDIR in "local_wcs_cache" "/mnt/usb/NMW_NG/solved_reference_images" "/home/NMW_web_upload/solved_reference_images" "/dataX/kirx/NMW_NG_rt3_autumn2019/solved_reference_images" ;do
    echo "Checking WCS cache directory $WCSCACHEDIR" | tee -a transient_factory_test31.txt
