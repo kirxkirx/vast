@@ -231,6 +231,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   SEXTRACTOR_CONFIG_FILES="default.sex__80ED_STF-8300"
   BAD_REGION_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/bad_region_ED80__Black.lst"
   EXCLUSION_LIST="../exclusion_list_ED80__Black.txt"
+  SYSREM_ITERATIONS=0
   MAX_NEW_IMG_MEAN_VALUE=25000
   MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=100
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
@@ -1669,9 +1670,9 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   if [ $? -ne 0 ];then
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
-   echo "ERROR running VaST on the field $FIELD (wrong field? clouds? --stdout)"
-   echo "ERROR running VaST on the field $FIELD (wrong field? clouds? -- transient_factory_test31.txt)" >> transient_factory_test31.txt
-   echo "ERROR running VaST on the field $FIELD (wrong field? clouds?)" >> transient_factory.log
+   echo "ERROR running VaST on the field $FIELD (wrong field? clouds? very bad focus? --stdout)"
+   echo "ERROR running VaST on the field $FIELD (wrong field? clouds? very bad focus? -- transient_factory_test31.txt)" >> transient_factory_test31.txt
+   echo "ERROR running VaST on the field $FIELD (wrong field? clouds? very bad focus?)" >> transient_factory.log
    # Display and save VaST output to the log file if the run failed
    echo "____ VaST output ____" | tee -a transient_factory_test31.txt
    cat vast_output_$$.tmp | tee -a transient_factory_test31.txt
