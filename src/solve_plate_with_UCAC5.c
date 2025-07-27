@@ -57,7 +57,8 @@
 
 #include "vast_is_file.h"
 
-#define BASE_COMMAND_LENGTH 1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH
+// 8192 is out of nowhere
+#define BASE_COMMAND_LENGTH 1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH + 8192
 
 struct str_catalog_search_parameters {
  double search_radius_deg;
@@ -2310,7 +2311,6 @@ int search_APASS_with_vizquery( struct detected_star *stars, int N, struct str_c
  // Photometric catalog search
  fprintf( stderr, "Searchig APASS...\n" );
  sprintf( command,
-          //"export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=vizier.cds.unistra.fr -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
           "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$(%slib/choose_vizier_mirror.sh APASS) -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\\'mag,e_r\\'mag,i\\'mag,e_i\\'mag,g\\'mag,e_g\\'mag Vmag=%.1lf..%.1lf -sort=Vmag -c.rs=%.1lf -list=%s > %s",
           path_to_vast_string,
           path_to_vast_string,

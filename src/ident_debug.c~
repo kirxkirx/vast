@@ -1,11 +1,10 @@
+
 #include <stdio.h>
 #include <stdlib.h> // for calloc()
 #include <math.h>
 
 #include "vast_types.h"
-#include "ident.h"
 #include "ident_debug.h"
-
 
 //
 // This function is useful for debugging. It will create a DS9 region file from an rray of structures (type struct Star)
@@ -116,7 +115,6 @@ void write_single_Triangle_to_ds9( struct Triangle *tr, struct Star *star, const
 void write_triangle_matching_debug_log(struct Triangle *tr1, int Nt1, struct Triangle *tr2, int Nt2, struct Star *star1, struct Star *star2, struct Ecv_triangles *ecv_tr, const char *filename) {
     FILE *f;
     int i;
-    int max_log_triangles;
     
     f = fopen(filename, "w");
     if (NULL == f) {
@@ -130,25 +128,24 @@ void write_triangle_matching_debug_log(struct Triangle *tr1, int Nt1, struct Tri
     fprintf(f, "Equivalent triangles found: %d\n", ecv_tr->Number);
     fprintf(f, "\n");
     
-    /* Log triangle side statistics - output all triangles, not just first 10 */
+    /* Log triangle side statistics */
     fprintf(f, "=== TRIANGLE SIDE STATISTICS ===\n");
-    fprintf(f, "Reference triangles:\n");
-    for (i = 0; i < Nt1; i++) {
+    fprintf(f, "Reference triangles (first 10):\n");
+    for (i = 0; i < MIN(10, Nt1); i++) {
         fprintf(f, "Tri %d: sides=%.2f,%.2f,%.2f area_proxy=%.2f\n", 
                 i, sqrt(tr1[i].ab), sqrt(tr1[i].bc), sqrt(tr1[i].ac), 
                 sqrt(tr1[i].ab_bc_ac));
     }
     
-    fprintf(f, "\nCurrent triangles:\n");
-    for (i = 0; i < Nt2; i++) {
+    fprintf(f, "\nCurrent triangles (first 10):\n");
+    for (i = 0; i < MIN(10, Nt2); i++) {
         fprintf(f, "Tri %d: sides=%.2f,%.2f,%.2f area_proxy=%.2f\n", 
                 i, sqrt(tr2[i].ab), sqrt(tr2[i].bc), sqrt(tr2[i].ac), 
                 sqrt(tr2[i].ab_bc_ac));
     }
     
     fprintf(f, "\n=== EQUIVALENT TRIANGLES ===\n");
-    /* Output all equivalent triangles, not just first 20 */
-    for (i = 0; i < ecv_tr->Number; i++) {
+    for (i = 0; i < MIN(20, ecv_tr->Number); i++) {
         fprintf(f, "Match %d: ref(%d,%d,%d) <-> cur(%d,%d,%d)\n", i,
                 ecv_tr->tr[i].tr1.a[0], ecv_tr->tr[i].tr1.a[1], ecv_tr->tr[i].tr1.a[2],
                 ecv_tr->tr[i].tr2.a[0], ecv_tr->tr[i].tr2.a[1], ecv_tr->tr[i].tr2.a[2]);
@@ -174,8 +171,7 @@ void write_triangle_construction_stars_ds9(struct Star *star, int Number, const 
     fprintf(f, "global color=%s dashlist=8 3 width=2\n", color);
     fprintf(f, "image\n");
     
-    /* Output all stars, ignore max_stars limit */
-    stars_to_write = Number;
+    stars_to_write = MIN(max_stars, Number);
     
     for (i = 0; i < stars_to_write; i++) {
         fprintf(f, "circle(%.3f,%.3f,5)\n", star[i].x_frame, star[i].y_frame);
@@ -186,11 +182,11 @@ void write_triangle_construction_stars_ds9(struct Star *star, int Number, const 
     fclose(f);
 }
 
-/* Write reference frame triangles to separate DS9 region file */
-void write_reference_triangles_with_matches_ds9(struct Triangle *tr1, int Nt1, struct Star *star1, struct Ecv_triangles *ecv_tr, const char *filename) {
+/* Write all triangles to DS9 region file with different colors for matched/unmatched */
+void write_all_triangles_with_matches_ds9(struct Triangle *tr1, int Nt1, struct Triangle *tr2, int Nt2, struct Star *star1, struct Star *star2, struct Ecv_triangles *ecv_tr, const char *filename) {
     FILE *f;
     int i, j;
-    int *ref_matched;
+    int *ref_matched, *cur_matched;
     double x1, y1, x2, y2, x3, y3;
     
     f = fopen(filename, "w");
@@ -199,9 +195,10 @@ void write_reference_triangles_with_matches_ds9(struct Triangle *tr1, int Nt1, s
         return;
     }
     
-    /* Allocate array to track which triangles are matched */
+    /* Allocate arrays to track which triangles are matched */
     ref_matched = calloc(Nt1, sizeof(int));
-    if (!ref_matched) {
+    cur_matched = calloc(Nt2, sizeof(int));
+    if (!ref_matched || !cur_matched) {
         fclose(f);
         return;
     }
@@ -216,14 +213,22 @@ void write_reference_triangles_with_matches_ds9(struct Triangle *tr1, int Nt1, s
                 break;
             }
         }
+        for (j = 0; j < Nt2; j++) {
+            if (tr2[j].a[0] == ecv_tr->tr[i].tr2.a[0] &&
+                tr2[j].a[1] == ecv_tr->tr[i].tr2.a[1] &&
+                tr2[j].a[2] == ecv_tr->tr[i].tr2.a[2]) {
+                cur_matched[j] = 1;
+                break;
+            }
+        }
     }
     
     fprintf(f, "# Region file format: DS9 version 4.0\n");
-    fprintf(f, "# Reference frame triangles with match status\n");
+    fprintf(f, "# All triangles with match status\n");
     fprintf(f, "image\n");
     
-    /* Write all reference triangles */
-    for (i = 0; i < Nt1; i++) {
+    /* Write reference triangles */
+    for (i = 0; i < MIN(50, Nt1); i++) {
         x1 = star1[tr1[i].a[0]].x_frame;  y1 = star1[tr1[i].a[0]].y_frame;
         x2 = star1[tr1[i].a[1]].x_frame;  y2 = star1[tr1[i].a[1]].y_frame;
         x3 = star1[tr1[i].a[2]].x_frame;  y3 = star1[tr1[i].a[2]].y_frame;
@@ -241,48 +246,8 @@ void write_reference_triangles_with_matches_ds9(struct Triangle *tr1, int Nt1, s
                 (x1+x2+x3)/3.0, (y1+y2+y3)/3.0, i);
     }
     
-    free(ref_matched);
-    fclose(f);
-}
-
-/* Write current frame triangles to separate DS9 region file */
-void write_current_triangles_with_matches_ds9(struct Triangle *tr2, int Nt2, struct Star *star2, struct Ecv_triangles *ecv_tr, const char *filename) {
-    FILE *f;
-    int i, j;
-    int *cur_matched;
-    double x1, y1, x2, y2, x3, y3;
-    
-    f = fopen(filename, "w");
-    if (NULL == f) {
-        fprintf(stderr, "ERROR: cannot open %s for writing\n", filename);
-        return;
-    }
-    
-    /* Allocate array to track which triangles are matched */
-    cur_matched = calloc(Nt2, sizeof(int));
-    if (!cur_matched) {
-        fclose(f);
-        return;
-    }
-    
-    /* Mark matched triangles */
-    for (i = 0; i < ecv_tr->Number; i++) {
-        for (j = 0; j < Nt2; j++) {
-            if (tr2[j].a[0] == ecv_tr->tr[i].tr2.a[0] &&
-                tr2[j].a[1] == ecv_tr->tr[i].tr2.a[1] &&
-                tr2[j].a[2] == ecv_tr->tr[i].tr2.a[2]) {
-                cur_matched[j] = 1;
-                break;
-            }
-        }
-    }
-    
-    fprintf(f, "# Region file format: DS9 version 4.0\n");
-    fprintf(f, "# Current frame triangles with match status\n");
-    fprintf(f, "image\n");
-    
-    /* Write all current image triangles */
-    for (i = 0; i < Nt2; i++) {
+    /* Write current image triangles */
+    for (i = 0; i < MIN(50, Nt2); i++) {
         x1 = star2[tr2[i].a[0]].x_frame;  y1 = star2[tr2[i].a[0]].y_frame;
         x2 = star2[tr2[i].a[1]].x_frame;  y2 = star2[tr2[i].a[1]].y_frame;
         x3 = star2[tr2[i].a[2]].x_frame;  y3 = star2[tr2[i].a[2]].y_frame;
@@ -300,47 +265,28 @@ void write_current_triangles_with_matches_ds9(struct Triangle *tr2, int Nt2, str
                 (x1+x2+x3)/3.0, (y1+y2+y3)/3.0, i);
     }
     
+    free(ref_matched);
     free(cur_matched);
     fclose(f);
-}
-
-/* DEPRECATED: Use separate functions above instead */
-void write_all_triangles_with_matches_ds9(struct Triangle *tr1, int Nt1, struct Triangle *tr2, int Nt2, struct Star *star1, struct Star *star2, struct Ecv_triangles *ecv_tr, const char *filename) {
-    /* Split into separate files to avoid coordinate system mixing */
-    char ref_filename[256];
-    char cur_filename[256];
-    
-    snprintf(ref_filename, sizeof(ref_filename), "ref_%s", filename);
-    snprintf(cur_filename, sizeof(cur_filename), "cur_%s", filename);
-    
-    write_reference_triangles_with_matches_ds9(tr1, Nt1, star1, ecv_tr, ref_filename);
-    write_current_triangles_with_matches_ds9(tr2, Nt2, star2, ecv_tr, cur_filename);
 }
 
 /* Write the best triangle match and coordinate transformation info */
 void write_best_triangle_match_ds9(struct Ecv_triangles *ecv_tr, int best_triangle_index, struct Star *star1, struct Star *star2, struct PixCoordinateTransformation *transform, const char *filename) {
     FILE *f;
     double x1, y1, x2, y2, x3, y3;
-    char ref_filename[256];
-    char cur_filename[256];
     
     if (best_triangle_index < 0 || best_triangle_index >= ecv_tr->Number) {
         return;
     }
     
-    /* Create separate files for reference and current frames */
-    snprintf(ref_filename, sizeof(ref_filename), "ref_%s", filename);
-    snprintf(cur_filename, sizeof(cur_filename), "cur_%s", filename);
-    
-    /* Write reference triangle */
-    f = fopen(ref_filename, "w");
+    f = fopen(filename, "w");
     if (NULL == f) {
-        fprintf(stderr, "ERROR: cannot open %s for writing\n", ref_filename);
+        fprintf(stderr, "ERROR: cannot open %s for writing\n", filename);
         return;
     }
     
     fprintf(f, "# Region file format: DS9 version 4.0\n");
-    fprintf(f, "# Best triangle match - reference frame\n");
+    fprintf(f, "# Best triangle match and transformation\n");
     fprintf(f, "# Rotation: %.3f degrees\n", transform->fi * 180.0 / M_PI);
     fprintf(f, "# Translation: (%.2f, %.2f)\n", 
             transform->translate1[0] + transform->translate2[0],
@@ -360,23 +306,6 @@ void write_best_triangle_match_ds9(struct Ecv_triangles *ecv_tr, int best_triang
     fprintf(f, "line(%.3f,%.3f,%.3f,%.3f)\n", x2, y2, x3, y3);
     fprintf(f, "line(%.3f,%.3f,%.3f,%.3f)\n", x3, y3, x1, y1);
     fprintf(f, "# text(%.3f,%.3f) text={REF_BEST}\n", (x1+x2+x3)/3.0, (y1+y2+y3)/3.0);
-    
-    fclose(f);
-    
-    /* Write current triangle */
-    f = fopen(cur_filename, "w");
-    if (NULL == f) {
-        fprintf(stderr, "ERROR: cannot open %s for writing\n", cur_filename);
-        return;
-    }
-    
-    fprintf(f, "# Region file format: DS9 version 4.0\n");
-    fprintf(f, "# Best triangle match - current frame\n");
-    fprintf(f, "# Rotation: %.3f degrees\n", transform->fi * 180.0 / M_PI);
-    fprintf(f, "# Translation: (%.2f, %.2f)\n", 
-            transform->translate1[0] + transform->translate2[0],
-            transform->translate1[1] + transform->translate2[1]);
-    fprintf(f, "image\n");
     
     /* Current triangle in thick cyan */
     x1 = star2[ecv_tr->tr[best_triangle_index].tr2.a[0]].x_frame;
@@ -399,72 +328,45 @@ void write_best_triangle_match_ds9(struct Ecv_triangles *ecv_tr, int best_triang
 void write_matched_stars_ds9(struct Star *star1, struct Star *star2, int *Pos1, int *Pos2, int num_matched, const char *filename) {
     FILE *f;
     int i;
-    char ref_filename[256];
-    char cur_filename[256];
     
-    /* Create separate files for reference and current frames */
-    snprintf(ref_filename, sizeof(ref_filename), "ref_%s", filename);
-    snprintf(cur_filename, sizeof(cur_filename), "cur_%s", filename);
-    
-    /* Write reference stars */
-    f = fopen(ref_filename, "w");
+    f = fopen(filename, "w");
     if (NULL == f) {
-        fprintf(stderr, "ERROR: cannot open %s for writing\n", ref_filename);
+        fprintf(stderr, "ERROR: cannot open %s for writing\n", filename);
         return;
     }
     
     fprintf(f, "# Region file format: DS9 version 4.0\n");
-    fprintf(f, "# Matched stars - reference frame\n");
+    fprintf(f, "# Matched star pairs after transformation\n");
     fprintf(f, "# %d total matches\n", num_matched);
     fprintf(f, "image\n");
     
-    /* Output all matched stars, not just first 100 */
-    for (i = 0; i < num_matched; i++) {
+    for (i = 0; i < MIN(num_matched, 100); i++) {
         /* Reference star in green */
         fprintf(f, "# color=green\n");
         fprintf(f, "circle(%.3f,%.3f,3)\n", 
                 star1[Pos1[i]].x_frame, star1[Pos1[i]].y_frame);
         
-        /* Distance annotation for first 50 to avoid excessive clutter */
-        if (i < 50) {
-            double dx = star1[Pos1[i]].x_frame - star2[Pos2[i]].x_frame;
-            double dy = star1[Pos1[i]].y_frame - star2[Pos2[i]].y_frame;
-            double dist = sqrt(dx*dx + dy*dy);
-            
-            fprintf(f, "# text(%.3f,%.3f) text={%.1f}\n",
-                    star1[Pos1[i]].x_frame + 8, star1[Pos1[i]].y_frame + 8, dist);
-        }
-    }
-    
-    fclose(f);
-    
-    /* Write current stars */
-    f = fopen(cur_filename, "w");
-    if (NULL == f) {
-        fprintf(stderr, "ERROR: cannot open %s for writing\n", cur_filename);
-        return;
-    }
-    
-    fprintf(f, "# Region file format: DS9 version 4.0\n");
-    fprintf(f, "# Matched stars - current frame\n");
-    fprintf(f, "# %d total matches\n", num_matched);
-    fprintf(f, "image\n");
-    
-    /* Output all matched stars */
-    for (i = 0; i < num_matched; i++) {
         /* Current star in yellow */
         fprintf(f, "# color=yellow\n");
         fprintf(f, "circle(%.3f,%.3f,3)\n", 
                 star2[Pos2[i]].x_frame, star2[Pos2[i]].y_frame);
         
-        /* Distance annotation for first 50 to avoid excessive clutter */
-        if (i < 50) {
-            double dx = star1[Pos1[i]].x_frame - star2[Pos2[i]].x_frame;
-            double dy = star1[Pos1[i]].y_frame - star2[Pos2[i]].y_frame;
-            double dist = sqrt(dx*dx + dy*dy);
-            
+        /* Connection line */
+        fprintf(f, "# color=white\n");
+        fprintf(f, "line(%.3f,%.3f,%.3f,%.3f)\n",
+                star1[Pos1[i]].x_frame, star1[Pos1[i]].y_frame,
+                star2[Pos2[i]].x_frame, star2[Pos2[i]].y_frame);
+        
+        /* Distance annotation */
+        double dx = star1[Pos1[i]].x_frame - star2[Pos2[i]].x_frame;
+        double dy = star1[Pos1[i]].y_frame - star2[Pos2[i]].y_frame;
+        double dist = sqrt(dx*dx + dy*dy);
+        
+        if (i < 20) { /* Only annotate first 20 to avoid clutter */
             fprintf(f, "# text(%.3f,%.3f) text={%.1f}\n",
-                    star2[Pos2[i]].x_frame + 8, star2[Pos2[i]].y_frame + 8, dist);
+                    (star1[Pos1[i]].x_frame + star2[Pos2[i]].x_frame)/2.0,
+                    (star1[Pos1[i]].y_frame + star2[Pos2[i]].y_frame)/2.0,
+                    dist);
         }
     }
     
@@ -475,7 +377,7 @@ void write_matched_stars_ds9(struct Star *star1, struct Star *star2, int *Pos1, 
 void write_triangle_similarity_analysis(struct Triangle *tr1, int Nt1, struct Triangle *tr2, int Nt2, float sigma_podobia, const char *filename) {
     FILE *f;
     int i, j;
-    int similar_count;
+    int similar_count = 0;
     float scale_factor, scale_diff;
     
     f = fopen(filename, "w");
@@ -484,23 +386,21 @@ void write_triangle_similarity_analysis(struct Triangle *tr1, int Nt1, struct Tr
         return;
     }
     
-    similar_count = 0;
-    
     fprintf(f, "=== TRIANGLE SIMILARITY ANALYSIS ===\n");
     fprintf(f, "Similarity tolerance: %.4f\n", sigma_podobia);
     fprintf(f, "Reference triangles: %d\n", Nt1);
     fprintf(f, "Current triangles: %d\n", Nt2);
     fprintf(f, "\n");
     
-    /* Analyze all triangles, not just first few */
-    for (i = 0; i < Nt1; i++) {
+    /* Analyze first few triangles in detail */
+    for (i = 0; i < MIN(5, Nt1); i++) {
         fprintf(f, "--- Reference triangle %d ---\n", i);
         fprintf(f, "Sides: %.2f, %.2f, %.2f\n", 
                 sqrt(tr1[i].ab), sqrt(tr1[i].bc), sqrt(tr1[i].ac));
         fprintf(f, "Area proxy: %.2f\n", sqrt(tr1[i].ab_bc_ac));
         
         /* Check for similar triangles */
-        for (j = 0; j < Nt2; j++) {
+        for (j = 0; j < MIN(10, Nt2); j++) {
             scale_factor = tr1[i].ab_bc_ac / tr2[j].ab_bc_ac;
             scale_diff = fabs(scale_factor - 1.0);
             
@@ -519,7 +419,7 @@ void write_triangle_similarity_analysis(struct Triangle *tr1, int Nt1, struct Tr
 
 
 
-int Podobie_debug(struct PixCoordinateTransformation *struct_pixel_coordinate_transformation, struct Ecv_triangles *ecv_tr, struct Triangle *tr1, int Nt1, struct Triangle *tr2, int Nt2, struct Star *star1, struct Star *star2, int Number1, int Number2) {
+int Podobie_debug(struct PixCoordinateTransformation *struct_pixel_coordinate_transformation, struct Ecv_triangles *ecv_tr, struct Triangle *tr1, int Nt1, struct Triangle *tr2, int Nt2, struct Star *star1, struct Star *star2) {
     int result;
     
     /* Call original function */
@@ -529,19 +429,14 @@ int Podobie_debug(struct PixCoordinateTransformation *struct_pixel_coordinate_tr
     write_triangle_matching_debug_log(tr1, Nt1, tr2, Nt2, star1, star2, ecv_tr, 
                                      "triangle_matching_debug.log");
     
-    /* Output all stars using the actual star count, not triangle count */
-    write_triangle_construction_stars_ds9(star1, Number1, 
-                                         "debug_reference_stars.reg", "green", Number1);
+    write_triangle_construction_stars_ds9(star1, MIN(Nt1 * 3, 150), 
+                                         "debug_reference_stars.reg", "green", 150);
     
-    write_triangle_construction_stars_ds9(star2, Number2, 
-                                         "debug_current_stars.reg", "cyan", Number2);
+    write_triangle_construction_stars_ds9(star2, MIN(Nt2 * 3, 150), 
+                                         "debug_current_stars.reg", "cyan", 150);
     
-    /* Use separate files for reference and current triangles */
-    write_reference_triangles_with_matches_ds9(tr1, Nt1, star1, ecv_tr,
-                                              "debug_reference_triangles.reg");
-    
-    write_current_triangles_with_matches_ds9(tr2, Nt2, star2, ecv_tr,
-                                            "debug_current_triangles.reg");
+    write_all_triangles_with_matches_ds9(tr1, Nt1, tr2, Nt2, star1, star2, ecv_tr,
+                                        "debug_all_triangles.reg");
     
     write_triangle_similarity_analysis(tr1, Nt1, tr2, Nt2,
                                       struct_pixel_coordinate_transformation->sigma_podobia,
@@ -607,3 +502,4 @@ int Very_Well_triangle_debug(struct Star *star1, int Number1, struct Star *star2
     
     return result;
 }
+
