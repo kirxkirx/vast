@@ -12,6 +12,7 @@ void progress(int done, int all);
 int vast_remove_directory(const char *path);
 int check_if_we_can_allocate_lots_of_memory(void);
 int check_and_print_memory_statistics(void);
+void print_TT_reminder( int show_timer_or_quit_instantly );
 
 /* Simple helper functions */
 int exclude_test(double X, double Y, double *exX, double *exY, int N, int verbose);

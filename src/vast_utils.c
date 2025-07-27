@@ -396,6 +396,55 @@ int check_and_print_memory_statistics() {
  return 0;
 }
 
+void print_TT_reminder( int show_timer_or_quit_instantly ) {
+
+ int n;
+
+ fprintf( stderr, "\n" );
+ fprintf( stderr, "\n" );
+
+ fprintf( stderr, "              #########   \x1B[34;47mATTENTION!\x1B[33;00m   #########              \n" );
+ fprintf( stderr, "According to the IAU recommendation (Resolution B1 XXIII IAU GA,\n" );
+ fprintf( stderr, "see http://www.iers.org/IERS/EN/Science/Recommendations/resolutionB1.html )  \n" );
+ fprintf( stderr, "Julian Dates (JDs) computed by VaST will be expressed by default    \n" );
+ fprintf( stderr, "in \x1B[34;47mTerrestrial Time (TT)\x1B[33;00m! " );
+ fprintf( stderr, "Starting from January 1, 2017:\n  TT = UTC + 69.184 sec  \n" );
+ fprintf( stderr, "If you want JDs to be expressed in UTC, use '-u' or '--UTC' key: './vast -u'\n" );
+ fprintf( stderr, "You may find which time system was used in vast_summary.log\n\n" );
+ fprintf( stderr, "Please \x1B[01;31mmake sure you know the difference between Terrestrial Time and UTC\033[00m,\n" );
+ fprintf( stderr, "before deriving the time of minimum of an eclipsing binary or maximum of\n" );
+ fprintf( stderr, "a pulsating star, sending a VaST lightcurve to your collaborators, AAVSO,\n" );
+ fprintf( stderr, "B.R.N.O. database etc. Often people and databases expect JDs in UTC, not TT.\n" );
+ fprintf( stderr, "More information may be found at https://en.wikipedia.org/wiki/Terrestrial_Time\n\n" );
+ if ( show_timer_or_quit_instantly == 2 ) {
+  return;
+ }
+ fprintf( stderr, "If you need accurate timing, don't forget to apply the Heliocentric Correction\n" );
+ fprintf( stderr, "to the lightcurve. This can be done using 'util/hjd_input_in_TT' or 'util/hjd_input_in_UTC'.\n\n" );
+ fprintf( stderr, "The more accurate barycentric time correction may be computed with VARTOOLS:\n" );
+ fprintf( stderr, "http://www.astro.princeton.edu/~jhartman/vartools.html#converttime\n" );
+ fprintf( stderr, "The SPICE library ( https://naif.jpl.nasa.gov/ ) support needs to be enabled\n" );
+ fprintf( stderr, "when compiling VARTOOLS.\n\n" );
+ fprintf( stderr, "Have fun! =)\n" );
+
+ if ( show_timer_or_quit_instantly == 1 ) {
+  return;
+ }
+ fprintf( stderr, "\n\n" );
+
+ fprintf( stderr, "This warning message will disappear in...   " );
+ // sleep for 6 seconds to make sure user saw the message 
+ for ( n= 5; n > 0; n-- ) {
+  sleep( 1 );
+  fprintf( stderr, "%d ", n );
+ }
+ sleep( 1 );
+ fprintf( stderr, "NOW!\n" );
+
+ return;
+}
+
+
 // The function is used to find a star specified with its pixel coordinates
 // in a list of stars (with their X Y coordinates listed in two arrays).
 //

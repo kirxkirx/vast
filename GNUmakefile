@@ -164,7 +164,7 @@ vast: vast.o vast_image_quality.o vast_utils.o gettime.o kourovka_sbg_date.o vas
 vast.o: $(SRC_PATH)vast.c $(SOURCE_IDENT_PATH)ident.h $(SRC_PATH)vast_limits.h $(SRC_PATH)vast_report_memory_error.h $(SRC_PATH)detailed_error_messages.h $(SRC_PATH)photocurve.h $(SRC_PATH)get_number_of_cpu_cores.h $(SRC_PATH)fit_plane_lin.h $(SRC_PATH)fitsfile_read_check.h $(SRC_PATH)wpolyfit.h $(SRC_PATH)replace_file_with_symlink_if_filename_contains_white_spaces.h $(SRC_PATH)lightcurve_io.h
 	$(CC) $(OPTFLAGS) -c -o vast.o $(SRC_PATH)vast.c -I$(GSL_INCLUDE) -Wall
 vast_image_quality.o: $(SRC_PATH)vast_image_quality.c
-	$(CC) $(OPTFLAGS) -c -o vast_image_quality.o $(SRC_PATH)vast_image_quality.c
+	$(CC) $(OPTFLAGS) -c -o vast_image_quality.o $(SRC_PATH)vast_image_quality.c -I$(GSL_INCLUDE)
 vast_utils.o: $(SRC_PATH)vast_utils.c
 	$(CC) $(OPTFLAGS) -c -o vast_utils.o $(SRC_PATH)vast_utils.c
 gettime.o: $(SRC_PATH)gettime.c
