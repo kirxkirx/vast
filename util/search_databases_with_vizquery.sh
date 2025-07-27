@@ -778,7 +778,7 @@ if [ -n "$SUGGESTED_NAME_STRING" ];then
  # Silly fix for the strange Mac bug where 'a"/     /a' is added to the star name
  SUGGESTED_NAME_STRING=$(echo "$SUGGESTED_NAME_STRING" | awk -F'a"/' '{print $1}') 
  # Suggested fix for the strangest bug of </body></html> appearing in the source name
- SUGGESTED_NAME_STRING=$(echo "$SUGGESTED_NAME_STRING" |  grep -vq '</body></html>') 
+ SUGGESTED_NAME_STRING=$(echo "$SUGGESTED_NAME_STRING" |  grep -vi '</body></html>') 
 fi
 
 

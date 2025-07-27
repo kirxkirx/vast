@@ -348,6 +348,7 @@ void ask_user_to_click_on_moving_object( char **input_images, float *moving_obje
 }
 
 
+/*
 //
 // This function is useful for debugging. It will create a DS9 region file from an rray of structures (type struct Star)
 // containing a list of stars.
@@ -400,10 +401,12 @@ void write_single_Star_from_struct_to_ds9_region_file( struct Star *star, int N_
  fclose( f );
  return;
 }
+*/
 
 /*
  This function is useful for debugging.
  */
+/*
 void write_Star_struct_to_ASCII_file( struct Star *star, int N_start, int N_stop, char *filename, double aperture ) {
  int i;
  FILE *f;
@@ -418,7 +421,7 @@ void write_Star_struct_to_ASCII_file( struct Star *star, int N_start, int N_stop
  fclose( f );
  return;
 }
-
+*/
 
 /*
    This function will write vast_images_catalogs.log file

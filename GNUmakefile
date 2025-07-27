@@ -158,11 +158,13 @@ stetson_test.o: $(SRC_PATH)test/stetson_test.c
 
 
 
-vast: vast.o vast_image_quality.o vast_utils.o gettime.o kourovka_sbg_date.o vast_report_memory_error.o libident.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o erfinv.o is_point_close_or_off_the_frame_edge.o get_path_to_vast.o detection_limit.o cfitsio gsl
-	$(CC) $(OPTFLAGS) -o vast vast.o vast_image_quality.o vast_utils.o gettime.o kourovka_sbg_date.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o vast_report_memory_error.o libident.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o erfinv.o is_point_close_or_off_the_frame_edge.o get_path_to_vast.o detection_limit.o $(CFITSIO_LIB) $(GSL_LIB) -Wl,-rpath,$(LIB_IDENT_PATH) -lm
+vast: vast.o ident_debug.o vast_image_quality.o vast_utils.o gettime.o kourovka_sbg_date.o vast_report_memory_error.o libident.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o erfinv.o is_point_close_or_off_the_frame_edge.o get_path_to_vast.o detection_limit.o cfitsio gsl
+	$(CC) $(OPTFLAGS) -o vast vast.o ident_debug.o vast_image_quality.o vast_utils.o gettime.o kourovka_sbg_date.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o vast_report_memory_error.o libident.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o erfinv.o is_point_close_or_off_the_frame_edge.o get_path_to_vast.o detection_limit.o $(CFITSIO_LIB) $(GSL_LIB) -Wl,-rpath,$(LIB_IDENT_PATH) -lm
 
 vast.o: $(SRC_PATH)vast.c $(SOURCE_IDENT_PATH)ident.h $(SRC_PATH)vast_limits.h $(SRC_PATH)vast_report_memory_error.h $(SRC_PATH)detailed_error_messages.h $(SRC_PATH)photocurve.h $(SRC_PATH)get_number_of_cpu_cores.h $(SRC_PATH)fit_plane_lin.h $(SRC_PATH)fitsfile_read_check.h $(SRC_PATH)wpolyfit.h $(SRC_PATH)replace_file_with_symlink_if_filename_contains_white_spaces.h $(SRC_PATH)lightcurve_io.h
 	$(CC) $(OPTFLAGS) -c -o vast.o $(SRC_PATH)vast.c -I$(GSL_INCLUDE) -Wall
+ident_debug.o: $(SRC_PATH)ident_debug.c
+	$(CC) $(OPTFLAGS) -c -o ident_debug.o $(SRC_PATH)ident_debug.c
 vast_image_quality.o: $(SRC_PATH)vast_image_quality.c
 	$(CC) $(OPTFLAGS) -c -o vast_image_quality.o $(SRC_PATH)vast_image_quality.c -I$(GSL_INCLUDE)
 vast_utils.o: $(SRC_PATH)vast_utils.c
