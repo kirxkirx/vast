@@ -63,8 +63,10 @@
 #include "fitsio.h" // we use a local copy of this file because we use a local copy of cfitsio
 
 // VaST's own header files
+#include "vast_types.h"
 #include "ident.h"
 #include "vast_limits.h"
+#include "vast_utils.h"
 #include "vast_report_memory_error.h"
 #include "detailed_error_messages.h"
 #include "photocurve.h"
@@ -86,6 +88,9 @@
 #include "is_point_close_or_off_the_frame_edge.h" // for is_point_close_or_off_the_frame_edge()
 //
 #include "detection_limit.h" // for get_detection_limit_sn()
+//
+#include "vast_is_file.h"
+#include "vast_image_quality.h"
 
 /****************** Auxiliary functions ******************/
 
@@ -122,6 +127,7 @@ or perhaps FLAGS = 8+16+32 = 56.
 
 */
 
+/*
 void version( char *version_string ) {
  strncpy( version_string, "VaST 1.0rc88", 32 );
  return;
@@ -133,7 +139,7 @@ void print_vast_version( void ) {
  fprintf( stderr, "\n--==%s==--\n\n", version_string );
  return;
 }
-
+*/
 void report_and_handle_too_many_stars_error( void ) {
  // user message
  fprintf( stderr, "#######################\nVaST thinks there are too many stars on the images.\n\nIn most cases this is not the case and VaST/SExtractor detects noise fluctuations and counts them as stars.\nIf this is the case you may want to change the detection settings in default.sex\nTry to set a higher star detection limit (get less stars per frame) by changing DETECT_MINAREA and DETECT_THRESH/ANALYSIS_THRESH\n\nYou may look at how well stars are detected by running './sextract_single_image'. Most stars visible on the image should be marked\nwith green circles and the green circles should not appear around things that are not stars.\n\nIf you are sure that it's the actual number of stars on image that exceeds the VaST limit of %d,\nchange the string \"#define MAX_NUMBER_OF_STARS %d\" in src/vast_limits.h file and recompile VaST by running \"make\".\n#######################\n", MAX_NUMBER_OF_STARS, MAX_NUMBER_OF_STARS );
@@ -401,7 +407,8 @@ void ask_user_to_click_on_moving_object( char **input_images, float *moving_obje
  return;
 }
 
-int remove_directory( const char *path ) {
+/*
+int vast_remove_directory( const char *path ) {
  int error= 0;
 
  // Safety checks for critical directories
@@ -480,7 +487,7 @@ int remove_directory( const char *path ) {
      break;
     }
 
-    /* Handle trailing slash in curr_path */
+    // Handle trailing slash in curr_path 
     if ( curr_len > 0 && curr_path[curr_len - 1] == '/' ) {
      sprintf( full_path, "%s%s", curr_path, p->d_name );
     } else {
@@ -512,7 +519,7 @@ int remove_directory( const char *path ) {
      if ( !lstat( full_path, &statbuf ) ) {
       unlink( full_path );
      } else {
-      fprintf( stderr, "ERROR in remove_directory(): Could not stat: %s\n", full_path );
+      fprintf( stderr, "ERROR in vast_remove_directory(): Could not stat: %s\n", full_path );
       error= 1;
      }
      free( full_path );
@@ -523,12 +530,12 @@ int remove_directory( const char *path ) {
    // Now remove the directory itself
    if ( !error ) {
     if ( rmdir( curr_path ) != 0 ) {
-     fprintf( stderr, "ERROR in remove_directory(): Failed to remove directory: %s\n", curr_path );
+     fprintf( stderr, "ERROR in vast_remove_directory(): Failed to remove directory: %s\n", curr_path );
      error= 1;
     }
    }
   } else {
-   fprintf( stderr, "INFO from remove_directory(): Could not open directory: %s\n", curr_path );
+   fprintf( stderr, "INFO from vast_remove_directory(): Could not open directory: %s\n", curr_path );
    error= 1;
   }
 
@@ -540,11 +547,13 @@ int remove_directory( const char *path ) {
 
  return error;
 }
+*/
 
-int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogfilename ); // actually it is declared in src/autodetect_aperture.c
+//int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogfilename ); // actually it is declared in src/autodetect_aperture.c
 
-void make_sure_libbin_is_in_path(); // actually it is declared in src/autodetect_aperture.c
+//void make_sure_libbin_is_in_path(); // actually it is declared in src/autodetect_aperture.c
 
+/*
 // This function will try to find the deepest image and set it as the reference one
 // by altering the image order in input_images array
 void choose_best_reference_image( char **input_images, int *vast_bad_image_flag, int Num ) {
@@ -1058,6 +1067,7 @@ void mark_images_with_elongated_stars_as_bad( char **input_images, int *vast_bad
 
  return;
 }
+*/
 
 //
 // This function is useful for debugging. It will create a DS9 region file from an rray of structures (type struct Star)
@@ -1133,6 +1143,7 @@ void write_Star_struct_to_ASCII_file( struct Star *star, int N_start, int N_stop
 //
 // Get the compiler version, just for the sake of bookkeeping...
 //
+/*
 void compiler_version( char *compiler_version_string ) {
  FILE *cc_version_file;
  cc_version_file= fopen( ".cc.version", "r" );
@@ -1188,7 +1199,7 @@ void vast_is_openmp_enabled( char *vast_openmp_enabled_string ) {
  fclose( cc_version_file );
  return;
 }
-
+*/
 /* is_file() - a small function which checks is an input string is a name of a readable file
 int is_file( char *filename ) {
  FILE *f= NULL;
@@ -1353,6 +1364,7 @@ void write_magnitude_calibration_param_log( double *poly_coeff, char *fitsimagen
  return;
 }
 
+/*
 // New memory check - try to allocate lots of space
 int check_if_we_can_allocate_lots_of_memory() {
  char *big_chunk_of_memory;
@@ -1364,7 +1376,9 @@ int check_if_we_can_allocate_lots_of_memory() {
  free( big_chunk_of_memory );
  return 0;
 }
+*/
 
+/*
 // Memory check
 int check_and_print_memory_statistics() {
 
@@ -1532,6 +1546,7 @@ void progress( int done, int all ) {
  fprintf( stderr, "processed %d of %d images (%5.1lf%%)\n", done, all, (double)done / (double)all * 100.0 );
  return;
 }
+*/
 
 // save_command_line_to_log_file(int argc, char **argv) - save command line arguments to the log file vast_command_line.log
 void save_command_line_to_log_file( int argc, char **argv ) {
@@ -1552,6 +1567,7 @@ void save_command_line_to_log_file( int argc, char **argv ) {
  fprintf( stderr, "\n\n" );
 }
 
+/*
 // TODO: replace with memove
 // a housekeeping function to exclude i'th element from three arrays
 void exclude_from_3_double_arrays( double *array1, double *array2, double *array3, int i, int *N ) {
@@ -1586,6 +1602,7 @@ void exclude_from_6_double_arrays( double *array1, double *array2, double *array
  ( *N )= ( *N ) - 1;
  return;
 }
+*/
 
 // Auxialiary function for magnitude calibration
 void drop_one_point_that_changes_fit_the_most( double *poly_x_external, double *poly_y_external, double *poly_err_external, int *N_good_stars_external, int photometric_calibration_type, int param_use_photocurve ) {
@@ -1655,7 +1672,8 @@ void drop_one_point_that_changes_fit_the_most( double *poly_x_external, double *
   if ( param_use_photocurve != 0 ) {
    wpolyfit_exit_code= fit_photocurve( poly_x, poly_y, poly_err, N_good_stars, poly_coeff_local_copy, &param_use_photocurve_local_copy, &chi2 );
   } else {
-   if ( photometric_calibration_type == 0 ) {
+   //if ( photometric_calibration_type == 0 ) {
+   if ( photometric_calibration_type == PHOTOMETRIC_LINEAR ) {
     wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff_local_copy, &chi2 );
    } else {
     wpolyfit_exit_code= wpolyfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff_local_copy, &chi2 );
@@ -1715,6 +1733,7 @@ void write_string_to_log_file( char *log_string, char *sextractor_catalog ) {
  return;
 }
 
+/*
 // The function is used to find a star specified with its pixel coordinates
 // in a list of stars (with their X Y coordinates listed in two arrays).
 //
@@ -1741,6 +1760,7 @@ int exclude_test( double X, double Y, double *exX, double *exY, int N, int verbo
  }
  return result;
 }
+*/
 
 // Transients are objects which were not detected on the reference frame but have now suddenly appeared.
 void test_transient( double *search_area_boundaries, struct Star star, double reference_image_JD, double X_im_size, double Y_im_size, double *X1, double *Y1, double *X2, double *Y2, int N_bad_regions, double aperture ) {
@@ -2079,7 +2099,8 @@ int main( int argc, char **argv ) {
 
  // Variables to set special parameters
  int fitsfile_read_error= 0;          // returned by gettime
- int photometric_calibration_type= 1; // do not calibrate mags by polynom
+ //int photometric_calibration_type= 1; // do not calibrate mags by polynom
+ int photometric_calibration_type= PHOTOMETRIC_PARABOLA; // the most flexible polynomial magnitude calibration is the default 
  int param_P= 0;                      // PSF photometry mode (1 - do it; 2 - do usual aperture photometry)
  int param_w= 0;                      // wide comparison window
  double fixed_star_matching_radius_pix= 0.0;
@@ -2393,6 +2414,7 @@ int main( int argc, char **argv ) {
    debug= 1;
    param_nofind= 1;
    break;
+/*
   case 't':
    cvalue= optarg;
    if ( 1 == is_file( cvalue ) ) {
@@ -2427,6 +2449,37 @@ int main( int argc, char **argv ) {
    }
 
    break;
+*/
+  case 't':
+    cvalue = optarg;
+    if (1 == is_file(cvalue)) {
+        fprintf(stderr, "Option -%c requires an argument: the desired photometric calibration type!\n", optopt);
+        return EXIT_FAILURE;
+    }
+    photometric_calibration_type = atoi(cvalue);
+    if (!IS_VALID_PHOTOMETRIC_TYPE(photometric_calibration_type)) {
+        fprintf(stderr, "The argument is out of range: -%c %s \n", optopt, cvalue);
+        return EXIT_FAILURE;
+    }
+    
+    /* Much cleaner condition checking */
+    if (photometric_calibration_type == PHOTOMETRIC_LINEAR) {
+        fprintf(stderr, "opt 't 0': linear magnitude calibration (vary zero-point and slope)\n");
+    } else if (photometric_calibration_type == PHOTOMETRIC_PARABOLA) {
+        fprintf(stderr, "opt 't 1': magnitude calibration with parabola\n");
+    } else if (photometric_calibration_type == PHOTOMETRIC_ZEROPOINT) {
+        fprintf(stderr, "opt 't 2': zero-point only magnitude calibration (linear with the fixed slope)\n");
+        apply_position_dependent_correction = 0;
+        param_use_photocurve = 0;
+    } else if (photometric_calibration_type == PHOTOMETRIC_PHOTOCURVE) {
+        param_nodiscardell = 1;
+        param_use_photocurve = 1;
+        photometric_calibration_type = PHOTOMETRIC_PARABOLA;
+        fprintf(stderr, "opt 't 3': \"photocurve\" will be used for magnitude calibration!\n");
+    } else if (photometric_calibration_type == PHOTOMETRIC_ROBUST_LINEAR) {
+        fprintf(stderr, "opt 't 4': robust linear magnitude calibration (vary zero-point and slope)\n");
+    }
+    break;
   case '9': // use ds9 FITS viewer
    use_ds9_instead_of_pgfv= 1;
    fprintf( stderr, "opt '9': DS9 FITS viewer will be used instead of pgfv\n" );
@@ -2461,13 +2514,15 @@ int main( int argc, char **argv ) {
    break;
   ///
   case 'p':
-   photometric_calibration_type= 0;
+   //photometric_calibration_type= 0;
+   photometric_calibration_type = PHOTOMETRIC_LINEAR;
    fprintf( stderr, "opt 'p': Polynomial magnitude calibration will *NOT* be used!\n" );
    break;
   case 'o':
    param_nodiscardell= 1; // incompatible with photocurve
    param_use_photocurve= 1;
-   photometric_calibration_type= 1; // force parabolic magnitude fit (it should be reasonably good). It is needed to remove outliers.
+   //photometric_calibration_type= 1; // force parabolic magnitude fit (it should be reasonably good). It is needed to remove outliers.
+   photometric_calibration_type = PHOTOMETRIC_PARABOLA;
    fprintf( stderr, "opt 'o': \"photocurve\" will be used for magnitude calibration!\n" );
    break;
   case 'z':
@@ -2688,19 +2743,19 @@ int main( int argc, char **argv ) {
 
   // symlinks
 #ifdef DEBUGMESSAGES
-  fprintf( stderr, "Starting remove_directory( \"symlinks_to_images\" )\n" );
+  fprintf( stderr, "Starting vast_remove_directory( \"symlinks_to_images\" )\n" );
 #endif
-  remove_directory( "symlinks_to_images" );
+  vast_remove_directory( "symlinks_to_images" );
 #ifdef DEBUGMESSAGES
-  fprintf( stderr, "Done with remove_directory( \"symlinks_to_images\" )\n" );
+  fprintf( stderr, "Done with vast_remove_directory( \"symlinks_to_images\" )\n" );
 #endif
   // converted images
 #ifdef DEBUGMESSAGES
-  fprintf( stderr, "Starting remove_directory( \"converted_images\" )\n" );
+  fprintf( stderr, "Starting vast_remove_directory( \"converted_images\" )\n" );
 #endif
-  remove_directory( "converted_images" );
+  vast_remove_directory( "converted_images" );
 #ifdef DEBUGMESSAGES
-  fprintf( stderr, "Done with remove_directory( \"converted_images\" )\n" );
+  fprintf( stderr, "Done with vast_remove_directory( \"converted_images\" )\n" );
 #endif
  }
 
@@ -3058,7 +3113,8 @@ int main( int argc, char **argv ) {
   diffphot_flag= 1;
   fprintf( stderr, "\n\n######## Applying a set of special settings for the simple differential photometry mode ########\n" );
   fprintf( stderr, "diffphot mode: magnitude calibration type is set to zeropoint offset only\n" );
-  photometric_calibration_type= 2;
+  //photometric_calibration_type= 2;
+  photometric_calibration_type = PHOTOMETRIC_ZEROPOINT;
   fprintf( stderr, "diffphot mode: disabling photocurve support\n" );
   param_use_photocurve= 0;
   fprintf( stderr, "diffphot mode: disabling position-dependent corrections\n" );
@@ -3615,7 +3671,8 @@ int main( int argc, char **argv ) {
    // probably some manual memory free-up should be here
    return EXIT_FAILURE;
   }
-  photometric_calibration_type= 2;
+  //photometric_calibration_type= 2;
+  photometric_calibration_type= PHOTOMETRIC_ZEROPOINT;
   fprintf( stderr, "Resetting the magnitude calibration mode to zero-point offset only!\n\n\n" );
  }
  ////////////////////////////////////////////////////////////////////
@@ -5241,7 +5298,8 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
     // Decide how many stars we need for magnitude calibration
     min_number_of_stars_for_magnitude_calibration= MIN( (int)( (double)MIN( NUMBER2, NUMBER3 ) / 3.0 ), MIN_NUMBER_STARS_POLY_MAG_CALIBR );
     // Relax min_number_of_stars_for_magnitude_calibration if we do zero-point only calibration (NMW good reference vs bad new image)
-    if ( photometric_calibration_type == 2 ) {
+    //if ( photometric_calibration_type == 2 ) {
+    if ( photometric_calibration_type == PHOTOMETRIC_ZEROPOINT ) {
      min_number_of_stars_for_magnitude_calibration= MIN( min_number_of_stars_for_magnitude_calibration, MIN_NUMBER_STARS_ZEROPOINT_MAG_CALIB );
     }
     min_number_of_stars_for_magnitude_calibration= MAX( min_number_of_stars_for_magnitude_calibration, 1 ); // we need at least one comparison star, that's for sure
@@ -5267,7 +5325,8 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 
      /// Here we try to weed-out potential variable stars from the magnitude calibration data
 
-     if ( photometric_calibration_type == 2 ) {
+     //if ( photometric_calibration_type == 2 ) {
+     if ( photometric_calibration_type == PHOTOMETRIC_ZEROPOINT ) {
       min_number_of_stars_for_magnitude_calibration= 1; // we can survive with only a single comparison star in this mode
       // Filter the comparison stars for the zero-point-only calibration
       if ( N_good_stars > 3 && N_manually_selected_comparison_stars > 0 ) {
@@ -5486,7 +5545,8 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      } // if( apply_position_dependent_correction==1 && wpolyfit_exit_code==0 ){
 
      // Second pass - remove the remaining outlier using weighted approximation
-     if ( wpolyfit_exit_code == 0 && photometric_calibration_type != 2 ) {
+     //if ( wpolyfit_exit_code == 0 && photometric_calibration_type != 2 ) {
+     if ( wpolyfit_exit_code == 0 && photometric_calibration_type != PHOTOMETRIC_ZEROPOINT ) {
       // Use linear function as the very first approximation
       wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
       fprintf( stderr, "Iteratively removing outliers from the mag-mag relation (weighted linear/polynomial fit)...\n" );
@@ -5510,7 +5570,8 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
         else
          exclude_from_6_double_arrays( poly_x, poly_y, poly_err, lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, the_baddest_outlier_number, &N_good_stars );
         // Recompute fit using linear or parabolic function depending on settings
-        if ( photometric_calibration_type == 0 ) {
+        //if ( photometric_calibration_type == 0 ) {
+        if ( photometric_calibration_type == PHOTOMETRIC_LINEAR ) {
          wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
         } else {
          wpolyfit_exit_code= wpolyfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
@@ -5551,10 +5612,12 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       // wpolyfit_exit_code= wpolyfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
       //}
       // Redo the final fit here, just in case
-      if ( photometric_calibration_type == 0 ) {
+      //if ( photometric_calibration_type == 0 ) {
+      if ( photometric_calibration_type == PHOTOMETRIC_LINEAR ) {
        fprintf( stderr, "Computing weighted linear magnitude calibration.\n" );
        wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
-      } else if ( photometric_calibration_type == 4 ) {
+      //} else if ( photometric_calibration_type == 4 ) {
+      } else if ( photometric_calibration_type == PHOTOMETRIC_ROBUST_LINEAR ) {
        fprintf( stderr, "Computing robust linear magnitude calibration.\n" );
        wpolyfit_exit_code= robustlinefit( poly_x, poly_y, N_good_stars, poly_coeff );
        // !!! poly_coeff[4] is not supposed to be used as an actual polynomial coefficient - we use it as a flag instead
@@ -5577,7 +5640,8 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 
      } // if( wpolyfit_exit_code==0 ){
      else {
-      if ( photometric_calibration_type == 2 ) {
+      //if ( photometric_calibration_type == 2 ) {
+      if ( photometric_calibration_type == PHOTOMETRIC_ZEROPOINT ) {
        fprintf( stderr, "Computing zero-point only magnitude calibration.\n" );
        // wpolyfit_exit_code= robustzeropointfit( poly_x, poly_y, MAX( (int)(0.1*N_good_stars), 3), poly_coeff );
        // wpolyfit_exit_code= robustzeropointfit( poly_x + 1, poly_y + 1, MAX( (int)(0.1*N_good_stars), 3), poly_coeff );

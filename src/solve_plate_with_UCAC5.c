@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <getopt.h>
 
-// #define _GNU_SOURCE // for memmem()
 #include <string.h>
 
 #include <libgen.h>    // for basename()
@@ -43,6 +42,7 @@
 #include "fitsio.h"
 #include "fitsfile_read_check.h"
 #include "vast_limits.h"
+#include "vast_types.h"
 #include "ident.h"
 
 #include "wpolyfit.h"
@@ -54,6 +54,8 @@
 #include "replace_file_with_symlink_if_filename_contains_white_spaces.h"
 
 #include "count_lines_in_ASCII_file.h" // for count_lines_in_ASCII_file()
+
+#include "vast_is_file.h"
 
 #define BASE_COMMAND_LENGTH 1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH
 

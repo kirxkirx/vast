@@ -13,7 +13,8 @@
 #include "vast_limits.h"
 #include "lightcurve_io.h"
 #include "variability_indexes.h"
-#include "ident.h"                                                   // for struct Star
+#include "vast_types.h"                                              // for struct Star
+//#include "ident.h"                                                   // for struct Star
 #include "filter_MagSize.h"                                          // for filter_MagSize()
 #include "get_image_filename_from_vast_image_details_log_using_JD.h" // for get_image_filename_from_vast_image_details_log_using_JD()
                                                                      // and update_number_of_bad_images_in_log_file()

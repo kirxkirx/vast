@@ -27,6 +27,7 @@
 
 #include "../vast_limits.h"
 #include "../photocurve.h"
+#include "../vast_types.h"
 #include "../ident.h"
 #include "../safely_encode_user_input_string.h" // for safely_encode_user_input_string() and also needed by fitsfile_read_check.h
 #include "../fitsfile_read_check.h"
@@ -38,6 +39,8 @@
 #include "../is_point_close_or_off_the_frame_edge.h" // for is_point_close_or_off_the_frame_edge()
 #include "../vast_filename_manipulation.h"
 #include "../kourovka_sbg_date.h" // for Kourovka_SBG_date_hack()
+
+#include "../vast_is_file.h"
 
 #define DEFAULT_APERTURE_FOR_CATALOG_DISPLAY 3.0
 

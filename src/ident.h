@@ -27,6 +27,7 @@
 
 #include "vast_limits.h"
 
+/*
 struct Observation {
  int star_num;
  double JD; // on a 64-bit system, both a double and a double* take 8 bytes each
@@ -40,33 +41,20 @@ struct Observation {
  char is_used; 
  float float_parameters[NUMBER_OF_FLOAT_PARAMETERS];
 };
-
-/*
-struct Observation {
- int star_num;
- double JD;
- double mag;
- double mag_err;
- double X;
- double Y;
- double APER;
- char filename[FILENAME_LENGTH];
- char fits_header_keywords_to_be_recorded_in_lightcurve[FITS_KEYWORDS_IN_LC_LENGTH];
- char is_used; // Check if this observation was alredy written to disk
- //
- float float_parameters[NUMBER_OF_FLOAT_PARAMETERS]; // Array of additional star parameters
-};
 */
-
+/*
+// moved to vast_types.h
 struct Frame {
  double X_centre;
  double Y_centre;
 };
+*/
 
 /*
   Structure describes the order of vertices
   of a triangle from the set of initial points star[n]
 */
+/*
 struct Triangle {
  int a[3];
  float ab;
@@ -74,22 +62,30 @@ struct Triangle {
  float bc;
  float ab_bc_ac;
 };
-
+*/
+/*
+// moved to vast_types.h
 struct Ecv_Triangle {
  struct Triangle tr1;
  struct Triangle tr2;
 };
+*/
 /*
   Description of a sequence of similar triangles
 */
+/*
+// moved to vast_types.h
 struct Ecv_triangles {
  struct Ecv_Triangle *tr;
  int Number; // Number of pairs
 };
+*/
 
 /*
   This structure describes a star.
 */
+/*
+// moved to vast_types.h
 struct Star {
  int n;
  float x;                    // X coordinate in pixels. WILL BE TRANSFORMED TO THE REFERENCE IMAGE COORDINATE FRAME
@@ -121,6 +117,7 @@ struct Star {
  int n_rejected;                                     // how many times this star was detected, but rejected according to the quality flags (mag-size, etc)
  char moving_object;    // manually match a moving object
 };
+*/
 
 #define MAXIMUM_POPADANIY 1
 #define PERSENT_POPADANIY 0
@@ -132,6 +129,8 @@ struct Star {
  Then linear transformation Line_Preobr
  Then translate
 */
+/*
+// moved to vast_types.h
 struct PixCoordinateTransformation {
  //double podobie;       // Similarity coefficient of the first frame to the second
  double translate1[2];       // translate along xy axes
@@ -146,6 +145,7 @@ struct PixCoordinateTransformation {
  int method;
  int Number_of_main_star; // Number of reference stars
 };
+*/
 
 // This function is also used in vast.c so cannot be inlined
 void Star_Copy(struct Star *copy, struct Star *star);

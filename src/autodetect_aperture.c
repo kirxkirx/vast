@@ -17,6 +17,8 @@
 #include <unistd.h>   // also for getpid() and unlink() ...
 
 #include "vast_limits.h"
+#include "vast_types.h"
+#include "vast_utils.h"
 #include "ident.h"
 #include "guess_saturation_limit.h"
 #include "write_individual_image_log.h"
@@ -29,6 +31,7 @@
 
 #include "fitsfile_read_check.h" // for safely_encode_user_input_string()
 
+/*
 // Update PATH variable to make sure the local copy of SExtractor is there
 void make_sure_libbin_is_in_path() {
  char pathstring[8192];
@@ -84,6 +87,7 @@ int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogf
  }
  return 0;
 }
+*/
 
 double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog, int force_recompute, int do_PSF_fitting, double fixed_aperture, double X_im_size, double Y_im_size, int guess_saturation_limit_operation_mode ) {
 

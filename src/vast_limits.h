@@ -406,7 +406,8 @@
 //#define DEBUGFILES
 //#define DEBUGMESSAGES
 
-#include "stdio.h" // defines FILE, fopen(), fclose()
+/*
+#include <stdio.h> // defines FILE, fopen(), fclose()
 
 // is_file() - a small function which checks is an input string is a name of a readable file
 static inline int is_file(char *filename) {
@@ -419,6 +420,7 @@ static inline int is_file(char *filename) {
   return 1;
  }
 }
+*/
 
 // The macro below will tell the pre-processor that limits.h is already included
 #define VAST_LIMITS_INCLUDE_FILE

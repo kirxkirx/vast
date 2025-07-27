@@ -9,6 +9,7 @@
 
 #include "vast_limits.h"
 #include "guess_saturation_limit.h"
+#include "vast_types.h"
 #include "ident.h"
 
 #include "replace_file_with_symlink_if_filename_contains_white_spaces.h"

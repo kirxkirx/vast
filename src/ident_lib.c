@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "vast_types.h"
 #include "ident.h"
 #include "vast_limits.h"
 #include "vast_report_memory_error.h"
