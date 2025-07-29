@@ -10,6 +10,7 @@
 #include <gsl/gsl_sort.h>
 #include <gsl/gsl_errno.h>
 
+#include "vast_types.h"
 #include "ident.h"
 #include "variability_indexes.h"
 #include "vast_limits.h"

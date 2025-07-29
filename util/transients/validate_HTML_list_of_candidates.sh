@@ -38,13 +38,13 @@ function validate_index_html() {
         test_passed_return_code=1
     fi
     
-    unber_of_tags=$(grep -c -i '</body>' "$index_file")
-    if [ $unber_of_tags -gt 1 ];then
+    number_of_tags=$(grep -c -i '</body>' "$index_file")
+    if [ $number_of_tags -gt 1 ];then
         echo "ERROR: multiple '</body>' tags in $index_file."
         test_passed_return_code=1
     fi
-    unber_of_tags=$(grep -c -i '</html>' "$index_file")
-    if [ $unber_of_tags -gt 1 ];then
+    number_of_tags=$(grep -c -i '</html>' "$index_file")
+    if [ $number_of_tags -gt 1 ];then
         echo "ERROR: multiple '</html>' tags in $index_file."
         test_passed_return_code=1
     fi

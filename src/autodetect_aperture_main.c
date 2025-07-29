@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "fitsio.h"
 #include "fitsfile_read_check.h"
+#include "vast_types.h"
 #include "ident.h"
 
 #include <stdio.h>
