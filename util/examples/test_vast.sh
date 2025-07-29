@@ -530,7 +530,7 @@ function test_internet_connection() {
 
  # Directory listing disabled
  #curl --max-time 10 --silent http://vast.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
- curl --max-time 10 --silent --show-error -I http://vast.sai.msu.ru 2>&1 | grep --quiet 'Content-Type:'
+ curl --max-time 30 --retry 1 --retry-delay 10 --connect-timeout 10 --silent --show-error -I http://vast.sai.msu.ru 2>&1 | grep --quiet 'Content-Type:'
  if [ $? -ne 0 ];then
   echo "ERROR in test_internet_connection(): cannot connect to vast.sai.msu.ru" 
   return 1
@@ -8916,7 +8916,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -9827,7 +9828,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 fi # if [ "$GITHUB_ACTIONS" != "true" ];then
@@ -10408,7 +10410,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -10848,7 +10851,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -11111,7 +11115,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -11449,7 +11454,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -11710,7 +11716,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -11961,7 +11968,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 ### Disable the above test for GitHub Actions
@@ -12450,7 +12458,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 ### Disable the above test for GitHub Actions
@@ -12780,7 +12789,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 #fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
 
@@ -13149,7 +13159,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 #fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
 
@@ -13531,7 +13542,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 #fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
 
@@ -13795,7 +13807,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 #fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
@@ -14056,7 +14069,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -14374,7 +14388,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -14756,7 +14771,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -15007,7 +15023,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -15452,7 +15469,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -15746,7 +15764,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 #fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
 
@@ -16305,7 +16324,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -16476,7 +16496,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -16885,7 +16906,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -17312,7 +17334,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -17879,7 +17902,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -18145,7 +18169,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -18393,7 +18418,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -18771,7 +18797,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -19099,7 +19126,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -19388,7 +19416,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -19667,7 +19696,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -20178,7 +20208,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -20348,7 +20379,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -23011,7 +23043,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -23068,7 +23101,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
@@ -23240,7 +23274,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 ### Disable the above test for GitHub Actions
@@ -25613,7 +25648,8 @@ if [ $? -ne 0 ];then
  echo "Internet connection error!" >> vast_test_report.txt
  echo "Failed test codes: $FAILED_TEST_CODES" 
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
- exit 1
+ #exit 1
+ fail_early "Internet connection error"
 fi
 
 
