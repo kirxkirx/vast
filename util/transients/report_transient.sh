@@ -714,6 +714,10 @@ Online MPChecker may fail to identify bright comets! Please manually check the <
 <input type='hidden' name='fieldsize' value='60'>
 <input type='hidden' name='fieldunit' value='3'>
 <input type='hidden' name='geometry' value='r'>
+<input type='hidden' name='filter[]' value='0'>
+<input type='hidden' name='filter[]' value='1'>
+<input type='hidden' name='filter[]' value='2'>
+<input type='hidden' name='filter[]' value='3'>
 <input type='hidden' name='order' value='9'>
 <input class='formbutton' type='Submit' value='Search VSX online'>
 </form>
