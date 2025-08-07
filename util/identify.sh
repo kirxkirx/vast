@@ -157,6 +157,170 @@ function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image
  return 0
 }
 
+# Function to determine local vs remote astrometry.net availability
+function determine_astrometry_method {
+ echo "Determining astrometry method..." 1>&2
+ 
+ # Check the default Astrometry.net install locations first
+ if [ -d /usr/local/astrometry/bin ];then
+  echo "$PATH" | grep --quiet '/usr/local/astrometry/bin'
+  if [ $? -ne 0 ];then
+   export PATH=$PATH:/usr/local/astrometry/bin
+  fi
+ fi
+ # Check another default Astrometry.net install location
+ if [ -d /usr/share/astrometry/bin ];then
+  echo "$PATH" | grep --quiet '/usr/share/astrometry/bin'
+  if [ $? -ne 0 ];then
+   export PATH=$PATH:/usr/share/astrometry/bin
+  fi
+ fi
+
+ # if ASTROMETRYNET_LOCAL_OR_REMOTE was not set externally to the script
+ if [ -z "$ASTROMETRYNET_LOCAL_OR_REMOTE" ];then
+  command -v solve-field &>/dev/null
+  if [ $? -eq 0 ];then
+   # Check that this is an executable file
+   if [ -x `command -v solve-field` ];then
+    echo "Using the local copy of Astrometry.net software..." 1>&2
+    ASTROMETRYNET_LOCAL_OR_REMOTE="local"
+   else
+    echo "WARNING: solve-field is found, but it is not an executable file!" 1>&2
+    echo "Will try remote server..." 1>&2
+    ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
+   fi
+  else
+   echo "Local solve-field not found, will try remote server..." 1>&2
+   ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
+  fi
+ else
+  echo "environment variable set: ASTROMETRYNET_LOCAL_OR_REMOTE=$ASTROMETRYNET_LOCAL_OR_REMOTE" 1>&2
+ fi
+}
+
+# Function to check remote server availability and set up remote astrometry
+function setup_remote_astrometry {
+ echo "Setting up remote astrometry servers..." 1>&2
+ 
+ local HOST_WE_ARE_RUNNING_AT=$(hostname)
+ local PLATE_SOLVE_SERVERS="scan.sai.msu.ru"
+
+ # Check if we are requested to use a specific plate solve server
+ if [ ! -z "$FORCE_PLATE_SOLVE_SERVER" ];then
+  if [ "$FORCE_PLATE_SOLVE_SERVER" != "none" ];then
+   echo "WARNING: using the user-specified plate solve server $FORCE_PLATE_SOLVE_SERVER" 1>&2
+   PLATE_SOLVE_SERVER="$FORCE_PLATE_SOLVE_SERVER"
+   PLATE_SOLVE_SERVERS="$PLATE_SOLVE_SERVER"
+  fi
+ fi
+
+ ###################################################
+ echo -n "Checking if we can reach any plate solve servers... " 1>&2
+ # Decide on which plate solve server to use
+ # first - set the initial list of servers
+ for FILE_TO_CHECK in server$$_*.ping_ok ;do
+  if [ -f "$FILE_TO_CHECK" ];then
+   rm -f "$FILE_TO_CHECK"
+  fi
+ done
+ for i in $PLATE_SOLVE_SERVERS ;do
+  # Why? Maybe we want remotely connect to ourselves for a test
+  ## make sure we'll not remotely connect to ourselves
+  #if [ ! -z "$HOST_WE_ARE_RUNNING_AT" ];then
+  # echo "$i" | grep --quiet "$HOST_WE_ARE_RUNNING_AT"
+  # if [ $? -eq 0 ];then
+  #  continue
+  # fi
+  #fi
+  #
+  ping -c1 -n "$i" &>/dev/null && echo "$i" > server$$_"$i".ping_ok &
+  echo -n "$i " 1>&2
+ done
+
+ wait
+ ### The ping test will not work if we are behind a firewall that doesn't let ping out
+ # If no servers could be reached, try to test for this possibility
+ ########################################
+ for SERVER_PING_OK_FILE in server$$_*.ping_ok ;do
+  if [ -f $SERVER_PING_OK_FILE ];then
+   # OK we could ping at least one server
+   break
+  fi
+  # If we are still here, that means we are either offline or behind a firewall that doesn't let ping out
+  for i in $PLATE_SOLVE_SERVERS ;do
+   # make sure we'll not remotely connect to ourselves
+   if [ ! -z "$HOST_WE_ARE_RUNNING_AT" ];then
+    echo "$i" | grep --quiet "$HOST_WE_ARE_RUNNING_AT"
+    if [ $? -eq 0 ];then
+     continue
+    fi
+   fi
+   #
+   #curl --max-time 10 --silent http://"$i"/astrometry_engine/files/ | grep --quiet 'Parent Directory' && echo "$i" > server$$_"$i".ping_ok &
+   curl $VAST_CURL_PROXY --max-time 10 --silent http://"$i"/lk/ --max-time 10 --silent | grep --quiet '../cgi-bin/lk/process_lightcurve.py' && echo "$i" > server$$_"$i".ping_ok &
+   echo -n "$i " 1>&2
+  done
+  wait
+ done
+ ########################################
+
+ cat server$$_*.ping_ok > servers$$.ping_ok 2>/dev/null
+
+ echo "" 1>&2
+ echo "The reachable servers are:" 1>&2
+ cat servers$$.ping_ok 1>&2
+
+ if [ ! -s servers$$.ping_ok ];then
+  echo "ERROR: no servers could be reached" 1>&2
+  rm -f server$$_*.ping_ok servers$$.ping_ok 2>/dev/null
+  return 1
+ fi
+
+ local N_REACHABLE_SERVERS=`cat servers$$.ping_ok | wc -l`
+ if [ $N_REACHABLE_SERVERS -eq 1 ];then
+  PLATE_SOLVE_SERVER=`head -n1 servers$$.ping_ok`
+ else
+  # Choose a random server among the available ones
+  PLATE_SOLVE_SERVER=`$TIMEOUT_COMMAND 10 sort --random-sort --random-source=/dev/urandom servers$$.ping_ok | head -n1`
+  # If the above fails because sort doesn't understand the '--random-sort' option
+  if [ "$PLATE_SOLVE_SERVER" = "" ];then
+   PLATE_SOLVE_SERVER=`head -n1 servers$$.ping_ok`
+  fi
+ fi # if [ $N_REACHABLE_SERVERS -eq 1 ];then
+
+ # Update the list of available servers
+ PLATE_SOLVE_SERVERS=""
+ while read SERVER ;do
+  PLATE_SOLVE_SERVERS="$PLATE_SOLVE_SERVERS $SERVER"
+ done < servers$$.ping_ok
+ echo "Updated list of available servers: $PLATE_SOLVE_SERVERS" 1>&2
+
+ rm -f server$$_*.ping_ok servers$$.ping_ok
+
+ if [ "$PLATE_SOLVE_SERVER" = "" ];then
+  echo "ERROR choosing the plate solve server" 1>&2
+  return 1
+ else
+  echo "We choose the plate solve server $PLATE_SOLVE_SERVER" 1>&2
+ fi
+ ###################################################
+
+ # Find curl
+ CURL=$(command -v curl)
+ if [ $? -ne 0 ];then
+  echo "ERROR: cannot find curl in PATH" 1>&2
+  return 1
+ else
+  # Set max time for all network communications
+  # note that this is ALSO acomplished by the timeout command before curl
+  # AND at the server side
+  #CURL="$CURL --max-time 299 "
+  # Needed for POST queries to work with cURL
+  CURL="$CURL $VAST_CURL_PROXY --max-time 299 -H 'Expect:'"
+ fi 
+
+ return 0
+}
 
 ########### Main part of the script begins here ###########
 
@@ -295,8 +459,6 @@ else
  fi
 fi
 
-
-
 SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".cat
 
 # Check if vast_summary.log file is present
@@ -367,190 +529,6 @@ fi
 
 #### ####
 
-########### Decide how to reach local or remote installation of Astrometry.net code ###########
-#
-# Decide if we want to use local installation of Astrometry.net software or a remote one
-#ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
-# Check the default Astrometry.net install location
-if [ -d /usr/local/astrometry/bin ];then
- echo "$PATH" | grep --quiet '/usr/local/astrometry/bin'
- if [ $? -ne 0 ];then
-  export PATH=$PATH:/usr/local/astrometry/bin
- fi
-fi
-# Check another default Astrometry.net install location
-if [ -d /usr/share/astrometry/bin ];then
- echo "$PATH" | grep --quiet '/usr/share/astrometry/bin'
- if [ $? -ne 0 ];then
-  export PATH=$PATH:/usr/share/astrometry/bin
- fi
-fi
-
-# if ASTROMETRYNET_LOCAL_OR_REMOTE was not set externally to the script
-if [ -z "$ASTROMETRYNET_LOCAL_OR_REMOTE" ];then
- command -v solve-field &>/dev/null
- if [ $? -eq 0 ];then
-  # Check that this is an executable file
-  if [ -x `command -v solve-field` ];then
-   echo "Using the local copy of Astrometry.net software..."
-   ASTROMETRYNET_LOCAL_OR_REMOTE="local"
-  else
-   echo "WARNING: solve-field is found, but it is not an executable file!"
-   echo "Using a remote server hosting Astrometry.net software..."
-   ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
-  fi
- else
-  echo "Using a remote server hosting Astrometry.net software..."
-  ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
- fi
-else
- echo "environment variable set: ASTROMETRYNET_LOCAL_OR_REMOTE=$ASTROMETRYNET_LOCAL_OR_REMOTE"
-fi
-
-
-#### REMOVE BEFORE PRODUCTION: this is to debug the remote plate solve server access
-#ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
-#ASTROMETRYNET_LOCAL_OR_REMOTE="local"
-####
-
-HOST_WE_ARE_RUNNING_AT=$(hostname)
-
-#PLATE_SOLVE_SERVERS="scan.sai.msu.ru polaris.kirx.net vast.sai.msu.ru"
-#PLATE_SOLVE_SERVERS="scan.sai.msu.ru polaris.kirx.net"
-# I think polaris.kirx.net was excluded becasue it couldn't properly solve plates for NMW-STL ref. frame match fail test
-PLATE_SOLVE_SERVERS="scan.sai.msu.ru"
-
-if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
-
- # Check if we are requested to use a specific plate solve server
- if [ ! -z "$FORCE_PLATE_SOLVE_SERVER" ];then
-  if [ "$FORCE_PLATE_SOLVE_SERVER" != "none" ];then
-   echo "WARNING: using the user-specified plate solve server $FORCE_PLATE_SOLVE_SERVER"
-   PLATE_SOLVE_SERVER="$FORCE_PLATE_SOLVE_SERVER"
-   PLATE_SOLVE_SERVERS="$PLATE_SOLVE_SERVER"
-  fi
- fi
-
-
- ###################################################
- echo -n "Checking if we can reach any plate solve servers... "
- # Decide on which plate solve server to use
- # first - set the initial list of servers
- for FILE_TO_CHECK in server$$_*.ping_ok ;do
-  if [ -f "$FILE_TO_CHECK" ];then
-   rm -f "$FILE_TO_CHECK"
-  fi
- done
- for i in $PLATE_SOLVE_SERVERS ;do
-  # Why? Maybe we want remotely connect to ourselves for a test
-  ## make sure we'll not remotely connect to ourselves
-  #if [ ! -z "$HOST_WE_ARE_RUNNING_AT" ];then
-  # echo "$i" | grep --quiet "$HOST_WE_ARE_RUNNING_AT"
-  # if [ $? -eq 0 ];then
-  #  continue
-  # fi
-  #fi
-  #
-  ping -c1 -n "$i" &>/dev/null && echo "$i" > server$$_"$i".ping_ok &
-  echo -n "$i "
- done
-
- wait
- ### The ping test will not work if we are behind a firewall that doesn't let ping out
- # If no servers could be reached, try to test for this possibility
- ########################################
- for SERVER_PING_OK_FILE in server$$_*.ping_ok ;do
-  if [ -f $SERVER_PING_OK_FILE ];then
-   # OK we could ping at least one server
-   break
-  fi
-  # If we are still here, that means we are either offline or behind a firewall that doesn't let ping out
-  for i in $PLATE_SOLVE_SERVERS ;do
-   # make sure we'll not remotely connect to ourselves
-   if [ ! -z "$HOST_WE_ARE_RUNNING_AT" ];then
-    echo "$i" | grep --quiet "$HOST_WE_ARE_RUNNING_AT"
-    if [ $? -eq 0 ];then
-     continue
-    fi
-   fi
-   #
-   #curl --max-time 10 --silent http://"$i"/astrometry_engine/files/ | grep --quiet 'Parent Directory' && echo "$i" > server$$_"$i".ping_ok &
-   curl $VAST_CURL_PROXY --max-time 10 --silent http://"$i"/lk/ --max-time 10 --silent | grep --quiet '../cgi-bin/lk/process_lightcurve.py' && echo "$i" > server$$_"$i".ping_ok &
-   echo -n "$i "
-  done
-  wait
- done
- ########################################
-
- cat server$$_*.ping_ok > servers$$.ping_ok
-
- echo "
-The reachable servers are:"
- cat servers$$.ping_ok
-
- if [ ! -s servers$$.ping_ok ];then
-  echo "ERROR: no servers could be reached"
-  exit 1
- fi
-
- N_REACHABLE_SERVERS=`cat servers$$.ping_ok | wc -l`
- if [ $N_REACHABLE_SERVERS -eq 1 ];then
-  PLATE_SOLVE_SERVER=`head -n1 servers$$.ping_ok`
- else
-  # Choose a random server among the available ones
-  PLATE_SOLVE_SERVER=`$TIMEOUT_COMMAND 10 sort --random-sort --random-source=/dev/urandom servers$$.ping_ok | head -n1`
-  # If the above fails because sort doesn't understand the '--random-sort' option
-  if [ "$PLATE_SOLVE_SERVER" = "" ];then
-   PLATE_SOLVE_SERVER=`head -n1 servers$$.ping_ok`
-  fi
- fi # if [ $N_REACHABLE_SERVERS -eq 1 ];then
-
- # Update the list of available servers
- PLATE_SOLVE_SERVERS=""
- while read SERVER ;do
-  PLATE_SOLVE_SERVERS="$PLATE_SOLVE_SERVERS $SERVER"
- done < servers$$.ping_ok
- echo "Updated list of available servers: $PLATE_SOLVE_SERVERS"
-
- rm -f server$$_*.ping_ok servers$$.ping_ok
-
-# Moved up
-# # Check if we are requested to use a specific plate solve server
-# if [ ! -z "$FORCE_PLATE_SOLVE_SERVER" ];then
-#  if [ "$FORCE_PLATE_SOLVE_SERVER" != "none" ];then
-#   echo "WARNING: using the user-specified plate solve server $FORCE_PLATE_SOLVE_SERVER"
-#   PLATE_SOLVE_SERVER="$FORCE_PLATE_SOLVE_SERVER"
-#   PLATE_SOLVE_SERVERS="$PLATE_SOLVE_SERVER"
-#  fi
-# fi
-
- if [ "$PLATE_SOLVE_SERVER" = "" ];then
-  echo "ERROR choosing the plate solve server"
-  exit 1
- else
-  echo "We choose the plate solve server $PLATE_SOLVE_SERVER"
- fi
- ###################################################
-
- # Find curl
- CURL=$(command -v curl)
- if [ $? -ne 0 ];then
-  echo "ERROR: cannot find curl in PATH"
-  exit 1
- else
-  # Set max time for all network communications
-  # note that this is ALSO acomplished by the timeout command before curl
-  # AND at the server side
-  #CURL="$CURL --max-time 299 "
-  # Needed for POST queries to work with cURL
-  CURL="$CURL $VAST_CURL_PROXY --max-time 299 -H 'Expect:'"
- fi 
-
-fi # if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
-
-
-
-
 # Now the interesting part...
 
 if [ ! -s "$WCS_IMAGE_NAME" ];then
@@ -560,6 +538,10 @@ if [ ! -s "$WCS_IMAGE_NAME" ];then
  fi
  #
  echo -n "No image with WCS calibration found for $FITSFILE .... "
+ 
+ # Only NOW determine the astrometry method - when we actually need plate solving
+ determine_astrometry_method
+ 
  #IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
  # The stuff below seems to work fine
  CATALOG_NAME=`"$VAST_PATH"lib/fits2cat $FITSFILE`
@@ -631,92 +613,6 @@ fi
   #$TIMEOUT_COMMAND 600 solve-field  --objs 1000 --depth 1-10,11-20,21-30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   #$TIMEOUT_COMMAND 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   #
-  # HACK Hack hack -- manually specify the field center and size
-  # V1716 Sco VSX position 17:22:45.05 -41:37:16.3
-  #$TIMEOUT_COMMAND 600 solve-field --ra 17:22:45.05 --dec -41:37:16.3 --radius 1.0 --objs 100 --depth 1-10,1-20,20-30 --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  #$TIMEOUT_COMMAND 600 solve-field --ra 17:22:45.05 --dec -41:37:16.3 --radius 40.0 --objs 100 --depth 1-10,1-20,20-30,1-100 --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # DART 04:57:09.65 -25:21:48.3
-  #$TIMEOUT_COMMAND 600 solve-field --ra 04:57:09.65 --dec -25:21:48.3 --radius 30.0 --objs 100 --depth 1-10,1-20,20-30 --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # DART 07:45:59.02 +05:38:02.7
-  #$TIMEOUT_COMMAND 600 solve-field --ra 07:45:59.02 --dec +05:38:02.7 --radius 30.0 --pixel-error 3  --objs 100 --depth 1-10,1-20 --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # TCPJ1524 15:24:47.60 -60:59:47.3
-  #$TIMEOUT_COMMAND 600 solve-field --ra 15:24:47.60 --dec -60:59:47.3 --radius 0.1 --objs 100 --depth 1-10,1-20,20-30 --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # 2022-Mar-29 02:00     12:08:38.06 +15:47:02.8
-  #$TIMEOUT_COMMAND 600 solve-field --ra 12:08:38.06 --dec +15:47:02.8 --radius 2.0 --objs 100 --depth 1-10,1-20  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # JWST 2022-Mar-28 02:10     11:59:54.41 +16:16:54.3
-  #$TIMEOUT_COMMAND 600 solve-field --ra 11:59:54.39 --dec +16:16:54.3 --radius 0.2 --objs 100 --depth 1-10,1-20  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # JWST 2022-Mar-21 01:20 A   10 59 27.58 +18 41 14.1
-  #$TIMEOUT_COMMAND 600 solve-field --ra 10:59:27.58 --dec +18:41:14.1 --radius 2.0 --objs 100 --depth 1-20  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # RA 2022 03 21 01:00  08:09:00.099   +06:42:00.95
-  #$TIMEOUT_COMMAND 600 solve-field --ra 08:09:00.099 --dec +06:42:00.95 --radius 2.0 --objs 100 --depth 1-20  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # RA 2022 03 09 02:00  07:14:54.055   +23:20:21.06
-  #$TIMEOUT_COMMAND 600 solve-field --ra 07:14:54.055 --dec +23:20:21.06 --radius 2.0 --objs 100 --depth 1-20  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # RA 2021 03 03 08:58:09.763   -07:32:21.96
-  #$TIMEOUT_COMMAND 600 solve-field --ra 08:58:09.763 --dec -07:32:21.96 --radius 1.0 --objs 100 --depth 1-20  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # JWST 2022-Mar-04 02:00     08:59:30.72 +17:44:20.5
-  #$TIMEOUT_COMMAND 600 solve-field --ra 08:59:30.72 --dec +17:44:20.5 --radius 0.5 --objs 100 --depth 1-20  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # JWST 2022-Mar-09 09:10     09:30:01.30 +18:50:55.0
-  #$TIMEOUT_COMMAND 600 solve-field --ra 09:30:01.30 --dec +18:50:55.0 --radius 0.5 --objs 100 --depth 1-20  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # RA 2021 09 30 09:30  07:59:52.171   +33:51:36.42
-  #$TIMEOUT_COMMAND 600 solve-field --ra 07:59:52.171 --dec +33:51:36.42 --radius 2.0 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # TCP J14420760-1758238 14:42:07.60 -17:58:23.0
-  #$TIMEOUT_COMMAND 600 solve-field --ra 14:42:07.60 --dec -17:58:23.0 --radius 0.1 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # ASASSN-22an
-  #$TIMEOUT_COMMAND 600 solve-field --ra 15:24:49.56 --dec -57:39:52.7 --radius 0.1 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # JWST 2022-01-26
-  #$TIMEOUT_COMMAND 600 solve-field --ra 07:00:49.58 --dec +05:44:15.4 --radius 0.3 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # JWST 2022-01-28
-  #$TIMEOUT_COMMAND 600 solve-field --ra 07:04:04.03 --dec +06:20:21.0 --radius 0.3 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # Fermi trans
-  #$TIMEOUT_COMMAND 600 solve-field --ra 06:14:31.20 --dec +17:13:48.0 --radius 0.4 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # Fermi transient near U Sco 16:23:16.80 -17:52:48.0
-  #$TIMEOUT_COMMAND 600 solve-field --ra 16:23:16.80 --dec -17:52:48.0 --radius 0.8 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # TCP J04023940+4250546
-  #$TIMEOUT_COMMAND 600 solve-field --ra 04:02:39.40 --dec +42:50:54.6 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # Nova Her
-  #$TIMEOUT_COMMAND 600 solve-field --ra 18:57:30.98 --dec +16:53:39.6 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # PNV_J06501960 the dwarf nova
-  #$TIMEOUT_COMMAND 600 solve-field --ra 06:50:19.50 --dec +30:02:43.5 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # BT Mon
-  #$TIMEOUT_COMMAND 600 solve-field --ra 06:43:47.24 --dec -02:01:13.9 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # Gaia21dyi
-  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 17:26:19.38 --dec -33:27:10.66 --radius 0.2  --objs 1000 --depth 1-30,30-50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # j1408
-  #$TIMEOUT_COMMAND 600 solve-field --ra 14:08:26.79 --dec -29:22:21.2 --radius 0.2 --objs 100 --depth 10,20,30  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # PGIR19brv
-  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 21:09:25.53 --dec +48:10:52.2 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # Gaia19dum
-  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 19:52:08.25 --dec 27:42:20.9 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # V3890 Sgr
-  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 18:30:43.28 --dec -24:01:08.9 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # TCP J21040470+4631129
-  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 21:04:04.69 --dec +46:31:13.7 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # RA 2019-06-10 10:06:05.612 +53:15:53.97
-  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 10:06:05.612 --dec +53:15:53.97 --radius 2.0  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --odds-to-solve 1e6 --ra 10:06:05.612 --dec +53:15:53.97 --radius 2.0  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # ASASSN-19cq
-  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 17:47:5.88 --dec -13:31:43 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # Gaia19bcv
-  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 23:43:54.60 --dec +65:33:43.88 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # Gaia18dvy
-  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 20:05:06.02 --dec +36:29:13.52 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # SOAR observations of ASASSN-19gt
-  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --pixel-error 3 --ra 11:40:33.13 --dec -62:50:17.4 --radius 0.2   --objs 50 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # SOAR observations of ASASSN-19cq
-  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 17:47:05.77 --dec -13:31:42.5 --radius 0.2   --objs 50 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # RA tracking at MSU 2019-01-14
-  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 06:25:29.247 --dec -17:23:42.98 --radius 3.0   --objs 50 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # RA tracking at MSU 2020-02-18
-  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --ra 08:32:09.568 --dec +39:14:31.32 --radius 3.0   --objs 50 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # ASASSN-17gs
-  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field  --ra 15:44:19.671 --dec -06:49:15.35 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # CSSJ0458
-  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field  --ra 04:58:39.6 --dec +35:05:43 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # Gaia16aye
-  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field  --ra 19:40:01.14 --dec +30:07:53.36 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  # Gaia16bnz
-  #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field  --ra 03:40:17.98 --dec +49:21:32.15 --radius 0.2  --objs 1000 --depth 10,20,30,40,50,60,70,80  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  #
   # The if below doesn't work, dont know why
   #if [ $? -ge 130 ];then
   # # Exit if solve-field was killed by user
@@ -725,11 +621,6 @@ fi
   if [ $? -ne 0 ];then
    echo "ERROR running solve-field locally. Retrying with a remote plate-solve server."
    ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
-   if [ "$PLATE_SOLVE_SERVER" = "" ];then
-    # Not checking, just assuming this server is reachable
-    PLATE_SOLVE_SERVER="scan.sai.msu.ru"
-   fi
-   CURL="curl $VAST_CURL_PROXY"
    # need the awk post-processing for curl request to work
    IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
   else
@@ -930,10 +821,19 @@ fi
    rm -f out$$.axy out$$.xyls
    # end of clean-up
   fi # solve-field didn't crash
- #fi # if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "local" ];then
+ fi # if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "local" ];then
  ############################################################################
- fi # local
+ 
  if [ "$ASTROMETRYNET_LOCAL_OR_REMOTE" = "remote" ];then
+ 
+  echo "Local astrometry not available or failed, trying remote servers..."
+  
+  # NOW we check for remote server availability - only when we actually need remote servers
+  if ! setup_remote_astrometry; then
+   echo "ERROR: Cannot reach any remote plate solve servers"
+   ERROR_STATUS=2
+   break
+  fi
  
   echo "Using the remote server with Astrometry.net code"
  
@@ -1186,8 +1086,11 @@ if [ $ERROR_STATUS -ne 0 ];then
  exit $ERROR_STATUS
 fi
 
-
- # At this point, we should somehow have a WCS calibrated image named $WCS_IMAGE_NAME
+# If we are in the star identification mode - identify the star!
+if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
+ 
+ # At this point, we should have a WCS calibrated image named $WCS_IMAGE_NAME
+ # Now create the catalog needed for star identification and UCAC5 matching
  echo "Checking if the catalog $SEXTRACTOR_CATALOG_NAME corresponding to the image $WCS_IMAGE_NAME alredy exist and is non-empty..."
  if [ ! -s "$SEXTRACTOR_CATALOG_NAME" ];then
   echo "Catalog $SEXTRACTOR_CATALOG_NAME corresponding to the image $WCS_IMAGE_NAME was not found."
@@ -1233,10 +1136,6 @@ fi
   fi
   
  fi
-
-
-# If we are in the star identification mode - identify the star!
-if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
  # Check if ucac5 plate solution is available
  UCAC5_SOLUTION_NAME="$SEXTRACTOR_CATALOG_NAME".ucac5
  if [ ! -f "$UCAC5_SOLUTION_NAME" ];then
@@ -1452,4 +1351,3 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
 else 
  echo "The plate-solved (WCS-calibrated) image is saved to $WCS_IMAGE_NAME"
 fi # if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
-
