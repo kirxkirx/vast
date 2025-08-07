@@ -313,7 +313,8 @@ int blind_plate_solve_with_astrometry_net( char *fits_image_filename, double app
  char cmdstr[2 * FILENAME_LENGTH + VAST_PATH_MAX];
  char path_to_vast_string[VAST_PATH_MAX];
  get_path_to_vast( path_to_vast_string );
- sprintf( cmdstr, "%sutil/wcs_image_calibration.sh %s %.1lf", path_to_vast_string, fits_image_filename, approximate_field_of_view_arcmin );
+ //sprintf( cmdstr, "%sutil/wcs_image_calibration.sh %s %.1lf", path_to_vast_string, fits_image_filename, approximate_field_of_view_arcmin );
+ sprintf( cmdstr, "%sutil/wcs_image_catalog.sh %s %.1lf", path_to_vast_string, fits_image_filename, approximate_field_of_view_arcmin );
  fprintf( stderr, "Trying to blindly solve the plate...\n%s\n", cmdstr );
  if ( 0 != system( cmdstr ) ) {
   fprintf( stderr, "ERROR solving the plate!\n" );

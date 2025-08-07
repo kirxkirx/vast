@@ -343,8 +343,8 @@ if [ $? -ne 0 ];then
 fi
 
 # Determine working mode: star identification or image WCS calibration
-START_NAME=`basename $0`
-if [ "$START_NAME" = "wcs_image_calibration.sh" ];then
+START_NAME=$(basename $0)
+if [ "$START_NAME" = "wcs_image_calibration.sh" ] || [ "$START_NAME" = "wcs_image_catalog.sh" ];then
  echo "Entering WCS image calibration mode."
  if [ -z "$1" ]; then
   echo "
@@ -513,9 +513,8 @@ if [ -n "$FIELD_OF_VIEW_ARCMIN" ];then
   # If we know FIELD_OF_VIEW_ARCMIN is so small we have no hope to blindly solve it 
   # - try to rely on WCS information that may be already inserted in the image
   if [ ! -f $WCS_IMAGE_NAME ];then
-   # Check if the file already contains a WCS-header
-   echo $SEXTRACTOR -c `grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $FITSFILE 2>/dev/null` `"$VAST_PATH"lib/guess_saturation_limit_main $FITSFILE 2>/dev/null`  $FITSFILE 
-   $SEXTRACTOR -c "$VAST_PATH"`grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $FITSFILE 2>/dev/null` `"$VAST_PATH"lib/guess_saturation_limit_main $FITSFILE 2>/dev/null`  $FITSFILE && echo "Using WCS information from the original image" 1>&2 && cp $FITSFILE $WCS_IMAGE_NAME
+   echo $SEXTRACTOR -c $(grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}') -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $FITSFILE 2>/dev/null` `"$VAST_PATH"lib/guess_saturation_limit_main $FITSFILE 2>/dev/null`  $FITSFILE 
+   $SEXTRACTOR -c "$VAST_PATH"$(grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}') -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $FITSFILE 2>/dev/null` `"$VAST_PATH"lib/guess_saturation_limit_main $FITSFILE 2>/dev/null`  $FITSFILE && echo "Using WCS information from the original image" 1>&2 && cp $FITSFILE $WCS_IMAGE_NAME
    "$VAST_PATH"lib/correct_sextractor_wcs_catalog_using_xy2sky.sh "$WCS_IMAGE_NAME" "$SEXTRACTOR_CATALOG_NAME"
   fi
  fi # if [ $TEST -eq 1 ];then
@@ -1086,7 +1085,7 @@ if [ $ERROR_STATUS -ne 0 ];then
  exit $ERROR_STATUS
 fi
 
-# If we are in the star identification mode - identify the star!
+# Check if a catalog is needed
 if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
  
  # At this point, we should have a WCS calibrated image named $WCS_IMAGE_NAME
@@ -1136,6 +1135,11 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
   fi
   
  fi
+fi # if [ "$START_NAME" != "wcs_image_calibration.sh" ] && [ "$START_NAME" != "wcs_image_catalog.sh" ];then
+
+# If we are in the star identification mode - identify the star!
+if [ "$START_NAME" != "wcs_image_calibration.sh" ] && [ "$START_NAME" != "wcs_image_catalog.sh" ] ;then
+ 
  # Check if ucac5 plate solution is available
  UCAC5_SOLUTION_NAME="$SEXTRACTOR_CATALOG_NAME".ucac5
  if [ ! -f "$UCAC5_SOLUTION_NAME" ];then
