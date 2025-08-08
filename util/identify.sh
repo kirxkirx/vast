@@ -344,7 +344,7 @@ fi
 
 # Determine working mode: star identification or image WCS calibration
 START_NAME=$(basename $0)
-if [ "$START_NAME" = "wcs_image_calibration.sh" ] || [ "$START_NAME" = "wcs_image_catalog.sh" ];then
+if [ "$START_NAME" = "wcs_image_calibration.sh" ] || [ "$START_NAME" = "wcs_image_nocatalog.sh" ];then
  echo "Entering WCS image calibration mode."
  if [ -z "$1" ]; then
   echo "
@@ -1086,7 +1086,7 @@ if [ $ERROR_STATUS -ne 0 ];then
 fi
 
 # Check if a catalog is needed
-if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
+if [ "$START_NAME" != "wcs_image_nocatalog.sh" ];then
  
  # At this point, we should have a WCS calibrated image named $WCS_IMAGE_NAME
  # Now create the catalog needed for star identification and UCAC5 matching
@@ -1135,10 +1135,10 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
   fi
   
  fi
-fi # if [ "$START_NAME" != "wcs_image_calibration.sh" ] && [ "$START_NAME" != "wcs_image_catalog.sh" ];then
+fi # if [ "$START_NAME" != "wcs_image_nocatalog.sh" ];then
 
 # If we are in the star identification mode - identify the star!
-if [ "$START_NAME" != "wcs_image_calibration.sh" ] && [ "$START_NAME" != "wcs_image_catalog.sh" ] ;then
+if [ "$START_NAME" != "wcs_image_calibration.sh" ] && [ "$START_NAME" != "wcs_image_nocatalog.sh" ] ;then
  
  # Check if ucac5 plate solution is available
  UCAC5_SOLUTION_NAME="$SEXTRACTOR_CATALOG_NAME".ucac5
@@ -1354,4 +1354,4 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ] && [ "$START_NAME" != "wcs_im
  fi
 else 
  echo "The plate-solved (WCS-calibrated) image is saved to $WCS_IMAGE_NAME"
-fi # if [ "$START_NAME" != "wcs_image_calibration.sh" ];then
+fi # if [ "$START_NAME" != "wcs_image_calibration.sh" ] && [ "$START_NAME" != "wcs_image_nocatalog.sh" ];then
