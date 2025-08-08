@@ -26965,6 +26965,7 @@ file wwwtest.png | grep --quiet 'PNG image data'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  # most likely Kirill needs to do sshfs at scan: 
+ # /usr/bin/sudo -u ... /usr/bin/sshfs -o allow_other -oHostKeyAlgorithms=+ssh-rsa -oPubkeyAcceptedKeyTypes=+ssh-rsa  ...dataX /var/www/scan.sai.msu.ru/cgi-bin/pa/archive_images/dataX
  # /usr/bin/sudo -u ... /usr/bin/sshfs -o allow_other -oHostKeyAlgorithms=+ssh-rsa -oPubkeyAcceptedKeyTypes=+ssh-rsa  ...dataY /var/www/scan.sai.msu.ru/cgi-bin/pa/archive_images/dataY
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_003"
 fi
