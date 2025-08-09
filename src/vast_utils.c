@@ -1,10 +1,10 @@
-#include <stdio.h> // for fprintf(), fopen(), fclose(), fgets()
-#include <stdlib.h>     // malloc, free, exit codes
-#include <string.h>     // strcmp, strlen, strdup, sprintf, strncpy
-#include <dirent.h>     // DIR, opendir, readdir, closedir, struct dirent
-#include <sys/types.h>  // DIR, struct stat
-#include <sys/stat.h>   // stat, lstat, struct stat, S_ISDIR
-#include <unistd.h>     // unlink, rmdir
+#include <stdio.h>     // for fprintf(), fopen(), fclose(), fgets()
+#include <stdlib.h>    // malloc, free, exit codes
+#include <string.h>    // strcmp, strlen, strdup, sprintf, strncpy
+#include <dirent.h>    // DIR, opendir, readdir, closedir, struct dirent
+#include <sys/types.h> // DIR, struct stat
+#include <sys/stat.h>  // stat, lstat, struct stat, S_ISDIR
+#include <unistd.h>    // unlink, rmdir
 
 #include "vast_utils.h"
 #include "vast_limits.h"
@@ -26,8 +26,8 @@ void print_vast_version( void ) {
 void compiler_version( char *compiler_version_string ) {
  FILE *cc_version_file;
  cc_version_file= fopen( ".cc.version", "r" );
-  if ( NULL == cc_version_file ) {
-    strncpy( compiler_version_string, "unknown compiler\n", 18 );
+ if ( NULL == cc_version_file ) {
+  strncpy( compiler_version_string, "unknown compiler\n", 18 );
   return;
  }
  if ( NULL == fgets( compiler_version_string, 256, cc_version_file ) ) {
@@ -224,7 +224,7 @@ int vast_remove_directory( const char *path ) {
  return error;
 }
 
-int check_if_we_can_allocate_lots_of_memory() {    
+int check_if_we_can_allocate_lots_of_memory() {
  char *big_chunk_of_memory;
  big_chunk_of_memory= malloc( 134217728 * sizeof( char ) ); // try to allocate 128MB
  if ( NULL == big_chunk_of_memory ) {
@@ -433,7 +433,7 @@ void print_TT_reminder( int show_timer_or_quit_instantly ) {
  fprintf( stderr, "\n\n" );
 
  fprintf( stderr, "This warning message will disappear in...   " );
- // sleep for 6 seconds to make sure user saw the message 
+ // sleep for 6 seconds to make sure user saw the message
  for ( n= 5; n > 0; n-- ) {
   sleep( 1 );
   fprintf( stderr, "%d ", n );
@@ -443,7 +443,6 @@ void print_TT_reminder( int show_timer_or_quit_instantly ) {
 
  return;
 }
-
 
 // The function is used to find a star specified with its pixel coordinates
 // in a list of stars (with their X Y coordinates listed in two arrays).
@@ -522,7 +521,7 @@ void make_sure_libbin_is_in_path() {
  return;
 }
 
-int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogfilename ) {                                                    
+int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogfilename ) {
  char fitsfilename_to_test[FILENAME_LENGTH];
  char local_catalogfilename[FILENAME_LENGTH];
  FILE *f;

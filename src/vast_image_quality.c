@@ -1,20 +1,18 @@
 /* -------------  C standard library ------------- */
-#include <stdio.h>      /* FILE, fopen, fclose, fgets, fprintf, stderr        */
-#include <stdlib.h>     /* malloc, free, exit, EXIT_FAILURE                   */
-#include <string.h>     /* strncpy                                            */
-#include <math.h>       /* fabs                                               */
+#include <stdio.h>  /* FILE, fopen, fclose, fgets, fprintf, stderr        */
+#include <stdlib.h> /* malloc, free, exit, EXIT_FAILURE                   */
+#include <string.h> /* strncpy                                            */
+#include <math.h>   /* fabs                                               */
 
 /* -------------  GNU Scientific Library (GSL) ------------- */
-#include <gsl/gsl_sort.h>             /* gsl_sort()                           */
-#include <gsl/gsl_statistics.h>       /* gsl_stats_median_from_sorted_data()  */
-
+#include <gsl/gsl_sort.h>       /* gsl_sort()                           */
+#include <gsl/gsl_statistics.h> /* gsl_stats_median_from_sorted_data()  */
 
 #include "vast_limits.h"
 #include "vast_utils.h"
 #include "vast_image_quality.h"
-#include "variability_indexes.h" // for esimate_sigma_from_MAD_of_sorted_data()
+#include "variability_indexes.h"      // for esimate_sigma_from_MAD_of_sorted_data()
 #include "parse_sextractor_catalog.h" // for parse_sextractor_catalog_string()
-
 
 // This function will try to find the deepest image and set it as the reference one
 // by altering the image order in input_images array

@@ -26,7 +26,7 @@
 
 // defined in autodetect_aperture.c
 // therefore any program that uses guess_saturation_limit() should be linked against autodetect_aperture.o
-//int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogfilename );
+// int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogfilename );
 
 // 1 - default gain value is found in default.sex
 //     will alow the program to change it

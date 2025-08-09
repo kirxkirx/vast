@@ -176,7 +176,7 @@ int robustlinefit( double *datax, double *datay, int n, double *poly_coeff ) {
  gsl_matrix *X, *cov;
  gsl_vector *x, *y, *c;
  double xi;
- 
+
  // reset poly_coeff[]
  poly_coeff[0]= poly_coeff[1]= poly_coeff[2]= poly_coeff[3]= 0.0;
 

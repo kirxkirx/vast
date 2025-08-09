@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> // for strncmp()
-#include <libgen.h> // for basename()
+#include <string.h>    // for strncmp()
+#include <libgen.h>    // for basename()
 #include <unistd.h>    // for getpid() and unlink()
 #include <sys/types.h> // for getpid()
-#include <ctype.h> // for isdigit()
+#include <ctype.h>     // for isdigit()
 #include <time.h>
 
 #include "fitsio.h"

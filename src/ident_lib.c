@@ -2284,18 +2284,18 @@ int Ident( struct PixCoordinateTransformation *struct_pixel_coordinate_transform
  // NEW DEBUG
 #ifdef DEBUG_TRIANGLE_STARMATCH
  /* Write initial triangle sets */
- write_Triangle_array_to_ds9(tr1, MIN(Nt1, 50), star1, "debug_ref_triangles.reg", "green");
- write_Triangle_array_to_ds9(tr2, MIN(Nt2, 50), star2, "debug_cur_triangles.reg", "cyan");
+ write_Triangle_array_to_ds9( tr1, MIN( Nt1, 50 ), star1, "debug_ref_triangles.reg", "green" );
+ write_Triangle_array_to_ds9( tr2, MIN( Nt2, 50 ), star2, "debug_cur_triangles.reg", "cyan" );
 
  // Search for similar triangles
- key= Podobie_debug(struct_pixel_coordinate_transformation, ecv_tr, tr1, Nt1, tr2, Nt2, star1, star2, Number1, Number2);
+ key= Podobie_debug( struct_pixel_coordinate_transformation, ecv_tr, tr1, Nt1, tr2, Nt2, star1, star2, Number1, Number2 );
 
  fprintf( stderr, "    %5d * detected, using %4d/%4d * for reference/current image matching, [DEBUG MODE] ", NUMBER2, Number1, Number2 );
 
  if ( key != 0 ) {
   key= Very_Well_triangle_debug( star1, Number1, star2, Number2, ecv_tr, struct_pixel_coordinate_transformation, &nm, control1 );
  }
- 
+
 #else
  // Search for similar triangles
  key= Podobie( struct_pixel_coordinate_transformation, ecv_tr, tr1, Nt1, tr2, Nt2 );

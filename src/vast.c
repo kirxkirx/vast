@@ -141,7 +141,6 @@ void report_and_handle_too_many_stars_error( void ) {
  return;
 }
 
-
 /* help_msg(const char* progname, int exit_code) - print help */
 void help_msg( const char *progname, int exit_code ) {
  fprintf( stdout, "Usage: %s [options] image1.fit image2.fit ... imageN.fit\n\n", progname );
@@ -346,7 +345,6 @@ void ask_user_to_click_on_moving_object( char **input_images, float *moving_obje
 
  return;
 }
-
 
 /*
 //
@@ -574,7 +572,6 @@ void write_magnitude_calibration_param_log( double *poly_coeff, char *fitsimagen
  return;
 }
 
-
 // save_command_line_to_log_file(int argc, char **argv) - save command line arguments to the log file vast_command_line.log
 void save_command_line_to_log_file( int argc, char **argv ) {
  int i;
@@ -593,7 +590,6 @@ void save_command_line_to_log_file( int argc, char **argv ) {
  fclose( cmdlogfile );
  fprintf( stderr, "\n\n" );
 }
-
 
 // Auxialiary function for magnitude calibration
 void drop_one_point_that_changes_fit_the_most( double *poly_x_external, double *poly_y_external, double *poly_err_external, int *N_good_stars_external, int photometric_calibration_type, int param_use_photocurve ) {
@@ -663,7 +659,7 @@ void drop_one_point_that_changes_fit_the_most( double *poly_x_external, double *
   if ( param_use_photocurve != 0 ) {
    wpolyfit_exit_code= fit_photocurve( poly_x, poly_y, poly_err, N_good_stars, poly_coeff_local_copy, &param_use_photocurve_local_copy, &chi2 );
   } else {
-   //if ( photometric_calibration_type == 0 ) {
+   // if ( photometric_calibration_type == 0 ) {
    if ( photometric_calibration_type == PHOTOMETRIC_LINEAR ) {
     wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff_local_copy, &chi2 );
    } else {
@@ -1060,11 +1056,11 @@ int main( int argc, char **argv ) {
  double reference_image_aperture;
 
  // Variables to set special parameters
- int fitsfile_read_error= 0;          // returned by gettime
- //int photometric_calibration_type= 1; // do not calibrate mags by polynom
- int photometric_calibration_type= PHOTOMETRIC_PARABOLA; // the most flexible polynomial magnitude calibration is the default 
- int param_P= 0;                      // PSF photometry mode (1 - do it; 2 - do usual aperture photometry)
- int param_w= 0;                      // wide comparison window
+ int fitsfile_read_error= 0; // returned by gettime
+ // int photometric_calibration_type= 1; // do not calibrate mags by polynom
+ int photometric_calibration_type= PHOTOMETRIC_PARABOLA; // the most flexible polynomial magnitude calibration is the default
+ int param_P= 0;                                         // PSF photometry mode (1 - do it; 2 - do usual aperture photometry)
+ int param_w= 0;                                         // wide comparison window
  double fixed_star_matching_radius_pix= 0.0;
  // int param_nocalib = 0;  // do not change magnitude scale
  int param_nofind= 0;                // do not run find_candidates
@@ -1376,7 +1372,42 @@ int main( int argc, char **argv ) {
    debug= 1;
    param_nofind= 1;
    break;
-/*
+   /*
+     case 't':
+      cvalue= optarg;
+      if ( 1 == is_file( cvalue ) ) {
+       fprintf( stderr, "Option -%c requires an argument: the desired photometric calibration type!\n", optopt );
+       return EXIT_FAILURE;
+      }
+      photometric_calibration_type= atoi( cvalue );
+      if ( photometric_calibration_type < 0 || photometric_calibration_type > 4 ) {
+       fprintf( stderr, "The argument is out of range: -%c %s \n", optopt, cvalue );
+       return EXIT_FAILURE;
+      }
+      if ( photometric_calibration_type == 0 ) {
+       fprintf( stderr, "opt 't 0': linear magnitude calibration (vary zero-point and slope)\n" );
+      }
+      if ( photometric_calibration_type == 1 ) {
+       fprintf( stderr, "opt 't 1': magnitude calibration with parabola\n" );
+      }
+      if ( photometric_calibration_type == 2 ) {
+       fprintf( stderr, "opt 't 2': zero-point only magnitude calibration (linear with the fixed slope)\n" );
+       apply_position_dependent_correction= 0;
+       param_use_photocurve= 0; // obviously incompatible with photocurve
+      }
+      if ( photometric_calibration_type == 3 ) {
+       // equivalent to '-o'
+       param_nodiscardell= 1; // incompatible with photocurve
+       param_use_photocurve= 1;
+       photometric_calibration_type= 1; // force parabolic magnitude fit (it should be reasonably good). It is needed to remove outliers.
+       fprintf( stderr, "opt 't 3': \"photocurve\" will be used for magnitude calibration!\n" );
+      }
+      if ( photometric_calibration_type == 4 ) {
+       fprintf( stderr, "opt 't 4': robust linear magnitude calibration (vary zero-point and slope)\n" );
+      }
+
+      break;
+   */
   case 't':
    cvalue= optarg;
    if ( 1 == is_file( cvalue ) ) {
@@ -1384,64 +1415,29 @@ int main( int argc, char **argv ) {
     return EXIT_FAILURE;
    }
    photometric_calibration_type= atoi( cvalue );
-   if ( photometric_calibration_type < 0 || photometric_calibration_type > 4 ) {
+   if ( !IS_VALID_PHOTOMETRIC_TYPE( photometric_calibration_type ) ) {
     fprintf( stderr, "The argument is out of range: -%c %s \n", optopt, cvalue );
     return EXIT_FAILURE;
    }
-   if ( photometric_calibration_type == 0 ) {
+
+   /* Much cleaner condition checking */
+   if ( photometric_calibration_type == PHOTOMETRIC_LINEAR ) {
     fprintf( stderr, "opt 't 0': linear magnitude calibration (vary zero-point and slope)\n" );
-   }
-   if ( photometric_calibration_type == 1 ) {
+   } else if ( photometric_calibration_type == PHOTOMETRIC_PARABOLA ) {
     fprintf( stderr, "opt 't 1': magnitude calibration with parabola\n" );
-   }
-   if ( photometric_calibration_type == 2 ) {
+   } else if ( photometric_calibration_type == PHOTOMETRIC_ZEROPOINT ) {
     fprintf( stderr, "opt 't 2': zero-point only magnitude calibration (linear with the fixed slope)\n" );
     apply_position_dependent_correction= 0;
-    param_use_photocurve= 0; // obviously incompatible with photocurve
-   }
-   if ( photometric_calibration_type == 3 ) {
-    // equivalent to '-o'
-    param_nodiscardell= 1; // incompatible with photocurve
+    param_use_photocurve= 0;
+   } else if ( photometric_calibration_type == PHOTOMETRIC_PHOTOCURVE ) {
+    param_nodiscardell= 1;
     param_use_photocurve= 1;
-    photometric_calibration_type= 1; // force parabolic magnitude fit (it should be reasonably good). It is needed to remove outliers.
+    photometric_calibration_type= PHOTOMETRIC_PARABOLA;
     fprintf( stderr, "opt 't 3': \"photocurve\" will be used for magnitude calibration!\n" );
-   }
-   if ( photometric_calibration_type == 4 ) {
+   } else if ( photometric_calibration_type == PHOTOMETRIC_ROBUST_LINEAR ) {
     fprintf( stderr, "opt 't 4': robust linear magnitude calibration (vary zero-point and slope)\n" );
    }
-
    break;
-*/
-  case 't':
-    cvalue = optarg;
-    if (1 == is_file(cvalue)) {
-        fprintf(stderr, "Option -%c requires an argument: the desired photometric calibration type!\n", optopt);
-        return EXIT_FAILURE;
-    }
-    photometric_calibration_type = atoi(cvalue);
-    if (!IS_VALID_PHOTOMETRIC_TYPE(photometric_calibration_type)) {
-        fprintf(stderr, "The argument is out of range: -%c %s \n", optopt, cvalue);
-        return EXIT_FAILURE;
-    }
-    
-    /* Much cleaner condition checking */
-    if (photometric_calibration_type == PHOTOMETRIC_LINEAR) {
-        fprintf(stderr, "opt 't 0': linear magnitude calibration (vary zero-point and slope)\n");
-    } else if (photometric_calibration_type == PHOTOMETRIC_PARABOLA) {
-        fprintf(stderr, "opt 't 1': magnitude calibration with parabola\n");
-    } else if (photometric_calibration_type == PHOTOMETRIC_ZEROPOINT) {
-        fprintf(stderr, "opt 't 2': zero-point only magnitude calibration (linear with the fixed slope)\n");
-        apply_position_dependent_correction = 0;
-        param_use_photocurve = 0;
-    } else if (photometric_calibration_type == PHOTOMETRIC_PHOTOCURVE) {
-        param_nodiscardell = 1;
-        param_use_photocurve = 1;
-        photometric_calibration_type = PHOTOMETRIC_PARABOLA;
-        fprintf(stderr, "opt 't 3': \"photocurve\" will be used for magnitude calibration!\n");
-    } else if (photometric_calibration_type == PHOTOMETRIC_ROBUST_LINEAR) {
-        fprintf(stderr, "opt 't 4': robust linear magnitude calibration (vary zero-point and slope)\n");
-    }
-    break;
   case '9': // use ds9 FITS viewer
    use_ds9_instead_of_pgfv= 1;
    fprintf( stderr, "opt '9': DS9 FITS viewer will be used instead of pgfv\n" );
@@ -1476,15 +1472,15 @@ int main( int argc, char **argv ) {
    break;
   ///
   case 'p':
-   //photometric_calibration_type= 0;
-   photometric_calibration_type = PHOTOMETRIC_LINEAR;
+   // photometric_calibration_type= 0;
+   photometric_calibration_type= PHOTOMETRIC_LINEAR;
    fprintf( stderr, "opt 'p': Polynomial magnitude calibration will *NOT* be used!\n" );
    break;
   case 'o':
    param_nodiscardell= 1; // incompatible with photocurve
    param_use_photocurve= 1;
-   //photometric_calibration_type= 1; // force parabolic magnitude fit (it should be reasonably good). It is needed to remove outliers.
-   photometric_calibration_type = PHOTOMETRIC_PARABOLA;
+   // photometric_calibration_type= 1; // force parabolic magnitude fit (it should be reasonably good). It is needed to remove outliers.
+   photometric_calibration_type= PHOTOMETRIC_PARABOLA;
    fprintf( stderr, "opt 'o': \"photocurve\" will be used for magnitude calibration!\n" );
    break;
   case 'z':
@@ -2075,8 +2071,8 @@ int main( int argc, char **argv ) {
   diffphot_flag= 1;
   fprintf( stderr, "\n\n######## Applying a set of special settings for the simple differential photometry mode ########\n" );
   fprintf( stderr, "diffphot mode: magnitude calibration type is set to zeropoint offset only\n" );
-  //photometric_calibration_type= 2;
-  photometric_calibration_type = PHOTOMETRIC_ZEROPOINT;
+  // photometric_calibration_type= 2;
+  photometric_calibration_type= PHOTOMETRIC_ZEROPOINT;
   fprintf( stderr, "diffphot mode: disabling photocurve support\n" );
   param_use_photocurve= 0;
   fprintf( stderr, "diffphot mode: disabling position-dependent corrections\n" );
@@ -2633,7 +2629,7 @@ int main( int argc, char **argv ) {
    // probably some manual memory free-up should be here
    return EXIT_FAILURE;
   }
-  //photometric_calibration_type= 2;
+  // photometric_calibration_type= 2;
   photometric_calibration_type= PHOTOMETRIC_ZEROPOINT;
   fprintf( stderr, "Resetting the magnitude calibration mode to zero-point offset only!\n\n\n" );
  }
@@ -4260,7 +4256,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
     // Decide how many stars we need for magnitude calibration
     min_number_of_stars_for_magnitude_calibration= MIN( (int)( (double)MIN( NUMBER2, NUMBER3 ) / 3.0 ), MIN_NUMBER_STARS_POLY_MAG_CALIBR );
     // Relax min_number_of_stars_for_magnitude_calibration if we do zero-point only calibration (NMW good reference vs bad new image)
-    //if ( photometric_calibration_type == 2 ) {
+    // if ( photometric_calibration_type == 2 ) {
     if ( photometric_calibration_type == PHOTOMETRIC_ZEROPOINT ) {
      min_number_of_stars_for_magnitude_calibration= MIN( min_number_of_stars_for_magnitude_calibration, MIN_NUMBER_STARS_ZEROPOINT_MAG_CALIB );
     }
@@ -4287,7 +4283,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 
      /// Here we try to weed-out potential variable stars from the magnitude calibration data
 
-     //if ( photometric_calibration_type == 2 ) {
+     // if ( photometric_calibration_type == 2 ) {
      if ( photometric_calibration_type == PHOTOMETRIC_ZEROPOINT ) {
       min_number_of_stars_for_magnitude_calibration= 1; // we can survive with only a single comparison star in this mode
       // Filter the comparison stars for the zero-point-only calibration
@@ -4507,7 +4503,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      } // if( apply_position_dependent_correction==1 && wpolyfit_exit_code==0 ){
 
      // Second pass - remove the remaining outlier using weighted approximation
-     //if ( wpolyfit_exit_code == 0 && photometric_calibration_type != 2 ) {
+     // if ( wpolyfit_exit_code == 0 && photometric_calibration_type != 2 ) {
      if ( wpolyfit_exit_code == 0 && photometric_calibration_type != PHOTOMETRIC_ZEROPOINT ) {
       // Use linear function as the very first approximation
       wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
@@ -4532,7 +4528,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
         else
          exclude_from_6_double_arrays( poly_x, poly_y, poly_err, lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, the_baddest_outlier_number, &N_good_stars );
         // Recompute fit using linear or parabolic function depending on settings
-        //if ( photometric_calibration_type == 0 ) {
+        // if ( photometric_calibration_type == 0 ) {
         if ( photometric_calibration_type == PHOTOMETRIC_LINEAR ) {
          wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
         } else {
@@ -4568,17 +4564,17 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       }
 
       //// Redo the final fit here, just in case
-      //if ( photometric_calibration_type == 0 ) {
-      // wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
-      //} else {
-      // wpolyfit_exit_code= wpolyfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
-      //}
-      // Redo the final fit here, just in case
-      //if ( photometric_calibration_type == 0 ) {
+      // if ( photometric_calibration_type == 0 ) {
+      //  wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
+      // } else {
+      //  wpolyfit_exit_code= wpolyfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
+      // }
+      //  Redo the final fit here, just in case
+      // if ( photometric_calibration_type == 0 ) {
       if ( photometric_calibration_type == PHOTOMETRIC_LINEAR ) {
        fprintf( stderr, "Computing weighted linear magnitude calibration.\n" );
        wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
-      //} else if ( photometric_calibration_type == 4 ) {
+       //} else if ( photometric_calibration_type == 4 ) {
       } else if ( photometric_calibration_type == PHOTOMETRIC_ROBUST_LINEAR ) {
        fprintf( stderr, "Computing robust linear magnitude calibration.\n" );
        wpolyfit_exit_code= robustlinefit( poly_x, poly_y, N_good_stars, poly_coeff );
@@ -4602,7 +4598,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 
      } // if( wpolyfit_exit_code==0 ){
      else {
-      //if ( photometric_calibration_type == 2 ) {
+      // if ( photometric_calibration_type == 2 ) {
       if ( photometric_calibration_type == PHOTOMETRIC_ZEROPOINT ) {
        fprintf( stderr, "Computing zero-point only magnitude calibration.\n" );
        // wpolyfit_exit_code= robustzeropointfit( poly_x, poly_y, MAX( (int)(0.1*N_good_stars), 3), poly_coeff );
@@ -4663,11 +4659,11 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
        // If we use a linear or parabolic calibration curve
        if ( apply_position_dependent_correction == 1 ) {
         // Aplly CCD position dependent correction
-        //STAR2[Pos2[i]].mag= STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[4] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[3] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[2] + STAR2[Pos2[i]].mag * (float)poly_coeff[1] + (float)poly_coeff[0] - ( lin_mag_A * STAR2[Pos2[i]].x_frame + lin_mag_B * STAR2[Pos2[i]].y_frame + lin_mag_C );
+        // STAR2[Pos2[i]].mag= STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[4] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[3] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[2] + STAR2[Pos2[i]].mag * (float)poly_coeff[1] + (float)poly_coeff[0] - ( lin_mag_A * STAR2[Pos2[i]].x_frame + lin_mag_B * STAR2[Pos2[i]].y_frame + lin_mag_C );
         STAR2[Pos2[i]].mag= STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[2] + STAR2[Pos2[i]].mag * (float)poly_coeff[1] + (float)poly_coeff[0] - ( lin_mag_A * STAR2[Pos2[i]].x_frame + lin_mag_B * STAR2[Pos2[i]].y_frame + lin_mag_C );
        } else {
         // Do not Aplly CCD position dependent correction
-        //STAR2[Pos2[i]].mag= STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[4] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[3] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[2] + STAR2[Pos2[i]].mag * (float)poly_coeff[1] + (float)poly_coeff[0];
+        // STAR2[Pos2[i]].mag= STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[4] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[3] + STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[2] + STAR2[Pos2[i]].mag * (float)poly_coeff[1] + (float)poly_coeff[0];
         // 2nd order polynomial (parabola) is already a massive overkill in most situations - let's not support higher order polynomials
         STAR2[Pos2[i]].mag= STAR2[Pos2[i]].mag * STAR2[Pos2[i]].mag * (float)poly_coeff[2] + STAR2[Pos2[i]].mag * (float)poly_coeff[1] + (float)poly_coeff[0];
        }
