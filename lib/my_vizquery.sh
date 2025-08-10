@@ -130,8 +130,8 @@ test -z "$script" && script="asu-tsv"
 
 # Build curl command
 # Note for me: vizquery test fails on boinc with --speed-limit 100 --speed-time 20
-# increasing --speed-time from 30 to 45 in attempt to save the M31 test
-call="curl $VAST_CURL_PROXY -s -X POST --data-binary @$tt --retry 1 --retry-delay 5 --connect-timeout 10 --speed-limit 100 --speed-time 45 http://$site/$cgidir/$script"
+# increasing --speed-time to 100 in attempt to save the M31 test @boinc
+call="curl $VAST_CURL_PROXY -s -X POST --data-binary @$tt --retry 1 --retry-delay 5 --connect-timeout 10 --speed-limit 100 --speed-time 100 http://$site/$cgidir/$script"
 
 # Handle input
 if [ $input_file -gt 0 ]; then	# Input in a file:
