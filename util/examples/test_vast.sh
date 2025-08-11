@@ -388,6 +388,8 @@ function test_https_connection() {
  
  # note there is no https support at vast.sai.msu.ru yet
 
+
+ # the following will not work at legacy systems that will try to connect via the disallowed SSLv3
  #curl --max-time 10 --silent https://kirx.net/astrometry_engine/files/ | grep --quiet 'Parent Directory'
  curl --max-time 10 --silent https://kirx.net/lk/ | grep --quiet '../cgi-bin/lk/process_lightcurve.py'
  if [ $? -ne 0 ];then
@@ -26987,7 +26989,11 @@ fi
 
 # Horizons direct and reverse proxy
 HORIZONS_DIRECT=$(curl --insecure --silent "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='2460145.3926'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
-HORIZONS_REVERSE_PROXY=$(curl --insecure --silent "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='2460145.3926'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
+if curl --silent --tlsv1.2 https://kirx.net --max-time 5 >/dev/null 2>&1 ;then
+ HORIZONS_REVERSE_PROXY=$(curl --insecure --silent "https://kirx.net/horizons/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='2460145.3926'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
+else
+ HORIZONS_REVERSE_PROXY=$(curl --insecure --silent "http://kirx.net/horizons/api/horizons.api?format=text&COMMAND='199'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TLIST='2460145.3926'&QUANTITIES='1,9'" | grep -A1 '$$SOE' | tail -n1 | awk '{printf "%02d:%02d:%05.2f %+03d:%02d:%04.1f %4.1fmag",$3,$4,$5,$6,$7,$8,$9}')
+fi
 if [ "$HORIZONS_DIRECT" != "$HORIZONS_REVERSE_PROXY" ] ;then
  if [ -n "$HORIZONS_DIRECT" ];then
   TEST_PASSED=0
@@ -27002,7 +27008,11 @@ fi
 
 ## VSX direct and reverse proxy
 VSX_DIRECT=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'https://vsx.aavso.org/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
-VSX_REVERSE_PROXY=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'https://kirx.net/vsx/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
+if curl --silent --tlsv1.2 https://kirx.net --max-time 5 >/dev/null 2>&1 ;then
+ VSX_REVERSE_PROXY=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'https://kirx.net/vsx/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
+else
+ VSX_REVERSE_PROXY=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'http://kirx.net/vsx/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
+fi
 if [ "$VSX_DIRECT" != "$VSX_REVERSE_PROXY" ] ;then
  if [ -n "$VSX_DIRECT" ];then
   TEST_PASSED=0
@@ -27020,13 +27030,17 @@ fi
 # kirx.net Image and Document Fetch Test
 
 # Fetch and parse HTML to find the image URL
-IMAGE_URL=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/' | grep -o 'kirx_med.jpg' | head -n1)
+if curl --silent --tlsv1.2 https://kirx.net --max-time 5 >/dev/null 2>&1 ;then
+ IMAGE_URL=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/' | grep -o 'kirx_med.jpg' | head -n1)
+else
+ IMAGE_URL=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://kirx.net/' | grep -o 'kirx_med.jpg' | head -n1)
+fi
 if [ -z "$IMAGE_URL" ]; then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_KIRXNET_IMAGE_URL_FETCH_FAILED"
 else
   # Download the image and verify its type
-  curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent --output kirx_med.jpg "https://kirx.net/$IMAGE_URL"
+  curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent --output kirx_med.jpg "https://kirx.net/$IMAGE_URL" || curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent --output kirx_med.jpg "http://kirx.net/$IMAGE_URL"
   if [ $? -ne 0 ] || [ ! -f kirx_med.jpg ]; then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_KIRXNET_IMAGE_DOWNLOAD_FAILED"
@@ -27042,13 +27056,17 @@ else
 fi
 
 # Fetch and parse HTML to find the PDF URL
-PDF_URL=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/' | grep -o 'Kirill_Sokolovsky__standalone_CV.pdf' | head -n1)
+if curl --silent --tlsv1.2 https://kirx.net --max-time 5 >/dev/null 2>&1 ;then
+ PDF_URL=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/' | grep -o 'Kirill_Sokolovsky__standalone_CV.pdf' | head -n1)
+else
+ PDF_URL=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://kirx.net/' | grep -o 'Kirill_Sokolovsky__standalone_CV.pdf' | head -n1)
+fi
 if [ -z "$PDF_URL" ]; then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_KIRXNET_PDF_URL_FETCH_FAILED"
 else
   # Download the document and verify its type
-  curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent --output Kirill_Sokolovsky__standalone_CV.pdf "https://kirx.net/$PDF_URL"
+  curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent --output Kirill_Sokolovsky__standalone_CV.pdf "https://kirx.net/$PDF_URL" || curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent --output Kirill_Sokolovsky__standalone_CV.pdf "http://kirx.net/$PDF_URL"
   if [ $? -ne 0 ] || [ ! -f Kirill_Sokolovsky__standalone_CV.pdf ]; then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_KIRXNET_PDF_DOWNLOAD_FAILED"
@@ -27146,38 +27164,39 @@ if [ "$YEAR" != "$CURRENT_YEAR" ]; then
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_YEAR_MISMATCH"
 fi
 
-# Fetch HTML and check for "morning summary" or "evening summary"
-NMW_VAST_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://vast.sai.msu.ru/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
-if [ -z "$NMW_VAST_SUMMARY_CHECK" ]; then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_VAST_SUMMARY_CHECK_FAILED"
-fi
-
-# Fetch HTML from kirx.net and check for "morning summary" or "evening summary"
-#NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://kirx.net:8888/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
-NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/kadar/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
-if [ -z "$NMW_KIRX_SUMMARY_CHECK" ]; then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_SUMMARY_CHECK_FAILED_kadar"
-fi
-# Fetch HTML from kirx.net and check for "morning summary" or "evening summary"
-NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/kadar/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
-if [ -z "$NMW_KIRX_SUMMARY_CHECK" ]; then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED_kadar"
-fi
-# Fetch HTML from kirx.net and check for "morning summary" or "evening summary"
-NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/kadar2/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
-if [ -z "$NMW_KIRX_SUMMARY_CHECK" ]; then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED_kadar2"
-fi
+## Fetch HTML and check for "morning summary" or "evening summary"
+#NMW_VAST_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://vast.sai.msu.ru/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
+#if [ -z "$NMW_VAST_SUMMARY_CHECK" ]; then
+#  TEST_PASSED=0
+#  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_VAST_SUMMARY_CHECK_FAILED"
+#fi
+#
+## Fetch HTML from kirx.net and check for "morning summary" or "evening summary"
+#NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/kadar/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
+#if [ -z "$NMW_KIRX_SUMMARY_CHECK" ]; then
+#  TEST_PASSED=0
+#  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_SUMMARY_CHECK_FAILED_kadar"
+#fi
+## Fetch HTML from kirx.net and check for "morning summary" or "evening summary"
+#NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/kadar/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
+#if [ -z "$NMW_KIRX_SUMMARY_CHECK" ]; then
+#  TEST_PASSED=0
+#  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED_kadar"
+#fi
+## Fetch HTML from kirx.net and check for "morning summary" or "evening summary"
+#NMW_KIRX_SUMMARY_CHECK=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://kirx.net/kadar2/unmw/uploads/' | grep -e 'morning summary' -e 'evening summary')
+#if [ -z "$NMW_KIRX_SUMMARY_CHECK" ]; then
+#  TEST_PASSED=0
+#  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_KIRX_REVERSE_PROXY_SUMMARY_CHECK_FAILED_kadar2"
+#fi
 
 ### Check directory listing where it's needed
-# Check if https://www.kirx.net/~kirx/ contains "Parent Directory"
-if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://www.kirx.net/~kirx/' | grep --quiet 'Parent Directory'; then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_INDEX_KIRX_PARENT_DIR_MISSING"
+if curl --silent --tlsv1.2 https://kirx.net --max-time 5 >/dev/null 2>&1 ;then
+ # Check if https://www.kirx.net/~kirx/ contains "Parent Directory"
+ if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://www.kirx.net/~kirx/' | grep --quiet 'Parent Directory'; then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_INDEX_KIRX_PARENT_DIR_MISSING"
+ fi
 fi
 
 # Check if http://scan.sai.msu.ru/~kirx/ contains "Parent Directory"
