@@ -1425,80 +1425,6 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
  return 0;
 }
 
-/**
- * Checks and sanitizes the VAST_CURL_PROXY environment variable.
- * Returns sanitized proxy string if valid, or NULL if invalid or not set.
- * The caller must free the returned string.
- */
-/*
-char *get_sanitized_curl_proxy() {
- const char *proxy_env= getenv( "VAST_CURL_PROXY" );
-
- // If not set, return NULL
- if ( proxy_env == NULL || strlen( proxy_env ) == 0 ) {
-  return NULL;
- }
-
- // Check for reasonable length (arbitrary limit of 512 chars)
- size_t len= strlen( proxy_env );
- if ( len > 512 ) {
-  fprintf( stderr, "WARNING: VAST_CURL_PROXY environment variable is too long (max 512 chars)\n" );
-  return NULL;
- }
-
- // Copy the string so we can safely work with it
- char *proxy_str= strdup( proxy_env );
- if ( proxy_str == NULL ) {
-  fprintf( stderr, "ERROR: Memory allocation failed for proxy string\n" );
-  return NULL;
- }
-
- // Check for required components
- if ( strstr( proxy_str, "--proxy" ) == NULL ||
-      ( strstr( proxy_str, "http" ) == NULL &&
-        strstr( proxy_str, "socks" ) == NULL ) ) {
-  fprintf( stderr, "WARNING: VAST_CURL_PROXY doesn't contain required proxy settings\n" );
-  free( proxy_str );
-  return NULL;
- }
-
- // Check for shell command separators or file paths
- if ( strstr( proxy_str, ";" ) != NULL ||
-      strstr( proxy_str, "&&" ) != NULL ||
-      strstr( proxy_str, "||" ) != NULL ||
-      strstr( proxy_str, "|" ) != NULL ||
-      strstr( proxy_str, ">" ) != NULL ||
-      strstr( proxy_str, "<" ) != NULL ||
-      strstr( proxy_str, "`" ) != NULL ||
-      strstr( proxy_str, "$" ) != NULL ||
-      strstr( proxy_str, "(" ) != NULL ||
-      strstr( proxy_str, ")" ) != NULL ||
-      strstr( proxy_str, "{" ) != NULL ||
-      strstr( proxy_str, "}" ) != NULL ||
-      strstr( proxy_str, "&" ) != NULL ||
-      strstr( proxy_str, "\\" ) != NULL ) {
-  fprintf( stderr, "WARNING: VAST_CURL_PROXY contains forbidden characters\n" );
-  free( proxy_str );
-  return NULL;
- }
-
- // Check for file path indicators
- if ( strstr( proxy_str, "/" ) != NULL &&
-      !( strstr( proxy_str, "http://" ) != NULL ||
-         strstr( proxy_str, "https://" ) != NULL ||
-         strstr( proxy_str, "socks://" ) != NULL ||
-         strstr( proxy_str, "socks4://" ) != NULL ||
-         strstr( proxy_str, "socks5://" ) != NULL ) ) {
-  fprintf( stderr, "WARNING: VAST_CURL_PROXY may contain file paths\n" );
-  free( proxy_str );
-  return NULL;
- }
-
- fprintf( stderr, "solve_plate_with_UCAC5 is using curl proxy settings from VAST_CURL_PROXY\n" );
-
- return proxy_str;
-}
-*/
 
 /**
  * Checks and sanitizes the VAST_CURL_PROXY environment variable.
@@ -1870,13 +1796,13 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  // Initialize the allocated memory to null characters
  memset( base_command, '\0', BASE_COMMAND_LENGTH );
  if ( randChoice == 0 ) {
-  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
+  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
             vizquery_input_filename, catalog_search_parameters->brightest_mag,
             catalog_search_parameters->faintest_mag,
             catalog_search_parameters->search_radius_deg * 3600,
             vizquery_output_filename );
  } else {
-  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
+  snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
             vizquery_input_filename, catalog_search_parameters->brightest_mag,
             catalog_search_parameters->faintest_mag,
             catalog_search_parameters->search_radius_deg * 3600,
@@ -1905,14 +1831,14 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
   // Note the reverse order with respect to randChoice
   if ( randChoice == 0 ) {
    // This block will execute if the first executed command was the first option and it failed
-   sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 2 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
+   sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 2 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
             vizquery_input_filename, catalog_search_parameters->brightest_mag,
             catalog_search_parameters->faintest_mag,
             catalog_search_parameters->search_radius_deg * 3600,
             vizquery_output_filename );
   } else {
    // This block will execute if the first executed command was the second option and it failed
-   sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 2 --max-time 300 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
+   sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 2 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
             vizquery_input_filename, catalog_search_parameters->brightest_mag,
             catalog_search_parameters->faintest_mag,
             catalog_search_parameters->search_radius_deg * 3600,
