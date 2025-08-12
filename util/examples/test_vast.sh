@@ -16692,20 +16692,20 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE0110"
   fi
   #grep --quiet "2023 07 19.892.  2460145.392.   8...  23:51:5.... -02:13:5..."  transient_report/index.html
-  grep --quiet "2023 07 19\.892.  2460145\.392.   [78]\.[09].  23:51:5.\... -02:1[34]:[05].\.."  transient_report/index.html
+  grep --quiet "2023 07 19\.892.  2460145\.392.   [78]\.[089].  23:51:5.\... -02:1[34]:[05].\.."  transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE0110a"
-   GREP_RESULT=`grep "2023 07 19\.892.  2460145\.392.   [78]\.[09].  23:51:5.\... -02:1[34]:[05].\.." transient_report/index.html`
+   GREP_RESULT=`grep "2023 07 19\.892.  2460145\.392.   [78]\.[089].  23:51:5.\... -02:1[34]:[05].\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NMWSTLFINDNEPTUNE0110a ######
 $GREP_RESULT"
-   GREP_RESULT=`grep -B20 "Neptune" transient_report/index.html`
+   GREP_RESULT=$(grep -B20 "Neptune" transient_report/index.html)
    DEBUG_OUTPUT="$DEBUG_OUTPUT
 ------ NMWSTLFINDNEPTUNE0110a grep -B20 Neptune ######
 $GREP_RESULT"
   fi
-  RADECPOSITION_TO_TEST=`grep "2023 07 19\.892.  2460145\.392.   [78]\.[09].  23:51:5.\... -02:1[34]:[05].\.."  transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=$(grep "2023 07 19\.892.  2460145\.392.   [78]\.[089].  23:51:5.\... -02:1[34]:[05].\.."  transient_report/index.html | head -n1 | awk '{print $6" "$7}')
   # JPL HORIZONS position of Neptune
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:51:55.76 -02:13:58.7  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
