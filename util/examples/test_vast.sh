@@ -8047,12 +8047,10 @@ $GREP_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD005_exitcode"
-  fi
-  if [ ! -f wcs_M31-1-001-001_dupe-1.fts ];then
+  elif [ ! -f wcs_M31-1-001-001_dupe-1.fts ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD005_wcs_M31-1-001-001_dupe-1.fts"
-  fi
-  if [ ! -f wcs_M31-1-001-001_dupe-1.fts.cat.ucac5 ];then
+  elif [ ! -f wcs_M31-1-001-001_dupe-1.fts.cat.ucac5 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD005_wcs_M31-1-001-001_dupe-1.fts.cat.ucac5"
   else
@@ -27082,7 +27080,11 @@ else
 fi
 
 # Fetch scan.sai.msu.ru/vast/ HTML and find the year
-YEAR=$(curl --insecure --connect-timeout 10 --retry 2 --max-time 30 --silent 'https://scan.sai.msu.ru/vast/' | grep -o 'developers team, [0-9]\{4\}-[0-9]\{4\}' | tail -n1 | awk -F '-' '{print $2}')
+if curl --silent --tlsv1.2 https://scan.sai.msu.ru/vast/ --max-time 5 >/dev/null 2>&1 ;then
+ YEAR=$(curl --insecure --connect-timeout 10 --retry 2 --max-time 30 --silent 'https://scan.sai.msu.ru/vast/' | grep -o 'developers team, [0-9]\{4\}-[0-9]\{4\}' | tail -n1 | awk -F '-' '{print $2}')
+else
+ YEAR=$(curl --insecure --connect-timeout 10 --retry 2 --max-time 30 --silent 'http://scan.sai.msu.ru/vast/' | grep -o 'developers team, [0-9]\{4\}-[0-9]\{4\}' | tail -n1 | awk -F '-' '{print $2}')
+fi
 CURRENT_YEAR=$(date -u +%Y)
 if [ -n "$YEAR" ] && [ -n "$CURRENT_YEAR" ]; then
  if [ "$YEAR" != "$CURRENT_YEAR" ]; then
@@ -27098,14 +27100,23 @@ fi
 # Scan SAI MSU vast-latest.tar.bz2 Fetch Test
 
 # Fetch and parse HTML to find the redirect URL
-REDIRECT_URL=$(curl --insecure --connect-timeout 10 --retry 2 --max-time 30 --silent 'https://scan.sai.msu.ru/' | grep -o 'meta http-equiv="Refresh" content="0; url=[^"]*' | awk -F'url=' '{print $2}')
+if curl --silent --tlsv1.2 https://scan.sai.msu.ru/vast/ --max-time 5 >/dev/null 2>&1 ;then
+ REDIRECT_URL=$(curl --insecure --connect-timeout 10 --retry 2 --max-time 30 --silent 'https://scan.sai.msu.ru/' | grep -o 'meta http-equiv="Refresh" content="0; url=[^"]*' | awk -F'url=' '{print $2}')
+else
+ REDIRECT_URL=$(curl --insecure --connect-timeout 10 --retry 2 --max-time 30 --silent 'http://scan.sai.msu.ru/' | grep -o 'meta http-equiv="Refresh" content="0; url=[^"]*' | awk -F'url=' '{print $2}')
+fi
 if [ -z "$REDIRECT_URL" ]; then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_SAI_REDIRECT_URL_FETCH_FAILED"
 else
   # Fetch the redirected URL and parse it to find the file URL
-  FILE_URL=$(curl --insecure --connect-timeout 10 --retry 2 --max-time 30 --silent "https://scan.sai.msu.ru/$REDIRECT_URL" | grep 'href' | grep 'vast-latest.tar.bz2' | awk -F'href' '{print $2}' | awk -F'"' '{print $2}' | head -n1)
-  FILE_URL="https://scan.sai.msu.ru/$REDIRECT_URL$FILE_URL"
+  if curl --silent --tlsv1.2 https://scan.sai.msu.ru/vast/ --max-time 5 >/dev/null 2>&1 ;then
+   FILE_URL=$(curl --insecure --connect-timeout 10 --retry 2 --max-time 30 --silent "https://scan.sai.msu.ru/$REDIRECT_URL" | grep 'href' | grep 'vast-latest.tar.bz2' | awk -F'href' '{print $2}' | awk -F'"' '{print $2}' | head -n1)
+   FILE_URL="https://scan.sai.msu.ru/$REDIRECT_URL$FILE_URL"
+  else
+   FILE_URL=$(curl --insecure --connect-timeout 10 --retry 2 --max-time 30 --silent "http://scan.sai.msu.ru/$REDIRECT_URL" | grep 'href' | grep 'vast-latest.tar.bz2' | awk -F'href' '{print $2}' | awk -F'"' '{print $2}' | head -n1)
+   FILE_URL="http://scan.sai.msu.ru/$REDIRECT_URL$FILE_URL"
+  fi
   if [ -z "$FILE_URL" ]; then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_SAI_FILE_URL_FETCH_FAILED"
@@ -27135,13 +27146,17 @@ if [ -z "$REDIRECT_CHECK" ]; then
 fi
 
 # Fetch HTML and find image URL
-IMAGE_URL=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://scan.sai.msu.ru/nmw/' | grep 'time_distribution.png' | head -n1 | awk -F'src=' '{print $2}' | awk -F'"' '{print $2}')
+if curl --silent --tlsv1.2 https://scan.sai.msu.ru/vast/ --max-time 5 >/dev/null 2>&1 ;then
+ IMAGE_URL=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://scan.sai.msu.ru/nmw/' | grep 'time_distribution.png' | head -n1 | awk -F'src=' '{print $2}' | awk -F'"' '{print $2}')
+else
+ IMAGE_URL=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://scan.sai.msu.ru/nmw/' | grep 'time_distribution.png' | head -n1 | awk -F'src=' '{print $2}' | awk -F'"' '{print $2}')
+fi
 if [ -z "$IMAGE_URL" ]; then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_IMAGE_URL_FETCH_FAILED"
 else
   # Download the image and verify its type
-  curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent --output time_distribution.png "https://scan.sai.msu.ru/nmw/$IMAGE_URL"
+  curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent --output time_distribution.png "https://scan.sai.msu.ru/nmw/$IMAGE_URL" || curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent --output time_distribution.png "http://scan.sai.msu.ru/nmw/$IMAGE_URL"
   if [ $? -ne 0 ] || [ ! -f time_distribution.png ]; then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_IMAGE_DOWNLOAD_FAILED"
@@ -27157,7 +27172,11 @@ else
 fi
 
 # Fetch HTML and find the year
-YEAR=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://scan.sai.msu.ru/nmw/' | grep -o 'NMW survey team, [0-9]\{4\}-[0-9]\{4\}' | tail -n1 | awk -F '-' '{print $2}')
+if curl --silent --tlsv1.2 https://scan.sai.msu.ru/vast/ --max-time 5 >/dev/null 2>&1 ;then
+ YEAR=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://scan.sai.msu.ru/nmw/' | grep -o 'NMW survey team, [0-9]\{4\}-[0-9]\{4\}' | tail -n1 | awk -F '-' '{print $2}')
+else
+ YEAR=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://scan.sai.msu.ru/nmw/' | grep -o 'NMW survey team, [0-9]\{4\}-[0-9]\{4\}' | tail -n1 | awk -F '-' '{print $2}')
+fi
 CURRENT_YEAR=$(date -u +%Y)
 if [ "$YEAR" != "$CURRENT_YEAR" ]; then
   TEST_PASSED=0
@@ -27212,7 +27231,7 @@ if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http
 fi
 
 # Check if https://scan.sai.msu.ru/lk/source/ contains "Parent Directory"
-if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://scan.sai.msu.ru/lk/source/' | grep --quiet 'Parent Directory'; then
+if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://scan.sai.msu.ru/lk/source/' | grep --quiet 'Parent Directory'; then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_INDEX_LK_SOURCE_PARENT_DIR_MISSING"
 fi
@@ -28403,8 +28422,10 @@ else
 fi
 util/comets.sh 2460595.28063657 > comets.txt
 if [ $? -ne 0 ];then                    
- TEST_PASSED=0                          
- FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_COMETS_MPCCODE_exit_code_cometssh__$(cat comets_header.txt)"
+ TEST_PASSED=0
+ COMETS_HEADER=$(cat comets_header.txt)
+ COMETS_HEADER="${COMETS_HEADER// /_}"
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_COMETS_MPCCODE_exit_code_cometssh__$COMETS_HEADER"
 elif [ ! -s comets.txt ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_COMETS_MPCCODE_EMPTY"
