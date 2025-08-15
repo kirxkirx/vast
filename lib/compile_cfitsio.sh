@@ -93,11 +93,11 @@ fi
 if [ ! -f .libs/libcfitsio.a ];then
  echo "ERROR: no .libs/libcfitsio.a"
  COMPILATION_ERROR=1
-fi
-if [ ! -s .libs/libcfitsio.a ];then
+elif [ ! -s .libs/libcfitsio.a ];then
  echo "ERROR: empty .libs/libcfitsio.a"
  COMPILATION_ERROR=1
 fi
+
 if [ $COMPILATION_ERROR -eq 0 ];then
  cp -v .libs/libcfitsio.a "$TARGET_DIR"
  if [ $? -ne 0 ];then

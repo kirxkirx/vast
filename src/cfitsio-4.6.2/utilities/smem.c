@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <memory.h>
 #include <string.h>
-#ifdef __APPLE__
 #include <stdlib.h>
-#else
-#include <malloc.h>
-#endif
+//#ifdef __APPLE__
+//#include <stdlib.h>
+//#else
+//#include <malloc.h>
+//#endif
 #include "fitsio.h"     /* needed to define LONGLONG */
 #include "drvrsmem.h"   /* uses LONGLONG */
 
