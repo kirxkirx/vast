@@ -1,0 +1,58 @@
+name: Create Release Archive
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Extract tag name
+      id: tag
+      run: echo "tag_name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      
+    - name: Create source archive
+      run: |
+        # Extract tag name without 'v' prefix if present
+        TAG_NAME="${{ steps.tag.outputs.tag_name }}"
+        
+        # Create directory with the desired name
+        ARCHIVE_NAME="vast-${TAG_NAME}"
+        mkdir -p "${ARCHIVE_NAME}"
+        
+        # Copy all files except .git directory
+        rsync -av --exclude='.git' --exclude="${ARCHIVE_NAME}" . "${ARCHIVE_NAME}/"
+        
+        # Create tar.bz2 archive
+        tar -cjf "${ARCHIVE_NAME}.tar.bz2" "${ARCHIVE_NAME}"
+        
+        # Verify archive structure
+        echo "Archive contents:"
+        tar -tjf "${ARCHIVE_NAME}.tar.bz2" | head -10
+        
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.tag.outputs.tag_name }}
+        release_name: vast-${{ steps.tag.outputs.tag_name }}
+        draft: false
+        prerelease: false
+        
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./vast-${{ steps.tag.outputs.tag_name }}.tar.bz2
+        asset_name: vast-${{ steps.tag.outputs.tag_name }}.tar.bz2
+        asset_content_type: application/x-bzip2

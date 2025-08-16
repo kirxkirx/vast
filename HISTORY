@@ -1,7 +1,15 @@
-	:vast-1.0rc88
+16 Aug 2025: vast-1.0rc88
 	* Fixed broken manual magnitude calibration that is launched as 'util/magnitude_calibration.sh' 
 	(with no filter name as an argument) or './pgfv calib' The reference image will be displayed and the user 
 	will be prompted to click on one ore multiple stars and specify their magnitude(s) in the terminal window.
+	* New frame-to-frame magnitude calibration mode - robust linear fit. Should be safe for all CCD/CMOS 
+	(not highly non-linear) detectors. It's useful for cases where you don't want the flexibility of the default 
+	polynomial magnitude calibration, but feel like the bright stars overweight the weighted linear fit.
+	You may activate robust linear magnitude calibration by adding command line option '--type 4':
+	'./vast --type 4 /path/to/my/images/*.fits'
+	It's best to try various magnitude calibration options and see what works best for your data:
+	with all the other processing parameters being fixed, which magnitude calibration type minimizes 
+	lightcurve scatter for your target star or maybe for the brightest stars in the field?
 	* Changed the default histogram cut from 99.5% to 99.0% to make 
 	all './pgfv' fits viewer images slightly brighter.
 	* VaST now properly understands fractions of a second in the observation time string. 
