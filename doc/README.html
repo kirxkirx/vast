@@ -34,7 +34,21 @@ function toggleElement(id)
 </script>
 
 
-<table align="center" width="50%" border="0" class="main">
+<style>
+  table.main {
+    table-layout: fixed;
+    width: 60%;
+    max-width: 950px;
+    margin: 0 auto; /* Centering the table */
+    box-sizing: border-box;
+  }
+  .main img {
+    max-width: 100%;
+    height: auto;
+  }
+</style>
+
+<table align="center" class="main" border="0">
 <tr><td bgcolor="#aaaadd">
 
 <div align="center">
@@ -49,8 +63,9 @@ on a series of astronomical images</h2>
 
 
 <p>
-<b>See the <a href="http://adsabs.harvard.edu/abs/2018A%26C....22...28S"><tt>VaST</tt> paper</a>
-for a detailed description of the code. The latest version of code is <a href="https://github.com/kirxkirx/vast">available on Github</a>.</b>
+<b>
+For a detailed description of the code, please see the <a href="http://adsabs.harvard.edu/abs/2018A%26C....22...28S"><tt>VaST</tt> paper</a>. 
+The latest version of the code is <a href="https://github.com/kirxkirx/vast">available on GitHub</a>.</b>
 </p>
 
 <dl>
@@ -70,7 +85,7 @@ for a detailed description of the code. The latest version of code is <a href="h
 
 <div align="right">
 Current quasi-stable version: <a href="https://github.com/kirxkirx/vast/releases"><img border="0" src="https://img.shields.io/github/v/release/kirxkirx/vast.svg?sort=semver" alt="version badge"></img></a><br>
-Automated testing status: 
+Automated tests: 
 <img border="0" src="https://github.com/kirxkirx/vast/actions/workflows/build_and_test_ubuntu.yml/badge.svg" alt="build and test ubuntu status"></img>
 <img border="0" src="https://github.com/kirxkirx/vast/actions/workflows/build_and_test_macos.yml/badge.svg" alt="build and test macOS status"></img>
 <img border="0" src="https://github.com/kirxkirx/vast/actions/workflows/build_only_freebsdvm.yml/badge.svg" alt="build FreeBSD status"></img>
@@ -98,19 +113,18 @@ with known magnitudes in the field of view, all magnitudes can be later
 converted to the standard system.</p>
 
 <p>Unlike software based on the image subtraction method, <tt>VaST</tt> can be used in
-case of unstable PSF (e.g., bad guiding or with digitized wide-field photographic images).
-<tt>VaST</tt> is not tied up to any external catalog and WCS (if operated in its main
+cases of unstable PSF (e.g., bad guiding or with digitized wide-field photographic images).
+<tt>VaST</tt> is not tied to any external catalog and WCS (if operated in its main
 "variable star search" mode), so it can be used on images taken with a telephoto lens as well as with a 2.6-m class telescope.
 If needed, absolute astrometric calibration may be performed through an interface to
-the <a href="http://astrometry.net/">Astrometry.net</a> code allowing one to
+the <a href="http://astrometry.net/">Astrometry.net</a> code, allowing one to
 perform automatic magnitude scale calibration and variable star identification
 (however, this will work only if the input images are large enough to
 perform blind plate solution).</p>
 
 <p><tt>VaST</tt> is written in C (and partly in BASH scripting language) for 
-<a href="http://en.wikipedia.org/wiki/Linux"><tt>GNU/Linux</tt></a>
-operating system. The it is also tested on <tt>macOS</tt> 
-and <a href="https://www.freebsd.org/"><tt>FreeBSD</tt></a>.
+<a href="http://en.wikipedia.org/wiki/Linux"><tt>GNU/Linux</tt></a> operating system. 
+It is also tested on <tt>macOS</tt> and <a href="https://www.freebsd.org/"><tt>FreeBSD</tt></a>.
 The best practical way to run <tt>VaST</tt> under 
 <tt>Windows</tt> is through <tt>Linux</tt> installed 
 in a virtual machine (e.g. 
@@ -125,7 +139,7 @@ but one will need to set up a working <tt>X window</tt> system on <tt>Windows</t
 before attempting to run <tt>VaST</tt> interactively.
 <tt>VaST</tt> is successfully tested on <tt>Raspberry Pi 4</tt> (controlled
 by <tt>Raspberry Pi OS</tt> aka <tt>Raspbian</tt>).
-On all the supported systems <tt>VaST</tt> is able to
+On all the supported systems, <tt>VaST</tt> is able to
 utilize multiple processing cores to perform most of its computations in
 parallel.</p>
 
@@ -191,31 +205,35 @@ The lightcurve inspection program <div class="code">./lc</div>
  basic skills in using one of these operating systems through a command line interface (terminal)</li>
  <li><a href="http://gcc.gnu.org/">GCC</a> (including Fortran and C++ compilers), comes with your <tt>GNU/Linux</tt>
  distribution. Note that you need to install GCC on <tt>macOS</tt> and <tt>FreeBSD</tt> as
- <tt>VaST</tt> will not work with the native clang compiler.</li>
- <li><a href="http://www.gnu.org/software/bc/">BC</a> calculator (can be found in your <tt>GNU/Linux</tt> distribution)</li>
+ <tt>VaST</tt> will not work with the native <tt>clang</tt> compiler.</li>
+ <li>X11 header files (needed for PGPLOT graphics library). 
+Depending on your distribution, you may need to install a development package: 
+ <ul> 
+  <li>Ubuntu/Debian: <tt>libx11-dev</tt></li> 
+  <li>Fedora/CentOS/RHEL/AlmaLinux: <tt>libX11-devel</tt></li> 
+  <li>openSUSE: <tt>libX11-devel</tt></li> 
+  <li>Mageia: <tt>libx11-devel</tt></li> 
+  <li>Arch Linux/Manjaro: <tt>libx11</tt></li> 
+  <li>Gentoo: <tt>x11-libs/libX11</tt></li> 
+  <li>macOS: Install <a href="https://www.xquartz.org/">XQuartz</a></li> 
+ </ul> 
+ </li>
  <li><a href="http://curl.haxx.se/">cURL</a> (can be found in your <tt>GNU/Linux</tt> distribution)</li>
  <li><a href="http://astromatic.iap.fr/software/sextractor/"><tt>SExtractor</tt></a>. If <tt>SExtractor</tt> is not installed system-wide, <tt>VaST</tt> will use
- the built-in <tt>SExtractor</tt>.</li>
- </ul>
+ its own copy.</li>
+</ul>
 
 <p>
 <b>The best way to get VaST is to clone the current development version from  
 <a href="https://github.com/kirxkirx/vast">GitHub</a>:</b>
 <div class="code">git clone https://github.com/kirxkirx/vast.git</div><br>
-Alternatively, you may download the quasi-stable version of <tt>VaST</tt> from this
-page 
-<b>via 
-<a href="ftp://scan.sai.msu.ru/pub/software/vast/vast-latest.tar.bz2">ftp</a>
-or
-<a href="vast-latest.tar.bz2">http</a> (~15M).</b>
-You may also want to download the sample data set
-(<a href="ftp://scan.sai.msu.ru/pub/software/vast/sample_data.tar.bz2">ftp</a>
-or <a href="sample_data.tar.bz2">http</a>, 24M).
+Alternatively, you may download the <b>stable version of <tt>VaST</tt> 
+<a href="https://github.com/kirxkirx/vast/releases"><img border="0" src="https://img.shields.io/github/v/release/kirxkirx/vast.svg?sort=semver" alt="version badge"></img></a> 
+from <a href="vast-latest.tar.bz2">this page</a></b> (~22M). 
+You may also want to download the <b>sample data</b> set from <a href="sample_data.tar.bz2">here</a>, 24M).
 </p>
 
-The older versions of <tt>VaST</tt> are available via 
-<a href="ftp://scan.sai.msu.ru/pub/software/vast">ftp</a> or 
-<a href="http://scan.sai.msu.ru/pub/software/vast">http</a>.<br/><br/>
+The older versions of <tt>VaST</tt> may be found <a href="http://scan.sai.msu.ru/pub/software/vast">here</a>.<br/><br/>
 
 
 
@@ -236,17 +254,9 @@ At this point <tt>VaST</tt> should be ready for work.</p>
 <p>If compilation fails, read the output carefully. Most probably it
 can't find some necessary libraries, header files or external programs. 
 Please install the required programs and try to compile <tt>VaST</tt> again.
-If you are sure that the needed libraries and headers are installed in the system
-but the compiler cannot find them, try to open Makefile with a 
-text editor and change the libraries locations to match your environment.
-Very old versions of <tt>VaST</tt> require 
-<a href="http://www.astro.caltech.edu/~tjp/pgplot/">PGPLOT</a>, 
-<a href="http://heasarc.gsfc.nasa.gov/fitsio/">CFITSIO</a> 
-and <a href="http://www.gnu.org/software/gsl/">GSL</a> 
-libraries to be installed in your system, 
-but most likely you don't want to use such an old <tt>VaST</tt> version.</p>
+</p>
 
-Special note for <b>Ubuntu</b> users! The following installation procedure is recommended:
+The following installation procedure is recommended for <b>Ubuntu</b>:
 <ul>
 <li>Install these libraries from pre-compiled Ubuntu packages (same should
 work for Linux Mint):
@@ -279,15 +289,14 @@ and quasi-stable version).</li>
 <li>Compile <tt>VaST</tt> by running <div class="code">make</div></li>
 </ul>
 
-Special note for <b><tt>macOS</tt></b> users: <tt>VaST</tt> is tested
-on <tt>macOS 12.6 'Monterey'</tt> with Xcode. The additional packages   
+To compile <tt>VaST</tt> on <b><tt>macOS</tt></b> you'll need Xcode, 
 <a href="https://www.xquartz.org/">XQuartz</a>
 and
 <a href="https://www.macports.org/">MacPorts</a> 
 or
 <a href="https://brew.sh/">Homebrew</a>
-need to be installed in the system
-from the manually-downloaded .pkg files, while
+to be installed in the system. You may nedd to manually downloaded .pkg
+files. The remaining software 
 gcc, gfortran, g++, wget, X11 library and libpng installed through 
 <a href="https://www.macports.org/">MacPorts</a>
 using the following terminal command:
@@ -324,7 +333,7 @@ gfortran. Note that you don't need to modify PATH permanently by editing
 before running 'make'.
 <br/>
 <br/>
-Special note for <b><tt>FreeBSD</tt></b> users: <tt>VaST</tt> scripts may fail to compile
+On <b><tt>FreeBSD</tt></b> <tt>VaST</tt> install scripts may fail to compile
 the internal copy of <a href="http://www.astro.caltech.edu/~tjp/pgplot/">PGPLOT</a>
 library. If that happens, please install <a href="http://www.astro.caltech.edu/~tjp/pgplot/">PGPLOT</a>
 system-wide with the command (as root):
@@ -684,31 +693,45 @@ You may want to edit these file to match your own setup.
 </ul></p>
 </br>
 
-
-<h2>Some switches that you may use with <tt>VaST</tt></h2>
+<h2><tt>VaST</tt> command line options</h2> 
 "-P" &mdash; perform PSF-fitting photometry with <a href="http://www.astromatic.net/software/sextractor"><tt>SExtractor</tt></a> and 
-<a href="http://www.astromatic.net/software/psfex">PSFEx</a>.<br/>
-"-9" &mdash; use <a href="http://hea-www.harvard.edu/RD/ds9/">DS9</a> instead of
-VaST's own viewer pgfv to view FITS files.<br/>
-"-u" &mdash; always assume UTC time system, don't perform conversion to TT.<br/>
-"-k" &mdash; force VaST to ignore the "JD" keyword in FITS headers.<br/>
-"-x2" &mdash; accept stars with non-zero <tt>SExtractor</tt> flag: 2 - blended stars,
-4 - saturated stars, 99 - accept everything.<br/>
-"-e" &mdash; failsafe mode: only stars detected on the reference frame
-will be processed.<br/>
-"-p" &mdash; tell VaST that it deals with a linear detector. This flag is useful for well
-calibrated CCD images, but for some CCD images it is better not to use it.
-Test what works best for your particular dataset!<br/>
-"-o" &mdash; tell VaST that it deals with a digitized photographic plate.
-The magnitude calibration between frames will be done using the relation
-proposed by <a href="http://adsabs.harvard.edu/abs/2005MNRAS.362..542B">Bacher et al. (2005, MNRAS, 362, 542)</a>.<br/>
-"-l" &mdash; perform sigma-filtering of lightcurves.<br/>
-"-r" &mdash; assume that images are not rotated with respect to each other by more than 3 degrees.<br/>
+<a href="http://www.astromatic.net/software/psfex">PSFEx</a>.<br/> 
+"-9" &mdash; use <a href="http://hea-www.harvard.edu/RD/ds9/">DS9</a> instead of VaST's own viewer pgfv to view FITS files.<br/> 
+"-u" or "--UTC" &mdash; always assume UTC time system, don't perform conversion to TT.<br/> 
+"-k" &mdash; ignore "JD" keyword in FITS headers (time of observation will be taken from usual keywords instead).<br/> 
+"-K" &mdash; ignore "DATE-OBS" keyword in FITS headers (VaST will try to derive observing time from other keywords).<br/> 
+"-x" or "--maxsextractorflag" &mdash; specify maximum acceptable SExtractor flag (e.g., "-x 3" accepts blended stars).<br/> 
+"-f" or "--nofind" &mdash; skip running './find_candidates' automatically after processing.<br/> 
+"-e" or "--failsafe" &mdash; only stars detected on the reference frame will be processed.<br/> 
+"-t" or "--type" &mdash; specify the frame-to-frame magnitude calibration type: 
+0 - linear magnitude calibration (vary zero-point and slope) 
+1 - magnitude calibration with parabola (default) 
+2 - zero-point only magnitude calibration (linear with fixed slope) 
+3 - "photocurve" magnitude calibration (useful for photographic data).<br/> 
+"-p" or "--poly" &mdash; equivalent to '-t 0' (linear magnitude calibration).<br/> 
+"-o" or "--photocurve" &mdash; equivalent to '-t 3', use "photocurve" formulas from 
+<a href="http://adsabs.harvard.edu/abs/2005MNRAS.362..542B">Bacher et al. (2005, MNRAS, 362, 542)</a> for photographic data calibration.<br/> 
+"-r" or "--norotation" &mdash; assume input images are not rotated by more than a few deg. w.r.t. the reference one.<br/> 
+"-l" or "--nodiscardell" &mdash; do NOT discard images with elliptical stars (bad tracking).<br/> 
+"-a" or "--aperture" &mdash; use fixed aperture (e.g., "-a 5.0" for 5 pixels diameter).<br/> 
+"-b" or "--matchstarnumber" &mdash; specify number of reference stars for image matching (e.g., "-b 200").<br/> 
+"-y" or "--sysrem" &mdash; perform SysRem iterations (e.g., "-y 3" for 3 iterations).<br/> 
+"-j" or "--position_dependent_correction" &mdash; use position-dependent magnitude correction (recommended for wide-field images).<br/> 
+"-J" or "--no_position_dependent_correction" &mdash; do NOT use position-dependent magnitude correction.<br/> 
+"-g" or "--guess_saturation_limit" &mdash; try to guess saturation limit from brightest pixels.<br/> 
+"-G" or "--no_guess_saturation_limit" &mdash; do NOT try to guess saturation limit.<br/> 
+"-1" or "--magsizefilter" &mdash; filter-out sources that appear too large or too small for their magnitude.<br/> 
+"-2" or "--nomagsizefilter" &mdash; do NOT filter-out sources based on magnitude-size relationship.<br/> 
+"-3" or "--selectbestaperture" &mdash; select the measurement aperture that minimizes lightcurve scatter for each object.<br/> 
+"-4" or "--noerrorsrescale" &mdash; disable photometric error rescaling.<br/> 
+"-5" or "--starmatchraius" &mdash; use a fixed-radius (in pixels) comparison circle for star matching.<br/> 
+"-6" or "--notremovebadimages" &mdash; disable automated identification of bad images.<br/> 
+"-7" or "--autoselectrefimage" &mdash; automatically select the deepest image as the reference image.<br/> 
+"-8" or "--excluderefimage" &mdash; do not use the reference image for photometry.<br/> 
+"--movingobject" &mdash; manually specify moving object position at each image (for comet/asteroid/space junk photometry).<br/>
+<br/>
 To get the full list of the available command line arguments run:
-<div class="code">   
- ./vast -h
-</div>
-
+<div class="code"> ./vast -h </div>
 <br/>
 
 
@@ -881,6 +904,106 @@ This mailing list is really low-traffic.
 <h2><a name="news"></a>Release notes</h2>
 
 <pre>
+16 Aug 2025: vast-1.0rc88
+
+ * Fixed broken manual magnitude calibration that is launched as 'util/magnitude_calibration.sh' 
+(with no filter name as an argument) or './pgfv calib' The reference image will be displayed and the user 
+will be prompted to click on one ore multiple stars and specify their magnitude(s) in the terminal window.
+
+ * New frame-to-frame magnitude calibration mode - robust linear fit. Should be safe for all CCD/CMOS 
+(not highly non-linear) detectors. It's useful for cases where you don't want the flexibility of the default 
+polynomial magnitude calibration, but feel like the bright stars overweight the weighted linear fit.
+You may activate robust linear magnitude calibration by adding command line option '--type 4':
+'./vast --type 4 /path/to/my/images/*.fits'
+It's best to try various magnitude calibration options and see what works best for your data:
+with all the other processing parameters being fixed, which magnitude calibration type minimizes 
+lightcurve scatter for your target star or maybe for the brightest stars in the field?
+
+ * Changed the default histogram cut from 99.5% to 99.0% to make 
+all './pgfv' fits viewer images slightly brighter.
+
+ * VaST now properly understands fractions of a second in the observation time string. 
+The lightcurve files produced by VaST now display JD with 8 decimal places corresponding 
+to 0.00000001*86400 = 8.6400e-04 sec in order to avoid any rounding errors in timestamping 
+short exposures. Of course, the JDs are only as accurate as the observing time information 
+written to FITS image header by the computer that is controlling the camera.
+
+ * Pressing 'F' keyboard key ("Fast ID") in the lightcurve viewer './lc' will start fast known variable star
+identification script 'util/identify_justname.sh' that will return only the name of the known variable.
+The script will print no name if it could not recognize the object as a known variable star.
+This is useful for quickly checking if a variable is a known one, before running a full check with
+'U' key that starts the slower 'util/identify.sh' script.
+
+ * 'util/cute_lc_fullJD outNNNNN.dat' will output a nicely formatted "JD mag err" lightcurve file
+with more decimal places than the old 'util/cute_lc outNNNNN.dat'
+
+ * Disable the USNO-B1.0 catalog search when identifying variable stars using the script 
+'util/identify.sh', which can be launched from the lightcurve inspection window by 
+pressing 'U' on the keyboard. The terminal output of the identification script 
+has been revised to improve readability.
+
+ * Added 'util/TT2UTC' tool (alongside the existing 'util/UTC2TT') to convert JD(TT) back to JD(UTC).
+The conversion tools work both with individual JDs supplied as a command line argument as well as 
+lightcurve files. The new TT to UTC may not work perfectly around the time leap seconds are introduced.
+
+ * The date conversion program 'util/get_image_date' now understands input date in the DD.MM.YYYY format,
+for example 'util/get_image_date 18.01.2024 03:09:49'. This date format has always been used in 
+'vast_summary.log' and 'vast_image_details.log' files for historical reasons and the new feature should
+simplify conversion to other date formats.
+
+ * VaST will now record computed calendar date/time of exposure start (based JD and exposure time) 
+for images where the observation time is specified by (any variation of) a JD keyword rather than DATE-OBS.
+Previously, for such images only the JD was recorded correctly in the log files vast_image_details.log and 
+vast_summary.log while the calendar date was set to 0.
+
+ * The dark frame subtraction tool 'util/ccd/ms' will check if the temperatures of the light and dark frame
+(as recorded in SET-TEMP and CCD-TEMP FITS header keywords) are close enough to each other. This should
+prevent the mistake of subtracting a dark frame taken at different temperature than the light frame, 
+which would typically result in an image that is worse than the uncalibrated one.
+
+ * Both the dark frame subtraction tool 'util/ccd/ms' and the median stacking tool 'util/ccd/mk' 
+will refuse to work with images that have very different SET-TEMP and CCD-TEMP values (for the same image).
+This is typically a sign of the image being taken before the camera had the time to cool down.
+
+ * The lightcurve viewer './lc' now supports on-the-fly conversions of ASAS-SN v1 and v2, ZTF SNAD, ATLAS, 
+and AAVSO-formatted lightcurve files, so they can be specified directly as command line arguments like this 
+'./lc /tmp/updated_AAVSO_files/AAVSO_KO_Oph__CV_measurements.txt'
+or
+'./lc /tmp/695115200007194.csv'
+The lightcurve viewer selects only one filter from multi-filter lightcurves. The intended use is quickly 
+answering "I wonder what this star is doing in ZTF" type of question: download the data file, plug it in 
+the lightcurve viewer, zoom-inspect-edit the lightcurve and maybe send it to the online period search service 
+by pressing 'L' on the keyboard.
+
+ * Fix broken './diffphot' manual comparison star selection mode.
+
+ * New script 'util/spacecraft.sh' prints geocentric positions of selected (bright and distant) spacecraft 
+for a given JD(UT). The positions are retrieved from JPL HORIZONS https://ssd.jpl.nasa.gov/horizons/
+
+ * The scripts 'util/spacecraft.sh', 'util/planets.sh', 'util/moons.sh' and 'util/comets.sh' now look for
+variable MPC_CODE. If it is set, the scripts will compute the apparent positions for the observatory with 
+the specified MPC code instead of the geocenter.
+
+ * Reduced the memory footprint of './vast'.
+
+ * The lightcurve viewer './lc' can now subtract a parabolic (2nd order polynomial) fit from a lightcurve:
+use '2' keyboard key. As with the linear ('1' key) and median-value ('0' key) subtraction, you may use 'B' key
+to set break points between the lightcurve segments that should be fit separately.
+
+ * The lightcurve viewer './lc' can now subtract a median magnitude from the lightcurve ('O' key) making 
+the lightcurve zero-centered. This may be useful for preparing heterogeneous time-series photometry (obtained 
+in various filters by various observers) to be combined for a joint period analysis. The workflow may look 
+something like: 
+1) load a lightcurve from observer A by running './lc observerA.txt';
+2) add breaks ('B' key) and fit trends ('1' or '2') subtracting them ('-' key) if necessary;
+3) remove the median magnitude from the detrended lightcurve ('O' key);
+4) save the lightcurve file ('W key');
+5) repeat the procedure with observers B and C;
+6) combined the detrended median-subtracted lightcurves into a single file sorting it
+'cat observerA_edit.txt observerB_edit.txt observerC_edit.txt | sort -n > combined_lightcurve.txt'
+7) load 'combined_lightcurve.txt' to your favorite period search tool, for example https://scan.sai.msu.ru/lk/
+
+
 12 Dec 2023: vast-1.0rc87:
 
  * Changed the deprecated VizieR vizier.u-strasbg.fr domain to vizier.cds.unistra.fr
@@ -3717,7 +3840,7 @@ servers for plate solution. Requires a local copy of UCAC4.
 <br/>
 <br/>
 
-<h2></a>Variable star search software not related to <tt>VaST</tt></h2>
+<h2></a>Variable star search/photometry software not related to <tt>VaST</tt></h2>
 
 If <tt>VaST</tt> doesn't suit your needs, you may be interested in trying other software
 (listed roughly in the order of decreasing similarity to <tt>VaST</tt> in design goals and implementation):
@@ -3766,6 +3889,8 @@ number of light curves. The input photometric data should be generated by
 other software (or downloaded from an archive) and then converted to a
 <tt>VARTOOLS</tt>-friendly format.
 <tt>VARTOOLS</tt> is licensed under the GPL.
+</li><li><a href="https://github.com/Astro-Sean/autophot"><tt>AutoPhOT</tt></a> -
+an automated <tt>Python 3</tt> pipeline designed for rapid, publication-quality photometry of transients.
 </li><li><a href="http://www.astro.washington.edu/users/becker/v2.0/hotpants.html">HOTPANTS</a> -
 High Order Transform of PSF ANd Template Subtraction is designed to
 photometrically align one input image with another, after they have been
@@ -3773,13 +3898,13 @@ astrometrically aligned. This is an implementation of the
 <a href="http://adsabs.harvard.edu/abs/2000A%26AS..144..363A">Alard 1999</a>
 algorithm for image subtraction. The program is intended to be used as part
 of a transient detection or photometry pipeline.
-</li><li><a href="http://www2.iap.fr/users/alard/package.html">ISIS</a> -
+</li><li><a href="http://www2.iap.fr/users/alard/package.html"><tt>ISIS</tt></a> -
 is a complete package to process CCD images using the image subtraction
 method. It allows one to find variable objects in the subtracted images and build
 their light curves from a series of CCD images. The package includes a period search
 routine based on the <a href="http://adsabs.harvard.edu/abs/1996ApJ...460L.107S">	
 Schwarzenberg-Czerny method</a>.
-</li><li><a href="http://users.camk.edu.pl/pych/DIAPL/README.html">DIAPL</a> - 
+</li><li><a href="http://users.camk.edu.pl/pych/DIAPL/README.html"><tt>DIAPL</tt></a> - 
 identifies variable stars via image subtraction, implemented in C, see 
 <a href="http://adsabs.harvard.edu/abs/2017arXiv170909572R">this e-print</a>.
 </li><li><a href="https://github.com/transientskp/tkp">TraP</a> - is a Python
@@ -3793,6 +3918,8 @@ PyPlate is used by the
 <a href="https://www.plate-archive.org/applause/">APPLAUSE</a> archives.
 </li>
 </ul>
+
+<i><a href="mailto:kirx@kirx.net">Let me know</a> if your favorite code belongs to this list!</i>
 
 
 <h2>Other tools that might be useful</h2>
@@ -3858,7 +3985,7 @@ Transitional" height="31" width="88" border="0"/></img></a> &nbsp; &nbsp;
 </div>
 
 </td></tr><tr><td bgcolor="#aaaadd">
-<div align="center"><tt>VaST</tt> developers team, 2005-2023</div>
+<div align="center"><tt>VaST</tt> developers team, 2005-2025</div>
 </td></tr></table>
 </body>
 </html>
