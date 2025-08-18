@@ -28465,6 +28465,15 @@ if ! lib/put_two_sources_in_one_field $POSITION_AT_C32 $POSITION_AT_500 2>&1 | g
  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_PLANETS_C32_500_MISMATCH"
 fi
 
+# -00:01:02.3 dec problem
+POSITION_EXPECTED="00:07:01.08 -00:43:22.1"
+POSITION_AT_500=$(util/planets.sh 2460905.4421 | grep Neptune | awk '{print $1" "$2}')
+if ! lib/put_two_sources_in_one_field $POSITION_EXPECTED $POSITION_AT_500 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.3 ? 0 : 1)}' ;then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_Neptune_-00dec"
+fi
+
+
 # Test comets local and remote (if we can compute locally)
 if command -v python3 &>/dev/null && \
  python3 -c "import skyfield" &>/dev/null && \
