@@ -19,7 +19,8 @@ static inline int any_unusual_characters_in_string(char *fitsfilename) {
   // allow the following characters in filename
   // ':' is needed because we also use the same function to check input coordinates string
   // '[', ',', ']' are needed to use CFITSIO image cutout interface
-  if( 0==isalnum(fitsfilename[i]) && fitsfilename[i]!=' ' && fitsfilename[i]!='\\' && fitsfilename[i]!='/' && fitsfilename[i]!='.' && fitsfilename[i]!='_' && fitsfilename[i]!='-' && fitsfilename[i]!='+' && fitsfilename[i]!='~' && fitsfilename[i]!=',' && fitsfilename[i]!=';' && fitsfilename[i]!=':' && fitsfilename[i]!='[' && fitsfilename[i]!=',' && fitsfilename[i]!=']' ) {
+  // allow '#' as there are real-life FITS files that has this symbol in their name
+  if( 0==isalnum(fitsfilename[i]) && fitsfilename[i]!=' ' && fitsfilename[i]!='\\' && fitsfilename[i]!='/' && fitsfilename[i]!='.' && fitsfilename[i]!='_' && fitsfilename[i]!='-' && fitsfilename[i]!='+' && fitsfilename[i]!='~' && fitsfilename[i]!=',' && fitsfilename[i]!=';' && fitsfilename[i]!=':' && fitsfilename[i]!='[' && fitsfilename[i]!=',' && fitsfilename[i]!=']' && fitsfilename[i]!='#' ) {
    fprintf(stderr,"ERROR in any_unusual_characters_in_string(): I'm unhappy with the character '%c' in the input string '%s'\n", fitsfilename[i], fitsfilename);
    return 1;
   }

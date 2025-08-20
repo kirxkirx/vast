@@ -154,6 +154,13 @@ function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image
   return 1
  fi
  
+ # Nope, uncorrected LBT/LBC astrometry is pretty bad actually - can't trust it
+ #### !!! Blindly trust LBT/LBC astrometry !!! ###
+ #echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -B500 -A500 "LBCOBFIL" | grep -B500 -A500 "LBCCHIP" |  grep --quiet "CTYPE2  = 'DEC--TAN'"
+ #if [ $? -eq 0 ];then
+ # return 1
+ #fi
+ 
  return 0
 }
 

@@ -985,7 +985,14 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  // Moved here as we may need the exposure time to set time using UT-END
  // if exposure!=0.0 we assume it was set earlier by Kourovka_SBG_date_hack()
  if ( exposure == 0.0 ) {
-  fits_read_key( fptr, TDOUBLE, "EXPTIME", &exposure, EXPOSURE_COMMENT, &status );
+  // give TEXPTIME (Telemetry Exposure Time) higher priority than EXPTIME
+  fits_read_key( fptr, TDOUBLE, "TEXPTIME", &exposure, EXPOSURE_COMMENT, &status );
+  if ( status == 202 ) {
+   status= 0;
+   fits_read_key( fptr, TDOUBLE, "EXPTIME", &exposure, EXPOSURE_COMMENT, &status );
+  } else {
+   fprintf( stderr, "Using exposure from TEXPTIME\n" );
+  }
   if ( status == 202 ) {
    status= 0;
    if ( param_verbose >= 1 )
@@ -1066,6 +1073,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   fits_read_key( fptr, TSTRING, "DATE-OBS", DATEOBS, DATEOBS_COMMENT, &status );
  }
  if ( status == 0 ) {
+  // Check if this is an EROS image, there are two types
   // The first type of images
   fits_read_key( fptr, TSTRING, "TU-START", DATEOBS, DATEOBS_COMMENT, &status );
   if ( status == 0 ) {
@@ -1157,6 +1165,19 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   DATEOBS_COMMENT[FLEN_CARD - 1]= '\0'; // just in case
  }
 
+ // DATE_OBS is in example image from Felice Cusano
+ if ( status == 202 ) {
+  // if DATE-OBS, DATE-BEG, DATE-EXP, SHUTOPEN do not exist, try DATE_OBS (with underscore sign)
+  fits_clear_errmsg(); // clear the CFITSIO error message stack
+  status= 0;
+  fits_read_key( fptr, TSTRING, "DATE_OBS", DATEOBS, DATEOBS_COMMENT, &status );
+  if ( status == 0 ) {
+   date_parsed= 1;
+   strncpy( DATEOBS_KEY_NAME, "DATE_OBS", 9 );
+  }
+  DATEOBS_COMMENT[FLEN_CARD - 1]= '\0'; // just in case
+ }
+
  // If both EXPSTART and EXPEND keywords are present - we want to use them instead of DATE-OBS and EXPTIME
  int status_before_EXPSTART_EXPEND_test= status;
  fits_read_key( fptr, TDOUBLE, "EXPSTART", &inJD, NULL, &status );
@@ -1170,22 +1191,6 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   }
  }
  status= status_before_EXPSTART_EXPEND_test;
- /*
-  // TICA TESS
-  status_before_EXPSTART_EXPEND_test= status;
-  status= 0;
-  fits_read_key( fptr, TDOUBLE, "TJD_ZERO", &inJD, NULL, &status );
-  if ( status == 0 ) {
-   fits_read_key( fptr, TDOUBLE, "MIDTJD", &inJD, NULL, &status );
-   if ( status == 0 ) {
-    fprintf( stderr, "Both TJD_ZERO and MIDTJD keywords are present - will use them instead of DATE-OBS\n" );
-    DATEOBS[0]= '\0';
-    date_parsed= 0; // we will get the date later
-    // status= 202; // seems unnecessary
-   }
-  }
-  status= status_before_EXPSTART_EXPEND_test;
- */
 
  // if DATE-OBS, DATE-BEG, DATE-EXP and SHUTOPEN do not exist at all, try DATE
  if ( status == 202 ) {

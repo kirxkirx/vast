@@ -20415,7 +20415,7 @@ fi
 ############# NCas21 KGO RC600 #############
 
 # Download the test dataset if needed
-if [ ! -d ../NMW_Venus_test ];then
+if [ ! -d ../KGO_RC600_NCas2021_test/ ];then
  cd .. || exit 1
  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/KGO_RC600_NCas2021_test.tar.bz2" && tar -xvjf KGO_RC600_NCas2021_test.tar.bz2 && rm -f KGO_RC600_NCas2021_test.tar.bz2
  cd "$WORKDIR" || exit 1
@@ -22964,6 +22964,64 @@ fi
 
 ### Disable the above test for GitHub Actions
 fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+
+
+######### LBT/LBC image with DATE_OBS and TEXPTIME
+if [ ! -f '../individual_images_test/NW-1B-BESSEL_15#3.fits' ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test || exit 1
+ curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NW-1B-BESSEL_15#3.fits.bz2" && 'bunzip2 NW-1B-BESSEL_15#3.fits.bz2'
+ cd "$WORKDIR" || exit 1
+fi
+
+if [ -f '../individual_images_test/NW-1B-BESSEL_15#3.fits' ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "Date specified in DATE_OBS individual image test " 
+ echo -n "Date specified in DATE_OBS individual image test: " >> vast_test_report.txt 
+ #
+ util/get_image_date '../individual_images_test/NW-1B-BESSEL_15#3.fits' 2>&1 | grep --quiet 'Exposure 420 sec, 24.11.2017 07:37:21.858 = JD 2458081.82004625 mid. exp.'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE_OBS001"
+ fi
+ #
+ lib/try_to_guess_image_fov '../individual_images_test/NW-1B-BESSEL_15#3.fits'  | grep --quiet '   7'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE_OBS003"
+ fi
+ #
+ # First run with a generic source extractor settings file to make sure VaST knows how to set gain for TICA TESS images
+ cp default.sex.ccd_example default.sex 
+ # Make sure gain value is set to exposure time for the count rate image 
+ lib/autodetect_aperture_main '../individual_images_test/NW-1B-BESSEL_15#3.fits' 2>&1 | grep --quiet 'GAIN 1.750'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE_OBS_gain"
+ fi
+ #
+
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mDate specified in DATE_OBS individual image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mDate specified in DATE_OBS individual image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE_OBS_TEST_NOT_PERFORMED"
+fi
+
 
 
 
