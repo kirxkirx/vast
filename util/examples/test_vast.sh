@@ -22973,7 +22973,7 @@ if [ ! -f '../individual_images_test/NW-1B-BESSEL_15#3.fits' ];then
   mkdir ../individual_images_test
  fi
  cd ../individual_images_test || exit 1
- curl --silent --show-error -o "NW-1B-BESSEL_15#3.fits.bz2" "http://scan.sai.msu.ru/~kirx/pub/NW-1B-BESSEL_15#3.fits.bz2" && 'bunzip2 NW-1B-BESSEL_15#3.fits.bz2'
+ curl --silent --show-error -o "NW-1B-BESSEL_15#3.fits.bz2" "http://scan.sai.msu.ru/~kirx/pub/NW-1B-BESSEL_15%233.fits.bz2" && bunzip2 'NW-1B-BESSEL_15#3.fits.bz2'
  cd "$WORKDIR" || exit 1
 fi
 
