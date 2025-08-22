@@ -22967,12 +22967,13 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ######### LBT/LBC image with DATE_OBS and TEXPTIME
+# yes, the filename contains '#' because the life is full of challenges
 if [ ! -f '../individual_images_test/NW-1B-BESSEL_15#3.fits' ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
  fi
  cd ../individual_images_test || exit 1
- curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NW-1B-BESSEL_15#3.fits.bz2" && 'bunzip2 NW-1B-BESSEL_15#3.fits.bz2'
+ curl --silent --show-error -o "NW-1B-BESSEL_15#3.fits.bz2" "http://scan.sai.msu.ru/~kirx/pub/NW-1B-BESSEL_15#3.fits.bz2" && 'bunzip2 NW-1B-BESSEL_15#3.fits.bz2'
  cd "$WORKDIR" || exit 1
 fi
 
