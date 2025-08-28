@@ -8,6 +8,7 @@ void delete_tr_keywords( fitsfile *fptr, int *status ) {
  char card[FLEN_CARD];
  char tr_keyword[FLEN_KEYWORD];
  int i, j; // counters
+ char suffix;
 
  // Loop over axes 1 and 2
  for ( i= 1; i <= 2; i++ ) {
@@ -25,6 +26,20 @@ void delete_tr_keywords( fitsfile *fptr, int *status ) {
      *status= 0;                           // Reset status after reporting
     }
    }
+   
+   // Also check for alternate WCS versions with A-Z suffixes
+   for ( suffix = 'A'; suffix <= 'Z'; suffix++ ) {
+    snprintf( tr_keyword, sizeof( tr_keyword ), "TR%d_%d%c", i, j, suffix );
+    if ( fits_read_card( fptr, tr_keyword, card, status ) == KEY_NO_EXIST ) {
+     *status= 0; // Reset status if the keyword is not found
+    } else {
+     fits_delete_key( fptr, tr_keyword, status );
+     if ( *status ) {
+      fits_report_error( stderr, *status ); // Report the error if one occurred
+      *status= 0;                           // Reset status after reporting
+     }
+    }
+   }
   }
  }
 }
@@ -34,6 +49,8 @@ void delete_tpv_keywords( fitsfile *fptr, int *status ) {
  char card[FLEN_CARD];
  char tpv_keyword[FLEN_KEYWORD];
  int i, j;                     // counters
+ char suffix;
+ 
  for ( i= 1; i <= 2; i++ ) {   // Loop over axes 1 and 2
   for ( j= 0; j <= 39; j++ ) { // Loop over possible keyword indices
    // Construct the keyword for the current TPV coefficient.
@@ -48,6 +65,20 @@ void delete_tpv_keywords( fitsfile *fptr, int *status ) {
      *status= 0;                           // Reset status after reporting
     }
    }
+   
+   // Also check for alternate WCS versions with A-Z suffixes
+   for ( suffix = 'A'; suffix <= 'Z'; suffix++ ) {
+    snprintf( tpv_keyword, sizeof( tpv_keyword ), "PV%d_%d%c", i, j, suffix );
+    if ( fits_read_card( fptr, tpv_keyword, card, status ) == KEY_NO_EXIST ) {
+     *status= 0; // Reset status if the keyword is not found
+    } else {
+     fits_delete_key( fptr, tpv_keyword, status );
+     if ( *status ) {
+      fits_report_error( stderr, *status ); // Report the error if one occurred
+      *status= 0;                           // Reset status after reporting
+     }
+    }
+   }
   }
  }
 }
@@ -57,6 +88,8 @@ void delete_poly_coeff( const char *key_base, int max_order, fitsfile *fptr, int
  char card[FLEN_CARD];
  char coeff_keyword[FLEN_KEYWORD];
  int i, j; // counters
+ char suffix;
+ 
  for ( i= 0; i <= max_order; i++ ) {
   for ( j= 0; j <= max_order; j++ ) {
    // Construct the keyword for the current coefficient.
@@ -69,6 +102,20 @@ void delete_poly_coeff( const char *key_base, int max_order, fitsfile *fptr, int
     if ( *status ) {
      fits_report_error( stderr, *status ); // Report the error if one occurred
      *status= 0;                           // Reset status after reporting
+    }
+   }
+   
+   // Also check for alternate WCS versions with A-Z suffixes
+   for ( suffix = 'A'; suffix <= 'Z'; suffix++ ) {
+    snprintf( coeff_keyword, sizeof( coeff_keyword ), "%s_%d_%d%c", key_base, i, j, suffix );
+    if ( fits_read_card( fptr, coeff_keyword, card, status ) == KEY_NO_EXIST ) {
+     *status= 0; // Reset status if the keyword is not found
+    } else {
+     fits_delete_key( fptr, coeff_keyword, status );
+     if ( *status ) {
+      fits_report_error( stderr, *status ); // Report the error if one occurred
+      *status= 0;                           // Reset status after reporting
+     }
     }
    }
   }
@@ -84,7 +131,9 @@ void strip_wcs_sip_keywords( fitsfile *fptr, int *status ) {
 
  char key_base[3]= { '\0' };
 
- char opus_keyword[FLEN_KEYWORD]; // for HST-sppecific OPUS keys
+ char alt_keyword[FLEN_KEYWORD]; // for alternate WCS keywords
+
+ char suffix;
 
  // SIP-specific 'ORDER' keywords
  const char *sip_order_keywords[]= { "A_ORDER", "B_ORDER", "AP_ORDER", "BP_ORDER", "A_DMAX", "B_DMAX", NULL };
@@ -106,7 +155,7 @@ void strip_wcs_sip_keywords( fitsfile *fptr, int *status ) {
  const char **order_keyword;
 
  for ( keyword= wcs_keywords; *keyword != NULL; keyword++ ) {
-  // delete key using its original name
+  // delete key using its original name (primary WCS)
   if ( fits_read_card( fptr, *keyword, card, status ) != KEY_NO_EXIST ) {
    fits_delete_key( fptr, *keyword, status );
    if ( *status ) {
@@ -116,12 +165,28 @@ void strip_wcs_sip_keywords( fitsfile *fptr, int *status ) {
   } else {
    *status= 0;
   }
-  // below we delete keys with some modifications to the original name
-  // HST-specific OPUS WCS keywords
+  
+  // Delete alternate WCS keywords with A-Z suffixes  
+  for ( suffix = 'A'; suffix <= 'Z'; suffix++ ) {
+   if ( strlen( *keyword ) < 8 ) {
+    snprintf( alt_keyword, sizeof( alt_keyword ), "%s%c", *keyword, suffix );
+    if ( fits_read_card( fptr, alt_keyword, card, status ) != KEY_NO_EXIST ) {
+     fits_delete_key( fptr, alt_keyword, status );
+     if ( *status ) {
+      fits_report_error( stderr, *status );
+      *status= 0;
+     }
+    } else {
+     *status= 0;
+    }
+   }
+  }
+  
+  // HST-specific OPUS WCS keywords (keep existing functionality)
   if ( strlen( *keyword ) < 8 ) {
-   snprintf( opus_keyword, sizeof( opus_keyword ), "%sO", *keyword );
-   if ( fits_read_card( fptr, opus_keyword, card, status ) != KEY_NO_EXIST ) {
-    fits_delete_key( fptr, opus_keyword, status );
+   snprintf( alt_keyword, sizeof( alt_keyword ), "%sO", *keyword );
+   if ( fits_read_card( fptr, alt_keyword, card, status ) != KEY_NO_EXIST ) {
+    fits_delete_key( fptr, alt_keyword, status );
     if ( *status ) {
      fits_report_error( stderr, *status );
      *status= 0;
@@ -130,12 +195,12 @@ void strip_wcs_sip_keywords( fitsfile *fptr, int *status ) {
     *status= 0;
    }
   }
-  //
-  // TESS-specific physical WCS keywords
+  
+  // TESS-specific physical WCS keywords (keep existing functionality)
   if ( strlen( *keyword ) < 8 ) {
-   snprintf( opus_keyword, sizeof( opus_keyword ), "%sP", *keyword );
-   if ( fits_read_card( fptr, opus_keyword, card, status ) != KEY_NO_EXIST ) {
-    fits_delete_key( fptr, opus_keyword, status );
+   snprintf( alt_keyword, sizeof( alt_keyword ), "%sP", *keyword );
+   if ( fits_read_card( fptr, alt_keyword, card, status ) != KEY_NO_EXIST ) {
+    fits_delete_key( fptr, alt_keyword, status );
     if ( *status ) {
      fits_report_error( stderr, *status );
      *status= 0;
@@ -144,12 +209,11 @@ void strip_wcs_sip_keywords( fitsfile *fptr, int *status ) {
     *status= 0;
    }
   }
-  //
  }
 
  // Deleting SIP-specific 'ORDER' keywords and coefficients
  for ( order_keyword= sip_order_keywords; *order_keyword != NULL; order_keyword++ ) {
-  // Check for ORDER keyword and determine the order
+  // Check for ORDER keyword and determine the order (primary WCS)
   if ( fits_read_key( fptr, TLONG, *order_keyword, &order, NULL, status ) != KEY_NO_EXIST ) {
    // Delete the ORDER keyword
    fits_delete_key( fptr, *order_keyword, status );
@@ -160,6 +224,23 @@ void strip_wcs_sip_keywords( fitsfile *fptr, int *status ) {
   } else {
    *status= 0;
    order= assumed_max_order; // Assume maximum order if ORDER keyword is missing
+  }
+
+  // Check for alternate WCS ORDER keywords with A-Z suffixes
+  for ( suffix = 'A'; suffix <= 'Z'; suffix++ ) {
+   if ( strlen( *order_keyword ) < 8 ) {
+    snprintf( alt_keyword, sizeof( alt_keyword ), "%s%c", *order_keyword, suffix );
+    if ( fits_read_key( fptr, TLONG, alt_keyword, &order, NULL, status ) != KEY_NO_EXIST ) {
+     // Delete the ORDER keyword
+     fits_delete_key( fptr, alt_keyword, status );
+     if ( *status ) {
+      fits_report_error( stderr, *status );
+      *status= 0;
+     }
+    } else {
+     *status= 0;
+    }
+   }
   }
 
   // Determine the base keyword for coefficients (e.g., "A", "B", "AP", "BP")

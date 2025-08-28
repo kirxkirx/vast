@@ -2984,7 +2984,7 @@ int main( int argc, char **argv ) {
    if ( stars_matched_at_this_iteration < MIN_NUMBER_OF_STARS_FOR_UCAC5_MATCH ) {
     fprintf( stderr, "\n\n The number of stars matched with the catalog is suspiciously low!\n Something is not right here... :(\n\n" );
    } else {
-    fprintf( stderr, "\n\n The field is successfully solved and matched with the catalog! :)\n\n" );
+    fprintf( stderr, "\n\n The field is successfully solved and matched with the astrometric catalog! :)\n\n" );
    }
    break;
   }
