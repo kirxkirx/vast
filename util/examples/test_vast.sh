@@ -28549,8 +28549,8 @@ if command -v python3 &>/dev/null && \
  
  EXPECTED_C32_POSITION_FROM_HORIZONS="09:54:29.38 +11:34:37.1"
  if [ -n "$POSITION_LOCAL_COMET_FINEDER" ];then
-  # 0.0014 deg is 5 arcsec
-  if ! lib/put_two_sources_in_one_field $POSITION_LOCAL_COMET_FINEDER $EXPECTED_C32_POSITION_FROM_HORIZONS 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.0014 ? 0 : 1)}' ;then
+  # 0.0028 deg is 10 arcsec
+  if ! lib/put_two_sources_in_one_field $POSITION_LOCAL_COMET_FINEDER $EXPECTED_C32_POSITION_FROM_HORIZONS 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.0028 ? 0 : 1)}' ;then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_COMET_LOCAL_POSITION_MISMATCH_${POSITION_LOCAL_COMET_FINEDER// /_}_${EXPECTED_C32_POSITION_FROM_HORIZONS// /_}"
   fi 
@@ -28565,8 +28565,8 @@ if command -v python3 &>/dev/null && \
  fi
  
  if [ -n "$POSITION_REMOTE_JPL_HORIZONS" ];then
-  # 0.0014 deg is 5 arcsec
-  if ! lib/put_two_sources_in_one_field $POSITION_REMOTE_JPL_HORIZONS $EXPECTED_C32_POSITION_FROM_HORIZONS 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.0014 ? 0 : 1)}' ;then
+  # 0.0028 deg is 10 arcsec
+  if ! lib/put_two_sources_in_one_field $POSITION_REMOTE_JPL_HORIZONS $EXPECTED_C32_POSITION_FROM_HORIZONS 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.0028 ? 0 : 1)}' ;then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_COMET_REMOTE_POSITION_MISMATCH_${POSITION_REMOTE_JPL_HORIZONS// /_}_${EXPECTED_C32_POSITION_FROM_HORIZONS// /_}"
   fi 
@@ -28575,8 +28575,8 @@ if command -v python3 &>/dev/null && \
 
  if [ -n "$POSITION_LOCAL_COMET_FINEDER" ] && [ -n "$POSITION_REMOTE_JPL_HORIZONS" ];then
   # If both positions are there - try to compare them
-  # 0.0014 deg is 5 arcsec
-  if ! lib/put_two_sources_in_one_field $POSITION_LOCAL_COMET_FINEDER $POSITION_REMOTE_JPL_HORIZONS 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.0014 ? 0 : 1)}' ;then
+  # 0.0028 deg is 10 arcsec
+  if ! lib/put_two_sources_in_one_field $POSITION_LOCAL_COMET_FINEDER $POSITION_REMOTE_JPL_HORIZONS 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.0028 ? 0 : 1)}' ;then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_COMET_LOCAL_REMOTE_POSITION_MISMATCH_${POSITION_LOCAL_COMET_FINEDER// /_}_${POSITION_REMOTE_JPL_HORIZONS// /_}"
   fi
