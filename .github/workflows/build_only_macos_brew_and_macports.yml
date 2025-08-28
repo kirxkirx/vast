@@ -77,7 +77,7 @@ jobs:
       run: sudo port upgrade outdated
       if: env.SKIP != 'true'
     - name: Install gcc, g++, gfortran, and wget
-      run: sudo port install gcc12 wget
+      run: sudo port install gcc13 wget
       if: env.SKIP != 'true'
     - name: Install X11 header files
       run: sudo port install xorg-libX11
