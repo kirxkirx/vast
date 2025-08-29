@@ -294,13 +294,18 @@ if [ -z "$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSE
  MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC=$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT
 fi
 #
-# Reject candidates with large distance between the two second-epoch detections
-### ==> Assumptio about positional accuracy hardcoded here <===
-TEST=$(echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC>$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+# Drop the coordinates consistencey test for super-bright objects (that will have large astrometic errors)
+TEST=$(echo "$MAG_MEAN>7.0" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
 if [ $TEST -eq 1 ];then
- echo "Rejecting candidate due to large distance ($ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC\") between the two second-epoch detections"
- clean_tmp_files
- exit 1
+ # Reject candidates with large distance between the two second-epoch detections
+ ### ==> Assumptio about positional accuracy hardcoded here <===
+ TEST=$(echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC>$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+ if [ $TEST -eq 1 ];then
+  echo "Rejecting candidate due to large distance ($ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC\") between the two second-epoch detections"
+  clean_tmp_files
+  exit 1
+ fi
+ #
 fi
 # Highlight candidates with suspiciously large distance between the two second-epoch detections
 ### ==> Assumptio about positional accuracy hardcoded here <===

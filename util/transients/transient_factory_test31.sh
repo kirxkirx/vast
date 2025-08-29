@@ -129,6 +129,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=100
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
   MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.12
+  FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX=0.50
   export MPC_CODE=C32
   # Calibration data
   if [ -z "$DARK_FRAMES_DIR" ];then
@@ -175,7 +176,6 @@ if [ -n "$CAMERA_SETTINGS" ];then
 # production value
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=2000
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=3000
-  #export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="13.5"
   export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="14.0"
   FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=12.5
   # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
@@ -1278,7 +1278,8 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "SECOND_EPOCH__SECOND_IMAGE= $SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_factory_test31.txt
   else
    # Consider the usual case where the seeing is somewhat different - pick the two images with the best seeing
-   echo "INFO: selecting two second-epoch images with best seeing" | tee -a transient_factory_test31.txt
+   echo "INFO: selecting two second-epoch images with best seeing (using aperture size as a proxy for seeing)" | tee -a transient_factory_test31.txt
+   cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | sort -nk9 | tee -a transient_factory_test31.txt
    #### In the following the exclusion of ' ap=  0.0 ' ' ap= 99.0 ' ' status=ERROR ' is needed to handle the case where one new image is bad while the other two are good.
    ### ===> APERTURE LIMITS HARDCODED HERE <===
    #SECOND_EPOCH__FIRST_IMAGE=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk '{if ( $9 > 2 ) print }' | awk '{if ( $9 < 8.5 ) print }' | sort -nk9 | head -n1 | awk '{print $17}')
