@@ -26744,7 +26744,7 @@ if [ $? -eq 0 ];then
   VAST_DATE=$(util/get_image_date "$TEST_JD" 2>&1 | grep ' (mid. exp) ' | head -n1 | awk '{print $3" "$4}')
   if [ "$ASTROPY_DATE" != "$VAST_DATE" ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH_${TEST_JD}_${ASTROPY_DATE// /T}_${VAST_DATE// /T}"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH01__${TEST_JD}_${ASTROPY_DATE// /T}_${VAST_DATE// /T}"
   fi
   #
   # UnixTime_0 J2000 today
@@ -26756,7 +26756,7 @@ if [ $? -eq 0 ];then
     #echo "${TEST_JD}  ${ASTROPY_DATE// /T}  ${VAST_DATE// /T}  "
     if [ "$ASTROPY_DATE" != "$VAST_DATE" ];then
      TEST_PASSED=0
-     FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH_${TEST_JD}_${ASTROPY_DATE// /T}_${VAST_DATE// /T}"
+     FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH02__${TEST_JD}_${ASTROPY_DATE// /T}_${VAST_DATE// /T}"
      break
     fi
    done
@@ -26770,7 +26770,7 @@ if [ $? -eq 0 ];then
   VAST_JD=$(util/get_image_date "$TEST_DATE" 2>&1 | grep ' JD ' | head -n1 | awk '{print $2}')
   if [ "$ASTROPY_JD" != "$VAST_JD" ];then
    TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH2_${TEST_DATE}_${ASTROPY_JD}_${VAST_JD}"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH03__${TEST_DATE}_${ASTROPY_JD}_${VAST_JD}"
   fi
   #
   for ITERATION in $(seq 1 10) ;do
@@ -26791,7 +26791,7 @@ if [ $? -eq 0 ];then
    VAST_JD=$(util/get_image_date "$TEST_DATE" 2>&1 | grep ' JD ' | head -n1 | awk '{print $2}')
    if [ "$ASTROPY_JD" != "$VAST_JD" ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH2_${TEST_DATE}_${ASTROPY_JD}_${VAST_JD}"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH04__${TEST_DATE}_${ASTROPY_JD}_${VAST_JD}"
    fi
   done
   #
