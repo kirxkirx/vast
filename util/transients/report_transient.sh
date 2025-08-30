@@ -674,7 +674,7 @@ if [ $TEST -eq 1 ];then
 fi
 #
 echo -n "
-Online MPChecker may fail to identify bright comets! Please manually check the <a href='http://aerith.net/comet/weekly/current.html' target='_blank'>Seiichi Yoshida's</a> and <a href='http://astro.vanbuitenen.nl/comets' target='_blank'>Gideon van Buitenen's</a> pages.
+Online MPChecker may fail to identify bright comets! Please manually check the <a href='http://aerith.net/comet/weekly/current.html' target='_blank'>Seiichi Yoshida's</a> and <a href='https://astro.vanbuitenen.nl/comets' target='_blank'>Gideon van Buitenen's</a> pages.
 </pre>
 <form style='display: inline;' NAME='$$FORMMPC$1' METHOD=POST TARGET='_blank' ACTION='https://minorplanetcenter.net/cgi-bin/mpcheck.cgi'>
 <input type=submit value=' Online MPChecker '>

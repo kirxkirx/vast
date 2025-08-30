@@ -2523,7 +2523,7 @@ Positions of selected spacecraft from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_
 cat spacecraft.txt | tee -a transient_factory_test31.txt
 ls -lh spacecraft.txt 2>&1 | tee -a transient_factory_test31.txt
 #echo "############################################################
-#Positions of bright comets (listed at http://astro.vanbuitenen.nl/comets and http://aerith.net/comet/weekly/current.html ) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" | tee -a transient_factory_test31.txt
+#Positions of bright comets (listed at https://astro.vanbuitenen.nl/comets and http://aerith.net/comet/weekly/current.html ) from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" | tee -a transient_factory_test31.txt
 echo "############################################################" | tee -a transient_factory_test31.txt
 if [ -s comets_header.txt ];then
  cat comets_header.txt | tee -a transient_factory_test31.txt

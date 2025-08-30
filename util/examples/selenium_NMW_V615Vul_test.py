@@ -32,7 +32,7 @@ SKIP_LINK_PATTERNS = (
     "wis-tns.weizmann.ac.il",
 )
 
-REQUEST_TIMEOUT   = 30   # seconds for each HTTP HEAD
+REQUEST_TIMEOUT   = 60   # seconds for each HTTP HEAD
 CHECK_EXTERNAL    = True # set False for offline / quick run
 MPC_PAGE_TIMEOUT  = 120  # seconds to wait for MPC page
 VSX_PAGE_TIMEOUT  = 120  # seconds to wait for VSX page
