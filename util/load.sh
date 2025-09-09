@@ -148,13 +148,12 @@ if [ $? -eq 0 ];then
   if [ $? -eq 0 ];then
    # it worked!
       
-   # Exit the scrip
-   echo "Done"
+   # Exit the script
+   #echo "Done"
+   echo -e "Done loading data files!\n\nTo view the sigma-magnitude plot run:\n ./find_candidates a\n"
 
    # Warn the user that we have re-written SExtractor setting file
-   echo "
-Remember: SExtractor settings file default.sex is rewritten when you load a dataset!
-"
+   echo -e "Remember: SExtractor settings file default.sex is rewritten when you load a dataset!\n"
 
    exit 0
   else
@@ -261,4 +260,4 @@ for i in "$REGION_NAME"/* ;do
  else
   cp -r $i .
  fi
-done && echo Done
+done && echo -e "Done loading data files!\n\nTo view the sigma-magnitude plot run:\n ./find_candidates a\n"
