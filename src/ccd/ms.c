@@ -182,7 +182,7 @@ int main( int argc, char *argv[] ) {
   if ( fabs( ccd_temp_image - set_temp_image ) > MAX_CCD_TEMP_DIFF ) {
    // found set temperature mismatch
    // basename() may mess the input string - use it just befor exit
-   fprintf( stderr, "ERROR: mismatch between CCD-TEMP and SET-TEMP in %s! Looks like the the camera didn't have time to cool down.\n", basename( input_file ) );
+   fprintf( stderr, "ERROR: mismatch between CCD-TEMP= %.1lf and SET-TEMP= %.1lf in %s! Looks like the the camera didn't have time to cool down.\n", ccd_temp_image, set_temp_image, basename( input_file ) );
    fits_close_file( fptr, &status );
    exit( EXIT_FAILURE );
   }
@@ -340,7 +340,7 @@ int main( int argc, char *argv[] ) {
   if ( fabs( ccd_temp_image - ccd_temp_dark ) > MAX_CCD_TEMP_DIFF ) {
    // found set temperature mismatch
    // basename() may mess the input string - use it just befor exit
-   fprintf( stderr, "ERROR: CCD-TEMP temperature mismatch between the light (%s) and dark (%s) images!\n", basename( input_file ), basename( dark_file ) );
+   fprintf( stderr, "ERROR: CCD-TEMP temperature mismatch between the light (%.1lf; %s) and dark (%.1lf; %s) images!\n", ccd_temp_image, basename( input_file ), ccd_temp_dark, basename( dark_file ) );
    free( image_array );
    free( dark_array );
    free( result_image_array );

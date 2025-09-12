@@ -12,7 +12,7 @@
 #include "safely_encode_user_input_string.h"
 
 void version( char *version_string ) {
- strncpy( version_string, "VaST 1.0rc88", 32 );
+ strncpy( version_string, "VaST 1.0rc89", 32 );
  return;
 }
 
