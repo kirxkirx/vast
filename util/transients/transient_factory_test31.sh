@@ -169,7 +169,8 @@ if [ -n "$CAMERA_SETTINGS" ];then
    #export FLAT_FIELD_FILE=/home/apache/flats/mff_2023-07-14.fit
    #export FLAT_FIELD_FILE=/home/apache/flats/STL__mff_2024_febmar_full_moon.fit
    #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/STL__mff_2024_febmar_full_moon.fit"
-   export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_2023-07-14.fit"
+   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_2023-07-14.fit"
+   export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/STL__mff_2025sep.fit"
   fi
   #
   TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="STL-11000M"
