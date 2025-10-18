@@ -141,7 +141,8 @@ if [ -n "$CAMERA_SETTINGS" ];then
    #export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_2024febmar_full_moon.fit
    #export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_2024jun_full_moon.fit
    #export FLAT_FIELD_FILE=/dataX/cgi-bin/unmw/uploads/flats/mff_2024jul17_flatbox.fit
-   export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_2024jul17_flatbox.fit"
+   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_2024jul17_flatbox.fit"
+   export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_2025sep.fit"
   fi
  fi
  #
