@@ -91,40 +91,49 @@ void print_usage( char *program_name ) {
 
 int main( int argc, char *argv[] ) {
  int opt;
- int force_processing= 0;
-
- char *input_file= argv[optind];
- char *dark_file= argv[optind + 1];
- char *output_file= argv[optind + 2];
-
- fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h
- long fpixel= 1;
+ int force_processing;
+ int skip_temp_checks;
+ char *prog_name;
+ char *input_file;
+ char *dark_file;
+ char *output_file;
+ fitsfile *fptr;
+ long fpixel;
  long naxes[2];
  long testX, testY;
  long img_size;
-
- int status= 0;
- int anynul= 0;
- unsigned short nullval= 0;
+ int status;
+ int anynul;
+ unsigned short nullval;
  unsigned short *image_array;
  unsigned short *dark_array;
  unsigned short *result_image_array;
-
  int i;
  int bitpix2;
  char **key;
  int No_of_keys;
  int keys_left;
- int ii, j; // counters
-
+ int ii, j;
  double tmp;
-
  double set_temp_image, set_temp_dark;
  double ccd_temp_image, ccd_temp_dark;
-
  double image_mean, dark_mean;
+ int is_bias;
 
- int is_bias= 0; // 1 - if it's a bias rather than dark frame (needed just to name it properly)
+ force_processing= 0;
+ skip_temp_checks= 0;
+ fpixel= 1;
+ status= 0;
+ anynul= 0;
+ nullval= 0;
+ is_bias= 0;
+
+ // Check if executable name is ms_notempchecks
+ prog_name= basename( argv[0] );
+ if ( strcmp( prog_name, "ms_notempchecks" ) == 0 ) {
+  skip_temp_checks= 1;
+  fprintf( stderr, "Temperature checks are DISABLED (running as ms_notempchecks)\n" );
+ }
 
  while ( ( opt= getopt( argc, argv, "hf" ) ) != -1 ) {
   switch ( opt ) {
@@ -146,6 +155,10 @@ int main( int argc, char *argv[] ) {
   print_usage( argv[0] );
   exit( EXIT_FAILURE );
  }
+
+ input_file= argv[optind];
+ dark_file= argv[optind + 1];
+ output_file= argv[optind + 2];
 
  fprintf( stderr, "Exploring image header: %s \n", input_file );
  fits_open_file( &fptr, input_file, 0, &status );
@@ -176,7 +189,7 @@ int main( int argc, char *argv[] ) {
   status= 0;
  }
  // Check for possible mismatch between CCD-TEMP and SET-TEMP
- if ( ccd_temp_image != FALLBACK_CCD_TEMP_VALUE && set_temp_image != FALLBACK_CCD_TEMP_VALUE ) {
+ if ( !skip_temp_checks && ccd_temp_image != FALLBACK_CCD_TEMP_VALUE && set_temp_image != FALLBACK_CCD_TEMP_VALUE ) {
   fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_image, input_file );
   fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_image, input_file );
   if ( fabs( ccd_temp_image - set_temp_image ) > MAX_CCD_TEMP_DIFF ) {
@@ -312,7 +325,7 @@ int main( int argc, char *argv[] ) {
   status= 0;
  }
  // Check the temperature match between the light and dark frames
- if ( set_temp_image != FALLBACK_CCD_TEMP_VALUE && set_temp_dark != FALLBACK_CCD_TEMP_VALUE ) {
+ if ( !skip_temp_checks && set_temp_image != FALLBACK_CCD_TEMP_VALUE && set_temp_dark != FALLBACK_CCD_TEMP_VALUE ) {
   fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_image, input_file );
   fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_dark, dark_file );
   if ( fabs( set_temp_image - set_temp_dark ) > MAX_SET_TEMP_DIFF ) {
@@ -334,7 +347,7 @@ int main( int argc, char *argv[] ) {
   status= 0;
  }
  // Check the temperature match between the light and dark frames
- if ( ccd_temp_image != FALLBACK_CCD_TEMP_VALUE && ccd_temp_dark != FALLBACK_CCD_TEMP_VALUE ) {
+ if ( !skip_temp_checks && ccd_temp_image != FALLBACK_CCD_TEMP_VALUE && ccd_temp_dark != FALLBACK_CCD_TEMP_VALUE ) {
   fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_image, input_file );
   fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_dark, dark_file );
   if ( fabs( ccd_temp_image - ccd_temp_dark ) > MAX_CCD_TEMP_DIFF ) {

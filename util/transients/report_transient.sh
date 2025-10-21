@@ -401,7 +401,7 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ] && [ -z "$THIS_IS_ARTI
  EXCLUSION_LIST_FILE="comets.txt"
  if [ -s "$EXCLUSION_LIST_FILE" ];then
   # The search radius has to match the one in util/transients/MPCheck_v2.sh
-  EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC=61
+  EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC=80
   lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep --quiet "FOUND"
   if [ $? -eq 0 ];then
    if [ -z "$THIS_IS_VAST_TEST" ];then

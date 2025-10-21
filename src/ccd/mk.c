@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <unistd.h> // for unlink()
+#include <libgen.h> // for basename()
 #include <gsl/gsl_sort.h>
 #include <gsl/gsl_statistics.h>
 
@@ -101,39 +102,48 @@ void handle_error( const char *message, int status ) {
 }
 
 int main( int argc, char *argv[] ) {
- // Varaibles for FITS file reading
- fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h
- long fpixel= 1;
+ int skip_temp_checks;
+ char *prog_name;
+ fitsfile *fptr;
+ long fpixel;
  long naxes[2];
  long naxes_ref[2];
-
- int status= 0;
- int anynul= 0;
- unsigned short nullval= 0;
+ int status;
+ int anynul;
+ unsigned short nullval;
  unsigned short **image_array;
  unsigned short *combined_array;
  double y[MAX_NUMBER_OF_OBSERVATIONS];
  double *yy;
  double val;
- double ref_index= 1.0; // just to make the compiler happy
- double cur_index= 1.0; // just to make the compiler happy
+ double ref_index;
+ double cur_index;
  int i, j;
  int bitpix2;
  int file_counter;
  int good_file_counter;
-
  double set_temp_image, ccd_temp_image;
-
- // These variables are needed to keep FITS header keys
  char **key;
  int No_of_keys;
  int keys_left;
  int ii;
- // long bzero= 0;
- // char bzero_comment[FLEN_CARD];
- // int bzero_key_found= 0;
-
  FILE *filedescriptor_for_opening_test;
+ long img_size;
+
+ skip_temp_checks= 0;
+ fpixel= 1;
+ status= 0;
+ anynul= 0;
+ nullval= 0;
+ ref_index= 1.0;
+ cur_index= 1.0;
+
+ // Check if executable name is mk_notempchecks
+ prog_name= basename( argv[0] );
+ if ( strcmp( prog_name, "mk_notempchecks" ) == 0 ) {
+  skip_temp_checks= 1;
+  fprintf( stderr, "Temperature checks are DISABLED (running as mk_notempchecks)\n" );
+ }
 
  fprintf( stderr, "Median combiner v2.4\n\n" );
  fprintf( stderr, "Combining %d files\n", argc - 1 );
@@ -159,7 +169,7 @@ int main( int argc, char *argv[] ) {
   status= 0;
  }
  // Check for possible mismatch between CCD-TEMP and SET-TEMP
- if ( ccd_temp_image != FALLBACK_CCD_TEMP_VALUE && set_temp_image != FALLBACK_CCD_TEMP_VALUE ) {
+ if ( !skip_temp_checks && ccd_temp_image != FALLBACK_CCD_TEMP_VALUE && set_temp_image != FALLBACK_CCD_TEMP_VALUE ) {
   fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_image, argv[1] );
   fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_image, argv[1] );
   if ( fabs( ccd_temp_image - set_temp_image ) > MAX_CCD_TEMP_DIFF ) {
@@ -201,7 +211,7 @@ int main( int argc, char *argv[] ) {
  fits_close_file( fptr, &status );
  fits_report_error( stderr, status ); // print out any error messages
 
- long img_size= naxes_ref[0] * naxes_ref[1];
+ img_size= naxes_ref[0] * naxes_ref[1];
  if ( img_size <= 0 ) {
   fprintf( stderr, "ERROR: The image size cannot be negative\n" );
   exit( EXIT_FAILURE );
@@ -245,7 +255,7 @@ int main( int argc, char *argv[] ) {
    status= 0;
   }
   // Check for possible mismatch between CCD-TEMP and SET-TEMP
-  if ( ccd_temp_image != FALLBACK_CCD_TEMP_VALUE && set_temp_image != FALLBACK_CCD_TEMP_VALUE ) {
+  if ( !skip_temp_checks && ccd_temp_image != FALLBACK_CCD_TEMP_VALUE && set_temp_image != FALLBACK_CCD_TEMP_VALUE ) {
    fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_image, argv[file_counter] );
    fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_image, argv[file_counter] );
    if ( fabs( ccd_temp_image - set_temp_image ) > MAX_CCD_TEMP_DIFF ) {

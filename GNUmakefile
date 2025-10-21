@@ -540,10 +540,12 @@ util/ccd/imgbin2x2: $(SRC_PATH)ccd/imgbin2x2.c $(SRC_PATH)ccd/imgbin2x2.py
 	cp $(SRC_PATH)ccd/imgbin2x2.py util/ccd/imgbin2x2.py
 util/ccd/mk: $(SRC_PATH)ccd/mk.c
 	$(CC) $(OPTFLAGS) -o util/ccd/mk $(SRC_PATH)ccd/mk.c $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+	cd util/ccd/ && ln -s mk mk_notempchecks && cd -
 util/ccd/mk_sigma_clip: $(SRC_PATH)ccd/mk_sigma_clip.c
 	$(CC) $(OPTFLAGS) -o util/ccd/mk_sigma_clip $(SRC_PATH)ccd/mk_sigma_clip.c $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 util/ccd/ms: $(SRC_PATH)ccd/ms.c
 	$(CC) $(OPTFLAGS) -o util/ccd/ms $(SRC_PATH)ccd/ms.c $(CFITSIO_LIB) -lm
+	cd util/ccd/ && ln -s ms ms_notempchecks && cd -
 util/ccd/md: $(SRC_PATH)ccd/md.c
 	$(CC) $(OPTFLAGS) -o util/ccd/md $(SRC_PATH)ccd/md.c $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 

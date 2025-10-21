@@ -109,7 +109,7 @@ fi
 EXCLUSION_LIST_FILE="comets.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then
  # the search radius has to match the one in util/transients/report_transient.sh
- PLANET_SEARCH_RESULTS=$(lib/put_two_sources_in_one_field "$RAHH:$RAMM:$RASS" "$DECDD:$DECMM:$DECSS" "$EXCLUSION_LIST_FILE" 61)
+ PLANET_SEARCH_RESULTS=$(lib/put_two_sources_in_one_field "$RAHH:$RAMM:$RASS" "$DECDD:$DECMM:$DECSS" "$EXCLUSION_LIST_FILE" 80)
  echo "$PLANET_SEARCH_RESULTS" | grep --quiet "FOUND"
  if [ $? -eq 0 ];then
   #echo "$PLANET_SEARCH_RESULTS" | awk -F'FOUND' '{print $2}'
