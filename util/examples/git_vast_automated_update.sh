@@ -13,8 +13,6 @@ export LANGUAGE LC_ALL
 # Configuration
 GITHUB_REPO_OWNER="kirxkirx"
 GITHUB_REPO_NAME="vast"
-GITHUB_API_BASE="https://api.github.com"
-REQUIRED_WORKFLOWS=("Ubuntu build and test" "macOS build and test" "FreeBSD build")
 
 # Exit codes
 EXIT_SUCCESS=0
@@ -98,47 +96,12 @@ command_exists() {
  return $?
 }
 
-# Function to call GitHub API
-github_api_call() {
- local endpoint="$1"
- local url="${GITHUB_API_BASE}${endpoint}"
- 
- # Try curl first, then wget
- if command_exists curl; then
-  curl --silent --show-error --fail "$url" 2>/dev/null
-  return $?
- elif command_exists wget; then
-  wget -q -O - "$url" 2>/dev/null
-  return $?
- else
-  echo "ERROR: neither curl nor wget is available" >&2
-  return 1
- fi
-}
-
-# Function to extract JSON value (simple parser for specific fields)
-extract_json_value() {
- local json="$1"
- local key="$2"
- 
- # Use grep and sed for basic JSON parsing (portable, no jq dependency)
- echo "$json" | grep -o "\"${key}\"[[:space:]]*:[[:space:]]*\"[^\"]*\"" | sed "s/\"${key}\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\"/\1/" | head -n 1
-}
-
-# Function to extract JSON array values
-extract_json_array_values() {
- local json="$1"
- local key="$2"
- 
- echo "$json" | grep -o "\"${key}\"[[:space:]]*:[[:space:]]*\"[^\"]*\"" | sed "s/\"${key}\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\"/\1/"
-}
-
 #################################
 # Pre-flight checks
 #################################
 
 # Check required commands
-for cmd in git grep sed awk; do
+for cmd in git grep sed; do
  if ! command_exists "$cmd"; then
   echo "ERROR: required command '$cmd' is not installed" >&2
   exit $EXIT_ERROR
@@ -210,64 +173,43 @@ if [ "$CURRENT_LOCAL_COMMIT" = "$REMOTE_COMMIT" ];then
 fi
 
 echo "New version available: $REMOTE_COMMIT"
-echo "Checking GitHub Actions status..."
+echo "Checking GitHub Actions status for this commit..."
 
-# Get workflow runs for the latest commit
-WORKFLOW_RUNS_JSON=$(github_api_call "/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/actions/runs?per_page=100&branch=master")
-if [ $? -ne 0 ] || [ -z "$WORKFLOW_RUNS_JSON" ];then
- echo "ERROR: failed to fetch workflow runs from GitHub API" >&2
+# Check combined status using GitHub's status API (much simpler!)
+# This endpoint returns a simple "state" field: "success", "pending", "failure", or "error"
+STATUS_URL="https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/commits/${REMOTE_COMMIT}/status"
+
+if command_exists curl; then
+ STATUS_RESPONSE=$(curl --silent --show-error --fail "$STATUS_URL" 2>/dev/null)
+elif command_exists wget; then
+ STATUS_RESPONSE=$(wget -q -O - "$STATUS_URL" 2>/dev/null)
+fi
+
+if [ $? -ne 0 ] || [ -z "$STATUS_RESPONSE" ];then
+ echo "ERROR: failed to fetch commit status from GitHub API" >&2
  exit $EXIT_ERROR
 fi
 
-# Check each required workflow
-ALL_WORKFLOWS_PASSED=true
+# Extract the state field - look for "state": "success" or similar
+# This is much simpler than parsing the full workflow runs API
+STATE=$(echo "$STATUS_RESPONSE" | grep -o '"state"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/"state"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/' | head -n 1)
 
-for workflow_name in "${REQUIRED_WORKFLOWS[@]}"; do
- echo "Checking workflow: $workflow_name"
- 
- # Find workflow run for this name and commit
- # This is a simplified approach - we look for matching workflow names and check conclusions
- workflow_found=false
- workflow_passed=false
- 
- # Extract all workflow names and conclusions
- IFS=$'\n'
- workflow_names=($(extract_json_array_values "$WORKFLOW_RUNS_JSON" "name"))
- workflow_conclusions=($(extract_json_array_values "$WORKFLOW_RUNS_JSON" "conclusion"))
- workflow_shas=($(extract_json_array_values "$WORKFLOW_RUNS_JSON" "head_sha"))
- unset IFS
- 
- # Find matching workflow for our commit
- for i in "${!workflow_names[@]}"; do
-  if [ "${workflow_names[$i]}" = "$workflow_name" ] && [ "${workflow_shas[$i]}" = "$REMOTE_COMMIT" ];then
-   workflow_found=true
-   if [ "${workflow_conclusions[$i]}" = "success" ];then
-    workflow_passed=true
-    echo "  Status: PASSED"
-    break
-   else
-    echo "  Status: ${workflow_conclusions[$i]}"
-    break
-   fi
-  fi
- done
- 
- if [ "$workflow_found" = false ];then
-  echo "  Status: NOT FOUND or still running"
-  ALL_WORKFLOWS_PASSED=false
- elif [ "$workflow_passed" = false ];then
-  ALL_WORKFLOWS_PASSED=false
+echo "Commit status: $STATE"
+
+# Check if state is success
+if [ "$STATE" != "success" ];then
+ if [ "$STATE" = "pending" ];then
+  echo "Tests are still running for commit $REMOTE_COMMIT"
+  echo "Will try again later"
+  exit $EXIT_ERROR
+ else
+  echo "ERROR: tests did not pass for commit $REMOTE_COMMIT (state: $STATE)" >&2
+  echo "Will not update to this version" >&2
+  exit $EXIT_ERROR
  fi
-done
-
-# If any workflow failed or is not found, exit
-if [ "$ALL_WORKFLOWS_PASSED" = false ];then
- echo "ERROR: not all required workflows passed for commit $REMOTE_COMMIT" >&2
- echo "Will not update to this version" >&2
- exit $EXIT_ERROR
 fi
 
-echo "All workflows passed. Proceeding with update."
+echo "All tests passed. Proceeding with update."
 
 # Pull the latest version
 echo "Pulling latest version..."
@@ -277,9 +219,10 @@ if [ $? -ne 0 ];then
  exit $EXIT_ERROR
 fi
 
-# Clean and compile
-echo "Cleaning previous build..."
-make clean &> /dev/null
+# Maybe I don't want that if RECOMPILE_VAST_ONLY = yes is set in GNUmakefile (for fast compilation)
+## Clean and compile
+#echo "Cleaning previous build..."
+#make clean &> /dev/null
 
 echo "Compiling VaST..."
 make > make.log 2>&1
