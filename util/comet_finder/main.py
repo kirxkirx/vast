@@ -10,7 +10,9 @@ import requests
 
 DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 COMETS_DATA_URL = "https://www.minorplanetcenter.net/iau/MPCORB/CometEls.txt"
+COMETS_DATA_URL_BACKUP = "http://kirx.net/iau/MPCORB/CometEls.txt"
 MPC_OBSERVATORY_URL = "https://www.minorplanetcenter.net/iau/lists/ObsCodes.html"
+MPC_OBSERVATORY_URL_BACKUP = "http://kirx.net/iau/lists/ObsCodes.html"
 FILTERED_COMETS_FILE = os.path.join(DIR, "filtered_comets.csv")
 OBSERVATORY_CACHE_FILE = os.path.join(DIR, "observatory_codes.csv")
 LOCAL_OBSERVATORY_FILE = "ObsCodes.html"
@@ -128,12 +130,32 @@ def get_observatory_coordinates(code):
 
 
 def fetch_observatory_data():
-    """Fetch and parse MPC observatory codes list"""
-    response = requests.get(MPC_OBSERVATORY_URL)
-    if response.status_code != 200:
-        raise ConnectionError(f"Failed to download observatory data: {response.status_code}")
+    """Fetch and parse MPC observatory codes list with fallback to backup URL"""
+    last_error = None
     
-    return parse_observatory_data(response.text)
+    # Try primary URL
+    try:
+        echo(f"-> Attempting to download from {MPC_OBSERVATORY_URL}")
+        response = requests.get(MPC_OBSERVATORY_URL, timeout=30)
+        if response.status_code == 200:
+            return parse_observatory_data(response.text)
+        last_error = f"HTTP status {response.status_code}"
+    except Exception as e:
+        last_error = str(e)
+        echo(f"-> Primary URL failed: {last_error}")
+    
+    # Try backup URL
+    try:
+        echo(f"-> Attempting backup URL: {MPC_OBSERVATORY_URL_BACKUP}")
+        response = requests.get(MPC_OBSERVATORY_URL_BACKUP, timeout=30)
+        if response.status_code == 200:
+            echo("-> Successfully downloaded from backup URL")
+            return parse_observatory_data(response.text)
+        last_error = f"HTTP status {response.status_code} from backup URL"
+    except Exception as e:
+        last_error = f"Backup URL also failed: {e}"
+    
+    raise ConnectionError(f"cannot download observatory data because {last_error}")
 
 
 def parse_observatory_data(data_text):
@@ -213,7 +235,7 @@ def calc(date: Time, min_mag: float, lat: float, long: float, result_file_name: 
 
 def prepare(date: Time, min_mag: float, lat: float, long: float):
     echo("-> Downloading comet data.")
-    comets = fetch_cometas_data(COMETS_DATA_URL, True)
+    comets = fetch_cometas_data(date.ts, True)
     echo(f"-> Loaded: '{len(comets)}' comets.")
 
     echo("-> Filter by magnitude.")
@@ -302,10 +324,31 @@ def calc_ra_dec(filtered_comets, date: Time, lat: float, long: float):
     return results
 
 
-def fetch_cometas_data(url: str, reload=False):
-    with load.open(url, reload=reload) as f:
-        comets = mpc.load_comets_dataframe(f)
-    return comets
+def fetch_cometas_data(ts, reload=False):
+    """Fetch comet data with fallback to backup URL"""
+    last_error = None
+    
+    # Try primary URL
+    try:
+        echo(f"-> Attempting to download from {COMETS_DATA_URL}")
+        with load.open(COMETS_DATA_URL, reload=reload) as f:
+            comets = mpc.load_comets_dataframe(f)
+            return comets
+    except Exception as e:
+        last_error = str(e)
+        echo(f"-> Primary URL failed: {last_error}")
+    
+    # Try backup URL
+    try:
+        echo(f"-> Attempting backup URL: {COMETS_DATA_URL_BACKUP}")
+        with load.open(COMETS_DATA_URL_BACKUP, reload=reload) as f:
+            comets = mpc.load_comets_dataframe(f)
+            echo("-> Successfully downloaded from backup URL")
+            return comets
+    except Exception as e:
+        last_error = f"Backup URL also failed: {e}"
+    
+    raise ConnectionError(f"cannot download {COMETS_DATA_URL} because {last_error}")
 
 
 def load_eph():
@@ -353,8 +396,8 @@ def parse_args():
     parser.add_argument(
         "command",
         type=str,
-        help="Launch command: calc — calculation of RA/Dec/Mag, \
-        prepare — filtering comets by mag."
+        help="Launch command: calc -- calculation of RA/Dec/Mag, \
+        prepare -- filtering comets by mag."
     )
 
     parser.add_argument(
