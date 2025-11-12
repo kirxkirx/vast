@@ -7,6 +7,8 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
+TRY_THESE_TEXT_EDITORS_IN_ORDER="joe nano vim emacs"
+
 if [ -z "$1" ];then
  echo "Usage: $0 out01234.dat"
  exit 1
@@ -156,8 +158,9 @@ fi
 You may need to edit the header before submitting the file to the AAVSO!"
 
 # Try to find a sensible editor
-if [ -z "$EDITOR" ];then
- for EDITOR_TO_TRY in joe nano vim emacs ;do
+if [ -z "$EDITOR" ] || ! command -v "$EDITOR" &>/dev/null ;then
+ #for EDITOR_TO_TRY in joe nano vim emacs ;do
+ for EDITOR_TO_TRY in $TRY_THESE_TEXT_EDITORS_IN_ORDER ;do
   command -v $EDITOR_TO_TRY &>/dev/null
   if [ $? -eq 0 ];then
    EDITOR="$EDITOR_TO_TRY"
