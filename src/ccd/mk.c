@@ -13,9 +13,9 @@
 
 #define FALLBACK_CCD_TEMP_VALUE 100
 #define MAX_CCD_TEMP_DIFF 2.5
-#define MIN_FLAT_FIELD_COUNT 5000
-#define MAX_FLAT_FIELD_COUNT 20000
-#define MAX_BRIGHTNESS 50000
+#define MAX_DARK_BIAS_COUNT 7000
+#define MIN_FLAT_FIELD_COUNT 17000
+#define MAX_FLAT_FIELD_COUNT 50000
 
 // char *beztochki( char * );
 
@@ -306,12 +306,12 @@ int main( int argc, char *argv[] ) {
 
   // Reject obviously bad images from the flat-field stack
   // (but how do we know it's a flat stack?)
-  // assume if the value is below 5000 counts it's a dark/bias staks and not flat
-  if ( MIN_FLAT_FIELD_COUNT < cur_index && cur_index < MAX_FLAT_FIELD_COUNT ) {
+  // assume if the value is below MAX_DARK_BIAS_COUNT counts it's a dark/bias staks and not flat
+  if ( MAX_DARK_BIAS_COUNT < cur_index && cur_index < MIN_FLAT_FIELD_COUNT ) {
    fprintf( stderr, "REJECT (too faint for a flat field)\n" );
    continue; // continue here so good_file_counter does not increase
   }
-  if ( cur_index > MAX_BRIGHTNESS ) {
+  if ( cur_index > MAX_FLAT_FIELD_COUNT ) {
    fprintf( stderr, "REJECT (too bright)\n" );
    continue; // continue here so good_file_counter does not increase
   }
