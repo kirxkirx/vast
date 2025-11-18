@@ -7,12 +7,15 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
-TRY_THESE_TEXT_EDITORS_IN_ORDER="joe nano vim emacs"
+TRY_THESE_TEXT_EDITORS_IN_ORDER="joe nano micro ne vim vi emacs gedit kate code"
+
+#################################
 
 if [ -z "$1" ];then
  echo "Usage: $0 out01234.dat"
  exit 1
 fi
+
 
 TEST_MODE_WITH_NO_INTERACTIVE_EDITOR=0
 if [ -n "$2" ];then
@@ -39,12 +42,12 @@ if [ $? -ne 0 ];then
 fi
 
 # Check that the magnitudes are reasonable
-if [ 1 -ne `util/cute_lc "$INPUT_VAST_LIGHTCURVE" | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEAN=' | awk '{if ( $2 > 5 ) print 1 ;else print 0 }'` ];then
+if [ 1 -ne $(util/cute_lc "$INPUT_VAST_LIGHTCURVE" | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEAN=' | awk '{if ( $2 > 5 ) print 1 ;else print 0 }') ];then
  echo "The magnitudes seem too small! Are you forgetting to convert the instrumental magnitudes to the absolute scale?"
  exit 1
 fi
 # Check that the magnitudes are reasonable
-if [ 1 -ne `util/cute_lc "$INPUT_VAST_LIGHTCURVE" | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEAN=' | awk '{if ( $2 < 25 ) print 1 ;else print 0 }'` ];then
+if [ 1 -ne $(util/cute_lc "$INPUT_VAST_LIGHTCURVE" | awk '{print $2}' | util/colstat 2>/dev/null | grep 'MEAN=' | awk '{if ( $2 < 25 ) print 1 ;else print 0 }') ];then
  echo "The magnitudes seem too large!"
  exit 1
 fi
@@ -60,9 +63,16 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
+CBA_OR_VSNET_MODE="CBA"
+if [[ "$(basename $0)" == *"VSNET"* ]]; then
+ CBA_OR_VSNET_MODE="VSNET"
+fi
+echo "Reformatting the lightcurve data file $INPUT_VAST_LIGHTCURVE $CBA_OR_VSNET_MODE style."
+
+
 # Get the observing date for the header
-JD_FIRST_OBS=$(util/cute_lc "$INPUT_VAST_LIGHTCURVE" | head -n1 | awk '{printf "%.3f", $1}')
-JD_LAST_OBS=$(util/cute_lc "$INPUT_VAST_LIGHTCURVE" | tail -n1 | awk '{printf "%.3f", $1}')
+JD_FIRST_OBS=$(util/cute_lc "$INPUT_VAST_LIGHTCURVE" | head -n1 | awk '{printf "%.2f", $1}')
+JD_LAST_OBS=$(util/cute_lc "$INPUT_VAST_LIGHTCURVE" | tail -n1 | awk '{printf "%.2f", $1}')
 UNIXTIME_FIRST_OBS=$(util/get_image_date "$JD_FIRST_OBS" 2>/dev/null | grep 'Unix Time' | awk '{print $3}')
 DATE_FOR_CBA_HEADER_FIRST_OBS=$(LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d%b%Y")
 DATE_FOR_CBA_MESSAGE_SUBJECT_FIRST_OBS=$(LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d %B %Y")
@@ -113,12 +123,12 @@ fi
 if [ ! -s CBA_previously_used_header.txt ];then
  echo "# Variable: $VARIABLE_STAR_NAME
 # Date: $DATE_FOR_CBA_HEADER_FIRST_OBS
-# Comp star: 144_AAVSO_(V= 14.357 )
-# Check star: 157_AAVSO_(V= 15.663 )
+# Comp star: APASS_ensemble
+# Check star: 
 # Exp time (s): $MEDIAN_EXPOSURE_TIME_SEC s
 # Filter: CV
-# Observatory: Michigan State Campus Observatory
-# East Lansing, MI, USA
+# Observatory: Texas Tech Skyview Observatory
+# Shallowater, TX, USA
 # Observers: Kirill Sokolovsky
 # Comments: Clear most of the night.
 #    JD              Var_Mag        Var_eMag" > CBA_previously_used_header.txt
@@ -192,7 +202,7 @@ if [ -z "$OBSERVER_NAMES" ];then
 fi
 
 
-FINAL_OUTPUT_FILENAME=CBA_"$VARIABLE_STAR_NAME_NO_WHITESPACES"_"$DATE_FOR_CBA_HEADER_FIRST_OBS"_measurements.txt
+FINAL_OUTPUT_FILENAME="${CBA_OR_VSNET_MODE}_${VARIABLE_STAR_NAME_NO_WHITESPACES}_${DATE_FOR_CBA_HEADER_FIRST_OBS}_measurements.txt"
 echo "Renaming the final report file:"
 cp -v CBA_report.txt "$FINAL_OUTPUT_FILENAME"
 grep '# ' CBA_report.txt > CBA_previously_used_header.txt
@@ -206,10 +216,20 @@ Please find attached the observations of $VARIABLE_STAR_NAME on $DATE_FOR_CBA_ME
 Best wishes,
 $OBSERVER_NAMES
 "
-echo " ### Suggested message subject and text 
-#To: cba-data@cbastro.org # Old address
+
+if [ "$CBA_OR_VSNET_MODE" = "VSNET" ];then
+ echo " ### Suggested message subject and text 
+To: vsnet-campaign-report@ooruri.kusastro.kyoto-u.ac.jp
+
+Subject: $SUBJECT
+
+$MESSAGE"
+else
+ echo " ### Suggested message subject and text 
 To: cbastro-data@googlegroups.com
 
 Subject: $SUBJECT
 
 $MESSAGE"
+fi
+

@@ -7,7 +7,7 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
-TRY_THESE_TEXT_EDITORS_IN_ORDER="joe nano vim emacs"
+TRY_THESE_TEXT_EDITORS_IN_ORDER="joe nano micro ne vim vi emacs gedit kate code"
 
 if [ -z "$1" ];then
  echo "Usage: $0 out01234.dat"

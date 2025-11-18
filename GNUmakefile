@@ -520,6 +520,8 @@ shell_commands: pgplot_components lib/lightcurve_simulator vast
 	#
 	cd util/artificial_star_test_for_transient_search && ln -s run_artificial_star_test.sh run_artificial_star_test_oneflux.sh && cd -
 	#
+	cd util && ln -s format_lightcurve_CBA.sh format_lightcurve_VSNET.sh && cd -
+	#
 	# This is to remove docs
 	rm -f `find src/ -name '*.pdf'` `find src/ -name '*.ps'`
 	#
@@ -615,6 +617,8 @@ clean: clean_libraries
 	rm -f lib/test_libpng_justtest_nomovepgplot.sh
 	#
 	rm -f util/artificial_star_test_for_transient_search/run_artificial_star_test_oneflux.sh
+	#
+	rm -f util/format_lightcurve_VSNET.sh
 	
 
 clean_objects: vast statistics etc pgplot_components old shell_commands period_filter ccd astrometry astcheck cdsclient
