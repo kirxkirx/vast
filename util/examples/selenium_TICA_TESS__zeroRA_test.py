@@ -1,12 +1,16 @@
 import logging
+import os
 import re
 import unittest
 from pathlib import Path
 from urllib.parse import urlparse
 
+import shutil
+
 import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -43,15 +47,51 @@ class SecondSectionLinkButtonTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         LOG.info("Starting Chrome in headless mode ...")
-        # -------- headless setup ---------------------------------------
         opts = Options()
         # for Chrome >= 109 use "headless=new"; for older versions "headless" also works
         opts.add_argument("--headless=new")
-        # optionally disable gpu & dev-shm if your CI container needs it
         opts.add_argument("--disable-gpu")
         opts.add_argument("--disable-dev-shm-usage")
 
-        cls.driver = webdriver.Chrome(options=opts)      # pass options here
+        # 1) explicit env var
+        chromedriver_path = os.environ.get("CHROMEDRIVER_PATH")
+
+        # 2) if not set, try to find chromedriver in PATH
+        if not chromedriver_path:
+            chromedriver_path = shutil.which("chromedriver")
+
+        try:
+            if chromedriver_path:
+                LOG.info("Using ChromeDriver at: %s", chromedriver_path)
+                try:
+                    # Selenium 4 style: use Service
+                    service = Service(executable_path=chromedriver_path)
+                    cls.driver = webdriver.Chrome(service=service, options=opts)
+                except TypeError:
+                    # Selenium 3 style: executable_path kwarg
+                    cls.driver = webdriver.Chrome(
+                        executable_path=chromedriver_path,
+                        options=opts,
+                    )
+            else:
+                LOG.info("No ChromeDriver found via CHROMEDRIVER_PATH or PATH, "
+                         "falling back to Selenium Manager / default behaviour")
+                cls.driver = webdriver.Chrome(options=opts)
+
+        except Exception as e:
+            LOG.error("Failed to initialize Chrome WebDriver")
+            LOG.error("Error: %s", str(e))
+            LOG.error("")
+            LOG.error("To fix this issue, try one of the following:")
+            LOG.error("1. Install ChromeDriver and add it to your PATH")
+            LOG.error("2. Set CHROMEDRIVER_PATH environment variable:")
+            LOG.error("   export CHROMEDRIVER_PATH=/path/to/chromedriver")
+            LOG.error("3. Install ChromeDriver via package manager:")
+            LOG.error("   - Gentoo: emerge www-apps/chromedriver-bin")
+            LOG.error("   - Ubuntu/Debian: apt install chromium-chromedriver")
+            LOG.error("   - Or download from: https://chromedriver.chromium.org/")
+            raise
+
         cls.driver.implicitly_wait(3)
 
     @classmethod
@@ -88,7 +128,8 @@ class SecondSectionLinkButtonTest(unittest.TestCase):
         anchor = self._find_section_root()
         section_nodes = self._collect_section_elements(anchor)
 
-        links, forms = set(), set()
+        links = set()
+        forms = set()
         for n in section_nodes:
             links.update(n.find_elements(By.XPATH, ".//a"))
             if n.tag_name.lower() == "a":
@@ -101,7 +142,9 @@ class SecondSectionLinkButtonTest(unittest.TestCase):
                  len(links), len(forms))
 
         # ----- link checks ----------------------------------------------
-        for idx, a in enumerate(sorted(links, key=lambda x: x.get_attribute("href")), 1):
+        idx = 0
+        for a in sorted(links, key=lambda x: x.get_attribute("href")):
+            idx = idx + 1
             href = a.get_attribute("href")
             LOG.info("(%2d/%d) Checking link: %s", idx, len(links), href)
             self.assertTrue(href, "<a> without href attribute")
@@ -157,7 +200,9 @@ class SecondSectionLinkButtonTest(unittest.TestCase):
                 LOG.info(" -- skipped (unsupported scheme %s)", parsed.scheme)
 
         # ----- form checks ----------------------------------------------
-        for idx, form in enumerate(forms, 1):
+        idx = 0
+        for form in forms:
+            idx = idx + 1
             action = form.get_attribute("action")
             LOG.info("Checking form %d/%d (action=%s)", idx, len(forms), action)
             self.assertTrue(action, "form without action attribute")

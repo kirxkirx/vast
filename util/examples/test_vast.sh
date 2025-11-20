@@ -1374,6 +1374,7 @@ if [ $? -ne 0 ];then
 fi
 
 ### Check this star is in the local copy of the ASASSN-V catalog (it should be)
+### if it isn't - the asassnv.csv was likely downloaded incompletley (check if it's good server-side)
 grep --quiet 'ASASSN-V J010901.57+471816.4' lib/catalogs/asassnv.csv
 if [ $? -ne 0 ];then
  TEST_PASSED=0
