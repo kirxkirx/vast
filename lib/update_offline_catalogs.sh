@@ -13,6 +13,12 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
+if [ ! -x lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search ];then
+ echo "Error: Could not find lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search"
+ echo "You need to compile VaST by running 'make' before running the script $0"
+ exit 1
+fi
+
 # Function to download Tycho2 dataset files
 get_tycho2_from_scan_with_curl() {
     local url="http://scan.sai.msu.ru/~kirx/data/tycho2/"
