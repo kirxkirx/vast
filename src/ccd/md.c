@@ -84,7 +84,7 @@ unsigned short detect_overscan2( float *image_array, long *naxes ) {
  // unsigned short min_real_count_estimate= (unsigned short)( median + 10 * sqrt( median ) );
  median= ( left_median > right_median ) ? left_median : right_median;
  //unsigned short min_real_count_estimate= (unsigned short)( median - 10 * sqrt( median ) );
- unsigned short min_real_count_estimate= (unsigned short)( left_median + 10 * sqrt( median ) );
+ unsigned short min_real_count_estimate= (unsigned short)( MIN( left_median, right_median ) + 10 * sqrt( median ) );
  fprintf( stdout, "Overscan detected!  (left_median=%.1lf, right_median=%.1lf, sqrt(median)=%lf)\n", left_median, right_median, sqrt( median ) );
  return MAX( min_real_count_estimate, MIN_REAL_COUNT );
 }
