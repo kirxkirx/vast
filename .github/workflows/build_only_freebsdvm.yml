@@ -33,7 +33,7 @@ jobs:
         # When using rsync, you can define copyback: false to not copy files back from the VM in to the host.
         copyback: false
         prepare: |
-          pkg install -y bash gcc gmake libx11 curl wget pgplot 
+          pkg install -y bash gcc gmake libX11 curl wget pgplot 
 
         run: |
           make
