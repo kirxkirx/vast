@@ -729,6 +729,11 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
  double m= star.mag;
  double m_err= star.sigma_mag;
 
+ // Test if the transient is detected with sufficient SNR
+ if ( star.flux / star.flux_err < MIN_SNR_TRANSIENT_DETECTION ) {
+  return;
+ }
+
  // Test if the time difference between the reference and the current image is >TRANSIENT_MIN_TIMESCALE_DAYS
  if ( fabs( star.JD - reference_image_JD ) < TRANSIENT_MIN_TIMESCALE_DAYS ) {
   return;

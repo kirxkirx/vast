@@ -80,6 +80,9 @@
                                       // Parameter used in src/data_parser.c 
                                       
 #define FAINTEST_STARS_ANYMAG 30.0    // Discard observations with (instrumental or whatever) magnitudes > FAINTEST_STARS
+
+#define MIN_SNR_TRANSIENT_DETECTION 5.0 // Discard transient candidates with signal-to-noise ratio < MIN_SNR_TRANSIENT_DETECTION
+
 #define MIN_SNR 3.0                   // Discard objects detected with signal-to-noise ratio < MIN_SNR
 #define MAX_MAG_ERROR 1.086 / MIN_SNR // Discard observations with the estimated error >MAX_MAG_ERROR. Note: the meaning of this parameter has changed in vast-1.0rc80 
                                       // see http://wise2.ipac.caltech.edu/docs/release/allsky/expsup/sec6_3a.html                                                     
