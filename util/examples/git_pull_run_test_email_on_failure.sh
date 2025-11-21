@@ -93,7 +93,7 @@ if [ $? -ne 0 ];then
 fi
 
 # Check that no other instances of the script are running
-N_RUN=`ps ax | grep combine_reports.sh | grep -v grep | grep bash | grep -c git_pull_run_test_email_on_failure.sh`
+N_RUN=$(ps ax | grep git_pull_run_test_email_on_failure.sh | grep -v grep | grep bash | grep -c git_pull_run_test_email_on_failure.sh)
 # This is conter-intuitive but the use of the construct N_RUN=`` will create a second copy of "bash ./git_pull_run_test_email_on_failure.sh" in the ps output
 # So one running copy of the script corresponds to N_RUN=2
 if [ $N_RUN -gt 2 ];then
@@ -102,7 +102,7 @@ if [ $N_RUN -gt 2 ];then
 fi
 
 # Check that no other test_vast.sh is running (could have been started manually)
-N_RUN=`ps ax | grep combine_reports.sh | grep -v grep | grep bash | grep -c test_vast.sh`
+N_RUN=$(ps ax | grep test_vast.sh | grep -v grep | grep bash | grep -c test_vast.sh)
 # So one running copy of the script corresponds to N_RUN=2
 if [ $N_RUN -gt 1 ];then
 # echo "ERROR: another instance of 'test_vast.sh' is already running"
@@ -126,30 +126,14 @@ fi
 
 
 # update VaST
-#LANG=C git remote update &>/dev/null
-#if [ $? -ne 0 ];then
-# echo "ERROR: cannot run 'git remote update'"
-# exit 1
-#fi
-#
-## Does not work with old git that will not say 'Your branch is up to date with'
-#LANG=C git status -uno 2>&1 | grep --quiet 'Your branch is up to date with'
-#if [ $? -ne 0 ];then
-## echo "We are up to date - no updates needed"
-# exit 0
-#fi
 
-LANG=C git pull --depth 1 2>&1 | grep --quiet 'Updating'
+# Don't use --depth 1 here!!!
+# When used on a normally-cloned repository it creates a history mismatch that makes Git think the branches have diverge!
+LANG=C git pull 2>&1 | grep --quiet 'Updating'
 if [ $? -ne 0 ];then
 # echo "ERROR: 'git pull' reports 'Already up to date.'"
  exit 0
 fi
-
-#LANG=C git pull 2>&1 | grep --quiet 'Already up to date.'
-#if [ $? -eq 0 ];then
-# echo "ERROR: 'git pull' reports 'Already up to date.'"
-# exit 1
-#fi
 
 if [ -f make.log ];then
  rm -f make.log
@@ -190,6 +174,4 @@ util/examples/test_vast.sh &>/dev/null
 #rm -f ../THIS_IS_HPCC__email_only_on_failure
 rm -f ../THIS_IS_HPCC
 # it will take care of reporting results on failure
-
-
 
