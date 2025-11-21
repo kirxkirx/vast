@@ -16,15 +16,15 @@ PARAMETERS_NAME default.param   # name of the file containing catalog contents
 DETECT_TYPE     CCD             # "CCD" or "PHOTO"
 FLAG_IMAGE      flag.fits       # filename for an input FLAG-image
 
-# Usual (optimistic) setup
+# Optimistic setup finds TCP J06364062+3318310 but is too slow in tests
 DETECT_MINAREA  2.0             # minimum number of pixels above threshold
 DETECT_THRESH   2.1             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
 ANALYSIS_THRESH 2.1             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
 
-# More conservative
-#DETECT_MINAREA  3.0             # minimum number of pixels above threshold
-#DETECT_THRESH   4.0             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
-#ANALYSIS_THRESH 4.0             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
+# Normal STL setup
+DETECT_MINAREA  2.0             # minimum number of pixels above threshold
+DETECT_THRESH   3.0             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
+ANALYSIS_THRESH 3.0             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
 
 SATUR_LEVEL     57000.0         # level (in ADUs) at which arises saturation
 
