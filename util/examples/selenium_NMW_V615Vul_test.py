@@ -34,6 +34,7 @@ PAGE_URL = REPORT_HTML.resolve().as_uri()
 SKIP_LINK_PATTERNS = (
     "cbat.eps.harvard.edu/tocp_report",
     "wis-tns.weizmann.ac.il",
+    "wis-tns.org",
 )
 
 REQUEST_TIMEOUT   = 60   # seconds for each HTTP HEAD
