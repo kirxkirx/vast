@@ -231,16 +231,14 @@ function setup_remote_astrometry {
   fi
  done
  for i in $PLATE_SOLVE_SERVERS ;do
-  # Why? Maybe we want remotely connect to ourselves for a test
-  ## make sure we'll not remotely connect to ourselves
-  #if [ ! -z "$HOST_WE_ARE_RUNNING_AT" ];then
-  # echo "$i" | grep --quiet "$HOST_WE_ARE_RUNNING_AT"
-  # if [ $? -eq 0 ];then
-  #  continue
-  # fi
-  #fi
-  #
-  ping -c1 -n "$i" &>/dev/null && echo "$i" > server$$_"$i".ping_ok &
+  # ping to the outside world may be blocked
+  if [ "$(uname)" = "Linux" ]; then
+   # -W1 is set 1 sec timeout on Linux
+   ping -c1 -n "$i" -W1 &>/dev/null && echo "$i" > server$$_"$i".ping_ok &
+  else
+   # -W1000 is set 1 sec timeout on FreeBSD/MacOS
+   ping -c1 -n "$i" -W1000 &>/dev/null && echo "$i" > server$$_"$i".ping_ok &
+  fi
   echo -n "$i " 1>&2
  done
 
