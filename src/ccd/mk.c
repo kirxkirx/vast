@@ -121,6 +121,7 @@ int main( int argc, char *argv[] ) {
  int i, j;
  int bitpix2;
  int file_counter;
+ int ref_file_index;
  int loaded_file_counter;
  int good_file_counter;
  double set_temp_image, ccd_temp_image;
@@ -154,8 +155,28 @@ int main( int argc, char *argv[] ) {
   exit( EXIT_FAILURE );
  }
 
- // Allocate combined array
- fits_open_file( &fptr, argv[1], 0, &status );
+ // Find the first valid FITS file to use as reference
+ for ( file_counter= 1; file_counter < argc; file_counter++ ) {
+  fits_open_file( &fptr, argv[file_counter], 0, &status );
+  if ( status == 0 ) {
+   // Successfully opened, use this as reference
+   break;
+  } else {
+   fprintf( stderr, "WARNING: Cannot open file %s - trying next file\n", argv[file_counter] );
+   fits_report_error( stderr, status );
+   status= 0;
+  }
+ }
+
+ if ( status != 0 || file_counter >= argc ) {
+  fprintf( stderr, "ERROR: Could not find any valid FITS files in the input!\n" );
+  exit( EXIT_FAILURE );
+ }
+
+ ref_file_index= file_counter;
+ fprintf( stderr, "Using %s as reference image\n", argv[ref_file_index] );
+
+ // Read reference image dimensions and header
  fits_read_key( fptr, TLONG, "NAXIS1", &naxes_ref[0], NULL, &status );
  fits_read_key( fptr, TLONG, "NAXIS2", &naxes_ref[1], NULL, &status );
  // Note the set temperature of the camera
@@ -172,8 +193,8 @@ int main( int argc, char *argv[] ) {
  }
  // Check for possible mismatch between CCD-TEMP and SET-TEMP
  if ( !skip_temp_checks && ccd_temp_image != FALLBACK_CCD_TEMP_VALUE && set_temp_image != FALLBACK_CCD_TEMP_VALUE ) {
-  fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_image, argv[1] );
-  fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_image, argv[1] );
+  fprintf( stderr, "CCD-TEMP= %lf for %s\n", ccd_temp_image, argv[ref_file_index] );
+  fprintf( stderr, "SET-TEMP= %lf for %s\n", set_temp_image, argv[ref_file_index] );
   if ( fabs( ccd_temp_image - set_temp_image ) > MAX_CCD_TEMP_DIFF ) {
    // found set temperature mismatch
    fprintf( stderr, "ERROR: mismatch between CCD-TEMP and SET-TEMP! Looks like the the camera didn't have time to cool down.\n" );
@@ -247,7 +268,7 @@ int main( int argc, char *argv[] ) {
   fits_read_key( fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status );
   fits_read_key( fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status );
   if ( naxes_ref[0] != naxes[0] || naxes_ref[1] != naxes[1] ) {
-   fprintf( stderr, "ERROR: image size mismatch %ldx%ld for %s vs. %ldx%ld for %s\n", naxes[0], naxes[1], argv[file_counter], naxes_ref[0], naxes_ref[1], argv[1] );
+   fprintf( stderr, "ERROR: image size mismatch %ldx%ld for %s vs. %ldx%ld for %s\n", naxes[0], naxes[1], argv[file_counter], naxes_ref[0], naxes_ref[1], argv[ref_file_index] );
    exit( EXIT_FAILURE );
   }
   // Note the set temperature of the camera
