@@ -3025,8 +3025,7 @@ $GREP_RESULT"
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_onenultwo_11"
- fi
- if [ ! -f median.fit ];then
+ elif [ ! -f median.fit ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_onenultwo_12"
  else
@@ -3041,8 +3040,7 @@ $GREP_RESULT"
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_onenultwo_881"
- fi
- if [ ! -f median.fit ];then
+ elif [ ! -f median.fit ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_onenultwo_882"
  else
@@ -3057,8 +3055,7 @@ $GREP_RESULT"
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_onenultwo_991"
- fi
- if [ ! -f median.fit ];then
+ elif [ ! -f median.fit ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_onenultwo_992"
  else
@@ -3073,8 +3070,7 @@ $GREP_RESULT"
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_onenultwo_21"
- fi
- if [ ! -f median.fit ];then
+ elif [ ! -f median.fit ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_onenultwo_22"
  else

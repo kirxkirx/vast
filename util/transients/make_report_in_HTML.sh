@@ -536,7 +536,7 @@ Don't forget to set the constellation name and the number of days since the last
    #
 
    # Stub variable star reports
-   echo "<a href=\"javascript:toggleElement('varstarstub_$TRANSIENT_NAME')\">Stub variable star reports</a> " >> transient_report/index.tmp  
+   echo "<a href=\"javascript:toggleElement('varstarstub_$TRANSIENT_NAME')\"><b>Stub variable star reports</b></a> " >> transient_report/index.tmp  
    echo -n "<div id=\"varstarstub_$TRANSIENT_NAME\" style=\"display:none\">
 Don't forget to change the observer code for the AAVSO and VSNET format data!<br>
 <pre class='folding-pre'>" >> transient_report/index.tmp
@@ -617,6 +617,7 @@ The VSNET data, depending on how interesting the target is, should be e-mailed t
 vsnet-alert@ooruri.kusastro.kyoto-u.ac.jp
 vsnet-outburst-wanted@ooruri.kusastro.kyoto-u.ac.jp
 vsnet-obs@ooruri.kusastro.kyoto-u.ac.jp
+# Time-series data may be sent to  vsnet-campaign-report@ooruri.kusastro.kyoto-u.ac.jp
 
 " >> transient_report/index.tmp
 
