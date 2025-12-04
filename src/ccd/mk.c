@@ -121,6 +121,7 @@ int main( int argc, char *argv[] ) {
  int i, j;
  int bitpix2;
  int file_counter;
+ int loaded_file_counter;
  int good_file_counter;
  double set_temp_image, ccd_temp_image;
  char **key;
@@ -137,6 +138,7 @@ int main( int argc, char *argv[] ) {
  nullval= 0;
  ref_index= 1.0;
  cur_index= 1.0;
+ loaded_file_counter= 0;
 
  // Check if executable name is mk_notempchecks
  prog_name= basename( argv[0] );
@@ -236,6 +238,12 @@ int main( int argc, char *argv[] ) {
  // Reading the input files
  for ( file_counter= 1; file_counter < argc; file_counter++ ) {
   fits_open_file( &fptr, argv[file_counter], 0, &status );
+  if ( status != 0 ) {
+   fprintf( stderr, "ERROR: Cannot open file %s - skipping this file\n", argv[file_counter] );
+   fits_report_error( stderr, status );
+   status= 0;
+   continue;
+  }
   fits_read_key( fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status );
   fits_read_key( fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status );
   if ( naxes_ref[0] != naxes[0] || naxes_ref[1] != naxes[1] ) {
@@ -267,9 +275,9 @@ int main( int argc, char *argv[] ) {
   }
   //
   // Allocate memory for the input images
-  image_array= realloc( image_array, file_counter * sizeof( unsigned short * ) );
-  image_array[file_counter - 1]= malloc( img_size * sizeof( unsigned short ) );
-  if ( image_array[file_counter - 1] == NULL ) {
+  image_array= realloc( image_array, ( loaded_file_counter + 1 ) * sizeof( unsigned short * ) );
+  image_array[loaded_file_counter]= malloc( img_size * sizeof( unsigned short ) );
+  if ( image_array[loaded_file_counter] == NULL ) {
    fprintf( stderr, "ERROR in mk: Couldn't allocate memory for image array\n Current image: %s\n", argv[file_counter] );
    exit( EXIT_FAILURE );
   }
@@ -281,12 +289,13 @@ int main( int argc, char *argv[] ) {
    fprintf( stderr, "ERROR: BITPIX = %d.  Only SHORT_IMG (BITPIX = %d) images are currently supported.\n", bitpix2, SHORT_IMG );
    exit( EXIT_FAILURE );
   }
-  fits_read_img( fptr, TUSHORT, 1, naxes[0] * naxes[1], &nullval, image_array[file_counter - 1], &anynul, &status );
+  fits_read_img( fptr, TUSHORT, 1, naxes[0] * naxes[1], &nullval, image_array[loaded_file_counter], &anynul, &status );
   fits_close_file( fptr, &status );
   fits_report_error( stderr, status ); // print out any error messages
   if ( status != 0 ) {
    exit( EXIT_FAILURE );
   }
+  loaded_file_counter++;
  }
 
  yy= malloc( img_size * sizeof( double ) );
@@ -295,10 +304,15 @@ int main( int argc, char *argv[] ) {
   exit( EXIT_FAILURE );
  };
 
+ if ( loaded_file_counter < 2 ) {
+  fprintf( stderr, "ERROR: only %d images were successfully loaded!\n", loaded_file_counter );
+  exit( EXIT_FAILURE );
+ }
+
  good_file_counter= 0;
- for ( file_counter= 1; file_counter < argc; file_counter++ ) {
+ for ( file_counter= 0; file_counter < loaded_file_counter; file_counter++ ) {
   for ( i= 0; i < img_size; i++ ) {
-   yy[i]= image_array[file_counter - 1][i];
+   yy[i]= image_array[file_counter][i];
   }
   gsl_sort( yy, 1, img_size );
   cur_index= gsl_stats_median_from_sorted_data( yy, 1, img_size );
@@ -322,7 +336,7 @@ int main( int argc, char *argv[] ) {
   }
 
   for ( ii= 0; ii < img_size; ii++ ) {
-   image_array[good_file_counter][ii]= image_array[file_counter - 1][ii] * ref_index / cur_index;
+   image_array[good_file_counter][ii]= image_array[file_counter][ii] * ref_index / cur_index;
   }
   good_file_counter++;
  }
@@ -385,8 +399,8 @@ int main( int argc, char *argv[] ) {
  fits_report_error( stderr, status ); /* print out any error messages */
  fits_close_file( fptr, &status );
 
- for ( file_counter= 1; file_counter < argc; file_counter++ ) {
-  free( image_array[file_counter - 1] );
+ for ( file_counter= 0; file_counter < loaded_file_counter; file_counter++ ) {
+  free( image_array[file_counter] );
  }
  free( image_array );
 

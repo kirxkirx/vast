@@ -3037,6 +3037,38 @@ $GREP_RESULT"
   fi
   rm -f median.fit
  fi
+ util/ccd/mk two.fit does_not_exist.png one.fit nul.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_onenultwo_881"
+ fi
+ if [ ! -f median.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_onenultwo_882"
+ else
+  util/imstat_vast median.fit | grep 'MEDIAN=     2.000'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_imstat_vast_883"
+  fi
+  rm -f median.fit
+ fi
+ util/ccd/mk does_not_exist.png two.fit does_not_exist.png one.fit nul.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_onenultwo_991"
+ fi
+ if [ ! -f median.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk_onenultwo_992"
+ else
+  util/imstat_vast median.fit | grep 'MEDIAN=     2.000'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_imstat_vast_993"
+  fi
+  rm -f median.fit
+ fi
  util/ccd/mk two.fit nul.fit
  if [ $? -ne 0 ];then
   TEST_PASSED=0
