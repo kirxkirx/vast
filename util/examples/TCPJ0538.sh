@@ -33,7 +33,7 @@ cp -v default.sex."$TARGET_NAME" default.sex
 # Main analysis command
 # --aperture 10   manually set fixed measurement aperture diameter of 10 pix
 # --type 4        robust linear image-to-image magnitude calibration (vary zero-point and slope, automated outlier rejection, no weights)
-./vast --aperture 10 --autoselectrefimage --type 4 --nofind --UTC "${IMG_DIR}/${IMG_FILE_PREFIX}"*
+./vast --selectbestaperture --autoselectrefimage --type 4 --nofind --UTC "${IMG_DIR}/${IMG_FILE_PREFIX}"*
 
 # Magnitude scale instrumental-to-catalog calibration (specify band and calibration function)
 util/magnitude_calibration.sh V robust_linear
