@@ -1166,7 +1166,6 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   SECOND_EPOCH__SECOND_IMAGE=$(ls "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" | tail -n1)
  elif [ $NUMBER_OF_SECOND_EPOCH_IMAGES -gt 2 ];then
   # There are more than two second-epoch images - do a preliminary VaST run to choose the two images with best seeing
-  #cp -v default.sex.telephoto_lens_onlybrightstars_v1 default.sex >> transient_factory_test31.txt
   cp -v "$SEXTRACTOR_CONFIG_BRIGHTSTARPASS" default.sex >> transient_factory_test31.txt 2>&1
   echo "Preliminary VaST run on the second-epoch images only" | tee -a transient_factory_test31.txt
   # --type 2 zero-point-only magnitude calibration requires fewer matched stars - useful for oblybrigthstars SE settings on very bright twilight images
@@ -1662,10 +1661,6 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
 
   echo "Starting VaST with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
   # Run VaST
-#  echo "
-#  ./vast --norotation --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE
-#  " | tee -a transient_factory_test31.txt
-#  ./vast --norotation --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --poly --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" &> vast_output_$$.tmp
   echo "
   ./vast --norotation --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --type 4 --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE
   " | tee -a transient_factory_test31.txt
@@ -2318,6 +2313,14 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     fi
    done
    #
+   ##########################################################
+   # Copy WCS-calibrated images back to input directory
+   for WCS_CALIBRATED_IMAGE_FOR_ARCHIVE in wcs_fd_*."$FITS_FILE_EXT" ; do
+    if [ -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ] && [ -s "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ] && [ ! -f "$ABSOLUTE_PATH_TO_IMAGES/$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ]; then
+     cp -v "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" "$ABSOLUTE_PATH_TO_IMAGES/" | tee -a transient_factory_test31.txt
+    fi
+   done
+   ##########################################################
    #
    echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
    util/transients/make_report_in_HTML.sh >> transient_factory_test31.txt 2>&1
