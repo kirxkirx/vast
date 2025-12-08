@@ -291,6 +291,28 @@ fi
 #################################
 # helper functions
 
+function is_this_test_run_based_on_input_img_path {
+ # Check if the provided path suggests this is a test run
+ # Returns 0 (true) if this is a test run, 1 (false) otherwise
+ local path_to_check
+ 
+ if [ -n "$1" ]; then
+  path_to_check="$1"
+ else
+  echo "ERROR in is_this_test_run_based_on_input_img_path(): no argument provided"
+  return 1
+ fi
+ 
+ echo "$path_to_check" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
+ if [ $? -eq 0 ]; then
+  # Pattern found - this IS a test run
+  return 0
+ else
+  # Pattern not found - this is NOT a test run
+  return 1
+ fi
+}
+
 function get_file_size() {
     local file="$1"
     if [ -f "$file" ]; then
@@ -2314,12 +2336,19 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    done
    #
    ##########################################################
-   # Copy WCS-calibrated images back to input directory
-   for WCS_CALIBRATED_IMAGE_FOR_ARCHIVE in wcs_fd_*."$FITS_FILE_EXT" ; do
-    if [ -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ] && [ -s "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ] && [ ! -f "$ABSOLUTE_PATH_TO_IMAGES/$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ]; then
-     cp -v "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" "$ABSOLUTE_PATH_TO_IMAGES/" | tee -a transient_factory_test31.txt
-    fi
-   done
+   #echo "$ABSOLUTE_PATH_TO_IMAGES" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
+   is_this_test_run_based_on_input_img_path "$ABSOLUTE_PATH_TO_IMAGES"
+   if [ $? -ne 0 ]; then
+    echo "Copying WCS-calibrated images back to input directory" | tee -a transient_factory_test31.txt
+    # Copy WCS-calibrated images back to input directory
+    for WCS_CALIBRATED_IMAGE_FOR_ARCHIVE in wcs_fd_*."$FITS_FILE_EXT" ; do
+     if [ -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ] && [ -s "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ] && [ ! -f "$ABSOLUTE_PATH_TO_IMAGES/$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ]; then
+      cp -v "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" "$ABSOLUTE_PATH_TO_IMAGES/" | tee -a transient_factory_test31.txt
+     fi
+    done
+   else
+    echo "This is a test - NOT copying WCS-calibrated images back to input directory" | tee -a transient_factory_test31.txt
+   fi
    ##########################################################
    #
    echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
@@ -2357,7 +2386,8 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
  echo "We are allowed to update the exclusion list at $HOST host" | tee -a transient_factory_test31.txt
  IS_THIS_TEST_RUN="NO"
  # if we are not in the test directory
- echo "$PWD" "$@" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
+ #echo "$PWD" "$@" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
+ is_this_test_run_based_on_input_img_path "$PWD $@"
  if [ $? -eq 0 ] ;then
   IS_THIS_TEST_RUN="YES"
   echo "The names $PWD $string_command_line_argumants suggest this is a test run" | tee -a transient_factory_test31.txt
@@ -2505,7 +2535,7 @@ exclusion_list_index_html.txt NOT FOUND" | tee -a transient_factory_test31.txt
   fi # if [ -f $EXCLUSION_LIST ];then
  else
   echo "This looks like a test run so we are not updating exclusion list  IS_THIS_TEST_RUN=$IS_THIS_TEST_RUN  ALLOW_EXCLUSION_LIST_UPDATE= $ALLOW_EXCLUSION_LIST_UPDATE" | tee -a transient_factory_test31.txt
-  echo "$PWD" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST' | tee -a transient_factory_test31.txt
+  #echo "$PWD" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST' | tee -a transient_factory_test31.txt
  fi # if [ "$IS_THIS_TEST_RUN" != "YES" ];then
 #fi # host
 ## exclusion list update
