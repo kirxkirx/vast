@@ -303,7 +303,9 @@ function is_this_test_run_based_on_input_img_path {
   return 1
  fi
  
- echo "$path_to_check" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
+ #echo "$path_to_check" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
+ # -i (ignore case)
+ echo "$path_to_check" | grep --quiet -i 'test'
  if [ $? -eq 0 ]; then
   # Pattern found - this IS a test run
   return 0
@@ -2387,7 +2389,7 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
  IS_THIS_TEST_RUN="NO"
  # if we are not in the test directory
  #echo "$PWD" "$@" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
- is_this_test_run_based_on_input_img_path "$PWD $@"
+ is_this_test_run_based_on_input_img_path "$PWD $string_command_line_argumants"
  if [ $? -eq 0 ] ;then
   IS_THIS_TEST_RUN="YES"
   echo "The names $PWD $string_command_line_argumants suggest this is a test run" | tee -a transient_factory_test31.txt
