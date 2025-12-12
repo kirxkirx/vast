@@ -303,7 +303,6 @@ function is_this_test_run_based_on_input_img_path {
   return 1
  fi
  
- #echo "$path_to_check" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
  # -i (ignore case)
  echo "$path_to_check" | grep --quiet -i 'test'
  if [ $? -eq 0 ]; then
@@ -964,8 +963,6 @@ The list of candidates will appear below. Please <b>manually reload the page</b>
 for NEW_IMAGES in "$@" ;do
 
 if [ ! -d "$NEW_IMAGES" ];then
- #echo "ERROR: $NEW_IMAGES is not a directory"
- #echo "ERROR: $NEW_IMAGES is not a directory" >> transient_factory_test31.txt
  echo "ERROR: $NEW_IMAGES is not a directory" | tee -a transient_factory_test31.txt
  continue
 fi
@@ -2338,14 +2335,13 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    done
    #
    ##########################################################
-   #echo "$ABSOLUTE_PATH_TO_IMAGES" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
-   is_this_test_run_based_on_input_img_path "$ABSOLUTE_PATH_TO_IMAGES"
+   is_this_test_run_based_on_input_img_path "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING"
    if [ $? -ne 0 ]; then
     echo "Copying WCS-calibrated images back to input directory" | tee -a transient_factory_test31.txt
     # Copy WCS-calibrated images back to input directory
     for WCS_CALIBRATED_IMAGE_FOR_ARCHIVE in wcs_fd_*."$FITS_FILE_EXT" ; do
      if [ -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ] && [ -s "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ] && [ ! -f "$ABSOLUTE_PATH_TO_IMAGES/$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ]; then
-      cp -v "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" "$ABSOLUTE_PATH_TO_IMAGES/" | tee -a transient_factory_test31.txt
+      cp -v "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" "$NEW_IMAGES/" | tee -a transient_factory_test31.txt
      fi
     done
    else
