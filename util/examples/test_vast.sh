@@ -1094,6 +1094,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 
 
 #### Standalone test for database querry scripts
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
+
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
 # Run the test
@@ -1525,6 +1528,10 @@ test_internet_connection fast
 if [ $? -ne 0 ];then
  exit 1
 fi
+
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
+
 
 
 ##### Photographic plate test #####
@@ -8951,6 +8958,9 @@ fi
 
 
 ##### Check SysRem #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
+
 if [ ! -d ../NMW_And1_test_lightcurves_40 ];then
  cd .. || exit 1
  if [ -f NMW_And1_test_lightcurves_40.tar.bz2 ];then
@@ -9314,6 +9324,8 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 remove_test_data_to_save_space
 #
 
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
 
 
 
@@ -9871,6 +9883,9 @@ lib/update_offline_catalogs.sh force
 
 
 ##### Saturn/Iapetus test #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
+
 # Download the test dataset if needed
 if [ ! -d ../NMW_Saturn_test ];then
  cd .. || exit 1
@@ -10442,6 +10457,9 @@ if [ $? -ne 0 ];then
  #exit 1
  fail_early "Internet connection error"
 fi
+
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
 
 
 
@@ -15829,7 +15847,8 @@ fi
 
 ##### Sgr9 crash and no shift test #####
 ### Disable this test for GitHub Actions
-#if [ "$GITHUB_ACTIONS" != "true" ];then
+if [ "$GITHUB_ACTIONS" != "true" ];then
+
 # Download the test dataset if needed
 if [ ! -d ../NMW_Sgr9_crash_test ];then
  cd .. || exit 1
@@ -16370,8 +16389,6 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 remove_test_data_to_save_space
-### Disable the above test for GitHub Actions
-#fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 # Test that the Internet conncation has not failed
 test_internet_connection
@@ -16384,9 +16401,15 @@ if [ $? -ne 0 ];then
  fail_early "Internet connection error"
 fi
 
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
+
 
 
 ############# NMW exclusion list #############
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
+
 # Download the test dataset if needed
 if [ ! -d ../NMW_Vul2_magnitude_calibration_exit_code_test ];then
  cd .. || exit 1
@@ -16556,9 +16579,15 @@ if [ $? -ne 0 ];then
  fail_early "Internet connection error"
 fi
 
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
+
 
 
 ##### NMW-STL find Neptune test #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
+
 # Download the test dataset if needed
 if [ ! -d ../NMW-STL__find_Neptune_test ];then
  cd .. || exit 1
@@ -16966,6 +16995,8 @@ if [ $? -ne 0 ];then
  fail_early "Internet connection error"
 fi
 
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
 
 
 
@@ -17397,6 +17428,9 @@ fi
 
 
 ##### NMW-STL ref. frame match fail test #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
+
 # Download the test dataset if needed
 if [ ! -d ../NMW-STL__RefFrameMatchFail_test ];then
  cd .. || exit 1
@@ -17962,6 +17996,9 @@ if [ $? -ne 0 ];then
  #exit 1
  fail_early "Internet connection error"
 fi
+
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
 
 
 ##### NMW-STL find huge comet test #####
@@ -18862,6 +18899,9 @@ fi
 
 
 ##### NMW-STL find Nova Oph 2024 test #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
+
 # Download the test dataset if needed
 if [ ! -d ../NMW-STL__NovaOph24N1_test ];then
  cd .. || exit 1
@@ -19187,6 +19227,8 @@ if [ $? -ne 0 ];then
  fail_early "Internet connection error"
 fi
 
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
 
 
 
@@ -19485,6 +19527,9 @@ fi
 
 
 ##### TICA TESS magnitude calibration failure test #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
+
 # Download the test dataset if needed
 if [ ! -d ../TICA_TESS_mag_calibration_failure_test ];then
  cd .. || exit 1
@@ -19757,6 +19802,8 @@ if [ $? -ne 0 ];then
  fail_early "Internet connection error"
 fi
 
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
 
 
 
@@ -22762,6 +22809,9 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ######### A bad TESS FFI with no WCS
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
+
 if [ ! -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits ];then
  if [ ! -d ../individual_images_test ];then
   mkdir ../individual_images_test
@@ -22870,6 +22920,8 @@ if [ -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits ]
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS_TEST_NOT_PERFORMED"
 fi
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
 
 
 
