@@ -15,7 +15,7 @@ jobs:
         git checkout ${{ github.sha }}
     - name: Install build dependencies
       run: |
-        yum install -y gcc gcc-gfortran libX11-devel libpng-devel make
+        yum install -y gcc gcc-gfortran libX11-devel libpng-devel make wget
     - name: Collect debug info
       run: |
         which gfortran
