@@ -154,6 +154,12 @@ function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image
   return 1
  fi
  
+ ### !!! Blindly trust ASTAP astrometry !!! ###
+ echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -B500 -A500 "ASTAP" |  grep -q "PLTSOLVD=                    T"
+ if [ $? -eq 0 ];then
+  return 1
+ fi
+ 
  # Nope, uncorrected LBT/LBC astrometry is pretty bad actually - can't trust it
  #### !!! Blindly trust LBT/LBC astrometry !!! ###
  #echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -B500 -A500 "LBCOBFIL" | grep -B500 -A500 "LBCCHIP" |  grep -q "CTYPE2  = 'DEC--TAN'"
@@ -188,7 +194,7 @@ function determine_astrometry_method {
   command -v solve-field &>/dev/null
   if [ $? -eq 0 ];then
    # Check that this is an executable file
-   if [ -x `command -v solve-field` ];then
+   if [ -x $(command -v solve-field) ];then
     echo "Using the local copy of Astrometry.net software..." 1>&2
     ASTROMETRYNET_LOCAL_OR_REMOTE="local"
    else
@@ -608,7 +614,8 @@ fi
   # Blind solve
   # old parameters - they work
   #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field --objs 1000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
-  $TIMEOUT_COMMAND 900 solve-field  --crpix-center --uniformize 0  --objs 1000 --depth 10,20,30-50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
+  $TIMEOUT_COMMAND 900 solve-field  --crpix-center --uniformize 0  --objs 1000 --depth 10,20,30-50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH  out$$.xyls
+  #$TIMEOUT_COMMAND 900 solve-field  --crpix-center --uniformize 0  --objs 1000 --depth 10,20,30-50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # the command below sometimes fails on STL images, so we try the above version that works at scab and also set SCALE_HIGH
   #$TIMEOUT_COMMAND 900 solve-field  --objs 1000 --depth 10,20,30-50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER $IMAGE_SIZE --scale-units arcminwidth --scale-low $SCALE_LOW --scale-high $SCALE_HIGH out$$.xyls
   # the above 30-50 parameter is to handle the situation when there are many saturated stars that bleed out so their position cannot be determined well
@@ -716,7 +723,7 @@ fi
     RADECCOMMAND="$QUAD_SIZE_MAX_OPTION --crpix-center $RADECCOMMAND --radius $FOV_MAJORAXIS_DEG --scale-low $IMAGE_SCALE_ARCSECPIX_LOW --scale-high $IMAGE_SCALE_ARCSECPIX_HIGH --scale-units arcsecperpix"
     #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
     #$TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
-    $TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 100  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
+    $TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 100  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER  --tweak-order 3
     if [ $? -ne 0 ];then
      echo "ERROR running the second iteration of solve-field on $BASENAME_FITSFILE"
      exit 1
@@ -777,7 +784,7 @@ fi
      #
      ############
      ############
-     # An absolute desperate move to get a rliable astrometry with very wide-field images like STL
+     # An absolute desperate move to get reliable astrometry with very wide-field images like STL
      # Just run solve-field on the _image_
      #
      # As Dustin Lang explains here https://groups.google.com/g/astrometry/c/1Pw6WjGmJD8
