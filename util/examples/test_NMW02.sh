@@ -48,21 +48,13 @@ if [ ! -s transient_report/index.html ];then
  exit 1
 fi
 
-#for VARIABLE_TO_FIND in 'LX Aql' 'KS Aql' 'V0536 Aql' 'KU Aql' 'RT Aql' 'W Sge' ;do
-# grep --quiet "$VARIABLE_TO_FIND" transient_report/index.html
-# if [ $? -ne 0 ];then
-#  TEST_PASSED=0
-#  FAILED_TEST_CODES="$FAILED_TEST_CODES  $VARIABLE_TO_FIND" 
-# fi
-#done
-
 # test for two objects that should not be among the candidates
-grep --quiet -e '0457 1795' -e '0459 1776' transient_report/index.html
+grep -q -e '0457 1795' -e '0459 1776' transient_report/index.html
 if [ $? -eq 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES  0457"
 fi
-grep --quiet -e '0572 0665' -e '0572 0665' transient_report/index.html
+grep -q -e '0572 0665' -e '0572 0665' transient_report/index.html
 if [ $? -eq 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES  0572"

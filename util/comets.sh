@@ -47,30 +47,6 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
-#if [ -z "$COMET_SH_LOCAL_OR_REMOTE" ] || [ "$COMET_SH_LOCAL_OR_REMOTE" != "remote" ];then
-# # Run the comet search locally
-# command -v python3 &>/dev/null && \
-# python3 -c "import skyfield; print(skyfield.__version__)" &>/dev/null && \
-# python3 -c "import numpy; print(numpy.__version__)" &>/dev/null && \
-# python3 -c "import pandas; print(pandas.__version__)" &>/dev/null && \
-# if [ -n "$MPC_CODE" ] && grep --quiet "$MPC_CODE " ObsCodes.html ;then
-#  COMET_FINDER_OBSERVATORY_CODE_ARGUMENT="-observatory $MPC_CODE"
-# else
-#  COMET_FINDER_OBSERVATORY_CODE_ARGUMENT=""
-# fi
-# python3 util/comet_finder/main.py calc -qd $JD $COMET_FINDER_OBSERVATORY_CODE_ARGUMENT
-# if [ $? -eq 0 ]; then
-#   echo "Positions of bright comets computed with util/comet_finder/main.py for JD(UT)$JD $COMET_FINDER_OBSERVATORY_CODE_ARGUMENT" > comets_header.txt
-#   cat comets_header.txt >&2
-#   exit 0
-# fi
-#fi
-#
-#if [ -n "$COMET_SH_LOCAL_OR_REMOTE" ] && [ "$COMET_SH_LOCAL_OR_REMOTE" = "local" ];then
-# echo "Local comet search failed!"
-# exit 1
-#fi
-
 # Run comet search locally unless explicitly set to "remote"
 if [ "$COMET_SH_LOCAL_OR_REMOTE" != "remote" ]; then
  if command -v python3 &>/dev/null && \
@@ -163,7 +139,7 @@ echo "$PERIODIC_COMETS" | while read PERIODIC_COMET_DESIGNATION_AND_NAME ;do
   SUCCESSFULLY_CONECTED_TO_JPL_HORIZONS_COUNTER=$((SUCCESSFULLY_CONECTED_TO_JPL_HORIZONS_COUNTER + 1))
  fi
  # Check if the reply contains ephemerides or the list of records
- echo "$HORIZONS_REPLY" | grep --quiet '$$EOE'
+ echo "$HORIZONS_REPLY" | grep -q '$$EOE'
  if [ $? -ne 0 ];then
   # Manually set designations for some comets with particularly annoying horizons output
   if [ "$PERIODIC_COMET_DESIGNATION" = "103P" ];then

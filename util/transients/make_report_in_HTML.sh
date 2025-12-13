@@ -51,7 +51,7 @@ if [ ! -s candidates-transients.lst ];then
 fi
 
 USE_JAVASCRIPT=0
-grep --quiet "<script type='text/javascript'>" transient_report/index.html
+grep -q "<script type='text/javascript'>" transient_report/index.html
 if [ $? -eq 0 ];then
  USE_JAVASCRIPT=1
 fi
@@ -447,7 +447,7 @@ for i in $REFERENCE_IMAGE " >> transient_report/index.tmp
 # Display the solved FITS images
 ds9 -frame lock wcs  " >> transient_report/index.tmp
    # We should always display the reference image, even if it's not in the lightcurve file
-   grep --quiet "$REFERENCE_IMAGE" $LIGHTCURVE_FILE_OUTDAT
+   grep -q "$REFERENCE_IMAGE" $LIGHTCURVE_FILE_OUTDAT
    if [ $? -ne 0 ];then
     echo -n "wcs_"`basename "$REFERENCE_IMAGE"`" " >> transient_report/index.tmp
    fi
@@ -473,14 +473,14 @@ ds9 -frame lock wcs  " >> transient_report/index.tmp
    #
 
    #
-   grep --max-count=1 --quiet 'done by the script' transient_report/index.html
+   grep -m 1 -q 'done by the script' transient_report/index.html
    if [ $? -eq 0 ];then
     echo "<a href=\"javascript:toggleElement('analysisscript_$TRANSIENT_NAME')\">Re-run transient search script</a>" >> transient_report/index.tmp  
     echo -n "<div id=\"analysisscript_$TRANSIENT_NAME\" style=\"display:none\">
 <pre class='folding-pre'>
 REFERENCE_IMAGES="`dirname $REFERENCE_IMAGE` >> transient_report/index.tmp
     echo -n "  " >> transient_report/index.tmp
-    grep --max-count=1 'done by the script' transient_report/index.html | awk -F'<code>' '{print $2}' | awk -F'</code>' '{print $1}' >> transient_report/index.tmp
+    grep -m 1 'done by the script' transient_report/index.html | awk -F'<code>' '{print $2}' | awk -F'</code>' '{print $1}' >> transient_report/index.tmp
     echo "</pre>
 </div>" >> transient_report/index.tmp
    fi
@@ -554,7 +554,7 @@ fi
 VARIABLE_NAME=""
 VARIABLE_NAME_NO_WHITESPACES=""
 
-grep --quiet 'The object was <font color="red">found</font> in <font color="blue">VSX</font>' transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT"
+grep -q 'The object was <font color="red">found</font> in <font color="blue">VSX</font>' transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT"
 if [ $? -eq 0 ];then
  VARIABLE_NAME=$(grep -A1 'The object was <font color="red">found</font> in <font color="blue">VSX</font>' transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT" | tail -n1 | awk -F'"' '{print $2}' | grep -i -v '</body></html>')
  # remove leading and trailing white spaces from string
@@ -565,7 +565,7 @@ if [ $? -eq 0 ];then
 fi
 
 if [ -z "$VARIABLE_NAME" ];then
- grep --quiet ' online_id ' transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT"
+ grep -q ' online_id ' transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT"
  if [ $? -eq 0 ];then
   VARIABLE_NAME=$(grep ' online_id ' transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT" | awk -F'|' '{print $2}'  | grep -i -v '</body></html>')
   # remove leading and trailing white spaces from string

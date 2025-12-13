@@ -59,7 +59,7 @@ if [ $GONOGO -eq 1 ];then
   # Linux
   if [ -f /proc/meminfo ];then 
    # Check that the memory size is written in units of kB
-   grep MemTotal /proc/meminfo | grep --quiet kB
+   grep MemTotal /proc/meminfo | grep -q kB
    if [ $? -eq 0 ];then
     RAM_SIZE_KBYTES=$(grep MemTotal /proc/meminfo | awk '{print $2}')
     if [ ! -z "$RAM_SIZE_KBYTES" ];then

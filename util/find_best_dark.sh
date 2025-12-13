@@ -112,7 +112,7 @@ if [ $? -ne 0 ];then
 # echo "WARNING: the input file $FITSFILE seems to be a FITS image that does not fully comply with the FITS standard.
 #Checking if the filename extension and FITS header look reasonable..."
  ## Exampt from the rule for files that have at least some correct keywords
- echo "$FITSFILE" | grep  -e ".fits"  -e ".FITS"  -e ".fts" -e ".FTS"  -e ".fit"  -e ".FIT" && "$VAST_PATH"util/listhead "$FITSFILE" | grep --quiet -e "SIMPLE  =                    T" -e "TELESCOP= 'Aristarchos'" && "$VAST_PATH"util/listhead "$FITSFILE" | grep --quiet -e "NAXIS   =                    2"  -e "NAXIS3  =                    1" -e "TELESCOP= 'Aristarchos'"
+ echo "$FITSFILE" | grep  -e ".fits"  -e ".FITS"  -e ".fts" -e ".FTS"  -e ".fit"  -e ".FIT" && "$VAST_PATH"util/listhead "$FITSFILE" | grep -q -e "SIMPLE  =                    T" -e "TELESCOP= 'Aristarchos'" && "$VAST_PATH"util/listhead "$FITSFILE" | grep -q -e "NAXIS   =                    2"  -e "NAXIS3  =                    1" -e "TELESCOP= 'Aristarchos'"
  if [ $? -ne 0 ];then
   echo "ERROR: the input image file $FITSFILE did not pass verification as a valid FITS file"  >&2
   exit 1
@@ -121,7 +121,7 @@ fi
 
 # Check if there are header keywords that indicate that the image was already dark-subtracted
 # Dark frame
-"$VAST_PATH"util/listhead "$FITSFILE" | grep --quiet 'Dark frame'
+"$VAST_PATH"util/listhead "$FITSFILE" | grep -q 'Dark frame'
 if [ $? -eq 0 ];then
  echo "ERROR: the input image seems to be dark frame subtracted already (found 'Dark frame' in the header)" >&2
  exit 1
@@ -192,7 +192,7 @@ for DARK in "$DARK_FRAMES_DIR"/* ;do
 #  echo "WARNING: the input file $DARK seems to be a FITS image that does not fully comply with the FITS standard.
 #Checking if the filename extension and FITS header look reasonable..."
   ## Exampt from the rule for files that have at least some correct keywords
-  echo "$DARK" | grep --quiet  -e ".fits"  -e ".FITS"  -e ".fts" -e ".FTS"  -e ".fit"  -e ".FIT" && "$VAST_PATH"util/listhead "$DARK" | grep --quiet -e "SIMPLE  =                    T" -e "TELESCOP= 'Aristarchos'" && "$VAST_PATH"util/listhead "$DARK" | grep --quiet -e "NAXIS   =                    2"  -e "NAXIS3  =                    1" -e "TELESCOP= 'Aristarchos'"
+  echo "$DARK" | grep -q  -e ".fits"  -e ".FITS"  -e ".fts" -e ".FTS"  -e ".fit"  -e ".FIT" && "$VAST_PATH"util/listhead "$DARK" | grep -q -e "SIMPLE  =                    T" -e "TELESCOP= 'Aristarchos'" && "$VAST_PATH"util/listhead "$DARK" | grep -q -e "NAXIS   =                    2"  -e "NAXIS3  =                    1" -e "TELESCOP= 'Aristarchos'"
   if [ $? -ne 0 ];then
    echo "ERROR: the input image file $DARK did not pass verification as a valid FITS file" >&2
    exit 1

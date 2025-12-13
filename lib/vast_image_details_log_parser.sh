@@ -30,7 +30,7 @@ fi
 # See if we need to exclude the reference image
 # We'll know that by parsing command line or by looking for a designated log file
 EXCLUDE_REF_IMAGE=0
-cat vast_command_line.log | grep --quiet -e ' --excluderefimage ' -e ' -8 '
+cat vast_command_line.log | grep -q -e ' --excluderefimage ' -e ' -8 '
 if [ $? -eq 0 ];then
  EXCLUDE_REF_IMAGE=1
 fi

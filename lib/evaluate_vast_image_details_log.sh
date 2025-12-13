@@ -27,7 +27,7 @@ fi
 
 # Check if the reference image is much worse than the other images
 REF_IMAGE=`grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
-N_STARS_DETECTED_ON_REF_IMG=`grep --max-count=1 "$REF_IMAGE" vast_image_details.log | awk '{print $13}'`
+N_STARS_DETECTED_ON_REF_IMG=`grep -m 1 "$REF_IMAGE" vast_image_details.log | awk '{print $13}'`
 MEDIAN_N_STARS_DETECTED=`cat vast_image_details.log | awk '{print $13}' | util/colstat 2>/dev/null | grep 'MEDIAN=' | awk '{print $2}'`
 SIGMA_N_STARS_DETECTED=`cat vast_image_details.log | awk '{print $13}' | util/colstat 2>/dev/null | grep 'MAD\*1.48=' | awk '{print $2}'`
 

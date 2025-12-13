@@ -129,7 +129,7 @@ Checking if the filename extension and FITS header look reasonable..."
 done
 
 # Check the input WCS image is acatually WCS-solved
-"$VAST_PATH"lib/bin/xy2sky "$WCS_IMAGE_NAME" | grep --quiet 'No WCS'
+"$VAST_PATH"lib/bin/xy2sky "$WCS_IMAGE_NAME" | grep -q 'No WCS'
 if [ $? -eq 0 ];then
  echo "ERROR in $0 : $WCS_IMAGE_NAME does not seem to be WCS-solved!" 1>&2
  exit 1
@@ -141,7 +141,7 @@ if [ ! -s vast_images_catalogs.log ];then
  exit 1
 fi
 
-grep --quiet "$FITSFILE" vast_images_catalogs.log
+grep -q "$FITSFILE" vast_images_catalogs.log
 if [ $? -ne 0 ];then
  # The input image is not one of the previously processed ones
  exit 1

@@ -129,7 +129,7 @@ fi
 
 # Don't use --depth 1 here!!!
 # When used on a normally-cloned repository it creates a history mismatch that makes Git think the branches have diverge!
-LANG=C git pull 2>&1 | grep --quiet 'Updating'
+LANG=C git pull 2>&1 | grep -q 'Updating'
 if [ $? -ne 0 ];then
 # echo "ERROR: 'git pull' reports 'Already up to date.'"
  exit 0

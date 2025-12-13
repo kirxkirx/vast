@@ -127,7 +127,7 @@ if [ -z "$1" ];then
  exit 1
 fi
 
-echo "$1" | grep --quiet '#'
+echo "$1" | grep -q '#'
 if [ $? -ne 0 ];then
  echo "The input URL doesn't have '#' - it doesn't point to a specific source in the HTML report"
  echo "Usage: $0 http://kirx.net:8888/unmw/uploads/20231114_evening_STL-11000M.html#21474_047_2023-11-14_18-35-58_002"

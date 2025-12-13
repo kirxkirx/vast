@@ -101,12 +101,12 @@ for XY in "482.9663100 1658.7934600" "1804.7764900 768.9890100" "138.2354000 171
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES  INSTRMAG_VARIABLE_NOT_DETECTED__${XY// /_}"
  fi
- grep --quiet "$LIGHTCURVEFILE" vast_autocandidates.log
+ grep -q "$LIGHTCURVEFILE" vast_autocandidates.log
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES  INSTRMAG_VARIABLE_NOT_SELECTED__$LIGHTCURVEFILE"__${XY//" "/"_"}
  fi
- grep --quiet "$LIGHTCURVEFILE" vast_list_of_likely_constant_stars.log
+ grep -q "$LIGHTCURVEFILE" vast_list_of_likely_constant_stars.log
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES  VARIABLE_MISTAKEN_FOR_CONSTANT__$LIGHTCURVEFILE"__${XY//" "/"_"}
@@ -124,7 +124,7 @@ for XY in "433.1528000 1952.2907700" "1601.8258100 293.3326100" "194.6116900 211
   # The bad source is not detected at all, good
   continue
  fi
- grep --quiet "$LIGHTCURVEFILE" vast_autocandidates.log
+ grep -q "$LIGHTCURVEFILE" vast_autocandidates.log
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES  INSTRMAG_FALSE_CANDIDATE_SELECTED__$LIGHTCURVEFILE"__${XY//" "/"_"}
@@ -148,12 +148,12 @@ for XY in "482.9663100 1658.7934600" "1804.7764900 768.9890100" "138.2354000 171
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES  CALIBMAG_VARIABLE_NOT_DETECTED__${XY// /_}"
  fi
- grep --quiet "$LIGHTCURVEFILE" vast_autocandidates.log
+ grep -q "$LIGHTCURVEFILE" vast_autocandidates.log
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES  CALIBMAG_VARIABLE_NOT_SELECTED__$LIGHTCURVEFILE"__${XY//" "/"_"}
  fi
- grep --quiet "$LIGHTCURVEFILE" vast_list_of_likely_constant_stars.log
+ grep -q "$LIGHTCURVEFILE" vast_list_of_likely_constant_stars.log
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES  CALIBMAG_VARIABLE_MISTAKEN_FOR_CONSTANT__$LIGHTCURVEFILE"__${XY//" "/"_"}
@@ -170,7 +170,7 @@ for XY in "433.1528000 1952.2907700" "1601.8258100 293.3326100" "194.6116900 211
   # The bad source is not detected at all, good
   continue
  fi
- grep --quiet "$LIGHTCURVEFILE" vast_autocandidates.log
+ grep -q "$LIGHTCURVEFILE" vast_autocandidates.log
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES  CALIBMAG_FALSE_CANDIDATE_SELECTED__$LIGHTCURVEFILE"__${XY//" "/"_"}

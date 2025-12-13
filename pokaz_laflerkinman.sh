@@ -169,7 +169,7 @@ fi
 # # If we are still here, that means we are either offline or behind a firewall that doesn't let ping out
 # for i in $PERIOD_SEARCH_SERVERS ;do
 #  echo -n "$i "
-#  curl --max-time 10 --silent http://"$i"/lk/files/ | grep --quiet -e 'Parent Directory' -e 'Directory listing' && echo "$i" > server_"${i//"/"/"_"}".ping_ok &
+#  curl --max-time 10 --silent http://"$i"/lk/files/ | grep -q -e 'Parent Directory' -e 'Directory listing' && echo "$i" > server_"${i//"/"/"_"}".ping_ok &
 # done
 # wait
 #done
@@ -181,7 +181,7 @@ for PROTOCOL_HTTP_OR_HTTPS in https http ;do
   # using sed instead of BASH string replacement as it fails on Mac
   #SERVER_NAME_FOR_TMP_FILE="${i//"/"/"_"}"
   SERVER_NAME_FOR_TMP_FILE=$(echo "$i" | sed 's/\//_/g')
-  curl --max-time 5 --retry 2 --silent "$PROTOCOL_HTTP_OR_HTTPS://$i/lk/files/" | grep --quiet -e 'Parent Directory' -e 'Directory listing' -e 'Forbidden' && echo "$i" > "server_${SERVER_NAME_FOR_TMP_FILE}.ping_ok" & 
+  curl --max-time 5 --retry 2 --silent "$PROTOCOL_HTTP_OR_HTTPS://$i/lk/files/" | grep -q -e 'Parent Directory' -e 'Directory listing' -e 'Forbidden' && echo "$i" > "server_${SERVER_NAME_FOR_TMP_FILE}.ping_ok" & 
  done
  wait
  # check if PROTOCOL is good
@@ -190,7 +190,7 @@ for PROTOCOL_HTTP_OR_HTTPS in https http ;do
   if [ -s "server_${SERVER_NAME_FOR_TMP_FILE}.ping_ok" ];then
    echo OK
   fi
- done | grep --quiet "OK" && break
+ done | grep -q "OK" && break
 done # PROTOCOL_HTTP_OR_HTTPS
 
 cat server_*.ping_ok > servers.ping_ok
@@ -205,7 +205,7 @@ Please check your internet connection..."
 fi
 
 # Choose the period search server
-if grep --quiet 'kirx.net/ticaariel' servers.ping_ok ;then
+if grep -q 'kirx.net/ticaariel' servers.ping_ok ;then
  # Choose the preferred server if it's up
  PERIOD_SEARCH_SERVER="kirx.net/ticaariel"
 else
@@ -215,7 +215,7 @@ else
  if [ "$PERIOD_SEARCH_SERVER" = "" ];then
   PERIOD_SEARCH_SERVER=$(head -n1 servers.ping_ok)
  fi # if [ "$PERIOD_SEARCH_SERVER" = "" ];then
-fi # if grep --quiet 'kirx.net/ticaariel' servers.ping_ok ;then
+fi # if grep -q 'kirx.net/ticaariel' servers.ping_ok ;then
    
 rm -f server_*.ping_ok servers.ping_ok
 

@@ -66,12 +66,12 @@ for XY in "324.2908000 395.8234900" "89.3177000 609.9127800" "13.4411000 683.061
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES  INSTRMAG_VARIABLE_NOT_DETECTED__${XY// /_}"
  fi
- grep --quiet "$LIGHTCURVEFILE" vast_autocandidates.log
+ grep -q "$LIGHTCURVEFILE" vast_autocandidates.log
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES  INSTRMAG_VARIABLE_NOT_SELECTED__$LIGHTCURVEFILE"__${XY//" "/"_"}
  fi
- grep --quiet "$LIGHTCURVEFILE" vast_list_of_likely_constant_stars.log
+ grep -q "$LIGHTCURVEFILE" vast_list_of_likely_constant_stars.log
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES  VARIABLE_MISTAKEN_FOR_CONSTANT__$LIGHTCURVEFILE"__${XY//" "/"_"}
@@ -95,12 +95,12 @@ for XY in "324.2908000 395.8234900" "89.3177000 609.9127800" "13.4411000 683.061
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES  CALIBMAG_VARIABLE_NOT_DETECTED__${XY// /_}"
  fi
- grep --quiet "$LIGHTCURVEFILE" vast_autocandidates.log
+ grep -q "$LIGHTCURVEFILE" vast_autocandidates.log
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES  CALIBMAG_VARIABLE_NOT_SELECTED__$LIGHTCURVEFILE"__${XY//" "/"_"}
  fi
- grep --quiet "$LIGHTCURVEFILE" vast_list_of_likely_constant_stars.log
+ grep -q "$LIGHTCURVEFILE" vast_list_of_likely_constant_stars.log
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES  CALIBMAG_VARIABLE_MISTAKEN_FOR_CONSTANT__$LIGHTCURVEFILE"__${XY//" "/"_"}

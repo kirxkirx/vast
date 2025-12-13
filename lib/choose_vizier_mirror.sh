@@ -12,13 +12,13 @@ function is_ssh_or_vnc() {
   command -v env &>/dev/null
   if [ $? -eq 0 ];then
    # vnc
-   env | grep --quiet VNCDESKTOP
+   env | grep -q VNCDESKTOP
    if [ $? -eq 0 ];then
     # Yes, we are over VNC
     return 0
    fi
    # ssh
-   env | grep --quiet -e SSH_CLIENT -e SSH_CONNECTION
+   env | grep -q -e SSH_CLIENT -e SSH_CONNECTION
    if [ $? -eq 0 ];then
     # Yes, we are over ssh
     return 0
@@ -134,13 +134,13 @@ fi
 # New code: choose VizieR mirror that serves Gaia DR2
 for vizier_mirror in vizier.cds.unistra.fr vizier.china-vo.org vizier.nao.ac.jp ;do
  if [ "$CATALOG_TO_TEST" = "APASS" ];then
-  "${VAST_PATH}"lib/vizquery -site="$vizier_mirror" -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\'mag,e_r\'mag,i\'mag,e_i\'mag,g\'mag,e_g\'mag Vmag=7.0..16.5 -sort=Vmag -c="23:24:47.70 +61:11:14.3" -c.rs=1.0 | grep ' 15.7' | grep ' 15.2' | grep --quiet ' 15.0'
+  "${VAST_PATH}"lib/vizquery -site="$vizier_mirror" -mime=text -source=II/336/apass9 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,Bmag,e_Bmag,Vmag,e_Vmag,r\'mag,e_r\'mag,i\'mag,e_i\'mag,g\'mag,e_g\'mag Vmag=7.0..16.5 -sort=Vmag -c="23:24:47.70 +61:11:14.3" -c.rs=1.0 | grep ' 15.7' | grep ' 15.2' | grep -q ' 15.0'
   if [ $? -eq 0 ];then
    echo "$vizier_mirror"
    exit 0
   fi
  else
-  "${VAST_PATH}"lib/vizquery -site="$vizier_mirror" -mime=text -source=I/345/gaia2 -out.max=3 -out.add=_r -out.form=mini -sort=Gmag Gmag=0.0..13.52 -c="18:02:32.82 -29:50:13.9" -c.rs=34.50 -out="Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var" | grep --quiet ' 4050254215686154112 '
+  "${VAST_PATH}"lib/vizquery -site="$vizier_mirror" -mime=text -source=I/345/gaia2 -out.max=3 -out.add=_r -out.form=mini -sort=Gmag Gmag=0.0..13.52 -c="18:02:32.82 -29:50:13.9" -c.rs=34.50 -out="Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var" | grep -q ' 4050254215686154112 '
   if [ $? -eq 0 ];then
    echo "$vizier_mirror"
    exit 0
@@ -155,7 +155,7 @@ exit 1
 ##for vizier_mirror in vizier.u-strasbg.fr vizier.cfa.harvard.edu vizier.hia.nrc.ca vizier.nao.ac.jp ;do
 #for vizier_mirror in vizier.u-strasbg.fr vizier.cfa.harvard.edu vizier.nao.ac.jp ;do
 # # 1252-0378302 is the USNO-B1.0 number of the test star
-# `"$VAST_PATH"lib/find_timeout_command.sh` 30 "$VAST_PATH"lib/vizquery -site=$vizier_mirror -mime=text -out.form=mini -source=USNO-B1 -out.add=_r -sort=_r -c="HD 226868" -c.rs=2 2>/dev/null | grep --quiet "1252-0378302"
+# `"$VAST_PATH"lib/find_timeout_command.sh` 30 "$VAST_PATH"lib/vizquery -site=$vizier_mirror -mime=text -out.form=mini -source=USNO-B1 -out.add=_r -sort=_r -c="HD 226868" -c.rs=2 2>/dev/null | grep -q "1252-0378302"
 # if [ $? -eq 0 ];then
 #  echo $vizier_mirror
 #  exit 0
@@ -177,7 +177,7 @@ for vizier_mirror in vizier.u-strasbg.fr vizier.cfa.harvard.edu ;do
   # We are limited to 1sec accuracy if %N is not supported
   #start_time=$(date +%s%N)
   start_time=$(date +%s)
-  $("$VAST_PATH"lib/find_timeout_command.sh) 30 "$VAST_PATH"lib/vizquery -site=$vizier_mirror -mime=text -out.form=mini -source=USNO-B1 -out.add=_r -sort=_r -c="HD 226868" -c.rs=2 2>/dev/null | grep --quiet "1252-0378302"
+  $("$VAST_PATH"lib/find_timeout_command.sh) 30 "$VAST_PATH"lib/vizquery -site=$vizier_mirror -mime=text -out.form=mini -source=USNO-B1 -out.add=_r -sort=_r -c="HD 226868" -c.rs=2 2>/dev/null | grep -q "1252-0378302"
   if [ $? -eq 0 ];then
    #end_time=$(date +%s%N)
    end_time=$(date +%s)

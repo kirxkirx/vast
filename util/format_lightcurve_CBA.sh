@@ -57,7 +57,7 @@ if [ ! -s vast_summary.log ];then
  echo "ERROR: cannot find vast_summary.log to determine the JD time system"
  exit 1
 fi
-grep --quiet 'JD time system (TT/UTC/UNKNOWN): UTC' vast_summary.log
+grep -q 'JD time system (TT/UTC/UNKNOWN): UTC' vast_summary.log
 if [ $? -ne 0 ];then
  echo "ERROR: cannot confirm that the JD time system is UTC from vast_summary.log"
  exit 1

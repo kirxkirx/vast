@@ -82,7 +82,7 @@ THIS_A_PLANET_OR_COMET=0
 EXCLUSION_LIST_FILE="moons.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then
  PLANET_SEARCH_RESULTS=$(lib/put_two_sources_in_one_field "$RAHH:$RAMM:$RASS" "$DECDD:$DECMM:$DECSS" "$EXCLUSION_LIST_FILE" 180)
- echo "$PLANET_SEARCH_RESULTS" | grep --quiet "FOUND"
+ echo "$PLANET_SEARCH_RESULTS" | grep -q "FOUND"
  if [ $? -eq 0 ];then
   #echo "$PLANET_SEARCH_RESULTS" | awk -F'FOUND' '{print $2}'
   ASTCHECK_OUTPUT=$(echo "$PLANET_SEARCH_RESULTS" | awk -F'FOUND' '{print $2}')
@@ -96,7 +96,7 @@ THIS_A_PLANET_OR_COMET=0
 EXCLUSION_LIST_FILE="planets.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then
  PLANET_SEARCH_RESULTS=$(lib/put_two_sources_in_one_field "$RAHH:$RAMM:$RASS" "$DECDD:$DECMM:$DECSS" "$EXCLUSION_LIST_FILE" 400)
- echo "$PLANET_SEARCH_RESULTS" | grep --quiet "FOUND"
+ echo "$PLANET_SEARCH_RESULTS" | grep -q "FOUND"
  if [ $? -eq 0 ];then
   #echo "$PLANET_SEARCH_RESULTS" | awk -F'FOUND' '{print $2}'
   ASTCHECK_OUTPUT=$(echo "$PLANET_SEARCH_RESULTS" | awk -F'FOUND' '{print $2}')
@@ -110,7 +110,7 @@ EXCLUSION_LIST_FILE="comets.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ] && [ $THIS_A_PLANET_OR_COMET -eq 0 ] ;then
  # the search radius has to match the one in util/transients/report_transient.sh
  PLANET_SEARCH_RESULTS=$(lib/put_two_sources_in_one_field "$RAHH:$RAMM:$RASS" "$DECDD:$DECMM:$DECSS" "$EXCLUSION_LIST_FILE" 120)
- echo "$PLANET_SEARCH_RESULTS" | grep --quiet "FOUND"
+ echo "$PLANET_SEARCH_RESULTS" | grep -q "FOUND"
  if [ $? -eq 0 ];then
   #echo "$PLANET_SEARCH_RESULTS" | awk -F'FOUND' '{print $2}'
   ASTCHECK_OUTPUT=$(echo "$PLANET_SEARCH_RESULTS" | awk -F'FOUND' '{print $2}')

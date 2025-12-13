@@ -164,7 +164,7 @@ fi
 FITSFILE_HEADER=$("$VAST_PATH"util/listhead "$FITSFILE")
 # Check if it has WCS keywords
 for TYPICAL_WCS_KEYWORD in CTYPE1 CTYPE2 CRVAL1 CRVAL2 CRPIX1 CRPIX2 CD1_1 CD1_2 CD2_1 CD2_2 ;do
- echo "$FITSFILE_HEADER" | grep --quiet "$TYPICAL_WCS_KEYWORD"
+ echo "$FITSFILE_HEADER" | grep -q "$TYPICAL_WCS_KEYWORD"
  if [ $? -ne 0 ];then
   echo "ERROR: some of the expected WCS keywords are misssing. Please make sure the input image is plate-solved!"
   exit 1

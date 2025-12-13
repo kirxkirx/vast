@@ -44,22 +44,22 @@ function check_if_the_vsx_page_looks_legit_and_we_might_be_having_parsing_issues
   # empty file 
   return 1
  fi
- grep --quiet --ignore-case '</html>' "$VSX_PAGE_CONTENT_FILE"
+ grep -q --ignore-case '</html>' "$VSX_PAGE_CONTENT_FILE"
  if [ $? -ne 0 ];then
   # no closing html tag - possibly incomplete file?
   return 1
  fi
- grep --quiet --ignore-case 'Variable Star Index' "$VSX_PAGE_CONTENT_FILE"
+ grep -q --ignore-case 'Variable Star Index' "$VSX_PAGE_CONTENT_FILE"
  if [ $? -ne 0 ];then
   # expect to find words 'Variable Star Index' on the page
   return 1
  fi
- grep --quiet --ignore-case 'New Search' "$VSX_PAGE_CONTENT_FILE"
+ grep -q --ignore-case 'New Search' "$VSX_PAGE_CONTENT_FILE"
  if [ $? -ne 0 ];then
   # expect to find words 'New Search' on the page
   return 1
  fi
- grep --quiet --ignore-case 'AUID' "$VSX_PAGE_CONTENT_FILE"
+ grep -q --ignore-case 'AUID' "$VSX_PAGE_CONTENT_FILE"
  if [ $? -ne 0 ];then
   # expect to find word 'AUID' on the page
   return 1
@@ -149,7 +149,7 @@ fi
 #
 
 # Check if the input coordinates are good
-if "$VAST_PATH"lib/hms2deg "$RA" "$DEC" &>/dev/null || "$VAST_PATH"lib/deg2hms "$RA" "$DEC" &>/dev/null ;then echo YES ;fi | grep --quiet 'YES'
+if "$VAST_PATH"lib/hms2deg "$RA" "$DEC" &>/dev/null || "$VAST_PATH"lib/deg2hms "$RA" "$DEC" &>/dev/null ;then echo YES ;fi | grep -q 'YES'
 if [ $? -ne 0 ];then
  echo "ERROR parding the input coordinates!"
  exit 1

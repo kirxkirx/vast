@@ -202,7 +202,7 @@ cd "$VASTDIR"
 lib/update_tai-utc.sh
 
 # Check that the fast compile option is disabled
-grep -v "#" GNUmakefile | grep --quiet 'RECOMPILE_VAST_ONLY = yes'
+grep -v "#" GNUmakefile | grep -q 'RECOMPILE_VAST_ONLY = yes'
 if [ $? -eq 0 ];then
  echo "
 
@@ -213,7 +213,7 @@ in GNUmakefile before release!
 fi
 
 # Check that the flag image removal is enabled
-grep -v '//' src/vast_limits.h | grep --quiet '#define REMOVE_FLAG_IMAGES_TO_SAVE_SPACE'
+grep -v '//' src/vast_limits.h | grep -q '#define REMOVE_FLAG_IMAGES_TO_SAVE_SPACE'
 if [ $? -ne 0 ];then
  echo "
 ERROR: please uncomment the line
@@ -223,7 +223,7 @@ in src/vast_limits.h before release!
 fi
 
 # Check that the strict magnitude and JD range check is enabled
-grep -v '//' src/vast_limits.h | grep --quiet '#define STRICT_CHECK_OF_JD_AND_MAG_RANGE'
+grep -v '//' src/vast_limits.h | grep -q '#define STRICT_CHECK_OF_JD_AND_MAG_RANGE'
 if [ $? -ne 0 ];then
  echo "
 ERROR: please uncomment the line
@@ -233,7 +233,7 @@ in src/vast_limits.h before release!
 fi
 
 # Check DEBUGMESSAGES
-grep -v '//' src/vast_limits.h | grep --quiet '#define DEBUGMESSAGES'
+grep -v '//' src/vast_limits.h | grep -q '#define DEBUGMESSAGES'
 if [ $? -eq 0 ];then
  echo "
 ERROR: please comment the line
@@ -243,7 +243,7 @@ in src/vast_limits.h before release!
 fi
 
 # Check DEBUGFILES
-grep -v '//' src/vast_limits.h | grep --quiet '#define DEBUGFILES'
+grep -v '//' src/vast_limits.h | grep -q '#define DEBUGFILES'
 if [ $? -eq 0 ];then
  echo "
 ERROR: please comment the line
@@ -259,14 +259,14 @@ ERROR: please set up the default bad_region.lst before release! (1)
 "
 fi
 
-grep --quiet '0 0  0 0' bad_region.lst
+grep -q '0 0  0 0' bad_region.lst
 if [ $? -ne 0 ];then
  echo "
 ERROR: please set up the default bad_region.lst before release! (2)
 "
 fi
 
-grep --quiet '0 0' bad_region.lst
+grep -q '0 0' bad_region.lst
 if [ $? -ne 0 ];then
  echo "
 ERROR: please set up the default bad_region.lst before release! (3)
@@ -275,17 +275,17 @@ fi
 
 # Check that no binary files are left in the source tree
 for i in `find .` ;do 
- file $i | grep --quiet ELF 
+ file $i | grep -q ELF 
  if [ $? -eq 0 ];then
   file $i 1>&2
   echo "BINARY_FILE_FOUND"
  fi
-done | grep --quiet "BINARY_FILE_FOUND"
+done | grep -q "BINARY_FILE_FOUND"
 if [ $? -eq 0 ];then
  echo "ERROR: please remove the above binary file(s) from the source tree"
 fi
 
-grep -A3 'Blind solve' util/identify.sh | grep 'solve-field' | tail -n1 | grep --quiet '#'
+grep -A3 'Blind solve' util/identify.sh | grep 'solve-field' | tail -n1 | grep -q '#'
 if [ $? -eq 0 ];then
  echo "
 ERROR: please set up the blind plate solve mode in util/identify.sh !

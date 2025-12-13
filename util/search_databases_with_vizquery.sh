@@ -233,7 +233,7 @@ VIZIER_SITE=$("$VAST_PATH"lib/choose_vizier_mirror.sh)
 echo -e "Starting $0" 1>&2
 
 ### Set path to wwwget in lib/bin/
-echo "$PATH" | grep --quiet "$VAST_PATH"lib/bin
+echo "$PATH" | grep -q "$VAST_PATH"lib/bin
 if [ $? -ne 0 ];then
  #export PATH="$VAST_PATH"lib/bin":$PATH"
  NEWPATH="$VAST_PATH"lib/bin
@@ -255,7 +255,7 @@ fi
 RA=$1
 # Handle coma as RA Dec separator
 if [ -z "$2" ];then
- echo "$RA" | grep --quiet -e ',+' -e ',-' -e ',[0-9]'
+ echo "$RA" | grep -q -e ',+' -e ',-' -e ',[0-9]'
  DEC=$(echo $RA | awk -F',' '{print $2}')
  RA=$(echo $RA | awk -F',' '{print $1}')
  echo "RA=#$RA#  DEC=#$DEC#"
@@ -276,7 +276,7 @@ if [ -z "$RA" ] || [ -z "$DEC" ];then
 fi   
 
 # Check if the input coordinates are good
-if "$VAST_PATH"lib/hms2deg "$RA" "$DEC" &>/dev/null || "$VAST_PATH"lib/deg2hms "$RA" "$DEC" &>/dev/null ;then echo YES ;fi | grep --quiet 'YES'
+if "$VAST_PATH"lib/hms2deg "$RA" "$DEC" &>/dev/null || "$VAST_PATH"lib/deg2hms "$RA" "$DEC" &>/dev/null ;then echo YES ;fi | grep -q 'YES'
 if [ $? -ne 0 ];then
  echo "ERROR parsing the input coordinates!"
  exit 1
@@ -528,22 +528,22 @@ else
  fi
  # Get additional variability info from Gaia
 # # Gaia short-time var
-# $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/shortts -out.max=10 -out.form=mini Source="$GOOD_CATALOG_NAME_GAIA" 2>/dev/null | grep -v \# | grep --quiet "$GOOD_CATALOG_NAME_GAIA"
+# $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/shortts -out.max=10 -out.form=mini Source="$GOOD_CATALOG_NAME_GAIA" 2>/dev/null | grep -v \# | grep -q "$GOOD_CATALOG_NAME_GAIA"
 # if [ $? -eq 0 ];then
 #  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING Gaia2_SHORTTS "
 # fi
 # # Gaia Cepheids
-# $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/cepheid -out.max=10 -out.form=mini Source="$GOOD_CATALOG_NAME_GAIA" 2>/dev/null | grep -v \# | grep --quiet "$GOOD_CATALOG_NAME_GAIA"
+# $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/cepheid -out.max=10 -out.form=mini Source="$GOOD_CATALOG_NAME_GAIA" 2>/dev/null | grep -v \# | grep -q "$GOOD_CATALOG_NAME_GAIA"
 # if [ $? -eq 0 ];then
 #  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING Gaia2_CEPHEID "
 # fi
 # # Gaia RR Lyrae
-# $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/rrlyrae -out.max=10 -out.form=mini Source="$GOOD_CATALOG_NAME_GAIA" 2>/dev/null | grep -v \# | grep --quiet "$GOOD_CATALOG_NAME_GAIA"
+# $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/rrlyrae -out.max=10 -out.form=mini Source="$GOOD_CATALOG_NAME_GAIA" 2>/dev/null | grep -v \# | grep -q "$GOOD_CATALOG_NAME_GAIA"
 # if [ $? -eq 0 ];then
 #  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING Gaia2_RRLYR "
 # fi
 # # Gaia LPV
-# $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/lpv -out.max=10 -out.form=mini Source="$GOOD_CATALOG_NAME_GAIA" 2>/dev/null | grep -v \# | grep --quiet "$GOOD_CATALOG_NAME_GAIA"
+# $TIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site=$VIZIER_SITE -mime=text -source=I/345/lpv -out.max=10 -out.form=mini Source="$GOOD_CATALOG_NAME_GAIA" 2>/dev/null | grep -v \# | grep -q "$GOOD_CATALOG_NAME_GAIA"
 # if [ $? -eq 0 ];then
 #  SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING Gaia2_LPV "
 # fi
@@ -645,7 +645,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
   VSX_TYPE=$(echo "$VSX_RESULT" | awk '{print $3}')
   VSX_PERIOD=$(echo "$VSX_RESULT" | awk '{print $4}')
   # Special case - OGLE one-word variable names
-  echo "$VSX_V" | grep --quiet 'OGLE-'
+  echo "$VSX_V" | grep -q 'OGLE-'
   if [ $? -eq 0 ];then
    VSX_V=""
    VSX_NAME=$(echo "$VSX_RESULT" | awk '{print $1}')
@@ -796,9 +796,9 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
  echo -e "\033[01;31m This object is not listed in the common varaible star catalogs \033[00m"
 else
  # Do not print 'known variable' message for dubious ATLAS variables
- if echo "$SUGGESTED_TYPE_STRING" | grep --quiet 'dubious'; then
+ if echo "$SUGGESTED_TYPE_STRING" | grep -q 'dubious'; then
   echo -e "\033[01;32m This is star is listed as dubious candidate variable in the ATLAS catalog \033[00m $SUGGESTED_NAME_STRING"
- elif echo "$SUGGESTED_NAME_STRING" | grep --quiet 'Large-amplitude variable Gaia DR2'; then
+ elif echo "$SUGGESTED_NAME_STRING" | grep -q 'Large-amplitude variable Gaia DR2'; then
   echo -e "\033[01;32m This is star is listed as a large-amplitude variable in Gaia DR2 catalog \033[00m $SUGGESTED_NAME_STRING"
  else
   echo -e "\033[01;32m This is a known variable star \033[00m $SUGGESTED_NAME_STRING"
@@ -876,7 +876,7 @@ $GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS"
 
 # Temporary disable Gaia lightcurve download before I figure out how to get Gaia DR3 epoch photometry
 # 
-# echo "$SUGGESTED_COMMENT_STRING" | grep --quiet -e 'CONSTANT' -e 'VARIABLE'
+# echo "$SUGGESTED_COMMENT_STRING" | grep -q -e 'CONSTANT' -e 'VARIABLE'
 # if [ $? -eq 0 ];then
 #  echo "
 #

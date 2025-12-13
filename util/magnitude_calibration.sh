@@ -112,18 +112,18 @@ else
    # strict variability check only if we have many comparison stars
    if [ $N_COMP_STARS -gt 100 ];then
     # Check if this star is constant
-    grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
+    grep -q "$OUTDATFILE" vast_list_of_likely_constant_stars.log
     if [ $? -ne 0 ];then
      continue
     fi
    fi
    # Check if this star not variable
-   grep --quiet "$OUTDATFILE" vast_autocandidates.log
+   grep -q "$OUTDATFILE" vast_autocandidates.log
    if [ $? -eq 0 ];then
     continue
    fi
    # Check if this star is good enough to be listed in vast_lightcurve_statistics.log (useful if we did not check vast_list_of_likely_constant_stars.log )
-   grep --quiet "$OUTDATFILE" vast_lightcurve_statistics.log
+   grep -q "$OUTDATFILE" vast_lightcurve_statistics.log
    if [ $? -ne 0 ];then
     continue
    fi
@@ -148,18 +148,18 @@ else
    # strict variability check only if we have many comparison stars
    if [ $N_COMP_STARS -gt 100 ];then
     # Check if this star is constant
-    grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
+    grep -q "$OUTDATFILE" vast_list_of_likely_constant_stars.log
     if [ $? -ne 0 ];then
      continue
     fi
    fi
    # Check if this star not variable
-   grep --quiet "$OUTDATFILE" vast_autocandidates.log
+   grep -q "$OUTDATFILE" vast_autocandidates.log
    if [ $? -eq 0 ];then
     continue
    fi
    # Check if this star is good enough to be listed in vast_lightcurve_statistics.log (useful if we did not check vast_list_of_likely_constant_stars.log )
-   grep --quiet "$OUTDATFILE" vast_lightcurve_statistics.log
+   grep -q "$OUTDATFILE" vast_lightcurve_statistics.log
    if [ $? -ne 0 ];then
     continue
    fi
@@ -184,18 +184,18 @@ else
    # strict variability check only if we have many comparison stars
    if [ $N_COMP_STARS -gt 100 ];then
     # Check if this star is constant
-    grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
+    grep -q "$OUTDATFILE" vast_list_of_likely_constant_stars.log
     if [ $? -ne 0 ];then
      continue
     fi
    fi
    # Check if this star not variable
-   grep --quiet "$OUTDATFILE" vast_autocandidates.log
+   grep -q "$OUTDATFILE" vast_autocandidates.log
    if [ $? -eq 0 ];then
     continue
    fi
    # Check if this star is good enough to be listed in vast_lightcurve_statistics.log (useful if we did not check vast_list_of_likely_constant_stars.log )
-   grep --quiet "$OUTDATFILE" vast_lightcurve_statistics.log
+   grep -q "$OUTDATFILE" vast_lightcurve_statistics.log
    if [ $? -ne 0 ];then
     continue
    fi
@@ -220,18 +220,18 @@ else
    # strict variability check only if we have many comparison stars
    if [ $N_COMP_STARS -gt 100 ];then
     # Check if this star is constant
-    grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
+    grep -q "$OUTDATFILE" vast_list_of_likely_constant_stars.log
     if [ $? -ne 0 ];then
      continue
     fi
    fi
    # Check if this star not variable
-   grep --quiet "$OUTDATFILE" vast_autocandidates.log
+   grep -q "$OUTDATFILE" vast_autocandidates.log
    if [ $? -eq 0 ];then
     continue
    fi
    # Check if this star is good enough to be listed in vast_lightcurve_statistics.log (useful if we did not check vast_list_of_likely_constant_stars.log )
-   grep --quiet "$OUTDATFILE" vast_lightcurve_statistics.log
+   grep -q "$OUTDATFILE" vast_lightcurve_statistics.log
    if [ $? -ne 0 ];then
     continue
    fi
@@ -256,18 +256,18 @@ else
    # strict variability check only if we have many comparison stars
    if [ $N_COMP_STARS -gt 100 ];then
     # Check if this star is constant
-    grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
+    grep -q "$OUTDATFILE" vast_list_of_likely_constant_stars.log
     if [ $? -ne 0 ];then
      continue
     fi
    fi
    # Check if this star not variable
-   grep --quiet "$OUTDATFILE" vast_autocandidates.log
+   grep -q "$OUTDATFILE" vast_autocandidates.log
    if [ $? -eq 0 ];then
     continue
    fi
    # Check if this star is good enough to be listed in vast_lightcurve_statistics.log (useful if we did not check vast_list_of_likely_constant_stars.log )
-   grep --quiet "$OUTDATFILE" vast_lightcurve_statistics.log
+   grep -q "$OUTDATFILE" vast_lightcurve_statistics.log
    if [ $? -ne 0 ];then
     continue
    fi
@@ -292,18 +292,18 @@ else
    # strict variability check only if we have many comparison stars
    if [ $N_COMP_STARS -gt 100 ];then
     # Check if this star is constant
-    grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
+    grep -q "$OUTDATFILE" vast_list_of_likely_constant_stars.log
     if [ $? -ne 0 ];then
      continue
     fi
    fi
    # Check if this star not variable
-   grep --quiet "$OUTDATFILE" vast_autocandidates.log
+   grep -q "$OUTDATFILE" vast_autocandidates.log
    if [ $? -eq 0 ];then
     continue
    fi
    # Check if this star is good enough to be listed in vast_lightcurve_statistics.log (useful if we did not check vast_list_of_likely_constant_stars.log )
-   grep --quiet "$OUTDATFILE" vast_lightcurve_statistics.log
+   grep -q "$OUTDATFILE" vast_lightcurve_statistics.log
    if [ $? -ne 0 ];then
     continue
    fi
@@ -328,18 +328,18 @@ else
    # strict variability check only if we have many comparison stars
    if [ $N_COMP_STARS -gt 100 ];then
     # Check if this star is constant
-    grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
+    grep -q "$OUTDATFILE" vast_list_of_likely_constant_stars.log
     if [ $? -ne 0 ];then
      continue
     fi
    fi
    # Check if this star not variable
-   grep --quiet "$OUTDATFILE" vast_autocandidates.log
+   grep -q "$OUTDATFILE" vast_autocandidates.log
    if [ $? -eq 0 ];then
     continue
    fi
    # Check if this star is good enough to be listed in vast_lightcurve_statistics.log (useful if we did not check vast_list_of_likely_constant_stars.log )
-   grep --quiet "$OUTDATFILE" vast_lightcurve_statistics.log
+   grep -q "$OUTDATFILE" vast_lightcurve_statistics.log
    if [ $? -ne 0 ];then
     continue
    fi
@@ -364,18 +364,18 @@ else
    # strict variability check only if we have many comparison stars
    if [ $N_COMP_STARS -gt 100 ];then
     # Check if this star is constant
-    grep --quiet "$OUTDATFILE" vast_list_of_likely_constant_stars.log
+    grep -q "$OUTDATFILE" vast_list_of_likely_constant_stars.log
     if [ $? -ne 0 ];then
      continue
     fi
    fi
    # Check if this star not variable
-   grep --quiet "$OUTDATFILE" vast_autocandidates.log
+   grep -q "$OUTDATFILE" vast_autocandidates.log
    if [ $? -eq 0 ];then
     continue
    fi
    # Check if this star is good enough to be listed in vast_lightcurve_statistics.log (useful if we did not check vast_list_of_likely_constant_stars.log )
-   grep --quiet "$OUTDATFILE" vast_lightcurve_statistics.log
+   grep -q "$OUTDATFILE" vast_lightcurve_statistics.log
    if [ $? -ne 0 ];then
     continue
    fi

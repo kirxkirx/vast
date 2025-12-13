@@ -106,7 +106,7 @@ for i in "$REGION_NAME"/out*.dat ;do
    fi
   fi
  fi
-done | grep --quiet "DIR_CONTAINS_AT_LEAST_ONE_GOOD_LIGHTCURVE_FILE"
+done | grep -q "DIR_CONTAINS_AT_LEAST_ONE_GOOD_LIGHTCURVE_FILE"
 if [ $? -eq 0 ];then
  echo "The directory $REGION_NAME seems to contain VaST-formated lightcurve files ... "
 else

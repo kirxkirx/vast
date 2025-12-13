@@ -489,14 +489,6 @@ util/bin_lightcurve_in_time: $(SRC_PATH)bin_lightcurve_in_time.c
 lib/ConstellationBoundaries:  $(SRC_PATH)catalogs/ConstellationBoundaries.c
 	$(CC) $(OPTFLAGS) -o lib/ConstellationBoundaries $(SRC_PATH)catalogs/ConstellationBoundaries.c
 
-#check_no_for_loop_initial_declaration:
-#	(find . -type f -name "*.c" -exec grep -H -E "for[[:space:]]*\([[:space:]]*(int|size_t)" {} \; && echo "I don't like 'for' loop initial declarations! Please declare variables at the start of the function." && exit 1)
-#check_no_for_loop_initial_declaration:
-#	@if find . -type f -name "*.c" -exec grep -q -E "for[[:space:]]*\([[:space:]]*(int|size_t)" {} \+; then \
-#		find . -type f -name "*.c" -exec grep -H -E "for[[:space:]]*\([[:space:]]*(int|size_t)" {} \+; \
-#		echo "I don't like 'for' loop initial declarations! Please declare variables at the start of the function."; \
-#		exit 1; \
-#	fi
 check_no_for_loop_initial_declaration:
 	lib/check_no_for_loop_initial_declaration.sh	
 	

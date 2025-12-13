@@ -152,7 +152,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  #./vast --selectbestaperture -y1 -p -x99 -u -f -k "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
  ./vast --matchstarnumber 500 --selectbestaperture -y1 -p -x99 -u -f -k "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE"
  cat vast_summary.log >> transient_factory.log
- grep --quiet 'Images used for photometry 4' vast_summary.log
+ grep -q 'Images used for photometry 4' vast_summary.log
  if [ $? -ne 0 ];then
   echo "***** IMAGE PROCESSING ERROR *****" >> transient_factory.log
   echo "############################################################" >> transient_factory.log

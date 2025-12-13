@@ -359,8 +359,8 @@ END {
 }
 
 function test_https_connection() {
- #curl --max-time 10 --silent https://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
- curl --max-time 10 --silent https://scan.sai.msu.ru/lk/ | grep --quiet '../cgi-bin/lk/process_lightcurve.py'
+ #curl --max-time 10 --silent https://scan.sai.msu.ru/astrometry_engine/files/ | grep -q 'Parent Directory'
+ curl --max-time 10 --silent https://scan.sai.msu.ru/lk/ | grep -q '../cgi-bin/lk/process_lightcurve.py'
  if [ $? -ne 0 ];then
   # if the above didn't work, try to download the certificate
   # The old cert that has expired already, will keep it in case clocks on the test machine are really off
@@ -373,8 +373,8 @@ function test_https_connection() {
   if [ $? -ne 0 ];then
    return 2
   fi
-  #curl --max-time 10 --silent --cacert intermediate.pem https://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
-  curl --max-time 10 --silent --cacert intermediate.pem https://scan.sai.msu.ru/lk/ | grep --quiet '../cgi-bin/lk/process_lightcurve.py'
+  #curl --max-time 10 --silent --cacert intermediate.pem https://scan.sai.msu.ru/astrometry_engine/files/ | grep -q 'Parent Directory'
+  curl --max-time 10 --silent --cacert intermediate.pem https://scan.sai.msu.ru/lk/ | grep -q '../cgi-bin/lk/process_lightcurve.py'
   if [ $? -ne 0 ];then
    # cleanup
    if [ -f intermediate.pem ];then
@@ -390,8 +390,8 @@ function test_https_connection() {
 
 
  # the following will not work at legacy systems that will try to connect via the disallowed SSLv3
- #curl --max-time 10 --silent https://kirx.net/astrometry_engine/files/ | grep --quiet 'Parent Directory'
- curl --max-time 10 --silent https://kirx.net/lk/ | grep --quiet '../cgi-bin/lk/process_lightcurve.py'
+ #curl --max-time 10 --silent https://kirx.net/astrometry_engine/files/ | grep -q 'Parent Directory'
+ curl --max-time 10 --silent https://kirx.net/lk/ | grep -q '../cgi-bin/lk/process_lightcurve.py'
  if [ $? -ne 0 ];then
   if [ ! -f intermediate.pem ];then
    # if the above didn't work, try to download the certificate
@@ -407,8 +407,8 @@ function test_https_connection() {
     return 2
    fi
   fi
-  #curl --max-time 10 --silent --cacert intermediate.pem https://kirx.net/astrometry_engine/files/ | grep --quiet 'Parent Directory'
-  curl --max-time 10 --silent --cacert intermediate.pem https://kirx.net/lk/ | grep --quiet '../cgi-bin/lk/process_lightcurve.py'
+  #curl --max-time 10 --silent --cacert intermediate.pem https://kirx.net/astrometry_engine/files/ | grep -q 'Parent Directory'
+  curl --max-time 10 --silent --cacert intermediate.pem https://kirx.net/lk/ | grep -q '../cgi-bin/lk/process_lightcurve.py'
   if [ $? -ne 0 ];then
    echo "ERROR in test_https_connection(): cannot connect to https://kirx.net"
    return 1
@@ -449,7 +449,7 @@ function remove_test_data_to_save_space() {
  #fi
  # Skip free disk space check on some pre-defined machines
  # hope this check should work even if there is no 'hostname' command
- hostname | grep --quiet 'eridan' 
+ hostname | grep -q 'eridan' 
  if [ $? -ne 0 ];then 
   # Free-up disk space if we run out of it
   FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
@@ -489,7 +489,7 @@ function check_if_enough_disk_space_for_tests() {
  if [ "$GITHUB_ACTIONS" != "true" ];then 
   return 0
  fi
- hostname | grep --quiet 'eridan' 
+ hostname | grep -q 'eridan' 
  if [ $? -ne 0 ];then 
   # Check free disk space
   FREE_DISK_SPACE_MB=`df -P . | tail -n1 | awk '{printf "%.0f",$4/(1024)}'`
@@ -518,8 +518,8 @@ function check_if_enough_disk_space_for_tests() {
 
 function test_internet_connection() {
  # Directory listing disabled
- #curl --max-time 10 --silent http://scan.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
- curl --max-time 10 --silent --show-error -I http://scan.sai.msu.ru 2>&1 | grep --quiet 'Content-Type:'
+ #curl --max-time 10 --silent http://scan.sai.msu.ru/astrometry_engine/files/ | grep -q 'Parent Directory'
+ curl --max-time 10 --silent --show-error -I http://scan.sai.msu.ru 2>&1 | grep -q 'Content-Type:'
  if [ $? -ne 0 ];then
   echo "ERROR in test_internet_connection(): cannot connect to scan.sai.msu.ru" 
   return 1
@@ -531,8 +531,8 @@ function test_internet_connection() {
  fi
 
  # Directory listing disabled
- #curl --max-time 10 --silent http://vast.sai.msu.ru/astrometry_engine/files/ | grep --quiet 'Parent Directory'
- curl --max-time 30 --retry 1 --retry-delay 10 --connect-timeout 10 --silent --show-error -I http://vast.sai.msu.ru 2>&1 | grep --quiet 'Content-Type:'
+ #curl --max-time 10 --silent http://vast.sai.msu.ru/astrometry_engine/files/ | grep -q 'Parent Directory'
+ curl --max-time 30 --retry 1 --retry-delay 10 --connect-timeout 10 --silent --show-error -I http://vast.sai.msu.ru 2>&1 | grep -q 'Content-Type:'
  if [ $? -ne 0 ];then
   echo "ERROR in test_internet_connection(): cannot connect to vast.sai.msu.ru" 
   return 1
@@ -871,29 +871,29 @@ if [ -d ../DART_Didymos_moving_object_photometry_test ];then
  else
  
   if [ -f vast_summary.log ];then
-   grep --quiet "Images processed 35" vast_summary.log
+   grep -q "Images processed 35" vast_summary.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES DART_IMG_PROC"
    fi
-   grep --quiet "Images used for photometry 34" vast_summary.log
+   grep -q "Images used for photometry 34" vast_summary.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES DART_IMG_MEA"
    fi
-   #grep --quiet 'Ref.  image: 2459852.89419 30.09.2022 09:27:08' vast_summary.log
+   #grep -q 'Ref.  image: 2459852.89419 30.09.2022 09:27:08' vast_summary.log
    compare_date_strings_in_vastsummarylog_with_tolerance 'Ref.  image: 2459852.89419 30.09.2022 09:27:08' 1
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES DART_REF_IMG_DATE"
    fi
-   #grep --quiet 'First image: 2459852.89419 30.09.2022 09:27:08' vast_summary.log
+   #grep -q 'First image: 2459852.89419 30.09.2022 09:27:08' vast_summary.log
    compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2459852.89419 30.09.2022 09:27:08' 1
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES DART_FIRST_IMG_DATE"
    fi
-   #grep --quiet 'Last  image: 2459852.91936 30.09.2022 10:03:23' vast_summary.log
+   #grep -q 'Last  image: 2459852.91936 30.09.2022 10:03:23' vast_summary.log
    compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459852.91936 30.09.2022 10:03:23' 1
    if [ $? -ne 0 ];then
     TEST_PASSED=0
@@ -1015,7 +1015,7 @@ if [ ! -s test_vizquery_M31.output ];then
  #fail_early
 fi
 # check that the whole output was received, if not - retry
-cat test_vizquery_M31.output | grep --quiet '#END#'
+cat test_vizquery_M31.output | grep -q '#END#'
 if [ $? -ne 0 ];then
  TEST_PASSED=1
  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST_RETRY"
@@ -1040,7 +1040,7 @@ if [ $? -ne 0 ];then
   fail_early
  fi
  #
- cat test_vizquery_M31.output | grep --quiet '#END#'
+ cat test_vizquery_M31.output | grep -q '#END#'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST004a_NO_END"
@@ -1062,7 +1062,7 @@ else
   FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST004_$TEST"
  fi
 fi
-cat test_vizquery_M31.output | grep --quiet '#END#'
+cat test_vizquery_M31.output | grep -q '#END#'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES VIZQUERYTEST005_NOEND"
@@ -1115,28 +1115,28 @@ if [ -f update_offline_catalogs.out ];then
 fi
 
 # GCVS should be the first one to reply, but others may too
-util/search_databases_with_curl.sh 22:02:43.29139 +42:16:39.9803 | grep --quiet "BL Lac"
+util/search_databases_with_curl.sh 22:02:43.29139 +42:16:39.9803 | grep -q "BL Lac"
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001"
 fi
 
 ### This should specifically test GCVS
-util/search_databases_with_curl.sh 22:02:43.29139 +42:16:39.9803 | grep --quiet "BLLAC"
+util/search_databases_with_curl.sh 22:02:43.29139 +42:16:39.9803 | grep -q "BLLAC"
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001a_GCVS"
 fi
 
 # A more precise way to test the GCVS online search
-util/search_databases_with_curl.sh 22:02:43.29139 +42:16:39.9803 | grep 'not found' | grep --quiet 'GCVS'
+util/search_databases_with_curl.sh 22:02:43.29139 +42:16:39.9803 | grep 'not found' | grep -q 'GCVS'
 if [ $? -eq 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001b_GCVS"
 fi
 
 # This should specifically test VSX search with util/search_databases_with_curl.sh
-util/search_databases_with_curl.sh 07:29:19.69 -13:23:06.6 | grep --quiet 'ZTF J072919.68-132306.5'
+util/search_databases_with_curl.sh 07:29:19.69 -13:23:06.6 | grep -q 'ZTF J072919.68-132306.5'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT001c_VSX"
@@ -1150,7 +1150,7 @@ if [ "$TEST_STRING" != "BL Lac" ];then
 fi
 
 # GCVS is supposed to reply
-util/search_databases_with_curl.sh 15:31:40.10 -20:27:17.3 | grep --quiet "BW Lib"
+util/search_databases_with_curl.sh 15:31:40.10 -20:27:17.3 | grep -q "BW Lib"
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT002"
@@ -1158,14 +1158,14 @@ fi
 
 # GCVS is supposed to reply
 cd .. || exit 1
-"$WORKDIR"/util/search_databases_with_curl.sh 15:31:40.10 -20:27:17.3 | grep --quiet "BW Lib"
+"$WORKDIR"/util/search_databases_with_curl.sh 15:31:40.10 -20:27:17.3 | grep -q "BW Lib"
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT002a"
 fi
 cd "$WORKDIR" || exit 1
 
-util/search_databases_with_vizquery.sh 22:02:43.29139 +42:16:39.9803 TEST 40 no_online_vsx | grep TEST | grep --quiet "BL Lac"
+util/search_databases_with_vizquery.sh 22:02:43.29139 +42:16:39.9803 TEST 40 no_online_vsx | grep TEST | grep -q "BL Lac"
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT003_vizquery"
@@ -1173,40 +1173,40 @@ if [ $? -ne 0 ];then
 fi
 
 cd .. || exit 1
-"$WORKDIR"/util/search_databases_with_vizquery.sh 22:02:43.29139 +42:16:39.9803 TEST 40 no_online_vsx | grep TEST | grep --quiet "BL Lac"
+"$WORKDIR"/util/search_databases_with_vizquery.sh 22:02:43.29139 +42:16:39.9803 TEST 40 no_online_vsx | grep TEST | grep -q "BL Lac"
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT003a_vizquery"
 fi
 cd "$WORKDIR" || exit 1
 
-util/search_databases_with_vizquery.sh 15:31:40.10 -20:27:17.3 TEST 40 no_online_vsx | grep TEST | grep --quiet "BW Lib"
+util/search_databases_with_vizquery.sh 15:31:40.10 -20:27:17.3 TEST 40 no_online_vsx | grep TEST | grep -q "BW Lib"
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT004_vizquery"
 fi
 
 # Coordinates in the deg fromat
-util/search_databases_with_vizquery.sh 34.8366337 -2.9776377 | grep 'omi Cet' | grep --quiet -e 'J-Ks=1.481+/-0.262 (M)' -e 'J-Ks=1.481+/-0.262 (Very red! L if it'
+util/search_databases_with_vizquery.sh 34.8366337 -2.9776377 | grep 'omi Cet' | grep -q -e 'J-Ks=1.481+/-0.262 (M)' -e 'J-Ks=1.481+/-0.262 (Very red! L if it'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT005_vizquery"
 fi
 # on-the-fly conversion
-util/search_databases_with_vizquery.sh `lib/hms2deg 02:19:20.79 -02:58:39.5` | grep 'omi Cet' | grep --quiet -e 'J-Ks=1.481+/-0.262 (M)' -e 'J-Ks=1.481+/-0.262 (Very red! L if it'
+util/search_databases_with_vizquery.sh `lib/hms2deg 02:19:20.79 -02:58:39.5` | grep 'omi Cet' | grep -q -e 'J-Ks=1.481+/-0.262 (M)' -e 'J-Ks=1.481+/-0.262 (Very red! L if it'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT005a_vizquery"
 fi
 
 # Coordinates in the HMS fromat
-util/search_databases_with_vizquery.sh 02:19:20.79 -02:58:39.5 | grep 'omi Cet' | grep --quiet -e 'J-Ks=1.481+/-0.262 (M)' -e 'J-Ks=1.481+/-0.262 (Very red! L if it'
+util/search_databases_with_vizquery.sh 02:19:20.79 -02:58:39.5 | grep 'omi Cet' | grep -q -e 'J-Ks=1.481+/-0.262 (M)' -e 'J-Ks=1.481+/-0.262 (Very red! L if it'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT006_vizquery"
 fi
 
-util/search_databases_with_vizquery.sh 19:50:33.92439 +32:54:50.6097 | grep 'khi Cyg' | grep --quiet -e 'J-Ks=1.863+/-0.240 (Very red!)'
+util/search_databases_with_vizquery.sh 19:50:33.92439 +32:54:50.6097 | grep 'khi Cyg' | grep -q -e 'J-Ks=1.863+/-0.240 (Very red!)'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT007_vizquery"
@@ -1221,13 +1221,13 @@ if [ $? -ne 0 ];then
 fi
 
 # Recover MDV test target
-lib/catalogs/check_catalogs_offline $(lib/hms2deg 01:23:45.67 +89:10:11.1) | grep --quiet 'TEST'
+lib/catalogs/check_catalogs_offline $(lib/hms2deg 01:23:45.67 +89:10:11.1) | grep -q 'TEST'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT007_check_MDVtest_offline"
 fi
 
-util/search_databases_with_vizquery.sh 01:23:45.67 +89:10:11.1 | grep --quiet 'TEST'
+util/search_databases_with_vizquery.sh 01:23:45.67 +89:10:11.1 | grep -q 'TEST'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT007_MDVtestINTEGRATION"
@@ -1235,95 +1235,95 @@ fi
 
 
 # XY Lyr is listed as SRC in VSX following the Hipparcos periodic variables paper
-util/search_databases_with_vizquery.sh 18:38:06.47677 +39:40:05.9835 | grep 'XY Lyr' | grep -e 'LC' -e 'SRC' | grep --quiet 'J-Ks=1.098+/-0.291 (M)'
+util/search_databases_with_vizquery.sh 18:38:06.47677 +39:40:05.9835 | grep 'XY Lyr' | grep -e 'LC' -e 'SRC' | grep -q 'J-Ks=1.098+/-0.291 (M)'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT008"
 fi
 
-util/search_databases_with_vizquery.sh 18:38:06.47677 +39:40:05.9835 mystar | grep 'XY Lyr' | grep -e 'LC' -e 'SRC' | grep 'J-Ks=1.098+/-0.291 (M)' | grep --quiet mystar
+util/search_databases_with_vizquery.sh 18:38:06.47677 +39:40:05.9835 mystar | grep 'XY Lyr' | grep -e 'LC' -e 'SRC' | grep 'J-Ks=1.098+/-0.291 (M)' | grep -q mystar
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT009"
 fi
 
 # MDV via VizieR
-util/search_databases_with_vizquery.sh 02:38:54.34 +63:37:40.4 | grep --quiet -e 'MDV 521' -e 'V1340 Cas'
+util/search_databases_with_vizquery.sh 02:38:54.34 +63:37:40.4 | grep -q -e 'MDV 521' -e 'V1340 Cas'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT010"
 fi
 
 # this is MDV 41 already included in GCVS
-util/search_databases_with_vizquery.sh 17:40:35.50 +06:17:00.4 | grep 'RRAB' | grep --quiet 'V3042 Oph'
+util/search_databases_with_vizquery.sh 17:40:35.50 +06:17:00.4 | grep 'RRAB' | grep -q 'V3042 Oph'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT011"
 fi
 
 # this is MDV 9 already included in GCVS
-util/search_databases_with_vizquery.sh 13:21:18.38 +18:08:22.2 | grep 'SXPHE' | grep 'VARIABLE' | grep --quiet -e 'OU Com' -e 'ASASSN-V J132118.28+180821.9'
+util/search_databases_with_vizquery.sh 13:21:18.38 +18:08:22.2 | grep 'SXPHE' | grep 'VARIABLE' | grep -q -e 'OU Com' -e 'ASASSN-V J132118.28+180821.9'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012"
 fi
 
 # ATLAS via VizieR test 
-util/search_databases_with_vizquery.sh 101.23204 -13.33439 | grep 'dubious (ATLAS)' | grep --quiet 'ATO J101.2320-13.3343'
+util/search_databases_with_vizquery.sh 101.23204 -13.33439 | grep 'dubious (ATLAS)' | grep -q 'ATO J101.2320-13.3343'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012atlas"
 fi
 
 # ATLAS via VizieR test - doesn't work anymore - the star got into VSX under its ZTF name
-util/search_databases_with_vizquery.sh 07:29:19.69 -13:23:06.6 | grep -e 'CBF (ATLAS)' -e '(VSX)' -e '(local)' | grep --quiet -e 'ATO J112.3320-13.3851' -e 'ZTF J072919.68-132306.5'
+util/search_databases_with_vizquery.sh 07:29:19.69 -13:23:06.6 | grep -e 'CBF (ATLAS)' -e '(VSX)' -e '(local)' | grep -q -e 'ATO J112.3320-13.3851' -e 'ZTF J072919.68-132306.5'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012vsx01"
 fi
 
 # This one was added to VSX
-util/search_databases_with_vizquery.sh 18:31:04.64 -16:58:22.3 | grep 'M' | grep 'VARIABLE' | grep --quiet 'ATO J277.7693-16.9729'
+util/search_databases_with_vizquery.sh 18:31:04.64 -16:58:22.3 | grep 'M' | grep 'VARIABLE' | grep -q 'ATO J277.7693-16.9729'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT012vsx02"
 fi
 
 # MASTER_OT J132104.04+560957.8 - AM CVn star, Gaia short timescale variable
-util/search_databases_with_vizquery.sh 200.26675923087 +56.16607967965 | grep -e 'V0496 UMa' -e 'MASTER_OT J132104.04+560957.8' | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_SHORTTS'
+util/search_databases_with_vizquery.sh 200.26675923087 +56.16607967965 | grep -e 'V0496 UMa' -e 'MASTER_OT J132104.04+560957.8' | grep -q 'VARIABLE' #| grep -q 'Gaia2_SHORTTS'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT013"
 fi
 
 # Gaia Cepheid, first in the list
-util/search_databases_with_vizquery.sh 237.17375455558 -42.26556630747 | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_CEPHEID'
+util/search_databases_with_vizquery.sh 237.17375455558 -42.26556630747 | grep -q 'VARIABLE' #| grep -q 'Gaia2_CEPHEID'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT014"
 fi
 
 # Gaia RR Lyr, first in the list
-util/search_databases_with_vizquery.sh 272.04211425638 -25.91123076425 | grep 'RRAB' | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_RRLYR'
+util/search_databases_with_vizquery.sh 272.04211425638 -25.91123076425 | grep 'RRAB' | grep -q 'VARIABLE' #| grep -q 'Gaia2_RRLYR'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT015"
 fi
 
 # Gaia LPV, first in the list. Do not mix it up with OGLE-BLG-RRLYR-01707 that is 36" away!
-util/search_databases_with_vizquery.sh 265.86100820754 -34.10333534797 | grep -v 'OGLE-BLG-RRLYR-01707' | grep 'OGLE-BLG-LPV-022489' | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_LPV'
+util/search_databases_with_vizquery.sh 265.86100820754 -34.10333534797 | grep -v 'OGLE-BLG-RRLYR-01707' | grep 'OGLE-BLG-LPV-022489' | grep -q 'VARIABLE' #| grep -q 'Gaia2_LPV'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT016"
 fi
 
 # Check that we are correctly formatting the OGLE variable name
-util/search_databases_with_vizquery.sh 17:05:07.49 -32:37:57.2 | grep 'OGLE-BLG-RRLYR-00001' | grep --quiet 'VARIABLE' # | grep --quiet 'Gaia2_RRLYR'
+util/search_databases_with_vizquery.sh 17:05:07.49 -32:37:57.2 | grep 'OGLE-BLG-RRLYR-00001' | grep -q 'VARIABLE' # | grep -q 'Gaia2_RRLYR'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT017"
 fi
-util/search_databases_with_vizquery.sh `lib/hms2deg 17:05:07.49 -32:37:57.2` | grep 'OGLE-BLG-RRLYR-00001' | grep --quiet 'VARIABLE' #| grep --quiet 'Gaia2_RRLYR'
+util/search_databases_with_vizquery.sh `lib/hms2deg 17:05:07.49 -32:37:57.2` | grep 'OGLE-BLG-RRLYR-00001' | grep -q 'VARIABLE' #| grep -q 'Gaia2_RRLYR'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT018"
@@ -1332,42 +1332,42 @@ fi
 # ATO J017.2565+47.3045 is the ATLAS catalog name
 # ASASSN-V J010901.57+471816.4 is the ASAS-SN catalog name
 # Gaia DR3 401287624918055680 is the VSX name
-util/search_databases_with_vizquery.sh 17.25656 47.30456 | grep --quiet -e 'ATO J017.2565+47.3045' -e 'ASASSN-V J010901.57+471816.4' -e 'Gaia DR3 401287624918055680'
+util/search_databases_with_vizquery.sh 17.25656 47.30456 | grep -q -e 'ATO J017.2565+47.3045' -e 'ASASSN-V J010901.57+471816.4' -e 'Gaia DR3 401287624918055680'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT019"
 fi
 
 # Make sure the script doesn't drop faint Gaia stars if the position match is perfect
-util/search_databases_with_vizquery.sh 14:08:10.55777 -45:26:50.7000 | grep --quiet '|'
+util/search_databases_with_vizquery.sh 14:08:10.55777 -45:26:50.7000 | grep -q '|'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT019a"
 fi
 
 # Coma as RA,Dec separator
-util/search_databases_with_vizquery.sh 18:49:05.97,-19:02:03.2 | grep --quiet 'V6594 Sgr'
+util/search_databases_with_vizquery.sh 18:49:05.97,-19:02:03.2 | grep -q 'V6594 Sgr'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT019b"
 fi
 
 # Check good formatting of Skiff's spectral type
-util/search_databases_with_vizquery.sh 20:07:36.82 +44:06:55.1 | grep --quiet 'SpType: G5/K1IV 2016A&A...594A..39F'
+util/search_databases_with_vizquery.sh 20:07:36.82 +44:06:55.1 | grep -q 'SpType: G5/K1IV 2016A&A...594A..39F'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_SKIFFSPTYPEFORMAT"
 fi
 
 # Check correct parsing of ATLAS dubious candidate + LAMOST
-util/search_databases_with_vizquery.sh 23:44:51.23 +27:21:33.1 target 600 | grep 'ATO J356.2104+27.3581' | grep 'dubious' | grep --quiet 'F5 (LAMOST DR5)'
+util/search_databases_with_vizquery.sh 23:44:51.23 +27:21:33.1 target 600 | grep 'ATO J356.2104+27.3581' | grep 'dubious' | grep -q 'F5 (LAMOST DR5)'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_ATLASLAMOSTFARAWAY"
 fi
 
 # ATLAS multiple candidates within the search radius
-util/search_databases_with_vizquery.sh 17:03:58.52 -19:33:32.5 object 350 | grep 'ATO J255.9939-19.5591' | grep --quiet 'LPV (ATLAS)'
+util/search_databases_with_vizquery.sh 17:03:58.52 -19:33:32.5 object 350 | grep 'ATO J255.9939-19.5591' | grep -q 'LPV (ATLAS)'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_ATLASMULTICAND"
@@ -1375,27 +1375,27 @@ fi
 
 ### Check this star is in the local copy of the ASASSN-V catalog (it should be)
 ### if it isn't - the asassnv.csv was likely downloaded incompletley (check if it's good server-side)
-grep --quiet 'ASASSN-V J010901.57+471816.4' lib/catalogs/asassnv.csv
+grep -q 'ASASSN-V J010901.57+471816.4' lib/catalogs/asassnv.csv
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT020csv"
 fi
 # Now find this variable using check_catalogs_offline (already in VSX, so the VSX name will come put instead of ASASSN-V)
-lib/catalogs/check_catalogs_offline 17.25656 47.30456 | grep --quiet -e 'ASASSN-V J010901.57+471816.4' -e 'Gaia DR3 401287624918055680'
+lib/catalogs/check_catalogs_offline 17.25656 47.30456 | grep -q -e 'ASASSN-V J010901.57+471816.4' -e 'Gaia DR3 401287624918055680'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT020"
 fi
 
 # laststar in the current asassnv.csv, but it's already in VSX
-lib/catalogs/check_catalogs_offline 225.53308 -45.05244 | grep --quiet 'ASASSN-V J150207.95-450307.5'
+lib/catalogs/check_catalogs_offline 225.53308 -45.05244 | grep -q 'ASASSN-V J150207.95-450307.5'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT020"
 fi
 
 
-lib/catalogs/check_catalogs_offline 34.8366337 -2.9776377 | grep --quiet 'omi Cet'
+lib/catalogs/check_catalogs_offline 34.8366337 -2.9776377 | grep -q 'omi Cet'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT021"
@@ -1404,21 +1404,21 @@ fi
 # Multiple known variables within the search radius - unrelated OGLE one from VSX and the correct ASASSN-V
 # This test relies on the local catalog search!
 # Gaia DR3 4056173647026510464 is the WRONG answer
-util/search_databases_with_vizquery.sh 17:54:41.41077 -30:21:59.3417 | grep --quiet 'ASASSN-V J175441.41-302159.3'
+util/search_databases_with_vizquery.sh 17:54:41.41077 -30:21:59.3417 | grep -q 'ASASSN-V J175441.41-302159.3'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_MULTCLOSEVAR"
 fi
 
 # Let's repeat the test above to make sure wear not getting the WRONG answer Gaia DR3 4056173647026510464
-util/search_databases_with_vizquery.sh 17:54:41.41077 -30:21:59.3417 | grep --quiet 'Gaia DR3 4056173647026510464'
+util/search_databases_with_vizquery.sh 17:54:41.41077 -30:21:59.3417 | grep -q 'Gaia DR3 4056173647026510464'
 if [ $? -eq 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_MULTCLOSEVAR_THE_WRONG_ANSWER"
 fi
 
 # Make sure the script gives 'may be a known variable' suggestion from parsing VizieR catalog names
-util/search_databases_with_vizquery.sh 00:39:16.81 +60:36:57.1 | grep --quiet 'may be a known variable'
+util/search_databases_with_vizquery.sh 00:39:16.81 +60:36:57.1 | grep -q 'may be a known variable'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_VIZKNOWNVAR"
@@ -1427,44 +1427,44 @@ fi
 # No false ID with Gaia DR2 high-amplitude variable
 # Now it's Gaia DR3 high-amplitude variable
 # The correct target is Gaia DR3 4254944797873326720. Now 25.71" from it there is a Gaia DR3 4254944870964356992 variable
-util/search_databases_with_vizquery.sh 18:53:19.68 -04:58:21.6 online_id 350 no_online_vsx | grep 'online_id' | grep --quiet 'Gaia DR3 4254944797873326720'
+util/search_databases_with_vizquery.sh 18:53:19.68 -04:58:21.6 online_id 350 no_online_vsx | grep 'online_id' | grep -q 'Gaia DR3 4254944797873326720'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_NOWRONGGAIAVAR"
 fi
 
 # Constellations
-util/constellation.sh 0.0 0.0 | grep --quiet 'Psc'
+util/constellation.sh 0.0 0.0 | grep -q 'Psc'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION001"
 fi
 
-util/constellation.sh 00:00:00.00 00:00:00.0 | grep --quiet 'Psc'
+util/constellation.sh 00:00:00.00 00:00:00.0 | grep -q 'Psc'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION002"
 fi
 
-util/constellation.sh 22:57:00 +35:20:00 | grep --quiet 'Lac'
+util/constellation.sh 22:57:00 +35:20:00 | grep -q 'Lac'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION003"
 fi
 
-util/constellation.sh 17:44:17 -30:00:00 | grep --quiet 'Sgr'
+util/constellation.sh 17:44:17 -30:00:00 | grep -q 'Sgr'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION004"
 fi
 
-util/constellation.sh 17:43:52 -30:02:30 | grep --quiet 'Oph'
+util/constellation.sh 17:43:52 -30:02:30 | grep -q 'Oph'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION005"
 fi
 
-util/constellation.sh 17:44:00 -30:05:00 | grep --quiet 'Sco'
+util/constellation.sh 17:44:00 -30:05:00 | grep -q 'Sco'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION006"
@@ -1473,28 +1473,28 @@ fi
 
 
 # V0437 Peg
-util/constellation.sh 21:30:03.96 +12:04:59.4 | grep --quiet 'Peg'
+util/constellation.sh 21:30:03.96 +12:04:59.4 | grep -q 'Peg'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION007"
 fi
 
 # V0581 Aur
-util/constellation.sh 05:12:06.91 +45:46:42.8 | grep --quiet 'Aur'
+util/constellation.sh 05:12:06.91 +45:46:42.8 | grep -q 'Aur'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION008"
 fi
 
 # LW Ara
-util/constellation.sh 17:28:09.26 -46:38:14.4 | grep --quiet 'Ara'
+util/constellation.sh 17:28:09.26 -46:38:14.4 | grep -q 'Ara'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION009"
 fi
 
 # V0443 Sge
-util/constellation.sh 19:53:20.02 +18:59:33.9 | grep --quiet 'Sge'
+util/constellation.sh 19:53:20.02 +18:59:33.9 | grep -q 'Sge'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES STANDALONEDBSCRIPT_CPNSTELLATION010"
@@ -1585,17 +1585,17 @@ if [ -d ../test_data_photo ];then
   fi
   # Check results
   if [ -f vast_summary.log ];then
-   grep --quiet "Images used for photometry 150" vast_summary.log
+   grep -q "Images used for photometry 150" vast_summary.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE001" 
    fi
-   grep --quiet "First image: 2433153.50800" vast_summary.log
+   grep -q "First image: 2433153.50800" vast_summary.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE002"
    fi
-   grep --quiet "Last  image: 2447836.28000" vast_summary.log
+   grep -q "Last  image: 2447836.28000" vast_summary.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE003"
@@ -1603,7 +1603,7 @@ if [ -d ../test_data_photo ];then
    #
    # Hunting the mysterious non-zero reference frame rotation cases
    if [ -f vast_image_details.log ];then
-    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+    grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
     if [ $? -ne 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_nonzero_ref_frame_rotation"
@@ -1612,7 +1612,7 @@ if [ -d ../test_data_photo ];then
 ###### PHOTOPLATE_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
     fi
-    grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+    grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE_nonzero_ref_frame_rotation_test2"
@@ -1627,12 +1627,12 @@ $GREP_RESULT"
    fi
    #
    # ../test_data_photo/SCA14627S_16037_07933__00_00.fit is a bad image just below 0.11
-   grep --quiet "Number of identified bad images: 0" vast_summary.log
+   grep -q "Number of identified bad images: 0" vast_summary.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE003a"
    fi
-   grep --quiet "Magnitude-Size filter: Disabled" vast_summary.log
+   grep -q "Magnitude-Size filter: Disabled" vast_summary.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE003b"
@@ -1859,7 +1859,7 @@ $GREP_RESULT"
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE021"
     fi
-    grep --quiet "$CEPHEIDOUTFILE" vast_autocandidates.log
+    grep -q "$CEPHEIDOUTFILE" vast_autocandidates.log
     if [ $? -ne 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE022"
@@ -1868,7 +1868,7 @@ $GREP_RESULT"
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE023"
     fi
-    grep --quiet "$CEPHEIDOUTFILE" vast_list_of_likely_constant_stars.log
+    grep -q "$CEPHEIDOUTFILE" vast_list_of_likely_constant_stars.log
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE024"
@@ -1919,7 +1919,7 @@ $GREP_RESULT"
     if [ $TEST -eq 1 ];then
      echo "GOODMATCH"
     fi
-   done | grep -c 'GOODMATCH' | grep --quiet -e '2' -e '3'
+   done | grep -c 'GOODMATCH' | grep -q -e '2' -e '3'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE029"
@@ -1953,24 +1953,24 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE100"
    fi
    # Check results
-   grep --quiet "Images used for photometry 150" vast_summary.log
+   grep -q "Images used for photometry 150" vast_summary.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE101"
    fi
-   grep --quiet "First image: 2433153.50800" vast_summary.log
+   grep -q "First image: 2433153.50800" vast_summary.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE102"
    fi
-   grep --quiet "Last  image: 2447836.28000" vast_summary.log
+   grep -q "Last  image: 2447836.28000" vast_summary.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE103"
    fi
    # Hunting the mysterious non-zero reference frame rotation cases
    if [ -f vast_image_details.log ];then
-    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+    grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
     if [ $? -ne 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE1_nonzero_ref_frame_rotation"
@@ -1979,7 +1979,7 @@ $GREP_RESULT"
 ###### PHOTOPLATE1_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
     fi
-    grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+    grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE1_nonzero_ref_frame_rotation_test2"
@@ -2077,7 +2077,7 @@ $GREP_RESULT"
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE112"
    fi
-   grep --quiet "$CEPHEIDOUTFILE" vast_autocandidates.log
+   grep -q "$CEPHEIDOUTFILE" vast_autocandidates.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE113"
@@ -2086,7 +2086,7 @@ $GREP_RESULT"
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE114"
    fi
-   grep --quiet "$CEPHEIDOUTFILE" vast_list_of_likely_constant_stars.log
+   grep -q "$CEPHEIDOUTFILE" vast_list_of_likely_constant_stars.log
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE115"
@@ -2145,24 +2145,24 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE200"
    fi
    # Check results
-   grep --quiet "Images used for photometry 150" vast_summary.log
+   grep -q "Images used for photometry 150" vast_summary.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE201"
    fi
-   grep --quiet "First image: 2433153.50800" vast_summary.log
+   grep -q "First image: 2433153.50800" vast_summary.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE202"
    fi
-   grep --quiet "Last  image: 2447836.28000" vast_summary.log
+   grep -q "Last  image: 2447836.28000" vast_summary.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE203"
    fi
    # Hunting the mysterious non-zero reference frame rotation cases
    if [ -f vast_image_details.log ];then
-    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+    grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
     if [ $? -ne 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE2_nonzero_ref_frame_rotation"
@@ -2171,7 +2171,7 @@ $GREP_RESULT"
 ###### PHOTOPLATE2_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
     fi
-    grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+    grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE2_nonzero_ref_frame_rotation_test2"
@@ -2268,7 +2268,7 @@ $GREP_RESULT"
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE212"
    fi
-   grep --quiet "$CEPHEIDOUTFILE" vast_autocandidates.log
+   grep -q "$CEPHEIDOUTFILE" vast_autocandidates.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE213"
@@ -2277,7 +2277,7 @@ $GREP_RESULT"
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE214"
    fi
-   grep --quiet "$CEPHEIDOUTFILE" vast_list_of_likely_constant_stars.log
+   grep -q "$CEPHEIDOUTFILE" vast_list_of_likely_constant_stars.log
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOPLATE215"
@@ -2421,29 +2421,29 @@ if [ -d ../sample_data ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 91" vast_summary.log
+  grep -q "Images processed 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD001"
   fi
-  grep --quiet "Images used for photometry 91" vast_summary.log
+  grep -q "Images used for photometry 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD002"
   fi
-  #grep --quiet "Ref.  image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "Ref.  image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Ref.  image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_REFIMAGE"
   fi
-  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD003"
   fi
-  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep -q "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -2457,7 +2457,7 @@ if [ -d ../sample_data ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD0_nonzero_ref_frame_rotation"
@@ -2466,7 +2466,7 @@ if [ -d ../sample_data ];then
 ###### SMALLCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD0_nonzero_ref_frame_rotation_test2"
@@ -2480,12 +2480,12 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD0_NO_vast_image_details_log"
   fi
   #
-  grep --quiet "Magnitude-Size filter: Disabled" vast_summary.log
+  grep -q "Magnitude-Size filter: Disabled" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD005"
   fi
-  grep --quiet "Photometric errors rescaling: YES" vast_summary.log
+  grep -q "Photometric errors rescaling: YES" vast_summary.log
   #if [ $? -ne 0 ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
@@ -2507,22 +2507,22 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD010"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD011"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD012"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD013"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD014"
@@ -2672,7 +2672,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD022 SMALLCCD023_NOT_PERFORMED"
   else
    STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   grep -q "$STATOUTFILE" vast_autocandidates.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD023"
@@ -2684,7 +2684,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD024 SMALLCCD025_NOT_PERFORMED"
   else
    STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-   grep --quiet "$STATOUTFILE" vast_list_of_likely_constant_stars.log
+   grep -q "$STATOUTFILE" vast_list_of_likely_constant_stars.log
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD025"
@@ -2797,21 +2797,21 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD033 SMALLCCD034_NOT_PERFORMED"
   else
    STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   grep -q "$STATOUTFILE" vast_autocandidates.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD034"
    fi
   fi
   STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-  grep --quiet "$STATOUTFILE" vast_list_of_likely_constant_stars.log
+  grep -q "$STATOUTFILE" vast_list_of_likely_constant_stars.log
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD035"
   fi
   ###############################################
   # Both stars should be selected using the following criterea, but let's check at least one
-  cat vast_autocandidates_details.log | grep --quiet 'IQR  IQR+MAD  eta+IQR+MAD  eta+CLIPPED_SIGMA'
+  cat vast_autocandidates_details.log | grep -q 'IQR  IQR+MAD  eta+IQR+MAD  eta+CLIPPED_SIGMA'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_AUTOCANDIDATEDETAILS"
@@ -2824,10 +2824,10 @@ $GREP_RESULT"
   fi
   ###############################################
   if [ -s vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
-   grep --quiet "CCD-TEMP" vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+   grep -q "CCD-TEMP" vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
    if [ $? -eq 0 ];then
     for LIGHTCURVEFILE_TO_TEST in out*.dat ;do
-     grep --quiet "CCD-TEMP" "$LIGHTCURVEFILE_TO_TEST"
+     grep -q "CCD-TEMP" "$LIGHTCURVEFILE_TO_TEST"
      if [ $? -ne 0 ];then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD037_$LIGHTCURVEFILE_TO_TEST"
@@ -2871,14 +2871,14 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_MAKE_FINDER_CHART_001"
   fi
   #
-  #lib/test_libpng.sh 2>&1 | grep --quiet 'libpng found and is working'
+  #lib/test_libpng.sh 2>&1 | grep -q 'libpng found and is working'
   # test_libpng_justtest_nomovepgplot.sh prints nothing, just sets the exit code
   lib/test_libpng_justtest_nomovepgplot.sh
   if [ $? -eq 0 ];then
    #if [ -f pgplot.png ];then
    if [ -f f_72-001r.png ];then
-    #file pgplot.png | grep --quiet 'PNG image data'
-    file f_72-001r.png | grep --quiet 'PNG image data'
+    #file pgplot.png | grep -q 'PNG image data'
+    file f_72-001r.png | grep -q 'PNG image data'
     if [ $? -ne 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_MAKE_FINDER_CHART_LIBPNG_ENABLED_BUT_OUTPUT_FILE_NOT_PNG"
@@ -2918,7 +2918,7 @@ $GREP_RESULT"
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_EMPTY_vast_accepted_or_rejected_images_based_on_stars_elongation.log"
    else
-    grep --quiet 'median(A-B) among all images 0.14' vast_accepted_or_rejected_images_based_on_stars_elongation.log
+    grep -q 'median(A-B) among all images 0.14' vast_accepted_or_rejected_images_based_on_stars_elongation.log
     if [ $? -ne 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_MEDIAN_AmB_CHANGE_vast_accepted_or_rejected_images_based_on_stars_elongation.log"
@@ -3004,17 +3004,17 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk__BSCALE_$N_KEYWORD_OCCURS"
   fi
-  util/listhead median.fit | grep --quiet "EXPTIME"
+  util/listhead median.fit | grep -q "EXPTIME"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk__EXPTIME"
   fi
-  util/listhead median.fit | grep --quiet "SET-TEMP"
+  util/listhead median.fit | grep -q "SET-TEMP"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk__SET-TEMP"
   fi
-  util/listhead median.fit | grep --quiet "CCD-TEMP"
+  util/listhead median.fit | grep -q "CCD-TEMP"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mk__CCD-TEMP"
@@ -3129,7 +3129,7 @@ if [ -d ../sample_data ];then
  cp vast_list_of_FITS_keywords_to_record_in_lightcurves.txt_example vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
  cp default.sex.ccd_example default.sex
  echo "218.95351  247.83630" > exclude.lst
- ./vast -u -f --nomagsizefilter ../sample_data/*.fit 2>&1 | grep ' 218\.' | grep ' 247\.' | grep --quiet 'is listed in exclude.lst'
+ ./vast -u -f --nomagsizefilter ../sample_data/*.fit 2>&1 | grep ' 218\.' | grep ' 247\.' | grep -q 'is listed in exclude.lst'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX000_$OPENMP_STATUS"
@@ -3148,29 +3148,29 @@ if [ -d ../sample_data ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 91" vast_summary.log
+  grep -q "Images processed 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX001_$OPENMP_STATUS"
   fi
-  grep --quiet "Images used for photometry 91" vast_summary.log
+  grep -q "Images used for photometry 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX002_$OPENMP_STATUS"
   fi
-  #grep --quiet "Ref.  image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "Ref.  image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Ref.  image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX_REFIMAGE"
   fi
-  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX003"
   fi
-  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep -q "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -3178,7 +3178,7 @@ if [ -d ../sample_data ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX0_nonzero_ref_frame_rotation"
@@ -3187,7 +3187,7 @@ if [ -d ../sample_data ];then
 ###### STAREX0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX0_nonzero_ref_frame_rotation_test2"
@@ -3201,12 +3201,12 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX0_NO_vast_image_details_log"
   fi
   #
-  grep --quiet "Magnitude-Size filter: Disabled" vast_summary.log
+  grep -q "Magnitude-Size filter: Disabled" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX005"
   fi
-  grep --quiet "Photometric errors rescaling: YES" vast_summary.log
+  grep -q "Photometric errors rescaling: YES" vast_summary.log
   #if [ $? -ne 0 ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
@@ -3228,22 +3228,22 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX010"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX011"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX012"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX013"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX014"
@@ -3393,7 +3393,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX022 STAREX023_NOT_PERFORMED"
   else
    STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   grep -q "$STATOUTFILE" vast_autocandidates.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX023"
@@ -3405,7 +3405,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX024 STAREX025_NOT_PERFORMED"
   else
    STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-   grep --quiet "$STATOUTFILE" vast_list_of_likely_constant_stars.log
+   grep -q "$STATOUTFILE" vast_list_of_likely_constant_stars.log
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX025"
@@ -3518,21 +3518,21 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX033 STAREX034_NOT_PERFORMED"
   else
    STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   grep -q "$STATOUTFILE" vast_autocandidates.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX034"
    fi
   fi
   STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-  grep --quiet "$STATOUTFILE" vast_list_of_likely_constant_stars.log
+  grep -q "$STATOUTFILE" vast_list_of_likely_constant_stars.log
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX035"
   fi
   ###############################################
   # Both stars should be selected using the following criterea, but let's check at least one
-  cat vast_autocandidates_details.log | grep --quiet 'IQR  IQR+MAD  eta+IQR+MAD  eta+CLIPPED_SIGMA'
+  cat vast_autocandidates_details.log | grep -q 'IQR  IQR+MAD  eta+IQR+MAD  eta+CLIPPED_SIGMA'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STAREX_AUTOCANDIDATEDETAILS"
@@ -3599,29 +3599,29 @@ if [ -d ../sample_data ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 91" vast_summary.log
+  grep -q "Images processed 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST001"
   fi
-  grep --quiet "Images used for photometry 91" vast_summary.log
+  grep -q "Images used for photometry 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST002"
   fi
-  #grep --quiet "Ref.  image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "Ref.  image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Ref.  image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST_REFIMAGE"
   fi
-  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST003"
   fi
-  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep -q "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -3629,7 +3629,7 @@ if [ -d ../sample_data ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST0_nonzero_ref_frame_rotation"
@@ -3638,7 +3638,7 @@ if [ -d ../sample_data ];then
 ###### SMALLCCDFILELIST0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST0_nonzero_ref_frame_rotation_test2"
@@ -3652,12 +3652,12 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST0_NO_vast_image_details_log"
   fi
   #
-  grep --quiet "Magnitude-Size filter: Disabled" vast_summary.log
+  grep -q "Magnitude-Size filter: Disabled" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST005"
   fi
-  grep --quiet "Photometric errors rescaling: YES" vast_summary.log
+  grep -q "Photometric errors rescaling: YES" vast_summary.log
   #if [ $? -ne 0 ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
@@ -3679,22 +3679,22 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST010"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST011"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST012"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST013"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST014"
@@ -3822,7 +3822,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST022 SMALLCCDFILELIST023_NOT_PERFORMED"
   else
    STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   grep -q "$STATOUTFILE" vast_autocandidates.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST023"
@@ -3834,7 +3834,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST024 SMALLCCDFILELIST025_NOT_PERFORMED"
   else
    STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-   grep --quiet "$STATOUTFILE" vast_list_of_likely_constant_stars.log
+   grep -q "$STATOUTFILE" vast_list_of_likely_constant_stars.log
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST025"
@@ -3947,21 +3947,21 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST033 SMALLCCDFILELIST034_NOT_PERFORMED"
   else
    STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   grep -q "$STATOUTFILE" vast_autocandidates.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST034"
    fi
   fi
   STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-  grep --quiet "$STATOUTFILE" vast_list_of_likely_constant_stars.log
+  grep -q "$STATOUTFILE" vast_list_of_likely_constant_stars.log
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST035"
   fi
   ###############################################
   # Both stars should be selected using the following criterea, but let's check at least one
-  cat vast_autocandidates_details.log | grep --quiet 'IQR  IQR+MAD  eta+IQR+MAD  eta+CLIPPED_SIGMA'
+  cat vast_autocandidates_details.log | grep -q 'IQR  IQR+MAD  eta+IQR+MAD  eta+CLIPPED_SIGMA'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST_AUTOCANDIDATEDETAILS"
@@ -3974,10 +3974,10 @@ $GREP_RESULT"
   fi
   ###############################################
   if [ -s vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
-   grep --quiet "CCD-TEMP" vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+   grep -q "CCD-TEMP" vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
    if [ $? -eq 0 ];then
     for LIGHTCURVEFILE_TO_TEST in out*.dat ;do
-     grep --quiet "CCD-TEMP" "$LIGHTCURVEFILE_TO_TEST"
+     grep -q "CCD-TEMP" "$LIGHTCURVEFILE_TO_TEST"
      if [ $? -ne 0 ];then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELIST037_$LIGHTCURVEFILE_TO_TEST"
@@ -4072,34 +4072,34 @@ if [ -d ../sample_data ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 91" vast_summary.log
+  grep -q "Images processed 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF001"
   fi
-  grep --quiet "Images used for photometry 91" vast_summary.log
+  grep -q "Images used for photometry 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF002"
   fi
-  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF003"
   fi
-  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep -q "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF004"
   fi
-  grep --quiet "Magnitude-Size filter: Disabled" vast_summary.log
+  grep -q "Magnitude-Size filter: Disabled" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF005"
   fi
-  grep --quiet "Photometric errors rescaling: YES" vast_summary.log
+  grep -q "Photometric errors rescaling: YES" vast_summary.log
   #if [ $? -ne 0 ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
@@ -4121,22 +4121,22 @@ if [ -d ../sample_data ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF010"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF011"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF012"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF013"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF014"
@@ -4149,7 +4149,7 @@ if [ -d ../sample_data ];then
   fi
   ###############################################
   # Both stars should be selected using the following criterea, but let's check at least one
-  cat vast_autocandidates_details.log | grep --quiet 'IQR  IQR+MAD  eta+IQR+MAD  eta+CLIPPED_SIGMA'
+  cat vast_autocandidates_details.log | grep -q 'IQR  IQR+MAD  eta+IQR+MAD  eta+CLIPPED_SIGMA'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF_AUTOCANDIDATEDETAILS"
@@ -4162,10 +4162,10 @@ if [ -d ../sample_data ];then
   fi
   ###############################################
   if [ -s vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
-   grep --quiet "CCD-TEMP" vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+   grep -q "CCD-TEMP" vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
    if [ $? -eq 0 ];then
     for LIGHTCURVEFILE_TO_TEST in out*.dat ;do
-     grep --quiet "CCD-TEMP" "$LIGHTCURVEFILE_TO_TEST"
+     grep -q "CCD-TEMP" "$LIGHTCURVEFILE_TO_TEST"
      if [ $? -ne 0 ];then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDFILELISTAUTOSELREF037_$LIGHTCURVEFILE_TO_TEST"
@@ -4246,12 +4246,12 @@ if [ -d ../sample_data ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 91" vast_summary.log
+  grep -q "Images processed 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDRANDOMOPTIONS001($OPTIONS)"
   fi
-  grep --quiet "Images used for photometry 91" vast_summary.log
+  grep -q "Images used for photometry 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDRANDOMOPTIONS002($OPTIONS)"
@@ -4321,23 +4321,23 @@ if [ -d ../sample_data ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 9" vast_summary.log
+  grep -q "Images processed 9" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD001"
   fi
-  grep --quiet "Images used for photometry 9" vast_summary.log
+  grep -q "Images used for photometry 9" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD002"
   fi
-  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD003"
   fi
-  #grep --quiet "Last  image: 2453202.33394 15.07.2004 19:59:22" vast_summary.log
+  #grep -q "Last  image: 2453202.33394 15.07.2004 19:59:22" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453202.33394 15.07.2004 19:59:22' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -4345,7 +4345,7 @@ if [ -d ../sample_data ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD0_nonzero_ref_frame_rotation"
@@ -4354,7 +4354,7 @@ if [ -d ../sample_data ];then
 ###### FEWSMALLCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD0_nonzero_ref_frame_rotation_test2"
@@ -4368,13 +4368,13 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD0_NO_vast_image_details_log"
   fi
   #
-  grep --quiet "Magnitude-Size filter: Enabled" vast_summary.log
+  grep -q "Magnitude-Size filter: Enabled" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD005"
   fi
   # No errors rescaling for the small number of input images!
-  grep --quiet "Photometric errors rescaling: NO" vast_summary.log
+  grep -q "Photometric errors rescaling: NO" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD006"
@@ -4395,22 +4395,22 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD010"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD011"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD012"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD013"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD014"
@@ -4423,10 +4423,10 @@ $GREP_RESULT"
   fi
   ###############################################
   if [ -s vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
-   grep --quiet "CCD-TEMP" vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+   grep -q "CCD-TEMP" vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
    if [ $? -eq 0 ];then
     for LIGHTCURVEFILE_TO_TEST in out*.dat ;do
-     grep --quiet "CCD-TEMP" "$LIGHTCURVEFILE_TO_TEST"
+     grep -q "CCD-TEMP" "$LIGHTCURVEFILE_TO_TEST"
      if [ $? -ne 0 ];then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES FEWSMALLCCD037"
@@ -4516,23 +4516,23 @@ if [ -d ../sample_data ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 91" vast_summary.log
+  grep -q "Images processed 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE001"
   fi
-  grep --quiet "Images used for photometry 91" vast_summary.log
+  grep -q "Images used for photometry 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE002"
   fi
-  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE003"
   fi
-  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep -q "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -4540,7 +4540,7 @@ if [ -d ../sample_data ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE0_nonzero_ref_frame_rotation"
@@ -4549,7 +4549,7 @@ if [ -d ../sample_data ];then
 ###### SMALLCCDNOERRORSRESCALE0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE0_nonzero_ref_frame_rotation_test2"
@@ -4563,12 +4563,12 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE0_NO_vast_image_details_log"
   fi
   #
-  grep --quiet "Magnitude-Size filter: Disabled" vast_summary.log
+  grep -q "Magnitude-Size filter: Disabled" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE005"
   fi
-  grep --quiet "Photometric errors rescaling: NO" vast_summary.log
+  grep -q "Photometric errors rescaling: NO" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE006"
@@ -4607,22 +4607,22 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE010"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE011"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE012"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE013"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE014"
@@ -4728,7 +4728,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE022 SMALLCCDNOERRORSRESCALE023_NOT_PERFORMED"
   else
    STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   grep -q "$STATOUTFILE" vast_autocandidates.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE023"
@@ -4740,7 +4740,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE024 SMALLCCDNOERRORSRESCALE025_NOT_PERFORMED"
   else
    STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-   grep --quiet "$STATOUTFILE" vast_list_of_likely_constant_stars.log
+   grep -q "$STATOUTFILE" vast_list_of_likely_constant_stars.log
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE025"
@@ -4848,14 +4848,14 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE033 SMALLCCDNOERRORSRESCALE034_NOT_PERFORMED"
   else
    STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   grep -q "$STATOUTFILE" vast_autocandidates.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE034"
    fi
   fi
   STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-  grep --quiet "$STATOUTFILE" vast_list_of_likely_constant_stars.log
+  grep -q "$STATOUTFILE" vast_list_of_likely_constant_stars.log
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE035"
@@ -4868,10 +4868,10 @@ $GREP_RESULT"
   fi
   ###############################################
   if [ -s vast_list_of_FITS_keywords_to_record_in_lightcurves.txt ];then
-   grep --quiet "CCD-TEMP" vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
+   grep -q "CCD-TEMP" vast_list_of_FITS_keywords_to_record_in_lightcurves.txt
    if [ $? -eq 0 ];then
     for LIGHTCURVEFILE_TO_TEST in out*.dat ;do
-     grep --quiet "CCD-TEMP" "$LIGHTCURVEFILE_TO_TEST"
+     grep -q "CCD-TEMP" "$LIGHTCURVEFILE_TO_TEST"
      if [ $? -ne 0 ];then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDNOERRORSRESCALE037"
@@ -4952,7 +4952,7 @@ if [ -d ../sample_data ];then
  # The [[:space:]] thing doesn't work on BSD
  #cat default.sex.ccd_example | sed 's:MAG_ZEROPOINT[[:space:]]\+0.0:MAG_ZEROPOINT  25.0:g' > default.sex
  # Make sure sed did the job correctly
- grep --quiet "MAG_ZEROPOINT  25.0" default.sex
+ grep -q "MAG_ZEROPOINT  25.0" default.sex
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD000"
@@ -4965,23 +4965,23 @@ if [ -d ../sample_data ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 91" vast_summary.log
+  grep -q "Images processed 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD001"
   fi
-  grep --quiet "Images used for photometry 91" vast_summary.log
+  grep -q "Images used for photometry 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD002"
   fi
-  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD003"
   fi
-  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep -q "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -4989,7 +4989,7 @@ if [ -d ../sample_data ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD0_nonzero_ref_frame_rotation"
@@ -4998,7 +4998,7 @@ if [ -d ../sample_data ];then
 ###### MAGZEROPOINTSMALLCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD0_nonzero_ref_frame_rotation_test2"
@@ -5012,7 +5012,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD0_NO_vast_image_details_log"
   fi
   #
-  grep --quiet "Magnitude-Size filter: Enabled" vast_summary.log
+  grep -q "Magnitude-Size filter: Enabled" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD005"
@@ -5033,22 +5033,22 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD009"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD010"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD011"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD012"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD013"
@@ -5126,23 +5126,23 @@ if [ -d ../sample_data ];then
  unset OMP_NUM_THREADS
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 91" vast_summary.log
+  grep -q "Images processed 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES OMP_NUM_THREADS_SMALLCCD001"
   fi
-  grep --quiet "Images used for photometry 91" vast_summary.log
+  grep -q "Images used for photometry 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES OMP_NUM_THREADS_SMALLCCD002"
   fi
-  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES OMP_NUM_THREADS_SMALLCCD003a"
   fi
-  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep -q "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -5150,7 +5150,7 @@ if [ -d ../sample_data ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES OMP_NUM_THREADS_SMALLCCD0_nonzero_ref_frame_rotation"
@@ -5159,7 +5159,7 @@ if [ -d ../sample_data ];then
 ###### OMP_NUM_THREADS_SMALLCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES OMP_NUM_THREADS_SMALLCCD0_nonzero_ref_frame_rotation_test2"
@@ -5189,22 +5189,22 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES OMP_NUM_THREADS_SMALLCCD008"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES OMP_NUM_THREADS_SMALLCCD009"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES OMP_NUM_THREADS_SMALLCCD010"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES OMP_NUM_THREADS_SMALLCCD011"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES OMP_NUM_THREADS_SMALLCCD012"
@@ -5259,23 +5259,23 @@ if [ -d ../sample_data ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 91" vast_summary.log
+  grep -q "Images processed 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD001"
   fi
-  grep --quiet "Images used for photometry 91" vast_summary.log
+  grep -q "Images used for photometry 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD002"
   fi
-  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD003a"
   fi
-  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep -q "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -5283,7 +5283,7 @@ if [ -d ../sample_data ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD0_nonzero_ref_frame_rotation"
@@ -5292,7 +5292,7 @@ if [ -d ../sample_data ];then
 ###### DIRNAME_SMALLCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD0_nonzero_ref_frame_rotation_test2"
@@ -5322,22 +5322,22 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD008"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD009"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD010"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD011"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME_SMALLCCD012"
@@ -5392,23 +5392,23 @@ if [ -d ../sample_data ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 91" vast_summary.log
+  grep -q "Images processed 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD001"
   fi
-  grep --quiet "Images used for photometry 91" vast_summary.log
+  grep -q "Images used for photometry 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD002"
   fi
-  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD003a"
   fi
-  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep -q "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -5416,7 +5416,7 @@ if [ -d ../sample_data ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD0_nonzero_ref_frame_rotation"
@@ -5425,7 +5425,7 @@ if [ -d ../sample_data ];then
 ###### DIRNAME2_SMALLCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD0_nonzero_ref_frame_rotation_test2"
@@ -5455,22 +5455,22 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD008"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD009"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD010"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD011"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DIRNAME2_SMALLCCD012"
@@ -5532,23 +5532,23 @@ if [ -d '../sample space' ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 91" vast_summary.log
+  grep -q "Images processed 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD001"
   fi
-  grep --quiet "Images used for photometry 91" vast_summary.log
+  grep -q "Images used for photometry 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD002"
   fi
-  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD003a"
   fi
-  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep -q "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -5556,7 +5556,7 @@ if [ -d '../sample space' ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD0_nonzero_ref_frame_rotation"
@@ -5565,7 +5565,7 @@ if [ -d '../sample space' ];then
 ###### WHITE_SPACE_NAME_SMALLCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD0_nonzero_ref_frame_rotation_test2"
@@ -5595,22 +5595,22 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD008"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD009"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD010"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD011"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD012"
@@ -5627,17 +5627,17 @@ $GREP_RESULT"
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD_IMSTAT01"
  fi
- util/imstat_vast '../sample space/f_72-001r.fit' | grep --quiet 'MEDIAN=   919.0'
+ util/imstat_vast '../sample space/f_72-001r.fit' | grep -q 'MEDIAN=   919.0'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD_IMSTAT02"
  fi
- util/imstat_vast_fast '../sample space/f_72-001r.fit' | grep --quiet 'MEDIAN'
+ util/imstat_vast_fast '../sample space/f_72-001r.fit' | grep -q 'MEDIAN'
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD_IMSTAT03"
  fi
- util/imstat_vast_fast '../sample space/f_72-001r.fit' | grep --quiet 'MEAN=   924.'
+ util/imstat_vast_fast '../sample space/f_72-001r.fit' | grep -q 'MEAN=   924.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES WHITE_SPACE_NAME_SMALLCCD_IMSTAT04"
@@ -5686,34 +5686,34 @@ if [ -d ../sample_data ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 91" vast_summary.log
+  grep -q "Images processed 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES AUTOSELECT_REF_IMG_SMALLCCD001"
   fi
-  grep --quiet "Images used for photometry 91" vast_summary.log
+  grep -q "Images used for photometry 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES AUTOSELECT_REF_IMG_SMALLCCD002"
   fi
-  #grep --quiet "Ref.  image: 2453193.35153 06.07.2004 20:24:42" vast_summary.log
+  #grep -q "Ref.  image: 2453193.35153 06.07.2004 20:24:42" vast_summary.log
   # New ref. image with new flagging system?..
-  #grep --quiet "Ref.  image: 2453193.35816 06.07.2004 20:34:15   ../sample_data/f_72-008r.fit" vast_summary.log
+  #grep -q "Ref.  image: 2453193.35816 06.07.2004 20:34:15   ../sample_data/f_72-008r.fit" vast_summary.log
   # We end up with different reference images at diffferent machines,
   # so let's just check the date when the ref image was taken
   #### ????This test is not working - different machines choose different reference images!!!!
-  grep "Ref.  image:" vast_summary.log | grep --quiet -e "06.07.2004" -e "05.07.2004" -e "01.08.2004"
+  grep "Ref.  image:" vast_summary.log | grep -q -e "06.07.2004" -e "05.07.2004" -e "01.08.2004"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES AUTOSELECT_REF_IMG_SMALLCCD003a"
   fi
-  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES AUTOSELECT_REF_IMG_SMALLCCD003b"
   fi
-  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep -q "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -5721,7 +5721,7 @@ if [ -d ../sample_data ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES AUTOSELECT_REF_IMG_SMALLCCD0_nonzero_ref_frame_rotation"
@@ -5730,7 +5730,7 @@ if [ -d ../sample_data ];then
 ###### AUTOSELECT_REF_IMG_SMALLCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES AUTOSELECT_REF_IMG_SMALLCCD0_nonzero_ref_frame_rotation_test2"
@@ -5760,22 +5760,22 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES AUTOSELECT_REF_IMG_SMALLCCD008"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES AUTOSELECT_REF_IMG_SMALLCCD009"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES AUTOSELECT_REF_IMG_SMALLCCD010"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES AUTOSELECT_REF_IMG_SMALLCCD011"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES AUTOSELECT_REF_IMG_SMALLCCD012"
@@ -5839,23 +5839,23 @@ if [ -d ../sample_data ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 91" vast_summary.log
+  grep -q "Images processed 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD001"
   fi
-  grep --quiet "Images used for photometry 91" vast_summary.log
+  grep -q "Images used for photometry 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD002"
   fi
-  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD003a"
   fi
-  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep -q "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -5863,7 +5863,7 @@ if [ -d ../sample_data ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD0_nonzero_ref_frame_rotation"
@@ -5872,7 +5872,7 @@ if [ -d ../sample_data ];then
 ###### WITH_KEYWORD_RECORDING_SMALLCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD0_nonzero_ref_frame_rotation_test2"
@@ -5902,22 +5902,22 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD008"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD009"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD010"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD011"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES WITH_KEYWORD_RECORDING_SMALLCCD012"
@@ -5932,7 +5932,7 @@ $GREP_RESULT"
    cat $LIGHTCURVEFILE_TO_TEST | awk '{ for(i=8; i<NF; i++) printf "%s",$i OFS; if(NF) printf "%s",$NF; printf ORS}' | while read A ;do
     #if [ ! -z "$A" ];then
     # The idea here is that if we save some FITS header keywords, the '=' sign will always be present in the string
-    echo "$A" | grep --quiet 'CCD-TEMP='
+    echo "$A" | grep -q 'CCD-TEMP='
     if [ $? -ne 0 ];then
      touch WITH_KEYWORD_RECORDING_SMALLCCD013_problem.tmp
      break
@@ -6005,23 +6005,23 @@ if [ -d ../sample_data ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 91" vast_summary.log
+  grep -q "Images processed 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NO_KEYWORD_RECORDING_SMALLCCD001"
   fi
-  grep --quiet "Images used for photometry 91" vast_summary.log
+  grep -q "Images used for photometry 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NO_KEYWORD_RECORDING_SMALLCCD002"
   fi
-  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NO_KEYWORD_RECORDING_SMALLCCD003a"
   fi
-  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep -q "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -6029,7 +6029,7 @@ if [ -d ../sample_data ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NO_KEYWORD_RECORDING_SMALLCCD0_nonzero_ref_frame_rotation"
@@ -6037,7 +6037,7 @@ if [ -d ../sample_data ];then
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### NO_KEYWORD_RECORDING_SMALLCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NO_KEYWORD_RECORDING_SMALLCCD0_nonzero_ref_frame_rotation_test2"
@@ -6068,22 +6068,22 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NO_KEYWORD_RECORDING_SMALLCCD008"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NO_KEYWORD_RECORDING_SMALLCCD009"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NO_KEYWORD_RECORDING_SMALLCCD010"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NO_KEYWORD_RECORDING_SMALLCCD011"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NO_KEYWORD_RECORDING_SMALLCCD012"
@@ -6098,7 +6098,7 @@ $GREP_RESULT"
    cat $LIGHTCURVEFILE_TO_TEST | awk '{ for(i=8; i<NF; i++) printf "%s",$i OFS; if(NF) printf "%s",$NF; printf ORS}' | while read A ;do
     #if [ ! -z "$A" ];then
     # The idea here is that if we save some FITS header keywords, the '=' sign will always be present in the string
-    echo "$A" | grep --quiet '='
+    echo "$A" | grep -q '='
     if [ $? -eq 0 ];then
      touch NO_KEYWORD_RECORDING_SMALLCCD013_problem.tmp
      break
@@ -6163,23 +6163,23 @@ if [ -d ../sample_data ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 91" vast_summary.log
+  grep -q "Images processed 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD001"
   fi
-  grep --quiet "Images used for photometry 91" vast_summary.log
+  grep -q "Images used for photometry 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD002"
   fi
-  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD003"
   fi
-  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep -q "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -6187,7 +6187,7 @@ if [ -d ../sample_data ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD0_nonzero_ref_frame_rotation"
@@ -6196,7 +6196,7 @@ if [ -d ../sample_data ];then
 ###### MAGSIZEFILTERSMALLCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD0_nonzero_ref_frame_rotation_test2"
@@ -6210,12 +6210,12 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD0_NO_vast_image_details_log"
   fi
   #
-  grep --quiet "Magnitude-Size filter: Enabled" vast_summary.log
+  grep -q "Magnitude-Size filter: Enabled" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD005"
   fi
-  grep --quiet 'Photometric errors rescaling: YES' vast_summary.log
+  grep -q 'Photometric errors rescaling: YES' vast_summary.log
   #if [ $? -ne 0 ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
@@ -6256,22 +6256,22 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD009"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD010"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD011"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD012"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD013"
@@ -6389,13 +6389,13 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD021 MAGSIZEFILTERSMALLCCD020_NOT_PERFORMED"
   else
    STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   grep -q "$STATOUTFILE" vast_autocandidates.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD022"
    fi
   fi
-  grep --quiet "$STATOUTFILE" vast_list_of_likely_constant_stars.log
+  grep -q "$STATOUTFILE" vast_list_of_likely_constant_stars.log
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD023"
@@ -6502,19 +6502,19 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD031 MAGSIZEFILTERSMALLCCD032_NOT_PERFORMED"
   else
    STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   grep -q "$STATOUTFILE" vast_autocandidates.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD032"
    fi
   fi
-  grep --quiet "$STATOUTFILE" vast_list_of_likely_constant_stars.log
+  grep -q "$STATOUTFILE" vast_list_of_likely_constant_stars.log
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGSIZEFILTERSMALLCCD033"
   fi
   ###############################################
-  cat src/vast_limits.h | grep -v '//' | grep --quiet 'DISABLE_MAGSIZE_FILTER_LOGS'
+  cat src/vast_limits.h | grep -v '//' | grep -q 'DISABLE_MAGSIZE_FILTER_LOGS'
   if [ $? -ne 0 ];then
    # Check log files associated with mag-size filtering
    for PARAM in 00 01 04 06 08 10 12 ;do
@@ -6662,23 +6662,23 @@ if [ -d '../sample space' ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 91" vast_summary.log
+  grep -q "Images processed 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD001"
   fi
-  grep --quiet "Images used for photometry 91" vast_summary.log
+  grep -q "Images used for photometry 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD002"
   fi
-  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD003"
   fi
-  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep -q "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -6686,7 +6686,7 @@ if [ -d '../sample space' ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD0_nonzero_ref_frame_rotation"
@@ -6694,7 +6694,7 @@ if [ -d '../sample space' ];then
     DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### SPACEMAGSIZEFILTERSMALLCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD0_nonzero_ref_frame_rotation_test2"
@@ -6709,12 +6709,12 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD0_NO_vast_image_details_log"
   fi
   #
-  grep --quiet "Magnitude-Size filter: Enabled" vast_summary.log
+  grep -q "Magnitude-Size filter: Enabled" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD005"
   fi
-  grep --quiet 'Photometric errors rescaling: YES' vast_summary.log
+  grep -q 'Photometric errors rescaling: YES' vast_summary.log
   #if [ $? -ne 0 ];then
   if [ $? -eq 0 ];then
    TEST_PASSED=0
@@ -6756,22 +6756,22 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD009"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD010"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD011"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD012"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD013"
@@ -6892,13 +6892,13 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD021 SPACEMAGSIZEFILTERSMALLCCD020_NOT_PERFORMED"
   else
    STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   grep -q "$STATOUTFILE" vast_autocandidates.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD022"
    fi
   fi
-  grep --quiet "$STATOUTFILE" vast_list_of_likely_constant_stars.log
+  grep -q "$STATOUTFILE" vast_list_of_likely_constant_stars.log
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD023"
@@ -7006,19 +7006,19 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD031 SPACEMAGSIZEFILTERSMALLCCD032_NOT_PERFORMED"
   else
    STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   grep -q "$STATOUTFILE" vast_autocandidates.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD032"
    fi
   fi
-  grep --quiet "$STATOUTFILE" vast_list_of_likely_constant_stars.log
+  grep -q "$STATOUTFILE" vast_list_of_likely_constant_stars.log
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPACEMAGSIZEFILTERSMALLCCD033"
   fi
   ###############################################
-  cat src/vast_limits.h | grep -v '//' | grep --quiet 'DISABLE_MAGSIZE_FILTER_LOGS'
+  cat src/vast_limits.h | grep -v '//' | grep -q 'DISABLE_MAGSIZE_FILTER_LOGS'
   if [ $? -ne 0 ];then
    # Check log files associated with mag-size filtering
    for PARAM in 00 01 04 06 08 10 12 ;do
@@ -7173,31 +7173,31 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 23" vast_summary.log
+  grep -q "Images processed 23" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS001"
   fi
-  grep --quiet "Images used for photometry 23" vast_summary.log
+  grep -q "Images used for photometry 23" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS002"
   fi
   # Ref. image might be different if we specify a directory rather than a file list
-  #grep --quiet "Ref.  image: 2458689.62122 25.07.2019 02:54:30" vast_summary.log
+  #grep -q "Ref.  image: 2458689.62122 25.07.2019 02:54:30" vast_summary.log
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS003a"
   #fi
   # 2458689.6211690 according to https://ssd.jpl.nasa.gov/tools/jdc/#/cd
-  #grep --quiet "First image: 2458689.62122 25.07.2019 02:54:30" vast_summary.log
-  #grep --quiet "First image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
+  #grep -q "First image: 2458689.62122 25.07.2019 02:54:30" vast_summary.log
+  #grep -q "First image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2458689.62121 25.07.2019 02:54:30' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS003b"
   fi
-  #grep --quiet "Last  image: 2458689.63980 25.07.2019 03:21:16" vast_summary.log
+  #grep -q "Last  image: 2458689.63980 25.07.2019 03:21:16" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2458689.63980 25.07.2019 03:21:16' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -7211,7 +7211,7 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS0_nonzero_ref_frame_rotation"
@@ -7220,7 +7220,7 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
 ###### REFIMAGE_WITH_VERY_FEW_STARS0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS0_nonzero_ref_frame_rotation_test2"
@@ -7250,22 +7250,22 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS008"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS009"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS010"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS011"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS012"
@@ -7332,29 +7332,29 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 23" vast_summary.log
+  grep -q "Images processed 23" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2001"
   fi
-  grep --quiet "Images used for photometry 23" vast_summary.log
+  grep -q "Images used for photometry 23" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2002"
   fi
-  #grep --quiet "Ref.  image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
+  #grep -q "Ref.  image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Ref.  image: 2458689.62121 25.07.2019 02:54:30' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2003a"
   fi
-  #grep --quiet "First image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
+  #grep -q "First image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2458689.62121 25.07.2019 02:54:30' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2003b"
   fi
-  #grep --quiet "Last  image: 2458689.63980 25.07.2019 03:21:16" vast_summary.log
+  #grep -q "Last  image: 2458689.63980 25.07.2019 03:21:16" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2458689.63980 25.07.2019 03:21:16' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -7362,7 +7362,7 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2_nonzero_ref_frame_rotation"
@@ -7371,7 +7371,7 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
 ###### REFIMAGE_WITH_VERY_FEW_STARS2_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2_nonzero_ref_frame_rotation_test2"
@@ -7401,22 +7401,22 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2008"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2009"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2010"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2011"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES REFIMAGE_WITH_VERY_FEW_STARS2012"
@@ -7487,33 +7487,33 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
   fi
   # Check results
   if [ -f vast_summary.log ];then
-   grep --quiet "Images processed 23" vast_summary.log
+   grep -q "Images processed 23" vast_summary.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3001"
     break
    fi
-   grep --quiet "Images used for photometry 23" vast_summary.log
+   grep -q "Images used for photometry 23" vast_summary.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3002"
     break
    fi
-   #grep --quiet "Ref.  image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
+   #grep -q "Ref.  image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
    compare_date_strings_in_vastsummarylog_with_tolerance 'Ref.  image: 2458689.62121 25.07.2019 02:54:30' 1
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3003a"
     break
    fi
-   #grep --quiet "First image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
+   #grep -q "First image: 2458689.62121 25.07.2019 02:54:30" vast_summary.log
    compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2458689.62121 25.07.2019 02:54:30' 1
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3003b"
     break
    fi
-   #grep --quiet "Last  image: 2458689.63980 25.07.2019 03:21:16" vast_summary.log
+   #grep -q "Last  image: 2458689.63980 25.07.2019 03:21:16" vast_summary.log
    compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2458689.63980 25.07.2019 03:21:16' 1
    if [ $? -ne 0 ];then
     TEST_PASSED=0
@@ -7522,7 +7522,7 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
    fi
    # Hunting the mysterious non-zero reference frame rotation cases
    if [ -f vast_image_details.log ];then
-    grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+    grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
     if [ $? -ne 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3_nonzero_ref_frame_rotation"
@@ -7532,7 +7532,7 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
 $GREP_RESULT"
      break
     fi
-    grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+    grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3_nonzero_ref_frame_rotation_test2"
@@ -7607,25 +7607,25 @@ if [ -d ../vast_test_ASASSN-19cq ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 11" vast_summary.log
+  grep -q "Images processed 11" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC001"
   fi
   # The possible reference image ../vast_test_ASASSN-19cq/2019_05_15/fd_img2_ASASSN_19cq_V_200s.fit
   # is the worst and should be rejected under normal circumstances
-  grep --quiet -e "Images used for photometry 11" -e "Images used for photometry 10" vast_summary.log
+  grep -q -e "Images used for photometry 11" -e "Images used for photometry 10" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC002"
   fi
-  #grep --quiet "First image: 2458619.73071 16.05.2019 05:30:33" vast_summary.log
+  #grep -q "First image: 2458619.73071 16.05.2019 05:30:33" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2458619.73071 16.05.2019 05:30:33' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC003a"
   fi
-  #grep --quiet "Last  image: 2458659.73438 25.06.2019 05:35:00" vast_summary.log
+  #grep -q "Last  image: 2458659.73438 25.06.2019 05:35:00" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2458659.73438 25.06.2019 05:35:00' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -7639,7 +7639,7 @@ if [ -d ../vast_test_ASASSN-19cq ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC0_nonzero_ref_frame_rotation"
@@ -7648,7 +7648,7 @@ if [ -d ../vast_test_ASASSN-19cq ];then
 ###### TWOLEVELDIRREC0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC0_nonzero_ref_frame_rotation_test2"
@@ -7678,22 +7678,22 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC008"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC009"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC010"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC011"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC012"
@@ -7715,25 +7715,25 @@ $GREP_RESULT"
  # Check results
  if [ -f vast_summary.log ];then
   # 12 because the reference image will be counted twice
-  grep --quiet "Images processed 12" vast_summary.log
+  grep -q "Images processed 12" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC101"
   fi
   # The possible reference image ../vast_test_ASASSN-19cq/2019_05_15/fd_img2_ASASSN_19cq_V_200s.fit
   # is the wors and should be rejected under normal circumstances
-  grep --quiet "Images used for photometry 10" vast_summary.log
+  grep -q "Images used for photometry 10" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC102"
   fi
-  #grep --quiet "First image: 2458619.73071 16.05.2019 05:30:33" vast_summary.log
+  #grep -q "First image: 2458619.73071 16.05.2019 05:30:33" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2458619.73071 16.05.2019 05:30:33' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC103a"
   fi
-  #grep --quiet "Last  image: 2458659.73438 25.06.2019 05:35:00" vast_summary.log
+  #grep -q "Last  image: 2458659.73438 25.06.2019 05:35:00" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2458659.73438 25.06.2019 05:35:00' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -7741,7 +7741,7 @@ $GREP_RESULT"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC1_nonzero_ref_frame_rotation"
@@ -7750,7 +7750,7 @@ $GREP_RESULT"
 ###### TWOLEVELDIRREC1_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC1_nonzero_ref_frame_rotation_test2"
@@ -7780,22 +7780,22 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC108"
   fi
-  grep --quiet "IQR" vast_lightcurve_statistics_format.log
+  grep -q "IQR" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC109"
   fi
-  grep --quiet "eta" vast_lightcurve_statistics_format.log
+  grep -q "eta" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC110"
   fi
-  grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC111"
   fi
-  grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TWOLEVELDIRREC112"
@@ -7864,26 +7864,26 @@ if [ -d ../MASTER_test ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 6" vast_summary.log
+  grep -q "Images processed 6" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCD001"
   fi
-  grep --quiet "Images used for photometry 6" vast_summary.log
+  grep -q "Images used for photometry 6" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCD002"
   fi
-  #grep --quiet "First image: 2457154.31907 11.05.2015 19:39:26" vast_summary.log
-  #grep --quiet "First image: 2457154.31910 11.05.2015 19:39:27" vast_summary.log
-  #grep --quiet "First image: 2457154.31909 11.05.2015 19:39:26" vast_summary.log
+  #grep -q "First image: 2457154.31907 11.05.2015 19:39:26" vast_summary.log
+  #grep -q "First image: 2457154.31910 11.05.2015 19:39:27" vast_summary.log
+  #grep -q "First image: 2457154.31909 11.05.2015 19:39:26" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2457154.31909 11.05.2015 19:39:26' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCD003"
   fi
-  #grep --quiet "Last  image: 2457154.32075 11.05.2015 19:41:51" vast_summary.log
-  #grep --quiet "Last  image: 2457154.32076 11.05.2015 19:41:51" vast_summary.log
+  #grep -q "Last  image: 2457154.32075 11.05.2015 19:41:51" vast_summary.log
+  #grep -q "Last  image: 2457154.32076 11.05.2015 19:41:51" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2457154.32076 11.05.2015 19:41:51' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -7897,7 +7897,7 @@ if [ -d ../MASTER_test ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCD0_nonzero_ref_frame_rotation"
@@ -7906,7 +7906,7 @@ if [ -d ../MASTER_test ];then
 ###### MASTERCCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCD0_nonzero_ref_frame_rotation_test2"
@@ -8019,23 +8019,23 @@ if [ -d ../M31_ISON_test ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 5" vast_summary.log
+  grep -q "Images processed 5" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD001"
   fi
-  grep --quiet "Images used for photometry 5" vast_summary.log
+  grep -q "Images used for photometry 5" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD002"
   fi
-  #grep --quiet "First image: 2455863.88499 29.10.2011 09:13:23" vast_summary.log
+  #grep -q "First image: 2455863.88499 29.10.2011 09:13:23" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2455863.88499 29.10.2011 09:13:23' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD003"
   fi
-  #grep --quiet "Last  image: 2455867.61163 02.11.2011 02:39:45" vast_summary.log
+  #grep -q "Last  image: 2455867.61163 02.11.2011 02:39:45" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2455867.61163 02.11.2011 02:39:45' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -8049,7 +8049,7 @@ if [ -d ../M31_ISON_test ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD0_nonzero_ref_frame_rotation"
@@ -8058,7 +8058,7 @@ if [ -d ../M31_ISON_test ];then
 ###### ISONM31CCD0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31CCD0_nonzero_ref_frame_rotation_test2"
@@ -8177,23 +8177,23 @@ if [ -d ../Gaia16aye_SN ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 4" vast_summary.log
+  grep -q "Images processed 4" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES GAIA16AYESN001"
   fi
-  grep --quiet "Images used for photometry 4" vast_summary.log
+  grep -q "Images used for photometry 4" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES GAIA16AYESN002"
   fi
-  #grep --quiet "First image: 2457714.13557 21.11.2016 15:13:43" vast_summary.log
+  #grep -q "First image: 2457714.13557 21.11.2016 15:13:43" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2457714.13557 21.11.2016 15:13:43' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES GAIA16AYESN003"
   fi
-  #grep --quiet "Last  image: 2457714.14230 21.11.2016 15:23:25" vast_summary.log
+  #grep -q "Last  image: 2457714.14230 21.11.2016 15:23:25" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2457714.14230 21.11.2016 15:23:25' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -8207,7 +8207,7 @@ if [ -d ../Gaia16aye_SN ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES GAIA16AYESN0_nonzero_ref_frame_rotation"
@@ -8216,7 +8216,7 @@ if [ -d ../Gaia16aye_SN ];then
 ###### GAIA16AYESN0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES GAIA16AYESN0_nonzero_ref_frame_rotation_test2"
@@ -8230,7 +8230,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES GAIA16AYESN0_NO_vast_image_details_log"
   fi
   #
-  grep --quiet "JD time system (TT/UTC/UNKNOWN): UTC" vast_summary.log
+  grep -q "JD time system (TT/UTC/UNKNOWN): UTC" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES GAIA16AYESN0041"
@@ -8324,23 +8324,23 @@ if [ -d ../only_few_stars ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 25" vast_summary.log
+  grep -q "Images processed 25" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARS001"
   fi
-  grep --quiet "Images used for photometry 25" vast_summary.log
+  grep -q "Images used for photometry 25" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARS002"
   fi
-  #grep --quiet "First image: 2452270.63266 27.12.2001 03:10:32" vast_summary.log
+  #grep -q "First image: 2452270.63266 27.12.2001 03:10:32" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2452270.63266 27.12.2001 03:10:32' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARS003"
   fi
-  #grep --quiet "Last  image: 2452298.60258 24.01.2002 02:27:23" vast_summary.log
+  #grep -q "Last  image: 2452298.60258 24.01.2002 02:27:23" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2452298.60258 24.01.2002 02:27:23' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -8354,7 +8354,7 @@ if [ -d ../only_few_stars ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARS0_nonzero_ref_frame_rotation"
@@ -8363,7 +8363,7 @@ if [ -d ../only_few_stars ];then
 ###### CCDIMGFEWSTARS0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARS0_nonzero_ref_frame_rotation_test2"
@@ -8377,7 +8377,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARS0_NO_vast_image_details_log"
   fi
   #
-  grep --quiet "JD time system (TT/UTC/UNKNOWN): UTC" vast_summary.log
+  grep -q "JD time system (TT/UTC/UNKNOWN): UTC" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARS0041"
@@ -8471,23 +8471,23 @@ if [ -d ../only_few_stars ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 25" vast_summary.log
+  grep -q "Images processed 25" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE001"
   fi
-  grep --quiet "Images used for photometry 25" vast_summary.log
+  grep -q "Images used for photometry 25" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE002"
   fi
-  #grep --quiet "First image: 2452270.63266 27.12.2001 03:10:32" vast_summary.log
+  #grep -q "First image: 2452270.63266 27.12.2001 03:10:32" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2452270.63266 27.12.2001 03:10:32' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE003"
   fi
-  #grep --quiet "Last  image: 2452298.60258 24.01.2002 02:27:23" vast_summary.log
+  #grep -q "Last  image: 2452298.60258 24.01.2002 02:27:23" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2452298.60258 24.01.2002 02:27:23' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -8495,7 +8495,7 @@ if [ -d ../only_few_stars ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE0_nonzero_ref_frame_rotation"
@@ -8504,7 +8504,7 @@ if [ -d ../only_few_stars ];then
 ###### CCDIMGFEWSTARSBRIGHTGALMAGSIZE0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE0_nonzero_ref_frame_rotation_test2"
@@ -8518,7 +8518,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE0_NO_vast_image_details_log"
   fi
   #
-  grep --quiet "JD time system (TT/UTC/UNKNOWN): UTC" vast_summary.log
+  grep -q "JD time system (TT/UTC/UNKNOWN): UTC" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE0041"
@@ -8544,14 +8544,14 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_NOVASTIMAGESCATALOGSLOG"
   fi
-  grep --quiet 'ap000177.fit' vast_images_catalogs.log
+  grep -q 'ap000177.fit' vast_images_catalogs.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CCDIMGFEWSTARSBRIGHTGALMAGSIZE_THEIMAGFILEISNOTINIMAGESCATALOGS"
   fi
   IMAGE_CATALOG_NAME=`cat vast_images_catalogs.log | grep 'ap000177.fit' | awk '{print $1}'`
   #
-  cat src/vast_limits.h | grep -v '//' | grep --quiet 'DISABLE_MAGSIZE_FILTER_LOGS'
+  cat src/vast_limits.h | grep -v '//' | grep -q 'DISABLE_MAGSIZE_FILTER_LOGS'
   if [ $? -ne 0 ];then
    if [ ! -s "$IMAGE_CATALOG_NAME".magparameter00filter_rejected ];then
     TEST_PASSED=0
@@ -8725,29 +8725,29 @@ if [ -d ../test_exclude_ref_image ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 309" vast_summary.log
+  grep -q "Images processed 309" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE001"
   fi
-  grep --quiet "Images used for photometry 309" vast_summary.log
+  grep -q "Images used for photometry 309" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE002"
   fi
-  grep 'Ref.  image:' vast_summary.log | grep --quiet 'coadd.red.fits'
+  grep 'Ref.  image:' vast_summary.log | grep -q 'coadd.red.fits'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE_REFIMAGE"
   fi
-  #grep --quiet "First image: 2450486.59230 07.02.1997 02:12:55" vast_summary.log
-  #grep --quiet "First image: 2450486.59230 07.02.1997 02:12:54" vast_summary.log
+  #grep -q "First image: 2450486.59230 07.02.1997 02:12:55" vast_summary.log
+  #grep -q "First image: 2450486.59230 07.02.1997 02:12:54" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2450486.59230 07.02.1997 02:12:54' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE003"
   fi
-  #grep --quiet "Last  image: 2452578.55380 31.10.2002 01:17:28" vast_summary.log
+  #grep -q "Last  image: 2452578.55380 31.10.2002 01:17:28" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2452578.55380 31.10.2002 01:17:28' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -8761,7 +8761,7 @@ if [ -d ../test_exclude_ref_image ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE0_nonzero_ref_frame_rotation"
@@ -8770,7 +8770,7 @@ if [ -d ../test_exclude_ref_image ];then
 ###### EXCLUDEREFIMAGE0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE0_nonzero_ref_frame_rotation_test2"
@@ -8785,8 +8785,8 @@ $GREP_RESULT"
   fi
   #
   # actually, the correct answer is UNKNOWN becasue GMT comment in the DATE keyword is irrelevant
-  #grep --quiet "JD time system (TT/UTC/UNKNOWN): UTC" vast_summary.log
-  grep --quiet "JD time system (TT/UTC/UNKNOWN): UNKNOWN" vast_summary.log
+  #grep -q "JD time system (TT/UTC/UNKNOWN): UTC" vast_summary.log
+  grep -q "JD time system (TT/UTC/UNKNOWN): UNKNOWN" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE005"
@@ -8804,8 +8804,8 @@ $GREP_RESULT"
 #   fi
   fi
   # Time test
-  #util/get_image_date ../test_exclude_ref_image/lm01306trr8a1338.fits 2>&1 | grep -A 10 'DATE-OBS= 1998-01-14T06:47:48' | grep -A 10 'EXPTIME = 0' | grep -A 10 'Exposure   0 sec, 14.01.1998 06:47:48   = JD  2450827.78319' | grep --quiet 'JD 2450827.783194'
-  util/get_image_date ../test_exclude_ref_image/lm01306trr8a1338.fits 2>&1 | grep -A 10 'DATE-OBS= 1998-01-14T06:47:48' | grep -A 10 'EXPTIME = 0' | grep -A 10 'Exposure 0 sec, 14.01.1998 06:47:48.480 = JD 2450827.78320' | grep --quiet '         JD 2450827.783200'
+  #util/get_image_date ../test_exclude_ref_image/lm01306trr8a1338.fits 2>&1 | grep -A 10 'DATE-OBS= 1998-01-14T06:47:48' | grep -A 10 'EXPTIME = 0' | grep -A 10 'Exposure   0 sec, 14.01.1998 06:47:48   = JD  2450827.78319' | grep -q 'JD 2450827.783194'
+  util/get_image_date ../test_exclude_ref_image/lm01306trr8a1338.fits 2>&1 | grep -A 10 'DATE-OBS= 1998-01-14T06:47:48' | grep -A 10 'EXPTIME = 0' | grep -A 10 'Exposure 0 sec, 14.01.1998 06:47:48.480 = JD 2450827.78320' | grep -q '         JD 2450827.783200'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE_OBSERVING_TIME001"
@@ -8822,12 +8822,12 @@ $GREP_RESULT"
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES  EXCLUDEREFIMAGE_VARIABLE_NOT_DETECTED__${XY// /_}"
    fi
-   grep --quiet "$LIGHTCURVEFILE" vast_autocandidates.log
+   grep -q "$LIGHTCURVEFILE" vast_autocandidates.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES  EXCLUDEREFIMAGE_VARIABLE_NOT_SELECTED__$LIGHTCURVEFILE"
    fi
-   grep --quiet "$LIGHTCURVEFILE" vast_list_of_likely_constant_stars.log
+   grep -q "$LIGHTCURVEFILE" vast_list_of_likely_constant_stars.log
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES  EXCLUDEREFIMAGE_VARIABLE_MISTAKEN_FOR_CONSTANT__$LIGHTCURVEFILE"
@@ -8840,7 +8840,7 @@ $GREP_RESULT"
     # The bad source is not detected at all, good
     continue
    fi
-   grep --quiet "$LIGHTCURVEFILE" vast_autocandidates.log
+   grep -q "$LIGHTCURVEFILE" vast_autocandidates.log
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES  FALSE_CANDIDATE_SELECTED__$LIGHTCURVEFILE"
@@ -8863,12 +8863,12 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE100"
   fi
   # Check results
-  grep --quiet "Images processed 2" vast_summary.log
+  grep -q "Images processed 2" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE101"
   fi
-  grep --quiet "Images used for photometry 2" vast_summary.log
+  grep -q "Images used for photometry 2" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE102"
@@ -8877,13 +8877,13 @@ $GREP_RESULT"
   ### Flag image test should always be the last one
   for IMAGE in ../test_exclude_ref_image/lm* ;do
    util/clean_data.sh
-   lib/autodetect_aperture_main $IMAGE 2>&1 | grep --quiet "FLAG_IMAGE image00000.flag"
+   lib/autodetect_aperture_main $IMAGE 2>&1 | grep -q "FLAG_IMAGE image00000.flag"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     BASEIMAGE=`basename $IMAGE`
     FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE006_$BASEIMAGE"
    fi 
-   lib/autodetect_aperture_main $IMAGE 2>&1 | grep --quiet "GAIN 1.990"
+   lib/autodetect_aperture_main $IMAGE 2>&1 | grep -q "GAIN 1.990"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     BASEIMAGE=`basename $IMAGE`
@@ -8892,18 +8892,18 @@ $GREP_RESULT"
   done
   
   # GAIN things
-  lib/autodetect_aperture_main ../test_exclude_ref_image/lm01306trraf1846.fits 2>&1 | grep --quiet 'GAINCCD=1.990'
+  lib/autodetect_aperture_main ../test_exclude_ref_image/lm01306trraf1846.fits 2>&1 | grep -q 'GAINCCD=1.990'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE_GAIN001"
   fi
-  lib/autodetect_aperture_main ../test_exclude_ref_image/lm01306trraf1846.fits 2>&1 | grep --quiet 'GAIN 1.990'
+  lib/autodetect_aperture_main ../test_exclude_ref_image/lm01306trraf1846.fits 2>&1 | grep -q 'GAIN 1.990'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE_GAIN002"
   fi  
   echo 'GAIN_KEY         GAINCCD' >> default.sex
-  lib/autodetect_aperture_main ../test_exclude_ref_image/lm01306trraf1846.fits 2>&1 | grep --quiet 'GAIN'
+  lib/autodetect_aperture_main ../test_exclude_ref_image/lm01306trraf1846.fits 2>&1 | grep -q 'GAIN'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGE_GAIN_KEY"
@@ -9281,12 +9281,12 @@ if [ -d ../NMW_And1_test_lightcurves_40 ];then
     fi
    fi
   fi
-  grep --quiet "$LIGHTCURVEFILE" vast_autocandidates.log
+  grep -q "$LIGHTCURVEFILE" vast_autocandidates.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES  NMWSYSREM5_VARIABLE_NOT_SELECTED__$LIGHTCURVEFILE"
   fi
-  grep --quiet "$LIGHTCURVEFILE" vast_list_of_likely_constant_stars.log
+  grep -q "$LIGHTCURVEFILE" vast_list_of_likely_constant_stars.log
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES  NMWSYSREM5_VARIABLE_MISTAKEN_FOR_CONSTANT__$LIGHTCURVEFILE"
@@ -9352,23 +9352,23 @@ if [ -d ../transient_detection_test_Ceres ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 4" vast_summary.log
+  grep -q "Images processed 4" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES001"
   fi
-  grep --quiet "Images used for photometry 4" vast_summary.log
+  grep -q "Images used for photometry 4" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES002"
   fi
-  #grep --quiet "First image: 2456005.28101 18.03.2012 18:44:24" vast_summary.log
+  #grep -q "First image: 2456005.28101 18.03.2012 18:44:24" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456005.28101 18.03.2012 18:44:24' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES003"
   fi
-  #grep --quiet "Last  image: 2456377.34852 25.03.2013 20:21:37" vast_summary.log
+  #grep -q "Last  image: 2456377.34852 25.03.2013 20:21:37" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2456377.34852 25.03.2013 20:21:37' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -9382,7 +9382,7 @@ if [ -d ../transient_detection_test_Ceres ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES CERES0_nonzero_ref_frame_rotation"
@@ -9391,7 +9391,7 @@ if [ -d ../transient_detection_test_Ceres ];then
 ###### CERES0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES CERES0_nonzero_ref_frame_rotation_test2"
@@ -9413,23 +9413,23 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES100"
   fi
-  grep --quiet "Images processed 4" vast_summary.log
+  grep -q "Images processed 4" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES101"
   fi
-  grep --quiet "Images used for photometry 4" vast_summary.log
+  grep -q "Images used for photometry 4" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES102"
   fi
-  #grep --quiet "First image: 2456005.28101 18.03.2012 18:44:24" vast_summary.log
+  #grep -q "First image: 2456005.28101 18.03.2012 18:44:24" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456005.28101 18.03.2012 18:44:24' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES103"
   fi
-  #grep --quiet "Last  image: 2456377.34852 25.03.2013 20:21:37" vast_summary.log
+  #grep -q "Last  image: 2456377.34852 25.03.2013 20:21:37" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2456377.34852 25.03.2013 20:21:37' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -9437,7 +9437,7 @@ $GREP_RESULT"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES CERES1_nonzero_ref_frame_rotation"
@@ -9446,7 +9446,7 @@ $GREP_RESULT"
 ###### CERES1_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES CERES1_nonzero_ref_frame_rotation_test2"
@@ -9568,13 +9568,13 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES009"
   fi 
-  grep --quiet "DO Gem" transient_report/index.html
+  grep -q "DO Gem" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES010"
   fi
-  #grep --quiet "2013 03 25.8483  2456377.3483  12.37  06:01:27.29 +23:51:10.7" transient_report/index.html
-  grep --quiet "2013 03 25.8483  2456377.3483  12.37" transient_report/index.html
+  #grep -q "2013 03 25.8483  2456377.3483  12.37  06:01:27.29 +23:51:10.7" transient_report/index.html
+  grep -q "2013 03 25.8483  2456377.3483  12.37" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES010a"
@@ -9598,13 +9598,13 @@ $GREP_RESULT"
    fi
   fi
   #
-  grep --quiet "HK Aur" transient_report/index.html
+  grep -q "HK Aur" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES011"
   fi
-  #grep --quiet "2013 03 22.3148  2456191.3148  11.75  05:48:54.08 +28:51:09.7" transient_report/index.html
-  grep --quiet "2013 03 25.8483  2456377.3483  11.26" transient_report/index.html
+  #grep -q "2013 03 22.3148  2456191.3148  11.75  05:48:54.08 +28:51:09.7" transient_report/index.html
+  grep -q "2013 03 25.8483  2456377.3483  11.26" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES011a"
@@ -9629,13 +9629,13 @@ $GREP_RESULT"
    fi
   fi
   # AW Tau does not pass the strict selection criterea, so we'll drop it
-  #grep --quiet "AW Tau" transient_report/index.html
+  #grep -q "AW Tau" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES CERES0110"
   #fi
-  ##grep --quiet "2013 03 22.3148  2456191.3148  13.38  05:47:30.53 +27:08:16.8" transient_report/index.html
-  #grep --quiet "2013 03 25.8483  2456377.3483  12.93" transient_report/index.html
+  ##grep -q "2013 03 22.3148  2456191.3148  13.38  05:47:30.53 +27:08:16.8" transient_report/index.html
+  #grep -q "2013 03 25.8483  2456377.3483  12.93" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES CERES0110a"
@@ -9659,13 +9659,13 @@ $GREP_RESULT"
   # fi
   #fi
   #
-  grep --quiet "LP Gem" transient_report/index.html
+  grep -q "LP Gem" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES012"
   fi
-  #grep --quiet "2013 03 22.3148  2456191.3148  13.10  06:05:05.47 +26:40:53.2" transient_report/index.html
-  grep --quiet "2013 03 25.8483  2456377.3483  12.24" transient_report/index.html
+  #grep -q "2013 03 22.3148  2456191.3148  13.10  06:05:05.47 +26:40:53.2" transient_report/index.html
+  grep -q "2013 03 25.8483  2456377.3483  12.24" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES012a"
@@ -9689,13 +9689,13 @@ $GREP_RESULT"
    fi
   fi
   #
-  grep --quiet "AU Tau" transient_report/index.html
+  grep -q "AU Tau" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES013"
   fi
-  #grep --quiet "2013 03 22.3148  2456191.3148  12.79  05:43:31.42 +28:07:41.4" transient_report/index.html
-  grep --quiet "2013 03 25.8483  2456377.3483  12.04  05:43" transient_report/index.html
+  #grep -q "2013 03 22.3148  2456191.3148  12.79  05:43:31.42 +28:07:41.4" transient_report/index.html
+  grep -q "2013 03 25.8483  2456377.3483  12.04  05:43" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES013a"
@@ -9718,13 +9718,13 @@ $GREP_RESULT"
    fi
   fi
   #
-  grep --quiet "RR Tau" transient_report/index.html
+  grep -q "RR Tau" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES014"
   fi
-  #grep --quiet "2013 03 22.3148  2456191.3148  12.32  05:39:30.69 +26:22:25.7" transient_report/index.html
-  grep --quiet "2013 03 25.8483  2456377.3483  10.76" transient_report/index.html
+  #grep -q "2013 03 22.3148  2456191.3148  12.32  05:39:30.69 +26:22:25.7" transient_report/index.html
+  grep -q "2013 03 25.8483  2456377.3483  10.76" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES014a"
@@ -9747,24 +9747,24 @@ $GREP_RESULT"
    fi
   fi
   #
-  grep --quiet "1 Ceres" transient_report/index.html
+  grep -q "1 Ceres" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES015"
   fi
-  #grep --quiet "2013 03 25.8483  2456377.3483  8.61  05:46:04.53 +28:40:52.7" transient_report/index.html
-  grep --quiet "2013 03 25.8483  2456377.3483   8.61" transient_report/index.html
+  #grep -q "2013 03 25.8483  2456377.3483  8.61  05:46:04.53 +28:40:52.7" transient_report/index.html
+  grep -q "2013 03 25.8483  2456377.3483   8.61" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES015a"
   fi
-  grep --quiet "21 Lutetia" transient_report/index.html
+  grep -q "21 Lutetia" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES016"
   fi
-  #grep --quiet "2013 03 25.8483  2456377.3483  12.43  06:00:06.32 +25:03:34.1" transient_report/index.html
-  grep --quiet -e "2013 03 25.8483  2456377.3483  12.43" -e "2013 03 25.8483  2456377.3483  12.42" transient_report/index.html
+  #grep -q "2013 03 25.8483  2456377.3483  12.43  06:00:06.32 +25:03:34.1" transient_report/index.html
+  grep -q -e "2013 03 25.8483  2456377.3483  12.43" -e "2013 03 25.8483  2456377.3483  12.42" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES016a"
@@ -9796,7 +9796,7 @@ $GREP_RESULT"
   if [ -f CERES018_PROBLEM.txt ];then
    rm -f CERES018_PROBLEM.txt
   fi
-  for OUTFILE in out*.dat ;do NLINES=`cat $OUTFILE | wc -l | awk '{print $1}'` ; NGOOD=`util/cute_lc $OUTFILE | wc -l | awk '{print $1}'` ; if [ $NLINES -ne $NGOOD ];then echo PROBLEM $NLINES $NGOOD $OUTFILE ; echo "$NLINES $NGOOD $OUTFILE" >> CERES018_PROBLEM.txt ; cp $OUTFILE CERES018_PROBLEM_$OUTFILE ;fi ;done | grep --quiet 'PROBLEM'
+  for OUTFILE in out*.dat ;do NLINES=`cat $OUTFILE | wc -l | awk '{print $1}'` ; NGOOD=`util/cute_lc $OUTFILE | wc -l | awk '{print $1}'` ; if [ $NLINES -ne $NGOOD ];then echo PROBLEM $NLINES $NGOOD $OUTFILE ; echo "$NLINES $NGOOD $OUTFILE" >> CERES018_PROBLEM.txt ; cp $OUTFILE CERES018_PROBLEM_$OUTFILE ;fi ;done | grep -q 'PROBLEM'
   if [ $? -eq 0 ];then
    N_FILES_WITH_PROBLEM=`cat CERES018_PROBLEM.txt |wc -l | awk '{print $1}'`
    if [ $N_FILES_WITH_PROBLEM -gt 1 ];then
@@ -9903,25 +9903,25 @@ if [ -d ../NMW_Saturn_test ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 4" vast_summary.log
+  grep -q "Images processed 4" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN001"
    fail_early
   fi
-  grep --quiet "Images used for photometry 4" vast_summary.log
+  grep -q "Images used for photometry 4" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN002"
    fail_early
   fi
-  #grep --quiet "First image: 2456021.56453 04.04.2012 01:32:40" vast_summary.log
+  #grep -q "First image: 2456021.56453 04.04.2012 01:32:40" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456021.56453 04.04.2012 01:32:40' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN003"
   fi
-  #grep --quiet "Last  image: 2458791.14727 03.11.2019 15:31:54" vast_summary.log
+  #grep -q "Last  image: 2458791.14727 03.11.2019 15:31:54" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2458791.14727 03.11.2019 15:31:54' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -9935,7 +9935,7 @@ if [ -d ../NMW_Saturn_test ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN0_nonzero_ref_frame_rotation"
@@ -9944,7 +9944,7 @@ if [ -d ../NMW_Saturn_test ];then
 ###### SATURN0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN0_nonzero_ref_frame_rotation_test2"
@@ -10048,19 +10048,19 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN009"
   fi 
-  grep --quiet "QY Sgr" transient_report/index.html
+  grep -q "QY Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN010"
   fi
   # this should NOT be found! First epoch image is used along the 2nd epoch images
-  grep --quiet "2019 11 03.7864  2457867.9530  12\.1." transient_report/index.html
+  grep -q "2019 11 03.7864  2457867.9530  12\.1." transient_report/index.html
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN010x"
   fi
   #
-  grep --quiet -e "2019 11 03.6470  2458791.1470  11\.1.  19:03:" -e "2019 11 03.6470  2458791.1470  11\.2.  19:03:" -e "2019 11 03.6470  2458791.1470  11\.3.  19:03:" transient_report/index.html
+  grep -q -e "2019 11 03.6470  2458791.1470  11\.1.  19:03:" -e "2019 11 03.6470  2458791.1470  11\.2.  19:03:" -e "2019 11 03.6470  2458791.1470  11\.3.  19:03:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN010a"
@@ -10082,13 +10082,13 @@ $GREP_RESULT"
    fi
   fi
   #
-  grep --quiet "V1058 Sgr" transient_report/index.html
+  grep -q "V1058 Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN011"
   fi
-  #grep --quiet -e "2019 11 03.6470  2458791.1470  11.84  19:01:" -e "2019 11 03.6470  2458791.1470  11.82  19:01:" -e "2019 11 03.6470  2458791.1470  11.86  19:01:" transient_report/index.html
-  grep --quiet "2019 11 03\.6470  2458791\.1470  11\.[789].  19:01:2[89]\... -22:38:5[567]\.." transient_report/index.html
+  #grep -q -e "2019 11 03.6470  2458791.1470  11.84  19:01:" -e "2019 11 03.6470  2458791.1470  11.82  19:01:" -e "2019 11 03.6470  2458791.1470  11.86  19:01:" transient_report/index.html
+  grep -q "2019 11 03\.6470  2458791\.1470  11\.[789].  19:01:2[89]\... -22:38:5[567]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN011a"
@@ -10110,8 +10110,8 @@ $GREP_RESULT"
    fi
   fi
   # Iapetus has no automatic ID in the old version of transient searh script
-  #grep --quiet -e "2019 11 03.6470  2458791.1470  12.13  19:06:" -e "2019 11 03.6470  2458791.1470  12.10  19:06:" transient_report/index.html
-  grep --quiet "2019 11 03\.6470  2458791\.1470  1[12]\.[019].  19:0[67]:..\... -22:25:[34].\.." transient_report/index.html
+  #grep -q -e "2019 11 03.6470  2458791.1470  12.13  19:06:" -e "2019 11 03.6470  2458791.1470  12.10  19:06:" transient_report/index.html
+  grep -q "2019 11 03\.6470  2458791\.1470  1[12]\.[019].  19:0[67]:..\... -22:25:[34].\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN0110a"
@@ -10134,12 +10134,12 @@ $GREP_RESULT"
    fi
   fi
   #
-  grep --quiet "V2407 Sgr" transient_report/index.html
+  grep -q "V2407 Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN012"
   fi
-  grep --quiet -e "2019 11 03.6470  2458791.1470  12\.2.  19:10:" -e "2019 11 03.6470  2458791.1470  12\.3.  19:10:" transient_report/index.html
+  grep -q -e "2019 11 03.6470  2458791.1470  12\.2.  19:10:" -e "2019 11 03.6470  2458791.1470  12\.3.  19:10:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN012a"
@@ -10161,12 +10161,12 @@ $GREP_RESULT"
    fi
   fi
   #
-  grep --quiet "V1260 Sgr" transient_report/index.html
+  grep -q "V1260 Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN013"
   fi
-  grep --quiet -e "2019 11 03.6470  2458791.1470  11.01  19:16:" -e "2019 11 03.6470  2458791.1470  10.97  19:16:" transient_report/index.html
+  grep -q -e "2019 11 03.6470  2458791.1470  11.01  19:16:" -e "2019 11 03.6470  2458791.1470  10.97  19:16:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN013a"
@@ -10188,12 +10188,12 @@ $GREP_RESULT"
    fi
   fi
   #
-  grep --quiet "QR Sgr" transient_report/index.html
+  grep -q "QR Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN014"
   fi
-  grep --quiet -e "2019 11 03.6470  2458791.1470  12.07  19:01:" -e "2019 11 03.6470  2458791.1470  12.04  19:01:" transient_report/index.html
+  grep -q -e "2019 11 03.6470  2458791.1470  12.07  19:01:" -e "2019 11 03.6470  2458791.1470  12.04  19:01:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN014a"
@@ -10215,13 +10215,13 @@ $GREP_RESULT"
    fi
   fi
   #
-  grep --quiet "TW Sgr" transient_report/index.html
+  grep -q "TW Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN314"
   fi
-  #grep --quiet -e "2019 11 03.6470  2458791.1470  10.97  19:13:" -e "2019 11 03.6470  2458791.1470  10.94  19:13:" -e "2019 11 03.6470  2458791.1470  10.93  19:13:" transient_report/index.html
-  grep --quiet -e "2019 11 03.6470  2458791.1470  10\.8.  19:13:..\... -21:33:..\.." -e "2019 11 03.6470  2458791.1470  10\.9.  19:13:..\... -21:33:..\.." transient_report/index.html
+  #grep -q -e "2019 11 03.6470  2458791.1470  10.97  19:13:" -e "2019 11 03.6470  2458791.1470  10.94  19:13:" -e "2019 11 03.6470  2458791.1470  10.93  19:13:" transient_report/index.html
+  grep -q -e "2019 11 03.6470  2458791.1470  10\.8.  19:13:..\... -21:33:..\.." -e "2019 11 03.6470  2458791.1470  10\.9.  19:13:..\... -21:33:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN314a"
@@ -10246,12 +10246,12 @@ $GREP_RESULT"
   #
   ##### The following variables will not be found with the 12.5 magnitude limit and v4 SE settings file
   #
-  grep --quiet "V1234 Sgr" transient_report/index.html
+  grep -q "V1234 Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN315"
   fi
-  grep --quiet -e "2019 11 03.6470  2458791.1470  12.80  19:00:" -e "2019 11 03.6470  2458791.1470  12.77  19:00:" -e "2019 11 03.6470  2458791.1470  12.78  19:00:" transient_report/index.html
+  grep -q -e "2019 11 03.6470  2458791.1470  12.80  19:00:" -e "2019 11 03.6470  2458791.1470  12.77  19:00:" -e "2019 11 03.6470  2458791.1470  12.78  19:00:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN315a"
@@ -10275,12 +10275,12 @@ $GREP_RESULT"
   #
   ##### The following variables will not be found with the 12.5 magnitude limit and v4 SE settings file
   #
-  grep --quiet "ASASSN-V J190815.15-194531.8" transient_report/index.html
+  grep -q "ASASSN-V J190815.15-194531.8" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN316"
   fi
-  grep --quiet -e "2019 11 03.6470  2458791.1470  12\.9.  19:08:..\... -19:45:..\.." -e "2019 11 03.6470  2458791.1470  13\.0.  19:08:..\... -19:45:..\.." transient_report/index.html
+  grep -q -e "2019 11 03.6470  2458791.1470  12\.9.  19:08:..\... -19:45:..\.." -e "2019 11 03.6470  2458791.1470  13\.0.  19:08:..\... -19:45:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN316a"
@@ -10298,7 +10298,7 @@ $GREP_RESULT"
    TEST_PASSED=0
    TEST=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN316a_TOO_FAR_TEST_ERROR($RADECPOSITION_TO_TEST)"
-   GREP_RESULT=`grep --quiet -e "2019 11 03.6470  2458791.1470  12\.9.  19:08:..\... -19:45:..\.." -e "2019 11 03.6470  2458791.1470  13\.0.  19:08:..\... -19:45:..\.." transient_report/index.html`
+   GREP_RESULT=`grep -q -e "2019 11 03.6470  2458791.1470  12\.9.  19:08:..\... -19:45:..\.." -e "2019 11 03.6470  2458791.1470  13\.0.  19:08:..\... -19:45:..\.." transient_report/index.html`
    DEBUG_OUTPUT="$DEBUG_OUTPUT                              
 ###### SATURN316a_TOO_FAR_TEST_ERROR($RADECPOSITION_TO_TEST) ######
 $GREP_RESULT"
@@ -10306,7 +10306,7 @@ $GREP_RESULT"
    if [ $TEST -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN316a_TOO_FAR_$DISTANCE_ARCSEC"
-    GREP_RESULT=`grep --quiet -e "2019 11 03.6470  2458791.1470  12\.9.  19:08:..\... -19:45:..\.." -e "2019 11 03.6470  2458791.1470  13\.0.  19:08:..\... -19:45:..\.." transient_report/index.html`
+    GREP_RESULT=`grep -q -e "2019 11 03.6470  2458791.1470  12\.9.  19:08:..\... -19:45:..\.." -e "2019 11 03.6470  2458791.1470  13\.0.  19:08:..\... -19:45:..\.." transient_report/index.html`
     DEBUG_OUTPUT="$DEBUG_OUTPUT                              
 ###### SATURN316a_TOO_FAR_$DISTANCE_ARCSEC ######
 $GREP_RESULT"
@@ -10316,12 +10316,12 @@ $GREP_RESULT"
   ##### The following variables will not be found with the 12.5 magnitude limit and v4 SE settings file
   ##### This is a really marginal case, so I'm removing it
   #
-  #grep --quiet "V1253 Sgr" transient_report/index.html
+  #grep -q "V1253 Sgr" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN317"
   #fi
-  #grep --quiet -e "2019 11 03.6470  2458791.1470  13.11  19:10:" -e "2019 11 03.7862  2457867.9529  13.42  19:10:" -e "2019 11 03.6470  2458791.1470  13.07  19:10:" -e "2019 11 03.6470  2458791.1470  13.08  19:10:" transient_report/index.html
+  #grep -q -e "2019 11 03.6470  2458791.1470  13.11  19:10:" -e "2019 11 03.7862  2457867.9529  13.42  19:10:" -e "2019 11 03.6470  2458791.1470  13.07  19:10:" -e "2019 11 03.6470  2458791.1470  13.08  19:10:" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN317a"
@@ -10380,7 +10380,7 @@ $GREP_RESULT"
   if [ -f SATURN018_PROBLEM.txt ];then
    rm -f SATURN018_PROBLEM.txt
   fi
-  for OUTFILE in out*.dat ;do NLINES=`cat $OUTFILE | wc -l | awk '{print $1}'` ; NGOOD=`util/cute_lc $OUTFILE | wc -l | awk '{print $1}'` ; if [ $NLINES -ne $NGOOD ];then echo PROBLEM $NLINES $NGOOD $OUTFILE ; echo "$NLINES $NGOOD $OUTFILE" >> SATURN018_PROBLEM.txt ; cp $OUTFILE SATURN018_PROBLEM_$OUTFILE ;fi ;done | grep --quiet 'PROBLEM'
+  for OUTFILE in out*.dat ;do NLINES=`cat $OUTFILE | wc -l | awk '{print $1}'` ; NGOOD=`util/cute_lc $OUTFILE | wc -l | awk '{print $1}'` ; if [ $NLINES -ne $NGOOD ];then echo PROBLEM $NLINES $NGOOD $OUTFILE ; echo "$NLINES $NGOOD $OUTFILE" >> SATURN018_PROBLEM.txt ; cp $OUTFILE SATURN018_PROBLEM_$OUTFILE ;fi ;done | grep -q 'PROBLEM'
   if [ $? -eq 0 ];then
    N_FILES_WITH_PROBLEM=`cat SATURN018_PROBLEM.txt |wc -l | awk '{print $1}'`
    if [ $N_FILES_WITH_PROBLEM -gt 1 ];then
@@ -10478,14 +10478,14 @@ if [ -d ../NMW_Saturn_test ];then
  fi
  if [ -f transient_report/index.html ];then
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2001"
    fail_early
   fi
-  #grep --quiet 'ERROR' "transient_report/index.html"
-  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
+  #grep -q 'ERROR' "transient_report/index.html"
+  grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_ERROR_MESSAGE_IN_index_html"
@@ -10498,19 +10498,19 @@ $GREP_RESULT
 $CAT_RESULT"
    fail_early
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2002"
    fail_early
   fi
-  #grep --quiet "First image: 2456021.56453 04.04.2012 01:32:40" transient_report/index.html
+  #grep -q "First image: 2456021.56453 04.04.2012 01:32:40" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456021.56453 04.04.2012 01:32:40' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2003"
   fi
-  #grep --quiet "Last  image: 2458791.14727 03.11.2019 15:31:54" transient_report/index.html
+  #grep -q "Last  image: 2458791.14727 03.11.2019 15:31:54" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2458791.14727 03.11.2019 15:31:54' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -10523,19 +10523,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_nonzero_ref_frame_rotation"
@@ -10544,7 +10544,7 @@ $CAT_RESULT"
 ###### SATURN2_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_nonzero_ref_frame_rotation_test2"
@@ -10560,19 +10560,19 @@ $GREP_RESULT"
   #
   # QY Sgr is now excluded as having a bright Gaia DR2 counterpart
   # now search for specific objects
-  #grep --quiet "QY Sgr" transient_report/index.html
+  #grep -q "QY Sgr" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2010"
   #fi
   # this should NOT be found! First epoch image is used along the 2nd epoch images
-  grep --quiet "2019 11 03.7864  2457867.9530  12.18" transient_report/index.html
+  grep -q "2019 11 03.7864  2457867.9530  12.18" transient_report/index.html
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2010x"
   fi
   ##
-  #grep --quiet -e "2019 11 03.6470  2458791.1470  11\.2.  19:03:" transient_report/index.html
+  #grep -q -e "2019 11 03.6470  2458791.1470  11\.2.  19:03:" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2010a"
@@ -10594,13 +10594,13 @@ $GREP_RESULT"
   # fi
   #fi
   #
-  grep --quiet "V1058 Sgr" transient_report/index.html
+  grep -q "V1058 Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2011"
   fi
-  #grep --quiet -e "2019 11 03.6470  2458791.1470  11\.9.  19:01:" -e "2019 11 03.6470  2458791.1470  11.84  19:01:" -e "2019 11 03.6470  2458791.1470  11.82  19:01:" -e "2019 11 03.6470  2458791.1470  11.86  19:01:" transient_report/index.html
-  grep --quiet -e "2019 11 03.6470  2458791.1470  11.7.  19:01:..... -22:39:...." -e "2019 11 03.6470  2458791.1470  11.8.  19:01:..... -22:39:...." -e "2019 11 03.6470  2458791.1470  11.9.  19:01:..... -22:39:...." -e '2019 11 03.6470  2458791.1470  11.9.  19:01:2.... -22:38:5...' transient_report/index.html
+  #grep -q -e "2019 11 03.6470  2458791.1470  11\.9.  19:01:" -e "2019 11 03.6470  2458791.1470  11.84  19:01:" -e "2019 11 03.6470  2458791.1470  11.82  19:01:" -e "2019 11 03.6470  2458791.1470  11.86  19:01:" transient_report/index.html
+  grep -q -e "2019 11 03.6470  2458791.1470  11.7.  19:01:..... -22:39:...." -e "2019 11 03.6470  2458791.1470  11.8.  19:01:..... -22:39:...." -e "2019 11 03.6470  2458791.1470  11.9.  19:01:..... -22:39:...." -e '2019 11 03.6470  2458791.1470  11.9.  19:01:2.... -22:38:5...' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2011a"
@@ -10622,12 +10622,12 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2011a_TOO_FAR_$DISTANCE_ARCSEC"
    fi
   fi
-  grep --quiet "Saturn" transient_report/index.html
+  grep -q "Saturn" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN20110"
   fi
-  grep --quiet -e "2019 11 03.6470  2458791.1470   6\...  19:06:" transient_report/index.html
+  grep -q -e "2019 11 03.6470  2458791.1470   6\...  19:06:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN20110a"
@@ -10651,13 +10651,13 @@ $GREP_RESULT"
   fi
   #
   # Iapetus has no automatic ID in the current VaST version
-  grep --quiet "Iapetus" transient_report/index.html
+  grep -q "Iapetus" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN20110_Iapetus"
   fi
-  #grep --quiet -e "2019 11 03.6470  2458791.1470  12\.1.  19:06:" -e "2019 11 03.6470  2458791.1470  12.10  19:06:" transient_report/index.html
-  grep --quiet -e "2019 11 03.6470  2458791.1470  12.0.  19:06:..... -22:25:...." -e "2019 11 03.6470  2458791.1470  12.1.  19:06:..... -22:25:...." transient_report/index.html
+  #grep -q -e "2019 11 03.6470  2458791.1470  12\.1.  19:06:" -e "2019 11 03.6470  2458791.1470  12.10  19:06:" transient_report/index.html
+  grep -q -e "2019 11 03.6470  2458791.1470  12.0.  19:06:..... -22:25:...." -e "2019 11 03.6470  2458791.1470  12.1.  19:06:..... -22:25:...." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN20110b"
@@ -10680,12 +10680,12 @@ $GREP_RESULT"
    fi
   fi
   #
-  grep --quiet "V2407 Sgr" transient_report/index.html
+  grep -q "V2407 Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2012"
   fi
-  grep --quiet -e "2019 11 03.6470  2458791.1470  12\.2.  19:10:" -e "2019 11 03.6470  2458791.1470  12\.3.  19:10:"  transient_report/index.html
+  grep -q -e "2019 11 03.6470  2458791.1470  12\.2.  19:10:" -e "2019 11 03.6470  2458791.1470  12\.3.  19:10:"  transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2012a"
@@ -10707,12 +10707,12 @@ $GREP_RESULT"
    fi
   fi
   #
-  grep --quiet "V1260 Sgr" transient_report/index.html
+  grep -q "V1260 Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2013"
   fi
-  grep --quiet -e "2019 11 03.6470  2458791.1470  11\.0.  19:16:" -e "2019 11 03.6470  2458791.1470  10\.9.  19:16:" transient_report/index.html
+  grep -q -e "2019 11 03.6470  2458791.1470  11\.0.  19:16:" -e "2019 11 03.6470  2458791.1470  10\.9.  19:16:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2013a"
@@ -10735,13 +10735,13 @@ $GREP_RESULT"
   fi
   #
   ### QR Sgr does not pass no-Gaia-source test
-  #grep --quiet "QR Sgr" transient_report/index.html
+  #grep -q "QR Sgr" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2014"
   #fi
-  ##grep --quiet -e "2019 11 03.6470  2458791.1470  12\.0.  19:01:" -e "2019 11 03.6470  2458791.1470  12\.1.  19:01:" transient_report/index.html
-  #grep --quiet -e "2019 11 03.6470  2458791.1470  11.9.  19:01:..... -21:19:...." -e "2019 11 03.6470  2458791.1470  12.0.  19:01:..... -21:19:...." -e "2019 11 03.6470  2458791.1470  12.1.  19:01:..... -21:19:...." transient_report/index.html
+  ##grep -q -e "2019 11 03.6470  2458791.1470  12\.0.  19:01:" -e "2019 11 03.6470  2458791.1470  12\.1.  19:01:" transient_report/index.html
+  #grep -q -e "2019 11 03.6470  2458791.1470  11.9.  19:01:..... -21:19:...." -e "2019 11 03.6470  2458791.1470  12.0.  19:01:..... -21:19:...." -e "2019 11 03.6470  2458791.1470  12.1.  19:01:..... -21:19:...." transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2014a"
@@ -10764,13 +10764,13 @@ $GREP_RESULT"
   # fi
   #fi
   #
-  grep --quiet "TW Sgr" transient_report/index.html
+  grep -q "TW Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2314"
   fi
-  #grep --quiet -e "2019 11 03.6470  2458791.1470  10\.8.  19:13:" -e "2019 11 03.6470  2458791.1470  10\.9.  19:13:"  transient_report/index.html
-  grep --quiet -e "2019 11 03.6470  2458791.1470  10.7.  19:13:..... -21:33:...." -e "2019 11 03.6470  2458791.1470  10.8.  19:13:..... -21:33:...." -e "2019 11 03.6470  2458791.1470  10.9.  19:13:..... -21:33:...."  transient_report/index.html
+  #grep -q -e "2019 11 03.6470  2458791.1470  10\.8.  19:13:" -e "2019 11 03.6470  2458791.1470  10\.9.  19:13:"  transient_report/index.html
+  grep -q -e "2019 11 03.6470  2458791.1470  10.7.  19:13:..... -21:33:...." -e "2019 11 03.6470  2458791.1470  10.8.  19:13:..... -21:33:...." -e "2019 11 03.6470  2458791.1470  10.9.  19:13:..... -21:33:...."  transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2314a"
@@ -10803,7 +10803,7 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_empty_$FILE_TO_CHECK"
     continue
    fi
-   grep --quiet '00:00:00.00' "$FILE_TO_CHECK"
+   grep -q '00:00:00.00' "$FILE_TO_CHECK"
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2_00:00:00.00_in_$FILE_TO_CHECK"
@@ -10957,7 +10957,7 @@ if [ -d ../NMW_Venus_test ];then
  fi
  #
  if [ -f 'transient_report/index.html' ];then
-  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
+  grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_ERROR_MESSAGE_IN_index_html"
@@ -10970,23 +10970,23 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS001"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS002"
   fi
-  #grep --quiet "First image: 2458956.27441 16.04.2020 18:34:59" transient_report/index.html
+  #grep -q "First image: 2458956.27441 16.04.2020 18:34:59" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2458956.27441 16.04.2020 18:34:59' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS003"
   fi
-  #grep --quiet "Last  image: 2458959.26847 19.04.2020 18:26:26" transient_report/index.html
+  #grep -q "Last  image: 2458959.26847 19.04.2020 18:26:26" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2458959.26847 19.04.2020 18:26:26' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -10999,19 +10999,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS0_nonzero_ref_frame_rotation"
@@ -11020,7 +11020,7 @@ $CAT_RESULT"
 ###### VENUS0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS0_nonzero_ref_frame_rotation_test2"
@@ -11035,12 +11035,12 @@ $GREP_RESULT"
   fi
   #
   #
-  grep 'galactic' transient_report/index.html | grep --quiet 'Venus'
+  grep 'galactic' transient_report/index.html | grep -q 'Venus'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS_PLANETID"
   fi
-  grep --quiet -e "2020 04 19.7683  2458959.2683   6\...  04:41:" -e "2020 04 19.7683  2458959.2683  5\...  04:41:" -e "2020 04 19.7683  2458959.2683  7\...  04:41:"  transient_report/index.html
+  grep -q -e "2020 04 19.7683  2458959.2683   6\...  04:41:" -e "2020 04 19.7683  2458959.2683  5\...  04:41:" -e "2020 04 19.7683  2458959.2683  7\...  04:41:"  transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS0110a"
@@ -11067,12 +11067,12 @@ $GREP_RESULT"
    fi
   fi
   # asteroid 9 Metis
-  grep --quiet "Metis" transient_report/index.html
+  grep -q "Metis" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS314"
   fi
-  grep --quiet "2020 04 19.7683  2458959.2683  11\...  04:44:" transient_report/index.html
+  grep -q "2020 04 19.7683  2458959.2683  11\...  04:44:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS314a"
@@ -11186,7 +11186,7 @@ if [ -d ../NMW_calibration_test ];then
  fi
  #
  if [ -f 'transient_report/index.html' ];then
-  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
+  grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_ERROR_MESSAGE_IN_index_html"
@@ -11200,23 +11200,23 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB001"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB002"
   fi
-  #grep --quiet "First image: 2455961.58259 04.02.2012 01:58:46" transient_report/index.html
+  #grep -q "First image: 2455961.58259 04.02.2012 01:58:46" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2455961.58259 04.02.2012 01:58:46' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB003"
   fi
-  #grep --quiet "Last  image: 2460254.19181 05.11.2023 16:36:02" transient_report/index.html
+  #grep -q "Last  image: 2460254.19181 05.11.2023 16:36:02" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460254.19181 05.11.2023 16:36:02' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -11229,19 +11229,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB0_nonzero_ref_frame_rotation"
@@ -11250,7 +11250,7 @@ $CAT_RESULT"
 ###### NMWCALIB0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB0_nonzero_ref_frame_rotation_test2"
@@ -11326,17 +11326,17 @@ $GREP_RESULT"
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_TESTFIT_IS_EMPTY"
  else
   # Check that the HISTORY headers are set up properly by the dark frame subtractor
-  util/listhead test.fit | grep --quiet 'HISTORY Dark frame subtraction:'
+  util/listhead test.fit | grep -q 'HISTORY Dark frame subtraction:'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_no_HISTORY01"
   fi
-  util/listhead test.fit | grep 'HISTORY' | grep --quiet 'Cyg2_2023-11-5_16-35-31_001.fts'
+  util/listhead test.fit | grep 'HISTORY' | grep -q 'Cyg2_2023-11-5_16-35-31_001.fts'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_no_HISTORY02"
   fi
-  util/listhead test.fit | grep 'HISTORY' | grep --quiet 'mdark_ST-Stas_-20C_20s_2023-11-09.fit'
+  util/listhead test.fit | grep 'HISTORY' | grep -q 'mdark_ST-Stas_-20C_20s_2023-11-09.fit'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_no_HISTORY03"
@@ -11359,33 +11359,33 @@ $GREP_RESULT"
   else
    # Check that the HISTORY headers are set correctly
    # The are the keys inserted by ms and should all still be there
-   util/listhead f_test.fit | grep --quiet 'HISTORY Dark frame subtraction:'
+   util/listhead f_test.fit | grep -q 'HISTORY Dark frame subtraction:'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_no_HISTORY01"
    fi
-   util/listhead f_test.fit | grep 'HISTORY' | grep --quiet 'Cyg2_2023-11-5_16-35-31_001.fts'
+   util/listhead f_test.fit | grep 'HISTORY' | grep -q 'Cyg2_2023-11-5_16-35-31_001.fts'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_no_HISTORY02"
    fi
-   util/listhead f_test.fit | grep 'HISTORY' | grep --quiet 'mdark_ST-Stas_-20C_20s_2023-11-09.fit'
+   util/listhead f_test.fit | grep 'HISTORY' | grep -q 'mdark_ST-Stas_-20C_20s_2023-11-09.fit'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MS_no_HISTORY03"
    fi
    # The keys inserted by md
-   util/listhead f_test.fit | grep --quiet 'HISTORY Flat fielding:'
+   util/listhead f_test.fit | grep -q 'HISTORY Flat fielding:'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_no_HISTORY01"
    fi
-   util/listhead f_test.fit | grep 'HISTORY' | grep --quiet 'test.fit'
+   util/listhead f_test.fit | grep 'HISTORY' | grep -q 'test.fit'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_no_HISTORY02"
    fi
-   util/listhead f_test.fit | grep 'HISTORY' | grep --quiet 'mff_0013_tail1_notbad.fit'
+   util/listhead f_test.fit | grep 'HISTORY' | grep -q 'mff_0013_tail1_notbad.fit'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCALIB_FIND_BEST_DARK_MD_no_HISTORY03"
@@ -11523,7 +11523,7 @@ if [ -d ../NMW_find_NovaCas_august31_test ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31000_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
+ grep -q 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31000_CANNOT_FIND_STAR_ERROR_MESSAGE"
@@ -11533,7 +11533,7 @@ if [ -d ../NMW_find_NovaCas_august31_test ];then
  if [ -f transient_report/index.html ];then
   # there SHOULD be a warning (formerly an error) message about distance between reference and second-epoch image centers
   # (sorry, I keep rephrasing the error message)
-  grep --quiet -e 'ERROR: distance between 1st reference and 1st new image centers is' -e 'WARNING: distance between 1st reference and 1st new image centers is' -e 'WARNING: distance between 1st reference and 1st second-epoch image centers is' -e 'ERROR: distance between 1st reference and 1st second-epoch image centers is' "transient_report/index.html"
+  grep -q -e 'ERROR: distance between 1st reference and 1st new image centers is' -e 'WARNING: distance between 1st reference and 1st new image centers is' -e 'WARNING: distance between 1st reference and 1st second-epoch image centers is' -e 'ERROR: distance between 1st reference and 1st second-epoch image centers is' "transient_report/index.html"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_NO_ERROR_MESSAGE_IN_index_html"
@@ -11547,7 +11547,7 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31001"
@@ -11557,7 +11557,7 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31001a"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31002"
@@ -11567,13 +11567,13 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31002a"
   fi
-  #grep --quiet "First image: 2456005.22259 18.03.2012 17:20:17" transient_report/index.html
+  #grep -q "First image: 2456005.22259 18.03.2012 17:20:17" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456005.22259 18.03.2012 17:20:17' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31003"
   fi
-  #grep --quiet "Last  image: 2459093.21130 31.08.2020 17:04:06" transient_report/index.html
+  #grep -q "Last  image: 2459093.21130 31.08.2020 17:04:06" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459093.21130 31.08.2020 17:04:06' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -11586,19 +11586,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG31_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310_nonzero_ref_frame_rotation"
@@ -11607,7 +11607,7 @@ $CAT_RESULT"
 ###### NMWNCASAUG310_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310_nonzero_ref_frame_rotation_test2"
@@ -11628,12 +11628,12 @@ $GREP_RESULT"
   fi
   #
   #
-  grep --quiet "V1391 Cas" transient_report/index.html
+  grep -q "V1391 Cas" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110_NAME"
   fi
-  grep --quiet -e "2020 08 31.7108  2459093.2108  12\.9.  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0.  00:11:" transient_report/index.html
+  grep -q -e "2020 08 31.7108  2459093.2108  12\.9.  00:11:" -e "2020 08 31.7108  2459093.2108  13\.0.  00:11:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110a_POSITION"
@@ -11660,25 +11660,25 @@ $GREP_RESULT"
   fi
   # Test Stub MPC report line
   #                  TAU0008  C2020 08 31.71081 00 11 42.18 +66 11 20.30         13.0 R      C32
-  #grep --quiet "     TAU0008  C2020 08 31.71030 00 11 4.\... +66 11 2.\...         1.\.. R      C32" transient_report/index.html
+  #grep -q "     TAU0008  C2020 08 31.71030 00 11 4.\... +66 11 2.\...         1.\.. R      C32" transient_report/index.html
   #                  TAU0008  C2020 08 31.71082 00 11 42.81 +66 11 21.2          13.0 R      C32
-  #grep --quiet "     TAU0008  C2020 08 31.71081 00 11 4.\... +66 11 2.\...         1.\.. R      C32" transient_report/index.html
+  #grep -q "     TAU0008  C2020 08 31.71081 00 11 4.\... +66 11 2.\...         1.\.. R      C32" transient_report/index.html
   # Not sure why 81/82
-  grep --quiet "     TAU0008  C2020 08 31.7108[12] 00 11 4.\... +66 11 2[01]\..          1[23]\.. R      C32" transient_report/index.html
+  grep -q "     TAU0008  C2020 08 31.7108[12] 00 11 4.\... +66 11 2[01]\..          1[23]\.. R      C32" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110b_$(grep 'TAU0008  C2020 08 31.710.. 00 11 4.\... +66 11 2.' transient_report/index.html | head -n1)"
   fi
   
   # Test Stub variable star reports
-  grep --quiet 'V1391 Cas,2459093.2108,1[23]\...,0.05,CV' transient_report/index.html
+  grep -q 'V1391 Cas,2459093.2108,1[23]\...,0.05,CV' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110c"
   fi
   
   # Test TOCP ID
-  grep 'TCP J00114297+6611190' transient_report/index.html | grep --quiet 'This object is listed in'
+  grep 'TCP J00114297+6611190' transient_report/index.html | grep -q 'This object is listed in'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCASAUG310110_TOCPID"
@@ -11786,7 +11786,7 @@ if [ -d ../NMW_nomatch_test ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET000_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_nomatch$$.tmp
+ grep -q 'ERROR: cannot find a star near the specified position' test_nomatch$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET000_CANNOT_FIND_STAR_ERROR_MESSAGE"
@@ -11795,7 +11795,7 @@ if [ -d ../NMW_nomatch_test ];then
  #
  if [ -f transient_report/index.html ];then
   # there should NOT be an error message about distance between reference and second-epoch image centers
-  grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
+  grep -q 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET_DIST_ERROR_MESSAGE_IN_index_html"
@@ -11809,7 +11809,7 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET001"
@@ -11819,7 +11819,7 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET001a"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET002"
@@ -11829,13 +11829,13 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET002a"
   fi
-  #grep --quiet "First image: 2456006.25111 19.03.2012 18:01:21" transient_report/index.html
+  #grep -q "First image: 2456006.25111 19.03.2012 18:01:21" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456006.25111 19.03.2012 18:01:21' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET003"
   fi
-  #grep --quiet "Last  image: 2459962.42100 17.01.2023 22:06:04" transient_report/index.html
+  #grep -q "Last  image: 2459962.42100 17.01.2023 22:06:04" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459962.42100 17.01.2023 22:06:04' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -11848,19 +11848,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0_nonzero_ref_frame_rotation"
@@ -11869,7 +11869,7 @@ $CAT_RESULT"
 ###### NMWLARGEOFFSET0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0_nonzero_ref_frame_rotation_test2"
@@ -11890,12 +11890,12 @@ $GREP_RESULT"
   fi
   #
   #
-  grep --quiet "DP Pyx" transient_report/index.html
+  grep -q "DP Pyx" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0110"
   fi
-  grep --quiet "2023 01 17.9208  2459962.4208  10\...  08:46:0.\... -27:45:" transient_report/index.html
+  grep -q "2023 01 17.9208  2459962.4208  10\...  08:46:0.\... -27:45:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0110a"
@@ -11921,12 +11921,12 @@ $GREP_RESULT"
    fi
   fi
   #
-  grep --quiet -e "V0594 Pup" -e "V594 Pup" transient_report/index.html
+  grep -q -e "V0594 Pup" -e "V594 Pup" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0110"
   fi
-  grep --quiet "2023 01 17.9208  2459962.4208  10\...  08:26:..\... -30:06:" transient_report/index.html
+  grep -q "2023 01 17.9208  2459962.4208  10\...  08:26:..\... -30:06:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWLARGEOFFSET0110a"
@@ -12040,7 +12040,7 @@ if [ -d ../NMW_ATLAS_Mira_in_Ser1 ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA000_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
+ grep -q 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA000_CANNOT_FIND_STAR_ERROR_MESSAGE"
@@ -12049,7 +12049,7 @@ if [ -d ../NMW_ATLAS_Mira_in_Ser1 ];then
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message about distance between reference and second-epoch image centers
-  grep --quiet 'ERROR:' "transient_report/index.html"
+  grep -q 'ERROR:' "transient_report/index.html"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_ERROR_MESSAGE_IN_index_html"
@@ -12063,7 +12063,7 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA001"
@@ -12073,7 +12073,7 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA001a"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA002"
@@ -12090,19 +12090,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0_nonzero_ref_frame_rotation"
@@ -12111,7 +12111,7 @@ $CAT_RESULT"
 ###### NMWATLASMIRA0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0_nonzero_ref_frame_rotation_test2"
@@ -12132,12 +12132,12 @@ $GREP_RESULT"
   fi
   #
   #
-  grep --quiet "ATO J264.4812-15.6857" transient_report/index.html
+  grep -q "ATO J264.4812-15.6857" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0110"
   fi
-  grep --quiet "2022 02 12.0...  2459622.5...  12...  17:37:..... -15:41:" transient_report/index.html
+  grep -q "2022 02 12.0...  2459622.5...  12...  17:37:..... -15:41:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0110a"
@@ -12163,19 +12163,19 @@ $GREP_RESULT"
    fi
   fi
   # Test Stub MPC report line
-  grep --quiet "     TAU0008  C2022 02 12.0.... 17 37 ..... -15 41 0....         12.. R      C32" transient_report/index.html
+  grep -q "     TAU0008  C2022 02 12.0.... 17 37 ..... -15 41 0....         12.. R      C32" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0110b"
   fi
 
   #
-  grep --quiet "FK Sgr" transient_report/index.html
+  grep -q "FK Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0111"
   fi
-  grep --quiet "2022 02 12.0...  2459622.5...  10...  17:45:4.... -16:07:1..." transient_report/index.html
+  grep -q "2022 02 12.0...  2459622.5...  10...  17:45:4.... -16:07:1..." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0111a"
@@ -12203,12 +12203,12 @@ $GREP_RESULT"
   #
 
   #
-  grep --quiet "ASAS J173723-1621.2" transient_report/index.html
+  grep -q "ASAS J173723-1621.2" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0112"
   fi
-  grep --quiet "2022 02 12.0...  2459622.5...   9...  17:37:2.... -16:21:1..." transient_report/index.html
+  grep -q "2022 02 12.0...  2459622.5...   9...  17:37:2.... -16:21:1..." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0112a"
@@ -12237,12 +12237,12 @@ $GREP_RESULT"
 
   #
   # NSVS 16588457 does not pass no-Gaia-source test
-  #grep --quiet "NSVS 16588457" transient_report/index.html
+  #grep -q "NSVS 16588457" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0113"
   #fi
-  #grep --quiet "2022 02 12.0...  2459622.5...  1....  17:27:0.... -18:23:1..." transient_report/index.html
+  #grep -q "2022 02 12.0...  2459622.5...  1....  17:27:0.... -18:23:1..." transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0113a"
@@ -12271,12 +12271,12 @@ $GREP_RESULT"
 
 #  # The amplitude of ASAS J174125-1731.7 is only 0.91mag so its detection depends on what
 #  # two second-epoch images get chosen
-#  grep --quiet "ASAS J174125-1731.7" transient_report/index.html
+#  grep -q "ASAS J174125-1731.7" transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0114"
 #  fi
-#  grep --quiet "2022 02 12.0...  2459622.5...  12...  17:41:2.... -17:31:4..." transient_report/index.html
+#  grep -q "2022 02 12.0...  2459622.5...  12...  17:41:2.... -17:31:4..." transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0114a"
@@ -12305,12 +12305,12 @@ $GREP_RESULT"
 
   # For V0604 Ser the falre amplitude drops to 0.82 with default.sex.telephoto_lens_v5
   #
-#  grep --quiet "V0604 Ser" transient_report/index.html
+#  grep -q "V0604 Ser" transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0115"
 #  fi
-#  grep --quiet "2022 02 12.0...  2459622.5...  12...  17:36:4.... -15:30:4..." transient_report/index.html
+#  grep -q "2022 02 12.0...  2459622.5...  12...  17:36:4.... -15:30:4..." transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0115a"
@@ -12338,12 +12338,12 @@ $GREP_RESULT"
 #  #
 #
   #
-  grep --quiet "ASAS J173214-1402.8" transient_report/index.html
+  grep -q "ASAS J173214-1402.8" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0116"
   fi
-  grep --quiet "2022 02 12.0...  2459622.5...  11...  17:32:1.... -14:02:...." transient_report/index.html
+  grep -q "2022 02 12.0...  2459622.5...  11...  17:32:1.... -14:02:...." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0116a"
@@ -12373,12 +12373,12 @@ $GREP_RESULT"
 # Disabling this one as the results strongly depend on wich machine we are running on (compare BSD-eridan, boinc-eridan).
 # The tharget is an incorrect double-detection on the reference frame.
 #  #
-#  grep --quiet "V0835 Oph" transient_report/index.html
+#  grep -q "V0835 Oph" transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0117"
 #  fi
-#  grep --quiet "2022 02 12.0...  2459622.5...  10...  17:36:1.... -16:34:3..." transient_report/index.html
+#  grep -q "2022 02 12.0...  2459622.5...  10...  17:36:1.... -16:34:3..." transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0117a"
@@ -12406,12 +12406,12 @@ $GREP_RESULT"
 #  #
 
   #
-  grep --quiet "ASAS J172912-1321.1" transient_report/index.html
+  grep -q "ASAS J172912-1321.1" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0118"
   fi
-  grep --quiet "2022 02 12.0...  2459622.5...   9...  17:29:1.... -13:21:0..." transient_report/index.html
+  grep -q "2022 02 12.0...  2459622.5...   9...  17:29:1.... -13:21:0..." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWATLASMIRA0118a"
@@ -12530,7 +12530,7 @@ if [ -d ../NMW_Sgr1_NovaSgr20N4_test ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
+ grep -q 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_CANNOT_FIND_STAR_ERROR_MESSAGE"
@@ -12539,7 +12539,7 @@ if [ -d ../NMW_Sgr1_NovaSgr20N4_test ];then
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
-  grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
+  grep -q 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_ERROR_MESSAGE_IN_index_html"
@@ -12553,7 +12553,7 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4001"
@@ -12563,7 +12563,7 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4001a"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4002"
@@ -12573,13 +12573,13 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4002a"
   fi
-  #grep --quiet "First image: 2456005.59475 19.03.2012 02:16:06" transient_report/index.html
+  #grep -q "First image: 2456005.59475 19.03.2012 02:16:06" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456005.59475 19.03.2012 02:16:06' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4003"
   fi
-  #grep --quiet -e "Last  image: 2459128.21054 05.10.2020 17:03:01" -e "Last  image: 2459128.21093 05.10.2020 17:03:34" transient_report/index.html
+  #grep -q -e "Last  image: 2459128.21054 05.10.2020 17:03:01" -e "Last  image: 2459128.21093 05.10.2020 17:03:34" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459128.21054 05.10.2020 17:03:01' 1 transient_report/index.html || compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459128.21093 05.10.2020 17:03:34' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -12592,19 +12592,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N4_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40_nonzero_ref_frame_rotation"
@@ -12613,7 +12613,7 @@ $CAT_RESULT"
 ###### NMWNSGR20N40_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40_nonzero_ref_frame_rotation_test2"
@@ -12636,12 +12636,12 @@ $GREP_RESULT"
   #
   # Nova Sgr 2020 N4 has no automatic ID in the current VaST version,
   # even worse, there seems to be a false ID with an OGLE eclipsing binary
-  #grep --quiet "N Sgr 2020 N4" transient_report/index.html
+  #grep -q "N Sgr 2020 N4" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40110"
   #fi
-  grep --quiet "2020 10 05.7...  2459128.2...  10\...  17:5.:..\... -21:22:..\.." transient_report/index.html
+  grep -q "2020 10 05.7...  2459128.2...  10\...  17:5.:..\... -21:22:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40110a"
@@ -12667,19 +12667,19 @@ $GREP_RESULT"
    fi
   fi
   # Test Stub MPC report line
-  grep --quiet "     TAU0008  C2020 10 05.7.... 17 5. ..\... -21 22 ..\...         10\.. R      C32" transient_report/index.html
+  grep -q "     TAU0008  C2020 10 05.7.... 17 5. ..\... -21 22 ..\...         10\.. R      C32" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40110b"
   fi
 
   # UZ Sgr
-  grep --quiet "UZ Sgr" transient_report/index.html
+  grep -q "UZ Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40210"
   fi
-  grep --quiet "2020 10 05.7...  2459128.2...  11\...  17:53:..\... -21:45:..\.." transient_report/index.html
+  grep -q "2020 10 05.7...  2459128.2...  11\...  17:53:..\... -21:45:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40210a"
@@ -12707,12 +12707,12 @@ $GREP_RESULT"
 
 
   # V1280 Sgr
-  grep --quiet "V1280 Sgr" transient_report/index.html
+  grep -q "V1280 Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40310"
   fi
-  grep --quiet "2020 10 05.7...  2459128.2...  10\...  18:10:..\... -26:52:..\.." transient_report/index.html
+  grep -q "2020 10 05.7...  2459128.2...  10\...  18:10:..\... -26:52:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40310a"
@@ -12741,12 +12741,12 @@ $GREP_RESULT"
 
 
   # VX Sgr
-  grep --quiet "VX Sgr" transient_report/index.html
+  grep -q "VX Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40410"
   fi
-  grep --quiet "2020 10 05.7...  2459128.2...   7\...  18:08:..\... -22:13:..\.." transient_report/index.html
+  grep -q "2020 10 05.7...  2459128.2...   7\...  18:08:..\... -22:13:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR20N40410a"
@@ -12859,7 +12859,7 @@ if [ -d ../NMW_Sco6_NovaSgr24N1_test ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
+ grep -q 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_CANNOT_FIND_STAR_ERROR_MESSAGE"
@@ -12868,7 +12868,7 @@ if [ -d ../NMW_Sco6_NovaSgr24N1_test ];then
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
-  grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
+  grep -q 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_ERROR_MESSAGE_IN_index_html"
@@ -12882,7 +12882,7 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1001"
@@ -12892,7 +12892,7 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1001a"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1002"
@@ -12902,13 +12902,13 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1002a"
   fi
-  #grep --quiet "First image: 2456031.51404 14.04.2012 00:19:58" transient_report/index.html
+  #grep -q "First image: 2456031.51404 14.04.2012 00:19:58" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456031.51404 14.04.2012 00:19:58' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1003"
   fi
-  #grep --quiet "Last  image: 2460364.62567 24.02.2024 03:00:48" transient_report/index.html
+  #grep -q "Last  image: 2460364.62567 24.02.2024 03:00:48" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460364.62567 24.02.2024 03:00:48' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -12921,19 +12921,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N1_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10_nonzero_ref_frame_rotation"
@@ -12942,7 +12942,7 @@ $CAT_RESULT"
 ###### NMWNSGR24N10_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10_nonzero_ref_frame_rotation_test2"
@@ -12965,12 +12965,12 @@ $GREP_RESULT"
   #
   # Nova Sgr 2024 N1 has no automatic ID in the current VaST version,
   # even worse, there seems to be a false ID with an OGLE LPV variable
-  #grep --quiet "N Sgr 2024 N1" transient_report/index.html
+  #grep -q "N Sgr 2024 N1" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10110"
   #fi
-  grep --quiet "2024 02 24\.125.  2460364\.625.  11\.1.  18:02:53\... -29:14:17\.." transient_report/index.html
+  grep -q "2024 02 24\.125.  2460364\.625.  11\.1.  18:02:53\... -29:14:17\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10110a"
@@ -12996,25 +12996,25 @@ $GREP_RESULT"
    fi
   fi
   # Test Stub MPC report line
-  grep --quiet "     TAU0008  C2024 02 24.125.. 18 02 53\... -29 14 17\..          11\.. R      C32" transient_report/index.html
+  grep -q "     TAU0008  C2024 02 24.125.. 18 02 53\... -29 14 17\..          11\.. R      C32" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10110b"
   fi
   # Test Stub TOCP report line
-  grep --quiet "TCP 2024 02 24.125.*  18 02 53\... -29 14 17\..  11\.. U             Sgr       9 0" transient_report/index.html
+  grep -q "TCP 2024 02 24.125.*  18 02 53\... -29 14 17\..  11\.. U             Sgr       9 0" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10110b"
   fi
 
   # V1770 Sgr
-  grep --quiet "V1770 Sgr" transient_report/index.html
+  grep -q "V1770 Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10210"
   fi
-  grep --quiet "2024 02 24\.125.  2460364\.625.  10\...  18:04:30\... -31:15:40\.." transient_report/index.html
+  grep -q "2024 02 24\.125.  2460364\.625.  10\...  18:04:30\... -31:15:40\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10210a"
@@ -13042,12 +13042,12 @@ $GREP_RESULT"
 
 
   # Mis V0540
-  grep --quiet "Mis V0540" transient_report/index.html
+  grep -q "Mis V0540" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10310"
   fi
-  grep --quiet "2024 02 24\.125.  2460364\.625.  11\...  17:59:06\... -28:31:19\.." transient_report/index.html
+  grep -q "2024 02 24\.125.  2460364\.625.  11\...  17:59:06\... -28:31:19\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10310a"
@@ -13075,12 +13075,12 @@ $GREP_RESULT"
 
 
   # V1783 Sgr
-  grep --quiet "V1783 Sgr" transient_report/index.html
+  grep -q "V1783 Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10410"
   fi
-  grep --quiet "2024 02 24\.125.  2460364\.625.  10\...  18:04:49\... -32:43:1.\.." transient_report/index.html
+  grep -q "2024 02 24\.125.  2460364\.625.  10\...  18:04:49\... -32:43:1.\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10410a"
@@ -13107,12 +13107,12 @@ $GREP_RESULT"
   fi
 
   # SY Sco
-  grep --quiet "SY Sco" transient_report/index.html
+  grep -q "SY Sco" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10411"
   fi
-  grep --quiet "2024 02 24.125.  2460364.625.   9\...  17:53:48\... -34:2.:..\.." transient_report/index.html
+  grep -q "2024 02 24.125.  2460364.625.   9\...  17:53:48\... -34:2.:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR24N10411a"
@@ -13230,7 +13230,7 @@ if [ -d ../NMW__NovaVul24_Stas_test ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
+ grep -q 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CANNOT_FIND_STAR_ERROR_MESSAGE"
@@ -13239,7 +13239,7 @@ if [ -d ../NMW__NovaVul24_Stas_test ];then
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
-  grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
+  grep -q 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_ERROR_MESSAGE_IN_index_html"
@@ -13253,7 +13253,7 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST001"
@@ -13263,7 +13263,7 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST001a"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST002"
@@ -13273,13 +13273,13 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST002a"
   fi
-  #grep --quiet "First image: 2460520.33991 28.07.2024 20:09:18" transient_report/index.html
+  #grep -q "First image: 2460520.33991 28.07.2024 20:09:18" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2460520.33991 28.07.2024 20:09:18' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST003"
   fi
-  #grep --quiet "Last  image: 2460521.33198 29.07.2024 19:57:53" transient_report/index.html
+  #grep -q "Last  image: 2460521.33198 29.07.2024 19:57:53" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460521.33198 29.07.2024 19:57:53' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -13292,19 +13292,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0_nonzero_ref_frame_rotation"
@@ -13313,7 +13313,7 @@ $CAT_RESULT"
 ###### NMWNVUL24ST0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0_nonzero_ref_frame_rotation_test2"
@@ -13334,7 +13334,7 @@ $GREP_RESULT"
   fi
   #
   #
-  grep --quiet "V0615 Vul" transient_report/index.html
+  grep -q "V0615 Vul" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0110"
@@ -13366,12 +13366,12 @@ $CAT_RESULT"
    fi
    #
   fi
-  grep galactic transient_report/index.html | grep --quiet "PNV J19430751+2100204"
+  grep galactic transient_report/index.html | grep -q "PNV J19430751+2100204"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0110"
   fi
-  grep --quiet "2024 07 29\.831.  2460521\.331.  11\...  19:43:0.\... +21:00:..\.." transient_report/index.html
+  grep -q "2024 07 29\.831.  2460521\.331.  11\...  19:43:0.\... +21:00:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0110a"
@@ -13400,7 +13400,7 @@ $GREP_RESULT"
   
   ### Pixel scale test (make sure WCS is not corrupted) ###
   for i in wcs_*.fts ;do 
-   util/fov_of_wcs_calibrated_image.sh $i | grep --quiet '8.3[45]"/pix' 
+   util/fov_of_wcs_calibrated_image.sh $i | grep -q '8.3[45]"/pix' 
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0110a_IMGSCALE_$i"
@@ -13408,7 +13408,7 @@ $GREP_RESULT"
   done
   
   ### Additional tests just using V615 Vul as an example
-  grep --quiet "V0615 Vul" transient_report/index.html
+  grep -q "V0615 Vul" transient_report/index.html
   if [ $? -eq 0 ];then
    #V615VUL_STAR_NUMBER=$(grep -B20 'V0615 Vul' transient_report/index.html | grep '<a name=' | tail -n1 | awk -F"'" '{print $2}' | awk -F"_" '{print $1}')
    #V615VUL_STAR_NUMBER=$(grep -B13 "2024 07 29\.831.  2460521\.331.  11\...  19:43:0.\... +21:00:..\.." transient_report/index.html | grep '<a name=' | tail -n1 | awk -F"'" '{print $2}' | awk -F"_" '{print $1}')
@@ -13418,7 +13418,7 @@ $GREP_RESULT"
    V615VUL_STAR_NUMBER=$(grep -B13 "2024 07 29\.831.  2460521\.331.  11\...  19:43:0.\... +21:00:..\.." transient_report/index.html | grep '<a name=' | tail -n1 | awk -F"'" '{print $2}' | awk -F"_" '{print $1}')
    if [ -f out"$V615VUL_STAR_NUMBER".dat ];then
     # The formatter scripts rely on util/identify_noninteractive.sh, so let's test it
-    util/identify_noninteractive.sh out"$V615VUL_STAR_NUMBER".dat | grep -A1 'New summary string' | grep --quiet -e 'V0615 Vul' -e 'V615 Vul'
+    util/identify_noninteractive.sh out"$V615VUL_STAR_NUMBER".dat | grep -A1 'New summary string' | grep -q -e 'V0615 Vul' -e 'V615 Vul'
     if [ $? -ne 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_NONINTERACTIVE_ID_FAILED"
@@ -13434,7 +13434,7 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
      #
      TEST_CBA_REPORT_TERMINAL=$(util/format_lightcurve_CBA.sh out"$V615VUL_STAR_NUMBER".dat test)
      if [ -n "$TEST_CBA_REPORT_TERMINAL" ];then
-      echo "$TEST_CBA_REPORT_TERMINAL" | grep --quiet -e 'Automatically setting the variable star name V0615 Vul' -e 'Automatically setting the variable star name V615 Vul'
+      echo "$TEST_CBA_REPORT_TERMINAL" | grep -q -e 'Automatically setting the variable star name V0615 Vul' -e 'Automatically setting the variable star name V615 Vul'
       if [ $? -ne 0 ];then
        TEST_PASSED=0
        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_AUTOMATICALLY_ASSIGNED_VARSTARNAME"
@@ -13449,28 +13449,28 @@ $(cat transient_report/index.html)
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 "
        fi
-      echo "$TEST_CBA_REPORT_TERMINAL" | grep --quiet '29 July 2024'
+      echo "$TEST_CBA_REPORT_TERMINAL" | grep -q '29 July 2024'
       if [ $? -ne 0 ];then
        TEST_PASSED=0
        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_HUMAN_READABLE_DATE"
       fi
       if [ -s CBA_V0615_Vul_29Jul2024_measurements.txt ];then
-       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep --quiet '# Date: 29Jul2024'
+       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep -q '# Date: 29Jul2024'
        if [ $? -ne 0 ];then
         TEST_PASSED=0
         FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_DATE"
        fi
-       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep --quiet '# Variable: V0615 Vul'
+       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep -q '# Variable: V0615 Vul'
        if [ $? -ne 0 ];then
         TEST_PASSED=0
         FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_INCORRECT_VARSTARNAME"
        fi
-       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep --quiet '# Exp time (s): 20'
+       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep -q '# Exp time (s): 20'
        if [ $? -ne 0 ];then
         TEST_PASSED=0
         FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_EXPTIME"
        fi
-       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep '2460521.3315' | grep --quiet ' 11.2'
+       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep '2460521.3315' | grep -q ' 11.2'
        if [ $? -ne 0 ];then
         TEST_PASSED=0
         FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_MEASUREMENT1"
@@ -13485,7 +13485,7 @@ $(cat CBA_V0615_Vul_29Jul2024_measurements.txt)
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 "
        fi
-       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep '2460521.3319' | grep --quiet ' 11.2'
+       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep '2460521.3319' | grep -q ' 11.2'
        if [ $? -ne 0 ];then
         TEST_PASSED=0
         FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_MEASUREMENT2"
@@ -13511,7 +13511,7 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
      #
      TEST_AAVSO_REPORT_TERMINAL=$(util/format_lightcurve_AAVSO.sh out"$V615VUL_STAR_NUMBER".dat test)
      if [ -n "$TEST_AAVSO_REPORT_TERMINAL" ];then
-      echo "$TEST_AAVSO_REPORT_TERMINAL" | grep --quiet 'Automatically setting the variable star name V0615 Vul'
+      echo "$TEST_AAVSO_REPORT_TERMINAL" | grep -q 'Automatically setting the variable star name V0615 Vul'
       if [ $? -ne 0 ];then
        TEST_PASSED=0
        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_NO_AUTOMATICALLY_ASSIGNED_VARSTARNAME"
@@ -13526,17 +13526,17 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 "
       fi
       if [ -s AAVSO_V0615_Vul_29Jul2024_CV_measurements.txt ];then
-       cat AAVSO_V0615_Vul_29Jul2024_CV_measurements.txt | grep '2460521.3315' | grep --quiet ',11.2'
+       cat AAVSO_V0615_Vul_29Jul2024_CV_measurements.txt | grep '2460521.3315' | grep -q ',11.2'
        if [ $? -ne 0 ];then
         TEST_PASSED=0
         FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_MEASUREMENT1"
        fi
-       cat AAVSO_V0615_Vul_29Jul2024_CV_measurements.txt | grep '2460521.3319' | grep --quiet ',11.2'
+       cat AAVSO_V0615_Vul_29Jul2024_CV_measurements.txt | grep '2460521.3319' | grep -q ',11.2'
        if [ $? -ne 0 ];then
         TEST_PASSED=0
         FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_MEASUREMENT2"
        fi
-       cat AAVSO_V0615_Vul_29Jul2024_CV_measurements.txt | grep --quiet -e 'V0615 Vul,' -e 'V615 Vul,'
+       cat AAVSO_V0615_Vul_29Jul2024_CV_measurements.txt | grep -q -e 'V0615 Vul,' -e 'V615 Vul,'
        if [ $? -ne 0 ];then
         TEST_PASSED=0
         FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_AAVSOSCRIPTTEST_INCORRECT_VARSTARNAME"
@@ -13640,7 +13640,7 @@ if [ -d ../NMW_Aql11_NovaHer21_test ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
+ grep -q 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21_CANNOT_FIND_STAR_ERROR_MESSAGE"
@@ -13649,7 +13649,7 @@ if [ -d ../NMW_Aql11_NovaHer21_test ];then
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
-  grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
+  grep -q 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21_ERROR_MESSAGE_IN_index_html"
@@ -13663,7 +13663,7 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21001"
@@ -13673,7 +13673,7 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21001a"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21002"
@@ -13683,13 +13683,13 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21002a"
   fi
-  #grep --quiet "First image: 2456005.49760 18.03.2012 23:56:13" transient_report/index.html
+  #grep -q "First image: 2456005.49760 18.03.2012 23:56:13" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456005.49760 18.03.2012 23:56:13' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21003"
   fi
-  #grep --quiet -e "Last  image: 2459378.42235 12.06.2021 22:08:01" -e "Last  image: 2459378.42271 12.06.2021 22:08:32" transient_report/index.html
+  #grep -q -e "Last  image: 2459378.42235 12.06.2021 22:08:01" -e "Last  image: 2459378.42271 12.06.2021 22:08:32" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459378.42235 12.06.2021 22:08:01' 1 transient_report/index.html || compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459378.42271 12.06.2021 22:08:32' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -13702,19 +13702,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER21_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER210_nonzero_ref_frame_rotation"
@@ -13723,7 +13723,7 @@ $CAT_RESULT"
 ###### NMWNHER210_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER210_nonzero_ref_frame_rotation_test2"
@@ -13746,12 +13746,12 @@ $GREP_RESULT"
   #
   # Nova Her 2021 has no automatic ID in the current VaST version,
   # even worse, there seems to be a false ID with an OGLE eclipsing binary
-  #grep --quiet "N Sgr 2020 N4" transient_report/index.html
+  #grep -q "N Sgr 2020 N4" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER210110"
   #fi
-  grep --quiet "2021 06 12.92..  2459378.42..   6\...  18:57:..\... +16:53:..\.." transient_report/index.html
+  grep -q "2021 06 12.92..  2459378.42..   6\...  18:57:..\... +16:53:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER210110a"
@@ -13778,7 +13778,7 @@ $GREP_RESULT"
    fi
   fi
   # Test Stub MPC report line
-  grep --quiet "     TAU0008  C2021 06 12.922.. 18 57 ..\... +16 53 ..\...          6\.. R      C32" transient_report/index.html
+  grep -q "     TAU0008  C2021 06 12.922.. 18 57 ..\... +16 53 ..\...          6\.. R      C32" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER210110b"
@@ -13786,12 +13786,12 @@ $GREP_RESULT"
 
 # Not detected with robust linear magnitude calibration
 #  # ASAS J185326+1245.0
-#  grep --quiet "ASAS J185326+1245.0" transient_report/index.html
+#  grep -q "ASAS J185326+1245.0" transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER210210"
 #  fi
-#  grep --quiet "2021 06 12.92..  2459378.42..  11\...  18:53:..\... +12:44:..\.." transient_report/index.html
+#  grep -q "2021 06 12.92..  2459378.42..  11\...  18:53:..\... +12:44:..\.." transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNHER210210a"
@@ -13902,7 +13902,7 @@ if [ -d ../NMW_find_NovaCas21_test ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
+ grep -q 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_CANNOT_FIND_STAR_ERROR_MESSAGE"
@@ -13911,7 +13911,7 @@ if [ -d ../NMW_find_NovaCas21_test ];then
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
-  grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
+  grep -q 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_ERROR_MESSAGE_IN_index_html"
@@ -13925,7 +13925,7 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21001"
@@ -13935,7 +13935,7 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21001a"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21002"
@@ -13945,13 +13945,13 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21002a"
   fi
-  #grep --quiet "First image: 2455961.21211 03.02.2012 17:05:11" transient_report/index.html
+  #grep -q "First image: 2455961.21211 03.02.2012 17:05:11" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2455961.21211 03.02.2012 17:05:11' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21003"
   fi
-  #grep --quiet -e "Last  image: 2459292.20861 18.03.2021 17:00:14" -e 'Last  image: 2459292.20897 18.03.2021 17:00:45' transient_report/index.html
+  #grep -q -e "Last  image: 2459292.20861 18.03.2021 17:00:14" -e 'Last  image: 2459292.20897 18.03.2021 17:00:45' transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459292.20861 18.03.2021 17:00:14' 1 transient_report/index.html || compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459292.20897 18.03.2021 17:00:45' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -13964,19 +13964,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS21_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS210_nonzero_ref_frame_rotation"
@@ -13985,7 +13985,7 @@ $CAT_RESULT"
 ###### NMWNCAS210_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS210_nonzero_ref_frame_rotation_test2"
@@ -14007,12 +14007,12 @@ $GREP_RESULT"
   #
   #
   # Nova Cas 2021 is V1405 Cas
-  grep --quiet "V1405 Cas" transient_report/index.html
+  grep -q "V1405 Cas" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS210110"
   fi
-  grep --quiet "2021 03 18\.70..  2459292.20..   9\...  23:24:..\... +61:11:..\.." transient_report/index.html
+  grep -q "2021 03 18\.70..  2459292.20..   9\...  23:24:..\... +61:11:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS210110a"
@@ -14038,7 +14038,7 @@ $GREP_RESULT"
    fi
   fi
   # Test Stub MPC report line
-  grep --quiet "     TAU0008  C2021 03 18.70... 23 24 4.\... +61 11 1.\...          9\.. R      C32" transient_report/index.html
+  grep -q "     TAU0008  C2021 03 18.70... 23 24 4.\... +61 11 1.\...          9\.. R      C32" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS210110b"
@@ -14047,12 +14047,12 @@ $GREP_RESULT"
   #
   # OQ Cep does not pass the no-Gaia-source test
   ## OQ Cep
-  #grep --quiet "OQ Cep" transient_report/index.html
+  #grep -q "OQ Cep" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS210210"
   #fi
-  #grep --quiet "2021 03 18.70..  2459292.20..  11\...  23:12:..\... +60:34:..\.." transient_report/index.html
+  #grep -q "2021 03 18.70..  2459292.20..  11\...  23:12:..\... +60:34:..\.." transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNCAS210210a"
@@ -14163,7 +14163,7 @@ if [ -d ../NMW_Sco6_NovaSgr21N2_test ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
+ grep -q 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2_CANNOT_FIND_STAR_ERROR_MESSAGE"
@@ -14172,7 +14172,7 @@ if [ -d ../NMW_Sco6_NovaSgr21N2_test ];then
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
-  grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
+  grep -q 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2_ERROR_MESSAGE_IN_index_html"
@@ -14186,7 +14186,7 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2001"
@@ -14196,7 +14196,7 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2001a"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2002"
@@ -14206,13 +14206,13 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2002a"
   fi
-  #grep --quiet "First image: 2456031.51354 14.04.2012 00:19:15" transient_report/index.html
+  #grep -q "First image: 2456031.51354 14.04.2012 00:19:15" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456031.51354 14.04.2012 00:19:15' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2003"
   fi
-  #grep --quiet -e "Last  image: 2459312.50961 08.04.2021 00:13:40" transient_report/index.html
+  #grep -q -e "Last  image: 2459312.50961 08.04.2021 00:13:40" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459312.50961 08.04.2021 00:13:40' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -14225,19 +14225,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N2_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N20_nonzero_ref_frame_rotation"
@@ -14246,7 +14246,7 @@ $CAT_RESULT"
 ###### NMWNSGR21N20_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N20_nonzero_ref_frame_rotation_test2"
@@ -14268,12 +14268,12 @@ $GREP_RESULT"
   #
   #
   # Nova Sgr 2021 N2 has no automatic ID in the current VaST version,
-  #grep --quiet "N Cas 2021" transient_report/index.html
+  #grep -q "N Cas 2021" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N20110"
   #fi
-  grep --quiet "2021 04 08\.009.  2459312\.509.   8\...  17:58:1.\... -29:14:5.\.." transient_report/index.html
+  grep -q "2021 04 08\.009.  2459312\.509.   8\...  17:58:1.\... -29:14:5.\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N20110a"
@@ -14301,12 +14301,12 @@ $GREP_RESULT"
 
 # V1804 Sgr does not actually pass the Gaia test
 #  # V1804 Sgr
-#  grep --quiet "V1804 Sgr" transient_report/index.html
+#  grep -q "V1804 Sgr" transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N20210"
 #  fi
-#  grep --quiet "2021 04 08\.009.  2459312\.509.  9\...  18:05:..\... -28:01:..\.." transient_report/index.html
+#  grep -q "2021 04 08\.009.  2459312\.509.  9\...  18:05:..\... -28:01:..\.." transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N20210a"
@@ -14333,12 +14333,12 @@ $GREP_RESULT"
 #  fi
   
   # BN Sco
-  grep --quiet "BN Sco" transient_report/index.html
+  grep -q "BN Sco" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N20211"
   fi
-  grep --quiet "2021 04 08.009.  2459312.509.   9\...  17:54:..\... -34:20:..\.." transient_report/index.html
+  grep -q "2021 04 08.009.  2459312.509.   9\...  17:54:..\... -34:20:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N20211a"
@@ -14365,12 +14365,12 @@ $GREP_RESULT"
   fi
   
   # V1783 Sgr
-  grep --quiet "V1783 Sgr" transient_report/index.html
+  grep -q "V1783 Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N20212"
   fi
-  grep --quiet "2021 04 08\.009.  2459312\.509.  10\...  18:04:..\... -32:43:..\.." transient_report/index.html
+  grep -q "2021 04 08\.009.  2459312\.509.  10\...  18:04:..\... -32:43:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N20212a"
@@ -14482,7 +14482,7 @@ if [ -d ../NMW_Sgr7_NovaSgr21N1_test ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
+ grep -q 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1_CANNOT_FIND_STAR_ERROR_MESSAGE"
@@ -14491,7 +14491,7 @@ if [ -d ../NMW_Sgr7_NovaSgr21N1_test ];then
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
-  grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
+  grep -q 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1_ERROR_MESSAGE_IN_index_html"
@@ -14505,7 +14505,7 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1001"
@@ -14515,7 +14515,7 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1001a"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1002"
@@ -14525,13 +14525,13 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1002a"
   fi
-  #grep --quiet "First image: 2456006.57071 20.03.2012 01:41:29" transient_report/index.html
+  #grep -q "First image: 2456006.57071 20.03.2012 01:41:29" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456006.57071 20.03.2012 01:41:29' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1003"
   fi
-  #grep --quiet -e "Last  image: 2459312.49796 07.04.2021 23:56:54" -e "Last  image: 2459312.49834 07.04.2021 23:57:27" transient_report/index.html
+  #grep -q -e "Last  image: 2459312.49796 07.04.2021 23:56:54" -e "Last  image: 2459312.49834 07.04.2021 23:57:27" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459312.49796 07.04.2021 23:56:54' 1 transient_report/index.html || compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459312.49834 07.04.2021 23:57:27' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -14544,19 +14544,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N1_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10_nonzero_ref_frame_rotation"
@@ -14565,7 +14565,7 @@ $CAT_RESULT"
 ###### NMWNSGR21N10_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10_nonzero_ref_frame_rotation_test2"
@@ -14587,12 +14587,12 @@ $GREP_RESULT"
   #
   #
   # Nova Sgr 2021 N1 has no automatic ID in the current VaST version,
-  #grep --quiet "N Cas 2021" transient_report/index.html
+  #grep -q "N Cas 2021" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10110"
   #fi
-  grep --quiet "2021 04 07\.99..  2459312\.49..   9\...  18:49:..\... -19:02:..\.." transient_report/index.html
+  grep -q "2021 04 07\.99..  2459312\.49..   9\...  18:49:..\... -19:02:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10110a"
@@ -14621,12 +14621,12 @@ $GREP_RESULT"
 # The amplitude is 0.91 mag so detection of V3789 Sgr entierly depends on which pair of images 
 # is taken as the second-epoch images.
 #  # V3789 Sgr
-#  grep --quiet "V3789 Sgr" transient_report/index.html
+#  grep -q "V3789 Sgr" transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10210"
 #  fi
-#  grep --quiet "2021 04 07\.997.  2459312\.497.  10\...  19:00:..\... -14:59:..\.." transient_report/index.html
+#  grep -q "2021 04 07\.997.  2459312\.497.  10\...  19:00:..\... -14:59:..\.." transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10210a"
@@ -14653,12 +14653,12 @@ $GREP_RESULT"
 #  fi
   
   # V6463 Sgr
-  grep --quiet "V6463 Sgr" transient_report/index.html
+  grep -q "V6463 Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10211"
   fi
-  grep --quiet "2021 04 07\.99..  2459312\.49..  11\...  18:3.:..\... -17:0.:..\.." transient_report/index.html
+  grep -q "2021 04 07\.99..  2459312\.49..  11\...  18:3.:..\... -17:0.:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10211a"
@@ -14685,12 +14685,12 @@ $GREP_RESULT"
   fi
   
   # SV Sct
-  grep --quiet "SV Sct" transient_report/index.html
+  grep -q "SV Sct" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10212"
   fi
-  grep --quiet "2021 04 07\.99..  2459312\.49..  10\...  18:53:..\... -14:11:..\.." transient_report/index.html
+  grep -q "2021 04 07\.99..  2459312\.49..  10\...  18:53:..\... -14:11:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10212a"
@@ -14717,12 +14717,12 @@ $GREP_RESULT"
   fi
   
   # V0357 Sgr
-  grep --quiet "V0357 Sgr" transient_report/index.html
+  grep -q "V0357 Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10213"
   fi
-  grep --quiet "2021 04 07\.99..  2459312\.49..  11\...  19:00:..\... -15:12:..\.." transient_report/index.html
+  grep -q "2021 04 07\.99..  2459312\.49..  11\...  19:00:..\... -15:12:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10213a"
@@ -14750,12 +14750,12 @@ $GREP_RESULT"
 
 # ??? Not found also with default.sex.telephoto_lens_v4 ???
 #  # ASAS J184735-1545.7
-#  grep --quiet "ASAS J184735-1545.7" transient_report/index.html
+#  grep -q "ASAS J184735-1545.7" transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10214"
 #  fi
-#  grep --quiet "2021 04 07\.99..  2459312\.49..  12\...  18:47:..\... -15:45:..\.." transient_report/index.html
+#  grep -q "2021 04 07\.99..  2459312\.49..  12\...  18:47:..\... -15:45:..\.." transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNSGR21N10214a"
@@ -14865,7 +14865,7 @@ if [ -d ../NMW_Vul7_NovaVul21_test ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
+ grep -q 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21_CANNOT_FIND_STAR_ERROR_MESSAGE"
@@ -14874,7 +14874,7 @@ if [ -d ../NMW_Vul7_NovaVul21_test ];then
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
-  grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
+  grep -q 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21_ERROR_MESSAGE_IN_index_html"
@@ -14888,7 +14888,7 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21001"
@@ -14898,7 +14898,7 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21001a"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21002"
@@ -14908,13 +14908,13 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21002a"
   fi
-  #grep --quiet "First image: 2456031.42797 13.04.2012 22:16:02" transient_report/index.html
+  #grep -q "First image: 2456031.42797 13.04.2012 22:16:02" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456031.42797 13.04.2012 22:16:02' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21003"
   fi
-  #grep --quiet -e "Last  image: 2459413.36175 17.07.2021 20:40:45" transient_report/index.html
+  #grep -q -e "Last  image: 2459413.36175 17.07.2021 20:40:45" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459413.36175 17.07.2021 20:40:45' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -14927,19 +14927,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL21_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL210_nonzero_ref_frame_rotation"
@@ -14948,7 +14948,7 @@ $CAT_RESULT"
 ###### NMWNVUL210_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL210_nonzero_ref_frame_rotation_test2"
@@ -14970,12 +14970,12 @@ $GREP_RESULT"
   #
   #
   # Nova Vul 2021 has no automatic ID in the current VaST version,
-  #grep --quiet "N Cas 2021" transient_report/index.html
+  #grep -q "N Cas 2021" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL210110"
   #fi
-  grep --quiet "2021 07 17\.86..  2459413\.36..  1.\...  20:21:0.\... +29:14:0.\.." transient_report/index.html
+  grep -q "2021 07 17\.86..  2459413\.36..  1.\...  20:21:0.\... +29:14:0.\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL210110a"
@@ -15002,12 +15002,12 @@ $GREP_RESULT"
   fi
 
   # V0369 Vul 0.816mag amplitude with default.sex.telephoto_lens_v5
-#  grep --quiet "V0369 Vul" transient_report/index.html
+#  grep -q "V0369 Vul" transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL210210"
 #  fi
-#  grep --quiet "2021 07 17\.86..  2459413\.36..  12\...  20:18:2.\... +26:39:1.\.." transient_report/index.html
+#  grep -q "2021 07 17\.86..  2459413\.36..  12\...  20:18:2.\... +26:39:1.\.." transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL210210a"
@@ -15117,7 +15117,7 @@ if [ -d ../NMW_find_Mars_test ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
+ grep -q 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_CANNOT_FIND_STAR_ERROR_MESSAGE"
@@ -15126,7 +15126,7 @@ if [ -d ../NMW_find_Mars_test ];then
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
-  grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
+  grep -q 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_ERROR_MESSAGE_IN_index_html"
@@ -15140,7 +15140,7 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS001"
@@ -15150,7 +15150,7 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS001a"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS002"
@@ -15160,13 +15160,13 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS002a"
   fi
-  #grep --quiet "First image: 2455929.28115 02.01.2012 18:44:31" transient_report/index.html
+  #grep -q "First image: 2455929.28115 02.01.2012 18:44:31" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2455929.28115 02.01.2012 18:44:31' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS003"
   fi
-  #grep --quiet -e "Last  image: 2459334.28175 29.04.2021 18:45:33" -e "Last  image: 2459334.28212 29.04.2021 18:46:05" transient_report/index.html
+  #grep -q -e "Last  image: 2459334.28175 29.04.2021 18:45:33" -e "Last  image: 2459334.28212 29.04.2021 18:46:05" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459334.28175 29.04.2021 18:45:33' 1 transient_report/index.html || compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459334.28212 29.04.2021 18:46:05' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -15179,19 +15179,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS0_nonzero_ref_frame_rotation"
@@ -15200,7 +15200,7 @@ $CAT_RESULT"
 ###### NMWMARS0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS0_nonzero_ref_frame_rotation_test2"
@@ -15214,12 +15214,12 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS0_NO_vast_image_details_log"
   fi
   #
-  grep 'galactic' transient_report/index.html | grep --quiet 'Mars'
+  grep 'galactic' transient_report/index.html | grep -q 'Mars'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS0110"
   fi
-  grep --quiet "2021 04 29\.781.  2459334\.281.   7\...  06:15:..\... +24:50:..\.." transient_report/index.html
+  grep -q "2021 04 29\.781.  2459334\.281.   7\...  06:15:..\... +24:50:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS0110a"
@@ -15254,12 +15254,12 @@ $GREP_RESULT"
   #
 
   # V0349 Gem
-  grep --quiet "V0349 Gem" transient_report/index.html
+  grep -q "V0349 Gem" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS0210"
   fi
-  grep --quiet -e "2021 04 29\.78..  2459334\.28..  12\...  06:20:..\... +23:46:..\.." -e "2021 04 29\.78..  2459334\.28..  11\...  06:20:..\... +23:46:..\.." transient_report/index.html
+  grep -q -e "2021 04 29\.78..  2459334\.28..  12\...  06:20:..\... +23:46:..\.." -e "2021 04 29\.78..  2459334\.28..  11\...  06:20:..\... +23:46:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS0210a"
@@ -15307,7 +15307,7 @@ $GREP_RESULT"
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
+ grep -q 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_CANNOT_FIND_STAR_ERROR_MESSAGE"
@@ -15316,7 +15316,7 @@ $GREP_RESULT"
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
-  grep --quiet 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
+  grep -q 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_ERROR_MESSAGE_IN_index_html"
@@ -15330,7 +15330,7 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3001"
@@ -15340,7 +15340,7 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3001a"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3002"
@@ -15350,13 +15350,13 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3002a"
   fi
-  #grep --quiet "First image: 2455929.28115 02.01.2012 18:44:31" transient_report/index.html
+  #grep -q "First image: 2455929.28115 02.01.2012 18:44:31" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2455929.28115 02.01.2012 18:44:31' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3003"
   fi
-  #grep --quiet -e "Last  image: 2459337.27924 02.05.2021 18:41:56" -e "Last  image: 2459334.28212 29.04.2021 18:46:05" transient_report/index.html
+  #grep -q -e "Last  image: 2459337.27924 02.05.2021 18:41:56" -e "Last  image: 2459334.28212 29.04.2021 18:46:05" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459337.27924 02.05.2021 18:41:56' 1 transient_report/index.html || compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459334.28212 29.04.2021 18:46:05' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -15369,19 +15369,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS3_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS30_nonzero_ref_frame_rotation"
@@ -15390,7 +15390,7 @@ $CAT_RESULT"
 ###### NMWMARS30_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS30_nonzero_ref_frame_rotation_test2"
@@ -15412,12 +15412,12 @@ $GREP_RESULT"
   #
   #
   # Mars has no automatic ID in the current VaST version,
-  #grep --quiet "N Cas 2021" transient_report/index.html
+  #grep -q "N Cas 2021" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS30110"
   #fi
-  grep --quiet "2021 05 02.77..  2459337.27..   7\...  06:23:..\... +24:46:..\.." transient_report/index.html
+  grep -q "2021 05 02.77..  2459337.27..   7\...  06:23:..\... +24:46:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS30110a"
@@ -15445,12 +15445,12 @@ $GREP_RESULT"
   fi
 
 #  # ASAS J061734+2526.7 -- amplitude 0.80 mag with default.sex.telephoto_lens_v5
-#  grep --quiet "ASAS J061734+2526.7" transient_report/index.html
+#  grep -q "ASAS J061734+2526.7" transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS30210"
 #  fi
-#  grep --quiet "2021 05 02.77..  2459337.27..  12\...  06:17:..\... +25:26:..\.." transient_report/index.html
+#  grep -q "2021 05 02.77..  2459337.27..  12\...  06:17:..\... +25:26:..\.." transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWMARS30210a"
@@ -15565,7 +15565,7 @@ if [ -d ../NMW_find_Chandra_test ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA000_EXIT_CODE"
  fi
  # Test for the specific error message
- grep --quiet 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
+ grep -q 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA000_CANNOT_FIND_STAR_ERROR_MESSAGE"
@@ -15574,7 +15574,7 @@ if [ -d ../NMW_find_Chandra_test ];then
  #
  if [ -f transient_report/index.html ];then
   # there SHOULD NOT be an error message 
-  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
+  grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA_ERROR_MESSAGE_IN_index_html"
@@ -15588,7 +15588,7 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA001"
@@ -15598,7 +15598,7 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA001a"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA002"
@@ -15608,13 +15608,13 @@ $CAT_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA002a"
   fi
-  #grep --quiet "First image: 2455961.58044 04.02.2012 01:55:40" transient_report/index.html
+  #grep -q "First image: 2455961.58044 04.02.2012 01:55:40" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2455961.58044 04.02.2012 01:55:40' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA003"
   fi
-  #grep --quiet "Last  image: 2459087.44020 25.08.2020 22:33:43" transient_report/index.html
+  #grep -q "Last  image: 2459087.44020 25.08.2020 22:33:43" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459087.44020 25.08.2020 22:33:43' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -15627,19 +15627,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0_nonzero_ref_frame_rotation"
@@ -15648,7 +15648,7 @@ $CAT_RESULT"
 ###### NMWNFINDCHANDRA0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0_nonzero_ref_frame_rotation_test2"
@@ -15674,12 +15674,12 @@ $GREP_RESULT"
 #### in position of second-epoch detections.
 #  #
 #  # Chandra has no automatic ID in the current VaST version
-#  #grep --quiet "Chandra" transient_report/index.html
+#  #grep -q "Chandra" transient_report/index.html
 #  #if [ $? -ne 0 ];then
 #  # TEST_PASSED=0
 #  # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0110"
 #  #fi
-#  grep --quiet "2020 08 25.9400  2459087.4400  12\.8.  18:57:" transient_report/index.html
+#  grep -q "2020 08 25.9400  2459087.4400  12\.8.  18:57:" transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0110a"
@@ -15705,18 +15705,18 @@ $GREP_RESULT"
 #   fi
 #  fi
 #  # Test Stub MPC report line
-#  grep --quiet "     TAU0008  C2020 08 25.93997 18 57 0.\... +32 28 2.\...         12\.. R      C32" transient_report/index.html
+#  grep -q "     TAU0008  C2020 08 25.93997 18 57 0.\... +32 28 2.\...         12\.. R      C32" transient_report/index.html
 #  if [ $? -ne 0 ];then
 #   TEST_PASSED=0
 #   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0110b"
 #  fi
   # RT Lyr
-  grep --quiet "RT Lyr" transient_report/index.html
+  grep -q "RT Lyr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0210"
   fi
-  grep --quiet -e "2020 08 25.9400  2459087.4400  10\.7.  19:01:" -e "2020 08 25.9400  2459087.4400  10\.6.  19:01:" transient_report/index.html
+  grep -q -e "2020 08 25.9400  2459087.4400  10\.7.  19:01:" -e "2020 08 25.9400  2459087.4400  10\.6.  19:01:" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0210a"
@@ -15742,12 +15742,12 @@ $GREP_RESULT"
    fi
   fi
   # Z Lyr
-  grep --quiet "Z Lyr" transient_report/index.html
+  grep -q "Z Lyr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0310"
   fi
-  grep --quiet -e "2020 08 25.9400  2459087.4400   9\...  18:59:..\... +34:57:..\.." -e "2020 08 25.9400  2459087.4400 10\.0.  18:59:..\... +34:57:..\.." transient_report/index.html
+  grep -q -e "2020 08 25.9400  2459087.4400   9\...  18:59:..\... +34:57:..\.." -e "2020 08 25.9400  2459087.4400 10\.0.  18:59:..\... +34:57:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNFINDCHANDRA0310a"
@@ -15876,7 +15876,7 @@ if [ -d ../NMW_Sgr9_crash_test ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH000_EXIT_CODE"
  fi
  if [ -f transient_report/index.html ];then
-  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
+  grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_ERROR_MESSAGE_IN_index_html"
@@ -15890,23 +15890,23 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH001"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH002"
   fi
-  #grep --quiet "First image: 2456030.54275 13.04.2012 01:01:19" transient_report/index.html
+  #grep -q "First image: 2456030.54275 13.04.2012 01:01:19" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456030.54275 13.04.2012 01:01:19' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH003"
   fi
-  #grep --quiet "Last  image: 2459094.23281 01.09.2020 17:35:05" transient_report/index.html
+  #grep -q "Last  image: 2459094.23281 01.09.2020 17:35:05" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459094.23281 01.09.2020 17:35:05' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -15919,19 +15919,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH0_nonzero_ref_frame_rotation"
@@ -15940,7 +15940,7 @@ $CAT_RESULT"
 ###### NMWSGR9CRASH0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH0_nonzero_ref_frame_rotation_test2"
@@ -15967,7 +15967,7 @@ $GREP_RESULT"
   #for HOT_PIXEL_XY in "0683 2080" "1201 0959" "1389 1252" "2855 2429" "1350 1569" "1806 1556" "3166 1895" "2416 0477" "2864 2496" "1158 1418" "0618 1681" "2577 0584" "2384 0291" "1034 1921" "2298 1573" "2508 1110" "1098 0166" "3181 0438" "0071 1242" "0782 1150" ;do
   # "1201 0959" "1389 1252" etc. - do not get found on all test systems
   #for HOT_PIXEL_XY in "0683 2080" "3166 1895" "2508 1110" "1098 0166" ;do
-  # grep --quiet "$HOT_PIXEL_XY" transient_report/index.html
+  # grep -q "$HOT_PIXEL_XY" transient_report/index.html
   # if [ $? -ne 0 ];then
   #  TEST_PASSED=0
   #  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_BADPIXNOTFOUND_${HOT_PIXEL_XY// /_}"
@@ -15977,12 +15977,12 @@ $GREP_RESULT"
   # Somehow it's now only 0.95mag above Gaia
   ##
   ## V1858 Sgr
-  #grep --quiet "V1858 Sgr" transient_report/index.html
+  #grep -q "V1858 Sgr" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH0110"
   #fi
-  #grep --quiet "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.."  transient_report/index.html
+  #grep -q "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.."  transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH0110a"
@@ -16010,13 +16010,13 @@ $GREP_RESULT"
   ##
   # V1278 Sgr does not pass the no-Gaia-source test
   ## V1278 Sgr
-  #grep --quiet "V1278 Sgr" transient_report/index.html
+  #grep -q "V1278 Sgr" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH314"
   #fi
   ##             2020 09 01.7326  2459094.2326  10.71  18:08:39.66 -34:01:42.3
-  #grep --quiet -e "2020 09 01.7326  2459094.2326  10\.6.  18:08:..\... -34:01:..\.." -e "2020 09 01.7326  2459094.2326  10\.7.  18:08:..\... -34:01:..\.." transient_report/index.html
+  #grep -q -e "2020 09 01.7326  2459094.2326  10\.6.  18:08:..\... -34:01:..\.." -e "2020 09 01.7326  2459094.2326  10\.7.  18:08:..\... -34:01:..\.." transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH314a"
@@ -16039,13 +16039,13 @@ $GREP_RESULT"
   #fi
   #
   # V1577 Sgr
-  grep --quiet "V1577 Sgr" transient_report/index.html
+  grep -q "V1577 Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH414"
   fi
   #             2020 09 01.7326  2459094.2326  10.72  18:12:18.28 -27:55:15.5
-  grep --quiet -e "2020 09 01.7326  2459094.2326  10\.6.  18:12:..\... -27:55:..\.." -e "2020 09 01.7326  2459094.2326  10\.7.  18:12:..\... -27:55:..\.." -e "2020 09 01.7326  2459094.2326  10\.5.  18:12:..\... -27:55:..\.." transient_report/index.html
+  grep -q -e "2020 09 01.7326  2459094.2326  10\.6.  18:12:..\... -27:55:..\.." -e "2020 09 01.7326  2459094.2326  10\.7.  18:12:..\... -27:55:..\.." -e "2020 09 01.7326  2459094.2326  10\.5.  18:12:..\... -27:55:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH414a"
@@ -16067,12 +16067,12 @@ $GREP_RESULT"
    fi
   fi
   # V1584 Sgr
-  grep --quiet "V1584 Sgr" transient_report/index.html
+  grep -q "V1584 Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH514"
   fi
-  grep --quiet -e "2020 09 01.7326  2459094.2326  11\...  18:15:..\... -30:23:..\.." -e "2020 09 01.7326  2459094.2326  10\.9.  18:15:..\... -30:23:..\.." transient_report/index.html
+  grep -q -e "2020 09 01.7326  2459094.2326  11\...  18:15:..\... -30:23:..\.." -e "2020 09 01.7326  2459094.2326  10\.9.  18:15:..\... -30:23:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH514a"
@@ -16096,43 +16096,43 @@ $GREP_RESULT"
   
   # Check what is and what is not in the exlcusion list
   # The variables should be there
-  grep --quiet '18:21:4.\... -34:11:2.\..' ../exclusion_list.txt
+  grep -q '18:21:4.\... -34:11:2.\..' ../exclusion_list.txt
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_VAR_NOT_ADDED_TO_EXCLUSION_LIST_01"
   fi
-  grep --quiet '18:08:3.\... -34:01:4.\..' ../exclusion_list.txt
+  grep -q '18:08:3.\... -34:01:4.\..' ../exclusion_list.txt
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_VAR_NOT_ADDED_TO_EXCLUSION_LIST_02"
   fi
-  grep --quiet '18:12:1.\... -27:55:..\..' ../exclusion_list.txt
+  grep -q '18:12:1.\... -27:55:..\..' ../exclusion_list.txt
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_VAR_NOT_ADDED_TO_EXCLUSION_LIST_03"
   fi
-  grep --quiet '18:15:4.\... -30:23:..\..' ../exclusion_list.txt
+  grep -q '18:15:4.\... -30:23:..\..' ../exclusion_list.txt
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_VAR_NOT_ADDED_TO_EXCLUSION_LIST_04"
   fi
   # The hot pixels should not be in the exclusion list
-  grep --quiet '18:10:4.\... -32:58:2.\..' ../exclusion_list.txt
+  grep -q '18:10:4.\... -32:58:2.\..' ../exclusion_list.txt
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_HOT_PIXEL_IN_EXCLUSION_LIST_01"
   fi
-  grep --quiet '18:13:2.\... -27:12:2.\..' ../exclusion_list.txt
+  grep -q '18:13:2.\... -27:12:2.\..' ../exclusion_list.txt
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_HOT_PIXEL_IN_EXCLUSION_LIST_02"
   fi
-  grep --quiet '18:21:3.\... -28:45:0.\..' ../exclusion_list.txt
+  grep -q '18:21:3.\... -28:45:0.\..' ../exclusion_list.txt
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_HOT_PIXEL_IN_EXCLUSION_LIST_03"
   fi
-  grep --quiet '18:31:5.\... -32:00:5.\..' ../exclusion_list.txt
+  grep -q '18:31:5.\... -32:00:5.\..' ../exclusion_list.txt
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_HOT_PIXEL_IN_EXCLUSION_LIST_03"
@@ -16160,7 +16160,7 @@ $GREP_RESULT"
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN000_EXIT_CODE"
  fi
  if [ -f transient_report/index.html ];then
-  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
+  grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_ERROR_MESSAGE_IN_index_html"
@@ -16174,23 +16174,23 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN001"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN002"
   fi
-  #grep --quiet "First image: 2456030.54275 13.04.2012 01:01:19" transient_report/index.html
+  #grep -q "First image: 2456030.54275 13.04.2012 01:01:19" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456030.54275 13.04.2012 01:01:19' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN003"
   fi
-  #grep --quiet "Last  image: 2459094.23281 01.09.2020 17:35:05" transient_report/index.html
+  #grep -q "Last  image: 2459094.23281 01.09.2020 17:35:05" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459094.23281 01.09.2020 17:35:05' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -16203,19 +16203,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN0_nonzero_ref_frame_rotation"
@@ -16224,7 +16224,7 @@ $CAT_RESULT"
 ###### NMWSGR9CRASH_RERUN0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN0_nonzero_ref_frame_rotation_test2"
@@ -16250,7 +16250,7 @@ $GREP_RESULT"
   #for HOT_PIXEL_XY in "0683 2080" "1201 0959" "1389 1252" "2855 2429" "1350 1569" "1806 1556" "3166 1895" "2416 0477" "2864 2496" "1158 1418" "0618 1681" "2577 0584" "2384 0291" "1034 1921" "2298 1573" "2508 1110" "1098 0166" "3181 0438" "0071 1242" "0782 1150" ;do
   # "1201 0959" "1389 1252" etc - do not get found on all test systems
   #for HOT_PIXEL_XY in "0683 2080" "3166 1895" "2508 1110" "1098 0166" ;do
-  # grep --quiet "$HOT_PIXEL_XY" transient_report/index.html
+  # grep -q "$HOT_PIXEL_XY" transient_report/index.html
   # if [ $? -ne 0 ];then
   #  TEST_PASSED=0
   #  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN_BADPIXNOTFOUND_${HOT_PIXEL_XY// /_}"
@@ -16258,12 +16258,12 @@ $GREP_RESULT"
   #done
   #
   # V1858 Sgr
-  grep --quiet "V1858 Sgr" transient_report/index.html
+  grep -q "V1858 Sgr" transient_report/index.html
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN0110"
   fi
-  grep -B10000 'Processig complete' transient_report/index.html | grep --quiet "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.."
+  grep -B10000 'Processig complete' transient_report/index.html | grep -q "2020 09 01.7326  2459094.2326  11\...  18:21:..\... -34:11:..\.."
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN0110a"
@@ -16276,35 +16276,35 @@ ____ ../exclusion_list.txt ____
 $GREP_RESULT2"
   fi
   # V1278 Sgr
-  grep --quiet "V1278 Sgr" transient_report/index.html
+  grep -q "V1278 Sgr" transient_report/index.html
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN314"
   fi
   # The line may appear in the logs as rejected candidate due to exclusion list, so we check lines before the log starts
-  grep -B10000 'Processig complete' transient_report/index.html | grep --quiet "2020 09 01.7326  2459094.2326  10\.6.  18:08:..\... -34:01:..\.."
+  grep -B10000 'Processig complete' transient_report/index.html | grep -q "2020 09 01.7326  2459094.2326  10\.6.  18:08:..\... -34:01:..\.."
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN314a"
   fi
   # V1577 Sgr
-  grep --quiet "V1577 Sgr" transient_report/index.html
+  grep -q "V1577 Sgr" transient_report/index.html
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN414"
   fi
-  grep -B10000 'Processig complete' transient_report/index.html | grep --quiet "2020 09 01.7326  2459094.2326  10\.6.  18:12:..\... -27:55:..\.."
+  grep -B10000 'Processig complete' transient_report/index.html | grep -q "2020 09 01.7326  2459094.2326  10\.6.  18:12:..\... -27:55:..\.."
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN414a"
   fi
   # V1584 Sgr
-  grep --quiet "V1584 Sgr" transient_report/index.html
+  grep -q "V1584 Sgr" transient_report/index.html
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN514"
   fi
-  grep -B10000 'Processig complete' transient_report/index.html | grep --quiet -e "2020 09 01.7326  2459094.2326  11\.0.  18:15:" -e "2020 09 01.7326  2459094.2326  10\.9.  18:15:"
+  grep -B10000 'Processig complete' transient_report/index.html | grep -q -e "2020 09 01.7326  2459094.2326  11\.0.  18:15:" -e "2020 09 01.7326  2459094.2326  10\.9.  18:15:"
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSGR9CRASH_RERUN514a"
@@ -16441,24 +16441,24 @@ if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_001"
  fi
  if [ -f transient_report/index.html ];then
-  grep --quiet '2 Pallas' transient_report/index.html
+  grep -q '2 Pallas' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_002"
   fi
-  grep --quiet 'EP Vul' transient_report/index.html
+  grep -q 'EP Vul' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_003"
   fi
   # Does not pass no-Gaia-source test
-  #grep --quiet -e 'NSV 11847' -e 'V0556 Vul' transient_report/index.html
+  #grep -q -e 'NSV 11847' -e 'V0556 Vul' transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_004"
   #fi
   # amplitude 0.87mag with default.sex.telephoto_lens_v5
-  #grep --quiet 'ASAS J193002+1950.9' transient_report/index.html
+  #grep -q 'ASAS J193002+1950.9' transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_005"
@@ -16471,22 +16471,22 @@ if [ -d ../NMW_Vul2_magnitude_calibration_exit_code_test/ ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_101"
   fi
   # Make sure we are finding now only the asteroid Pallas and the variables are excluded
-  grep --quiet '2 Pallas' transient_report/index.html
+  grep -q '2 Pallas' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_102"
   fi
-  grep --quiet 'EP Vul' transient_report/index.html
+  grep -q 'EP Vul' transient_report/index.html
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_103"
   fi
-  grep --quiet 'NSV 11847' transient_report/index.html
+  grep -q 'NSV 11847' transient_report/index.html
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_104"
   fi
-  grep --quiet 'ASAS J193002+1950.9' transient_report/index.html
+  grep -q 'ASAS J193002+1950.9' transient_report/index.html
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWEXCLU_105"
@@ -16627,7 +16627,7 @@ if [ -d ../NMW-STL__find_Neptune_test ];then
  fi
  #
  if [ -f transient_report/index.html ];then
-  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
+  grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_ERROR_MESSAGE_IN_index_html"
@@ -16641,23 +16641,23 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE001"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE002"
   fi
-  #grep --quiet "First image: 2459821.46208 29.08.2022 23:05:14" transient_report/index.html
+  #grep -q "First image: 2459821.46208 29.08.2022 23:05:14" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2459821.46208 29.08.2022 23:05:14' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE003"
   fi
-  #grep --quiet "Last  image: 2460145.39289 19.07.2023 21:25:36" transient_report/index.html
+  #grep -q "Last  image: 2460145.39289 19.07.2023 21:25:36" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460145.39289 19.07.2023 21:25:36' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -16670,19 +16670,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_vSTL' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_vSTL' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE0_nonzero_ref_frame_rotation"
@@ -16691,7 +16691,7 @@ $CAT_RESULT"
 ###### NMWSTLFINDNEPTUNE0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE0_nonzero_ref_frame_rotation_test2"
@@ -16713,13 +16713,13 @@ $GREP_RESULT"
   #
   #
   # Neptune
-  grep 'galactic' transient_report/index.html | grep --quiet 'Neptune'
+  grep 'galactic' transient_report/index.html | grep -q 'Neptune'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE0110"
   fi
-  #grep --quiet "2023 07 19.892.  2460145.392.   8...  23:51:5.... -02:13:5..."  transient_report/index.html
-  grep --quiet "2023 07 19\.892.  2460145\.392.   [78]\.[089].  23:51:5.\... -02:1[34]:[05].\.."  transient_report/index.html
+  #grep -q "2023 07 19.892.  2460145.392.   8...  23:51:5.... -02:13:5..."  transient_report/index.html
+  grep -q "2023 07 19\.892.  2460145\.392.   [78]\.[089].  23:51:5.\... -02:1[34]:[05].\.."  transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE0110a"
@@ -16750,12 +16750,12 @@ $GREP_RESULT"
    fi
   fi
   # Klotho
-  grep --quiet "Klotho" transient_report/index.html
+  grep -q "Klotho" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE314"
   fi
-  grep --quiet "2023 07 19\.892.  2460145\.392.  11\...  00:05:2.\... +00:34:..\.." transient_report/index.html
+  grep -q "2023 07 19\.892.  2460145\.392.  11\...  00:05:2.\... +00:34:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE314a"
@@ -16778,12 +16778,12 @@ $GREP_RESULT"
    fi
   fi
   # Nemausa
-  grep --quiet "Nemausa" transient_report/index.html
+  grep -q "Nemausa" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE414"
   fi
-  grep --quiet -e "2023 07 19\.892.  2460145\.392.  11\...  23:41:..\... +03:01:3.\.." -e "2023 07 19\.892.  2460145\.392.  11\...  23:42:0.\... +03:01:3.\.." transient_report/index.html
+  grep -q -e "2023 07 19\.892.  2460145\.392.  11\...  23:41:..\... +03:01:3.\.." -e "2023 07 19\.892.  2460145\.392.  11\...  23:42:0.\... +03:01:3.\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE414a"
@@ -16807,12 +16807,12 @@ $GREP_RESULT"
   fi
   # 
   ## Messalina -- default.sex.telephoto_lens_vSTL invisible with 3/4/4
-  #grep --quiet "Messalina" transient_report/index.html
+  #grep -q "Messalina" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE514"
   #fi
-  #grep --quiet "2023 07 19\.892.  2460145\.392.  13\...  23:41:1.\... -01:10:0.\.." transient_report/index.html
+  #grep -q "2023 07 19\.892.  2460145\.392.  13\...  23:41:1.\... -01:10:0.\.." transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE514a"
@@ -16836,13 +16836,13 @@ $GREP_RESULT"
   #fi
   #
   # Newtonia
-  grep --quiet "Newtonia" transient_report/index.html
+  grep -q "Newtonia" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE614"
   fi
-  #grep --quiet "2023 07 19.892.  2460145.392.  13\...  23:42:2.\... -03:49:..\.." transient_report/index.html
-  grep --quiet "2023 07 19\.892.  2460145\.392.  13\.[345].  23:42:2[567]\... -03:49:3[345]\.." transient_report/index.html
+  #grep -q "2023 07 19.892.  2460145.392.  13\...  23:42:2.\... -03:49:..\.." transient_report/index.html
+  grep -q "2023 07 19\.892.  2460145\.392.  13\.[345].  23:42:2[567]\... -03:49:3[345]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE614a"
@@ -16866,12 +16866,12 @@ $GREP_RESULT"
    fi
   fi
   # Pandora
-  grep --quiet "Pandora" transient_report/index.html
+  grep -q "Pandora" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE714"
   fi
-  grep --quiet "2023 07 19.892.  2460145.392.  12\...  00:18:..\... -03:14:..\.." transient_report/index.html
+  grep -q "2023 07 19.892.  2460145.392.  12\...  00:18:..\... -03:14:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE714a"
@@ -17038,7 +17038,7 @@ if [ -d ../NMW-STL__find_NovaVul24_test ];then
  fi
  #
  if [ -f transient_report/index.html ];then
-  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
+  grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_ERROR_MESSAGE_IN_index_html"
@@ -17052,23 +17052,23 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24001"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24002"
   fi
-  #grep --quiet "First image: 2460232.25743 14.10.2023 18:10:32" transient_report/index.html
+  #grep -q "First image: 2460232.25743 14.10.2023 18:10:32" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2460232.25743 14.10.2023 18:10:32' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24003"
   fi
-  #grep --quiet "Last  image: 2460521.39237 29.07.2024 21:24:51" transient_report/index.html
+  #grep -q "Last  image: 2460521.39237 29.07.2024 21:24:51" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460521.39237 29.07.2024 21:24:51' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -17081,19 +17081,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_vSTL' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_vSTL' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL240_nonzero_ref_frame_rotation"
@@ -17102,7 +17102,7 @@ $CAT_RESULT"
 ###### NMWSTLFINDNVUL240_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL240_nonzero_ref_frame_rotation_test2"
@@ -17123,17 +17123,17 @@ $GREP_RESULT"
   fi
   #
   # Nova Vul 2024 = V615 Vul = PNV J19430751+2100204
-  grep --quiet "V0615 Vul" transient_report/index.html
+  grep -q "V0615 Vul" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24110a"
   fi
-  grep 'galactic' transient_report/index.html | grep --quiet 'PNV J19430751+2100204'
+  grep 'galactic' transient_report/index.html | grep -q 'PNV J19430751+2100204'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL240110"
   fi
-  grep --quiet "2024 07 29\.892.  2460521\.392.  10...  19:43:0.\... +21:00:[12].\.."  transient_report/index.html
+  grep -q "2024 07 29\.892.  2460521\.392.  10...  19:43:0.\... +21:00:[12].\.."  transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL240110a"
@@ -17160,12 +17160,12 @@ $GREP_RESULT"
    fi
   fi
   # Klotho
-  grep --quiet "RT Sge" transient_report/index.html
+  grep -q "RT Sge" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24314"
   fi
-  grep --quiet "2024 07 29\.892.  2460521\.392.  11\...  20:07:1.\... +18:12:2.\.." transient_report/index.html
+  grep -q "2024 07 29\.892.  2460521\.392.  11\...  20:07:1.\... +18:12:2.\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24314a"
@@ -17188,12 +17188,12 @@ $GREP_RESULT"
    fi
   fi
   # CX Sge
-  grep --quiet "CX Sge" transient_report/index.html
+  grep -q "CX Sge" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24414"
   fi
-  grep --quiet "2024 07 29\.892.  2460521\.392.  11\.[89].  20:14:2.\... +20:14:[45].\.." transient_report/index.html
+  grep -q "2024 07 29\.892.  2460521\.392.  11\.[89].  20:14:2.\... +20:14:[45].\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24414a"
@@ -17217,13 +17217,13 @@ $GREP_RESULT"
   fi
   # 
   # UX Sge
-  grep --quiet "UX Sge" transient_report/index.html
+  grep -q "UX Sge" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24614"
   fi
   # vSTL        2024 07  29.8920    2460521.3920  12.55  20:18:07.07  +18:08:22.0
-  grep --quiet "2024 07 29\.892.  2460521\.392.  12\.5.  20:18:0.\... +18:08:[12].\.." transient_report/index.html
+  grep -q "2024 07 29\.892.  2460521\.392.  12\.5.  20:18:0.\... +18:08:[12].\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24614a"
@@ -17246,13 +17246,13 @@ $GREP_RESULT"
    fi
   fi
   # VW Del
-  grep --quiet "VW Del" transient_report/index.html
+  grep -q "VW Del" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24714"
   fi
   #             2024 07 29.8920  2460521.3920  11.52  20:22:34.90 +17:37:30.0 # boinc
-  grep --quiet "2024 07 29\.892.  2460521\.392.  11\.[34567].  20:22:3.\... +17:37:[23].\.." transient_report/index.html
+  grep -q "2024 07 29\.892.  2460521\.392.  11\.[34567].  20:22:3.\... +17:37:[23].\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24714a"
@@ -17281,7 +17281,7 @@ $GREP_RESULT"
   
   ### Pixel scale test (make sure WCS is not corrupted) ###
   for i in wcs_*.fts ;do 
-   util/fov_of_wcs_calibrated_image.sh $i | grep --quiet '13.[78][89012]"/pix' 
+   util/fov_of_wcs_calibrated_image.sh $i | grep -q '13.[78][89012]"/pix' 
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24714a_IMGSCALE_$i"
@@ -17300,13 +17300,13 @@ $GREP_RESULT"
     fi
     if [ -f "pv$$.fits" ];then
      FITS_HEADER=$(util/listhead "pv$$.fits")
-     echo "$FITS_HEADER" | grep --quiet 'RA---TPV' && echo "$FITS_HEADER" | grep --quiet 'DEC--TPV'
+     echo "$FITS_HEADER" | grep -q 'RA---TPV' && echo "$FITS_HEADER" | grep -q 'DEC--TPV'
      if [ $? -ne 0 ];then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_SIP2PV_header1_$FITSFILE"
       break
      fi
-     echo "$FITS_HEADER" | grep --quiet 'PV1_1' && echo "$FITS_HEADER" | grep --quiet 'PV2_1'
+     echo "$FITS_HEADER" | grep -q 'PV1_1' && echo "$FITS_HEADER" | grep -q 'PV2_1'
      if [ $? -ne 0 ];then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_SIP2PV_header2_$FITSFILE"
@@ -17471,7 +17471,7 @@ if [ -d ../NMW-STL__RefFrameMatchFail_test ];then
  #fi
  #
  if [ -f transient_report/index.html ];then
-  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
+  grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_ERROR_MESSAGE_IN_index_html"
@@ -17485,12 +17485,12 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH001"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH002"
@@ -17512,38 +17512,38 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_vSTL' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_vSTL' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_SESETTINGSFILE"
   fi
   #
-  grep --quiet 'Reading dark frame ../NMW-STL__RefFrameMatchFail_test/darks/mdark_STL_-25C_20s_2024-01-12.fit 4008 2672  16 bitpix' transient_report/index.html
+  grep -q 'Reading dark frame ../NMW-STL__RefFrameMatchFail_test/darks/mdark_STL_-25C_20s_2024-01-12.fit 4008 2672  16 bitpix' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_CORRECTDARK"
   fi
-  grep --quiet 'Dark frame is subtracted' transient_report/index.html
+  grep -q 'Dark frame is subtracted' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_DARKSUBMSG"
   fi
-  grep --quiet 'MegaDivider' transient_report/index.html
+  grep -q 'MegaDivider' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_FLAT"
   fi
-  grep --quiet 'SECOND_EPOCH__FIRST_IMAGE=../NMW-STL__RefFrameMatchFail_test/second_epoch_images/fd_044_2024-11-22_15-43-4_001.fts' transient_report/index.html
+  grep -q 'SECOND_EPOCH__FIRST_IMAGE=../NMW-STL__RefFrameMatchFail_test/second_epoch_images/fd_044_2024-11-22_15-43-4_001.fts' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_SECOND_EPOCH__FIRST_IMAGE"
   fi
-  grep --quiet 'SECOND_EPOCH__SECOND_IMAGE=../NMW-STL__RefFrameMatchFail_test/second_epoch_images/fd_044_2024-11-22_15-43-57_002.fts' transient_report/index.html
+  grep -q 'SECOND_EPOCH__SECOND_IMAGE=../NMW-STL__RefFrameMatchFail_test/second_epoch_images/fd_044_2024-11-22_15-43-57_002.fts' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_SECOND_EPOCH__SECOND_IMAGE"
@@ -17551,7 +17551,7 @@ $CAT_RESULT"
   #
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH0_nonzero_ref_frame_rotation"
@@ -17560,7 +17560,7 @@ $CAT_RESULT"
 ###### NMWSTLREFFRAMEMATCH0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH0_nonzero_ref_frame_rotation_test2"
@@ -17581,12 +17581,12 @@ $GREP_RESULT"
   fi
   #
   # 
-  grep --quiet "V0456 Aql" transient_report/index.html
+  grep -q "V0456 Aql" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH314"
   fi
-  grep --quiet "2024 11 22\.6546  2460637\.1546  1[01]\.[89012].  19:41:1.\... +07:24:5.\.." transient_report/index.html
+  grep -q "2024 11 22\.6546  2460637\.1546  1[01]\.[89012].  19:41:1.\... +07:24:5.\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH314a"
@@ -17609,12 +17609,12 @@ $GREP_RESULT"
    fi
   fi
   # 
-  grep --quiet "R Del" transient_report/index.html
+  grep -q "R Del" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH414"
   fi
-  grep --quiet "2024 11 22\.6546  2460637\.1546   7\.[67].  20:14:5.\... +09:05:2[01]\.." transient_report/index.html
+  grep -q "2024 11 22\.6546  2460637\.1546   7\.[67].  20:14:5.\... +09:05:2[01]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH414a"
@@ -17638,12 +17638,12 @@ $GREP_RESULT"
   fi
   # 
   # 
-  grep --quiet "V0727 Aql" transient_report/index.html
+  grep -q "V0727 Aql" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH614"
   fi
-  grep --quiet "2024 11 22\.6546  2460637\.1546  12\.[34].  19:56:5.\... +07:58:[45].\.." transient_report/index.html
+  grep -q "2024 11 22\.6546  2460637\.1546  12\.[34].  19:56:5.\... +07:58:[45].\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH614a"
@@ -17666,12 +17666,12 @@ $GREP_RESULT"
    fi
   fi
   #
-  grep --quiet "V0633 Aql" transient_report/index.html
+  grep -q "V0633 Aql" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH714"
   fi
-  grep --quiet "2024 11 22\.6546  2460637\.1546  12\.5.  19:36:[23][90]\... +09:48:0.\.." transient_report/index.html
+  grep -q "2024 11 22\.6546  2460637\.1546  12\.5.  19:36:[23][90]\... +09:48:0.\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH714a"
@@ -17698,12 +17698,12 @@ $GREP_RESULT"
    fi
   fi
   #
-  grep --quiet "HI Aql" transient_report/index.html
+  grep -q "HI Aql" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH814"
   fi
-  grep --quiet "2024 11 22\.6546  2460637\.1546  10\.[89].  20:07:2.\... +09:33:3.\.." transient_report/index.html
+  grep -q "2024 11 22\.6546  2460637\.1546  10\.[89].  20:07:2.\... +09:33:3.\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH814a"
@@ -17730,12 +17730,12 @@ $GREP_RESULT"
    fi
   fi
   #
-  grep --quiet "V0757 Aql" transient_report/index.html
+  grep -q "V0757 Aql" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH914"
   fi
-  grep --quiet "2024 11 22\.6546  2460637\.1546  12\.5.  20:00:[12].\... +09:54:2.\.." transient_report/index.html
+  grep -q "2024 11 22\.6546  2460637\.1546  12\.5.  20:00:[12].\... +09:54:2.\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH914a"
@@ -17762,12 +17762,12 @@ $GREP_RESULT"
    fi
   fi
   #
-  grep --quiet "RU Aql" transient_report/index.html
+  grep -q "RU Aql" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1014"
   fi
-  grep --quiet "2024 11 22\.6546  2460637\.1546  [ 1][90].[90].  20:12:4.\... +12:59:3.\.." transient_report/index.html
+  grep -q "2024 11 22\.6546  2460637\.1546  [ 1][90].[90].  20:12:4.\... +12:59:3.\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1014a"
@@ -17794,12 +17794,12 @@ $GREP_RESULT"
    fi
   fi
   #
-  grep --quiet "RT Aql" transient_report/index.html
+  grep -q "RT Aql" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1114"
   fi
-  grep --quiet "2024 11 22\.6546  2460637\.1546   9.[123].  19:38:0.... +11:43:1.\.." transient_report/index.html
+  grep -q "2024 11 22\.6546  2460637\.1546   9.[123].  19:38:0.... +11:43:1.\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1114a"
@@ -17826,12 +17826,12 @@ $GREP_RESULT"
    fi
   fi
   #
-  grep --quiet "V0436 Aql" transient_report/index.html
+  grep -q "V0436 Aql" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1214"
   fi
-  grep --quiet "2024 11 22\.6546  2460637\.1546  11\.3.  20:04:[34].\... +11:45:1.\.." transient_report/index.html
+  grep -q "2024 11 22\.6546  2460637\.1546  11\.3.  20:04:[34].\... +11:45:1.\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1214a"
@@ -17860,7 +17860,7 @@ $GREP_RESULT"
   
   ### Pixel scale test (make sure WCS is not corrupted) ###
   for i in wcs_*.fts ;do 
-   util/fov_of_wcs_calibrated_image.sh $i | grep --quiet '13.[78][89012]"/pix' 
+   util/fov_of_wcs_calibrated_image.sh $i | grep -q '13.[78][89012]"/pix' 
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_IMGSCALE_$i"
@@ -17879,13 +17879,13 @@ $GREP_RESULT"
     fi
     if [ -f "pv$$.fits" ];then
      FITS_HEADER=$(util/listhead "pv$$.fits")
-     echo "$FITS_HEADER" | grep --quiet 'RA---TPV' && echo "$FITS_HEADER" | grep --quiet 'DEC--TPV'
+     echo "$FITS_HEADER" | grep -q 'RA---TPV' && echo "$FITS_HEADER" | grep -q 'DEC--TPV'
      if [ $? -ne 0 ];then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_SIP2PV_header1_$FITSFILE"
       break
      fi
-     echo "$FITS_HEADER" | grep --quiet 'PV1_1' && echo "$FITS_HEADER" | grep --quiet 'PV2_1'
+     echo "$FITS_HEADER" | grep -q 'PV1_1' && echo "$FITS_HEADER" | grep -q 'PV2_1'
      if [ $? -ne 0 ];then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH_SIP2PV_header2_$FITSFILE"
@@ -18003,7 +18003,7 @@ if [ -d ../NMW-STL__STL-11000M__find_huge_comet_test ];then
  fi
  #
  if [ -f transient_report/index.html ];then
-  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
+  grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET_ERROR_MESSAGE_IN_index_html"
@@ -18017,23 +18017,23 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET001"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET002"
   fi
-  #grep --quiet "First image: 2460232.25743 14.10.2023 18:10:32" transient_report/index.html
+  #grep -q "First image: 2460232.25743 14.10.2023 18:10:32" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2459821.29554398 29.08.2022 19:05:25.000' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET003"
   fi
-  #grep --quiet "Last  image: 2460521.39237 29.07.2024 21:24:51" transient_report/index.html
+  #grep -q "Last  image: 2460521.39237 29.07.2024 21:24:51" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460614.18384259 30.10.2024 16:24:34.000' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -18046,19 +18046,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_vSTL' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_vSTL' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET0_nonzero_ref_frame_rotation"
@@ -18067,7 +18067,7 @@ $CAT_RESULT"
 ###### NMWSTLFINDCOMET0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET0_nonzero_ref_frame_rotation_test2"
@@ -18089,7 +18089,7 @@ $GREP_RESULT"
   #
   #
   # The comet C/2023 A3 (Tsuchinshan-ATLAS)
-  grep --quiet "2024 10 30\.683.  2460614\.183.  ..\...  17:53:..\... +03:40:..\.."  transient_report/index.html
+  grep -q "2024 10 30\.683.  2460614\.183.  ..\...  17:53:..\... +03:40:..\.."  transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET0110a"
@@ -18116,12 +18116,12 @@ $GREP_RESULT"
    fi
   fi
   # 
-  grep --quiet "SV Oph" transient_report/index.html
+  grep -q "SV Oph" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET314"
   fi
-  grep --quiet "2024 10 30\.683.  2460614\.183.   9.9.  17:56:24\... +03:22:3[78]\.." transient_report/index.html
+  grep -q "2024 10 30\.683.  2460614\.183.   9.9.  17:56:24\... +03:22:3[78]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET314a"
@@ -18144,12 +18144,12 @@ $GREP_RESULT"
    fi
   fi
   # 
-  grep --quiet "ASAS J173712-0043.7" transient_report/index.html
+  grep -q "ASAS J173712-0043.7" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET414"
   fi
-  grep --quiet "2024 10 30\.683.  2460614\.183.  11\...  17:37:12\... -00:43:[34].\.." transient_report/index.html
+  grep -q "2024 10 30\.683.  2460614\.183.  11\...  17:37:12\... -00:43:[34].\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDCOMET414a"
@@ -18297,7 +18297,7 @@ if [ -d ../TICA_TESS__find_NovaVul24_test ];then
  fi
  #
  if [ -f transient_report/index.html ];then
-  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
+  grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24_ERROR_MESSAGE_IN_index_html"
@@ -18311,25 +18311,25 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24001"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24002"
   fi
-  #grep --quiet "First image: 2460521.04571 29.07.2024 13:04:31" transient_report/index.html
-  #grep --quiet "First image: 2460521.04571 29.07.2024 13:04:30" transient_report/index.html
+  #grep -q "First image: 2460521.04571 29.07.2024 13:04:31" transient_report/index.html
+  #grep -q "First image: 2460521.04571 29.07.2024 13:04:30" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2460521.04571 29.07.2024 13:04:30' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24003"
   fi
-  #grep --quiet "Last  image: 2460521.30034 29.07.2024 19:11:11" transient_report/index.html
-  #grep --quiet "Last  image: 2460521.30034 29.07.2024 19:11:10" transient_report/index.html
+  #grep -q "Last  image: 2460521.30034 29.07.2024 19:11:11" transient_report/index.html
+  #grep -q "Last  image: 2460521.30034 29.07.2024 19:11:10" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460521.30034 29.07.2024 19:11:10' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -18342,19 +18342,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=APASS_I' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=APASS_I' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.TICA_TESS' transient_report/index.html
+  grep -q 'default.sex.TICA_TESS' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL240_nonzero_ref_frame_rotation"
@@ -18363,7 +18363,7 @@ $CAT_RESULT"
 ###### TICATESSFINDNVUL240_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL240_nonzero_ref_frame_rotation_test2"
@@ -18385,17 +18385,17 @@ $GREP_RESULT"
   #
   #
   # Nova Vul 2024 = V615 Vul = PNV J19430751+2100204
-  grep --quiet "V0615 Vul" transient_report/index.html
+  grep -q "V0615 Vul" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL24110a"
   fi
-  grep 'galactic' transient_report/index.html | grep --quiet 'PNV J19430751+2100204'
+  grep 'galactic' transient_report/index.html | grep -q 'PNV J19430751+2100204'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL240110"
   fi
-  grep --quiet "2024 07 29\.799.  2460521\.299.   9\.[89].  19:43:07\... +21:00:20\.."  transient_report/index.html
+  grep -q "2024 07 29\.799.  2460521\.299.   9\.[89].  19:43:07\... +21:00:20\.."  transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFINDNVUL240110a"
@@ -18551,7 +18551,7 @@ if [ -d ../NMW-STL__plate_solve_failure_test ];then
  fi
  #
  if [ -f transient_report/index.html ];then
-  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
+  grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_ERROR_MESSAGE_IN_index_html"
@@ -18565,23 +18565,23 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE001"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE002"
   fi
-  #grep --quiet "First image: 2459819.35199 27.08.2022 20:26:42" transient_report/index.html
+  #grep -q "First image: 2459819.35199 27.08.2022 20:26:42" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2459819.35199 27.08.2022 20:26:42' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE003"
   fi
-  #grep --quiet "Last  image: 2460177.36831 20.08.2023 20:50:12" transient_report/index.html
+  #grep -q "Last  image: 2460177.36831 20.08.2023 20:50:12" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460177.36831 20.08.2023 20:50:12' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -18594,19 +18594,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_vSTL' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_vSTL' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE0_nonzero_ref_frame_rotation"
@@ -18615,7 +18615,7 @@ $CAT_RESULT"
 ###### NMWSTLPLATESOLVEFAILURE0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE0_nonzero_ref_frame_rotation_test2"
@@ -18636,13 +18636,13 @@ $GREP_RESULT"
   fi
   #
   # Amphitrite
-  grep --quiet "Amphitrite" transient_report/index.html
+  grep -q "Amphitrite" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE314"
   fi
   #             2023 08 20.8680  2460177.3680  9.81  00:55:42.04 +06:08:05.9
-  grep --quiet -e "2023 08 20\.8680  2460177\.3680   9\...  00:55:..\... +06:07:..\.." -e "2023 08 20\.8680  2460177\.3680  9\...  00:55:..\... +06:08:..\.." transient_report/index.html
+  grep -q -e "2023 08 20\.8680  2460177\.3680   9\...  00:55:..\... +06:07:..\.." -e "2023 08 20\.8680  2460177\.3680  9\...  00:55:..\... +06:08:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE314a"
@@ -18665,12 +18665,12 @@ $GREP_RESULT"
    fi
   fi
   # Fredegundis
-  grep --quiet "Fredegundis" transient_report/index.html
+  grep -q "Fredegundis" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE414"
   fi
-  grep --quiet "2023 08 20\.8680  2460177\.3680  12\...  00:35:0.\... +14:05:..\.." transient_report/index.html
+  grep -q "2023 08 20\.8680  2460177\.3680  12\...  00:35:0.\... +14:05:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLPLATESOLVEFAILURE414a"
@@ -18930,7 +18930,7 @@ if [ -d ../NMW-STL__NovaOph24N1_test ];then
  fi
  #
  if [ -f transient_report/index.html ];then
-  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
+  grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_ERROR_MESSAGE_IN_index_html"
@@ -18944,23 +18944,23 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24001"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24002"
   fi
-  #grep --quiet "First image: 2459821.27843 29.08.2022 18:40:46" transient_report/index.html
+  #grep -q "First image: 2459821.27843 29.08.2022 18:40:46" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2459821.27843 29.08.2022 18:40:46' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24003"
   fi
-  #grep --quiet "Last  image: 2460380.60719 11.03.2024 02:34:11" transient_report/index.html
+  #grep -q "Last  image: 2460380.60719 11.03.2024 02:34:11" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460380.60719 11.03.2024 02:34:11' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -18973,19 +18973,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_vSTL' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_vSTL' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH240_nonzero_ref_frame_rotation"
@@ -18994,7 +18994,7 @@ $CAT_RESULT"
 ###### NMWSTLNOPH240_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH240_nonzero_ref_frame_rotation_test2"
@@ -19015,14 +19015,14 @@ $GREP_RESULT"
   fi
   #
   # V4370 Oph
-  grep --quiet "V4370 Oph" transient_report/index.html
+  grep -q "V4370 Oph" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24314"
   fi
   #                           !             !
   #             2024 03 11.1068  2460380.6069  10.28  17:39:57.13 -26:27:42.4
-  grep --quiet "2024 03 11.106.  2460380.606.  10\...  17:39:5[67]\... -26:27:4[123]\.." transient_report/index.html
+  grep -q "2024 03 11.106.  2460380.606.  10\...  17:39:5[67]\... -26:27:4[123]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24314a"
@@ -19045,7 +19045,7 @@ $GREP_RESULT"
    fi
   fi
   # V1858 Sgr
-  grep --quiet "V1858 Sgr" transient_report/index.html
+  grep -q "V1858 Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24414"
@@ -19054,7 +19054,7 @@ $GREP_RESULT"
   #             2024 03 11.1068  2460380.6069  11.40  18:21:40.17 -34:11:21.6
   # vSTL        2024 03 11.1068  2460380.6069  11.37  18:21:39.99 -34:11:22.7
   # vSTL@epsilon2024 03 11.1068  2460380.6069  11.37  18:21:39.99 -34:11:23.1
-  grep --quiet "2024 03 11\.106.  2460380\.606.  11\.[23456].  18:21:[34].\... -34:11:[123].\.." transient_report/index.html
+  grep -q "2024 03 11\.106.  2460380\.606.  11\.[23456].  18:21:[34].\... -34:11:[123].\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24414a"
@@ -19078,7 +19078,7 @@ $GREP_RESULT"
   fi
   # 
   # V2905 Sgr
-  grep --quiet "V2905 Sgr" transient_report/index.html
+  grep -q "V2905 Sgr" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24415"
@@ -19087,7 +19087,7 @@ $GREP_RESULT"
   #             2024 03 11.1068  2460380.6069  10.69  18:17:20.43 -28:09:50.3
   #             2024 03 11.1068  2460380.6069  10.69  18:17:20.43 -28:09:50.3  -- ariel
   #             2024 03 11.1068  2460380.6069  10.69  18:17:20.38 -28:09:49.9  -- eridan
-  grep --quiet -e "2024 03 11\.106.  2460380\.606.  10\...  18:17:20\... -28:09:50\.." -e "2024 03 11\.106.  2460380\.606.  10\...  18:17:20\... -28:09:49\.." transient_report/index.html
+  grep -q -e "2024 03 11\.106.  2460380\.606.  10\...  18:17:20\... -28:09:50\.." -e "2024 03 11\.106.  2460380\.606.  10\...  18:17:20\... -28:09:49\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24415a"
@@ -19122,7 +19122,7 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_empty_$FILE_TO_CHECK"
     continue
    fi
-   grep --quiet '00:00:00.00' "$FILE_TO_CHECK"
+   grep -q '00:00:00.00' "$FILE_TO_CHECK"
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLNOPH24_00:00:00.00_in_$FILE_TO_CHECK"
@@ -19259,7 +19259,7 @@ if [ -d ../NMW__NovaOph24N1_test ];then
  fi
  #
  if [ -f transient_report/index.html ];then
-  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
+  grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_ERROR_MESSAGE_IN_index_html"
@@ -19273,23 +19273,23 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24001"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24002"
   fi
-  #grep --quiet "First image: 2456005.58950 19.03.2012 02:08:33" transient_report/index.html
+  #grep -q "First image: 2456005.58950 19.03.2012 02:08:33" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456005.58950 19.03.2012 02:08:33' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24003"
   fi
-  #grep --quiet "Last  image: 2460380.60800 11.03.2024 02:35:21" transient_report/index.html
+  #grep -q "Last  image: 2460380.60800 11.03.2024 02:35:21" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460380.60800 11.03.2024 02:35:21' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -19302,19 +19302,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_TYCHO2_V"
   fi
-  grep --quiet 'default.sex.telephoto_lens_v4' transient_report/index.html
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH240_nonzero_ref_frame_rotation"
@@ -19323,7 +19323,7 @@ $CAT_RESULT"
 ###### NMWNOPH240_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH240_nonzero_ref_frame_rotation_test2"
@@ -19338,7 +19338,7 @@ $GREP_RESULT"
   fi
   #
   # AAVSO stub format test
-  grep --quiet "V4370 Oph,2460380.607" transient_report/index.html
+  grep -q "V4370 Oph,2460380.607" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24314_AAVSOSTUB"
@@ -19350,7 +19350,7 @@ $GREP_RESULT"
   #
   #
   # V4370 Oph
-  grep --quiet "V4370 Oph" transient_report/index.html
+  grep -q "V4370 Oph" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24314"
@@ -19358,7 +19358,7 @@ $GREP_RESULT"
   #                           !             !
   #                   2024 03 11.1076  2460380.6076  10.29  17:39:57.01 -26:27:41.1
   #                   2024 03 11.1076  2460380.6076  10.29  17:39:56.92 -26:27:41.0 - opc@vast-tester
-  grep --quiet "2024 03 11.107.  2460380.607.  10\...  17:39:5[67]\... -26:27:4[01]\.." transient_report/index.html
+  grep -q "2024 03 11.107.  2460380.607.  10\...  17:39:5[67]\... -26:27:4[01]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24314a"
@@ -19412,7 +19412,7 @@ $GREP_RESULT"
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_empty_$FILE_TO_CHECK"
     continue
    fi
-   grep --quiet '00:00:00.00' "$FILE_TO_CHECK"
+   grep -q '00:00:00.00' "$FILE_TO_CHECK"
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNOPH24_00:00:00.00_in_$FILE_TO_CHECK"
@@ -19554,7 +19554,7 @@ if [ -d ../TICA_TESS_mag_calibration_failure_test ];then
  fi
  #
  if [ -f transient_report/index.html ];then
-  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
+  grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_ERROR_MESSAGE_IN_index_html"
@@ -19568,30 +19568,30 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE001"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE002"
   fi
-  #grep --quiet "First image: 2460175.19308" transient_report/index.html
+  #grep -q "First image: 2460175.19308" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2460175.19307695 18.08.2023 16:36:42.648' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE003"
   fi
-  #grep --quiet "Last  image: 2460176.20465" transient_report/index.html
+  #grep -q "Last  image: 2460176.20465" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460176.20465055 19.08.2023 16:53:22.608' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE004"
   fi
   #
-  #grep --quiet "Estimated ref. image limiting mag.:  14.24" transient_report/index.html
+  #grep -q "Estimated ref. image limiting mag.:  14.24" transient_report/index.html
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_REF_IMG_LIMIT"
@@ -19621,19 +19621,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=APASS_I' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=APASS_I' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_APASS_I"
   fi
-  grep --quiet 'default.sex.TICA_TESS' transient_report/index.html
+  grep -q 'default.sex.TICA_TESS' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE0_nonzero_ref_frame_rotation"
@@ -19642,7 +19642,7 @@ $CAT_RESULT"
 ###### TICATESSMAGCALIBFAILURE0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSMAGCALIBFAILURE0_nonzero_ref_frame_rotation_test2"
@@ -19816,7 +19816,7 @@ if [ -d ../TICA_TESS__zeroRA_test ];then
  fi
  #
  if [ -f transient_report/index.html ];then
-  grep -v -i 'Soft' transient_report/index.html | grep --quiet 'ERROR'
+  grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_ERROR_MESSAGE_IN_index_html"
@@ -19830,23 +19830,23 @@ $GREP_RESULT
 $CAT_RESULT"
   fi
   # The copy of the log file should be in the HTML report
-  grep --quiet "Images processed 4" transient_report/index.html
+  grep -q "Images processed 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA001"
   fi
-  grep --quiet "Images used for photometry 4" transient_report/index.html
+  grep -q "Images used for photometry 4" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA002"
   fi
-  #grep --quiet "First image: 2460175.19308" transient_report/index.html
+  #grep -q "First image: 2460175.19308" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2460820.72612382 25.05.2025 05:24:17.898' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA003"
   fi
-  #grep --quiet "Last  image: 2460176.20465" transient_report/index.html
+  #grep -q "Last  image: 2460176.20465" transient_report/index.html
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460820.98075333 25.05.2025 11:30:57.888' 1 transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -19875,7 +19875,7 @@ $CAT_RESULT"
   fi
   #
   #
-  grep --quiet "Klio" transient_report/index.html
+  grep -q "Klio" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Klio_name"
@@ -19909,7 +19909,7 @@ $CAT_RESULT"
   fi
   #                           !             !
   #             2025 05 25.4796  2460820.9796  13.04  23:49:57.18 -01:15:22.0
-  grep --quiet "2025 05 25\.479.  2460820\.979.  13\.0.  23:49:5[67]\... -01:15:2[12]\.." transient_report/index.html
+  grep -q "2025 05 25\.479.  2460820\.979.  13\.0.  23:49:5[67]\... -01:15:2[12]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Klio_position"
@@ -19933,14 +19933,14 @@ $CAT_RESULT"
   fi
   #
   #
-  grep --quiet "Stereoskopia" transient_report/index.html
+  grep -q "Stereoskopia" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Stereoskopia_name"
   fi
   #                           !             !
   #             2025 05 25.4796  2460820.9796  13.58  23:52:16.53 -05:41:15.1
-  grep --quiet "2025 05 25\.479.  2460820\.979.  13\.5.  23:52:16\... -05:41:1[45]\.." transient_report/index.html
+  grep -q "2025 05 25\.479.  2460820\.979.  13\.5.  23:52:16\... -05:41:1[45]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Stereoskopia_position"
@@ -19964,14 +19964,14 @@ $CAT_RESULT"
   fi
   #
   #
-  grep --quiet "Italia" transient_report/index.html
+  grep -q "Italia" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Italia_name"
   fi
   #                           !             !
   #             2025 05 25.4796  2460820.9796  13.97  23:22:05.14 -08:42:02.2
-  grep --quiet "2025 05 25\.479.  2460820\.979.  1[34]\.[09].  23:22:0[45]\... -08:42:0[12]\.." transient_report/index.html
+  grep -q "2025 05 25\.479.  2460820\.979.  1[34]\.[09].  23:22:0[45]\... -08:42:0[12]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Italia_position"
@@ -19995,14 +19995,14 @@ $CAT_RESULT"
   fi
   #
   #
-  grep --quiet "Whittemora" transient_report/index.html
+  grep -q "Whittemora" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Whittemora_name"
   fi
   #                           !             !
   #             2025 05 25.4796  2460820.9796  14.51  00:00:00.08 -08:32:14.2
-  grep --quiet "2025 05 25\.479.  2460820\.979.  14\.[45].  00:00:00\... -08:32:1[34]\.." transient_report/index.html
+  grep -q "2025 05 25\.479.  2460820\.979.  14\.[45].  00:00:00\... -08:32:1[34]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Whittemora_position"
@@ -20026,14 +20026,14 @@ $CAT_RESULT"
   fi
   #
   #
-  grep --quiet "Otthild" transient_report/index.html
+  grep -q "Otthild" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Otthild_name"
   fi
   #                           !             !
   #             2025 05 25.4796  2460820.9796  14.53  23:29:58.96 -14:27:56.1
-  grep --quiet "2025 05 25\.479.  2460820\.979.  14\.[45].  23:29:5[89]\... -14:27:5[56]\.." transient_report/index.html
+  grep -q "2025 05 25\.479.  2460820\.979.  14\.[45].  23:29:5[89]\... -14:27:5[56]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Otthild_position"
@@ -20057,14 +20057,14 @@ $CAT_RESULT"
   fi
   #
   #
-  grep --quiet "Laurentia" transient_report/index.html
+  grep -q "Laurentia" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Laurentia_name"
   fi
   #                           !             !
   #             2025 05 25.4796  2460820.9796  14.71  23:37:16.76 -07:54:39.2
-  grep --quiet "2025 05 25\.479.  2460820\.979.  14\.[67].  23:37:1[67]\... -07:54:3[89]\.." transient_report/index.html
+  grep -q "2025 05 25\.479.  2460820\.979.  14\.[67].  23:37:1[67]\... -07:54:3[89]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Laurentia_position"
@@ -20088,14 +20088,14 @@ $CAT_RESULT"
   fi
   #
   # Melusina - blended with previously detected star so should be flound as "flare"
-  grep --quiet "Melusina" transient_report/index.html
+  grep -q "Melusina" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Melusina_name"
   fi
   #                           !             !
   #             2025 05 25.4796  2460820.9796  13.84  23:39:27.54 -11:23:21.7
-  grep --quiet "2025 05 25\.479.  2460820\.979.  13\.[789].  23:39:2[678]\... -11:23:2[12]\.." transient_report/index.html
+  grep -q "2025 05 25\.479.  2460820\.979.  13\.[789].  23:39:2[678]\... -11:23:2[12]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Melusina_position"
@@ -20133,19 +20133,19 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_check_dates_consistency_in_vast_image_details_log"
   fi
   #
-  grep --quiet 'PHOTOMETRIC_CALIBRATION=APASS_I' transient_report/index.html
+  grep -q 'PHOTOMETRIC_CALIBRATION=APASS_I' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_APASS_I"
   fi
-  grep --quiet 'default.sex.TICA_TESS' transient_report/index.html
+  grep -q 'default.sex.TICA_TESS' transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_SESETTINGSFILE"
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA0_nonzero_ref_frame_rotation"
@@ -20154,7 +20154,7 @@ $CAT_RESULT"
 ###### TICATESSZERORA0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA0_nonzero_ref_frame_rotation_test2"
@@ -20302,23 +20302,23 @@ if [ -d ../KZ_Her_DSLR_transient_search_test ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 4" vast_summary.log
+  grep -q "Images processed 4" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER001"
   fi
-  grep --quiet "Images used for photometry 4" vast_summary.log
+  grep -q "Images used for photometry 4" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER002"
   fi
-  #grep --quiet "First image: 2456897.40709 27.08.2014 21:45:57" vast_summary.log
+  #grep -q "First image: 2456897.40709 27.08.2014 21:45:57" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456897.40709 27.08.2014 21:45:57' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER003"
   fi
-  #grep --quiet "Last  image: 2456982.24706 20.11.2014 17:55:30" vast_summary.log
+  #grep -q "Last  image: 2456982.24706 20.11.2014 17:55:30" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2456982.24706 20.11.2014 17:55:30' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -20332,7 +20332,7 @@ if [ -d ../KZ_Her_DSLR_transient_search_test ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER0_nonzero_ref_frame_rotation"
@@ -20341,7 +20341,7 @@ if [ -d ../KZ_Her_DSLR_transient_search_test ];then
 ###### DSLRKZHER0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER0_nonzero_ref_frame_rotation_test2"
@@ -20368,18 +20368,18 @@ $GREP_RESULT"
    cp lightcurve.tmp_emergency_stop_debug DSLRKZHER_magcalibr_emergency__lightcurve.tmp_emergency_stop_debug
   fi
   ###########################################################
-  grep --quiet "KZ Her" transient_report/index.html
+  grep -q "KZ Her" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER006"
   fi
   #grep "NSV 11188" transient_report/index.html
-  grep --quiet -e "V1451 Her" -e "NSV 11188" transient_report/index.html
+  grep -q -e "V1451 Her" -e "NSV 11188" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER007"
   fi
-  grep --quiet "V0515 Oph" transient_report/index.html
+  grep -q "V0515 Oph" transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER008"
@@ -20467,29 +20467,29 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 3" vast_summary.log
+  grep -q "Images processed 3" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600001"
   fi
-  grep --quiet "Images used for photometry 3" vast_summary.log
+  grep -q "Images used for photometry 3" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600002"
   fi
-  #grep --quiet "Ref.  image: 2459292.18307 18.03.2021 16:23:32" vast_summary.log
+  #grep -q "Ref.  image: 2459292.18307 18.03.2021 16:23:32" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Ref.  image: 2459292.18307 18.03.2021 16:23:32' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600_REFIMAGE"
   fi
-  #grep --quiet "First image: 2459292.18307 18.03.2021 16:23:32" vast_summary.log
+  #grep -q "First image: 2459292.18307 18.03.2021 16:23:32" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2459292.18307 18.03.2021 16:23:32' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600003"
   fi
-  #grep --quiet "Last  image: 2459292.18455 18.03.2021 16:25:40" vast_summary.log
+  #grep -q "Last  image: 2459292.18455 18.03.2021 16:25:40" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459292.18455 18.03.2021 16:25:40' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -20575,29 +20575,29 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 3" vast_summary.log
+  grep -q "Images processed 3" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B001"
   fi
-  grep --quiet "Images used for photometry 3" vast_summary.log
+  grep -q "Images used for photometry 3" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B002"
   fi
-  #grep --quiet "Ref.  image: 2459292.18279 18.03.2021 16:23:03" vast_summary.log
+  #grep -q "Ref.  image: 2459292.18279 18.03.2021 16:23:03" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Ref.  image: 2459292.18279 18.03.2021 16:23:03' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B_REFIMAGE"
   fi
-  #grep --quiet "First image: 2459292.18279 18.03.2021 16:23:03" vast_summary.log
+  #grep -q "First image: 2459292.18279 18.03.2021 16:23:03" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2459292.18279 18.03.2021 16:23:03' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600B003"
   fi
-  #grep --quiet "Last  image: 2459292.18427 18.03.2021 16:25:11" vast_summary.log
+  #grep -q "Last  image: 2459292.18427 18.03.2021 16:25:11" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459292.18427 18.03.2021 16:25:11' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -20677,29 +20677,29 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 3" vast_summary.log
+  grep -q "Images processed 3" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc001"
   fi
-  grep --quiet "Images used for photometry 3" vast_summary.log
+  grep -q "Images used for photometry 3" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc002"
   fi
-  #grep --quiet "Ref.  image: 2459292.18326 18.03.2021 16:23:51" vast_summary.log
+  #grep -q "Ref.  image: 2459292.18326 18.03.2021 16:23:51" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Ref.  image: 2459292.18326 18.03.2021 16:23:51' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc_REFIMAGE"
   fi
-  #grep --quiet "First image: 2459292.18326 18.03.2021 16:23:51" vast_summary.log
+  #grep -q "First image: 2459292.18326 18.03.2021 16:23:51" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2459292.18326 18.03.2021 16:23:51' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NCAS21RC600Rc003"
   fi
-  #grep --quiet "Last  image: 2459292.18475 18.03.2021 16:25:59" vast_summary.log
+  #grep -q "Last  image: 2459292.18475 18.03.2021 16:25:59" vast_summary.log
   # it was the rounding thing producing 1.06 sec difference
   #                                                      Last  image: 2459292.18473773 18.03.2021 16:25:58.840
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2459292.18473773 18.03.2021 16:25:58.840' 1
@@ -20847,13 +20847,13 @@ if [ -f ../individual_images_test/1630+3250.20150511T215921000.fit ];then
   fi
  fi 
  # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
- util/solve_plate_with_UCAC5 ../individual_images_test/1630+3250.20150511T215921000.fit 2>&1 | grep --quiet 'The output catalog wcs_1630+3250.20150511T215921000.fit.cat.ucac5 already exist.'
+ util/solve_plate_with_UCAC5 ../individual_images_test/1630+3250.20150511T215921000.fit 2>&1 | grep -q 'The output catalog wcs_1630+3250.20150511T215921000.fit.cat.ucac5 already exist.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ULTRAWIDEFIELD003"
  fi
  #
- util/get_image_date ../individual_images_test/1630+3250.20150511T215921000.fit | grep --quiet "Exposure 20 sec, 11.05.2015 21:59:20.999 = JD 2457154.41633101 mid. exp."
+ util/get_image_date ../individual_images_test/1630+3250.20150511T215921000.fit | grep -q "Exposure 20 sec, 11.05.2015 21:59:20.999 = JD 2457154.41633101 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ULTRAWIDEFIELD004"
@@ -20899,12 +20899,12 @@ if [ -f ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit
  echo "SN2023ixf N130 image test " 
  echo -n "SN2023ixf N130 image test: " >> vast_test_report.txt 
  cp default.sex.ccd_example default.sex
- lib/autodetect_aperture_main ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit 2>&1 | grep --quiet -- '-GAIN 1.001'
+ lib/autodetect_aperture_main ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit 2>&1 | grep -q -- '-GAIN 1.001'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN1300EGAIN"
  fi
- lib/try_to_guess_image_fov ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit | grep --quiet '71'
+ lib/try_to_guess_image_fov ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit | grep -q '71'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN1300GUESSFOV"
@@ -20936,14 +20936,14 @@ if [ -f ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit
   fi
  fi 
  # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
- util/solve_plate_with_UCAC5 ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit 2>&1 | grep --quiet 'The output catalog wcs_2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit.cat.ucac5 already exist.'
+ util/solve_plate_with_UCAC5 ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit 2>&1 | grep -q 'The output catalog wcs_2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit.cat.ucac5 already exist.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130003"
  fi
  #
- #util/get_image_date ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit | grep --quiet "Exposure 400 sec, 18.05.2023 20:29:41 UT = JD(UT) 2460083.35626 mid. exp."
- util/get_image_date ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit | grep --quiet "Exposure 400 sec, 18.05.2023 20:29:41.010 UTC = JD(UTC) 2460083.35626169 mid. exp."
+ #util/get_image_date ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit | grep -q "Exposure 400 sec, 18.05.2023 20:29:41 UT = JD(UT) 2460083.35626 mid. exp."
+ util/get_image_date ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit | grep -q "Exposure 400 sec, 18.05.2023 20:29:41.010 UTC = JD(UTC) 2460083.35626169 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130004"
@@ -21029,7 +21029,7 @@ if [ -f ../individual_images_test/c176.fits ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES HOTPIXIMAGE002a_$TEST"
   fi
  fi 
- util/get_image_date ../individual_images_test/c176.fits | grep --quiet "Exposure 120 sec, 02.08.2017 20:31:52 UTC = JD(UTC) 2457968.35616 mid. exp."
+ util/get_image_date ../individual_images_test/c176.fits | grep -q "Exposure 120 sec, 02.08.2017 20:31:52 UTC = JD(UTC) 2457968.35616 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES HOTPIXIMAGE003"
@@ -21095,8 +21095,8 @@ if [ -f ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit 
    FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600002a_$TEST"
   fi
  fi 
- #util/get_image_date ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit | grep --quiet "Exposure  45 sec, 11.06.2019 00:10:29 UT = JD(UT) 2458645.50755 mid. exp."
- util/get_image_date ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit | grep --quiet "Exposure 45 sec, 11.06.2019 00:10:29 UTC = JD(UTC) 2458645.50754 mid. exp."
+ #util/get_image_date ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit | grep -q "Exposure  45 sec, 11.06.2019 00:10:29 UT = JD(UT) 2458645.50755 mid. exp."
+ util/get_image_date ../individual_images_test/SS433-1MHz-76mcs-PreampX4-0016Rc-19-06-10.fit | grep -q "Exposure 45 sec, 11.06.2019 00:10:29 UTC = JD(UTC) 2458645.50754 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600003"
@@ -21160,7 +21160,7 @@ if [ -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fi
  echo "SAI RC600 B image test " 
  echo -n "SAI RC600 B image test: " >> vast_test_report.txt 
  #
- util/get_image_date ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit | grep --quiet "Exposure 60 sec, 16.07.2021 18:02:26.680 UTC = JD(UTC) 2459412.25204491 mid. exp."
+ util/get_image_date ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit | grep -q "Exposure 60 sec, 16.07.2021 18:02:26.680 UTC = JD(UTC) 2459412.25204491 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B003"
@@ -21337,7 +21337,7 @@ $GREP_RESULT"
   fi
 
  fi # check if util/wcs_image_calibration.sh returned 0 exit code
- util/get_image_date ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit | grep --quiet "Exposure 600 sec, 24.06.2019 21:34:19 UTC = JD(UTC) 2458659.40230 mid. exp."
+ util/get_image_date ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit | grep -q "Exposure 600 sec, 24.06.2019 21:34:19 UTC = JD(UTC) 2458659.40230 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED003"
@@ -21448,9 +21448,9 @@ if [ -f ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits ];th
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ_FIT_ROBUST_LINEAR_COEFFB"
  fi
- #util/get_image_date ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits | grep --quiet "Exposure 300 sec, 01.04.2021 18:06:22 UT = JD(UT) 2459306.25616 mid. exp."
- #util/get_image_date ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits | grep --quiet "Exposure 300 sec, 01.04.2021 18:06:21.738 UT = JD(UT) 2459306.25615 mid. exp."
- util/get_image_date ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits | grep --quiet "Exposure 300 sec, 01.04.2021 18:06:21.738 UTC = JD(UTC) 2459306.25615438 mid. exp."
+ #util/get_image_date ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits | grep -q "Exposure 300 sec, 01.04.2021 18:06:22 UT = JD(UT) 2459306.25616 mid. exp."
+ #util/get_image_date ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits | grep -q "Exposure 300 sec, 01.04.2021 18:06:21.738 UT = JD(UT) 2459306.25615 mid. exp."
+ util/get_image_date ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits | grep -q "Exposure 300 sec, 01.04.2021 18:06:21.738 UTC = JD(UTC) 2459306.25615438 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ003"
@@ -21555,8 +21555,8 @@ if [ -f ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits ];the
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2_FIT_ROBUST_LINEAR_COEFFB"
  fi
- #util/get_image_date ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits | grep --quiet "Exposure  60 sec, 31.03.2021 18:22:58 UT = JD(UT) 2459305.26630 mid. exp."
- util/get_image_date ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits | grep --quiet "Exposure 60 sec, 31.03.2021 18:22:58.281 UTC = JD(UTC) 2459305.26629955 mid. exp."
+ #util/get_image_date ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits | grep -q "Exposure  60 sec, 31.03.2021 18:22:58 UT = JD(UT) 2459305.26630 mid. exp."
+ util/get_image_date ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits | grep -q "Exposure 60 sec, 31.03.2021 18:22:58.281 UTC = JD(UTC) 2459305.26629955 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2003"
@@ -21620,8 +21620,8 @@ if [ -f ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits ];t
  # Run the test
  echo "Blank image with MJD-OBS test " 
  echo -n "Blank image with MJD-OBS test: " >> vast_test_report.txt 
- #util/get_image_date ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits | grep --quiet 'JD (mid. exp.) 2450862.85250 = 1998-02-18 08:27:36'
- util/get_image_date ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits | grep --quiet 'JD (mid. exp.) 2450862.85250000 = 1998-02-18 08:27:36.000'
+ #util/get_image_date ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits | grep -q 'JD (mid. exp.) 2450862.85250 = 1998-02-18 08:27:36'
+ util/get_image_date ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits | grep -q 'JD (mid. exp.) 2450862.85250000 = 1998-02-18 08:27:36.000'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES BLANKMJDOBS001"
@@ -21688,7 +21688,7 @@ if [ -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWARCHIVEIMG002a_$TEST"
   fi
  fi 
- util/get_image_date ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts | grep --quiet "Exposure 40 sec, 30.10.2011 23:02:28 UTC = JD(UTC) 2455865.46028 mid. exp."
+ util/get_image_date ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts | grep -q "Exposure 40 sec, 30.10.2011 23:02:28 UTC = JD(UTC) 2455865.46028 mid. exp."
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWARCHIVEIMG003"
@@ -21751,7 +21751,7 @@ if [ -f ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-
   fi
  fi
  # make sure no flag image is created for this one 
- lib/guess_saturation_limit_main ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit 2>&1 | grep --quiet -e 'FLAG_IMAGE' -e 'WEIGHT_IMAGE' -e 'WEIGHT_TYPE'
+ lib/guess_saturation_limit_main ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit 2>&1 | grep -q -e 'FLAG_IMAGE' -e 'WEIGHT_IMAGE' -e 'WEIGHT_TYPE'
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLSKYMARK_FLAG_IMG_CREATED"
@@ -21826,7 +21826,7 @@ if [ -f ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Lum
   fi
  fi
  # make sure no flag image is created for this one 
- lib/guess_saturation_limit_main ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit 2>&1 | grep --quiet -e 'FLAG_IMAGE' -e 'WEIGHT_IMAGE' -e 'WEIGHT_TYPE'
+ lib/guess_saturation_limit_main ../individual_images_test/raw-T33-filippromanov-Nova-20230421-042825-Luminance-BIN1-W-001-016.fit 2>&1 | grep -q -e 'FLAG_IMAGE' -e 'WEIGHT_IMAGE' -e 'WEIGHT_TYPE'
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLVET33NOFOCRED_FLAG_IMG_CREATED"
@@ -22094,13 +22094,13 @@ if [ -f ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits ];the
 $GREP_RESULT"
  fi 
  cp default.sex.ccd_example default.sex
- lib/autodetect_aperture_main ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits 2>&1 | grep --quiet "FLAG_IMAGE image00000.flag"
+ lib/autodetect_aperture_main ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits 2>&1 | grep -q "FLAG_IMAGE image00000.flag"
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES FLAGHST001"
  fi 
- #util/get_image_date ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits | grep --quiet "JD (mid. exp.) 2456311.52320"
- util/get_image_date ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits | grep --quiet "JD (mid. exp.) 2456311.523195"
+ #util/get_image_date ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits | grep -q "JD (mid. exp.) 2456311.52320"
+ util/get_image_date ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits | grep -q "JD (mid. exp.) 2456311.523195"
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES FLAGHST002"
@@ -22147,40 +22147,40 @@ if [ -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.f
  echo "ZTF image header test " 
  echo -n "ZTF image header test: " >> vast_test_report.txt 
  #
- #util/get_image_date ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits | grep --quiet 'Exposure  30 sec, 27.03.2018 12:43:50   = JD  2458205.03061 mid. exp.'
- #util/get_image_date ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits | grep --quiet 'Exposure  30 sec, 27.03.2018 12:43:50.209   = JD  2458205.03062 mid. exp.'
- util/get_image_date ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits | grep --quiet 'Exposure 30 sec, 27.03.2018 12:43:50.209 = JD 2458205.03061584 mid. exp.'
+ #util/get_image_date ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits | grep -q 'Exposure  30 sec, 27.03.2018 12:43:50   = JD  2458205.03061 mid. exp.'
+ #util/get_image_date ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits | grep -q 'Exposure  30 sec, 27.03.2018 12:43:50.209   = JD  2458205.03062 mid. exp.'
+ util/get_image_date ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits | grep -q 'Exposure 30 sec, 27.03.2018 12:43:50.209 = JD 2458205.03061584 mid. exp.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER000"
  fi
  #
- util/get_image_date ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits 2>&1 | grep --quiet 'DATE-OBS= 2018-03-27T12:43:50'
+ util/get_image_date ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits 2>&1 | grep -q 'DATE-OBS= 2018-03-27T12:43:50'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER000a"
  fi
  #
- util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits  | grep --quiet "Image size: 51.9'x52.0'"
+ util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits  | grep -q "Image size: 51.9'x52.0'"
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER000b"
  fi
  #
- util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits  | grep --quiet 'Image scale: 1.01"/pix along the X axis and 1.01"/pix along the Y axis'
+ util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits  | grep -q 'Image scale: 1.01"/pix along the X axis and 1.01"/pix along the Y axis'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER000c"
  fi
  #
- util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits  | grep --quiet 'Image center: 17:47:53.046 -13:08:42.33 J2000 1536.500 1540.500'
+ util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits  | grep -q 'Image center: 17:47:53.046 -13:08:42.33 J2000 1536.500 1540.500'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER000d"
  fi
  #
  #
- lib/try_to_guess_image_fov ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits  | grep --quiet ' 47'
+ lib/try_to_guess_image_fov ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits  | grep -q ' 47'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER000e"
@@ -22238,7 +22238,7 @@ if [ -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.f
   fi # else if [ $TEST -lt 700 ];then
  fi 
  # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
- util/solve_plate_with_UCAC5 ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits 2>&1 | grep --quiet 'The output catalog wcs_ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits.cat.ucac5 already exist.'
+ util/solve_plate_with_UCAC5 ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits 2>&1 | grep -q 'The output catalog wcs_ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits.cat.ucac5 already exist.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER003"
@@ -22282,43 +22282,43 @@ if [ -f ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.f
  echo "ZTF image header test 2 " 
  echo -n "ZTF image header test 2: " >> vast_test_report.txt 
  #
- #util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit | grep --quiet 'Exposure  30 sec, 09.12.2018 10:25:07   = JD  2458461.93428 mid. exp.'
- #util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit | grep --quiet 'Exposure  30 sec, 09.12.2018 10:25:10   = JD  2458461.93432 mid. exp.'
- #util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit | grep --quiet 'Exposure  30 sec, 09.12.2018 10:25:09.789   = JD  2458461.93431 mid. exp.'
- util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit | grep --quiet 'Exposure 30 sec, 09.12.2018 10:25:09.789 = JD 2458461.93431469 mid. exp.'
+ #util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit | grep -q 'Exposure  30 sec, 09.12.2018 10:25:07   = JD  2458461.93428 mid. exp.'
+ #util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit | grep -q 'Exposure  30 sec, 09.12.2018 10:25:10   = JD  2458461.93432 mid. exp.'
+ #util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit | grep -q 'Exposure  30 sec, 09.12.2018 10:25:09.789   = JD  2458461.93431 mid. exp.'
+ util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit | grep -q 'Exposure 30 sec, 09.12.2018 10:25:09.789 = JD 2458461.93431469 mid. exp.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2000"
  fi
  #
- #util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit 2>&1 | grep --quiet 'DATE-OBS= 2018-12-09T10:25:07'
- #util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit 2>&1 | grep --quiet 'DATE-OBS= 2018-12-09T10:25:10'
- util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit 2>&1 | grep --quiet 'DATE-OBS= 2018-12-09T10:25:09.789'
+ #util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit 2>&1 | grep -q 'DATE-OBS= 2018-12-09T10:25:07'
+ #util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit 2>&1 | grep -q 'DATE-OBS= 2018-12-09T10:25:10'
+ util/get_image_date ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit 2>&1 | grep -q 'DATE-OBS= 2018-12-09T10:25:09.789'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2000a"
  fi
  #
- util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit  | grep --quiet "Image size: 51.8'x52.0'"
+ util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit  | grep -q "Image size: 51.8'x52.0'"
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2000b"
  fi
  #
- util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit  | grep --quiet 'Image scale: 1.01"/pix along the X axis and 1.01"/pix along the Y axis'
+ util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit  | grep -q 'Image scale: 1.01"/pix along the X axis and 1.01"/pix along the Y axis'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2000c"
  fi
  #
- util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit  | grep --quiet 'Image center: 06:56:29.366 -22:50:13.56 J2000 1536.500 1540.500'
+ util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit  | grep -q 'Image center: 06:56:29.366 -22:50:13.56 J2000 1536.500 1540.500'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2000d"
  fi
  #
  #
- lib/try_to_guess_image_fov ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit  | grep --quiet ' 47'
+ lib/try_to_guess_image_fov ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit  | grep -q ' 47'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2000e"
@@ -22347,7 +22347,7 @@ if [ -f ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.f
   fi
  fi 
  # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
- util/solve_plate_with_UCAC5 ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit 2>&1 | grep --quiet 'The output catalog wcs_ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit.cat.ucac5 already exist.'
+ util/solve_plate_with_UCAC5 ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit 2>&1 | grep -q 'The output catalog wcs_ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit.cat.ucac5 already exist.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2003"
@@ -22418,20 +22418,20 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit ];then
  echo "Stacked DSLR image (BITPIX=16) created with Siril test " 
  echo -n "Stacked DSLR image (BITPIX=16) created with Siril test: " >> vast_test_report.txt 
  #
- #util/get_image_date ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit | grep --quiet 'Exposure 750 sec, 20.08.2020 07:45:37 UT = JD(UT) 2459081.82769 mid. exp.'
- util/get_image_date ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit | grep --quiet 'Exposure 750 sec, 20.08.2020 07:45:37 UTC = JD(UTC) 2459081.82769 mid. exp.'
+ #util/get_image_date ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit | grep -q 'Exposure 750 sec, 20.08.2020 07:45:37 UT = JD(UT) 2459081.82769 mid. exp.'
+ util/get_image_date ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit | grep -q 'Exposure 750 sec, 20.08.2020 07:45:37 UTC = JD(UTC) 2459081.82769 mid. exp.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL001"
  fi
  #
- util/get_image_date ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit 2>&1 | grep --quiet 'DATE-OBS= 2020-08-20T07:45:37'
+ util/get_image_date ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit 2>&1 | grep -q 'DATE-OBS= 2020-08-20T07:45:37'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL002"
  fi
  #
- lib/try_to_guess_image_fov ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit  | grep --quiet ' 672'
+ lib/try_to_guess_image_fov ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit  | grep -q ' 672'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL003"
@@ -22440,7 +22440,7 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit ];then
  #
  cp default.sex.ccd_example default.sex 
  # Make sure gain value is NOT set to 0 for a 16 bit DSLR image 
- lib/guess_saturation_limit_main ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit 2>&1 | grep --quiet 'The gain value is set to 0 '
+ lib/guess_saturation_limit_main ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit 2>&1 | grep -q 'The gain value is set to 0 '
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32_gain"
@@ -22451,19 +22451,19 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL004"
  else
-  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_16bit_g2.fit | grep --quiet "Image size: 97"
+  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_16bit_g2.fit | grep -q "Image size: 97"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL005"
   fi
   #
-  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_16bit_g2.fit  | grep --quiet 'Image scale: 13'
+  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_16bit_g2.fit  | grep -q 'Image scale: 13'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL006"
   fi
   #
-  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_16bit_g2.fit  | grep --quiet 'Image center: 00:07:'
+  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_16bit_g2.fit  | grep -q 'Image center: 00:07:'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL007"
@@ -22490,7 +22490,7 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit ];then
    fi
   fi 
   # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
-  util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit 2>&1 | grep --quiet 'The output catalog wcs_r_ncas20200820_stacked_16bit_g2.fit.cat.ucac5 already exist.'
+  util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20200820_stacked_16bit_g2.fit 2>&1 | grep -q 'The output catalog wcs_r_ncas20200820_stacked_16bit_g2.fit.cat.ucac5 already exist.'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL012"
@@ -22537,20 +22537,20 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit ];then
  echo "Stacked DSLR image (BITPIX=-32) created with Siril test " 
  echo -n "Stacked DSLR image (BITPIX=-32) created with Siril test: " >> vast_test_report.txt 
  #
- #util/get_image_date ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit | grep --quiet 'Exposure 750 sec, 20.08.2020 07:45:37 UT = JD(UT) 2459081.82769 mid. exp.'
- util/get_image_date ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit | grep --quiet 'Exposure 750 sec, 20.08.2020 07:45:37 UTC = JD(UTC) 2459081.82769 mid. exp.'
+ #util/get_image_date ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit | grep -q 'Exposure 750 sec, 20.08.2020 07:45:37 UT = JD(UT) 2459081.82769 mid. exp.'
+ util/get_image_date ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit | grep -q 'Exposure 750 sec, 20.08.2020 07:45:37 UTC = JD(UTC) 2459081.82769 mid. exp.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32001"
  fi
  #
- util/get_image_date ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit 2>&1 | grep --quiet 'DATE-OBS= 2020-08-20T07:45:37'
+ util/get_image_date ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit 2>&1 | grep -q 'DATE-OBS= 2020-08-20T07:45:37'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32002"
  fi
  #
- lib/try_to_guess_image_fov ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit  | grep --quiet ' 672'
+ lib/try_to_guess_image_fov ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit  | grep -q ' 672'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32003"
@@ -22559,13 +22559,13 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit ];then
  #
  cp default.sex.ccd_example default.sex 
  # Make sure gain value is set to 0 for a -32 DSLR image 
- lib/guess_saturation_limit_main ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit 2>&1 | grep --quiet 'The gain value is set to 0 '
+ lib/guess_saturation_limit_main ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit 2>&1 | grep -q 'The gain value is set to 0 '
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32_gain01"
  fi
  #
- lib/autodetect_aperture_main ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit 2>&1 | grep --quiet 'GAIN 0.0'
+ lib/autodetect_aperture_main ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit 2>&1 | grep -q 'GAIN 0.0'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32_gain02"
@@ -22576,19 +22576,19 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32004"
  else
-  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_32bit_g2.fit | grep --quiet "Image size: 97"
+  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_32bit_g2.fit | grep -q "Image size: 97"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32005"
   fi
   #
-  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_32bit_g2.fit  | grep --quiet 'Image scale: 13'
+  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_32bit_g2.fit  | grep -q 'Image scale: 13'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32006"
   fi
   #
-  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_32bit_g2.fit  | grep --quiet 'Image center: 00:07:'
+  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20200820_stacked_32bit_g2.fit  | grep -q 'Image center: 00:07:'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32007"
@@ -22615,7 +22615,7 @@ if [ -f ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit ];then
    fi
   fi 
   # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
-  util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit 2>&1 | grep --quiet 'The output catalog wcs_r_ncas20200820_stacked_32bit_g2.fit.cat.ucac5 already exist.'
+  util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20200820_stacked_32bit_g2.fit 2>&1 | grep -q 'The output catalog wcs_r_ncas20200820_stacked_32bit_g2.fit.cat.ucac5 already exist.'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32012"
@@ -22662,14 +22662,14 @@ if [ -f ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g
  echo "Stacked DSLR image (BITPIX=-32, EXPSTART, EXPEND) created with Siril test " 
  echo -n "Stacked DSLR image (BITPIX=-32, EXPSTART, EXPEND) created with Siril test: " >> vast_test_report.txt 
  #
- #util/get_image_date ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit | grep --quiet 'JD (mid. exp.) 2459177.84869 = 2020-11-24 08:22:06 (UT)'
- util/get_image_date ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit | grep --quiet 'JD (mid. exp.) 2459177.84868634 = 2020-11-24 08:22:06.500 (UTC)'
+ #util/get_image_date ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit | grep -q 'JD (mid. exp.) 2459177.84869 = 2020-11-24 08:22:06 (UT)'
+ util/get_image_date ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit | grep -q 'JD (mid. exp.) 2459177.84868634 = 2020-11-24 08:22:06.500 (UTC)'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND001"
  fi
  #
- lib/try_to_guess_image_fov ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit  | grep --quiet ' 672'
+ lib/try_to_guess_image_fov ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit  | grep -q ' 672'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND003"
@@ -22678,13 +22678,13 @@ if [ -f ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g
  #
  cp default.sex.ccd_example default.sex 
  # Make sure gain value is set to 0 for a -32 DSLR image 
- lib/guess_saturation_limit_main ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit 2>&1 | grep --quiet 'The gain value is set to 0 '
+ lib/guess_saturation_limit_main ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit 2>&1 | grep -q 'The gain value is set to 0 '
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND_gain01"
  fi
  #
- lib/autodetect_aperture_main ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit 2>&1 | grep --quiet 'GAIN 0.0'
+ lib/autodetect_aperture_main ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit 2>&1 | grep -q 'GAIN 0.0'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND_gain02"
@@ -22695,19 +22695,19 @@ if [ -f ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND004"
  else
-  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit | grep --quiet "Image size: 97...'x64...'"
+  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit | grep -q "Image size: 97...'x64...'"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND005"
   fi
   #
-  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit  | grep --quiet 'Image scale: 13'
+  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit  | grep -q 'Image scale: 13'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND006"
   fi
   #
-  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit  | grep --quiet 'Image center: 00:03:'
+  util/fov_of_wcs_calibrated_image.sh wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit  | grep -q 'Image center: 00:03:'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND007"
@@ -22734,7 +22734,7 @@ if [ -f ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g
    fi
   fi 
   # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
-  util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit 2>&1 | grep --quiet 'The output catalog wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit.cat.ucac5 already exist.'
+  util/solve_plate_with_UCAC5 ../individual_images_test/r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit 2>&1 | grep -q 'The output catalog wcs_r_ncas20201124_stacked_32bit_EXPSTART_EXPEND_g2.fit.cat.ucac5 already exist.'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES STACKEDDSLRSIRIL32EXPEND012"
@@ -22779,17 +22779,17 @@ if [ -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits ]
  echo "TESS FFI with no WCS test " 
  echo -n "TESS FFI with no WCS test: " >> vast_test_report.txt 
  #
- #util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:38   = JD  2458955.79836 mid. exp.'
- #util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:38 TDB = JD(TDB) 2458955.79836 mid. exp.'
- #util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:37.885 TDB = JD(TDB) 2458955.79836 mid. exp.'
- #util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:37.885 TDB = JD(TDB) 2458955.79835515 mid. exp.'
- util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet 'Exposure 1800 sec, 16.04.2020 06:54:37.885 UTC = JD(UTC) 2458955.79835515 mid. exp.'
+ #util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep -q 'Exposure 1800 sec, 16.04.2020 06:54:38   = JD  2458955.79836 mid. exp.'
+ #util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep -q 'Exposure 1800 sec, 16.04.2020 06:54:38 TDB = JD(TDB) 2458955.79836 mid. exp.'
+ #util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep -q 'Exposure 1800 sec, 16.04.2020 06:54:37.885 TDB = JD(TDB) 2458955.79836 mid. exp.'
+ #util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep -q 'Exposure 1800 sec, 16.04.2020 06:54:37.885 TDB = JD(TDB) 2458955.79835515 mid. exp.'
+ util/get_image_date ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep -q 'Exposure 1800 sec, 16.04.2020 06:54:37.885 UTC = JD(UTC) 2458955.79835515 mid. exp.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS001"
  fi
  #
- lib/try_to_guess_image_fov ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits  | grep --quiet ' 710'
+ lib/try_to_guess_image_fov ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits  | grep -q ' 710'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS003"
@@ -22798,7 +22798,7 @@ if [ -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits ]
  #
  cp default.sex.ccd_example default.sex 
  # Make sure gain value is set to exposure time for the count rate image 
- lib/autodetect_aperture_main ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits 2>&1 | grep --quiet 'GAIN 1425'
+ lib/autodetect_aperture_main ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits 2>&1 | grep -q 'GAIN 1425'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS_gain"
@@ -22809,19 +22809,19 @@ if [ -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits ]
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS004"
  else
-  util/fov_of_wcs_calibrated_image.sh wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep --quiet "Image size: 7..\..'x7..\..'"
+  util/fov_of_wcs_calibrated_image.sh wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits | grep -q "Image size: 7..\..'x7..\..'"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS005"
   fi
   #
-  util/fov_of_wcs_calibrated_image.sh wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits  | grep --quiet -e 'Image scale: 19.' -e 'Image scale: 20.'
+  util/fov_of_wcs_calibrated_image.sh wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits  | grep -q -e 'Image scale: 19.' -e 'Image scale: 20.'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS006"
   fi
   #
-  util/fov_of_wcs_calibrated_image.sh wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits  | grep --quiet 'Image center: 01:04:'
+  util/fov_of_wcs_calibrated_image.sh wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits  | grep -q 'Image center: 01:04:'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS007"
@@ -22848,7 +22848,7 @@ if [ -f ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits ]
    fi
   fi 
   # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
-  util/solve_plate_with_UCAC5 ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits 2>&1 | grep --quiet 'The output catalog wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits.cat.ucac5 already exist.'
+  util/solve_plate_with_UCAC5 ../individual_images_test/tess2020107065919-s0024-4-4-0180-s_ffic.fits 2>&1 | grep -q 'The output catalog wcs_tess2020107065919-s0024-4-4-0180-s_ffic.fits.cat.ucac5 already exist.'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TESSFFINOWCS012"
@@ -22893,14 +22893,14 @@ if [ -f ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4
  echo "TICA TESS FFI individual image test " 
  echo -n "TICA TESS FFI individual image test: " >> vast_test_report.txt 
  #
- #util/get_image_date ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep --quiet 'JD (mid. exp.) 2460168.93614 = 2023-08-12 10:28:03 (TDB)'
- util/get_image_date ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep --quiet 'JD (mid. exp.) 2460168.93614120 = 2023-08-12 10:28:02.599 (TDB)'
+ #util/get_image_date ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep -q 'JD (mid. exp.) 2460168.93614 = 2023-08-12 10:28:03 (TDB)'
+ util/get_image_date ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep -q 'JD (mid. exp.) 2460168.93614120 = 2023-08-12 10:28:02.599 (TDB)'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG001"
  fi
  #
- lib/try_to_guess_image_fov ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits  | grep --quiet ' 667'
+ lib/try_to_guess_image_fov ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits  | grep -q ' 667'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG003"
@@ -22909,7 +22909,7 @@ if [ -f ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4
  # First run with a generic source extractor settings file to make sure VaST knows how to set gain for TICA TESS images
  cp default.sex.ccd_example default.sex 
  # Make sure gain value is set to exposure time for the count rate image 
- lib/autodetect_aperture_main ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep --quiet 'GAIN 1.000'
+ lib/autodetect_aperture_main ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep -q 'GAIN 1.000'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG_gain"
@@ -22918,7 +22918,7 @@ if [ -f ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4
  # Re-run with a proper source extractor settings file
  cp default.sex.TICA_TESS default.sex 
  # and make sure flag and weight images are produced
- lib/autodetect_aperture_main ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep 'FLAG_IMAGE' | grep --quiet 'WEIGHT_IMAGE'
+ lib/autodetect_aperture_main ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep 'FLAG_IMAGE' | grep -q 'WEIGHT_IMAGE'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG_gain"
@@ -22929,19 +22929,19 @@ if [ -f ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG004"
  else
-  util/fov_of_wcs_calibrated_image.sh wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits | grep --quiet "Image size: 7..\..'x7..\..'"
+  util/fov_of_wcs_calibrated_image.sh wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits | grep -q "Image size: 7..\..'x7..\..'"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG005"
   fi
   #
-  util/fov_of_wcs_calibrated_image.sh wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits  | grep --quiet -e 'Image scale: 19.' -e 'Image scale: 20.'
+  util/fov_of_wcs_calibrated_image.sh wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits  | grep -q -e 'Image scale: 19.' -e 'Image scale: 20.'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG006"
   fi
   #
-  util/fov_of_wcs_calibrated_image.sh wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits  | grep --quiet 'Image center: 06:08:'
+  util/fov_of_wcs_calibrated_image.sh wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits  | grep -q 'Image center: 06:08:'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG007"
@@ -22968,7 +22968,7 @@ if [ -f ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4
    fi
   fi 
   # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
-  util/solve_plate_with_UCAC5 ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep --quiet 'The output catalog wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.cat.ucac5 already exist.'
+  util/solve_plate_with_UCAC5 ../individual_images_test/hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits 2>&1 | grep -q 'The output catalog wcs_hlsp_tica_tess_ffi_s0068-o2-00838718-cam4-ccd4_tess_v01_img.fits.cat.ucac5 already exist.'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSFFISINGLEIMG012"
@@ -23014,13 +23014,13 @@ if [ -f '../individual_images_test/NW-1B-BESSEL_15#3.fits' ];then
  echo "Date specified in DATE_OBS individual image test " 
  echo -n "Date specified in DATE_OBS individual image test: " >> vast_test_report.txt 
  #
- util/get_image_date '../individual_images_test/NW-1B-BESSEL_15#3.fits' 2>&1 | grep --quiet 'Exposure 420 sec, 24.11.2017 07:37:21.858 = JD 2458081.82004625 mid. exp.'
+ util/get_image_date '../individual_images_test/NW-1B-BESSEL_15#3.fits' 2>&1 | grep -q 'Exposure 420 sec, 24.11.2017 07:37:21.858 = JD 2458081.82004625 mid. exp.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES DATE_OBS001"
  fi
  #
- lib/try_to_guess_image_fov '../individual_images_test/NW-1B-BESSEL_15#3.fits'  | grep --quiet '   7'
+ lib/try_to_guess_image_fov '../individual_images_test/NW-1B-BESSEL_15#3.fits'  | grep -q '   7'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES DATE_OBS003"
@@ -23029,7 +23029,7 @@ if [ -f '../individual_images_test/NW-1B-BESSEL_15#3.fits' ];then
  # First run with a generic source extractor settings file to make sure VaST knows how to set gain for TICA TESS images
  cp default.sex.ccd_example default.sex 
  # Make sure gain value is set to exposure time for the count rate image 
- lib/autodetect_aperture_main '../individual_images_test/NW-1B-BESSEL_15#3.fits' 2>&1 | grep --quiet 'GAIN 1.750'
+ lib/autodetect_aperture_main '../individual_images_test/NW-1B-BESSEL_15#3.fits' 2>&1 | grep -q 'GAIN 1.750'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES DATE_OBS_gain"
@@ -23181,7 +23181,7 @@ if [ -d ../individual_images_test ];then
    IMAGE=`basename $IMAGE`
    FAILED_TEST_CODES="$FAILED_TEST_CODES STRIPWCS01_$IMAGE"
   fi
-  util/listhead test.fits | awk -F'=' '{print $1}' | grep --quiet -e 'WCSAXES' -e 'CRPIX' -e 'CRVAL' -e 'CTYPE' -e 'CUNIT' -e 'CDELT' -e 'CROTA' -e 'CD[1-2]_[1-2]' -e 'PC[1-2]_[1-2]' -e 'PV[0-9]\{1,2\}_[0-9]\{1,2\}' -e 'TR[0-9]\{1,2\}_[0-9]\{1,2\}' -e 'AP_' -e 'BP_'
+  util/listhead test.fits | awk -F'=' '{print $1}' | grep -q -e 'WCSAXES' -e 'CRPIX' -e 'CRVAL' -e 'CTYPE' -e 'CUNIT' -e 'CDELT' -e 'CROTA' -e 'CD[1-2]_[1-2]' -e 'PC[1-2]_[1-2]' -e 'PV[0-9]\{1,2\}_[0-9]\{1,2\}' -e 'TR[0-9]\{1,2\}_[0-9]\{1,2\}' -e 'AP_' -e 'BP_'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    IMAGE=`basename $IMAGE`
@@ -23509,24 +23509,24 @@ if [ -d /mnt/usb/M4_F775W_images_Level2_few_links_for_tests ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 6" vast_summary.log
+  grep -q "Images processed 6" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIALM4HST001"
   fi
-  grep --quiet "Images used for photometry 6" vast_summary.log
+  grep -q "Images used for photometry 6" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIALM4HST002"
   fi
   # Calendar time will be set to 00.00.0000 00:00:00 if JD is taken from EXPSTART instead of DATE-OBS
-  #grep --quiet -e "First image: 2456311.38443 18.01.2013 21:13:25" -e "First image: 2456311.38443 00.00.0000 00:00:00" vast_summary.log
+  #grep -q -e "First image: 2456311.38443 18.01.2013 21:13:25" -e "First image: 2456311.38443 00.00.0000 00:00:00" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456311.38443 18.01.2013 21:13:25' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIALM4HST003"
   fi
-  #grep --quiet -e "Last  image: 2456312.04468 19.01.2013 13:04:10" -e "Last  image: 2456312.04468 00.00.0000 00:00:00" vast_summary.log
+  #grep -q -e "Last  image: 2456312.04468 19.01.2013 13:04:10" -e "Last  image: 2456312.04468 00.00.0000 00:00:00" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2456312.04468 19.01.2013 13:04:10' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -23534,7 +23534,7 @@ if [ -d /mnt/usb/M4_F775W_images_Level2_few_links_for_tests ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIALM4HST0_nonzero_ref_frame_rotation"
@@ -23543,7 +23543,7 @@ if [ -d /mnt/usb/M4_F775W_images_Level2_few_links_for_tests ];then
 ###### SPECIALM4HST0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIALM4HST0_nonzero_ref_frame_rotation_test2"
@@ -23557,12 +23557,12 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIALM4HST0_NO_vast_image_details_log"
   fi
   #
-  grep --quiet "Magnitude-Size filter: Enabled" vast_summary.log
+  grep -q "Magnitude-Size filter: Enabled" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIALM4HST005"
   fi
-  grep --quiet "Photometric errors rescaling: NO" vast_summary.log
+  grep -q "Photometric errors rescaling: NO" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIALM4HST006"
@@ -23778,7 +23778,7 @@ if [ $? -eq 0 ];then
    echo -n "Special Valgrind test: " >> vast_test_report.txt 
    #
    # Run the test only if VaST was compiled wthout AddressSanitizer
-   ldd vast | grep --quiet 'libasan'
+   ldd vast | grep -q 'libasan'
    if [ $? -ne 0 ];then
     cp default.sex.ccd_example default.sex
     valgrind --error-exitcode=1 -v --tool=memcheck --track-origins=yes ./vast -uf ../sample_data/f_72-00* &> valgrind_test.out
@@ -23791,7 +23791,7 @@ if [ $? -eq 0 ];then
       echo "ERROR"
       break
      fi
-    done | grep --quiet 'ERROR'
+    done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND002"
@@ -23808,7 +23808,7 @@ if [ $? -eq 0 ];then
       echo "ERROR"
       break
      fi
-    done | grep --quiet 'ERROR'
+    done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND003a"
@@ -23823,7 +23823,7 @@ if [ $? -eq 0 ];then
       echo "ERROR"
       break
      fi
-    done | grep --quiet 'ERROR'
+    done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND004a"
@@ -23838,7 +23838,7 @@ if [ $? -eq 0 ];then
       echo "ERROR"
       break
      fi
-    done | grep --quiet 'ERROR'
+    done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND006"
@@ -23855,7 +23855,7 @@ if [ $? -eq 0 ];then
       echo "ERROR"
       break
      fi
-    done | grep --quiet 'ERROR'
+    done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND008"
@@ -23870,7 +23870,7 @@ if [ $? -eq 0 ];then
       echo "ERROR"
       break
      fi
-    done | grep --quiet 'ERROR'
+    done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND010"
@@ -23888,7 +23888,7 @@ if [ $? -eq 0 ];then
       echo "ERROR"
       break
      fi
-    done | grep --quiet 'ERROR'
+    done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND012"
@@ -23907,7 +23907,7 @@ if [ $? -eq 0 ];then
        echo "ERROR"
        break
       fi
-     done | grep --quiet 'ERROR'
+     done | grep -q 'ERROR'
      if [ $? -eq 0 ];then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND014"
@@ -23929,7 +23929,7 @@ if [ $? -eq 0 ];then
       echo "ERROR"
       break
      fi
-    done | grep --quiet 'ERROR'
+    done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND016"
@@ -23948,7 +23948,7 @@ if [ $? -eq 0 ];then
       echo "ERROR"
       break
      fi
-    done | grep --quiet 'ERROR'
+    done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND018"
@@ -23967,7 +23967,7 @@ if [ $? -eq 0 ];then
       echo "ERROR"
       break
      fi
-    done | grep --quiet 'ERROR'
+    done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND018"
@@ -23989,7 +23989,7 @@ if [ $? -eq 0 ];then
       echo "ERROR"
       break
      fi
-    done | grep --quiet 'ERROR'
+    done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND020"
@@ -24011,7 +24011,7 @@ if [ $? -eq 0 ];then
       echo "ERROR"
       break
      fi
-    done | grep --quiet 'ERROR'
+    done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND022"
@@ -24033,7 +24033,7 @@ if [ $? -eq 0 ];then
       echo "ERROR"
       break
      fi
-    done | grep --quiet 'ERROR'
+    done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND024"
@@ -24053,7 +24053,7 @@ if [ $? -eq 0 ];then
       echo "ERROR"
       break
      fi
-    done | grep --quiet 'ERROR'
+    done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND026"
@@ -24072,7 +24072,7 @@ if [ $? -eq 0 ];then
       echo "ERROR"
       break
      fi
-    done | grep --quiet 'ERROR'
+    done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND028"
@@ -24100,7 +24100,7 @@ if [ $? -eq 0 ];then
       echo "ERROR"
       break
      fi
-    done | grep --quiet 'ERROR'
+    done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND027"
@@ -24117,7 +24117,7 @@ if [ $? -eq 0 ];then
       echo "ERROR"
       break
      fi
-    done | grep --quiet 'ERROR'
+    done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND029"
@@ -24134,7 +24134,7 @@ if [ $? -eq 0 ];then
       echo "ERROR"
       break
      fi
-    done | grep --quiet 'ERROR'
+    done | grep -q 'ERROR'
     if [ $? -eq 0 ];then
      TEST_PASSED=0
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND031"
@@ -24159,7 +24159,7 @@ if [ $? -eq 0 ];then
        echo "ERROR"
        break
       fi
-     done | grep --quiet 'ERROR'
+     done | grep -q 'ERROR'
      if [ $? -eq 0 ];then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND033"
@@ -24187,7 +24187,7 @@ if [ $? -eq 0 ];then
    else
      FAILED_TEST_CODES="$FAILED_TEST_CODES SPECIAL_VALGRIND_TEST_NOT_PERFORMED_ASAN_ENABLED"
      echo "SPECIAL_VALGRIND_TEST_NOT_PERFORMED_ASAN_ENABLED" >> vast_test_report.txt
-   fi # ldd vast | grep --quiet 'libasan'
+   fi # ldd vast | grep -q 'libasan'
   else
    # do not distract user with this obscure message if the test host is not eridan
    if [ "$HOSTNAME" = "eridan" ];then
@@ -24248,7 +24248,7 @@ if [ -d ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails 
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOMETRIC_ERROR_RESCALING003"
  fi
- util/rescale_photometric_errors 2>&1 | grep --quiet 'Applying corrections to error estimates in all lightcurves.'
+ util/rescale_photometric_errors 2>&1 | grep -q 'Applying corrections to error estimates in all lightcurves.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES PHOTOMETRIC_ERROR_RESCALING004"
@@ -24887,23 +24887,23 @@ if [ -d ../sample_data ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 91" vast_summary.log
+  grep -q "Images processed 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF001"
   fi
-  grep --quiet "Images used for photometry 91" vast_summary.log
+  grep -q "Images used for photometry 91" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF002"
   fi
-  #grep --quiet "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  #grep -q "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF003"
   fi
-  #grep --quiet "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  #grep -q "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -24911,7 +24911,7 @@ if [ -d ../sample_data ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF0_nonzero_ref_frame_rotation"
@@ -24920,7 +24920,7 @@ if [ -d ../sample_data ];then
 ###### SMALLCCDPSF0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF0_nonzero_ref_frame_rotation_test2"
@@ -24935,7 +24935,7 @@ $GREP_RESULT"
   fi
   #
 
-  grep --quiet 'Photometric errors rescaling: NO' vast_summary.log
+  grep -q 'Photometric errors rescaling: NO' vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF_ERRORRESCALINGLOGREC"
@@ -25092,7 +25092,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF019 SMALLCCDPSF020_NOT_PERFORMED"
   else
    STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   grep -q "$STATOUTFILE" vast_autocandidates.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF020"
@@ -25217,7 +25217,7 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF028 SMALLCCDPSF029_NOT_PERFORMED"
   else
    STATOUTFILE=`echo "$STATSTR" | awk '{print $5}'`
-   grep --quiet "$STATOUTFILE" vast_autocandidates.log
+   grep -q "$STATOUTFILE" vast_autocandidates.log
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF029"
@@ -25225,7 +25225,7 @@ $GREP_RESULT"
   fi
   ###############################################
 
-  cat src/vast_limits.h | grep -v '//' | grep --quiet 'DISABLE_MAGSIZE_FILTER_LOGS'
+  cat src/vast_limits.h | grep -v '//' | grep -q 'DISABLE_MAGSIZE_FILTER_LOGS'
   if [ $? -ne 0 ];then
   
    # Check the log files corresponding to the first 9 images
@@ -25306,19 +25306,19 @@ if [ -d ../MASTER_test ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 6" vast_summary.log
+  grep -q "Images processed 6" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCDPSF001"
   fi
-  grep --quiet "Images used for photometry 6" vast_summary.log
+  grep -q "Images used for photometry 6" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCDPSF002"
   fi
-  ##grep --quiet "First image: 2457154.31907 11.05.2015 19:39:26" vast_summary.log
-  #grep --quiet "First image: 2457154.31909 11.05.2015 19:39:27" vast_summary.log
-  #grep --quiet "First image: 2457154.31910 11.05.2015 19:39:27" vast_summary.log
+  ##grep -q "First image: 2457154.31907 11.05.2015 19:39:26" vast_summary.log
+  #grep -q "First image: 2457154.31909 11.05.2015 19:39:27" vast_summary.log
+  #grep -q "First image: 2457154.31910 11.05.2015 19:39:27" vast_summary.log
   # again, the rounding thing strikes back
   #                                                      First image: 2457154.31908637 11.05.2015 19:39:26.562
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2457154.31908637 11.05.2015 19:39:26.562' 1
@@ -25326,8 +25326,8 @@ if [ -d ../MASTER_test ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCDPSF003"
   fi
-  #grep --quiet "Last  image: 2457154.32075 11.05.2015 19:41:51" vast_summary.log
-  #grep --quiet "Last  image: 2457154.32076 11.05.2015 19:41:51" vast_summary.log
+  #grep -q "Last  image: 2457154.32075 11.05.2015 19:41:51" vast_summary.log
+  #grep -q "Last  image: 2457154.32076 11.05.2015 19:41:51" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2457154.32076 11.05.2015 19:41:51' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -25335,7 +25335,7 @@ if [ -d ../MASTER_test ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCDPSF0_nonzero_ref_frame_rotation"
@@ -25344,7 +25344,7 @@ if [ -d ../MASTER_test ];then
 ###### MASTERCCDPSF0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES MASTERCCDPSF0_nonzero_ref_frame_rotation_test2"
@@ -25396,7 +25396,7 @@ $GREP_RESULT"
    fi
   done
 
-  cat src/vast_limits.h | grep -v '//' | grep --quiet 'DISABLE_MAGSIZE_FILTER_LOGS'
+  cat src/vast_limits.h | grep -v '//' | grep -q 'DISABLE_MAGSIZE_FILTER_LOGS'
   if [ $? -ne 0 ];then
 
    # Check the log files
@@ -25467,23 +25467,23 @@ if [ -d ../M31_ISON_test ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 5" vast_summary.log
+  grep -q "Images processed 5" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF001"
   fi
-  grep --quiet "Images used for photometry 5" vast_summary.log
+  grep -q "Images used for photometry 5" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF002"
   fi
-  #grep --quiet "First image: 2455863.88499 29.10.2011 09:13:23" vast_summary.log
+  #grep -q "First image: 2455863.88499 29.10.2011 09:13:23" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2455863.88499 29.10.2011 09:13:23' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF003"
   fi
-  #grep --quiet "Last  image: 2455867.61163 02.11.2011 02:39:45" vast_summary.log
+  #grep -q "Last  image: 2455867.61163 02.11.2011 02:39:45" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2455867.61163 02.11.2011 02:39:45' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -25491,7 +25491,7 @@ if [ -d ../M31_ISON_test ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF0_nonzero_ref_frame_rotation"
@@ -25500,7 +25500,7 @@ if [ -d ../M31_ISON_test ];then
 ###### ISONM31PSF0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES ISONM31PSF0_nonzero_ref_frame_rotation_test2"
@@ -25588,7 +25588,7 @@ if [ -d ../test_exclude_ref_image ];then
  fi
  # Check results
  if [ -f vast_summary.log ];then
-  grep --quiet "Images processed 309" vast_summary.log
+  grep -q "Images processed 309" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF001"
@@ -25602,18 +25602,18 @@ if [ -d ../test_exclude_ref_image ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF002"
   fi
-  grep 'Ref.  image:' vast_summary.log | grep --quiet 'coadd.red.fits'
+  grep 'Ref.  image:' vast_summary.log | grep -q 'coadd.red.fits'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF_REFIMAGE"
   fi
-  #grep --quiet "First image: 2450486.59230 07.02.1997 02:12:55" vast_summary.log
+  #grep -q "First image: 2450486.59230 07.02.1997 02:12:55" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2450486.59230 07.02.1997 02:12:55' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF003"
   fi
-  #grep --quiet "Last  image: 2452578.55380 31.10.2002 01:17:28" vast_summary.log
+  #grep -q "Last  image: 2452578.55380 31.10.2002 01:17:28" vast_summary.log
   compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2452578.55380 31.10.2002 01:17:28' 1
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -25621,7 +25621,7 @@ if [ -d ../test_exclude_ref_image ];then
   fi
   # Hunting the mysterious non-zero reference frame rotation cases
   if [ -f vast_image_details.log ];then
-   grep --max-count=1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep --quiet 'rotation=   0.000'
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF0_nonzero_ref_frame_rotation"
@@ -25630,7 +25630,7 @@ if [ -d ../test_exclude_ref_image ];then
 ###### EXCLUDEREFIMAGEPSF0_nonzero_ref_frame_rotation ######
 $GREP_RESULT"
    fi
-   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep --quiet `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF0_nonzero_ref_frame_rotation_test2"
@@ -25644,9 +25644,9 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF0_NO_vast_image_details_log"
   fi
   #
-  #grep --quiet "JD time system (TT/UTC/UNKNOWN): UTC" vast_summary.log
+  #grep -q "JD time system (TT/UTC/UNKNOWN): UTC" vast_summary.log
   # UNKNOWN is actually the correct answer when getting the observing time from MJD-OBS in coadd.red.fits
-  grep --quiet "JD time system (TT/UTC/UNKNOWN): UNKNOWN" vast_summary.log
+  grep -q "JD time system (TT/UTC/UNKNOWN): UNKNOWN" vast_summary.log
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF005"
@@ -25664,8 +25664,8 @@ $GREP_RESULT"
 #   fi
   fi
   # Time test
-  #util/get_image_date ../test_exclude_ref_image/lm01306trr8a1338.fits 2>&1 | grep -A 10 'DATE-OBS= 1998-01-14T06:47:48' | grep -A 10 'EXPTIME = 0' | grep -A 10 'Exposure   0 sec, 14.01.1998 06:47:48   = JD  2450827.78319' | grep --quiet 'JD 2450827.783194'
-  util/get_image_date ../test_exclude_ref_image/lm01306trr8a1338.fits 2>&1 | grep -A 10 'DATE-OBS= 1998-01-14T06:47:48.480' | grep -A 10 'EXPTIME = 0' | grep -A 10 'Exposure 0 sec, 14.01.1998 06:47:48.480 = JD 2450827.78320000' | grep --quiet '  JD 2450827.78320000'
+  #util/get_image_date ../test_exclude_ref_image/lm01306trr8a1338.fits 2>&1 | grep -A 10 'DATE-OBS= 1998-01-14T06:47:48' | grep -A 10 'EXPTIME = 0' | grep -A 10 'Exposure   0 sec, 14.01.1998 06:47:48   = JD  2450827.78319' | grep -q 'JD 2450827.783194'
+  util/get_image_date ../test_exclude_ref_image/lm01306trr8a1338.fits 2>&1 | grep -A 10 'DATE-OBS= 1998-01-14T06:47:48.480' | grep -A 10 'EXPTIME = 0' | grep -A 10 'Exposure 0 sec, 14.01.1998 06:47:48.480 = JD 2450827.78320000' | grep -q '  JD 2450827.78320000'
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF_OBSERVING_TIME001"
@@ -25682,7 +25682,7 @@ $GREP_RESULT"
   ### Flag image test should always be the last one
   for IMAGE in ../test_exclude_ref_image/lm* ;do
    util/clean_data.sh
-   lib/autodetect_aperture_main $IMAGE 2>&1 | grep --quiet "FLAG_IMAGE image00000.flag"
+   lib/autodetect_aperture_main $IMAGE 2>&1 | grep -q "FLAG_IMAGE image00000.flag"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     BASEIMAGE=`basename $IMAGE`
@@ -25690,7 +25690,7 @@ $GREP_RESULT"
    fi 
    # GAIN_KEY is present in default.sex.excluderefimgtest
    # so GAIN should NOT be specified on the SExtractor command line
-   lib/autodetect_aperture_main $IMAGE 2>&1 | grep --quiet "GAIN 1.990"
+   lib/autodetect_aperture_main $IMAGE 2>&1 | grep -q "GAIN 1.990"
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     BASEIMAGE=`basename $IMAGE`
@@ -25700,18 +25700,18 @@ $GREP_RESULT"
   
   ###### Not needed as GAIN_KEY is set in default.sex
   # GAIN things
-  #lib/autodetect_aperture_main ../test_exclude_ref_image/lm01306trraf1846.fits 2>&1 | grep --quiet 'GAINCCD=1.990'
+  #lib/autodetect_aperture_main ../test_exclude_ref_image/lm01306trraf1846.fits 2>&1 | grep -q 'GAINCCD=1.990'
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF_GAIN001"
   #fi
-  #lib/autodetect_aperture_main ../test_exclude_ref_image/lm01306trraf1846.fits 2>&1 | grep --quiet 'GAIN 1.990'
+  #lib/autodetect_aperture_main ../test_exclude_ref_image/lm01306trraf1846.fits 2>&1 | grep -q 'GAIN 1.990'
   #if [ $? -ne 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF_GAIN002"
   #fi  
   #echo 'GAIN_KEY         GAINCCD' >> default.sex
-  #lib/autodetect_aperture_main ../test_exclude_ref_image/lm01306trraf1846.fits 2>&1 | grep --quiet 'GAIN'
+  #lib/autodetect_aperture_main ../test_exclude_ref_image/lm01306trraf1846.fits 2>&1 | grep -q 'GAIN'
   #if [ $? -eq 0 ];then
   # TEST_PASSED=0
   # FAILED_TEST_CODES="$FAILED_TEST_CODES EXCLUDEREFIMAGEPSF_GAIN_KEY"
@@ -25827,7 +25827,7 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 
 #### Coordinate conversion test
 # A local copy of WCSTools now should be supplied with VaST
-echo "$PATH" | grep --quiet ':lib/bin'
+echo "$PATH" | grep -q ':lib/bin'
 if [ $? -ne 0 ];then
  export PATH=$PATH:lib/bin
 fi
@@ -25877,18 +25877,18 @@ if [ $? -eq 0 ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION005_${POSITION_DEG// /_}"
   fi
  done
- lib/deg2hms_uas 126.59917135396 -50.96207264973 | grep --quiet '08:26:23.801125 -50:57:43.46154'
+ lib/deg2hms_uas 126.59917135396 -50.96207264973 | grep -q '08:26:23.801125 -50:57:43.46154'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION006"
  fi
  
- lib/put_two_sources_in_one_field 0.0 0.0 1.0 1.0 | grep --quiet 'Average position  00:02:00.00 +00:30:00.0'
+ lib/put_two_sources_in_one_field 0.0 0.0 1.0 1.0 | grep -q 'Average position  00:02:00.00 +00:30:00.0'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_MIDPOINT"
  fi
- lib/put_two_sources_in_one_field 0.0 0.0 1.0 1.0 | grep --quiet 'Angular distance  01:24:51.04 = 1.4141'
+ lib/put_two_sources_in_one_field 0.0 0.0 1.0 1.0 | grep -q 'Angular distance  01:24:51.04 = 1.4141'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_DIST"
@@ -25952,30 +25952,30 @@ if [ $? -eq 0 ];then
   fi
  fi
  #
- #lib/put_two_sources_in_one_field 22:28:49.71 -21:50:21.7 22:29:22.9 -21:51:25 | grep --quiet -- '22:29:06.30 -21:50:53.3'
+ #lib/put_two_sources_in_one_field 22:28:49.71 -21:50:21.7 22:29:22.9 -21:51:25 | grep -q -- '22:29:06.30 -21:50:53.3'
  # rounding error on boinc test machine
- lib/put_two_sources_in_one_field 22:28:49.71 -21:50:21.7 22:29:22.9 -21:51:25 | grep --quiet -- '22:29:06\.3. -21:50:53\.3'
+ lib/put_two_sources_in_one_field 22:28:49.71 -21:50:21.7 22:29:22.9 -21:51:25 | grep -q -- '22:29:06\.3. -21:50:53\.3'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_AVPOS01"
  fi
- #lib/put_two_sources_in_one_field 22:28:49.71 21:50:21.7 22:29:22.9 21:51:25 | grep --quiet -- '22:29:06.30 +21:50:53.3'
+ #lib/put_two_sources_in_one_field 22:28:49.71 21:50:21.7 22:29:22.9 21:51:25 | grep -q -- '22:29:06.30 +21:50:53.3'
  # rounding error on boinc test machine
- lib/put_two_sources_in_one_field 22:28:49.71 21:50:21.7 22:29:22.9 21:51:25 | grep --quiet -- '22:29:06\.3. +21:50:53\.3'
+ lib/put_two_sources_in_one_field 22:28:49.71 21:50:21.7 22:29:22.9 21:51:25 | grep -q -- '22:29:06\.3. +21:50:53\.3'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_AVPOS02"
  fi
- #lib/put_two_sources_in_one_field 22:08:49.01 -05:42:34.8 22:08:49.52 -05:42:50.5 | grep --quiet -- '22:08:49.27 -05:42:42.7'
+ #lib/put_two_sources_in_one_field 22:08:49.01 -05:42:34.8 22:08:49.52 -05:42:50.5 | grep -q -- '22:08:49.27 -05:42:42.7'
  # rounding error on boinc test machine
- lib/put_two_sources_in_one_field 22:08:49.01 -05:42:34.8 22:08:49.52 -05:42:50.5 | grep --quiet -- '22:08:49\.27 -05:42:42\..'
+ lib/put_two_sources_in_one_field 22:08:49.01 -05:42:34.8 22:08:49.52 -05:42:50.5 | grep -q -- '22:08:49\.27 -05:42:42\..'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_AVPOS03"
  fi
- #lib/put_two_sources_in_one_field 22:08:49.01 +05:42:34.8 22:08:49.52 +05:42:50.5 | grep --quiet -- '22:08:49.27 +05:42:42.7'
+ #lib/put_two_sources_in_one_field 22:08:49.01 +05:42:34.8 22:08:49.52 +05:42:50.5 | grep -q -- '22:08:49.27 +05:42:42.7'
  # rounding error on boinc test machine
- lib/put_two_sources_in_one_field 22:08:49.01 +05:42:34.8 22:08:49.52 +05:42:50.5 | grep --quiet -- '22:08:49\.27 +05:42:42\..'
+ lib/put_two_sources_in_one_field 22:08:49.01 +05:42:34.8 22:08:49.52 +05:42:50.5 | grep -q -- '22:08:49\.27 +05:42:42\..'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_AVPOS04"
@@ -25989,22 +25989,22 @@ if [ $? -eq 0 ];then
 16:12:45.3 +26:40:15
 16:15:47.4 +27:25:20
 16:16:44.8 +29:09:01" > exclusion_list_autotest.txt
- lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_001"
  fi
- lib/put_two_sources_in_one_field 15:59:30.2 +25:55:13 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 15:59:30.2 +25:55:13 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_002"
  fi
- lib/put_two_sources_in_one_field 16:16:44.8 +29:09:01 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 16:16:44.8 +29:09:01 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_003"
  fi
- lib/put_two_sources_in_one_field 16:16:44.8 -29:09:01 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 16:16:44.8 -29:09:01 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_004"
@@ -26016,37 +26016,37 @@ if [ $? -eq 0 ];then
 16:12:45.3 +26:40:15
 16:15:47.4 +27:25:20 Star5
 16:16:44.8 +29:09:01" > exclusion_list_autotest.txt
- lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
  fi
- lib/put_two_sources_in_one_field 15:59:30.2 +25:55:13 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 15:59:30.2 +25:55:13 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_102"
  fi
- lib/put_two_sources_in_one_field 16:16:44.8 +29:09:01 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 16:16:44.8 +29:09:01 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_103"
  fi
- lib/put_two_sources_in_one_field 16:16:44.8 -29:09:01 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 16:16:44.8 -29:09:01 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_104"
  fi
- lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep 'Star1' | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep 'Star1' | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
  fi
- lib/put_two_sources_in_one_field 16:01:26.6 +29:51:04 exclusion_list_autotest.txt 17 | grep 'Star 3' | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 16:01:26.6 +29:51:04 exclusion_list_autotest.txt 17 | grep 'Star 3' | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
  fi
- lib/put_two_sources_in_one_field 16:15:47.4 +27:25:20 exclusion_list_autotest.txt 17 | grep 'Star5' | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 16:15:47.4 +27:25:20 exclusion_list_autotest.txt 17 | grep 'Star5' | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
@@ -26066,37 +26066,37 @@ if [ $? -eq 0 ];then
 
  
 " > exclusion_list_autotest.txt
- lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
  fi
- lib/put_two_sources_in_one_field 15:59:30.2 +25:55:13 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 15:59:30.2 +25:55:13 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_102"
  fi
- lib/put_two_sources_in_one_field 16:16:44.8 +29:09:01 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 16:16:44.8 +29:09:01 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_103"
  fi
- lib/put_two_sources_in_one_field 16:16:44.8 -29:09:01 exclusion_list_autotest.txt 17 | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 16:16:44.8 -29:09:01 exclusion_list_autotest.txt 17 | grep -q 'FOUND'
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_104"
  fi
- lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep 'Star1' | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 15:57:35.3 +26:52:40 exclusion_list_autotest.txt 17 | grep 'Star1' | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
  fi
- lib/put_two_sources_in_one_field 16:01:26.6 +29:51:04 exclusion_list_autotest.txt 17 | grep 'Star 3' | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 16:01:26.6 +29:51:04 exclusion_list_autotest.txt 17 | grep 'Star 3' | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
  fi
- lib/put_two_sources_in_one_field 16:15:47.4 +27:25:20 exclusion_list_autotest.txt 17 | grep 'Star5' | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 16:15:47.4 +27:25:20 exclusion_list_autotest.txt 17 | grep 'Star5' | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES COORDINATESCONVERTION_EXCLUSIONLIST_101"
@@ -26152,28 +26152,28 @@ if [ -s ../vast_test_lightcurves/exclusion_list_STL.txt ];then
  echo -n "Performing the large exclusion file test: " >> vast_test_report.txt 
 
  # this one should be found
- lib/put_two_sources_in_one_field 01:23:45.67 +89:01:23.4 ../vast_test_lightcurves/exclusion_list_STL.txt 1.0 | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 01:23:45.67 +89:01:23.4 ../vast_test_lightcurves/exclusion_list_STL.txt 1.0 | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES LARGE_EXCLUSION_FILE__01"
  fi
  
  # this one should be found
- lib/put_two_sources_in_one_field 01:23:45.67 -01:01:23.4 ../vast_test_lightcurves/exclusion_list_STL.txt 1.0 | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 01:23:45.67 -01:01:23.4 ../vast_test_lightcurves/exclusion_list_STL.txt 1.0 | grep -q 'FOUND'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES LARGE_EXCLUSION_FILE__02"
  fi
 
  # this one should not be found
- lib/put_two_sources_in_one_field 01:23:45.67 -02:01:23.4 ../vast_test_lightcurves/exclusion_list_STL.txt 1.0 | grep --quiet 'FOUND'
+ lib/put_two_sources_in_one_field 01:23:45.67 -02:01:23.4 ../vast_test_lightcurves/exclusion_list_STL.txt 1.0 | grep -q 'FOUND'
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES LARGE_EXCLUSION_FILE__03"
  fi
 
  # make sure it throws error if the file does nto exist
- lib/put_two_sources_in_one_field 01:23:45.67 -01:01:23.4 nonexisting_file_exclusion_list_STL.txt 1.0 2>&1 | grep --quiet 'ERROR'
+ lib/put_two_sources_in_one_field 01:23:45.67 -01:01:23.4 nonexisting_file_exclusion_list_STL.txt 1.0 2>&1 | grep -q 'ERROR'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES LARGE_EXCLUSION_FILE__04"
@@ -26206,7 +26206,7 @@ echo "Performing the astcheck test "
 echo -n "Performing the astcheck test: " >> vast_test_report.txt 
 
 echo "01:23:45.67 -01:23:45.6 My Test Planet" > planets.txt
-util/transients/MPCheck_v2.sh 01:23:45.67 -01:23:45.6 2023 08 20.8680 | grep --quiet '0.0"  My Test Planet'
+util/transients/MPCheck_v2.sh 01:23:45.67 -01:23:45.6 2023 08 20.8680 | grep -q '0.0"  My Test Planet'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES ASTCHECK_PLANET"
@@ -26214,7 +26214,7 @@ fi
 rm -f planets.txt
 
 echo "01:23:45.67 -01:23:45.6 My Test Comet" > comets.txt
-util/transients/MPCheck_v2.sh  01:23:45.67 -01:24:45.6 2023 08 20.8680 | grep --quiet '60.0"  My Test Comet'
+util/transients/MPCheck_v2.sh  01:23:45.67 -01:24:45.6 2023 08 20.8680 | grep -q '60.0"  My Test Comet'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES ASTCHECK_COMET"
@@ -26287,7 +26287,7 @@ TEST_PASSED=1
 # Run the test
 echo "Calendar date to JD conversion test " 
 echo -n "Calendar date to JD conversion test: " >> vast_test_report.txt 
-util/get_image_date '2014-09-09T05:29:55' | grep --quiet 'JD(UTC) 2456909.72911'
+util/get_image_date '2014-09-09T05:29:55' | grep -q 'JD(UTC) 2456909.72911'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV001"
@@ -26300,8 +26300,8 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
   break
  fi
 done
-#util/get_image_date '2456909.72911' 2>&1 |grep --quiet '2014-09-09 05:29:55 (UT)'
-util/get_image_date '2456909.72911' 2>&1 |grep --quiet '2014-09-09 05:29:55.104 (UTC)'
+#util/get_image_date '2456909.72911' 2>&1 |grep -q '2014-09-09 05:29:55 (UT)'
+util/get_image_date '2456909.72911' 2>&1 |grep -q '2014-09-09 05:29:55.104 (UTC)'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV003"
@@ -26315,7 +26315,7 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  fi
 done
 ### Repeat the above test checking the other output line
-util/get_image_date '2456909.72911' 2>&1 |grep --quiet 'DATE-OBS= 2014-09-09T05:29:55'
+util/get_image_date '2456909.72911' 2>&1 |grep -q 'DATE-OBS= 2014-09-09T05:29:55'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV003a"
@@ -26328,8 +26328,8 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
   break
  fi
 done
-#util/get_image_date '2458563.500000' 2>&1 |grep --quiet '2019-03-21 00:00:00 (UT)'
-util/get_image_date '2458563.500000' 2>&1 |grep --quiet '2019-03-21 00:00:00.000 (UTC)'
+#util/get_image_date '2458563.500000' 2>&1 |grep -q '2019-03-21 00:00:00 (UT)'
+util/get_image_date '2458563.500000' 2>&1 |grep -q '2019-03-21 00:00:00.000 (UTC)'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV005"
@@ -26342,7 +26342,7 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
   break
  fi
 done
-util/get_image_date '2458563.500000' 2>&1 |grep --quiet 'DATE-OBS= 2019-03-21T00:00:00'
+util/get_image_date '2458563.500000' 2>&1 |grep -q 'DATE-OBS= 2019-03-21T00:00:00'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV005b"
@@ -26355,15 +26355,15 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
   break
  fi
 done
-#util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep --quiet 'JD 2440587.499977'
+#util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep -q 'JD 2440587.499977'
 # https://ssd.jpl.nasa.gov/tools/jdc/#/cd                            2440587.4999769
-util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep --quiet ' JD 2440587.49997685'
+util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep -q ' JD 2440587.49997685'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV006"
 fi
 # And a few more checks for the format of the input date string
-util/get_image_date '2014-09-09T05:29' 2>&1 | grep --quiet 'JD 2456909.728472'
+util/get_image_date '2014-09-09T05:29' 2>&1 | grep -q 'JD 2456909.728472'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV006"
@@ -26376,124 +26376,124 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
   break
  fi
 done
-util/get_image_date '1969-12-31T23:59:59.0' 2>&1 | grep --quiet '  JD 2440587.499988'
+util/get_image_date '1969-12-31T23:59:59.0' 2>&1 | grep -q '  JD 2440587.499988'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV007"
 fi
-util/get_image_date 21/09/99 2>&1 | grep --quiet 'Exposure 0 sec, 21.09.1999 00:00:00 UTC = JD(UTC) 2451442.50000'
+util/get_image_date 21/09/99 2>&1 | grep -q 'Exposure 0 sec, 21.09.1999 00:00:00 UTC = JD(UTC) 2451442.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV107"
 fi
-util/get_image_date 21-09-99 2>&1 | grep --quiet 'Exposure 0 sec, 21.09.1999 00:00:00 UTC = JD(UTC) 2451442.50000'
+util/get_image_date 21-09-99 2>&1 | grep -q 'Exposure 0 sec, 21.09.1999 00:00:00 UTC = JD(UTC) 2451442.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV108"
 fi
-util/get_image_date 21-09-1999 2>&1 | grep --quiet 'Exposure 0 sec, 21.09.1999 00:00:00 UTC = JD(UTC) 2451442.50000'
+util/get_image_date 21-09-1999 2>&1 | grep -q 'Exposure 0 sec, 21.09.1999 00:00:00 UTC = JD(UTC) 2451442.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV109"
 fi
-util/get_image_date 1-09-99 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
+util/get_image_date 1-09-99 2>&1 | grep -q 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV110"
 fi
-util/get_image_date 1-09-1999 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
+util/get_image_date 1-09-1999 2>&1 | grep -q 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV111"
 fi
-util/get_image_date 1-9-1999 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
+util/get_image_date 1-9-1999 2>&1 | grep -q 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV112"
 fi
-util/get_image_date 01-09-1999 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
+util/get_image_date 01-09-1999 2>&1 | grep -q 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV113"
 fi
-util/get_image_date 01-9-1999 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
+util/get_image_date 01-9-1999 2>&1 | grep -q 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV114"
 fi
-util/get_image_date 01-9-99 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
+util/get_image_date 01-9-99 2>&1 | grep -q 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV115"
 fi
-util/get_image_date 1-9-99 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
+util/get_image_date 1-9-99 2>&1 | grep -q 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV116"
 fi
-util/get_image_date 1999-9-1 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
+util/get_image_date 1999-9-1 2>&1 | grep -q 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV117"
 fi
-util/get_image_date 1999-09-1 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
+util/get_image_date 1999-09-1 2>&1 | grep -q 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV118"
 fi
-util/get_image_date 1999-09-01 2>&1 | grep --quiet 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
+util/get_image_date 1999-09-01 2>&1 | grep -q 'Exposure 0 sec, 01.09.1999 00:00:00 UTC = JD(UTC) 2451422.50000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV119"
 fi
-util/get_image_date 2012-02-04 02:48:30 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:30 UTC = JD(UTC) 2455961.61701'
+util/get_image_date 2012-02-04 02:48:30 2>&1 | grep -q 'Exposure 0 sec, 04.02.2012 02:48:30 UTC = JD(UTC) 2455961.61701'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV120"
 fi
-util/get_image_date 2012-02-4 02:48:30 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:30 UTC = JD(UTC) 2455961.61701'
+util/get_image_date 2012-02-4 02:48:30 2>&1 | grep -q 'Exposure 0 sec, 04.02.2012 02:48:30 UTC = JD(UTC) 2455961.61701'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV121"
 fi
-util/get_image_date 2012-2-4 02:48:30 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:30 UTC = JD(UTC) 2455961.61701'
+util/get_image_date 2012-2-4 02:48:30 2>&1 | grep -q 'Exposure 0 sec, 04.02.2012 02:48:30 UTC = JD(UTC) 2455961.61701'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV122"
 fi
-util/get_image_date 2012-2-04 02:48:30 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:30 UTC = JD(UTC) 2455961.61701'
+util/get_image_date 2012-2-04 02:48:30 2>&1 | grep -q 'Exposure 0 sec, 04.02.2012 02:48:30 UTC = JD(UTC) 2455961.61701'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV123"
 fi
 #
-util/get_image_date 2012-02-4 02:48 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:00 UTC = JD(UTC) 2455961.61667'
+util/get_image_date 2012-02-4 02:48 2>&1 | grep -q 'Exposure 0 sec, 04.02.2012 02:48:00 UTC = JD(UTC) 2455961.61667'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV125"
 fi
-util/get_image_date 2012-02-4 02:48:00 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:00 UTC = JD(UTC) 2455961.61667'
+util/get_image_date 2012-02-4 02:48:00 2>&1 | grep -q 'Exposure 0 sec, 04.02.2012 02:48:00 UTC = JD(UTC) 2455961.61667'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV126"
 fi
 #
-util/get_image_date 04.02.2012 02:48:30 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:30 UTC = JD(UTC) 2455961.61701'
+util/get_image_date 04.02.2012 02:48:30 2>&1 | grep -q 'Exposure 0 sec, 04.02.2012 02:48:30 UTC = JD(UTC) 2455961.61701'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV127"
 fi
-util/get_image_date 4.02.2012 02:48:30 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:30 UTC = JD(UTC) 2455961.61701'
+util/get_image_date 4.02.2012 02:48:30 2>&1 | grep -q 'Exposure 0 sec, 04.02.2012 02:48:30 UTC = JD(UTC) 2455961.61701'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV128"
 fi
-util/get_image_date 4.2.2012 02:48:30 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:30 UTC = JD(UTC) 2455961.61701'
+util/get_image_date 4.2.2012 02:48:30 2>&1 | grep -q 'Exposure 0 sec, 04.02.2012 02:48:30 UTC = JD(UTC) 2455961.61701'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV129"
 fi
-util/get_image_date 04.2.2012 02:48:30 2>&1 | grep --quiet 'Exposure 0 sec, 04.02.2012 02:48:30 UTC = JD(UTC) 2455961.61701'
+util/get_image_date 04.2.2012 02:48:30 2>&1 | grep -q 'Exposure 0 sec, 04.02.2012 02:48:30 UTC = JD(UTC) 2455961.61701'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV130"
@@ -26511,7 +26511,7 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
   break
  fi
 done
-util/get_image_date '1970-01-01T00:00:00' 2>&1 | grep --quiet ' JD 2440587.500000'
+util/get_image_date '1970-01-01T00:00:00' 2>&1 | grep -q ' JD 2440587.500000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV008"
@@ -26526,7 +26526,7 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
 done
 # Make sure the rounding is done correctly
 # I'm comparing to https://ssd.jpl.nasa.gov/tools/jdc/#/cd
-util/get_image_date '1969-12-31T23:59:58.1' 2>&1 | grep --quiet ' JD 2440587.499978'
+util/get_image_date '1969-12-31T23:59:58.1' 2>&1 | grep -q ' JD 2440587.499978'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV009"
@@ -26540,7 +26540,7 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  fi
 done
 # 2440587.4999873
-util/get_image_date '1969-12-31T23:59:58.9' 2>&1 | grep --quiet ' JD 2440587.499987'
+util/get_image_date '1969-12-31T23:59:58.9' 2>&1 | grep -q ' JD 2440587.499987'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV010"
@@ -26554,7 +26554,7 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  fi
 done
 #### Other output
-util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep --quiet 'MPC format 1969 12 31.99998'
+util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep -q 'MPC format 1969 12 31.99998'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV011_$(util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep 'MPC format ')"
@@ -26564,18 +26564,18 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV011_MPCATel"
 fi
-util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep --quiet 'Julian year 1969.9999999366'
+util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep -q 'Julian year 1969.9999999366'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV012"
 fi
-util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep --quiet 'Unix Time -2'
+util/get_image_date '1969-12-31T23:59:58.0' 2>&1 | grep -q 'Unix Time -2'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV013"
 fi
 #### Same as above, but check that we are roundng correctly
-util/get_image_date '1969-12-31T23:59:58.4' 2>&1 | grep --quiet 'MPC format 1969 12 31.99998'
+util/get_image_date '1969-12-31T23:59:58.4' 2>&1 | grep -q 'MPC format 1969 12 31.99998'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV014_$(util/get_image_date '1969-12-31T23:59:58.4' 2>&1 | grep 'MPC format ')"
@@ -26586,30 +26586,30 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV014_MPCATel"
 fi
 # 2440587.4999815 1969.999999949
-util/get_image_date '1969-12-31T23:59:58.4' 2>&1 | grep --quiet 'Julian year 1969.9999999493'
-#| grep --quiet 'Julian year 1969.999999937'
+util/get_image_date '1969-12-31T23:59:58.4' 2>&1 | grep -q 'Julian year 1969.9999999493'
+#| grep -q 'Julian year 1969.999999937'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV015"
 fi
-util/get_image_date '1969-12-31T23:59:58.4' 2>&1 | grep --quiet 'Unix Time -2'
+util/get_image_date '1969-12-31T23:59:58.4' 2>&1 | grep -q 'Unix Time -2'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV016"
 fi
-#util/get_image_date '1969-12-31T23:59:57.6' 2>&1 | grep --quiet 'MPC format 1969 12 31.99998'
-util/get_image_date '1969-12-31T23:59:57.6' 2>&1 | grep --quiet 'MPC format 1969 12 31.99997'
+#util/get_image_date '1969-12-31T23:59:57.6' 2>&1 | grep -q 'MPC format 1969 12 31.99998'
+util/get_image_date '1969-12-31T23:59:57.6' 2>&1 | grep -q 'MPC format 1969 12 31.99997'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV017"
 fi
-util/get_image_date '1969-12-31T23:59:57.6' 2>&1 | grep --quiet 'Julian year 1969.9999999239'
-#| grep --quiet 'Julian year 1969.999999937'
+util/get_image_date '1969-12-31T23:59:57.6' 2>&1 | grep -q 'Julian year 1969.9999999239'
+#| grep -q 'Julian year 1969.999999937'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV018"
 fi
-util/get_image_date '1969-12-31T23:59:57.6' 2>&1 | grep --quiet 'Unix Time -2'
+util/get_image_date '1969-12-31T23:59:57.6' 2>&1 | grep -q 'Unix Time -2'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV019"
@@ -26623,34 +26623,34 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  fi
 done
 # And a few more checks for the format of the input date string
-util/get_image_date '2014-09-09T05:29' 2>&1 | grep --quiet ' JD 2456909.728472'
+util/get_image_date '2014-09-09T05:29' 2>&1 | grep -q ' JD 2456909.728472'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV020"
 fi
-util/get_image_date '2014-09-09 05:29' 2>&1 | grep --quiet ' JD 2456909.728472'
+util/get_image_date '2014-09-09 05:29' 2>&1 | grep -q ' JD 2456909.728472'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV021"
 fi
-util/get_image_date '2014-09-09 05:29:' 2>&1 | grep --quiet ' JD 2456909.728472'
+util/get_image_date '2014-09-09 05:29:' 2>&1 | grep -q ' JD 2456909.728472'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV022"
 fi
-util/get_image_date '2014-09-09 05:29: ' 2>&1 | grep --quiet ' JD 2456909.728472'
+util/get_image_date '2014-09-09 05:29: ' 2>&1 | grep -q ' JD 2456909.728472'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV023"
 fi
-util/get_image_date '2015-08-21T22:18:25.000000' 2>&1 | grep --quiet ' JD 2457256.429456'
+util/get_image_date '2015-08-21T22:18:25.000000' 2>&1 | grep -q ' JD 2457256.429456'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV023a"
 fi
 # 2459175.2574474 - I'm comparing to https://ssd.jpl.nasa.gov/tools/jdc/#/cd
-util/get_image_date '2020-11-21T18:10:43.4516245' 2>&1 | grep --quiet ' JD 2459175.257447'
-#| grep --quiet 'JD 2459175.257442'
+util/get_image_date '2020-11-21T18:10:43.4516245' 2>&1 | grep -q ' JD 2459175.257447'
+#| grep -q 'JD 2459175.257442'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV023b"
@@ -26665,7 +26665,7 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
 done
 
 # Check input as MJD
-util/get_image_date '58020.39' 2>&1 | grep --quiet ' JD 2458020.89'
+util/get_image_date '58020.39' 2>&1 | grep -q ' JD 2458020.89'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV024"
@@ -26680,22 +26680,22 @@ for TMP_FITS_FILE in fake_image_hack_*.fits ;do
 done
 
 # Check input with multiple arguments and as a fraction of the day
-util/get_image_date 2020 10 27 18:00 2>&1 | grep --quiet 'MPC format 2020 10 27.75000'
+util/get_image_date 2020 10 27 18:00 2>&1 | grep -q 'MPC format 2020 10 27.75000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV025"
 fi
-util/get_image_date 2020 10 27 18:00:00 2>&1 | grep --quiet 'MPC format 2020 10 27.75000'
+util/get_image_date 2020 10 27 18:00:00 2>&1 | grep -q 'MPC format 2020 10 27.75000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV025"
 fi
-util/get_image_date 2020 10 27.75 2>&1 | grep --quiet 'MPC format 2020 10 27.75000'
+util/get_image_date 2020 10 27.75 2>&1 | grep -q 'MPC format 2020 10 27.75000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV026"
 fi
-util/get_image_date 2020 1 7.75 2>&1 | grep --quiet 'MPC format 2020 01  7.75000'
+util/get_image_date 2020 1 7.75 2>&1 | grep -q 'MPC format 2020 01  7.75000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV027"
@@ -26712,14 +26712,14 @@ done
 
 # Check funny input
 # 2460082.4740613
-#util/get_image_date 2023-05-17T23:22:38.894T00:00:24.955 | grep --quiet 'Exposure   0 sec, 17.05.2023 23:22:39   = JD  2460082.47406'
-#util/get_image_date 2023-05-17T23:22:38.894T00:00:24.955 | grep --quiet 'xposure 0 sec, 17.05.2023 23:22:38.894 = JD 2460082.47406127'
+#util/get_image_date 2023-05-17T23:22:38.894T00:00:24.955 | grep -q 'Exposure   0 sec, 17.05.2023 23:22:39   = JD  2460082.47406'
+#util/get_image_date 2023-05-17T23:22:38.894T00:00:24.955 | grep -q 'xposure 0 sec, 17.05.2023 23:22:38.894 = JD 2460082.47406127'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV028"
 fi
-#util/get_image_date 2023-05-17T23:22:38.894T99:00:24.955 | grep --quiet 'Exposure   0 sec, 17.05.2023 23:22:39   = JD  2460082.47406'
-util/get_image_date 2023-05-17T23:22:38.894T99:00:24.955 | grep --quiet 'Exposure 0 sec, 17.05.2023 23:22:38.894 = JD 2460082.47406127'
+#util/get_image_date 2023-05-17T23:22:38.894T99:00:24.955 | grep -q 'Exposure   0 sec, 17.05.2023 23:22:39   = JD  2460082.47406'
+util/get_image_date 2023-05-17T23:22:38.894T99:00:24.955 | grep -q 'Exposure 0 sec, 17.05.2023 23:22:38.894 = JD 2460082.47406127'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV029"
@@ -26729,15 +26729,15 @@ fi
 # according to https://aa.usno.navy.mil/faq/TT
 # The epoch designated "J2000.0" is specified as Julian date 2451545.0 TT, or 2000 January 1, 12h TT.
 # This epoch can also be expressed as 2000 January 1, 11:59:27.816 TAI or 2000 January 1, 11:58:55.816 UTC.
-#util/UTC2TT $(util/get_image_date 2000-01-01 11:58:55.816 | grep ' JD 2' | awk '{print $2}') 2>&1 | grep --quiet 'JD(TT)= 2451545.00000'
+#util/UTC2TT $(util/get_image_date 2000-01-01 11:58:55.816 | grep ' JD 2' | awk '{print $2}') 2>&1 | grep -q 'JD(TT)= 2451545.00000'
 # more zeroes because we can
-util/UTC2TT $(util/get_image_date 2000-01-01 11:58:55.816 | grep ' JD 2' | awk '{print $2}') 2>&1 | grep --quiet 'JD(TT)= 2451545.00000000'
+util/UTC2TT $(util/get_image_date 2000-01-01 11:58:55.816 | grep ' JD 2' | awk '{print $2}') 2>&1 | grep -q 'JD(TT)= 2451545.00000000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_UTC2TT01"
 fi
-#util/TT2UTC 2451545.00000 2>&1 | grep --quiet 'JD(UTC)= 2451544.99926'
-util/TT2UTC 2451545.00000 2>&1 | grep --quiet 'JD(UTC)= 2451544.99925713'
+#util/TT2UTC 2451545.00000 2>&1 | grep -q 'JD(UTC)= 2451544.99926'
+util/TT2UTC 2451545.00000 2>&1 | grep -q 'JD(UTC)= 2451544.99925713'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_TT2UTC01"
@@ -26745,7 +26745,7 @@ fi
 # Actually that is suposed to be 2000 January 1, 11:58:55.816 UTC, but we don't have better than one second accuracy
 # No, actually now we do have sub-second accuracy, so this should work
 #util/get_image_date $(util/TT2UTC 2451545.00000 2>&1 | grep 'JD(UTC)=' | awk '{print $2}') 2>&1 | grep '2000-01-01 11:58:56 (UT)'
-util/get_image_date $(util/TT2UTC 2451545.00000 2>&1 | grep 'JD(UTC)=' | awk '{print $2}') 2>&1 | grep --quiet '2000-01-01 11:58:55.816 (UTC)'
+util/get_image_date $(util/TT2UTC 2451545.00000 2>&1 | grep 'JD(UTC)=' | awk '{print $2}') 2>&1 | grep -q '2000-01-01 11:58:55.816 (UTC)'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_TT2UTC02"
@@ -26763,7 +26763,7 @@ fi
 command -v python3 &> /dev/null
 if [ $? -eq 0 ];then
  # test if astropy script is working
- util/jd2date.py 2460560.17929398 | grep --quiet '2024-09-06 16:18:11.000'
+ util/jd2date.py 2460560.17929398 | grep -q '2024-09-06 16:18:11.000'
  if [ $? -eq 0 ];then
   # Ready to test
   #
@@ -26924,7 +26924,7 @@ else
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_003"
   else
-   lib/lk_compute_periodogram IOMC_2677000065.txt 100 1.0 0.1 | grep 'LK' | grep --quiet '0.308703'
+   lib/lk_compute_periodogram IOMC_2677000065.txt 100 1.0 0.1 | grep 'LK' | grep -q '0.308703'
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_OMC2ASCII2_LK_local_period_search_failed"
@@ -26991,7 +26991,7 @@ else
  #
  # The new upsilon incorrectly classifies the test lightcurve as a cepheid, because it cannot correctly derive its period
  # but whatever, here we just want to check that the web service is working
- curl --silent "$RESULTSURL" | grep --quiet -e 'class =  RRL_ab' -e 'class = RRL_ab' -e 'class = CEPH_F'
+ curl --silent "$RESULTSURL" | grep -q -e 'class =  RRL_ab' -e 'class = RRL_ab' -e 'class = CEPH_F'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_WWWU_003"
@@ -27016,7 +27016,7 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMWSKYARCHIVE_002"
 fi
-file wwwtest.png | grep --quiet 'PNG image data'
+file wwwtest.png | grep -q 'PNG image data'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMWSKYARCHIVE_003"
@@ -27050,7 +27050,7 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_PASKYARCHIVE_002"
 fi
-file wwwtest.png | grep --quiet 'PNG image data'
+file wwwtest.png | grep -q 'PNG image data'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  # most likely Kirill needs to do sshfs at scan: 
@@ -27068,7 +27068,7 @@ fi
 
 
 # EpCalc
-curl  --insecure --connect-timeout 10 --retry 1 --max-time 30  --silent 'http://scan.sai.msu.ru/cgi-bin/epcalc/ecalc?HJD0=2453810.90213&Period=10.55&JD1=2453903.90213&JD2=2453930.90213' | grep --quiet '2453937.502130'
+curl  --insecure --connect-timeout 10 --retry 1 --max-time 30  --silent 'http://scan.sai.msu.ru/cgi-bin/epcalc/ecalc?HJD0=2453810.90213&Period=10.55&JD1=2453903.90213&JD2=2453930.90213' | grep -q '2453937.502130'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_EPCALC_001"
@@ -27132,7 +27132,7 @@ else
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_KIRXNET_IMAGE_DOWNLOAD_FAILED"
   else
-    file kirx_med.jpg | grep --quiet 'JPEG image data'
+    file kirx_med.jpg | grep -q 'JPEG image data'
     if [ $? -ne 0 ]; then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_KIRXNET_IMAGE_VERIFICATION_FAILED"
@@ -27158,7 +27158,7 @@ else
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_KIRXNET_PDF_DOWNLOAD_FAILED"
   else
-    file Kirill_Sokolovsky__standalone_CV.pdf | grep --quiet 'PDF document'
+    file Kirill_Sokolovsky__standalone_CV.pdf | grep -q 'PDF document'
     if [ $? -ne 0 ]; then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_KIRXNET_PDF_VERIFICATION_FAILED"
@@ -27216,7 +27216,7 @@ else
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_SAI_FILE_DOWNLOAD_FAILED"
     else
-      file vast-latest.tar.bz2 | grep --quiet 'bzip2 compressed data'
+      file vast-latest.tar.bz2 | grep -q 'bzip2 compressed data'
       if [ $? -ne 0 ]; then
         TEST_PASSED=0
         FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_SAI_FILE_VERIFICATION_FAILED"
@@ -27250,7 +27250,7 @@ else
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_IMAGE_DOWNLOAD_FAILED"
   else
-    file time_distribution.png | grep --quiet 'PNG image data'
+    file time_distribution.png | grep -q 'PNG image data'
     if [ $? -ne 0 ]; then
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_NMW_IMAGE_VERIFICATION_FAILED"
@@ -27301,32 +27301,32 @@ fi
 ### Check directory listing where it's needed
 if curl --silent --tlsv1.2 https://kirx.net --max-time 5 >/dev/null 2>&1 ;then
  # Check if https://www.kirx.net/~kirx/ contains "Parent Directory"
- if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://www.kirx.net/~kirx/' | grep --quiet 'Parent Directory'; then
+ if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'https://www.kirx.net/~kirx/' | grep -q 'Parent Directory'; then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_INDEX_KIRX_PARENT_DIR_MISSING"
  fi
 fi
 
 # Check if http://scan.sai.msu.ru/~kirx/ contains "Parent Directory"
-if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://scan.sai.msu.ru/~kirx/' | grep --quiet 'Parent Directory'; then
+if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://scan.sai.msu.ru/~kirx/' | grep -q 'Parent Directory'; then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_INDEX_SCAN_KIRX_PARENT_DIR_MISSING"
 fi
 
 # Check if http://scan.sai.msu.ru/~denis/ contains "Parent Directory"
-if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://scan.sai.msu.ru/~denis/' | grep --quiet 'Parent Directory'; then
+if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://scan.sai.msu.ru/~denis/' | grep -q 'Parent Directory'; then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_INDEX_SCAN_DENIS_PARENT_DIR_MISSING"
 fi
 
 # Check if https://scan.sai.msu.ru/lk/source/ contains "Parent Directory"
-if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://scan.sai.msu.ru/lk/source/' | grep --quiet 'Parent Directory'; then
+if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://scan.sai.msu.ru/lk/source/' | grep -q 'Parent Directory'; then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_INDEX_LK_SOURCE_PARENT_DIR_MISSING"
 fi
 
 # Check if http://scan.sai.msu.ru/pub/software/vast/ contains "Parent Directory"
-if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://scan.sai.msu.ru/pub/software/vast/' | grep --quiet 'Parent Directory'; then
+if ! curl --insecure --connect-timeout 10 --retry 1 --max-time 30 --silent 'http://scan.sai.msu.ru/pub/software/vast/' | grep -q 'Parent Directory'; then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_INDEX_VAST_SOFTWARE_PARENT_DIR_MISSING"
 fi
@@ -28032,12 +28032,12 @@ if [ ! -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
  cd "$WORKDIR" || exit 1
 fi
 if [ -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
- util/fov_of_wcs_calibrated_image.sh ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts | grep 'Image size: 467.' | grep --quiet '352.'
+ util/fov_of_wcs_calibrated_image.sh ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts | grep 'Image size: 467.' | grep -q '352.'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES IMAGEFOVSCRIPT_001"
  fi
- util/fov_of_wcs_calibrated_image.sh ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts | grep --quiet 'Image scale: 8.3'
+ util/fov_of_wcs_calibrated_image.sh ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts | grep -q 'Image scale: 8.3'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES IMAGEFOVSCRIPT_002"
@@ -28113,7 +28113,7 @@ if [ -f ../NMW_corrupt_calibration_test/d_test.fit ] && [ -f ../NMW_corrupt_cali
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWFLATFIELDING_003"
  fi
- lib/autodetect_aperture_main fd_test.fit 2>&1 | grep --quiet FLAG_IMAGE
+ lib/autodetect_aperture_main fd_test.fit 2>&1 | grep -q FLAG_IMAGE
  if [ $? -eq 0 ];then
   # There should be no flag image for this flatfielded frame
   TEST_PASSED=0
@@ -28328,7 +28328,7 @@ echo "2459424.93743 -10.88910 0.00230
 2459428.88889 -10.87730 0.00230
 2459428.93750 -10.88260 0.00230
 2459428.98628 -10.88720 0.00230
-2459429.03125 -10.89180 0.00240" | lib/kwee-van-woerden 2> /dev/null | grep --quiet '2459426.9446'
+2459429.03125 -10.89180 0.00240" | lib/kwee-van-woerden 2> /dev/null | grep -q '2459426.9446'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES KvW_001"
@@ -28361,28 +28361,28 @@ echo -n "Performing colstat test: " >> vast_test_report.txt
 
 echo "1
 2
-3" | util/colstat 2> /dev/null | grep --quiet 'MIN= 1.000000'
+3" | util/colstat 2> /dev/null | grep -q 'MIN= 1.000000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
 fi
 echo "1
 2
-3" | util/colstat 2> /dev/null | grep --quiet 'MAX= 3.000000'
+3" | util/colstat 2> /dev/null | grep -q 'MAX= 3.000000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
 fi
 echo "1
 2
-3" | util/colstat 2> /dev/null | grep --quiet 'MEDIAN= 2.000000'
+3" | util/colstat 2> /dev/null | grep -q 'MEDIAN= 2.000000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
 fi
 echo "1
 2
-3" | util/colstat 2> /dev/null | grep --quiet 'MEAN= 2.000000'
+3" | util/colstat 2> /dev/null | grep -q 'MEAN= 2.000000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
@@ -28390,7 +28390,7 @@ fi
 echo "1
 2
 3
-" | util/colstat 2> /dev/null | grep --quiet 'MEAN= 2.000000'
+" | util/colstat 2> /dev/null | grep -q 'MEAN= 2.000000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
@@ -28400,7 +28400,7 @@ echo "1
 3
  
  
-" | util/colstat 2> /dev/null | grep --quiet 'MEAN= 2.000000'
+" | util/colstat 2> /dev/null | grep -q 'MEAN= 2.000000'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES COLSTAT_MIN"
@@ -28436,7 +28436,7 @@ if [ $? -ne 0 ];then
  TEST_PASSED=0                          
  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_MOONS"
 else
- util/transients/MPCheck_v2.sh 02:38:29.72 +13:57:41.6 2023 10 22.8947 | grep --quiet 'Ganymede'
+ util/transients/MPCheck_v2.sh 02:38:29.72 +13:57:41.6 2023 10 22.8947 | grep -q 'Ganymede'
  if [ $? -ne 0 ];then                    
   TEST_PASSED=0                          
   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_Ganymede"
@@ -28850,7 +28850,7 @@ else
  echo "### Send the above report to the VaST developer? (yes/no)"
  read USER_ANSWER
  #if [ "yes" = "$USER_ANSWER" ] || [ "y" = "$USER_ANSWER" ] || [ "ys" = "$USER_ANSWER" ] || [ "Yes" = "$USER_ANSWER" ] || [ "YES" = "$USER_ANSWER" ] || [ "1" = "$USER_ANSWER" ] ;then
- echo "$USER_ANSWER" | grep --quiet -e "yes" -e "yy" -e "ys" -e "Yes" -e "YES"
+ echo "$USER_ANSWER" | grep -q -e "yes" -e "yy" -e "ys" -e "Yes" -e "YES"
  if [ $? -eq 0 ] || [ "y" = "$USER_ANSWER" ] || [ "1" = "$USER_ANSWER" ] ;then
   MAIL_TEST_REPORT_TO_KIRX="YES"
  else

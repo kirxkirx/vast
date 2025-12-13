@@ -31,7 +31,7 @@ fi
 #
 
 for VARIABLE_TO_FIND in 'LX Aql' 'KS Aql' 'V0536 Aql' 'KU Aql' 'RT Aql' 'W Sge' ;do
- grep --quiet "$VARIABLE_TO_FIND" transient_report/index.html
+ grep -q "$VARIABLE_TO_FIND" transient_report/index.html
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES  $VARIABLE_TO_FIND" 

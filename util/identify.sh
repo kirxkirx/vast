@@ -101,7 +101,7 @@ function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image
  FITS_IMAGE_TO_CHECK_HEADER=`"$VAST_PATH"util/listhead "$FITS_IMAGE_TO_CHECK"`
  # Check if it has WCS keywords
  for TYPICAL_WCS_KEYWORD in CTYPE1 CTYPE2 CRVAL1 CRVAL2 CRPIX1 CRPIX2 CD1_1 CD1_2 CD2_1 CD2_2 ;do
-  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet "$TYPICAL_WCS_KEYWORD"
+  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -q "$TYPICAL_WCS_KEYWORD"
   if [ $? -ne 0 ];then
    return 0
   fi
@@ -111,10 +111,10 @@ function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image
  ### But for now...
  
  ### !!! Blindly trust WCS if it was created by Astrometry.net code !!! ###
- echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet -e 'HISTORY Created by the Astrometry.net suite.' -e 'HISTORY WCS created by AIJ link to Astronomy.net website'
+ echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -q -e 'HISTORY Created by the Astrometry.net suite.' -e 'HISTORY WCS created by AIJ link to Astronomy.net website'
  if [ $? -eq 0 ];then
   # TEST for the possibility that this is one of the messed-up NMW archive images
-  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet -e 'A_0_0' -e 'A_2_0' && echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet 'PV1_1'
+  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -q -e 'A_0_0' -e 'A_2_0' && echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -q 'PV1_1'
   if [ $? -eq 0 ];then
    echo "$0  -- WARNING, the input image has both A_0_0 and PV1_1 distortions kewords! Will try to re-solve the image."
   else
@@ -124,39 +124,39 @@ function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image
  fi
  
  ### !!! Blindly trust WCS if it was created by SCAMP code !!! ###
- echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet -e 'HISTORY   Astrometric solution by SCAMP version'
+ echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -q -e 'HISTORY   Astrometric solution by SCAMP version'
  if [ $? -eq 0 ];then
   return 1
  fi
  
  ### !!! Blindly trust WCS if it was created by SWarp image stacking code !!! ###
- echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet "SOFTNAME= 'SWarp"
+ echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -q "SOFTNAME= 'SWarp"
  if [ $? -eq 0 ];then
   return 1
  fi
  
  ### !!! Blindly trust ZTF image astrometry !!! ###
  # (actually it will have the above SCAMP keyword too)
- echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -B500 -A500 "ORIGIN  = 'Zwicky Transient Facility'" | grep -B500 -A500 "INSTRUME= 'ZTF/MOSAIC'" |  grep --quiet "CTYPE1  = 'RA---TPV'"
+ echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -B500 -A500 "ORIGIN  = 'Zwicky Transient Facility'" | grep -B500 -A500 "INSTRUME= 'ZTF/MOSAIC'" |  grep -q "CTYPE1  = 'RA---TPV'"
  if [ $? -eq 0 ];then
   return 1
  fi
 
  ### !!! Blindly trust TESS FFI astrometry !!! ###
- echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -B500 -A500 "TELESCOP= 'TESS    '" | grep -B500 -A500 "INSTRUME= 'TESS Photometer'" |  grep --quiet "CTYPE1  = 'RA---TAN-SIP'"
+ echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -B500 -A500 "TELESCOP= 'TESS    '" | grep -B500 -A500 "INSTRUME= 'TESS Photometer'" |  grep -q "CTYPE1  = 'RA---TAN-SIP'"
  if [ $? -eq 0 ];then
   return 1
  fi
  
  ### !!! Blindly trust ATLAS astrometry !!! ###
- echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -B500 -A500 "ATLAS camera ID" |  grep --quiet "CTYPE2  = 'DEC--TPV'"
+ echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -B500 -A500 "ATLAS camera ID" |  grep -q "CTYPE2  = 'DEC--TPV'"
  if [ $? -eq 0 ];then
   return 1
  fi
  
  # Nope, uncorrected LBT/LBC astrometry is pretty bad actually - can't trust it
  #### !!! Blindly trust LBT/LBC astrometry !!! ###
- #echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -B500 -A500 "LBCOBFIL" | grep -B500 -A500 "LBCCHIP" |  grep --quiet "CTYPE2  = 'DEC--TAN'"
+ #echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -B500 -A500 "LBCOBFIL" | grep -B500 -A500 "LBCCHIP" |  grep -q "CTYPE2  = 'DEC--TAN'"
  #if [ $? -eq 0 ];then
  # return 1
  #fi
@@ -170,14 +170,14 @@ function determine_astrometry_method {
  
  # Check the default Astrometry.net install locations first
  if [ -d /usr/local/astrometry/bin ];then
-  echo "$PATH" | grep --quiet '/usr/local/astrometry/bin'
+  echo "$PATH" | grep -q '/usr/local/astrometry/bin'
   if [ $? -ne 0 ];then
    export PATH=$PATH:/usr/local/astrometry/bin
   fi
  fi
  # Check another default Astrometry.net install location
  if [ -d /usr/share/astrometry/bin ];then
-  echo "$PATH" | grep --quiet '/usr/share/astrometry/bin'
+  echo "$PATH" | grep -q '/usr/share/astrometry/bin'
   if [ $? -ne 0 ];then
    export PATH=$PATH:/usr/share/astrometry/bin
   fi
@@ -255,14 +255,14 @@ function setup_remote_astrometry {
   for i in $PLATE_SOLVE_SERVERS ;do
    # make sure we'll not remotely connect to ourselves
    if [ ! -z "$HOST_WE_ARE_RUNNING_AT" ];then
-    echo "$i" | grep --quiet "$HOST_WE_ARE_RUNNING_AT"
+    echo "$i" | grep -q "$HOST_WE_ARE_RUNNING_AT"
     if [ $? -eq 0 ];then
      continue
     fi
    fi
    #
-   #curl --max-time 10 --silent http://"$i"/astrometry_engine/files/ | grep --quiet 'Parent Directory' && echo "$i" > server$$_"$i".ping_ok &
-   curl $VAST_CURL_PROXY --max-time 10 --silent http://"$i"/lk/ --max-time 10 --silent | grep --quiet '../cgi-bin/lk/process_lightcurve.py' && echo "$i" > server$$_"$i".ping_ok &
+   #curl --max-time 10 --silent http://"$i"/astrometry_engine/files/ | grep -q 'Parent Directory' && echo "$i" > server$$_"$i".ping_ok &
+   curl $VAST_CURL_PROXY --max-time 10 --silent http://"$i"/lk/ --max-time 10 --silent | grep -q '../cgi-bin/lk/process_lightcurve.py' && echo "$i" > server$$_"$i".ping_ok &
    echo -n "$i " 1>&2
   done
   wait
@@ -342,7 +342,7 @@ export TIMEOUT_COMMAND
 
 # Set SExtractor executable
 SEXTRACTOR=sex
-echo "$PATH" | grep --quiet "$VAST_PATH"lib/bin/
+echo "$PATH" | grep -q "$VAST_PATH"lib/bin/
 if [ $? -ne 0 ];then
  export PATH=$PATH:"$VAST_PATH"lib/bin/
 fi

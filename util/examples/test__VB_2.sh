@@ -518,38 +518,38 @@ if [ $? -ne 0 ];then
 fi
 # Check results
 if [ -f vast_summary.log ];then
- grep --quiet "Images processed 1250" vast_summary.log
+ grep -q "Images processed 1250" vast_summary.log
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_001"
  fi
- grep --quiet "Images used for photometry 1240" vast_summary.log
+ grep -q "Images used for photometry 1240" vast_summary.log
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_002"
  fi
- grep --quiet "Ref.  image: 2457993.39415 27.08.2017 21:25:55" vast_summary.log
+ grep -q "Ref.  image: 2457993.39415 27.08.2017 21:25:55" vast_summary.log
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_000__REFIMAGE"
  fi
- grep --quiet "First image: 2457993.39415 27.08.2017 21:25:55" vast_summary.log
+ grep -q "First image: 2457993.39415 27.08.2017 21:25:55" vast_summary.log
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_003"
  fi
- grep --quiet "Last  image: 2458157.35237 07.02.2018 20:25:46" vast_summary.log
+ grep -q "Last  image: 2458157.35237 07.02.2018 20:25:46" vast_summary.log
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_004"
  fi
- grep --quiet "Magnitude-Size filter: Enabled" vast_summary.log
+ grep -q "Magnitude-Size filter: Enabled" vast_summary.log
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_005"
  fi
- #grep --quiet "Photometric errors rescaling: YES" vast_summary.log
- grep --quiet "Photometric errors rescaling: NO" vast_summary.log
+ #grep -q "Photometric errors rescaling: YES" vast_summary.log
+ grep -q "Photometric errors rescaling: NO" vast_summary.log
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_006"
@@ -570,22 +570,22 @@ if [ -f vast_summary.log ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_010"
  fi
- grep --quiet "IQR" vast_lightcurve_statistics_format.log
+ grep -q "IQR" vast_lightcurve_statistics_format.log
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_011"
  fi
- grep --quiet "eta" vast_lightcurve_statistics_format.log
+ grep -q "eta" vast_lightcurve_statistics_format.log
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_012"
  fi
- grep --quiet "RoMS" vast_lightcurve_statistics_format.log
+ grep -q "RoMS" vast_lightcurve_statistics_format.log
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_013"
  fi
- grep --quiet "rCh2" vast_lightcurve_statistics_format.log
+ grep -q "rCh2" vast_lightcurve_statistics_format.log
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_014"
@@ -600,7 +600,7 @@ if [ -f vast_summary.log ];then
  # FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_000_N_AUTOCANDIDATES2"
  #fi
  #
- util/identify_noninteractive.sh `cat vast_autocandidates.log | while read A ;do grep "$A" vast_lightcurve_statistics.log ;done | sort -k2 | tail -n1 | awk '{print $5}'` | grep --quiet 'V0523 Cas'
+ util/identify_noninteractive.sh `cat vast_autocandidates.log | while read A ;do grep "$A" vast_lightcurve_statistics.log ;done | sort -k2 | tail -n1 | awk '{print $5}'` | grep -q 'V0523 Cas'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_VB_000_VARID"

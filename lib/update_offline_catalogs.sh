@@ -476,11 +476,6 @@ for i in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19; do
   echo "ERROR in $0 while checking Tycho-2 copy: file $TYCHO_PATH/tyc2.dat.$i is empty"
   exit 1
  fi
- # sadly, this test is unreliable: I've got one machine with file telling me it's a Cetificate when looking as tyc2.dat.00
- #if ! file "$TYCHO_PATH"/tyc2.dat."$i" | grep --quiet 'ASCII text' ;then
- # echo "ERROR in $0 while checking Tycho-2 copy: file $TYCHO_PATH/tyc2.dat.$i type is not 'ASCII text'"
- # exit 1
- #fi
 done
 #can't have output here as it goes straight to the transient candidates list
 #echo "Tycho-2 copy looks healthy"

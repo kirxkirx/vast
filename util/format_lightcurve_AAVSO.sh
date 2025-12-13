@@ -55,7 +55,7 @@ if [ ! -s vast_summary.log ];then
  echo "ERROR: cannot find vast_summary.log to determine the JD time system, assuming UTC"
  SOFTWARE_VERSION=$(./vast --version 2>/dev/null)
 else
- grep --quiet 'JD time system (TT/UTC/UNKNOWN): UTC' vast_summary.log
+ grep -q 'JD time system (TT/UTC/UNKNOWN): UTC' vast_summary.log
  if [ $? -ne 0 ];then
   echo "ERROR: cannot confirm that the JD time system is UTC from vast_summary.log"
   exit 1
@@ -178,7 +178,7 @@ if [ -n "$EDITOR" ];then
  fi
  # Check that the edit looks reasonable
  # variable star name 
- grep --quiet 'XX Xxx' AAVSO_report.txt
+ grep -q 'XX Xxx' AAVSO_report.txt
  if [ $? -eq 0 ];then
   echo "
   
@@ -192,7 +192,7 @@ It seems you forgot to set the correct variable star name! Please search and rep
   fi # if [ $TEST_MODE_WITH_NO_INTERACTIVE_EDITOR -ne 1 ];then
  fi
  # filter name
- grep --quiet ',X,' AAVSO_report.txt
+ grep -q ',X,' AAVSO_report.txt
  if [ $? -eq 0 ];then
   echo "
   
@@ -206,7 +206,7 @@ It seems you forgot to set the correct filter name! Please search and replace th
   fi # if [ $TEST_MODE_WITH_NO_INTERACTIVE_EDITOR -ne 1 ];then
  fi
  # AAVSO observer code
- grep --quiet 'XXX' AAVSO_report.txt
+ grep -q 'XXX' AAVSO_report.txt
  if [ $? -eq 0 ];then
   echo "
   

@@ -304,7 +304,7 @@ function is_this_test_run_based_on_input_img_path {
  fi
  
  # -i (ignore case)
- echo "$path_to_check" | grep --quiet -i 'test'
+ echo "$path_to_check" | grep -q -i 'test'
  if [ $? -eq 0 ]; then
   # Pattern found - this IS a test run
   return 0
@@ -432,7 +432,7 @@ function try_to_calibrate_the_input_frame {
  fi
  # util/ccd/ms will write HISTORY Dark frame subtraction in the dark-frame-subtracted file
  # We test this in order not to do the dark frame subtraction twice
- util/listhead "$INPUT_FRAME_PATH" | grep --quiet 'Dark frame subtraction'
+ util/listhead "$INPUT_FRAME_PATH" | grep -q 'Dark frame subtraction'
  if [ $? -eq 0 ];then
   echo "try_to_calibrate_the_input_frame(): the dark frame has already been subtracted from the input image" 1>&2
   return 1
@@ -1598,28 +1598,28 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
  # Set custom bad_region.lst if there is one
  # the camera name should be present in the input file (directory) name
  KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE=0
- echo "$SECOND_EPOCH__FIRST_IMAGE" | grep --quiet -e "Nazar" -e "nazar" -e "NAZAR"
+ echo "$SECOND_EPOCH__FIRST_IMAGE" | grep -q -e "Nazar" -e "nazar" -e "NAZAR"
  if [ $? -eq 0 ];then
   KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE=1
   if [ -f ../Nazar_bad_region.lst ];then
    cp -v ../Nazar_bad_region.lst bad_region.lst >> transient_factory_test31.txt 2>&1
   fi
  fi
- echo "$SECOND_EPOCH__FIRST_IMAGE" | grep --quiet -e "Planeta" -e "planeta" -e "PLANETA"
+ echo "$SECOND_EPOCH__FIRST_IMAGE" | grep -q -e "Planeta" -e "planeta" -e "PLANETA"
  if [ $? -eq 0 ];then
   KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE=1
   if [ -f ../Planeta_bad_region.lst ];then
    cp -v ../Planeta_bad_region.lst bad_region.lst >> transient_factory_test31.txt 2>&1
   fi
  fi
- echo "$SECOND_EPOCH__FIRST_IMAGE" | grep --quiet -e "Stas" -e "stas" -e "STAS"
+ echo "$SECOND_EPOCH__FIRST_IMAGE" | grep -q -e "Stas" -e "stas" -e "STAS"
  if [ $? -eq 0 ];then
   KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE=1
   if [ -f ../Stas_bad_region.lst ];then
    cp -v ../Stas_bad_region.lst bad_region.lst >> transient_factory_test31.txt 2>&1
   fi
  fi
- echo "$SECOND_EPOCH__FIRST_IMAGE" | grep --quiet -e "STL-11000M" -e "NMW-STL"
+ echo "$SECOND_EPOCH__FIRST_IMAGE" | grep -q -e "STL-11000M" -e "NMW-STL"
  if [ $? -eq 0 ];then
   KNOW_THIS_CAMERA_NAME_FOR_BAD_REGION_FILE=1
   if [ -f ../STL_bad_region.lst ];then
@@ -1714,7 +1714,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   echo "The four input images were $REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_factory_test31.txt
   cat vast_summary.log >> transient_factory.log
   # double-check that the VaST run was OK
-  grep --quiet 'Images used for photometry 4' vast_summary.log
+  grep -q 'Images used for photometry 4' vast_summary.log
   if [ $? -ne 0 ];then
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
@@ -1738,7 +1738,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
       # It may be one of the NMW archive images with broken WCS
       # (pubdate this check - some problematic NMW archive images have no 'A_0_0')
       FITS_IMAGE_TO_CHECK_HEADER=$("$VAST_PATH"util/listhead "$i")
-      echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet -e 'A_0_0' -e 'A_2_0' && echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --quiet 'PV1_1'
+      echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -q -e 'A_0_0' -e 'A_2_0' && echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -q 'PV1_1'
       if [ $? -eq 0 ];then
        echo "$0  -- WARNING, the input image has both SIP and PV distortions kewords! Will try to re-solve the image."
       else
@@ -1825,7 +1825,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
      fi
     fi
    fi
-  done | grep --quiet 'UNSOLVED_PLATE'
+  done | grep -q 'UNSOLVED_PLATE'
   if [ $? -eq 0 ];then
    # Save image date for it to be displayed in the summary file
    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
@@ -2098,7 +2098,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    #cat "$i" | awk '{print $2}' | util/colstat 2>&1 | grep 'MEAN=' | awk '{if ( $2 < -5 && $2 >18 ) print "ERROR"}' | grep 'ERROR' && break
    # The reference frame might be a few magnitudes deeper than the new frames
    cat "$i" | awk '{print $2}' | util/colstat 2>&1 | grep 'MEAN=' | awk -v var="$FILTER_BRIGHT_MAG_CUTOFF_TRANSIENT_SEARCH" -v var2="$FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH" '{if ( $2 < var && $2 > var2+5.0 ) print "ERROR"}' | grep 'ERROR' && break
-  done | grep --quiet 'ERROR'
+  done | grep -q 'ERROR'
   #
   if [ $? -eq 0 ];then
    # Wait for the solve_plate_with_UCAC5 stuff to finish
@@ -2199,7 +2199,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   DIMY=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS2 | awk '{print $3}' | head -n1)
   ### ===> IMAGE EDGE OFFSET HARDCODED HERE <===
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
-   cat "$i" | awk "{if ( \$4>$FRAME_EDGE_OFFSET_PIX && \$4<$DIMX-$FRAME_EDGE_OFFSET_PIX && \$5>$FRAME_EDGE_OFFSET_PIX && \$5<$DIMY-$FRAME_EDGE_OFFSET_PIX ) print \"YES\"; else print \"NO\" }" | grep --quiet 'NO'
+   cat "$i" | awk "{if ( \$4>$FRAME_EDGE_OFFSET_PIX && \$4<$DIMX-$FRAME_EDGE_OFFSET_PIX && \$5>$FRAME_EDGE_OFFSET_PIX && \$5<$DIMY-$FRAME_EDGE_OFFSET_PIX ) print \"YES\"; else print \"NO\" }" | grep -q 'NO'
    if [ $? -ne 0 ];then
     # If there was no "NO" answer for any of the lines
     grep "$i" candidates-transients.lst | head -n1 
@@ -2213,11 +2213,11 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
 
   # Make sure each candidate is detected on the two second-epoch images, not any other combination
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
-   grep --quiet "$SECOND_EPOCH__FIRST_IMAGE" "$i"
+   grep -q "$SECOND_EPOCH__FIRST_IMAGE" "$i"
    if [ $? -ne 0 ];then
     continue
    fi
-   grep --quiet "$SECOND_EPOCH__SECOND_IMAGE" "$i"
+   grep -q "$SECOND_EPOCH__SECOND_IMAGE" "$i"
    if [ $? -ne 0 ];then
     continue
    fi
@@ -2384,13 +2384,13 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
  echo "We are allowed to update the exclusion list at $HOST host" | tee -a transient_factory_test31.txt
  IS_THIS_TEST_RUN="NO"
  # if we are not in the test directory
- #echo "$PWD" "$@" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
+ #echo "$PWD" "$@" | grep -q -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST'
  is_this_test_run_based_on_input_img_path "$PWD $string_command_line_argumants"
  if [ $? -eq 0 ] ;then
   IS_THIS_TEST_RUN="YES"
   echo "The names $PWD $string_command_line_argumants suggest this is a test run" | tee -a transient_factory_test31.txt
  fi
- echo "$1" | grep --quiet -e 'NMW_Vul2_magnitude_calibration_exit_code_test' -e 'NMW_Sgr9_crash_test'
+ echo "$1" | grep -q -e 'NMW_Vul2_magnitude_calibration_exit_code_test' -e 'NMW_Sgr9_crash_test'
  if [ $? -eq 0 ] ;then
   IS_THIS_TEST_RUN="NO"
   echo "Allowing the exclusion list update for $1" | tee -a transient_factory_test31.txt
@@ -2405,7 +2405,7 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
  echo "###################################################################################" | tee -a transient_factory_test31.txt
  while read -r RADECSTR ;do
   # The following line should match that in util/transients/report_transient.sh
-  grep -A8 "$RADECSTR" transient_report/index.html | grep 'neverexclude_list.txt' | grep --quiet 'This object is listed in'
+  grep -A8 "$RADECSTR" transient_report/index.html | grep 'neverexclude_list.txt' | grep -q 'This object is listed in'
   if [ $? -eq 0 ];then
    #echo "$RADECSTR  -- listed in neverexclude_list.txt (will NOT add it to exclusion list)" | tee -a transient_factory_test31.txt
    # stdout goes to exclusion_list_index_html.txt_noasteroids in this loop, so this line ended up in exclusion list - very silly
@@ -2413,8 +2413,8 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
    continue
   fi
   # Mac OS X grep does not handle well the combination --max-count=1 -A8
-  #grep --max-count=1 -A8 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep --quiet 'not found'
-  grep -A8 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep --quiet 'not found'
+  #grep --max-count=1 -A8 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep -q 'not found'
+  grep -A8 "$RADECSTR" transient_report/index.html | grep 'astcheck' | grep -q 'not found'
   if [ $? -eq 0 ];then
    echo "$RADECSTR"
    echo "$RADECSTR  -- not an asteroid (will add it to exclusion list)" >> transient_factory_test31.txt
@@ -2426,7 +2426,7 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
  mv -v exclusion_list_index_html.txt_noasteroids exclusion_list_index_html.txt >> transient_factory_test31.txt 2>&1
  #
  while read -r RADECSTR ;do
-  grep -A8 "$RADECSTR" transient_report/index.html | grep 'galactic' | grep --quiet -e '<font color="red">0.0</font></b> pix' -e '<font color="red">0.1</font></b> pix' -e '<font color="red">0.2</font></b> pix'
+  grep -A8 "$RADECSTR" transient_report/index.html | grep 'galactic' | grep -q -e '<font color="red">0.0</font></b> pix' -e '<font color="red">0.1</font></b> pix' -e '<font color="red">0.2</font></b> pix'
   #if [ $? -ne 0 ] || ( [[ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ]] &&
   # [[ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" == "no" ]] ); then
   if [ $? -ne 0 ] || { [[ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ]] &&
@@ -2444,9 +2444,9 @@ echo "The analysis was running at $HOST" | tee -a transient_factory_test31.txt
  echo "# Count candidates with no identification (that also don't look like hot pix)" | tee -a transient_factory_test31.txt
  NUMBER_OF_UNIDENTIFIED_CANDIDATES=0
  while read -r RADECSTR ;do
-  grep -A8 "$RADECSTR" transient_report/index.html | grep 'VSX' | grep --quiet 'not found' && grep -A8 "$RADECSTR" transient_report/index.html | grep 'ASASSN-V' | grep --quiet 'not found' 
+  grep -A8 "$RADECSTR" transient_report/index.html | grep 'VSX' | grep -q 'not found' && grep -A8 "$RADECSTR" transient_report/index.html | grep 'ASASSN-V' | grep -q 'not found' 
   if [ $? -eq 0 ];then
-   grep -A8 "$RADECSTR" transient_report/index.html | grep --quiet 'This object is listed in'
+   grep -A8 "$RADECSTR" transient_report/index.html | grep -q 'This object is listed in'
    if [ $? -ne 0 ];then
     ((NUMBER_OF_UNIDENTIFIED_CANDIDATES = NUMBER_OF_UNIDENTIFIED_CANDIDATES + 1))
     echo "$RADECSTR  -- not a known variable star" >> transient_factory_test31.txt
@@ -2533,7 +2533,7 @@ exclusion_list_index_html.txt NOT FOUND" | tee -a transient_factory_test31.txt
   fi # if [ -f $EXCLUSION_LIST ];then
  else
   echo "This looks like a test run so we are not updating exclusion list  IS_THIS_TEST_RUN=$IS_THIS_TEST_RUN  ALLOW_EXCLUSION_LIST_UPDATE= $ALLOW_EXCLUSION_LIST_UPDATE" | tee -a transient_factory_test31.txt
-  #echo "$PWD" | grep --quiet -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST' | tee -a transient_factory_test31.txt
+  #echo "$PWD" | grep -q -e 'vast_test' -e 'saturn_test' -e 'test' -e 'Test' -e 'TEST' | tee -a transient_factory_test31.txt
  fi # if [ "$IS_THIS_TEST_RUN" != "YES" ];then
 #fi # host
 ## exclusion list update

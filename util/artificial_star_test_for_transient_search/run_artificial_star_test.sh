@@ -100,7 +100,7 @@ fi
 
 # FLUX is assumed to be the flux corresponding to the limiting magnitude:
 # the one at which we reliably detect sources (and appparently transients),
-echo $0 | grep --quiet 'run_artificial_star_test_oneflux.sh'
+echo $0 | grep -q 'run_artificial_star_test_oneflux.sh'
 if [ $? -eq 0 ];then
  # try only one flux value
  #
