@@ -36,8 +36,9 @@ jobs:
         apk add --no-cache bash gcc g++ gfortran make musl-dev libx11-dev libpng-dev git curl file
     - name: Collect debug info
       run: |
-        readlink -f gfortran
-        readlink -f gcc
+        # alpine/busybox has 'which', but no 'readlink -f'
+        which gfortran
+        which gcc
         gfortran --version
         gcc --version
     - name: make VaST
@@ -54,6 +55,7 @@ jobs:
         dnf install -y gcc gcc-gfortran libX11-devel libpng-devel make git
     - name: Collect debug info
       run: |
+        # fedora has 'readlink -f', but no 'which'
         readlink -f gfortran
         readlink -f gcc
         gfortran --version
