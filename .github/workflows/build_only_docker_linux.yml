@@ -1,0 +1,57 @@
+name: Docker Linux builds
+
+on: [push]
+
+jobs:
+  manylinux2014:
+    runs-on: ubuntu-latest
+    container: quay.io/pypa/manylinux2014_x86_64
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install build dependencies
+      run: |
+        yum install -y gcc gcc-gfortran libX11-devel libpng-devel make
+    - name: Collect debug info
+      run: |
+        which gfortran
+        which gcc
+        gfortran --version
+        gcc --version
+    - name: make VaST
+      run: make
+
+  alpine:
+    needs: manylinux2014
+    runs-on: ubuntu-latest
+    container: alpine:latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install build dependencies
+      run: |
+        apk add --no-cache bash gcc gfortran make musl-dev libx11-dev libpng-dev git
+    - name: Collect debug info
+      run: |
+        which gfortran
+        which gcc
+        gfortran --version
+        gcc --version
+    - name: make VaST
+      run: make
+
+  fedora:
+    needs: alpine
+    runs-on: ubuntu-latest
+    container: fedora:latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install build dependencies
+      run: |
+        dnf install -y gcc gcc-gfortran libX11-devel libpng-devel make git
+    - name: Collect debug info
+      run: |
+        which gfortran
+        which gcc
+        gfortran --version
+        gcc --version
+    - name: make VaST
+      run: make
