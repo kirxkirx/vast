@@ -10,6 +10,7 @@ jobs:
     - name: Manual checkout
       run: |
         yum install -y git
+        git config --global --add safe.directory /__w/vast/vast
         git clone https://github.com/${{ github.repository }} .
         git checkout ${{ github.sha }}
     - name: Install build dependencies
