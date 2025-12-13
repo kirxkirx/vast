@@ -18,8 +18,8 @@ jobs:
         yum install -y gcc gcc-gfortran libX11-devel libpng-devel make wget
     - name: Collect debug info
       run: |
-        which gfortran
-        which gcc
+        readlink -f gfortran
+        readlink -f gcc
         gfortran --version
         gcc --version
     - name: make VaST
@@ -36,8 +36,8 @@ jobs:
         apk add --no-cache bash gcc g++ gfortran make musl-dev libx11-dev libpng-dev git curl file
     - name: Collect debug info
       run: |
-        which gfortran
-        which gcc
+        readlink -f gfortran
+        readlink -f gcc
         gfortran --version
         gcc --version
     - name: make VaST
@@ -54,8 +54,8 @@ jobs:
         dnf install -y gcc gcc-gfortran libX11-devel libpng-devel make git
     - name: Collect debug info
       run: |
-        which gfortran
-        which gcc
+        readlink -f gfortran
+        readlink -f gcc
         gfortran --version
         gcc --version
     - name: make VaST
