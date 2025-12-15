@@ -802,7 +802,7 @@ fi
       AN_NEW_FITS_WITH_UPDATED_WCS="$AN_WCS_BASE".new
       AN_WCSONLY_FILE="$AN_WCS_BASE".wcs
       AN_AXY_FILE="$AN_WCS_BASE".axy
-      echo wcs_"$BASENAME_FITSFILE" | solve-field --files-on-stdin --fits-image --overwrite --no-plots --corr none --index-xyls none --match none --rdls none --solved none  --nsigma 10
+      echo wcs_"$BASENAME_FITSFILE" | solve-field --files-on-stdin --fits-image --overwrite --no-plots --corr none --index-xyls none --match none --rdls none --solved none  --nsigma 10  --tweak-order 3
       if [ $? -eq 0 ];then
        # if there is an output file - replace the original with it
        if [ -s "$AN_NEW_FITS_WITH_UPDATED_WCS" ];then
