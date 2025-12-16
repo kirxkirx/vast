@@ -723,7 +723,8 @@ fi
     RADECCOMMAND="$QUAD_SIZE_MAX_OPTION --crpix-center $RADECCOMMAND --radius $FOV_MAJORAXIS_DEG --scale-low $IMAGE_SCALE_ARCSECPIX_LOW --scale-high $IMAGE_SCALE_ARCSECPIX_HIGH --scale-units arcsecperpix"
     #`"$VAST_PATH"lib/find_timeout_command.sh` 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
     #$TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 10,20,30,40,50  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER 
-    $TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 100  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER  --tweak-order 3
+    # Can't use --tweak-order 3 as tweaks are unreliable for wide-field images when using starlists rather than images - see below.
+    $TIMEOUT_COMMAND 600 solve-field out$$.xyls $IMAGE_SIZE $RADECCOMMAND --objs 10000 --depth 100  --overwrite --no-plots --x-column X_IMAGE --y-column Y_IMAGE --sort-column FLUX_APER  #--tweak-order 3
     if [ $? -ne 0 ];then
      echo "ERROR running the second iteration of solve-field on $BASENAME_FITSFILE"
      exit 1
@@ -793,7 +794,8 @@ fi
      #  However, if you re-run solve-field using the "--verify" option on the wcs file you get, it will then check that WCS file against ALL the index files,
      # and tune up the best one.  Doing that can often produce improved results."
      #
-     TEST=$(echo "$FOV_MAJORAXIS_DEG" | awk '{if ( $1 > 10.0 ) print 1 ;else print 0 }')
+     #TEST=$(echo "$FOV_MAJORAXIS_DEG" | awk '{if ( $1 > 10.0 ) print 1 ;else print 0 }')
+     TEST=$(echo "$FOV_MAJORAXIS_DEG" | awk '{if ( $1 > 5.0 ) print 1 ;else print 0 }')
      if [ $TEST -eq 1 ];then
       #if fasle ;then
       echo "The field of view is large: we'll try to run Astromety.net code on the image itself rather than a star list"

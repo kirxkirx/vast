@@ -9586,12 +9586,13 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES010"
   fi
   #grep -q "2013 03 25.8483  2456377.3483  12.37  06:01:27.29 +23:51:10.7" transient_report/index.html
-  grep -q "2013 03 25.8483  2456377.3483  12.37" transient_report/index.html
+  #grep -q "2013 03 25.8483  2456377.3483  12.37" transient_report/index.html
+  grep -q "2013 03 25\.8483  2456377\.3483  12\.3[56789]  06:01:2[678]\... +23:51:1[6789]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES010a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2013 03 25.8483  2456377.3483  12.37" transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=$(grep "2013 03 25\.8483  2456377\.3483  12\.3[56789]  06:01:2[678]\... +23:51:1[6789]\.." transient_report/index.html | awk '{print $6" "$7}')
   # Changed to the VSX position
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 06:01:27.02 +23:51:19.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
@@ -16871,13 +16872,14 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE614"
   fi
   #grep -q "2023 07 19.892.  2460145.392.  13\...  23:42:2.\... -03:49:..\.." transient_report/index.html
-  grep -q "2023 07 19\.892.  2460145\.392.  13\.[345].  23:42:2[567]\... -03:49:3[345]\.." transient_report/index.html
+  #                            2023 07 19.8926  2460145.3926  13.35  23:42:27.03 -03:49:32.5
+  grep -q "2023 07 19\.892.  2460145\.392.  13\.[345].  23:42:2[567]\... -03:49:3[12345]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNEPTUNE614a"
   fi
   #RADECPOSITION_TO_TEST=`grep "2023 07 19.892.  2460145.392.  13\...  23:42:2.\... -03:49:..\.." transient_report/index.html | awk '{print $6" "$7}'`
-  RADECPOSITION_TO_TEST=`grep "2023 07 19\.892.  2460145\.392.  13\.[345].  23:42:2[567]\... -03:49:3[345]\.." transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2023 07 19\.892.  2460145\.392.  13\.[345].  23:42:2[567]\... -03:49:3[12345]\.." transient_report/index.html | awk '{print $6" "$7}'`
   # JPL HORIZONS position of Newtonia
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 23:42:26.98 -03:49:30.2  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
@@ -17648,12 +17650,13 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH414"
   fi
-  grep -q "2024 11 22\.6546  2460637\.1546   7\.[67].  20:14:5.\... +09:05:2[01]\.." transient_report/index.html
+  #        2024 11 22.6546  2460637.1546   7.72  20:14:55.13 +09:05:19.8
+  grep -q "2024 11 22\.6546  2460637\.1546   7\.[5678].  20:14:5.\... +09:05:[12].\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH414a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2024 11 22\.6546  2460637\.1546   7\.[67].  20:14:5.\... +09:05:2[01]\.." transient_report/index.html | awk '{print $6" "$7}'`
+  RADECPOSITION_TO_TEST=`grep "2024 11 22\.6546  2460637\.1546   7\.[5678].  20:14:5.\... +09:05:[12].\.." transient_report/index.html | awk '{print $6" "$7}'`
   # position of R Del from VSX
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 20:14:55.14 +09:05:21.0  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
