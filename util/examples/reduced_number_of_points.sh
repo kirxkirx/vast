@@ -46,7 +46,8 @@ for ITERATION in `seq 1 10` ;do
  
  ITERATION_TIME_STOP_UNIXSEC=`date -u +%s`
  
- ITERATION_TIME_MINUTES=`echo "($ITERATION_TIME_STOP_UNIXSEC-$ITERATION_TIME_START_UNIXSEC)/60" | bc -ql | awk '{printf "%.3f",$1}'`
+ #ITERATION_TIME_MINUTES=`echo "($ITERATION_TIME_STOP_UNIXSEC-$ITERATION_TIME_START_UNIXSEC)/60" | bc -ql | awk '{printf "%.3f",$1}'`
+ ITERATION_TIME_MINUTES=$(echo "$ITERATION_TIME_STOP_UNIXSEC $ITERATION_TIME_START_UNIXSEC" | awk '{printf "%.3f", ($1-$2)/60}')
  
  echo "#### Completed iteration $ITER_STR in $ITERATION_TIME_MINUTES minutes ####"
 
@@ -55,7 +56,8 @@ done
 done # for N_POINTS in `seq 2 300` ;do
 
 TOTAL_TIME_STOP_UNIXSEC=`date -u +%s`
-TOTAL_TIME_RUNNING_DAYS=`echo "($TOTAL_TIME_STOP_UNIXSEC-$TOTAL_TIME_START_UNIXSEC)/86400" | bc -ql | awk '{printf "%.3f",$1}'`
+#TOTAL_TIME_RUNNING_DAYS=`echo "($TOTAL_TIME_STOP_UNIXSEC-$TOTAL_TIME_START_UNIXSEC)/86400" | bc -ql | awk '{printf "%.3f",$1}'`
+TOTAL_TIME_RUNNING_DAYS=$(echo "$TOTAL_TIME_STOP_UNIXSEC $TOTAL_TIME_START_UNIXSEC" | awk '{printf "%.3f", ($1-$2)/86400}')
 
 echo "Analysis complete! Total running time: $TOTAL_TIME_RUNNING_DAYS days"
 

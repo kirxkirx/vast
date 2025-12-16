@@ -12,9 +12,9 @@ if [ -z $1 ]; then
  echo "JDout = JDin + deltaJD"
  exit
 else
-# "JDout = JDin + $1"
  while read JD XXX ;do
-  JD=`echo "$JD+($1)" |bc -ql`
+  #JD=`echo "$JD+($1)" |bc -ql`
+  JD=$(echo "$JD $1" | awk '{printf "%.10f", $1+$2}')
   echo "$JD $XXX"
  done
 fi

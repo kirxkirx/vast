@@ -31,7 +31,8 @@ while read JD MAG MERR X Y APP FITSFILE ;do
  WCS_IMAGE_NAME=wcs_`basename $FITSFILE`
  SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".cat
 
- N=`echo "$N+1"|bc -q`
+ #N=`echo "$N+1"|bc -q`
+ N=$((N+1))
  if [ $N -gt 30 ];then
   break
  fi

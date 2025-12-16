@@ -48,7 +48,8 @@ if [ "$WantToCalcStarStat" = Y ];
       then
         TotalImages=`grep -v status=ERROR $filename |wc -l`
         TotalMeasurements=`cat $StarFileName|wc -l`
-        Pers=$(echo "scale=2; 100*$TotalMeasurements/$TotalImages"|bc -ql)
+        #Pers=$(echo "scale=2; 100*$TotalMeasurements/$TotalImages"|bc -ql)
+        Pers=$(echo "$TotalMeasurements $TotalImages" | awk '{printf "%.2f", 100*$1/$2}')
         echo "Matching persent of star #$StarNumber - $Pers"
         exit
      else

@@ -596,15 +596,9 @@ fi
   echo "Using the local copy of Astrometry.net code"
   
   IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE`
-  #SCALE_LOW=`echo "0.3*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'`
   # "0.9*$TRIAL_FIELD_OF_VIEW_ARCMIN matches the remote server parameters
-  #SCALE_LOW=`echo "0.9*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'`
   SCALE_LOW=`echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",0.9*$1}'`
   # Yes, works fine with 1.2*$TRIAL_FIELD_OF_VIEW_ARCMIN but does not work with 1.0*$TRIAL_FIELD_OF_VIEW_ARCMIN
-  #SCALE_HIGH=`echo "1.2*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql`
-  #SCALE_HIGH=`echo "1.6*$TRIAL_FIELD_OF_VIEW_ARCMIN" | bc -ql | awk '{printf "%.1f",$1}'`
-  # this value fails with some STL images
-  #SCALE_HIGH=`echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",1.6*$1}'`
   SCALE_HIGH=`echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",5.0*$1}'`
   #
   #
@@ -1024,7 +1018,6 @@ Retrying..."
     fi
    else
     echo -e "Sadly, the field was \033[01;31mNOT SOLVED\033[00m. :("
-    #echo "Try to set a smaller field of view size, for example:  $0 $1 " `echo "$TRIAL_FIELD_OF_VIEW_ARCMIN/2"|bc -ql`
     echo "Try to set a smaller field of view size, for example:  $0 $1 " `echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f", $1/2}'`
     ERROR_STATUS=1
    fi
