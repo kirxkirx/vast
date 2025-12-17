@@ -28037,6 +28037,12 @@ if [ $N_REPLY_LINES -lt 600 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_UCAC5_scan"
 fi
+# UCAC5 test tau.kirx.net
+N_REPLY_LINES=$(curl --insecure --connect-timeout 10 --retry 1 --max-time 300 -F file=@scan_ucac5_test.input -F submit="Upload Image" -F brightmag=2.000000 -F faintmag=13.500000 -F searcharcsec=23.350000 'http://tau.kirx.net/cgi-bin/ucac5/search_ucac5.py' | wc -l)
+if [ $N_REPLY_LINES -lt 600 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_UCAC5_scan"
+fi
 # clean up
 if [ -f scan_ucac5_test.input ];then
  rm -f scan_ucac5_test.input
