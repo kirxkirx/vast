@@ -23325,10 +23325,11 @@ if [ -d ../individual_images_test ];then
   cp default.sex.ccd_example default.sex
   if [ -f ../individual_images_test/1630+3250.20150511T215921000.fit ];then
    unset TELESCOP
-   export ASTROMETRYNET_LOCAL_OR_REMOTE="remote" 
-   #util/wcs_image_calibration.sh ../individual_images_test/1630+3250.20150511T215921000.fit
-   util/wcs_image_nocatalog.sh ../individual_images_test/1630+3250.20150511T215921000.fit
-   export ASTROMETRYNET_LOCAL_OR_REMOTE=""
+   #export ASTROMETRYNET_LOCAL_OR_REMOTE="remote" 
+   ##util/wcs_image_calibration.sh ../individual_images_test/1630+3250.20150511T215921000.fit
+   #util/wcs_image_nocatalog.sh ../individual_images_test/1630+3250.20150511T215921000.fit
+   #export ASTROMETRYNET_LOCAL_OR_REMOTE=""
+   ASTROMETRYNET_LOCAL_OR_REMOTE="remote" util/wcs_image_nocatalog.sh ../individual_images_test/1630+3250.20150511T215921000.fit
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE001"
