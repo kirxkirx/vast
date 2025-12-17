@@ -876,7 +876,7 @@ fi
    $TIMEOUT_COMMAND 600 $CURL -F file=@out$$.xyls -F submit="Upload Image" -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
    CURL_EXIT_CODE=$?
    cp -v out$$.xyls test.xyls
-   echo "$CURL -F file=@test.xyls -F submit='Upload Image' -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE "http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html" > test.txt
+   echo "$CURL -F file=@test.xyls -F submit='Upload Image' -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE \"http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py\" --user vast48:khyzbaojMhztNkWd > server_reply$$.html" > test.txt
    # A reminder from 'man timout':
    # If the command times out, and --preserve-status is not set, then exit with status 124.
    # Otherwise, exit with  the  status of  COMMAND.

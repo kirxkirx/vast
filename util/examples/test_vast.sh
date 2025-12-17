@@ -23325,7 +23325,8 @@ if [ -d ../individual_images_test ];then
   if [ -f ../individual_images_test/1630+3250.20150511T215921000.fit ];then
    unset TELESCOP
    export ASTROMETRYNET_LOCAL_OR_REMOTE="remote" 
-   util/wcs_image_calibration.sh ../individual_images_test/1630+3250.20150511T215921000.fit
+   #util/wcs_image_calibration.sh ../individual_images_test/1630+3250.20150511T215921000.fit
+   util/wcs_image_nocatalog.sh ../individual_images_test/1630+3250.20150511T215921000.fit
    export ASTROMETRYNET_LOCAL_OR_REMOTE=""
    if [ $? -ne 0 ];then
     TEST_PASSED=0
@@ -23349,7 +23350,8 @@ if [ -d ../individual_images_test ];then
   if [ -f ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit ];then
    unset TELESCOP
    cp default.sex.ccd_example default.sex
-   ASTROMETRYNET_LOCAL_OR_REMOTE="remote" util/wcs_image_calibration.sh ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit
+   #ASTROMETRYNET_LOCAL_OR_REMOTE="remote" util/wcs_image_calibration.sh ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit
+   ASTROMETRYNET_LOCAL_OR_REMOTE="remote" util/wcs_image_nocatalog.sh ../individual_images_test/Calibrated-T30-ksokolovsky-ra-20150309-004645-Luminance-BIN1-W-005-001.fit
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE003"
@@ -23372,7 +23374,8 @@ if [ -d ../individual_images_test ];then
   if [ -f ../individual_images_test/SCA13320__00_00.fits ];then
    unset TELESCOP
    cp default.sex.beta_Cas_photoplates default.sex
-   ASTROMETRYNET_LOCAL_OR_REMOTE="remote" util/wcs_image_calibration.sh ../individual_images_test/SCA13320__00_00.fits
+   #ASTROMETRYNET_LOCAL_OR_REMOTE="remote" util/wcs_image_calibration.sh ../individual_images_test/SCA13320__00_00.fits
+   ASTROMETRYNET_LOCAL_OR_REMOTE="remote" util/wcs_image_nocatalog.sh ../individual_images_test/SCA13320__00_00.fits
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE005"
@@ -23395,7 +23398,8 @@ if [ -d ../individual_images_test ];then
   if [ -f ../M31_ISON_test/M31-1-001-001_dupe-1.fts ];then
    unset TELESCOP
    cp default.sex.ison_m31_test default.sex
-   ASTROMETRYNET_LOCAL_OR_REMOTE="remote" util/wcs_image_calibration.sh ../M31_ISON_test/M31-1-001-001_dupe-1.fts
+   #ASTROMETRYNET_LOCAL_OR_REMOTE="remote" util/wcs_image_calibration.sh ../M31_ISON_test/M31-1-001-001_dupe-1.fts
+   ASTROMETRYNET_LOCAL_OR_REMOTE="remote" util/wcs_image_nocatalog.sh ../M31_ISON_test/M31-1-001-001_dupe-1.fts
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES $FORCE_PLATE_SOLVE_SERVER"_"REMOTEPLATESOLVE007"
