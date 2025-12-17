@@ -216,7 +216,7 @@ function setup_remote_astrometry {
  echo "Setting up remote astrometry servers..." 1>&2
  
  local HOST_WE_ARE_RUNNING_AT=$(hostname)
- local PLATE_SOLVE_SERVERS="scan.sai.msu.ru"
+ local PLATE_SOLVE_SERVERS="tau.kirx.net scan.sai.msu.ru"
 
  # Check if we are requested to use a specific plate solve server
  if [ ! -z "$FORCE_PLATE_SOLVE_SERVER" ];then
@@ -268,7 +268,7 @@ function setup_remote_astrometry {
    fi
    #
    #curl --max-time 10 --silent http://"$i"/astrometry_engine/files/ | grep -q 'Parent Directory' && echo "$i" > server$$_"$i".ping_ok &
-   curl $VAST_CURL_PROXY --max-time 10 --silent http://"$i"/lk/ --max-time 10 --silent | grep -q '../cgi-bin/lk/process_lightcurve.py' && echo "$i" > server$$_"$i".ping_ok &
+   curl $VAST_CURL_PROXY --max-time 10 --silent http://"$i"/lk/ | grep -q '/cgi-bin/lk/process_lightcurve.py' && echo "$i" > server$$_"$i".ping_ok &
    echo -n "$i " 1>&2
   done
   wait
@@ -900,7 +900,15 @@ fi
     ERROR_STATUS=2
     continue
    fi
-   EXPECTED_WCS_HEAD_URL=`grep WCS_HEADER_FILE= server_reply$$.html |awk '{print $2}'`
+   if grep -q -e  '404 Not Found' -e '500 Internal Server Error' server_reply$$.html ;then
+    echo "ERROR in $0: plate-solve server reports an error!"
+    echo "#### Server reply listing ####"
+    cat server_reply$$.html
+    echo "##############################"
+    ERROR_STATUS=2
+    continue    
+   fi
+   EXPECTED_WCS_HEAD_URL=`grep WCS_HEADER_FILE= server_reply$$.html | awk '{print $2}'`
    if [ "$EXPECTED_WCS_HEAD_URL" = "" ];then
     echo "ERROR in $0: cannot parse the plate-solve server reply to get 'WCS_HEADER_FILE=' line!"
     echo "#### Server reply listing ####"

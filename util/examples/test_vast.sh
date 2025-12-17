@@ -23317,7 +23317,7 @@ if [ -d ../individual_images_test ];then
  echo "Test plate solving with remote servers " 
  echo -n "Plate solving with remote servers: " >> vast_test_report.txt 
  #for FORCE_PLATE_SOLVE_SERVER in scan.sai.msu.ru vast.sai.msu.ru polaris.kirx.net none ;do
- for FORCE_PLATE_SOLVE_SERVER in scan.sai.msu.ru vast.sai.msu.ru polaris.kirx.net ;do
+ for FORCE_PLATE_SOLVE_SERVER in tau.kirx.net scan.sai.msu.ru ;do
   export FORCE_PLATE_SOLVE_SERVER
   unset TELESCOP
   util/clean_data.sh
@@ -24567,7 +24567,8 @@ if [ ! -f ../vast_test_lightcurves/ZTF1901_2-5_KGO_JDmid.dat ];then
 fi
 
 #PERIOD_SEARCH_SERVERS="none scan.sai.msu.ru vast.sai.msu.ru"
-PERIOD_SEARCH_SERVERS="scan.sai.msu.ru vast.sai.msu.ru"
+#PERIOD_SEARCH_SERVERS="scan.sai.msu.ru vast.sai.msu.ru"
+PERIOD_SEARCH_SERVERS="tau.kirx.net scan.sai.msu.ru vast.sai.msu.ru"
 
 ## out00095_edit_edit.dat
 EXPECTED_FREQUENCY_CD=$(echo "0.8202" | awk '{printf "%.4f",$1}')

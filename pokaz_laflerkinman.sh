@@ -145,7 +145,9 @@ if [ -z "$PERIOD_SEARCH_SERVER" ] || [ "$PERIOD_SEARCH_SERVER" = "none" ];then
  # empty none is still a problem
  #PERIOD_SEARCH_SERVERS="kirx.net/ticaariel scan.sai.msu.ru vast.sai.msu.ru"
  # remove ariel
- PERIOD_SEARCH_SERVERS="scan.sai.msu.ru vast.sai.msu.ru"
+ #PERIOD_SEARCH_SERVERS="scan.sai.msu.ru vast.sai.msu.ru"
+ # add tau.kirx.net
+ PERIOD_SEARCH_SERVERS="tau.kirx.net scan.sai.msu.ru vast.sai.msu.ru"
 else
  # PERIOD_SEARCH_SERVER is externally set, but we still want to check if it's rachable
  PERIOD_SEARCH_SERVERS="$PERIOD_SEARCH_SERVER"
@@ -205,9 +207,11 @@ Please check your internet connection..."
 fi
 
 # Choose the period search server
-if grep -q 'kirx.net/ticaariel' servers.ping_ok ;then
+#if grep -q 'kirx.net/ticaariel' servers.ping_ok ;then
+if grep -q 'tau.kirx.net' servers.ping_ok ;then
  # Choose the preferred server if it's up
- PERIOD_SEARCH_SERVER="kirx.net/ticaariel"
+ #PERIOD_SEARCH_SERVER="kirx.net/ticaariel"
+ PERIOD_SEARCH_SERVER="tau.kirx.net"
 else
  # Choose a random server among the available ones
  PERIOD_SEARCH_SERVER=$($("$VAST_PATH"lib/find_timeout_command.sh) 10 sort --random-sort --random-source=/dev/urandom servers.ping_ok | head -n1)
