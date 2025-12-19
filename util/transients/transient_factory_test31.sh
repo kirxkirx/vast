@@ -105,15 +105,26 @@ UCAC5_PLATESOLVE_ITERATIONS=1
 #STARMATCH_RADIUS_PIX=4
 STARMATCH_RADIUS_PIX=3.5
 
-NMW_CALIBRATION="$HOME/nmw_calibration"
-if [ ! -d "$NMW_CALIBRATION" ];then
- # vast
- NMW_CALIBRATION="/dataX/cgi-bin/unmw/uploads/nmw_calibration"
- if [ ! -d "$NMW_CALIBRATION" ];then
-  # kadar and kadar2
-  NMW_CALIBRATION="/home/apache/nmw_calibration"
- fi
-fi
+#NMW_CALIBRATION="$HOME/nmw_calibration"
+#if [ ! -d "$NMW_CALIBRATION" ];then
+# # vast
+# NMW_CALIBRATION="/dataX/cgi-bin/unmw/uploads/nmw_calibration"
+# if [ ! -d "$NMW_CALIBRATION" ];then
+#  # kadar and kadar2
+#  NMW_CALIBRATION="/home/apache/nmw_calibration"
+#  if [ ! -d "$NMW_CALIBRATION" ];then
+#   # tau
+#   NMW_CALIBRATION="/var/www/nmw_calibration"
+#  fi
+# fi
+#fi
+for dir in "$HOME/nmw_calibration" \
+           "/dataX/cgi-bin/unmw/uploads/nmw_calibration" \
+           "/home/apache/nmw_calibration" \
+           "/var/www/nmw_calibration"; do
+  NMW_CALIBRATION="$dir"
+  [ -d "$dir" ] && break
+done
 
 # CAMERA_SETTINGS environment vairable may be set to override the default settings with the ones needed for a different camera
 if [ -n "$CAMERA_SETTINGS" ];then

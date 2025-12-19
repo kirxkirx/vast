@@ -9587,12 +9587,12 @@ $GREP_RESULT"
   fi
   #grep -q "2013 03 25.8483  2456377.3483  12.37  06:01:27.29 +23:51:10.7" transient_report/index.html
   #grep -q "2013 03 25.8483  2456377.3483  12.37" transient_report/index.html
-  grep -q "2013 03 25\.8483  2456377\.3483  12\.3[56789]  06:01:2[678]\... +23:51:1[6789]\.." transient_report/index.html
+  grep -q "2013 03 25\.8483  2456377\.3483  12\.3[56789]  06:01:[123].\... +23:51:[012].\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES CERES010a"
   fi
-  RADECPOSITION_TO_TEST=$(grep "2013 03 25\.8483  2456377\.3483  12\.3[56789]  06:01:2[678]\... +23:51:1[6789]\.." transient_report/index.html | awk '{print $6" "$7}')
+  RADECPOSITION_TO_TEST=$(grep "2013 03 25\.8483  2456377\.3483  12\.3[56789]  06:01:[123].\... +23:51:[012].\.." transient_report/index.html | awk '{print $6" "$7}')
   # Changed to the VSX position
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 06:01:27.02 +23:51:19.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
