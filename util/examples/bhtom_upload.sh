@@ -17,8 +17,8 @@
 #export BHTOM_OBSERVATORY_NAME="SET_OBSERVATORY_NAME"
 
 # Test or live run?
-#DRY_RUN="False"
-DRY_RUN="True"
+DRY_RUN="False"
+#DRY_RUN="True"
 
 
 
