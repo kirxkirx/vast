@@ -13474,23 +13474,23 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
        TEST_PASSED=0
        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_HUMAN_READABLE_DATE"
       fi
-      if [ -s CBA_V0615_Vul_29Jul2024_measurements.txt ];then
-       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep -q '# Date: 29Jul2024'
+      if [ -s CBA_V0615_Vul_29Jul2024_CV_measurements.txt ];then
+       cat CBA_V0615_Vul_29Jul2024_CV_measurements.txt | grep -q '# Date: 29Jul2024'
        if [ $? -ne 0 ];then
         TEST_PASSED=0
         FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_DATE"
        fi
-       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep -q '# Variable: V0615 Vul'
+       cat CBA_V0615_Vul_29Jul2024_CV_measurements.txt | grep -q '# Variable: V0615 Vul'
        if [ $? -ne 0 ];then
         TEST_PASSED=0
         FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_INCORRECT_VARSTARNAME"
        fi
-       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep -q '# Exp time (s): 20'
+       cat CBA_V0615_Vul_29Jul2024_CV_measurements.txt | grep -q '# Exp time (s): 20'
        if [ $? -ne 0 ];then
         TEST_PASSED=0
         FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NO_EXPTIME"
        fi
-       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep '2460521.3315' | grep -q ' 11.2'
+       cat CBA_V0615_Vul_29Jul2024_CV_measurements.txt | grep '2460521.3315' | grep -q ' 11.2'
        if [ $? -ne 0 ];then
         TEST_PASSED=0
         FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_MEASUREMENT1"
@@ -13505,7 +13505,7 @@ $(cat CBA_V0615_Vul_29Jul2024_measurements.txt)
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 "
        fi
-       cat CBA_V0615_Vul_29Jul2024_measurements.txt | grep '2460521.3319' | grep -q ' 11.2'
+       cat CBA_V0615_Vul_29Jul2024_CV_measurements.txt | grep '2460521.3319' | grep -q ' 11.2'
        if [ $? -ne 0 ];then
         TEST_PASSED=0
         FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_MEASUREMENT2"
@@ -13523,7 +13523,7 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
       else
        TEST_PASSED=0
        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_NOOUTPUTFILE"
-      fi # if [ -s CBA_V0615_Vul_29Jul2024_measurements.txt ];then
+      fi # if [ -s CBA_V0615_Vul_29Jul2024_CV_measurements.txt ];then
      else
       TEST_PASSED=0
       FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_CBASCRIPTTEST_EMPTY_TEST_CBA_REPORT_TERMINAL"
