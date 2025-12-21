@@ -1,1 +1,0 @@
-format_lightcurve_CBA.sh
