@@ -21032,6 +21032,97 @@ fi
 ### Disable the above test for GitHub Actions
 fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
+######### TTU Skyview Obs. Tel.-4 0.3m + SBIG STC-428P CMOS
+if [ ! -f ../individual_images_test/fd_TOI-1518b_test_128sec_2x2__0128G_.fit ];then
+ if [ ! -d ../individual_images_test ];then
+  mkdir ../individual_images_test
+ fi
+ cd ../individual_images_test || exit 1
+ curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/fd_TOI-1518b_test_128sec_2x2__0128G_.fit.bz2" && bunzip2 fd_TOI-1518b_test_128sec_2x2__0128G_.fit.bz2
+ cd "$WORKDIR" || exit 1
+fi
+
+if [ -f ../individual_images_test/fd_TOI-1518b_test_128sec_2x2__0128G_.fit ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "TTU 0.3m STC-428P image test " 
+ echo -n "TTU 0.3m STC-428P image test: " >> vast_test_report.txt 
+ cp default.sex.ccd_example default.sex
+ lib/try_to_guess_image_fov ../individual_images_test/fd_TOI-1518b_test_128sec_2x2__0128G_.fit | grep -q '16'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TTUSTC428P0GUESSFOV"
+ fi
+ util/wcs_image_calibration.sh ../individual_images_test/fd_TOI-1518b_test_128sec_2x2__0128G_.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TTUSTC428P0PLATESOLVE"
+ fi
+ if [ ! -f wcs_fd_TOI-1518b_test_128sec_2x2__0128G_.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TTUSTC428P001"
+ fi 
+ lib/bin/xy2sky wcs_fd_TOI-1518b_test_128sec_2x2__0128G_.fit 200 200 &>/dev/null
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TTUSTC428P001a"
+ fi
+ util/solve_plate_with_UCAC5 ../individual_images_test/fd_TOI-1518b_test_128sec_2x2__0128G_.fit
+ if [ ! -s wcs_fd_TOI-1518b_test_128sec_2x2__0128G_.fit.cat.ucac5 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TTUSTC428P002"
+ else
+  TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_fd_TOI-1518b_test_128sec_2x2__0128G_.fit.cat.ucac5 | wc -l | awk '{print $1}'`
+  # expect 44
+  if [ $TEST -lt 40 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES TTUSTC428P002a_$TEST"
+  fi
+ fi 
+ # test that util/solve_plate_with_UCAC5 will not try to recompute the solution if the output catalog is already there
+ util/solve_plate_with_UCAC5 ../individual_images_test/fd_TOI-1518b_test_128sec_2x2__0128G_.fit 2>&1 | grep -q 'The output catalog wcs_fd_TOI-1518b_test_128sec_2x2__0128G_.fit.cat.ucac5 already exist.'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TTUSTC428P003"
+ fi
+ #
+ util/get_image_date ../individual_images_test/fd_TOI-1518b_test_128sec_2x2__0128G_.fit | grep -q "Exposure 128 sec, 11.12.2025 07:48:27 UTC = JD(UTC) 2461020.82605 mid. exp."
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES TTUSTC428P004"
+ fi
+
+ # Astropy image date matching test
+ command -v python3 &> /dev/null     
+ if [ $? -eq 0 ];then
+  python3 -c "import astropy; print(astropy.__version__)" && python3 -c "import sys,subprocess; sys.exit(0 if subprocess.run(['echo','test'],capture_output=True).returncode == 0 else 1)" 2>/dev/null
+  if [ $? -eq 0 ];then
+   lib/astropy_test_get_image_date.py ../individual_images_test/fd_TOI-1518b_test_128sec_2x2__0128G_.fit
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES TTUSTC428P_ASTROPY_DATE_MISMATCH"
+   fi
+  fi
+ fi
+
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mTTU 0.3m STC-428P image test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mTTU 0.3m STC-428P image test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES TTUSTC428P_TEST_NOT_PERFORMED"
+fi
+
 
 ######### Many hot pixels image
 if [ ! -f ../individual_images_test/c176.fits ];then

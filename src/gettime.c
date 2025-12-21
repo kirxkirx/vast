@@ -1573,7 +1573,10 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    if ( param_verbose >= 1 )
     fprintf( stderr, "Trying to guess the time system by parsing the comment string '%s'\n", DATEOBS_COMMENT );
    // don't start from 0 - if there is no comment, the string will contain 0 characters before \0 !
-   for ( j= 1; j < (int)strlen( DATEOBS_COMMENT ) - 1; j++ ) {
+   // actully we need to start from 0 because the comment string may start with 'UT'
+   // supposedly, we already checked that the string is at least two characters long
+   //for ( j= 1; j < (int)strlen( DATEOBS_COMMENT ) - 1; j++ ) {
+   for ( j= 0; j < (int)strlen( DATEOBS_COMMENT ) - 1; j++ ) {
     if ( DATEOBS_COMMENT[j] == 'U' && DATEOBS_COMMENT[j + 1] == 'T' ) {
      ( *timesys )= 1; // UT
      if ( param_verbose >= 1 )

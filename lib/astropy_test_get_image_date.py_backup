@@ -39,15 +39,12 @@ def process_fits_with_astropy(filename):
         print(f"TIME-OBS: {header.get('TIME-OBS')}")
         print(f"DATE: {header.get('DATE')}")
         print(f"EXPTIME: {header.get('EXPTIME')}")
-        print(f"EXPOSURE: {header.get('EXPOSURE')}")
         print(f"JD: {header.get('JD')}")
         print(f"TIMESYS: {header.get('TIMESYS')}")
         
         date_obs = header.get('DATE-OBS')
         time_obs = header.get('TIME-OBS')
-        exptime = header.get('EXPTIME')
-        if exptime is None:
-            exptime = header.get('EXPOSURE', 0)
+        exptime = header.get('EXPTIME', 0)
         
         if date_obs:
             if 'T' in date_obs:
@@ -157,3 +154,4 @@ def main():
         
 if __name__ == "__main__":
     main()
+    
