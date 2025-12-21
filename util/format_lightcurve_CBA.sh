@@ -189,6 +189,12 @@ if [ -z "$VARIABLE_STAR_NAME" ];then
 fi
 VARIABLE_STAR_NAME_NO_WHITESPACES="${VARIABLE_STAR_NAME// /_}"
 
+FILTER_NAME=`head CBA_report.txt | grep '# Filter: ' | awk -F '# Filter: ' '{print $2}'`
+if [ -z "$FILTER_NAME" ];then
+ echo "ERROR in CBA_report.txt : cannot find the filter name"
+ exit 1
+fi
+
 OBSERVATORY_NAME=`head CBA_report.txt | grep 'Observatory: ' | awk -F 'Observatory: ' '{print $2}'`
 if [ -z "$OBSERVATORY_NAME" ];then
  echo "ERROR in CBA_report.txt : cannot find the observatory name"
@@ -202,7 +208,7 @@ if [ -z "$OBSERVER_NAMES" ];then
 fi
 
 
-FINAL_OUTPUT_FILENAME="${CBA_OR_VSNET_MODE}_${VARIABLE_STAR_NAME_NO_WHITESPACES}_${DATE_FOR_CBA_HEADER_FIRST_OBS}_measurements.txt"
+FINAL_OUTPUT_FILENAME="${CBA_OR_VSNET_MODE}_${VARIABLE_STAR_NAME_NO_WHITESPACES}_${DATE_FOR_CBA_HEADER_FIRST_OBS}_${FILTER_NAME}_measurements.txt"
 echo "Renaming the final report file:"
 cp -v CBA_report.txt "$FINAL_OUTPUT_FILENAME"
 grep '# ' CBA_report.txt > CBA_previously_used_header.txt
@@ -232,4 +238,3 @@ Subject: $SUBJECT
 
 $MESSAGE"
 fi
-
