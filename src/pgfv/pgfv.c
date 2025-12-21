@@ -763,9 +763,17 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
 
  // fprintf(stderr, "DEBUG_B image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
 
- if ( ( *min_i ) != 0.0 ) {
-  ( *max_i )= MIN( ( *max_i ), 10 * ( *min_i ) ); // bright star in the field case
+ // Problem when high-bias image is dark-subtracted
+ //if ( ( *min_i ) != 0.0 ) {
+ // ( *max_i )= MIN( ( *max_i ), 10 * ( *min_i ) ); // bright star in the field case
+ //}
+ // Let's do it only if the cutout is small, so one star may dominate the histogram
+ if ( number_of_nonnegative_pixels + number_of_negative_pixels < 100*100 ) { 
+  if ( ( *min_i ) != 0.0 ) {
+   ( *max_i )= MIN( ( *max_i ), 10 * ( *min_i ) ); // bright star in the field case
+  }
  }
+ 
 
  // fprintf(stderr, "DEBUG_C image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
 
