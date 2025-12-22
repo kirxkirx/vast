@@ -210,6 +210,25 @@ void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, ch
  struct_tm_pointer= gmtime( &exposure_start_time_unixsec );
 #endif
 
+
+ // yes, it seems to work for avoiding 05:60 output
+ if ( floor( ((double)(struct_tm_pointer->tm_sec) + double_fractional_seconds_only) * 1000.0 + 0.5) / 1000.0 == 60.0) {
+  exposure_start_time_unixsec++;
+  double_fractional_seconds_only = 0.0;
+#if defined(_POSIX_C_SOURCE) || defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
+  gmtime_r(&exposure_start_time_unixsec, struct_tm_pointer);
+#else
+  struct_tm_pointer = gmtime(&exposure_start_time_unixsec);
+#endif
+ }
+
+ year= struct_tm_pointer->tm_year + 1900;
+ month= struct_tm_pointer->tm_mon + 1;
+ day= struct_tm_pointer->tm_mday;
+ hour= struct_tm_pointer->tm_hour;
+ minute= struct_tm_pointer->tm_min;
+ second= (double)( struct_tm_pointer->tm_sec ) + double_fractional_seconds_only;
+
  // Produce finder_chart_timestring_output
  if ( NULL != finder_chart_timestring_output ) {
   generate_finder_chart_timestring( finder_chart_timestring_output,
@@ -219,13 +238,6 @@ void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, ch
                                     exposure_sec );
  }
  //
-
- year= struct_tm_pointer->tm_year + 1900;
- month= struct_tm_pointer->tm_mon + 1;
- day= struct_tm_pointer->tm_mday;
- hour= struct_tm_pointer->tm_hour;
- minute= struct_tm_pointer->tm_min;
- second= (double)( struct_tm_pointer->tm_sec ) + double_fractional_seconds_only;
 
 #if defined( _POSIX_C_SOURCE ) || defined( _BSD_SOURCE ) || defined( _SVID_SOURCE )
  free( struct_tm_pointer );

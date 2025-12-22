@@ -26929,6 +26929,34 @@ if [ $? -eq 0 ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH01__${TEST_JD}_${ASTROPY_DATE// /T}_${VAST_DATE// /T}"
   fi
   #
+  # another fixed date test
+  # Failure mode: JD (mid. exp.) 2451798.71250000 = 2000-09-11 05:05:60.000 (UTC)
+  TEST_JD="2451798.712500"
+  ASTROPY_DATE=$(util/jd2date.py "$TEST_JD")
+  VAST_DATE=$(util/get_image_date "$TEST_JD" 2>&1 | grep ' (mid. exp) ' | head -n1 | awk '{print $3" "$4}')
+  if [ "$ASTROPY_DATE" != "$VAST_DATE" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH01__${TEST_JD}_${ASTROPY_DATE// /T}_${VAST_DATE// /T}"
+  fi
+  #
+  TEST_JD="2451798.712499"
+  ASTROPY_DATE=$(util/jd2date.py "$TEST_JD")
+  VAST_DATE=$(util/get_image_date "$TEST_JD" 2>&1 | grep ' (mid. exp) ' | head -n1 | awk '{print $3" "$4}')
+  if [ "$ASTROPY_DATE" != "$VAST_DATE" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH01__${TEST_JD}_${ASTROPY_DATE// /T}_${VAST_DATE// /T}"
+  fi
+  #
+  TEST_JD="2451798.712501"
+  ASTROPY_DATE=$(util/jd2date.py "$TEST_JD")
+  VAST_DATE=$(util/get_image_date "$TEST_JD" 2>&1 | grep ' (mid. exp) ' | head -n1 | awk '{print $3" "$4}')
+  if [ "$ASTROPY_DATE" != "$VAST_DATE" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH01__${TEST_JD}_${ASTROPY_DATE// /T}_${VAST_DATE// /T}"
+  fi
+  #
+  #
+  # Test with random dates offset from 
   # UnixTime_0 J2000 today
   for START_JD in 2440587.5 2451545.0 2460560.17929398 ;do
    for ITERATION in $(seq 1 10) ;do

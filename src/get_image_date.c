@@ -443,6 +443,36 @@ int main( int argc, char **argv ) {
  structureTIME__truncated= gmtime( &UnixTime_time_t__truncated );
 #endif
 
+/*
+ // Try to solve 05:05:60.000 (UTC) problem
+ fprintf(stderr,"\n\n\n OOOOOO\n\n\n");
+ // Normalize time if fractional seconds would cause seconds >= 60
+ if ((double)(structureTIME__truncated->tm_sec) + double_fractional_seconds_only >= 60.0) {
+  //
+  fprintf(stderr,"\n\n\n AAAA %lf %lf \n\n\n", (double)(structureTIME__truncated->tm_sec), double_fractional_seconds_only );
+  //
+  UnixTime_time_t__truncated++;
+  double_fractional_seconds_only -= 1.0;
+#if defined(_POSIX_C_SOURCE) || defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
+  gmtime_r(&UnixTime_time_t__truncated, structureTIME__truncated);
+#else
+  structureTIME__truncated = gmtime(&UnixTime_time_t__truncated);
+#endif
+ }
+*/
+
+ if ( floor( ((double)(structureTIME__truncated->tm_sec) + double_fractional_seconds_only) * 1000.0 + 0.5) / 1000.0 == 60.0) {
+  UnixTime_time_t__truncated++;
+  double_fractional_seconds_only = 0.0;
+#if defined(_POSIX_C_SOURCE) || defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
+  gmtime_r(&UnixTime_time_t__truncated, structureTIME__truncated);
+#else
+  structureTIME__truncated = gmtime(&UnixTime_time_t__truncated);
+#endif
+ }
+
+
+
  // fprintf( stderr, "DEBUG28\n");
 
  // Print output
