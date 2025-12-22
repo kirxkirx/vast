@@ -26872,7 +26872,9 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV028"
 fi
 #util/get_image_date 2023-05-17T23:22:38.894T99:00:24.955 | grep -q 'Exposure   0 sec, 17.05.2023 23:22:39   = JD  2460082.47406'
-util/get_image_date 2023-05-17T23:22:38.894T99:00:24.955 | grep -q 'Exposure 0 sec, 17.05.2023 23:22:38.894 = JD 2460082.47406127'
+#                                                                   Exposure 0 sec, 17.05.2023 23:22:38.894 UTC = JD(UTC) 2460082.47406127
+#util/get_image_date 2023-05-17T23:22:38.894T99:00:24.955 | grep -q 'Exposure 0 sec, 17.05.2023 23:22:38.894 = JD 2460082.47406127'
+util/get_image_date 2023-05-17T23:22:38.894T99:00:24.955 | grep -q 'Exposure 0 sec, 17.05.2023 23:22:38.894 UTC = JD(UTC) 2460082.47406127'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV029"
