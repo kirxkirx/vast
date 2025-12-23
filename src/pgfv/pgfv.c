@@ -468,6 +468,10 @@ int get_ref_image_name( char *str ) {
 void fix_array_with_negative_values( long NUM_OF_PIXELS, float *im ) {
  long i;
  float min, max;
+ 
+ if (im == NULL || NUM_OF_PIXELS <= 0)
+  return;
+ 
  min= max= im[0];
  for ( i= 0; i < NUM_OF_PIXELS; i++ ) {
   if ( im[i] < min && im[i] > 0 )
@@ -475,6 +479,8 @@ void fix_array_with_negative_values( long NUM_OF_PIXELS, float *im ) {
   if ( im[i] > max && im[i] > 0 )
    max= im[i];
  }
+ 
+ // may only happen if im[0] was negative
  if ( min < 0.0 ) {
   for ( i= 0; i < NUM_OF_PIXELS; i++ )
    im[i]= im[i] - min;
@@ -485,11 +491,12 @@ void fix_array_with_negative_values( long NUM_OF_PIXELS, float *im ) {
   min= 0.001;
  }
 
+ // scale down
  if ( max > 65535.0 ) {
   for ( i= 0; i < NUM_OF_PIXELS; i++ )
    im[i]= im[i] * 65535.0 / max;
  }
- max= 65535.0;
+ //max= 65535.0; // does nothing
 
  return;
 }
@@ -2102,7 +2109,7 @@ int main( int argc, char **argv ) {
  if ( status != 0 ) {
   exit( status );
  }
-
+/*
  // Don't do this check if this is fits2png
  if ( finder_chart_mode != 1 && use_labels != 0 ) {
   // Decide if we want to use xy2sky()
@@ -2117,20 +2124,24 @@ int main( int argc, char **argv ) {
  } else {
   use_xy2sky= 0;
  }
-
+*/
  axis_ratio= (float)naxes[0] / (float)naxes[1];
 
  // filter out bad pixels from float_array
  for ( i= 0; i < naxes[0] * naxes[1]; i++ ) {
-  if ( float_array[i] < MIN_PIX_VALUE || float_array[i] > MAX_PIX_VALUE )
+  if ( float_array[i] < MIN_PIX_VALUE || float_array[i] > MAX_PIX_VALUE ) {
    float_array[i]= 0.0;
+  }
+  //real_float_array[i]= float_array[i];
  }
 
  // real_float_array - array with real pixel values (well, not real but converted to float)
  // float_array - array used for computations with values ranging from 0 to 65535
- for ( i= 0; i < naxes[0] * naxes[1]; i++ ) {
-  real_float_array[i]= float_array[i];
- }
+ //for ( i= 0; i < naxes[0] * naxes[1]; i++ ) {
+ // real_float_array[i]= float_array[i];
+ //}
+ memcpy(real_float_array, float_array, naxes[0] * naxes[1] * sizeof(float));
+ //
  fix_array_with_negative_values( naxes[0] * naxes[1], float_array );
  // image_minmax2( naxes[0] * naxes[1], float_array, &max_val, &min_val );
  image_minmax3( naxes[0] * naxes[1], float_array, &max_val, &min_val, 1, naxes[0], 1, naxes[1], naxes );
@@ -2429,6 +2440,7 @@ int main( int argc, char **argv ) {
    // Process left mouse button click
    if ( curC == 'A' ) {
     fprintf( stderr, "\nPixel: %7.1f %7.1f %9.3f\n", curX, curY, real_float_array[(int)( curX - 0.5 ) + (int)( curY - 0.5 ) * naxes[0]] );
+    ///
     ///
     if ( use_xy2sky > 0 ) {
      xy2sky_return_value= xy2sky( fits_image_name, curX, curY );
@@ -2871,24 +2883,24 @@ int main( int argc, char **argv ) {
     //    cpgclos();
     //    return 0;
    }
-   /* Make labels with general information: time, filename... */
+   // Make labels with general information: time, filename...
    if ( use_labels == 1 ) {
     if ( finder_chart_mode == 0 ) {
-     cpgscr( 1, 0.62, 0.81, 0.38 ); /* set color of lables */
-     cpgsch( 0.9 );                 /* Set small font size */
+     cpgscr( 1, 0.62, 0.81, 0.38 ); // set color of lables 
+     cpgsch( 0.9 );                 // Set small font size 
      // cpgmtxt("T", 0.5, 0.5, 0.5, fits_image_name);
      cpgmtxt( "T", 0.5, 0.5, 0.5, fits_image_name_string_for_display );
      cpgmtxt( "T", 1.5, 0.5, 0.5, stderr_output );
-     cpgsch( 1.0 );              /* Set normal font size */
-     cpgscr( 1, 1.0, 1.0, 1.0 ); /* */
+     cpgsch( 1.0 );              // Set normal font size 
+     cpgscr( 1, 1.0, 1.0, 1.0 ); //
     } else {
      // note, this is not used when generating finder charts
      cpgmtxt( "T", 1.0, 0.5, 0.5, stderr_output );
     }
    }
-   /* Done with labels */
+   // Done with labels
 
-   /* Put a mark */
+   /// Put a mark 
    if ( mark_trigger == 1 && use_labels == 1 ) {
     cpgsci( 2 );
     fprintf( stderr, "Putting marker 001: %.3f %.3f\n", markX, markY );
@@ -2903,25 +2915,6 @@ int main( int argc, char **argv ) {
     }
     /////
    } // if ( mark_trigger == 1 ) {
-
-   /*
-      // Confusing and unnecessary
-      if ( use_labels == 1 ) {
-       // Always put mark in the center of the finding chart
-       if ( finder_chart_mode == 1 ) {
-        markX= ( (float)naxes[0] / 2.0 );
-        markY= ( (float)naxes[1] / 2.0 );
-        cpgsci( 2 );
-        cpgsch( 3.0 );
-        cpgslw( 2 ); // increase line width
-        fprintf( stderr, "Putting image center marker 002: %.3f %.3f\n", markX, markY );
-        cpgpt1( markX, markY, 2 );
-        cpgslw( 1 ); // set default line width
-        cpgsch( 1.0 );
-        cpgsci( 1 );
-       }
-      }
-   */
 
    // Markers from manymarkers file
    for ( marker_counter= 0; marker_counter < manymrkerscounter; marker_counter++ ) {
@@ -3055,9 +3048,25 @@ int main( int argc, char **argv ) {
     }
 
     return 0;
-   }
+   } // if ( finder_chart_mode == 1 ) {
 
    // fprintf(stderr,"DEBUG000\n");
+
+   // Don't do this check if this is fits2png
+   if ( finder_chart_mode != 1 && use_labels != 0 && use_xy2sky == 2 ) {
+    fprintf( stderr, " \n" );
+    // Decide if we want to use xy2sky()
+    xy2sky_return_value= xy2sky( fits_image_name, (float)naxes[0] / 2.0, (float)naxes[1] / 2.0 );
+    if ( xy2sky_return_value == 0 ) {
+     fprintf( stderr, "The image center coordinates are printed above.\n" );
+     use_xy2sky= 1;
+    } else {
+     use_xy2sky= 0;
+    }
+    //
+   } else {
+    use_xy2sky= 0;
+   }
 
    /* If not in simple display mode - draw star markers */
    if ( match_mode > 0 && draw_star_markers == 1 ) {
