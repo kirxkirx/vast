@@ -2442,7 +2442,6 @@ int main( int argc, char **argv ) {
     fprintf( stderr, "\nPixel: %7.1f %7.1f %9.3f\n", curX, curY, real_float_array[(int)( curX - 0.5 ) + (int)( curY - 0.5 ) * naxes[0]] );
     ///
     ///
-    fprintf(stderr,"DEBUUUG use_xy2sky= %d\n",use_xy2sky);
     if ( use_xy2sky > 0 ) {
      xy2sky_return_value= xy2sky( fits_image_name, curX, curY );
     }
