@@ -2442,6 +2442,7 @@ int main( int argc, char **argv ) {
     fprintf( stderr, "\nPixel: %7.1f %7.1f %9.3f\n", curX, curY, real_float_array[(int)( curX - 0.5 ) + (int)( curY - 0.5 ) * naxes[0]] );
     ///
     ///
+    fprintf(stderr,"DEBUUUG use_xy2sky= %d\n",use_xy2sky);
     if ( use_xy2sky > 0 ) {
      xy2sky_return_value= xy2sky( fits_image_name, curX, curY );
     }
@@ -3053,17 +3054,19 @@ int main( int argc, char **argv ) {
    // fprintf(stderr,"DEBUG000\n");
 
    // Don't do this check if this is fits2png
-   if ( finder_chart_mode != 1 && use_labels != 0 && use_xy2sky == 2 ) {
-    fprintf( stderr, " \n" );
-    // Decide if we want to use xy2sky()
-    xy2sky_return_value= xy2sky( fits_image_name, (float)naxes[0] / 2.0, (float)naxes[1] / 2.0 );
-    if ( xy2sky_return_value == 0 ) {
-     fprintf( stderr, "The image center coordinates are printed above.\n" );
-     use_xy2sky= 1;
-    } else {
-     use_xy2sky= 0;
+   if ( finder_chart_mode != 1 && use_labels != 0 ) {
+    if ( use_xy2sky == 2 ) {
+     fprintf( stderr, " \n" );
+     // Decide if we want to use xy2sky()
+     xy2sky_return_value= xy2sky( fits_image_name, (float)naxes[0] / 2.0, (float)naxes[1] / 2.0 );
+     if ( xy2sky_return_value == 0 ) {
+      fprintf( stderr, "The image center coordinates are printed above.\n" );
+      use_xy2sky= 1;
+     } else {
+      use_xy2sky= 0;
+     }
+     //
     }
-    //
    } else {
     use_xy2sky= 0;
    }
