@@ -45,9 +45,9 @@ if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"ED80__Black"* ]] ; then
  echo "The input indicates the images are from ED80 Black Mazan" | tee -a transient_factory_test31.txt
  export CAMERA_SETTINGS="ED80__Black"
 fi
-if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"NMW-TexasTech"* ]] ; then
+if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"NMW-TexasTech"* ]] || [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"TTUQ1b1x1"* ]] ; then
  echo "The input indicates the images are from NMW-TexasTech" | tee -a transient_factory_test31.txt
- export CAMERA_SETTINGS="NMW-TexasTech"
+ export CAMERA_SETTINGS="TTUQ1b1x1"
 fi
 
 
@@ -267,7 +267,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
  fi
  #
  #
- if [ "$CAMERA_SETTINGS" = "NMW-TexasTech" ];then
+ if [ "$CAMERA_SETTINGS" = "TTUQ1b1x1" ];then
   # 135 mm f/2.2 telephoto lens + QHY600M CMOS, 20 sec exposures
   echo "### Using search settings for $CAMERA_SETTINGS camera ###" | tee -a transient_factory_test31.txt
   export AAVSO_COMMENT_STRING="NMW-TexasTech Camera-1 135mm f/2.2 telephoto lens + QHY600M CMOS"
@@ -287,19 +287,16 @@ if [ -n "$CAMERA_SETTINGS" ];then
   # we don't usually have a luxury of multiple flat field frames to choose from
   # FLAT_FIELD_FILE has to point to one specific file that will be used for flat-fielding
   if [ -z "$FLAT_FIELD_FILE" ];then
-   #export FLAT_FIELD_FILE=/home/apache/flats/mff_2023-07-14.fit
-   #export FLAT_FIELD_FILE=/home/apache/flats/STL__mff_2024_febmar_full_moon.fit
-   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/STL__mff_2024_febmar_full_moon.fit"
-   #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_2023-07-14.fit"
-   export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/STL__mff_2025sep.fit"
+   export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/TTUQ1b1x1_mff_2025-12-22.fit"
   fi
   #
-  TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="STL-11000M"
-  export TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
+  #TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="STL-11000M"
+  #export TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
+  unset TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
 # production value
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=2000
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=3000
-  export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="14.0"
+  export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="15.0"
   FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=12.5
   # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
   SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
@@ -309,14 +306,14 @@ if [ -n "$CAMERA_SETTINGS" ];then
   #export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="yes"
   export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="no"
   #BAD_REGION_FILE="../STL_bad_region.lst"
-  BAD_REGION_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/STL_bad_region.lst"
-  EXCLUSION_LIST="../exclusion_list_STL.txt"
+  BAD_REGION_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/TTUQ1_bad_region.lst"
+  EXCLUSION_LIST="../exclusion_list_TTUQ1.txt"
   #export OMP_NUM_THREADS=4
-  SYSREM_ITERATIONS=0
+  #SYSREM_ITERATIONS=2
   UCAC5_PLATESOLVE_ITERATIONS=2
   #STARMATCH_RADIUS_PIX=4 # testing new values
   # The funny ghost image seems to be no more than 80pix away from frame edge
-  FRAME_EDGE_OFFSET_PIX=100
+  FRAME_EDGE_OFFSET_PIX=50
  fi
  #
 
