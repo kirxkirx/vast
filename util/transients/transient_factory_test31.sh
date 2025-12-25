@@ -287,7 +287,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
   # we don't usually have a luxury of multiple flat field frames to choose from
   # FLAT_FIELD_FILE has to point to one specific file that will be used for flat-fielding
   if [ -z "$FLAT_FIELD_FILE" ];then
-   export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/TTUQ1b1x1_mff_2025-12-22.fit"
+   export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2025-12-22.fit"
   fi
   #
   #TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="STL-11000M"
