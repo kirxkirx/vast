@@ -296,7 +296,7 @@ if [ -n "$CAMERA_SETTINGS" ];then
 # production value
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=2000
   NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=3000
-  export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="15.0"
+  export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="14.5"
   FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=12.5
   # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
   SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
@@ -1544,9 +1544,17 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    
    # Display the dark and falt frames in the log
    echo "Dark frame used to calibrate the second-epoch images:<br>" >> transient_factory_test31.txt
-   echo "<img src=\"dark.png\"><br>" >> transient_factory_test31.txt
+   if [ -s "transient_report/dark.png" ];then
+    echo "<img src=\"dark.png\"><br>" >> transient_factory_test31.txt
+   else
+    echo "<b>No good dark!</b><br>"
+   fi
    echo "Flat field used to calibrate the second-epoch images:<br>" >> transient_factory_test31.txt
-   echo "<img src=\"flat.png\"><br>" >> transient_factory_test31.txt
+   if [ -s "transient_report/flat.png" ];then
+    echo "<img src=\"flat.png\"><br>" >> transient_factory_test31.txt
+   else
+    echo "<b>No good flat!</b><br>"
+   fi
    #
    
   fi
