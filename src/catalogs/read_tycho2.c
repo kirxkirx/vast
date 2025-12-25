@@ -225,6 +225,7 @@ int match_stars_with_catalog( struct Star *arrStar, int N, struct CatStar *arrCa
  }
  fclose( calibfile );
  fprintf( stderr, "Relation between the catalog and instrumental magnitudes is written to calib.txt\n" );
+ // should this be median?
  fprintf( stdout, "0.000000 1.000000 %9.6lf\n", gsl_stats_mean( mag_zeropoint, 1, mag_zeropoint_counter ) );
  free( mag_zeropoint );
  return N_mantch;

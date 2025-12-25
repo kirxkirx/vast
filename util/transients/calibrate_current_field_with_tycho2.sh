@@ -193,4 +193,4 @@ util/calibrate_magnitude_scale $MAGNITUDE_CALIBRATION_PARAMETERS
 if [ $? -ne 0 ];then
  echo "ERROR: non-zero exit code of util/calibrate_magnitude_scale"
 fi
-#util/calibrate_magnitude_scale `lib/catalogs/read_tycho2`
+echo "1.0 0.0 $MAGNITUDE_CALIBRATION_PARAMETERS" > calib.txt_param
