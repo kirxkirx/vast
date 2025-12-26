@@ -16,7 +16,7 @@
 #define DEFAULT_N_FORK 5 // number of threads to be used if it cannot be properly determined at runtime
 
 //// Memory settings ////
-#define MAX_NUMBER_OF_STARS 300000
+#define MAX_NUMBER_OF_STARS 400000
 #define MAX_NUMBER_OF_OBSERVATIONS 120000 // per star
 
 //////////////////////////////////////////////////////////

@@ -67,7 +67,7 @@ for i in data* candidates.lst pgplot.ps pgplot.gif nohup.out test.cat *~ util/*~
   rm -f "$i"
  fi
 done
-for i in candidates-*.err candidates-*.txt candidates-*.lst m_sigma_bin.tmp match.txt calib.txt manually_selected_comparison_stars.lst manually_selected_aperture.txt ;do
+for i in candidates-*.err candidates-*.txt candidates-*.lst m_sigma_bin.tmp match.txt calib.txt calib.txt_param calib.txt_param_tycho2 manually_selected_comparison_stars.lst manually_selected_aperture.txt ;do
  if [ -f "$i" ];then
   rm -f "$i"
  fi
