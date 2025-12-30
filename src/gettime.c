@@ -998,8 +998,23 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    get_header_info_from_first_image_hdu_instead_of_just_first_hdu= 1;
   }
  }
+ 
+ // Check if this is a compressed image by looking for ZIMAGE keyword
+ // For compressed images, keep reading from the current (image) HDU
+ int is_compressed_image= 0;
+ int zimage_value;
+ status= 0;
+ fits_read_key( fptr, TLOGICAL, "ZIMAGE", &zimage_value, NULL, &status );
+ if ( status == 0 && zimage_value == 1 ) {
+  is_compressed_image= 1;
+  if ( param_verbose >= 1 ) {
+    fprintf( stderr, "Detected compressed FITS image - will read keywords from image extension\n" );
+  }
+ }
+ status= 0;
 
- if ( get_header_info_from_first_image_hdu_instead_of_just_first_hdu != 1 ) {
+ if ( get_header_info_from_first_image_hdu_instead_of_just_first_hdu != 1 && is_compressed_image != 1 ) {
+ //if ( get_header_info_from_first_image_hdu_instead_of_just_first_hdu != 1 ) {
   // Close the FITS file and re-open it with fits_open_file() instead of fits_open_image()
   // as the observing date information may be in a different HDU than the image!
   fits_close_file( fptr, &status ); // close file
