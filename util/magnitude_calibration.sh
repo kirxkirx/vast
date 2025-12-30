@@ -33,19 +33,15 @@ else
  ;;
  "V")
  ;;
- "R")
+ "R"|"Rc")
  ;;
- "Rc")
+ "I"|"Ic")
  ;;
- "I")
+ "r"|"SR")
  ;;
- "Ic")
+ "i"|"SI")
  ;;
- "r")
- ;;
- "i")
- ;;
- "g")
+ "g"|"SG")
  ;;
  *) 
   echo "ERROR: unknown band $BAND"
@@ -208,7 +204,7 @@ else
    echo "$MEDIAN_MAG  $B  $COMBINED_ERROR"
   done | sort -n > calib.txt
  ;;
- "r")
+ "r"|"SR")
   export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$17,$18}' | grep -v '0.000000' | wc -l`
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$17,$18}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then
@@ -244,7 +240,7 @@ else
    echo "$MEDIAN_MAG  $B  $COMBINED_ERROR"
   done | sort -n > calib.txt
  ;;
- "i")
+ "i"|"SI")
   export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$19,$20}' | grep -v '0.000000' | wc -l`
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$19,$20}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then
@@ -352,7 +348,7 @@ else
    echo "$MEDIAN_MAG  $B  $COMBINED_ERROR"
   done | sort -n > calib.txt
  ;;
- "g")
+ "g"|"SG")
   export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$25,$26}' | grep -v '0.000000' | wc -l`
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$25,$26}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then

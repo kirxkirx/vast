@@ -1,4 +1,6 @@
 XX XXX 2026: vast-1.0rc89
+	* The magnitude calibration script 'util/magnitude_calibration.sh' now understands AAVSO names of Sloan filters:
+	SG for g, SR for r and SI for i. The usual lower case filter names gri work too.
 	* Prefer tau.kirx.net as the period search server (activated by pressing 'P' keyboard key in lightcurve viewer vindow).
 16 Aug 2025: vast-1.0rc88
 	* Fixed broken manual magnitude calibration that is launched as 'util/magnitude_calibration.sh' 
