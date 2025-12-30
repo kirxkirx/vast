@@ -1,3 +1,8 @@
+* Save filter info from image header to vast_summary.log
+
+* Propagate filter info from util/magnitude_calibration.sh through vast_summary.log 
+to util/format_lightcurve_AAVSO.sh and util/format_lightcurve_CBA.sh
+
 * Fix 'catalog already exist' when trying to do single-image magnitude calibration,
 but the existing catalog contains only astrometry.
 
