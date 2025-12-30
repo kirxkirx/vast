@@ -548,7 +548,7 @@ clean_libraries:
 	util/clean_data.sh all # remove all data (lightcurves, etc) from the previous VaST run
 	rm -f vast libident.so libident.o $(LIB_DIR)stat $(LIB_DIR)formater_out_wfk stat_outfile $(LIB_DIR)simulate_2_colors combine_obs_median $(SRC_PATH)*.o $(SRC_PATH)*.so lc find_candidates pgfv $(SRC_PATH)pgfv/*.o $(SRC_PATH)diferential/*.o vast poisk util/stat_outfile util/combine_obs_median $(LIB_DIR)m_sigma_bin $(LIB_DIR)select_sysrem_input_star_list lib/periodFilter/periodS2 lib/periodFilter/periodFilter lib/BLS/bls util/ccd/*
 	rm -f lib/libcfitsio.a lib/libz.a
-	rm -f util/fitscopy util/funpack src/cfitsio/fitscopy src/fitsio.h src/longnam.h
+	rm -f util/fitscopy util/funpack util/fpack src/cfitsio/fitscopy src/fitsio.h src/longnam.h
 	rm -f lib/fitsverify
 	lib/compile_zlib.sh clean
 	lib/compile_cfitsio.sh clean

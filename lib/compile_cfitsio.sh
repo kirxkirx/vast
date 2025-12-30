@@ -124,9 +124,9 @@ if [ $ZLIB_TEST_RESULT -eq 0 ];then
   fi
  fi
 
- echo "Compiling funpack..."
 
  # Compile funpack.c
+ echo "Compiling funpack..."
  if [ $COMPILATION_ERROR -eq 0 ];then
   $C_COMPILER -c -o fpackutil.o utilities/fpackutil.c -I$LIBRARY_SOURCE
   if [ $? -ne 0 ];then
@@ -141,6 +141,26 @@ if [ $ZLIB_TEST_RESULT -eq 0 ];then
   $C_COMPILER -o ../../util/funpack funpack.o fpackutil.o "$TARGET_DIR"/libcfitsio.a $ZLIB_LIBS -lm
   if [ $? -ne 0 ];then
    echo "ERROR compiling funpack" 1>&2
+   COMPILATION_ERROR=1
+  fi
+ fi
+
+ # Compile fpack.c
+ echo "Compiling fpack..."
+ if [ $COMPILATION_ERROR -eq 0 ];then
+  $C_COMPILER -c -o fpackutil.o utilities/fpackutil.c -I$LIBRARY_SOURCE
+  if [ $? -ne 0 ];then
+   echo "ERROR compiling fpackutil.o" 1>&2
+   COMPILATION_ERROR=1
+  fi
+  $C_COMPILER -c -o fpack.o utilities/fpack.c -I$LIBRARY_SOURCE
+  if [ $? -ne 0 ];then
+   echo "ERROR compiling fpack.o" 1>&2
+   COMPILATION_ERROR=1
+  fi
+  $C_COMPILER -o ../../util/fpack fpack.o fpackutil.o "$TARGET_DIR"/libcfitsio.a $ZLIB_LIBS -lm
+  if [ $? -ne 0 ];then
+   echo "ERROR compiling fpack" 1>&2
    COMPILATION_ERROR=1
   fi
  fi
@@ -219,7 +239,7 @@ fi
 if [ $ZLIB_TEST_RESULT -eq 0 ];then
  if [ $COMPILATION_ERROR -eq 0 ];then
  echo -n "Checking library tools:   "
-  for TEST_FILE in "$TARGET_DIR"/fitsverify util/listhead util/modhead util/imarith util/fitscopy util/funpack ;do
+  for TEST_FILE in "$TARGET_DIR"/fitsverify util/listhead util/modhead util/imarith util/fitscopy util/funpack util/fpack ;do
    echo -n "$TEST_FILE - "
    if [ ! -f $TEST_FILE ];then
     COMPILATION_ERROR=1
