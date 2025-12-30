@@ -949,6 +949,7 @@ int main( int argc, char **argv ) {
 
  // For FITS file reading
  fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h
+ int naxis;
  long naxes[2];
  int status= 0;
  int bitpix;
@@ -1997,6 +1998,7 @@ int main( int argc, char **argv ) {
   return 1;
  }
 
+/*
  fits_open_image( &fptr, fits_image_name, 0, &status );
  if ( status != 0 ) {
   fprintf( stderr, "ERROR opening %s\n", fits_image_name );
@@ -2006,6 +2008,32 @@ int main( int argc, char **argv ) {
  fits_read_key( fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status );
  fits_read_key( fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status );
  fprintf( stderr, "Image \x1B[01;34m %s \x1B[33;00m : %ldx%ld pixels, BITPIX data type code: %d\n", fits_image_name, naxes[0], naxes[1], bitpix );
+*/
+ fits_open_image( &fptr, fits_image_name, 0, &status );
+ if ( status != 0 ) {
+  fprintf( stderr, "ERROR opening %s\n", fits_image_name );
+  return 1;
+ }
+ fits_get_img_type( fptr, &bitpix, &status );
+
+ fits_get_img_dim( fptr, &naxis, &status );
+ if ( status != 0 ) {
+  fprintf( stderr, "ERROR getting image dimensions from %s\n", fits_image_name );
+  fits_report_error( stderr, status );
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+
+ fits_get_img_size( fptr, 2, naxes, &status );
+ if ( status != 0 ) {
+  fprintf( stderr, "ERROR getting image size from %s\n", fits_image_name );
+  fits_report_error( stderr, status );
+  fits_close_file( fptr, &status );
+  return 1;
+ }
+
+ fprintf( stderr, "Image \x1B[01;34m %s \x1B[33;00m : %ldx%ld pixels, BITPIX data type code: %d\n", fits_image_name, naxes[0], naxes[1], bitpix );
+
  if ( naxes[0] * naxes[1] <= 0 ) {
   fprintf( stderr, "ERROR: Trying allocate zero or negative sized array\n" );
   exit( EXIT_FAILURE );
