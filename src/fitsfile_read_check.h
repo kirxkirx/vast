@@ -224,6 +224,7 @@ static inline int fitsfile_read_check(char *fitsfilename) {
  fits_close_file(fptr, &status);
  //
  if( 0 == check_if_the_input_is_FPack_compressed_FITS( fitsfilename ) ) {
+  //fprintf(stderr, "WARNING from fitsfile_read_check(): the input file is a compressed FITS image.\nYou may want to uncompressed the FITS image with 'util/funpack' before processing with VaST.\n");
   fprintf(stderr, "ERROR in fitsfile_read_check(): the input file is a compressed FITS image.\nPlease uncompressed the FITS image with 'util/funpack' before processing with VaST.\n");
   return 1;
  }
@@ -288,6 +289,7 @@ static inline int fitsfile_read_check_silent(char *fitsfilename) {
  fits_close_file(fptr, &status);
  //
  if( 0 == check_if_the_input_is_FPack_compressed_FITS( fitsfilename ) ) {
+//  fprintf(stderr, "WARNING from fitsfile_read_check(): the input file is a compressed FITS image.\nYou may want to uncompressed the FITS image with 'util/funpack' before processing with VaST.\n");
   fprintf(stderr, "ERROR in fitsfile_read_check(): the input file is a compressed FITS image.\nPlease uncompressed the FITS image with 'util/funpack' before processing with VaST.\n");
   return 1;
  }
