@@ -391,6 +391,8 @@ Usage: $0 outNUMBER.dat
   elif [ -f out"$LIGHTCURVEFILE".dat ];then
    # Maybe it was the star number specified on the command line, not the fulll lightcurv filename
    LIGHTCURVEFILE=out"$LIGHTCURVEFILE".dat
+  elif [ -f out$(echo "$LIGHTCURVEFILE" | awk '{printf "%05.0f", $1}').dat ];then
+   LIGHTCURVEFILE=out$(echo "$LIGHTCURVEFILE" | awk '{printf "%05.0f", $1}').dat
   else
    echo "ERROR: the lightcurve file $LIGHTCURVEFILE does not exist!"
    exit 1
