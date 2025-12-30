@@ -13451,6 +13451,13 @@ $(cat transient_report/index.html)
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 "
     else
+     # Test if util/identify_noninteractive.sh can understand just the star number, not the full lightcurve filename
+     util/identify_noninteractive.sh "$V615VUL_STAR_NUMBER"  | grep -A1 'New summary string' | grep -q -e 'V0615 Vul' -e 'V615 Vul'
+     if [ $? -ne 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST_NONINTERACTIVE_ID_STARNUMBERONLY_FAILED"
+     fi
+     #
      #
      TEST_CBA_REPORT_TERMINAL=$(util/format_lightcurve_CBA.sh out"$V615VUL_STAR_NUMBER".dat test)
      if [ -n "$TEST_CBA_REPORT_TERMINAL" ];then

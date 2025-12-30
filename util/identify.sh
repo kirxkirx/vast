@@ -388,6 +388,9 @@ Usage: $0 outNUMBER.dat
  if [ ! -f "$LIGHTCURVEFILE" ];then
   if [ -f "$OLDDDIR_TO_CHECK_INPUT_FILE"/"$LIGHTCURVEFILE" ];then
    LIGHTCURVEFILE="$OLDDDIR_TO_CHECK_INPUT_FILE/$LIGHTCURVEFILE"
+  elif [ -f out"$LIGHTCURVEFILE".dat ];then
+   # Maybe it was the star number specified on the command line, not the fulll lightcurv filename
+   LIGHTCURVEFILE=out"$LIGHTCURVEFILE".dat
   else
    echo "ERROR: the lightcurve file $LIGHTCURVEFILE does not exist!"
    exit 1

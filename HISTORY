@@ -2,7 +2,12 @@ XX XXX 2026: vast-1.0rc89
 	* The magnitude calibration script 'util/magnitude_calibration.sh' now understands AAVSO names of Sloan filters:
 	SG for g, SR for r and SI for i. The usual lower case filter names gri work too.
 	* Prefer tau.kirx.net as the period search server (activated by pressing 'P' keyboard key in lightcurve viewer vindow).
-	* Include util/fpack CFITSIO FITS image compresiion utility.
+ 	* Include util/fpack CFITSIO FITS image compresiion utility.
+	* The star identification script 'util/identify.sh' can now understand if a star is specified by its number,
+	not only by its full filename, so both options should work:
+	util/identify.sh out12345.dat
+	as well as
+	util/identify.sh 12345
 16 Aug 2025: vast-1.0rc88
 	* Fixed broken manual magnitude calibration that is launched as 'util/magnitude_calibration.sh' 
 	(with no filter name as an argument) or './pgfv calib' The reference image will be displayed and the user 
