@@ -853,6 +853,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  double exposure= 0.0; // if exposure != 0.0 -- assuming we have correctly read it
  // End of time variables
  long naxes[2];
+ int naxis;
 
  // LOG-files
  // FILE *vast_image_details;
@@ -940,6 +941,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   return status;
  }
 
+/*
  // Get image dimentions
  fits_read_key( fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status );
  if ( 0 != status ) {
@@ -957,6 +959,26 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   fprintf( stderr, "ERROR: gettime() - can't get image dimensions from NAXIS2 keyword!\n" );
   return status;
  }
+*/
+ // Get image dimensions
+ fits_get_img_dim( fptr, &naxis, &status );
+ if ( 0 != status ) {
+  fits_report_error( stderr, status );
+  fits_clear_errmsg();              // clear the CFITSIO error message stack
+  fits_close_file( fptr, &status ); // close file
+  fprintf( stderr, "ERROR: gettime() - can't get number of image dimensions!\n" );
+  return status;
+ }
+
+ fits_get_img_size( fptr, 2, naxes, &status );
+ if ( 0 != status ) {
+  fits_report_error( stderr, status );
+  fits_clear_errmsg();              // clear the CFITSIO error message stack
+  fits_close_file( fptr, &status ); // close file
+  fprintf( stderr, "ERROR: gettime() - can't get image dimensions!\n" );
+  return status;
+ }
+
 
  if ( param_verbose >= 1 ) {
   fprintf( stderr, "%ldx%ld FITS image %s\n", naxes[0], naxes[1], fitsfilename );
