@@ -430,6 +430,18 @@ if [ ! -s "$FITSFILE" ];then
  exit 1
 fi
 ###############
+# Handle special case - fully calibrated compressed image from NMW archive
+echo $(basename $FITSFILE) | grep 'wcs_fd_' | grep -q '\.fz'
+if [ $? -eq 0 ];then
+ echo "Handling the special case of a fully calibrated compressed image from NMW archive"
+ cp -v "$FITSFILE" $(basename $FITSFILE)
+ # -D delete the input file after creating the uncompressed output file
+ "$VAST_PATH"/util/funpack -D $(basename $FITSFILE)
+ FITSFILE=$(basename $FITSFILE)
+ FITSFILE=${FITSFILE/.fz/}
+fi
+###############
+#ORIGINAL_FITSFILE="$FITSFILE"
 # On-the fly convert the input image if necessary
 FITSFILE=`"$VAST_PATH"lib/on_the_fly_symlink_or_convert "$FITSFILE"`
 ###############
@@ -439,7 +451,7 @@ if [ -x "$VAST_PATH"lib/fitsverify ];then
  if [ $? -ne 0 ];then
   echo "WARNING: the input file $FITSFILE seems to be a FITS image that does not fully comply with the FITS standard.
 Checking if the filename extension and FITS header look reasonable..."
-  ## Exampt from the rule for files that have at least some correct keywords
+  ## Exempt from the rule for files that contain at least some correct keywords
   echo "$FITSFILE" | grep  -e ".fits"  -e ".FITS"  -e ".fts" -e ".FTS"  -e ".fit"  -e ".FIT" && "$VAST_PATH"util/listhead "$FITSFILE" | grep -e "SIMPLE  =                    T" -e "TELESCOP= 'Aristarchos'" && "$VAST_PATH"util/listhead "$FITSFILE" | grep -e "NAXIS   =                    2"  -e "NAXIS3  =                    1" -e "TELESCOP= 'Aristarchos'"
   if [ $? -eq 0 ];then
    echo "OK, let's assume this is a valid FITS file"
@@ -453,14 +465,15 @@ else
 fi # else if [ -x "$VAST_PATH"lib/fitsverify ];then
 
 ###
+# conversion/uncompression may change FITSFILE
 BASENAME_FITSFILE=$(basename "$FITSFILE")
+#BASENAME_ORIGINAL_FITSFILE=$(basename "$ORIGINAL_FITSFILE")
 ###
 
 # Test if the original image is already a calibrated one
 # (Test by checking the file name)
 TEST_SUBSTRING="$BASENAME_FITSFILE"
 TEST_SUBSTRING="${TEST_SUBSTRING:0:4}"
-#TEST_SUBSTRING=`expr substr $TEST_SUBSTRING  1 4`
 if [ "$TEST_SUBSTRING" = "wcs_" ];then
  echo "Special case: the file name suggests the file has already been plate-solved with VaST"
  cp -v "$FITSFILE" .
@@ -474,6 +487,7 @@ else
   cp -v "$FITSFILE" "$WCS_IMAGE_NAME" 
  fi
 fi
+
 
 SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".cat
 
@@ -559,7 +573,7 @@ if [ ! -s "$WCS_IMAGE_NAME" ];then
  
  #IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
  # The stuff below seems to work fine
- CATALOG_NAME=`"$VAST_PATH"lib/fits2cat $FITSFILE`
+ CATALOG_NAME=$("$VAST_PATH"lib/fits2cat $FITSFILE)
  if [ -f "$CATALOG_NAME".apphot ];then
   CATALOG_NAME="$CATALOG_NAME".apphot
  fi
@@ -1375,3 +1389,14 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ] && [ "$START_NAME" != "wcs_im
 else 
  echo "The plate-solved (WCS-calibrated) image is saved to $WCS_IMAGE_NAME"
 fi # if [ "$START_NAME" != "wcs_image_calibration.sh" ] && [ "$START_NAME" != "wcs_image_nocatalog.sh" ];then
+
+
+#echo "DEBUGTEST"
+#
+## Rename the thing if it was converted on the fly
+#if [ -f "$VAST_PATH"vast_unpacked_images.log ];then
+# grep -q "$FITSFILE" "$VAST_PATH"vast_unpacked_images.log
+# if [ $? -eq 0 ];then
+#  WCS_IMAGE_NAME=wcs_$(grep "$FITSFILE" "$VAST_PATH"vast_unpacked_images.log | awk '{print $2}' | head -n1)
+# fi
+#fi

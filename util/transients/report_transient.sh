@@ -101,8 +101,9 @@ clean_tmp_files
 while read JD MAG MERR X Y APP FITSFILE REST ;do
  # At this point, we should somehow have a WCS calibrated image named $WCS_IMAGE_NAME
  WCS_IMAGE_NAME=wcs_$(basename "$FITSFILE")
- WCS_IMAGE_NAME=${WCS_IMAGE_NAME/wcs_wcs_/wcs_}
- if [ ! -f $WCS_IMAGE_NAME ];then
+ WCS_IMAGE_NAME="${WCS_IMAGE_NAME/wcs_wcs_/wcs_}"
+ WCS_IMAGE_NAME="${WCS_IMAGE_NAME/.fz/}"
+ if [ ! -f "$WCS_IMAGE_NAME" ];then
   echo "ERROR: cannot find plate-solved image $WCS_IMAGE_NAME" 
   clean_tmp_files
   exit 1
@@ -645,6 +646,7 @@ if [ $VARIABLE_STAR_ID -ne 0 ] && [ $ASTEROID_ID -ne 0 ] && [ -z "$THIS_IS_ARTIF
   # Instead of a guess, use the actual field of view - the reference image is supposed to be solved by now
   WCS_REFERENCE_IMAGE_NAME=wcs_$(basename $REFERENCE_IMAGE)
   WCS_REFERENCE_IMAGE_NAME=${WCS_REFERENCE_IMAGE_NAME/wcs_wcs_/wcs_}
+  WCS_REFERENCE_IMAGE_NAME=${WCS_REFERENCE_IMAGE_NAME/.fz/}
   #util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS online_id $(util/fov_of_wcs_calibrated_image.sh $WCS_REFERENCE_IMAGE_NAME | grep 'Image size:' | awk -F"[ 'x]" '{if ($3 > $4) print $3; else print $4}') 2>&1 | grep '|' | tail -n1
   # Disable online VSX search
   util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS online_id $(util/fov_of_wcs_calibrated_image.sh $WCS_REFERENCE_IMAGE_NAME | grep 'Image size:' | awk -F"[ 'x]" '{if ($3 > $4) print $3; else print $4}') no_online_vsx 2>&1 | grep '|' | tail -n1

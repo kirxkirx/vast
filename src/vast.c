@@ -733,6 +733,8 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
  if ( star.flux / star.flux_err < MIN_SNR_TRANSIENT_DETECTION ) {
   return;
  }
+ 
+ fprintf(stderr, "TRANSIENTDEBUG01\n");
 
  // Test if the time difference between the reference and the current image is >TRANSIENT_MIN_TIMESCALE_DAYS
  if ( fabs( star.JD - reference_image_JD ) < TRANSIENT_MIN_TIMESCALE_DAYS ) {
@@ -740,6 +742,7 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
  }
  // if( star.n==4511 )fprintf(stderr,"##### %lf %lf\n",star.JD,reference_image_JD);
  // if( star.n==21841 )fprintf(stderr,"##### %lf %lf\n",star.JD,reference_image_JD);
+ fprintf(stderr, "TRANSIENTDEBUG02\n");
 
  if ( x > search_area_boundaries[0] && x < search_area_boundaries[1] ) {
   if ( y > search_area_boundaries[2] && y < search_area_boundaries[3] ) {
@@ -747,17 +750,20 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
    // don't care if it's fainter or brighter thant the bright search box limits
    // if ( m + 1.0 * m_err < search_area_boundaries[5] ) {
    if ( m + 0.0 * m_err < search_area_boundaries[5] ) {
+    fprintf(stderr, "TRANSIENTDEBUG03\n");
     // The candidate is inside the search box - now make additional (slow) checks
     // if ( 1 == is_point_close_or_off_the_frame_edge( star.x_frame, star.y_frame, X_im_size, Y_im_size, 3 * FRAME_EDGE_INDENT_PIXELS ) ) {
     if ( 1 == is_point_close_or_off_the_frame_edge( star.x_frame, star.y_frame, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) ) {
      return;
     }
+    fprintf(stderr, "TRANSIENTDEBUG04\n");
     // if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- passed is_point_close_or_off_the_frame_edge()\n");
     //  double-check that it's not in a bad region
     if ( 0 != exclude_region( X1, Y1, X2, Y2, N_bad_regions, star.x_frame, star.y_frame, aperture ) ) {
      fprintf( stderr, "The transient candidate %9.3lf %9.3lf is rejected, see bad_region.lst\n", star.x_frame, star.y_frame );
      return;
     }
+    fprintf(stderr, "TRANSIENTDEBUG05\n");
     // if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- passed exclude_region() new frame\n");
     //  Check that it's not in a bad region on the reference frame - there will be no reference object!
     //  increase the bad region, just in case
@@ -765,6 +771,7 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
      fprintf( stderr, "The transient candidate (new frame position %9.3lf %9.3lf ; ref frame position: %9.3lf %9.3lf) is rejected as at the reference frame it would land at a bad region listed in bad_region.lst\n", star.x_frame, star.y_frame, x, y );
      return;
     }
+    fprintf(stderr, "TRANSIENTDEBUG06\n");
     // if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- passed exclude_region() ref frame\n");
     //  OK, we like this candidate
     // if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- we like it\n");
@@ -773,8 +780,10 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
      fprintf( stderr, "ERROR writing to candidates-transients.lst\n" );
      return;
     }
+    fprintf(stderr, "TRANSIENTDEBUG07\n");
     fprintf( transientfile, "out%05d.dat  %8.3lf %8.3lf\n", n, x, y );
     fclose( transientfile );
+    fprintf(stderr, "TRANSIENTDEBUG08\n");
    }
   }
  }
@@ -1720,6 +1729,14 @@ int main( int argc, char **argv ) {
 #ifdef DEBUGMESSAGES
   fprintf( stderr, "Done with vast_remove_directory( \"converted_images\" )\n" );
 #endif
+  // compressed images
+#ifdef DEBUGMESSAGES
+  fprintf( stderr, "Starting vast_remove_directory( \"unpacked_images\" )\n" );
+#endif
+  vast_remove_directory( "unpacked_images" );
+#ifdef DEBUGMESSAGES
+  fprintf( stderr, "Done with vast_remove_directory( \"unpacked_images\" )\n" );
+#endif
  }
 
  // Go through images and directories specified on the command line
@@ -2026,6 +2043,86 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "list not found.\nThis is OK if you specify the input images on the command line, not through this text file.\n" );
  }
 
+ // This has to be done before imag unpacking
+ // Update PATH variable to make sure the local copy of SExtractor is there
+ make_sure_libbin_is_in_path();
+
+ /// Check if the SExtractor executable (named "sex") is present in $PATH
+ if ( 0 != system( "lib/look_for_sextractor.sh" ) ) {
+  fprintf( stderr, "Error looking for SExtractor. Aborting further computations...\n" );
+  return EXIT_FAILURE;
+ }
+
+ // Update TAI-UTC file if needed
+ if ( 0 != system( "lib/update_tai-utc.sh" ) ) {
+  fprintf( stderr, "WARNING: an error occured while trying to update lib/tai-utc.dat\nNo internet connection?\n" );
+ }
+
+ // Destroy files created by previous session
+ fprintf( stderr, "Cleaning old outNNNNN.dat files.\n" );
+ if ( 0 != system( "util/clean_data.sh all >/dev/null" ) ) {
+  fprintf( stderr, "Error while cleaning old files. Aborting further computations...\n" );
+  return EXIT_FAILURE;
+ }
+ fprintf( stderr, "Done with cleaning!\n" );
+
+ // Save command line arguments to the log file vast_command_line.log
+ save_command_line_to_log_file( argc, argv );
+ 
+
+ ////////////////////////////////////////////
+
+ 
+ // TBA: unpacking and RGB image conversions using a copy of input_images[]
+ /* TBA: unpacking and RGB image conversions using a copy of input_images[] */
+
+ char **input_images_copy;
+
+ /* allocate pointer array */
+ input_images_copy = (char **)malloc( (size_t)Num * sizeof(char *) );
+ if ( input_images_copy == NULL ) {
+  fprintf( stderr, "ERROR: cannot allocate input_images_copy\n" );
+  return EXIT_FAILURE;
+ }
+
+ /* deep copy strings */
+ for ( j = 0; j < Num; j++ ) {
+  //input_images_copy[j] = strdup( input_images[j] );
+  input_images_copy[j] = malloc( FILENAME_LENGTH * sizeof(char *) );
+  strncpy( input_images_copy[j], input_images[j], FILENAME_LENGTH );
+  input_images_copy[j][FILENAME_LENGTH-1]='\0'; // just in case
+  if ( input_images_copy[j] == NULL ) {
+   fprintf( stderr, "ERROR: cannot strdup input_images[%u]\n", j );
+   while ( j > 0 ) {
+    j--;
+    free( input_images_copy[j] );
+   }
+   free( input_images_copy );
+   return EXIT_FAILURE;
+  }
+ }
+
+ for ( j = 0; j < Num; j++ ) {
+  // Unpack the FITS image if it's packed with fpack (SExtractor cannot handle packed FITS)
+  unpack_compressed_FITS_image( input_images_copy[j] );
+  // Handle an RGB image
+  cutout_green_channel_out_of_RGB_DSLR_image(  input_images_copy[j] );
+  // These two functions will do file conversion and create logs, so the converted 
+  // files will be re-used by later envocations of these same functions.
+  // Note that the first run (when the actual image conversion is done) should ALWAYS be single-threaded!
+ }
+ 
+ // !!!!
+ //system("cat vast_unpacked_images.log");
+
+ /* free the copy */
+ for ( j = 0; j < Num; j++ ) {
+  free( input_images_copy[j] );
+ }
+ free( input_images_copy );
+ 
+ // We should have populated input_images[] at this point
+
  if ( Num == 1 ) {
   fprintf( stderr, "Only one image was supplied: %s", input_images[0] );
   fprintf( stderr, "Entering single image mode...\n\n" );
@@ -2165,6 +2262,8 @@ int main( int argc, char **argv ) {
 
  // The end of the beginning
 
+ // MOVED UP
+ /*
  // Update PATH variable to make sure the local copy of SExtractor is there
  make_sure_libbin_is_in_path();
 
@@ -2189,6 +2288,8 @@ int main( int argc, char **argv ) {
 
  // Save command line arguments to the log file vast_command_line.log
  save_command_line_to_log_file( argc, argv );
+ 
+ */
 
  /// Special mode for manual comparison star selection
  // if( 0 == strcmp("diffphot", basename(argv[0])) ) {

@@ -45,7 +45,7 @@ if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"ED80__Black"* ]] ; then
  echo "The input indicates the images are from ED80 Black Mazan" | tee -a transient_factory_test31.txt
  export CAMERA_SETTINGS="ED80__Black"
 fi
-if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"NMW-TexasTech"* ]] || [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"TTUQ1b1x1"* ]] ; then
+if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"NMW-TexasTech"* ]] || [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"TTUQ1b1x1"* ]] || [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"Q1b1x1"* ]] ; then
  echo "The input indicates the images are from NMW-TexasTech" | tee -a transient_factory_test31.txt
  export CAMERA_SETTINGS="TTUQ1b1x1"
 fi
@@ -109,19 +109,6 @@ UCAC5_PLATESOLVE_ITERATIONS=1
 #STARMATCH_RADIUS_PIX=4
 STARMATCH_RADIUS_PIX=3.5
 
-#NMW_CALIBRATION="$HOME/nmw_calibration"
-#if [ ! -d "$NMW_CALIBRATION" ];then
-# # vast
-# NMW_CALIBRATION="/dataX/cgi-bin/unmw/uploads/nmw_calibration"
-# if [ ! -d "$NMW_CALIBRATION" ];then
-#  # kadar and kadar2
-#  NMW_CALIBRATION="/home/apache/nmw_calibration"
-#  if [ ! -d "$NMW_CALIBRATION" ];then
-#   # tau
-#   NMW_CALIBRATION="/var/www/nmw_calibration"
-#  fi
-# fi
-#fi
 for dir in "$HOME/nmw_calibration" \
            "/dataX/cgi-bin/unmw/uploads/nmw_calibration" \
            "/home/apache/nmw_calibration" \
@@ -510,6 +497,20 @@ function try_to_calibrate_the_input_frame {
  OUTPUT_DARK_SUBTRACTED_FRAME_PATH="$INPUT_FRAME_DIRNAME/$OUTPUT_DARK_SUBTRACTED_FRAME_BASENAME"
  OUTPUT_FLATFIELDED_FRAME_BASENAME=fd_"$INPUT_FRAME_BASENAME"
  OUTPUT_FLATFIELDED_FRAME_PATH="$INPUT_FRAME_DIRNAME/$OUTPUT_FLATFIELDED_FRAME_BASENAME"
+ #
+ OUTPUT_PLATESOLVED_FLATFIELDED_FRAME_PATH="$INPUT_FRAME_DIRNAME/wcs_$OUTPUT_FLATFIELDED_FRAME_BASENAME"
+ 
+ # check if calibrated frame is already present in the input directory from a previous run
+ if [ -s "$OUTPUT_PLATESOLVED_FLATFIELDED_FRAME_PATH" ];then
+  echo "try_to_calibrate_the_input_frame(): found a platesolved calibrated frame from a previosu run $OUTPUT_PLATESOLVED_FLATFIELDED_FRAME_PATH" 1>&2
+  echo "$OUTPUT_PLATESOLVED_FLATFIELDED_FRAME_PATH"
+  return 0
+ fi
+ if [ -s "$OUTPUT_FLATFIELDED_FRAME_PATH" ];then
+  echo "try_to_calibrate_the_input_frame(): found a calibrated frame from a previosu run $OUTPUT_FLATFIELDED_FRAME_PATH" 1>&2
+  echo "$OUTPUT_FLATFIELDED_FRAME_PATH"
+  return 0
+ fi
  
  # check if the input image directory is writable
  if [ ! -w "$INPUT_FRAME_DIRNAME" ];then
@@ -1032,15 +1033,31 @@ if [ ! -d "$NEW_IMAGES" ];then
  continue
 fi
 
+# Naturally ,we assume that fits file extension and calibration status prefix are the same for all data in the input dir
+
 # Figure out fits file extension for this dataset
-FITS_FILE_EXT=$(for POSSIBLE_FITS_FILE_EXT in fts fits fit ;do for IMGFILE in "$NEW_IMAGES"/*."$POSSIBLE_FITS_FILE_EXT" ;do if [ -f "$IMGFILE" ];then echo "$POSSIBLE_FITS_FILE_EXT"; break; fi ;done ;done)
+FITS_FILE_EXT=$(for POSSIBLE_FITS_FILE_EXT in fts fit fits ;do for IMGFILE in "$NEW_IMAGES"/*.{"$POSSIBLE_FITS_FILE_EXT","$POSSIBLE_FITS_FILE_EXT".fz} ;do if [ -f "$IMGFILE" ];then echo "$POSSIBLE_FITS_FILE_EXT"; break; fi ;done ;done)
 if [ -z "$FITS_FILE_EXT" ];then
- FITS_FILE_EXT="fts"
+ echo "ERROR in $0 cannot determine FITS_FILE_EXT"
+ exit 1
+ #FITS_FILE_EXT="fts"
 fi
 export FITS_FILE_EXT
 echo "FITS_FILE_EXT=$FITS_FILE_EXT" | tee -a transient_factory_test31.txt
 
-LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR=$(for IMGFILE in "$NEW_IMAGES"/*."$FITS_FILE_EXT" ;do if [ -f "$IMGFILE" ];then basename "$IMGFILE" ;fi ;done | awk '{if (length($1) >= 3) print $1}' FS='_' | sort | uniq)
+# Figure out fits file calibration status prefix for this dataset
+CALIBRATION_STATUS_PREFIX=$(for POSSIBLE_CALIBRATION_STATUS_PREFIX in wcs_fd_ fd_ ;do for IMGFILE in "$NEW_IMAGES"/"$POSSIBLE_CALIBRATION_STATUS_PREFIX"*.{"$FITS_FILE_EXT","$FITS_FILE_EXT".fz} ;do if [ -f "$IMGFILE" ];then echo "$POSSIBLE_CALIBRATION_STATUS_PREFIX"; break; fi ;done ;done | head -n1)
+export CALIBRATION_STATUS_PREFIX
+echo "CALIBRATION_STATUS_PREFIX=$CALIBRATION_STATUS_PREFIX" | tee -a transient_factory_test31.txt
+
+# Figure out fits file compression postfix for this dataset
+FITS_FILE_COMPRESSION_POSTFIX=$(for POSSIBLE_FITS_FILE_COMPRESSION_POSTFIX in .fz ;do for IMGFILE in "$NEW_IMAGES"/"$POSSIBLE_CALIBRATION_STATUS_PREFIX"*."$FITS_FILE_EXT""$POSSIBLE_FITS_FILE_COMPRESSION_POSTFIX" ;do if [ -f "$IMGFILE" ];then echo "$POSSIBLE_FITS_FILE_COMPRESSION_POSTFIX"; break; fi ;done ;done)
+export FITS_FILE_COMPRESSION_POSTFIX
+
+
+#LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR=$(for IMGFILE in "$NEW_IMAGES"/*."$FITS_FILE_EXT" ;do if [ -f "$IMGFILE" ];then basename "$IMGFILE" ;fi ;done | awk '{if (length($1) >= 3) print $1}' FS='_' | sort | uniq)
+#LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR=$(for IMGFILE in "$NEW_IMAGES"/*."$FITS_FILE_EXT" ;do if [ -f "$IMGFILE" ];then B=$(basename "$IMGFILE") ; BB=$(echo "${B/wcs_fd_/}") ; echo "${BB/fd_/}" ;fi ;done | awk '{if (length($1) >= 3) print $1}' FS='_' | sort | uniq)
+LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR=$(for IMGFILE in "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX"*.{"$FITS_FILE_EXT","$FITS_FILE_EXT".fz} ;do if [ -f "$IMGFILE" ];then B=$(basename "$IMGFILE"); echo "${B/$CALIBRATION_STATUS_PREFIX/}" ;fi ;done | awk '{if (length($1) >= 3) print $1}' FS='_' | sort | uniq)
 
 echo "Fields in the data directory: 
 $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR
@@ -1089,7 +1106,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  echo "$output" | tee -a transient_factory_test31.txt
  if [ $exit_code -ne 0 ]; then
   echo "$output" >> transient_report/index.html
-  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
   exit 1
  fi
  unset exit_code
@@ -1101,7 +1118,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  echo "$output" | tee -a transient_factory_test31.txt
  if [ $exit_code -ne 0 ]; then
   echo "$output" >> transient_report/index.html
-  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
   exit 1
  fi
  unset exit_code
@@ -1113,14 +1130,14 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  N=$(ls "$REFERENCE_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" | wc -l)
  if [ $N -lt 2 ];then
   # Save image date for it to be displayed in the summary file
-  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
   echo "ERROR: too few refereence images for the field $FIELD" | tee -a transient_factory_test31.txt
   continue
  fi
- N=$(ls "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" | wc -l)
+ N=$(ls "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" | wc -l)
  if [ $N -lt 2 ];then
   # Save image date for it to be displayed in the summary file
-  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
   echo "ERROR: too few new images for the field $FIELD" | tee -a transient_factory_test31.txt
   continue
  fi
@@ -1135,7 +1152,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  
  # Choose second epoch images
  # first, count how many there are
- NUMBER_OF_SECOND_EPOCH_IMAGES=$(ls "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" | wc -l)
+ NUMBER_OF_SECOND_EPOCH_IMAGES=$(ls "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" | wc -l)
   
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -gt 1 ];then
   # Make image previews
@@ -1143,7 +1160,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   echo "Large previews of the second-epoch (new) images:<br>" >> transient_factory_test31.txt
   echo "MAKE_PNG_PLOTS=$MAKE_PNG_PLOTS<br>" >> transient_factory_test31.txt
   echo "<a name='small_field_preview_log_section'></a>" >> transient_factory_test31.txt
-  for FITS_IMAGE_TO_PREVIEW in "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" ;do
+  for FITS_IMAGE_TO_PREVIEW in "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" ;do
    BASENAME_FITS_IMAGE_TO_PREVIEW=$(basename "$FITS_IMAGE_TO_PREVIEW")
    PREVIEW_IMAGE="$BASENAME_FITS_IMAGE_TO_PREVIEW"_preview.png
    ######
@@ -1186,14 +1203,14 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # less than 2 images, 2 images, mere than 2 images
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -lt 2 ];then
   # Save image date for it to be displayed in the summary file
-  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
   echo "ERROR processing the image series - only $NUMBER_OF_SECOND_EPOCH_IMAGES second-epoch images found" | tee -a transient_factory_test31.txt
   continue
  fi
  # Test if the images look like FITS images
  echo -n "Read-check the input FITS images... "
  echo -n "Read-check the input FITS images... " >> transient_factory_test31.txt
- for FITS_FILE_TO_CHECK in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" ;do
+ for FITS_FILE_TO_CHECK in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" ;do
   # We assume that if util/listhead can read it - chances are the input is a readable FITS file
   util/listhead "$FITS_FILE_TO_CHECK" > /dev/null
   if [ $? -ne 0 ];then
@@ -1206,7 +1223,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  # Test if we can get the observing date from FITS images
  echo -n "Read date check the input FITS images... "
  echo -n "Read date check the input FITS images... " >> transient_factory_test31.txt
- for FITS_FILE_TO_CHECK in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" ;do
+ for FITS_FILE_TO_CHECK in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" ;do
   # We assume that if util/listhead can read it - chances are the input is a readable FITS file
   util/get_image_date "$FITS_FILE_TO_CHECK" > /dev/null
   if [ $? -ne 0 ];then
@@ -1223,7 +1240,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
 
   BELOW_THRESHOLD_COUNT=0
 
-  for FITS_FILE_TO_CHECK in "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT"; do
+  for FITS_FILE_TO_CHECK in "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX"; do
    util/imstat_vast_fast "$FITS_FILE_TO_CHECK" | awk -v max="$MAX_NEW_IMG_MEAN_VALUE" '/ MEAN= / {
      if ($2 < max) {
        exit 0
@@ -1248,15 +1265,15 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  #
  # $NUMBER_OF_SECOND_EPOCH_IMAGES -lt 2 is handled above
  if [ $NUMBER_OF_SECOND_EPOCH_IMAGES -eq 2 ];then
-  SECOND_EPOCH__FIRST_IMAGE=$(ls "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" | head -n1)
-  SECOND_EPOCH__SECOND_IMAGE=$(ls "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" | tail -n1)
+  SECOND_EPOCH__FIRST_IMAGE=$(ls "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" | head -n1)
+  SECOND_EPOCH__SECOND_IMAGE=$(ls "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" | tail -n1)
  elif [ $NUMBER_OF_SECOND_EPOCH_IMAGES -gt 2 ];then
   # There are more than two second-epoch images - do a preliminary VaST run to choose the two images with best seeing
   cp -v "$SEXTRACTOR_CONFIG_BRIGHTSTARPASS" default.sex >> transient_factory_test31.txt 2>&1
   echo "Preliminary VaST run on the second-epoch images only" | tee -a transient_factory_test31.txt
   # --type 2 zero-point-only magnitude calibration requires fewer matched stars - useful for oblybrigthstars SE settings on very bright twilight images
-  echo "./vast --type 2 --norotation --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit"  "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" | tee -a transient_factory_test31.txt
-  ./vast --type 2 --norotation --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit  "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" > prelim_vast_run.log 2>&1  
+  echo "./vast --type 2 --norotation --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit"  "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" | tee -a transient_factory_test31.txt
+  ./vast --type 2 --norotation --autoselectrefimage --matchstarnumber 100 --UTC --nofind --failsafe --nomagsizefilter --noerrorsrescale --notremovebadimages --no_guess_saturation_limit  "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" > prelim_vast_run.log 2>&1  
   echo "wait" | tee -a transient_factory_test31.txt
   wait
   ## Special test for stuck camera ##
@@ -1264,7 +1281,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    N_SAME_IMAGE=$(grep -c ' rotation= 180.000 ' vast_image_details.log)
    if [ $N_SAME_IMAGE -gt 1 ];then
     # Save image date for it to be displayed in the summary file
-    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
     # Stuck camera
     #echo "ERROR the camera is stuck repeatedly sending the same image!"
     echo "***** ACTION NEEDED - RESET CAMERA!!! *****   IMAGE PROCESSING ERROR (stuck camera repeatedly sending the same image) " >> transient_factory.log
@@ -1277,7 +1294,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   grep 'Bad reference image...' prelim_vast_run.log >> transient_factory.log
   if [ $? -eq 0 ];then
    # Save image date for it to be displayed in the summary file
-   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
    # Bad reference image
    #echo "ERROR clouds on second-epoch images?"
    echo "***** IMAGE PROCESSING ERROR (clouds?) *****" >> transient_factory.log
@@ -1291,14 +1308,14 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   fi
   if [ ! -s vast_summary.log ];then
    # Save image date for it to be displayed in the summary file
-   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
    echo "ERROR: vast_summary.log is not created during the preliminary VaST run" | tee -a transient_factory_test31.txt
    continue
   fi
   N_PROCESSED_IMAGES_PRELIM_RUN=$(grep 'Images processed' vast_summary.log | awk '{print $3}')
   if [ $N_PROCESSED_IMAGES_PRELIM_RUN -lt 2 ];then
    # Save image date for it to be displayed in the summary file
-   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
    #echo "ERROR processing second-epoch images!"
    echo "***** IMAGE PROCESSING ERROR (preliminary VaST run) *****" >> transient_factory.log
    echo "############################################################" >> transient_factory.log
@@ -1308,7 +1325,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   N_PROCESSED_IMAGES_PRELIM_RUN=$(grep 'Images used for photometry' vast_summary.log | awk '{print $5}')
   if [ $N_PROCESSED_IMAGES_PRELIM_RUN -lt 2 ];then
    # Save image date for it to be displayed in the summary file
-   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
    #echo "ERROR processing second-epoch images!"
    echo "***** IMAGE PROCESSING ERROR (preliminary VaST run) *****" >> transient_factory.log
    echo "############################################################" >> transient_factory.log
@@ -1317,7 +1334,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   fi
   if [ ! -s vast_image_details.log ];then
    # Save image date for it to be displayed in the summary file
-   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
    echo "ERROR: vast_image_details.log is not created (preliminary VaST run)" | tee -a transient_factory_test31.txt
    continue
   fi
@@ -1334,7 +1351,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING=$(cat vast_image_details.log | grep -v -e ' ap=  0.0 ' -e ' ap= 99.0 ' -e ' status=ERROR ' | awk -v min_var="$FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX" -v max_var="$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX" '{if ( $9 > min_var && $9 < max_var ) print }' | wc -l)
   if [ $NUMBER_OF_IMAGES_WITH_REASONABLE_SEEING -lt 2 ];then
    # Save image date for it to be displayed in the summary file
-   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
    #echo "ERROR: seeing on second-epoch images is out of range - ap. size outside ($FILTER_BAD_IMG__MIN_APERTURE_STAR_SIZE_PIX,$FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX) pix. range"
    echo "***** ERROR: seeing on second-epoch images is out of range *****" >> transient_factory.log
    echo "############################################################" >> transient_factory.log
@@ -1404,7 +1421,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   #TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<$FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
   #if [ $TEST -eq 0 ];then
   # # Save image date for it to be displayed in the summary file
-  # print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+  # print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
   # echo "ERROR: tracking error (elongated stars), median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  $(basename $SECOND_EPOCH__FIRST_IMAGE)" >> transient_factory_test31.txt
   # continue
   #else
@@ -1412,7 +1429,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   #fi
   if awk -v x="$MEDIAN_DIFFERENCE_AminusB_PIX" -v y="$FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX" 'BEGIN {exit !(x>y)}'; then
    # Save image date for it to be displayed in the summary file
-   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
    echo "ERROR: tracking error (elongated stars), median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  $(basename $SECOND_EPOCH__FIRST_IMAGE)" | tee -a transient_factory_test31.txt
    continue
   else
@@ -1426,7 +1443,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   #TEST=$(echo "$MEDIAN_DIFFERENCE_AminusB_PIX<$FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
   #if [ $TEST -eq 0 ];then
   # # Save image date for it to be displayed in the summary file
-  # print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+  # print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
   # echo "ERROR: tracking error (elongated stars) median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  $(basename $SECOND_EPOCH__SECOND_IMAGE)" >> transient_factory_test31.txt
   # continue
   #else
@@ -1434,7 +1451,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   #fi
   if awk -v x="$MEDIAN_DIFFERENCE_AminusB_PIX" -v y="$FILTER_BAD_IMG__MAX_ELONGATION_AminusB_PIX" 'BEGIN {exit !(x>y)}'; then
    # Save image date for it to be displayed in the summary file
-   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
    echo "ERROR: tracking error (elongated stars) median(A-B)=$MEDIAN_DIFFERENCE_AminusB_PIX pix  $(basename $SECOND_EPOCH__SECOND_IMAGE)" | tee -a transient_factory_test31.txt
    continue
   else
@@ -1474,14 +1491,14 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    echo "INFO:                  SECOND_EPOCH__SD_ratio= $SECOND_EPOCH__SD_ratio" | tee -a transient_factory_test31.txt
    # Check ratio of the mean image values against the user-specified threshold
    if awk -v maxratio="$MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO" -v ref="$REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" -v second="$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" 'BEGIN {if (second > maxratio * ref) exit 0; exit 1}'; then
-    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
     echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO * $REFERENCE_EPOCH__FIRST_IMAGE_MEAN_VALUE" | tee -a transient_factory_test31.txt
     continue
    fi # awk ...
    # Check the mean value itself (if this filter is defined)
    if [ -n "$MAX_NEW_IMG_MEAN_VALUE" ];then
     if awk -v max="$MAX_NEW_IMG_MEAN_VALUE" -v second="$SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE" 'BEGIN {if (second > max) exit 0; exit 1}'; then
-     print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+     print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
      echo "ERROR: bright background on new image  $SECOND_EPOCH__FIRST_IMAGE_MEAN_VALUE > $MAX_NEW_IMG_MEAN_VALUE" | tee -a transient_factory_test31.txt
      continue
     fi # awk ... 
@@ -1490,7 +1507,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    if [ -n "$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" ] && [ -n "$SECOND_EPOCH__FIRST_IMAGE_SD" ] && [ -n "$SECOND_EPOCH__SECOND_IMAGE_SD" ]; then
     echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD $MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS" | awk '{A=$1; B=$2; C=$3; result=(A > B ? (A - B) : (B - A)) / B; exit (result < C ? 0 : 1)}'
     if [ $? -ne 0 ];then
-     print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+     print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
      echo "ERROR: passing clouds (SD ratio=$SECOND_EPOCH__SD_ratio hard threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS)" | tee -a transient_factory_test31.txt
      continue
     fi
@@ -1499,7 +1516,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    if [ -n "$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT" ] && [ -n "$SECOND_EPOCH__FIRST_IMAGE_SD" ] && [ -n "$SECOND_EPOCH__SECOND_IMAGE_SD" ]; then
     echo "$SECOND_EPOCH__FIRST_IMAGE_SD $SECOND_EPOCH__SECOND_IMAGE_SD $MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT" | awk '{A=$1; B=$2; C=$3; result=(A > B ? (A - B) : (B - A)) / B; exit (result < C ? 0 : 1)}'
     if [ $? -ne 0 ];then
-     #print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+     #print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
      echo "ERROR: passing clouds (SD ratio=$SECOND_EPOCH__SD_ratio soft threshold=$MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT)" | tee -a transient_factory_test31.txt
      # Don't stop on soft limit
      #continue
@@ -1520,7 +1537,7 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  done | grep "ERROR opening file"
  if [ $? -eq 0 ];then
   # Save image date for it to be displayed in the summary file
-  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
   echo "ERROR processing the image series: ls failed on one of the input images" | tee -a transient_factory_test31.txt
   continue
  fi
@@ -1577,7 +1594,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
  done | grep "ERROR opening file"
  if [ $? -eq 0 ];then
   # Save image date for it to be displayed in the summary file
-  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+  print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
   echo "ERROR processing the image series: ls failed on one of the second-epoch images" | tee -a transient_factory_test31.txt
   continue
  fi
@@ -1761,7 +1778,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   ./vast --norotation --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --type 4 --maxsextractorflag 99 --UTC --nofind --nojdkeyword "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" &> vast_output_$$.tmp
   if [ $? -ne 0 ];then
    # Save image date for it to be displayed in the summary file
-   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
    echo "ERROR running VaST on the field $FIELD (wrong field? clouds? very bad focus? --stdout)"
    echo "ERROR running VaST on the field $FIELD (wrong field? clouds? very bad focus? -- transient_factory_test31.txt)" >> transient_factory_test31.txt
    echo "ERROR running VaST on the field $FIELD (wrong field? clouds? very bad focus?)" >> transient_factory.log
@@ -1790,7 +1807,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   grep -q 'Images used for photometry 4' vast_summary.log
   if [ $? -ne 0 ];then
    # Save image date for it to be displayed in the summary file
-   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
    echo "***** IMAGE PROCESSING ERROR (less than 4 images processed) *****" >> transient_factory.log
    echo "############################################################" >> transient_factory.log
    echo "ERROR running VaST on the field $FIELD (less than 4 images processed)" | tee -a transient_factory_test31.txt
@@ -1876,6 +1893,8 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
    # make sure we do not have wcs_wcs_
    WCS_IMAGE_NAME_FOR_CHECKS=${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}
    #
+   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/.fz/}"
+   #
    if [ ! -s "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
     echo "***** PLATE SOLVE PROCESSING ERROR *****
 ***** cannot find $WCS_IMAGE_NAME_FOR_CHECKS  *****
@@ -1901,7 +1920,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   done | grep -q 'UNSOLVED_PLATE'
   if [ $? -eq 0 ];then
    # Save image date for it to be displayed in the summary file
-   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
    #echo "ERROR found an unsoved plate in the field $FIELD" >> transient_factory.log
    #echo "ERROR found an unsoved plate in the field $FIELD" >> transient_factory_test31.txt
    echo "ERROR found an unsoved plate in the field $FIELD" | tee -a transient_factory_test31.txt
@@ -1911,6 +1930,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   # Determine image FoV to compute limits on the pointing accuracy
   WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $REFERENCE_EPOCH__FIRST_IMAGE)"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
+    WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/.fz/}"
   FOV_OF_WCS_CALIBRATED_IMAGE_RESULTS=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS")
   #IMAGE_FOV_ARCMIN=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS" | grep 'Image size:' | awk '{print $3}' | awk -F"'" '{print $1}')
   IMAGE_FOV_ARCMIN=$(echo "$FOV_OF_WCS_CALIBRATED_IMAGE_RESULTS" | grep 'Image size:' | awk '{print $3}' | awk -F"'" '{print $1}')
@@ -1951,8 +1971,17 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   #### Do the pointing check for the first image of the second epoch
   WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $SECOND_EPOCH__FIRST_IMAGE)"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
+  WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/.fz/}"
   IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS" | grep 'Image center:' | awk '{print $3" "$4}')
+  if [ -z "$IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE" ];then
+   echo "ERROR: cannot determine IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE" | tee -a transient_factory_test31.txt
+   break
+  fi
   DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}')
+  if [ -z "$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG" ];then
+   echo "ERROR: cannot determine DISTANCE_BETWEEN_IMAGE_CENTERS_DEG" | tee -a transient_factory_test31.txt
+   break
+  fi
   echo "###################################
 # Check the image center offset between the reference and the first second-epoch image (pointing accuracy)
 Reference image center $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE
@@ -1963,7 +1992,7 @@ Soft limit: $POINTING_ACCURACY_LIMIT_DEG_SOFT deg.  Hard limit: $POINTING_ACCURA
   #  Pointing accuracy - check hard limit
   if awk -v x="$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG" -v y="$POINTING_ACCURACY_LIMIT_DEG_HARD" 'BEGIN {exit !(x>y)}'; then
    if [ "$CHECK_POINTING_ACCURACY" = "yes" ]; then
-    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
     echo "ERROR: distance between 1st reference and 1st new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $POINTING_ACCURACY_LIMIT_DEG_HARD deg.)" | tee -a transient_factory_test31.txt
     break
    fi
@@ -1983,6 +2012,7 @@ Soft limit: $POINTING_ACCURACY_LIMIT_DEG_SOFT deg.  Hard limit: $POINTING_ACCURA
   #### Do the pointing check for the second image of the second epoch
   WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $SECOND_EPOCH__SECOND_IMAGE)"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
+  WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/.fz/}"
   IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS" | grep 'Image center:' | awk '{print $3" "$4}')
   DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}')
   echo "###################################
@@ -1994,7 +2024,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   # Pointing accuracy - check hard limit
   if awk -v x="$DISTANCE_BETWEEN_IMAGE_CENTERS_DEG" -v y="$POINTING_ACCURACY_LIMIT_DEG_HARD" 'BEGIN {exit !(x>y)}'; then
    if [ "$CHECK_POINTING_ACCURACY" = "yes" ]; then
-    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+    print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
     echo "ERROR: distance between 1st reference and 2nd new image centers is $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG deg. (Hard limit: $POINTING_ACCURACY_LIMIT_DEG_HARD deg.)" | tee -a transient_factory_test31.txt
     break
    fi
@@ -2077,6 +2107,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   fi
   WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $REFERENCE_EPOCH__FIRST_IMAGE)"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
+  WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/.fz/}"
   if [ ! -s "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
    echo "$WCS_IMAGE_NAME_FOR_CHECKS does not exist or is empty: waiting for solve_plate_with_UCAC5" | tee -a transient_factory_test31.txt
    # Wait here hoping util/solve_plate_with_UCAC5 will plate-solve the reference image
@@ -2177,7 +2208,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    # Wait for the solve_plate_with_UCAC5 stuff to finish
    echo "wait" | tee -a transient_factory_test31.txt
    # Save image date for it to be displayed in the summary file
-   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
    wait
    # Print the output from each temporary file and then delete the file
    for solve_plate_with_UCAC5_tempFile in "${solve_plate_with_UCAC5_tempFiles[@]}"; do
@@ -2207,7 +2238,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     fi
    done
    # Save image date for it to be displayed in the summary file
-   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$FIELD"_*_*."$FITS_FILE_EXT" >> transient_factory_test31.txt
+   print_image_date_for_logs_in_case_of_emergency_stop "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" >> transient_factory_test31.txt
    # Throw an error
    #echo "ERROR calibrating magnitudes in the field $FIELD MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE"
    #echo "ERROR calibrating magnitudes in the field $FIELD MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE=$MAGNITUDE_CALIBRATION_SCRIPT_EXIT_CODE" >> transient_factory_test31.txt
@@ -2268,8 +2299,22 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   ############################################
   # Remove candidates close to frame edge
   # here we assume that all images are the samesize as $SECOND_EPOCH__SECOND_IMAGE
-  DIMX=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS1 | awk '{print $3}' | head -n1)
-  DIMY=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS2 | awk '{print $3}' | head -n1)
+  echo $(basename "$SECOND_EPOCH__SECOND_IMAGE") | grep -q '\.fz'
+  if [ $? -eq 0 ];then
+   SECOND_EPOCH__SECOND_IMAGE_HEADER=$(util/funpack -S "$SECOND_EPOCH__SECOND_IMAGE" | util/listhead STDIN)
+  else
+   SECOND_EPOCH__SECOND_IMAGE_HEADER=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE")
+  fi
+  #DIMX=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS1 | awk '{print $3}' | head -n1)
+  DIMX=$(echo "$SECOND_EPOCH__SECOND_IMAGE_HEADER" | grep NAXIS1 | awk '{print $3}' | head -n1)
+  #DIMY=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS2 | awk '{print $3}' | head -n1)
+  DIMY=$(echo "$SECOND_EPOCH__SECOND_IMAGE_HEADER" | grep NAXIS2 | awk '{print $3}' | head -n1)
+  if [ $DIMX -lt 300 ];then
+   echo "ERROR DIMX=$DIMX seems too small" | tee -a transient_factory_test31.txt
+  fi
+  if [ $DIMY -lt 300 ];then
+   echo "ERROR DIMY=$DIMY seems too small" | tee -a transient_factory_test31.txt
+  fi
   ### ===> IMAGE EDGE OFFSET HARDCODED HERE <===
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
    cat "$i" | awk "{if ( \$4>$FRAME_EDGE_OFFSET_PIX && \$4<$DIMX-$FRAME_EDGE_OFFSET_PIX && \$5>$FRAME_EDGE_OFFSET_PIX && \$5<$DIMY-$FRAME_EDGE_OFFSET_PIX ) print \"YES\"; else print \"NO\" }" | grep -q 'NO'
@@ -2302,6 +2347,8 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   # move it here to do it once
   SECOND_EPOCH_IMAGE_ONE=$(cat vast_image_details.log | awk '{print $17}' | head -n3 | tail -n1)
   WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE="wcs_$(basename "$SECOND_EPOCH_IMAGE_ONE")"
+  WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE="${WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE/wcs_wcs_/wcs_}"
+  WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE="${WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE/.fz/}"
   # Exclude the previously considered candidates
   if [ ! -s exclusion_list.txt ];then
    if [ -s "$EXCLUSION_LIST" ];then
@@ -2413,9 +2460,33 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
     echo "Copying WCS-calibrated images back to input directory" | tee -a transient_factory_test31.txt
     # Copy WCS-calibrated images back to input directory
     for WCS_CALIBRATED_IMAGE_FOR_ARCHIVE in wcs_fd_*."$FITS_FILE_EXT" ; do
-     if [ -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ] && [ -s "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ] && [ ! -f "$ABSOLUTE_PATH_TO_IMAGES/$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ]; then
-      cp -v "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" "$NEW_IMAGES/" | tee -a transient_factory_test31.txt
+     #
+     if [ ! -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ];then
+      echo "WARNING: no fully-calibrated images to save!" | tee -a transient_factory_test31.txt
+      break
+     fi 
+     #
+     echo "Saving fully-calibrated image $WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" | tee -a transient_factory_test31.txt
+     # Compress the image
+     if [ -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE".fz ];then
+      rm -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE".fz
      fi
+     util/fpack "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" 2>&1 | tee -a transient_factory_test31.txt
+     if [ $? -ne 0 ];then
+      echo "ERROR running  util/fpack $WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" | tee -a transient_factory_test31.txt
+     elif [ -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE".fz ];then
+      WCS_CALIBRATED_IMAGE_FOR_ARCHIVE="$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE".fz
+     else
+      echo "ERROR: fpack did not create the expected compressed file $WCS_CALIBRATED_IMAGE_FOR_ARCHIVE.fz" | tee -a transient_factory_test31.txt
+     fi
+     #
+     if [ -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ] && [ -s "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ]; then 
+      if [ ! -f "$NEW_IMAGES/$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ]; then
+       cp -v "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" "$NEW_IMAGES/" | tee -a transient_factory_test31.txt
+      else
+       echo "The destination file is already there - not rewriting $NEW_IMAGES/$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" | tee -a transient_factory_test31.txt
+      fi # if [ ! -f "$ABSOLUTE_PATH_TO_IMAGES/$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ]; then
+     fi # if [ -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ] && [ -s "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ]; then
     done
    else
     echo "This is a test - NOT copying WCS-calibrated images back to input directory" | tee -a transient_factory_test31.txt

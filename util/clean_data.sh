@@ -123,6 +123,9 @@ for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.da
  fi
 done
 
+rm -rf unpacked_images/ converted_images/
+
+
 # Remove magnitude calibration crash report
 if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
  rm -f 'lightcurve.tmp_emergency_stop_debug'

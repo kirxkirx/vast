@@ -30,6 +30,7 @@ int main( int argc, char **argv ) {
  fitsfilename[FILENAME_LENGTH - 1]= '\0';
 
  replace_file_with_symlink_if_filename_contains_white_spaces( fitsfilename );
+ unpack_compressed_FITS_image( fitsfilename );
  cutout_green_channel_out_of_RGB_DSLR_image( fitsfilename );
 
  fprintf( stdout, "%s\n", fitsfilename );

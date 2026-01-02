@@ -125,7 +125,13 @@ fi
 
 
 # Check that the FITS image does seem to contain a WCS solution
-FITS_IMAGE_TO_CHECK_HEADER=`"$VAST_PATH"util/listhead "$FITS_IMAGE_TO_CHECK"`
+echo $(basename "$FITS_IMAGE_TO_CHECK") | grep -q '\.fz'
+if [ $? -eq 0 ];then
+ # funpack -S image.fits.fz | listhead STDIN
+ FITS_IMAGE_TO_CHECK_HEADER=$("$VAST_PATH"util/funpack -S "$FITS_IMAGE_TO_CHECK" | "$VAST_PATH"util/listhead STDIN)
+else
+ FITS_IMAGE_TO_CHECK_HEADER=$("$VAST_PATH"util/listhead "$FITS_IMAGE_TO_CHECK")
+fi
 # Check if it has WCS keywords
 for TYPICAL_WCS_KEYWORD in NAXIS1 NAXIS2  CTYPE1 CTYPE2 CRVAL1 CRVAL2 CRPIX1 CRPIX2 CD1_1 CD1_2 CD2_1 CD2_2 ;do
  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -q "$TYPICAL_WCS_KEYWORD"

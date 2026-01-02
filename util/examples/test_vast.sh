@@ -464,7 +464,7 @@ function remove_test_data_to_save_space() {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining."
-    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ;do
+    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -5530,7 +5530,6 @@ if [ -d '../sample space' ];then
  # Run the test
  echo "White space name test " 
  echo -n "White space name test: " >> vast_test_report.txt
- # Here is the main feature of this test: we limit the number of processin threads to only 2
  cp default.sex.ccd_example default.sex
  ./vast -u -f '../sample space/'*.fit
  if [ $? -ne 0 ];then
@@ -5669,6 +5668,176 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 remove_test_data_to_save_space
+
+
+
+
+
+##### Compressed FITS #####
+# Download the test dataset if needed
+if [ ! -d ../sample_data ];then
+ cd .. || exit 1
+ curl --silent --show-error -O "http://scan.sai.msu.ru/vast/sample_data.tar.bz2" && tar -xvjf sample_data.tar.bz2 && rm -f sample_data.tar.bz2
+ cd "$WORKDIR" || exit 1
+fi
+if [ ! -d '../sample_data_compressed' ];then
+ cp -r '../sample_data' '../sample_data_compressed' || exit 1
+ cd '../sample_data_compressed' || exit 1
+ "$WORKDIR"/util/fpack *r.fit
+ if [ $? -ne 0 ];then
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ERROR_COMPRESSED_SMALLCCD"
+ fi
+ rm -f *r.fit
+ cd "$WORKDIR" || exit 1
+fi
+
+# If the test data are found
+if [ -d '../sample_data_compressed' ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ # Run the test
+ echo "Compressed images test " 
+ echo -n "Compressed images test: " >> vast_test_report.txt
+ cp default.sex.ccd_example default.sex
+ ./vast -u -f '../sample_data_compressed/'*.fit.fz
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD000"
+ fi
+ # Check results
+ if [ -f vast_summary.log ];then
+  grep -q "Images processed 91" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD001"
+  fi
+  grep -q "Images used for photometry 91" vast_summary.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD002"
+  fi
+  #grep -q "First image: 2453192.38876 05.07.2004 21:18:19" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2453192.38876 05.07.2004 21:18:19' 1
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD003a"
+  fi
+  #grep -q "Last  image: 2453219.49067 01.08.2004 23:45:04" vast_summary.log
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2453219.49067 01.08.2004 23:45:04' 1
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD003b"
+  fi
+  # Hunting the mysterious non-zero reference frame rotation cases
+  if [ -f vast_image_details.log ];then
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD0_nonzero_ref_frame_rotation"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### COMPRESSED_SMALLCCD0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### COMPRESSED_SMALLCCD0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD0_NO_vast_image_details_log"
+  fi
+  #
+  if [ ! -f vast_lightcurve_statistics.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD005c"
+  fi
+  if [ ! -s vast_lightcurve_statistics.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD006"
+  fi
+  if [ ! -f vast_lightcurve_statistics_format.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD007"
+  fi
+  if [ ! -s vast_lightcurve_statistics_format.log ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD008"
+  fi
+  grep -q "IQR" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD009"
+  fi
+  grep -q "eta" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD010"
+  fi
+  grep -q "RoMS" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD011"
+  fi
+  grep -q "rCh2" vast_lightcurve_statistics_format.log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD012"
+  fi
+
+ else
+  echo "ERROR: cannot find vast_summary.log" 
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD_ALL"
+ fi
+ 
+ util/imstat_vast '../sample_data_compressed/f_72-001r.fit.fz'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD_IMSTAT01"
+ fi
+ util/imstat_vast '../sample_data_compressed/f_72-001r.fit.fz' | grep -q 'MEDIAN=   919.0'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD_IMSTAT02"
+ fi
+ util/imstat_vast_fast '../sample_data_compressed/f_72-001r.fit.fz' | grep -q 'MEDIAN'
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD_IMSTAT03"
+ fi
+ util/imstat_vast_fast '../sample_data_compressed/f_72-001r.fit.fz' | grep -q 'MEAN=   924.'
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD_IMSTAT04"
+ fi
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mCompressed images test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mCompressed images test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES COMPRESSED_SMALLCCD_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+#
+remove_test_data_to_save_space
+
 
 ##### Small CCD images test with automated reference image selection #####
 # Download the test dataset if needed

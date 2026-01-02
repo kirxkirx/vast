@@ -9,7 +9,7 @@ export LANGUAGE LC_ALL
 
 lib/transient_list
 if [ $? -ne 0 ];then
- echo "ERROR running lib/transient_list" 1>&2
+ echo "Non-zero exit code of lib/transient_list" 1>&2
  exit 1
 fi
 

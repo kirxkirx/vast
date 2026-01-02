@@ -16,6 +16,9 @@
 #include "fitsio.h" // we use a local copy of this file because we use a local copy of cfitsio
 #include "fitsfile_read_check.h"
 
+// needed for check_if_the_input_is_FPack_compressed_FITS()
+#include "replace_file_with_symlink_if_filename_contains_white_spaces.h"
+
 void replace_file_with_symlink_if_filename_contains_white_spaces( char *filename ) {
  unsigned int i, need_to_replace_with_symlink;
  char symlinkname[FILENAME_LENGTH];
@@ -269,3 +272,116 @@ void cutout_green_channel_out_of_RGB_DSLR_image( char *filename ) {
 
  return;
 }
+
+
+void unpack_compressed_FITS_image( char *filename ) {
+ FILE *vast_unpacked_images_log;
+ char vast_unpacked_images_log_original_image_name[FILENAME_LENGTH];
+
+ unsigned int i; // counter
+ char unpacked_image_name[FILENAME_LENGTH];
+ char unpacked_image_name_local[FILENAME_LENGTH];
+ //
+ struct stat sb; // structure returned by stat() system call
+
+ //unsigned int need_to_cutout_green_channel= 0;         // default is that we don't do anything
+ //unsigned int does_the_header_look_like_DSLR_image= 0; // default - it does not
+ //char *pointer_to_the_key_start;                       // for substring search with memmem()
+
+ //char program[FLEN_CARD]; // FLEN_CARD length of a FITS header card defined in fitsio.h
+
+ char command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
+ char path_to_vast_string[VAST_PATH_MAX];
+
+ //double isospeed;
+
+ // fitsio
+ //long naxes3;
+ //int naxis;
+ //int status= 0;
+ //fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h
+
+ if ( 0 != fitsfile_read_check_silent( filename ) ) {
+  return; // the input is not a readable FITS file, so we just quit
+ }
+
+ // Check if the input actually is a compressed FITS image
+ if( 0 != check_if_the_input_is_FPack_compressed_FITS( filename ) ){
+  return;
+ }
+
+ // It may not work if we are outside the vast work directory, but I'll deal with this later
+ // Check if this image has already been unpacked and is still there
+ vast_unpacked_images_log= fopen( "vast_unpacked_images.log", "r" );
+ if ( NULL != vast_unpacked_images_log ) {
+  while ( -1 < fscanf( vast_unpacked_images_log, "%s %s", vast_unpacked_images_log_original_image_name, unpacked_image_name_local ) ) {
+   // trying to calm down CodeQL rather than fix any real issue here
+   safely_encode_user_input_string( unpacked_image_name, unpacked_image_name_local, FILENAME_LENGTH - 1 );
+   if ( 0 == strncmp( filename, vast_unpacked_images_log_original_image_name, FILENAME_LENGTH ) ) {
+    // escape special characters in the unpacked_image_name (as it was derived from "user input" fscanf() )
+    // if( 0 != any_unusual_characters_in_string(unpacked_image_name) ) {
+    // fprintf(stderr, "WARNING: any_unusual_characters_in_string(%s) returned 1\n", unpacked_image_name);
+    // continue;
+    // //fclose(vast_unpacked_images_log);
+    // //return;
+    //}
+    //
+    if ( 0 == fitsfile_read_check_silent( unpacked_image_name_local ) ) {
+     fprintf( stderr, "Found previously unpacked image %s %s\n", vast_unpacked_images_log_original_image_name, unpacked_image_name );
+     // strncpy(filename, unpacked_image_name, FILENAME_LENGTH - 1);
+     //  not enough to calm down CodeQL
+     safely_encode_user_input_string( filename, unpacked_image_name, FILENAME_LENGTH - 1 );
+     filename[FILENAME_LENGTH - 1]= '\0'; // just in case
+     fclose( vast_unpacked_images_log );
+     return;
+    }
+   }
+  }
+  fclose( vast_unpacked_images_log );
+ }
+
+
+ // create unpacked_image name
+ for ( i= 1; i < MAX_NUMBER_OF_OBSERVATIONS; i++ ) {
+  sprintf( unpacked_image_name, "unpacked_images/unpacked_image_%05d.fits", i );
+  if ( 0 != stat( unpacked_image_name, &sb ) )
+   break; // continue if such a unpacked_image already exists, break if this name is still empty
+ }
+ if ( i >= MAX_NUMBER_OF_OBSERVATIONS ) {
+  fprintf( stderr, "ERROR: unpacked_images counter is out of range!\n" );
+  return;
+ }
+ fprintf( stderr, "WARNING: image \"%s\" seems to be a packed (compressed) image - SExtractor will not be able to handle that!\nTrying to circumvent this problem unpacking the image %s\n", filename, unpacked_image_name );
+
+ if ( 0 == mkdir( "unpacked_images", 0766 ) ) {
+  fprintf( stderr, "Creating directory 'unpacked_images/'\n" );
+ }
+
+ // Create unpacked_image
+ get_path_to_vast( path_to_vast_string );
+ sprintf( command, "%sutil/funpack -O %s %s", path_to_vast_string, unpacked_image_name, filename );
+ fprintf( stderr, "%s\n", command );
+ if ( 0 != system( command ) ) {
+  fprintf( stderr, "ERROR running system()\n" );
+  return;
+ }
+ if ( 0 != fitsfile_read_check( unpacked_image_name ) ) {
+  fprintf( stderr, "ERROR: the unpacked FITS file %s check failed!\n", unpacked_image_name );
+  return;
+ }
+
+ vast_unpacked_images_log= fopen( "vast_unpacked_images.log", "a" );
+ if ( NULL == vast_unpacked_images_log ) {
+  fprintf( stderr, "WARNING: cannot open vast_unpacked_images.log for writing!\n" );
+ } else {
+  fprintf( vast_unpacked_images_log, "%s %s\n", filename, unpacked_image_name );
+  fclose( vast_unpacked_images_log );
+ }
+
+ // strncpy(filename, unpacked_image_name, FILENAME_LENGTH - 1);
+ safely_encode_user_input_string( filename, unpacked_image_name, FILENAME_LENGTH - 1 );
+ filename[FILENAME_LENGTH - 1]= '\0'; // just in case
+
+ return;
+}
+

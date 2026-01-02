@@ -189,7 +189,12 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
  // Make sure the local copy of SExtractor will be in PATH in case there is no system-wide one
  make_sure_libbin_is_in_path();
 
- // What will happen if we have an RGB image here?????
+ // These two functions MUST be run single-thread the first time they do actual conversion!!!
+ 
+ // Unpack the FITS image if it's packed with fpack (SExtractor cannot handle packed FITS)
+ unpack_compressed_FITS_image( fitsfilename );
+
+ // Handle an RGB image 
  cutout_green_channel_out_of_RGB_DSLR_image( fitsfilename );
 
  fprintf( stderr, "autodetect_aperture() is running SExtractor on %s\n", fitsfilename );
