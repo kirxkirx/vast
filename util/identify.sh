@@ -82,6 +82,30 @@ get_vast_path_ends_with_slash_from_this_script_name() {
  echo "$VAST_PATH"
 }
 
+#
+function rename_unpacked_image {
+ # check if any images were converted
+ if [ ! -s vast_unpacked_images.log ];then
+  return 0
+ fi
+ IMG_WE_ARE_RENAMING="$1"
+ if [ -z "$IMG_WE_ARE_RENAMING" ];then
+  return 0
+ fi
+ IMG_WE_ARE_RENAMING=$(basename "$IMG_WE_ARE_RENAMING")
+ CONVERTED_IMAGE_PATH=$(grep "$IMG_WE_ARE_RENAMING" vast_unpacked_images.log | awk '{print $2}')
+ CONVERTED_IMAGE_NAME=wcs_$(basename "$CONVERTED_IMAGE_PATH")
+
+ for FILE_TO_RENAME in "$CONVERTED_IMAGE_NAME"* ;do
+  if [ -f "$FILE_TO_RENAME" ];then
+   NEW_FILENAME=wcs_"${FILE_TO_RENAME/$CONVERTED_IMAGE_NAME/${IMG_WE_ARE_RENAMING/.fz/}}"
+   NEW_FILENAME="${NEW_FILENAME/wcs_wcs_/wcs_}"
+   mv -v "$FILE_TO_RENAME" "$NEW_FILENAME"
+  fi
+ done
+
+}
+
 # 0 - no, unknown telescope - have to plate-solve the image in the normal way
 # 1 - yes, we trust WCS solution in images from this telescope
 function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image {
@@ -441,7 +465,7 @@ if [ $? -eq 0 ];then
  FITSFILE=${FITSFILE/.fz/}
 fi
 ###############
-#ORIGINAL_FITSFILE="$FITSFILE"
+ORIGINAL_FITSFILE="$FITSFILE"
 # On-the fly convert the input image if necessary
 FITSFILE=`"$VAST_PATH"lib/on_the_fly_symlink_or_convert "$FITSFILE"`
 ###############
@@ -1390,6 +1414,12 @@ else
  echo "The plate-solved (WCS-calibrated) image is saved to $WCS_IMAGE_NAME"
 fi # if [ "$START_NAME" != "wcs_image_calibration.sh" ] && [ "$START_NAME" != "wcs_image_nocatalog.sh" ];then
 
+# Rename unpacked image
+echo $(basename "$ORIGINAL_FITSFILE") | grep -q '\.fz'
+if [ $? -eq 0 ];then
+ echo "Renaming unpacked FITS image and related files:"
+ rename_unpacked_image "$ORIGINAL_FITSFILE"
+fi
 
 #echo "DEBUGTEST"
 #

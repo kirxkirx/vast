@@ -1033,7 +1033,7 @@ if [ ! -d "$NEW_IMAGES" ];then
  continue
 fi
 
-# Naturally ,we assume that fits file extension and calibration status prefix are the same for all data in the input dir
+# Naturally, we assume that fits file extension and calibration status prefix are the same for all data in the input dir
 
 # Figure out fits file extension for this dataset
 FITS_FILE_EXT=$(for POSSIBLE_FITS_FILE_EXT in fts fit fits ;do for IMGFILE in "$NEW_IMAGES"/*.{"$POSSIBLE_FITS_FILE_EXT","$POSSIBLE_FITS_FILE_EXT".fz} ;do if [ -f "$IMGFILE" ];then echo "$POSSIBLE_FITS_FILE_EXT"; break; fi ;done ;done)
@@ -1877,8 +1877,16 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   declare -a calibrationPIDs  # Declare an array to hold PIDs
 
   for i in $(awk '{print $17}' vast_image_details.log | sort | uniq); do
-   util/wcs_image_calibration.sh "$i" &
-   calibrationPIDs+=($!)  # Append PID of the background process to the array
+   # can't do parallell solving for compresed images
+   echo $(basename "$i") | grep -q '\.fz'
+   if [ $? -eq 0 ];then
+    # do it serial
+    util/wcs_image_calibration.sh "$i"
+   else
+    # do it parallel
+    util/wcs_image_calibration.sh "$i" &
+    calibrationPIDs+=($!)  # Append PID of the background process to the array
+   fi
   done
 
   # Wait for all wcs_image_calibration.sh processes to end processing
@@ -1924,7 +1932,8 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
    #echo "ERROR found an unsoved plate in the field $FIELD" >> transient_factory.log
    #echo "ERROR found an unsoved plate in the field $FIELD" >> transient_factory_test31.txt
    echo "ERROR found an unsoved plate in the field $FIELD" | tee -a transient_factory_test31.txt
-   continue
+   break # no I actually want to abort on platte solve failure
+   #continue
   fi
 
   # Determine image FoV to compute limits on the pointing accuracy
