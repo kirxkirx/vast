@@ -17786,6 +17786,10 @@ $GREP_RESULT"
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES FZ_NMWSTLFINDNVUL240110"
+   GREP_RESULT=$(cat transient_report/index.html)
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### FZ_NMWSTLFINDNVUL240110a ######
+$GREP_RESULT"
   fi
   grep -q "2024 07 29\.892.  2460521\.392.  10...  19:43:0.\... +21:00:[12].\.."  transient_report/index.html
   if [ $? -ne 0 ];then

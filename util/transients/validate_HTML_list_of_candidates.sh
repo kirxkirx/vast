@@ -67,6 +67,12 @@ fi
 validate_index_html "$index_file"
 if [ $? -ne 0 ]; then
     echo "Validation failed for $index_file."
+    echo "
+Note that errors like
+ERROR: Missing javascript:toggleElement in /tmp/index.html.
+ERROR: Missing <script>printCandidateNameWithAbsLink in /tmp/index.html.
+may appear when no coandidates are listed in the HTML file while they are expected to be there.
+"
     exit 1
 else
     echo "Validation passed for $index_file."
