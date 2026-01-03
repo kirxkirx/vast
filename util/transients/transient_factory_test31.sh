@@ -2308,21 +2308,31 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   ############################################
   # Remove candidates close to frame edge
   # here we assume that all images are the samesize as $SECOND_EPOCH__SECOND_IMAGE
-  echo $(basename "$SECOND_EPOCH__SECOND_IMAGE") | grep -q '\.fz'
-  if [ $? -eq 0 ];then
-   SECOND_EPOCH__SECOND_IMAGE_HEADER=$(util/funpack -S "$SECOND_EPOCH__SECOND_IMAGE" | util/listhead STDIN)
-  else
-   SECOND_EPOCH__SECOND_IMAGE_HEADER=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE")
+  #echo $(basename "$SECOND_EPOCH__SECOND_IMAGE") | grep -q '\.fz' || file "$FITS_IMAGE_TO_CHECK" | grep 'FITS image' | grep 'compress'
+  #if [ $? -eq 0 ];then
+  # SECOND_EPOCH__SECOND_IMAGE_HEADER=$(util/funpack -S "$SECOND_EPOCH__SECOND_IMAGE" | util/listhead STDIN)
+  #else
+  # SECOND_EPOCH__SECOND_IMAGE_HEADER=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE")
+  #fi
+  ##DIMX=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS1 | awk '{print $3}' | head -n1)
+  #DIMX=$(echo "$SECOND_EPOCH__SECOND_IMAGE_HEADER" | grep NAXIS1 | awk '{print $3}' | head -n1)
+  ##DIMY=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS2 | awk '{print $3}' | head -n1)
+  #DIMY=$(echo "$SECOND_EPOCH__SECOND_IMAGE_HEADER" | grep NAXIS2 | awk '{print $3}' | head -n1)
+  IMG_SIZE_STR=$(lib/astrometry/get_image_dimentions "$SECOND_EPOCH__SECOND_IMAGE")
+  DIMX=$(echo "$IMG_SIZE_STR" | awk '{print $2}')
+  DIMY=$(echo "$IMG_SIZE_STR" | awk '{print $4}')
+  if [ -z "$DIMX" ] || [ -z "$DIMY" ]; then
+   echo "ERROR in $0 -- cannot get image size using  lib/astrometry/get_image_dimentions $SECOND_EPOCH__SECOND_IMAGE"
+   continue
   fi
-  #DIMX=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS1 | awk '{print $3}' | head -n1)
-  DIMX=$(echo "$SECOND_EPOCH__SECOND_IMAGE_HEADER" | grep NAXIS1 | awk '{print $3}' | head -n1)
-  #DIMY=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS2 | awk '{print $3}' | head -n1)
-  DIMY=$(echo "$SECOND_EPOCH__SECOND_IMAGE_HEADER" | grep NAXIS2 | awk '{print $3}' | head -n1)
+
   if [ $DIMX -lt 300 ];then
-   echo "ERROR DIMX=$DIMX seems too small" | tee -a transient_factory_test31.txt
+   echo "ERROR in $0 -- DIMX=$DIMX seems too small" | tee -a transient_factory_test31.txt
+   continue
   fi
   if [ $DIMY -lt 300 ];then
-   echo "ERROR DIMY=$DIMY seems too small" | tee -a transient_factory_test31.txt
+   echo "ERROR in $0 -- DIMY=$DIMY seems too small" | tee -a transient_factory_test31.txt
+   continue
   fi
   ### ===> IMAGE EDGE OFFSET HARDCODED HERE <===
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
@@ -2358,6 +2368,12 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE="wcs_$(basename "$SECOND_EPOCH_IMAGE_ONE")"
   WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE="${WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE/wcs_wcs_/wcs_}"
   WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE="${WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE/.fz/}"
+  # We must double-check here that the input is not a compressed image as sky2xy will not be able to handle it
+  echo $(basename "$WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE") | grep -q '\.fz' || file "$WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE" | grep 'FITS image' | grep 'compress'
+  if [ $? -eq 0 ];then
+   echo "ERROR in $0 -- $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE is a compressed FITS image about to be passed to sky2xy" | tee -a transient_factory_test31.txt
+   exit 1
+  fi
   # Exclude the previously considered candidates
   if [ ! -s exclusion_list.txt ];then
    if [ -s "$EXCLUSION_LIST" ];then

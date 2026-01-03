@@ -134,6 +134,14 @@ if [ $? -eq 0 ];then
  echo "ERROR in $0 : $WCS_IMAGE_NAME does not seem to be WCS-solved!" 1>&2
  exit 1
 fi
+
+echo $(basename $FITSFILE) | grep 'wcs_fd_' | grep -q '\.fz' || file "$FITSFILE" | grep 'FITS image' | grep 'compress'
+if [ $? -eq 0 ];then
+ echo "ERROR in $0 : $WCS_IMAGE_NAME image is compressed!" 1>&2
+ exit 1
+fi
+
+
 ############################################
 
 if [ ! -s vast_images_catalogs.log ];then

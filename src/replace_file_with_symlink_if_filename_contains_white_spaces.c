@@ -136,6 +136,11 @@ void cutout_green_channel_out_of_RGB_DSLR_image( char *filename ) {
   return; // the input is not a readable FITS file, so we just quit
  }
 
+ // Check if the input is a compressed FITS image - it has to be uncompressed before starting this function!
+ if( 0 == check_if_the_input_is_FPack_compressed_FITS( filename ) ){
+  return;
+ }
+
  // It may not work if we are outside the vast work directory, but I'll deal with this later
  // Check if this image has already been converted and is still there
  vast_converted_images_log= fopen( "vast_converted_images.log", "r" );

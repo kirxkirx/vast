@@ -455,7 +455,7 @@ if [ ! -s "$FITSFILE" ];then
 fi
 ###############
 # Handle special case - fully calibrated compressed image from NMW archive
-echo $(basename $FITSFILE) | grep 'wcs_fd_' | grep -q '\.fz'
+echo $(basename $FITSFILE) | grep 'wcs_fd_' | grep -q '\.fz' || file "$FITSFILE" | grep 'FITS image' | grep 'compress'
 if [ $? -eq 0 ];then
  echo "Handling the special case of a fully calibrated compressed image from NMW archive"
  cp -v "$FITSFILE" $(basename $FITSFILE)
@@ -467,6 +467,8 @@ fi
 ###############
 ORIGINAL_FITSFILE="$FITSFILE"
 # On-the fly convert the input image if necessary
+# This should also uncompress .fz image, but note that the image file name will change 
+# (will attempt to rename at the endof the script)
 FITSFILE=`"$VAST_PATH"lib/on_the_fly_symlink_or_convert "$FITSFILE"`
 ###############
 # Verify that the input file is a valid FITS file
@@ -1278,7 +1280,7 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ] && [ "$START_NAME" != "wcs_im
    echo "ERROR parsing the coordinates string \"$RADEC\""
    exit 1
   fi
-  echo ${STARNUM//out/" "} $("$VAST_PATH"lib/deg2hms $RADEC) $X $Y $WCS_IMAGE_NAME |awk '{printf "%s  %s %s  %8.3f %8.3f %s\n",$1,$2,$3,$4,$5,$6}'
+  echo ${STARNUM//out/" "} $("$VAST_PATH"lib/deg2hms $RADEC) $X $Y $WCS_IMAGE_NAME | awk '{printf "%s  %s %s  %8.3f %8.3f %s\n",$1,$2,$3,$4,$5,$6}'
   if [ "$START_NAME" = "identify_for_catalog.sh" ];then
    #rm -f tmp$$.cat
    exit 0
@@ -1290,8 +1292,12 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ] && [ "$START_NAME" != "wcs_im
    "$VAST_PATH"util/search_databases_with_curl.sh $("$VAST_PATH"lib/deg2hms $RADEC) H > "$TEMP_FILE__SDWC_OUTPUT" &
    TEMP_FILE__MPCheck_OUTPUT=$(mktemp 2>/dev/null || echo "tempilefallback_MPCheck_OUTPUT_$$.tmp")
    UNCALIBRATED_IMAGE_NAME=$(echo ${WCS_IMAGE_NAME//"wcs_"/})
-   # How did this work at all????
+   # How did this work at all???? And what if the input image is compressed?
    DATEANDTIME=$(grep "$UNCALIBRATED_IMAGE_NAME" "$VAST_PATH"vast_image_details.log | head -n1 |awk '{print $2" "$3}')
+   if [ -z "$DATEANDTIME" ];then
+    echo "ERROR in $0 -- empty DATEANDTIME for util/transients/MPCheck_v2.sh"
+    exit 1
+   fi
    echo "$VAST_PATH"util/transients/MPCheck_v2.sh $("$VAST_PATH"lib/deg2hms $RADEC) $DATEANDTIME H
    #"$VAST_PATH"util/transients/MPCheck_v2.sh $("$VAST_PATH"lib/deg2hms $RADEC) $DATEANDTIME H > "$TEMP_FILE__MPCheck_OUTPUT" &
    "$VAST_PATH"util/transients/MPCheck_v2.sh $("$VAST_PATH"lib/deg2hms $RADEC) $(util/get_image_date $DATEANDTIME 2>&1 | grep 'MPC format ' | awk '{print $3" "$4" "$5}') H > "$TEMP_FILE__MPCheck_OUTPUT" &
@@ -1421,12 +1427,3 @@ if [ $? -eq 0 ];then
  rename_unpacked_image "$ORIGINAL_FITSFILE"
 fi
 
-#echo "DEBUGTEST"
-#
-## Rename the thing if it was converted on the fly
-#if [ -f "$VAST_PATH"vast_unpacked_images.log ];then
-# grep -q "$FITSFILE" "$VAST_PATH"vast_unpacked_images.log
-# if [ $? -eq 0 ];then
-#  WCS_IMAGE_NAME=wcs_$(grep "$FITSFILE" "$VAST_PATH"vast_unpacked_images.log | awk '{print $2}' | head -n1)
-# fi
-#fi

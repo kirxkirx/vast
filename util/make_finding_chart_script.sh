@@ -160,6 +160,20 @@ Checking if the filename extension and FITS header look reasonable..."
  fi
 fi
 
+# Handle compressed FITS
+echo $(basename "$FITSFILE") | grep -q '\.fz' || file "$FITSFILE" | grep 'FITS image' | grep 'compress'
+if [ $? -eq 0 ];then
+ echo "The input seems to be a compressed FITS image -- trying to funpack it"
+ UNCOMPRESSED_FITS_FILE="uncompressed_$(basename $FITSFILE)"
+ "$VAST_PATH"util/funpack -O "$UNCOMPRESSED_FITS_FILE" "$FITSFILE"
+ if [ $? -ne 0 ];then
+  echo "ERROR in $0 -- exit funpack code"
+  exit 1
+ fi
+ FITSFILE="$UNCOMPRESSED_FITS_FILE"
+fi
+
+
 # Check if the input image is WCS-calibrated
 FITSFILE_HEADER=$("$VAST_PATH"util/listhead "$FITSFILE")
 # Check if it has WCS keywords

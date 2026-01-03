@@ -123,12 +123,26 @@ Checking if the filename extension and FITS header look reasonable..."
  fi
 fi
 
+# Check that the input image is not compressed 
+# xy2sky from WCSTools will not be able to handle a compressed image!
+echo $(basename "$WCS_IMAGE") | grep '\.fz'
+if [ $? -eq 0 ];then
+ echo "ERROR in $0 (1) -- the input image appears to be compressed! xy2sky cannot handlesuch images!"
+ exit 1
+fi
+file "$WCS_IMAGE" | grep 'FITS image' | grep 'compress'
+if [ $? -eq 0 ];then
+ echo "ERROR in $0 (2) -- the input image appears to be compressed! xy2sky cannot handlesuch images!"
+ exit 1
+fi
+
+
 # Silently test that xy2sky does not crash on the input image
 "$VAST_PATH"lib/bin/xy2sky "$WCS_IMAGE" 10 10 &> /dev/null
 if [ $? -ne 0 ];then
  # Run it again to see the error message
  "$VAST_PATH"lib/bin/xy2sky "$WCS_IMAGE" 10 10
- echo "ERROR in the test run of xy2sky"
+ echo "ERROR in $0 in the test run of xy2sky"
  exit 1
 fi
 

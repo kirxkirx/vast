@@ -6,11 +6,13 @@
 #include "../fitsio.h"
 
 int main( int argc, char **argv ) {
- int status= 0;  // for cfitsio routines
- fitsfile *fptr; /* pointer to the FITS file; defined in fitsio.h */
- // long  fpixel = 1, naxis = 2;
+ int status;
+ int naxis;
+ fitsfile *fptr;
  long naxes[2];
  char fitsfilename[1024];
+
+ status = 0;
 
  if ( argc != 2 ) {
   fprintf( stderr, "Usage: %s image.fit\n", argv[0] );
@@ -18,29 +20,42 @@ int main( int argc, char **argv ) {
  }
 
  strncpy( fitsfilename, argv[1], 1024 );
+ fitsfilename[1024 - 1] = '\0'; /* ensure null termination */
 
  /* Extract data from fits header */
- // fits_open_file(&fptr, fitsfilename, READONLY, &status);
  fits_open_image( &fptr, fitsfilename, READONLY, &status );
  if ( 0 != status ) {
-  fits_report_error( stderr, status ); /* print out any error messages */
+  fits_report_error( stderr, status );
   return status;
  }
- fits_read_key( fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status );
+
+ /* Get number of dimensions */
+ fits_get_img_dim( fptr, &naxis, &status );
  if ( 0 != status ) {
   fits_report_error( stderr, status );
-  fits_close_file( fptr, &status ); // close file
-  fprintf( stderr, "ERROR: can't get image dimensions from NAXIS1 keyword!\n" );
+  fits_close_file( fptr, &status );
+  fprintf( stderr, "ERROR: can't get number of image dimensions!\n" );
   return status;
  }
- fits_read_key( fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status );
+
+ if ( naxis != 2 ) {
+  fits_close_file( fptr, &status );
+  fprintf( stderr, "ERROR: expected 2D image, got %d dimensions!\n", naxis );
+  return 1;
+ }
+
+ /* Get image dimensions - this works correctly for both compressed and uncompressed images */
+ fits_get_img_size( fptr, 2, naxes, &status );
  if ( 0 != status ) {
   fits_report_error( stderr, status );
-  fits_close_file( fptr, &status ); // close file
-  fprintf( stderr, "ERROR: can't get image dimensions from NAXIS2 keyword!\n" );
+  fits_close_file( fptr, &status );
+  fprintf( stderr, "ERROR: can't get image dimensions!\n" );
   return status;
  }
- fits_close_file( fptr, &status ); // close file
+
+ fits_close_file( fptr, &status );
+
  fprintf( stdout, " --width %ld --height %ld ", naxes[0], naxes[1] );
+
  return 0;
 }

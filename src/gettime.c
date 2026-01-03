@@ -941,25 +941,6 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   return status;
  }
 
-/*
- // Get image dimentions
- fits_read_key( fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status );
- if ( 0 != status ) {
-  fits_report_error( stderr, status );
-  fits_clear_errmsg();              // clear the CFITSIO error message stack
-  fits_close_file( fptr, &status ); // close file
-  fprintf( stderr, "ERROR: gettime() - can't get image dimensions from NAXIS1 keyword!\n" );
-  return status;
- }
- fits_read_key( fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status );
- if ( 0 != status ) {
-  fits_report_error( stderr, status );
-  fits_clear_errmsg();              // clear the CFITSIO error message stack
-  fits_close_file( fptr, &status ); // close file
-  fprintf( stderr, "ERROR: gettime() - can't get image dimensions from NAXIS2 keyword!\n" );
-  return status;
- }
-*/
  // Get image dimensions
  fits_get_img_dim( fptr, &naxis, &status );
  if ( 0 != status ) {

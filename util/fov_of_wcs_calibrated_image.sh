@@ -123,15 +123,22 @@ Checking if the filename extension and FITS header look reasonable..."
  fi
 fi
 
-
-# Check that the FITS image does seem to contain a WCS solution
-echo $(basename "$FITS_IMAGE_TO_CHECK") | grep -q '\.fz'
+# Handle compressed FITS
+echo $(basename "$FITS_IMAGE_TO_CHECK") | grep -q '\.fz' || file "$FITS_IMAGE_TO_CHECK" | grep 'FITS image' | grep 'compress'
 if [ $? -eq 0 ];then
  # funpack -S image.fits.fz | listhead STDIN
  FITS_IMAGE_TO_CHECK_HEADER=$("$VAST_PATH"util/funpack -S "$FITS_IMAGE_TO_CHECK" | "$VAST_PATH"util/listhead STDIN)
 else
  FITS_IMAGE_TO_CHECK_HEADER=$("$VAST_PATH"util/listhead "$FITS_IMAGE_TO_CHECK")
 fi
+
+if [ -z "$FITS_IMAGE_TO_CHECK_HEADER" ];then
+ echo "ERROR getting FITS header from $FITS_IMAGE_TO_CHECK"
+ exit 1
+fi
+
+# Check that the FITS image does seem to contain a WCS solution
+
 # Check if it has WCS keywords
 for TYPICAL_WCS_KEYWORD in NAXIS1 NAXIS2  CTYPE1 CTYPE2 CRVAL1 CRVAL2 CRPIX1 CRPIX2 CD1_1 CD1_2 CD2_1 CD2_2 ;do
  echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -q "$TYPICAL_WCS_KEYWORD"
@@ -143,28 +150,33 @@ Is the input image $FITS_IMAGE_TO_CHECK actually plate-solved?" 1>&2
 done
 
 # Get image dimentions in pixels
-#FITSHEADER=`"$VAST_PATH"util/listhead "$FITS_IMAGE_TO_CHECK"`
-# avoid reading the FITS file for the second time
-FITSHEADER="$FITS_IMAGE_TO_CHECK_HEADER"
-#
-NAXIS1=`echo "$FITSHEADER" | grep --max-count=1 'NAXIS1' | awk -F '=' '{print $2}' | awk '{print $1}'`
-NAXIS2=`echo "$FITSHEADER" | grep --max-count=1 'NAXIS2' | awk -F '=' '{print $2}' | awk '{print $1}'`
+# We assume the image is uncompressed above and we have a proper image header
+# Would it be safer to use head instead of grep --max-count= in case we have busybox grep?
+#NAXIS1=$(echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --max-count=1 'NAXIS1' | awk -F '=' '{print $2}' | awk '{print $1}')
+#NAXIS2=$(echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --max-count=1 'NAXIS2' | awk -F '=' '{print $2}' | awk '{print $1}')
+IMG_SIZE_STR=$("$VAST_PATH"lib/astrometry/get_image_dimentions "$FITS_IMAGE_TO_CHECK_HEADER")
+NAXIS1=$(echo "$IMG_SIZE_STR" | awk '{print $2}')
+NAXIS2=$(echo "$IMG_SIZE_STR" | awk '{print $4}')
+if [ -z "$NAXIS1" ] || [ -z "$NAXIS3" ]; then
+ echo "ERROR in $0 -- cannot get image size using  lib/astrometry/get_image_dimentions  $FITS_IMAGE_TO_CHECK_HEADER"
+ exit 1
+fi
 
 # Determine the image size
-XY2SKY_OUTPUT=`"$VAST_PATH"lib/bin/xy2sky -j "$FITS_IMAGE_TO_CHECK" 0 0 $NAXIS1 0 0 $NAXIS2`
-CORNER_0_0=`echo "$XY2SKY_OUTPUT" | head -n1 | awk '{print $1" "$2}'`
-CORNER_NAXIS1_0=`echo "$XY2SKY_OUTPUT" | head -n2 | tail -n1 | awk '{print $1" "$2}'`
-CORNER_0_NAXIS2=`echo "$XY2SKY_OUTPUT" | head -n3 | tail -n1 | awk '{print $1" "$2}'`
-X_SIZE_ARCMIN=`"$VAST_PATH"lib/bin/skycoor -r $CORNER_0_0 $CORNER_NAXIS1_0 | awk '{printf "%.1f",$1/60}'`
-Y_SIZE_ARCMIN=`"$VAST_PATH"lib/bin/skycoor -r $CORNER_0_0 $CORNER_0_NAXIS2 | awk '{printf "%.1f",$1/60}'`
+XY2SKY_OUTPUT=$("$VAST_PATH"lib/bin/xy2sky -j "$FITS_IMAGE_TO_CHECK" 0 0 $NAXIS1 0 0 $NAXIS2)
+CORNER_0_0=$(echo "$XY2SKY_OUTPUT" | head -n1 | awk '{print $1" "$2}')
+CORNER_NAXIS1_0=$(echo "$XY2SKY_OUTPUT" | head -n2 | tail -n1 | awk '{print $1" "$2}')
+CORNER_0_NAXIS2=$(echo "$XY2SKY_OUTPUT" | head -n3 | tail -n1 | awk '{print $1" "$2}')
+X_SIZE_ARCMIN=$("$VAST_PATH"lib/bin/skycoor -r $CORNER_0_0 $CORNER_NAXIS1_0 | awk '{printf "%.1f",$1/60}')
+Y_SIZE_ARCMIN=$("$VAST_PATH"lib/bin/skycoor -r $CORNER_0_0 $CORNER_0_NAXIS2 | awk '{printf "%.1f",$1/60}')
 
-IMAGE_SCALE_X_ARCSECpix=`echo "$X_SIZE_ARCMIN $NAXIS1" | awk '{printf "%.2f",$1*60/$2}'`
-IMAGE_SCALE_Y_ARCSECpix=`echo "$Y_SIZE_ARCMIN $NAXIS2" | awk '{printf "%.2f",$1*60/$2}'`
+IMAGE_SCALE_X_ARCSECpix=$(echo "$X_SIZE_ARCMIN $NAXIS1" | awk '{printf "%.2f",$1*60/$2}')
+IMAGE_SCALE_Y_ARCSECpix=$(echo "$Y_SIZE_ARCMIN $NAXIS2" | awk '{printf "%.2f",$1*60/$2}')
 
-IMAGE_CENTER_XY=`echo "$NAXIS1 $NAXIS2" | awk '{printf "%.3f %.3f",($1+1)/2,($2+1)/2}'`
-IMAGE_CENTER_RA_Dec=`"$VAST_PATH"lib/bin/xy2sky -j "$FITS_IMAGE_TO_CHECK" $IMAGE_CENTER_XY`
+IMAGE_CENTER_XY=$(echo "$NAXIS1 $NAXIS2" | awk '{printf "%.3f %.3f",($1+1)/2,($2+1)/2}')
+IMAGE_CENTER_RA_Dec=$("$VAST_PATH"lib/bin/xy2sky -j "$FITS_IMAGE_TO_CHECK" $IMAGE_CENTER_XY)
 
 # Print the results
-echo "Image size: $X_SIZE_ARCMIN'"x"$Y_SIZE_ARCMIN'"
+echo "Image size: ${X_SIZE_ARCMIN}'x${Y_SIZE_ARCMIN}' ${NAXIS1}x${NAXIS2} pix"
 echo "Image scale: $IMAGE_SCALE_X_ARCSECpix\"/pix along the X axis and $IMAGE_SCALE_Y_ARCSECpix\"/pix along the Y axis"
 echo "Image center: $IMAGE_CENTER_RA_Dec"
