@@ -157,7 +157,7 @@ done
 IMG_SIZE_STR=$("$VAST_PATH"lib/astrometry/get_image_dimentions "$FITS_IMAGE_TO_CHECK_HEADER")
 NAXIS1=$(echo "$IMG_SIZE_STR" | awk '{print $2}')
 NAXIS2=$(echo "$IMG_SIZE_STR" | awk '{print $4}')
-if [ -z "$NAXIS1" ] || [ -z "$NAXIS3" ]; then
+if [ -z "$NAXIS1" ] || [ -z "$NAXIS2" ]; then
  echo "ERROR in $0 -- cannot get image size using  lib/astrometry/get_image_dimentions  $FITS_IMAGE_TO_CHECK_HEADER"
  exit 1
 fi

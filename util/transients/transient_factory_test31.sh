@@ -1983,7 +1983,8 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/.fz/}"
   IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS" | grep 'Image center:' | awk '{print $3" "$4}')
   if [ -z "$IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE" ];then
-   echo "ERROR: cannot determine IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE" | tee -a transient_factory_test31.txt
+   echo "ERROR in $0: cannot determine IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE" | tee -a transient_factory_test31.txt
+   echo "The command line was: util/fov_of_wcs_calibrated_image.sh $WCS_IMAGE_NAME_FOR_CHECKS | grep 'Image center:' | awk '{print $3" "$4}'"
    break
   fi
   DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.2f", $5}')
