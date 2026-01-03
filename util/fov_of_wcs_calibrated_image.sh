@@ -154,7 +154,7 @@ done
 # Would it be safer to use head instead of grep --max-count= in case we have busybox grep?
 #NAXIS1=$(echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --max-count=1 'NAXIS1' | awk -F '=' '{print $2}' | awk '{print $1}')
 #NAXIS2=$(echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep --max-count=1 'NAXIS2' | awk -F '=' '{print $2}' | awk '{print $1}')
-IMG_SIZE_STR=$("$VAST_PATH"lib/astrometry/get_image_dimentions "$FITS_IMAGE_TO_CHECK_HEADER")
+IMG_SIZE_STR=$("$VAST_PATH"lib/astrometry/get_image_dimentions "$FITS_IMAGE_TO_CHECK")
 NAXIS1=$(echo "$IMG_SIZE_STR" | awk '{print $2}')
 NAXIS2=$(echo "$IMG_SIZE_STR" | awk '{print $4}')
 if [ -z "$NAXIS1" ] || [ -z "$NAXIS2" ]; then
@@ -173,7 +173,9 @@ Y_SIZE_ARCMIN=$("$VAST_PATH"lib/bin/skycoor -r $CORNER_0_0 $CORNER_0_NAXIS2 | aw
 IMAGE_SCALE_X_ARCSECpix=$(echo "$X_SIZE_ARCMIN $NAXIS1" | awk '{printf "%.2f",$1*60/$2}')
 IMAGE_SCALE_Y_ARCSECpix=$(echo "$Y_SIZE_ARCMIN $NAXIS2" | awk '{printf "%.2f",$1*60/$2}')
 
-IMAGE_CENTER_XY=$(echo "$NAXIS1 $NAXIS2" | awk '{printf "%.3f %.3f",($1+1)/2,($2+1)/2}')
+# why +1??
+#IMAGE_CENTER_XY=$(echo "$NAXIS1 $NAXIS2" | awk '{printf "%.3f %.3f",($1+1)/2,($2+1)/2}')
+IMAGE_CENTER_XY=$(echo "$NAXIS1 $NAXIS2" | awk '{printf "%.3f %.3f",$1/2+1,$2/2+1}')
 IMAGE_CENTER_RA_Dec=$("$VAST_PATH"lib/bin/xy2sky -j "$FITS_IMAGE_TO_CHECK" $IMAGE_CENTER_XY)
 
 # Print the results
