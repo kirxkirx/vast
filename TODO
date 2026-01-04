@@ -1,3 +1,7 @@
+* Make fastplot support compressed FITS
+
+* NMW: try parallelle solve_UCAC5 for compressed fits?
+
 * Save filter info from image header to vast_summary.log
 
 * Propagate filter info from util/magnitude_calibration.sh through vast_summary.log 

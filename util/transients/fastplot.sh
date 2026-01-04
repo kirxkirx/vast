@@ -271,6 +271,7 @@ check_file_exists "$INPUTFILE"
 INPUTFILE_BASENAME=$(basename "$INPUTFILE")
 WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
 WCS_INPUTFILE="${WCS_INPUTFILE/wcs_wcs_/wcs_}"
+WCS_INPUTFILE="${WCS_INPUTFILE/.fz/}"
 util/wcs_image_calibration.sh "$INPUTFILE"
 if [ $? -ne 0 ];then
  echo "ERROR running util/wcs_image_calibration.sh $INPUTFILE"
@@ -292,6 +293,7 @@ check_file_exists "$INPUTFILE"
 INPUTFILE_BASENAME=$(basename "$INPUTFILE")
 WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
 WCS_INPUTFILE="${WCS_INPUTFILE/wcs_wcs_/wcs_}"
+WCS_INPUTFILE="${WCS_INPUTFILE/.fz/}"
 util/wcs_image_calibration.sh "$INPUTFILE"
 if [ $? -ne 0 ];then
  echo "ERROR running util/wcs_image_calibration.sh $INPUTFILE"
@@ -313,6 +315,7 @@ check_file_exists "$INPUTFILE"
 INPUTFILE_BASENAME=$(basename "$INPUTFILE")
 WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
 WCS_INPUTFILE="${WCS_INPUTFILE/wcs_wcs_/wcs_}"
+WCS_INPUTFILE="${WCS_INPUTFILE/.fz/}"
 util/wcs_image_calibration.sh "$INPUTFILE"
 if [ $? -ne 0 ];then
  echo "ERROR running util/wcs_image_calibration.sh $INPUTFILE"
@@ -334,6 +337,7 @@ check_file_exists "$INPUTFILE"
 INPUTFILE_BASENAME=$(basename "$INPUTFILE")
 WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
 WCS_INPUTFILE="${WCS_INPUTFILE/wcs_wcs_/wcs_}"
+WCS_INPUTFILE="${WCS_INPUTFILE/.fz/}"
 util/wcs_image_calibration.sh "$INPUTFILE"
 if [ $? -ne 0 ];then
  echo "ERROR running util/wcs_image_calibration.sh $INPUTFILE"

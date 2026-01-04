@@ -155,19 +155,19 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
-ORIGONAL_SEXTRACTOR_CATALOG=`grep "$FITSFILE" vast_images_catalogs.log | awk '{print $1}'`
-if [ ! -f "$ORIGONAL_SEXTRACTOR_CATALOG" ];then
- echo "ERROR in $0 : cannot find $ORIGONAL_SEXTRACTOR_CATALOG"
+ORIGINAL_SEXTRACTOR_CATALOG=`grep "$FITSFILE" vast_images_catalogs.log | awk '{print $1}'`
+if [ ! -f "$ORIGINAL_SEXTRACTOR_CATALOG" ];then
+ echo "ERROR in $0 : cannot find $ORIGINAL_SEXTRACTOR_CATALOG"
  exit 1
 fi
-if [ ! -s "$ORIGONAL_SEXTRACTOR_CATALOG" ];then
- echo "ERROR in $0 : the catalog file $ORIGONAL_SEXTRACTOR_CATALOG is empty"
+if [ ! -s "$ORIGINAL_SEXTRACTOR_CATALOG" ];then
+ echo "ERROR in $0 : the catalog file $ORIGINAL_SEXTRACTOR_CATALOG is empty"
  exit 1
 fi
 
 # OK, assume we are good
-echo "Generating $OUTPUT_SEXTRACTOR_CATALOG from $ORIGONAL_SEXTRACTOR_CATALOG" 1>&2
-cat "$ORIGONAL_SEXTRACTOR_CATALOG" | awk '{printf "%10d %11.7f %+11.7f %11.4f %11.4f %12.7g %12.7g %8.4f %8.4f %3d\n", $1, 0.0,0.0, $16,$17, $2,$3, $4,$10, $22}' > correct_sextractor_wcs_catalog_usingxy2sky$$.tmp
+echo "Generating $OUTPUT_SEXTRACTOR_CATALOG from $ORIGINAL_SEXTRACTOR_CATALOG" 1>&2
+cat "$ORIGINAL_SEXTRACTOR_CATALOG" | awk '{printf "%10d %11.7f %+11.7f %11.4f %11.4f %12.7g %12.7g %8.4f %8.4f %3d\n", $1, 0.0,0.0, $16,$17, $2,$3, $4,$10, $22}' > correct_sextractor_wcs_catalog_usingxy2sky$$.tmp
 # The desired output:
 # NUMBER
 # ALPHAWIN_SKY
