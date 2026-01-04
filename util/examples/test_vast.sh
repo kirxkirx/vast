@@ -18047,7 +18047,7 @@ fi
 
 ##### NMW-STL ref. frame match fail test #####
 ### Disable this test for GitHub Actions
-if [ "$GITHUB_ACTIONS" != "true" ];then
+#if [ "$GITHUB_ACTIONS" != "true" ];then
 
 # Download the test dataset if needed
 if [ ! -d ../NMW-STL__RefFrameMatchFail_test ];then
@@ -18102,6 +18102,12 @@ if [ -d ../NMW-STL__RefFrameMatchFail_test ];then
  if [ ! -f ../STL_bad_region.lst ];then
   cp -v ../NMW-STL__RefFrameMatchFail_test/STL_bad_region.lst ../STL_bad_region.lst
  fi
+ # Remove calibrated image files that may be in the data directory from a previous test run
+ for FILE_TO_REMOVE in ../NMW-STL__RefFrameMatchFail_test/second_epoch_images/fd_* ;do
+  if [ -f "$FILE_TO_REMOVE" ];then
+   rm -fv "$FILE_TO_REMOVE"
+  fi
+ done
  # Set calibration files
  export DARK_FRAMES_DIR=../NMW-STL__RefFrameMatchFail_test/darks
  export FLAT_FIELD_FILE=../NMW-STL__RefFrameMatchFail_test/flats/STL__mff_2024_febmar_full_moon.fit
@@ -18617,7 +18623,7 @@ if [ $? -ne 0 ];then
 fi
 
 ### Disable the above test for GitHub Actions
-fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
+#fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
 
 
 ##### NMW-STL find huge comet test #####
