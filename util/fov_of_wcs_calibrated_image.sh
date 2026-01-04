@@ -170,6 +170,9 @@ CORNER_0_NAXIS2=$(echo "$XY2SKY_OUTPUT" | head -n3 | tail -n1 | awk '{print $1" 
 X_SIZE_ARCMIN=$("$VAST_PATH"lib/bin/skycoor -r $CORNER_0_0 $CORNER_NAXIS1_0 | awk '{printf "%.1f",$1/60}')
 Y_SIZE_ARCMIN=$("$VAST_PATH"lib/bin/skycoor -r $CORNER_0_0 $CORNER_0_NAXIS2 | awk '{printf "%.1f",$1/60}')
 
+X_SIZE_DEG=$(echo "$X_SIZE_ARCMIN" | awk '{printf "%.1f",$1/60}')
+Y_SIZE_DEG=$(echo "$Y_SIZE_ARCMIN" | awk '{printf "%.1f",$1/60}')
+
 IMAGE_SCALE_X_ARCSECpix=$(echo "$X_SIZE_ARCMIN $NAXIS1" | awk '{printf "%.2f",$1*60/$2}')
 IMAGE_SCALE_Y_ARCSECpix=$(echo "$Y_SIZE_ARCMIN $NAXIS2" | awk '{printf "%.2f",$1*60/$2}')
 
@@ -179,6 +182,6 @@ IMAGE_CENTER_XY=$(echo "$NAXIS1 $NAXIS2" | awk '{printf "%.3f %.3f",$1/2+1,$2/2+
 IMAGE_CENTER_RA_Dec=$("$VAST_PATH"lib/bin/xy2sky -j "$FITS_IMAGE_TO_CHECK" $IMAGE_CENTER_XY)
 
 # Print the results
-echo "Image size: ${X_SIZE_ARCMIN}'x${Y_SIZE_ARCMIN}' ${NAXIS1}x${NAXIS2} pix"
+echo "Image size: ${X_SIZE_ARCMIN}'x${Y_SIZE_ARCMIN}'  ${X_SIZE_DEG}(deg)x${Y_SIZE_DEG}(deg)  ${NAXIS1}x${NAXIS2} pix"
 echo "Image scale: $IMAGE_SCALE_X_ARCSECpix\"/pix along the X axis and $IMAGE_SCALE_Y_ARCSECpix\"/pix along the Y axis"
 echo "Image center: $IMAGE_CENTER_RA_Dec"

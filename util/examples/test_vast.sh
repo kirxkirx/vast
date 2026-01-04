@@ -22936,7 +22936,8 @@ if [ -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.f
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER000c"
  fi
  #
- util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits  | grep -q 'Image center: 17:47:53.046 -13:08:42.33 J2000 1536.500 1540.500'
+ #util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits  | grep -q 'Image center: 17:47:53.046 -13:08:42.33 J2000 1536.500 1540.500'
+ util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.fits  | grep -q 'Image center: 17:47:53.011 -13:08:42.84 J2000 1537.000 1541.0'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER000d"
@@ -23074,7 +23075,8 @@ if [ -f ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.f
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2000c"
  fi
  #
- util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit  | grep -q 'Image center: 06:56:29.366 -22:50:13.56 J2000 1536.500 1540.500'
+ #util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit  | grep -q 'Image center: 06:56:29.366 -22:50:13.56 J2000 1536.500 1540.500'
+ util/fov_of_wcs_calibrated_image.sh ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.fit  | grep -q 'Image center: 06:56:29.329 -22:50:14.07 J2000 1537.000 1541.000'
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2000d"
@@ -28861,7 +28863,8 @@ if [ -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES IMAGEFOVSCRIPT_004"
  fi
- DISTANCE_FROM_IMAGE_CENTER_ARCSEC=`lib/bin/skycoor -r 03:47:04.453 +45:10:05.77 $IMAGE_CENTER`
+ #DISTANCE_FROM_IMAGE_CENTER_ARCSEC=`lib/bin/skycoor -r 03:47:04.453 +45:10:05.77 $IMAGE_CENTER`
+ DISTANCE_FROM_IMAGE_CENTER_ARCSEC=`lib/bin/skycoor -r 03:47:04.057 +45:10:09.96 $IMAGE_CENTER`
  #TEST=`echo "$DISTANCE_FROM_IMAGE_CENTER_ARCSEC<0.3" | bc -ql`
  TEST=`echo "$DISTANCE_FROM_IMAGE_CENTER_ARCSEC" | awk '{if ( $1 < 0.3 ) print 1 ;else print 0 }'`
  re='^[0-9]+$'

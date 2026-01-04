@@ -34,13 +34,13 @@ int main( int argc, char **argv ) {
  if ( 0 != status ) {
   fits_report_error( stderr, status );
   fits_close_file( fptr, &status );
-  fprintf( stderr, "ERROR: can't get number of image dimensions!\n" );
+  fprintf( stderr, "ERROR in %s: can't get number of image dimensions!\n", argv[0] );
   return status;
  }
 
- if ( naxis != 2 ) {
+ if ( naxis != 2 && naxis != 3 ) {
   fits_close_file( fptr, &status );
-  fprintf( stderr, "ERROR: expected 2D image, got %d dimensions!\n", naxis );
+  fprintf( stderr, "ERROR in %s: expected 2D image (or 3D if it's a color one), got %d dimensions!\n", argv[0], naxis );
   return 1;
  }
 
@@ -49,7 +49,7 @@ int main( int argc, char **argv ) {
  if ( 0 != status ) {
   fits_report_error( stderr, status );
   fits_close_file( fptr, &status );
-  fprintf( stderr, "ERROR: can't get image dimensions!\n" );
+  fprintf( stderr, "ERROR in %s: can't get image dimensions!\n", argv[0] );
   return status;
  }
 
