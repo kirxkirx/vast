@@ -2108,9 +2108,16 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    solve_plate_with_UCAC5_tempFile=$(mktemp 2>/dev/null || echo "tempilefallback_solve_plate_with_UCAC5_OUTPUT_$$.tmp")
    # Store the temporary file name for later use
    solve_plate_with_UCAC5_tempFiles+=("$solve_plate_with_UCAC5_tempFile")
-   util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> "$solve_plate_with_UCAC5_tempFile"  &
+   #util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> "$solve_plate_with_UCAC5_tempFile"  &
+   # Same as above - do not run plate solving in parallel on compressed images - just in case
+   echo $(basename "$i") | grep -q '\.fz'
+   if [ $? -eq 0 ];then
+    util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> "$solve_plate_with_UCAC5_tempFile"
+   else
+    util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> "$solve_plate_with_UCAC5_tempFile"  &
+   fi
   done
-    
+  
   # Calibrate magnitude scale with Tycho-2 or APASS stars in the field
   # In order for this to work, we need the plate-solved reference image 
   echo "Calibrating the magnitude scale" | tee -a transient_factory_test31.txt

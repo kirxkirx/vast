@@ -324,6 +324,39 @@ int blind_plate_solve_with_astrometry_net( char *fits_image_filename, double app
 
 void guess_wcs_catalog_filename( char *wcs_catalog_filename, char *fits_image_filename ) {
  char test_string[FILENAME_LENGTH];
+ char *fz_extension_position;
+ size_t test_string_len;
+ 
+ strcpy( test_string, basename( fits_image_filename ) );
+ 
+ // Strip .fz extension if present (to match shell script behavior)
+ test_string_len = strlen( test_string );
+ if ( test_string_len > 3 ) {
+  fz_extension_position = test_string + test_string_len - 3;
+  if ( strcmp( fz_extension_position, ".fz" ) == 0 ) {
+   *fz_extension_position = '\0';
+  }
+ }
+ 
+ if ( test_string[0] == 'w' && test_string[1] == 'c' && test_string[2] == 's' && test_string[3] == '_' ) {
+  wcs_catalog_filename[0]= '\0';
+ } else {
+  strncpy( wcs_catalog_filename, "wcs_", FILENAME_LENGTH );
+  wcs_catalog_filename[FILENAME_LENGTH - 1]= '\0';
+ }
+ strncat( wcs_catalog_filename, test_string, FILENAME_LENGTH - strlen( wcs_catalog_filename ) );
+ wcs_catalog_filename[FILENAME_LENGTH - 1]= '\0';
+ strncat( wcs_catalog_filename, ".cat", FILENAME_LENGTH - strlen( wcs_catalog_filename ) );
+ wcs_catalog_filename[FILENAME_LENGTH - 1]= '\0';
+ // fprintf(stderr,"test_string=#%s#\n",test_string);
+ // fprintf(stderr,"fits_image_filename=#%s#\n",fits_image_filename);
+ // fprintf(stderr,"wcs_catalog_filename=#%s#\n",wcs_catalog_filename);
+ return;
+}
+
+/*
+void guess_wcs_catalog_filename_old_does_not_hanlde_fz( char *wcs_catalog_filename, char *fits_image_filename ) {
+ char test_string[FILENAME_LENGTH];
  strcpy( test_string, basename( fits_image_filename ) );
  if ( test_string[0] == 'w' && test_string[1] == 'c' && test_string[2] == 's' && test_string[3] == '_' ) {
   wcs_catalog_filename[0]= '\0';
@@ -340,6 +373,7 @@ void guess_wcs_catalog_filename( char *wcs_catalog_filename, char *fits_image_fi
  // fprintf(stderr,"wcs_catalog_filename=#%s#\n",wcs_catalog_filename);
  return;
 }
+*/
 
 int check_if_the_output_catalog_already_exist( char *fits_image_filename ) {
  FILE *f;

@@ -128,6 +128,7 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
    exit 1
   fi
  elif [ -f $SEXTRACTOR_CATALOG_NAME ];then
+  echo "WARNING from $0 -- UCAC5 catalog $UCAC5_SOLUTION_NAME not found - falling back to uncorrected catalog $SEXTRACTOR_CATALOG_NAME"
   # this is used by util/transients/report_transient.sh
   RADEC=$(lib/find_star_in_wcs_catalog $X $Y < $SEXTRACTOR_CATALOG_NAME)
   if [ $? -ne 0 ];then
@@ -136,7 +137,7 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
    exit 1
   fi
  else
-  echo "error in $0 cannot find any of the plate-solved-image-related catalogs: $UCAC5_SOLUTION_NAME $SEXTRACTOR_CATALOG_NAME" 
+  echo "ERROR in $0 -- cannot find any of the plate-solved-image-related catalogs: $UCAC5_SOLUTION_NAME $SEXTRACTOR_CATALOG_NAME" 
   clean_tmp_files
   exit 1
  fi

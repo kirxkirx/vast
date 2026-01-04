@@ -455,7 +455,9 @@ if [ ! -s "$FITSFILE" ];then
 fi
 ###############
 # Handle special case - fully calibrated compressed image from NMW archive
-echo $(basename $FITSFILE) | grep 'wcs_fd_' | grep -q '\.fz' || file "$FITSFILE" | grep 'FITS image' | grep 'compress'
+#echo $(basename $FITSFILE) | grep 'wcs_fd_' | grep -q '\.fz' || file "$FITSFILE" | grep 'FITS image' | grep 'compress'
+# OK here we actually want to trigger funpack only based on the filename patern for fully-calibrated images
+echo $(basename $FITSFILE) | grep 'wcs_fd_' | grep -q '\.fz'
 if [ $? -eq 0 ];then
  echo "Handling the special case of a fully calibrated compressed image from NMW archive"
  cp -v "$FITSFILE" $(basename $FITSFILE)
@@ -469,7 +471,10 @@ ORIGINAL_FITSFILE="$FITSFILE"
 # On-the fly convert the input image if necessary
 # This should also uncompress .fz image, but note that the image file name will change 
 # (will attempt to rename at the endof the script)
+echo "DEBUG: ORIGINAL_FITSFILE=$ORIGINAL_FITSFILE"
+echo "DEBUG: FITSFILE before on_the_fly=$FITSFILE"
 FITSFILE=`"$VAST_PATH"lib/on_the_fly_symlink_or_convert "$FITSFILE"`
+echo "DEBUG: FITSFILE after on_the_fly=$FITSFILE"
 ###############
 # Verify that the input file is a valid FITS file
 if [ -x "$VAST_PATH"lib/fitsverify ];then
@@ -496,6 +501,8 @@ BASENAME_FITSFILE=$(basename "$FITSFILE")
 #BASENAME_ORIGINAL_FITSFILE=$(basename "$ORIGINAL_FITSFILE")
 ###
 
+# Supposedly FITSFILE should have been uncompressed at this point even if it was compressed originally
+
 # Test if the original image is already a calibrated one
 # (Test by checking the file name)
 TEST_SUBSTRING="$BASENAME_FITSFILE"
@@ -514,6 +521,8 @@ else
  fi
 fi
 
+echo "DEBUG: FITSFILE after on_the_fly=$FITSFILE"
+echo "DEBUG: WCS_IMAGE_NAME=$WCS_IMAGE_NAME"
 
 SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".cat
 
@@ -640,12 +649,13 @@ fi
   
   echo "Using the local copy of Astrometry.net code"
   
-  IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE`
+  IMAGE_SIZE=$("$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE)
   # "0.9*$TRIAL_FIELD_OF_VIEW_ARCMIN matches the remote server parameters
-  SCALE_LOW=`echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",0.9*$1}'`
+  SCALE_LOW=$(echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",0.9*$1}')
   # Yes, works fine with 1.2*$TRIAL_FIELD_OF_VIEW_ARCMIN but does not work with 1.0*$TRIAL_FIELD_OF_VIEW_ARCMIN
-  SCALE_HIGH=`echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",5.0*$1}'`
+  SCALE_HIGH=$(echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",5.0*$1}')
   #
+  echo "IMAGE_SIZE=$IMAGE_SIZE   SCALE_LOW=$SCALE_LOW SCALE_HIGH=$SCALE_HIGH"
   #
   echo "Using solve-field binary"
   command -v solve-field
