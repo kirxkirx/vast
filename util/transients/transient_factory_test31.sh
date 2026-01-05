@@ -2114,14 +2114,14 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
    echo "Running  util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> $solve_plate_with_UCAC5_tempFile" | tee -a transient_factory_test31.txt
    #util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> "$solve_plate_with_UCAC5_tempFile"  &
    # Same as above - do not run plate solving in parallel on compressed images - just in case
-   echo $(basename "$i") | grep -q '\.fz$'
-   if [ $? -eq 0 ];then
-    echo "Sequential run for $i" | tee -a transient_factory_test31.txt
-    util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> "$solve_plate_with_UCAC5_tempFile"
-   else
+   #echo $(basename "$i") | grep -q '\.fz$'
+   #if [ $? -eq 0 ];then
+   # echo "Sequential run for $i" | tee -a transient_factory_test31.txt
+   # util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> "$solve_plate_with_UCAC5_tempFile"
+   #else
     echo "Parallel run for $i" | tee -a transient_factory_test31.txt
     util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> "$solve_plate_with_UCAC5_tempFile"  &
-   fi
+   #fi
   done
   
   # Calibrate magnitude scale with Tycho-2 or APASS stars in the field
