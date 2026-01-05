@@ -124,7 +124,7 @@ Checking if the filename extension and FITS header look reasonable..."
 fi
 
 # Handle compressed FITS
-echo $(basename "$FITS_IMAGE_TO_CHECK") | grep -q '\.fz' || file "$FITS_IMAGE_TO_CHECK" | grep 'FITS image' | grep 'compress'
+echo $(basename "$FITS_IMAGE_TO_CHECK") | grep -q '\.fz$' || file "$FITS_IMAGE_TO_CHECK" | grep 'FITS image' | grep 'compress'
 if [ $? -eq 0 ];then
  # funpack -S image.fits.fz | listhead STDIN
  FITS_IMAGE_TO_CHECK_HEADER=$("$VAST_PATH"util/funpack -S "$FITS_IMAGE_TO_CHECK" | "$VAST_PATH"util/listhead STDIN)

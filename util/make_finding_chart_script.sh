@@ -161,7 +161,7 @@ Checking if the filename extension and FITS header look reasonable..."
 fi
 
 # Handle compressed FITS
-echo $(basename "$FITSFILE") | grep -q '\.fz' || file "$FITSFILE" | grep 'FITS image' | grep 'compress'
+echo $(basename "$FITSFILE") | grep -q '\.fz$' || file "$FITSFILE" | grep 'FITS image' | grep 'compress'
 if [ $? -eq 0 ];then
  echo "The input seems to be a compressed FITS image -- trying to funpack it"
  UNCOMPRESSED_FITS_FILE="uncompressed_$(basename $FITSFILE)"

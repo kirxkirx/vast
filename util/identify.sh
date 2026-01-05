@@ -457,7 +457,7 @@ fi
 # Handle special case - fully calibrated compressed image from NMW archive
 #echo $(basename $FITSFILE) | grep 'wcs_fd_' | grep -q '\.fz' || file "$FITSFILE" | grep 'FITS image' | grep 'compress'
 # OK here we actually want to trigger funpack only based on the filename patern for fully-calibrated images
-echo $(basename $FITSFILE) | grep 'wcs_fd_' | grep -q '\.fz'
+echo $(basename $FITSFILE) | grep 'wcs_fd_' | grep -q '\.fz$'
 if [ $? -eq 0 ];then
  echo "Handling the special case of a fully calibrated compressed image from NMW archive"
  cp -v "$FITSFILE" $(basename $FITSFILE)
@@ -513,11 +513,20 @@ if [ "$TEST_SUBSTRING" = "wcs_" ];then
  WCS_IMAGE_NAME="$BASENAME_FITSFILE"
 else
  WCS_IMAGE_NAME=wcs_"$BASENAME_FITSFILE"
+ WCS_IMAGE_NAME="${WCS_IMAGE_NAME/.fz/}"
  # Test if the original image has a WCS header and we should just blindly trust it
  check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image "$FITSFILE"
  if [ $? -eq 1 ];then
-  echo "The input image $FITSFILE has a WCS header - will blindly trust it is good..."
-  cp -v "$FITSFILE" "$WCS_IMAGE_NAME" 
+  echo "It's a known telescope with plate solutions that are supposed to be good."
+  if echo "$FITSFILE" | grep -q '\.fz$' ; then
+   echo "The input image $FITSFILE is apcked and has a WCS header - will unpack it and blindly trust the solution is good..."
+   "$VAST_PATH"util/funpack -O "$WCS_IMAGE_NAME" "$FITSFILE" || exit 1
+  else
+   echo "The input image $FITSFILE has a WCS header - will blindly trust it is good..."
+   cp -v "$FITSFILE" "$WCS_IMAGE_NAME" 
+  fi
+ else
+  echo "It's not one of the telescopes that are know to produce images with good WCS solutions - will try to re-solve!"
  fi
 fi
 
@@ -1431,7 +1440,7 @@ else
 fi # if [ "$START_NAME" != "wcs_image_calibration.sh" ] && [ "$START_NAME" != "wcs_image_nocatalog.sh" ];then
 
 # Rename unpacked image
-echo $(basename "$ORIGINAL_FITSFILE") | grep -q '\.fz'
+echo $(basename "$ORIGINAL_FITSFILE") | grep -q '\.fz$'
 if [ $? -eq 0 ];then
  echo "Renaming unpacked FITS image and related files:"
  rename_unpacked_image "$ORIGINAL_FITSFILE"

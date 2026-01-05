@@ -178,15 +178,28 @@ void wcs_basename( const char *filename, char *new_filename ) {
  // Duplicate the filename, as basename might modify the original string
  char filename_copy[FILENAME_LENGTH];
  char basename_str[FILENAME_LENGTH];
+ char *fz_extension_position;
+ size_t basename_len;
+ 
  strncpy( filename_copy, filename, FILENAME_LENGTH - 1 );
  filename_copy[FILENAME_LENGTH - 1]= '\0'; // just in case
  strncpy( basename_str, basename( filename_copy ), FILENAME_LENGTH - 1 );
  basename_str[FILENAME_LENGTH - 1]= '\0'; // just in case
 
+ // Strip .fz extension if present
+ basename_len = strlen( basename_str );
+ if ( basename_len > 3 ) {
+  fz_extension_position = basename_str + basename_len - 3;
+  if ( strcmp( fz_extension_position, ".fz" ) == 0 ) {
+   *fz_extension_position = '\0';
+  }
+ }
+
  // Check if the basename already starts with "wcs_"
  if ( strncmp( basename_str, "wcs_", 4 ) == 0 ) {
-  // No need to add the prefix, return the duplicated name
-  strncpy( new_filename, filename, FILENAME_LENGTH - 1 );
+  // No need to add the prefix, copy the basename without .fz
+  strncpy( new_filename, basename_str, FILENAME_LENGTH - 1 );
+  new_filename[FILENAME_LENGTH - 1]= '\0';
   return;
  }
 

@@ -128,6 +128,13 @@ Checking if the filename extension and FITS header look reasonable..."
 
 done
 
+echo $(basename $WCS_IMAGE_NAME) | grep -q '\.fz$' || file "$FITSFILE" | grep 'FITS image' | grep 'compress'
+if [ $? -eq 0 ];then
+ echo "ERROR in $0 : $WCS_IMAGE_NAME image is compressed! (It's not supposed to be!)" 1>&2
+ exit 1
+fi
+
+
 # Check the input WCS image is acatually WCS-solved
 "$VAST_PATH"lib/bin/xy2sky "$WCS_IMAGE_NAME" | grep -q 'No WCS'
 if [ $? -eq 0 ];then
@@ -135,11 +142,6 @@ if [ $? -eq 0 ];then
  exit 1
 fi
 
-echo $(basename $FITSFILE) | grep 'wcs_fd_' | grep -q '\.fz' || file "$FITSFILE" | grep 'FITS image' | grep 'compress'
-if [ $? -eq 0 ];then
- echo "ERROR in $0 : $WCS_IMAGE_NAME image is compressed!" 1>&2
- exit 1
-fi
 
 
 ############################################

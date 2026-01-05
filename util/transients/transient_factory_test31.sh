@@ -1878,7 +1878,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
 
   for i in $(awk '{print $17}' vast_image_details.log | sort | uniq); do
    # can't do parallell solving for compresed images
-   echo $(basename "$i") | grep -q '\.fz'
+   echo $(basename "$i") | grep -q '\.fz$'
    if [ $? -eq 0 ];then
     # do it serial
     util/wcs_image_calibration.sh "$i"
@@ -2092,14 +2092,17 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   fi # if [ -z "$PHOTOMETRIC_CALIBRATION" ];then
 
   
-  echo "Running solve_plate_with_UCAC5" | tee -a transient_factory_test31.txt
+  echo "Running solve_plate_with_UCAC5..." | tee -a transient_factory_test31.txt
   
     
   # We need photometric info for the reference image, and we need it now, so solving in the foreground
   if [ "$PHOTOMETRIC_CALIBRATION" != "TYCHO2_V" ];then
+   echo "First running on the reference image as we need photometric info:
+util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE_EPOCH__FIRST_IMAGE" | tee -a transient_factory_test31.txt
    util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE_EPOCH__FIRST_IMAGE >> transient_factory_test31.txt 2>&1
   fi
   
+  echo "Preparing for ar aprallel run" | tee -a transient_factory_test31.txt
   # Array to hold names of temporary files
   declare -a solve_plate_with_UCAC5_tempFiles
   # Now solve all images in parallel with no photomeric calibration
@@ -2108,12 +2111,15 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    solve_plate_with_UCAC5_tempFile=$(mktemp 2>/dev/null || echo "tempilefallback_solve_plate_with_UCAC5_OUTPUT_$$.tmp")
    # Store the temporary file name for later use
    solve_plate_with_UCAC5_tempFiles+=("$solve_plate_with_UCAC5_tempFile")
+   echo "Running  util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> $solve_plate_with_UCAC5_tempFile" | tee -a transient_factory_test31.txt
    #util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> "$solve_plate_with_UCAC5_tempFile"  &
    # Same as above - do not run plate solving in parallel on compressed images - just in case
-   echo $(basename "$i") | grep -q '\.fz'
+   echo $(basename "$i") | grep -q '\.fz$'
    if [ $? -eq 0 ];then
+    echo "Sequential run for $i" | tee -a transient_factory_test31.txt
     util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> "$solve_plate_with_UCAC5_tempFile"
    else
+    echo "Parallel run for $i" | tee -a transient_factory_test31.txt
     util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> "$solve_plate_with_UCAC5_tempFile"  &
    fi
   done
@@ -2135,7 +2141,8 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    # Print the output from each temporary file and then delete the file
    for solve_plate_with_UCAC5_tempFile in "${solve_plate_with_UCAC5_tempFiles[@]}"; do
     if [ -f "$solve_plate_with_UCAC5_tempFile" ];then
-     #cat "$solve_plate_with_UCAC5_tempFile"
+     echo "############ $solve_plate_with_UCAC5_tempFile (1) ############" | tee -a transient_factory_test31.txt
+     cat "$solve_plate_with_UCAC5_tempFile" | tee -a transient_factory_test31.txt
      rm -f "$solve_plate_with_UCAC5_tempFile"
     fi
    done
@@ -2232,7 +2239,8 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    # Print the output from each temporary file and then delete the file
    for solve_plate_with_UCAC5_tempFile in "${solve_plate_with_UCAC5_tempFiles[@]}"; do
     if [ -f "$solve_plate_with_UCAC5_tempFile" ];then
-     #cat "$solve_plate_with_UCAC5_tempFile"
+     echo "############ $solve_plate_with_UCAC5_tempFile (2) ############" | tee -a transient_factory_test31.txt
+     cat "$solve_plate_with_UCAC5_tempFile" | tee -a transient_factory_test31.txt
      rm -f "$solve_plate_with_UCAC5_tempFile"
     fi
    done
@@ -2252,7 +2260,8 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    # Print the output from each temporary file and then delete the file
    for solve_plate_with_UCAC5_tempFile in "${solve_plate_with_UCAC5_tempFiles[@]}"; do
     if [ -f "$solve_plate_with_UCAC5_tempFile" ];then
-     #cat "$solve_plate_with_UCAC5_tempFile"
+     echo "############ $solve_plate_with_UCAC5_tempFile (3) ############" | tee -a transient_factory_test31.txt
+     cat "$solve_plate_with_UCAC5_tempFile" | tee -a transient_factory_test31.txt
      rm -f "$solve_plate_with_UCAC5_tempFile"
     fi
    done
@@ -2274,7 +2283,8 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    # Print the output from each temporary file and then delete the file
    for solve_plate_with_UCAC5_tempFile in "${solve_plate_with_UCAC5_tempFiles[@]}"; do
     if [ -f "$solve_plate_with_UCAC5_tempFile" ];then
-     #cat "$solve_plate_with_UCAC5_tempFile"
+     echo "############ $solve_plate_with_UCAC5_tempFile (4) ############" | tee -a transient_factory_test31.txt
+     cat "$solve_plate_with_UCAC5_tempFile" | tee -a transient_factory_test31.txt
      rm -f "$solve_plate_with_UCAC5_tempFile"
     fi
    done
@@ -2379,7 +2389,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE="${WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE/wcs_wcs_/wcs_}"
   WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE="${WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE/.fz/}"
   # We must double-check here that the input is not a compressed image as sky2xy will not be able to handle it
-  echo $(basename "$WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE") | grep -q '\.fz' || file "$WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE" | grep 'FITS image' | grep 'compress'
+  echo $(basename "$WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE") | grep -q '\.fz$' || file "$WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE" | grep 'FITS image' | grep 'compress'
   if [ $? -eq 0 ];then
    echo "ERROR in $0 -- $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE is a compressed FITS image about to be passed to sky2xy" | tee -a transient_factory_test31.txt
    exit 1
@@ -2444,7 +2454,8 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    # Print the output from each temporary file and then delete the file
    for solve_plate_with_UCAC5_tempFile in "${solve_plate_with_UCAC5_tempFiles[@]}"; do
     if [ -f "$solve_plate_with_UCAC5_tempFile" ];then
-     #cat "$solve_plate_with_UCAC5_tempFile"
+     echo "############ $solve_plate_with_UCAC5_tempFile (5) ############" | tee -a transient_factory_test31.txt
+     cat "$solve_plate_with_UCAC5_tempFile" | tee -a transient_factory_test31.txt
      rm -f "$solve_plate_with_UCAC5_tempFile"
     fi
    done
@@ -2466,7 +2477,9 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    #
    # Print seeing statistics
    echo "Median FWHM seeing for isolated stars:" | tee -a transient_factory_test31.txt
-   for IMG_CATALOG_FOR_SEEING_STAT in image0000?.cat ;do
+   #for IMG_CATALOG_FOR_SEEING_STAT in image0000?.cat ;do
+   # There may be image00000.cat in the current directory
+   for IMG_CATALOG_FOR_SEEING_STAT in $(cat vast_images_catalogs.log | awk '{print $1}') ;do
     cat "$IMG_CATALOG_FOR_SEEING_STAT" | awk '{if( $22 < 2 && $23 > 0 ) print $23}' | util/colstat 2>&1 | grep ' MEDIAN= ' | awk '{printf "%4.1f pix  ",$2}'
     basename $(grep "$IMG_CATALOG_FOR_SEEING_STAT" vast_images_catalogs.log  | awk '{print $2}')
    done | tee -a transient_factory_test31.txt
@@ -2484,7 +2497,8 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    # Print the output from each temporary file and then delete the file
    for solve_plate_with_UCAC5_tempFile in "${solve_plate_with_UCAC5_tempFiles[@]}"; do
     if [ -f "$solve_plate_with_UCAC5_tempFile" ];then
-     #cat "$solve_plate_with_UCAC5_tempFile"
+     echo "############ $solve_plate_with_UCAC5_tempFile (6) ############" | tee -a transient_factory_test31.txt
+     cat "$solve_plate_with_UCAC5_tempFile" | tee -a transient_factory_test31.txt
      rm -f "$solve_plate_with_UCAC5_tempFile"
     fi
    done

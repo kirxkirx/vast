@@ -125,7 +125,7 @@ fi
 
 # Check that the input image is not compressed 
 # xy2sky from WCSTools will not be able to handle a compressed image!
-echo $(basename "$WCS_IMAGE") | grep '\.fz'
+echo $(basename "$WCS_IMAGE") | grep '\.fz$'
 if [ $? -eq 0 ];then
  echo "ERROR in $0 (1) -- the input image appears to be compressed! xy2sky cannot handlesuch images!"
  exit 1
