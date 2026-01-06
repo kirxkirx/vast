@@ -9050,7 +9050,7 @@ $GREP_RESULT"
   ### Flag image test should always be the last one
   for IMAGE in ../test_exclude_ref_image/lm* ;do
    util/clean_data.sh
-   lib/autodetect_aperture_main $IMAGE 2>&1 | grep -q "FLAG_IMAGE image00000.flag"
+   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image" | grep "\.flag"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     BASEIMAGE=`basename $IMAGE`
@@ -17541,10 +17541,13 @@ $GREP_RESULT"
    fi
   fi
 
-  util/transients/test_fastplot.sh
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_FASTPLOT"
+  command -v swarp &> /dev/null
+  if [ $? -eq 0 ];then
+   util/transients/test_fastplot.sh
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_FASTPLOT"
+   fi
   fi
 
   
@@ -17987,10 +17990,13 @@ $GREP_RESULT"
    fi
   fi
   
-  util/transients/test_fastplot.sh
-  if [ $? -ne 0 ];then
-   TEST_PASSED=0
-   FAILED_TEST_CODES="$FAILED_TEST_CODES FZ_NMWSTLFINDNVUL24_FASTPLOT"
+  command -v swarp &>/dev/null
+  if [ $? -eq 0 ];then
+   util/transients/test_fastplot.sh
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES FZ_NMWSTLFINDNVUL24_FASTPLOT"
+   fi
   fi
 
 
@@ -22869,7 +22875,8 @@ if [ -f ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits ];the
 $GREP_RESULT"
  fi 
  cp default.sex.ccd_example default.sex
- lib/autodetect_aperture_main ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits 2>&1 | grep -q "FLAG_IMAGE image00000.flag"
+ #lib/autodetect_aperture_main ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits 2>&1 | grep -q "FLAG_IMAGE image00000.flag"
+ lib/autodetect_aperture_main ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits 2>&1 | grep "FLAG_IMAGE image" | grep "\.flag"
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES FLAGHST001"

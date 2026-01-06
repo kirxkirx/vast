@@ -37,7 +37,8 @@ fi
 
 # There should be no flag image for d_test4.fit
 #lib/autodetect_aperture_main d_test4.fit 2>&1 | grep "FLAG_IMAGE image00000.flag"
-lib/sextract_single_image_noninteractive d_test4.fit 2>&1 | grep "FLAG_IMAGE image00000.flag"
+#lib/sextract_single_image_noninteractive d_test4.fit 2>&1 | grep "FLAG_IMAGE image00000.flag"
+lib/sextract_single_image_noninteractive d_test4.fit 2>&1 | grep "FLAG_IMAGE image" | grep "\.flag"
 if [ $? -eq 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR005"
