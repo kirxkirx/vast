@@ -10672,7 +10672,6 @@ if [ -d ../NMW_Saturn_test ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES SATURN2001"
    fail_early
   fi
-  #grep -q 'ERROR' "transient_report/index.html"
   grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
   if [ $? -eq 0 ];then
    TEST_PASSED=0

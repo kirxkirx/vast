@@ -120,6 +120,18 @@ jobs:
     - name: Install shellcheck
       run: sudo port install shellcheck
       if: env.SKIP != 'true'
+    - name: Install Selenium + requests (Python)
+      run: |
+        pip3 install --upgrade selenium requests
+        python3 -c "import selenium; print(selenium.__version__)"
+        python3 -c "import requests; print(requests.__version__)"
+      if: env.SKIP != 'true'
+    - name: Verify Chrome availability for Selenium tests
+      run: |
+        # macOS runners have Chrome pre-installed
+        /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --version || echo "Chrome version check"
+        # Selenium 4.6+ has built-in Selenium Manager that auto-downloads ChromeDriver
+      if: env.SKIP != 'true'
     - name: make VaST
       run: make
       if: env.SKIP != 'true'

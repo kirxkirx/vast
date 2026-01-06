@@ -1802,6 +1802,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   #
   echo "VaST run complete with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
   echo "The four input images were $REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_factory_test31.txt
+  echo "## VaST run with SExtractor config file $SEXTRACTOR_CONFIG_FILE ##" >> transient_factory.log
   cat vast_summary.log >> transient_factory.log
   # double-check that the VaST run was OK
   grep -q 'Images used for photometry 4' vast_summary.log
