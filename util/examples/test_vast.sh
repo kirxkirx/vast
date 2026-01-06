@@ -710,6 +710,7 @@ echo "Started on $STARTTIME_HUMAN_RADABLE" >> vast_test_report.txt
 ##### Gather system information #####
 echo "Gathering basic system information for summary report" 
 echo "---------- System information ----------" >> vast_test_report.txt
+uname -a >> vast_test_report.txt
 SYSTEM_TYPE=`uname`
 if [ "$SYSTEM_TYPE" = "Linux" ];then
  # Use inxi script to generate nice human-readable system parameters summary
@@ -2952,11 +2953,12 @@ $GREP_RESULT"
   ### Flag image test should always be the last one
   for IMAGE in ../sample_data/*.fit ;do
    util/clean_data.sh
-   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   # new name of flag images
+   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image" | grep "\.flag"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     IMAGE=`basename $IMAGE`
-    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD038_$IMAGE"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD038_noflagimg_$IMAGE"
    fi 
   done
 
@@ -4011,7 +4013,8 @@ $GREP_RESULT"
   ### Flag image test should always be the last one
   for IMAGE in ../sample_data/*.fit ;do
    util/clean_data.sh
-   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   #lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image" | grep "\.flag"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     IMAGE=`basename $IMAGE`
@@ -4459,7 +4462,8 @@ $GREP_RESULT"
   ### Flag image test should always be the last one
   for IMAGE in ../sample_data/*.fit ;do
    util/clean_data.sh
-   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   #lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image" | grep "\.flag"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     IMAGE=`basename $IMAGE`
@@ -4905,7 +4909,8 @@ $GREP_RESULT"
   ### Flag image test should always be the last one
   for IMAGE in ../sample_data/*.fit ;do
    util/clean_data.sh
-   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   #lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image" | grep "\.flag"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     IMAGE=`basename $IMAGE`
@@ -5066,19 +5071,6 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD014"
   fi
-
-
-  # Skip the flag image test as it surely was done before
-  #### Flag image test should always be the last one
-  #for IMAGE in ../sample_data/*.fit ;do
-  # util/clean_data.sh
-  # lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
-  # if [ $? -ne 0 ];then
-  #  TEST_PASSED=0
-  #  IMAGE=`basename $IMAGE`
-  #  FAILED_TEST_CODES="$FAILED_TEST_CODES MAGZEROPOINTSMALLCCD004_$IMAGE"
-  # fi 
-  #done
 
  else
   echo "ERROR: cannot find vast_summary.log" 
@@ -8124,7 +8116,8 @@ $GREP_RESULT"
   ### Flag image test should always be the last one
   for IMAGE in ../MASTER_test/*.fit ;do
    util/clean_data.sh
-   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   #lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image" | grep "\.flag"
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     IMAGE=`basename $IMAGE`
@@ -8284,7 +8277,8 @@ $GREP_RESULT"
   ### Flag image test should always be the last one
   for IMAGE in ../M31_ISON_test/*.fts ;do
    util/clean_data.sh
-   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   #lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image" | grep "\.flag"
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     IMAGE=`basename $IMAGE`
@@ -8432,7 +8426,8 @@ $GREP_RESULT"
   ### Flag image test should always be the last one
   for IMAGE in ../Gaia16aye_SN/*.fit ;do
    util/clean_data.sh
-   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   #lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image" | grep "\.flag"
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     IMAGE=`basename $IMAGE`
@@ -8582,7 +8577,8 @@ $GREP_RESULT"
   ### Flag image test should always be the last one
   for IMAGE in ../only_few_stars/* ;do
    util/clean_data.sh
-   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   #lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image" | grep "\.flag"
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     IMAGE=`basename $IMAGE`
@@ -8827,7 +8823,8 @@ $GREP_RESULT"
   ### Flag image test should always be the last one
   for IMAGE in ../only_few_stars/* ;do
    util/clean_data.sh
-   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   #lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image" | grep "\.flag"
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     IMAGE=`basename $IMAGE`
@@ -9997,7 +9994,8 @@ $GREP_RESULT"
   ### Flag image test should always be the last one because we clean the data
   for IMAGE in ../transient_detection_test_Ceres/reference_images/* ../transient_detection_test_Ceres/second_epoch_images/* ;do
    util/clean_data.sh
-   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   #lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image" | grep "\.flag"
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     IMAGE=`basename $IMAGE`
@@ -10585,7 +10583,8 @@ $GREP_RESULT"
   ### Flag image test should always be the last one because we clean the data
   for IMAGE in ../NMW_Saturn_test/reference_images/* ../NMW_Saturn_test/second_epoch_images/* ;do
    util/clean_data.sh
-   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   #lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   lib/autodetect_aperture_main $IMAGE 2>&1 | grep "FLAG_IMAGE image" | grep "\.flag"
    if [ $? -eq 0 ];then
     TEST_PASSED=0
     IMAGE=`basename $IMAGE`
@@ -21068,7 +21067,8 @@ $GREP_RESULT"
   for IMAGE in v838her1.fit v838her2.fit v838her3.fit v838her4.fit ;do
    util/clean_data.sh
    # Now we DO want the flag images to be created for this dataset
-   lib/autodetect_aperture_main ../KZ_Her_DSLR_transient_search_test/$IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   #lib/autodetect_aperture_main ../KZ_Her_DSLR_transient_search_test/$IMAGE 2>&1 | grep "FLAG_IMAGE image00000.flag"
+   lib/autodetect_aperture_main ../KZ_Her_DSLR_transient_search_test/$IMAGE 2>&1 | grep "FLAG_IMAGE image" | grep "\.flag"
    if [ $? -ne 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES DSLRKZHER009_$IMAGE"
@@ -22848,7 +22848,7 @@ if [ -f ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits ];the
  echo -n "Flag image creation for HST test: " >> vast_test_report.txt 
  # first run without grep "FLAG_IMAGE image00000.flag" to see the crash log if any
  cp default.sex.ccd_example default.sex
- GREP_RESULT=`lib/autodetect_aperture_main ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits 2>&1`
+ GREP_RESULT=$(lib/autodetect_aperture_main ../individual_images_test/hst_12911_01_wfc3_uvis_f775w_01_drz.fits 2>&1)
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES FLAGHST000"
@@ -24192,7 +24192,8 @@ if [ -f ../individual_images_test/SCA13320__00_00.fits ];then
  echo "No flag images for photoplates 2 test " 
  echo -n "No flag images for photoplates 2 test: " >> vast_test_report.txt 
  cp default.sex.beta_Cas_photoplates default.sex
- lib/autodetect_aperture_main ../individual_images_test/SCA13320__00_00.fits 2>&1 | grep "FLAG_IMAGE image00000.flag"
+ #lib/autodetect_aperture_main ../individual_images_test/SCA13320__00_00.fits 2>&1 | grep "FLAG_IMAGE image00000.flag"
+ lib/autodetect_aperture_main ../individual_images_test/SCA13320__00_00.fits 2>&1 | grep "FLAG_IMAGE image" | grep "\.flag"
  if [ $? -eq 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES NOFLAGSPHOTO2001"
