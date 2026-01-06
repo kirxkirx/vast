@@ -93,7 +93,8 @@ function rename_unpacked_image {
   return 0
  fi
  IMG_WE_ARE_RENAMING=$(basename "$IMG_WE_ARE_RENAMING")
- CONVERTED_IMAGE_PATH=$(grep "$IMG_WE_ARE_RENAMING" vast_unpacked_images.log | awk '{print $2}')
+ # CONVERTED_IMAGE_PATH is not supposed to be multi-line, but let's add head -n1 in the end just in case
+ CONVERTED_IMAGE_PATH=$(grep "$IMG_WE_ARE_RENAMING" vast_unpacked_images.log | awk '{print $2}' | head -n1)
  CONVERTED_IMAGE_NAME=wcs_$(basename "$CONVERTED_IMAGE_PATH")
 
  for FILE_TO_RENAME in "$CONVERTED_IMAGE_NAME"* ;do
