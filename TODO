@@ -71,8 +71,6 @@ Unless it is explicitly requested by user.
 
 * Test on linux Mint
 
-* Test CFITSIO after building
-
 * Correct for differential extinction/flat-fielding problems while performing
 absolute magnitude calibration using APASS.
 

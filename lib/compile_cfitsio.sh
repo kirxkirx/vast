@@ -259,5 +259,53 @@ if [ $COMPILATION_ERROR -eq 1 ];then
  exit 1
 fi
 
+# Run lightweight tests to verify the library is working
+echo -e "\033[01;34mRunning CFITSIO library tests\033[00m"
+
+if [ $ZLIB_TEST_RESULT -eq 0 ];then
+ # Sanity check: verify tools run and produce expected output
+ echo -n "Sanity check tools: "
+ for TOOL_TO_TEST in "$TARGET_DIR"/fitsverify util/listhead util/modhead util/fitscopy ;do
+  TOOL_OUTPUT=$("$TOOL_TO_TEST" 2>&1 || true)
+  if echo "$TOOL_OUTPUT" | grep -q -i "usage"; then
+   echo -n "$(basename "$TOOL_TO_TEST") OK, "
+  else
+   echo -e "\n\033[01;31mERROR: $(basename "$TOOL_TO_TEST") did not produce expected output\033[00m"
+   COMPILATION_ERROR=1
+  fi
+ done
+ echo "done!"
+fi
+
+# Compile and run CFITSIO testprog for comprehensive library test
+if [ $COMPILATION_ERROR -eq 0 ];then
+ echo "Compiling CFITSIO testprog..."
+ cd "$LIBRARY_SOURCE" || exit 1
+ $C_COMPILER -o testprog utilities/testprog.c -I. "$TARGET_DIR"/libcfitsio.a $ZLIB_LIBS -lm 2>/dev/null
+ if [ $? -eq 0 ] && [ -x testprog ]; then
+  echo "Running CFITSIO testprog (comprehensive library test)..."
+  ./testprog > testprog_output.log 2>&1
+  TESTPROG_STATUS=$?
+  if [ $TESTPROG_STATUS -eq 0 ];then
+   echo -e "CFITSIO testprog: \033[01;32mPASSED\033[00m"
+  else
+   echo -e "CFITSIO testprog: \033[01;31mFAILED (exit code $TESTPROG_STATUS)\033[00m"
+   echo "Last 20 lines of testprog output:"
+   tail -20 testprog_output.log
+   COMPILATION_ERROR=1
+  fi
+  # Cleanup test files
+  rm -f testprog testprog_output.log testprog.fit
+ else
+  echo "WARNING: Could not compile testprog (non-fatal)"
+ fi
+ cd "$VAST_DIR" || exit 1
+fi
+
+if [ $COMPILATION_ERROR -eq 1 ];then
+ echo -e "\033[01;31mCFITSIO TEST ERROR\033[00m"
+ exit 1
+fi
+
 echo -e "\033[01;34mFinished compiling CFITSIO library \033[00m"
 echo " "
