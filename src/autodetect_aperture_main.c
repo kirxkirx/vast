@@ -14,6 +14,37 @@
 
 #include "replace_file_with_symlink_if_filename_contains_white_spaces.h"
 
+// Write the catalog-to-image mapping to vast_images_catalogs.log
+// This function creates the file if it doesn't exist, or appends if the entry is not already present.
+// Note: vast.c has its own write_images_catalogs_logfile() that overwrites the entire file
+// with sequential naming (image00001.cat, etc.). This function is for standalone use of
+// autodetect_aperture_main where PID-based naming is used.
+static void update_vast_images_catalogs_log( const char *catalogfilename, const char *fitsfilename ) {
+ FILE *f;
+ char existing_catalog[FILENAME_LENGTH];
+ char existing_fits[FILENAME_LENGTH];
+ // First check if this entry already exists in the log
+ f= fopen( "vast_images_catalogs.log", "r" );
+ if ( f != NULL ) {
+  while ( 2 == fscanf( f, "%s %s", existing_catalog, existing_fits ) ) {
+   if ( 0 == strcmp( existing_fits, fitsfilename ) && 0 == strcmp( existing_catalog, catalogfilename ) ) {
+    // Entry already exists, no need to write again
+    fclose( f );
+    return;
+   }
+  }
+  fclose( f );
+ }
+ // Create or append the new entry
+ f= fopen( "vast_images_catalogs.log", "a" );
+ if ( f == NULL ) {
+  fprintf( stderr, "WARNING: cannot open vast_images_catalogs.log for writing\n" );
+  return;
+ }
+ fprintf( f, "%s %s\n", catalogfilename, fitsfilename );
+ fclose( f );
+}
+
 int main( int argc, char **argv ) {
  double double_garbage_JD;
  int int_garbage_timesys;
@@ -61,6 +92,8 @@ int main( int argc, char **argv ) {
  if ( 0 == strncmp( "sextract_single_image_noninteractive", basename( argv[0] ), strlen( "sextract_single_image_noninteractive" ) ) || 0 == strncmp( "fits2cat", basename( argv[0] ), strlen( "fits2cat" ) ) ) {
   // Perform the standard multi-run SExtractor processing and write the output source catalog
   aperture= autodetect_aperture( fitsfilename, sextractor_catalog, 0, 0, 0.0, X_im_size, Y_im_size, 2 );
+  // Write the catalog-to-image correspondence to the log file
+  update_vast_images_catalogs_log( sextractor_catalog, fitsfilename );
   // special case when we are emulating fits2cat
   if ( 0 == strncmp( "fits2cat", basename( argv[0] ), strlen( "fits2cat" ) ) ) {
    fprintf( stdout, "%s\n", sextractor_catalog );

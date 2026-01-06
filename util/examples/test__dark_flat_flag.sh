@@ -44,35 +44,48 @@ if [ $? -eq 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR005"
 fi
 
-for FILE_TO_TESI in image00000.cat ;do
- if [ ! -f "$FILE_TO_TESI" ];then
+# Get catalog name from vast_images_catalogs.log (new PID-based naming convention)
+if [ ! -s vast_images_catalogs.log ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR006a_no_vast_images_catalogs_log"
+else
+ CATALOG_NAME=$(grep 'd_test4.fit' vast_images_catalogs.log | awk '{print $1}')
+ if [ -z "$CATALOG_NAME" ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR006_$FILE_TO_TESI"
- fi
-done
-for FILE_TO_TESI in image00000.flag image00000.weight ;do
- if [ -f "$FILE_TO_TESI" ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR007_$FILE_TO_TESI"
- fi
-done
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR006b_catalog_not_in_log"
+ else
+  if [ ! -f "$CATALOG_NAME" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR006_$CATALOG_NAME"
+  fi
+  # Derive flag and weight filenames from catalog name
+  FLAG_NAME="${CATALOG_NAME%.cat}.flag"
+  WEIGHT_NAME="${CATALOG_NAME%.cat}.weight"
+  for FILE_TO_TEST in "$FLAG_NAME" "$WEIGHT_NAME" ;do
+   if [ -f "$FILE_TO_TEST" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR007_$FILE_TO_TEST"
+   fi
+  done
 
-N_LINES_SEXTRACTOR_CATALOG=`cat image00000.cat | wc -l`
-# expect 563
-if [ $N_LINES_SEXTRACTOR_CATALOG -gt 700 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR008_$N_LINES_SEXTRACTOR_CATALOG"
-fi
-if [ $N_LINES_SEXTRACTOR_CATALOG -lt 350 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR009_$N_LINES_SEXTRACTOR_CATALOG"
-fi
+  N_LINES_SEXTRACTOR_CATALOG=$(cat "$CATALOG_NAME" | wc -l)
+  # expect 563
+  if [ $N_LINES_SEXTRACTOR_CATALOG -gt 700 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR008_$N_LINES_SEXTRACTOR_CATALOG"
+  fi
+  if [ $N_LINES_SEXTRACTOR_CATALOG -lt 350 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR009_$N_LINES_SEXTRACTOR_CATALOG"
+  fi
 
-for FILE_TO_TESI in image00000.cat image00000.flag image00000.weight ;do
- if [ -f "$FILE_TO_TESI" ];then
-  rm -f "$FILE_TO_TESI"
+  for FILE_TO_TEST in "$CATALOG_NAME" "$FLAG_NAME" "$WEIGHT_NAME" ;do
+   if [ -f "$FILE_TO_TEST" ];then
+    rm -f "$FILE_TO_TEST"
+   fi
+  done
  fi
-done
+fi
 if [ -f fd_test4.fit ];then
  rm -f fd_test4.fit
 fi
@@ -105,16 +118,33 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR105"
 fi
 
-# grep '         0' will select only sources with 0 external flag
-N_LINES_SEXTRACTOR_CATALOG=`cat image00000.cat | grep '         0' | wc -l`
-# expect 571
-if [ $N_LINES_SEXTRACTOR_CATALOG -gt 700 ];then
+# Get catalog name from vast_images_catalogs.log (new PID-based naming convention)
+if [ ! -s vast_images_catalogs.log ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR106a_no_vast_images_catalogs_log"
+else
+ CATALOG_NAME=$(grep 'fd_test4.fit' vast_images_catalogs.log | awk '{print $1}')
+ if [ -z "$CATALOG_NAME" ];then
   TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR107_$N_LINES_SEXTRACTOR_CATALOG"
-fi
-if [ $N_LINES_SEXTRACTOR_CATALOG -lt 350 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR108_$N_LINES_SEXTRACTOR_CATALOG"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR106b_catalog_not_in_log"
+ else
+  if [ ! -f "$CATALOG_NAME" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR106_$CATALOG_NAME"
+  else
+   # grep '         0' will select only sources with 0 external flag
+   N_LINES_SEXTRACTOR_CATALOG=$(cat "$CATALOG_NAME" | grep '         0' | wc -l)
+   # expect 571
+   if [ $N_LINES_SEXTRACTOR_CATALOG -gt 700 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR107_$N_LINES_SEXTRACTOR_CATALOG"
+   fi
+   if [ $N_LINES_SEXTRACTOR_CATALOG -lt 350 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES DARK_FLAT_FLAG__ERROR108_$N_LINES_SEXTRACTOR_CATALOG"
+   fi
+  fi
+ fi
 fi
 
 
