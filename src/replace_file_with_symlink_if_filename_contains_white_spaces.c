@@ -289,22 +289,8 @@ void unpack_compressed_FITS_image( char *filename ) {
  //
  struct stat sb; // structure returned by stat() system call
 
- //unsigned int need_to_cutout_green_channel= 0;         // default is that we don't do anything
- //unsigned int does_the_header_look_like_DSLR_image= 0; // default - it does not
- //char *pointer_to_the_key_start;                       // for substring search with memmem()
-
- //char program[FLEN_CARD]; // FLEN_CARD length of a FITS header card defined in fitsio.h
-
  char command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
  char path_to_vast_string[VAST_PATH_MAX];
-
- //double isospeed;
-
- // fitsio
- //long naxes3;
- //int naxis;
- //int status= 0;
- //fitsfile *fptr; // pointer to the FITS file; defined in fitsio.h
 
  if ( 0 != fitsfile_read_check_silent( filename ) ) {
   return; // the input is not a readable FITS file, so we just quit
@@ -323,14 +309,6 @@ void unpack_compressed_FITS_image( char *filename ) {
    // trying to calm down CodeQL rather than fix any real issue here
    safely_encode_user_input_string( unpacked_image_name, unpacked_image_name_local, FILENAME_LENGTH - 1 );
    if ( 0 == strncmp( filename, vast_unpacked_images_log_original_image_name, FILENAME_LENGTH ) ) {
-    // escape special characters in the unpacked_image_name (as it was derived from "user input" fscanf() )
-    // if( 0 != any_unusual_characters_in_string(unpacked_image_name) ) {
-    // fprintf(stderr, "WARNING: any_unusual_characters_in_string(%s) returned 1\n", unpacked_image_name);
-    // continue;
-    // //fclose(vast_unpacked_images_log);
-    // //return;
-    //}
-    //
     if ( 0 == fitsfile_read_check_silent( unpacked_image_name_local ) ) {
      fprintf( stderr, "Found previously unpacked image %s %s\n", vast_unpacked_images_log_original_image_name, unpacked_image_name );
      // strncpy(filename, unpacked_image_name, FILENAME_LENGTH - 1);

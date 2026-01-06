@@ -527,7 +527,9 @@ int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogf
  FILE *f;
  f= fopen( "vast_images_catalogs.log", "r" );
  if ( f == NULL ) {
-  strcpy( catalogfilename, "image00000.cat" );
+  // Use PID to create a unique catalog name to avoid race conditions
+  // when multiple processes run in parallel on different images
+  sprintf( catalogfilename, "image_pid%05d.cat", (int)getpid() );
   return 1; // not only this image has not been processed, even "vast_images_catalogs.log" is not created yet!
  }
  int found= 0;
@@ -540,7 +542,9 @@ int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogf
  }
  fclose( f );
  if ( found == 0 ) {
-  strcpy( catalogfilename, "image00000.cat" );
+  // Use PID to create a unique catalog name to avoid race conditions
+  // when multiple processes run in parallel on different images
+  sprintf( catalogfilename, "image_pid%05d.cat", (int)getpid() );
   return 1; // it is possible that image00000.cat is referring to another image, so we'll recompute...
  }
  // Check if the catalog already exist

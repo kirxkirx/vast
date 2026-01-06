@@ -1878,15 +1878,15 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
 
   for i in $(awk '{print $17}' vast_image_details.log | sort | uniq); do
    # can't do parallell solving for compresed images
-   echo $(basename "$i") | grep -q '\.fz$'
-   if [ $? -eq 0 ];then
-    # do it serial
-    util/wcs_image_calibration.sh "$i"
-   else
+   #echo $(basename "$i") | grep -q '\.fz$'
+   #if [ $? -eq 0 ];then
+   # # do it serial
+   # util/wcs_image_calibration.sh "$i"
+   #else
     # do it parallel
     util/wcs_image_calibration.sh "$i" &
     calibrationPIDs+=($!)  # Append PID of the background process to the array
-   fi
+   #fi
   done
 
   # Wait for all wcs_image_calibration.sh processes to end processing
@@ -2115,14 +2115,14 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
    #util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> "$solve_plate_with_UCAC5_tempFile"  &
    # Same as above - do not run plate solving in parallel on compressed images - just in case
    # Tested - we actually need to serialize the compressed image processing - doesn't work otherwise
-   echo $(basename "$i") | grep -q '\.fz$'
-   if [ $? -eq 0 ];then
-    echo "Sequential run for $i" | tee -a transient_factory_test31.txt
-    util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> "$solve_plate_with_UCAC5_tempFile"
-   else
+   #echo $(basename "$i") | grep -q '\.fz$'
+   #if [ $? -eq 0 ];then
+   # echo "Sequential run for $i" | tee -a transient_factory_test31.txt
+   # util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> "$solve_plate_with_UCAC5_tempFile"
+   #else
     echo "Parallel run for $i" | tee -a transient_factory_test31.txt
     util/solve_plate_with_UCAC5 --no_photometric_catalog --iterations $UCAC5_PLATESOLVE_ITERATIONS  $i &> "$solve_plate_with_UCAC5_tempFile"  &
-   fi
+   #fi
   done
   
   # Calibrate magnitude scale with Tycho-2 or APASS stars in the field
