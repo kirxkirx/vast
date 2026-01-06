@@ -1,0 +1,6 @@
+{
+  "name": "VaST",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {},
+  "postCreateCommand": "sudo apt update && sudo apt install -y gfortran bc iputils-ping"
+}
