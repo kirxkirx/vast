@@ -269,6 +269,8 @@ fi
 INPUTFILE=$(echo "$THE_FOUR_IMAGE_FILES" | awk '{print $1}')
 check_file_exists "$INPUTFILE"
 INPUTFILE_BASENAME=$(basename "$INPUTFILE")
+# Remove .fz extension for compressed FITS files
+INPUTFILE_BASENAME="${INPUTFILE_BASENAME/.fz/}"
 WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
 WCS_INPUTFILE="${WCS_INPUTFILE/wcs_wcs_/wcs_}"
 WCS_INPUTFILE="${WCS_INPUTFILE/.fz/}"
@@ -291,6 +293,8 @@ cp -v r_"$WCS_INPUTFILE" "$OUTPUT_DIR"/resampled_FITS
 INPUTFILE=$(echo "$THE_FOUR_IMAGE_FILES" | awk '{print $2}')
 check_file_exists "$INPUTFILE"
 INPUTFILE_BASENAME=$(basename "$INPUTFILE")
+# Remove .fz extension for compressed FITS files
+INPUTFILE_BASENAME="${INPUTFILE_BASENAME/.fz/}"
 WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
 WCS_INPUTFILE="${WCS_INPUTFILE/wcs_wcs_/wcs_}"
 WCS_INPUTFILE="${WCS_INPUTFILE/.fz/}"
@@ -313,6 +317,8 @@ cp -v r_"$WCS_INPUTFILE" "$OUTPUT_DIR"/resampled_FITS
 INPUTFILE=$(echo "$THE_FOUR_IMAGE_FILES" | awk '{print $3}')
 check_file_exists "$INPUTFILE"
 INPUTFILE_BASENAME=$(basename "$INPUTFILE")
+# Remove .fz extension for compressed FITS files
+INPUTFILE_BASENAME="${INPUTFILE_BASENAME/.fz/}"
 WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
 WCS_INPUTFILE="${WCS_INPUTFILE/wcs_wcs_/wcs_}"
 WCS_INPUTFILE="${WCS_INPUTFILE/.fz/}"
@@ -335,6 +341,8 @@ cp -v r_"$WCS_INPUTFILE" "$OUTPUT_DIR"/resampled_FITS
 INPUTFILE=$(echo "$THE_FOUR_IMAGE_FILES" | awk '{print $4}')
 check_file_exists "$INPUTFILE"
 INPUTFILE_BASENAME=$(basename "$INPUTFILE")
+# Remove .fz extension for compressed FITS files
+INPUTFILE_BASENAME="${INPUTFILE_BASENAME/.fz/}"
 WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
 WCS_INPUTFILE="${WCS_INPUTFILE/wcs_wcs_/wcs_}"
 WCS_INPUTFILE="${WCS_INPUTFILE/.fz/}"

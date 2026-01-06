@@ -17541,6 +17541,11 @@ $GREP_RESULT"
    fi
   fi
 
+  util/transients/test_fastplot.sh
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLFINDNVUL24_FASTPLOT"
+  fi
 
   
   test_if_test31_tmp_files_are_present
@@ -17981,6 +17986,13 @@ $GREP_RESULT"
     rm -f "pv$$.fits"
    fi
   fi
+  
+  util/transients/test_fastplot.sh
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES FZ_NMWSTLFINDNVUL24_FASTPLOT"
+  fi
+
 
 
   
