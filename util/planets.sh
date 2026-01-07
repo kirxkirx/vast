@@ -63,7 +63,8 @@ if [ "$PLANETS_SH_LOCAL_OR_REMOTE" != "remote" ]; then
 
   python3 util/planet_finder/main.py calc -q -d "$JD" $PLANET_FINDER_OBSERVATORY_CODE_ARGUMENT
   if [ $? -eq 0 ]; then
-   echo "Positions of planets computed with util/planet_finder/main.py for JD(UT)$JD $PLANET_FINDER_OBSERVATORY_CODE_ARGUMENT" >&2
+   echo "Positions of planets computed with util/planet_finder/main.py for JD(UT)$JD $PLANET_FINDER_OBSERVATORY_CODE_ARGUMENT" > planets_header.txt
+   cat planets_header.txt >&2
    exit 0
   fi
  fi
@@ -76,7 +77,8 @@ if [ "$PLANETS_SH_LOCAL_OR_REMOTE" = "local" ]; then
 fi
 
 # Fall back to HORIZONS
-echo "Positions of planets from JPL HORIZONS for JD(UT)$JD at $MPC_CODE" >&2
+echo "Positions of planets from JPL HORIZONS for JD(UT)$JD at $MPC_CODE" > planets_header.txt
+cat planets_header.txt >&2
 
 # Add @399 suffix for HORIZONS if not present
 if [[ "$MPC_CODE" != *@* ]]; then

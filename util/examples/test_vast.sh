@@ -29608,13 +29608,45 @@ if command -v python3 &>/dev/null && \
   fi
  fi
 
+ # Test planets_header.txt for local computation
+ export PLANETS_SH_LOCAL_OR_REMOTE="local"
+ util/planets.sh 2460658.64631944 > planets.txt 2>/dev/null
+ if [ -s planets_header.txt ];then
+  if ! grep -q 'planet_finder' planets_header.txt ;then
+   TEST_PASSED=0
+   PLANETS_HEADER=$(cat planets_header.txt)
+   PLANETS_HEADER="${PLANETS_HEADER// /_}"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_PLANETS_HEADER_LOCAL_NOT_PLANET_FINDER__$PLANETS_HEADER"
+  fi
+ else
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_PLANETS_HEADER_LOCAL_MISSING"
+ fi
+ rm -f planets_header.txt planets.txt
+
+ # Test planets_header.txt for remote computation
+ export PLANETS_SH_LOCAL_OR_REMOTE="remote"
+ util/planets.sh 2460658.64631944 > planets.txt 2>/dev/null
+ if [ -s planets_header.txt ];then
+  if ! grep -q 'HORIZONS' planets_header.txt ;then
+   TEST_PASSED=0
+   PLANETS_HEADER=$(cat planets_header.txt)
+   PLANETS_HEADER="${PLANETS_HEADER// /_}"
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_PLANETS_HEADER_REMOTE_NOT_HORIZONS__$PLANETS_HEADER"
+  fi
+ else
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_PLANETS_HEADER_REMOTE_MISSING"
+ fi
+ rm -f planets_header.txt planets.txt
+
  unset PLANETS_SH_LOCAL_OR_REMOTE
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_SOLAR_SYSTEM_INFO_PLANET_LOCAL_REMOTE_POSITION_noskyfield"
 fi
 
 
-for SOLAR_SYSTEM_INFO_FILE_TO_REMOVE in planets.txt moons.txt spacecraft.txt comets.txt ;do
+for SOLAR_SYSTEM_INFO_FILE_TO_REMOVE in planets.txt planets_header.txt moons.txt spacecraft.txt comets.txt comets_header.txt ;do
  if [ -f "$SOLAR_SYSTEM_INFO_FILE_TO_REMOVE" ];then
   rm -f "$SOLAR_SYSTEM_INFO_FILE_TO_REMOVE"
  fi

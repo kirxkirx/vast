@@ -1071,7 +1071,7 @@ if [ -z "$LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR" ];then
 fi
 
 # Make sure there are no pleantes/comets/transients files
-for FILE_TO_REMOVE in planets.txt comets.txt moons.txt spacecraft.txt asassn_transients_list.txt tocp_transients_list.txt ;do
+for FILE_TO_REMOVE in planets.txt planets_header.txt comets.txt comets_header.txt moons.txt spacecraft.txt asassn_transients_list.txt tocp_transients_list.txt ;do
  if [ -f "$FILE_TO_REMOVE" ];then
   rm -f "$FILE_TO_REMOVE"
  fi
@@ -2748,8 +2748,10 @@ exclusion_list_index_html.txt NOT FOUND" | tee -a transient_factory_test31.txt
 if [ -n "$MPC_CODE" ];then
  echo "The observatory MPC code is $MPC_CODE" | tee -a transient_factory_test31.txt
 fi
-echo "############################################################
-Planet positions from JPL HORIZONS for JD(UT)$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS:" | tee -a transient_factory_test31.txt
+echo "############################################################" | tee -a transient_factory_test31.txt
+if [ -s planets_header.txt ];then
+ cat planets_header.txt | tee -a transient_factory_test31.txt
+fi
 cat planets.txt | tee -a transient_factory_test31.txt
 ls -lh planets.txt 2>&1 | tee -a transient_factory_test31.txt
 echo "############################################################
@@ -2811,7 +2813,7 @@ echo "</pre>" >> transient_report/index.html
 
 echo "</BODY></HTML>" >> transient_report/index.html
 
-for FILE_TO_REMOVE in planets.txt comets.txt moons.txt spacecraft.txt asassn_transients_list.txt tocp_transients_list.txt ;do
+for FILE_TO_REMOVE in planets.txt planets_header.txt comets.txt comets_header.txt moons.txt spacecraft.txt asassn_transients_list.txt tocp_transients_list.txt ;do
  if [ -f "$FILE_TO_REMOVE" ];then
   rm -f "$FILE_TO_REMOVE"
  fi
