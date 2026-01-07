@@ -21569,7 +21569,7 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 ######### SN2023ixf N130 image
 ### Disable this test for GitHub Actions
-if [ "$GITHUB_ACTIONS" != "true" ];then
+#if [ "$GITHUB_ACTIONS" != "true" ];then
 
 if [ ! -f ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit ];then
  if [ ! -d ../individual_images_test ];then
@@ -21668,7 +21668,7 @@ else
 fi
 
 ### Disable the above test for GitHub Actions
-fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+#fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 ######### TTU Skyview Obs. Tel.-4 0.3m + SBIG STC-428P CMOS
 if [ ! -f ../individual_images_test/fd_TOI-1518b_test_128sec_2x2__0128G_.fit ];then
