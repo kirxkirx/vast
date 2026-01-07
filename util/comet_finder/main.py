@@ -6,6 +6,8 @@ from skyfield.data import mpc
 from skyfield.constants import GM_SUN_Pitjeva_2005_km3_s2 as GM_SUN
 import math, datetime, os, argparse, sys
 import requests
+import fcntl
+import time
 
 
 DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
@@ -28,9 +30,10 @@ def main():
     load.verbose = args.quiet != True
 
     # Create date from argument
+    # Input JD is in UT, not TT - use ut1 for proper handling
     ts = load.timescale()
     if args.date != 0:
-        date = ts.tt_jd(args.date)
+        date = ts.ut1_jd(args.date)
     else:
         date = ts.now()  
         
@@ -80,7 +83,7 @@ def get_observatory_coordinates(code):
     """Get observatory coordinates by MPC code"""
     # Check if we have observatory data
     observatories = None
-    
+
     try:
         # First check if local file exists in current directory
         if os.path.exists(LOCAL_OBSERVATORY_FILE):
@@ -94,11 +97,8 @@ def get_observatory_coordinates(code):
         # Finally download if needed
         else:
             echo("-> Downloading MPC observatory data")
-            observatories = fetch_observatory_data()
-            # Cache for future use
-            if not os.path.exists(DIR):
-                os.makedirs(DIR)
-            observatories.to_csv(OBSERVATORY_CACHE_FILE, index=False)
+            observatories = fetch_observatory_data_with_lock()
+            # Cache for future use (already done in fetch_observatory_data_with_lock)
         
         # Add debugging info about available codes
         echo(f"-> Number of observatories loaded: {len(observatories)}")
@@ -129,10 +129,73 @@ def get_observatory_coordinates(code):
         raise
 
 
+def fetch_observatory_data_with_lock():
+    """
+    Fetch observatory data with file locking to prevent race conditions
+    when planet_finder and comet_finder run simultaneously.
+    """
+    lock_path = OBSERVATORY_CACHE_FILE + ".lock"
+
+    # Create data directory if needed
+    if not os.path.exists(DIR):
+        os.makedirs(DIR)
+
+    # Check if cache already exists (another process might have created it)
+    if os.path.exists(OBSERVATORY_CACHE_FILE):
+        echo("-> Using cached observatory data (created by another process)")
+        return pd.read_csv(OBSERVATORY_CACHE_FILE)
+
+    max_wait = 60  # 1 minute max wait for observatory data
+    wait_time = 0
+
+    try:
+        lock_file = open(lock_path, 'w')
+        while wait_time < max_wait:
+            try:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                # Got the lock - check if another process created cache while we waited
+                if os.path.exists(OBSERVATORY_CACHE_FILE):
+                    echo("-> Using cached observatory data (created by another process)")
+                    fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+                    lock_file.close()
+                    return pd.read_csv(OBSERVATORY_CACHE_FILE)
+
+                # Download and cache
+                observatories = fetch_observatory_data()
+                observatories.to_csv(OBSERVATORY_CACHE_FILE, index=False)
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+                lock_file.close()
+                return observatories
+
+            except IOError:
+                # Another process has the lock - wait
+                echo(f"-> Waiting for observatory data download... {wait_time}s")
+                time.sleep(2)
+                wait_time += 2
+
+                # Check if it's now available
+                if os.path.exists(OBSERVATORY_CACHE_FILE):
+                    lock_file.close()
+                    return pd.read_csv(OBSERVATORY_CACHE_FILE)
+
+        lock_file.close()
+        raise TimeoutError("Timeout waiting for observatory data download")
+
+    except TimeoutError:
+        raise
+    except Exception as e:
+        # Clean up lock file on error, then re-raise
+        try:
+            os.remove(lock_path)
+        except:
+            pass
+        raise
+
+
 def fetch_observatory_data():
     """Fetch and parse MPC observatory codes list with fallback to backup URL"""
     last_error = None
-    
+
     # Try primary URL
     try:
         echo(f"-> Attempting to download from {MPC_OBSERVATORY_URL}")
@@ -143,7 +206,7 @@ def fetch_observatory_data():
     except Exception as e:
         last_error = str(e)
         echo(f"-> Primary URL failed: {last_error}")
-    
+
     # Try backup URL
     try:
         echo(f"-> Attempting backup URL: {MPC_OBSERVATORY_URL_BACKUP}")
@@ -154,7 +217,7 @@ def fetch_observatory_data():
         last_error = f"HTTP status {response.status_code} from backup URL"
     except Exception as e:
         last_error = f"Backup URL also failed: {e}"
-    
+
     raise ConnectionError(f"cannot download observatory data because {last_error}")
 
 
@@ -352,8 +415,68 @@ def fetch_cometas_data(ts, reload=False):
 
 
 def load_eph():
-    eph = load(EPHEMERIDES_FILE)
-    return eph
+    """
+    Load ephemeris with file locking to handle concurrent access.
+    This prevents race conditions when planet_finder and comet_finder
+    run simultaneously.
+    """
+    eph_path = os.path.join(DIR, EPHEMERIDES_FILE)
+    lock_path = eph_path + ".lock"
+
+    # If ephemeris exists, just load it
+    if os.path.exists(eph_path):
+        return load(EPHEMERIDES_FILE)
+
+    # Need to download - use file locking to prevent race conditions
+    echo("-> Ephemeris not found, downloading...")
+
+    # Create data directory if needed
+    if not os.path.exists(DIR):
+        os.makedirs(DIR)
+
+    # Try to acquire lock
+    max_wait = 300  # 5 minutes max wait
+    wait_time = 0
+
+    try:
+        lock_file = open(lock_path, 'w')
+        while wait_time < max_wait:
+            try:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                # Got the lock - check if another process downloaded it while we waited
+                if os.path.exists(eph_path):
+                    echo("-> Ephemeris downloaded by another process")
+                    fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+                    lock_file.close()
+                    return load(EPHEMERIDES_FILE)
+
+                # Download ephemeris
+                eph = load(EPHEMERIDES_FILE)
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+                lock_file.close()
+                return eph
+
+            except IOError:
+                # Another process has the lock - wait
+                echo(f"-> Waiting for ephemeris download (another process)... {wait_time}s")
+                time.sleep(5)
+                wait_time += 5
+
+                # Check if it's now available
+                if os.path.exists(eph_path):
+                    lock_file.close()
+                    return load(EPHEMERIDES_FILE)
+
+        lock_file.close()
+        raise TimeoutError("Timeout waiting for ephemeris download")
+
+    except Exception as e:
+        # Clean up lock file on error
+        try:
+            os.remove(lock_path)
+        except:
+            pass
+        raise
 
 
 def clean_int(value: str):

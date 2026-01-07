@@ -7,12 +7,11 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
+CONNECTION_TIMEOUT_SEC=10
+
 if [ -z "$MPC_CODE" ];then
  # Default MPC code is 500 - geocenter
  MPC_CODE=500
-fi
-if [[ "$MPC_CODE" != *@* ]]; then
- MPC_CODE="${MPC_CODE}@399"
 fi
 
 isFloat() {
@@ -48,7 +47,41 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
+# Try local skyfield-based computation first (unless explicitly set to "remote")
+if [ "$PLANETS_SH_LOCAL_OR_REMOTE" != "remote" ]; then
+ if command -v python3 &>/dev/null && \
+  python3 -c "import skyfield" &>/dev/null; then
 
+  # Strip MPC_CODE from @399 suffix if present
+  MPC_CODE_LOCAL="${MPC_CODE%@*}"
+
+  if [ -n "$MPC_CODE_LOCAL" ] && [ -f ObsCodes.html ] && grep -q "^$MPC_CODE_LOCAL " ObsCodes.html ; then
+   PLANET_FINDER_OBSERVATORY_CODE_ARGUMENT="-observatory $MPC_CODE_LOCAL"
+  else
+   PLANET_FINDER_OBSERVATORY_CODE_ARGUMENT=""
+  fi
+
+  python3 util/planet_finder/main.py calc -q -d "$JD" $PLANET_FINDER_OBSERVATORY_CODE_ARGUMENT
+  if [ $? -eq 0 ]; then
+   echo "Positions of planets computed with util/planet_finder/main.py for JD(UT)$JD $PLANET_FINDER_OBSERVATORY_CODE_ARGUMENT" >&2
+   exit 0
+  fi
+ fi
+fi
+
+# Explicitly fail if local planet search was required but unsuccessful
+if [ "$PLANETS_SH_LOCAL_OR_REMOTE" = "local" ]; then
+ echo "Local planet position computation failed!"
+ exit 1
+fi
+
+# Fall back to HORIZONS
+echo "Positions of planets from JPL HORIZONS for JD(UT)$JD at $MPC_CODE" >&2
+
+# Add @399 suffix for HORIZONS if not present
+if [[ "$MPC_CODE" != *@* ]]; then
+ MPC_CODE="${MPC_CODE}@399"
+fi
 
 for PLANET_NAME in Mercury Venus Mars Jupiter Saturn Uranus Neptune Pluto Moon ;do
  # Match the planet name to its PLANET_ID

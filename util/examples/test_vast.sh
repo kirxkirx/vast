@@ -29548,6 +29548,72 @@ else
 fi
 
 
+# Test planets local skyfield vs remote HORIZONS (if we can compute locally)
+if command -v python3 &>/dev/null && \
+ python3 -c "import skyfield" &>/dev/null && \
+ python3 -c "import numpy" &>/dev/null && \
+ python3 -c "import pandas" &>/dev/null; then
+
+ # Test geocentric planet positions (MPC code 500)
+ export PLANETS_SH_LOCAL_OR_REMOTE="local"
+ POSITION_LOCAL_MARS=$(util/planets.sh 2460658.64631944 2>/dev/null | grep Mars | awk '{print $1" "$2}')
+ if [ $? -ne 0 ] || [ -z "$POSITION_LOCAL_MARS" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_local_planets_computation_failed"
+ fi
+
+ # Expected position from HORIZONS for Mars at JD 2460658.64631944 (geocentric)
+ EXPECTED_500_POSITION_FROM_HORIZONS_MARS="08:34:38.49 +21:57:21.8"
+ if [ -n "$POSITION_LOCAL_MARS" ];then
+  # 0.0083 deg is 30 arcsec - acceptable tolerance for planet position
+  if ! lib/put_two_sources_in_one_field $POSITION_LOCAL_MARS $EXPECTED_500_POSITION_FROM_HORIZONS_MARS 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.0083 ? 0 : 1)}' ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_PLANET_LOCAL_POSITION_MISMATCH_${POSITION_LOCAL_MARS// /_}_${EXPECTED_500_POSITION_FROM_HORIZONS_MARS// /_}"
+  fi
+ fi
+
+ # Test Moon position (most sensitive to timing/ephemeris differences)
+ POSITION_LOCAL_MOON=$(util/planets.sh 2460658.64631944 2>/dev/null | grep Moon | awk '{print $1" "$2}')
+ if [ -n "$POSITION_LOCAL_MOON" ];then
+  # Expected position from HORIZONS for Moon at JD 2460658.64631944 (geocentric)
+  EXPECTED_500_POSITION_FROM_HORIZONS_MOON="04:12:07.99 +25:40:03.9"
+  # 0.0167 deg is 60 arcsec - Moon moves fast so we allow larger tolerance
+  if ! lib/put_two_sources_in_one_field $POSITION_LOCAL_MOON $EXPECTED_500_POSITION_FROM_HORIZONS_MOON 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.0167 ? 0 : 1)}' ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_MOON_LOCAL_POSITION_MISMATCH_${POSITION_LOCAL_MOON// /_}_${EXPECTED_500_POSITION_FROM_HORIZONS_MOON// /_}"
+  fi
+ fi
+
+ export PLANETS_SH_LOCAL_OR_REMOTE="remote"
+ POSITION_REMOTE_MARS=$(util/planets.sh 2460658.64631944 2>/dev/null | grep Mars | awk '{print $1" "$2}')
+ if [ $? -ne 0 ] || [ -z "$POSITION_REMOTE_MARS" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_remote_planets_computation_failed"
+ fi
+
+ if [ -n "$POSITION_REMOTE_MARS" ];then
+  # 0.0028 deg is 10 arcsec
+  if ! lib/put_two_sources_in_one_field $POSITION_REMOTE_MARS $EXPECTED_500_POSITION_FROM_HORIZONS_MARS 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.0028 ? 0 : 1)}' ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_PLANET_REMOTE_POSITION_MISMATCH_${POSITION_REMOTE_MARS// /_}_${EXPECTED_500_POSITION_FROM_HORIZONS_MARS// /_}"
+  fi
+ fi
+
+ if [ -n "$POSITION_LOCAL_MARS" ] && [ -n "$POSITION_REMOTE_MARS" ];then
+  # Compare local vs remote positions
+  # 0.0083 deg is 30 arcsec - acceptable difference between local and remote
+  if ! lib/put_two_sources_in_one_field $POSITION_LOCAL_MARS $POSITION_REMOTE_MARS 2>&1 | grep 'Angular distance' | awk '{exit ($5 < 0.0083 ? 0 : 1)}' ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SOLAR_SYSTEM_INFO_PLANET_LOCAL_REMOTE_POSITION_MISMATCH_${POSITION_LOCAL_MARS// /_}_${POSITION_REMOTE_MARS// /_}"
+  fi
+ fi
+
+ unset PLANETS_SH_LOCAL_OR_REMOTE
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_SOLAR_SYSTEM_INFO_PLANET_LOCAL_REMOTE_POSITION_noskyfield"
+fi
+
+
 for SOLAR_SYSTEM_INFO_FILE_TO_REMOVE in planets.txt moons.txt spacecraft.txt comets.txt ;do
  if [ -f "$SOLAR_SYSTEM_INFO_FILE_TO_REMOVE" ];then
   rm -f "$SOLAR_SYSTEM_INFO_FILE_TO_REMOVE"

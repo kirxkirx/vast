@@ -54,13 +54,21 @@ if [ "$COMET_SH_LOCAL_OR_REMOTE" != "remote" ]; then
   python3 -c "import numpy" &>/dev/null && \
   python3 -c "import pandas" &>/dev/null; then
 
-  if [ -n "$MPC_CODE" ] && grep -q "$MPC_CODE " ObsCodes.html; then
-   COMET_FINDER_OBSERVATORY_CODE_ARGUMENT="-observatory $MPC_CODE"
+  # Just in case strip MPC_CODE form @399
+  MPC_CODE_LOCAL="${MPC_CODE%@*}"
+
+  if [ -n "$MPC_CODE_LOCAL" ] && [ -f ObsCodes.html ] && grep -q "^$MPC_CODE_LOCAL " ObsCodes.html ; then
+   COMET_FINDER_OBSERVATORY_CODE_ARGUMENT="-observatory $MPC_CODE_LOCAL"
   else
    COMET_FINDER_OBSERVATORY_CODE_ARGUMENT=""
   fi
-
-  python3 util/comet_finder/main.py calc -qd "$JD" $COMET_FINDER_OBSERVATORY_CODE_ARGUMENT
+  #if [ -n "$MPC_CODE" ] && grep -q "$MPC_CODE " ObsCodes.html; then
+  # COMET_FINDER_OBSERVATORY_CODE_ARGUMENT="-observatory $MPC_CODE"
+  #else
+  # COMET_FINDER_OBSERVATORY_CODE_ARGUMENT=""
+  #fi
+  
+  python3 util/comet_finder/main.py calc -q -d "$JD" $COMET_FINDER_OBSERVATORY_CODE_ARGUMENT
   if [ $? -eq 0 ]; then
    echo "Positions of bright comets computed with util/comet_finder/main.py for JD(UT)$JD $COMET_FINDER_OBSERVATORY_CODE_ARGUMENT" > comets_header.txt
    cat comets_header.txt >&2

@@ -1208,36 +1208,33 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
   continue
  fi
  # Test if the images look like FITS images
- echo -n "Read-check the input FITS images... "
- echo -n "Read-check the input FITS images... " >> transient_factory_test31.txt
+ echo -n "Read-check the input FITS images... " | tee -a transient_factory_test31.txt
  for FITS_FILE_TO_CHECK in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" ;do
   # We assume that if util/listhead can read it - chances are the input is a readable FITS file
   util/listhead "$FITS_FILE_TO_CHECK" > /dev/null
   if [ $? -ne 0 ];then
    echo "ERROR reading the FITS file $FITS_FILE_TO_CHECK"
-  fi  
+  fi
  done | grep 'ERROR reading the FITS file' >> transient_factory_test31.txt && continue # continue to the next field
  #
  echo "read-check OK" | tee -a transient_factory_test31.txt
  #
  # Test if any images are blank (constant values - camera error)
- if [ -f lib/is_fits_image_blank ];then
-  echo -n "Blank image check the input FITS images... "
-  echo -n "Blank image check the input FITS images... " >> transient_factory_test31.txt
+ if [ -x lib/is_fits_image_blank ];then
+  echo -n "Blank image check the input FITS images... " | tee -a transient_factory_test31.txt
   for FITS_FILE_TO_CHECK in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" ;do
    lib/is_fits_image_blank "$FITS_FILE_TO_CHECK" > /dev/null 2>&1
    BLANK_CHECK_EXIT_CODE=$?
    if [ $BLANK_CHECK_EXIT_CODE -eq 1 ];then
     echo "ERROR: blank image (camera error?) $FITS_FILE_TO_CHECK"
    fi
-  done | grep 'ERROR: blank image' | tee -a transient_factory_test31.txt && continue # continue to the next field
+  done | grep 'ERROR: blank image' >> transient_factory_test31.txt && continue # continue to the next field
   #
   echo "blank-image-check OK" | tee -a transient_factory_test31.txt
  fi
  #
  # Test if we can get the observing date from FITS images
- echo -n "Read date check the input FITS images... "
- echo -n "Read date check the input FITS images... " >> transient_factory_test31.txt
+ echo -n "Read date check the input FITS images... " | tee -a transient_factory_test31.txt
  for FITS_FILE_TO_CHECK in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" ;do
   # We assume that if util/listhead can read it - chances are the input is a readable FITS file
   util/get_image_date "$FITS_FILE_TO_CHECK" > /dev/null
@@ -1859,8 +1856,6 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
 
   if [ ! -f planets.txt ] && [ -z "$THIS_IS_ARTIFICIAL_STAR_TEST_DO_NO_ONLINE_VSX_SEARCH" ];then
    JD_FIRSTIMAGE_FOR_PLANET_POSITIONS=$(util/get_image_date "$SECOND_EPOCH__FIRST_IMAGE" 2>&1 | grep ' JD ' | tail -n1 | awk '{print $2}')
-   #echo "The reference JD(UT) for computing planet and comet positions: $JD_FIRSTIMAGE_FOR_PLANET_POSITIONS"
-   #echo "The reference JD(UT) for computing planet and comet positions: $JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" >> transient_factory_test31.txt
    echo "The reference JD(UT) for computing planet and comet positions: $JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" | tee -a transient_factory_test31.txt
    $TIMEOUTCOMMAND util/planets.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > planets.txt &
    $TIMEOUTCOMMAND util/comets.sh "$JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" > comets.txt &
