@@ -24,10 +24,6 @@ https://ui.adsabs.harvard.edu/abs/2020ApJS..249...18C/abstract
 
 * Add support for "bias + scaled dark" CCD image calibration strategy
 
-* A NOVAS-based routine that would compute geocentric J2000 positions of major planets.
-(This is for quickly identifying bright transient candidates, so no need for high positional accuracy.)
-For now we have a HORIZONS-based script: util/planets.sh
-
 * On fresh install the VSX catalog update is slow and silent.
 Need to inform the user about what is going on!
 

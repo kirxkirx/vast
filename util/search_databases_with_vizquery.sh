@@ -509,7 +509,7 @@ The script will try to download these catalogs now - it will take some time!
  ######
  ######
  echo -n "VSX (local copy) and ASASSN-V (local copy)  "
- LOCAL_CATALOG_SEARCH_RESULTS=$("$VAST_PATH"lib/catalogs/check_catalogs_offline $GOOD_CATALOG_POSITION_DEG 2>/dev/null)
+ LOCAL_CATALOG_SEARCH_RESULTS=$("$VAST_PATH"lib/catalogs/check_catalogs_offline $GOOD_CATALOG_POSITION_DEG)
  if [ $? -eq 0 ];then
   # The object is found in local catalogs
   # Mac doesn't allow '-m1 -A1' combination for grep (!!!)

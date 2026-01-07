@@ -14,8 +14,8 @@ export LANGUAGE LC_ALL
 #################################
 
 if [ ! -x lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search ];then
- echo "Error: Could not find lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search"
- echo "You need to compile VaST by running 'make' before running the script $0"
+ echo "Error: Could not find lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search" >&2
+ echo "You need to compile VaST by running 'make' before running the script $0" >&2
  exit 1
 fi
 
@@ -29,7 +29,7 @@ get_tycho2_from_scan_with_curl() {
     listing=$(curl $VAST_CURL_PROXY -s "$url" | grep -o 'href="[^"]*"' | cut -d'"' -f2)
 
     if [[ -z "$listing" ]]; then
-        echo "Error: Could not retrieve directory listing"
+        echo "Error: Could not retrieve directory listing" >&2
         return 1
     fi
 
@@ -39,18 +39,18 @@ get_tycho2_from_scan_with_curl() {
 
         # Check if file matches the desired patterns
         if [[ "$item" == "ReadMe" || "$item" == *.gz || "$item" == "robots.txt" ]]; then
-            echo "Downloading: $item"
+            echo "Downloading: $item" >&2
             curl --silent --show-error --max-time $CATALOG_DOWNLOAD_TIMEOUT_SEC \
                 $VAST_CURL_PROXY --continue-at - --retry $max_retries --retry-delay $retry_delay \
                 --create-dirs -o "$item" "${url}${item}"
             if [[ $? -ne 0 ]]; then
-                echo "Failed to download: $item after $max_retries attempts"
+                echo "Failed to download: $item after $max_retries attempts" >&2
                 return 1
             fi
         fi
     done
 
-    echo "All files downloaded successfully"
+    echo "All files downloaded successfully" >&2
     return 0
 }
 
@@ -156,7 +156,7 @@ if [ ! -z "$1" ];then
 fi
 
 if [ ! -d lib/catalogs ];then
- echo "ERROR locating lib/catalogs" 
+ echo "ERROR locating lib/catalogs" >&2
  exit 1
 fi
 
@@ -201,11 +201,11 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
 
  # check if the file is there at all
  if [ ! -s "$FILE_TO_UPDATE" ];then
-  echo "There is no file $FILE_TO_UPDATE or it is empty" 
+  echo "There is no file $FILE_TO_UPDATE or it is empty" >&2
   if [ $DOWNLOAD_EVERYTHING -eq 1 ] ;then
    NEED_TO_UPDATE_THE_FILE=1
   else
-   echo "No need to update $FILE_TO_UPDATE"
+   echo "No need to update $FILE_TO_UPDATE" >&2
    continue
   fi 
   #
@@ -215,14 +215,14 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
   if [ $? -ne 0 ];then
    FILE_MODIFICATION_DATE=`stat -f "%m" "$FILE_TO_UPDATE" 2>/dev/null`
    if [ $? -ne 0 ];then
-    echo "ERROR cannot get modification time for $FILE_TO_UPDATE" 
+    echo "ERROR cannot get modification time for $FILE_TO_UPDATE" >&2
     exit 1
    fi
   fi
   # Check that FILE_MODIFICATION_DATE actually contains Unix seconds
   re='^[0-9]+$'
   if ! [[ $FILE_MODIFICATION_DATE =~ $re ]] ; then
-   echo "ERROR inappropriate content of FILE_MODIFICATION_DATE=$FILE_MODIFICATION_DATE" 
+   echo "ERROR inappropriate content of FILE_MODIFICATION_DATE=$FILE_MODIFICATION_DATE" >&2
    exit 1
   fi
  fi
@@ -238,13 +238,13 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
  fi
  
  if [ "$1" == "force" ];then
-  echo "Forcing the catalog update per user request"  
+  echo "Forcing the catalog update per user request" >&2
   NEED_TO_UPDATE_THE_FILE=1
  fi
 
  # Update the file if needed
  if [ $NEED_TO_UPDATE_THE_FILE -eq 1 ];then
-  echo "######### Updating $FILE_TO_UPDATE #########" 
+  echo "######### Updating $FILE_TO_UPDATE #########" >&2 
   CURL_COMMAND=""
   CURL_LOCAL_COMMAND=""
   UNPACK_COMMAND=""
@@ -275,15 +275,15 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
    UNPACK_COMMAND=""
   fi
   if [ -z "$CURL_COMMAND" ];then
-   echo "ERROR CURL_COMMAND is not set" 
+   echo "ERROR CURL_COMMAND is not set" >&2
    exit 1
   fi
   if [ -z "$CURL_LOCAL_COMMAND" ];then
-   echo "ERROR CURL_LOCAL_COMMAND is not set" 
+   echo "ERROR CURL_LOCAL_COMMAND is not set" >&2
    exit 1
   fi
   if [ -z "$TMP_OUTPUT" ];then
-   echo "ERROR TMP_OUTPUT is not set" 
+   echo "ERROR TMP_OUTPUT is not set" >&2
    exit 1
   fi
   
@@ -297,8 +297,8 @@ for FILE_TO_UPDATE in ObsCodes.html astorb.dat lib/catalogs/vsx.dat lib/catalogs
 
   # First try to download a catalog from the mirror
   echo "### CURL_LOCAL_COMMAND ###
-$PWD" 
-  echo "$CURL_LOCAL_COMMAND" 
+$PWD" >&2
+  echo "$CURL_LOCAL_COMMAND" >&2
   $CURL_LOCAL_COMMAND
   if [ $? -ne 0 ];then
    # Clean up the possible incompele downlaod - we can't be sure if $CURL_LOCAL_COMMAND and $CURL_LOCAL_COMMAND point to exact same version of the file
@@ -310,10 +310,10 @@ $PWD"
    fi
    #
    # if that failed, try to download the catalog from the original link
-   echo "Failed to download from the local link, fallig back to $CURL_COMMAND" 
+   echo "Failed to download from the local link, fallig back to $CURL_COMMAND" >&2
    $CURL_COMMAND
    if [ $? -ne 0 ];then
-    echo "ERROR running the download command" 
+    echo "ERROR running the download command" >&2 
     if [ -f "$TMP_OUTPUT" ];then
      rm -f "$TMP_OUTPUT"
     fi
@@ -324,37 +324,37 @@ $PWD"
    fi
    #
   fi # if that failed
-  echo "TMP_OUTPUT=$TMP_OUTPUT"
+  echo "TMP_OUTPUT=$TMP_OUTPUT" >&2
   # If we are still here, we downloaded the catalog, one way or the other
   if [ ! -z "$UNPACK_COMMAND" ];then
    echo "### UNPACK_COMMAND ###
 We are currently at $PWD
-Will run the unpack command: $UNPACK_COMMAND" 
+Will run the unpack command: $UNPACK_COMMAND" >&2
    # The output of this ls run makes me nervous as on of the files does not exist
    $UNPACK_COMMAND
    if [ $? -ne 0 ];then
-    echo "ERROR running $UNPACK_COMMAND" 
+    echo "ERROR running $UNPACK_COMMAND" >&2
     exit 1
    else
-    echo "Unpack complete" 
+    echo "Unpack complete" >&2
    fi
   fi
   if [ ! -s "$TMP_OUTPUT" ];then
-   echo "ERROR: $TMP_OUTPUT is EMPTY!"  
+   echo "ERROR: $TMP_OUTPUT is EMPTY!" >&2  
    if [ -f "$TMP_OUTPUT" ];then
     rm -f "$TMP_OUTPUT"
    fi
    exit 1
   fi
-  mv -v "$TMP_OUTPUT" "$FILE_TO_UPDATE"  && touch "$FILE_TO_UPDATE"
-  echo "Successfully updated $FILE_TO_UPDATE"
+  mv "$TMP_OUTPUT" "$FILE_TO_UPDATE" && touch "$FILE_TO_UPDATE" && echo "Moved $TMP_OUTPUT to $FILE_TO_UPDATE" >&2
+  echo "Successfully updated $FILE_TO_UPDATE" >&2
  fi
 
 done
 
 ### Check if the  Bright  Star  Catalogue  (BSC) has been downloaded
 if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ ! -s "lib/catalogs/brightbright_star_catalog_radeconly.txt" ] ;then
- echo "Downloading the Bright Star Catalogue"
+ echo "Downloading the Bright Star Catalogue" >&2
  # The CDS link is down
  #curl --silent ftp://cdsarc.u-strasbg.fr/pub/cats/V/50/catalog.gz | gunzip > lib/catalogs/bright_star_catalog_original.txt
  # Changed to local copy
@@ -362,11 +362,11 @@ if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ ! -s "lib/catal
  #curl --silent "$LOCAL_SERVER/bright_star_catalog_original.txt.gz" | gunzip > lib/catalogs/bright_star_catalog_original.txt
  curl $VAST_CURL_PROXY --connect-timeout 10 --insecure --silent --output lib/catalogs/bright_star_catalog_original.txt "$LOCAL_SERVER/bright_star_catalog_original.txt"
  if [ $? -eq 0 ];then
-  echo "Extracting the R.A. Dec. list (all BSC)"
+  echo "Extracting the R.A. Dec. list (all BSC)" >&2
   cat lib/catalogs/bright_star_catalog_original.txt | grep -v -e 'NOVA' -e '47    Tuc' -e 'M 31' -e 'NGC 2281' -e 'M 67' -e 'NGC 2808' | while IFS= read -r STR ;do 
    echo "${STR:75:2}:${STR:77:2}:${STR:79:4} ${STR:83:3}:${STR:86:2}:${STR:88:2}" 
   done > lib/catalogs/bright_star_catalog_radeconly.txt
-  echo "Extracting the R.A. Dec. list (stars brighter than mag 4)"
+  echo "Extracting the R.A. Dec. list (stars brighter than mag 4)" >&2
   # Exact lines, no trimming, Without '-r' option, any backslashes in the input will be discarded. You should almost always use the -r option with read.
   cat lib/catalogs/bright_star_catalog_original.txt | grep -v -e 'NOVA' -e '47    Tuc' -e 'M 31' -e 'NGC 2281' -e 'M 67' -e 'NGC 2808' | while IFS= read -r STR ;do 
    #echo "#$STR#"
@@ -379,7 +379,7 @@ if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ ! -s "lib/catal
    # https://stackoverflow.com/questions/806906/how-do-i-test-if-a-variable-is-a-number-in-bash
    re='^[+-]?[0-9]+([.][0-9]+)?$'
    if ! [[ $MAG =~ $re ]] ; then
-    echo "TEST ERROR: $MAG" 
+    echo "TEST ERROR: $MAG" >&2
     continue
    fi
    # Make sure we have the proper format
@@ -391,7 +391,7 @@ if [ ! -s "lib/catalogs/bright_star_catalog_original.txt" ] || [ ! -s "lib/catal
    echo "${STR:75:2}:${STR:77:2}:${STR:79:4} ${STR:83:3}:${STR:86:2}:${STR:88:2}" 
   done > lib/catalogs/brightbright_star_catalog_radeconly.txt
  else
-  echo "ERROR in $0 while downloading/unpacking the Bright Star Catalogue"
+  echo "ERROR in $0 while downloading/unpacking the Bright Star Catalogue" >&2
   exit 1
  fi
 #can't have output here as it goes straight to the transient candidates list
@@ -418,22 +418,22 @@ if [ -d "lib/catalogs/tycho2" ] && [ -z "$(ls -A "lib/catalogs/tycho2")" ] ;then
 fi
 #
 if [ ! -f "$TYCHO_PATH/tyc2.dat.00" ];then
- echo "No local copy of Tycho-2 found (no $TYCHO_PATH/tyc2.dat.00)"
+ echo "No local copy of Tycho-2 found (no $TYCHO_PATH/tyc2.dat.00)" >&2
  # Check if there is a local copy of Tycho-2 in the top directory
  if [ -s ../tycho2/tyc2.dat.19 ];then
   echo "Found nonempty ../tycho2/tyc2.dat.19
-  ln -s ../tycho2 $TYCHO_PATH"
+  ln -s ../tycho2 $TYCHO_PATH" >&2
   #ln -s `readlink -f ../tycho2` $TYCHO_PATH
   ln -s $(vastrealpath ../tycho2) "$TYCHO_PATH"
  else
   #
-  echo "Tycho-2 catalog was not found at $TYCHO_PATH -- will try to download it"
+  echo "Tycho-2 catalog was not found at $TYCHO_PATH -- will try to download it" >&2
   if [ ! -d "$TYCHO_PATH" ];then
    mkdir "$TYCHO_PATH" || exit 1
   fi
   # Test if a path is a writable directory
   if [ ! -d "$TYCHO_PATH" ] || [ ! -w "$TYCHO_PATH" ];then
-   echo "ERROR in $0: $TYCHO_PATH is not a writable directory!"
+   echo "ERROR in $0: $TYCHO_PATH is not a writable directory!" >&2
    exit 1
   fi
   #
@@ -449,7 +449,7 @@ if [ ! -f "$TYCHO_PATH/tyc2.dat.00" ];then
   # No $VAST_CURL_PROXY support here!
   #wget -nH --cut-dirs=4 --no-parent -r -l0 -c -A 'ReadMe,*.gz,robots.txt' "http://scan.sai.msu.ru/~kirx/data/tycho2/"
   get_tycho2_from_scan_with_curl
-  echo "Download complete. Unpacking..."
+  echo "Download complete. Unpacking..." >&2
   for i in tyc2.dat.*gz ;do
    # handle a very special case: `basename $i .gz` is a broken symlink
    if [ -L `basename $i .gz` ];then
@@ -469,11 +469,11 @@ fi
 # Check if Tycho-2 copy looks healthy
 for i in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19; do
  if [ ! -f "$TYCHO_PATH"/tyc2.dat."$i" ];then
-  echo "ERROR in $0 while checking Tycho-2 copy: file $TYCHO_PATH/tyc2.dat.$i is not found"
+  echo "ERROR in $0 while checking Tycho-2 copy: file $TYCHO_PATH/tyc2.dat.$i is not found" >&2
   exit 1
  fi
  if [ ! -s "$TYCHO_PATH"/tyc2.dat."$i" ];then
-  echo "ERROR in $0 while checking Tycho-2 copy: file $TYCHO_PATH/tyc2.dat.$i is empty"
+  echo "ERROR in $0 while checking Tycho-2 copy: file $TYCHO_PATH/tyc2.dat.$i is empty" >&2
   exit 1
  fi
 done
@@ -486,11 +486,11 @@ if [ ! -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
  # also in 
  lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search 9.1
  if [ $? -ne 0 ];then
-  echo "ERROR in $0: non-zero exit code from running 'lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search 9.1'"
+  echo "ERROR in $0: non-zero exit code from running 'lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search 9.1'" >&2
   exit 1
  fi
  if [ ! -s lib/catalogs/list_of_bright_stars_from_tycho2.txt ];then
-  echo "ERROR in $0: lib/catalogs/list_of_bright_stars_from_tycho2.txt is empty"
+  echo "ERROR in $0: lib/catalogs/list_of_bright_stars_from_tycho2.txt is empty" >&2
   exit 1
  fi
 fi
