@@ -24,10 +24,6 @@ https://ui.adsabs.harvard.edu/abs/2020ApJS..249...18C/abstract
 
 * Test if the input image is blank (no noise, no stars)
 
-* Fix the rounding error in date coversion 
-util/get_image_date 2020-07-15.841 != 2459046.340995
-util/get_image_date 2020-08-05.271 != 2459066.770995
-
 * Add support for "bias + scaled dark" CCD image calibration strategy
 
 * A NOVAS-based routine that would compute geocentric J2000 positions of major planets.

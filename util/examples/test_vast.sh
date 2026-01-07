@@ -21618,8 +21618,10 @@ if [ -f ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit
   FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130002"
  else
   TEST=`grep -v '0.000 0.000   0.000 0.000   0.000 0.000' wcs_2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit.cat.ucac5 | wc -l | awk '{print $1}'`
-  # expect 431
-  if [ $TEST -lt 300 ];then
+  # expect 431 -- that's the wrong expectation - that's the number if saturation limit was not determined so saturated stars are included in APASS catalog match, which we don't want!
+  #if [ $TEST -lt 300 ];then
+  # expect 253 - that's the correct expectation that excludes saturated stars
+  if [ $TEST -lt 200 ] || [ $TEST -gt 300 ] ;then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130002a_$TEST"
   fi

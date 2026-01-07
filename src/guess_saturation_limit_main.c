@@ -21,6 +21,7 @@ int main( int argc, char **argv ) {
  char fitsfilename[FILENAME_LENGTH];
 
  char gain_sextractor_cl_parameter_string[FILENAME_LENGTH];
+ char saturation_limit_sextractor_cl_parameter_string[FILENAME_LENGTH];
  char flag_image_sextractor_cl_parameter_string[FILENAME_LENGTH];
  char flag_image_filename[FILENAME_LENGTH];
  char weight_image_filename[FILENAME_LENGTH];
@@ -44,12 +45,11 @@ int main( int argc, char **argv ) {
   return 1;
  }
 
- // Guess and print aimage saturation limit
- gain_sextractor_cl_parameter_string[0]= flag_image_sextractor_cl_parameter_string[0]= flag_image_filename[0]= '\0';
- guess_saturation_limit( fitsfilename, flag_image_sextractor_cl_parameter_string, 1 );
- fprintf( stderr, "FYI: the guessed saturation limit may be passed to SExtractor as %s\n", flag_image_sextractor_cl_parameter_string );
+ // Guess saturation limit for the given image
+ saturation_limit_sextractor_cl_parameter_string[0]= '\0';
+ guess_saturation_limit( fitsfilename, saturation_limit_sextractor_cl_parameter_string, 1 );
 
- // Reset
+ // Reset for next calls
  gain_sextractor_cl_parameter_string[0]= flag_image_sextractor_cl_parameter_string[0]= flag_image_filename[0]= '\0';
 
  // Check if we need a flag image
@@ -58,7 +58,8 @@ int main( int argc, char **argv ) {
  // Guess gain for the given image
  guess_gain( fitsfilename, gain_sextractor_cl_parameter_string, 2, 1 );
 
- fprintf( stdout, "%s%s\n", flag_image_sextractor_cl_parameter_string, gain_sextractor_cl_parameter_string );
+ // Output all SExtractor command line parameters: saturation limit, flag/weight images, and gain
+ fprintf( stdout, "%s%s%s\n", saturation_limit_sextractor_cl_parameter_string, flag_image_sextractor_cl_parameter_string, gain_sextractor_cl_parameter_string );
 
  return 0;
 }
