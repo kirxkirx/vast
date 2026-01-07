@@ -27496,6 +27496,19 @@ if [ $? -ne 0 ];then
  FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV027"
 fi
 
+# Test for date rounding bug fix: 2020-07-15.841 should give JD .3410 not .340995
+util/get_image_date 2020-07-15.841 2>&1 | grep -q 'JD 2459046.3410'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV028_ROUNDING1"
+fi
+# Test for date rounding bug fix: 2020-08-05.271 should give JD .7710 not .770995
+util/get_image_date 2020-08-05.271 2>&1 | grep -q 'JD 2459066.7710'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV028_ROUNDING2"
+fi
+
 # Now make sure there are no residual files
 for TMP_FITS_FILE in fake_image_hack_*.fits ;do
  if [ -f "$TMP_FITS_FILE" ];then
