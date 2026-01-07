@@ -1220,6 +1220,21 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
  #
  echo "read-check OK" | tee -a transient_factory_test31.txt
  #
+ # Test if any images are blank (constant values - camera error)
+ if [ -f lib/is_fits_image_blank ];then
+  echo -n "Blank image check the input FITS images... "
+  echo -n "Blank image check the input FITS images... " >> transient_factory_test31.txt
+  for FITS_FILE_TO_CHECK in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$NEW_IMAGES"/"$CALIBRATION_STATUS_PREFIX""$FIELD"_*_*."$FITS_FILE_EXT""$FITS_FILE_COMPRESSION_POSTFIX" ;do
+   lib/is_fits_image_blank "$FITS_FILE_TO_CHECK" > /dev/null 2>&1
+   BLANK_CHECK_EXIT_CODE=$?
+   if [ $BLANK_CHECK_EXIT_CODE -eq 1 ];then
+    echo "ERROR: blank image (camera error?) $FITS_FILE_TO_CHECK"
+   fi
+  done | grep 'ERROR: blank image' | tee -a transient_factory_test31.txt && continue # continue to the next field
+  #
+  echo "blank-image-check OK" | tee -a transient_factory_test31.txt
+ fi
+ #
  # Test if we can get the observing date from FITS images
  echo -n "Read date check the input FITS images... "
  echo -n "Read date check the input FITS images... " >> transient_factory_test31.txt

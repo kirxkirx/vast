@@ -22429,6 +22429,89 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 
+######### Test is_fits_image_blank tool
+# This test does not require large test data, runs anywhere
+if [ -f lib/is_fits_image_blank ];then
+ # Download blank image if not present
+ if [ ! -f ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits ];then
+  if [ ! -d ../individual_images_test ];then
+   mkdir ../individual_images_test
+  fi
+  cd ../individual_images_test || exit 1
+  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/blank_image_with_only_MJD-OBS_keyword.fits.bz2" && bunzip2 blank_image_with_only_MJD-OBS_keyword.fits.bz2
+  cd "$WORKDIR" || exit 1
+ fi
+ if [ -f ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits ];then
+  THIS_TEST_START_UNIXSEC=$(date +%s)
+  TEST_PASSED=1
+  util/clean_data.sh
+  # Run the test
+  echo "Test is_fits_image_blank tool "
+  echo -n "Test is_fits_image_blank tool: " >> vast_test_report.txt
+
+  # Test 1: blank image should return exit code 1 and output "BLANK"
+  BLANK_CHECK_OUTPUT=$(lib/is_fits_image_blank ../individual_images_test/blank_image_with_only_MJD-OBS_keyword.fits)
+  BLANK_CHECK_EXIT_CODE=$?
+  if [ $BLANK_CHECK_EXIT_CODE -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES ISFITSIMAGEBLANK001"
+  fi
+  if [ "$BLANK_CHECK_OUTPUT" != "BLANK" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES ISFITSIMAGEBLANK002"
+  fi
+
+  # Test 2: need a non-blank image for testing - use the default.psfex or any available FITS
+  # Try to find a normal FITS image from test data
+  NORMAL_IMAGE=""
+  if [ -f ../M4_WFC3_F775W_PoD/HHKK_test.fits ];then
+   NORMAL_IMAGE="../M4_WFC3_F775W_PoD/HHKK_test.fits"
+  elif [ -f ../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts ];then
+   NORMAL_IMAGE="../individual_images_test/wcs_fd_Per3_2011-10-31_001.fts"
+  elif [ -f ../sample_data/f_72-001r.fit ];then
+   NORMAL_IMAGE="../sample_data/f_72-001r.fit"
+  fi
+
+  if [ -n "$NORMAL_IMAGE" ] && [ -f "$NORMAL_IMAGE" ];then
+   NORMAL_CHECK_OUTPUT=$(lib/is_fits_image_blank "$NORMAL_IMAGE")
+   NORMAL_CHECK_EXIT_CODE=$?
+   if [ $NORMAL_CHECK_EXIT_CODE -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES ISFITSIMAGEBLANK003"
+   fi
+   if [ "$NORMAL_CHECK_OUTPUT" != "OK" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES ISFITSIMAGEBLANK004"
+   fi
+  fi
+
+  # Test 3: non-existent file should return exit code 2
+  lib/is_fits_image_blank nonexistent_file_aksdjfhaskjdfh.fits &>/dev/null
+  if [ $? -ne 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES ISFITSIMAGEBLANK005"
+  fi
+
+  THIS_TEST_STOP_UNIXSEC=$(date +%s)
+  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+  # Make an overall conclusion for this test
+  if [ $TEST_PASSED -eq 1 ];then
+   echo -e "\n\033[01;34mTest is_fits_image_blank tool \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+   echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+  else
+   echo -e "\n\033[01;34mTest is_fits_image_blank tool \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+   echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+  fi
+ else
+  FAILED_TEST_CODES="$FAILED_TEST_CODES ISFITSIMAGEBLANK_TEST_NOT_PERFORMED"
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES ISFITSIMAGEBLANK_TOOL_NOT_FOUND"
+fi
+
+
+
 ######### NMW archive image
 ### Disable this test for GitHub Actions
 if [ "$GITHUB_ACTIONS" != "true" ];then

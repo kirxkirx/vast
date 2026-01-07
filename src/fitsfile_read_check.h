@@ -107,9 +107,7 @@ static void check_if_the_input_is_MaxIM_compressed_FITS(char *fitsfilename) {
  memset(buffer, 0, 65535); // wipe the memory just in case there was something there
  for( i= 0; i < 65535; i++ ) {
   // getc returns int, not unsigned char
-  //buffer[i]= getc(f);
   getc_return_value= getc(f);
-  //if( buffer[i] == EOF ) {
   if( getc_return_value == EOF ) {
    break;
   }

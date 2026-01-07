@@ -22,8 +22,6 @@ default.sex 10 10 10
 http://variables.cn:88/ztf/
 https://ui.adsabs.harvard.edu/abs/2020ApJS..249...18C/abstract
 
-* Test if the input image is blank (no noise, no stars)
-
 * Add support for "bias + scaled dark" CCD image calibration strategy
 
 * A NOVAS-based routine that would compute geocentric J2000 positions of major planets.
