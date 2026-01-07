@@ -61,15 +61,13 @@ Unless it is explicitly requested by user.
 
 * Print error message when requested to convert from TT back to UTC.
 
-* Single-image cosmic ray/hot pixel filter?
+* Single-image cosmic ray/hot pixel filter!!!
 
 * Image arithmetics with floating point images
 
 * util/ccd/mk - do robust sigma-clipping before MEDIAN-combining images???
 
 * Ignore JD keyword if there is a comment "/Julian Date at start of exposure"
-
-* Test on linux Mint
 
 * Correct for differential extinction/flat-fielding problems while performing
 absolute magnitude calibration using APASS.
