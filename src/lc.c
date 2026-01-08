@@ -3580,6 +3580,34 @@ int main( int argc, char **argv ) {
    //}
   }
 
+  // Check for unknown key - if curC doesn't match any known key
+  if ( curC != 'A' && curC != 'a' &&
+       curC != 'Z' && curC != 'z' &&
+       curC != 'X' && curC != 'x' &&
+       curC != 'D' && curC != 'd' &&
+       curC != 'R' && curC != 'r' &&
+       curC != 'E' && curC != 'e' &&
+       curC != 'S' && curC != 's' &&
+       curC != 'N' && curC != 'n' &&
+       curC != 'U' && curC != 'u' &&
+       curC != 'F' && curC != 'f' &&
+       curC != 'O' && curC != 'o' &&
+       curC != 'T' && curC != 't' &&
+       curC != 'C' && curC != 'c' &&
+       curC != 'W' && curC != 'w' &&
+       curC != 'P' && curC != 'p' &&
+       curC != 'L' && curC != 'l' &&
+       curC != 'Q' && curC != 'q' &&
+       curC != 'H' && curC != 'h' &&
+       curC != 'I' && curC != 'i' &&
+       curC != 'B' && curC != 'b' &&
+       curC != 'K' && curC != 'k' &&
+       curC != 'M' && curC != 'm' &&
+       curC != '0' && curC != '1' && curC != '2' &&
+       curC != '-' && curC != ' ' ) {
+   fprintf( stderr, "Unknown key '%c'\n", curC );
+  }
+
   // If we were plotting to a file instead of X window...
   if ( 0 == strcmp( PGPLOT_CONTROL, "/CPS" ) || 0 == strcmp( PGPLOT_CONTROL, "/PNG" ) ) {
    cpgclos();

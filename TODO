@@ -61,12 +61,6 @@ absolute magnitude calibration using APASS.
 
 * Make sure the narrow-field CCD test images can be plate-solved automatically
 
-* Need support for sub-second timing in DATE-OBS. So far we are rounding to
-1 sec due to the definition of struct tm (int tm_sec)
-https://www.gnu.org/software/libc/manual/html_node/Broken_002ddown-Time.html
-
-* Print "unknown key" message in lc and find_candidates
-
 * Even more clear interpretation of the command line
 
 * ZScale image scaling in pgfv???
