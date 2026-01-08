@@ -452,5 +452,11 @@ if [ $? -ne 0 ];then
  echo "ERROR running 'util/calibrate_magnitude_scale $FIT_MAG_CALIB_RESULTING_PARARMETERS'"
  exit 1
 fi
+
+# Update the "Magnitude scale:" line in vast_summary.log if a band was specified
+if [ -n "$BAND" ] && [ -f vast_summary.log ];then
+ sed -i "s/Magnitude scale: instrumental/Magnitude scale: $BAND/" vast_summary.log
+fi
+
 util/nopgplot.sh -q
 echo "Magnitde calibration complete. :)"
