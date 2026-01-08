@@ -25394,6 +25394,9 @@ fi
 #PERIOD_SEARCH_SERVERS="scan.sai.msu.ru vast.sai.msu.ru"
 PERIOD_SEARCH_SERVERS="tau.kirx.net scan.sai.msu.ru vast.sai.msu.ru"
 
+# Disable server fallback in pokaz_laflerkinman.sh so we can detect individual server failures
+export PERIOD_SEARCH_NO_FALLBACK=1
+
 ## out00095_edit_edit.dat
 EXPECTED_FREQUENCY_CD=$(echo "0.8202" | awk '{printf "%.4f",$1}')
 # Local period search
@@ -25660,11 +25663,12 @@ if [ $TEST_PASSED -eq 1 ];then
 else
  echo -e "\n\033[01;34mPeriod search test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)" 
  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
-fi 
+fi
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
-df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 #
+unset PERIOD_SEARCH_NO_FALLBACK
 
 
 

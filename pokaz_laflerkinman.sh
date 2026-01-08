@@ -206,21 +206,28 @@ Please check your internet connection..."
  exit 1
 fi
 
-# Choose the period search server
-#if grep -q 'kirx.net/ticaariel' servers.ping_ok ;then
+# Save the list of all reachable servers for fallback (with preferred server first)
+# Put the preferred server first if it's reachable
 if grep -q 'tau.kirx.net' servers.ping_ok ;then
- # Choose the preferred server if it's up
- #PERIOD_SEARCH_SERVER="kirx.net/ticaariel"
  PERIOD_SEARCH_SERVER="tau.kirx.net"
+ # Create ordered list: preferred server first, then others
+ REACHABLE_SERVERS="$PERIOD_SEARCH_SERVER"
+ while read SERVER_LINE ;do
+  if [ "$SERVER_LINE" != "$PERIOD_SEARCH_SERVER" ];then
+   REACHABLE_SERVERS="$REACHABLE_SERVERS $SERVER_LINE"
+  fi
+ done < servers.ping_ok
 else
- # Choose a random server among the available ones
+ # Choose a random server among the available ones as primary
  PERIOD_SEARCH_SERVER=$($("$VAST_PATH"lib/find_timeout_command.sh) 10 sort --random-sort --random-source=/dev/urandom servers.ping_ok | head -n1)
  # If the above fails because sort doesn't understand the '--random-sort' option
  if [ "$PERIOD_SEARCH_SERVER" = "" ];then
   PERIOD_SEARCH_SERVER=$(head -n1 servers.ping_ok)
- fi # if [ "$PERIOD_SEARCH_SERVER" = "" ];then
-fi # if grep -q 'kirx.net/ticaariel' servers.ping_ok ;then
-   
+ fi
+ # Save all reachable servers for fallback
+ REACHABLE_SERVERS=$(cat servers.ping_ok | tr '\n' ' ')
+fi
+
 rm -f server_*.ping_ok servers.ping_ok
 
 # Check if we are requested to use a specific server
@@ -228,13 +235,20 @@ if [ ! -z "$FORCE_PERIOD_SEARCH_SERVER" ];then
  if [ "$FORCE_PERIOD_SEARCH_SERVER" != "none" ];then
   echo "WARNING: using the user-specified period search server $FORCE_PERIOD_SEARCH_SERVER"
   PERIOD_SEARCH_SERVER="$FORCE_PERIOD_SEARCH_SERVER"
-  PERIOD_SEARCH_SERVERS="$PERIOD_SEARCH_SERVER"
+  REACHABLE_SERVERS="$PERIOD_SEARCH_SERVER"
  fi
 fi
-   
+
 if [ -z "$PERIOD_SEARCH_SERVER" ];then
  echo "Error choosing the period search server"
  exit 1
+fi
+
+# Check if fallback is disabled (for testing purposes)
+# Set PERIOD_SEARCH_NO_FALLBACK=1 to disable fallback and fail on first server error
+if [ "$PERIOD_SEARCH_NO_FALLBACK" = "1" ] || [ "$PERIOD_SEARCH_NO_FALLBACK" = "yes" ];then
+ echo "Note: server fallback is DISABLED (test mode)"
+ REACHABLE_SERVERS="$PERIOD_SEARCH_SERVER"
 fi
 ###################################################
 
@@ -350,49 +364,64 @@ if [ ! -s "${VAST_PATH}saved_period_search_lightcurves/$NEWFILENAME" ];then
  exit 1
 fi
 
-echo "# Uploading the lightcurve to $PERIOD_SEARCH_SERVER"
-echo "$PROTOCOL_HTTP_OR_HTTPS://$PERIOD_SEARCH_SERVER/cgi-bin/lk/process_lightcurve.py"
+# Try each reachable server until one succeeds
+UPLOAD_SUCCESS=0
+RESULTURL=""
+for CURRENT_SERVER in $REACHABLE_SERVERS ;do
+ echo "# Uploading the lightcurve to $CURRENT_SERVER"
+ echo "$PROTOCOL_HTTP_OR_HTTPS://$CURRENT_SERVER/cgi-bin/lk/process_lightcurve.py"
 
-# Upload the converted lightcurve file to the server
-$CURL -F file=@"${VAST_PATH}saved_period_search_lightcurves/$NEWFILENAME" -F submit="Compute" -F pmax=$PMAX -F pmin=$PMIN -F phaseshift=0.1 -F fileupload="True" -F applyhelcor="No" -F timesys="$TIMESYSTEM" -F position="00:00:00.00 +00:00:00.0" "$PROTOCOL_HTTP_OR_HTTPS://$PERIOD_SEARCH_SERVER/cgi-bin/lk/process_lightcurve.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
-if [ $? -ne 0 ];then
- echo "WARNING: curl returned a non-zero exit status - something is wrong!"
-else
- echo "# OK, got the server reply..."
-fi
+ # Upload the converted lightcurve file to the server
+ $CURL -F file=@"${VAST_PATH}saved_period_search_lightcurves/$NEWFILENAME" -F submit="Compute" -F pmax=$PMAX -F pmin=$PMIN -F phaseshift=0.1 -F fileupload="True" -F applyhelcor="No" -F timesys="$TIMESYSTEM" -F position="00:00:00.00 +00:00:00.0" "$PROTOCOL_HTTP_OR_HTTPS://$CURRENT_SERVER/cgi-bin/lk/process_lightcurve.py" --user vast48:khyzbaojMhztNkWd > server_reply$$.html
+ CURL_EXIT_CODE=$?
+ if [ $CURL_EXIT_CODE -ne 0 ];then
+  echo "WARNING: curl returned exit code $CURL_EXIT_CODE for server $CURRENT_SERVER"
+  rm -f server_reply$$.html
+  continue
+ fi
 
-if [ ! -f server_reply$$.html ];then
- echo "ERROR in $0: no server reply file server_reply$$.html"
- exit 1
-fi
+ if [ ! -f server_reply$$.html ];then
+  echo "WARNING: no server reply file from $CURRENT_SERVER"
+  continue
+ fi
 
-if [ ! -s server_reply$$.html ];then
- echo "ERROR in $0: empty server reply file server_reply$$.html"
- exit 1
-fi
+ if [ ! -s server_reply$$.html ];then
+  echo "WARNING: empty server reply from $CURRENT_SERVER"
+  rm -f server_reply$$.html
+  continue
+ fi
 
-### DEBUG
-#cat server_reply$$.html
+ ### DEBUG
+ #cat server_reply$$.html
 
-# Parse the server reply
-RESULTURL=`grep "The output will be written to" server_reply$$.html | awk -F"<a" '{print $2}' |awk -F">" '{print $1}' | head -n 1`
-RESULTURL=${RESULTURL//\"/ }
-RESULTURL=`echo $RESULTURL | awk '{print $2}'`
+ # Parse the server reply
+ RESULTURL=`grep "The output will be written to" server_reply$$.html | awk -F"<a" '{print $2}' |awk -F">" '{print $1}' | head -n 1`
+ RESULTURL=${RESULTURL//\"/ }
+ RESULTURL=`echo $RESULTURL | awk '{print $2}'`
 
-if [ -z "$RESULTURL" ];then
- echo "ERROR in $0: cannot find the results URL
-Here is the full server reply:
+ if [ -z "$RESULTURL" ];then
+  echo "WARNING: cannot find results URL in reply from $CURRENT_SERVER"
+  echo "Server reply was:"
+  cat server_reply$$.html
+  rm -f server_reply$$.html
+  continue
+ fi
 
-################################"
- cat server_reply$$.html
- echo "################################
-The period search script $0 is terminated."
+ # If we got here, the upload was successful
+ echo "# OK, got valid reply from $CURRENT_SERVER"
+ UPLOAD_SUCCESS=1
  rm -f server_reply$$.html
+ break
+
+done # for CURRENT_SERVER in $REACHABLE_SERVERS
+
+# Check if any server succeeded
+if [ $UPLOAD_SUCCESS -ne 1 ] || [ -z "$RESULTURL" ];then
+ echo "ERROR in $0: all period search servers failed to return valid results
+Tried servers: $REACHABLE_SERVERS
+The period search script $0 is terminated."
  exit 1
 fi
-
-# Remove temporary files
-rm -f server_reply$$.html
 
 # Start web browser to view the results
 "$VAST_PATH"lib/start_web_browser.sh "$RESULTURL"

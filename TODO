@@ -6,8 +6,7 @@ to util/format_lightcurve_AAVSO.sh and util/format_lightcurve_CBA.sh
 * Fix 'catalog already exist' when trying to do single-image magnitude calibration,
 but the existing catalog contains only astrometry.
 
-* Add a possibility to always use either wget or curl, not both! 
-
+* Add a possibility to always use either wget or curl, not both! ???
 
 * Test with bad images
 ./diffphot /mnt/usb/MSU_Obs/2021_09_30/alternative_mffC_morning/fd_TOI2025_C_10sec_run01-*.fit
@@ -21,15 +20,10 @@ https://ui.adsabs.harvard.edu/abs/2020ApJS..249...18C/abstract
 
 * Add support for "bias + scaled dark" CCD image calibration strategy
 
-* On fresh install the VSX catalog update is slow and silent.
-Need to inform the user about what is going on!
-
 * Specify image center for plate solver.
 
 * Write warning in sextract_single_image that with the default settings 
 a measurement will be dropped.
-
-* Make sure to go to another period search server if the first one didn't work.
 
 * Do a range check for all STAR*[Pos*[i]]
 
