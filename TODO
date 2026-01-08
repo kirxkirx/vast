@@ -1,3 +1,6 @@
+* Deal with the magnitude limit mess: it's OK to have magnitude limit of the reference image in vast_summary.log 
+but for the NMW transient search we want the magnitude limit of the new images as th reference one are likely much better!
+
 * Fix 'catalog already exist' when trying to do single-image magnitude calibration,
 but the existing catalog contains only astrometry.
 

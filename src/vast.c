@@ -799,7 +799,7 @@ int compare( const double *a, const double *b ) {
   return 0;
 }
 
-void set_transient_search_boundaries( double *search_area_boundaries, struct Star *star, int NUMBER, double X_im_size, double Y_im_size ) {
+void set_transient_search_boundaries( double *search_area_boundaries, struct Star *star, int NUMBER, double X_im_size, double Y_im_size, double *snr_detection_limit ) {
 
  double *detection_limit_from_snr__mag_array;
  double *detection_limit_from_snr__snr_array;
@@ -874,8 +874,13 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
  }
 
  extract_mag_and_snr_from_structStar( star, (size_t)NUMBER, detection_limit_from_snr__mag_array, detection_limit_from_snr__snr_array );
- detection_limit_derived_from_snr= get_detection_limit_sn( detection_limit_from_snr__mag_array, detection_limit_from_snr__snr_array, (size_t)NUMBER, MIN_SNR, &detection_limit_from_snr__success );
+ //detection_limit_derived_from_snr= get_detection_limit_sn( detection_limit_from_snr__mag_array, detection_limit_from_snr__snr_array, (size_t)NUMBER, MIN_SNR, &detection_limit_from_snr__success );
+ // Let's call it with MIN_SNR_TRANSIENT_DETECTION instead of MIN_SNR in order to be somewhat more conservative (or realystic if you will)
+ detection_limit_derived_from_snr= get_detection_limit_sn( detection_limit_from_snr__mag_array, detection_limit_from_snr__snr_array, (size_t)NUMBER, MIN_SNR_TRANSIENT_DETECTION, &detection_limit_from_snr__success );
  // fprintf(stderr,"DEBUG: detection_limit_from_snr__success= %d  GSL_SUCCESS= %d\n", detection_limit_from_snr__success,GSL_SUCCESS);
+ 
+ // set the output value
+ (*snr_detection_limit)=detection_limit_derived_from_snr;
 
  free( detection_limit_from_snr__mag_array );
  free( detection_limit_from_snr__snr_array );
@@ -1157,6 +1162,7 @@ int main( int argc, char **argv ) {
 
  //// Hunt for transients ////
  double search_area_boundaries[6]; // Xmin, Xmax, Ymin, Ymax, MAGmin, MAGmax
+ double snr_detection_limit;
 
  double a_a; // semi-major axis lengths
  double a_a_err;
@@ -3200,7 +3206,7 @@ int main( int argc, char **argv ) {
 
  if ( debug != 0 )
   fprintf( stderr, "DEBUG MSG: set_transient_search_boundaries()\n" );
- set_transient_search_boundaries( search_area_boundaries, STAR3, NUMBER3, X_im_size, Y_im_size );
+ set_transient_search_boundaries( search_area_boundaries, STAR3, NUMBER3, X_im_size, Y_im_size, &snr_detection_limit );
 
  if ( debug != 0 )
   fprintf( stderr, "DEBUG MSG: I am NUMBER1: %d, I am JD: %lf, I am Mister X: %lf\n", NUMBER1, JD, X_im_size );
@@ -5791,7 +5797,9 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  }
  fprintf( vast_image_details, "Magnitude scale: instrumental\n" );
  //                            01234567890123
- fprintf( vast_image_details, "Estimated ref. image limiting mag.: %6.2lf\n", search_area_boundaries[5] );
+ //fprintf( vast_image_details, "Estimated ref. image limiting mag.: %6.2lf\n", search_area_boundaries[5] );
+ // report specifically the SNR-derived detection limit, not whatever is used for the transient search
+ fprintf( vast_image_details, "Estimated ref. image limiting mag.: %6.2lf\n", snr_detection_limit );
  if ( param_filterout_magsize_outliers == 1 ) {
   fprintf( vast_image_details, "Magnitude-Size filter: Enabled\n" );
  } else {
