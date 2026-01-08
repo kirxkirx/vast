@@ -5789,6 +5789,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
   fprintf( stderr, "ERROR: cannot open vast_summary.log for writing!\n" );
   return EXIT_FAILURE;
  }
+ fprintf( vast_image_details, "Magnitude scale: instrumental\n" );
  //                            01234567890123
  fprintf( vast_image_details, "Estimated ref. image limiting mag.: %6.2lf\n", search_area_boundaries[5] );
  if ( param_filterout_magsize_outliers == 1 ) {

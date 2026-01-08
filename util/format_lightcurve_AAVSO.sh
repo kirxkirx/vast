@@ -50,6 +50,14 @@ if [ 1 -ne `util/cute_lc "$INPUT_VAST_LIGHTCURVE" | awk '{print $2}' | util/cols
  exit 1
 fi
 
+# Additional check: verify magnitude scale is not instrumental
+if [ -s vast_summary.log ];then
+ if grep -q 'Magnitude scale: instrumental' vast_summary.log ;then
+  echo "ERROR: magnitude scale is still 'instrumental' according to vast_summary.log - please calibrate magnitudes first!"
+  exit 1
+ fi
+fi
+
 # Check that the time system is UTC
 if [ ! -s vast_summary.log ];then
  echo "ERROR: cannot find vast_summary.log to determine the JD time system, assuming UTC"
@@ -86,13 +94,30 @@ fi
 
 # the default filter name should be manually edited by the user!
 FILTER="X"
+# Try to get the filter name from vast_summary.log (set by magnitude calibration)
+if [ -s vast_summary.log ];then
+ FILTER_FROM_SUMMARY=$(grep 'Magnitude scale: ' vast_summary.log | awk '{print $3}')
+ if [ -n "$FILTER_FROM_SUMMARY" ] && [ "$FILTER_FROM_SUMMARY" != "instrumental" ];then
+  # Normalize filter names to AAVSO convention
+  case "$FILTER_FROM_SUMMARY" in
+   "g"|"SG") FILTER="SG" ;;
+   "r"|"SR") FILTER="SR" ;;
+   "i"|"SI") FILTER="SI" ;;
+   *) FILTER="$FILTER_FROM_SUMMARY" ;;
+  esac
+  echo "Filter name from vast_summary.log: $FILTER_FROM_SUMMARY -> AAVSO filter: $FILTER" 1>&2
+ fi
+fi
 # the default star name should be manually edited by the user!
 VARIABLE_STAR_NAME="XX Xxx"
 # but we can try to guess star and filter name from the CBA file, if present
 if [ -s CBA_previously_used_header.txt ];then
  echo "Importing the variable star info from CBA_previously_used_header.txt" 1>&2
  VARIABLE_STAR_NAME=`cat CBA_previously_used_header.txt | grep '# Variable: ' | awk -F '# Variable: ' '{print $2}'`
- FILTER=`cat CBA_previously_used_header.txt | grep '# Filter: ' | awk -F '# Filter: ' '{print $2}'`
+ # Only import filter from CBA header if we didn't get it from vast_summary.log
+ if [ "$FILTER" = "X" ];then
+  FILTER=`cat CBA_previously_used_header.txt | grep '# Filter: ' | awk -F '# Filter: ' '{print $2}'`
+ fi
 fi
 
 # if automated magnitude calibration was performed,

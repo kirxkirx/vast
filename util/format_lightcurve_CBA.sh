@@ -52,6 +52,14 @@ if [ 1 -ne $(util/cute_lc "$INPUT_VAST_LIGHTCURVE" | awk '{print $2}' | util/col
  exit 1
 fi
 
+# Additional check: verify magnitude scale is not instrumental
+if [ -s vast_summary.log ];then
+ if grep -q 'Magnitude scale: instrumental' vast_summary.log ;then
+  echo "ERROR: magnitude scale is still 'instrumental' according to vast_summary.log - please calibrate magnitudes first!"
+  exit 1
+ fi
+fi
+
 # Check that the time system is UTC
 if [ ! -s vast_summary.log ];then
  echo "ERROR: cannot find vast_summary.log to determine the JD time system"
@@ -120,13 +128,23 @@ Trying to automatically ID the star $INPUT_VAST_LIGHTCURVE"
  fi
 fi
 
+# Try to get the filter name from vast_summary.log (set by magnitude calibration)
+CBA_FILTER="CV"
+if [ -s vast_summary.log ];then
+ FILTER_FROM_SUMMARY=$(grep 'Magnitude scale: ' vast_summary.log | awk '{print $3}')
+ if [ -n "$FILTER_FROM_SUMMARY" ] && [ "$FILTER_FROM_SUMMARY" != "instrumental" ];then
+  CBA_FILTER="$FILTER_FROM_SUMMARY"
+  echo "Filter name from vast_summary.log: $CBA_FILTER" 1>&2
+ fi
+fi
+
 if [ ! -s CBA_previously_used_header.txt ];then
  echo "# Variable: $VARIABLE_STAR_NAME
 # Date: $DATE_FOR_CBA_HEADER_FIRST_OBS
 # Comp star: APASS_ensemble
-# Check star: 
+# Check star:
 # Exp time (s): $MEDIAN_EXPOSURE_TIME_SEC s
-# Filter: CV
+# Filter: $CBA_FILTER
 # Observatory: Texas Tech Skyview Observatory
 # Shallowater, TX, USA
 # Observers: Kirill Sokolovsky
@@ -145,7 +163,12 @@ echo "# Date: $DATE_FOR_CBA_HEADER_FIRST_OBS" >> CBA_report.txt
 grep '# Comp star: ' CBA_previously_used_header.txt >> CBA_report.txt
 grep '# Check star: ' CBA_previously_used_header.txt >> CBA_report.txt
 echo "# Exp time (s): $MEDIAN_EXPOSURE_TIME_SEC " >> CBA_report.txt
-grep '# Filter: ' CBA_previously_used_header.txt >> CBA_report.txt
+# Use filter from vast_summary.log if available, otherwise use previously saved header
+if [ "$CBA_FILTER" != "CV" ];then
+ echo "# Filter: $CBA_FILTER" >> CBA_report.txt
+else
+ grep '# Filter: ' CBA_previously_used_header.txt >> CBA_report.txt
+fi
 grep -A4 '# Observatory: ' CBA_previously_used_header.txt | grep '#' >> CBA_report.txt
 
 #
