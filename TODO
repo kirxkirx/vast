@@ -40,8 +40,6 @@ Unless it is explicitly requested by user.
 
 * inxi may not work (because of lspci for example) - deal with it
 
-* Print error message when requested to convert from TT back to UTC.
-
 * Single-image cosmic ray/hot pixel filter!!!
 
 * Image arithmetics with floating point images
