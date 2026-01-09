@@ -58,6 +58,66 @@ void update_limiting_magnitude_in_log_file( double new_mag_limit ) {
  return;
 }
 
+// Update column 3 (lim_mag_ref_frame) in vast_limiting_magnitude.log with calibrated magnitudes
+void update_vast_limiting_magnitude_log_file( double a, double b, double c, int operation_mode, double *a_ ) {
+ FILE *logfilein;
+ FILE *logfileout;
+ char str[2048];
+ char image_path[1024];
+ double raw_lim_mag, lim_mag_ref_frame, new_lim_mag;
+
+ logfilein= fopen( "vast_limiting_magnitude.log", "r" );
+ if ( logfilein == NULL ) {
+  fprintf( stderr, "WARNING: cannot open vast_limiting_magnitude.log for updating\n" );
+  return;
+ }
+
+ logfileout= fopen( "vast_limiting_magnitude.log.tmp", "w" );
+ if ( logfileout == NULL ) {
+  fclose( logfilein );
+  fprintf( stderr, "WARNING: cannot create vast_limiting_magnitude.log.tmp\n" );
+  return;
+ }
+
+ while ( NULL != fgets( str, 2048, logfilein ) ) {
+  // Skip comment lines
+  if ( str[0] == '#' ) {
+   fputs( str, logfileout );
+   continue;
+  }
+  // Parse the line
+  if ( 3 == sscanf( str, "%1023s %lf %lf", image_path, &raw_lim_mag, &lim_mag_ref_frame ) ) {
+   // Apply calibration to lim_mag_ref_frame
+   if ( lim_mag_ref_frame < 90.0 ) { // Skip placeholder values (99.0)
+    if ( operation_mode == 0 ) {
+     new_lim_mag= a * lim_mag_ref_frame * lim_mag_ref_frame + b * lim_mag_ref_frame + c;
+    } else if ( operation_mode == 4 || operation_mode == 5 ) {
+     new_lim_mag= eval_photocurve( lim_mag_ref_frame, a_, operation_mode );
+    } else {
+     new_lim_mag= lim_mag_ref_frame; // No transformation
+    }
+   } else {
+    new_lim_mag= lim_mag_ref_frame; // Keep placeholder
+   }
+   // Write updated line (raw_lim_mag unchanged, lim_mag_ref_frame updated)
+   fprintf( logfileout, "%s  %.4f  %.4f\n", image_path, raw_lim_mag, new_lim_mag );
+  } else {
+   // If parsing fails, write line unchanged
+   fputs( str, logfileout );
+  }
+ }
+
+ fclose( logfileout );
+ fclose( logfilein );
+
+ // Replace original file with updated file
+ unlink( "vast_limiting_magnitude.log" );
+ rename( "vast_limiting_magnitude.log.tmp", "vast_limiting_magnitude.log" );
+
+ fprintf( stderr, "Updated vast_limiting_magnitude.log with calibrated magnitudes\n" );
+ return;
+}
+
 int main( int argc, char **argv ) {
 
  // Mag conversion
@@ -220,6 +280,8 @@ int main( int argc, char **argv ) {
  }
  // Write new reference frame limiting magnitude to log file
  update_limiting_magnitude_in_log_file( newmag );
+ // Update vast_limiting_magnitude.log with calibrated magnitudes
+ update_vast_limiting_magnitude_log_file( a, b, c, operation_mode, a_ );
 
  // Create a list of files
  filenamelist= (char **)malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );

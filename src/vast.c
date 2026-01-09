@@ -1160,6 +1160,8 @@ int main( int argc, char **argv ) {
 
  FILE *vast_exclude_reference_image_log;
 
+ FILE *vast_limiting_mag_log; // Log file for per-image limiting magnitudes
+
  //// Hunt for transients ////
  double search_area_boundaries[6]; // Xmin, Xmax, Ymin, Ymax, MAGmin, MAGmax
  double snr_detection_limit;
@@ -3208,6 +3210,17 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "DEBUG MSG: set_transient_search_boundaries()\n" );
  set_transient_search_boundaries( search_area_boundaries, STAR3, NUMBER3, X_im_size, Y_im_size, &snr_detection_limit );
 
+ // Open vast_limiting_magnitude.log and write header + reference image entry
+ vast_limiting_mag_log= fopen( "vast_limiting_magnitude.log", "w" );
+ if ( vast_limiting_mag_log == NULL ) {
+  fprintf( stderr, "ERROR: cannot open vast_limiting_magnitude.log for writing!\n" );
+ } else {
+  fprintf( vast_limiting_mag_log, "# Limiting magnitudes log\n" );
+  fprintf( vast_limiting_mag_log, "# image_path  raw_lim_mag  lim_mag_ref_frame\n" );
+  // Write reference image entry (same value for both columns since it's the reference frame)
+  fprintf( vast_limiting_mag_log, "%s  %.4f  %.4f\n", input_images[0], snr_detection_limit, snr_detection_limit );
+ }
+
  if ( debug != 0 )
   fprintf( stderr, "DEBUG MSG: I am NUMBER1: %d, I am JD: %lf, I am Mister X: %lf\n", NUMBER1, JD, X_im_size );
  if ( debug != 0 )
@@ -4752,6 +4765,38 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
     if ( debug != 0 ) {
      fprintf( stderr, "DEBUG MSG: It was a lot of work, OK now\n" );
     }
+
+    // Calculate limiting magnitude for this image BEFORE transformation
+    {
+     double raw_limiting_mag= 99.0;
+     double transformed_limiting_mag= 99.0;
+     if ( NUMBER2 > 10 ) {
+      double *current_image_mag_array= malloc( sizeof( double ) * NUMBER2 );
+      double *current_image_snr_array= malloc( sizeof( double ) * NUMBER2 );
+      if ( current_image_mag_array != NULL && current_image_snr_array != NULL ) {
+       extract_mag_and_snr_from_structStar( STAR2, (size_t)NUMBER2, current_image_mag_array, current_image_snr_array );
+       int lim_mag_success= 0;
+       raw_limiting_mag= get_detection_limit_sn( current_image_mag_array, current_image_snr_array, (size_t)NUMBER2, MIN_SNR_TRANSIENT_DETECTION, &lim_mag_success );
+       if ( lim_mag_success == 1 && wpolyfit_exit_code == 0 ) {
+        // Transform using calibration coefficients (same formula as for star magnitudes)
+        if ( param_use_photocurve != 0 ) {
+         transformed_limiting_mag= eval_photocurve( raw_limiting_mag, poly_coeff, param_use_photocurve );
+        } else {
+         transformed_limiting_mag= poly_coeff[2] * raw_limiting_mag * raw_limiting_mag + poly_coeff[1] * raw_limiting_mag + poly_coeff[0];
+        }
+       }
+      }
+      if ( current_image_mag_array != NULL )
+       free( current_image_mag_array );
+      if ( current_image_snr_array != NULL )
+       free( current_image_snr_array );
+     }
+     // Write to vast_limiting_magnitude.log
+     if ( vast_limiting_mag_log != NULL ) {
+      fprintf( vast_limiting_mag_log, "%s  %.4f  %.4f\n", input_images[n], raw_limiting_mag, transformed_limiting_mag );
+     }
+    }
+
     if ( wpolyfit_exit_code == 0 ) {
      /* Transform all magnitudes to the ref-frame system. */
      if ( debug != 0 )
@@ -5291,6 +5336,11 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
   }
 
   progress( n + 1, Num );
+ }
+
+ // Close vast_limiting_magnitude.log
+ if ( vast_limiting_mag_log != NULL ) {
+  fclose( vast_limiting_mag_log );
  }
 
  fprintf( stderr, "Done with measurements! =)\n\n" );

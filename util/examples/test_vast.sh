@@ -3096,6 +3096,28 @@ $GREP_RESULT"
   fi
  done
 
+ # Test vast_limiting_magnitude.log
+ if [ ! -f vast_limiting_magnitude.log ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_NO_LIMITING_MAG_LOG"
+ fi
+ if [ ! -s vast_limiting_magnitude.log ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_EMPTY_LIMITING_MAG_LOG"
+ fi
+ # Check it has correct number of lines (should have entry for each processed image)
+ LIMITING_MAG_LINES=$(grep -v "^#" vast_limiting_magnitude.log | wc -l)
+ if [ $LIMITING_MAG_LINES -lt 90 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_LIMITING_MAG_LOG_TOO_FEW_LINES"
+ fi
+ # Check that limiting magnitudes are reasonable (negative instrumental, around -2 to -18)
+ FIRST_LIM_MAG=$(grep -v "^#" vast_limiting_magnitude.log | head -n1 | awk '{print $2}')
+ TEST=$(echo "$FIRST_LIM_MAG" | awk '{if ($1 < -2 && $1 > -18) print 1; else print 0}')
+ if [ $TEST -ne 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_LIMITING_MAG_UNREASONABLE"
+ fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
