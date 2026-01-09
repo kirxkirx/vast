@@ -109,6 +109,10 @@ UCAC5_PLATESOLVE_ITERATIONS=1
 #STARMATCH_RADIUS_PIX=4
 STARMATCH_RADIUS_PIX=3.5
 
+# Compress calibrated-platesolved images using fpack?
+# Useful to reduce file size for archival storage at the cost of more disk I/O
+FPACK_FULLY_CALIBRATED_IMAGE="yes"
+
 for dir in "$HOME/nmw_calibration" \
            "/dataX/cgi-bin/unmw/uploads/nmw_calibration" \
            "/home/apache/nmw_calibration" \
@@ -290,17 +294,19 @@ if [ -n "$CAMERA_SETTINGS" ];then
   #SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL2"
   # REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES rejects candidates with exactly the same pixel coordinates on two new images
   # as these are likely to be hot pixels sneaking into the list of candidates if no shift has been applied between the two second-epoch images.
-  #export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="yes"
-  export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="no"
+  export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="yes"
+  #export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="no"
   #BAD_REGION_FILE="../STL_bad_region.lst"
   BAD_REGION_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/TTUQ1_bad_region.lst"
   EXCLUSION_LIST="../exclusion_list_TTUQ1.txt"
   #export OMP_NUM_THREADS=4
-  #SYSREM_ITERATIONS=2
+  SYSREM_ITERATIONS=0
   UCAC5_PLATESOLVE_ITERATIONS=2
   #STARMATCH_RADIUS_PIX=4 # testing new values
-  # The funny ghost image seems to be no more than 80pix away from frame edge
-  FRAME_EDGE_OFFSET_PIX=50
+  # Let's try to reduce from 50 to 25
+  FRAME_EDGE_OFFSET_PIX=25
+  # Do not compress fully calibrated images to reduce disk load
+  FPACK_FULLY_CALIBRATED_IMAGE="no"
  fi
  #
 
@@ -331,6 +337,13 @@ if [ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ];then
  if [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "y" ] || [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "Y" ] || [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "yes" ] || [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "Yes" ] || [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "YES" ] || [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "true" ] || [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "True" ] || [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "TRUE" ];then
   REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="yes"
   export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES
+ fi
+fi
+
+if [ -n "$FPACK_FULLY_CALIBRATED_IMAGE" ];then
+ if [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "y" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "Y" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "yes" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "Yes" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "YES" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "true" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "True" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "TRUE" ];then
+  FPACK_FULLY_CALIBRATED_IMAGE="yes"
+  export FPACK_FULLY_CALIBRATED_IMAGE
  fi
 fi
 
@@ -798,6 +811,7 @@ SYSREM_ITERATIONS= $SYSREM_ITERATIONS
 TELESCOP= $TELESCOP
 TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION= $TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
 UCAC5_PLATESOLVE_ITERATIONS= $UCAC5_PLATESOLVE_ITERATIONS
+FPACK_FULLY_CALIBRATED_IMAGE= $FPACK_FULLY_CALIBRATED_IMAGE
 #######################################
 HOSTNAME= $HOSTNAME
 USER= $USER
@@ -2528,18 +2542,26 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
      fi 
      #
      echo "Saving fully-calibrated image $WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" | tee -a transient_factory_test31.txt
-     # Compress the image
-     if [ -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE".fz ];then
-      rm -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE".fz
-     fi
-     util/fpack "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" 2>&1 | tee -a transient_factory_test31.txt
-     if [ $? -ne 0 ];then
-      echo "ERROR running  util/fpack $WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" | tee -a transient_factory_test31.txt
-     elif [ -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE".fz ];then
-      WCS_CALIBRATED_IMAGE_FOR_ARCHIVE="$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE".fz
+     if [ -n "$FPACK_FULLY_CALIBRATED_IMAGE" ] ;then
+      if [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "y" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "yes" ] ;then
+       # Compress the image
+       if [ -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE".fz ];then
+        rm -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE".fz
+       fi
+       util/fpack "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" 2>&1 | tee -a transient_factory_test31.txt
+       if [ $? -ne 0 ];then
+        echo "ERROR running  util/fpack $WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" | tee -a transient_factory_test31.txt
+       elif [ -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE".fz ];then
+        WCS_CALIBRATED_IMAGE_FOR_ARCHIVE="$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE".fz
+       else
+        echo "ERROR: fpack did not create the expected compressed file $WCS_CALIBRATED_IMAGE_FOR_ARCHIVE.fz" | tee -a transient_factory_test31.txt
+       fi
+      else
+       echo "INFO: FPACK_FULLY_CALIBRATED_IMAGE=$FPACK_FULLY_CALIBRATED_IMAGE (not compressing the image)" | tee -a transient_factory_test31.txt
+      fi # if [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "y" ] || [ "$FPACK_FULLY_CALIBRATED_IMAGE" = "yes" ] ;then
      else
-      echo "ERROR: fpack did not create the expected compressed file $WCS_CALIBRATED_IMAGE_FOR_ARCHIVE.fz" | tee -a transient_factory_test31.txt
-     fi
+      echo "INFO: FPACK_FULLY_CALIBRATED_IMAGE is not set" | tee -a transient_factory_test31.txt
+     fi # if [ -n "$FPACK_FULLY_CALIBRATED_IMAGE" ] ;then
      #
      if [ -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ] && [ -s "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ]; then 
       if [ ! -f "$NEW_IMAGES/$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ]; then
