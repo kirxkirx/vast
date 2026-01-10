@@ -472,10 +472,10 @@ ORIGINAL_FITSFILE="$FITSFILE"
 # On-the fly convert the input image if necessary
 # This should also uncompress .fz image, but note that the image file name will change 
 # (will attempt to rename at the endof the script)
-echo "DEBUG: ORIGINAL_FITSFILE=$ORIGINAL_FITSFILE"
-echo "DEBUG: FITSFILE before on_the_fly=$FITSFILE"
+echo "ORIGINAL_FITSFILE=$ORIGINAL_FITSFILE"
+echo "FITSFILE before on_the_fly=$FITSFILE"
 FITSFILE=`"$VAST_PATH"lib/on_the_fly_symlink_or_convert "$FITSFILE"`
-echo "DEBUG: FITSFILE after on_the_fly=$FITSFILE"
+echo "FITSFILE after on_the_fly=$FITSFILE"
 ###############
 # Verify that the input file is a valid FITS file
 if [ -x "$VAST_PATH"lib/fitsverify ];then
@@ -531,8 +531,8 @@ else
  fi
 fi
 
-echo "DEBUG: FITSFILE after on_the_fly=$FITSFILE"
-echo "DEBUG: WCS_IMAGE_NAME=$WCS_IMAGE_NAME"
+echo "FITSFILE after on_the_fly=$FITSFILE"
+echo "WCS_IMAGE_NAME=$WCS_IMAGE_NAME"
 
 SEXTRACTOR_CATALOG_NAME="$WCS_IMAGE_NAME".cat
 
