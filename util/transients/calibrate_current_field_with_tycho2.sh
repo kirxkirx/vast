@@ -194,3 +194,8 @@ if [ $? -ne 0 ];then
  echo "ERROR: non-zero exit code of util/calibrate_magnitude_scale"
 fi
 echo "1.0 0.0 $MAGNITUDE_CALIBRATION_PARAMETERS" > calib.txt_param_tycho2
+
+# Update the "Magnitude scale:" line in vast_summary.log
+if [ -f vast_summary.log ];then
+ sed -i "s/Magnitude scale: instrumental/Magnitude scale: CV/" vast_summary.log
+fi
