@@ -885,10 +885,10 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
  free( detection_limit_from_snr__mag_array );
  free( detection_limit_from_snr__snr_array );
 
- if ( GSL_SUCCESS != detection_limit_from_snr__success ) {
+ if ( 1 != detection_limit_from_snr__success ) {
   fprintf( stderr, "WARNING: failed to determine magnitude limit from the magnitude-SNR relation! Falling back to the 80 percent brighter stars limit.\n" );
  } else {
-  fprintf( stderr, "Detection limit from the magnitude-SNR relation= %.1lf  (%.1lf sigma detection)\n", detection_limit_derived_from_snr, MIN_SNR );
+  fprintf( stderr, "Detection limit from the magnitude-SNR relation= %.1lf  (%.1lf sigma detection)\n", detection_limit_derived_from_snr, MIN_SNR_TRANSIENT_DETECTION );
  }
 
  // Mag limit above which are 80% of the detected stars
