@@ -239,11 +239,11 @@ double get_detection_limit_sn( double *mag, double *mag_sn, size_t n, double tar
 
  // Check if success pointer is NULL before dereferencing
  if ( success != NULL ) {
-  *success= status; // should be GSL_SUCCESS if we are good
-
   if ( status == GSL_SUCCESS ) {
+   *success= 1; // Set to 1 on success (not GSL_SUCCESS which is 0)
    fprintf( stderr, "get_detection_limit_sn(): Detection limit: %.2f\n", root );
   } else {
+   *success= 0; // Set to 0 on failure
    fprintf( stderr, "get_detection_limit_sn(): Failed to find detection limit\n" );
   }
  }
