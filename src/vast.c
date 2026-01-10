@@ -918,6 +918,25 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
  return;
 }
 
+// Get FILTER keyword value from FITS header, return "unknown" if not found
+static void get_filter_from_fits_header( char *fitsfilename, char *filter_value ) {
+ fitsfile *fptr;
+ int status= 0;
+ fits_open_file( &fptr, fitsfilename, READONLY, &status );
+ if ( 0 == status ) {
+  fits_read_key( fptr, TSTRING, "FILTER", filter_value, NULL, &status );
+  if ( 0 != status ) {
+   fits_clear_errmsg();
+   strcpy( filter_value, "unknown" );
+  }
+  status= 0;
+  fits_close_file( fptr, &status );
+ } else {
+  fits_clear_errmsg();
+  strcpy( filter_value, "unknown" );
+ }
+}
+
 void record_specified_fits_keywords( char *input_image, char *output_str_with_fits_keywords_to_capture_from_input_images ) {
  //
  fitsfile *fptr;       // FITS file pointer, defined in fitsio.h
@@ -1048,6 +1067,7 @@ int main( int argc, char **argv ) {
 
  double JD= 0;
  char tmpNAME[OUTFILENAME_LENGTH];             // Array to store generated lightcurve filenames
+ char filter_value[FLEN_VALUE];                // FILTER keyword value from the reference image header
  struct Observation *ptr_struct_Obs= NULL;     // Structure to store all observations
  long TOTAL_OBS= 0;                            // Total number of measurements
  long obs_in_RAM= 0;                           // Number of observations which were not written to disk
@@ -5845,6 +5865,8 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
   fprintf( stderr, "ERROR: cannot open vast_summary.log for writing!\n" );
   return EXIT_FAILURE;
  }
+ get_filter_from_fits_header( input_images[0], filter_value );
+ fprintf( vast_image_details, "FILTER key from ref. img. header: %s\n", filter_value );
  fprintf( vast_image_details, "Magnitude scale: instrumental\n" );
  //                            01234567890123
  //fprintf( vast_image_details, "Estimated ref. image limiting mag.: %6.2lf\n", search_area_boundaries[5] );
