@@ -2511,6 +2511,10 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
    done | tee -a transient_factory_test31.txt
    #
    #
+   echo "Limiting magnitude estimates:" | tee -a transient_factory_test31.txt
+   grep -v \# vast_limiting_magnitude.log | while read IMGPATH LIM_MAG_INST LIM_MAG REST_JUST_IN_CASE ;do
+    echo "$LIM_MAG "$(basename "$IMGPATH") | awk '{printf " %4.1f mag.  %s\n", $1, $2}'
+   done | tee -a transient_factory_test31.txt
    SNR_LIM=$(grep MIN_SNR_TRANSIENT_DETECTION src/vast_limits.h | awk '{print $3}')
    SNR_MAG_LIM=$(grep -v '^#' vast_limiting_magnitude.log | tail -n 2 | awk '{print $NF}' | sort -n | head -n 1 | awk '{printf "%4.1f", $1}')
    lib/create_data
