@@ -2511,10 +2511,17 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
    done | tee -a transient_factory_test31.txt
    #
    #
+   SNR_LIM=$(grep MIN_SNR_TRANSIENT_DETECTION src/vast_limits.h | awk '{print $3}')
+   SNR_MAG_LIM=$(grep -v '^#' vast_limiting_magnitude.log | tail -n 2 | awk '{print $NF}' | sort -n | head -n 1 | awk '{printf "%4.1f", $1}')
    lib/create_data
    ALLIMG_MAG_LIM=$(grep '  4  ' vast_lightcurve_statistics.log | awk '{print $1}'  | util/colstat 2>&1 | grep 'percen80= ' | awk '{printf "%4.1f", $2}')
-   echo "All-image limiting magnitude estimate: $ALLIMG_MAG_LIM with $SEXTRACTOR_CONFIG_FILE
-(80th percentile of magnitude distribution of stars detected on all four images)" | tee -a transient_factory_test31.txt
+   echo "All-image limiting magnitude estimate:  $SNR_MAG_LIM (SNR $SNR_LIM)  $ALLIMG_MAG_LIM (80% of stars)  with $SEXTRACTOR_CONFIG_FILE
+The first estimate is the magnitude of a star detected with a signal-to-noise ratio of $SNR_LIM following Karpov (2025, Acta Polytechnica, 65, 50). 
+This value should be representative of the faintest stars clearly visible in the image. 
+The brighter of the limiting magnitude estimates for the two second-epoch images is reported here.
+The second estimate is the 80th percentile of the magnitude distribution of stars detected on all four images.
+This value is representative of the faintest object that may enter the candidate transients list.
+The hard cut-off for the candidate transients is $FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH mag." | tee -a transient_factory_test31.txt
 
    echo "Waiting for UCAC5 plate solver" | tee -a transient_factory_test31.txt
    # this is for UCAC5 plate solver AND parallel exclusion list preparation AND planets.txt and friends

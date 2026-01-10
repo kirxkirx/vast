@@ -1,14 +1,21 @@
 XX XXX 2026: vast-1.0rc89
+	* VaST now produces 'vast_limiting_magnitude.log' that lists limiting magnitude for each frame estimated as 
+	the magnitude of a star detected with a signal-to-noise ratio of 5 following Karpov (2025, Acta Polytechnica, 65, 50) 
+	https://ui.adsabs.harvard.edu/abs/2025AcPol..65...50K/abstract
+	This value should be representative of the faintest stars clearly visible in the image. 
+	The limiting magnitude values in 'vast_limiting_magnitude.log' are converted from instrumental to a catalog scale
+	along with magnitudes in lightcurve and summary files when 'util/magnitude_calibration.sh' script is used.
 	* The magnitude calibration script 'util/magnitude_calibration.sh' now updates the "Magnitude scale:" line
 	in vast_summary.log with the filter name used for calibration (replacing the default "instrumental").
 	* The lightcurve formatting scripts 'util/format_lightcurve_AAVSO.sh' and 'util/format_lightcurve_CBA.sh'
 	now check vast_summary.log to verify magnitudes are calibrated (exit with error if "Magnitude scale: instrumental"),
-	and automatically get the filter name from vast_summary.log. For AAVSO format, filter names are normalized
+	and automatically get the filter name from vast_summary.log. Remember to specify your band as "CV", not "V" in 
+	the reports if the observations were unfiltered, but calibrated to V. For AAVSO format, filter names are normalized
 	(g->SG, r->SR, i->SI); for CBA format, filter names are used as-is.
 	* The magnitude calibration script 'util/magnitude_calibration.sh' now understands AAVSO names of Sloan filters:
 	SG for g, SR for r and SI for i. The usual lower case filter names gri work too.
-	* Prefer tau.kirx.net as the period search server (activated by pressing 'P' keyboard key in lightcurve viewer vindow).
- 	* Include util/fpack CFITSIO FITS image compresiion utility.
+	* Prefer tau.kirx.net as the period search server (activated by pressing 'P' keyboard key in lightcurve viewer window).
+ 	* Include util/fpack CFITSIO FITS image compression utility.
 	* The star identification script 'util/identify.sh' can now understand if a star is specified by its number,
 	not only by its full filename, so both options should work:
 	util/identify.sh out12345.dat
