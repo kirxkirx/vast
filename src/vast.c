@@ -5562,6 +5562,9 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
 
  free( child_pids );
 
+ // Get filter value from the reference image before freeing input_images
+ get_filter_from_fits_header( input_images[0], filter_value );
+
  // Now we can free the arrays (no longer needed for Observations to point to)
  for ( n= Num; n--; ) {
   free( input_images[n] );
@@ -5865,7 +5868,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
   fprintf( stderr, "ERROR: cannot open vast_summary.log for writing!\n" );
   return EXIT_FAILURE;
  }
- get_filter_from_fits_header( input_images[0], filter_value );
+ // filter_value was already populated before freeing input_images
  fprintf( vast_image_details, "FILTER key from ref. img. header: %s\n", filter_value );
  fprintf( vast_image_details, "Magnitude scale: instrumental\n" );
  //                            01234567890123
