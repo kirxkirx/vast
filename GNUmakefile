@@ -536,7 +536,7 @@ libident.o: $(SOURCE_IDENT_PATH)ident_lib.c $(SOURCE_IDENT_PATH)ident.h
 	$(CC) $(OPTFLAGS) -c -o $(SRC_PATH)ident_lib.o -fPIC $(SOURCE_IDENT_PATH)ident_lib.c 
 	cp $(SRC_PATH)ident_lib.o libident.o # file name kept for historical reasons
 
-ccd: util/ccd/mk util/ccd/ms util/ccd/md util/ccd/mk_sigma_clip util/ccd/imgbin2x2
+ccd: util/ccd/mk util/ccd/ms util/ccd/md util/ccd/mk_sigma_clip util/ccd/imgbin2x2 util/ccd/lacosmic
 
 util/ccd/imgbin2x2: $(SRC_PATH)ccd/imgbin2x2.c $(SRC_PATH)ccd/imgbin2x2.py
 	$(CC) $(OPTFLAGS) -o util/ccd/imgbin2x2 $(SRC_PATH)ccd/imgbin2x2.c $(CFITSIO_LIB) -lm
@@ -551,6 +551,8 @@ util/ccd/ms: $(SRC_PATH)ccd/ms.c
 	cd util/ccd/ && ln -s ms ms_notempchecks && cd -
 util/ccd/md: $(SRC_PATH)ccd/md.c
 	$(CC) $(OPTFLAGS) -o util/ccd/md $(SRC_PATH)ccd/md.c $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+util/ccd/lacosmic: $(SRC_PATH)ccd/lacosmic.c
+	$(CC) $(OPTFLAGS) -o util/ccd/lacosmic $(SRC_PATH)ccd/lacosmic.c $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 
 ifneq ($(RECOMPILE_VAST_ONLY),yes)
 clean_libraries:
