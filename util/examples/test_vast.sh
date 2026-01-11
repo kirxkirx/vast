@@ -22206,7 +22206,13 @@ if [ -f ../individual_images_test/2023-05-18_23-29-41__-20.00_400.00s_0008_c.fit
   # expect 431 -- that's the wrong expectation - that's the number if saturation limit was not determined so saturated stars are included in APASS catalog match, which we don't want!
   #if [ $TEST -lt 300 ];then
   # expect 253 - that's the correct expectation that excludes saturated stars
-  if [ $TEST -lt 200 ] || [ $TEST -gt 300 ] ;then
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   TEST_PASSED=0
+   # Encode the bad value for debugging
+   TEST_HEX=$(echo -n "$TEST" | xxd -p | tr -d '\n')
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130002a_NOT_A_NUMBER_${TEST_HEX}"
+  elif (( TEST < 200 || TEST > 300 )) ;then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SN2023ixfN130002a_$TEST"
   fi
