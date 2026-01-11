@@ -1,6 +1,8 @@
 name: FreeBSD build
 
-on: [push]
+on:
+  push:
+  workflow_dispatch:
 
 jobs:
   test:

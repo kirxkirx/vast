@@ -3,6 +3,7 @@ name: Ubuntu build and test
 on:
   push:
     branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   ubuntu2204build:

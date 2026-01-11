@@ -3,6 +3,7 @@ name: macOS build and test
 on:
   schedule:
     - cron: '0 2 * * 0'  # Run weekly on Sundays at 2 AM UTC
+  workflow_dispatch:
 
 jobs:
   build_homebrew:
