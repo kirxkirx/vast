@@ -807,12 +807,17 @@ if [ $TEST_PASSED -eq 1 ];then
 fi # if [ $TEST_PASSED -eq 1 ];then -- command line arguments are not assumed to be numerical
 
 if [ $TEST_PASSED -eq 1 ];then
- # Now check that 'sed -i' is not anywhere in the scripts as it behaves differently in Linux and MacOS/FreeBSD
- find . -name '*.sh' -exec grep -H 'sed -i' {} \; | grep -v '^[^:]*:[[:space:]]*#'
+ command -v find &>/dev/null
  if [ $? -eq 0 ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SEDminusIfound"
- fi
+  # Now check that 'sed -i' is not anywhere in the scripts as it behaves differently in Linux and MacOS/FreeBSD
+  find . -name '*.sh' -exec grep -H 'sed -i' {} \; | grep -v '^[^:]*:[[:space:]]*#'
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SEDminusIfound"
+  fi
+ else
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_VAST_SHELLSCRIPTS_SEDminusIfound"
+ fi # if [ $? -eq 0 ];then
 fi # if [ $TEST_PASSED -eq 1 ];then
 
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
@@ -29984,6 +29989,8 @@ if [ "$FAILED_TEST_CODES" != "NONE" ];then
  FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_NMWNVUL24ST_SELENIUM_TEST/}"
  # libpng
  FAILED_TEST_CODES="${FAILED_TEST_CODES// LIBPNG_DISABLED/}"
+ # this test is not performed if there is no 'find' command
+ FAILED_TEST_CODES="${FAILED_TEST_CODES// NOT_PERFORMED_VAST_SHELLSCRIPTS_SEDminusIfound/}"
  #
  if [ ! -z "$FAILED_TEST_CODES" ];then
   echo "Exit code 1"
