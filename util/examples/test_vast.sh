@@ -873,7 +873,32 @@ if [ $TEST_PASSED -eq 1 ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SEDminusRfound"
   fi
   # grep -P test.txt
-  find . -name '*.sh' -exec grep -nH -E '(^|[;&(|[:space:]])grep[[:space:]]+(-[A-Za-z]*P[A-Za-z]*[[:space:]]+|[^#]*[[:space:]]+-[A-Za-z]*P[A-Za-z]*([[:space:]]+|$))' {} \; | grep -v '^[^:]*:[[:space:]]*#'
+  #find . -name '*.sh' -exec grep -nH -E '(^|[;&(|[:space:]])grep[[:space:]]+(-[A-Za-z]*P[A-Za-z]*[[:space:]]+|[^#]*[[:space:]]+-[A-Za-z]*P[A-Za-z]*([[:space:]]+|$))' {} \; | grep -v '^[^:]*:[[:space:]]*#'
+  find . -name '*.sh' -exec awk '
+  /^[[:space:]]*#/ { next }
+
+  {
+    line = $0
+    n = split(line, a, /[[:space:]]+/)
+
+    for (i = 1; i <= n; i++) {
+      if (a[i] == "grep" || a[i] ~ /\/grep$/) {
+
+        # scan only grep options
+        for (j = i + 1; j <= n; j++) {
+          if (a[j] == "|" || a[j] == "||" || a[j] == "&&" || a[j] == ";") break
+          if (a[j] == "--") break
+          if (a[j] !~ /^-/) break
+
+          # match -P or combined options like -nP, -vP, etc.
+          if (a[j] ~ /^-[A-Za-z]*P[A-Za-z]*$/) {
+            print FILENAME ":" NR ":" line
+          }
+        }
+      }
+    }
+  }
+' {} \; | grep -q .
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_GREPminusPfound"
