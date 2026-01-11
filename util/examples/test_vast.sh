@@ -806,6 +806,15 @@ if [ $TEST_PASSED -eq 1 ];then
  done
 fi # if [ $TEST_PASSED -eq 1 ];then -- command line arguments are not assumed to be numerical
 
+if [ $TEST_PASSED -eq 1 ];then
+ # Now check that 'sed -i' is not anywhere in the scripts as it behaves differently in Linux and MacOS/FreeBSD
+ find . -name '*.sh' -exec grep -H 'sed -i' {} \; | grep -v '^[^:]*:[[:space:]]*#'
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SEDminusIfound"
+ fi
+fi # if [ $TEST_PASSED -eq 1 ];then
+
 THIS_TEST_STOP_UNIXSEC=$(date +%s)
 THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 # Make an overall conclusion for this test

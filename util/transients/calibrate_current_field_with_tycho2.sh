@@ -197,5 +197,7 @@ echo "1.0 0.0 $MAGNITUDE_CALIBRATION_PARAMETERS" > calib.txt_param_tycho2
 
 # Update the "Magnitude scale:" line in vast_summary.log
 if [ -f vast_summary.log ];then
- sed -i "s/Magnitude scale: instrumental/Magnitude scale: CV/" vast_summary.log
+ # 'sed -i' works differently on MacOS
+ #sed -i "s/Magnitude scale: instrumental/Magnitude scale: CV/" vast_summary.log
+ sed 's/Magnitude scale: instrumental/Magnitude scale: CV/' vast_summary.log > vast_summary.log.tmp && mv vast_summary.log.tmp vast_summary.log
 fi
