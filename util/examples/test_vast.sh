@@ -806,17 +806,80 @@ if [ $TEST_PASSED -eq 1 ];then
  done
 fi # if [ $TEST_PASSED -eq 1 ];then -- command line arguments are not assumed to be numerical
 
+# Scan for portability traps
 if [ $TEST_PASSED -eq 1 ];then
  command -v find &>/dev/null
  if [ $? -eq 0 ];then
   # Now check that 'sed -i' is not anywhere in the scripts as it behaves differently in Linux and MacOS/FreeBSD
-  find . -name '*.sh' -exec grep -H 'sed -i' {} \; | grep -v '^[^:]*:[[:space:]]*#'
+  find . -name '*.sh' -exec grep -nH 'sed -i' {} \; | grep -v '^[^:]*:[[:space:]]*#'
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SEDminusIfound"
   fi
+  # sed -r (GNU) vs sed -E (BSD)
+  find . -name '*.sh' -exec grep -nH 'sed[[:space:]].*-r' {} \; | grep -v '^[^:]*:[[:space:]]*#'
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SEDminusRfound"
+  fi
+  # grep -P test.txt
+  find . -name '*.sh' -exec grep -nH -E '(^|[;&(|[:space:]])grep[[:space:]]+(-[A-Za-z]*P[A-Za-z]*[[:space:]]+|[^#]*[[:space:]]+-[A-Za-z]*P[A-Za-z]*([[:space:]]+|$))' {} \; | grep -v '^[^:]*:[[:space:]]*#'
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_GREPminusPfound"
+  fi
+  # grep -r -R test.txt
+  find . -name '*.sh' -exec awk '
+  /^[[:space:]]*#/ { next }
+  {
+    line = $0
+    n = split(line, a, /[[:space:]]+/)
+    for (i = 1; i <= n; i++) {
+      if (a[i] == "grep" || a[i] ~ /\/grep$/) {
+        for (j = i + 1; j <= n; j++) {
+          if (a[j] == "|" || a[j] == "||" || a[j] == "&&" || a[j] == ";") break
+          if (a[j] == "--") break
+          if (a[j] !~ /^-/) break
+          if (a[j] ~ /^-[A-Za-z]*[rR][A-Za-z]*$/) {
+            print FILENAME ":" NR ":" line
+          }
+        }
+      }
+    }
+  }
+' {} \; | grep -q .
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_GREPminusRfound"
+  fi
+  # head -n -1 # nope - must use tail
+  find . -name '*.sh' -exec awk '
+  /^[[:space:]]*#/ { next }
+  {
+    line=$0
+    n=split(line,a,/[[:space:]]+/)
+
+    for(i=1;i<=n;i++){
+      if(a[i]=="head" || a[i] ~ /\/head$/){
+        for(j=i+1;j<=n-1;j++){
+          if(a[j]=="|"||a[j]=="||"||a[j]=="&&"||a[j]==";") break
+          if(a[j]=="-n" && a[j+1] ~ /^-[0-9]+$/){
+            print FILENAME ":" NR ":" line
+            break
+          }
+        }
+      }
+    }
+  }
+' {} \; | grep -q .
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_HEADminusNminus1found"
+  fi
+
+
  else
-  FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_VAST_SHELLSCRIPTS_SEDminusIfound"
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NOT_PERFORMED_VAST_SHELLSCRIPTS_PORTABILITY_TRAPS"
  fi # if [ $? -eq 0 ];then
 fi # if [ $TEST_PASSED -eq 1 ];then
 

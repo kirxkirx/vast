@@ -75,9 +75,9 @@ fi
 JD_FIRST_OBS=$(util/cute_lc "$INPUT_VAST_LIGHTCURVE" | head -n1 | awk '{print $1}')
 JD_LAST_OBS=$(util/cute_lc "$INPUT_VAST_LIGHTCURVE" | tail -n1 | awk '{print $1}')
 UNIXTIME_FIRST_OBS=$(util/get_image_date "$JD_FIRST_OBS" 2>/dev/null | grep 'Unix Time' | awk '{print $3}')
+
 DATE_FOR_AAVSO_HEADER_FIRST_OBS=$(LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d%b%Y")
 DATE_FOR_AAVSO_MESSAGE_SUBJECT_FIRST_OBS=$(LANG=C date -d @"$UNIXTIME_FIRST_OBS" +"%d %B %Y")
-
 if [ -z "$DATE_FOR_AAVSO_HEADER_FIRST_OBS" ] || [ -z "$DATE_FOR_AAVSO_MESSAGE_SUBJECT_FIRST_OBS" ];then
  # try BSD date
  DATE_FOR_AAVSO_HEADER_FIRST_OBS=$(date -r "$UNIXTIME_FIRST_OBS" +"%d%b%Y")
