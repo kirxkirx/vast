@@ -811,13 +811,63 @@ if [ $TEST_PASSED -eq 1 ];then
  command -v find &>/dev/null
  if [ $? -eq 0 ];then
   # Now check that 'sed -i' is not anywhere in the scripts as it behaves differently in Linux and MacOS/FreeBSD
-  find . -name '*.sh' -exec grep -nH 'sed -i' {} \; | grep -v '^[^:]*:[[:space:]]*#'
+  #find . -name '*.sh' -exec grep -nH 'sed -i' {} \; | grep -v '^[^:]*:[[:space:]]*#'
+  find . -name '*.sh' -exec awk '
+  /^[[:space:]]*#/ { next }
+
+  {
+    line = $0
+    n = split(line, a, /[[:space:]]+/)
+
+    for (i = 1; i <= n; i++) {
+      if (a[i] == "sed" || a[i] ~ /\/sed$/) {
+
+        # scan only sed options
+        for (j = i + 1; j <= n; j++) {
+          if (a[j] == "|" || a[j] == "||" || a[j] == "&&" || a[j] == ";") break
+          if (a[j] == "--") break
+          if (a[j] !~ /^-/) break
+
+          # match -i or combined options like -in, -Ei, etc.
+          if (a[j] ~ /^-[A-Za-z]*i[A-Za-z]*$/) {
+            print FILENAME ":" NR ":" line
+          }
+        }
+      }
+    }
+  }
+' {} \; | grep -q .
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SEDminusIfound"
   fi
   # sed -r (GNU) vs sed -E (BSD)
-  find . -name '*.sh' -exec grep -nH 'sed[[:space:]].*-r' {} \; | grep -v '^[^:]*:[[:space:]]*#'
+  #find . -name '*.sh' -exec grep -nH 'sed[[:space:]].*-r' {} \; | grep -v '^[^:]*:[[:space:]]*#'
+  find . -name '*.sh' -exec awk '
+  /^[[:space:]]*#/ { next }
+
+  {
+    line = $0
+    n = split(line, a, /[[:space:]]+/)
+
+    for (i = 1; i <= n; i++) {
+      if (a[i] == "sed" || a[i] ~ /\/sed$/) {
+
+        # scan only sed options
+        for (j = i + 1; j <= n; j++) {
+          if (a[j] == "|" || a[j] == "||" || a[j] == "&&" || a[j] == ";") break
+          if (a[j] == "--") break
+          if (a[j] !~ /^-/) break
+
+          # match -r or combined options like -nr, -ir, etc.
+          if (a[j] ~ /^-[A-Za-z]*r[A-Za-z]*$/) {
+            print FILENAME ":" NR ":" line
+          }
+        }
+      }
+    }
+  }
+' {} \; | grep -q .
   if [ $? -eq 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VAST_SHELLSCRIPTS_SEDminusRfound"
