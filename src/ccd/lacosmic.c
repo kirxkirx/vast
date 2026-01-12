@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <libgen.h>
+#include <errno.h>
 
 #include <gsl/gsl_sort_float.h>
 
@@ -89,12 +90,10 @@ static void print_usage(const char *prog_name) {
 }
 
 static void check_and_remove_file(const char *filename) {
-    if (access(filename, F_OK) == 0) {
-        if (unlink(filename) == 0) {
-            fprintf(stderr, "WARNING: existing file %s was deleted\n", filename);
-        } else {
-            fprintf(stderr, "ERROR: could not delete existing file %s\n", filename);
-        }
+    if (unlink(filename) == 0) {
+        fprintf(stderr, "WARNING: existing file %s was deleted\n", filename);
+    } else if (errno != ENOENT) {
+        fprintf(stderr, "ERROR: could not delete existing file %s\n", filename);
     }
 }
 
