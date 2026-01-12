@@ -183,7 +183,7 @@ int vast_remove_directory( const char *path ) {
        break;
       }
      } else {
-      // If regular file, remove it
+      // Non-directory entry: attempt to remove it directly
       if ( unlink( full_path ) != 0 ) {
        fprintf( stderr, "ERROR removing file: %s\n", full_path );
        error= 1;
@@ -191,11 +191,9 @@ int vast_remove_directory( const char *path ) {
       free( full_path );
      }
     } else {
-     // Handle broken symlink case
-     if ( !lstat( full_path, &statbuf ) ) {
-      unlink( full_path );
-     } else {
-      fprintf( stderr, "ERROR in vast_remove_directory(): Could not stat: %s\n", full_path );
+     // If stat fails (for example, broken symlink), still attempt to remove
+     if ( unlink( full_path ) != 0 ) {
+      fprintf( stderr, "ERROR in vast_remove_directory(): Could not remove: %s\n", full_path );
       error= 1;
      }
      free( full_path );
