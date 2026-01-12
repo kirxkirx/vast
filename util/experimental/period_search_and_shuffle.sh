@@ -63,7 +63,8 @@ cat input_lightcurve_$SESSION_KEY.dat | awk '{print " "$2}' > ordered_mag_$SESSI
 HIGHEST_PEAK=`lib/deeming_compute_periodogram input_lightcurve_$SESSION_KEY.dat $PMAX $PMIN $PHASESTEP | awk '{print $2}'`
 HIGHEST_FAKE_PEAK=$HIGHEST_PEAK
 N_PEAKS_ABOVE_THE_HIGHEST_PEAK=0;
-for ITERATION in `seq 1 $ITERATIONS` ;do
+ITERATION=1
+while [ $ITERATION -le $ITERATIONS ] ;do
  cat input_lightcurve_$SESSION_KEY.dat | awk '{print $1 }' | sort --random-sort > randomized_JD_$SESSION_KEY.dat
  #sort --random-sort input_lightcurve_$SESSION_KEY.dat > current_lightcurve_$SESSION_KEY.dat
  # <&3 tells bash to read a file at descriptor 3.
@@ -91,6 +92,7 @@ for ITERATION in `seq 1 $ITERATIONS` ;do
  #FRACTION_OF_PEAKS_ABOVE_THE_HIGHEST_PEAK=`echo "$N_PEAKS_ABOVE_THE_HIGHEST_PEAK/$ITERATION" | bc -ql`
  FRACTION_OF_PEAKS_ABOVE_THE_HIGHEST_PEAK=`echo "$N_PEAKS_ABOVE_THE_HIGHEST_PEAK $ITERATION" | awk '{print $1/$2}'`
  echo "$FRACTION_OF_PEAKS_ABOVE_THE_HIGHEST_PEAK  $N_PEAKS_ABOVE_THE_HIGHEST_PEAK out of $ITERATION peaks are above the original highest peak of $HIGHEST_PEAK (current peak: $PEAK ). N iterations: $ITERATIONS"
+ ITERATION=$((ITERATION+1))
 done
 
 FRACTION_OF_PEAKS_ABOVE_THE_HIGHEST_PEAK=`echo "$FRACTION_OF_PEAKS_ABOVE_THE_HIGHEST_PEAK" | awk '{printf "%.6f",$1}'`

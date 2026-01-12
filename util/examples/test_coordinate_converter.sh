@@ -7,7 +7,8 @@ if [ $? -ne 0 ];then
 fi
 
 # Repeat the following test 1000 times
-for ITERATION in `seq 1 1000` ;do
+ITERATION=1
+while [ $ITERATION -le 1000 ] ;do
 
 
 ############ Generate a random sky position ############
@@ -188,4 +189,5 @@ fi
 
 
 
-done # ITERATION
+ITERATION=$((ITERATION+1))
+done # while [ $ITERATION -le 1000 ]

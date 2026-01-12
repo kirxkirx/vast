@@ -17,14 +17,15 @@ for AMPLITUDE in 0.1 0.2 0.5 1.0 ;do
 #for AMPLITUDE in 0.01 ;do
 
 
-for N_LIGHTCURVE_POINTS in `seq 2 200` ;do
+N_LIGHTCURVE_POINTS=2
+while [ $N_LIGHTCURVE_POINTS -le 200 ] ;do
 
 #for N_LIGHTCURVE_POINTS in 178 179 180 181 ;do
 
 #################
 # Reformat
 AMPLITUDE=`echo $AMPLITUDE | awk '{printf "%5.3f",$1}'`
-N_LIGHTCURVE_POINTS=`echo $N_LIGHTCURVE_POINTS | awk '{printf "%04d",$1}'`
+N_LIGHTCURVE_POINTS_STR=`echo $N_LIGHTCURVE_POINTS | awk '{printf "%04d",$1}'`
 #################
 
 # Remove any old data
@@ -35,16 +36,16 @@ lib/noise_lightcurve_simulator $N_LIGHTCURVE_POINTS
 
 # compute stats for noise-only lightcurves
 util/nopgplot.sh
-cp vast_lightcurve_statistics.log simulations__noise-only__"$N_LIGHTCURVE_POINTS"__"$AMPLITUDE"__vast_lightcurve_statistics.log
+cp vast_lightcurve_statistics.log simulations__noise-only__"$N_LIGHTCURVE_POINTS_STR"__"$AMPLITUDE"__vast_lightcurve_statistics.log
 
-echo -n "$N_LIGHTCURVE_POINTS " >> simulations__"$AMPLITUDE"__N__idx01_wSTD.txt
-echo -n "$N_LIGHTCURVE_POINTS " >> simulations__"$AMPLITUDE"__N__idx09_MAD.txt
-echo -n "$N_LIGHTCURVE_POINTS " >> simulations__"$AMPLITUDE"__N__idx14_Vp2p.txt
-echo -n "$N_LIGHTCURVE_POINTS " >> simulations__"$AMPLITUDE"__N__idx25_IQR.txt
-echo -n "$N_LIGHTCURVE_POINTS " >> simulations__"$AMPLITUDE"__N__idx17_Jtim.txt
-echo -n "$N_LIGHTCURVE_POINTS " >> simulations__"$AMPLITUDE"__N__idx21_eta.txt
-echo -n "$N_LIGHTCURVE_POINTS " >> simulations__"$AMPLITUDE"__N__idx23_S_B.txt
-echo -n "$N_LIGHTCURVE_POINTS " >> simulations__"$AMPLITUDE"__N__idx11_RoMS.txt
+echo -n "$N_LIGHTCURVE_POINTS_STR " >> simulations__"$AMPLITUDE"__N__idx01_wSTD.txt
+echo -n "$N_LIGHTCURVE_POINTS_STR " >> simulations__"$AMPLITUDE"__N__idx09_MAD.txt
+echo -n "$N_LIGHTCURVE_POINTS_STR " >> simulations__"$AMPLITUDE"__N__idx14_Vp2p.txt
+echo -n "$N_LIGHTCURVE_POINTS_STR " >> simulations__"$AMPLITUDE"__N__idx25_IQR.txt
+echo -n "$N_LIGHTCURVE_POINTS_STR " >> simulations__"$AMPLITUDE"__N__idx17_Jtim.txt
+echo -n "$N_LIGHTCURVE_POINTS_STR " >> simulations__"$AMPLITUDE"__N__idx21_eta.txt
+echo -n "$N_LIGHTCURVE_POINTS_STR " >> simulations__"$AMPLITUDE"__N__idx23_S_B.txt
+echo -n "$N_LIGHTCURVE_POINTS_STR " >> simulations__"$AMPLITUDE"__N__idx11_RoMS.txt
 
 # Extract stats on the index before injecting variability
 # idx01_wSTD
@@ -87,7 +88,7 @@ done
 
 # compute stats for variability lightcurves
 util/nopgplot.sh
-cp vast_lightcurve_statistics.log simulations__variability__"$N_LIGHTCURVE_POINTS"__"$AMPLITUDE"__vast_lightcurve_statistics.log
+cp vast_lightcurve_statistics.log simulations__variability__"$N_LIGHTCURVE_POINTS_STR"__"$AMPLITUDE"__vast_lightcurve_statistics.log
 
 # Extract stats on the index after injecting variability
 # idx01_wSTD
@@ -124,6 +125,7 @@ cat vast_lightcurve_statistics.log | awk '{print $16}' | util/colstat | sed 's: 
 echo "$MEDIAN $MADx148 " >> simulations__"$AMPLITUDE"__N__idx11_RoMS.txt
 rm -f script.tmp
 
+N_LIGHTCURVE_POINTS=$((N_LIGHTCURVE_POINTS+1))
 done
 
 done

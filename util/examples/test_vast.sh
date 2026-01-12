@@ -7850,7 +7850,8 @@ if [ -d ../vast_test_bright_stars_failed_match ];then
  cp default.sex.ccd_bright_star default.sex
  # Run VaST multiple times to catch a rarely occurring problem
  # amazon thing is likely to time out with the number of trials set to 100
- for VAST_RUN in `seq 1 10` ;do
+ VAST_RUN=1
+ while [ $VAST_RUN -le 10 ] ;do
   ./vast -u -t2 -f ../vast_test_bright_stars_failed_match/*
   if [ $? -ne 0 ];then
    TEST_PASSED=0
@@ -7921,11 +7922,12 @@ $GREP_RESULT"
    fi
   #
   else
-   echo "ERROR: cannot find vast_summary.log" 
+   echo "ERROR: cannot find vast_summary.log"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES RUN"$VAST_RUN"_REFIMAGE_WITH_VERY_FEW_STARS3_ALL"
   fi
- done # for VAST_RUN in `seq 1 100` ;do
+  VAST_RUN=$((VAST_RUN+1))
+ done # while [ $VAST_RUN -le 10 ]
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)
  THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
@@ -26733,7 +26735,8 @@ $GREP_RESULT"
   if [ $? -ne 0 ];then
   
    # Check the log files corresponding to the first 9 images
-   for IMGNUM in `seq 1 9`;do
+   IMGNUM=1
+   while [ $IMGNUM -le 9 ];do
     #for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve image0000$IMGNUM.cat.magparameter02filter_passed image0000$IMGNUM.cat.magparameter02filter_rejected image0000$IMGNUM.cat.magparameter02filter_thresholdcurve ;do
     # We disabled the PSF-APER filter, so no *magparameter02filter_passed files are created
     for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve ;do
@@ -26742,6 +26745,7 @@ $GREP_RESULT"
       FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF_EMPTYPSFFILTERINGLOFGILE_$LOGFILE_TO_CHECK"
      fi
     done
+    IMGNUM=$((IMGNUM+1))
    done
   
    NUMER_OF_REJECTED_STARS=`cat image00001.cat.magpsfchi2filter_rejected | wc -l | awk '{print $1}'`
@@ -26904,7 +26908,8 @@ $GREP_RESULT"
   if [ $? -ne 0 ];then
 
    # Check the log files
-   for IMGNUM in `seq 1 6`;do
+   IMGNUM=1
+   while [ $IMGNUM -le 6 ];do
     #for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve image0000$IMGNUM.cat.magparameter02filter_passed image0000$IMGNUM.cat.magparameter02filter_rejected image0000$IMGNUM.cat.magparameter02filter_thresholdcurve ;do
     for LOGFILE_TO_CHECK in image0000$IMGNUM.cat.magpsfchi2filter_passed image0000$IMGNUM.cat.magpsfchi2filter_rejected image0000$IMGNUM.cat.magpsfchi2filter_thresholdcurve ;do
      if [ ! -s "$LOGFILE_TO_CHECK" ];then
@@ -26912,6 +26917,7 @@ $GREP_RESULT"
       FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCDPSF_EMPTYPSFFILTERINGLOFGILE_$LOGFILE_TO_CHECK"
      fi
     done
+    IMGNUM=$((IMGNUM+1))
    done
   
   fi # DISABLE_MAGSIZE_FILTER_LOGS
@@ -28322,10 +28328,11 @@ if [ $? -eq 0 ];then
   fi
   #
   #
-  # Test with random dates offset from 
+  # Test with random dates offset from
   # UnixTime_0 J2000 today
   for START_JD in 2440587.5 2451545.0 2460560.17929398 ;do
-   for ITERATION in $(seq 1 10) ;do
+   ITERATION=1
+   while [ $ITERATION -le 10 ] ;do
     TEST_JD=$(echo "$START_JD" "$RANDOM" "$RANDOM" | awk '{printf "%f", $1+$2/100+$3/100000}')
     ASTROPY_DATE=$(util/jd2date.py "$TEST_JD")
     VAST_DATE=$(util/get_image_date "$TEST_JD" 2>&1 | grep ' (mid. exp) ' | head -n1 | awk '{print $3" "$4}')
@@ -28335,6 +28342,7 @@ if [ $? -eq 0 ];then
      FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH02__${TEST_JD}_${ASTROPY_DATE// /T}_${VAST_DATE// /T}"
      break
     fi
+    ITERATION=$((ITERATION+1))
    done
   done
   #
@@ -28349,7 +28357,8 @@ if [ $? -eq 0 ];then
    FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH03__${TEST_DATE}_${ASTROPY_JD}_${VAST_JD}"
   fi
   #
-  for ITERATION in $(seq 1 10) ;do
+  ITERATION=1
+  while [ $ITERATION -le 10 ] ;do
    # Generate random values for each component
    YEAR=$((RANDOM % 60 + 1970))  # Random year between 1970 and 2029
    MONTH=$(printf "%02d" $((RANDOM % 12 + 1)))  # Random month between 1 and 12, zero-padded
@@ -28358,7 +28367,7 @@ if [ $? -eq 0 ];then
    MINUTE=$(printf "%02d" $((RANDOM % 60)))  # Random minute between 0 and 59, zero-padded
    SECOND=$(printf "%02d" $((RANDOM % 60)))  # Random second between 0 and 59, zero-padded
    MILLISECOND=$(printf "%03d" $((RANDOM % 1000)))  # Random millisecond between 0 and 999, zero-padded
-  
+
    # Combine into the desired format
    TEST_DATE="${YEAR}-${MONTH}-${DAY}T${HOUR}:${MINUTE}:${SECOND}.${MILLISECOND}"
 
@@ -28369,6 +28378,7 @@ if [ $? -eq 0 ];then
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES DATE2JDCONV_ASTROPY_DATE_MISMATCH04__${TEST_DATE}_${ASTROPY_JD}_${VAST_JD}"
    fi
+   ITERATION=$((ITERATION+1))
   done
   #
  else
@@ -29709,15 +29719,18 @@ echo -n "Performing best aperture selection test: " >> vast_test_report.txt
 util/clean_data.sh
 
 # generate test data
-for i in $(seq -w 1 1000)
+i=1
+while [ $i -le 1000 ]
 do
-  outfile="out0${i}.dat"  
-  echo "2442659.54300 -11.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +11.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  
-2442659.54300 -12.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +12.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  
-2442659.54300 -13.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +13.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  
-2442659.54300 -14.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +14.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  
-2442659.54300 -15.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +15.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  
+  i_padded=$(printf '%04d' $i)
+  outfile="out0${i_padded}.dat"
+  echo "2442659.54300 -11.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +11.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653
+2442659.54300 -12.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +12.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653
+2442659.54300 -13.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +13.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653
+2442659.54300 -14.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +14.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653
+2442659.54300 -15.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +15.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653
 " > $outfile
+  i=$((i+1))
 done
 
 # 1st run should find the non-default aperture as the best one for all the stars
@@ -29739,15 +29752,18 @@ fi
 util/clean_data.sh
 
 # generate test data
-for i in $(seq -w 1 1000)
+i=1
+while [ $i -le 1000 ]
 do
-  outfile="out0${i}.dat"  
-  echo "2442659.54300 -11.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +11.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  CCD-TEMP=  -20.417621345447451  
-2442659.54300 -12.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +12.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  CCD-TEMP=  -20.417621345447451  
-2442659.54300 -13.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +13.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  CCD-TEMP=  -20.417621345447451  
-2442659.54300 -14.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +14.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  CCD-TEMP=  -20.417621345447451  
-2442659.54300 -15.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +15.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  CCD-TEMP=  -20.417621345447451  
+  i_padded=$(printf '%04d' $i)
+  outfile="out0${i_padded}.dat"
+  echo "2442659.54300 -11.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +11.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  CCD-TEMP=  -20.417621345447451
+2442659.54300 -12.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +12.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  CCD-TEMP=  -20.417621345447451
+2442659.54300 -13.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +13.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  CCD-TEMP=  -20.417621345447451
+2442659.54300 -14.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +14.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  CCD-TEMP=  -20.417621345447451
+2442659.54300 -15.0591 0.0522  1952.47595   24.73140  9.9 ../test_data_photo/SCA10670S_13788_08321__00_00.fit    +0.0000 0.0522  -0.0382 0.0486  +15.0591 0.0559  +0.0442 0.0597  +0.0360 0.0653  CCD-TEMP=  -20.417621345447451
 " > $outfile
+  i=$((i+1))
 done
 
 # 1st run should find the non-default aperture as the best one for all the stars

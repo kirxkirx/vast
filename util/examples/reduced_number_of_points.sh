@@ -15,7 +15,8 @@ if [ -d SIMULATOR_reference ];then
 fi
 util/save.sh SIMULATOR_reference
 
-for N_POINTS in `seq 2 300` ;do
+N_POINTS=2
+while [ $N_POINTS -le 300 ] ;do
 
 N_POINTS_STR=`echo $N_POINTS | awk '{printf "%04d",$1}'`
 
@@ -28,7 +29,8 @@ else
  mkdir $SIMULATION_RESULTS_DIR
 fi
 
-for ITERATION in `seq 1 10` ;do
+ITERATION=1
+while [ $ITERATION -le 10 ] ;do
 
  ITERATION_TIME_START_UNIXSEC=`date -u +%s`
 
@@ -51,9 +53,11 @@ for ITERATION in `seq 1 10` ;do
  
  echo "#### Completed iteration $ITER_STR in $ITERATION_TIME_MINUTES minutes ####"
 
+ ITERATION=$((ITERATION+1))
 done
 
-done # for N_POINTS in `seq 2 300` ;do
+N_POINTS=$((N_POINTS+1))
+done # while [ $N_POINTS -le 300 ]
 
 TOTAL_TIME_STOP_UNIXSEC=`date -u +%s`
 #TOTAL_TIME_RUNNING_DAYS=`echo "($TOTAL_TIME_STOP_UNIXSEC-$TOTAL_TIME_START_UNIXSEC)/86400" | bc -ql | awk '{printf "%.3f",$1}'`

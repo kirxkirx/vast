@@ -9,7 +9,8 @@ fi
 TEST_PASSED=1
 
 # Repeat the following test 100 times
-for ITERATION in `seq 1 100` ;do
+ITERATION=1
+while [ $ITERATION -le 100 ] ;do
 
 
 ############ Generate a random sky position and JD ############
@@ -46,9 +47,11 @@ fi
 if [ -f test_heliocentric_correction.tmp ];then
  rm -f test_heliocentric_correction.tmp
 fi
-for LIGHTCURVEPOINT in `seq 1 100` ;do
+LIGHTCURVEPOINT=1
+while [ $LIGHTCURVEPOINT -le 100 ] ;do
  JD=`echo "$RANDOM_JD $LIGHTCURVEPOINT" | awk '{printf "%.5f",$1-$2}'`
  echo "$JD 11.11 0.01" >> test_heliocentric_correction.tmp
+ LIGHTCURVEPOINT=$((LIGHTCURVEPOINT+1))
 done
 
 ############ Apply VaST HJD correction ############
@@ -118,4 +121,5 @@ if [ -f test_heliocentric_correction.tmp_vartools ];then
  rm -f test_heliocentric_correction.tmp_vartools
 fi
 
-done # ITERATION
+ITERATION=$((ITERATION+1))
+done # while [ $ITERATION -le 100 ]

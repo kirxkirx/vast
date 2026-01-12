@@ -75,6 +75,7 @@ all: print_check_start_message check print_compile_start_message clean check_no_
 
 ifneq ($(RECOMPILE_VAST_ONLY),yes)
 check:
+	@command -v bash >/dev/null 2>&1 || { echo "ERROR: bash is required to run VaST but was not found in PATH"; exit 1; }
 	lib/check_external_programs.sh $(CC)
 else
 check:

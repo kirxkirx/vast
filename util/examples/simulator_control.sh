@@ -20,7 +20,8 @@ else
  mkdir simulation_results
 fi
 
-for ITERATION in `seq 1 1000` ;do
+ITERATION=1
+while [ $ITERATION -le 1000 ] ;do
  # load data
  util/load.sh SIMULATOR_reference
 
@@ -46,5 +47,6 @@ for ITERATION in `seq 1 1000` ;do
  
  cp vast_detection_efficiency.log simulation_results/ITERATION"$ITER_STR"_vast_detection_efficiency.log
 
+ ITERATION=$((ITERATION+1))
 done
 

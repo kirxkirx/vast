@@ -128,7 +128,8 @@ for FLUX in $TRIAL_FLUXES ;do
  N_CANDIDATES_FOUND_TOTAL=0
  N_ARTSTARS_INSERTED_TOTAL=0
  IDENTIFIED_ARTSTARS_FOR_THIS_ITERATION_TMPFILE=$(mktemp)
- for ITERATION in $(seq 1 $N_ITERATIONS) ;do
+ ITERATION=1
+ while [ $ITERATION -le $N_ITERATIONS ] ;do
 
   # Insert artificial stars
   util/artificial_star_test_for_transient_search/insert_artificial_stars_in_image.py "$PLATE_SOLVED_SECOND_EPOCH_IMAGES_DIR"/ $FLUX $N_ARTSTARS_PER_ITER --fwhm "$FWHM"
@@ -175,6 +176,7 @@ for FLUX in $TRIAL_FLUXES ;do
  
   N_ARTSTARS_INSERTED_TOTAL=$[$N_ARTSTARS_INSERTED_TOTAL + $N_ARTSTARS_PER_ITER]
 
+  ITERATION=$((ITERATION+1))
  done
 
  COLSTAT_OUTPUT=$(cat "$IDENTIFIED_ARTSTARS_FOR_THIS_ITERATION_TMPFILE" | awk '{print $3}' | util/colstat)

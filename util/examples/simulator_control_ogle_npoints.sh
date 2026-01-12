@@ -22,7 +22,8 @@ for OLDDIR in reduced_N_points_* ;do
 done
 
 
-for N_POINTS in `seq 2 260` ;do
+N_POINTS=2
+while [ $N_POINTS -le 260 ] ;do
 #for N_POINTS in `seq 201 265` ;do
 
 #
@@ -35,7 +36,8 @@ fi
 
 
 #for ITERATION in `seq 1 1000` ;do
-for ITERATION in `seq 1 100` ;do
+ITERATION=1
+while [ $ITERATION -le 100 ] ;do
  # load data
  util/load.sh SIMULATOR_reference
  
@@ -63,9 +65,11 @@ for ITERATION in `seq 1 100` ;do
  
  cp vast_detection_efficiency.log simulation_results/ITERATION"$ITER_STR"_vast_detection_efficiency.log
 
+ ITERATION=$((ITERATION+1))
 done
 
 mv simulation_results reduced_N_points_"$N_POINTS"_simulation_results
 
-done # N_POINTS
+N_POINTS=$((N_POINTS+1))
+done # while [ $N_POINTS -le 260 ]
 
