@@ -480,7 +480,7 @@ function remove_test_data_to_save_space() {
    fi
    if [ $TEST -eq 1 ];then
     echo "WARNING: we are almost out of disk space, only $FREE_DISK_SPACE_MB MB remaining."
-    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ;do
+    for TEST_DATASET in ../NMW_And1_test_lightcurves_40 ../Gaia16aye_SN ../individual_images_test ../KZ_Her_DSLR_transient_search_test ../M31_ISON_test ../M4_WFC3_F775W_PoD_lightcurves_where_rescale_photometric_errors_fails ../MASTER_test ../only_few_stars ../test_data_photo ../test_exclude_ref_image ../transient_detection_test_Ceres ../NMW_Saturn_test ../NMW_Venus_test ../NMW_find_Chandra_test ../NMW_find_NovaCas_august31_test ../NMW_Sgr9_crash_test ../NMW_Sgr1_NovaSgr20N4_test ../NMW_Aql11_NovaHer21_test ../NMW_Vul2_magnitude_calibration_exit_code_test ../NMW_find_NovaCas21_test ../NMW_Sco6_NovaSgr21N2_test ../NMW_Sgr7_NovaSgr21N1_test ../NMW_find_Mars_test ../tycho2 ../vast_test_lightcurves ../vast_test__dark_flat_flag ../vast_test_ASASSN-19cq ../vast_test_bright_stars_failed_match '../sample space' '../sample_data_compressed' ../NMW_corrupt_calibration_test ../NMW_ATLAS_Mira_in_Ser1 ../DART_Didymos_moving_object_photometry_test ../NMW-STL__find_Neptune_test ../NMW-STL__find_NovaVul24_test ../NMW-STL__RefFrameMatchFail_test ../NMW-STL__STL-11000M__find_huge_comet_test ../NMW-STL__plate_solve_failure_test ../NMW-STL__NovaOph24N1_test ../NMW__NovaOph24N1_test ../NMW_calibration_test ../NMW_Sco6_NovaSgr24N1_test ../NMW__NovaVul24_Stas_test ../NMW_nomatch_test ../TICA_TESS_mag_calibration_failure_test ../TICA_TESS__find_NovaVul24_test ../KGO_RC600_NCas2021_test ../NMW-STL__find_NovaVul24_lacosmic_test ../NMW__NovaVul24_Stas_lacosmic_test ../NMW__NovaOph24N1_lacosmic_test ;do
      # Simple safety thing
      TEST=`echo "$TEST_DATASET" | grep -c '\.\.'`
      if [ $TEST -ne 1 ];then
@@ -18671,6 +18671,584 @@ $GREP_RESULT"
  fi
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWSTLFINDNVUL24_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt
+#
+remove_test_data_to_save_space
+
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!"
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES"
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ #exit 1
+ fail_early "Internet connection error"
+fi
+
+
+
+##### (L.A.Cosmic processed) NMW find Nova Vul 2024 ST test #####
+# Download the test dataset if needed
+if [ ! -d ../NMW__NovaVul24_Stas_test ];then
+ cd .. || exit 1
+ curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW__NovaVul24_Stas_test.tar.bz2" && tar -xvjf NMW__NovaVul24_Stas_test.tar.bz2 && rm -f NMW__NovaVul24_Stas_test.tar.bz2
+ cd "$WORKDIR" || exit 1
+fi
+if [ ! -d ../NMW__NovaVul24_Stas_lacosmic_test ];then
+ cp -rv ../NMW__NovaVul24_Stas_test ../NMW__NovaVul24_Stas_lacosmic_test || exit 1
+ cd ../NMW__NovaVul24_Stas_lacosmic_test/second_epoch_images || exit 1
+ # Apply lacosmic to each image
+ for FITSFILE in *.fts ;do
+  "$WORKDIR"/util/ccd/lacosmic "$FITSFILE" "lacosmic_$FITSFILE"
+  if [ $? -ne 0 ];then
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST_lacosmic_exit_code_$FITSFILE"
+  fi
+  mv "lacosmic_$FITSFILE" "$FITSFILE"
+ done
+ cd "$WORKDIR" || exit 1
+fi
+
+# If the test data are found
+if [ -d ../NMW__NovaVul24_Stas_lacosmic_test ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ #
+ remove_test31_tmp_files_if_present
+ # Run the test
+ echo "NMW find Nova Vul 2024 ST L.A.Cosmic processed test "
+ echo -n "NMW find Nova Vul 2024 ST L.A.Cosmic processed test: " >> vast_test_report.txt
+ #
+ # Verify lacosmic processing: check BITPIX preservation
+ for FITSFILE in ../NMW__NovaVul24_Stas_lacosmic_test/second_epoch_images/*.fts ;do
+  BITPIX_VALUE=$(util/listhead "$FITSFILE" 2>/dev/null | grep "^BITPIX" | awk '{print $3}')
+  if [ "$BITPIX_VALUE" != "16" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST_BITPIX"
+  fi
+ done
+ #
+ # Verify lacosmic processing: check HISTORY keyword
+ for FITSFILE in ../NMW__NovaVul24_Stas_lacosmic_test/second_epoch_images/*.fts ;do
+  util/listhead "$FITSFILE" 2>/dev/null | grep -q "L.A.Cosmic"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST_HISTORY"
+  fi
+ done
+ #
+ cp -v bad_region.lst_default bad_region.lst
+ #
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ # Test the production NMW script
+ REFERENCE_IMAGES=../NMW__NovaVul24_Stas_lacosmic_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW__NovaVul24_Stas_lacosmic_test/second_epoch_images &> test_transient_search_script_terminal_output$$.tmp
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST_EXIT_CODE"
+ fi
+ # Test for the specific error message
+ grep -q 'ERROR: cannot find a star near the specified position' test_transient_search_script_terminal_output$$.tmp
+ if [ $? -eq 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST_CANNOT_FIND_STAR_ERROR_MESSAGE"
+ fi
+ rm -f test_transient_search_script_terminal_output$$.tmp
+ #
+ if [ -f transient_report/index.html ];then
+  # there SHOULD NOT be an error message
+  grep -q 'ERROR: distance between reference and second-epoch image centers' "transient_report/index.html"
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST_ERROR_MESSAGE_IN_index_html"
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT="silenced"
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### LC_NMWVUL24ST_ERROR_MESSAGE_IN_index_html ######
+$GREP_RESULT
+----------------- transient_factory_test31.txt -----------------
+$CAT_RESULT"
+  fi
+  # The copy of the log file should be in the HTML report
+  grep -q "Images processed 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST001"
+  fi
+  NUMBER_OF_GOOD_SE_RUNS=`grep -c "Images processed 4" transient_report/index.html`
+  if [ $NUMBER_OF_GOOD_SE_RUNS -lt 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST001a"
+  fi
+  grep -q "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST002"
+  fi
+  NUMBER_OF_GOOD_SE_RUNS=`grep -c "Images used for photometry 4" transient_report/index.html`
+  if [ $NUMBER_OF_GOOD_SE_RUNS -lt 2 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST002a"
+  fi
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2460520.33991 28.07.2024 20:09:18' 1 transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST003"
+  fi
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460521.33198 29.07.2024 19:57:53' 1 transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST_check_dates_consistency_in_vast_image_details_log"
+  fi
+  #
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST_TYCHO2_V"
+  fi
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST_SESETTINGSFILE"
+  fi
+  # Hunting the mysterious non-zero reference frame rotation cases
+  if [ -f vast_image_details.log ];then
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST0_nonzero_ref_frame_rotation"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### LC_NMWVUL24ST0_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST0_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### LC_NMWVUL24ST0_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST0_NO_vast_image_details_log"
+  fi
+  #
+  #
+  if ! util/transients/validate_HTML_list_of_candidates.sh ;then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST0_HTML_LIST_FORMAT"
+  fi
+  #
+  #
+  grep -q "V0615 Vul" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST0110"
+  fi
+  grep galactic transient_report/index.html | grep -q "PNV J19430751+2100204"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST0110b"
+  fi
+  grep -q "2024 07 29\.831.  2460521\.331.  11\...  19:43:0.\... +21:00:..\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST0110a"
+   GREP_RESULT=`grep "2024 07 29\.831.  2460521\.331.  11\...  19:43:0.\... +21:00:..\.." transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### LC_NMWVUL24ST0110a ######
+$GREP_RESULT"
+  fi
+  RADECPOSITION_TO_TEST=`grep "2024 07 29\.831.  2460521\.331.  11\...  19:43:0.\... +21:00:..\.." transient_report/index.html | head -n1 | awk '{print $6" "$7}'`
+  # Position of Nova Vul 2024 from Henryk Sielewicz via astronomy.ru/Stanislav Korotkij 19:43:07.49 +21:00:21.6
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 19:43:07.49 +21:00:21.6 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST0110a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST0110a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+
+  ### Pixel scale test (make sure WCS is not corrupted) ###
+  for i in wcs_*.fts ;do
+   util/fov_of_wcs_calibrated_image.sh $i | grep -q '8.3[45]"/pix'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST0110a_IMGSCALE_$i"
+   fi
+  done
+
+  test_if_test31_tmp_files_are_present
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST_TMP_FILE_PRESENT"
+  fi
+
+ else
+  echo "ERROR running the transient search script"
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST_ALL"
+ fi
+
+ ###### restore exclusion list after the test if needed
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mNMW find Nova Vul 2024 ST L.A.Cosmic processed test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mNMW find Nova Vul 2024 ST L.A.Cosmic processed test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWVUL24ST_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt
+#
+remove_test_data_to_save_space
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!"
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES"
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ #exit 1
+ fail_early "Internet connection error"
+fi
+
+
+
+##### (L.A.Cosmic processed) NMW find Nova Oph 2024 test #####
+# Download the test dataset if needed
+if [ ! -d ../NMW__NovaOph24N1_test ];then
+ cd .. || exit 1
+ curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/NMW__NovaOph24N1_test.tar.bz2" && tar -xvjf NMW__NovaOph24N1_test.tar.bz2 && rm -f NMW__NovaOph24N1_test.tar.bz2
+ cd "$WORKDIR" || exit 1
+fi
+if [ ! -d ../NMW__NovaOph24N1_lacosmic_test ];then
+ cp -rv ../NMW__NovaOph24N1_test ../NMW__NovaOph24N1_lacosmic_test || exit 1
+ cd ../NMW__NovaOph24N1_lacosmic_test/second_epoch_images || exit 1
+ # Apply lacosmic to each image
+ for FITSFILE in *.fts ;do
+  "$WORKDIR"/util/ccd/lacosmic "$FITSFILE" "lacosmic_$FITSFILE"
+  if [ $? -ne 0 ];then
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_lacosmic_exit_code_$FITSFILE"
+  fi
+  mv "lacosmic_$FITSFILE" "$FITSFILE"
+ done
+ cd "$WORKDIR" || exit 1
+fi
+
+# If the test data are found
+if [ -d ../NMW__NovaOph24N1_lacosmic_test ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ #
+ remove_test31_tmp_files_if_present
+ # Run the test
+ echo "NMW find Nova Oph 2024 L.A.Cosmic processed test "
+ echo -n "NMW find Nova Oph 2024 L.A.Cosmic processed test: " >> vast_test_report.txt
+ #
+ # Verify lacosmic processing: check BITPIX preservation
+ for FITSFILE in ../NMW__NovaOph24N1_lacosmic_test/second_epoch_images/*.fts ;do
+  BITPIX_VALUE=$(util/listhead "$FITSFILE" 2>/dev/null | grep "^BITPIX" | awk '{print $3}')
+  if [ "$BITPIX_VALUE" != "16" ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_BITPIX"
+  fi
+ done
+ #
+ # Verify lacosmic processing: check HISTORY keyword
+ for FITSFILE in ../NMW__NovaOph24N1_lacosmic_test/second_epoch_images/*.fts ;do
+  util/listhead "$FITSFILE" 2>/dev/null | grep -q "L.A.Cosmic"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_HISTORY"
+  fi
+ done
+ #
+ cp -v bad_region.lst_default bad_region.lst
+ #
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ #################################################################
+ # We need a special astorb.dat for the asteroids
+ if [ -f astorb.dat ];then
+  mv astorb.dat astorb.dat_backup
+ fi
+ if [ ! -f astorb_2023.dat ];then
+  curl --silent --show-error -O "http://scan.sai.msu.ru/~kirx/pub/astorb_2023.dat.gz"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_error_downloading_custom_astorb_2023.dat"
+  fi
+  gunzip astorb_2023.dat.gz
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_error_unpacking_custom_astorb_2023.dat"
+  fi
+ fi
+ cp astorb_2023.dat astorb.dat
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_error_copying_astorb_2023.dat_to_astorb.dat"
+ fi
+ #################################################################
+ # Set STL camera bad regions file
+ if [ ! -f ../STL_bad_region.lst ];then
+  cp -v ../NMW__NovaOph24N1_lacosmic_test/STL_bad_region.lst ../STL_bad_region.lst
+ fi
+ # Test the production NMW script
+ REFERENCE_IMAGES=../NMW__NovaOph24N1_lacosmic_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW__NovaOph24N1_lacosmic_test/second_epoch_images
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24000_EXIT_CODE"
+ fi
+ #
+ if [ -f astorb.dat_backup ];then
+  mv astorb.dat_backup astorb.dat
+ else
+  # remove the custom astorb.dat
+  rm -f astorb.dat
+ fi
+ #
+ if [ -f transient_report/index.html ];then
+  grep -v -i 'Soft' transient_report/index.html | grep -q 'ERROR'
+  if [ $? -eq 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_ERROR_MESSAGE_IN_index_html"
+   GREP_RESULT=`grep -e 'ERROR' -e 'WARNING' 'transient_report/index.html'`
+   CAT_RESULT="silenced"
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### LC_NMWOPH24_ERROR_MESSAGE_IN_index_html ######
+$GREP_RESULT
+----------------- transient_factory_test31.txt -----------------
+$CAT_RESULT"
+  fi
+  # The copy of the log file should be in the HTML report
+  grep -q "Images processed 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24001"
+  fi
+  grep -q "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24002"
+  fi
+  compare_date_strings_in_vastsummarylog_with_tolerance 'First image: 2456005.58950 19.03.2012 02:08:33' 1 transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24003"
+  fi
+  compare_date_strings_in_vastsummarylog_with_tolerance 'Last  image: 2460380.60800 11.03.2024 02:35:21' 1 transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24004"
+  fi
+  #
+  check_dates_consistency_in_vast_image_details_log
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_check_dates_consistency_in_vast_image_details_log"
+  fi
+  #
+  grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_TYCHO2_V"
+  fi
+  grep -q 'default.sex.telephoto_lens_v4' transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_SESETTINGSFILE"
+  fi
+  # Hunting the mysterious non-zero reference frame rotation cases
+  if [ -f vast_image_details.log ];then
+   grep -m 1 `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'` vast_image_details.log | grep -q 'rotation=   0.000'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH240_nonzero_ref_frame_rotation"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### LC_NMWOPH240_nonzero_ref_frame_rotation ######
+$GREP_RESULT"
+   fi
+   grep -v -e 'rotation=   0.000' -e 'rotation= 180.000' vast_image_details.log | grep -q `grep 'Ref.  image:' vast_summary.log | awk '{print $6}'`
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH240_nonzero_ref_frame_rotation_test2"
+    GREP_RESULT=`cat vast_summary.log vast_image_details.log`
+    DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### LC_NMWOPH240_nonzero_ref_frame_rotation_test2 ######
+$GREP_RESULT"
+   fi
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH240_NO_vast_image_details_log"
+  fi
+  #
+  # AAVSO stub format test
+  grep -q "V4370 Oph,2460380.607" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24314_AAVSOSTUB"
+   GREP_RESULT=`cat vast_summary.log transient_report/index.html`
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### LC_NMWOPH24314_AAVSOSTUB ######
+$GREP_RESULT"
+  fi
+  #
+  #
+  # V4370 Oph
+  grep -q "V4370 Oph" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24314"
+  fi
+  grep -q "2024 03 11.107.  2460380.607.  10\...  17:39:5[67]\... -26:27:4[01]\.." transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24314a"
+  fi
+  # 1st pass
+  RADECPOSITION_TO_TEST=`grep "2024 03 11.107.  2460380.607.  10\...  17:39:5[67]\... -26:27:4[01]\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  # SOAR position of V4370 Oph
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:39:57.080 -26:27:41.93  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24314a_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24314a_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  # 2nd pass
+  RADECPOSITION_TO_TEST=`grep "2024 03 11.107.  2460380.607.  10\...  17:39:5[67]\... -26:27:41\.." transient_report/index.html | awk '{print $6" "$7}' | tail -n1`
+  # SOAR position of V4370 Oph
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 17:39:57.080 -26:27:41.93  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  # NMW scale is 8.4"/pix
+  TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
+  re='^[0-9]+$'
+  if ! [[ $TEST =~ $re ]] ; then
+   echo "TEST ERROR"
+   TEST_PASSED=0
+   TEST=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24314b_TOO_FAR_TEST_ERROR"
+  else
+   if [ $TEST -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24314b_TOO_FAR_$DISTANCE_ARCSEC"
+   fi
+  fi
+  #
+  #
+  for FILE_TO_CHECK in planets.txt comets.txt moons.txt asassn_transients_list.txt tocp_transients_list.txt ;do
+   if [ -f "$FILE_TO_CHECK" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_no_$FILE_TO_CHECK"
+    continue
+   fi
+   if [ -s "$FILE_TO_CHECK" ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_empty_$FILE_TO_CHECK"
+    continue
+   fi
+   grep -q '00:00:00.00' "$FILE_TO_CHECK"
+   if [ $? -eq 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_00:00:00.00_in_$FILE_TO_CHECK"
+   fi
+  done
+  #
+
+  test_if_test31_tmp_files_are_present
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_TMP_FILE_PRESENT"
+  fi
+
+ else
+  echo "ERROR running the transient search script"
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_ALL"
+ fi
+
+
+ ###### restore default bad regions file
+ if [ -f bad_region.lst_default ];then
+  cp -v bad_region.lst_default bad_region.lst
+ fi
+ #
+
+ ###### restore default exclusion list if any
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
+
+
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mNMW find Nova Oph 2024 L.A.Cosmic processed test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mNMW find Nova Oph 2024 L.A.Cosmic processed test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES LC_NMWOPH24_TEST_NOT_PERFORMED"
 fi
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
