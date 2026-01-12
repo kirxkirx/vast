@@ -970,11 +970,40 @@ else
 fi
 # If the syntax-check fails - don't bother with the other tests - exit now
 if [ $TEST_PASSED -eq 0 ];then
- echo "Script syntax check failed!" 
+ echo "Script syntax check failed!"
  echo "Script syntax check failed!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 
+ echo "Failed test codes: $FAILED_TEST_CODES"
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  exit 1
+fi
+
+##### Syntax-check GitHub workflow YAML files #####
+# This test is skipped if python3 or PyYAML is not available
+if command -v python3 &>/dev/null && python3 -c "import yaml" &>/dev/null; then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ echo -n "Syntax-check GitHub workflow YAML files: "
+ echo -n "Syntax-check GitHub workflow YAML files: " >> vast_test_report.txt
+ for YAML_FILE in .github/workflows/*.yml ;do
+  if [ -f "$YAML_FILE" ]; then
+   if ! python3 -c "import yaml; yaml.safe_load(open('$YAML_FILE'))" 2>/dev/null; then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES YAML_SYNTAX_$(basename "$YAML_FILE" .yml)"
+   fi
+  fi
+ done
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mSyntax-check GitHub workflow YAML files \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mSyntax-check GitHub workflow YAML files \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ echo "Skipping YAML syntax check (python3 or PyYAML not available)"
+ echo "SKIPPED (python3 or PyYAML not available)" >> vast_test_report.txt
 fi
 
 ########## remove bad regions file 
