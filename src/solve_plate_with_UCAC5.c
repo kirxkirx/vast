@@ -33,6 +33,9 @@
 
 #include <time.h> // for seeding the random number generator with srand(time(NULL))
 
+#include <sys/wait.h> // for waitpid() in execute_curl_direct()
+#include <ctype.h>    // for isspace() in parse_shell_args()
+
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_sort.h>
 
@@ -1660,8 +1663,213 @@ char *get_sanitized_curl_proxy() {
 }
 
 /**
+ * Parses a shell-style argument string into tokens, handling single and double quotes.
+ * Adds parsed tokens to the provided argv array, updating argc and reallocating if needed.
+ *
+ * input_str: The string to parse (can be NULL or empty)
+ * argv: Pointer to the argument array (will be reallocated if needed)
+ * argc: Pointer to current argument count (will be updated)
+ * capacity: Pointer to current array capacity (will be updated if reallocated)
+ *
+ * Returns 0 on success, -1 on memory allocation failure.
+ */
+static int parse_shell_args( const char *input_str, char ***argv, int *argc, int *capacity ) {
+ if ( input_str == NULL || strlen( input_str ) == 0 ) {
+  return 0; // Nothing to parse
+ }
+
+ char *str_copy= strdup( input_str );
+ if ( str_copy == NULL ) {
+  return -1;
+ }
+
+ char *p= str_copy;
+ char *token_start;
+ char quote_char;
+ char token_buf[1024];
+ int token_len;
+
+ while ( *p != '\0' ) {
+  // Skip leading whitespace
+  while ( *p != '\0' && isspace( (unsigned char)*p ) ) {
+   p++;
+  }
+  if ( *p == '\0' ) {
+   break;
+  }
+
+  token_len= 0;
+  token_buf[0]= '\0';
+
+  // Parse one token (may consist of multiple quoted/unquoted segments)
+  while ( *p != '\0' && !isspace( (unsigned char)*p ) ) {
+   if ( *p == '\'' || *p == '"' ) {
+    // Quoted segment
+    quote_char= *p;
+    p++; // Skip opening quote
+    token_start= p;
+    while ( *p != '\0' && *p != quote_char ) {
+     if ( token_len < (int)sizeof( token_buf ) - 1 ) {
+      token_buf[token_len++]= *p;
+     }
+     p++;
+    }
+    if ( *p == quote_char ) {
+     p++; // Skip closing quote
+    }
+   } else {
+    // Unquoted segment
+    if ( token_len < (int)sizeof( token_buf ) - 1 ) {
+     token_buf[token_len++]= *p;
+    }
+    p++;
+   }
+  }
+  token_buf[token_len]= '\0';
+
+  // Add token to argv if non-empty
+  if ( token_len > 0 ) {
+   // Check if we need to grow the array
+   if ( *argc >= *capacity - 1 ) { // -1 to leave room for NULL terminator
+    int new_capacity= *capacity * 2;
+    char **new_argv= realloc( *argv, new_capacity * sizeof( char * ) );
+    if ( new_argv == NULL ) {
+     free( str_copy );
+     return -1;
+    }
+    *argv= new_argv;
+    *capacity= new_capacity;
+   }
+
+   ( *argv )[*argc]= strdup( token_buf );
+   if ( ( *argv )[*argc] == NULL ) {
+    free( str_copy );
+    return -1;
+   }
+   ( *argc )++;
+  }
+ }
+
+ free( str_copy );
+ return 0;
+}
+
+/**
+ * Frees an argv-style array of strings.
+ */
+static void free_argv( char **argv, int argc ) {
+ int i;
+ if ( argv == NULL ) {
+  return;
+ }
+ for ( i= 0; i < argc; i++ ) {
+  free( argv[i] );
+ }
+ free( argv );
+}
+
+/**
+ * Executes curl directly without shell interpretation using fork() + execvp().
+ * This avoids command injection vulnerabilities by passing arguments as an array.
+ *
+ * base_command: The curl arguments (without "curl" prefix)
+ * proxy_settings: Optional proxy settings string (can be NULL)
+ * print_command: If non-zero, print the command to stderr (with obscured credentials)
+ *
+ * Returns the exit status of curl, or -1 on error.
+ */
+static int execute_curl_direct( const char *base_command, const char *proxy_settings, int print_command ) {
+ char **argv= NULL;
+ int argc= 0;
+ int capacity= 64;
+ int status;
+ pid_t pid;
+ int i;
+
+ // Allocate initial argv array
+ argv= malloc( capacity * sizeof( char * ) );
+ if ( argv == NULL ) {
+  fprintf( stderr, "ERROR: Memory allocation failed for argv\n" );
+  return -1;
+ }
+
+ // First argument is the program name
+ argv[argc]= strdup( "curl" );
+ if ( argv[argc] == NULL ) {
+  free( argv );
+  fprintf( stderr, "ERROR: Memory allocation failed for curl argument\n" );
+  return -1;
+ }
+ argc++;
+
+ // Parse proxy settings if provided
+ if ( proxy_settings != NULL && strlen( proxy_settings ) > 0 ) {
+  if ( parse_shell_args( proxy_settings, &argv, &argc, &capacity ) != 0 ) {
+   free_argv( argv, argc );
+   fprintf( stderr, "ERROR: Failed to parse proxy settings\n" );
+   return -1;
+  }
+ }
+
+ // Parse base command
+ if ( parse_shell_args( base_command, &argv, &argc, &capacity ) != 0 ) {
+  free_argv( argv, argc );
+  fprintf( stderr, "ERROR: Failed to parse base command\n" );
+  return -1;
+ }
+
+ // NULL-terminate the array
+ argv[argc]= NULL;
+
+ // Print command if requested (for debugging)
+ if ( print_command ) {
+  fprintf( stderr, "Executing:" );
+  for ( i= 0; i < argc; i++ ) {
+   // Obscure proxy credentials in output
+   if ( i > 0 && strcmp( argv[i - 1], "--proxy-user" ) == 0 ) {
+    fprintf( stderr, " user:password" );
+   } else {
+    fprintf( stderr, " %s", argv[i] );
+   }
+  }
+  fprintf( stderr, "\n" );
+ }
+
+ // Fork and execute
+ pid= fork();
+ if ( pid == -1 ) {
+  fprintf( stderr, "ERROR: fork() failed\n" );
+  free_argv( argv, argc );
+  return -1;
+ }
+
+ if ( pid == 0 ) {
+  // Child process: execute curl
+  execvp( "curl", argv );
+  // If execvp returns, it failed
+  _exit( 127 );
+ }
+
+ // Parent process: wait for child
+ if ( waitpid( pid, &status, 0 ) == -1 ) {
+  fprintf( stderr, "ERROR: waitpid() failed\n" );
+  free_argv( argv, argc );
+  return -1;
+ }
+
+ free_argv( argv, argc );
+
+ if ( WIFEXITED( status ) ) {
+  return WEXITSTATUS( status );
+ } else {
+  return -1; // Child terminated abnormally
+ }
+}
+
+/**
  * Safely constructs a curl command with proxy settings if available.
  * Returns a dynamically allocated string that must be freed by the caller.
+ * NOTE: This function is kept for backward compatibility and logging purposes.
  */
 char *construct_safe_curl_command( const char *base_command, const char *proxy_settings ) {
  // Allocate memory for the full command
@@ -1755,7 +1963,6 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  char string[1024];
  // char base_command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
  char base_command[BASE_COMMAND_LENGTH];
- char *command= NULL;
  FILE *vizquery_input;
  FILE *f;
  int i;
@@ -1863,20 +2070,9 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  }
  base_command[BASE_COMMAND_LENGTH - 1]= '\0'; // just in case snprintf() messed up the last byte
 
- // Construct safe command
- command= construct_safe_curl_command( base_command, proxy_settings );
- if ( command == NULL ) {
-  if ( proxy_settings != NULL ) {
-   free( proxy_settings );
-  }
-  return 1;
- }
-
+ // Execute curl directly without shell interpretation (avoids command injection)
  fprintf( stderr, "Running curl...\n" );
- vizquery_run_success= system( command );
- obscure_proxy_credentials( command );
- fprintf( stderr, "%s\n", command );
- free( command ); // Free the allocated command string
+ vizquery_run_success= execute_curl_direct( base_command, proxy_settings, 1 );
 
  if ( vizquery_run_success != 0 || count_lines_in_ASCII_file( vizquery_output_filename ) < 5 ) {
   fprintf( stderr, "First attempt failed, trying alternative command\n" );
@@ -1905,20 +2101,9 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
             vizquery_output_filename );
   }
 
-  // Construct safe command for retry
-  command= construct_safe_curl_command( base_command, proxy_settings );
-  if ( command == NULL ) {
-   if ( proxy_settings != NULL ) {
-    free( proxy_settings );
-   }
-   return 1;
-  }
-
+  // Execute curl directly without shell interpretation (avoids command injection)
   fprintf( stderr, "Running curl...\n" );
-  vizquery_run_success= system( command );
-  obscure_proxy_credentials( command );
-  fprintf( stderr, "%s\n", command );
-  free( command ); // Free the allocated command string
+  vizquery_run_success= execute_curl_direct( base_command, proxy_settings, 1 );
 
   if ( vizquery_run_success != 0 || count_lines_in_ASCII_file( vizquery_output_filename ) < 5 ) {
    fprintf( stderr, "ERROR: Both attempts failed\n" );
@@ -2056,7 +2241,6 @@ int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, i
  char string[1024];
  // char base_command[1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH];
  char base_command[BASE_COMMAND_LENGTH];
- char *command= NULL;
  FILE *vizquery_input;
  FILE *f;
  int i;
@@ -2158,20 +2342,9 @@ int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, i
  }
  base_command[BASE_COMMAND_LENGTH - 1]= '\0'; // just in case snprintf() messed up the last byte
 
- // Construct safe command
- command= construct_safe_curl_command( base_command, proxy_settings );
- if ( command == NULL ) {
-  if ( proxy_settings != NULL ) {
-   free( proxy_settings );
-  }
-  return 1;
- }
-
+ // Execute curl directly without shell interpretation (avoids command injection)
  fprintf( stderr, "Running curl...\n" );
- vizquery_run_success= system( command );
- obscure_proxy_credentials( command );
- fprintf( stderr, "%s\n", command );
- free( command ); // Free the allocated command string
+ vizquery_run_success= execute_curl_direct( base_command, proxy_settings, 1 );
 
  if ( vizquery_run_success != 0 || count_lines_in_ASCII_file( vizquery_output_filename ) < 5 ) {
   fprintf( stderr, "First attempt failed, trying alternative command\n" );
@@ -2193,20 +2366,9 @@ int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, i
             vizquery_output_filename );
   }
 
-  // Construct safe command for retry
-  command= construct_safe_curl_command( base_command, proxy_settings );
-  if ( command == NULL ) {
-   if ( proxy_settings != NULL ) {
-    free( proxy_settings );
-   }
-   return 1;
-  }
-
+  // Execute curl directly without shell interpretation (avoids command injection)
   fprintf( stderr, "Running curl...\n" );
-  vizquery_run_success= system( command );
-  obscure_proxy_credentials( command );
-  fprintf( stderr, "%s\n", command );
-  free( command ); // Free the allocated command string
+  vizquery_run_success= execute_curl_direct( base_command, proxy_settings, 1 );
 
   if ( vizquery_run_success != 0 || count_lines_in_ASCII_file( vizquery_output_filename ) < 5 ) {
    fprintf( stderr, "ERROR: Both attempts failed\n" );

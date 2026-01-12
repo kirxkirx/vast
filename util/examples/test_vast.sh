@@ -17,24 +17,6 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
-# Print GitHub Actions diagnostic information
-if [ "$GITHUB_ACTIONS" = "true" ]; then
- RUN_URL=""
- if [ -n "$GITHUB_SERVER_URL" ] && [ -n "$GITHUB_REPOSITORY" ] && [ -n "$GITHUB_RUN_ID" ]; then
-  RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
- fi
-
- echo "---------- GitHub Actions ----------"
- [ -n "$GITHUB_WORKFLOW" ] && echo "Workflow: $GITHUB_WORKFLOW"
- [ -n "$GITHUB_JOB" ] && echo "Job: $GITHUB_JOB"
- [ -n "$GITHUB_RUN_ID" ] && echo "Run ID: $GITHUB_RUN_ID"
- [ -n "$GITHUB_RUN_NUMBER" ] && echo "Run number: $GITHUB_RUN_NUMBER"
- [ -n "$GITHUB_RUN_ATTEMPT" ] && echo "Run attempt: $GITHUB_RUN_ATTEMPT"
- [ -n "$GITHUB_SHA" ] && echo "Commit: $GITHUB_SHA"
- [ -n "$GITHUB_REF_NAME" ] && echo "Ref: $GITHUB_REF_NAME"
- [ -n "$RUN_URL" ] && echo "Run URL: $RUN_URL"
- echo "-------------------------------------"
-fi
 
 ##### Auxiliary functions #####
 # save_test_artifact file_to_save TEST_NAME
@@ -606,6 +588,26 @@ function check_dates_consistency_in_vast_image_details_log() {
  return 0
 }
 
+# Print GitHub Actions diagnostic information
+function github_actions_info() {
+ if [ "$GITHUB_ACTIONS" = "true" ]; then
+  RUN_URL=""
+  if [ -n "$GITHUB_SERVER_URL" ] && [ -n "$GITHUB_REPOSITORY" ] && [ -n "$GITHUB_RUN_ID" ]; then
+   RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+  fi
+
+  echo "---------- GitHub Actions ----------"
+  [ -n "$GITHUB_WORKFLOW" ] && echo "Workflow: $GITHUB_WORKFLOW"
+  [ -n "$GITHUB_JOB" ] && echo "Job: $GITHUB_JOB"
+  [ -n "$GITHUB_RUN_ID" ] && echo "Run ID: $GITHUB_RUN_ID"
+  [ -n "$GITHUB_RUN_NUMBER" ] && echo "Run number: $GITHUB_RUN_NUMBER"
+  [ -n "$GITHUB_RUN_ATTEMPT" ] && echo "Run attempt: $GITHUB_RUN_ATTEMPT"
+  [ -n "$GITHUB_SHA" ] && echo "Commit: $GITHUB_SHA"
+  [ -n "$GITHUB_REF_NAME" ] && echo "Ref: $GITHUB_REF_NAME"
+  [ -n "$RUN_URL" ] && echo "Run URL: $RUN_URL"
+  echo "-------------------------------------"
+ fi
+}
 
 
 
@@ -723,11 +725,14 @@ STARTTIME_HUMAN_RADABLE=`date`
 echo "Started on $STARTTIME_HUMAN_RADABLE" 
 echo "Started on $STARTTIME_HUMAN_RADABLE" >> vast_test_report.txt
 
+##### Is this GitHub Actions run? #####
+github_actions_info >> vast_test_report.txt
+
 ##### Gather system information #####
 echo "Gathering basic system information for summary report" 
 echo "---------- System information ----------" >> vast_test_report.txt
 uname -a >> vast_test_report.txt
-SYSTEM_TYPE=`uname`
+SYSTEM_TYPE=$(uname)
 if [ "$SYSTEM_TYPE" = "Linux" ];then
  # Use inxi script to generate nice human-readable system parameters summary
  lib/inxi -c0 -! 31 -S -M -C -I >> vast_test_report.txt
