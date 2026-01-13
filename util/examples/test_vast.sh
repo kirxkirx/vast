@@ -22231,8 +22231,9 @@ $CAT_RESULT"
   #fi
   #
   #
+  # old 80% of stars value 14.19, new SNR5 value 15.54
   MAG_ZP=$(grep "Estimated ref. image limiting mag.:  1" transient_report/index.html | tail -n1 | awk '{print $6}')
-  TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 14.19)*($1 - 14.19) ) < 0.05 ) print 1 ;else print 0 }'`
+  TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 15.54)*($1 - 15.54) ) < 0.05 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
