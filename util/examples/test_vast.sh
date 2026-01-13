@@ -710,7 +710,8 @@ remove_test_artifacts
 
 ##### Report that we are starting the work #####
 echo "---------- Starting $0 ----------" 
-echo "---------- $0 ----------" > vast_test_report.txt
+echo "
+---------- $0 ----------" > vast_test_report.txt
 
 ##### Set initial values for the variables #####
 DEBUG_OUTPUT=""
