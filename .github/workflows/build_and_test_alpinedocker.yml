@@ -67,19 +67,20 @@ jobs:
         env:
           TEST_VAST_CURL_PROXY: ${{ secrets.TEST_VAST_CURL_PROXY }}
         run: |
-          # Keep artifacts in the workspace so upload-artifact can pick them up
+          rm -rf test_artifacts
+          mkdir -p test_artifacts
+
           docker run --rm \
             -e TEST_VAST_CURL_PROXY \
-            -v "$GITHUB_WORKSPACE:/work" \
-            -w /work \
+            -v "$GITHUB_WORKSPACE:/out" \
+            -w /opt/vast \
             vast-alpine:ci \
-            bash -lc 'echo "1" > ../THIS_IS_HPCC; util/examples/test_vast.sh'
-
-      - name: Upload test artifacts
-        if: env.SKIP != 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-artifacts-alpine
-          path: test_artifacts/
-          retention-days: 7
-
+            bash -lc '
+              echo "1" > ../THIS_IS_HPCC
+              util/examples/test_vast.sh
+              # copy artifacts to the runner workspace for upload
+              if [ -d test_artifacts ]; then
+                rm -rf /out/test_artifacts
+                cp -a test_artifacts /out/
+              fi
+            '
