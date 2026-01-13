@@ -3366,6 +3366,9 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
 
+if [ $TEST_PASSED -ne 1 ];then
+ fail_early "Fail early after SMALLCCD_TEST - if this simple test does not work - something is very wrong"
+fi
 
 ##### Small CCD images star exclusion test #####
 # Download the test dataset if needed
