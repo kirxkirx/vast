@@ -58,6 +58,7 @@ jobs:
 
           docker run --rm \
             -e TEST_VAST_CURL_PROXY \
+            -e GITHUB_ACTIONS \
             -v "$GITHUB_WORKSPACE:/out" \
             -w /opt/vast \
             vast-alpine:ci \
