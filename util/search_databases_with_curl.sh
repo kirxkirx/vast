@@ -44,22 +44,22 @@ function check_if_the_vsx_page_looks_legit_and_we_might_be_having_parsing_issues
   # empty file 
   return 1
  fi
- grep -q --ignore-case '</html>' "$VSX_PAGE_CONTENT_FILE"
+ grep -q -i '</html>' "$VSX_PAGE_CONTENT_FILE"
  if [ $? -ne 0 ];then
   # no closing html tag - possibly incomplete file?
   return 1
  fi
- grep -q --ignore-case 'Variable Star Index' "$VSX_PAGE_CONTENT_FILE"
+ grep -q -i 'Variable Star Index' "$VSX_PAGE_CONTENT_FILE"
  if [ $? -ne 0 ];then
   # expect to find words 'Variable Star Index' on the page
   return 1
  fi
- grep -q --ignore-case 'New Search' "$VSX_PAGE_CONTENT_FILE"
+ grep -q -i 'New Search' "$VSX_PAGE_CONTENT_FILE"
  if [ $? -ne 0 ];then
   # expect to find words 'New Search' on the page
   return 1
  fi
- grep -q --ignore-case 'AUID' "$VSX_PAGE_CONTENT_FILE"
+ grep -q -i 'AUID' "$VSX_PAGE_CONTENT_FILE"
  if [ $? -ne 0 ];then
   # expect to find word 'AUID' on the page
   return 1

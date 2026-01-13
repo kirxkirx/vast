@@ -684,7 +684,7 @@ if [ $KNOWN_VARIABLE -eq 0 ];then
     # Generic VizieR search for the word 'variable'
     if [ $KNOWN_VARIABLE -eq 0 ];then
      echo -n "Generic VizieR search for catalogs with the word 'variable' in their name (VizieR)"
-     GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -words='variable' -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" 2>/dev/null | grep 'Title' | grep --ignore-case -e 'variable' -e 'variability' | grep -v -e 'Northern Sky Variability Survey' -e 'Stellar variability in Gaia DR3' -e 'Variability properties of TIC sources with KELT' -e 'Variability Upper Limits' | sed 's:#Title\: ::g')
+     GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS=$($LONGTIMEOUTCOMMAND "$VAST_PATH"lib/vizquery -site="$VIZIER_SITE" -words='variable' -mime=text  -c="$GOOD_CATALOG_POSITION" -c.rs="$R_SEARCH_ARCSEC" 2>/dev/null | grep 'Title' | grep -i -e 'variable' -e 'variability' | grep -v -e 'Northern Sky Variability Survey' -e 'Stellar variability in Gaia DR3' -e 'Variability properties of TIC sources with KELT' -e 'Variability Upper Limits' | sed 's:#Title\: ::g')
      if [ -n "$GENERIC_VIZIER_SEARCH_VARIABLE_RESULTS" ];then
       SUGGESTED_COMMENT_STRING="$SUGGESTED_COMMENT_STRING may be a known variable - check VizieR  "
      fi
