@@ -46,7 +46,7 @@ VSX_PAGE_TIMEOUT  = 120  # seconds to wait for VSX page
 
 # Retry settings for external link checks
 LINK_CHECK_MAX_RETRIES = 2
-LINK_CHECK_RETRY_DELAY = 120  # seconds to wait between retries
+LINK_CHECK_RETRY_DELAY = 240  # seconds to wait between retries
 
 
 class SecondSectionLinkButtonTest(unittest.TestCase):

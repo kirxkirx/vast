@@ -13794,7 +13794,7 @@ $GREP_RESULT"
       GREP_RESULT=$(cat selenium_NMW_V615Vul_test.txt)
       CAT_RESULT="silenced"
       DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### TICATESSZERORA_ERROR_MESSAGE_IN_index_html ######
+###### NMWNVUL24ST_SELENIUM_TEST ######
 $GREP_RESULT
 ----------------- transient_factory_test31.txt -----------------
 $CAT_RESULT"
