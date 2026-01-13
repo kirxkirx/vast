@@ -21,17 +21,24 @@ int compare_julian_date( const void *a, const void *b ) {
 
 // Function to sort the content of a file after checking if the file is already sorted (if it is - do nothing)
 void sort_file( const char *file_name ) {
- Data data_arr[MAX_NUMBER_OF_OBSERVATIONS];
+ Data *data_arr; // heap-allocated to avoid stack overflow on musl libc
  size_t data_count;
  char line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE];
  double julian_date;
  size_t i;
  int is_sorted= 1; // Assume sorted initially
 
+ data_arr= malloc( MAX_NUMBER_OF_OBSERVATIONS * sizeof( Data ) );
+ if ( NULL == data_arr ) {
+  fprintf( stderr, "sort_file() ERROR: failed to allocate data_arr\n" );
+  return;
+ }
+
  FILE *file= fopen( file_name, "r" );
  if ( !file ) {
   sprintf( line, "sort_file() ERROR opening file %s", file_name );
   perror( line );
+  free( data_arr );
   return;
  }
 
@@ -44,6 +51,10 @@ void sort_file( const char *file_name ) {
   if ( NULL == data_arr[data_count].line ) {
    fprintf( stderr, "ERROR: NULL == data_arr[data_count].line \n" );
    fclose( file );
+   for ( i= 0; i < data_count; i++ ) {
+    free( data_arr[i].line );
+   }
+   free( data_arr );
    return;
   }
   strncpy( data_arr[data_count].line, line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE );
@@ -70,6 +81,7 @@ void sort_file( const char *file_name ) {
   for ( i= 0; i < data_count; i++ ) {
    free( data_arr[i].line );
   }
+  free( data_arr );
   return;
  }
 
@@ -83,6 +95,10 @@ void sort_file( const char *file_name ) {
 
  if ( !output_file ) {
   fprintf( stderr, "ERROR opening output file %s\n", output_file_name );
+  for ( i= 0; i < data_count; i++ ) {
+   free( data_arr[i].line );
+  }
+  free( data_arr );
   return;
  }
 
@@ -96,13 +112,16 @@ void sort_file( const char *file_name ) {
  // Replace the original file with the sorted file
  if ( remove( file_name ) != 0 ) {
   perror( "sort_file() ERROR deleting original file" );
+  free( data_arr );
   return;
  }
  if ( rename( output_file_name, file_name ) != 0 ) {
   perror( "sort_file() ERROR renaming sorted file" );
+  free( data_arr );
   return;
  }
 
+ free( data_arr );
  return;
 }
 

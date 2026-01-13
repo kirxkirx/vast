@@ -64,9 +64,11 @@ jobs:
             bash -lc '
               echo "1" > ../THIS_IS_HPCC
               util/examples/test_vast.sh
+              TEST_EXIT_CODE=$?
               # copy artifacts to the runner workspace for upload
               if [ -d test_artifacts ]; then
                 rm -rf /out/test_artifacts
                 cp -a test_artifacts /out/
               fi
+              exit $TEST_EXIT_CODE
             '
