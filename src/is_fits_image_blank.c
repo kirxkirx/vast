@@ -17,13 +17,13 @@
 //  -1 - error reading the image
 int is_fits_image_blank( char *fitsfilename ) {
  fitsfile *fptr;
- int status = 0;
+ int status= 0;
  int naxis;
  long naxes[2];
  long totpix;
  double *pix;
- int anynul = 0;
- double nullval = 0.0;
+ int anynul= 0;
+ double nullval= 0.0;
  long ii;
 
  double min_val, max_val;
@@ -56,10 +56,10 @@ int is_fits_image_blank( char *fitsfilename ) {
   return -1;
  }
 
- totpix = naxes[0] * naxes[1];
+ totpix= naxes[0] * naxes[1];
 
  // Allocate memory for the image
- pix = (double *)malloc( totpix * sizeof( double ) );
+ pix= (double *)malloc( totpix * sizeof( double ) );
  if ( pix == NULL ) {
   fprintf( stderr, "ERROR in is_fits_image_blank(): cannot allocate memory for %s\n", fitsfilename );
   fits_close_file( fptr, &status );
@@ -80,15 +80,15 @@ int is_fits_image_blank( char *fitsfilename ) {
  fits_close_file( fptr, &status );
 
  // Find min and max values
- min_val = pix[0];
- max_val = pix[0];
+ min_val= pix[0];
+ max_val= pix[0];
 
- for ( ii = 1; ii < totpix; ii++ ) {
+ for ( ii= 1; ii < totpix; ii++ ) {
   if ( pix[ii] < min_val ) {
-   min_val = pix[ii];
+   min_val= pix[ii];
   }
   if ( pix[ii] > max_val ) {
-   max_val = pix[ii];
+   max_val= pix[ii];
   }
  }
 

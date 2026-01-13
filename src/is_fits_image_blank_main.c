@@ -28,7 +28,7 @@ int main( int argc, char **argv ) {
 
  // Safely copy the filename
  safely_encode_user_input_string( fitsfilename, argv[1], FILENAME_LENGTH );
- fitsfilename[FILENAME_LENGTH - 1] = '\0';
+ fitsfilename[FILENAME_LENGTH - 1]= '\0';
 
  // Check if the file is a valid FITS image
  if ( 0 != fitsfile_read_check( fitsfilename ) ) {
@@ -37,7 +37,7 @@ int main( int argc, char **argv ) {
  }
 
  // Check if the image is blank
- result = is_fits_image_blank( fitsfilename );
+ result= is_fits_image_blank( fitsfilename );
 
  if ( result == -1 ) {
   // Error reading the image

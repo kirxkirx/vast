@@ -46,7 +46,7 @@ unsigned short detect_overscan2( float *image_array, long *naxes ) {
   img_profile[i - posY * naxes[0]]= (double)image_array[i];
  }
 
- //int binsize= 64;
+ // int binsize= 64;
  int binsize= 8;
 
  double left[binsize];
@@ -70,7 +70,7 @@ unsigned short detect_overscan2( float *image_array, long *naxes ) {
 
  // do not test if the values seem high
  if ( left_median > 5000 && right_median > 5000 ) {
-  fprintf( stdout, "No overscan detected - all values seem high! (left_median=%.1lf, right_median=%.1lf)\n", left_median, right_median);
+  fprintf( stdout, "No overscan detected - all values seem high! (left_median=%.1lf, right_median=%.1lf)\n", left_median, right_median );
   return MIN_REAL_COUNT;
  }
 
@@ -83,7 +83,7 @@ unsigned short detect_overscan2( float *image_array, long *naxes ) {
  // fprintf(stderr,"DEBUG: median=%lf left_median=%lf right_median=%lf",median,left_median,right_median);
  // unsigned short min_real_count_estimate= (unsigned short)( median + 10 * sqrt( median ) );
  median= ( left_median > right_median ) ? left_median : right_median;
- //unsigned short min_real_count_estimate= (unsigned short)( median - 10 * sqrt( median ) );
+ // unsigned short min_real_count_estimate= (unsigned short)( median - 10 * sqrt( median ) );
  unsigned short min_real_count_estimate= (unsigned short)( MIN( left_median, right_median ) + 10 * sqrt( median ) );
  fprintf( stdout, "Overscan detected!  (left_median=%.1lf, right_median=%.1lf, sqrt(median)=%lf)\n", left_median, right_median, sqrt( median ) );
  return MAX( min_real_count_estimate, MIN_REAL_COUNT );

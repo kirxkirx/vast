@@ -210,15 +210,14 @@ void form_DATEOBS_EXPTIME_log_output_from_JD( double JD, double exposure_sec, ch
  struct_tm_pointer= gmtime( &exposure_start_time_unixsec );
 #endif
 
-
  // yes, it seems to work for avoiding 05:60 output
- if ( floor( ((double)(struct_tm_pointer->tm_sec) + double_fractional_seconds_only) * 1000.0 + 0.5) / 1000.0 == 60.0) {
+ if ( floor( ( (double)( struct_tm_pointer->tm_sec ) + double_fractional_seconds_only ) * 1000.0 + 0.5 ) / 1000.0 == 60.0 ) {
   exposure_start_time_unixsec++;
-  double_fractional_seconds_only = 0.0;
-#if defined(_POSIX_C_SOURCE) || defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
-  gmtime_r(&exposure_start_time_unixsec, struct_tm_pointer);
+  double_fractional_seconds_only= 0.0;
+#if defined( _POSIX_C_SOURCE ) || defined( _BSD_SOURCE ) || defined( _SVID_SOURCE )
+  gmtime_r( &exposure_start_time_unixsec, struct_tm_pointer );
 #else
-  struct_tm_pointer = gmtime(&exposure_start_time_unixsec);
+  struct_tm_pointer= gmtime( &exposure_start_time_unixsec );
 #endif
  }
 
@@ -960,7 +959,6 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
   return status;
  }
 
-
  if ( param_verbose >= 1 ) {
   fprintf( stderr, "%ldx%ld FITS image %s\n", naxes[0], naxes[1], fitsfilename );
  }
@@ -979,7 +977,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    get_header_info_from_first_image_hdu_instead_of_just_first_hdu= 1;
   }
  }
- 
+
  // Check if this is a compressed image by looking for ZIMAGE keyword
  // For compressed images, keep reading from the current (image) HDU
  int is_compressed_image= 0;
@@ -989,15 +987,15 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
  if ( status == 0 && zimage_value == 1 ) {
   is_compressed_image= 1;
   if ( param_verbose >= 1 ) {
-    fprintf( stderr, "Detected compressed FITS image - will read keywords from image extension\n" );
+   fprintf( stderr, "Detected compressed FITS image - will read keywords from image extension\n" );
   }
  }
  status= 0;
 
  if ( get_header_info_from_first_image_hdu_instead_of_just_first_hdu != 1 && is_compressed_image != 1 ) {
- //if ( get_header_info_from_first_image_hdu_instead_of_just_first_hdu != 1 ) {
-  // Close the FITS file and re-open it with fits_open_file() instead of fits_open_image()
-  // as the observing date information may be in a different HDU than the image!
+  // if ( get_header_info_from_first_image_hdu_instead_of_just_first_hdu != 1 ) {
+  //  Close the FITS file and re-open it with fits_open_file() instead of fits_open_image()
+  //  as the observing date information may be in a different HDU than the image!
   fits_close_file( fptr, &status ); // close file
   if ( 0 != status ) {
    fits_report_error( stderr, status ); // print out any error messages
@@ -1605,7 +1603,7 @@ int gettime( char *fitsfilename, double *JD, int *timesys, int convert_timesys_t
    // don't start from 0 - if there is no comment, the string will contain 0 characters before \0 !
    // actully we need to start from 0 because the comment string may start with 'UT'
    // supposedly, we already checked that the string is at least two characters long
-   //for ( j= 1; j < (int)strlen( DATEOBS_COMMENT ) - 1; j++ ) {
+   // for ( j= 1; j < (int)strlen( DATEOBS_COMMENT ) - 1; j++ ) {
    for ( j= 0; j < (int)strlen( DATEOBS_COMMENT ) - 1; j++ ) {
     if ( DATEOBS_COMMENT[j] == 'U' && DATEOBS_COMMENT[j + 1] == 'T' ) {
      ( *timesys )= 1; // UT

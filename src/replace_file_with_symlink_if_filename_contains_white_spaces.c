@@ -137,7 +137,7 @@ void cutout_green_channel_out_of_RGB_DSLR_image( char *filename ) {
  }
 
  // Check if the input is a compressed FITS image - it has to be uncompressed before starting this function!
- if( 0 == check_if_the_input_is_FPack_compressed_FITS( filename ) ){
+ if ( 0 == check_if_the_input_is_FPack_compressed_FITS( filename ) ) {
   return;
  }
 
@@ -278,7 +278,6 @@ void cutout_green_channel_out_of_RGB_DSLR_image( char *filename ) {
  return;
 }
 
-
 void unpack_compressed_FITS_image( char *filename ) {
  FILE *vast_unpacked_images_log;
  char vast_unpacked_images_log_original_image_name[FILENAME_LENGTH];
@@ -297,7 +296,7 @@ void unpack_compressed_FITS_image( char *filename ) {
  }
 
  // Check if the input actually is a compressed FITS image
- if( 0 != check_if_the_input_is_FPack_compressed_FITS( filename ) ){
+ if ( 0 != check_if_the_input_is_FPack_compressed_FITS( filename ) ) {
   return;
  }
 
@@ -322,7 +321,6 @@ void unpack_compressed_FITS_image( char *filename ) {
   }
   fclose( vast_unpacked_images_log );
  }
-
 
  // create unpacked_image name
  for ( i= 1; i < MAX_NUMBER_OF_OBSERVATIONS; i++ ) {
@@ -367,4 +365,3 @@ void unpack_compressed_FITS_image( char *filename ) {
 
  return;
 }
-

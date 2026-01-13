@@ -468,10 +468,10 @@ int get_ref_image_name( char *str ) {
 void fix_array_with_negative_values( long NUM_OF_PIXELS, float *im ) {
  long i;
  float min, max;
- 
- if (im == NULL || NUM_OF_PIXELS <= 0)
+
+ if ( im == NULL || NUM_OF_PIXELS <= 0 )
   return;
- 
+
  min= max= im[0];
  for ( i= 0; i < NUM_OF_PIXELS; i++ ) {
   if ( im[i] < min && im[i] > 0 )
@@ -479,7 +479,7 @@ void fix_array_with_negative_values( long NUM_OF_PIXELS, float *im ) {
   if ( im[i] > max && im[i] > 0 )
    max= im[i];
  }
- 
+
  // may only happen if im[0] was negative
  if ( min < 0.0 ) {
   for ( i= 0; i < NUM_OF_PIXELS; i++ )
@@ -496,7 +496,7 @@ void fix_array_with_negative_values( long NUM_OF_PIXELS, float *im ) {
   for ( i= 0; i < NUM_OF_PIXELS; i++ )
    im[i]= im[i] * 65535.0 / max;
  }
- //max= 65535.0; // does nothing
+ // max= 65535.0; // does nothing
 
  return;
 }
@@ -771,16 +771,15 @@ void image_minmax3( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i, f
  // fprintf(stderr, "DEBUG_B image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
 
  // Problem when high-bias image is dark-subtracted
- //if ( ( *min_i ) != 0.0 ) {
+ // if ( ( *min_i ) != 0.0 ) {
  // ( *max_i )= MIN( ( *max_i ), 10 * ( *min_i ) ); // bright star in the field case
  //}
  // Let's do it only if the cutout is small, so one star may dominate the histogram
- if ( number_of_nonnegative_pixels + number_of_negative_pixels < 100*100 ) { 
+ if ( number_of_nonnegative_pixels + number_of_negative_pixels < 100 * 100 ) {
   if ( ( *min_i ) != 0.0 ) {
    ( *max_i )= MIN( ( *max_i ), 10 * ( *min_i ) ); // bright star in the field case
   }
  }
- 
 
  // fprintf(stderr, "DEBUG_C image_minmax3: min_i=%f max_i=%f \n", (*min_i), (*max_i) );
 
@@ -1998,17 +1997,17 @@ int main( int argc, char **argv ) {
   return 1;
  }
 
-/*
- fits_open_image( &fptr, fits_image_name, 0, &status );
- if ( status != 0 ) {
-  fprintf( stderr, "ERROR opening %s\n", fits_image_name );
-  return 1;
- }
- fits_get_img_type( fptr, &bitpix, &status );
- fits_read_key( fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status );
- fits_read_key( fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status );
- fprintf( stderr, "Image \x1B[01;34m %s \x1B[33;00m : %ldx%ld pixels, BITPIX data type code: %d\n", fits_image_name, naxes[0], naxes[1], bitpix );
-*/
+ /*
+  fits_open_image( &fptr, fits_image_name, 0, &status );
+  if ( status != 0 ) {
+   fprintf( stderr, "ERROR opening %s\n", fits_image_name );
+   return 1;
+  }
+  fits_get_img_type( fptr, &bitpix, &status );
+  fits_read_key( fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status );
+  fits_read_key( fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status );
+  fprintf( stderr, "Image \x1B[01;34m %s \x1B[33;00m : %ldx%ld pixels, BITPIX data type code: %d\n", fits_image_name, naxes[0], naxes[1], bitpix );
+ */
  fits_open_image( &fptr, fits_image_name, 0, &status );
  if ( status != 0 ) {
   fprintf( stderr, "ERROR opening %s\n", fits_image_name );
@@ -2137,22 +2136,22 @@ int main( int argc, char **argv ) {
  if ( status != 0 ) {
   exit( status );
  }
-/*
- // Don't do this check if this is fits2png
- if ( finder_chart_mode != 1 && use_labels != 0 ) {
-  // Decide if we want to use xy2sky()
-  xy2sky_return_value= xy2sky( fits_image_name, (float)naxes[0] / 2.0, (float)naxes[1] / 2.0 );
-  if ( xy2sky_return_value == 0 ) {
-   fprintf( stderr, "The image center coordinates are printed above.\n" );
-   use_xy2sky= 1;
+ /*
+  // Don't do this check if this is fits2png
+  if ( finder_chart_mode != 1 && use_labels != 0 ) {
+   // Decide if we want to use xy2sky()
+   xy2sky_return_value= xy2sky( fits_image_name, (float)naxes[0] / 2.0, (float)naxes[1] / 2.0 );
+   if ( xy2sky_return_value == 0 ) {
+    fprintf( stderr, "The image center coordinates are printed above.\n" );
+    use_xy2sky= 1;
+   } else {
+    use_xy2sky= 0;
+   }
+   //
   } else {
    use_xy2sky= 0;
   }
-  //
- } else {
-  use_xy2sky= 0;
- }
-*/
+ */
  axis_ratio= (float)naxes[0] / (float)naxes[1];
 
  // filter out bad pixels from float_array
@@ -2160,15 +2159,15 @@ int main( int argc, char **argv ) {
   if ( float_array[i] < MIN_PIX_VALUE || float_array[i] > MAX_PIX_VALUE ) {
    float_array[i]= 0.0;
   }
-  //real_float_array[i]= float_array[i];
+  // real_float_array[i]= float_array[i];
  }
 
  // real_float_array - array with real pixel values (well, not real but converted to float)
  // float_array - array used for computations with values ranging from 0 to 65535
- //for ( i= 0; i < naxes[0] * naxes[1]; i++ ) {
+ // for ( i= 0; i < naxes[0] * naxes[1]; i++ ) {
  // real_float_array[i]= float_array[i];
  //}
- memcpy(real_float_array, float_array, naxes[0] * naxes[1] * sizeof(float));
+ memcpy( real_float_array, float_array, naxes[0] * naxes[1] * sizeof( float ) );
  //
  fix_array_with_negative_values( naxes[0] * naxes[1], float_array );
  // image_minmax2( naxes[0] * naxes[1], float_array, &max_val, &min_val );
@@ -2914,12 +2913,12 @@ int main( int argc, char **argv ) {
    // Make labels with general information: time, filename...
    if ( use_labels == 1 ) {
     if ( finder_chart_mode == 0 ) {
-     cpgscr( 1, 0.62, 0.81, 0.38 ); // set color of lables 
-     cpgsch( 0.9 );                 // Set small font size 
+     cpgscr( 1, 0.62, 0.81, 0.38 ); // set color of lables
+     cpgsch( 0.9 );                 // Set small font size
      // cpgmtxt("T", 0.5, 0.5, 0.5, fits_image_name);
      cpgmtxt( "T", 0.5, 0.5, 0.5, fits_image_name_string_for_display );
      cpgmtxt( "T", 1.5, 0.5, 0.5, stderr_output );
-     cpgsch( 1.0 );              // Set normal font size 
+     cpgsch( 1.0 );              // Set normal font size
      cpgscr( 1, 1.0, 1.0, 1.0 ); //
     } else {
      // note, this is not used when generating finder charts
@@ -2928,7 +2927,7 @@ int main( int argc, char **argv ) {
    }
    // Done with labels
 
-   /// Put a mark 
+   /// Put a mark
    if ( mark_trigger == 1 && use_labels == 1 ) {
     cpgsci( 2 );
     fprintf( stderr, "Putting marker 001: %.3f %.3f\n", markX, markY );

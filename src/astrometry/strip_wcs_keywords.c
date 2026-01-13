@@ -26,9 +26,9 @@ void delete_tr_keywords( fitsfile *fptr, int *status ) {
      *status= 0;                           // Reset status after reporting
     }
    }
-   
+
    // Also check for alternate WCS versions with A-Z suffixes
-   for ( suffix = 'A'; suffix <= 'Z'; suffix++ ) {
+   for ( suffix= 'A'; suffix <= 'Z'; suffix++ ) {
     snprintf( tr_keyword, sizeof( tr_keyword ), "TR%d_%d%c", i, j, suffix );
     if ( fits_read_card( fptr, tr_keyword, card, status ) == KEY_NO_EXIST ) {
      *status= 0; // Reset status if the keyword is not found
@@ -48,9 +48,9 @@ void delete_tr_keywords( fitsfile *fptr, int *status ) {
 void delete_tpv_keywords( fitsfile *fptr, int *status ) {
  char card[FLEN_CARD];
  char tpv_keyword[FLEN_KEYWORD];
- int i, j;                     // counters
+ int i, j; // counters
  char suffix;
- 
+
  for ( i= 1; i <= 2; i++ ) {   // Loop over axes 1 and 2
   for ( j= 0; j <= 39; j++ ) { // Loop over possible keyword indices
    // Construct the keyword for the current TPV coefficient.
@@ -65,9 +65,9 @@ void delete_tpv_keywords( fitsfile *fptr, int *status ) {
      *status= 0;                           // Reset status after reporting
     }
    }
-   
+
    // Also check for alternate WCS versions with A-Z suffixes
-   for ( suffix = 'A'; suffix <= 'Z'; suffix++ ) {
+   for ( suffix= 'A'; suffix <= 'Z'; suffix++ ) {
     snprintf( tpv_keyword, sizeof( tpv_keyword ), "PV%d_%d%c", i, j, suffix );
     if ( fits_read_card( fptr, tpv_keyword, card, status ) == KEY_NO_EXIST ) {
      *status= 0; // Reset status if the keyword is not found
@@ -89,7 +89,7 @@ void delete_poly_coeff( const char *key_base, int max_order, fitsfile *fptr, int
  char coeff_keyword[FLEN_KEYWORD];
  int i, j; // counters
  char suffix;
- 
+
  for ( i= 0; i <= max_order; i++ ) {
   for ( j= 0; j <= max_order; j++ ) {
    // Construct the keyword for the current coefficient.
@@ -104,9 +104,9 @@ void delete_poly_coeff( const char *key_base, int max_order, fitsfile *fptr, int
      *status= 0;                           // Reset status after reporting
     }
    }
-   
+
    // Also check for alternate WCS versions with A-Z suffixes
-   for ( suffix = 'A'; suffix <= 'Z'; suffix++ ) {
+   for ( suffix= 'A'; suffix <= 'Z'; suffix++ ) {
     snprintf( coeff_keyword, sizeof( coeff_keyword ), "%s_%d_%d%c", key_base, i, j, suffix );
     if ( fits_read_card( fptr, coeff_keyword, card, status ) == KEY_NO_EXIST ) {
      *status= 0; // Reset status if the keyword is not found
@@ -165,9 +165,9 @@ void strip_wcs_sip_keywords( fitsfile *fptr, int *status ) {
   } else {
    *status= 0;
   }
-  
-  // Delete alternate WCS keywords with A-Z suffixes  
-  for ( suffix = 'A'; suffix <= 'Z'; suffix++ ) {
+
+  // Delete alternate WCS keywords with A-Z suffixes
+  for ( suffix= 'A'; suffix <= 'Z'; suffix++ ) {
    if ( strlen( *keyword ) < 8 ) {
     snprintf( alt_keyword, sizeof( alt_keyword ), "%s%c", *keyword, suffix );
     if ( fits_read_card( fptr, alt_keyword, card, status ) != KEY_NO_EXIST ) {
@@ -181,7 +181,7 @@ void strip_wcs_sip_keywords( fitsfile *fptr, int *status ) {
     }
    }
   }
-  
+
   // HST-specific OPUS WCS keywords (keep existing functionality)
   if ( strlen( *keyword ) < 8 ) {
    snprintf( alt_keyword, sizeof( alt_keyword ), "%sO", *keyword );
@@ -195,7 +195,7 @@ void strip_wcs_sip_keywords( fitsfile *fptr, int *status ) {
     *status= 0;
    }
   }
-  
+
   // TESS-specific physical WCS keywords (keep existing functionality)
   if ( strlen( *keyword ) < 8 ) {
    snprintf( alt_keyword, sizeof( alt_keyword ), "%sP", *keyword );
@@ -227,7 +227,7 @@ void strip_wcs_sip_keywords( fitsfile *fptr, int *status ) {
   }
 
   // Check for alternate WCS ORDER keywords with A-Z suffixes
-  for ( suffix = 'A'; suffix <= 'Z'; suffix++ ) {
+  for ( suffix= 'A'; suffix <= 'Z'; suffix++ ) {
    if ( strlen( *order_keyword ) < 8 ) {
     snprintf( alt_keyword, sizeof( alt_keyword ), "%s%c", *order_keyword, suffix );
     if ( fits_read_key( fptr, TLONG, alt_keyword, &order, NULL, status ) != KEY_NO_EXIST ) {

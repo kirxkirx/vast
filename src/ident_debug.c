@@ -118,7 +118,7 @@ void write_single_Triangle_to_ds9( struct Triangle *tr, struct Star *star, const
 void write_triangle_matching_debug_log( struct Triangle *tr1, int Nt1, struct Triangle *tr2, int Nt2, struct Star *star1, struct Star *star2, struct Ecv_triangles *ecv_tr, const char *filename ) {
  FILE *f;
  int i;
- //int max_log_triangles;
+ // int max_log_triangles;
 
  f= fopen( filename, "w" );
  if ( NULL == f ) {

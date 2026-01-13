@@ -733,8 +733,8 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
  if ( star.flux / star.flux_err < MIN_SNR_TRANSIENT_DETECTION ) {
   return;
  }
- 
- fprintf(stderr, "TRANSIENTDEBUG01\n");
+
+ fprintf( stderr, "TRANSIENTDEBUG01\n" );
 
  // Test if the time difference between the reference and the current image is >TRANSIENT_MIN_TIMESCALE_DAYS
  if ( fabs( star.JD - reference_image_JD ) < TRANSIENT_MIN_TIMESCALE_DAYS ) {
@@ -742,7 +742,7 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
  }
  // if( star.n==4511 )fprintf(stderr,"##### %lf %lf\n",star.JD,reference_image_JD);
  // if( star.n==21841 )fprintf(stderr,"##### %lf %lf\n",star.JD,reference_image_JD);
- fprintf(stderr, "TRANSIENTDEBUG02\n");
+ fprintf( stderr, "TRANSIENTDEBUG02\n" );
 
  if ( x > search_area_boundaries[0] && x < search_area_boundaries[1] ) {
   if ( y > search_area_boundaries[2] && y < search_area_boundaries[3] ) {
@@ -750,20 +750,20 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
    // don't care if it's fainter or brighter thant the bright search box limits
    // if ( m + 1.0 * m_err < search_area_boundaries[5] ) {
    if ( m + 0.0 * m_err < search_area_boundaries[5] ) {
-    fprintf(stderr, "TRANSIENTDEBUG03\n");
+    fprintf( stderr, "TRANSIENTDEBUG03\n" );
     // The candidate is inside the search box - now make additional (slow) checks
     // if ( 1 == is_point_close_or_off_the_frame_edge( star.x_frame, star.y_frame, X_im_size, Y_im_size, 3 * FRAME_EDGE_INDENT_PIXELS ) ) {
     if ( 1 == is_point_close_or_off_the_frame_edge( star.x_frame, star.y_frame, X_im_size, Y_im_size, FRAME_EDGE_INDENT_PIXELS ) ) {
      return;
     }
-    fprintf(stderr, "TRANSIENTDEBUG04\n");
+    fprintf( stderr, "TRANSIENTDEBUG04\n" );
     // if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- passed is_point_close_or_off_the_frame_edge()\n");
     //  double-check that it's not in a bad region
     if ( 0 != exclude_region( X1, Y1, X2, Y2, N_bad_regions, star.x_frame, star.y_frame, aperture ) ) {
      fprintf( stderr, "The transient candidate %9.3lf %9.3lf is rejected, see bad_region.lst\n", star.x_frame, star.y_frame );
      return;
     }
-    fprintf(stderr, "TRANSIENTDEBUG05\n");
+    fprintf( stderr, "TRANSIENTDEBUG05\n" );
     // if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- passed exclude_region() new frame\n");
     //  Check that it's not in a bad region on the reference frame - there will be no reference object!
     //  increase the bad region, just in case
@@ -771,7 +771,7 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
      fprintf( stderr, "The transient candidate (new frame position %9.3lf %9.3lf ; ref frame position: %9.3lf %9.3lf) is rejected as at the reference frame it would land at a bad region listed in bad_region.lst\n", star.x_frame, star.y_frame, x, y );
      return;
     }
-    fprintf(stderr, "TRANSIENTDEBUG06\n");
+    fprintf( stderr, "TRANSIENTDEBUG06\n" );
     // if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- passed exclude_region() ref frame\n");
     //  OK, we like this candidate
     // if( star.n==21841 )fprintf(stderr,"##### star.n==21841  -- we like it\n");
@@ -780,10 +780,10 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
      fprintf( stderr, "ERROR writing to candidates-transients.lst\n" );
      return;
     }
-    fprintf(stderr, "TRANSIENTDEBUG07\n");
+    fprintf( stderr, "TRANSIENTDEBUG07\n" );
     fprintf( transientfile, "out%05d.dat  %8.3lf %8.3lf\n", n, x, y );
     fclose( transientfile );
-    fprintf(stderr, "TRANSIENTDEBUG08\n");
+    fprintf( stderr, "TRANSIENTDEBUG08\n" );
    }
   }
  }
@@ -874,13 +874,13 @@ void set_transient_search_boundaries( double *search_area_boundaries, struct Sta
  }
 
  extract_mag_and_snr_from_structStar( star, (size_t)NUMBER, detection_limit_from_snr__mag_array, detection_limit_from_snr__snr_array );
- //detection_limit_derived_from_snr= get_detection_limit_sn( detection_limit_from_snr__mag_array, detection_limit_from_snr__snr_array, (size_t)NUMBER, MIN_SNR, &detection_limit_from_snr__success );
- // Let's call it with MIN_SNR_TRANSIENT_DETECTION instead of MIN_SNR in order to be somewhat more conservative (or realystic if you will)
+ // detection_limit_derived_from_snr= get_detection_limit_sn( detection_limit_from_snr__mag_array, detection_limit_from_snr__snr_array, (size_t)NUMBER, MIN_SNR, &detection_limit_from_snr__success );
+ //  Let's call it with MIN_SNR_TRANSIENT_DETECTION instead of MIN_SNR in order to be somewhat more conservative (or realystic if you will)
  detection_limit_derived_from_snr= get_detection_limit_sn( detection_limit_from_snr__mag_array, detection_limit_from_snr__snr_array, (size_t)NUMBER, MIN_SNR_TRANSIENT_DETECTION, &detection_limit_from_snr__success );
  // fprintf(stderr,"DEBUG: detection_limit_from_snr__success= %d  GSL_SUCCESS= %d\n", detection_limit_from_snr__success,GSL_SUCCESS);
- 
+
  // set the output value
- (*snr_detection_limit)=detection_limit_derived_from_snr;
+ ( *snr_detection_limit )= detection_limit_derived_from_snr;
 
  free( detection_limit_from_snr__mag_array );
  free( detection_limit_from_snr__snr_array );
@@ -2096,29 +2096,27 @@ int main( int argc, char **argv ) {
 
  // Save command line arguments to the log file vast_command_line.log
  save_command_line_to_log_file( argc, argv );
- 
 
  ////////////////////////////////////////////
 
- 
  // TBA: unpacking and RGB image conversions using a copy of input_images[]
  /* TBA: unpacking and RGB image conversions using a copy of input_images[] */
 
  char **input_images_copy;
 
  /* allocate pointer array */
- input_images_copy = (char **)malloc( (size_t)Num * sizeof(char *) );
+ input_images_copy= (char **)malloc( (size_t)Num * sizeof( char * ) );
  if ( input_images_copy == NULL ) {
   fprintf( stderr, "ERROR: cannot allocate input_images_copy\n" );
   return EXIT_FAILURE;
  }
 
  /* deep copy strings */
- for ( j = 0; j < Num; j++ ) {
-  //input_images_copy[j] = strdup( input_images[j] );
-  input_images_copy[j] = malloc( FILENAME_LENGTH * sizeof(char *) );
+ for ( j= 0; j < Num; j++ ) {
+  // input_images_copy[j] = strdup( input_images[j] );
+  input_images_copy[j]= malloc( FILENAME_LENGTH * sizeof( char * ) );
   strncpy( input_images_copy[j], input_images[j], FILENAME_LENGTH );
-  input_images_copy[j][FILENAME_LENGTH-1]='\0'; // just in case
+  input_images_copy[j][FILENAME_LENGTH - 1]= '\0'; // just in case
   if ( input_images_copy[j] == NULL ) {
    fprintf( stderr, "ERROR: cannot strdup input_images[%u]\n", j );
    while ( j > 0 ) {
@@ -2130,25 +2128,25 @@ int main( int argc, char **argv ) {
   }
  }
 
- for ( j = 0; j < Num; j++ ) {
+ for ( j= 0; j < Num; j++ ) {
   // Unpack the FITS image if it's packed with fpack (SExtractor cannot handle packed FITS)
   unpack_compressed_FITS_image( input_images_copy[j] );
   // Handle an RGB image
-  cutout_green_channel_out_of_RGB_DSLR_image(  input_images_copy[j] );
-  // These two functions will do file conversion and create logs, so the converted 
+  cutout_green_channel_out_of_RGB_DSLR_image( input_images_copy[j] );
+  // These two functions will do file conversion and create logs, so the converted
   // files will be re-used by later envocations of these same functions.
   // Note that the first run (when the actual image conversion is done) should ALWAYS be single-threaded!
  }
- 
+
  // !!!!
- //system("cat vast_unpacked_images.log");
+ // system("cat vast_unpacked_images.log");
 
  /* free the copy */
- for ( j = 0; j < Num; j++ ) {
+ for ( j= 0; j < Num; j++ ) {
   free( input_images_copy[j] );
  }
  free( input_images_copy );
- 
+
  // We should have populated input_images[] at this point
 
  if ( Num == 1 ) {
@@ -2316,7 +2314,7 @@ int main( int argc, char **argv ) {
 
  // Save command line arguments to the log file vast_command_line.log
  save_command_line_to_log_file( argc, argv );
- 
+
  */
 
  /// Special mode for manual comparison star selection
@@ -5872,7 +5870,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  fprintf( vast_image_details, "FILTER key from ref. img. header: %s\n", filter_value );
  fprintf( vast_image_details, "Magnitude scale: instrumental\n" );
  //                            01234567890123
- //fprintf( vast_image_details, "Estimated ref. image limiting mag.: %6.2lf\n", search_area_boundaries[5] );
+ // fprintf( vast_image_details, "Estimated ref. image limiting mag.: %6.2lf\n", search_area_boundaries[5] );
  // report specifically the SNR-derived detection limit, not whatever is used for the transient search
  fprintf( vast_image_details, "Estimated ref. image limiting mag.: %6.2lf\n", snr_detection_limit );
  if ( param_filterout_magsize_outliers == 1 ) {

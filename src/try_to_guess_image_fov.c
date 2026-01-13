@@ -24,9 +24,9 @@ int is_it_a_photopate_scan_from_SAI_collection_with_the_basic_header( char *fits
  char telescop_comment[1024];
  int status;
  fitsfile *fptr;
- 
- status = 0;
- 
+
+ status= 0;
+
  fits_open_file( &fptr, fitsfilename, READONLY, &status );
  if ( 0 != status ) {
   fits_report_error( stderr, status );
@@ -97,8 +97,8 @@ int try_to_recognize_Zeiss2_with_FLIcam( char *fitsfilename, double *estimated_f
  fitsfile *fptr;
  int naxis;
 
- status = 0;
- 
+ status= 0;
+
  fits_open_file( &fptr, fitsfilename, READONLY, &status );
  if ( 0 != status ) {
   fits_report_error( stderr, status );
@@ -161,7 +161,7 @@ int try_to_recognize_Zeiss2_with_FLIcam( char *fitsfilename, double *estimated_f
   fits_close_file( fptr, &status );
   return status;
  }
- 
+
  fits_get_img_size( fptr, 2, naxes, &status );
  if ( 0 != status ) {
   fits_report_error( stderr, status );
@@ -169,7 +169,7 @@ int try_to_recognize_Zeiss2_with_FLIcam( char *fitsfilename, double *estimated_f
   fits_close_file( fptr, &status );
   return status;
  }
- 
+
  if ( naxes[0] != 1024 ) {
   fits_close_file( fptr, &status );
   return 1;
@@ -194,9 +194,9 @@ int try_to_recognize_TESS_FFI( char *fitsfilename, double *estimated_fov_arcmin 
  int status;
  fitsfile *fptr;
  int naxis;
- 
- status = 0;
- 
+
+ status= 0;
+
  fits_open_file( &fptr, fitsfilename, READONLY, &status );
  if ( 0 != status ) {
   fits_report_error( stderr, status );
@@ -240,7 +240,7 @@ int try_to_recognize_TESS_FFI( char *fitsfilename, double *estimated_fov_arcmin 
   fits_close_file( fptr, &status );
   return status;
  }
- 
+
  fits_get_img_size( fptr, 2, naxes, &status );
  if ( 0 != status ) {
   fits_report_error( stderr, status );
@@ -248,7 +248,7 @@ int try_to_recognize_TESS_FFI( char *fitsfilename, double *estimated_fov_arcmin 
   fits_close_file( fptr, &status );
   return status;
  }
- 
+
  if ( naxes[0] != 2136 ) {
   fits_close_file( fptr, &status );
   return 1;
@@ -279,8 +279,8 @@ int try_to_recognize_MSUcampusObs06m_with_APOGEEcam( char *fitsfilename, double 
  fitsfile *fptr;
  int naxis;
 
- status = 0;
- 
+ status= 0;
+
  fits_open_file( &fptr, fitsfilename, READONLY, &status );
  if ( 0 != status ) {
   fits_report_error( stderr, status );
@@ -352,7 +352,7 @@ int try_to_recognize_MSUcampusObs06m_with_APOGEEcam( char *fitsfilename, double 
   fits_close_file( fptr, &status );
   return status;
  }
- 
+
  fits_get_img_size( fptr, 2, naxes, &status );
  if ( 0 != status ) {
   fits_report_error( stderr, status );
@@ -360,7 +360,7 @@ int try_to_recognize_MSUcampusObs06m_with_APOGEEcam( char *fitsfilename, double 
   fits_close_file( fptr, &status );
   return status;
  }
- 
+
  if ( naxes[0] != 1024 ) {
   fits_close_file( fptr, &status );
   return 1;
@@ -388,10 +388,10 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
  int status;
  fitsfile *fptr;
  int env_var_good;
- 
- status = 0;
- env_var_good = 0;
- 
+
+ status= 0;
+ env_var_good= 0;
+
  if ( NULL != getenv( "TELESCOP" ) ) {
   strncpy( telescop, getenv( "TELESCOP" ), FLEN_VALUE );
   telescop[FLEN_VALUE - 1]= '\0';
@@ -399,7 +399,7 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
    env_var_good= 1;
   }
  }
- 
+
  if ( env_var_good == 0 ) {
   fits_open_file( &fptr, fitsfilename, READONLY, &status );
   if ( 0 != status ) {
@@ -414,24 +414,24 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
   }
   fits_close_file( fptr, &status );
  }
- 
+
  if ( 0 == strncasecmp( telescop, "Lens  2.8/170", FLEN_VALUE - 1 ) ) {
   ( *estimated_fov_arcmin )= 180.0;
   return 0;
  }
- 
+
  pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "Lens", 4 );
  if ( pointer_to_the_key_start != NULL ) {
   ( *estimated_fov_arcmin )= 180.0;
   return 0;
  }
- 
+
  pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "LENS", 4 );
  if ( pointer_to_the_key_start != NULL ) {
   ( *estimated_fov_arcmin )= 180.0;
   return 0;
  }
- 
+
  pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "HST", 3 );
  if ( pointer_to_the_key_start != NULL ) {
   ( *estimated_fov_arcmin )= 2.0;
@@ -509,7 +509,7 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
    return 0;
   }
  }
- 
+
  if ( strlen( telescop ) >= 10 ) {
   pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "STL-11000M", 10 );
   if ( pointer_to_the_key_start != NULL ) {
@@ -517,7 +517,7 @@ int try_to_recognize_telescop_keyword( char *fitsfilename, double *estimated_fov
    return 0;
   }
  }
- 
+
  if ( strlen( telescop ) >= 7 ) {
   pointer_to_the_key_start= (char *)memmem( telescop, strlen( telescop ), "NMW-STL", 7 );
   if ( pointer_to_the_key_start != NULL ) {
@@ -562,15 +562,15 @@ int look_for_focallen_keyword( char *fitsfilename, double *estimated_fov_arcmin 
  long naxes[2];
  int naxis;
 
- status = 0;
- 
+ status= 0;
+
  fits_open_file( &fptr, fitsfilename, READONLY, &status );
  if ( 0 != status ) {
   fits_report_error( stderr, status );
   fits_clear_errmsg();
   return status;
  }
- 
+
  fits_read_key( fptr, TDOUBLE, "FOCALLEN", &focallen, NULL, &status );
  if ( 0 != status ) {
   status= 0;
@@ -590,7 +590,7 @@ int look_for_focallen_keyword( char *fitsfilename, double *estimated_fov_arcmin 
   fits_close_file( fptr, &status );
   return status;
  }
- 
+
  fits_get_img_size( fptr, 2, naxes, &status );
  if ( 0 != status ) {
   fits_report_error( stderr, status );
@@ -657,28 +657,28 @@ int look_for_existing_wcs_header( char *fitsfilename, double *estimated_fov_arcm
  int j;
  int naxis;
 
- status = 0;
- scale_arcsec_pix = 0.0;
- 
+ status= 0;
+ scale_arcsec_pix= 0.0;
+
  fits_open_file( &fptr, fitsfilename, READONLY, &status );
  if ( 0 != status ) {
   fits_report_error( stderr, status );
   fits_clear_errmsg();
   return status;
  }
- 
+
  fits_get_img_dim( fptr, &naxis, &status );
  if ( 0 != status ) {
   fits_clear_errmsg();
   fits_close_file( fptr, &status );
   return status;
  }
- 
+
  if ( naxis < 2 ) {
   fits_close_file( fptr, &status );
   return 1;
  }
- 
+
  fits_get_img_size( fptr, 2, naxes, &status );
  if ( 0 != status ) {
   fits_report_error( stderr, status );
@@ -686,7 +686,7 @@ int look_for_existing_wcs_header( char *fitsfilename, double *estimated_fov_arcm
   fits_close_file( fptr, &status );
   return status;
  }
- 
+
  CDELT1= 0.0;
  fits_read_key( fptr, TDOUBLE, "CDELT1", &CDELT1, NULL, &status );
  if ( 0 != status ) {
@@ -694,7 +694,7 @@ int look_for_existing_wcs_header( char *fitsfilename, double *estimated_fov_arcm
   fits_clear_errmsg();
   CDELT1= 0.0;
  }
- 
+
  xinc= 0.0;
  fits_read_img_coord( fptr, &xrefval, &yrefval, &xrefpix, &yrefpix, &xinc, &yinc, &rot, coordtype, &status );
  if ( status == APPROX_WCS_KEY ) {
@@ -717,14 +717,14 @@ int look_for_existing_wcs_header( char *fitsfilename, double *estimated_fov_arcm
   fprintf( stderr, "ERROR: Couldn't allocate memory for wcs_key(try_to_guess_image_fov)\n" );
   exit( EXIT_FAILURE );
  }
- 
+
  wcs_key[0]= (char *)malloc( FLEN_CARD * sizeof( char ) );
  if ( wcs_key[0] == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for wcs_key[0](try_to_guess_image_fov)\n" );
   exit( EXIT_FAILURE );
  }
  memset( wcs_key[0], 0, FLEN_CARD * sizeof( char ) );
- 
+
  for ( i= 1; i < No_of_wcs_keys; i++ ) {
   wcs_key[i]= (char *)malloc( FLEN_CARD * sizeof( char ) );
   if ( wcs_key[i] == NULL ) {
@@ -796,8 +796,8 @@ int main( int argc, char **argv ) {
  int detected, matched;
  char name_of_wcs_solved_reference_image[MAX_LOG_STR_LENGTH];
  char name_of_fits_image[FILENAME_LENGTH];
- 
- estimated_fov_arcmin = 40.0;
+
+ estimated_fov_arcmin= 40.0;
 
  if ( argc != 2 ) {
   fprintf( stderr, "This program will make a naive attempt to guess image field of view in arcminutes based on various circumstantial evidence.\n Usage: %s my_image.fits\n", argv[0] );

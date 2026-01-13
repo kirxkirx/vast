@@ -183,18 +183,18 @@ void wcs_basename( const char *filename, char *new_filename ) {
  char basename_str[FILENAME_LENGTH];
  char *fz_extension_position;
  size_t basename_len;
- 
+
  strncpy( filename_copy, filename, FILENAME_LENGTH - 1 );
  filename_copy[FILENAME_LENGTH - 1]= '\0'; // just in case
  strncpy( basename_str, basename( filename_copy ), FILENAME_LENGTH - 1 );
  basename_str[FILENAME_LENGTH - 1]= '\0'; // just in case
 
  // Strip .fz extension if present
- basename_len = strlen( basename_str );
+ basename_len= strlen( basename_str );
  if ( basename_len > 3 ) {
-  fz_extension_position = basename_str + basename_len - 3;
+  fz_extension_position= basename_str + basename_len - 3;
   if ( strcmp( fz_extension_position, ".fz" ) == 0 ) {
-   *fz_extension_position = '\0';
+   *fz_extension_position= '\0';
   }
  }
 
@@ -342,18 +342,18 @@ void guess_wcs_catalog_filename( char *wcs_catalog_filename, char *fits_image_fi
  char test_string[FILENAME_LENGTH];
  char *fz_extension_position;
  size_t test_string_len;
- 
+
  strcpy( test_string, basename( fits_image_filename ) );
- 
+
  // Strip .fz extension if present (to match shell script behavior)
- test_string_len = strlen( test_string );
+ test_string_len= strlen( test_string );
  if ( test_string_len > 3 ) {
-  fz_extension_position = test_string + test_string_len - 3;
+  fz_extension_position= test_string + test_string_len - 3;
   if ( strcmp( fz_extension_position, ".fz" ) == 0 ) {
-   *fz_extension_position = '\0';
+   *fz_extension_position= '\0';
   }
  }
- 
+
  if ( test_string[0] == 'w' && test_string[1] == 'c' && test_string[2] == 's' && test_string[3] == '_' ) {
   wcs_catalog_filename[0]= '\0';
  } else {
@@ -1475,7 +1475,6 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
  return 0;
 }
 
-
 /**
  * Checks and sanitizes the VAST_CURL_PROXY environment variable.
  * Returns sanitized proxy string if valid, or NULL if invalid or not set.
@@ -2231,7 +2230,6 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
 
  return 0;
 }
-
 
 int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, int N, struct str_catalog_search_parameters *catalog_search_parameters ) {
  double epoch, pmRA, e_pmRA, pmDE, e_pmDE, dt, observing_epoch_jy, catalog_ra_original, catalog_dec_original;

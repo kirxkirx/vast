@@ -12,7 +12,7 @@ int main( int argc, char **argv ) {
  long naxes[2];
  char fitsfilename[1024];
 
- status = 0;
+ status= 0;
 
  if ( argc != 2 ) {
   fprintf( stderr, "Usage: %s image.fit\n", argv[0] );
@@ -20,7 +20,7 @@ int main( int argc, char **argv ) {
  }
 
  strncpy( fitsfilename, argv[1], 1024 );
- fitsfilename[1024 - 1] = '\0'; /* ensure null termination */
+ fitsfilename[1024 - 1]= '\0'; /* ensure null termination */
 
  /* Extract data from fits header */
  fits_open_image( &fptr, fitsfilename, READONLY, &status );
