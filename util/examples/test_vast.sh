@@ -735,15 +735,39 @@ echo "---------- System information ----------" >> vast_test_report.txt
 uname -a >> vast_test_report.txt
 SYSTEM_TYPE=$(uname)
 if [ "$SYSTEM_TYPE" = "Linux" ];then
- # Use inxi script to generate nice human-readable system parameters summary
- lib/inxi -c0 -! 31 -S -M -C -I >> vast_test_report.txt
- # If inix fails, gather at least some basic info
- if [ $? -ne 0 ];then
-  uname -a >> vast_test_report.txt
-  lscpu >> vast_test_report.txt
-  free -m >> vast_test_report.txt
+ # OS info (BusyBox-friendly)
+ if [ -r /etc/os-release ]; then
+  echo "--- /etc/os-release ---" >> vast_test_report.txt
+  cat /etc/os-release >> vast_test_report.txt
+ elif [ -r /etc/alpine-release ]; then
+  echo "--- /etc/alpine-release ---" >> vast_test_report.txt
+  cat /etc/alpine-release >> vast_test_report.txt
  fi
+ # Use inxi script to generate nice human-readable system parameters summary
+ command -v gawk >/dev/null 2>&1 && lib/inxi -c0 -! 31 -S -M -C -I >> vast_test_report.txt
+ if [ $? -ne 0 ];then
+  # If inix fails, gather at least some basic info
+
+  # CPU model: avoid grep -m; use head -n 1 instead
+  if [ -r /proc/cpuinfo ]; then
+   echo "--- CPU ---" >> vast_test_report.txt
+   grep -E '^(model name|Hardware|Processor)[[:space:]]*:' /proc/cpuinfo 2>/dev/null | head -n 1 >> vast_test_report.txt
+   echo -n "CPU cores (counted): " >> vast_test_report.txt
+   grep -c '^processor' /proc/cpuinfo 2>/dev/null >> vast_test_report.txt
+  elif command -v lscpu &> /dev/null ; then
+   lscpu >> vast_test_report.txt
+  fi
+
+  # Memory: /proc/meminfo is always there in containers
+  if [ -r /proc/meminfo ]; then
+   echo "--- Memory ---" >> vast_test_report.txt
+   grep -E '^(MemTotal|MemFree|MemAvailable|SwapTotal|SwapFree)[[:space:]]*:' /proc/meminfo 2>/dev/null >> vast_test_report.txt
+  else
+   free -m >> vast_test_report.txt
+  fi
+ fi # gawk/inix
 else
+ # this is not Linux
  # Resort to uname and sysctl
  uname -a >> vast_test_report.txt
  sysctl -a | grep -e "hw.machine_arch" -e "hw.model" -e "hw.ncpu" -e "hw.physmem" -e "hw.memsize" >> vast_test_report.txt
@@ -5606,8 +5630,8 @@ if [ -d ../sample_data ];then
  TEST_PASSED=1
  util/clean_data.sh
  # Run the test
- echo "Small CCD images with directory name instead of file list test " 
- echo -n "Small CCD images with directory name instead of file list test: " >> vast_test_report.txt
+ echo "Small CCD images with directory name ending with '/' instead of file list test " 
+ echo -n "Small CCD images with directory name ending with '/' instead of file list test: " >> vast_test_report.txt
  # Here is the main feature of this test: we limit the number of processin threads to only 2
  cp default.sex.ccd_example default.sex
  ./vast -u -f ../sample_data/
