@@ -1,0 +1,85 @@
+name: Alpine Docker build + VaST system test
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'   # weekly, Sundays 02:00 UTC (same cadence style as macOS workflow) 
+  workflow_dispatch:
+
+jobs:
+  build_and_test_alpine_docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check commit message
+        id: check_commit
+        run: |
+          commit_message=$(git log --format=%B -n 1 HEAD)
+          if [[ "${commit_message}" == *"notest"* ]]; then
+            echo "Commit contains 'notest'. Skipping tests."
+            echo "SKIP=true" >> $GITHUB_ENV
+          else
+            echo "SKIP=false" >> $GITHUB_ENV
+          fi
+
+      - name: Build VaST Alpine Docker image
+        if: env.SKIP != 'true'
+        run: |
+          docker build -t vast-alpine:ci -f - . <<'DOCKERFILE'
+          FROM alpine:latest
+
+          # Base build deps (mirrors your alpine container build list, plus what test_vast.sh commonly needs)
+          RUN apk add --no-cache \
+                bash \
+                gcc g++ gfortran make musl-dev \
+                libx11-dev libpng-dev \
+                git curl wget file bc \
+                ghostscript \
+                python3 py3-pip py3-setuptools py3-wheel \
+                chromium chromium-chromedriver
+
+          # Some tests expect "python" to exist
+          RUN ln -sf /usr/bin/python3 /usr/bin/python
+
+          WORKDIR /opt/vast
+          COPY . /opt/vast
+
+          # Python deps used by parts of the test suite (Ubuntu workflow installs these via pip)
+          RUN pip3 install --no-cache-dir --break-system-packages \
+                astropy sympy \
+                -r util/comet_finder/requirements.txt \
+                selenium requests
+
+          # Build VaST inside the image
+          RUN make
+
+          DOCKERFILE
+
+      - name: Syntax-check the test script
+        if: env.SKIP != 'true'
+        run: |
+          docker run --rm -v "$GITHUB_WORKSPACE:/work" -w /work vast-alpine:ci \
+            bash -lc 'bash -n util/examples/test_vast.sh'
+
+      - name: Run VaST system test inside Alpine container
+        if: env.SKIP != 'true'
+        env:
+          TEST_VAST_CURL_PROXY: ${{ secrets.TEST_VAST_CURL_PROXY }}
+        run: |
+          # Keep artifacts in the workspace so upload-artifact can pick them up
+          docker run --rm \
+            -e TEST_VAST_CURL_PROXY \
+            -v "$GITHUB_WORKSPACE:/work" \
+            -w /work \
+            vast-alpine:ci \
+            bash -lc 'echo "1" > ../THIS_IS_HPCC; util/examples/test_vast.sh'
+
+      - name: Upload test artifacts
+        if: env.SKIP != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts-alpine
+          path: test_artifacts/
+          retention-days: 7
+
