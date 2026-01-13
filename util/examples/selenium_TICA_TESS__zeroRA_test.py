@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import time
 import unittest
 from pathlib import Path
 from urllib.parse import urlparse
@@ -35,12 +36,28 @@ SKIP_LINK_PATTERNS = (
     "cbat.eps.harvard.edu/tocp_report",
     "wis-tns.weizmann.ac.il",
     "wis-tns.org",
+    "aladin.u-strasbg.fr/AladinLite/",
+)
+
+# Links already tested in selenium_NMW_V615Vul_test.py - skip here to avoid
+# duplicate requests to external services that may have rate limits or be flaky
+SKIP_ALREADY_TESTED_PATTERNS = (
+    "www.projectpluto.com/sat_id2.htm",
+    "minorplanetcenter.net/cgi-bin/checkmp.cgi",
+    "www.fitsblink.net/satellites/",
+    "aerith.net/comet/weekly/current.html",
+    "astro.vanbuitenen.nl/comets",
+    "irsa.ipac.caltech.edu/applications/wise/",
 )
 
 REQUEST_TIMEOUT   = 60   # seconds for each HTTP HEAD
 CHECK_EXTERNAL    = True # set False for offline / quick run
 MPC_PAGE_TIMEOUT  = 120  # seconds to wait for MPC page
 VSX_PAGE_TIMEOUT  = 120  # seconds to wait for VSX page
+
+# Retry settings for external link checks
+LINK_CHECK_MAX_RETRIES = 2
+LINK_CHECK_RETRY_DELAY = 120  # seconds to wait between retries
 
 
 class SecondSectionLinkButtonTest(unittest.TestCase):
@@ -157,6 +174,11 @@ class SecondSectionLinkButtonTest(unittest.TestCase):
                 LOG.info(" -- skipped (in skip list)")
                 continue
 
+            # 1b) skip links already tested in the other selenium test
+            if any(pat in href for pat in SKIP_ALREADY_TESTED_PATTERNS):
+                LOG.info(" -- skipped (tested in selenium_NMW_V615Vul_test.py)")
+                continue
+
             # 2) javascript toggle
             if href.startswith("javascript:"):
                 match = re.search(r"toggleElement\('([^']+)'\)", href)
@@ -186,15 +208,23 @@ class SecondSectionLinkButtonTest(unittest.TestCase):
                 if not CHECK_EXTERNAL:
                     LOG.info(" -- skipped (external checks disabled)")
                     continue
-                try:
-                    resp = requests.head(href, allow_redirects=True,
-                                         timeout=REQUEST_TIMEOUT)
-                    self.assertLess(
-                        resp.status_code, 400,
-                        "%s -> HTTP %d" % (href, resp.status_code)
-                    )
-                except requests.RequestException as exc:
-                    self.fail("Broken link %s: %s" % (href, exc))
+                last_error = None
+                for attempt in range(LINK_CHECK_MAX_RETRIES + 1):
+                    try:
+                        resp = requests.head(href, allow_redirects=True,
+                                             timeout=REQUEST_TIMEOUT)
+                        if resp.status_code < 400:
+                            last_error = None
+                            break
+                        last_error = "%s -> HTTP %d" % (href, resp.status_code)
+                    except requests.RequestException as exc:
+                        last_error = "Broken link %s: %s" % (href, exc)
+                    if attempt < LINK_CHECK_MAX_RETRIES:
+                        LOG.info(" -- failed, retrying in %d seconds (attempt %d/%d)...",
+                                 LINK_CHECK_RETRY_DELAY, attempt + 1, LINK_CHECK_MAX_RETRIES + 1)
+                        time.sleep(LINK_CHECK_RETRY_DELAY)
+                if last_error:
+                    self.fail(last_error)
 
             # 5) unsupported scheme
             else:
