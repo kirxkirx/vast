@@ -13782,8 +13782,9 @@ $GREP_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWNVUL24ST0110"
   else
    # Consider epic Selenium test of the transient candidates page
+   # (disable Selenium test for Alpine linux specifically)
    command -v python &> /dev/null     
-   if [ $? -eq 0 ];then
+   if [ $? -eq 0 ] && [ ! -f /etc/alpine-release ];then
     python -c "import unittest; import logging; import re; import pathlib; import selenium; print(selenium.__version__)" 2>/dev/null
     if [ $? -eq 0 ];then
      python -m unittest -v util/examples/selenium_NMW_V615Vul_test.py &> selenium_NMW_V615Vul_test.txt
@@ -22519,8 +22520,9 @@ $CAT_RESULT"
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Klio_name"
   else
    # Consider epic Selenium test of the transient candidates page
+   # (disable Selenium test for Alpine linux specifically)
    command -v python &> /dev/null     
-   if [ $? -eq 0 ];then
+   if [ $? -eq 0 ] && [ ! -f /etc/alpine-release ] ;then
     python -c "import unittest; import logging; import re; import pathlib; import selenium; print(selenium.__version__)" 2>/dev/null
     if [ $? -eq 0 ];then
      python -m unittest -v util/examples/selenium_TICA_TESS__zeroRA_test.py &> selenium_TICA_TESS__zeroRA_test.txt
