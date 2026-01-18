@@ -304,7 +304,8 @@ if [ -n "$CAMERA_SETTINGS" ];then
   UCAC5_PLATESOLVE_ITERATIONS=2
   #STARMATCH_RADIUS_PIX=4 # testing new values
   # Let's try to reduce from 50 to 25
-  FRAME_EDGE_OFFSET_PIX=25
+  # Nope, looks like we can avoid many mismatches with a larger edge ident
+  FRAME_EDGE_OFFSET_PIX=100
   # Do not compress fully calibrated images to reduce disk load
   FPACK_FULLY_CALIBRATED_IMAGE="no"
  fi
@@ -2082,7 +2083,8 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
    if [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "yes" ];then
     ### ===> POINTING ACCURACY LIMITS HARDCODED HERE <===
     # Require a 3 pixel shift, but no less than 1"
-    MIN_IMAGE_SHIFT_ARCSEC=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{val = 3*$1; printf "%.1f", (val<1.0?1.0:val)}')
+    # OK, let's make it 1 pix
+    MIN_IMAGE_SHIFT_ARCSEC=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{val = 1*$1; printf "%.1f", (val<1.0?1.0:val)}')
     MIN_IMAGE_SHIFT_DEG=$(echo "$MIN_IMAGE_SHIFT_ARCSEC" | awk '{printf "%.5f", $1/3600}')
     #
     DISTANCE_BETWEEN_IMAGE_CENTERS_DEG=$(lib/put_two_sources_in_one_field $IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE $IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE 2>/dev/null | grep 'Angular distance' | awk '{printf "%.5f", $5}')
