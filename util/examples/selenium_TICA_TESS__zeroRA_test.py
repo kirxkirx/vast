@@ -57,7 +57,7 @@ MPC_PAGE_TIMEOUT  = 300  # seconds to wait for MPC page
 VSX_PAGE_TIMEOUT  = 120  # seconds to wait for VSX page
 
 # Retry settings for external link checks
-LINK_CHECK_MAX_RETRIES = 2
+LINK_CHECK_MAX_RETRIES = 1
 LINK_CHECK_RETRY_DELAY = 300  # seconds to wait between retries
 
 
