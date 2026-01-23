@@ -20,6 +20,13 @@
 
 #include <gsl/gsl_sort_float.h>
 
+/* OpenMP support - only enabled if VAST_ENABLE_OPENMP is defined and compiler supports it */
+#ifdef VAST_ENABLE_OPENMP
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+#endif
+
 #include "../fitsio.h"
 
 /* Default parameters - conservative settings to preserve faint stars */
@@ -162,13 +169,64 @@ static void laplacian_filter( const float *input, float *output, long width, lon
  }
 }
 
-/* Find median of n floats using GSL sort */
+/* Quickselect partition: rearrange so elements < pivot are left, > pivot are right */
+static int quickselect_partition( float *arr, int left, int right, int pivot_idx ) {
+ float pivot_val= arr[pivot_idx];
+ float tmp;
+ int store_idx, i;
+
+ /* Move pivot to end */
+ tmp= arr[pivot_idx];
+ arr[pivot_idx]= arr[right];
+ arr[right]= tmp;
+
+ store_idx= left;
+ for ( i= left; i < right; i++ ) {
+  if ( arr[i] < pivot_val ) {
+   tmp= arr[store_idx];
+   arr[store_idx]= arr[i];
+   arr[i]= tmp;
+   store_idx++;
+  }
+ }
+
+ /* Move pivot to its final place */
+ tmp= arr[store_idx];
+ arr[store_idx]= arr[right];
+ arr[right]= tmp;
+
+ return store_idx;
+}
+
+/* Quickselect: find k-th smallest element in O(n) average time */
+static float quickselect( float *arr, int left, int right, int k ) {
+ int pivot_idx, pivot_new_idx;
+
+ while ( left < right ) {
+  /* Choose middle element as pivot for better average performance */
+  pivot_idx= left + ( right - left ) / 2;
+  pivot_new_idx= quickselect_partition( arr, left, right, pivot_idx );
+
+  if ( k == pivot_new_idx ) {
+   return arr[k];
+  } else if ( k < pivot_new_idx ) {
+   right= pivot_new_idx - 1;
+  } else {
+   left= pivot_new_idx + 1;
+  }
+ }
+ return arr[left];
+}
+
+/* Find median of n floats using quickselect - O(n) average time */
 static float median_of_n( float *arr, int n ) {
- gsl_sort_float( arr, 1, n );
  if ( n % 2 == 1 ) {
-  return arr[n / 2];
+  return quickselect( arr, 0, n - 1, n / 2 );
  } else {
-  return 0.5f * ( arr[n / 2 - 1] + arr[n / 2] );
+  /* For even n, find both middle elements */
+  float lower= quickselect( arr, 0, n - 1, n / 2 - 1 );
+  float upper= quickselect( arr, 0, n - 1, n / 2 );
+  return 0.5f * ( lower + upper );
  }
 }
 
@@ -180,20 +238,94 @@ static void median_filter( const float *input, float *output, long width, long h
  int i, j, idx;
  long xi, yi;
  int window_size= filter_size * filter_size;
+ int is_interior;
 
+#ifdef VAST_ENABLE_OPENMP
+#ifdef _OPENMP
+#pragma omp parallel private( x, i, j, idx, xi, yi, is_interior )
+ {
+  /* Each thread gets its own work buffer */
+  float *thread_work_buffer= malloc( window_size * sizeof( float ) );
+  if ( thread_work_buffer != NULL ) {
+#pragma omp for
+   for ( y= 0; y < height; y++ ) {
+    for ( x= 0; x < width; x++ ) {
+     idx= 0;
+     /* Check if this pixel is in the interior (no boundary issues) */
+     is_interior= ( y >= half && y < height - half && x >= half && x < width - half );
+     if ( is_interior ) {
+      /* Fast path: no boundary checks needed */
+      for ( j= -half; j <= half; j++ ) {
+       for ( i= -half; i <= half; i++ ) {
+        thread_work_buffer[idx++]= input[( y + j ) * width + ( x + i )];
+       }
+      }
+     } else {
+      /* Slow path: need mirror boundary handling */
+      for ( j= -half; j <= half; j++ ) {
+       for ( i= -half; i <= half; i++ ) {
+        yi= mirror_index( y + j, height );
+        xi= mirror_index( x + i, width );
+        thread_work_buffer[idx++]= input[yi * width + xi];
+       }
+      }
+     }
+     output[y * width + x]= median_of_n( thread_work_buffer, window_size );
+    }
+   }
+   free( thread_work_buffer );
+  }
+ }
+#else
+ /* Non-OpenMP fallback */
  for ( y= 0; y < height; y++ ) {
   for ( x= 0; x < width; x++ ) {
    idx= 0;
-   for ( j= -half; j <= half; j++ ) {
-    for ( i= -half; i <= half; i++ ) {
-     yi= mirror_index( y + j, height );
-     xi= mirror_index( x + i, width );
-     work_buffer[idx++]= input[yi * width + xi];
+   is_interior= ( y >= half && y < height - half && x >= half && x < width - half );
+   if ( is_interior ) {
+    for ( j= -half; j <= half; j++ ) {
+     for ( i= -half; i <= half; i++ ) {
+      work_buffer[idx++]= input[( y + j ) * width + ( x + i )];
+     }
+    }
+   } else {
+    for ( j= -half; j <= half; j++ ) {
+     for ( i= -half; i <= half; i++ ) {
+      yi= mirror_index( y + j, height );
+      xi= mirror_index( x + i, width );
+      work_buffer[idx++]= input[yi * width + xi];
+     }
     }
    }
    output[y * width + x]= median_of_n( work_buffer, window_size );
   }
  }
+#endif
+#else
+ /* Non-OpenMP fallback */
+ for ( y= 0; y < height; y++ ) {
+  for ( x= 0; x < width; x++ ) {
+   idx= 0;
+   is_interior= ( y >= half && y < height - half && x >= half && x < width - half );
+   if ( is_interior ) {
+    for ( j= -half; j <= half; j++ ) {
+     for ( i= -half; i <= half; i++ ) {
+      work_buffer[idx++]= input[( y + j ) * width + ( x + i )];
+     }
+    }
+   } else {
+    for ( j= -half; j <= half; j++ ) {
+     for ( i= -half; i <= half; i++ ) {
+      yi= mirror_index( y + j, height );
+      xi= mirror_index( x + i, width );
+      work_buffer[idx++]= input[yi * width + xi];
+     }
+    }
+   }
+   output[y * width + x]= median_of_n( work_buffer, window_size );
+  }
+ }
+#endif
 }
 
 /* Compute noise model: N = sqrt(gain * median5(I) + readnoise^2) / gain */

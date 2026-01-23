@@ -584,80 +584,6 @@ double classic_welch_stetson_I_from_sorted_lightcurve( size_t *input_array_index
  return I;
 }
 
-// This function computes interquartile range
-// (a range containing the innr 50% of values)
-// for an unsorted dataset
-/*
-double compute_IQR_of_unsorted_data(double *unsorted_data, int n) {
-#ifdef DISABLE_INDEX_IQR
- return 0.0;
-#endif
-
- double Q1, Q2, Q3;
- double IQR; // the result
- double *x;  // copy of the input dataset that will be sorted
- double *x2;
- double *x3;
- int i, j, k; // counters
-
- // allocate memory
- x= malloc(n * sizeof(double));
- if( x == NULL ) {
-  fprintf(stderr, "ERROR allocating memory for x in compute_IQR_of_unsorted_data()\n");
-  exit( EXIT_FAILURE );
- }
- x2= malloc(n * sizeof(double));
- if( x2 == NULL ) {
-  fprintf(stderr, "ERROR allocating memory for x2 in compute_IQR_of_unsorted_data()\n");
-  exit( EXIT_FAILURE );
- }
- x3= malloc(n * sizeof(double));
- if( x3 == NULL ) {
-  fprintf(stderr, "ERROR allocating memory for x3 in compute_IQR_of_unsorted_data()\n");
-  exit( EXIT_FAILURE );
- }
-
- // make a copy of the input dataset
- for( i= 0; i < n; i++ ) {
-  x[i]= unsorted_data[i];
- }
- // sort the copy
- gsl_sort(x, 1, n);
-
- // compute median
- Q2= gsl_stats_median_from_sorted_data(x, 1, n);
-
- // make copies of the lower (x2) and upper (x3) 50% of the data
- for( j= k= i= 0; i < n; i++ ) {
-  if( x[i] <= Q2 ) {
-   x2[j]= x[i];
-   j++;
-  } else {
-   x3[k]= x[i];
-   k++;
-  }
- }
- // x2 and x3 are sorted because they are created from a sorted array (x)
- Q1= gsl_stats_median_from_sorted_data(x2, 1, j);
- Q3= gsl_stats_median_from_sorted_data(x3, 1, k);
-
- IQR= Q3 - Q1;
-
- // free-up memory
- free(x3);
- free(x2);
- free(x);
-
-// // Scale IQR top sigma
-// // ${\rm IQR} = 2 \Phi^{-1}(0.75)
-// // 2*norminv(0.75) = 1.34897950039216
-// //IQR=IQR/( 2.0*gsl_cdf_ugaussian_Pinv(0.75) );
-// IQR= IQR / 1.34897950039216;
-
- // return result
- return IQR;
-}
-*/
 double compute_IQR_of_sorted_data( double *sorted_data, int n ) {
  double Q1, Q2, Q3;
  double IQR;  // the result
@@ -712,6 +638,7 @@ double compute_IQR_of_unsorted_data( double *unsorted_data, int n ) {
  // return result
  return IQR;
 }
+
 double estimate_sigma_from_IQR_of_unsorted_data( double *unsorted_data, int n ) {
  double IQR, sigma;
  IQR= compute_IQR_of_unsorted_data( unsorted_data, n );
@@ -722,6 +649,7 @@ double estimate_sigma_from_IQR_of_unsorted_data( double *unsorted_data, int n ) 
  sigma= IQR / 1.34897950039216;
  return sigma;
 }
+
 double estimate_sigma_from_IQR_of_sorted_data( double *sorted_data, int n ) {
  double IQR, sigma;
  IQR= compute_IQR_of_sorted_data( sorted_data, n );
@@ -733,66 +661,6 @@ double estimate_sigma_from_IQR_of_sorted_data( double *sorted_data, int n ) {
  return sigma;
 }
 
-/*
-float clipped_mean_of_unsorted_data_float( float *unsorted_data, long n ) {
- long i;
- double *x;
- float float_result;
- x=malloc(n*sizeof(double));
- for( i=0; i<n; i++ ) {
-  x[i]=(double)unsorted_data[i];
- }
- float_result= (float)clipped_mean_of_unsorted_data( x, n );
- free(x);
- return float_result;
-}
-
-// This function will compute the clipped mean the input dataset,
-// the input dataset will be copied and the copy will be sorted to compute median, MAD and reject outliers.
-// The input dataset will not be changed.
-double clipped_mean_of_unsorted_data( double *unsorted_data, long n ) {
- double median;
- double mean;
- int n_good_for_mean;
- double MAD_scaled_to_sigma; // the result
- double *x;                  // copy of the input dataset that will be sorted
- int i;                      // counter
-
- // allocate memory
- x= malloc( n * sizeof( double ) );
- if ( x == NULL ) {
-  fprintf( stderr, "ERROR allocating memory for x in esimate_sigma_from_MAD_of_unsorted_data()\n" );
-  exit( EXIT_FAILURE );
- }
-
- // make a copy of the input dataset
- for ( i= 0; i < n; i++ ) {
-  x[i]= unsorted_data[i];
- }
- // sort the copy
- gsl_sort( x, 1, n );
-
- // compute MAD scaled to sigma
- MAD_scaled_to_sigma= esimate_sigma_from_MAD_of_sorted_data( x, n );
- median= gsl_stats_median_from_sorted_data( x, 1, n );
-
- n_good_for_mean=0;
- mean=0.0;
- for( i=0; i<n; i++ ) {
-  if ( fabs( x[i]-median )<3*MAD_scaled_to_sigma ){
-   mean+=x[i];
-   n_good_for_mean++;
-  }
- }
- mean= mean/(double)n_good_for_mean;
-
- // free-up memory
- free( x );
-
- // return result
- return MAD_scaled_to_sigma;
-}
-*/
 
 // This function will compute the Median Absolute Deviation of the input dataset,
 // the input dataset will be copied and the copy will be sorted to compute MAD.
