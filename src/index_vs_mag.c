@@ -9,6 +9,7 @@
 
 #include "vast_limits.h"
 #include "variability_indexes.h"     // for MAD computation
+#include "quickselect.h"             // for quickselect_median_double()
 #include "detailed_error_messages.h" // for report_lightcurve_statistics_computation_problem()
 #include "index_vs_mag.h"
 
@@ -372,13 +373,10 @@ int main() {
      // estimate the expected index value and expected variance
      if ( k > 5 ) {
       //     if( iteration<3 ){
-      gsl_sort( data_for_stat, 1, k );
-      // yes, qsort is noticably slower!!
-      // qsort( data_for_stat, k, sizeof( double ), compare_double );
-      index_expected[i][varindex_counter]= gsl_stats_median_from_sorted_data( data_for_stat, 1, k );
-      gsl_sort( data_for_stat_median_subtracted, 1, k );
-      // qsort( data_for_stat_median_subtracted, k, sizeof( double ), compare_double );
-      index_spread[i][varindex_counter]= esimate_sigma_from_MAD_of_sorted_data( data_for_stat_median_subtracted, k );
+      // Use quickselect for O(n) median computation instead of O(n log n) sort
+      index_expected[i][varindex_counter]= quickselect_median_double( data_for_stat, k );
+      // Use optimized MAD function with quickselect internally
+      index_spread[i][varindex_counter]= esimate_sigma_from_MAD_of_unsorted_data( data_for_stat_median_subtracted, k );
       //     }
       //     else{
       //      index_expected[i][varindex_counter]=gsl_stats_mean( data_for_stat, 1, k);
@@ -510,9 +508,10 @@ int main() {
     }
     // estimate the expected index value and expected variance
     if( k>1 ){
-     gsl_sort( data_for_stat, 1, k);
-     index_expected[i][varindex_counter]=gsl_stats_median_from_sorted_data( data_for_stat, 1, k);
-     index_spread[i][varindex_counter]=esimate_sigma_from_MAD_of_sorted_data( data_for_stat, k);
+     // Use quickselect for O(n) median computation instead of O(n log n) sort
+     index_expected[i][varindex_counter]=quickselect_median_double( data_for_stat, k);
+     // Use optimized MAD function with quickselect internally
+     index_spread[i][varindex_counter]=esimate_sigma_from_MAD_of_unsorted_data( data_for_stat, k);
      // If k>1 but there is no expected value or variance
      if( 0==isnormal(index_expected[i][varindex_counter]) )index_expected[i][varindex_counter]=0.0;
      if( 0==isnormal(index_spread[i][varindex_counter]) )index_spread[i][varindex_counter]=0.0;

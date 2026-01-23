@@ -13,6 +13,7 @@
 
 #include "vast_limits.h"
 #include "lightcurve_io.h"
+#include "quickselect.h"  // for quickselect_median_double()
 
 int main( int argc, char **argv ) {
 
@@ -130,8 +131,8 @@ int main( int argc, char **argv ) {
     i++;
    }
    fclose( lightcurvefile );
-   gsl_sort( mag_a, 1, i );
-   median_mag= gsl_stats_median_from_sorted_data( mag_a, 1, i );
+   // Use quickselect for O(n) median computation instead of O(n log n) sort
+   median_mag= quickselect_median_double( mag_a, i );
    // Should we try sigma estimated from MAD instead of this????
    mag_sigma= gsl_stats_sd_m( mag_a, 1, i, median_mag );
    sprintf( lightcurve_tmp_filename, "lightcurve.tmp" );

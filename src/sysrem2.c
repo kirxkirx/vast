@@ -31,6 +31,7 @@
 #include "vast_limits.h"
 #include "lightcurve_io.h"
 #include "variability_indexes.h" // for esimate_sigma_from_MAD_of_unsorted_data()
+#include "quickselect.h"         // for quickselect_median_double()
 
 #include "get_dates_from_lightcurve_files_function.h"
 
@@ -433,8 +434,8 @@ int main() {
      k++;
     }
    }
-   gsl_sort( double_data, 1, k );
-   median= gsl_stats_median_from_sorted_data( double_data, 1, k );
+   // Use quickselect for O(n) median computation instead of O(n log n) sort
+   median= quickselect_median_double( double_data, k );
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
 #pragma omp parallel for private( j )

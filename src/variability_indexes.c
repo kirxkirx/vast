@@ -29,6 +29,8 @@
 
 #include "variability_indexes.h"
 
+#include "quickselect.h"
+
 double sgn( double a ) {
  if ( a < 0.0 )
   return -1.0;
@@ -124,8 +126,9 @@ void stetson_JKL_from_sorted_lightcurve( size_t *input_array_index_p, double *in
   for ( i= 0; i < input_Nobs - 2; i++ ) {
    w[i]= input_JD[input_array_index_p[i + 1]] - input_JD[input_array_index_p[i]];
   }
-  gsl_sort( w, 1, i );
-  dt= gsl_stats_median_from_sorted_data( w, 1, i );
+  // Use quickselect to find median - O(n) instead of O(n log n)
+  // Note: quickselect modifies the array, but w is reused below anyway
+  dt= quickselect_median_double( w, i );
  }
 
  ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -662,10 +665,9 @@ double estimate_sigma_from_IQR_of_sorted_data( double *sorted_data, int n ) {
 }
 
 
-// This function will compute the Median Absolute Deviation of the input dataset,
-// the input dataset will be copied and the copy will be sorted to compute MAD.
+// Original version using full sort - kept for reference/comparison
 // The input dataset will not be changed.
-double esimate_sigma_from_MAD_of_unsorted_data( double *unsorted_data, long n ) {
+double esimate_sigma_from_MAD_of_unsorted_data__fullsort( double *unsorted_data, long n ) {
  double MAD_scaled_to_sigma; // the result
  double *x;                  // copy of the input dataset that will be sorted
  int i;                      // counter
@@ -683,8 +685,6 @@ double esimate_sigma_from_MAD_of_unsorted_data( double *unsorted_data, long n ) 
  }
  // sort the copy
  gsl_sort( x, 1, n );
- // that is slower than gsl_sort()
- // vast_qsort_double(x, n);
 
  // compute MAD scaled to sigma
  MAD_scaled_to_sigma= esimate_sigma_from_MAD_of_sorted_data( x, n );
@@ -696,12 +696,55 @@ double esimate_sigma_from_MAD_of_unsorted_data( double *unsorted_data, long n ) 
  return MAD_scaled_to_sigma;
 }
 
+// Optimized version using quickselect - O(n) instead of O(n log n)
+// This function will compute the Median Absolute Deviation of the input dataset,
+// the input dataset will be copied and the copy will be processed to compute MAD.
+// The input dataset will not be changed.
+double esimate_sigma_from_MAD_of_unsorted_data( double *unsorted_data, long n ) {
+ double median_data, MAD, sigma; // the result
+ double *x;                      // copy of the input dataset
+ int i;                          // counter
+
+ // allocate memory
+ x= malloc( n * sizeof( double ) );
+ if ( x == NULL ) {
+  fprintf( stderr, "ERROR allocating memory for x in esimate_sigma_from_MAD_of_unsorted_data()\n" );
+  exit( EXIT_FAILURE );
+ }
+
+ // make a copy of the input dataset
+ for ( i= 0; i < n; i++ ) {
+  x[i]= unsorted_data[i];
+ }
+
+ // Use quickselect to find median of data - O(n) instead of O(n log n)
+ median_data= quickselect_median_double( x, (int)n );
+
+ // Compute absolute deviations (reuse x array)
+ for ( i= 0; i < n; i++ ) {
+  x[i]= fabs( unsorted_data[i] - median_data );
+ }
+
+ // Use quickselect to find median of absolute deviations - O(n)
+ MAD= quickselect_median_double( x, (int)n );
+
+ // free-up memory
+ free( x );
+
+ // Scale MAD to sigma: 1.48260221850560 = 1/norminv(3/4)
+ sigma= 1.48260221850560 * MAD;
+
+ // return result
+ return sigma;
+}
+
 // This function will compute the Median Absolute Deviation of the input
 // dataset ASSUMING IT IS SORTED and will scale it to sigma.
 // The input dataset will not be changed. For a detailed discussion of MAD
 // see http://en.wikipedia.org/wiki/Robust_measures_of_scale
 // and http://en.wikipedia.org/wiki/Median_absolute_deviation#relation_to_standard_deviation
-double compute_MAD_of_sorted_data( double *sorted_data, long n ) {
+// Original version using full sort - kept for reference/comparison
+double compute_MAD_of_sorted_data__fullsort( double *sorted_data, long n ) {
  double median_data, MAD; //, sigma;
  double *AD;
  int i;
@@ -731,6 +774,33 @@ double compute_MAD_of_sorted_data( double *sorted_data, long n ) {
  // return sigma;
 }
 
+// Optimized version using quickselect - O(n) instead of O(n log n) for finding MAD median
+double compute_MAD_of_sorted_data( double *sorted_data, long n ) {
+ double median_data, MAD;
+ double *AD;
+ int i;
+
+ AD= malloc( n * sizeof( double ) );
+ if ( AD == NULL ) {
+  fprintf( stderr, "ERROR allocating memory for AD in compute_MAD_of_sorted_data()\n" );
+  exit( EXIT_FAILURE );
+ }
+
+ // The input dataset has to be sorted so we can compute its median
+ median_data= gsl_stats_median_from_sorted_data( sorted_data, 1, n );
+
+ // Compute absolute deviations
+ for ( i= 0; i < n; i++ ) {
+  AD[i]= fabs( sorted_data[i] - median_data );
+ }
+ // Use quickselect to find median of absolute deviations - O(n) instead of O(n log n)
+ MAD= quickselect_median_double( AD, (int)n );
+
+ free( AD );
+
+ return MAD;
+}
+
 double esimate_sigma_from_MAD_of_sorted_data( double *sorted_data, long n ) {
  double sigma, MAD;
  MAD= compute_MAD_of_sorted_data( sorted_data, n );
@@ -740,7 +810,8 @@ double esimate_sigma_from_MAD_of_sorted_data( double *sorted_data, long n ) {
 }
 
 // float version of the above functions
-float compute_MAD_of_sorted_data_float( float *sorted_data, long n ) {
+// Original version using full sort - kept for reference/comparison
+float compute_MAD_of_sorted_data_float__fullsort( float *sorted_data, long n ) {
  float median_data, MAD; //, sigma;
  float *AD;
  int i;
@@ -768,6 +839,33 @@ float compute_MAD_of_sorted_data_float( float *sorted_data, long n ) {
  // sigma= 1.48260221850560 * MAD;
  // return sigma;
 }
+
+// Optimized version using quickselect - O(n) instead of O(n log n) for finding MAD median
+float compute_MAD_of_sorted_data_float( float *sorted_data, long n ) {
+ float median_data, MAD;
+ float *AD;
+ int i;
+
+ AD= malloc( n * sizeof( float ) );
+ if ( AD == NULL ) {
+  fprintf( stderr, "ERROR allocating memory for AD in compute_MAD_of_sorted_data_float()\n" );
+  exit( EXIT_FAILURE );
+ }
+
+ // The input dataset has to be sorted so we can compute its median
+ median_data= gsl_stats_float_median_from_sorted_data( sorted_data, 1, n );
+
+ // Compute absolute deviations
+ for ( i= 0; i < n; i++ ) {
+  AD[i]= fabsf( sorted_data[i] - median_data );
+ }
+ // Use quickselect to find median of absolute deviations - O(n) instead of O(n log n)
+ MAD= quickselect_median_float( AD, (int)n );
+
+ free( AD );
+
+ return MAD;
+}
 float esimate_sigma_from_MAD_of_sorted_data_float( float *sorted_data, long n ) {
  float MAD, sigma;
  MAD= compute_MAD_of_sorted_data_float( sorted_data, n );
@@ -777,7 +875,8 @@ float esimate_sigma_from_MAD_of_sorted_data_float( float *sorted_data, long n ) 
 }
 
 // as the above, but messes-up the input array in order to save memory
-double compute_MAD_of_sorted_data_and_ruin_input_array( double *sorted_data, long n ) {
+// Original version using full sort - kept for reference/comparison
+double compute_MAD_of_sorted_data_and_ruin_input_array__fullsort( double *sorted_data, long n ) {
  double median_data, MAD; //, sigma;
  int i;
 
@@ -795,6 +894,24 @@ double compute_MAD_of_sorted_data_and_ruin_input_array( double *sorted_data, lon
  // // 1.48260221850560 = 1/norminv(3/4)
  // sigma= 1.48260221850560 * MAD;
  // return sigma;
+}
+
+// Optimized version using quickselect - O(n) instead of O(n log n) for finding MAD median
+double compute_MAD_of_sorted_data_and_ruin_input_array( double *sorted_data, long n ) {
+ double median_data, MAD;
+ int i;
+
+ // The input dataset has to be sorted so we can compute its median
+ median_data= gsl_stats_median_from_sorted_data( sorted_data, 1, n );
+
+ // Compute absolute deviations
+ for ( i= 0; i < n; i++ ) {
+  sorted_data[i]= fabs( sorted_data[i] - median_data );
+ }
+ // Use quickselect to find median of absolute deviations - O(n) instead of O(n log n)
+ MAD= quickselect_median_double( sorted_data, (int)n );
+
+ return MAD;
 }
 
 double esimate_sigma_from_MAD_of_sorted_data_and_ruin_input_array( double *sorted_data, long n ) {
@@ -868,12 +985,14 @@ double N3_consecutive_samesign_deviations_in_sorted_lightcurve( size_t *input_ar
   exit( EXIT_FAILURE );
  }
 
+ // Make a copy for quickselect (which modifies its input)
  for ( i= 0; i < input_Nobs; i++ ) {
   data[i]= input_m[i];
  }
- gsl_sort( data, 1, i );
- median= gsl_stats_median_from_sorted_data( data, 1, i );
- mad_scaled_to_sigma= esimate_sigma_from_MAD_of_sorted_data( data, i );
+ // Use quickselect to find median - O(n) instead of O(n log n)
+ median= quickselect_median_double( data, input_Nobs );
+ // Use optimized MAD function with unsorted input
+ mad_scaled_to_sigma= esimate_sigma_from_MAD_of_unsorted_data( input_m, input_Nobs );
  free( data );
 
  // count triplets
@@ -1050,10 +1169,10 @@ double detect_excursions_in_sorted_lightcurve( size_t *p, double *JD, double *m,
    mean1= scan_mag[i][0];
    sigma1= scan_err[i][0];
   } else {
-   gsl_sort( scan_mag[i], 1, points_in_scans[i] );
-   mean1= gsl_stats_median_from_sorted_data( scan_mag[i], 1, points_in_scans[i] );
+   // Use quickselect for O(n) median computation instead of O(n log n) sort
+   mean1= quickselect_median_double( scan_mag[i], points_in_scans[i] );
    // our best estimate of sigma will be either MAD scaled to sigma (if we have many points) or max estimated error (fallback if we have only a couple of points)
-   sigma1= MAX( esimate_sigma_from_MAD_of_sorted_data( scan_mag[i], points_in_scans[i] ), gsl_stats_max( scan_err[i], 1, points_in_scans[i] ) );
+   sigma1= MAX( esimate_sigma_from_MAD_of_unsorted_data( scan_mag[i], points_in_scans[i] ), gsl_stats_max( scan_err[i], 1, points_in_scans[i] ) );
   }
 
 #ifdef DEBUGFILES
@@ -1062,13 +1181,13 @@ double detect_excursions_in_sorted_lightcurve( size_t *p, double *JD, double *m,
 
   for ( j= i + 1; j < n_scan; j++ ) {
    // Second scan
-   if ( points_in_scans[j] ) {
+   if ( points_in_scans[j] < 2 ) {
     mean2= scan_mag[j][0];
     sigma2= scan_err[j][0];
    } else {
-    gsl_sort( scan_mag[j], 1, points_in_scans[j] );
-    mean2= gsl_stats_median_from_sorted_data( scan_mag[j], 1, points_in_scans[j] );
-    sigma2= MAX( esimate_sigma_from_MAD_of_sorted_data( scan_mag[j], points_in_scans[j] ), gsl_stats_max( scan_err[j], 1, points_in_scans[j] ) );
+    // Use quickselect for O(n) median computation instead of O(n log n) sort
+    mean2= quickselect_median_double( scan_mag[j], points_in_scans[j] );
+    sigma2= MAX( esimate_sigma_from_MAD_of_unsorted_data( scan_mag[j], points_in_scans[j] ), gsl_stats_max( scan_err[j], 1, points_in_scans[j] ) );
    }
 
    test_results_for_pairs_of_scans[scan_pair]= fabs( mean1 - mean2 ) / sqrt( sigma1 * sigma1 + sigma2 * sigma2 );
@@ -1310,7 +1429,8 @@ double Normalized_excess_variance( double *m, double *merr, int N ) {
  return result;
 }
 
-double compute_RoMS( double *unsorted_m, double *unsorted_merr, int N ) {
+// Original version using full sort - kept for reference/comparison
+double compute_RoMS__fullsort( double *unsorted_m, double *unsorted_merr, int N ) {
 #ifdef DISABLE_INDEX_ROMS
  return 0.0;
 #endif
@@ -1343,6 +1463,40 @@ double compute_RoMS( double *unsorted_m, double *unsorted_merr, int N ) {
  // compute RoMS
  for ( out_RoMS= 0.0, i= 0; i < N; i++ ) {
   // We do this calculation on the unsorted array so we don't need to sort also unsorted_merr together with unsorted_m
+  out_RoMS+= fabs( ( unsorted_m[i] - median_m ) / unsorted_merr[i] );
+ }
+ out_RoMS= out_RoMS / (double)( N - 1 );
+ return out_RoMS;
+}
+
+// Optimized version using quickselect - O(n) instead of O(n log n) for finding median
+double compute_RoMS( double *unsorted_m, double *unsorted_merr, int N ) {
+#ifdef DISABLE_INDEX_ROMS
+ return 0.0;
+#endif
+
+ double out_RoMS; // result will be stored here
+ int i;           // counter
+ double median_m; // median mag.
+ double *x;       // a copy of the input array
+
+ // allocate memory for copy (quickselect modifies the array)
+ x= malloc( N * sizeof( double ) );
+ if ( x == NULL ) {
+  fprintf( stderr, "ERROR allocating memory for x in compute_RoMS()\n" );
+  exit( EXIT_FAILURE );
+ }
+
+ // make a copy of the input dataset
+ for ( i= 0; i < N; i++ ) {
+  x[i]= unsorted_m[i];
+ }
+ // Use quickselect to find median - O(n) instead of O(n log n)
+ median_m= quickselect_median_double( x, N );
+ free( x );
+
+ // compute RoMS
+ for ( out_RoMS= 0.0, i= 0; i < N; i++ ) {
   out_RoMS+= fabs( ( unsorted_m[i] - median_m ) / unsorted_merr[i] );
  }
  out_RoMS= out_RoMS / (double)( N - 1 );
@@ -1416,7 +1570,8 @@ void compute_variability_indexes_that_need_time_sorting( double *input_JD, doubl
  return;
 }
 
-double compute_median_of_usorted_array_without_changing_it( double *data, int n ) {
+// Original version using full sort - kept for reference/comparison
+double compute_median_of_usorted_array_without_changing_it__fullsort( double *data, int n ) {
  int i;
  double *local_copy_data;
  double median;
@@ -1438,6 +1593,35 @@ double compute_median_of_usorted_array_without_changing_it( double *data, int n 
 
  gsl_sort( local_copy_data, 1, n );
  median= gsl_stats_median_from_sorted_data( local_copy_data, 1, n );
+
+ free( local_copy_data );
+
+ return median;
+}
+
+// Optimized version using quickselect - O(n) instead of O(n log n)
+double compute_median_of_usorted_array_without_changing_it( double *data, int n ) {
+ int i;
+ double *local_copy_data;
+ double median;
+
+ if ( n < 2 ) {
+  fprintf( stderr, "ERROR in compute_median_of_usorted_array_without_changing_it(): cannot compute median for only %d points!\n", n );
+  return 0.0;
+ }
+
+ local_copy_data= malloc( n * sizeof( double ) );
+ if ( local_copy_data == NULL ) {
+  fprintf( stderr, "ERROR in variability_indexes.c - cannot allocate memory for local_copy_data\n" );
+  exit( EXIT_FAILURE );
+ }
+
+ for ( i= n; i--; ) {
+  local_copy_data[i]= data[i];
+ }
+
+ // Use quickselect to find median - O(n) instead of O(n log n)
+ median= quickselect_median_double( local_copy_data, n );
 
  free( local_copy_data );
 

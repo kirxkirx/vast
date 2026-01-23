@@ -94,7 +94,7 @@ old: formater_out_wfk
 
 astrometry: lib/astrometry/get_image_dimentions lib/astrometry/insert_wcs_header lib/astrometry/strip_wcs_keywords lib/make_outxyls_for_astrometric_calibration util/solve_plate_with_UCAC5 lib/autodetect_aperture_main lib/try_to_guess_image_fov cfitsio gsl
 
-pgplot_components: variability_indexes.o photocurve.o gettime.o kourovka_sbg_date.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o replace_file_with_symlink_if_filename_contains_white_spaces.o wpolyfit.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o cfitsio gsl
+pgplot_components: variability_indexes.o quickselect.o photocurve.o gettime.o kourovka_sbg_date.o autodetect_aperture.o guess_saturation_limit.o get_number_of_cpu_cores.o exclude_region.o replace_file_with_symlink_if_filename_contains_white_spaces.o wpolyfit.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o cfitsio gsl
 	lib/test_libpng.sh
 	echo $(OPTFLAGS) > optflags_for_scripts.tmp
 	$(CC) $(OPTFLAGS) -c src/setenv_local_pgplot.c
@@ -151,16 +151,16 @@ period_filter: lib/period_search/periodFilter/periodS2 lib/periodFilter/periodFi
 nopgplot: print_check_start_message check print_compile_start_message clean zlib cfitsio gsl sextractor vast.o vast statistics etc old shell_commands period_filter ccd astrometry astcheck clean_objects print_compile_success_message 
 
 
-stetson_test: stetson_test.o variability_indexes.o lib/create_data
-	$(CC) $(OPTFLAGS) -o lib/test/stetson_test stetson_test.o variability_indexes.o $(GSL_LIB) -lm
+stetson_test: stetson_test.o variability_indexes.o quickselect.o lib/create_data
+	$(CC) $(OPTFLAGS) -o lib/test/stetson_test stetson_test.o variability_indexes.o quickselect.o $(GSL_LIB) -lm
 
 stetson_test.o: $(SRC_PATH)test/stetson_test.c
 	$(CC) $(OPTFLAGS) -c $(SRC_PATH)test/stetson_test.c -I$(GSL_INCLUDE)
 
 
 
-vast: vast.o ident_debug.o vast_image_quality.o vast_utils.o gettime.o kourovka_sbg_date.o vast_report_memory_error.o libident.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o erfinv.o is_point_close_or_off_the_frame_edge.o get_path_to_vast.o detection_limit.o cfitsio gsl
-	$(CC) $(OPTFLAGS) -o vast vast.o ident_debug.o vast_image_quality.o vast_utils.o gettime.o kourovka_sbg_date.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o vast_report_memory_error.o libident.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o filter_MagSize.o erfinv.o is_point_close_or_off_the_frame_edge.o get_path_to_vast.o detection_limit.o $(CFITSIO_LIB) $(GSL_LIB) -Wl,-rpath,$(LIB_IDENT_PATH) -lm
+vast: vast.o ident_debug.o vast_image_quality.o vast_utils.o gettime.o kourovka_sbg_date.o vast_report_memory_error.o libident.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o quickselect.o filter_MagSize.o erfinv.o is_point_close_or_off_the_frame_edge.o get_path_to_vast.o detection_limit.o cfitsio gsl
+	$(CC) $(OPTFLAGS) -o vast vast.o ident_debug.o vast_image_quality.o vast_utils.o gettime.o kourovka_sbg_date.o autodetect_aperture.o guess_saturation_limit.o exclude_region.o wpolyfit.o photocurve.o fit_plane_lin.o get_number_of_cpu_cores.o vast_report_memory_error.o libident.o replace_file_with_symlink_if_filename_contains_white_spaces.o variability_indexes.o quickselect.o filter_MagSize.o erfinv.o is_point_close_or_off_the_frame_edge.o get_path_to_vast.o detection_limit.o $(CFITSIO_LIB) $(GSL_LIB) -Wl,-rpath,$(LIB_IDENT_PATH) -lm
 
 vast.o: $(SRC_PATH)vast.c $(SOURCE_IDENT_PATH)ident.h $(SRC_PATH)vast_limits.h $(SRC_PATH)vast_report_memory_error.h $(SRC_PATH)detailed_error_messages.h $(SRC_PATH)photocurve.h $(SRC_PATH)get_number_of_cpu_cores.h $(SRC_PATH)fit_plane_lin.h $(SRC_PATH)fitsfile_read_check.h $(SRC_PATH)wpolyfit.h $(SRC_PATH)replace_file_with_symlink_if_filename_contains_white_spaces.h $(SRC_PATH)lightcurve_io.h
 	$(CC) $(OPTFLAGS) -c -o vast.o $(SRC_PATH)vast.c -I$(GSL_INCLUDE) -Wall
@@ -208,8 +208,8 @@ guess_saturation_limit_main.o: $(SRC_PATH)guess_saturation_limit_main.c
 	$(CC) $(OPTFLAGS) -c $(SRC_PATH)guess_saturation_limit_main.c
 #lib/guess_saturation_limit_main: guess_saturation_limit_main.o guess_saturation_limit.o autodetect_aperture.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o
 #	$(CC) $(OPTFLAGS) -o lib/guess_saturation_limit_main  guess_saturation_limit_main.o guess_saturation_limit.o autodetect_aperture.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o $(GSL_LIB) $(CFITSIO_LIB) -lm
-lib/guess_saturation_limit_main: guess_saturation_limit_main.o guess_saturation_limit.o vast_utils.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o
-	$(CC) $(OPTFLAGS) -o lib/guess_saturation_limit_main  guess_saturation_limit_main.o guess_saturation_limit.o vast_utils.o exclude_region.o variability_indexes.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o $(GSL_LIB) $(CFITSIO_LIB) -lm
+lib/guess_saturation_limit_main: guess_saturation_limit_main.o guess_saturation_limit.o vast_utils.o exclude_region.o variability_indexes.o quickselect.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o
+	$(CC) $(OPTFLAGS) -o lib/guess_saturation_limit_main  guess_saturation_limit_main.o guess_saturation_limit.o vast_utils.o exclude_region.o variability_indexes.o quickselect.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o $(GSL_LIB) $(CFITSIO_LIB) -lm
 
 lib/shutterless_bad_regions_hack: $(SRC_PATH)shutterless_bad_regions_hack.c
 	$(CC) $(OPTFLAGS) -o lib/shutterless_bad_regions_hack $(SRC_PATH)shutterless_bad_regions_hack.c $(CFITSIO_LIB) -lm
@@ -223,7 +223,10 @@ is_fits_image_blank_main.o: $(SRC_PATH)is_fits_image_blank_main.c $(SRC_PATH)is_
 lib/is_fits_image_blank: is_fits_image_blank_main.o is_fits_image_blank.o
 	$(CC) $(OPTFLAGS) -o lib/is_fits_image_blank is_fits_image_blank_main.o is_fits_image_blank.o $(CFITSIO_LIB) -lm
 
-variability_indexes.o: $(SRC_PATH)variability_indexes.c $(SRC_PATH)vast_limits.h $(SRC_PATH)variability_indexes.h
+quickselect.o: $(SRC_PATH)quickselect.c $(SRC_PATH)quickselect.h
+	$(CC) $(OPTFLAGS) -c -o quickselect.o $(SRC_PATH)quickselect.c
+
+variability_indexes.o: $(SRC_PATH)variability_indexes.c $(SRC_PATH)vast_limits.h $(SRC_PATH)variability_indexes.h $(SRC_PATH)quickselect.h
 	# Older GCC versions complain about isnormal() unless -std=c99 is given explicitly
 	#$(CC) $(OPTFLAGS) -c -o variability_indexes.o $(SRC_PATH)variability_indexes.c -std=c99 -I$(GSL_INCLUDE)
 	# MacOS header files are incompatible with -std=c99
@@ -235,8 +238,8 @@ create_data.o: $(SRC_PATH)create_data.c $(SRC_PATH)vast_limits.h $(SRC_PATH)vari
 	$(CC) $(OPTFLAGS) -c -o create_data.o $(SRC_PATH)create_data.c -I$(GSL_INCLUDE)
 write_vast_lightcurve_statistics_format_log.o: $(SRC_PATH)write_vast_lightcurve_statistics_format_log.c
 	$(CC) $(OPTFLAGS) -c -o write_vast_lightcurve_statistics_format_log.o $(SRC_PATH)write_vast_lightcurve_statistics_format_log.c
-lib/create_data: create_data.o get_number_of_measured_images_from_vast_summary_log.o variability_indexes.o write_vast_lightcurve_statistics_format_log.o
-	$(CC) $(OPTFLAGS) -o lib/create_data create_data.o get_number_of_measured_images_from_vast_summary_log.o variability_indexes.o write_vast_lightcurve_statistics_format_log.o $(GSL_LIB) -lm
+lib/create_data: create_data.o get_number_of_measured_images_from_vast_summary_log.o variability_indexes.o quickselect.o write_vast_lightcurve_statistics_format_log.o
+	$(CC) $(OPTFLAGS) -o lib/create_data create_data.o get_number_of_measured_images_from_vast_summary_log.o variability_indexes.o quickselect.o write_vast_lightcurve_statistics_format_log.o $(GSL_LIB) -lm
 lib/fast_clean_data: $(SRC_PATH)fast_clean_data.c
 	$(CC) $(OPTFLAGS) -o lib/fast_clean_data $(SRC_PATH)fast_clean_data.c
 
@@ -253,13 +256,13 @@ stat_outfile: $(SRC_PATH)stat_outfile.c
 
 colstat.o: $(SRC_PATH)colstat.c
 	$(CC) $(OPTFLAGS) -c -o colstat.o $(SRC_PATH)colstat.c -I$(GSL_INCLUDE)
-util/colstat: colstat.o variability_indexes.o
-	$(CC) $(OPTFLAGS) -o util/colstat colstat.o variability_indexes.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+util/colstat: colstat.o variability_indexes.o quickselect.o
+	$(CC) $(OPTFLAGS) -o util/colstat colstat.o variability_indexes.o quickselect.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 
 imstat_vast.o: $(SRC_PATH)imstat_vast.c
 	$(CC) $(OPTFLAGS) -c -o imstat_vast.o $(SRC_PATH)imstat_vast.c -I$(GSL_INCLUDE)
-util/imstat_vast: imstat_vast.o variability_indexes.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o
-	$(CC) $(OPTFLAGS) -o util/imstat_vast imstat_vast.o variability_indexes.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+util/imstat_vast: imstat_vast.o variability_indexes.o quickselect.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o
+	$(CC) $(OPTFLAGS) -o util/imstat_vast imstat_vast.o variability_indexes.o quickselect.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 	cd util/ ; ln -s imstat_vast imstat_vast_fast ; cd ..
 
 
@@ -277,11 +280,11 @@ index_vs_mag.o: $(SRC_PATH)index_vs_mag.c
 	# MacOS header files are incompatible with -std=c99
 	$(CC) $(OPTFLAGS) -c $(SRC_PATH)index_vs_mag.c -I$(GSL_INCLUDE)
 
-m_sigma_bin: m_sigma_bin.o variability_indexes.o
-	$(CC) $(OPTFLAGS) -o $(LIB_DIR)m_sigma_bin m_sigma_bin.o variability_indexes.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+m_sigma_bin: m_sigma_bin.o variability_indexes.o quickselect.o
+	$(CC) $(OPTFLAGS) -o $(LIB_DIR)m_sigma_bin m_sigma_bin.o variability_indexes.o quickselect.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 
-index_vs_mag: index_vs_mag.o variability_indexes.o
-	$(CC) $(OPTFLAGS) -o $(LIB_DIR)index_vs_mag index_vs_mag.o variability_indexes.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+index_vs_mag: index_vs_mag.o variability_indexes.o quickselect.o
+	$(CC) $(OPTFLAGS) -o $(LIB_DIR)index_vs_mag index_vs_mag.o variability_indexes.o quickselect.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 
 
 
@@ -324,13 +327,13 @@ select_only_n_random_points_from_set_of_lightcurves.o: $(SRC_PATH)select_only_n_
 lib/select_only_n_random_points_from_set_of_lightcurves: select_only_n_random_points_from_set_of_lightcurves.o get_dates_from_lightcurve_files_function.o
 	$(CC) $(OPTFLAGS) -o lib/select_only_n_random_points_from_set_of_lightcurves select_only_n_random_points_from_set_of_lightcurves.o get_dates_from_lightcurve_files_function.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 
-lib/new_lightcurve_sigma_filter: $(SRC_PATH)new_lightcurve_sigma_filter.c
-	$(CC) $(OPTFLAGS) -o lib/new_lightcurve_sigma_filter $(SRC_PATH)new_lightcurve_sigma_filter.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+lib/new_lightcurve_sigma_filter: $(SRC_PATH)new_lightcurve_sigma_filter.c quickselect.o
+	$(CC) $(OPTFLAGS) -o lib/new_lightcurve_sigma_filter $(SRC_PATH)new_lightcurve_sigma_filter.c quickselect.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 
 select_aperture_with_smallest_scatter_for_each_object.o: $(SRC_PATH)select_aperture_with_smallest_scatter_for_each_object.c
 	$(CC) $(OPTFLAGS) -c -o select_aperture_with_smallest_scatter_for_each_object.o $(SRC_PATH)select_aperture_with_smallest_scatter_for_each_object.c -I$(GSL_INCLUDE) -lm
-lib/select_aperture_with_smallest_scatter_for_each_object: select_aperture_with_smallest_scatter_for_each_object.o variability_indexes.o
-	$(CC) $(OPTFLAGS) -o lib/select_aperture_with_smallest_scatter_for_each_object select_aperture_with_smallest_scatter_for_each_object.o variability_indexes.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+lib/select_aperture_with_smallest_scatter_for_each_object: select_aperture_with_smallest_scatter_for_each_object.o variability_indexes.o quickselect.o
+	$(CC) $(OPTFLAGS) -o lib/select_aperture_with_smallest_scatter_for_each_object select_aperture_with_smallest_scatter_for_each_object.o variability_indexes.o quickselect.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 
 
 lib/kwee-van-woerden: $(SRC_PATH)kwee-van-woerden.c
@@ -359,8 +362,8 @@ util/get_image_date: get_image_date.o gettime.o kourovka_sbg_date.o
 	cd util/ ; ln -s get_image_date fix_image_date ; cd -
 lib/find_flares: $(SRC_PATH)find_flares.c
 	$(CC) $(OPTFLAGS) -o lib/find_flares $(SRC_PATH)find_flares.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
-lib/autodetect_aperture_main: autodetect_aperture_main.o autodetect_aperture.o vast_utils.o guess_saturation_limit.o exclude_region.o gettime.o kourovka_sbg_date.o get_number_of_cpu_cores.o get_path_to_vast.o variability_indexes.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o
-	$(CC) $(OPTFLAGS) -o lib/autodetect_aperture_main autodetect_aperture_main.o autodetect_aperture.o vast_utils.o guess_saturation_limit.o exclude_region.o gettime.o kourovka_sbg_date.o get_number_of_cpu_cores.o get_path_to_vast.o variability_indexes.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE)  -lm
+lib/autodetect_aperture_main: autodetect_aperture_main.o autodetect_aperture.o vast_utils.o guess_saturation_limit.o exclude_region.o gettime.o kourovka_sbg_date.o get_number_of_cpu_cores.o get_path_to_vast.o variability_indexes.o quickselect.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o
+	$(CC) $(OPTFLAGS) -o lib/autodetect_aperture_main autodetect_aperture_main.o autodetect_aperture.o vast_utils.o guess_saturation_limit.o exclude_region.o gettime.o kourovka_sbg_date.o get_number_of_cpu_cores.o get_path_to_vast.o variability_indexes.o quickselect.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE)  -lm
 	cd lib ; ln -s autodetect_aperture_main sextract_single_image_noninteractive ; cd ..
 autodetect_aperture_main.o: $(SRC_PATH)autodetect_aperture_main.c
 	$(CC) $(OPTFLAGS) -c $(SRC_PATH)autodetect_aperture_main.c
@@ -369,8 +372,8 @@ autodetect_aperture_main.o: $(SRC_PATH)autodetect_aperture_main.c
 remove_bad_images.o: $(SRC_PATH)remove_bad_images.c
 	$(CC) $(OPTFLAGS) -c $(SRC_PATH)remove_bad_images.c -I$(GSL_INCLUDE)
 	
-lib/remove_bad_images: remove_bad_images.o variability_indexes.o
-	$(CC) $(OPTFLAGS) -o lib/remove_bad_images remove_bad_images.o variability_indexes.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm $(OPTFLAGS)
+lib/remove_bad_images: remove_bad_images.o variability_indexes.o quickselect.o
+	$(CC) $(OPTFLAGS) -o lib/remove_bad_images remove_bad_images.o variability_indexes.o quickselect.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm $(OPTFLAGS)
 
 lib/sort_all_lightcurve_files_in_jd: $(SRC_PATH)sort_all_lightcurve_files_in_jd.c
 	$(CC) $(OPTFLAGS) -o lib/sort_all_lightcurve_files_in_jd $(SRC_PATH)sort_all_lightcurve_files_in_jd.c
@@ -378,8 +381,8 @@ lib/sort_all_lightcurve_files_in_jd: $(SRC_PATH)sort_all_lightcurve_files_in_jd.
 MagSize_filter_standalone.o: $(SRC_PATH)MagSize_filter_standalone.c
 	$(CC) $(OPTFLAGS) -c $(SRC_PATH)MagSize_filter_standalone.c -I$(GSL_INCLUDE)
 
-lib/MagSize_filter_standalone: MagSize_filter_standalone.o filter_MagSize.o erfinv.o variability_indexes.o
-	$(CC) $(OPTFLAGS) -o lib/MagSize_filter_standalone MagSize_filter_standalone.o filter_MagSize.o erfinv.o variability_indexes.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+lib/MagSize_filter_standalone: MagSize_filter_standalone.o filter_MagSize.o erfinv.o variability_indexes.o quickselect.o
+	$(CC) $(OPTFLAGS) -o lib/MagSize_filter_standalone MagSize_filter_standalone.o filter_MagSize.o erfinv.o variability_indexes.o quickselect.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 
 
 get_image_date.o: $(SRC_PATH)get_image_date.c
@@ -405,8 +408,8 @@ get_dates_from_lightcurve_files_function.o: $(SRC_PATH)get_dates_from_lightcurve
 	$(CC) $(OPTFLAGS) -c -o get_dates_from_lightcurve_files_function.o $(SRC_PATH)get_dates_from_lightcurve_files_function.c
 sysrem2.o: $(SRC_PATH)sysrem2.c
 	$(CC) $(OPTFLAGS) -c -o sysrem2.o $(SRC_PATH)sysrem2.c -I$(GSL_INCLUDE) -lm
-util/sysrem2: sysrem2.o variability_indexes.o get_dates_from_lightcurve_files_function.o get_number_of_cpu_cores.o
-	$(CC) $(OPTFLAGS) -o util/sysrem2 sysrem2.o variability_indexes.o get_dates_from_lightcurve_files_function.o get_number_of_cpu_cores.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+util/sysrem2: sysrem2.o variability_indexes.o quickselect.o get_dates_from_lightcurve_files_function.o get_number_of_cpu_cores.o
+	$(CC) $(OPTFLAGS) -o util/sysrem2 sysrem2.o variability_indexes.o quickselect.o get_dates_from_lightcurve_files_function.o get_number_of_cpu_cores.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 
 lib/lightcurve_simulator: $(SRC_PATH)lightcurve_simulator.c
 	$(CC) $(OPTFLAGS) -o lib/lightcurve_simulator $(SRC_PATH)lightcurve_simulator.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
@@ -487,8 +490,8 @@ make_outxyls_for_astrometric_calibration.o: $(SRC_PATH)make_outxyls_for_astromet
 lib/make_outxyls_for_astrometric_calibration: make_outxyls_for_astrometric_calibration.o is_point_close_or_off_the_frame_edge.o
 	$(CC) $(OPTFLAGS) -o lib/make_outxyls_for_astrometric_calibration make_outxyls_for_astrometric_calibration.o is_point_close_or_off_the_frame_edge.o $(GSL_LIB) -I$(GSL_INCLUDE) $(CFITSIO_LIB) -lm
 
-util/solve_plate_with_UCAC5: solve_plate_with_UCAC5.o gettime.o kourovka_sbg_date.o wpolyfit.o variability_indexes.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o
-	$(CC) $(OPTFLAGS) -o util/solve_plate_with_UCAC5 solve_plate_with_UCAC5.o gettime.o kourovka_sbg_date.o fit_plane_lin.o wpolyfit.o variability_indexes.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+util/solve_plate_with_UCAC5: solve_plate_with_UCAC5.o gettime.o kourovka_sbg_date.o wpolyfit.o variability_indexes.o quickselect.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o
+	$(CC) $(OPTFLAGS) -o util/solve_plate_with_UCAC5 solve_plate_with_UCAC5.o gettime.o kourovka_sbg_date.o fit_plane_lin.o wpolyfit.o variability_indexes.o quickselect.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 	cd util/ ; ln -s solve_plate_with_UCAC5 solve_plate_with_UCAC4 ; cd ..
 solve_plate_with_UCAC5.o:
 	$(CC) $(OPTFLAGS) -c  $(SRC_PATH)solve_plate_with_UCAC5.c -I$(GSL_INCLUDE)
