@@ -37,6 +37,7 @@ SKIP_LINK_PATTERNS = (
     "wis-tns.weizmann.ac.il",
     "wis-tns.org",
     "aladin.u-strasbg.fr/AladinLite/",
+    "www.projectpluto.com/sat_id2.htm",
 )
 
 # Links already tested in selenium_NMW_V615Vul_test.py - skip here to avoid
@@ -52,12 +53,12 @@ SKIP_ALREADY_TESTED_PATTERNS = (
 
 REQUEST_TIMEOUT   = 60   # seconds for each HTTP HEAD
 CHECK_EXTERNAL    = True # set False for offline / quick run
-MPC_PAGE_TIMEOUT  = 120  # seconds to wait for MPC page
+MPC_PAGE_TIMEOUT  = 300  # seconds to wait for MPC page
 VSX_PAGE_TIMEOUT  = 120  # seconds to wait for VSX page
 
 # Retry settings for external link checks
 LINK_CHECK_MAX_RETRIES = 2
-LINK_CHECK_RETRY_DELAY = 120  # seconds to wait between retries
+LINK_CHECK_RETRY_DELAY = 300  # seconds to wait between retries
 
 
 class SecondSectionLinkButtonTest(unittest.TestCase):
