@@ -20390,7 +20390,8 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1014"
   fi
-  grep -q "2024 11 22\.6546  2460637\.1546  [ 1][90].[90].  20:12:4.\... +12:59:3.\.." transient_report/index.html
+  # Quickselect median 2024 11 22.6546  2460637.1546   9.98  20:12:44.82 +12:59:41.7
+  grep -q "2024 11 22\.6546  2460637\.1546  [ 1][90].[90].  20:12:4.\... +12:59:[34].\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWSTLREFFRAMEMATCH1014a"
@@ -20399,7 +20400,7 @@ $GREP_RESULT"
 ###### NMWSTLREFFRAMEMATCH1014a ######
 $GREP_RESULT"
   fi
-  RADECPOSITION_TO_TEST=`grep "2024 11 22\.6546  2460637\.1546  [ 1][90].[90].  20:12:4.\... +12:59:3.\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
+  RADECPOSITION_TO_TEST=`grep "2024 11 22\.6546  2460637\.1546  [ 1][90].[90].  20:12:4.\... +12:59:[34].\.." transient_report/index.html | awk '{print $6" "$7}' | head -n1`
   # position from VSX
   DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 20:12:44.82 +12:59:41.2  $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW-STL scale is 13.80"/pix
