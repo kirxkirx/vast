@@ -848,7 +848,7 @@ void histeq( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i ) {
 #define ZSCALE_MAX_REJECT     0.5     // max frac. of pixels to be rejected
 #define ZSCALE_KREJ           2.5     // k-sigma pixel rejection factor
 #define ZSCALE_MAX_ITERATIONS 5       // maximum number of fitline iterations
-#define ZSCALE_CONTRAST       0.5     // default contrast (from DS9 zContrast_)
+#define ZSCALE_CONTRAST       0.25    // default contrast (from DS9 frscale.C zContrast_)
 #define ZSCALE_SAMPLE         600     // number of pixels to sample (from DS9 zSample_)
 #define ZSCALE_LINE           5       // number of pixels per line (from DS9 zLine_)
 
@@ -903,13 +903,18 @@ static float zscale_compute_sigma( float *flat, int *badpix, int npix, float *me
 
 // Fit a line to the sorted sample data with iterative rejection
 // Returns number of good pixels remaining
+// Based on DS9 zFitLine implementation
+#define ZSCALE_GOOD_PIXEL   0
+#define ZSCALE_BAD_PIXEL    1
+#define ZSCALE_REJECT_PIXEL 2
+
 static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslope,
                             float krej, int ngrow, int maxiter ) {
  int i, j, k;
  float xscale;
  float *flat;
  float *normx;
- int *badpix;
+ short *badpix;  // Use short to match DS9 (supports 3 states)
  double sumxsqr, sumxz, sumx, sumz;
  float z0, dz;
  int ngoodpix, last_ngoodpix;
@@ -936,7 +941,7 @@ static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslop
  // Allocate working arrays
  flat= (float *)malloc( npix * sizeof( float ) );
  normx= (float *)malloc( npix * sizeof( float ) );
- badpix= (int *)calloc( npix, sizeof( int ) );  // initialized to 0 (good)
+ badpix= (short *)calloc( npix, sizeof( short ) );  // initialized to 0 (GOOD_PIXEL)
 
  if ( flat == NULL || normx == NULL || badpix == NULL ) {
   fprintf( stderr, "ERROR: zscale_fit_line: memory allocation failed\n" );
@@ -953,7 +958,7 @@ static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslop
   normx[i]= i * xscale - 1.0f;
  }
 
- // Initial fit with no rejection
+ // Initial fit with no rejection - accumulate sums for ALL pixels
  sumxsqr= 0.0;
  sumxz= 0.0;
  sumx= 0.0;
@@ -967,7 +972,7 @@ static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslop
   sumz+= z;
  }
 
- // Solve for line coefficients
+ // Solve for initial line coefficients
  z0= (float)( sumz / npix );
  dz= (float)( sumxz / sumxsqr );
 
@@ -978,50 +983,78 @@ static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslop
  for ( k= 0; k < maxiter; k++ ) {
   last_ngoodpix= ngoodpix;
 
-  // Compute flattened data (residuals)
+  // Compute flattened data (residuals from fitted line)
   for ( i= 0; i < npix; i++ ) {
    flat[i]= sample[i] - ( normx[i] * dz + z0 );
   }
 
-  // Compute k-sigma threshold
-  sigma= zscale_compute_sigma( flat, badpix, npix, &mean );
+  // Compute k-sigma threshold using only good pixels
+  // Recompute sigma for good pixels
+  {
+   int ng= 0;
+   double sum= 0.0, sumsq= 0.0;
+   for ( i= 0; i < npix; i++ ) {
+    if ( badpix[i] == ZSCALE_GOOD_PIXEL ) {
+     float pv= flat[i];
+     ng++;
+     sum+= pv;
+     sumsq+= pv * pv;
+    }
+   }
+   if ( ng > 1 ) {
+    mean= (float)( sum / ng );
+    double temp= sumsq / ( ng - 1 ) - ( sum * sum ) / ( ng * ( ng - 1 ) );
+    sigma= ( temp > 0.0 ) ? (float)sqrt( temp ) : 0.0f;
+   } else {
+    mean= 0.0f;
+    sigma= 0.0f;
+   }
+  }
+
   threshold= krej * sigma;
   lcut= -threshold;
   hcut= threshold;
 
-  // Reject pixels beyond threshold
+  // Reject pixels beyond threshold (following DS9 algorithm)
+  // Use 3-state system to avoid double-counting
   ngoodpix= npix;
   for ( i= 0; i < npix; i++ ) {
-   if ( badpix[i] == 1 ) {
+   if ( badpix[i] == ZSCALE_BAD_PIXEL ) {
     ngoodpix--;
    } else {
     residual= flat[i];
     if ( residual < lcut || residual > hcut ) {
      // Reject this pixel and neighbors within ngrow
-     for ( j= MAX( 0, i - ngrow ); j < MIN( npix, i + ngrow + 1 ); j++ ) {
-      if ( badpix[j] == 0 ) {
-       // Subtract contribution from sums
-       double x= normx[j];
-       double z= sample[j];
-       sumxsqr-= x * x;
-       sumxz-= z * x;
-       sumx-= x;
-       sumz-= z;
-       badpix[j]= 1;
-       ngoodpix--;
+     // Following DS9: for j <= i, mark BAD and subtract from sums
+     // For j > i, mark REJECT (will be handled when we reach it)
+     // Reject neighbors within ngrow (matching DS9: range is [i-ngrow, i+ngrow) )
+     for ( j= MAX( 0, i - ngrow ); j < MIN( npix, i + ngrow ); j++ ) {
+      if ( badpix[j] != ZSCALE_BAD_PIXEL ) {
+       if ( j <= i ) {
+        // Already processed or current pixel - mark as bad and subtract
+        double x= normx[j];
+        double z= sample[j];
+        sumxsqr-= x * x;
+        sumxz-= z * x;
+        sumx-= x;
+        sumz-= z;
+        badpix[j]= ZSCALE_BAD_PIXEL;
+        ngoodpix--;
+       } else {
+        // Forward pixel - mark for rejection but don't subtract yet
+        badpix[j]= ZSCALE_REJECT_PIXEL;
+       }
       }
      }
     }
    }
   }
 
-  // Recompute line coefficients
-  if ( ngoodpix > 0 ) {
-   if ( sumxsqr > 0.0 ) {
-    rowrat= sumx / sumxsqr;
-    z0= (float)( ( sumz - rowrat * sumxz ) / ( ngoodpix - rowrat * sumx ) );
-    dz= (float)( ( sumxz - z0 * sumx ) / sumxsqr );
-   }
+  // Recompute line coefficients using updated sums
+  if ( ngoodpix > 0 && sumxsqr > 0.0 ) {
+   rowrat= sumx / sumxsqr;
+   z0= (float)( ( sumz - rowrat * sumxz ) / ( ngoodpix - rowrat * sumx ) );
+   dz= (float)( ( sumxz - z0 * sumx ) / sumxsqr );
   }
 
   // Check for convergence
@@ -1030,7 +1063,7 @@ static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslop
   }
  }
 
- // Transform coefficients back to original X range
+ // Transform coefficients back to original X range [1:npix]
  *zstart= z0 - dz;
  *zslope= dz * xscale;
 
@@ -1040,6 +1073,10 @@ static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslop
 
  return ngoodpix;
 }
+
+#undef ZSCALE_GOOD_PIXEL
+#undef ZSCALE_BAD_PIXEL
+#undef ZSCALE_REJECT_PIXEL
 
 // Main zscale function - computes z1 (min) and z2 (max) for display
 void zscale( long naxes0, long naxes1, float *im, float *z1_out, float *z2_out ) {
@@ -1079,6 +1116,8 @@ void zscale( long naxes0, long naxes1, float *im, float *z1_out, float *z2_out )
  nlines= (int)( ( naxes1 + line_step - 1 ) / line_step );
 
  max_sample= npix_per_line * nlines;
+ fprintf( stderr, "zscale sampling: image %ldx%ld, col_step=%d line_step=%d npix_per_line=%d nlines=%d max_sample=%d\n",
+          naxes0, naxes1, col_step, line_step, npix_per_line, nlines, max_sample );
  sample= (float *)malloc( max_sample * sizeof( float ) );
  if ( sample == NULL ) {
   fprintf( stderr, "ERROR: zscale: memory allocation failed\n" );
@@ -1092,12 +1131,13 @@ void zscale( long naxes0, long naxes1, float *im, float *z1_out, float *z2_out )
   return;
  }
 
- // Sample the image
+ // Sample the image (matching DS9 sampling pattern)
+ // DS9 starts lines from (line_step+1)/2, but columns from 0
  for ( line= ( line_step + 1 ) / 2; line < naxes1; line+= line_step ) {
-  for ( col= ( col_step + 1 ) / 2; col < naxes0; col+= col_step ) {
+  for ( col= 0; col < naxes0; col+= col_step ) {
    value= im[line * naxes0 + col];
-   // Skip NaN and Inf values
-   if ( isfinite( value ) && value > 0.0f && value < 65535.0f ) {
+   // Skip NaN and Inf values (matching DS9 behavior)
+   if ( isfinite( value ) ) {
     sample[sample_count++]= value;
     if ( sample_count >= max_sample ) break;
    }
@@ -1164,6 +1204,8 @@ void zscale( long naxes0, long naxes1, float *im, float *z1_out, float *z2_out )
 
  fprintf( stderr, "zscale: z1=%.2f z2=%.2f (median=%.2f, slope=%.4f, ngood=%d/%d)\n",
           *z1_out, *z2_out, median, zslope, ngoodpix, sample_count );
+ fprintf( stderr, "zscale debug: zmin=%.2f zmax=%.2f center=%d raw_slope=%.4f contrast=%.2f\n",
+          zmin, zmax, center_pixel, zslope * contrast, contrast );
 }
 
 /*
