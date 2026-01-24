@@ -31078,7 +31078,7 @@ if [ $? -ne 0 ];then
 fi
 
 # 2nd run should find no non-default apertures
-lib/select_aperture_with_smallest_scatter_for_each_object 2>&1 | grep 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for  1000 stars'
+lib/select_aperture_with_smallest_scatter_for_each_object 2>&1 | grep -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for  1000 stars'  -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for   999 stars'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES BESTAPSEL_002"
@@ -31111,7 +31111,7 @@ if [ $? -ne 0 ];then
 fi
 
 # 2nd run should find no non-default apertures
-lib/select_aperture_with_smallest_scatter_for_each_object 2>&1 | grep 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for  1000 stars'
+lib/select_aperture_with_smallest_scatter_for_each_object 2>&1 | grep -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for  1000 stars' -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for   999 stars'
 if [ $? -ne 0 ];then
  TEST_PASSED=0
  FAILED_TEST_CODES="$FAILED_TEST_CODES BESTAPSEL_004"
