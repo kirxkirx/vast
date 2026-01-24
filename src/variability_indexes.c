@@ -896,20 +896,20 @@ double compute_MAD_of_sorted_data_and_ruin_input_array__fullsort( double *sorted
  // return sigma;
 }
 
-// Optimized version using quickselect - O(n) instead of O(n log n) for finding MAD median
+// Use gsl_sort for reliable O(n log n) performance - quickselect has O(n^2) worst case
+// with many duplicate values which is common in astronomical image absolute deviations
 double compute_MAD_of_sorted_data_and_ruin_input_array( double *sorted_data, long n ) {
  double median_data, MAD;
- int i;
+ long i;
 
  // The input dataset has to be sorted so we can compute its median
  median_data= gsl_stats_median_from_sorted_data( sorted_data, 1, n );
 
- // Compute absolute deviations
  for ( i= 0; i < n; i++ ) {
   sorted_data[i]= fabs( sorted_data[i] - median_data );
  }
- // Use quickselect to find median of absolute deviations - O(n) instead of O(n log n)
- MAD= quickselect_median_double( sorted_data, (int)n );
+ gsl_sort( sorted_data, 1, n );
+ MAD= gsl_stats_median_from_sorted_data( sorted_data, 1, n );
 
  return MAD;
 }

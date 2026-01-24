@@ -58,12 +58,22 @@ double quickselect_double( double *arr, int left, int right, int k ) {
 
 /* Find median of n doubles using quickselect - O(n) average time */
 double quickselect_median_double( double *arr, int n ) {
+ int i;
+ double lower, upper;
+
  if ( n % 2 == 1 ) {
   return quickselect_double( arr, 0, n - 1, n / 2 );
  } else {
-  /* For even n, find both middle elements */
-  double lower= quickselect_double( arr, 0, n - 1, n / 2 - 1 );
-  double upper= quickselect_double( arr, 0, n - 1, n / 2 );
+  /* For even n, find the lower middle element first */
+  lower= quickselect_double( arr, 0, n - 1, n / 2 - 1 );
+  /* After quickselect, arr is partitioned: arr[n/2..n-1] >= arr[n/2-1]
+   * So upper (the n/2-th smallest) is the minimum of arr[n/2..n-1] */
+  upper= arr[n / 2];
+  for ( i= n / 2 + 1; i < n; i++ ) {
+   if ( arr[i] < upper ) {
+    upper= arr[i];
+   }
+  }
   return 0.5 * ( lower + upper );
  }
 }
@@ -119,12 +129,22 @@ float quickselect_float( float *arr, int left, int right, int k ) {
 
 /* Find median of n floats using quickselect - O(n) average time */
 float quickselect_median_float( float *arr, int n ) {
+ int i;
+ float lower, upper;
+
  if ( n % 2 == 1 ) {
   return quickselect_float( arr, 0, n - 1, n / 2 );
  } else {
-  /* For even n, find both middle elements */
-  float lower= quickselect_float( arr, 0, n - 1, n / 2 - 1 );
-  float upper= quickselect_float( arr, 0, n - 1, n / 2 );
+  /* For even n, find the lower middle element first */
+  lower= quickselect_float( arr, 0, n - 1, n / 2 - 1 );
+  /* After quickselect, arr is partitioned: arr[n/2..n-1] >= arr[n/2-1]
+   * So upper (the n/2-th smallest) is the minimum of arr[n/2..n-1] */
+  upper= arr[n / 2];
+  for ( i= n / 2 + 1; i < n; i++ ) {
+   if ( arr[i] < upper ) {
+    upper= arr[i];
+   }
+  }
   return 0.5f * ( lower + upper );
  }
 }
