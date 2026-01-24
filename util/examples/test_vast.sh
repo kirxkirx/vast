@@ -31327,7 +31327,212 @@ else
 fi 
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
-df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt
+#
+
+
+
+# test_median_mad test - tests quickselect-based median and MAD computation
+THIS_TEST_START_UNIXSEC=$(date +%s)
+TEST_PASSED=1
+echo "Performing test_median_mad test "
+echo -n "Performing test_median_mad test: " >> vast_test_report.txt
+
+# Check that the test program exists
+if [ ! -f lib/test_median_mad ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_MEDIAN_MAD_NOT_FOUND"
+fi
+
+# Test 1: Basic median computation (odd number of elements)
+# Reference: MEDIAN=2.0 for 1,2,3
+echo "1
+2
+3" | lib/test_median_mad 2> /dev/null | grep -q 'MEDIAN_GSL= 2.0000000000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_MEDIAN_MAD_MEDIAN_ODD"
+fi
+
+# Test 2: Basic median computation (even number of elements)
+# Reference: MEDIAN=2.5 for 1,2,3,4
+echo "1
+2
+3
+4" | lib/test_median_mad 2> /dev/null | grep -q 'MEDIAN_GSL= 2.5000000000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_MEDIAN_MAD_MEDIAN_EVEN"
+fi
+
+# Test 3: Quickselect median should match GSL median
+# Using more complex data: 1.5 3.7 2.1 8.9 4.2 5.6 7.3 2.8 6.4 9.1 0.5 4.8
+# Reference values computed with util/colstat: MEDIAN=4.5, MAD=2.15
+echo "1.5
+3.7
+2.1
+8.9
+4.2
+5.6
+7.3
+2.8
+6.4
+9.1
+0.5
+4.8" | lib/test_median_mad 2> /dev/null | grep -q 'MEDIAN_QUICKSELECT= 4.5000000000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_MEDIAN_MAD_QS_MEDIAN"
+fi
+
+# Test 4: Quickselect median must equal GSL median
+MEDIAN_QS=$(echo "1.5
+3.7
+2.1
+8.9
+4.2
+5.6
+7.3
+2.8
+6.4
+9.1
+0.5
+4.8" | lib/test_median_mad 2> /dev/null | grep '^MEDIAN_QUICKSELECT=' | awk -F'=' '{print $2}')
+MEDIAN_GSL=$(echo "1.5
+3.7
+2.1
+8.9
+4.2
+5.6
+7.3
+2.8
+6.4
+9.1
+0.5
+4.8" | lib/test_median_mad 2> /dev/null | grep '^MEDIAN_GSL=' | awk -F'=' '{print $2}')
+# Check if they're equal using awk
+TEST=$(echo "$MEDIAN_QS $MEDIAN_GSL" | awk '{if ( sqrt( ($1-$2)*($1-$2) ) < 1e-9 ) print 1 ;else print 0 }')
+if [ "$TEST" != "1" ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_MEDIAN_MAD_QS_GSL_MEDIAN_MISMATCH"
+fi
+
+# Test 5: MAD computation - reference value from util/colstat is 2.15
+echo "1.5
+3.7
+2.1
+8.9
+4.2
+5.6
+7.3
+2.8
+6.4
+9.1
+0.5
+4.8" | lib/test_median_mad 2> /dev/null | grep -q 'MAD_GSL_SORTED= 2.1500000000'
+if [ $? -ne 0 ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_MEDIAN_MAD_MAD_VALUE"
+fi
+
+# Test 6: Quickselect MAD must equal GSL-sorted MAD
+MAD_QS=$(echo "1.5
+3.7
+2.1
+8.9
+4.2
+5.6
+7.3
+2.8
+6.4
+9.1
+0.5
+4.8" | lib/test_median_mad 2> /dev/null | grep '^MAD_QUICKSELECT=' | awk -F'=' '{print $2}')
+MAD_GSL=$(echo "1.5
+3.7
+2.1
+8.9
+4.2
+5.6
+7.3
+2.8
+6.4
+9.1
+0.5
+4.8" | lib/test_median_mad 2> /dev/null | grep '^MAD_GSL_SORTED=' | awk -F'=' '{print $2}')
+TEST=$(echo "$MAD_QS $MAD_GSL" | awk '{if ( sqrt( ($1-$2)*($1-$2) ) < 1e-9 ) print 1 ;else print 0 }')
+if [ "$TEST" != "1" ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_MEDIAN_MAD_QS_GSL_MAD_MISMATCH"
+fi
+
+# Test 7: Cross-check median with util/colstat reference value
+MEDIAN_COLSTAT=$(echo "1.5
+3.7
+2.1
+8.9
+4.2
+5.6
+7.3
+2.8
+6.4
+9.1
+0.5
+4.8" | util/colstat 2> /dev/null | grep 'MEDIAN=' | awk '{print $2}')
+TEST=$(echo "$MEDIAN_QS $MEDIAN_COLSTAT" | awk '{if ( sqrt( ($1-$2)*($1-$2) ) < 1e-5 ) print 1 ;else print 0 }')
+if [ "$TEST" != "1" ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_MEDIAN_MAD_COLSTAT_MEDIAN_MISMATCH"
+fi
+
+# Test 8: Cross-check MAD with util/colstat reference value
+MAD_COLSTAT=$(echo "1.5
+3.7
+2.1
+8.9
+4.2
+5.6
+7.3
+2.8
+6.4
+9.1
+0.5
+4.8" | util/colstat 2> /dev/null | grep '     MAD=' | awk '{print $2}')
+TEST=$(echo "$MAD_QS $MAD_COLSTAT" | awk '{if ( sqrt( ($1-$2)*($1-$2) ) < 1e-5 ) print 1 ;else print 0 }')
+if [ "$TEST" != "1" ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_MEDIAN_MAD_COLSTAT_MAD_MISMATCH"
+fi
+
+# Test 9: Test with hardcoded reference values (in case colstat changes)
+# Reference: for data 1.5 3.7 2.1 8.9 4.2 5.6 7.3 2.8 6.4 9.1 0.5 4.8
+# MEDIAN should be 4.5, MAD should be 2.15
+TEST=$(echo "$MEDIAN_QS" | awk '{if ( sqrt( ($1-4.5)*($1-4.5) ) < 1e-9 ) print 1 ;else print 0 }')
+if [ "$TEST" != "1" ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_MEDIAN_MAD_HARDCODED_MEDIAN"
+fi
+TEST=$(echo "$MAD_QS" | awk '{if ( sqrt( ($1-2.15)*($1-2.15) ) < 1e-9 ) print 1 ;else print 0 }')
+if [ "$TEST" != "1" ];then
+ TEST_PASSED=0
+ FAILED_TEST_CODES="$FAILED_TEST_CODES TEST_MEDIAN_MAD_HARDCODED_MAD"
+fi
+
+
+THIS_TEST_STOP_UNIXSEC=$(date +%s)
+THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
+
+# Make an overall conclusion for this test
+if [ $TEST_PASSED -eq 1 ];then
+ echo -e "\n\033[01;34mtest_median_mad test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+else
+ echo -e "\n\033[01;34mtest_median_mad test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+ echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 #
 
 

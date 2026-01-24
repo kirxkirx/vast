@@ -86,7 +86,7 @@ q: vast statistics etc pgplot_components old period_filter ccd
 
 main: vast.o vast statistics stetson_test lib/create_data
 
-statistics: m_sigma_bin index_vs_mag select_sysrem_input_star_list drop lib/select_only_n_random_points_from_set_of_lightcurves lib/new_lightcurve_sigma_filter lib/select_aperture_with_smallest_scatter_for_each_object lib/create_data rescale_photometric_errors util/colstat util/imstat_vast
+statistics: m_sigma_bin index_vs_mag select_sysrem_input_star_list drop lib/select_only_n_random_points_from_set_of_lightcurves lib/new_lightcurve_sigma_filter lib/select_aperture_with_smallest_scatter_for_each_object lib/create_data rescale_photometric_errors util/colstat util/imstat_vast lib/test_median_mad
 
 etc: stat_outfile util/calibrate_magnitude_scale lib/deg2hms lib/coord_v_dva_slova lib/hms2deg lib/fix_photo_log util/sysrem util/sysrem2 lib/lightcurve_simulator lib/noise_lightcurve_simulator util/local_zeropoint_correction lib/checkstar lib/remove_bad_images lib/sort_all_lightcurve_files_in_jd lib/put_two_sources_in_one_field lib/fit_parabola_wpolyfit lib/remove_lightcurves_with_small_number_of_points lib/transient_list util/hjd util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/observations_per_star lib/kwee-van-woerden lib/find_star_in_wcs_catalog util/UTC2TT lib/find_flares lib/catalogs/read_tycho2 lib/catalogs/create_tycho2_list_of_bright_stars_to_exclude_from_transient_search lib/catalogs/check_catalogs_offline util/get_image_date lib/fast_clean_data stetson_test util/split_multiextension_fits lib/guess_saturation_limit_main lib/shutterless_bad_regions_hack lib/MagSize_filter_standalone util/phase_lc lib/on_the_fly_symlink_or_convert util/bin_lightcurve_in_time lib/ConstellationBoundaries lib/is_fits_image_blank
 
@@ -258,6 +258,11 @@ colstat.o: $(SRC_PATH)colstat.c
 	$(CC) $(OPTFLAGS) -c -o colstat.o $(SRC_PATH)colstat.c -I$(GSL_INCLUDE)
 util/colstat: colstat.o variability_indexes.o quickselect.o
 	$(CC) $(OPTFLAGS) -o util/colstat colstat.o variability_indexes.o quickselect.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
+
+test_median_mad.o: $(SRC_PATH)test_median_mad.c
+	$(CC) $(OPTFLAGS) -c -o test_median_mad.o $(SRC_PATH)test_median_mad.c -I$(GSL_INCLUDE)
+lib/test_median_mad: test_median_mad.o variability_indexes.o quickselect.o
+	$(CC) $(OPTFLAGS) -o lib/test_median_mad test_median_mad.o variability_indexes.o quickselect.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 
 imstat_vast.o: $(SRC_PATH)imstat_vast.c
 	$(CC) $(OPTFLAGS) -c -o imstat_vast.o $(SRC_PATH)imstat_vast.c -I$(GSL_INCLUDE)
@@ -591,7 +596,7 @@ clean: clean_libraries
 	rm -f lib/deg2hms_uas
 	rm -f lib/sine_wave_simulator lib/sine_wave_and_psd_simulator lib/sine_wave_or_psd_simulator
 	rm -f util/rescale_photometric_errors util/estimate_systematic_noise_level
-	rm -f util/colstat
+	rm -f util/colstat lib/test_median_mad
 	rm -f util/imstat_vast util/imstat_vast_fast
 	rm -f src/*~
 	rm -f util/convert/CoRoT_FITS2ASCII util/convert/SWASP_FITS2ASCII util/cute_lc util/cute_lc_fullJD util/observations_per_star lib/astrometry/get_image_dimentions lib/astrometry/insert_wcs_header lib/astrometry/strip_wcs_keywords lib/astrometry/*~ lib/kwee-van-woerden  lib/find_star_in_wcs_catalog
