@@ -1,6 +1,3 @@
-* Deal with the magnitude limit mess: it's OK to have magnitude limit of the reference image in vast_summary.log 
-but for the NMW transient search we want the magnitude limit of the new images as th reference one are likely much better!
-
 * Fix 'catalog already exist' when trying to do single-image magnitude calibration,
 but the existing catalog contains only astrometry.
 
@@ -35,10 +32,6 @@ a measurement will be dropped.
 
 * Do not try to guess gain if 'photocurve' is used for magnitude calibration???
 Unless it is explicitly requested by user.
-
-* inxi may not work (because of lspci for example) - deal with it
-
-* Single-image cosmic ray/hot pixel filter!!!
 
 * Image arithmetics with floating point images
 

@@ -1,4 +1,6 @@
 XX XXX 2026: vast-1.0rc89
+	* 'util/ccd/lacosmic' implements L.A.Cosmic single-image cosmic ray rejection algorithm of 
+	van Dokkum (2001, PASP, 113, 1420) https://ui.adsabs.harvard.edu/abs/2001PASP..113.1420V/abstract
 	* VaST now produces 'vast_limiting_magnitude.log' that lists limiting magnitude for each frame estimated as 
 	the magnitude of a star detected with a signal-to-noise ratio of 5 following Karpov (2025, Acta Polytechnica, 65, 50) 
 	https://ui.adsabs.harvard.edu/abs/2025AcPol..65...50K/abstract
@@ -23,6 +25,8 @@ XX XXX 2026: vast-1.0rc89
 	util/identify.sh out12345.dat
 	as well as
 	util/identify.sh 12345
+	* Use Quickselect algorithm instead of full sorting for computing median value of an array.
+	That provides a major speedup in computations... in most cases.
 16 Aug 2025: vast-1.0rc88
 	* Fixed broken manual magnitude calibration that is launched as 'util/magnitude_calibration.sh' 
 	(with no filter name as an argument) or './pgfv calib' The reference image will be displayed and the user 

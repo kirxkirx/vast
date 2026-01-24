@@ -300,6 +300,7 @@ void print_pgfv_help() {
  fprintf( stderr, "press 'Z' and draw rectangle to zoom in.\n" );
  fprintf( stderr, "press 'D' or click middle mouse button to return to the original zoom.\n" );
  fprintf( stderr, "press 'H' for Histogram Equalization.\n" );
+ fprintf( stderr, "press 'S' to toggle Zscale display (IRAF/DS9 algorithm for optimal image stretch).\n" );
  fprintf( stderr, "press 'B' to invert X axis.\n" );
  fprintf( stderr, "press 'V' to invert Y axis.\n" );
  fprintf( stderr, "move mouse and press 'F' to adjust image brightness/contrast. If an image apears too bright, move the pointer to the lower left and press 'F'. Repeat it many times to achive the desired result.\n" );
@@ -833,6 +834,339 @@ void histeq( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i ) {
 }
 
 /*
+   ZSCALE algorithm implementation based on IRAF/DS9
+   See /tmp/SAOImageDS9/tksao/frame/fitsdata.C for reference implementation
+
+   The zscale algorithm is designed to display the image values near the median
+   image value without computing a full histogram. It samples the image,
+   sorts the samples, fits a line with iterative rejection, and computes
+   display limits based on the slope and median.
+*/
+
+// ZSCALE constants from DS9 reference implementation
+#define ZSCALE_MIN_NPIXELS    5       // smallest permissible sample
+#define ZSCALE_MAX_REJECT     0.5     // max frac. of pixels to be rejected
+#define ZSCALE_KREJ           2.5     // k-sigma pixel rejection factor
+#define ZSCALE_MAX_ITERATIONS 5       // maximum number of fitline iterations
+#define ZSCALE_CONTRAST       0.5     // default contrast (from DS9 zContrast_)
+#define ZSCALE_SAMPLE         600     // number of pixels to sample (from DS9 zSample_)
+#define ZSCALE_LINE           5       // number of pixels per line (from DS9 zLine_)
+
+// Comparison function for qsort
+static int zscale_float_compare( const void *a, const void *b ) {
+ float fa= *(const float *)a;
+ float fb= *(const float *)b;
+ if ( fa < fb ) return -1;
+ if ( fa > fb ) return 1;
+ return 0;
+}
+
+// Compute sigma of good pixels (those not marked as bad)
+static float zscale_compute_sigma( float *flat, int *badpix, int npix, float *mean_out ) {
+ int ngoodpix= 0;
+ double sum= 0.0;
+ double sumsq= 0.0;
+ int i;
+ float pixval;
+ float mean, sigma;
+ double temp;
+
+ // Accumulate sum and sum of squares for good pixels
+ for ( i= 0; i < npix; i++ ) {
+  if ( badpix[i] == 0 ) {  // good pixel
+   pixval= flat[i];
+   ngoodpix++;
+   sum+= pixval;
+   sumsq+= pixval * pixval;
+  }
+ }
+
+ // Compute mean and sigma
+ if ( ngoodpix == 0 ) {
+  *mean_out= 0.0f;
+  return 0.0f;
+ } else if ( ngoodpix == 1 ) {
+  *mean_out= (float)sum;
+  return 0.0f;
+ } else {
+  mean= (float)( sum / ngoodpix );
+  *mean_out= mean;
+  temp= sumsq / ( ngoodpix - 1 ) - ( sum * sum ) / ( ngoodpix * ( ngoodpix - 1 ) );
+  if ( temp < 0.0 ) {
+   sigma= 0.0f;
+  } else {
+   sigma= (float)sqrt( temp );
+  }
+  return sigma;
+ }
+}
+
+// Fit a line to the sorted sample data with iterative rejection
+// Returns number of good pixels remaining
+static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslope,
+                            float krej, int ngrow, int maxiter ) {
+ int i, j, k;
+ float xscale;
+ float *flat;
+ float *normx;
+ int *badpix;
+ double sumxsqr, sumxz, sumx, sumz;
+ float z0, dz;
+ int ngoodpix, last_ngoodpix;
+ int minpix;
+ float mean, sigma, threshold;
+ float residual;
+ float lcut, hcut;
+ double rowrat;
+
+ if ( npix <= 0 ) {
+  *zstart= 0.0f;
+  *zslope= 0.0f;
+  return 0;
+ }
+
+ if ( npix == 1 ) {
+  *zstart= sample[0];
+  *zslope= 0.0f;
+  return 1;
+ }
+
+ xscale= 2.0f / ( npix - 1 );
+
+ // Allocate working arrays
+ flat= (float *)malloc( npix * sizeof( float ) );
+ normx= (float *)malloc( npix * sizeof( float ) );
+ badpix= (int *)calloc( npix, sizeof( int ) );  // initialized to 0 (good)
+
+ if ( flat == NULL || normx == NULL || badpix == NULL ) {
+  fprintf( stderr, "ERROR: zscale_fit_line: memory allocation failed\n" );
+  if ( flat ) free( flat );
+  if ( normx ) free( normx );
+  if ( badpix ) free( badpix );
+  *zstart= sample[npix / 2];
+  *zslope= 0.0f;
+  return npix;
+ }
+
+ // Compute normalized X vector ([-1, 1] range)
+ for ( i= 0; i < npix; i++ ) {
+  normx[i]= i * xscale - 1.0f;
+ }
+
+ // Initial fit with no rejection
+ sumxsqr= 0.0;
+ sumxz= 0.0;
+ sumx= 0.0;
+ sumz= 0.0;
+
+ for ( i= 0; i < npix; i++ ) {
+  float x= normx[i];
+  float z= sample[i];
+  sumxsqr+= x * x;
+  sumxz+= z * x;
+  sumz+= z;
+ }
+
+ // Solve for line coefficients
+ z0= (float)( sumz / npix );
+ dz= (float)( sumxz / sumxsqr );
+
+ // Iterative fitting with rejection
+ ngoodpix= npix;
+ minpix= MAX( ZSCALE_MIN_NPIXELS, (int)( npix * ZSCALE_MAX_REJECT ) );
+
+ for ( k= 0; k < maxiter; k++ ) {
+  last_ngoodpix= ngoodpix;
+
+  // Compute flattened data (residuals)
+  for ( i= 0; i < npix; i++ ) {
+   flat[i]= sample[i] - ( normx[i] * dz + z0 );
+  }
+
+  // Compute k-sigma threshold
+  sigma= zscale_compute_sigma( flat, badpix, npix, &mean );
+  threshold= krej * sigma;
+  lcut= -threshold;
+  hcut= threshold;
+
+  // Reject pixels beyond threshold
+  ngoodpix= npix;
+  for ( i= 0; i < npix; i++ ) {
+   if ( badpix[i] == 1 ) {
+    ngoodpix--;
+   } else {
+    residual= flat[i];
+    if ( residual < lcut || residual > hcut ) {
+     // Reject this pixel and neighbors within ngrow
+     for ( j= MAX( 0, i - ngrow ); j < MIN( npix, i + ngrow + 1 ); j++ ) {
+      if ( badpix[j] == 0 ) {
+       // Subtract contribution from sums
+       double x= normx[j];
+       double z= sample[j];
+       sumxsqr-= x * x;
+       sumxz-= z * x;
+       sumx-= x;
+       sumz-= z;
+       badpix[j]= 1;
+       ngoodpix--;
+      }
+     }
+    }
+   }
+  }
+
+  // Recompute line coefficients
+  if ( ngoodpix > 0 ) {
+   if ( sumxsqr > 0.0 ) {
+    rowrat= sumx / sumxsqr;
+    z0= (float)( ( sumz - rowrat * sumxz ) / ( ngoodpix - rowrat * sumx ) );
+    dz= (float)( ( sumxz - z0 * sumx ) / sumxsqr );
+   }
+  }
+
+  // Check for convergence
+  if ( ngoodpix >= last_ngoodpix || ngoodpix < minpix ) {
+   break;
+  }
+ }
+
+ // Transform coefficients back to original X range
+ *zstart= z0 - dz;
+ *zslope= dz * xscale;
+
+ free( flat );
+ free( normx );
+ free( badpix );
+
+ return ngoodpix;
+}
+
+// Main zscale function - computes z1 (min) and z2 (max) for display
+void zscale( long naxes0, long naxes1, float *im, float *z1_out, float *z2_out ) {
+ long npixels= naxes0 * naxes1;
+ int nsample= ZSCALE_SAMPLE;
+ int nline= ZSCALE_LINE;
+ float contrast= ZSCALE_CONTRAST;
+
+ int stride;
+ int npix_per_line;
+ int nlines;
+ int line_step;
+ int col_step;
+
+ float *sample;
+ int sample_count= 0;
+ int max_sample;
+
+ int i, line, col;
+ float value;
+
+ float zmin, zmax, median;
+ float zstart, zslope;
+ int ngoodpix;
+ int minpix;
+ int center_pixel;
+
+ // Calculate sampling parameters
+ // Try to get roughly nsample pixels spread evenly across the image
+ npix_per_line= MAX( 1, MIN( (int)naxes0, nline ) );
+ col_step= MAX( 2, (int)( ( naxes0 + npix_per_line - 1 ) / npix_per_line ) );
+ npix_per_line= MAX( 1, (int)( ( naxes0 + col_step - 1 ) / col_step ) );
+
+ nlines= MAX( 1, nsample / nline );
+ nlines= MAX( nlines, MIN( (int)naxes1, ( nsample + npix_per_line - 1 ) / npix_per_line ) );
+ line_step= MAX( 2, (int)( naxes1 / nlines ) );
+ nlines= (int)( ( naxes1 + line_step - 1 ) / line_step );
+
+ max_sample= npix_per_line * nlines;
+ sample= (float *)malloc( max_sample * sizeof( float ) );
+ if ( sample == NULL ) {
+  fprintf( stderr, "ERROR: zscale: memory allocation failed\n" );
+  // Fall back to simple min/max
+  *z1_out= im[0];
+  *z2_out= im[0];
+  for ( i= 0; i < npixels; i++ ) {
+   if ( im[i] < *z1_out ) *z1_out= im[i];
+   if ( im[i] > *z2_out ) *z2_out= im[i];
+  }
+  return;
+ }
+
+ // Sample the image
+ for ( line= ( line_step + 1 ) / 2; line < naxes1; line+= line_step ) {
+  for ( col= ( col_step + 1 ) / 2; col < naxes0; col+= col_step ) {
+   value= im[line * naxes0 + col];
+   // Skip NaN and Inf values
+   if ( isfinite( value ) && value > 0.0f && value < 65535.0f ) {
+    sample[sample_count++]= value;
+    if ( sample_count >= max_sample ) break;
+   }
+  }
+  if ( sample_count >= max_sample ) break;
+ }
+
+ if ( sample_count < ZSCALE_MIN_NPIXELS ) {
+  fprintf( stderr, "WARNING: zscale: not enough valid pixels sampled (%d)\n", sample_count );
+  free( sample );
+  // Fall back to simple min/max
+  *z1_out= im[0];
+  *z2_out= im[0];
+  for ( i= 0; i < npixels; i++ ) {
+   if ( im[i] < *z1_out ) *z1_out= im[i];
+   if ( im[i] > *z2_out ) *z2_out= im[i];
+  }
+  return;
+ }
+
+ // Sort the sample
+ qsort( sample, sample_count, sizeof( float ), zscale_float_compare );
+
+ zmin= sample[0];
+ zmax= sample[sample_count - 1];
+
+ // Compute median
+ center_pixel= MAX( 1, ( sample_count + 1 ) / 2 );
+ if ( sample_count % 2 == 1 || center_pixel >= sample_count ) {
+  median= sample[center_pixel - 1];
+ } else {
+  median= ( sample[center_pixel - 1] + sample[center_pixel] ) / 2.0f;
+ }
+
+ // Fit a line with iterative rejection
+ minpix= MAX( ZSCALE_MIN_NPIXELS, (int)( sample_count * ZSCALE_MAX_REJECT ) );
+ ngoodpix= zscale_fit_line( sample, sample_count, &zstart, &zslope,
+                            ZSCALE_KREJ, MAX( 1, (int)( sample_count * 0.01 ) ),
+                            ZSCALE_MAX_ITERATIONS );
+
+ // Compute z1 and z2
+ if ( ngoodpix < minpix ) {
+  // Not enough good pixels, use full range
+  *z1_out= zmin;
+  *z2_out= zmax;
+ } else {
+  // Apply contrast
+  if ( contrast > 0.0f ) {
+   zslope= zslope / contrast;
+  }
+
+  // Compute endpoints
+  *z1_out= MAX( zmin, median - ( center_pixel - 1 ) * zslope );
+  *z2_out= MIN( zmax, median + ( sample_count - center_pixel ) * zslope );
+
+  // Sanity check
+  if ( *z1_out >= *z2_out ) {
+   *z1_out= zmin;
+   *z2_out= zmax;
+  }
+ }
+
+ free( sample );
+
+ fprintf( stderr, "zscale: z1=%.2f z2=%.2f (median=%.2f, slope=%.4f, ngood=%d/%d)\n",
+          *z1_out, *z2_out, median, zslope, ngoodpix, sample_count );
+}
+
+/*
 int myimax( int A, int B ) {
  if ( A > B )
   return A;
@@ -982,6 +1316,7 @@ int main( int argc, char **argv ) {
  float max_val;
 
  int hist_trigger= 0;
+ int zscale_trigger= 0;
  int mark_trigger= 0;
 
  float markX= 0.0;
@@ -2825,6 +3160,17 @@ int main( int argc, char **argv ) {
    }
    curC= 'R';
   }
+  // S - toggle zscale display
+  if ( curC == 'S' || curC == 's' ) {
+   if ( zscale_trigger == 0 ) {
+    zscale_trigger= 1;
+    fprintf( stderr, "Zscale display enabled\n" );
+   } else {
+    zscale_trigger= 0;
+    fprintf( stderr, "Zscale display disabled (using default cuts)\n" );
+   }
+   curC= 'R';
+  }
   if ( curC == 'D' || curC == 'd' ) {
    drawX1= 1;
    drawY1= 1;
@@ -2894,7 +3240,13 @@ int main( int argc, char **argv ) {
    }
 
    // Determine cuts
-   image_minmax3( naxes[0] * naxes[1], float_array, &max_val, &min_val, drawX1, drawX2, drawY1, drawY2, naxes );
+   if ( zscale_trigger == 1 ) {
+    // Use zscale algorithm for display cuts
+    zscale( naxes[0], naxes[1], float_array, &min_val, &max_val );
+   } else {
+    // Use default histogram-based cuts
+    image_minmax3( naxes[0] * naxes[1], float_array, &max_val, &min_val, drawX1, drawX2, drawY1, drawY2, naxes );
+   }
 
    // Draw image
    if ( finder_chart_mode == 0 ) {
