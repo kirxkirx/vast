@@ -1116,8 +1116,8 @@ void zscale( long naxes0, long naxes1, float *im, float *z1_out, float *z2_out )
  nlines= (int)( ( naxes1 + line_step - 1 ) / line_step );
 
  max_sample= npix_per_line * nlines;
- fprintf( stderr, "zscale sampling: image %ldx%ld, col_step=%d line_step=%d npix_per_line=%d nlines=%d max_sample=%d\n",
-          naxes0, naxes1, col_step, line_step, npix_per_line, nlines, max_sample );
+ // fprintf( stderr, "zscale sampling: image %ldx%ld, col_step=%d line_step=%d npix_per_line=%d nlines=%d max_sample=%d\n",
+ //          naxes0, naxes1, col_step, line_step, npix_per_line, nlines, max_sample );
  sample= (float *)malloc( max_sample * sizeof( float ) );
  if ( sample == NULL ) {
   fprintf( stderr, "ERROR: zscale: memory allocation failed\n" );
@@ -1132,17 +1132,24 @@ void zscale( long naxes0, long naxes1, float *im, float *z1_out, float *z2_out )
  }
 
  // Sample the image (matching DS9 sampling pattern)
- // DS9 starts lines from (line_step+1)/2, but columns from 0
- for ( line= ( line_step + 1 ) / 2; line < naxes1; line+= line_step ) {
-  for ( col= 0; col < naxes0; col+= col_step ) {
-   value= im[line * naxes0 + col];
-   // Skip NaN and Inf values (matching DS9 behavior)
-   if ( isfinite( value ) ) {
-    sample[sample_count++]= value;
-    if ( sample_count >= max_sample ) break;
+ // DS9 samples lines: (line_step+1)/2, (line_step+1)/2 + line_step, ...
+ // To match DS9 with Y-flip, we transform each DS9 line index to flipped index
+ {
+  int ds9_line;
+  int ds9_start= ( line_step + 1 ) / 2;
+  for ( ds9_line= ds9_start; ds9_line < naxes1; ds9_line+= line_step ) {
+   // Transform DS9 line to pgfv line (Y-flip): pgfv_line = naxes1 - 1 - ds9_line
+   line= naxes1 - 1 - ds9_line;
+   for ( col= 0; col < naxes0; col+= col_step ) {
+    value= im[line * naxes0 + col];
+    // Skip NaN and Inf values (matching DS9 behavior)
+    if ( isfinite( value ) ) {
+     sample[sample_count++]= value;
+     if ( sample_count >= max_sample ) break;
+    }
    }
+   if ( sample_count >= max_sample ) break;
   }
-  if ( sample_count >= max_sample ) break;
  }
 
  if ( sample_count < ZSCALE_MIN_NPIXELS ) {
@@ -1202,10 +1209,10 @@ void zscale( long naxes0, long naxes1, float *im, float *z1_out, float *z2_out )
 
  free( sample );
 
- fprintf( stderr, "zscale: z1=%.2f z2=%.2f (median=%.2f, slope=%.4f, ngood=%d/%d)\n",
-          *z1_out, *z2_out, median, zslope, ngoodpix, sample_count );
- fprintf( stderr, "zscale debug: zmin=%.2f zmax=%.2f center=%d raw_slope=%.4f contrast=%.2f\n",
-          zmin, zmax, center_pixel, zslope * contrast, contrast );
+ // fprintf( stderr, "zscale: z1=%.2f z2=%.2f (median=%.2f, slope=%.4f, ngood=%d/%d)\n",
+ //          *z1_out, *z2_out, median, zslope, ngoodpix, sample_count );
+ // fprintf( stderr, "zscale debug: zmin=%.2f zmax=%.2f center=%d raw_slope=%.4f contrast=%.2f\n",
+ //          zmin, zmax, center_pixel, zslope * contrast, contrast );
 }
 
 /*
