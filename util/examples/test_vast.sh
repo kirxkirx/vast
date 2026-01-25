@@ -15997,7 +15997,7 @@ fi
 
 ##### find Chandra #####
 ### Disable this test for GitHub Actions
-#if [ "$GITHUB_ACTIONS" != "true" ];then 
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../NMW_find_Chandra_test ];then
  cd .. || exit 1
@@ -16288,7 +16288,7 @@ if [ $? -ne 0 ];then
  #exit 1
  fail_early "Internet connection error"
 fi
-#fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 
@@ -18326,6 +18326,8 @@ fi
 
 
 ##### (L.A.Cosmic processed) NMW-STL find Nova Vul 2024 test #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../NMW-STL__find_NovaVul24_test ];then
  cd .. || exit 1
@@ -18711,6 +18713,7 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 #
 remove_test_data_to_save_space
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 # Test that the Internet conncation has not failed
 test_internet_connection
@@ -18726,6 +18729,8 @@ fi
 
 
 ##### (L.A.Cosmic processed) NMW find Nova Vul 2024 ST test #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../NMW__NovaVul24_Stas_test ];then
  cd .. || exit 1
@@ -18975,6 +18980,8 @@ echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 #
 remove_test_data_to_save_space
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
@@ -20011,7 +20018,7 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then  for NMW-STL Nova Oph 2024 lacosmic
 
 ##### NMW-STL ref. frame match fail test #####
 ### Disable this test for GitHub Actions
-#if [ "$GITHUB_ACTIONS" != "true" ];then
+if [ "$GITHUB_ACTIONS" != "true" ];then
 
 # Download the test dataset if needed
 if [ ! -d ../NMW-STL__RefFrameMatchFail_test ];then
@@ -20588,7 +20595,7 @@ if [ $? -ne 0 ];then
 fi
 
 ### Disable the above test for GitHub Actions
-#fi # if [ "$GITHUB_ACTIONS" != "true" ];then 
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ##### NMW-STL find huge comet test #####
@@ -22400,6 +22407,8 @@ fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ##### TICA TESS zero RA test #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../TICA_TESS__zeroRA_test ];then
  cd .. || exit 1
@@ -22895,16 +22904,19 @@ else
 fi
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
-df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 #
 remove_test_data_to_save_space
+
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 
+ echo "Internet connection error!"
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 
+ echo "Failed test codes: $FAILED_TEST_CODES"
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  #exit 1
  fail_early "Internet connection error"
@@ -24697,9 +24709,10 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 remove_test_data_to_save_space
 
 
-
+# Disable this test altogether - it's very slow
+if false ;then
 # Do this test only in GitHub Actions
-if [ "$GITHUB_ACTIONS" == "true" ];then 
+#if [ "$GITHUB_ACTIONS" == "true" ];then 
 if [ -n "$TEST_VAST_CURL_PROXY" ];then
 VAST_CURL_PROXY="$TEST_VAST_CURL_PROXY"
 export VAST_CURL_PROXY
