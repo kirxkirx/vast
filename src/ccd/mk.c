@@ -17,7 +17,78 @@
 #define MIN_FLAT_FIELD_COUNT 17000
 #define MAX_FLAT_FIELD_COUNT 50000
 
+/* Toggle median implementation:
+ * - Set to 1 for GSL sort-based median.
+ * - Set to 0 for quickselect-based median.
+ */
+#define USE_GSL_MEDIAN 0
+
 // char *beztochki( char * );
+
+/* Quickselect partition: rearrange so elements < pivot are left, > pivot are right */
+static int quickselect_partition( double *arr, int left, int right, int pivot_idx ) {
+ double pivot_val= arr[pivot_idx];
+ double tmp;
+ int store_idx;
+ int i;
+
+ /* Move pivot to end */
+ tmp= arr[pivot_idx];
+ arr[pivot_idx]= arr[right];
+ arr[right]= tmp;
+
+ store_idx= left;
+ for ( i= left; i < right; i++ ) {
+  if ( arr[i] < pivot_val ) {
+   tmp= arr[store_idx];
+   arr[store_idx]= arr[i];
+   arr[i]= tmp;
+   store_idx++;
+  }
+ }
+
+ /* Move pivot to its final place */
+ tmp= arr[store_idx];
+ arr[store_idx]= arr[right];
+ arr[right]= tmp;
+
+ return store_idx;
+}
+
+/* Quickselect: find k-th smallest element in O(n) average time */
+static double quickselect( double *arr, int left, int right, int k ) {
+ int pivot_idx;
+ int pivot_new_idx;
+
+ while ( left < right ) {
+  /* Choose middle element as pivot for better average performance */
+  pivot_idx= left + ( right - left ) / 2;
+  pivot_new_idx= quickselect_partition( arr, left, right, pivot_idx );
+
+  if ( k == pivot_new_idx ) {
+   return arr[k];
+  } else if ( k < pivot_new_idx ) {
+   right= pivot_new_idx - 1;
+  } else {
+   left= pivot_new_idx + 1;
+  }
+ }
+ return arr[left];
+}
+
+/* Find median of n doubles using quickselect - O(n) average time */
+static double median_of_n( double *arr, int n ) {
+ if ( n % 2 == 1 ) {
+  return quickselect( arr, 0, n - 1, n / 2 );
+ }
+
+ /* For even n, find both middle elements */
+ {
+  double lower= quickselect( arr, 0, n - 1, n / 2 - 1 );
+  double upper= quickselect( arr, 0, n - 1, n / 2 );
+  return 0.5 * ( lower + upper );
+ }
+}
 
 void check_and_remove_duplicate_keywords( const char *filename ) {
  fitsfile *fptr;       // FITS file pointer
@@ -335,8 +406,12 @@ int main( int argc, char *argv[] ) {
   for ( i= 0; i < img_size; i++ ) {
    yy[i]= image_array[file_counter][i];
   }
+#if USE_GSL_MEDIAN
   gsl_sort( yy, 1, img_size );
   cur_index= gsl_stats_median_from_sorted_data( yy, 1, img_size );
+#else
+  cur_index= median_of_n( yy, (int)img_size );
+#endif
   fprintf( stderr, "cur_index=%lf\n", cur_index );
 
   // Reject obviously bad images from the flat-field stack
@@ -373,8 +448,12 @@ int main( int argc, char *argv[] ) {
   for ( file_counter= 0; file_counter < good_file_counter; file_counter++ ) {
    y[file_counter]= image_array[file_counter][i];
   }
+#if USE_GSL_MEDIAN
   gsl_sort( y, 1, good_file_counter );
   val= gsl_stats_median_from_sorted_data( y, 1, good_file_counter );
+#else
+  val= median_of_n( y, good_file_counter );
+#endif
   combined_array[i]= (unsigned short)( val + 0.5 );
  }
 
