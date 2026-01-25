@@ -12295,7 +12295,7 @@ fi
 
 ##### Pyx2 test (involves three second-epoch images including a bad one) #####
 ### Disable this test for GitHub Actions
-#if [ "$GITHUB_ACTIONS" != "true" ];then
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../NMW_nomatch_test ];then
  cd .. || exit 1
@@ -12545,12 +12545,12 @@ if [ $? -ne 0 ];then
 fi
 
 ### Disable the above test for GitHub Actions
-#fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ##### ATLAS Mira not in VSX ID test #####
 ### Disable this test for GitHub Actions
-#if [ "$GITHUB_ACTIONS" != "true" ];then
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../NMW_ATLAS_Mira_in_Ser1 ];then
  cd .. || exit 1
@@ -13035,7 +13035,7 @@ if [ $? -ne 0 ];then
 fi
 
 ### Disable the above test for GitHub Actions
-#fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ##### Nova Sgr 2020 N4 test (three second-epoch images, all good) #####
@@ -17985,6 +17985,8 @@ fi
 
 
 ##### (compressed FITS) NMW-STL find Nova Vul 2024 test #####
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # Download the test dataset if needed
 if [ ! -d ../NMW-STL__find_NovaVul24_test ];then
  cd .. || exit 1
@@ -18416,14 +18418,16 @@ remove_test_data_to_save_space
 # Test that the Internet conncation has not failed
 test_internet_connection
 if [ $? -ne 0 ];then
- echo "Internet connection error!" 
+ echo "Internet connection error!"
  echo "Internet connection error!" >> vast_test_report.txt
- echo "Failed test codes: $FAILED_TEST_CODES" 
+ echo "Failed test codes: $FAILED_TEST_CODES"
  echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
  #exit 1
  fail_early "Internet connection error"
 fi
 
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ##### (L.A.Cosmic processed) NMW-STL find Nova Vul 2024 test #####
