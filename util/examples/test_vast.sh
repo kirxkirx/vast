@@ -23894,7 +23894,7 @@ fi
 
 ######### SAI RC600 B image
 ### Disable this test for GitHub Actions
-#if [ "$GITHUB_ACTIONS" != "true" ];then
+if [ "$GITHUB_ACTIONS" != "true" ];then
 # this image requires index-204-03.fits to get solved
 if [ ! -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit ];then
  if [ ! -d ../individual_images_test ];then
@@ -24005,7 +24005,7 @@ else
  FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_TEST_NOT_PERFORMED"
 fi
 ### Disable the above test for GitHub Actions
-#fi # if [ "$GITHUB_ACTIONS" != "true" ];then
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 ######### SAI RC600 many bleeding stars image
