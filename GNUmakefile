@@ -268,7 +268,7 @@ imstat_vast.o: $(SRC_PATH)imstat_vast.c
 	$(CC) $(OPTFLAGS) -c -o imstat_vast.o $(SRC_PATH)imstat_vast.c -I$(GSL_INCLUDE)
 util/imstat_vast: imstat_vast.o variability_indexes.o quickselect.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o
 	$(CC) $(OPTFLAGS) -o util/imstat_vast imstat_vast.o variability_indexes.o quickselect.o replace_file_with_symlink_if_filename_contains_white_spaces.o get_path_to_vast.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
-	cd util/ ; ln -s imstat_vast imstat_vast_fast ; cd ..
+	cd util/ ; ln -sf imstat_vast imstat_vast_fast ; cd ..
 
 
 simulate_2_colors: $(SRC_PATH)simulate_2_colors.c
@@ -297,7 +297,7 @@ rescale_photometric_errors.o: $(SRC_PATH)rescale_photometric_errors.c
 	$(CC) $(OPTFLAGS) -c $(SRC_PATH)rescale_photometric_errors.c -I$(GSL_INCLUDE) -lm
 rescale_photometric_errors: rescale_photometric_errors.o wpolyfit.o
 	$(CC) $(OPTFLAGS) -o util/rescale_photometric_errors rescale_photometric_errors.o wpolyfit.o $(GSL_LIB) -I$(GSL_INCLUDE) -lm
-	cd util/ ; ln -s rescale_photometric_errors estimate_systematic_noise_level ; cd ..
+	cd util/ ; ln -sf rescale_photometric_errors estimate_systematic_noise_level ; cd ..
 
 
 select_sysrem_input_star_list: $(SRC_PATH)select_sysrem_input_star_list.c
@@ -364,12 +364,12 @@ lib/catalogs/check_catalogs_offline: $(SRC_PATH)catalogs/check_catalogs_offline.
 	$(CC) $(OPTFLAGS) -o lib/catalogs/check_catalogs_offline $(SRC_PATH)catalogs/check_catalogs_offline.c -lm
 util/get_image_date: get_image_date.o gettime.o kourovka_sbg_date.o
 	$(CC) $(OPTFLAGS) -o util/get_image_date get_image_date.o gettime.o kourovka_sbg_date.o $(CFITSIO_LIB) -lm
-	cd util/ ; ln -s get_image_date fix_image_date ; cd -
+	cd util/ ; ln -sf get_image_date fix_image_date ; cd -
 lib/find_flares: $(SRC_PATH)find_flares.c
 	$(CC) $(OPTFLAGS) -o lib/find_flares $(SRC_PATH)find_flares.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 lib/autodetect_aperture_main: autodetect_aperture_main.o autodetect_aperture.o vast_utils.o guess_saturation_limit.o exclude_region.o gettime.o kourovka_sbg_date.o get_number_of_cpu_cores.o get_path_to_vast.o variability_indexes.o quickselect.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o
 	$(CC) $(OPTFLAGS) -o lib/autodetect_aperture_main autodetect_aperture_main.o autodetect_aperture.o vast_utils.o guess_saturation_limit.o exclude_region.o gettime.o kourovka_sbg_date.o get_number_of_cpu_cores.o get_path_to_vast.o variability_indexes.o quickselect.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE)  -lm
-	cd lib ; ln -s autodetect_aperture_main sextract_single_image_noninteractive ; cd ..
+	cd lib ; ln -sf autodetect_aperture_main sextract_single_image_noninteractive ; cd ..
 autodetect_aperture_main.o: $(SRC_PATH)autodetect_aperture_main.c
 	$(CC) $(OPTFLAGS) -c $(SRC_PATH)autodetect_aperture_main.c
 
@@ -400,14 +400,14 @@ lib/periodFilter/periodFilter: $(SRC_PATH)period_search/periodFilter/periodFilte
 lib/BLS/bls: $(SRC_PATH)period_search/BLS/bls.c
 	$(CC) $(OPTFLAGS) -o lib/BLS/bls $(SRC_PATH)period_search/BLS/bls.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 lib/lk_compute_periodogram: lib/deeming_compute_periodogram
-	cd lib/; ln -s  deeming_compute_periodogram lk_compute_periodogram ; ln -s deeming_compute_periodogram compute_periodogram_allmethods ; ln -s deeming_compute_periodogram ls_compute_periodogram ; cd ..
+	cd lib/; ln -sf  deeming_compute_periodogram lk_compute_periodogram ; ln -sf deeming_compute_periodogram compute_periodogram_allmethods ; ln -sf deeming_compute_periodogram ls_compute_periodogram ; cd ..
 deeming_compute_periodogram.o: $(SRC_PATH)period_search/deeming_compute_periodogram.c
 	$(CC) $(OPTFLAGS) -c -o deeming_compute_periodogram.o $(SRC_PATH)period_search/deeming_compute_periodogram.c -I$(GSL_INCLUDE) -lm
 lib/deeming_compute_periodogram: deeming_compute_periodogram.o #get_number_of_cpu_cores.o
 	$(CC) $(OPTFLAGS) -o lib/deeming_compute_periodogram deeming_compute_periodogram.o $(USE_SINCOS_OPITION) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 	
 util/sysrem: util/sysrem2
-	cd util/; ln -s sysrem2 sysrem ; cd ..
+	cd util/; ln -sf sysrem2 sysrem ; cd ..
 
 get_dates_from_lightcurve_files_function.o: $(SRC_PATH)get_dates_from_lightcurve_files_function.c
 	$(CC) $(OPTFLAGS) -c -o get_dates_from_lightcurve_files_function.o $(SRC_PATH)get_dates_from_lightcurve_files_function.c
@@ -440,26 +440,26 @@ util/convert/SWASP_FITS2ASCII: $(SRC_PATH)SWASP_FITS2ASCII.c
 	$(CC) $(OPTFLAGS) -o util/convert/SWASP_FITS2ASCII $(SRC_PATH)SWASP_FITS2ASCII.c $(CFITSIO_LIB) -lm
 util/cute_lc: cute_lc.o vast_report_memory_error.o
 	$(CC) $(OPTFLAGS) -o util/cute_lc cute_lc.o vast_report_memory_error.o $(GSL_LIB) -lm
-	cd util/ ; ln -s cute_lc cute_lc_fullJD ; cd ..
+	cd util/ ; ln -sf cute_lc cute_lc_fullJD ; cd ..
 cute_lc.o: $(SRC_PATH)cute_lc.c
 	$(CC) $(OPTFLAGS) -c -o cute_lc.o $(SRC_PATH)cute_lc.c -I$(GSL_INCLUDE)
 util/observations_per_star: $(SRC_PATH)observations_per_star.c
 	$(CC) $(OPTFLAGS) -o util/observations_per_star $(SRC_PATH)observations_per_star.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 util/phase_lc: $(SRC_PATH)phase_lc.c
 	$(CC) $(OPTFLAGS) -o util/phase_lc $(SRC_PATH)phase_lc.c $(GSL_LIB) -I$(GSL_INCLUDE) -lm
-	cd util/ ; ln -s phase_lc phase_and_bin_lc ; cd ..
+	cd util/ ; ln -sf phase_lc phase_and_bin_lc ; cd ..
 
 util/UTC2TT: UTC2TT.o gettime.o kourovka_sbg_date.o
 	$(CC) $(OPTFLAGS) -o util/UTC2TT UTC2TT.o gettime.o kourovka_sbg_date.o $(CFITSIO_LIB) -lm
-	ln -s UTC2TT util/TT2UTC
+	ln -sf UTC2TT util/TT2UTC
 	
 UTC2TT.o: $(SRC_PATH)heliocentric_correction/UTC2TT.c
 	$(CC) $(OPTFLAGS) -c -o UTC2TT.o $(SRC_PATH)heliocentric_correction/UTC2TT.c 
 
 util/hjd: eph_manager.o hjd.o hjd_N.o novas.o novascon.o nutation.o readeph0.o solsys3.o gettime.o kourovka_sbg_date.o
 	$(CC) $(OPTFLAGS) -o util/hjd hjd.o eph_manager.o hjd_N.o novas.o novascon.o nutation.o readeph0.o solsys3.o gettime.o kourovka_sbg_date.o $(CFITSIO_LIB) -lm
-	ln -s hjd util/hjd_input_in_UTC
-	ln -s hjd util/hjd_input_in_TT
+	ln -sf hjd util/hjd_input_in_UTC
+	ln -sf hjd util/hjd_input_in_TT
 eph_manager.o: $(SRC_PATH)heliocentric_correction/eph_manager.c
 	$(CC) $(OPTFLAGS) -c -o eph_manager.o $(SRC_PATH)heliocentric_correction/eph_manager.c
 hjd.o: $(SRC_PATH)heliocentric_correction/hjd.c
@@ -497,7 +497,7 @@ lib/make_outxyls_for_astrometric_calibration: make_outxyls_for_astrometric_calib
 
 util/solve_plate_with_UCAC5: solve_plate_with_UCAC5.o gettime.o kourovka_sbg_date.o wpolyfit.o variability_indexes.o quickselect.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o
 	$(CC) $(OPTFLAGS) -o util/solve_plate_with_UCAC5 solve_plate_with_UCAC5.o gettime.o kourovka_sbg_date.o fit_plane_lin.o wpolyfit.o variability_indexes.o quickselect.o get_path_to_vast.o is_point_close_or_off_the_frame_edge.o replace_file_with_symlink_if_filename_contains_white_spaces.o $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
-	cd util/ ; ln -s solve_plate_with_UCAC5 solve_plate_with_UCAC4 ; cd ..
+	cd util/ ; ln -sf solve_plate_with_UCAC5 solve_plate_with_UCAC4 ; cd ..
 solve_plate_with_UCAC5.o:
 	$(CC) $(OPTFLAGS) -c  $(SRC_PATH)solve_plate_with_UCAC5.c -I$(GSL_INCLUDE)
 
@@ -511,26 +511,26 @@ check_no_for_loop_initial_declaration:
 	lib/check_no_for_loop_initial_declaration.sh	
 	
 shell_commands: pgplot_components lib/lightcurve_simulator vast
-	ln -s vast diffphot
-	ln -s pgfv sextract_single_image
-	ln -s pgfv select_star_on_reference_image
-	ln -s ../pgfv util/make_finding_chart
-	ln -s ../pgfv util/make_finder_chart
-	ln -s ../pgfv util/fits2png
-	ln -s draw_stars_with_ds9.sh util/mark_wcs_position_with_ds9.sh
-	cd util && ln -s identify.sh identify_noninteractive.sh && ln -s identify.sh identify_justname.sh && ln -s identify.sh wcs_image_calibration.sh && ln -s identify.sh wcs_image_nocatalog.sh && ln -s identify.sh identify_transient.sh && ln -s identify.sh identify_for_catalog.sh && cd -
+	ln -sf vast diffphot
+	ln -sf pgfv sextract_single_image
+	ln -sf pgfv select_star_on_reference_image
+	ln -sf ../pgfv util/make_finding_chart
+	ln -sf ../pgfv util/make_finder_chart
+	ln -sf ../pgfv util/fits2png
+	ln -sf draw_stars_with_ds9.sh util/mark_wcs_position_with_ds9.sh
+	cd util && ln -sf identify.sh identify_noninteractive.sh && ln -sf identify.sh identify_justname.sh && ln -sf identify.sh wcs_image_calibration.sh && ln -sf identify.sh wcs_image_nocatalog.sh && ln -sf identify.sh identify_transient.sh && ln -sf identify.sh identify_for_catalog.sh && cd -
 	#
-	cd lib && ln -s lightcurve_simulator sine_wave_simulator && ln -s lightcurve_simulator sine_wave_and_psd_simulator && ln -s lightcurve_simulator sine_wave_or_psd_simulator && cd -
+	cd lib && ln -sf lightcurve_simulator sine_wave_simulator && ln -sf lightcurve_simulator sine_wave_and_psd_simulator && ln -sf lightcurve_simulator sine_wave_or_psd_simulator && cd -
 	#
-	cd lib && ln -s deg2hms deg2hms_uas && cd -
+	cd lib && ln -sf deg2hms deg2hms_uas && cd -
 	#
-	cd lib && ln -s autodetect_aperture_main fits2cat && cd -
+	cd lib && ln -sf autodetect_aperture_main fits2cat && cd -
 	#
-	cd lib && ln -s test_libpng.sh test_libpng_justtest_nomovepgplot.sh && cd -
+	cd lib && ln -sf test_libpng.sh test_libpng_justtest_nomovepgplot.sh && cd -
 	#
-	cd util/artificial_star_test_for_transient_search && ln -s run_artificial_star_test.sh run_artificial_star_test_oneflux.sh && cd -
+	cd util/artificial_star_test_for_transient_search && ln -sf run_artificial_star_test.sh run_artificial_star_test_oneflux.sh && cd -
 	#
-	cd util && ln -s format_lightcurve_CBA.sh format_lightcurve_VSNET.sh && cd -
+	cd util && ln -sf format_lightcurve_CBA.sh format_lightcurve_VSNET.sh && cd -
 	#
 	# This is to remove docs
 	rm -f `find src/ -name '*.pdf'` `find src/ -name '*.ps'`
@@ -552,12 +552,12 @@ util/ccd/imgbin2x2: $(SRC_PATH)ccd/imgbin2x2.c $(SRC_PATH)ccd/imgbin2x2.py
 	cp $(SRC_PATH)ccd/imgbin2x2.py util/ccd/imgbin2x2.py
 util/ccd/mk: $(SRC_PATH)ccd/mk.c
 	$(CC) $(OPTFLAGS) -o util/ccd/mk $(SRC_PATH)ccd/mk.c $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
-	cd util/ccd/ && ln -s mk mk_notempchecks && cd -
+	cd util/ccd/ && ln -sf mk mk_notempchecks && cd -
 util/ccd/mk_sigma_clip: $(SRC_PATH)ccd/mk_sigma_clip.c
 	$(CC) $(OPTFLAGS) -o util/ccd/mk_sigma_clip $(SRC_PATH)ccd/mk_sigma_clip.c $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 util/ccd/ms: $(SRC_PATH)ccd/ms.c
 	$(CC) $(OPTFLAGS) -o util/ccd/ms $(SRC_PATH)ccd/ms.c $(CFITSIO_LIB) -lm
-	cd util/ccd/ && ln -s ms ms_notempchecks && cd -
+	cd util/ccd/ && ln -sf ms ms_notempchecks && cd -
 util/ccd/md: $(SRC_PATH)ccd/md.c
 	$(CC) $(OPTFLAGS) -o util/ccd/md $(SRC_PATH)ccd/md.c $(CFITSIO_LIB) $(GSL_LIB) -I$(GSL_INCLUDE) -lm
 util/ccd/lacosmic: $(SRC_PATH)ccd/lacosmic.c
