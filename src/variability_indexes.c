@@ -664,7 +664,6 @@ double estimate_sigma_from_IQR_of_sorted_data( double *sorted_data, int n ) {
  return sigma;
 }
 
-
 // Original version using full sort - kept for reference/comparison
 // The input dataset will not be changed.
 double esimate_sigma_from_MAD_of_unsorted_data__fullsort( double *unsorted_data, long n ) {

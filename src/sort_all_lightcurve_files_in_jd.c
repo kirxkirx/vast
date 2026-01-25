@@ -58,7 +58,7 @@ void sort_file( const char *file_name ) {
    return;
   }
   strncpy( data_arr[data_count].line, line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE );
-  data_arr[data_count].line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1] = '\0'; // just in case
+  data_arr[data_count].line[MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE - 1]= '\0'; // just in case
 
   // Check if the current entry is out of order
   if ( data_count > 0 && julian_date < data_arr[data_count - 1].julian_date ) {
@@ -66,13 +66,12 @@ void sort_file( const char *file_name ) {
   }
 
   data_count++;
-  
+
   // Check for the unlikely case where the lightcurve may have more than MAX_NUMBER_OF_OBSERVATIONS
-  if (data_count >= MAX_NUMBER_OF_OBSERVATIONS) {
-   fprintf(stderr, "ERROR: too many lines in %s (>%d)\n", file_name, MAX_NUMBER_OF_OBSERVATIONS);
+  if ( data_count >= MAX_NUMBER_OF_OBSERVATIONS ) {
+   fprintf( stderr, "ERROR: too many lines in %s (>%d)\n", file_name, MAX_NUMBER_OF_OBSERVATIONS );
    break; // or return
   }
-  
  }
  fclose( file );
 

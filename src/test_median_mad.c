@@ -33,12 +33,12 @@ int main() {
  int str_len, str_is_good;
 
  // Results from different methods
- double median_gsl;           // GSL median from sorted data (reference)
- double median_quickselect;   // Our quickselect-based median
- double mad_gsl_sorted;       // MAD computed from sorted data using gsl_sort internally
- double mad_quickselect;      // MAD computed using quickselect
- double sigma_from_mad_gsl;   // sigma from MAD (sorted)
- double sigma_from_mad_qs;    // sigma from MAD (quickselect)
+ double median_gsl;         // GSL median from sorted data (reference)
+ double median_quickselect; // Our quickselect-based median
+ double mad_gsl_sorted;     // MAD computed from sorted data using gsl_sort internally
+ double mad_quickselect;    // MAD computed using quickselect
+ double sigma_from_mad_gsl; // sigma from MAD (sorted)
+ double sigma_from_mad_qs;  // sigma from MAD (quickselect)
 
  fprintf( stderr, "Test program for median and MAD computation\n" );
  fprintf( stderr, "Enter a column of numbers:\n" );

@@ -346,14 +346,13 @@ int main( int argc, char *argv[] ) {
  }
  //
 
- 
  // Histogram buffer for median over 16-bit data
  hist= calloc( 65536, sizeof( unsigned int ) );
  if ( hist == NULL ) {
   fprintf( stderr, "ERROR: Couldn't allocate memory for histogram\n" );
   exit( EXIT_FAILURE );
  }
-image_array= NULL;
+ image_array= NULL;
 
  /*
   image_array= malloc( sizeof( unsigned short * ) ); // this will be realloc'ed before use anyhow
@@ -431,7 +430,6 @@ image_array= NULL;
   loaded_file_counter++;
  }
 
- 
  if ( loaded_file_counter < 2 ) {
   fprintf( stderr, "ERROR: only %d images were successfully loaded!\n", loaded_file_counter );
   exit( EXIT_FAILURE );
@@ -532,7 +530,7 @@ image_array= NULL;
 
  free( hist );
 
-for ( file_counter= 0; file_counter < loaded_file_counter; file_counter++ ) {
+ for ( file_counter= 0; file_counter < loaded_file_counter; file_counter++ ) {
   free( image_array[file_counter] );
  }
  free( image_array );

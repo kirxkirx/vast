@@ -844,28 +844,30 @@ void histeq( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i ) {
 */
 
 // ZSCALE constants from DS9 reference implementation
-#define ZSCALE_MIN_NPIXELS    5       // smallest permissible sample
-#define ZSCALE_MAX_REJECT     0.5     // max frac. of pixels to be rejected
-#define ZSCALE_KREJ           2.5     // k-sigma pixel rejection factor
-#define ZSCALE_MAX_ITERATIONS 5       // maximum number of fitline iterations
-#define ZSCALE_CONTRAST       0.25    // default contrast (from DS9 frscale.C zContrast_)
-#define ZSCALE_SAMPLE         600     // number of pixels to sample (from DS9 zSample_)
-#define ZSCALE_LINE           5       // number of pixels per line (from DS9 zLine_)
+#define ZSCALE_MIN_NPIXELS 5    // smallest permissible sample
+#define ZSCALE_MAX_REJECT 0.5   // max frac. of pixels to be rejected
+#define ZSCALE_KREJ 2.5         // k-sigma pixel rejection factor
+#define ZSCALE_MAX_ITERATIONS 5 // maximum number of fitline iterations
+#define ZSCALE_CONTRAST 0.25    // default contrast (from DS9 frscale.C zContrast_)
+#define ZSCALE_SAMPLE 600       // number of pixels to sample (from DS9 zSample_)
+#define ZSCALE_LINE 5           // number of pixels per line (from DS9 zLine_)
 
 // Comparison function for qsort
 static int zscale_float_compare( const void *a, const void *b ) {
  float fa= *(const float *)a;
  float fb= *(const float *)b;
- if ( fa < fb ) return -1;
- if ( fa > fb ) return 1;
+ if ( fa < fb )
+  return -1;
+ if ( fa > fb )
+  return 1;
  return 0;
 }
 
 // Fit a line to the sorted sample data with iterative rejection
 // Returns number of good pixels remaining
 // Based on DS9 zFitLine implementation
-#define ZSCALE_GOOD_PIXEL   0
-#define ZSCALE_BAD_PIXEL    1
+#define ZSCALE_GOOD_PIXEL 0
+#define ZSCALE_BAD_PIXEL 1
 #define ZSCALE_REJECT_PIXEL 2
 
 static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslope,
@@ -874,7 +876,7 @@ static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslop
  float xscale;
  float *flat;
  float *normx;
- short *badpix;  // Use short to match DS9 (supports 3 states)
+ short *badpix; // Use short to match DS9 (supports 3 states)
  double sumxsqr, sumxz, sumx, sumz;
  float z0, dz;
  int ngoodpix, last_ngoodpix;
@@ -901,13 +903,16 @@ static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslop
  // Allocate working arrays
  flat= (float *)malloc( npix * sizeof( float ) );
  normx= (float *)malloc( npix * sizeof( float ) );
- badpix= (short *)calloc( npix, sizeof( short ) );  // initialized to 0 (GOOD_PIXEL)
+ badpix= (short *)calloc( npix, sizeof( short ) ); // initialized to 0 (GOOD_PIXEL)
 
  if ( flat == NULL || normx == NULL || badpix == NULL ) {
   fprintf( stderr, "ERROR: zscale_fit_line: memory allocation failed\n" );
-  if ( flat ) free( flat );
-  if ( normx ) free( normx );
-  if ( badpix ) free( badpix );
+  if ( flat )
+   free( flat );
+  if ( normx )
+   free( normx );
+  if ( badpix )
+   free( badpix );
   *zstart= sample[npix / 2];
   *zslope= 0.0f;
   return npix;
@@ -1082,8 +1087,10 @@ void zscale( long naxes0, long naxes1, float *im, float *z1_out, float *z2_out )
   *z1_out= im[0];
   *z2_out= im[0];
   for ( i= 0; i < npixels; i++ ) {
-   if ( im[i] < *z1_out ) *z1_out= im[i];
-   if ( im[i] > *z2_out ) *z2_out= im[i];
+   if ( im[i] < *z1_out )
+    *z1_out= im[i];
+   if ( im[i] > *z2_out )
+    *z2_out= im[i];
   }
   return;
  }
@@ -1102,10 +1109,12 @@ void zscale( long naxes0, long naxes1, float *im, float *z1_out, float *z2_out )
     // Skip NaN and Inf values (matching DS9 behavior)
     if ( isfinite( value ) ) {
      sample[sample_count++]= value;
-     if ( sample_count >= max_sample ) break;
+     if ( sample_count >= max_sample )
+      break;
     }
    }
-   if ( sample_count >= max_sample ) break;
+   if ( sample_count >= max_sample )
+    break;
   }
  }
 
@@ -1116,8 +1125,10 @@ void zscale( long naxes0, long naxes1, float *im, float *z1_out, float *z2_out )
   *z1_out= im[0];
   *z2_out= im[0];
   for ( i= 0; i < npixels; i++ ) {
-   if ( im[i] < *z1_out ) *z1_out= im[i];
-   if ( im[i] > *z2_out ) *z2_out= im[i];
+   if ( im[i] < *z1_out )
+    *z1_out= im[i];
+   if ( im[i] > *z2_out )
+    *z2_out= im[i];
   }
   return;
  }

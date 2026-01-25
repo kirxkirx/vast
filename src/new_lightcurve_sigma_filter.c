@@ -13,7 +13,7 @@
 
 #include "vast_limits.h"
 #include "lightcurve_io.h"
-#include "quickselect.h"  // for quickselect_median_double()
+#include "quickselect.h" // for quickselect_median_double()
 
 int main( int argc, char **argv ) {
 
