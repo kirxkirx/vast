@@ -17,11 +17,14 @@
 #define MIN_FLAT_FIELD_COUNT 17000
 #define MAX_FLAT_FIELD_COUNT 50000
 
-/* Toggle median implementation:
- * - Set to 1 for GSL sort-based median.
- * - Set to 0 for quickselect-based median.
- */
-#define USE_GSL_MEDIAN 0
+// Toggle median implementation:
+// - Set to 1 for GSL sort-based median.
+// - Set to 0 for quickselect-based median.
+//
+// The test shows that quickselect-based median is inappropriate for background-dominated astronomical images
+// as it tends to hit O(n^2) worst-case performance.
+//
+#define USE_GSL_MEDIAN 1
 
 // char *beztochki( char * );
 
