@@ -4,6 +4,8 @@ XX XXX 2026: vast-1.0rc89
 	* The FITS image viewer './pgfv' now has a new image stretch option "zscale" that can be activated
 	(and then deactivated) by pressing 'S' keyboard key while viewing an image. A brief description of 
 	zscale algorithm may be found at https://astro.uni-bonn.de/~sysstw/lfa_html/iraf/images.tv.display.html#h_27
+	* 'util/ccd/mk_fast' - a much faster version of median image stacker that relies of histogram-based median 
+	for images and quickselect-based median for pixels.
 	* VaST now produces 'vast_limiting_magnitude.log' that lists limiting magnitude for each frame estimated as 
 	the magnitude of a star detected with a signal-to-noise ratio of 5 following Karpov (2025, Acta Polytechnica, 65, 50) 
 	https://ui.adsabs.harvard.edu/abs/2025AcPol..65...50K/abstract

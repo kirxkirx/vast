@@ -3340,6 +3340,107 @@ $GREP_RESULT"
   fi
   rm -f median.fit
  fi
+ util/ccd/mk_fast one.fit nul.fit two.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_onenultwo_01"
+ fi
+ if [ ! -f median.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_onenultwo_02"
+ else
+  util/imstat_vast median.fit | grep 'MEDIAN=     1.000'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_imstat_vast_03"
+  fi
+  N_KEYWORD_OCCURS=$(util/listhead median.fit | grep -c "BZERO   =")
+  if [ $N_KEYWORD_OCCURS -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast__BZERO_$N_KEYWORD_OCCURS"
+  fi
+  N_KEYWORD_OCCURS=$(util/listhead median.fit | grep -c "BSCALE  =")
+  if [ $N_KEYWORD_OCCURS -ne 1 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast__BSCALE_$N_KEYWORD_OCCURS"
+  fi
+  util/listhead median.fit | grep -q "EXPTIME"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast__EXPTIME"
+  fi
+  util/listhead median.fit | grep -q "SET-TEMP"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast__SET-TEMP"
+  fi
+  util/listhead median.fit | grep -q "CCD-TEMP"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast__CCD-TEMP"
+  fi
+  rm -f median.fit
+ fi
+ util/ccd/mk_fast two.fit one.fit nul.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_onenultwo_11"
+ elif [ ! -f median.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_onenultwo_12"
+ else
+  util/imstat_vast median.fit | grep 'MEDIAN=     2.000'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_imstat_vast_13"
+  fi
+  rm -f median.fit
+ fi
+ util/ccd/mk_fast two.fit does_not_exist.png one.fit nul.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_onenultwo_881"
+ elif [ ! -f median.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_onenultwo_882"
+ else
+  util/imstat_vast median.fit | grep 'MEDIAN=     2.000'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_imstat_vast_883"
+  fi
+  rm -f median.fit
+ fi
+ util/ccd/mk_fast does_not_exist.png two.fit does_not_exist.png one.fit nul.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_onenultwo_991"
+ elif [ ! -f median.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_onenultwo_992"
+ else
+  util/imstat_vast median.fit | grep 'MEDIAN=     2.000'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_imstat_vast_993"
+  fi
+  rm -f median.fit
+ fi
+ util/ccd/mk_fast two.fit nul.fit
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_onenultwo_21"
+ elif [ ! -f median.fit ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_onenultwo_22"
+ else
+  util/imstat_vast median.fit | grep 'MEDIAN=     1.000'
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SMALLCCD_mkfast_imstat_vast_23"
+  fi
+  rm -f median.fit
+ fi
  for TEST_FILE_TO_REMOVE in nul.fit one.fit two.fit median.fit ;do
   if [ -f "$TEST_FILE_TO_REMOVE" ];then
    rm -f "$TEST_FILE_TO_REMOVE"
