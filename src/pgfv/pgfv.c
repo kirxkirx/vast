@@ -861,46 +861,6 @@ static int zscale_float_compare( const void *a, const void *b ) {
  return 0;
 }
 
-// Compute sigma of good pixels (those not marked as bad)
-static float zscale_compute_sigma( float *flat, int *badpix, int npix, float *mean_out ) {
- int ngoodpix= 0;
- double sum= 0.0;
- double sumsq= 0.0;
- int i;
- float pixval;
- float mean, sigma;
- double temp;
-
- // Accumulate sum and sum of squares for good pixels
- for ( i= 0; i < npix; i++ ) {
-  if ( badpix[i] == 0 ) {  // good pixel
-   pixval= flat[i];
-   ngoodpix++;
-   sum+= pixval;
-   sumsq+= pixval * pixval;
-  }
- }
-
- // Compute mean and sigma
- if ( ngoodpix == 0 ) {
-  *mean_out= 0.0f;
-  return 0.0f;
- } else if ( ngoodpix == 1 ) {
-  *mean_out= (float)sum;
-  return 0.0f;
- } else {
-  mean= (float)( sum / ngoodpix );
-  *mean_out= mean;
-  temp= sumsq / ( ngoodpix - 1 ) - ( sum * sum ) / ( ngoodpix * ( ngoodpix - 1 ) );
-  if ( temp < 0.0 ) {
-   sigma= 0.0f;
-  } else {
-   sigma= (float)sqrt( temp );
-  }
-  return sigma;
- }
-}
-
 // Fit a line to the sorted sample data with iterative rejection
 // Returns number of good pixels remaining
 // Based on DS9 zFitLine implementation
@@ -919,7 +879,7 @@ static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslop
  float z0, dz;
  int ngoodpix, last_ngoodpix;
  int minpix;
- float mean, sigma, threshold;
+ float sigma, threshold;
  float residual;
  float lcut, hcut;
  double rowrat;
@@ -1002,11 +962,9 @@ static int zscale_fit_line( float *sample, int npix, float *zstart, float *zslop
     }
    }
    if ( ng > 1 ) {
-    mean= (float)( sum / ng );
     double temp= sumsq / ( ng - 1 ) - ( sum * sum ) / ( ng * ( ng - 1 ) );
     sigma= ( temp > 0.0 ) ? (float)sqrt( temp ) : 0.0f;
    } else {
-    mean= 0.0f;
     sigma= 0.0f;
    }
   }
@@ -1085,7 +1043,6 @@ void zscale( long naxes0, long naxes1, float *im, float *z1_out, float *z2_out )
  int nline= ZSCALE_LINE;
  float contrast= ZSCALE_CONTRAST;
 
- int stride;
  int npix_per_line;
  int nlines;
  int line_step;

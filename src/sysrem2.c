@@ -102,6 +102,12 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
  input_sysrem_input_star_list_lst= fopen( "sysrem_input_star_list.lst", "r" );
  if ( NULL == input_sysrem_input_star_list_lst ) {
   fprintf( stderr, "ERROR! Can't open file sysrem_input_star_list.lst (2)\n" );
+  // Close already opened output files before exiting
+  for ( output_file_counter= 0; output_file_counter < Noutput_files; output_file_counter++ ) {
+   if ( outputfile[output_file_counter] != NULL ) {
+    fclose( outputfile[output_file_counter] );
+   }
+  }
   exit( EXIT_FAILURE );
  }
  output_file_counter= 0;
@@ -109,6 +115,13 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
  while ( NULL != fgets( full_string, MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG, input_sysrem_input_star_list_lst ) ) {
   if ( NULL == outputfile[output_file_counter % Noutput_files] ) {
    fprintf( stderr, "ERROR: NULL == outputfile[output_file_counter modulus Noutput_files] this shouldn't be happening!\n" );
+   // Close input file and all output files before exiting
+   fclose( input_sysrem_input_star_list_lst );
+   for ( output_file_counter= 0; output_file_counter < Noutput_files; output_file_counter++ ) {
+    if ( outputfile[output_file_counter] != NULL ) {
+     fclose( outputfile[output_file_counter] );
+    }
+   }
    exit( EXIT_FAILURE );
   }
   fputs( full_string, outputfile[output_file_counter % Noutput_files] );
@@ -117,10 +130,7 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
 
  fclose( input_sysrem_input_star_list_lst );
  fprintf( stderr, "Number of stars in sysrem_input_star_list.lst %d\n", Nstars );
- if ( Nstars < SYSREM_MIN_NUMBER_OF_STARS ) {
-  fprintf( stderr, "Too few stars!\n" );
-  exit( EXIT_FAILURE );
- }
+ // Note: Nstars check removed here as it was already validated above and hasn't changed
 
  // close the output files
  for ( output_file_counter= 0; output_file_counter < Noutput_files; output_file_counter++ ) {

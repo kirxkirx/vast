@@ -1683,7 +1683,6 @@ static int parse_shell_args( const char *input_str, char ***argv, int *argc, int
  }
 
  char *p= str_copy;
- char *token_start;
  char quote_char;
  char token_buf[1024];
  int token_len;
@@ -1706,7 +1705,6 @@ static int parse_shell_args( const char *input_str, char ***argv, int *argc, int
     // Quoted segment
     quote_char= *p;
     p++; // Skip opening quote
-    token_start= p;
     while ( *p != '\0' && *p != quote_char ) {
      if ( token_len < (int)sizeof( token_buf ) - 1 ) {
       token_buf[token_len++]= *p;

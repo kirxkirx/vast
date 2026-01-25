@@ -159,7 +159,7 @@ int fake_image_hack( char *input_string ) {
    remove_leading_white_spaces_before_first_digit_from_string( processed_input_string );
    // fprintf( stderr, "DEBUG09 #%s#\n", processed_input_string);
    //  make sure the last character of the string is not white space
-   if ( processed_input_string[strlen( processed_input_string ) - 1] == ' ' ) {
+   if ( strlen( processed_input_string ) > 0 && processed_input_string[strlen( processed_input_string ) - 1] == ' ' ) {
     processed_input_string[strlen( processed_input_string ) - 1]= '\0';
    }
    // run this early to handle 04.02.2012 02:48:30 - style dates

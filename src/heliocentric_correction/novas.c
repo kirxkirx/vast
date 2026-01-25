@@ -1341,10 +1341,15 @@ short int mean_star( double jd_tt, double ra, double dec,
    Set up the 'tempstar' structure, then use it to create a position
    vector based on the apparent RA and declination of the star.
 */
+ {
+  // Local arrays sized to match function parameter expectations
+  char dummy_name[SIZE_OF_OBJ_NAME]= "dummy";
+  char cat_name[SIZE_OF_CAT_NAME]= "CAT";
 
- if ( ( error= make_cat_entry( "dummy", "CAT", 0, ra, dec, 0.0, 0.0, 0.0, 0.0,
-                               &tempstar ) ) != 0 ) {
-  return ( error + 1 );
+  if ( ( error= make_cat_entry( dummy_name, cat_name, 0, ra, dec, 0.0, 0.0, 0.0, 0.0,
+                                &tempstar ) ) != 0 ) {
+   return ( error + 1 );
+  }
  }
 
  starvectors( &tempstar, pos, dum );
@@ -1564,11 +1569,17 @@ short int place( double jd_tt, object *cel_object,
 */
 
  if ( first_time ) {
-  make_cat_entry( "NULL_STAR", "   ", 0L, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+  // Local arrays sized to match function parameter expectations
+  static char null_star_name[SIZE_OF_OBJ_NAME]= "NULL_STAR";
+  static char null_catalog[SIZE_OF_CAT_NAME]= "   ";
+  static char earth_name[SIZE_OF_OBJ_NAME]= "Earth";
+  static char sun_name[SIZE_OF_OBJ_NAME]= "Sun";
+
+  make_cat_entry( null_star_name, null_catalog, 0L, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                   &null_star );
 
-  make_object( 0, 3, "Earth", &null_star, &earth );
-  make_object( 0, 10, "Sun", &null_star, &sun );
+  make_object( 0, 3, earth_name, &null_star, &earth );
+  make_object( 0, 10, sun_name, &null_star, &sun );
 
   first_time= 0;
  }
@@ -5516,12 +5527,17 @@ short int grav_def( double jd_tdb, short int loc_code,
 */
 
  if ( ( first_time == 1 ) || ( nbodies != nbodies_last ) ) {
+  // Local arrays sized to match function parameter expectations
+  static char dummy_star_name[SIZE_OF_OBJ_NAME]= "dummy";
+  static char dummy_catalog[SIZE_OF_CAT_NAME]= "   ";
+  static char earth_name[SIZE_OF_OBJ_NAME]= "Earth";
+
   for ( i= 0; i < nbodies; i++ ) {
    if ( i == 0 ) {
-    make_cat_entry( "dummy", "   ", 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    make_cat_entry( dummy_star_name, dummy_catalog, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                     &dummy_star );
 
-    make_object( 0, 3, "Earth", &dummy_star, &earth );
+    make_object( 0, 3, earth_name, &dummy_star, &earth );
    }
 
    if ( ( error= make_object( 0, body_num[i], body_name[i],
@@ -7764,13 +7780,13 @@ short int cio_array( double jd_tdb, long int n_pts,
    free( ra );
   }
 
-  t= (double *)calloc( (size_t)n_pts, double_size );
+  t= (double *)calloc( (size_t)n_pts, sizeof( double ) );
   if ( t == NULL ) {
    fclose( cio_file );
    return ( error= 4 );
   }
 
-  ra= (double *)calloc( (size_t)n_pts, double_size );
+  ra= (double *)calloc( (size_t)n_pts, sizeof( double ) );
   if ( ra == NULL ) {
    free( t );
    fclose( cio_file );

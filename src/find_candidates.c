@@ -337,8 +337,9 @@ int main( int argc, char **argv ) {
   if ( lightcurve_statistics_file == NULL ) {
    fprintf( stderr, "ERROR: Can't open file \"vast_lightcurve_statistics.log\"!\n" );
    use_old_files= 0;
+  } else {
+   fclose( lightcurve_statistics_file );
   }
-  fclose( lightcurve_statistics_file );
  }
 
  if ( use_old_files == 0 ) {

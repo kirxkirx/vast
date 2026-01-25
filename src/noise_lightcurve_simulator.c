@@ -99,6 +99,10 @@ int main( int argc, char **argv ) {
  for ( lightcurve_counter= 0; lightcurve_counter < DEFAULT_NUMBER_OF_LIGHTCURVES_TO_SIMULATE; lightcurve_counter++ ) {
   sprintf( simulated_lightcurve_filename, "out%05d.dat", lightcurve_counter + 1 );
   simulated_lightcurve_file= fopen( simulated_lightcurve_filename, "w" );
+  if ( simulated_lightcurve_file == NULL ) {
+   fprintf( stderr, "ERROR: cannot open output file %s\n", simulated_lightcurve_filename );
+   continue;
+  }
   // Lightcurve simulation
   for ( i= 0; i < number_of_measurements; i++ ) {
 #ifdef QASI_REGULAR_SAMPLING

@@ -151,6 +151,10 @@ void sort_file_old( const char *file_name ) {
   if ( NULL == data_arr[data_count].line ) {
    fprintf( stderr, "ERROR: NULL == data_arr[data_count].line \n" );
    fclose( file );
+   // Free previously allocated lines before returning
+   for ( i= 0; i < data_count; i++ ) {
+    free( data_arr[i].line );
+   }
    return;
   }
   strncpy( data_arr[data_count].line, line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE );
@@ -168,6 +172,10 @@ void sort_file_old( const char *file_name ) {
 
  if ( !output_file ) {
   fprintf( stderr, "ERROR opening output file %s\n", output_file_name );
+  // Free allocated lines before returning
+  for ( i= 0; i < data_count; i++ ) {
+   free( data_arr[i].line );
+  }
   return;
  }
 

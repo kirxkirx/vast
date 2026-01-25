@@ -291,6 +291,7 @@ void normalize_spectral_window_file( unsigned long N_freq, char *periodogramfile
  periodogramfile= fopen( periodogramfilename, "r" );
  if ( NULL == periodogramfile ) {
   fprintf( stderr, "ERROR in normalize_spectral_window_file(): cannot open file %s\n", periodogramfilename );
+  exit( EXIT_FAILURE );
  }
  i= 0;
  while ( -1 < fscanf( periodogramfile, "%lf %lf %lf", &freq[i], &theta[i], &window[i] ) )

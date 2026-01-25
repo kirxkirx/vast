@@ -181,6 +181,10 @@ int main( int argc, char **argv ) {
  strncpy( outfilename, argv[1], OUTFILENAME_LENGTH );
  outfilename[OUTFILENAME_LENGTH - 1]= '\0'; // paranoid
  outfile= fopen( outfilename, "r" );
+ if ( outfile == NULL ) {
+  fprintf( stderr, "ERROR: Can't open file %s\n", outfilename );
+  return 1;
+ }
  i= 0;
  while ( -1 < read_lightcurve_point( outfile, &in_JD[i], &in_mag[i], &in_magerr[i], &in_x[i], &in_y[i], &in_app[i], fake_str, NULL ) ) {
   if ( in_JD[i] == 0.0 ) {

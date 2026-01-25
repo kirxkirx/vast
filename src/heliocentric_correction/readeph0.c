@@ -107,6 +107,10 @@ double *readeph( int mp, char *name, double jd,
  // End of the silly thing
 
  pv= (double *)malloc( 6L * sizeof( double ) );
+ if ( pv == NULL ) {
+  *error= 9;
+  return NULL;
+ }
 
  for ( i= 0; i < 6; i++ )
   pv[i]= 0.0;

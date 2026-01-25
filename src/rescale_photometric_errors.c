@@ -315,6 +315,10 @@ int main( int argc, char **argv ) {
  fprintf( stderr, "Applying corrections to error estimates in all lightcurves.\n" );
  // Create a list of files
  filenamelist= (char **)malloc( MAX_NUMBER_OF_STARS * sizeof( char * ) );
+ if ( filenamelist == NULL ) {
+  fprintf( stderr, "ERROR: Couldn't allocate memory for filenamelist\n" );
+  return 1;
+ }
  filename_counter= 0;
  dp= opendir( "./" );
  if ( dp != NULL ) {
