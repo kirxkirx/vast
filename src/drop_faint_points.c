@@ -106,7 +106,16 @@ int main( int argc, char **argv ) {
    fclose( infile );
    // Remove faintest point
    infile= fopen( infilename, "r" );
+   if ( infile == NULL ) {
+    fprintf( stderr, "ERROR: cannot reopen %s for reading\n", infilename );
+    break;
+   }
    outfile= fopen( outfilename, "w" );
+   if ( outfile == NULL ) {
+    fprintf( stderr, "ERROR: cannot open %s for writing\n", outfilename );
+    fclose( infile );
+    break;
+   }
    while ( -1 < read_lightcurve_point( infile, &JD, &M, &MERR, &X, &Y, &APP, str, str2 ) ) {
     if ( JD == 0.0 )
      continue; // if this line could not be parsed, try the next one

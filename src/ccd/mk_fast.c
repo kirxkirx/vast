@@ -404,6 +404,11 @@ image_array= NULL;
   //
   // Allocate memory for the input images
   image_array= realloc( image_array, ( loaded_file_counter + 1 ) * sizeof( unsigned short * ) );
+  if ( image_array == NULL ) {
+   fprintf( stderr, "ERROR in mk: Couldn't reallocate memory for image_array\n" );
+   fits_close_file( fptr, &status );
+   exit( EXIT_FAILURE );
+  }
   image_array[loaded_file_counter]= malloc( img_size * sizeof( unsigned short ) );
   if ( image_array[loaded_file_counter] == NULL ) {
    fprintf( stderr, "ERROR in mk: Couldn't allocate memory for image array\n Current image: %s\n", argv[file_counter] );

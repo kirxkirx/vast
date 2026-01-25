@@ -307,7 +307,10 @@ void ask_user_to_click_on_moving_object( char **input_images, float *moving_obje
   fprintf( stderr, "Image: %s\nLeft-click on the moving target then right-click to go to the next image.\n", input_images[i] );
   sprintf( command_string, "./sextract_single_image %s 2>&1 | grep 'Star coordinates' | sed 's/\\x1B\\[[0-9;]\\{1,\\}[A-Za-z]//g' | tail -n1", input_images[i] );
   pipe_for_reading_coordinates_from_sextract_single_image= popen( command_string, "r" );
-  if ( 2 != fscanf( pipe_for_reading_coordinates_from_sextract_single_image, "Star coordinates %f %f (pix)", &moving_object__user_array_x[i], &moving_object__user_array_y[i] ) ) {
+  if ( pipe_for_reading_coordinates_from_sextract_single_image == NULL ) {
+   fprintf( stderr, "ERROR: popen() failed for sextract_single_image command\n" );
+   moving_object__user_array_x[i]= moving_object__user_array_y[i]= 0.0;
+  } else if ( 2 != fscanf( pipe_for_reading_coordinates_from_sextract_single_image, "Star coordinates %f %f (pix)", &moving_object__user_array_x[i], &moving_object__user_array_y[i] ) ) {
    fprintf( stderr, "No moving object selected (or failed to parse './sextract_single_image' output)\n" );
    moving_object__user_array_x[i]= moving_object__user_array_y[i]= 0.0;
   }
@@ -319,7 +322,9 @@ void ask_user_to_click_on_moving_object( char **input_images, float *moving_obje
    moving_object__user_array_y[i]= 0.0;
    fprintf( stderr, "No moving object selected (or failed to parse './sextract_single_image' output) (case C)\n" );
   }
-  pclose( pipe_for_reading_coordinates_from_sextract_single_image );
+  if ( pipe_for_reading_coordinates_from_sextract_single_image != NULL ) {
+   pclose( pipe_for_reading_coordinates_from_sextract_single_image );
+  }
   // fprintf(stderr,"ask_user_to_click_on_moving_object() %f %f\n", moving_object__user_array_x[i], moving_object__user_array_y[i]);
   //  Crash if the moving object is not visible on the reference image
   if ( i == 0 ) {

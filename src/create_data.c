@@ -117,6 +117,15 @@ void sort_log_file_in_mag() {
                                  // The array data is not changed.
 
  f= fopen( "vast_lightcurve_statistics.log", "w" );
+ if ( f == NULL ) {
+  fprintf( stderr, "ERROR: cannot open vast_lightcurve_statistics.log for writing in sort_log_file_in_mag()\n" );
+  free( p );
+  for ( i= 0; i < number_of_lines_in_file; i++ )
+   free( file_content[i] );
+  free( file_content );
+  free( mag );
+  return;
+ }
  for ( i= 0; i < n; i++ ) {
   fprintf( f, "%s", file_content[p[i]] );
  }

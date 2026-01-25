@@ -42,7 +42,7 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
  FILE *input_sysrem_input_star_list_lst;
  FILE *outputfile[SYSREM_MAX_NUMBER_OF_PROCESSING_BLOCKS]; //= { NULL }; // I'm initializing it to NULL just to make the compiler happy
  // FILE **outputfile;
- unsigned int Nstars, Noutput_files, output_file_counter;
+ unsigned int Nstars, Noutput_files, output_file_counter, close_counter;
  char full_string[MAX_STRING_LENGTH_IN_VAST_LIGHTCURVE_STATISTICS_LOG];
 
  Nstars= 0;
@@ -103,9 +103,9 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
  if ( NULL == input_sysrem_input_star_list_lst ) {
   fprintf( stderr, "ERROR! Can't open file sysrem_input_star_list.lst (2)\n" );
   // Close already opened output files before exiting
-  for ( output_file_counter= 0; output_file_counter < Noutput_files; output_file_counter++ ) {
-   if ( outputfile[output_file_counter] != NULL ) {
-    fclose( outputfile[output_file_counter] );
+  for ( close_counter= 0; close_counter < Noutput_files; close_counter++ ) {
+   if ( outputfile[close_counter] != NULL ) {
+    fclose( outputfile[close_counter] );
    }
   }
   exit( EXIT_FAILURE );
@@ -117,9 +117,9 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
    fprintf( stderr, "ERROR: NULL == outputfile[output_file_counter modulus Noutput_files] this shouldn't be happening!\n" );
    // Close input file and all output files before exiting
    fclose( input_sysrem_input_star_list_lst );
-   for ( output_file_counter= 0; output_file_counter < Noutput_files; output_file_counter++ ) {
-    if ( outputfile[output_file_counter] != NULL ) {
-     fclose( outputfile[output_file_counter] );
+   for ( close_counter= 0; close_counter < Noutput_files; close_counter++ ) {
+    if ( outputfile[close_counter] != NULL ) {
+     fclose( outputfile[close_counter] );
     }
    }
    exit( EXIT_FAILURE );
@@ -133,11 +133,11 @@ int split_sysrem_input_star_list_lst( char **split_sysrem_input_star_list_lst_fi
  // Note: Nstars check removed here as it was already validated above and hasn't changed
 
  // close the output files
- for ( output_file_counter= 0; output_file_counter < Noutput_files; output_file_counter++ ) {
-  // why would outputfile[output_file_counter] be NULL?! I don't know. Trying to expect the unexpected.
-  // if ( NULL != outputfile[output_file_counter] ) {
-  fprintf( stderr, "Closing the output file %d\n", output_file_counter );
-  fclose( outputfile[output_file_counter] );
+ for ( close_counter= 0; close_counter < Noutput_files; close_counter++ ) {
+  // why would outputfile[close_counter] be NULL?! I don't know. Trying to expect the unexpected.
+  // if ( NULL != outputfile[close_counter] ) {
+  fprintf( stderr, "Closing the output file %d\n", close_counter );
+  fclose( outputfile[close_counter] );
   //}
  }
  // free(outputfile);
