@@ -120,6 +120,9 @@ void write_triangle_matching_debug_log( struct Triangle *tr1, int Nt1, struct Tr
  int i;
  // int max_log_triangles;
 
+ (void)star1; // Unused, kept for API consistency
+ (void)star2; // Unused, kept for API consistency
+
  f= fopen( filename, "w" );
  if ( NULL == f ) {
   fprintf( stderr, "ERROR: cannot open %s for writing\n", filename );
@@ -164,6 +167,8 @@ void write_triangle_construction_stars_ds9( struct Star *star, int Number, const
  FILE *f;
  int i;
  int stars_to_write;
+
+ (void)max_stars; // Intentionally ignored - output all stars
 
  f= fopen( filename, "w" );
  if ( NULL == f ) {

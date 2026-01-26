@@ -1905,6 +1905,8 @@ int get_star_number_from_name( char *output_str, char *input_str ) {
 void remove_median_magnitude( float *mag, int N, double mag_zeropoint_for_log, double *JD_double_array_for_log ) {
  FILE *vast_lc_remove_median_magnitude_logfile;
  int i;
+
+ (void)mag_zeropoint_for_log; // Unused, but kept for API consistency
  float *sorted_mag;
  float median_mag;
  float *corrected_mag;

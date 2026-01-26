@@ -1481,7 +1481,7 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
  * The caller must free the returned string.
  */
 char *get_sanitized_curl_proxy() {
- int i;
+ size_t i;
 
  const char *proxy_env= getenv( "VAST_CURL_PROXY" );
 
