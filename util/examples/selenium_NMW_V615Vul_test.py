@@ -38,6 +38,7 @@ SKIP_LINK_PATTERNS = (
     "wis-tns.org",
     "aladin.u-strasbg.fr/AladinLite/",
     "www.projectpluto.com/sat_id2.htm",
+    "minorplanetcenter.net/cgi-bin/checkneocmt.cgi",
 )
 
 # Links that are known to be flaky - failures are logged as warnings, not errors

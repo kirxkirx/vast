@@ -76,24 +76,7 @@ jobs:
       run: sudo port upgrade outdated
       if: env.SKIP != 'true'
     - name: Install dependencies via MacPorts
-      run: sudo port install gcc13 wget xorg-libX11 libpng ghostscript shellcheck python312 py312-pip
-      if: env.SKIP != 'true'
-    - name: Install Python and Selenium via MacPorts
-      run: |
-        # Create a virtual environment to install Python packages (PEP 668 compliance)
-        /opt/local/bin/python3.12 -m venv ~/selenium_venv
-        source ~/selenium_venv/bin/activate
-        pip install --upgrade selenium requests
-        python3 -c "import selenium; print(selenium.__version__)"
-        python3 -c "import requests; print(requests.__version__)"
-        # Add venv to PATH for subsequent steps
-        echo "$HOME/selenium_venv/bin" >> $GITHUB_PATH
-      if: env.SKIP != 'true'
-    - name: Verify Chrome availability for Selenium tests
-      run: |
-        # macOS runners have Chrome pre-installed
-        /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --version || echo "Chrome version check"
-        # Selenium 4.6+ has built-in Selenium Manager that auto-downloads ChromeDriver
+      run: sudo port install gcc13 wget xorg-libX11 libpng ghostscript shellcheck
       if: env.SKIP != 'true'
     - name: make VaST (MacPorts)
       run: make
