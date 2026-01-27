@@ -3256,6 +3256,10 @@ int main( int argc, char **argv ) {
  if ( debug != 0 )
   fprintf( stderr, "DEBUG MSG: Sort arrays for Ident STAR3, NUMBER3...\n" );
  Sort_in_mag_of_stars( STAR3, NUMBER3 );
+ // Rebuild reverse lookup for STAR3 after sorting (indices changed)
+ for ( i= 0; i < NUMBER3; i++ ) {
+  star_num_to_star3_idx[STAR3[i].n]= i;
+ }
  if ( debug != 0 )
   fprintf( stderr, "DEBUG MSG: Done with sorting arrays...\n" );
 
