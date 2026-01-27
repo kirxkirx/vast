@@ -1237,9 +1237,11 @@ int main( int argc, char **argv ) {
  int coordinate_array_counter;
  int *number_of_coordinate_measurements_for_star;
  int *star_numbers_for_coordinate_arrays;
+ int *star_num_to_coord_array_idx; // Reverse lookup: star_number -> coordinate_array_index (O(1) instead of O(n) search)
  float **coordinate_array_x;
  float **coordinate_array_y;
  int i_update_coordinates_STAR3;
+ int *star_num_to_star3_idx; // Reverse lookup: star_number -> STAR3 index (O(1) instead of O(n) search)
 
  int max_number; // Maximum star number, will be needed to make up numbers for new stars if we want to add them to the list
 
@@ -2698,6 +2700,22 @@ int main( int argc, char **argv ) {
   vast_report_memory_error();
   return EXIT_FAILURE;
  }
+ // Allocate reverse lookup array for O(1) coordinate array index lookup by star number
+ malloc_size= ( MAX_NUMBER_OF_STARS + 1 ) * sizeof( int );
+ if ( malloc_size <= 0 ) {
+  fprintf( stderr, "ERROR - trying to allocate zero or negative number of bytes for star_num_to_coord_array_idx!\n" );
+  return EXIT_FAILURE;
+ }
+ star_num_to_coord_array_idx= malloc( (size_t)malloc_size );
+ if ( star_num_to_coord_array_idx == NULL ) {
+  fprintf( stderr, "ERROR: can't allocate memory for star_num_to_coord_array_idx\n" );
+  vast_report_memory_error();
+  return EXIT_FAILURE;
+ }
+ // Initialize to -1 (meaning "not in coordinate arrays")
+ for ( i= 0; i <= MAX_NUMBER_OF_STARS; i++ ) {
+  star_num_to_coord_array_idx[i]= -1;
+ }
  malloc_size= MAX_NUMBER_OF_STARS * sizeof( float * );
  if ( malloc_size <= 0 ) {
   fprintf( stderr, "ERROR010 - trying to allocate zero or negative number of bytes!\n" );
@@ -2859,6 +2877,22 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "ERROR: can't allocate memory!\n STAR3=malloc(MAX_NUMBER_OF_STARS*sizeof(struct Star)); - failed!\n" );
   vast_report_memory_error();
   return EXIT_FAILURE;
+ }
+ // Allocate reverse lookup array for O(1) STAR3 index lookup by star number
+ malloc_size= ( MAX_NUMBER_OF_STARS + 1 ) * sizeof( int );
+ if ( malloc_size <= 0 ) {
+  fprintf( stderr, "ERROR - trying to allocate zero or negative number of bytes for star_num_to_star3_idx!\n" );
+  return EXIT_FAILURE;
+ }
+ star_num_to_star3_idx= malloc( (size_t)malloc_size );
+ if ( star_num_to_star3_idx == NULL ) {
+  fprintf( stderr, "ERROR: can't allocate memory for star_num_to_star3_idx\n" );
+  vast_report_memory_error();
+  return EXIT_FAILURE;
+ }
+ // Initialize to -1 (meaning "not in STAR3")
+ for ( i= 0; i <= MAX_NUMBER_OF_STARS; i++ ) {
+  star_num_to_star3_idx[i]= -1;
  }
  //---------------------------------------
  // Determine SExtractor catalog format //
@@ -3062,6 +3096,7 @@ int main( int argc, char **argv ) {
   // Use only good stars for coordinate transformation
   if ( STAR1[NUMBER1 - 1].sextractor_flag <= 7 && STAR1[NUMBER1 - 1].vast_flag == 0 ) {
    Star_Copy( STAR3 + NUMBER3 - 1, STAR1 + NUMBER1 - 1 );
+   star_num_to_star3_idx[STAR1[NUMBER1 - 1].n]= NUMBER3 - 1; // Update reverse lookup for O(1) access
   } else {
    NUMBER3--;
   }
@@ -3351,6 +3386,7 @@ int main( int argc, char **argv ) {
 
   // Save coordinates to the array. (the arrays are used to compute mean position of a star across all images)
   star_numbers_for_coordinate_arrays[coordinate_array_counter]= STAR1[i].n;
+  star_num_to_coord_array_idx[STAR1[i].n]= coordinate_array_counter; // Update reverse lookup for O(1) access
   number_of_coordinate_measurements_for_star[coordinate_array_counter]= 1; // first measurement
   coordinate_array_x[coordinate_array_counter]= malloc( sizeof( float ) );
   if ( coordinate_array_x[coordinate_array_counter] == NULL ) {
@@ -5008,6 +5044,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       if ( i >= Number_of_ecv_star ) {
        // Save coordinates to the array. (the arrays are used to compute mean position of a star across all images)
        star_numbers_for_coordinate_arrays[coordinate_array_counter]= STAR1[Pos1[i]].n;
+       star_num_to_coord_array_idx[STAR1[Pos1[i]].n]= coordinate_array_counter; // Update reverse lookup for O(1) access
        number_of_coordinate_measurements_for_star[coordinate_array_counter]= 1; // first measurement
        coordinate_array_x[coordinate_array_counter]= malloc( sizeof( float ) );
        if ( coordinate_array_x[coordinate_array_counter] == NULL ) {
@@ -5028,20 +5065,11 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       }
       //
 
-      // Coordinates averaging
-      for ( coordinate_array_index= 0; coordinate_array_index < coordinate_array_counter; coordinate_array_index++ ) {
-       // sadly, no measurable speed-up
-       // attempt to speed-up
-       if ( n >= MAX_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ) {
-        if ( number_of_coordinate_measurements_for_star[coordinate_array_index] >= MAX_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ) {
-         continue;
-        }
-       }
-       //
-       // SLOW: 5.12%
-       // if ( STAR1[Pos1[i]].n == star_numbers_for_coordinate_arrays[coordinate_array_index] ) {
-       // Using the IF_UNLIKELY macro to handle branch prediction
-       IF_UNLIKELY( STAR1[Pos1[i]].n == star_numbers_for_coordinate_arrays[coordinate_array_index] ) {
+      // Coordinates averaging - use O(1) lookup instead of O(n) linear search
+      coordinate_array_index= star_num_to_coord_array_idx[STAR1[Pos1[i]].n];
+      if ( coordinate_array_index != -1 ) {
+       // Skip if we already have enough measurements
+       if ( !( n >= MAX_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES && number_of_coordinate_measurements_for_star[coordinate_array_index] >= MAX_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ) ) {
         // maybe we don't want to do it if number_of_coordinate_measurements_for_star[coordinate_array_index] > something ?
         if ( number_of_coordinate_measurements_for_star[coordinate_array_index] < MAX_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ) {
          number_of_coordinate_measurements_for_star[coordinate_array_index]++;
@@ -5067,31 +5095,18 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
           //
          } // update coordinates ONLY if we already have many measurements
         } // if( number_of_coordinate_measurements_for_star[coordinate_array_index]<MAX_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ){
-          /////////////////
-          // coordinate_array_index=coordinate_array_counter; // break the loop
-          //  cannot use the usual break here if OpenMP is active
-          //                                            #ifndef VAST_ENABLE_OPENMP
-        break; // there should be only one match STAR1[Pos1[i]].n==star_numbers_for_coordinate_arrays[coordinate_array_index] , right?
-               //                                           #endif
-        /////////////////
-       } // if( STAR1[Pos1[i]].n==star_numbers_for_coordinate_arrays[coordinate_array_index] ){
-      } // for(coordinate_array_index=0;coordinate_array_index<NUMBER1;coordinate_array_index++){
-      // Update coordinates in STAR3 (reference structure for image metching)
-      if ( n > MIN_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ) { // this step make sence only if coordinates in STAR1 have (or could have) been updated, and that if checks it!
-       for ( i_update_coordinates_STAR3= 0; i_update_coordinates_STAR3 < NUMBER3; i_update_coordinates_STAR3++ ) {
-        // for ( i_update_coordinates_STAR3= NUMBER3; i_update_coordinates_STAR3--; ) {
-        //  SLOW: 4.13%
-        // if ( STAR1[Pos1[i]].n == STAR3[i_update_coordinates_STAR3].n ) {
-        // Using the IF_UNLIKELY macro to handle branch prediction
-        IF_UNLIKELY( STAR1[Pos1[i]].n == STAR3[i_update_coordinates_STAR3].n ) {
-         // never update for a moving object
-         if ( STAR1[Pos1[i]].moving_object != 1 && STAR3[i_update_coordinates_STAR3].moving_object != 1 ) {
-          STAR3[i_update_coordinates_STAR3].x= STAR1[Pos1[i]].x;
-          STAR3[i_update_coordinates_STAR3].y= STAR1[Pos1[i]].y;
-         }
-         break; // there should be only one match, correct?!
-        } // if( STAR1[Pos1[i]].n==STAR3[i_update_coordinates_STAR3].n ){
-       } // for( i_update_coordinates_STAR3=0; i_update_coordinates_STAR3<NUMBER3; i_update_coordinates_STAR3++ ){
+       } // skip if we already have enough measurements
+      } // if( coordinate_array_index != -1 )
+      // Update coordinates in STAR3 (reference structure for image matching) - use O(1) lookup instead of O(n) linear search
+      if ( n > MIN_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ) { // this step makes sense only if coordinates in STAR1 have (or could have) been updated
+       i_update_coordinates_STAR3= star_num_to_star3_idx[STAR1[Pos1[i]].n];
+       if ( i_update_coordinates_STAR3 != -1 ) {
+        // never update for a moving object
+        if ( STAR1[Pos1[i]].moving_object != 1 && STAR3[i_update_coordinates_STAR3].moving_object != 1 ) {
+         STAR3[i_update_coordinates_STAR3].x= STAR1[Pos1[i]].x;
+         STAR3[i_update_coordinates_STAR3].y= STAR1[Pos1[i]].y;
+        }
+       } // if( i_update_coordinates_STAR3 != -1 )
       } // if( n>MIN_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ){
       // Done with avaraging the coordinates
       ////////////////////////////////////////////////////////////////////
@@ -5278,6 +5293,14 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
         }
         free( star_numbers_for_coordinate_arrays );
         if ( debug != 0 ) {
+         fprintf( stderr, "DEBUG MSG: free(star_num_to_coord_array_idx);\n" );
+        }
+        free( star_num_to_coord_array_idx );
+        if ( debug != 0 ) {
+         fprintf( stderr, "DEBUG MSG: free(star_num_to_star3_idx);\n" );
+        }
+        free( star_num_to_star3_idx );
+        if ( debug != 0 ) {
          fprintf( stderr, "DEBUG MSG: free(number_of_coordinate_measurements_for_star);\n" );
         }
         free( number_of_coordinate_measurements_for_star );
@@ -5437,6 +5460,14 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  }
  // fprintf( stderr, "13 " );
  free( star_numbers_for_coordinate_arrays );
+ if ( debug != 0 ) {
+  fprintf( stderr, "DEBUG MSG: free(star_num_to_coord_array_idx);\n" );
+ }
+ free( star_num_to_coord_array_idx );
+ if ( debug != 0 ) {
+  fprintf( stderr, "DEBUG MSG: free(star_num_to_star3_idx);\n" );
+ }
+ free( star_num_to_star3_idx );
  if ( debug != 0 ) {
   fprintf( stderr, "DEBUG MSG: free(number_of_coordinate_measurements_for_star);\n" );
  }
