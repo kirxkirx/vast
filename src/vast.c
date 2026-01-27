@@ -91,6 +91,14 @@
 //
 #include "vast_is_file.h"
 #include "vast_image_quality.h"
+//
+#include "quickselect.h" // for quickselect_median_float()
+
+// Toggle median implementation:
+// - Set to 1 for GSL sort-based median.
+// - Set to 0 for quickselect-based median (faster O(n) average vs O(n log n) for sort).
+//
+#define USE_GSL_MEDIAN 0
 
 /****************** Auxiliary functions ******************/
 
@@ -739,7 +747,7 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
   return;
  }
 
- fprintf( stderr, "TRANSIENTDEBUG01\n" );
+ // fprintf( stderr, "TRANSIENTDEBUG01\n" );
 
  // Test if the time difference between the reference and the current image is >TRANSIENT_MIN_TIMESCALE_DAYS
  if ( fabs( star.JD - reference_image_JD ) < TRANSIENT_MIN_TIMESCALE_DAYS ) {
@@ -747,7 +755,7 @@ void test_transient( double *search_area_boundaries, struct Star star, double re
  }
  // if( star.n==4511 )fprintf(stderr,"##### %lf %lf\n",star.JD,reference_image_JD);
  // if( star.n==21841 )fprintf(stderr,"##### %lf %lf\n",star.JD,reference_image_JD);
- fprintf( stderr, "TRANSIENTDEBUG02\n" );
+ // fprintf( stderr, "TRANSIENTDEBUG02\n" );
 
  if ( x > search_area_boundaries[0] && x < search_area_boundaries[1] ) {
   if ( y > search_area_boundaries[2] && y < search_area_boundaries[3] ) {
@@ -5044,12 +5052,15 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
          // update coordinates ONLY if we already have many measurements
          if ( number_of_coordinate_measurements_for_star[coordinate_array_index] > MIN_N_IMAGES_USED_TO_DETERMINE_STAR_COORDINATES ) {
           //
-
-          //
+#if USE_GSL_MEDIAN
           gsl_sort_float( coordinate_array_x[coordinate_array_index], 1, number_of_coordinate_measurements_for_star[coordinate_array_index] );
           gsl_sort_float( coordinate_array_y[coordinate_array_index], 1, number_of_coordinate_measurements_for_star[coordinate_array_index] );
           STAR1[Pos1[i]].x= gsl_stats_float_median_from_sorted_data( coordinate_array_x[coordinate_array_index], 1, number_of_coordinate_measurements_for_star[coordinate_array_index] );
           STAR1[Pos1[i]].y= gsl_stats_float_median_from_sorted_data( coordinate_array_y[coordinate_array_index], 1, number_of_coordinate_measurements_for_star[coordinate_array_index] );
+#else
+          STAR1[Pos1[i]].x= quickselect_median_float( coordinate_array_x[coordinate_array_index], number_of_coordinate_measurements_for_star[coordinate_array_index] );
+          STAR1[Pos1[i]].y= quickselect_median_float( coordinate_array_y[coordinate_array_index], number_of_coordinate_measurements_for_star[coordinate_array_index] );
+#endif
           //
           // STAR1[Pos1[i]].x= clipped_mean_of_unsorted_data_float( coordinate_array_x[coordinate_array_index], number_of_coordinate_measurements_for_star[coordinate_array_index] );
           // STAR1[Pos1[i]].y= clipped_mean_of_unsorted_data_float( coordinate_array_y[coordinate_array_index], number_of_coordinate_measurements_for_star[coordinate_array_index] );

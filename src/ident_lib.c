@@ -1303,12 +1303,20 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
 
  point p1, p2, p_best;
 
- int previous_number_in_array;
-
  int number_of_ambiguous_matches= 0;
  double fraction_of_ambiguous_matches;
 
+ // Bitmap for O(1) lookup of already-matched star1 indices (replaces O(n) linear search)
+ char *matched_star1_bitmap;
+
  epsilon= sigma_popadaniya * sigma_popadaniya;
+
+ // Allocate and zero-initialize bitmap for tracking matched star1 indices
+ matched_star1_bitmap= (char *)calloc( Number1, sizeof( char ) );
+ if ( matched_star1_bitmap == NULL ) {
+  fprintf( stderr, "ERROR in Ident_on_sigma(): cannot allocate memory for matched_star1_bitmap\n" );
+  return 0;
+ }
 
  points1= loadPoint( star1, Number1 );
  points2= loadPoint( star2, Number2 );
@@ -1391,15 +1399,17 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
   p1= disjoinList( &xs_matched_ );
   p2= disjoinList( &ys_matched_ );
   // if the star was not matched with another star before
-  previous_number_in_array= isNumberInIntArray( Pos1, number_of_matched_stars, p1.i );
-  if ( -1 == previous_number_in_array ) {
+  // Use bitmap for O(1) lookup instead of O(n) linear search
+  if ( matched_star1_bitmap[p1.i] == 0 ) {
    //
    if ( number_of_matched_stars >= Number1 ) {
     fprintf( stderr, "ERROR in Ident_on_sigma(): number_of_matched_stars>=Number1 while it shouldn't\n" );
+    free( matched_star1_bitmap );
     exit( EXIT_FAILURE );
    }
    if ( number_of_matched_stars >= Number2 ) {
     fprintf( stderr, "ERROR in Ident_on_sigma(): number_of_matched_stars>=Number2 while it shouldn't\n" );
+    free( matched_star1_bitmap );
     exit( EXIT_FAILURE );
    }
    //
@@ -1411,8 +1421,12 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
    // write it as matched
    Pos1[number_of_matched_stars]= p1.i;
    Pos2[number_of_matched_stars]= p2.i;
+   matched_star1_bitmap[p1.i]= 1; // Mark this star1 index as matched
    number_of_matched_stars++;
   } else {
+   // Note: the comment below is misleading. The algorithm doesn't find a "better" match.
+   // It simply uses first-come-first-served: whichever star2 was processed first claimed
+   // this star1, and subsequent star2s wanting the same star1 are rejected as ambiguous.
    // this star has a better match, so this match is wrong
    // WHY DO YOU THINK THE PREVIOUS MATCH IS THE BETTER ONE?
    ys_unmatched= addToList( p2, ys_unmatched );
@@ -1459,6 +1473,8 @@ int Ident_on_sigma( struct Star *star1, int Number1, struct Star *star2, int Num
  //
  fprintf( stderr, "fraction_of_ambiguous_matches= %lf, number_of_ambiguous_matches=%d \n", fraction_of_ambiguous_matches, number_of_ambiguous_matches );
  //
+
+ free( matched_star1_bitmap );
 
  return number_of_matched_stars;
 }
