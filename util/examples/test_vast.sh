@@ -31197,16 +31197,49 @@ fi
 
 # 2nd run should find no non-default apertures
 #lib/select_aperture_with_smallest_scatter_for_each_object 2>&1 | grep -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for  1000 stars'  -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for   999 stars'
-TEST_OUTPUT=$(lib/select_aperture_with_smallest_scatter_for_each_object 2>&1) echo "$TEST_OUTPUT" | grep -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for  1000 stars'  -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for   999 stars'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES BESTAPSEL_002"
- GREP_RESULT="$TEST_OUTPUT"
- DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### BESTAPSEL_002 ######
-$GREP_RESULT"
+#TEST_OUTPUT=$(lib/select_aperture_with_smallest_scatter_for_each_object 2>&1) echo "$TEST_OUTPUT" | grep -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for  1000 stars'  -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for   999 stars'
+#if [ $? -ne 0 ];then
+# TEST_PASSED=0
+# FAILED_TEST_CODES="$FAILED_TEST_CODES BESTAPSEL_002"
+# GREP_RESULT="$TEST_OUTPUT"
+# DEBUG_OUTPUT="$DEBUG_OUTPUT
+####### BESTAPSEL_002 ######
+#$GREP_RESULT"
+#fi
+#unset TEST_OUTPUT
+
+TEST_OUTPUT="$(lib/select_aperture_with_smallest_scatter_for_each_object 2>&1)"
+RC=$?
+
+# 1) command failed
+if [ $RC -ne 0 ]; then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES BESTAPSEL_002_CMDFAIL"
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### BESTAPSEL_002_CMDFAIL ######
+exit_code=$RC
+$TEST_OUTPUT"
+# 2) output empty
+elif [ -z "$TEST_OUTPUT" ]; then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES BESTAPSEL_002_EMPTY"
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### BESTAPSEL_002_EMPTY ######
+(output is empty)"
+# 3) expected lines missing
+elif ! printf '%s\n' "$TEST_OUTPUT" | grep -q \
+        -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for  1000 stars' \
+        -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for   999 stars'
+then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES BESTAPSEL_002_NOMATCH"
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### BESTAPSEL_002_NOMATCH ######
+$TEST_OUTPUT"
 fi
-unset TEST_OUTPUT
+
+unset TEST_OUTPUT RC
+
 
 ### run with extra comments
 # preapare
@@ -31236,16 +31269,49 @@ fi
 
 # 2nd run should find no non-default apertures
 #lib/select_aperture_with_smallest_scatter_for_each_object 2>&1 | grep -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for  1000 stars' -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for   999 stars'
-TEST_OUTPUT=$(lib/select_aperture_with_smallest_scatter_for_each_object 2>&1) echo "$TEST_OUTPUT" | grep -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for  1000 stars' -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for   999 stars'
-if [ $? -ne 0 ];then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES BESTAPSEL_004"
- GREP_RESULT="$TEST_OUTPUT"
- DEBUG_OUTPUT="$DEBUG_OUTPUT
-###### BESTAPSEL_004 ######
-$GREP_RESULT"
+#TEST_OUTPUT=$(lib/select_aperture_with_smallest_scatter_for_each_object 2>&1) echo "$TEST_OUTPUT" | grep -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for  1000 stars' -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for   999 stars'
+#if [ $? -ne 0 ];then
+# TEST_PASSED=0
+# FAILED_TEST_CODES="$FAILED_TEST_CODES BESTAPSEL_004"
+# GREP_RESULT="$TEST_OUTPUT"
+# DEBUG_OUTPUT="$DEBUG_OUTPUT
+####### BESTAPSEL_004 ######
+#$GREP_RESULT"
+#fi
+#unset TEST_OUTPUT
+
+TEST_OUTPUT="$(lib/select_aperture_with_smallest_scatter_for_each_object 2>&1)"
+RC=$?
+
+# 1) command failed
+if [ $RC -ne 0 ]; then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES BESTAPSEL_004_CMDFAIL"
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### BESTAPSEL_004_CMDFAIL ######
+exit_code=$RC
+$TEST_OUTPUT"
+# 2) output empty
+elif [ -z "$TEST_OUTPUT" ]; then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES BESTAPSEL_004_EMPTY"
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### BESTAPSEL_004_EMPTY ######
+(output is empty)"
+# 3) expected lines missing
+elif ! printf '%s\n' "$TEST_OUTPUT" | grep -q \
+        -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for  1000 stars' \
+        -e 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for   999 stars'
+then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES BESTAPSEL_004_NOMATCH"
+  DEBUG_OUTPUT="$DEBUG_OUTPUT
+###### BESTAPSEL_004_NOMATCH ######
+$TEST_OUTPUT"
 fi
-unset TEST_OUTPUT
+
+unset TEST_OUTPUT RC
+
 
 #####
 
