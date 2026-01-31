@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 
 # This script is for automated VaST testing that can be run form a cron job.
-# It will 'git pull' the latest version of VaST and if there is an update,
-# the script will compile it and run the test reporting the results to the developer by e-mail.
+# It will check if GitHub Actions tests passed for the latest commit, and if so,
+# 'git pull' the latest version of VaST, compile it and run the test
+# reporting the results to the developer by e-mail.
+
+# Configuration
+GITHUB_REPO_OWNER="kirxkirx"
+GITHUB_REPO_NAME="vast"
 
 
 #################################
@@ -115,6 +120,16 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
+# Check that either curl or wget is available (needed for GitHub API)
+command -v curl &> /dev/null
+if [ $? -ne 0 ];then
+ command -v wget &> /dev/null
+ if [ $? -ne 0 ];then
+  echo "ERROR: neither curl nor wget is installed"
+  exit 1
+ fi
+fi
+
 VAST_PATH=$(get_vast_path_ends_with_slash_from_this_script_name "$0")
 export VAST_PATH
 # Check if we are in the VaST root directory
@@ -127,12 +142,83 @@ fi
 
 # update VaST
 
+# Check if this is a git repository
+if [ ! -d .git ];then
+ echo "ERROR: $VAST_PATH is not a git repository"
+ exit 1
+fi
+
+# Get current local commit
+CURRENT_LOCAL_COMMIT=$(git rev-parse HEAD 2>/dev/null)
+if [ $? -ne 0 ] || [ -z "$CURRENT_LOCAL_COMMIT" ];then
+ echo "ERROR: cannot get current commit hash"
+ exit 1
+fi
+
+# Fetch latest info from remote (without updating working directory)
+git fetch origin master &>/dev/null
+if [ $? -ne 0 ];then
+ echo "ERROR: git fetch failed"
+ exit 1
+fi
+
+# Get remote commit
+REMOTE_COMMIT=$(git rev-parse origin/master 2>/dev/null)
+if [ $? -ne 0 ] || [ -z "$REMOTE_COMMIT" ];then
+ echo "ERROR: cannot get remote commit hash"
+ exit 1
+fi
+
+# Check if already up to date
+if [ "$CURRENT_LOCAL_COMMIT" = "$REMOTE_COMMIT" ];then
+# echo "Already up to date"
+ exit 0
+fi
+
+echo "New version available: $REMOTE_COMMIT"
+echo "Checking GitHub Actions status for this commit..."
+
+# Check combined status using GitHub's status API
+# This endpoint returns a simple "state" field: "success", "pending", "failure", or "error"
+STATUS_URL="https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/commits/${REMOTE_COMMIT}/status"
+
+if command -v curl &> /dev/null; then
+ STATUS_RESPONSE=$(curl --silent --show-error --fail "$STATUS_URL" 2>/dev/null)
+elif command -v wget &> /dev/null; then
+ STATUS_RESPONSE=$(wget -q -O - "$STATUS_URL" 2>/dev/null)
+fi
+
+if [ $? -ne 0 ] || [ -z "$STATUS_RESPONSE" ];then
+ echo "ERROR: failed to fetch commit status from GitHub API"
+ exit 1
+fi
+
+# Extract the state field - look for "state": "success" or similar
+STATE=$(echo "$STATUS_RESPONSE" | grep -o '"state"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/"state"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/' | head -n 1)
+
+echo "Commit status: $STATE"
+
+# Check if state is success
+if [ "$STATE" != "success" ];then
+ if [ "$STATE" = "pending" ];then
+  echo "Tests are still running for commit $REMOTE_COMMIT"
+  echo "Will try again later"
+ else
+  echo "ERROR: tests did not pass for commit $REMOTE_COMMIT (state: $STATE)"
+  echo "Will not run local tests for this version"
+ fi
+ exit 0
+fi
+
+echo "All GitHub tests passed. Proceeding with update and local testing."
+
+# Pull the latest version
 # Don't use --depth 1 here!!!
 # When used on a normally-cloned repository it creates a history mismatch that makes Git think the branches have diverge!
-LANG=C git pull 2>&1 | grep -q 'Updating'
+git pull origin master
 if [ $? -ne 0 ];then
-# echo "ERROR: 'git pull' reports 'Already up to date.'"
- exit 0
+ echo "ERROR: git pull failed"
+ exit 1
 fi
 
 if [ -f make.log ];then
