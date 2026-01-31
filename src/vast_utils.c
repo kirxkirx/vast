@@ -4,7 +4,8 @@
 #include <dirent.h>    // DIR, opendir, readdir, closedir, struct dirent
 #include <sys/types.h> // DIR, struct stat
 #include <sys/stat.h>  // stat, lstat, struct stat, S_ISDIR
-#include <unistd.h>    // unlink, rmdir
+#include <unistd.h>    // unlink, rmdir, unlinkat
+#include <fcntl.h>     // AT_SYMLINK_NOFOLLOW
 
 #include "vast_utils.h"
 #include "vast_limits.h"
@@ -145,35 +146,35 @@ int vast_remove_directory( const char *path ) {
 
   DIR *d= opendir( curr_path );
   if ( d ) {
+   int dfd= dirfd( d );
    struct dirent *p;
    while ( ( p= readdir( d ) ) ) {
     // Skip "." and ".."
     if ( !strcmp( p->d_name, "." ) || !strcmp( p->d_name, ".." ) )
      continue;
 
-    // Construct full path
-    size_t curr_len= strlen( curr_path );
-    size_t name_len= strlen( p->d_name );
-    size_t path_len= curr_len + name_len + 2; // +2 for '/' and '\0'
-
-    char *full_path= malloc( path_len );
-    if ( full_path == NULL ) {
-     fprintf( stderr, "ERROR: Memory allocation failed\n" );
-     error= 1;
-     break;
-    }
-
-    /* Handle trailing slash in curr_path */
-    if ( curr_len > 0 && curr_path[curr_len - 1] == '/' ) {
-     sprintf( full_path, "%s%s", curr_path, p->d_name );
-    } else {
-     sprintf( full_path, "%s/%s", curr_path, p->d_name );
-    }
-
     struct stat statbuf;
-    if ( !stat( full_path, &statbuf ) ) {
+    if ( !fstatat( dfd, p->d_name, &statbuf, AT_SYMLINK_NOFOLLOW ) ) {
      if ( S_ISDIR( statbuf.st_mode ) ) {
-      // If directory, add to stack if we haven't reached max depth
+      // If directory, construct full path and add to stack
+      size_t curr_len= strlen( curr_path );
+      size_t name_len= strlen( p->d_name );
+      size_t path_len= curr_len + name_len + 2; // +2 for '/' and '\0'
+
+      char *full_path= malloc( path_len );
+      if ( full_path == NULL ) {
+       fprintf( stderr, "ERROR: Memory allocation failed\n" );
+       error= 1;
+       break;
+      }
+
+      /* Handle trailing slash in curr_path */
+      if ( curr_len > 0 && curr_path[curr_len - 1] == '/' ) {
+       sprintf( full_path, "%s%s", curr_path, p->d_name );
+      } else {
+       sprintf( full_path, "%s/%s", curr_path, p->d_name );
+      }
+
       if ( stack_ptr < MAX_DIR_DEPTH ) {
        dir_stack[stack_ptr++]= full_path; // Will process later
       } else {
@@ -183,20 +184,18 @@ int vast_remove_directory( const char *path ) {
        break;
       }
      } else {
-      // Non-directory entry: attempt to remove it directly
-      if ( unlink( full_path ) != 0 ) {
-       fprintf( stderr, "ERROR removing file: %s\n", full_path );
+      // Non-directory entry: remove using directory fd to avoid TOCTOU race
+      if ( unlinkat( dfd, p->d_name, 0 ) != 0 ) {
+       fprintf( stderr, "ERROR removing file: %s/%s\n", curr_path, p->d_name );
        error= 1;
       }
-      free( full_path );
      }
     } else {
-     // If stat fails (for example, broken symlink), still attempt to remove
-     if ( unlink( full_path ) != 0 ) {
-      fprintf( stderr, "ERROR in vast_remove_directory(): Could not remove: %s\n", full_path );
+     // If lstat fails (for example, broken symlink), still attempt to remove
+     if ( unlinkat( dfd, p->d_name, 0 ) != 0 ) {
+      fprintf( stderr, "ERROR in vast_remove_directory(): Could not remove: %s/%s\n", curr_path, p->d_name );
       error= 1;
      }
-     free( full_path );
     }
    }
    closedir( d );
