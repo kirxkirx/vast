@@ -6,6 +6,7 @@
 #include <sys/stat.h>  // stat, lstat, struct stat, S_ISDIR
 #include <unistd.h>    // unlink, rmdir, unlinkat
 #include <fcntl.h>     // AT_SYMLINK_NOFOLLOW
+#include <libgen.h>    // for basename()
 
 #include "vast_utils.h"
 #include "vast_limits.h"
@@ -561,4 +562,215 @@ int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogf
   };
  }
  return 0;
+}
+
+/****************** Functions moved from vast.c ******************/
+
+void extract_mag_and_snr_from_structStar( const struct Star *stars, size_t n_stars, double *mag_array, double *snr_array ) {
+ size_t i;
+ for ( i= 0; i < n_stars; i++ ) {
+  mag_array[i]= (double)stars[i].mag;
+  snr_array[i]= stars[i].flux / stars[i].flux_err;
+ }
+ return;
+}
+
+// a comparison function to qsort the observations cached in memory
+int compare_star_num( const void *a, const void *b ) {
+ const struct Observation *obs_a= (const struct Observation *)a;
+ const struct Observation *obs_b= (const struct Observation *)b;
+
+ return ( obs_a->star_num - obs_b->star_num );
+}
+
+size_t binary_search_first( struct Observation *arr, size_t size, int target ) {
+ size_t left= 0;
+ size_t right= size;
+ size_t mid;
+
+ while ( left < right ) {
+  mid= left + ( right - left ) / 2;
+  if ( arr[mid].star_num < target ) {
+   left= mid + 1;
+  } else {
+   right= mid;
+  }
+ }
+ return left;
+}
+
+void write_images_catalogs_logfile( char **filelist, int n ) {
+ FILE *f;
+ int i;
+ f= fopen( "vast_images_catalogs.log", "w" );
+ if ( NULL == f ) {
+  fprintf( stderr, "ERROR in write_images_catalogs_logfile() while opening file %s for writing\n", "vast_images_catalogs.log" );
+  return;
+ }
+ for ( i= 0; i < n; i++ ) {
+  fprintf( f, "image%05d.cat %s\n", i + 1, filelist[i] );
+ }
+ fclose( f );
+ return;
+}
+
+/* Write data on magnitude calibration to the log file */
+void write_magnitude_calibration_log( double *mag1, double *mag2, double *mag_err, int N, char *fitsimagename ) {
+ char logfilename[FILENAME_LENGTH];
+ FILE *logfile;
+ int i;
+ strncpy( logfilename, basename( fitsimagename ), FILENAME_LENGTH );
+ logfilename[FILENAME_LENGTH - 1]= '\0';
+ for ( i= (int)strlen( logfilename ) - 1; i--; ) {
+  if ( logfilename[i] == '.' ) {
+   logfilename[i]= '\0';
+   break;
+  }
+ }
+ strcat( logfilename, ".calib" );
+ logfile= fopen( logfilename, "w" );
+ if ( NULL == logfile ) {
+  fprintf( stderr, "WARNING: can't open %s for writing!\n", logfilename );
+  return;
+ }
+ for ( i= 0; i < N; i++ ) {
+  fprintf( logfile, "%8.4lf %8.4lf %.4lf\n", mag1[i], mag2[i], mag_err[i] );
+ }
+ fclose( logfile );
+ fprintf( stderr, "Using %d stars for magnitude calibration (before filtering).\n", N );
+ return;
+}
+
+void write_magnitude_calibration_log2( double *mag1, double *mag2, double *mag_err, int N, char *fitsimagename ) {
+ // Calculate the size of dest, minus the null terminator, to ensure
+ // that it is large enough to hold the concatenated string
+ size_t dest_size= FILENAME_LENGTH - 1;
+
+ char logfilename[FILENAME_LENGTH];
+ FILE *logfile;
+ int i;
+ strncpy( logfilename, basename( fitsimagename ), FILENAME_LENGTH );
+ logfilename[FILENAME_LENGTH - 1]= '\0';
+ for ( i= (int)strlen( logfilename ) - 1; i--; ) {
+  if ( logfilename[i] == '.' ) {
+   logfilename[i]= '\0';
+   break;
+  }
+ }
+ // strcat(logfilename, ".calib2");
+ strncat( logfilename, ".calib2", dest_size - strlen( logfilename ) );
+
+ logfile= fopen( logfilename, "w" );
+ if ( NULL == logfile ) {
+  fprintf( stderr, "WARNING: can't open %s for writing!\n", logfilename );
+  return;
+ }
+ for ( i= 0; i < N; i++ ) {
+  fprintf( logfile, "%8.4lf %8.4lf %.4lf\n", mag1[i], mag2[i], mag_err[i] );
+ }
+ fclose( logfile );
+ fprintf( stderr, "After removing outliers in (X,Y,dm) plane, we are left with %d stars for magnitude calibration.\n", N );
+ return;
+}
+
+void write_magnitude_calibration_log_plane( double *mag1, double *mag2, double *mag_err, int N, char *fitsimagename, double A, double B, double C ) {
+ // Calculate the size of dest, minus the null terminator, to ensure
+ // that it is large enough to hold the concatenated string
+ size_t dest_size= FILENAME_LENGTH - 1;
+
+ char logfilename[FILENAME_LENGTH];
+ FILE *logfile;
+ int i;
+ if ( strlen( fitsimagename ) < 1 ) {
+  fprintf( stderr, "WARNING from write_magnitude_calibration_log_plane(): cannot get FITS image filename!\n" );
+  return;
+ }
+ strncpy( logfilename, basename( fitsimagename ), FILENAME_LENGTH );
+ logfilename[FILENAME_LENGTH - 1]= '\0';
+ for ( i= (int)strlen( logfilename ) - 1; i--; ) {
+  if ( logfilename[i] == '.' ) {
+   logfilename[i]= '\0';
+   break;
+  }
+ }
+ // strcat(logfilename, ".calib_plane");
+ strncat( logfilename, ".calib_plane", dest_size - strlen( logfilename ) );
+
+ logfile= fopen( logfilename, "w" );
+ if ( NULL == logfile ) {
+  fprintf( stderr, "WARNING: can't open %s for writing!\n", logfilename );
+  return;
+ }
+ for ( i= 0; i < N; i++ ) {
+  fprintf( logfile, "%8.4lf %8.4lf %.4lf\n", mag1[i], mag2[i], mag_err[i] );
+ }
+ fclose( logfile );
+ // strcat(logfilename, ".calib_plane_param");
+ strncat( logfilename, ".calib_plane_param", dest_size - strlen( logfilename ) );
+ logfile= fopen( logfilename, "w" );
+ if ( NULL == logfile ) {
+  fprintf( stderr, "WARNING: can't open %s for writing!\n", logfilename );
+  return;
+ }
+ fprintf( logfile, "%lf %lf %lf\n", A, B, C );
+ fclose( logfile );
+ return;
+}
+
+// Write parameters of magnitude calibration to another log file
+void write_magnitude_calibration_param_log( double *poly_coeff, char *fitsimagename ) {
+ // Calculate the size of dest, minus the null terminator, to ensure
+ // that it is large enough to hold the concatenated string
+ size_t dest_size= FILENAME_LENGTH - 1;
+
+ char logfilename[FILENAME_LENGTH];
+ FILE *logfile;
+ int i;
+ strncpy( logfilename, basename( fitsimagename ), FILENAME_LENGTH );
+ logfilename[FILENAME_LENGTH - 1]= '\0';
+ for ( i= (int)strlen( logfilename ) - 1; i--; ) {
+  if ( logfilename[i] == '.' ) {
+   logfilename[i]= '\0';
+   break;
+  }
+ }
+ // strncat(logfilename, ".calib_param", FILENAME_LENGTH - 32);
+ strncat( logfilename, ".calib_param", dest_size - strlen( logfilename ) );
+ logfilename[FILENAME_LENGTH - 1]= '\0';
+ logfile= fopen( logfilename, "w" );
+ if ( NULL == logfile ) {
+  fprintf( stderr, "WARNING: can't open %s for writing!\n", logfilename );
+  return;
+ }
+ fprintf( logfile, "%lf %lf %lf %lf %lf\n", poly_coeff[4], poly_coeff[3], poly_coeff[2], poly_coeff[1], poly_coeff[0] );
+ fclose( logfile );
+ return;
+}
+
+// save_command_line_to_log_file(int argc, char **argv) - save command line arguments to the log file vast_command_line.log
+void save_command_line_to_log_file( int argc, char **argv ) {
+ int i;
+ FILE *cmdlogfile;
+ cmdlogfile= fopen( "vast_command_line.log", "w" );
+ if ( NULL == cmdlogfile ) {
+  fprintf( stderr, "ERROR: cannot open vast_command_line.log for writing - something is very wrong.\n" );
+  return;
+ }
+ // Print to the terminal in addition to the log file
+ fprintf( stderr, "\n VaST was started with the following command line: \n" );
+ for ( i= 0; i < argc; i++ ) {
+  fprintf( cmdlogfile, "%s ", argv[i] ); // log file
+  fprintf( stderr, "%s ", argv[i] );     // terminal
+ }
+ fclose( cmdlogfile );
+ fprintf( stderr, "\n\n" );
+}
+
+int compare( const double *a, const double *b ) {
+ if ( *a < *b )
+  return -1;
+ else if ( *a > *b )
+  return 1;
+ else
+  return 0;
 }
