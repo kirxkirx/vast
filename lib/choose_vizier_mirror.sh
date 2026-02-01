@@ -147,7 +147,8 @@ for vizier_mirror in vizier.cds.unistra.fr vizier.china-vo.org vizier.nao.ac.jp 
   fi
  fi # catalog
 done
-# echo nothing if nothing works
+# If no mirror passed the catalog-specific test, fall back to the primary mirror
+echo "vizier.cds.unistra.fr"
 exit 1
 
 
