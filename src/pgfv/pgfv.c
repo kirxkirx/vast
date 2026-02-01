@@ -5,6 +5,11 @@
 #include <string.h>
 
 #include <math.h>
+// isfinite() is a C99 macro that may not be available on older systems (e.g. Scientific Linux 5.6 with gcc 4.1).
+// Fall back to finite() which is widely available as a BSD/POSIX legacy function.
+#ifndef isfinite
+#define isfinite(x) finite(x)
+#endif
 #include <libgen.h> // for basename()
 
 #include <sys/types.h> // for getpid()
