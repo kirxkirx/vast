@@ -16,22 +16,6 @@ function check_directory_exists {
     fi
 }
 
-# Function to check if a file was successfully created
-function check_file_created {
-    if [ ! -f "$1" ]; then
-        echo "ERROR: Failed to create file $1."
-        exit 1
-    fi
-}
-
-# Function to check if a directory was successfully created
-function check_directory_created {
-    if [ ! -d "$1" ]; then
-        echo "ERROR: Failed to create directory $1."
-        exit 1
-    fi
-}
-
 #################################
 # Set the safe locale that should be available on any POSIX system
 LC_ALL=C
@@ -170,7 +154,7 @@ N_FILE=0
 for FILE_TO_CHECK in $THE_FOUR_IMAGE_FILES ;do
  echo "Checking $FILE_TO_CHECK"
  check_file_exists "$FILE_TO_CHECK"
- N_FILE=$[$N_FILE + 1]
+ N_FILE=$(( N_FILE + 1 ))
 done
 if [ $N_FILE -ne 4 ];then
  echo "ERROR: N_FILE = $N_FILE != 4"
@@ -194,7 +178,7 @@ if [ -d "$OUTPUT_DIR" ];then
  rm -rf "$OUTPUT_DIR"
 fi
 mkdir "$OUTPUT_DIR"
-check_directory_created "$OUTPUT_DIR"
+check_directory_exists "$OUTPUT_DIR"
 mkdir "$OUTPUT_DIR"/reference_platesolved_FITS
 mkdir "$OUTPUT_DIR"/new_platesolved_FITS
 mkdir "$OUTPUT_DIR"/resampled_FITS
@@ -265,164 +249,85 @@ if [ $N_RAW_FILES -gt 1 ];then
 fi
 
 
+# Function to plate-solve an image, generate finding charts, and copy results
+# Arguments: $1 = input file path, $2 = destination subdir (reference_platesolved_FITS or new_platesolved_FITS)
+# Sets global: PROCESS_IMAGE_CHARTS_BASENAME
+process_image() {
+ local INPUTFILE="$1"
+ local DEST_SUBDIR="$2"
+ check_file_exists "$INPUTFILE"
+ local INPUTFILE_BASENAME
+ INPUTFILE_BASENAME=$(basename "$INPUTFILE")
+ # Remove .fz extension for compressed FITS files
+ INPUTFILE_BASENAME="${INPUTFILE_BASENAME/.fz/}"
+ local WCS_INPUTFILE
+ WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
+ WCS_INPUTFILE="${WCS_INPUTFILE/wcs_wcs_/wcs_}"
+ WCS_INPUTFILE="${WCS_INPUTFILE/.fz/}"
+ util/wcs_image_calibration.sh "$INPUTFILE"
+ if [ $? -ne 0 ];then
+  echo "ERROR running util/wcs_image_calibration.sh $INPUTFILE"
+  exit 1
+ fi
+ check_file_exists "$WCS_INPUTFILE"
+ cp -v "$WCS_INPUTFILE" "$OUTPUT_DIR"/"$DEST_SUBDIR"
+ util/make_finding_chart_script.sh "$WCS_INPUTFILE" "$TARET_RA" "$TARET_DEC"
+ if [ $? -ne 0 ];then
+  echo "ERROR running util/make_finding_chart_script.sh $WCS_INPUTFILE $TARET_RA $TARET_DEC"
+  exit 1
+ fi
+ check_file_exists r_"$WCS_INPUTFILE"
+ cp -v r_"$WCS_INPUTFILE" "$OUTPUT_DIR"/resampled_FITS
+ # Return the charts basename via global variable
+ PROCESS_IMAGE_CHARTS_BASENAME="${INPUTFILE_BASENAME//./_}"
+ ## Handle the case of the input image having wcs_ in their name
+ PROCESS_IMAGE_CHARTS_BASENAME="${PROCESS_IMAGE_CHARTS_BASENAME/wcs_/}"
+}
+
 # make plate solved and resampled FITS images and finder charts
-INPUTFILE=$(echo "$THE_FOUR_IMAGE_FILES" | awk '{print $1}')
-check_file_exists "$INPUTFILE"
-INPUTFILE_BASENAME=$(basename "$INPUTFILE")
-# Remove .fz extension for compressed FITS files
-INPUTFILE_BASENAME="${INPUTFILE_BASENAME/.fz/}"
-WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
-WCS_INPUTFILE="${WCS_INPUTFILE/wcs_wcs_/wcs_}"
-WCS_INPUTFILE="${WCS_INPUTFILE/.fz/}"
-util/wcs_image_calibration.sh "$INPUTFILE"
-if [ $? -ne 0 ];then
- echo "ERROR running util/wcs_image_calibration.sh $INPUTFILE"
- exit 1
-fi
-check_file_created "$WCS_INPUTFILE"
-cp -v "$WCS_INPUTFILE" "$OUTPUT_DIR"/reference_platesolved_FITS
-util/make_finding_chart_script.sh "$WCS_INPUTFILE" "$TARET_RA" "$TARET_DEC"
-if [ $? -ne 0 ];then
- echo "ERROR running util/make_finding_chart_script.sh $WCS_INPUTFILE $TARET_RA $TARET_DEC"
- exit 1
-fi
-check_file_created r_"$WCS_INPUTFILE"
-CHARTS_REF1_BASENAME="${INPUTFILE_BASENAME//./_}"
-cp -v r_"$WCS_INPUTFILE" "$OUTPUT_DIR"/resampled_FITS
-
-INPUTFILE=$(echo "$THE_FOUR_IMAGE_FILES" | awk '{print $2}')
-check_file_exists "$INPUTFILE"
-INPUTFILE_BASENAME=$(basename "$INPUTFILE")
-# Remove .fz extension for compressed FITS files
-INPUTFILE_BASENAME="${INPUTFILE_BASENAME/.fz/}"
-WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
-WCS_INPUTFILE="${WCS_INPUTFILE/wcs_wcs_/wcs_}"
-WCS_INPUTFILE="${WCS_INPUTFILE/.fz/}"
-util/wcs_image_calibration.sh "$INPUTFILE"
-if [ $? -ne 0 ];then
- echo "ERROR running util/wcs_image_calibration.sh $INPUTFILE"
- exit 1
-fi
-check_file_created "$WCS_INPUTFILE"
-cp -v "$WCS_INPUTFILE" "$OUTPUT_DIR"/reference_platesolved_FITS
-util/make_finding_chart_script.sh "$WCS_INPUTFILE" "$TARET_RA" "$TARET_DEC"
-if [ $? -ne 0 ];then
- echo "ERROR running util/make_finding_chart_script.sh $WCS_INPUTFILE $TARET_RA $TARET_DEC"
- exit 1
-fi
-check_file_created r_"$WCS_INPUTFILE"
-CHARTS_REF2_BASENAME="${INPUTFILE_BASENAME//./_}"
-cp -v r_"$WCS_INPUTFILE" "$OUTPUT_DIR"/resampled_FITS
-
-INPUTFILE=$(echo "$THE_FOUR_IMAGE_FILES" | awk '{print $3}')
-check_file_exists "$INPUTFILE"
-INPUTFILE_BASENAME=$(basename "$INPUTFILE")
-# Remove .fz extension for compressed FITS files
-INPUTFILE_BASENAME="${INPUTFILE_BASENAME/.fz/}"
-WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
-WCS_INPUTFILE="${WCS_INPUTFILE/wcs_wcs_/wcs_}"
-WCS_INPUTFILE="${WCS_INPUTFILE/.fz/}"
-util/wcs_image_calibration.sh "$INPUTFILE"
-if [ $? -ne 0 ];then
- echo "ERROR running util/wcs_image_calibration.sh $INPUTFILE"
- exit 1
-fi
-check_file_created "$WCS_INPUTFILE"
-cp -v "$WCS_INPUTFILE" "$OUTPUT_DIR"/new_platesolved_FITS
-util/make_finding_chart_script.sh "$WCS_INPUTFILE" "$TARET_RA" "$TARET_DEC"
-if [ $? -ne 0 ];then
- echo "ERROR running util/make_finding_chart_script.sh $WCS_INPUTFILE $TARET_RA $TARET_DEC"
- exit 1
-fi
-check_file_created r_"$WCS_INPUTFILE"
-CHARTS_NEW1_BASENAME="${INPUTFILE_BASENAME//./_}"
-cp -v r_"$WCS_INPUTFILE" "$OUTPUT_DIR"/resampled_FITS
-
-INPUTFILE=$(echo "$THE_FOUR_IMAGE_FILES" | awk '{print $4}')
-check_file_exists "$INPUTFILE"
-INPUTFILE_BASENAME=$(basename "$INPUTFILE")
-# Remove .fz extension for compressed FITS files
-INPUTFILE_BASENAME="${INPUTFILE_BASENAME/.fz/}"
-WCS_INPUTFILE=wcs_$(basename "$INPUTFILE")
-WCS_INPUTFILE="${WCS_INPUTFILE/wcs_wcs_/wcs_}"
-WCS_INPUTFILE="${WCS_INPUTFILE/.fz/}"
-util/wcs_image_calibration.sh "$INPUTFILE"
-if [ $? -ne 0 ];then
- echo "ERROR running util/wcs_image_calibration.sh $INPUTFILE"
- exit 1
-fi
-check_file_created "$WCS_INPUTFILE"
-cp -v "$WCS_INPUTFILE" "$OUTPUT_DIR"/new_platesolved_FITS
-util/make_finding_chart_script.sh "$WCS_INPUTFILE" "$TARET_RA" "$TARET_DEC"
-if [ $? -ne 0 ];then
- echo "ERROR running util/make_finding_chart_script.sh $WCS_INPUTFILE $TARET_RA $TARET_DEC"
- exit 1
-fi
-check_file_created r_"$WCS_INPUTFILE"
-CHARTS_NEW2_BASENAME="${INPUTFILE_BASENAME//./_}"
-cp -v r_"$WCS_INPUTFILE" "$OUTPUT_DIR"/resampled_FITS
-
-## Handle the case of the input image having wcs_ in their name
-CHARTS_REF1_BASENAME="${CHARTS_REF1_BASENAME/wcs_/}"
-CHARTS_REF2_BASENAME="${CHARTS_REF2_BASENAME/wcs_/}"
-CHARTS_NEW1_BASENAME="${CHARTS_NEW1_BASENAME/wcs_/}"
-CHARTS_NEW2_BASENAME="${CHARTS_NEW2_BASENAME/wcs_/}"
-##
+# Image 1,2 = reference; Image 3,4 = new
+IMAGE_DEST_DIRS=( reference_platesolved_FITS reference_platesolved_FITS new_platesolved_FITS new_platesolved_FITS )
+CHARTS_BASENAMES=()
+for IMG_IDX in 1 2 3 4 ;do
+ INPUTFILE=$(echo "$THE_FOUR_IMAGE_FILES" | awk "{print \$$IMG_IDX}")
+ process_image "$INPUTFILE" "${IMAGE_DEST_DIRS[$IMG_IDX-1]}"
+ CHARTS_BASENAMES+=( "$PROCESS_IMAGE_CHARTS_BASENAME" )
+done
+CHARTS_REF1_BASENAME="${CHARTS_BASENAMES[0]}"
+CHARTS_REF2_BASENAME="${CHARTS_BASENAMES[1]}"
+CHARTS_NEW1_BASENAME="${CHARTS_BASENAMES[2]}"
+CHARTS_NEW2_BASENAME="${CHARTS_BASENAMES[3]}"
 
 # Combine the finder charts into one image (note the '*' symbols meaning the command will work only if you have a single transient in that field)
 #
-montage finder_0032pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix.png finder_0032pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_targetmark_v11.png
-montage finder_0032pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix.png finder_0032pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_targetmark_v12.png
-montage finder_0064pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix.png finder_0064pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_targetmark_v11.png
-montage finder_0064pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix.png finder_0064pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_targetmark_v12.png
-montage finder_0128pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix.png finder_0128pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_targetmark_v11.png
-montage finder_0128pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix.png finder_0128pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_targetmark_v12.png
-#
-montage finder_0020pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0020pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0020pix_v11.png
-montage finder_0020pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0020pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0020pix_v12.png
-montage finder_0032pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0032pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_v11.png
-montage finder_0032pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0032pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_v12.png
-montage finder_0064pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0064pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_v11.png
-montage finder_0064pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0064pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_v12.png
-montage finder_0128pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0128pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_v11.png
-montage finder_0128pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0128pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_v12.png
-#
-#
-montage finder_0032pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix.png finder_0032pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_targetmark_v21.png
-montage finder_0032pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix.png finder_0032pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_targetmark_v22.png
-montage finder_0064pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix.png finder_0064pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_targetmark_v21.png
-montage finder_0064pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix.png finder_0064pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_targetmark_v22.png
-montage finder_0128pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix.png finder_0128pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_targetmark_v21.png
-montage finder_0128pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix.png finder_0128pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_targetmark_v22.png
-#
-montage finder_0020pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0020pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0020pix_v21.png
-montage finder_0020pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0020pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0020pix_v22.png
-montage finder_0032pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0032pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_v21.png
-montage finder_0032pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0032pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0032pix_v22.png
-montage finder_0064pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0064pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_v21.png
-montage finder_0064pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0064pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0064pix_v22.png
-montage finder_0128pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0128pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_v21.png
-montage finder_0128pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0128pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_0128pix_v22.png
+REF_BASENAMES=( "$CHARTS_REF1_BASENAME" "$CHARTS_REF2_BASENAME" )
+NEW_BASENAMES=( "$CHARTS_NEW1_BASENAME" "$CHARTS_NEW2_BASENAME" )
+# With target mark: pixel sizes 0032, 0064, 0128
+for PPPP in 0032 0064 0128 ;do
+ for R in 1 2 ;do
+  for N in 1 2 ;do
+   montage finder_"$PPPP"pix_r_wcs_"${REF_BASENAMES[$R-1]}"__*pix.png finder_"$PPPP"pix_r_wcs_"${NEW_BASENAMES[$N-1]}"__*pix_nofov.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_"$PPPP"pix_targetmark_v"$R""$N".png
+  done
+ done
+done
+# Without target mark: pixel sizes 0020, 0032, 0064, 0128
+for PPPP in 0020 0032 0064 0128 ;do
+ for R in 1 2 ;do
+  for N in 1 2 ;do
+   montage finder_"$PPPP"pix_r_wcs_"${REF_BASENAMES[$R-1]}"__*pix_notargetmark.png finder_"$PPPP"pix_r_wcs_"${NEW_BASENAMES[$N-1]}"__*pix_nofov_notargetmark.png -tile 2x1 -geometry +0+0 -border 1 -bordercolor white finder_chart_"$PPPP"pix_v"$R""$N".png
+  done
+ done
+done
 
 # Create GIF animation
 #
-convert -delay 50 -loop 0   finder_0020pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0020pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0020pix_v11.gif
-convert -delay 50 -loop 0   finder_0020pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0020pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0020pix_v12.gif
-convert -delay 50 -loop 0   finder_0032pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0032pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0032pix_v11.gif
-convert -delay 50 -loop 0   finder_0032pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0032pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0032pix_v12.gif
-convert -delay 50 -loop 0   finder_0064pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0064pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0064pix_v11.gif
-convert -delay 50 -loop 0   finder_0064pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0064pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0064pix_v12.gif
-convert -delay 50 -loop 0   finder_0128pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0128pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0128pix_v11.gif
-convert -delay 50 -loop 0   finder_0128pix_r_wcs_"$CHARTS_REF1_BASENAME"__*pix_notargetmark.png finder_0128pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0128pix_v12.gif
-#
-convert -delay 50 -loop 0   finder_0020pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0020pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0020pix_v21.gif
-convert -delay 50 -loop 0   finder_0020pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0020pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0020pix_v22.gif
-convert -delay 50 -loop 0   finder_0032pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0032pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0032pix_v21.gif
-convert -delay 50 -loop 0   finder_0032pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0032pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0032pix_v22.gif
-convert -delay 50 -loop 0   finder_0064pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0064pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0064pix_v21.gif
-convert -delay 50 -loop 0   finder_0064pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0064pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0064pix_v22.gif
-convert -delay 50 -loop 0   finder_0128pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0128pix_r_wcs_"$CHARTS_NEW1_BASENAME"__*pix_notargetmark.png animation_0128pix_v21.gif
-convert -delay 50 -loop 0   finder_0128pix_r_wcs_"$CHARTS_REF2_BASENAME"__*pix_notargetmark.png finder_0128pix_r_wcs_"$CHARTS_NEW2_BASENAME"__*pix_notargetmark.png animation_0128pix_v22.gif
+for PPPP in 0020 0032 0064 0128 ;do
+ for R in 1 2 ;do
+  for N in 1 2 ;do
+   convert -delay 50 -loop 0 finder_"$PPPP"pix_r_wcs_"${REF_BASENAMES[$R-1]}"__*pix_notargetmark.png finder_"$PPPP"pix_r_wcs_"${NEW_BASENAMES[$N-1]}"__*pix_notargetmark.png animation_"$PPPP"pix_v"$R""$N".gif
+  done
+ done
+done
 
 # save visual inspection plots
 mv -v *.png "$OUTPUT_DIR"/finder_charts_PNG
