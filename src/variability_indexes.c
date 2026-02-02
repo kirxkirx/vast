@@ -704,6 +704,11 @@ double esimate_sigma_from_MAD_of_unsorted_data( double *unsorted_data, long n ) 
  double *x;                      // copy of the input dataset
  int i;                          // counter
 
+ // With 0 or 1 data points there is no scatter to measure
+ if ( n < 2 ) {
+  return 0.0;
+ }
+
  // allocate memory
  x= malloc( n * sizeof( double ) );
  if ( x == NULL ) {
