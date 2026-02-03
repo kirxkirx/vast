@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <string.h> // for memcpy in Star_Copy
 
 #include "vast_types.h"
 #include "ident.h"
@@ -94,34 +95,11 @@ void Delete_PixCoordinateTransformation( struct PixCoordinateTransformation *str
  free( struct_pixel_coordinate_transformation );
 }
 
+// Copy all fields of struct Star. Using memcpy instead of field-by-field assignment
+// for cleaner code and automatic adaptation if struct Star changes. Modern compilers
+// optimize both approaches equally well, so there is no performance difference.
 void Star_Copy( struct Star *copy, struct Star *star ) {
- copy->x= star->x;
- copy->y= star->y;
- copy->flux= star->flux;
- copy->flux_err= star->flux_err;
- copy->n= star->n;
- copy->mag= star->mag;
- copy->sigma_mag= star->sigma_mag;
- copy->JD= star->JD;
- copy->x_frame= star->x_frame;
- copy->y_frame= star->y_frame;
- copy->detected_on_ref_frame= star->detected_on_ref_frame;
- copy->sextractor_flag= star->sextractor_flag;
- copy->vast_flag= star->vast_flag;
- copy->star_size= star->star_size;
- //
- copy->star_psf_chi2= star->star_psf_chi2;
- //
- int i;
- for ( i= NUMBER_OF_FLOAT_PARAMETERS; i--; ) {
-  copy->float_parameters[i]= star->float_parameters[i];
- }
- //
- copy->n_detected= star->n_detected;
- copy->n_rejected= star->n_rejected;
- //
- copy->moving_object= star->moving_object;
- //
+ memcpy( copy, star, sizeof( struct Star ) );
 }
 
 static inline void Ecv_Triangle_Copy( struct Ecv_Triangle *ecv_tr1, struct Ecv_Triangle *ecv_tr2 ) {
