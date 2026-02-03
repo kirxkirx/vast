@@ -445,7 +445,11 @@ int main() {
     }
    }
    // Use quickselect for O(n) median computation instead of O(n log n) sort
-   median= quickselect_median_double( double_data, k );
+   if ( k > 0 ) {
+    median= quickselect_median_double( double_data, k );
+   } else {
+    median= 0.0;
+   }
 #ifdef VAST_ENABLE_OPENMP
 #ifdef _OPENMP
 #pragma omp parallel for private( j )

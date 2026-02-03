@@ -128,7 +128,9 @@ void stetson_JKL_from_sorted_lightcurve( size_t *input_array_index_p, double *in
   }
   // Use quickselect to find median - O(n) instead of O(n log n)
   // Note: quickselect modifies the array, but w is reused below anyway
-  dt= quickselect_median_double( w, i );
+  if ( i > 0 ) {
+   dt= quickselect_median_double( w, i );
+  }
  }
 
  ////////////////////////////////////////////////////////////////////////////////////////////////////

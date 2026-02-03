@@ -131,6 +131,9 @@ int main( int argc, char **argv ) {
     i++;
    }
    fclose( lightcurvefile );
+   if ( i < 2 ) {
+    break; // not enough data points to compute sigma, skip filtering
+   }
    // Use quickselect for O(n) median computation instead of O(n log n) sort
    median_mag= quickselect_median_double( mag_a, i );
    // Should we try sigma estimated from MAD instead of this????

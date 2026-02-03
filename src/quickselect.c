@@ -61,6 +61,10 @@ double quickselect_median_double( double *arr, int n ) {
  int i;
  double lower, upper;
 
+ if ( n < 1 ) {
+  return 0.0;
+ }
+
  if ( n % 2 == 1 ) {
   return quickselect_double( arr, 0, n - 1, n / 2 );
  } else {
@@ -131,6 +135,10 @@ float quickselect_float( float *arr, int left, int right, int k ) {
 float quickselect_median_float( float *arr, int n ) {
  int i;
  float lower, upper;
+
+ if ( n < 1 ) {
+  return 0.0f;
+ }
 
  if ( n % 2 == 1 ) {
   return quickselect_float( arr, 0, n - 1, n / 2 );
