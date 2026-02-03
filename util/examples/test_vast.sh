@@ -31227,8 +31227,7 @@ elif [ -z "$TEST_OUTPUT" ]; then
 ###### BESTAPSEL_002_EMPTY ######
 (output is empty)"
 # 3) expected lines missing
-elif ! printf '%s\n' "$TEST_OUTPUT" | grep -q 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for  1000 stars' \
-then
+elif ! printf '%s\n' "$TEST_OUTPUT" | grep -q 'Aperture with index 0 (REFERENCE_APERTURE_DIAMETER +0.00\*REFERENCE_APERTURE_DIAMETER) seems best for  1000 stars' ; then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES BESTAPSEL_002_NOMATCH"
   DEBUG_OUTPUT="$DEBUG_OUTPUT
