@@ -542,6 +542,10 @@ struct Triangle *Separate_to_triangles( struct Star *star, int Number, int *Ntri
  return ( triangles );
 }
 
+// Optimization note: Sorting tr2 by ab_bc_ac and using binary search to find matching
+// triangles was tested. While it reduced loop iterations by ~99%, the qsort overhead
+// cancelled out any gains, resulting in no measurable speedup. The simple O(Nt1*Nt2)
+// nested loop below is kept as it performs equally well in practice.
 int Podobie( struct PixCoordinateTransformation *struct_pixel_coordinate_transformation, struct Ecv_triangles *ecv_tr,
              struct Triangle *tr1, int Nt1,
              struct Triangle *tr2, int Nt2 ) {
