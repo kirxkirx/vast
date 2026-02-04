@@ -15,8 +15,11 @@
 
 #define DEFAULT_APPROXIMATE_FIELD_OF_VIEW_ARCMIN 40.0
 
-// Use quickselect O(n) algorithm instead of gsl_sort O(n log n) for median computation
-#define USE_QUICKSELECT_FOR_MEDIAN
+// Toggle median implementation:
+// - Set to 1 for GSL sort-based median.
+// - Set to 0 for quickselect-based median (faster O(n) average vs O(n log n) for sort).
+//
+#define USE_GSL_MEDIAN 0
 
 #define VIZIER_SITE "$(\"$VAST_PATH\"lib/choose_vizier_mirror.sh)"
 
@@ -55,9 +58,7 @@
 
 #include "variability_indexes.h" // for esimate_sigma_from_MAD_of_unsorted_data() and c4()
 
-#ifdef USE_QUICKSELECT_FOR_MEDIAN
 #include "quickselect.h" // for quickselect_median_double() - O(n) median computation
-#endif
 
 #include "is_point_close_or_off_the_frame_edge.h" // for is_point_close_or_off_the_frame_edge()
 
@@ -243,16 +244,16 @@ void remove_outliers_from_a_pair_of_arrays( double *a, double *b, int *N_good ) 
   copy_a[i]= 0; //
  //
  // Compute median
-#ifdef USE_QUICKSELECT_FOR_MEDIAN
- // O(n) quickselect-based median - note: quickselect_median_double modifies the array
- median1= quickselect_median_double( a, copy_N_good );
- median2= quickselect_median_double( b, copy_N_good );
-#else
+#if USE_GSL_MEDIAN
  // O(n log n) sort-based median
  gsl_sort( a, 1, copy_N_good );
  median1= gsl_stats_median_from_sorted_data( a, 1, copy_N_good );
  gsl_sort( b, 1, copy_N_good );
  median2= gsl_stats_median_from_sorted_data( b, 1, copy_N_good );
+#else
+ // O(n) quickselect-based median - note: quickselect_median_double modifies the array
+ median1= quickselect_median_double( a, copy_N_good );
+ median2= quickselect_median_double( b, copy_N_good );
 #endif
  // gsl_stats_absdev_m doesn't require sorted data
  MAD1= gsl_stats_absdev_m( a, 1, copy_N_good, median1 );
@@ -3199,13 +3200,13 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
    i++;
   }
  }
-#ifdef USE_QUICKSELECT_FOR_MEDIAN
- // O(n) quickselect-based median
- estimated_output_accuracy_of_the_plate_solution_arcsec= 3600 * quickselect_median_double( z1, i );
-#else
+#if USE_GSL_MEDIAN
  // O(n log n) sort-based median
  gsl_sort( z1, 1, i );
  estimated_output_accuracy_of_the_plate_solution_arcsec= 3600 * gsl_stats_median_from_sorted_data( z1, 1, i );
+#else
+ // O(n) quickselect-based median
+ estimated_output_accuracy_of_the_plate_solution_arcsec= 3600 * quickselect_median_double( z1, i );
 #endif
  fprintf( stderr, "Estimated accuracy of the plate solution: %.2lf\" \n", estimated_output_accuracy_of_the_plate_solution_arcsec );
 
