@@ -123,7 +123,7 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
   # this is used by util/transients/transient_factory_test31.sh
   RADEC=$(lib/find_star_in_wcs_catalog "$X" "$Y" < "$UCAC5_SOLUTION_NAME")
   if [ $? -ne 0 ];then
-   echo "(1) error in $0 filed to run  lib/find_star_in_wcs_catalog $X $Y < $UCAC5_SOLUTION_NAME"
+   echo "(1) error in $0 failed to run  lib/find_star_in_wcs_catalog $X $Y < $UCAC5_SOLUTION_NAME"
    clean_tmp_files
    exit 1
   fi
@@ -132,7 +132,7 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
   # this is used by util/transients/report_transient.sh
   RADEC=$(lib/find_star_in_wcs_catalog "$X" "$Y" < "$SEXTRACTOR_CATALOG_NAME")
   if [ $? -ne 0 ];then
-   echo "(2) error in $0 filed to run  lib/find_star_in_wcs_catalog $X $Y < $SEXTRACTOR_CATALOG_NAME"
+   echo "(2) error in $0 failed to run  lib/find_star_in_wcs_catalog $X $Y < $SEXTRACTOR_CATALOG_NAME"
    clean_tmp_files
    exit 1
   fi
@@ -248,7 +248,7 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 JD_MEAN="$MEAN"
-JD_MEAN_SHORT=$(echo $JD_MEAN |awk '{printf "%.4f",$1}')
+JD_MEAN_SHORT=$(echo "$JD_MEAN" | awk '{printf "%.4f",$1}')
 DATE_INFO=$(util/get_image_date "$JD_MEAN" 2>&1)
 #YEAR_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $3}')
 #MONTH_MEAN=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{print $4}')
@@ -300,7 +300,7 @@ fi
 TEST=$(awk -v a="$MAG_MEAN" -v b="7.0" 'BEGIN {print (a > b) ? 1 : 0}')
 if [ $TEST -eq 1 ];then
  # Reject candidates with large distance between the two second-epoch detections
- ### ==> Assumptio about positional accuracy hardcoded here <===
+ ### ==> Assumption about positional accuracy hardcoded here <===
  TEST=$(awk -v a="$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC" -v b="$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT" 'BEGIN {print (a > b) ? 1 : 0}')
  if [ $TEST -eq 1 ];then
   echo "Rejecting candidate due to large distance ($ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC\") between the two second-epoch detections"
@@ -310,7 +310,7 @@ if [ $TEST -eq 1 ];then
  #
 fi
 # Highlight candidates with suspiciously large distance between the two second-epoch detections
-### ==> Assumptio about positional accuracy hardcoded here <===
+### ==> Assumption about positional accuracy hardcoded here <===
 TEST=$(awk -v a="$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC" -v b="$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT" 'BEGIN {print (a > b) ? 1 : 0}')
 if [ $TEST -eq 1 ];then
  ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING="<b><font color=\"red\">$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC</font></b>"
@@ -318,18 +318,18 @@ else
  ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING="<font color=\"green\">$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC</font>"
 fi
 
-PIX_X_SECOND_EPOCH_1=$(cat "$REPORT_TRANSIENT_TMPFILE_X" | head -n1)
-PIX_Y_SECOND_EPOCH_1=$(cat "$REPORT_TRANSIENT_TMPFILE_Y" | head -n1)
-PIX_X_SECOND_EPOCH_2=$(cat "$REPORT_TRANSIENT_TMPFILE_X" | tail -n1)
-PIX_Y_SECOND_EPOCH_2=$(cat "$REPORT_TRANSIENT_TMPFILE_Y" | tail -n1)
+PIX_X_SECOND_EPOCH_1=$(head -n1 "$REPORT_TRANSIENT_TMPFILE_X")
+PIX_Y_SECOND_EPOCH_1=$(head -n1 "$REPORT_TRANSIENT_TMPFILE_Y")
+PIX_X_SECOND_EPOCH_2=$(tail -n1 "$REPORT_TRANSIENT_TMPFILE_X")
+PIX_Y_SECOND_EPOCH_2=$(tail -n1 "$REPORT_TRANSIENT_TMPFILE_Y")
 PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS=$(echo "$PIX_X_SECOND_EPOCH_1 $PIX_X_SECOND_EPOCH_2 $PIX_Y_SECOND_EPOCH_1 $PIX_Y_SECOND_EPOCH_2" | awk '{printf "%.1f", sqrt( ($1-$2)*($1-$2) + ($3-$4)*($3-$4) )}')
 PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING="$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS"
-### ==> Assumptio about shift between secon-spoch images hardcoded here <===
+### ==> Assumption about shift between second-epoch images hardcoded here <===
 if [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" = "0.0" ] || [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" = "0.1" ] || [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" = "0.2" ] || [ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" = "0.3" ] ;then
  PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING="<b><font color=\"red\">$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS</font></b>"
  if [ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ];then
   if [ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" = "yes" ];then
-   echo "Rejecting candidate as there is no shift in pixel posiiton (shift $PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS pix) between the two second-epoch detections and REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES is set to '$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES'"
+   echo "Rejecting candidate as there is no shift in pixel position (shift $PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS pix) between the two second-epoch detections and REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES is set to '$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES'"
    clean_tmp_files
    exit 1   
   fi
@@ -577,7 +577,7 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
      fi
     elif [ "$N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS" -ge 2 ];then
      # Using the [*] instead of [@] treats the entire array as a single string, using the first character of the Internal Field Separator (IFS) variable as a delimiter (which is a space by default).
-     echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2 blend (TIMEOUTCOMMAND_GAIA_VIZIER=#$TIMEOUTCOMMAND_GAIA_VIZIER#, MAG_MEAN=$MAG_MEAN, BLEND_MAG_FAINT_SEARCH_LIMIT=$BLEND_MAG_FAINT_SEARCH_LIMIT, VIZIER_COMMAND=#${VIZIER_COMMAND[*]}#)"
+     echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2 blend (TIMEOUTCOMMAND_GAIA_VIZIER=#$TIMEOUTCOMMAND_GAIA_VIZIER#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT, VIZIER_COMMAND=#${VIZIER_COMMAND[*]}#)"
      echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt__"$LIGHTCURVEFILE"
      clean_tmp_files
      exit 1
