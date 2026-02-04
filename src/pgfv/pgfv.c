@@ -53,11 +53,19 @@ void save_star_to_vast_list_of_previously_known_variables_and_exclude_lst( int s
  FILE *filepointer;
  fprintf( stderr, "Marking out%05d.dat as a variable star and excluding it from magnitude calibration\n", sextractor_catalog__star_number );
  filepointer= fopen( "vast_list_of_previously_known_variables.log", "a" );
- fprintf( filepointer, "out%05d.dat\n", sextractor_catalog__star_number );
- fclose( filepointer );
+ if ( filepointer != NULL ) {
+  fprintf( filepointer, "out%05d.dat\n", sextractor_catalog__star_number );
+  fclose( filepointer );
+ } else {
+  fprintf( stderr, "ERROR: cannot open vast_list_of_previously_known_variables.log for writing\n" );
+ }
  filepointer= fopen( "exclude.lst", "a" );
- fprintf( filepointer, "%.3f %.3f\n", sextractor_catalog__X, sextractor_catalog__Y );
- fclose( filepointer );
+ if ( filepointer != NULL ) {
+  fprintf( filepointer, "%.3f %.3f\n", sextractor_catalog__X, sextractor_catalog__Y );
+  fclose( filepointer );
+ } else {
+  fprintf( stderr, "ERROR: cannot open exclude.lst for writing\n" );
+ }
  return;
 }
 
@@ -822,7 +830,7 @@ void histeq( long NUM_OF_PIXELS, float *im, float *max_i, float *min_i ) {
  for ( i= 0; i < NUM_OF_PIXELS; i++ ) {
   if ( im[i] > ( *max_i ) )
    ( *max_i )= im[i];
-  if ( im[i] < ( *max_i ) )
+  if ( im[i] < ( *min_i ) )
    ( *min_i )= im[i];
  }
  for ( i= 0; i < NUM_OF_PIXELS; i++ ) {
@@ -1798,8 +1806,9 @@ int main( int argc, char **argv ) {
  manymrkerscounter= 0;
  manymarkersfile= fopen( "vast_manymarkersfile.log", "r" );
  if ( manymarkersfile != NULL ) {
-  while ( -1 < fscanf( manymarkersfile, "%f %f %[^\t\n]", &manymarkersX[manymrkerscounter], &manymarkersY[manymrkerscounter], manymarkersstring ) )
+  while ( manymrkerscounter < 1024 && -1 < fscanf( manymarkersfile, "%f %f %[^\t\n]", &manymarkersX[manymrkerscounter], &manymarkersY[manymrkerscounter], manymarkersstring ) )
    manymrkerscounter++;
+  fclose( manymarkersfile );
   fprintf( stderr, "vast_manymarkersfile.log - %d markers\n", manymrkerscounter );
  }
 
@@ -2074,7 +2083,9 @@ int main( int argc, char **argv ) {
   fprintf( stderr, "Warning after running gettime(): stderr_output is suspiciously short:\n" );
   fprintf( stderr, "#%s#\n", stderr_output );
  }
- stderr_output[strlen( stderr_output ) - 1]= '\0'; /* Remove \n at the end of line */
+ if ( strlen( stderr_output ) > 0 ) {
+  stderr_output[strlen( stderr_output ) - 1]= '\0'; /* Remove \n at the end of line */
+ }
  // Special case of HLA images with no proper date
  if ( is_this_an_hla_image == 1 ) {
   stderr_output[0]= '\0';
@@ -2137,8 +2148,13 @@ int main( int argc, char **argv ) {
   // Check if the SExtractor executable (named "sex") is present in $PATH
   // Update PATH variable to make sure the local copy of SExtractor is there
   char pathstring[8192];
-  strncpy( pathstring, getenv( "PATH" ), 8192 - 1 - 8 );
-  pathstring[8192 - 1 - 8]= '\0';
+  char *env_path= getenv( "PATH" );
+  if ( env_path != NULL ) {
+   strncpy( pathstring, env_path, 8192 - 1 - 8 );
+   pathstring[8192 - 1 - 8]= '\0';
+  } else {
+   pathstring[0]= '\0';
+  }
   strncat( pathstring, ":lib/bin", 9 );
   pathstring[8192 - 1]= '\0';
   setenv( "PATH", pathstring, 1 );
