@@ -16,7 +16,7 @@ trap 'clean_tmp_files' EXIT HUP INT QUIT TERM
 
 
 # Parse the command line arguments
-if [ -z $1 ]; then
+if [ -z "$1" ]; then
  echo "Usage: $0 outNUMBER.dat"
  exit 1
 fi
@@ -84,10 +84,10 @@ function clean_tmp_files {
 
 # TRAP!! If we whant to identify a flare, there will be no sense to search for an asteroid on the reference image.
 # Use the first discovery image instead!
-REFERENCE_IMAGE=$(cat vast_summary.log |grep "Ref.  image:" | awk '{print $6}')
+REFERENCE_IMAGE=$(grep "Ref.  image:" vast_summary.log | awk '{print $6}')
 
 # Assume that the second first-epoch image is always supplied as the second image on the command line
-SECOND_REFERENCE_IMAGE=$(cat vast_image_details.log | head -n2 | tail -n1 | awk '{print $17}')
+SECOND_REFERENCE_IMAGE=$(head -n2 vast_image_details.log | tail -n1 | awk '{print $17}')
 
 #     Reference image    2010 12 10.0833  2455540.5834  13.61  06:29:12.25 +26:24:19.4
 echo "<table style='font-family:monospace;font-size:12px;'>
@@ -119,18 +119,18 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  DAYFRAC=$(echo "$DATE_INFO" | grep 'MPC format' | awk '{printf "%.6f", $5}')
  # If there is a UCAC5 plate solution with local corrections - use it,
  # otherwise rely on the positions computed using only the WCS header
- if [ -f $UCAC5_SOLUTION_NAME ];then
+ if [ -f "$UCAC5_SOLUTION_NAME" ];then
   # this is used by util/transients/transient_factory_test31.sh
-  RADEC=$(lib/find_star_in_wcs_catalog $X $Y < $UCAC5_SOLUTION_NAME)
+  RADEC=$(lib/find_star_in_wcs_catalog "$X" "$Y" < "$UCAC5_SOLUTION_NAME")
   if [ $? -ne 0 ];then
    echo "(1) error in $0 filed to run  lib/find_star_in_wcs_catalog $X $Y < $UCAC5_SOLUTION_NAME"
    clean_tmp_files
    exit 1
   fi
- elif [ -f $SEXTRACTOR_CATALOG_NAME ];then
+ elif [ -f "$SEXTRACTOR_CATALOG_NAME" ];then
   echo "WARNING from $0 -- UCAC5 catalog $UCAC5_SOLUTION_NAME not found - falling back to uncorrected catalog $SEXTRACTOR_CATALOG_NAME"
   # this is used by util/transients/report_transient.sh
-  RADEC=$(lib/find_star_in_wcs_catalog $X $Y < $SEXTRACTOR_CATALOG_NAME)
+  RADEC=$(lib/find_star_in_wcs_catalog "$X" "$Y" < "$SEXTRACTOR_CATALOG_NAME")
   if [ $? -ne 0 ];then
    echo "(2) error in $0 filed to run  lib/find_star_in_wcs_catalog $X $Y < $SEXTRACTOR_CATALOG_NAME"
    clean_tmp_files
@@ -142,9 +142,9 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
   exit 1
  fi
  #
- RA=$(echo $RADEC | awk '{print $1}')
- DEC=$(echo $RADEC | awk '{print $2}')
- MAG=$(echo $MAG | awk '{printf "%.2f",$1}')
+ RA=$(echo "$RADEC" | awk '{print $1}')
+ DEC=$(echo "$RADEC" | awk '{print $2}')
+ MAG=$(echo "$MAG" | awk '{printf "%.2f",$1}')
 
  # Do not use the first-epoch images for computing average values (positions, dates, magnitdes)
  if [ "$FITSFILE" != "$REFERENCE_IMAGE" ] && [ "$FITSFILE" != "$SECOND_REFERENCE_IMAGE" ] ;then
@@ -157,7 +157,7 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  fi
  
  if [ "$FITSFILE" != "$REFERENCE_IMAGE" ] ;then
-  N=$[$N+1]
+  N=$((N+1))
   echo -n "<tr><td>Discovery image $N   &nbsp;&nbsp;</td>"
  else
   echo -n "<tr><td>Reference image     &nbsp;&nbsp;</td>"
@@ -170,8 +170,8 @@ while read JD MAG MERR X Y APP FITSFILE REST ;do
  JD_SHORT=$(printf "%.5f" "$JD_FROM_IMAGE_HEADER") # purely for visualisation purposes
  X=$(printf "%04.0f" "$X") # purely for visualisation purposes
  Y=$(printf "%04.0f" "$Y") # purely for visualisation purposes
- echo "<td>$YEAR $MONTH $DAYFRAC_SHORT &nbsp;&nbsp;</td><td> $JD_SHORT &nbsp;&nbsp;</td><td> $MAG &nbsp;&nbsp;</td><td>" $(lib/deg2hms $RADEC) "&nbsp;&nbsp;</td><td>$X $Y &nbsp;&nbsp;</td><td>$FITSFILE</td></tr>"
-done < $LIGHTCURVEFILE
+ echo "<td>$YEAR $MONTH $DAYFRAC_SHORT &nbsp;&nbsp;</td><td> $JD_SHORT &nbsp;&nbsp;</td><td> $MAG &nbsp;&nbsp;</td><td>" "$(lib/deg2hms $RADEC)" "&nbsp;&nbsp;</td><td>$X $Y &nbsp;&nbsp;</td><td>$FITSFILE</td></tr>"
+done < "$LIGHTCURVEFILE"
 echo "</table>"
 
 # We need to reformat util/colstat output to make it look like a small shell script
@@ -265,20 +265,20 @@ DAYFRAC_MEAN_SUPERSHORT=$(echo "$DATE_INFO" | grep 'Dayfraction' | awk '{printf 
 #### Test for float numbers ####
 for STRING_TO_TEST in "$RA_MEAN" "$RA_MAX" "$RA_MIN" "$DEC_MEAN" "$DEC_MAX" "$DEC_MIN" "$MAG_MEAN" "$DAYFRAC_MEAN" "$DAYFRAC_MEAN_SHORT" "$DAYFRAC_MEAN_SUPERSHORT" "$JD_MEAN" "$JD_MEAN_SHORT" ;do
  # remove leading and trailing white spaces from STRING_TO_TEST
- STRING_TO_TEST_NO_WHITESPCAES=$(echo "$STRING_TO_TEST" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+ STRING_TO_TEST_NO_WHITESPACES=$(echo "$STRING_TO_TEST" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
  re='^[+-]?[0-9]+([.][0-9]+)?$'
  #if ! [[ $STRING_TO_TEST =~ $re ]] ; then
- if ! [[ $STRING_TO_TEST_NO_WHITESPCAES =~ $re ]] ; then
+ if ! [[ $STRING_TO_TEST_NO_WHITESPACES =~ $re ]] ; then
   echo "ERROR in $0 : the string #$STRING_TO_TEST# is not a floating point number" 
   clean_tmp_files
   exit 1
  fi
 done
 ################################
-RA_SECOND_EPOCH_1=$(cat "$REPORT_TRANSIENT_TMPFILE_RA" | head -n1)
-DEC_SECOND_EPOCH_1=$(cat "$REPORT_TRANSIENT_TMPFILE_DEC" | head -n1)
-RA_SECOND_EPOCH_2=$(cat "$REPORT_TRANSIENT_TMPFILE_RA" | tail -n1)
-DEC_SECOND_EPOCH_2=$(cat "$REPORT_TRANSIENT_TMPFILE_DEC" | tail -n1)
+RA_SECOND_EPOCH_1=$(head -n1 "$REPORT_TRANSIENT_TMPFILE_RA")
+DEC_SECOND_EPOCH_1=$(head -n1 "$REPORT_TRANSIENT_TMPFILE_DEC")
+RA_SECOND_EPOCH_2=$(tail -n1 "$REPORT_TRANSIENT_TMPFILE_RA")
+DEC_SECOND_EPOCH_2=$(tail -n1 "$REPORT_TRANSIENT_TMPFILE_DEC")
 
 ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING=$(lib/put_two_sources_in_one_field "$RA_SECOND_EPOCH_1" "$DEC_SECOND_EPOCH_1"  "$RA_SECOND_EPOCH_2" "$DEC_SECOND_EPOCH_2" 2>&1 | grep 'Angular distance')
 ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING="${ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_STRING/Angular/angular}"
@@ -297,11 +297,11 @@ if [ -z "$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSE
 fi
 #
 # Drop the coordinates consistencey test for super-bright objects (that will have large astrometic errors)
-TEST=$(echo "$MAG_MEAN>7.0" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+TEST=$(awk -v a="$MAG_MEAN" -v b="7.0" 'BEGIN {print (a > b) ? 1 : 0}')
 if [ $TEST -eq 1 ];then
  # Reject candidates with large distance between the two second-epoch detections
  ### ==> Assumptio about positional accuracy hardcoded here <===
- TEST=$(echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC>$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+ TEST=$(awk -v a="$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC" -v b="$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_HARDLIMIT" 'BEGIN {print (a > b) ? 1 : 0}')
  if [ $TEST -eq 1 ];then
   echo "Rejecting candidate due to large distance ($ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC\") between the two second-epoch detections"
   clean_tmp_files
@@ -311,7 +311,7 @@ if [ $TEST -eq 1 ];then
 fi
 # Highlight candidates with suspiciously large distance between the two second-epoch detections
 ### ==> Assumptio about positional accuracy hardcoded here <===
-TEST=$(echo "$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC>$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+TEST=$(awk -v a="$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC" -v b="$MAX_ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_SOFTLIMIT" 'BEGIN {print (a > b) ? 1 : 0}')
 if [ $TEST -eq 1 ];then
  ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC_STRING="<b><font color=\"red\">$ANGULAR_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS_ARCSEC</font></b>"
 else
@@ -524,10 +524,10 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
  # do this only if $VIZIER_SITE is set
  if [ -n "$VIZIER_SITE" ];then
   # if this is a new source
-  NUBER_OF_LIGHTCURVE_POINTS=$(cat "$LIGHTCURVEFILE" | wc -l)
+  NUBER_OF_LIGHTCURVE_POINTS=$(wc -l < "$LIGHTCURVEFILE")
   # Assume that two-reference-images detections are good match, check only new sources and one-reference-images detections to speed things up
   # If it's a flare with only one reference-image detection - check Gaia anyway as the first detection migth be a mismatch
-  if [ $NUBER_OF_LIGHTCURVE_POINTS -eq 2 ] || [ $NUBER_OF_LIGHTCURVE_POINTS -eq 3 ] ;then
+  if [ "$NUBER_OF_LIGHTCURVE_POINTS" -eq 2 ] || [ "$NUBER_OF_LIGHTCURVE_POINTS" -eq 3 ] ;then
    # New last-ditch effort, search Gaia DR2 for a known star of approximately the same brightenss
    if [ -z "$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK" ];then
     GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK="Gmag"
@@ -559,7 +559,11 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
     # | awk 'NF > 0' is needed to exclude empty lines as echo "$VIZIER_GAIADR2_OUTPUT" will produce an empty line even when $VIZIER_GAIADR2_OUTPUT contains nothing
     # let's do echo -n as the second line of defense against the empty lines
     N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS=$(echo -n "$VIZIER_GAIADR2_OUTPUT" | awk 'NF > 0' | wc -l)
-    if [ $N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS -eq 1 ];then
+    # Ensure N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS is a valid integer, default to 0 if not
+    if ! [[ "$N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS" =~ ^[0-9]+$ ]]; then
+     N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS=0
+    fi
+    if [ "$N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS" -eq 1 ];then
      # If there is only one star - check how far is it from the candidate position
      #DISTANCE_ARCSEC=$(echo "$VIZIER_GAIADR2_OUTPUT" | head -n1 | awk '{print $1}')
      # Try to be robust against $VIZIER_GAIADR2_OUTPUT containing garbage - set DISTANCE_ARCSEC to 999.99 is unsure
@@ -571,7 +575,7 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
       clean_tmp_files
       exit 1
      fi
-    elif [ $N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS -ge 2 ];then
+    elif [ "$N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS" -ge 2 ];then
      # Using the [*] instead of [@] treats the entire array as a single string, using the first character of the Internal Field Separator (IFS) variable as a delimiter (which is a space by default).
      echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2 blend (TIMEOUTCOMMAND_GAIA_VIZIER=#$TIMEOUTCOMMAND_GAIA_VIZIER#, MAG_MEAN=$MAG_MEAN, BLEND_MAG_FAINT_SEARCH_LIMIT=$BLEND_MAG_FAINT_SEARCH_LIMIT, VIZIER_COMMAND=#${VIZIER_COMMAND[*]}#)"
      echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt__"$LIGHTCURVEFILE"
@@ -585,7 +589,11 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
    # The awk 'NF > 0' command is equivalent to sed '/^[[:space:]]*$/d', but is generally faster and more efficient. It checks if the number of fields (NF) is greater than 0, which means the line is not empty.
    #NUMBER_OF_NONEMPTY_LINES=$($TIMEOUTCOMMAND_GAIA_VIZIER lib/vizquery -site="$VIZIER_SITE" -mime=text -source=II/336  -out.max=1 -out.add=_r -out.form=mini  -sort=Vmag Vmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC  -out=RAJ2000,DEJ2000,Vmag 2>/dev/null | grep -B10 '#END#' | grep -vE "#|---|sec|Vma|RAJ" | awk 'NF > 3' | wc -l)
    NUMBER_OF_NONEMPTY_LINES=$($TIMEOUTCOMMAND_GAIA_VIZIER lib/vizquery -site="$VIZIER_SITE" -mime=text -source=II/336  -out.max=1 -out.add=_r -out.form=mini  -sort=Vmag Vmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC  -out=RAJ2000,DEJ2000,Vmag 2>/dev/null | grep -B10 '#END#' | grep -vE "#|---|sec|Vma|RAJ" | awk 'NF > 3' | awk '{if (NF >= 2 && length($1) > 0 && ($1 + 0) == $1 && $1 >= 0 && length($2) > 0 && ($2 + 0) == $2 && $2 >= 0 && $2 < 360) print}' | wc -l)
-   if [ $NUMBER_OF_NONEMPTY_LINES -gt 0 ];then
+   # Ensure NUMBER_OF_NONEMPTY_LINES is a valid integer, default to 0 if not
+   if ! [[ "$NUMBER_OF_NONEMPTY_LINES" =~ ^[0-9]+$ ]]; then
+    NUMBER_OF_NONEMPTY_LINES=0
+   fi
+   if [ "$NUMBER_OF_NONEMPTY_LINES" -gt 0 ];then
     echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in APASS   (TIMEOUTCOMMAND_GAIA_VIZIER=#$TIMEOUTCOMMAND_GAIA_VIZIER#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT)"
     #echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_apass.txt
     echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_apass.txt__"$LIGHTCURVEFILE"
@@ -636,16 +644,23 @@ if [ -z "$VARIABLE_STAR_ID" ] || [ -z "$ASTEROID_ID" ] ;then
  clean_tmp_files
  exit 1
 fi
+# Validate that VARIABLE_STAR_ID and ASTEROID_ID are integers
+if ! [[ "$VARIABLE_STAR_ID" =~ ^[0-9]+$ ]] || ! [[ "$ASTEROID_ID" =~ ^[0-9]+$ ]]; then
+ echo "ERROR in $0  VARIABLE_STAR_ID (#$VARIABLE_STAR_ID#) or ASTEROID_ID (#$ASTEROID_ID#) are not valid integers"
+ clean_tmp_files
+ exit 1
+fi
 # If the candidate transient is not a known variable star or asteroid and doesn't seem to be a hot pixel - try online search
-if [ $VARIABLE_STAR_ID -ne 0 ] && [ $ASTEROID_ID -ne 0 ] && [ -z "$THIS_IS_ARTIFICIAL_STAR_TEST_DO_NO_ONLINE_VSX_SEARCH" ] ;then
- if [[ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.0" ]] &&
-    [[ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.1" ]] &&
-    [[ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.2" ]] ||
-    ( [[ ! -z "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ]] &&
+if [ "$VARIABLE_STAR_ID" -ne 0 ] && [ "$ASTEROID_ID" -ne 0 ] && [ -z "$THIS_IS_ARTIFICIAL_STAR_TEST_DO_NO_ONLINE_VSX_SEARCH" ] ;then
+ # Proceed if: (pixel shift exists) OR (pixel shift requirement is disabled)
+ if ( [[ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.0" ]] &&
+      [[ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.1" ]] &&
+      [[ "$PIX_DISTANCE_BETWEEN_SECOND_EPOCH_DETECTIONS" != "0.2" ]] ) ||
+    ( [[ -n "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" ]] &&
       [[ "$REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES" == "no" ]] ); then
   # Slow online ID
   # Instead of a guess, use the actual field of view - the reference image is supposed to be solved by now
-  WCS_REFERENCE_IMAGE_NAME=wcs_$(basename $REFERENCE_IMAGE)
+  WCS_REFERENCE_IMAGE_NAME=wcs_$(basename "$REFERENCE_IMAGE")
   WCS_REFERENCE_IMAGE_NAME=${WCS_REFERENCE_IMAGE_NAME/wcs_wcs_/wcs_}
   WCS_REFERENCE_IMAGE_NAME=${WCS_REFERENCE_IMAGE_NAME/.fz/}
   #util/search_databases_with_vizquery.sh $RADEC_MEAN_HMS online_id $(util/fov_of_wcs_calibrated_image.sh $WCS_REFERENCE_IMAGE_NAME | grep 'Image size:' | awk -F"[ 'x]" '{if ($3 > $4) print $3; else print $4}') 2>&1 | grep '|' | tail -n1
@@ -672,7 +687,7 @@ echo -n "<a href=\"https://www.wis-tns.org/search?ra=$RA_MEAN&decl=$DEC_MEAN&rad
 <a href=\"http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=$RA_MEAN%20$DEC_MEAN&CooDefinedFrames=J2000&Radius=1.0&Radius.unit=arcmin\" target=\"_blank\">Search this object in <font color=\"maroon\">SIMBAD</font>.</a>
 <a href=\"http://vizier.u-strasbg.fr/viz-bin/VizieR?-source=&-out.add=_r&-out.add=_RAJ%2C_DEJ&-sort=_r&-to=&-out.max=20&-meta.ucd=2&-meta.foot=1&-c=$RA_MEAN+$DEC_MEAN&-c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC\" target=\"_blank\">Search this object in <font color=\"FF9900\">VizieR</font> catalogs.</a>  <a href=\"http://irsa.ipac.caltech.edu/applications/wise/#id=Hydra_wise_wise_1&RequestClass=ServerRequest&DoSearch=true&schema=allsky-4band&intersect=CENTER&subsize=0.16666666800000002&mcenter=mcen&band=1,2,3,4&dpLevel=3a&UserTargetWorldPt=$RA_MEAN;$DEC_MEAN;EQ_J2000&SimpleTargetPanel.field.resolvedBy=nedthensimbad&preliminary_data=no&coaddId=&projectId=wise&searchName=wise_1&shortDesc=Position&isBookmarkAble=true&isDrillDownRoot=true&isSearchResult=true\" target=\"_blank\"><font color=\"green\">WISE</font> atlas</a>  <a href=\"https://aladin.u-strasbg.fr/AladinLite/?target=$RA_MEAN+$DEC_MEAN\" target='_blank'>Aladin Lite</a>"
 # Dispaly SNAD ZTF link only if there is a hope to have ZTF data for this declination
-TEST=$(echo "$DEC_MEAN > -30" | awk -F'>' '{if ( $1 > $2 ) print 1 ;else print 0 }')
+TEST=$(awk -v a="$DEC_MEAN" -v b="-30" 'BEGIN {print (a > b) ? 1 : 0}')
 if [ $TEST -eq 1 ];then
  echo -n "  <a href=\"https://ztf.snad.space/dr17/search/$RA_MEAN%20$DEC_MEAN/4\" target='_blank'>SNAD ZTF viewer</a>"
 fi
@@ -755,8 +770,8 @@ Online MPChecker may fail to identify bright comets! Please manually check the <
 </form>
 "
 
-# Show the ASAS-3 button only for sources with declination below +28 
-TEST=$(echo "$DEC_MEAN<28" | awk -F'<' '{if ( $1 < $2 ) print 1 ;else print 0 }')
+# Show the ASAS-3 button only for sources with declination below +28
+TEST=$(awk -v a="$DEC_MEAN" -v b="28" 'BEGIN {print (a < b) ? 1 : 0}')
 re='^[0-9]+$'
 if ! [[ $TEST =~ $re ]] ; then
  echo "TEST ERROR in $DEC_MEAN<28" 
