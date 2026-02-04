@@ -509,7 +509,10 @@ The script will try to download these catalogs now - it will take some time!
  ######
  ######
  echo -n "VSX (local copy) and ASASSN-V (local copy)  "
- LOCAL_CATALOG_SEARCH_RESULTS=$("$VAST_PATH"lib/catalogs/check_catalogs_offline $GOOD_CATALOG_POSITION_DEG)
+ # The check_catalogs_offline binary internally calls system("lib/update_offline_catalogs.sh all")
+ # using a relative path, so it must be run from the VaST root directory. We use a subshell
+ # with cd to ensure the correct working directory without affecting the parent shell.
+ LOCAL_CATALOG_SEARCH_RESULTS=$(cd "$VAST_PATH" && lib/catalogs/check_catalogs_offline $GOOD_CATALOG_POSITION_DEG)
  if [ $? -eq 0 ];then
   # The object is found in local catalogs
   # Mac doesn't allow '-m1 -A1' combination for grep (!!!)

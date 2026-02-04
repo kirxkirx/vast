@@ -470,7 +470,10 @@ int main( int argc, char **argv ) {
   }
  }
 
- // This script should take care of updating the catalogs
+ // This script should take care of updating the catalogs.
+ // Note: The relative path "lib/update_offline_catalogs.sh" requires this program to be
+ // executed from the VaST root directory. Calling scripts (e.g., util/search_databases_with_vizquery.sh)
+ // must ensure they cd to VAST_PATH before invoking this binary.
  if ( 0 != system( "lib/update_offline_catalogs.sh all" ) ) {
   fprintf( stderr, "WARNING: an error occured while updating the catalogs with lib/update_offline_catalogs.sh\n" );
  }
