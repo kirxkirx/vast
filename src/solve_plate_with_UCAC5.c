@@ -76,6 +76,7 @@ struct detected_star {
  double y_pix;
  double ra_deg_measured;
  double dec_deg_measured;
+ double cos_dec_measured; // precomputed cos(dec_deg_measured * M_PI / 180.0)
  double flux;
  double flux_err;
  double mag;
@@ -249,8 +250,8 @@ void remove_outliers_from_a_pair_of_arrays( double *a, double *b, int *N_good ) 
  }
  // for(i=0;i<j;i++)
  for ( i= 0; i < MIN( j, copy_N_good ); i++ ) {
-  // fprintf(stderr,"%lg %d\n",copy_a[j],j);
-  a[i]= copy_a[j];
+  // fprintf(stderr,"%lg %d\n",copy_a[i],i);
+  a[i]= copy_a[i];
  }
  //(*N_good)=j;
  ( *N_good )= MIN( j, copy_N_good );
@@ -634,6 +635,7 @@ int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, in
   //
   stars[i].ra_deg_measured_orig= stars[i].ra_deg_measured;
   stars[i].dec_deg_measured_orig= stars[i].dec_deg_measured;
+  stars[i].cos_dec_measured= cos( stars[i].dec_deg_measured * M_PI / 180.0 ); // precompute for efficiency
   // set default values of the derived parameters
   stars[i].matched_with_astrometric_catalog= 0; // no catalog match at first
   stars[i].matched_with_photometric_catalog= 0; // no catalog match at first
@@ -792,7 +794,6 @@ int read_UCAC5_from_vizquery( struct detected_star *stars, int N, char *vizquery
      stars[i].APASS_i= 0.0;
      stars[i].APASS_i_err= 0.0;
      stars[i].Rc_computed_from_APASS_ri= 0.0;
-     stars[i].Rc_computed_from_APASS_ri_err= 0.0;
      stars[i].Rc_computed_from_APASS_ri_err= 0.0;
      stars[i].Ic_computed_from_APASS_ri= 0.0;
      stars[i].Ic_computed_from_APASS_ri_err= 0.0;
@@ -2970,7 +2971,7 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
   target_y_pix= stars[j].y_pix;
   target_ra= stars[j].ra_deg_measured;
   target_dec= stars[j].dec_deg_measured;
-  cos_delta= cos( stars[j].dec_deg_measured * M_PI / 180.0 );
+  cos_delta= stars[j].cos_dec_measured; // use precomputed value
 
   // try various corrections
   best_accuracy= 9980.0;    // 99.9*99.9;
@@ -3444,6 +3445,7 @@ int main( int argc, char **argv ) {
   for ( i= 0; i < number_of_stars_in_wcs_catalog; i++ ) {
    stars[i].ra_deg_measured= stars[i].corrected_ra_local;
    stars[i].dec_deg_measured= stars[i].corrected_dec_local;
+   stars[i].cos_dec_measured= cos( stars[i].dec_deg_measured * M_PI / 180.0 ); // update precomputed value
    // Make sure all stars have a flag that they are not matched with a catalog yet
    stars[i].matched_with_astrometric_catalog= 0;
    //
