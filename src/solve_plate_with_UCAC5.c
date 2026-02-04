@@ -425,7 +425,7 @@ void write_wcs_catalog( char *fits_image_filename, struct detected_star *stars, 
  int i;
  char wcs_catalog_filename[FILENAME_LENGTH];
  guess_wcs_catalog_filename( wcs_catalog_filename, fits_image_filename );
- strcat( wcs_catalog_filename, ".ucac5" );
+ strncat( wcs_catalog_filename, ".ucac5", FILENAME_LENGTH - strlen( wcs_catalog_filename ) - 1 );
  if ( number_of_stars_in_wcs_catalog < 1 ) {
   fprintf( stderr, "ERROR: in write_wcs_catalog()  number_of_stars_in_wcs_catalog=%d\n", number_of_stars_in_wcs_catalog );
   return;
@@ -474,7 +474,7 @@ void write_matched_stars_to_ds9_region( char *fits_image_filename, struct detect
  int i;
  char wcs_catalog_filename[FILENAME_LENGTH];
  guess_wcs_catalog_filename( wcs_catalog_filename, fits_image_filename );
- strcat( wcs_catalog_filename, ".ds9.reg" );
+ strncat( wcs_catalog_filename, ".ds9.reg", FILENAME_LENGTH - strlen( wcs_catalog_filename ) - 1 );
  f= fopen( wcs_catalog_filename, "w" );
  if ( f == NULL ) {
   fprintf( stderr, "ERROR opening %s for writing!\n", wcs_catalog_filename );
@@ -497,7 +497,7 @@ void write_astrometric_residuals_vector_field( char *fits_image_filename, struct
  int i;
  char wcs_catalog_filename[FILENAME_LENGTH];
  guess_wcs_catalog_filename( wcs_catalog_filename, fits_image_filename );
- strcat( wcs_catalog_filename, ".astrometric_residuals" );
+ strncat( wcs_catalog_filename, ".astrometric_residuals", FILENAME_LENGTH - strlen( wcs_catalog_filename ) - 1 );
  if ( number_of_stars_in_wcs_catalog < 1 ) {
   fprintf( stderr, "ERROR: in write_wcs_catalog()  number_of_stars_in_wcs_catalog=%d\n", number_of_stars_in_wcs_catalog );
   return;
@@ -2961,7 +2961,21 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
   N_only_good++;
  }
 
+// Parallelize the local corrections loop - each iteration is independent
+// Each thread uses its own stack-allocated z1_local/z2_local arrays (max 502 elements needed)
+#ifdef VAST_ENABLE_OPENMP
+#ifdef _OPENMP
+#pragma omp parallel for private( j, i, N_good, target_x_pix, target_y_pix, target_ra, target_dec, cos_delta, \
+                                  best_accuracy, best_search_radius, current_search_radius, distance, \
+                                  current_accuracy_ra, current_accuracy_dec, current_accuracy, \
+                                  best_local_correction_ra, best_local_correction_dec, \
+                                  local_correction_ra, local_correction_dec )
+#endif
+#endif
  for ( j= 0; j < N; j++ ) {
+  // Thread-local arrays for collecting nearby star corrections
+  double z1_local[502];
+  double z2_local[502];
 
   if ( process_only_stars_matched_with_catalog == 1 && stars[j].matched_with_astrometric_catalog != 1 )
    continue;
@@ -2999,8 +3013,8 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
     if ( distance < current_search_radius ) {
      if ( distance == 0.0 )
       continue; //
-     z1[N_good]= only_good_starsmatched_with_catalog[i].catalog_ra - only_good_starsmatched_with_catalog[i].corrected_mag_ra;
-     z2[N_good]= only_good_starsmatched_with_catalog[i].catalog_dec - only_good_starsmatched_with_catalog[i].corrected_mag_dec;
+     z1_local[N_good]= only_good_starsmatched_with_catalog[i].catalog_ra - only_good_starsmatched_with_catalog[i].corrected_mag_ra;
+     z2_local[N_good]= only_good_starsmatched_with_catalog[i].catalog_dec - only_good_starsmatched_with_catalog[i].corrected_mag_dec;
      N_good++;
      if ( N_good > 501 )
       break; // too many stars
@@ -3018,17 +3032,17 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
    }
    ///
    // if( N_good<5 )break; // too few stars
-   // remove_outliers_from_a_pair_of_arrays( z1, z2, &N_good);
+   // remove_outliers_from_a_pair_of_arrays( z1_local, z2_local, &N_good);
    ///
    if ( N_good < 5 )
     break; // too few stars
    // if( N_good<10 )break; // too few stars
-   current_accuracy_ra= gsl_stats_variance( z1, 1, N_good );
-   // current_accuracy_ra=gsl_stats_sd(z1,1,N_good);
-   // current_accuracy_ra=esimate_sigma_from_MAD_of_unsorted_data( z1, N_good);
-   current_accuracy_dec= gsl_stats_variance( z2, 1, N_good );
-   // current_accuracy_dec=gsl_stats_sd(z2,1,N_good);
-   // current_accuracy_dec=esimate_sigma_from_MAD_of_unsorted_data( z2, N_good);
+   current_accuracy_ra= gsl_stats_variance( z1_local, 1, N_good );
+   // current_accuracy_ra=gsl_stats_sd(z1_local,1,N_good);
+   // current_accuracy_ra=esimate_sigma_from_MAD_of_unsorted_data( z1_local, N_good);
+   current_accuracy_dec= gsl_stats_variance( z2_local, 1, N_good );
+   // current_accuracy_dec=gsl_stats_sd(z2_local,1,N_good);
+   // current_accuracy_dec=esimate_sigma_from_MAD_of_unsorted_data( z2_local, N_good);
    // current_accuracy=sqrt(current_accuracy_ra*cos_delta*current_accuracy_ra*cos_delta+current_accuracy_dec*current_accuracy_dec);
    // current_accuracy=current_accuracy_ra*cos_delta*current_accuracy_ra*cos_delta+current_accuracy_dec*current_accuracy_dec;
    current_accuracy= current_accuracy_ra * cos_delta * cos_delta + current_accuracy_dec; // for gsl_stats_variance()
@@ -3060,8 +3074,8 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
    if ( distance < best_search_radius ) {
     if ( distance == 0.0 )
      continue; //
-    z1[N_good]= only_good_starsmatched_with_catalog[i].catalog_ra - only_good_starsmatched_with_catalog[i].corrected_mag_ra;
-    z2[N_good]= only_good_starsmatched_with_catalog[i].catalog_dec - only_good_starsmatched_with_catalog[i].corrected_mag_dec;
+    z1_local[N_good]= only_good_starsmatched_with_catalog[i].catalog_ra - only_good_starsmatched_with_catalog[i].corrected_mag_ra;
+    z2_local[N_good]= only_good_starsmatched_with_catalog[i].catalog_dec - only_good_starsmatched_with_catalog[i].corrected_mag_dec;
     N_good++;
     // fprintf(stderr,"%lf %lf\n",only_good_starsmatched_with_catalog[i].ra_deg_measured,only_good_starsmatched_with_catalog[i].dec_deg_measured);
    }
@@ -3069,19 +3083,19 @@ int correct_measured_positions( struct detected_star *stars, int N, double searc
   // exit(1);
 
   /// Somehow this seems very dangerous
-  // remove_outliers_from_a_pair_of_arrays( z1, z2, &N_good);
+  // remove_outliers_from_a_pair_of_arrays( z1_local, z2_local, &N_good);
   ///
 
   if ( N_good >= 3 ) {
 
-   best_local_correction_ra= gsl_stats_mean( z1, 1, N_good );
-   best_local_correction_dec= gsl_stats_mean( z2, 1, N_good );
+   best_local_correction_ra= gsl_stats_mean( z1_local, 1, N_good );
+   best_local_correction_dec= gsl_stats_mean( z2_local, 1, N_good );
 
    /*
-   gsl_sort(z1,1,N_good);
-   gsl_sort(z2,1,N_good);
-   best_local_correction_ra=gsl_stats_median_from_sorted_data(z1,1,N_good);
-   best_local_correction_dec=gsl_stats_median_from_sorted_data(z2,1,N_good);
+   gsl_sort(z1_local,1,N_good);
+   gsl_sort(z2_local,1,N_good);
+   best_local_correction_ra=gsl_stats_median_from_sorted_data(z1_local,1,N_good);
+   best_local_correction_dec=gsl_stats_median_from_sorted_data(z2_local,1,N_good);
 */
   } else {
    // fprintf(stderr,"DEBUG: best_accuracy=%lf best_search_radius=%lf (arcmin)\n",best_accuracy,best_search_radius*60);
