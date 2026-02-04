@@ -68,7 +68,7 @@
 #include "vast_is_file.h"
 
 // 8192 is out of nowhere
-#define BASE_COMMAND_LENGTH 1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH + 8192
+#define BASE_COMMAND_LENGTH ( 1024 + 3 * VAST_PATH_MAX + 2 * FILENAME_LENGTH + 8192 )
 
 struct str_catalog_search_parameters {
  double search_radius_deg;
@@ -172,6 +172,10 @@ void debug_dump_star_struct( struct detected_star *stars, int N ) {
  int i;
  FILE *f;
  f= fopen( "debug_dump_star_struct.txt", "w" );
+ if ( f == NULL ) {
+  fprintf( stderr, "WARNING: Cannot open debug_dump_star_struct.txt for writing\n" );
+  return;
+ }
  for ( i= 0; i < N; i++ ) {
   fprintf( f, "%lf %lf %lf %lf %lf %lf\n",
            stars[i].ra_deg_measured,
@@ -253,6 +257,11 @@ void remove_outliers_from_a_pair_of_arrays( double *a, double *b, int *N_good ) 
  // gsl_stats_absdev_m doesn't require sorted data
  MAD1= gsl_stats_absdev_m( a, 1, copy_N_good, median1 );
  MAD2= gsl_stats_absdev_m( b, 1, copy_N_good, median2 );
+ // Guard against division by zero if all values are identical
+ if ( MAD1 == 0.0 || MAD2 == 0.0 ) {
+  free( copy_a );
+  return; // cannot identify outliers if there's no spread in the data
+ }
  for ( i= 0, j= 0; i < copy_N_good; i++ ) {
   // taken from http://www.itl.nist.gov/div898/handbook/eda/section3/eda35h.htm
   M1= 0.6745 * ( a[i] - median1 ) / MAD1;
@@ -413,8 +422,8 @@ int check_if_the_output_catalog_already_exist( char *fits_image_filename ) {
  char wcs_catalog_filename[FILENAME_LENGTH + 32];
  char string[1024];
  guess_wcs_catalog_filename( wcs_catalog_filename, fits_image_filename );
- strncat( wcs_catalog_filename, ".ucac5", FILENAME_LENGTH );
- wcs_catalog_filename[FILENAME_LENGTH - 1]= '\0'; // just in case
+ strncat( wcs_catalog_filename, ".ucac5", sizeof( wcs_catalog_filename ) - strlen( wcs_catalog_filename ) - 1 );
+ wcs_catalog_filename[sizeof( wcs_catalog_filename ) - 1]= '\0'; // just in case
  f= fopen( wcs_catalog_filename, "r" );
  if ( f == NULL ) {
   return 0; // OK, the catalog is not there
@@ -608,7 +617,7 @@ int read_wcs_catalog( char *fits_image_filename, struct detected_star *stars, in
    blend_counter++;
   }
  }
- if ( (double)blend_counter / (double)i > 0.33333 ) {
+ if ( i > 0 && (double)blend_counter / (double)i > 0.33333 ) {
   fprintf( stderr, "The fraction of blended stars is high!\n" );
   // max_acceptable_SE_flag= 3;
   // fprintf( stderr, "The fraction of blended stars is high - will accept them for catalog matching!\nThe maximum acceptable Source Extractor flag is %d\n", max_acceptable_SE_flag);
@@ -734,6 +743,10 @@ int read_UCAC5_from_vizquery( struct detected_star *stars, int N, char *vizquery
  double observing_epoch_jy, dt;
 
  f= fopen( vizquery_output_filename, "r" );
+ if ( f == NULL ) {
+  fprintf( stderr, "ERROR: Cannot open %s for reading in read_UCAC5_from_vizquery()\n", vizquery_output_filename );
+  return 1;
+ }
  while ( NULL != fgets( string, 1024, f ) ) {
   if ( string[0] == '#' )
    continue;
@@ -769,7 +782,10 @@ int read_UCAC5_from_vizquery( struct detected_star *stars, int N, char *vizquery
   dt= observing_epoch_jy - epoch;
   // https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/340
   // pmRA is UCAC/Gaia proper motion in RA*cosDE
-  catalog_ra= catalog_ra + pmRA / ( 3600000 * cos_delta ) * dt;
+  // Guard against division by zero near celestial poles
+  if ( fabs( cos_delta ) > 1e-6 ) {
+   catalog_ra= catalog_ra + pmRA / ( 3600000 * cos_delta ) * dt;
+  }
   catalog_dec= catalog_dec + pmDE / 3600000 * dt;
   /////////////////////////////////////////////////////////////
 
@@ -862,6 +878,10 @@ int read_PANSTARRS1_from_vizquery( struct detected_star *stars, int N, char *viz
  double APASS_g_err;
 
  f= fopen( vizquery_output_filename, "r" );
+ if ( f == NULL ) {
+  fprintf( stderr, "ERROR: Cannot open %s for reading in read_PANSTARRS1_from_vizquery()\n", vizquery_output_filename );
+  return 1;
+ }
  while ( NULL != fgets( string, 1024, f ) ) {
   if ( string[0] == '#' )
    continue;
@@ -1437,7 +1457,9 @@ int search_UCAC5_localcopy( struct detected_star *stars, int N, struct str_catal
       catalog_dec_original= catalog_dec;
       observing_epoch_jy= 2000.0 + ( stars[0].observing_epoch_jd - 2451545.0 ) / 365.25;
       dt= observing_epoch_jy - epoch;
-      catalog_ra= catalog_ra + pmRA / ( 3600000 * cos_delta ) * dt;
+      if ( fabs( cos_delta ) > 1e-6 ) {
+       catalog_ra= catalog_ra + pmRA / ( 3600000 * cos_delta ) * dt;
+      }
       // catalog_ra= catalog_ra + pmRA / 3600000 * cos_delta * dt;
       catalog_dec= catalog_dec + pmDE / 3600000 * dt;
       //
@@ -2142,6 +2164,10 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
 #endif
 
  f= fopen( vizquery_output_filename, "r" );
+ if ( f == NULL ) {
+  fprintf( stderr, "ERROR: Cannot open %s for reading\n", vizquery_output_filename );
+  return 1;
+ }
  while ( NULL != fgets( string, 1024, f ) ) {
   if ( string[0] == '#' )
    continue;
@@ -2169,7 +2195,9 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
   dt= observing_epoch_jy - epoch;
   // https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/340
   // pmRA is UCAC/Gaia proper motion in RA*cosDE
-  catalog_ra= catalog_ra + pmRA / ( 3600000 * cos_delta ) * dt;
+  if ( fabs( cos_delta ) > 1e-6 ) {
+   catalog_ra= catalog_ra + pmRA / ( 3600000 * cos_delta ) * dt;
+  }
   catalog_dec= catalog_dec + pmDE / 3600000 * dt;
   /////////////////////////////////////////////////////////////
 
@@ -2406,6 +2434,10 @@ int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, i
 #endif
 
  f= fopen( vizquery_output_filename, "r" );
+ if ( f == NULL ) {
+  fprintf( stderr, "ERROR: Cannot open %s for reading\n", vizquery_output_filename );
+  return 1;
+ }
  while ( NULL != fgets( string, 1024, f ) ) {
   if ( string[0] == '#' )
    continue;
@@ -2433,7 +2465,9 @@ int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, i
   dt= observing_epoch_jy - epoch;
   // https://vizier.cds.unistra.fr/viz-bin/VizieR?-source=I/340
   // pmRA is UCAC/Gaia proper motion in RA*cosDE
-  catalog_ra= catalog_ra + pmRA / ( 3600000 * cos_delta ) * dt;
+  if ( fabs( cos_delta ) > 1e-6 ) {
+   catalog_ra= catalog_ra + pmRA / ( 3600000 * cos_delta ) * dt;
+  }
   catalog_dec= catalog_dec + pmDE / 3600000 * dt;
   /////////////////////////////////////////////////////////////
 
