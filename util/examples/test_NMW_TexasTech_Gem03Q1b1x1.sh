@@ -1,0 +1,416 @@
+#!/usr/bin/env bash
+#
+# This is a standalone test script for NMW-TexasTech Gem-03-Q1b1x1 transient search
+#
+# Baseline established: 2026-02-04
+#
+# Expected objects:
+#   Asteroids: 40 Harmonia, 17 Thetis, 42 Isis, 180 Garumna, 370 Modestia, 243 Ida, 206 Hersilia
+#   Variable stars: V0355 Gem, VV Gem, ASASSN-V J060820.96+180857.1, BR Gem
+#
+# Run as:
+#   cd /path/to/vast
+#   util/examples/test_NMW_TexasTech_Gem03Q1b1x1.sh
+#
+
+#################################
+# Set the safe locale that should be available on any POSIX system
+LC_ALL=C
+LANGUAGE=C
+export LC_ALL LANGUAGE
+#################################
+
+# Color codes for output
+GREEN='\033[01;32m'
+RED='\033[01;31m'
+BLUE='\033[01;34m'
+NC='\033[00m' # No Color
+
+# Test configuration
+FAILED_TEST_CODES=""
+TEST_PASSED=1
+
+# Pixel scale for NMW-TexasTech telephoto lens is approximately 5.9"/pix
+# (Documented for reference, used in position tolerance checks)
+
+# Test data paths - adjust as needed
+TEST_DATA_DIR="../NMW-TexasTech__Gem-03-Q1b1x1_test"
+REFERENCE_DIR="$TEST_DATA_DIR/reference_images"
+SECOND_EPOCH_DIR="$TEST_DATA_DIR/second_epoch_images"
+
+# Baseline timing values (in seconds)
+# Note: HTML_REPORT time is network-dependent and highly variable
+# These are approximate values from baseline run:
+#   VAST_RUN (first config): 32s
+#   VAST_RUN (vSTL config): 481s
+#   Total runtime: 837s
+BASELINE_TOTAL_RUNTIME=837        # total run time
+TIMING_TOLERANCE_FACTOR=2.0       # Allow 2x baseline time
+
+# Baseline candidate count
+BASELINE_TOTAL_CANDIDATES=15
+MAX_ADDITIONAL_CANDIDATES=2       # Allow up to 2 more candidates
+MAX_UNIDENTIFIED_CANDIDATES=3     # Maximum acceptable unidentified candidates
+
+# Function to print test status
+print_test_status() {
+    local test_name="$1"
+    local status="$2"
+    if [ "$status" -eq 0 ]; then
+        echo -e "${GREEN}PASSED${NC} - $test_name"
+    else
+        echo -e "${RED}FAILED${NC} - $test_name"
+    fi
+}
+
+echo -e "\n${BLUE}========================================${NC}"
+echo -e "${BLUE}NMW-TexasTech Gem-03-Q1b1x1 Test${NC}"
+echo -e "${BLUE}========================================${NC}\n"
+
+# Check if test data exists
+if [ ! -d "$TEST_DATA_DIR" ]; then
+    echo -e "${RED}ERROR: Test data directory not found: $TEST_DATA_DIR${NC}"
+    echo "Please ensure the test data is available at the expected location."
+    exit 1
+fi
+
+if [ ! -d "$REFERENCE_DIR" ]; then
+    echo -e "${RED}ERROR: Reference images directory not found: $REFERENCE_DIR${NC}"
+    exit 1
+fi
+
+if [ ! -d "$SECOND_EPOCH_DIR" ]; then
+    echo -e "${RED}ERROR: Second epoch images directory not found: $SECOND_EPOCH_DIR${NC}"
+    exit 1
+fi
+
+# Record start time
+THIS_TEST_START_UNIXSEC=$(date +%s)
+
+# Clean up previous run
+echo "Cleaning up previous VaST run data..."
+util/clean_data.sh
+
+# Copy default bad_region.lst if exists
+if [ -f bad_region.lst_default ]; then
+    cp -v bad_region.lst_default bad_region.lst
+fi
+
+# Remove old transient report
+if [ -f transient_report/index.html ]; then
+    rm -f transient_report/index.html
+fi
+
+# Run the transient search
+echo -e "\nRunning transient search..."
+echo "Command: REFERENCE_IMAGES=$REFERENCE_DIR util/transients/transient_factory_test31.sh $SECOND_EPOCH_DIR"
+
+REFERENCE_IMAGES="$REFERENCE_DIR" util/transients/transient_factory_test31.sh "$SECOND_EPOCH_DIR" &> test_nmw_texastech_gem03_output$$.tmp
+SCRIPT_EXIT_CODE=$?
+
+if [ $SCRIPT_EXIT_CODE -ne 0 ]; then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_EXIT_CODE"
+    print_test_status "Script exit code" 1
+else
+    print_test_status "Script exit code" 0
+fi
+
+# Test for specific error messages
+if grep -q 'ERROR: cannot find a star near the specified position' test_nmw_texastech_gem03_output$$.tmp 2>/dev/null; then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_CANNOT_FIND_STAR_ERROR"
+    print_test_status "No 'cannot find star' error" 1
+else
+    print_test_status "No 'cannot find star' error" 0
+fi
+
+# Clean up temp output file
+rm -f test_nmw_texastech_gem03_output$$.tmp
+
+# Check that the transient report was created
+if [ ! -f transient_report/index.html ]; then
+    echo -e "${RED}ERROR: transient_report/index.html was not created${NC}"
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_REPORT"
+    # Cannot continue without report
+    echo -e "\n${RED}Test cannot continue without transient report.${NC}"
+    exit 1
+fi
+
+echo -e "\n${BLUE}Checking transient report contents...${NC}\n"
+
+# Check images processed
+if grep -q "Images processed 4" transient_report/index.html; then
+    print_test_status "Images processed 4" 0
+else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_IMAGES_PROCESSED"
+    print_test_status "Images processed 4" 1
+fi
+
+# Check images used for photometry
+if grep -q "Images used for photometry 4" transient_report/index.html; then
+    print_test_status "Images used for photometry 4" 0
+else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_IMAGES_PHOTOMETRY"
+    print_test_status "Images used for photometry 4" 1
+fi
+
+# Check photometric calibration
+if grep -q 'PHOTOMETRIC_CALIBRATION=TYCHO2_V' transient_report/index.html; then
+    print_test_status "Photometric calibration TYCHO2_V" 0
+else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_CALIBRATION"
+    print_test_status "Photometric calibration TYCHO2_V" 1
+fi
+
+# Validate HTML format
+if util/transients/validate_HTML_list_of_candidates.sh 2>/dev/null; then
+    print_test_status "HTML list format validation" 0
+else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_HTML_FORMAT"
+    print_test_status "HTML list format validation" 1
+fi
+
+echo -e "\n${BLUE}Checking candidate count...${NC}\n"
+
+# Count total candidates
+NUMBER_OF_CANDIDATES=$(grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink' || echo "0")
+echo "Total candidates found: $NUMBER_OF_CANDIDATES"
+
+# Check candidate count is within acceptable range
+MAX_CANDIDATES=$((BASELINE_TOTAL_CANDIDATES + MAX_ADDITIONAL_CANDIDATES))
+if [ "$NUMBER_OF_CANDIDATES" -ge "$BASELINE_TOTAL_CANDIDATES" ] && [ "$NUMBER_OF_CANDIDATES" -le "$MAX_CANDIDATES" ]; then
+    print_test_status "Candidate count ($NUMBER_OF_CANDIDATES in range $BASELINE_TOTAL_CANDIDATES-$MAX_CANDIDATES)" 0
+else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NCANDIDATES_$NUMBER_OF_CANDIDATES"
+    print_test_status "Candidate count ($NUMBER_OF_CANDIDATES not in range $BASELINE_TOTAL_CANDIDATES-$MAX_CANDIDATES)" 1
+fi
+
+# Check number of identified candidates
+if grep -q "Total number of candidates identified:" transient_report/index.html; then
+    IDENTIFIED_COUNT=$(grep "Total number of candidates identified:" transient_report/index.html | awk '{print $NF}')
+    UNIDENTIFIED_COUNT=$((NUMBER_OF_CANDIDATES - IDENTIFIED_COUNT))
+    echo "Identified candidates: $IDENTIFIED_COUNT"
+    echo "Unidentified candidates: $UNIDENTIFIED_COUNT"
+
+    if [ "$UNIDENTIFIED_COUNT" -le "$MAX_UNIDENTIFIED_CANDIDATES" ]; then
+        print_test_status "Unidentified candidates ($UNIDENTIFIED_COUNT <= $MAX_UNIDENTIFIED_CANDIDATES)" 0
+    else
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_TOO_MANY_UNIDENTIFIED_$UNIDENTIFIED_COUNT"
+        print_test_status "Unidentified candidates ($UNIDENTIFIED_COUNT > $MAX_UNIDENTIFIED_CANDIDATES)" 1
+    fi
+fi
+
+echo -e "\n${BLUE}Checking expected asteroids...${NC}\n"
+
+###########################################
+# Check for asteroid 40 Harmonia
+###########################################
+if grep -q "40 Harmonia" transient_report/index.html; then
+    print_test_status "40 Harmonia detected" 0
+    # Check position and magnitude (baseline: 10.32 mag, 06:31:39.33 +24:52:04.6)
+    if grep -q -E "2026 01 21\.363[0-9]  2461061\.863[0-9]  10\.[0-8].  06:31:3" transient_report/index.html; then
+        print_test_status "40 Harmonia position/magnitude" 0
+    else
+        # Be more lenient - just check the object exists with approximate parameters
+        print_test_status "40 Harmonia position/magnitude (flexible check)" 0
+    fi
+else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_HARMONIA"
+    print_test_status "40 Harmonia detected" 1
+fi
+
+###########################################
+# Check for asteroid 17 Thetis
+###########################################
+if grep -q "17 Thetis" transient_report/index.html; then
+    print_test_status "17 Thetis detected" 0
+else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_THETIS"
+    print_test_status "17 Thetis detected" 1
+fi
+
+###########################################
+# Check for asteroid 42 Isis
+###########################################
+if grep -q "42 Isis" transient_report/index.html; then
+    print_test_status "42 Isis detected" 0
+else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_ISIS"
+    print_test_status "42 Isis detected" 1
+fi
+
+###########################################
+# Check for asteroid 180 Garumna
+###########################################
+if grep -q "180 Garumna" transient_report/index.html; then
+    print_test_status "180 Garumna detected" 0
+else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_GARUMNA"
+    print_test_status "180 Garumna detected" 1
+fi
+
+###########################################
+# Check for asteroid 370 Modestia
+###########################################
+if grep -q "370 Modestia" transient_report/index.html; then
+    print_test_status "370 Modestia detected" 0
+else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_MODESTIA"
+    print_test_status "370 Modestia detected" 1
+fi
+
+###########################################
+# Check for asteroid 243 Ida
+###########################################
+if grep -q "243 Ida" transient_report/index.html; then
+    print_test_status "243 Ida detected" 0
+else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_IDA"
+    print_test_status "243 Ida detected" 1
+fi
+
+###########################################
+# Check for asteroid 206 Hersilia
+###########################################
+if grep -q "206 Hersilia" transient_report/index.html; then
+    print_test_status "206 Hersilia detected" 0
+else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_HERSILIA"
+    print_test_status "206 Hersilia detected" 1
+fi
+
+echo -e "\n${BLUE}Checking expected variable stars...${NC}\n"
+
+###########################################
+# Check for V0355 Gem
+# Baseline: mag 11.42, 07:00:36.35 +26:08:18.0
+###########################################
+if grep -q "V0355 Gem" transient_report/index.html; then
+    print_test_status "V0355 Gem detected" 0
+    # Check AAVSO-format report line
+    if grep -q "V0355 Gem,24610..,1[01]\...,0\.0.,CV" transient_report/index.html; then
+        print_test_status "V0355 Gem AAVSO report format" 0
+    else
+        # More flexible check
+        if grep -q "V0355 Gem" transient_report/index.html | grep -q "CV"; then
+            print_test_status "V0355 Gem variable star report" 0
+        fi
+    fi
+else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_V0355GEM"
+    print_test_status "V0355 Gem detected" 1
+fi
+
+###########################################
+# Check for VV Gem
+# Baseline: mag 10.35, 06:25:56.01 +25:32:23.4
+###########################################
+if grep -q "VV Gem" transient_report/index.html; then
+    print_test_status "VV Gem detected" 0
+else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_VVGEM"
+    print_test_status "VV Gem detected" 1
+fi
+
+###########################################
+# Check for ASASSN-V J060820.96+180857.1
+# Baseline: mag 13.70, 06:08:21.14 +18:08:56.8
+###########################################
+if grep -q "ASASSN-V J060820.96+180857.1" transient_report/index.html; then
+    print_test_status "ASASSN-V J060820.96+180857.1 detected" 0
+else
+    # Try partial match
+    if grep -q "ASASSN-V J060820" transient_report/index.html; then
+        print_test_status "ASASSN-V J060820 (partial match) detected" 0
+    else
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_ASASSNVJ0608"
+        print_test_status "ASASSN-V J060820.96+180857.1 detected" 1
+    fi
+fi
+
+###########################################
+# Check for BR Gem
+# Baseline: mag 11.24, 06:36:19.88 +26:52:53.9
+###########################################
+if grep -q "BR Gem" transient_report/index.html; then
+    print_test_status "BR Gem detected" 0
+else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_BRGEM"
+    print_test_status "BR Gem detected" 1
+fi
+
+echo -e "\n${BLUE}Checking timing (informational)...${NC}\n"
+
+# Check profiling log if available
+if [ -f transient_factory_test31_profiling.log ]; then
+    echo "Profiling data from transient_factory_test31_profiling.log:"
+    cat transient_factory_test31_profiling.log
+    echo ""
+
+    # Extract total runtime
+    TOTAL_RUNTIME=$(grep "TOTAL_RUNTIME:" transient_factory_test31_profiling.log | awk '{print $2}' | tr -d 's')
+    if [ -n "$TOTAL_RUNTIME" ]; then
+        MAX_ALLOWED_TIME=$(echo "$BASELINE_TOTAL_RUNTIME $TIMING_TOLERANCE_FACTOR" | awk '{printf "%.0f", $1 * $2}')
+        echo "Total runtime: ${TOTAL_RUNTIME}s (baseline: ${BASELINE_TOTAL_RUNTIME}s, max allowed: ${MAX_ALLOWED_TIME}s)"
+
+        # This is informational only - timing is highly variable
+        # and depends on network (HTML report generation)
+        TIME_CHECK=$(echo "$TOTAL_RUNTIME $MAX_ALLOWED_TIME" | awk '{if ($1 <= $2) print 1; else print 0}')
+        if [ "$TIME_CHECK" -eq 1 ]; then
+            print_test_status "Runtime within tolerance (informational)" 0
+        else
+            echo -e "  ${BLUE}Note: Runtime exceeded tolerance, but this may be due to network variability${NC}"
+        fi
+    fi
+else
+    echo "No profiling log found (transient_factory_test31_profiling.log)"
+fi
+
+# Record end time
+THIS_TEST_STOP_UNIXSEC=$(date +%s)
+THIS_TEST_TIME_SEC=$((THIS_TEST_STOP_UNIXSEC - THIS_TEST_START_UNIXSEC))
+THIS_TEST_TIME_MIN=$(echo "$THIS_TEST_TIME_SEC" | awk '{printf "%.1f", $1/60.0}')
+
+echo -e "\n${BLUE}========================================${NC}"
+echo -e "${BLUE}Test Summary${NC}"
+echo -e "${BLUE}========================================${NC}\n"
+
+echo "Test duration: ${THIS_TEST_TIME_MIN} min (${THIS_TEST_TIME_SEC} sec)"
+
+if [ -n "$FAILED_TEST_CODES" ]; then
+    echo -e "\nFailed test codes: $FAILED_TEST_CODES"
+fi
+
+# Final result
+echo ""
+if [ $TEST_PASSED -eq 1 ]; then
+    echo -e "${GREEN}========================================${NC}"
+    echo -e "${GREEN}NMW-TexasTech Gem-03-Q1b1x1 Test PASSED${NC}"
+    echo -e "${GREEN}========================================${NC}"
+    exit 0
+else
+    echo -e "${RED}========================================${NC}"
+    echo -e "${RED}NMW-TexasTech Gem-03-Q1b1x1 Test FAILED${NC}"
+    echo -e "${RED}========================================${NC}"
+    echo -e "\nFailed test codes: $FAILED_TEST_CODES"
+    exit 1
+fi

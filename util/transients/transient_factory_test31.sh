@@ -2846,6 +2846,20 @@ echo "############################################################
 List of TOCP transients from http://www.cbat.eps.harvard.edu/unconf/tocp.html :" | tee -a transient_factory_test31.txt
 cat tocp_transients_list.txt | tee -a transient_factory_test31.txt
 ls -lh tocp_transients_list.txt 2>&1 | tee -a transient_factory_test31.txt
+#
+
+# Record total script runtime
+SCRIPT_END_UNIXSEC=$(date +%s)
+TOTAL_ELAPSED_SEC=$((SCRIPT_END_UNIXSEC - SCRIPT_START_UNIXSEC))
+TOTAL_ELAPSED_MIN=$(echo "$TOTAL_ELAPSED_SEC" | awk '{printf "%.2f", $1/60.0}')
+echo "=======================================" >> "$PROFILING_LOG"
+echo "TOTAL_RUNTIME: ${TOTAL_ELAPSED_SEC}s (${TOTAL_ELAPSED_MIN} min)" >> "$PROFILING_LOG"
+echo "Finished: $(date)" >> "$PROFILING_LOG"
+
+# Append profiling results to main log
+echo "" >> transient_factory_test31.txt
+echo "=== PROFILING RESULTS ===" | tee -a transient_factory_test31.txt
+cat "$PROFILING_LOG" | tee -a transient_factory_test31.txt
 ###############################################################################################################
 
 ## Finalize the HTML report
@@ -2886,19 +2900,6 @@ for FILE_TO_REMOVE in planets.txt planets_header.txt comets.txt comets_header.tx
   rm -f "$FILE_TO_REMOVE"
  fi
 done
-
-# Record total script runtime
-SCRIPT_END_UNIXSEC=$(date +%s)
-TOTAL_ELAPSED_SEC=$((SCRIPT_END_UNIXSEC - SCRIPT_START_UNIXSEC))
-TOTAL_ELAPSED_MIN=$(echo "$TOTAL_ELAPSED_SEC" | awk '{printf "%.2f", $1/60.0}')
-echo "=======================================" >> "$PROFILING_LOG"
-echo "TOTAL_RUNTIME: ${TOTAL_ELAPSED_SEC}s (${TOTAL_ELAPSED_MIN} min)" >> "$PROFILING_LOG"
-echo "Finished: $(date)" >> "$PROFILING_LOG"
-
-# Append profiling results to main log
-echo "" >> transient_factory_test31.txt
-echo "=== PROFILING RESULTS ===" >> transient_factory_test31.txt
-cat "$PROFILING_LOG" >> transient_factory_test31.txt
 
 # The uncleaned directory is needed for the test script!!!
 #util/clean_data.sh
