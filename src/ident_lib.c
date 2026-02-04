@@ -729,7 +729,8 @@ static inline float mean_distance__Popadanie_star1_to_star2( struct Star *star1,
 // Tested optimizations:
 // - Spatial indexing with various cell sizes (10x, 50x, 100x sigma): No measurable improvement
 //   due to grid building overhead canceling the reduced iteration count.
-// - OpenMP parallelization on outer loop: No measurable improvement due to thread overhead.
+// - OpenMP parallelization on outer loop: Made performance WORSE (3x slower on retry-heavy workloads)
+//   due to thread synchronization overhead dominating when there are many short matching attempts.
 // The simple O(N*M) nested loop performs well with compiler optimization (-O2).
 static inline int Popadanie_star1_to_star2__with_mean_distance( struct Star *star1, int Number1, struct Star *star2, int Number2,
                                                                 double sigma_popadaniya, float *output_mean_distance ) {
