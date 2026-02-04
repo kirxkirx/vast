@@ -636,6 +636,17 @@ function print_image_date_for_logs_in_case_of_emergency_stop {
  return 0
 }
 
+function record_timing {
+ local SECTION_NAME="$1"
+ local START_TIME="$2"
+ local END_TIME
+ END_TIME=$(date +%s)
+ local ELAPSED_SEC=$((END_TIME - START_TIME))
+ local ELAPSED_MIN
+ ELAPSED_MIN=$(echo "$ELAPSED_SEC" | awk '{printf "%.2f", $1/60.0}')
+ echo "$SECTION_NAME: ${ELAPSED_SEC}s (${ELAPSED_MIN} min)" >> "$PROFILING_LOG"
+}
+
 function check_if_vast_install_looks_reasonably_healthy {
  for FILE_TO_CHECK in ./vast GNUmakefile makefile lib/autodetect_aperture_main lib/bin/xy2sky lib/catalogs/check_catalogs_offline lib/choose_vizier_mirror.sh lib/deeming_compute_periodogram lib/deg2hms_uas lib/drop_bright_points lib/drop_faint_points lib/fit_robust_linear lib/guess_saturation_limit_main lib/hms2deg lib/lk_compute_periodogram lib/new_lightcurve_sigma_filter lib/put_two_sources_in_one_field lib/remove_bad_images lib/remove_lightcurves_with_small_number_of_points lib/select_only_n_random_points_from_set_of_lightcurves lib/sextract_single_image_noninteractive lib/try_to_guess_image_fov lib/update_offline_catalogs.sh lib/update_tai-utc.sh lib/vizquery util/calibrate_magnitude_scale util/calibrate_single_image.sh util/ccd/md util/ccd/mk util/ccd/ms util/clean_data.sh util/examples/test_coordinate_converter.sh util/examples/test__dark_flat_flag.sh util/examples/test_heliocentric_correction.sh util/fov_of_wcs_calibrated_image.sh util/get_image_date util/hjd_input_in_UTC util/load.sh util/magnitude_calibration.sh util/make_finding_chart util/nopgplot.sh util/rescale_photometric_errors util/save.sh util/search_databases_with_curl.sh util/search_databases_with_vizquery.sh util/solve_plate_with_UCAC5 util/stat_outfile util/sysrem2 util/transients/transient_factory_test31.sh util/wcs_image_calibration.sh ;do
   if [ ! -s "$FILE_TO_CHECK" ];then
@@ -774,6 +785,14 @@ for FILE_TO_REMOVE in local_wcs_cache/* exclusion_list.txt exclusion_list_bsc.tx
   rm -f "$FILE_TO_REMOVE"
  fi
 done
+
+# Initialize profiling log
+PROFILING_LOG="transient_factory_test31_profiling.log"
+rm -f "$PROFILING_LOG" 2>/dev/null
+SCRIPT_START_UNIXSEC=$(date +%s)
+echo "=== Transient Factory Profiling ===" >> "$PROFILING_LOG"
+echo "Started: $(date)" >> "$PROFILING_LOG"
+echo "=======================================" >> "$PROFILING_LOG"
 
 #### Start writing the new log file transient_factory_test31.txt ####
 # Print the processing parameters for diagnostic purposes:
@@ -1095,7 +1114,8 @@ done
 PREVIOUS_FIELD="none"
 
 for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
- 
+
+ FIELD_START_UNIXSEC=$(date +%s)
  echo "########### Starting $FIELD ###########" | tee -a transient_factory_test31.txt
 
  echo "Processing $FIELD" | tee -a transient_factory_test31.txt
@@ -1789,7 +1809,8 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   export SEXTRACTOR_CONFIG_FILE
   
   echo "*------ $SEXTRACTOR_CONFIG_FILE ------*" | tee -a transient_factory_test31.txt
-  
+  SEXCONFIG_START_UNIXSEC=$(date +%s)
+
   ## Set the SExtractor parameters file
   if [ ! -f "$SEXTRACTOR_CONFIG_FILE" ];then
    echo "ERROR finding $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
@@ -1798,6 +1819,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   cp -v "$SEXTRACTOR_CONFIG_FILE" default.sex >> transient_factory_test31.txt 2>&1
 
   echo "Starting VaST with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
+  VAST_RUN_START_UNIXSEC=$(date +%s)
   # Run VaST
   echo "
   ./vast --norotation --starmatchraius $STARMATCH_RADIUS_PIX --matchstarnumber 500 --selectbestaperture --sysrem $SYSREM_ITERATIONS --type 4 --maxsextractorflag 99 --UTC --nofind --nojdkeyword $REFERENCE_EPOCH__FIRST_IMAGE $REFERENCE_EPOCH__SECOND_IMAGE $SECOND_EPOCH__FIRST_IMAGE $SECOND_EPOCH__SECOND_IMAGE
@@ -1828,6 +1850,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   fi
   #
   echo "VaST run complete with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
+  record_timing "    VAST_RUN" "$VAST_RUN_START_UNIXSEC"
   echo "The four input images were $REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" "$SECOND_EPOCH__FIRST_IMAGE" "$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_factory_test31.txt
   echo "## VaST run with SExtractor config file $SEXTRACTOR_CONFIG_FILE ##" >> transient_factory.log
   cat vast_summary.log >> transient_factory.log
@@ -1867,8 +1890,9 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
      fi # if [ -s "$i" ];then
     done # for i in "$WCSCACHEDIR"/wcs_"$FIELD"_*."$FITS_FILE_EXT" "$WCSCACHEDIR"/exclusion_list*; do
    fi # if [ -d "$WCSCACHEDIR" ];then
-  done # for WCSCACHEDIR in 
+  done # for WCSCACHEDIR in
 
+  WCS_EPHEMERIS_START_UNIXSEC=$(date +%s)
   if [ ! -f planets.txt ] && [ -z "$THIS_IS_ARTIFICIAL_STAR_TEST_DO_NO_ONLINE_VSX_SEARCH" ];then
    JD_FIRSTIMAGE_FOR_PLANET_POSITIONS=$(util/get_image_date "$SECOND_EPOCH__FIRST_IMAGE" 2>&1 | grep ' JD ' | tail -n1 | awk '{print $2}')
    echo "The reference JD(UT) for computing planet and comet positions: $JD_FIRSTIMAGE_FOR_PLANET_POSITIONS" | tee -a transient_factory_test31.txt
@@ -1919,8 +1943,9 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   for pid in "${calibrationPIDs[@]}"; do
    wait "$pid"
   done
+  record_timing "    WCS_CALIBRATION_AND_EPHEMERIS" "$WCS_EPHEMERIS_START_UNIXSEC"
   #
-  
+
   # Check that the plates were actually solved
   for i in $(cat vast_image_details.log | awk '{print $17}') ;do 
    WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $i)"
@@ -2128,7 +2153,8 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
 util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE_EPOCH__FIRST_IMAGE" | tee -a transient_factory_test31.txt
    util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE_EPOCH__FIRST_IMAGE >> transient_factory_test31.txt 2>&1
   fi
-  
+
+  UCAC5_START_UNIXSEC=$(date +%s)
   echo "Preparing for ar aprallel run" | tee -a transient_factory_test31.txt
   # Array to hold names of temporary files
   declare -a solve_plate_with_UCAC5_tempFiles
@@ -2177,6 +2203,8 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
   else
    echo "Found non-empty $WCS_IMAGE_NAME_FOR_CHECKS" | tee -a transient_factory_test31.txt
   fi
+  record_timing "    UCAC5_PLATE_SOLVING" "$UCAC5_START_UNIXSEC"
+  MAGCAL_START_UNIXSEC=$(date +%s)
   echo "____ Start of magnitude calibration ____" | tee -a transient_factory_test31.txt
   #
   # Double-check that PHOTOMETRIC_CALIBRATION is set earlier
@@ -2250,6 +2278,7 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
   esac
   grep 'Estimated ref. image limiting mag.:' vast_summary.log >> transient_factory_test31.txt 2>&1
   echo "____ End of magnitude calibration ____" | tee -a transient_factory_test31.txt
+  record_timing "    MAGNITUDE_CALIBRATION" "$MAGCAL_START_UNIXSEC"
   # Check that the magnitude calibration actually worked
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
    ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
@@ -2590,10 +2619,13 @@ The hard cut-off for the candidate transients is $FILTER_FAINT_MAG_CUTOFF_TRANSI
    ##########################################################
    #
    echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
+   HTML_REPORT_START_UNIXSEC=$(date +%s)
    util/transients/make_report_in_HTML.sh >> transient_factory_test31.txt 2>&1
+   record_timing "    HTML_REPORT" "$HTML_REPORT_START_UNIXSEC"
    echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
   fi # else if [ $NUMBER_OF_DETECTED_TRANSIENTS -gt 500 ];then
   
+  record_timing "  SE_CONFIG_${SEXTRACTOR_CONFIG_FILE}" "$SEXCONFIG_START_UNIXSEC"
   echo "*------ done with $SEXTRACTOR_CONFIG_FILE ------*" | tee -a transient_factory_test31.txt
 
   echo "#### The local exclusion list is exclusion_list_local.txt ####" | tee -a transient_factory_test31.txt
@@ -2607,8 +2639,9 @@ The hard cut-off for the candidate transients is $FILTER_FAINT_MAG_CUTOFF_TRANSI
   rm -f exclusion_list_local.txt
  fi
  
+ record_timing "FIELD_$FIELD" "$FIELD_START_UNIXSEC"
  echo "########### Completed $FIELD ###########" | tee -a transient_factory_test31.txt
- 
+
 done # for i in "$NEW_IMAGES"/ ...
 
 done # for NEW_IMAGES in $@ ;do
@@ -2853,6 +2886,19 @@ for FILE_TO_REMOVE in planets.txt planets_header.txt comets.txt comets_header.tx
   rm -f "$FILE_TO_REMOVE"
  fi
 done
+
+# Record total script runtime
+SCRIPT_END_UNIXSEC=$(date +%s)
+TOTAL_ELAPSED_SEC=$((SCRIPT_END_UNIXSEC - SCRIPT_START_UNIXSEC))
+TOTAL_ELAPSED_MIN=$(echo "$TOTAL_ELAPSED_SEC" | awk '{printf "%.2f", $1/60.0}')
+echo "=======================================" >> "$PROFILING_LOG"
+echo "TOTAL_RUNTIME: ${TOTAL_ELAPSED_SEC}s (${TOTAL_ELAPSED_MIN} min)" >> "$PROFILING_LOG"
+echo "Finished: $(date)" >> "$PROFILING_LOG"
+
+# Append profiling results to main log
+echo "" >> transient_factory_test31.txt
+echo "=== PROFILING RESULTS ===" >> transient_factory_test31.txt
+cat "$PROFILING_LOG" >> transient_factory_test31.txt
 
 # The uncleaned directory is needed for the test script!!!
 #util/clean_data.sh
