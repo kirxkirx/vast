@@ -227,7 +227,7 @@ int convert_nova_helper_format( char *lightcurvefilename, char *path_to_vast_str
  // Generate the converted filename
  snprintf( converted_filename, MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER, "%s/%s_converted.dat", converted_directory, original_filename );
  // Ensure null-termination
- lightcurvefilename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1]= '\0';
+ converted_filename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1]= '\0';
 
  fprintf( stderr, "nova_helper data format detected! Converting %s to %s\n", basename( lightcurvefilename ), converted_filename );
 
@@ -298,7 +298,7 @@ int convert_tess_format( char *lightcurvefilename, char *path_to_vast_string ) {
  // Generate the converted filename
  snprintf( converted_filename, MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER, "%s/%s_converted.dat", converted_directory, original_filename );
  // Ensure null-termination
- lightcurvefilename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1]= '\0';
+ converted_filename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1]= '\0';
 
  fprintf( stderr, "TESS LightKurve format detected! Converting %s to %s\n", basename( lightcurvefilename ), converted_filename );
 
@@ -371,7 +371,7 @@ int convert_atlas_format( char *lightcurvefilename, char *path_to_vast_string ) 
  // Generate the converted filename
  snprintf( converted_filename, MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER, "%s/%s_converted.dat", converted_directory, original_filename );
  // Ensure null-termination
- lightcurvefilename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1]= '\0';
+ converted_filename[MAX_INTERNAL_FILENAME_LENGTH_ONTHEFLY_LC_CONVERTER - 1]= '\0';
 
  fprintf( stderr, "ATLAS data format detected! Converting %s to %s\n", basename( lightcurvefilename ), converted_filename );
 
@@ -392,7 +392,7 @@ int convert_atlas_format( char *lightcurvefilename, char *path_to_vast_string ) 
  // Process the lightcurve data
  while ( fgets( line, MAX_STRING_LENGTH_IN_LIGHTCURVE_FILE, lightcurvefile ) != NULL ) {
   if ( sscanf( line, "%lf %lf %lf %*f %*f %c", &mjd, &mag, &mag_err, filter ) == 4 ) {
-   if ( strcmp( filter, "o" ) == 0 && mag > 0.0 && mag_err < 0.2 ) {
+   if ( filter[0] == 'o' && mag > 0.0 && mag_err < 0.2 ) {
     fprintf( convertedfile, "%.6lf %.5f %.5f\n", mjd + 2400000.5, mag, mag_err );
    }
   }
@@ -1755,7 +1755,7 @@ void fit_linear_trend( float *input_JD, float *input_mag, float *mag_err, int N,
  ( *B )= 0.0;
 
  // Suppress output if it's flat
- if ( ( *A ) < 1e-6 || 1e-6 < ( *A ) ) {
+ if ( fabs( *A ) > 1e-6 ) {
   fprintf( stderr, "Weighted linear trend fit:   %lf mag/day, corresponding to t_2mag= %lf, t_3mag= %lf\n", ( *A ), 2.0 / ( *A ), 3.0 / ( *A ) );
  }
 
@@ -1766,7 +1766,7 @@ void fit_linear_trend( float *input_JD, float *input_mag, float *mag_err, int N,
  ( *A )= poly_coeff[1];
  // fprintf(stderr, "DEBUG03\n");
  //  Suppress output if it's flat
- if ( ( *A ) < 1e-6 || 1e-6 < ( *A ) ) {
+ if ( fabs( *A ) > 1e-6 ) {
   fprintf( stderr, "Robust linear trend fit:   %lf mag/day, corresponding to t_2mag= %lf, t_3mag= %lf\n", ( *A ), 2.0 / ( *A ), 3.0 / ( *A ) );
  }
  // fprintf(stderr, "DEBUG04\n");
@@ -1992,7 +1992,8 @@ void remove_median_magnitude( float *mag, int N, double mag_zeropoint_for_log, d
 }
 
 int find_closest( float x, float y, float *X, float *Y, int N, float new_X1, float new_X2, float new_Y1, float new_Y2 ) {
- float y_to_x_scaling_factor= fabsf( new_X2 - new_X1 ) / fabsf( new_Y2 - new_Y1 );
+ float y_range= fabsf( new_Y2 - new_Y1 );
+ float y_to_x_scaling_factor= ( y_range > 1e-6f ) ? fabsf( new_X2 - new_X1 ) / y_range : 1.0f;
  int i;
  float best_dist;
  int best_dist_num= 0;
@@ -2231,7 +2232,7 @@ int main( int argc, char **argv ) {
  fprintf( stderr, "Opening \x1B[34;47m %s \x1B[33;00m ...  ", lightcurvefilename );
  lightcurvefile= fopen( lightcurvefilename, "r" );
  if ( NULL == lightcurvefile ) {
-  sprintf( tmp_lightcurvefilename, "out%s.dat", lightcurvefilename );
+  snprintf( tmp_lightcurvefilename, 2 * FILENAME_LENGTH, "out%s.dat", lightcurvefilename );
   strncpy( lightcurvefilename, tmp_lightcurvefilename, FILENAME_LENGTH - 1 );
   lightcurvefilename[FILENAME_LENGTH - 1]= '\0'; // just in case
   fprintf( stderr, "ERROR: cannot open file!\n Trying %s ... ", lightcurvefilename );
