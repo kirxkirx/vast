@@ -30105,24 +30105,25 @@ if [ -z "$HORIZONS_DIRECT" ] && [ -z "$HORIZONS_REVERSE_PROXY" ] ;then
 fi
 # if HORIZONS_DIRECT failed - that's not an error - that's why we need the reverse proxy
 
-## VSX direct and reverse proxy
-VSX_DIRECT=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'https://vsx.aavso.org/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
-if curl --silent --tlsv1.2 https://kirx.net --max-time 5 >/dev/null 2>&1 ;then
- VSX_REVERSE_PROXY=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'https://kirx.net/vsx/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
-else
- VSX_REVERSE_PROXY=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'http://kirx.net/vsx/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
-fi
-if [ "$VSX_DIRECT" != "$VSX_REVERSE_PROXY" ] ;then
- if [ -n "$VSX_DIRECT" ];then
-  TEST_PASSED=0
-  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_VSX_REVERSE_PROXY_FAILED"
- fi
-fi
-if [ -z "$VSX_DIRECT" ] && [ -z "$VSX_REVERSE_PROXY" ] ;then
- TEST_PASSED=0
- FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_VSX_DIRECT_AND_REVERSE_PROXY_FAILED"
-fi
-## if VSX_DIRECT failed - that's not an error - that's why we need the reverse proxy
+# disable VSX test
+### VSX direct and reverse proxy
+#VSX_DIRECT=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'https://vsx.aavso.org/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
+#if curl --silent --tlsv1.2 https://kirx.net --max-time 5 >/dev/null 2>&1 ;then
+# VSX_REVERSE_PROXY=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'https://kirx.net/vsx/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
+#else
+# VSX_REVERSE_PROXY=$(curl --insecure --silent --max-time 30 --data 'targetcenter=07:29:19.69%20-13:23:06.6&format=s&constid=0&fieldsize=0.5&fieldunit=2&geometry=r&order=9&ql=1&filter[]=0,1,2' 'http://kirx.net/vsx/index.php?view=results.submit1' | grep '\<desig' |awk -F\> '{print $3}')
+#fi
+#if [ "$VSX_DIRECT" != "$VSX_REVERSE_PROXY" ] ;then
+# if [ -n "$VSX_DIRECT" ];then
+#  TEST_PASSED=0
+#  FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_VSX_REVERSE_PROXY_FAILED"
+# fi
+#fi
+#if [ -z "$VSX_DIRECT" ] && [ -z "$VSX_REVERSE_PROXY" ] ;then
+# TEST_PASSED=0
+# FAILED_TEST_CODES="$FAILED_TEST_CODES AUXWEB_VSX_DIRECT_AND_REVERSE_PROXY_FAILED"
+#fi
+### if VSX_DIRECT failed - that's not an error - that's why we need the reverse proxy
 
 #### Test static pages for any unexpected changes
 

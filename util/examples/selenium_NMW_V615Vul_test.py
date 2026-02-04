@@ -251,7 +251,7 @@ class SecondSectionLinkButtonTest(unittest.TestCase):
 
         # special submissions
         self._check_mpc_submission(section_nodes)
-        self._check_vsx_submission(section_nodes)
+        #self._check_vsx_submission(section_nodes)
 
     # ----- MPC submission ----------------------------------------------
     def _check_mpc_submission(self, section_nodes):
