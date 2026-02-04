@@ -132,7 +132,7 @@ test -z "$script" && script="asu-tsv"
 # Note for me: vizquery test fails on boinc with --speed-limit 100 --speed-time 20
 # increasing --speed-time to 100 did not help with slow VizieR mirrors (e.g. china-vo)
 # lowering --speed-limit to 10 and increasing --speed-time to 300 to tolerate very slow mirrors
-call="curl $VAST_CURL_PROXY -s -X POST --data-binary @$tt --retry 1 --retry-delay 5 --connect-timeout 10 --speed-limit 10 --speed-time 300 --max-time 600 http://$site/$cgidir/$script"
+call="curl $VAST_CURL_PROXY -s -X POST --data-binary @$tt --retry 1 --retry-delay 5 --connect-timeout 10 --speed-limit 10 --speed-time 400 --max-time 600 http://$site/$cgidir/$script"
 
 # Handle input
 if [ $input_file -gt 0 ]; then	# Input in a file:
