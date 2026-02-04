@@ -1207,6 +1207,10 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 remove_test_data_to_save_space
 #
 
+
+### Enable this test only for GitHub Actions where internet connection is sure to be very fast
+if [ "$GITHUB_ACTIONS" == "true" ];then
+
 #### vizquery test
 THIS_TEST_START_UNIXSEC=$(date +%s)
 TEST_PASSED=1
@@ -1318,7 +1322,7 @@ fi
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt  
 #
-
+fi # if [ "$GITHUB_ACTIONS" == "true" ];then # - enable the anove test for GitHub Actions only
 
 
 #### Standalone test for database querry scripts
