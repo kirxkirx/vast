@@ -60,6 +60,7 @@ fi
 remove_all_report_transient_output_files
 
 # do not start the parallel run befor making sure the offline catalogs (that will be used by report_transient.sh) are up to date
+# Note: This script must be run from the VaST root directory for the relative path to work correctly.
 lib/update_offline_catalogs.sh all
 
 # Parallel run - ckeck candidates and create result files
@@ -81,7 +82,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  } &
 
  # Increment thread count and check if limit is reached
- thread_count=$[$thread_count+1]
+ thread_count=$((thread_count+1))
  if [ "$thread_count" -ge "$max_threads" ]; then
   # Wait for all background jobs to finish before continuing
   wait
@@ -168,7 +169,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    # Set PNG finding chart dimensions
    export PGPLOT_PNG_HEIGHT=400 ; export PGPLOT_PNG_WIDTH=400
    output_file="transient_report/${TRANSIENT_NAME}_reference.png"
-   source_file="$(basename ${REFERENCE_IMAGE%.*}).png"
+   source_file="$(basename "${REFERENCE_IMAGE%.*}").png"
    max_attempts=2
    attempt=1
    success=false
@@ -209,7 +210,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  #####
  echo "<img src=\""$TRANSIENT_NAME"_reference.png\">" >> transient_report/index.tmp
  # plot reference image preview - full frame image to check for clouds, scattered light, etc
- BASENAME_REFERENCE_IMAGE=`basename $REFERENCE_IMAGE`
+ BASENAME_REFERENCE_IMAGE=$(basename "$REFERENCE_IMAGE")
  REFERENCE_IMAGE_PREVIEW="$BASENAME_REFERENCE_IMAGE"_preview.png
  #####
  if [ -n "$MAKE_PNG_PLOTS" ];then
@@ -217,7 +218,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    # image size needs to match the one set in util/transients/transient_factory_test31.sh and below
    export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
    output_file="transient_report/$REFERENCE_IMAGE_PREVIEW"
-   source_file="$(basename ${REFERENCE_IMAGE%.*}).png"
+   source_file="$(basename "${REFERENCE_IMAGE%.*}").png"
    max_attempts=2
    attempt=1
    success=false
@@ -270,7 +271,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
   if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then
    # Plot the discovery image
    #N=`echo $N+1|bc -q`
-   N=$[$N+1]
+   N=$((N+1))
    #DATE=$(grep $IMAGE vast_image_details.log |awk '{print $2" "$3"  "$7}')
    #####
    if [ -n "$MAKE_PNG_PLOTS" ];then
@@ -278,7 +279,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
      # Set PNG finding chart dimensions
      export PGPLOT_PNG_HEIGHT=400 ; export PGPLOT_PNG_WIDTH=400
      output_file="transient_report/${TRANSIENT_NAME}_discovery${N}.png"
-     source_file="$(basename ${IMAGE%.*}).png"
+     source_file="$(basename "${IMAGE%.*}").png"
      max_attempts=2
      attempt=1
      success=false
@@ -329,7 +330,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    echo "<img src=\""$TRANSIENT_NAME"_discovery"$N".png\">" >> transient_report/index.tmp
    
   fi # if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then
- done < $LIGHTCURVE_FILE_OUTDAT
+ done < "$LIGHTCURVE_FILE_OUTDAT"
  
  echo "</br>" >> transient_report/index.tmp
  #util/transients/report_transient.sh $LIGHTCURVE_FILE_OUTDAT  >> transient_report/index.tmp
@@ -353,17 +354,17 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    #echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Preview of the reference image(s) and two 2nd epoch images</a> (are there clouds/trees in the view?)" >> transient_report/index.tmp  
    echo "<a href=\"javascript:toggleElement('fullframepreview_$TRANSIENT_NAME')\">Full images</a> (clouds? trees? ice on chip?)" >> transient_report/index.tmp  
    if [ ! -z "$URL_OF_DATA_PROCESSING_ROOT" ];then
-    DIRNAME_2ND_EPOCH_IMAGES=`dirname $REFERENCE_IMAGE`
-    DIRNAME_2ND_EPOCH_IMAGES=`basename $DIRNAME_2ND_EPOCH_IMAGES`
+    DIRNAME_2ND_EPOCH_IMAGES=$(dirname "$REFERENCE_IMAGE")
+    DIRNAME_2ND_EPOCH_IMAGES=$(basename "$DIRNAME_2ND_EPOCH_IMAGES")
     echo "<div id=\"fullframepreview_$TRANSIENT_NAME\" style=\"display:none\"><a href='$URL_OF_DATA_PROCESSING_ROOT/$DIRNAME_2ND_EPOCH_IMAGES/$BASENAME_REFERENCE_IMAGE'>$BASENAME_REFERENCE_IMAGE</a><br><img src=\"$REFERENCE_IMAGE_PREVIEW\"><br>" >> transient_report/index.tmp
    else
     echo "<div id=\"fullframepreview_$TRANSIENT_NAME\" style=\"display:none\">$BASENAME_REFERENCE_IMAGE<br><img src=\"$REFERENCE_IMAGE_PREVIEW\"><br>" >> transient_report/index.tmp
    fi
    while read JD MAG ERR X Y APP IMAGE REST ;do
     if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then
-     BASENAME_IMAGE=`basename $IMAGE`
+     BASENAME_IMAGE=$(basename "$IMAGE")
      PREVIEW_IMAGE="$BASENAME_IMAGE"_preview.png
-     if [ ! -f transient_report/$PREVIEW_IMAGE ];then
+     if [ ! -f "transient_report/$PREVIEW_IMAGE" ];then
       #####
       if [ -n "$MAKE_PNG_PLOTS" ];then
        if [ "$MAKE_PNG_PLOTS" == "yes" ];then
@@ -385,12 +386,12 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
          success=false
          while [ $attempt -le $max_attempts ]; do
           if util/fits2png "$IMAGE" &> /dev/null; then
-           if mv "$(basename ${IMAGE%.*}).png" "transient_report/$PREVIEW_IMAGE"; then
-            echo "Successfully moved $(basename ${IMAGE%.*}).png to transient_report/$PREVIEW_IMAGE"
+           if mv "$(basename "${IMAGE%.*}").png" "transient_report/$PREVIEW_IMAGE"; then
+            echo "Successfully moved $(basename "${IMAGE%.*}").png to transient_report/$PREVIEW_IMAGE"
             success=true
             break
            else
-            echo "WARNING from $0 (attempt $attempt): Move failed. Source $(basename ${IMAGE%.*}).png exists: $([ -f "$(basename ${IMAGE%.*}).png" ] && echo 'Yes' || echo 'No'). Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
+            echo "WARNING from $0 (attempt $attempt): Move failed. Source $(basename "${IMAGE%.*}").png exists: $([ -f "$(basename "${IMAGE%.*}").png" ] && echo 'Yes' || echo 'No'). Destination dir exists: $([ -d transient_report ] && echo 'Yes' || echo 'No')."
            fi
           else
            echo "WARNING from $0 (attempt $attempt): fits2png failed for $IMAGE"
@@ -399,7 +400,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
           [ $attempt -le $max_attempts ] && echo "Retrying (attempt $attempt of $max_attempts)..." && sleep 5
          done
          if [ "$success" = false ]; then
-          echo "ERROR in $0: Failed to create or move $(basename ${IMAGE%.*}).png to transient_report/$PREVIEW_IMAGE after $max_attempts attempts"
+          echo "ERROR in $0: Failed to create or move $(basename "${IMAGE%.*}").png to transient_report/$PREVIEW_IMAGE after $max_attempts attempts"
          fi
         fi # if [ ! -f transient_report/$PREVIEW_IMAGE ]; then
         #
@@ -407,17 +408,17 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
        fi
       fi
       #####
-     fi # if [ ! -f transient_report/$PREVIEW_IMAGE ];then
+     fi # if [ ! -f "transient_report/$PREVIEW_IMAGE" ];then
      # Link to the images dir if $URL_OF_DATA_PROCESSING_ROOT is set
      if [ ! -z "$URL_OF_DATA_PROCESSING_ROOT" ];then
-      DIRNAME_2ND_EPOCH_IMAGES=`dirname $IMAGE`
-      DIRNAME_2ND_EPOCH_IMAGES=`basename $DIRNAME_2ND_EPOCH_IMAGES`
+      DIRNAME_2ND_EPOCH_IMAGES=$(dirname "$IMAGE")
+      DIRNAME_2ND_EPOCH_IMAGES=$(basename "$DIRNAME_2ND_EPOCH_IMAGES")
       echo "<br><a href='$URL_OF_DATA_PROCESSING_ROOT/$DIRNAME_2ND_EPOCH_IMAGES/$BASENAME_IMAGE'>$BASENAME_IMAGE</a><br><img src=\"$PREVIEW_IMAGE\"><br>" >> transient_report/index.tmp
      else
       echo "<br>$BASENAME_IMAGE<br><img src=\"$PREVIEW_IMAGE\"><br>" >> transient_report/index.tmp
      fi
     fi
-   done < $LIGHTCURVE_FILE_OUTDAT
+   done < "$LIGHTCURVE_FILE_OUTDAT"
    # we are not using convert for some time now...
    # not sure if wait here is of any use now...
    #wait
@@ -442,7 +443,7 @@ for i in $REFERENCE_IMAGE " >> transient_report/index.tmp
     if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then
      echo -n "$IMAGE "
     fi
-   done < $LIGHTCURVE_FILE_OUTDAT >> transient_report/index.tmp
+   done < "$LIGHTCURVE_FILE_OUTDAT" >> transient_report/index.tmp
    echo -n ";do util/wcs_image_calibration.sh \$i ;done
 # Display the solved FITS images
 ds9 -frame lock wcs  " >> transient_report/index.tmp
@@ -453,7 +454,7 @@ ds9 -frame lock wcs  " >> transient_report/index.tmp
    fi
    while read JD MAG ERR X Y APP IMAGE REST ;do
     echo -n " wcs_"`basename "$IMAGE"`" -crosshair $X $Y image   "
-   done < $LIGHTCURVE_FILE_OUTDAT >> transient_report/index.tmp
+   done < "$LIGHTCURVE_FILE_OUTDAT" >> transient_report/index.tmp
    echo "
 </pre>
 </div>" >> transient_report/index.tmp
@@ -503,7 +504,7 @@ Mean position:
     #cat test.mpc | sed 's: 500: C32:g' >> transient_report/index.tmp
     #cat test.mpc__"$LIGHTCURVE_FILE_OUTDAT" | sed 's: 500: C32:g' >> transient_report/index.tmp
     # Maybe we don't need that as test.mpc__"$LIGHTCURVE_FILE_OUTDAT" should already include a correct MPC_CODE
-    cat test.mpc__"$LIGHTCURVE_FILE_OUTDAT" | sed "s: 500: $MPC_CODE:g" >> transient_report/index.tmp
+    sed "s: 500: $MPC_CODE:g" test.mpc__"$LIGHTCURVE_FILE_OUTDAT" >> transient_report/index.tmp
     echo "</pre>
 Position measured on individual images:
 <pre class='folding-pre'>" >> transient_report/index.tmp
@@ -526,7 +527,7 @@ Don't forget to set the constellation name and the number of days since the last
 <pre class='folding-pre'>
 " >> transient_report/index.tmp
     #cat test.mpc | sed 's: C2: 2:g' | awk -v val="$CONSTELLATION" '{printf "TCP %d %02d %07.4f*  %02d %02d %05.2f %+03d %02d %04.1f  %4.1f U             %s       9 0\n", $2, $3, $4,  $5, $6, $7,  $8, $9, $10,  $11,  val}' >> transient_report/index.tmp
-    cat test.mpc__"$LIGHTCURVE_FILE_OUTDAT" | sed 's: C2: 2:g' | awk -v val="$CONSTELLATION" '{printf "TCP %d %02d %07.4f*  %02d %02d %05.2f %+03d %02d %04.1f  %4.1f U             %s       9 0\n", $2, $3, $4,  $5, $6, $7,  $8, $9, $10,  $11,  val}' >> transient_report/index.tmp
+    sed 's: C2: 2:g' test.mpc__"$LIGHTCURVE_FILE_OUTDAT" | awk -v val="$CONSTELLATION" '{printf "TCP %d %02d %07.4f*  %02d %02d %05.2f %+03d %02d %04.1f  %4.1f U             %s       9 0\n", $2, $3, $4,  $5, $6, $7,  $8, $9, $10,  $11,  val}' >> transient_report/index.tmp
     echo "</pre>
 <br>
 </div>" >> transient_report/index.tmp
@@ -545,7 +546,7 @@ if [ -z "$AAVSO_OBSCODE" ];then
 fi
 if [ -z "$SOFTWARE_VERSION" ];then
  if [ -s vast_summary.log ];then
-  SOFTWARE_VERSION=$(cat vast_summary.log | grep 'Software:' | awk '{print $2" "$3}')
+  SOFTWARE_VERSION=$(grep 'Software:' vast_summary.log | awk '{print $2" "$3}')
  fi
  SOFTWARE_VERSION="$SOFTWARE_VERSION transient pipeline"
 fi
@@ -643,7 +644,7 @@ for i in $REFERENCE_IMAGE " >> transient_report/index.tmp
     if [ "$IMAGE" != "$REFERENCE_IMAGE" ];then
      echo -n "$IMAGE "
     fi
-   done < $LIGHTCURVE_FILE_OUTDAT >> transient_report/index.tmp
+   done < "$LIGHTCURVE_FILE_OUTDAT" >> transient_report/index.tmp
    echo -n ";do util/wcs_image_calibration.sh \$i && util/make_finding_chart_script.sh wcs_\`basename \$i\` $TARGET_MEAN_POSITION ;done 
 # Combine the finder charts into one image (note the '*' symbols meaning the command will work only if you have a single transient in that field)
 montage " >> transient_report/index.tmp
