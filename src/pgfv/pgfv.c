@@ -2366,21 +2366,8 @@ int main( int argc, char **argv ) {
   return 0;
  }
 
- if ( 0 != fitsfile_read_check( fits_image_name ) ) {
-  return 1;
- }
-
- /*
-  fits_open_image( &fptr, fits_image_name, 0, &status );
-  if ( status != 0 ) {
-   fprintf( stderr, "ERROR opening %s\n", fits_image_name );
-   return 1;
-  }
-  fits_get_img_type( fptr, &bitpix, &status );
-  fits_read_key( fptr, TLONG, "NAXIS1", &naxes[0], NULL, &status );
-  fits_read_key( fptr, TLONG, "NAXIS2", &naxes[1], NULL, &status );
-  fprintf( stderr, "Image \x1B[01;34m %s \x1B[33;00m : %ldx%ld pixels, BITPIX data type code: %d\n", fits_image_name, naxes[0], naxes[1], bitpix );
- */
+ // Note: fitsfile_read_check() already called at line ~2076 for this fits_image_name,
+ // so we skip the redundant check here and let fits_open_image handle any errors
  fits_open_image( &fptr, fits_image_name, 0, &status );
  if ( status != 0 ) {
   fprintf( stderr, "ERROR opening %s\n", fits_image_name );
@@ -2543,8 +2530,7 @@ int main( int argc, char **argv ) {
  memcpy( real_float_array, float_array, naxes[0] * naxes[1] * sizeof( float ) );
  //
  fix_array_with_negative_values( naxes[0] * naxes[1], float_array );
- // image_minmax2( naxes[0] * naxes[1], float_array, &max_val, &min_val );
- image_minmax3( naxes[0] * naxes[1], float_array, &max_val, &min_val, 1, naxes[0], 1, naxes[1], naxes );
+ // image_minmax3 will be called on first redraw in the main loop, no need to call it here
 
  // GUI
  setenv_localpgplot( argv[0] );
