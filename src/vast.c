@@ -401,16 +401,17 @@ void write_Star_struct_to_ASCII_file( struct Star *star, int N_start, int N_stop
 */
 
 // Auxialiary function for magnitude calibration
+// Optimized: moved allocations outside loop, using memcpy instead of element-by-element copy
 void drop_one_point_that_changes_fit_the_most( double *poly_x_external, double *poly_y_external, double *poly_err_external, int *N_good_stars_external, int photometric_calibration_type, int param_use_photocurve ) {
  int param_use_photocurve_local_copy;
  double poly_coeff_local_copy[10];
  double chi2;
  double chi2_best;
- int i;
  int i_drop;
  int i_drop_best= -1;
  int N_good_stars;
  int wpolyfit_exit_code;
+ size_t array_size_bytes;
 
  double *poly_x;
  double *poly_y;
@@ -422,6 +423,30 @@ void drop_one_point_that_changes_fit_the_most( double *poly_x_external, double *
   return;
  }
 
+ // Allocate arrays once before the loop
+ array_size_bytes= ( *N_good_stars_external ) * sizeof( double );
+ poly_x= (double *)malloc( array_size_bytes );
+ if ( poly_x == NULL ) {
+  fprintf( stderr, "ERROR in drop_one_point_that_changes_fit_the_most(): can't allocate memory for magnitude calibration!\n" );
+  vast_report_memory_error();
+  return;
+ }
+ poly_y= (double *)malloc( array_size_bytes );
+ if ( poly_y == NULL ) {
+  fprintf( stderr, "ERROR in drop_one_point_that_changes_fit_the_most(): can't allocate memory for magnitude calibration!\n" );
+  vast_report_memory_error();
+  free( poly_x );
+  return;
+ }
+ poly_err= (double *)malloc( array_size_bytes );
+ if ( poly_err == NULL ) {
+  fprintf( stderr, "ERROR in drop_one_point_that_changes_fit_the_most(): can't allocate memory for magnitude calibration!\n" );
+  vast_report_memory_error();
+  free( poly_x );
+  free( poly_y );
+  return;
+ }
+
  // for(i_drop=0;i_drop<(*N_good_stars_external);i_drop++){
  for ( i_drop= -1; i_drop < 10; i_drop++ ) {
 
@@ -430,41 +455,17 @@ void drop_one_point_that_changes_fit_the_most( double *poly_x_external, double *
    fprintf( stderr, "Error: no good stars for magnitude calibration\n" );
    // exit( EXIT_FAILURE ); // I don't want to crash here
   }
-  poly_x= (double *)malloc( N_good_stars * sizeof( double ) );
-  if ( poly_x == NULL ) {
-   fprintf( stderr, "ERROR in drop_one_point_that_changes_fit_the_most(): can't allocate memory for magnitude calibration!\n" );
-   vast_report_memory_error();
-   return;
-  }
-  poly_y= (double *)malloc( N_good_stars * sizeof( double ) );
-  if ( poly_y == NULL ) {
-   fprintf( stderr, "ERROR in drop_one_point_that_changes_fit_the_most(): can't allocate memory for magnitude calibration!\n" );
-   vast_report_memory_error();
-   free( poly_x );
-   return;
-  }
-  poly_err= (double *)malloc( N_good_stars * sizeof( double ) );
-  if ( poly_err == NULL ) {
-   fprintf( stderr, "ERROR in drop_one_point_that_changes_fit_the_most(): can't allocate memory for magnitude calibration!\n" );
-   vast_report_memory_error();
-   free( poly_x );
-   free( poly_y );
-   return;
-  }
 
-  // Initialize the array
-  // to be replaced with memcpy
-  for ( i= 0; i < ( *N_good_stars_external ); i++ ) {
-   poly_x[i]= poly_x_external[i];
-   poly_y[i]= poly_y_external[i];
-   poly_err[i]= poly_err_external[i];
-  }
+  // Copy arrays using memcpy (faster than element-by-element copy)
+  memcpy( poly_x, poly_x_external, array_size_bytes );
+  memcpy( poly_y, poly_y_external, array_size_bytes );
+  memcpy( poly_err, poly_err_external, array_size_bytes );
 
   if ( i_drop >= 0 ) {
    exclude_from_3_double_arrays( poly_x, poly_y, poly_err, i_drop, &N_good_stars );
   }
 
-  // Fit thr function and get chi2
+  // Fit the function and get chi2
   if ( param_use_photocurve != 0 ) {
    wpolyfit_exit_code= fit_photocurve( poly_x, poly_y, poly_err, N_good_stars, poly_coeff_local_copy, &param_use_photocurve_local_copy, &chi2 );
   } else {
@@ -475,10 +476,6 @@ void drop_one_point_that_changes_fit_the_most( double *poly_x_external, double *
     wpolyfit_exit_code= wpolyfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff_local_copy, &chi2 );
    }
   } // if( param_use_photocurve!=0 ){
-
-  free( poly_err );
-  free( poly_y );
-  free( poly_x );
 
   if ( i_drop == -1 ) {
    chi2_best= chi2;
@@ -494,6 +491,11 @@ void drop_one_point_that_changes_fit_the_most( double *poly_x_external, double *
   }
 
  } // for(i_drop=0;i_drop<(*N_good_stars_external);i_drop++){
+
+ // Free arrays once after the loop
+ free( poly_err );
+ free( poly_y );
+ free( poly_x );
 
  // Apply the result
  exclude_from_3_double_arrays( poly_x_external, poly_y_external, poly_err_external, i_drop_best, N_good_stars_external );
@@ -4344,35 +4346,33 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
      } else {
       // Filter the comparison stars for the usual linear/quadratic/photocurve calibration
 
-      // First pass - remove really bad outliers usin unweighted linear approximation
+      // First pass - remove really bad outliers using unweighted linear approximation
+      // Optimized: batch removal of all outliers exceeding threshold, then refit
       fprintf( stderr, "Iteratively removing outliers from the linear mag-mag relation (unweighted fit)...\n" );
-      // Use linear function as the first-order approximation
-      // wpolyfit_exit_code=wlinearfit(poly_x, poly_y, poly_err_fake, N_good_stars, poly_coeff);
-      wpolyfit_exit_code= robustlinefit( poly_x, poly_y, N_good_stars, poly_coeff );
-      do {
-       the_baddest_outlier= 0.0;
-       the_baddest_outlier_number= -1;
-       for ( exclude_outlier_mags_counter= N_good_stars; exclude_outlier_mags_counter--; ) {
-        computed_mag= poly_coeff[1] * poly_x[exclude_outlier_mags_counter] + poly_coeff[0];
-        // find the baddest outlier
-        abs_computed_predicted_mag_diff= fabs( computed_mag - poly_y[exclude_outlier_mags_counter] );
-        if ( abs_computed_predicted_mag_diff > 3 * MAX_DIFF_POLY_MAG_CALIBRATION && abs_computed_predicted_mag_diff > the_baddest_outlier ) {
-         the_baddest_outlier= abs_computed_predicted_mag_diff;
-         the_baddest_outlier_number= exclude_outlier_mags_counter;
+      {
+       int outliers_removed_this_iteration;
+       wpolyfit_exit_code= robustlinefit( poly_x, poly_y, N_good_stars, poly_coeff );
+       do {
+        outliers_removed_this_iteration= 0;
+        // Scan from the end to safely remove multiple elements
+        for ( exclude_outlier_mags_counter= N_good_stars - 1; exclude_outlier_mags_counter >= 0; exclude_outlier_mags_counter-- ) {
+         computed_mag= poly_coeff[1] * poly_x[exclude_outlier_mags_counter] + poly_coeff[0];
+         abs_computed_predicted_mag_diff= fabs( computed_mag - poly_y[exclude_outlier_mags_counter] );
+         if ( abs_computed_predicted_mag_diff > 3 * MAX_DIFF_POLY_MAG_CALIBRATION ) {
+          // This point is an outlier - remove it
+          if ( apply_position_dependent_correction == 0 )
+           exclude_from_3_double_arrays( poly_x, poly_y, poly_err, exclude_outlier_mags_counter, &N_good_stars );
+          else
+           exclude_from_6_double_arrays( poly_x, poly_y, poly_err, lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, exclude_outlier_mags_counter, &N_good_stars );
+          outliers_removed_this_iteration++;
+         }
         }
-       }
-       // And now remove the baddest outlier
-       if ( the_baddest_outlier_number >= 0 ) {
-        // Exclude bad point from calibration
-        if ( apply_position_dependent_correction == 0 )
-         exclude_from_3_double_arrays( poly_x, poly_y, poly_err, the_baddest_outlier_number, &N_good_stars );
-        else
-         exclude_from_6_double_arrays( poly_x, poly_y, poly_err, lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, the_baddest_outlier_number, &N_good_stars );
-        // Recompute fit using unweighted linear fit
-        // wpolyfit_exit_code=wlinearfit(poly_x, poly_y, poly_err_fake, N_good_stars, poly_coeff);
-        wpolyfit_exit_code= robustlinefit( poly_x, poly_y, N_good_stars, poly_coeff );
-       }
-      } while ( the_baddest_outlier_number >= 0 );
+        // Recompute fit only if we removed any outliers
+        if ( outliers_removed_this_iteration > 0 && N_good_stars >= min_number_of_stars_for_magnitude_calibration ) {
+         wpolyfit_exit_code= robustlinefit( poly_x, poly_y, N_good_stars, poly_coeff );
+        }
+       } while ( outliers_removed_this_iteration > 0 && N_good_stars >= min_number_of_stars_for_magnitude_calibration );
+      }
      } // Iteratively removing outliers from the linear mag-mag relation (unweighted fit)
 
      /* Check that we haven't dropped too many stars so the parabolic fit still make sence */
@@ -4485,40 +4485,41 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
       } // if( wpolyfit_exit_code==0 ){
      } // if( apply_position_dependent_correction==1 && wpolyfit_exit_code==0 ){
 
-     // Second pass - remove the remaining outlier using weighted approximation
+     // Second pass - remove the remaining outliers using weighted approximation
+     // Optimized: batch removal of all outliers exceeding threshold, then refit
      // if ( wpolyfit_exit_code == 0 && photometric_calibration_type != 2 ) {
      if ( wpolyfit_exit_code == 0 && photometric_calibration_type != PHOTOMETRIC_ZEROPOINT ) {
       // Use linear function as the very first approximation
       wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
       fprintf( stderr, "Iteratively removing outliers from the mag-mag relation (weighted linear/polynomial fit)...\n" );
-      do {
-       the_baddest_outlier= 0.0;
-       the_baddest_outlier_number= -1;
-       for ( exclude_outlier_mags_counter= N_good_stars; exclude_outlier_mags_counter--; ) {
-        computed_mag= poly_coeff[2] * poly_x[exclude_outlier_mags_counter] * poly_x[exclude_outlier_mags_counter] + poly_coeff[1] * poly_x[exclude_outlier_mags_counter] + poly_coeff[0];
-        // find the baddest outlier
-        abs_computed_predicted_mag_diff= fabs( computed_mag - poly_y[exclude_outlier_mags_counter] );
-        if ( abs_computed_predicted_mag_diff > MAX_DIFF_POLY_MAG_CALIBRATION && abs_computed_predicted_mag_diff > the_baddest_outlier ) {
-         the_baddest_outlier= abs_computed_predicted_mag_diff;
-         the_baddest_outlier_number= exclude_outlier_mags_counter;
+      {
+       int outliers_removed_this_iteration;
+       do {
+        outliers_removed_this_iteration= 0;
+        // Scan from the end to safely remove multiple elements
+        for ( exclude_outlier_mags_counter= N_good_stars - 1; exclude_outlier_mags_counter >= 0; exclude_outlier_mags_counter-- ) {
+         computed_mag= poly_coeff[2] * poly_x[exclude_outlier_mags_counter] * poly_x[exclude_outlier_mags_counter] + poly_coeff[1] * poly_x[exclude_outlier_mags_counter] + poly_coeff[0];
+         abs_computed_predicted_mag_diff= fabs( computed_mag - poly_y[exclude_outlier_mags_counter] );
+         if ( abs_computed_predicted_mag_diff > MAX_DIFF_POLY_MAG_CALIBRATION ) {
+          // This point is an outlier - remove it
+          if ( apply_position_dependent_correction == 0 )
+           exclude_from_3_double_arrays( poly_x, poly_y, poly_err, exclude_outlier_mags_counter, &N_good_stars );
+          else
+           exclude_from_6_double_arrays( poly_x, poly_y, poly_err, lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, exclude_outlier_mags_counter, &N_good_stars );
+          outliers_removed_this_iteration++;
+         }
         }
-       }
-       // And now remove the baddest outlier
-       if ( the_baddest_outlier_number >= 0 ) {
-        // Exclude bad point from calibration
-        if ( apply_position_dependent_correction == 0 )
-         exclude_from_3_double_arrays( poly_x, poly_y, poly_err, the_baddest_outlier_number, &N_good_stars );
-        else
-         exclude_from_6_double_arrays( poly_x, poly_y, poly_err, lin_mag_cor_x, lin_mag_cor_y, lin_mag_cor_z, the_baddest_outlier_number, &N_good_stars );
-        // Recompute fit using linear or parabolic function depending on settings
-        // if ( photometric_calibration_type == 0 ) {
-        if ( photometric_calibration_type == PHOTOMETRIC_LINEAR ) {
-         wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
-        } else {
-         wpolyfit_exit_code= wpolyfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
+        // Recompute fit only if we removed any outliers
+        if ( outliers_removed_this_iteration > 0 && N_good_stars >= min_number_of_stars_for_magnitude_calibration ) {
+         // if ( photometric_calibration_type == 0 ) {
+         if ( photometric_calibration_type == PHOTOMETRIC_LINEAR ) {
+          wpolyfit_exit_code= wlinearfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
+         } else {
+          wpolyfit_exit_code= wpolyfit( poly_x, poly_y, poly_err, N_good_stars, poly_coeff, NULL );
+         }
         }
-       } // if(the_baddest_outlier_number>=0){
-      } while ( the_baddest_outlier_number >= 0 );
+       } while ( outliers_removed_this_iteration > 0 && N_good_stars >= min_number_of_stars_for_magnitude_calibration );
+      }
       ////////////////////////////////////////////
       //
       // FILE *magcalibdebugfile;
