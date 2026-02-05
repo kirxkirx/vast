@@ -18,14 +18,14 @@ export LANGUAGE LC_ALL
 # A more portable realpath wrapper
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
-  REALPATH=`readlink -f "$1" 2>/dev/null`
+  REALPATH=$(readlink -f "$1" 2>/dev/null)
   if [ $? -ne 0 ];then
    # If we are on Mac OS X system, GNU readlink might be installed as 'greadlink'
-   REALPATH=`greadlink -f "$1" 2>/dev/null`
+   REALPATH=$(greadlink -f "$1" 2>/dev/null)
    if [ $? -ne 0 ];then
-    REALPATH=`realpath "$1" 2>/dev/null`
+    REALPATH=$(realpath "$1" 2>/dev/null)
     if [ $? -ne 0 ];then
-     REALPATH=`grealpath "$1" 2>/dev/null`
+     REALPATH=$(grealpath "$1" 2>/dev/null)
      if [ $? -ne 0 ];then
       # Something that should work well enough in practice
       OURPWD=$PWD
@@ -123,7 +123,7 @@ function check_if_we_know_the_telescope_and_can_blindly_trust_wcs_from_the_image
   VAST_PATH="$VAST_PATH/"
  fi
  #
- FITS_IMAGE_TO_CHECK_HEADER=`"$VAST_PATH"util/listhead "$FITS_IMAGE_TO_CHECK"`
+ FITS_IMAGE_TO_CHECK_HEADER=$("$VAST_PATH"util/listhead "$FITS_IMAGE_TO_CHECK")
  # Check if it has WCS keywords
  for TYPICAL_WCS_KEYWORD in CTYPE1 CTYPE2 CRVAL1 CRVAL2 CRPIX1 CRPIX2 CD1_1 CD1_2 CD2_1 CD2_2 ;do
   echo "$FITS_IMAGE_TO_CHECK_HEADER" | grep -q "$TYPICAL_WCS_KEYWORD"
@@ -244,7 +244,7 @@ function setup_remote_astrometry {
  local PLATE_SOLVE_SERVERS="tau.kirx.net scan.sai.msu.ru"
 
  # Check if we are requested to use a specific plate solve server
- if [ ! -z "$FORCE_PLATE_SOLVE_SERVER" ];then
+ if [ -n "$FORCE_PLATE_SOLVE_SERVER" ];then
   if [ "$FORCE_PLATE_SOLVE_SERVER" != "none" ];then
    echo "WARNING: using the user-specified plate solve server $FORCE_PLATE_SOLVE_SERVER" 1>&2
    PLATE_SOLVE_SERVER="$FORCE_PLATE_SOLVE_SERVER"
@@ -285,7 +285,7 @@ function setup_remote_astrometry {
   # If we are still here, that means we are either offline or behind a firewall that doesn't let ping out
   for i in $PLATE_SOLVE_SERVERS ;do
    # make sure we'll not remotely connect to ourselves
-   if [ ! -z "$HOST_WE_ARE_RUNNING_AT" ];then
+   if [ -n "$HOST_WE_ARE_RUNNING_AT" ];then
     echo "$i" | grep -q "$HOST_WE_ARE_RUNNING_AT"
     if [ $? -eq 0 ];then
      continue
@@ -312,15 +312,15 @@ function setup_remote_astrometry {
   return 1
  fi
 
- local N_REACHABLE_SERVERS=`cat servers$$.ping_ok | wc -l`
+ local N_REACHABLE_SERVERS=$(wc -l < servers$$.ping_ok)
  if [ $N_REACHABLE_SERVERS -eq 1 ];then
-  PLATE_SOLVE_SERVER=`head -n1 servers$$.ping_ok`
+  PLATE_SOLVE_SERVER=$(head -n1 servers$$.ping_ok)
  else
   # Choose a random server among the available ones
-  PLATE_SOLVE_SERVER=`$TIMEOUT_COMMAND 10 sort --random-sort --random-source=/dev/urandom servers$$.ping_ok | head -n1`
+  PLATE_SOLVE_SERVER=$($TIMEOUT_COMMAND 10 sort --random-sort --random-source=/dev/urandom servers$$.ping_ok | head -n1)
   # If the above fails because sort doesn't understand the '--random-sort' option
   if [ "$PLATE_SOLVE_SERVER" = "" ];then
-   PLATE_SOLVE_SERVER=`head -n1 servers$$.ping_ok`
+   PLATE_SOLVE_SERVER=$(head -n1 servers$$.ping_ok)
   fi
  fi # if [ $N_REACHABLE_SERVERS -eq 1 ];then
 
@@ -367,7 +367,7 @@ OLDDDIR_TO_CHECK_INPUT_FILE="$PWD"
 cd "$VAST_PATH" || exit 1
 
 # Set the correct path to 'timeout'
-TIMEOUT_COMMAND=`"$VAST_PATH"lib/find_timeout_command.sh`
+TIMEOUT_COMMAND=$("$VAST_PATH"lib/find_timeout_command.sh)
 export TIMEOUT_COMMAND
 
 
@@ -428,7 +428,7 @@ Usage: $0 outNUMBER.dat
  read JD MAG MERR X Y APP FITSFILE REST < $LIGHTCURVEFILE && echo "ok"
  # TRAP!! If we whant to identify a flare, there will be no sence to search for an asteroid on the reference image.
  # Use the first discovery image instead!
- REFERENCE_IMAGE=`cat "$VAST_PATH"vast_summary.log |grep "Ref.  image:" | awk '{print $6}'`
+ REFERENCE_IMAGE=$(grep "Ref.  image:" "$VAST_PATH"vast_summary.log | awk '{print $6}')
  if [ "$START_NAME" = "identify_transient.sh" ];then
   while read JD MAG MERR X Y APP FITSFILE REST ;do
   if [ "$FITSFILE" != "$REFERENCE_IMAGE" ] ;then 
@@ -474,7 +474,7 @@ ORIGINAL_FITSFILE="$FITSFILE"
 # (will attempt to rename at the endof the script)
 echo "ORIGINAL_FITSFILE=$ORIGINAL_FITSFILE"
 echo "FITSFILE before on_the_fly=$FITSFILE"
-FITSFILE=`"$VAST_PATH"lib/on_the_fly_symlink_or_convert "$FITSFILE"`
+FITSFILE=$("$VAST_PATH"lib/on_the_fly_symlink_or_convert "$FITSFILE")
 echo "FITSFILE after on_the_fly=$FITSFILE"
 ###############
 # Verify that the input file is a valid FITS file
@@ -588,8 +588,8 @@ if [ -n "$FIELD_OF_VIEW_ARCMIN" ];then
   # If we know FIELD_OF_VIEW_ARCMIN is so small we have no hope to blindly solve it 
   # - try to rely on WCS information that may be already inserted in the image
   if [ ! -f $WCS_IMAGE_NAME ];then
-   echo $SEXTRACTOR -c $(grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}') -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $FITSFILE 2>/dev/null` `"$VAST_PATH"lib/guess_saturation_limit_main $FITSFILE 2>/dev/null`  $FITSFILE 
-   $SEXTRACTOR -c "$VAST_PATH"$(grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}') -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $FITSFILE 2>/dev/null` `"$VAST_PATH"lib/guess_saturation_limit_main $FITSFILE 2>/dev/null`  $FITSFILE && echo "Using WCS information from the original image" 1>&2 && cp $FITSFILE $WCS_IMAGE_NAME
+   echo $SEXTRACTOR -c $(grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}') -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES $("$VAST_PATH"lib/autodetect_aperture_main $FITSFILE 2>/dev/null) $("$VAST_PATH"lib/guess_saturation_limit_main $FITSFILE 2>/dev/null)  $FITSFILE 
+   $SEXTRACTOR -c "$VAST_PATH"$(grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}') -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES $("$VAST_PATH"lib/autodetect_aperture_main $FITSFILE 2>/dev/null) $("$VAST_PATH"lib/guess_saturation_limit_main $FITSFILE 2>/dev/null)  $FITSFILE && echo "Using WCS information from the original image" 1>&2 && cp $FITSFILE $WCS_IMAGE_NAME
    "$VAST_PATH"lib/correct_sextractor_wcs_catalog_using_xy2sky.sh "$WCS_IMAGE_NAME" "$SEXTRACTOR_CATALOG_NAME"
   fi
  fi # if [ $TEST -eq 1 ];then
@@ -616,13 +616,13 @@ if [ ! -s "$WCS_IMAGE_NAME" ];then
  # Only NOW determine the astrometry method - when we actually need plate solving
  determine_astrometry_method
  
- #IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
+ #IMAGE_SIZE=$("$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}')
  # The stuff below seems to work fine
  CATALOG_NAME=$("$VAST_PATH"lib/fits2cat $FITSFILE)
  if [ -f "$CATALOG_NAME".apphot ];then
   CATALOG_NAME="$CATALOG_NAME".apphot
  fi
- "$VAST_PATH"lib/make_outxyls_for_astrometric_calibration "$CATALOG_NAME" out$$.xyls `"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print $2" "$4}'`
+ "$VAST_PATH"lib/make_outxyls_for_astrometric_calibration "$CATALOG_NAME" out$$.xyls $("$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print $2" "$4}')
  if [ $? -ne 0 ];then
   echo "ERROR running $VAST_PATH""lib/make_outxyls_for_astrometric_calibration!"
   exit 1
@@ -648,7 +648,7 @@ fi
  # Try to solve the image with a range of trial FIELD_OF_VIEW_ARCMINs
 
  #for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN `echo "$FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",3*$1}'` `echo "$FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",$1*3/4}'` ;do
- for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN `echo "$FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",3*$1}'` `echo "$FIELD_OF_VIEW_ARCMIN" | awk '{if ( $1 < 60 ) printf "%.1f",$1*3/4; else printf "%.1f",0.5*$1}'` ;do
+ for TRIAL_FIELD_OF_VIEW_ARCMIN in $FIELD_OF_VIEW_ARCMIN $(echo "$FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f",3*$1}') $(echo "$FIELD_OF_VIEW_ARCMIN" | awk '{if ( $1 < 60 ) printf "%.1f",$1*3/4; else printf "%.1f",0.5*$1}') ;do
  
  echo "######### Trying to solve plate assuming $TRIAL_FIELD_OF_VIEW_ARCMIN' field of view #########
  $FITSFILE"
@@ -692,7 +692,7 @@ fi
    echo "ERROR running solve-field locally. Retrying with a remote plate-solve server."
    ASTROMETRYNET_LOCAL_OR_REMOTE="remote"
    # need the awk post-processing for curl request to work
-   IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
+   IMAGE_SIZE=$("$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}')
   else
    # solve-field didn't crash
    if [ ! -f out$$.solved ];then
@@ -762,11 +762,11 @@ fi
     rm -f out$$.wcs out$$.axy out$$.corr out$$.match out$$.rdls out$$.solved out$$-indx.xyls
     ############
     # Attempt the second iteration with restricted parameters
-    RADECCOMMAND=`"$VAST_PATH"util/fov_of_wcs_calibrated_image.sh wcs_"$BASENAME_FITSFILE" | grep 'Image center:' | awk '{print "--ra "$3" --dec "$4}'`
-    FOV_MAJORAXIS_DEG=`"$VAST_PATH"util/fov_of_wcs_calibrated_image.sh wcs_"$BASENAME_FITSFILE" | grep 'Image size:' | awk '{print $3}' | sed "s:'::g" | sed "s:x: :g"  | awk '{if ( $1 < $2 ) print $2/60 ;else print $1/60 }'`
-    IMAGE_SCALE_ARCSECPIX=`"$VAST_PATH"util/fov_of_wcs_calibrated_image.sh wcs_"$BASENAME_FITSFILE" | grep 'Image scale:' | awk '{print $3}' | awk -F '"' '{print $1}'`
-    IMAGE_SCALE_ARCSECPIX_LOW=`echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%f",0.95*$1}'`
-    IMAGE_SCALE_ARCSECPIX_HIGH=`echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%f",1.05*$1}'`
+    RADECCOMMAND=$("$VAST_PATH"util/fov_of_wcs_calibrated_image.sh wcs_"$BASENAME_FITSFILE" | grep 'Image center:' | awk '{print "--ra "$3" --dec "$4}')
+    FOV_MAJORAXIS_DEG=$("$VAST_PATH"util/fov_of_wcs_calibrated_image.sh wcs_"$BASENAME_FITSFILE" | grep 'Image size:' | awk '{print $3}' | sed "s:'::g" | sed "s:x: :g"  | awk '{if ( $1 < $2 ) print $2/60 ;else print $1/60 }')
+    IMAGE_SCALE_ARCSECPIX=$("$VAST_PATH"util/fov_of_wcs_calibrated_image.sh wcs_"$BASENAME_FITSFILE" | grep 'Image scale:' | awk '{print $3}' | awk -F '"' '{print $1}')
+    IMAGE_SCALE_ARCSECPIX_LOW=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%f",0.95*$1}')
+    IMAGE_SCALE_ARCSECPIX_HIGH=$(echo "$IMAGE_SCALE_ARCSECPIX" | awk '{printf "%f",1.05*$1}')
     # We need to add an additional parameter '--uniformize 0' for the newer version of Astrometry.net code
     # --uniformize <int> select sources uniformly using roughly this many boxes (0=disable; default 10)
     # as the quality of the solution degrades for wide-field images when this feature is enabled.
@@ -917,7 +917,7 @@ fi
     # Remove the current server from the list
     PLATE_SOLVE_SERVERS=${PLATE_SOLVE_SERVERS//$PLATE_SOLVE_SERVER/}
     # Pick the next server in line
-    PLATE_SOLVE_SERVER=`echo $PLATE_SOLVE_SERVERS | awk '{print $1}'`
+    PLATE_SOLVE_SERVER=$(echo $PLATE_SOLVE_SERVERS | awk '{print $1}')
     # break if there are no more servers left
     if [ "$PLATE_SOLVE_SERVER" = "" ];then
      echo "No more plate-solve servers left"
@@ -933,7 +933,7 @@ fi
    fi
    
    # Moved here as IMAGE_SIZE without awk postprocessing is defined and used above
-   IMAGE_SIZE=`"$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}'`
+   IMAGE_SIZE=$("$VAST_PATH"lib/astrometry/get_image_dimentions $FITSFILE | awk '{print "width="$2" -F hight="$4}')
    
    echo "Plate solving parameters: -F fov=$TRIAL_FIELD_OF_VIEW_ARCMIN -F $IMAGE_SIZE http://$PLATE_SOLVE_SERVER/cgi-bin/process_file/process_sextractor_list.py"
    
@@ -973,7 +973,7 @@ fi
     ERROR_STATUS=2
     continue    
    fi
-   EXPECTED_WCS_HEAD_URL=`grep WCS_HEADER_FILE= server_reply$$.html | awk '{print $2}'`
+   EXPECTED_WCS_HEAD_URL=$(grep WCS_HEADER_FILE= server_reply$$.html | awk '{print $2}')
    if [ "$EXPECTED_WCS_HEAD_URL" = "" ];then
     echo "ERROR in $0: cannot parse the plate-solve server reply to get 'WCS_HEADER_FILE=' line!"
     echo "#### Server reply listing ####"
@@ -1091,11 +1091,11 @@ Retrying..."
     fi
    else
     echo -e "Sadly, the field was \033[01;31mNOT SOLVED\033[00m. :("
-    echo "Try to set a smaller field of view size, for example:  $0 $1 " `echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f", $1/2}'`
+    echo "Try to set a smaller field of view size, for example:  $0 $1 " $(echo "$TRIAL_FIELD_OF_VIEW_ARCMIN" | awk '{printf "%.1f", $1/2}')
     ERROR_STATUS=1
    fi
    # At this point we should remove the completed job from the server
-   SERVER_JOB_ID=`grep "Job ID:" server_reply$$.html |head -n1 |awk '{print $3}'`
+   SERVER_JOB_ID=$(grep "Job ID:" server_reply$$.html | head -n1 | awk '{print $3}')
    if [ "$SERVER_JOB_ID" != "" ];then
     echo "Sending request to remove job $SERVER_JOB_ID from the server...  "
     VaSTID="XGkbtHTGfTPVLrZLBdtIDPzGAEAjaZWW"
@@ -1178,8 +1178,8 @@ if [ "$START_NAME" != "wcs_image_nocatalog.sh" ];then
   if [ $? -ne 0 ];then
    echo "lib/reformat_existing_sextractor_catalog_according_to_wcsparam.sh did not work. Re-running SExtractor..." 1>&2
    echo "Running command '$SEXTRACTOR' from $0"
-   echo $SEXTRACTOR -c "$VAST_PATH"`grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $WCS_IMAGE_NAME 2>/dev/null` `"$VAST_PATH"lib/guess_saturation_limit_main $WCS_IMAGE_NAME 2>/dev/null`  $WCS_IMAGE_NAME 1>&2
-   $SEXTRACTOR -c "$VAST_PATH"default.sex -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $WCS_IMAGE_NAME 2>/dev/null` `"$VAST_PATH"lib/guess_saturation_limit_main $WCS_IMAGE_NAME 2>/dev/null`  $WCS_IMAGE_NAME && echo "ok"
+   echo $SEXTRACTOR -c "$VAST_PATH"$(grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}') -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES $("$VAST_PATH"lib/autodetect_aperture_main $WCS_IMAGE_NAME 2>/dev/null) $("$VAST_PATH"lib/guess_saturation_limit_main $WCS_IMAGE_NAME 2>/dev/null)  $WCS_IMAGE_NAME 1>&2
+   $SEXTRACTOR -c "$VAST_PATH"default.sex -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES $("$VAST_PATH"lib/autodetect_aperture_main $WCS_IMAGE_NAME 2>/dev/null) $("$VAST_PATH"lib/guess_saturation_limit_main $WCS_IMAGE_NAME 2>/dev/null)  $WCS_IMAGE_NAME && echo "ok"
   fi
   echo "Catalog $SEXTRACTOR_CATALOG_NAME corresponding to the image $WCS_IMAGE_NAME created."
   "$VAST_PATH"lib/correct_sextractor_wcs_catalog_using_xy2sky.sh "$WCS_IMAGE_NAME" "$SEXTRACTOR_CATALOG_NAME"
@@ -1187,10 +1187,10 @@ if [ "$START_NAME" != "wcs_image_nocatalog.sh" ];then
   echo "Catalog $SEXTRACTOR_CATALOG_NAME corresponding to the image $WCS_IMAGE_NAME found." 
   
   # Check if the catalog looks big enough
-  TEST=`cat $SEXTRACTOR_CATALOG_NAME | wc -l`
+  TEST=$(wc -l < "$SEXTRACTOR_CATALOG_NAME")
   if [ $TEST -lt 100 ];then
    echo "The catalog seems suspiciously small (only $TEST lines), re-generating the catalog with SExtractor..."
-   $SEXTRACTOR -c "$VAST_PATH"`grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $WCS_IMAGE_NAME 2>/dev/null` `"$VAST_PATH"lib/guess_saturation_limit_main $WCS_IMAGE_NAME 2>/dev/null`  $WCS_IMAGE_NAME && echo "ok"
+   $SEXTRACTOR -c "$VAST_PATH"$(grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}') -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES $("$VAST_PATH"lib/autodetect_aperture_main $WCS_IMAGE_NAME 2>/dev/null) $("$VAST_PATH"lib/guess_saturation_limit_main $WCS_IMAGE_NAME 2>/dev/null)  $WCS_IMAGE_NAME && echo "ok"
    if [ -f $SEXTRACTOR_CATALOG_NAME ];then
     echo "Catalog $SEXTRACTOR_CATALOG_NAME corresponding to the image $WCS_IMAGE_NAME created."
     "$VAST_PATH"lib/correct_sextractor_wcs_catalog_using_xy2sky.sh "$WCS_IMAGE_NAME" "$SEXTRACTOR_CATALOG_NAME"
@@ -1200,10 +1200,10 @@ if [ "$START_NAME" != "wcs_image_nocatalog.sh" ];then
   fi
   
   # Checking the catalog format
-  TEST=`head -n1 "$SEXTRACTOR_CATALOG_NAME" | awk '{print $6}'`
+  TEST=$(head -n1 "$SEXTRACTOR_CATALOG_NAME" | awk '{print $6}')
   if [ "$TEST" = "" ];then
    echo "The catalog is in the old format, re-generating the catalog..."
-   $SEXTRACTOR -c "$VAST_PATH"`grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}'` -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES `"$VAST_PATH"lib/autodetect_aperture_main $WCS_IMAGE_NAME 2>/dev/null` `"$VAST_PATH"lib/guess_saturation_limit_main $WCS_IMAGE_NAME 2>/dev/null`  $WCS_IMAGE_NAME && echo "ok"
+   $SEXTRACTOR -c "$VAST_PATH"$(grep "SExtractor parameter file:" "$VAST_PATH"vast_summary.log |awk '{print $4}') -PARAMETERS_NAME "$VAST_PATH"wcs.param -CATALOG_NAME $SEXTRACTOR_CATALOG_NAME -PHOT_APERTURES $("$VAST_PATH"lib/autodetect_aperture_main $WCS_IMAGE_NAME 2>/dev/null) $("$VAST_PATH"lib/guess_saturation_limit_main $WCS_IMAGE_NAME 2>/dev/null)  $WCS_IMAGE_NAME && echo "ok"
    if [ -f "$SEXTRACTOR_CATALOG_NAME" ];then
     echo "Catalog $SEXTRACTOR_CATALOG_NAME corresponding to the image $WCS_IMAGE_NAME created."
     "$VAST_PATH"lib/correct_sextractor_wcs_catalog_using_xy2sky.sh "$WCS_IMAGE_NAME" "$SEXTRACTOR_CATALOG_NAME"
@@ -1243,8 +1243,8 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ] && [ "$START_NAME" != "wcs_im
   ############################################################################
   echo "Performing plate solution with UCAC5..."
   # If this is not the reference image - do not do the slow VizieR APASS search!
-  REFERENCE_IMAGE=$(cat "$VAST_PATH"vast_summary.log |grep "Ref.  image:" | awk '{print $6}')
-  BASENAME_REFERENCE_IMAGE=$(basename $REFERENCE_IMAGE)
+  REFERENCE_IMAGE=$(grep "Ref.  image:" "$VAST_PATH"vast_summary.log | awk '{print $6}')
+  BASENAME_REFERENCE_IMAGE=$(basename "$REFERENCE_IMAGE")
   TEST_SUBSTRING="$BASENAME_REFERENCE_IMAGE"
   TEST_SUBSTRING="${TEST_SUBSTRING:0:4}"
   if [ "$TEST_SUBSTRING" = "wcs_" ];then
@@ -1275,7 +1275,7 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ] && [ "$START_NAME" != "wcs_im
   echo "Found the UCAC5 plate solution file $UCAC5_SOLUTION_NAME"
  fi
 
- STARNUM=$(basename $LIGHTCURVEFILE .dat)
+ STARNUM=$(basename "$LIGHTCURVEFILE" .dat)
  echo "Looking for a star near the position $X $Y (pix) in $UCAC5_SOLUTION_NAME ..."
   RADEC=$("$VAST_PATH"lib/find_star_in_wcs_catalog $X $Y < $UCAC5_SOLUTION_NAME)
   if [ $? -ne 0 ];then
@@ -1407,7 +1407,7 @@ if [ "$START_NAME" != "wcs_image_calibration.sh" ] && [ "$START_NAME" != "wcs_im
   #if [ -f search_databases_with_vizquery_USNOB_ID_OK.tmp ];then
   # search_databases_with_vizquery_USNOB_ID_OK.tmp is no longer produced by the new version of util/search_databases_with_vizquery.sh
   if [ -f search_databases_with_vizquery_GAIA_ID_OK.tmp ];then
-   echo -n " draw green circle("`cat search_databases_with_vizquery_USNOB_ID_OK.tmp`" 2.5arcsec) ;" >> Aladin.script
+   echo -n " draw green circle("$(cat search_databases_with_vizquery_USNOB_ID_OK.tmp)" 2.5arcsec) ;" >> Aladin.script
   fi
   echo "" >> Aladin.script
   export PATH=$PATH:$HOME # Aladin is often saved in the home directory
