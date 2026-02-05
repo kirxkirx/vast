@@ -75,6 +75,8 @@ double get_VT_from_string(char *str);
 
 void get_catnumber_from_string(char *str, char *str2);
 
+void parse_tycho2_line(char *str, char *catnumber, double *RA, double *Dec, double *BT, double *VT);
+
 int match_stars_with_catalog(struct Star *arrStar, int N, struct CatStar *arrCatStar, long M);
 
 int read_tycho_cat(struct CatStar *arrCatStar, long *M, double *image_boundaries_radec);

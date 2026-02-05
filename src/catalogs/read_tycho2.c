@@ -14,8 +14,10 @@
 double get_RA_from_string( char *str ) {
  char str2[256];
  unsigned int i, j, nomer_v;
+ size_t len;
  nomer_v= 0;
- for ( i= 0, j= 0; i < strlen( str ); i++ ) {
+ len= strlen( str );
+ for ( i= 0, j= 0; i < len; i++ ) {
   str2[j]= str[i];
   if ( str2[j] == '|' ) {
    str2[j]= '\0';
@@ -34,8 +36,10 @@ double get_RA_from_string( char *str ) {
 double get_Dec_from_string( char *str ) {
  char str2[256];
  unsigned int i, j, nomer_v;
+ size_t len;
  nomer_v= 0;
- for ( i= 0, j= 0; i < strlen( str ); i++ ) {
+ len= strlen( str );
+ for ( i= 0, j= 0; i < len; i++ ) {
   str2[j]= str[i];
   if ( str2[j] == '|' ) {
    str2[j]= '\0';
@@ -53,8 +57,10 @@ double get_Dec_from_string( char *str ) {
 double get_BT_from_string( char *str ) {
  char str2[256];
  unsigned int i, j, nomer_v;
+ size_t len;
  nomer_v= 0;
- for ( i= 0, j= 0; i < strlen( str ); i++ ) {
+ len= strlen( str );
+ for ( i= 0, j= 0; i < len; i++ ) {
   str2[j]= str[i];
   if ( str2[j] == '|' ) {
    str2[j]= '\0';
@@ -72,8 +78,10 @@ double get_BT_from_string( char *str ) {
 double get_VT_from_string( char *str ) {
  char str2[256];
  unsigned int i, j, nomer_v;
+ size_t len;
  nomer_v= 0;
- for ( i= 0, j= 0; i < strlen( str ); i++ ) {
+ len= strlen( str );
+ for ( i= 0, j= 0; i < len; i++ ) {
   str2[j]= str[i];
   if ( str2[j] == '|' ) {
    str2[j]= '\0';
@@ -100,6 +108,46 @@ void get_catnumber_from_string( char *str, char *str2 ) {
   }
  }
  return;
+}
+
+// Parse all needed fields from Tycho-2 catalog line in a single pass
+// Fields: 1=catnumber, 3=RA, 4=Dec, 18=BT, 20=VT (pipe-delimited, 0-indexed after split)
+void parse_tycho2_line( char *str, char *catnumber, double *RA, double *Dec, double *BT, double *VT ) {
+ char field[256];
+ unsigned int i, j, field_num;
+ size_t len;
+ int k;
+
+ len= strlen( str );
+ field_num= 0;
+ j= 0;
+
+ for ( i= 0; i <= len; i++ ) {
+  if ( str[i] == '|' || str[i] == '\0' || str[i] == '\n' ) {
+   field[j]= '\0';
+   // Process field based on field_num (0-indexed)
+   if ( field_num == 0 ) {
+    // catnumber - first 14 chars, replace spaces with dashes
+    for ( k= 0; k < 14 && field[k] != '\0'; k++ ) {
+     catnumber[k]= ( field[k] == ' ' ) ? '-' : field[k];
+    }
+    catnumber[k]= '\0';
+   } else if ( field_num == 2 ) {
+    *RA= atof( field );
+   } else if ( field_num == 3 ) {
+    *Dec= atof( field );
+   } else if ( field_num == 17 ) {
+    *BT= atof( field );
+   } else if ( field_num == 19 ) {
+    *VT= atof( field );
+    break; // Got all fields we need
+   }
+   field_num++;
+   j= 0;
+  } else {
+   field[j++]= str[i];
+  }
+ }
 }
 
 static int compare_star_on_mag_to_sort_arrStar( const void *a1, const void *a2 ) {
@@ -240,6 +288,9 @@ int read_tycho_cat( struct CatStar *arrCatStar, long *M, double *image_boundarie
                             "lib/catalogs/tycho2/tyc2.dat.11", "lib/catalogs/tycho2/tyc2.dat.12", "lib/catalogs/tycho2/tyc2.dat.13", "lib/catalogs/tycho2/tyc2.dat.14", "lib/catalogs/tycho2/tyc2.dat.15", "lib/catalogs/tycho2/tyc2.dat.16",
                             "lib/catalogs/tycho2/tyc2.dat.17", "lib/catalogs/tycho2/tyc2.dat.18", "lib/catalogs/tycho2/tyc2.dat.19" };
  char tychostr[TYCHOSTRING];
+ char catnumber_tmp[TYCHONUMBER];
+ double RA_tmp, Dec_tmp, BT_tmp, VT_tmp;
+
  for ( tychofilecounter= 0; tychofilecounter < 20; tychofilecounter++ ) {
   fprintf( stderr, "Reading Tycho2 catalog file %s\n", tychofiles[tychofilecounter] );
   tychofile= fopen( tychofiles[tychofilecounter], "r" );
@@ -250,25 +301,28 @@ int read_tycho_cat( struct CatStar *arrCatStar, long *M, double *image_boundarie
   memset( tychostr, 0, TYCHOSTRING ); // reset the string just in case
   while ( NULL != fgets( tychostr, TYCHOSTRING, tychofile ) ) {
    tychostr[TYCHOSTRING - 1]= '\0'; // just in case
-   arrCatStar[i].ALPHA_catalog= get_RA_from_string( tychostr );
-   if ( arrCatStar[i].ALPHA_catalog < image_boundaries_radec[0] )
+   // Parse all fields in single pass
+   parse_tycho2_line( tychostr, catnumber_tmp, &RA_tmp, &Dec_tmp, &BT_tmp, &VT_tmp );
+   // Apply filters
+   if ( RA_tmp < image_boundaries_radec[0] )
     continue;
-   if ( arrCatStar[i].ALPHA_catalog > image_boundaries_radec[1] )
+   if ( RA_tmp > image_boundaries_radec[1] )
     continue;
-   arrCatStar[i].DELTA_catalog= get_Dec_from_string( tychostr );
-   if ( arrCatStar[i].DELTA_catalog < image_boundaries_radec[2] )
+   if ( Dec_tmp < image_boundaries_radec[2] )
     continue;
-   if ( arrCatStar[i].DELTA_catalog > image_boundaries_radec[3] )
+   if ( Dec_tmp > image_boundaries_radec[3] )
     continue;
-   arrCatStar[i].VT= get_VT_from_string( tychostr );
-   if ( arrCatStar[i].VT == 0.0 )
+   if ( VT_tmp == 0.0 )
     continue;
-   arrCatStar[i].BT= get_BT_from_string( tychostr );
-   if ( arrCatStar[i].BT == 0.0 )
+   if ( BT_tmp == 0.0 )
     continue;
-   memset( arrCatStar[i].catnumber, 0, TYCHONUMBER ); // reset the string just in case
-   get_catnumber_from_string( tychostr, arrCatStar[i].catnumber );
-   //   fprintf(stderr,"%s  %lf %lf  %lf %lf\n",arrCatStar[i].catnumber,arrCatStar[i].ALPHA_catalog,arrCatStar[i].DELTA_catalog,arrCatStar[i].BT,arrCatStar[i].VT);
+   // Store accepted star
+   arrCatStar[i].ALPHA_catalog= RA_tmp;
+   arrCatStar[i].DELTA_catalog= Dec_tmp;
+   arrCatStar[i].VT= VT_tmp;
+   arrCatStar[i].BT= BT_tmp;
+   memset( arrCatStar[i].catnumber, 0, TYCHONUMBER );
+   strncpy( arrCatStar[i].catnumber, catnumber_tmp, TYCHONUMBER - 1 );
    i++;
   }
   fclose( tychofile );
@@ -370,7 +424,7 @@ int create_tycho2_list_of_bright_stars_to_exclude_from_transient_search( double 
 
  outputradeclist= fopen( "lib/catalogs/list_of_bright_stars_from_tycho2.txt", "w" );
  if ( outputradeclist == NULL ) {
-  fprintf( stderr, "ERROR: cannot open lib/catalogs/list_of_bright_stars_from_tycho2.txt for wrigting!\n" );
+  fprintf( stderr, "ERROR: cannot open lib/catalogs/list_of_bright_stars_from_tycho2.txt for writing!\n" );
   return 1;
  }
 
