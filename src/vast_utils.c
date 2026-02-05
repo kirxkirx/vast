@@ -550,36 +550,39 @@ int exclude_test( double X, double Y, double *exX, double *exY, int N, int verbo
  return result;
 }
 
-// TODO: replace with memove
 // a housekeeping function to exclude i'th element from three arrays
+// Optimized: use memmove instead of element-by-element copy
 void exclude_from_3_double_arrays( double *array1, double *array2, double *array3, int i, int *N ) {
- int j;
+ size_t elements_to_move;
  if ( i < 0 || i >= ( *N ) ) {
   fprintf( stderr, "ERROR in exclude_from_3_double_arrays(): i=%d\n", i );
   return;
  }
- for ( j= i; j < ( *N ) - 1; j++ ) {
-  array1[j]= array1[j + 1];
-  array2[j]= array2[j + 1];
-  array3[j]= array3[j + 1];
+ elements_to_move= ( *N ) - i - 1;
+ if ( elements_to_move > 0 ) {
+  memmove( &array1[i], &array1[i + 1], elements_to_move * sizeof( double ) );
+  memmove( &array2[i], &array2[i + 1], elements_to_move * sizeof( double ) );
+  memmove( &array3[i], &array3[i + 1], elements_to_move * sizeof( double ) );
  }
  ( *N )= ( *N ) - 1;
  return;
 }
 // a housekeeping function to exclude i'th element from six arrays
+// Optimized: use memmove instead of element-by-element copy
 void exclude_from_6_double_arrays( double *array1, double *array2, double *array3, double *array4, double *array5, double *array6, int i, int *N ) {
- int j;
+ size_t elements_to_move;
  if ( i < 0 || i >= ( *N ) ) {
   fprintf( stderr, "ERROR in exclude_from_6_double_arrays(): i=%d\n", i );
   return;
  }
- for ( j= i; j < ( *N ) - 1; j++ ) {
-  array1[j]= array1[j + 1];
-  array2[j]= array2[j + 1];
-  array3[j]= array3[j + 1];
-  array4[j]= array4[j + 1];
-  array5[j]= array5[j + 1];
-  array6[j]= array6[j + 1];
+ elements_to_move= ( *N ) - i - 1;
+ if ( elements_to_move > 0 ) {
+  memmove( &array1[i], &array1[i + 1], elements_to_move * sizeof( double ) );
+  memmove( &array2[i], &array2[i + 1], elements_to_move * sizeof( double ) );
+  memmove( &array3[i], &array3[i + 1], elements_to_move * sizeof( double ) );
+  memmove( &array4[i], &array4[i + 1], elements_to_move * sizeof( double ) );
+  memmove( &array5[i], &array5[i + 1], elements_to_move * sizeof( double ) );
+  memmove( &array6[i], &array6[i + 1], elements_to_move * sizeof( double ) );
  }
  ( *N )= ( *N ) - 1;
  return;
