@@ -898,7 +898,18 @@ fi
 VIZIER_SITE=$(lib/choose_vizier_mirror.sh)
 export VIZIER_SITE
 echo "VIZIER_SITE=$VIZIER_SITE" | tee -a transient_factory_test31.txt
-### 
+# Select the best Gaia DR2 client (VizieR or ESA TAP)
+# GAIA_DR2_CLIENT can be set externally to force a specific client: "vizquery", "esa_tap", or "auto"
+if [ -z "$GAIA_DR2_CLIENT" ] || [ "$GAIA_DR2_CLIENT" = "auto" ];then
+ if [ -x lib/choose_gaia_dr2_client.sh ];then
+  GAIA_DR2_CLIENT=$(lib/choose_gaia_dr2_client.sh "$VIZIER_SITE")
+ else
+  GAIA_DR2_CLIENT="vizquery"
+ fi
+fi
+export GAIA_DR2_CLIENT
+echo "GAIA_DR2_CLIENT=$GAIA_DR2_CLIENT" | tee -a transient_factory_test31.txt
+###
 TIMEOUTCOMMAND=$("$VAST_PATH"lib/find_timeout_command.sh)
 if [ $? -ne 0 ];then
  echo "WARNING: cannot find timeout command" | tee -a transient_factory_test31.txt

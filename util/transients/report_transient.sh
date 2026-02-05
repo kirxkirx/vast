@@ -82,6 +82,53 @@ function clean_tmp_files {
 }
 
 
+######### function to query Gaia DR2 using either VizieR or ESA TAP #########
+# Uses GAIA_DR2_CLIENT environment variable to select the client
+# Arguments are passed through to the selected client in vizquery-compatible format
+# Output format is the same for both clients
+function query_gaia_dr2 {
+ local coords="$1"
+ local search_radius_arcsec="$2"
+ local mag_bright="$3"
+ local mag_faint="$4"
+ local sort_band="$5"
+ local max_results="$6"
+
+ # Default to vizquery if GAIA_DR2_CLIENT is not set
+ if [ -z "$GAIA_DR2_CLIENT" ]; then
+  GAIA_DR2_CLIENT="vizquery"
+ fi
+
+ if [ "$GAIA_DR2_CLIENT" = "esa_tap" ] && [ -x lib/gaia_dr2_cone_search.sh ]; then
+  # Use ESA TAP endpoint
+  lib/gaia_dr2_cone_search.sh \
+   -c="$coords" \
+   -c.rs="$search_radius_arcsec" \
+   -out.max="$max_results" \
+   -sort="$sort_band" \
+   "$sort_band=$mag_bright..$mag_faint" \
+   -timeout=30 2>/dev/null
+ else
+  # Use VizieR (default)
+  if [ -z "$VIZIER_SITE" ]; then
+   return 1
+  fi
+  $TIMEOUTCOMMAND_GAIA_VIZIER lib/vizquery \
+   -site="$VIZIER_SITE" \
+   -mime=text \
+   -source=I/345/gaia2 \
+   -out.max="$max_results" \
+   -out.add=_r \
+   -out.form=mini \
+   -sort="$sort_band" \
+   "$sort_band=$mag_bright..$mag_faint" \
+   -c="$coords" \
+   -c.rs="$search_radius_arcsec" \
+   -out=Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var 2>/dev/null
+ fi
+}
+
+
 # TRAP!! If we whant to identify a flare, there will be no sense to search for an asteroid on the reference image.
 # Use the first discovery image instead!
 REFERENCE_IMAGE=$(grep "Ref.  image:" vast_summary.log | awk '{print $6}')
@@ -521,8 +568,8 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
   fi
  fi
  ############
- # do this only if $VIZIER_SITE is set
- if [ -n "$VIZIER_SITE" ];then
+ # do this only if $VIZIER_SITE is set or GAIA_DR2_CLIENT is set to esa_tap
+ if [ -n "$VIZIER_SITE" ] || [ "$GAIA_DR2_CLIENT" = "esa_tap" ];then
   # if this is a new source
   NUBER_OF_LIGHTCURVE_POINTS=$(wc -l < "$LIGHTCURVEFILE")
   # Assume that two-reference-images detections are good match, check only new sources and one-reference-images detections to speed things up
@@ -540,49 +587,34 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
    # Special treatment for blends and individual Gaia DR2 source matches
    # 2pix blend rejection works well. Let's try 2.5 pix
    BLEND_SEARCH_RADIUS_ARCSEC=$(echo "$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC" | awk '{printf "%.2f", $1*2.5}')
-   VIZIER_COMMAND=("lib/vizquery"
-                "-site=$VIZIER_SITE"
-                "-mime=text"
-                "-source=I/345/gaia2"
-                "-out.max=3"
-                "-out.add=_r"
-                "-out.form=mini"
-                "-sort=$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK"
-                "$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT"
-                "-c=$RA_MEAN_HMS_DEC_MEAN_HMS_ONSESTRING"
-                "-c.rs=$BLEND_SEARCH_RADIUS_ARCSEC"
-                "-out=Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var")
-   #VIZIER_GAIADR2_OUTPUT=$($TIMEOUTCOMMAND_GAIA_VIZIER "${VIZIER_COMMAND[@]}" 2>/dev/null | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE")
-   # let's be paranoid about $VIZIER_GAIADR2_OUTPUT containing only source records and no garbage
-   VIZIER_GAIADR2_OUTPUT=$($TIMEOUTCOMMAND_GAIA_VIZIER "${VIZIER_COMMAND[@]}" 2>/dev/null | grep -B10 '#END#' | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE" | awk 'NF > 5' | awk '{if (NF >= 3 && length($1) > 0 && ($1 + 0) == $1 && $1 >= 0 && length($3) > 0 && ($3 + 0) == $3 && $3 > 0 && $3 < 360) print}')
-   if [ -n "$VIZIER_GAIADR2_OUTPUT" ];then
-    # | awk 'NF > 0' is needed to exclude empty lines as echo "$VIZIER_GAIADR2_OUTPUT" will produce an empty line even when $VIZIER_GAIADR2_OUTPUT contains nothing
+   # Query Gaia DR2 using either VizieR or ESA TAP based on GAIA_DR2_CLIENT
+   # let's be paranoid about GAIADR2_OUTPUT containing only source records and no garbage
+   GAIADR2_OUTPUT=$(query_gaia_dr2 "$RA_MEAN_HMS_DEC_MEAN_HMS_ONSESTRING" "$BLEND_SEARCH_RADIUS_ARCSEC" "$MAG_BRIGHT_SEARCH_LIMIT" "$MAG_FAINT_SEARCH_LIMIT" "$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK" 3 | grep -B10 '#END#' | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE" | awk 'NF > 5' | awk '{if (NF >= 3 && length($1) > 0 && ($1 + 0) == $1 && $1 >= 0 && length($3) > 0 && ($3 + 0) == $3 && $3 > 0 && $3 < 360) print}')
+   if [ -n "$GAIADR2_OUTPUT" ];then
+    # | awk 'NF > 0' is needed to exclude empty lines as echo "$GAIADR2_OUTPUT" will produce an empty line even when $GAIADR2_OUTPUT contains nothing
     # let's do echo -n as the second line of defense against the empty lines
-    N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS=$(echo -n "$VIZIER_GAIADR2_OUTPUT" | awk 'NF > 0' | wc -l)
+    N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS=$(echo -n "$GAIADR2_OUTPUT" | awk 'NF > 0' | wc -l)
     # Ensure N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS is a valid integer, default to 0 if not
     if ! [[ "$N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS" =~ ^[0-9]+$ ]]; then
      N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS=0
     fi
     if [ "$N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS" -eq 1 ];then
      # If there is only one star - check how far is it from the candidate position
-     #DISTANCE_ARCSEC=$(echo "$VIZIER_GAIADR2_OUTPUT" | head -n1 | awk '{print $1}')
-     # Try to be robust against $VIZIER_GAIADR2_OUTPUT containing garbage - set DISTANCE_ARCSEC to 999.99 is unsure
-     DISTANCE_ARCSEC=$(echo "$VIZIER_GAIADR2_OUTPUT" | head -n1 | awk '{print (NF > 0 && length($1) > 0 && ($1 + 0) == $1 && $1 >= 0) ? $1 : "999.99"}')
+     # Try to be robust against $GAIADR2_OUTPUT containing garbage - set DISTANCE_ARCSEC to 999.99 if unsure
+     DISTANCE_ARCSEC=$(echo "$GAIADR2_OUTPUT" | head -n1 | awk '{print (NF > 0 && length($1) > 0 && ($1 + 0) == $1 && $1 >= 0) ? $1 : "999.99"}')
      if awk -v max="$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC" -v dist="$DISTANCE_ARCSEC" 'BEGIN {if (dist < max) exit 0; exit 1}' ;then
-      # Using the [*] instead of [@] treats the entire array as a single string, using the first character of the Internal Field Separator (IFS) variable as a delimiter (which is a space by default).
-      echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2 single (TIMEOUTCOMMAND_GAIA_VIZIER=#$TIMEOUTCOMMAND_GAIA_VIZIER#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT, VIZIER_COMMAND=#${VIZIER_COMMAND[*]}#)VIZIER_GAIADR2_OUTPUT=#$VIZIER_GAIADR2_OUTPUT#N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS=#$N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS#DISTANCE_ARCSEC=#$DISTANCE_ARCSEC#MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC=#$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC#"
+      echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2 single (GAIA_DR2_CLIENT=#$GAIA_DR2_CLIENT#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT)GAIADR2_OUTPUT=#$GAIADR2_OUTPUT#N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS=#$N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS#DISTANCE_ARCSEC=#$DISTANCE_ARCSEC#MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC=#$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC#"
       echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt__"$LIGHTCURVEFILE"
       clean_tmp_files
       exit 1
      fi
     elif [ "$N_GAIA_STARS_WITIN_BLEND_SEARCH_RADIUS" -ge 2 ];then
-     # Using the [*] instead of [@] treats the entire array as a single string, using the first character of the Internal Field Separator (IFS) variable as a delimiter (which is a space by default).
-     echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2 blend (TIMEOUTCOMMAND_GAIA_VIZIER=#$TIMEOUTCOMMAND_GAIA_VIZIER#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT, VIZIER_COMMAND=#${VIZIER_COMMAND[*]}#)"
+     echo "**** FOUND  $RA_MEAN_HMS $DEC_MEAN_HMS in Gaia DR2 blend (GAIA_DR2_CLIENT=#$GAIA_DR2_CLIENT#, MAG_MEAN=$MAG_MEAN, MAG_FAINT_SEARCH_LIMIT=$MAG_FAINT_SEARCH_LIMIT)"
      echo "$RA_MEAN_HMS $DEC_MEAN_HMS" >> exclusion_list_gaiadr2.txt__"$LIGHTCURVEFILE"
      clean_tmp_files
      exit 1
     fi # if Gaia DR2 match found (single star or blend)
-   fi # non-empty $VIZIER_GAIADR2_OUTPUT
+   fi # non-empty $GAIADR2_OUTPUT
    #
    # The trouble is... Gaia catalog is missing many obvious bright stars
    # So if the Gaia search didn't work well - let's try APASS (chosen because it has good magnitudes and is deep enough for NMW)
