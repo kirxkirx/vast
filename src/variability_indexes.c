@@ -744,6 +744,59 @@ double esimate_sigma_from_MAD_of_unsorted_data( double *unsorted_data, long n ) 
  return sigma;
 }
 
+// Same as esimate_sigma_from_MAD_of_unsorted_data but also returns the median
+// via output parameter. This avoids needing to sort the data first.
+// Uses O(n) quickselect instead of O(n log n) sort.
+double esimate_sigma_from_MAD_of_unsorted_data_and_target_median( double *unsorted_data, long n, double *out_median ) {
+ double median_data, MAD, sigma;
+ double *x;
+ long i;
+
+ // With 0 or 1 data points there is no scatter to measure
+ if ( n < 2 ) {
+  if ( out_median != NULL ) {
+   *out_median= ( n == 1 ) ? unsorted_data[0] : 0.0;
+  }
+  return 0.0;
+ }
+
+ // allocate memory
+ x= malloc( n * sizeof( double ) );
+ if ( x == NULL ) {
+  fprintf( stderr, "ERROR allocating memory for x in esimate_sigma_from_MAD_of_unsorted_data_and_target_median()\n" );
+  exit( EXIT_FAILURE );
+ }
+
+ // make a copy of the input dataset
+ for ( i= 0; i < n; i++ ) {
+  x[i]= unsorted_data[i];
+ }
+
+ // Use quickselect to find median of data - O(n) instead of O(n log n)
+ median_data= quickselect_median_double( x, (int)n );
+
+ // Return the median if requested
+ if ( out_median != NULL ) {
+  *out_median= median_data;
+ }
+
+ // Compute absolute deviations (reuse x array)
+ for ( i= 0; i < n; i++ ) {
+  x[i]= fabs( unsorted_data[i] - median_data );
+ }
+
+ // Use quickselect to find median of absolute deviations - O(n)
+ MAD= quickselect_median_double( x, (int)n );
+
+ // free-up memory
+ free( x );
+
+ // Scale MAD to sigma: 1.48260221850560 = 1/norminv(3/4)
+ sigma= 1.48260221850560 * MAD;
+
+ return sigma;
+}
+
 // This function will compute the Median Absolute Deviation of the input
 // dataset ASSUMING IT IS SORTED and will scale it to sigma.
 // The input dataset will not be changed. For a detailed discussion of MAD

@@ -4304,9 +4304,15 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
        for ( comparison_star_counter= 0; comparison_star_counter < N_good_stars; comparison_star_counter++ ) {
         comparison_star_mag_diff[comparison_star_counter]= poly_y[comparison_star_counter] - poly_x[comparison_star_counter];
        }
+#if USE_GSL_MEDIAN
+       // GSL sort-based code - O(n log n)
        gsl_sort( comparison_star_mag_diff, 1, N_good_stars );
        comparison_star_median_mag_diff= gsl_stats_median_from_sorted_data( comparison_star_mag_diff, 1, N_good_stars );
        sigma_from_MAD= esimate_sigma_from_MAD_of_sorted_data( comparison_star_mag_diff, (long)N_good_stars );
+#else
+       // Quickselect-based code - O(n) average
+       sigma_from_MAD= esimate_sigma_from_MAD_of_unsorted_data_and_target_median( comparison_star_mag_diff, (long)N_good_stars, &comparison_star_median_mag_diff );
+#endif
        fprintf( stderr, "Zero-point offset = %.4lf +/-%.4lf mag (sigma= %.4lf mag)\n", comparison_star_median_mag_diff, sigma_from_MAD / sqrt( (double)N_good_stars ), sigma_from_MAD );
        free( comparison_star_mag_diff );
        // Now filter-out the outliers

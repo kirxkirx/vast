@@ -58,6 +58,8 @@ double estimate_sigma_from_IQR_of_unsorted_data(double *unsorted_data, int n);
 
 double esimate_sigma_from_MAD_of_unsorted_data(double *unsorted_data, long n);
 
+double esimate_sigma_from_MAD_of_unsorted_data_and_target_median(double *unsorted_data, long n, double *out_median);
+
 double compute_MAD_of_sorted_data(double *sorted_data, long n);
 
 double esimate_sigma_from_MAD_of_sorted_data(double *sorted_data, long n);
