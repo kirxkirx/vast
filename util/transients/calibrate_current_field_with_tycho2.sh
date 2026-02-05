@@ -16,12 +16,6 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 #################################
 
-# Find SExtractor
-SEXTRACTOR=$(command -v sex 2>/dev/null)
-if [ "" = "$SEXTRACTOR" ];then
- SEXTRACTOR=lib/bin/sex
-fi
-
 function vastrealpath {
   # On Linux, just go for the fastest option which is 'readlink -f'
   REALPATH=$(readlink -f "$1" 2>/dev/null)
@@ -35,9 +29,9 @@ function vastrealpath {
      if [ $? -ne 0 ];then
       # Something that should work well enough in practice
       OURPWD=$PWD
-      cd "$(dirname "$1")"
+      cd "$(dirname "$1")" || return
       REALPATH="$PWD/$(basename "$1")"
-      cd "$OURPWD"
+      cd "$OURPWD" || return
      fi # grealpath
     fi # realpath
    fi # greadlink -f
@@ -46,11 +40,11 @@ function vastrealpath {
 }
 
 ##### Check if a local copy of Tycho-2 is available and if its usable?
-VASTDIR=$(vastrealpath $PWD)
+VASTDIR=$(vastrealpath "$PWD")
 TYCHO_PATH=lib/catalogs/tycho2
 
 # Check if there is a symbolic link, but it is broken
-if [ -L $TYCHO_PATH/tyc2.dat.00 ];then
+if [ -L "$TYCHO_PATH/tyc2.dat.00" ];then
  # test if symlink is broken (by seeing if it links to an existing file)
  if [ ! -e "$TYCHO_PATH/tyc2.dat.00" ] ; then
   # code if the symlink is broken
@@ -60,27 +54,26 @@ if [ -L $TYCHO_PATH/tyc2.dat.00 ];then
 fi
 
 # Check if there is a copy of Tycho-2
-if [ ! -f $TYCHO_PATH/tyc2.dat.00 ];then
+if [ ! -f "$TYCHO_PATH/tyc2.dat.00" ];then
  echo "No local copy of Tycho-2 found (no $TYCHO_PATH/tyc2.dat.00)"
  # Check if there is a local copy of Tycho-2 in the top directory
  if [ -s ../tycho2/tyc2.dat.19 ];then
-  echo "Found nonempty ../tycho2/tyc2.dat.19
-  ln -s ../tycho2 $TYCHO_PATH"
+  echo "Found nonempty ../tycho2/tyc2.dat.19, creating symlink to $TYCHO_PATH"
   #ln -s `readlink -f ../tycho2` $TYCHO_PATH
-  ln -s $(vastrealpath ../tycho2) $TYCHO_PATH
+  ln -s "$(vastrealpath ../tycho2)" "$TYCHO_PATH"
  else
   #
   echo "Tycho-2 catalog was not found at $TYCHO_PATH"
   echo "Would you like to download it now (it's big, ~160M)? (y/n)"
-  read ANSWER
+  read -r ANSWER
   if [ "$ANSWER" = "n" ];then
    echo "Well, maybe next time..."
    exit 1
   else
-   if [ ! -d $TYCHO_PATH ];then
-    mkdir $TYCHO_PATH
+   if [ ! -d "$TYCHO_PATH" ];then
+    mkdir "$TYCHO_PATH"
    fi
-   cd $TYCHO_PATH 
+   cd "$TYCHO_PATH" || exit 1
    # remove any incomplete copy of Tycho-2
    for i in tyc2.dat.* ;do
     if [ -f "$i" ];then
@@ -93,26 +86,26 @@ if [ ! -f $TYCHO_PATH/tyc2.dat.00 ];then
    echo "Download complete. Unpacking..."
    for i in tyc2.dat.*gz ;do
     # handle a very special case: `basename $i .gz` is a broken symlink
-    if [ -L $(basename $i .gz) ];then
+    if [ -L "$(basename "$i" .gz)" ];then
      # if this is a symlink
-     if [ ! -e $(basename $i .gz) ];then
+     if [ ! -e "$(basename "$i" .gz)" ];then
       # if it is broken
-      rm -f $(basename $i .gz)
+      rm -f "$(basename "$i" .gz)"
       # remove that symlink
      fi
     fi
     #
-    gunzip $i
+    gunzip "$i"
    done
-   cd $VASTDIR
+   cd "$VASTDIR" || exit 1
   fi
  fi # if [ -s ../tycho2/tyc2.dat.19 ];then 
 else
  echo "Tycho-2 catalog is found at $TYCHO_PATH"
  # Make sure the catalog is fully downloaded and unpacked
- if [ ! -f $TYCHO_PATH/tyc2.dat.19 ] ;then
+ if [ ! -f "$TYCHO_PATH/tyc2.dat.19" ] ;then
   echo "WARNING! One of the catalog files was not found! Will attempt to re-download the catalog."
-  cd $TYCHO_PATH 
+  cd "$TYCHO_PATH" || exit 1
   # remove any incomplete copy of Tycho-2
   for i in tyc2.dat.* ;do
    if [ -f "$i" ];then
@@ -125,18 +118,18 @@ else
   echo "Download complete. Unpacking..."
   for i in tyc2.dat.*gz ;do
    # handle a very special case: `basename $i .gz` is a broken symlink
-   if [ -L $(basename $i .gz) ];then
+   if [ -L "$(basename "$i" .gz)" ];then
     # if this is a symlink
-    if [ ! -e $(basename $i .gz) ];then
+    if [ ! -e "$(basename "$i" .gz)" ];then
      # if it is broken
-     rm -f $(basename $i .gz)
+     rm -f "$(basename "$i" .gz)"
      # remove that symlink
     fi
    fi
    #
-   gunzip $i
+   gunzip "$i"
   done
-  cd $VASTDIR  
+  cd "$VASTDIR" || exit 1
  fi
 fi
 
@@ -149,19 +142,19 @@ fi
 echo "Tycho-2 catalog and the derived bright star exclusion list are ready"
 
 # WCS-calibrate the reference image if it has not been done
-REFERENCE_IMAGE=$(cat vast_summary.log | grep "Ref.  image:" |awk '{print $6}')
-TEST_SUBSTRING=$(basename $REFERENCE_IMAGE)
+REFERENCE_IMAGE=$(grep "Ref.  image:" vast_summary.log | awk '{print $6}')
+TEST_SUBSTRING=$(basename "$REFERENCE_IMAGE")
 TEST_SUBSTRING="${TEST_SUBSTRING:0:4}"
 if [ "$TEST_SUBSTRING" = "wcs_" ];then
- cp $REFERENCE_IMAGE .
- WCS_CALIBRATED_REFERENCE_IMAGE=$(basename $REFERENCE_IMAGE)
+ cp "$REFERENCE_IMAGE" .
+ WCS_CALIBRATED_REFERENCE_IMAGE=$(basename "$REFERENCE_IMAGE")
 else
- WCS_CALIBRATED_REFERENCE_IMAGE=wcs_$(basename $REFERENCE_IMAGE)
+ WCS_CALIBRATED_REFERENCE_IMAGE=wcs_$(basename "$REFERENCE_IMAGE")
 fi
 SEXTRACTOR_CATALOG_NAME="$WCS_CALIBRATED_REFERENCE_IMAGE".cat
 echo "Checking for the presence of non-empty $WCS_CALIBRATED_REFERENCE_IMAGE and $SEXTRACTOR_CATALOG_NAME "
 if [ ! -s "$WCS_CALIBRATED_REFERENCE_IMAGE" ] || [ ! -s "$SEXTRACTOR_CATALOG_NAME" ] ;then
- util/wcs_image_calibration.sh $REFERENCE_IMAGE 
+ util/wcs_image_calibration.sh "$REFERENCE_IMAGE"
  if [ $? -ne 0 ];then
   echo "ERROR in $0 : cannot plate-solve the reference image $REFERENCE_IMAGE"
   exit 1
@@ -173,7 +166,7 @@ fi # if [ ! -s "$WCS_CALIBRATED_REFERENCE_IMAGE" ] || [ ! -s "$SEXTRACTOR_CATALO
 
 # Final check for $WCS_CALIBRATED_REFERENCE_IMAGE and $SEXTRACTOR_CATALOG_NAME
 if [ ! -s "$WCS_CALIBRATED_REFERENCE_IMAGE" ];then
- echo "ERROR in $0 : cannot find the WCS-calibrated image $WCS_CALIBRATED_REFERENCE_IMAGEE which was supposed to be created by util/wcs_image_calibration.sh"
+ echo "ERROR in $0 : cannot find the WCS-calibrated image $WCS_CALIBRATED_REFERENCE_IMAGE which was supposed to be created by util/wcs_image_calibration.sh"
  exit 1
 fi
 if [ ! -s "$SEXTRACTOR_CATALOG_NAME" ];then
