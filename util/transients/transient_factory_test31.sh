@@ -1611,13 +1611,13 @@ for FIELD in $LIST_OF_FIELDS_IN_THE_NEW_IMAGES_DIR ;do
    if [ -s "transient_report/dark.png" ];then
     echo "<img src=\"dark.png\"><br>" >> transient_factory_test31.txt
    else
-    echo "<b>No good dark!</b><br>"
+    echo "<b>No good dark!</b><br>" >> transient_factory_test31.txt
    fi
    echo "Flat field used to calibrate the second-epoch images:<br>" >> transient_factory_test31.txt
    if [ -s "transient_report/flat.png" ];then
     echo "<img src=\"flat.png\"><br>" >> transient_factory_test31.txt
    else
-    echo "<b>No good flat!</b><br>"
+    echo "<b>No good flat!</b><br>" >> transient_factory_test31.txt
    fi
    #
    
@@ -1651,7 +1651,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   # Make image previews
   echo "Previews of the CALIBRATED second-epoch images:<br>" >> transient_factory_test31.txt
   for FITS_IMAGE_TO_PREVIEW in "$CALIBRATED_SECOND_EPOCH__FIRST_IMAGE" "$CALIBRATED_SECOND_EPOCH__SECOND_IMAGE" ;do
-   BASENAME_FITS_IMAGE_TO_PREVIEW=$(basename $FITS_IMAGE_TO_PREVIEW)
+   BASENAME_FITS_IMAGE_TO_PREVIEW=$(basename "$FITS_IMAGE_TO_PREVIEW")
    PREVIEW_IMAGE="$BASENAME_FITS_IMAGE_TO_PREVIEW"_preview.png
    ######
    if [ -n "$MAKE_PNG_PLOTS" ];then
@@ -1948,7 +1948,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
 
   # Check that the plates were actually solved
   for i in $(cat vast_image_details.log | awk '{print $17}') ;do 
-   WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $i)"
+   WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename "$i")"
    # make sure we do not have wcs_wcs_
    WCS_IMAGE_NAME_FOR_CHECKS=${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}
    #
@@ -1988,7 +1988,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   fi
 
   # Determine image FoV to compute limits on the pointing accuracy
-  WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $REFERENCE_EPOCH__FIRST_IMAGE)"
+  WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename "$REFERENCE_EPOCH__FIRST_IMAGE")"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
     WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/.fz/}"
   FOV_OF_WCS_CALIBRATED_IMAGE_RESULTS=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS")
@@ -2029,7 +2029,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   IMAGE_CENTER__REFERENCE_EPOCH__FIRST_IMAGE=$(echo "$FOV_OF_WCS_CALIBRATED_IMAGE_RESULTS" | grep 'Image center:' | awk '{print $3" "$4}')
 
   #### Do the pointing check for the first image of the second epoch
-  WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $SECOND_EPOCH__FIRST_IMAGE)"
+  WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename "$SECOND_EPOCH__FIRST_IMAGE")"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/.fz/}"
   IMAGE_CENTER__SECOND_EPOCH__FIRST_IMAGE=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS" | grep 'Image center:' | awk '{print $3" "$4}')
@@ -2073,7 +2073,7 @@ Soft limit: $POINTING_ACCURACY_LIMIT_DEG_SOFT deg.  Hard limit: $POINTING_ACCURA
 
 
   #### Do the pointing check for the second image of the second epoch
-  WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $SECOND_EPOCH__SECOND_IMAGE)"
+  WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename "$SECOND_EPOCH__SECOND_IMAGE")"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/.fz/}"
   IMAGE_CENTER__SECOND_EPOCH__SECOND_IMAGE=$(util/fov_of_wcs_calibrated_image.sh "$WCS_IMAGE_NAME_FOR_CHECKS" | grep 'Image center:' | awk '{print $3" "$4}')
@@ -2184,7 +2184,7 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
   if [ -f 'lightcurve.tmp_emergency_stop_debug' ];then
    rm -f 'lightcurve.tmp_emergency_stop_debug'
   fi
-  WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename $REFERENCE_EPOCH__FIRST_IMAGE)"
+  WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename "$REFERENCE_EPOCH__FIRST_IMAGE")"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/wcs_wcs_/wcs_}"
   WCS_IMAGE_NAME_FOR_CHECKS="${WCS_IMAGE_NAME_FOR_CHECKS/.fz/}"
   if [ ! -s "$WCS_IMAGE_NAME_FOR_CHECKS" ];then
@@ -2253,12 +2253,12 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
     # - they will be used by util/transients/calibrate_current_field_with_tycho2.sh
     # (if not present calibrate_current_field_with_tycho2.sh may try to recreate them and collide with a plate solution launched by $0)
     REFERENCE_IMAGE=$(cat vast_summary.log | grep "Ref.  image:" | awk '{print $6}')
-    TEST_SUBSTRING=$(basename $REFERENCE_IMAGE)
+    TEST_SUBSTRING=$(basename "$REFERENCE_IMAGE")
     TEST_SUBSTRING="${TEST_SUBSTRING:0:4}"
     if [ "$TEST_SUBSTRING" = "wcs_" ];then
-     WCS_CALIBRATED_REFERENCE_IMAGE=$(basename $REFERENCE_IMAGE)
+     WCS_CALIBRATED_REFERENCE_IMAGE=$(basename "$REFERENCE_IMAGE")
     else
-     WCS_CALIBRATED_REFERENCE_IMAGE=wcs_$(basename $REFERENCE_IMAGE)
+     WCS_CALIBRATED_REFERENCE_IMAGE=wcs_$(basename "$REFERENCE_IMAGE")
     fi
     SEXTRACTOR_CATALOG_NAME="$WCS_CALIBRATED_REFERENCE_IMAGE".cat
     echo "$0 is checking for the presence of non-empty $WCS_CALIBRATED_REFERENCE_IMAGE and $SEXTRACTOR_CATALOG_NAME " | tee -a transient_factory_test31.txt
@@ -2446,7 +2446,7 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
   WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE="${WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE/wcs_wcs_/wcs_}"
   WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE="${WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE/.fz/}"
   # We must double-check here that the input is not a compressed image as sky2xy will not be able to handle it
-  echo $(basename "$WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE") | grep -q '\.fz$' || file "$WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE" | grep 'FITS image' | grep 'compress'
+  basename "$WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE" | grep -q '\.fz$' || file "$WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE" | grep 'FITS image' | grep -q 'compress'
   if [ $? -eq 0 ];then
    echo "ERROR in $0 -- $WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE is a compressed FITS image about to be passed to sky2xy" | tee -a transient_factory_test31.txt
    exit 1
@@ -2543,7 +2543,7 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
    #
    #
    echo "Limiting magnitude estimates:" | tee -a transient_factory_test31.txt
-   grep -v \# vast_limiting_magnitude.log | while read IMGPATH LIM_MAG_INST LIM_MAG REST_JUST_IN_CASE ;do
+   grep -v \# vast_limiting_magnitude.log | while read -r IMGPATH LIM_MAG_INST LIM_MAG REST_JUST_IN_CASE ;do
     echo "$LIM_MAG "$(basename "$IMGPATH") | awk '{printf " %4.1f mag.  %s\n", $1, $2}'
    done | tee -a transient_factory_test31.txt
    SNR_LIM=$(grep MIN_SNR_TRANSIENT_DETECTION src/vast_limits.h | awk '{print $3}')

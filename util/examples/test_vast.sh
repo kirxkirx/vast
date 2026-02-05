@@ -23292,6 +23292,8 @@ fi
 
 
 ############# NCas21 KGO RC600 #############
+### Disable this test for GitHub Actions
+if [ "$GITHUB_ACTIONS" != "true" ];then
 
 # Download the test dataset if needed
 if [ ! -d ../KGO_RC600_NCas2021_test/ ];then
@@ -23644,6 +23646,8 @@ if [ -d ../KGO_RC600_NCas2021_test/ ];then
  # 
 fi # if [ -d ../KGO_RC600_NCas2021_test/ ];then
 
+### Disable the above test for GitHub Actions
+fi # if [ "$GITHUB_ACTIONS" != "true" ];then
 
 
 
