@@ -2385,16 +2385,6 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
   ############################################
   # Remove candidates close to frame edge
   # here we assume that all images are the samesize as $SECOND_EPOCH__SECOND_IMAGE
-  #echo $(basename "$SECOND_EPOCH__SECOND_IMAGE") | grep -q '\.fz' || file "$FITS_IMAGE_TO_CHECK" | grep 'FITS image' | grep 'compress'
-  #if [ $? -eq 0 ];then
-  # SECOND_EPOCH__SECOND_IMAGE_HEADER=$(util/funpack -S "$SECOND_EPOCH__SECOND_IMAGE" | util/listhead STDIN)
-  #else
-  # SECOND_EPOCH__SECOND_IMAGE_HEADER=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE")
-  #fi
-  ##DIMX=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS1 | awk '{print $3}' | head -n1)
-  #DIMX=$(echo "$SECOND_EPOCH__SECOND_IMAGE_HEADER" | grep NAXIS1 | awk '{print $3}' | head -n1)
-  ##DIMY=$(util/listhead "$SECOND_EPOCH__SECOND_IMAGE" | grep NAXIS2 | awk '{print $3}' | head -n1)
-  #DIMY=$(echo "$SECOND_EPOCH__SECOND_IMAGE_HEADER" | grep NAXIS2 | awk '{print $3}' | head -n1)
   IMG_SIZE_STR=$(lib/astrometry/get_image_dimentions "$SECOND_EPOCH__SECOND_IMAGE")
   DIMX=$(echo "$IMG_SIZE_STR" | awk '{print $2}')
   DIMY=$(echo "$IMG_SIZE_STR" | awk '{print $4}')
