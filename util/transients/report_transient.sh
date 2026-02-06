@@ -589,7 +589,12 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
    BLEND_SEARCH_RADIUS_ARCSEC=$(echo "$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC" | awk '{printf "%.2f", $1*2.5}')
    # Query Gaia DR2 using either VizieR or ESA TAP based on GAIA_DR2_CLIENT
    # let's be paranoid about GAIADR2_OUTPUT containing only source records and no garbage
+   NETWORK_TIMING_START=$(date +%s)
    GAIADR2_OUTPUT=$(query_gaia_dr2 "$RA_MEAN_HMS_DEC_MEAN_HMS_ONSESTRING" "$BLEND_SEARCH_RADIUS_ARCSEC" "$MAG_BRIGHT_SEARCH_LIMIT" "$MAG_FAINT_SEARCH_LIMIT" "$GAIA_BAND_FOR_CATALOGED_SOURCE_CHECK" 3 | grep -B10 '#END#' | grep -vE "#|---|sec|Gma|RA_ICRS" | grep -E "NOT_AVAILABLE|CONSTANT|VARIABLE" | awk 'NF > 5' | awk '{if (NF >= 3 && length($1) > 0 && ($1 + 0) == $1 && $1 >= 0 && length($3) > 0 && ($3 + 0) == $3 && $3 > 0 && $3 < 360) print}')
+   NETWORK_TIMING_END=$(date +%s)
+   if [ -n "$NETWORK_TIMING_LOG" ]; then
+    echo "GAIA_DR2_QUERY $LIGHTCURVEFILE $((NETWORK_TIMING_END - NETWORK_TIMING_START))s" >> "$NETWORK_TIMING_LOG"
+   fi
    if [ -n "$GAIADR2_OUTPUT" ];then
     # | awk 'NF > 0' is needed to exclude empty lines as echo "$GAIADR2_OUTPUT" will produce an empty line even when $GAIADR2_OUTPUT contains nothing
     # let's do echo -n as the second line of defense against the empty lines
@@ -620,7 +625,12 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ];then
    # So if the Gaia search didn't work well - let's try APASS (chosen because it has good magnitudes and is deep enough for NMW)
    # The awk 'NF > 0' command is equivalent to sed '/^[[:space:]]*$/d', but is generally faster and more efficient. It checks if the number of fields (NF) is greater than 0, which means the line is not empty.
    #NUMBER_OF_NONEMPTY_LINES=$($TIMEOUTCOMMAND_GAIA_VIZIER lib/vizquery -site="$VIZIER_SITE" -mime=text -source=II/336  -out.max=1 -out.add=_r -out.form=mini  -sort=Vmag Vmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC  -out=RAJ2000,DEJ2000,Vmag 2>/dev/null | grep -B10 '#END#' | grep -vE "#|---|sec|Vma|RAJ" | awk 'NF > 3' | wc -l)
+   NETWORK_TIMING_START=$(date +%s)
    NUMBER_OF_NONEMPTY_LINES=$($TIMEOUTCOMMAND_GAIA_VIZIER lib/vizquery -site="$VIZIER_SITE" -mime=text -source=II/336  -out.max=1 -out.add=_r -out.form=mini  -sort=Vmag Vmag=$MAG_BRIGHT_SEARCH_LIMIT..$MAG_FAINT_SEARCH_LIMIT  -c="$RA_MEAN_HMS $DEC_MEAN_HMS" -c.rs=$MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC  -out=RAJ2000,DEJ2000,Vmag 2>/dev/null | grep -B10 '#END#' | grep -vE "#|---|sec|Vma|RAJ" | awk 'NF > 3' | awk '{if (NF >= 2 && length($1) > 0 && ($1 + 0) == $1 && $1 >= 0 && length($2) > 0 && ($2 + 0) == $2 && $2 >= 0 && $2 < 360) print}' | wc -l)
+   NETWORK_TIMING_END=$(date +%s)
+   if [ -n "$NETWORK_TIMING_LOG" ]; then
+    echo "APASS_QUERY $LIGHTCURVEFILE $((NETWORK_TIMING_END - NETWORK_TIMING_START))s" >> "$NETWORK_TIMING_LOG"
+   fi
    # Ensure NUMBER_OF_NONEMPTY_LINES is a valid integer, default to 0 if not
    if ! [[ "$NUMBER_OF_NONEMPTY_LINES" =~ ^[0-9]+$ ]]; then
     NUMBER_OF_NONEMPTY_LINES=0

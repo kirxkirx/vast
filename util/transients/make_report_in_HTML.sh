@@ -64,8 +64,13 @@ remove_all_report_transient_output_files
 lib/update_offline_catalogs.sh all
 
 # Parallel run - ckeck candidates and create result files
-# Limit the numbe of threads running in parallel
-max_threads=5
+# Limit the number of threads running in parallel
+# Allow configuration via environment variable
+if [ -z "$REPORT_MAX_THREADS" ]; then
+ max_threads=5
+else
+ max_threads="$REPORT_MAX_THREADS"
+fi
 thread_count=0
 while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  

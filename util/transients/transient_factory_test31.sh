@@ -2374,6 +2374,7 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
   fi
 
   ################## Quality cuts applied to calibrated magnitudes of the candidate transients ##################
+  FILTER_START_UNIXSEC=$(date +%s)
   cp -v candidates-transients.lst DEBUG_BACKUP_candidates-transients.lst
   echo "Filter-out faint candidates..." | tee -a transient_factory_test31.txt
   # Filter-out faint candidates
@@ -2384,21 +2385,28 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
   # Filter-out suspiciously bright candidates
   ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 "$i" | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk -v var="$FILTER_BRIGHT_MAG_CUTOFF_TRANSIENT_SEARCH" '{print ((($1+$2)/2<var)?1:0)}' ) ; if [ $TEST -eq 0 ];then grep "$i" candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  record_timing "      FILTER_MAGNITUDE_RANGE" "$FILTER_START_UNIXSEC"
 
+  FILTER_START_UNIXSEC=$(date +%s)
   echo "Filter-out candidates with large difference between measured mags in one epoch..." | tee -a transient_factory_test31.txt
   # 2nd epoch
   # Filter-out candidates with large difference between measured mags
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 "$i" | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($1-$2)>0.4 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep "$i" candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
   # Filter-out candidates with large difference between measured mags
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do A=$(tail -n2 "$i" | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($2-$1)>0.4 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep "$i" candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  record_timing "      FILTER_EPOCH2_MAGDIFF" "$FILTER_START_UNIXSEC"
+
+  FILTER_START_UNIXSEC=$(date +%s)
   # 1st epoch (only for sources detected on two reference images)
   # Filter-out candidates with large difference between measured mags
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do if [ $(wc -l < "$i") -lt 4 ];then grep "$i" candidates-transients.lst | head -n1 ;continue ;fi ; A=$(head -n2 "$i" | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($1-$2)>1.0 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep "$i" candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
   # Filter-out candidates with large difference between measured mags
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do if [ $(wc -l < "$i") -lt 4 ];then grep "$i" candidates-transients.lst | head -n1 ;continue ;fi ; A=$(head -n2 "$i" | awk '{print $2}') ; TEST=$(echo ${A//[$'\t\r\n ']/ } | awk '{if ( ($2-$1)>1.0 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep "$i" candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  record_timing "      FILTER_EPOCH1_MAGDIFF" "$FILTER_START_UNIXSEC"
 
   ############################################
   # Remove candidates close to frame edge
+  FILTER_START_UNIXSEC=$(date +%s)
   # here we assume that all images are the samesize as $SECOND_EPOCH__SECOND_IMAGE
   IMG_SIZE_STR=$(lib/astrometry/get_image_dimentions "$SECOND_EPOCH__SECOND_IMAGE")
   DIMX=$(echo "$IMG_SIZE_STR" | awk '{print $2}')
@@ -2417,21 +2425,25 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
    continue
   fi
   ### ===> IMAGE EDGE OFFSET HARDCODED HERE <===
-  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do
    cat "$i" | awk "{if ( \$4>$FRAME_EDGE_OFFSET_PIX && \$4<$DIMX-$FRAME_EDGE_OFFSET_PIX && \$5>$FRAME_EDGE_OFFSET_PIX && \$5<$DIMY-$FRAME_EDGE_OFFSET_PIX ) print \"YES\"; else print \"NO\" }" | grep -q 'NO'
    if [ $? -ne 0 ];then
     # If there was no "NO" answer for any of the lines
-    grep "$i" candidates-transients.lst | head -n1 
+    grep "$i" candidates-transients.lst | head -n1
    fi
   done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  record_timing "      FILTER_FRAME_EDGE" "$FILTER_START_UNIXSEC"
   ############################################
 
+  FILTER_START_UNIXSEC=$(date +%s)
   echo "Filter-out small-amplitude flares..." | tee -a transient_factory_test31.txt
   # Filter-out small-amplitude flares
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do if [ $(wc -l < "$i") -eq 2 ];then grep "$i" candidates-transients.lst | head -n1 ;continue ;fi ; A=$(head -n1 "$i" | awk '{print $2}') ; B=$(tail -n2 "$i" | awk '{print $2}') ; MEANMAGSECONDEPOCH=$(echo ${B//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2}') ; TEST=$(echo $A $MEANMAGSECONDEPOCH | awk '{if ( ($1-$2)<0.5 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep "$i" candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  record_timing "      FILTER_SMALL_AMPLITUDE_FLARE" "$FILTER_START_UNIXSEC"
 
+  FILTER_START_UNIXSEC=$(date +%s)
   # Make sure each candidate is detected on the two second-epoch images, not any other combination
-  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
+  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do
    grep -q "$SECOND_EPOCH__FIRST_IMAGE" "$i"
    if [ $? -ne 0 ];then
     continue
@@ -2440,8 +2452,9 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
    if [ $? -ne 0 ];then
     continue
    fi
-   grep "$i" candidates-transients.lst | head -n1 
+   grep "$i" candidates-transients.lst | head -n1
   done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
+  record_timing "      FILTER_SECOND_EPOCH_VERIFY" "$FILTER_START_UNIXSEC"
 
   ### Prepare the exclusion lists for this field
   echo "Preparing the exclusion lists for this field" | tee -a transient_factory_test31.txt

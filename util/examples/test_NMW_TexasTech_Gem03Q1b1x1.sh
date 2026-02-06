@@ -366,6 +366,16 @@ if [ -f transient_factory_test31_profiling.log ]; then
     cat transient_factory_test31_profiling.log
     echo ""
 
+    # Extract and display individual timing components
+    echo "Individual timing components:"
+    for TIMING_SECTION in VAST_RUN WCS_CALIBRATION_AND_EPHEMERIS UCAC5_PLATE_SOLVING MAGNITUDE_CALIBRATION HTML_REPORT FILTER_MAGNITUDE_RANGE FILTER_EPOCH2_MAGDIFF FILTER_EPOCH1_MAGDIFF FILTER_FRAME_EDGE FILTER_SMALL_AMPLITUDE_FLARE FILTER_SECOND_EPOCH_VERIFY; do
+        SECTION_TIME=$(grep "$TIMING_SECTION:" transient_factory_test31_profiling.log 2>/dev/null | head -n1 | awk '{print $2}')
+        if [ -n "$SECTION_TIME" ]; then
+            printf "  %-35s %s\n" "$TIMING_SECTION:" "$SECTION_TIME"
+        fi
+    done
+    echo ""
+
     # Extract total runtime
     TOTAL_RUNTIME=$(grep "TOTAL_RUNTIME:" transient_factory_test31_profiling.log | awk '{print $2}' | tr -d 's')
     if [ -n "$TOTAL_RUNTIME" ]; then
@@ -383,6 +393,49 @@ if [ -f transient_factory_test31_profiling.log ]; then
     fi
 else
     echo "No profiling log found (transient_factory_test31_profiling.log)"
+fi
+
+echo -e "\n${BLUE}Checking magnitude calibration...${NC}\n"
+
+# Validate magnitude calibration zero-point from transient_factory_test31.txt
+if [ -f transient_factory_test31.txt ]; then
+    ZEROPOINT=$(grep "Zero point" transient_factory_test31.txt | head -n1 | awk '{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+\.[0-9]+$/ || $i ~ /^-[0-9]+\.[0-9]+$/) {print $i; exit}}')
+    if [ -n "$ZEROPOINT" ]; then
+        # Zero point should be reasonable (typically between -30 and 30)
+        ZP_OK=$(echo "$ZEROPOINT" | awk '{if ($1 > -30 && $1 < 30) print 1; else print 0}')
+        if [ "$ZP_OK" -eq 1 ]; then
+            print_test_status "Zero-point value reasonable ($ZEROPOINT)" 0
+        else
+            TEST_PASSED=0
+            FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_BAD_ZEROPOINT_$ZEROPOINT"
+            print_test_status "Zero-point value reasonable ($ZEROPOINT)" 1
+        fi
+    fi
+fi
+
+# Check detected object magnitudes are within expected ranges
+echo -e "\n${BLUE}Validating detected object magnitudes...${NC}\n"
+
+# Extract magnitudes from the report and validate they're in expected range (8-15 mag)
+MAGS_FROM_REPORT=$(grep -oE "[0-9]+\.[0-9]+" transient_report/index.html 2>/dev/null | awk '$1 > 5 && $1 < 20' | head -20)
+if [ -n "$MAGS_FROM_REPORT" ]; then
+    MAG_COUNT=0
+    MAG_VALID=0
+    for MAG in $MAGS_FROM_REPORT; do
+        MAG_COUNT=$((MAG_COUNT + 1))
+        IN_RANGE=$(echo "$MAG" | awk '{if ($1 >= 8 && $1 <= 15) print 1; else print 0}')
+        if [ "$IN_RANGE" -eq 1 ]; then
+            MAG_VALID=$((MAG_VALID + 1))
+        fi
+    done
+    if [ "$MAG_COUNT" -gt 0 ]; then
+        MAG_PERCENT=$((MAG_VALID * 100 / MAG_COUNT))
+        if [ "$MAG_PERCENT" -ge 50 ]; then
+            print_test_status "Detected magnitudes in expected range ($MAG_VALID/$MAG_COUNT)" 0
+        else
+            echo -e "  ${BLUE}Note: Only $MAG_VALID of $MAG_COUNT magnitudes in 8-15 range (may be OK)${NC}"
+        fi
+    fi
 fi
 
 # Record end time
