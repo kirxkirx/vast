@@ -43,8 +43,9 @@ SECOND_EPOCH_DIR="$TEST_DATA_DIR/second_epoch_images"
 # These are approximate values from baseline run:
 #   VAST_RUN (first config): 31s
 #   VAST_RUN (vSTL config): 350s
-#   Total runtime: 564s
-BASELINE_TOTAL_RUNTIME=564        # total run time
+#   HTML_REPORT (vSTL): 48s (wait -n optimization)
+#   Total runtime: 480s
+BASELINE_TOTAL_RUNTIME=480        # total run time
 TIMING_TOLERANCE_FACTOR=2.0       # Allow 2x baseline time
 
 # Baseline candidate count

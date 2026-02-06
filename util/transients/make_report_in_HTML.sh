@@ -59,6 +59,8 @@ fi
 # individual files cleanup
 remove_all_report_transient_output_files
 
+MAKE_REPORT_START_UNIXSEC=$(date +%s)
+
 # do not start the parallel run befor making sure the offline catalogs (that will be used by report_transient.sh) are up to date
 # Note: This script must be run from the VaST root directory for the relative path to work correctly.
 lib/update_offline_catalogs.sh all
@@ -71,14 +73,21 @@ if [ -z "$REPORT_MAX_THREADS" ]; then
 else
  max_threads="$REPORT_MAX_THREADS"
 fi
+# Check if 'wait -n' is available (bash 4.3+) for better job scheduling.
+# With wait -n, we immediately fill any freed slot instead of waiting for
+# the entire batch to complete, improving utilization with uneven job times.
+USE_WAIT_N=0
+if [ "${BASH_VERSINFO[0]}" -ge 5 ] || { [ "${BASH_VERSINFO[0]}" -eq 4 ] && [ "${BASH_VERSINFO[1]}" -ge 3 ]; }; then
+ USE_WAIT_N=1
+fi
 thread_count=0
 while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
- 
+
  if [ ! -s "$LIGHTCURVE_FILE_OUTDAT" ];then
   echo "WARNING: $LIGHTCURVE_FILE_OUTDAT lightcurve file does not exist!!!"
   continue
  fi
- 
+
  {
   util/transients/report_transient.sh "$LIGHTCURVE_FILE_OUTDAT"  > transient_report/index.tmp2__report_transient_output__"$LIGHTCURVE_FILE_OUTDAT"
   if [ $? -eq 0 ];then
@@ -86,14 +95,19 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
   fi
  } &
 
- # Increment thread count and check if limit is reached
  thread_count=$((thread_count+1))
  if [ "$thread_count" -ge "$max_threads" ]; then
-  # Wait for all background jobs to finish before continuing
-  wait
-  thread_count=0
+  if [ $USE_WAIT_N -eq 1 ]; then
+   # Wait for any single job to finish, then continue launching
+   wait -n 2>/dev/null
+   thread_count=$((thread_count-1))
+  else
+   # Fallback: wait for all jobs in this batch to finish
+   wait
+   thread_count=0
+  fi
  fi
-   
+
 done < candidates-transients.lst
 
 # Wait for all report_transient.sh processes to finish
@@ -109,6 +123,9 @@ for LISTFILE_COMBINED in exclusion_list_gaiadr2.txt exclusion_list_apass.txt exc
   fi
  done
 done
+
+PHASE1_END_UNIXSEC=$(date +%s)
+echo "make_report_in_HTML.sh Phase 1 (network queries): $((PHASE1_END_UNIXSEC - MAKE_REPORT_START_UNIXSEC))s" >&2
 
 # --- Pre-generate preview images in parallel ---
 # This avoids serial fits2png calls in the per-candidate loop below.
@@ -236,6 +253,9 @@ if [ -n "$MAKE_PNG_PLOTS" ] && [ "$MAKE_PNG_PLOTS" = "yes" ]; then
  echo "Done pre-generating finding charts."
 fi
 
+PREGEN_END_UNIXSEC=$(date +%s)
+echo "make_report_in_HTML.sh Pre-generation: $((PREGEN_END_UNIXSEC - PHASE1_END_UNIXSEC))s" >&2
+
 # Searial run - read the results files and produce HTML output
 while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
  if ! rm -f transient_report/index.tmp; then
@@ -299,7 +319,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    export PGPLOT_PNG_HEIGHT=400 ; export PGPLOT_PNG_WIDTH=400
    output_file="transient_report/${TRANSIENT_NAME}_reference.png"
    source_file="$(basename "${REFERENCE_IMAGE%.*}").png"
-   max_attempts=2
+   max_attempts=1
    attempt=1
    success=false
    while [ $attempt -le $max_attempts ]; do
@@ -327,7 +347,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
      echo "WARNING from $0 (attempt $attempt): make_finding_chart failed for $REFERENCE_IMAGE"
     fi
     attempt=$((attempt + 1))
-    [ $attempt -le $max_attempts ] && echo "Retrying (attempt $attempt of $max_attempts)..." && sleep 5
+    [ $attempt -le $max_attempts ] && echo "Retrying (attempt $attempt of $max_attempts)..." && sleep 1
    done
    if [ "$success" = false ]; then
     echo "WARNING in $0: (1) Failed to create or move $source_file to $output_file after $max_attempts attempts  util/make_finding_chart $REFERENCE_IMAGE $G $H"
@@ -348,7 +368,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
    output_file="transient_report/$REFERENCE_IMAGE_PREVIEW"
    source_file="$(basename "${REFERENCE_IMAGE%.*}").png"
-   max_attempts=2
+   max_attempts=1
    attempt=1
    success=false
    while [ $attempt -le $max_attempts ]; do
@@ -376,7 +396,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
      echo "WARNING from $0 (attempt $attempt): fits2png failed for $REFERENCE_IMAGE"
     fi
     attempt=$((attempt + 1))
-    [ $attempt -le $max_attempts ] && echo "Retrying (attempt $attempt of $max_attempts)..." && sleep 5
+    [ $attempt -le $max_attempts ] && echo "Retrying (attempt $attempt of $max_attempts)..." && sleep 1
    done
    if [ "$success" = false ]; then
      echo "WARNING in $0: (2) Failed to create or move $source_file to $output_file after $max_attempts attempts   util/fits2png $REFERENCE_IMAGE"
@@ -409,7 +429,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
      export PGPLOT_PNG_HEIGHT=400 ; export PGPLOT_PNG_WIDTH=400
      output_file="transient_report/${TRANSIENT_NAME}_discovery${N}.png"
      source_file="$(basename "${IMAGE%.*}").png"
-     max_attempts=2
+     max_attempts=1
      attempt=1
      success=false
      while [ $attempt -le $max_attempts ]; do
@@ -443,7 +463,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
       attempt=$((attempt + 1))
       if [ $attempt -le $max_attempts ]; then
        echo "Retrying (attempt $attempt of $max_attempts)..."
-       sleep 5
+       sleep 1
       fi
      done
      if [ "$success" = false ]; then
@@ -510,7 +530,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
         # fi # else if util/fits2png "$IMAGE" &> /dev/null; then
         #fi # if [ ! -f transient_report/$PREVIEW_IMAGE ]; then
         if [ ! -f "transient_report/$PREVIEW_IMAGE" ]; then
-         max_attempts=3
+         max_attempts=1
          attempt=1
          success=false
          while [ $attempt -le $max_attempts ]; do
@@ -526,7 +546,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
            echo "WARNING from $0 (attempt $attempt): fits2png failed for $IMAGE"
           fi
           attempt=$((attempt + 1))
-          [ $attempt -le $max_attempts ] && echo "Retrying (attempt $attempt of $max_attempts)..." && sleep 5
+          [ $attempt -le $max_attempts ] && echo "Retrying (attempt $attempt of $max_attempts)..." && sleep 1
          done
          if [ "$success" = false ]; then
           echo "ERROR in $0: Failed to create or move $(basename "${IMAGE%.*}").png to transient_report/$PREVIEW_IMAGE after $max_attempts attempts"
@@ -867,6 +887,10 @@ fi
 #if [ -f transient_report/index.tmp2__report_transient_output ];then
 # rm -f transient_report/index.tmp2__report_transient_output
 #fi
+
+PHASE2_END_UNIXSEC=$(date +%s)
+echo "make_report_in_HTML.sh Phase 2 (HTML assembly): $((PHASE2_END_UNIXSEC - PREGEN_END_UNIXSEC))s" >&2
+echo "make_report_in_HTML.sh TOTAL: $((PHASE2_END_UNIXSEC - MAKE_REPORT_START_UNIXSEC))s" >&2
 
 # individual files cleanup
 remove_all_report_transient_output_files
