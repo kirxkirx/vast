@@ -88,10 +88,13 @@ jobs:
         done
       if: env.SKIP != 'true'
     - name: prepare for the test
-      run: echo "1" > ../THIS_IS_HPCC
+      run: |
+        echo "1" > ../THIS_IS_HPCC
+        mkdir -p test_artifacts
       if: env.SKIP != 'true'
     - name: test VaST
-      run: util/examples/test_vast.sh
+      run: util/examples/test_vast.sh 2>&1 | tee test_artifacts/test_vast_full_output.log
+      timeout-minutes: 300
       if: env.SKIP != 'true'
     - name: Upload test artifacts
       uses: actions/upload-artifact@v4
@@ -99,4 +102,4 @@ jobs:
         name: test-artifacts-macos
         path: test_artifacts/
         retention-days: 7
-      if: env.SKIP != 'true'
+      if: always() && env.SKIP != 'true'

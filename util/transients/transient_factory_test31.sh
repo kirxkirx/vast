@@ -2448,12 +2448,6 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
   ############################################
 
   FILTER_START_UNIXSEC=$(date +%s)
-  echo "Filter-out small-amplitude flares..." | tee -a transient_factory_test31.txt
-  # Filter-out small-amplitude flares
-  for i in $(cat candidates-transients.lst | awk '{print $1}') ;do if [ $(wc -l < "$i") -eq 2 ];then grep "$i" candidates-transients.lst | head -n1 ;continue ;fi ; A=$(head -n1 "$i" | awk '{print $2}') ; B=$(tail -n2 "$i" | awk '{print $2}') ; MEANMAGSECONDEPOCH=$(echo ${B//[$'\t\r\n ']/ } | awk '{print ($1+$2)/2}') ; TEST=$(echo $A $MEANMAGSECONDEPOCH | awk '{if ( ($1-$2)<0.5 ) print 1; else print 0 }') ; if [ $TEST -eq 0 ];then grep "$i" candidates-transients.lst | head -n1 ;fi ;done > candidates-transients.tmp ; mv candidates-transients.tmp candidates-transients.lst
-  record_timing "      FILTER_SMALL_AMPLITUDE_FLARE" "$FILTER_START_UNIXSEC"
-
-  FILTER_START_UNIXSEC=$(date +%s)
   # Make sure each candidate is detected on the two second-epoch images, not any other combination
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do
    grep -q "$SECOND_EPOCH__FIRST_IMAGE" "$i"

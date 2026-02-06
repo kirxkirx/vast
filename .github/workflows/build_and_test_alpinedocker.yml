@@ -52,6 +52,7 @@ jobs:
       - name: Run VaST system test inside Alpine container
         env:
           TEST_VAST_CURL_PROXY: ${{ secrets.TEST_VAST_CURL_PROXY }}
+        timeout-minutes: 300
         run: |
           rm -rf test_artifacts
           mkdir -p test_artifacts
@@ -64,8 +65,9 @@ jobs:
             vast-alpine:ci \
             bash -lc '
               echo "1" > ../THIS_IS_HPCC
-              util/examples/test_vast.sh
-              TEST_EXIT_CODE=$?
+              mkdir -p test_artifacts /out/test_artifacts
+              util/examples/test_vast.sh 2>&1 | tee test_artifacts/test_vast_full_output.log /out/test_artifacts/test_vast_full_output.log
+              TEST_EXIT_CODE=${PIPESTATUS[0]}
               # copy artifacts to the runner workspace for upload
               if [ -d test_artifacts ]; then
                 rm -rf /out/test_artifacts
@@ -73,3 +75,19 @@ jobs:
               fi
               exit $TEST_EXIT_CODE
             '
+
+      - name: Copy artifacts from container on failure
+        if: always()
+        run: |
+          # In case the docker run was killed before copying artifacts,
+          # the tee log on the host side (via volume mount) may still be available.
+          # Ensure the directory exists for the upload step.
+          mkdir -p test_artifacts
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts-alpine
+          path: test_artifacts/
+          retention-days: 7
+        if: always()

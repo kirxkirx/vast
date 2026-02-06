@@ -729,6 +729,22 @@ echo "Started on $STARTTIME_HUMAN_RADABLE" >> vast_test_report.txt
 ##### Is this GitHub Actions run? #####
 github_actions_info >> vast_test_report.txt
 
+##### Set up a trap to send partial results if the process is killed (e.g. GitHub Actions timeout) #####
+handle_sigterm() {
+ echo ""
+ echo "SIGTERM received -- saving partial test results before exit"
+ echo "TIMEOUT: test was killed. FAILED_TEST_CODES at time of kill: $FAILED_TEST_CODES" >> vast_test_report.txt
+ ENDTIME_UNIXSEC=$(date +%s)
+ RUNTIME_SEC=$((ENDTIME_UNIXSEC - STARTTIME_UNIXSEC))
+ echo "Runtime before kill: ${RUNTIME_SEC}s" >> vast_test_report.txt
+ if [ "$MAIL_TEST_REPORT_TO_KIRX" = "YES" ] || [ -f ../THIS_IS_HPCC ];then
+  email_vast_test_report
+ fi
+ make_sure_test_artifacts_is_not_empty
+ exit 1
+}
+trap 'handle_sigterm' TERM
+
 ##### Gather system information #####
 echo "Gathering basic system information for summary report" 
 echo "---------- System information ----------" >> vast_test_report.txt

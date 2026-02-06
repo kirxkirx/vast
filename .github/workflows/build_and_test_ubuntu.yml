@@ -89,12 +89,15 @@ jobs:
             echo "SKIP=false" >> $GITHUB_ENV
           fi
       - name: Prepare for the test
-        run: echo "1" > ../THIS_IS_HPCC
-        if: env.SKIP != 'true' 
+        run: |
+          echo "1" > ../THIS_IS_HPCC
+          mkdir -p test_artifacts
+        if: env.SKIP != 'true'
       - name: Test VaST
         #env:
         #  TEST_VAST_CURL_PROXY: ${{ secrets.TEST_VAST_CURL_PROXY }}
-        run: util/examples/test_vast.sh
+        run: util/examples/test_vast.sh 2>&1 | tee test_artifacts/test_vast_full_output.log
+        timeout-minutes: 300
         if: env.SKIP != 'true'
       - name: Upload test artifacts
         uses: actions/upload-artifact@v4
@@ -102,4 +105,4 @@ jobs:
           name: test-artifacts
           path: test_artifacts/
           retention-days: 7
-        if: env.SKIP != 'true'
+        if: always() && env.SKIP != 'true'
