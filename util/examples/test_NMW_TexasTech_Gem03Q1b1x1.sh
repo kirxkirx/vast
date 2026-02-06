@@ -368,7 +368,7 @@ if [ -f transient_factory_test31_profiling.log ]; then
 
     # Extract and display individual timing components
     echo "Individual timing components:"
-    for TIMING_SECTION in VAST_RUN WCS_CALIBRATION_AND_EPHEMERIS UCAC5_PLATE_SOLVING MAGNITUDE_CALIBRATION HTML_REPORT FILTER_MAGNITUDE_RANGE FILTER_EPOCH2_MAGDIFF FILTER_EPOCH1_MAGDIFF FILTER_FRAME_EDGE FILTER_SMALL_AMPLITUDE_FLARE FILTER_SECOND_EPOCH_VERIFY; do
+    for TIMING_SECTION in VAST_RUN WCS_CACHE_SETUP WCS_CALIBRATION_AND_EPHEMERIS UCAC5_PLATE_SOLVING MAGNITUDE_CALIBRATION CANDIDATE_FILTERING_TOTAL FILTER_MAGNITUDE_CONSOLIDATED FILTER_FRAME_EDGE FILTER_SECOND_EPOCH_VERIFY EXCLUSION_LIST_PREPARATION SEEING_AND_LIMITING_MAG WAIT_FOR_UCAC5 HTML_REPORT; do
         SECTION_TIME=$(grep "$TIMING_SECTION:" transient_factory_test31_profiling.log 2>/dev/null | head -n1 | awk '{print $2}')
         if [ -n "$SECTION_TIME" ]; then
             printf "  %-35s %s\n" "$TIMING_SECTION:" "$SECTION_TIME"
@@ -391,6 +391,47 @@ if [ -f transient_factory_test31_profiling.log ]; then
             echo -e "  ${BLUE}Note: Runtime exceeded tolerance, but this may be due to network variability${NC}"
         fi
     fi
+    # Validate profiling log has expected sections
+    echo -e "\n${BLUE}Validating profiling log contents...${NC}\n"
+
+    # Check that VAST_RUN times are recorded for both SExtractor configs
+    VAST_RUN_COUNT=$(grep -c "VAST_RUN_" transient_factory_test31_profiling.log 2>/dev/null || echo "0")
+    if [ "$VAST_RUN_COUNT" -ge 2 ]; then
+        print_test_status "Per-SExtractor-config VAST_RUN labels ($VAST_RUN_COUNT entries)" 0
+    else
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_PROFILING_VAST_RUN_LABELS"
+        print_test_status "Per-SExtractor-config VAST_RUN labels ($VAST_RUN_COUNT entries, expected >= 2)" 1
+    fi
+
+    # Check that the consolidated filter timing is recorded
+    if grep -q "FILTER_MAGNITUDE_CONSOLIDATED:" transient_factory_test31_profiling.log 2>/dev/null; then
+        print_test_status "Consolidated magnitude filter profiling recorded" 0
+    else
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_PROFILING_CONSOLIDATED_FILTER"
+        print_test_status "Consolidated magnitude filter profiling recorded" 1
+    fi
+
+    # Check that new profiling sections are recorded
+    for REQUIRED_SECTION in CANDIDATE_FILTERING_TOTAL EXCLUSION_LIST_PREPARATION SEEING_AND_LIMITING_MAG WAIT_FOR_UCAC5 WCS_CACHE_SETUP; do
+        if grep -q "$REQUIRED_SECTION:" transient_factory_test31_profiling.log 2>/dev/null; then
+            print_test_status "Profiling section $REQUIRED_SECTION recorded" 0
+        else
+            TEST_PASSED=0
+            FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_PROFILING_${REQUIRED_SECTION}"
+            print_test_status "Profiling section $REQUIRED_SECTION recorded" 1
+        fi
+    done
+
+    # Check total runtime is recorded
+    if grep -q "TOTAL_RUNTIME:" transient_factory_test31_profiling.log 2>/dev/null; then
+        print_test_status "Total runtime recorded in profiling log" 0
+    else
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_PROFILING_TOTAL_RUNTIME"
+        print_test_status "Total runtime recorded in profiling log" 1
+    fi
 else
     echo "No profiling log found (transient_factory_test31_profiling.log)"
 fi
@@ -401,14 +442,40 @@ echo -e "\n${BLUE}Checking magnitude calibration...${NC}\n"
 if [ -f transient_factory_test31.txt ]; then
     ZEROPOINT=$(grep "Zero point" transient_factory_test31.txt | head -n1 | awk '{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+\.[0-9]+$/ || $i ~ /^-[0-9]+\.[0-9]+$/) {print $i; exit}}')
     if [ -n "$ZEROPOINT" ]; then
-        # Zero point should be reasonable (typically between -30 and 30)
-        ZP_OK=$(echo "$ZEROPOINT" | awk '{if ($1 > -30 && $1 < 30) print 1; else print 0}')
-        if [ "$ZP_OK" -eq 1 ]; then
-            print_test_status "Zero-point value reasonable ($ZEROPOINT)" 0
+        # Zero point should be in a tight range (typically between -2 and 5 for NMW)
+        ZP_TIGHT=$(echo "$ZEROPOINT" | awk '{if ($1 > -2 && $1 < 5) print 1; else print 0}')
+        if [ "$ZP_TIGHT" -eq 1 ]; then
+            print_test_status "Zero-point value in tight range ($ZEROPOINT, expected -2 to 5)" 0
         else
-            TEST_PASSED=0
-            FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_BAD_ZEROPOINT_$ZEROPOINT"
-            print_test_status "Zero-point value reasonable ($ZEROPOINT)" 1
+            # Fallback: check broad range
+            ZP_OK=$(echo "$ZEROPOINT" | awk '{if ($1 > -30 && $1 < 30) print 1; else print 0}')
+            if [ "$ZP_OK" -eq 1 ]; then
+                echo -e "  ${BLUE}Note: Zero-point $ZEROPOINT outside tight range but within broad range${NC}"
+                print_test_status "Zero-point value reasonable ($ZEROPOINT)" 0
+            else
+                TEST_PASSED=0
+                FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_BAD_ZEROPOINT_$ZEROPOINT"
+                print_test_status "Zero-point value reasonable ($ZEROPOINT)" 1
+            fi
+        fi
+    fi
+
+    # Check that photometric calibration is TYCHO2_V in the pipeline log
+    if grep -q "PHOTOMETRIC_CALIBRATION=TYCHO2_V" transient_factory_test31.txt; then
+        print_test_status "PHOTOMETRIC_CALIBRATION=TYCHO2_V in pipeline log" 0
+    else
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_PIPELINE_LOG_CALIBRATION"
+        print_test_status "PHOTOMETRIC_CALIBRATION=TYCHO2_V in pipeline log" 1
+    fi
+
+    # Check that the magnitude calibration mentions the number of calibration stars
+    if grep -q "calibration stars" transient_factory_test31.txt; then
+        CALIB_STARS=$(grep "calibration stars" transient_factory_test31.txt | head -n1 | awk '{for(i=1;i<=NF;i++) if($i ~ /^[0-9]+$/ && $i > 5) {print $i; exit}}')
+        if [ -n "$CALIB_STARS" ]; then
+            print_test_status "Calibration star count reported ($CALIB_STARS)" 0
+        else
+            print_test_status "Calibration star count mentioned" 0
         fi
     fi
 fi

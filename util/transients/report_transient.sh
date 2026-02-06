@@ -404,10 +404,11 @@ SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=0
 STAR_IN_NEVEREXCLUDE_LIST_MESSAGE=""
 EXCLUSION_LIST_FILE="neverexclude_list.txt"
 if [ -s "$EXCLUSION_LIST_FILE" ];then
- lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC | grep -q "FOUND"
+ MATCH_OUTPUT=$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC)
+ echo "$MATCH_OUTPUT" | grep -q "FOUND"
  if [ $? -eq 0 ];then
   SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
-  STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<b><font color=\"red\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')"</b>"
+  STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<b><font color=\"red\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(echo "$MATCH_OUTPUT" | grep "FOUND" | awk -F'FOUND' '{print $2}')"</b>"
  fi
 fi
 #
@@ -417,12 +418,13 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ] && [ -z "$THIS_IS_ARTI
  EXCLUSION_LIST_FILE="moons.txt"
  if [ -s "$EXCLUSION_LIST_FILE" ];then
   EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC=180
-  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep -q "FOUND"
+  MATCH_OUTPUT=$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC)
+  echo "$MATCH_OUTPUT" | grep -q "FOUND"
   if [ $? -eq 0 ];then
    if [ -z "$THIS_IS_VAST_TEST" ];then
     SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
    fi
-   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<b><font color=\"red\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')"</b>"
+   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<b><font color=\"red\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(echo "$MATCH_OUTPUT" | grep "FOUND" | awk -F'FOUND' '{print $2}')"</b>"
   fi
  fi
 fi
@@ -433,12 +435,13 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ] && [ -z "$THIS_IS_ARTI
  EXCLUSION_LIST_FILE="planets.txt"
  if [ -s "$EXCLUSION_LIST_FILE" ];then
   EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC=900
-  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep -q "FOUND"
+  MATCH_OUTPUT=$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC)
+  echo "$MATCH_OUTPUT" | grep -q "FOUND"
   if [ $? -eq 0 ];then
    if [ -z "$THIS_IS_VAST_TEST" ];then
     SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
    fi
-   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<b><font color=\"red\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')"</b>"
+   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<b><font color=\"red\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(echo "$MATCH_OUTPUT" | grep "FOUND" | awk -F'FOUND' '{print $2}')"</b>"
   fi
  fi
 fi
@@ -451,12 +454,13 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ] && [ -z "$THIS_IS_ARTI
  if [ -s "$EXCLUSION_LIST_FILE" ];then
   # The search radius has to match the one in util/transients/MPCheck_v2.sh
   EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC=120
-  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep -q "FOUND"
+  MATCH_OUTPUT=$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC)
+  echo "$MATCH_OUTPUT" | grep -q "FOUND"
   if [ $? -eq 0 ];then
    if [ -z "$THIS_IS_VAST_TEST" ];then
     SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
    fi
-   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<b><font color=\"red\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')"</b>"
+   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<b><font color=\"red\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(echo "$MATCH_OUTPUT" | grep "FOUND" | awk -F'FOUND' '{print $2}')"</b>"
   fi
  fi
 fi
@@ -467,14 +471,15 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ] && [ -z "$THIS_IS_ARTI
  EXCLUSION_LIST_FILE="tocp_transients_list.txt"
  if [ -s "$EXCLUSION_LIST_FILE" ];then
   EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC=10
-  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep -q "FOUND"
+  MATCH_OUTPUT=$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC)
+  echo "$MATCH_OUTPUT" | grep -q "FOUND"
   if [ $? -eq 0 ];then
    # note that this might cause different behavior between the test and manual runs
    # by affecting the content of exclusion_list_local.txt
    if [ -z "$THIS_IS_VAST_TEST" ];then
     SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
    fi
-   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<b><font color=\"red\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')"</b>"
+   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<b><font color=\"red\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(echo "$MATCH_OUTPUT" | grep "FOUND" | awk -F'FOUND' '{print $2}')"</b>"
   fi
  fi
 fi
@@ -485,12 +490,13 @@ fi
 if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ] && [ -z "$THIS_IS_ARTIFICIAL_STAR_TEST_DO_NO_ONLINE_VSX_SEARCH" ];then
  EXCLUSION_LIST_FILE="asassn_transients_list.txt"
  if [ -s "$EXCLUSION_LIST_FILE" ];then
-  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC | grep -q "FOUND"
+  MATCH_OUTPUT=$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC)
+  echo "$MATCH_OUTPUT" | grep -q "FOUND"
   if [ $? -eq 0 ];then
    if [ -z "$THIS_IS_VAST_TEST" ];then
     SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
    fi
-   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<b><font color=\"red\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $MAX_ANGULAR_DISTANCE_BETWEEN_MEASURED_POSITION_AND_CATALOG_MATCH_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')"</b>"
+   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<b><font color=\"red\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(echo "$MATCH_OUTPUT" | grep "FOUND" | awk -F'FOUND' '{print $2}')"</b>"
   fi
  fi
 fi
@@ -502,13 +508,14 @@ if [ $SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT -eq 0 ] && [ -z "$THIS_IS_ARTI
  EXCLUSION_LIST_FILE="spacecraft.txt"
  if [ -s "$EXCLUSION_LIST_FILE" ];then
   EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC=1800
-  lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep -q "FOUND"
+  MATCH_OUTPUT=$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC)
+  echo "$MATCH_OUTPUT" | grep -q "FOUND"
   if [ $? -eq 0 ];then
    # I don't want this set for spacecraft as false IDs are very likely
    #if [ -z "$THIS_IS_VAST_TEST" ];then
    # SKIP_ALL_EXCLUSION_LISTS_FOR_THIS_TRANSIENT=1
    #fi
-   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<b><font color=\"red\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(lib/put_two_sources_in_one_field "$RA_MEAN_HMS" "$DEC_MEAN_HMS" "$EXCLUSION_LIST_FILE" $EXCLUSION_LIST_FILE_CUSTOM_SEARCH_RADIUS_ARCSEC | grep "FOUND" | awk -F'FOUND' '{print $2}')"</b>"
+   STAR_IN_NEVEREXCLUDE_LIST_MESSAGE="<b><font color=\"red\">This object is listed in $EXCLUSION_LIST_FILE</font> "$(echo "$MATCH_OUTPUT" | grep "FOUND" | awk -F'FOUND' '{print $2}')"</b>"
   fi
  fi
 fi
