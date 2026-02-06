@@ -32372,6 +32372,9 @@ df -h >> vast_test_incremental_list_of_failed_test_codes.txt
 ####################################################
 #### Gaia DR2 clients test (ESA TAP vs VizieR)
 ####################################################
+# This test requires network access to ESA TAP and VizieR services,
+# run only in GitHub Actions where connectivity is reliable.
+if [ "$GITHUB_ACTIONS" == "true" ];then
 # Test only if curl and the test script are available
 command -v curl &>/dev/null
 if [ $? -eq 0 ] && [ -x util/examples/test_gaia_dr2_clients.sh ];then
@@ -32401,6 +32404,7 @@ if [ $? -eq 0 ] && [ -x util/examples/test_gaia_dr2_clients.sh ];then
 else
  FAILED_TEST_CODES="$FAILED_TEST_CODES GAIADR2CLIENTS_TEST_NOT_AVAILABLE"
 fi
+fi # if [ "$GITHUB_ACTIONS" == "true" ];then -- Gaia DR2 clients test
 #
 echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
 df -h >> vast_test_incremental_list_of_failed_test_codes.txt

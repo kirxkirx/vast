@@ -2,7 +2,7 @@
 #
 # This is a standalone test script for NMW-TexasTech Gem-03-Q1b1x1 transient search
 #
-# Baseline established: 2026-02-04
+# Baseline established: 2026-02-06
 #
 # Expected objects:
 #   Asteroids: 40 Harmonia, 17 Thetis, 42 Isis, 180 Garumna, 370 Modestia, 243 Ida, 206 Hersilia
@@ -41,10 +41,10 @@ SECOND_EPOCH_DIR="$TEST_DATA_DIR/second_epoch_images"
 # Baseline timing values (in seconds)
 # Note: HTML_REPORT time is network-dependent and highly variable
 # These are approximate values from baseline run:
-#   VAST_RUN (first config): 32s
-#   VAST_RUN (vSTL config): 481s
-#   Total runtime: 837s
-BASELINE_TOTAL_RUNTIME=837        # total run time
+#   VAST_RUN (first config): 31s
+#   VAST_RUN (vSTL config): 350s
+#   Total runtime: 564s
+BASELINE_TOTAL_RUNTIME=564        # total run time
 TIMING_TOLERANCE_FACTOR=2.0       # Allow 2x baseline time
 
 # Baseline candidate count
@@ -210,152 +210,523 @@ fi
 
 echo -e "\n${BLUE}Checking expected asteroids...${NC}\n"
 
+# NMW-TexasTech pixel scale is ~5.9"/pix
+# Position tolerance for put_two_sources_in_one_field checks
+POSITION_TOLERANCE_ARCSEC="5.9"
+
 ###########################################
 # Check for asteroid 40 Harmonia
+# Baseline: mag 10.32, RA 06:31:39.33 Dec +24:52:04.6
 ###########################################
-if grep -q "40 Harmonia" transient_report/index.html; then
-    print_test_status "40 Harmonia detected" 0
-    # Check position and magnitude (baseline: 10.32 mag, 06:31:39.33 +24:52:04.6)
-    if grep -q -E "2026 01 21\.363[0-9]  2461061\.863[0-9]  10\.[0-8].  06:31:3" transient_report/index.html; then
-        print_test_status "40 Harmonia position/magnitude" 0
-    else
-        # Be more lenient - just check the object exists with approximate parameters
-        print_test_status "40 Harmonia position/magnitude (flexible check)" 0
-    fi
-else
+grep -q "40 Harmonia" transient_report/index.html
+if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_HARMONIA"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_HARMONIA"
     print_test_status "40 Harmonia detected" 1
+else
+    print_test_status "40 Harmonia detected" 0
+fi
+# Check position and magnitude from the human-readable line
+#                    2026 01 21.3632  2461061.8632  10.32  06:31:39.33 +24:52:04.6
+grep -q "2026 01 21.363.  2461061.863.  10\...  06:31:3.\... +24:52:0.\." transient_report/index.html
+if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_HARMONIA_POSMAG"
+    print_test_status "40 Harmonia position/magnitude" 1
+else
+    print_test_status "40 Harmonia position/magnitude" 0
+fi
+# Test position accuracy
+RADECPOSITION_TO_TEST=$(grep "2026 01 21.363.  2461061.863.  10\...  06:31:3" transient_report/index.html | head -n1 | awk '{print $6" "$7}')
+if [ -n "$RADECPOSITION_TO_TEST" ];then
+    DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 06:31:39.33 +24:52:04.6 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
+    TEST=$(echo "$DISTANCE_ARCSEC" | awk -v tol="$POSITION_TOLERANCE_ARCSEC" '{if ( $1 < tol ) print 1 ;else print 0 }')
+    re='^[0-9]+$'
+    if ! [[ $TEST =~ $re ]] ; then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_HARMONIA_POS_ERROR"
+        print_test_status "40 Harmonia position" 1
+    else
+        if [ $TEST -eq 0 ];then
+            TEST_PASSED=0
+            FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_HARMONIA_POS_${DISTANCE_ARCSEC}"
+            print_test_status "40 Harmonia position (dist ${DISTANCE_ARCSEC}\")" 1
+        else
+            print_test_status "40 Harmonia position (dist ${DISTANCE_ARCSEC}\")" 0
+        fi
+    fi
 fi
 
 ###########################################
 # Check for asteroid 17 Thetis
+# Baseline: mag 11.66, RA 06:18:46.76 Dec +20:14:13.5
 ###########################################
-if grep -q "17 Thetis" transient_report/index.html; then
-    print_test_status "17 Thetis detected" 0
-else
+grep -q "17 Thetis" transient_report/index.html
+if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_THETIS"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_THETIS"
     print_test_status "17 Thetis detected" 1
+else
+    print_test_status "17 Thetis detected" 0
+fi
+# Check position and magnitude from the human-readable line
+#                    2026 01 21.3632  2461061.8632  11.66  06:18:46.76 +20:14:13.5
+grep -q "2026 01 21.363.  2461061.863.  1[12]\...  06:18:4.\... +20:14:1.\." transient_report/index.html
+if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_THETIS_POSMAG"
+    print_test_status "17 Thetis position/magnitude" 1
+else
+    print_test_status "17 Thetis position/magnitude" 0
+fi
+# Test position accuracy
+RADECPOSITION_TO_TEST=$(grep "2026 01 21.363.  2461061.863.  1[12]\...  06:18:4" transient_report/index.html | head -n1 | awk '{print $6" "$7}')
+if [ -n "$RADECPOSITION_TO_TEST" ];then
+    DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 06:18:46.76 +20:14:13.5 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
+    TEST=$(echo "$DISTANCE_ARCSEC" | awk -v tol="$POSITION_TOLERANCE_ARCSEC" '{if ( $1 < tol ) print 1 ;else print 0 }')
+    re='^[0-9]+$'
+    if ! [[ $TEST =~ $re ]] ; then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_THETIS_POS_ERROR"
+        print_test_status "17 Thetis position" 1
+    else
+        if [ $TEST -eq 0 ];then
+            TEST_PASSED=0
+            FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_THETIS_POS_${DISTANCE_ARCSEC}"
+            print_test_status "17 Thetis position (dist ${DISTANCE_ARCSEC}\")" 1
+        else
+            print_test_status "17 Thetis position (dist ${DISTANCE_ARCSEC}\")" 0
+        fi
+    fi
 fi
 
 ###########################################
 # Check for asteroid 42 Isis
+# Baseline: mag 11.69, RA 05:53:58.61 Dec +26:45:37.3
 ###########################################
-if grep -q "42 Isis" transient_report/index.html; then
-    print_test_status "42 Isis detected" 0
-else
+grep -q "42 Isis" transient_report/index.html
+if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_ISIS"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_ISIS"
     print_test_status "42 Isis detected" 1
+else
+    print_test_status "42 Isis detected" 0
+fi
+# Check position and magnitude from the human-readable line
+#                    2026 01 21.3632  2461061.8632  11.69  05:53:58.61 +26:45:37.3
+grep -q "2026 01 21.363.  2461061.863.  1[12]\...  05:53:5.\... +26:45:3.\." transient_report/index.html
+if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_ISIS_POSMAG"
+    print_test_status "42 Isis position/magnitude" 1
+else
+    print_test_status "42 Isis position/magnitude" 0
+fi
+# Test position accuracy
+RADECPOSITION_TO_TEST=$(grep "2026 01 21.363.  2461061.863.  1[12]\...  05:53:5" transient_report/index.html | head -n1 | awk '{print $6" "$7}')
+if [ -n "$RADECPOSITION_TO_TEST" ];then
+    DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 05:53:58.61 +26:45:37.3 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
+    TEST=$(echo "$DISTANCE_ARCSEC" | awk -v tol="$POSITION_TOLERANCE_ARCSEC" '{if ( $1 < tol ) print 1 ;else print 0 }')
+    re='^[0-9]+$'
+    if ! [[ $TEST =~ $re ]] ; then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_ISIS_POS_ERROR"
+        print_test_status "42 Isis position" 1
+    else
+        if [ $TEST -eq 0 ];then
+            TEST_PASSED=0
+            FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_ISIS_POS_${DISTANCE_ARCSEC}"
+            print_test_status "42 Isis position (dist ${DISTANCE_ARCSEC}\")" 1
+        else
+            print_test_status "42 Isis position (dist ${DISTANCE_ARCSEC}\")" 0
+        fi
+    fi
 fi
 
 ###########################################
 # Check for asteroid 180 Garumna
+# Baseline: mag 13.42, RA 05:56:24.12 Dec +24:08:27.4
 ###########################################
-if grep -q "180 Garumna" transient_report/index.html; then
-    print_test_status "180 Garumna detected" 0
-else
+grep -q "180 Garumna" transient_report/index.html
+if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_GARUMNA"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_GARUMNA"
     print_test_status "180 Garumna detected" 1
+else
+    print_test_status "180 Garumna detected" 0
+fi
+# Check position and magnitude from the human-readable line
+#                    2026 01 21.3632  2461061.8632  13.42  05:56:24.12 +24:08:27.4
+grep -q "2026 01 21.363.  2461061.863.  1[34]\...  05:56:2.\... +24:08:2.\." transient_report/index.html
+if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_GARUMNA_POSMAG"
+    print_test_status "180 Garumna position/magnitude" 1
+else
+    print_test_status "180 Garumna position/magnitude" 0
+fi
+# Test position accuracy
+RADECPOSITION_TO_TEST=$(grep "2026 01 21.363.  2461061.863.  1[34]\...  05:56:2" transient_report/index.html | head -n1 | awk '{print $6" "$7}')
+if [ -n "$RADECPOSITION_TO_TEST" ];then
+    DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 05:56:24.12 +24:08:27.4 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
+    TEST=$(echo "$DISTANCE_ARCSEC" | awk -v tol="$POSITION_TOLERANCE_ARCSEC" '{if ( $1 < tol ) print 1 ;else print 0 }')
+    re='^[0-9]+$'
+    if ! [[ $TEST =~ $re ]] ; then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_GARUMNA_POS_ERROR"
+        print_test_status "180 Garumna position" 1
+    else
+        if [ $TEST -eq 0 ];then
+            TEST_PASSED=0
+            FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_GARUMNA_POS_${DISTANCE_ARCSEC}"
+            print_test_status "180 Garumna position (dist ${DISTANCE_ARCSEC}\")" 1
+        else
+            print_test_status "180 Garumna position (dist ${DISTANCE_ARCSEC}\")" 0
+        fi
+    fi
 fi
 
 ###########################################
 # Check for asteroid 370 Modestia
+# Baseline: mag 13.86, RA 05:56:16.12 Dec +25:25:45.9
 ###########################################
-if grep -q "370 Modestia" transient_report/index.html; then
-    print_test_status "370 Modestia detected" 0
-else
+grep -q "370 Modestia" transient_report/index.html
+if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_MODESTIA"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_MODESTIA"
     print_test_status "370 Modestia detected" 1
+else
+    print_test_status "370 Modestia detected" 0
+fi
+# Check position and magnitude from the human-readable line
+#                    2026 01 21.3632  2461061.8632  13.86  05:56:16.12 +25:25:45.9
+grep -q "2026 01 21.363.  2461061.863.  1[34]\...  05:56:1.\... +25:25:4.\." transient_report/index.html
+if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_MODESTIA_POSMAG"
+    print_test_status "370 Modestia position/magnitude" 1
+else
+    print_test_status "370 Modestia position/magnitude" 0
+fi
+# Test position accuracy
+RADECPOSITION_TO_TEST=$(grep "2026 01 21.363.  2461061.863.  1[34]\...  05:56:1" transient_report/index.html | head -n1 | awk '{print $6" "$7}')
+if [ -n "$RADECPOSITION_TO_TEST" ];then
+    DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 05:56:16.12 +25:25:45.9 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
+    TEST=$(echo "$DISTANCE_ARCSEC" | awk -v tol="$POSITION_TOLERANCE_ARCSEC" '{if ( $1 < tol ) print 1 ;else print 0 }')
+    re='^[0-9]+$'
+    if ! [[ $TEST =~ $re ]] ; then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_MODESTIA_POS_ERROR"
+        print_test_status "370 Modestia position" 1
+    else
+        if [ $TEST -eq 0 ];then
+            TEST_PASSED=0
+            FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_MODESTIA_POS_${DISTANCE_ARCSEC}"
+            print_test_status "370 Modestia position (dist ${DISTANCE_ARCSEC}\")" 1
+        else
+            print_test_status "370 Modestia position (dist ${DISTANCE_ARCSEC}\")" 0
+        fi
+    fi
 fi
 
 ###########################################
 # Check for asteroid 243 Ida
+# Baseline: mag 13.99, RA 05:57:43.69 Dec +24:35:06.6
 ###########################################
-if grep -q "243 Ida" transient_report/index.html; then
-    print_test_status "243 Ida detected" 0
-else
+grep -q "243 Ida" transient_report/index.html
+if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_IDA"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_IDA"
     print_test_status "243 Ida detected" 1
+else
+    print_test_status "243 Ida detected" 0
+fi
+# Check position and magnitude from the human-readable line
+#                    2026 01 21.3632  2461061.8632  13.99  05:57:43.69 +24:35:06.6
+grep -q "2026 01 21.363.  2461061.863.  1[34]\...  05:57:4.\... +24:35:0.\." transient_report/index.html
+if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_IDA_POSMAG"
+    print_test_status "243 Ida position/magnitude" 1
+else
+    print_test_status "243 Ida position/magnitude" 0
+fi
+# Test position accuracy
+RADECPOSITION_TO_TEST=$(grep "2026 01 21.363.  2461061.863.  1[34]\...  05:57:4" transient_report/index.html | head -n1 | awk '{print $6" "$7}')
+if [ -n "$RADECPOSITION_TO_TEST" ];then
+    DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 05:57:43.69 +24:35:06.6 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
+    TEST=$(echo "$DISTANCE_ARCSEC" | awk -v tol="$POSITION_TOLERANCE_ARCSEC" '{if ( $1 < tol ) print 1 ;else print 0 }')
+    re='^[0-9]+$'
+    if ! [[ $TEST =~ $re ]] ; then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_IDA_POS_ERROR"
+        print_test_status "243 Ida position" 1
+    else
+        if [ $TEST -eq 0 ];then
+            TEST_PASSED=0
+            FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_IDA_POS_${DISTANCE_ARCSEC}"
+            print_test_status "243 Ida position (dist ${DISTANCE_ARCSEC}\")" 1
+        else
+            print_test_status "243 Ida position (dist ${DISTANCE_ARCSEC}\")" 0
+        fi
+    fi
 fi
 
 ###########################################
 # Check for asteroid 206 Hersilia
+# Baseline: mag 12.33, RA 06:39:22.55 Dec +19:31:21.4
 ###########################################
-if grep -q "206 Hersilia" transient_report/index.html; then
-    print_test_status "206 Hersilia detected" 0
-else
+grep -q "206 Hersilia" transient_report/index.html
+if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_HERSILIA"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_HERSILIA"
     print_test_status "206 Hersilia detected" 1
+else
+    print_test_status "206 Hersilia detected" 0
+fi
+# Check position and magnitude from the human-readable line
+#                    2026 01 21.3632  2461061.8632  12.33  06:39:22.55 +19:31:21.4
+grep -q "2026 01 21.363.  2461061.863.  1[23]\...  06:39:2.\... +19:31:2.\." transient_report/index.html
+if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_HERSILIA_POSMAG"
+    print_test_status "206 Hersilia position/magnitude" 1
+else
+    print_test_status "206 Hersilia position/magnitude" 0
+fi
+# Test position accuracy
+RADECPOSITION_TO_TEST=$(grep "2026 01 21.363.  2461061.863.  1[23]\...  06:39:2" transient_report/index.html | head -n1 | awk '{print $6" "$7}')
+if [ -n "$RADECPOSITION_TO_TEST" ];then
+    DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 06:39:22.55 +19:31:21.4 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
+    TEST=$(echo "$DISTANCE_ARCSEC" | awk -v tol="$POSITION_TOLERANCE_ARCSEC" '{if ( $1 < tol ) print 1 ;else print 0 }')
+    re='^[0-9]+$'
+    if ! [[ $TEST =~ $re ]] ; then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_HERSILIA_POS_ERROR"
+        print_test_status "206 Hersilia position" 1
+    else
+        if [ $TEST -eq 0 ];then
+            TEST_PASSED=0
+            FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_HERSILIA_POS_${DISTANCE_ARCSEC}"
+            print_test_status "206 Hersilia position (dist ${DISTANCE_ARCSEC}\")" 1
+        else
+            print_test_status "206 Hersilia position (dist ${DISTANCE_ARCSEC}\")" 0
+        fi
+    fi
 fi
 
 echo -e "\n${BLUE}Checking expected variable stars...${NC}\n"
 
 ###########################################
 # Check for V0355 Gem
-# Baseline: mag 11.42, 07:00:36.35 +26:08:18.0
+# Baseline: mag 11.42, RA 07:00:36.35 Dec +26:08:18.0
 ###########################################
-if grep -q "V0355 Gem" transient_report/index.html; then
+grep -q "V0355 Gem" transient_report/index.html
+if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_V0355GEM"
+    print_test_status "V0355 Gem detected" 1
+else
     print_test_status "V0355 Gem detected" 0
-    # Check AAVSO-format report line
-    if grep -q "V0355 Gem,24610..,1[01]\...,0\.0.,CV" transient_report/index.html; then
-        print_test_status "V0355 Gem AAVSO report format" 0
+fi
+# Check position and magnitude from the human-readable line
+#                    2026 01 21.3632  2461061.8632  11.42  07:00:36.35 +26:08:18.0
+grep -q "2026 01 21.363.  2461061.863.  1[12]\...  07:00:3.\... +26:08:1.\." transient_report/index.html
+if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_V0355GEM_POSMAG"
+    print_test_status "V0355 Gem position/magnitude" 1
+else
+    print_test_status "V0355 Gem position/magnitude" 0
+fi
+# Test AAVSO report line
+# V0355 Gem,2461061.8632,11.42,0.05,CV
+grep -q "V0355 Gem,2461061\.863.,1[12]\...,0\.0.,CV" transient_report/index.html
+if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_V0355GEM_AAVSO"
+    print_test_status "V0355 Gem AAVSO report line" 1
+else
+    print_test_status "V0355 Gem AAVSO report line" 0
+fi
+# Test position accuracy
+RADECPOSITION_TO_TEST=$(grep "2026 01 21.363.  2461061.863.  1[12]\...  07:00:3" transient_report/index.html | head -n1 | awk '{print $6" "$7}')
+if [ -n "$RADECPOSITION_TO_TEST" ];then
+    DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 07:00:36.35 +26:08:18.0 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
+    TEST=$(echo "$DISTANCE_ARCSEC" | awk -v tol="$POSITION_TOLERANCE_ARCSEC" '{if ( $1 < tol ) print 1 ;else print 0 }')
+    re='^[0-9]+$'
+    if ! [[ $TEST =~ $re ]] ; then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_V0355GEM_POS_ERROR"
+        print_test_status "V0355 Gem position" 1
     else
-        # More flexible check
-        if grep -q "V0355 Gem" transient_report/index.html | grep -q "CV"; then
-            print_test_status "V0355 Gem variable star report" 0
+        if [ $TEST -eq 0 ];then
+            TEST_PASSED=0
+            FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_V0355GEM_POS_${DISTANCE_ARCSEC}"
+            print_test_status "V0355 Gem position (dist ${DISTANCE_ARCSEC}\")" 1
+        else
+            print_test_status "V0355 Gem position (dist ${DISTANCE_ARCSEC}\")" 0
         fi
     fi
-else
-    TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_V0355GEM"
-    print_test_status "V0355 Gem detected" 1
 fi
 
 ###########################################
 # Check for VV Gem
-# Baseline: mag 10.35, 06:25:56.01 +25:32:23.4
+# Baseline: mag 10.35, RA 06:25:56.01 Dec +25:32:23.4
 ###########################################
-if grep -q "VV Gem" transient_report/index.html; then
-    print_test_status "VV Gem detected" 0
-else
+grep -q "VV Gem" transient_report/index.html
+if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_VVGEM"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_VVGEM"
     print_test_status "VV Gem detected" 1
+else
+    print_test_status "VV Gem detected" 0
+fi
+# Check position and magnitude from the human-readable line
+#                    2026 01 21.3632  2461061.8632  10.35  06:25:56.01 +25:32:23.4
+grep -q "2026 01 21.363.  2461061.863.  10\...  06:25:5.\... +25:32:2.\." transient_report/index.html
+if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_VVGEM_POSMAG"
+    print_test_status "VV Gem position/magnitude" 1
+else
+    print_test_status "VV Gem position/magnitude" 0
+fi
+# Test AAVSO report line
+# VV Gem,2461061.8632,10.35,0.05,CV
+grep -q "VV Gem,2461061\.863.,10\...,0\.0.,CV" transient_report/index.html
+if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_VVGEM_AAVSO"
+    print_test_status "VV Gem AAVSO report line" 1
+else
+    print_test_status "VV Gem AAVSO report line" 0
+fi
+# Test position accuracy
+RADECPOSITION_TO_TEST=$(grep "2026 01 21.363.  2461061.863.  10\...  06:25:5" transient_report/index.html | head -n1 | awk '{print $6" "$7}')
+if [ -n "$RADECPOSITION_TO_TEST" ];then
+    DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 06:25:56.01 +25:32:23.4 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
+    TEST=$(echo "$DISTANCE_ARCSEC" | awk -v tol="$POSITION_TOLERANCE_ARCSEC" '{if ( $1 < tol ) print 1 ;else print 0 }')
+    re='^[0-9]+$'
+    if ! [[ $TEST =~ $re ]] ; then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_VVGEM_POS_ERROR"
+        print_test_status "VV Gem position" 1
+    else
+        if [ $TEST -eq 0 ];then
+            TEST_PASSED=0
+            FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_VVGEM_POS_${DISTANCE_ARCSEC}"
+            print_test_status "VV Gem position (dist ${DISTANCE_ARCSEC}\")" 1
+        else
+            print_test_status "VV Gem position (dist ${DISTANCE_ARCSEC}\")" 0
+        fi
+    fi
 fi
 
 ###########################################
 # Check for ASASSN-V J060820.96+180857.1
-# Baseline: mag 13.70, 06:08:21.14 +18:08:56.8
+# Baseline: mag 13.70, RA 06:08:21.14 Dec +18:08:56.8
 ###########################################
-if grep -q "ASASSN-V J060820.96+180857.1" transient_report/index.html; then
-    print_test_status "ASASSN-V J060820.96+180857.1 detected" 0
+grep -q "ASASSN-V J060820" transient_report/index.html
+if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_ASASSNVJ0608"
+    print_test_status "ASASSN-V J060820.96+180857.1 detected" 1
 else
-    # Try partial match
-    if grep -q "ASASSN-V J060820" transient_report/index.html; then
-        print_test_status "ASASSN-V J060820 (partial match) detected" 0
-    else
+    print_test_status "ASASSN-V J060820.96+180857.1 detected" 0
+fi
+# Check position and magnitude from the human-readable line
+#                    2026 01 21.3632  2461061.8632  13.70  06:08:21.14 +18:08:56.8
+grep -q "2026 01 21.363.  2461061.863.  1[34]\...  06:08:2.\... +18:08:5.\." transient_report/index.html
+if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_ASASSNVJ0608_POSMAG"
+    print_test_status "ASASSN-V J060820 position/magnitude" 1
+else
+    print_test_status "ASASSN-V J060820 position/magnitude" 0
+fi
+# Test AAVSO report line
+# ASASSN-V J060820.96+180857.1,2461061.8632,13.70,0.05,CV
+grep -q "ASASSN-V J060820.96+180857.1,2461061\.863.,1[34]\...,0\.0.,CV" transient_report/index.html
+if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_ASASSNVJ0608_AAVSO"
+    print_test_status "ASASSN-V J060820 AAVSO report line" 1
+else
+    print_test_status "ASASSN-V J060820 AAVSO report line" 0
+fi
+# Test position accuracy
+RADECPOSITION_TO_TEST=$(grep "2026 01 21.363.  2461061.863.  1[34]\...  06:08:2" transient_report/index.html | head -n1 | awk '{print $6" "$7}')
+if [ -n "$RADECPOSITION_TO_TEST" ];then
+    DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 06:08:21.14 +18:08:56.8 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
+    TEST=$(echo "$DISTANCE_ARCSEC" | awk -v tol="$POSITION_TOLERANCE_ARCSEC" '{if ( $1 < tol ) print 1 ;else print 0 }')
+    re='^[0-9]+$'
+    if ! [[ $TEST =~ $re ]] ; then
         TEST_PASSED=0
-        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_ASASSNVJ0608"
-        print_test_status "ASASSN-V J060820.96+180857.1 detected" 1
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_ASASSNVJ0608_POS_ERROR"
+        print_test_status "ASASSN-V J060820 position" 1
+    else
+        if [ $TEST -eq 0 ];then
+            TEST_PASSED=0
+            FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_ASASSNVJ0608_POS_${DISTANCE_ARCSEC}"
+            print_test_status "ASASSN-V J060820 position (dist ${DISTANCE_ARCSEC}\")" 1
+        else
+            print_test_status "ASASSN-V J060820 position (dist ${DISTANCE_ARCSEC}\")" 0
+        fi
     fi
 fi
 
 ###########################################
 # Check for BR Gem
-# Baseline: mag 11.24, 06:36:19.88 +26:52:53.9
+# Baseline: mag 11.24, RA 06:36:19.88 Dec +26:52:53.9
 ###########################################
-if grep -q "BR Gem" transient_report/index.html; then
-    print_test_status "BR Gem detected" 0
-else
+grep -q "BR Gem" transient_report/index.html
+if [ $? -ne 0 ];then
     TEST_PASSED=0
-    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_BRGEM"
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_BRGEM"
     print_test_status "BR Gem detected" 1
+else
+    print_test_status "BR Gem detected" 0
+fi
+# Check position and magnitude from the human-readable line
+#                    2026 01 21.3632  2461061.8632  11.24  06:36:19.88 +26:52:53.9
+grep -q "2026 01 21.363.  2461061.863.  1[12]\...  06:36:1.\... +26:52:5.\." transient_report/index.html
+if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_BRGEM_POSMAG"
+    print_test_status "BR Gem position/magnitude" 1
+else
+    print_test_status "BR Gem position/magnitude" 0
+fi
+# Test AAVSO report line
+# BR Gem,2461061.8632,11.24,0.05,CV
+grep -q "BR Gem,2461061\.863.,1[12]\...,0\.0.,CV" transient_report/index.html
+if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_BRGEM_AAVSO"
+    print_test_status "BR Gem AAVSO report line" 1
+else
+    print_test_status "BR Gem AAVSO report line" 0
+fi
+# Test position accuracy
+RADECPOSITION_TO_TEST=$(grep "2026 01 21.363.  2461061.863.  1[12]\...  06:36:1" transient_report/index.html | head -n1 | awk '{print $6" "$7}')
+if [ -n "$RADECPOSITION_TO_TEST" ];then
+    DISTANCE_ARCSEC=$(lib/put_two_sources_in_one_field 06:36:19.88 +26:52:53.9 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}')
+    TEST=$(echo "$DISTANCE_ARCSEC" | awk -v tol="$POSITION_TOLERANCE_ARCSEC" '{if ( $1 < tol ) print 1 ;else print 0 }')
+    re='^[0-9]+$'
+    if ! [[ $TEST =~ $re ]] ; then
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_BRGEM_POS_ERROR"
+        print_test_status "BR Gem position" 1
+    else
+        if [ $TEST -eq 0 ];then
+            TEST_PASSED=0
+            FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_BRGEM_POS_${DISTANCE_ARCSEC}"
+            print_test_status "BR Gem position (dist ${DISTANCE_ARCSEC}\")" 1
+        else
+            print_test_status "BR Gem position (dist ${DISTANCE_ARCSEC}\")" 0
+        fi
+    fi
 fi
 
 echo -e "\n${BLUE}Checking timing (informational)...${NC}\n"
@@ -478,6 +849,26 @@ if [ -f transient_factory_test31.txt ]; then
             print_test_status "Calibration star count mentioned" 0
         fi
     fi
+fi
+
+echo -e "\n${BLUE}Checking calib.txt...${NC}\n"
+
+# Check calib.txt line count
+# Baseline: 10460 lines (allow 10% deviation)
+if [ -f calib.txt ]; then
+    CALIB_LINES=$(wc -l < calib.txt)
+    # Expected range: 9400-11500 (roughly +-10%)
+    if [ "$CALIB_LINES" -ge 9400 ] && [ "$CALIB_LINES" -le 11500 ]; then
+        print_test_status "calib.txt line count ($CALIB_LINES, expected ~10460)" 0
+    else
+        TEST_PASSED=0
+        FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_CALIBTXT_LINES_$CALIB_LINES"
+        print_test_status "calib.txt line count ($CALIB_LINES, expected ~10460)" 1
+    fi
+else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES NMWTEXASGEM03_NO_CALIBTXT"
+    print_test_status "calib.txt exists" 1
 fi
 
 # Check detected object magnitudes are within expected ranges

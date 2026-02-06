@@ -198,7 +198,7 @@ fi
 #$CURL --silent --max-time 30 \"http://www.sai.msu.su/gcvs/cgi-bin/co-h.cgi?coor=${RA//:/+}+${DEC_STUPID_PLUS_GCVS//:/+}&radius=60\"
 #
 #" 1>&2
-DATABASE_RESULTS=$($TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --silent --max-time 45 "http://www.sai.msu.su/gcvs/cgi-bin/co-h.cgi?coor=${RA//:/+}+${DEC_STUPID_PLUS_GCVS//:/+}&radius=60" | grep \| )
+DATABASE_RESULTS=$($TIMEOUTCOMMAND $CURL $VAST_CURL_PROXY --silent --max-time 90 "http://www.sai.msu.su/gcvs/cgi-bin/co-h.cgi?coor=${RA//:/+}+${DEC_STUPID_PLUS_GCVS//:/+}&radius=60" | grep \| )
 if [ "$DATABASE_RESULTS" != "" ];then
  if [ $COLOR -eq 1 ];then
   echo -e "The object was \033[01;32mfound\033[00m in $DATABASE_NAME:  "
