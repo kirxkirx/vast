@@ -1885,7 +1885,6 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   fi
   echo "############################################################" >> transient_factory.log
   
-  # DO WE STILL WANT THIS???
   # Use cache if possible to speed-up WCS calibration
   WCS_CACHE_SETUP_START_UNIXSEC=$(date +%s)
   for WCSCACHEDIR in "local_wcs_cache" "/mnt/usb/NMW_NG/solved_reference_images" "/home/NMW_web_upload/solved_reference_images" "/dataX/kirx/NMW_NG_rt3_autumn2019/solved_reference_images" ;do
@@ -2499,7 +2498,8 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
     #WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
     {
      lib/bin/sky2xy "$WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE" @lib/catalogs/brightbright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bbsc.txt
-     cp exclusion_list_bbsc.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+     # No need to copy to local_wcs_cache/ - the file survives in the working directory between SExtractor config runs
+     #cp exclusion_list_bbsc.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
     } &
    fi
   fi
@@ -2510,7 +2510,8 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
     #WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
     {
      lib/bin/sky2xy "$WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE" @lib/catalogs/bright_star_catalog_radeconly.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' > exclusion_list_bsc.txt
-     cp exclusion_list_bsc.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+     # No need to copy to local_wcs_cache/ - the file survives in the working directory between SExtractor config runs
+     #cp exclusion_list_bsc.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
     } &
    fi
   fi
@@ -2521,7 +2522,8 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
     #WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE=wcs_"$(basename $SECOND_EPOCH_IMAGE_ONE)"
     {
      lib/bin/sky2xy "$WCS_SOLVED_SECOND_EPOCH_IMAGE_ONE" @lib/catalogs/list_of_bright_stars_from_tycho2.txt | grep -v -e 'off image' -e 'offscale' | awk '{print $1" "$2}' | lib/deg2hms - > exclusion_list_tycho2.txt
-     cp exclusion_list_tycho2.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
+     # No need to copy to local_wcs_cache/ - the file survives in the working directory between SExtractor config runs
+     #cp exclusion_list_tycho2.txt local_wcs_cache/ >> transient_factory_test31.txt 2>&1
     } &
    fi
   fi
