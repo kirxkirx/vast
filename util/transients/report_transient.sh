@@ -678,11 +678,16 @@ TEMP_FILE__SDWC_OUTPUT=$(mktemp 2>/dev/null || echo "tempilefallback_SDWC_OUTPUT
  echo $? > "${TEMP_FILE__SDWC_OUTPUT}_exit_status.tmp"
 } &
 TEMP_FILE__MPCheck_OUTPUT=$(mktemp 2>/dev/null || echo "tempilefallback_MPCheck_OUTPUT_$$.tmp")
+NETWORK_TIMING_MPCHECK_START=$(date +%s)
 {
  util/transients/MPCheck_v2.sh $RADEC_MEAN_HMS $YEAR_MEAN $MONTH_MEAN $DAYFRAC_MEAN H $MAG_MEAN test.mpc__"$LIGHTCURVEFILE" > "$TEMP_FILE__MPCheck_OUTPUT"
  echo $? > "${TEMP_FILE__MPCheck_OUTPUT}_exit_status.tmp"
 } &
 wait
+NETWORK_TIMING_MPCHECK_END=$(date +%s)
+if [ -n "$NETWORK_TIMING_LOG" ]; then
+ echo "MPCHECK_QUERY $LIGHTCURVEFILE $((NETWORK_TIMING_MPCHECK_END - NETWORK_TIMING_MPCHECK_START))s" >> "$NETWORK_TIMING_LOG"
+fi
 VARIABLE_STAR_ID=$(cat "${TEMP_FILE__SDWC_OUTPUT}_exit_status.tmp")
 ASTEROID_ID=$(cat "${TEMP_FILE__MPCheck_OUTPUT}_exit_status.tmp")
 cat "$TEMP_FILE__SDWC_OUTPUT"

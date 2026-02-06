@@ -794,6 +794,10 @@ echo "=== Transient Factory Profiling ===" >> "$PROFILING_LOG"
 echo "Started: $(date)" >> "$PROFILING_LOG"
 echo "=======================================" >> "$PROFILING_LOG"
 
+# Enable network timing log for report_transient.sh to record per-query durations
+export NETWORK_TIMING_LOG="transient_factory_test31_network_timing.log"
+rm -f "$NETWORK_TIMING_LOG" 2>/dev/null
+
 #### Start writing the new log file transient_factory_test31.txt ####
 # Print the processing parameters for diagnostic purposes:
 echo "######## Processing parameters ########
@@ -1692,9 +1696,6 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
         break
        fi
        if util/fits2png "$FITS_IMAGE_TO_PREVIEW" &> /dev/null; then
-        # Wait for a short time to allow for I/O completion
-        sleep 1
-        
         source_file="$(basename ${FITS_IMAGE_TO_PREVIEW%.*}).png"
         dest_file="transient_report/$PREVIEW_IMAGE"
         
@@ -2652,6 +2653,7 @@ The hard cut-off for the candidate transients is $FILTER_FAINT_MAG_CUTOFF_TRANSI
    ##########################################################
    #
    echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
+   export REPORT_MAX_THREADS=10
    HTML_REPORT_START_UNIXSEC=$(date +%s)
    util/transients/make_report_in_HTML.sh >> transient_factory_test31.txt 2>&1
    record_timing "    HTML_REPORT" "$HTML_REPORT_START_UNIXSEC"

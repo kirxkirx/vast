@@ -110,7 +110,131 @@ for LISTFILE_COMBINED in exclusion_list_gaiadr2.txt exclusion_list_apass.txt exc
  done
 done
 
+# --- Pre-generate preview images in parallel ---
+# This avoids serial fits2png calls in the per-candidate loop below.
+# Each unique FITS file produces a uniquely-named preview PNG, so no filename conflicts.
+if [ -n "$MAKE_PNG_PLOTS" ] && [ "$MAKE_PNG_PLOTS" = "yes" ]; then
+ echo "Pre-generating preview images in parallel..."
+ PREGEN_MAX_THREADS=4
+ pregen_thread_count=0
+ # Collect all unique FITS images (reference + discovery) from candidates-transients.lst and lightcurves
+ {
+  # Reference images (column 6)
+  awk '{print $6}' candidates-transients.lst
+  # Discovery images from lightcurve files
+  while read PREGEN_LC_FILE PREGEN_B PREGEN_C PREGEN_D PREGEN_E PREGEN_REF_IMAGE PREGEN_G PREGEN_H ;do
+   if [ -s "$PREGEN_LC_FILE" ] && [ -f transient_report/index.tmp2__report_transient_output__GOOD__"$PREGEN_LC_FILE" ]; then
+    while read PREGEN_JD PREGEN_MAG PREGEN_ERR PREGEN_X PREGEN_Y PREGEN_APP PREGEN_IMAGE PREGEN_REST ;do
+     if [ "$PREGEN_IMAGE" != "$PREGEN_REF_IMAGE" ]; then
+      echo "$PREGEN_IMAGE"
+     fi
+    done < "$PREGEN_LC_FILE"
+   fi
+  done < candidates-transients.lst
+ } | sort -u | while read FITS_IMAGE_FOR_PREVIEW ;do
+  BASENAME_IMG=$(basename "$FITS_IMAGE_FOR_PREVIEW")
+  PREVIEW_FILE="transient_report/${BASENAME_IMG}_preview.png"
+  if [ -s "$PREVIEW_FILE" ]; then
+   continue
+  fi
+  {
+   export PGPLOT_PNG_WIDTH=1000 ; export PGPLOT_PNG_HEIGHT=1000
+   SOURCE_PNG="$(basename "${FITS_IMAGE_FOR_PREVIEW%.*}").png"
+   if util/fits2png "$FITS_IMAGE_FOR_PREVIEW" &> /dev/null; then
+    if [ -f "$SOURCE_PNG" ]; then
+     mv "$SOURCE_PNG" "$PREVIEW_FILE" 2>/dev/null
+    fi
+   fi
+   unset PGPLOT_PNG_WIDTH ; unset PGPLOT_PNG_HEIGHT
+  } &
+  pregen_thread_count=$((pregen_thread_count + 1))
+  if [ "$pregen_thread_count" -ge "$PREGEN_MAX_THREADS" ]; then
+   wait
+   pregen_thread_count=0
+  fi
+ done
+ wait
+ echo "Done pre-generating preview images."
+fi
 
+# --- Pre-generate finding charts in parallel ---
+# Finding charts use make_finding_chart which outputs $(basename "${IMAGE%.*}").png
+# in the current directory. Multiple candidates from the SAME FITS image would collide,
+# so we use mkdir-based locking per FITS image basename to serialize access.
+if [ -n "$MAKE_PNG_PLOTS" ] && [ "$MAKE_PNG_PLOTS" = "yes" ]; then
+ echo "Pre-generating finding charts in parallel..."
+ FINDCHART_MAX_THREADS=4
+ findchart_thread_count=0
+ while read FC_LC_FILE FC_B FC_C FC_D FC_E FC_REF_IMAGE FC_G FC_H ;do
+  if [ ! -s "$FC_LC_FILE" ]; then
+   continue
+  fi
+  if [ ! -f transient_report/index.tmp2__report_transient_output__GOOD__"$FC_LC_FILE" ]; then
+   continue
+  fi
+  FC_TRANSIENT_NAME=$(basename "$FC_LC_FILE" .dat)
+  FC_TRANSIENT_NAME="${FC_TRANSIENT_NAME/out/}"
+  FC_TRANSIENT_NAME="${FC_TRANSIENT_NAME}_$(basename "$FC_C" .fts)"
+  FC_TRANSIENT_NAME=$(basename "$FC_TRANSIENT_NAME" .fits)
+  FC_TRANSIENT_NAME=$(basename "$FC_TRANSIENT_NAME" .fit)
+
+  # Reference finding chart
+  FC_OUTPUT_FILE="transient_report/${FC_TRANSIENT_NAME}_reference.png"
+  if [ ! -s "$FC_OUTPUT_FILE" ]; then
+   {
+    FC_LOCK_DIR="/tmp/vast_findchart_$(basename "${FC_REF_IMAGE%.*}").lock"
+    while ! mkdir "$FC_LOCK_DIR" 2>/dev/null; do sleep 0.1 ; done
+    export PGPLOT_PNG_HEIGHT=400 ; export PGPLOT_PNG_WIDTH=400
+    FC_SOURCE="$(basename "${FC_REF_IMAGE%.*}").png"
+    if util/make_finding_chart "$FC_REF_IMAGE" "$FC_G" "$FC_H" &>/dev/null; then
+     if [ -f "$FC_SOURCE" ]; then
+      mv "$FC_SOURCE" "$FC_OUTPUT_FILE" 2>/dev/null
+     fi
+    fi
+    unset PGPLOT_PNG_HEIGHT ; unset PGPLOT_PNG_WIDTH
+    rmdir "$FC_LOCK_DIR" 2>/dev/null
+   } &
+   findchart_thread_count=$((findchart_thread_count + 1))
+   if [ "$findchart_thread_count" -ge "$FINDCHART_MAX_THREADS" ]; then
+    wait
+    findchart_thread_count=0
+   fi
+  fi
+
+  # Discovery finding charts
+  FC_N=0
+  while read FC_JD FC_MAG FC_ERR FC_X FC_Y FC_APP FC_IMAGE FC_REST ;do
+   if [ "$FC_IMAGE" != "$FC_REF_IMAGE" ]; then
+    FC_N=$((FC_N + 1))
+    FC_DISC_OUTPUT="transient_report/${FC_TRANSIENT_NAME}_discovery${FC_N}.png"
+    if [ ! -s "$FC_DISC_OUTPUT" ]; then
+     {
+      FC_LOCK_DIR="/tmp/vast_findchart_$(basename "${FC_IMAGE%.*}").lock"
+      while ! mkdir "$FC_LOCK_DIR" 2>/dev/null; do sleep 0.1 ; done
+      export PGPLOT_PNG_HEIGHT=400 ; export PGPLOT_PNG_WIDTH=400
+      FC_SOURCE="$(basename "${FC_IMAGE%.*}").png"
+      if util/make_finding_chart "$FC_IMAGE" "$FC_X" "$FC_Y" &>/dev/null; then
+       if [ -f "$FC_SOURCE" ]; then
+        mv "$FC_SOURCE" "$FC_DISC_OUTPUT" 2>/dev/null
+       fi
+      fi
+      unset PGPLOT_PNG_HEIGHT ; unset PGPLOT_PNG_WIDTH
+      rmdir "$FC_LOCK_DIR" 2>/dev/null
+     } &
+     findchart_thread_count=$((findchart_thread_count + 1))
+     if [ "$findchart_thread_count" -ge "$FINDCHART_MAX_THREADS" ]; then
+      wait
+      findchart_thread_count=0
+     fi
+    fi
+   fi
+  done < "$FC_LC_FILE"
+ done < candidates-transients.lst
+ wait
+ # Clean up any stale lock dirs
+ rm -rf /tmp/vast_findchart_*.lock 2>/dev/null
+ echo "Done pre-generating finding charts."
+fi
 
 # Searial run - read the results files and produce HTML output
 while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do

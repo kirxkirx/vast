@@ -1000,6 +1000,16 @@ int main( int argc, char **argv ) {
  time_t start_time;
  time_t end_time;
  double elapsed_time;
+ time_t timing_sextractor_start;
+ time_t timing_sextractor_end;
+ time_t timing_matching_start;
+ time_t timing_matching_end;
+ time_t timing_lightcurve_write_start;
+ time_t timing_lightcurve_write_end;
+ time_t timing_select_aperture_start;
+ time_t timing_select_aperture_end;
+ time_t timing_sysrem_start;
+ time_t timing_sysrem_end;
 
  //// Time system ////
  int timesys= 0;               // 0 - unknown
@@ -2312,6 +2322,7 @@ int main( int argc, char **argv ) {
   return EXIT_FAILURE;
  }
 
+ timing_sextractor_start= time( NULL );
  fprintf( stderr, "Running SExtractor in %d parallel threads...\n", MIN( n_fork, Num ) );
  // Initialize child_pids
  for ( j_fork= 0; j_fork < n_fork; j_fork++ ) {
@@ -2437,7 +2448,9 @@ int main( int argc, char **argv ) {
   // This is an extra precaution as the problem seems to be solved by the above wait loop.
   // sleep(1);
 
+  timing_sextractor_end= time( NULL );
   fprintf( stderr, "\n\nDone with SExtractor!\n\n" );
+  fprintf( stderr, "TIMING SExtractor: %.0lf seconds\n", difftime( timing_sextractor_end, timing_sextractor_start ) );
 
   // Elongated image star mark and automatic reference image selection cannot work with
   // the fast processing hack: they need all the image catalogs to be present.
@@ -3249,6 +3262,7 @@ int main( int argc, char **argv ) {
  write_string_to_log_file( log_output, sextractor_catalog );
 
  ////// Process other images //////
+ timing_matching_start= time( NULL );
  for ( n= n_start; n < Num; n++ ) {
   fprintf( stderr, "\n\n\n" );
 
@@ -5193,6 +5207,9 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
   progress( n + 1, Num );
  }
 
+ timing_matching_end= time( NULL );
+ fprintf( stderr, "TIMING matching_and_photometry: %.0lf seconds\n", difftime( timing_matching_end, timing_matching_start ) );
+
  // Close vast_limiting_magnitude.log
  if ( vast_limiting_mag_log != NULL ) {
   fclose( vast_limiting_mag_log );
@@ -5301,6 +5318,7 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  ////
 
  //
+ timing_lightcurve_write_start= time( NULL );
  fprintf( stderr, "Sorting the measurements cached in memory...\n" );
  qsort( ptr_struct_Obs, obs_in_RAM, sizeof( struct Observation ), compare_star_num );
 
@@ -5402,6 +5420,8 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
   }
  } // for(i = 0; i < NUMBER1; i++) {
 #endif
+ timing_lightcurve_write_end= time( NULL );
+ fprintf( stderr, "TIMING lightcurve_write: %.0lf seconds\n", difftime( timing_lightcurve_write_end, timing_lightcurve_write_start ) );
 
  free( child_pids );
 
@@ -5642,11 +5662,14 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  fclose( vast_image_details );
 
  if ( param_select_best_aperture_for_each_source == 1 ) {
+  timing_select_aperture_start= time( NULL );
   fprintf( stderr, "Selecting the best aperture for each source\n" );
   if ( 0 != system( "lib/select_aperture_with_smallest_scatter_for_each_object" ) ) {
    fprintf( stderr, "ERROR running  lib/select_aperture_with_smallest_scatter_for_each_object\n" );
    return EXIT_FAILURE;
   }
+  timing_select_aperture_end= time( NULL );
+  fprintf( stderr, "TIMING select_aperture: %.0lf seconds\n", difftime( timing_select_aperture_end, timing_select_aperture_start ) );
  }
 
  if ( number_of_sysrem_iterations > 0 || param_rescale_photometric_errors == 1 ) {
@@ -5673,12 +5696,17 @@ counter_rejected_bad_psf_fit+= filter_on_float_parameters( STAR2, NUMBER2, sextr
  }
 
  // SysRem needs an input list of non-variable sources
+ timing_sysrem_start= time( NULL );
  for ( n= 0; n < number_of_sysrem_iterations; n++ ) {
   fprintf( stderr, "Starting SysRem iteration %d...\n", number_of_sysrem_iterations );
   if ( 0 != system( "util/sysrem2" ) ) {
    fprintf( stderr, "ERROR running  util/sysrem2\n" );
    return EXIT_FAILURE; // if we were asked to run SysRem but failed - abort
   }
+ }
+ timing_sysrem_end= time( NULL );
+ if ( number_of_sysrem_iterations > 0 ) {
+  fprintf( stderr, "TIMING sysrem: %.0lf seconds\n", difftime( timing_sysrem_end, timing_sysrem_start ) );
  }
 
  /* Prepare list of possible transients */
