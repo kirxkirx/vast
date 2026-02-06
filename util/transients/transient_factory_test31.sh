@@ -908,7 +908,11 @@ if [ -z "$GAIA_DR2_CLIENT" ] || [ "$GAIA_DR2_CLIENT" = "auto" ];then
  fi
 fi
 export GAIA_DR2_CLIENT
-echo "GAIA_DR2_CLIENT=$GAIA_DR2_CLIENT" | tee -a transient_factory_test31.txt
+if [ "$GAIA_DR2_CLIENT" = "esa_tap" ]; then
+ echo "GAIA_DR2_CLIENT=$GAIA_DR2_CLIENT (lib/gaia_dr2_cone_search.sh -> ESA Gaia Archive TAP service)" | tee -a transient_factory_test31.txt
+else
+ echo "GAIA_DR2_CLIENT=$GAIA_DR2_CLIENT (lib/vizquery -> VizieR $VIZIER_SITE)" | tee -a transient_factory_test31.txt
+fi
 ###
 TIMEOUTCOMMAND=$("$VAST_PATH"lib/find_timeout_command.sh)
 if [ $? -ne 0 ];then
