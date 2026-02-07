@@ -12,6 +12,11 @@
 # This makes autodetect_aperture() find valid catalogs and skip SExtractor
 # for those images.
 #
+# IMPORTANT: this cache uses basename(fits_image) as the cache key.
+# It relies on FITS image filenames being unique across all cached fields.
+# This holds for NMW because filenames contain timestamps
+# (e.g. Gem03Q1b1x1_2025-12-18_22-15-52_001.fits).
+#
 # This script is a no-op if VAST_SEXTRACTOR_CACHE_DIR is not set — there is
 # zero overhead for non-cache users.
 

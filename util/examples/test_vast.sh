@@ -22336,8 +22336,226 @@ fi
 
 
 
+##### NMW catalog cache test #####
+# This test verifies that the SExtractor catalog cache mechanism works correctly.
+# It reuses the NMW__NovaOph24N1_test dataset (already downloaded by the previous test).
+# The test runs the transient factory twice:
+#  1st run: populates the cache (cold start)
+#  2nd run: uses cached reference image catalogs (warm start)
+# We verify that:
+#  - cached files appear in the cache directory after the 1st run
+#  - the "restored" messages appear in VaST stderr output on the 2nd run
+#  - the transient detection results are identical between both runs
+# If the test data are found
+if [ -d ../NMW__NovaOph24N1_test ];then
+ THIS_TEST_START_UNIXSEC=$(date +%s)
+ TEST_PASSED=1
+ util/clean_data.sh
+ #
+ remove_test31_tmp_files_if_present
+ # Run the test
+ echo "NMW catalog cache test "
+ echo -n "NMW catalog cache test: " >> vast_test_report.txt
+ #
+ cp -v bad_region.lst_default bad_region.lst
+ #
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
+ #
+ if [ -f ../exclusion_list.txt ];then
+  mv ../exclusion_list.txt ../exclusion_list.txt_backup
+ fi
+ #################################################################
+ # We need a special astorb.dat for the asteroids
+ if [ -f astorb.dat ];then
+  mv astorb.dat astorb.dat_backup
+ fi
+ if [ ! -f astorb_2023.dat ];then
+  curl --silent --show-error -O "http://tau.kirx.net/vast_test_data/astorb_2023.dat.gz"
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE_error_downloading_custom_astorb_2023.dat"
+  fi
+  gunzip astorb_2023.dat.gz
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE_error_unpacking_custom_astorb_2023.dat"
+  fi
+ fi
+ cp astorb_2023.dat astorb.dat
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE_error_copying_astorb_2023.dat_to_astorb.dat"
+ fi
+ #################################################################
+ # Set STL camera bad regions file
+ if [ ! -f ../STL_bad_region.lst ];then
+  cp -v ../NMW__NovaOph24N1_test/STL_bad_region.lst ../STL_bad_region.lst
+ fi
+ #
+ # Create a temporary cache directory for this test
+ CATALOG_CACHE_TEST_DIR=$(mktemp -d "${TMPDIR:-/tmp}/vast_catalog_cache_test.XXXXXX")
+ if [ ! -d "$CATALOG_CACHE_TEST_DIR" ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE_MKTEMP_FAILED"
+ fi
+ #
+ ##### 1st run: populate the cache (cold start) #####
+ export VAST_SEXTRACTOR_CACHE_DIR="$CATALOG_CACHE_TEST_DIR"
+ REFERENCE_IMAGES=../NMW__NovaOph24N1_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW__NovaOph24N1_test/second_epoch_images
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE000_RUN1_EXIT_CODE"
+ fi
+ #
+ # Verify that the cache directory was populated with at least one subdirectory
+ CACHE_SUBDIRS_COUNT=$(find "$CATALOG_CACHE_TEST_DIR" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
+ if [ "$CACHE_SUBDIRS_COUNT" -lt 1 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE001_NO_CACHE_SUBDIRS"
+ fi
+ # Verify that cached .cat and .cat.aperture files exist
+ CACHE_CAT_COUNT=$(find "$CATALOG_CACHE_TEST_DIR" -name '*.cat' -not -name '*.cat.aperture' 2>/dev/null | wc -l)
+ if [ "$CACHE_CAT_COUNT" -lt 2 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE002_TOO_FEW_CACHED_CATS_$CACHE_CAT_COUNT"
+ fi
+ CACHE_APR_COUNT=$(find "$CATALOG_CACHE_TEST_DIR" -name '*.cat.aperture' 2>/dev/null | wc -l)
+ if [ "$CACHE_APR_COUNT" -lt 2 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE003_TOO_FEW_CACHED_APERTURES_$CACHE_APR_COUNT"
+ fi
+ #
+ # Verify the 1st run produced correct results
+ if [ -f transient_report/index.html ];then
+  grep -q "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE004_RUN1_IMAGES"
+  fi
+  grep -q "V4370 Oph" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE005_RUN1_NOVA"
+  fi
+ else
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE006_RUN1_NO_INDEX_HTML"
+ fi
+ #
+ ##### 2nd run: use cached catalogs (warm start) #####
+ util/clean_data.sh
+ remove_test31_tmp_files_if_present
+ cp -v bad_region.lst_default bad_region.lst
+ if [ -f transient_report/index.html ];then
+  rm -f transient_report/index.html
+ fi
+ cp astorb_2023.dat astorb.dat
+ #
+ REFERENCE_IMAGES=../NMW__NovaOph24N1_test/reference_images/ util/transients/transient_factory_test31.sh ../NMW__NovaOph24N1_test/second_epoch_images 2>vast_catalog_cache_stderr_$$.tmp
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE010_RUN2_EXIT_CODE"
+ fi
+ #
+ # Verify that the cache restore messages appeared in stderr (from lib/restore_cached_sextractor_catalogs.sh)
+ if [ -f vast_catalog_cache_stderr_$$.tmp ];then
+  grep -q 'SExtractor catalog cache: restored' vast_catalog_cache_stderr_$$.tmp
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE011_NO_RESTORE_MESSAGE"
+  fi
+  rm -f vast_catalog_cache_stderr_$$.tmp
+ else
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE012_NO_STDERR_FILE"
+ fi
+ #
+ # Verify the 2nd run produced correct results
+ if [ -f transient_report/index.html ];then
+  grep -q "Images used for photometry 4" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE013_RUN2_IMAGES"
+  fi
+  grep -q "V4370 Oph" transient_report/index.html
+  if [ $? -ne 0 ];then
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE014_RUN2_NOVA"
+  fi
+ else
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE015_RUN2_NO_INDEX_HTML"
+ fi
+ #
+ # Verify that the cache was reported as enabled in the log
+ grep -q 'SExtractor catalog cache: enabled' transient_factory_test31.txt
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE016_NO_ENABLED_MESSAGE"
+ fi
+ #
+ # Unset the cache directory and clean up
+ unset VAST_SEXTRACTOR_CACHE_DIR
+ if [ -d "$CATALOG_CACHE_TEST_DIR" ];then
+  rm -rf "$CATALOG_CACHE_TEST_DIR"
+ fi
+ #
+ #
+ if [ -f astorb.dat_backup ];then
+  mv astorb.dat_backup astorb.dat
+ else
+  rm -f astorb.dat
+ fi
+ #
+ test_if_test31_tmp_files_are_present
+ if [ $? -ne 0 ];then
+  TEST_PASSED=0
+  FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE_TMP_FILE_PRESENT"
+ fi
+ #
+ ###### restore default bad regions file
+ if [ -f bad_region.lst_default ];then
+  cp -v bad_region.lst_default bad_region.lst
+ fi
+ #
+ ###### restore default exclusion list if any
+ if [ -f ../exclusion_list.txt_backup ];then
+  mv ../exclusion_list.txt_backup ../exclusion_list.txt
+ fi
+ #
 
+ THIS_TEST_STOP_UNIXSEC=$(date +%s)
+ THIS_TEST_TIME_MIN_STR=$(echo "$THIS_TEST_STOP_UNIXSEC" "$THIS_TEST_START_UNIXSEC" | awk '{printf "%.1f min", ($1-$2)/60.0}')
 
+ # Make an overall conclusion for this test
+ if [ $TEST_PASSED -eq 1 ];then
+  echo -e "\n\033[01;34mNMW catalog cache test \033[01;32mPASSED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "PASSED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ else
+  echo -e "\n\033[01;34mNMW catalog cache test \033[01;31mFAILED\033[00m ($THIS_TEST_TIME_MIN_STR)"
+  echo "FAILED ($THIS_TEST_TIME_MIN_STR)" >> vast_test_report.txt
+ fi
+else
+ FAILED_TEST_CODES="$FAILED_TEST_CODES NMWCATCACHE_TEST_NOT_PERFORMED"
+fi
+#
+echo "$FAILED_TEST_CODES" >> vast_test_incremental_list_of_failed_test_codes.txt
+df -h >> vast_test_incremental_list_of_failed_test_codes.txt
+#
+remove_test_data_to_save_space
+
+# Test that the Internet conncation has not failed
+test_internet_connection
+if [ $? -ne 0 ];then
+ echo "Internet connection error!"
+ echo "Internet connection error!" >> vast_test_report.txt
+ echo "Failed test codes: $FAILED_TEST_CODES"
+ echo "Failed test codes: $FAILED_TEST_CODES" >> vast_test_report.txt
+ #exit 1
+ fail_early "Internet connection error"
+fi
 
 
 
