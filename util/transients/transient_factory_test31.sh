@@ -1895,6 +1895,9 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   fi
   #
   if [ -f vast_output_$$.tmp ];then
+   # Propagate SExtractor catalog cache restore messages to stderr
+   # so they are visible to the calling process
+   grep 'SExtractor catalog cache: restored' vast_output_$$.tmp >&2 2>/dev/null
    # Extract TIMING lines from vast output to the profiling log before cleanup
    grep '^TIMING ' vast_output_$$.tmp >> "$PROFILING_LOG" 2>/dev/null
    rm -f vast_output_$$.tmp
