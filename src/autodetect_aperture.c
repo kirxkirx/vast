@@ -89,7 +89,7 @@ int find_catalog_in_vast_images_catalogs_log( char *fitsfilename, char *catalogf
 }
 */
 
-double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog, int force_recompute, int do_PSF_fitting, double fixed_aperture, double X_im_size, double Y_im_size, int guess_saturation_limit_operation_mode ) {
+double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog, int force_recompute, int do_PSF_fitting, double fixed_aperture, double X_im_size, double Y_im_size, int guess_saturation_limit_operation_mode, int flag_image_use_mode ) {
 
  FILE *psfex_compatible_sextractor_parameters_file;
  char error_message_string[2048 + 1024 + 4 * FILENAME_LENGTH]; // should be big enough to encomapss command[]
@@ -126,8 +126,8 @@ double autodetect_aperture( char *fitsfilename, char *output_sextractor_catalog,
  char flag_image_sextractor_cl_parameter_string[FILENAME_LENGTH];
  char flag_image_filename[FILENAME_LENGTH];
  char weight_image_filename[FILENAME_LENGTH];
- int is_flag_image_used= 2; // 2 - guess by default, 1 - always use the flag image, 0 - never use the flag image
-                            // The decision will also be stored in this variable: 1 - use the flag image, 0 - don't use it
+ int is_flag_image_used= flag_image_use_mode; // 2 - guess by default, 1 - always use the flag image, 0 - never use the flag image
+                                              // The decision will also be stored in this variable: 1 - use the flag image, 0 - don't use it
  int external_flag;
  char external_flag_string[256];
 

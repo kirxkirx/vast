@@ -91,7 +91,7 @@ int main( int argc, char **argv ) {
 
  if ( 0 == strncmp( "sextract_single_image_noninteractive", basename( argv[0] ), strlen( "sextract_single_image_noninteractive" ) ) || 0 == strncmp( "fits2cat", basename( argv[0] ), strlen( "fits2cat" ) ) ) {
   // Perform the standard multi-run SExtractor processing and write the output source catalog
-  aperture= autodetect_aperture( fitsfilename, sextractor_catalog, 0, 0, 0.0, X_im_size, Y_im_size, 2 );
+  aperture= autodetect_aperture( fitsfilename, sextractor_catalog, 0, 0, 0.0, X_im_size, Y_im_size, 2, 2 );
   // Write the catalog-to-image correspondence to the log file
   update_vast_images_catalogs_log( sextractor_catalog, fitsfilename );
   // special case when we are emulating fits2cat
@@ -101,7 +101,7 @@ int main( int argc, char **argv ) {
   }
  } else {
   // do not write the output source catalog, just print-out the aperture
-  aperture= autodetect_aperture( fitsfilename, sextractor_catalog, 0, 2, 0.0, X_im_size, Y_im_size, 2 );
+  aperture= autodetect_aperture( fitsfilename, sextractor_catalog, 0, 2, 0.0, X_im_size, Y_im_size, 2, 2 );
  }
  fprintf( stdout, "%.1lf\n", aperture );
  return 0;

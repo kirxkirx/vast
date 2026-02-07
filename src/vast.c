@@ -181,6 +181,7 @@ void help_msg( const char *progname, int exit_code ) {
  printf( "  -J or --no_position_dependent_correction DO NOT use position-dependent magnitude correction (recommended for narrow-field images with not too many stars on them)\n" );
  printf( "  -g or --guess_saturation_limit try to guess image saturation limit based on the brightest pixels found in the image\n" );
  printf( "  -G or --no_guess_saturation_limit DO NOT try to guess image saturation limit based on the brightest pixels found in the image\n" );
+ printf( "  -F or --noflagimage DO NOT create flag images for SExtractor (faster, use for images known to have no zero-padded edges)\n" );
  printf( "  -1 or --magsizefilter filter-out sources that appear too large or to small for their magnitude (compared to other sources on this image)\n" );
  printf( "  -2 or --nomagsizefilter DO NOT filter-out sources that appear too large or to small for their magnitude (compared to other sources on this image)\n" );
  printf( "  -3 or --selectbestaperture for each object select measurement aperture that minimized the lightcurve scatter\n" );
@@ -1078,6 +1079,7 @@ int main( int argc, char **argv ) {
  int guess_saturation_limit_operation_mode= 2; // by default try to be smart and guess
                                                // if we should guess the saturation limit
                                                // or use the one specified in default.sex
+ int flag_image_use_mode= 2; // 2 - guess (default), 1 - always use, 0 - never use
  int external_flag;
  double psf_chi2;
 
@@ -1160,10 +1162,11 @@ int main( int argc, char **argv ) {
  char *cvalue= NULL;
 
  // const char *const shortopt= "vh9fdqmwpoPngGrlseucUijJkK12346785:a:b:x:y:t:";
- const char *const shortopt= "a:b:cdefgGhijJkKlmnopPqrst:uUvwx:y:z12345:6789";
+ const char *const shortopt= "a:b:cdefFgGhijJkKlmnopPqrst:uUvwx:y:z12345:6789";
  const struct option longopt[]= {
      { "guess_saturation_limit", 0, NULL, 'g' },
      { "no_guess_saturation_limit", 0, NULL, 'G' },
+     { "noflagimage", 0, NULL, 'F' },
      { "version", 0, NULL, 'v' },
      { "PSF", 0, NULL, 'P' },
      { "help", 0, NULL, 'h' },
@@ -1305,6 +1308,10 @@ int main( int argc, char **argv ) {
   case 'G': // Auto-detect saturation limit
    guess_saturation_limit_operation_mode= 0;
    fprintf( stderr, "opt 'G': Will NOT try to guess saturation limit for each image\n" );
+   break;
+  case 'F': // Do not create flag images for SExtractor
+   flag_image_use_mode= 0;
+   fprintf( stderr, "opt 'F': Will NOT create flag images for SExtractor\n" );
    break;
   /// Should be replaces with the new option 'starmatchraius'
   case 's': // small comparison window - 1 pix.
@@ -2349,7 +2356,7 @@ int main( int argc, char **argv ) {
     if ( pid == -1 ) {
      fprintf( stderr, "WARNING: cannot fork()! Continuing in the streamline mode...\n" );
     }
-    autodetect_aperture( input_images[i], sextractor_catalog, 0, param_P, fixed_aperture, X_im_size, Y_im_size, guess_saturation_limit_operation_mode );
+    autodetect_aperture( input_images[i], sextractor_catalog, 0, param_P, fixed_aperture, X_im_size, Y_im_size, guess_saturation_limit_operation_mode, flag_image_use_mode );
     if ( pid == 0 ) {
      ///// If this is a child /////
      // free-up memory
@@ -2622,7 +2629,7 @@ int main( int argc, char **argv ) {
 
  if ( debug != 0 )
   fprintf( stderr, "DEBUG MSG: (ref) autodetect_aperture(input_images[0])\n" );
- aperture= autodetect_aperture( input_images[0], sextractor_catalog, 0, param_P, fixed_aperture, X_im_size, Y_im_size, guess_saturation_limit_operation_mode );
+ aperture= autodetect_aperture( input_images[0], sextractor_catalog, 0, param_P, fixed_aperture, X_im_size, Y_im_size, guess_saturation_limit_operation_mode, flag_image_use_mode );
  if ( aperture > 75 || aperture < 1.0 ) {
   // TBA: wait so the error message doesn't get swamped
   fprintf( stderr, "APERTURE = %.1lf is > 75.0 or < 1.0\nBad reference image...\n", aperture );
@@ -3280,7 +3287,7 @@ int main( int argc, char **argv ) {
     fprintf( stderr, "OK\n" );
    if ( debug != 0 )
     fprintf( stderr, "DEBUG MSG: autodetect_aperture() - " );
-   aperture= autodetect_aperture( input_images[n], sextractor_catalog, 0, param_P, fixed_aperture, X_im_size, Y_im_size, guess_saturation_limit_operation_mode );
+   aperture= autodetect_aperture( input_images[n], sextractor_catalog, 0, param_P, fixed_aperture, X_im_size, Y_im_size, guess_saturation_limit_operation_mode, flag_image_use_mode );
    if ( debug != 0 )
     fprintf( stderr, "OK\n" );
 

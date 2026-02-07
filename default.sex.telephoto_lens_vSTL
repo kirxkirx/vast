@@ -17,9 +17,9 @@ DETECT_TYPE     CCD             # "CCD" or "PHOTO"
 FLAG_IMAGE      flag.fits       # filename for an input FLAG-image
 
 # Optimistic setup finds TCP J06364062+3318310 but is too slow in tests
-DETECT_MINAREA  2.0             # minimum number of pixels above threshold
-DETECT_THRESH   2.1             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
-ANALYSIS_THRESH 2.1             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
+#DETECT_MINAREA  2.0             # minimum number of pixels above threshold
+#DETECT_THRESH   2.1             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
+#ANALYSIS_THRESH 2.1             # <sigmas> or <threshold>,<ZP> in mag.arcsec-2
 
 # Normal STL setup
 DETECT_MINAREA  2.0             # minimum number of pixels above threshold

@@ -205,7 +205,7 @@ int Ident_on_sigma(struct Star *star1, int Number1, struct Star *star2, int Numb
 int Ident(struct PixCoordinateTransformation *struct_pixel_coordinate_transformation, struct Star *STAR1, int NUMBER1, struct Star *STAR2, int NUMBER2, int START_NUMBER2,
           int *Pos1, int *Pos2, int control1, struct Star *STAR3, int NUMBER3, int START_NUMBER3, int *match_retry, int min_number_of_matched_stars, double image_size_X, double image_size_Y);
 
-double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, int force_recompute, int param_P, double fixed_aperture, double X_im_size, double Y_im_size, int guess_saturation_limit_operation_mode);
+double autodetect_aperture(char *fitsfilename, char *output_sextractor_catalog, int force_recompute, int param_P, double fixed_aperture, double X_im_size, double Y_im_size, int guess_saturation_limit_operation_mode, int flag_image_use_mode);
 
 // These two should be moved to a new gettime.h
 int check_if_this_fits_image_is_north_up_east_left(char *fitsfilename);
