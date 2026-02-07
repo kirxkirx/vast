@@ -117,7 +117,7 @@ for i in out*_edit* ;do
  fi
 done
 # Remove possible leftovers from util/transients/report_transient.sh
-for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.dat jd$$.dat x$$.dat y$$.dat  tempilefallback_SDWC_OUTPUT_$$.tmp tempilefallback_MPCheck_OUTPUT_$$.tmp *_exit_status.tmp vast_output_*.tmp vast_catalog_cache_stderr_*.tmp ;do
+for TMP_FILE_TO_REMOVE in ra$$.dat dec$$.dat mag$$.dat script$$.dat dayfrac$$.dat jd$$.dat x$$.dat y$$.dat  tempilefallback_SDWC_OUTPUT_$$.tmp tempilefallback_MPCheck_OUTPUT_$$.tmp *_exit_status.tmp vast_output_*.tmp ;do
  if [ -f "$TMP_FILE_TO_REMOVE" ];then
   rm -f "$TMP_FILE_TO_REMOVE"
  fi
