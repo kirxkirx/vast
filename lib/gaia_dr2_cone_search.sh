@@ -75,8 +75,8 @@ while [[ $# -gt 0 ]]; do
   Gmag=*|phot_g_mean_mag=*)
    # Magnitude range: "Gmag=0.0..13.13"
    MAG_RANGE="${1#*=}"
-   MAG_BRIGHT=$(echo "$MAG_RANGE" | awk -F'\\.\\.' '{print $1}')
-   MAG_FAINT=$(echo "$MAG_RANGE" | awk -F'\\.\\.' '{print $2}')
+   MAG_BRIGHT=$(echo "$MAG_RANGE" | awk -F'\.\.' '{print $1}')
+   MAG_FAINT=$(echo "$MAG_RANGE" | awk -F'\.\.' '{print $2}')
    shift
    ;;
   -sort=*)
@@ -130,7 +130,7 @@ if [[ -z "$RESPONSE" ]]; then
 fi
 
 # Check for error response
-if echo "$RESPONSE" | grep -q "ERROR\|Exception"; then
+if echo "$RESPONSE" | grep -E -q "ERROR|Exception"; then
  echo "$RESPONSE" >&2
  exit 1
 fi
