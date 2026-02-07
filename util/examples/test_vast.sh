@@ -11686,13 +11686,16 @@ $GREP_RESULT"
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS314"
   fi
-  grep -q "2020 04 19.7683  2458959.2683  11\...  04:44:" transient_report/index.html
+  #grep -q "2020 04 19.7683  2458959.2683  11\...  04:44:" transient_report/index.html
+  #        2020 04 19.7683  2458959.2683  11.22  04:44:14.10 +23:59:01.9
+  grep -q "2020 04 19\.7683  2458959\.2683  11\.[12].  04:44:1.\... +2[34]:[05][089]:..\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES VENUS314a"
   fi
-  RADECPOSITION_TO_TEST=`grep "2020 04 19.7683  2458959.2683  11\...  04:44:" transient_report/index.html | awk '{print $6" "$7}'`
-  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 04:44:14.09 +23:59:02.0 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
+  RADECPOSITION_TO_TEST=`grep "2020 04 19\.7683  2458959\.2683  11\.[12].  04:44:1.\... +2[34]:[05][089]:..\.." transient_report/index.html | awk '{print $6" "$7}'`
+  # JPL JORIZONS position of Metis at C32 on JD(UTC)2458959.2683: 04:44:14.08 +23:59:02.4
+  DISTANCE_ARCSEC=`lib/put_two_sources_in_one_field 04:44:14.08 +23:59:02.4 $RADECPOSITION_TO_TEST | grep 'Angular distance' | awk '{printf "%f", $5*3600}'`
   # NMW scale is 8.4"/pix
   TEST=`echo "$DISTANCE_ARCSEC" | awk '{if ( $1 < 8.4 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
