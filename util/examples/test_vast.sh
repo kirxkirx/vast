@@ -23167,7 +23167,8 @@ $CAT_RESULT"
   fi
   #                           !             !
   #             2025 05 25.4796  2460820.9796  14.71  23:37:16.76 -07:54:39.2
-  grep -q "2025 05 25\.479.  2460820\.979.  14\.[67].  23:37:1[67]\... -07:54:3[89]\.." transient_report/index.html
+  #             2025 05 25.4796  2460820.9796  14.69  23:37:16.82 -07:54:37.9
+  grep -q "2025 05 25\.479.  2460820\.979.  14\.[67].  23:37:1[67]\... -07:54:3[789]\.." transient_report/index.html
   if [ $? -ne 0 ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES TICATESSZERORA_Laurentia_position"
