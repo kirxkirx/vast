@@ -2291,6 +2291,12 @@ int main( int argc, char **argv ) {
  // Create vast_images_catalogs.log
  write_images_catalogs_logfile( input_images, Num );
 
+ // Restore cached SExtractor catalogs if VAST_SEXTRACTOR_CACHE_DIR is set.
+ // This must run after clean_data.sh (which deletes old .cat files) and after
+ // write_images_catalogs_logfile (which creates the image-to-catalog mapping),
+ // but before the fork() loop that runs autodetect_aperture() on each image.
+ system( "lib/restore_cached_sextractor_catalogs.sh" );
+
  int n_fork;    //=get_number_of_cpu_cores(); // number of parallel threads
  int i_fork= 0; // counter for fork
  int j_fork;    // another counter for fork

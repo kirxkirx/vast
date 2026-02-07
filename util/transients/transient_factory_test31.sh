@@ -647,6 +647,18 @@ function record_timing {
  echo "$SECTION_NAME: ${ELAPSED_SEC}s (${ELAPSED_MIN} min)" >> "$PROFILING_LOG"
 }
 
+# Compute MD5 checksum of a file, portable across Linux (md5sum), macOS/FreeBSD (md5 -r).
+# Returns empty string if no md5 tool is available, which signals the caller to disable caching.
+function compute_md5_of_file {
+ if command -v md5sum > /dev/null 2>&1 ; then
+  md5sum "$1" | awk '{print $1}'
+ elif command -v md5 > /dev/null 2>&1 ; then
+  md5 -r "$1" | awk '{print $1}'
+ else
+  echo ""
+ fi
+}
+
 function check_if_vast_install_looks_reasonably_healthy {
  for FILE_TO_CHECK in ./vast GNUmakefile makefile lib/autodetect_aperture_main lib/bin/xy2sky lib/catalogs/check_catalogs_offline lib/choose_vizier_mirror.sh lib/deeming_compute_periodogram lib/deg2hms_uas lib/drop_bright_points lib/drop_faint_points lib/fit_robust_linear lib/guess_saturation_limit_main lib/hms2deg lib/lk_compute_periodogram lib/new_lightcurve_sigma_filter lib/put_two_sources_in_one_field lib/remove_bad_images lib/remove_lightcurves_with_small_number_of_points lib/select_only_n_random_points_from_set_of_lightcurves lib/sextract_single_image_noninteractive lib/try_to_guess_image_fov lib/update_offline_catalogs.sh lib/update_tai-utc.sh lib/vizquery util/calibrate_magnitude_scale util/calibrate_single_image.sh util/ccd/md util/ccd/mk util/ccd/ms util/clean_data.sh util/examples/test_coordinate_converter.sh util/examples/test__dark_flat_flag.sh util/examples/test_heliocentric_correction.sh util/fov_of_wcs_calibrated_image.sh util/get_image_date util/hjd_input_in_UTC util/load.sh util/magnitude_calibration.sh util/make_finding_chart util/nopgplot.sh util/rescale_photometric_errors util/save.sh util/search_databases_with_curl.sh util/search_databases_with_vizquery.sh util/solve_plate_with_UCAC5 util/stat_outfile util/sysrem2 util/transients/transient_factory_test31.sh util/wcs_image_calibration.sh ;do
   if [ ! -s "$FILE_TO_CHECK" ];then
@@ -842,6 +854,15 @@ USER= $USER
 HOME= $HOME
 #######################################" | tee -a transient_factory_test31.txt
 #################################
+
+# Log whether the global SExtractor catalog cache is enabled or disabled.
+# The cache allows skipping SExtractor for reference images on subsequent runs
+# when the same SExtractor config is used, saving CPU time in multi-field operation.
+if [ -n "$VAST_SEXTRACTOR_CACHE_DIR" ] && [ -d "$VAST_SEXTRACTOR_CACHE_DIR" ]; then
+ echo "SExtractor catalog cache: enabled, directory $VAST_SEXTRACTOR_CACHE_DIR" | tee -a transient_factory_test31.txt
+else
+ echo "SExtractor catalog cache: disabled (VAST_SEXTRACTOR_CACHE_DIR not set or directory does not exist)" | tee -a transient_factory_test31.txt
+fi
 
 # Check the reference images
 if [ ! -d "$REFERENCE_IMAGES" ];then
@@ -1834,6 +1855,18 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   fi
   cp -v "$SEXTRACTOR_CONFIG_FILE" default.sex >> transient_factory_test31.txt 2>&1
 
+  # --- SExtractor catalog cache: compute config hash for save section ---
+  # Cache loading is handled inside ./vast by lib/restore_cached_sextractor_catalogs.sh
+  # (which runs after clean_data.sh, so cached files are not deleted).
+  # Here we only compute CONFIG_HASH, needed later by the cache save section.
+  CONFIG_HASH=""
+  if [ -n "$VAST_SEXTRACTOR_CACHE_DIR" ] && [ -d "$VAST_SEXTRACTOR_CACHE_DIR" ]; then
+   CONFIG_HASH=$(compute_md5_of_file "$SEXTRACTOR_CONFIG_FILE")
+   if [ -z "$CONFIG_HASH" ]; then
+    echo "SExtractor catalog cache: disabled (md5sum/md5 not available)" | tee -a transient_factory_test31.txt
+   fi
+  fi
+
   echo "Starting VaST with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
   VAST_RUN_START_UNIXSEC=$(date +%s)
   # Run VaST
@@ -1866,6 +1899,33 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
    grep '^TIMING ' vast_output_$$.tmp >> "$PROFILING_LOG" 2>/dev/null
    rm -f vast_output_$$.tmp
   fi
+
+  # --- SExtractor catalog cache: save reference image catalogs to cache ---
+  # After a successful VaST run, save the catalogs and aperture files for reference
+  # images to the cache directory so they can be reused on subsequent runs with the
+  # same SExtractor config. Uses atomic write (cp to .tmp, then mv) for concurrency safety.
+  if [ -n "$VAST_SEXTRACTOR_CACHE_DIR" ] && [ -n "$CONFIG_HASH" ]; then
+   CACHE_SUBDIR="$VAST_SEXTRACTOR_CACHE_DIR/$CONFIG_HASH"
+   mkdir -p "$CACHE_SUBDIR"
+   for CACHE_REF_IMAGE in "$REFERENCE_EPOCH__FIRST_IMAGE" "$REFERENCE_EPOCH__SECOND_IMAGE" ; do
+    CACHE_REF_BASENAME=$(basename "$CACHE_REF_IMAGE")
+    # Look up the catalog file name assigned to this reference image by VaST
+    CACHE_CATALOG_NAME=$(grep "$CACHE_REF_IMAGE" vast_images_catalogs.log | awk '{print $1}')
+    if [ -n "$CACHE_CATALOG_NAME" ] && [ -f "$CACHE_CATALOG_NAME" ] && [ -f "${CACHE_CATALOG_NAME}.aperture" ]; then
+     # Atomic write: copy to a temporary file, then rename to the final name.
+     # If two instances write the same file, last writer wins (both produce identical content).
+     cp "$CACHE_CATALOG_NAME" "$CACHE_SUBDIR/${CACHE_REF_BASENAME}.cat.tmp.$$"
+     mv "$CACHE_SUBDIR/${CACHE_REF_BASENAME}.cat.tmp.$$" "$CACHE_SUBDIR/${CACHE_REF_BASENAME}.cat"
+     cp "${CACHE_CATALOG_NAME}.aperture" "$CACHE_SUBDIR/${CACHE_REF_BASENAME}.cat.aperture.tmp.$$"
+     mv "$CACHE_SUBDIR/${CACHE_REF_BASENAME}.cat.aperture.tmp.$$" "$CACHE_SUBDIR/${CACHE_REF_BASENAME}.cat.aperture"
+     echo "SExtractor catalog cache: saved ${CACHE_REF_BASENAME}.cat to cache" | tee -a transient_factory_test31.txt
+    else
+     echo "SExtractor catalog cache: could not save ${CACHE_REF_BASENAME}.cat (catalog not found in vast_images_catalogs.log)" | tee -a transient_factory_test31.txt
+    fi
+   done
+  fi
+  # --- End SExtractor catalog cache save ---
+
   #
   echo "VaST run complete with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
   record_timing "    VAST_RUN_${SEXTRACTOR_CONFIG_FILE}" "$VAST_RUN_START_UNIXSEC"
