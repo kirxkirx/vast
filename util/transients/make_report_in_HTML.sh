@@ -325,7 +325,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    while [ $attempt -le $max_attempts ]; do
     # check if the file already exists somehow
     if [ -s "$output_file" ];then
-     echo "The output file $output_file already exist"
+     # not printing 'already exist' to stdout to avoid bloating the filtering log
      success=true
      break
     fi
@@ -374,7 +374,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
    while [ $attempt -le $max_attempts ]; do
     # check if the file already exists somehow
     if [ -s "$output_file" ];then
-     echo "The output file $output_file already exist"
+     # not printing 'already exist' to stdout to avoid bloating the filtering log
      success=true
      break
     fi
@@ -435,7 +435,7 @@ while read LIGHTCURVE_FILE_OUTDAT B C D E REFERENCE_IMAGE G H ;do
      while [ $attempt -le $max_attempts ]; do
       # check if the file already exists somehow
       if [ -s "$output_file" ];then
-       echo "The output file $output_file already exist"
+       # not printing 'already exist' to stdout to avoid bloating the filtering log
        success=true
        break
       fi

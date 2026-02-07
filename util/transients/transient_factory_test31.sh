@@ -1712,7 +1712,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
       success=false
       while [ $attempt -le $max_attempts ]; do
        if [ -s "transient_report/$PREVIEW_IMAGE" ];then
-        echo "The output file transient_report/$PREVIEW_IMAGE already exist!"
+        # not printing 'already exist' to stdout to avoid bloating the filtering log
         success=true
         break
        fi
@@ -2722,6 +2722,7 @@ The hard cut-off for the candidate transients is $FILTER_FAINT_MAG_CUTOFF_TRANSI
    echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
    export REPORT_MAX_THREADS=10
    HTML_REPORT_START_UNIXSEC=$(date +%s)
+   # stderr is intentionally captured in the log file along with stdout
    util/transients/make_report_in_HTML.sh >> transient_factory_test31.txt 2>&1
    record_timing "    HTML_REPORT" "$HTML_REPORT_START_UNIXSEC"
    echo "Prepared the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
@@ -2945,8 +2946,8 @@ List of recent ASAS-SN transients from https://www.astronomy.ohio-state.edu/asas
 cat asassn_transients_list.txt | tee -a transient_factory_test31.txt
 ls -lh asassn_transients_list.txt 2>&1 | tee -a transient_factory_test31.txt
 echo "############################################################
-List of TOCP transients from http://www.cbat.eps.harvard.edu/unconf/tocp.html :" | tee -a transient_factory_test31.txt
-cat tocp_transients_list.txt | tee -a transient_factory_test31.txt
+Truncated list of TOCP transients from http://www.cbat.eps.harvard.edu/unconf/tocp.html :" | tee -a transient_factory_test31.txt
+cat tocp_transients_list.txt | tail -n20 | tee -a transient_factory_test31.txt
 ls -lh tocp_transients_list.txt 2>&1 | tee -a transient_factory_test31.txt
 #
 
@@ -2958,10 +2959,11 @@ echo "=======================================" >> "$PROFILING_LOG"
 echo "TOTAL_RUNTIME: ${TOTAL_ELAPSED_SEC}s (${TOTAL_ELAPSED_MIN} min)" >> "$PROFILING_LOG"
 echo "Finished: $(date)" >> "$PROFILING_LOG"
 
-# Append profiling results to main log
-echo "" >> transient_factory_test31.txt
-echo "=== PROFILING RESULTS ===" | tee -a transient_factory_test31.txt
-cat "$PROFILING_LOG" | tee -a transient_factory_test31.txt
+# Print profiling results to the terminal but not to transient_factory_test31.txt
+# to avoid bloating the filtering log
+echo ""
+echo "=== PROFILING RESULTS ==="
+cat "$PROFILING_LOG"
 ###############################################################################################################
 
 ## Finalize the HTML report
@@ -2970,7 +2972,8 @@ echo "<H2>Processing complete!</H2>" >> transient_report/index.html
 TOTAL_NUMBER_OF_CANDIDATES=$(grep 'script' transient_report/index.html | grep -c 'printCandidateNameWithAbsLink')
 echo "Total number of candidates identified: $TOTAL_NUMBER_OF_CANDIDATES" >> transient_report/index.html
 
-echo "<H3>Processing log:</H3>
+echo "<a href=\"javascript:toggleElement('processing_log')\"><H3>Processing log:</H3></a>
+<div id=\"processing_log\" style=\"display:none\">
 <pre class='folding-pre'>" >> transient_report/index.html
 FILENAME="transient_factory.log"
 THRESHOLD=$((10 * 1024 * 1024))  # 10 MB in bytes
@@ -2980,9 +2983,11 @@ if [ "$FILESIZE" -gt "$THRESHOLD" ]; then
 else
  cat transient_factory.log >> transient_report/index.html
 fi
-echo "</pre>" >> transient_report/index.html
+echo "</pre>
+</div>" >> transient_report/index.html
 
-echo "<H3>Filtering log:</H3>
+echo "<a href=\"javascript:toggleElement('filtering_log')\"><H3>Filtering log:</H3></a>
+<div id=\"filtering_log\">
 <pre class='folding-pre'>" >> transient_report/index.html
 FILENAME="transient_factory_test31.txt"
 THRESHOLD=$((10 * 1024 * 1024))  # 10 MB in bytes
@@ -2993,7 +2998,15 @@ if [ "$FILESIZE" -gt "$THRESHOLD" ]; then
 else
  cat transient_factory_test31.txt >> transient_report/index.html
 fi
-echo "</pre>" >> transient_report/index.html
+echo "</pre>
+</div>" >> transient_report/index.html
+
+echo "<a href=\"javascript:toggleElement('profiling_log')\"><H3>Profiling:</H3></a>
+<div id=\"profiling_log\" style=\"display:none\">
+<pre class='folding-pre'>" >> transient_report/index.html
+cat "$PROFILING_LOG" >> transient_report/index.html
+echo "</pre>
+</div>" >> transient_report/index.html
 
 echo "</BODY></HTML>" >> transient_report/index.html
 
