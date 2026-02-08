@@ -15,7 +15,7 @@
 #define MAX_CCD_TEMP_DIFF 2.5
 #define MAX_DARK_BIAS_COUNT 7000
 #define MIN_FLAT_FIELD_COUNT 17000
-#define MAX_FLAT_FIELD_COUNT 50000
+#define MAX_FLAT_FIELD_COUNT 44000
 
 // Toggle median implementation:
 // - Set to 1 for GSL sort-based median.
