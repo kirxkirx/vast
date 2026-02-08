@@ -356,7 +356,7 @@ int blind_plate_solve_with_astrometry_net( char *fits_image_filename, double app
  char path_to_vast_string[VAST_PATH_MAX];
  get_path_to_vast( path_to_vast_string );
  sprintf( cmdstr, "%sutil/wcs_image_calibration.sh %s %.1lf", path_to_vast_string, fits_image_filename, approximate_field_of_view_arcmin );
- fprintf( stderr, "Trying to blindly solve the plate...\n%s\n", cmdstr );
+ fprintf( stderr, "Trying to blindly solve the plate (local solve-field or remote server)...\n%s\n", cmdstr );
  if ( 0 != system( cmdstr ) ) {
   fprintf( stderr, "ERROR solving the plate!\n" );
   return 1;
@@ -2075,7 +2075,7 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  char *proxy_settings= get_sanitized_curl_proxy();
 
  // Astrometric catalog search
- fprintf( stderr, "Searchig UCAC5...\n" );
+ fprintf( stderr, "Searchig UCAC5 via remote servers (scan/vast/tau)...\n" );
  // Randomly choose between the three servers
  // Seed the random number generator
  srand( time( NULL ) );
@@ -2086,18 +2086,21 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  // Initialize the allocated memory to null characters
  memset( base_command, '\0', BASE_COMMAND_LENGTH );
  if ( randChoice == 0 ) {
+  fprintf( stderr, "Trying UCAC5 server: scan.sai.msu.ru\n" );
   snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
             vizquery_input_filename, catalog_search_parameters->brightest_mag,
             catalog_search_parameters->faintest_mag,
             catalog_search_parameters->search_radius_deg * 3600,
             vizquery_output_filename );
  } else if ( randChoice == 1 ) {
+  fprintf( stderr, "Trying UCAC5 server: vast.sai.msu.ru\n" );
   snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
             vizquery_input_filename, catalog_search_parameters->brightest_mag,
             catalog_search_parameters->faintest_mag,
             catalog_search_parameters->search_radius_deg * 3600,
             vizquery_output_filename );
  } else {
+  fprintf( stderr, "Trying UCAC5 server: tau.kirx.net\n" );
   snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://tau.kirx.net/cgi-bin/ucac5/search_ucac5.py'",
             vizquery_input_filename, catalog_search_parameters->brightest_mag,
             catalog_search_parameters->faintest_mag,
@@ -2107,15 +2110,16 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
  base_command[BASE_COMMAND_LENGTH - 1]= '\0'; // just in case snprintf() messed up the last byte
 
  // Execute curl directly without shell interpretation (avoids command injection)
- fprintf( stderr, "Running curl...\n" );
+ fprintf( stderr, "Running curl to query UCAC5...\n" );
  vizquery_run_success= execute_curl_direct( base_command, proxy_settings, 1 );
 
  if ( vizquery_run_success != 0 || count_lines_in_ASCII_file( vizquery_output_filename ) < 5 ) {
-  fprintf( stderr, "First attempt failed, trying alternative command\n" );
+  fprintf( stderr, "First UCAC5 server attempt failed, trying alternative server\n" );
 
   // Note the reverse order with respect to randChoice
   if ( randChoice == 0 ) {
    // This block will execute if the first executed command was the first option and it failed
+   fprintf( stderr, "Trying UCAC5 server: vast.sai.msu.ru (fallback)\n" );
    sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 2 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
             vizquery_input_filename, catalog_search_parameters->brightest_mag,
             catalog_search_parameters->faintest_mag,
@@ -2123,6 +2127,7 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
             vizquery_output_filename );
   } else if ( randChoice == 1 ) {
    // This block will execute if the first executed command was the second option and it failed
+   fprintf( stderr, "Trying UCAC5 server: tau.kirx.net (fallback)\n" );
    sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 2 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://tau.kirx.net/cgi-bin/ucac5/search_ucac5.py'",
             vizquery_input_filename, catalog_search_parameters->brightest_mag,
             catalog_search_parameters->faintest_mag,
@@ -2130,6 +2135,7 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
             vizquery_output_filename );
   } else {
    // This block will execute if the first executed command was the third option and it failed
+   fprintf( stderr, "Trying UCAC5 server: scan.sai.msu.ru (fallback)\n" );
    sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 2 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
             vizquery_input_filename, catalog_search_parameters->brightest_mag,
             catalog_search_parameters->faintest_mag,
@@ -2138,11 +2144,11 @@ int search_UCAC5_at_scan( struct detected_star *stars, int N, struct str_catalog
   }
 
   // Execute curl directly without shell interpretation (avoids command injection)
-  fprintf( stderr, "Running curl...\n" );
+  fprintf( stderr, "Running curl to query UCAC5 (fallback)...\n" );
   vizquery_run_success= execute_curl_direct( base_command, proxy_settings, 1 );
 
   if ( vizquery_run_success != 0 || count_lines_in_ASCII_file( vizquery_output_filename ) < 5 ) {
-   fprintf( stderr, "ERROR: Both attempts failed\n" );
+   fprintf( stderr, "ERROR: Both UCAC5 server attempts failed\n" );
    // Free proxy settings if allocated
    if ( proxy_settings != NULL ) {
     free( proxy_settings );
@@ -2369,12 +2375,14 @@ int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, i
  // Initialize the allocated memory to null characters
  memset( base_command, '\0', BASE_COMMAND_LENGTH );
  if ( randChoice == 0 ) {
+  fprintf( stderr, "Trying UCAC5 server: scan.sai.msu.ru\n" );
   snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
             vizquery_input_filename, catalog_search_parameters->brightest_mag,
             catalog_search_parameters->faintest_mag,
             catalog_search_parameters->search_radius_deg * 3600,
             vizquery_output_filename );
  } else {
+  fprintf( stderr, "Trying UCAC5 server: vast.sai.msu.ru\n" );
   snprintf( base_command, BASE_COMMAND_LENGTH, "--silent --show-error --insecure --connect-timeout 10 --retry 1 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
             vizquery_input_filename, catalog_search_parameters->brightest_mag,
             catalog_search_parameters->faintest_mag,
@@ -2384,15 +2392,16 @@ int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, i
  base_command[BASE_COMMAND_LENGTH - 1]= '\0'; // just in case snprintf() messed up the last byte
 
  // Execute curl directly without shell interpretation (avoids command injection)
- fprintf( stderr, "Running curl...\n" );
+ fprintf( stderr, "Running curl to query UCAC5...\n" );
  vizquery_run_success= execute_curl_direct( base_command, proxy_settings, 1 );
 
  if ( vizquery_run_success != 0 || count_lines_in_ASCII_file( vizquery_output_filename ) < 5 ) {
-  fprintf( stderr, "First attempt failed, trying alternative command\n" );
+  fprintf( stderr, "First UCAC5 server attempt failed, trying alternative server\n" );
 
   // Note the reverse order with respect to randChoice
   if ( randChoice == 0 ) {
    // This block will execute if the first executed command was the first option and it failed
+   fprintf( stderr, "Trying UCAC5 server: vast.sai.msu.ru (fallback)\n" );
    sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 2 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://vast.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
             vizquery_input_filename, catalog_search_parameters->brightest_mag,
             catalog_search_parameters->faintest_mag,
@@ -2400,6 +2409,7 @@ int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, i
             vizquery_output_filename );
   } else {
    // This block will execute if the first executed command was the second option and it failed
+   fprintf( stderr, "Trying UCAC5 server: scan.sai.msu.ru (fallback)\n" );
    sprintf( base_command, "--silent --show-error --insecure --connect-timeout 10 --retry 2 --max-time 600 -F file=@%s -F submit=\"Upload Image\" -F brightmag=%lf -F faintmag=%lf -F searcharcsec=%lf --output %s 'http://scan.sai.msu.ru/cgi-bin/ucac5/search_ucac5.py'",
             vizquery_input_filename, catalog_search_parameters->brightest_mag,
             catalog_search_parameters->faintest_mag,
@@ -2408,11 +2418,11 @@ int search_UCAC5_at_scan__old_scan_and_vast_only( struct detected_star *stars, i
   }
 
   // Execute curl directly without shell interpretation (avoids command injection)
-  fprintf( stderr, "Running curl...\n" );
+  fprintf( stderr, "Running curl to query UCAC5 (fallback)...\n" );
   vizquery_run_success= execute_curl_direct( base_command, proxy_settings, 1 );
 
   if ( vizquery_run_success != 0 || count_lines_in_ASCII_file( vizquery_output_filename ) < 5 ) {
-   fprintf( stderr, "ERROR: Both attempts failed\n" );
+   fprintf( stderr, "ERROR: Both UCAC5 server attempts failed\n" );
    // Free proxy settings if allocated
    if ( proxy_settings != NULL ) {
     free( proxy_settings );
@@ -2559,19 +2569,20 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
  get_path_to_vast( path_to_vast_string );
 
  // Try the local copy of UCAC5
+ fprintf( stderr, "UCAC5 search strategy: trying local copy first\n" );
  if ( 0 == search_UCAC5_localcopy( stars, N, catalog_search_parameters ) ) {
   fprintf( stderr, "The local UCAC5 search seems to be a success\n" );
   return 0;
  } else {
-  fprintf( stderr, "The local UCAC5 search failed. Trying remote search at scan\n" );
+  fprintf( stderr, "The local UCAC5 search failed. Trying remote UCAC5 servers (scan/vast/tau)\n" );
  }
 
  // Try the copy of UCAC5 at scan
  if ( 0 == search_UCAC5_at_scan( stars, N, catalog_search_parameters ) ) {
-  fprintf( stderr, "The scan UCAC5 search seems to be a success\n" );
+  fprintf( stderr, "The remote UCAC5 server search seems to be a success\n" );
   return 0;
  } else {
-  fprintf( stderr, "The scan UCAC5 search failed. Trying remote search with vizquery\n" );
+  fprintf( stderr, "The remote UCAC5 server search failed. Trying VizieR as last resort\n" );
   // exit( EXIT_FAILURE );
  }
 
@@ -2612,7 +2623,7 @@ int search_UCAC5_with_vizquery( struct detected_star *stars, int N, struct str_c
  fprintf( stderr, "Searchig VizieR for %d good reference stars...\n", search_stars_counter );
 
  // Astrometric catalog search
- fprintf( stderr, "Searchig UCAC5...\n" );
+ fprintf( stderr, "Searchig UCAC5 via VizieR (mirror will be selected by lib/choose_vizier_mirror.sh)...\n" );
  // yes, sorting in magnitude works
  // sprintf( command, "export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=%s -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=%.1lf..%.1lf -sort=f.mag -c.rs=%.1lf -list=%s > %s", path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, VIZIER_SITE, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );
  sprintf( command, "export BEST_VIZIER_MIRROR=%s; echo $BEST_VIZIER_MIRROR; export PATH=\"$PATH:%slib/bin\"; $(%slib/find_timeout_command.sh) %.0lf %slib/vizquery -site=$BEST_VIZIER_MIRROR -mime=text -source=UCAC5 -out.max=1 -out.add=_1 -out.add=_r -out.form=mini -out=RAJ2000,DEJ2000,f.mag,EPucac,pmRA,e_pmRA,pmDE,e_pmDE f.mag=%.1lf..%.1lf -sort=f.mag -c.rs=%.1lf -list=%s > %s", VIZIER_SITE, path_to_vast_string, path_to_vast_string, (double)VIZIER_TIMEOUT_SEC, path_to_vast_string, catalog_search_parameters->brightest_mag, catalog_search_parameters->faintest_mag, catalog_search_parameters->search_radius_deg * 3600, vizquery_input_filename, vizquery_output_filename );

@@ -925,6 +925,7 @@ fi
     fi
    fi
    #################### Start of single-server communication ####################
+   echo "Plate solve server: $PLATE_SOLVE_SERVER" 1>&2
    echo -e "Submitting the plates solving job to the server \033[01;34m $PLATE_SOLVE_SERVER \033[00m"
    echo -e "This may take \033[01;31mup to a few minutes\033[00m..."
    if [ ! -f out$$.xyls ];then
