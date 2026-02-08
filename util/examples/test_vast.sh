@@ -32617,10 +32617,11 @@ if [ $? -eq 0 ] && [ -x util/examples/test_gaia_dr2_clients.sh ];then
  echo "Performing Gaia DR2 clients test (ESA TAP vs VizieR) "
  echo -n "Gaia DR2 clients test: " >> vast_test_report.txt
 
- util/examples/test_gaia_dr2_clients.sh &>/dev/null
+ GAIA_DR2_CLIENTS_TEST_OUTPUT=$(util/examples/test_gaia_dr2_clients.sh 2>&1)
  if [ $? -ne 0 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES GAIADR2CLIENTS001"
+  echo "$GAIA_DR2_CLIENTS_TEST_OUTPUT" | tail -40
  fi
 
  THIS_TEST_STOP_UNIXSEC=$(date +%s)

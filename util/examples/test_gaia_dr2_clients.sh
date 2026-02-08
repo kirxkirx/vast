@@ -37,6 +37,9 @@ fi
 
 cd "$VASTDIR" || exit 1
 
+# Find the portable timeout command (timeout on Linux, gtimeout on Mac, lib/timeout as fallback)
+TIMEOUT_CMD=$(lib/find_timeout_command.sh)
+
 # Check that required scripts exist
 if [[ ! -x lib/gaia_dr2_cone_search.sh ]]; then
  echo "ERROR: lib/gaia_dr2_cone_search.sh not found or not executable" >&2
@@ -84,9 +87,9 @@ run_test() {
  echo ""
  echo "  [ESA TAP] Querying..."
  local esa_start esa_end esa_time esa_output esa_count
- esa_start=$(date +%s.%N)
+ esa_start=$(date +%s)
  esa_output=$(lib/gaia_dr2_cone_search.sh -out.max=10 -sort=Gmag "$mag_range" "-c=$coords" "-c.rs=$radius" 2>&1)
- esa_end=$(date +%s.%N)
+ esa_end=$(date +%s)
  esa_time=$(echo "$esa_end $esa_start" | awk '{printf "%.3f", $1 - $2}')
  ESA_TIMES+=("$esa_time")
 
@@ -109,11 +112,11 @@ run_test() {
  echo ""
  echo "  [VizieR] Querying..."
  local vizier_start vizier_end vizier_time vizier_output vizier_count
- vizier_start=$(date +%s.%N)
- vizier_output=$(timeout 60 lib/vizquery -site=vizier.cds.unistra.fr -mime=text -source=I/345/gaia2 \
+ vizier_start=$(date +%s)
+ vizier_output=$($TIMEOUT_CMD 60 lib/vizquery -site=vizier.cds.unistra.fr -mime=text -source=I/345/gaia2 \
   -out.max=10 -out.add=_r -out.form=mini -sort=Gmag "$mag_range" \
   "-c=$coords" "-c.rs=$radius" -out=Source,RA_ICRS,DE_ICRS,Gmag,RPmag,Var 2>/dev/null)
- vizier_end=$(date +%s.%N)
+ vizier_end=$(date +%s)
  vizier_time=$(echo "$vizier_end $vizier_start" | awk '{printf "%.3f", $1 - $2}')
  VIZIER_TIMES+=("$vizier_time")
 
