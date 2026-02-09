@@ -2029,6 +2029,7 @@ SECOND_EPOCH__SECOND_IMAGE=$SECOND_EPOCH__SECOND_IMAGE" | tee -a transient_facto
   record_timing "    WCS_CALIBRATION_AND_EPHEMERIS" "$WCS_EPHEMERIS_START_UNIXSEC"
   #
 
+  PLATE_VERIFY_AND_POINTING_START_UNIXSEC=$(date +%s)
   # Check that the plates were actually solved
   for i in $(cat vast_image_details.log | awk '{print $17}') ;do 
    WCS_IMAGE_NAME_FOR_CHECKS=wcs_"$(basename "$i")"
@@ -2227,6 +2228,7 @@ Angular distance between the image centers $DISTANCE_BETWEEN_IMAGE_CENTERS_DEG d
   fi # if [ -z "$PHOTOMETRIC_CALIBRATION" ];then
 
   
+  record_timing "    PLATE_VERIFY_AND_POINTING" "$PLATE_VERIFY_AND_POINTING_START_UNIXSEC"
   echo "Running solve_plate_with_UCAC5..." | tee -a transient_factory_test31.txt
   
     
@@ -2362,6 +2364,7 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
   grep 'Estimated ref. image limiting mag.:' vast_summary.log >> transient_factory_test31.txt 2>&1
   echo "____ End of magnitude calibration ____" | tee -a transient_factory_test31.txt
   record_timing "    MAGNITUDE_CALIBRATION" "$MAGCAL_START_UNIXSEC"
+  MAGCAL_SANITY_CHECK_START_UNIXSEC=$(date +%s)
   # Check that the magnitude calibration actually worked
   for i in $(cat candidates-transients.lst | awk '{print $1}') ;do 
    ### ===> MAGNITUDE LIMITS HARDCODED HERE <===
@@ -2441,6 +2444,7 @@ util/solve_plate_with_UCAC5 --iterations $UCAC5_PLATESOLVE_ITERATIONS $REFERENCE
    continue
   fi
 
+  record_timing "    MAGCAL_SANITY_CHECK" "$MAGCAL_SANITY_CHECK_START_UNIXSEC"
   ################## Quality cuts applied to calibrated magnitudes of the candidate transients ##################
   CANDIDATE_FILTERING_TOTAL_START_UNIXSEC=$(date +%s)
   FILTER_START_UNIXSEC=$(date +%s)
@@ -2673,6 +2677,7 @@ The hard cut-off for the candidate transients is $FILTER_FAINT_MAG_CUTOFF_TRANSI
    done
    record_timing "    WAIT_FOR_UCAC5" "$WAIT_FOR_UCAC5_START_UNIXSEC"
    #
+   WCS_IMAGE_ARCHIVING_START_UNIXSEC=$(date +%s)
    ##########################################################
    is_this_test_run_based_on_input_img_path "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING"
    if [ $? -ne 0 ]; then
@@ -2719,6 +2724,7 @@ The hard cut-off for the candidate transients is $FILTER_FAINT_MAG_CUTOFF_TRANSI
     echo "This is a test - NOT copying WCS-calibrated images back to input directory" | tee -a transient_factory_test31.txt
    fi
    ##########################################################
+   record_timing "    WCS_IMAGE_ARCHIVING" "$WCS_IMAGE_ARCHIVING_START_UNIXSEC"
    #
    echo "Preparing the HTML report for the field $FIELD with $SEXTRACTOR_CONFIG_FILE" | tee -a transient_factory_test31.txt
    export REPORT_MAX_THREADS=10

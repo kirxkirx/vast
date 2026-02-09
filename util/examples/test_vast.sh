@@ -22693,8 +22693,11 @@ $CAT_RESULT"
   #
   #
   # old 80% of stars value 14.19, new SNR5 value 15.54
+  # after changing the outlier rejection strategy for magnitude calibration (all aoutliers at once instead of one-by-one with refit)
+  # the new value is 15.48 at kadar2 and 15.49 at tau
   MAG_ZP=$(grep "Estimated ref. image limiting mag.:  1" transient_report/index.html | tail -n1 | awk '{print $6}')
-  TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 15.54)*($1 - 15.54) ) < 0.05 ) print 1 ;else print 0 }'`
+  #TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 15.54)*($1 - 15.54) ) < 0.05 ) print 1 ;else print 0 }'`
+  TEST=`echo "$MAG_ZP" | awk '{if ( sqrt( ($1 - 15.48)*($1 - 15.48) ) < 0.05 ) print 1 ;else print 0 }'`
   re='^[0-9]+$'
   if ! [[ $TEST =~ $re ]] ; then
    echo "TEST ERROR"
