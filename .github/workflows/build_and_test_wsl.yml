@@ -1,0 +1,92 @@
+name: WSL2 Ubuntu build and test
+
+on:
+  schedule:
+    - cron: '0 2 * * 5'  # Run weekly on Fridays at 2 AM UTC
+  workflow_dispatch:
+
+jobs:
+  build_and_test_wsl:
+    runs-on: windows-2022
+
+    defaults:
+      run:
+        shell: wsl-bash {0}
+
+    steps:
+      # Checkout on the Windows side, then copy into the WSL virtual disk
+      - name: Configure git to preserve LF line endings
+        shell: cmd
+        run: git config --global core.autocrlf input
+
+      - uses: actions/checkout@v4
+
+      - name: Setup WSL2 with Ubuntu
+        uses: Vampire/setup-wsl@v6
+        with:
+          distribution: Ubuntu-24.04
+          wsl-version: 2
+          update: 'true'
+          additional-packages:
+            build-essential
+            gcc
+            g++
+            gfortran
+            make
+            libx11-dev
+            libpng-dev
+            ghostscript
+            curl
+            wget
+            file
+            bc
+            git
+
+      - name: Copy sources to WSL home directory
+        run: |
+          # The checkout is on the Windows NTFS filesystem which is extremely
+          # slow under WSL2 due to the 9P protocol bridge.
+          # Copy to the WSL-native ext4 virtual disk for much better I/O.
+          SRCDIR=$(wslpath "$GITHUB_WORKSPACE")
+          echo "Copying from $SRCDIR to ~/vast ..."
+          cp -rp "$SRCDIR" ~/vast
+          echo "Source tree size:"
+          du -sh ~/vast
+
+      - name: Build VaST
+        run: |
+          cd ~/vast
+          make
+
+      - name: Syntax-check the test script
+        run: bash -n ~/vast/util/examples/test_vast.sh
+
+      - name: Prepare for the test
+        run: |
+          cd ~/vast
+          echo "1" > ../THIS_IS_HPCC
+          mkdir -p test_artifacts
+
+      - name: Test VaST
+        run: |
+          cd ~/vast
+          util/examples/test_vast.sh 2>&1 | tee test_artifacts/test_vast_full_output.log
+          exit ${PIPESTATUS[0]}
+        timeout-minutes: 300
+
+      - name: Copy test artifacts to Windows filesystem
+        if: always()
+        run: |
+          OUTDIR=$(wslpath "$GITHUB_WORKSPACE")
+          mkdir -p "$OUTDIR/test_artifacts"
+          if [ -d ~/vast/test_artifacts ]; then
+            cp -rp ~/vast/test_artifacts/* "$OUTDIR/test_artifacts/" 2>/dev/null || true
+          fi
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-artifacts-wsl
+          path: test_artifacts/
+          retention-days: 7
