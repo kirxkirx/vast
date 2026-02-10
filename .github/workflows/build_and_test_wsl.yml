@@ -47,7 +47,7 @@ jobs:
           # The checkout is on the Windows NTFS filesystem which is extremely
           # slow under WSL2 due to the 9P protocol bridge.
           # Copy to the WSL-native ext4 virtual disk for much better I/O.
-          SRCDIR=$(wslpath "$GITHUB_WORKSPACE")
+          SRCDIR=$(wslpath '${{ github.workspace }}')
           echo "Copying from $SRCDIR to ~/vast ..."
           cp -rp "$SRCDIR" ~/vast
           echo "Source tree size:"
@@ -77,7 +77,7 @@ jobs:
       - name: Copy test artifacts to Windows filesystem
         if: always()
         run: |
-          OUTDIR=$(wslpath "$GITHUB_WORKSPACE")
+          OUTDIR=$(wslpath '${{ github.workspace }}')
           mkdir -p "$OUTDIR/test_artifacts"
           if [ -d ~/vast/test_artifacts ]; then
             cp -rp ~/vast/test_artifacts/* "$OUTDIR/test_artifacts/" 2>/dev/null || true
