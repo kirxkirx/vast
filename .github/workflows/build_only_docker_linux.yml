@@ -46,8 +46,27 @@ jobs:
     - name: make VaST
       run: make
 
-  fedora:
+  debian:
     needs: alpine
+    runs-on: ubuntu-latest
+    container: debian:bookworm
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install build dependencies
+      run: |
+        apt-get update
+        apt-get install -y build-essential gfortran libx11-dev libpng-dev curl wget file bc git
+    - name: Collect debug info
+      run: |
+        readlink -f gfortran
+        readlink -f gcc
+        gfortran --version
+        gcc --version
+    - name: make VaST
+      run: make
+
+  fedora:
+    needs: debian
     runs-on: ubuntu-latest
     container: fedora:latest
     steps:
@@ -58,6 +77,60 @@ jobs:
     - name: Collect debug info
       run: |
         # fedora has 'readlink -f', but no 'which'
+        readlink -f gfortran
+        readlink -f gcc
+        gfortran --version
+        gcc --version
+    - name: make VaST
+      run: make
+
+  almalinux9:
+    needs: fedora
+    runs-on: ubuntu-latest
+    container: almalinux:9
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install build dependencies
+      run: |
+        dnf install -y gcc gcc-gfortran gcc-c++ make libX11-devel libpng-devel curl wget file bc git
+    - name: Collect debug info
+      run: |
+        readlink -f gfortran
+        readlink -f gcc
+        gfortran --version
+        gcc --version
+    - name: make VaST
+      run: make
+
+  opensuse:
+    needs: almalinux9
+    runs-on: ubuntu-latest
+    container: opensuse/tumbleweed
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install build dependencies
+      run: |
+        zypper --non-interactive install gcc gcc-fortran gcc-c++ make libX11-devel libpng16-devel curl wget file bc git
+    - name: Collect debug info
+      run: |
+        readlink -f gfortran
+        readlink -f gcc
+        gfortran --version
+        gcc --version
+    - name: make VaST
+      run: make
+
+  archlinux:
+    needs: opensuse
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install build dependencies
+      run: |
+        pacman -Syu --noconfirm gcc gcc-fortran make libx11 libpng curl wget file bc git
+    - name: Collect debug info
+      run: |
         readlink -f gfortran
         readlink -f gcc
         gfortran --version
