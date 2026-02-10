@@ -1,2 +1,8 @@
-Type 'make' to compile the software. 
+Type 'make' to compile the software.
 See doc/README.html for further instructions.
+
+Platform-specific installation guides:
+  INSTALL_LINUX.md        - Linux (Ubuntu, Fedora, Alpine)
+  INSTALL_MACOS.md        - macOS (Homebrew, MacPorts)
+  INSTALL_FREEBSD.md      - FreeBSD
+  INSTALL_WINDOWS_WSL2.md - Windows via WSL2
