@@ -135,20 +135,9 @@ if [ -n "$MAKE_PNG_PLOTS" ] && [ "$MAKE_PNG_PLOTS" = "yes" ]; then
  PREGEN_MAX_THREADS=4
  pregen_thread_count=0
  # Collect all unique FITS images (reference + discovery) from candidates-transients.lst and lightcurves
- {
-  # Reference images (column 6)
-  awk '{print $6}' candidates-transients.lst
-  # Discovery images from lightcurve files
-  while read PREGEN_LC_FILE PREGEN_B PREGEN_C PREGEN_D PREGEN_E PREGEN_REF_IMAGE PREGEN_G PREGEN_H ;do
-   if [ -s "$PREGEN_LC_FILE" ] && [ -f transient_report/index.tmp2__report_transient_output__GOOD__"$PREGEN_LC_FILE" ]; then
-    while read PREGEN_JD PREGEN_MAG PREGEN_ERR PREGEN_X PREGEN_Y PREGEN_APP PREGEN_IMAGE PREGEN_REST ;do
-     if [ "$PREGEN_IMAGE" != "$PREGEN_REF_IMAGE" ]; then
-      echo "$PREGEN_IMAGE"
-     fi
-    done < "$PREGEN_LC_FILE"
-   fi
-  done < candidates-transients.lst
- } | sort -u | while read FITS_IMAGE_FOR_PREVIEW ;do
+ # Use process substitution so the while-read loop runs in the current shell,
+ # ensuring 'wait' below can catch all background jobs launched inside the loop.
+ while read FITS_IMAGE_FOR_PREVIEW ;do
   BASENAME_IMG=$(basename "$FITS_IMAGE_FOR_PREVIEW")
   PREVIEW_FILE="transient_report/${BASENAME_IMG}_preview.png"
   if [ -s "$PREVIEW_FILE" ]; then
@@ -169,7 +158,20 @@ if [ -n "$MAKE_PNG_PLOTS" ] && [ "$MAKE_PNG_PLOTS" = "yes" ]; then
    wait
    pregen_thread_count=0
   fi
- done
+ done < <({
+  # Reference images (column 6)
+  awk '{print $6}' candidates-transients.lst
+  # Discovery images from lightcurve files
+  while read PREGEN_LC_FILE PREGEN_B PREGEN_C PREGEN_D PREGEN_E PREGEN_REF_IMAGE PREGEN_G PREGEN_H ;do
+   if [ -s "$PREGEN_LC_FILE" ] && [ -f transient_report/index.tmp2__report_transient_output__GOOD__"$PREGEN_LC_FILE" ]; then
+    while read PREGEN_JD PREGEN_MAG PREGEN_ERR PREGEN_X PREGEN_Y PREGEN_APP PREGEN_IMAGE PREGEN_REST ;do
+     if [ "$PREGEN_IMAGE" != "$PREGEN_REF_IMAGE" ]; then
+      echo "$PREGEN_IMAGE"
+     fi
+    done < "$PREGEN_LC_FILE"
+   fi
+  done < candidates-transients.lst
+ } | sort -u)
  wait
  echo "Done pre-generating preview images."
 fi
