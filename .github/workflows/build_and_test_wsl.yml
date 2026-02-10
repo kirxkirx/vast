@@ -72,7 +72,12 @@ jobs:
           cd ~/vast
           util/examples/test_vast.sh 2>&1 | tee test_artifacts/test_vast_full_output.log
           exit ${PIPESTATUS[0]}
-        timeout-minutes: 300
+        timeout-minutes: 350
+
+      - name: Collect additional test artifacts
+        if: always()
+        run: |
+          cp ~/vast/vast_test_incremental_list_of_failed_test_codes.txt ~/vast/test_artifacts/ 2>/dev/null || true
 
       - name: Copy test artifacts to Windows filesystem
         if: always()

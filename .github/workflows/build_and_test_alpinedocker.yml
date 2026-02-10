@@ -69,6 +69,7 @@ jobs:
               util/examples/test_vast.sh 2>&1 | tee test_artifacts/test_vast_full_output.log /out/test_artifacts/test_vast_full_output.log
               TEST_EXIT_CODE=${PIPESTATUS[0]}
               # copy artifacts to the runner workspace for upload
+              cp vast_test_incremental_list_of_failed_test_codes.txt test_artifacts/ 2>/dev/null || true
               if [ -d test_artifacts ]; then
                 rm -rf /out/test_artifacts
                 cp -a test_artifacts /out/

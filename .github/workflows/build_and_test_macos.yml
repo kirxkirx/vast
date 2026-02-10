@@ -98,6 +98,10 @@ jobs:
         exit ${PIPESTATUS[0]}
       timeout-minutes: 300
       if: env.SKIP != 'true'
+    - name: Collect additional test artifacts
+      run: |
+        cp vast_test_incremental_list_of_failed_test_codes.txt test_artifacts/ 2>/dev/null || true
+      if: always() && env.SKIP != 'true'
     - name: Upload test artifacts
       uses: actions/upload-artifact@v4
       with:
