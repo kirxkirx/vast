@@ -49,6 +49,10 @@ if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"NMW-TexasTech"* ]] || [[
  echo "The input indicates the images are from NMW-TexasTech" | tee -a transient_factory_test31.txt
  export CAMERA_SETTINGS="TTUQ1b1x1"
 fi
+if [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"TTUQ2b1x1"* ]] || [[ "$INPUT_PATH_FOR_DETERMINING_CAMERA_SETTING" == *"Q2b1x1"* ]] ; then
+ echo "The input indicates the images are from NMW-TexasTech" | tee -a transient_factory_test31.txt
+ export CAMERA_SETTINGS="TTUQ2b1x1"
+fi
 
 
 ########### Default settings based on the old NMW camera (aka ST-8300 aka Stas):
@@ -300,6 +304,59 @@ if [ -n "$CAMERA_SETTINGS" ];then
   #BAD_REGION_FILE="../STL_bad_region.lst"
   BAD_REGION_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/TTUQ1_bad_region.lst"
   EXCLUSION_LIST="../exclusion_list_TTUQ1.txt"
+  #export OMP_NUM_THREADS=4
+  SYSREM_ITERATIONS=0
+  UCAC5_PLATESOLVE_ITERATIONS=2
+  #STARMATCH_RADIUS_PIX=4 # testing new values
+  # Let's try to reduce from 50 to 25
+  # Nope, looks like we can avoid many mismatches with a larger edge ident
+  FRAME_EDGE_OFFSET_PIX=100
+  # Do not compress fully calibrated images to reduce disk load
+  FPACK_FULLY_CALIBRATED_IMAGE="no"
+ fi
+ #
+ if [ "$CAMERA_SETTINGS" = "TTUQ2b1x1" ];then
+  # 135 mm f/2.2 telephoto lens + QHY600M CMOS, 20 sec exposures
+  echo "### Using search settings for $CAMERA_SETTINGS camera ###" | tee -a transient_factory_test31.txt
+  export AAVSO_COMMENT_STRING="NMW-TexasTech Camera-2 135mm f/2.2 telephoto lens + QHY600M CMOS"
+  export MPC_CODE=500
+  # The reference frames are very dark, but we want to process very bright frames
+  MAX_NEW_IMG_MEAN_VALUE=25000
+  MAX_NEW_TO_REF_MEAN_IMG_VALUE_RATIO=100
+  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS=0.18
+  MAX_SD_RATIO_OF_SECOND_EPOCH_IMGS_SOFT_LIMIT=0.12
+  # The input images will be calibrated
+  # DARK_FRAMES_DIR has to be pointed at directory containing dark frames,
+  # the script will try to find the most appropriate one based on temperature and time
+  #if [ -z "$DARK_FRAMES_DIR" ];then
+  # #export DARK_FRAMES_DIR=/home/apache/darks
+  # export DARK_FRAMES_DIR="$NMW_CALIBRATION/$CAMERA_SETTINGS/darks"
+  #fi
+  # we don't usually have a luxury of multiple flat field frames to choose from
+  # FLAT_FIELD_FILE has to point to one specific file that will be used for flat-fielding
+  #if [ -z "$FLAT_FIELD_FILE" ];then
+  # #export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2025-12-22.fit"
+  # export FLAT_FIELD_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/flats/mff_TTUQ1b1x1_2026-01-17.fit"
+  #fi
+  #
+  #TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION="STL-11000M"
+  #export TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
+  unset TELESCOP_NAME_KNOWN_TO_VaST_FOR_FOV_DETERMINATION
+# production value
+  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_SOFT_LIMIT=2000
+  NUMBER_OF_DETECTED_TRANSIENTS_BEFORE_FILTERING_HARD_LIMIT=3000
+  export FILTER_FAINT_MAG_CUTOFF_TRANSIENT_SEARCH="14.5"
+  FILTER_BAD_IMG__MAX_APERTURE_STAR_SIZE_PIX=12.5
+  # You will likely need custom SEXTRACTOR_CONFIG_FILES because GAIN is different
+  SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL"
+  #SEXTRACTOR_CONFIG_FILES="default.sex.telephoto_lens_onlybrightstars_v1 default.sex.telephoto_lens_vSTL2"
+  # REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES rejects candidates with exactly the same pixel coordinates on two new images
+  # as these are likely to be hot pixels sneaking into the list of candidates if no shift has been applied between the two second-epoch images.
+  export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="yes"
+  #export REQUIRE_PIX_SHIFT_BETWEEN_IMAGES_FOR_TRANSIENT_CANDIDATES="no"
+  #BAD_REGION_FILE="../STL_bad_region.lst"
+  BAD_REGION_FILE="$NMW_CALIBRATION/$CAMERA_SETTINGS/TTUQ2_bad_region.lst"
+  EXCLUSION_LIST="../exclusion_list_TTUQ2.txt"
   #export OMP_NUM_THREADS=4
   SYSREM_ITERATIONS=0
   UCAC5_PLATESOLVE_ITERATIONS=2
