@@ -171,8 +171,6 @@ static int compare_star_on_mag_to_sort_arrCatStar( const void *a1, const void *a
 }
 
 int match_stars_with_catalog( struct Star *arrStar, int N, struct CatStar *arrCatStar, long M ) {
- double *mag_zeropoint; //=malloc(MAX_NUMBER_OF_STARS_ON_IMAGE*sizeof(double));
- int mag_zeropoint_counter= 0;
  FILE *calibfile;
  int N_mantch= 0;
  long i, j;
@@ -180,12 +178,6 @@ int match_stars_with_catalog( struct Star *arrStar, int N, struct CatStar *arrCa
  double distance;
  double best_distance;
  int match_only_N_brightest_stars;
-
- mag_zeropoint= malloc( N * sizeof( double ) );
- if ( NULL == mag_zeropoint ) {
-  fprintf( stderr, "ERROR allocating memory in match_stars_with_catalog()\n" );
-  return 0;
- }
 
  // sort arrays in magnitude
  qsort( arrStar, N, sizeof( struct Star ), compare_star_on_mag_to_sort_arrStar );
@@ -261,21 +253,13 @@ int match_stars_with_catalog( struct Star *arrStar, int N, struct CatStar *arrCa
    // fprintf(calibfile,"%.5lf %.5lf %.5lf\n", arrStar[i].MAG_APER, arrStar[i].V, arrStar[i].MAGERR_APER);
    if ( arrStar[i].good_star == 1 ) {
     // fprintf(stderr,"good star!\n");
-    fprintf( calibfile, "%.4lf %.4lf %.4lf\n", arrStar[i].MAG_APER, arrStar[i].V, 0.01 ); // write it out for the magnitude calibration!
-    // Ok, actually we write this file for backward compatibility with lib/fit_mag_calib
-    // here is what we actually use
-    mag_zeropoint[mag_zeropoint_counter]= arrStar[i].V - arrStar[i].MAG_APER;
-    // fprintf(stdout,"%lf\n",mag_zeropoint[mag_zeropoint_counter]);
-    mag_zeropoint_counter++;
+    fprintf( calibfile, "%.4lf %.4lf %.4lf\n", arrStar[i].MAG_APER, arrStar[i].V, 0.01 ); // write it out for the magnitude calibration with lib/fit_zeropoint
    }
    N_mantch++;
   }
  }
  fclose( calibfile );
  fprintf( stderr, "Relation between the catalog and instrumental magnitudes is written to calib.txt\n" );
- // should this be median?
- fprintf( stdout, "0.000000 1.000000 %9.6lf\n", gsl_stats_mean( mag_zeropoint, 1, mag_zeropoint_counter ) );
- free( mag_zeropoint );
  return N_mantch;
 }
 

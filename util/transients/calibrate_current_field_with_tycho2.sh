@@ -180,7 +180,16 @@ echo "The reference image ($WCS_CALIBRATED_REFERENCE_IMAGE) and catalog ($SEXTRA
 cp -v "$SEXTRACTOR_CATALOG_NAME" wcsmag.cat
 
 #valgrind -v --tool=memcheck --leak-check=full  --show-reachable=yes --track-origins=yes lib/catalogs/read_tycho2
-MAGNITUDE_CALIBRATION_PARAMETERS=$(lib/catalogs/read_tycho2)
+lib/catalogs/read_tycho2
+if [ $? -ne 0 ];then
+ echo "ERROR running lib/catalogs/read_tycho2"
+ exit 1
+fi
+MAGNITUDE_CALIBRATION_PARAMETERS=$(lib/fit_zeropoint)
+if [ $? -ne 0 ];then
+ echo "ERROR fitting the magnitude scale with lib/fit_zeropoint"
+ exit 1
+fi
 echo "util/calibrate_magnitude_scale $MAGNITUDE_CALIBRATION_PARAMETERS"
 util/calibrate_magnitude_scale $MAGNITUDE_CALIBRATION_PARAMETERS
 if [ $? -ne 0 ];then
