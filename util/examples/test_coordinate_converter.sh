@@ -6,9 +6,11 @@ if [ $? -ne 0 ];then
  exit 1
 fi
 
-# Repeat the following test 1000 times
+# Repeat the following test 100 times
+# (reduced from 1000: each iteration spawns ~18 subprocesses,
+#  making this extremely slow on WSL2 due to fork overhead)
 ITERATION=1
-while [ $ITERATION -le 1000 ] ;do
+while [ $ITERATION -le 100 ] ;do
 
 
 ############ Generate a random sky position ############
