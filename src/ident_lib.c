@@ -950,11 +950,11 @@ int Star2_to_star1_on_main_triangle( struct PixCoordinateTransformation *struct_
  struct_pixel_coordinate_transformation->line[2]= ( y1[1] * y2[0] - y2[1] * y1[0] ) / d;
  struct_pixel_coordinate_transformation->line[3]= -( y1[1] * x2[0] - y2[1] * x1[0] ) / d;
 
- struct_pixel_coordinate_transformation->fi= -atan( struct_pixel_coordinate_transformation->line[1] / struct_pixel_coordinate_transformation->line[0] );
- if ( ( struct_pixel_coordinate_transformation->fi >= 0 ) && ( struct_pixel_coordinate_transformation->line[1] >= 0 ) )
-  struct_pixel_coordinate_transformation->fi+= M_PI;
- else if ( ( struct_pixel_coordinate_transformation->fi < 0 ) && ( struct_pixel_coordinate_transformation->line[1] < 0 ) )
-  struct_pixel_coordinate_transformation->fi+= M_PI;
+ // line[0] = s*cos(theta), line[1] = -s*sin(theta), so sin(theta) = -line[1], cos(theta) = line[0]
+ // Using atan2 instead of atan + manual quadrant correction to avoid an edge case
+ // where line[1] = exactly 0.0 causes the rotation to be miscomputed as 180 deg
+ // instead of 0 deg (machine-dependent floating-point behavior).
+ struct_pixel_coordinate_transformation->fi= atan2( -struct_pixel_coordinate_transformation->line[1], struct_pixel_coordinate_transformation->line[0] );
 
  struct_pixel_coordinate_transformation->translate2[0]= -X;
  struct_pixel_coordinate_transformation->translate2[1]= -Y;
