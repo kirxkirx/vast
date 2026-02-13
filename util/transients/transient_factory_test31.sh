@@ -2750,7 +2750,7 @@ The hard cut-off for the candidate transients is $FILTER_FAINT_MAG_CUTOFF_TRANSI
     # Copy WCS-calibrated images back to input directory
     for WCS_CALIBRATED_IMAGE_FOR_ARCHIVE in wcs_fd_*."$FITS_FILE_EXT" ; do
      #
-     if [ ! -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ];then
+     if [ ! -f "$WCS_CALIBRATED_IMAGE_FOR_ARCHIVE" ] && [ -n "$DARK_FRAMES_DIR" ] && [ -n "$FLAT_FIELD_FILE" ] ;then
       echo "WARNING: no fully-calibrated images to save!" | tee -a transient_factory_test31.txt
       break
      fi 
