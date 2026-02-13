@@ -16,6 +16,8 @@
 #define MAX_DARK_BIAS_COUNT 7000
 #define MIN_FLAT_FIELD_COUNT 17000
 #define MAX_FLAT_FIELD_COUNT 44000
+#define MAX_CENTER_MEDIAN 60000
+#define CENTER_BOX_SIZE 64
 
 // Toggle median implementation:
 // - Set to 1 for GSL sort-based median.
@@ -205,6 +207,10 @@ int main( int argc, char *argv[] ) {
  int ii;
  FILE *filedescriptor_for_opening_test;
  long img_size;
+ double center_median;
+ double *center_box;
+ long center_box_count;
+ long cx, cy, x0, y0, x1, y1, bx, by;
 
  skip_temp_checks= 0;
  fpixel= 1;
@@ -427,6 +433,37 @@ int main( int argc, char *argv[] ) {
   if ( cur_index > MAX_FLAT_FIELD_COUNT ) {
    fprintf( stderr, "REJECT (too bright)\n" );
    continue; // continue here so good_file_counter does not increase
+  }
+
+  // Check median of center box for high vignetting:
+  // a vignetted flat may have low overall median but saturated center
+  if ( naxes_ref[0] >= CENTER_BOX_SIZE && naxes_ref[1] >= CENTER_BOX_SIZE ) {
+   cx= naxes_ref[0] / 2;
+   cy= naxes_ref[1] / 2;
+   x0= cx - CENTER_BOX_SIZE / 2;
+   y0= cy - CENTER_BOX_SIZE / 2;
+   x1= x0 + CENTER_BOX_SIZE;
+   y1= y0 + CENTER_BOX_SIZE;
+   center_box= malloc( CENTER_BOX_SIZE * CENTER_BOX_SIZE * sizeof( double ) );
+   if ( center_box == NULL ) {
+    fprintf( stderr, "ERROR: Couldn't allocate memory for center_box\n" );
+    exit( EXIT_FAILURE );
+   }
+   center_box_count= 0;
+   for ( by= y0; by < y1; by++ ) {
+    for ( bx= x0; bx < x1; bx++ ) {
+     center_box[center_box_count]= image_array[file_counter][by * naxes_ref[0] + bx];
+     center_box_count++;
+    }
+   }
+   gsl_sort( center_box, 1, center_box_count );
+   center_median= gsl_stats_median_from_sorted_data( center_box, 1, center_box_count );
+   free( center_box );
+   fprintf( stderr, "center_median=%lf\n", center_median );
+   if ( center_median > MAX_CENTER_MEDIAN ) {
+    fprintf( stderr, "REJECT (center too bright: vignetting may cause saturated center while overall median is OK)\n" );
+    continue;
+   }
   }
 
   if ( good_file_counter == 0 ) {
