@@ -24443,6 +24443,21 @@ if [ -f ../individual_images_test/J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fi
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_FIT_ROBUST_LINEAR_COEFFB"
    fi
+   # Test calib.png creation
+   lib/test_libpng_justtest_nomovepgplot.sh
+   if [ $? -eq 0 ];then
+    if [ -f calib.png ];then
+     file calib.png | grep -q 'PNG image data'
+     if [ $? -ne 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_CALIB_PNG_NOT_PNG"
+     fi
+     rm -f calib.png
+    else
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600B_CALIB_PNG_MISSING"
+    fi
+   fi
   fi # else if [ ! -f wcs_J20210770+2914093-1MHz-76mcs-PreampX4-0001B.fit ];then
  fi # check if util/solve_plate_with_UCAC5 returned 0 exit code
  
@@ -24554,9 +24569,24 @@ if [ -f ../individual_images_test/V2466Cyg-1MHz-76mcs-PreampX4-0001Rc.fit ];then
    TEST_PASSED=0
    FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED_FIT_ROBUST_LINEAR_COEFFB"
    GREP_RESULT=`cat calib.txt_param`
-   DEBUG_OUTPUT="$DEBUG_OUTPUT                              
+   DEBUG_OUTPUT="$DEBUG_OUTPUT
 ###### SAIRC600MANYBLEED_FIT_ROBUST_LINEAR_COEFFB ######
 $GREP_RESULT"
+  fi
+  # Test calib.png creation
+  lib/test_libpng_justtest_nomovepgplot.sh
+  if [ $? -eq 0 ];then
+   if [ -f calib.png ];then
+    file calib.png | grep -q 'PNG image data'
+    if [ $? -ne 0 ];then
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED_CALIB_PNG_NOT_PNG"
+    fi
+    rm -f calib.png
+   else
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SAIRC600MANYBLEED_CALIB_PNG_MISSING"
+   fi
   fi
 
  fi # check if util/wcs_image_calibration.sh returned 0 exit code
@@ -24672,6 +24702,21 @@ if [ -f ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits ];th
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ_FIT_ROBUST_LINEAR_COEFFB"
  fi
+ # Test calib.png creation
+ lib/test_libpng_justtest_nomovepgplot.sh
+ if [ $? -eq 0 ];then
+  if [ -f calib.png ];then
+   file calib.png | grep -q 'PNG image data'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ_CALIB_PNG_NOT_PNG"
+   fi
+   rm -f calib.png
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ_CALIB_PNG_MISSING"
+  fi
+ fi
  #util/get_image_date ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits | grep -q "Exposure 300 sec, 01.04.2021 18:06:22 UT = JD(UT) 2459306.25616 mid. exp."
  #util/get_image_date ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits | grep -q "Exposure 300 sec, 01.04.2021 18:06:21.738 UT = JD(UT) 2459306.25615 mid. exp."
  util/get_image_date ../individual_images_test/LIGHT_21-06-21_V_-39.82_300.00s_0001.fits | grep -q "Exposure 300 sec, 01.04.2021 18:06:21.738 UTC = JD(UTC) 2459306.25615438 mid. exp."
@@ -24779,6 +24824,21 @@ if [ -f ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits ];the
  if [ $TEST -ne 1 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2_FIT_ROBUST_LINEAR_COEFFB"
+ fi
+ # Test calib.png creation
+ lib/test_libpng_justtest_nomovepgplot.sh
+ if [ $? -eq 0 ];then
+  if [ -f calib.png ];then
+   file calib.png | grep -q 'PNG image data'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2_CALIB_PNG_NOT_PNG"
+   fi
+   rm -f calib.png
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES SINTEZ2_CALIB_PNG_MISSING"
+  fi
  fi
  #util/get_image_date ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits | grep -q "Exposure  60 sec, 31.03.2021 18:22:58 UT = JD(UT) 2459305.26630 mid. exp."
  util/get_image_date ../individual_images_test/LIGHT_21-22-58_B_-42.00_60.00s_0001.fits | grep -q "Exposure 60 sec, 31.03.2021 18:22:58.281 UTC = JD(UTC) 2459305.26629955 mid. exp."
@@ -25556,6 +25616,21 @@ if [ -f ../individual_images_test/ztf_20180327530417_000382_zg_c02_o_q3_sciimg.f
     TEST_PASSED=0
     FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER008"
    fi
+   # Test calib.png creation
+   lib/test_libpng_justtest_nomovepgplot.sh
+   if [ $? -eq 0 ];then
+    if [ -f calib.png ];then
+     file calib.png | grep -q 'PNG image data'
+     if [ $? -ne 0 ];then
+      TEST_PASSED=0
+      FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER_CALIB_PNG_NOT_PNG"
+     fi
+     rm -f calib.png
+    else
+     TEST_PASSED=0
+     FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER_CALIB_PNG_MISSING"
+    fi
+   fi
    #
   fi # else if [ $TEST -lt 700 ];then
  fi 
@@ -25700,6 +25775,21 @@ if [ -f ../individual_images_test/ztf_20181209434120_000259_zr_c11_o_q1_sciimg.f
  if [ $TEST -ne 1 ];then
   TEST_PASSED=0
   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2008"
+ fi
+ # Test calib.png creation
+ lib/test_libpng_justtest_nomovepgplot.sh
+ if [ $? -eq 0 ];then
+  if [ -f calib.png ];then
+   file calib.png | grep -q 'PNG image data'
+   if [ $? -ne 0 ];then
+    TEST_PASSED=0
+    FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2_CALIB_PNG_NOT_PNG"
+   fi
+   rm -f calib.png
+  else
+   TEST_PASSED=0
+   FAILED_TEST_CODES="$FAILED_TEST_CODES ZTFHEADER2_CALIB_PNG_MISSING"
+  fi
  fi
 
 

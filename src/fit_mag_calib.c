@@ -282,6 +282,79 @@ int main( int argc, char **argv ) {
   fit_photocurve( insmag, catmag, insmagerr, n_stars, poly_coeff, &fit_function, NULL );
  }
 
+ // Produce PNG plot for non-interactive modes
+ if ( operation_mode != 0 ) {
+  setenv_localpgplot( argv[0] );
+  if ( 1 == cpgbeg( 0, "calib.png/PNG", 1, 1 ) ) {
+   // White background, black foreground for PNG
+   cpgscr( 0, 1.0, 1.0, 1.0 );
+   cpgscr( 1, 0.0, 0.0, 0.0 );
+
+   cpgsvp( 0.08, 0.95, 0.1, 0.9 );
+   cpgswin( mininstmag - ( maxinstmag - mininstmag ) / 10,
+            maxinstmag + ( maxinstmag - mininstmag ) / 10,
+            mincatmag - ( maxcatmag - mincatmag ) / 10,
+            maxcatmag + ( maxcatmag - mincatmag ) / 10 );
+
+   cpgscf( 1 );
+   cpgbox( "BCNST1", 0.0, 0, "BCNST1", 0.0, 0 );
+   cpglab( "Instrumental magnitude", "Catalog magnitude", "" );
+
+   // Build header string showing the fit function formula
+   cpgsch( 1.0 );
+   sprintf( header_str, "fitting function: y=" );
+   if ( A != 0.0 ) {
+    sprintf( header_str2, "%lf\\(0729)x\\u2\\d", A );
+    strcat( header_str, header_str2 );
+    sprintf( header_str2, "%+lf\\(0729)x", B );
+    strcat( header_str, header_str2 );
+   } else {
+    sprintf( header_str2, "%lf\\(0729)x", B );
+    strcat( header_str, header_str2 );
+   }
+   sprintf( header_str2, "%+lf", C );
+   strcat( header_str, header_str2 );
+   if ( fit_function == 4 ) {
+    sprintf( header_str, "fitting function: y=%.5lf*log\\d10\\u(10\\u%.5lf*(x-(%.5lf))\\d+1)+(%.5lf)", poly_coeff[0], poly_coeff[1], poly_coeff[2], poly_coeff[3] );
+   }
+   if ( fit_function == 5 ) {
+    sprintf( header_str, "fitting function: x=%.5lf*log\\d10\\u(10\\u%.5lf*(y-(%.5lf))\\d+1)+(%.5lf)", poly_coeff[0], poly_coeff[1], poly_coeff[2], poly_coeff[3] );
+   }
+   cpgmtxt( "T", 1.0, 0.0, 0.0, header_str );
+
+   // Compute best-fit curve points
+   if ( fit_function != 4 && fit_function != 5 ) {
+    computed_x[0]= mininstmag;
+    computed_y[0]= (float)( A * computed_x[0] * computed_x[0] + B * computed_x[0] + C );
+    for ( j= 1; j < MAX_NUMBER_OF_STARS_MAG_CALIBR; j++ ) {
+     computed_x[j]= computed_x[j - 1] + ( maxinstmag - mininstmag ) / MAX_NUMBER_OF_STARS_MAG_CALIBR;
+     computed_y[j]= (float)( A * computed_x[j] * computed_x[j] + B * computed_x[j] + C );
+    }
+   } else {
+    computed_x[0]= mininstmag;
+    computed_y[0]= (float)eval_photocurve( (double)computed_x[0], poly_coeff, fit_function );
+    for ( j= 1; j < MAX_NUMBER_OF_STARS_MAG_CALIBR; j++ ) {
+     computed_x[j]= computed_x[j - 1] + ( maxinstmag - mininstmag ) / MAX_NUMBER_OF_STARS_MAG_CALIBR;
+     computed_y[j]= (float)eval_photocurve( (double)computed_x[j], poly_coeff, fit_function );
+    }
+   }
+
+   // Draw data points with error bars in red
+   cpgsci( 2 );
+   for ( j= 0; j < n_stars; j++ ) {
+    cpgerr1( 6, finsmag[j], fcatmag[j], finsmagerr[j], 1.0 );
+   }
+   cpgpt( n_stars, finsmag, fcatmag, 17 );
+
+   // Draw best-fit curve in blue
+   cpgsci( 4 );
+   cpgline( MAX_NUMBER_OF_STARS_MAG_CALIBR, computed_x, computed_y );
+
+   cpgend();
+  }
+  // If cpgbeg failed (no PNG support), silently continue without a plot
+ }
+
  // Go interactive
  if ( operation_mode == 0 ) {
 
