@@ -10,6 +10,9 @@ export LANGUAGE LC_ALL
 if [ -f calib.txt ];then
  rm -f calib.txt
 fi
+if [ -f calib.png ];then
+ rm -f calib.png
+fi
 
 if [ ! -f data.m_sigma ];then
  util/nopgplot.sh
