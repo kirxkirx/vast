@@ -61,17 +61,17 @@ else
   exit 1
  fi 
  
- REFERENCE_IMAGE=`grep "Ref.  image: " vast_summary.log  |awk '{print $6}'`
+ REFERENCE_IMAGE=$(grep "Ref.  image: " vast_summary.log  |awk '{print $6}')
 
  # Test if the original image is already a calibrated one
  # (Test by checking the file name)
- TEST_SUBSTRING=`basename $REFERENCE_IMAGE`
+ TEST_SUBSTRING=$(basename $REFERENCE_IMAGE)
  TEST_SUBSTRING="${TEST_SUBSTRING:0:4}"
  #TEST_SUBSTRING=`expr substr $TEST_SUBSTRING  1 4`
  if [ "$TEST_SUBSTRING" = "wcs_" ];then
-  UCAC5_REFERENCE_IMAGE_MATCH_FILE=`basename $REFERENCE_IMAGE`.cat.ucac5
+  UCAC5_REFERENCE_IMAGE_MATCH_FILE=$(basename $REFERENCE_IMAGE).cat.ucac5
  else
-  UCAC5_REFERENCE_IMAGE_MATCH_FILE=wcs_`basename $REFERENCE_IMAGE`.cat.ucac5
+  UCAC5_REFERENCE_IMAGE_MATCH_FILE=wcs_$(basename $REFERENCE_IMAGE).cat.ucac5
  fi
  # if the output catalog file is present and is not empty
  if [ ! -s "$UCAC5_REFERENCE_IMAGE_MATCH_FILE" ];then
@@ -97,7 +97,7 @@ else
  # Parse the catalog match file
  case "$BAND" in
  "C")
-  export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$11,$12}' | grep -v '0.000000' | wc -l`
+  export N_COMP_STARS=$(cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$11,$12}' | grep -v '0.000000' | wc -l)
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$11,$12}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then
     continue
@@ -124,16 +124,16 @@ else
     continue
    fi
    # Replace the magnitude and error measured at this image with the median mag and scatter from all images
-   MEDIAN_MAG_AND_SCATTER=`grep "$OUTDATFILE" vast_lightcurve_statistics.log | awk '{print $1" "$2}'`
-   MEDIAN_MAG=`echo $MEDIAN_MAG_AND_SCATTER | awk '{print $1}'`
-   SCATTER=`echo $MEDIAN_MAG_AND_SCATTER | awk '{print $2}'`
-   COMBINED_ERROR=`echo "$SCATTER $C" | awk '{print sqrt($1*$1+$2*$2)}'`
+   MEDIAN_MAG_AND_SCATTER=$(grep "$OUTDATFILE" vast_lightcurve_statistics.log | awk '{print $1" "$2}')
+   MEDIAN_MAG=$(echo $MEDIAN_MAG_AND_SCATTER | awk '{print $1}')
+   SCATTER=$(echo $MEDIAN_MAG_AND_SCATTER | awk '{print $2}')
+   COMBINED_ERROR=$(echo "$SCATTER $C" | awk '{print sqrt($1*$1+$2*$2)}')
    # Write output
    echo "$MEDIAN_MAG  $B  $COMBINED_ERROR"
   done | sort -n > calib.txt
  ;;
  "B")
-  export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$13,$14}' | grep -v '0.000000' | wc -l`
+  export N_COMP_STARS=$(cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$13,$14}' | grep -v '0.000000' | wc -l)
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$13,$14}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then
     continue
@@ -160,16 +160,16 @@ else
     continue
    fi
    # Replace the magnitude and error measured at this image with the median mag and scatter from all images
-   MEDIAN_MAG_AND_SCATTER=`grep "$OUTDATFILE" vast_lightcurve_statistics.log | awk '{print $1" "$2}'`
-   MEDIAN_MAG=`echo $MEDIAN_MAG_AND_SCATTER | awk '{print $1}'`
-   SCATTER=`echo $MEDIAN_MAG_AND_SCATTER | awk '{print $2}'`
-   COMBINED_ERROR=`echo "$SCATTER $C" | awk '{print sqrt($1*$1+$2*$2)}'`
+   MEDIAN_MAG_AND_SCATTER=$(grep "$OUTDATFILE" vast_lightcurve_statistics.log | awk '{print $1" "$2}')
+   MEDIAN_MAG=$(echo $MEDIAN_MAG_AND_SCATTER | awk '{print $1}')
+   SCATTER=$(echo $MEDIAN_MAG_AND_SCATTER | awk '{print $2}')
+   COMBINED_ERROR=$(echo "$SCATTER $C" | awk '{print sqrt($1*$1+$2*$2)}')
    # Write output
    echo "$MEDIAN_MAG  $B  $COMBINED_ERROR"
   done | sort -n > calib.txt
  ;;
  "V")
-  export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$15,$16}' | grep -v '0.000000' | wc -l`
+  export N_COMP_STARS=$(cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$15,$16}' | grep -v '0.000000' | wc -l)
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$15,$16}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then
     continue
@@ -196,16 +196,16 @@ else
     continue
    fi
    # Replace the magnitude and error measured at this image with the median mag and scatter from all images
-   MEDIAN_MAG_AND_SCATTER=`grep "$OUTDATFILE" vast_lightcurve_statistics.log | awk '{print $1" "$2}'`
-   MEDIAN_MAG=`echo $MEDIAN_MAG_AND_SCATTER | awk '{print $1}'`
-   SCATTER=`echo $MEDIAN_MAG_AND_SCATTER | awk '{print $2}'`
-   COMBINED_ERROR=`echo "$SCATTER $C" | awk '{print sqrt($1*$1+$2*$2)}'`
+   MEDIAN_MAG_AND_SCATTER=$(grep "$OUTDATFILE" vast_lightcurve_statistics.log | awk '{print $1" "$2}')
+   MEDIAN_MAG=$(echo $MEDIAN_MAG_AND_SCATTER | awk '{print $1}')
+   SCATTER=$(echo $MEDIAN_MAG_AND_SCATTER | awk '{print $2}')
+   COMBINED_ERROR=$(echo "$SCATTER $C" | awk '{print sqrt($1*$1+$2*$2)}')
    # Write output
    echo "$MEDIAN_MAG  $B  $COMBINED_ERROR"
   done | sort -n > calib.txt
  ;;
  "r"|"SR")
-  export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$17,$18}' | grep -v '0.000000' | wc -l`
+  export N_COMP_STARS=$(cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$17,$18}' | grep -v '0.000000' | wc -l)
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$17,$18}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then
     continue
@@ -232,16 +232,16 @@ else
     continue
    fi
    # Replace the magnitude and error measured at this image with the median mag and scatter from all images
-   MEDIAN_MAG_AND_SCATTER=`grep "$OUTDATFILE" vast_lightcurve_statistics.log | awk '{print $1" "$2}'`
-   MEDIAN_MAG=`echo $MEDIAN_MAG_AND_SCATTER | awk '{print $1}'`
-   SCATTER=`echo $MEDIAN_MAG_AND_SCATTER | awk '{print $2}'`
-   COMBINED_ERROR=`echo "$SCATTER $C" | awk '{print sqrt($1*$1+$2*$2)}'`
+   MEDIAN_MAG_AND_SCATTER=$(grep "$OUTDATFILE" vast_lightcurve_statistics.log | awk '{print $1" "$2}')
+   MEDIAN_MAG=$(echo $MEDIAN_MAG_AND_SCATTER | awk '{print $1}')
+   SCATTER=$(echo $MEDIAN_MAG_AND_SCATTER | awk '{print $2}')
+   COMBINED_ERROR=$(echo "$SCATTER $C" | awk '{print sqrt($1*$1+$2*$2)}')
    # Write output
    echo "$MEDIAN_MAG  $B  $COMBINED_ERROR"
   done | sort -n > calib.txt
  ;;
  "i"|"SI")
-  export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$19,$20}' | grep -v '0.000000' | wc -l`
+  export N_COMP_STARS=$(cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$19,$20}' | grep -v '0.000000' | wc -l)
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$19,$20}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then
     continue
@@ -268,16 +268,16 @@ else
     continue
    fi
    # Replace the magnitude and error measured at this image with the median mag and scatter from all images
-   MEDIAN_MAG_AND_SCATTER=`grep "$OUTDATFILE" vast_lightcurve_statistics.log | awk '{print $1" "$2}'`
-   MEDIAN_MAG=`echo $MEDIAN_MAG_AND_SCATTER | awk '{print $1}'`
-   SCATTER=`echo $MEDIAN_MAG_AND_SCATTER | awk '{print $2}'`
-   COMBINED_ERROR=`echo "$SCATTER $C" | awk '{print sqrt($1*$1+$2*$2)}'`
+   MEDIAN_MAG_AND_SCATTER=$(grep "$OUTDATFILE" vast_lightcurve_statistics.log | awk '{print $1" "$2}')
+   MEDIAN_MAG=$(echo $MEDIAN_MAG_AND_SCATTER | awk '{print $1}')
+   SCATTER=$(echo $MEDIAN_MAG_AND_SCATTER | awk '{print $2}')
+   COMBINED_ERROR=$(echo "$SCATTER $C" | awk '{print sqrt($1*$1+$2*$2)}')
    # Write output
    echo "$MEDIAN_MAG  $B  $COMBINED_ERROR"
   done | sort -n > calib.txt
  ;;
  "R"|"Rc")
-  export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$21,$22}' | grep -v '0.000000' | wc -l`
+  export N_COMP_STARS=$(cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$21,$22}' | grep -v '0.000000' | wc -l)
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$21,$22}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then
     continue
@@ -304,16 +304,16 @@ else
     continue
    fi
    # Replace the magnitude and error measured at this image with the median mag and scatter from all images
-   MEDIAN_MAG_AND_SCATTER=`grep "$OUTDATFILE" vast_lightcurve_statistics.log | awk '{print $1" "$2}'`
-   MEDIAN_MAG=`echo $MEDIAN_MAG_AND_SCATTER | awk '{print $1}'`
-   SCATTER=`echo $MEDIAN_MAG_AND_SCATTER | awk '{print $2}'`
-   COMBINED_ERROR=`echo "$SCATTER $C" | awk '{print sqrt($1*$1+$2*$2)}'`
+   MEDIAN_MAG_AND_SCATTER=$(grep "$OUTDATFILE" vast_lightcurve_statistics.log | awk '{print $1" "$2}')
+   MEDIAN_MAG=$(echo $MEDIAN_MAG_AND_SCATTER | awk '{print $1}')
+   SCATTER=$(echo $MEDIAN_MAG_AND_SCATTER | awk '{print $2}')
+   COMBINED_ERROR=$(echo "$SCATTER $C" | awk '{print sqrt($1*$1+$2*$2)}')
    # Write output
    echo "$MEDIAN_MAG  $B  $COMBINED_ERROR"
   done | sort -n > calib.txt
  ;;
  "I"|"Ic")
-  export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$23,$24}' | grep -v '0.000000' | wc -l`
+  export N_COMP_STARS=$(cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$23,$24}' | grep -v '0.000000' | wc -l)
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$23,$24}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then
     continue
@@ -340,16 +340,16 @@ else
     continue
    fi
    # Replace the magnitude and error measured at this image with the median mag and scatter from all images
-   MEDIAN_MAG_AND_SCATTER=`grep "$OUTDATFILE" vast_lightcurve_statistics.log | awk '{print $1" "$2}'`
-   MEDIAN_MAG=`echo $MEDIAN_MAG_AND_SCATTER | awk '{print $1}'`
-   SCATTER=`echo $MEDIAN_MAG_AND_SCATTER | awk '{print $2}'`
-   COMBINED_ERROR=`echo "$SCATTER $C" | awk '{print sqrt($1*$1+$2*$2)}'`
+   MEDIAN_MAG_AND_SCATTER=$(grep "$OUTDATFILE" vast_lightcurve_statistics.log | awk '{print $1" "$2}')
+   MEDIAN_MAG=$(echo $MEDIAN_MAG_AND_SCATTER | awk '{print $1}')
+   SCATTER=$(echo $MEDIAN_MAG_AND_SCATTER | awk '{print $2}')
+   COMBINED_ERROR=$(echo "$SCATTER $C" | awk '{print sqrt($1*$1+$2*$2)}')
    # Write output
    echo "$MEDIAN_MAG  $B  $COMBINED_ERROR"
   done | sort -n > calib.txt
  ;;
  "g"|"SG")
-  export N_COMP_STARS=`cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$25,$26}' | grep -v '0.000000' | wc -l`
+  export N_COMP_STARS=$(cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$25,$26}' | grep -v '0.000000' | wc -l)
   cat $UCAC5_REFERENCE_IMAGE_MATCH_FILE | awk '{printf "out%05d.dat %f %f %f \n", $1, $8,$25,$26}' | while read OUTDATFILE A B C ;do 
    if [ -z $C ];then
     continue
@@ -376,10 +376,10 @@ else
     continue
    fi
    # Replace the magnitude and error measured at this image with the median mag and scatter from all images
-   MEDIAN_MAG_AND_SCATTER=`grep "$OUTDATFILE" vast_lightcurve_statistics.log | awk '{print $1" "$2}'`
-   MEDIAN_MAG=`echo $MEDIAN_MAG_AND_SCATTER | awk '{print $1}'`
-   SCATTER=`echo $MEDIAN_MAG_AND_SCATTER | awk '{print $2}'`
-   COMBINED_ERROR=`echo "$SCATTER $C" | awk '{print sqrt($1*$1+$2*$2)}'`
+   MEDIAN_MAG_AND_SCATTER=$(grep "$OUTDATFILE" vast_lightcurve_statistics.log | awk '{print $1" "$2}')
+   MEDIAN_MAG=$(echo $MEDIAN_MAG_AND_SCATTER | awk '{print $1}')
+   SCATTER=$(echo $MEDIAN_MAG_AND_SCATTER | awk '{print $2}')
+   COMBINED_ERROR=$(echo "$SCATTER $C" | awk '{print sqrt($1*$1+$2*$2)}')
    # Write output
    echo "$MEDIAN_MAG  $B  $COMBINED_ERROR"
   done | sort -n > calib.txt
@@ -401,31 +401,31 @@ if [ -f calib.txt_param ];then
 fi
 
 if [ "$2" == "linear" ];then
- FIT_MAG_CALIB_RESULTING_PARARMETERS=`lib/fit_linear`
+ FIT_MAG_CALIB_RESULTING_PARARMETERS=$(lib/fit_linear)
  if [ $? -ne 0 ];then
   echo "ERROR fitting the magnitude scale! :("
   exit 1
  fi
 elif [ "$2" == "robust_linear" ];then
- FIT_MAG_CALIB_RESULTING_PARARMETERS=`lib/fit_robust_linear`
+ FIT_MAG_CALIB_RESULTING_PARARMETERS=$(lib/fit_robust_linear)
  if [ $? -ne 0 ];then
   echo "ERROR fitting the magnitude scale! :("
   exit 1
  fi
 elif [ "$2" == "zero_point" ];then
- FIT_MAG_CALIB_RESULTING_PARARMETERS=`lib/fit_zeropoint`
+ FIT_MAG_CALIB_RESULTING_PARARMETERS=$(lib/fit_zeropoint)
  if [ $? -ne 0 ];then
   echo "ERROR fitting the magnitude scale! :("
   exit 1
  fi
 elif [ "$2" == "photocurve" ];then
- FIT_MAG_CALIB_RESULTING_PARARMETERS=`lib/fit_photocurve`
+ FIT_MAG_CALIB_RESULTING_PARARMETERS=$(lib/fit_photocurve)
  if [ $? -ne 0 ];then
   echo "ERROR fitting the magnitude scale! :("
   exit 1
  fi
 else
- FIT_MAG_CALIB_RESULTING_PARARMETERS=`lib/fit_mag_calib`
+ FIT_MAG_CALIB_RESULTING_PARARMETERS=$(lib/fit_mag_calib)
  if [ $? -ne 0 ];then
   echo "ERROR fitting the magnitude scale! :("
   exit 1
